@@ -17,7 +17,7 @@ equals(OXIDE_DEBUG, "1") {
 installPath = $$[QT_INSTALL_QML]/$$replace(uri, \\., /)
 qmldir.files = qmldir
 qmldir.path = $$installPath
-qmlplugin.files = $${CHROMIUM_PLATFORM_DIR}/lib.target/$${QMAKE_PREFIX_SHLIB}oxideqmlplugin.$${QMAKE_EXTENSION_SHLIB}
+qmlplugin.files = $${CHROMIUM_PLATFORM_DIR}/lib.target/$${QMAKE_PREFIX_SHLIB}qmloxideplugin.$${QMAKE_EXTENSION_SHLIB}
 qmlplugin.path = $$installPath
 qmlplugin.CONFIG = no_check_exist
 

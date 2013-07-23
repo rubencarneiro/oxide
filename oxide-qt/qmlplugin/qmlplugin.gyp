@@ -17,7 +17,7 @@
 {
   'targets': [
     {
-      'target_name': 'oxideqmlplugin',
+      'target_name': 'qmloxideplugin',
       'type': 'shared_library',
       'conditions': [
         ['qmlplugin_rpath!=""',
