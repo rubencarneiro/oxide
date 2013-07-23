@@ -1,52 +1,26 @@
-TEMPLATE = lib
-TARGET = qmloxideplugin
-QT += qml quick
-CONFIG += qt plugin
-DEPTH = ../..
-
-TARGET = $$qtLibraryTarget($$TARGET)
+TEMPLATE = aux
 uri = com.canonical.Oxide
 
-isEmpty(PREFIX) {
-    PREFIX = /usr/local
+DEPTH = ../..
+
+isEmpty(QMAKE_EXTENSION_SHLIB) {
+    QMAKE_EXTENSION_SHLIB = so
 }
 
-INCLUDEPATH += \
-    $$DEPTH \
-    $${DEPTH}/oxide-qt \
-    $${DEPTH}/chromium/src
-
+CHROMIUM_OUTPUT_DIR = $${DEPTH}/chromium/src/out
 equals(OXIDE_DEBUG, "1") {
-    LIBS += -L$${DEPTH}/chromium/src/out/Debug/lib.target -loxideprivate
+    CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Debug
 } else {
-    LIBS += -L$${DEPTH}/chromium/src/out/Release/lib.target -loxideprivate
+    CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Release
 }
 
-# Input
-SOURCES += \
-    oxide_qml_plugin.cpp \
-    oxide_qquick_web_view.cpp \
-    oxide_qquick_web_view_context.cpp
+installPath = $$[QT_INSTALL_QML]/$$replace(uri, \\., /)
+qmldir.files = qmldir
+qmldir.path = $$installPath
+qmlplugin.files = $${CHROMIUM_PLATFORM_DIR}/lib.target/$${QMAKE_PREFIX_SHLIB}oxideqmlplugin.$${QMAKE_EXTENSION_SHLIB}
+qmlplugin.path = $$installPath
+qmlplugin.CONFIG = no_check_exist
 
-HEADERS += \
-    oxide_qquick_web_view.h \
-    oxide_qquick_web_view_context.h
+INSTALLS += qmlplugin qmldir
 
 OTHER_FILES = qmldir
-
-!equals(_PRO_FILE_PWD_, $$OUT_PWD) {
-    copy_qmldir.target = $$OUT_PWD/qmldir
-    copy_qmldir.depends = $$_PRO_FILE_PWD_/qmldir
-    copy_qmldir.commands = $(COPY_FILE) \"$$replace(copy_qmldir.depends, /, $$QMAKE_DIR_SEP)\" \"$$replace(copy_qmldir.target, /, $$QMAKE_DIR_SEP)\"
-    QMAKE_EXTRA_TARGETS += copy_qmldir
-    PRE_TARGETDEPS += $$copy_qmldir.target
-}
-
-qmldir.files = qmldir
-unix {
-    installPath = $$[QT_INSTALL_QML]/$$replace(uri, \\., /)
-    qmldir.path = $$installPath
-    target.path = $$installPath
-    INSTALLS += target qmldir
-    QMAKE_LFLAGS += '-Wl,-rpath,\'\$\$ORIGIN/$$system(python -c \'import os.path; print os.path.relpath(\"$${PREFIX}/lib/oxide-qt\", \"$$installPath\")\')\'' 
-}

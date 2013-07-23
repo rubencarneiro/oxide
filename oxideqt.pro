@@ -1,11 +1,15 @@
 TEMPLATE = subdirs
+CONFIG += ordered
 
 equals(OXIDE_DEBUG, "1") {
     CONFIG += debug
 }
 
-oxideqtprivate.file = oxide-qt/core/oxideprivate.pro
-SUBDIRS += oxideqtprivate
+oxidegyp.file = oxide-qt/gyp.pro
+SUBDIRS += oxidegyp
+
+oxideprivate.file = oxide-qt/core/oxideprivate.pro
+SUBDIRS += oxideprivate
 
 qmlplugin.file = oxide-qt/qmlplugin/qmlplugin.pro
 SUBDIRS += qmlplugin
