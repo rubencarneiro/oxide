@@ -64,6 +64,10 @@
         '<(DEPTH)/content/content.gyp:content_app',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
+        '<(DEPTH)/content/content.gyp:content_ppapi_plugin',
+        '<(DEPTH)/content/content.gyp:content_plugin',
+        '<(DEPTH)/content/content.gyp:content_renderer',
+        '<(DEPTH)/content/content.gyp:content_worker',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/webkit/common/user_agent/webkit_user_agent.gyp:user_agent'
@@ -73,16 +77,22 @@
         '<(DEPTH)'
       ],
       'sources': [
+        'app/oxide_main.cc',
+        'app/oxide_main.h',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_impl.cc',
         'browser/oxide_browser_context_impl.h',
         'browser/oxide_browser_main_parts.cc',
         'browser/oxide_browser_main_parts.h',
+        'browser/oxide_browser_process_handle.cc',
+        'browser/oxide_browser_process_handle.h',
         'browser/oxide_browser_process_main.cc',
         'browser/oxide_browser_process_main.h',
         'browser/oxide_content_browser_client.cc',
         'browser/oxide_content_browser_client.h',
+        'browser/oxide_global_settings.cc',
+        'browser/oxide_global_settings.h',
         'browser/oxide_http_user_agent_settings.cc',
         'browser/oxide_http_user_agent_settings.h',
         'browser/oxide_io_thread_delegate.cc',
@@ -111,11 +121,7 @@
         'common/oxide_content_main_delegate.cc',
         'common/oxide_content_main_delegate.h',
         'common/oxide_core_export.h',
-        'public/browser/oxide_browser_process_handle.cc',
-        'public/browser/oxide_browser_process_handle.h',
-        'public/browser/oxide_global_settings.cc',
-        'public/browser/oxide_global_settings.h',
-        'public/common/oxide_export.h'
+        'common/oxide_export.h'
       ],
       'variables': {
         'chromium_code': 1

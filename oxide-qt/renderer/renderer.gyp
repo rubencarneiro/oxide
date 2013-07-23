@@ -15,13 +15,22 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
-  'variables': {
-    'oxide_port_targets': [
-      'oxide-qt/qmlplugin/qmlplugin.gyp:*',
-      'oxide-qt/renderer/renderer.gyp:*'
-    ],
-    'oxide_port_libprivate_targets': [
-      'oxide-qt/core/core.gyp:*',
-    ]
-  }
+  'targets': [
+    {
+      'target_name': 'oxide-renderer',
+      'type': 'executable',
+      'dependencies': [
+        '../../oxide.gyp:oxideprivate'
+      ],
+      'ldflags': [
+        '-Wl,-rpath=\$$ORIGIN'
+      ],
+      'sources': [
+        'main.cc'
+      ],
+      'variables': {
+        'chromium_code': 1
+      }
+    }
+  ]
 }

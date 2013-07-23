@@ -21,6 +21,7 @@
     'disable_nacl': 1,
     'use_gconf': 0,
     'linux_use_gold_binary': 0,
-    'linux_use_gold_flags': 0
+    'linux_use_gold_flags': 0,
+    'linux_use_tcmalloc': 0
   }
 }

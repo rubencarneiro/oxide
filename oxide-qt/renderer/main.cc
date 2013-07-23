@@ -15,31 +15,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
-#define _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
+#include "base/memory/scoped_ptr.h"
 
-#include "base/compiler_specific.h"
+#include "oxide/app/oxide_main.h"
 
-#include "oxide/common/oxide_content_main_delegate.h"
-#include "oxide/common/oxide_export.h"
+#include "oxide-qt/core/common/oxide_qt_content_main_delegate.h"
 
-namespace oxide {
-namespace qt {
-
-class OXIDE_EXPORT ContentMainDelegate FINAL :
-    public oxide::ContentMainDelegate {
- public:
-  ContentMainDelegate() {}
-
-  static oxide::ContentMainDelegate* Create();
-
- private:
-  content::ContentBrowserClient* CreateContentBrowserClientImpl() FINAL;
-
-  DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
-};
-
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
+int main(int argc, const char* argv[]) {
+  scoped_ptr<oxide::ContentMainDelegate> delegate(
+      oxide::qt::ContentMainDelegate::Create());
+  return oxide::OxideMain(argc, argv, delegate.get());
+}

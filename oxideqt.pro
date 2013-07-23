@@ -14,6 +14,9 @@ SUBDIRS += oxideprivate
 qmlplugin.file = oxide-qt/qmlplugin/qmlplugin.pro
 SUBDIRS += qmlplugin
 
+renderer.file = oxide-qt/renderer/renderer.pro
+SUBDIRS += renderer
+
 OTHER_FILES += \
     gyp_oxide \
     oxide.gyp \

@@ -30,6 +30,7 @@ OTHER_FILES += \
     oxide-qt/core/core.gyp \
     oxide-qt/oxide_qt.gypi \
     oxide-qt/qmlplugin/qmlplugin.gyp \
+    oxide-qt/renderer/renderer.gyp \
     oxide-qt/system.gyp
 
 QMAKE_CLEAN += -r \

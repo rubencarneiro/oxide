@@ -43,8 +43,6 @@ class OXIDE_CORE_EXPORT ContentBrowserClient :
       content::RenderViewHostDelegateView** render_view_host_delegate_view)
       FINAL;
 
-  void RenderProcessHostCreated(content::RenderProcessHost* host) FINAL;
-
   net::URLRequestContextGetter* CreateRequestContext(
       content::BrowserContext* browser_context,
       content::ProtocolHandlerMap* protocol_handlers) FINAL;

@@ -71,7 +71,9 @@ class OXIDE_CORE_EXPORT WebViewHost :
   void WasShown();
   void WasHidden();
 
-  content::WebContents* web_contents() const;
+  content::WebContents* web_contents() const {
+    return web_contents_.get();
+  }
 
  protected:
   WebViewHost();
