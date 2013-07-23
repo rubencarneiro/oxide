@@ -23,7 +23,7 @@
 #include "base/memory/ref_counted.h"
 
 #include "oxide/browser/oxide_browser_process_main.h"
-#include "oxide/public/common/oxide_export.h"
+#include "oxide/common/oxide_export.h"
 
 namespace oxide {
 

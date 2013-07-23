@@ -19,10 +19,9 @@
 
 #include "base/logging.h"
 
-#include "oxide/public/browser/oxide_global_settings.h"
-
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
+#include "oxide_global_settings.h"
 #include "oxide_web_contents_view.h"
 
 namespace oxide {

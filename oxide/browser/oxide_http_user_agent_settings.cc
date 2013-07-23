@@ -20,7 +20,7 @@
 #include "content/public/common/content_client.h"
 #include "net/http/http_util.h"
 
-#include "oxide/public/browser/oxide_global_settings.h"
+#include "oxide_global_settings.h"
 
 namespace oxide {
 

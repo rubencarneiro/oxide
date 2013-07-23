@@ -25,7 +25,7 @@
 
 #include "oxide/browser/oxide_web_contents_view_delegate.h"
 #include "oxide/browser/oxide_web_view_host.h"
-#include "oxide/public/browser/oxide_browser_process_handle.h"
+#include "oxide/browser/oxide_browser_process_handle.h"
 
 #include "oxide-qt/core/common/oxide_qt_content_main_delegate.h"
 

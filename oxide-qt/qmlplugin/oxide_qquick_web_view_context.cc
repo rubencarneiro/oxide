@@ -17,7 +17,7 @@
 
 #include "oxide_qquick_web_view_context.h"
 
-#include "oxide/public/browser/oxide_global_settings.h"
+#include "oxide/browser/oxide_global_settings.h"
 
 QT_USE_NAMESPACE
 

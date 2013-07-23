@@ -24,7 +24,7 @@
 #include "base/compiler_specific.h"
 #include "base/synchronization/lock.h"
 
-#include "oxide/public/common/oxide_export.h"
+#include "oxide/common/oxide_export.h"
 
 template <typename Type> struct DefaultSingletonTraits;
 
