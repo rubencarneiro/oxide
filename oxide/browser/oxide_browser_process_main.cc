@@ -66,6 +66,11 @@ bool BrowserProcessMain::Init() {
 // static
 int BrowserProcessMain::RunBrowserProcess(
     const content::MainFunctionParams& main_function_params) {
+  if (!g_process) {
+    LOG(ERROR) << "Running in browser mode is not supported";
+    return 1;
+  }
+
   g_process->browser_main_runner_.reset(content::BrowserMainRunner::Create());
   int rv = g_process->browser_main_runner_->Initialize(main_function_params);
   if (rv != -1) {
