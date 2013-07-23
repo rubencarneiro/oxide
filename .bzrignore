@@ -1,0 +1,10 @@
+chromium/*
+!chromium/.gclient
+out/
+.pc/
+*.moc
+*.oxideprivate.mk
+*.swp
+*.target.oxideprivate.mk
+Makefile*
+moc_*

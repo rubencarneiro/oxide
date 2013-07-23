@@ -1,0 +1,17 @@
+Index: oxide/chromium/src/tools/gyp/pylib/gyp/generator/make.py
+===================================================================
+--- oxide.orig/chromium/src/tools/gyp/pylib/gyp/generator/make.py	2013-07-12 20:54:58.790487377 +0100
++++ oxide/chromium/src/tools/gyp/pylib/gyp/generator/make.py	2013-07-14 00:20:37.242866389 +0100
+@@ -90,7 +90,11 @@
+     default_variables.setdefault('OS', operating_system)
+     default_variables.setdefault('SHARED_LIB_SUFFIX', '.so')
+     default_variables.setdefault('SHARED_LIB_DIR','$(builddir)/lib.$(TOOLSET)')
+-    default_variables.setdefault('LIB_DIR', '$(obj).$(TOOLSET)')
++    offset = '.'
++    if 'options' in params:
++      offset = os.path.relpath(params['options'].depth,
++                               params['options'].toplevel_dir)
++    default_variables.setdefault('LIB_DIR', os.path.join('$(obj).$(TOOLSET)', offset))
+ 
+ 
+ def CalculateGeneratorInputInfo(params):

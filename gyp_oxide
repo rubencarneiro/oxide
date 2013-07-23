@@ -1,0 +1,76 @@
+#!/usr/bin/python
+
+# Copyright (C) 2013 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+from __future__ import print_function
+import glob
+import os
+import os.path
+import sys
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+chromium_src = os.path.join(script_dir, 'chromium', 'src')
+
+sys.path.insert(0, os.path.join(chromium_src, 'tools', 'gyp', 'pylib'))
+try:
+    import gyp
+except ImportError:
+    print('Cannot find gyp module. Do you have a Chromium checkout?', file=sys.stderr)
+    sys.exit(1)
+
+sys.path.insert(1, os.path.join(chromium_src, 'tools', 'grit'))
+sys.path.insert(1, os.path.join(chromium_src, 'chrome', 'tools', 'build'))
+sys.path.insert(1, os.path.join(chromium_src, 'third_party', 'WebKit', 'Source', 'core', 'scripts'))
+
+def additional_include_files(args=[]):
+    specified_includes = set()
+    for arg in args:
+        if arg.startswith('-I') and len(arg) > 2:
+            specified_includes.add(os.path.realpath(arg[2:]))
+
+    result = []
+    def AddInclude(path):
+        if os.path.realpath(path) not in specified_includes:
+            result.append(path)
+
+    AddInclude(os.path.join(script_dir, 'oxide', 'oxide.gypi'))
+
+    # Always include common.gypi.
+    AddInclude(os.path.join(chromium_src, 'build', 'common.gypi'))
+
+    # Optionally add supplemental .gypi files if present.
+    supplements = glob.glob(os.path.join(chromium_src, '*', 'supplement.gypi'))
+    for supplement in supplements:
+        AddInclude(supplement)
+
+    return result
+
+if __name__ == '__main__':
+    args = sys.argv[1:]
+
+    args.append(os.path.join(script_dir, 'oxide.gyp'))
+    args.extend(['-I' + i for i in additional_include_files(args)])
+
+    args.append('--no-circular-check')
+    args.extend(['--toplevel-dir', script_dir])
+    args.extend(['--depth', chromium_src])
+    args.extend(['--suffix', '.oxideprivate'])
+    args.extend(['--format', 'make'])
+    args.append('-Goutput_dir=%s' % os.path.join(chromium_src, 'out'))
+
+    os.chdir(script_dir)
+    sys.exit(gyp.main(args))
