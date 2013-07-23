@@ -20,8 +20,8 @@
 #include "base/memory/singleton.h"
 #include "webkit/common/user_agent/user_agent.h"
 
-#include "browser/oxide_content_browser_client.h"
-#include "public/browser/oxide_global_settings.h"
+#include "oxide/browser/oxide_content_browser_client.h"
+#include "oxide/public/browser/oxide_global_settings.h"
 
 namespace oxide {
 

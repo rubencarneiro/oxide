@@ -22,8 +22,8 @@
 
 #include "url/gurl.h"
 
-#include "core/browser/oxide_qt_web_view_host.h"
-#include "core/browser/oxide_web_view_host_delegate.h"
+#include "oxide-qt/core/browser/oxide_qt_web_view_host_qquick.h"
+#include "oxide-qt/core/browser/oxide_qt_web_view_host_delegate.h"
 
 QT_USE_NAMESPACE
 
@@ -48,7 +48,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewHostDelegate {
   void OnCommandsUpdated();
 
   OxideQQuickWebView* q_ptr;
-  QScopedPointer<oxide:qt::WebViewHost> web_view_host_;
+  QScopedPointer<oxide::qt::WebViewHostQQuick> web_view_host_;
   QScopedPointer<InitData> init_props_;
 };
 
@@ -77,6 +77,8 @@ void OxideQQuickWebViewPrivate::OnCommandsUpdated() {
 }
 
 void OxideQQuickWebView::visibilityChangedListener() {
+  Q_D(OxideQQuickWebView);
+
   if (isVisible()) {
     d->web_view_host_->WasShown();
   } else {
@@ -86,12 +88,14 @@ void OxideQQuickWebView::visibilityChangedListener() {
 
 void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
                                          const QRectF& oldGeometry) {
+  Q_D(OxideQQuickWebView);
+
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
   for (QList<QQuickItem *>::iterator it = childItems().begin();
        it != childItems().end();
        ++it) {
-    *it->setSize(newGeometry.size());
+    (*it)->setSize(newGeometry.size());
   }
 
   if (d->web_view_host_) {
@@ -127,23 +131,23 @@ void OxideQQuickWebView::componentComplete() {
   Q_ASSERT(d->init_props_);
 
   d->web_view_host_.reset(
-      oxide::qt::WebViewHost::Create(
-        this, d, d->init_props_.incognito,
+      oxide::qt::WebViewHostQQuick::Create(
+        this, d, d->init_props_->incognito,
         QSizeF(width(), height()), isVisible()));
 
-  if (!d->init_props_.url.isEmpty()) {
+  if (!d->init_props_->url.isEmpty()) {
     d->web_view_host_->SetURL(
-        GURL(d->init_props_.url.toString().toStdString()));
+        GURL(d->init_props_->url.toString().toStdString()));
   }
 
   d->init_props_.reset();
 }
 
 QUrl OxideQQuickWebView::url() const {
-  Q_D(OxideQQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   if (d->init_props_) {
-    return d->init_props_.url;
+    return d->init_props_->url;
   }
 
   if (d->web_view_host_) {
@@ -157,14 +161,14 @@ void OxideQQuickWebView::setUrl(const QUrl& url) {
   Q_D(OxideQQuickWebView);
 
   if (d->init_props_) {
-    d->init_props_.url = url;
+    d->init_props_->url = url;
   } else if (d->web_view_host_) {
     d->web_view_host_->SetURL(GURL(url.toString().toStdString()));
   }
 }
 
 QString OxideQQuickWebView::title() const {
-  Q_D(OxideQQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   if (d->web_view_host_) {
     return QString::fromStdString(d->web_view_host_->GetTitle());
@@ -174,7 +178,7 @@ QString OxideQQuickWebView::title() const {
 }
 
 bool OxideQQuickWebView::canGoBack() const {
-  Q_D(OxideQQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   if (!d->web_view_host_) {
     return false;
@@ -184,7 +188,7 @@ bool OxideQQuickWebView::canGoBack() const {
 }
 
 bool OxideQQuickWebView::canGoForward() const {
-  Q_D(OxideQQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   if (!d->web_view_host_) {
     return false;
@@ -194,10 +198,10 @@ bool OxideQQuickWebView::canGoForward() const {
 }
 
 bool OxideQQuickWebView::incognito() const {
-  Q_D(OxideQQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   if (d->init_props_) {
-    return d->init_props_.incognito;
+    return d->init_props_->incognito;
   }
 
   if (d->web_view_host_) {
@@ -211,12 +215,12 @@ void OxideQQuickWebView::setIncognito(bool incognito) {
   Q_D(OxideQQuickWebView);
 
   if (d->init_props_) {
-    d->init_props_.incognito = incognito
+    d->init_props_->incognito = incognito;
   }
 }
 
-bool OxideQQuickWebView::loading() {
-  Q_D(OxideQQuickWebView);
+bool OxideQQuickWebView::loading() const {
+  Q_D(const OxideQQuickWebView);
 
   if (d->web_view_host_) {
     return d->web_view_host_->IsLoading();

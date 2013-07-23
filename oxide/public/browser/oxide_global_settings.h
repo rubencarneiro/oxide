@@ -18,13 +18,13 @@
 #ifndef _OXIDE_PUBLIC_BROWSER_GLOBAL_SETTINGS_H_
 #define _OXIDE_PUBLIC_BROWSER_GLOBAL_SETTINGS_H_
 
-#include "public/common/oxide_export.h"
-
 #include <string>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/synchronization/lock.h"
+
+#include "oxide/public/common/oxide_export.h"
 
 template <typename Type> struct DefaultSingletonTraits;
 

@@ -30,7 +30,7 @@
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
 
-#include "browser/oxide_browser_process_main.h"
+#include "oxide/browser/oxide_browser_process_main.h"
 
 #include "oxide_content_client.h"
 

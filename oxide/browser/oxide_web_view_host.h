@@ -26,7 +26,7 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 
-#include "common/oxide_core_export.h"
+#include "oxide/common/oxide_core_export.h"
 
 class GURL;
 

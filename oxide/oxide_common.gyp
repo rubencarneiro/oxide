@@ -21,7 +21,7 @@
       'type': 'none',
       'all_dependent_settings': {
         'include_dirs': [
-          '<(SHARED_INTERMEDIATE_DIR)/oxide'
+          '<(SHARED_INTERMEDIATE_DIR)'
         ]
       },
       'actions': [
@@ -48,7 +48,7 @@
       'type': '<(component)',
       'all_dependent_settings': {
         'include_dirs': [
-          '.',
+          '..',
           '<(DEPTH)'
         ],
         'variables': {
@@ -69,7 +69,7 @@
         '<(DEPTH)/webkit/common/user_agent/webkit_user_agent.gyp:user_agent'
       ],
       'include_dirs': [
-        '.',
+        '..',
         '<(DEPTH)'
       ],
       'sources': [

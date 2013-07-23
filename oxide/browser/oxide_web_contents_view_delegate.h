@@ -20,7 +20,7 @@
 
 #include "ui/gfx/rect.h"
 
-#include "common/oxide_core_export.h"
+#include "oxide/common/oxide_core_export.h"
 
 namespace content {
 

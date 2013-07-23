@@ -33,8 +33,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
-  Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY commandsChanged)
-  Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY commandsChanged)
+  Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY commandsUpdated)
+  Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY commandsUpdated)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
@@ -68,10 +68,10 @@ class OxideQQuickWebView : public QQuickItem {
  Q_SIGNALS:
   void urlChanged();
   void titleChanged();
-  void commandsChanged();
+  void commandsUpdated();
   void loadingChanged();
 
- Q_SLOTS:
+ private Q_SLOTS:
   void visibilityChangedListener();
 
  private:

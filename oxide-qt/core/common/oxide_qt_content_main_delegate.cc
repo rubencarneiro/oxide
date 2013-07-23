@@ -19,7 +19,7 @@
 
 #include "base/lazy_instance.h"
 
-#include "browser/oxide_qt_content_browser_client.h"
+#include "oxide-qt/core/browser/oxide_qt_content_browser_client.h"
 
 namespace {
 base::LazyInstance<oxide::qt::ContentBrowserClient> g_content_browser_client =

@@ -19,7 +19,7 @@
 
 #include "base/logging.h"
 
-#include "public/browser/oxide_global_settings.h"
+#include "oxide/public/browser/oxide_global_settings.h"
 
 #include "oxide_off_the_record_browser_context_impl.h"
 

@@ -5,6 +5,6 @@ out/
 *.moc
 *.oxideprivate.mk
 *.swp
-*.target.oxideprivate.mk
+*.target.oxide.mk
 Makefile*
 moc_*

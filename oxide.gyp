@@ -17,10 +17,21 @@
 {
   'targets': [
     {
+      'target_name': 'oxide',
+      'type': 'none',
+      'dependencies': [
+        'oxideprivate',
+        '<@(oxide_port_targets)'
+      ]
+    },
+    {
       'target_name': 'oxideprivate',
       'type': 'shared_library',
       'dependencies': [
-        '<(oxide_private_port_target)'
+        '<@(oxide_port_libprivate_targets)'
+      ],
+      'export_dependent_settings': [
+        '<@(_dependencies)'
       ]
     }
   ]

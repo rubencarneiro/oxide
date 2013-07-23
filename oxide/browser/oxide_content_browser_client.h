@@ -22,7 +22,7 @@
 #include "base/compiler_specific.h"
 #include "content/public/browser/content_browser_client.h"
 
-#include "common/oxide_core_export.h"
+#include "oxide/common/oxide_core_export.h"
 
 namespace base {
 class MessagePump;

@@ -68,7 +68,7 @@ if __name__ == '__main__':
     args.append('--no-circular-check')
     args.extend(['--toplevel-dir', script_dir])
     args.extend(['--depth', chromium_src])
-    args.extend(['--suffix', '.oxideprivate'])
+    args.extend(['--suffix', '.oxide'])
     args.extend(['--format', 'make'])
     args.append('-Goutput_dir=%s' % os.path.join(chromium_src, 'out'))
 

@@ -21,7 +21,7 @@
 #include "content/public/app/content_main_runner.h"
 #include "content/public/browser/browser_main_runner.h"
 
-#include "common/oxide_content_main_delegate.h"
+#include "oxide/common/oxide_content_main_delegate.h"
 
 #include "oxide_io_thread_delegate.h"
 

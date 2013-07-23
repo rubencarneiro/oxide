@@ -24,7 +24,7 @@
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
 
-#include "public/browser/oxide_global_settings.h"
+#include "oxide/public/browser/oxide_global_settings.h"
 
 #include "oxide_browser_context_impl.h"
 #include "oxide_browser_process_main.h"

@@ -17,15 +17,15 @@
 
 #include "oxide_global_settings.h"
 
-#include "browser/oxide_browser_process_main.h"
-#include "common/chrome_version.h"
-#include "common/oxide_content_client.h"
-
 #include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/browser_thread.h"
 #include "webkit/common/user_agent/user_agent_util.h"
+
+#include "oxide/browser/oxide_browser_process_main.h"
+#include "oxide/common/chrome_version.h"
+#include "oxide/common/oxide_content_client.h"
 
 namespace oxide {
 

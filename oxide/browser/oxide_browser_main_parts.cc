@@ -19,7 +19,7 @@
 
 #include "base/message_loop.h"
 
-#include "common/oxide_content_client.h"
+#include "oxide/common/oxide_content_client.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"

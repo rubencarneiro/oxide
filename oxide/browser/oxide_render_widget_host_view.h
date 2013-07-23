@@ -23,7 +23,7 @@
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "ui/gfx/size.h"
 
-#include "common/oxide_core_export.h"
+#include "oxide/common/oxide_core_export.h"
 
 namespace content {
 class RenderWidgetHostImpl;

@@ -16,6 +16,11 @@
 
 {
   'variables': {
-    'oxide_private_port_target': 'oxide-qt/core/oxide_qt.gyp:oxide_qt_private'
+    'oxide_port_targets': [
+      'oxide-qt/qmlplugin/qmlplugin.gyp:*'
+    ],
+    'oxide_port_libprivate_targets': [
+      'oxide-qt/core/core.gyp:*',
+    ]
   }
 }

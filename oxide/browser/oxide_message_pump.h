@@ -22,7 +22,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_pump.h"
 
-#include "common/oxide_core_export.h"
+#include "oxide/common/oxide_core_export.h"
 
 namespace base {
 class RunLoop;

@@ -40,7 +40,7 @@
 #include "net/url_request/url_request_context.h"
 #include "net/url_request/url_request_job_factory_impl.h"
 
-#include "common/oxide_constants.h"
+#include "oxide/common/oxide_constants.h"
 
 #include "oxide_browser_process_main.h"
 #include "oxide_io_thread_delegate.h"

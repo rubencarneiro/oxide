@@ -18,12 +18,12 @@
 #ifndef _OXIDE_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
 #define _OXIDE_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
 
-#include "browser/oxide_browser_process_main.h"
-#include "public/common/oxide_export.h"
-
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
+
+#include "oxide/browser/oxide_browser_process_main.h"
+#include "oxide/public/common/oxide_export.h"
 
 namespace oxide {
 
