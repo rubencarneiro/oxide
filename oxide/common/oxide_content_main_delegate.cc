@@ -39,8 +39,6 @@ base::LazyInstance<content::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
 }
 
-static void* module_handle;
-
 namespace oxide {
 
 content::ContentBrowserClient*
@@ -73,8 +71,9 @@ void ContentMainDelegate::PreSandboxStartup() {
   // same as base::FILE_EXE, which is not what we want in the browser process)
   // We will use this to find the renderer binary
   Dl_info info;
-  int rv = dladdr(module_handle, &info);
-  DCHECK_EQ(rv, 0) << "Failed to determine module path";
+  int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
+                  &info);
+  DCHECK_NE(rv, 0) << "Failed to determine module path";
 
   PathService::Override(base::FILE_MODULE,
                         base::FilePath(info.dli_fname));
