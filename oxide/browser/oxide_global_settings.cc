@@ -36,7 +36,8 @@ GlobalSettings* GlobalSettings::GetInstance() {
 
 // static
 std::string GlobalSettings::GetProduct() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  DCHECK(!content::BrowserThread::IsWellKnownThread(content::BrowserThread::UI) ||
+         content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   GlobalSettings* self = GetInstance();
   if (!self->product_.empty()) {
     return self->product_;
@@ -54,7 +55,8 @@ void GlobalSettings::SetProduct(const std::string& product) {
 
 // static
 std::string GlobalSettings::GetUserAgent() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  DCHECK(!content::BrowserThread::IsWellKnownThread(content::BrowserThread::UI) ||
+         content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   GlobalSettings* self = GetInstance();
   if (!self->user_agent_.empty()) {
     return self->user_agent_;
