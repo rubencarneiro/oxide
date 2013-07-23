@@ -82,7 +82,9 @@ int BrowserProcessMain::RunBrowserProcess(
 
 // static
 void BrowserProcessMain::ShutdownBrowserProcess() {
-  g_process->browser_main_runner_->Shutdown();
+  if (g_process) {
+    g_process->browser_main_runner_->Shutdown();
+  }
 }
 
 // static
