@@ -19,6 +19,15 @@
     {
       'target_name': 'oxideqmlplugin',
       'type': 'shared_library',
+      'conditions': [
+        ['qmlplugin_rpath!=""',
+          {
+            'ldflags': [
+              '-Wl,-rpath=<(qmlplugin_rpath)'
+            ]
+          }
+        ] 
+      ],
       'dependencies': [
         '../system.gyp:Qt5Core',
         '../system.gyp:Qt5Gui',

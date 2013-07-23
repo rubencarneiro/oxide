@@ -6,8 +6,14 @@ DEPTH = ..
 GYP_GENERATED_MAKEFILE = Makefile.oxide
 GYP_MAKE_INVOKE = CFLAGS= CXXFLAGS= LDFLAGS= CPPFLAGS= make -C $$DEPTH -f $$GYP_GENERATED_MAKEFILE oxide
 
+isEmpty(PREFIX) {
+    PREFIX = /usr/local
+}
+uri = com.canonical.Oxide
+installPath = $$[QT_INSTALL_QML]/$$replace(uri, \\., /)
+
 gyp_generate.target = $${DEPTH}/$${GYP_GENERATED_MAKEFILE}
-gyp_generate.commands = $${DEPTH}/gyp_oxide -I$${PWD}/oxide_qt.gypi
+gyp_generate.commands = $${DEPTH}/gyp_oxide -I$${PWD}/oxide_qt.gypi -Dqmlplugin_rpath=\'\\\$\$\$\$ORIGIN/$$system(python -c \'import os.path; print os.path.relpath(\"$${PREFIX}/lib/oxide-qt\", \"$$installPath\")\')\'
 QMAKE_EXTRA_TARGETS += gyp_generate
 
 gypimpl.target = gypimpl
