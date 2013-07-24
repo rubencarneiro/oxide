@@ -1,0 +1,34 @@
+Index: oxide/chromium/src/content/browser/zygote_host/zygote_host_impl_linux.cc
+===================================================================
+--- oxide.orig/chromium/src/content/browser/zygote_host/zygote_host_impl_linux.cc	2013-07-12 20:53:41.898487082 +0100
++++ oxide/chromium/src/content/browser/zygote_host/zygote_host_impl_linux.cc	2013-07-25 00:10:06.883224886 +0100
+@@ -30,6 +30,7 @@
+ #include "content/browser/renderer_host/render_sandbox_host_linux.h"
+ #include "content/common/zygote_commands_linux.h"
+ #include "content/public/browser/content_browser_client.h"
++#include "content/public/common/content_paths.h"
+ #include "content/public/common/content_switches.h"
+ #include "content/public/common/result_codes.h"
+ #include "sandbox/linux/suid/client/setuid_sandbox_client.h"
+@@ -70,7 +71,7 @@
+   init_ = true;
+ 
+   base::FilePath chrome_path;
+-  CHECK(PathService::Get(base::FILE_EXE, &chrome_path));
++  CHECK(PathService::Get(CHILD_PROCESS_EXE, &chrome_path));
+   CommandLine cmd_line(chrome_path);
+ 
+   cmd_line.AppendSwitchASCII(switches::kProcessType, switches::kZygoteProcess);
+Index: oxide/chromium/src/content/common/child_process_host_impl.cc
+===================================================================
+--- oxide.orig/chromium/src/content/common/child_process_host_impl.cc	2013-07-12 20:53:45.202487095 +0100
++++ oxide/chromium/src/content/common/child_process_host_impl.cc	2013-07-25 00:11:24.519225290 +0100
+@@ -91,7 +91,7 @@
+   child_path = CommandLine::ForCurrentProcess()->GetSwitchValuePath(
+       switches::kBrowserSubprocessPath);
+ 
+-#if defined(OS_LINUX)
++#if 0
+   // Use /proc/self/exe rather than our known binary path so updates
+   // can't swap out the binary from underneath us.
+   // When running under Valgrind, forking /proc/self/exe ends up forking the

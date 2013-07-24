@@ -1,2 +1,3 @@
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
+child-path.patch

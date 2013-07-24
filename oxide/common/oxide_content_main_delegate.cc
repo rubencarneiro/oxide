@@ -27,6 +27,7 @@
 #include "base/logging.h"
 #include "base/path_service.h"
 #include "content/public/common/content_client.h"
+#include "content/public/common/content_paths.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
 
@@ -81,9 +82,9 @@ void ContentMainDelegate::PreSandboxStartup() {
   base::FilePath subprocess_path;
   PathService::Get(base::DIR_MODULE, &subprocess_path);
   subprocess_path.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
-  CommandLine::ForCurrentProcess()->AppendSwitchPath(
-      switches::kBrowserSubprocessPath,
-      subprocess_path);
+
+  PathService::Override(content::CHILD_PROCESS_EXE,
+                        subprocess_path);
 }
 
 int ContentMainDelegate::RunProcess(
