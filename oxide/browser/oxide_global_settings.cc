@@ -36,8 +36,6 @@ GlobalSettings* GlobalSettings::GetInstance() {
 
 // static
 std::string GlobalSettings::GetProduct() {
-  DCHECK(!content::BrowserThread::IsWellKnownThread(content::BrowserThread::UI) ||
-         content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   GlobalSettings* self = GetInstance();
   if (!self->product_.empty()) {
     return self->product_;
@@ -48,15 +46,12 @@ std::string GlobalSettings::GetProduct() {
 
 // static
 void GlobalSettings::SetProduct(const std::string& product) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   GetInstance()->product_ = product;
   ContentClient::MaybeUpdateUserAgent();
 }
 
 // static
 std::string GlobalSettings::GetUserAgent() {
-  DCHECK(!content::BrowserThread::IsWellKnownThread(content::BrowserThread::UI) ||
-         content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   GlobalSettings* self = GetInstance();
   if (!self->user_agent_.empty()) {
     return self->user_agent_;
@@ -68,20 +63,17 @@ std::string GlobalSettings::GetUserAgent() {
 
 // static
 void GlobalSettings::SetUserAgent(const std::string& user_agent) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   GetInstance()->user_agent_ = user_agent;
   ContentClient::MaybeUpdateUserAgent();
 }
 
 // static
 std::string GlobalSettings::GetDataPath() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   return GetInstance()->data_path_;
 }
 
 // static
 bool GlobalSettings::SetDataPath(const std::string& data_path) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   GlobalSettings* self = GetInstance();
   if (BrowserProcessMain::Exists()) {
     LOG(ERROR) << "It's too late to set the data path";
@@ -95,13 +87,11 @@ bool GlobalSettings::SetDataPath(const std::string& data_path) {
 
 // static
 std::string GlobalSettings::GetCachePath() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   return GetInstance()->cache_path_;
 }
 
 // static
 bool GlobalSettings::SetCachePath(const std::string& cache_path) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   GlobalSettings* self = GetInstance();
   if (BrowserProcessMain::Exists()) {
     LOG(ERROR) << "It's too late to set the cache path";
