@@ -40,7 +40,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
-  OxideQQuickWebView(QQuickItem* parent);
+  OxideQQuickWebView(QQuickItem* parent = NULL);
   virtual ~OxideQQuickWebView();
 
   void classBegin();

@@ -15,6 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxide_qquick_web_view.h"
 #include "oxide_qquick_web_view_context.h"
 
 #include <QString>
@@ -46,6 +47,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterSingletonType<OxideQQuickWebViewContext>(
         uri, 0, 1, "WebViewContext", WebViewContextSingletonFactory);
+    qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
   }
 };
 
