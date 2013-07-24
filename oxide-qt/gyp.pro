@@ -17,7 +17,7 @@ gyp_generate.commands = \
     $${DEPTH}/gyp_oxide \
     -I$${PWD}/oxide_qt.gypi \
     -Dqmlplugin_rpath=\'\\\$\$\$\$ORIGIN/$$system(python -c \'import os.path; print os.path.relpath(\"$${PREFIX}/lib/oxide-qt\", \"$$installPath\")\')\' \
-    -Dlinux_sandbox_path=\'$${PREFIX}/lib/oxide-qt/oxide-sandbox\'
+    -Dqt_install_prefix=\'$${PREFIX}\'
 QMAKE_EXTRA_TARGETS += gyp_generate
 
 gypimpl.target = gypimpl

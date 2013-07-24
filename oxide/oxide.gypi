@@ -16,12 +16,26 @@
 
 {
   'variables': {
-    'use_aura': 1,
-    'toolkit_uses_gtk': 0,
     'disable_nacl': 1,
-    'use_gconf': 0,
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
-    'linux_use_tcmalloc': 0
+    'linux_use_tcmalloc': 0,
+    'toolkit_uses_gtk': 0,
+    'use_aura': 1,
+    'use_gconf': 0,
+
+    'variables': {
+      'linux_sandbox_name%': 'oxide-sandbox',
+      'private_lib_dir%': ''
+    },
+
+    'linux_sandbox_name%': '<(linux_sandbox_name)',
+    'private_lib_dir%': '<(private_lib_dir)',
+
+    'conditions': [
+      ['private_lib_dir != ""', {
+        'linux_sandbox_path': '<(private_lib_dir)/<(linux_sandbox_name)'
+      }]
+    ]
   }
 }

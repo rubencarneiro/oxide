@@ -22,6 +22,13 @@
     ],
     'oxide_port_libprivate_targets': [
       'oxide-qt/core/core.gyp:*',
-    ]
+    ],
+
+    'variables': {
+      'qt_install_prefix%': '/usr/local',
+    },
+
+    'qt_install_prefix%': '<(qt_install_prefix)',
+    'private_lib_dir': '<(qt_install_prefix)/lib/oxide-qt'
   }
 }
