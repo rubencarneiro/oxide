@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_HOST_QQUICK_H_
 
 #include <QtGlobal>
+#include <QUrl>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -52,6 +53,9 @@ class OXIDE_EXPORT WebViewHostQQuick FINAL :
                                    bool incognito,
                                    const QSizeF& initial_size,
                                    bool visible);
+
+  QUrl GetURL() const;
+  void SetURL(const QUrl& url);
 
   void UpdateSize(const QSizeF& size);
 

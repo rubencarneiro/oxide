@@ -28,8 +28,6 @@
 
 #include "oxide/common/oxide_export.h"
 
-class GURL;
-
 namespace gfx {
 class Size;
 }
@@ -49,8 +47,8 @@ class OXIDE_EXPORT WebViewHost :
  public:
   virtual ~WebViewHost();
 
-  const GURL& GetURL() const;
-  void SetURL(const GURL& url);
+  std::string GetURL() const;
+  void SetURL(const std::string& url);
 
   std::string GetTitle() const;
 

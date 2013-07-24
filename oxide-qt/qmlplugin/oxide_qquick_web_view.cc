@@ -20,8 +20,6 @@
 #include <QRectF>
 #include <QSizeF>
 
-#include "url/gurl.h"
-
 #include "oxide-qt/core/browser/oxide_qt_web_view_host_qquick.h"
 #include "oxide-qt/core/browser/oxide_qt_web_view_host_delegate.h"
 
@@ -136,8 +134,7 @@ void OxideQQuickWebView::componentComplete() {
         QSizeF(width(), height()), isVisible()));
 
   if (!d->init_props_->url.isEmpty()) {
-    d->web_view_host_->SetURL(
-        GURL(d->init_props_->url.toString().toStdString()));
+    d->web_view_host_->SetURL(d->init_props_->url);
   }
 
   d->init_props_.reset();
@@ -151,7 +148,7 @@ QUrl OxideQQuickWebView::url() const {
   }
 
   if (d->web_view_host_) {
-    return QUrl(QString::fromStdString(d->web_view_host_->GetURL().spec()));
+    return d->web_view_host_->GetURL();
   }
 
   return QUrl();
@@ -163,7 +160,7 @@ void OxideQQuickWebView::setUrl(const QUrl& url) {
   if (d->init_props_) {
     d->init_props_->url = url;
   } else if (d->web_view_host_) {
-    d->web_view_host_->SetURL(GURL(url.toString().toStdString()));
+    d->web_view_host_->SetURL(url);
   }
 }
 

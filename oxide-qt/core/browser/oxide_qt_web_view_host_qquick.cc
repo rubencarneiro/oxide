@@ -22,6 +22,7 @@
 #include <QQuickWindow>
 #include <QSize>
 #include <QSizeF>
+#include <QString>
 
 #include "base/logging.h"
 #include "content/public/browser/web_contents.h"
@@ -83,6 +84,14 @@ WebViewHostQQuick* WebViewHostQQuick::Create(QQuickItem* container,
   visible ? wvh->WasShown() : wvh->WasHidden();
 
   return wvh;
+}
+
+QUrl WebViewHostQQuick::GetURL() const {
+  return QUrl(QString::fromStdString(oxide::WebViewHost::GetURL()));
+}
+
+void WebViewHostQQuick::SetURL(const QUrl& url) {
+  oxide::WebViewHost::SetURL(url.toString().toStdString());
 }
 
 void WebViewHostQQuick::UpdateSize(const QSizeF& size) {

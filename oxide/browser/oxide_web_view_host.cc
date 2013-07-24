@@ -24,6 +24,7 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
+#include "url/gurl.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
@@ -88,12 +89,13 @@ WebViewHost::~WebViewHost() {
   }
 }
 
-const GURL& WebViewHost::GetURL() const {
-  return web_contents_->GetActiveURL();
+std::string WebViewHost::GetURL() const {
+  return web_contents_->GetActiveURL().spec();
 }
 
-void WebViewHost::SetURL(const GURL& url) {
-  content::NavigationController::LoadURLParams params(url);
+void WebViewHost::SetURL(const std::string& url) {
+  GURL gurl(url);
+  content::NavigationController::LoadURLParams params(gurl);
   web_contents_->GetController().LoadURLWithParams(params);
 }
 
