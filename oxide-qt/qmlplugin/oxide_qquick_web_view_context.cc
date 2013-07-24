@@ -21,8 +21,9 @@
 
 QT_USE_NAMESPACE
 
-OxideQQuickWebViewContext::OxideQQuickWebViewContext() :
-    QObject() {}
+OxideQQuickWebViewContext::OxideQQuickWebViewContext(
+    QObject* parent) :
+    QObject(parent) {}
 
 OxideQQuickWebViewContext::~OxideQQuickWebViewContext() {}
 

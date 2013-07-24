@@ -33,7 +33,7 @@ class OxideQQuickWebViewContext : public QObject {
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
 
  public:
-  OxideQQuickWebViewContext();
+  OxideQQuickWebViewContext(QObject* parent = NULL);
   virtual ~OxideQQuickWebViewContext();
 
   QString product() const;
