@@ -43,9 +43,9 @@ BrowserProcessMain* BrowserProcessMain::GetInstance() {
 
 // static
 void BrowserProcessMain::Create() {
-  BrowserProcessMain* tmp = new BrowserProcessMain();
-  if (!tmp->Init()) {
-    delete tmp;
+  scoped_refptr<BrowserProcessMain> tmp = new BrowserProcessMain();
+  if (tmp->Init()) {
+    tmp->AddRef();
   }
 }
 
@@ -102,12 +102,20 @@ void BrowserProcessMain::InitContentMainDelegateFactory(
 BrowserProcessMain::BrowserProcessMain() {
   DCHECK(g_main_delegate_factory) <<
       "Implementation needs to specify a ContentMainDelegate factory";
+  DCHECK(!g_process) << "Should only have one BrowserProcessMain";
+
+  g_process = this;
+
   main_delegate_.reset(g_main_delegate_factory());
   main_runner_.reset(content::ContentMainRunner::Create());
 }
 
 BrowserProcessMain::~BrowserProcessMain() {
+  DCHECK_EQ(g_process, this);
+
   main_runner_->Shutdown();
+
+  g_process = NULL;
 }
 
 // static
