@@ -26,7 +26,7 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 
-#include "oxide/common/oxide_core_export.h"
+#include "oxide/common/oxide_export.h"
 
 class GURL;
 
@@ -43,7 +43,7 @@ class WebContents;
 
 namespace oxide {
 
-class OXIDE_CORE_EXPORT WebViewHost :
+class OXIDE_EXPORT WebViewHost :
     public content::WebContentsDelegate,
     public content::WebContentsObserver {
  public:
