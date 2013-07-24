@@ -90,10 +90,9 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
-  for (QList<QQuickItem *>::iterator it = childItems().begin();
-       it != childItems().end();
-       ++it) {
-    (*it)->setSize(newGeometry.size());
+  for (int i = 0; i < childItems().count(); ++i) {
+    QQuickItem* item = childItems().at(i);
+    item->setSize(newGeometry.size());
   }
 
   if (d->web_view_host_) {
