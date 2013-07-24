@@ -77,6 +77,13 @@ void ContentMainDelegate::PreSandboxStartup() {
 
   PathService::Override(base::FILE_MODULE,
                         base::FilePath(info.dli_fname));
+
+  base::FilePath subprocess_path;
+  PathService::Get(base::DIR_MODULE, &subprocess_path);
+  subprocess_path.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
+  CommandLine::ForCurrentProcess()->AppendSwitchPath(
+      switches::kBrowserSubprocessPath,
+      subprocess_path);
 }
 
 int ContentMainDelegate::RunProcess(

@@ -15,6 +15,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
+  'variables': {
+    'oxide_subprocess%': 'oxide-renderer'
+  },
   'targets': [
     {
       'target_name': 'oxide_private_generated',
@@ -56,7 +59,8 @@
         }
       },
       'defines': [
-        'OXIDE_CORE_IMPLEMENTATION'
+        'OXIDE_CORE_IMPLEMENTATION',
+        'OXIDE_SUBPROCESS=\"<(oxide_subprocess)\"'
       ],
       'dependencies': [
         'oxide_private_generated',
