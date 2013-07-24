@@ -17,6 +17,9 @@ SUBDIRS += qmlplugin
 renderer.file = oxide-qt/renderer/renderer.pro
 SUBDIRS += renderer
 
+sandbox.file = oxide-qt/sandbox.pro
+SUBDIRS += sandbox
+
 OTHER_FILES += \
     gyp_oxide \
     oxide.gyp \

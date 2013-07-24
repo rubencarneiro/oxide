@@ -13,7 +13,11 @@ uri = com.canonical.Oxide
 installPath = $$[QT_INSTALL_QML]/$$replace(uri, \\., /)
 
 gyp_generate.target = $${DEPTH}/$${GYP_GENERATED_MAKEFILE}
-gyp_generate.commands = $${DEPTH}/gyp_oxide -I$${PWD}/oxide_qt.gypi -Dqmlplugin_rpath=\'\\\$\$\$\$ORIGIN/$$system(python -c \'import os.path; print os.path.relpath(\"$${PREFIX}/lib/oxide-qt\", \"$$installPath\")\')\'
+gyp_generate.commands = \
+    $${DEPTH}/gyp_oxide \
+    -I$${PWD}/oxide_qt.gypi \
+    -Dqmlplugin_rpath=\'\\\$\$\$\$ORIGIN/$$system(python -c \'import os.path; print os.path.relpath(\"$${PREFIX}/lib/oxide-qt\", \"$$installPath\")\')\' \
+    -Dlinux_sandbox_path=\'$${PREFIX}/lib/oxide-qt/oxide-sandbox\'
 QMAKE_EXTRA_TARGETS += gyp_generate
 
 gypimpl.target = gypimpl

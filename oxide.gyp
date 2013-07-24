@@ -21,7 +21,8 @@
       'type': 'none',
       'dependencies': [
         'oxideprivate',
-        '<@(oxide_port_targets)'
+        '<@(oxide_port_targets)',
+        '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox'
       ]
     },
     {
