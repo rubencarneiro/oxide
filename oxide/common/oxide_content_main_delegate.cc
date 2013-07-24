@@ -81,7 +81,8 @@ void ContentMainDelegate::PreSandboxStartup() {
 
   base::FilePath subprocess_path;
   PathService::Get(base::DIR_MODULE, &subprocess_path);
-  subprocess_path.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
+  subprocess_path =
+      subprocess_path.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
 
   PathService::Override(content::CHILD_PROCESS_EXE,
                         subprocess_path);
