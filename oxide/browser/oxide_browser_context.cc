@@ -19,6 +19,7 @@
 
 #include "base/files/file_path.h"
 #include "base/logging.h"
+#include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
@@ -40,7 +41,20 @@ namespace oxide {
 class ResourceContext FINAL : public content::ResourceContext {
  public:
   ResourceContext() :
-      request_context_getter_(NULL) {}
+      request_context_getter_(NULL) {
+    if (content::ResourceDispatcherHostImpl::Get()) {
+      content::ResourceDispatcherHostImpl::Get()->AddResourceContext(this);
+    }
+  }
+
+  ~ResourceContext() {
+    content::ResourceDispatcherHostImpl* rdhi =
+        content::ResourceDispatcherHostImpl::Get();
+    if (rdhi) {
+      rdhi->CancelRequestsForContext(this);
+      rdhi->RemoveResourceContext(this);
+    }
+  }
 
   net::HostResolver* GetHostResolver() FINAL {
     return BrowserProcessMain::io_thread_delegate()->host_resolver();

@@ -18,6 +18,7 @@
 #include "oxide_content_browser_client.h"
 
 #include "base/logging.h"
+#include "content/browser/loader/resource_dispatcher_host_impl.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
@@ -65,6 +66,20 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
   return GlobalSettings::GetAcceptLangs();
+}
+
+void ContentBrowserClient::ResourceDispatcherHostCreated() {
+  BrowserContext* default_context = BrowserContext::GetInstance();
+  if (default_context) {
+    content::ResourceDispatcherHostImpl* rdhi =
+        content::ResourceDispatcherHostImpl::Get();
+    rdhi->AddResourceContext(default_context->GetResourceContext());
+
+    BrowserContext* otr_context = default_context->GetOffTheRecordContext();
+    if (otr_context != default_context) {
+      rdhi->AddResourceContext(otr_context->GetResourceContext());
+    }
+  }
 }
 
 bool ContentBrowserClient::GetDefaultScreenInfo(
