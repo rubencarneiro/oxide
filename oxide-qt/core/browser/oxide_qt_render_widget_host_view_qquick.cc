@@ -27,7 +27,9 @@
 #include <QQuickPaintedItem>
 #include <QQuickWindow>
 #include <QRect>
+#include <QRectF>
 #include <QScreen>
+#include <QSizeF>
 
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
@@ -462,7 +464,9 @@ class OxideRenderViewItem : public QQuickPaintedItem {
                       QQuickItem* parent) :
       QQuickPaintedItem(parent),
       owner_(owner),
-      backing_store_(NULL) {}
+      backing_store_(NULL) {
+    setAcceptedMouseButtons(Qt::AllButtons);
+  }
 
   virtual ~OxideRenderViewItem() {}
 
@@ -568,7 +572,9 @@ RenderWidgetHostViewQQuick::RenderWidgetHostViewQQuick(
     content::RenderWidgetHost* render_widget_host,
     QQuickItem* container) :
     oxide::RenderWidgetHostView(render_widget_host),
-    view_item_(new OxideRenderViewItem(this, container)) {}
+    view_item_(new OxideRenderViewItem(this, container)) {
+  view_item_->setSize(QSizeF(container->width(), container->height()));
+}
 
 // static
 void RenderWidgetHostViewQQuick::GetScreenInfo(
