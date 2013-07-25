@@ -533,6 +533,7 @@ void OxideRenderViewItem::mousePressEvent(QMouseEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardMouseEvent(
       QMouseEventToWebEvent(event));
   event->accept();
+  setFocus(true);
 }
 
 void OxideRenderViewItem::mouseReleaseEvent(QMouseEvent* event) {
