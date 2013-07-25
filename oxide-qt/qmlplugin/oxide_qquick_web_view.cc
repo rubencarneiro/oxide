@@ -78,9 +78,9 @@ void OxideQQuickWebView::visibilityChangedListener() {
   Q_D(OxideQQuickWebView);
 
   if (isVisible()) {
-    d->web_view_host_->WasShown();
+    d->web_view_host_->Shown();
   } else {
-    d->web_view_host_->WasHidden();
+    d->web_view_host_->Hidden();
   }
 }
 

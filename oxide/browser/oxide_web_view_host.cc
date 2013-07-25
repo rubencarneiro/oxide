@@ -139,11 +139,11 @@ void WebViewHost::UpdateSize(const gfx::Size& size) {
   web_contents_->GetView()->SizeContents(size);
 }
 
-void WebViewHost::WasShown() {
+void WebViewHost::Shown() {
   web_contents_->WasShown();
 }
 
-void WebViewHost::WasHidden() {
+void WebViewHost::Hidden() {
   web_contents_->WasHidden();
 }
 

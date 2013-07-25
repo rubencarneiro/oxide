@@ -81,7 +81,7 @@ WebViewHostQQuick* WebViewHostQQuick::Create(QQuickItem* container,
   static_cast<oxide::WebContentsView *>(
       wvh->web_contents()->GetView())->SetDelegate(wvh);
 
-  visible ? wvh->WasShown() : wvh->WasHidden();
+  visible ? wvh->Shown() : wvh->Hidden();
 
   return wvh;
 }

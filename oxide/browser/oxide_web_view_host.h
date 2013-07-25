@@ -66,8 +66,8 @@ class OXIDE_EXPORT WebViewHost :
   bool IsLoading() const;
 
   void UpdateSize(const gfx::Size& size);
-  void WasShown();
-  void WasHidden();
+  void Shown();
+  void Hidden();
 
   content::WebContents* web_contents() const {
     return web_contents_.get();
