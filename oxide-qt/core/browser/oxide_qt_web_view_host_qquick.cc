@@ -106,7 +106,10 @@ content::RenderWidgetHostView* WebViewHostQQuick::CreateViewForWidget(
 
 gfx::Rect WebViewHostQQuick::GetContainerBounds() {
   QPointF pos(container_->mapToScene(QPointF(0,0)));
-  pos += QPointF(container_->window()->x(), container_->window()->y());
+  if (container_->window()) {
+    // We could be called before being added to a scene
+    pos += QPointF(container_->window()->x(), container_->window()->y());
+  }
 
   return gfx::Rect(qRound(pos.x()),
                    qRound(pos.y()),
