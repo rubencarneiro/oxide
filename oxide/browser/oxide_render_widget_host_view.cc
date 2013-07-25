@@ -168,6 +168,14 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
   return false;
 }
 
+gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
+  // XXX: This default implementation assumes a scale factor of 1.0
+  //      Implementations that change this for DPI-awareness need
+  //      to also set WebScreenInfo::deviceScaleFactor in
+  //      GetScreenInfo()
+  return GetViewBounds().size();
+}
+
 gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
   NOTIMPLEMENTED();
   return gfx::GLSurfaceHandle();

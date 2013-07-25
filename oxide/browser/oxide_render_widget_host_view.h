@@ -102,6 +102,9 @@ class OXIDE_CORE_EXPORT RenderWidgetHostView :
   void AcceleratedSurfaceRelease() FINAL;
 
   bool HasAcceleratedSurface(const gfx::Size& desired_size) FINAL;
+
+  virtual gfx::Size GetPhysicalBackingSize() const OVERRIDE;
+
   gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
 
   void SetHasHorizontalScrollbar(bool has_horizontal_scrollbar) FINAL;
