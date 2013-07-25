@@ -303,6 +303,8 @@ class DefaultURLRequestContextGetter FINAL :
               context->storage()->ftp_transaction_factory()));
       DCHECK(set_protocol);
 
+      url_request_context_.reset(context);
+
       protocol_handlers_.clear();
       data_path_.clear();
       cache_path_.clear();
