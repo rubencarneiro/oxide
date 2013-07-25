@@ -554,7 +554,7 @@ void OxideRenderViewItem::updatePolish() {
 }
 
 void OxideRenderViewItem::paint(QPainter* painter) {
-  if (backing_store_) {
+  if (!backing_store_) {
     return;
   }
 
