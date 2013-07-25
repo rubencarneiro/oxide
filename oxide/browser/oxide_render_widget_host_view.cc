@@ -29,6 +29,8 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     is_hidden_(false),
     host_(content::RenderWidgetHostImpl::From(host)) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
+
+  host_->SetView(this);
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {}
