@@ -21,7 +21,6 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QSize>
-#include <QSizeF>
 #include <QString>
 
 #include "base/logging.h"
@@ -64,16 +63,14 @@ WebViewHostQQuick::~WebViewHostQQuick() {}
 
 WebViewHostQQuick* WebViewHostQQuick::Create(QQuickItem* container,
                                              WebViewHostDelegate* delegate,
-                                             bool incognito,
-                                             const QSizeF& initial_size,
-                                             bool visible) {
+                                             bool incognito) {
   CHECK(container && delegate) <<
       "Invalid parameters to WebViewHostQQuick::Create";
 
   WebViewHostQQuick* wvh = new WebViewHostQQuick(container, delegate);
   if (!wvh->Init(incognito,
-                 gfx::Size(initial_size.toSize().width(),
-                           initial_size.toSize().height()))) {
+                 gfx::Size(qRound(container->width()),
+                           qRound(container->height())))) {
     delete wvh;
     return NULL;
   }
@@ -81,7 +78,7 @@ WebViewHostQQuick* WebViewHostQQuick::Create(QQuickItem* container,
   static_cast<oxide::WebContentsView *>(
       wvh->web_contents()->GetView())->SetDelegate(wvh);
 
-  visible ? wvh->Shown() : wvh->Hidden();
+  wvh->UpdateVisibility();
 
   return wvh;
 }
@@ -94,9 +91,17 @@ void WebViewHostQQuick::SetURL(const QUrl& url) {
   oxide::WebViewHost::SetURL(url.toString().toStdString());
 }
 
-void WebViewHostQQuick::UpdateSize(const QSizeF& size) {
-  oxide::WebViewHost::UpdateSize(gfx::Size(size.toSize().width(),
-                                           size.toSize().height()));
+void WebViewHostQQuick::UpdateSize() {
+  oxide::WebViewHost::UpdateSize(gfx::Size(qRound(container_->width()),
+                                           qRound(container_->height())));
+}
+
+void WebViewHostQQuick::UpdateVisibility() {
+  if (container_->isVisible()) {
+    oxide::WebViewHost::Shown();
+  } else {
+    oxide::WebViewHost::Hidden();
+  }
 }
 
 content::RenderWidgetHostView* WebViewHostQQuick::CreateViewForWidget(

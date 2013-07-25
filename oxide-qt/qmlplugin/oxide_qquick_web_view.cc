@@ -18,7 +18,6 @@
 #include "oxide_qquick_web_view.h"
 
 #include <QRectF>
-#include <QSizeF>
 
 #include "oxide-qt/core/browser/oxide_qt_web_view_host_qquick.h"
 #include "oxide-qt/core/browser/oxide_qt_web_view_host_delegate.h"
@@ -77,10 +76,8 @@ void OxideQQuickWebViewPrivate::OnCommandsUpdated() {
 void OxideQQuickWebView::visibilityChangedListener() {
   Q_D(OxideQQuickWebView);
 
-  if (isVisible()) {
-    d->web_view_host_->Shown();
-  } else {
-    d->web_view_host_->Hidden();
+  if (d->web_view_host_) {
+    d->web_view_host_->UpdateVisibility();
   }
 }
 
@@ -96,7 +93,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
   }
 
   if (d->web_view_host_) {
-    d->web_view_host_->UpdateSize(newGeometry.size());
+    d->web_view_host_->UpdateSize();
   }
 }
 
@@ -129,8 +126,7 @@ void OxideQQuickWebView::componentComplete() {
 
   d->web_view_host_.reset(
       oxide::qt::WebViewHostQQuick::Create(
-        this, d, d->init_props_->incognito,
-        QSizeF(width(), height()), isVisible()));
+        this, d, d->init_props_->incognito));
 
   if (!d->init_props_->url.isEmpty()) {
     d->web_view_host_->SetURL(d->init_props_->url);

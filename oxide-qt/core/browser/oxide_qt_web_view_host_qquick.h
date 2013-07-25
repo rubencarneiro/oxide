@@ -50,14 +50,13 @@ class OXIDE_EXPORT WebViewHostQQuick FINAL :
 
   static WebViewHostQQuick* Create(QQuickItem* container,
                                    WebViewHostDelegate* delegate,
-                                   bool incognito,
-                                   const QSizeF& initial_size,
-                                   bool visible);
+                                   bool incognito);
 
   QUrl GetURL() const;
   void SetURL(const QUrl& url);
 
-  void UpdateSize(const QSizeF& size);
+  void UpdateSize();
+  void UpdateVisibility();
 
   content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) FINAL;
