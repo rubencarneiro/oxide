@@ -554,6 +554,10 @@ void OxideRenderViewItem::updatePolish() {
 }
 
 void OxideRenderViewItem::paint(QPainter* painter) {
+  if (backing_store_) {
+    return;
+  }
+
   QRectF rect(0, 0, width(), height());
   painter->drawPixmap(rect, *backing_store_->pixmap(), rect);
 }
