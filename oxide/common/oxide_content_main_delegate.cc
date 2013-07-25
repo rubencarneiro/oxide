@@ -30,6 +30,8 @@
 #include "content/public/common/content_paths.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
+#include "ui/base/layout.h"
+#include "ui/base/resource/resource_bundle.h"
 
 #include "oxide/browser/oxide_browser_process_main.h"
 
@@ -79,13 +81,23 @@ void ContentMainDelegate::PreSandboxStartup() {
   PathService::Override(base::FILE_MODULE,
                         base::FilePath(info.dli_fname));
 
-  base::FilePath subprocess_path;
-  PathService::Get(base::DIR_MODULE, &subprocess_path);
-  subprocess_path =
-      subprocess_path.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
+  base::FilePath module_path;
+  PathService::Get(base::DIR_MODULE, &module_path);
 
-  PathService::Override(content::CHILD_PROCESS_EXE,
-                        subprocess_path);
+  PathService::Override(
+      content::CHILD_PROCESS_EXE,
+      module_path.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS)));
+
+  // The locale passed here doesn't matter, as there aren't any
+  // localized resources to load
+  ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
+
+  ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
+      module_path.Append(FILE_PATH_LITERAL("oxide.pak")),
+      ui::SCALE_FACTOR_NONE);
+  ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
+      module_path.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
+      ui::SCALE_FACTOR_100P);
 }
 
 int ContentMainDelegate::RunProcess(

@@ -17,6 +17,9 @@ equals(OXIDE_DEBUG, "1") {
 }
 
 oxideprivate.path = $${PREFIX}/lib/oxide-qt/
-oxideprivate.files = $${CHROMIUM_PLATFORM_DIR}/lib.target/$${QMAKE_PREFIX_SHLIB}oxideprivate.$${QMAKE_EXTENSION_SHLIB}
+oxideprivate.files = \
+    $${CHROMIUM_PLATFORM_DIR}/lib.target/$${QMAKE_PREFIX_SHLIB}oxideprivate.$${QMAKE_EXTENSION_SHLIB} \
+    $${CHROMIUM_PLATFORM_DIR}/obj/gen/repack/oxide.pak \
+    $${CHROMIUM_PLATFORM_DIR}/obj/gen/repack/oxide_100_percent.pak
 oxideprivate.CONFIG = no_check_exist
 INSTALLS += oxideprivate

@@ -21,6 +21,7 @@
       'type': 'none',
       'dependencies': [
         'oxideprivate',
+        'oxide_packed_resources',
         '<@(oxide_port_targets)',
         '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox'
       ]
@@ -33,6 +34,51 @@
       ],
       'export_dependent_settings': [
         '<@(_dependencies)'
+      ]
+    },
+    {
+      'target_name': 'oxide_packed_resources',
+      'type': 'none',
+      'variables': {
+        'repack_path': '<(DEPTH)/tools/grit/grit/format/repack.py'
+      },
+      'dependencies': [
+        '<(DEPTH)/content/content_resources.gyp:content_resources',
+        '<(DEPTH)/ui/ui.gyp:ui_resources'
+      ],
+      'actions': [
+        {
+          'action_name': 'repack_oxide',
+          'variables': {
+            'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak'
+            ]
+          },
+          'inputs': [
+            '<(repack_path)',
+            '<@(pak_inputs)'
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/repack/oxide.pak'
+          ],
+          'action': ['python', '<(repack_path)', '<@(_outputs)', '<@(pak_inputs)']
+        },
+        {
+          'action_name': 'repack_oxide_100_percent',
+          'variables': {
+            'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/ui/ui_resources/ui_resources_100_percent.pak'
+            ]
+          },
+          'inputs': [
+            '<(repack_path)',
+            '<@(pak_inputs)'
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/repack/oxide_100_percent.pak'
+          ],
+          'action': ['python', '<(repack_path)', '<@(_outputs)', '<@(pak_inputs)']
+        }
       ]
     }
   ]
