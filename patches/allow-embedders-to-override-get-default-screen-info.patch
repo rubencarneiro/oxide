@@ -1,0 +1,105 @@
+Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_aura.cc
+===================================================================
+--- oxide.orig/chromium/src/content/browser/renderer_host/render_widget_host_view_aura.cc	2013-07-15 07:45:46.422443206 +0100
++++ oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_aura.cc	2013-07-25 09:18:42.877138003 +0100
+@@ -3115,7 +3115,8 @@
+ 
+ // static
+ void RenderWidgetHostViewPort::GetDefaultScreenInfo(WebScreenInfo* results) {
+-  GetScreenInfoForWindow(results, NULL);
++  if (!RenderWidgetHostViewBase::GetDefaultScreenInfo(results))
++    GetScreenInfoForWindow(results, NULL);
+ }
+ 
+ }  // namespace content
+Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_base.cc
+===================================================================
+--- oxide.orig/chromium/src/content/browser/renderer_host/render_widget_host_view_base.cc	2013-07-12 20:53:40.354487076 +0100
++++ oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_base.cc	2013-07-25 10:09:29.201153840 +0100
+@@ -11,6 +11,8 @@
+ #include "content/browser/renderer_host/render_widget_host_impl.h"
+ #include "content/port/browser/render_widget_host_view_frame_subscriber.h"
+ #include "content/port/browser/smooth_scroll_gesture.h"
++#include "content/public/browser/content_browser_client.h"
++#include "content/public/common/content_client.h"
+ #include "third_party/WebKit/public/web/WebScreenInfo.h"
+ #include "ui/gfx/display.h"
+ #include "ui/gfx/screen.h"
+@@ -350,6 +352,12 @@
+ 
+ #endif  // OS_WIN
+ 
++// static
++bool RenderWidgetHostViewBase::GetDefaultScreenInfo(
++    WebKit::WebScreenInfo* result) {
++  return GetContentClient()->browser()->GetDefaultScreenInfo(result);
++}
++
+ RenderWidgetHostViewBase::RenderWidgetHostViewBase()
+     : popup_type_(WebKit::WebPopupTypeNone),
+       mouse_locked_(false),
+Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_base.h
+===================================================================
+--- oxide.orig/chromium/src/content/browser/renderer_host/render_widget_host_view_base.h	2013-07-12 20:53:40.806487078 +0100
++++ oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_base.h	2013-07-25 10:06:33.729152928 +0100
+@@ -24,6 +24,10 @@
+ #include "ui/gfx/native_widget_types.h"
+ #include "ui/gfx/rect.h"
+ 
++namespace WebKit {
++class WebScreenInfo;
++}
++
+ namespace content {
+ 
+ class RenderWidgetHostImpl;
+@@ -93,6 +97,8 @@
+   static void DetachPluginWindowsCallback(HWND window);
+ #endif
+ 
++  static bool GetDefaultScreenInfo(WebKit::WebScreenInfo* results);
++
+  protected:
+   // Interface class only, do not construct.
+   RenderWidgetHostViewBase();
+Index: oxide/chromium/src/content/public/browser/content_browser_client.cc
+===================================================================
+--- oxide.orig/chromium/src/content/public/browser/content_browser_client.cc	2013-07-12 20:53:44.502487092 +0100
++++ oxide/chromium/src/content/public/browser/content_browser_client.cc	2013-07-25 09:40:56.801144938 +0100
+@@ -285,6 +285,11 @@
+   return NULL;
+ }
+ 
++bool ContentBrowserClient::GetDefaultScreenInfo(
++    WebKit::WebScreenInfo* result) {
++  return false;
++}
++
+ #if defined(OS_WIN)
+ const wchar_t* ContentBrowserClient::GetResourceDllName() {
+   return NULL;
+Index: oxide/chromium/src/content/public/browser/content_browser_client.h
+===================================================================
+--- oxide.orig/chromium/src/content/public/browser/content_browser_client.h	2013-07-12 20:53:44.506487092 +0100
++++ oxide/chromium/src/content/public/browser/content_browser_client.h	2013-07-25 09:41:19.917145058 +0100
+@@ -71,6 +71,10 @@
+ class FileSystemBackend;
+ }
+ 
++namespace WebKit {
++class WebScreenInfo;
++}
++
+ namespace content {
+ 
+ class AccessTokenStore;
+@@ -570,6 +574,9 @@
+   // Return NULL to use the default one for the platform to be created.
+   virtual LocationProvider* OverrideSystemLocationProvider();
+ 
++  // Allows an embedder to override RenderViewHostPort::GetDefaultScreenInfo
++  virtual bool GetDefaultScreenInfo(WebKit::WebScreenInfo* result);
++
+ #if defined(OS_POSIX) && !defined(OS_MACOSX)
+   // Populates |mappings| with all files that need to be mapped before launching
+   // a child process.

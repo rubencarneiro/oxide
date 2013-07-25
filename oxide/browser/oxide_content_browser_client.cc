@@ -67,4 +67,10 @@ std::string ContentBrowserClient::GetAcceptLangs(
   return GlobalSettings::GetAcceptLangs();
 }
 
+bool ContentBrowserClient::GetDefaultScreenInfo(
+    WebKit::WebScreenInfo* result) {
+  GetDefaultScreenInfoImpl(result);
+  return true;
+}
+
 } // namespace oxide

@@ -57,6 +57,8 @@ class OXIDE_CORE_EXPORT ContentBrowserClient :
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;
 
+  bool GetDefaultScreenInfo(WebKit::WebScreenInfo* result) FINAL;
+
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
 
  protected:
@@ -64,6 +66,8 @@ class OXIDE_CORE_EXPORT ContentBrowserClient :
   ContentBrowserClient() {}
 
  private:
+  virtual void GetDefaultScreenInfoImpl(WebKit::WebScreenInfo* result) = 0;
+
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 

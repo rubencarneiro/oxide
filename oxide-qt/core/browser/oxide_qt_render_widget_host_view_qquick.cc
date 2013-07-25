@@ -570,6 +570,26 @@ RenderWidgetHostViewQQuick::RenderWidgetHostViewQQuick(
     oxide::RenderWidgetHostView(render_widget_host),
     view_item_(new OxideRenderViewItem(this, container)) {}
 
+// static
+void RenderWidgetHostViewQQuick::GetScreenInfo(
+    QScreen* screen, WebKit::WebScreenInfo* result) {
+  result->depth = screen->depth();
+  result->depthPerComponent = 8; // XXX: Copied the GTK impl here
+  result->isMonochrome = result->depth == 1;
+
+  QRect rect = screen->geometry();
+  result->rect = WebKit::WebRect(rect.x(),
+                                 rect.y(),
+                                 rect.width(),
+                                 rect.height());
+
+  QRect availableRect = screen->availableGeometry();
+  result->availableRect = WebKit::WebRect(availableRect.x(),
+                                          availableRect.y(),
+                                          availableRect.width(),
+                                          availableRect.height());
+}
+
 void RenderWidgetHostViewQQuick::Blur() {
   view_item_->setFocus(false);
 }
@@ -611,23 +631,7 @@ content::BackingStore* RenderWidgetHostViewQQuick::AllocBackingStore(
 
 void RenderWidgetHostViewQQuick::GetScreenInfo(
     WebKit::WebScreenInfo* results) {
-  QScreen* screen = view_item_->window()->screen();
-
-  results->depth = screen->depth();
-  results->depthPerComponent = 8; // XXX: Copied the GTK impl here
-  results->isMonochrome = results->depth == 1;
-
-  QRect rect = screen->geometry();
-  results->rect = WebKit::WebRect(rect.x(),
-                                  rect.y(),
-                                  rect.width(),
-                                  rect.height());
-
-  QRect availableRect = screen->availableGeometry();
-  results->availableRect = WebKit::WebRect(availableRect.x(),
-                                           availableRect.y(),
-                                           availableRect.width(),
-                                           availableRect.height());
+  GetScreenInfo(view_item_->window()->screen(), results);
 }
 
 gfx::Rect RenderWidgetHostViewQQuick::GetBoundsInRootWindow() {

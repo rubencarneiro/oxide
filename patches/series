@@ -1,3 +1,4 @@
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
 child-path.patch
+allow-embedders-to-override-get-default-screen-info.patch

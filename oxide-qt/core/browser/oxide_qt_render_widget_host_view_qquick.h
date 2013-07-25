@@ -29,6 +29,7 @@
 QT_BEGIN_NAMESPACE
 class QQuickItem;
 class QQuickPaintedItem;
+class QScreen;
 QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
@@ -40,6 +41,8 @@ class RenderWidgetHostViewQQuick FINAL : public oxide::RenderWidgetHostView {
  public:
   RenderWidgetHostViewQQuick(content::RenderWidgetHost* render_widget_host,
                              QQuickItem* container);
+
+  static void GetScreenInfo(QScreen* screen, WebKit::WebScreenInfo* result);
 
   void Blur() FINAL;
   void Focus() FINAL;

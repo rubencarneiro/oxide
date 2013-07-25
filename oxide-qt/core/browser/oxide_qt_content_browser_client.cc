@@ -17,13 +17,23 @@
 
 #include "oxide_qt_content_browser_client.h"
 
+#include <QGuiApplication>
+
 #include "oxide_qt_message_pump.h"
+#include "oxide_qt_render_widget_host_view_qquick.h"
 
 namespace oxide {
 namespace qt {
 
 base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
+}
+
+void ContentBrowserClient::GetDefaultScreenInfoImpl(
+    WebKit::WebScreenInfo* result) {
+  RenderWidgetHostViewQQuick::GetScreenInfo(
+      QGuiApplication::primaryScreen(),
+      result);
 }
 
 } // namespace qt

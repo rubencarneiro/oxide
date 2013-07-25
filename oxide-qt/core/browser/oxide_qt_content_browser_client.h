@@ -39,6 +39,8 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
   ContentBrowserClient() {}
 
+  void GetDefaultScreenInfoImpl(WebKit::WebScreenInfo* result) FINAL;
+
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 
