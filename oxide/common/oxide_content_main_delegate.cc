@@ -46,7 +46,7 @@ base::LazyInstance<content::ContentRendererClient> g_content_renderer_client =
 
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
-  DCHECK(ContentClient::IsBrowser()) <<
+  DCHECK(BrowserProcessMain::Exists()) <<
     "Creating a browser client in a non-browser process";
   return CreateContentBrowserClientImpl();
 }
@@ -60,9 +60,6 @@ ContentMainDelegate::~ContentMainDelegate() {}
 
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
-
-  ContentClient::SetIsBrowser(
-    !CommandLine::ForCurrentProcess()->HasSwitch(switches::kProcessType));
 
   ContentClient::SetBasicStartupComplete(true);
 

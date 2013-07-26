@@ -33,11 +33,6 @@ void ContentClient::MaybeUpdateUserAgent() {
 }
 
 // static
-void ContentClient::SetIsBrowser(bool is_browser) {
-  GetInstance()->is_browser_ = is_browser;
-}
-
-// static
 void ContentClient::SetBasicStartupComplete(bool complete) {
   GetInstance()->basic_startup_complete_ = complete;
 }
@@ -58,11 +53,6 @@ std::string ContentClient::GetProduct() const {
 
 std::string ContentClient::GetUserAgent() const {
   return GlobalSettings::GetUserAgent();
-}
-
-// static
-bool ContentClient::IsBrowser() {
-  return GetInstance()->is_browser_;
 }
 
 // static

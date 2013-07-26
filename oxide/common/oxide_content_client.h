@@ -39,14 +39,11 @@ class ContentClient : public content::ContentClient {
   virtual std::string GetProduct() const OVERRIDE;
   virtual std::string GetUserAgent() const OVERRIDE;
 
-  static bool IsBrowser();
-
  protected:
   // Limit default constructor access to derived classes and
   // our lazy instance initializer
   friend struct DefaultSingletonTraits<ContentClient>;
   ContentClient() :
-      is_browser_(false),
       basic_startup_complete_(false) {}
 
  private:
@@ -54,11 +51,9 @@ class ContentClient : public content::ContentClient {
   friend class GlobalSettings;
 
   static void MaybeUpdateUserAgent();
-  static void SetIsBrowser(bool is_browser);
   static void SetBasicStartupComplete(bool complete);
   static bool IsBasicStartupComplete();
 
-  bool is_browser_;
   bool basic_startup_complete_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
