@@ -42,6 +42,9 @@
 
 QT_USE_NAMESPACE
 
+namespace oxide {
+namespace qt {
+
 namespace {
 
 double QInputEventTimeToWebEventTime(QInputEvent* qevent) {
@@ -458,17 +461,17 @@ WebKit::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent,
   return event;
 }
 
-class OxideRenderViewItem : public QQuickPaintedItem {
+class RenderViewItem : public QQuickPaintedItem {
  public:
-  OxideRenderViewItem(oxide::qt::RenderWidgetHostViewQQuick* owner,
-                      QQuickItem* parent) :
+  RenderViewItem(RenderWidgetHostViewQQuick* owner,
+                 QQuickItem* parent) :
       QQuickPaintedItem(parent),
       owner_(owner),
       backing_store_(NULL) {
     setAcceptedMouseButtons(Qt::AllButtons);
   }
 
-  virtual ~OxideRenderViewItem() {}
+  virtual ~RenderViewItem() {}
 
  private:
   virtual void focusInEvent(QFocusEvent* event);
@@ -487,74 +490,74 @@ class OxideRenderViewItem : public QQuickPaintedItem {
   virtual void updatePolish();
   virtual void paint(QPainter* paint);
 
-  oxide::qt::RenderWidgetHostViewQQuick* owner_;
-  oxide::qt::BackingStore* backing_store_;
+  RenderWidgetHostViewQQuick* owner_;
+  BackingStore* backing_store_;
 };
 
-void OxideRenderViewItem::focusInEvent(QFocusEvent* event) {
+void RenderViewItem::focusInEvent(QFocusEvent* event) {
   DCHECK(event->gotFocus());
 
   owner_->OnFocus();
   event->accept();
 }
 
-void OxideRenderViewItem::focusOutEvent(QFocusEvent* event) {
+void RenderViewItem::focusOutEvent(QFocusEvent* event) {
   DCHECK(event->lostFocus());
 
   owner_->OnBlur();
   event->accept();
 }
 
-void OxideRenderViewItem::keyPressEvent(QKeyEvent* event) {
+void RenderViewItem::keyPressEvent(QKeyEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardKeyboardEvent(
       QKeyEventToWebEvent(event));
   event->accept();
 }
 
-void OxideRenderViewItem::keyReleaseEvent(QKeyEvent* event) {
+void RenderViewItem::keyReleaseEvent(QKeyEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardKeyboardEvent(
       QKeyEventToWebEvent(event));
   event->accept();
 }
 
-void OxideRenderViewItem::mouseDoubleClickEvent(QMouseEvent* event) {
+void RenderViewItem::mouseDoubleClickEvent(QMouseEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardMouseEvent(
       QMouseEventToWebEvent(event));
   event->accept();
 }
 
-void OxideRenderViewItem::mouseMoveEvent(QMouseEvent* event) {
+void RenderViewItem::mouseMoveEvent(QMouseEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardMouseEvent(
       QMouseEventToWebEvent(event));
   event->accept();
 }
 
-void OxideRenderViewItem::mousePressEvent(QMouseEvent* event) {
+void RenderViewItem::mousePressEvent(QMouseEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardMouseEvent(
       QMouseEventToWebEvent(event));
   event->accept();
   setFocus(true);
 }
 
-void OxideRenderViewItem::mouseReleaseEvent(QMouseEvent* event) {
+void RenderViewItem::mouseReleaseEvent(QMouseEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardMouseEvent(
       QMouseEventToWebEvent(event));
   event->accept();
 }
 
-void OxideRenderViewItem::wheelEvent(QWheelEvent* event) {
+void RenderViewItem::wheelEvent(QWheelEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardWheelEvent(
       QWheelEventToWebEvent(event, this));
   event->accept();
 }
 
-void OxideRenderViewItem::updatePolish() {
+void RenderViewItem::updatePolish() {
   bool force_create = !owner_->GetRenderWidgetHostImpl()->empty();
-  backing_store_ = static_cast<oxide::qt::BackingStore *>(
+  backing_store_ = static_cast<BackingStore *>(
       owner_->GetRenderWidgetHostImpl()->GetBackingStore(force_create));
 }
 
-void OxideRenderViewItem::paint(QPainter* painter) {
+void RenderViewItem::paint(QPainter* painter) {
   if (!backing_store_) {
     return;
   }
@@ -563,10 +566,7 @@ void OxideRenderViewItem::paint(QPainter* painter) {
   painter->drawPixmap(rect, *backing_store_->pixmap(), rect);
 }
 
-}
-
-namespace oxide {
-namespace qt {
+} // namespace
 
 void RenderWidgetHostViewQQuick::ScheduleUpdate(const gfx::Rect& rect) {
   view_item_->update(QRect(rect.x(), rect.y(), rect.width(), rect.height()));
@@ -577,7 +577,7 @@ RenderWidgetHostViewQQuick::RenderWidgetHostViewQQuick(
     content::RenderWidgetHost* render_widget_host,
     QQuickItem* container) :
     oxide::RenderWidgetHostView(render_widget_host),
-    view_item_(new OxideRenderViewItem(this, container)) {
+    view_item_(new RenderViewItem(this, container)) {
   view_item_->setSize(QSizeF(container->width(), container->height()));
 }
 

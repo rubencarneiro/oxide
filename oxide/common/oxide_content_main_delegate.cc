@@ -37,12 +37,12 @@
 
 #include "oxide_content_client.h"
 
+namespace oxide {
+
 namespace {
 base::LazyInstance<content::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
 }
-
-namespace oxide {
 
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {

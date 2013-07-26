@@ -32,11 +32,11 @@
 #include "oxide_off_the_record_browser_context_impl.h"
 #include "oxide_url_request_context.h"
 
+namespace oxide {
+
 namespace {
 oxide::BrowserContext* g_browser_context;
 }
-
-namespace oxide {
 
 class ResourceContext FINAL : public content::ResourceContext {
  public:

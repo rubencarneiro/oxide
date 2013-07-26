@@ -26,6 +26,9 @@
 #include "oxide_content_browser_client.h"
 #include "oxide_message_pump.h"
 
+
+namespace oxide {
+
 namespace {
 
 class MessageLoopForUI FINAL : public base::MessageLoop {
@@ -37,18 +40,16 @@ class MessageLoopForUI FINAL : public base::MessageLoop {
   }
 
   void Start() {
-    static_cast<oxide::MessagePump *>(pump_.get())->Start(this);
+    static_cast<MessagePump *>(pump_.get())->Start(this);
   }
 };
 
 base::MessagePump* CreateMessagePumpForUI() {
-  return oxide::ContentClient::GetInstance()->
-      browser()->CreateMessagePumpForUI();
+  return ContentClient::GetInstance()->browser()->
+      CreateMessagePumpForUI();
 }
 
-}
-
-namespace oxide {
+} // namespace
 
 BrowserMainParts::BrowserMainParts() {
   context_.reset(oxide::BrowserContext::Create());

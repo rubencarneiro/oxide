@@ -45,6 +45,8 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_io_thread_delegate.h"
 
+namespace oxide {
+
 namespace {
 
 class DefaultURLRequestContext FINAL : public net::URLRequestContext {
@@ -167,8 +169,7 @@ class DefaultURLRequestContext FINAL : public net::URLRequestContext {
   DISALLOW_COPY_AND_ASSIGN(DefaultURLRequestContext);
 };
 
-class DefaultURLRequestContextGetter FINAL :
-    public oxide::URLRequestContextGetter {
+class DefaultURLRequestContextGetter FINAL : public URLRequestContextGetter {
  public:
   DefaultURLRequestContextGetter(
       content::ProtocolHandlerMap* protocol_handlers,
@@ -187,8 +188,8 @@ class DefaultURLRequestContextGetter FINAL :
     if (!url_request_context_) {
       DefaultURLRequestContext* context = new DefaultURLRequestContext();
 
-      oxide::IOThreadDelegate* io_thread_delegate =
-          oxide::BrowserProcessMain::io_thread_delegate();
+      IOThreadDelegate* io_thread_delegate =
+          BrowserProcessMain::io_thread_delegate();
 
       context->storage()->set_net_log(io_thread_delegate->net_log());
       context->storage()->set_host_resolver(
@@ -229,7 +230,7 @@ class DefaultURLRequestContextGetter FINAL :
         DCHECK(!data_path_.empty());
         context->storage()->set_cookie_store(
             content::CreatePersistentCookieStore(
-                data_path_.Append(oxide::kCookiesFilename),
+                data_path_.Append(kCookiesFilename),
                 false,
                 NULL,
                 NULL));
@@ -249,7 +250,7 @@ class DefaultURLRequestContextGetter FINAL :
         cache_backend = new net::HttpCache::DefaultBackend(
               net::DISK_CACHE,
               net::CACHE_BACKEND_DEFAULT,
-              cache_path_.Append(oxide::kCacheDirname),
+              cache_path_.Append(kCacheDirname),
               0, // Use the default max size
               content::BrowserThread::GetMessageLoopProxyForThread(
                   content::BrowserThread::CACHE));
@@ -322,9 +323,7 @@ class DefaultURLRequestContextGetter FINAL :
   DISALLOW_COPY_AND_ASSIGN(DefaultURLRequestContextGetter);
 };
 
-}
-
-namespace oxide {
+} // namespace
 
 URLRequestContextGetter::URLRequestContextGetter() {}
 

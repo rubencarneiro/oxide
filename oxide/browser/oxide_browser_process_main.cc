@@ -25,12 +25,12 @@
 
 #include "oxide_io_thread_delegate.h"
 
-namespace {
-oxide::ContentMainDelegateFactory* g_main_delegate_factory;
-oxide::BrowserProcessMain* g_process;
-}
-
 namespace oxide {
+
+namespace {
+ContentMainDelegateFactory* g_main_delegate_factory;
+BrowserProcessMain* g_process;
+}
 
 // static
 BrowserProcessMain* BrowserProcessMain::GetInstance() {

@@ -27,6 +27,9 @@
 
 QT_USE_NAMESPACE
 
+namespace oxide {
+namespace qt {
+
 namespace {
 
 int g_chromium_event_type = QEvent::None;
@@ -38,10 +41,7 @@ int GetTimeIntervalMilliseconds(const base::TimeTicks& from) {
   return delay < 0 ? 0 : delay;
 }
 
-}
-
-namespace oxide {
-namespace qt {
+} // namespace
 
 void MessagePump::timerEvent(QTimerEvent* event) {
   DCHECK(event->timerId() == delayed_work_timer_id_);
