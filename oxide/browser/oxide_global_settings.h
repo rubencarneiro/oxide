@@ -56,6 +56,8 @@ class GlobalSettings FINAL {
 
   GlobalSettings() {}
 
+  static void UpdateUserAgentWithWebKit();
+
   std::string product_;
   std::string user_agent_;
   std::string data_path_;

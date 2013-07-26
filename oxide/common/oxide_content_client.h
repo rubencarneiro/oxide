@@ -43,19 +43,9 @@ class ContentClient : public content::ContentClient {
   // Limit default constructor access to derived classes and
   // our lazy instance initializer
   friend struct DefaultSingletonTraits<ContentClient>;
-  ContentClient() :
-      basic_startup_complete_(false) {}
+  ContentClient() {}
 
  private:
-  friend class ContentMainDelegate;
-  friend class GlobalSettings;
-
-  static void MaybeUpdateUserAgent();
-  static void SetBasicStartupComplete(bool complete);
-  static bool IsBasicStartupComplete();
-
-  bool basic_startup_complete_;
-
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
 };
 

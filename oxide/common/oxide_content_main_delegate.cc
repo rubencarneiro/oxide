@@ -61,8 +61,6 @@ ContentMainDelegate::~ContentMainDelegate() {}
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
 
-  ContentClient::SetBasicStartupComplete(true);
-
   return false;
 }
 
@@ -108,8 +106,6 @@ int ContentMainDelegate::RunProcess(
 }
 
 void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
-  ContentClient::SetBasicStartupComplete(false);
-
   if (process_type.empty()) {
     BrowserProcessMain::ShutdownBrowserProcess();
   }

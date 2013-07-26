@@ -18,29 +18,11 @@
 #include "oxide_content_client.h"
 
 #include "base/memory/singleton.h"
-#include "webkit/common/user_agent/user_agent.h"
 
 #include "oxide/browser/oxide_content_browser_client.h"
 #include "oxide/browser/oxide_global_settings.h"
 
 namespace oxide {
-
-// static
-void ContentClient::MaybeUpdateUserAgent() {
-  if (IsBasicStartupComplete()) {
-    webkit_glue::SetUserAgent(GetInstance()->GetUserAgent(), false);
-  }
-}
-
-// static
-void ContentClient::SetBasicStartupComplete(bool complete) {
-  GetInstance()->basic_startup_complete_ = complete;
-}
-
-// static
-bool ContentClient::IsBasicStartupComplete() {
-  return GetInstance()->basic_startup_complete_;
-}
 
 ContentBrowserClient* ContentClient::browser() {
   return static_cast<ContentBrowserClient *>(

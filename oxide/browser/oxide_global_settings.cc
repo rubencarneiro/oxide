@@ -21,6 +21,7 @@
 #include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/browser_thread.h"
+#include "webkit/common/user_agent/user_agent.h"
 #include "webkit/common/user_agent/user_agent_util.h"
 
 #include "oxide/browser/oxide_browser_process_main.h"
@@ -28,6 +29,12 @@
 #include "oxide/common/oxide_content_client.h"
 
 namespace oxide {
+
+// static
+void GlobalSettings::UpdateUserAgentWithWebKit() {
+  webkit_glue::SetUserAgent(ContentClient::GetInstance()->GetUserAgent(),
+                            false);
+}
 
 // static
 GlobalSettings* GlobalSettings::GetInstance() {
@@ -47,7 +54,7 @@ std::string GlobalSettings::GetProduct() {
 // static
 void GlobalSettings::SetProduct(const std::string& product) {
   GetInstance()->product_ = product;
-  ContentClient::MaybeUpdateUserAgent();
+  UpdateUserAgentWithWebKit();
 }
 
 // static
@@ -64,7 +71,7 @@ std::string GlobalSettings::GetUserAgent() {
 // static
 void GlobalSettings::SetUserAgent(const std::string& user_agent) {
   GetInstance()->user_agent_ = user_agent;
-  ContentClient::MaybeUpdateUserAgent();
+  UpdateUserAgentWithWebKit();
 }
 
 // static
