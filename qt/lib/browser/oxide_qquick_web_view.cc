@@ -70,7 +70,7 @@ class OxideQQuickWebViewPrivate FINAL :
   void OnCommandsUpdated() FINAL;
 
   OxideQQuickWebView* q_ptr;
-  oxide::BrowserProcessHandle<oxide::qt::ContentMainDelegate> process_handle_;
+  oxide::BrowserProcessHandle process_handle_;
 };
 
 void OxideQQuickWebViewPrivate::OnURLChanged() {

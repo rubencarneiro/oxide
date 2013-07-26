@@ -34,8 +34,6 @@ namespace oxide {
 class ContentMainDelegate;
 class IOThreadDelegate;
 
-typedef ContentMainDelegate* (ContentMainDelegateFactory)();
-
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
 // Chrome (which is not possible in a public API). Use BrowserProcessHandle
@@ -52,7 +50,7 @@ class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
   static bool Exists();
 
  private:
-  friend class BrowserProcessHandleBase;
+  friend class BrowserProcessHandle;
   friend class base::RefCounted<BrowserProcessMain>;
   friend class BrowserMainParts;
   friend class ContentMainDelegate;
@@ -70,8 +68,6 @@ class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
   static void ShutdownBrowserProcess();
 
   static void PreCreateThreads();
-  static void InitContentMainDelegateFactory(
-      ContentMainDelegateFactory* factory);
 
   // XXX: Don't change the order of these unless you know what you are
   //      doing. It's important that ContentMainDelegate outlives

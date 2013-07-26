@@ -30,8 +30,6 @@ class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
  public:
   ContentMainDelegate() {}
 
-  OXIDE_EXPORT static oxide::ContentMainDelegate* Create();
-
  private:
   content::ContentBrowserClient* CreateContentBrowserClientImpl() FINAL;
 

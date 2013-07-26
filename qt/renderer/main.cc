@@ -15,14 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "base/memory/scoped_ptr.h"
-
 #include "shared/app/oxide_main.h"
 
-#include "qt/lib/common/oxide_qt_content_main_delegate.h"
-
 int main(int argc, const char* argv[]) {
-  scoped_ptr<oxide::ContentMainDelegate> delegate(
-      oxide::qt::ContentMainDelegate::Create());
-  return oxide::OxideMain(argc, argv, delegate.get());
+  return oxide::OxideMain(argc, argv);
 }

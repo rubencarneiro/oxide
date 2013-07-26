@@ -19,9 +19,7 @@
 
 namespace oxide {
 
-BrowserProcessHandleBase::BrowserProcessHandleBase(
-    ContentMainDelegateFactory* main_delegate_factory) {
-  BrowserProcessMain::InitContentMainDelegateFactory(main_delegate_factory);
+BrowserProcessHandle::BrowserProcessHandle() {
   handle_ = BrowserProcessMain::GetInstance();
 }
 

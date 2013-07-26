@@ -17,14 +17,16 @@
 
 #include "oxide_main.h"
 
+#include "base/memory/scoped_ptr.h"
 #include "content/public/app/content_main.h"
 
 #include "shared/common/oxide_content_main_delegate.h"
 
 namespace oxide {
 
-int OxideMain(int argc, const char** argv, ContentMainDelegate* delegate) {
-  return content::ContentMain(argc, argv, delegate);
+int OxideMain(int argc, const char** argv) {
+  scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+  return content::ContentMain(argc, argv, delegate.get());
 }
 
 } // namespace oxide

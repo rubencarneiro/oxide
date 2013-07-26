@@ -34,10 +34,11 @@ ContentMainDelegate::CreateContentBrowserClientImpl() {
   return g_content_browser_client.Pointer();
 }
 
+} // namespace qt
+
 // static
-oxide::ContentMainDelegate* ContentMainDelegate::Create() {
-  return new ContentMainDelegate();
+ContentMainDelegate* ContentMainDelegate::Create() {
+  return new qt::ContentMainDelegate();
 }
 
-} // namespace qt
 } // namespace oxide

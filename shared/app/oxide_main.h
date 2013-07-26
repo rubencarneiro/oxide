@@ -22,11 +22,8 @@
 
 namespace oxide {
 
-class ContentMainDelegate;
-
 OXIDE_EXPORT int OxideMain(int argc,
-                           const char** argv,
-                           ContentMainDelegate* delegate);
+                           const char** argv);
 
 } // namespace oxide
 

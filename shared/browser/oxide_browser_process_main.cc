@@ -28,7 +28,6 @@
 namespace oxide {
 
 namespace {
-ContentMainDelegateFactory* g_main_delegate_factory;
 BrowserProcessMain* g_process;
 }
 
@@ -92,21 +91,12 @@ void BrowserProcessMain::PreCreateThreads() {
   g_process->io_thread_delegate_.reset(new IOThreadDelegate());
 }
 
-// static
-void BrowserProcessMain::InitContentMainDelegateFactory(
-    ContentMainDelegateFactory* factory) {
-  DCHECK(!g_process || g_main_delegate_factory == factory);
-  g_main_delegate_factory = factory;
-}
-
 BrowserProcessMain::BrowserProcessMain() {
-  DCHECK(g_main_delegate_factory) <<
-      "Implementation needs to specify a ContentMainDelegate factory";
   DCHECK(!g_process) << "Should only have one BrowserProcessMain";
 
   g_process = this;
 
-  main_delegate_.reset(g_main_delegate_factory());
+  main_delegate_.reset(ContentMainDelegate::Create());
   main_runner_.reset(content::ContentMainRunner::Create());
 }
 

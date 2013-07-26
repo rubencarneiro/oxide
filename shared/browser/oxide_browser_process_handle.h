@@ -26,26 +26,18 @@
 
 namespace oxide {
 
-class BrowserProcessHandleBase {
+// Creating the first instance of this class will start up the main
+// browser process components. These will exist until all instances
+// of this class have been destroyed
+class BrowserProcessHandle {
  public:
+  BrowserProcessHandle();
   bool Available() const { return !!handle_; }
-
- protected:
-  BrowserProcessHandleBase(ContentMainDelegateFactory* main_delegate_factory);
 
  private:
   scoped_refptr<BrowserProcessMain> handle_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserProcessHandleBase);
-};
-
-// Creating the first instance of this class will start up the main
-// browser process components. These will exist until all instances
-// of this class have been destroyed
-template<class T>
-class BrowserProcessHandle FINAL : public BrowserProcessHandleBase {
- public:
-  BrowserProcessHandle() : BrowserProcessHandleBase(T::Create) {}
+  DISALLOW_COPY_AND_ASSIGN(BrowserProcessHandle);
 };
 
 } // namespace oxide
