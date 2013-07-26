@@ -649,7 +649,7 @@ bool RenderWidgetHostViewQQuick::IsShowing() {
 gfx::Rect RenderWidgetHostViewQQuick::GetViewBounds() const {
   QPointF pos(view_item_->mapToScene(QPointF(0,0)));
   if (view_item_->window()) {
-    pos += QPointF(view_item_->window()->x(), view_item_->window()->y());
+    pos += view_item_->window()->position();
   }
 
   return gfx::Rect(qRound(pos.x()),
