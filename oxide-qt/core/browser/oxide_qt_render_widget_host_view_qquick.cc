@@ -395,6 +395,7 @@ WebKit::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
   case QEvent::MouseButtonDblClick:
     event.type = WebKit::WebInputEvent::Undefined;
     event.clickCount = 2;
+    break;
   default:
     NOTREACHED();
   }
