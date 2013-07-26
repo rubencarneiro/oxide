@@ -94,7 +94,12 @@ bool GlobalSettings::SetDataPath(const std::string& data_path) {
 
 // static
 std::string GlobalSettings::GetCachePath() {
-  return GetInstance()->cache_path_;
+  GlobalSettings* self = GetInstance();
+  if (self->cache_path_.empty()) {
+    return GetDataPath();
+  }
+
+  return self->cache_path_;
 }
 
 // static
