@@ -393,7 +393,7 @@ WebKit::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
     event.type = WebKit::WebInputEvent::MouseMove;
     break;
   case QEvent::MouseButtonDblClick:
-    event.type = WebKit::WebInputEvent::Undefined;
+    event.type = WebKit::WebInputEvent::MouseDown;
     event.clickCount = 2;
     break;
   default:
