@@ -30,25 +30,39 @@ template <typename Type> struct DefaultSingletonTraits;
 
 namespace oxide {
 
-// This is the main browser process context. It provides access to
-// state that is shared between views
+// This provides a way to define and access global settings that are
+// shared between views
 class GlobalSettings FINAL {
  public:
   static GlobalSettings* GetInstance();
 
+  // Return the product name string. By default, this is "Chrome/<version>"
   OXIDE_EXPORT static std::string GetProduct();
+  // Set the product name
   OXIDE_EXPORT static void SetProduct(const std::string& product);
 
+  // Return the user agent string. By default, this is created by
+  // Webkit, using the product name
   OXIDE_EXPORT static std::string GetUserAgent();
+  // Set the user agent string for all views
   OXIDE_EXPORT static void SetUserAgent(const std::string& user_agent);
 
+  // Return the file path for storing data
   OXIDE_EXPORT static std::string GetDataPath();
+  // Set the file path for storing data. This cannot be done after
+  // the main browser components have started. By default, this is
+  // empty (so all views will run in incognito mode)
   OXIDE_EXPORT static bool SetDataPath(const std::string& data_path);
 
+  // Return the file path for storing cache data
   OXIDE_EXPORT static std::string GetCachePath();
+  // Set the file path for storing cache data
   OXIDE_EXPORT static bool SetCachePath(const std::string& cache_path);
 
+  // Return the string used to generate the HTTP Accept-Language header
+  // (eg, "en-us,en")
   OXIDE_EXPORT static std::string GetAcceptLangs();
+  // Set the string used to generate the HTTP Accept-Language header
   OXIDE_EXPORT static void SetAcceptLangs(const std::string& accept_langs);
 
  private:

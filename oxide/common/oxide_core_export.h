@@ -18,6 +18,9 @@
 #ifndef _OXIDE_COMMON_CORE_EXPORT_H_
 #define _OXIDE_COMMON_CORE_EXPORT_H_
 
+// OXIDE_CORE_EXPORT exists for exposing API's to the implementation
+// specific parts in component builds. If you want to expose an API
+// from the private library, then OXIDE_EXPORT is what you want
 #if defined(COMPONENT_BUILD)
 #if defined(OXIDE_CORE_IMPLEMENTATION)
 #define OXIDE_CORE_EXPORT __attribute__((visibility("default")))

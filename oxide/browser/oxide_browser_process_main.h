@@ -36,10 +36,19 @@ class IOThreadDelegate;
 
 typedef ContentMainDelegate* (ContentMainDelegateFactory)();
 
+// This class basically encapsulates the process-wide bits that would
+// normally be kept alive for the life of the process on the stack in
+// Chrome (which is not possible in a public API). Use BrowserProcessHandle
+// to hold a reference to this, which also handles setting the
+// ContentMainDelegate to that specified by the implementation
 class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
  public:
+
+  // Return the IO thread delegate, which is a container of objects
+  // whose lifetime is tied to the IO thread
   static IOThreadDelegate* io_thread_delegate();
 
+  // Returns true of the browser process components have been started
   static bool Exists();
 
  private:

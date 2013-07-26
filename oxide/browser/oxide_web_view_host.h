@@ -41,6 +41,10 @@ class WebContents;
 
 namespace oxide {
 
+// This is the main web view class exposed to the external client library.
+// Implementations should subclass this. When adding new methods to this,
+// please remember that Chromium internal API's are not publically exposed
+// and cannot be used by external modules
 class OXIDE_EXPORT WebViewHost :
     public content::WebContentsDelegate,
     public content::WebContentsObserver {

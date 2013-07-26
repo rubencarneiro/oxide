@@ -41,6 +41,8 @@ class URLRequestThrottlerManager;
 
 namespace oxide {
 
+// This object manages the lifetime of objects that are tied to the
+// IO thread
 class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
  public:
   IOThreadDelegate();
@@ -82,8 +84,10 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
     return data_->throttler_manager();
   }
 
+  // Called on the IO thread
   void Init() FINAL;
 
+  // Called on the IO thread
   void CleanUp() FINAL;
 
  private:
