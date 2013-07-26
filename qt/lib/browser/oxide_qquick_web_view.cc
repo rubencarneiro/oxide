@@ -25,9 +25,12 @@
 #include "content/public/browser/web_contents.h"
 #include "ui/gfx/size.h"
 
+#include "shared/browser/oxide_browser_process_handle.h"
 #include "shared/browser/oxide_web_contents_view.h"
 #include "shared/browser/oxide_web_contents_view_delegate.h"
 #include "shared/browser/oxide_web_view_host.h"
+
+#include "qt/lib/common/oxide_qt_content_main_delegate.h"
 
 #include "oxide_qt_render_widget_host_view_qquick.h"
 
@@ -67,6 +70,7 @@ class OxideQQuickWebViewPrivate FINAL :
   void OnCommandsUpdated() FINAL;
 
   OxideQQuickWebView* q_ptr;
+  oxide::BrowserProcessHandle<oxide::qt::ContentMainDelegate> process_handle_;
 };
 
 void OxideQQuickWebViewPrivate::OnURLChanged() {
@@ -95,6 +99,10 @@ void OxideQQuickWebViewPrivate::OnCommandsUpdated() {
 
 void OxideQQuickWebViewPrivate::UpdateVisibility() {
   Q_Q(OxideQQuickWebView);
+
+  if (init_props_) {
+    return;
+  }
 
   if (q->isVisible()) {
     Shown();
@@ -142,7 +150,9 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
     item->setSize(newGeometry.size());
   }
 
-  d->UpdateSize(gfx::Size(qRound(width()), qRound(height())));
+  if (!d->init_props_) {
+    d->UpdateSize(gfx::Size(qRound(width()), qRound(height())));
+  }
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
@@ -180,9 +190,9 @@ void OxideQQuickWebView::componentComplete() {
     d->SetURL(GURL(d->init_props_->url.toString().toStdString()));
   }
 
-  d->UpdateVisibility();
-
   d->init_props_.reset();
+
+  d->UpdateVisibility();
 }
 
 QUrl OxideQQuickWebView::url() const {

@@ -61,6 +61,8 @@ void WebViewHost::OnCommandsUpdated() {}
 WebViewHost::WebViewHost() {}
 
 bool WebViewHost::Init(bool incognito, const gfx::Size& initial_size) {
+  DCHECK(!web_contents_) << "Called Init() more than once";
+
   if (!BrowserProcessMain::Exists()) {
     LOG(ERROR) << "Implementation needs to start the browser components first!";
     return false;
