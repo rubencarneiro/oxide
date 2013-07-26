@@ -469,6 +469,7 @@ class RenderViewItem : public QQuickPaintedItem {
       owner_(owner),
       backing_store_(NULL) {
     setAcceptedMouseButtons(Qt::AllButtons);
+    setAcceptHoverEvents(true);
   }
 
   virtual ~RenderViewItem() {}
@@ -486,6 +487,8 @@ class RenderViewItem : public QQuickPaintedItem {
   virtual void mouseReleaseEvent(QMouseEvent* event);
 
   virtual void wheelEvent(QWheelEvent* event);
+
+  virtual void hoverMoveEvent(QHoverEvent* event);
 
   virtual void updatePolish();
   virtual void paint(QPainter* paint);
@@ -549,6 +552,24 @@ void RenderViewItem::wheelEvent(QWheelEvent* event) {
   owner_->GetRenderWidgetHost()->ForwardWheelEvent(
       QWheelEventToWebEvent(event, this));
   event->accept();
+}
+
+void RenderViewItem::hoverMoveEvent(QHoverEvent* hover) {
+  // QtQuick gives us a hover event unless we have a grab (which
+  // happens implicitly on button press). As Chromium doesn't
+  // distinguish between the 2, just give it a mouse event
+  QPointF window_pos = mapToScene(hover->posF());
+  QMouseEvent me(QEvent::MouseMove,
+                 hover->posF(),
+                 window_pos,
+                 window_pos + window()->position(),
+                 Qt::NoButton,
+                 Qt::NoButton,
+                 hover->modifiers());
+
+  mouseMoveEvent(&me);
+
+  hover->setAccepted(me.isAccepted());
 }
 
 void RenderViewItem::updatePolish() {
