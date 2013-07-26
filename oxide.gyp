@@ -15,22 +15,27 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
+  'variables': {
+    'liboxide_soname': '<(SHARED_LIB_PREFIX)<(oxide_port_libname)<(SHARED_LIB_SUFFIX).<(oxide_port_libversion)'
+  },
   'targets': [
     {
       'target_name': 'oxide',
       'type': 'none',
       'dependencies': [
-        'oxideprivate',
+        '<(oxide_port_libname)',
         'oxide_packed_resources',
-        '<@(oxide_port_targets)',
+        '<(oxide_port_renderer_target)',
+        '<@(oxide_port_extra_targets)',
         '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox'
       ]
     },
     {
-      'target_name': 'oxideprivate',
+      'target_name': '<(oxide_port_libname)',
       'type': 'shared_library',
+      'shared_library_version': '<(oxide_port_libversion)',
       'dependencies': [
-        '<@(oxide_port_libprivate_targets)'
+        '<(oxide_port_staticlib_target)'
       ],
       'export_dependent_settings': [
         '<@(_dependencies)'

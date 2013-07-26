@@ -5,23 +5,23 @@ equals(OXIDE_DEBUG, "1") {
     CONFIG += debug
 }
 
-oxidegyp.file = oxide-qt/gyp.pro
+oxidegyp.file = qt/gyp.pro
 SUBDIRS += oxidegyp
 
-oxideprivate.file = oxide-qt/core/oxideprivate.pro
-SUBDIRS += oxideprivate
+oxidelib.file = qt/lib/lib.pro
+SUBDIRS += oxidelib
 
-qmlplugin.file = oxide-qt/qmlplugin/qmlplugin.pro
+qmlplugin.file = qt/qmlplugin/qmlplugin.pro
 SUBDIRS += qmlplugin
 
-renderer.file = oxide-qt/renderer/renderer.pro
+renderer.file = qt/renderer/renderer.pro
 SUBDIRS += renderer
 
-sandbox.file = oxide-qt/sandbox.pro
+sandbox.file = qt/sandbox.pro
 SUBDIRS += sandbox
 
 OTHER_FILES += \
     gyp_oxide \
     oxide.gyp \
-    oxide/oxide.gypi \
-    oxide/oxide_common.gyp
+    oxide.gypi \
+    shared/shared.gyp
