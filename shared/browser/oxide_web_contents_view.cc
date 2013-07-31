@@ -20,8 +20,6 @@
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
-#include "ui/gfx/point.h"
-#include "ui/gfx/rect.h"
 
 #include "oxide_web_contents_view_delegate.h"
 #include "oxide_web_popup_menu.h"
