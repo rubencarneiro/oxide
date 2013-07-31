@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_PUBLIC_BROWSER_GLOBAL_SETTINGS_H_
-#define _OXIDE_PUBLIC_BROWSER_GLOBAL_SETTINGS_H_
+#ifndef _OXIDE_SHARED_PUBLIC_BROWSER_GLOBAL_SETTINGS_H_
+#define _OXIDE_SHARED_PUBLIC_BROWSER_GLOBAL_SETTINGS_H_
 
 #include <string>
 
@@ -83,4 +83,4 @@ class GlobalSettings FINAL {
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_PUBLIC_BROWSER_GLOBAL_SETTINGS_H_
+#endif // _OXIDE_SHARED_SHARED_PUBLIC_BROWSER_GLOBAL_SETTINGS_H_

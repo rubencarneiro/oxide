@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_MESSAGE_PUMP_H_
-#define _OXIDE_QT_CORE_BROWSER_MESSAGE_PUMP_H_
+#ifndef _OXIDE_QT_LIB_BROWSER_MESSAGE_PUMP_H_
+#define _OXIDE_QT_LIB_BROWSER_MESSAGE_PUMP_H_
 
 #include <QObject>
 #include <QtGlobal>
@@ -78,4 +78,4 @@ class MessagePump FINAL : public QObject,
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_MESSAGE_PUMP_H_
+#endif // _OXIDE_QT_LIB_BROWSER_MESSAGE_PUMP_H_

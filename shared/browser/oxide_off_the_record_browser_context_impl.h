@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_BROWSER_OFF_THE_RECORD_BROWSER_CONTEXT_IMPL_H_
-#define _OXIDE_BROWSER_OFF_THE_RECORD_BROWSER_CONTEXT_IMPL_H_
+#ifndef _OXIDE_SHARED_BROWSER_OFF_THE_RECORD_BROWSER_CONTEXT_IMPL_H_
+#define _OXIDE_SHARED_BROWSER_OFF_THE_RECORD_BROWSER_CONTEXT_IMPL_H_
 
 #include "oxide_browser_context.h"
 
@@ -53,4 +53,4 @@ class OffTheRecordBrowserContextImpl FINAL : public BrowserContext {
 
 } // namespace oxide
 
-#endif // _OXIDE_BROWSER_OFF_THE_RECORD_BROWSER_CONTEXT_IMPL_H_ 
+#endif // _OXIDE_SHARED_BROWSER_OFF_THE_RECORD_BROWSER_CONTEXT_IMPL_H_ 

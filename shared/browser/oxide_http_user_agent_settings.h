@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_BROWSER_HTTP_USER_AGENT_SETTINGS_H_
-#define _OXIDE_BROWSER_HTTP_USER_AGENT_SETTINGS_H_
+#ifndef _OXIDE_SHARED_BROWSER_HTTP_USER_AGENT_SETTINGS_H_
+#define _OXIDE_SHARED_BROWSER_HTTP_USER_AGENT_SETTINGS_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -41,4 +41,4 @@ class HttpUserAgentSettings FINAL : public net::HttpUserAgentSettings {
 
 } // namespace oxide
 
-#endif // _OXIDE_BROWSER_HTTP_USER_AGENT_SETTINGS_H_
+#endif // _OXIDE_SHARED_BROWSER_HTTP_USER_AGENT_SETTINGS_H_

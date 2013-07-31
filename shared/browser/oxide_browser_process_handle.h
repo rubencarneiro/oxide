@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
-#define _OXIDE_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
+#ifndef _OXIDE_SHARED_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
+#define _OXIDE_SHARED_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -42,4 +42,4 @@ class BrowserProcessHandle {
 
 } // namespace oxide
 
-#endif // _OXIDE_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
+#endif // _OXIDE_SHARED_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_

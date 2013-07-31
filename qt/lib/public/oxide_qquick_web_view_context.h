@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CLIENT_QQUICK_WEB_VIEW_CONTEXT_H_
-#define _OXIDE_QT_CLIENT_QQUICK_WEB_VIEW_CONTEXT_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_
+#define _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_
 
 #include <QObject>
 #include <QString>
@@ -61,4 +61,4 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   void acceptLangsChanged();
 };
 
-#endif // _OXIDE_QT_CLIENT_QQUICK_WEB_VIEW_CONTEXT_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_
