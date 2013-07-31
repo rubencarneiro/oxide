@@ -27,6 +27,10 @@
 
 #include "shared/common/oxide_export.h"
 
+QT_BEGIN_NAMESPACE
+class QQmlComponent;
+QT_END_NAMESPACE
+
 QT_USE_NAMESPACE
 
 class OxideQQuickWebViewPrivate;
@@ -39,6 +43,9 @@ class OXIDE_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY commandsUpdated)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+
+  Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
+
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
@@ -61,6 +68,9 @@ class OXIDE_EXPORT OxideQQuickWebView : public QQuickItem {
 
   bool loading() const;
 
+  QQmlComponent* popupMenu() const;
+  void setPopupMenu(QQmlComponent* popup_menu);
+
  public Q_SLOTS:
   void goBack();
   void goForward();
@@ -72,6 +82,7 @@ class OXIDE_EXPORT OxideQQuickWebView : public QQuickItem {
   void titleChanged();
   void commandsUpdated();
   void loadingChanged();
+  void popupMenuChanged();
 
  private Q_SLOTS:
   void visibilityChangedListener();

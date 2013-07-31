@@ -33,6 +33,7 @@
 #include "qt/lib/common/oxide_qt_content_main_delegate.h"
 
 #include "oxide_qt_render_widget_host_view_qquick.h"
+#include "oxide_qt_web_popup_menu_qquick.h"
 
 QT_USE_NAMESPACE
 
@@ -61,7 +62,10 @@ class OxideQQuickWebViewPrivate FINAL :
 
   gfx::Rect GetContainerBounds() FINAL;
 
+  oxide::WebPopupMenu* CreatePopupMenu() FINAL;
+
   QScopedPointer<InitData> init_props_;
+  QScopedPointer<QQmlComponent> popup_menu_;
 
  private:
   void OnURLChanged() FINAL;
@@ -131,6 +135,12 @@ gfx::Rect OxideQQuickWebViewPrivate::GetContainerBounds() {
                    qRound(pos.y()),
                    qRound(q->width()),
                    qRound(q->height()));
+}
+
+oxide::WebPopupMenu* OxideQQuickWebViewPrivate::CreatePopupMenu() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qt::WebPopupMenuQQuick(q, web_contents());
 }
 
 void OxideQQuickWebView::visibilityChangedListener() {
@@ -247,6 +257,19 @@ bool OxideQQuickWebView::loading() const {
   Q_D(const OxideQQuickWebView);
 
   return d->IsLoading();
+}
+
+QQmlComponent* OxideQQuickWebView::popupMenu() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->popup_menu_.data();
+}
+
+void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
+  Q_D(OxideQQuickWebView);
+
+  d->popup_menu_.reset(popup_menu);
+  emit popupMenuChanged();
 }
 
 void OxideQQuickWebView::goBack() {

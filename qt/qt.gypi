@@ -24,5 +24,10 @@
     'oxide_port_renderer_target': 'qt/renderer/renderer.gyp:oxide-renderer',
     'oxide_port_resource_subpath': 'oxide-qt',
     'oxide_port_staticlib_target': 'qt/lib/lib.gyp:oxide_qt'
+  },
+  'target_defaults': {
+    'defines': [
+      'OXIDE_BUILD=qt'
+    ]
   }
 }

@@ -20,6 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 #include "content/port/browser/render_view_host_delegate_view.h"
 #include "content/port/browser/web_contents_view_port.h"
 #include "ui/gfx/size.h"
@@ -31,6 +32,7 @@ class WebContents;
 namespace oxide {
 
 class WebContentsViewDelegate;
+class WebPopupMenu;
 
 class WebContentsView FINAL : public content::WebContentsViewPort,
                               public content::RenderViewHostDelegateView {
@@ -78,6 +80,7 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
                      const std::vector<WebMenuItem>& items,
                      bool right_aligned,
                      bool allow_multiple_selection) FINAL;
+  void PopupDone();
 
   void SetDelegate(WebContentsViewDelegate* delegate);
 
@@ -85,6 +88,7 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
   content::WebContents* web_contents_;
   WebContentsViewDelegate* delegate_;
   gfx::Size requested_size_;
+  scoped_ptr<WebPopupMenu> active_popup_menu_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);
 };

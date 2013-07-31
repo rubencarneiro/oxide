@@ -17,10 +17,14 @@
 
 #include "oxide_web_contents_view.h"
 
+#include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
+#include "ui/gfx/point.h"
+#include "ui/gfx/rect.h"
 
 #include "oxide_web_contents_view_delegate.h"
+#include "oxide_web_popup_menu.h"
 
 namespace oxide {
 
@@ -124,7 +128,28 @@ void WebContentsView::ShowPopupMenu(const gfx::Rect& bounds,
                                     int selected_item,
                                     const std::vector<WebMenuItem>& items,
                                     bool right_aligned,
-                                    bool allow_multiple_selection) {}
+                                    bool allow_multiple_selection) {
+  DCHECK(!active_popup_menu_);
+
+  if (delegate_) {
+    active_popup_menu_.reset(delegate_->CreatePopupMenu());
+  } else {
+    DLOG(ERROR) << "Can't show popup without a delegate";
+  }
+
+  if (!active_popup_menu_) {
+    static_cast<content::RenderViewHostImpl *>(
+        web_contents_->GetRenderViewHost())->DidCancelPopupMenu();
+    return;
+  }
+
+  active_popup_menu_->Show(bounds, items, selected_item,
+                           allow_multiple_selection);
+}
+
+void WebContentsView::PopupDone() {
+  active_popup_menu_.reset();
+}
 
 void WebContentsView::SetDelegate(WebContentsViewDelegate* delegate) {
   delegate_ = delegate;

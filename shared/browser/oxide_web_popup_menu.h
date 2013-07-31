@@ -15,32 +15,46 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
-#define _OXIDE_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
+#ifndef _OXIDE_SHARED_BROWSER_WEB_POPUP_MENU_H_
+#define _OXIDE_SHARED_BROWSER_WEB_POPUP_MENU_H_
 
-#include "ui/gfx/rect.h"
+#include <vector>
+
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "webkit/common/webmenuitem.h"
 
 namespace content {
+class WebContents;
+}
 
-class RenderWidgetHost;
-class RenderWidgetHostView;
-
+namespace gfx {
+class Rect;
 }
 
 namespace oxide {
 
-class WebContentsViewDelegate {
+class WebPopupMenu {
  public:
-  virtual ~WebContentsViewDelegate() {};
+  virtual ~WebPopupMenu() {}
 
-  virtual content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) = 0;
+  virtual void Show(const gfx::Rect& bounds,
+                    const std::vector<WebMenuItem>& items,
+                    int selected_item,
+                    bool allow_multiple_selection) = 0;
 
-  virtual gfx::Rect GetContainerBounds() = 0;
+  void SelectItems(const std::vector<int>& selected_indices);
+  void Cancel();
 
-  virtual WebPopupMenu* CreatePopupMenu() = 0;
+ protected:
+  WebPopupMenu(content::WebContents* web_contents);
+
+ private:
+  content::WebContents* web_contents_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
+#endif // _OXIDE_SHARED_BROWSER_WEB_POPUP_MENU_H_

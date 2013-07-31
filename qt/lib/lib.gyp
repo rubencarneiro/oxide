@@ -22,6 +22,7 @@
       'all_dependent_settings': {
         'include_dirs': [
           '../..',
+          '<(INTERMEDIATE_DIR)',
           '<(DEPTH)'
         ]
       },
@@ -40,6 +41,7 @@
       ],
       'include_dirs': [
         '../..',
+        '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
       ],
       'sources': [
@@ -57,6 +59,8 @@
         'browser/oxide_qt_message_pump.h',
         'browser/oxide_qt_render_widget_host_view_qquick.cc',
         'browser/oxide_qt_render_widget_host_view_qquick.h',
+        'browser/oxide_qt_web_popup_menu_qquick.cc',
+        'browser/oxide_qt_web_popup_menu_qquick.h',
         'common/oxide_qt_content_main_delegate.cc',
         'common/oxide_qt_content_main_delegate.h'
       ],
@@ -83,6 +87,22 @@
         {
           'action_name': 'moc_oxide_qquick_web_view_context.cc',
           'moc_input': 'browser/oxide_qquick_web_view_context.h',
+          'inputs': [
+            '<(_moc_input)'
+          ],
+          'outputs': [
+            '<(INTERMEDIATE_DIR)/<(_action_name)'
+          ],
+          'action': [
+            'moc',
+            '-o',
+            '<(INTERMEDIATE_DIR)/<(_action_name)',
+            '<(_moc_input)'
+          ]
+        },
+        {
+          'action_name': 'oxide_qt_web_popup_menu_qquick.moc',
+          'moc_input': 'browser/oxide_qt_web_popup_menu_qquick.cc',
           'inputs': [
             '<(_moc_input)'
           ],

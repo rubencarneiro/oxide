@@ -1,0 +1,186 @@
+Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.cc
+===================================================================
+--- oxide.orig/chromium/src/content/browser/renderer_host/render_view_host_impl.cc	2013-07-12 20:53:40.686487077 +0100
++++ oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.cc	2013-07-31 01:38:01.365838044 +0100
+@@ -998,7 +998,7 @@
+                         OnShowDesktopNotification)
+     IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_Cancel,
+                         OnCancelDesktopNotification)
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
++#if defined(OS_MACOSX) || defined(OS_ANDROID) || defined(OXIDE_BUILD)
+     IPC_MESSAGE_HANDLER(ViewHostMsg_ShowPopup, OnShowPopup)
+ #endif
+     IPC_MESSAGE_HANDLER(ViewHostMsg_RunFileChooser, OnRunFileChooser)
+@@ -1677,7 +1677,7 @@
+   RenderWidgetHostImpl::ForwardKeyboardEvent(key_event);
+ }
+ 
+-#if defined(OS_ANDROID)
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+ void RenderViewHostImpl::DidSelectPopupMenuItems(
+     const std::vector<int>& selected_indices) {
+   Send(new ViewMsg_SelectPopupMenuItems(GetRoutingID(), false,
+@@ -2043,7 +2043,7 @@
+       GetRoutingID(), snapshot_id, gfx::Size(), png));
+ }
+ 
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
++#if defined(OS_MACOSX) || defined(OS_ANDROID) || defined (OXIDE_BUILD)
+ void RenderViewHostImpl::OnShowPopup(
+     const ViewHostMsg_ShowPopup_Params& params) {
+   RenderViewHostDelegateView* view = delegate_->GetDelegateView();
+Index: oxide/chromium/src/content/renderer/render_thread_impl.cc
+===================================================================
+--- oxide.orig/chromium/src/content/renderer/render_thread_impl.cc	2013-07-12 20:53:42.750487085 +0100
++++ oxide/chromium/src/content/renderer/render_thread_impl.cc	2013-07-29 18:06:03.341247910 +0100
+@@ -331,7 +331,7 @@
+   v8::V8::SetCreateHistogramFunction(CreateHistogram);
+   v8::V8::SetAddHistogramSampleFunction(AddHistogramSample);
+ 
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
++#if defined(OS_MACOSX) || defined(OS_ANDROID) || defined(OXIDE_BUILD)
+   // On Mac and Android, the select popups are rendered by the browser.
+   WebKit::WebView::setUseExternalPopupMenus(true);
+ #endif
+Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.h
+===================================================================
+--- oxide.orig/chromium/src/content/browser/renderer_host/render_view_host_impl.h	2013-07-12 20:53:40.354487076 +0100
++++ oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.h	2013-07-31 01:39:09.997838401 +0100
+@@ -393,7 +393,9 @@
+   media::MediaPlayerManager* media_player_manager() {
+     return media_player_manager_;
+   }
++#endif
+ 
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+   void DidSelectPopupMenuItems(const std::vector<int>& selected_indices);
+   void DidCancelPopupMenu();
+ #endif
+@@ -583,7 +585,7 @@
+                               int automation_id);
+   void OnGetWindowSnapshot(const int snapshot_id);
+ 
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
++#if defined(OS_MACOSX) || defined(OS_ANDROID) || defined(OXIDE_BUILD)
+   void OnShowPopup(const ViewHostMsg_ShowPopup_Params& params);
+ #endif
+ 
+Index: oxide/chromium/src/content/common/view_messages.h
+===================================================================
+--- oxide.orig/chromium/src/content/common/view_messages.h	2013-07-15 07:45:46.558443206 +0100
++++ oxide/chromium/src/content/common/view_messages.h	2013-07-31 01:41:21.369839084 +0100
+@@ -1254,6 +1254,7 @@
+ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSharedTimersSuspended,
+                      bool /* suspend */)
+ 
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+ #if defined(OS_ANDROID)
+ // Sent when the browser wants the bounding boxes of the current find matches.
+ //
+@@ -1267,12 +1268,14 @@
+ // final_update set to true).
+ IPC_MESSAGE_ROUTED1(ViewMsg_FindMatchRects,
+                     int /* current_version */)
++#endif
+ 
+ // External popup menus.
+ IPC_MESSAGE_ROUTED2(ViewMsg_SelectPopupMenuItems,
+                     bool /* user canceled the popup */,
+                     std::vector<int> /* selected indices */)
+ 
++#if defined(OS_ANDROID)
+ // Tells the renderer to try to revert to the zoom level we were at before
+ // ViewMsg_ScrollFocusedEditableNodeIntoView was called.
+ IPC_MESSAGE_ROUTED0(ViewMsg_UndoScrollFocusedEditableNodeIntoView)
+@@ -1293,7 +1296,7 @@
+ // Sent by the browser when the renderer should generate a new frame.
+ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
+                     cc::BeginFrameArgs /* args */)
+-
++#endif
+ #elif defined(OS_MACOSX)
+ // Let the RenderView know its window has changed visibility.
+ IPC_MESSAGE_ROUTED1(ViewMsg_SetWindowVisibility,
+Index: oxide/chromium/src/content/renderer/render_view_impl.cc
+===================================================================
+--- oxide.orig/chromium/src/content/renderer/render_view_impl.cc	2013-07-15 07:45:46.626443207 +0100
++++ oxide/chromium/src/content/renderer/render_view_impl.cc	2013-07-31 11:34:41.862024157 +0100
+@@ -1275,15 +1275,19 @@
+ #endif
+     IPC_MESSAGE_HANDLER(ViewMsg_SetAccessibilityMode, OnSetAccessibilityMode)
+     IPC_MESSAGE_HANDLER(ViewMsg_DisownOpener, OnDisownOpener)
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+ #if defined(OS_ANDROID)
+     IPC_MESSAGE_HANDLER(InputMsg_ActivateNearestFindResult,
+                         OnActivateNearestFindResult)
+     IPC_MESSAGE_HANDLER(ViewMsg_FindMatchRects, OnFindMatchRects)
++#endif
+     IPC_MESSAGE_HANDLER(ViewMsg_SelectPopupMenuItems, OnSelectPopupMenuItems)
++#if defined(OS_ANDROID)
+     IPC_MESSAGE_HANDLER(ViewMsg_UndoScrollFocusedEditableNodeIntoView,
+                         OnUndoScrollFocusedEditableNodeIntoRect)
+     IPC_MESSAGE_HANDLER(ViewMsg_UpdateTopControlsState,
+                         OnUpdateTopControlsState)
++#endif
+ #elif defined(OS_MACOSX)
+     IPC_MESSAGE_HANDLER(InputMsg_CopyToFindPboard, OnCopyToFindPboard)
+     IPC_MESSAGE_HANDLER(ViewMsg_PluginImeCompositionCompleted,
+@@ -6610,7 +6614,7 @@
+ }
+ #endif
+ 
+-#if defined(OS_ANDROID)
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+ void RenderViewImpl::OnSelectPopupMenuItems(
+     bool canceled,
+     const std::vector<int>& selected_indices) {
+Index: oxide/chromium/src/content/renderer/render_view_impl.h
+===================================================================
+--- oxide.orig/chromium/src/content/renderer/render_view_impl.h	2013-07-15 07:45:46.602443206 +0100
++++ oxide/chromium/src/content/renderer/render_view_impl.h	2013-07-31 11:36:11.238024621 +0100
+@@ -1064,15 +1064,19 @@
+ 
+   void OnDisownOpener();
+ 
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+ #if defined(OS_ANDROID)
+   void OnActivateNearestFindResult(int request_id, float x, float y);
+   void OnFindMatchRects(int current_version);
++#endif
+   void OnSelectPopupMenuItems(bool canceled,
+                               const std::vector<int>& selected_indices);
++#if defined(OS_ANDROID)
+   void OnUndoScrollFocusedEditableNodeIntoRect();
+   void OnUpdateTopControlsState(bool enable_hiding,
+                                 bool enable_showing,
+                                 bool animate);
++#endif
+ #elif defined(OS_MACOSX)
+   void OnCopyToFindPboard();
+   void OnPluginImeCompositionCompleted(const string16& text, int plugin_id);
+Index: oxide/chromium/src/content/renderer/external_popup_menu.cc
+===================================================================
+--- oxide.orig/chromium/src/content/renderer/external_popup_menu.cc	2013-07-12 20:53:42.326487084 +0100
++++ oxide/chromium/src/content/renderer/external_popup_menu.cc	2013-07-31 11:38:59.530025496 +0100
+@@ -51,7 +51,7 @@
+ }
+ #endif
+ 
+-#if defined(OS_ANDROID)
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+ void ExternalPopupMenu::DidSelectItems(bool canceled,
+                                        const std::vector<int>& indices) {
+   if (!popup_menu_client_)
+Index: oxide/chromium/src/content/renderer/external_popup_menu.h
+===================================================================
+--- oxide.orig/chromium/src/content/renderer/external_popup_menu.h	2013-07-12 20:53:43.714487089 +0100
++++ oxide/chromium/src/content/renderer/external_popup_menu.h	2013-07-31 11:38:39.418025392 +0100
+@@ -32,7 +32,7 @@
+   void DidSelectItem(int selected_index);
+ #endif
+ 
+-#if defined(OS_ANDROID)
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+   // Called when the user has selected items or canceled the popup.
+   void DidSelectItems(bool canceled, const std::vector<int>& selected_indices);
+ #endif

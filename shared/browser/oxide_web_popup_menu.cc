@@ -15,32 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
-#define _OXIDE_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
+#include "oxide_web_popup_menu.h"
 
-#include "ui/gfx/rect.h"
+#include "base/logging.h"
+#include "content/browser/renderer_host/render_view_host_impl.h"
+#include "content/public/browser/web_contents.h"
 
-namespace content {
-
-class RenderWidgetHost;
-class RenderWidgetHostView;
-
-}
+#include "oxide_web_contents_view.h"
 
 namespace oxide {
 
-class WebContentsViewDelegate {
- public:
-  virtual ~WebContentsViewDelegate() {};
+WebPopupMenu::WebPopupMenu(content::WebContents* web_contents) :
+    web_contents_(web_contents) {
+  DCHECK(web_contents_);
+}
 
-  virtual content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) = 0;
+void WebPopupMenu::SelectItems(const std::vector<int>& selected_indices) {
+  static_cast<content::RenderViewHostImpl *>(
+    web_contents_->GetRenderViewHost())->
+      DidSelectPopupMenuItems(selected_indices);
+  static_cast<oxide::WebContentsView *>(web_contents_->GetView())->PopupDone();
+}
 
-  virtual gfx::Rect GetContainerBounds() = 0;
-
-  virtual WebPopupMenu* CreatePopupMenu() = 0;
-};
+void WebPopupMenu::Cancel() {
+  static_cast<content::RenderViewHostImpl *>(
+    web_contents_->GetRenderViewHost())->DidCancelPopupMenu();
+  static_cast<oxide::WebContentsView *>(web_contents_->GetView())->PopupDone();
+}
 
 } // namespace oxide
-
-#endif // _OXIDE_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
