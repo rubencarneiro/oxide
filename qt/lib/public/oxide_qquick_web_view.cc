@@ -30,10 +30,9 @@
 #include "shared/browser/oxide_web_contents_view_delegate.h"
 #include "shared/browser/oxide_web_view_host.h"
 
+#include "qt/lib/browser/oxide_qt_render_widget_host_view_qquick.h"
+#include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
 #include "qt/lib/common/oxide_qt_content_main_delegate.h"
-
-#include "oxide_qt_render_widget_host_view_qquick.h"
-#include "oxide_qt_web_popup_menu_qquick.h"
 
 QT_USE_NAMESPACE
 

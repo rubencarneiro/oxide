@@ -47,10 +47,6 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_view.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_view_context.cc',
-        'browser/oxide_qquick_web_view.cc',
-        'browser/oxide_qquick_web_view.h',
-        'browser/oxide_qquick_web_view_context.cc',
-        'browser/oxide_qquick_web_view_context.h',
         'browser/oxide_qt_backing_store.cc',
         'browser/oxide_qt_backing_store.h',
         'browser/oxide_qt_content_browser_client.cc',
@@ -62,7 +58,11 @@
         'browser/oxide_qt_web_popup_menu_qquick.cc',
         'browser/oxide_qt_web_popup_menu_qquick.h',
         'common/oxide_qt_content_main_delegate.cc',
-        'common/oxide_qt_content_main_delegate.h'
+        'common/oxide_qt_content_main_delegate.h',
+        'public/oxide_qquick_web_view.cc',
+        'public/oxide_qquick_web_view.h',
+        'public/oxide_qquick_web_view_context.cc',
+        'public/oxide_qquick_web_view_context.h'
       ],
       'variables': {
         'chromium_code': 1
@@ -70,7 +70,7 @@
       'actions': [
         {
           'action_name': 'moc_oxide_qquick_web_view.cc',
-          'moc_input': 'browser/oxide_qquick_web_view.h',
+          'moc_input': 'public/oxide_qquick_web_view.h',
           'inputs': [
             '<(_moc_input)'
           ],
@@ -86,7 +86,7 @@
         },
         {
           'action_name': 'moc_oxide_qquick_web_view_context.cc',
-          'moc_input': 'browser/oxide_qquick_web_view_context.h',
+          'moc_input': 'public/oxide_qquick_web_view_context.h',
           'inputs': [
             '<(_moc_input)'
           ],
