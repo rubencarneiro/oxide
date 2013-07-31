@@ -52,6 +52,7 @@ class OxideQQuickWebViewPrivate FINAL :
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view) :
       oxide::WebView(),
       oxide::WebContentsViewDelegate(),
+      popup_menu_(NULL),
       q_ptr(view) {}
 
   void UpdateVisibility();
@@ -64,7 +65,7 @@ class OxideQQuickWebViewPrivate FINAL :
   oxide::WebPopupMenu* CreatePopupMenu() FINAL;
 
   QScopedPointer<InitData> init_props_;
-  QScopedPointer<QQmlComponent> popup_menu_;
+  QQmlComponent* popup_menu_;
 
  private:
   void OnURLChanged() FINAL;
@@ -261,13 +262,13 @@ bool OxideQQuickWebView::loading() const {
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->popup_menu_.data();
+  return d->popup_menu_;
 }
 
 void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
   Q_D(OxideQQuickWebView);
 
-  d->popup_menu_.reset(popup_menu);
+  d->popup_menu_ = popup_menu;
   emit popupMenuChanged();
 }
 
