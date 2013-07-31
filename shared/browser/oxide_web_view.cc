@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_web_view_host.h"
+#include "oxide_web_view.h"
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
@@ -31,8 +31,8 @@
 
 namespace oxide {
 
-void WebViewHost::NavigationStateChanged(const content::WebContents* source,
-                                         unsigned changed_flags) {
+void WebView::NavigationStateChanged(const content::WebContents* source,
+                                     unsigned changed_flags) {
   DCHECK_EQ(source, web_contents_.get());
 
   if (changed_flags & content::INVALIDATE_TYPE_URL) {
@@ -53,14 +53,14 @@ void WebViewHost::NavigationStateChanged(const content::WebContents* source,
   }
 }
 
-void WebViewHost::OnURLChanged() {}
-void WebViewHost::OnTitleChanged() {}
-void WebViewHost::OnLoadingChanged() {}
-void WebViewHost::OnCommandsUpdated() {}
+void WebView::OnURLChanged() {}
+void WebView::OnTitleChanged() {}
+void WebView::OnLoadingChanged() {}
+void WebView::OnCommandsUpdated() {}
 
-WebViewHost::WebViewHost() {}
+WebView::WebView() {}
 
-bool WebViewHost::Init(bool incognito, const gfx::Size& initial_size) {
+bool WebView::Init(bool incognito, const gfx::Size& initial_size) {
   DCHECK(!web_contents_) << "Called Init() more than once";
 
   if (!BrowserProcessMain::Exists()) {
@@ -80,71 +80,70 @@ bool WebViewHost::Init(bool incognito, const gfx::Size& initial_size) {
   }
 
   web_contents_->SetDelegate(this);
-  Observe(web_contents_.get());
 
   return true;
 }
 
-WebViewHost::~WebViewHost() {
+WebView::~WebView() {
   if (web_contents_) {
     web_contents_->SetDelegate(NULL);
   }
 }
 
-const GURL& WebViewHost::GetURL() const {
+const GURL& WebView::GetURL() const {
   return web_contents_->GetActiveURL();
 }
 
-void WebViewHost::SetURL(const GURL& url) {
+void WebView::SetURL(const GURL& url) {
   content::NavigationController::LoadURLParams params(url);
   web_contents_->GetController().LoadURLWithParams(params);
 }
 
-std::string WebViewHost::GetTitle() const {
+std::string WebView::GetTitle() const {
   return base::UTF16ToUTF8(web_contents_->GetTitle());
 }
 
-bool WebViewHost::CanGoBack() const {
+bool WebView::CanGoBack() const {
   return web_contents_->GetController().CanGoBack();
 }
 
-bool WebViewHost::CanGoForward() const {
+bool WebView::CanGoForward() const {
   return web_contents_->GetController().CanGoForward();
 }
 
-void WebViewHost::GoBack() {
+void WebView::GoBack() {
   web_contents_->GetController().GoBack();
 }
 
-void WebViewHost::GoForward() {
+void WebView::GoForward() {
   web_contents_->GetController().GoForward();
 }
 
-void WebViewHost::Stop() {
+void WebView::Stop() {
   web_contents_->Stop();
 }
 
-void WebViewHost::Reload() {
+void WebView::Reload() {
   web_contents_->GetController().Reload(true);
 }
 
-bool WebViewHost::IsIncognito() const {
+bool WebView::IsIncognito() const {
   return web_contents_->GetBrowserContext()->IsOffTheRecord();
 }
 
-bool WebViewHost::IsLoading() const {
+bool WebView::IsLoading() const {
   return web_contents_->IsLoading();
 }
 
-void WebViewHost::UpdateSize(const gfx::Size& size) {
+void WebView::UpdateSize(const gfx::Size& size) {
   web_contents_->GetView()->SizeContents(size);
 }
 
-void WebViewHost::Shown() {
+void WebView::Shown() {
   web_contents_->WasShown();
 }
 
-void WebViewHost::Hidden() {
+void WebView::Hidden() {
   web_contents_->WasHidden();
 }
 

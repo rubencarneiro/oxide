@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_HOST_H_
-#define _OXIDE_SHARED_BROWSER_WEB_VIEW_HOST_H_
+#ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
+#define _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 
 #include <string>
 
@@ -24,7 +24,6 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/web_contents_delegate.h"
-#include "content/public/browser/web_contents_observer.h"
 
 class GURL;
 
@@ -42,11 +41,9 @@ class WebContents;
 namespace oxide {
 
 // This is the main webview class
-class WebViewHost :
-    public content::WebContentsDelegate,
-    public content::WebContentsObserver {
+class WebView : public content::WebContentsDelegate {
  public:
-  virtual ~WebViewHost();
+  virtual ~WebView();
 
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
@@ -71,7 +68,7 @@ class WebViewHost :
   void Hidden();
 
  protected:
-  WebViewHost();
+  WebView();
   bool Init(bool incognito, const gfx::Size& initial_size);
 
   content::WebContents* web_contents() const {
@@ -89,9 +86,9 @@ class WebViewHost :
 
   scoped_ptr<content::WebContents> web_contents_;
 
-  DISALLOW_COPY_AND_ASSIGN(WebViewHost);
+  DISALLOW_COPY_AND_ASSIGN(WebView);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_WEB_VIEW_HOST_H_
+#endif // _OXIDE_SHARED_BROWSER_WEB_VIEW_H_

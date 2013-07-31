@@ -28,7 +28,7 @@
 #include "shared/browser/oxide_browser_process_handle.h"
 #include "shared/browser/oxide_web_contents_view.h"
 #include "shared/browser/oxide_web_contents_view_delegate.h"
-#include "shared/browser/oxide_web_view_host.h"
+#include "shared/browser/oxide_web_view.h"
 
 #include "qt/lib/browser/oxide_qt_render_widget_host_view_qquick.h"
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
@@ -44,13 +44,13 @@ struct InitData {
 };
 
 class OxideQQuickWebViewPrivate FINAL :
-    public oxide::WebViewHost,
+    public oxide::WebView,
     public oxide::WebContentsViewDelegate {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view) :
-      oxide::WebViewHost(),
+      oxide::WebView(),
       oxide::WebContentsViewDelegate(),
       q_ptr(view) {}
 
