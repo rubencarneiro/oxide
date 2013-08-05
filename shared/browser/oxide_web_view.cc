@@ -28,6 +28,7 @@
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_web_contents_view.h"
 
 namespace oxide {
 
@@ -58,7 +59,11 @@ void WebView::OnTitleChanged() {}
 void WebView::OnLoadingChanged() {}
 void WebView::OnCommandsUpdated() {}
 
-WebView::WebView() {}
+WebView::WebView(WebContentsViewDelegate* delegate) :
+    web_contents_view_delegate_(delegate) {
+  DCHECK(delegate) <<
+      "The implementation must supply a WebContentsViewDelegate";
+}
 
 bool WebView::Init(bool incognito, const gfx::Size& initial_size) {
   DCHECK(!web_contents_) << "Called Init() more than once";
@@ -80,6 +85,8 @@ bool WebView::Init(bool incognito, const gfx::Size& initial_size) {
   }
 
   web_contents_->SetDelegate(this);
+  static_cast<oxide::WebContentsView *>(
+      web_contents_->GetView())->SetDelegate(web_contents_view_delegate_);
   script_executor_.BeginObserving(web_contents_.get());
 
   return true;

@@ -53,7 +53,7 @@ class OxideQQuickWebViewPrivate FINAL :
 
  public:
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view) :
-      oxide::WebView(),
+      oxide::WebView(this),
       oxide::WebContentsViewDelegate(),
       popup_menu_(NULL),
       q_ptr(view),
@@ -203,9 +203,6 @@ void OxideQQuickWebView::componentComplete() {
 
   d->Init(d->init_props_->incognito,
           gfx::Size(qRound(width()), qRound(height())));
-
-  static_cast<oxide::WebContentsView *>(
-      d->web_contents()->GetView())->SetDelegate(d);
 
   if (!d->init_props_->url.isEmpty()) {
     d->SetURL(GURL(d->init_props_->url.toString().toStdString()));

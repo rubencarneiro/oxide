@@ -39,11 +39,7 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
-  if (delegate_) {
-    return delegate_->CreateViewForWidget(render_widget_host);
-  }
-
-  return NULL;
+  return delegate_->CreateViewForWidget(render_widget_host);
 }
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForPopupWidget(
@@ -72,11 +68,7 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  if (delegate_) {
-    *out = delegate_->GetContainerBounds();
-  } else {
-    *out = gfx::Rect();
-  }
+  *out = delegate_->GetContainerBounds();
 }
 
 void WebContentsView::OnTabCrashed(base::TerminationStatus status,
@@ -129,11 +121,7 @@ void WebContentsView::ShowPopupMenu(const gfx::Rect& bounds,
                                     bool allow_multiple_selection) {
   DCHECK(!active_popup_menu_);
 
-  if (delegate_) {
-    active_popup_menu_.reset(delegate_->CreatePopupMenu());
-  } else {
-    DLOG(ERROR) << "Can't show popup without a delegate";
-  }
+  active_popup_menu_.reset(delegate_->CreatePopupMenu());
 
   if (!active_popup_menu_) {
     static_cast<content::RenderViewHostImpl *>(
