@@ -29,6 +29,10 @@ class RenderWidgetHostView;
 
 namespace oxide {
 
+// This interface provides a way for the WebContentsView to communicate
+// with toolkit-specific parts, and should be implemented by each port.
+// Note that it has nothing to do with content::WebContentsViewDelegate.
+// Sorry for the unfortunate name (feel free to think of a better name)
 class WebContentsViewDelegate {
  public:
   virtual ~WebContentsViewDelegate() {};
