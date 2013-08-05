@@ -71,6 +71,8 @@ class OXIDE_EXPORT OxideQQuickWebView : public QQuickItem {
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
+  Q_INVOKABLE void executeScript(const QString& code);
+
  public Q_SLOTS:
   void goBack();
   void goForward();

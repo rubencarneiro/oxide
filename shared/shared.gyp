@@ -109,6 +109,8 @@
         'browser/oxide_off_the_record_browser_context_impl.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
+        'browser/oxide_script_executor_host.cc',
+        'browser/oxide_script_executor_host.h',
         'browser/oxide_ssl_config_service.cc',
         'browser/oxide_ssl_config_service.h',
         'browser/oxide_url_request_context.cc',
@@ -127,7 +129,15 @@
         'common/oxide_content_main_delegate.cc',
         'common/oxide_content_main_delegate.h',
         'common/oxide_core_export.h',
-        'common/oxide_export.h'
+        'common/oxide_export.h',
+        'common/oxide_message_generator.cc',
+        'common/oxide_message_generator.h',
+        'common/oxide_messages.h',
+        'common/oxide_user_script.h',
+        'renderer/oxide_content_renderer_client.cc',
+        'renderer/oxide_content_renderer_client.h',
+        'renderer/oxide_script_executor.cc',
+        'renderer/oxide_script_executor.h'
       ],
       'variables': {
         'chromium_code': 1

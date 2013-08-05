@@ -34,13 +34,14 @@
 #include "ui/base/resource/resource_bundle.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/renderer/oxide_content_renderer_client.h"
 
 #include "oxide_content_client.h"
 
 namespace oxide {
 
 namespace {
-base::LazyInstance<content::ContentRendererClient> g_content_renderer_client =
+base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
 }
 

@@ -4,3 +4,4 @@ subprocess-paths.patch
 allow-embedders-to-override-get-default-screen-info.patch
 gyp-support-library-version.patch
 support-native-popup-menus.patch
+add-oxide-messages.patch

@@ -22,6 +22,8 @@
 #include <QRectF>
 #include <QSize>
 
+#include "base/bind.h"
+#include "base/memory/weak_ptr.h"
 #include "content/public/browser/web_contents.h"
 #include "ui/gfx/size.h"
 
@@ -29,6 +31,7 @@
 #include "shared/browser/oxide_web_contents_view.h"
 #include "shared/browser/oxide_web_contents_view_delegate.h"
 #include "shared/browser/oxide_web_view.h"
+#include "shared/common/oxide_user_script.h"
 
 #include "qt/lib/browser/oxide_qt_render_widget_host_view_qquick.h"
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
@@ -53,7 +56,8 @@ class OxideQQuickWebViewPrivate FINAL :
       oxide::WebView(),
       oxide::WebContentsViewDelegate(),
       popup_menu_(NULL),
-      q_ptr(view) {}
+      q_ptr(view),
+      weak_factory_(this) {}
 
   void UpdateVisibility();
 
@@ -64,6 +68,10 @@ class OxideQQuickWebViewPrivate FINAL :
 
   oxide::WebPopupMenu* CreatePopupMenu() FINAL;
 
+  base::WeakPtr<OxideQQuickWebViewPrivate> GetWeakPtr() {
+    return weak_factory_.GetWeakPtr();
+  }
+
   QScopedPointer<InitData> init_props_;
   QQmlComponent* popup_menu_;
 
@@ -73,8 +81,11 @@ class OxideQQuickWebViewPrivate FINAL :
   void OnLoadingChanged() FINAL;
   void OnCommandsUpdated() FINAL;
 
+  void OnExecuteScriptFinished(bool error, const std::string& error_string) {}
+
   OxideQQuickWebView* q_ptr;
   oxide::BrowserProcessHandle process_handle_;
+  base::WeakPtrFactory<OxideQQuickWebViewPrivate> weak_factory_;
 };
 
 void OxideQQuickWebViewPrivate::OnURLChanged() {
@@ -270,6 +281,17 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
 
   d->popup_menu_ = popup_menu;
   emit popupMenuChanged();
+}
+
+void OxideQQuickWebView::executeScript(const QString& code) {
+  Q_D(OxideQQuickWebView);
+
+  // FIXME: Handle errors
+  d->ExecuteScript(
+      code.toStdString(), false, oxide::UserScript::DOCUMENT_IDLE,
+      false, std::string(),
+      base::Bind(&OxideQQuickWebViewPrivate::OnExecuteScriptFinished,
+                 d->GetWeakPtr()));
 }
 
 void OxideQQuickWebView::goBack() {
