@@ -58,7 +58,7 @@ class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
   BrowserProcessMain();
   ~BrowserProcessMain();
 
-  static BrowserProcessMain* GetInstance();
+  static scoped_refptr<BrowserProcessMain> GetInstance();
 
   static void Create();
   bool Init();

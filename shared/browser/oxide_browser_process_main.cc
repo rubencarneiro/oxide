@@ -32,19 +32,24 @@ BrowserProcessMain* g_process;
 }
 
 // static
-BrowserProcessMain* BrowserProcessMain::GetInstance() {
+scoped_refptr<BrowserProcessMain> BrowserProcessMain::GetInstance() {
   if (!g_process) {
     Create();
   }
 
-  return g_process;
+  return scoped_refptr<BrowserProcessMain>(g_process);
 }
 
 // static
 void BrowserProcessMain::Create() {
-  scoped_refptr<BrowserProcessMain> tmp = new BrowserProcessMain();
-  if (tmp->Init()) {
-    tmp->AddRef();
+  // This is a bit weird. We don't want to add a reference here, else
+  // we leak (because GetInstance increases the ref count). However,
+  // we can't simply delete the object if initialization fails
+  // (you have to use Release() for that, which means we need to first
+  // AddRef())
+  BrowserProcessMain* tmp = new BrowserProcessMain();
+  if (!tmp->Init()) {
+    scoped_refptr<BrowserProcessMain> reaper(tmp);
   }
 }
 
