@@ -26,6 +26,11 @@ void MessagePump::SetupRunLoop() {
   run_loop_->BeforeRun();
 }
 
+void MessagePump::Stop() {
+  run_loop_->AfterRun();
+  run_loop_.reset();
+}
+
 MessagePump::MessagePump() {}
 
 MessagePump::~MessagePump() {}

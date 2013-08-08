@@ -26,23 +26,9 @@
 #include "oxide_content_browser_client.h"
 #include "oxide_message_pump.h"
 
-
 namespace oxide {
 
 namespace {
-
-class MessageLoopForUI FINAL : public base::MessageLoop {
- public:
-  static MessageLoopForUI* current() {
-    MessageLoop* loop = base::MessageLoop::current();
-    DCHECK_EQ(loop->type(), base::MessageLoop::TYPE_UI);
-    return static_cast<MessageLoopForUI *>(loop);
-  }
-
-  void Start() {
-    static_cast<MessagePump *>(pump_.get())->Start(this);
-  }
-};
 
 base::MessagePump* CreateMessagePumpForUI() {
   return ContentClient::GetInstance()->browser()->

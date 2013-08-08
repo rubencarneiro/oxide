@@ -20,6 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/message_loop.h"
 #include "base/message_loop/message_pump.h"
 
 namespace base {
@@ -35,6 +36,8 @@ class MessagePump : public base::MessagePump {
 
   virtual void Start(Delegate* delegate) = 0;
 
+  void Stop();
+
  protected:
   void SetupRunLoop();
 
@@ -42,6 +45,23 @@ class MessagePump : public base::MessagePump {
   scoped_ptr<base::RunLoop> run_loop_;
 
   DISALLOW_COPY_AND_ASSIGN(MessagePump);
+};
+
+class MessageLoopForUI FINAL : public base::MessageLoop {
+ public:
+  static MessageLoopForUI* current() {
+    MessageLoop* loop = base::MessageLoop::current();
+    DCHECK_EQ(loop->type(), base::MessageLoop::TYPE_UI);
+    return static_cast<MessageLoopForUI *>(loop);
+  }
+
+  void Start() {
+    static_cast<MessagePump *>(pump_.get())->Start(this);
+  }
+
+  void Stop() {
+    static_cast<MessagePump *>(pump_.get())->Stop();
+  }
 };
 
 } // namespace oxide

@@ -24,6 +24,7 @@
 #include "shared/common/oxide_content_main_delegate.h"
 
 #include "oxide_io_thread_delegate.h"
+#include "oxide_message_pump.h"
 
 namespace oxide {
 
@@ -108,6 +109,7 @@ BrowserProcessMain::BrowserProcessMain() {
 BrowserProcessMain::~BrowserProcessMain() {
   DCHECK_EQ(g_process, this);
 
+  MessageLoopForUI::current()->Stop();
   main_runner_->Shutdown();
 
   g_process = NULL;
