@@ -17,12 +17,13 @@
 
 #include "oxide_content_browser_client.h"
 
+#include <vector>
+
 #include "base/logging.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
-#include "oxide_global_settings.h"
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
@@ -47,7 +48,7 @@ ContentBrowserClient::OverrideCreateWebContentsView(
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
     content::BrowserContext* browser_context,
     content::ProtocolHandlerMap* protocol_handlers) {
-  return BrowserContext::FromContentBrowserContext(
+  return BrowserContext::FromContent(
       browser_context)->CreateRequestContext(protocol_handlers);
 }
 
@@ -65,20 +66,23 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
 
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
-  return GlobalSettings::GetAcceptLangs();
+  return BrowserContext::FromContent(browser_context)->GetAcceptLangs();
 }
 
 void ContentBrowserClient::ResourceDispatcherHostCreated() {
-  BrowserContext* default_context = BrowserContext::GetInstance();
-  if (default_context) {
-    content::ResourceDispatcherHostImpl* rdhi =
-        content::ResourceDispatcherHostImpl::Get();
-    rdhi->AddResourceContext(default_context->GetResourceContext());
+  std::vector<BrowserContext *>* contexts = BrowserContext::GetAllContexts();
+  if (!contexts) {
+    return;
+  }
 
-    BrowserContext* otr_context = default_context->GetOffTheRecordContext();
-    if (otr_context != default_context) {
-      rdhi->AddResourceContext(otr_context->GetResourceContext());
-    }
+  content::ResourceDispatcherHostImpl* rdhi =
+      content::ResourceDispatcherHostImpl::Get();
+
+  for (std::vector<BrowserContext *>::iterator it = contexts->begin();
+       it != contexts->end(); ++it) {
+    BrowserContext* c = *it;
+
+    rdhi->AddResourceContext(c->GetResourceContext());
   }
 }
 

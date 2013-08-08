@@ -21,6 +21,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 #include "oxide_browser_context.h"
@@ -29,22 +30,55 @@ namespace oxide {
 
 class OffTheRecordBrowserContextImpl;
 
+class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
+ public:
+  BrowserContextIODataImpl();
+
+  net::SSLConfigService* ssl_config_service() const FINAL;
+  net::HttpUserAgentSettings* http_user_agent_settings() const FINAL;
+
+  base::FilePath GetPath() const FINAL;
+  bool SetPath(const base::FilePath& path) FINAL;
+  base::FilePath GetCachePath() const FINAL;
+  bool SetCachePath(const base::FilePath& cache_path) FINAL;
+
+  std::string GetAcceptLangs() const FINAL;
+  void SetAcceptLangs(const std::string& langs) FINAL;
+
+  std::string GetProduct() const FINAL;
+  void SetProduct(const std::string& product) FINAL;
+  std::string GetUserAgent() const FINAL;
+  void SetUserAgent(const std::string& user_agent) FINAL;
+
+  bool IsOffTheRecord() const FINAL;
+
+ private:
+  std::string GetProductLocked() const;
+
+  scoped_refptr<net::SSLConfigService> ssl_config_service_;
+  scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
+
+  base::FilePath path_;
+  base::FilePath cache_path_;
+
+  std::string product_;
+  std::string user_agent_;
+
+  std::string accept_langs_;
+
+  DISALLOW_COPY_AND_ASSIGN(BrowserContextIODataImpl);
+};
+
 class BrowserContextImpl FINAL : public BrowserContext {
  public:
   BrowserContext* GetOffTheRecordContext() FINAL;
-
   BrowserContext* GetOriginalContext() FINAL;
-
-  base::FilePath GetPath() FINAL;
-
-  bool IsOffTheRecord() const FINAL;
 
  private:
   friend class BrowserContext;
 
   BrowserContextImpl();
 
-  base::FilePath path_;
   scoped_ptr<OffTheRecordBrowserContextImpl> otr_context_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextImpl);

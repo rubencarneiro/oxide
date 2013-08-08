@@ -37,6 +37,9 @@
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
 #include "qt/lib/common/oxide_qt_content_main_delegate.h"
 
+#include "oxide_qquick_web_view_context.h"
+#include "oxide_qquick_web_view_context_p.h"
+
 QT_USE_NAMESPACE
 
 struct InitData {
@@ -52,10 +55,16 @@ class OxideQQuickWebViewPrivate FINAL :
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
+  ~OxideQQuickWebViewPrivate() {
+    if (context_ && owns_context_) {
+      delete context_;
+    }
+  }
+
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view) :
-      oxide::WebView(this),
-      oxide::WebContentsViewDelegate(),
       popup_menu_(NULL),
+      context_(NULL),
+      owns_context_(false),
       q_ptr(view),
       weak_factory_(this) {}
 
@@ -74,6 +83,8 @@ class OxideQQuickWebViewPrivate FINAL :
 
   QScopedPointer<InitData> init_props_;
   QQmlComponent* popup_menu_;
+  OxideQQuickWebViewContext* context_;
+  bool owns_context_;
 
  private:
   void OnURLChanged() FINAL;
@@ -201,7 +212,13 @@ void OxideQQuickWebView::componentComplete() {
 
   Q_ASSERT(d->init_props_);
 
-  d->Init(d->init_props_->incognito,
+  if (!d->context_) {
+    d->context_ = OxideQQuickWebViewContext::createForDefault();
+    d->owns_context_ = true;
+  }
+
+  d->Init(OxideQQuickWebViewContextPrivate::get(d->context_)->context(),
+          d, d->init_props_->incognito,
           gfx::Size(qRound(width()), qRound(height())));
 
   if (!d->init_props_->url.isEmpty()) {
@@ -278,6 +295,22 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
 
   d->popup_menu_ = popup_menu;
   emit popupMenuChanged();
+}
+
+OxideQQuickWebViewContext* OxideQQuickWebView::context() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->context_;
+}
+
+void OxideQQuickWebView::setContext(OxideQQuickWebViewContext* context) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->init_props_) {
+    Q_ASSERT(!d->context_);
+    d->context_ = context;
+    d->owns_context_ = false;
+  }
 }
 
 void OxideQQuickWebView::executeScript(const QString& code) {

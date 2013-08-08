@@ -26,6 +26,12 @@
 
 QT_USE_NAMESPACE
 
+class OxideQQuickWebViewContextPrivate;
+
+namespace oxide {
+class BrowserContext;
+}
+
 class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
@@ -34,9 +40,15 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   Q_PROPERTY(QString cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
 
+  Q_DECLARE_PRIVATE(OxideQQuickWebViewContext)
+
  public:
   OxideQQuickWebViewContext(QObject* parent = NULL);
+  OxideQQuickWebViewContext(oxide::BrowserContext* context,
+                            QObject* parent = NULL);
   virtual ~OxideQQuickWebViewContext();
+
+  static OxideQQuickWebViewContext* createForDefault();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -59,6 +71,9 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   void dataPathChanged();
   void cachePathChanged();
   void acceptLangsChanged();
+
+ private:
+  QScopedPointer<OxideQQuickWebViewContextPrivate> d_ptr;
 };
 
 #endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_

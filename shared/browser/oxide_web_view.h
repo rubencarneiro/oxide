@@ -42,6 +42,7 @@ class WebContents;
 
 namespace oxide {
 
+class BrowserContext;
 class WebContentsViewDelegate;
 
 // This is the main webview class
@@ -59,7 +60,6 @@ class WebView : public content::WebContentsDelegate {
 
   void GoBack();
   void GoForward();
-
   void Stop();
   void Reload();
 
@@ -79,11 +79,14 @@ class WebView : public content::WebContentsDelegate {
       const std::string& isolated_world_name,
       const ScriptExecutorHost::ExecuteScriptCallback& callback);
 
-  void SetWebContentsViewDelegate(WebContentsViewDelegate* delegate);
+  BrowserContext* GetBrowserContext() const;
 
  protected:
-  WebView(WebContentsViewDelegate* delegate);
-  bool Init(bool incognito, const gfx::Size& initial_size);
+  WebView();
+  bool Init(BrowserContext* context,
+            WebContentsViewDelegate* delegate,
+            bool incognito,
+            const gfx::Size& initial_size);
 
   content::WebContents* web_contents() const {
     return web_contents_.get();
@@ -99,10 +102,9 @@ class WebView : public content::WebContentsDelegate {
   virtual void OnCommandsUpdated();
 
   scoped_ptr<content::WebContents> web_contents_;
-  WebContentsViewDelegate* web_contents_view_delegate_;
   ScriptExecutorHost script_executor_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
+  DISALLOW_COPY_AND_ASSIGN(WebView);
 };
 
 } // namespace oxide

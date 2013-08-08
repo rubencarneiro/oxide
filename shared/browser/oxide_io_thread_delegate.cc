@@ -26,9 +26,7 @@
 #include "net/proxy/proxy_service.h"
 #include "net/url_request/url_request_throttler_manager.h"
 
-#include "oxide_http_user_agent_settings.h"
 #include "oxide_network_delegate.h"
-#include "oxide_ssl_config_service.h"
 
 namespace oxide {
 
@@ -102,8 +100,6 @@ IOThreadDelegate::Data::throttler_manager() const {
 IOThreadDelegate::IOThreadDelegate() :
     data_(NULL) {
   net_log_.reset(new net::NetLog());
-  ssl_config_service_ = new SSLConfigService();
-  http_user_agent_settings_.reset(new HttpUserAgentSettings());
 
   content::BrowserThread::SetDelegate(content::BrowserThread::IO, this);
 }

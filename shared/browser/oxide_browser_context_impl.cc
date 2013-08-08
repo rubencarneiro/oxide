@@ -18,17 +18,138 @@
 #include "oxide_browser_context_impl.h"
 
 #include "base/logging.h"
+#include "base/strings/stringprintf.h"
+#include "content/public/browser/browser_thread.h"
+#include "webkit/common/user_agent/user_agent.h"
+#include "webkit/common/user_agent/user_agent_util.h"
 
-#include "oxide_global_settings.h"
+#include "shared/common/chrome_version.h"
+#include "shared/common/oxide_content_client.h"
+
+#include "oxide_http_user_agent_settings.h"
 #include "oxide_off_the_record_browser_context_impl.h"
+#include "oxide_ssl_config_service.h"
 
 namespace oxide {
 
-BrowserContextImpl::BrowserContextImpl() :
-    path_(GlobalSettings::GetDataPath()) {
-  DCHECK(!GlobalSettings::GetDataPath().empty()) <<
-      "We shouldn't have a persistent context without a data path!";
+std::string BrowserContextIODataImpl::GetProductLocked() const {
+  if (!product_.empty()) {
+    // Avoid COW races
+    return std::string(product_.data(), product_.size());
+  }
+
+  return base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING);
 }
+
+BrowserContextIODataImpl::BrowserContextIODataImpl() :
+    ssl_config_service_(new SSLConfigService()),
+    http_user_agent_settings_(new HttpUserAgentSettings(this)) {}
+
+net::SSLConfigService*
+BrowserContextIODataImpl::ssl_config_service() const {
+  return ssl_config_service_.get();
+}
+
+net::HttpUserAgentSettings*
+BrowserContextIODataImpl::http_user_agent_settings() const {
+  return http_user_agent_settings_.get();
+}
+
+base::FilePath BrowserContextIODataImpl::GetPath() const {
+  base::AutoLock lock(lock_);
+  // Return a new FilePath with its own string buffer
+  return base::FilePath(path_.value().data());
+}
+
+bool BrowserContextIODataImpl::SetPath(const base::FilePath& path) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
+  base::AutoLock lock(lock_);
+
+  if (initialized_) {
+    LOG(ERROR) << "It's too late to set the data path";
+    return false;
+  }
+
+  path_ = path;
+  return true;
+}
+
+base::FilePath BrowserContextIODataImpl::GetCachePath() const {
+  base::AutoLock lock(lock_);
+  // Return a new FilePath with its own string buffer
+  return base::FilePath(cache_path_.value().data());
+}
+
+bool BrowserContextIODataImpl::SetCachePath(
+    const base::FilePath& cache_path) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
+  base::AutoLock lock(lock_);
+
+  if (initialized_) {
+    LOG(ERROR) << "It's too late to set the cache path";
+    return false;
+  }
+
+  cache_path_ = cache_path;
+  return true;
+}
+
+std::string BrowserContextIODataImpl::GetAcceptLangs() const {
+  base::AutoLock lock(lock_);
+  if (!accept_langs_.empty()) {
+    // Avoid COW races
+    return std::string(accept_langs_.data(), accept_langs_.size());
+  }
+
+  // FIXME: Get this from translations
+  return "en-us,en";
+}
+
+void BrowserContextIODataImpl::SetAcceptLangs(const std::string& langs) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
+  base::AutoLock lock(lock_);
+  accept_langs_ = langs;
+}
+
+std::string BrowserContextIODataImpl::GetProduct() const {
+  base::AutoLock lock(lock_);
+  return GetProductLocked();
+}
+
+void BrowserContextIODataImpl::SetProduct(const std::string& product) {
+  base::AutoLock lock(lock_);
+  product_ = product;
+}
+
+std::string BrowserContextIODataImpl::GetUserAgent() const {
+  base::AutoLock lock(lock_);
+  if (!user_agent_.empty()) {
+    // Avoid COW races
+    return std::string(user_agent_.data(), user_agent_.size());
+  }
+
+  return webkit_glue::BuildUserAgentFromProduct(GetProductLocked());
+}
+
+void BrowserContextIODataImpl::SetUserAgent(
+    const std::string& user_agent) {
+  base::AutoLock lock(lock_);
+  user_agent_ = user_agent;
+}
+
+bool BrowserContextIODataImpl::IsOffTheRecord() const {
+  if (GetPath().empty()) {
+    return true;
+  }
+
+  return false;
+}
+
+BrowserContextImpl::BrowserContextImpl() :
+    BrowserContext(new BrowserContextIODataImpl()) {}
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
   if (!otr_context_) {
@@ -40,14 +161,6 @@ BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
 
 BrowserContext* BrowserContextImpl::GetOriginalContext() {
   return this;
-}
-
-base::FilePath BrowserContextImpl::GetPath() {
-  return path_;
-}
-
-bool BrowserContextImpl::IsOffTheRecord() const {
-  return false;
 }
 
 } // namespace oxide

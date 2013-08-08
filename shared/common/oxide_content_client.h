@@ -36,8 +36,7 @@ class ContentClient : public content::ContentClient {
 
   ContentBrowserClient* browser();
 
-  virtual std::string GetProduct() const OVERRIDE;
-  virtual std::string GetUserAgent() const OVERRIDE;
+  virtual std::string GetUserAgent() const FINAL;
 
  protected:
   // Limit default constructor access to derived classes and

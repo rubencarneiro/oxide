@@ -51,9 +51,7 @@ base::MessagePump* CreateMessagePumpForUI() {
 
 } // namespace
 
-BrowserMainParts::BrowserMainParts() {
-  context_.reset(oxide::BrowserContext::Create());
-}
+BrowserMainParts::BrowserMainParts() {}
 
 void BrowserMainParts::PreEarlyInitialization() {
   base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
@@ -68,6 +66,10 @@ int BrowserMainParts::PreCreateThreads() {
 bool BrowserMainParts::MainMessageLoopRun(int* result_code) {
   MessageLoopForUI::current()->Start();
   return true;
+}
+
+void BrowserMainParts::PostDestroyThreads() {
+  BrowserContext::DestroyDefault();
 }
 
 } // namespace oxide

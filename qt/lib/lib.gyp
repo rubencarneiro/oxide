@@ -62,7 +62,8 @@
         'public/oxide_qquick_web_view.cc',
         'public/oxide_qquick_web_view.h',
         'public/oxide_qquick_web_view_context.cc',
-        'public/oxide_qquick_web_view_context.h'
+        'public/oxide_qquick_web_view_context.h',
+        'public/oxide_qquick_web_view_context_p.h'
       ],
       'variables': {
         'chromium_code': 1

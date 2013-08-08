@@ -29,8 +29,6 @@ class MessageLoop;
 
 namespace oxide {
 
-class BrowserContext;
-
 class BrowserMainParts FINAL : public content::BrowserMainParts {
  public:
   BrowserMainParts();
@@ -41,8 +39,9 @@ class BrowserMainParts FINAL : public content::BrowserMainParts {
 
   bool MainMessageLoopRun(int* result_code) FINAL;
 
+  void PostDestroyThreads() FINAL;
+
  private:
-  scoped_ptr<oxide::BrowserContext> context_;
   scoped_ptr<base::MessageLoop> main_message_loop_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);

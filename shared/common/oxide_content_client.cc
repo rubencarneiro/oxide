@@ -18,9 +18,12 @@
 #include "oxide_content_client.h"
 
 #include "base/memory/singleton.h"
+#include "base/strings/stringprintf.h"
+#include "webkit/common/user_agent/user_agent.h"
+#include "webkit/common/user_agent/user_agent_util.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
-#include "shared/browser/oxide_global_settings.h"
+#include "shared/common/chrome_version.h"
 
 namespace oxide {
 
@@ -29,12 +32,9 @@ ContentBrowserClient* ContentClient::browser() {
       content::ContentClient::browser());
 }
 
-std::string ContentClient::GetProduct() const {
-  return GlobalSettings::GetProduct();
-}
-
 std::string ContentClient::GetUserAgent() const {
-  return GlobalSettings::GetUserAgent();
+  return webkit_glue::BuildUserAgentFromProduct(
+      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
 }
 
 // static

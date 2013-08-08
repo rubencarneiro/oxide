@@ -28,12 +28,12 @@ QT_USE_NAMESPACE
 
 namespace {
 
-QObject* WebViewContextSingletonFactory(QQmlEngine* engine,
-                                        QJSEngine* script_engine) {
+QObject* DefaultWebViewContextSingletonFactory(QQmlEngine* engine,
+                                               QJSEngine* script_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(script_engine);
 
-  return new OxideQQuickWebViewContext();
+  return OxideQQuickWebViewContext::createForDefault();
 }
 
 }
@@ -46,7 +46,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide"));
 
     qmlRegisterSingletonType<OxideQQuickWebViewContext>(
-        uri, 0, 1, "WebViewContext", WebViewContextSingletonFactory);
+        uri, 0, 1, "DefaultWebViewContext", DefaultWebViewContextSingletonFactory);
+    qmlRegisterType<OxideQQuickWebViewContext>(uri, 0, 1, "WebViewContext");
     qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
   }
 };

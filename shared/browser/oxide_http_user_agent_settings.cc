@@ -20,12 +20,15 @@
 #include "content/public/common/content_client.h"
 #include "net/http/http_util.h"
 
-#include "oxide_global_settings.h"
+#include "oxide_browser_context.h"
 
 namespace oxide {
 
+HttpUserAgentSettings::HttpUserAgentSettings(BrowserContextIOData* context) :
+    context_(context) {}
+
 std::string HttpUserAgentSettings::GetAcceptLanguage() const {
-  std::string new_accept_lang_setting = GlobalSettings::GetAcceptLangs();
+  std::string new_accept_lang_setting = context_->GetAcceptLangs();
   if (new_accept_lang_setting != http_accept_language_setting_) {
     http_accept_language_setting_ = new_accept_lang_setting;
     http_accept_language_ =
@@ -37,7 +40,8 @@ std::string HttpUserAgentSettings::GetAcceptLanguage() const {
 }
 
 std::string HttpUserAgentSettings::GetUserAgent(const GURL& url) const {
-  return content::GetUserAgent(url);
+  // TODO: Add support for overrides
+  return context_->GetUserAgent();
 }
 
 } // namespace oxide

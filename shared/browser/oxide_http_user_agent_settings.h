@@ -24,15 +24,19 @@
 
 namespace oxide {
 
+class BrowserContextIOData;
+
 class HttpUserAgentSettings FINAL : public net::HttpUserAgentSettings {
  public:
-  HttpUserAgentSettings() {}
+  HttpUserAgentSettings(BrowserContextIOData* context);
 
   std::string GetAcceptLanguage() const FINAL;
 
   std::string GetUserAgent(const GURL& url) const FINAL;
 
  private:
+  BrowserContextIOData* context_;
+
   mutable std::string http_accept_language_setting_;
   mutable std::string http_accept_language_;
 

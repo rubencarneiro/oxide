@@ -59,14 +59,15 @@ void WebView::OnTitleChanged() {}
 void WebView::OnLoadingChanged() {}
 void WebView::OnCommandsUpdated() {}
 
-WebView::WebView(WebContentsViewDelegate* delegate) :
-    web_contents_view_delegate_(delegate) {
-  DCHECK(delegate) <<
-      "The implementation must supply a WebContentsViewDelegate";
-}
+WebView::WebView() {}
 
-bool WebView::Init(bool incognito, const gfx::Size& initial_size) {
+bool WebView::Init(BrowserContext* context,
+                   WebContentsViewDelegate* delegate,
+                   bool incognito,
+                   const gfx::Size& initial_size) {
   DCHECK(!web_contents_) << "Called Init() more than once";
+  DCHECK(context) << "Must supply a context";
+  DCHECK(delegate) << "Must supply a delegate";
 
   if (!BrowserProcessMain::Exists()) {
     LOG(ERROR) << "Implementation needs to start the browser components first!";
@@ -75,8 +76,8 @@ bool WebView::Init(bool incognito, const gfx::Size& initial_size) {
 
   content::WebContents::CreateParams params(
       incognito ?
-        BrowserContext::GetInstance()->GetOffTheRecordContext() :
-        BrowserContext::GetInstance());
+        context->GetOffTheRecordContext() :
+        context->GetOriginalContext());
   params.initial_size = initial_size;
   web_contents_.reset(content::WebContents::Create(params));
   if (!web_contents_) {
@@ -86,7 +87,7 @@ bool WebView::Init(bool incognito, const gfx::Size& initial_size) {
 
   web_contents_->SetDelegate(this);
   static_cast<oxide::WebContentsView *>(
-      web_contents_->GetView())->SetDelegate(web_contents_view_delegate_);
+      web_contents_->GetView())->SetDelegate(delegate);
   script_executor_.BeginObserving(web_contents_.get());
 
   return true;
@@ -164,6 +165,10 @@ void WebView::ExecuteScript(
     const ScriptExecutorHost::ExecuteScriptCallback& callback) {
   script_executor_.ExecuteScript(code, all_frames, run_at, in_main_world,
                                  isolated_world_name, callback);
+}
+
+BrowserContext* WebView::GetBrowserContext() const {
+  return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
 } // namespace oxide

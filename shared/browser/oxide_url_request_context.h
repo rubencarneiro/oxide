@@ -20,38 +20,53 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/memory/ref_counted.h"
+#include "base/memory/weak_ptr.h"
 #include "content/public/browser/content_browser_client.h"
+#include "net/url_request/url_request_context.h"
 #include "net/url_request/url_request_context_getter.h"
 
 namespace base {
 
-class FilePath;
 class SingleThreadTaskRunner;
 
 } // namespace base
 
-namespace net {
-class URLRequestContext;
-}
-
 namespace oxide {
+
+class BrowserContextIOData;
+
+class URLRequestContext : public net::URLRequestContext {
+ public:
+  virtual ~URLRequestContext() {}
+
+  base::WeakPtr<URLRequestContext> GetWeakPtr() {
+    return weak_factory_.GetWeakPtr();
+  }
+
+ protected:
+  URLRequestContext() :
+      weak_factory_(this) {}
+
+ private:
+  base::WeakPtrFactory<URLRequestContext> weak_factory_;
+
+  DISALLOW_COPY_AND_ASSIGN(URLRequestContext);
+};
 
 class URLRequestContextGetter : public net::URLRequestContextGetter {
  public:
-  static URLRequestContextGetter* Create(
+  virtual ~URLRequestContextGetter();
+
+  static URLRequestContextGetter* CreateMain(
       content::ProtocolHandlerMap* protocol_handlers,
-      base::FilePath data_path,
-      base::FilePath cache_path,
-      bool is_incognito);
+      BrowserContextIOData* context);
 
   scoped_refptr<base::SingleThreadTaskRunner> GetNetworkTaskRunner() const FINAL;
 
  protected:
   URLRequestContextGetter();
 
-  scoped_ptr<net::URLRequestContext> url_request_context_;
+  base::WeakPtr<URLRequestContext> url_request_context_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(URLRequestContextGetter);

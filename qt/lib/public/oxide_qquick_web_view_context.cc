@@ -17,59 +17,113 @@
 
 #include "oxide_qquick_web_view_context.h"
 
-#include "shared/browser/oxide_global_settings.h"
+#include "base/files/file_path.h"
+
+#include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_browser_process_handle.h"
+
+#include "oxide_qquick_web_view_context_p.h"
 
 QT_USE_NAMESPACE
 
+OxideQQuickWebViewContextPrivate::OxideQQuickWebViewContextPrivate(
+    OxideQQuickWebViewContext* q,
+    oxide::BrowserContext* context,
+    bool owns_context) :
+    q_ptr(q), context_(context), owns_context_(owns_context) {}
+
+OxideQQuickWebViewContextPrivate::~OxideQQuickWebViewContextPrivate() {
+  if (context_ && owns_context_) {
+    delete context_;
+  }
+}
+
+OxideQQuickWebViewContextPrivate* OxideQQuickWebViewContextPrivate::get(
+    OxideQQuickWebViewContext* context) {
+  return context->d_func();
+}
+
 OxideQQuickWebViewContext::OxideQQuickWebViewContext(
     QObject* parent) :
-    QObject(parent) {}
+    QObject(parent),
+    d_ptr(new OxideQQuickWebViewContextPrivate(
+              this, oxide::BrowserContext::Create(), true)) {}
+
+OxideQQuickWebViewContext::OxideQQuickWebViewContext(
+    oxide::BrowserContext* context, QObject* parent) :
+    QObject(parent),
+    d_ptr(new OxideQQuickWebViewContextPrivate(this, context, false)) {}
 
 OxideQQuickWebViewContext::~OxideQQuickWebViewContext() {}
 
+// static
+OxideQQuickWebViewContext* OxideQQuickWebViewContext::createForDefault() {
+  return new OxideQQuickWebViewContext(oxide::BrowserContext::GetDefault());
+}
+
 QString OxideQQuickWebViewContext::product() const {
-  return QString::fromStdString(oxide::GlobalSettings::GetProduct());
+  Q_D(const OxideQQuickWebViewContext);
+
+  return QString::fromStdString(d->context()->GetProduct());
 }
 
 void OxideQQuickWebViewContext::setProduct(const QString& product) {
-  oxide::GlobalSettings::SetProduct(product.toStdString());
+  Q_D(OxideQQuickWebViewContext);
+
+  d->context()->SetProduct(product.toStdString());
   emit productChanged();
 }
 
 QString OxideQQuickWebViewContext::userAgent() const {
-  return QString::fromStdString(oxide::GlobalSettings::GetUserAgent());
+  Q_D(const OxideQQuickWebViewContext);
+
+  return QString::fromStdString(d->context()->GetUserAgent());
 }
 
 void OxideQQuickWebViewContext::setUserAgent(const QString& user_agent) {
-  oxide::GlobalSettings::SetUserAgent(user_agent.toStdString());
+  Q_D(OxideQQuickWebViewContext);
+
+  d->context()->SetUserAgent(user_agent.toStdString());
   emit userAgentChanged();
 }
 
 QString OxideQQuickWebViewContext::dataPath() const {
-  return QString::fromStdString(oxide::GlobalSettings::GetDataPath());
+  Q_D(const OxideQQuickWebViewContext);
+
+  return QString::fromStdString(d->context()->GetPath().value());
 }
 
 void OxideQQuickWebViewContext::setDataPath(const QString& data_path) {
-  if (oxide::GlobalSettings::SetDataPath(data_path.toStdString())) {
+  Q_D(OxideQQuickWebViewContext);
+
+  if (d->context()->SetPath(base::FilePath(data_path.toStdString()))) {
     emit dataPathChanged();
   }
 }
 
 QString OxideQQuickWebViewContext::cachePath() const {
-  return QString::fromStdString(oxide::GlobalSettings::GetCachePath());
+  Q_D(const OxideQQuickWebViewContext);
+
+  return QString::fromStdString(d->context()->GetCachePath().value());
 }
 
 void OxideQQuickWebViewContext::setCachePath(const QString& cache_path) {
-  if (oxide::GlobalSettings::SetCachePath(cache_path.toStdString())) {
+  Q_D(OxideQQuickWebViewContext);
+
+  if (d->context()->SetCachePath(base::FilePath(cache_path.toStdString()))) {
     emit cachePathChanged();
   }
 }
 
 QString OxideQQuickWebViewContext::acceptLangs() const {
-  return QString::fromStdString(oxide::GlobalSettings::GetAcceptLangs());
+  Q_D(const OxideQQuickWebViewContext);
+
+  return QString::fromStdString(d->context()->GetAcceptLangs());
 }
 
 void OxideQQuickWebViewContext::setAcceptLangs(const QString& accept_langs) {
-  oxide::GlobalSettings::SetAcceptLangs(accept_langs.toStdString());
+  Q_D(OxideQQuickWebViewContext);
+
+  d->context()->SetAcceptLangs(accept_langs.toStdString());
   emit acceptLangsChanged();
 }

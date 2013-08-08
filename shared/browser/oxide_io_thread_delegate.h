@@ -30,11 +30,9 @@ namespace net {
 class CertVerifier;
 class HostResolver;
 class HttpAuthHandlerFactory;
-class HttpUserAgentSettings;
 class NetLog;
 class NetworkDelegate;
 class ProxyService;
-class SSLConfigService;
 class URLRequestThrottlerManager;
 
 } // namespace net
@@ -68,16 +66,8 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
     return data_->proxy_service();
   }
 
-  net::SSLConfigService* ssl_config_service() const {
-    return ssl_config_service_;
-  }
-
   net::NetworkDelegate* network_delegate() const {
     return data_->network_delegate();
-  }
-
-  net::HttpUserAgentSettings* http_user_agent_settings() const {
-    return http_user_agent_settings_.get();
   }
 
   net::URLRequestThrottlerManager* throttler_manager() const {
@@ -119,8 +109,6 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
   };
 
   scoped_ptr<net::NetLog> net_log_;
-  scoped_refptr<net::SSLConfigService> ssl_config_service_;
-  scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
 
   Data* data_;
 

@@ -95,8 +95,6 @@
         'browser/oxide_browser_process_main.h',
         'browser/oxide_content_browser_client.cc',
         'browser/oxide_content_browser_client.h',
-        'browser/oxide_global_settings.cc',
-        'browser/oxide_global_settings.h',
         'browser/oxide_http_user_agent_settings.cc',
         'browser/oxide_http_user_agent_settings.h',
         'browser/oxide_io_thread_delegate.cc',
