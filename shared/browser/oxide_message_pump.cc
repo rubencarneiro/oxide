@@ -17,6 +17,7 @@
 
 #include "oxide_message_pump.h"
 
+#include "base/logging.h"
 #include "base/run_loop.h"
 
 namespace oxide {
@@ -27,11 +28,30 @@ void MessagePump::SetupRunLoop() {
 }
 
 void MessagePump::Stop() {
+  // We just abort immediately if this triggers to prevent potentially
+  // exploitable crashes. If you hit this, it means that you're dispatching
+  // a task from the event queue without keeping a BrowserProcessHandle alive
+  // on the stack
+  CHECK_EQ(task_depth_, 0) <<
+      "Someone terminated the main browser process components whilst "
+      "dispatching a task from the event queue!";
+
   run_loop_->AfterRun();
-  run_loop_.reset();
 }
 
-MessagePump::MessagePump() {}
+void MessagePump::WillProcessTask(const base::PendingTask& pending_task) {
+  ++task_depth_;
+}
+
+void MessagePump::DidProcessTask(const base::PendingTask& pending_task) {
+  --task_depth_;
+  DCHECK(task_depth_ >= 0);
+}
+
+MessagePump::MessagePump() :
+    task_depth_(0) {
+  base::MessageLoop::current()->AddTaskObserver(this);
+}
 
 MessagePump::~MessagePump() {}
 

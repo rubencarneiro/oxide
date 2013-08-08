@@ -29,20 +29,24 @@ class RunLoop;
 
 namespace oxide {
 
-class MessagePump : public base::MessagePump {
+class MessagePump : public base::MessagePump,
+                    public base::MessageLoop::TaskObserver {
  public:
   MessagePump();
-  ~MessagePump();
+  virtual ~MessagePump();
 
   virtual void Start(Delegate* delegate) = 0;
-
   void Stop();
+
+  void WillProcessTask(const base::PendingTask& pending_task) FINAL;
+  void DidProcessTask(const base::PendingTask& pending_task) FINAL;
 
  protected:
   void SetupRunLoop();
 
  private:
   scoped_ptr<base::RunLoop> run_loop_;
+  int task_depth_;
 
   DISALLOW_COPY_AND_ASSIGN(MessagePump);
 };
