@@ -89,9 +89,9 @@ class BrowserContext : public content::BrowserContext {
     return static_cast<BrowserContext *>(context);
   }
 
-  // Get the default context. The caller does not own the result and
-  // must not destroy it. The default context will become invalid once
-  // the main browser process components have shut down
+  // Get the default browser context. The caller does not own the
+  // result and must not destroy it. The default context will become
+  // invalid once the main browser process components have shut down
   static BrowserContext* GetDefault();
   static void DestroyDefault();
 
@@ -100,7 +100,8 @@ class BrowserContext : public content::BrowserContext {
   // Create a new browser context. The caller owns this context, and
   // is responsible for destroying it when it is finished with it.
   // The caller must ensure that it outlives any other consumers (ie,
-  // WebView's)
+  // WebView's), and must ensure that it is destroyed before all
+  // BrowserProcessHandle's have been released
   static BrowserContext* Create();
 
   static std::vector<BrowserContext *>* GetAllContexts();

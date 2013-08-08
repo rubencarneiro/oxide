@@ -68,11 +68,8 @@ bool WebView::Init(BrowserContext* context,
   DCHECK(!web_contents_) << "Called Init() more than once";
   DCHECK(context) << "Must supply a context";
   DCHECK(delegate) << "Must supply a delegate";
-
-  if (!BrowserProcessMain::Exists()) {
-    LOG(ERROR) << "Implementation needs to start the browser components first!";
-    return false;
-  }
+  DCHECK(process_handle_.Available()) <<
+       "Failed to start the browser components first!";
 
   content::WebContents::CreateParams params(
       incognito ?

@@ -27,7 +27,6 @@
 #include "content/public/browser/web_contents.h"
 #include "ui/gfx/size.h"
 
-#include "shared/browser/oxide_browser_process_handle.h"
 #include "shared/browser/oxide_web_contents_view.h"
 #include "shared/browser/oxide_web_contents_view_delegate.h"
 #include "shared/browser/oxide_web_view.h"
@@ -95,7 +94,6 @@ class OxideQQuickWebViewPrivate FINAL :
   void OnExecuteScriptFinished(bool error, const std::string& error_string) {}
 
   OxideQQuickWebView* q_ptr;
-  oxide::BrowserProcessHandle process_handle_;
   base::WeakPtrFactory<OxideQQuickWebViewPrivate> weak_factory_;
 };
 

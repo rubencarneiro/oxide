@@ -25,6 +25,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/web_contents_delegate.h"
 
+#include "shared/browser/oxide_browser_process_handle.h"
 #include "shared/browser/oxide_script_executor_host.h"
 
 class GURL;
@@ -45,7 +46,9 @@ namespace oxide {
 class BrowserContext;
 class WebContentsViewDelegate;
 
-// This is the main webview class
+// This is the main webview class. Implementations should subclass
+// this. Note that this class will hold the main browser process
+// components alive
 class WebView : public content::WebContentsDelegate {
  public:
   virtual ~WebView();
@@ -101,8 +104,12 @@ class WebView : public content::WebContentsDelegate {
   virtual void OnLoadingChanged();
   virtual void OnCommandsUpdated();
 
-  scoped_ptr<content::WebContents> web_contents_;
+  // Don't mess with the ordering of this unless you know what you
+  // are doing. The WebContents needs to disappear first, and the
+  // BrowserProcessHandle must outive everything
+  BrowserProcessHandle process_handle_;
   ScriptExecutorHost script_executor_;
+  scoped_ptr<content::WebContents> web_contents_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
