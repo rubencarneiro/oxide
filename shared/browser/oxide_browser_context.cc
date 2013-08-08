@@ -182,20 +182,7 @@ class DefaultURLRequestContext FINAL : public URLRequestContext {
 class ResourceContext FINAL : public content::ResourceContext {
  public:
   ResourceContext() :
-      request_context_(NULL) {
-    if (content::ResourceDispatcherHostImpl::Get()) {
-      content::ResourceDispatcherHostImpl::Get()->AddResourceContext(this);
-    }
-  }
-
-  ~ResourceContext() {
-    content::ResourceDispatcherHostImpl* rdhi =
-        content::ResourceDispatcherHostImpl::Get();
-    if (rdhi) {
-      rdhi->CancelRequestsForContext(this);
-      rdhi->RemoveResourceContext(this);
-    }
-  }
+      request_context_(NULL) {}
 
   net::HostResolver* GetHostResolver() FINAL {
     return BrowserProcessMain::io_thread_delegate()->host_resolver();

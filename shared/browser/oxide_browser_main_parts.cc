@@ -68,7 +68,7 @@ bool BrowserMainParts::MainMessageLoopRun(int* result_code) {
   return true;
 }
 
-void BrowserMainParts::PostDestroyThreads() {
+void BrowserMainParts::PostMainMessageLoopRun() {
   BrowserContext::DestroyDefault();
 }
 

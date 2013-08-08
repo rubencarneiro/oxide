@@ -39,7 +39,7 @@ class BrowserMainParts FINAL : public content::BrowserMainParts {
 
   bool MainMessageLoopRun(int* result_code) FINAL;
 
-  void PostDestroyThreads() FINAL;
+  void PostMainMessageLoopRun() FINAL;
 
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
