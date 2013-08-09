@@ -56,7 +56,7 @@ class OxideQQuickWebViewPrivate FINAL :
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
-  ~OxideQQuickWebViewPrivate() {}
+  ~OxideQQuickWebViewPrivate();
 
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view) :
       context_(NULL),
@@ -121,6 +121,11 @@ void OxideQQuickWebViewPrivate::OnCommandsUpdated() {
   Q_Q(OxideQQuickWebView);
 
   emit q->commandsUpdated();
+}
+
+OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
+  // It's important that this goes away before our context
+  DestroyWebContents();
 }
 
 void OxideQQuickWebViewPrivate::UpdateVisibility() {

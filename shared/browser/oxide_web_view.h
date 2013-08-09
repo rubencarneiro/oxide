@@ -95,6 +95,10 @@ class WebView : public content::WebContentsDelegate {
     return web_contents_.get();
   }
 
+  void DestroyWebContents() {
+    web_contents_.reset();
+  }
+
  private:
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
