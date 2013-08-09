@@ -20,6 +20,7 @@
 #include <QPointF>
 #include <QQuickWindow>
 #include <QRectF>
+#include <QSharedPointer>
 #include <QSize>
 
 #include "base/bind.h"
@@ -94,6 +95,7 @@ class OxideQQuickWebViewPrivate FINAL :
 
   OxideQQuickWebView* q_ptr;
   scoped_ptr<InitData> init_props_;
+  QSharedPointer<OxideQQuickWebViewContext> default_context_;
   base::WeakPtrFactory<OxideQQuickWebViewPrivate> weak_factory_;
 };
 
@@ -169,7 +171,8 @@ void OxideQQuickWebViewPrivate::componentComplete() {
   Q_ASSERT(init_props_);
 
   if (!context_) {
-    context_ = OxideQQuickWebViewContext::defaultContext();
+    default_context_.reset(OxideQQuickWebViewContext::defaultContext());
+    context_ = default_context_.data();
   }
 
   Init(OxideQQuickWebViewContextPrivate::get(context_)->GetContext(),

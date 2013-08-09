@@ -36,13 +36,12 @@ class OxideQQuickWebViewContextPrivate {
   Q_DECLARE_PUBLIC(OxideQQuickWebViewContext)
 
  public:
-  OxideQQuickWebViewContextPrivate(OxideQQuickWebViewContext* q,
-                                   bool is_default);
+  OxideQQuickWebViewContextPrivate(OxideQQuickWebViewContext* q);
 
   virtual ~OxideQQuickWebViewContextPrivate();
 
   oxide::BrowserContext* context() const {
-    return weak_context_.get();
+    return context_.get();
   }
 
   oxide::BrowserContext* GetContext();
@@ -58,11 +57,7 @@ class OxideQQuickWebViewContextPrivate {
   OxideQQuickWebViewContext* q_ptr;
 
   oxide::BrowserProcessHandle process_handle_;
-
   scoped_ptr<oxide::BrowserContext> context_;
-  base::WeakPtr<oxide::BrowserContext> weak_context_;
-
-  bool is_default_;
 
   scoped_ptr<LazyInitProperties> lazy_init_props_;
 };

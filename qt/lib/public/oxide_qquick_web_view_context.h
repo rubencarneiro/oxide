@@ -45,8 +45,6 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
 
  public:
   OxideQQuickWebViewContext(QObject* parent = NULL);
-  OxideQQuickWebViewContext(bool is_default,
-                            QObject* parent = NULL);
   virtual ~OxideQQuickWebViewContext();
 
   static OxideQQuickWebViewContext* defaultContext();
@@ -74,6 +72,8 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   void acceptLangsChanged();
 
  private:
+  OxideQQuickWebViewContext(bool is_default);
+
   QScopedPointer<OxideQQuickWebViewContextPrivate> d_ptr;
 };
 

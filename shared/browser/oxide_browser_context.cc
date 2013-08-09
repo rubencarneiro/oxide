@@ -54,7 +54,6 @@ namespace oxide {
 
 namespace {
 
-BrowserContext* g_default_context;
 std::vector<BrowserContext *>* g_contexts;
 
 class DefaultURLRequestContext FINAL : public URLRequestContext {
@@ -355,8 +354,7 @@ BrowserContext::IODataHandle::~IODataHandle() {
 }
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
-    io_data_(io_data),
-    weak_factory_(this) {
+    io_data_(io_data) {
   if (!g_contexts) {
     g_contexts = new std::vector<BrowserContext *>();
   }
@@ -367,9 +365,6 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
 }
 
 BrowserContext::~BrowserContext() {
-  CHECK_NE(this, g_default_context) <<
-      "A consumer deleted the default BrowserContext";
-
   std::vector<BrowserContext *>& contexts = *g_contexts;
 
   std::vector<BrowserContext *>::iterator it;
@@ -388,41 +383,6 @@ BrowserContext::~BrowserContext() {
 }
 
 // static
-base::WeakPtr<BrowserContext> BrowserContext::GetDefault() {
-  if (g_default_context) {
-    return g_default_context->GetWeakPtr();
-  }
-
-  return base::WeakPtr<BrowserContext>();
-}
-
-// static
-void BrowserContext::DestroyDefault() {
-  if (!g_default_context) {
-    return;
-  }
-
-  BrowserContext* tmp = g_default_context;
-  g_default_context = NULL;
-  delete tmp;
-}
-
-bool BrowserContext::IsDefault() {
-  return GetOriginalContext() == g_default_context ||
-      GetOffTheRecordContext() == g_default_context;
-}
-
-// static
-base::WeakPtr<BrowserContext> BrowserContext::CreateDefault(
-    const base::FilePath& path,
-    const base::FilePath& cache_path) {
-  CHECK(!g_default_context);
-
-  g_default_context = new BrowserContextImpl(path, cache_path);
-  return g_default_context->GetWeakPtr();
-}
-
-// static
 BrowserContext* BrowserContext::Create(const base::FilePath& path,
                                        const base::FilePath& cache_path) {
   return new BrowserContextImpl(path, cache_path);
@@ -431,10 +391,6 @@ BrowserContext* BrowserContext::Create(const base::FilePath& path,
 // static
 std::vector<BrowserContext *>* BrowserContext::GetAllContexts() {
   return g_contexts;
-}
-
-base::WeakPtr<BrowserContext> BrowserContext::GetWeakPtr() {
-  return weak_factory_.GetWeakPtr();
 }
 
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
@@ -544,6 +500,5 @@ content::GeolocationPermissionContext*
 quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
   return NULL;
 }
-
 
 } // namespace oxide

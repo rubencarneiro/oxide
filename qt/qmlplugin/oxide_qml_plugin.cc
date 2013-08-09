@@ -16,6 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <QObject>
+#include <QSharedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -71,35 +72,35 @@ class OxideQQuickDefaultWebViewContext : public QObject {
   void acceptLangsChangedListener();
 
  private:
-  OxideQQuickWebViewContext* context_;
+  QSharedPointer<OxideQQuickWebViewContext> context_;
 };
 
 OxideQQuickDefaultWebViewContext::OxideQQuickDefaultWebViewContext(
     QObject* parent) :
     QObject(parent),
     context_(OxideQQuickWebViewContext::defaultContext()) {
-  QObject::connect(context_, SIGNAL(productChanged()),
+  QObject::connect(context_.data(), SIGNAL(productChanged()),
                    this, SLOT(productChangedListener()));
-  QObject::connect(context_, SIGNAL(userAgentChanged()),
+  QObject::connect(context_.data(), SIGNAL(userAgentChanged()),
                    this, SLOT(userAgentChangedListener()));
-  QObject::connect(context_, SIGNAL(dataPathChanged()),
+  QObject::connect(context_.data(), SIGNAL(dataPathChanged()),
                    this, SLOT(dataPathChangedListener()));
-  QObject::connect(context_, SIGNAL(cachePathChanged()),
+  QObject::connect(context_.data(), SIGNAL(cachePathChanged()),
                    this, SLOT(cachePathChangedListener()));
-  QObject::connect(context_, SIGNAL(acceptLangsChanged()),
+  QObject::connect(context_.data(), SIGNAL(acceptLangsChanged()),
                    this, SLOT(acceptLangsChangedListener()));
 }
 
 OxideQQuickDefaultWebViewContext::~OxideQQuickDefaultWebViewContext() {
-  QObject::disconnect(context_, SIGNAL(productChanged()),
+  QObject::disconnect(context_.data(), SIGNAL(productChanged()),
                       this, SLOT(productChangedListener()));
-  QObject::disconnect(context_, SIGNAL(userAgentChanged()),
+  QObject::disconnect(context_.data(), SIGNAL(userAgentChanged()),
                       this, SLOT(userAgentChangedListener()));
-  QObject::disconnect(context_, SIGNAL(dataPathChanged()),
+  QObject::disconnect(context_.data(), SIGNAL(dataPathChanged()),
                       this, SLOT(dataPathChangedListener()));
-  QObject::disconnect(context_, SIGNAL(cachePathChanged()),
+  QObject::disconnect(context_.data(), SIGNAL(cachePathChanged()),
                       this, SLOT(cachePathChangedListener()));
-  QObject::disconnect(context_, SIGNAL(acceptLangsChanged()),
+  QObject::disconnect(context_.data(), SIGNAL(acceptLangsChanged()),
                       this, SLOT(acceptLangsChangedListener()));
 }
 

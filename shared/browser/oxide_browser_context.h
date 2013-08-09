@@ -24,7 +24,6 @@
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/weak_ptr.h"
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
@@ -88,17 +87,6 @@ class BrowserContext : public content::BrowserContext {
     return static_cast<BrowserContext *>(context);
   }
 
-  // Return a weak pointer to the default context if it has been
-  // created
-  static base::WeakPtr<BrowserContext> GetDefault();
-  static void DestroyDefault();
-
-  bool IsDefault();
-
-  static base::WeakPtr<BrowserContext> CreateDefault(
-      const base::FilePath& path,
-      const base::FilePath& cache_path);
-
   // Create a new browser context. The caller owns this context, and
   // is responsible for destroying it when it is finished with it.
   // The caller must ensure that it outlives any other consumers (ie,
@@ -108,8 +96,6 @@ class BrowserContext : public content::BrowserContext {
                                 const base::FilePath& cache_path);
 
   static std::vector<BrowserContext *>* GetAllContexts();
-
-  base::WeakPtr<BrowserContext> GetWeakPtr();
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers);
@@ -203,7 +189,6 @@ class BrowserContext : public content::BrowserContext {
 
   IODataHandle io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
-  base::WeakPtrFactory<BrowserContext> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

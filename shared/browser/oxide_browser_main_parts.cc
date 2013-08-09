@@ -21,7 +21,6 @@
 
 #include "shared/common/oxide_content_client.h"
 
-#include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_message_pump.h"
@@ -52,10 +51,6 @@ int BrowserMainParts::PreCreateThreads() {
 bool BrowserMainParts::MainMessageLoopRun(int* result_code) {
   MessageLoopForUI::current()->Start();
   return true;
-}
-
-void BrowserMainParts::PostMainMessageLoopRun() {
-  BrowserContext::DestroyDefault();
 }
 
 } // namespace oxide
