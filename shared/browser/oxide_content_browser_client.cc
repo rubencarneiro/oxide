@@ -70,16 +70,13 @@ std::string ContentBrowserClient::GetAcceptLangs(
 }
 
 void ContentBrowserClient::ResourceDispatcherHostCreated() {
-  std::vector<BrowserContext *>* contexts = BrowserContext::GetAllContexts();
-  if (!contexts) {
-    return;
-  }
+  std::vector<BrowserContext *>& contexts = BrowserContext::GetAllContexts();
 
   content::ResourceDispatcherHostImpl* rdhi =
       content::ResourceDispatcherHostImpl::Get();
 
-  for (std::vector<BrowserContext *>::iterator it = contexts->begin();
-       it != contexts->end(); ++it) {
+  for (std::vector<BrowserContext *>::iterator it = contexts.begin();
+       it != contexts.end(); ++it) {
     BrowserContext* c = *it;
 
     rdhi->AddResourceContext(c->GetResourceContext());

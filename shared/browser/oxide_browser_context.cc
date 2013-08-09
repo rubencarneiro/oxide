@@ -54,8 +54,6 @@ namespace oxide {
 
 namespace {
 
-std::vector<BrowserContext *>* g_contexts;
-
 class DefaultURLRequestContext FINAL : public URLRequestContext {
  public:
   DefaultURLRequestContext() :
@@ -352,30 +350,20 @@ BrowserContext::IODataHandle::~IODataHandle() {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
-  if (!g_contexts) {
-    g_contexts = new std::vector<BrowserContext *>();
-  }
 
-  g_contexts->push_back(this);
+  GetAllContexts().push_back(this);
 
   content::BrowserContext::EnsureResourceContextInitialized(this);
 }
 
 BrowserContext::~BrowserContext() {
-  std::vector<BrowserContext *>& contexts = *g_contexts;
-
   std::vector<BrowserContext *>::iterator it;
-  for (std::vector<BrowserContext *>::iterator it = contexts.begin();
-       it != contexts.end(); ++it) {
+  for (std::vector<BrowserContext *>::iterator it = GetAllContexts().begin();
+       it != GetAllContexts().end(); ++it) {
     if (*it == this) {
-      contexts.erase(it);
+      GetAllContexts().erase(it);
       break;
     }
-  }
-
-  if (contexts.size() == 0) {
-    delete g_contexts;
-    g_contexts = NULL;
   }
 }
 
@@ -386,7 +374,9 @@ BrowserContext* BrowserContext::Create(const base::FilePath& path,
 }
 
 // static
-std::vector<BrowserContext *>* BrowserContext::GetAllContexts() {
+std::vector<BrowserContext *>& BrowserContext::GetAllContexts() {
+  static std::vector<BrowserContext *> g_contexts;
+
   return g_contexts;
 }
 

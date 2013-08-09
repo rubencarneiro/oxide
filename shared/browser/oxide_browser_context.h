@@ -95,7 +95,7 @@ class BrowserContext : public content::BrowserContext {
   static BrowserContext* Create(const base::FilePath& path,
                                 const base::FilePath& cache_path);
 
-  static std::vector<BrowserContext *>* GetAllContexts();
+  static std::vector<BrowserContext *>& GetAllContexts();
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers);
