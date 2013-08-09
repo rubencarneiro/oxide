@@ -40,6 +40,7 @@ namespace oxide {
 class ResourceContext;
 class URLRequestContext;
 class URLRequestContextGetter;
+class WebView;
 
 class BrowserContextIOData {
  public:
@@ -119,6 +120,9 @@ class BrowserContext : public content::BrowserContext {
 
   BrowserContextIOData* io_data() const { return io_data_.io_data(); }
 
+  void AddWebView(WebView* wv);
+  void RemoveWebView(WebView* wv);
+
   virtual net::URLRequestContextGetter* GetRequestContext() OVERRIDE;
   virtual net::URLRequestContextGetter* GetRequestContextForRenderProcess(
       int renderer_child_id) OVERRIDE;
@@ -189,6 +193,7 @@ class BrowserContext : public content::BrowserContext {
 
   IODataHandle io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
+  std::vector<WebView *> web_views_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

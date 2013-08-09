@@ -357,6 +357,8 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
 }
 
 BrowserContext::~BrowserContext() {
+  CHECK_EQ(web_views_.size(), static_cast<size_t>(0));
+
   std::vector<BrowserContext *>::iterator it;
   for (std::vector<BrowserContext *>::iterator it = GetAllContexts().begin();
        it != GetAllContexts().end(); ++it) {
@@ -425,6 +427,21 @@ std::string BrowserContext::GetUserAgent() const {
 
 void BrowserContext::SetUserAgent(const std::string& user_agent) {
   io_data_.SetUserAgent(user_agent);
+}
+
+void BrowserContext::AddWebView(WebView* wv) {
+  web_views_.push_back(wv);
+}
+
+void BrowserContext::RemoveWebView(WebView* wv) {
+  std::vector<WebView *>::iterator it;
+  for (std::vector<WebView *>::iterator it = web_views_.begin();
+       it != web_views_.end(); ++it) {
+    if (*it == wv) {
+      web_views_.erase(it);
+      break;
+    }
+  }
 }
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {

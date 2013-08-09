@@ -71,6 +71,8 @@ bool WebView::Init(BrowserContext* context,
   DCHECK(process_handle_.Available()) <<
        "Failed to start the browser components first!";
 
+  context->AddWebView(this);
+
   content::WebContents::CreateParams params(
       incognito ?
         context->GetOffTheRecordContext() :
@@ -90,8 +92,14 @@ bool WebView::Init(BrowserContext* context,
   return true;
 }
 
+void WebView::DestroyWebContents() {
+  GetBrowserContext()->RemoveWebView(this);
+  web_contents_.reset();
+}
+
 WebView::~WebView() {
   if (web_contents_) {
+    GetBrowserContext()->RemoveWebView(this);
     web_contents_->SetDelegate(NULL);
   }
 }
