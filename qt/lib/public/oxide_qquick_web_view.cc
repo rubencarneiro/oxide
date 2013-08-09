@@ -171,6 +171,12 @@ void OxideQQuickWebViewPrivate::componentComplete() {
   Q_ASSERT(init_props_);
 
   if (!context_) {
+    // Ok, we handle the default context a bit differently. If our context
+    // comes from setContext(), then we don't hold a strong reference to it
+    // because it will be owned by someone else in the QML object
+    // hierarchy. However, the default context is not in this hierarchy and
+    // has no QObject parent, so we use reference counting for it instead to
+    // ensure that it is freed once all webviews are closed
     default_context_.reset(OxideQQuickWebViewContext::defaultContext());
     context_ = default_context_.data();
   }
