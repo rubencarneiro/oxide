@@ -22,6 +22,7 @@
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
+#include <QUrl>
 
 #include "shared/common/oxide_export.h"
 
@@ -37,8 +38,8 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
-  Q_PROPERTY(QString dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
-  Q_PROPERTY(QString cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
+  Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
+  Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebViewContext)
@@ -55,11 +56,11 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   QString userAgent() const;
   void setUserAgent(const QString& user_agent);
 
-  QString dataPath() const;
-  void setDataPath(const QString& data_path);
+  QUrl dataPath() const;
+  void setDataPath(const QUrl& data_url);
 
-  QString cachePath() const;
-  void setCachePath(const QString& cache_path);
+  QUrl cachePath() const;
+  void setCachePath(const QUrl& cache_url);
 
   QString acceptLangs() const;
   void setAcceptLangs(const QString& accept_langs);

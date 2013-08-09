@@ -34,8 +34,8 @@ class OxideQQuickDefaultWebViewContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
-  Q_PROPERTY(QString dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
-  Q_PROPERTY(QString cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
+  Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
+  Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
 
  public:
@@ -48,11 +48,11 @@ class OxideQQuickDefaultWebViewContext : public QObject {
   QString userAgent() const;
   void setUserAgent(const QString& user_agent);
 
-  QString dataPath() const;
-  void setDataPath(const QString& data_path);
+  QUrl dataPath() const;
+  void setDataPath(const QUrl& data_path);
 
-  QString cachePath() const;
-  void setCachePath(const QString& cache_path);
+  QUrl cachePath() const;
+  void setCachePath(const QUrl& cache_path);
 
   QString acceptLangs() const;
   void setAcceptLangs(const QString& accept_langs);
@@ -121,21 +121,21 @@ void OxideQQuickDefaultWebViewContext::setUserAgent(
   context_->setUserAgent(user_agent);
 }
 
-QString OxideQQuickDefaultWebViewContext::dataPath() const {
+QUrl OxideQQuickDefaultWebViewContext::dataPath() const {
   return context_->dataPath();
 }
 
 void OxideQQuickDefaultWebViewContext::setDataPath(
-    const QString& data_path) {
+    const QUrl& data_path) {
   context_->setDataPath(data_path);
 }
 
-QString OxideQQuickDefaultWebViewContext::cachePath() const {
+QUrl OxideQQuickDefaultWebViewContext::cachePath() const {
   return context_->cachePath();
 }
 
 void OxideQQuickDefaultWebViewContext::setCachePath(
-    const QString& cache_path) {
+    const QUrl& cache_path) {
   context_->setCachePath(cache_path);
 }
 

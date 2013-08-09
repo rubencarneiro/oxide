@@ -147,40 +147,54 @@ void OxideQQuickWebViewContext::setUserAgent(const QString& user_agent) {
   emit userAgentChanged();
 }
 
-QString OxideQQuickWebViewContext::dataPath() const {
+QUrl OxideQQuickWebViewContext::dataPath() const {
   Q_D(const OxideQQuickWebViewContext);
 
   if (d->context()) {
-    return QString::fromStdString(d->context()->GetPath().value());
+    return QUrl::fromLocalFile(
+        QString::fromStdString(d->context()->GetPath().value()));
   }
 
-  return QString::fromStdString(d->lazy_init_props()->data_path.value());
+  return QUrl::fromLocalFile(
+      QString::fromStdString(d->lazy_init_props()->data_path.value()));
 }
 
-void OxideQQuickWebViewContext::setDataPath(const QString& data_path) {
+void OxideQQuickWebViewContext::setDataPath(const QUrl& data_url) {
   Q_D(OxideQQuickWebViewContext);
 
   if (!d->context()) {
-    d->lazy_init_props()->data_path = base::FilePath(data_path.toStdString());
+    if (!data_url.isLocalFile()) {
+      return;
+    }
+    d->lazy_init_props()->data_path =
+        base::FilePath(data_url.toLocalFile().toStdString());
+
     emit dataPathChanged();
   } 
 }
 
-QString OxideQQuickWebViewContext::cachePath() const {
+QUrl OxideQQuickWebViewContext::cachePath() const {
   Q_D(const OxideQQuickWebViewContext);
 
   if (d->context()) {
-    return QString::fromStdString(d->context()->GetCachePath().value());
+    return QUrl::fromLocalFile(
+        QString::fromStdString(d->context()->GetCachePath().value()));
   }
 
-  return QString::fromStdString(d->lazy_init_props()->cache_path.value());
+  return QUrl::fromLocalFile(
+      QString::fromStdString(d->lazy_init_props()->cache_path.value()));
 }
 
-void OxideQQuickWebViewContext::setCachePath(const QString& cache_path) {
+void OxideQQuickWebViewContext::setCachePath(const QUrl& cache_url) {
   Q_D(OxideQQuickWebViewContext);
 
   if (!d->context()) {
-    d->lazy_init_props()->cache_path = base::FilePath(cache_path.toStdString());
+    if (!cache_url.isLocalFile()) {
+      return;
+    }
+    d->lazy_init_props()->cache_path =
+        base::FilePath(cache_url.toLocalFile().toStdString());
+
     emit cachePathChanged();
   }
 }
