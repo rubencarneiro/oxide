@@ -32,15 +32,14 @@ class OffTheRecordBrowserContextImpl;
 
 class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
  public:
-  BrowserContextIODataImpl();
+  BrowserContextIODataImpl(const base::FilePath& path,
+                           const base::FilePath& cache_path);
 
   net::SSLConfigService* ssl_config_service() const FINAL;
   net::HttpUserAgentSettings* http_user_agent_settings() const FINAL;
 
   base::FilePath GetPath() const FINAL;
-  bool SetPath(const base::FilePath& path) FINAL;
   base::FilePath GetCachePath() const FINAL;
-  bool SetCachePath(const base::FilePath& cache_path) FINAL;
 
   std::string GetAcceptLangs() const FINAL;
   void SetAcceptLangs(const std::string& langs) FINAL;
@@ -77,7 +76,8 @@ class BrowserContextImpl FINAL : public BrowserContext {
  private:
   friend class BrowserContext;
 
-  BrowserContextImpl();
+  BrowserContextImpl(const base::FilePath& path,
+                     const base::FilePath& cache_path);
 
   scoped_ptr<OffTheRecordBrowserContextImpl> otr_context_;
 

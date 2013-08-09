@@ -355,7 +355,8 @@ BrowserContext::IODataHandle::~IODataHandle() {
 }
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
-    io_data_(io_data) {
+    io_data_(io_data),
+    weak_factory_(this) {
   if (!g_contexts) {
     g_contexts = new std::vector<BrowserContext *>();
   }
@@ -386,6 +387,56 @@ BrowserContext::~BrowserContext() {
   }
 }
 
+// static
+base::WeakPtr<BrowserContext> BrowserContext::GetDefault() {
+  if (g_default_context) {
+    return g_default_context->GetWeakPtr();
+  }
+
+  return base::WeakPtr<BrowserContext>();
+}
+
+// static
+void BrowserContext::DestroyDefault() {
+  if (!g_default_context) {
+    return;
+  }
+
+  BrowserContext* tmp = g_default_context;
+  g_default_context = NULL;
+  delete tmp;
+}
+
+bool BrowserContext::IsDefault() {
+  return GetOriginalContext() == g_default_context ||
+      GetOffTheRecordContext() == g_default_context;
+}
+
+// static
+base::WeakPtr<BrowserContext> BrowserContext::CreateDefault(
+    const base::FilePath& path,
+    const base::FilePath& cache_path) {
+  CHECK(!g_default_context);
+
+  g_default_context = new BrowserContextImpl(path, cache_path);
+  return g_default_context->GetWeakPtr();
+}
+
+// static
+BrowserContext* BrowserContext::Create(const base::FilePath& path,
+                                       const base::FilePath& cache_path) {
+  return new BrowserContextImpl(path, cache_path);
+}
+
+// static
+std::vector<BrowserContext *>* BrowserContext::GetAllContexts() {
+  return g_contexts;
+}
+
+base::WeakPtr<BrowserContext> BrowserContext::GetWeakPtr() {
+  return weak_factory_.GetWeakPtr();
+}
+
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
     content::ProtocolHandlerMap* protocol_handlers) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
@@ -405,16 +456,8 @@ base::FilePath BrowserContext::GetPath() {
   return io_data_.GetPath();
 }
 
-bool BrowserContext::SetPath(const base::FilePath& path) {
-  return io_data_.SetPath(path);
-}
-
 base::FilePath BrowserContext::GetCachePath() {
   return io_data_.GetCachePath();
-}
-
-bool BrowserContext::SetCachePath(const base::FilePath& cache_path) {
-  return io_data_.SetCachePath(cache_path);
 }
 
 std::string BrowserContext::GetAcceptLangs() const {
@@ -502,40 +545,5 @@ quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
   return NULL;
 }
 
-// static
-BrowserContext* BrowserContext::GetDefault() {
-  if (!g_default_context) {
-    g_default_context = new BrowserContextImpl();
-  }
-
-  return g_default_context;
-}
-
-
-// static
-void BrowserContext::DestroyDefault() {
-  if (!g_default_context) {
-    return;
-  }
-
-  BrowserContext* tmp = g_default_context;
-  g_default_context = NULL;
-  delete tmp;
-}
-
-bool BrowserContext::IsDefault() {
-  return GetOriginalContext() == g_default_context ||
-      GetOffTheRecordContext() == g_default_context;
-}
-
-// static
-BrowserContext* BrowserContext::Create() {
-  return new BrowserContextImpl();
-}
-
-// static
-std::vector<BrowserContext *>* BrowserContext::GetAllContexts() {
-  return g_contexts;
-}
 
 } // namespace oxide

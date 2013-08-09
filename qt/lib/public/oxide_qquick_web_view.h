@@ -55,7 +55,6 @@ class OXIDE_EXPORT OxideQQuickWebView : public QQuickItem {
   OxideQQuickWebView(QQuickItem* parent = NULL);
   virtual ~OxideQQuickWebView();
 
-  void classBegin();
   void componentComplete();
 
   QUrl url() const;

@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QString>
 #include <QtGlobal>
+#include <QtQml>
 
 #include "shared/common/oxide_export.h"
 
@@ -44,11 +45,11 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
 
  public:
   OxideQQuickWebViewContext(QObject* parent = NULL);
-  OxideQQuickWebViewContext(oxide::BrowserContext* context,
+  OxideQQuickWebViewContext(bool is_default,
                             QObject* parent = NULL);
   virtual ~OxideQQuickWebViewContext();
 
-  static OxideQQuickWebViewContext* createForDefault();
+  static OxideQQuickWebViewContext* defaultContext();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -75,5 +76,7 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
  private:
   QScopedPointer<OxideQQuickWebViewContextPrivate> d_ptr;
 };
+
+QML_DECLARE_TYPE(OxideQQuickWebViewContext)
 
 #endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_

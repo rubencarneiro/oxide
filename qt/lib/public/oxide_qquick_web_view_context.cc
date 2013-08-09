@@ -17,25 +17,68 @@
 
 #include "oxide_qquick_web_view_context.h"
 
+#include <QCoreApplication>
+#include <string>
+
 #include "base/files/file_path.h"
 
 #include "shared/browser/oxide_browser_context.h"
-#include "shared/browser/oxide_browser_process_handle.h"
 
 #include "oxide_qquick_web_view_context_p.h"
 
 QT_USE_NAMESPACE
 
+namespace {
+OxideQQuickWebViewContext* g_default_context;
+}
+
+struct LazyInitProperties {
+  std::string product;
+  std::string user_agent;
+  base::FilePath data_path;
+  base::FilePath cache_path;
+  std::string accept_langs;
+};
+
 OxideQQuickWebViewContextPrivate::OxideQQuickWebViewContextPrivate(
     OxideQQuickWebViewContext* q,
-    oxide::BrowserContext* context,
-    bool owns_context) :
-    q_ptr(q), context_(context), owns_context_(owns_context) {}
+    bool is_default) :
+    q_ptr(q), is_default_(is_default),
+    lazy_init_props_(new LazyInitProperties()) {}
 
-OxideQQuickWebViewContextPrivate::~OxideQQuickWebViewContextPrivate() {
-  if (context_ && owns_context_) {
-    delete context_;
+OxideQQuickWebViewContextPrivate::~OxideQQuickWebViewContextPrivate() {}
+
+oxide::BrowserContext* OxideQQuickWebViewContextPrivate::GetContext() {
+  if (weak_context_) {
+    return weak_context_.get();
   }
+
+  Q_ASSERT(lazy_init_props_);
+
+  if (is_default_) {
+    weak_context_ = oxide::BrowserContext::CreateDefault(
+        lazy_init_props_->data_path,
+        lazy_init_props_->cache_path);
+  } else {
+    context_.reset(oxide::BrowserContext::Create(
+        lazy_init_props_->data_path,
+        lazy_init_props_->cache_path));
+    weak_context_ = context_->GetWeakPtr();
+  }
+
+  if (!lazy_init_props_->product.empty()) {
+    weak_context_->SetProduct(lazy_init_props_->product);
+  }
+  if (!lazy_init_props_->user_agent.empty()) {
+    weak_context_->SetUserAgent(lazy_init_props_->user_agent);
+  }
+  if (!lazy_init_props_->accept_langs.empty()) {
+    weak_context_->SetAcceptLangs(lazy_init_props_->accept_langs);
+  }
+
+  lazy_init_props_.reset();
+
+  return weak_context_.get();
 }
 
 OxideQQuickWebViewContextPrivate* OxideQQuickWebViewContextPrivate::get(
@@ -43,26 +86,41 @@ OxideQQuickWebViewContextPrivate* OxideQQuickWebViewContextPrivate::get(
   return context->d_func();
 }
 
-OxideQQuickWebViewContext::OxideQQuickWebViewContext(
-    QObject* parent) :
+OxideQQuickWebViewContext::OxideQQuickWebViewContext(QObject* parent) :
     QObject(parent),
-    d_ptr(new OxideQQuickWebViewContextPrivate(
-              this, oxide::BrowserContext::Create(), true)) {}
+    d_ptr(new OxideQQuickWebViewContextPrivate(this, false)) {}
 
-OxideQQuickWebViewContext::OxideQQuickWebViewContext(
-    oxide::BrowserContext* context, QObject* parent) :
+OxideQQuickWebViewContext::OxideQQuickWebViewContext(bool is_default,
+                                                     QObject* parent) :
     QObject(parent),
-    d_ptr(new OxideQQuickWebViewContextPrivate(this, context, false)) {}
+    d_ptr(new OxideQQuickWebViewContextPrivate(this, is_default)) {
+  if (is_default) {
+    Q_ASSERT(!g_default_context);
+    g_default_context = this;
+  }
+}
 
-OxideQQuickWebViewContext::~OxideQQuickWebViewContext() {}
+OxideQQuickWebViewContext::~OxideQQuickWebViewContext() {
+  if (g_default_context == this) {
+    g_default_context = NULL;
+  }
+}
 
 // static
-OxideQQuickWebViewContext* OxideQQuickWebViewContext::createForDefault() {
-  return new OxideQQuickWebViewContext(oxide::BrowserContext::GetDefault());
+OxideQQuickWebViewContext* OxideQQuickWebViewContext::defaultContext() {
+  if (g_default_context) {
+    return g_default_context;
+  }
+
+  return new OxideQQuickWebViewContext(true, QCoreApplication::instance());
 }
 
 QString OxideQQuickWebViewContext::product() const {
   Q_D(const OxideQQuickWebViewContext);
+
+  if (d->lazy_init_props()) {
+    return QString::fromStdString(d->lazy_init_props()->product);
+  }
 
   return QString::fromStdString(d->context()->GetProduct());
 }
@@ -70,12 +128,21 @@ QString OxideQQuickWebViewContext::product() const {
 void OxideQQuickWebViewContext::setProduct(const QString& product) {
   Q_D(OxideQQuickWebViewContext);
 
-  d->context()->SetProduct(product.toStdString());
+  if (d->lazy_init_props()) {
+    d->lazy_init_props()->product = product.toStdString();
+  } else {
+    d->context()->SetProduct(product.toStdString());
+  }
+
   emit productChanged();
 }
 
 QString OxideQQuickWebViewContext::userAgent() const {
   Q_D(const OxideQQuickWebViewContext);
+
+  if (d->lazy_init_props()) {
+    return QString::fromStdString(d->lazy_init_props()->user_agent);
+  }
 
   return QString::fromStdString(d->context()->GetUserAgent());
 }
@@ -83,12 +150,21 @@ QString OxideQQuickWebViewContext::userAgent() const {
 void OxideQQuickWebViewContext::setUserAgent(const QString& user_agent) {
   Q_D(OxideQQuickWebViewContext);
 
-  d->context()->SetUserAgent(user_agent.toStdString());
+  if (d->lazy_init_props()) {
+    d->lazy_init_props()->user_agent = user_agent.toStdString();
+  } else {
+    d->context()->SetUserAgent(user_agent.toStdString());
+  }
+
   emit userAgentChanged();
 }
 
 QString OxideQQuickWebViewContext::dataPath() const {
   Q_D(const OxideQQuickWebViewContext);
+
+  if (d->lazy_init_props()) {
+    return QString::fromStdString(d->lazy_init_props()->data_path.value());
+  }
 
   return QString::fromStdString(d->context()->GetPath().value());
 }
@@ -96,7 +172,8 @@ QString OxideQQuickWebViewContext::dataPath() const {
 void OxideQQuickWebViewContext::setDataPath(const QString& data_path) {
   Q_D(OxideQQuickWebViewContext);
 
-  if (d->context()->SetPath(base::FilePath(data_path.toStdString()))) {
+  if (d->lazy_init_props()) {
+    d->lazy_init_props()->data_path = base::FilePath(data_path.toStdString());
     emit dataPathChanged();
   }
 }
@@ -104,13 +181,18 @@ void OxideQQuickWebViewContext::setDataPath(const QString& data_path) {
 QString OxideQQuickWebViewContext::cachePath() const {
   Q_D(const OxideQQuickWebViewContext);
 
+  if (d->lazy_init_props()) {
+    return QString::fromStdString(d->lazy_init_props()->cache_path.value());
+  }
+
   return QString::fromStdString(d->context()->GetCachePath().value());
 }
 
 void OxideQQuickWebViewContext::setCachePath(const QString& cache_path) {
   Q_D(OxideQQuickWebViewContext);
 
-  if (d->context()->SetCachePath(base::FilePath(cache_path.toStdString()))) {
+  if (d->lazy_init_props()) {
+    d->lazy_init_props()->cache_path = base::FilePath(cache_path.toStdString());
     emit cachePathChanged();
   }
 }
@@ -118,12 +200,21 @@ void OxideQQuickWebViewContext::setCachePath(const QString& cache_path) {
 QString OxideQQuickWebViewContext::acceptLangs() const {
   Q_D(const OxideQQuickWebViewContext);
 
+  if (d->lazy_init_props()) {
+    return QString::fromStdString(d->lazy_init_props()->accept_langs);
+  }
+
   return QString::fromStdString(d->context()->GetAcceptLangs());
 }
 
 void OxideQQuickWebViewContext::setAcceptLangs(const QString& accept_langs) {
   Q_D(OxideQQuickWebViewContext);
 
-  d->context()->SetAcceptLangs(accept_langs.toStdString());
+  if (d->lazy_init_props()) {
+    d->lazy_init_props()->accept_langs = accept_langs.toStdString();
+  } else {
+    d->context()->SetAcceptLangs(accept_langs.toStdString());
+  }
+
   emit acceptLangsChanged();
 }

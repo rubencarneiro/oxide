@@ -23,6 +23,7 @@
 #include <QSize>
 
 #include "base/bind.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/web_contents.h"
 #include "ui/gfx/size.h"
@@ -54,17 +55,13 @@ class OxideQQuickWebViewPrivate FINAL :
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
-  ~OxideQQuickWebViewPrivate() {
-    if (context_ && owns_context_) {
-      delete context_;
-    }
-  }
+  ~OxideQQuickWebViewPrivate() {}
 
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view) :
-      popup_menu_(NULL),
       context_(NULL),
-      owns_context_(false),
+      popup_menu_(NULL),
       q_ptr(view),
+      init_props_(new InitData()),
       weak_factory_(this) {}
 
   void UpdateVisibility();
@@ -80,10 +77,12 @@ class OxideQQuickWebViewPrivate FINAL :
     return weak_factory_.GetWeakPtr();
   }
 
-  QScopedPointer<InitData> init_props_;
-  QQmlComponent* popup_menu_;
+  void componentComplete();
+
+  InitData* init_props() const { return init_props_.get(); }
+
   OxideQQuickWebViewContext* context_;
-  bool owns_context_;
+  QQmlComponent* popup_menu_;
 
  private:
   void OnURLChanged() FINAL;
@@ -94,6 +93,7 @@ class OxideQQuickWebViewPrivate FINAL :
   void OnExecuteScriptFinished(bool error, const std::string& error_string) {}
 
   OxideQQuickWebView* q_ptr;
+  scoped_ptr<InitData> init_props_;
   base::WeakPtrFactory<OxideQQuickWebViewPrivate> weak_factory_;
 };
 
@@ -163,6 +163,28 @@ oxide::WebPopupMenu* OxideQQuickWebViewPrivate::CreatePopupMenu() {
   return new oxide::qt::WebPopupMenuQQuick(q, web_contents());
 }
 
+void OxideQQuickWebViewPrivate::componentComplete() {
+  Q_Q(OxideQQuickWebView);
+
+  Q_ASSERT(init_props_);
+
+  if (!context_) {
+    context_ = OxideQQuickWebViewContext::defaultContext();
+  }
+
+  Init(OxideQQuickWebViewContextPrivate::get(context_)->GetContext(),
+       this, init_props_->incognito,
+       gfx::Size(qRound(q->width()), qRound(q->height())));
+
+  if (!init_props_->url.isEmpty()) {
+    SetURL(GURL(init_props_->url.toString().toStdString()));
+  }
+
+  init_props_.reset();
+
+  UpdateVisibility();
+}
+
 void OxideQQuickWebView::visibilityChangedListener() {
   Q_D(OxideQQuickWebView);
 
@@ -180,7 +202,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
     item->setSize(newGeometry.size());
   }
 
-  if (!d->init_props_) {
+  if (d->web_contents()) {
     d->UpdateSize(gfx::Size(qRound(width()), qRound(height())));
   }
 }
@@ -197,35 +219,12 @@ OxideQQuickWebView::~OxideQQuickWebView() {
                       this, SLOT(visibilityChangedListener()));
 }
 
-void OxideQQuickWebView::classBegin() {
-  Q_D(OxideQQuickWebView);
-
-  Q_ASSERT(!d->init_props_);
-
-  d->init_props_.reset(new InitData());
-}
-
 void OxideQQuickWebView::componentComplete() {
   Q_D(OxideQQuickWebView);
 
-  Q_ASSERT(d->init_props_);
+  QQuickItem::componentComplete();
 
-  if (!d->context_) {
-    d->context_ = OxideQQuickWebViewContext::createForDefault();
-    d->owns_context_ = true;
-  }
-
-  d->Init(OxideQQuickWebViewContextPrivate::get(d->context_)->context(),
-          d, d->init_props_->incognito,
-          gfx::Size(qRound(width()), qRound(height())));
-
-  if (!d->init_props_->url.isEmpty()) {
-    d->SetURL(GURL(d->init_props_->url.toString().toStdString()));
-  }
-
-  d->init_props_.reset();
-
-  d->UpdateVisibility();
+  d->componentComplete();
 }
 
 QUrl OxideQQuickWebView::url() const {
@@ -237,8 +236,8 @@ QUrl OxideQQuickWebView::url() const {
 void OxideQQuickWebView::setUrl(const QUrl& url) {
   Q_D(OxideQQuickWebView);
 
-  if (d->init_props_) {
-    d->init_props_->url = url;
+  if (d->init_props()) {
+    d->init_props()->url = url;
   } else {
     d->SetURL(GURL(url.toString().toStdString()));
   }
@@ -271,8 +270,8 @@ bool OxideQQuickWebView::incognito() const {
 void OxideQQuickWebView::setIncognito(bool incognito) {
   Q_D(OxideQQuickWebView);
 
-  if (d->init_props_) {
-    d->init_props_->incognito = incognito;
+  if (d->init_props()) {
+    d->init_props()->incognito = incognito;
   }
 }
 
@@ -304,10 +303,9 @@ OxideQQuickWebViewContext* OxideQQuickWebView::context() const {
 void OxideQQuickWebView::setContext(OxideQQuickWebViewContext* context) {
   Q_D(OxideQQuickWebView);
 
-  if (d->init_props_) {
+  if (!d->web_contents()) {
     Q_ASSERT(!d->context_);
     d->context_ = context;
-    d->owns_context_ = false;
   }
 }
 

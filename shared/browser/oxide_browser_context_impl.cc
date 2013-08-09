@@ -41,9 +41,13 @@ std::string BrowserContextIODataImpl::GetProductLocked() const {
   return base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING);
 }
 
-BrowserContextIODataImpl::BrowserContextIODataImpl() :
+BrowserContextIODataImpl::BrowserContextIODataImpl(
+    const base::FilePath& path,
+    const base::FilePath& cache_path) :
     ssl_config_service_(new SSLConfigService()),
-    http_user_agent_settings_(new HttpUserAgentSettings(this)) {}
+    http_user_agent_settings_(new HttpUserAgentSettings(this)),
+    path_(path),
+    cache_path_(cache_path) {}
 
 net::SSLConfigService*
 BrowserContextIODataImpl::ssl_config_service() const {
@@ -56,44 +60,15 @@ BrowserContextIODataImpl::http_user_agent_settings() const {
 }
 
 base::FilePath BrowserContextIODataImpl::GetPath() const {
-  base::AutoLock lock(lock_);
-  // Return a new FilePath with its own string buffer
-  return base::FilePath(path_.value().data());
-}
-
-bool BrowserContextIODataImpl::SetPath(const base::FilePath& path) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-
-  base::AutoLock lock(lock_);
-
-  if (initialized_) {
-    LOG(ERROR) << "It's too late to set the data path";
-    return false;
-  }
-
-  path_ = path;
-  return true;
+  return path_;
 }
 
 base::FilePath BrowserContextIODataImpl::GetCachePath() const {
-  base::AutoLock lock(lock_);
-  // Return a new FilePath with its own string buffer
-  return base::FilePath(cache_path_.value().data());
-}
-
-bool BrowserContextIODataImpl::SetCachePath(
-    const base::FilePath& cache_path) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-
-  base::AutoLock lock(lock_);
-
-  if (initialized_) {
-    LOG(ERROR) << "It's too late to set the cache path";
-    return false;
+  if (cache_path_.empty()) {
+    return GetPath();
   }
 
-  cache_path_ = cache_path;
-  return true;
+  return cache_path_;
 }
 
 std::string BrowserContextIODataImpl::GetAcceptLangs() const {
@@ -148,8 +123,9 @@ bool BrowserContextIODataImpl::IsOffTheRecord() const {
   return false;
 }
 
-BrowserContextImpl::BrowserContextImpl() :
-    BrowserContext(new BrowserContextIODataImpl()) {}
+BrowserContextImpl::BrowserContextImpl(const base::FilePath& path,
+                                       const base::FilePath& cache_path) :
+    BrowserContext(new BrowserContextIODataImpl(path, cache_path)) {}
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
   if (!otr_context_) {

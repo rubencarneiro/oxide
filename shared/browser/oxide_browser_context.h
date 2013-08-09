@@ -24,6 +24,7 @@
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/weak_ptr.h"
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
@@ -49,9 +50,7 @@ class BrowserContextIOData {
   virtual net::HttpUserAgentSettings* http_user_agent_settings() const = 0;
 
   virtual base::FilePath GetPath() const = 0;
-  virtual bool SetPath(const base::FilePath& path) = 0;
   virtual base::FilePath GetCachePath() const = 0;
-  virtual bool SetCachePath(const base::FilePath& cache_path) = 0;
 
   virtual std::string GetAcceptLangs() const = 0;
   virtual void SetAcceptLangs(const std::string& langs) = 0;
@@ -89,22 +88,28 @@ class BrowserContext : public content::BrowserContext {
     return static_cast<BrowserContext *>(context);
   }
 
-  // Get the default browser context. The caller does not own the
-  // result and must not destroy it. The default context will become
-  // invalid once the main browser process components have shut down
-  static BrowserContext* GetDefault();
+  // Return a weak pointer to the default context if it has been
+  // created
+  static base::WeakPtr<BrowserContext> GetDefault();
   static void DestroyDefault();
 
   bool IsDefault();
+
+  static base::WeakPtr<BrowserContext> CreateDefault(
+      const base::FilePath& path,
+      const base::FilePath& cache_path);
 
   // Create a new browser context. The caller owns this context, and
   // is responsible for destroying it when it is finished with it.
   // The caller must ensure that it outlives any other consumers (ie,
   // WebView's), and must ensure that it is destroyed before all
   // BrowserProcessHandle's have been released
-  static BrowserContext* Create();
+  static BrowserContext* Create(const base::FilePath& path,
+                                const base::FilePath& cache_path);
 
   static std::vector<BrowserContext *>* GetAllContexts();
+
+  base::WeakPtr<BrowserContext> GetWeakPtr();
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers);
@@ -115,9 +120,7 @@ class BrowserContext : public content::BrowserContext {
   bool IsOffTheRecord() const FINAL;
 
   base::FilePath GetPath() FINAL;
-  bool SetPath(const base::FilePath& path);
   base::FilePath GetCachePath();
-  bool SetCachePath(const base::FilePath& path);
 
   std::string GetAcceptLangs() const;
   void SetAcceptLangs(const std::string& langs);
@@ -173,13 +176,7 @@ class BrowserContext : public content::BrowserContext {
     bool IsOffTheRecord() const { return io_data_->IsOffTheRecord(); }
 
     base::FilePath GetPath() { return io_data_->GetPath(); }
-    bool SetPath(const base::FilePath& path) {
-      return io_data_->SetPath(path);
-    }
     base::FilePath GetCachePath() { return io_data_->GetCachePath(); }
-    bool SetCachePath(const base::FilePath& cache_path) {
-      return io_data_->SetCachePath(cache_path);
-    }
 
     std::string GetAcceptLangs() const { return io_data_->GetAcceptLangs(); }
     void SetAcceptLangs(const std::string& langs) {
@@ -206,6 +203,7 @@ class BrowserContext : public content::BrowserContext {
 
   IODataHandle io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
+  base::WeakPtrFactory<BrowserContext> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

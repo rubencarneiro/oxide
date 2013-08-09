@@ -20,12 +20,16 @@
 
 #include <QtGlobal>
 
+#include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
+
 #include "shared/browser/oxide_browser_process_handle.h"
 
 namespace oxide {
 class BrowserContext;
 }
 
+struct LazyInitProperties;
 class OxideQQuickWebViewContext;
 
 class OxideQQuickWebViewContextPrivate {
@@ -33,21 +37,34 @@ class OxideQQuickWebViewContextPrivate {
 
  public:
   OxideQQuickWebViewContextPrivate(OxideQQuickWebViewContext* q,
-                                   oxide::BrowserContext* context,
-                                   bool owns_context);
+                                   bool is_default);
 
   virtual ~OxideQQuickWebViewContextPrivate();
 
-  oxide::BrowserContext* context() const { return context_; }
+  oxide::BrowserContext* context() const {
+    return weak_context_.get();
+  }
+
+  oxide::BrowserContext* GetContext();
+
+  LazyInitProperties* lazy_init_props() const {
+    return lazy_init_props_.get();
+  }
 
   static OxideQQuickWebViewContextPrivate* get(
       OxideQQuickWebViewContext* context);
 
  private:
   OxideQQuickWebViewContext* q_ptr;
+
   oxide::BrowserProcessHandle process_handle_;
-  oxide::BrowserContext* context_;
-  bool owns_context_;
+
+  scoped_ptr<oxide::BrowserContext> context_;
+  base::WeakPtr<oxide::BrowserContext> weak_context_;
+
+  bool is_default_;
+
+  scoped_ptr<LazyInitProperties> lazy_init_props_;
 };
 
 #endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_P_H_
