@@ -213,10 +213,7 @@ void BrowserContextIOData::Init(
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
   DCHECK(!initialized_);
 
-  {
-    base::AutoLock lock(lock_);
-    initialized_ = true;
-  }
+  initialized_ = true;
 
   DefaultURLRequestContext* context = new DefaultURLRequestContext();
 
