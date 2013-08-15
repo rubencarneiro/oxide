@@ -112,13 +112,14 @@ gfx::Rect WebContentsView::GetViewBounds() const {
   return gfx::Rect();
 }
 
-void WebContentsView::ShowPopupMenu(const gfx::Rect& bounds,
-                                    int item_height,
-                                    double item_font_size,
-                                    int selected_item,
-                                    const std::vector<WebMenuItem>& items,
-                                    bool right_aligned,
-                                    bool allow_multiple_selection) {
+void WebContentsView::ShowPopupMenu(
+    const gfx::Rect& bounds,
+    int item_height,
+    double item_font_size,
+    int selected_item,
+    const std::vector<content::MenuItem>& items,
+    bool right_aligned,
+    bool allow_multiple_selection) {
   DCHECK(!active_popup_menu_);
 
   active_popup_menu_.reset(delegate_->CreatePopupMenu());

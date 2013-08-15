@@ -65,7 +65,7 @@
       'dependencies': [
         'oxide_shared_generated',
         '<(DEPTH)/base/base.gyp:base',
-        '<(DEPTH)/content/content.gyp:content_app',
+        '<(DEPTH)/content/content.gyp:content_app_both',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
         '<(DEPTH)/content/content.gyp:content_ppapi_plugin',

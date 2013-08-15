@@ -22,7 +22,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "webkit/common/webmenuitem.h"
+#include "content/public/common/menu_item.h"
 
 namespace content {
 class WebContents;
@@ -39,7 +39,7 @@ class WebPopupMenu {
   virtual ~WebPopupMenu() {}
 
   virtual void Show(const gfx::Rect& bounds,
-                    const std::vector<WebMenuItem>& items,
+                    const std::vector<content::MenuItem>& items,
                     int selected_item,
                     bool allow_multiple_selection) = 0;
 

@@ -1,10 +1,10 @@
 Index: oxide/chromium/src/base/run_loop.h
 ===================================================================
---- oxide.orig/chromium/src/base/run_loop.h	2013-06-10 16:17:02.783903380 +0100
-+++ oxide/chromium/src/base/run_loop.h	2013-07-11 12:47:06.894043366 +0100
+--- oxide.orig/chromium/src/base/run_loop.h	2013-08-15 23:56:09.175131581 +0100
++++ oxide/chromium/src/base/run_loop.h	2013-08-15 23:56:09.175131581 +0100
 @@ -10,6 +10,10 @@
  #include "base/memory/weak_ptr.h"
- #include "base/message_loop.h"
+ #include "base/message_loop/message_loop.h"
  
 +namespace oxide {
 +class MessagePump;

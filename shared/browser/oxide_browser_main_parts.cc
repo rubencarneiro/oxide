@@ -17,7 +17,7 @@
 
 #include "oxide_browser_main_parts.h"
 
-#include "base/message_loop.h"
+#include "base/message_loop/message_loop.h"
 
 #include "shared/common/oxide_content_client.h"
 

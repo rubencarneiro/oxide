@@ -104,7 +104,7 @@ WebView::~WebView() {
 }
 
 const GURL& WebView::GetURL() const {
-  return web_contents_->GetActiveURL();
+  return web_contents_->GetVisibleURL();
 }
 
 void WebView::SetURL(const GURL& url) {

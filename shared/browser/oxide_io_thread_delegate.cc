@@ -116,6 +116,8 @@ void IOThreadDelegate::Init() {
   data_ = new Data(this);
 }
 
+void IOThreadDelegate::InitAsync() {}
+
 void IOThreadDelegate::CleanUp() {
   DCHECK(data_);
 

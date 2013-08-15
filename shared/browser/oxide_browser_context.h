@@ -109,8 +109,8 @@ class BrowserContext : public content::BrowserContext {
 
   bool IsSameContext(BrowserContext* other) const;
 
-  base::FilePath GetPath() FINAL;
-  base::FilePath GetCachePath();
+  base::FilePath GetPath() const FINAL;
+  base::FilePath GetCachePath() const;
 
   std::string GetAcceptLangs() const;
   void SetAcceptLangs(const std::string& langs);
@@ -170,8 +170,8 @@ class BrowserContext : public content::BrowserContext {
 
     bool IsOffTheRecord() const { return io_data_->IsOffTheRecord(); }
 
-    base::FilePath GetPath() { return io_data_->GetPath(); }
-    base::FilePath GetCachePath() { return io_data_->GetCachePath(); }
+    base::FilePath GetPath() const { return io_data_->GetPath(); }
+    base::FilePath GetCachePath() const { return io_data_->GetCachePath(); }
 
     std::string GetAcceptLangs() const { return io_data_->GetAcceptLangs(); }
     void SetAcceptLangs(const std::string& langs) {

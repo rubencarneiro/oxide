@@ -78,6 +78,9 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
   void Init() FINAL;
 
   // Called on the IO thread
+  void InitAsync() FINAL;
+
+  // Called on the IO thread
   void CleanUp() FINAL;
 
  private:

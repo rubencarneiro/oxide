@@ -1,11 +1,11 @@
 Index: oxide/chromium/src/ipc/ipc_message_start.h
 ===================================================================
---- oxide.orig/chromium/src/ipc/ipc_message_start.h	2013-07-12 20:53:28.554487031 +0100
-+++ oxide/chromium/src/ipc/ipc_message_start.h	2013-08-01 18:35:29.358604567 +0100
-@@ -87,6 +87,7 @@
-   NaClHostMsgStart,
+--- oxide.orig/chromium/src/ipc/ipc_message_start.h	2013-08-16 00:01:30.143131939 +0100
++++ oxide/chromium/src/ipc/ipc_message_start.h	2013-08-16 00:01:30.143131939 +0100
+@@ -88,6 +88,7 @@
    WebRTCIdentityMsgStart,
-   EncodedVideoCaptureMsgStart,
+   LocalDiscoveryMsgStart,
+   PowerMonitorMsgStart,
 +  OxideMsgStart,
    LastIPCMsgStart      // Must come last.
  };

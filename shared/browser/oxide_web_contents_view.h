@@ -77,7 +77,7 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
                      int item_height,
                      double item_font_size,
                      int selected_item,
-                     const std::vector<WebMenuItem>& items,
+                     const std::vector<content::MenuItem>& items,
                      bool right_aligned,
                      bool allow_multiple_selection) FINAL;
   void PopupDone();

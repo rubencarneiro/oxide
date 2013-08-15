@@ -42,7 +42,7 @@ class WebPopupMenuQQuick FINAL : public oxide::WebPopupMenu {
                      content::WebContents* web_contents);
 
   void Show(const gfx::Rect& bounds,
-            const std::vector<WebMenuItem>& items,
+            const std::vector<content::MenuItem>& items,
             int selected_item,
             bool allow_multiple_selection) FINAL;
 

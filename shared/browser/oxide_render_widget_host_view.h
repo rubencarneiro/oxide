@@ -43,7 +43,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
 
   void MovePluginWindows(
       const gfx::Vector2d& scroll_offset,
-      const std::vector<webkit::npapi::WebPluginGeometry>& moves) FINAL;
+      const std::vector<content::WebPluginGeometry>& moves) FINAL;
 
   virtual void Blur() OVERRIDE;
 

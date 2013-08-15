@@ -108,7 +108,7 @@ class DefaultURLRequestContext FINAL : public URLRequestContext {
     void set_http_server_properties(
         net::HttpServerProperties* http_server_properties) {
       http_server_properties_.reset(http_server_properties);
-      owner_->set_http_server_properties(http_server_properties);
+      owner_->set_http_server_properties(http_server_properties->GetWeakPtr());
     }
 
     void set_http_user_agent_settings(
@@ -188,6 +188,14 @@ class ResourceContext FINAL : public content::ResourceContext {
   net::URLRequestContext* GetRequestContext() FINAL {
     CHECK(request_context_);
     return request_context_;
+  }
+
+  bool AllowMicAccess(const GURL& origin) FINAL {
+    return false;
+  }
+
+  bool AllowCameraAccess(const GURL& origin) FINAL {
+    return false;
   }
 
  private:
@@ -402,11 +410,11 @@ bool BrowserContext::IsSameContext(BrowserContext* other) const {
          other->GetOffTheRecordContext() == this;
 }
 
-base::FilePath BrowserContext::GetPath() {
+base::FilePath BrowserContext::GetPath() const {
   return io_data_.GetPath();
 }
 
-base::FilePath BrowserContext::GetCachePath() {
+base::FilePath BrowserContext::GetCachePath() const {
   return io_data_.GetCachePath();
 }
 

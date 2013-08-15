@@ -44,7 +44,7 @@ class PopupListModel : public QAbstractListModel {
 
  public:
   virtual ~PopupListModel() {}
-  PopupListModel(const std::vector<WebMenuItem>& items,
+  PopupListModel(const std::vector<content::MenuItem>& items,
                  int selected_item,
                  bool allow_multiple_selection);
 
@@ -67,15 +67,15 @@ class PopupListModel : public QAbstractListModel {
   };
 
   struct Item {
-    Item(const WebMenuItem& item, int index,
+    Item(const content::MenuItem& item, int index,
          const std::string& group, bool add_check) :
         label(QString::fromStdString(base::UTF16ToUTF8(item.label))),
-        tooltip(QString::fromStdString(base::UTF16ToUTF8(item.toolTip))),
+        tooltip(QString::fromStdString(base::UTF16ToUTF8(item.tool_tip))),
         group(QString::fromStdString(group)),
         index(index),
         enabled(item.enabled),
         checked(item.checked || add_check),
-        separator(item.type == WebMenuItem::SEPARATOR) {}
+        separator(item.type == content::MenuItem::SEPARATOR) {}
 
     QString label;
     QString tooltip;
@@ -93,7 +93,7 @@ class PopupListModel : public QAbstractListModel {
 };
 
 PopupListModel::PopupListModel(
-    const std::vector<WebMenuItem>& items,
+    const std::vector<content::MenuItem>& items,
     int selected_item,
     bool allow_multiple_selection) :
     allow_multi_select_(allow_multiple_selection),
@@ -116,8 +116,8 @@ PopupListModel::PopupListModel(
 
   int j = 0;
   for (int i = 0; i < static_cast<int>(items.size()); ++i) {
-    const WebMenuItem& item = items[i];
-    if (item.type == WebMenuItem::GROUP) {
+    const content::MenuItem& item = items[i];
+    if (item.type == content::MenuItem::GROUP) {
       current_group = base::UTF16ToUTF8(item.label);
       continue;
     }
@@ -231,7 +231,7 @@ class PopupMenuContext : public QObject {
   virtual ~PopupMenuContext() {}
   PopupMenuContext(WebPopupMenuQQuick* popup_menu,
                    const gfx::Rect& bounds,
-                   const std::vector<WebMenuItem>& items,
+                   const std::vector<content::MenuItem>& items,
                    int selected_item,
                    bool allow_multiple_selection);
 
@@ -250,7 +250,7 @@ class PopupMenuContext : public QObject {
 
 PopupMenuContext::PopupMenuContext(WebPopupMenuQQuick* popup_menu,
                                    const gfx::Rect& bounds,
-                                   const std::vector<WebMenuItem>& items,
+                                   const std::vector<content::MenuItem>& items,
                                    int selected_item,
                                    bool allow_multiple_selection) :
     popup_menu_(popup_menu),
@@ -278,7 +278,7 @@ WebPopupMenuQQuick::WebPopupMenuQQuick(OxideQQuickWebView* view,
 }
 
 void WebPopupMenuQQuick::Show(const gfx::Rect& bounds,
-                              const std::vector<WebMenuItem>& items,
+                              const std::vector<content::MenuItem>& items,
                               int selected_item,
                               bool allow_multiple_selection) {
   QQmlComponent* component = view_->popupMenu();

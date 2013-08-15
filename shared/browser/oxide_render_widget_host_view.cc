@@ -72,7 +72,7 @@ void RenderWidgetHostView::WasHidden() {
 
 void RenderWidgetHostView::MovePluginWindows(
     const gfx::Vector2d& scroll_offset,
-    const std::vector<webkit::npapi::WebPluginGeometry>& moves) {}
+    const std::vector<content::WebPluginGeometry>& moves) {}
 
 void RenderWidgetHostView::Blur() {}
 
