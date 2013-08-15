@@ -62,6 +62,22 @@ ContentMainDelegate::~ContentMainDelegate() {}
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
 
+  CommandLine* command_line = CommandLine::ForCurrentProcess();
+
+  std::string process_type =
+      command_line->GetSwitchValueASCII(switches::kProcessType);
+  if (process_type.empty()) {
+    const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
+    if (renderer_cmd_prefix) {
+      command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
+                                      renderer_cmd_prefix);
+    }
+
+    if (getenv("OXIDE_NO_SANDBOX")) {
+      command_line->AppendSwitch(switches::kNoSandbox);
+    }
+  }
+
   return false;
 }
 
