@@ -19,6 +19,7 @@
 #define _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_
 
 #include <QObject>
+#include <QQmlListProperty>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -28,11 +29,8 @@
 
 QT_USE_NAMESPACE
 
+class OxideQQuickUserScript;
 class OxideQQuickWebViewContextPrivate;
-
-namespace oxide {
-class BrowserContext;
-}
 
 class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   Q_OBJECT
@@ -41,6 +39,7 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebViewContext)
 
@@ -65,12 +64,17 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public QObject {
   QString acceptLangs() const;
   void setAcceptLangs(const QString& accept_langs);
 
+  QQmlListProperty<OxideQQuickUserScript> userScripts();
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
   void dataPathChanged();
   void cachePathChanged();
   void acceptLangsChanged();
+
+ private Q_SLOTS:
+  void scriptUpdated();
 
  private:
   OxideQQuickWebViewContext(bool is_default);

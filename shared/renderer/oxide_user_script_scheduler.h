@@ -15,41 +15,38 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
-#define _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
+#ifndef _OXIDE_SHARED_RENDERER_USER_SCRIPT_SCHEDULER_H_
+#define _OXIDE_SHARED_RENDERER_USER_SCRIPT_SCHEDULER_H
 
-#include <string>
+#include <set>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "content/public/common/content_client.h"
-
-template <typename Type> struct DefaultSingletonTraits;
+#include "base/memory/weak_ptr.h"
+#include "content/public/renderer/render_view_observer.h"
 
 namespace oxide {
 
-class ContentBrowserClient;
-class ContentRendererClient;
-
-class ContentClient : public content::ContentClient {
+class UserScriptScheduler FINAL : public content::RenderViewObserver {
  public:
-  static ContentClient* GetInstance();
+  UserScriptScheduler(content::RenderView* render_view);
 
-  ContentBrowserClient* browser();
-  ContentRendererClient* renderer();
+  void DidFinishDocumentLoad(WebKit::WebFrame* frame) FINAL;
+  void DidFinishLoad(WebKit::WebFrame* frame) FINAL;
+  void DidCreateDocumentElement(WebKit::WebFrame* frame) FINAL;
 
-  virtual std::string GetUserAgent() const FINAL;
-
- protected:
-  // Limit default constructor access to derived classes and
-  // our lazy instance initializer
-  friend struct DefaultSingletonTraits<ContentClient>;
-  ContentClient() {}
+  void FrameDetached(WebKit::WebFrame* frame) FINAL;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(ContentClient);
+  void DoIdleInject();
+
+  bool idle_posted_;
+  std::set<WebKit::WebFrame *> pending_idle_frames_;
+  base::WeakPtrFactory<UserScriptScheduler> weak_factory_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(UserScriptScheduler);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
+#endif // _OXIDE_SHARED_RENDERER_USER_SCRIPT_SCHEDULER_H

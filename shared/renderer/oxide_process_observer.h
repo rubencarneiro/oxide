@@ -15,26 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_content_renderer_client.h"
+#ifndef _OXIDE_SHARED_RENDERER_PROCESS_OBSERVER_H_
+#define _OXIDE_SHARED_RENDERER_PROCESS_OBSERVER_H_
 
-#include "oxide_process_observer.h"
-#include "oxide_user_script_scheduler.h"
-#include "oxide_user_script_slave.h"
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "content/public/renderer/render_process_observer.h"
 
 namespace oxide {
 
-ContentRendererClient::ContentRendererClient() {}
+class ProcessObserver FINAL : public content::RenderProcessObserver {
+ public:
+  ProcessObserver();
 
-ContentRendererClient::~ContentRendererClient() {}
+  bool OnControlMessageReceived(const IPC::Message& message) FINAL;
 
-void ContentRendererClient::RenderThreadStarted() {
-  process_observer_.reset(new ProcessObserver());
-  user_script_slave_.reset(new UserScriptSlave());
-}
+  void OnRenderProcessShutdown() FINAL;
 
-void ContentRendererClient::RenderViewCreated(
-    content::RenderView* render_view) {
-  new UserScriptScheduler(render_view);
-}
+  static bool IsOffTheRecord();
+
+ private:
+  void OnSetIsIncognitoProcess(bool incognito);
+
+  DISALLOW_COPY_AND_ASSIGN(ProcessObserver);
+};
 
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_RENDERER_PROCESS_OBSERVER_H_

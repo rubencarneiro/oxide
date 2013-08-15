@@ -323,17 +323,6 @@ void OxideQQuickWebView::setContext(OxideQQuickWebViewContext* context) {
   }
 }
 
-void OxideQQuickWebView::executeScript(const QString& code) {
-  Q_D(OxideQQuickWebView);
-
-  // FIXME: Handle errors
-  d->ExecuteScript(
-      code.toStdString(), false, oxide::UserScript::DOCUMENT_IDLE,
-      false, std::string(),
-      base::Bind(&OxideQQuickWebViewPrivate::OnExecuteScriptFinished,
-                 d->GetWeakPtr()));
-}
-
 void OxideQQuickWebView::goBack() {
   Q_D(OxideQQuickWebView);
 

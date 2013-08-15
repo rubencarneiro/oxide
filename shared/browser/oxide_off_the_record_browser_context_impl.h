@@ -62,6 +62,8 @@ class OffTheRecordBrowserContextImpl FINAL : public BrowserContext {
   BrowserContext* GetOffTheRecordContext() FINAL;
   BrowserContext* GetOriginalContext() FINAL;
 
+  UserScriptMaster& UserScriptManager() FINAL;
+
  private:
   friend class BrowserContext;
   friend class BrowserContextImpl;

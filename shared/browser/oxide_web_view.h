@@ -26,7 +26,6 @@
 #include "content/public/browser/web_contents_delegate.h"
 
 #include "shared/browser/oxide_browser_process_handle.h"
-#include "shared/browser/oxide_script_executor_host.h"
 
 class GURL;
 
@@ -74,14 +73,6 @@ class WebView : public content::WebContentsDelegate {
   void Shown();
   void Hidden();
 
-  void ExecuteScript(
-      const std::string& code,
-      bool all_frames,
-      int run_at,
-      bool in_main_world,
-      const std::string& isolated_world_name,
-      const ScriptExecutorHost::ExecuteScriptCallback& callback);
-
   BrowserContext* GetBrowserContext() const;
 
  protected:
@@ -110,7 +101,6 @@ class WebView : public content::WebContentsDelegate {
   // are doing. The WebContents needs to disappear first, and the
   // BrowserProcessHandle must outive everything
   BrowserProcessHandle process_handle_;
-  ScriptExecutorHost script_executor_;
   scoped_ptr<content::WebContents> web_contents_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

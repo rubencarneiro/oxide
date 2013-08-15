@@ -111,4 +111,8 @@ BrowserContext* OffTheRecordBrowserContextImpl::GetOriginalContext() {
   return original_context_;
 }
 
+UserScriptMaster& OffTheRecordBrowserContextImpl::UserScriptManager() {
+  return original_context_->UserScriptManager();
+}
+
 } // namespace oxide

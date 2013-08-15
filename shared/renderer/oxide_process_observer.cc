@@ -15,26 +15,44 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_content_renderer_client.h"
-
 #include "oxide_process_observer.h"
-#include "oxide_user_script_scheduler.h"
-#include "oxide_user_script_slave.h"
+
+#include "content/public/renderer/render_thread.h"
+#include "ipc/ipc_message_macros.h"
+
+#include "shared/common/oxide_messages.h"
 
 namespace oxide {
 
-ContentRendererClient::ContentRendererClient() {}
-
-ContentRendererClient::~ContentRendererClient() {}
-
-void ContentRendererClient::RenderThreadStarted() {
-  process_observer_.reset(new ProcessObserver());
-  user_script_slave_.reset(new UserScriptSlave());
+namespace {
+bool g_is_off_the_record = true;
 }
 
-void ContentRendererClient::RenderViewCreated(
-    content::RenderView* render_view) {
-  new UserScriptScheduler(render_view);
+void ProcessObserver::OnSetIsIncognitoProcess(bool incognito) {
+  g_is_off_the_record = incognito;
+}
+
+ProcessObserver::ProcessObserver() {
+  content::RenderThread::Get()->AddObserver(this);
+}
+
+bool ProcessObserver::OnControlMessageReceived(const IPC::Message& message) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(ProcessObserver, message)
+    IPC_MESSAGE_HANDLER(OxideMsg_SetIsIncognitoProcess, OnSetIsIncognitoProcess)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
+
+void ProcessObserver::OnRenderProcessShutdown() {
+  content::RenderThread::Get()->RemoveObserver(this);
+}
+
+// static
+bool ProcessObserver::IsOffTheRecord() {
+  return g_is_off_the_record;
 }
 
 } // namespace oxide

@@ -20,17 +20,31 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 #include "content/public/renderer/content_renderer_client.h"
 
 namespace oxide {
 
+class ProcessObserver;
+class UserScriptSlave;
+
 class ContentRendererClient FINAL : public content::ContentRendererClient {
  public:
-  ContentRendererClient() {}
+  ContentRendererClient();
+  ~ContentRendererClient();
+
+  UserScriptSlave* user_script_slave() const {
+    return user_script_slave_.get();
+  }
+
+  void RenderThreadStarted() FINAL;
 
   void RenderViewCreated(content::RenderView* render_view) FINAL;
 
  private:
+  scoped_ptr<ProcessObserver> process_observer_;
+  scoped_ptr<UserScriptSlave> user_script_slave_;
+
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };
 

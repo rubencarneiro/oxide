@@ -397,6 +397,11 @@ bool BrowserContext::IsOffTheRecord() const {
   return io_data_.IsOffTheRecord();
 }
 
+bool BrowserContext::IsSameContext(BrowserContext* other) const {
+  return other->GetOriginalContext() == this ||
+         other->GetOffTheRecordContext() == this;
+}
+
 base::FilePath BrowserContext::GetPath() {
   return io_data_.GetPath();
 }

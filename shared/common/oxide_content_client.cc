@@ -24,12 +24,18 @@
 
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/chrome_version.h"
+#include "shared/renderer/oxide_content_renderer_client.h"
 
 namespace oxide {
 
 ContentBrowserClient* ContentClient::browser() {
   return static_cast<ContentBrowserClient *>(
       content::ContentClient::browser());
+}
+
+ContentRendererClient* ContentClient::renderer() {
+  return static_cast<ContentRendererClient *>(
+      content::ContentClient::renderer());
 }
 
 std::string ContentClient::GetUserAgent() const {

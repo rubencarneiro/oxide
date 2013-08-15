@@ -87,7 +87,6 @@ bool WebView::Init(BrowserContext* context,
   web_contents_->SetDelegate(this);
   static_cast<oxide::WebContentsView *>(
       web_contents_->GetView())->SetDelegate(delegate);
-  script_executor_.BeginObserving(web_contents_.get());
 
   return true;
 }
@@ -159,17 +158,6 @@ void WebView::Shown() {
 
 void WebView::Hidden() {
   web_contents_->WasHidden();
-}
-
-void WebView::ExecuteScript(
-    const std::string& code,
-    bool all_frames,
-    int run_at,
-    bool in_main_world,
-    const std::string& isolated_world_name,
-    const ScriptExecutorHost::ExecuteScriptCallback& callback) {
-  script_executor_.ExecuteScript(code, all_frames, run_at, in_main_world,
-                                 isolated_world_name, callback);
 }
 
 BrowserContext* WebView::GetBrowserContext() const {

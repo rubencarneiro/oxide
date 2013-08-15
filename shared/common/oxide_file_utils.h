@@ -15,26 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_content_renderer_client.h"
+#ifndef _OXIDE_SHARED_COMMON_FILE_UTILS_H_
+#define _OXIDE_SHARED_COMMON_FILE_UTILS_H_
 
-#include "oxide_process_observer.h"
-#include "oxide_user_script_scheduler.h"
-#include "oxide_user_script_slave.h"
+#include "base/basictypes.h"
+#include "base/callback.h"
+#include "base/compiler_specific.h"
+#include "base/platform_file.h"
+
+namespace base {
+class FilePath;
+class TaskRunner;
+}
 
 namespace oxide {
 
-ContentRendererClient::ContentRendererClient() {}
+class FileUtils FINAL {
+ public:
+  typedef base::Callback<void(base::PlatformFileError,
+                              const char*,
+                              int)> GetFileContentsCallback;
 
-ContentRendererClient::~ContentRendererClient() {}
+  static bool GetFileContents(base::TaskRunner* task_runner,
+                              const base::FilePath& file_path,
+                              const GetFileContentsCallback& callback);
 
-void ContentRendererClient::RenderThreadStarted() {
-  process_observer_.reset(new ProcessObserver());
-  user_script_slave_.reset(new UserScriptSlave());
-}
-
-void ContentRendererClient::RenderViewCreated(
-    content::RenderView* render_view) {
-  new UserScriptScheduler(render_view);
-}
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(FileUtils);
+};
 
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_COMMON_FILE_UTILS_H_

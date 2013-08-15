@@ -15,41 +15,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include <string>
-
-#include "base/values.h"
+#include "base/memory/shared_memory.h"
 #include "ipc/ipc_message_macros.h"
 #include "ipc/ipc_message_start.h"
 
 #define IPC_MESSAGE_START OxideMsgStart
 
-IPC_STRUCT_BEGIN(OxideMsg_ExecuteScript_Params)
-  // Unique ID. Note that this is only unique within a RenderView
-  IPC_STRUCT_MEMBER(int, request_id)
+IPC_MESSAGE_CONTROL1(OxideMsg_SetIsIncognitoProcess,
+                     bool)
 
-  // The current page ID (for avoiding races)
-  IPC_STRUCT_MEMBER(int, page_id)
-
-  // The actual JS code to inject
-  IPC_STRUCT_MEMBER(std::string, code)
-
-  // Inject the code in to all frames rather than just the root frame
-  IPC_STRUCT_MEMBER(bool, all_frames)
-
-  // When to inject the code
-  IPC_STRUCT_MEMBER(int, run_at)
-
-  // Execute the script in the main world, rather than isolated world
-  IPC_STRUCT_MEMBER(bool, in_main_world)
-
-  // A name for the isolated world in which to execute the script
-  IPC_STRUCT_MEMBER(std::string, isolated_world_name)
-IPC_STRUCT_END()
-
-IPC_MESSAGE_ROUTED1(OxideMsg_ExecuteScript,
-                    OxideMsg_ExecuteScript_Params)
-
-IPC_MESSAGE_ROUTED3(OxideHostMsg_ExecuteScriptFinished,
-                    int, /* Request ID */
-                    std::string, /* Error string */
-                    base::ListValue /* Script results */)
+IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserScripts,
+                     base::SharedMemoryHandle)

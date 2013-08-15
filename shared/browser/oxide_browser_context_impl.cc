@@ -125,7 +125,8 @@ bool BrowserContextIODataImpl::IsOffTheRecord() const {
 
 BrowserContextImpl::BrowserContextImpl(const base::FilePath& path,
                                        const base::FilePath& cache_path) :
-    BrowserContext(new BrowserContextIODataImpl(path, cache_path)) {}
+    BrowserContext(new BrowserContextIODataImpl(path, cache_path)),
+    user_script_manager_(this) {}
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
   if (!otr_context_) {
@@ -137,6 +138,10 @@ BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
 
 BrowserContext* BrowserContextImpl::GetOriginalContext() {
   return this;
+}
+
+UserScriptMaster& BrowserContextImpl::UserScriptManager() {
+  return user_script_manager_;
 }
 
 } // namespace oxide

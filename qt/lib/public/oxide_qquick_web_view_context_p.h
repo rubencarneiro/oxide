@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_P_H_
 #define _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_P_H_
 
+#include <QList>
 #include <QtGlobal>
 
 #include "base/memory/scoped_ptr.h"
@@ -30,7 +31,14 @@ class BrowserContext;
 }
 
 struct LazyInitProperties;
+class OxideQQuickUserScript;
 class OxideQQuickWebViewContext;
+
+QT_BEGIN_NAMESPACE
+template<typename T> class QQmlListProperty;
+QT_END_NAMESPACE
+
+QT_USE_NAMESPACE
 
 class OxideQQuickWebViewContextPrivate {
   Q_DECLARE_PUBLIC(OxideQQuickWebViewContext)
@@ -53,11 +61,22 @@ class OxideQQuickWebViewContextPrivate {
   static OxideQQuickWebViewContextPrivate* get(
       OxideQQuickWebViewContext* context);
 
+  static void userScript_append(QQmlListProperty<OxideQQuickUserScript>* prop,
+                                OxideQQuickUserScript* user_script);
+  static int userScript_count(QQmlListProperty<OxideQQuickUserScript>* prop);
+  static OxideQQuickUserScript* userScript_at(
+      QQmlListProperty<OxideQQuickUserScript>* prop,
+      int index);
+  static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
+
+  void updateUserScripts();
+
  private:
   OxideQQuickWebViewContext* q_ptr;
 
   oxide::BrowserProcessHandle process_handle_;
   scoped_ptr<oxide::BrowserContext> context_;
+  QList<OxideQQuickUserScript *> user_scripts_;
 
   scoped_ptr<LazyInitProperties> lazy_init_props_;
 };

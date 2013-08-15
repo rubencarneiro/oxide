@@ -23,6 +23,7 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
+#include "qt/lib/public/oxide_qquick_user_script.h"
 #include "qt/lib/public/oxide_qquick_web_view.h"
 #include "qt/lib/public/oxide_qquick_web_view_context.h"
 
@@ -37,6 +38,7 @@ class OxideQQuickDefaultWebViewContext : public QObject {
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts)
 
  public:
   OxideQQuickDefaultWebViewContext(QObject* parent = NULL);
@@ -56,6 +58,8 @@ class OxideQQuickDefaultWebViewContext : public QObject {
 
   QString acceptLangs() const;
   void setAcceptLangs(const QString& accept_langs);
+
+  QQmlListProperty<OxideQQuickUserScript> userScripts();
 
  Q_SIGNALS:
   void productChanged();
@@ -148,6 +152,11 @@ void OxideQQuickDefaultWebViewContext::setAcceptLangs(
   context_->setAcceptLangs(accept_langs);
 }
 
+QQmlListProperty<OxideQQuickUserScript>
+OxideQQuickDefaultWebViewContext::userScripts() {
+  return context_->userScripts();
+}
+
 void OxideQQuickDefaultWebViewContext::productChangedListener() {
   emit productChanged();
 }
@@ -187,6 +196,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterSingletonType<OxideQQuickDefaultWebViewContext>(
         uri, 0, 1, "DefaultWebViewContext", DefaultWebViewContextSingletonFactory);
+    qmlRegisterType<OxideQQuickUserScript>(uri, 0, 1, "UserScript");
     qmlRegisterType<OxideQQuickWebViewContext>(uri, 0, 1, "WebViewContext");
     qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
   }

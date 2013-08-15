@@ -23,7 +23,10 @@
 #include "base/files/file_path.h"
 
 #include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_user_script_master.h"
 
+#include "oxide_qquick_user_script.h"
+#include "oxide_qquick_user_script_p.h"
 #include "oxide_qquick_web_view_context_p.h"
 
 QT_USE_NAMESPACE
@@ -67,12 +70,113 @@ oxide::BrowserContext* OxideQQuickWebViewContextPrivate::GetContext() {
 
   lazy_init_props_.reset();
 
+  updateUserScripts();
+
   return context_.get();
 }
 
 OxideQQuickWebViewContextPrivate* OxideQQuickWebViewContextPrivate::get(
     OxideQQuickWebViewContext* context) {
   return context->d_func();
+}
+
+void OxideQQuickWebViewContextPrivate::userScript_append(
+    QQmlListProperty<OxideQQuickUserScript>* prop,
+    OxideQQuickUserScript* user_script) {
+  if (!user_script) {
+    return;
+  }
+
+  OxideQQuickWebViewContext* context =
+      static_cast<OxideQQuickWebViewContext *>(prop->object);
+  OxideQQuickWebViewContextPrivate* p =
+      OxideQQuickWebViewContextPrivate::get(context);
+
+  if (!p->user_scripts_.isEmpty() && p->user_scripts_.contains(user_script)) {
+    p->user_scripts_.removeOne(user_script);
+    p->user_scripts_.append(user_script);
+  } else {
+    QObject::connect(user_script, SIGNAL(scriptLoaded()),
+                     context, SLOT(scriptUpdated()));
+    QObject::connect(user_script, SIGNAL(scriptPropertyChanged()),
+                     context, SLOT(scriptUpdated()));
+    p->user_scripts_.append(user_script);
+  }
+
+  p->updateUserScripts();
+}
+
+int OxideQQuickWebViewContextPrivate::userScript_count(
+    QQmlListProperty<OxideQQuickUserScript>* prop) {
+  OxideQQuickWebViewContextPrivate* p =
+      OxideQQuickWebViewContextPrivate::get(
+        static_cast<OxideQQuickWebViewContext *>(prop->object));
+
+  return p->user_scripts_.size();
+}
+
+OxideQQuickUserScript* OxideQQuickWebViewContextPrivate::userScript_at(
+    QQmlListProperty<OxideQQuickUserScript>* prop,
+    int index) {
+  OxideQQuickWebViewContextPrivate* p =
+      OxideQQuickWebViewContextPrivate::get(
+        static_cast<OxideQQuickWebViewContext *>(prop->object));
+
+  if (index >= p->user_scripts_.size()) {
+    return NULL;
+  }
+
+  return p->user_scripts_.at(index);
+}
+
+void OxideQQuickWebViewContextPrivate::userScript_clear(
+    QQmlListProperty<OxideQQuickUserScript>* prop) {
+  OxideQQuickWebViewContext* context =
+      static_cast<OxideQQuickWebViewContext *>(prop->object);
+  OxideQQuickWebViewContextPrivate* p =
+      OxideQQuickWebViewContextPrivate::get(context);
+
+  while (p->user_scripts_.size() > 0) {
+    OxideQQuickUserScript* script = p->user_scripts_.first();
+    p->user_scripts_.removeFirst();
+    QObject::disconnect(script, SIGNAL(scriptLoaded()),
+                        context, SLOT(scriptUpdated()));
+    QObject::disconnect(script, SIGNAL(scriptPropertyChanged()),
+                        context, SLOT(scriptUpdated()));
+    delete script;
+  }
+
+  p->updateUserScripts();
+}
+
+void OxideQQuickWebViewContextPrivate::updateUserScripts() {
+  if (!context_) {
+    return;
+  }
+
+  std::vector<oxide::UserScript *> scripts;
+
+  for (int i = 0; i < user_scripts_.size(); ++i) {
+    OxideQQuickUserScript* qscript = user_scripts_.at(i);
+    if (qscript->state() == OxideQQuickUserScript::Loading) {
+      return;
+    }
+
+    if (qscript->state() != OxideQQuickUserScript::Ready) {
+      continue;
+    }
+
+    scripts.push_back(
+        OxideQQuickUserScriptPrivate::get(qscript)->user_script());
+  }
+
+  context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
+}
+
+void OxideQQuickWebViewContext::scriptUpdated() {
+  Q_D(OxideQQuickWebViewContext);
+
+  d->updateUserScripts();
 }
 
 OxideQQuickWebViewContext::OxideQQuickWebViewContext(QObject* parent) :
@@ -220,3 +324,14 @@ void OxideQQuickWebViewContext::setAcceptLangs(const QString& accept_langs) {
 
   emit acceptLangsChanged();
 }
+
+QQmlListProperty<OxideQQuickUserScript>
+OxideQQuickWebViewContext::userScripts() {
+  return QQmlListProperty<OxideQQuickUserScript>(
+      this, NULL,
+      OxideQQuickWebViewContextPrivate::userScript_append,
+      OxideQQuickWebViewContextPrivate::userScript_count,
+      OxideQQuickWebViewContextPrivate::userScript_at,
+      OxideQQuickWebViewContextPrivate::userScript_clear);
+}
+

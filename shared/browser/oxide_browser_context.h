@@ -40,6 +40,7 @@ namespace oxide {
 class ResourceContext;
 class URLRequestContext;
 class URLRequestContextGetter;
+class UserScriptMaster;
 class WebView;
 
 class BrowserContextIOData {
@@ -106,6 +107,8 @@ class BrowserContext : public content::BrowserContext {
 
   bool IsOffTheRecord() const FINAL;
 
+  bool IsSameContext(BrowserContext* other) const;
+
   base::FilePath GetPath() FINAL;
   base::FilePath GetCachePath();
 
@@ -122,6 +125,8 @@ class BrowserContext : public content::BrowserContext {
 
   void AddWebView(WebView* wv);
   void RemoveWebView(WebView* wv);
+
+  virtual UserScriptMaster& UserScriptManager() = 0;
 
   virtual net::URLRequestContextGetter* GetRequestContext() OVERRIDE;
   virtual net::URLRequestContextGetter* GetRequestContextForRenderProcess(

@@ -25,6 +25,7 @@
 #include "base/memory/scoped_ptr.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_user_script_master.h"
 
 namespace oxide {
 
@@ -73,6 +74,8 @@ class BrowserContextImpl FINAL : public BrowserContext {
   BrowserContext* GetOffTheRecordContext() FINAL;
   BrowserContext* GetOriginalContext() FINAL;
 
+  UserScriptMaster& UserScriptManager() FINAL;
+
  private:
   friend class BrowserContext;
 
@@ -80,6 +83,7 @@ class BrowserContextImpl FINAL : public BrowserContext {
                      const base::FilePath& cache_path);
 
   scoped_ptr<OffTheRecordBrowserContextImpl> otr_context_;
+  UserScriptMaster user_script_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextImpl);
 };

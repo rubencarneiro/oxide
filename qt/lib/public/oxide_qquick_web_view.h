@@ -76,8 +76,6 @@ class OXIDE_EXPORT OxideQQuickWebView : public QQuickItem {
   OxideQQuickWebViewContext* context() const;
   void setContext(OxideQQuickWebViewContext* context);
 
-  Q_INVOKABLE void executeScript(const QString& code);
-
  public Q_SLOTS:
   void goBack();
   void goForward();
