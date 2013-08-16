@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_web_view_context.h"
+#include "oxide_qquick_web_view_context_p.h"
 
 #include <QCoreApplication>
 #include <string>
@@ -25,9 +25,9 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_user_script_master.h"
 
-#include "oxide_qquick_user_script.h"
 #include "oxide_qquick_user_script_p.h"
-#include "oxide_qquick_web_view_context_p.h"
+#include "oxide_qquick_user_script_p_p.h"
+#include "oxide_qquick_web_view_context_p_p.h"
 
 QT_USE_NAMESPACE
 

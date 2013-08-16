@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_web_view.h"
+#include "oxide_qquick_web_view_p.h"
 
 #include <QPointF>
 #include <QQuickWindow>
@@ -38,8 +38,8 @@
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
 #include "qt/lib/common/oxide_qt_content_main_delegate.h"
 
-#include "oxide_qquick_web_view_context.h"
 #include "oxide_qquick_web_view_context_p.h"
+#include "oxide_qquick_web_view_context_p_p.h"
 
 QT_USE_NAMESPACE
 

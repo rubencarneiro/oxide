@@ -23,9 +23,9 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
-#include "qt/lib/public/oxide_qquick_user_script.h"
-#include "qt/lib/public/oxide_qquick_web_view.h"
-#include "qt/lib/public/oxide_qquick_web_view_context.h"
+#include "qt/lib/public/oxide_qquick_user_script_p.h"
+#include "qt/lib/public/oxide_qquick_web_view_p.h"
+#include "qt/lib/public/oxide_qquick_web_view_context_p.h"
 
 QT_USE_NAMESPACE
 

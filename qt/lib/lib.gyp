@@ -64,13 +64,13 @@
         'common/oxide_qt_content_main_delegate.cc',
         'common/oxide_qt_content_main_delegate.h',
         'public/oxide_qquick_user_script.cc',
-        'public/oxide_qquick_user_script.h',
         'public/oxide_qquick_user_script_p.h',
+        'public/oxide_qquick_user_script_p_p.h',
         'public/oxide_qquick_web_view.cc',
-        'public/oxide_qquick_web_view.h',
+        'public/oxide_qquick_web_view_p.h',
         'public/oxide_qquick_web_view_context.cc',
-        'public/oxide_qquick_web_view_context.h',
-        'public/oxide_qquick_web_view_context_p.h'
+        'public/oxide_qquick_web_view_context_p.h',
+        'public/oxide_qquick_web_view_context_p_p.h'
       ],
       'variables': {
         'chromium_code': 1
@@ -78,7 +78,7 @@
       'actions': [
         {
           'action_name': 'moc_oxide_qquick_user_script.cc',
-          'moc_input': 'public/oxide_qquick_user_script.h',
+          'moc_input': 'public/oxide_qquick_user_script_p.h',
           'inputs': [
             '<(_moc_input)'
           ],
@@ -94,7 +94,7 @@
         },
         {
           'action_name': 'moc_oxide_qquick_web_view.cc',
-          'moc_input': 'public/oxide_qquick_web_view.h',
+          'moc_input': 'public/oxide_qquick_web_view_p.h',
           'inputs': [
             '<(_moc_input)'
           ],
@@ -110,7 +110,7 @@
         },
         {
           'action_name': 'moc_oxide_qquick_web_view_context.cc',
-          'moc_input': 'public/oxide_qquick_web_view_context.h',
+          'moc_input': 'public/oxide_qquick_web_view_context_p.h',
           'inputs': [
             '<(_moc_input)'
           ],

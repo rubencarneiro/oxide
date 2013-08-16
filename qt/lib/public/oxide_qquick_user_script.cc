@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_user_script.h"
+#include "oxide_qquick_user_script_p.h"
 
 #include <QtDebug>
 
@@ -31,7 +31,7 @@
 #include "shared/common/oxide_file_utils.h"
 #include "shared/common/oxide_user_script.h"
 
-#include "oxide_qquick_user_script_p.h"
+#include "oxide_qquick_user_script_p_p.h"
 
 void OxideQQuickUserScriptPrivate::OnGotFileContents(
     base::PlatformFileError error,
