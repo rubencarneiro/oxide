@@ -13,8 +13,7 @@ isEmpty(PREFIX) {
 gyp_generate.target = $${DEPTH}/$${GYP_GENERATED_MAKEFILE}
 gyp_generate.commands = \
     cd $$DEPTH ; ./gyp_oxide \
-    -I$${PWD}/qt.gypi \
-    -Dlinux_sandbox_path=\'$${PREFIX}/lib/oxide-qt/oxide-sandbox\'
+    -I$${PWD}/qt.gypi
 QMAKE_EXTRA_TARGETS += gyp_generate
 
 gypimpl.target = gypimpl

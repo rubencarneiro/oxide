@@ -23,19 +23,5 @@
     'toolkit_uses_gtk': 0,
     'use_aura': 1,
     'use_gconf': 0,
-
-    'variables': {
-      'linux_sandbox_name%': 'oxide-sandbox',
-      'private_lib_dir%': ''
-    },
-
-    'linux_sandbox_name%': '<(linux_sandbox_name)',
-    'private_lib_dir%': '<(private_lib_dir)',
-
-    'conditions': [
-      ['private_lib_dir != ""', {
-        'linux_sandbox_path': '<(private_lib_dir)/<(linux_sandbox_name)'
-      }]
-    ]
   }
 }

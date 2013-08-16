@@ -27,7 +27,6 @@
 #include "base/logging.h"
 #include "base/path_service.h"
 #include "content/public/common/content_client.h"
-#include "content/public/common/content_paths.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
@@ -82,37 +81,34 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
-  // base::FILE_MODULE doesn't work correctly on Linux (it returns the
-  // same as base::FILE_EXE, which is not what we want in the browser process)
-  // We will use this to find the renderer binary
   Dl_info info;
   int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
                   &info);
   DCHECK_NE(rv, 0) << "Failed to determine module path";
 
-  PathService::Override(base::FILE_MODULE,
-                        base::FilePath(info.dli_fname));
-
   // We assume that the renderer and other resources are at
   // |./oxide-<port_name>/| relative to the public library
-  base::FilePath support_path;
-  PathService::Get(base::DIR_MODULE, &support_path);
+  base::FilePath support_dir = base::FilePath(info.dli_fname).DirName();
+  support_dir = support_dir.Append(FILE_PATH_LITERAL(OXIDE_RESOURCE_SUBPATH));
 
-  support_path =
-      support_path.Append(FILE_PATH_LITERAL(OXIDE_RESOURCE_SUBPATH));
-  PathService::Override(
-      content::CHILD_PROCESS_EXE,
-      support_path.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS)));
+  std::string process_type =
+      CommandLine::ForCurrentProcess()->
+        GetSwitchValueASCII(switches::kProcessType);
+  if (process_type.empty()) {
+    PathService::Override(
+        base::FILE_EXE,
+        support_dir.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS)));
+  }
 
   // The locale passed here doesn't matter, as there aren't any
   // localized resources to load
   ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
 
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
-      support_path.Append(FILE_PATH_LITERAL("oxide.pak")),
+      support_dir.Append(FILE_PATH_LITERAL("oxide.pak")),
       ui::SCALE_FACTOR_NONE);
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
-      support_path.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
+      support_dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
       ui::SCALE_FACTOR_100P);
 }
 

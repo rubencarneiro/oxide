@@ -14,12 +14,12 @@ equals(OXIDE_DEBUG, "1") {
 }
 
 sandbox.path = $${PREFIX}/lib/oxide-qt/
-sandbox.files = $${CHROMIUM_PLATFORM_DIR}/oxide-sandbox
+sandbox.files = $${CHROMIUM_PLATFORM_DIR}/chrome-sandbox
 sandbox.extra = cp $${CHROMIUM_PLATFORM_DIR}/chrome_sandbox $$sandbox.files
-sandbox.CONFIG = no_check_exist
+sandbox.CONFIG = no_check_exist executable
 INSTALLS += sandbox
 
 setsuidbit.path = $$sandbox.path
-setsuidbit.commands = chmod u+s $${sandbox.path}/oxide-sandbox
+setsuidbit.commands = chmod u+s $${sandbox.path}/chrome-sandbox
 setsuidbit.depends = sandbox
 INSTALLS += setsuidbit
