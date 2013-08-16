@@ -15,17 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_user_script_p.h"
+#ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_USER_SCRIPT_H_
+#define _OXIDE_QT_LIB_PUBLIC_QQUICK_USER_SCRIPT_H_
 
-#include "oxide_qt_user_script_p.h"
+#include <QObject>
+#include <QQmlParserStatus>
 
-OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
-    oxide::qt::UserScript(*new oxide::qt::UserScriptPrivate(this), parent) {}
+#include "shared/common/oxide_export.h"
 
-OxideQQuickUserScript::~OxideQQuickUserScript() {}
+#include "oxide_qt_user_script.h"
 
-void OxideQQuickUserScript::classBegin() {}
+class OxideQQuickUserScriptPrivate;
 
-void OxideQQuickUserScript::componentComplete() {
-  startLoading();
-}
+class OXIDE_EXPORT OxideQQuickUserScript : public oxide::qt::UserScript,
+                                           public QQmlParserStatus {
+  Q_OBJECT
+
+ public:
+
+  OxideQQuickUserScript(QObject* parent = NULL);
+  virtual ~OxideQQuickUserScript();
+
+  void classBegin();
+  void componentComplete();
+};
+
+#endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_USER_SCRIPT_H_
