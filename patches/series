@@ -1,6 +1,6 @@
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
-subprocess-paths.patch
+use-correct-path-for-renderer.patch
 allow-embedders-to-override-get-default-screen-info.patch
 gyp-support-library-version.patch
 support-native-popup-menus.patch

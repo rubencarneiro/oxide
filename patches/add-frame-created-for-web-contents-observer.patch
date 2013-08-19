@@ -1,3 +1,6 @@
+Description: Add FrameAttached notifications to WebContentsObserver, so that we can track frames
+Author: Chris Coulson <chris.coulson@canonical.com>
+
 Index: oxide/chromium/src/content/browser/web_contents/web_contents_impl.cc
 ===================================================================
 --- oxide.orig/chromium/src/content/browser/web_contents/web_contents_impl.cc	2013-08-15 23:50:56.343131231 +0100
