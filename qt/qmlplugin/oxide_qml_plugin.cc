@@ -24,6 +24,7 @@
 #include <QQmlExtensionPlugin>
 
 #include "qt/lib/public/oxide_q_user_script.h"
+#include "qt/lib/public/oxide_q_web_frame.h"
 #include "qt/lib/public/oxide_qquick_web_view_p.h"
 #include "qt/lib/public/oxide_qquick_web_view_context_p.h"
 
@@ -197,6 +198,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterSingletonType<OxideQQuickDefaultWebViewContext>(
         uri, 0, 1, "DefaultWebViewContext", DefaultWebViewContextSingletonFactory);
     qmlRegisterType<OxideQUserScript>(uri, 0, 1, "UserScript");
+    qmlRegisterUncreatableType<OxideQWebFrame>(uri, 0, 1, "WebFrame",
+        "Frames cannot be created by consumers");
     qmlRegisterType<OxideQQuickWebViewContext>(uri, 0, 1, "WebViewContext");
     qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
   }
