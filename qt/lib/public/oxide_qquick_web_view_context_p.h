@@ -22,8 +22,6 @@
 #include <QtGlobal>
 #include <QtQml>
 
-#include "shared/common/oxide_export.h"
-
 #include "oxide_qt_web_view_context.h"
 
 QT_USE_NAMESPACE
@@ -31,7 +29,8 @@ QT_USE_NAMESPACE
 class OxideQQuickWebViewContextPrivate;
 class OxideQUserScript;
 
-class OXIDE_EXPORT OxideQQuickWebViewContext : public oxide::qt::WebViewContext {
+class Q_DECL_EXPORT OxideQQuickWebViewContext :
+    public oxide::qt::WebViewContext {
   Q_OBJECT
   Q_PROPERTY(QQmlListProperty<OxideQUserScript> userScripts READ userScripts)
 

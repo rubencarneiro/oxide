@@ -23,8 +23,6 @@
 #include <QtGlobal>
 #include <QUrl>
 
-#include "shared/common/oxide_export.h"
-
 QT_USE_NAMESPACE
 
 namespace oxide {
@@ -32,7 +30,7 @@ namespace qt {
 
 class WebViewContextPrivate;
 
-class OXIDE_EXPORT WebViewContext : public QObject {
+class Q_DECL_EXPORT WebViewContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)

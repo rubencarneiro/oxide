@@ -24,12 +24,10 @@
 #include <QString>
 #include <QUrl>
 
-#include "shared/common/oxide_export.h"
-
 class OxideQUserScriptPrivate;
 
-class OXIDE_EXPORT OxideQUserScript : public QObject,
-                                      public QQmlParserStatus {
+class Q_DECL_EXPORT OxideQUserScript : public QObject,
+                                       public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl)
   Q_PROPERTY(bool emulateGreasemonkey READ emulateGreasemonkey WRITE setEmulateGreasemonkey NOTIFY scriptPropertyChanged)

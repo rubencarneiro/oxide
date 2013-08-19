@@ -24,8 +24,6 @@
 #include <QtGlobal>
 #include <QUrl>
 
-#include "shared/common/oxide_export.h"
-
 class OxideQWebFramePrivate;
 
 namespace oxide {
@@ -34,7 +32,7 @@ class WebFrame;
 }
 }
 
-class OXIDE_EXPORT OxideQWebFrame : public QObject {
+class Q_DECL_EXPORT OxideQWebFrame : public QObject {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
   Q_PROPERTY(OxideQWebFrame* parentFrame READ parentFrame NOTIFY parentFrameChanged)

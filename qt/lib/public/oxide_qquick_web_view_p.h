@@ -25,8 +25,6 @@
 #include <QtQml>
 #include <QUrl>
 
-#include "shared/common/oxide_export.h"
-
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
 QT_END_NAMESPACE
@@ -36,7 +34,7 @@ QT_USE_NAMESPACE
 class OxideQQuickWebViewContext;
 class OxideQQuickWebViewPrivate;
 
-class OXIDE_EXPORT OxideQQuickWebView : public QQuickItem {
+class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
