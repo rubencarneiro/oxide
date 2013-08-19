@@ -1,0 +1,28 @@
+Index: oxide/chromium/src/content/browser/web_contents/web_contents_impl.cc
+===================================================================
+--- oxide.orig/chromium/src/content/browser/web_contents/web_contents_impl.cc	2013-08-15 23:50:56.343131231 +0100
++++ oxide/chromium/src/content/browser/web_contents/web_contents_impl.cc	2013-08-17 11:16:17.491273762 +0100
+@@ -2575,6 +2575,9 @@
+     int64 parent_frame_id,
+     int64 frame_id,
+     const std::string& frame_name) {
++  FOR_EACH_OBSERVER(WebContentsObserver, observers_,
++                    FrameAttached(message_source_, parent_frame_id, frame_id));
++
+   FrameTreeNode* parent = FindFrameTreeNodeByID(parent_frame_id);
+   if (!parent)
+     return;
+Index: oxide/chromium/src/content/public/browser/web_contents_observer.h
+===================================================================
+--- oxide.orig/chromium/src/content/public/browser/web_contents_observer.h	2013-08-15 23:50:52.711131227 +0100
++++ oxide/chromium/src/content/public/browser/web_contents_observer.h	2013-08-17 11:17:25.719273838 +0100
+@@ -184,6 +184,9 @@
+                                    PageTransition transition,
+                                    int64 source_frame_id) {}
+ 
++  virtual void FrameAttached(RenderViewHost* render_view_host,
++                             int64 parent_frame_id,
++                             int64 frame_id) {}
+   virtual void FrameDetached(RenderViewHost* render_view_host,
+                              int64 frame_id) {}
+ 

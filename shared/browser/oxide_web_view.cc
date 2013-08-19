@@ -17,11 +17,16 @@
 
 #include "oxide_web_view.h"
 
+#include <queue>
+
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_controller.h"
+#include "content/public/browser/notification_source.h"
+#include "content/public/browser/notification_types.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
 #include "url/gurl.h"
@@ -29,8 +34,25 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_web_contents_view.h"
+#include "oxide_web_frame.h"
 
 namespace oxide {
+
+WebView::NotificationObserver::NotificationObserver(WebView* web_view) :
+    web_view_(web_view) {}
+
+void WebView::NotificationObserver::Observe(
+    int type,
+    const content::NotificationSource& source,
+    const content::NotificationDetails& details) {
+  if (type != content::NOTIFICATION_WEB_CONTENTS_SWAPPED ||
+      content::Source<content::WebContents>(source).ptr() !=
+          web_view_->web_contents_.get()) {
+    return;
+  }
+
+  web_view_->NotifyRenderViewHostSwappedIn();
+}
 
 void WebView::NavigationStateChanged(const content::WebContents* source,
                                      unsigned changed_flags) {
@@ -54,12 +76,38 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
   }
 }
 
+void WebView::NotifyRenderViewHostSwappedIn() {
+  WebFrame* root = NULL;
+  content::RenderViewHostImpl* rvh =
+      static_cast<content::RenderViewHostImpl *>(
+        web_contents_->GetRenderViewHost());
+
+  if (rvh->main_frame_id() != -1) {
+    root = AllocWebFrame(rvh->main_frame_id());
+  }
+
+  root_frame_.reset(root);
+}
+
+WebFrame* WebView::FindFrameByID(int64 frame_id) {
+  if (!root_frame_) {
+    return NULL;
+  }
+
+  return root_frame_->FindFrameWithIDInSubtree(frame_id);
+}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnLoadingChanged() {}
 void WebView::OnCommandsUpdated() {}
 
-WebView::WebView() {}
+WebFrame* WebView::AllocWebFrame(int64 frame_id) {
+  return NULL;
+}
+
+WebView::WebView() :
+    notification_observer_(this) {}
 
 bool WebView::Init(BrowserContext* context,
                    WebContentsViewDelegate* delegate,
@@ -85,6 +133,12 @@ bool WebView::Init(BrowserContext* context,
   }
 
   web_contents_->SetDelegate(this);
+  Observe(web_contents_.get());
+  registrar_.Add(
+      &notification_observer_,
+      content::NOTIFICATION_WEB_CONTENTS_SWAPPED,
+      content::Source<content::WebContents>(web_contents_.get()));
+
   static_cast<oxide::WebContentsView *>(
       web_contents_->GetView())->SetDelegate(delegate);
 
@@ -162,6 +216,61 @@ void WebView::Hidden() {
 
 BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
+}
+
+void WebView::DidCommitProvisionalLoadForFrame(
+    int64 frame_id,
+    bool is_main_frame,
+    const GURL& url,
+    content::PageTransition transition_type,
+    content::RenderViewHost* render_view_host) {
+  if (render_view_host != web_contents_->GetRenderViewHost()) {
+    return;
+  }
+
+  if (!root_frame_) {
+    root_frame_.reset(AllocWebFrame(frame_id));
+    DCHECK(!root_frame_ || is_main_frame);
+  }
+
+  WebFrame* frame = FindFrameByID(frame_id);
+  if (frame) {
+    frame->SetURL(url);
+  }
+}
+
+void WebView::FrameAttached(content::RenderViewHost* render_view_host,
+                            int64 parent_frame_id,
+                            int64 frame_id) {
+  if (render_view_host != web_contents_->GetRenderViewHost()) {
+    return;
+  }
+
+  WebFrame* parent = FindFrameByID(parent_frame_id);
+  if (!parent) {
+    return;
+  }
+
+  WebFrame* frame = AllocWebFrame(frame_id);
+  if (!frame) {
+    return;
+  }
+
+  parent->AddChildFrame(frame);
+}
+
+void WebView::FrameDetached(content::RenderViewHost* render_view_host,
+                            int64 frame_id) {
+  if (render_view_host != web_contents_->GetRenderViewHost()) {
+    return;
+  }
+
+  WebFrame* frame = FindFrameByID(frame_id);
+  if (!frame) {
+    return;
+  }
+
+  frame->parent()->RemoveChildFrameWithID(frame_id);
 }
 
 } // namespace oxide

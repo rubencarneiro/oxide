@@ -49,6 +49,7 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_user_script.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_web_frame.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view_context.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_user_script.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_view.cc',
@@ -61,6 +62,8 @@
         'browser/oxide_qt_message_pump.h',
         'browser/oxide_qt_render_widget_host_view_qquick.cc',
         'browser/oxide_qt_render_widget_host_view_qquick.h',
+        'browser/oxide_qt_web_frame.cc',
+        'browser/oxide_qt_web_frame.h',
         'browser/oxide_qt_web_popup_menu_qquick.cc',
         'browser/oxide_qt_web_popup_menu_qquick.h',
         'common/oxide_qt_content_main_delegate.cc',
@@ -68,6 +71,8 @@
         'public/oxide_qt_user_script.cc',
         'public/oxide_qt_user_script.h',
         'public/oxide_qt_user_script_p.h',
+        'public/oxide_q_web_frame.cc',
+        'public/oxide_q_web_frame.h',
         'public/oxide_qt_web_view_context.cc',
         'public/oxide_qt_web_view_context.h',
         'public/oxide_qt_web_view_context_p.h',
@@ -86,6 +91,22 @@
         {
           'action_name': 'moc_oxide_qt_user_script.cc',
           'moc_input': 'public/oxide_qt_user_script.h',
+          'inputs': [
+            '<(_moc_input)'
+          ],
+          'outputs': [
+            '<(INTERMEDIATE_DIR)/<(_action_name)'
+          ],
+          'action': [
+            'moc',
+            '-o',
+            '<(INTERMEDIATE_DIR)/<(_action_name)',
+            '<(_moc_input)'
+          ]
+        },
+        {
+          'action_name': 'moc_oxide_q_web_frame.cc',
+          'moc_input': 'public/oxide_q_web_frame.h',
           'inputs': [
             '<(_moc_input)'
           ],

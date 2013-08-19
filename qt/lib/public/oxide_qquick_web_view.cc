@@ -35,6 +35,7 @@
 #include "shared/common/oxide_user_script.h"
 
 #include "qt/lib/browser/oxide_qt_render_widget_host_view_qquick.h"
+#include "qt/lib/browser/oxide_qt_web_frame.h"
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
 #include "qt/lib/common/oxide_qt_content_main_delegate.h"
 
@@ -91,6 +92,8 @@ class OxideQQuickWebViewPrivate FINAL :
   void OnLoadingChanged() FINAL;
   void OnCommandsUpdated() FINAL;
 
+  oxide::WebFrame* AllocWebFrame(int64 frame_id) FINAL;
+
   void OnExecuteScriptFinished(bool error, const std::string& error_string) {}
 
   OxideQQuickWebView* q_ptr;
@@ -121,6 +124,11 @@ void OxideQQuickWebViewPrivate::OnCommandsUpdated() {
   Q_Q(OxideQQuickWebView);
 
   emit q->commandsUpdated();
+}
+
+oxide::WebFrame* OxideQQuickWebViewPrivate::AllocWebFrame(
+    int64 frame_id) {
+  return new oxide::qt::WebFrame(frame_id);
 }
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
