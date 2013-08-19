@@ -91,6 +91,7 @@ class OxideQQuickWebViewPrivate FINAL :
   void OnTitleChanged() FINAL;
   void OnLoadingChanged() FINAL;
   void OnCommandsUpdated() FINAL;
+  void OnRootFrameChanged() FINAL;
 
   oxide::WebFrame* AllocWebFrame(int64 frame_id) FINAL;
 
@@ -124,6 +125,12 @@ void OxideQQuickWebViewPrivate::OnCommandsUpdated() {
   Q_Q(OxideQQuickWebView);
 
   emit q->commandsUpdated();
+}
+
+void OxideQQuickWebViewPrivate::OnRootFrameChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->rootFrameChanged();
 }
 
 oxide::WebFrame* OxideQQuickWebViewPrivate::AllocWebFrame(
@@ -301,6 +308,12 @@ bool OxideQQuickWebView::loading() const {
   Q_D(const OxideQQuickWebView);
 
   return d->IsLoading();
+}
+
+OxideQWebFrame* OxideQQuickWebView::rootFrame() const {
+  Q_D(const OxideQQuickWebView);
+
+  return static_cast<oxide::qt::WebFrame *>(d->GetRootFrame())->q_web_frame();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {

@@ -80,6 +80,8 @@ class WebView : public content::WebContentsDelegate,
 
   BrowserContext* GetBrowserContext() const;
 
+  WebFrame* GetRootFrame() const;
+
   void DidCommitProvisionalLoadForFrame(
       int64 frame_id,
       bool is_main_frame,
@@ -132,6 +134,7 @@ class WebView : public content::WebContentsDelegate,
   virtual void OnTitleChanged();
   virtual void OnLoadingChanged();
   virtual void OnCommandsUpdated();
+  virtual void OnRootFrameChanged();
 
   virtual WebFrame* AllocWebFrame(int64 frame_id);
 

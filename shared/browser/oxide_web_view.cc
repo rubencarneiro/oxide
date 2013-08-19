@@ -87,6 +87,7 @@ void WebView::NotifyRenderViewHostSwappedIn() {
   }
 
   root_frame_.reset(root);
+  OnRootFrameChanged();
 }
 
 WebFrame* WebView::FindFrameByID(int64 frame_id) {
@@ -101,6 +102,7 @@ void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnLoadingChanged() {}
 void WebView::OnCommandsUpdated() {}
+void WebView::OnRootFrameChanged() {}
 
 WebFrame* WebView::AllocWebFrame(int64 frame_id) {
   return NULL;
@@ -218,6 +220,10 @@ BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
+WebFrame* WebView::GetRootFrame() const {
+  return root_frame_.get();
+}
+
 void WebView::DidCommitProvisionalLoadForFrame(
     int64 frame_id,
     bool is_main_frame,
@@ -231,6 +237,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
   if (!root_frame_) {
     root_frame_.reset(AllocWebFrame(frame_id));
     DCHECK(!root_frame_ || is_main_frame);
+    OnRootFrameChanged();
   }
 
   WebFrame* frame = FindFrameByID(frame_id);

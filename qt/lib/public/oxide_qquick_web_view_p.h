@@ -33,6 +33,7 @@ QT_USE_NAMESPACE
 
 class OxideQQuickWebViewContext;
 class OxideQQuickWebViewPrivate;
+class OxideQWebFrame;
 
 class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
@@ -42,6 +43,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY commandsUpdated)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+  Q_PROPERTY(OxideQWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
@@ -68,6 +70,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   bool loading() const;
 
+  OxideQWebFrame* rootFrame() const;
+
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
@@ -85,6 +89,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void titleChanged();
   void commandsUpdated();
   void loadingChanged();
+  void rootFrameChanged();
   void popupMenuChanged();
 
  private Q_SLOTS:
