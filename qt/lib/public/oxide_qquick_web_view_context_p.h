@@ -28,12 +28,12 @@
 
 QT_USE_NAMESPACE
 
-class OxideQQuickUserScript;
 class OxideQQuickWebViewContextPrivate;
+class OxideQUserScript;
 
 class OXIDE_EXPORT OxideQQuickWebViewContext : public oxide::qt::WebViewContext {
   Q_OBJECT
-  Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts)
+  Q_PROPERTY(QQmlListProperty<OxideQUserScript> userScripts READ userScripts)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebViewContext)
 
@@ -43,7 +43,7 @@ class OXIDE_EXPORT OxideQQuickWebViewContext : public oxide::qt::WebViewContext 
 
   static OxideQQuickWebViewContext* defaultContext();
 
-  QQmlListProperty<OxideQQuickUserScript> userScripts();
+  QQmlListProperty<OxideQUserScript> userScripts();
 
  private:
   OxideQQuickWebViewContext(bool is_default);

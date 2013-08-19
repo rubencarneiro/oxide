@@ -15,22 +15,21 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_USER_SCRIPT_H_
-#define _OXIDE_QT_LIB_PUBLIC_USER_SCRIPT_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_H_
 
 #include <QObject>
+#include <QQmlParserStatus>
 #include <QScopedPointer>
 #include <QString>
 #include <QUrl>
 
 #include "shared/common/oxide_export.h"
 
-namespace oxide {
-namespace qt {
+class OxideQUserScriptPrivate;
 
-class UserScriptPrivate;
-
-class OXIDE_EXPORT UserScript : public QObject {
+class OXIDE_EXPORT OxideQUserScript : public QObject,
+                                      public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl)
   Q_PROPERTY(bool emulateGreasemonkey READ emulateGreasemonkey WRITE setEmulateGreasemonkey NOTIFY scriptPropertyChanged)
@@ -38,7 +37,7 @@ class OXIDE_EXPORT UserScript : public QObject {
   Q_PROPERTY(bool incognitoEnabled READ incognitoEnabled WRITE setIncognitoEnabled NOTIFY scriptPropertyChanged)
   Q_PROPERTY(QString worldId READ worldId WRITE setWorldId NOTIFY scriptPropertyChanged)
 
-  Q_DECLARE_PRIVATE(UserScript)
+  Q_DECLARE_PRIVATE(OxideQUserScript)
 
  public:
 
@@ -49,8 +48,11 @@ class OXIDE_EXPORT UserScript : public QObject {
     Failed
   };
 
-  UserScript(UserScriptPrivate& dd, QObject* parent = NULL);
-  virtual ~UserScript();
+  OxideQUserScript(QObject* parent = NULL);
+  virtual ~OxideQUserScript();
+
+  void classBegin();
+  void componentComplete();
 
   void startLoading();
 
@@ -77,10 +79,7 @@ class OXIDE_EXPORT UserScript : public QObject {
   void scriptPropertyChanged();
 
  protected:
-  QScopedPointer<UserScriptPrivate> d_ptr;
+  QScopedPointer<OxideQUserScriptPrivate> d_ptr;
 };
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_LIB_PUBLIC_USER_SCRIPT_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_H_

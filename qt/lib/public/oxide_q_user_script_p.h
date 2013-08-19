@@ -24,46 +24,41 @@
 #include "base/memory/weak_ptr.h"
 #include "base/platform_file.h"
 
-#include "oxide_qt_user_script.h"
+#include "oxide_q_user_script.h"
 
 namespace oxide {
-
 class UserScript;
+}
 
-namespace qt {
-
-class UserScriptPrivate FINAL {
-  Q_DECLARE_PUBLIC(UserScript)
+class OxideQUserScriptPrivate FINAL {
+  Q_DECLARE_PUBLIC(OxideQUserScript)
 
  public:
-  UserScriptPrivate(UserScript* q);
-  virtual ~UserScriptPrivate();
+  OxideQUserScriptPrivate(OxideQUserScript* q);
+  virtual ~OxideQUserScriptPrivate();
 
   void startLoading();
 
-  UserScript::State state() const { return state_; }
+  OxideQUserScript::State state() const { return state_; }
   oxide::UserScript* user_script() const {
     return user_script_.get();
   }
  
-  static UserScriptPrivate* get(UserScript* user_script);
+  static OxideQUserScriptPrivate* get(OxideQUserScript* user_script);
 
  protected:
-  UserScript* q_ptr;
+  OxideQUserScript* q_ptr;
 
  private:
   void OnGotFileContents(base::PlatformFileError error,
                          const char* data,
                          int bytes_read);
 
-  UserScript::State state_;
+  OxideQUserScript::State state_;
   scoped_ptr<oxide::UserScript> user_script_;
-  base::WeakPtrFactory<UserScriptPrivate> weak_factory_;
+  base::WeakPtrFactory<OxideQUserScriptPrivate> weak_factory_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UserScriptPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQUserScriptPrivate);
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_LIB_PUBLIC_USER_SCRIPT_P_H

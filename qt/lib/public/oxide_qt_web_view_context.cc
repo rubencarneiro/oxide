@@ -24,8 +24,8 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_user_script_master.h"
 
-#include "oxide_qt_user_script.h"
-#include "oxide_qt_user_script_p.h"
+#include "oxide_q_user_script.h"
+#include "oxide_q_user_script_p.h"
 #include "oxide_qt_web_view_context_p.h"
 
 namespace oxide {
@@ -83,17 +83,17 @@ void WebViewContextPrivate::updateUserScripts() {
   std::vector<oxide::UserScript *> scripts;
 
   for (int i = 0; i < user_scripts_.size(); ++i) {
-    UserScript* qscript = user_scripts_.at(i);
-    if (qscript->state() == UserScript::Loading) {
+    OxideQUserScript* qscript = user_scripts_.at(i);
+    if (qscript->state() == OxideQUserScript::Loading) {
       return;
     }
 
-    if (qscript->state() != UserScript::Ready) {
+    if (qscript->state() != OxideQUserScript::Ready) {
       continue;
     }
 
     scripts.push_back(
-        UserScriptPrivate::get(qscript)->user_script());
+        OxideQUserScriptPrivate::get(qscript)->user_script());
   }
 
   context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);

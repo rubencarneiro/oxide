@@ -22,8 +22,8 @@
 
 #include "oxide_qt_web_view_context_p.h"
 
-class OxideQQuickUserScript;
 class OxideQQuickWebViewContext;
+class OxideQUserScript;
 
 QT_BEGIN_NAMESPACE
 template<typename T> class QQmlListProperty;
@@ -42,13 +42,13 @@ class OxideQQuickWebViewContextPrivate FINAL :
   static OxideQQuickWebViewContextPrivate* get(
       OxideQQuickWebViewContext* context);
 
-  static void userScript_append(QQmlListProperty<OxideQQuickUserScript>* prop,
-                                OxideQQuickUserScript* user_script);
-  static int userScript_count(QQmlListProperty<OxideQQuickUserScript>* prop);
-  static OxideQQuickUserScript* userScript_at(
-      QQmlListProperty<OxideQQuickUserScript>* prop,
+  static void userScript_append(QQmlListProperty<OxideQUserScript>* prop,
+                                OxideQUserScript* user_script);
+  static int userScript_count(QQmlListProperty<OxideQUserScript>* prop);
+  static OxideQUserScript* userScript_at(
+      QQmlListProperty<OxideQUserScript>* prop,
       int index);
-  static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
+  static void userScript_clear(QQmlListProperty<OxideQUserScript>* prop);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OxideQQuickWebViewContextPrivate);

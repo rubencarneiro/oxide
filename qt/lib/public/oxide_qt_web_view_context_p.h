@@ -26,6 +26,8 @@
 
 #include "shared/browser/oxide_browser_process_handle.h"
 
+class OxideQUserScript;
+
 namespace oxide {
 
 class BrowserContext;
@@ -33,7 +35,6 @@ class BrowserContext;
 namespace qt {
 
 class LazyInitProperties;
-class UserScript;
 class WebViewContext;
 
 class WebViewContextPrivate {
@@ -51,7 +52,7 @@ class WebViewContextPrivate {
   LazyInitProperties* lazy_init_props() const {
     return lazy_init_props_.get();
   }
-  QList<UserScript *>& user_scripts() {
+  QList<OxideQUserScript *>& user_scripts() {
     return user_scripts_;
   }
 
@@ -67,7 +68,7 @@ class WebViewContextPrivate {
  private:
   oxide::BrowserProcessHandle process_handle_;
   scoped_ptr<oxide::BrowserContext> context_;
-  QList<UserScript *> user_scripts_;
+  QList<OxideQUserScript *> user_scripts_;
 
   scoped_ptr<LazyInitProperties> lazy_init_props_;
 
