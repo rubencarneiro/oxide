@@ -55,7 +55,7 @@ class Q_DECL_EXPORT OxideQWebFrame : public QObject {
 
  Q_SIGNALS:
   void urlChanged();
-  void parentFrameChanged(OxideQWebFrame* old_frame);
+  void parentFrameChanged();
   void childFrameChanged(ChildFrameChangedType type,
                          OxideQWebFrame* child_frame);
 

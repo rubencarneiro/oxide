@@ -38,13 +38,11 @@ WebFrame* WebFrame::GetChildFrameWithID(int64 frame_id) const {
 }
 
 void WebFrame::SetParent(WebFrame* parent) {
-  WebFrame* old_parent = parent_;
   parent_ = parent;
-
-  OnParentChanged(old_parent);
+  OnParentChanged();
 }
 
-void WebFrame::OnParentChanged(WebFrame* old_parent) {}
+void WebFrame::OnParentChanged() {}
 void WebFrame::OnChildAdded(WebFrame* child) {}
 void WebFrame::OnChildRemoved(WebFrame* child) {}
 void WebFrame::OnURLChanged() {}

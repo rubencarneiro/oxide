@@ -39,7 +39,7 @@ class WebFrame FINAL : public oxide::WebFrame {
   }
 
  private:
-  void OnParentChanged(oxide::WebFrame* old_parent) FINAL;
+  void OnParentChanged() FINAL;
   void OnChildAdded(oxide::WebFrame* child) FINAL;
   void OnChildRemoved(oxide::WebFrame* child) FINAL;
   void OnURLChanged() FINAL;

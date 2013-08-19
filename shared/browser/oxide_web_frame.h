@@ -61,7 +61,7 @@ class WebFrame {
 
   void SetParent(WebFrame* parent);
 
-  virtual void OnParentChanged(WebFrame* old_parent);
+  virtual void OnParentChanged();
   virtual void OnChildAdded(WebFrame* child);
   virtual void OnChildRemoved(WebFrame* child);
   virtual void OnURLChanged();

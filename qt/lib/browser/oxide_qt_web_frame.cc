@@ -22,10 +22,8 @@
 namespace oxide {
 namespace qt {
 
-void WebFrame::OnParentChanged(oxide::WebFrame* old_parent) {
-  OxideQWebFrame* old_qparent = old_parent ?
-      static_cast<WebFrame *>(old_parent)->q_web_frame() : NULL;
-  q_web_frame_->parentFrameChanged(old_qparent);
+void WebFrame::OnParentChanged() {
+  q_web_frame_->parentFrameChanged();
 }
 
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
