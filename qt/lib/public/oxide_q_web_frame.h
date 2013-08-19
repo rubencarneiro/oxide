@@ -22,6 +22,7 @@
 #include <QObject>
 #include <QScopedPointer>
 #include <QtGlobal>
+#include <QtQml>
 #include <QUrl>
 
 class OxideQWebFramePrivate;
@@ -68,5 +69,7 @@ class Q_DECL_EXPORT OxideQWebFrame : public QObject {
   
   QScopedPointer<OxideQWebFramePrivate> d_ptr;
 };
+
+QML_DECLARE_TYPE(OxideQWebFrame)
 
 #endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_H_

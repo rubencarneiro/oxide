@@ -22,6 +22,7 @@
 #include <QQmlParserStatus>
 #include <QScopedPointer>
 #include <QString>
+#include <QtQml>
 #include <QUrl>
 
 class OxideQUserScriptPrivate;
@@ -79,5 +80,7 @@ class Q_DECL_EXPORT OxideQUserScript : public QObject,
  protected:
   QScopedPointer<OxideQUserScriptPrivate> d_ptr;
 };
+
+QML_DECLARE_TYPE(OxideQUserScript)
 
 #endif // _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_H_
