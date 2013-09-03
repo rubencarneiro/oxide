@@ -32,7 +32,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "ui/gfx/rect.h"
 
-#include "qt/lib/public/oxide_qquick_web_view.h"
+#include "qt/lib/public/oxide_qquick_web_view_p.h"
 
 namespace oxide {
 namespace qt {

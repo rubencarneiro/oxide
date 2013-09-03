@@ -16,7 +16,8 @@
 
 {
   'variables': {
-    'oxide_subprocess%': 'oxide-renderer'
+    'oxide_subprocess%': 'oxide-renderer',
+    'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide'
   },
   'targets': [
     {
@@ -24,7 +25,7 @@
       'type': 'none',
       'all_dependent_settings': {
         'include_dirs': [
-          '<(SHARED_INTERMEDIATE_DIR)'
+          '<(SHARED_INTERMEDIATE_DIR)/oxide'
         ]
       },
       'actions': [
@@ -34,7 +35,7 @@
             'common/chrome_version.h.in'
           ],
           'outputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/shared/common/chrome_version.h'
+            '<(SHARED_INTERMEDIATE_DIR)/oxide/shared/common/chrome_version.h'
           ],
           'action': [
             'python',
@@ -45,6 +46,24 @@
           ]
         }
       ]
+    },
+    {
+      'target_name': 'oxide_shared_resources',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'oxide_shared_resources_resources',
+          'variables': {
+            'grit_grd_file': 'oxide_resources.grd'
+          },
+          'includes': [ '../chromium/src/build/grit_action.gypi' ]
+        }
+      ],
+      'all_dependent_settings': {
+        'include_dirs': [
+          '<(SHARED_INTERMEDIATE_DIR)/oxide'
+        ]
+      },
     },
     {
       'target_name': 'oxide_shared',
@@ -64,6 +83,7 @@
       ],
       'dependencies': [
         'oxide_shared_generated',
+        'oxide_shared_resources',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_app_both',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -74,6 +94,7 @@
         '<(DEPTH)/content/content.gyp:content_worker',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
+        '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
         '<(DEPTH)/ui/ui.gyp:ui',
         '<(DEPTH)/url/url.gyp:url_lib',
         '<(DEPTH)/webkit/common/user_agent/webkit_user_agent.gyp:user_agent'
@@ -99,14 +120,22 @@
         'browser/oxide_content_browser_client.h',
         'browser/oxide_http_user_agent_settings.cc',
         'browser/oxide_http_user_agent_settings.h',
+        'browser/oxide_incoming_message.cc',
+        'browser/oxide_incoming_message.h',
         'browser/oxide_io_thread_delegate.cc',
         'browser/oxide_io_thread_delegate.h',
+        'browser/oxide_message_dispatcher_browser.cc',
+        'browser/oxide_message_dispatcher_browser.h',
+        'browser/oxide_message_handler.cc',
+        'browser/oxide_message_handler.h',
         'browser/oxide_message_pump.cc',
         'browser/oxide_message_pump.h',
         'browser/oxide_network_delegate.cc',
         'browser/oxide_network_delegate.h',
         'browser/oxide_off_the_record_browser_context_impl.cc',
         'browser/oxide_off_the_record_browser_context_impl.h',
+        'browser/oxide_outgoing_message_request.cc',
+        'browser/oxide_outgoing_message_request.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
         'browser/oxide_ssl_config_service.cc',
@@ -134,6 +163,7 @@
         'common/oxide_export.h',
         'common/oxide_file_utils.cc',
         'common/oxide_file_utils.h',
+        'common/oxide_message_enums.h',
         'common/oxide_message_generator.cc',
         'common/oxide_message_generator.h',
         'common/oxide_messages.h',
@@ -141,12 +171,19 @@
         'common/oxide_user_script.h',
         'renderer/oxide_content_renderer_client.cc',
         'renderer/oxide_content_renderer_client.h',
+        'renderer/oxide_isolated_world_map.cc',
+        'renderer/oxide_isolated_world_map.h',
+        'renderer/oxide_message_dispatcher_renderer.cc',
+        'renderer/oxide_message_dispatcher_renderer.h',
         'renderer/oxide_process_observer.cc',
         'renderer/oxide_process_observer.h',
         'renderer/oxide_user_script_scheduler.cc',
         'renderer/oxide_user_script_scheduler.h',
         'renderer/oxide_user_script_slave.cc',
         'renderer/oxide_user_script_slave.h',
+        'renderer/oxide_v8_message_manager.cc',
+        'renderer/oxide_v8_message_manager.h',
+        'renderer/oxide_v8_scoped_persistent.h',
         '<(DEPTH)/extensions/common/constants.cc',
         '<(DEPTH)/extensions/common/constants.h',
         '<(DEPTH)/extensions/common/error_utils.cc',

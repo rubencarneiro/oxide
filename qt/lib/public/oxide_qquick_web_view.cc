@@ -17,6 +17,7 @@
 
 #include "oxide_qquick_web_view_p.h"
 
+#include <QList>
 #include <QPointF>
 #include <QQuickWindow>
 #include <QRectF>
@@ -29,6 +30,7 @@
 #include "content/public/browser/web_contents.h"
 #include "ui/gfx/size.h"
 
+#include "shared/browser/oxide_message_dispatcher_browser.h"
 #include "shared/browser/oxide_web_contents_view.h"
 #include "shared/browser/oxide_web_contents_view_delegate.h"
 #include "shared/browser/oxide_web_view.h"
@@ -41,6 +43,7 @@
 
 #include "oxide_qquick_web_view_context_p.h"
 #include "oxide_qquick_web_view_context_p_p.h"
+#include "oxide_qt_qmessage_handler_p.h"
 
 QT_USE_NAMESPACE
 
@@ -66,6 +69,9 @@ class OxideQQuickWebViewPrivate FINAL :
       init_props_(new InitData()),
       weak_factory_(this) {}
 
+  oxide::MessageDispatcherBrowser::MessageHandlerVector
+      GetMessageHandlers() const;
+
   void UpdateVisibility();
 
   content::RenderWidgetHostView* CreateViewForWidget(
@@ -82,6 +88,25 @@ class OxideQQuickWebViewPrivate FINAL :
   void componentComplete();
 
   InitData* init_props() const { return init_props_.get(); }
+
+  static void messageHandler_append(
+      QQmlListProperty<OxideQQuickMessageHandler>* prop,
+      OxideQQuickMessageHandler* message_handler);
+  static int messageHandler_count(
+      QQmlListProperty<OxideQQuickMessageHandler>* prop);
+  static OxideQQuickMessageHandler* messageHandler_at(
+      QQmlListProperty<OxideQQuickMessageHandler>* prop,
+      int index);
+  static void messageHandler_clear(
+      QQmlListProperty<OxideQQuickMessageHandler>* prop);
+
+  QList<OxideQQuickMessageHandler *>& message_handlers() {
+    return message_handlers_;
+  }
+
+  static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view) {
+    return web_view->d_func();
+  }
 
   OxideQQuickWebViewContext* context_;
   QQmlComponent* popup_menu_;
@@ -100,6 +125,7 @@ class OxideQQuickWebViewPrivate FINAL :
   OxideQQuickWebView* q_ptr;
   scoped_ptr<InitData> init_props_;
   QSharedPointer<OxideQQuickWebViewContext> default_context_;
+  QList<OxideQQuickMessageHandler *> message_handlers_;
   base::WeakPtrFactory<OxideQQuickWebViewPrivate> weak_factory_;
 };
 
@@ -135,12 +161,23 @@ void OxideQQuickWebViewPrivate::OnRootFrameChanged() {
 
 oxide::WebFrame* OxideQQuickWebViewPrivate::AllocWebFrame(
     int64 frame_id) {
-  return new oxide::qt::WebFrame(frame_id);
+  return new oxide::qt::WebFrameQQuick(frame_id);
 }
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
   // It's important that this goes away before our context
   DestroyWebContents();
+}
+
+oxide::MessageDispatcherBrowser::MessageHandlerVector
+OxideQQuickWebViewPrivate::GetMessageHandlers() const {
+  oxide::MessageDispatcherBrowser::MessageHandlerVector list;
+  for (int i = 0; i < message_handlers_.size(); ++i) {
+    list.push_back(oxide::qt::QMessageHandlerPrivate::get(
+        message_handlers_.at(i))->handler());
+  }
+
+  return list;
 }
 
 void OxideQQuickWebViewPrivate::UpdateVisibility() {
@@ -212,6 +249,57 @@ void OxideQQuickWebViewPrivate::componentComplete() {
   init_props_.reset();
 
   UpdateVisibility();
+}
+
+// static
+void OxideQQuickWebViewPrivate::messageHandler_append(
+    QQmlListProperty<OxideQQuickMessageHandler>* prop,
+    OxideQQuickMessageHandler* message_handler) {
+  if (!message_handler) {
+    return;
+  }
+
+  OxideQQuickWebView* web_view =
+      static_cast<OxideQQuickWebView* >(prop->object);
+
+  web_view->addMessageHandler(message_handler);
+}
+
+// static
+int OxideQQuickWebViewPrivate::messageHandler_count(
+    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+  OxideQQuickWebViewPrivate* p =
+      OxideQQuickWebViewPrivate::get(
+        static_cast<OxideQQuickWebView *>(prop->object));
+
+  return p->message_handlers().size();
+}
+
+// static
+OxideQQuickMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
+    QQmlListProperty<OxideQQuickMessageHandler>* prop,
+    int index) {
+  OxideQQuickWebViewPrivate* p =
+      OxideQQuickWebViewPrivate::get(
+        static_cast<OxideQQuickWebView *>(prop->object));
+
+  if (index >= p->message_handlers().size()) {
+    return NULL;
+  }
+
+  return p->message_handlers().at(index);
+}
+
+// static
+void OxideQQuickWebViewPrivate::messageHandler_clear(
+    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+  OxideQQuickWebView* web_view =
+      static_cast<OxideQQuickWebView *>(prop->object);
+  OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(web_view);
+
+  p->message_handlers().clear();
+
+  emit web_view->messageHandlersChanged();
 }
 
 void OxideQQuickWebView::visibilityChangedListener() {
@@ -310,10 +398,47 @@ bool OxideQQuickWebView::loading() const {
   return d->IsLoading();
 }
 
-OxideQWebFrame* OxideQQuickWebView::rootFrame() const {
+OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   Q_D(const OxideQQuickWebView);
 
-  return static_cast<oxide::qt::WebFrame *>(d->GetRootFrame())->q_web_frame();
+  return static_cast<oxide::qt::WebFrameQQuick *>(
+      d->GetRootFrame())->QQuickWebFrame();
+}
+
+QQmlListProperty<OxideQQuickMessageHandler>
+OxideQQuickWebView::messageHandlers() {
+  return QQmlListProperty<OxideQQuickMessageHandler>(
+      this, NULL,
+      OxideQQuickWebViewPrivate::messageHandler_append,
+      OxideQQuickWebViewPrivate::messageHandler_count,
+      OxideQQuickWebViewPrivate::messageHandler_at,
+      OxideQQuickWebViewPrivate::messageHandler_clear);
+}
+
+void OxideQQuickWebView::addMessageHandler(
+    OxideQQuickMessageHandler* handler) {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->message_handlers().contains(handler)) {
+    oxide::qt::QMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
+    handler->setParent(this);
+
+    d->message_handlers().append(handler);
+
+    emit messageHandlersChanged();
+  }
+}
+
+void OxideQQuickWebView::removeMessageHandler(
+    OxideQQuickMessageHandler* handler) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->message_handlers().contains(handler)) {
+    d->message_handlers().removeOne(handler);
+    handler->setParent(NULL);
+
+    emit messageHandlersChanged();
+  }
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {

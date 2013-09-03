@@ -15,39 +15,42 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
-#define _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_QMESSAGE_HANDLER_H_
+#define _OXIDE_QT_LIB_PUBLIC_QMESSAGE_HANDLER_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
-#include "content/public/browser/browser_main_parts.h"
-#include "content/public/browser/render_view_host.h"
-
-namespace base {
-class MessageLoop;
-}
+#include <QObject>
+#include <QScopedPointer>
+#include <QString>
+#include <QtGlobal>
 
 namespace oxide {
+namespace qt {
 
-class BrowserMainParts FINAL : public content::BrowserMainParts {
+class QMessageHandlerPrivate;
+
+class Q_DECL_EXPORT QMessageHandler : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(QString msgId READ msgId WRITE setMsgId NOTIFY msgIdChanged)
+
+  Q_DECLARE_PRIVATE(QMessageHandler)
+
  public:
-  BrowserMainParts();
-  ~BrowserMainParts();
+  virtual ~QMessageHandler();
 
-  void PreEarlyInitialization() FINAL;
+  QString msgId() const;
+  void setMsgId(const QString& id);
 
-  int PreCreateThreads() FINAL;
+ Q_SIGNALS:
+  void msgIdChanged();
 
-  bool MainMessageLoopRun(int* result_code) FINAL;
+ protected:
+  QMessageHandler(QMessageHandlerPrivate& dd,
+                  QObject* parent = NULL);
 
- private:
-  scoped_ptr<base::MessageLoop> main_message_loop_;
-  content::RenderViewHost::CreatedCallback rvh_created_callback_;
-
-  DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);
+  QScopedPointer<QMessageHandlerPrivate> d_ptr;
 };
 
-};
+} // namespace qt
+} // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_QMESSAGE_HANDLER_H_

@@ -15,61 +15,46 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_QWEB_FRAME_H_
+#define _OXIDE_QT_LIB_PUBLIC_QWEB_FRAME_H_
 
-#include <QList>
 #include <QObject>
 #include <QScopedPointer>
 #include <QtGlobal>
-#include <QtQml>
 #include <QUrl>
-
-class OxideQWebFramePrivate;
 
 namespace oxide {
 namespace qt {
-class WebFrame;
-}
-}
 
-class Q_DECL_EXPORT OxideQWebFrame : public QObject {
+class QMessageHandler;
+class QWebFramePrivate;
+class WebFrame;
+
+class Q_DECL_EXPORT QWebFrame : public QObject {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
-  Q_PROPERTY(OxideQWebFrame* parentFrame READ parentFrame NOTIFY parentFrameChanged)
-  Q_PROPERTY(QList<OxideQWebFrame *> childFrames READ childFrames NOTIFY childFrameChanged)
-  Q_ENUMS(ChildFrameChangedType)
 
-  Q_DECLARE_PRIVATE(OxideQWebFrame)
+  Q_DECLARE_PRIVATE(QWebFrame)
 
  public:
-  enum ChildFrameChangedType {
-    ChildAdded,
-    ChildRemoved
-  };
-
-  virtual ~OxideQWebFrame();
+  virtual ~QWebFrame();
 
   QUrl url() const;
-  OxideQWebFrame* parentFrame() const;
-  QList<OxideQWebFrame *> childFrames() const;
+
+  Q_INVOKABLE void addMessageHandler(QMessageHandler* handler);
+  Q_INVOKABLE void removeMessageHandler(QMessageHandler* handler);
 
  Q_SIGNALS:
   void urlChanged();
-  void parentFrameChanged();
-  void childFrameChanged(ChildFrameChangedType type,
-                         OxideQWebFrame* child_frame);
+  void messageHandlersChanged();
 
  protected:
-  friend class oxide::qt::WebFrame;
+  QWebFrame(QWebFramePrivate& dd);
 
-  OxideQWebFrame(oxide::qt::WebFrame* owner);
-
- private:
-  
-  QScopedPointer<OxideQWebFramePrivate> d_ptr;
+  QScopedPointer<QWebFramePrivate> d_ptr;
 };
 
-QML_DECLARE_TYPE(OxideQWebFrame)
+} // namespace qt
+} // namespace oxide
 
 #endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_H_

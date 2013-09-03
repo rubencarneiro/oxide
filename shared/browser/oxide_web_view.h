@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 
 #include <string>
+#include <vector>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -29,6 +30,7 @@
 #include "content/public/browser/web_contents_observer.h"
 
 #include "shared/browser/oxide_browser_process_handle.h"
+#include "shared/browser/oxide_message_dispatcher_browser.h"
 
 class GURL;
 
@@ -57,6 +59,8 @@ class WebView : public content::WebContentsDelegate,
  public:
   virtual ~WebView();
 
+  static WebView* FromWebContents(content::WebContents* web_contents);
+
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
 
@@ -81,6 +85,7 @@ class WebView : public content::WebContentsDelegate,
   BrowserContext* GetBrowserContext() const;
 
   WebFrame* GetRootFrame() const;
+  WebFrame* FindFrameWithID(int64 frame_id) const;
 
   void DidCommitProvisionalLoadForFrame(
       int64 frame_id,
@@ -95,16 +100,21 @@ class WebView : public content::WebContentsDelegate,
   void FrameDetached(content::RenderViewHost* render_view_host,
                      int64 frame_id) FINAL;
 
+  bool OnReceiveMessage(const MessageDispatcherBrowser::V8Message& message);
+
+  virtual MessageDispatcherBrowser::MessageHandlerVector
+      GetMessageHandlers() const;
+
+  content::WebContents* web_contents() const {
+    return web_contents_.get();
+  }
+
  protected:
   WebView();
   bool Init(BrowserContext* context,
             WebContentsViewDelegate* delegate,
             bool incognito,
             const gfx::Size& initial_size);
-
-  content::WebContents* web_contents() const {
-    return web_contents_.get();
-  }
 
   void DestroyWebContents();
 
@@ -128,7 +138,6 @@ class WebView : public content::WebContentsDelegate,
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
   void NotifyRenderViewHostSwappedIn();
-  WebFrame* FindFrameByID(int64 frame_id);
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();

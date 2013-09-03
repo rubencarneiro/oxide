@@ -15,39 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_
-#define _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_H_
+#define _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_H_
 
-#include <QQmlListProperty>
+#include <QObject>
+#include <QScopedPointer>
 #include <QtGlobal>
-#include <QtQml>
 
-#include "oxide_qt_qweb_view_context.h"
+namespace oxide {
+namespace qt {
 
-QT_USE_NAMESPACE
+class QOutgoingMessageRequestPrivate;
 
-class OxideQQuickWebViewContextPrivate;
-class OxideQUserScript;
-
-class Q_DECL_EXPORT OxideQQuickWebViewContext :
-    public oxide::qt::QWebViewContext {
+class Q_DECL_EXPORT QOutgoingMessageRequest : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QQmlListProperty<OxideQUserScript> userScripts READ userScripts)
-
-  Q_DECLARE_PRIVATE(OxideQQuickWebViewContext)
+  Q_DECLARE_PRIVATE(QOutgoingMessageRequest)
 
  public:
-  OxideQQuickWebViewContext(QObject* parent = NULL);
-  virtual ~OxideQQuickWebViewContext();
+  virtual ~QOutgoingMessageRequest();
 
-  static OxideQQuickWebViewContext* defaultContext();
+ protected:
+  QOutgoingMessageRequest(QOutgoingMessageRequestPrivate& dd);
 
-  QQmlListProperty<OxideQUserScript> userScripts();
-
- private:
-  OxideQQuickWebViewContext(bool is_default);
+  QScopedPointer<QOutgoingMessageRequestPrivate> d_ptr;
 };
 
-QML_DECLARE_TYPE(OxideQQuickWebViewContext)
+} // namespace qt
+} // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_CONTEXT_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_H_

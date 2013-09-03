@@ -15,39 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
-#define _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+#ifndef _OXIDE_SHARED_RENDERER_ISOLATED_WORLD_MAP_H_
+#define _OXIDE_SHARED_RENDERER_ISOLATED_WORLD_MAP_H_
+
+#include <string>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
-#include "content/public/browser/browser_main_parts.h"
-#include "content/public/browser/render_view_host.h"
-
-namespace base {
-class MessageLoop;
-}
 
 namespace oxide {
 
-class BrowserMainParts FINAL : public content::BrowserMainParts {
+class IsolatedWorldMap FINAL {
  public:
-  BrowserMainParts();
-  ~BrowserMainParts();
-
-  void PreEarlyInitialization() FINAL;
-
-  int PreCreateThreads() FINAL;
-
-  bool MainMessageLoopRun(int* result_code) FINAL;
+  static int NameToID(const std::string& name);
+  static std::string IDToName(int id);
 
  private:
-  scoped_ptr<base::MessageLoop> main_message_loop_;
-  content::RenderViewHost::CreatedCallback rvh_created_callback_;
-
-  DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(IsolatedWorldMap);
 };
 
-};
+} // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+#endif // _OXIDE_SHARED_RENDERER_ISOLATED_WORLD_MAP_H_

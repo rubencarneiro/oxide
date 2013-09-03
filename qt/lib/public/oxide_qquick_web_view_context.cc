@@ -16,9 +16,9 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qquick_web_view_context_p.h"
+#include "oxide_qquick_web_view_context_p_p.h"
 
 #include "oxide_q_user_script.h"
-#include "oxide_qquick_web_view_context_p_p.h"
 
 QT_USE_NAMESPACE
 
@@ -28,7 +28,7 @@ OxideQQuickWebViewContext* g_default_context;
 
 OxideQQuickWebViewContextPrivate::OxideQQuickWebViewContextPrivate(
     OxideQQuickWebViewContext* q) :
-    oxide::qt::WebViewContextPrivate(q) {}
+    oxide::qt::QWebViewContextPrivate(q) {}
 
 OxideQQuickWebViewContextPrivate::~OxideQQuickWebViewContextPrivate() {}
 
@@ -107,7 +107,7 @@ void OxideQQuickWebViewContextPrivate::userScript_clear(
 }
 
 OxideQQuickWebViewContext::OxideQQuickWebViewContext(bool is_default) :
-    oxide::qt::WebViewContext(*new OxideQQuickWebViewContextPrivate(this)) {
+    oxide::qt::QWebViewContext(*new OxideQQuickWebViewContextPrivate(this)) {
   if (is_default) {
     Q_ASSERT(!g_default_context);
     g_default_context = this;
@@ -115,8 +115,8 @@ OxideQQuickWebViewContext::OxideQQuickWebViewContext(bool is_default) :
 }
 
 OxideQQuickWebViewContext::OxideQQuickWebViewContext(QObject* parent) :
-    oxide::qt::WebViewContext(*new OxideQQuickWebViewContextPrivate(this),
-                              parent) {}
+    oxide::qt::QWebViewContext(*new OxideQQuickWebViewContextPrivate(this),
+                               parent) {}
 
 OxideQQuickWebViewContext::~OxideQQuickWebViewContext() {
   if (g_default_context == this) {

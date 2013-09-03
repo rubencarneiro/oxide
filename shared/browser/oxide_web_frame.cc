@@ -18,26 +18,27 @@
 #include "oxide_web_frame.h"
 
 #include "base/logging.h"
+#include "content/public/browser/render_view_host.h"
+#include "content/public/browser/web_contents.h"
+
+#include "shared/common/oxide_messages.h"
+
+#include "oxide_message_handler.h"
+#include "oxide_outgoing_message_request.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
 void WebFrame::AddChildrenToQueue(std::queue<WebFrame *>* queue) const {
-  for (ChildMap::const_iterator it = child_frames_.begin();
+  for (ChildVector::const_iterator it = child_frames_.begin();
        it != child_frames_.end(); ++it) {
-    queue->push(it->second.get());
+    linked_ptr<WebFrame> frame = *it;
+    queue->push(frame.get());
   }
-}
-
-WebFrame* WebFrame::GetChildFrameWithID(int64 frame_id) const {
-  ChildMap::const_iterator it = child_frames_.find(frame_id);
-  if (it != child_frames_.end()) {
-    return it->second.get();
-  }
-
-  return NULL;
 }
 
 void WebFrame::SetParent(WebFrame* parent) {
+  DCHECK(!view_);
   parent_ = parent;
   OnParentChanged();
 }
@@ -49,31 +50,51 @@ void WebFrame::OnURLChanged() {}
 
 WebFrame::WebFrame(int64 frame_id) :
   id_(frame_id),
-  parent_(NULL) {}
+  parent_(NULL),
+  view_(NULL),
+  next_message_serial_(0),
+  weak_factory_(this) {}
 
 WebFrame::~WebFrame() {}
+
+WebView* WebFrame::GetView() const {
+  WebFrame* top = const_cast<WebFrame *>(this);
+  while (top->parent()) {
+    top = top->parent();
+  }
+
+  if (top == this) {
+    return view_;
+  }
+
+  return top->GetView();
+}
+
+void WebFrame::SetView(WebView* view) {
+  DCHECK(!parent_);
+  view_ = view;
+}
 
 void WebFrame::AddChildFrame(WebFrame* frame) {
   CHECK(!frame->parent());
 
   frame->SetParent(this);
 
-  child_frames_[frame->identifier()] = linked_ptr<WebFrame>(frame);
+  child_frames_.push_back(linked_ptr<WebFrame>(frame));
   OnChildAdded(frame);
 }
 
-void WebFrame::RemoveChildFrameWithID(int64 frame_id) {
-  ChildMap::iterator it = child_frames_.find(frame_id);
-  if (it == child_frames_.end()) {
-    return;
+void WebFrame::RemoveChildFrame(WebFrame* frame) {
+  for (ChildVector::iterator it = child_frames_.begin();
+       it != child_frames_.end(); ++it) {
+    linked_ptr<WebFrame> f = *it;
+
+    if (f == frame) {
+      child_frames_.erase(it);
+      OnChildRemoved(frame);
+      return;
+    }
   }
-
-  linked_ptr<WebFrame> child(it->second);
-
-  child_frames_.erase(frame_id);
-  OnChildRemoved(child.get());
-
-  child->SetParent(NULL);
 }
 
 void WebFrame::SetURL(const GURL& url) {
@@ -81,11 +102,7 @@ void WebFrame::SetURL(const GURL& url) {
   OnURLChanged();
 }
 
-WebFrame* WebFrame::FindFrameWithIDInSubtree(int64 frame_id) {
-  if (identifier() == frame_id) {
-    return this;
-  }
-
+WebFrame* WebFrame::FindFrameWithID(int64 frame_id) {
   std::queue<WebFrame *> q;
   q.push(this);
 
@@ -93,8 +110,9 @@ WebFrame* WebFrame::FindFrameWithIDInSubtree(int64 frame_id) {
     WebFrame* f = q.front();
     q.pop();
 
-    WebFrame* rv = f->GetChildFrameWithID(frame_id);
-    if (rv) return rv;
+    if (f->identifier() == frame_id) {
+      return f;
+    }
 
     f->AddChildrenToQueue(&q);
   }
@@ -102,15 +120,67 @@ WebFrame* WebFrame::FindFrameWithIDInSubtree(int64 frame_id) {
   return NULL;
 }
 
-std::vector<WebFrame *> WebFrame::GetChildFrames() const {
-  std::vector<WebFrame *> frames;
+size_t WebFrame::ChildCount() const {
+  return child_frames_.size();
+}
 
-  for (ChildMap::const_iterator it = child_frames_.begin();
-       it != child_frames_.end(); ++ it) {
-    frames.push_back(it->second.get());
+WebFrame* WebFrame::ChildAt(size_t index) const {
+  if (index >= child_frames_.size()) {
+    return NULL;
   }
 
-  return frames;
+  return child_frames_.at(index).get();
+}
+
+bool WebFrame::SendMessage(const std::string& world_id,
+                           const std::string& msg_id,
+                           const std::string& args,
+                           OutgoingMessageRequest* req) {
+  DCHECK(req);
+
+  int serial = next_message_serial_++;
+
+  req->set_serial(serial);
+
+  OxideMsg_SendMessage_Params params;
+  params.frame_id = identifier();
+  params.world_id = world_id;
+  params.serial = serial;
+  params.type = OxideMsg_SendMessage_Type::Message;
+  params.msg_id = msg_id;
+  params.args = args;
+
+  content::WebContents* web_contents = GetView()->web_contents();
+
+  return web_contents->Send(new OxideMsg_SendMessage(
+      web_contents->GetRenderViewHost()->GetRoutingID(), params));
+}
+
+bool WebFrame::SendMessageNoReply(const std::string& world_id,
+                                  const std::string& msg_id,
+                                  const std::string& args) {
+  OxideMsg_SendMessage_Params params;
+  params.frame_id = identifier();
+  params.world_id = world_id;
+  params.serial = -1;
+  params.type = OxideMsg_SendMessage_Type::Message;
+  params.msg_id = msg_id;
+  params.args = args;
+
+  content::WebContents* web_contents = GetView()->web_contents();
+
+  return web_contents->Send(new OxideMsg_SendMessage(
+      web_contents->GetRenderViewHost()->GetRoutingID(), params));
+}
+
+MessageDispatcherBrowser::MessageHandlerVector
+WebFrame::GetMessageHandlers() const {
+  return MessageDispatcherBrowser::MessageHandlerVector();
+}
+
+MessageDispatcherBrowser::OutgoingMessageRequestVector
+WebFrame::GetOutgoingMessageRequests() const {
+  return MessageDispatcherBrowser::OutgoingMessageRequestVector();
 }
 
 } // namespace oxide

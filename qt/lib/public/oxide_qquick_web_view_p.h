@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_H_
 #define _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_H_
 
+#include <QQmlListProperty>
 #include <QQuickItem>
 #include <QScopedPointer>
 #include <QString>
@@ -31,9 +32,10 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+class OxideQQuickMessageHandler;
+class OxideQQuickWebFrame;
 class OxideQQuickWebViewContext;
 class OxideQQuickWebViewPrivate;
-class OxideQWebFrame;
 
 class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
@@ -43,7 +45,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY commandsUpdated)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
-  Q_PROPERTY(OxideQWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
+  Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
@@ -70,7 +73,11 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   bool loading() const;
 
-  OxideQWebFrame* rootFrame() const;
+  OxideQQuickWebFrame* rootFrame() const;
+
+  QQmlListProperty<OxideQQuickMessageHandler> messageHandlers();
+  Q_INVOKABLE void addMessageHandler(OxideQQuickMessageHandler* handler);
+  Q_INVOKABLE void removeMessageHandler(OxideQQuickMessageHandler* handler);
 
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
@@ -91,6 +98,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void loadingChanged();
   void rootFrameChanged();
   void popupMenuChanged();
+  void messageHandlersChanged();
 
  private Q_SLOTS:
   void visibilityChangedListener();

@@ -15,39 +15,34 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
-#define _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
-
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
-#include "content/public/browser/browser_main_parts.h"
-#include "content/public/browser/render_view_host.h"
-
-namespace base {
-class MessageLoop;
-}
+#include "oxide_outgoing_message_request.h"
 
 namespace oxide {
 
-class BrowserMainParts FINAL : public content::BrowserMainParts {
- public:
-  BrowserMainParts();
-  ~BrowserMainParts();
+OutgoingMessageRequest::OutgoingMessageRequest() :
+    serial_(-1) {}
 
-  void PreEarlyInitialization() FINAL;
+void OutgoingMessageRequest::SetReplyCallback(
+    const ResponseCallback& callback) {
+  reply_callback_ = callback;
+}
 
-  int PreCreateThreads() FINAL;
+void OutgoingMessageRequest::SetErrorCallback(
+    const ResponseCallback& callback) {
+  error_callback_ = callback;
+}
 
-  bool MainMessageLoopRun(int* result_code) FINAL;
+void OutgoingMessageRequest::OnReceiveResponse(
+    const MessageDispatcherBrowser::V8Response& response) {
+  if (response.is_error) {
+    if (!error_callback_.is_null()) {
+      error_callback_.Run(response.param);
+    }
+  } else {
+    if (!reply_callback_.is_null()) {
+      reply_callback_.Run(response.param);
+    }
+  }
+}
 
- private:
-  scoped_ptr<base::MessageLoop> main_message_loop_;
-  content::RenderViewHost::CreatedCallback rvh_created_callback_;
-
-  DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);
-};
-
-};
-
-#endif // _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+} // namespace oxide

@@ -20,11 +20,13 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/linked_ptr.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/renderer/content_renderer_client.h"
 
 namespace oxide {
 
+class MessageDispatcherRenderer;
 class ProcessObserver;
 class UserScriptSlave;
 
@@ -36,14 +38,26 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
   UserScriptSlave* user_script_slave() const {
     return user_script_slave_.get();
   }
+  MessageDispatcherRenderer* message_dispatcher() const {
+    return message_dispatcher_.get();
+  }
 
   void RenderThreadStarted() FINAL;
 
   void RenderViewCreated(content::RenderView* render_view) FINAL;
 
+  void DidCreateScriptContext(WebKit::WebFrame* frame,
+                              v8::Handle<v8::Context> context,
+                              int extension_group,
+                              int world_id) FINAL;
+  void WillReleaseScriptContext(WebKit::WebFrame* frame,
+                                v8::Handle<v8::Context>,
+                                int world_id) FINAL;
+
  private:
   scoped_ptr<ProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;
+  scoped_ptr<MessageDispatcherRenderer> message_dispatcher_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };

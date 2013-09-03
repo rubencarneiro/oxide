@@ -6,3 +6,4 @@ gyp-support-library-version.patch
 support-native-popup-menus.patch
 add-oxide-messages.patch
 add-frame-created-for-web-contents-observer.patch
+add-oxide-resources.patch

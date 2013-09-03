@@ -56,7 +56,8 @@
           'action_name': 'repack_oxide',
           'variables': {
             'pak_inputs': [
-              '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak'
+              '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/oxide/oxide_resources.pak'
             ]
           },
           'inputs': [

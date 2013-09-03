@@ -17,12 +17,14 @@
 
 #include "oxide_browser_main_parts.h"
 
+#include "base/bind.h"
 #include "base/message_loop/message_loop.h"
 
 #include "shared/common/oxide_content_client.h"
 
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_message_dispatcher_browser.h"
 #include "oxide_message_pump.h"
 
 namespace oxide {
@@ -34,9 +36,20 @@ base::MessagePump* CreateMessagePumpForUI() {
       CreateMessagePumpForUI();
 }
 
+void RenderViewHostCreated(content::RenderViewHost* rvh) {
+  new oxide::MessageDispatcherBrowser(rvh);
+}
+
 } // namespace
 
-BrowserMainParts::BrowserMainParts() {}
+BrowserMainParts::BrowserMainParts() :
+    rvh_created_callback_(base::Bind(&RenderViewHostCreated)) {
+  content::RenderViewHost::AddCreatedCallback(rvh_created_callback_);
+}
+
+BrowserMainParts::~BrowserMainParts() {
+  content::RenderViewHost::RemoveCreatedCallback(rvh_created_callback_);
+}
 
 void BrowserMainParts::PreEarlyInitialization() {
   base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);

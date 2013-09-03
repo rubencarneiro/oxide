@@ -17,6 +17,7 @@
 
 #include "oxide_content_renderer_client.h"
 
+#include "oxide_message_dispatcher_renderer.h"
 #include "oxide_process_observer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
@@ -30,11 +31,28 @@ ContentRendererClient::~ContentRendererClient() {}
 void ContentRendererClient::RenderThreadStarted() {
   process_observer_.reset(new ProcessObserver());
   user_script_slave_.reset(new UserScriptSlave());
+  message_dispatcher_.reset(new MessageDispatcherRenderer());
 }
 
 void ContentRendererClient::RenderViewCreated(
     content::RenderView* render_view) {
   new UserScriptScheduler(render_view);
+  new MessageDispatcherRenderer::EndPoint(render_view);
+}
+
+void ContentRendererClient::DidCreateScriptContext(
+    WebKit::WebFrame* frame,
+    v8::Handle<v8::Context> context,
+    int extension_group,
+    int world_id) {
+  message_dispatcher_->DidCreateScriptContext(frame, context, world_id);
+}
+
+void ContentRendererClient::WillReleaseScriptContext(
+    WebKit::WebFrame* frame,
+    v8::Handle<v8::Context> context,
+    int world_id) {
+  message_dispatcher_->WillReleaseScriptContext(frame, context, world_id);
 }
 
 } // namespace oxide

@@ -17,36 +17,81 @@
 
 #include "oxide_qt_web_frame.h"
 
-#include "qt/lib/public/oxide_q_web_frame.h"
+#include "qt/lib/public/oxide_qquick_web_frame_p.h"
+#include "qt/lib/public/oxide_qt_qweb_frame.h"
+#include "qt/lib/public/oxide_qt_qweb_frame_p.h"
+#include "qt/lib/public/oxide_qt_qmessage_handler_p.h"
+#include "qt/lib/public/oxide_qt_qoutgoing_message_request_p.h"
 
 namespace oxide {
 namespace qt {
 
-void WebFrame::OnParentChanged() {
-  q_web_frame_->parentFrameChanged();
-}
-
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
-  OxideQWebFrame* qchild = child ?
-      static_cast<WebFrame *>(child)->q_web_frame() : NULL;
-  q_web_frame_->childFrameChanged(OxideQWebFrame::ChildAdded, qchild);
+  OnChildAddedQt(static_cast<WebFrame *>(child)->q_web_frame());
 }
 
 void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
-  OxideQWebFrame* qchild = child ?
-      static_cast<WebFrame *>(child)->q_web_frame() : NULL;
-  q_web_frame_->childFrameChanged(OxideQWebFrame::ChildRemoved, qchild);
+  OnChildRemovedQt(static_cast<WebFrame *>(child)->q_web_frame());
 }
 
 void WebFrame::OnURLChanged() {
   q_web_frame_->urlChanged();
 }
 
-WebFrame::WebFrame(int64 frame_id) :
+WebFrame::WebFrame(int64 frame_id, QWebFrame* q_web_frame) :
     oxide::WebFrame(frame_id),
-    q_web_frame_(new OxideQWebFrame(this)) {}
+    q_web_frame_(q_web_frame) {}
 
 WebFrame::~WebFrame() {}
+
+MessageDispatcherBrowser::MessageHandlerVector
+WebFrame::GetMessageHandlers() const {
+  MessageDispatcherBrowser::MessageHandlerVector list;
+  QList<QMessageHandler *>& handlers =
+      QWebFramePrivate::get(q_web_frame_.get())->message_handlers();
+  for (int i = 0; i < handlers.size(); ++i) {
+    list.push_back(QMessageHandlerPrivate::get(handlers.at(i))->handler());
+  }
+
+  return list;
+}
+
+MessageDispatcherBrowser::OutgoingMessageRequestVector
+WebFrame::GetOutgoingMessageRequests() const {
+  MessageDispatcherBrowser::OutgoingMessageRequestVector list;
+  QList<QOutgoingMessageRequest *>& requests =
+      QWebFramePrivate::get(q_web_frame_.get())->outgoing_message_requests();
+  for (int i = 0; i < requests.size(); ++i) {
+    list.push_back(QOutgoingMessageRequestPrivate::get(requests.at(i))->request());
+  }
+
+  return list;
+}
+
+void WebFrameQQuick::OnParentChanged() {
+  QQuickWebFrame()->parentFrameChanged();
+}
+
+void WebFrameQQuick::OnChildAddedQt(QWebFrame* child) {
+  QQuickWebFrame()->childFrameChanged(
+      OxideQQuickWebFrame::ChildAdded,
+      qobject_cast<OxideQQuickWebFrame *>(child));
+}
+
+void WebFrameQQuick::OnChildRemovedQt(QWebFrame* child) {
+  QQuickWebFrame()->childFrameChanged(
+      OxideQQuickWebFrame::ChildRemoved,
+      qobject_cast<OxideQQuickWebFrame *>(child));
+}
+
+WebFrameQQuick::WebFrameQQuick(int64 frame_id) :
+    WebFrame(frame_id, new OxideQQuickWebFrame(this)) {}
+
+WebFrameQQuick::~WebFrameQQuick() {}
+
+OxideQQuickWebFrame* WebFrameQQuick::QQuickWebFrame() const {
+  return qobject_cast<OxideQQuickWebFrame *>(q_web_frame());
+}
 
 } // namespace qt
 } // namespace oxide

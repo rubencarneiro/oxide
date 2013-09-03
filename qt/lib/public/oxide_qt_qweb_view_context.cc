@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_web_view_context.h"
+#include "oxide_qt_qweb_view_context.h"
 
 #include <string>
 
@@ -26,7 +26,7 @@
 
 #include "oxide_q_user_script.h"
 #include "oxide_q_user_script_p.h"
-#include "oxide_qt_web_view_context_p.h"
+#include "oxide_qt_qweb_view_context_p.h"
 
 namespace oxide {
 namespace qt {
@@ -39,12 +39,12 @@ struct LazyInitProperties {
   std::string accept_langs;
 };
 
-WebViewContextPrivate::WebViewContextPrivate(WebViewContext* q) :
+QWebViewContextPrivate::QWebViewContextPrivate(QWebViewContext* q) :
     q_ptr(q), lazy_init_props_(new LazyInitProperties()) {}
 
-WebViewContextPrivate::~WebViewContextPrivate() {}
+QWebViewContextPrivate::~QWebViewContextPrivate() {}
 
-oxide::BrowserContext* WebViewContextPrivate::GetContext() {
+oxide::BrowserContext* QWebViewContextPrivate::GetContext() {
   if (context_) {
     return context_.get();
   }
@@ -71,11 +71,11 @@ oxide::BrowserContext* WebViewContextPrivate::GetContext() {
 }
 
 // static
-WebViewContextPrivate* WebViewContextPrivate::get(WebViewContext* context) {
+QWebViewContextPrivate* QWebViewContextPrivate::get(QWebViewContext* context) {
   return context->d_func();
 }
 
-void WebViewContextPrivate::updateUserScripts() {
+void QWebViewContextPrivate::updateUserScripts() {
   if (!context_) {
     return;
   }
@@ -99,21 +99,21 @@ void WebViewContextPrivate::updateUserScripts() {
   context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
 }
 
-void WebViewContext::scriptUpdated() {
-  Q_D(WebViewContext);
+void QWebViewContext::scriptUpdated() {
+  Q_D(QWebViewContext);
 
   d->updateUserScripts();
 }
 
-WebViewContext::WebViewContext(WebViewContextPrivate& dd,
-                               QObject* parent) :
+QWebViewContext::QWebViewContext(QWebViewContextPrivate& dd,
+                                 QObject* parent) :
     QObject(parent),
     d_ptr(&dd) {}
 
-WebViewContext::~WebViewContext() {}
+QWebViewContext::~QWebViewContext() {}
 
-QString WebViewContext::product() const {
-  Q_D(const WebViewContext);
+QString QWebViewContext::product() const {
+  Q_D(const QWebViewContext);
 
   if (d->context()) {
     return QString::fromStdString(d->context()->GetProduct());
@@ -122,8 +122,8 @@ QString WebViewContext::product() const {
   return QString::fromStdString(d->lazy_init_props()->product);
 }
 
-void WebViewContext::setProduct(const QString& product) {
-  Q_D(WebViewContext);
+void QWebViewContext::setProduct(const QString& product) {
+  Q_D(QWebViewContext);
 
   if (d->context()) {
     d->context()->SetProduct(product.toStdString());
@@ -134,8 +134,8 @@ void WebViewContext::setProduct(const QString& product) {
   emit productChanged();
 }
 
-QString WebViewContext::userAgent() const {
-  Q_D(const WebViewContext);
+QString QWebViewContext::userAgent() const {
+  Q_D(const QWebViewContext);
 
   if (d->context()) {
     return QString::fromStdString(d->context()->GetUserAgent());
@@ -144,8 +144,8 @@ QString WebViewContext::userAgent() const {
   return QString::fromStdString(d->lazy_init_props()->user_agent);
 }
 
-void WebViewContext::setUserAgent(const QString& user_agent) {
-  Q_D(WebViewContext);
+void QWebViewContext::setUserAgent(const QString& user_agent) {
+  Q_D(QWebViewContext);
 
   if (d->context()) {
     d->context()->SetUserAgent(user_agent.toStdString());
@@ -156,8 +156,8 @@ void WebViewContext::setUserAgent(const QString& user_agent) {
   emit userAgentChanged();
 }
 
-QUrl WebViewContext::dataPath() const {
-  Q_D(const WebViewContext);
+QUrl QWebViewContext::dataPath() const {
+  Q_D(const QWebViewContext);
 
   if (d->context()) {
     return QUrl::fromLocalFile(
@@ -168,8 +168,8 @@ QUrl WebViewContext::dataPath() const {
       QString::fromStdString(d->lazy_init_props()->data_path.value()));
 }
 
-void WebViewContext::setDataPath(const QUrl& data_url) {
-  Q_D(WebViewContext);
+void QWebViewContext::setDataPath(const QUrl& data_url) {
+  Q_D(QWebViewContext);
 
   if (!d->context()) {
     if (!data_url.isLocalFile()) {
@@ -182,8 +182,8 @@ void WebViewContext::setDataPath(const QUrl& data_url) {
   } 
 }
 
-QUrl WebViewContext::cachePath() const {
-  Q_D(const WebViewContext);
+QUrl QWebViewContext::cachePath() const {
+  Q_D(const QWebViewContext);
 
   if (d->context()) {
     return QUrl::fromLocalFile(
@@ -194,8 +194,8 @@ QUrl WebViewContext::cachePath() const {
       QString::fromStdString(d->lazy_init_props()->cache_path.value()));
 }
 
-void WebViewContext::setCachePath(const QUrl& cache_url) {
-  Q_D(WebViewContext);
+void QWebViewContext::setCachePath(const QUrl& cache_url) {
+  Q_D(QWebViewContext);
 
   if (!d->context()) {
     if (!cache_url.isLocalFile()) {
@@ -208,8 +208,8 @@ void WebViewContext::setCachePath(const QUrl& cache_url) {
   }
 }
 
-QString WebViewContext::acceptLangs() const {
-  Q_D(const WebViewContext);
+QString QWebViewContext::acceptLangs() const {
+  Q_D(const QWebViewContext);
 
   if (d->context()) {
     return QString::fromStdString(d->context()->GetAcceptLangs());
@@ -218,8 +218,8 @@ QString WebViewContext::acceptLangs() const {
   return QString::fromStdString(d->lazy_init_props()->accept_langs);
 }
 
-void WebViewContext::setAcceptLangs(const QString& accept_langs) {
-  Q_D(WebViewContext);
+void QWebViewContext::setAcceptLangs(const QString& accept_langs) {
+  Q_D(QWebViewContext);
 
   if (d->context()) {
     d->context()->SetAcceptLangs(accept_langs.toStdString());

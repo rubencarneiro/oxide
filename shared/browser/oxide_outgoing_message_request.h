@@ -15,39 +15,41 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
-#define _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+#ifndef _OXIDE_SHARED_BROWSER_OUTGOING_MESSAGE_REQUEST_H_
+#define _OXIDE_SHARED_BROWSER_OUTGOING_MESSAGE_REQUEST_H_
 
 #include "base/basictypes.h"
+#include "base/callback.h"
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
-#include "content/public/browser/browser_main_parts.h"
-#include "content/public/browser/render_view_host.h"
 
-namespace base {
-class MessageLoop;
-}
+#include "shared/browser/oxide_message_dispatcher_browser.h"
 
 namespace oxide {
 
-class BrowserMainParts FINAL : public content::BrowserMainParts {
+class OutgoingMessageRequest FINAL {
  public:
-  BrowserMainParts();
-  ~BrowserMainParts();
+  typedef base::Callback<void(const std::string&)> ResponseCallback;
 
-  void PreEarlyInitialization() FINAL;
+  OutgoingMessageRequest();
 
-  int PreCreateThreads() FINAL;
+  int serial() const {
+    return serial_;
+  }
+  void set_serial(int serial) {
+    serial_ = serial;
+  }
 
-  bool MainMessageLoopRun(int* result_code) FINAL;
+  void SetReplyCallback(const ResponseCallback& callback);
+  void SetErrorCallback(const ResponseCallback& callback);
+
+  void OnReceiveResponse(const MessageDispatcherBrowser::V8Response& response);
 
  private:
-  scoped_ptr<base::MessageLoop> main_message_loop_;
-  content::RenderViewHost::CreatedCallback rvh_created_callback_;
-
-  DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);
+  int serial_;
+  ResponseCallback reply_callback_;
+  ResponseCallback error_callback_;
 };
 
-};
+} // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+#endif // _OXIDE_SHARED_BROWSER_OUTGOING_MESSAGE_REQUEST_H_

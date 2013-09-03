@@ -24,29 +24,55 @@
 
 #include "shared/browser/oxide_web_frame.h"
 
-class OxideQWebFrame;
+class OxideQQuickWebFrame;
 
 namespace oxide {
 namespace qt {
 
-class WebFrame FINAL : public oxide::WebFrame {
- public:
-  WebFrame(int64 frame_id);
-  ~WebFrame();
+class QWebFrame;
 
-  OxideQWebFrame* q_web_frame() const {
+class WebFrame : public oxide::WebFrame {
+ public:
+  virtual ~WebFrame();
+
+  QWebFrame* q_web_frame() const {
     return q_web_frame_.get();
   }
 
+  MessageDispatcherBrowser::MessageHandlerVector
+      GetMessageHandlers() const FINAL;
+  MessageDispatcherBrowser::OutgoingMessageRequestVector
+      GetOutgoingMessageRequests() const FINAL;
+
+ protected:
+  WebFrame(int64 frame_id, QWebFrame* q_web_frame);
+
  private:
-  void OnParentChanged() FINAL;
   void OnChildAdded(oxide::WebFrame* child) FINAL;
   void OnChildRemoved(oxide::WebFrame* child) FINAL;
   void OnURLChanged() FINAL;
 
-  scoped_ptr<OxideQWebFrame> q_web_frame_;
+  virtual void OnChildAddedQt(QWebFrame* child) = 0;
+  virtual void OnChildRemovedQt(QWebFrame* child) = 0;
+
+  scoped_ptr<QWebFrame> q_web_frame_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrame);
+};
+
+class WebFrameQQuick FINAL : public WebFrame {
+ public:
+  WebFrameQQuick(int64 frame_id);
+  ~WebFrameQQuick();
+
+  OxideQQuickWebFrame* QQuickWebFrame() const;
+
+ private:
+  void OnParentChanged() FINAL;
+  void OnChildAddedQt(QWebFrame* child) FINAL;
+  void OnChildRemovedQt(QWebFrame* child) FINAL;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrameQQuick);
 };
 
 } // namespace qt

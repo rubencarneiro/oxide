@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grit latest_public_release="0" current_release="1">
+  <outputs>
+    <output filename="grit/oxide_resources.h" type="rc_header">
+      <emit emit_type='prepend'></emit>
+    </output>
+    <output filename="oxide_resources.pak" type="data_package" />
+  </outputs>
+  <release seq="1">
+    <includes>
+      <include name="IDR_OXIDE_V8_MESSAGE_MANAGER_BINDINGS_JS" file="renderer/oxide_v8_message_manager_bindings.js" type="BINDATA" />
+    </includes>
+  </release>
+</grit>

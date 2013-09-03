@@ -34,6 +34,7 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_user_script.h"
 
+#include "oxide_isolated_world_map.h"
 #include "oxide_process_observer.h"
 
 namespace oxide {
@@ -48,34 +49,17 @@ const char kUserScriptTail[] = "\n})(window);";
 // static
 int UserScriptSlave::GetIsolatedWorldID(const std::string& name,
                                         WebKit::WebFrame* frame) {
-  static std::map<std::string, int> g_isolated_world_ids;
-  static int g_next_isolated_world_id = 1;
-
   std::string url(kIsolatedWorldOriginProtocol);
   url.append(name);
 
-  std::map<std::string, int>::iterator it = g_isolated_world_ids.find(name);
-  if (it != g_isolated_world_ids.end()) {
-    frame->setIsolatedWorldSecurityOrigin(
-        it->second,
-        WebKit::WebSecurityOrigin::createFromString(base::UTF8ToUTF16(url)));
-    frame->setIsolatedWorldContentSecurityPolicy(
-        it->second,
-        WebKit::WebString::fromUTF8(kIsolatedWorldCSP));
-    return it->second;
-  }
-
-  int new_id = g_next_isolated_world_id++;
-  g_isolated_world_ids[name] = new_id;
+  int id = IsolatedWorldMap::NameToID(name);
 
   frame->setIsolatedWorldSecurityOrigin(
-      new_id,
-      WebKit::WebSecurityOrigin::createFromString(base::UTF8ToUTF16(url)));
+      id, WebKit::WebSecurityOrigin::createFromString(base::UTF8ToUTF16(url)));
   frame->setIsolatedWorldContentSecurityPolicy(
-      new_id,
-      WebKit::WebString::fromUTF8(kIsolatedWorldCSP));
+      id, WebKit::WebString::fromUTF8(kIsolatedWorldCSP));
 
-  return new_id;
+  return id;
 }
 
 void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {

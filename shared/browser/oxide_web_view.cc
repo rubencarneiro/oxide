@@ -31,8 +31,11 @@
 #include "content/public/browser/web_contents_view.h"
 #include "url/gurl.h"
 
+#include "shared/common/oxide_messages.h"
+
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_message_handler.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 
@@ -84,18 +87,13 @@ void WebView::NotifyRenderViewHostSwappedIn() {
 
   if (rvh->main_frame_id() != -1) {
     root = AllocWebFrame(rvh->main_frame_id());
+    if (root) {
+      root->SetView(this);
+    }
   }
 
   root_frame_.reset(root);
   OnRootFrameChanged();
-}
-
-WebFrame* WebView::FindFrameByID(int64 frame_id) {
-  if (!root_frame_) {
-    return NULL;
-  }
-
-  return root_frame_->FindFrameWithIDInSubtree(frame_id);
 }
 
 void WebView::OnURLChanged() {}
@@ -107,6 +105,7 @@ void WebView::OnRootFrameChanged() {}
 WebFrame* WebView::AllocWebFrame(int64 frame_id) {
   return NULL;
 }
+
 
 WebView::WebView() :
     notification_observer_(this) {}
@@ -157,6 +156,11 @@ WebView::~WebView() {
     GetBrowserContext()->RemoveWebView(this);
     web_contents_->SetDelegate(NULL);
   }
+}
+
+// static
+WebView* WebView::FromWebContents(content::WebContents* web_contents) {
+  return static_cast<WebView *>(web_contents->GetDelegate());
 }
 
 const GURL& WebView::GetURL() const {
@@ -224,6 +228,14 @@ WebFrame* WebView::GetRootFrame() const {
   return root_frame_.get();
 }
 
+WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
+  if (!root_frame_) {
+    return NULL;
+  }
+
+  return root_frame_->FindFrameWithID(frame_id);
+}
+
 void WebView::DidCommitProvisionalLoadForFrame(
     int64 frame_id,
     bool is_main_frame,
@@ -235,12 +247,16 @@ void WebView::DidCommitProvisionalLoadForFrame(
   }
 
   if (!root_frame_) {
-    root_frame_.reset(AllocWebFrame(frame_id));
+    WebFrame* root = AllocWebFrame(frame_id);
+    if (root) {
+      root->SetView(this);
+    }
+    root_frame_.reset(root);
     DCHECK(!root_frame_ || is_main_frame);
     OnRootFrameChanged();
   }
 
-  WebFrame* frame = FindFrameByID(frame_id);
+  WebFrame* frame = FindFrameWithID(frame_id);
   if (frame) {
     frame->SetURL(url);
   }
@@ -253,7 +269,7 @@ void WebView::FrameAttached(content::RenderViewHost* render_view_host,
     return;
   }
 
-  WebFrame* parent = FindFrameByID(parent_frame_id);
+  WebFrame* parent = FindFrameWithID(parent_frame_id);
   if (!parent) {
     return;
   }
@@ -272,12 +288,17 @@ void WebView::FrameDetached(content::RenderViewHost* render_view_host,
     return;
   }
 
-  WebFrame* frame = FindFrameByID(frame_id);
+  WebFrame* frame = FindFrameWithID(frame_id);
   if (!frame) {
     return;
   }
 
-  frame->parent()->RemoveChildFrameWithID(frame_id);
+  frame->parent()->RemoveChildFrame(frame);
+}
+
+MessageDispatcherBrowser::MessageHandlerVector
+WebView::GetMessageHandlers() const {
+  return MessageDispatcherBrowser::MessageHandlerVector();
 }
 
 } // namespace oxide

@@ -20,7 +20,7 @@
 
 #include <QtGlobal>
 
-#include "oxide_qt_web_view_context_p.h"
+#include "oxide_qt_qweb_view_context_p.h"
 
 class OxideQQuickWebViewContext;
 class OxideQUserScript;
@@ -32,7 +32,7 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class OxideQQuickWebViewContextPrivate FINAL :
-    public oxide::qt::WebViewContextPrivate {
+    public oxide::qt::QWebViewContextPrivate {
   Q_DECLARE_PUBLIC(OxideQQuickWebViewContext)
 
  public:
