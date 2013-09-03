@@ -23,6 +23,7 @@
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
+#include <QVariant>
 
 namespace oxide {
 class IncomingMessage;
@@ -35,7 +36,7 @@ class QMessageHandlerBasePrivate;
 class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString worldId READ worldId)
-  Q_PROPERTY(QString args READ args)
+  Q_PROPERTY(QVariant args READ args)
 
   Q_DECLARE_PRIVATE(oxide::qt::QIncomingMessage)
 
@@ -43,9 +44,9 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   virtual ~OxideQIncomingMessage();
 
   QString worldId() const;
-  QString args() const;
+  QVariant args() const;
 
-  Q_INVOKABLE void reply(const QString& args);
+  Q_INVOKABLE void reply(const QVariant& args);
   Q_INVOKABLE void error(const QString& msg);
 
  protected:

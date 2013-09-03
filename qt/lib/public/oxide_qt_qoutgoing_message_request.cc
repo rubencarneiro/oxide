@@ -19,8 +19,12 @@
 #include "oxide_q_outgoing_message_request_base_p.h"
 #include "oxide_qquick_outgoing_message_request_p.h"
 
+#include <QByteArray>
+#include <QJSEngine>
+#include <QJsonDocument>
 #include <QString>
 #include <QtDebug>
+#include <QVariant>
 
 #include "base/bind.h"
 
@@ -31,7 +35,9 @@ namespace qt {
 
 void QOutgoingMessageRequestBasePrivate::ReceiveReplyCallback(
     const std::string& args) {
-  OnReceiveReply(QString::fromStdString(args));
+  QJsonDocument jsondoc(QJsonDocument::fromJson(
+      QByteArray(args.data(), args.length())));
+  OnReceiveReply(jsondoc.toVariant());
 }
 
 void QOutgoingMessageRequestBasePrivate::ReceiveErrorCallback(
@@ -90,14 +96,14 @@ class QQuickOutgoingMessageRequestPrivate :
   QJSValue error_callback_;
 
  private:
-  void OnReceiveReply(const QString& args);
+  void OnReceiveReply(const QVariant& args);
   void OnReceiveError(const QString& msg);
 };
 
 void QQuickOutgoingMessageRequestPrivate::OnReceiveReply(
-    const QString& args) {
+    const QVariant& args) {
   QJSValueList jsargs;
-  jsargs.append(QJSValue(args));
+  jsargs.append(reply_callback_.engine()->toScriptValue(args));
 
   reply_callback_.call(jsargs);
 }

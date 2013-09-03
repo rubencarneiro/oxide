@@ -19,6 +19,8 @@
 #include "oxide_q_web_frame_base_p.h"
 #include "oxide_qquick_web_frame_p.h"
 
+#include <QByteArray>
+#include <QJsonDocument>
 #include <QString>
 
 #include "qt/lib/browser/oxide_qt_web_frame.h"
@@ -228,16 +230,18 @@ OxideQQuickWebFrame::messageHandlers() {
 OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
     const QString& world_id,
     const QString& msg_id,
-    const QString& args) {
+    const QVariant& args) {
   Q_D(oxide::qt::QQuickWebFrame);
 
   OxideQQuickOutgoingMessageRequest* request =
       new OxideQQuickOutgoingMessageRequest();
 
+  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
+
   if (!d->owner()->SendMessage(
           world_id.toStdString(),
           msg_id.toStdString(),
-          args.toStdString(),
+          QString(jsondoc.toJson()).toStdString(),
           oxide::qt::QOutgoingMessageRequestBasePrivate::get(request)->request())) {
     delete request;
     return NULL;
@@ -250,10 +254,12 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
 
 void OxideQQuickWebFrame::sendMessageNoReply(const QString& world_id,
                                              const QString& msg_id,
-                                             const QString& args) {
+                                             const QVariant& args) {
   Q_D(oxide::qt::QQuickWebFrame);
+
+  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
   d->owner()->SendMessageNoReply(world_id.toStdString(),
                                  msg_id.toStdString(),
-                                 args.toStdString());
+                                 QString(jsondoc.toJson()).toStdString());
 }

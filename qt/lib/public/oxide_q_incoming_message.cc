@@ -17,6 +17,9 @@
 
 #include "oxide_q_incoming_message.h"
 
+#include <QByteArray>
+#include <QJsonDocument>
+
 #include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/oxide_incoming_message.h"
@@ -27,14 +30,23 @@ namespace qt {
 class QIncomingMessagePrivate {
  public:
   QIncomingMessagePrivate(oxide::IncomingMessage* message) :
-      incoming_(message) {}
+      incoming_(message) {
+    QJsonDocument jsondoc(QJsonDocument::fromJson(
+        QByteArray(message->args().data(), message->args().length())));
+    args_variant_ = jsondoc.toVariant();
+  }
 
   oxide::IncomingMessage* incoming() const {
     return incoming_.get();
   }
 
+  QVariant args() const {
+    return args_variant_;
+  }
+
  private:
   scoped_ptr<oxide::IncomingMessage> incoming_;
+  QVariant args_variant_;
 };
 
 } // namespace qt
@@ -53,16 +65,17 @@ QString OxideQIncomingMessage::worldId() const {
   return QString::fromStdString(d->incoming()->world_id());
 }
 
-QString OxideQIncomingMessage::args() const {
+QVariant OxideQIncomingMessage::args() const {
   Q_D(const oxide::qt::QIncomingMessage);
 
-  return QString::fromStdString(d->incoming()->args());
+  return d->args();
 }
 
-void OxideQIncomingMessage::reply(const QString& args) {
+void OxideQIncomingMessage::reply(const QVariant& args) {
   Q_D(oxide::qt::QIncomingMessage);
 
-  d->incoming()->Reply(args.toStdString());
+  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
+  d->incoming()->Reply(QString(jsondoc.toJson()).toStdString());
 }
 
 void OxideQIncomingMessage::error(const QString& msg) {

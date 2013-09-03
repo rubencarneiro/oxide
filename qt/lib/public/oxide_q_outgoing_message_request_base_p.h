@@ -27,6 +27,7 @@
 
 QT_BEGIN_NAMESPACE
 class QString;
+class QVariant;
 QT_END_NAMESPACE
 
 class OxideQOutgoingMessageRequestBase;
@@ -60,7 +61,7 @@ class QOutgoingMessageRequestBasePrivate {
   void ReceiveReplyCallback(const std::string& args);
   void ReceiveErrorCallback(const std::string& msg);
 
-  virtual void OnReceiveReply(const QString& args) = 0;
+  virtual void OnReceiveReply(const QVariant& args) = 0;
   virtual void OnReceiveError(const QString& msg) = 0;
 
   oxide::OutgoingMessageRequest request_;

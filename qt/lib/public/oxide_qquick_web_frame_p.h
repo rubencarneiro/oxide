@@ -21,6 +21,7 @@
 #include <QQmlListProperty>
 #include <QtGlobal>
 #include <QtQml>
+#include <QVariant>
 
 #include "qt/lib/public/oxide_q_web_frame_base.h"
 
@@ -60,10 +61,10 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public OxideQWebFrameBase {
   Q_INVOKABLE OxideQQuickOutgoingMessageRequest*
       sendMessage(const QString& world_id,
                   const QString& msg_id,
-                  const QString& args);
+                  const QVariant& args);
   Q_INVOKABLE void sendMessageNoReply(const QString& world_id,
                                       const QString& msg_id,
-                                      const QString& args);
+                                      const QVariant& args);
 
  Q_SIGNALS:
   void parentFrameChanged();
