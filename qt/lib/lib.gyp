@@ -50,8 +50,8 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_q_incoming_message.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_q_message_handler_base.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_outgoing_message_request_base.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_q_user_script.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qt_qoutgoing_message_request.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_qweb_frame.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_qweb_view_context.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_message_handler.cc',
@@ -77,13 +77,13 @@
         'public/oxide_q_incoming_message.h',
         'public/oxide_q_message_handler_base.h',
         'public/oxide_q_message_handler_base_p.h',
+        'public/oxide_q_outgoing_message_request_base.h',
+        'public/oxide_q_outgoing_message_request_base_p.h',
         'public/oxide_q_user_script.cc',
         'public/oxide_q_user_script.h',
         'public/oxide_q_user_script_p.h',
         'public/oxide_qt_qmessage_handler.cc',
         'public/oxide_qt_qoutgoing_message_request.cc',
-        'public/oxide_qt_qoutgoing_message_request.h',
-        'public/oxide_qt_qoutgoing_message_request_p.h',
         'public/oxide_qt_qweb_frame.cc',
         'public/oxide_qt_qweb_frame.h',
         'public/oxide_qt_qweb_frame_p.h',
@@ -136,8 +136,8 @@
           ]
         },
         {
-          'action_name': 'moc_oxide_q_user_script.cc',
-          'moc_input': 'public/oxide_q_user_script.h',
+          'action_name': 'moc_oxide_q_outgoing_message_request_base.cc',
+          'moc_input': 'public/oxide_q_outgoing_message_request_base.h',
           'inputs': [
             '<(_moc_input)'
           ],
@@ -152,8 +152,8 @@
           ]
         },
         {
-          'action_name': 'moc_oxide_qt_qoutgoing_message_request.cc',
-          'moc_input': 'public/oxide_qt_qoutgoing_message_request.h',
+          'action_name': 'moc_oxide_q_user_script.cc',
+          'moc_input': 'public/oxide_q_user_script.h',
           'inputs': [
             '<(_moc_input)'
           ],

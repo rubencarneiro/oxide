@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_H_
-#define _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_H_
 
 #include <QObject>
 #include <QScopedPointer>
@@ -24,23 +24,22 @@
 
 namespace oxide {
 namespace qt {
+class QOutgoingMessageRequestBasePrivate;
+}
+}
 
-class QOutgoingMessageRequestPrivate;
-
-class Q_DECL_EXPORT QOutgoingMessageRequest : public QObject {
+class Q_DECL_EXPORT OxideQOutgoingMessageRequestBase : public QObject {
   Q_OBJECT
-  Q_DECLARE_PRIVATE(QOutgoingMessageRequest)
+  Q_DECLARE_PRIVATE(oxide::qt::QOutgoingMessageRequestBase)
 
  public:
-  virtual ~QOutgoingMessageRequest();
+  virtual ~OxideQOutgoingMessageRequestBase();
 
  protected:
-  QOutgoingMessageRequest(QOutgoingMessageRequestPrivate& dd);
+  OxideQOutgoingMessageRequestBase(
+      oxide::qt::QOutgoingMessageRequestBasePrivate& dd);
 
-  QScopedPointer<QOutgoingMessageRequestPrivate> d_ptr;
+  QScopedPointer<oxide::qt::QOutgoingMessageRequestBasePrivate> d_ptr;
 };
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_H_

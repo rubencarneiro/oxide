@@ -18,10 +18,10 @@
 #include "oxide_qt_web_frame.h"
 
 #include "qt/lib/public/oxide_q_message_handler_base_p.h"
+#include "qt/lib/public/oxide_q_outgoing_message_request_base_p.h"
 #include "qt/lib/public/oxide_qquick_web_frame_p.h"
 #include "qt/lib/public/oxide_qt_qweb_frame.h"
 #include "qt/lib/public/oxide_qt_qweb_frame_p.h"
-#include "qt/lib/public/oxide_qt_qoutgoing_message_request_p.h"
 
 namespace oxide {
 namespace qt {
@@ -59,10 +59,10 @@ WebFrame::GetMessageHandlers() const {
 MessageDispatcherBrowser::OutgoingMessageRequestVector
 WebFrame::GetOutgoingMessageRequests() const {
   MessageDispatcherBrowser::OutgoingMessageRequestVector list;
-  QList<QOutgoingMessageRequest *>& requests =
+  QList<OxideQOutgoingMessageRequestBase *>& requests =
       QWebFramePrivate::get(q_web_frame_.get())->outgoing_message_requests();
   for (int i = 0; i < requests.size(); ++i) {
-    list.push_back(QOutgoingMessageRequestPrivate::get(requests.at(i))->request());
+    list.push_back(QOutgoingMessageRequestBasePrivate::get(requests.at(i))->request());
   }
 
   return list;

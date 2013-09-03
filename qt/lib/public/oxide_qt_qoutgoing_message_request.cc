@@ -15,9 +15,9 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxide_q_outgoing_message_request_base.h"
+#include "oxide_q_outgoing_message_request_base_p.h"
 #include "oxide_qquick_outgoing_message_request_p.h"
-#include "oxide_qt_qoutgoing_message_request.h"
-#include "oxide_qt_qoutgoing_message_request_p.h"
 
 #include <QString>
 #include <QtDebug>
@@ -29,18 +29,18 @@
 namespace oxide {
 namespace qt {
 
-void QOutgoingMessageRequestPrivate::ReceiveReplyCallback(
+void QOutgoingMessageRequestBasePrivate::ReceiveReplyCallback(
     const std::string& args) {
   OnReceiveReply(QString::fromStdString(args));
 }
 
-void QOutgoingMessageRequestPrivate::ReceiveErrorCallback(
+void QOutgoingMessageRequestBasePrivate::ReceiveErrorCallback(
     const std::string& msg) {
   OnReceiveError(QString::fromStdString(msg));
 }
 
-QOutgoingMessageRequestPrivate::~QOutgoingMessageRequestPrivate() {
-  Q_Q(QOutgoingMessageRequest);
+QOutgoingMessageRequestBasePrivate::~QOutgoingMessageRequestBasePrivate() {
+  Q_Q(OxideQOutgoingMessageRequestBase);
 
   if (frame_) {
     frame_->removeOutgoingMessageRequest(q);
@@ -48,8 +48,9 @@ QOutgoingMessageRequestPrivate::~QOutgoingMessageRequestPrivate() {
   }
 }
 
-void QOutgoingMessageRequestPrivate::setFramePrivate(QWebFramePrivate* frame) {
-  Q_Q(QOutgoingMessageRequest);
+void QOutgoingMessageRequestBasePrivate::setFramePrivate(
+    QWebFramePrivate* frame) {
+  Q_Q(OxideQOutgoingMessageRequestBase);
 
   if (frame_) {
     frame_->removeOutgoingMessageRequest(q);
@@ -60,39 +61,30 @@ void QOutgoingMessageRequestPrivate::setFramePrivate(QWebFramePrivate* frame) {
 }
 
 // static
-QOutgoingMessageRequestPrivate* QOutgoingMessageRequestPrivate::get(
-    QOutgoingMessageRequest* request) {
+QOutgoingMessageRequestBasePrivate* QOutgoingMessageRequestBasePrivate::get(
+    OxideQOutgoingMessageRequestBase* request) {
   return request->d_func();
 }
 
-QOutgoingMessageRequestPrivate::QOutgoingMessageRequestPrivate(
-    QOutgoingMessageRequest* q) :
+QOutgoingMessageRequestBasePrivate::QOutgoingMessageRequestBasePrivate(
+    OxideQOutgoingMessageRequestBase* q) :
     q_ptr(q),
     frame_(NULL),
     weak_factory_(this) {
   request_.SetReplyCallback(
-      base::Bind(&QOutgoingMessageRequestPrivate::ReceiveReplyCallback,
+      base::Bind(&QOutgoingMessageRequestBasePrivate::ReceiveReplyCallback,
                  weak_factory_.GetWeakPtr()));
   request_.SetErrorCallback(
-      base::Bind(&QOutgoingMessageRequestPrivate::ReceiveErrorCallback,
+      base::Bind(&QOutgoingMessageRequestBasePrivate::ReceiveErrorCallback,
                  weak_factory_.GetWeakPtr()));
 }
 
-QOutgoingMessageRequest::QOutgoingMessageRequest(
-    QOutgoingMessageRequestPrivate& dd) :
-    d_ptr(&dd) {}
-
-QOutgoingMessageRequest::~QOutgoingMessageRequest() {}
-
-} // namespace qt
-} // namespace oxide
-
-class OxideQQuickOutgoingMessageRequestPrivate :
-    public oxide::qt::QOutgoingMessageRequestPrivate {
+class QQuickOutgoingMessageRequestPrivate :
+    public oxide::qt::QOutgoingMessageRequestBasePrivate {
  public:
-  OxideQQuickOutgoingMessageRequestPrivate(
+  QQuickOutgoingMessageRequestPrivate(
       OxideQQuickOutgoingMessageRequest* q) :
-        oxide::qt::QOutgoingMessageRequestPrivate(q) {}
+        oxide::qt::QOutgoingMessageRequestBasePrivate(q) {}
 
   QJSValue reply_callback_;
   QJSValue error_callback_;
@@ -102,7 +94,7 @@ class OxideQQuickOutgoingMessageRequestPrivate :
   void OnReceiveError(const QString& msg);
 };
 
-void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveReply(
+void QQuickOutgoingMessageRequestPrivate::OnReceiveReply(
     const QString& args) {
   QJSValueList jsargs;
   jsargs.append(QJSValue(args));
@@ -110,7 +102,7 @@ void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveReply(
   reply_callback_.call(jsargs);
 }
 
-void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveError(
+void QQuickOutgoingMessageRequestPrivate::OnReceiveError(
     const QString& msg) {
   QJSValueList jsargs;
   jsargs.append(QJSValue(msg));
@@ -118,21 +110,30 @@ void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveError(
   error_callback_.call(jsargs);
 }
 
+} // namespace qt
+} // namespace oxide
+
+OxideQOutgoingMessageRequestBase::OxideQOutgoingMessageRequestBase(
+    oxide::qt::QOutgoingMessageRequestBasePrivate& dd) :
+    d_ptr(&dd) {}
+
+OxideQOutgoingMessageRequestBase::~OxideQOutgoingMessageRequestBase() {}
+
 OxideQQuickOutgoingMessageRequest::OxideQQuickOutgoingMessageRequest() :
-    oxide::qt::QOutgoingMessageRequest(
-      *new OxideQQuickOutgoingMessageRequestPrivate(this)) {}
+    OxideQOutgoingMessageRequestBase(
+      *new oxide::qt::QQuickOutgoingMessageRequestPrivate(this)) {}
 
 OxideQQuickOutgoingMessageRequest::~OxideQQuickOutgoingMessageRequest() {}
 
 QJSValue OxideQQuickOutgoingMessageRequest::replyCallback() const {
-  Q_D(const OxideQQuickOutgoingMessageRequest);
+  Q_D(const oxide::qt::QQuickOutgoingMessageRequest);
 
   return d->reply_callback_;
 }
 
 void OxideQQuickOutgoingMessageRequest::setReplyCallback(
     const QJSValue& callback) {
-  Q_D(OxideQQuickOutgoingMessageRequest);
+  Q_D(oxide::qt::QQuickOutgoingMessageRequest);
 
   if (d->reply_callback_.strictlyEquals(callback)) {
     return;
@@ -148,14 +149,14 @@ void OxideQQuickOutgoingMessageRequest::setReplyCallback(
 }
 
 QJSValue OxideQQuickOutgoingMessageRequest::errorCallback() const {
-  Q_D(const OxideQQuickOutgoingMessageRequest);
+  Q_D(const oxide::qt::QQuickOutgoingMessageRequest);
 
   return d->error_callback_;
 }
 
 void OxideQQuickOutgoingMessageRequest::setErrorCallback(
     const QJSValue& callback) {
-  Q_D(OxideQQuickOutgoingMessageRequest);
+  Q_D(oxide::qt::QQuickOutgoingMessageRequest);
 
   if (d->error_callback_.strictlyEquals(callback)) {
     return;

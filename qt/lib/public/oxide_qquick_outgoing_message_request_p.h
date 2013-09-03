@@ -20,17 +20,21 @@
 
 #include <QJSValue>
 
-#include "qt/lib/public/oxide_qt_qoutgoing_message_request.h"
+#include "qt/lib/public/oxide_q_outgoing_message_request_base.h"
 
-class OxideQQuickOutgoingMessageRequestPrivate;
+namespace oxide {
+namespace qt {
+class QQuickOutgoingMessageRequestPrivate;
+}
+}
 
 class Q_DECL_EXPORT OxideQQuickOutgoingMessageRequest :
-    public oxide::qt::QOutgoingMessageRequest {
+    public OxideQOutgoingMessageRequestBase {
   Q_OBJECT
   Q_PROPERTY(QJSValue onreply READ replyCallback WRITE setReplyCallback NOTIFY replyCallbackChanged)
   Q_PROPERTY(QJSValue onerror READ errorCallback WRITE setErrorCallback NOTIFY errorCallbackChanged)
 
-  Q_DECLARE_PRIVATE(OxideQQuickOutgoingMessageRequest)
+  Q_DECLARE_PRIVATE(oxide::qt::QQuickOutgoingMessageRequest)
 
  public:
   virtual ~OxideQQuickOutgoingMessageRequest();

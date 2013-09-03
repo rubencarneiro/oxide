@@ -24,9 +24,9 @@
 #include "qt/lib/browser/oxide_qt_web_frame.h"
 
 #include "oxide_q_message_handler_base_p.h"
+#include "oxide_q_outgoing_message_request_base_p.h"
 #include "oxide_qquick_message_handler_p.h"
 #include "oxide_qquick_outgoing_message_request_p.h"
-#include "oxide_qt_qoutgoing_message_request_p.h"
 
 namespace oxide {
 namespace qt {
@@ -41,17 +41,17 @@ QWebFramePrivate* QWebFramePrivate::get(QWebFrame* frame) {
 }
 
 void QWebFramePrivate::addOutgoingMessageRequest(
-    QOutgoingMessageRequest* request) {
+    OxideQOutgoingMessageRequestBase* request) {
   Q_ASSERT(!outgoing_message_requests_.contains(request));
 
-  QOutgoingMessageRequestPrivate::get(request)->setFramePrivate(this);
+  QOutgoingMessageRequestBasePrivate::get(request)->setFramePrivate(this);
   outgoing_message_requests_.append(request);  
 }
 
 void QWebFramePrivate::removeOutgoingMessageRequest(
-    QOutgoingMessageRequest* request) {
+    OxideQOutgoingMessageRequestBase* request) {
   outgoing_message_requests_.removeOne(request);
-  QOutgoingMessageRequestPrivate::get(request)->setFramePrivate(NULL);
+  QOutgoingMessageRequestBasePrivate::get(request)->setFramePrivate(NULL);
 }
 
 QWebFrame::QWebFrame(QWebFramePrivate& dd) :
@@ -241,7 +241,7 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
           world_id.toStdString(),
           msg_id.toStdString(),
           args.toStdString(),
-          oxide::qt::QOutgoingMessageRequestPrivate::get(request)->request())) {
+          oxide::qt::QOutgoingMessageRequestBasePrivate::get(request)->request())) {
     delete request;
     return NULL;
   }

@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_P_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_P_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_P_H_
 
 #include <QtGlobal>
 #include <string>
@@ -29,17 +29,18 @@ QT_BEGIN_NAMESPACE
 class QString;
 QT_END_NAMESPACE
 
+class OxideQOutgoingMessageRequestBase;
+
 namespace oxide {
 namespace qt {
 
-class QOutgoingMessageRequest;
 class QWebFramePrivate;
 
-class QOutgoingMessageRequestPrivate {
-  Q_DECLARE_PUBLIC(QOutgoingMessageRequest)
+class QOutgoingMessageRequestBasePrivate {
+  Q_DECLARE_PUBLIC(OxideQOutgoingMessageRequestBase)
 
  public:
-  virtual ~QOutgoingMessageRequestPrivate();
+  virtual ~QOutgoingMessageRequestBasePrivate();
 
   oxide::OutgoingMessageRequest* request() {
     return &request_;
@@ -47,12 +48,13 @@ class QOutgoingMessageRequestPrivate {
 
   void setFramePrivate(QWebFramePrivate* frame);
 
-  static QOutgoingMessageRequestPrivate* get(QOutgoingMessageRequest* request);
+  static QOutgoingMessageRequestBasePrivate* get(
+      OxideQOutgoingMessageRequestBase* request);
 
  protected:
-  QOutgoingMessageRequestPrivate(QOutgoingMessageRequest* q);
+  QOutgoingMessageRequestBasePrivate(OxideQOutgoingMessageRequestBase* q);
 
-  QOutgoingMessageRequest* q_ptr;
+  OxideQOutgoingMessageRequestBase* q_ptr;
 
  private:
   void ReceiveReplyCallback(const std::string& args);
@@ -63,10 +65,10 @@ class QOutgoingMessageRequestPrivate {
 
   oxide::OutgoingMessageRequest request_;
   QWebFramePrivate* frame_;
-  base::WeakPtrFactory<QOutgoingMessageRequestPrivate> weak_factory_;
+  base::WeakPtrFactory<QOutgoingMessageRequestBasePrivate> weak_factory_;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_P_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_P_H_
