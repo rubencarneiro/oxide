@@ -19,9 +19,9 @@
 
 #include "qt/lib/public/oxide_q_message_handler_base_p.h"
 #include "qt/lib/public/oxide_q_outgoing_message_request_base_p.h"
+#include "qt/lib/public/oxide_q_web_frame_base.h"
+#include "qt/lib/public/oxide_q_web_frame_base_p.h"
 #include "qt/lib/public/oxide_qquick_web_frame_p.h"
-#include "qt/lib/public/oxide_qt_qweb_frame.h"
-#include "qt/lib/public/oxide_qt_qweb_frame_p.h"
 
 namespace oxide {
 namespace qt {
@@ -38,7 +38,7 @@ void WebFrame::OnURLChanged() {
   q_web_frame_->urlChanged();
 }
 
-WebFrame::WebFrame(int64 frame_id, QWebFrame* q_web_frame) :
+WebFrame::WebFrame(int64 frame_id, OxideQWebFrameBase* q_web_frame) :
     oxide::WebFrame(frame_id),
     q_web_frame_(q_web_frame) {}
 
@@ -48,7 +48,7 @@ MessageDispatcherBrowser::MessageHandlerVector
 WebFrame::GetMessageHandlers() const {
   MessageDispatcherBrowser::MessageHandlerVector list;
   QList<OxideQMessageHandlerBase *>& handlers =
-      QWebFramePrivate::get(q_web_frame_.get())->message_handlers();
+      QWebFrameBasePrivate::get(q_web_frame_.get())->message_handlers();
   for (int i = 0; i < handlers.size(); ++i) {
     list.push_back(QMessageHandlerBasePrivate::get(handlers.at(i))->handler());
   }
@@ -60,9 +60,10 @@ MessageDispatcherBrowser::OutgoingMessageRequestVector
 WebFrame::GetOutgoingMessageRequests() const {
   MessageDispatcherBrowser::OutgoingMessageRequestVector list;
   QList<OxideQOutgoingMessageRequestBase *>& requests =
-      QWebFramePrivate::get(q_web_frame_.get())->outgoing_message_requests();
+      QWebFrameBasePrivate::get(q_web_frame_.get())->outgoing_message_requests();
   for (int i = 0; i < requests.size(); ++i) {
-    list.push_back(QOutgoingMessageRequestBasePrivate::get(requests.at(i))->request());
+    list.push_back(
+        QOutgoingMessageRequestBasePrivate::get(requests.at(i))->request());
   }
 
   return list;
@@ -72,13 +73,13 @@ void WebFrameQQuick::OnParentChanged() {
   QQuickWebFrame()->parentFrameChanged();
 }
 
-void WebFrameQQuick::OnChildAddedQt(QWebFrame* child) {
+void WebFrameQQuick::OnChildAddedQt(OxideQWebFrameBase* child) {
   QQuickWebFrame()->childFrameChanged(
       OxideQQuickWebFrame::ChildAdded,
       qobject_cast<OxideQQuickWebFrame *>(child));
 }
 
-void WebFrameQQuick::OnChildRemovedQt(QWebFrame* child) {
+void WebFrameQQuick::OnChildRemovedQt(OxideQWebFrameBase* child) {
   QQuickWebFrame()->childFrameChanged(
       OxideQQuickWebFrame::ChildRemoved,
       qobject_cast<OxideQQuickWebFrame *>(child));

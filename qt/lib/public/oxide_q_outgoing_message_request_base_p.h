@@ -34,7 +34,7 @@ class OxideQOutgoingMessageRequestBase;
 namespace oxide {
 namespace qt {
 
-class QWebFramePrivate;
+class QWebFrameBasePrivate;
 
 class QOutgoingMessageRequestBasePrivate {
   Q_DECLARE_PUBLIC(OxideQOutgoingMessageRequestBase)
@@ -46,7 +46,7 @@ class QOutgoingMessageRequestBasePrivate {
     return &request_;
   }
 
-  void setFramePrivate(QWebFramePrivate* frame);
+  void setFramePrivate(QWebFrameBasePrivate* frame);
 
   static QOutgoingMessageRequestBasePrivate* get(
       OxideQOutgoingMessageRequestBase* request);
@@ -64,7 +64,7 @@ class QOutgoingMessageRequestBasePrivate {
   virtual void OnReceiveError(const QString& msg) = 0;
 
   oxide::OutgoingMessageRequest request_;
-  QWebFramePrivate* frame_;
+  QWebFrameBasePrivate* frame_;
   base::WeakPtrFactory<QOutgoingMessageRequestBasePrivate> weak_factory_;
 };
 

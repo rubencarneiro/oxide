@@ -22,26 +22,26 @@
 #include <QtGlobal>
 #include <QtQml>
 
-#include "qt/lib/public/oxide_qt_qweb_frame.h"
+#include "qt/lib/public/oxide_q_web_frame_base.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickOutgoingMessageRequest;
-class OxideQQuickWebFramePrivate;
 
 namespace oxide {
 namespace qt {
+class QQuickWebFramePrivate;
 class WebFrameQQuick;
 }
 }
 
-class Q_DECL_EXPORT OxideQQuickWebFrame : public oxide::qt::QWebFrame {
+class Q_DECL_EXPORT OxideQQuickWebFrame : public OxideQWebFrameBase {
   Q_OBJECT
   Q_PROPERTY(OxideQQuickWebFrame* parentFrame READ parentFrame NOTIFY parentFrameChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickWebFrame> childFrames READ childFrames NOTIFY childFrameChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers)
   Q_ENUMS(ChildFrameChangedType)
 
-  Q_DECLARE_PRIVATE(OxideQQuickWebFrame)
+  Q_DECLARE_PRIVATE(oxide::qt::QQuickWebFrame)
 
  public:
   enum ChildFrameChangedType {

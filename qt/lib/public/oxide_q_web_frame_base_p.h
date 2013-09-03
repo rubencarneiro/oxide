@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QWEB_FRAME_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_QWEB_FRAME_P_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_P_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_P_H_
 
 #include <QList>
 
@@ -24,16 +24,16 @@
 
 class OxideQMessageHandlerBase;
 class OxideQOutgoingMessageRequestBase;
+class OxideQWebFrameBase;
 
 namespace oxide {
 namespace qt {
 
-class QWebFrame;
 class WebFrame;
 
-class QWebFramePrivate {
+class QWebFrameBasePrivate {
  public:
-  virtual ~QWebFramePrivate();
+  virtual ~QWebFrameBasePrivate();
 
   WebFrame* owner() const { return owner_; }
   QList<OxideQMessageHandlerBase *>& message_handlers() {
@@ -43,23 +43,23 @@ class QWebFramePrivate {
     return outgoing_message_requests_;
   }
 
-  static QWebFramePrivate* get(QWebFrame* web_frame);
+  static QWebFrameBasePrivate* get(OxideQWebFrameBase* web_frame);
 
   void addOutgoingMessageRequest(OxideQOutgoingMessageRequestBase* request);
   void removeOutgoingMessageRequest(OxideQOutgoingMessageRequestBase* request);
 
  protected:
-  QWebFramePrivate(WebFrame* owner);
+  QWebFrameBasePrivate(WebFrame* owner);
 
  private:
   WebFrame* owner_;
   QList<OxideQMessageHandlerBase *> message_handlers_;
   QList<OxideQOutgoingMessageRequestBase *> outgoing_message_requests_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QWebFramePrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(QWebFrameBasePrivate);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_QWEB_FRAME_P_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_P_H_

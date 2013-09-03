@@ -30,9 +30,9 @@
 #include "qt/lib/browser/oxide_qt_web_frame.h"
 
 #include "oxide_q_incoming_message.h"
+#include "oxide_q_web_frame_base.h"
 #include "oxide_qquick_web_frame_p.h"
 #include "oxide_qquick_web_view_p.h"
-#include "oxide_qt_qweb_frame.h"
 
 namespace oxide {
 namespace qt {
@@ -66,7 +66,8 @@ void QMessageHandlerBasePrivate::removeFromCurrentOwner() {
 
   // XXX: Is there a better way of doing this? Perhaps by notifying
   //      the existing owner that the handler has a new parent?
-  if (QWebFrame* frame = qobject_cast<QWebFrame *>(q->parent())) {
+  if (OxideQWebFrameBase* frame =
+      qobject_cast<OxideQWebFrameBase *>(q->parent())) {
     frame->removeMessageHandler(q);
   } else if (OxideQQuickWebView* view =
              qobject_cast<OxideQQuickWebView *>(q->parent())) {
@@ -85,12 +86,12 @@ class QQuickMessageHandlerPrivate : public QMessageHandlerBasePrivate {
 
  private:
   void OnReceiveMessage(OxideQIncomingMessage* message,
-                        oxide::qt::QWebFrame* frame) FINAL;
+                        OxideQWebFrameBase* frame) FINAL;
 };
 
 void QQuickMessageHandlerPrivate::OnReceiveMessage(
     OxideQIncomingMessage* message,
-    oxide::qt::QWebFrame* frame) {
+    OxideQWebFrameBase* frame) {
   QQmlEngine::setObjectOwnership(message, QQmlEngine::JavaScriptOwnership);
 
   QJSValueList args;

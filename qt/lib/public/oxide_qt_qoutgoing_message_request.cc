@@ -24,7 +24,7 @@
 
 #include "base/bind.h"
 
-#include "oxide_qt_qweb_frame_p.h"
+#include "oxide_q_web_frame_base_p.h"
 
 namespace oxide {
 namespace qt {
@@ -49,7 +49,7 @@ QOutgoingMessageRequestBasePrivate::~QOutgoingMessageRequestBasePrivate() {
 }
 
 void QOutgoingMessageRequestBasePrivate::setFramePrivate(
-    QWebFramePrivate* frame) {
+    QWebFrameBasePrivate* frame) {
   Q_Q(OxideQOutgoingMessageRequestBase);
 
   if (frame_) {

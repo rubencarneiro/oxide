@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_qweb_frame.h"
-#include "oxide_qt_qweb_frame_p.h"
+#include "oxide_q_web_frame_base.h"
+#include "oxide_q_web_frame_base_p.h"
 #include "oxide_qquick_web_frame_p.h"
 
 #include <QString>
@@ -31,16 +31,16 @@
 namespace oxide {
 namespace qt {
 
-QWebFramePrivate::QWebFramePrivate(WebFrame* owner) :
+QWebFrameBasePrivate::QWebFrameBasePrivate(WebFrame* owner) :
     owner_(owner) {}
 
-QWebFramePrivate::~QWebFramePrivate() {}
+QWebFrameBasePrivate::~QWebFrameBasePrivate() {}
 
-QWebFramePrivate* QWebFramePrivate::get(QWebFrame* frame) {
+QWebFrameBasePrivate* QWebFrameBasePrivate::get(OxideQWebFrameBase* frame) {
   return frame->d_func();
 }
 
-void QWebFramePrivate::addOutgoingMessageRequest(
+void QWebFrameBasePrivate::addOutgoingMessageRequest(
     OxideQOutgoingMessageRequestBase* request) {
   Q_ASSERT(!outgoing_message_requests_.contains(request));
 
@@ -48,61 +48,16 @@ void QWebFramePrivate::addOutgoingMessageRequest(
   outgoing_message_requests_.append(request);  
 }
 
-void QWebFramePrivate::removeOutgoingMessageRequest(
+void QWebFrameBasePrivate::removeOutgoingMessageRequest(
     OxideQOutgoingMessageRequestBase* request) {
   outgoing_message_requests_.removeOne(request);
   QOutgoingMessageRequestBasePrivate::get(request)->setFramePrivate(NULL);
 }
 
-QWebFrame::QWebFrame(QWebFramePrivate& dd) :
-    QObject(),
-    d_ptr(&dd) {}
-
-QWebFrame::~QWebFrame() {
-  Q_D(QWebFrame);
-
-  for (int i = 0; i < d->outgoing_message_requests().size(); ++i) {
-    d->removeOutgoingMessageRequest(d->outgoing_message_requests().at(i));    
-  }
-}
-
-QUrl QWebFrame::url() const {
-  Q_D(const QWebFrame);
-
-  return QUrl(QString::fromStdString(d->owner()->url().spec()));
-}
-
-void QWebFrame::addMessageHandler(OxideQMessageHandlerBase* handler) {
-  Q_D(QWebFrame);
-
-  if (!d->message_handlers().contains(handler)) {
-    QMessageHandlerBasePrivate::get(handler)->removeFromCurrentOwner();
-    handler->setParent(this);
-
-    d->message_handlers().append(handler);
-
-    emit messageHandlersChanged();
-  }
-}
-
-void QWebFrame::removeMessageHandler(OxideQMessageHandlerBase* handler) {
-  Q_D(QWebFrame);
-
-  if (d->message_handlers().contains(handler)) {
-    d->message_handlers().removeOne(handler);
-    handler->setParent(NULL);
-
-    emit messageHandlersChanged();
-  }
-}
-
-} // namespace qt
-} // namespace oxide
-
-class OxideQQuickWebFramePrivate : public oxide::qt::QWebFramePrivate {
+class QQuickWebFramePrivate : public QWebFrameBasePrivate {
  public:
-  OxideQQuickWebFramePrivate(oxide::qt::WebFrameQQuick* owner) :
-      oxide::qt::QWebFramePrivate(owner) {}
+  QQuickWebFramePrivate(WebFrameQQuick* owner) :
+      QWebFrameBasePrivate(owner) {}
 
   static int childFrame_count(QQmlListProperty<OxideQQuickWebFrame>* prop);
   static OxideQQuickWebFrame* childFrame_at(
@@ -121,11 +76,10 @@ class OxideQQuickWebFramePrivate : public oxide::qt::QWebFramePrivate {
 };
 
 // static
-int OxideQQuickWebFramePrivate::childFrame_count(
+int QQuickWebFramePrivate::childFrame_count(
     QQmlListProperty<OxideQQuickWebFrame>* prop) {
-  oxide::qt::QWebFramePrivate* p =
-      oxide::qt::QWebFramePrivate::get(
-        static_cast<oxide::qt::QWebFrame *>(prop->object));
+  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(
+        static_cast<OxideQWebFrameBase *>(prop->object));
 
   if (p->owner()->ChildCount() > INT_MAX) {
     qWarning() << "Number of child frames exceed maximum";
@@ -136,19 +90,18 @@ int OxideQQuickWebFramePrivate::childFrame_count(
 }
 
 // static
-OxideQQuickWebFrame* OxideQQuickWebFramePrivate::childFrame_at(
+OxideQQuickWebFrame* QQuickWebFramePrivate::childFrame_at(
     QQmlListProperty<OxideQQuickWebFrame>* prop,
     int index) {
-  oxide::qt::QWebFramePrivate* p =
-      oxide::qt::QWebFramePrivate::get(
-        static_cast<oxide::qt::QWebFrame *>(prop->object));
+  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(
+        static_cast<OxideQWebFrameBase *>(prop->object));
 
-  return static_cast<oxide::qt::WebFrameQQuick *>(
+  return static_cast<WebFrameQQuick *>(
       p->owner()->ChildAt(index))->QQuickWebFrame();
 }
 
 // static
-void OxideQQuickWebFramePrivate::messageHandler_append(
+void QQuickWebFramePrivate::messageHandler_append(
     QQmlListProperty<OxideQQuickMessageHandler>* prop,
     OxideQQuickMessageHandler* value) {
   if (!value) {
@@ -162,21 +115,19 @@ void OxideQQuickWebFramePrivate::messageHandler_append(
 }
 
 // static
-int OxideQQuickWebFramePrivate::messageHandler_count(
+int QQuickWebFramePrivate::messageHandler_count(
     QQmlListProperty<OxideQQuickMessageHandler>* prop) {
-  oxide::qt::QWebFramePrivate* p =
-      oxide::qt::QWebFramePrivate::get(
+  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(
         static_cast<OxideQQuickWebFrame *>(prop->object));
 
   return p->message_handlers().size();
 }
 
 // static
-OxideQQuickMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
+OxideQQuickMessageHandler* QQuickWebFramePrivate::messageHandler_at(
     QQmlListProperty<OxideQQuickMessageHandler>* prop,
     int index) {
-  oxide::qt::QWebFramePrivate* p =
-      oxide::qt::QWebFramePrivate::get(
+  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(
         static_cast<OxideQQuickWebFrame *>(prop->object));
 
   return qobject_cast<OxideQQuickMessageHandler *>(
@@ -184,11 +135,11 @@ OxideQQuickMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
 }
 
 // static
-void OxideQQuickWebFramePrivate::messageHandler_clear(
+void QQuickWebFramePrivate::messageHandler_clear(
     QQmlListProperty<OxideQQuickMessageHandler>* prop) {
   OxideQQuickWebFrame* frame =
       static_cast<OxideQQuickWebFrame *>(prop->object);
-  oxide::qt::QWebFramePrivate* p = oxide::qt::QWebFramePrivate::get(frame);
+  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(frame);
 
   while (p->message_handlers().size() > 0) {
     OxideQMessageHandlerBase* handler = p->message_handlers().first();
@@ -199,13 +150,59 @@ void OxideQQuickWebFramePrivate::messageHandler_clear(
   emit frame->messageHandlersChanged();
 }
 
+} // namespace qt
+} // namespace oxide
+
+OxideQWebFrameBase::OxideQWebFrameBase(oxide::qt::QWebFrameBasePrivate& dd) :
+    QObject(),
+    d_ptr(&dd) {}
+
+OxideQWebFrameBase::~OxideQWebFrameBase() {
+  Q_D(oxide::qt::QWebFrameBase);
+
+  for (int i = 0; i < d->outgoing_message_requests().size(); ++i) {
+    d->removeOutgoingMessageRequest(d->outgoing_message_requests().at(i));
+  }
+}
+
+QUrl OxideQWebFrameBase::url() const {
+  Q_D(const oxide::qt::QWebFrameBase);
+
+  return QUrl(QString::fromStdString(d->owner()->url().spec()));
+}
+
+void OxideQWebFrameBase::addMessageHandler(OxideQMessageHandlerBase* handler) {
+  Q_D(oxide::qt::QWebFrameBase);
+
+  if (!d->message_handlers().contains(handler)) {
+    oxide::qt::QMessageHandlerBasePrivate::get(handler)->removeFromCurrentOwner();
+    handler->setParent(this);
+
+    d->message_handlers().append(handler);
+
+    emit messageHandlersChanged();
+  }
+}
+
+void OxideQWebFrameBase::removeMessageHandler(
+    OxideQMessageHandlerBase* handler) {
+  Q_D(oxide::qt::QWebFrameBase);
+
+  if (d->message_handlers().contains(handler)) {
+    d->message_handlers().removeOne(handler);
+    handler->setParent(NULL);
+
+    emit messageHandlersChanged();
+  }
+}
+
 OxideQQuickWebFrame::OxideQQuickWebFrame(oxide::qt::WebFrameQQuick* owner) :
-    oxide::qt::QWebFrame(*new OxideQQuickWebFramePrivate(owner)) {}
+    OxideQWebFrameBase(*new oxide::qt::QQuickWebFramePrivate(owner)) {}
 
 OxideQQuickWebFrame::~OxideQQuickWebFrame() {}
 
 OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
-  Q_D(const OxideQQuickWebFrame);
+  Q_D(const oxide::qt::QQuickWebFrame);
 
   return static_cast<oxide::qt::WebFrameQQuick *>(
       d->owner()->parent())->QQuickWebFrame();
@@ -214,25 +211,25 @@ OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
 QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {
   return QQmlListProperty<OxideQQuickWebFrame>(
       this, NULL,
-      OxideQQuickWebFramePrivate::childFrame_count,
-      OxideQQuickWebFramePrivate::childFrame_at);
+      oxide::qt::QQuickWebFramePrivate::childFrame_count,
+      oxide::qt::QQuickWebFramePrivate::childFrame_at);
 }
 
 QQmlListProperty<OxideQQuickMessageHandler>
 OxideQQuickWebFrame::messageHandlers() {
   return QQmlListProperty<OxideQQuickMessageHandler>(
       this, NULL,
-      OxideQQuickWebFramePrivate::messageHandler_append,
-      OxideQQuickWebFramePrivate::messageHandler_count,
-      OxideQQuickWebFramePrivate::messageHandler_at,
-      OxideQQuickWebFramePrivate::messageHandler_clear);
+      oxide::qt::QQuickWebFramePrivate::messageHandler_append,
+      oxide::qt::QQuickWebFramePrivate::messageHandler_count,
+      oxide::qt::QQuickWebFramePrivate::messageHandler_at,
+      oxide::qt::QQuickWebFramePrivate::messageHandler_clear);
 }
 
 OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
     const QString& world_id,
     const QString& msg_id,
     const QString& args) {
-  Q_D(OxideQQuickWebFrame);
+  Q_D(oxide::qt::QQuickWebFrame);
 
   OxideQQuickOutgoingMessageRequest* request =
       new OxideQQuickOutgoingMessageRequest();
@@ -254,7 +251,7 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
 void OxideQQuickWebFrame::sendMessageNoReply(const QString& world_id,
                                              const QString& msg_id,
                                              const QString& args) {
-  Q_D(OxideQQuickWebFrame);
+  Q_D(oxide::qt::QQuickWebFrame);
 
   d->owner()->SendMessageNoReply(world_id.toStdString(),
                                  msg_id.toStdString(),

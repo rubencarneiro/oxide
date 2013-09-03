@@ -28,14 +28,13 @@
 
 class OxideQIncomingMessage;
 class OxideQMessageHandlerBase;
+class OxideQWebFrameBase;
 
 namespace oxide {
 
 class IncomingMessage;
 
 namespace qt {
-
-class QWebFrame;
 
 class QMessageHandlerBasePrivate {
   Q_DECLARE_PUBLIC(OxideQMessageHandlerBase)
@@ -62,7 +61,7 @@ class QMessageHandlerBasePrivate {
  private:
   void ReceiveMessageCallback(oxide::IncomingMessage* message);
   virtual void OnReceiveMessage(OxideQIncomingMessage* message,
-                                QWebFrame* frame) = 0;
+                                OxideQWebFrameBase* frame) = 0;
 
   oxide::MessageHandler handler_;
   base::WeakPtrFactory<QMessageHandlerBasePrivate> weak_factory_;

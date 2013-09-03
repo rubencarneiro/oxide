@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QWEB_FRAME_H_
-#define _OXIDE_QT_LIB_PUBLIC_QWEB_FRAME_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_H_
 
 #include <QObject>
 #include <QScopedPointer>
@@ -28,17 +28,20 @@ class OxideQMessageHandlerBase;
 namespace oxide {
 namespace qt {
 
-class QWebFramePrivate;
+class QWebFrameBasePrivate;
 class WebFrame;
 
-class Q_DECL_EXPORT QWebFrame : public QObject {
+}
+}
+
+class Q_DECL_EXPORT OxideQWebFrameBase : public QObject {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
 
-  Q_DECLARE_PRIVATE(QWebFrame)
+  Q_DECLARE_PRIVATE(oxide::qt::QWebFrameBase)
 
  public:
-  virtual ~QWebFrame();
+  virtual ~OxideQWebFrameBase();
 
   QUrl url() const;
 
@@ -50,12 +53,9 @@ class Q_DECL_EXPORT QWebFrame : public QObject {
   void messageHandlersChanged();
 
  protected:
-  QWebFrame(QWebFramePrivate& dd);
+  OxideQWebFrameBase(oxide::qt::QWebFrameBasePrivate& dd);
 
-  QScopedPointer<QWebFramePrivate> d_ptr;
+  QScopedPointer<oxide::qt::QWebFrameBasePrivate> d_ptr;
 };
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_H_
