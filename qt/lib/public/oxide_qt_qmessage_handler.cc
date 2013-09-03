@@ -16,7 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_q_message_handler_base.h"
-#include "oxide_qt_qmessage_handler_p.h"
+#include "oxide_q_message_handler_base_p.h"
 #include "oxide_qquick_message_handler_p.h"
 
 #include <QQmlEngine>

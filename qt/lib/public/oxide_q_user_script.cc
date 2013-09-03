@@ -16,6 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_q_user_script.h"
+#include "oxide_q_user_script_p.h"
 
 #include <QtDebug>
 
@@ -30,9 +31,10 @@
 #include "shared/common/oxide_file_utils.h"
 #include "shared/common/oxide_user_script.h"
 
-#include "oxide_q_user_script_p.h"
+namespace oxide {
+namespace qt {
 
-void OxideQUserScriptPrivate::OnGotFileContents(
+void QUserScriptPrivate::OnGotFileContents(
     base::PlatformFileError error,
     const char* data,
     int bytes_read) {
@@ -54,15 +56,15 @@ void OxideQUserScriptPrivate::OnGotFileContents(
   emit q->scriptLoaded();  
 }
 
-OxideQUserScriptPrivate::OxideQUserScriptPrivate(OxideQUserScript* q) :
+QUserScriptPrivate::QUserScriptPrivate(OxideQUserScript* q) :
     q_ptr(q),
     state_(OxideQUserScript::Constructing),
     user_script_(new oxide::UserScript()),
     weak_factory_(this) {}
 
-OxideQUserScriptPrivate::~OxideQUserScriptPrivate() {}
+QUserScriptPrivate::~QUserScriptPrivate() {}
 
-void OxideQUserScriptPrivate::startLoading() {
+void QUserScriptPrivate::startLoading() {
   Q_Q(OxideQUserScript);
 
   Q_ASSERT(state_ == OxideQUserScript::Constructing);
@@ -74,7 +76,7 @@ void OxideQUserScriptPrivate::startLoading() {
       content::BrowserThread::GetMessageLoopProxyForThread(
         content::BrowserThread::FILE).get(),
       base::FilePath(user_script_->url().path()),
-      base::Bind(&OxideQUserScriptPrivate::OnGotFileContents,
+      base::Bind(&QUserScriptPrivate::OnGotFileContents,
                  weak_factory_.GetWeakPtr()))) {
     state_ = OxideQUserScript::Failed;
     emit q->scriptLoadFailed();
@@ -82,14 +84,16 @@ void OxideQUserScriptPrivate::startLoading() {
 }
 
 // static
-OxideQUserScriptPrivate* OxideQUserScriptPrivate::get(
-    OxideQUserScript* user_script) {
+QUserScriptPrivate* QUserScriptPrivate::get(OxideQUserScript* user_script) {
   return user_script->d_func();
 }
 
+} // namespace qt
+} // namespace oxide
+
 OxideQUserScript::OxideQUserScript(QObject* parent) :
     QObject(parent),
-    d_ptr(new OxideQUserScriptPrivate(this)) {}
+    d_ptr(new oxide::qt::QUserScriptPrivate(this)) {}
 
 OxideQUserScript::~OxideQUserScript() {}
 
@@ -100,25 +104,25 @@ void OxideQUserScript::componentComplete() {
 }
 
 void OxideQUserScript::startLoading() {
-  Q_D(OxideQUserScript);
+  Q_D(oxide::qt::QUserScript);
 
   d->startLoading();
 }
 
 OxideQUserScript::State OxideQUserScript::state() const {
-  Q_D(const OxideQUserScript);
+  Q_D(const oxide::qt::QUserScript);
 
   return d->state();
 }
 
 QUrl OxideQUserScript::url() const {
-  Q_D(const OxideQUserScript);
+  Q_D(const oxide::qt::QUserScript);
 
   return QUrl(QString::fromStdString(d->user_script()->url().spec()));
 }
 
 void OxideQUserScript::setUrl(const QUrl& url) {
-  Q_D(OxideQUserScript);
+  Q_D(oxide::qt::QUserScript);
 
   if (d->state() != Constructing) {
     qWarning() << "url is a construct-only parameter";
@@ -139,13 +143,13 @@ void OxideQUserScript::setUrl(const QUrl& url) {
 }
 
 bool OxideQUserScript::emulateGreasemonkey() const {
-  Q_D(const OxideQUserScript);
+  Q_D(const oxide::qt::QUserScript);
 
   return d->user_script()->emulate_greasemonkey();
 }
 
 void OxideQUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
-  Q_D(OxideQUserScript);
+  Q_D(oxide::qt::QUserScript);
 
   if (emulate_greasemonkey == emulateGreasemonkey()) {
     return;
@@ -156,13 +160,13 @@ void OxideQUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
 }
 
 bool OxideQUserScript::matchAllFrames() const {
-  Q_D(const OxideQUserScript);
+  Q_D(const oxide::qt::QUserScript);
 
   return d->user_script()->match_all_frames();
 }
 
 void OxideQUserScript::setMatchAllFrames(bool match_all_frames) {
-  Q_D(OxideQUserScript);
+  Q_D(oxide::qt::QUserScript);
 
   if (match_all_frames == matchAllFrames()) {
     return;
@@ -173,13 +177,13 @@ void OxideQUserScript::setMatchAllFrames(bool match_all_frames) {
 }
 
 bool OxideQUserScript::incognitoEnabled() const {
-  Q_D(const OxideQUserScript);
+  Q_D(const oxide::qt::QUserScript);
 
   return d->user_script()->incognito_enabled();
 }
 
 void OxideQUserScript::setIncognitoEnabled(bool incognito_enabled) {
-  Q_D(OxideQUserScript);
+  Q_D(oxide::qt::QUserScript);
 
   if (incognito_enabled == incognitoEnabled()) {
     return;
@@ -190,13 +194,13 @@ void OxideQUserScript::setIncognitoEnabled(bool incognito_enabled) {
 }
 
 QString OxideQUserScript::worldId() const {
-  Q_D(const OxideQUserScript);
+  Q_D(const oxide::qt::QUserScript);
 
   return QString::fromStdString(d->user_script()->world_id());
 }
 
 void OxideQUserScript::setWorldId(const QString& world_id) {
-  Q_D(OxideQUserScript);
+  Q_D(oxide::qt::QUserScript);
 
   if (world_id == worldId()) {
     return;

@@ -41,10 +41,10 @@
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
 #include "qt/lib/common/oxide_qt_content_main_delegate.h"
 
+#include "oxide_q_message_handler_base_p.h"
 #include "oxide_qquick_message_handler_p.h"
 #include "oxide_qquick_web_view_context_p.h"
 #include "oxide_qquick_web_view_context_p_p.h"
-#include "oxide_qt_qmessage_handler_p.h"
 
 QT_USE_NAMESPACE
 

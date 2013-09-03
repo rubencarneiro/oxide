@@ -93,7 +93,7 @@ void QWebViewContextPrivate::updateUserScripts() {
     }
 
     scripts.push_back(
-        OxideQUserScriptPrivate::get(qscript)->user_script());
+        oxide::qt::QUserScriptPrivate::get(qscript)->user_script());
   }
 
   context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);

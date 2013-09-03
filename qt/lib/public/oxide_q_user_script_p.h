@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_USER_SCRIPT_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_USER_SCRIPT_P_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_P_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_P_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -28,14 +28,15 @@
 
 namespace oxide {
 class UserScript;
-}
 
-class OxideQUserScriptPrivate FINAL {
+namespace qt {
+
+class QUserScriptPrivate FINAL {
   Q_DECLARE_PUBLIC(OxideQUserScript)
 
  public:
-  OxideQUserScriptPrivate(OxideQUserScript* q);
-  virtual ~OxideQUserScriptPrivate();
+  QUserScriptPrivate(OxideQUserScript* q);
+  virtual ~QUserScriptPrivate();
 
   void startLoading();
 
@@ -44,7 +45,7 @@ class OxideQUserScriptPrivate FINAL {
     return user_script_.get();
   }
  
-  static OxideQUserScriptPrivate* get(OxideQUserScript* user_script);
+  static QUserScriptPrivate* get(OxideQUserScript* user_script);
 
  protected:
   OxideQUserScript* q_ptr;
@@ -56,9 +57,12 @@ class OxideQUserScriptPrivate FINAL {
 
   OxideQUserScript::State state_;
   scoped_ptr<oxide::UserScript> user_script_;
-  base::WeakPtrFactory<OxideQUserScriptPrivate> weak_factory_;
+  base::WeakPtrFactory<QUserScriptPrivate> weak_factory_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQUserScriptPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(QUserScriptPrivate);
 };
 
-#endif // _OXIDE_QT_LIB_PUBLIC_USER_SCRIPT_P_H
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_P_H

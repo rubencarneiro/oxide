@@ -23,9 +23,9 @@
 
 #include "qt/lib/browser/oxide_qt_web_frame.h"
 
+#include "oxide_q_message_handler_base_p.h"
 #include "oxide_qquick_message_handler_p.h"
 #include "oxide_qquick_outgoing_message_request_p.h"
-#include "oxide_qt_qmessage_handler_p.h"
 #include "oxide_qt_qoutgoing_message_request_p.h"
 
 namespace oxide {

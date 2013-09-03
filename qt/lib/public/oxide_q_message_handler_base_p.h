@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QMESSAGE_HANDLER_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_QMESSAGE_HANDLER_P_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_P_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_P_H_
 
 #include <QtGlobal>
 
@@ -73,4 +73,4 @@ class QMessageHandlerBasePrivate {
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_QMESSAGE_HANDLER_P_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_P_H_

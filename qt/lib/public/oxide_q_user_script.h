@@ -25,7 +25,11 @@
 #include <QtQml>
 #include <QUrl>
 
-class OxideQUserScriptPrivate;
+namespace oxide {
+namespace qt {
+class QUserScriptPrivate;
+}
+}
 
 class Q_DECL_EXPORT OxideQUserScript : public QObject,
                                        public QQmlParserStatus {
@@ -36,7 +40,7 @@ class Q_DECL_EXPORT OxideQUserScript : public QObject,
   Q_PROPERTY(bool incognitoEnabled READ incognitoEnabled WRITE setIncognitoEnabled NOTIFY scriptPropertyChanged)
   Q_PROPERTY(QString worldId READ worldId WRITE setWorldId NOTIFY scriptPropertyChanged)
 
-  Q_DECLARE_PRIVATE(OxideQUserScript)
+  Q_DECLARE_PRIVATE(oxide::qt::QUserScript)
 
  public:
 
@@ -78,7 +82,7 @@ class Q_DECL_EXPORT OxideQUserScript : public QObject,
   void scriptPropertyChanged();
 
  protected:
-  QScopedPointer<OxideQUserScriptPrivate> d_ptr;
+  QScopedPointer<oxide::qt::QUserScriptPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQUserScript)
