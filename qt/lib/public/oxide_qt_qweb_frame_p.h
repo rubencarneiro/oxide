@@ -22,10 +22,11 @@
 
 #include "base/basictypes.h"
 
+class OxideQMessageHandlerBase;
+
 namespace oxide {
 namespace qt {
 
-class QMessageHandler;
 class QOutgoingMessageRequest;
 class QWebFrame;
 class WebFrame;
@@ -35,7 +36,7 @@ class QWebFramePrivate {
   virtual ~QWebFramePrivate();
 
   WebFrame* owner() const { return owner_; }
-  QList<QMessageHandler *>& message_handlers() {
+  QList<OxideQMessageHandlerBase *>& message_handlers() {
     return message_handlers_;
   }
   QList<QOutgoingMessageRequest *>& outgoing_message_requests() {
@@ -52,7 +53,7 @@ class QWebFramePrivate {
 
  private:
   WebFrame* owner_;
-  QList<QMessageHandler *> message_handlers_;
+  QList<OxideQMessageHandlerBase *> message_handlers_;
   QList<QOutgoingMessageRequest *> outgoing_message_requests_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(QWebFramePrivate);

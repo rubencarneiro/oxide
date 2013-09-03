@@ -72,11 +72,11 @@ QUrl QWebFrame::url() const {
   return QUrl(QString::fromStdString(d->owner()->url().spec()));
 }
 
-void QWebFrame::addMessageHandler(QMessageHandler* handler) {
+void QWebFrame::addMessageHandler(OxideQMessageHandlerBase* handler) {
   Q_D(QWebFrame);
 
   if (!d->message_handlers().contains(handler)) {
-    QMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
+    QMessageHandlerBasePrivate::get(handler)->removeFromCurrentOwner();
     handler->setParent(this);
 
     d->message_handlers().append(handler);
@@ -85,7 +85,7 @@ void QWebFrame::addMessageHandler(QMessageHandler* handler) {
   }
 }
 
-void QWebFrame::removeMessageHandler(QMessageHandler* handler) {
+void QWebFrame::removeMessageHandler(OxideQMessageHandlerBase* handler) {
   Q_D(QWebFrame);
 
   if (d->message_handlers().contains(handler)) {
@@ -191,7 +191,7 @@ void OxideQQuickWebFramePrivate::messageHandler_clear(
   oxide::qt::QWebFramePrivate* p = oxide::qt::QWebFramePrivate::get(frame);
 
   while (p->message_handlers().size() > 0) {
-    oxide::qt::QMessageHandler* handler = p->message_handlers().first();
+    OxideQMessageHandlerBase* handler = p->message_handlers().first();
     p->message_handlers().removeFirst();
     delete handler;
   }

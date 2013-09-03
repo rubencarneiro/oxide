@@ -23,10 +23,11 @@
 #include <QtGlobal>
 #include <QUrl>
 
+class OxideQMessageHandlerBase;
+
 namespace oxide {
 namespace qt {
 
-class QMessageHandler;
 class QWebFramePrivate;
 class WebFrame;
 
@@ -41,8 +42,8 @@ class Q_DECL_EXPORT QWebFrame : public QObject {
 
   QUrl url() const;
 
-  Q_INVOKABLE void addMessageHandler(QMessageHandler* handler);
-  Q_INVOKABLE void removeMessageHandler(QMessageHandler* handler);
+  Q_INVOKABLE void addMessageHandler(OxideQMessageHandlerBase* handler);
+  Q_INVOKABLE void removeMessageHandler(OxideQMessageHandlerBase* handler);
 
  Q_SIGNALS:
   void urlChanged();

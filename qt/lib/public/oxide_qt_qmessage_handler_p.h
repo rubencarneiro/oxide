@@ -26,10 +26,8 @@
 
 #include "shared/browser/oxide_message_handler.h"
 
-#include "qt/lib/public/oxide_qquick_message_handler_p.h"
-#include "qt/lib/public/oxide_qt_qmessage_handler.h"
-
 class OxideQIncomingMessage;
+class OxideQMessageHandlerBase;
 
 namespace oxide {
 
@@ -39,12 +37,12 @@ namespace qt {
 
 class QWebFrame;
 
-class QMessageHandlerPrivate {
-  Q_DECLARE_PUBLIC(QMessageHandler)
+class QMessageHandlerBasePrivate {
+  Q_DECLARE_PUBLIC(OxideQMessageHandlerBase)
 
  public:
-  QMessageHandlerPrivate(QMessageHandler* q);
-  virtual ~QMessageHandlerPrivate();
+  QMessageHandlerBasePrivate(OxideQMessageHandlerBase* q);
+  virtual ~QMessageHandlerBasePrivate();
 
   const oxide::MessageHandler* handler() const {
     return &handler_;
@@ -53,12 +51,13 @@ class QMessageHandlerPrivate {
     return &handler_;
   }
 
-  static QMessageHandlerPrivate* get(QMessageHandler* message_handler);
+  static QMessageHandlerBasePrivate* get(
+      OxideQMessageHandlerBase* message_handler);
 
   void removeFromCurrentOwner();
 
  protected:
-  QMessageHandler* q_ptr;
+  OxideQMessageHandlerBase* q_ptr;
 
  private:
   void ReceiveMessageCallback(oxide::IncomingMessage* message);
@@ -66,9 +65,9 @@ class QMessageHandlerPrivate {
                                 QWebFrame* frame) = 0;
 
   oxide::MessageHandler handler_;
-  base::WeakPtrFactory<QMessageHandlerPrivate> weak_factory_;
+  base::WeakPtrFactory<QMessageHandlerBasePrivate> weak_factory_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QMessageHandlerPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(QMessageHandlerBasePrivate);
 };
 
 } // namespace qt

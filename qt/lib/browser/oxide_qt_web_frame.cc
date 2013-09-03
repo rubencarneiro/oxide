@@ -47,10 +47,10 @@ WebFrame::~WebFrame() {}
 MessageDispatcherBrowser::MessageHandlerVector
 WebFrame::GetMessageHandlers() const {
   MessageDispatcherBrowser::MessageHandlerVector list;
-  QList<QMessageHandler *>& handlers =
+  QList<OxideQMessageHandlerBase *>& handlers =
       QWebFramePrivate::get(q_web_frame_.get())->message_handlers();
   for (int i = 0; i < handlers.size(); ++i) {
-    list.push_back(QMessageHandlerPrivate::get(handlers.at(i))->handler());
+    list.push_back(QMessageHandlerBasePrivate::get(handlers.at(i))->handler());
   }
 
   return list;

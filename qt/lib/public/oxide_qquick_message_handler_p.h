@@ -21,15 +21,19 @@
 #include <QJSValue>
 #include <QtQml>
 
-#include "qt/lib/public/oxide_qt_qmessage_handler.h"
+#include "qt/lib/public/oxide_q_message_handler_base.h"
 
-class OxideQQuickMessageHandlerPrivate;
+namespace oxide {
+namespace qt {
+class QQuickMessageHandlerPrivate;
+}
+}
 
-class Q_DECL_EXPORT OxideQQuickMessageHandler : public oxide::qt::QMessageHandler {
+class Q_DECL_EXPORT OxideQQuickMessageHandler : public OxideQMessageHandlerBase {
   Q_OBJECT
   Q_PROPERTY(QJSValue callback READ callback WRITE setCallback NOTIFY callbackChanged)
 
-  Q_DECLARE_PRIVATE(OxideQQuickMessageHandler)
+  Q_DECLARE_PRIVATE(oxide::qt::QQuickMessageHandler)
 
  public:
   OxideQQuickMessageHandler(QObject* parent = NULL);

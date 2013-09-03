@@ -29,7 +29,7 @@ class OxideQIncomingMessagePrivate;
 namespace oxide {
 class IncomingMessage;
 namespace qt {
-class QMessageHandlerPrivate;
+class QMessageHandlerBasePrivate;
 }
 }
 
@@ -50,7 +50,7 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_INVOKABLE void error(const QString& msg);
 
  protected:
-  friend class oxide::qt::QMessageHandlerPrivate;
+  friend class oxide::qt::QMessageHandlerBasePrivate;
 
   OxideQIncomingMessage(oxide::IncomingMessage* message);
 

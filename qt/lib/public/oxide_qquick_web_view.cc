@@ -41,6 +41,7 @@
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
 #include "qt/lib/common/oxide_qt_content_main_delegate.h"
 
+#include "oxide_qquick_message_handler_p.h"
 #include "oxide_qquick_web_view_context_p.h"
 #include "oxide_qquick_web_view_context_p_p.h"
 #include "oxide_qt_qmessage_handler_p.h"
@@ -173,7 +174,7 @@ oxide::MessageDispatcherBrowser::MessageHandlerVector
 OxideQQuickWebViewPrivate::GetMessageHandlers() const {
   oxide::MessageDispatcherBrowser::MessageHandlerVector list;
   for (int i = 0; i < message_handlers_.size(); ++i) {
-    list.push_back(oxide::qt::QMessageHandlerPrivate::get(
+    list.push_back(oxide::qt::QMessageHandlerBasePrivate::get(
         message_handlers_.at(i))->handler());
   }
 
@@ -420,7 +421,7 @@ void OxideQQuickWebView::addMessageHandler(
   Q_D(OxideQQuickWebView);
 
   if (!d->message_handlers().contains(handler)) {
-    oxide::qt::QMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
+    oxide::qt::QMessageHandlerBasePrivate::get(handler)->removeFromCurrentOwner();
     handler->setParent(this);
 
     d->message_handlers().append(handler);

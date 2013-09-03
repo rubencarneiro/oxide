@@ -49,8 +49,8 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_q_incoming_message.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_message_handler_base.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_q_user_script.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qt_qmessage_handler.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_qoutgoing_message_request.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_qweb_frame.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_qweb_view_context.cc',
@@ -75,11 +75,11 @@
         'common/oxide_qt_content_main_delegate.h',
         'public/oxide_q_incoming_message.cc',
         'public/oxide_q_incoming_message.h',
+        'public/oxide_q_message_handler_base.h',
         'public/oxide_q_user_script.cc',
         'public/oxide_q_user_script.h',
         'public/oxide_q_user_script_p.h',
         'public/oxide_qt_qmessage_handler.cc',
-        'public/oxide_qt_qmessage_handler.h',
         'public/oxide_qt_qmessage_handler_p.h',
         'public/oxide_qt_qoutgoing_message_request.cc',
         'public/oxide_qt_qoutgoing_message_request.h',
@@ -120,8 +120,8 @@
           ]
         },
         {
-          'action_name': 'moc_oxide_q_user_script.cc',
-          'moc_input': 'public/oxide_q_user_script.h',
+          'action_name': 'moc_oxide_q_message_handler_base.cc',
+          'moc_input': 'public/oxide_q_message_handler_base.h',
           'inputs': [
             '<(_moc_input)'
           ],
@@ -136,8 +136,8 @@
           ]
         },
         {
-          'action_name': 'moc_oxide_qt_qmessage_handler.cc',
-          'moc_input': 'public/oxide_qt_qmessage_handler.h',
+          'action_name': 'moc_oxide_q_user_script.cc',
+          'moc_input': 'public/oxide_q_user_script.h',
           'inputs': [
             '<(_moc_input)'
           ],
