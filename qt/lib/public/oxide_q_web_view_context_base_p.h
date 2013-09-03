@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QWEB_VIEW_CONTEXT_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_QWEB_VIEW_CONTEXT_P_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_P_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_P_H_
 
 #include <QList>
 #include <QtGlobal>
@@ -27,6 +27,7 @@
 #include "shared/browser/oxide_browser_process_handle.h"
 
 class OxideQUserScript;
+class OxideQWebViewContextBase;
 
 namespace oxide {
 
@@ -35,13 +36,12 @@ class BrowserContext;
 namespace qt {
 
 class LazyInitProperties;
-class QWebViewContext;
 
-class QWebViewContextPrivate {
-  Q_DECLARE_PUBLIC(QWebViewContext)
+class QWebViewContextBasePrivate {
+  Q_DECLARE_PUBLIC(OxideQWebViewContextBase)
 
  public:
-  virtual ~QWebViewContextPrivate();
+  virtual ~QWebViewContextBasePrivate();
 
   oxide::BrowserContext* context() const {
     return context_.get();
@@ -56,14 +56,14 @@ class QWebViewContextPrivate {
     return user_scripts_;
   }
 
-  static QWebViewContextPrivate* get(QWebViewContext* context);
+  static QWebViewContextBasePrivate* get(OxideQWebViewContextBase* context);
 
   void updateUserScripts();
 
  protected:
-  QWebViewContextPrivate(QWebViewContext* q);
+  QWebViewContextBasePrivate(OxideQWebViewContextBase* q);
 
-  QWebViewContext* q_ptr;
+  OxideQWebViewContextBase* q_ptr;
 
  private:
   oxide::BrowserProcessHandle process_handle_;
@@ -72,10 +72,10 @@ class QWebViewContextPrivate {
 
   scoped_ptr<LazyInitProperties> lazy_init_props_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QWebViewContextPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(QWebViewContextBasePrivate);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_QWEB_VIEW_CONTEXT_P_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_P_H_

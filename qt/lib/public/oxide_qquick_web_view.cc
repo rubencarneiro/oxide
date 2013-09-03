@@ -42,9 +42,9 @@
 #include "qt/lib/common/oxide_qt_content_main_delegate.h"
 
 #include "oxide_q_message_handler_base_p.h"
+#include "oxide_q_web_view_context_base_p.h"
 #include "oxide_qquick_message_handler_p.h"
 #include "oxide_qquick_web_view_context_p.h"
-#include "oxide_qquick_web_view_context_p_p.h"
 
 QT_USE_NAMESPACE
 
@@ -239,7 +239,7 @@ void OxideQQuickWebViewPrivate::componentComplete() {
     context_ = default_context_.data();
   }
 
-  Init(OxideQQuickWebViewContextPrivate::get(context_)->GetContext(),
+  Init(oxide::qt::QWebViewContextBasePrivate::get(context_)->GetContext(),
        this, init_props_->incognito,
        gfx::Size(qRound(q->width()), qRound(q->height())));
 

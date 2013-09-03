@@ -22,19 +22,23 @@
 #include <QtGlobal>
 #include <QtQml>
 
-#include "oxide_qt_qweb_view_context.h"
+#include "oxide_q_web_view_context_base.h"
 
 QT_USE_NAMESPACE
 
-class OxideQQuickWebViewContextPrivate;
 class OxideQUserScript;
 
-class Q_DECL_EXPORT OxideQQuickWebViewContext :
-    public oxide::qt::QWebViewContext {
+namespace oxide {
+namespace qt {
+class QQuickWebViewContextPrivate;
+}
+}
+
+class Q_DECL_EXPORT OxideQQuickWebViewContext : public OxideQWebViewContextBase {
   Q_OBJECT
   Q_PROPERTY(QQmlListProperty<OxideQUserScript> userScripts READ userScripts)
 
-  Q_DECLARE_PRIVATE(OxideQQuickWebViewContext)
+  Q_DECLARE_PRIVATE(oxide::qt::QQuickWebViewContext)
 
  public:
   OxideQQuickWebViewContext(QObject* parent = NULL);

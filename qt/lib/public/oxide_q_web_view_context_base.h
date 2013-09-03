@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QWEB_VIEW_CONTEXT_H_
-#define _OXIDE_QT_LIB_PUBLIC_QWEB_VIEW_CONTEXT_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_H_
+#define _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_H_
 
 #include <QObject>
 #include <QString>
@@ -27,10 +27,11 @@ QT_USE_NAMESPACE
 
 namespace oxide {
 namespace qt {
+class QWebViewContextBasePrivate;
+}
+}
 
-class QWebViewContextPrivate;
-
-class Q_DECL_EXPORT QWebViewContext : public QObject {
+class Q_DECL_EXPORT OxideQWebViewContextBase : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
@@ -38,10 +39,10 @@ class Q_DECL_EXPORT QWebViewContext : public QObject {
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
 
-  Q_DECLARE_PRIVATE(QWebViewContext)
+  Q_DECLARE_PRIVATE(oxide::qt::QWebViewContextBase)
 
  public:
-  virtual ~QWebViewContext();
+  virtual ~OxideQWebViewContextBase();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -66,16 +67,13 @@ class Q_DECL_EXPORT QWebViewContext : public QObject {
   void acceptLangsChanged();
 
  protected:
-  QWebViewContext(QWebViewContextPrivate& dd,
-                  QObject* parent = NULL);
+  OxideQWebViewContextBase(oxide::qt::QWebViewContextBasePrivate& dd,
+                           QObject* parent = NULL);
 
-  QScopedPointer<QWebViewContextPrivate> d_ptr;
+  QScopedPointer<oxide::qt::QWebViewContextBasePrivate> d_ptr;
 
  private Q_SLOTS:
   void scriptUpdated();
 };
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_LIB_PUBLIC_QWEB_VIEW_CONTEXT_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_H_

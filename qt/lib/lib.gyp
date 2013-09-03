@@ -53,7 +53,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxide_q_outgoing_message_request_base.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_q_user_script.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_q_web_frame_base.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qt_qweb_view_context.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_web_view_context_base.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_message_handler.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_outgoing_message_request.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_frame.cc',
@@ -84,20 +84,18 @@
         'public/oxide_q_user_script_p.h',
         'public/oxide_q_web_frame_base.h',
         'public/oxide_q_web_frame_base_p.h',
+        'public/oxide_q_web_view_context_base.h',
+        'public/oxide_q_web_view_context_base_p.h',
         'public/oxide_qt_qmessage_handler.cc',
         'public/oxide_qt_qoutgoing_message_request.cc',
         'public/oxide_qt_qweb_frame.cc',
         'public/oxide_qt_qweb_view_context.cc',
-        'public/oxide_qt_qweb_view_context.h',
-        'public/oxide_qt_qweb_view_context_p.h',
         'public/oxide_qquick_message_handler_p.h',
         'public/oxide_qquick_outgoing_message_request_p.h',
         'public/oxide_qquick_web_frame_p.h',
         'public/oxide_qquick_web_view.cc',
         'public/oxide_qquick_web_view_p.h',
-        'public/oxide_qquick_web_view_context.cc',
         'public/oxide_qquick_web_view_context_p.h',
-        'public/oxide_qquick_web_view_context_p_p.h'
       ],
       'variables': {
         'chromium_code': 1
@@ -184,8 +182,8 @@
           ]
         },
         {
-          'action_name': 'moc_oxide_qt_qweb_view_context.cc',
-          'moc_input': 'public/oxide_qt_qweb_view_context.h',
+          'action_name': 'moc_oxide_q_web_view_context_base.cc',
+          'moc_input': 'public/oxide_q_web_view_context_base.h',
           'inputs': [
             '<(_moc_input)'
           ],
