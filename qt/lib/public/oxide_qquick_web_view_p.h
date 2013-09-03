@@ -35,7 +35,12 @@ QT_USE_NAMESPACE
 class OxideQQuickMessageHandler;
 class OxideQQuickWebFrame;
 class OxideQQuickWebViewContext;
-class OxideQQuickWebViewPrivate;
+
+namespace oxide {
+namespace qt {
+class QQuickWebViewPrivate;
+}
+}
 
 class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
@@ -52,7 +57,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQQuickWebViewContext* context READ context WRITE setContext)
 
-  Q_DECLARE_PRIVATE(OxideQQuickWebView)
+  Q_DECLARE_PRIVATE(oxide::qt::QQuickWebView)
 
  public:
   OxideQQuickWebView(QQuickItem* parent = NULL);
@@ -107,7 +112,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   virtual void geometryChanged(const QRectF& newGeometry,
                                const QRectF& oldGeometry);
 
-  QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
+  QScopedPointer<oxide::qt::QQuickWebViewPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebView)
