@@ -24,11 +24,10 @@
 #include <QtGlobal>
 #include <QtQml>
 
-class OxideQIncomingMessagePrivate;
-
 namespace oxide {
 class IncomingMessage;
 namespace qt {
+class QIncomingMessagePrivate;
 class QMessageHandlerBasePrivate;
 }
 }
@@ -38,7 +37,7 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_PROPERTY(QString worldId READ worldId)
   Q_PROPERTY(QString args READ args)
 
-  Q_DECLARE_PRIVATE(OxideQIncomingMessage)
+  Q_DECLARE_PRIVATE(oxide::qt::QIncomingMessage)
 
  public:
   virtual ~OxideQIncomingMessage();
@@ -55,7 +54,7 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   OxideQIncomingMessage(oxide::IncomingMessage* message);
 
  private:
-  QScopedPointer<OxideQIncomingMessagePrivate> d_ptr;
+  QScopedPointer<oxide::qt::QIncomingMessagePrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQIncomingMessage)

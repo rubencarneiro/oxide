@@ -21,10 +21,12 @@
 
 #include "shared/browser/oxide_incoming_message.h"
 
-class OxideQIncomingMessagePrivate {
+namespace oxide {
+namespace qt {
+
+class QIncomingMessagePrivate {
  public:
-  OxideQIncomingMessagePrivate(
-      oxide::IncomingMessage* message) :
+  QIncomingMessagePrivate(oxide::IncomingMessage* message) :
       incoming_(message) {}
 
   oxide::IncomingMessage* incoming() const {
@@ -35,33 +37,36 @@ class OxideQIncomingMessagePrivate {
   scoped_ptr<oxide::IncomingMessage> incoming_;
 };
 
+} // namespace qt
+} // namespace oxide
+
 OxideQIncomingMessage::OxideQIncomingMessage(
     oxide::IncomingMessage* message) :
     QObject(),
-    d_ptr(new OxideQIncomingMessagePrivate(message)) {}
+    d_ptr(new oxide::qt::QIncomingMessagePrivate(message)) {}
 
 OxideQIncomingMessage::~OxideQIncomingMessage() {}
 
 QString OxideQIncomingMessage::worldId() const {
-  Q_D(const OxideQIncomingMessage);
+  Q_D(const oxide::qt::QIncomingMessage);
 
   return QString::fromStdString(d->incoming()->world_id());
 }
 
 QString OxideQIncomingMessage::args() const {
-  Q_D(const OxideQIncomingMessage);
+  Q_D(const oxide::qt::QIncomingMessage);
 
   return QString::fromStdString(d->incoming()->args());
 }
 
 void OxideQIncomingMessage::reply(const QString& args) {
-  Q_D(OxideQIncomingMessage);
+  Q_D(oxide::qt::QIncomingMessage);
 
   d->incoming()->Reply(args.toStdString());
 }
 
 void OxideQIncomingMessage::error(const QString& msg) {
-  Q_D(OxideQIncomingMessage);
+  Q_D(oxide::qt::QIncomingMessage);
 
   d->incoming()->Error(msg.toStdString());
 }
