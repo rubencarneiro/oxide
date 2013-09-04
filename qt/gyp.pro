@@ -9,6 +9,9 @@ GYP_MAKE_INVOKE = CFLAGS= CXXFLAGS= LDFLAGS= CPPFLAGS= make -C $$DEPTH -f $$GYP_
 isEmpty(PREFIX) {
     PREFIX = /usr/local
 }
+isEmpty(QMAKE_EXTENSION_SHLIB) {
+    QMAKE_EXTENSION_SHLIB = so
+}
 
 gyp_generate.target = $${DEPTH}/$${GYP_GENERATED_MAKEFILE}
 gyp_generate.commands = \
@@ -26,12 +29,30 @@ equals(OXIDE_DEBUG, "1") {
 QMAKE_EXTRA_TARGETS += gypimpl
 PRE_TARGETDEPS += gypimpl
 
+CHROMIUM_OUTPUT_DIR = $${DEPTH}/chromium/src/out
+equals(OXIDE_DEBUG, "1") {
+    CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Debug
+} else {
+    CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Release
+}
+
+gyppost.target = gyppost
+gyppost.commands = \
+    cd $${CHROMIUM_PLATFORM_DIR}/lib.target && \
+    ln -f -s $${QMAKE_PREFIX_SHLIB}oxide-qt.$${QMAKE_EXTENSION_SHLIB}.0 $${QMAKE_PREFIX_SHLIB}oxide-qt.$${QMAKE_EXTENSION_SHLIB}
+QMAKE_EXTRA_TARGETS += gyppost
+POST_TARGETDEPS += gyppost
+
 OTHER_FILES += \
+    gyp_oxide \
+    oxide.gyp \
     qt/lib/lib.gyp \
     qt/qmlplugin/qmlplugin.gyp \
     qt/qt.gypi \
     qt/renderer/renderer.gyp \
-    qt/system.gyp
+    qt/system.gyp \
+    shared/shared.gypi \
+    shared/shared.gyp
 
 QMAKE_CLEAN += -r \
     $${DEPTH}/Makefile.oxide \

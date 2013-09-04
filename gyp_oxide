@@ -47,7 +47,7 @@ def additional_include_files(args=[]):
         if os.path.realpath(path) not in specified_includes:
             result.append(path)
 
-    AddInclude(os.path.join(script_dir, 'oxide.gypi'))
+    AddInclude(os.path.join(script_dir, 'shared', 'shared.gypi'))
 
     # Always include common.gypi.
     AddInclude(os.path.join(chromium_src, 'build', 'common.gypi'))

@@ -23,7 +23,6 @@
         '<(oxide_port_libname)',
         'oxide_packed_resources',
         '<(oxide_port_renderer_target)',
-        '<@(oxide_port_extra_targets)',
         '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox'
       ]
     },

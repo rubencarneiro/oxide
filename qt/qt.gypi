@@ -16,9 +16,6 @@
 
 {
   'variables': {
-    'oxide_port_extra_targets': [
-      'qt/qmlplugin/qmlplugin.gyp:*',
-    ],
     'oxide_port_libname': 'oxide-qt',
     'oxide_port_libversion': '0',
     'oxide_port_renderer_target': 'qt/renderer/renderer.gyp:oxide-renderer',
