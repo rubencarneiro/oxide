@@ -22,6 +22,7 @@
 
 #include "base/base_paths.h"
 #include "base/command_line.h"
+#include "base/file_util.h"
 #include "base/files/file_path.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
@@ -86,30 +87,41 @@ void ContentMainDelegate::PreSandboxStartup() {
                   &info);
   DCHECK_NE(rv, 0) << "Failed to determine module path";
 
-  // We assume that the renderer and other resources are at
-  // |./oxide-<port_name>/| relative to the public library
-  base::FilePath support_dir = base::FilePath(info.dli_fname).DirName();
-  support_dir = support_dir.Append(FILE_PATH_LITERAL(OXIDE_RESOURCE_SUBPATH));
+  base::FilePath dirs[2];
+
+  dirs[0] = base::FilePath(info.dli_fname).DirName();
+  dirs[1] = dirs[0].DirName();
+  dirs[0] = dirs[0].Append(FILE_PATH_LITERAL(OXIDE_RESOURCE_SUBPATH));
 
   std::string process_type =
       CommandLine::ForCurrentProcess()->
         GetSwitchValueASCII(switches::kProcessType);
-  if (process_type.empty()) {
-    PathService::Override(
-        base::FILE_EXE,
-        support_dir.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS)));
+
+  for (int i = 0; i < 2; ++i) {
+    base::FilePath renderer = dirs[i].Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
+    if (!base::PathExists(renderer)) {
+      continue;
+    }
+
+    if (process_type.empty()) {
+      PathService::Override(base::FILE_EXE, renderer);
+    }
+
+    base::FilePath dir = dirs[i];
+
+    // The locale passed here doesn't matter, as there aren't any
+    // localized resources to load
+    ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
+
+    ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
+        dir.Append(FILE_PATH_LITERAL("oxide.pak")),
+        ui::SCALE_FACTOR_NONE);
+    ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
+        dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
+        ui::SCALE_FACTOR_100P);
+
+    break;
   }
-
-  // The locale passed here doesn't matter, as there aren't any
-  // localized resources to load
-  ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
-
-  ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
-      support_dir.Append(FILE_PATH_LITERAL("oxide.pak")),
-      ui::SCALE_FACTOR_NONE);
-  ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
-      support_dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
-      ui::SCALE_FACTOR_100P);
 }
 
 int ContentMainDelegate::RunProcess(

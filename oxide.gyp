@@ -62,7 +62,7 @@
             '<@(pak_inputs)'
           ],
           'outputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/repack/oxide.pak'
+            '<(PRODUCT_DIR)/oxide.pak'
           ],
           'action': ['python', '<(repack_path)', '<@(_outputs)', '<@(pak_inputs)']
         },
@@ -78,7 +78,7 @@
             '<@(pak_inputs)'
           ],
           'outputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/repack/oxide_100_percent.pak'
+            '<(PRODUCT_DIR)/oxide_100_percent.pak'
           ],
           'action': ['python', '<(repack_path)', '<@(_outputs)', '<@(pak_inputs)']
         }

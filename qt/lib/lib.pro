@@ -23,7 +23,7 @@ INSTALLS += lib
 
 extras.path = $${PREFIX}/lib/oxide-qt
 extras.files = \
-    $${CHROMIUM_PLATFORM_DIR}/obj/gen/repack/oxide.pak \
-    $${CHROMIUM_PLATFORM_DIR}/obj/gen/repack/oxide_100_percent.pak
+    $${CHROMIUM_PLATFORM_DIR}/oxide.pak \
+    $${CHROMIUM_PLATFORM_DIR}/oxide_100_percent.pak
 extras.CONFIG = no_check_exist
 INSTALLS += extras
