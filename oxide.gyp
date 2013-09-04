@@ -15,9 +15,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
-  'variables': {
-    'liboxide_soname': '<(SHARED_LIB_PREFIX)<(oxide_port_libname)<(SHARED_LIB_SUFFIX).<(oxide_port_libversion)'
-  },
   'targets': [
     {
       'target_name': 'oxide',
