@@ -15,28 +15,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
-  'targets': [
-    {
-      'target_name': 'qmloxideplugin',
-      'type': 'shared_library',
-      'dependencies': [
-        '../system.gyp:Qt5Core',
-        '../system.gyp:Qt5Quick',
-        '../../oxide.gyp:<(oxide_port_libname)'
-      ],
-      'include_dirs': [
-        '<(INTERMEDIATE_DIR)'
-      ],
-      'sources': [
-        'oxide_qml_plugin.cc'
-      ],
-      'actions': [
-        {
-          'action_name': 'oxide_qml_plugin.moc',
-          'moc_input': 'oxide_qml_plugin.cc',
-          'includes': [ '../moc.gypi' ]
-        }
-      ]
-    }
+  'inputs': [
+    '<(_moc_input)'
+  ],
+  'outputs': [
+    '<(INTERMEDIATE_DIR)/<(_action_name)'
+  ],
+  'action': [
+    'moc',
+    '-o',
+    '<(INTERMEDIATE_DIR)/<(_action_name)',
+    '<(_moc_input)'
   ]
 }

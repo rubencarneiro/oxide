@@ -104,194 +104,62 @@
         {
           'action_name': 'moc_oxide_q_incoming_message.cc',
           'moc_input': 'public/oxide_q_incoming_message.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_message_handler_base.cc',
           'moc_input': 'public/oxide_q_message_handler_base.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_outgoing_message_request_base.cc',
           'moc_input': 'public/oxide_q_outgoing_message_request_base.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_user_script.cc',
           'moc_input': 'public/oxide_q_user_script.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_web_frame_base.cc',
           'moc_input': 'public/oxide_q_web_frame_base.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_web_view_context_base.cc',
           'moc_input': 'public/oxide_q_web_view_context_base.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_message_handler.cc',
           'moc_input': 'public/oxide_qquick_message_handler_p.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_outgoing_message_request.cc',
           'moc_input': 'public/oxide_qquick_outgoing_message_request_p.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_web_frame.cc',
           'moc_input': 'public/oxide_qquick_web_frame_p.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_web_view.cc',
           'moc_input': 'public/oxide_qquick_web_view_p.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_web_view_context.cc',
           'moc_input': 'public/oxide_qquick_web_view_context_p.h',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'oxide_qt_web_popup_menu_qquick.moc',
           'moc_input': 'browser/oxide_qt_web_popup_menu_qquick.cc',
-          'inputs': [
-            '<(_moc_input)'
-          ],
-          'outputs': [
-            '<(INTERMEDIATE_DIR)/<(_action_name)'
-          ],
-          'action': [
-            'moc',
-            '-o',
-            '<(INTERMEDIATE_DIR)/<(_action_name)',
-            '<(_moc_input)'
-          ]
+          'includes': [ '../moc.gypi' ]
         }
       ]
     }
