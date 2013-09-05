@@ -321,7 +321,9 @@ void BrowserContextIOData::Init(
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFileScheme,
-      new net::FileProtocolHandler());
+      new net::FileProtocolHandler(
+        content::BrowserThread::GetMessageLoopProxyForThread(
+          content::BrowserThread::FILE)));
   DCHECK(set_protocol);
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kDataScheme, new net::DataProtocolHandler());
