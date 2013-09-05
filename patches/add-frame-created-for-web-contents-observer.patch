@@ -1,11 +1,15 @@
 Description: Add FrameAttached notifications to WebContentsObserver, so that we can track frames
 Author: Chris Coulson <chris.coulson@canonical.com>
 
-Index: oxide/chromium/src/content/browser/web_contents/web_contents_impl.cc
-===================================================================
---- oxide.orig/chromium/src/content/browser/web_contents/web_contents_impl.cc	2013-08-15 23:50:56.343131231 +0100
-+++ oxide/chromium/src/content/browser/web_contents/web_contents_impl.cc	2013-08-17 11:16:17.491273762 +0100
-@@ -2575,6 +2575,9 @@
+diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
+--- a/content/browser/web_contents/web_contents_impl.cc
++++ b/content/browser/web_contents/web_contents_impl.cc
+@@ -2587,16 +2587,19 @@ FrameTreeNode* WebContentsImpl::FindFram
+ 
+   return NULL;
+ }
+ 
+ void WebContentsImpl::OnFrameAttached(
      int64 parent_frame_id,
      int64 frame_id,
      const std::string& frame_name) {
@@ -15,11 +19,20 @@ Index: oxide/chromium/src/content/browser/web_contents/web_contents_impl.cc
    FrameTreeNode* parent = FindFrameTreeNodeByID(parent_frame_id);
    if (!parent)
      return;
-Index: oxide/chromium/src/content/public/browser/web_contents_observer.h
-===================================================================
---- oxide.orig/chromium/src/content/public/browser/web_contents_observer.h	2013-08-15 23:50:52.711131227 +0100
-+++ oxide/chromium/src/content/public/browser/web_contents_observer.h	2013-08-17 11:17:25.719273838 +0100
-@@ -184,6 +184,9 @@
+ 
+   FrameTreeNode* node = new FrameTreeNode(frame_id, frame_name);
+   parent->AddChild(node);
+ }
+ 
+diff --git a/content/public/browser/web_contents_observer.h b/content/public/browser/web_contents_observer.h
+--- a/content/public/browser/web_contents_observer.h
++++ b/content/public/browser/web_contents_observer.h
+@@ -195,16 +195,19 @@ class CONTENT_EXPORT WebContentsObserver
+   // place.
+   virtual void DidOpenRequestedURL(WebContents* new_contents,
+                                    const GURL& url,
+                                    const Referrer& referrer,
+                                    WindowOpenDisposition disposition,
                                     PageTransition transition,
                                     int64 source_frame_id) {}
  
@@ -28,4 +41,9 @@ Index: oxide/chromium/src/content/public/browser/web_contents_observer.h
 +                             int64 frame_id) {}
    virtual void FrameDetached(RenderViewHost* render_view_host,
                               int64 frame_id) {}
+ 
+   // These two methods correspond to the points in time when the spinner of the
+   // tab starts and stops spinning.
+   virtual void DidStartLoading(RenderViewHost* render_view_host) {}
+   virtual void DidStopLoading(RenderViewHost* render_view_host) {}
  

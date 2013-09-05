@@ -1,11 +1,37 @@
 Description: Make gyp work correctly when toplevel != depth
 Author: Chris Coulson <chris.coulson@canonical.com>
 
-Index: oxide/chromium/src/tools/gyp/pylib/gyp/generator/make.py
-===================================================================
---- oxide.orig/chromium/src/tools/gyp/pylib/gyp/generator/make.py	2013-07-15 07:52:36.818444781 +0100
-+++ oxide/chromium/src/tools/gyp/pylib/gyp/generator/make.py	2013-07-23 19:19:50.140610663 +0100
-@@ -90,7 +90,11 @@
+diff --git a/tools/gyp/pylib/gyp/__init__.py b/tools/gyp/pylib/gyp/__init__.py
+--- a/tools/gyp/pylib/gyp/__init__.py
++++ b/tools/gyp/pylib/gyp/__init__.py
+@@ -192,17 +192,17 @@ def RegenerateFlags(options):
+   object (even in the absence of the environment variables.)
+ 
+   Any path options will be normalized relative to depth.
+ 
+   The format flag is not included, as it is assumed the calling generator will
+   set that as appropriate.
+   """
+   def FixPath(path):
+-    path = gyp.common.FixIfRelativePath(path, options.depth)
++    path = gyp.common.FixIfRelativePath(path, options.toplevel_dir)
+     if not path:
+       return os.path.curdir
+     return path
+ 
+   def Noop(value):
+     return value
+ 
+   # We always want to ignore the environment when regenerating, to avoid
+diff --git a/tools/gyp/pylib/gyp/generator/make.py b/tools/gyp/pylib/gyp/generator/make.py
+--- a/tools/gyp/pylib/gyp/generator/make.py
++++ b/tools/gyp/pylib/gyp/generator/make.py
+@@ -85,17 +85,21 @@ def CalculateVariables(default_variables
+     COMPILABLE_EXTENSIONS.update({'.m': 'objc', '.mm' : 'objcxx'})
+   else:
+     operating_system = flavor
+     if flavor == 'android':
+       operating_system = 'linux'  # Keep this legacy behavior for now.
      default_variables.setdefault('OS', operating_system)
      default_variables.setdefault('SHARED_LIB_SUFFIX', '.so')
      default_variables.setdefault('SHARED_LIB_DIR','$(builddir)/lib.$(TOOLSET)')
@@ -18,16 +44,8 @@ Index: oxide/chromium/src/tools/gyp/pylib/gyp/generator/make.py
  
  
  def CalculateGeneratorInputInfo(params):
-Index: oxide/chromium/src/tools/gyp/pylib/gyp/__init__.py
-===================================================================
---- oxide.orig/chromium/src/tools/gyp/pylib/gyp/__init__.py	2013-07-12 20:54:58.790487377 +0100
-+++ oxide/chromium/src/tools/gyp/pylib/gyp/__init__.py	2013-07-23 19:20:27.420610807 +0100
-@@ -197,7 +197,7 @@
-   set that as appropriate.
-   """
-   def FixPath(path):
--    path = gyp.common.FixIfRelativePath(path, options.depth)
-+    path = gyp.common.FixIfRelativePath(path, options.toplevel_dir)
-     if not path:
-       return os.path.curdir
-     return path
+   """Calculate the generator specific info that gets fed to input (called by
+   gyp)."""
+   generator_flags = params.get('generator_flags', {})
+   android_ndk_version = generator_flags.get('android_ndk_version', None)
+   # Android NDK requires a strict link order.

@@ -1,11 +1,15 @@
 Description: Support native popups in oxide
 Author: Chris Coulson <chris.coulson@canonical.com>
 
-Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.cc
-===================================================================
---- oxide.orig/chromium/src/content/browser/renderer_host/render_view_host_impl.cc	2013-08-15 23:57:57.975131702 +0100
-+++ oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.cc	2013-08-15 23:57:57.963131702 +0100
-@@ -991,7 +991,7 @@
+diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/browser/renderer_host/render_view_host_impl.cc
+--- a/content/browser/renderer_host/render_view_host_impl.cc
++++ b/content/browser/renderer_host/render_view_host_impl.cc
+@@ -991,17 +991,17 @@ bool RenderViewHostImpl::OnMessageReceiv
+     IPC_MESSAGE_HANDLER(ViewHostMsg_DidZoomURL, OnDidZoomURL)
+     IPC_MESSAGE_HANDLER(ViewHostMsg_GetWindowSnapshot, OnGetWindowSnapshot)
+     IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_RequestPermission,
+                         OnRequestDesktopNotificationPermission)
+     IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_Show,
                          OnShowDesktopNotification)
      IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_Cancel,
                          OnCancelDesktopNotification)
@@ -14,7 +18,17 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.cc
      IPC_MESSAGE_HANDLER(ViewHostMsg_ShowPopup, OnShowPopup)
  #endif
      IPC_MESSAGE_HANDLER(ViewHostMsg_RunFileChooser, OnRunFileChooser)
-@@ -1669,7 +1669,7 @@
+     IPC_MESSAGE_HANDLER(ViewHostMsg_DidAccessInitialDocument,
+                         OnDidAccessInitialDocument)
+     IPC_MESSAGE_HANDLER(ViewHostMsg_DomOperationResponse,
+                         OnDomOperationResponse)
+     IPC_MESSAGE_HANDLER(AccessibilityHostMsg_Events, OnAccessibilityEvents)
+@@ -1673,17 +1673,17 @@ void RenderViewHostImpl::ForwardKeyboard
+   if (ignore_input_events()) {
+     if (key_event.type == WebInputEvent::RawKeyDown)
+       delegate_->OnIgnoredUIEvent();
+     return;
+   }
    RenderWidgetHostImpl::ForwardKeyboardEvent(key_event);
  }
  
@@ -23,7 +37,17 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.cc
  void RenderViewHostImpl::DidSelectPopupMenuItems(
      const std::vector<int>& selected_indices) {
    Send(new ViewMsg_SelectPopupMenuItems(GetRoutingID(), false,
-@@ -2008,7 +2008,7 @@
+                                         selected_indices));
+ }
+ 
+ void RenderViewHostImpl::DidCancelPopupMenu() {
+   Send(new ViewMsg_SelectPopupMenuItems(GetRoutingID(), true,
+@@ -2012,17 +2012,17 @@ void RenderViewHostImpl::OnGetWindowSnap
+       return;
+     }
+   }
+ 
+   Send(new ViewMsg_WindowSnapshotCompleted(
        GetRoutingID(), snapshot_id, gfx::Size(), png));
  }
  
@@ -32,25 +56,21 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.cc
  void RenderViewHostImpl::OnShowPopup(
      const ViewHostMsg_ShowPopup_Params& params) {
    RenderViewHostDelegateView* view = delegate_->GetDelegateView();
-Index: oxide/chromium/src/content/renderer/render_thread_impl.cc
-===================================================================
---- oxide.orig/chromium/src/content/renderer/render_thread_impl.cc	2013-08-15 23:57:57.975131702 +0100
-+++ oxide/chromium/src/content/renderer/render_thread_impl.cc	2013-08-15 23:57:57.967131702 +0100
-@@ -323,7 +323,7 @@
-   v8::V8::SetCreateHistogramFunction(CreateHistogram);
-   v8::V8::SetAddHistogramSampleFunction(AddHistogramSample);
- 
--#if defined(OS_MACOSX) || defined(OS_ANDROID)
-+#if defined(OS_MACOSX) || defined(OS_ANDROID) || defined(OXIDE_BUILD)
-   // On Mac and Android, the select popups are rendered by the browser.
-   WebKit::WebView::setUseExternalPopupMenus(true);
+   if (view) {
+     view->ShowPopupMenu(params.bounds,
+                         params.item_height,
+                         params.item_font_size,
+                         params.selected_item,
+diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/browser/renderer_host/render_view_host_impl.h
+--- a/content/browser/renderer_host/render_view_host_impl.h
++++ b/content/browser/renderer_host/render_view_host_impl.h
+@@ -384,17 +384,19 @@ class CONTENT_EXPORT RenderViewHostImpl
+   void DidSelectPopupMenuItem(int selected_index);
+   void DidCancelPopupMenu();
  #endif
-Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.h
-===================================================================
---- oxide.orig/chromium/src/content/browser/renderer_host/render_view_host_impl.h	2013-08-15 23:57:57.975131702 +0100
-+++ oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.h	2013-08-15 23:57:57.967131702 +0100
-@@ -391,7 +391,9 @@
-   media::MediaPlayerManager* media_player_manager() {
+ 
+ #if defined(OS_ANDROID)
+   BrowserMediaPlayerManager* media_player_manager() {
      return media_player_manager_;
    }
 +#endif
@@ -59,7 +79,17 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.h
    void DidSelectPopupMenuItems(const std::vector<int>& selected_indices);
    void DidCancelPopupMenu();
  #endif
-@@ -577,7 +579,7 @@
+ 
+   // User rotated the screen. Calls the "onorientationchange" Javascript hook.
+   void SendOrientationChangeEvent(int orientation);
+ 
+   // Sets a bit indicating whether the RenderView is responsible for displaying
+@@ -571,17 +573,17 @@ class CONTENT_EXPORT RenderViewHostImpl
+       const ShowDesktopNotificationHostMsgParams& params);
+   void OnCancelDesktopNotification(int notification_id);
+   void OnRunFileChooser(const FileChooserParams& params);
+   void OnDidAccessInitialDocument();
+   void OnDomOperationResponse(const std::string& json_string,
                                int automation_id);
    void OnGetWindowSnapshot(const int snapshot_id);
  
@@ -68,11 +98,20 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_view_host_impl.h
    void OnShowPopup(const ViewHostMsg_ShowPopup_Params& params);
  #endif
  
-Index: oxide/chromium/src/content/common/view_messages.h
-===================================================================
---- oxide.orig/chromium/src/content/common/view_messages.h	2013-08-15 23:57:57.975131702 +0100
-+++ oxide/chromium/src/content/common/view_messages.h	2013-08-15 23:59:45.875131823 +0100
-@@ -1268,6 +1268,7 @@
+  private:
+   friend class TestRenderViewHost;
+   FRIEND_TEST_ALL_PREFIXES(RenderViewHostTest, BasicRenderFrameHost);
+   FRIEND_TEST_ALL_PREFIXES(RenderViewHostTest, RoutingIdSane);
+ 
+diff --git a/content/common/view_messages.h b/content/common/view_messages.h
+--- a/content/common/view_messages.h
++++ b/content/common/view_messages.h
+@@ -1267,35 +1267,38 @@ IPC_MESSAGE_ROUTED3(ViewMsg_WindowSnapsh
+                     int /* snapshot_id */,
+                     gfx::Size /* size */,
+                     std::vector<unsigned char> /* png */)
+ 
+ // Tells the renderer to suspend/resume the webkit timers.
  IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSharedTimersSuspended,
                       bool /* suspend */)
  
@@ -80,7 +119,13 @@ Index: oxide/chromium/src/content/common/view_messages.h
  #if defined(OS_ANDROID)
  // Sent when the browser wants the bounding boxes of the current find matches.
  //
-@@ -1281,12 +1282,14 @@
+ // If match rects are already cached on the browser side, |current_version|
+ // should be the version number from the ViewHostMsg_FindMatchRects_Reply
+ // they came in, so the renderer can tell if it needs to send updated rects.
+ // Otherwise just pass -1 to always receive the list of rects.
+ //
+ // There must be an active search string (it is probably most useful to call
+ // this immediately after a ViewHostMsg_Find_Reply message arrives with
  // final_update set to true).
  IPC_MESSAGE_ROUTED1(ViewMsg_FindMatchRects,
                      int /* current_version */)
@@ -95,7 +140,17 @@ Index: oxide/chromium/src/content/common/view_messages.h
  // Tells the renderer to try to revert to the zoom level we were at before
  // ViewMsg_ScrollFocusedEditableNodeIntoView was called.
  IPC_MESSAGE_ROUTED0(ViewMsg_UndoScrollFocusedEditableNodeIntoView)
-@@ -1311,6 +1314,7 @@
+ 
+ // This message relays the beginning or end of a batch event in the IME.
+ IPC_MESSAGE_ROUTED1(ViewMsg_ImeBatchStateChanged,
+     bool /* is_begin */)
+ 
+@@ -1310,16 +1313,17 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNee
+ 
+ // Sent by the browser when the renderer should generate a new frame.
+ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
+                     cc::BeginFrameArgs /* args */)
+ 
  // Sent by the browser when an IME update that requires acknowledgement has been
  // processed on the browser side.
  IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
@@ -103,11 +158,86 @@ Index: oxide/chromium/src/content/common/view_messages.h
  
  #elif defined(OS_MACOSX)
  // Let the RenderView know its window has changed visibility.
-Index: oxide/chromium/src/content/renderer/render_view_impl.cc
-===================================================================
---- oxide.orig/chromium/src/content/renderer/render_view_impl.cc	2013-08-15 23:57:57.975131702 +0100
-+++ oxide/chromium/src/content/renderer/render_view_impl.cc	2013-08-15 23:57:57.967131702 +0100
-@@ -1426,15 +1426,19 @@
+ IPC_MESSAGE_ROUTED1(ViewMsg_SetWindowVisibility,
+                     bool /* visibile */)
+ 
+ // Let the RenderView know its window's frame has changed.
+ IPC_MESSAGE_ROUTED2(ViewMsg_WindowFrameChanged,
+diff --git a/content/renderer/external_popup_menu.cc b/content/renderer/external_popup_menu.cc
+--- a/content/renderer/external_popup_menu.cc
++++ b/content/renderer/external_popup_menu.cc
+@@ -49,17 +49,17 @@ void ExternalPopupMenu::DidSelectItem(in
+     return;
+   if (index == -1)
+     popup_menu_client_->didCancel();
+   else
+     popup_menu_client_->didAcceptIndex(index);
+ }
+ #endif
+ 
+-#if defined(OS_ANDROID)
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+ void ExternalPopupMenu::DidSelectItems(bool canceled,
+                                        const std::vector<int>& indices) {
+   if (!popup_menu_client_)
+     return;
+   if (canceled)
+     popup_menu_client_->didCancel();
+   else
+     popup_menu_client_->didAcceptIndices(indices);
+diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_popup_menu.h
+--- a/content/renderer/external_popup_menu.h
++++ b/content/renderer/external_popup_menu.h
+@@ -27,17 +27,17 @@ class ExternalPopupMenu : public WebKit:
+   virtual ~ExternalPopupMenu() {}
+ 
+ #if defined(OS_MACOSX)
+   // Called when the user has selected an item. |selected_item| is -1 if the
+   // user canceled the popup.
+   void DidSelectItem(int selected_index);
+ #endif
+ 
+-#if defined(OS_ANDROID)
++#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
+   // Called when the user has selected items or canceled the popup.
+   void DidSelectItems(bool canceled, const std::vector<int>& selected_indices);
+ #endif
+ 
+   // WebKit::WebExternalPopupMenu implementation:
+   virtual void show(const WebKit::WebRect& bounds);
+   virtual void close();
+ 
+diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
+--- a/content/renderer/render_thread_impl.cc
++++ b/content/renderer/render_thread_impl.cc
+@@ -318,17 +318,17 @@ void RenderThreadImpl::Init() {
+   base::debug::TraceLog::GetInstance()->SetThreadSortIndex(
+       base::PlatformThread::CurrentId(),
+       kTraceEventRendererMainThreadSortIndex);
+ 
+   v8::V8::SetCounterFunction(base::StatsTable::FindLocation);
+   v8::V8::SetCreateHistogramFunction(CreateHistogram);
+   v8::V8::SetAddHistogramSampleFunction(AddHistogramSample);
+ 
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
++#if defined(OS_MACOSX) || defined(OS_ANDROID) || defined(OXIDE_BUILD)
+   // On Mac and Android, the select popups are rendered by the browser.
+   WebKit::WebView::setUseExternalPopupMenus(true);
+ #endif
+ 
+   lazy_tls.Pointer()->Set(this);
+ 
+ #if defined(OS_WIN)
+   // If you are running plugins in this thread you need COM active but in
+diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
+--- a/content/renderer/render_view_impl.cc
++++ b/content/renderer/render_view_impl.cc
+@@ -1418,25 +1418,29 @@ bool RenderViewImpl::OnMessageReceived(c
+     IPC_MESSAGE_HANDLER(ViewMsg_SetHistoryLengthAndPrune,
+                         OnSetHistoryLengthAndPrune)
+     IPC_MESSAGE_HANDLER(ViewMsg_EnableViewSourceMode, OnEnableViewSourceMode)
+ #if defined(OS_ANDROID)
+     IPC_MESSAGE_HANDLER(JavaBridgeMsg_Init, OnJavaBridgeInit)
  #endif
      IPC_MESSAGE_HANDLER(ViewMsg_SetAccessibilityMode, OnSetAccessibilityMode)
      IPC_MESSAGE_HANDLER(ViewMsg_DisownOpener, OnDisownOpener)
@@ -127,7 +257,17 @@ Index: oxide/chromium/src/content/renderer/render_view_impl.cc
  #elif defined(OS_MACOSX)
      IPC_MESSAGE_HANDLER(InputMsg_CopyToFindPboard, OnCopyToFindPboard)
      IPC_MESSAGE_HANDLER(ViewMsg_PluginImeCompositionCompleted,
-@@ -6348,7 +6352,7 @@
+                         OnPluginImeCompositionCompleted)
+     IPC_MESSAGE_HANDLER(ViewMsg_SelectPopupMenuItem, OnSelectPopupMenuItem)
+     IPC_MESSAGE_HANDLER(ViewMsg_SetInLiveResize, OnSetInLiveResize)
+     IPC_MESSAGE_HANDLER(ViewMsg_SetWindowVisibility, OnSetWindowVisibility)
+     IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
+@@ -6301,17 +6305,17 @@ void RenderViewImpl::OnSelectPopupMenuIt
+     NOTREACHED();
+     return;
+   }
+   external_popup_menu_->DidSelectItem(selected_index);
+   external_popup_menu_.reset();
  }
  #endif
  
@@ -136,11 +276,20 @@ Index: oxide/chromium/src/content/renderer/render_view_impl.cc
  void RenderViewImpl::OnSelectPopupMenuItems(
      bool canceled,
      const std::vector<int>& selected_indices) {
-Index: oxide/chromium/src/content/renderer/render_view_impl.h
-===================================================================
---- oxide.orig/chromium/src/content/renderer/render_view_impl.h	2013-08-15 23:57:57.975131702 +0100
-+++ oxide/chromium/src/content/renderer/render_view_impl.h	2013-08-15 23:57:57.971131702 +0100
-@@ -1052,15 +1052,19 @@
+   // It is possible to receive more than one of these calls if the user presses
+   // a select faster than it takes for the show-select-popup IPC message to make
+   // it to the browser UI thread.  Ignore the extra-messages.
+   // TODO(jcivelli): http:/b/5793321 Implement a better fix, as detailed in bug.
+   if (!external_popup_menu_)
+diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_impl.h
+--- a/content/renderer/render_view_impl.h
++++ b/content/renderer/render_view_impl.h
+@@ -1023,25 +1023,29 @@ class CONTENT_EXPORT RenderViewImpl
+   void OnZoomFactor(PageZoom zoom, int zoom_center_x, int zoom_center_y);
+ 
+   void OnEnableViewSourceMode();
+ 
+   void OnJavaBridgeInit();
  
    void OnDisownOpener();
  
@@ -160,29 +309,8 @@ Index: oxide/chromium/src/content/renderer/render_view_impl.h
  #elif defined(OS_MACOSX)
    void OnCopyToFindPboard();
    void OnPluginImeCompositionCompleted(const string16& text, int plugin_id);
-Index: oxide/chromium/src/content/renderer/external_popup_menu.cc
-===================================================================
---- oxide.orig/chromium/src/content/renderer/external_popup_menu.cc	2013-08-15 23:57:57.975131702 +0100
-+++ oxide/chromium/src/content/renderer/external_popup_menu.cc	2013-08-15 23:57:57.971131702 +0100
-@@ -54,7 +54,7 @@
- }
- #endif
- 
--#if defined(OS_ANDROID)
-+#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
- void ExternalPopupMenu::DidSelectItems(bool canceled,
-                                        const std::vector<int>& indices) {
-   if (!popup_menu_client_)
-Index: oxide/chromium/src/content/renderer/external_popup_menu.h
-===================================================================
---- oxide.orig/chromium/src/content/renderer/external_popup_menu.h	2013-08-15 23:57:57.975131702 +0100
-+++ oxide/chromium/src/content/renderer/external_popup_menu.h	2013-08-15 23:57:57.971131702 +0100
-@@ -32,7 +32,7 @@
-   void DidSelectItem(int selected_index);
- #endif
- 
--#if defined(OS_ANDROID)
-+#if defined(OS_ANDROID) || defined(OXIDE_BUILD)
-   // Called when the user has selected items or canceled the popup.
-   void DidSelectItems(bool canceled, const std::vector<int>& selected_indices);
- #endif
+   void OnSelectPopupMenuItem(int selected_index);
+   void OnSetInLiveResize(bool in_live_resize);
+   void OnSetWindowVisibility(bool visible);
+   void OnWindowFrameChanged(const gfx::Rect& window_frame,
+                             const gfx::Rect& view_frame);

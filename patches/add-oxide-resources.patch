@@ -1,8 +1,12 @@
-Index: oxide/chromium/src/tools/gritsettings/resource_ids
-===================================================================
---- oxide.orig/chromium/src/tools/gritsettings/resource_ids	2013-08-15 23:52:05.847131309 +0100
-+++ oxide/chromium/src/tools/gritsettings/resource_ids	2013-08-23 18:44:48.477922193 +0100
-@@ -218,4 +218,7 @@
+diff --git a/tools/gritsettings/resource_ids b/tools/gritsettings/resource_ids
+--- a/tools/gritsettings/resource_ids
++++ b/tools/gritsettings/resource_ids
+@@ -213,9 +213,12 @@
+   },
+   "components/component_strings.grd": {
+     "messages": [30000],
+   },
+   "third_party/WebKit/public/blink_resources.grd": {
      "includes": [30500],
    },
    # Resource ids starting at 31000 are reserved for projects built on Chromium.

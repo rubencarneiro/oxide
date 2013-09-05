@@ -1,11 +1,15 @@
 Description: Don't use /proc/self/exe as the renderer path. That is never correct for oxide
 Author: Chris Coulson <chris.coulson@canonical.com>
 
-Index: oxide/chromium/src/content/common/child_process_host_impl.cc
-===================================================================
---- oxide.orig/chromium/src/content/common/child_process_host_impl.cc	2013-08-16 02:06:45.111140339 +0100
-+++ oxide/chromium/src/content/common/child_process_host_impl.cc	2013-08-16 02:06:45.107140339 +0100
-@@ -91,7 +91,7 @@
+diff --git a/content/common/child_process_host_impl.cc b/content/common/child_process_host_impl.cc
+--- a/content/common/child_process_host_impl.cc
++++ b/content/common/child_process_host_impl.cc
+@@ -86,17 +86,17 @@ ChildProcessHost* ChildProcessHost::Crea
+ 
+ // static
+ base::FilePath ChildProcessHost::GetChildPath(int flags) {
+   base::FilePath child_path;
+ 
    child_path = CommandLine::ForCurrentProcess()->GetSwitchValuePath(
        switches::kBrowserSubprocessPath);
  
@@ -14,3 +18,8 @@ Index: oxide/chromium/src/content/common/child_process_host_impl.cc
    // Use /proc/self/exe rather than our known binary path so updates
    // can't swap out the binary from underneath us.
    // When running under Valgrind, forking /proc/self/exe ends up forking the
+   // Valgrind executable, which then crashes. However, it's almost safe to
+   // assume that the updates won't happen while testing with Valgrind tools.
+   if (child_path.empty() && flags & CHILD_ALLOW_SELF && !RunningOnValgrind())
+     child_path = base::FilePath(base::kProcSelfExe);
+ #endif

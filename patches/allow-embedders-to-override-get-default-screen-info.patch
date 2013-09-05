@@ -3,11 +3,15 @@ Description: Allow embedders to override RenderWidgetHostViewPort::GetDefaultScr
  can delegate to embedders, rather than using Aura / X11 to do this
 Author: Chris Coulson <chris.coulson@canonical.com>
 
-Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_aura.cc
-===================================================================
---- oxide.orig/chromium/src/content/browser/renderer_host/render_widget_host_view_aura.cc	2013-07-15 07:45:46.422443206 +0100
-+++ oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_aura.cc	2013-07-25 09:18:42.877138003 +0100
-@@ -3115,7 +3115,8 @@
+diff --git a/content/browser/renderer_host/render_widget_host_view_aura.cc b/content/browser/renderer_host/render_widget_host_view_aura.cc
+--- a/content/browser/renderer_host/render_widget_host_view_aura.cc
++++ b/content/browser/renderer_host/render_widget_host_view_aura.cc
+@@ -3276,12 +3276,13 @@ void RenderWidgetHostViewAura::DetachFro
+ // static
+ RenderWidgetHostView* RenderWidgetHostView::CreateViewForWidget(
+     RenderWidgetHost* widget) {
+   return new RenderWidgetHostViewAura(widget);
+ }
  
  // static
  void RenderWidgetHostViewPort::GetDefaultScreenInfo(WebScreenInfo* results) {
@@ -17,20 +21,34 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_
  }
  
  }  // namespace content
-Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_base.cc
-===================================================================
---- oxide.orig/chromium/src/content/browser/renderer_host/render_widget_host_view_base.cc	2013-07-12 20:53:40.354487076 +0100
-+++ oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_base.cc	2013-07-25 10:09:29.201153840 +0100
-@@ -11,6 +11,8 @@
+diff --git a/content/browser/renderer_host/render_widget_host_view_base.cc b/content/browser/renderer_host/render_widget_host_view_base.cc
+--- a/content/browser/renderer_host/render_widget_host_view_base.cc
++++ b/content/browser/renderer_host/render_widget_host_view_base.cc
+@@ -7,16 +7,18 @@
+ #include "base/logging.h"
+ #include "content/browser/accessibility/browser_accessibility_manager.h"
+ #include "content/browser/gpu/gpu_data_manager_impl.h"
+ #include "content/browser/renderer_host/basic_mouse_wheel_smooth_scroll_gesture.h"
+ #include "content/browser/renderer_host/render_process_host_impl.h"
  #include "content/browser/renderer_host/render_widget_host_impl.h"
  #include "content/port/browser/render_widget_host_view_frame_subscriber.h"
- #include "content/port/browser/smooth_scroll_gesture.h"
+ #include "content/port/browser/synthetic_gesture.h"
 +#include "content/public/browser/content_browser_client.h"
 +#include "content/public/common/content_client.h"
  #include "third_party/WebKit/public/web/WebScreenInfo.h"
  #include "ui/gfx/display.h"
  #include "ui/gfx/screen.h"
-@@ -350,6 +352,12 @@
+ #include "ui/gfx/size_conversions.h"
+ #include "ui/gfx/size_f.h"
+ 
+ #if defined(OS_WIN)
+ #include "base/command_line.h"
+@@ -372,16 +374,22 @@ void RenderWidgetHostViewBase::DetachPlu
+   // away. This will prevent the plugin windows from getting destroyed
+   // automatically. The detached plugin windows will get cleaned up in proper
+   // sequence as part of the usual cleanup when the plugin instance goes away.
+   EnumChildWindows(parent, DetachPluginWindowsCallbackInternal, NULL);
+ }
  
  #endif  // OS_WIN
  
@@ -43,11 +61,20 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_
  RenderWidgetHostViewBase::RenderWidgetHostViewBase()
      : popup_type_(WebKit::WebPopupTypeNone),
        mouse_locked_(false),
-Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_base.h
-===================================================================
---- oxide.orig/chromium/src/content/browser/renderer_host/render_widget_host_view_base.h	2013-07-12 20:53:40.806487078 +0100
-+++ oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_base.h	2013-07-25 10:06:33.729152928 +0100
-@@ -24,6 +24,10 @@
+       showing_context_menu_(false),
+       selection_text_offset_(0),
+       selection_range_(ui::Range::InvalidRange()),
+       current_device_scale_factor_(0),
+       renderer_frame_number_(0) {
+diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/content/browser/renderer_host/render_widget_host_view_base.h
+--- a/content/browser/renderer_host/render_widget_host_view_base.h
++++ b/content/browser/renderer_host/render_widget_host_view_base.h
+@@ -19,16 +19,20 @@
+ #include "base/memory/scoped_ptr.h"
+ #include "base/callback_forward.h"
+ #include "content/common/content_export.h"
+ #include "content/port/browser/render_widget_host_view_port.h"
+ #include "ui/base/range/range.h"
  #include "ui/gfx/native_widget_types.h"
  #include "ui/gfx/rect.h"
  
@@ -58,7 +85,17 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_
  namespace content {
  
  class RenderWidgetHostImpl;
-@@ -93,6 +97,8 @@
+ 
+ // Basic implementation shared by concrete RenderWidgetHostView
+ // subclasses.
+ //
+ // Note that nothing should use this class, except concrete subclasses
+@@ -94,16 +98,18 @@ class CONTENT_EXPORT RenderWidgetHostVie
+   bool HasDisplayPropertyChanged(gfx::NativeView view);
+ 
+ #if defined(OS_WIN)
+   // The callback that DetachPluginsHelper calls for each child window. Call
+   // this directly if you want to do custom filtering on plugin windows first.
    static void DetachPluginWindowsCallback(HWND window);
  #endif
  
@@ -67,11 +104,20 @@ Index: oxide/chromium/src/content/browser/renderer_host/render_widget_host_view_
   protected:
    // Interface class only, do not construct.
    RenderWidgetHostViewBase();
-Index: oxide/chromium/src/content/public/browser/content_browser_client.cc
-===================================================================
---- oxide.orig/chromium/src/content/public/browser/content_browser_client.cc	2013-07-12 20:53:44.502487092 +0100
-+++ oxide/chromium/src/content/public/browser/content_browser_client.cc	2013-07-25 09:40:56.801144938 +0100
-@@ -285,6 +285,11 @@
+ 
+ #if defined(OS_WIN)
+   // Shared implementation of MovePluginWindows for use by win and aura/wina.
+   static void MovePluginWindowsHelper(
+       HWND parent,
+diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
+--- a/content/public/browser/content_browser_client.cc
++++ b/content/public/browser/content_browser_client.cc
+@@ -277,16 +277,21 @@ ui::SelectFilePolicy* ContentBrowserClie
+     WebContents* web_contents) {
+   return NULL;
+ }
+ 
+ LocationProvider* ContentBrowserClient::OverrideSystemLocationProvider() {
    return NULL;
  }
  
@@ -83,11 +129,20 @@ Index: oxide/chromium/src/content/public/browser/content_browser_client.cc
  #if defined(OS_WIN)
  const wchar_t* ContentBrowserClient::GetResourceDllName() {
    return NULL;
-Index: oxide/chromium/src/content/public/browser/content_browser_client.h
-===================================================================
---- oxide.orig/chromium/src/content/public/browser/content_browser_client.h	2013-07-12 20:53:44.506487092 +0100
-+++ oxide/chromium/src/content/public/browser/content_browser_client.h	2013-07-25 09:41:19.917145058 +0100
-@@ -71,6 +71,10 @@
+ }
+ #endif
+ 
+ #if defined(USE_NSS)
+ crypto::CryptoModuleBlockingPasswordDelegate*
+diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
+--- a/content/public/browser/content_browser_client.h
++++ b/content/public/browser/content_browser_client.h
+@@ -71,16 +71,20 @@ namespace ui {
+ class SelectFilePolicy;
+ }
+ 
+ namespace fileapi {
+ class ExternalMountPoints;
  class FileSystemBackend;
  }
  
@@ -98,7 +153,17 @@ Index: oxide/chromium/src/content/public/browser/content_browser_client.h
  namespace content {
  
  class AccessTokenStore;
-@@ -570,6 +574,9 @@
+ class BrowserChildProcessHost;
+ class BrowserContext;
+ class BrowserMainParts;
+ class BrowserPluginGuestDelegate;
+ class BrowserPpapiHost;
+@@ -558,16 +562,19 @@ class CONTENT_EXPORT ContentBrowserClien
+       BrowserContext* browser_context,
+       const base::FilePath& storage_partition_path,
+       ScopedVector<fileapi::FileSystemBackend>* additional_backends) {}
+ 
+   // Allows an embedder to return its own LocationProvider implementation.
    // Return NULL to use the default one for the platform to be created.
    virtual LocationProvider* OverrideSystemLocationProvider();
  
@@ -108,3 +173,8 @@ Index: oxide/chromium/src/content/public/browser/content_browser_client.h
  #if defined(OS_POSIX) && !defined(OS_MACOSX)
    // Populates |mappings| with all files that need to be mapped before launching
    // a child process.
+   virtual void GetAdditionalMappedFilesForChildProcess(
+       const CommandLine& command_line,
+       int child_process_id,
+       std::vector<FileDescriptorInfo>* mappings) {}
+ #endif

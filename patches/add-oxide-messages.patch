@@ -1,11 +1,15 @@
 Description: Add OxideMsgStart to IPCMessageStart enum
 Author: Chris Coulson <chris.coulson@canonical.com>
 
-Index: oxide/chromium/src/ipc/ipc_message_start.h
-===================================================================
---- oxide.orig/chromium/src/ipc/ipc_message_start.h	2013-08-16 00:01:30.143131939 +0100
-+++ oxide/chromium/src/ipc/ipc_message_start.h	2013-08-16 00:01:30.143131939 +0100
-@@ -88,6 +88,7 @@
+diff --git a/ipc/ipc_message_start.h b/ipc/ipc_message_start.h
+--- a/ipc/ipc_message_start.h
++++ b/ipc/ipc_message_start.h
+@@ -83,12 +83,13 @@ enum IPCMessageStart {
+   WebRtcLoggingMsgStart,
+   TtsMsgStart,
+   MemoryBenchmarkMsgStart,
+   WebSocketMsgStart,
+   NaClHostMsgStart,
    WebRTCIdentityMsgStart,
    LocalDiscoveryMsgStart,
    PowerMonitorMsgStart,
@@ -13,3 +17,4 @@ Index: oxide/chromium/src/ipc/ipc_message_start.h
    LastIPCMsgStart      // Must come last.
  };
  
+ #endif  // IPC_IPC_MESSAGE_START_H_
