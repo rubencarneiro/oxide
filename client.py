@@ -52,6 +52,10 @@ def main():
   CheckCall(["gclient", "sync", "--force"], chromiumdir)
 
   if not has_hg:
+    with open(os.path.join(chromium_src_path, ".hgignore"), "w") as f:
+      f.write("~$\n")
+      f.write("\.svn/\n")
+      f.write("\.git/\n")
     CheckCall(["hg", "init"], chromium_src_path)
     CheckCall(["hg", "addremove"], chromium_src_path)
     CheckCall(["hg", "ci", "-m", "Updated with client.py"], chromium_src_path)
