@@ -48,6 +48,7 @@
         '<(DEPTH)'
       ],
       'sources': [
+        '<(INTERMEDIATE_DIR)/oxide_qt_web_popup_menu_qquick.moc',
         'browser/oxide_qt_backing_store.cc',
         'browser/oxide_qt_backing_store.h',
         'browser/oxide_qt_content_browser_client.cc',
@@ -76,6 +77,13 @@
         'api/oxide_qt_qweb_view_context_p.h',
         'api/oxide_q_user_script_p.cc',
         'api/oxide_q_user_script_p.h'
+      ],
+      'actions': [
+        {
+          'action_name': 'oxide_qt_web_popup_menu_qquick.moc',
+          'moc_input': 'browser/oxide_qt_web_popup_menu_qquick.cc',
+          'includes': [ '../moc.gypi' ]
+        },
       ],
       'variables': {
         'chromium_code': 1
