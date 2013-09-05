@@ -108,9 +108,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
   void SetScrollOffsetPinning(bool is_pinned_to_left,
                               bool is_pinned_to_right) FINAL;
 
-  void OnAccessibilityNotifications(
-      const std::vector<AccessibilityHostMsg_NotificationParams>& params)
-      FINAL;
+  void OnAccessibilityEvents(
+      const std::vector<AccessibilityHostMsg_EventParams>& params) FINAL;
 
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 

@@ -187,8 +187,8 @@ void RenderWidgetHostView::SetHasHorizontalScrollbar(
 void RenderWidgetHostView::SetScrollOffsetPinning(bool is_pinned_to_left,
                                                   bool is_pinned_to_right) {}
 
-void RenderWidgetHostView::OnAccessibilityNotifications(
-    const std::vector<AccessibilityHostMsg_NotificationParams>& params) {}
+void RenderWidgetHostView::OnAccessibilityEvents(
+    const std::vector<AccessibilityHostMsg_EventParams>& params) {}
 
 void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {}
 
