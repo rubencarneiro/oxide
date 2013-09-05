@@ -81,8 +81,8 @@ void RenderWidgetHostView::UpdateCursor(const WebCursor& cursor) {}
 void RenderWidgetHostView::SetIsLoading(bool is_loading) {}
 
 void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
-                                                bool can_compose_inline,
-                                                ui::TextInputMode mode) {}
+                                                ui::TextInputMode mode,
+                                                bool can_compose_inline) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {}
 

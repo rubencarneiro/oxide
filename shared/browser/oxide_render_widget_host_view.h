@@ -52,8 +52,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
   void SetIsLoading(bool is_loading) FINAL;
 
   void TextInputTypeChanged(ui::TextInputType type,
-                            bool can_compose_inline,
-                            ui::TextInputMode mode) FINAL;
+                            ui::TextInputMode mode,
+                            bool can_compose_inline) FINAL;
 
   void ImeCancelComposition() FINAL;
   void ImeCompositionRangeChanged(
