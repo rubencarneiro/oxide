@@ -15,21 +15,30 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_P_H_
+#ifndef _OXIDE_QT_LIB_API_QWEB_FRAME_P_H_
+#define _OXIDE_QT_LIB_API_QWEB_FRAME_P_H_
 
 #include <QList>
+#include <QtGlobal>
 
 #include "base/basictypes.h"
+#include "base/compiler_specific.h"
 
 class OxideQMessageHandlerBase;
 class OxideQOutgoingMessageRequestBase;
+class OxideQQuickMessageHandler;
+class OxideQQuickWebFrame;
 class OxideQWebFrameBase;
+
+QT_BEGIN_NAMESPACE
+template <typename T> class QQmlListProperty;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
 class WebFrame;
+class WebFrameQQuick;
 
 class QWebFrameBasePrivate {
  public:
@@ -59,7 +68,32 @@ class QWebFrameBasePrivate {
   DISALLOW_IMPLICIT_CONSTRUCTORS(QWebFrameBasePrivate);
 };
 
+class QQuickWebFramePrivate FINAL : public QWebFrameBasePrivate {
+ public:
+  static QQuickWebFramePrivate* Create(WebFrameQQuick* owner);
+
+  static int childFrame_count(QQmlListProperty<OxideQQuickWebFrame>* prop);
+  static OxideQQuickWebFrame* childFrame_at(
+      QQmlListProperty<OxideQQuickWebFrame>* prop, int index);
+
+  static void messageHandler_append(
+      QQmlListProperty<OxideQQuickMessageHandler>* prop,
+      OxideQQuickMessageHandler* value);
+  static int messageHandler_count(
+      QQmlListProperty<OxideQQuickMessageHandler>* prop);
+  static OxideQQuickMessageHandler* messageHandler_at(
+      QQmlListProperty<OxideQQuickMessageHandler>* prop,
+      int index);
+  static void messageHandler_clear(
+      QQmlListProperty<OxideQQuickMessageHandler>* prop);
+
+ private:
+  QQuickWebFramePrivate(WebFrameQQuick* owner);
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(QQuickWebFramePrivate);
+};
+
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_P_H_
+#endif // _OXIDE_QT_LIB_API_QWEB_FRAME_P_H_

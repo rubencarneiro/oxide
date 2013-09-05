@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_H_
+#ifndef _OXIDE_QT_LIB_API_PUBLIC_Q_USER_SCRIPT_H_
+#define _OXIDE_QT_LIB_API_PUBLIC_Q_USER_SCRIPT_H_
 
 #include <QObject>
 #include <QQmlParserStatus>
@@ -87,4 +87,4 @@ class Q_DECL_EXPORT OxideQUserScript : public QObject,
 
 QML_DECLARE_TYPE(OxideQUserScript)
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_H_
+#endif // _OXIDE_QT_LIB_API_PUBLIC_Q_USER_SCRIPT_H_

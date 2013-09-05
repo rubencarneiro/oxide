@@ -15,37 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_MESSAGE_HANDLER_H_
-#define _OXIDE_QT_LIB_PUBLIC_QQUICK_MESSAGE_HANDLER_H_
+#include "oxide_q_incoming_message_p.h"
 
-#include <QJSValue>
-#include <QtQml>
+#include <QByteArray>
+#include <QJsonDocument>
 
-#include "qt/lib/public/oxide_q_message_handler_base.h"
+#include "shared/browser/oxide_incoming_message.h"
 
 namespace oxide {
 namespace qt {
-class QQuickMessageHandlerPrivate;
+
+QIncomingMessagePrivate::QIncomingMessagePrivate(
+    oxide::IncomingMessage* message) :
+    incoming_(message) {
+    QJsonDocument jsondoc(QJsonDocument::fromJson(
+        QByteArray(message->args().data(), message->args().length())));
+    args_variant_ = jsondoc.toVariant();
 }
+
+QIncomingMessagePrivate* QIncomingMessagePrivate::Create(
+    oxide::IncomingMessage* message) {
+  return new QIncomingMessagePrivate(message);
 }
 
-class Q_DECL_EXPORT OxideQQuickMessageHandler : public OxideQMessageHandlerBase {
-  Q_OBJECT
-  Q_PROPERTY(QJSValue callback READ callback WRITE setCallback NOTIFY callbackChanged)
-
-  Q_DECLARE_PRIVATE(oxide::qt::QQuickMessageHandler)
-
- public:
-  OxideQQuickMessageHandler(QObject* parent = NULL);
-  virtual ~OxideQQuickMessageHandler();
-
-  QJSValue callback() const;
-  void setCallback(const QJSValue& callback);
-
- Q_SIGNALS:
-  void callbackChanged();
-};
-
-QML_DECLARE_TYPE(OxideQQuickMessageHandler)
-
-#endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_MESSAGE_HANDLER_H_
+} // namespace qt
+} // namespace oxide

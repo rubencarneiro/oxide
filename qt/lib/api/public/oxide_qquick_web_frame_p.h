@@ -15,15 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_FRAME_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_FRAME_P_H_
+#ifndef _OXIDE_QT_LIB_API_PUBLIC_QQUICK_WEB_FRAME_P_H_
+#define _OXIDE_QT_LIB_API_PUBLIC_QQUICK_WEB_FRAME_P_H_
 
 #include <QQmlListProperty>
 #include <QtGlobal>
 #include <QtQml>
 #include <QVariant>
 
-#include "qt/lib/public/oxide_q_web_frame_base.h"
+#include "oxide_q_web_frame_base.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickOutgoingMessageRequest;
@@ -79,4 +79,4 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public OxideQWebFrameBase {
 
 QML_DECLARE_TYPE(OxideQQuickWebFrame);
 
-#endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_FRAME_P_H_
+#endif // _OXIDE_QT_LIB_API_PUBLIC_QQUICK_WEB_FRAME_P_H_

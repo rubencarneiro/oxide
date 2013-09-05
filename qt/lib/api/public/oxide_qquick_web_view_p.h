@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_H_
-#define _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_H_
+#ifndef _OXIDE_QT_LIB_API_PUBLIC_QQUICK_WEB_VIEW_P_H_
+#define _OXIDE_QT_LIB_API_PUBLIC_QQUICK_WEB_VIEW_P_H_
 
 #include <QQmlListProperty>
 #include <QQuickItem>
@@ -117,4 +117,4 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
 QML_DECLARE_TYPE(OxideQQuickWebView)
 
-#endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_WEB_VIEW_H_
+#endif // _OXIDE_QT_LIB_API_PUBLIC_QQUICK_WEB_VIEW_P_H_

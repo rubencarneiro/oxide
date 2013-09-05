@@ -15,12 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_QQUICK_OUTGOING_MESSAGE_REQUEST_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_QQUICK_OUTGOING_MESSAGE_REQUEST_P_H_
+#ifndef _OXIDE_QT_LIB_API_PUBLIC_QQUICK_OUTGOING_MESSAGE_REQUEST_P_H_
+#define _OXIDE_QT_LIB_API_PUBLIC_QQUICK_OUTGOING_MESSAGE_REQUEST_P_H_
 
 #include <QJSValue>
+#include <QtQml>
 
-#include "qt/lib/public/oxide_q_outgoing_message_request_base.h"
+#include "oxide_q_outgoing_message_request_base.h"
 
 namespace oxide {
 namespace qt {
@@ -55,4 +56,6 @@ class Q_DECL_EXPORT OxideQQuickOutgoingMessageRequest :
   OxideQQuickOutgoingMessageRequest();
 };
 
-#endif // _OXIDE_QT_LIB_PUBLIC_QQUICK_OUTGOING_MESSAGE_REQUEST_P_H_
+QML_DECLARE_TYPE(OxideQQuickOutgoingMessageRequest);
+
+#endif // _OXIDE_QT_LIB_API_PUBLIC_QQUICK_OUTGOING_MESSAGE_REQUEST_P_H_

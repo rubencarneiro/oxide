@@ -20,42 +20,14 @@
 #include <QByteArray>
 #include <QJsonDocument>
 
-#include "base/memory/scoped_ptr.h"
-
 #include "shared/browser/oxide_incoming_message.h"
 
-namespace oxide {
-namespace qt {
-
-class QIncomingMessagePrivate {
- public:
-  QIncomingMessagePrivate(oxide::IncomingMessage* message) :
-      incoming_(message) {
-    QJsonDocument jsondoc(QJsonDocument::fromJson(
-        QByteArray(message->args().data(), message->args().length())));
-    args_variant_ = jsondoc.toVariant();
-  }
-
-  oxide::IncomingMessage* incoming() const {
-    return incoming_.get();
-  }
-
-  QVariant args() const {
-    return args_variant_;
-  }
-
- private:
-  scoped_ptr<oxide::IncomingMessage> incoming_;
-  QVariant args_variant_;
-};
-
-} // namespace qt
-} // namespace oxide
+#include "qt/lib/api/oxide_q_incoming_message_p.h"
 
 OxideQIncomingMessage::OxideQIncomingMessage(
     oxide::IncomingMessage* message) :
     QObject(),
-    d_ptr(new oxide::qt::QIncomingMessagePrivate(message)) {}
+    d_ptr(oxide::qt::QIncomingMessagePrivate::Create(message)) {}
 
 OxideQIncomingMessage::~OxideQIncomingMessage() {}
 

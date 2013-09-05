@@ -15,40 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_H_
+#ifndef _OXIDE_QT_LIB_API_PUBLIC_QQUICK_MESSAGE_HANDLER_H_
+#define _OXIDE_QT_LIB_API_PUBLIC_QQUICK_MESSAGE_HANDLER_H_
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QString>
-#include <QtGlobal>
+#include <QJSValue>
+#include <QtQml>
+
+#include "oxide_q_message_handler_base.h"
 
 namespace oxide {
 namespace qt {
-class QMessageHandlerBasePrivate;
+class QQuickMessageHandlerPrivate;
 }
 }
 
-class Q_DECL_EXPORT OxideQMessageHandlerBase : public QObject {
+class Q_DECL_EXPORT OxideQQuickMessageHandler : public OxideQMessageHandlerBase {
   Q_OBJECT
-  Q_PROPERTY(QString msgId READ msgId WRITE setMsgId NOTIFY msgIdChanged)
+  Q_PROPERTY(QJSValue callback READ callback WRITE setCallback NOTIFY callbackChanged)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QMessageHandlerBase)
+  Q_DECLARE_PRIVATE(oxide::qt::QQuickMessageHandler)
 
  public:
-  virtual ~OxideQMessageHandlerBase();
+  OxideQQuickMessageHandler(QObject* parent = NULL);
+  virtual ~OxideQQuickMessageHandler();
 
-  QString msgId() const;
-  void setMsgId(const QString& id);
+  QJSValue callback() const;
+  void setCallback(const QJSValue& callback);
 
  Q_SIGNALS:
-  void msgIdChanged();
-
- protected:
-  OxideQMessageHandlerBase(oxide::qt::QMessageHandlerBasePrivate& dd,
-                           QObject* parent = NULL);
-
-  QScopedPointer<oxide::qt::QMessageHandlerBasePrivate> d_ptr;
+  void callbackChanged();
 };
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_H_
+QML_DECLARE_TYPE(OxideQQuickMessageHandler)
+
+#endif // _OXIDE_QT_LIB_API_PUBLIC_QQUICK_MESSAGE_HANDLER_H_

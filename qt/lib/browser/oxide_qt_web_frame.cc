@@ -17,11 +17,11 @@
 
 #include "oxide_qt_web_frame.h"
 
-#include "qt/lib/public/oxide_q_message_handler_base_p.h"
-#include "qt/lib/public/oxide_q_outgoing_message_request_base_p.h"
-#include "qt/lib/public/oxide_q_web_frame_base.h"
-#include "qt/lib/public/oxide_q_web_frame_base_p.h"
-#include "qt/lib/public/oxide_qquick_web_frame_p.h"
+#include "qt/lib/api/oxide_qt_qmessage_handler_p.h"
+#include "qt/lib/api/oxide_qt_qoutgoing_message_request_p.h"
+#include "qt/lib/api/oxide_qt_qweb_frame_p.h"
+#include "qt/lib/api/public/oxide_q_web_frame_base.h"
+#include "qt/lib/api/public/oxide_qquick_web_frame_p.h"
 
 namespace oxide {
 namespace qt {

@@ -15,27 +15,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_P_H_
+#ifndef _OXIDE_QT_LIB_API_QWEB_VIEW_CONTEXT_P_H_
+#define _OXIDE_QT_LIB_API_QWEB_VIEW_CONTEXT_P_H_
 
 #include <QList>
 #include <QtGlobal>
 
 #include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "base/files/file_path.h"
 #include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/oxide_browser_process_handle.h"
 
+#include "qt/lib/api/public/oxide_qquick_web_view_context_p.h"
+
 class OxideQUserScript;
 class OxideQWebViewContextBase;
 
-namespace oxide {
+QT_BEGIN_NAMESPACE
+template <typename T> class QQmlListProperty;
+QT_END_NAMESPACE
 
+namespace oxide {
 class BrowserContext;
 
 namespace qt {
-
-class LazyInitProperties;
+struct LazyInitProperties {
+  std::string product;
+  std::string user_agent;
+  base::FilePath data_path;
+  base::FilePath cache_path;
+  std::string accept_langs;
+};
 
 class QWebViewContextBasePrivate {
   Q_DECLARE_PUBLIC(OxideQWebViewContextBase)
@@ -75,7 +87,32 @@ class QWebViewContextBasePrivate {
   DISALLOW_IMPLICIT_CONSTRUCTORS(QWebViewContextBasePrivate);
 };
 
+class QQuickWebViewContextPrivate FINAL : public QWebViewContextBasePrivate {
+  Q_DECLARE_PUBLIC(OxideQQuickWebViewContext)
+
+ public:
+  static QQuickWebViewContextPrivate* Create(OxideQQuickWebViewContext* q);
+
+  ~QQuickWebViewContextPrivate();
+
+  static QQuickWebViewContextPrivate* get(
+      OxideQQuickWebViewContext* context);
+
+  static void userScript_append(QQmlListProperty<OxideQUserScript>* prop,
+                                OxideQUserScript* user_script);
+  static int userScript_count(QQmlListProperty<OxideQUserScript>* prop);
+  static OxideQUserScript* userScript_at(
+      QQmlListProperty<OxideQUserScript>* prop,
+      int index);
+  static void userScript_clear(QQmlListProperty<OxideQUserScript>* prop);
+
+ private:
+  QQuickWebViewContextPrivate(OxideQQuickWebViewContext* q);
+
+  DISALLOW_COPY_AND_ASSIGN(QQuickWebViewContextPrivate);
+};
+
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_VIEW_CONTEXT_BASE_P_H_
+#endif // _OXIDE_QT_LIB_API_QWEB_VIEW_CONTEXT_P_H_

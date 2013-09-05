@@ -15,38 +15,42 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
-#define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
+#ifndef _OXIDE_QT_LIB_API_Q_INCOMING_MESSAGE_P_H_
+#define _OXIDE_QT_LIB_API_Q_INCOMING_MESSAGE_P_H_
 
-#include "ui/gfx/rect.h"
+#include <QVariant>
 
-namespace content {
-
-class RenderWidgetHost;
-class RenderWidgetHostView;
-
-}
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 
 namespace oxide {
+class IncomingMessage;
 
-class WebPopupMenu;
+namespace qt {
 
-// This interface provides a way for the WebContentsView to communicate
-// with toolkit-specific parts, and should be implemented by each port.
-// Note that it has nothing to do with content::WebContentsViewDelegate.
-// Sorry for the unfortunate name (feel free to think of a better name)
-class WebContentsViewDelegate {
+class QIncomingMessagePrivate FINAL {
  public:
-  virtual ~WebContentsViewDelegate() {};
+  static QIncomingMessagePrivate* Create(oxide::IncomingMessage* message);
 
-  virtual content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) = 0;
+  oxide::IncomingMessage* incoming() const {
+    return incoming_.get();
+  }
 
-  virtual gfx::Rect GetContainerBounds() = 0;
+  QVariant args() const {
+    return args_variant_;
+  }
 
-  virtual WebPopupMenu* CreatePopupMenu() = 0;
+ private:
+  QIncomingMessagePrivate(oxide::IncomingMessage* message);
+
+  scoped_ptr<oxide::IncomingMessage> incoming_;
+  QVariant args_variant_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(QIncomingMessagePrivate);
 };
 
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_DELEGATE_H_
+#endif // _OXIDE_QT_LIB_API_Q_INCOMING_MESSAGE_P_H_

@@ -15,20 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_q_outgoing_message_request_base.h"
-#include "oxide_q_outgoing_message_request_base_p.h"
-#include "oxide_qquick_outgoing_message_request_p.h"
+#include "oxide_qt_qoutgoing_message_request_p.h"
 
 #include <QByteArray>
 #include <QJSEngine>
 #include <QJsonDocument>
 #include <QString>
-#include <QtDebug>
 #include <QVariant>
 
 #include "base/bind.h"
 
-#include "oxide_q_web_frame_base_p.h"
+#include "qt/lib/api/public/oxide_q_outgoing_message_request_base.h"
+#include "qt/lib/api/public/oxide_qquick_outgoing_message_request_p.h"
+
+#include "oxide_qt_qweb_frame_p.h"
 
 namespace oxide {
 namespace qt {
@@ -85,20 +85,9 @@ QOutgoingMessageRequestBasePrivate::QOutgoingMessageRequestBasePrivate(
                  weak_factory_.GetWeakPtr()));
 }
 
-class QQuickOutgoingMessageRequestPrivate :
-    public oxide::qt::QOutgoingMessageRequestBasePrivate {
- public:
-  QQuickOutgoingMessageRequestPrivate(
-      OxideQQuickOutgoingMessageRequest* q) :
-        oxide::qt::QOutgoingMessageRequestBasePrivate(q) {}
-
-  QJSValue reply_callback_;
-  QJSValue error_callback_;
-
- private:
-  void OnReceiveReply(const QVariant& args);
-  void OnReceiveError(const QString& msg);
-};
+QQuickOutgoingMessageRequestPrivate::QQuickOutgoingMessageRequestPrivate(
+    OxideQQuickOutgoingMessageRequest* q) :
+    QOutgoingMessageRequestBasePrivate(q) {}
 
 void QQuickOutgoingMessageRequestPrivate::OnReceiveReply(
     const QVariant& args) {
@@ -116,63 +105,11 @@ void QQuickOutgoingMessageRequestPrivate::OnReceiveError(
   error_callback_.call(jsargs);
 }
 
+// static
+QQuickOutgoingMessageRequestPrivate* QQuickOutgoingMessageRequestPrivate::Create(
+    OxideQQuickOutgoingMessageRequest* q) {
+  return new QQuickOutgoingMessageRequestPrivate(q);
+}
+
 } // namespace qt
 } // namespace oxide
-
-OxideQOutgoingMessageRequestBase::OxideQOutgoingMessageRequestBase(
-    oxide::qt::QOutgoingMessageRequestBasePrivate& dd) :
-    d_ptr(&dd) {}
-
-OxideQOutgoingMessageRequestBase::~OxideQOutgoingMessageRequestBase() {}
-
-OxideQQuickOutgoingMessageRequest::OxideQQuickOutgoingMessageRequest() :
-    OxideQOutgoingMessageRequestBase(
-      *new oxide::qt::QQuickOutgoingMessageRequestPrivate(this)) {}
-
-OxideQQuickOutgoingMessageRequest::~OxideQQuickOutgoingMessageRequest() {}
-
-QJSValue OxideQQuickOutgoingMessageRequest::replyCallback() const {
-  Q_D(const oxide::qt::QQuickOutgoingMessageRequest);
-
-  return d->reply_callback_;
-}
-
-void OxideQQuickOutgoingMessageRequest::setReplyCallback(
-    const QJSValue& callback) {
-  Q_D(oxide::qt::QQuickOutgoingMessageRequest);
-
-  if (d->reply_callback_.strictlyEquals(callback)) {
-    return;
-  }
-
-  if (!callback.isCallable()) {
-    qWarning() << "Invalid callback";
-    return;
-  }
-
-  d->reply_callback_ = callback;
-  emit replyCallbackChanged();
-}
-
-QJSValue OxideQQuickOutgoingMessageRequest::errorCallback() const {
-  Q_D(const oxide::qt::QQuickOutgoingMessageRequest);
-
-  return d->error_callback_;
-}
-
-void OxideQQuickOutgoingMessageRequest::setErrorCallback(
-    const QJSValue& callback) {
-  Q_D(oxide::qt::QQuickOutgoingMessageRequest);
-
-  if (d->error_callback_.strictlyEquals(callback)) {
-    return;
-  }
-
-  if (!callback.isCallable()) {
-    qWarning() << "Invalid callback";
-    return;
-  }
-
-  d->error_callback_ = callback;
-  emit errorCallbackChanged();
-}

@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_H_
+#ifndef _OXIDE_QT_LIB_API_PUBLIC_Q_WEB_FRAME_BASE_H_
+#define _OXIDE_QT_LIB_API_PUBLIC_Q_WEB_FRAME_BASE_H_
 
 #include <QObject>
 #include <QScopedPointer>
@@ -58,4 +58,4 @@ class Q_DECL_EXPORT OxideQWebFrameBase : public QObject {
   QScopedPointer<oxide::qt::QWebFrameBasePrivate> d_ptr;
 };
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_WEB_FRAME_BASE_H_
+#endif // _OXIDE_QT_LIB_API_PUBLIC_Q_WEB_FRAME_BASE_H_

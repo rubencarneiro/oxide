@@ -23,13 +23,13 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
-#include "qt/lib/public/oxide_q_incoming_message.h"
-#include "qt/lib/public/oxide_q_user_script.h"
-#include "qt/lib/public/oxide_qquick_message_handler_p.h"
-#include "qt/lib/public/oxide_qquick_outgoing_message_request_p.h"
-#include "qt/lib/public/oxide_qquick_web_frame_p.h"
-#include "qt/lib/public/oxide_qquick_web_view_p.h"
-#include "qt/lib/public/oxide_qquick_web_view_context_p.h"
+#include "oxide_q_incoming_message.h"
+#include "oxide_q_user_script.h"
+#include "oxide_qquick_message_handler_p.h"
+#include "oxide_qquick_outgoing_message_request_p.h"
+#include "oxide_qquick_web_frame_p.h"
+#include "oxide_qquick_web_view_p.h"
+#include "oxide_qquick_web_view_context_p.h"
 
 QT_USE_NAMESPACE
 

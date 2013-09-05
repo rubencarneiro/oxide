@@ -16,8 +16,7 @@ equals(OXIDE_DEBUG, "1") {
     CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Release
 }
 
-QMAKE_CXXFLAGS += -fno-rtti
-INCLUDEPATH = $${_PRO_FILE_PWD_}/$${DEPTH}
+INCLUDEPATH = $${_PRO_FILE_PWD_}/$${DEPTH}/qt/lib/api/public
 LIBS += -L$${CHROMIUM_PLATFORM_DIR}/lib.target -loxide-qt
 
 OTHER_FILES = qmldir

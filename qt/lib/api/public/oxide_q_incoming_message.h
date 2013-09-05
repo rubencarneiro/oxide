@@ -15,31 +15,49 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_H_
+#ifndef _OXIDE_QT_LIB_API_PUBLIC_Q_INCOMING_MESSAGE_H_
+#define _OXIDE_QT_LIB_API_PUBLIC_Q_INCOMING_MESSAGE_H_
 
 #include <QObject>
 #include <QScopedPointer>
+#include <QString>
 #include <QtGlobal>
+#include <QtQml>
+#include <QVariant>
 
 namespace oxide {
+class IncomingMessage;
 namespace qt {
-class QOutgoingMessageRequestBasePrivate;
+class QIncomingMessagePrivate;
+class QMessageHandlerBasePrivate;
 }
 }
 
-class Q_DECL_EXPORT OxideQOutgoingMessageRequestBase : public QObject {
+class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_OBJECT
-  Q_DECLARE_PRIVATE(oxide::qt::QOutgoingMessageRequestBase)
+  Q_PROPERTY(QString worldId READ worldId)
+  Q_PROPERTY(QVariant args READ args)
+
+  Q_DECLARE_PRIVATE(oxide::qt::QIncomingMessage)
 
  public:
-  virtual ~OxideQOutgoingMessageRequestBase();
+  virtual ~OxideQIncomingMessage();
+
+  QString worldId() const;
+  QVariant args() const;
+
+  Q_INVOKABLE void reply(const QVariant& args);
+  Q_INVOKABLE void error(const QString& msg);
 
  protected:
-  OxideQOutgoingMessageRequestBase(
-      oxide::qt::QOutgoingMessageRequestBasePrivate& dd);
+  friend class oxide::qt::QMessageHandlerBasePrivate;
 
-  QScopedPointer<oxide::qt::QOutgoingMessageRequestBasePrivate> d_ptr;
+  OxideQIncomingMessage(oxide::IncomingMessage* message);
+
+ private:
+  QScopedPointer<oxide::qt::QIncomingMessagePrivate> d_ptr;
 };
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_H_
+QML_DECLARE_TYPE(OxideQIncomingMessage)
+
+#endif // _OXIDE_QT_LIB_API_PUBLIC_Q_INCOMING_MESSAGE_H_

@@ -15,24 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_q_message_handler_base.h"
-#include "oxide_q_message_handler_base_p.h"
-#include "oxide_qquick_message_handler_p.h"
+#include "oxide_qt_qmessage_handler_p.h"
 
 #include <QQmlEngine>
-#include <QtDebug>
 
 #include "base/bind.h"
 
 #include "shared/browser/oxide_incoming_message.h"
 #include "shared/browser/oxide_message_handler.h"
 
+#include "qt/lib/api/public/oxide_q_incoming_message.h"
+#include "qt/lib/api/public/oxide_q_web_frame_base.h"
+#include "qt/lib/api/public/oxide_qquick_web_frame_p.h"
+#include "qt/lib/api/public/oxide_qquick_web_view_p.h"
 #include "qt/lib/browser/oxide_qt_web_frame.h"
-
-#include "oxide_q_incoming_message.h"
-#include "oxide_q_web_frame_base.h"
-#include "oxide_qquick_web_frame_p.h"
-#include "oxide_qquick_web_view_p.h"
 
 namespace oxide {
 namespace qt {
@@ -75,20 +71,6 @@ void QMessageHandlerBasePrivate::removeFromCurrentOwner() {
   }
 }
 
-class QQuickMessageHandlerPrivate : public QMessageHandlerBasePrivate {
-  Q_DECLARE_PUBLIC(OxideQQuickMessageHandler)
-
- public:
-  QQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q) :
-      QMessageHandlerBasePrivate(q) {}
-
-  QJSValue callback_;
-
- private:
-  void OnReceiveMessage(OxideQIncomingMessage* message,
-                        OxideQWebFrameBase* frame) FINAL;
-};
-
 void QQuickMessageHandlerPrivate::OnReceiveMessage(
     OxideQIncomingMessage* message,
     OxideQWebFrameBase* frame) {
@@ -102,58 +84,15 @@ void QQuickMessageHandlerPrivate::OnReceiveMessage(
   callback_.call(args);
 }
 
+QQuickMessageHandlerPrivate::QQuickMessageHandlerPrivate(
+    OxideQQuickMessageHandler* q) :
+    QMessageHandlerBasePrivate(q) {}
+
+// static
+QQuickMessageHandlerPrivate* QQuickMessageHandlerPrivate::Create(
+    OxideQQuickMessageHandler* q) {
+  return new QQuickMessageHandlerPrivate(q);
+}
+
 } // namespace qt
 } // namespace oxide
-
-OxideQMessageHandlerBase::OxideQMessageHandlerBase(
-    oxide::qt::QMessageHandlerBasePrivate& dd,
-    QObject* parent) :
-    QObject(parent),
-    d_ptr(&dd) {}
-
-OxideQMessageHandlerBase::~OxideQMessageHandlerBase() {}
-
-QString OxideQMessageHandlerBase::msgId() const {
-  Q_D(const oxide::qt::QMessageHandlerBase);
-
-  return QString::fromStdString(d->handler()->msg_id());
-}
-
-void OxideQMessageHandlerBase::setMsgId(const QString& id) {
-  Q_D(oxide::qt::QMessageHandlerBase);
-
-  if (id.toStdString() == d->handler()->msg_id()) {
-    return;
-  }
-
-  d->handler()->set_msg_id(id.toStdString());
-  emit msgIdChanged();
-}
-
-OxideQQuickMessageHandler::OxideQQuickMessageHandler(QObject* parent) :
-    OxideQMessageHandlerBase(*new oxide::qt::QQuickMessageHandlerPrivate(this),
-                             parent) {}
-
-OxideQQuickMessageHandler::~OxideQQuickMessageHandler() {}
-
-QJSValue OxideQQuickMessageHandler::callback() const {
-  Q_D(const oxide::qt::QQuickMessageHandler);
-
-  return d->callback_;
-}
-
-void OxideQQuickMessageHandler::setCallback(const QJSValue& callback) {
-  Q_D(oxide::qt::QQuickMessageHandler);
-
-  if (callback.strictlyEquals(d->callback_)) {
-    return;
-  }
-
-  if (!callback.isCallable()) {
-    qWarning() << "Invalid callback";
-    return;
-  }
-
-  d->callback_ = callback;
-  emit callbackChanged();
-}

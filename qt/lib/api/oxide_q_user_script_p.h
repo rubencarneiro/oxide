@@ -15,8 +15,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_P_H_
+#ifndef _OXIDE_QT_LIB_API_Q_USER_SCRIPT_P_H_
+#define _OXIDE_QT_LIB_API_Q_USER_SCRIPT_P_H_
+
+#include <QtGlobal>
+#include <QUrl>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -24,7 +27,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/platform_file.h"
 
-#include "oxide_q_user_script.h"
+#include "qt/lib/api/public/oxide_q_user_script.h"
 
 namespace oxide {
 class UserScript;
@@ -44,6 +47,9 @@ class QUserScriptPrivate FINAL {
   oxide::UserScript* user_script() const {
     return user_script_.get();
   }
+
+  QUrl url() const;
+  void setUrl(const QUrl& url);
  
   static QUserScriptPrivate* get(OxideQUserScript* user_script);
 
@@ -65,4 +71,4 @@ class QUserScriptPrivate FINAL {
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_USER_SCRIPT_P_H
+#endif // _OXIDE_QT_LIB_API_Q_USER_SCRIPT_P_H

@@ -15,9 +15,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_P_H_
+#ifndef _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_P_H_
+#define _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_P_H_
 
+#include <QJSValue>
 #include <QtGlobal>
 #include <string>
 
@@ -31,6 +32,7 @@ class QVariant;
 QT_END_NAMESPACE
 
 class OxideQOutgoingMessageRequestBase;
+class OxideQQuickOutgoingMessageRequest;
 
 namespace oxide {
 namespace qt {
@@ -69,7 +71,23 @@ class QOutgoingMessageRequestBasePrivate {
   base::WeakPtrFactory<QOutgoingMessageRequestBasePrivate> weak_factory_;
 };
 
+class QQuickOutgoingMessageRequestPrivate :
+    public QOutgoingMessageRequestBasePrivate {
+ public:
+  static QQuickOutgoingMessageRequestPrivate* Create(
+      OxideQQuickOutgoingMessageRequest* q);
+
+  QJSValue reply_callback_;
+  QJSValue error_callback_;
+
+ private:
+  QQuickOutgoingMessageRequestPrivate(OxideQQuickOutgoingMessageRequest* q);
+
+  void OnReceiveReply(const QVariant& args);
+  void OnReceiveError(const QString& msg);
+};
+
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_OUTGOING_MESSAGE_REQUEST_BASE_P_H_
+#endif // _OXIDE_QT_LIB_PUBLIC_QOUTGOING_MESSAGE_REQUEST_P_H_

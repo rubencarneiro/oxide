@@ -15,9 +15,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_P_H_
-#define _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_P_H_
+#ifndef _OXIDE_QT_LIB_API_QMESSAGE_HANDLER_P_H_
+#define _OXIDE_QT_LIB_API_QMESSAGE_HANDLER_P_H_
 
+#include <QJSValue>
 #include <QtGlobal>
 
 #include "base/basictypes.h"
@@ -25,6 +26,8 @@
 #include "base/memory/weak_ptr.h"
 
 #include "shared/browser/oxide_message_handler.h"
+
+#include "oxide_qquick_message_handler_p.h"
 
 class OxideQIncomingMessage;
 class OxideQMessageHandlerBase;
@@ -40,7 +43,6 @@ class QMessageHandlerBasePrivate {
   Q_DECLARE_PUBLIC(OxideQMessageHandlerBase)
 
  public:
-  QMessageHandlerBasePrivate(OxideQMessageHandlerBase* q);
   virtual ~QMessageHandlerBasePrivate();
 
   const oxide::MessageHandler* handler() const {
@@ -56,6 +58,8 @@ class QMessageHandlerBasePrivate {
   void removeFromCurrentOwner();
 
  protected:
+  QMessageHandlerBasePrivate(OxideQMessageHandlerBase* q);
+
   OxideQMessageHandlerBase* q_ptr;
 
  private:
@@ -69,7 +73,21 @@ class QMessageHandlerBasePrivate {
   DISALLOW_IMPLICIT_CONSTRUCTORS(QMessageHandlerBasePrivate);
 };
 
+class QQuickMessageHandlerPrivate FINAL : public QMessageHandlerBasePrivate {
+  Q_DECLARE_PUBLIC(OxideQQuickMessageHandler)
+
+ public:
+  static QQuickMessageHandlerPrivate* Create(OxideQQuickMessageHandler* q);
+
+  QJSValue callback_;
+
+ private:
+  QQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
+  void OnReceiveMessage(OxideQIncomingMessage* message,
+                        OxideQWebFrameBase* frame) FINAL;
+};
+
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_PUBLIC_Q_MESSAGE_HANDLER_BASE_P_H_
+#endif // _OXIDE_QT_LIB_API_QMESSAGE_HANDLER_P_H_

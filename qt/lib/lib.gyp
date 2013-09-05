@@ -27,10 +27,10 @@
         ]
       },
       'dependencies': [
+        'oxide_qt_public',
         '../system.gyp:Qt5Core',
         '../system.gyp:Qt5Gui',
         '../system.gyp:Qt5Quick',
-        '../../shared/shared.gyp:oxide_shared_generated',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -48,17 +48,6 @@
         '<(DEPTH)'
       ],
       'sources': [
-        '<(INTERMEDIATE_DIR)/moc_oxide_q_incoming_message.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_q_message_handler_base.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_q_outgoing_message_request_base.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_q_user_script.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_q_web_frame_base.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_q_web_view_context_base.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_message_handler.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_outgoing_message_request.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_frame.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_view.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_view_context.cc',
         'browser/oxide_qt_backing_store.cc',
         'browser/oxide_qt_backing_store.h',
         'browser/oxide_qt_content_browser_client.cc',
@@ -73,94 +62,136 @@
         'browser/oxide_qt_web_popup_menu_qquick.h',
         'common/oxide_qt_content_main_delegate.cc',
         'common/oxide_qt_content_main_delegate.h',
-        'public/oxide_q_incoming_message.cc',
-        'public/oxide_q_incoming_message.h',
-        'public/oxide_q_message_handler_base.h',
-        'public/oxide_q_message_handler_base_p.h',
-        'public/oxide_q_outgoing_message_request_base.h',
-        'public/oxide_q_outgoing_message_request_base_p.h',
-        'public/oxide_q_user_script.cc',
-        'public/oxide_q_user_script.h',
-        'public/oxide_q_user_script_p.h',
-        'public/oxide_q_web_frame_base.h',
-        'public/oxide_q_web_frame_base_p.h',
-        'public/oxide_q_web_view_context_base.h',
-        'public/oxide_q_web_view_context_base_p.h',
-        'public/oxide_qt_qmessage_handler.cc',
-        'public/oxide_qt_qoutgoing_message_request.cc',
-        'public/oxide_qt_qweb_frame.cc',
-        'public/oxide_qt_qweb_view_context.cc',
-        'public/oxide_qquick_message_handler_p.h',
-        'public/oxide_qquick_outgoing_message_request_p.h',
-        'public/oxide_qquick_web_frame_p.h',
-        'public/oxide_qquick_web_view.cc',
-        'public/oxide_qquick_web_view_p.h',
-        'public/oxide_qquick_web_view_context_p.h',
+        'api/oxide_q_incoming_message_p.cc',
+        'api/oxide_q_incoming_message_p.h',
+        'api/oxide_qquick_web_view_p.cc',
+        'api/oxide_qquick_web_view_p_p.h',
+        'api/oxide_qt_qmessage_handler_p.cc',
+        'api/oxide_qt_qmessage_handler_p.h',
+        'api/oxide_qt_qoutgoing_message_request_p.cc',
+        'api/oxide_qt_qoutgoing_message_request_p.h',
+        'api/oxide_qt_qweb_frame_p.cc',
+        'api/oxide_qt_qweb_frame_p.h',
+        'api/oxide_qt_qweb_view_context_p.cc',
+        'api/oxide_qt_qweb_view_context_p.h',
+        'api/oxide_q_user_script_p.cc',
+        'api/oxide_q_user_script_p.h'
       ],
       'variables': {
         'chromium_code': 1
+      }
+    },
+    {
+      'target_name': 'oxide_qt_public',
+      'type': 'static_library',
+      'all_dependent_settings': {
+        'include_dirs': [
+          'api/public'
+        ]
       },
+      'cflags_cc!': [ '-fno-rtti' ],
+      'dependencies': [
+        '../system.gyp:Qt5Core',
+        '../system.gyp:Qt5Gui',
+        '../system.gyp:Qt5Quick',
+        '../../shared/shared.gyp:oxide_shared',
+        '<(DEPTH)/skia/skia.gyp:skia',
+      ],
+      'export_dependent_settings': [
+        '<(DEPTH)/skia/skia.gyp:skia'
+      ],
+      'include_dirs': [
+        'api/public',
+        '../..',
+        '<(DEPTH)'
+      ],
+      'sources': [
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_incoming_message.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_message_handler_base.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_outgoing_message_request_base.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_user_script.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_web_frame_base.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_web_view_context_base.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_message_handler.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_outgoing_message_request.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_frame.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_view.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_view_context.cc',
+        'api/public/oxide_q_incoming_message.cc',
+        'api/public/oxide_q_incoming_message.h',
+        'api/public/oxide_q_message_handler_base.h',
+        'api/public/oxide_q_outgoing_message_request_base.h',
+        'api/public/oxide_q_user_script.cc',
+        'api/public/oxide_q_user_script.h',
+        'api/public/oxide_q_web_frame_base.h',
+        'api/public/oxide_q_web_view_context_base.h',
+        'api/public/oxide_qquick_message_handler_p.h',
+        'api/public/oxide_qquick_outgoing_message_request_p.h',
+        'api/public/oxide_qquick_web_frame_p.h',
+        'api/public/oxide_qquick_web_view.cc',
+        'api/public/oxide_qquick_web_view_p.h',
+        'api/public/oxide_qquick_web_view_context_p.h',
+        'api/public/oxide_qt_qmessage_handler.cc',
+        'api/public/oxide_qt_qoutgoing_message_request.cc',
+        'api/public/oxide_qt_qweb_frame.cc',
+        'api/public/oxide_qt_qweb_view_context.cc',
+      ],
       'actions': [
         {
           'action_name': 'moc_oxide_q_incoming_message.cc',
-          'moc_input': 'public/oxide_q_incoming_message.h',
+          'moc_input': 'api/public/oxide_q_incoming_message.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_message_handler_base.cc',
-          'moc_input': 'public/oxide_q_message_handler_base.h',
+          'moc_input': 'api/public/oxide_q_message_handler_base.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_outgoing_message_request_base.cc',
-          'moc_input': 'public/oxide_q_outgoing_message_request_base.h',
+          'moc_input': 'api/public/oxide_q_outgoing_message_request_base.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_user_script.cc',
-          'moc_input': 'public/oxide_q_user_script.h',
+          'moc_input': 'api/public/oxide_q_user_script.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_web_frame_base.cc',
-          'moc_input': 'public/oxide_q_web_frame_base.h',
+          'moc_input': 'api/public/oxide_q_web_frame_base.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_q_web_view_context_base.cc',
-          'moc_input': 'public/oxide_q_web_view_context_base.h',
+          'moc_input': 'api/public/oxide_q_web_view_context_base.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_message_handler.cc',
-          'moc_input': 'public/oxide_qquick_message_handler_p.h',
+          'moc_input': 'api/public/oxide_qquick_message_handler_p.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_outgoing_message_request.cc',
-          'moc_input': 'public/oxide_qquick_outgoing_message_request_p.h',
+          'moc_input': 'api/public/oxide_qquick_outgoing_message_request_p.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_web_frame.cc',
-          'moc_input': 'public/oxide_qquick_web_frame_p.h',
+          'moc_input': 'api/public/oxide_qquick_web_frame_p.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_web_view.cc',
-          'moc_input': 'public/oxide_qquick_web_view_p.h',
+          'moc_input': 'api/public/oxide_qquick_web_view_p.h',
           'includes': [ '../moc.gypi' ]
         },
         {
           'action_name': 'moc_oxide_qquick_web_view_context.cc',
-          'moc_input': 'public/oxide_qquick_web_view_context_p.h',
+          'moc_input': 'api/public/oxide_qquick_web_view_context_p.h',
           'includes': [ '../moc.gypi' ]
         },
-        {
-          'action_name': 'oxide_qt_web_popup_menu_qquick.moc',
-          'moc_input': 'browser/oxide_qt_web_popup_menu_qquick.cc',
-          'includes': [ '../moc.gypi' ]
-        }
       ]
     }
   ]
