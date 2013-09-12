@@ -109,9 +109,17 @@ class QQuickWebViewPrivate : public oxide::WebView,
 
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
-  void OnLoadingChanged() FINAL;
   void OnCommandsUpdated() FINAL;
+
   void OnRootFrameChanged() FINAL;
+
+  void OnLoadStarted(const GURL& validated_url,
+                     bool is_error_frame) FINAL;
+  void OnLoadStopped(const GURL& validated_url) FINAL;
+  void OnLoadFailed(const GURL& validated_url,
+                    int error_code,
+                    const std::string& error_description) FINAL;
+  void OnLoadSucceeded(const GURL& validated_url) FINAL;
 
   oxide::WebFrame* AllocWebFrame(int64 frame_id) FINAL;
 

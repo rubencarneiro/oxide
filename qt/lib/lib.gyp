@@ -35,6 +35,7 @@
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_renderer',
+        '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/ui/ui.gyp:ui',
         '<(DEPTH)/url/url.gyp:url_lib'
@@ -65,6 +66,8 @@
         'common/oxide_qt_content_main_delegate.h',
         'api/oxide_q_incoming_message_p.cc',
         'api/oxide_q_incoming_message_p.h',
+        'api/oxide_q_load_status_p.cc',
+        'api/oxide_q_load_status_p.h',
         'api/oxide_qquick_web_view_p.cc',
         'api/oxide_qquick_web_view_p_p.h',
         'api/oxide_qt_qmessage_handler_p.cc',
@@ -115,6 +118,7 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_q_incoming_message.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_q_load_status.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_q_message_handler_base.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_q_outgoing_message_request_base.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_q_user_script.cc',
@@ -127,6 +131,8 @@
         '<(INTERMEDIATE_DIR)/moc_oxide_qquick_web_view_context.cc',
         'api/public/oxide_q_incoming_message.cc',
         'api/public/oxide_q_incoming_message.h',
+        'api/public/oxide_q_load_status.cc',
+        'api/public/oxide_q_load_status.h',
         'api/public/oxide_q_message_handler_base.h',
         'api/public/oxide_q_outgoing_message_request_base.h',
         'api/public/oxide_q_user_script.cc',
@@ -148,6 +154,11 @@
         {
           'action_name': 'moc_oxide_q_incoming_message.cc',
           'moc_input': 'api/public/oxide_q_incoming_message.h',
+          'includes': [ '../moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxide_q_load_status.cc',
+          'moc_input': 'api/public/oxide_q_load_status.h',
           'includes': [ '../moc.gypi' ]
         },
         {

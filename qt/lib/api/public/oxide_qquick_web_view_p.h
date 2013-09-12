@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+class OxideQLoadStatus;
 class OxideQQuickMessageHandler;
 class OxideQQuickWebFrame;
 class OxideQQuickWebViewContext;
@@ -100,7 +101,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void urlChanged();
   void titleChanged();
   void commandsUpdated();
-  void loadingChanged();
+  void loadingChanged(OxideQLoadStatus* status);
   void rootFrameChanged();
   void popupMenuChanged();
   void messageHandlersChanged();

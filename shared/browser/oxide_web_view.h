@@ -87,12 +87,40 @@ class WebView : public content::WebContentsDelegate,
   WebFrame* GetRootFrame() const;
   WebFrame* FindFrameWithID(int64 frame_id) const;
 
+  void DidStartProvisionalLoadForFrame(
+      int64 frame_id,
+      int64 parent_frame_id,
+      bool is_main_frame,
+      const GURL& validated_url,
+      bool is_error_page,
+      bool is_iframe_srcdoc,
+      content::RenderViewHost* render_view_host) FINAL;
+
   void DidCommitProvisionalLoadForFrame(
       int64 frame_id,
       bool is_main_frame,
       const GURL& url,
       content::PageTransition transition_type,
       content::RenderViewHost* render_view_host) FINAL;
+
+  void DidFailProvisionalLoad(
+      int64 frame_id,
+      bool is_main_frame,
+      const GURL& validated_url,
+      int error_code,
+      const base::string16& error_description,
+      content::RenderViewHost* render_view_host) FINAL;
+
+  void DidFinishLoad(int64 frame_id,
+                     const GURL& validated_url,
+                     bool is_main_frame,
+                     content::RenderViewHost* render_view_host);
+  void DidFailLoad(int64 frame_id,
+                   const GURL& validated_url,
+                   bool is_main_frame,
+                   int error_code,
+                   const base::string16& error_description,
+                   content::RenderViewHost* render_view_host) FINAL;
 
   void FrameAttached(content::RenderViewHost* render_view_host,
                      int64 parent_frame_id,
@@ -139,11 +167,23 @@ class WebView : public content::WebContentsDelegate,
                               unsigned changed_flags) FINAL;
   void NotifyRenderViewHostSwappedIn();
 
+  void DispatchLoadFailed(const GURL& validated_url,
+                          int error_code,
+                          const base::string16& error_description);
+
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
-  virtual void OnLoadingChanged();
   virtual void OnCommandsUpdated();
+
   virtual void OnRootFrameChanged();
+
+  virtual void OnLoadStarted(const GURL& validated_url,
+                             bool is_error_frame);
+  virtual void OnLoadStopped(const GURL& validated_url);
+  virtual void OnLoadFailed(const GURL& validated_url,
+                            int error_code,
+                            const std::string& error_description);
+  virtual void OnLoadSucceeded(const GURL& validated_url);
 
   virtual WebFrame* AllocWebFrame(int64 frame_id);
 

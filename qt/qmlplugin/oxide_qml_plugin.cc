@@ -24,6 +24,7 @@
 #include <QQmlExtensionPlugin>
 
 #include "oxide_q_incoming_message.h"
+#include "oxide_q_load_status.h"
 #include "oxide_q_user_script.h"
 #include "oxide_qquick_message_handler_p.h"
 #include "oxide_qquick_outgoing_message_request_p.h"
@@ -202,6 +203,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         uri, 0, 1, "DefaultWebViewContext", DefaultWebViewContextSingletonFactory);
     qmlRegisterUncreatableType<OxideQIncomingMessage>(uri, 0, 1, "IncomingMessage",
         "IncomingMessages are created automatically by Oxide");
+    qmlRegisterUncreatableType<OxideQLoadStatus>(uri, 0, 1, "LoadStatus",
+        "LoadStatus' are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQQuickOutgoingMessageRequest>(uri, 0, 1, "OutgoingMessageRequest",
         "OutgoingMessageRequests are created automatically by WebFrame.sendMessage");
     qmlRegisterType<OxideQUserScript>(uri, 0, 1, "UserScript");

@@ -29,6 +29,7 @@
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
+#include "net/base/net_errors.h"
 #include "url/gurl.h"
 
 #include "shared/common/oxide_messages.h"
@@ -69,10 +70,6 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
     OnTitleChanged();
   }
 
-  if (changed_flags & content::INVALIDATE_TYPE_LOAD) {
-    OnLoadingChanged();
-  }
-
   if (changed_flags & (content::INVALIDATE_TYPE_URL |
                        content::INVALIDATE_TYPE_LOAD)) {
     OnCommandsUpdated();
@@ -96,11 +93,30 @@ void WebView::NotifyRenderViewHostSwappedIn() {
   OnRootFrameChanged();
 }
 
+void WebView::DispatchLoadFailed(const GURL& validated_url,
+                                 int error_code,
+                                 const base::string16& error_description) {
+  if (error_code == net::ERR_ABORTED) {
+    OnLoadStopped(validated_url);
+  } else {
+    OnLoadFailed(validated_url, error_code,
+                 base::UTF16ToUTF8(error_description));
+  }
+}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
-void WebView::OnLoadingChanged() {}
 void WebView::OnCommandsUpdated() {}
+
 void WebView::OnRootFrameChanged() {}
+
+void WebView::OnLoadStarted(const GURL& validated_url,
+                            bool is_error_frame) {}
+void WebView::OnLoadStopped(const GURL& validated_url) {}
+void WebView::OnLoadFailed(const GURL& validated_url,
+                           int error_code,
+                           const std::string& error_description) {}
+void WebView::OnLoadSucceeded(const GURL& validated_url) {}
 
 WebFrame* WebView::AllocWebFrame(int64 frame_id) {
   return NULL;
@@ -236,6 +252,25 @@ WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
   return root_frame_->FindFrameWithID(frame_id);
 }
 
+void WebView::DidStartProvisionalLoadForFrame(
+    int64 frame_id,
+    int64 parent_frame_id,
+    bool is_main_frame,
+    const GURL& validated_url,
+    bool is_error_frame,
+    bool is_iframe_srcdoc,
+    content::RenderViewHost* render_view_host) {
+  if (render_view_host != web_contents_->GetRenderViewHost()) {
+    return;
+  }
+
+  if (!is_main_frame) {
+    return;
+  }
+
+  OnLoadStarted(validated_url, is_error_frame);
+}
+
 void WebView::DidCommitProvisionalLoadForFrame(
     int64 frame_id,
     bool is_main_frame,
@@ -260,6 +295,56 @@ void WebView::DidCommitProvisionalLoadForFrame(
   if (frame) {
     frame->SetURL(url);
   }
+}
+
+void WebView::DidFailProvisionalLoad(
+    int64 frame_id,
+    bool is_main_frame,
+    const GURL& validated_url,
+    int error_code,
+    const base::string16& error_description,
+    content::RenderViewHost* render_view_host) {
+  if (render_view_host != web_contents_->GetRenderViewHost()) {
+    return;
+  }
+
+  if (!is_main_frame) {
+    return;
+  }
+
+  DispatchLoadFailed(validated_url, error_code, error_description);
+}
+
+void WebView::DidFinishLoad(int64 frame_id,
+                            const GURL& validated_url,
+                            bool is_main_frame,
+                            content::RenderViewHost* render_view_host) {
+  if (render_view_host != web_contents_->GetRenderViewHost()) {
+    return;
+  }
+
+  if (!is_main_frame) {
+    return;
+  }
+
+  OnLoadSucceeded(validated_url);
+}
+
+void WebView::DidFailLoad(int64 frame_id,
+                          const GURL& validated_url,
+                          bool is_main_frame,
+                          int error_code,
+                          const base::string16& error_description,
+                          content::RenderViewHost* render_view_host) {
+  if (render_view_host != web_contents_->GetRenderViewHost()) {
+    return;
+  }
+
+  if (!is_main_frame) {
+    return;
+  }
+
+  DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
 void WebView::FrameAttached(content::RenderViewHost* render_view_host,
