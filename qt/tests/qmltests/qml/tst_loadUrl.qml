@@ -18,7 +18,7 @@ TestWebView {
     function test_loadUrl1_data() {
       return [
         { url: "http://localhost:8080/empty.html", succeeded: 1, failed: 0 },
-        { url: Qt.resolvedUrl("../../html/empty.html"), succeeded: 1, failed: 0 },
+        { url: Qt.resolvedUrl("../../www/empty.html"), succeeded: 1, failed: 0 },
         { url: "about:blank", succeeded: 1, failed: 0 },
         { url: "foo://bar.com", succeeded: 1, failed: 1, documentURI: "data:text/html,chromewebdata" }
       ];
