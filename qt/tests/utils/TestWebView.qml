@@ -26,6 +26,14 @@ WebView {
     return testApi;
   }
 
+  function waitForLoadStarted() {
+    waitingFor = LoadStatus.LoadStatusStarted;
+    var success = waitFor(function() { return waitingFor === null; });
+    waitingFor = null;
+
+    return success;
+  }
+
   function waitForLoadSucceeded() {
     waitingFor = LoadStatus.LoadStatusSucceeded;
     var success = waitFor(function() { return waitingFor === null; });

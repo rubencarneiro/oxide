@@ -8,14 +8,14 @@ TestWebView {
 
   TestCase {
     id: test
-    name: "WebViewLoadURL"
+    name: "WebView_loadUrl"
     when: windowShown
 
     function init() {
       webView.resetLoadCounters();
     }
 
-    function test_loadUrl1_data() {
+    function test_WebView_loadUrl1_data() {
       return [
         { url: "http://localhost:8080/empty.html", succeeded: 1, failed: 0 },
         { url: Qt.resolvedUrl("../../www/empty.html"), succeeded: 1, failed: 0 },
@@ -24,7 +24,7 @@ TestWebView {
       ];
     }
 
-    function test_loadUrl1(data) {
+    function test_WebView_loadUrl1(data) {
       webView.url = data.url;
       verify(webView.waitForLoadSucceeded());
 
@@ -40,7 +40,7 @@ TestWebView {
       compare(webView.getTestApi().documentURI, data.documentURI);
     }
 
-    function test_loadUrl2_ignoreEmpty() {
+    function test_WebView_loadUrl2_ignoreEmpty() {
       var url = "http://localhost:8080/empty.html";
 
       webView.url = url;
