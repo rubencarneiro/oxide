@@ -101,7 +101,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void urlChanged();
   void titleChanged();
   void commandsUpdated();
-  void loadingChanged(OxideQLoadStatus* status);
+  void loadingChanged(OxideQLoadStatus* loadStatus);
   void rootFrameChanged();
   void popupMenuChanged();
   void messageHandlersChanged();

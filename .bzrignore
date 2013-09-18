@@ -1,10 +1,15 @@
 chromium/*
 !chromium/.gclient
 out/
-.pc/
-*.moc
+*.moc/
+*.obj/
 *.oxideprivate.mk
+*.pch/
 *.swp
 *.target.oxide.mk
 Makefile*
 moc_*
+*.so
+*.so.*
+*.o
+qt/qmlplugin/imports/

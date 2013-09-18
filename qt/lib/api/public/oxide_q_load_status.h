@@ -22,6 +22,7 @@
 #include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
+#include <QtQml>
 #include <QUrl>
 
 namespace oxide {
@@ -76,5 +77,7 @@ class Q_DECL_EXPORT OxideQLoadStatus : public QObject {
  private:
   QScopedPointer<oxide::qt::QLoadStatusPrivate> d_ptr;
 };
+
+QML_DECLARE_TYPE(OxideQLoadStatus)
 
 #endif // _OXIDE_QT_LIB_API_PUBLIC_Q_LOAD_STATUS_H_

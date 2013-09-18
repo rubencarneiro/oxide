@@ -1,21 +1,14 @@
 TEMPLATE = aux
 TARGET = gyp
 
-DEPTH = ..
+include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
 
 GYP_GENERATED_MAKEFILE = Makefile.oxide
-GYP_MAKE_INVOKE = CFLAGS= CXXFLAGS= LDFLAGS= CPPFLAGS= make -C $$DEPTH -f $$GYP_GENERATED_MAKEFILE oxide
+GYP_MAKE_INVOKE = CFLAGS= CXXFLAGS= LDFLAGS= CPPFLAGS= make -C $$OXIDE_SRC_ROOT -f $$GYP_GENERATED_MAKEFILE oxide
 
-isEmpty(PREFIX) {
-    PREFIX = /usr/local
-}
-isEmpty(QMAKE_EXTENSION_SHLIB) {
-    QMAKE_EXTENSION_SHLIB = so
-}
-
-gyp_generate.target = $${DEPTH}/$${GYP_GENERATED_MAKEFILE}
+gyp_generate.target = $${OXIDE_SRC_ROOT}/$${GYP_GENERATED_MAKEFILE}
 gyp_generate.commands = \
-    cd $$DEPTH ; ./gyp_oxide \
+    cd $$OXIDE_SRC_ROOT ; ./gyp_oxide \
     -I$${PWD}/qt.gypi
 QMAKE_EXTRA_TARGETS += gyp_generate
 
@@ -29,17 +22,10 @@ equals(OXIDE_DEBUG, "1") {
 QMAKE_EXTRA_TARGETS += gypimpl
 PRE_TARGETDEPS += gypimpl
 
-CHROMIUM_OUTPUT_DIR = $${DEPTH}/chromium/src/out
-equals(OXIDE_DEBUG, "1") {
-    CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Debug
-} else {
-    CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Release
-}
-
 gyppost.target = gyppost
 gyppost.commands = \
-    cd $${CHROMIUM_PLATFORM_DIR}/lib.target && \
-    ln -f -s $${QMAKE_PREFIX_SHLIB}oxide-qt.$${QMAKE_EXTENSION_SHLIB}.0 $${QMAKE_PREFIX_SHLIB}oxide-qt.$${QMAKE_EXTENSION_SHLIB}
+    cd $$CHROMIUM_LIB_DIR && \
+    ln -f -s liboxide-qt.so.0 liboxide-qt.so
 QMAKE_EXTRA_TARGETS += gyppost
 POST_TARGETDEPS += gyppost
 
@@ -55,6 +41,6 @@ OTHER_FILES += \
     shared/shared.gyp
 
 QMAKE_CLEAN += -r \
-    $${DEPTH}/Makefile.oxide \
-    `find $$DEPTH -name \"*.target.oxide.mk\"` \
-    $${DEPTH}/chromium/src/out/
+    $${OXIDE_SRC_ROOT}/Makefile.oxide \
+    `find $$OXIDE_SRC_ROOT -name \"*.target.oxide.mk\"` \
+    $$CHROMIUM_OUT_DIR

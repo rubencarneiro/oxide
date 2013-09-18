@@ -3,27 +3,28 @@ TARGET = qmloxideplugin
 QT += qml quick
 CONFIG += qt plugin
 
-DEPTH = ../..
+include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
 
 uri = com.canonical.Oxide
+TARGET.module_name = $$replace(uri, \\., /)
+
+DESTDIR = $${OUT_PWD}/imports/$${TARGET.module_name}
 
 SOURCES += oxide_qml_plugin.cc
 
-CHROMIUM_OUTPUT_DIR = $${DEPTH}/chromium/src/out
-equals(OXIDE_DEBUG, "1") {
-    CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Debug
-} else {
-    CHROMIUM_PLATFORM_DIR = $${CHROMIUM_OUTPUT_DIR}/Release
-}
-
-INCLUDEPATH = $${_PRO_FILE_PWD_}/$${DEPTH}/qt/lib/api/public
-LIBS += -L$${CHROMIUM_PLATFORM_DIR}/lib.target -loxide-qt
+INCLUDEPATH = $${OXIDE_SRC_ROOT}/qt/lib/api/public
+LIBS += -L$${CHROMIUM_LIB_DIR} -loxide-qt
 
 OTHER_FILES = qmldir
 
+copy2build.depends = $${_PRO_FILE_PWD_}/qmldir
+copy2build.commands = $${QMAKE_COPY} $${_PRO_FILE_PWD_}/qmldir $${OUT_PWD}/imports/$${TARGET.module_name}/qmldir
+QMAKE_EXTRA_TARGETS += copy2build
+PRE_TARGETDEPS += copy2build
+
 qmldir.files = qmldir
 unix {
-    installPath = $$[QT_INSTALL_QML]/$$replace(uri, \\., /)
+    installPath = $$[QT_INSTALL_QML]/$${TARGET.module_name}
     qmldir.path = $$installPath
     target.path = $$installPath
     INSTALLS += target qmldir
