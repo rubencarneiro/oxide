@@ -62,9 +62,13 @@ def main():
     CheckCall(["hg", "qinit"], chromium_src_path)
 
     patchdir = os.path.join(topsrcdir, "patches")
+    patches = []
     with open(os.path.join(patchdir, "series"), "r") as f:
       for line in f.readlines():
-        CheckCall(["hg", "qimport", os.path.join(patchdir, line.strip())], chromium_src_path)
+        patches.append(os.path.join(patchdir, line.strip()))
+    patches.reverse()
+    for patch in patches:
+      CheckCall(["hg", "qimport", patch], chromium_src_path)
   else:
     CheckCall(["hg", "addremove"], chromium_src_path)
     CheckCall(["hg", "ci", "-m", "Updated with client.py"], chromium_src_path)
