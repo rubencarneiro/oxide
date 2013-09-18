@@ -260,10 +260,6 @@ void WebView::DidStartProvisionalLoadForFrame(
     bool is_error_frame,
     bool is_iframe_srcdoc,
     content::RenderViewHost* render_view_host) {
-  if (render_view_host != web_contents_->GetRenderViewHost()) {
-    return;
-  }
-
   if (!is_main_frame) {
     return;
   }
@@ -304,10 +300,6 @@ void WebView::DidFailProvisionalLoad(
     int error_code,
     const base::string16& error_description,
     content::RenderViewHost* render_view_host) {
-  if (render_view_host != web_contents_->GetRenderViewHost()) {
-    return;
-  }
-
   if (!is_main_frame) {
     return;
   }
@@ -319,10 +311,6 @@ void WebView::DidFinishLoad(int64 frame_id,
                             const GURL& validated_url,
                             bool is_main_frame,
                             content::RenderViewHost* render_view_host) {
-  if (render_view_host != web_contents_->GetRenderViewHost()) {
-    return;
-  }
-
   if (!is_main_frame) {
     return;
   }
@@ -336,10 +324,6 @@ void WebView::DidFailLoad(int64 frame_id,
                           int error_code,
                           const base::string16& error_description,
                           content::RenderViewHost* render_view_host) {
-  if (render_view_host != web_contents_->GetRenderViewHost()) {
-    return;
-  }
-
   if (!is_main_frame) {
     return;
   }

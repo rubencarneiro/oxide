@@ -29,6 +29,7 @@ TestWebView {
 
       compare(webView.loadsSucceededCount, data.succeeded);
       compare(webView.loadsFailedCount, data.failed);
+      compare(webView.loadsStartedCount, data.succeeded + data.failed);
       compare(webView.url, data.url);
 
       compare(webView.getTestApi().documentURI, data.url);
@@ -44,9 +45,13 @@ TestWebView {
       compare(webView.loadsFailedCount, 0);
       compare(webView.url, url);
 
+      webView.resetLoadCounters();
+
       webView.url = "";
       wait(1000);
-      compare(webView.loadsStartedCount, 1);
+      compare(webView.loadsStartedCount, 0);
+      compare(webView.loadsFailedCount, 0);
+      compare(webView.loadsSucceededCount, 0);
       compare(webView.url, url);
     }
   }
