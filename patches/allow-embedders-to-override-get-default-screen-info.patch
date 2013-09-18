@@ -6,7 +6,7 @@ Author: Chris Coulson <chris.coulson@canonical.com>
 diff --git a/content/browser/renderer_host/render_widget_host_view_aura.cc b/content/browser/renderer_host/render_widget_host_view_aura.cc
 --- a/content/browser/renderer_host/render_widget_host_view_aura.cc
 +++ b/content/browser/renderer_host/render_widget_host_view_aura.cc
-@@ -3276,12 +3276,13 @@ void RenderWidgetHostViewAura::DetachFro
+@@ -3372,12 +3372,13 @@ void RenderWidgetHostViewAura::DetachFro
  // static
  RenderWidgetHostView* RenderWidgetHostView::CreateViewForWidget(
      RenderWidgetHost* widget) {
@@ -63,7 +63,7 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.cc b/con
        mouse_locked_(false),
        showing_context_menu_(false),
        selection_text_offset_(0),
-       selection_range_(ui::Range::InvalidRange()),
+       selection_range_(gfx::Range::InvalidRange()),
        current_device_scale_factor_(0),
        renderer_frame_number_(0) {
 diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/content/browser/renderer_host/render_widget_host_view_base.h
@@ -74,8 +74,8 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/cont
  #include "base/callback_forward.h"
  #include "content/common/content_export.h"
  #include "content/port/browser/render_widget_host_view_port.h"
- #include "ui/base/range/range.h"
  #include "ui/gfx/native_widget_types.h"
+ #include "ui/gfx/range/range.h"
  #include "ui/gfx/rect.h"
  
 +namespace WebKit {
@@ -90,7 +90,7 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/cont
  // subclasses.
  //
  // Note that nothing should use this class, except concrete subclasses
-@@ -94,16 +98,18 @@ class CONTENT_EXPORT RenderWidgetHostVie
+@@ -97,16 +101,18 @@ class CONTENT_EXPORT RenderWidgetHostVie
    bool HasDisplayPropertyChanged(gfx::NativeView view);
  
  #if defined(OS_WIN)
@@ -112,7 +112,7 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/cont
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -277,16 +277,21 @@ ui::SelectFilePolicy* ContentBrowserClie
+@@ -283,16 +283,21 @@ ui::SelectFilePolicy* ContentBrowserClie
      WebContents* web_contents) {
    return NULL;
  }
@@ -158,7 +158,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class BrowserMainParts;
  class BrowserPluginGuestDelegate;
  class BrowserPpapiHost;
-@@ -558,16 +562,19 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -563,16 +567,19 @@ class CONTENT_EXPORT ContentBrowserClien
        BrowserContext* browser_context,
        const base::FilePath& storage_partition_path,
        ScopedVector<fileapi::FileSystemBackend>* additional_backends) {}
