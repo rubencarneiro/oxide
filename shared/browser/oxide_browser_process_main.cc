@@ -20,6 +20,8 @@
 #include "base/logging.h"
 #include "content/public/app/content_main_runner.h"
 #include "content/public/browser/browser_main_runner.h"
+#include "ui/base/resource/resource_bundle.h"
+#include "url/url_util.h"
 
 #include "shared/common/oxide_content_main_delegate.h"
 
@@ -113,6 +115,9 @@ BrowserProcessMain::~BrowserProcessMain() {
 
   MessageLoopForUI::current()->Stop();
   main_runner_->Shutdown();
+
+  url_util::Shutdown();
+  ui::ResourceBundle::CleanupSharedInstance();
 
   g_process = NULL;
 }

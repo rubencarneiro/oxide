@@ -1,0 +1,25 @@
+Description: Ensure that AddStandardScheme is unlocked during url_util::Shutdown()
+Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/url/url_util.cc b/url/url_util.cc
+--- a/url/url_util.cc
++++ b/url/url_util.cc
+@@ -369,16 +369,18 @@ void Initialize() {
+   InitStandardSchemes();
+ }
+ 
+ void Shutdown() {
+   if (standard_schemes) {
+     delete standard_schemes;
+     standard_schemes = NULL;
+   }
++
++  standard_schemes_locked = false;
+ }
+ 
+ void AddStandardScheme(const char* new_scheme) {
+   // If this assert triggers, it means you've called AddStandardScheme after
+   // LockStandardSchemes have been called (see the header file for
+   // LockStandardSchemes for more).
+   //
+   // This normally means you're trying to set up a new standard scheme too late

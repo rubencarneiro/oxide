@@ -7,3 +7,6 @@ support-native-popup-menus.patch
 add-oxide-messages.patch
 add-frame-created-for-web-contents-observer.patch
 add-oxide-resources.patch
+unlock-url-util-on-shutdown.patch
+dont-assert-once-only-initialization-of-icu.patch
+allow-message-loop-to-be-restarted.patch
