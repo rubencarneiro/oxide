@@ -49,8 +49,10 @@ QOutgoingMessageRequestBasePrivate::~QOutgoingMessageRequestBasePrivate() {
   Q_Q(OxideQOutgoingMessageRequestBase);
 
   if (frame_) {
-    frame_->removeOutgoingMessageRequest(q);
-    Q_ASSERT(!frame_);
+    QWebFrameBasePrivate* frame = frame_;
+    frame_ = NULL;
+
+    frame->removeOutgoingMessageRequest(q);
   }
 }
 
@@ -59,8 +61,10 @@ void QOutgoingMessageRequestBasePrivate::setFramePrivate(
   Q_Q(OxideQOutgoingMessageRequestBase);
 
   if (frame_) {
-    frame_->removeOutgoingMessageRequest(q);
-    Q_ASSERT(!frame_);
+    QWebFrameBasePrivate* frame = frame_;
+    frame_ = NULL;
+
+    frame->removeOutgoingMessageRequest(q);
   }
 
   frame_ = frame;
