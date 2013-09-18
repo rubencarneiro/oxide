@@ -184,6 +184,10 @@ const GURL& WebView::GetURL() const {
 }
 
 void WebView::SetURL(const GURL& url) {
+  if (!url.is_valid()) {
+    return;
+  }
+
   content::NavigationController::LoadURLParams params(url);
   web_contents_->GetController().LoadURLWithParams(params);
 }
