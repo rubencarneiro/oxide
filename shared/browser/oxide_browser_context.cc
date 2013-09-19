@@ -264,7 +264,8 @@ void BrowserContextIOData::Init(
     context->storage()->set_cookie_store(
         content::CreatePersistentCookieStore(
             GetPath().Append(kCookiesFilename),
-            false, NULL, NULL));
+            false, NULL, NULL,
+            scoped_refptr<base::SequencedTaskRunner>()));
   }
 
   context->storage()->set_transport_security_state(

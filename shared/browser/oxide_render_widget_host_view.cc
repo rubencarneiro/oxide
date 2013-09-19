@@ -87,7 +87,7 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
 void RenderWidgetHostView::ImeCancelComposition() {}
 
 void RenderWidgetHostView::ImeCompositionRangeChanged(
-    const ui::Range& range,
+    const gfx::Range& range,
     const std::vector<gfx::Rect>& character_bounds) {}
 
 void RenderWidgetHostView::DidUpdateBackingStore(

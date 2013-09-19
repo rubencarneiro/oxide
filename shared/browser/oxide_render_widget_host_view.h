@@ -57,7 +57,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
 
   void ImeCancelComposition() FINAL;
   void ImeCompositionRangeChanged(
-      const ui::Range& range,
+      const gfx::Range& range,
       const std::vector<gfx::Rect>& character_bounds) FINAL;
 
   void DidUpdateBackingStore(
