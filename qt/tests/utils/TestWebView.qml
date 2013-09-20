@@ -79,8 +79,11 @@ WebView {
     }
   }
 
+  function componentCompleted() {}
+
   Component.onCompleted: {
     _lastLoadingState = loading;
+    componentCompleted();
   }
 
   TestResult { id: _testResult }
