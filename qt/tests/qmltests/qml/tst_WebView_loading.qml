@@ -18,13 +18,17 @@ TestWebView {
     when: windowShown
 
     function test_WebView_loading() {
-      compare(webView.loading, false);
+      compare(webView.loading, false,
+              "WebView.loading should be false before we start loading");
 
       webView.url = "http://localhost:8080/empty.html";
-      verify(webView.waitForLoadSucceeded());
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for a successful load");
 
-      compare(webView.loading, false);
-      compare(loadingStateChangeCount, 2);
+      compare(webView.loading, false,
+              "WebView.loading should be false after we finish loading");
+      compare(loadingStateChangeCount, 2,
+              "WebView.loading should have changed twice during the load");
     }
   }
 }
