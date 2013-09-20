@@ -18,3 +18,7 @@
 oxide.addMessageHandler("GET-DOCUMENT-URI", function(args, msg) {
   msg.reply({location: window.document.documentURI});
 });
+
+oxide.addMessageHandler("SET-DOCUMENT-TITLE", function(args, msg) {
+  window.document.title = args.title;
+});

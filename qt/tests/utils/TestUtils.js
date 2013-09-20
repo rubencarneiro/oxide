@@ -47,5 +47,11 @@ TestApiHost.prototype = {
     } else {
       throw Error("Message call timed out");
     }
+  },
+
+  set documentTitle(title) {
+    this._webview.rootFrame.sendMessageNoReply("TestUtils",
+                                               "SET-DOCUMENT-TITLE",
+                                               { title: title });
   }
 };
