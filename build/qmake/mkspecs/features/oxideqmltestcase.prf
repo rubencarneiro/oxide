@@ -3,15 +3,20 @@ QT += qml qmltest oxide-private
 
 include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
 
+_DESTDIR = $${OXIDE_BUILD_OUT}/test
+
 QT.oxide.name = oxide-qt
-QT.oxide.libs = $$CHROMIUM_LIB_DIR
+QT.oxide.libs = $$CHROMIUM_OUT_LIB_DIR
 
 check.commands = OXIDE_NO_SANDBOX=1
 check.commands += OXIDE_RESOURCE_PATH=$$CHROMIUM_OUT_PLAT_DIR
+check.commands += cd $$_DESTDIR &&
 check.commands += python $${OXIDE_SRC_ROOT}/qt/tests/utils/runtests.py -s ${OXIDE_SRC_ROOT}/qt/tests/www -p 8080 --
+load(testcase)
+
+DESTDIR = $$_DESTDIR
 
 !isEmpty(IMPORTPATH) {
-    load(testcase)
     for(import, IMPORTPATH): check.commands += -import \"$$import\"
 }
 
