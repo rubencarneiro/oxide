@@ -12,4 +12,4 @@ moc_*
 *.so
 *.so.*
 *.o
-qt/qmlplugin/imports/
+qt/tests/qmltests/tst_qmltests

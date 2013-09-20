@@ -1,14 +1,22 @@
 TEMPLATE = subdirs
 CONFIG += ordered
 
-oxidegyp.file = qt/gyp.pro
-SUBDIRS += oxidegyp
+lib.file = qt/lib/lib.pro
+SUBDIRS += lib
+
+renderer.file = qt/renderer/renderer.pro
+SUBDIRS += renderer
+
+sandbox.file = qt/sandbox/sandbox.pro
+SUBDIRS += sandbox
 
 qmlplugin.file = qt/qmlplugin/qmlplugin.pro
 SUBDIRS += qmlplugin
 
-install.file = qt/install.pro
-SUBDIRS += install
-
 qmltests.file = qt/tests/qmltests/qmltests.pro
 SUBDIRS += qmltests
+
+QMAKE_CLEAN += -r \
+    $${OXIDE_SRC_ROOT}/Makefile.oxide \
+    `find $$OXIDE_SRC_ROOT -name \"*.target.oxide.mk\"` \
+    $$CHROMIUM_OUT_DIR

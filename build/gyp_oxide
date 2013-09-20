@@ -22,8 +22,8 @@ import os
 import os.path
 import sys
 
-script_dir = os.path.dirname(os.path.realpath(__file__))
-chromium_src = os.path.join(script_dir, 'chromium', 'src')
+src_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+chromium_src = os.path.join(src_dir, 'chromium', 'src')
 
 sys.path.insert(0, os.path.join(chromium_src, 'tools', 'gyp', 'pylib'))
 try:
@@ -47,7 +47,7 @@ def additional_include_files(args=[]):
         if os.path.realpath(path) not in specified_includes:
             result.append(path)
 
-    AddInclude(os.path.join(script_dir, 'shared', 'shared.gypi'))
+    AddInclude(os.path.join(src_dir, 'shared', 'shared.gypi'))
 
     # Always include common.gypi.
     AddInclude(os.path.join(chromium_src, 'build', 'common.gypi'))
@@ -62,15 +62,15 @@ def additional_include_files(args=[]):
 if __name__ == '__main__':
     args = sys.argv[1:]
 
-    args.append(os.path.join(script_dir, 'oxide.gyp'))
+    args.append(os.path.join(src_dir, 'build', 'oxide.gyp'))
     args.extend(['-I' + i for i in additional_include_files(args)])
 
     args.append('--no-circular-check')
-    args.extend(['--toplevel-dir', script_dir])
+    args.extend(['--toplevel-dir', src_dir])
     args.extend(['--depth', chromium_src])
     args.extend(['--suffix', '.oxide'])
     args.extend(['--format', 'make'])
     args.append('-Goutput_dir=%s' % os.path.join(chromium_src, 'out'))
 
-    os.chdir(script_dir)
+    os.chdir(src_dir)
     sys.exit(gyp.main(args))

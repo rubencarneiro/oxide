@@ -17,17 +17,11 @@
 {
   'targets': [
     {
-      'target_name': 'oxide-renderer',
-      'type': 'executable',
+      'target_name': 'oxide',
+      'type': 'none',
       'dependencies': [
-        '../lib/lib.gyp:oxide-qt'
-      ],
-      'sources': [
-        'main.cc'
-      ],
-      'variables': {
-        'chromium_code': 1
-      }
+        '<@(oxide_port_all_targets)'
+      ]
     }
   ]
 }

@@ -27,7 +27,7 @@
 
 #include "shared/browser/oxide_message_handler.h"
 
-#include "oxide_qquick_message_handler_p.h"
+#include "qt/lib/api/public/oxide_qquick_message_handler_p.h"
 
 class OxideQIncomingMessage;
 class OxideQMessageHandlerBase;

@@ -1,8 +1,0 @@
-isEmpty(PREFIX):PREFIX = /usr/local
-
-CHROMIUM_OUT_DIR = $${OXIDE_SRC_ROOT}/chromium/src/out
-
-equals(OXIDE_DEBUG, "1"):CHROMIUM_PLAT_DIR = $${CHROMIUM_OUT_DIR}/Debug
-else:CHROMIUM_PLAT_DIR = $${CHROMIUM_OUT_DIR}/Release
-
-CHROMIUM_LIB_DIR = $${CHROMIUM_PLAT_DIR}/lib.target

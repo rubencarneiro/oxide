@@ -66,6 +66,53 @@
       },
     },
     {
+      'target_name': 'oxide_packed_resources',
+      'type': 'none',
+      'variables': {
+        'repack_path': '<(DEPTH)/tools/grit/grit/format/repack.py'
+      },
+      'dependencies': [
+        'oxide_shared_resources',
+        '<(DEPTH)/content/content_resources.gyp:content_resources',
+        '<(DEPTH)/ui/ui.gyp:ui_resources'
+      ],
+      'actions': [
+        {
+          'action_name': 'repack_oxide',
+          'variables': {
+            'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/oxide/oxide_resources.pak'
+            ]
+          },
+          'inputs': [
+            '<(repack_path)',
+            '<@(pak_inputs)'
+          ],
+          'outputs': [
+            '<(PRODUCT_DIR)/oxide.pak'
+          ],
+          'action': ['python', '<(repack_path)', '<@(_outputs)', '<@(pak_inputs)']
+        },
+        {
+          'action_name': 'repack_oxide_100_percent',
+          'variables': {
+            'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/ui/ui_resources/ui_resources_100_percent.pak'
+            ]
+          },
+          'inputs': [
+            '<(repack_path)',
+            '<@(pak_inputs)'
+          ],
+          'outputs': [
+            '<(PRODUCT_DIR)/oxide_100_percent.pak'
+          ],
+          'action': ['python', '<(repack_path)', '<@(_outputs)', '<@(pak_inputs)']
+        }
+      ]
+    },
+    {
       'target_name': 'oxide_shared',
       'type': '<(component)',
       'all_dependent_settings': {
@@ -83,7 +130,7 @@
       ],
       'dependencies': [
         'oxide_shared_generated',
-        'oxide_shared_resources',
+        'oxide_packed_resources',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_app_both',
         '<(DEPTH)/content/content.gyp:content_browser',

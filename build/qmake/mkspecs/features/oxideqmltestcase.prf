@@ -5,7 +5,6 @@ include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
 
 QT.oxide.name = oxide-qt
 QT.oxide.libs = $$CHROMIUM_LIB_DIR
-QT.oxide.run_depends = core gui quick qml
 
 check.commands = OXIDE_NO_SANDBOX=1
 check.commands += python $${OXIDE_SRC_ROOT}/qt/tests/utils/runtests.py -s ${OXIDE_SRC_ROOT}/qt/tests/www -p 8080 --
