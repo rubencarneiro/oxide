@@ -4,52 +4,47 @@ import com.canonical.Oxide 0.1
 import "TestUtils.js" as TestUtils
 
 WebView {
-  property var testApi: null
-  property var waitingFor: null
+  property var _testApi: null
 
   property var loadsStartedCount: 0
   property var loadsSucceededCount: 0
   property var loadsFailedCount: 0
   property var loadsStoppedCount: 0
-  property var lastLoadingState: false
-  property var loadingStateChangeCount: 0
+  property var _lastLoadingState: false
 
   function resetLoadCounters() {
     loadsStartedCount = 0;
     loadsSucceededCount = 0;
     loadsFailedCount = 0;
     loadsStoppedCount = 0;
-    loadingStateChangeCount = 0;
   }
 
   function getTestApi() {
-    if (!testApi) {
-      testApi = new TestUtils.TestApiHost(this);
+    if (!_testApi) {
+      _testApi = new TestUtils.TestApiHost(this);
     }
-    return testApi;
+    return _testApi;
   }
 
-  function waitForLoadStarted() {
-    waitingFor = LoadStatus.LoadStatusStarted;
-    var success = waitFor(function() { return waitingFor === null; });
-    waitingFor = null;
-
-    return success;
+  function waitForLoadStarted(count) {
+    if (count === undefined) {
+      count = loadsStartedCount + 1;
+    }
+    return waitFor(function() { return loadsStartedCount == count; });
   }
 
-  function waitForLoadSucceeded() {
-    waitingFor = LoadStatus.LoadStatusSucceeded;
-    var success = waitFor(function() { return waitingFor === null; });
-    waitingFor = null;
-
-    return success;
+  function waitForLoadSucceeded(count) {
+    if (count === undefined) {
+      count = loadsSucceededCount + 1;
+    }
+    return waitFor(function() { return loadsSucceededCount == count; });
   }
 
   function waitFor(predicate, timeout) {
     timeout = timeout || 5000;
     var i = 0;
     while (i < timeout && !predicate()) {
-      testResult.wait(50);
+      _testResult.wait(50);
       i += 50;
     }
     return predicate();
@@ -65,11 +60,9 @@ WebView {
     ]
   }
 
-  onLoadingChanged: {
-    if (loadStatus.status == waitingFor) {
-      waitingFor = null;
-    }
+  function loadingStateChanged() {}
 
+  onLoadingChanged: {
     if (loadStatus.status == LoadStatus.LoadStatusStarted) {
       loadsStartedCount++;
     } else if (loadStatus.status == LoadStatus.LoadStatusSucceeded) {
@@ -80,15 +73,15 @@ WebView {
       loadsFailedCount++;
     }
 
-    if (loading != lastLoadingState) {
-      loadingStateChangeCount++;
-      lastLoadingState = loading;
+    if (loading != _lastLoadingState) {
+      _lastLoadingState = loading;
+      loadingStateChanged();
     }
   }
 
   Component.onCompleted: {
-    lastLoadingState = loading;
+    _lastLoadingState = loading;
   }
 
-  TestResult { id: testResult }
+  TestResult { id: _testResult }
 }

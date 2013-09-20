@@ -6,6 +6,12 @@ TestWebView {
   id: webView
   focus: true
 
+  property var loadingStateChangeCount: 0
+
+  function loadingStateChanged() {
+    loadingStateChangeCount++;
+  }
+
   TestCase {
     id: test
     name: "WebView_loading"
@@ -18,7 +24,7 @@ TestWebView {
       verify(webView.waitForLoadSucceeded());
 
       compare(webView.loading, false);
-      compare(webView.loadingStateChangeCount, 2);
+      compare(loadingStateChangeCount, 2);
     }
   }
 }
