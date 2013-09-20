@@ -1,4 +1,4 @@
-CONFIG += gyp
+CONFIG += gyp disable_check
 TARGET = chrome_sandbox
 GYP_TYPE = libexec
 

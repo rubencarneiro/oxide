@@ -1,4 +1,4 @@
-CONFIG += gyp
+CONFIG += gyp disable_check
 TARGET = oxide-qt
 GYP_TYPE = lib
 
