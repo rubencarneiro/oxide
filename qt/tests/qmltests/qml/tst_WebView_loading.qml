@@ -15,12 +15,10 @@ TestWebView {
       compare(webView.loading, false);
 
       webView.url = "http://localhost:8080/empty.html";
-
-      verify(webView.waitForLoadStarted());
-      compare(webView.loading, true);
-
       verify(webView.waitForLoadSucceeded());
+
       compare(webView.loading, false);
+      compare(webView.loadingStateChangeCount, 2);
     }
   }
 }

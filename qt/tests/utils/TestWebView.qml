@@ -11,12 +11,15 @@ WebView {
   property var loadsSucceededCount: 0
   property var loadsFailedCount: 0
   property var loadsStoppedCount: 0
+  property var lastLoadingState: false
+  property var loadingStateChangeCount: 0
 
   function resetLoadCounters() {
     loadsStartedCount = 0;
     loadsSucceededCount = 0;
     loadsFailedCount = 0;
     loadsStoppedCount = 0;
+    loadingStateChangeCount = 0;
   }
 
   function getTestApi() {
@@ -76,6 +79,15 @@ WebView {
     } else if (loadStatus.status == LoadStatus.LoadStatusFailed) {
       loadsFailedCount++;
     }
+
+    if (loading != lastLoadingState) {
+      loadingStateChangeCount++;
+      lastLoadingState = loading;
+    }
+  }
+
+  Component.onCompleted: {
+    lastLoadingState = loading;
   }
 
   TestResult { id: testResult }
