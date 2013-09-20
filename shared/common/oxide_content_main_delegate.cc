@@ -82,46 +82,41 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
-  Dl_info info;
-  int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
-                  &info);
-  DCHECK_NE(rv, 0) << "Failed to determine module path";
+  base::FilePath resource_dir;
+  const char* resource_path = getenv("OXIDE_RESOURCE_PATH");
+  if (resource_path) {
+    resource_dir = base::FilePath(resource_path);
+  } else {
+    Dl_info info;
+    int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
+                    &info);
+    DCHECK_NE(rv, 0) << "Failed to determine module path";
 
-  base::FilePath dirs[2];
+    resource_dir =
+        base::FilePath(info.dli_fname).DirName().Append(
+          FILE_PATH_LITERAL(OXIDE_RESOURCE_SUBPATH));
+  }
 
-  dirs[0] = base::FilePath(info.dli_fname).DirName();
-  dirs[1] = dirs[0].DirName();
-  dirs[0] = dirs[0].Append(FILE_PATH_LITERAL(OXIDE_RESOURCE_SUBPATH));
+  base::FilePath renderer =
+      resource_dir.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
 
   std::string process_type =
       CommandLine::ForCurrentProcess()->
         GetSwitchValueASCII(switches::kProcessType);
-
-  for (int i = 0; i < 2; ++i) {
-    base::FilePath renderer = dirs[i].Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
-    if (!base::PathExists(renderer)) {
-      continue;
-    }
-
-    if (process_type.empty()) {
-      PathService::Override(base::FILE_EXE, renderer);
-    }
-
-    base::FilePath dir = dirs[i];
-
-    // The locale passed here doesn't matter, as there aren't any
-    // localized resources to load
-    ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
-
-    ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
-        dir.Append(FILE_PATH_LITERAL("oxide.pak")),
-        ui::SCALE_FACTOR_NONE);
-    ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
-        dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
-        ui::SCALE_FACTOR_100P);
-
-    break;
+  if (process_type.empty()) {
+    PathService::Override(base::FILE_EXE, renderer);
   }
+
+  // The locale passed here doesn't matter, as there aren't any
+  // localized resources to load
+  ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
+
+  ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
+      resource_dir.Append(FILE_PATH_LITERAL("oxide.pak")),
+      ui::SCALE_FACTOR_NONE);
+  ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
+      resource_dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
+      ui::SCALE_FACTOR_100P);
 }
 
 int ContentMainDelegate::RunProcess(
