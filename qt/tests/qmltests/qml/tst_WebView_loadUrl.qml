@@ -40,7 +40,13 @@ TestWebView {
       compare(webView.getTestApi().documentURI, data.documentURI);
     }
 
-    function test_WebView_loadUrl2_ignoreEmpty() {
+    function test_WebView_loadUrl2_ignoreInvalid_data() {
+      return [
+        { url: "" }
+      ];
+    }
+
+    function test_WebView_loadUrl2_ignoreInvalid(data) {
       var url = "http://localhost:8080/empty.html";
 
       webView.url = url;
@@ -52,7 +58,7 @@ TestWebView {
 
       webView.resetLoadCounters();
 
-      webView.url = "";
+      webView.url = data.url;
       wait(1000);
       compare(webView.loadsStartedCount, 0);
       compare(webView.loadsFailedCount, 0);
