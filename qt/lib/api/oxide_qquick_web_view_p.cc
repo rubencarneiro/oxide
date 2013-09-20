@@ -61,7 +61,7 @@ void QQuickWebViewPrivate::OnTitleChanged() {
 void QQuickWebViewPrivate::OnCommandsUpdated() {
   Q_Q(OxideQQuickWebView);
 
-  emit q->commandsUpdated();
+  emit q->navigationHistoryChanged();
 }
 
 void QQuickWebViewPrivate::OnRootFrameChanged() {

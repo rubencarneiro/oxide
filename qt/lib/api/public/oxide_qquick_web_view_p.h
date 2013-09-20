@@ -47,8 +47,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
-  Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY commandsUpdated)
-  Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY commandsUpdated)
+  Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
+  Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
@@ -100,7 +100,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
  Q_SIGNALS:
   void urlChanged();
   void titleChanged();
-  void commandsUpdated();
+  void navigationHistoryChanged();
   void loadingChanged(OxideQLoadStatus* loadStatus);
   void rootFrameChanged();
   void popupMenuChanged();
