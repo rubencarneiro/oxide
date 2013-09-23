@@ -6,15 +6,19 @@ TestWebView {
   id: webView
   focus: true
 
-  property var urlChangedCount: 0
   property var lastUrl: ""
 
   onUrlChanged: {
-    urlChangedCount++;
     if (url == lastUrl) {
       fail("Got a urlChanged() signal when the url didn't change");
     }
     lastUrl = url;
+  }
+
+  SignalSpy {
+    id: spy
+    target: webView
+    signalName: "urlChanged"
   }
 
   TestCase {
@@ -24,7 +28,7 @@ TestWebView {
 
     function init() {
       webView.clearLoadEventCounters();
-      urlChangedCount = 0;
+      spy.clear();
     }
 
     function test_WebView_loadUrl1_data() {
@@ -41,8 +45,7 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 
-      compare(webView.urlChangedCount, 1,
-              "Got an unexpected number of url changes");
+      compare(spy.count, 1, "Got an unexpected number of url changes");
 
       compare(webView.loadsSucceededCount, data.succeeded,
               "Got an unexpected number of successful loads");
@@ -74,8 +77,7 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 
-      compare(webView.urlChangedCount, 1,
-              "Got an unexpected number of url changes");
+      compare(spy.count, 1, "Got an unexpected number of url changes");
 
       compare(webView.loadsStartedCount, 1,
               "Got an unexpected number of started loads");
@@ -86,13 +88,12 @@ TestWebView {
       compare(webView.url, url, "WebView.url is incorrect");
 
       webView.clearLoadEventCounters();
-      urlChangedCount = 0;
+      spy.clear();
 
       webView.url = data.url;
       wait(1000);
 
-      compare(webView.urlChangedCount, 0,
-              "There should have been no url changes");
+      compare(spy.count, 0, "There should have been no url changes");
 
       compare(webView.loadsStartedCount, 0,
               "There should have been no started loads");
