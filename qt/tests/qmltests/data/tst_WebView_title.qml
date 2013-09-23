@@ -6,7 +6,11 @@ TestWebView {
   id: webView
   focus: true
 
-  property var titleChangedCount: 0
+  SignalSpy {
+    id: spy
+    target: webView
+    signalName: "titleChanged"
+  }
 
   TestCase {
     id: test
@@ -23,32 +27,27 @@ TestWebView {
 
       compare(webView.title, "Test",
               "WebView.title should match the document title");
-      compare(titleChangedCount, 2,
+      compare(spy.count, 2,
               "There should have been 2 title changes during the load");
 
       var test = "This is a test title";
 
-      titleChangedCount = 0;
+      spy.clear();
       webView.getTestApi().documentTitle = test;
-      verify(waitFor(function() { return titleChangedCount > 0; }),
-             "Timed out waiting for the title to change");
+      spy.wait();
 
       compare(webView.title, test,
               "WebView.title should match the new title");
 
-      titleChangedCount = 0;
+      spy.clear();
       webView.reload();
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful reload");
 
       compare(webView.title, "Test",
               "WebView.title should match the document title after a reload");
-      compare(titleChangedCount, 2,
+      compare(spy.count, 2,
               "There should have been 2 title changes during the reload");
     }
-  }
-
-  onTitleChanged: {
-    titleChangedCount++;
   }
 }

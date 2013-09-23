@@ -6,10 +6,10 @@ TestWebView {
   id: webView
   focus: true
 
-  property var loadingStateChangeCount: 0
-
-  function loadingStateChanged() {
-    loadingStateChangeCount++;
+  SignalSpy {
+    id: spy
+    target: webView
+    signalName: "loadingChanged"
   }
 
   TestCase {
@@ -27,7 +27,7 @@ TestWebView {
 
       compare(webView.loading, false,
               "WebView.loading should be false after we finish loading");
-      compare(loadingStateChangeCount, 2,
+      compare(spy.count, 2,
               "WebView.loading should have changed twice during the load");
     }
   }

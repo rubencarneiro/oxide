@@ -17,10 +17,6 @@ TestWebView {
     lastUrl = url;
   }
 
-  function componentCompleted() {
-    lastUrl = webView.url;
-  }
-
   TestCase {
     id: test
     name: "WebView_loadUrl"
@@ -107,5 +103,9 @@ TestWebView {
       compare(webView.url, url,
               "WebView.url should match the original url");
     }
+  }
+
+  Component.onCompleted: {
+    lastUrl = webView.url;
   }
 }
