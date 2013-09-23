@@ -6,4 +6,4 @@ SOURCES += tst_qmltests.cc
 include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
 
 IMPORTPATH = $${OXIDE_BUILD_OUT}/imports
-QMLSOURCEPATH = $${_PRO_FILE_PWD_}/qml
+TESTDATAPATH = $${_PRO_FILE_PWD_}/data
