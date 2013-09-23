@@ -4,39 +4,44 @@ import com.canonical.Oxide 0.1
 import "TestUtils.js" as TestUtils
 
 WebView {
-  property var _testApi: null
+  id: webView
 
-  property var loadsStartedCount: 0
-  property var loadsSucceededCount: 0
-  property var loadsFailedCount: 0
-  property var loadsStoppedCount: 0
+  readonly property alias loadsStartedCount: webView.qtest_loadsStartedCount
+  readonly property alias loadsSucceededCount: webView.qtest_loadsSucceededCount
+  readonly property alias loadsFailedCount: webView.qtest_loadsFailedCount
+  readonly property alias loadsStoppedCount: webView.qtest_loadsStoppedCount
 
-  function resetLoadCounters() {
-    loadsStartedCount = 0;
-    loadsSucceededCount = 0;
-    loadsFailedCount = 0;
-    loadsStoppedCount = 0;
+  function clearLoadEventCounters() {
+    qtest_loadsStartedCount = 0;
+    qtest_loadsSucceededCount = 0;
+    qtest_loadsFailedCount = 0;
+    qtest_loadsStoppedCount = 0;
+
+    qtest_expectedLoadsStartedCount = 0;
+    qtest_expectedLoadsSucceededCount = 0;
+    qtest_expectedLoadsFailedCount = 0;
+    qtest_expectedLoadsStoppedCount = 0;
   }
 
   function getTestApi() {
-    if (!_testApi) {
-      _testApi = new TestUtils.TestApiHost(this);
+    if (!qtest_testApi) {
+      qtest_testApi = new TestUtils.TestApiHost(this);
     }
-    return _testApi;
+    return qtest_testApi;
   }
 
-  function waitForLoadStarted(count) {
-    if (count === undefined) {
-      count = loadsStartedCount + 1;
-    }
-    return waitFor(function() { return loadsStartedCount == count; });
+  function waitForLoadStarted(timeout) {
+    var expected = ++qtest_expectedLoadsStartedCount;
+    return waitFor(
+        function() { return expected == qtest_loadsStartedCount; },
+        timeout);
   }
 
-  function waitForLoadSucceeded(count) {
-    if (count === undefined) {
-      count = loadsSucceededCount + 1;
-    }
-    return waitFor(function() { return loadsSucceededCount == count; });
+  function waitForLoadSucceeded(timeout) {
+    var expected = ++qtest_expectedLoadsSucceededCount;
+    return waitFor(
+        function() { return expected == qtest_loadsSucceededCount; },
+        timeout);
   }
 
   function waitFor(predicate, timeout) {
@@ -49,6 +54,18 @@ WebView {
     return predicate();
   }
 
+  property var qtest_testApi: null
+
+  property int qtest_loadsStartedCount: 0
+  property int qtest_loadsSucceededCount: 0
+  property int qtest_loadsFailedCount: 0
+  property int qtest_loadsStoppedCount: 0
+
+  property int qtest_expectedLoadsStartedCount: 0
+  property int qtest_expectedLoadsSucceededCount: 0
+  property int qtest_expectedLoadsFailedCount: 0
+  property int qtest_expectedLoadsStoppedCount: 0
+
   context: WebViewContext {
     userScripts: [
       UserScript {
@@ -59,15 +76,21 @@ WebView {
     ]
   }
 
-  onLoadingChanged: {
-    if (loadStatus.status == LoadStatus.LoadStatusStarted) {
-      loadsStartedCount++;
-    } else if (loadStatus.status == LoadStatus.LoadStatusSucceeded) {
-      loadsSucceededCount++;
-    } else if (loadStatus.status == LoadStatus.LoadStatusStopped) {
-      loadsStoppedCount++;
-    } else if (loadStatus.status == LoadStatus.LoadStatusFailed) {
-      loadsFailedCount++;
+  Item {
+    Component.onCompleted: {
+      webView.loadingChanged.connect(onLoadingChanged);
+    }
+
+    function onLoadingChanged(loadStatus) {
+      if (loadStatus.status == LoadStatus.LoadStatusStarted) {
+        webView.qtest_loadsStartedCount++;
+      } else if (loadStatus.status == LoadStatus.LoadStatusSucceeded) {
+        webView.qtest_loadsSucceededCount++;
+      } else if (loadStatus.status == LoadStatus.LoadStatusStopped) {
+        webView.qtest_loadsStoppedCount++;
+      } else if (loadStatus.status == LoadStatus.LoadStatusFailed) {
+        webView.qtest_loadsFailedCount++;
+      }
     }
   }
 

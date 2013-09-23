@@ -23,7 +23,7 @@ TestWebView {
     when: windowShown
 
     function init() {
-      webView.resetLoadCounters();
+      webView.clearLoadEventCounters();
       urlChangedCount = 0;
     }
 
@@ -85,7 +85,7 @@ TestWebView {
               "Got an unexpected number of failed loads");
       compare(webView.url, url, "WebView.url is incorrect");
 
-      webView.resetLoadCounters();
+      webView.clearLoadEventCounters();
       urlChangedCount = 0;
 
       webView.url = data.url;
