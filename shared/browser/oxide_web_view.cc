@@ -205,10 +205,18 @@ bool WebView::CanGoForward() const {
 }
 
 void WebView::GoBack() {
+  if (!CanGoBack()) {
+    return;
+  }
+
   web_contents_->GetController().GoBack();
 }
 
 void WebView::GoForward() {
+  if (!CanGoForward()) {
+    return;
+  }
+
   web_contents_->GetController().GoForward();
 }
 
