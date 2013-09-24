@@ -44,11 +44,18 @@ WebView {
         timeout);
   }
 
+  function waitForLoadStopped(timeout) {
+    var expected = ++qtest_expectedLoadsStoppedCount;
+    return waitFor(
+        function() { return expected == qtest_loadsStoppedCount; },
+        timeout);
+  }
+
   function waitFor(predicate, timeout) {
     timeout = timeout || 5000;
     var i = 0;
     while (i < timeout && !predicate()) {
-      _testResult.wait(50);
+      qtest_testResult.wait(50);
       i += 50;
     }
     return predicate();
@@ -94,5 +101,5 @@ WebView {
     }
   }
 
-  TestResult { id: _testResult }
+  TestResult { id: qtest_testResult }
 }
