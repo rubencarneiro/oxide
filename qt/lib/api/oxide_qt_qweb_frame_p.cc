@@ -31,7 +31,11 @@ namespace qt {
 QWebFrameBasePrivate::QWebFrameBasePrivate(WebFrame* owner) :
     owner_(owner) {}
 
-QWebFrameBasePrivate::~QWebFrameBasePrivate() {}
+QWebFrameBasePrivate::~QWebFrameBasePrivate() {
+  while (!outgoing_message_requests_.isEmpty()) {
+    removeOutgoingMessageRequest(outgoing_message_requests_.first());
+  }
+}
 
 QWebFrameBasePrivate* QWebFrameBasePrivate::get(OxideQWebFrameBase* frame) {
   return frame->d_func();

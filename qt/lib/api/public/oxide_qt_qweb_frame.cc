@@ -33,13 +33,7 @@ OxideQWebFrameBase::OxideQWebFrameBase(oxide::qt::QWebFrameBasePrivate& dd) :
     QObject(),
     d_ptr(&dd) {}
 
-OxideQWebFrameBase::~OxideQWebFrameBase() {
-  Q_D(oxide::qt::QWebFrameBase);
-
-  for (int i = 0; i < d->outgoing_message_requests().size(); ++i) {
-    d->removeOutgoingMessageRequest(d->outgoing_message_requests().at(i));
-  }
-}
+OxideQWebFrameBase::~OxideQWebFrameBase() {}
 
 QUrl OxideQWebFrameBase::url() const {
   Q_D(const oxide::qt::QWebFrameBase);
