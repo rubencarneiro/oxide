@@ -48,6 +48,8 @@ def main():
   has_hg = os.path.isdir(os.path.join(chromium_src_path, ".hg"))
   if has_hg:
     CheckCall(["hg", "qpop", "-a"], chromium_src_path)
+    os.rename(os.path.join(chromium_src_path, ".hg"),
+              os.path.join(chromium_src_path, ".hg.bak"))
 
   CheckCall(["gclient", "sync", "--force"], chromiumdir)
 
@@ -75,6 +77,8 @@ def main():
     for patch in patches:
       CheckCall(["hg", "qimport", patch], chromium_src_path)
   else:
+    os.rename(os.path.join(chromium_src_path, ".hg.bak"),
+              os.path.join(chromium_src_path, ".hg"))
     CheckCall(["hg", "addremove"], chromium_src_path)
     CheckCall(["hg", "ci", "-m", "Updated with client.py"], chromium_src_path)
 
