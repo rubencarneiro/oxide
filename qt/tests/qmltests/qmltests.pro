@@ -1,9 +1,7 @@
-TEMPLATE = app
-TARGET = tst_qmltests
-CONFIG += warn_on oxideqmltestcase
-SOURCES += tst_qmltests.cc
+TEMPLATE = subdirs
 
-include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
+noprofile.file = noprofile.pro
+SUBDIRS += noprofile
 
-IMPORTPATH = $${OXIDE_BUILD_OUT}/imports
-TESTDATAPATH = $${_PRO_FILE_PWD_}/data
+profile.file = profile.pro
+SUBDIRS += profile

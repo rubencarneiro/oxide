@@ -23,9 +23,11 @@ import os
 import os.path
 import posixpath
 from select import select
+import shutil
 import SimpleHTTPServer
 from subprocess import Popen
 import sys
+import tempfile
 import thread
 import urllib
 
@@ -84,14 +86,21 @@ class Options(OptionParser):
                     help="Run a HTTP server from the specified directory")
     self.add_option("-p", "--server-port", action="store", type="int", dest="port",
                     help="Specify a port for the HTTP server", default=8080)
+    self.add_option("-t", "--temp-profile", action="store_true", dest="temp_profile",
+                    help="Create a temporary data directory for oxide")
 
 class Runner(object):
   def __init__(self, options):
     self._should_shutdown = False
     self._rlist = []
     self._p = None
+    self._temp_profile = None
 
     (opts, args) = options.parse_args()
+
+    if (opts.temp_profile):
+      self._temp_profile = tempfile.mkdtemp()
+      os.environ["OXIDE_TESTING_DATA_PATH"] = self._temp_profile
 
     http_path = os.path.abspath(opts.server) if opts.server is not None else None
     http_port = opts.port if opts.port is not None else 8080
@@ -121,6 +130,9 @@ class Runner(object):
       (r, w, x) = select(self._rlist, [], [])
       for i in r:
         i.handle_event()
+
+    if self._temp_profile is not None:
+      shutil.rmtree(self._temp_profile)
 
     return self._p.returncode if self._p is not None else 0
 

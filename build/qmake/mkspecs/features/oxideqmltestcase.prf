@@ -12,7 +12,9 @@ isEmpty(TESTDATAPATH):TESTDATAPATH = $${_PRO_FILE_PWD_}
 
 check.commands = OXIDE_NO_SANDBOX=1
 check.commands += OXIDE_RESOURCE_PATH=$$CHROMIUM_OUT_PLAT_DIR
-check.commands += python $${OXIDE_SRC_ROOT}/qt/tests/utils/runtests.py -s $${TESTDATAPATH} -p 8080 --
+check.commands += python $${OXIDE_SRC_ROOT}/qt/tests/utils/runtests.py -s $${TESTDATAPATH} -p 8080
+oxideqmltestcase-tmp-profile:check.commands += -t
+check.commands += --
 load(testcase)
 
 check.commands = cd $$_DESTDIR && $$check.commands

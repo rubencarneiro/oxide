@@ -15,11 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include <QDir>
 #include <QLatin1String>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
+#include <QString>
 #include <QtGlobal>
+#include <QUrl>
+#include <QVariant>
 
 class OxideQmlTestingPlugin : public QQmlExtensionPlugin {
   Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QQmlExtensionInterface" FILE "oxide_qml_testing_plugin.json")
@@ -28,9 +32,14 @@ class OxideQmlTestingPlugin : public QQmlExtensionPlugin {
   void initializeEngine(QQmlEngine* engine, const char* uri) {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide.Testing"));
 
-    engine->rootContext()->setContextProperty(
-        "OXIDE_TESTING_DATA_PATH",
-        QVariant(qgetenv("OXIDE_TESTING_DATA_PATH")));
+    QUrl url;
+    QString path(QString(qgetenv("OXIDE_TESTING_DATA_PATH")));
+    if (!path.isEmpty()) {
+      QDir dir(path);
+      url = QUrl::fromLocalFile(dir.absolutePath());
+    }
+    engine->rootContext()->setContextProperty("OXIDE_TESTING_DATA_PATH",
+                                              QVariant(url));
   }
 
   void registerTypes(const char* uri) {
