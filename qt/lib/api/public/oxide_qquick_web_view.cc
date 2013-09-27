@@ -169,28 +169,28 @@ void OxideQQuickWebView::removeMessageHandler(
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
   Q_D(const oxide::qt::QQuickWebView);
 
-  return d->popup_menu_;
+  return d->popup_menu;
 }
 
 void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
   Q_D(oxide::qt::QQuickWebView);
 
-  d->popup_menu_ = popup_menu;
+  d->popup_menu = popup_menu;
   emit popupMenuChanged();
 }
 
 OxideQQuickWebViewContext* OxideQQuickWebView::context() const {
   Q_D(const oxide::qt::QQuickWebView);
 
-  return d->context_;
+  return d->context;
 }
 
 void OxideQQuickWebView::setContext(OxideQQuickWebViewContext* context) {
   Q_D(oxide::qt::QQuickWebView);
 
   if (!d->web_contents()) {
-    Q_ASSERT(!d->context_);
-    d->context_ = context;
+    Q_ASSERT(!d->context);
+    d->context = context;
   }
 }
 

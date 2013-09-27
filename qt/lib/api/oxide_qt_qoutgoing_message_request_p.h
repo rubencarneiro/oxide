@@ -77,8 +77,8 @@ class QQuickOutgoingMessageRequestPrivate :
   static QQuickOutgoingMessageRequestPrivate* Create(
       OxideQQuickOutgoingMessageRequest* q);
 
-  QJSValue reply_callback_;
-  QJSValue error_callback_;
+  QJSValue reply_callback;
+  QJSValue error_callback;
 
  private:
   QQuickOutgoingMessageRequestPrivate(OxideQQuickOutgoingMessageRequest* q);

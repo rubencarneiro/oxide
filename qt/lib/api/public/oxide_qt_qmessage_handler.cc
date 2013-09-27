@@ -57,13 +57,13 @@ OxideQQuickMessageHandler::~OxideQQuickMessageHandler() {}
 QJSValue OxideQQuickMessageHandler::callback() const {
   Q_D(const oxide::qt::QQuickMessageHandler);
 
-  return d->callback_;
+  return d->callback;
 }
 
 void OxideQQuickMessageHandler::setCallback(const QJSValue& callback) {
   Q_D(oxide::qt::QQuickMessageHandler);
 
-  if (callback.strictlyEquals(d->callback_)) {
+  if (callback.strictlyEquals(d->callback)) {
     return;
   }
 
@@ -72,6 +72,6 @@ void OxideQQuickMessageHandler::setCallback(const QJSValue& callback) {
     return;
   }
 
-  d->callback_ = callback;
+  d->callback = callback;
   emit callbackChanged();
 }

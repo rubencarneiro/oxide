@@ -77,11 +77,11 @@ void QQuickMessageHandlerPrivate::OnReceiveMessage(
   QQmlEngine::setObjectOwnership(message, QQmlEngine::JavaScriptOwnership);
 
   QJSValueList args;
-  args.append(callback_.engine()->newQObject(message));
-  args.append(callback_.engine()->newQObject(
+  args.append(callback.engine()->newQObject(message));
+  args.append(callback.engine()->newQObject(
       qobject_cast<OxideQQuickWebFrame *>(frame)));
 
-  callback_.call(args);
+  callback.call(args);
 }
 
 QQuickMessageHandlerPrivate::QQuickMessageHandlerPrivate(

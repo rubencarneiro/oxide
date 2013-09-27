@@ -85,9 +85,9 @@ QQuickOutgoingMessageRequestPrivate::QQuickOutgoingMessageRequestPrivate(
 void QQuickOutgoingMessageRequestPrivate::OnReceiveReply(
     const QVariant& args) {
   QJSValueList jsargs;
-  jsargs.append(reply_callback_.engine()->toScriptValue(args));
+  jsargs.append(reply_callback.engine()->toScriptValue(args));
 
-  reply_callback_.call(jsargs);
+  reply_callback.call(jsargs);
 }
 
 void QQuickOutgoingMessageRequestPrivate::OnReceiveError(
@@ -95,7 +95,7 @@ void QQuickOutgoingMessageRequestPrivate::OnReceiveError(
   QJSValueList jsargs;
   jsargs.append(QJSValue(msg));
 
-  error_callback_.call(jsargs);
+  error_callback.call(jsargs);
 }
 
 // static

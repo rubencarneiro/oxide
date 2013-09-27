@@ -37,14 +37,14 @@ OxideQQuickOutgoingMessageRequest::~OxideQQuickOutgoingMessageRequest() {}
 QJSValue OxideQQuickOutgoingMessageRequest::replyCallback() const {
   Q_D(const oxide::qt::QQuickOutgoingMessageRequest);
 
-  return d->reply_callback_;
+  return d->reply_callback;
 }
 
 void OxideQQuickOutgoingMessageRequest::setReplyCallback(
     const QJSValue& callback) {
   Q_D(oxide::qt::QQuickOutgoingMessageRequest);
 
-  if (d->reply_callback_.strictlyEquals(callback)) {
+  if (d->reply_callback.strictlyEquals(callback)) {
     return;
   }
 
@@ -53,21 +53,21 @@ void OxideQQuickOutgoingMessageRequest::setReplyCallback(
     return;
   }
 
-  d->reply_callback_ = callback;
+  d->reply_callback = callback;
   emit replyCallbackChanged();
 }
 
 QJSValue OxideQQuickOutgoingMessageRequest::errorCallback() const {
   Q_D(const oxide::qt::QQuickOutgoingMessageRequest);
 
-  return d->error_callback_;
+  return d->error_callback;
 }
 
 void OxideQQuickOutgoingMessageRequest::setErrorCallback(
     const QJSValue& callback) {
   Q_D(oxide::qt::QQuickOutgoingMessageRequest);
 
-  if (d->error_callback_.strictlyEquals(callback)) {
+  if (d->error_callback.strictlyEquals(callback)) {
     return;
   }
 
@@ -76,6 +76,6 @@ void OxideQQuickOutgoingMessageRequest::setErrorCallback(
     return;
   }
 
-  d->error_callback_ = callback;
+  d->error_callback = callback;
   emit errorCallbackChanged();
 }

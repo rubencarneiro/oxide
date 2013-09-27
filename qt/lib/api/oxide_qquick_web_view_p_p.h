@@ -101,8 +101,8 @@ class QQuickWebViewPrivate : public oxide::WebView,
   QUrl url() const;
   void setUrl(const QUrl& url);
 
-  OxideQQuickWebViewContext* context_;
-  QQmlComponent* popup_menu_;
+  OxideQQuickWebViewContext* context;
+  QQmlComponent* popup_menu;
 
  private:
   QQuickWebViewPrivate(OxideQQuickWebView* view);

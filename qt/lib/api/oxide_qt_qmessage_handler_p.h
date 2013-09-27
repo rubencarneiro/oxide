@@ -79,7 +79,7 @@ class QQuickMessageHandlerPrivate FINAL : public QMessageHandlerBasePrivate {
  public:
   static QQuickMessageHandlerPrivate* Create(OxideQQuickMessageHandler* q);
 
-  QJSValue callback_;
+  QJSValue callback;
 
  private:
   QQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);

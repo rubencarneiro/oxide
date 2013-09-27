@@ -39,8 +39,8 @@ namespace oxide {
 namespace qt {
 
 QQuickWebViewPrivate::QQuickWebViewPrivate(OxideQQuickWebView* view) :
-    context_(NULL),
-    popup_menu_(NULL),
+    context(NULL),
+    popup_menu(NULL),
     q_ptr(view),
     init_props_(new InitData()),
     weak_factory_(this) {}
@@ -180,7 +180,7 @@ void QQuickWebViewPrivate::componentComplete() {
 
   Q_ASSERT(init_props_);
 
-  if (!context_) {
+  if (!context) {
     // Ok, we handle the default context a bit differently. If our context
     // comes from setContext(), then we don't hold a strong reference to it
     // because it will be owned by someone else in the QML object
@@ -188,10 +188,10 @@ void QQuickWebViewPrivate::componentComplete() {
     // has no QObject parent, so we use reference counting for it instead to
     // ensure that it is freed once all webviews are closed
     default_context_.reset(OxideQQuickWebViewContext::defaultContext());
-    context_ = default_context_.data();
+    context = default_context_.data();
   }
 
-  Init(QWebViewContextBasePrivate::get(context_)->GetContext(),
+  Init(QWebViewContextBasePrivate::get(context)->GetContext(),
        this, init_props_->incognito,
        gfx::Size(qRound(q->width()), qRound(q->height())));
 
