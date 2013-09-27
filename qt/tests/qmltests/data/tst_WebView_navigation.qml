@@ -163,8 +163,8 @@ TestWebView {
       compare(webView.loadsStoppedCount, 0,
               "There should be no stopped loads yet");
 
-      var doStop = function(status) {
-        if (status.status == LoadStatus.LoadStatusStarted) {
+      var doStop = function(ev) {
+        if (ev.type == LoadEvent.TypeStarted) {
           webView.stop();
         }
       };

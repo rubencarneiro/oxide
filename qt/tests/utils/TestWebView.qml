@@ -90,14 +90,14 @@ WebView {
       webView.loadingChanged.connect(onLoadingChanged);
     }
 
-    function onLoadingChanged(loadStatus) {
-      if (loadStatus.status == LoadStatus.LoadStatusStarted) {
+    function onLoadingChanged(loadEvent) {
+      if (loadEvent.type == LoadEvent.TypeStarted) {
         webView.qtest_loadsStartedCount++;
-      } else if (loadStatus.status == LoadStatus.LoadStatusSucceeded) {
+      } else if (loadEvent.type == LoadEvent.TypeSucceeded) {
         webView.qtest_loadsSucceededCount++;
-      } else if (loadStatus.status == LoadStatus.LoadStatusStopped) {
+      } else if (loadEvent.type == LoadEvent.TypeStopped) {
         webView.qtest_loadsStoppedCount++;
-      } else if (loadStatus.status == LoadStatus.LoadStatusFailed) {
+      } else if (loadEvent.type == LoadEvent.TypeFailed) {
         webView.qtest_loadsFailedCount++;
       }
     }

@@ -15,61 +15,61 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_q_load_status_p.h"
+#include "oxide_q_load_event_p.h"
 
 #include "net/base/net_errors.h"
 
 namespace oxide {
 namespace qt {
 
-QLoadStatusPrivate::QLoadStatusPrivate(const QUrl& url,
-                                       OxideQLoadStatus::LoadStatus status,
-                                       OxideQLoadStatus::ErrorCode error,
-                                       const QString& error_description) :
+QLoadEventPrivate::QLoadEventPrivate(const QUrl& url,
+                                     OxideQLoadEvent::Type type,
+                                     OxideQLoadEvent::ErrorCode error,
+                                     const QString& error_description) :
     url_(url),
-    status_(status),
+    type_(type),
     error_(error),
     error_string_(error_description) {}
 
 // static
-OxideQLoadStatus::ErrorCode
-QLoadStatusPrivate::ChromeErrorCodeToOxideErrorCode(int error_code) {
+OxideQLoadEvent::ErrorCode
+QLoadEventPrivate::ChromeErrorCodeToOxideErrorCode(int error_code) {
   switch (error_code) {
     case 0:
-      return OxideQLoadStatus::ErrorNone;
+      return OxideQLoadEvent::ErrorNone;
     case net::ERR_UNEXPECTED:
-      return OxideQLoadStatus::ErrorUnexpected;
+      return OxideQLoadEvent::ErrorUnexpected;
     case net::ERR_NAME_NOT_RESOLVED:
-      return OxideQLoadStatus::ErrorNameNotResolved;
+      return OxideQLoadEvent::ErrorNameNotResolved;
     default:
-      return OxideQLoadStatus::ErrorFailed;
+      return OxideQLoadEvent::ErrorFailed;
   }
 }
 
 // static
-QLoadStatusPrivate* QLoadStatusPrivate::Create(
+QLoadEventPrivate* QLoadEventPrivate::Create(
     const QUrl& url,
-    OxideQLoadStatus::LoadStatus status,
+    OxideQLoadEvent::Type type,
     int error_code,
     const QString& error_description) {
-  return new QLoadStatusPrivate(url, status,
-                                ChromeErrorCodeToOxideErrorCode(error_code),
-                                error_description);
+  return new QLoadEventPrivate(url, type,
+                               ChromeErrorCodeToOxideErrorCode(error_code),
+                               error_description);
 }
 
-QUrl QLoadStatusPrivate::url() const {
+QUrl QLoadEventPrivate::url() const {
   return url_;
 }
 
-OxideQLoadStatus::LoadStatus QLoadStatusPrivate::status() const {
-  return status_;
+OxideQLoadEvent::Type QLoadEventPrivate::type() const {
+  return type_;
 }
 
-OxideQLoadStatus::ErrorCode QLoadStatusPrivate::error() const {
+OxideQLoadEvent::ErrorCode QLoadEventPrivate::error() const {
   return error_;
 }
 
-QString QLoadStatusPrivate::errorString() const {
+QString QLoadEventPrivate::errorString() const {
   return error_string_;
 }
 

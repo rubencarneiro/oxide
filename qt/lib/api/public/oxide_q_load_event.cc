@@ -15,40 +15,40 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_q_load_status.h"
+#include "oxide_q_load_event.h"
 
-#include "qt/lib/api/oxide_q_load_status_p.h"
+#include "qt/lib/api/oxide_q_load_event_p.h"
 
-OxideQLoadStatus::~OxideQLoadStatus() {}
+OxideQLoadEvent::~OxideQLoadEvent() {}
 
-QUrl OxideQLoadStatus::url() const {
-  Q_D(const oxide::qt::QLoadStatus);
+QUrl OxideQLoadEvent::url() const {
+  Q_D(const oxide::qt::QLoadEvent);
 
   return d->url();
 }
 
-OxideQLoadStatus::LoadStatus OxideQLoadStatus::status() const {
-  Q_D(const oxide::qt::QLoadStatus);
+OxideQLoadEvent::Type OxideQLoadEvent::type() const {
+  Q_D(const oxide::qt::QLoadEvent);
 
-  return d->status();
+  return d->type();
 }
 
-OxideQLoadStatus::ErrorCode OxideQLoadStatus::error() const {
-  Q_D(const oxide::qt::QLoadStatus);
+OxideQLoadEvent::ErrorCode OxideQLoadEvent::error() const {
+  Q_D(const oxide::qt::QLoadEvent);
 
   return d->error();
 }
 
-QString OxideQLoadStatus::errorString() const {
-  Q_D(const oxide::qt::QLoadStatus);
+QString OxideQLoadEvent::errorString() const {
+  Q_D(const oxide::qt::QLoadEvent);
 
   return d->errorString();
 }
 
-OxideQLoadStatus::OxideQLoadStatus(const QUrl& url,
-                                   LoadStatus status,
-                                   int error_code,
-                                   const QString& error_description) :
+OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
+                                 Type type,
+                                 int error_code,
+                                 const QString& error_description) :
     QObject(),
-    d_ptr(oxide::qt::QLoadStatusPrivate::Create(
-        url, status, error_code, error_description)) {}
+    d_ptr(oxide::qt::QLoadEventPrivate::Create(
+        url, type, error_code, error_description)) {}

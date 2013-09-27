@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_API_PUBLIC_Q_LOAD_STATUS_H_
-#define _OXIDE_QT_LIB_API_PUBLIC_Q_LOAD_STATUS_H_
+#ifndef _OXIDE_QT_LIB_API_PUBLIC_Q_LOAD_EVENT_H_
+#define _OXIDE_QT_LIB_API_PUBLIC_Q_LOAD_EVENT_H_
 
 #include <QObject>
 #include <QScopedPointer>
@@ -27,31 +27,31 @@
 
 namespace oxide {
 namespace qt {
-class QLoadStatusPrivate;
+class QLoadEventPrivate;
 class QQuickWebViewPrivate;
 }
 }
 
-class Q_DECL_EXPORT OxideQLoadStatus : public QObject {
+class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url)
-  Q_PROPERTY(LoadStatus status READ status)
+  Q_PROPERTY(Type type READ type)
   Q_PROPERTY(ErrorCode error READ error)
   Q_PROPERTY(QString errorString READ errorString)
 
-  Q_ENUMS(LoadStatus)
+  Q_ENUMS(Type)
   Q_ENUMS(ErrorCode)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QLoadStatus)
+  Q_DECLARE_PRIVATE(oxide::qt::QLoadEvent)
 
  public:
-  virtual ~OxideQLoadStatus();
+  virtual ~OxideQLoadEvent();
 
-  enum LoadStatus {
-    LoadStatusStarted,
-    LoadStatusStopped,
-    LoadStatusSucceeded,
-    LoadStatusFailed
+  enum Type {
+    TypeStarted,
+    TypeStopped,
+    TypeSucceeded,
+    TypeFailed
   };
 
   enum ErrorCode {
@@ -62,22 +62,22 @@ class Q_DECL_EXPORT OxideQLoadStatus : public QObject {
   };
 
   QUrl url() const;
-  LoadStatus status() const;
+  Type type() const;
   ErrorCode error() const;
   QString errorString() const;
 
  protected:
   friend class oxide::qt::QQuickWebViewPrivate;
 
-  Q_DECL_HIDDEN OxideQLoadStatus(const QUrl& url,
-                                 LoadStatus status,
-                                 int error_code = 0,
-                                 const QString& error_string = QString());
+  Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
+                                Type type,
+                                int error_code = 0,
+                                const QString& error_string = QString());
 
  private:
-  QScopedPointer<oxide::qt::QLoadStatusPrivate> d_ptr;
+  QScopedPointer<oxide::qt::QLoadEventPrivate> d_ptr;
 };
 
-QML_DECLARE_TYPE(OxideQLoadStatus)
+QML_DECLARE_TYPE(OxideQLoadEvent)
 
-#endif // _OXIDE_QT_LIB_API_PUBLIC_Q_LOAD_STATUS_H_
+#endif // _OXIDE_QT_LIB_API_PUBLIC_Q_LOAD_EVENT_H_

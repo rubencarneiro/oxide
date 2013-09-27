@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_API_Q_LOAD_STATUS_P_H_
-#define _OXIDE_QT_LIB_API_Q_LOAD_STATUS_P_H_
+#ifndef _OXIDE_QT_LIB_API_Q_LOAD_EVENT_P_H_
+#define _OXIDE_QT_LIB_API_Q_LOAD_EVENT_P_H_
 
 #include <QString>
 #include <QUrl>
@@ -24,41 +24,41 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 
-#include "qt/lib/api/public/oxide_q_load_status.h"
+#include "qt/lib/api/public/oxide_q_load_event.h"
 
 namespace oxide {
 namespace qt {
 
-class QLoadStatusPrivate FINAL {
+class QLoadEventPrivate FINAL {
  public:
-  static QLoadStatusPrivate* Create(const QUrl& url,
-                                    OxideQLoadStatus::LoadStatus status,
-                                    int error_code,
-                                    const QString& error_description);
+  static QLoadEventPrivate* Create(const QUrl& url,
+                                   OxideQLoadEvent::Type type,
+                                   int error_code,
+                                   const QString& error_description);
 
   QUrl url() const;
-  OxideQLoadStatus::LoadStatus status() const;
-  OxideQLoadStatus::ErrorCode error() const;
+  OxideQLoadEvent::Type type() const;
+  OxideQLoadEvent::ErrorCode error() const;
   QString errorString() const;
 
  private:
-  QLoadStatusPrivate(const QUrl& url,
-                     OxideQLoadStatus::LoadStatus status,
-                     OxideQLoadStatus::ErrorCode error,
+  QLoadEventPrivate(const QUrl& url,
+                     OxideQLoadEvent::Type type,
+                     OxideQLoadEvent::ErrorCode error,
                      const QString& error_description);
 
-  static OxideQLoadStatus::ErrorCode ChromeErrorCodeToOxideErrorCode(
+  static OxideQLoadEvent::ErrorCode ChromeErrorCodeToOxideErrorCode(
       int error_code);
 
   QUrl url_;
-  OxideQLoadStatus::LoadStatus status_;
-  OxideQLoadStatus::ErrorCode error_;
+  OxideQLoadEvent::Type type_;
+  OxideQLoadEvent::ErrorCode error_;
   QString error_string_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QLoadStatusPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(QLoadEventPrivate);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_API_Q_LOAD_STATUS_P_H_
+#endif // _OXIDE_QT_LIB_API_Q_LOAD_EVENT_P_H_
