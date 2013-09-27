@@ -39,19 +39,13 @@ class PythonHandlerSandboxGlobal(dict):
       '__builtins__': __builtins__
     })
 
-  def __setitem__(self, key, value):
-    raise TypeError("PythonHandlerSandboxGlobal does not support assignment")
-
 class PythonHandlerSandbox(object):
   def __init__(self, f):
-    self._locals = dict()
-
-    _globals = PythonHandlerSandboxGlobal()
-
-    execfile(f, _globals, self._locals)
+    self._globals = PythonHandlerSandboxGlobal()
+    execfile(f, self._globals)
 
   def run_handler(self, request):
-    self._locals["handler"](request)
+    self._globals["handler"](request)
 
 class PythonHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   def __init__(self, request, translated_path):
@@ -111,7 +105,8 @@ class PythonHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       return
 
     self.wfile.flush()
-    self._request.wfile.write(self.wfile.getvalue())
+    self.wfile.seek(0)
+    shutil.copyfileobj(self.wfile, self._request.wfile)
     self.wfile.close()
 
 class TestProcess(object):
