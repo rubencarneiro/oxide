@@ -18,7 +18,6 @@
 #include "oxide_qquick_web_view_p_p.h"
 
 #include <QPointF>
-#include <QQmlEngine>
 #include <QQuickWindow>
 #include <QSizeF>
 #include <QString>
@@ -74,23 +73,17 @@ void QQuickWebViewPrivate::OnLoadStarted(const GURL& validated_url,
                                          bool is_error_frame) {
   Q_Q(OxideQQuickWebView);
 
-  OxideQLoadStatus* status =
-      new OxideQLoadStatus(QUrl(QString::fromStdString(validated_url.spec())),
-                           OxideQLoadStatus::LoadStatusStarted);
-  QQmlEngine::setObjectOwnership(status, QQmlEngine::JavaScriptOwnership);
-
-  emit q->loadingChanged(status);
+  OxideQLoadStatus status(QUrl(QString::fromStdString(validated_url.spec())),
+                          OxideQLoadStatus::LoadStatusStarted);
+  emit q->loadingChanged(&status);
 }
 
 void QQuickWebViewPrivate::OnLoadStopped(const GURL& validated_url) {
   Q_Q(OxideQQuickWebView);
 
-  OxideQLoadStatus* status =
-      new OxideQLoadStatus(QUrl(QString::fromStdString(validated_url.spec())),
-                           OxideQLoadStatus::LoadStatusStopped);
-  QQmlEngine::setObjectOwnership(status, QQmlEngine::JavaScriptOwnership);
-
-  emit q->loadingChanged(status);
+  OxideQLoadStatus status(QUrl(QString::fromStdString(validated_url.spec())),
+                          OxideQLoadStatus::LoadStatusStopped);
+  emit q->loadingChanged(&status);
 }
 
 void QQuickWebViewPrivate::OnLoadFailed(
@@ -99,25 +92,19 @@ void QQuickWebViewPrivate::OnLoadFailed(
     const std::string& error_description) {
   Q_Q(OxideQQuickWebView);
 
-  OxideQLoadStatus* status =
-      new OxideQLoadStatus(QUrl(QString::fromStdString(validated_url.spec())),
-                           OxideQLoadStatus::LoadStatusFailed,
-                           error_code,
-                           QString::fromStdString(error_description));
-  QQmlEngine::setObjectOwnership(status, QQmlEngine::JavaScriptOwnership);
-
-  emit q->loadingChanged(status);
+  OxideQLoadStatus status(QUrl(QString::fromStdString(validated_url.spec())),
+                          OxideQLoadStatus::LoadStatusFailed,
+                          error_code,
+                          QString::fromStdString(error_description));
+  emit q->loadingChanged(&status);
 }
 
 void QQuickWebViewPrivate::OnLoadSucceeded(const GURL& validated_url) {
   Q_Q(OxideQQuickWebView);
 
-  OxideQLoadStatus* status =
-      new OxideQLoadStatus(QUrl(QString::fromStdString(validated_url.spec())),
-                           OxideQLoadStatus::LoadStatusSucceeded);
-  QQmlEngine::setObjectOwnership(status, QQmlEngine::JavaScriptOwnership);
-
-  emit q->loadingChanged(status);
+  OxideQLoadStatus status(QUrl(QString::fromStdString(validated_url.spec())),
+                          OxideQLoadStatus::LoadStatusSucceeded);
+  emit q->loadingChanged(&status);
 }
 
 oxide::WebFrame* QQuickWebViewPrivate::AllocWebFrame(
