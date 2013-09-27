@@ -1,0 +1,18 @@
+<html>
+<body>
+  <script>
+var name, value;
+var params = document.location.search.replace(/^\?/, "").split("&");
+params.forEach(function(param) {
+  var parts = param.split("=");
+  if (parts[0] == "name") {
+    name = parts[1];
+  } else if (parts[0] == "value") {
+    value = parts[1];
+  }
+});
+
+document.cookie = name + "=" + value + ";expires=" + (new Date(Date.now() + 31536000000)).toUTCString();
+  </script>
+</body>
+</html>

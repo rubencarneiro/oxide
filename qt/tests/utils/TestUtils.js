@@ -53,5 +53,34 @@ TestApiHost.prototype = {
     this._webview.rootFrame.sendMessageNoReply("TestUtils",
                                                "SET-DOCUMENT-TITLE",
                                                { title: title });
+  },
+
+  evaluateCode: function(code, wrap) {
+    var result;
+    var got_error = false;
+    var got_result = false;
+    var r = this._webview.rootFrame.sendMessage(
+        "TestUtils",
+        "EVALUATE-CODE",
+        { code: code,
+          wrap: wrap === undefined ? false : wrap });
+    r.onreply = function(response) {
+      result = response.result;
+      got_result = true;
+    };
+    r.onerror = function(msg) {
+      result = msg;
+      got_error = true;
+    }
+
+    this._webview.waitFor(function() { return got_result || got_error; });
+
+    if (got_error) {
+      throw Error(result);
+    } else if (got_result) {
+      return result;
+    } else {
+      throw Error("Message call timed out");
+    }
   }
 };

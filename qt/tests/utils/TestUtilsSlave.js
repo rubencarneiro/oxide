@@ -22,3 +22,15 @@ oxide.addMessageHandler("GET-DOCUMENT-URI", function(args, msg) {
 oxide.addMessageHandler("SET-DOCUMENT-TITLE", function(args, msg) {
   window.document.title = args.title;
 });
+
+oxide.addMessageHandler("EVALUATE-CODE", function(args, msg) {
+  var code = args.code;
+  if (args.wrap) {
+    code = "(function() {" + code + "})()";
+  }
+  try {
+    msg.reply({result: eval(code)});
+  } catch(e) {
+    msg.error("Caught exception: \"" + e + "\"");
+  }
+});
