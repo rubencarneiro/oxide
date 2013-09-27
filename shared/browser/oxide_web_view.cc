@@ -136,12 +136,13 @@ bool WebView::Init(BrowserContext* context,
   DCHECK(process_handle_.Available()) <<
        "Failed to start the browser components first!";
 
+  context = incognito ?
+      context->GetOffTheRecordContext() :
+      context->GetOriginalContext();
+
   context->AddWebView(this);
 
-  content::WebContents::CreateParams params(
-      incognito ?
-        context->GetOffTheRecordContext() :
-        context->GetOriginalContext());
+  content::WebContents::CreateParams params(context);
   params.initial_size = initial_size;
   web_contents_.reset(content::WebContents::Create(params));
   if (!web_contents_) {
