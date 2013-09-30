@@ -251,8 +251,8 @@ class Runner(object):
       for i in r:
         i.handle_event()
 
-    #if self._temp_profile is not None:
-    #  shutil.rmtree(self._temp_profile)
+    if self._temp_profile is not None:
+      shutil.rmtree(self._temp_profile)
 
     return self._p.returncode if self._p is not None else 0
 
