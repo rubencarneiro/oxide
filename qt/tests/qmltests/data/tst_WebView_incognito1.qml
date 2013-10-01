@@ -5,6 +5,8 @@ import com.canonical.Oxide.Testing 0.1
 TestWebView {
   id: webView
   focus: true
+  width: 200
+  height: 200
 
   TestCase {
     id: test
