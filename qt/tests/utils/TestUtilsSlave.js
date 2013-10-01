@@ -15,17 +15,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-oxide.addMessageHandler("GET-DOCUMENT-URI", function(args, msg) {
+oxide.addMessageHandler("GET-DOCUMENT-URI", function(msg) {
   msg.reply({location: window.document.documentURI});
 });
 
-oxide.addMessageHandler("SET-DOCUMENT-TITLE", function(args, msg) {
-  window.document.title = args.title;
+oxide.addMessageHandler("SET-DOCUMENT-TITLE", function(msg) {
+  window.document.title = msg.args.title;
 });
 
-oxide.addMessageHandler("EVALUATE-CODE", function(args, msg) {
-  var code = args.code;
-  if (args.wrap) {
+oxide.addMessageHandler("EVALUATE-CODE", function(msg) {
+  var code = msg.args.code;
+  if (msg.args.wrap) {
     code = "(function() {" + code + "})()";
   }
   try {
@@ -35,9 +35,9 @@ oxide.addMessageHandler("EVALUATE-CODE", function(args, msg) {
   }
 });
 
-oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(args, msg) {
+oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
   try {
-    var r = document.querySelector(args.selector).getBoundingClientRect();
+    var r = document.querySelector(msg.args.selector).getBoundingClientRect();
     msg.reply({x: r.left, y: r.top, width: r.width, height: r.height});
   } catch(e) {
     msg.error("Caught exception: \"" + e + "\"");

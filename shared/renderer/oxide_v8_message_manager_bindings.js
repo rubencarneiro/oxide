@@ -70,7 +70,9 @@ registerReceiveHandlerNative(function messageHandler(serial, type, id, args) {
       return;
     }
 
-    g_handlers[id].call(null, JSON.parse(args), msg);
+    msg.args = JSON.parse(args);
+
+    g_handlers[id].call(null, msg);
   }
 });
 
