@@ -53,7 +53,7 @@ class Q_DECL_EXPORT OxideQQuickOutgoingMessageRequest :
  protected:
   friend class OxideQQuickWebFrame;
 
-  OxideQQuickOutgoingMessageRequest();
+  Q_DECL_HIDDEN OxideQQuickOutgoingMessageRequest();
 };
 
 QML_DECLARE_TYPE(OxideQQuickOutgoingMessageRequest);

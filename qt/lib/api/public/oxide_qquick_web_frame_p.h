@@ -74,7 +74,7 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public OxideQWebFrameBase {
  protected:
   friend class oxide::qt::WebFrameQQuick;
 
-  OxideQQuickWebFrame(oxide::qt::WebFrameQQuick* owner);
+  Q_DECL_HIDDEN OxideQQuickWebFrame(oxide::qt::WebFrameQQuick* owner);
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebFrame);

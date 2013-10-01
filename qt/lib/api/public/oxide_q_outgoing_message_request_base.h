@@ -36,7 +36,7 @@ class Q_DECL_EXPORT OxideQOutgoingMessageRequestBase : public QObject {
   virtual ~OxideQOutgoingMessageRequestBase();
 
  protected:
-  OxideQOutgoingMessageRequestBase(
+  Q_DECL_HIDDEN OxideQOutgoingMessageRequestBase(
       oxide::qt::QOutgoingMessageRequestBasePrivate& dd);
 
   QScopedPointer<oxide::qt::QOutgoingMessageRequestBasePrivate> d_ptr;

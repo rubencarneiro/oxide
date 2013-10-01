@@ -52,7 +52,7 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
  protected:
   friend class oxide::qt::QMessageHandlerBasePrivate;
 
-  OxideQIncomingMessage(oxide::IncomingMessage* message);
+  Q_DECL_HIDDEN OxideQIncomingMessage(oxide::IncomingMessage* message);
 
  private:
   QScopedPointer<oxide::qt::QIncomingMessagePrivate> d_ptr;

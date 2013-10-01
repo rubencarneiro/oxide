@@ -53,7 +53,7 @@ class Q_DECL_EXPORT OxideQWebFrameBase : public QObject {
   void messageHandlersChanged();
 
  protected:
-  OxideQWebFrameBase(oxide::qt::QWebFrameBasePrivate& dd);
+  Q_DECL_HIDDEN OxideQWebFrameBase(oxide::qt::QWebFrameBasePrivate& dd);
 
   QScopedPointer<oxide::qt::QWebFrameBasePrivate> d_ptr;
 };
