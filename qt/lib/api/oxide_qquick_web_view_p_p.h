@@ -58,7 +58,6 @@ class QQuickWebViewPrivate : public oxide::WebView,
   static QQuickWebViewPrivate* Create(OxideQQuickWebView* view);
   ~QQuickWebViewPrivate();
 
-
   oxide::MessageDispatcherBrowser::MessageHandlerVector
       GetMessageHandlers() const;
 
@@ -100,6 +99,8 @@ class QQuickWebViewPrivate : public oxide::WebView,
 
   QUrl url() const;
   void setUrl(const QUrl& url);
+
+  void addAttachedPropertyTo(QObject* object);
 
   OxideQQuickWebViewContext* context;
   QQmlComponent* popup_menu;

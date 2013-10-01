@@ -35,6 +35,7 @@ QT_USE_NAMESPACE
 class OxideQLoadEvent;
 class OxideQQuickMessageHandler;
 class OxideQQuickWebFrame;
+class OxideQQuickWebView;
 class OxideQQuickWebViewContext;
 
 namespace oxide {
@@ -42,6 +43,21 @@ namespace qt {
 class QQuickWebViewPrivate;
 }
 }
+
+class Q_DECL_EXPORT OxideQQuickWebViewAttached : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(OxideQQuickWebView* view READ view)
+
+ public:
+  OxideQQuickWebViewAttached(QObject* parent);
+  virtual ~OxideQQuickWebViewAttached();
+
+  OxideQQuickWebView* view() const;
+  void setView(OxideQQuickWebView* view);
+
+ private:
+  OxideQQuickWebView* view_;
+};
 
 class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
@@ -91,6 +107,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   OxideQQuickWebViewContext* context() const;
   void setContext(OxideQQuickWebViewContext* context);
 
+  static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
+
  public Q_SLOTS:
   void goBack();
   void goForward();
@@ -117,5 +135,6 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebView)
+QML_DECLARE_TYPEINFO(OxideQQuickWebView, QML_HAS_ATTACHED_PROPERTIES)
 
 #endif // _OXIDE_QT_LIB_API_PUBLIC_QQUICK_WEB_VIEW_P_H_

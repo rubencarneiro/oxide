@@ -32,6 +32,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "ui/gfx/rect.h"
 
+#include "qt/lib/api/oxide_qquick_web_view_p_p.h"
 #include "qt/lib/api/public/oxide_qquick_web_view_p.h"
 
 namespace oxide {
@@ -308,6 +309,7 @@ void WebPopupMenuQQuick::Show(const gfx::Rect& bounds,
     return;
   }
 
+  QQuickWebViewPrivate::get(view_)->addAttachedPropertyTo(popup_menu_.get());
   popup_menu_->setParentItem(view_);
 
   component->completeCreate();

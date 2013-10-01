@@ -27,6 +27,20 @@
 
 QT_USE_NAMESPACE
 
+OxideQQuickWebViewAttached::OxideQQuickWebViewAttached(QObject* parent) :
+    QObject(parent),
+    view_(NULL) {}
+
+OxideQQuickWebViewAttached::~OxideQQuickWebViewAttached() {}
+
+OxideQQuickWebView* OxideQQuickWebViewAttached::view() const {
+  return view_;
+}
+
+void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
+  view_ = view;
+}
+
 void OxideQQuickWebView::visibilityChangedListener() {
   Q_D(oxide::qt::QQuickWebView);
 
@@ -192,6 +206,12 @@ void OxideQQuickWebView::setContext(OxideQQuickWebViewContext* context) {
     Q_ASSERT(!d->context);
     d->context = context;
   }
+}
+
+// static
+OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
+    QObject* object) {
+  return new OxideQQuickWebViewAttached(object);
 }
 
 void OxideQQuickWebView::goBack() {

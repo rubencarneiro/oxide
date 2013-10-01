@@ -21,6 +21,7 @@
 #include <QQuickWindow>
 #include <QSizeF>
 #include <QString>
+#include <QtQml>
 
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
@@ -256,6 +257,15 @@ void QQuickWebViewPrivate::messageHandler_clear(
 // static
 QQuickWebViewPrivate* QQuickWebViewPrivate::get(OxideQQuickWebView* view) {
   return view->d_func();
+}
+
+void QQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
+  Q_Q(OxideQQuickWebView);
+
+  OxideQQuickWebViewAttached* attached =
+      qobject_cast<OxideQQuickWebViewAttached *>(
+        qmlAttachedPropertiesObject<OxideQQuickWebView>(object));
+  attached->setView(q);
 }
 
 void QQuickWebViewPrivate::updateSize(const QSizeF& size) {
