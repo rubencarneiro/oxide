@@ -34,3 +34,12 @@ oxide.addMessageHandler("EVALUATE-CODE", function(args, msg) {
     msg.error("Caught exception: \"" + e + "\"");
   }
 });
+
+oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(args, msg) {
+  try {
+    var r = document.querySelector(args.selector).getBoundingClientRect();
+    msg.reply({x: r.left, y: r.top, width: r.width, height: r.height});
+  } catch(e) {
+    msg.error("Caught exception: \"" + e + "\"");
+  }
+});

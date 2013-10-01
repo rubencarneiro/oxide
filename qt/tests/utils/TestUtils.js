@@ -22,23 +22,22 @@ function TestApiHost(webview) {
 }
 
 TestApiHost.prototype = {
-  get documentURI() {
+  waitForResult: function(req, timeout) {
     var result;
     var got_error = false;
     var got_result = false;
-    var r = this._webview.rootFrame.sendMessage("TestUtils",
-                                                "GET-DOCUMENT-URI",
-                                                {});
-    r.onreply = function(response) {
-      result = response.location;
-      got_result = true;
-    };
-    r.onerror = function(msg) {
-      result = msg;
-      got_error = true;
-    }
 
-    this._webview.waitFor(function() { return got_result || got_error; });
+    req.onreply = function(response) {
+      got_result = true;
+      result = response;
+    };
+    req.onerror = function(msg) {
+      got_error = true;
+      result = msg;
+    };
+
+    this._webview.waitFor(function() { return got_result || got_error; },
+                          timeout);
 
     if (got_error) {
       throw Error(result);
@@ -47,6 +46,13 @@ TestApiHost.prototype = {
     } else {
       throw Error("Message call timed out");
     }
+  },
+
+  get documentURI() {
+    return this.waitForResult(
+        this._webview.rootFrame.sendMessage("TestUtils",
+                                            "GET-DOCUMENT-URI",
+                                            {})).location;
   },
 
   set documentTitle(title) {
@@ -56,31 +62,18 @@ TestApiHost.prototype = {
   },
 
   evaluateCode: function(code, wrap) {
-    var result;
-    var got_error = false;
-    var got_result = false;
-    var r = this._webview.rootFrame.sendMessage(
-        "TestUtils",
-        "EVALUATE-CODE",
-        { code: code,
-          wrap: wrap === undefined ? false : wrap });
-    r.onreply = function(response) {
-      result = response.result;
-      got_result = true;
-    };
-    r.onerror = function(msg) {
-      result = msg;
-      got_error = true;
-    }
+    return this.waitForResult(
+        this._webview.rootFrame.sendMessage(
+          "TestUtils",
+          "EVALUATE-CODE",
+          { code: code,
+            wrap: wrap === undefined ? false : wrap })).result;
+  },
 
-    this._webview.waitFor(function() { return got_result || got_error; });
-
-    if (got_error) {
-      throw Error(result);
-    } else if (got_result) {
-      return result;
-    } else {
-      throw Error("Message call timed out");
-    }
+  getBoundingClientRectForSelector: function(selector) {
+    return this.waitForResult(
+        this._webview.rootFrame.sendMessage("TestUtils",
+                                            "GET-BOUNDING-CLIENT-RECT",
+                                            { selector: selector }));
   }
 };
