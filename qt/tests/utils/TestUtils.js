@@ -55,12 +55,6 @@ TestApiHost.prototype = {
                                             {})).location;
   },
 
-  set documentTitle(title) {
-    this._webview.rootFrame.sendMessageNoReply("TestUtils",
-                                               "SET-DOCUMENT-TITLE",
-                                               { title: title });
-  },
-
   evaluateCode: function(code, wrap) {
     return this.waitForResult(
         this._webview.rootFrame.sendMessage(

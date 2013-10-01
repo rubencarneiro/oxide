@@ -35,7 +35,7 @@ TestWebView {
       var test = "This is a test title";
 
       spy.clear();
-      webView.getTestApi().documentTitle = test;
+      webView.getTestApi().evaluateCode("window.document.title = \"" + test + "\"");
       spy.wait();
 
       compare(webView.title, test,
