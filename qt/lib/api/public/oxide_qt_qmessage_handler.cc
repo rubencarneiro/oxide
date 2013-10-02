@@ -22,13 +22,20 @@
 
 #include "qt/lib/api/oxide_qt_qmessage_handler_p.h"
 
+#include "oxide_q_web_frame_base.h"
+#include "oxide_qquick_web_view_p.h"
+
 OxideQMessageHandlerBase::OxideQMessageHandlerBase(
     oxide::qt::QMessageHandlerBasePrivate& dd,
     QObject* parent) :
     QObject(parent),
     d_ptr(&dd) {}
 
-OxideQMessageHandlerBase::~OxideQMessageHandlerBase() {}
+OxideQMessageHandlerBase::~OxideQMessageHandlerBase() {
+  Q_D(oxide::qt::QMessageHandlerBase);
+
+  d->removeFromCurrentOwner();
+}
 
 QString OxideQMessageHandlerBase::msgId() const {
   Q_D(const oxide::qt::QMessageHandlerBase);
@@ -50,7 +57,14 @@ void OxideQMessageHandlerBase::setMsgId(const QString& id) {
 OxideQQuickMessageHandler::OxideQQuickMessageHandler(QObject* parent) :
     OxideQMessageHandlerBase(
       *oxide::qt::QQuickMessageHandlerPrivate::Create(this),
-       parent) {}
+       parent) {
+  if (OxideQQuickWebView* view = qobject_cast<OxideQQuickWebView *>(parent)) {
+    view->addMessageHandler(this);
+  } else if (OxideQWebFrameBase* frame =
+             qobject_cast<OxideQWebFrameBase *>(parent)) {
+    frame->addMessageHandler(this);
+  }
+}
 
 OxideQQuickMessageHandler::~OxideQQuickMessageHandler() {}
 
