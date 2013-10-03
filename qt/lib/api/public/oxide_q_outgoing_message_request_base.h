@@ -42,7 +42,7 @@ class Q_DECL_EXPORT OxideQOutgoingMessageRequestBase : public QObject {
     ErrorUncaughtException,
     ErrorNoHandler,
     ErrorHandlerReportedError,
-    ErrorFrameDisappeared = 1000
+    ErrorFrameDisappeared
   };
 
  protected:

@@ -44,9 +44,11 @@ class OutgoingMessageRequest FINAL {
   void SetErrorCallback(const ErrorCallback& callback);
 
   void OnReceiveResponse(const MessageDispatcherBrowser::V8Response& response);
+  void SendError(int error, const std::string& msg);
 
  private:
   int serial_;
+  bool had_response_;
   ReplyCallback reply_callback_;
   ErrorCallback error_callback_;
 };

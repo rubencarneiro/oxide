@@ -55,7 +55,18 @@ WebFrame::WebFrame(int64 frame_id) :
   next_message_serial_(0),
   weak_factory_(this) {}
 
-WebFrame::~WebFrame() {}
+WebFrame::~WebFrame() {
+  MessageDispatcherBrowser::OutgoingMessageRequestVector requests =
+      GetOutgoingMessageRequests();
+  for (MessageDispatcherBrowser::OutgoingMessageRequestVector::iterator it =
+        requests.begin();
+       it != requests.end(); ++it) {
+    OutgoingMessageRequest* request = *it;
+
+    request->SendError(OxideMsg_SendMessage_Error::FRAME_DISAPPEARED,
+                       "The frame disappeared whilst waiting for a response");
+  }
+}
 
 WebView* WebFrame::GetView() const {
   WebFrame* top = const_cast<WebFrame *>(this);

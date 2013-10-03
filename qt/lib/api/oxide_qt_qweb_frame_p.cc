@@ -45,14 +45,14 @@ void QWebFrameBasePrivate::addOutgoingMessageRequest(
     OxideQOutgoingMessageRequestBase* request) {
   Q_ASSERT(!outgoing_message_requests_.contains(request));
 
-  QOutgoingMessageRequestBasePrivate::get(request)->setFramePrivate(this);
+  QOutgoingMessageRequestBasePrivate::get(request)->frame = this;
   outgoing_message_requests_.append(request);  
 }
 
 void QWebFrameBasePrivate::removeOutgoingMessageRequest(
     OxideQOutgoingMessageRequestBase* request) {
   outgoing_message_requests_.removeOne(request);
-  QOutgoingMessageRequestBasePrivate::get(request)->setFramePrivate(NULL);
+  QOutgoingMessageRequestBasePrivate::get(request)->frame = NULL;
 }
 
 QQuickWebFramePrivate::QQuickWebFramePrivate(WebFrameQQuick* owner) :

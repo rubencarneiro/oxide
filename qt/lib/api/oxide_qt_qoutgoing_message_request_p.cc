@@ -37,6 +37,8 @@ void QOutgoingMessageRequestBasePrivate::ReceiveReplyCallback(
   QJsonDocument jsondoc(QJsonDocument::fromJson(
       QByteArray(args.data(), args.length())));
   OnReceiveReply(jsondoc.toVariant());
+
+  removeFromOwner();
 }
 
 void QOutgoingMessageRequestBasePrivate::ReceiveErrorCallback(
@@ -45,20 +47,21 @@ void QOutgoingMessageRequestBasePrivate::ReceiveErrorCallback(
   OnReceiveError(
       static_cast<OxideQOutgoingMessageRequestBase::ErrorCode>(error),
       QString::fromStdString(msg));
+
+  removeFromOwner();
 }
 
-QOutgoingMessageRequestBasePrivate::~QOutgoingMessageRequestBasePrivate() {
+void QOutgoingMessageRequestBasePrivate::removeFromOwner() {
   Q_Q(OxideQOutgoingMessageRequestBase);
 
-  if (frame_) {
-    frame_->removeOutgoingMessageRequest(q);
-    Q_ASSERT(!frame_);
+  if (frame) {
+    frame->removeOutgoingMessageRequest(q);
+    frame = NULL;
   }
 }
 
-void QOutgoingMessageRequestBasePrivate::setFramePrivate(
-    QWebFrameBasePrivate* frame) {
-  frame_ = frame;
+QOutgoingMessageRequestBasePrivate::~QOutgoingMessageRequestBasePrivate() {
+  removeFromOwner();
 }
 
 // static
@@ -69,8 +72,8 @@ QOutgoingMessageRequestBasePrivate* QOutgoingMessageRequestBasePrivate::get(
 
 QOutgoingMessageRequestBasePrivate::QOutgoingMessageRequestBasePrivate(
     OxideQOutgoingMessageRequestBase* q) :
+    frame(NULL),
     q_ptr(q),
-    frame_(NULL),
     weak_factory_(this) {
   request_.SetReplyCallback(
       base::Bind(&QOutgoingMessageRequestBasePrivate::ReceiveReplyCallback,

@@ -55,6 +55,8 @@ class QOutgoingMessageRequestBasePrivate {
   static QOutgoingMessageRequestBasePrivate* get(
       OxideQOutgoingMessageRequestBase* request);
 
+  QWebFrameBasePrivate* frame;
+
  protected:
   QOutgoingMessageRequestBasePrivate(OxideQOutgoingMessageRequestBase* q);
 
@@ -69,8 +71,9 @@ class QOutgoingMessageRequestBasePrivate {
       OxideQOutgoingMessageRequestBase::ErrorCode error,
       const QString& msg) = 0;
 
+  void removeFromOwner();
+
   oxide::OutgoingMessageRequest request_;
-  QWebFrameBasePrivate* frame_;
   base::WeakPtrFactory<QOutgoingMessageRequestBasePrivate> weak_factory_;
 };
 

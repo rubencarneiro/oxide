@@ -34,11 +34,26 @@ struct OxideMsg_SendMessage_Error {
  public:
   enum Value {
     OK,
+
+    // The frame ID or world name were invalid
     INVALID_DESTINATION,
+
+    // The message handler threw an error
     UNCAUGHT_EXCEPTION,
+
+    // No handler was registered for this message
     NO_HANDLER,
+
+    // The handler reported an error
     HANDLER_REPORTED_ERROR,
 
+    // The frame disappeared before sending a response was sent
+    // (only valid for embedder to content script messages, and
+    //  never actually sent across the wire)
+    FRAME_DISAPPEARED,
+
+    // The message could not be delivered
+    // (only valid for content script to embedder messages)
     UNDELIVERABLE = 1000
   };
 };

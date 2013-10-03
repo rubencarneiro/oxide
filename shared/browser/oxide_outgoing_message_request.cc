@@ -20,7 +20,8 @@
 namespace oxide {
 
 OutgoingMessageRequest::OutgoingMessageRequest() :
-    serial_(-1) {}
+    serial_(-1),
+    had_response_(false) {}
 
 void OutgoingMessageRequest::SetReplyCallback(
     const ReplyCallback& callback) {
@@ -34,6 +35,12 @@ void OutgoingMessageRequest::SetErrorCallback(
 
 void OutgoingMessageRequest::OnReceiveResponse(
     const MessageDispatcherBrowser::V8Response& response) {
+  if (had_response_) {
+    return;
+  }
+
+  had_response_ = true;
+
   if (response.IsError()) {
     if (!error_callback_.is_null()) {
       error_callback_.Run(response.error, response.param);
@@ -42,6 +49,19 @@ void OutgoingMessageRequest::OnReceiveResponse(
     if (!reply_callback_.is_null()) {
       reply_callback_.Run(response.param);
     }
+  }
+}
+
+void OutgoingMessageRequest::SendError(int error,
+                                       const std::string& msg) {
+  if (had_response_) {
+    return;
+  }
+
+  had_response_ = true;
+
+  if (!error_callback_.is_null()) {
+    error_callback_.Run(error, msg);
   }
 }
 
