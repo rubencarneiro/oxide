@@ -25,10 +25,11 @@ WebView {
   }
 
   function getTestApi() {
-    if (!qtest_testApi) {
-      qtest_testApi = new TestUtils.TestApiHost(this);
-    }
-    return qtest_testApi;
+    return new TestUtils.TestApiHost(this, rootFrame);
+  }
+
+  function getTestApiForFrame(frame) {
+    return new TestUtils.TestApiHost(this, frame);
   }
 
   function waitForLoadStarted(timeout) {
@@ -62,8 +63,6 @@ WebView {
     return predicate();
   }
 
-  property var qtest_testApi: null
-
   property int qtest_loadsStartedCount: 0
   property int qtest_loadsSucceededCount: 0
   property int qtest_loadsFailedCount: 0
@@ -81,6 +80,7 @@ WebView {
         worldId: "TestUtils"
         url: Qt.resolvedUrl("TestUtilsSlave.js")
         incognitoEnabled: true
+        matchAllFrames: true
       }
     ]
   }

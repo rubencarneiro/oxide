@@ -17,8 +17,9 @@
 
 .pragma library
 
-function TestApiHost(webview) {
+function TestApiHost(webview, frame) {
   this._webview = webview;
+  this._frame = frame;
 }
 
 TestApiHost.prototype = {
@@ -50,14 +51,14 @@ TestApiHost.prototype = {
 
   get documentURI() {
     return this.waitForResult(
-        this._webview.rootFrame.sendMessage("TestUtils",
-                                            "GET-DOCUMENT-URI",
-                                            {})).location;
+        this._frame.sendMessage("TestUtils",
+                                "GET-DOCUMENT-URI",
+                                {})).location;
   },
 
   evaluateCode: function(code, wrap) {
     return this.waitForResult(
-        this._webview.rootFrame.sendMessage(
+        this._frame.sendMessage(
           "TestUtils",
           "EVALUATE-CODE",
           { code: code,
@@ -66,8 +67,15 @@ TestApiHost.prototype = {
 
   getBoundingClientRectForSelector: function(selector) {
     return this.waitForResult(
-        this._webview.rootFrame.sendMessage("TestUtils",
-                                            "GET-BOUNDING-CLIENT-RECT",
-                                            { selector: selector }));
+        this._frame.sendMessage("TestUtils",
+                                "GET-BOUNDING-CLIENT-RECT",
+                                { selector: selector }));
+  },
+
+  sendMessageToSelf: function(id, args) {
+    return this.waitForResult(
+        this._frame.sendMessage("TestUtils",
+                                "SEND-MESSAGE-TO-SELF",
+                                { id: id, args: args } ));
   }
 };

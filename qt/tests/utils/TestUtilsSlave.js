@@ -39,3 +39,13 @@ oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
     msg.error("Caught exception: \"" + e + "\"");
   }
 });
+
+oxide.addMessageHandler("SEND-MESSAGE-TO-SELF", function(msg) {
+  var r = oxide.sendMessage(msg.args.id, msg.args.args);
+  r.onreply = function(response) {
+    msg.reply(response);
+  };
+  r.onerror = function(error) {
+    msg.error(error);
+  };
+});
