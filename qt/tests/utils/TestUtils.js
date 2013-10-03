@@ -32,7 +32,7 @@ TestApiHost.prototype = {
       got_result = true;
       result = response;
     };
-    req.onerror = function(msg) {
+    req.onerror = function(error, msg) {
       got_error = true;
       result = msg;
     };

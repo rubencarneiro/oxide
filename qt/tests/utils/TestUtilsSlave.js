@@ -27,17 +27,19 @@ oxide.addMessageHandler("EVALUATE-CODE", function(msg) {
   try {
     msg.reply({result: eval(code)});
   } catch(e) {
-    msg.error("Caught exception: \"" + e + "\"");
+    msg.error("Code threw exception: \"" + e + "\"");
   }
 });
 
 oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
-  try {
-    var r = document.querySelector(msg.args.selector).getBoundingClientRect();
-    msg.reply({x: r.left, y: r.top, width: r.width, height: r.height});
-  } catch(e) {
-    msg.error("Caught exception: \"" + e + "\"");
+  var e = document.querySelector(msg.args.selector);
+  if (!e) {
+    msg.error("No element found");
+    return;
   }
+
+  var r = e.getBoundingClientRect();
+  msg.reply({x: r.left, y: r.top, width: r.width, height: r.height});
 });
 
 oxide.addMessageHandler("SEND-MESSAGE-TO-SELF", function(msg) {
@@ -45,7 +47,7 @@ oxide.addMessageHandler("SEND-MESSAGE-TO-SELF", function(msg) {
   r.onreply = function(response) {
     msg.reply(response);
   };
-  r.onerror = function(error) {
-    msg.error(error);
+  r.onerror = function(error, desc) {
+    msg.error(desc);
   };
 });
