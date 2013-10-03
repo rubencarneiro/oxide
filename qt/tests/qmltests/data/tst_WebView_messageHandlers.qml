@@ -39,13 +39,6 @@ TestWebView {
         webView.lastMessageWorldId = msg.worldId;
         throw Error("This is an exception");
       }
-    },
-    MessageHandler {
-      msgId: "TEST-WRONG-WORLD"
-      worldIds: [ "Yaaaaaaaaa" ]
-      callback: function(msg, frame) {
-        msg.reply({});
-      }
     }
   ]
 
@@ -154,8 +147,14 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
+      for (var i in webView.messageHandlers) {
+        if (webView.messageHandlers[i].msgId == "TEST-REPLY") {
+          webView.messageHandlers[i].worldIds = [ "Yaaaaaa" ];
+        }
+      }
+
       try {
-        webView.getTestApi().sendMessageToSelf("TEST-WRONG-WORLD", { in: 10 });
+        webView.getTestApi().sendMessageToSelf("TEST-REPLY", { in: 10 });
         verify(false, "Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
