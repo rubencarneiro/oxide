@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_MESSAGE_HANDLER_H_
 
 #include <string>
+#include <vector>
 
 #include "base/basictypes.h"
 #include "base/callback.h"
@@ -43,12 +44,20 @@ class MessageHandler FINAL {
     msg_id_ = id;
   }
 
+  const std::vector<std::string>& world_ids() const {
+    return world_ids_;
+  }
+  void set_world_ids(const std::vector<std::string>& ids) {
+    world_ids_ = ids;
+  }
+
   void SetCallback(const HandlerCallback& callback);
 
   void OnReceiveMessage(const MessageDispatcherBrowser::V8Message& message);
 
  private:
   std::string msg_id_;
+  std::vector<std::string> world_ids_;
   HandlerCallback callback_;
 
   DISALLOW_COPY_AND_ASSIGN(MessageHandler);

@@ -54,6 +54,33 @@ void OxideQMessageHandlerBase::setMsgId(const QString& id) {
   emit msgIdChanged();
 }
 
+QList<QString> OxideQMessageHandlerBase::worldIds() const {
+  Q_D(const oxide::qt::QMessageHandlerBase);
+
+  QList<QString> list;
+
+  const std::vector<std::string>& ids = d->handler()->world_ids();
+  for (std::vector<std::string>::const_iterator it = ids.begin();
+       it != ids.end(); ++it) {
+    list.append(QString::fromStdString(*it));
+  }
+
+  return list;
+}
+
+void OxideQMessageHandlerBase::setWorldIds(const QList<QString>& ids) {
+  Q_D(oxide::qt::QMessageHandlerBase);
+
+  std::vector<std::string> list;
+
+  for (int i = 0; i < ids.size(); ++i) {
+    list.push_back(ids[i].toStdString());
+  }
+
+  d->handler()->set_world_ids(list);
+  emit worldIdsChanged();
+}
+
 OxideQQuickMessageHandler::OxideQQuickMessageHandler(QObject* parent) :
     OxideQMessageHandlerBase(
       *oxide::qt::QQuickMessageHandlerPrivate::Create(this),

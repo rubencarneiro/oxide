@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_LIB_API_PUBLIC_Q_MESSAGE_HANDLER_BASE_H_
 #define _OXIDE_QT_LIB_API_PUBLIC_Q_MESSAGE_HANDLER_BASE_H_
 
+#include <QList>
 #include <QObject>
 #include <QScopedPointer>
 #include <QString>
@@ -32,6 +33,7 @@ class QMessageHandlerBasePrivate;
 class Q_DECL_EXPORT OxideQMessageHandlerBase : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString msgId READ msgId WRITE setMsgId NOTIFY msgIdChanged)
+  Q_PROPERTY(QList<QString> worldIds READ worldIds WRITE setWorldIds NOTIFY worldIdsChanged)
 
   Q_DECLARE_PRIVATE(oxide::qt::QMessageHandlerBase)
 
@@ -41,8 +43,12 @@ class Q_DECL_EXPORT OxideQMessageHandlerBase : public QObject {
   QString msgId() const;
   void setMsgId(const QString& id);
 
+  QList<QString> worldIds() const;
+  void setWorldIds(const QList<QString>& ids);
+
  Q_SIGNALS:
   void msgIdChanged();
+  void worldIdsChanged();
 
  protected:
   OxideQMessageHandlerBase(oxide::qt::QMessageHandlerBasePrivate& dd,

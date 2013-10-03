@@ -99,9 +99,20 @@ void MessageDispatcherBrowser::OnReceiveMessage(
          it != handlers.end(); ++it) {
       MessageHandler* handler = *it;
 
-      if (handler->msg_id() == params.msg_id) {
-        handler->OnReceiveMessage(message);
-        return;
+      if (handler->msg_id() != params.msg_id) {
+        continue;
+      }
+
+      const std::vector<std::string>& world_ids = handler->world_ids();
+
+      for (std::vector<std::string>::const_iterator it = world_ids.begin();
+           it != world_ids.end(); ++it) {
+        std::string world_id = *it;
+
+        if (world_id == params.world_id) {
+          handler->OnReceiveMessage(message);
+          return;
+        }
       }
     }
 
@@ -110,9 +121,20 @@ void MessageDispatcherBrowser::OnReceiveMessage(
          it != handlers.end(); ++it) {
       MessageHandler* handler = *it;
 
-      if (handler->msg_id() == params.msg_id) {
-        handler->OnReceiveMessage(message);
-        return;
+      if (handler->msg_id() != params.msg_id) {
+        continue;
+      }
+
+      const std::vector<std::string>& world_ids = handler->world_ids();
+
+      for (std::vector<std::string>::const_iterator it = world_ids.begin();
+           it != world_ids.end(); ++it) {
+        std::string world_id = *it;
+
+        if (world_id == params.world_id) {
+          handler->OnReceiveMessage(message);
+          return;
+        }
       }
     }
 

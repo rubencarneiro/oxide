@@ -14,6 +14,7 @@ TestWebView {
   messageHandlers: [
     MessageHandler {
       msgId: "TEST"
+      worldIds: [ "TestUtils" ]
       callback: function(msg, frame) {
         webView.lastMessageFrameSource = frame;
         msg.reply({ out: msg.args.in * 2 });
