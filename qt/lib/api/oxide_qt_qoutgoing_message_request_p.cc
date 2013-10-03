@@ -25,7 +25,6 @@
 
 #include "base/bind.h"
 
-#include "qt/lib/api/public/oxide_q_outgoing_message_request_base.h"
 #include "qt/lib/api/public/oxide_qquick_outgoing_message_request_p.h"
 
 #include "oxide_qt_qweb_frame_p.h"
@@ -41,8 +40,11 @@ void QOutgoingMessageRequestBasePrivate::ReceiveReplyCallback(
 }
 
 void QOutgoingMessageRequestBasePrivate::ReceiveErrorCallback(
+    int error,
     const std::string& msg) {
-  OnReceiveError(QString::fromStdString(msg));
+  OnReceiveError(
+      static_cast<OxideQOutgoingMessageRequestBase::ErrorCode>(error),
+      QString::fromStdString(msg));
 }
 
 QOutgoingMessageRequestBasePrivate::~QOutgoingMessageRequestBasePrivate() {
@@ -91,8 +93,10 @@ void QQuickOutgoingMessageRequestPrivate::OnReceiveReply(
 }
 
 void QQuickOutgoingMessageRequestPrivate::OnReceiveError(
+    OxideQOutgoingMessageRequestBase::ErrorCode error,
     const QString& msg) {
   QJSValueList jsargs;
+  jsargs.append(QJSValue(error));
   jsargs.append(QJSValue(msg));
 
   error_callback.call(jsargs);

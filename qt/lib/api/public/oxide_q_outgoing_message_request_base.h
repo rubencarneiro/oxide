@@ -31,9 +31,19 @@ class QOutgoingMessageRequestBasePrivate;
 class Q_DECL_EXPORT OxideQOutgoingMessageRequestBase : public QObject {
   Q_OBJECT
   Q_DECLARE_PRIVATE(oxide::qt::QOutgoingMessageRequestBase)
+  Q_ENUMS(ErrorCode)
 
  public:
   virtual ~OxideQOutgoingMessageRequestBase();
+
+  enum ErrorCode {
+    ErrorNone,
+    ErrorDestinationNotFound,
+    ErrorUncaughtException,
+    ErrorNoHandler,
+    ErrorHandlerReportedError,
+    ErrorFrameDisappeared = 1000
+  };
 
  protected:
   Q_DECL_HIDDEN OxideQOutgoingMessageRequestBase(

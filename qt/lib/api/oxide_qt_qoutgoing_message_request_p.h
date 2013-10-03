@@ -26,12 +26,13 @@
 
 #include "shared/browser/oxide_outgoing_message_request.h"
 
+#include "qt/lib/api/public/oxide_q_outgoing_message_request_base.h"
+
 QT_BEGIN_NAMESPACE
 class QString;
 class QVariant;
 QT_END_NAMESPACE
 
-class OxideQOutgoingMessageRequestBase;
 class OxideQQuickOutgoingMessageRequest;
 
 namespace oxide {
@@ -61,10 +62,12 @@ class QOutgoingMessageRequestBasePrivate {
 
  private:
   void ReceiveReplyCallback(const std::string& args);
-  void ReceiveErrorCallback(const std::string& msg);
+  void ReceiveErrorCallback(int error, const std::string& msg);
 
   virtual void OnReceiveReply(const QVariant& args) = 0;
-  virtual void OnReceiveError(const QString& msg) = 0;
+  virtual void OnReceiveError(
+      OxideQOutgoingMessageRequestBase::ErrorCode error,
+      const QString& msg) = 0;
 
   oxide::OutgoingMessageRequest request_;
   QWebFrameBasePrivate* frame_;
@@ -84,7 +87,9 @@ class QQuickOutgoingMessageRequestPrivate :
   QQuickOutgoingMessageRequestPrivate(OxideQQuickOutgoingMessageRequest* q);
 
   void OnReceiveReply(const QVariant& args);
-  void OnReceiveError(const QString& msg);
+  void OnReceiveError(
+      OxideQOutgoingMessageRequestBase::ErrorCode error,
+      const QString& msg);
 };
 
 } // namespace qt

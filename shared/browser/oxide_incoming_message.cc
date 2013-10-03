@@ -43,6 +43,7 @@ void IncomingMessage::Reply(const std::string& args) {
   params.world_id = world_id_;
   params.serial = serial_;
   params.type = OxideMsg_SendMessage_Type::Reply;
+  params.error = OxideMsg_SendMessage_Error::OK;
   params.args = args;
 
   source_->GetRenderViewHost()->Send(
@@ -59,7 +60,8 @@ void IncomingMessage::Error(const std::string& msg) {
   params.frame_id = frame_->identifier();
   params.world_id = world_id_;
   params.serial = serial_;
-  params.type = OxideMsg_SendMessage_Type::Error;
+  params.type = OxideMsg_SendMessage_Type::Reply;
+  params.error = OxideMsg_SendMessage_Error::HANDLER_REPORTED_ERROR;
   params.args = msg;
 
   source_->GetRenderViewHost()->Send(

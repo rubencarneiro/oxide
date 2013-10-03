@@ -23,20 +23,20 @@ OutgoingMessageRequest::OutgoingMessageRequest() :
     serial_(-1) {}
 
 void OutgoingMessageRequest::SetReplyCallback(
-    const ResponseCallback& callback) {
+    const ReplyCallback& callback) {
   reply_callback_ = callback;
 }
 
 void OutgoingMessageRequest::SetErrorCallback(
-    const ResponseCallback& callback) {
+    const ErrorCallback& callback) {
   error_callback_ = callback;
 }
 
 void OutgoingMessageRequest::OnReceiveResponse(
     const MessageDispatcherBrowser::V8Response& response) {
-  if (response.is_error) {
+  if (response.IsError()) {
     if (!error_callback_.is_null()) {
-      error_callback_.Run(response.param);
+      error_callback_.Run(response.error, response.param);
     }
   } else {
     if (!reply_callback_.is_null()) {

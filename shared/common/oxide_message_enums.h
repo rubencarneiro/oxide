@@ -22,13 +22,25 @@ struct OxideMsg_SendMessage_Type {
  public:
   enum Value {
     Message,
-    Reply,
-    Error
+    Reply
   };
 
   static bool is_valid(int type) {
-    return type == Message || type == Reply || type == Error;
+    return type == Message || type == Reply;
   }
+};
+
+struct OxideMsg_SendMessage_Error {
+ public:
+  enum Value {
+    OK,
+    INVALID_DESTINATION,
+    UNCAUGHT_EXCEPTION,
+    NO_HANDLER,
+    HANDLER_REPORTED_ERROR,
+
+    UNDELIVERABLE = 1000
+  };
 };
 
 #endif // _OXIDE_SHARED_COMMON_MESSAGE_ENUMS_H_

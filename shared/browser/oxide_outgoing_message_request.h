@@ -28,7 +28,8 @@ namespace oxide {
 
 class OutgoingMessageRequest FINAL {
  public:
-  typedef base::Callback<void(const std::string&)> ResponseCallback;
+  typedef base::Callback<void(const std::string&)> ReplyCallback;
+  typedef base::Callback<void(int, const std::string&)> ErrorCallback;
 
   OutgoingMessageRequest();
 
@@ -39,15 +40,15 @@ class OutgoingMessageRequest FINAL {
     serial_ = serial;
   }
 
-  void SetReplyCallback(const ResponseCallback& callback);
-  void SetErrorCallback(const ResponseCallback& callback);
+  void SetReplyCallback(const ReplyCallback& callback);
+  void SetErrorCallback(const ErrorCallback& callback);
 
   void OnReceiveResponse(const MessageDispatcherBrowser::V8Response& response);
 
  private:
   int serial_;
-  ResponseCallback reply_callback_;
-  ResponseCallback error_callback_;
+  ReplyCallback reply_callback_;
+  ErrorCallback error_callback_;
 };
 
 } // namespace oxide

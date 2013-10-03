@@ -93,7 +93,7 @@ void V8MessageManager::SendMessageInner(
     const v8::FunctionCallbackInfo<v8::Value>& args) {
   v8::HandleScope handle_scope(v8::Isolate::GetCurrent());
 
-  if (args.Length() < 3) {
+  if (args.Length() < 4) {
     v8::ThrowException(v8::Exception::Error(v8::String::New(
         "Insufficient arguments")));
     return;
@@ -101,9 +101,11 @@ void V8MessageManager::SendMessageInner(
 
   v8::Local<v8::Value> serial_as_val = args[0];
   v8::Local<v8::Value> type_as_val = args[1];
-  v8::Local<v8::Value> msg_id_as_val = args[2];
+  v8::Local<v8::Value> error_as_val = args[2];
+  v8::Local<v8::Value> msg_id_as_val = args[3];
 
-  if (!serial_as_val->IsInt32() || !type_as_val->IsInt32()) {
+  if (!serial_as_val->IsInt32() || !type_as_val->IsInt32() ||
+      !error_as_val->IsInt32()) {
     v8::ThrowException(v8::Exception::Error(v8::String::New(
         "Unexpected argument types")));
     return;
@@ -127,11 +129,18 @@ void V8MessageManager::SendMessageInner(
       static_cast<OxideMsg_SendMessage_Type::Value>(
         type_as_val->ToInt32()->Value());
 
+  OxideMsg_SendMessage_Error::Value error =
+      static_cast<OxideMsg_SendMessage_Error::Value>(
+        error_as_val->ToInt32()->Value());
+  if (type != OxideMsg_SendMessage_Type::Reply) {
+    error = OxideMsg_SendMessage_Error::OK;
+  }
+
   v8::Local<v8::String> msg_id = msg_id_as_val->ToString();
 
   v8::Local<v8::String> msg_args;
-  if (args.Length() > 3) {
-    v8::Local<v8::Value> msg_args_as_val = args[3];
+  if (args.Length() > 4) {
+    v8::Local<v8::Value> msg_args_as_val = args[4];
     if (!msg_args_as_val->IsString()) {
       v8::ThrowException(v8::Exception::Error(v8::String::New(
           "Invalid argument type")));
@@ -139,7 +148,7 @@ void V8MessageManager::SendMessageInner(
     }
 
     msg_args = msg_args_as_val->ToString();
-  } else if (type == OxideMsg_SendMessage_Type::Error) {
+  } else if (error != OxideMsg_SendMessage_Error::OK) {
     msg_args = v8::String::Empty();
   } else {
     msg_args = v8::String::New("{}");
@@ -150,6 +159,7 @@ void V8MessageManager::SendMessageInner(
   params.world_id = IsolatedWorldMap::IDToName(world_id_);
   params.serial = serial->Value();
   params.type = type;
+  params.error = error;
   params.msg_id = V8StringToStdString(msg_id);
   params.args = V8StringToStdString(msg_args);
 
@@ -290,6 +300,7 @@ void V8MessageManager::ReceiveMessage(
   v8::Handle<v8::Value> args[] = {
     v8::Integer::New(params.serial),
     v8::Integer::New(params.type),
+    v8::Integer::New(params.error),
     v8::String::New(params.msg_id.data()),
     v8::String::New(params.args.data())
   };
@@ -305,9 +316,17 @@ void V8MessageManager::ReceiveMessage(
     error_params.frame_id = params.frame_id;
     error_params.world_id = params.world_id;
     error_params.serial = params.serial;
-    error_params.type = OxideMsg_SendMessage_Type::Error;
+    error_params.type = OxideMsg_SendMessage_Type::Reply;
+    error_params.error = OxideMsg_SendMessage_Error::UNCAUGHT_EXCEPTION;
     error_params.msg_id = params.msg_id;
-    error_params.args = std::string("Handler threw an exception");
+
+    v8::Local<v8::Message> msg(try_catch.Message());
+    if (!msg.IsEmpty()) {
+      v8::Local<v8::String> s(msg->Get());
+      error_params.args = V8StringToStdString(s);
+    } else {
+      error_params.args = std::string("Handler threw an exception");
+    }
 
     content::RenderThread::Get()->Send(
         new OxideHostMsg_SendMessage(render_view()->GetRoutingID(),

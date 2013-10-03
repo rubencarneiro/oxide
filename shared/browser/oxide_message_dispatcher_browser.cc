@@ -41,12 +41,13 @@ MessageDispatcherBrowser::V8Message::V8Message(
 
 MessageDispatcherBrowser::V8Response::V8Response(
     const OxideMsg_SendMessage_Params& params) :
-    is_error(params.type == OxideMsg_SendMessage_Type::Error),
+    error(params.error),
     param(params.args) {}
 
 void MessageDispatcherBrowser::MaybeSendError(
     const OxideMsg_SendMessage_Params& params,
-    const std::string& error) {
+    OxideMsg_SendMessage_Error::Value error_code,
+    const std::string& error_desc) {
   if (params.type != OxideMsg_SendMessage_Type::Message) {
     return;
   }
@@ -55,9 +56,10 @@ void MessageDispatcherBrowser::MaybeSendError(
   error_params.frame_id = params.frame_id;
   error_params.world_id = params.world_id;
   error_params.serial = params.serial;
-  error_params.type = OxideMsg_SendMessage_Type::Error;
+  error_params.type = OxideMsg_SendMessage_Type::Reply;
+  error_params.error = error_code;
   error_params.msg_id = params.msg_id;
-  error_params.args = error;
+  error_params.args = error_desc;
 
   Send(new OxideMsg_SendMessage(routing_id(), error_params));
 }
@@ -68,12 +70,16 @@ void MessageDispatcherBrowser::OnReceiveMessage(
       content::WebContents::FromRenderViewHost(render_view_host());
 
   if (!web_contents) {
-    MaybeSendError(params, "No WebContents");
+    MaybeSendError(params,
+                   OxideMsg_SendMessage_Error::UNDELIVERABLE,
+                   "No WebContents associated with RenderViewHost");
     return;
   }
 
   if (web_contents->GetRenderViewHost() != render_view_host()) {
-    MaybeSendError(params, "RenderViewHost is not current");
+    MaybeSendError(params,
+                   OxideMsg_SendMessage_Error::UNDELIVERABLE,
+                   "RenderViewHost is not current");
     return;
   }
 
@@ -82,7 +88,9 @@ void MessageDispatcherBrowser::OnReceiveMessage(
   if (params.type == OxideMsg_SendMessage_Type::Message) {
     V8Message message(web_view, this, params);
     if (!message.frame) {
-      MaybeSendError(params, "Invalid frame");
+      MaybeSendError(params,
+                     OxideMsg_SendMessage_Error::INVALID_DESTINATION,
+                     "Invalid frame ID");
       return;
     }
 
@@ -108,7 +116,9 @@ void MessageDispatcherBrowser::OnReceiveMessage(
       }
     }
 
-    MaybeSendError(params, "Message was not handled");
+    MaybeSendError(params,
+                   OxideMsg_SendMessage_Error::NO_HANDLER,
+                   "No handler was found for message");
     return; 
   }
 

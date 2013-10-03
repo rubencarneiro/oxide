@@ -26,6 +26,8 @@
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/render_view_host_observer.h"
 
+#include "shared/common/oxide_message_enums.h"
+
 struct OxideMsg_SendMessage_Params;
 
 namespace oxide {
@@ -56,7 +58,9 @@ class MessageDispatcherBrowser FINAL : public content::RenderViewHostObserver {
   struct V8Response {
     V8Response(const OxideMsg_SendMessage_Params& params);
 
-    bool is_error;
+    bool IsError() const { return error != 0; }
+
+    int error;
     std::string param;
   };
 
@@ -71,7 +75,8 @@ class MessageDispatcherBrowser FINAL : public content::RenderViewHostObserver {
 
  private:
   void MaybeSendError(const OxideMsg_SendMessage_Params& params,
-                      const std::string& error);
+                      OxideMsg_SendMessage_Error::Value error_code,
+                      const std::string& error_desc);
   void OnReceiveMessage(const OxideMsg_SendMessage_Params& params);
 
   base::WeakPtrFactory<MessageDispatcherBrowser> weak_factory_;

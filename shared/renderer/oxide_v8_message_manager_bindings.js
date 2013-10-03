@@ -17,7 +17,10 @@
 
 const TYPE_MESSAGE = 0;
 const TYPE_REPLY = 1;
-const TYPE_ERROR = 2;
+
+const ERROR_OK = 0;
+const ERROR_NO_HANDLER = 3;
+const ERROR_HANDLER_REPORTED_ERROR = 4;
 
 var g_serial = 0;
 var g_requests = {};
@@ -39,17 +42,17 @@ SendMessageRequest.prototype = Object.create(Object.prototype, {
 function createIncomingMessage(serial) {
   return Object.create(Object.prototype, {
     reply: { value: function(args) {
-      sendMessageNative(serial, TYPE_REPLY, "", JSON.stringify(args));
+      sendMessageNative(serial, TYPE_REPLY, ERROR_OK, "", JSON.stringify(args));
     }},
 
     error: { value: function(msg) {
-      sendMessageNative(serial, TYPE_ERROR, "", msg);
+      sendMessageNative(serial, TYPE_REPLY, ERROR_HANDLER_REPORTED_ERROR, "", msg);
     }}
   });
 }
 
-registerReceiveHandlerNative(function messageHandler(serial, type, id, args) {
-  if (type == TYPE_REPLY || type == TYPE_ERROR) {
+registerReceiveHandlerNative(function messageHandler(serial, type, error, id, args) {
+  if (type == TYPE_REPLY) {
     if (!(serial in g_requests)) {
       return;
     }
@@ -57,19 +60,19 @@ registerReceiveHandlerNative(function messageHandler(serial, type, id, args) {
     var r = g_requests[serial];
     delete g_requests[serial];
 
-    if (type == TYPE_REPLY && typeof(r.onreply) == "function") {
+    if (error == ERROR_OK && typeof(r.onreply) == "function") {
       r.onreply.call(null, JSON.parse(args));
     } else if (typeof(r.onerror) == "function") {
-      r.onerror.call(null, args);
+      r.onerror.call(null, error, args);
     }
   } else {
-    var msg = createIncomingMessage(serial);
-
     if (!(id in g_handlers)) {
-      msg.error("No registered message handler");
+      sendMessageNative(serial, TYPE_REPLY, ERROR_NO_HANDLER, "",
+                        "No registered handler for \"" + id + "\" message");
       return;
     }
 
+    var msg = createIncomingMessage(serial);
     msg.args = JSON.parse(args);
 
     g_handlers[id].call(null, msg);
@@ -79,14 +82,14 @@ registerReceiveHandlerNative(function messageHandler(serial, type, id, args) {
 exports.sendMessage = function(id, args) {
   var serial = getNextSerial();
 
-  sendMessageNative(serial, TYPE_MESSAGE, id, JSON.stringify(args));
+  sendMessageNative(serial, TYPE_MESSAGE, ERROR_OK, id, JSON.stringify(args));
 
   g_requests[serial] = new SendMessageRequest();
   return g_requests[serial];
 };
 
 exports.sendMessageNoReply = function(id, args) {
-  sendMessageNative(-1, TYPE_MESSAGE, id, JSON.stringify(args));
+  sendMessageNative(-1, TYPE_MESSAGE, ERROR_OK, id, JSON.stringify(args));
 };
 
 exports.addMessageHandler = function(id, handler) {

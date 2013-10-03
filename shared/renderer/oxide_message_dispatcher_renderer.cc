@@ -72,7 +72,8 @@ void MessageDispatcherRenderer::OnReceiveMessage(
   error_params.frame_id = params.frame_id;
   error_params.world_id = params.world_id;
   error_params.serial = params.serial;
-  error_params.type = OxideMsg_SendMessage_Type::Error;
+  error_params.type = OxideMsg_SendMessage_Type::Reply;
+  error_params.error = OxideMsg_SendMessage_Error::INVALID_DESTINATION;
   error_params.msg_id = params.msg_id;
   error_params.args = std::string("Invalid frame or world ID");
 
