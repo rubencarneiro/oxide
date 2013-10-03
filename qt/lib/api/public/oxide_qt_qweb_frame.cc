@@ -58,6 +58,10 @@ void OxideQWebFrameBase::removeMessageHandler(
     OxideQMessageHandlerBase* handler) {
   Q_D(oxide::qt::QWebFrameBase);
 
+  if (!d) {
+    return;
+  }
+
   if (d->message_handlers().contains(handler)) {
     d->message_handlers().removeOne(handler);
     handler->setParent(NULL);

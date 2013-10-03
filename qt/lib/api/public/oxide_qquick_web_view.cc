@@ -172,6 +172,10 @@ void OxideQQuickWebView::removeMessageHandler(
     OxideQQuickMessageHandler* handler) {
   Q_D(oxide::qt::QQuickWebView);
 
+  if (!d) {
+    return;
+  }
+
   if (d->message_handlers().contains(handler)) {
     d->message_handlers().removeOne(handler);
     handler->setParent(NULL);
