@@ -45,9 +45,9 @@ oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
 oxide.addMessageHandler("SEND-MESSAGE-TO-SELF", function(msg) {
   var r = oxide.sendMessage(msg.args.id, msg.args.args);
   r.onreply = function(response) {
-    msg.reply(response);
+    msg.reply({error: 0, response: response});
   };
   r.onerror = function(error, desc) {
-    msg.error(desc);
+    msg.reply({error: error, response: desc});
   };
 });

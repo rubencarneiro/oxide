@@ -1,3 +1,4 @@
 module com.canonical.Oxide.Testing
 plugin qmloxidetestingplugin
 TestWebView 0.1 TestWebView.qml
+TestUtils 0.1 TestUtils.js

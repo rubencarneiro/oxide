@@ -17,6 +17,11 @@
 
 .pragma library
 
+function MessageError(error, desc) {
+  this.error = error;
+  this.message = desc;
+}
+
 function TestApiHost(webview, frame) {
   this._webview = webview;
   this._frame = frame;
@@ -25,27 +30,26 @@ function TestApiHost(webview, frame) {
 TestApiHost.prototype = {
   waitForResult: function(req, timeout) {
     var result;
-    var got_error = false;
-    var got_result = false;
+    var error;
 
     req.onreply = function(response) {
-      got_result = true;
       result = response;
+      error = 0;
     };
-    req.onerror = function(error, msg) {
-      got_error = true;
+    req.onerror = function(error_code, msg) {
       result = msg;
+      error = error_code;
     };
 
-    this._webview.waitFor(function() { return got_result || got_error; },
+    this._webview.waitFor(function() { return error !== undefined; },
                           timeout);
 
-    if (got_error) {
-      throw Error(result);
-    } else if (got_result) {
+    if (error > 0) {
+      throw new MessageError(error, result);
+    } else if (error === 0) {
       return result;
     } else {
-      throw Error("Message call timed out");
+      throw new Error("Message call timed out");
     }
   },
 
@@ -73,9 +77,14 @@ TestApiHost.prototype = {
   },
 
   sendMessageToSelf: function(id, args) {
-    return this.waitForResult(
+    var r = this.waitForResult(
         this._frame.sendMessage("TestUtils",
                                 "SEND-MESSAGE-TO-SELF",
                                 { id: id, args: args } ));
+    if (r.error > 0) {
+      throw new MessageError(r.error, r.response);
+    } else {
+      return r.response;
+    }
   }
 };

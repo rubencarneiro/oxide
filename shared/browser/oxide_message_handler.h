@@ -33,7 +33,7 @@ class IncomingMessage;
 
 class MessageHandler FINAL {
  public:
-  typedef base::Callback<void(IncomingMessage*)> HandlerCallback;
+  typedef base::Callback<void(IncomingMessage*, bool*, bool*, std::string*)> HandlerCallback;
 
   MessageHandler();
 

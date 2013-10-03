@@ -18,8 +18,12 @@
 #include "oxide_message_handler.h"
 
 #include "base/logging.h"
+#include "content/public/browser/render_view_host.h"
+
+#include "shared/common/oxide_messages.h"
 
 #include "oxide_incoming_message.h"
+#include "oxide_web_frame.h"
 
 namespace oxide {
 
@@ -34,7 +38,29 @@ void MessageHandler::OnReceiveMessage(
   DCHECK_EQ(message.msg_id, msg_id());
   DCHECK(!callback_.is_null());
 
-  callback_.Run(new IncomingMessage(message));
+  bool delivered = false;
+  bool error = false;
+  std::string error_desc;
+
+  callback_.Run(new IncomingMessage(message), &delivered, &error, &error_desc);
+
+  if (!delivered || error) {
+    OxideMsg_SendMessage_Params params;
+    params.frame_id = message.frame->identifier();
+    params.world_id = message.world_id;
+    params.serial = message.serial;
+    params.type = OxideMsg_SendMessage_Type::Reply;
+    params.error = error ?
+        OxideMsg_SendMessage_Error::UNCAUGHT_EXCEPTION :
+        OxideMsg_SendMessage_Error::UNDELIVERABLE;
+    params.msg_id = message.msg_id;
+    params.args = error_desc;
+
+    message.dispatcher->GetRenderViewHost()->Send(
+        new OxideMsg_SendMessage(
+          message.dispatcher->GetRenderViewHost()->GetRoutingID(),
+          params));
+  }
 }
 
 } // namespace oxide

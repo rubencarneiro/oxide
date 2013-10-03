@@ -63,9 +63,13 @@ class QMessageHandlerBasePrivate {
   OxideQMessageHandlerBase* q_ptr;
 
  private:
-  void ReceiveMessageCallback(oxide::IncomingMessage* message);
-  virtual void OnReceiveMessage(OxideQIncomingMessage* message,
-                                OxideQWebFrameBase* frame) = 0;
+  void ReceiveMessageCallback(oxide::IncomingMessage* message,
+                              bool* delivered,
+                              bool* error,
+                              std::string* error_desc);
+  virtual bool OnReceiveMessage(OxideQIncomingMessage* message,
+                                OxideQWebFrameBase* frame,
+                                QString* error_desc) = 0;
 
   oxide::MessageHandler handler_;
   base::WeakPtrFactory<QMessageHandlerBasePrivate> weak_factory_;
@@ -83,8 +87,9 @@ class QQuickMessageHandlerPrivate FINAL : public QMessageHandlerBasePrivate {
 
  private:
   QQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
-  void OnReceiveMessage(OxideQIncomingMessage* message,
-                        OxideQWebFrameBase* frame) FINAL;
+  bool OnReceiveMessage(OxideQIncomingMessage* message,
+                        OxideQWebFrameBase* frame,
+                        QString* error_desc) FINAL;
 };
 
 } // namespace qt

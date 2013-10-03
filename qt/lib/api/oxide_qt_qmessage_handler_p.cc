@@ -34,10 +34,20 @@ namespace oxide {
 namespace qt {
 
 void QMessageHandlerBasePrivate::ReceiveMessageCallback(
-    oxide::IncomingMessage* message) {
-  OnReceiveMessage(
+    oxide::IncomingMessage* message,
+    bool* delivered,
+    bool* error,
+    std::string* error_desc) {
+
+  *delivered = true;
+
+  QString qerror_desc;
+  *error = !OnReceiveMessage(
       new OxideQIncomingMessage(message),
-      static_cast<WebFrame *>(message->frame())->q_web_frame());
+      static_cast<WebFrame *>(message->frame())->q_web_frame(),
+      &qerror_desc);
+
+  *error_desc = qerror_desc.toStdString();
 }
 
 QMessageHandlerBasePrivate::QMessageHandlerBasePrivate(
@@ -71,9 +81,10 @@ void QMessageHandlerBasePrivate::removeFromCurrentOwner() {
   }
 }
 
-void QQuickMessageHandlerPrivate::OnReceiveMessage(
+bool QQuickMessageHandlerPrivate::OnReceiveMessage(
     OxideQIncomingMessage* message,
-    OxideQWebFrameBase* frame) {
+    OxideQWebFrameBase* frame,
+    QString* error_desc) {
   QQmlEngine::setObjectOwnership(message, QQmlEngine::JavaScriptOwnership);
 
   QJSValueList args;
@@ -81,7 +92,13 @@ void QQuickMessageHandlerPrivate::OnReceiveMessage(
   args.append(callback.engine()->newQObject(
       qobject_cast<OxideQQuickWebFrame *>(frame)));
 
-  callback.call(args);
+  QJSValue rv = callback.call(args);
+  if (rv.isError()) {
+    *error_desc = rv.toString();
+    return false;
+  }
+
+  return true;
 }
 
 QQuickMessageHandlerPrivate::QQuickMessageHandlerPrivate(
