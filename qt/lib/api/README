@@ -1,0 +1,20 @@
+*** IMPORTANT ***
+Chromium (and hence, Oxide) is built without run-time type information (RTTI).
+However, this breaks consumers that generally assume RTTI exists (ie, they don't
+compile with the "-fno-rtti" flag). Consumers that are built with RTTI will fail
+to link if they construct instances of classes from objects that aren't built
+with RTTI, if those classes have a vtable. In order to avoid constraining
+consumers, we build all public classes with RTTI.
+
+All objects in this folder (excluding everything in the private subfolder) are
+compiled with RTTI. When working on these files, please keep in consideration
+the following 2 restrictions:
+
+1) You can't use dynamic_cast on instances of classes from elsewhere in Oxide
+   or Chromium (I shouldn't need to explain this!)
+2) You can't construct instances of classes with virtual functions from
+   objects that are built anywhere else in Oxide or Chromium. If you need to
+   construct a new instance of a class, ensure that the constructor is called
+   from an object that isn't built with RTTI, and return a pointer to the fully
+   constructed object (ie, have the private class provide a static
+   "Class::Create()" function)

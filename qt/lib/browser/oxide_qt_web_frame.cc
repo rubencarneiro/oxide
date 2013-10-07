@@ -19,11 +19,11 @@
 
 #include "base/logging.h"
 
-#include "qt/lib/api/oxide_qt_qmessage_handler_p.h"
-#include "qt/lib/api/oxide_qt_qoutgoing_message_request_p.h"
-#include "qt/lib/api/oxide_qt_qweb_frame_p.h"
-#include "qt/lib/api/public/oxide_q_web_frame_base.h"
-#include "qt/lib/api/public/oxide_qquick_web_frame_p.h"
+#include "qt/lib/api/oxide_q_web_frame_base.h"
+#include "qt/lib/api/oxide_qquick_web_frame_p.h"
+#include "qt/lib/api/private/oxide_qt_qmessage_handler_p.h"
+#include "qt/lib/api/private/oxide_qt_qoutgoing_message_request_p.h"
+#include "qt/lib/api/private/oxide_qt_qweb_frame_p.h"
 
 namespace oxide {
 namespace qt {

@@ -32,8 +32,8 @@
 #include "base/strings/utf_string_conversions.h"
 #include "ui/gfx/rect.h"
 
-#include "qt/lib/api/oxide_qquick_web_view_p_p.h"
-#include "qt/lib/api/public/oxide_qquick_web_view_p.h"
+#include "qt/lib/api/oxide_qquick_web_view_p.h"
+#include "qt/lib/api/private/oxide_qquick_web_view_p_p.h"
 
 namespace oxide {
 namespace qt {
