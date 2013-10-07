@@ -122,7 +122,7 @@ class QQuickWebViewPrivate : public oxide::WebView,
                     const std::string& error_description) FINAL;
   void OnLoadSucceeded(const GURL& validated_url) FINAL;
 
-  oxide::WebFrame* AllocWebFrame(int64 frame_id) FINAL;
+  oxide::WebFrame* CreateWebFrame(int64 frame_id) FINAL;
 
   OxideQQuickWebView* q_ptr;
   scoped_ptr<InitData> init_props_;

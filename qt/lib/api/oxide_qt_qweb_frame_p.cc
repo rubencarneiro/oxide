@@ -35,6 +35,8 @@ QWebFrameBasePrivate::~QWebFrameBasePrivate() {
   while (!outgoing_message_requests_.isEmpty()) {
     removeOutgoingMessageRequest(outgoing_message_requests_.first());
   }
+
+  owner_->q_web_frame = NULL;
 }
 
 QWebFrameBasePrivate* QWebFrameBasePrivate::get(OxideQWebFrameBase* frame) {
@@ -66,26 +68,20 @@ QQuickWebFramePrivate* QQuickWebFramePrivate::Create(WebFrameQQuick* owner) {
 // static
 int QQuickWebFramePrivate::childFrame_count(
     QQmlListProperty<OxideQQuickWebFrame>* prop) {
-  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(
-        static_cast<OxideQWebFrameBase *>(prop->object));
+  OxideQQuickWebFrame* frame =
+      static_cast<OxideQQuickWebFrame *>(prop->object);
 
-  if (p->owner()->ChildCount() > INT_MAX) {
-    qWarning() << "Number of child frames exceed maximum";
-    return INT_MAX;
-  }
-
-  return static_cast<int>(p->owner()->ChildCount());
+  return frame->children().count();
 }
 
 // static
 OxideQQuickWebFrame* QQuickWebFramePrivate::childFrame_at(
     QQmlListProperty<OxideQQuickWebFrame>* prop,
     int index) {
-  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(
-        static_cast<OxideQWebFrameBase *>(prop->object));
+  OxideQQuickWebFrame* frame =
+      static_cast<OxideQQuickWebFrame *>(prop->object);
 
-  return static_cast<WebFrameQQuick *>(
-      p->owner()->ChildAt(index))->QQuickWebFrame();
+  return qobject_cast<OxideQQuickWebFrame *>(frame->children().at(index));
 }
 
 // static

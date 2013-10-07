@@ -85,6 +85,7 @@ class WebView : public content::WebContentsDelegate,
   BrowserContext* GetBrowserContext() const;
 
   WebFrame* GetRootFrame() const;
+  void SetRootFrame(WebFrame* root);
   WebFrame* FindFrameWithID(int64 frame_id) const;
 
   void DidStartProvisionalLoadForFrame(
@@ -185,7 +186,7 @@ class WebView : public content::WebContentsDelegate,
                             const std::string& error_description);
   virtual void OnLoadSucceeded(const GURL& validated_url);
 
-  virtual WebFrame* AllocWebFrame(int64 frame_id);
+  virtual WebFrame* CreateWebFrame(int64 frame_id);
 
   // Don't mess with the ordering of this unless you know what you
   // are doing. The WebContents needs to disappear first, and the

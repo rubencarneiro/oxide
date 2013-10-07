@@ -70,16 +70,24 @@ void OxideQWebFrameBase::removeMessageHandler(
   }
 }
 
+void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
+  OxideQQuickWebFrame* child = qobject_cast<OxideQQuickWebFrame *>(event->child());
+  Q_ASSERT(child);
+
+  if (event->added()) {
+    emit childFrameChanged(ChildAdded, child);
+  } else if (event->removed()) {
+    emit childFrameChanged(ChildRemoved, child);
+  }
+}
+
 OxideQQuickWebFrame::OxideQQuickWebFrame(oxide::qt::WebFrameQQuick* owner) :
     OxideQWebFrameBase(*oxide::qt::QQuickWebFramePrivate::Create(owner)) {}
 
 OxideQQuickWebFrame::~OxideQQuickWebFrame() {}
 
 OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
-  Q_D(const oxide::qt::QQuickWebFrame);
-
-  return static_cast<oxide::qt::WebFrameQQuick *>(
-      d->owner()->parent())->QQuickWebFrame();
+  return qobject_cast<OxideQQuickWebFrame *>(parent());
 }
 
 QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {

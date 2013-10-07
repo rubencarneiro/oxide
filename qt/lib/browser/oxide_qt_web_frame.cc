@@ -17,6 +17,8 @@
 
 #include "oxide_qt_web_frame.h"
 
+#include "base/logging.h"
+
 #include "qt/lib/api/oxide_qt_qmessage_handler_p.h"
 #include "qt/lib/api/oxide_qt_qoutgoing_message_request_p.h"
 #include "qt/lib/api/oxide_qt_qweb_frame_p.h"
@@ -27,28 +29,33 @@ namespace oxide {
 namespace qt {
 
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
-  OnChildAddedQt(static_cast<WebFrame *>(child)->q_web_frame());
+  static_cast<WebFrame *>(child)->q_web_frame->setParent(q_web_frame);
 }
 
 void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
-  OnChildRemovedQt(static_cast<WebFrame *>(child)->q_web_frame());
+  static_cast<WebFrame *>(child)->q_web_frame->setParent(NULL);
 }
 
 void WebFrame::OnURLChanged() {
-  q_web_frame_->urlChanged();
+  q_web_frame->urlChanged();
 }
 
 WebFrame::WebFrame(int64 frame_id, OxideQWebFrameBase* q_web_frame) :
     oxide::WebFrame(frame_id),
-    q_web_frame_(q_web_frame) {}
+    q_web_frame(q_web_frame) {}
 
-WebFrame::~WebFrame() {}
+WebFrame::~WebFrame() {
+  if (q_web_frame) {
+    delete q_web_frame;
+    DCHECK(!q_web_frame);
+  }
+}
 
 MessageDispatcherBrowser::MessageHandlerVector
 WebFrame::GetMessageHandlers() const {
   MessageDispatcherBrowser::MessageHandlerVector list;
   QList<OxideQMessageHandlerBase *>& handlers =
-      QWebFrameBasePrivate::get(q_web_frame_.get())->message_handlers();
+      QWebFrameBasePrivate::get(q_web_frame)->message_handlers();
   for (int i = 0; i < handlers.size(); ++i) {
     list.push_back(QMessageHandlerBasePrivate::get(handlers.at(i))->handler());
   }
@@ -60,7 +67,7 @@ MessageDispatcherBrowser::OutgoingMessageRequestVector
 WebFrame::GetOutgoingMessageRequests() const {
   MessageDispatcherBrowser::OutgoingMessageRequestVector list;
   QList<OxideQOutgoingMessageRequestBase *>& requests =
-      QWebFrameBasePrivate::get(q_web_frame_.get())->outgoing_message_requests();
+      QWebFrameBasePrivate::get(q_web_frame)->outgoing_message_requests();
   for (int i = 0; i < requests.size(); ++i) {
     list.push_back(
         QOutgoingMessageRequestBasePrivate::get(requests.at(i))->request());
@@ -69,29 +76,13 @@ WebFrame::GetOutgoingMessageRequests() const {
   return list;
 }
 
-void WebFrameQQuick::OnParentChanged() {
-  QQuickWebFrame()->parentFrameChanged();
-}
-
-void WebFrameQQuick::OnChildAddedQt(OxideQWebFrameBase* child) {
-  QQuickWebFrame()->childFrameChanged(
-      OxideQQuickWebFrame::ChildAdded,
-      qobject_cast<OxideQQuickWebFrame *>(child));
-}
-
-void WebFrameQQuick::OnChildRemovedQt(OxideQWebFrameBase* child) {
-  QQuickWebFrame()->childFrameChanged(
-      OxideQQuickWebFrame::ChildRemoved,
-      qobject_cast<OxideQQuickWebFrame *>(child));
-}
-
 WebFrameQQuick::WebFrameQQuick(int64 frame_id) :
     WebFrame(frame_id, new OxideQQuickWebFrame(this)) {}
 
 WebFrameQQuick::~WebFrameQQuick() {}
 
 OxideQQuickWebFrame* WebFrameQQuick::QQuickWebFrame() const {
-  return qobject_cast<OxideQQuickWebFrame *>(q_web_frame());
+  return qobject_cast<OxideQQuickWebFrame *>(q_web_frame);
 }
 
 } // namespace qt

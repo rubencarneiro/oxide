@@ -37,8 +37,9 @@ class OutgoingMessageRequest;
 // of this will typically own a publicly exposed webframe
 class WebFrame {
  public:
-  WebFrame(int64 frame_id);
   virtual ~WebFrame();
+
+  void DestroyFrame();
 
   int64 identifier() const {
     return id_;
@@ -53,16 +54,15 @@ class WebFrame {
   }
 
   WebView* GetView() const;
-  void SetView(WebView* view);
 
   base::WeakPtr<WebFrame> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
   }
 
-  void AddChildFrame(WebFrame* frame);
-  void RemoveChildFrame(WebFrame* frame);
-
   void SetURL(const GURL& url);
+
+  void SetParent(WebView* parent);
+  void SetParent(WebFrame* parent);
 
   WebFrame* FindFrameWithID(int64 frame_id);
 
@@ -82,14 +82,17 @@ class WebFrame {
   virtual MessageDispatcherBrowser::OutgoingMessageRequestVector
       GetOutgoingMessageRequests() const;
 
+ protected:
+  WebFrame(int64 frame_id);
+
  private:
   typedef std::vector<linked_ptr<WebFrame> > ChildVector;
 
+  void AddChildFrame(WebFrame* frame);
+  void RemoveChildFrame(WebFrame* frame);
+
   void AddChildrenToQueue(std::queue<WebFrame *>* queue) const;
 
-  void SetParent(WebFrame* parent);
-
-  virtual void OnParentChanged();
   virtual void OnChildAdded(WebFrame* child);
   virtual void OnChildRemoved(WebFrame* child);
   virtual void OnURLChanged();

@@ -77,20 +77,18 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
 }
 
 void WebView::NotifyRenderViewHostSwappedIn() {
-  WebFrame* root = NULL;
   content::RenderViewHostImpl* rvh =
       static_cast<content::RenderViewHostImpl *>(
         web_contents_->GetRenderViewHost());
 
   if (rvh->main_frame_id() != -1) {
-    root = AllocWebFrame(rvh->main_frame_id());
+    WebFrame* root = CreateWebFrame(rvh->main_frame_id());
     if (root) {
-      root->SetView(this);
+      root->SetParent(this);
     }
+  } else {
+    SetRootFrame(NULL);
   }
-
-  root_frame_.reset(root);
-  OnRootFrameChanged();
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -118,7 +116,7 @@ void WebView::OnLoadFailed(const GURL& validated_url,
                            const std::string& error_description) {}
 void WebView::OnLoadSucceeded(const GURL& validated_url) {}
 
-WebFrame* WebView::AllocWebFrame(int64 frame_id) {
+WebFrame* WebView::CreateWebFrame(int64 frame_id) {
   return NULL;
 }
 
@@ -257,6 +255,19 @@ WebFrame* WebView::GetRootFrame() const {
   return root_frame_.get();
 }
 
+void WebView::SetRootFrame(WebFrame* root) {
+  bool changed = false;
+  if (root != root_frame_) {
+    changed = true;
+  }
+
+  root_frame_.reset(root);
+
+  if (changed) {
+    OnRootFrameChanged();
+  }
+}
+
 WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
   if (!root_frame_) {
     return NULL;
@@ -290,14 +301,11 @@ void WebView::DidCommitProvisionalLoadForFrame(
     return;
   }
 
-  if (!root_frame_) {
-    WebFrame* root = AllocWebFrame(frame_id);
+  if (!root_frame_ && is_main_frame) {
+    WebFrame* root = CreateWebFrame(frame_id);
     if (root) {
-      root->SetView(this);
+      root->SetParent(this);
     }
-    root_frame_.reset(root);
-    DCHECK(!root_frame_ || is_main_frame);
-    OnRootFrameChanged();
   }
 
   WebFrame* frame = FindFrameWithID(frame_id);
@@ -356,12 +364,8 @@ void WebView::FrameAttached(content::RenderViewHost* render_view_host,
     return;
   }
 
-  WebFrame* frame = AllocWebFrame(frame_id);
-  if (!frame) {
-    return;
-  }
-
-  parent->AddChildFrame(frame);
+  WebFrame* frame = CreateWebFrame(frame_id);
+  frame->SetParent(parent);
 }
 
 void WebView::FrameDetached(content::RenderViewHost* render_view_host,
@@ -375,7 +379,7 @@ void WebView::FrameDetached(content::RenderViewHost* render_view_host,
     return;
   }
 
-  frame->parent()->RemoveChildFrame(frame);
+  frame->DestroyFrame();
 }
 
 MessageDispatcherBrowser::MessageHandlerVector

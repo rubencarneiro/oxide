@@ -44,7 +44,7 @@ void QMessageHandlerBasePrivate::ReceiveMessageCallback(
   QString qerror_desc;
   *error = !OnReceiveMessage(
       new OxideQIncomingMessage(message),
-      static_cast<WebFrame *>(message->frame())->q_web_frame(),
+      static_cast<WebFrame *>(message->frame())->q_web_frame,
       &qerror_desc);
 
   *error_desc = qerror_desc.toStdString();

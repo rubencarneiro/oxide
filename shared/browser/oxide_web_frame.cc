@@ -29,68 +29,7 @@
 
 namespace oxide {
 
-void WebFrame::AddChildrenToQueue(std::queue<WebFrame *>* queue) const {
-  for (ChildVector::const_iterator it = child_frames_.begin();
-       it != child_frames_.end(); ++it) {
-    linked_ptr<WebFrame> frame = *it;
-    queue->push(frame.get());
-  }
-}
-
-void WebFrame::SetParent(WebFrame* parent) {
-  DCHECK(!view_);
-  parent_ = parent;
-  OnParentChanged();
-}
-
-void WebFrame::OnParentChanged() {}
-void WebFrame::OnChildAdded(WebFrame* child) {}
-void WebFrame::OnChildRemoved(WebFrame* child) {}
-void WebFrame::OnURLChanged() {}
-
-WebFrame::WebFrame(int64 frame_id) :
-  id_(frame_id),
-  parent_(NULL),
-  view_(NULL),
-  next_message_serial_(0),
-  weak_factory_(this) {}
-
-WebFrame::~WebFrame() {
-  MessageDispatcherBrowser::OutgoingMessageRequestVector requests =
-      GetOutgoingMessageRequests();
-  for (MessageDispatcherBrowser::OutgoingMessageRequestVector::iterator it =
-        requests.begin();
-       it != requests.end(); ++it) {
-    OutgoingMessageRequest* request = *it;
-
-    request->SendError(OxideMsg_SendMessage_Error::FRAME_DISAPPEARED,
-                       "The frame disappeared whilst waiting for a response");
-  }
-}
-
-WebView* WebFrame::GetView() const {
-  WebFrame* top = const_cast<WebFrame *>(this);
-  while (top->parent()) {
-    top = top->parent();
-  }
-
-  if (top == this) {
-    return view_;
-  }
-
-  return top->GetView();
-}
-
-void WebFrame::SetView(WebView* view) {
-  DCHECK(!parent_);
-  view_ = view;
-}
-
 void WebFrame::AddChildFrame(WebFrame* frame) {
-  CHECK(!frame->parent());
-
-  frame->SetParent(this);
-
   child_frames_.push_back(linked_ptr<WebFrame>(frame));
   OnChildAdded(frame);
 }
@@ -108,10 +47,76 @@ void WebFrame::RemoveChildFrame(WebFrame* frame) {
   }
 }
 
+void WebFrame::AddChildrenToQueue(std::queue<WebFrame *>* queue) const {
+  for (ChildVector::const_iterator it = child_frames_.begin();
+       it != child_frames_.end(); ++it) {
+    linked_ptr<WebFrame> frame = *it;
+    queue->push(frame.get());
+  }
+}
+
+void WebFrame::OnChildAdded(WebFrame* child) {}
+void WebFrame::OnChildRemoved(WebFrame* child) {}
+void WebFrame::OnURLChanged() {}
+
+WebFrame::WebFrame(int64 frame_id) :
+    id_(frame_id),
+    parent_(NULL),
+    view_(NULL),
+    next_message_serial_(0),
+    weak_factory_(this) {}
+
+WebFrame::~WebFrame() {
+  MessageDispatcherBrowser::OutgoingMessageRequestVector requests =
+      GetOutgoingMessageRequests();
+  for (MessageDispatcherBrowser::OutgoingMessageRequestVector::iterator it =
+        requests.begin();
+       it != requests.end(); ++it) {
+    OutgoingMessageRequest* request = *it;
+
+    request->SendError(OxideMsg_SendMessage_Error::FRAME_DISAPPEARED,
+                       "The frame disappeared whilst waiting for a response");
+  }
+}
+
+void WebFrame::DestroyFrame() {
+  if (parent_) {
+    parent_->RemoveChildFrame(this);
+  } else {
+    view_->SetRootFrame(NULL);
+  }
+}
+
+WebView* WebFrame::GetView() const {
+  WebFrame* top = const_cast<WebFrame *>(this);
+  while (top->parent()) {
+    top = top->parent();
+  }
+
+  if (top == this) {
+    return view_;
+  }
+
+  return top->GetView();
+}
+
 void WebFrame::SetURL(const GURL& url) {
   url_ = url;
   OnURLChanged();
 }
+
+void WebFrame::SetParent(WebView* parent) {
+  DCHECK(!view_ && !parent_) << "Changing parents is not supported";
+  view_ = parent;
+  view_->SetRootFrame(this);
+}
+
+void WebFrame::SetParent(WebFrame* parent) {
+  DCHECK(!view_ && !parent_) << "Changing parents is not supported";
+  parent_ = parent;
+  parent_->AddChildFrame(this);
+}
+
 
 WebFrame* WebFrame::FindFrameWithID(int64 frame_id) {
   std::queue<WebFrame *> q;

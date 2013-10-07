@@ -37,7 +37,7 @@ class WebFrameQQuick;
 
 class Q_DECL_EXPORT OxideQQuickWebFrame : public OxideQWebFrameBase {
   Q_OBJECT
-  Q_PROPERTY(OxideQQuickWebFrame* parentFrame READ parentFrame NOTIFY parentFrameChanged)
+  Q_PROPERTY(OxideQQuickWebFrame* parentFrame READ parentFrame)
   Q_PROPERTY(QQmlListProperty<OxideQQuickWebFrame> childFrames READ childFrames NOTIFY childFrameChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers)
   Q_ENUMS(ChildFrameChangedType)
@@ -67,12 +67,13 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public OxideQWebFrameBase {
                                       const QVariant& args);
 
  Q_SIGNALS:
-  void parentFrameChanged();
   void childFrameChanged(ChildFrameChangedType type,
                          OxideQQuickWebFrame* child_frame);
 
  protected:
   friend class oxide::qt::WebFrameQQuick;
+
+  virtual void childEvent(QChildEvent* event);
 
   Q_DECL_HIDDEN OxideQQuickWebFrame(oxide::qt::WebFrameQQuick* owner);
 };

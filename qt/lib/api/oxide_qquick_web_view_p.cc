@@ -27,6 +27,7 @@
 #include "url/gurl.h"
 
 #include "qt/lib/api/public/oxide_q_load_event.h"
+#include "qt/lib/api/public/oxide_q_web_frame_base.h"
 #include "qt/lib/api/public/oxide_qquick_web_view_p.h"
 #include "qt/lib/api/public/oxide_qquick_web_view_context_p.h"
 #include "qt/lib/browser/oxide_qt_render_widget_host_view_qquick.h"
@@ -66,6 +67,11 @@ void QQuickWebViewPrivate::OnCommandsUpdated() {
 
 void QQuickWebViewPrivate::OnRootFrameChanged() {
   Q_Q(OxideQQuickWebView);
+
+  WebFrame* root = static_cast<WebFrame *>(GetRootFrame());
+  if (root) {
+    root->q_web_frame->setParent(q);
+  }
 
   emit q->rootFrameChanged();
 }
@@ -108,7 +114,7 @@ void QQuickWebViewPrivate::OnLoadSucceeded(const GURL& validated_url) {
   emit q->loadingChanged(&event);
 }
 
-oxide::WebFrame* QQuickWebViewPrivate::AllocWebFrame(
+oxide::WebFrame* QQuickWebViewPrivate::CreateWebFrame(
     int64 frame_id) {
   return new WebFrameQQuick(frame_id);
 }
