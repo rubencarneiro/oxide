@@ -19,6 +19,7 @@
 #define _OXIDE_QT_LIB_API_PUBLIC_QQUICK_MESSAGE_HANDLER_H_
 
 #include <QJSValue>
+#include <QQmlParserStatus>
 #include <QtQml>
 
 #include "oxide_q_message_handler_base.h"
@@ -29,7 +30,8 @@ class QQuickMessageHandlerPrivate;
 }
 }
 
-class Q_DECL_EXPORT OxideQQuickMessageHandler : public OxideQMessageHandlerBase {
+class Q_DECL_EXPORT OxideQQuickMessageHandler : public OxideQMessageHandlerBase,
+                                                public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QJSValue callback READ callback WRITE setCallback NOTIFY callbackChanged)
 
@@ -38,6 +40,9 @@ class Q_DECL_EXPORT OxideQQuickMessageHandler : public OxideQMessageHandlerBase 
  public:
   OxideQQuickMessageHandler(QObject* parent = NULL);
   virtual ~OxideQQuickMessageHandler();
+
+  void classBegin();
+  void componentComplete();
 
   QJSValue callback() const;
   void setCallback(const QJSValue& callback);

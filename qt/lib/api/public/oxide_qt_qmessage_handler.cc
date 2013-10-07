@@ -84,16 +84,20 @@ void OxideQMessageHandlerBase::setWorldIds(const QList<QString>& ids) {
 OxideQQuickMessageHandler::OxideQQuickMessageHandler(QObject* parent) :
     OxideQMessageHandlerBase(
       *oxide::qt::QQuickMessageHandlerPrivate::Create(this),
-       parent) {
-  if (OxideQQuickWebView* view = qobject_cast<OxideQQuickWebView *>(parent)) {
+       parent) {}
+
+OxideQQuickMessageHandler::~OxideQQuickMessageHandler() {}
+
+void OxideQQuickMessageHandler::classBegin() {}
+
+void OxideQQuickMessageHandler::componentComplete() {
+  if (OxideQQuickWebView* view = qobject_cast<OxideQQuickWebView *>(parent())) {
     view->addMessageHandler(this);
   } else if (OxideQWebFrameBase* frame =
-             qobject_cast<OxideQWebFrameBase *>(parent)) {
+             qobject_cast<OxideQWebFrameBase *>(parent())) {
     frame->addMessageHandler(this);
   }
 }
-
-OxideQQuickMessageHandler::~OxideQQuickMessageHandler() {}
 
 QJSValue OxideQQuickMessageHandler::callback() const {
   Q_D(const oxide::qt::QQuickMessageHandler);
