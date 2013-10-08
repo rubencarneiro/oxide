@@ -42,12 +42,19 @@ QUrl OxideQWebFrameBase::url() const {
 }
 
 void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
-  OxideQQuickWebFrame* child = qobject_cast<OxideQQuickWebFrame *>(event->child());
-  Q_ASSERT(child);
+  Q_D(oxide::qt::QQuickWebFrame);
 
+  OxideQQuickWebFrame* child = qobject_cast<OxideQQuickWebFrame *>(event->child());
+  if (!child) {
+    // We also manage message handlers and outgoing message requests
+    return;
+  }
+  
   if (event->added()) {
+    d->children().append(child);
     emit childFrameChanged(ChildAdded, child);
   } else if (event->removed()) {
+    d->children().removeOne(child);
     emit childFrameChanged(ChildRemoved, child);
   }
 }

@@ -68,20 +68,20 @@ QQuickWebFramePrivate* QQuickWebFramePrivate::Create(WebFrameQQuick* owner) {
 // static
 int QQuickWebFramePrivate::childFrame_count(
     QQmlListProperty<OxideQQuickWebFrame>* prop) {
-  OxideQQuickWebFrame* frame =
-      static_cast<OxideQQuickWebFrame *>(prop->object);
+  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(
+      static_cast<OxideQQuickWebFrame *>(prop->object));
 
-  return frame->children().count();
+  return p->children().count();
 }
 
 // static
 OxideQQuickWebFrame* QQuickWebFramePrivate::childFrame_at(
     QQmlListProperty<OxideQQuickWebFrame>* prop,
     int index) {
-  OxideQQuickWebFrame* frame =
-      static_cast<OxideQQuickWebFrame *>(prop->object);
+  QWebFrameBasePrivate* p = QWebFrameBasePrivate::get(
+      static_cast<OxideQQuickWebFrame *>(prop->object));
 
-  return qobject_cast<OxideQQuickWebFrame *>(frame->children().at(index));
+  return qobject_cast<OxideQQuickWebFrame *>(p->children().at(index));
 }
 
 // static

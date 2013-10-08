@@ -51,6 +51,9 @@ class QWebFrameBasePrivate {
   QList<OxideQOutgoingMessageRequestBase *>& outgoing_message_requests() {
     return outgoing_message_requests_;
   }
+  QList<OxideQWebFrameBase *>& children() {
+    return children_;
+  }
 
   static QWebFrameBasePrivate* get(OxideQWebFrameBase* web_frame);
 
@@ -64,6 +67,8 @@ class QWebFrameBasePrivate {
   WebFrame* owner_;
   QList<OxideQMessageHandlerBase *> message_handlers_;
   QList<OxideQOutgoingMessageRequestBase *> outgoing_message_requests_;
+  // We keep this separate to QObject becase we want a way to track child frames quickly
+  QList<OxideQWebFrameBase *> children_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(QWebFrameBasePrivate);
 };
