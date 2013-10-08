@@ -140,8 +140,13 @@ bool OxideQQuickWebView::loading() const {
 OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   Q_D(const oxide::qt::QQuickWebView);
 
-  return static_cast<oxide::qt::WebFrameQQuick *>(
-      d->GetRootFrame())->QQuickWebFrame();
+  oxide::qt::WebFrameQQuick* root =
+      static_cast<oxide::qt::WebFrameQQuick *>(d->GetRootFrame());
+  if (!root) {
+    return NULL;
+  }
+
+  return root->QQuickWebFrame();
 }
 
 QQmlListProperty<OxideQQuickMessageHandler>
