@@ -41,35 +41,6 @@ QUrl OxideQWebFrameBase::url() const {
   return QUrl(QString::fromStdString(d->owner()->url().spec()));
 }
 
-void OxideQWebFrameBase::addMessageHandler(OxideQMessageHandlerBase* handler) {
-  Q_D(oxide::qt::QWebFrameBase);
-
-  if (!d->message_handlers().contains(handler)) {
-    oxide::qt::QMessageHandlerBasePrivate::get(handler)->removeFromCurrentOwner();
-    handler->setParent(this);
-
-    d->message_handlers().append(handler);
-
-    emit messageHandlersChanged();
-  }
-}
-
-void OxideQWebFrameBase::removeMessageHandler(
-    OxideQMessageHandlerBase* handler) {
-  Q_D(oxide::qt::QWebFrameBase);
-
-  if (!d) {
-    return;
-  }
-
-  if (d->message_handlers().contains(handler)) {
-    d->message_handlers().removeOne(handler);
-    handler->setParent(NULL);
-
-    emit messageHandlersChanged();
-  }
-}
-
 void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
   OxideQQuickWebFrame* child = qobject_cast<OxideQQuickWebFrame *>(event->child());
   Q_ASSERT(child);
@@ -105,6 +76,35 @@ OxideQQuickWebFrame::messageHandlers() {
       oxide::qt::QQuickWebFramePrivate::messageHandler_count,
       oxide::qt::QQuickWebFramePrivate::messageHandler_at,
       oxide::qt::QQuickWebFramePrivate::messageHandler_clear);
+}
+
+void OxideQQuickWebFrame::addMessageHandler(OxideQQuickMessageHandler* handler) {
+  Q_D(oxide::qt::QQuickWebFrame);
+
+  if (!d->message_handlers().contains(handler)) {
+    oxide::qt::QQuickMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
+    handler->setParent(this);
+
+    d->message_handlers().append(handler);
+
+    emit messageHandlersChanged();
+  }
+}
+
+void OxideQQuickWebFrame::removeMessageHandler(
+    OxideQQuickMessageHandler* handler) {
+  Q_D(oxide::qt::QQuickWebFrame);
+
+  if (!d) {
+    return;
+  }
+
+  if (d->message_handlers().contains(handler)) {
+    d->message_handlers().removeOne(handler);
+    handler->setParent(NULL);
+
+    emit messageHandlersChanged();
+  }
 }
 
 OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(

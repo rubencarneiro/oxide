@@ -57,6 +57,8 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public OxideQWebFrameBase {
   QQmlListProperty<OxideQQuickWebFrame> childFrames();
 
   QQmlListProperty<OxideQQuickMessageHandler> messageHandlers();
+  Q_INVOKABLE void addMessageHandler(OxideQQuickMessageHandler* handler);
+  Q_INVOKABLE void removeMessageHandler(OxideQQuickMessageHandler* handler);
 
   Q_INVOKABLE OxideQQuickOutgoingMessageRequest*
       sendMessage(const QString& world_id,

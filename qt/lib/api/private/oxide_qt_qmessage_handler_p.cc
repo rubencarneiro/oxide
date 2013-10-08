@@ -67,20 +67,6 @@ QMessageHandlerBasePrivate* QMessageHandlerBasePrivate::get(
   return message_handler->d_func();
 }
 
-void QMessageHandlerBasePrivate::removeFromCurrentOwner() {
-  Q_Q(OxideQMessageHandlerBase);
-
-  // XXX: Is there a better way of doing this? Perhaps by notifying
-  //      the existing owner that the handler has a new parent?
-  if (OxideQWebFrameBase* frame =
-      qobject_cast<OxideQWebFrameBase *>(q->parent())) {
-    frame->removeMessageHandler(q);
-  } else if (OxideQQuickWebView* view =
-             qobject_cast<OxideQQuickWebView *>(q->parent())) {
-    view->removeMessageHandler(qobject_cast<OxideQQuickMessageHandler *>(q));
-  }
-}
-
 bool QQuickMessageHandlerPrivate::OnReceiveMessage(
     OxideQIncomingMessage* message,
     OxideQWebFrameBase* frame,
@@ -109,6 +95,26 @@ QQuickMessageHandlerPrivate::QQuickMessageHandlerPrivate(
 QQuickMessageHandlerPrivate* QQuickMessageHandlerPrivate::Create(
     OxideQQuickMessageHandler* q) {
   return new QQuickMessageHandlerPrivate(q);
+}
+
+void QQuickMessageHandlerPrivate::removeFromCurrentOwner() {
+  Q_Q(OxideQQuickMessageHandler);
+
+  // XXX: Is there a better way of doing this? Perhaps by notifying
+  //      the existing owner that the handler has a new parent?
+  if (OxideQQuickWebFrame* frame =
+      qobject_cast<OxideQQuickWebFrame *>(q->parent())) {
+    frame->removeMessageHandler(q);
+  } else if (OxideQQuickWebView* view =
+             qobject_cast<OxideQQuickWebView *>(q->parent())) {
+    view->removeMessageHandler(q);
+  }
+}
+
+// static
+QQuickMessageHandlerPrivate* QQuickMessageHandlerPrivate::get(
+    OxideQQuickMessageHandler* message_handler) {
+  return message_handler->d_func();
 }
 
 } // namespace qt

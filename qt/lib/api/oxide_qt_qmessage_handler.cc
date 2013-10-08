@@ -22,7 +22,7 @@
 
 #include "qt/lib/api/private/oxide_qt_qmessage_handler_p.h"
 
-#include "oxide_q_web_frame_base.h"
+#include "oxide_qquick_web_frame_p.h"
 #include "oxide_qquick_web_view_p.h"
 
 OxideQMessageHandlerBase::OxideQMessageHandlerBase(
@@ -93,8 +93,8 @@ void OxideQQuickMessageHandler::classBegin() {}
 void OxideQQuickMessageHandler::componentComplete() {
   if (OxideQQuickWebView* view = qobject_cast<OxideQQuickWebView *>(parent())) {
     view->addMessageHandler(this);
-  } else if (OxideQWebFrameBase* frame =
-             qobject_cast<OxideQWebFrameBase *>(parent())) {
+  } else if (OxideQQuickWebFrame* frame =
+             qobject_cast<OxideQQuickWebFrame *>(parent())) {
     frame->addMessageHandler(this);
   }
 }

@@ -52,10 +52,10 @@ class QMessageHandlerBasePrivate {
     return &handler_;
   }
 
+  virtual void removeFromCurrentOwner() = 0;
+
   static QMessageHandlerBasePrivate* get(
       OxideQMessageHandlerBase* message_handler);
-
-  void removeFromCurrentOwner();
 
  protected:
   QMessageHandlerBasePrivate(OxideQMessageHandlerBase* q);
@@ -82,6 +82,11 @@ class QQuickMessageHandlerPrivate FINAL : public QMessageHandlerBasePrivate {
 
  public:
   static QQuickMessageHandlerPrivate* Create(OxideQQuickMessageHandler* q);
+
+  void removeFromCurrentOwner() FINAL;
+
+  static QQuickMessageHandlerPrivate* get(
+      OxideQQuickMessageHandler* message_handler);
 
   QJSValue callback;
 

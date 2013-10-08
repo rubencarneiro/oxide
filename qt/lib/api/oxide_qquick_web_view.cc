@@ -164,7 +164,7 @@ void OxideQQuickWebView::addMessageHandler(
   Q_D(oxide::qt::QQuickWebView);
 
   if (!d->message_handlers().contains(handler)) {
-    oxide::qt::QMessageHandlerBasePrivate::get(handler)->removeFromCurrentOwner();
+    oxide::qt::QQuickMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
     handler->setParent(this);
 
     d->message_handlers().append(handler);
