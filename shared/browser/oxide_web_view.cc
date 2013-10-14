@@ -49,7 +49,7 @@ void WebView::NotificationObserver::Observe(
     int type,
     const content::NotificationSource& source,
     const content::NotificationDetails& details) {
-  if (type != content::NOTIFICATION_WEB_CONTENTS_SWAPPED ||
+  if (type != content::NOTIFICATION_RENDER_VIEW_HOST_CHANGED ||
       content::Source<content::WebContents>(source).ptr() !=
           web_view_->web_contents_.get()) {
     return;
@@ -152,7 +152,7 @@ bool WebView::Init(BrowserContext* context,
   Observe(web_contents_.get());
   registrar_.Add(
       &notification_observer_,
-      content::NOTIFICATION_WEB_CONTENTS_SWAPPED,
+      content::NOTIFICATION_RENDER_VIEW_HOST_CHANGED,
       content::Source<content::WebContents>(web_contents_.get()));
 
   static_cast<oxide::WebContentsView *>(
