@@ -112,7 +112,9 @@ void OxideQQuickMessageHandler::setCallback(const QJSValue& callback) {
     return;
   }
 
-  if (!callback.isCallable()) {
+  if (!callback.isCallable() &&
+      !callback.isNull() &&
+      !callback.isUndefined()) {
     qWarning() << "Invalid callback";
     return;
   }
