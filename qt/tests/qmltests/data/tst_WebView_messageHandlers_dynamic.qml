@@ -14,10 +14,20 @@ TestWebView {
     MessageHandler {}
   }
 
+  SignalSpy {
+    id: spy
+    target: webView
+    signalName: "messageHandlersChanged"
+  }
+
   TestCase {
     id: test
     name: "WebView_messageHandlers_dynamic"
     when: windowShown
+
+    function init() {
+      spy.clear();
+    }
 
     function test_WebView_messageHandlers_dynamic1() {
       compare(webView.messageHandlers.length, 0,
@@ -31,6 +41,7 @@ TestWebView {
             }
           });
       webView.addMessageHandler(handler);
+      compare(spy.count, 1, "Should have had a messageHandlersChanged signal");
       compare(webView.messageHandlers.length, 1, "Should have a handler now");
       compare(webView.messageHandlers[0], handler,
               "Got the wrong handler back");
@@ -45,18 +56,21 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      compare(webView.getTestApi().sendMessageToSelf(
-                  "TEST", { in: 10 }).out, 20,
+      function sendMessage() {
+        return webView.getTestApi().sendMessageToSelf("TEST", { in: 10 }).out;
+      }
+
+      compare(sendMessage(), 20,
               "Invalid response from message handler");
 
       handler = webView.messageHandlers[0];
       webView.removeMessageHandler(handler);
-      compare(webView.messageHandlers.length, 0,
-              "Should have no handlers again");
+      compare(spy.count, 2, "Should have had a messageHandlersChanged signal");
+      compare(webView.messageHandlers.length, 0, "Should have no handlers again");
 
       try {
-        webView.getTestApi().sendMessageToSelf("TEST", { in: 10 });
-        verify(false, "Should have thrown");
+        sendMessage();
+        fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
         compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
@@ -75,6 +89,7 @@ TestWebView {
               msg.reply({ out: msg.args.in * 2 });
             }
           });
+      compare(spy.count, 1, "Should have had a messageHandlersChanged signal");
       compare(webView.messageHandlers.length, 1, "Should have a handler now");
       compare(webView.messageHandlers[0], handler,
               "Got the wrong handler back");
@@ -89,19 +104,21 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      compare(webView.getTestApi().sendMessageToSelf(
-                  "TEST", { in: 10 }).out, 20,
-              "Invalid response from message handler");
+      function sendMessage() {
+        return webView.getTestApi().sendMessageToSelf("TEST", { in: 10 }).out;
+      }
+
+      compare(sendMessage(), 20, "Invalid response from message handler");
 
       handler = webView.messageHandlers[0];
       webView.removeMessageHandler(handler);
 
-      compare(webView.messageHandlers.length, 0,
-              "Should have no handlers again");
+      compare(spy.count, 2, "Should have had a messageHandlersChanged signal");
+      compare(webView.messageHandlers.length, 0, "Should have no handlers again");
 
       try {
-        webView.getTestApi().sendMessageToSelf("TEST", { in: 10 });
-        verify(false, "Should have thrown");
+        sendMessage();
+        fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
         compare(e.error, OutgoingMessageRequest.ErrorNoHandler,

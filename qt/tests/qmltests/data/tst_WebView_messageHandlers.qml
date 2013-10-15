@@ -9,35 +9,12 @@ TestWebView {
   width: 200
   height: 200
 
-  property QtObject lastMessageFrameSource: null
-  property string lastMessageWorldId: ""
-
   messageHandlers: [
     MessageHandler {
-      msgId: "TEST-REPLY"
-      worldIds: [ "TestUtils" ]
+      msgId: "TEST"
+      worldIds: [ "Foo", "TestUtils" ]
       callback: function(msg, frame) {
-        webView.lastMessageFrameSource = frame;
-        webView.lastMessageWorldId = msg.worldId;
         msg.reply({ out: msg.args.in * 2 });
-      }
-    },
-    MessageHandler {
-      msgId: "TEST-ERROR"
-      worldIds: [ "TestUtils" ]
-      callback: function(msg, frame) {
-        webView.lastMessageFrameSource = frame;
-        webView.lastMessageWorldId = msg.worldId;
-        msg.error("This is an error");
-      }
-    },
-    MessageHandler {
-      msgId: "TEST-THROW"
-      worldIds: [ "TestUtils" ]
-      callback: function(msg, frame) {
-        webView.lastMessageFrameSource = frame;
-        webView.lastMessageWorldId = msg.worldId;
-        throw Error("This is an exception");
       }
     }
   ]
@@ -47,23 +24,14 @@ TestWebView {
     name: "WebView_messageHandlers"
     when: windowShown
 
-    function init() {
-      webView.lastMessageFrameSource = null;
-      webView.lastMessageWorldId = "";
-    }
-
     function test_WebView_messageHandlers1_valid() {
       webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
       compare(webView.getTestApi().sendMessageToSelf(
-                  "TEST-REPLY", { in: 10 }).out, 20,
+                  "TEST", { in: 10 }).out, 20,
               "Invalid response from message handler");
-      compare(webView.lastMessageFrameSource, webView.rootFrame,
-              "Invalid source frame for message");
-      compare(webView.lastMessageWorldId, "TestUtils",
-              "Invalid world ID for message");
     }
 
     function test_WebView_messageHandlers2_valid_subframe() {
@@ -77,90 +45,58 @@ TestWebView {
       var frame = webView.rootFrame.childFrames[0];
 
       compare(webView.getTestApiForFrame(frame).sendMessageToSelf(
-                  "TEST-REPLY", { in: 10 }).out, 20,
+                  "TEST", { in: 10 }).out, 20,
               "Invalid response from message handler");
-      compare(webView.lastMessageFrameSource, frame,
-              "Invalid source frame for message");
-      compare(webView.lastMessageWorldId, "TestUtils",
-              "Invalid world ID for message");
     }
 
-    function test_WebView_messageHandlers3_error() {
+    function test_WebView_messageHandlers5_noMatchingMsgId() {
       webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      try {
-        webView.getTestApi().sendMessageToSelf("TEST-ERROR", { in: 10 });
-        verify(false, "Should have thrown");
-      } catch(e) {
-        verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorHandlerReportedError,
-                "Unexpected error type");
-        compare(e.message, "This is an error", "Unexpected error message");
+      function sendMessage() {
+        return webView.getTestApi().sendMessageToSelf("TEST", { in: 10 }).out;
       }
 
-      compare(webView.lastMessageFrameSource, webView.rootFrame,
-              "Invalid source frame for message");
-      compare(webView.lastMessageWorldId, "TestUtils",
-              "Invalid world ID for message");
-    }
+      compare(sendMessage(), 20, "Should have had a response");
 
-    function test_WebView_messageHandlers4_throw() {
-      webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
+      webView.messageHandlers[0].msgId = "TEST2";
 
       try {
-        webView.getTestApi().sendMessageToSelf("TEST-THROW", { in: 10 });
-        verify(false, "Should have thrown");
-      } catch(e) {
-        verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorUncaughtException,
-                "Unexpected error type");
-        compare(e.message, "Error: This is an exception", "Unexpected error message");
-      }
-
-      compare(webView.lastMessageFrameSource, webView.rootFrame,
-              "Invalid source frame for message");
-      compare(webView.lastMessageWorldId, "TestUtils",
-              "Invalid world ID for message");
-    }
-
-    function test_WebView_messageHandlers5_noHandler() {
-      webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-
-      try {
-        webView.getTestApi().sendMessageToSelf("TEST-NO-HANDLER", { in: 10 });
-        verify(false, "Should have thrown");
+        sendMessage();
+        fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
         compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
                 "Unexpected error type");
       }
+
+      webView.messageHandlers[0].msgId = "TEST";
     }
 
-    function test_WebView_messageHandlers6_noWorldMatch() {
+    function test_WebView_messageHandlers6_noMatchingWorld() {
       webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      for (var i in webView.messageHandlers) {
-        if (webView.messageHandlers[i].msgId == "TEST-REPLY") {
-          webView.messageHandlers[i].worldIds = [ "Yaaaaaa" ];
-        }
+      function sendMessage() {
+        return webView.getTestApi().sendMessageToSelf("TEST", { in: 10 }).out;
       }
 
+      compare(sendMessage(), 20, "Should have had a response");
+
+      webView.messageHandlers[0].worldIds = [ "Yaaaaaa" ];
+
       try {
-        webView.getTestApi().sendMessageToSelf("TEST-REPLY", { in: 10 });
-        verify(false, "Should have thrown");
+        sendMessage();
+        fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
         compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
                 "Unexpected error type");
       }
+
+      webView.messageHandlers[0].worldIds = [ "Foo", "TestUtils" ];
     }
   }
 }
