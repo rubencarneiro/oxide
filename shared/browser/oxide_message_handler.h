@@ -51,6 +51,8 @@ class MessageHandler FINAL {
     world_ids_ = ids;
   }
 
+  bool IsValid() const;
+
   void SetCallback(const HandlerCallback& callback);
 
   void OnReceiveMessage(const MessageDispatcherBrowser::V8Message& message);

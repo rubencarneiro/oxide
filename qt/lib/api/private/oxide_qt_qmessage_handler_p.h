@@ -52,6 +52,9 @@ class QMessageHandlerBasePrivate {
     return &handler_;
   }
 
+  void attachHandler();
+  void disconnectHandler();
+
   virtual void removeFromCurrentOwner() = 0;
 
   static QMessageHandlerBasePrivate* get(

@@ -99,6 +99,10 @@ void MessageDispatcherBrowser::OnReceiveMessage(
          it != handlers.end(); ++it) {
       MessageHandler* handler = *it;
 
+      if (!handler->IsValid()) {
+        continue;
+      }
+
       if (handler->msg_id() != params.msg_id) {
         continue;
       }
@@ -120,6 +124,10 @@ void MessageDispatcherBrowser::OnReceiveMessage(
     for (MessageHandlerVector::iterator it = handlers.begin();
          it != handlers.end(); ++it) {
       MessageHandler* handler = *it;
+
+      if (!handler->IsValid()) {
+        continue;
+      }
 
       if (handler->msg_id() != params.msg_id) {
         continue;

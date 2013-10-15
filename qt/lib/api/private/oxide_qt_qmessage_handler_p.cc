@@ -53,13 +53,19 @@ void QMessageHandlerBasePrivate::ReceiveMessageCallback(
 QMessageHandlerBasePrivate::QMessageHandlerBasePrivate(
     OxideQMessageHandlerBase* q) :
     q_ptr(q),
-    weak_factory_(this) {
+    weak_factory_(this) {}
+
+QMessageHandlerBasePrivate::~QMessageHandlerBasePrivate() {}
+
+void QMessageHandlerBasePrivate::attachHandler() {
   handler_.SetCallback(
       base::Bind(&QMessageHandlerBasePrivate::ReceiveMessageCallback,
       weak_factory_.GetWeakPtr()));
 }
 
-QMessageHandlerBasePrivate::~QMessageHandlerBasePrivate() {}
+void QMessageHandlerBasePrivate::disconnectHandler() {
+  handler_.SetCallback(oxide::MessageHandler::HandlerCallback());
+}
 
 // static
 QMessageHandlerBasePrivate* QMessageHandlerBasePrivate::get(

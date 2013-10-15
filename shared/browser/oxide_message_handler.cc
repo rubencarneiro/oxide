@@ -29,6 +29,10 @@ namespace oxide {
 
 MessageHandler::MessageHandler() {}
 
+bool MessageHandler::IsValid() const {
+  return !msg_id_.empty() && world_ids_.size() > 0 && !callback_.is_null();
+}
+
 void MessageHandler::SetCallback(const HandlerCallback& callback) {
   callback_ = callback;
 }
