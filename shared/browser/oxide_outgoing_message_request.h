@@ -40,6 +40,8 @@ class OutgoingMessageRequest FINAL {
     serial_ = serial;
   }
 
+  bool IsWaiting() const;
+
   void SetReplyCallback(const ReplyCallback& callback);
   void SetErrorCallback(const ErrorCallback& callback);
 

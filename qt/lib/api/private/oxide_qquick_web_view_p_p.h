@@ -59,8 +59,8 @@ class QQuickWebViewPrivate : public QWebViewBasePrivate,
   static QQuickWebViewPrivate* Create(OxideQQuickWebView* view);
   ~QQuickWebViewPrivate();
 
-  oxide::MessageDispatcherBrowser::MessageHandlerVector
-      GetMessageHandlers() const;
+  size_t GetMessageHandlerCount() const FINAL;
+  oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
 
   void OnRootFrameCreated(oxide::WebFrame* root) FINAL;
 

@@ -23,13 +23,11 @@
 
 #include "shared/common/oxide_messages.h"
 
-#include "oxide_message_handler.h"
 #include "oxide_outgoing_message_request.h"
 #include "oxide_web_frame_tree.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
-
 
 void WebFrame::AddChildFrame(WebFrame* frame) {
   DCHECK_NE(frame->identifier(), -1);
@@ -81,12 +79,19 @@ void WebFrame::DestroyFrame() {
     ChildAt(ChildCount() - 1)->DestroyFrame();
   }
 
-  MessageDispatcherBrowser::OutgoingMessageRequestVector requests =
-      GetOutgoingMessageRequests();
-  for (MessageDispatcherBrowser::OutgoingMessageRequestVector::iterator it =
-        requests.begin();
-       it != requests.end(); ++it) {
-    OutgoingMessageRequest* request = *it;
+  while (true) {
+    OutgoingMessageRequest* request = NULL;
+    for (size_t i = 0; i < GetOutgoingMessageRequestCount(); ++i) {
+      OutgoingMessageRequest* tmp = GetOutgoingMessageRequestAt(i);
+      if (tmp->IsWaiting()) {
+        request = tmp;
+        break;
+      }
+    }
+
+    if (!request) {
+      break;
+    }
 
     request->SendError(OxideMsg_SendMessage_Error::FRAME_DISAPPEARED,
                        "The frame disappeared whilst waiting for a response");
@@ -188,14 +193,21 @@ bool WebFrame::SendMessageNoReply(const std::string& world_id,
       GetRenderViewHost()->GetRoutingID(), params));
 }
 
-MessageDispatcherBrowser::MessageHandlerVector
-WebFrame::GetMessageHandlers() const {
-  return MessageDispatcherBrowser::MessageHandlerVector();
+size_t WebFrame::GetMessageHandlerCount() const {
+  return 0;
 }
 
-MessageDispatcherBrowser::OutgoingMessageRequestVector
-WebFrame::GetOutgoingMessageRequests() const {
-  return MessageDispatcherBrowser::OutgoingMessageRequestVector();
+MessageHandler* WebFrame::GetMessageHandlerAt(size_t index) const {
+  return NULL;
+}
+
+size_t WebFrame::GetOutgoingMessageRequestCount() const {
+  return 0;
+}
+
+OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
+    size_t index) const {
+  return NULL;
 }
 
 } // namespace oxide

@@ -33,15 +33,13 @@ struct OxideMsg_SendMessage_Params;
 namespace oxide {
 
 class MessageHandler;
+class MessageTarget;
 class OutgoingMessageRequest;
 class WebFrame;
 class WebView;
 
 class MessageDispatcherBrowser FINAL : public content::RenderViewHostObserver {
  public:
-  typedef std::vector<MessageHandler *> MessageHandlerVector;
-  typedef std::vector<OutgoingMessageRequest *> OutgoingMessageRequestVector;
-
   struct V8Message {
     V8Message(WebView* view,
               MessageDispatcherBrowser* dispatcher,
@@ -74,9 +72,11 @@ class MessageDispatcherBrowser FINAL : public content::RenderViewHostObserver {
   bool OnMessageReceived(const IPC::Message& message) FINAL;
 
  private:
-  void MaybeSendError(const OxideMsg_SendMessage_Params& params,
-                      OxideMsg_SendMessage_Error::Value error_code,
-                      const std::string& error_desc);
+  void SendErrorForMessage(const V8Message& message,
+                           OxideMsg_SendMessage_Error::Value error_code,
+                           const std::string& error_desc);
+  bool TryDispatchToTarget(MessageTarget* target,
+                           const V8Message& message);
   void OnReceiveMessage(const OxideMsg_SendMessage_Params& params);
 
   base::WeakPtrFactory<MessageDispatcherBrowser> weak_factory_;

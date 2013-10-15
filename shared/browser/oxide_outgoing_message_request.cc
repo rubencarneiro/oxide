@@ -23,6 +23,10 @@ OutgoingMessageRequest::OutgoingMessageRequest() :
     serial_(-1),
     had_response_(false) {}
 
+bool OutgoingMessageRequest::IsWaiting() const {
+  return !had_response_;
+}
+
 void OutgoingMessageRequest::SetReplyCallback(
     const ReplyCallback& callback) {
   reply_callback_ = callback;

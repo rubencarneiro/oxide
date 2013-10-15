@@ -31,6 +31,7 @@
 
 #include "shared/browser/oxide_browser_process_handle.h"
 #include "shared/browser/oxide_message_dispatcher_browser.h"
+#include "shared/browser/oxide_message_target.h"
 
 class GURL;
 
@@ -54,7 +55,8 @@ class WebFrame;
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
 // components alive
-class WebView : public content::WebContentsDelegate,
+class WebView : public MessageTarget,
+                public content::WebContentsDelegate,
                 public content::WebContentsObserver {
  public:
   virtual ~WebView();
@@ -123,10 +125,8 @@ class WebView : public content::WebContentsDelegate,
                    const base::string16& error_description,
                    content::RenderViewHost* render_view_host) FINAL;
 
-  bool OnReceiveMessage(const MessageDispatcherBrowser::V8Message& message);
-
-  virtual MessageDispatcherBrowser::MessageHandlerVector
-      GetMessageHandlers() const;
+  virtual size_t GetMessageHandlerCount() const OVERRIDE;
+  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
 
   content::WebContents* web_contents() const {
     return web_contents_.get();

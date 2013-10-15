@@ -179,6 +179,7 @@
         'browser/oxide_message_handler.h',
         'browser/oxide_message_pump.cc',
         'browser/oxide_message_pump.h',
+        'browser/oxide_message_target.h',
         'browser/oxide_network_delegate.cc',
         'browser/oxide_network_delegate.h',
         'browser/oxide_off_the_record_browser_context_impl.cc',

@@ -38,7 +38,6 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
-#include "oxide_message_handler.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_frame_tree.h"
@@ -340,9 +339,12 @@ void WebView::DidFailLoad(int64 frame_id,
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
-MessageDispatcherBrowser::MessageHandlerVector
-WebView::GetMessageHandlers() const {
-  return MessageDispatcherBrowser::MessageHandlerVector();
+size_t WebView::GetMessageHandlerCount() const {
+  return 0;
+}
+
+MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
+  return NULL;
 }
 
 void WebView::OnRootFrameCreated(WebFrame* root) {}

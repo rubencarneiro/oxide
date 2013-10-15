@@ -120,15 +120,14 @@ QQuickWebViewPrivate::~QQuickWebViewPrivate() {
   DestroyWebContents();
 }
 
-oxide::MessageDispatcherBrowser::MessageHandlerVector
-QQuickWebViewPrivate::GetMessageHandlers() const {
-  oxide::MessageDispatcherBrowser::MessageHandlerVector list;
-  for (int i = 0; i < message_handlers_.size(); ++i) {
-    list.push_back(QMessageHandlerBasePrivate::get(
-        message_handlers_.at(i))->handler());
-  }
+size_t QQuickWebViewPrivate::GetMessageHandlerCount() const {
+  return message_handlers_.size();
+}
 
-  return list;
+oxide::MessageHandler* QQuickWebViewPrivate::GetMessageHandlerAt(
+    size_t index) const {
+  return QMessageHandlerBasePrivate::get(
+      message_handlers_.at(index))->handler();
 }
 
 void QQuickWebViewPrivate::OnRootFrameCreated(oxide::WebFrame* root) {

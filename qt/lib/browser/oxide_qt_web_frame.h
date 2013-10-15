@@ -31,10 +31,12 @@ namespace qt {
 
 class WebFrame : public oxide::WebFrame {
  public:
-  MessageDispatcherBrowser::MessageHandlerVector
-      GetMessageHandlers() const FINAL;
-  MessageDispatcherBrowser::OutgoingMessageRequestVector
-      GetOutgoingMessageRequests() const FINAL;
+  size_t GetMessageHandlerCount() const FINAL;
+  oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
+
+  size_t GetOutgoingMessageRequestCount() const FINAL;
+  oxide::OutgoingMessageRequest*
+      GetOutgoingMessageRequestAt(size_t index) const FINAL;
 
   OxideQWebFrameBase* q_web_frame;
 

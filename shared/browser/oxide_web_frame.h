@@ -26,6 +26,7 @@
 #include "url/gurl.h"
 
 #include "shared/browser/oxide_message_dispatcher_browser.h"
+#include "shared/browser/oxide_message_target.h"
 
 namespace content {
 class RenderViewHost;
@@ -40,7 +41,7 @@ class WebView;
 // Represents a document frame in the renderer (a top-level frame or iframe).
 // This is designed to be subclassed by each implementation. Each instance
 // of this will typically own a publicly exposed webframe
-class WebFrame {
+class WebFrame : public MessageTarget {
  public:
   void DestroyFrame();
 
@@ -86,10 +87,11 @@ class WebFrame {
                           const std::string& msg_id,
                           const std::string& args);
 
-  virtual MessageDispatcherBrowser::MessageHandlerVector
-      GetMessageHandlers() const;
-  virtual MessageDispatcherBrowser::OutgoingMessageRequestVector
-      GetOutgoingMessageRequests() const;
+  virtual size_t GetMessageHandlerCount() const OVERRIDE;
+  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
+
+  virtual size_t GetOutgoingMessageRequestCount() const;
+  virtual OutgoingMessageRequest* GetOutgoingMessageRequestAt(size_t index) const;
 
  protected:
   WebFrame();

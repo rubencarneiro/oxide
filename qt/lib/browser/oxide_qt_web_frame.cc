@@ -48,29 +48,25 @@ WebFrame::~WebFrame() {
   DCHECK(!q_web_frame);
 }
 
-MessageDispatcherBrowser::MessageHandlerVector
-WebFrame::GetMessageHandlers() const {
-  MessageDispatcherBrowser::MessageHandlerVector list;
-  QList<OxideQMessageHandlerBase *>& handlers =
-      QWebFrameBasePrivate::get(q_web_frame)->message_handlers();
-  for (int i = 0; i < handlers.size(); ++i) {
-    list.push_back(QMessageHandlerBasePrivate::get(handlers.at(i))->handler());
-  }
-
-  return list;
+size_t WebFrame::GetMessageHandlerCount() const {
+  return QWebFrameBasePrivate::get(q_web_frame)->message_handlers().size();
 }
 
-MessageDispatcherBrowser::OutgoingMessageRequestVector
-WebFrame::GetOutgoingMessageRequests() const {
-  MessageDispatcherBrowser::OutgoingMessageRequestVector list;
-  QList<OxideQOutgoingMessageRequestBase *>& requests =
-      QWebFrameBasePrivate::get(q_web_frame)->outgoing_message_requests();
-  for (int i = 0; i < requests.size(); ++i) {
-    list.push_back(
-        QOutgoingMessageRequestBasePrivate::get(requests.at(i))->request());
-  }
+oxide::MessageHandler* WebFrame::GetMessageHandlerAt(size_t index) const {
+  OxideQMessageHandlerBase* handler =
+      QWebFrameBasePrivate::get(q_web_frame)->message_handlers().at(index);
+  return QMessageHandlerBasePrivate::get(handler)->handler();
+}
 
-  return list;
+size_t WebFrame::GetOutgoingMessageRequestCount() const {
+  return QWebFrameBasePrivate::get(q_web_frame)->outgoing_message_requests().size();
+}
+
+oxide::OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
+    size_t index) const {
+  OxideQOutgoingMessageRequestBase* req =
+      QWebFrameBasePrivate::get(q_web_frame)->outgoing_message_requests().at(index);
+  return QOutgoingMessageRequestBasePrivate::get(req)->request();
 }
 
 WebFrameQQuick::WebFrameQQuick() :

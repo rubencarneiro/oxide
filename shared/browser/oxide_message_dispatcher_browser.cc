@@ -22,6 +22,7 @@
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_message_handler.h"
+#include "oxide_message_target.h"
 #include "oxide_outgoing_message_request.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_view.h"
@@ -44,111 +45,84 @@ MessageDispatcherBrowser::V8Response::V8Response(
     error(params.error),
     param(params.args) {}
 
-void MessageDispatcherBrowser::MaybeSendError(
-    const OxideMsg_SendMessage_Params& params,
+void MessageDispatcherBrowser::SendErrorForMessage(
+    const V8Message& message,
     OxideMsg_SendMessage_Error::Value error_code,
     const std::string& error_desc) {
-  if (params.type != OxideMsg_SendMessage_Type::Message) {
-    return;
+  OxideMsg_SendMessage_Params params;
+  params.frame_id = message.frame->identifier();
+  params.world_id = message.world_id;
+  params.serial = message.serial;
+  params.type = OxideMsg_SendMessage_Type::Reply;
+  params.error = error_code;
+  params.msg_id = message.msg_id;
+  params.args = error_desc;
+
+  Send(new OxideMsg_SendMessage(routing_id(), params));
+}
+
+bool MessageDispatcherBrowser::TryDispatchToTarget(MessageTarget* target,
+                                                   const V8Message& message) {
+  for (size_t i = 0; i < target->GetMessageHandlerCount(); ++i) {
+    MessageHandler* handler = target->GetMessageHandlerAt(i);
+
+    if (!handler->IsValid()) {
+      continue;
+    }
+
+    if (handler->msg_id() != message.msg_id) {
+      continue;
+    }
+
+    const std::vector<std::string>& world_ids = handler->world_ids();
+
+    for (std::vector<std::string>::const_iterator it = world_ids.begin();
+         it != world_ids.end(); ++it) {
+      std::string world_id = *it;
+
+      if (world_id == message.world_id) {
+        handler->OnReceiveMessage(message);
+        return true;
+      }
+    }
   }
 
-  OxideMsg_SendMessage_Params error_params;
-  error_params.frame_id = params.frame_id;
-  error_params.world_id = params.world_id;
-  error_params.serial = params.serial;
-  error_params.type = OxideMsg_SendMessage_Type::Reply;
-  error_params.error = error_code;
-  error_params.msg_id = params.msg_id;
-  error_params.args = error_desc;
-
-  Send(new OxideMsg_SendMessage(routing_id(), error_params));
+  return false;
 }
 
 void MessageDispatcherBrowser::OnReceiveMessage(
     const OxideMsg_SendMessage_Params& params) {
   content::WebContents* web_contents =
       content::WebContents::FromRenderViewHost(render_view_host());
-
-  if (!web_contents) {
-    MaybeSendError(params,
-                   OxideMsg_SendMessage_Error::UNDELIVERABLE,
-                   "No WebContents associated with RenderViewHost");
-    return;
-  }
-
-  if (web_contents->GetRenderViewHost() != render_view_host()) {
-    MaybeSendError(params,
-                   OxideMsg_SendMessage_Error::UNDELIVERABLE,
-                   "RenderViewHost is not current");
-    return;
-  }
+  DCHECK(web_contents);
 
   WebView* web_view = WebView::FromWebContents(web_contents);
 
   if (params.type == OxideMsg_SendMessage_Type::Message) {
     V8Message message(web_view, this, params);
-    if (!message.frame) {
-      MaybeSendError(params,
-                     OxideMsg_SendMessage_Error::INVALID_DESTINATION,
-                     "Invalid frame ID");
+
+    if (web_contents->GetRenderViewHost() != render_view_host()) {
+      SendErrorForMessage(message,
+                          OxideMsg_SendMessage_Error::UNDELIVERABLE,
+                          "RenderViewHost is not current");
       return;
     }
 
-    MessageHandlerVector handlers = message.frame->GetMessageHandlers();
-    for (MessageHandlerVector::iterator it = handlers.begin();
-         it != handlers.end(); ++it) {
-      MessageHandler* handler = *it;
+    if (!message.frame) {
+      SendErrorForMessage(message,
+                          OxideMsg_SendMessage_Error::INVALID_DESTINATION,
+                          "Invalid frame ID");
+      return;
+    }
 
-      if (!handler->IsValid()) {
-        continue;
-      }
-
-      if (handler->msg_id() != params.msg_id) {
-        continue;
-      }
-
-      const std::vector<std::string>& world_ids = handler->world_ids();
-
-      for (std::vector<std::string>::const_iterator it = world_ids.begin();
-           it != world_ids.end(); ++it) {
-        std::string world_id = *it;
-
-        if (world_id == params.world_id) {
-          handler->OnReceiveMessage(message);
-          return;
-        }
+    if (!TryDispatchToTarget(message.frame, message)) {
+      if (!TryDispatchToTarget(message.frame->GetView(), message)) {
+        SendErrorForMessage(message,
+                            OxideMsg_SendMessage_Error::NO_HANDLER,
+                            "No handler was found for message");
       }
     }
 
-    handlers = message.frame->GetView()->GetMessageHandlers();
-    for (MessageHandlerVector::iterator it = handlers.begin();
-         it != handlers.end(); ++it) {
-      MessageHandler* handler = *it;
-
-      if (!handler->IsValid()) {
-        continue;
-      }
-
-      if (handler->msg_id() != params.msg_id) {
-        continue;
-      }
-
-      const std::vector<std::string>& world_ids = handler->world_ids();
-
-      for (std::vector<std::string>::const_iterator it = world_ids.begin();
-           it != world_ids.end(); ++it) {
-        std::string world_id = *it;
-
-        if (world_id == params.world_id) {
-          handler->OnReceiveMessage(message);
-          return;
-        }
-      }
-    }
-
-    MaybeSendError(params,
-                   OxideMsg_SendMessage_Error::NO_HANDLER,
-                   "No handler was found for message");
     return; 
   }
 
@@ -157,10 +131,8 @@ void MessageDispatcherBrowser::OnReceiveMessage(
     return;
   }
 
-  OutgoingMessageRequestVector requests = frame->GetOutgoingMessageRequests();
-  for (OutgoingMessageRequestVector::iterator it = requests.begin();
-       it != requests.end(); ++it) {
-    OutgoingMessageRequest* request = *it;
+  for (size_t i = 0; i < frame->GetOutgoingMessageRequestCount(); ++i) {
+    OutgoingMessageRequest* request = frame->GetOutgoingMessageRequestAt(i);
 
     if (request->serial() == params.serial) {
       V8Response response(params);
@@ -168,7 +140,6 @@ void MessageDispatcherBrowser::OnReceiveMessage(
       return;
     }
   }
-
 }
 
 MessageDispatcherBrowser::MessageDispatcherBrowser(
