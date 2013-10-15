@@ -63,13 +63,19 @@ void WebFrameTree::OnFrameDetached(int64 frame_id) {
 }
 
 WebFrameTree::WebFrameTree(content::RenderViewHost* rvh) :
-    content::RenderViewHostObserver(rvh) {
+    content::RenderViewHostObserver(rvh),
+    root_(NULL) {
   g_web_frame_tree_map.Get().insert(std::make_pair(
       WebFrameTreeID(render_view_host()->GetProcess()->GetID(), routing_id()),
       this));
 }
 
-WebFrameTree::~WebFrameTree() {}
+WebFrameTree::~WebFrameTree() {
+  if (root_) {
+    root_->DestroyFrame();
+    root_ = NULL;
+  }
+}
 
 // static
 WebFrameTree* WebFrameTree::FromRenderViewHost(content::RenderViewHost* rvh) {
@@ -82,15 +88,13 @@ WebFrameTree* WebFrameTree::FromRenderViewHost(content::RenderViewHost* rvh) {
 
 WebFrame* WebFrameTree::GetRootFrame() {
   if (!root_) {
-    WebFrame* root = CreateFrame();
-    root->set_tree(this);
+    root_ = CreateFrame();
+    root_->set_tree(this);
 
-    GetView()->OnRootFrameCreated(root);
-
-    root_.reset(root);
+    GetView()->OnRootFrameCreated(root_);
   }
 
-  return root_.get();
+  return root_;
 }
 
 WebView* WebFrameTree::GetView() const {

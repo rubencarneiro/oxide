@@ -20,7 +20,6 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/browser/render_view_host_observer.h"
 
 namespace oxide {
@@ -50,7 +49,7 @@ class WebFrameTree : public content::RenderViewHostObserver {
 
   virtual WebFrame* CreateFrame() = 0;
 
-  scoped_ptr<WebFrame> root_;
+  WebFrame* root_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrameTree);
 };

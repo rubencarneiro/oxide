@@ -30,17 +30,18 @@
 
 namespace oxide {
 
+
 void WebFrame::AddChildFrame(WebFrame* frame) {
   DCHECK_NE(frame->identifier(), -1);
 
-  child_frames_.push_back(linked_ptr<WebFrame>(frame));
+  child_frames_.push_back(frame);
   OnChildAdded(frame);
 }
 
 void WebFrame::RemoveChildFrame(WebFrame* frame) {
   for (ChildVector::iterator it = child_frames_.begin();
        it != child_frames_.end(); ++it) {
-    linked_ptr<WebFrame> f = *it;
+    WebFrame* f = *it;
 
     if (f == frame) {
       child_frames_.erase(it);
@@ -53,8 +54,8 @@ void WebFrame::RemoveChildFrame(WebFrame* frame) {
 void WebFrame::AddChildrenToQueue(std::queue<WebFrame *>* queue) const {
   for (ChildVector::const_iterator it = child_frames_.begin();
        it != child_frames_.end(); ++it) {
-    linked_ptr<WebFrame> frame = *it;
-    queue->push(frame.get());
+    WebFrame* frame = *it;
+    queue->push(frame);
   }
 }
 
@@ -67,9 +68,19 @@ WebFrame::WebFrame() :
     parent_(NULL),
     tree_(NULL),
     next_message_serial_(0),
+    destroyed_(false),
     weak_factory_(this) {}
 
 WebFrame::~WebFrame() {
+  DCHECK(destroyed_) <<
+      "WebFrame's destructor must only be called via DestroyFrame";
+}
+
+void WebFrame::DestroyFrame() {
+  while (ChildCount() > 0) {
+    ChildAt(ChildCount() - 1)->DestroyFrame();
+  }
+
   MessageDispatcherBrowser::OutgoingMessageRequestVector requests =
       GetOutgoingMessageRequests();
   for (MessageDispatcherBrowser::OutgoingMessageRequestVector::iterator it =
@@ -80,11 +91,15 @@ WebFrame::~WebFrame() {
     request->SendError(OxideMsg_SendMessage_Error::FRAME_DISAPPEARED,
                        "The frame disappeared whilst waiting for a response");
   }
-}
 
-void WebFrame::DestroyFrame() {
-  DCHECK(parent_);
-  parent_->RemoveChildFrame(this);
+  if (parent_) {
+    parent_->RemoveChildFrame(this);
+    parent_ = NULL;
+  }
+
+  destroyed_ = true;
+
+  delete this;
 }
 
 WebView* WebFrame::GetView() const {
@@ -133,7 +148,7 @@ WebFrame* WebFrame::ChildAt(size_t index) const {
     return NULL;
   }
 
-  return child_frames_.at(index).get();
+  return child_frames_.at(index);
 }
 
 bool WebFrame::SendMessage(const std::string& world_id,

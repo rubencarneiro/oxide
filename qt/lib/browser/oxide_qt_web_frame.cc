@@ -44,10 +44,8 @@ WebFrame::WebFrame(OxideQWebFrameBase* q_web_frame) :
     q_web_frame(q_web_frame) {}
 
 WebFrame::~WebFrame() {
-  if (q_web_frame) {
-    delete q_web_frame;
-    DCHECK(!q_web_frame);
-  }
+  delete q_web_frame;
+  DCHECK(!q_web_frame);
 }
 
 MessageDispatcherBrowser::MessageHandlerVector

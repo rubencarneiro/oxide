@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "base/basictypes.h"
-#include "base/memory/linked_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "url/gurl.h"
 
@@ -43,8 +42,6 @@ class WebView;
 // of this will typically own a publicly exposed webframe
 class WebFrame {
  public:
-  virtual ~WebFrame();
-
   void DestroyFrame();
 
   int64 identifier() const {
@@ -96,9 +93,10 @@ class WebFrame {
 
  protected:
   WebFrame();
+  virtual ~WebFrame();
 
  private:
-  typedef std::vector<linked_ptr<WebFrame> > ChildVector;
+  typedef std::vector<WebFrame *> ChildVector;
 
   void AddChildFrame(WebFrame* frame);
   void RemoveChildFrame(WebFrame* frame);
@@ -115,6 +113,7 @@ class WebFrame {
   WebFrame* parent_;
   WebFrameTree* tree_;
   int next_message_serial_;
+  bool destroyed_;
   base::WeakPtrFactory<WebFrame> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);

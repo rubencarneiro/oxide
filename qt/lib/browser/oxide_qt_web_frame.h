@@ -31,8 +31,6 @@ namespace qt {
 
 class WebFrame : public oxide::WebFrame {
  public:
-  virtual ~WebFrame();
-
   MessageDispatcherBrowser::MessageHandlerVector
       GetMessageHandlers() const FINAL;
   MessageDispatcherBrowser::OutgoingMessageRequestVector
@@ -42,6 +40,7 @@ class WebFrame : public oxide::WebFrame {
 
  protected:
   WebFrame(OxideQWebFrameBase* q_web_frame);
+  virtual ~WebFrame();
 
  private:
   void OnChildAdded(oxide::WebFrame* child) FINAL;
@@ -54,11 +53,12 @@ class WebFrame : public oxide::WebFrame {
 class WebFrameQQuick FINAL : public WebFrame {
  public:
   WebFrameQQuick();
-  ~WebFrameQQuick();
 
   OxideQQuickWebFrame* QQuickWebFrame() const;
 
  private:
+  ~WebFrameQQuick();
+
   DISALLOW_COPY_AND_ASSIGN(WebFrameQQuick);
 };
 
