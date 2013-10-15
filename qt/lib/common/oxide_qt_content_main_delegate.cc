@@ -21,13 +21,13 @@
 
 #include "qt/lib/browser/oxide_qt_content_browser_client.h"
 
-namespace {
-base::LazyInstance<oxide::qt::ContentBrowserClient> g_content_browser_client =
-    LAZY_INSTANCE_INITIALIZER;
-}
-
 namespace oxide {
 namespace qt {
+
+namespace {
+base::LazyInstance<ContentBrowserClient> g_content_browser_client =
+    LAZY_INSTANCE_INITIALIZER;
+}
 
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClientImpl() {
