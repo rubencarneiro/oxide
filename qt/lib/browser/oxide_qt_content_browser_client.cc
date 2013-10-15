@@ -19,14 +19,31 @@
 
 #include <QGuiApplication>
 
+#include "shared/browser/oxide_web_view.h"
+
+#include "qt/lib/api/private/oxide_q_web_view_base_p.h"
+
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_render_widget_host_view_qquick.h"
+#include "oxide_qt_web_frame_tree.h"
 
 namespace oxide {
 namespace qt {
 
 base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
+}
+
+oxide::WebFrameTree* ContentBrowserClient::CreateWebFrameTree(
+    content::RenderViewHost* rvh) {
+  QWebViewBasePrivate* wvp = static_cast<QWebViewBasePrivate *>(
+      oxide::WebView::FromRenderViewHost(rvh));
+  if (!wvp) {
+    // The first RVH created for a WebContents is before we set the delegate
+    return NULL;
+  }
+
+  return wvp->CreateWebFrameTree(rvh);
 }
 
 void ContentBrowserClient::GetDefaultScreenInfoImpl(

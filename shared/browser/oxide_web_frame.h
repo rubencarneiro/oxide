@@ -28,9 +28,15 @@
 
 #include "shared/browser/oxide_message_dispatcher_browser.h"
 
+namespace content {
+class RenderViewHost;
+}
+
 namespace oxide {
 
 class OutgoingMessageRequest;
+class WebFrameTree;
+class WebView;
 
 // Represents a document frame in the renderer (a top-level frame or iframe).
 // This is designed to be subclassed by each implementation. Each instance
@@ -44,6 +50,9 @@ class WebFrame {
   int64 identifier() const {
     return id_;
   }
+  void set_identifier(int64 id) {
+    id_ = id;
+  }
 
   GURL url() const {
     return url_;
@@ -53,18 +62,21 @@ class WebFrame {
     return parent_;
   }
 
+  void set_tree(WebFrameTree* tree) {
+    tree_ = tree;
+  }
+
   WebView* GetView() const;
+  content::RenderViewHost* GetRenderViewHost() const;
 
   base::WeakPtr<WebFrame> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
   }
 
   void SetURL(const GURL& url);
-
-  void SetParent(WebView* parent);
   void SetParent(WebFrame* parent);
 
-  WebFrame* FindFrameWithID(int64 frame_id);
+  WebFrame* FindFrameWithID(int64 frame_id) const;
 
   size_t ChildCount() const;
   WebFrame* ChildAt(size_t index) const;
@@ -83,7 +95,7 @@ class WebFrame {
       GetOutgoingMessageRequests() const;
 
  protected:
-  WebFrame(int64 frame_id);
+  WebFrame();
 
  private:
   typedef std::vector<linked_ptr<WebFrame> > ChildVector;
@@ -101,11 +113,11 @@ class WebFrame {
   GURL url_;
   ChildVector child_frames_;
   WebFrame* parent_;
-  WebView* view_;
+  WebFrameTree* tree_;
   int next_message_serial_;
   base::WeakPtrFactory<WebFrame> weak_factory_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrame);
+  DISALLOW_COPY_AND_ASSIGN(WebFrame);
 };
 
 } // namespace oxide

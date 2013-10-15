@@ -49,3 +49,9 @@ IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
 
 IPC_MESSAGE_ROUTED1(OxideMsg_SendMessage,
                     OxideMsg_SendMessage_Params)
+
+IPC_MESSAGE_ROUTED2(OxideHostMsg_FrameCreated,
+                    long long /* parent */,
+                    long long /* frame */)
+IPC_MESSAGE_ROUTED1(OxideHostMsg_FrameDetached,
+                    long long /* frame */)

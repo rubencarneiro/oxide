@@ -26,7 +26,13 @@ namespace base {
 class MessagePump;
 }
 
+namespace content {
+class RenderViewHost;
+}
+
 namespace oxide {
+
+class WebFrameTree;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
  public:
@@ -60,7 +66,10 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   bool GetDefaultScreenInfo(WebKit::WebScreenInfo* result) FINAL;
 
+  // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
+
+  virtual WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh);
 
  protected:
   // Limit default constructor access to derived classes

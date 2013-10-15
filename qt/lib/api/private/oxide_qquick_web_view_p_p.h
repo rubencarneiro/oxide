@@ -28,7 +28,8 @@
 
 #include "shared/browser/oxide_message_dispatcher_browser.h"
 #include "shared/browser/oxide_web_contents_view_delegate.h"
-#include "shared/browser/oxide_web_view.h"
+
+#include "qt/lib/api/private/oxide_q_web_view_base_p.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickWebView;
@@ -50,7 +51,7 @@ struct InitData {
   QUrl url;
 };
 
-class QQuickWebViewPrivate : public oxide::WebView,
+class QQuickWebViewPrivate : public QWebViewBasePrivate,
                              public oxide::WebContentsViewDelegate {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
@@ -60,6 +61,8 @@ class QQuickWebViewPrivate : public oxide::WebView,
 
   oxide::MessageDispatcherBrowser::MessageHandlerVector
       GetMessageHandlers() const;
+
+  void OnRootFrameCreated(oxide::WebFrame* root) FINAL;
 
   void UpdateVisibility();
 
@@ -73,6 +76,8 @@ class QQuickWebViewPrivate : public oxide::WebView,
   base::WeakPtr<QQuickWebViewPrivate> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
   }
+
+  WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh) FINAL;
 
   void componentComplete();
 
@@ -121,8 +126,6 @@ class QQuickWebViewPrivate : public oxide::WebView,
                     int error_code,
                     const std::string& error_description) FINAL;
   void OnLoadSucceeded(const GURL& validated_url) FINAL;
-
-  oxide::WebFrame* CreateWebFrame(int64 frame_id) FINAL;
 
   OxideQQuickWebView* q_ptr;
   scoped_ptr<InitData> init_props_;

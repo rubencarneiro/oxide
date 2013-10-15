@@ -15,38 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
-#define _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#ifndef _OXIDE_QT_LIB_API_PRIVATE_Q_WEB_VIEW_BASE_P_H_
+#define _OXIDE_QT_LIB_API_PRIVATE_Q_WEB_VIEW_BASE_P_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "shared/browser/oxide_web_view.h"
 
-#include "shared/browser/oxide_content_browser_client.h"
-
-namespace base {
-template <typename Type> struct DefaultLazyInstanceTraits;
+namespace {
+class RenderViewHost;
 }
 
 namespace oxide {
 namespace qt {
 
-class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
+class WebFrameTree;
+
+class QWebViewBasePrivate : public oxide::WebView {
  public:
-  base::MessagePump* CreateMessagePumpForUI() FINAL;
-
-  oxide::WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh) FINAL;
-
- private:
-  // Limit default constructor access to the lazy instance initializer
-  friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
-  ContentBrowserClient() {}
-
-  void GetDefaultScreenInfoImpl(WebKit::WebScreenInfo* result) FINAL;
-
-  DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
+  virtual WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh) = 0;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#endif // _OXIDE_QT_LIB_API_PRIVATE_Q_WEB_VIEW_BASE_P_H_

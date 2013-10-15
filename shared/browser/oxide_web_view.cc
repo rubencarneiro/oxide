@@ -32,13 +32,16 @@
 #include "net/base/net_errors.h"
 #include "url/gurl.h"
 
+#include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_content_browser_client.h"
 #include "oxide_message_handler.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
+#include "oxide_web_frame_tree.h"
 
 namespace oxide {
 
@@ -77,17 +80,12 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
 }
 
 void WebView::NotifyRenderViewHostSwappedIn() {
-  content::RenderViewHostImpl* rvh =
-      static_cast<content::RenderViewHostImpl *>(
-        web_contents_->GetRenderViewHost());
+  WebFrame* old_root = root_frame_;
+  root_frame_ = WebFrameTree::FromRenderViewHost(
+      web_contents_->GetRenderViewHost())->GetRootFrame();
 
-  if (rvh->main_frame_id() != -1) {
-    WebFrame* root = CreateWebFrame(rvh->main_frame_id());
-    if (root) {
-      root->SetParent(this);
-    }
-  } else {
-    SetRootFrame(NULL);
+  if (old_root != root_frame_) {
+    OnRootFrameChanged();
   }
 }
 
@@ -116,12 +114,8 @@ void WebView::OnLoadFailed(const GURL& validated_url,
                            const std::string& error_description) {}
 void WebView::OnLoadSucceeded(const GURL& validated_url) {}
 
-WebFrame* WebView::CreateWebFrame(int64 frame_id) {
-  return NULL;
-}
-
-
 WebView::WebView() :
+    root_frame_(NULL),
     notification_observer_(this) {}
 
 bool WebView::Init(BrowserContext* context,
@@ -149,6 +143,11 @@ bool WebView::Init(BrowserContext* context,
   }
 
   web_contents_->SetDelegate(this);
+  if (!WebFrameTree::FromRenderViewHost(web_contents_->GetRenderViewHost())) {
+    ContentClient::GetInstance()->browser()->CreateWebFrameTree(
+        web_contents_->GetRenderViewHost());
+  }
+
   Observe(web_contents_.get());
   registrar_.Add(
       &notification_observer_,
@@ -176,6 +175,11 @@ WebView::~WebView() {
 // static
 WebView* WebView::FromWebContents(content::WebContents* web_contents) {
   return static_cast<WebView *>(web_contents->GetDelegate());
+}
+
+// static
+WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
+  return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
 }
 
 const GURL& WebView::GetURL() const {
@@ -252,20 +256,7 @@ BrowserContext* WebView::GetBrowserContext() const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_.get();
-}
-
-void WebView::SetRootFrame(WebFrame* root) {
-  bool changed = false;
-  if (root != root_frame_) {
-    changed = true;
-  }
-
-  root_frame_.reset(root);
-
-  if (changed) {
-    OnRootFrameChanged();
-  }
+  return root_frame_;
 }
 
 WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
@@ -297,15 +288,12 @@ void WebView::DidCommitProvisionalLoadForFrame(
     const GURL& url,
     content::PageTransition transition_type,
     content::RenderViewHost* render_view_host) {
-  if (render_view_host != web_contents_->GetRenderViewHost()) {
+  if (!root_frame_) {
     return;
   }
 
-  if (!root_frame_ && is_main_frame) {
-    WebFrame* root = CreateWebFrame(frame_id);
-    if (root) {
-      root->SetParent(this);
-    }
+  if (is_main_frame) {
+    root_frame_->set_identifier(frame_id);
   }
 
   WebFrame* frame = FindFrameWithID(frame_id);
@@ -352,39 +340,11 @@ void WebView::DidFailLoad(int64 frame_id,
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
-void WebView::FrameAttached(content::RenderViewHost* render_view_host,
-                            int64 parent_frame_id,
-                            int64 frame_id) {
-  if (render_view_host != web_contents_->GetRenderViewHost()) {
-    return;
-  }
-
-  WebFrame* parent = FindFrameWithID(parent_frame_id);
-  if (!parent) {
-    return;
-  }
-
-  WebFrame* frame = CreateWebFrame(frame_id);
-  frame->SetParent(parent);
-}
-
-void WebView::FrameDetached(content::RenderViewHost* render_view_host,
-                            int64 frame_id) {
-  if (render_view_host != web_contents_->GetRenderViewHost()) {
-    return;
-  }
-
-  WebFrame* frame = FindFrameWithID(frame_id);
-  if (!frame) {
-    return;
-  }
-
-  frame->DestroyFrame();
-}
-
 MessageDispatcherBrowser::MessageHandlerVector
 WebView::GetMessageHandlers() const {
   return MessageDispatcherBrowser::MessageHandlerVector();
 }
+
+void WebView::OnRootFrameCreated(WebFrame* root) {}
 
 } // namespace oxide

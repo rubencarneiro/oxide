@@ -32,6 +32,7 @@
 #include "qt/lib/api/oxide_qquick_web_view_context_p.h"
 #include "qt/lib/browser/oxide_qt_render_widget_host_view_qquick.h"
 #include "qt/lib/browser/oxide_qt_web_frame.h"
+#include "qt/lib/browser/oxide_qt_web_frame_tree.h"
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
 
 #include "oxide_qt_qmessage_handler_p.h"
@@ -67,11 +68,6 @@ void QQuickWebViewPrivate::OnCommandsUpdated() {
 
 void QQuickWebViewPrivate::OnRootFrameChanged() {
   Q_Q(OxideQQuickWebView);
-
-  WebFrame* root = static_cast<WebFrame *>(GetRootFrame());
-  if (root) {
-    root->q_web_frame->setParent(q);
-  }
 
   emit q->rootFrameChanged();
 }
@@ -114,11 +110,6 @@ void QQuickWebViewPrivate::OnLoadSucceeded(const GURL& validated_url) {
   emit q->loadingChanged(&event);
 }
 
-oxide::WebFrame* QQuickWebViewPrivate::CreateWebFrame(
-    int64 frame_id) {
-  return new WebFrameQQuick(frame_id);
-}
-
 // static
 QQuickWebViewPrivate* QQuickWebViewPrivate::Create(OxideQQuickWebView* view) {
   return new QQuickWebViewPrivate(view);
@@ -138,6 +129,13 @@ QQuickWebViewPrivate::GetMessageHandlers() const {
   }
 
   return list;
+}
+
+void QQuickWebViewPrivate::OnRootFrameCreated(oxide::WebFrame* root) {
+  Q_Q(OxideQQuickWebView);
+
+  WebFrame* qroot = static_cast<WebFrame *>(root);
+  qroot->q_web_frame->setParent(q);
 }
 
 void QQuickWebViewPrivate::UpdateVisibility() {
@@ -180,6 +178,11 @@ oxide::WebPopupMenu* QQuickWebViewPrivate::CreatePopupMenu() {
   Q_Q(OxideQQuickWebView);
 
   return new WebPopupMenuQQuick(q, web_contents());
+}
+
+WebFrameTree* QQuickWebViewPrivate::CreateWebFrameTree(
+    content::RenderViewHost* rvh) {
+  return new WebFrameTreeQQuick(rvh);
 }
 
 void QQuickWebViewPrivate::componentComplete() {

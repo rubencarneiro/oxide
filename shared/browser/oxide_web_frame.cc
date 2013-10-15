@@ -25,11 +25,14 @@
 
 #include "oxide_message_handler.h"
 #include "oxide_outgoing_message_request.h"
+#include "oxide_web_frame_tree.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
 
 void WebFrame::AddChildFrame(WebFrame* frame) {
+  DCHECK_NE(frame->identifier(), -1);
+
   child_frames_.push_back(linked_ptr<WebFrame>(frame));
   OnChildAdded(frame);
 }
@@ -59,10 +62,10 @@ void WebFrame::OnChildAdded(WebFrame* child) {}
 void WebFrame::OnChildRemoved(WebFrame* child) {}
 void WebFrame::OnURLChanged() {}
 
-WebFrame::WebFrame(int64 frame_id) :
-    id_(frame_id),
+WebFrame::WebFrame() :
+    id_(-1),
     parent_(NULL),
-    view_(NULL),
+    tree_(NULL),
     next_message_serial_(0),
     weak_factory_(this) {}
 
@@ -80,24 +83,16 @@ WebFrame::~WebFrame() {
 }
 
 void WebFrame::DestroyFrame() {
-  if (parent_) {
-    parent_->RemoveChildFrame(this);
-  } else {
-    view_->SetRootFrame(NULL);
-  }
+  DCHECK(parent_);
+  parent_->RemoveChildFrame(this);
 }
 
 WebView* WebFrame::GetView() const {
-  WebFrame* top = const_cast<WebFrame *>(this);
-  while (top->parent()) {
-    top = top->parent();
-  }
+  return tree_->GetView();
+}
 
-  if (top == this) {
-    return view_;
-  }
-
-  return top->GetView();
+content::RenderViewHost* WebFrame::GetRenderViewHost() const {
+  return tree_->GetRenderViewHost();
 }
 
 void WebFrame::SetURL(const GURL& url) {
@@ -105,22 +100,15 @@ void WebFrame::SetURL(const GURL& url) {
   OnURLChanged();
 }
 
-void WebFrame::SetParent(WebView* parent) {
-  DCHECK(!view_ && !parent_) << "Changing parents is not supported";
-  view_ = parent;
-  view_->SetRootFrame(this);
-}
-
 void WebFrame::SetParent(WebFrame* parent) {
-  DCHECK(!view_ && !parent_) << "Changing parents is not supported";
+  DCHECK(!parent_) << "Changing parents is not supported";
   parent_ = parent;
   parent_->AddChildFrame(this);
 }
 
-
-WebFrame* WebFrame::FindFrameWithID(int64 frame_id) {
+WebFrame* WebFrame::FindFrameWithID(int64 frame_id) const {
   std::queue<WebFrame *> q;
-  q.push(this);
+  q.push(const_cast<WebFrame *>(this));
 
   while (!q.empty()) {
     WebFrame* f = q.front();
@@ -166,10 +154,8 @@ bool WebFrame::SendMessage(const std::string& world_id,
   params.msg_id = msg_id;
   params.args = args;
 
-  content::WebContents* web_contents = GetView()->web_contents();
-
-  return web_contents->Send(new OxideMsg_SendMessage(
-      web_contents->GetRenderViewHost()->GetRoutingID(), params));
+  return GetRenderViewHost()->Send(new OxideMsg_SendMessage(
+      GetRenderViewHost()->GetRoutingID(), params));
 }
 
 bool WebFrame::SendMessageNoReply(const std::string& world_id,
@@ -183,10 +169,8 @@ bool WebFrame::SendMessageNoReply(const std::string& world_id,
   params.msg_id = msg_id;
   params.args = args;
 
-  content::WebContents* web_contents = GetView()->web_contents();
-
-  return web_contents->Send(new OxideMsg_SendMessage(
-      web_contents->GetRenderViewHost()->GetRoutingID(), params));
+  return GetRenderViewHost()->Send(new OxideMsg_SendMessage(
+      GetRenderViewHost()->GetRoutingID(), params));
 }
 
 MessageDispatcherBrowser::MessageHandlerVector

@@ -98,4 +98,9 @@ bool ContentBrowserClient::GetDefaultScreenInfo(
   return true;
 }
 
+WebFrameTree* ContentBrowserClient::CreateWebFrameTree(
+    content::RenderViewHost* rvh) {
+  return NULL;
+}
+
 } // namespace oxide

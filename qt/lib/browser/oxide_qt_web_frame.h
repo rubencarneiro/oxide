@@ -41,7 +41,7 @@ class WebFrame : public oxide::WebFrame {
   OxideQWebFrameBase* q_web_frame;
 
  protected:
-  WebFrame(int64 frame_id, OxideQWebFrameBase* q_web_frame);
+  WebFrame(OxideQWebFrameBase* q_web_frame);
 
  private:
   void OnChildAdded(oxide::WebFrame* child) FINAL;
@@ -53,13 +53,13 @@ class WebFrame : public oxide::WebFrame {
 
 class WebFrameQQuick FINAL : public WebFrame {
  public:
-  WebFrameQQuick(int64 frame_id);
+  WebFrameQQuick();
   ~WebFrameQQuick();
 
   OxideQQuickWebFrame* QQuickWebFrame() const;
 
  private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrameQQuick);
+  DISALLOW_COPY_AND_ASSIGN(WebFrameQQuick);
 };
 
 } // namespace qt

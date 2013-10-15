@@ -21,6 +21,7 @@
 #include "oxide_process_observer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
+#include "oxide_web_frame_observer.h"
 
 namespace oxide {
 
@@ -38,6 +39,7 @@ void ContentRendererClient::RenderViewCreated(
     content::RenderView* render_view) {
   new UserScriptScheduler(render_view);
   new MessageDispatcherRenderer::EndPoint(render_view);
+  new WebFrameObserver(render_view);
 }
 
 void ContentRendererClient::DidCreateScriptContext(

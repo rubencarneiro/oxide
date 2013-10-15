@@ -38,6 +38,7 @@ base::MessagePump* CreateMessagePumpForUI() {
 
 void RenderViewHostCreated(content::RenderViewHost* rvh) {
   new oxide::MessageDispatcherBrowser(rvh);
+  oxide::ContentClient::GetInstance()->browser()->CreateWebFrameTree(rvh);
 }
 
 } // namespace

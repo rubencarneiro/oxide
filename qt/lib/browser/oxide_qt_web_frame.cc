@@ -40,8 +40,7 @@ void WebFrame::OnURLChanged() {
   q_web_frame->urlChanged();
 }
 
-WebFrame::WebFrame(int64 frame_id, OxideQWebFrameBase* q_web_frame) :
-    oxide::WebFrame(frame_id),
+WebFrame::WebFrame(OxideQWebFrameBase* q_web_frame) :
     q_web_frame(q_web_frame) {}
 
 WebFrame::~WebFrame() {
@@ -76,8 +75,8 @@ WebFrame::GetOutgoingMessageRequests() const {
   return list;
 }
 
-WebFrameQQuick::WebFrameQQuick(int64 frame_id) :
-    WebFrame(frame_id, new OxideQQuickWebFrame(this)) {}
+WebFrameQQuick::WebFrameQQuick() :
+    WebFrame(new OxideQQuickWebFrame(this)) {}
 
 WebFrameQQuick::~WebFrameQQuick() {}
 

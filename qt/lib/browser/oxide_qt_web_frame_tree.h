@@ -15,38 +15,38 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
-#define _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#ifndef _OXIDE_QT_LIB_BROWSER_WEB_FRAME_TREE_H_
+#define _OXIDE_QT_LIB_BROWSER_WEB_FRAME_TREE_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 
-#include "shared/browser/oxide_content_browser_client.h"
-
-namespace base {
-template <typename Type> struct DefaultLazyInstanceTraits;
-}
+#include "shared/browser/oxide_web_frame_tree.h"
 
 namespace oxide {
 namespace qt {
 
-class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
+class WebFrameTree : public oxide::WebFrameTree {
  public:
-  base::MessagePump* CreateMessagePumpForUI() FINAL;
+  virtual ~WebFrameTree();
 
-  oxide::WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh) FINAL;
+ protected:
+  WebFrameTree(content::RenderViewHost* rvh);
+};
+
+class WebFrameTreeQQuick FINAL : public WebFrameTree {
+ public:
+  WebFrameTreeQQuick(content::RenderViewHost* rvh);
+  virtual ~WebFrameTreeQQuick();
+
+  oxide::WebFrame* CreateFrame() FINAL;
 
  private:
-  // Limit default constructor access to the lazy instance initializer
-  friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
-  ContentBrowserClient() {}
-
-  void GetDefaultScreenInfoImpl(WebKit::WebScreenInfo* result) FINAL;
-
-  DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrameTreeQQuick);
 };
+
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#endif // _OXIDE_QT_LIB_BROWSER_WEB_FRAME_TREE_H_

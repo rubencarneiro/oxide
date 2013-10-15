@@ -60,6 +60,7 @@ class WebView : public content::WebContentsDelegate,
   virtual ~WebView();
 
   static WebView* FromWebContents(content::WebContents* web_contents);
+  static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
 
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
@@ -85,7 +86,6 @@ class WebView : public content::WebContentsDelegate,
   BrowserContext* GetBrowserContext() const;
 
   WebFrame* GetRootFrame() const;
-  void SetRootFrame(WebFrame* root);
   WebFrame* FindFrameWithID(int64 frame_id) const;
 
   void DidStartProvisionalLoadForFrame(
@@ -123,12 +123,6 @@ class WebView : public content::WebContentsDelegate,
                    const base::string16& error_description,
                    content::RenderViewHost* render_view_host) FINAL;
 
-  void FrameAttached(content::RenderViewHost* render_view_host,
-                     int64 parent_frame_id,
-                     int64 frame_id) FINAL;
-  void FrameDetached(content::RenderViewHost* render_view_host,
-                     int64 frame_id) FINAL;
-
   bool OnReceiveMessage(const MessageDispatcherBrowser::V8Message& message);
 
   virtual MessageDispatcherBrowser::MessageHandlerVector
@@ -137,6 +131,8 @@ class WebView : public content::WebContentsDelegate,
   content::WebContents* web_contents() const {
     return web_contents_.get();
   }
+
+  virtual void OnRootFrameCreated(WebFrame* root);
 
  protected:
   WebView();
@@ -186,14 +182,12 @@ class WebView : public content::WebContentsDelegate,
                             const std::string& error_description);
   virtual void OnLoadSucceeded(const GURL& validated_url);
 
-  virtual WebFrame* CreateWebFrame(int64 frame_id);
-
   // Don't mess with the ordering of this unless you know what you
   // are doing. The WebContents needs to disappear first, and the
   // BrowserProcessHandle must outive everything
   BrowserProcessHandle process_handle_;
   scoped_ptr<content::WebContents> web_contents_;
-  scoped_ptr<WebFrame> root_frame_;
+  WebFrame* root_frame_;
   NotificationObserver notification_observer_;
   content::NotificationRegistrar registrar_;
 
