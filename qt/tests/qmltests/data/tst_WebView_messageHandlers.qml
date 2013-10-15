@@ -9,11 +9,14 @@ TestWebView {
   width: 200
   height: 200
 
+  property QtObject lastMessageFrameSource: null
+
   messageHandlers: [
     MessageHandler {
       msgId: "TEST"
       worldIds: [ "Foo", "TestUtils" ]
       callback: function(msg, frame) {
+        webView.lastMessageFrameSource = frame;
         msg.reply({ out: msg.args.in * 2 });
       }
     }
@@ -24,6 +27,10 @@ TestWebView {
     name: "WebView_messageHandlers"
     when: windowShown
 
+    function init() {
+      webView.lastMessageFrameSource = null;
+    }
+
     function test_WebView_messageHandlers1_valid() {
       webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
       verify(webView.waitForLoadSucceeded(),
@@ -32,6 +39,7 @@ TestWebView {
       compare(webView.getTestApi().sendMessageToSelf(
                   "TEST", { in: 10 }).out, 20,
               "Invalid response from message handler");
+      compare(webView.lastMessageFrameSource, webView.rootFrame, "Invalid frame");
     }
 
     function test_WebView_messageHandlers2_valid_subframe() {
@@ -47,6 +55,7 @@ TestWebView {
       compare(webView.getTestApiForFrame(frame).sendMessageToSelf(
                   "TEST", { in: 10 }).out, 20,
               "Invalid response from message handler");
+      compare(webView.lastMessageFrameSource, frame, "Invalid frame");
     }
 
     function test_WebView_messageHandlers5_noMatchingMsgId() {
