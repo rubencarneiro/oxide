@@ -5,7 +5,7 @@ allow-embedders-to-override-get-default-screen-info.patch
 gyp-support-library-version.patch
 support-native-popup-menus.patch
 add-oxide-messages.patch
-#add-frame-created-for-web-contents-observer.patch
+add-frame-created-for-render-view.patch
 add-oxide-resources.patch
 unlock-url-util-on-shutdown.patch
 dont-assert-once-only-initialization-of-icu.patch
