@@ -58,7 +58,7 @@ TestWebView {
       compare(webView.lastMessageFrameSource, frame, "Invalid frame");
     }
 
-    function test_WebView_messageHandlers5_noMatchingMsgId() {
+    function test_WebView_messageHandlers3_noMatchingMsgId() {
       webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -83,7 +83,7 @@ TestWebView {
       webView.messageHandlers[0].msgId = "TEST";
     }
 
-    function test_WebView_messageHandlers6_noMatchingWorld() {
+    function test_WebView_messageHandlers4_noMatchingWorld() {
       webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -106,6 +106,32 @@ TestWebView {
       }
 
       webView.messageHandlers[0].worldIds = [ "Foo", "TestUtils" ];
+    }
+
+    function test_WebView_messageHandlers5_noCallback() {
+      webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+
+      function sendMessage() {
+        return webView.getTestApi().sendMessageToSelf("TEST", { in: 10 }).out;
+      }
+
+      compare(sendMessage(), 20, "Should have had a response");
+
+      var orig = webView.messageHandlers[0].callback;
+      webView.messageHandlers[0].callback = null;
+
+      try {
+        sendMessage();
+        fail("Should have thrown");
+      } catch(e) {
+        verify(e instanceof TestUtils.MessageError, "Invalid exception type");
+        compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
+                "Unexpected error type");
+      }
+
+      webView.messageHandlers[0].callback = orig;
     }
   }
 }
