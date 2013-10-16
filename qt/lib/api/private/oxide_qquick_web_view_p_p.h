@@ -27,7 +27,6 @@
 #include "base/memory/weak_ptr.h"
 
 #include "shared/browser/oxide_message_dispatcher_browser.h"
-#include "shared/browser/oxide_web_contents_view_delegate.h"
 
 #include "qt/lib/api/private/oxide_q_web_view_base_p.h"
 
@@ -51,8 +50,7 @@ struct InitData {
   QUrl url;
 };
 
-class QQuickWebViewPrivate : public QWebViewBasePrivate,
-                             public oxide::WebContentsViewDelegate {
+class QQuickWebViewPrivate : public QWebViewBasePrivate {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
@@ -62,16 +60,16 @@ class QQuickWebViewPrivate : public QWebViewBasePrivate,
   size_t GetMessageHandlerCount() const FINAL;
   oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
 
-  void OnRootFrameCreated(oxide::WebFrame* root) FINAL;
-
-  void UpdateVisibility();
+  void RootFrameCreated(oxide::WebFrame* root) FINAL;
 
   content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) FINAL;
 
   gfx::Rect GetContainerBounds() FINAL;
 
-  oxide::WebPopupMenu* CreatePopupMenu() FINAL;
+  WebPopupMenu* CreatePopupMenu() FINAL;
+
+  void UpdateVisibility();
 
   base::WeakPtr<QQuickWebViewPrivate> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();

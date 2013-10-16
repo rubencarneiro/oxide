@@ -91,7 +91,7 @@ WebFrame* WebFrameTree::GetRootFrame() {
     root_ = CreateFrame();
     root_->set_tree(this);
 
-    GetView()->OnRootFrameCreated(root_);
+    GetView()->RootFrameCreated(root_);
   }
 
   return root_;

@@ -196,7 +196,6 @@
         'browser/oxide_user_script_master.h',
         'browser/oxide_web_contents_view.cc',
         'browser/oxide_web_contents_view.h',
-        'browser/oxide_web_contents_view_delegate.h',
         'browser/oxide_web_frame.cc',
         'browser/oxide_web_frame.h',
         'browser/oxide_web_frame_tree.cc',

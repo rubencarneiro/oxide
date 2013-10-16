@@ -118,14 +118,11 @@ WebView::WebView() :
     notification_observer_(this) {}
 
 bool WebView::Init(BrowserContext* context,
-                   WebContentsViewDelegate* delegate,
                    bool incognito,
                    const gfx::Size& initial_size) {
   DCHECK(!web_contents_) << "Called Init() more than once";
-  DCHECK(context) << "Must supply a context";
-  DCHECK(delegate) << "Must supply a delegate";
-  DCHECK(process_handle_.Available()) <<
-       "Failed to start the browser components first!";
+  CHECK(process_handle_.Available()) <<
+        "Failed to start the browser components first!";
 
   context = incognito ?
       context->GetOffTheRecordContext() :
@@ -152,9 +149,6 @@ bool WebView::Init(BrowserContext* context,
       &notification_observer_,
       content::NOTIFICATION_RENDER_VIEW_HOST_CHANGED,
       content::Source<content::WebContents>(web_contents_.get()));
-
-  static_cast<oxide::WebContentsView *>(
-      web_contents_->GetView())->SetDelegate(delegate);
 
   return true;
 }
@@ -347,6 +341,10 @@ MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
   return NULL;
 }
 
-void WebView::OnRootFrameCreated(WebFrame* root) {}
+void WebView::RootFrameCreated(WebFrame* root) {}
+
+WebPopupMenu* WebView::CreatePopupMenu() {
+  return NULL;
+}
 
 } // namespace oxide

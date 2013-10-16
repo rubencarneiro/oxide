@@ -21,16 +21,19 @@
 #include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
 
-#include "oxide_web_contents_view_delegate.h"
 #include "oxide_web_popup_menu.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
 WebContentsView::WebContentsView(content::WebContents* web_contents) :
-    web_contents_(web_contents),
-    delegate_(NULL) {}
+    web_contents_(web_contents) {}
 
 WebContentsView::~WebContentsView() {}
+
+WebView* WebContentsView::GetWebView() const {
+  return WebView::FromWebContents(web_contents_);
+}
 
 void WebContentsView::CreateView(const gfx::Size& initial_size,
                                  gfx::NativeView context) {
@@ -39,7 +42,7 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
-  return delegate_->CreateViewForWidget(render_widget_host);
+  return GetWebView()->CreateViewForWidget(render_widget_host);
 }
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForPopupWidget(
@@ -68,7 +71,7 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  *out = delegate_->GetContainerBounds();
+  *out = GetWebView()->GetContainerBounds();
 }
 
 void WebContentsView::OnTabCrashed(base::TerminationStatus status,
@@ -122,8 +125,9 @@ void WebContentsView::ShowPopupMenu(
     bool allow_multiple_selection) {
   DCHECK(!active_popup_menu_);
 
-  active_popup_menu_.reset(delegate_->CreatePopupMenu());
+  active_popup_menu_.reset(GetWebView()->CreatePopupMenu());
 
+  // FIXME: Provide away for ports to opt out of native popups entirely
   if (!active_popup_menu_) {
     static_cast<content::RenderViewHostImpl *>(
         web_contents_->GetRenderViewHost())->DidCancelPopupMenu();
@@ -136,10 +140,6 @@ void WebContentsView::ShowPopupMenu(
 
 void WebContentsView::PopupDone() {
   active_popup_menu_.reset();
-}
-
-void WebContentsView::SetDelegate(WebContentsViewDelegate* delegate) {
-  delegate_ = delegate;
 }
 
 } // namespace oxide

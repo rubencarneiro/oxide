@@ -130,25 +130,11 @@ oxide::MessageHandler* QQuickWebViewPrivate::GetMessageHandlerAt(
       message_handlers_.at(index))->handler();
 }
 
-void QQuickWebViewPrivate::OnRootFrameCreated(oxide::WebFrame* root) {
+void QQuickWebViewPrivate::RootFrameCreated(oxide::WebFrame* root) {
   Q_Q(OxideQQuickWebView);
 
   WebFrame* qroot = static_cast<WebFrame *>(root);
   qroot->q_web_frame->setParent(q);
-}
-
-void QQuickWebViewPrivate::UpdateVisibility() {
-  Q_Q(OxideQQuickWebView);
-
-  if (init_props_) {
-    return;
-  }
-
-  if (q->isVisible()) {
-    Shown();
-  } else {
-    Hidden();
-  }  
 }
 
 content::RenderWidgetHostView* QQuickWebViewPrivate::CreateViewForWidget(
@@ -179,6 +165,21 @@ oxide::WebPopupMenu* QQuickWebViewPrivate::CreatePopupMenu() {
   return new WebPopupMenuQQuick(q, web_contents());
 }
 
+void QQuickWebViewPrivate::UpdateVisibility() {
+  Q_Q(OxideQQuickWebView);
+
+  if (init_props_) {
+    return;
+  }
+
+  if (q->isVisible()) {
+    Shown();
+  } else {
+    Hidden();
+  }  
+}
+
+
 WebFrameTree* QQuickWebViewPrivate::CreateWebFrameTree(
     content::RenderViewHost* rvh) {
   return new WebFrameTreeQQuick(rvh);
@@ -201,7 +202,7 @@ void QQuickWebViewPrivate::componentComplete() {
   }
 
   Init(QWebViewContextBasePrivate::get(context)->GetContext(),
-       this, init_props_->incognito,
+       init_props_->incognito,
        gfx::Size(qRound(q->width()), qRound(q->height())));
 
   if (!init_props_->url.isEmpty()) {

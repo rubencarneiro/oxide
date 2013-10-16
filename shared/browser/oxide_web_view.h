@@ -28,6 +28,7 @@
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
+#include "ui/gfx/rect.h"
 
 #include "shared/browser/oxide_browser_process_handle.h"
 #include "shared/browser/oxide_message_dispatcher_browser.h"
@@ -42,6 +43,8 @@ class Size;
 namespace content {
 
 struct OpenURLParams;
+class RenderWidgetHost;
+class RenderWidgetHostView;
 class WebContents;
 
 } // namespace content
@@ -49,8 +52,8 @@ class WebContents;
 namespace oxide {
 
 class BrowserContext;
-class WebContentsViewDelegate;
 class WebFrame;
+class WebPopupMenu;
 
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
@@ -132,12 +135,18 @@ class WebView : public MessageTarget,
     return web_contents_.get();
   }
 
-  virtual void OnRootFrameCreated(WebFrame* root);
+  virtual void RootFrameCreated(WebFrame* root);
+
+  virtual content::RenderWidgetHostView* CreateViewForWidget(
+      content::RenderWidgetHost* render_widget_host) = 0;
+
+  virtual gfx::Rect GetContainerBounds() = 0;
+
+  virtual WebPopupMenu* CreatePopupMenu();
 
  protected:
   WebView();
   bool Init(BrowserContext* context,
-            WebContentsViewDelegate* delegate,
             bool incognito,
             const gfx::Size& initial_size);
 

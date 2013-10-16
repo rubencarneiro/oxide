@@ -31,14 +31,16 @@ class WebContents;
 
 namespace oxide {
 
-class WebContentsViewDelegate;
 class WebPopupMenu;
+class WebView;
 
 class WebContentsView FINAL : public content::WebContentsViewPort,
                               public content::RenderViewHostDelegateView {
  public:
   ~WebContentsView();
   WebContentsView(content::WebContents* web_contents);
+
+  WebView* GetWebView() const;
 
   void CreateView(const gfx::Size& initial_size,
                   gfx::NativeView context) FINAL;
@@ -82,11 +84,8 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
                      bool allow_multiple_selection) FINAL;
   void PopupDone();
 
-  void SetDelegate(WebContentsViewDelegate* delegate);
-
  private:
   content::WebContents* web_contents_;
-  WebContentsViewDelegate* delegate_;
   gfx::Size requested_size_;
   scoped_ptr<WebPopupMenu> active_popup_menu_;
 
