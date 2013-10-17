@@ -61,6 +61,7 @@ def main():
       f.write("\.svn/\n")
       f.write("\.git/\n")
       f.write("^out/\n")
+      f.write("\.host\.(.*\.|)mk$\n")
       f.write("\.target\.(.*\.|)mk$\n")
       f.write("Makefile(\.*|)$\n")
       f.write("^\.hgignore$\n")
