@@ -34,9 +34,9 @@ QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
 class OxideQQuickMessageHandler;
+class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
-class OxideQQuickWebViewContext;
 
 namespace oxide {
 namespace qt {
@@ -72,7 +72,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
-  Q_PROPERTY(OxideQQuickWebViewContext* context READ context WRITE setContext)
+  Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
 
   Q_DECLARE_PRIVATE(oxide::qt::QQuickWebView)
 
@@ -104,8 +104,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
-  OxideQQuickWebViewContext* context() const;
-  void setContext(OxideQQuickWebViewContext* context);
+  OxideQQuickWebContext* context() const;
+  void setContext(OxideQQuickWebContext* context);
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 

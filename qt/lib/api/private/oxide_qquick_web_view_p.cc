@@ -28,15 +28,15 @@
 
 #include "qt/lib/api/oxide_q_load_event.h"
 #include "qt/lib/api/oxide_q_web_frame_base.h"
+#include "qt/lib/api/oxide_qquick_web_context_p.h"
 #include "qt/lib/api/oxide_qquick_web_view_p.h"
-#include "qt/lib/api/oxide_qquick_web_view_context_p.h"
 #include "qt/lib/browser/oxide_qt_render_widget_host_view_qquick.h"
 #include "qt/lib/browser/oxide_qt_web_frame.h"
 #include "qt/lib/browser/oxide_qt_web_frame_tree.h"
 #include "qt/lib/browser/oxide_qt_web_popup_menu_qquick.h"
 
 #include "oxide_qt_qmessage_handler_p.h"
-#include "oxide_qt_qweb_view_context_p.h"
+#include "oxide_qt_qweb_context_p.h"
 
 namespace oxide {
 namespace qt {
@@ -197,11 +197,11 @@ void QQuickWebViewPrivate::componentComplete() {
     // hierarchy. However, the default context is not in this hierarchy and
     // has no QObject parent, so we use reference counting for it instead to
     // ensure that it is freed once all webviews are closed
-    default_context_.reset(OxideQQuickWebViewContext::defaultContext());
+    default_context_.reset(OxideQQuickWebContext::defaultContext());
     context = default_context_.data();
   }
 
-  Init(QWebViewContextBasePrivate::get(context)->GetContext(),
+  Init(QWebContextBasePrivate::get(context)->GetContext(),
        init_props_->incognito,
        gfx::Size(qRound(q->width()), qRound(q->height())));
 

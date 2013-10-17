@@ -28,15 +28,15 @@
 #include "oxide_q_user_script.h"
 #include "oxide_qquick_message_handler_p.h"
 #include "oxide_qquick_outgoing_message_request_p.h"
+#include "oxide_qquick_web_context_p.h"
 #include "oxide_qquick_web_frame_p.h"
 #include "oxide_qquick_web_view_p.h"
-#include "oxide_qquick_web_view_context_p.h"
 
 QT_USE_NAMESPACE
 
 namespace {
 
-class OxideQQuickDefaultWebViewContext : public QObject {
+class OxideQQuickDefaultWebContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
@@ -46,8 +46,8 @@ class OxideQQuickDefaultWebViewContext : public QObject {
   Q_PROPERTY(QQmlListProperty<OxideQUserScript> userScripts READ userScripts)
 
  public:
-  OxideQQuickDefaultWebViewContext(QObject* parent = NULL);
-  virtual ~OxideQQuickDefaultWebViewContext();
+  OxideQQuickDefaultWebContext(QObject* parent = NULL);
+  virtual ~OxideQQuickDefaultWebContext();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -81,13 +81,13 @@ class OxideQQuickDefaultWebViewContext : public QObject {
   void acceptLangsChangedListener();
 
  private:
-  QSharedPointer<OxideQQuickWebViewContext> context_;
+  QSharedPointer<OxideQQuickWebContext> context_;
 };
 
-OxideQQuickDefaultWebViewContext::OxideQQuickDefaultWebViewContext(
+OxideQQuickDefaultWebContext::OxideQQuickDefaultWebContext(
     QObject* parent) :
     QObject(parent),
-    context_(OxideQQuickWebViewContext::defaultContext()) {
+    context_(OxideQQuickWebContext::defaultContext()) {
   QObject::connect(context_.data(), SIGNAL(productChanged()),
                    this, SLOT(productChangedListener()));
   QObject::connect(context_.data(), SIGNAL(userAgentChanged()),
@@ -100,7 +100,7 @@ OxideQQuickDefaultWebViewContext::OxideQQuickDefaultWebViewContext(
                    this, SLOT(acceptLangsChangedListener()));
 }
 
-OxideQQuickDefaultWebViewContext::~OxideQQuickDefaultWebViewContext() {
+OxideQQuickDefaultWebContext::~OxideQQuickDefaultWebContext() {
   QObject::disconnect(context_.data(), SIGNAL(productChanged()),
                       this, SLOT(productChangedListener()));
   QObject::disconnect(context_.data(), SIGNAL(userAgentChanged()),
@@ -113,81 +113,81 @@ OxideQQuickDefaultWebViewContext::~OxideQQuickDefaultWebViewContext() {
                       this, SLOT(acceptLangsChangedListener()));
 }
 
-QString OxideQQuickDefaultWebViewContext::product() const {
+QString OxideQQuickDefaultWebContext::product() const {
   return context_->product();
 }
 
-void OxideQQuickDefaultWebViewContext::setProduct(const QString& product) {
+void OxideQQuickDefaultWebContext::setProduct(const QString& product) {
   context_->setProduct(product);
 }
 
-QString OxideQQuickDefaultWebViewContext::userAgent() const {
+QString OxideQQuickDefaultWebContext::userAgent() const {
   return context_->userAgent();
 }
 
-void OxideQQuickDefaultWebViewContext::setUserAgent(
+void OxideQQuickDefaultWebContext::setUserAgent(
     const QString& user_agent) {
   context_->setUserAgent(user_agent);
 }
 
-QUrl OxideQQuickDefaultWebViewContext::dataPath() const {
+QUrl OxideQQuickDefaultWebContext::dataPath() const {
   return context_->dataPath();
 }
 
-void OxideQQuickDefaultWebViewContext::setDataPath(
+void OxideQQuickDefaultWebContext::setDataPath(
     const QUrl& data_path) {
   context_->setDataPath(data_path);
 }
 
-QUrl OxideQQuickDefaultWebViewContext::cachePath() const {
+QUrl OxideQQuickDefaultWebContext::cachePath() const {
   return context_->cachePath();
 }
 
-void OxideQQuickDefaultWebViewContext::setCachePath(
+void OxideQQuickDefaultWebContext::setCachePath(
     const QUrl& cache_path) {
   context_->setCachePath(cache_path);
 }
 
-QString OxideQQuickDefaultWebViewContext::acceptLangs() const {
+QString OxideQQuickDefaultWebContext::acceptLangs() const {
   return context_->acceptLangs();
 }
 
-void OxideQQuickDefaultWebViewContext::setAcceptLangs(
+void OxideQQuickDefaultWebContext::setAcceptLangs(
     const QString& accept_langs) {
   context_->setAcceptLangs(accept_langs);
 }
 
 QQmlListProperty<OxideQUserScript>
-OxideQQuickDefaultWebViewContext::userScripts() {
+OxideQQuickDefaultWebContext::userScripts() {
   return context_->userScripts();
 }
 
-void OxideQQuickDefaultWebViewContext::productChangedListener() {
+void OxideQQuickDefaultWebContext::productChangedListener() {
   emit productChanged();
 }
 
-void OxideQQuickDefaultWebViewContext::userAgentChangedListener() {
+void OxideQQuickDefaultWebContext::userAgentChangedListener() {
   emit userAgentChanged();
 }
 
-void OxideQQuickDefaultWebViewContext::dataPathChangedListener() {
+void OxideQQuickDefaultWebContext::dataPathChangedListener() {
   emit dataPathChanged();
 }
 
-void OxideQQuickDefaultWebViewContext::cachePathChangedListener() {
+void OxideQQuickDefaultWebContext::cachePathChangedListener() {
   emit cachePathChanged();
 }
 
-void OxideQQuickDefaultWebViewContext::acceptLangsChangedListener() {
+void OxideQQuickDefaultWebContext::acceptLangsChangedListener() {
   emit acceptLangsChanged();
 }
 
-QObject* DefaultWebViewContextSingletonFactory(QQmlEngine* engine,
-                                               QJSEngine* script_engine) {
+QObject* DefaultWebContextSingletonFactory(QQmlEngine* engine,
+                                           QJSEngine* script_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(script_engine);
 
-  return new OxideQQuickDefaultWebViewContext();
+  return new OxideQQuickDefaultWebContext();
 }
 
 }
@@ -199,8 +199,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
   void registerTypes(const char* uri) {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide"));
 
-    qmlRegisterSingletonType<OxideQQuickDefaultWebViewContext>(
-        uri, 0, 1, "DefaultWebViewContext", DefaultWebViewContextSingletonFactory);
+    qmlRegisterSingletonType<OxideQQuickDefaultWebContext>(
+        uri, 0, 1, "DefaultWebContext", DefaultWebContextSingletonFactory);
     qmlRegisterUncreatableType<OxideQIncomingMessage>(uri, 0, 1, "IncomingMessage",
         "IncomingMessages are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQLoadEvent>(uri, 0, 1, "LoadEvent",
@@ -211,7 +211,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickMessageHandler>(uri, 0, 1, "MessageHandler");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 0, 1, "WebFrame",
         "Frames are created automatically by Oxide to represent frames in the renderer");
-    qmlRegisterType<OxideQQuickWebViewContext>(uri, 0, 1, "WebViewContext");
+    qmlRegisterType<OxideQQuickWebContext>(uri, 0, 1, "WebContext");
     qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
   }
 };

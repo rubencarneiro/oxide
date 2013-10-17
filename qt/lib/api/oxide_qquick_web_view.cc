@@ -202,13 +202,13 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
   emit popupMenuChanged();
 }
 
-OxideQQuickWebViewContext* OxideQQuickWebView::context() const {
+OxideQQuickWebContext* OxideQQuickWebView::context() const {
   Q_D(const oxide::qt::QQuickWebView);
 
   return d->context;
 }
 
-void OxideQQuickWebView::setContext(OxideQQuickWebViewContext* context) {
+void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   Q_D(oxide::qt::QQuickWebView);
 
   if (!d->web_contents()) {

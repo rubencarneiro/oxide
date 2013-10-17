@@ -31,8 +31,8 @@
 #include "qt/lib/api/private/oxide_q_web_view_base_p.h"
 
 class OxideQQuickMessageHandler;
+class OxideQQuickWebContext;
 class OxideQQuickWebView;
-class OxideQQuickWebViewContext;
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
@@ -105,7 +105,7 @@ class QQuickWebViewPrivate : public QWebViewBasePrivate {
 
   void addAttachedPropertyTo(QObject* object);
 
-  OxideQQuickWebViewContext* context;
+  OxideQQuickWebContext* context;
   QQmlComponent* popup_menu;
 
  private:
@@ -127,7 +127,7 @@ class QQuickWebViewPrivate : public QWebViewBasePrivate {
 
   OxideQQuickWebView* q_ptr;
   scoped_ptr<InitData> init_props_;
-  QSharedPointer<OxideQQuickWebViewContext> default_context_;
+  QSharedPointer<OxideQQuickWebContext> default_context_;
   QList<OxideQQuickMessageHandler *> message_handlers_;
   base::WeakPtrFactory<QQuickWebViewPrivate> weak_factory_;
 };

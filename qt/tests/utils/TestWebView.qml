@@ -72,7 +72,7 @@ WebView {
   property int qtest_expectedLoadsFailedCount: 0
   property int qtest_expectedLoadsStoppedCount: 0
 
-  context: WebViewContext {
+  context: WebContext {
     dataPath: OXIDE_TESTING_DATA_PATH
     userScripts: [
       UserScript {

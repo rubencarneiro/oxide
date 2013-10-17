@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_WEB_VIEW_CONTEXT_BASE_H
-#define OXIDE_Q_WEB_VIEW_CONTEXT_BASE_H
+#ifndef OXIDE_Q_WEB_CONTEXT_BASE_H
+#define OXIDE_Q_WEB_CONTEXT_BASE_H
 
 #include <QObject>
 #include <QString>
@@ -27,11 +27,11 @@ QT_USE_NAMESPACE
 
 namespace oxide {
 namespace qt {
-class QWebViewContextBasePrivate;
+class QWebContextBasePrivate;
 }
 }
 
-class Q_DECL_EXPORT OxideQWebViewContextBase : public QObject {
+class Q_DECL_EXPORT OxideQWebContextBase : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
@@ -39,10 +39,10 @@ class Q_DECL_EXPORT OxideQWebViewContextBase : public QObject {
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QWebViewContextBase)
+  Q_DECLARE_PRIVATE(oxide::qt::QWebContextBase)
 
  public:
-  virtual ~OxideQWebViewContextBase();
+  virtual ~OxideQWebContextBase();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -67,13 +67,13 @@ class Q_DECL_EXPORT OxideQWebViewContextBase : public QObject {
   void acceptLangsChanged();
 
  protected:
-  OxideQWebViewContextBase(oxide::qt::QWebViewContextBasePrivate& dd,
-                           QObject* parent = NULL);
+  OxideQWebContextBase(oxide::qt::QWebContextBasePrivate& dd,
+                       QObject* parent = NULL);
 
-  QScopedPointer<oxide::qt::QWebViewContextBasePrivate> d_ptr;
+  QScopedPointer<oxide::qt::QWebContextBasePrivate> d_ptr;
 
  private Q_SLOTS:
   void scriptUpdated();
 };
 
-#endif // OXIDE_Q_WEB_VIEW_CONTEXT_BASE_H
+#endif // OXIDE_Q_WEB_CONTEXT_BASE_H
