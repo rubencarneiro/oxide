@@ -51,7 +51,9 @@ def main():
     os.rename(os.path.join(chromium_src_path, ".hg"),
               os.path.join(chromium_src_path, ".hg.bak"))
 
-  CheckCall(["gclient", "sync", "--force"], chromiumdir)
+  CheckCall(["gclient", "sync", "--force",
+             "--gclientfile", os.path.join(topsrcdir, "gclient.conf")],
+            chromiumdir)
 
   if not has_hg:
     with open(os.path.join(chromium_src_path, ".hgignore"), "w") as f:
