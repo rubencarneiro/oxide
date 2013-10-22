@@ -177,7 +177,6 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
 }
 
 gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
-  NOTIMPLEMENTED();
   return gfx::GLSurfaceHandle();
 }
 
