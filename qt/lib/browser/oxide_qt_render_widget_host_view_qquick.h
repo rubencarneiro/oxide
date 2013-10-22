@@ -18,7 +18,7 @@
 #ifndef _OXIDE_QT_LIB_BROWSER_RENDER_WIDGET_HOST_VIEW_QQUICK_H_
 #define _OXIDE_QT_LIB_BROWSER_RENDER_WIDGET_HOST_VIEW_QQUICK_H_
 
-#include <QScopedPointer>
+#include <QQuickPaintedItem>
 #include <QtGlobal>
 
 #include "base/basictypes.h"
@@ -28,7 +28,6 @@
 
 QT_BEGIN_NAMESPACE
 class QQuickItem;
-class QQuickPaintedItem;
 class QScreen;
 QT_END_NAMESPACE
 
@@ -37,10 +36,14 @@ QT_USE_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostViewQQuick FINAL : public oxide::RenderWidgetHostView {
+class BackingStore;
+
+class RenderWidgetHostViewQQuick FINAL : public QQuickPaintedItem,
+                                         public oxide::RenderWidgetHostView {
  public:
   RenderWidgetHostViewQQuick(content::RenderWidgetHost* render_widget_host,
                              QQuickItem* container);
+  virtual ~RenderWidgetHostViewQQuick();
 
   static void GetScreenInfo(QScreen* screen, WebKit::WebScreenInfo* result);
 
@@ -60,10 +63,28 @@ class RenderWidgetHostViewQQuick FINAL : public oxide::RenderWidgetHostView {
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
 
+  void focusInEvent(QFocusEvent* event) FINAL;
+  void focusOutEvent(QFocusEvent* event) FINAL;
+
+  void keyPressEvent(QKeyEvent* event) FINAL;
+  void keyReleaseEvent(QKeyEvent* event) FINAL;
+
+  void mouseDoubleClickEvent(QMouseEvent* event) FINAL;
+  void mouseMoveEvent(QMouseEvent* event) FINAL;
+  void mousePressEvent(QMouseEvent* event) FINAL;
+  void mouseReleaseEvent(QMouseEvent* event) FINAL;
+
+  void wheelEvent(QWheelEvent* event) FINAL;
+
+  void hoverMoveEvent(QHoverEvent* event) FINAL;
+
+  void updatePolish() FINAL;
+  void paint(QPainter* paint) FINAL;
+
  private:
   void ScheduleUpdate(const gfx::Rect& rect) FINAL;
 
-  QScopedPointer<QQuickPaintedItem> view_item_;
+  BackingStore* backing_store_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostViewQQuick);
 };
