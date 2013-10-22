@@ -32,7 +32,8 @@
         {
           'action_name': 'chrome_version_header',
           'inputs': [
-            'common/chrome_version.h.in'
+            'common/chrome_version.h.in',
+            '<(DEPTH)/chrome/VERSION'
           ],
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/oxide/shared/common/chrome_version.h'
