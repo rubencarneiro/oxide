@@ -19,9 +19,9 @@
 
 #include <QRectF>
 
-#include "qt/lib/api/private/oxide_qquick_web_view_p_p.h"
-#include "qt/lib/api/private/oxide_qt_qmessage_handler_p.h"
-#include "qt/lib/browser/oxide_qt_web_frame.h"
+#include "qt/core/api/private/oxide_qquick_web_view_p_p.h"
+#include "qt/core/api/private/oxide_qt_qmessage_handler_p.h"
+#include "qt/core/browser/oxide_qt_web_frame.h"
 
 #include "oxide_qquick_message_handler_p.h"
 

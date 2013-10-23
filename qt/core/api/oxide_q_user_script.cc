@@ -21,7 +21,7 @@
 
 #include "shared/common/oxide_user_script.h"
 
-#include "qt/lib/api/private/oxide_q_user_script_p.h"
+#include "qt/core/api/private/oxide_q_user_script_p.h"
 
 OxideQUserScript::OxideQUserScript(QObject* parent) :
     QObject(parent),

@@ -17,10 +17,10 @@
 
 #include "oxide_qt_qweb_frame_p.h"
 
-#include "qt/lib/api/oxide_q_web_frame_base.h"
-#include "qt/lib/api/oxide_qquick_message_handler_p.h"
-#include "qt/lib/api/oxide_qquick_web_frame_p.h"
-#include "qt/lib/browser/oxide_qt_web_frame.h"
+#include "qt/core/api/oxide_q_web_frame_base.h"
+#include "qt/core/api/oxide_qquick_message_handler_p.h"
+#include "qt/core/api/oxide_qquick_web_frame_p.h"
+#include "qt/core/browser/oxide_qt_web_frame.h"
 
 #include "oxide_qt_qmessage_handler_p.h"
 #include "oxide_qt_qoutgoing_message_request_p.h"

@@ -25,7 +25,7 @@
 
 #include "base/bind.h"
 
-#include "qt/lib/api/oxide_qquick_outgoing_message_request_p.h"
+#include "qt/core/api/oxide_qquick_outgoing_message_request_p.h"
 
 #include "oxide_qt_qweb_frame_p.h"
 

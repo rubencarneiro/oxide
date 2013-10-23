@@ -22,10 +22,10 @@
 #include <QJsonDocument>
 #include <QString>
 
-#include "qt/lib/api/private/oxide_qt_qmessage_handler_p.h"
-#include "qt/lib/api/private/oxide_qt_qoutgoing_message_request_p.h"
-#include "qt/lib/api/private/oxide_qt_qweb_frame_p.h"
-#include "qt/lib/browser/oxide_qt_web_frame.h"
+#include "qt/core/api/private/oxide_qt_qmessage_handler_p.h"
+#include "qt/core/api/private/oxide_qt_qoutgoing_message_request_p.h"
+#include "qt/core/api/private/oxide_qt_qweb_frame_p.h"
+#include "qt/core/browser/oxide_qt_web_frame.h"
 
 #include "oxide_qquick_outgoing_message_request_p.h"
 

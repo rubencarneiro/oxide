@@ -20,7 +20,7 @@
 
 #include <QtDebug>
 
-#include "qt/lib/api/private/oxide_qt_qoutgoing_message_request_p.h"
+#include "qt/core/api/private/oxide_qt_qoutgoing_message_request_p.h"
 
 OxideQOutgoingMessageRequestBase::OxideQOutgoingMessageRequestBase(
     oxide::qt::QOutgoingMessageRequestBasePrivate& dd) :

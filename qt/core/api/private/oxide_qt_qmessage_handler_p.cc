@@ -24,11 +24,11 @@
 #include "shared/browser/oxide_incoming_message.h"
 #include "shared/browser/oxide_message_handler.h"
 
-#include "qt/lib/api/oxide_q_incoming_message.h"
-#include "qt/lib/api/oxide_q_web_frame_base.h"
-#include "qt/lib/api/oxide_qquick_web_frame_p.h"
-#include "qt/lib/api/oxide_qquick_web_view_p.h"
-#include "qt/lib/browser/oxide_qt_web_frame.h"
+#include "qt/core/api/oxide_q_incoming_message.h"
+#include "qt/core/api/oxide_q_web_frame_base.h"
+#include "qt/core/api/oxide_qquick_web_frame_p.h"
+#include "qt/core/api/oxide_qquick_web_view_p.h"
+#include "qt/core/browser/oxide_qt_web_frame.h"
 
 namespace oxide {
 namespace qt {

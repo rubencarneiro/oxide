@@ -24,7 +24,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 
-#include "qt/lib/api/oxide_q_load_event.h"
+#include "qt/core/api/oxide_q_load_event.h"
 
 namespace oxide {
 namespace qt {

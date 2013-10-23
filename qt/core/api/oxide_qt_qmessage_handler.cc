@@ -20,7 +20,7 @@
 
 #include <QtDebug>
 
-#include "qt/lib/api/private/oxide_qt_qmessage_handler_p.h"
+#include "qt/core/api/private/oxide_qt_qmessage_handler_p.h"
 
 #include "oxide_qquick_web_frame_p.h"
 #include "oxide_qquick_web_view_p.h"

@@ -21,7 +21,7 @@
 
 #include "shared/browser/oxide_web_view.h"
 
-#include "qt/lib/api/private/oxide_q_web_view_base_p.h"
+#include "qt/core/api/private/oxide_q_web_view_base_p.h"
 
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_render_widget_host_view_qquick.h"

@@ -12,7 +12,7 @@ DESTDIR = $${OXIDE_BUILD_OUT}/imports/$${TARGET.module_name}
 
 SOURCES += oxide_qml_plugin.cc
 
-INCLUDEPATH = $${OXIDE_SRC_ROOT}/qt/lib/api
+INCLUDEPATH = $${OXIDE_SRC_ROOT}/qt/core/api
 LIBS += -L$${CHROMIUM_OUT_LIB_DIR} -loxide-qt
 
 OTHER_FILES = qmldir

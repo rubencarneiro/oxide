@@ -19,7 +19,7 @@
 
 #include "base/lazy_instance.h"
 
-#include "qt/lib/browser/oxide_qt_content_browser_client.h"
+#include "qt/core/browser/oxide_qt_content_browser_client.h"
 
 namespace oxide {
 namespace qt {

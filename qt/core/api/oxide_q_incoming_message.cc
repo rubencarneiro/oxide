@@ -22,7 +22,7 @@
 
 #include "shared/browser/oxide_incoming_message.h"
 
-#include "qt/lib/api/private/oxide_q_incoming_message_p.h"
+#include "qt/core/api/private/oxide_q_incoming_message_p.h"
 
 OxideQIncomingMessage::OxideQIncomingMessage(
     oxide::IncomingMessage* message) :

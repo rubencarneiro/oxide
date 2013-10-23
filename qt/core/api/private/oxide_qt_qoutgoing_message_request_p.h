@@ -26,7 +26,7 @@
 
 #include "shared/browser/oxide_outgoing_message_request.h"
 
-#include "qt/lib/api/oxide_q_outgoing_message_request_base.h"
+#include "qt/core/api/oxide_q_outgoing_message_request_base.h"
 
 QT_BEGIN_NAMESPACE
 class QString;

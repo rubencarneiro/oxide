@@ -24,7 +24,7 @@
 
 #include "shared/browser/oxide_browser_context.h"
 
-#include "qt/lib/api/private/oxide_qt_qweb_context_p.h"
+#include "qt/core/api/private/oxide_qt_qweb_context_p.h"
 
 namespace {
 OxideQQuickWebContext* g_default_context;

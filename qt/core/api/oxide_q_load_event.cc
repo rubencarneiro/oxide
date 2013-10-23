@@ -17,7 +17,7 @@
 
 #include "oxide_q_load_event.h"
 
-#include "qt/lib/api/private/oxide_q_load_event_p.h"
+#include "qt/core/api/private/oxide_q_load_event_p.h"
 
 OxideQLoadEvent::~OxideQLoadEvent() {}
 

@@ -1,8 +1,8 @@
 TEMPLATE = subdirs
 CONFIG += ordered
 
-lib.file = qt/lib/lib.pro
-SUBDIRS += lib
+core.file = qt/core/core.pro
+SUBDIRS += core
 
 renderer.file = qt/renderer/renderer.pro
 SUBDIRS += renderer

@@ -28,7 +28,7 @@
 
 #include "shared/browser/oxide_message_dispatcher_browser.h"
 
-#include "qt/lib/api/private/oxide_q_web_view_base_p.h"
+#include "qt/core/api/private/oxide_q_web_view_base_p.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;

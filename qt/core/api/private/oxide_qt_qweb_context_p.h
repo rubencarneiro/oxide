@@ -28,7 +28,7 @@
 
 #include "shared/browser/oxide_browser_process_handle.h"
 
-#include "qt/lib/api/oxide_qquick_web_context_p.h"
+#include "qt/core/api/oxide_qquick_web_context_p.h"
 
 class OxideQQuickWebContext;
 class OxideQUserScript;

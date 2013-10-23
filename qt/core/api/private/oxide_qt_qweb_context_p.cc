@@ -22,8 +22,8 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_user_script_master.h"
 
-#include "qt/lib/api/oxide_q_user_script.h"
-#include "qt/lib/api/oxide_q_web_context_base.h"
+#include "qt/core/api/oxide_q_user_script.h"
+#include "qt/core/api/oxide_q_web_context_base.h"
 
 #include "oxide_q_user_script_p.h"
 

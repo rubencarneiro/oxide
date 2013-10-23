@@ -27,7 +27,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/platform_file.h"
 
-#include "qt/lib/api/oxide_q_user_script.h"
+#include "qt/core/api/oxide_q_user_script.h"
 
 namespace oxide {
 class UserScript;
