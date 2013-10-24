@@ -57,7 +57,8 @@ oxide::MessageHandler* WebFrame::GetMessageHandlerAt(
   OxideQQuickMessageHandler* handler =
       OxideQQuickWebFramePrivate::get(
         q_web_frame)->message_handlers().at(index);
-  return OxideQQuickMessageHandlerPrivate::get(handler)->handler();
+  // FIXME: Stop using OxideQQuickMessageHandlerPrivate from here
+  return OxideQQuickMessageHandlerPrivate::get(handler)->GetHandler();
 }
 
 size_t WebFrame::GetOutgoingMessageRequestCount() const {

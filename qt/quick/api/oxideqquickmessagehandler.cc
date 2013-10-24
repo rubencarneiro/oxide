@@ -36,44 +36,30 @@ OxideQQuickMessageHandler::~OxideQQuickMessageHandler() {
 QString OxideQQuickMessageHandler::msgId() const {
   Q_D(const OxideQQuickMessageHandler);
 
-  return QString::fromStdString(d->handler()->msg_id());
+  return d->msgId();
 }
 
 void OxideQQuickMessageHandler::setMsgId(const QString& id) {
   Q_D(OxideQQuickMessageHandler);
 
-  if (id.toStdString() == d->handler()->msg_id()) {
+  if (id == d->msgId()) {
     return;
   }
 
-  d->handler()->set_msg_id(id.toStdString());
+  d->setMsgId(id);
   emit msgIdChanged();
 }
 
 QList<QString> OxideQQuickMessageHandler::worldIds() const {
   Q_D(const OxideQQuickMessageHandler);
 
-  QList<QString> list;
-
-  const std::vector<std::string>& ids = d->handler()->world_ids();
-  for (std::vector<std::string>::const_iterator it = ids.begin();
-       it != ids.end(); ++it) {
-    list.append(QString::fromStdString(*it));
-  }
-
-  return list;
+  return d->worldIds();
 }
 
 void OxideQQuickMessageHandler::setWorldIds(const QList<QString>& ids) {
   Q_D(OxideQQuickMessageHandler);
 
-  std::vector<std::string> list;
-
-  for (int i = 0; i < ids.size(); ++i) {
-    list.push_back(ids[i].toStdString());
-  }
-
-  d->handler()->set_world_ids(list);
+  d->setWorldIds(ids);
   emit worldIdsChanged();
 }
 
@@ -100,7 +86,7 @@ void OxideQQuickMessageHandler::setCallback(const QJSValue& callback) {
   d->callback = callback;
 
   if (is_null) {
-    d->disconnectHandler();
+    d->detachHandler();
   } else {
     d->attachHandler();
   }

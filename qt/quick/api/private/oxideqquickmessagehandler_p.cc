@@ -20,13 +20,6 @@
 
 #include <QQmlEngine>
 
-#include "base/bind.h"
-
-#include "shared/browser/oxide_incoming_message.h"
-#include "shared/browser/oxide_message_handler.h"
-
-#include "qt/core/browser/oxide_qt_web_frame.h"
-
 #include "qt/core/api/oxideqincomingmessage.h"
 
 #include "qt/quick/api/oxideqquickwebframe_p.h"
@@ -34,45 +27,29 @@
 
 OxideQQuickMessageHandlerPrivate::OxideQQuickMessageHandlerPrivate(
     OxideQQuickMessageHandler* q) :
-    weak_factory_(this),
     q_ptr(q) {}
 
-void OxideQQuickMessageHandlerPrivate::ReceiveMessageCallback(
-    oxide::IncomingMessage* message,
-    bool* delivered,
-    bool* error,
-    std::string* error_desc) {
-
-  *delivered = true;
-  *error = true;
-
+bool OxideQQuickMessageHandlerPrivate::OnReceiveMessage(
+    OxideQIncomingMessage* message,
+    OxideQQuickWebFrame* frame,
+    QString& error) {
   QJSValueList args;
-  args.append(callback.engine()->newQObject(new OxideQIncomingMessage(message)));
-  args.append(callback.engine()->newQObject(
-      qobject_cast<OxideQQuickWebFrame *>(
-        static_cast<oxide::qt::WebFrame *>(message->frame())->q_web_frame)));
+  args.append(callback.engine()->newQObject(message));
+  args.append(callback.engine()->newQObject(frame));
 
   QJSValue rv = callback.call(args);
   if (rv.isError()) {
-    *error_desc = rv.toString().toStdString();
-    return;
+    error = rv.toString();
+    return false;
   }
+
+  return true;
 }
 
 // static
 OxideQQuickMessageHandlerPrivate* OxideQQuickMessageHandlerPrivate::Create(
     OxideQQuickMessageHandler* q) {
   return new OxideQQuickMessageHandlerPrivate(q);
-}
-
-void OxideQQuickMessageHandlerPrivate::attachHandler() {
-  handler_.SetCallback(
-      base::Bind(&OxideQQuickMessageHandlerPrivate::ReceiveMessageCallback,
-      weak_factory_.GetWeakPtr()));
-}
-
-void OxideQQuickMessageHandlerPrivate::disconnectHandler() {
-  handler_.SetCallback(oxide::MessageHandler::HandlerCallback());
 }
 
 void OxideQQuickMessageHandlerPrivate::removeFromCurrentOwner() {

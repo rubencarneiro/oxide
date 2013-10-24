@@ -127,7 +127,7 @@ size_t OxideQQuickWebViewPrivate::GetMessageHandlerCount() const {
 oxide::MessageHandler* OxideQQuickWebViewPrivate::GetMessageHandlerAt(
     size_t index) const {
   return OxideQQuickMessageHandlerPrivate::get(
-      message_handlers_.at(index))->handler();
+      message_handlers_.at(index))->GetHandler();
 }
 
 void OxideQQuickWebViewPrivate::RootFrameCreated(oxide::WebFrame* root) {

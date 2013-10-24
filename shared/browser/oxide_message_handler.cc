@@ -46,7 +46,7 @@ void MessageHandler::OnReceiveMessage(
   bool error = false;
   std::string error_desc;
 
-  callback_.Run(new IncomingMessage(message), &delivered, &error, &error_desc);
+  callback_.Run(new IncomingMessage(message), &delivered, &error, error_desc);
 
   if (!delivered || error) {
     OxideMsg_SendMessage_Params params;

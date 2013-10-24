@@ -26,10 +26,12 @@
 #include <QVariant>
 
 class OxideQIncomingMessagePrivate;
-class OxideQQuickMessageHandlerPrivate;
 
 namespace oxide {
 class IncomingMessage;
+namespace qt {
+class MessageHandlerAdapter;
+}
 }
 
 class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
@@ -49,10 +51,9 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_INVOKABLE void error(const QString& msg);
 
  protected:
-  friend class OxideQQuickMessageHandlerPrivate;
+  friend class oxide::qt::MessageHandlerAdapter;
 
-  // FIXME: Would be nice to hide this
-  OxideQIncomingMessage(oxide::IncomingMessage* message);
+  Q_DECL_HIDDEN OxideQIncomingMessage(oxide::IncomingMessage* message);
 
  private:
   QScopedPointer<OxideQIncomingMessagePrivate> d_ptr;

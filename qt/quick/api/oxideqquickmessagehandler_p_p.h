@@ -21,35 +21,18 @@
 #include <QJSValue>
 #include <QtGlobal>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/weak_ptr.h"
-
-#include "shared/browser/oxide_message_handler.h"
+#include "qt/core/glue/oxide_qt_message_handler_adapter.h"
 
 class OxideQIncomingMessage;
 class OxideQQuickMessageHandler;
 
-namespace oxide {
-class IncomingMessage;
-}
-
-class OxideQQuickMessageHandlerPrivate FINAL {
+class OxideQQuickMessageHandlerPrivate Q_DECL_FINAL :
+    public oxide::qt::MessageHandlerAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickMessageHandler)
 
  public:
   static OxideQQuickMessageHandlerPrivate* Create(
       OxideQQuickMessageHandler* q);
-
-  const oxide::MessageHandler* handler() const {
-    return &handler_;
-  }
-  oxide::MessageHandler* handler() {
-    return &handler_;
-  }
-
-  void attachHandler();
-  void disconnectHandler();
 
   void removeFromCurrentOwner();
 
@@ -60,17 +43,13 @@ class OxideQQuickMessageHandlerPrivate FINAL {
 
  private:
   OxideQQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
-  void ReceiveMessageCallback(oxide::IncomingMessage* message,
-                              bool* delivered,
-                              bool* error,
-                              std::string* error_desc);
-
-  oxide::MessageHandler handler_;
-  base::WeakPtrFactory<OxideQQuickMessageHandlerPrivate> weak_factory_;
+  bool OnReceiveMessage(OxideQIncomingMessage* message,
+                        OxideQQuickWebFrame* frame,
+                        QString& error) Q_DECL_FINAL;
 
   OxideQQuickMessageHandler* q_ptr;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQQuickMessageHandlerPrivate);
+  Q_DISABLE_COPY(OxideQQuickMessageHandlerPrivate);
 };
 
 #endif // _OXIDE_QT_QUICK_API_MESSAGE_HANDLER_P_P_H_
