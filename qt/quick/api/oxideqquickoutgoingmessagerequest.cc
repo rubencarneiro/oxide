@@ -22,19 +22,19 @@
 
 OxideQQuickOutgoingMessageRequest::OxideQQuickOutgoingMessageRequest() :
     QObject(),
-    d_ptr(oxide::qt::QQuickOutgoingMessageRequestPrivate::Create(this)) {}
+    d_ptr(OxideQQuickOutgoingMessageRequestPrivate::Create(this)) {}
 
 OxideQQuickOutgoingMessageRequest::~OxideQQuickOutgoingMessageRequest() {}
 
 QJSValue OxideQQuickOutgoingMessageRequest::replyCallback() const {
-  Q_D(const oxide::qt::QQuickOutgoingMessageRequest);
+  Q_D(const OxideQQuickOutgoingMessageRequest);
 
   return d->reply_callback;
 }
 
 void OxideQQuickOutgoingMessageRequest::setReplyCallback(
     const QJSValue& callback) {
-  Q_D(oxide::qt::QQuickOutgoingMessageRequest);
+  Q_D(OxideQQuickOutgoingMessageRequest);
 
   if (d->reply_callback.strictlyEquals(callback)) {
     return;
@@ -50,14 +50,14 @@ void OxideQQuickOutgoingMessageRequest::setReplyCallback(
 }
 
 QJSValue OxideQQuickOutgoingMessageRequest::errorCallback() const {
-  Q_D(const oxide::qt::QQuickOutgoingMessageRequest);
+  Q_D(const OxideQQuickOutgoingMessageRequest);
 
   return d->error_callback;
 }
 
 void OxideQQuickOutgoingMessageRequest::setErrorCallback(
     const QJSValue& callback) {
-  Q_D(oxide::qt::QQuickOutgoingMessageRequest);
+  Q_D(OxideQQuickOutgoingMessageRequest);
 
   if (d->error_callback.strictlyEquals(callback)) {
     return;

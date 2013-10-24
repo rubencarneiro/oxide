@@ -27,11 +27,7 @@
 #include <QtGlobal>
 #include <QtQml>
 
-namespace oxide {
-namespace qt {
-class QQuickMessageHandlerPrivate;
-}
-}
+class OxideQQuickMessageHandlerPrivate;
 
 class Q_DECL_EXPORT OxideQQuickMessageHandler : public QObject,
                                                 public QQmlParserStatus {
@@ -40,7 +36,7 @@ class Q_DECL_EXPORT OxideQQuickMessageHandler : public QObject,
   Q_PROPERTY(QList<QString> worldIds READ worldIds WRITE setWorldIds NOTIFY worldIdsChanged)
   Q_PROPERTY(QJSValue callback READ callback WRITE setCallback NOTIFY callbackChanged)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QQuickMessageHandler)
+  Q_DECLARE_PRIVATE(OxideQQuickMessageHandler)
 
  public:
   OxideQQuickMessageHandler(QObject* parent = NULL);
@@ -64,7 +60,7 @@ class Q_DECL_EXPORT OxideQQuickMessageHandler : public QObject,
   void callbackChanged();
 
  private:
-  QScopedPointer<oxide::qt::QQuickMessageHandlerPrivate> d_ptr;
+  QScopedPointer<OxideQQuickMessageHandlerPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickMessageHandler)

@@ -22,25 +22,25 @@
 OxideQLoadEvent::~OxideQLoadEvent() {}
 
 QUrl OxideQLoadEvent::url() const {
-  Q_D(const oxide::qt::QLoadEvent);
+  Q_D(const OxideQLoadEvent);
 
   return d->url();
 }
 
 OxideQLoadEvent::Type OxideQLoadEvent::type() const {
-  Q_D(const oxide::qt::QLoadEvent);
+  Q_D(const OxideQLoadEvent);
 
   return d->type();
 }
 
 OxideQLoadEvent::ErrorCode OxideQLoadEvent::error() const {
-  Q_D(const oxide::qt::QLoadEvent);
+  Q_D(const OxideQLoadEvent);
 
   return d->error();
 }
 
 QString OxideQLoadEvent::errorString() const {
-  Q_D(const oxide::qt::QLoadEvent);
+  Q_D(const OxideQLoadEvent);
 
   return d->errorString();
 }
@@ -50,5 +50,5 @@ OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  int error_code,
                                  const QString& error_description) :
     QObject(),
-    d_ptr(oxide::qt::QLoadEventPrivate::Create(
+    d_ptr(OxideQLoadEventPrivate::Create(
         url, type, error_code, error_description)) {}

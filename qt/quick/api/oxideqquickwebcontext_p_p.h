@@ -37,8 +37,8 @@ QT_END_NAMESPACE
 
 namespace oxide {
 class BrowserContext;
+}
 
-namespace qt {
 struct LazyInitProperties {
   std::string product;
   std::string user_agent;
@@ -47,11 +47,11 @@ struct LazyInitProperties {
   std::string accept_langs;
 };
 
-class QQuickWebContextPrivate FINAL {
+class OxideQQuickWebContextPrivate FINAL {
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
  public:
-  static QQuickWebContextPrivate* Create(OxideQQuickWebContext* q);
+  static OxideQQuickWebContextPrivate* Create(OxideQQuickWebContext* q);
 
   oxide::BrowserContext* context() const {
     return context_.get();
@@ -66,7 +66,7 @@ class QQuickWebContextPrivate FINAL {
     return user_scripts_;
   }
 
-  static QQuickWebContextPrivate* get(OxideQQuickWebContext* context);
+  static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
   void updateUserScripts();
 
@@ -79,7 +79,7 @@ class QQuickWebContextPrivate FINAL {
   static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
 
  private:
-  QQuickWebContextPrivate(OxideQQuickWebContext* q);
+  OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
 
   oxide::BrowserProcessHandle process_handle_;
   scoped_ptr<oxide::BrowserContext> context_;
@@ -89,10 +89,7 @@ class QQuickWebContextPrivate FINAL {
 
   OxideQQuickWebContext* q_ptr;
 
-  DISALLOW_COPY_AND_ASSIGN(QQuickWebContextPrivate);
+  DISALLOW_COPY_AND_ASSIGN(OxideQQuickWebContextPrivate);
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_

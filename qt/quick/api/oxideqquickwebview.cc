@@ -42,14 +42,14 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 }
 
 void OxideQQuickWebView::visibilityChangedListener() {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   d->UpdateVisibility();
 }
 
 void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
                                          const QRectF& oldGeometry) {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
@@ -65,7 +65,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
     QQuickItem(parent),
-    d_ptr(oxide::qt::QQuickWebViewPrivate::Create(this)) {
+    d_ptr(OxideQQuickWebViewPrivate::Create(this)) {
   QObject::connect(this, SIGNAL(visibleChanged()),
                    this, SLOT(visibilityChangedListener()));
 }
@@ -76,7 +76,7 @@ OxideQQuickWebView::~OxideQQuickWebView() {
 }
 
 void OxideQQuickWebView::componentComplete() {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   QQuickItem::componentComplete();
 
@@ -84,13 +84,13 @@ void OxideQQuickWebView::componentComplete() {
 }
 
 QUrl OxideQQuickWebView::url() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   return d->url();
 }
 
 void OxideQQuickWebView::setUrl(const QUrl& url) {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   if (d->init_props()) {
     d->init_props()->url = url;
@@ -100,31 +100,31 @@ void OxideQQuickWebView::setUrl(const QUrl& url) {
 }
 
 QString OxideQQuickWebView::title() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   return QString::fromStdString(d->GetTitle());
 }
 
 bool OxideQQuickWebView::canGoBack() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   return d->CanGoBack();
 }
 
 bool OxideQQuickWebView::canGoForward() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   return d->CanGoForward();
 }
 
 bool OxideQQuickWebView::incognito() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   return d->IsIncognito();
 }
 
 void OxideQQuickWebView::setIncognito(bool incognito) {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   if (d->init_props()) {
     d->init_props()->incognito = incognito;
@@ -132,13 +132,13 @@ void OxideQQuickWebView::setIncognito(bool incognito) {
 }
 
 bool OxideQQuickWebView::loading() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   return d->IsLoading();
 }
 
 OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   oxide::qt::WebFrame* root =
       static_cast<oxide::qt::WebFrame *>(d->GetRootFrame());
@@ -153,18 +153,18 @@ QQmlListProperty<OxideQQuickMessageHandler>
 OxideQQuickWebView::messageHandlers() {
   return QQmlListProperty<OxideQQuickMessageHandler>(
       this, NULL,
-      oxide::qt::QQuickWebViewPrivate::messageHandler_append,
-      oxide::qt::QQuickWebViewPrivate::messageHandler_count,
-      oxide::qt::QQuickWebViewPrivate::messageHandler_at,
-      oxide::qt::QQuickWebViewPrivate::messageHandler_clear);
+      OxideQQuickWebViewPrivate::messageHandler_append,
+      OxideQQuickWebViewPrivate::messageHandler_count,
+      OxideQQuickWebViewPrivate::messageHandler_at,
+      OxideQQuickWebViewPrivate::messageHandler_clear);
 }
 
 void OxideQQuickWebView::addMessageHandler(
     OxideQQuickMessageHandler* handler) {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   if (!d->message_handlers().contains(handler)) {
-    oxide::qt::QQuickMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
+    OxideQQuickMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
     handler->setParent(this);
 
     d->message_handlers().append(handler);
@@ -175,7 +175,7 @@ void OxideQQuickWebView::addMessageHandler(
 
 void OxideQQuickWebView::removeMessageHandler(
     OxideQQuickMessageHandler* handler) {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   if (!d) {
     return;
@@ -190,26 +190,26 @@ void OxideQQuickWebView::removeMessageHandler(
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   return d->popup_menu;
 }
 
 void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   d->popup_menu = popup_menu;
   emit popupMenuChanged();
 }
 
 OxideQQuickWebContext* OxideQQuickWebView::context() const {
-  Q_D(const oxide::qt::QQuickWebView);
+  Q_D(const OxideQQuickWebView);
 
   return d->context;
 }
 
 void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   if (!d->web_contents()) {
     Q_ASSERT(!d->context);
@@ -224,25 +224,25 @@ OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
 }
 
 void OxideQQuickWebView::goBack() {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   d->GoBack();
 }
 
 void OxideQQuickWebView::goForward() {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   d->GoForward();
 }
 
 void OxideQQuickWebView::stop() {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   d->Stop();
 }
 
 void OxideQQuickWebView::reload() {
-  Q_D(oxide::qt::QQuickWebView);
+  Q_D(OxideQQuickWebView);
 
   d->Reload();
 }

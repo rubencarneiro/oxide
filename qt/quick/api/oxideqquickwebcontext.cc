@@ -29,13 +29,13 @@ OxideQQuickWebContext* g_default_context;
 }
 
 void OxideQQuickWebContext::scriptUpdated() {
-  Q_D(oxide::qt::QQuickWebContext);
+  Q_D(OxideQQuickWebContext);
 
   d->updateUserScripts();
 }
 
 OxideQQuickWebContext::OxideQQuickWebContext(bool is_default) :
-    d_ptr(oxide::qt::QQuickWebContextPrivate::Create(this)) {
+    d_ptr(OxideQQuickWebContextPrivate::Create(this)) {
   if (is_default) {
     Q_ASSERT(!g_default_context);
     g_default_context = this;
@@ -44,7 +44,7 @@ OxideQQuickWebContext::OxideQQuickWebContext(bool is_default) :
 
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
-    d_ptr(oxide::qt::QQuickWebContextPrivate::Create(this)) {}
+    d_ptr(OxideQQuickWebContextPrivate::Create(this)) {}
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   if (g_default_context == this) {
@@ -62,7 +62,7 @@ OxideQQuickWebContext* OxideQQuickWebContext::defaultContext() {
 }
 
 QString OxideQQuickWebContext::product() const {
-  Q_D(const oxide::qt::QQuickWebContext);
+  Q_D(const OxideQQuickWebContext);
 
   if (d->context()) {
     return QString::fromStdString(d->context()->GetProduct());
@@ -72,7 +72,7 @@ QString OxideQQuickWebContext::product() const {
 }
 
 void OxideQQuickWebContext::setProduct(const QString& product) {
-  Q_D(oxide::qt::QQuickWebContext);
+  Q_D(OxideQQuickWebContext);
 
   if (d->context()) {
     d->context()->SetProduct(product.toStdString());
@@ -84,7 +84,7 @@ void OxideQQuickWebContext::setProduct(const QString& product) {
 }
 
 QString OxideQQuickWebContext::userAgent() const {
-  Q_D(const oxide::qt::QQuickWebContext);
+  Q_D(const OxideQQuickWebContext);
 
   if (d->context()) {
     return QString::fromStdString(d->context()->GetUserAgent());
@@ -94,7 +94,7 @@ QString OxideQQuickWebContext::userAgent() const {
 }
 
 void OxideQQuickWebContext::setUserAgent(const QString& user_agent) {
-  Q_D(oxide::qt::QQuickWebContext);
+  Q_D(OxideQQuickWebContext);
 
   if (d->context()) {
     d->context()->SetUserAgent(user_agent.toStdString());
@@ -106,7 +106,7 @@ void OxideQQuickWebContext::setUserAgent(const QString& user_agent) {
 }
 
 QUrl OxideQQuickWebContext::dataPath() const {
-  Q_D(const oxide::qt::QQuickWebContext);
+  Q_D(const OxideQQuickWebContext);
 
   if (d->context()) {
     return QUrl::fromLocalFile(
@@ -118,7 +118,7 @@ QUrl OxideQQuickWebContext::dataPath() const {
 }
 
 void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
-  Q_D(oxide::qt::QQuickWebContext);
+  Q_D(OxideQQuickWebContext);
 
   if (!d->context()) {
     if (!data_url.isLocalFile()) {
@@ -132,7 +132,7 @@ void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
 }
 
 QUrl OxideQQuickWebContext::cachePath() const {
-  Q_D(const oxide::qt::QQuickWebContext);
+  Q_D(const OxideQQuickWebContext);
 
   if (d->context()) {
     return QUrl::fromLocalFile(
@@ -144,7 +144,7 @@ QUrl OxideQQuickWebContext::cachePath() const {
 }
 
 void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
-  Q_D(oxide::qt::QQuickWebContext);
+  Q_D(OxideQQuickWebContext);
 
   if (!d->context()) {
     if (!cache_url.isLocalFile()) {
@@ -158,7 +158,7 @@ void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
 }
 
 QString OxideQQuickWebContext::acceptLangs() const {
-  Q_D(const oxide::qt::QQuickWebContext);
+  Q_D(const OxideQQuickWebContext);
 
   if (d->context()) {
     return QString::fromStdString(d->context()->GetAcceptLangs());
@@ -168,7 +168,7 @@ QString OxideQQuickWebContext::acceptLangs() const {
 }
 
 void OxideQQuickWebContext::setAcceptLangs(const QString& accept_langs) {
-  Q_D(oxide::qt::QQuickWebContext);
+  Q_D(OxideQQuickWebContext);
 
   if (d->context()) {
     d->context()->SetAcceptLangs(accept_langs.toStdString());
@@ -183,9 +183,9 @@ QQmlListProperty<OxideQQuickUserScript>
 OxideQQuickWebContext::userScripts() {
   return QQmlListProperty<OxideQQuickUserScript>(
       this, NULL,
-      oxide::qt::QQuickWebContextPrivate::userScript_append,
-      oxide::qt::QQuickWebContextPrivate::userScript_count,
-      oxide::qt::QQuickWebContextPrivate::userScript_at,
-      oxide::qt::QQuickWebContextPrivate::userScript_clear);
+      OxideQQuickWebContextPrivate::userScript_append,
+      OxideQQuickWebContextPrivate::userScript_count,
+      OxideQQuickWebContextPrivate::userScript_at,
+      OxideQQuickWebContextPrivate::userScript_clear);
 }
 

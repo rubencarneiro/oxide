@@ -22,10 +22,7 @@
 
 #include "shared/browser/oxide_incoming_message.h"
 
-namespace oxide {
-namespace qt {
-
-QIncomingMessagePrivate::QIncomingMessagePrivate(
+OxideQIncomingMessagePrivate::OxideQIncomingMessagePrivate(
     oxide::IncomingMessage* message) :
     incoming_(message) {
     QJsonDocument jsondoc(QJsonDocument::fromJson(
@@ -33,10 +30,7 @@ QIncomingMessagePrivate::QIncomingMessagePrivate(
     args_variant_ = jsondoc.toVariant();
 }
 
-QIncomingMessagePrivate* QIncomingMessagePrivate::Create(
+OxideQIncomingMessagePrivate* OxideQIncomingMessagePrivate::Create(
     oxide::IncomingMessage* message) {
-  return new QIncomingMessagePrivate(message);
+  return new OxideQIncomingMessagePrivate(message);
 }
-
-} // namespace qt
-} // namespace oxide

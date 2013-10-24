@@ -39,42 +39,40 @@
 #include "qt/quick/api/oxideqquickwebcontext_p_p.h"
 #include "qt/quick/api/oxideqquickwebframe_p.h"
 
-namespace oxide {
-namespace qt {
-
-QQuickWebViewPrivate::QQuickWebViewPrivate(OxideQQuickWebView* view) :
+OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
+    OxideQQuickWebView* view) :
     context(NULL),
     popup_menu(NULL),
     q_ptr(view),
     init_props_(new InitData()),
     weak_factory_(this) {}
 
-void QQuickWebViewPrivate::OnURLChanged() {
+void OxideQQuickWebViewPrivate::OnURLChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->urlChanged();
 }
 
-void QQuickWebViewPrivate::OnTitleChanged() {
+void OxideQQuickWebViewPrivate::OnTitleChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->titleChanged();
 }
 
-void QQuickWebViewPrivate::OnCommandsUpdated() {
+void OxideQQuickWebViewPrivate::OnCommandsUpdated() {
   Q_Q(OxideQQuickWebView);
 
   emit q->navigationHistoryChanged();
 }
 
-void QQuickWebViewPrivate::OnRootFrameChanged() {
+void OxideQQuickWebViewPrivate::OnRootFrameChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->rootFrameChanged();
 }
 
-void QQuickWebViewPrivate::OnLoadStarted(const GURL& validated_url,
-                                         bool is_error_frame) {
+void OxideQQuickWebViewPrivate::OnLoadStarted(const GURL& validated_url,
+                                              bool is_error_frame) {
   Q_Q(OxideQQuickWebView);
 
   OxideQLoadEvent event(QUrl(QString::fromStdString(validated_url.spec())),
@@ -82,7 +80,7 @@ void QQuickWebViewPrivate::OnLoadStarted(const GURL& validated_url,
   emit q->loadingChanged(&event);
 }
 
-void QQuickWebViewPrivate::OnLoadStopped(const GURL& validated_url) {
+void OxideQQuickWebViewPrivate::OnLoadStopped(const GURL& validated_url) {
   Q_Q(OxideQQuickWebView);
 
   OxideQLoadEvent event(QUrl(QString::fromStdString(validated_url.spec())),
@@ -90,7 +88,7 @@ void QQuickWebViewPrivate::OnLoadStopped(const GURL& validated_url) {
   emit q->loadingChanged(&event);
 }
 
-void QQuickWebViewPrivate::OnLoadFailed(
+void OxideQQuickWebViewPrivate::OnLoadFailed(
     const GURL& validated_url,
     int error_code,
     const std::string& error_description) {
@@ -103,7 +101,7 @@ void QQuickWebViewPrivate::OnLoadFailed(
   emit q->loadingChanged(&event);
 }
 
-void QQuickWebViewPrivate::OnLoadSucceeded(const GURL& validated_url) {
+void OxideQQuickWebViewPrivate::OnLoadSucceeded(const GURL& validated_url) {
   Q_Q(OxideQQuickWebView);
 
   OxideQLoadEvent event(QUrl(QString::fromStdString(validated_url.spec())),
@@ -112,40 +110,41 @@ void QQuickWebViewPrivate::OnLoadSucceeded(const GURL& validated_url) {
 }
 
 // static
-QQuickWebViewPrivate* QQuickWebViewPrivate::Create(OxideQQuickWebView* view) {
-  return new QQuickWebViewPrivate(view);
+OxideQQuickWebViewPrivate* OxideQQuickWebViewPrivate::Create(
+    OxideQQuickWebView* view) {
+  return new OxideQQuickWebViewPrivate(view);
 }
 
-QQuickWebViewPrivate::~QQuickWebViewPrivate() {
+OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
   // It's important that this goes away before our context
   DestroyWebContents();
 }
 
-size_t QQuickWebViewPrivate::GetMessageHandlerCount() const {
+size_t OxideQQuickWebViewPrivate::GetMessageHandlerCount() const {
   return message_handlers_.size();
 }
 
-oxide::MessageHandler* QQuickWebViewPrivate::GetMessageHandlerAt(
+oxide::MessageHandler* OxideQQuickWebViewPrivate::GetMessageHandlerAt(
     size_t index) const {
-  return QQuickMessageHandlerPrivate::get(
+  return OxideQQuickMessageHandlerPrivate::get(
       message_handlers_.at(index))->handler();
 }
 
-void QQuickWebViewPrivate::RootFrameCreated(oxide::WebFrame* root) {
+void OxideQQuickWebViewPrivate::RootFrameCreated(oxide::WebFrame* root) {
   Q_Q(OxideQQuickWebView);
 
-  WebFrame* qroot = static_cast<WebFrame *>(root);
+  oxide::qt::WebFrame* qroot = static_cast<oxide::qt::WebFrame *>(root);
   qroot->q_web_frame->setParent(q);
 }
 
-content::RenderWidgetHostView* QQuickWebViewPrivate::CreateViewForWidget(
+content::RenderWidgetHostView* OxideQQuickWebViewPrivate::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
   Q_Q(OxideQQuickWebView);
 
-  return new RenderWidgetHostViewQQuick(render_widget_host, q);
+  return new oxide::qt::RenderWidgetHostViewQQuick(render_widget_host, q);
 }
 
-gfx::Rect QQuickWebViewPrivate::GetContainerBounds() {
+gfx::Rect OxideQQuickWebViewPrivate::GetContainerBounds() {
   Q_Q(OxideQQuickWebView);
 
   QPointF pos(q->mapToScene(QPointF(0,0)));
@@ -160,13 +159,13 @@ gfx::Rect QQuickWebViewPrivate::GetContainerBounds() {
                    qRound(q->height()));
 }
 
-oxide::WebPopupMenu* QQuickWebViewPrivate::CreatePopupMenu() {
+oxide::WebPopupMenu* OxideQQuickWebViewPrivate::CreatePopupMenu() {
   Q_Q(OxideQQuickWebView);
 
-  return new WebPopupMenuQQuick(q, web_contents());
+  return new oxide::qt::WebPopupMenuQQuick(q, web_contents());
 }
 
-void QQuickWebViewPrivate::UpdateVisibility() {
+void OxideQQuickWebViewPrivate::UpdateVisibility() {
   Q_Q(OxideQQuickWebView);
 
   if (init_props_) {
@@ -181,12 +180,12 @@ void QQuickWebViewPrivate::UpdateVisibility() {
 }
 
 
-WebFrameTree* QQuickWebViewPrivate::CreateWebFrameTree(
+oxide::qt::WebFrameTree* OxideQQuickWebViewPrivate::CreateWebFrameTree(
     content::RenderViewHost* rvh) {
-  return new WebFrameTree(rvh);
+  return new oxide::qt::WebFrameTree(rvh);
 }
 
-void QQuickWebViewPrivate::componentComplete() {
+void OxideQQuickWebViewPrivate::componentComplete() {
   Q_Q(OxideQQuickWebView);
 
   Q_ASSERT(init_props_);
@@ -202,7 +201,7 @@ void QQuickWebViewPrivate::componentComplete() {
     context = default_context_.data();
   }
 
-  Init(QQuickWebContextPrivate::get(context)->GetContext(),
+  Init(OxideQQuickWebContextPrivate::get(context)->GetContext(),
        init_props_->incognito,
        gfx::Size(qRound(q->width()), qRound(q->height())));
 
@@ -216,7 +215,7 @@ void QQuickWebViewPrivate::componentComplete() {
 }
 
 // static
-void QQuickWebViewPrivate::messageHandler_append(
+void OxideQQuickWebViewPrivate::messageHandler_append(
     QQmlListProperty<OxideQQuickMessageHandler>* prop,
     OxideQQuickMessageHandler* message_handler) {
   if (!message_handler) {
@@ -230,19 +229,19 @@ void QQuickWebViewPrivate::messageHandler_append(
 }
 
 // static
-int QQuickWebViewPrivate::messageHandler_count(
+int OxideQQuickWebViewPrivate::messageHandler_count(
     QQmlListProperty<OxideQQuickMessageHandler>* prop) {
-  QQuickWebViewPrivate* p = QQuickWebViewPrivate::get(
+  OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
   return p->message_handlers().size();
 }
 
 // static
-OxideQQuickMessageHandler* QQuickWebViewPrivate::messageHandler_at(
+OxideQQuickMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
     QQmlListProperty<OxideQQuickMessageHandler>* prop,
     int index) {
-  QQuickWebViewPrivate* p = QQuickWebViewPrivate::get(
+  OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
   if (index >= p->message_handlers().size()) {
@@ -253,11 +252,11 @@ OxideQQuickMessageHandler* QQuickWebViewPrivate::messageHandler_at(
 }
 
 // static
-void QQuickWebViewPrivate::messageHandler_clear(
+void OxideQQuickWebViewPrivate::messageHandler_clear(
     QQmlListProperty<OxideQQuickMessageHandler>* prop) {
   OxideQQuickWebView* web_view =
       static_cast<OxideQQuickWebView *>(prop->object);
-  QQuickWebViewPrivate* p = QQuickWebViewPrivate::get(web_view);
+  OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(web_view);
 
   p->message_handlers().clear();
 
@@ -265,11 +264,12 @@ void QQuickWebViewPrivate::messageHandler_clear(
 }
 
 // static
-QQuickWebViewPrivate* QQuickWebViewPrivate::get(OxideQQuickWebView* view) {
+OxideQQuickWebViewPrivate* OxideQQuickWebViewPrivate::get(
+    OxideQQuickWebView* view) {
   return view->d_func();
 }
 
-void QQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
+void OxideQQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
   Q_Q(OxideQQuickWebView);
 
   OxideQQuickWebViewAttached* attached =
@@ -278,17 +278,14 @@ void QQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
   attached->setView(q);
 }
 
-void QQuickWebViewPrivate::updateSize(const QSizeF& size) {
+void OxideQQuickWebViewPrivate::updateSize(const QSizeF& size) {
   UpdateSize(gfx::Size(qRound(size.width()), qRound(size.height())));
 }
 
-QUrl QQuickWebViewPrivate::url() const {
+QUrl OxideQQuickWebViewPrivate::url() const {
   return QUrl(QString::fromStdString(GetURL().spec()));
 }
 
-void QQuickWebViewPrivate::setUrl(const QUrl& url) {
+void OxideQQuickWebViewPrivate::setUrl(const QUrl& url) {
   SetURL(GURL(url.toString().toStdString()));
 }
-
-} // namespace qt
-} // namespace oxide

@@ -24,7 +24,7 @@
 
 OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
     QObject(parent),
-    d_ptr(new oxide::qt::QQuickUserScriptPrivate(this)) {}
+    d_ptr(new OxideQQuickUserScriptPrivate(this)) {}
 
 OxideQQuickUserScript::~OxideQQuickUserScript() {}
 
@@ -35,25 +35,25 @@ void OxideQQuickUserScript::componentComplete() {
 }
 
 void OxideQQuickUserScript::startLoading() {
-  Q_D(oxide::qt::QQuickUserScript);
+  Q_D(OxideQQuickUserScript);
 
   d->startLoading();
 }
 
 OxideQQuickUserScript::State OxideQQuickUserScript::state() const {
-  Q_D(const oxide::qt::QQuickUserScript);
+  Q_D(const OxideQQuickUserScript);
 
   return d->state();
 }
 
 QUrl OxideQQuickUserScript::url() const {
-  Q_D(const oxide::qt::QQuickUserScript);
+  Q_D(const OxideQQuickUserScript);
 
   return d->url();
 }
 
 void OxideQQuickUserScript::setUrl(const QUrl& url) {
-  Q_D(oxide::qt::QQuickUserScript);
+  Q_D(OxideQQuickUserScript);
 
   if (d->state() != Constructing) {
     qWarning() << "url is a construct-only parameter";
@@ -74,13 +74,13 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
 }
 
 bool OxideQQuickUserScript::emulateGreasemonkey() const {
-  Q_D(const oxide::qt::QQuickUserScript);
+  Q_D(const OxideQQuickUserScript);
 
   return d->user_script()->emulate_greasemonkey();
 }
 
 void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
-  Q_D(oxide::qt::QQuickUserScript);
+  Q_D(OxideQQuickUserScript);
 
   if (emulate_greasemonkey == emulateGreasemonkey()) {
     return;
@@ -91,13 +91,13 @@ void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
 }
 
 bool OxideQQuickUserScript::matchAllFrames() const {
-  Q_D(const oxide::qt::QQuickUserScript);
+  Q_D(const OxideQQuickUserScript);
 
   return d->user_script()->match_all_frames();
 }
 
 void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
-  Q_D(oxide::qt::QQuickUserScript);
+  Q_D(OxideQQuickUserScript);
 
   if (match_all_frames == matchAllFrames()) {
     return;
@@ -108,13 +108,13 @@ void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
 }
 
 bool OxideQQuickUserScript::incognitoEnabled() const {
-  Q_D(const oxide::qt::QQuickUserScript);
+  Q_D(const OxideQQuickUserScript);
 
   return d->user_script()->incognito_enabled();
 }
 
 void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
-  Q_D(oxide::qt::QQuickUserScript);
+  Q_D(OxideQQuickUserScript);
 
   if (incognito_enabled == incognitoEnabled()) {
     return;
@@ -125,13 +125,13 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
 }
 
 QString OxideQQuickUserScript::worldId() const {
-  Q_D(const oxide::qt::QQuickUserScript);
+  Q_D(const OxideQQuickUserScript);
 
   return QString::fromStdString(d->user_script()->world_id());
 }
 
 void OxideQQuickUserScript::setWorldId(const QString& world_id) {
-  Q_D(oxide::qt::QQuickUserScript);
+  Q_D(OxideQQuickUserScript);
 
   if (world_id == worldId()) {
     return;

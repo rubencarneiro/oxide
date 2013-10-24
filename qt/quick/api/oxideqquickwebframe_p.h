@@ -28,10 +28,10 @@
 
 class OxideQQuickMessageHandler;
 class OxideQQuickOutgoingMessageRequest;
+class OxideQQuickWebFramePrivate;
 
 namespace oxide {
 namespace qt {
-class QQuickWebFramePrivate;
 class WebFrame;
 }
 }
@@ -44,7 +44,7 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public QObject {
   Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers)
   Q_ENUMS(ChildFrameChangedType)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QQuickWebFrame)
+  Q_DECLARE_PRIVATE(OxideQQuickWebFrame)
 
  public:
   enum ChildFrameChangedType {
@@ -83,7 +83,7 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public QObject {
   Q_DECL_HIDDEN OxideQQuickWebFrame(oxide::qt::WebFrame* owner);
   virtual void childEvent(QChildEvent* event);
 
-  QScopedPointer<oxide::qt::QQuickWebFramePrivate> d_ptr;
+  QScopedPointer<OxideQQuickWebFramePrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebFrame);

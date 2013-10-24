@@ -41,8 +41,9 @@ QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
-
 class WebFrameTree;
+}
+}
 
 struct InitData {
   InitData() : incognito(false) {}
@@ -51,12 +52,12 @@ struct InitData {
   QUrl url;
 };
 
-class QQuickWebViewPrivate : public oxide::WebView {
+class OxideQQuickWebViewPrivate FINAL : public oxide::WebView {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
-  static QQuickWebViewPrivate* Create(OxideQQuickWebView* view);
-  ~QQuickWebViewPrivate();
+  static OxideQQuickWebViewPrivate* Create(OxideQQuickWebView* view);
+  ~OxideQQuickWebViewPrivate();
 
   size_t GetMessageHandlerCount() const FINAL;
   oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
@@ -68,15 +69,15 @@ class QQuickWebViewPrivate : public oxide::WebView {
 
   gfx::Rect GetContainerBounds() FINAL;
 
-  WebPopupMenu* CreatePopupMenu() FINAL;
+  oxide::WebPopupMenu* CreatePopupMenu() FINAL;
 
   void UpdateVisibility();
 
-  base::WeakPtr<QQuickWebViewPrivate> GetWeakPtr() {
+  base::WeakPtr<OxideQQuickWebViewPrivate> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
   }
 
-  WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh);
+  oxide::qt::WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh);
 
   void componentComplete();
 
@@ -97,7 +98,7 @@ class QQuickWebViewPrivate : public oxide::WebView {
     return message_handlers_;
   }
 
-  static QQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
+  static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
 
   void updateSize(const QSizeF& size);
 
@@ -110,7 +111,7 @@ class QQuickWebViewPrivate : public oxide::WebView {
   QQmlComponent* popup_menu;
 
  private:
-  QQuickWebViewPrivate(OxideQQuickWebView* view);
+  OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
@@ -130,10 +131,7 @@ class QQuickWebViewPrivate : public oxide::WebView {
   scoped_ptr<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
   QList<OxideQQuickMessageHandler *> message_handlers_;
-  base::WeakPtrFactory<QQuickWebViewPrivate> weak_factory_;
+  base::WeakPtrFactory<OxideQQuickWebViewPrivate> weak_factory_;
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

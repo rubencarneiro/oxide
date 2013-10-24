@@ -48,27 +48,29 @@ WebFrame::WebFrame() :
     q_web_frame(new OxideQQuickWebFrame(this)) {}
 
 size_t WebFrame::GetMessageHandlerCount() const {
-  return QQuickWebFramePrivate::get(q_web_frame)->message_handlers().size();
+  return OxideQQuickWebFramePrivate::get(
+      q_web_frame)->message_handlers().size();
 }
 
 oxide::MessageHandler* WebFrame::GetMessageHandlerAt(
     size_t index) const {
   OxideQQuickMessageHandler* handler =
-      QQuickWebFramePrivate::get(q_web_frame)->message_handlers().at(index);
-  return QQuickMessageHandlerPrivate::get(handler)->handler();
+      OxideQQuickWebFramePrivate::get(
+        q_web_frame)->message_handlers().at(index);
+  return OxideQQuickMessageHandlerPrivate::get(handler)->handler();
 }
 
 size_t WebFrame::GetOutgoingMessageRequestCount() const {
-  return QQuickWebFramePrivate::get(
+  return OxideQQuickWebFramePrivate::get(
       q_web_frame)->outgoing_message_requests().size();
 }
 
 oxide::OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
     size_t index) const {
   OxideQQuickOutgoingMessageRequest* req =
-      QQuickWebFramePrivate::get(
+      OxideQQuickWebFramePrivate::get(
         q_web_frame)->outgoing_message_requests().at(index);
-  return QQuickOutgoingMessageRequestPrivate::get(req)->request();
+  return OxideQQuickOutgoingMessageRequestPrivate::get(req)->request();
 }
 
 } // namespace qt

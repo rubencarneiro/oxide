@@ -25,22 +25,22 @@
 
 OxideQQuickMessageHandler::OxideQQuickMessageHandler(QObject* parent) :
     QObject(parent),
-    d_ptr(oxide::qt::QQuickMessageHandlerPrivate::Create(this)) {}
+    d_ptr(OxideQQuickMessageHandlerPrivate::Create(this)) {}
 
 OxideQQuickMessageHandler::~OxideQQuickMessageHandler() {
-  Q_D(oxide::qt::QQuickMessageHandler);
+  Q_D(OxideQQuickMessageHandler);
 
   d->removeFromCurrentOwner();
 }
 
 QString OxideQQuickMessageHandler::msgId() const {
-  Q_D(const oxide::qt::QQuickMessageHandler);
+  Q_D(const OxideQQuickMessageHandler);
 
   return QString::fromStdString(d->handler()->msg_id());
 }
 
 void OxideQQuickMessageHandler::setMsgId(const QString& id) {
-  Q_D(oxide::qt::QQuickMessageHandler);
+  Q_D(OxideQQuickMessageHandler);
 
   if (id.toStdString() == d->handler()->msg_id()) {
     return;
@@ -51,7 +51,7 @@ void OxideQQuickMessageHandler::setMsgId(const QString& id) {
 }
 
 QList<QString> OxideQQuickMessageHandler::worldIds() const {
-  Q_D(const oxide::qt::QQuickMessageHandler);
+  Q_D(const OxideQQuickMessageHandler);
 
   QList<QString> list;
 
@@ -65,7 +65,7 @@ QList<QString> OxideQQuickMessageHandler::worldIds() const {
 }
 
 void OxideQQuickMessageHandler::setWorldIds(const QList<QString>& ids) {
-  Q_D(oxide::qt::QQuickMessageHandler);
+  Q_D(OxideQQuickMessageHandler);
 
   std::vector<std::string> list;
 
@@ -78,13 +78,13 @@ void OxideQQuickMessageHandler::setWorldIds(const QList<QString>& ids) {
 }
 
 QJSValue OxideQQuickMessageHandler::callback() const {
-  Q_D(const oxide::qt::QQuickMessageHandler);
+  Q_D(const OxideQQuickMessageHandler);
 
   return d->callback;
 }
 
 void OxideQQuickMessageHandler::setCallback(const QJSValue& callback) {
-  Q_D(oxide::qt::QQuickMessageHandler);
+  Q_D(OxideQQuickMessageHandler);
 
   if (callback.strictlyEquals(d->callback)) {
     return;

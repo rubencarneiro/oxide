@@ -19,13 +19,11 @@
 
 #include "net/base/net_errors.h"
 
-namespace oxide {
-namespace qt {
-
-QLoadEventPrivate::QLoadEventPrivate(const QUrl& url,
-                                     OxideQLoadEvent::Type type,
-                                     OxideQLoadEvent::ErrorCode error,
-                                     const QString& error_description) :
+OxideQLoadEventPrivate::OxideQLoadEventPrivate(
+    const QUrl& url,
+    OxideQLoadEvent::Type type,
+    OxideQLoadEvent::ErrorCode error,
+    const QString& error_description) :
     url_(url),
     type_(type),
     error_(error),
@@ -33,7 +31,7 @@ QLoadEventPrivate::QLoadEventPrivate(const QUrl& url,
 
 // static
 OxideQLoadEvent::ErrorCode
-QLoadEventPrivate::ChromeErrorCodeToOxideErrorCode(int error_code) {
+OxideQLoadEventPrivate::ChromeErrorCodeToOxideErrorCode(int error_code) {
   switch (error_code) {
     case 0:
       return OxideQLoadEvent::ErrorNone;
@@ -47,31 +45,30 @@ QLoadEventPrivate::ChromeErrorCodeToOxideErrorCode(int error_code) {
 }
 
 // static
-QLoadEventPrivate* QLoadEventPrivate::Create(
+OxideQLoadEventPrivate* OxideQLoadEventPrivate::Create(
     const QUrl& url,
     OxideQLoadEvent::Type type,
     int error_code,
     const QString& error_description) {
-  return new QLoadEventPrivate(url, type,
-                               ChromeErrorCodeToOxideErrorCode(error_code),
-                               error_description);
+  return new OxideQLoadEventPrivate(
+      url,
+      type,
+      ChromeErrorCodeToOxideErrorCode(error_code),
+      error_description);
 }
 
-QUrl QLoadEventPrivate::url() const {
+QUrl OxideQLoadEventPrivate::url() const {
   return url_;
 }
 
-OxideQLoadEvent::Type QLoadEventPrivate::type() const {
+OxideQLoadEvent::Type OxideQLoadEventPrivate::type() const {
   return type_;
 }
 
-OxideQLoadEvent::ErrorCode QLoadEventPrivate::error() const {
+OxideQLoadEvent::ErrorCode OxideQLoadEventPrivate::error() const {
   return error_;
 }
 
-QString QLoadEventPrivate::errorString() const {
+QString OxideQLoadEventPrivate::errorString() const {
   return error_string_;
 }
-
-} // namespace qt
-} // namespace oxide

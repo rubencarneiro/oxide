@@ -32,15 +32,12 @@
 #include "qt/quick/api/oxideqquickwebframe_p.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
-namespace oxide {
-namespace qt {
-
-QQuickMessageHandlerPrivate::QQuickMessageHandlerPrivate(
+OxideQQuickMessageHandlerPrivate::OxideQQuickMessageHandlerPrivate(
     OxideQQuickMessageHandler* q) :
     weak_factory_(this),
     q_ptr(q) {}
 
-void QQuickMessageHandlerPrivate::ReceiveMessageCallback(
+void OxideQQuickMessageHandlerPrivate::ReceiveMessageCallback(
     oxide::IncomingMessage* message,
     bool* delivered,
     bool* error,
@@ -53,7 +50,7 @@ void QQuickMessageHandlerPrivate::ReceiveMessageCallback(
   args.append(callback.engine()->newQObject(new OxideQIncomingMessage(message)));
   args.append(callback.engine()->newQObject(
       qobject_cast<OxideQQuickWebFrame *>(
-        static_cast<WebFrame *>(message->frame())->q_web_frame)));
+        static_cast<oxide::qt::WebFrame *>(message->frame())->q_web_frame)));
 
   QJSValue rv = callback.call(args);
   if (rv.isError()) {
@@ -63,22 +60,22 @@ void QQuickMessageHandlerPrivate::ReceiveMessageCallback(
 }
 
 // static
-QQuickMessageHandlerPrivate* QQuickMessageHandlerPrivate::Create(
+OxideQQuickMessageHandlerPrivate* OxideQQuickMessageHandlerPrivate::Create(
     OxideQQuickMessageHandler* q) {
-  return new QQuickMessageHandlerPrivate(q);
+  return new OxideQQuickMessageHandlerPrivate(q);
 }
 
-void QQuickMessageHandlerPrivate::attachHandler() {
+void OxideQQuickMessageHandlerPrivate::attachHandler() {
   handler_.SetCallback(
-      base::Bind(&QQuickMessageHandlerPrivate::ReceiveMessageCallback,
+      base::Bind(&OxideQQuickMessageHandlerPrivate::ReceiveMessageCallback,
       weak_factory_.GetWeakPtr()));
 }
 
-void QQuickMessageHandlerPrivate::disconnectHandler() {
+void OxideQQuickMessageHandlerPrivate::disconnectHandler() {
   handler_.SetCallback(oxide::MessageHandler::HandlerCallback());
 }
 
-void QQuickMessageHandlerPrivate::removeFromCurrentOwner() {
+void OxideQQuickMessageHandlerPrivate::removeFromCurrentOwner() {
   Q_Q(OxideQQuickMessageHandler);
 
   // XXX: Is there a better way of doing this? Perhaps by notifying
@@ -93,10 +90,7 @@ void QQuickMessageHandlerPrivate::removeFromCurrentOwner() {
 }
 
 // static
-QQuickMessageHandlerPrivate* QQuickMessageHandlerPrivate::get(
+OxideQQuickMessageHandlerPrivate* OxideQQuickMessageHandlerPrivate::get(
     OxideQQuickMessageHandler* message_handler) {
   return message_handler->d_func();
 }
-
-} // namespace qt
-} // namespace oxide

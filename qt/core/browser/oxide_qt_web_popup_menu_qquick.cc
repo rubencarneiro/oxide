@@ -309,7 +309,8 @@ void WebPopupMenuQQuick::Show(const gfx::Rect& bounds,
     return;
   }
 
-  QQuickWebViewPrivate::get(view_)->addAttachedPropertyTo(popup_menu_.get());
+  OxideQQuickWebViewPrivate::get(view_)->addAttachedPropertyTo(
+      popup_menu_.get());
   popup_menu_->setParentItem(view_);
 
   component->completeCreate();

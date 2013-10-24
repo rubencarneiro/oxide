@@ -34,15 +34,16 @@ QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
-
 class WebFrame;
+}
+}
 
-class QQuickWebFramePrivate FINAL {
+class OxideQQuickWebFramePrivate FINAL {
  public:
-  static QQuickWebFramePrivate* Create(WebFrame* owner);
-  ~QQuickWebFramePrivate();
+  static OxideQQuickWebFramePrivate* Create(oxide::qt::WebFrame* owner);
+  ~OxideQQuickWebFramePrivate();
 
-  WebFrame* owner() const { return owner_; }
+  oxide::qt::WebFrame* owner() const { return owner_; }
   QList<OxideQQuickMessageHandler *>& message_handlers() {
     return message_handlers_;
   }
@@ -53,7 +54,7 @@ class QQuickWebFramePrivate FINAL {
     return children_;
   }
 
-  static QQuickWebFramePrivate* get(OxideQQuickWebFrame* web_frame);
+  static OxideQQuickWebFramePrivate* get(OxideQQuickWebFrame* web_frame);
 
   static int childFrame_count(QQmlListProperty<OxideQQuickWebFrame>* prop);
   static OxideQQuickWebFrame* childFrame_at(
@@ -74,18 +75,15 @@ class QQuickWebFramePrivate FINAL {
       QQmlListProperty<OxideQQuickMessageHandler>* prop);
 
  private:
-  QQuickWebFramePrivate(WebFrame* owner);
+  OxideQQuickWebFramePrivate(oxide::qt::WebFrame* owner);
 
-  WebFrame* owner_;
+  oxide::qt::WebFrame* owner_;
   QList<OxideQQuickMessageHandler *> message_handlers_;
   QList<OxideQQuickOutgoingMessageRequest *> outgoing_message_requests_;
   // We keep this separate to QObject becase we want a way to track child frames quickly
   QList<OxideQQuickWebFrame *> children_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QQuickWebFramePrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQQuickWebFramePrivate);
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_

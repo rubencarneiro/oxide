@@ -27,31 +27,31 @@
 OxideQIncomingMessage::OxideQIncomingMessage(
     oxide::IncomingMessage* message) :
     QObject(),
-    d_ptr(oxide::qt::QIncomingMessagePrivate::Create(message)) {}
+    d_ptr(OxideQIncomingMessagePrivate::Create(message)) {}
 
 OxideQIncomingMessage::~OxideQIncomingMessage() {}
 
 QString OxideQIncomingMessage::worldId() const {
-  Q_D(const oxide::qt::QIncomingMessage);
+  Q_D(const OxideQIncomingMessage);
 
   return QString::fromStdString(d->incoming()->world_id());
 }
 
 QVariant OxideQIncomingMessage::args() const {
-  Q_D(const oxide::qt::QIncomingMessage);
+  Q_D(const OxideQIncomingMessage);
 
   return d->args();
 }
 
 void OxideQIncomingMessage::reply(const QVariant& args) {
-  Q_D(oxide::qt::QIncomingMessage);
+  Q_D(OxideQIncomingMessage);
 
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
   d->incoming()->Reply(QString(jsondoc.toJson()).toStdString());
 }
 
 void OxideQIncomingMessage::error(const QString& msg) {
-  Q_D(oxide::qt::QIncomingMessage);
+  Q_D(OxideQIncomingMessage);
 
   d->incoming()->Error(msg.toStdString());
 }

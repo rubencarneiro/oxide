@@ -31,14 +31,13 @@
 
 namespace oxide {
 class UserScript;
+}
 
-namespace qt {
-
-class QQuickUserScriptPrivate FINAL {
+class OxideQQuickUserScriptPrivate FINAL {
   Q_DECLARE_PUBLIC(OxideQQuickUserScript)
 
  public:
-  QQuickUserScriptPrivate(OxideQQuickUserScript* q);
+  OxideQQuickUserScriptPrivate(OxideQQuickUserScript* q);
 
   void startLoading();
 
@@ -50,7 +49,7 @@ class QQuickUserScriptPrivate FINAL {
   QUrl url() const;
   void setUrl(const QUrl& url);
  
-  static QQuickUserScriptPrivate* get(OxideQQuickUserScript* user_script);
+  static OxideQQuickUserScriptPrivate* get(OxideQQuickUserScript* user_script);
 
  protected:
   OxideQQuickUserScript* q_ptr;
@@ -62,12 +61,9 @@ class QQuickUserScriptPrivate FINAL {
 
   OxideQQuickUserScript::State state_;
   scoped_ptr<oxide::UserScript> user_script_;
-  base::WeakPtrFactory<QQuickUserScriptPrivate> weak_factory_;
+  base::WeakPtrFactory<OxideQQuickUserScriptPrivate> weak_factory_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QQuickUserScriptPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQQuickUserScriptPrivate);
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_QUICK_API_USER_SCRIPT_P_P_H_

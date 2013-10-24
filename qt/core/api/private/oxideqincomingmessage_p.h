@@ -26,12 +26,11 @@
 
 namespace oxide {
 class IncomingMessage;
+}
 
-namespace qt {
-
-class QIncomingMessagePrivate FINAL {
+class OxideQIncomingMessagePrivate FINAL {
  public:
-  static QIncomingMessagePrivate* Create(oxide::IncomingMessage* message);
+  static OxideQIncomingMessagePrivate* Create(oxide::IncomingMessage* message);
 
   oxide::IncomingMessage* incoming() const {
     return incoming_.get();
@@ -42,15 +41,12 @@ class QIncomingMessagePrivate FINAL {
   }
 
  private:
-  QIncomingMessagePrivate(oxide::IncomingMessage* message);
+  OxideQIncomingMessagePrivate(oxide::IncomingMessage* message);
 
   scoped_ptr<oxide::IncomingMessage> incoming_;
   QVariant args_variant_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QIncomingMessagePrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQIncomingMessagePrivate);
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_CORE_API_PRIVATE_INCOMING_MESSAGE_P_H_

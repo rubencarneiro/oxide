@@ -32,34 +32,31 @@ class QVariant;
 QT_END_NAMESPACE
 
 class OxideQQuickOutgoingMessageRequest;
+class OxideQQuickWebFramePrivate;
 
-namespace oxide {
-namespace qt {
-
-class QQuickWebFramePrivate;
-
-class QQuickOutgoingMessageRequestPrivate {
+class OxideQQuickOutgoingMessageRequestPrivate {
   Q_DECLARE_PUBLIC(OxideQQuickOutgoingMessageRequest)
 
  public:
-  virtual ~QQuickOutgoingMessageRequestPrivate();
+  virtual ~OxideQQuickOutgoingMessageRequestPrivate();
 
-  static QQuickOutgoingMessageRequestPrivate* Create(
+  static OxideQQuickOutgoingMessageRequestPrivate* Create(
       OxideQQuickOutgoingMessageRequest* q);
 
   oxide::OutgoingMessageRequest* request() {
     return &request_;
   }
 
-  static QQuickOutgoingMessageRequestPrivate* get(
+  static OxideQQuickOutgoingMessageRequestPrivate* get(
       OxideQQuickOutgoingMessageRequest* request);
 
   QJSValue reply_callback;
   QJSValue error_callback;
-  QQuickWebFramePrivate* frame;
+  OxideQQuickWebFramePrivate* frame;
 
  private:
-  QQuickOutgoingMessageRequestPrivate(OxideQQuickOutgoingMessageRequest* q);
+  OxideQQuickOutgoingMessageRequestPrivate(
+      OxideQQuickOutgoingMessageRequest* q);
 
   void ReceiveReplyCallback(const std::string& args);
   void ReceiveErrorCallback(int error, const std::string& msg);
@@ -67,12 +64,9 @@ class QQuickOutgoingMessageRequestPrivate {
   void removeFromOwner();
 
   oxide::OutgoingMessageRequest request_;
-  base::WeakPtrFactory<QQuickOutgoingMessageRequestPrivate> weak_factory_;
+  base::WeakPtrFactory<OxideQQuickOutgoingMessageRequestPrivate> weak_factory_;
 
   OxideQQuickOutgoingMessageRequest* q_ptr;
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_QUICK_API_OUTGOING_MESSAGE_REQUEST_P_P_H_

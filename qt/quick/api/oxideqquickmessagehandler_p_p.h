@@ -31,16 +31,15 @@ class OxideQIncomingMessage;
 class OxideQQuickMessageHandler;
 
 namespace oxide {
-
 class IncomingMessage;
+}
 
-namespace qt {
-
-class QQuickMessageHandlerPrivate FINAL {
+class OxideQQuickMessageHandlerPrivate FINAL {
   Q_DECLARE_PUBLIC(OxideQQuickMessageHandler)
 
  public:
-  static QQuickMessageHandlerPrivate* Create(OxideQQuickMessageHandler* q);
+  static OxideQQuickMessageHandlerPrivate* Create(
+      OxideQQuickMessageHandler* q);
 
   const oxide::MessageHandler* handler() const {
     return &handler_;
@@ -54,27 +53,24 @@ class QQuickMessageHandlerPrivate FINAL {
 
   void removeFromCurrentOwner();
 
-  static QQuickMessageHandlerPrivate* get(
+  static OxideQQuickMessageHandlerPrivate* get(
       OxideQQuickMessageHandler* message_handler);
 
   QJSValue callback;
 
  private:
-  QQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
+  OxideQQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
   void ReceiveMessageCallback(oxide::IncomingMessage* message,
                               bool* delivered,
                               bool* error,
                               std::string* error_desc);
 
   oxide::MessageHandler handler_;
-  base::WeakPtrFactory<QQuickMessageHandlerPrivate> weak_factory_;
+  base::WeakPtrFactory<OxideQQuickMessageHandlerPrivate> weak_factory_;
 
   OxideQQuickMessageHandler* q_ptr;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QQuickMessageHandlerPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQQuickMessageHandlerPrivate);
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_QUICK_API_MESSAGE_HANDLER_P_P_H_

@@ -28,23 +28,22 @@
 
 #include "qt/quick/api/oxideqquickwebframe_p_p.h"
 
-namespace oxide {
-namespace qt {
-
-QQuickOutgoingMessageRequestPrivate::QQuickOutgoingMessageRequestPrivate(
+OxideQQuickOutgoingMessageRequestPrivate::OxideQQuickOutgoingMessageRequestPrivate(
     OxideQQuickOutgoingMessageRequest* q) :
     frame(NULL),
     weak_factory_(this),
     q_ptr(q) {
   request_.SetReplyCallback(
-      base::Bind(&QQuickOutgoingMessageRequestPrivate::ReceiveReplyCallback,
-                 weak_factory_.GetWeakPtr()));
+      base::Bind(
+        &OxideQQuickOutgoingMessageRequestPrivate::ReceiveReplyCallback,
+        weak_factory_.GetWeakPtr()));
   request_.SetErrorCallback(
-      base::Bind(&QQuickOutgoingMessageRequestPrivate::ReceiveErrorCallback,
-                 weak_factory_.GetWeakPtr()));
+      base::Bind(
+        &OxideQQuickOutgoingMessageRequestPrivate::ReceiveErrorCallback,
+        weak_factory_.GetWeakPtr()));
 }
 
-void QQuickOutgoingMessageRequestPrivate::ReceiveReplyCallback(
+void OxideQQuickOutgoingMessageRequestPrivate::ReceiveReplyCallback(
     const std::string& args) {
   QJsonDocument jsondoc(QJsonDocument::fromJson(
       QByteArray(args.data(), args.length())));
@@ -57,7 +56,7 @@ void QQuickOutgoingMessageRequestPrivate::ReceiveReplyCallback(
   removeFromOwner();
 }
 
-void QQuickOutgoingMessageRequestPrivate::ReceiveErrorCallback(
+void OxideQQuickOutgoingMessageRequestPrivate::ReceiveErrorCallback(
     int error,
     const std::string& msg) {
   QJSValueList jsargs;
@@ -69,7 +68,7 @@ void QQuickOutgoingMessageRequestPrivate::ReceiveErrorCallback(
   removeFromOwner();
 }
 
-void QQuickOutgoingMessageRequestPrivate::removeFromOwner() {
+void OxideQQuickOutgoingMessageRequestPrivate::removeFromOwner() {
   Q_Q(OxideQQuickOutgoingMessageRequest);
 
   if (frame) {
@@ -78,21 +77,18 @@ void QQuickOutgoingMessageRequestPrivate::removeFromOwner() {
   }
 }
 
-QQuickOutgoingMessageRequestPrivate::~QQuickOutgoingMessageRequestPrivate() {
+OxideQQuickOutgoingMessageRequestPrivate::~OxideQQuickOutgoingMessageRequestPrivate() {
   removeFromOwner();
 }
 
 // static
-QQuickOutgoingMessageRequestPrivate* QQuickOutgoingMessageRequestPrivate::Create(
+OxideQQuickOutgoingMessageRequestPrivate* OxideQQuickOutgoingMessageRequestPrivate::Create(
     OxideQQuickOutgoingMessageRequest* q) {
-  return new QQuickOutgoingMessageRequestPrivate(q);
+  return new OxideQQuickOutgoingMessageRequestPrivate(q);
 }
 
 // static
-QQuickOutgoingMessageRequestPrivate* QQuickOutgoingMessageRequestPrivate::get(
+OxideQQuickOutgoingMessageRequestPrivate* OxideQQuickOutgoingMessageRequestPrivate::get(
     OxideQQuickOutgoingMessageRequest* request) {
   return request->d_func();
 }
-
-} // namespace qt
-} // namespace oxide

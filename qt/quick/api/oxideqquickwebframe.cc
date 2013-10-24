@@ -30,10 +30,10 @@
 #include "oxideqquickoutgoingmessagerequest_p_p.h"
 
 OxideQQuickWebFrame::OxideQQuickWebFrame(oxide::qt::WebFrame* owner) :
-    d_ptr(oxide::qt::QQuickWebFramePrivate::Create(owner)) {}
+    d_ptr(OxideQQuickWebFramePrivate::Create(owner)) {}
 
 void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
-  Q_D(oxide::qt::QQuickWebFrame);
+  Q_D(OxideQQuickWebFrame);
 
   OxideQQuickWebFrame* child = qobject_cast<OxideQQuickWebFrame *>(event->child());
   if (!child) {
@@ -53,7 +53,7 @@ void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
 OxideQQuickWebFrame::~OxideQQuickWebFrame() {}
 
 QUrl OxideQQuickWebFrame::url() const {
-  Q_D(const oxide::qt::QQuickWebFrame);
+  Q_D(const OxideQQuickWebFrame);
 
   return QUrl(QString::fromStdString(d->owner()->url().spec()));
 }
@@ -65,25 +65,25 @@ OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
 QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {
   return QQmlListProperty<OxideQQuickWebFrame>(
       this, NULL,
-      oxide::qt::QQuickWebFramePrivate::childFrame_count,
-      oxide::qt::QQuickWebFramePrivate::childFrame_at);
+      OxideQQuickWebFramePrivate::childFrame_count,
+      OxideQQuickWebFramePrivate::childFrame_at);
 }
 
 QQmlListProperty<OxideQQuickMessageHandler>
 OxideQQuickWebFrame::messageHandlers() {
   return QQmlListProperty<OxideQQuickMessageHandler>(
       this, NULL,
-      oxide::qt::QQuickWebFramePrivate::messageHandler_append,
-      oxide::qt::QQuickWebFramePrivate::messageHandler_count,
-      oxide::qt::QQuickWebFramePrivate::messageHandler_at,
-      oxide::qt::QQuickWebFramePrivate::messageHandler_clear);
+      OxideQQuickWebFramePrivate::messageHandler_append,
+      OxideQQuickWebFramePrivate::messageHandler_count,
+      OxideQQuickWebFramePrivate::messageHandler_at,
+      OxideQQuickWebFramePrivate::messageHandler_clear);
 }
 
 void OxideQQuickWebFrame::addMessageHandler(OxideQQuickMessageHandler* handler) {
-  Q_D(oxide::qt::QQuickWebFrame);
+  Q_D(OxideQQuickWebFrame);
 
   if (!d->message_handlers().contains(handler)) {
-    oxide::qt::QQuickMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
+    OxideQQuickMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
     handler->setParent(this);
 
     d->message_handlers().append(handler);
@@ -94,7 +94,7 @@ void OxideQQuickWebFrame::addMessageHandler(OxideQQuickMessageHandler* handler) 
 
 void OxideQQuickWebFrame::removeMessageHandler(
     OxideQQuickMessageHandler* handler) {
-  Q_D(oxide::qt::QQuickWebFrame);
+  Q_D(OxideQQuickWebFrame);
 
   if (!d) {
     return;
@@ -112,7 +112,7 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
     const QString& world_id,
     const QString& msg_id,
     const QVariant& args) {
-  Q_D(oxide::qt::QQuickWebFrame);
+  Q_D(OxideQQuickWebFrame);
 
   OxideQQuickOutgoingMessageRequest* request =
       new OxideQQuickOutgoingMessageRequest();
@@ -123,7 +123,7 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
           world_id.toStdString(),
           msg_id.toStdString(),
           QString(jsondoc.toJson()).toStdString(),
-          oxide::qt::QQuickOutgoingMessageRequestPrivate::get(request)->request())) {
+          OxideQQuickOutgoingMessageRequestPrivate::get(request)->request())) {
     delete request;
     return NULL;
   }
@@ -136,7 +136,7 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
 void OxideQQuickWebFrame::sendMessageNoReply(const QString& world_id,
                                              const QString& msg_id,
                                              const QVariant& args) {
-  Q_D(oxide::qt::QQuickWebFrame);
+  Q_D(OxideQQuickWebFrame);
 
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 

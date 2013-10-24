@@ -26,26 +26,23 @@
 #include "qt/quick/api/oxideqquickuserscript_p.h"
 #include "qt/quick/api/oxideqquickuserscript_p_p.h"
 
-namespace oxide {
-namespace qt {
-
-QQuickWebContextPrivate::QQuickWebContextPrivate(
+OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     lazy_init_props_(new LazyInitProperties()),
     q_ptr(q) {}
 
 // static
-QQuickWebContextPrivate* QQuickWebContextPrivate::Create(
+OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::Create(
     OxideQQuickWebContext* q) {
-  return new QQuickWebContextPrivate(q);
+  return new OxideQQuickWebContextPrivate(q);
 }
 
-QQuickWebContextPrivate* QQuickWebContextPrivate::get(
+OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
     OxideQQuickWebContext* context) {
   return context->d_func();
 }
 
-oxide::BrowserContext* QQuickWebContextPrivate::GetContext() {
+oxide::BrowserContext* OxideQQuickWebContextPrivate::GetContext() {
   if (context_) {
     return context_.get();
   }
@@ -71,7 +68,7 @@ oxide::BrowserContext* QQuickWebContextPrivate::GetContext() {
   return context_.get();
 }
 
-void QQuickWebContextPrivate::updateUserScripts() {
+void OxideQQuickWebContextPrivate::updateUserScripts() {
   if (!context_) {
     return;
   }
@@ -89,13 +86,13 @@ void QQuickWebContextPrivate::updateUserScripts() {
     }
 
     scripts.push_back(
-        oxide::qt::QQuickUserScriptPrivate::get(qscript)->user_script());
+        OxideQQuickUserScriptPrivate::get(qscript)->user_script());
   }
 
   context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
 }
 
-void QQuickWebContextPrivate::userScript_append(
+void OxideQQuickWebContextPrivate::userScript_append(
     QQmlListProperty<OxideQQuickUserScript>* prop,
     OxideQQuickUserScript* user_script) {
   if (!user_script) {
@@ -104,7 +101,7 @@ void QQuickWebContextPrivate::userScript_append(
 
   OxideQQuickWebContext* context =
       static_cast<OxideQQuickWebContext *>(prop->object);
-  QQuickWebContextPrivate* p = QQuickWebContextPrivate::get(context);
+  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(context);
 
   if (!p->user_scripts().isEmpty() &&
       p->user_scripts().contains(user_script)) {
@@ -121,18 +118,18 @@ void QQuickWebContextPrivate::userScript_append(
   p->updateUserScripts();
 }
 
-int QQuickWebContextPrivate::userScript_count(
+int OxideQQuickWebContextPrivate::userScript_count(
     QQmlListProperty<OxideQQuickUserScript>* prop) {
-  QQuickWebContextPrivate* p = QQuickWebContextPrivate::get(
+  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(
         static_cast<OxideQQuickWebContext *>(prop->object));
 
   return p->user_scripts().size();
 }
 
-OxideQQuickUserScript* QQuickWebContextPrivate::userScript_at(
+OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
     QQmlListProperty<OxideQQuickUserScript>* prop,
     int index) {
-  QQuickWebContextPrivate* p = QQuickWebContextPrivate::get(
+  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(
         static_cast<OxideQQuickWebContext *>(prop->object));
 
   if (index >= p->user_scripts().size()) {
@@ -142,11 +139,11 @@ OxideQQuickUserScript* QQuickWebContextPrivate::userScript_at(
   return qobject_cast<OxideQQuickUserScript *>(p->user_scripts().at(index));
 }
 
-void QQuickWebContextPrivate::userScript_clear(
+void OxideQQuickWebContextPrivate::userScript_clear(
     QQmlListProperty<OxideQQuickUserScript>* prop) {
   OxideQQuickWebContext* context =
       static_cast<OxideQQuickWebContext *>(prop->object);
-  QQuickWebContextPrivate* p = QQuickWebContextPrivate::get(context);
+  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(context);
 
   while (p->user_scripts().size() > 0) {
     OxideQQuickUserScript* script = p->user_scripts().first();
@@ -160,6 +157,3 @@ void QQuickWebContextPrivate::userScript_clear(
 
   p->updateUserScripts();
 }
-
-} // namespace qt
-} // namespace oxide

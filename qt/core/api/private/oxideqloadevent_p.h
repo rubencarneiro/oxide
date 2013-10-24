@@ -26,15 +26,12 @@
 
 #include "qt/core/api/oxideqloadevent.h"
 
-namespace oxide {
-namespace qt {
-
-class QLoadEventPrivate FINAL {
+class OxideQLoadEventPrivate FINAL {
  public:
-  static QLoadEventPrivate* Create(const QUrl& url,
-                                   OxideQLoadEvent::Type type,
-                                   int error_code,
-                                   const QString& error_description);
+  static OxideQLoadEventPrivate* Create(const QUrl& url,
+                                        OxideQLoadEvent::Type type,
+                                        int error_code,
+                                        const QString& error_description);
 
   QUrl url() const;
   OxideQLoadEvent::Type type() const;
@@ -42,10 +39,10 @@ class QLoadEventPrivate FINAL {
   QString errorString() const;
 
  private:
-  QLoadEventPrivate(const QUrl& url,
-                     OxideQLoadEvent::Type type,
-                     OxideQLoadEvent::ErrorCode error,
-                     const QString& error_description);
+  OxideQLoadEventPrivate(const QUrl& url,
+                         OxideQLoadEvent::Type type,
+                         OxideQLoadEvent::ErrorCode error,
+                         const QString& error_description);
 
   static OxideQLoadEvent::ErrorCode ChromeErrorCodeToOxideErrorCode(
       int error_code);
@@ -55,10 +52,7 @@ class QLoadEventPrivate FINAL {
   OxideQLoadEvent::ErrorCode error_;
   QString error_string_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(QLoadEventPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQLoadEventPrivate);
 };
-
-} // namespace qt
-} // namespace oxide
 
 #endif // _OXIDE_QT_CORE_API_PRIVATE_LOAD_EVENT_P_H_

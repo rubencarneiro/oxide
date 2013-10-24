@@ -25,12 +25,8 @@
 #include <QtQml>
 #include <QUrl>
 
-namespace oxide {
-namespace qt {
-class QLoadEventPrivate;
-class QQuickWebViewPrivate;
-}
-}
+class OxideQLoadEventPrivate;
+class OxideQQuickWebViewPrivate;
 
 class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_OBJECT
@@ -42,7 +38,7 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_ENUMS(Type)
   Q_ENUMS(ErrorCode)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QLoadEvent)
+  Q_DECLARE_PRIVATE(OxideQLoadEvent)
 
  public:
   virtual ~OxideQLoadEvent();
@@ -67,7 +63,7 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   QString errorString() const;
 
  protected:
-  friend class oxide::qt::QQuickWebViewPrivate;
+  friend class OxideQQuickWebViewPrivate;
 
   Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
                                 Type type,
@@ -75,7 +71,7 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
                                 const QString& error_string = QString());
 
  private:
-  QScopedPointer<oxide::qt::QLoadEventPrivate> d_ptr;
+  QScopedPointer<OxideQLoadEventPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQLoadEvent)

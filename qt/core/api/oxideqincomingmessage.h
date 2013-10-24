@@ -25,12 +25,11 @@
 #include <QtQml>
 #include <QVariant>
 
+class OxideQIncomingMessagePrivate;
+class OxideQQuickMessageHandlerPrivate;
+
 namespace oxide {
 class IncomingMessage;
-namespace qt {
-class QIncomingMessagePrivate;
-class QQuickMessageHandlerPrivate;
-}
 }
 
 class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
@@ -38,7 +37,7 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_PROPERTY(QString worldId READ worldId)
   Q_PROPERTY(QVariant args READ args)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QIncomingMessage)
+  Q_DECLARE_PRIVATE(OxideQIncomingMessage)
 
  public:
   virtual ~OxideQIncomingMessage();
@@ -50,13 +49,13 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_INVOKABLE void error(const QString& msg);
 
  protected:
-  friend class oxide::qt::QQuickMessageHandlerPrivate;
+  friend class OxideQQuickMessageHandlerPrivate;
 
   // FIXME: Would be nice to hide this
   OxideQIncomingMessage(oxide::IncomingMessage* message);
 
  private:
-  QScopedPointer<oxide::qt::QIncomingMessagePrivate> d_ptr;
+  QScopedPointer<OxideQIncomingMessagePrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQIncomingMessage)

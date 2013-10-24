@@ -28,12 +28,7 @@
 QT_USE_NAMESPACE
 
 class OxideQQuickUserScript;
-
-namespace oxide {
-namespace qt {
-class QQuickWebContextPrivate;
-}
-}
+class OxideQQuickWebContextPrivate;
 
 class Q_DECL_EXPORT OxideQQuickWebContext : public QObject {
   Q_OBJECT
@@ -44,7 +39,7 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject {
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QQuickWebContext)
+  Q_DECLARE_PRIVATE(OxideQQuickWebContext)
 
  public:
   OxideQQuickWebContext(QObject* parent = NULL);
@@ -82,7 +77,7 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject {
  private:
   OxideQQuickWebContext(bool is_default);
 
-  QScopedPointer<oxide::qt::QQuickWebContextPrivate> d_ptr;
+  QScopedPointer<OxideQQuickWebContextPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebContext)

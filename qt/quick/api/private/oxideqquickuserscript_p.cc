@@ -30,10 +30,7 @@
 #include "shared/common/oxide_file_utils.h"
 #include "shared/common/oxide_user_script.h"
 
-namespace oxide {
-namespace qt {
-
-void QQuickUserScriptPrivate::OnGotFileContents(
+void OxideQQuickUserScriptPrivate::OnGotFileContents(
     base::PlatformFileError error,
     const char* data,
     int bytes_read) {
@@ -55,13 +52,14 @@ void QQuickUserScriptPrivate::OnGotFileContents(
   emit q->scriptLoaded();  
 }
 
-QQuickUserScriptPrivate::QQuickUserScriptPrivate(OxideQQuickUserScript* q) :
+OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
+    OxideQQuickUserScript* q) :
     q_ptr(q),
     state_(OxideQQuickUserScript::Constructing),
     user_script_(new oxide::UserScript()),
     weak_factory_(this) {}
 
-void QQuickUserScriptPrivate::startLoading() {
+void OxideQQuickUserScriptPrivate::startLoading() {
   Q_Q(OxideQQuickUserScript);
 
   Q_ASSERT(state_ == OxideQQuickUserScript::Constructing);
@@ -73,26 +71,23 @@ void QQuickUserScriptPrivate::startLoading() {
       content::BrowserThread::GetMessageLoopProxyForThread(
         content::BrowserThread::FILE).get(),
       base::FilePath(user_script_->url().path()),
-      base::Bind(&QQuickUserScriptPrivate::OnGotFileContents,
+      base::Bind(&OxideQQuickUserScriptPrivate::OnGotFileContents,
                  weak_factory_.GetWeakPtr()))) {
     state_ = OxideQQuickUserScript::Failed;
     emit q->scriptLoadFailed();
   }
 }
 
-QUrl QQuickUserScriptPrivate::url() const {
+QUrl OxideQQuickUserScriptPrivate::url() const {
   return QUrl(QString::fromStdString(user_script_->url().spec()));
 }
 
-void QQuickUserScriptPrivate::setUrl(const QUrl& url) {
+void OxideQQuickUserScriptPrivate::setUrl(const QUrl& url) {
   user_script_->set_url(GURL(url.toString().toStdString()));
 }
 
 // static
-QQuickUserScriptPrivate* QQuickUserScriptPrivate::get(
+OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
     OxideQQuickUserScript* user_script) {
   return user_script->d_func();
 }
-
-} // namespace qt
-} // namespace oxide

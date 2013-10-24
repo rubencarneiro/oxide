@@ -24,11 +24,7 @@
 #include <QtGlobal>
 #include <QtQml>
 
-namespace oxide {
-namespace qt {
-class QQuickOutgoingMessageRequestPrivate;
-}
-}
+class OxideQQuickOutgoingMessageRequestPrivate;
 
 class Q_DECL_EXPORT OxideQQuickOutgoingMessageRequest : public QObject {
   Q_OBJECT
@@ -36,7 +32,7 @@ class Q_DECL_EXPORT OxideQQuickOutgoingMessageRequest : public QObject {
   Q_PROPERTY(QJSValue onerror READ errorCallback WRITE setErrorCallback NOTIFY errorCallbackChanged)
   Q_ENUMS(ErrorCode)
 
-  Q_DECLARE_PRIVATE(oxide::qt::QQuickOutgoingMessageRequest)
+  Q_DECLARE_PRIVATE(OxideQQuickOutgoingMessageRequest)
 
  public:
   virtual ~OxideQQuickOutgoingMessageRequest();
@@ -66,7 +62,7 @@ class Q_DECL_EXPORT OxideQQuickOutgoingMessageRequest : public QObject {
   Q_DECL_HIDDEN OxideQQuickOutgoingMessageRequest();
 
  private:
-  QScopedPointer<oxide::qt::QQuickOutgoingMessageRequestPrivate> d_ptr;
+  QScopedPointer<OxideQQuickOutgoingMessageRequestPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickOutgoingMessageRequest);

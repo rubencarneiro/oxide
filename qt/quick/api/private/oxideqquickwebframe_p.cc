@@ -24,18 +24,17 @@
 #include "qt/quick/api/oxideqquickmessagehandler_p_p.h"
 #include "qt/quick/api/oxideqquickoutgoingmessagerequest_p_p.h"
 
-namespace oxide {
-namespace qt {
-
-QQuickWebFramePrivate::QQuickWebFramePrivate(WebFrame* owner) :
+OxideQQuickWebFramePrivate::OxideQQuickWebFramePrivate(
+    oxide::qt::WebFrame* owner) :
     owner_(owner) {}
 
 // static
-QQuickWebFramePrivate* QQuickWebFramePrivate::Create(WebFrame* owner) {
-  return new QQuickWebFramePrivate(owner);
+OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::Create(
+    oxide::qt::WebFrame* owner) {
+  return new OxideQQuickWebFramePrivate(owner);
 }
 
-QQuickWebFramePrivate::~QQuickWebFramePrivate() {
+OxideQQuickWebFramePrivate::~OxideQQuickWebFramePrivate() {
   while (!outgoing_message_requests_.isEmpty()) {
     removeOutgoingMessageRequest(outgoing_message_requests_.first());
   }
@@ -43,45 +42,46 @@ QQuickWebFramePrivate::~QQuickWebFramePrivate() {
   owner_->q_web_frame = NULL;
 }
 
-QQuickWebFramePrivate* QQuickWebFramePrivate::get(OxideQQuickWebFrame* frame) {
+OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
+    OxideQQuickWebFrame* frame) {
   return frame->d_func();
 }
 
 // static
-int QQuickWebFramePrivate::childFrame_count(
+int OxideQQuickWebFramePrivate::childFrame_count(
     QQmlListProperty<OxideQQuickWebFrame>* prop) {
-  QQuickWebFramePrivate* p = QQuickWebFramePrivate::get(
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
       static_cast<OxideQQuickWebFrame *>(prop->object));
 
   return p->children().count();
 }
 
 // static
-OxideQQuickWebFrame* QQuickWebFramePrivate::childFrame_at(
+OxideQQuickWebFrame* OxideQQuickWebFramePrivate::childFrame_at(
     QQmlListProperty<OxideQQuickWebFrame>* prop,
     int index) {
-  QQuickWebFramePrivate* p = QQuickWebFramePrivate::get(
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
       static_cast<OxideQQuickWebFrame *>(prop->object));
 
   return qobject_cast<OxideQQuickWebFrame *>(p->children().at(index));
 }
 
-void QQuickWebFramePrivate::addOutgoingMessageRequest(
+void OxideQQuickWebFramePrivate::addOutgoingMessageRequest(
     OxideQQuickOutgoingMessageRequest* request) {
   Q_ASSERT(!outgoing_message_requests_.contains(request));
 
-  QQuickOutgoingMessageRequestPrivate::get(request)->frame = this;
+  OxideQQuickOutgoingMessageRequestPrivate::get(request)->frame = this;
   outgoing_message_requests_.append(request);  
 }
 
-void QQuickWebFramePrivate::removeOutgoingMessageRequest(
+void OxideQQuickWebFramePrivate::removeOutgoingMessageRequest(
     OxideQQuickOutgoingMessageRequest* request) {
   outgoing_message_requests_.removeOne(request);
-  QQuickOutgoingMessageRequestPrivate::get(request)->frame = NULL;
+  OxideQQuickOutgoingMessageRequestPrivate::get(request)->frame = NULL;
 }
 
 // static
-void QQuickWebFramePrivate::messageHandler_append(
+void OxideQQuickWebFramePrivate::messageHandler_append(
     QQmlListProperty<OxideQQuickMessageHandler>* prop,
     OxideQQuickMessageHandler* value) {
   if (!value) {
@@ -95,19 +95,19 @@ void QQuickWebFramePrivate::messageHandler_append(
 }
 
 // static
-int QQuickWebFramePrivate::messageHandler_count(
+int OxideQQuickWebFramePrivate::messageHandler_count(
     QQmlListProperty<OxideQQuickMessageHandler>* prop) {
-  QQuickWebFramePrivate* p = QQuickWebFramePrivate::get(
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
         static_cast<OxideQQuickWebFrame *>(prop->object));
 
   return p->message_handlers().size();
 }
 
 // static
-OxideQQuickMessageHandler* QQuickWebFramePrivate::messageHandler_at(
+OxideQQuickMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
     QQmlListProperty<OxideQQuickMessageHandler>* prop,
     int index) {
-  QQuickWebFramePrivate* p = QQuickWebFramePrivate::get(
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
         static_cast<OxideQQuickWebFrame *>(prop->object));
 
   return qobject_cast<OxideQQuickMessageHandler *>(
@@ -115,11 +115,11 @@ OxideQQuickMessageHandler* QQuickWebFramePrivate::messageHandler_at(
 }
 
 // static
-void QQuickWebFramePrivate::messageHandler_clear(
+void OxideQQuickWebFramePrivate::messageHandler_clear(
     QQmlListProperty<OxideQQuickMessageHandler>* prop) {
   OxideQQuickWebFrame* frame =
       static_cast<OxideQQuickWebFrame *>(prop->object);
-  QQuickWebFramePrivate* p = QQuickWebFramePrivate::get(frame);
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(frame);
 
   while (p->message_handlers().size() > 0) {
     OxideQQuickMessageHandler* handler = p->message_handlers().first();
@@ -129,6 +129,3 @@ void QQuickWebFramePrivate::messageHandler_clear(
 
   emit frame->messageHandlersChanged();
 }
-
-} // namespace qt
-} // namespace oxide
