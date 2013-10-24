@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_BROWSER_WEB_FRAME_TREE_H_
-#define _OXIDE_QT_LIB_BROWSER_WEB_FRAME_TREE_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_WEB_FRAME_TREE_H_
+#define _OXIDE_QT_CORE_BROWSER_WEB_FRAME_TREE_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -40,4 +40,4 @@ class WebFrameTree FINAL : public oxide::WebFrameTree {
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_BROWSER_WEB_FRAME_TREE_H_
+#endif // _OXIDE_QT_CORE_BROWSER_WEB_FRAME_TREE_H_

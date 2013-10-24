@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
-#define _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#define _OXIDE_QT_CORE_BROWSER_CONTENT_BROWSER_CLIENT_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -49,4 +49,4 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_LIB_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#endif // _OXIDE_QT_CORE_BROWSER_CONTENT_BROWSER_CLIENT_H_
