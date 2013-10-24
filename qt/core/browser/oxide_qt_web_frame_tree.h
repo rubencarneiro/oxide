@@ -26,23 +26,14 @@
 namespace oxide {
 namespace qt {
 
-class WebFrameTree : public oxide::WebFrameTree {
+class WebFrameTree FINAL : public oxide::WebFrameTree {
  public:
-  virtual ~WebFrameTree();
-
- protected:
   WebFrameTree(content::RenderViewHost* rvh);
-};
-
-class WebFrameTreeQQuick FINAL : public WebFrameTree {
- public:
-  WebFrameTreeQQuick(content::RenderViewHost* rvh);
-  virtual ~WebFrameTreeQQuick();
 
   oxide::WebFrame* CreateFrame() FINAL;
 
  private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrameTreeQQuick);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrameTree);
 };
 
 

@@ -21,7 +21,7 @@
 
 #include "shared/browser/oxide_web_view.h"
 
-#include "qt/core/api/private/oxide_q_web_view_base_p.h"
+#include "qt/quick/api/oxideqquickwebview_p_p.h"
 
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_render_widget_host_view_qquick.h"
@@ -36,7 +36,7 @@ base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
 
 oxide::WebFrameTree* ContentBrowserClient::CreateWebFrameTree(
     content::RenderViewHost* rvh) {
-  QWebViewBasePrivate* wvp = static_cast<QWebViewBasePrivate *>(
+  QQuickWebViewPrivate* wvp = static_cast<QQuickWebViewPrivate *>(
       oxide::WebView::FromRenderViewHost(rvh));
   if (!wvp) {
     // The first RVH created for a WebContents is before we set the delegate

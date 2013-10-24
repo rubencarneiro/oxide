@@ -15,43 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_LIB_BROWSER_WEB_FRAME_H_
-#define _OXIDE_QT_LIB_BROWSER_WEB_FRAME_H_
+#include "oxideqincomingmessage_p.h"
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include <QByteArray>
+#include <QJsonDocument>
 
-#include "shared/browser/oxide_web_frame.h"
-
-class OxideQQuickWebFrame;
+#include "shared/browser/oxide_incoming_message.h"
 
 namespace oxide {
 namespace qt {
 
-class WebFrame FINAL : public oxide::WebFrame {
- public:
-  WebFrame();
+QIncomingMessagePrivate::QIncomingMessagePrivate(
+    oxide::IncomingMessage* message) :
+    incoming_(message) {
+    QJsonDocument jsondoc(QJsonDocument::fromJson(
+        QByteArray(message->args().data(), message->args().length())));
+    args_variant_ = jsondoc.toVariant();
+}
 
-  size_t GetMessageHandlerCount() const FINAL;
-  oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
-
-  size_t GetOutgoingMessageRequestCount() const FINAL;
-  oxide::OutgoingMessageRequest*
-      GetOutgoingMessageRequestAt(size_t index) const FINAL;
-
-  OxideQQuickWebFrame* q_web_frame;
-
- private:
-  ~WebFrame();
-
-  void OnChildAdded(oxide::WebFrame* child) FINAL;
-  void OnChildRemoved(oxide::WebFrame* child) FINAL;
-  void OnURLChanged() FINAL;
-
-  DISALLOW_COPY_AND_ASSIGN(WebFrame);
-};
+QIncomingMessagePrivate* QIncomingMessagePrivate::Create(
+    oxide::IncomingMessage* message) {
+  return new QIncomingMessagePrivate(message);
+}
 
 } // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_LIB_BROWSER_WEB_FRAME_H_

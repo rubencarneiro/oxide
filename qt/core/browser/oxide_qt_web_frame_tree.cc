@@ -25,15 +25,8 @@ namespace qt {
 WebFrameTree::WebFrameTree(content::RenderViewHost* rvh) :
     oxide::WebFrameTree(rvh) {}
 
-WebFrameTree::~WebFrameTree() {}
-
-WebFrameTreeQQuick::WebFrameTreeQQuick(content::RenderViewHost* rvh) :
-    WebFrameTree(rvh) {}
-
-WebFrameTreeQQuick::~WebFrameTreeQQuick() {}
-
-oxide::WebFrame* WebFrameTreeQQuick::CreateFrame() {
-  return new WebFrameQQuick();
+oxide::WebFrame* WebFrameTree::CreateFrame() {
+  return new WebFrame();
 }
 
 } // namespace qt

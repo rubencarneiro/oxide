@@ -23,14 +23,14 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
-#include "oxide_q_incoming_message.h"
-#include "oxide_q_load_event.h"
-#include "oxide_q_user_script.h"
-#include "oxide_qquick_message_handler_p.h"
-#include "oxide_qquick_outgoing_message_request_p.h"
-#include "oxide_qquick_web_context_p.h"
-#include "oxide_qquick_web_frame_p.h"
-#include "oxide_qquick_web_view_p.h"
+#include "oxideqincomingmessage.h"
+#include "oxideqloadevent.h"
+#include "oxideqquickmessagehandler_p.h"
+#include "oxideqquickoutgoingmessagerequest_p.h"
+#include "oxideqquickuserscript_p.h"
+#include "oxideqquickwebcontext_p.h"
+#include "oxideqquickwebframe_p.h"
+#include "oxideqquickwebview_p.h"
 
 QT_USE_NAMESPACE
 
@@ -43,7 +43,7 @@ class OxideQQuickDefaultWebContext : public QObject {
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
-  Q_PROPERTY(QQmlListProperty<OxideQUserScript> userScripts READ userScripts)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts)
 
  public:
   OxideQQuickDefaultWebContext(QObject* parent = NULL);
@@ -64,7 +64,7 @@ class OxideQQuickDefaultWebContext : public QObject {
   QString acceptLangs() const;
   void setAcceptLangs(const QString& accept_langs);
 
-  QQmlListProperty<OxideQUserScript> userScripts();
+  QQmlListProperty<OxideQQuickUserScript> userScripts();
 
  Q_SIGNALS:
   void productChanged();
@@ -157,7 +157,7 @@ void OxideQQuickDefaultWebContext::setAcceptLangs(
   context_->setAcceptLangs(accept_langs);
 }
 
-QQmlListProperty<OxideQUserScript>
+QQmlListProperty<OxideQQuickUserScript>
 OxideQQuickDefaultWebContext::userScripts() {
   return context_->userScripts();
 }
@@ -207,7 +207,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "LoadEvent' are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQQuickOutgoingMessageRequest>(uri, 0, 1, "OutgoingMessageRequest",
         "OutgoingMessageRequests are created automatically by WebFrame.sendMessage");
-    qmlRegisterType<OxideQUserScript>(uri, 0, 1, "UserScript");
+    qmlRegisterType<OxideQQuickUserScript>(uri, 0, 1, "UserScript");
     qmlRegisterType<OxideQQuickMessageHandler>(uri, 0, 1, "MessageHandler");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 0, 1, "WebFrame",
         "Frames are created automatically by Oxide to represent frames in the renderer");

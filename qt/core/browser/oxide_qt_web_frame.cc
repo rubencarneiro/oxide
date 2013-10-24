@@ -19,14 +19,18 @@
 
 #include "base/logging.h"
 
-#include "qt/core/api/oxide_q_web_frame_base.h"
-#include "qt/core/api/oxide_qquick_web_frame_p.h"
-#include "qt/core/api/private/oxide_qt_qmessage_handler_p.h"
-#include "qt/core/api/private/oxide_qt_qoutgoing_message_request_p.h"
-#include "qt/core/api/private/oxide_qt_qweb_frame_p.h"
+#include "qt/quick/api/oxideqquickmessagehandler_p_p.h"
+#include "qt/quick/api/oxideqquickoutgoingmessagerequest_p_p.h"
+#include "qt/quick/api/oxideqquickwebframe_p.h"
+#include "qt/quick/api/oxideqquickwebframe_p_p.h"
 
 namespace oxide {
 namespace qt {
+
+WebFrame::~WebFrame() {
+  delete q_web_frame;
+  DCHECK(!q_web_frame);
+}
 
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
   static_cast<WebFrame *>(child)->q_web_frame->setParent(q_web_frame);
@@ -40,42 +44,31 @@ void WebFrame::OnURLChanged() {
   q_web_frame->urlChanged();
 }
 
-WebFrame::WebFrame(OxideQWebFrameBase* q_web_frame) :
-    q_web_frame(q_web_frame) {}
-
-WebFrame::~WebFrame() {
-  delete q_web_frame;
-  DCHECK(!q_web_frame);
-}
+WebFrame::WebFrame() :
+    q_web_frame(new OxideQQuickWebFrame(this)) {}
 
 size_t WebFrame::GetMessageHandlerCount() const {
-  return QWebFrameBasePrivate::get(q_web_frame)->message_handlers().size();
+  return QQuickWebFramePrivate::get(q_web_frame)->message_handlers().size();
 }
 
-oxide::MessageHandler* WebFrame::GetMessageHandlerAt(size_t index) const {
-  OxideQMessageHandlerBase* handler =
-      QWebFrameBasePrivate::get(q_web_frame)->message_handlers().at(index);
-  return QMessageHandlerBasePrivate::get(handler)->handler();
+oxide::MessageHandler* WebFrame::GetMessageHandlerAt(
+    size_t index) const {
+  OxideQQuickMessageHandler* handler =
+      QQuickWebFramePrivate::get(q_web_frame)->message_handlers().at(index);
+  return QQuickMessageHandlerPrivate::get(handler)->handler();
 }
 
 size_t WebFrame::GetOutgoingMessageRequestCount() const {
-  return QWebFrameBasePrivate::get(q_web_frame)->outgoing_message_requests().size();
+  return QQuickWebFramePrivate::get(
+      q_web_frame)->outgoing_message_requests().size();
 }
 
 oxide::OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
     size_t index) const {
-  OxideQOutgoingMessageRequestBase* req =
-      QWebFrameBasePrivate::get(q_web_frame)->outgoing_message_requests().at(index);
-  return QOutgoingMessageRequestBasePrivate::get(req)->request();
-}
-
-WebFrameQQuick::WebFrameQQuick() :
-    WebFrame(new OxideQQuickWebFrame(this)) {}
-
-WebFrameQQuick::~WebFrameQQuick() {}
-
-OxideQQuickWebFrame* WebFrameQQuick::QQuickWebFrame() const {
-  return qobject_cast<OxideQQuickWebFrame *>(q_web_frame);
+  OxideQQuickOutgoingMessageRequest* req =
+      QQuickWebFramePrivate::get(
+        q_web_frame)->outgoing_message_requests().at(index);
+  return QQuickOutgoingMessageRequestPrivate::get(req)->request();
 }
 
 } // namespace qt
