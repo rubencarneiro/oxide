@@ -32,6 +32,9 @@ class OxideQQuickUserScriptPrivate Q_DECL_FINAL :
   static OxideQQuickUserScriptPrivate* get(OxideQQuickUserScript* user_script);
 
  private:
+  // To map this back to public object
+  friend class OxideQQuickWebContextPrivate;
+
   void OnScriptLoadFailed() Q_DECL_FINAL;
   void OnScriptLoaded() Q_DECL_FINAL;
 

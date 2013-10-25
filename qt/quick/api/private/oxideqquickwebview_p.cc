@@ -33,6 +33,7 @@
 #include "qt/core/browser/oxide_qt_web_frame_tree.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu_qquick.h"
 #include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
+#include "qt/core/glue/private/oxide_qt_web_context_adapter_p.h"
 
 #include "qt/quick/api/oxideqquickmessagehandler_p_p.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
@@ -202,7 +203,7 @@ void OxideQQuickWebViewPrivate::componentComplete() {
     context = default_context_.data();
   }
 
-  Init(OxideQQuickWebContextPrivate::get(context)->GetContext(),
+  Init(oxide::qt::WebContextAdapterPrivate::get(OxideQQuickWebContextPrivate::get(context))->GetContext(),
        init_props_->incognito,
        gfx::Size(qRound(q->width()), qRound(q->height())));
 

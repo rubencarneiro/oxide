@@ -18,14 +18,96 @@
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 
-#include <string>
+#include <QQmlListProperty>
+#include <QtDebug>
 
-#include "base/files/file_path.h"
-
-#include "shared/browser/oxide_browser_context.h"
+#include "oxideqquickuserscript_p.h"
+#include "oxideqquickuserscript_p_p.h"
 
 namespace {
 OxideQQuickWebContext* g_default_context;
+}
+
+OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
+    OxideQQuickWebContext* q) :
+    q_ptr(q) {}
+
+OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
+    OxideQQuickWebContext* context) {
+  return context->d_func();
+}
+
+void OxideQQuickWebContextPrivate::userScript_append(
+    QQmlListProperty<OxideQQuickUserScript>* prop,
+    OxideQQuickUserScript* user_script) {
+  if (!user_script) {
+    return;
+  }
+
+  OxideQQuickUserScriptPrivate* script_priv =
+      OxideQQuickUserScriptPrivate::get(user_script);
+
+  OxideQQuickWebContext* context =
+      static_cast<OxideQQuickWebContext *>(prop->object);
+  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(context);
+
+  if (!p->user_scripts().isEmpty() &&
+      p->user_scripts().contains(script_priv)) {
+    p->user_scripts().removeOne(script_priv);
+    p->user_scripts().append(script_priv);
+  } else {
+    QObject::connect(user_script, SIGNAL(scriptLoaded()),
+                     context, SLOT(scriptUpdated()));
+    QObject::connect(user_script, SIGNAL(scriptPropertyChanged()),
+                     context, SLOT(scriptUpdated()));
+    p->user_scripts().append(script_priv);
+  }
+
+  p->updateUserScripts();
+}
+
+int OxideQQuickWebContextPrivate::userScript_count(
+    QQmlListProperty<OxideQQuickUserScript>* prop) {
+  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(
+        static_cast<OxideQQuickWebContext *>(prop->object));
+
+  return p->user_scripts().size();
+}
+
+OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
+    QQmlListProperty<OxideQQuickUserScript>* prop,
+    int index) {
+  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(
+        static_cast<OxideQQuickWebContext *>(prop->object));
+
+  if (index >= p->user_scripts().size()) {
+    return NULL;
+  }
+
+  // XXX: Should we have a better way to get from adapter to public object?
+  return static_cast<OxideQQuickUserScriptPrivate *>(
+      p->user_scripts().at(index))->q_func();
+}
+
+void OxideQQuickWebContextPrivate::userScript_clear(
+    QQmlListProperty<OxideQQuickUserScript>* prop) {
+  OxideQQuickWebContext* context =
+      static_cast<OxideQQuickWebContext *>(prop->object);
+  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(context);
+
+  while (p->user_scripts().size() > 0) {
+    // XXX: Should we have a better way to get from adapter to public object?
+    OxideQQuickUserScriptPrivate* script =
+        static_cast<OxideQQuickUserScriptPrivate *>(p->user_scripts().first());
+    p->user_scripts().removeFirst();
+    QObject::disconnect(script->q_func(), SIGNAL(scriptLoaded()),
+                        context, SLOT(scriptUpdated()));
+    QObject::disconnect(script->q_func(), SIGNAL(scriptPropertyChanged()),
+                        context, SLOT(scriptUpdated()));
+    delete script->q_func();
+  }
+
+  p->updateUserScripts();
 }
 
 void OxideQQuickWebContext::scriptUpdated() {
@@ -35,7 +117,7 @@ void OxideQQuickWebContext::scriptUpdated() {
 }
 
 OxideQQuickWebContext::OxideQQuickWebContext(bool is_default) :
-    d_ptr(OxideQQuickWebContextPrivate::Create(this)) {
+    d_ptr(new OxideQQuickWebContextPrivate(this)) {
   if (is_default) {
     Q_ASSERT(!g_default_context);
     g_default_context = this;
@@ -44,7 +126,7 @@ OxideQQuickWebContext::OxideQQuickWebContext(bool is_default) :
 
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
-    d_ptr(OxideQQuickWebContextPrivate::Create(this)) {}
+    d_ptr(new OxideQQuickWebContextPrivate(this)) {}
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   if (g_default_context == this) {
@@ -64,118 +146,95 @@ OxideQQuickWebContext* OxideQQuickWebContext::defaultContext() {
 QString OxideQQuickWebContext::product() const {
   Q_D(const OxideQQuickWebContext);
 
-  if (d->context()) {
-    return QString::fromStdString(d->context()->GetProduct());
-  }
-
-  return QString::fromStdString(d->lazy_init_props()->product);
+  return d->product();
 }
 
 void OxideQQuickWebContext::setProduct(const QString& product) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->context()) {
-    d->context()->SetProduct(product.toStdString());
-  } else {
-    d->lazy_init_props()->product = product.toStdString();
+  if (d->product() == product) {
+    return;
   }
 
+  d->setProduct(product);
   emit productChanged();
 }
 
 QString OxideQQuickWebContext::userAgent() const {
   Q_D(const OxideQQuickWebContext);
 
-  if (d->context()) {
-    return QString::fromStdString(d->context()->GetUserAgent());
-  }
-
-  return QString::fromStdString(d->lazy_init_props()->user_agent);
+  return d->userAgent();
 }
 
 void OxideQQuickWebContext::setUserAgent(const QString& user_agent) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->context()) {
-    d->context()->SetUserAgent(user_agent.toStdString());
-  } else {
-    d->lazy_init_props()->user_agent = user_agent.toStdString();
+  if (d->userAgent() == user_agent) {
+    return;
   }
 
+  d->setUserAgent(user_agent);
   emit userAgentChanged();
 }
 
 QUrl OxideQQuickWebContext::dataPath() const {
   Q_D(const OxideQQuickWebContext);
 
-  if (d->context()) {
-    return QUrl::fromLocalFile(
-        QString::fromStdString(d->context()->GetPath().value()));
-  }
-
-  return QUrl::fromLocalFile(
-      QString::fromStdString(d->lazy_init_props()->data_path.value()));
+  return d->dataPath();
 }
 
 void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (!d->context()) {
-    if (!data_url.isLocalFile()) {
-      return;
-    }
-    d->lazy_init_props()->data_path =
-        base::FilePath(data_url.toLocalFile().toStdString());
+  if (d->inUse()) {
+    qWarning() << "Cannot set dataPath once the context is being used";
+    return;
+  }
 
-    emit dataPathChanged();
-  } 
+  if (d->dataPath() == data_url) {
+    return;
+  }
+
+  d->setDataPath(data_url);
+  emit dataPathChanged();
 }
 
 QUrl OxideQQuickWebContext::cachePath() const {
   Q_D(const OxideQQuickWebContext);
 
-  if (d->context()) {
-    return QUrl::fromLocalFile(
-        QString::fromStdString(d->context()->GetCachePath().value()));
-  }
-
-  return QUrl::fromLocalFile(
-      QString::fromStdString(d->lazy_init_props()->cache_path.value()));
+  return d->cachePath();
 }
 
 void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (!d->context()) {
-    if (!cache_url.isLocalFile()) {
-      return;
-    }
-    d->lazy_init_props()->cache_path =
-        base::FilePath(cache_url.toLocalFile().toStdString());
-
-    emit cachePathChanged();
+  if (d->inUse()) {
+    qWarning() << "Cannot set cachePath once the context is being used";
+    return;
   }
+
+  if (d->cachePath() == cache_url) {
+    return;
+  }
+
+  d->setCachePath(cache_url);
+  emit cachePathChanged();
 }
 
 QString OxideQQuickWebContext::acceptLangs() const {
   Q_D(const OxideQQuickWebContext);
 
-  if (d->context()) {
-    return QString::fromStdString(d->context()->GetAcceptLangs());
-  }
-
-  return QString::fromStdString(d->lazy_init_props()->accept_langs);
+  return d->acceptLangs();
 }
 
 void OxideQQuickWebContext::setAcceptLangs(const QString& accept_langs) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->context()) {
-    d->context()->SetAcceptLangs(accept_langs.toStdString());
-  } else {
-    d->lazy_init_props()->accept_langs = accept_langs.toStdString();
+  if (d->acceptLangs() == accept_langs) {
+    return;
   }
 
+  d->setAcceptLangs(accept_langs);
   emit acceptLangsChanged();
 }
 

@@ -18,15 +18,9 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 
-#include <QList>
 #include <QtGlobal>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/files/file_path.h"
-#include "base/memory/scoped_ptr.h"
-
-#include "shared/browser/oxide_browser_process_handle.h"
+#include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
 class OxideQQuickWebContext;
 class OxideQQuickUserScript;
@@ -35,40 +29,14 @@ QT_BEGIN_NAMESPACE
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
-namespace oxide {
-class BrowserContext;
-}
-
-struct LazyInitProperties {
-  std::string product;
-  std::string user_agent;
-  base::FilePath data_path;
-  base::FilePath cache_path;
-  std::string accept_langs;
-};
-
-class OxideQQuickWebContextPrivate FINAL {
+class OxideQQuickWebContextPrivate Q_DECL_FINAL :
+    public oxide::qt::WebContextAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
  public:
-  static OxideQQuickWebContextPrivate* Create(OxideQQuickWebContext* q);
-
-  oxide::BrowserContext* context() const {
-    return context_.get();
-  }
-
-  oxide::BrowserContext* GetContext();
-
-  LazyInitProperties* lazy_init_props() const {
-    return lazy_init_props_.get();
-  }
-  QList<OxideQQuickUserScript *>& user_scripts() {
-    return user_scripts_;
-  }
+  OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
-
-  void updateUserScripts();
 
   static void userScript_append(QQmlListProperty<OxideQQuickUserScript>* prop,
                                 OxideQQuickUserScript* user_script);
@@ -79,17 +47,9 @@ class OxideQQuickWebContextPrivate FINAL {
   static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
 
  private:
-  OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
-
-  oxide::BrowserProcessHandle process_handle_;
-  scoped_ptr<oxide::BrowserContext> context_;
-  QList<OxideQQuickUserScript *> user_scripts_;
-
-  scoped_ptr<LazyInitProperties> lazy_init_props_;
-
   OxideQQuickWebContext* q_ptr;
 
-  DISALLOW_COPY_AND_ASSIGN(OxideQQuickWebContextPrivate);
+  Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
