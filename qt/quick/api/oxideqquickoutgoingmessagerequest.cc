@@ -18,11 +18,58 @@
 #include "oxideqquickoutgoingmessagerequest_p.h"
 #include "oxideqquickoutgoingmessagerequest_p_p.h"
 
+#include <QJSEngine>
+#include <QString>
 #include <QtDebug>
+#include <QVariant>
+
+#include "oxideqquickwebframe_p_p.h"
+
+void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveReply(
+    const QVariant& args) {
+  QJSValueList jsargs;
+  jsargs.append(reply_callback.engine()->toScriptValue(args));
+
+  reply_callback.call(jsargs);
+
+  removeFromOwner();
+}
+
+void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveError(
+    int error,
+    const QString& msg) {
+  QJSValueList jsargs;
+  jsargs.append(QJSValue(error));
+  jsargs.append(QJSValue(msg));
+
+  error_callback.call(jsargs);
+
+  removeFromOwner();
+}
+
+OxideQQuickOutgoingMessageRequestPrivate::OxideQQuickOutgoingMessageRequestPrivate(
+    OxideQQuickOutgoingMessageRequest* q) :
+    frame(NULL),
+    q_ptr(q) {}
+
+// static
+OxideQQuickOutgoingMessageRequestPrivate* OxideQQuickOutgoingMessageRequestPrivate::get(
+    OxideQQuickOutgoingMessageRequest* request) {
+  return request->d_func();
+}
+
+void OxideQQuickOutgoingMessageRequestPrivate::removeFromOwner() {
+  Q_Q(OxideQQuickOutgoingMessageRequest);
+
+  if (frame) {
+    frame->removeOutgoingMessageRequest(q);
+    frame = NULL;
+  }
+}
 
 OxideQQuickOutgoingMessageRequest::OxideQQuickOutgoingMessageRequest() :
     QObject(),
-    d_ptr(OxideQQuickOutgoingMessageRequestPrivate::Create(this)) {}
+    d_ptr(new OxideQQuickOutgoingMessageRequestPrivate(this)) {}
 
 OxideQQuickOutgoingMessageRequest::~OxideQQuickOutgoingMessageRequest() {
   Q_D(OxideQQuickOutgoingMessageRequest);

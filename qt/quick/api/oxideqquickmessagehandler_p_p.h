@@ -31,8 +31,7 @@ class OxideQQuickMessageHandlerPrivate Q_DECL_FINAL :
   Q_DECLARE_PUBLIC(OxideQQuickMessageHandler)
 
  public:
-  static OxideQQuickMessageHandlerPrivate* Create(
-      OxideQQuickMessageHandler* q);
+  OxideQQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
 
   void removeFromCurrentOwner();
 
@@ -42,7 +41,6 @@ class OxideQQuickMessageHandlerPrivate Q_DECL_FINAL :
   QJSValue callback;
 
  private:
-  OxideQQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
   bool OnReceiveMessage(OxideQIncomingMessage* message,
                         OxideQQuickWebFrame* frame,
                         QString& error) Q_DECL_FINAL;
