@@ -17,12 +17,38 @@
 
 #include "oxide_qt_message_handler_adapter_p.h"
 
+#include "shared/browser/oxide_incoming_message.h"
+
+#include "qt/core/api/oxideqincomingmessage.h"
+#include "qt/core/browser/oxide_qt_web_frame.h"
+#include "qt/core/glue/oxide_qt_message_handler_adapter.h"
+
 namespace oxide {
 namespace qt {
 
 MessageHandlerAdapterPrivate::MessageHandlerAdapterPrivate(
     MessageHandlerAdapter* adapter) :
-    weak_factory_(adapter) {}
+    pub_(adapter),
+    weak_factory_(this) {}
+
+void MessageHandlerAdapterPrivate::ReceiveMessageCallback(
+    oxide::IncomingMessage* message,
+    bool* delivered,
+    bool* error,
+    std::string& error_desc) {
+  *delivered = true;
+
+  QString qerror;
+
+  *error = !pub_->OnReceiveMessage(
+      new OxideQIncomingMessage(message),
+      static_cast<WebFrame *>(message->frame())->q_web_frame,
+      qerror);
+
+  if (*error) {
+    error_desc = qerror.toStdString();
+  }
+}
 
 // static
 MessageHandlerAdapterPrivate* MessageHandlerAdapterPrivate::Create(
@@ -30,9 +56,15 @@ MessageHandlerAdapterPrivate* MessageHandlerAdapterPrivate::Create(
   return new MessageHandlerAdapterPrivate(adapter);
 }
 
-base::WeakPtr<MessageHandlerAdapter>
+base::WeakPtr<MessageHandlerAdapterPrivate>
 MessageHandlerAdapterPrivate::GetWeakPtr() {
   return weak_factory_.GetWeakPtr();
+}
+
+// static
+MessageHandlerAdapterPrivate* MessageHandlerAdapterPrivate::get(
+    MessageHandlerAdapter* adapter) {
+  return adapter->priv_.data();
 }
 
 } // namespace qt

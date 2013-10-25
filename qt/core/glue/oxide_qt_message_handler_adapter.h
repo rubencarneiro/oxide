@@ -29,10 +29,6 @@ class OxideQIncomingMessage;
 class OxideQQuickWebFrame;
 
 namespace oxide {
-
-class IncomingMessage;
-class MessageHandler;
-
 namespace qt {
 
 class MessageHandlerAdapterPrivate;
@@ -50,16 +46,12 @@ class Q_DECL_EXPORT MessageHandlerAdapter {
   void attachHandler();
   void detachHandler();
 
-  oxide::MessageHandler* GetHandler();
-
  protected:
   MessageHandlerAdapter();
 
  private:
-  void ReceiveMessageCallback(oxide::IncomingMessage* message,
-                              bool* delivered,
-                              bool* error,
-                              std::string& error_desc);
+  friend class MessageHandlerAdapterPrivate;
+
   virtual bool OnReceiveMessage(OxideQIncomingMessage* message,
                                 OxideQQuickWebFrame* frame,
                                 QString& error) = 0;

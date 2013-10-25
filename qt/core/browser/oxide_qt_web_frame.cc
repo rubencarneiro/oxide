@@ -19,6 +19,9 @@
 
 #include "base/logging.h"
 
+#include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
+#include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
+
 #include "qt/quick/api/oxideqquickmessagehandler_p_p.h"
 #include "qt/quick/api/oxideqquickoutgoingmessagerequest_p_p.h"
 #include "qt/quick/api/oxideqquickwebframe_p.h"
@@ -58,7 +61,8 @@ oxide::MessageHandler* WebFrame::GetMessageHandlerAt(
       OxideQQuickWebFramePrivate::get(
         q_web_frame)->message_handlers().at(index);
   // FIXME: Stop using OxideQQuickMessageHandlerPrivate from here
-  return OxideQQuickMessageHandlerPrivate::get(handler)->GetHandler();
+  return &MessageHandlerAdapterPrivate::get(
+      OxideQQuickMessageHandlerPrivate::get(handler))->handler();
 }
 
 size_t WebFrame::GetOutgoingMessageRequestCount() const {
@@ -72,7 +76,8 @@ oxide::OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
       OxideQQuickWebFramePrivate::get(
         q_web_frame)->outgoing_message_requests().at(index);
   // FIXME: Stop using OxideQQuickOutgoingMessageRequestPrivate from here
-  return OxideQQuickOutgoingMessageRequestPrivate::get(req)->GetRequest();
+  return &OutgoingMessageRequestAdapterPrivate::get(
+      OxideQQuickOutgoingMessageRequestPrivate::get(req))->request();
 }
 
 } // namespace qt

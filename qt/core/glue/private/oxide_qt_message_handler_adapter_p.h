@@ -27,6 +27,9 @@
 #include "shared/browser/oxide_message_handler.h"
 
 namespace oxide {
+
+class IncomingMessage;
+
 namespace qt {
 
 class MessageHandlerAdapter;
@@ -42,13 +45,22 @@ class MessageHandlerAdapterPrivate FINAL {
     return handler_;
   }
 
-  base::WeakPtr<MessageHandlerAdapter> GetWeakPtr();
+  base::WeakPtr<MessageHandlerAdapterPrivate> GetWeakPtr();
+
+  static MessageHandlerAdapterPrivate* get(MessageHandlerAdapter* adapter);
 
  private:
+  friend class MessageHandlerAdapter;
+
   MessageHandlerAdapterPrivate(MessageHandlerAdapter* adapter);
+  void ReceiveMessageCallback(oxide::IncomingMessage* message,
+                              bool* delivered,
+                              bool* error,
+                              std::string& error_desc);
 
   oxide::MessageHandler handler_;
-  base::WeakPtrFactory<MessageHandlerAdapter> weak_factory_;
+  MessageHandlerAdapter* pub_;
+  base::WeakPtrFactory<MessageHandlerAdapterPrivate> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(MessageHandlerAdapterPrivate);
 };

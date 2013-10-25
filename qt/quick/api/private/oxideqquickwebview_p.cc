@@ -27,12 +27,12 @@
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
 
+#include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view_qquick.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_frame_tree.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu_qquick.h"
-
-#include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
 
 #include "qt/quick/api/oxideqquickmessagehandler_p_p.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
@@ -126,8 +126,9 @@ size_t OxideQQuickWebViewPrivate::GetMessageHandlerCount() const {
 
 oxide::MessageHandler* OxideQQuickWebViewPrivate::GetMessageHandlerAt(
     size_t index) const {
-  return OxideQQuickMessageHandlerPrivate::get(
-      message_handlers_.at(index))->GetHandler();
+  return &oxide::qt::MessageHandlerAdapterPrivate::get(
+      OxideQQuickMessageHandlerPrivate::get(
+        message_handlers_.at(index)))->handler();
 }
 
 void OxideQQuickWebViewPrivate::RootFrameCreated(oxide::WebFrame* root) {

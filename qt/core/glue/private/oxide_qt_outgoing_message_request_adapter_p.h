@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_OUTGOING_MESSAGE_REQUEST_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_PRIVATE_OUTGOING_MESSAGE_REQUEST_ADAPTER_H_
 
+#include <string>
+
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
@@ -38,13 +40,21 @@ class OutgoingMessageRequestAdapterPrivate FINAL {
     return request_;
   }
 
-  base::WeakPtr<OutgoingMessageRequestAdapter> GetWeakPtr();
+  base::WeakPtr<OutgoingMessageRequestAdapterPrivate> GetWeakPtr();
+
+  static OutgoingMessageRequestAdapterPrivate* get(
+      OutgoingMessageRequestAdapter* adapter);
 
  private:
+  friend class OutgoingMessageRequestAdapter;
+
   OutgoingMessageRequestAdapterPrivate(OutgoingMessageRequestAdapter* adapter);
+  void ReceiveReplyCallback(const std::string& args);
+  void ReceiveErrorCallback(int error, const std::string& msg);
 
   oxide::OutgoingMessageRequest request_;
-  base::WeakPtrFactory<OutgoingMessageRequestAdapter> weak_factory_;
+  OutgoingMessageRequestAdapter* pub_;
+  base::WeakPtrFactory<OutgoingMessageRequestAdapterPrivate> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(OutgoingMessageRequestAdapterPrivate);
 };

@@ -18,8 +18,6 @@
 #ifndef _OXIDE_QT_CORE_GLUE_OUTGOING_MESSAGE_REQUEST_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_OUTGOING_MESSAGE_REQUEST_ADAPTER_H_
 
-#include <string>
-
 #include <QScopedPointer>
 #include <QtGlobal>
 
@@ -29,9 +27,6 @@ class QVariant;
 QT_END_NAMESPACE
 
 namespace oxide {
-
-class OutgoingMessageRequest;
-
 namespace qt {
 
 class OutgoingMessageRequestAdapterPrivate;
@@ -40,14 +35,11 @@ class Q_DECL_EXPORT OutgoingMessageRequestAdapter {
  public:
   virtual ~OutgoingMessageRequestAdapter();
 
-  oxide::OutgoingMessageRequest* GetRequest();
-
  protected:
   OutgoingMessageRequestAdapter();
 
  private:
-  void ReceiveReplyCallback(const std::string& args);
-  void ReceiveErrorCallback(int error, const std::string& msg);
+  friend class OutgoingMessageRequestAdapterPrivate;
 
   virtual void OnReceiveReply(const QVariant& args) = 0;
   virtual void OnReceiveError(int error, const QString& msg) = 0;

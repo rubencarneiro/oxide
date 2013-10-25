@@ -23,32 +23,10 @@
 
 #include "shared/browser/oxide_incoming_message.h"
 
-#include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
-
-#include "qt/core/api/oxideqincomingmessage.h"
 
 namespace oxide {
 namespace qt {
-
-void MessageHandlerAdapter::ReceiveMessageCallback(
-    oxide::IncomingMessage* message,
-    bool* delivered,
-    bool* error,
-    std::string& error_desc) {
-  *delivered = true;
-
-  QString qerror;
-
-  *error = !OnReceiveMessage(
-      new OxideQIncomingMessage(message),
-      static_cast<WebFrame *>(message->frame())->q_web_frame,
-      qerror);
-
-  if (*error) {
-    error_desc = qerror.toStdString();
-  }
-}
 
 MessageHandlerAdapter::MessageHandlerAdapter() :
     priv_(MessageHandlerAdapterPrivate::Create(this)) {}
@@ -87,16 +65,12 @@ void MessageHandlerAdapter::setWorldIds(const QList<QString>& ids) {
 
 void MessageHandlerAdapter::attachHandler() {
   priv_->handler().SetCallback(
-      base::Bind(&MessageHandlerAdapter::ReceiveMessageCallback,
+      base::Bind(&MessageHandlerAdapterPrivate::ReceiveMessageCallback,
       priv_->GetWeakPtr()));
 }
 
 void MessageHandlerAdapter::detachHandler() {
   priv_->handler().SetCallback(oxide::MessageHandler::HandlerCallback());
-}
-
-oxide::MessageHandler* MessageHandlerAdapter::GetHandler() {
-  return &priv_->handler();
 }
 
 } // namespace qt

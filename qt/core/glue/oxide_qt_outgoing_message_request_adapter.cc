@@ -17,11 +17,6 @@
 
 #include "oxide_qt_outgoing_message_request_adapter.h"
 
-#include <QByteArray>
-#include <QJsonDocument>
-#include <QString>
-#include <QVariant>
-
 #include "base/bind.h"
 
 #include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
@@ -29,37 +24,19 @@
 namespace oxide {
 namespace qt {
 
-void OutgoingMessageRequestAdapter::ReceiveReplyCallback(
-    const std::string& args) {
-  QJsonDocument jsondoc(QJsonDocument::fromJson(
-      QByteArray(args.data(), args.length())));
-
-  OnReceiveReply(jsondoc.toVariant());
-}
-
-void OutgoingMessageRequestAdapter::ReceiveErrorCallback(
-    int error,
-    const std::string& msg) {
-  OnReceiveError(error, QString::fromStdString(msg));
-}
-
 OutgoingMessageRequestAdapter::OutgoingMessageRequestAdapter() :
     priv_(OutgoingMessageRequestAdapterPrivate::Create(this)) {
   priv_->request().SetReplyCallback(
       base::Bind(
-        &OutgoingMessageRequestAdapter::ReceiveReplyCallback,
+        &OutgoingMessageRequestAdapterPrivate::ReceiveReplyCallback,
         priv_->GetWeakPtr()));
   priv_->request().SetErrorCallback(
       base::Bind(
-        &OutgoingMessageRequestAdapter::ReceiveErrorCallback,
+        &OutgoingMessageRequestAdapterPrivate::ReceiveErrorCallback,
         priv_->GetWeakPtr()));
 }
 
 OutgoingMessageRequestAdapter::~OutgoingMessageRequestAdapter() {}
-
-oxide::OutgoingMessageRequest* OutgoingMessageRequestAdapter::GetRequest() {
-  return &priv_->request();
-}
 
 } // namespace qt
 } // namespace oxide

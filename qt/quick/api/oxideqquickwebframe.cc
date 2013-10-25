@@ -23,6 +23,7 @@
 #include <QString>
 
 #include "qt/core/browser/oxide_qt_web_frame.h"
+#include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
 
 #include "oxideqquickmessagehandler_p.h"
 #include "oxideqquickmessagehandler_p_p.h"
@@ -123,7 +124,7 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
           world_id.toStdString(),
           msg_id.toStdString(),
           QString(jsondoc.toJson()).toStdString(),
-          OxideQQuickOutgoingMessageRequestPrivate::get(request)->GetRequest())) {
+          &oxide::qt::OutgoingMessageRequestAdapterPrivate::get(OxideQQuickOutgoingMessageRequestPrivate::get(request))->request())) {
     delete request;
     return NULL;
   }

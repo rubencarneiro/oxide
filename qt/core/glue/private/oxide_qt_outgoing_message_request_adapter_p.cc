@@ -17,21 +17,50 @@
 
 #include "oxide_qt_outgoing_message_request_adapter_p.h"
 
+#include <QByteArray>
+#include <QJsonDocument>
+#include <QString>
+#include <QVariant>
+
+#include "qt/core/glue/oxide_qt_outgoing_message_request_adapter.h"
+
 namespace oxide {
 namespace qt {
 
 OutgoingMessageRequestAdapterPrivate::OutgoingMessageRequestAdapterPrivate(
     OutgoingMessageRequestAdapter* adapter) :
-    weak_factory_(adapter) {}
+    pub_(adapter),
+    weak_factory_(this) {}
 
+void OutgoingMessageRequestAdapterPrivate::ReceiveReplyCallback(
+    const std::string& args) {
+  QJsonDocument jsondoc(QJsonDocument::fromJson(
+      QByteArray(args.data(), args.length())));
+
+  pub_->OnReceiveReply(jsondoc.toVariant());
+}
+
+void OutgoingMessageRequestAdapterPrivate::ReceiveErrorCallback(
+    int error,
+    const std::string& msg) {
+  pub_->OnReceiveError(error, QString::fromStdString(msg));
+}
+
+// static
 OutgoingMessageRequestAdapterPrivate* OutgoingMessageRequestAdapterPrivate::Create(
     OutgoingMessageRequestAdapter* adapter) {
   return new OutgoingMessageRequestAdapterPrivate(adapter);
 }
 
-base::WeakPtr<OutgoingMessageRequestAdapter>
+base::WeakPtr<OutgoingMessageRequestAdapterPrivate>
 OutgoingMessageRequestAdapterPrivate::GetWeakPtr() {
   return weak_factory_.GetWeakPtr();
+}
+
+// static
+OutgoingMessageRequestAdapterPrivate* OutgoingMessageRequestAdapterPrivate::get(
+    OutgoingMessageRequestAdapter* adapter) {
+  return adapter->priv_.data();
 }
 
 } // namespace qt
