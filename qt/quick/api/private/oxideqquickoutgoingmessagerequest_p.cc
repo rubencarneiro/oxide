@@ -18,66 +18,36 @@
 #include "qt/quick/api/oxideqquickoutgoingmessagerequest_p_p.h"
 #include "qt/quick/api/oxideqquickoutgoingmessagerequest_p.h"
 
-#include <QByteArray>
 #include <QJSEngine>
-#include <QJsonDocument>
 #include <QString>
 #include <QVariant>
-
-#include "base/bind.h"
 
 #include "qt/quick/api/oxideqquickwebframe_p_p.h"
 
 OxideQQuickOutgoingMessageRequestPrivate::OxideQQuickOutgoingMessageRequestPrivate(
     OxideQQuickOutgoingMessageRequest* q) :
     frame(NULL),
-    weak_factory_(this),
-    q_ptr(q) {
-  request_.SetReplyCallback(
-      base::Bind(
-        &OxideQQuickOutgoingMessageRequestPrivate::ReceiveReplyCallback,
-        weak_factory_.GetWeakPtr()));
-  request_.SetErrorCallback(
-      base::Bind(
-        &OxideQQuickOutgoingMessageRequestPrivate::ReceiveErrorCallback,
-        weak_factory_.GetWeakPtr()));
-}
+    q_ptr(q) {}
 
-void OxideQQuickOutgoingMessageRequestPrivate::ReceiveReplyCallback(
-    const std::string& args) {
-  QJsonDocument jsondoc(QJsonDocument::fromJson(
-      QByteArray(args.data(), args.length())));
-
+void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveReply(
+    const QVariant& args) {
   QJSValueList jsargs;
-  jsargs.append(reply_callback.engine()->toScriptValue(jsondoc.toVariant()));
+  jsargs.append(reply_callback.engine()->toScriptValue(args));
 
   reply_callback.call(jsargs);
 
   removeFromOwner();
 }
 
-void OxideQQuickOutgoingMessageRequestPrivate::ReceiveErrorCallback(
+void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveError(
     int error,
-    const std::string& msg) {
+    const QString& msg) {
   QJSValueList jsargs;
   jsargs.append(QJSValue(error));
-  jsargs.append(QJSValue(QString::fromStdString(msg)));
+  jsargs.append(QJSValue(msg));
 
   error_callback.call(jsargs);
 
-  removeFromOwner();
-}
-
-void OxideQQuickOutgoingMessageRequestPrivate::removeFromOwner() {
-  Q_Q(OxideQQuickOutgoingMessageRequest);
-
-  if (frame) {
-    frame->removeOutgoingMessageRequest(q);
-    frame = NULL;
-  }
-}
-
-OxideQQuickOutgoingMessageRequestPrivate::~OxideQQuickOutgoingMessageRequestPrivate() {
   removeFromOwner();
 }
 
@@ -91,4 +61,13 @@ OxideQQuickOutgoingMessageRequestPrivate* OxideQQuickOutgoingMessageRequestPriva
 OxideQQuickOutgoingMessageRequestPrivate* OxideQQuickOutgoingMessageRequestPrivate::get(
     OxideQQuickOutgoingMessageRequest* request) {
   return request->d_func();
+}
+
+void OxideQQuickOutgoingMessageRequestPrivate::removeFromOwner() {
+  Q_Q(OxideQQuickOutgoingMessageRequest);
+
+  if (frame) {
+    frame->removeOutgoingMessageRequest(q);
+    frame = NULL;
+  }
 }

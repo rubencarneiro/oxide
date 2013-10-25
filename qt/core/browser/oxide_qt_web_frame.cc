@@ -71,7 +71,8 @@ oxide::OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
   OxideQQuickOutgoingMessageRequest* req =
       OxideQQuickWebFramePrivate::get(
         q_web_frame)->outgoing_message_requests().at(index);
-  return OxideQQuickOutgoingMessageRequestPrivate::get(req)->request();
+  // FIXME: Stop using OxideQQuickOutgoingMessageRequestPrivate from here
+  return OxideQQuickOutgoingMessageRequestPrivate::get(req)->GetRequest();
 }
 
 } // namespace qt

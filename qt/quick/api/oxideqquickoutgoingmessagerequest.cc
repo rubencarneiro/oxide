@@ -24,7 +24,11 @@ OxideQQuickOutgoingMessageRequest::OxideQQuickOutgoingMessageRequest() :
     QObject(),
     d_ptr(OxideQQuickOutgoingMessageRequestPrivate::Create(this)) {}
 
-OxideQQuickOutgoingMessageRequest::~OxideQQuickOutgoingMessageRequest() {}
+OxideQQuickOutgoingMessageRequest::~OxideQQuickOutgoingMessageRequest() {
+  Q_D(OxideQQuickOutgoingMessageRequest);
+
+  d->removeFromOwner();
+}
 
 QJSValue OxideQQuickOutgoingMessageRequest::replyCallback() const {
   Q_D(const OxideQQuickOutgoingMessageRequest);

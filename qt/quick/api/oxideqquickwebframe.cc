@@ -123,7 +123,7 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
           world_id.toStdString(),
           msg_id.toStdString(),
           QString(jsondoc.toJson()).toStdString(),
-          OxideQQuickOutgoingMessageRequestPrivate::get(request)->request())) {
+          OxideQQuickOutgoingMessageRequestPrivate::get(request)->GetRequest())) {
     delete request;
     return NULL;
   }
