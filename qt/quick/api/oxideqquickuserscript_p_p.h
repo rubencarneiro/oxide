@@ -19,51 +19,25 @@
 #define _OXIDE_QT_QUICK_API_USER_SCRIPT_P_P_H_
 
 #include <QtGlobal>
-#include <QUrl>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
-#include "base/platform_file.h"
+#include "qt/core/glue/oxide_qt_user_script_adapter.h"
 
-#include "qt/quick/api/oxideqquickuserscript_p.h"
-
-namespace oxide {
-class UserScript;
-}
-
-class OxideQQuickUserScriptPrivate FINAL {
+class OxideQQuickUserScriptPrivate Q_DECL_FINAL :
+    public oxide::qt::UserScriptAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickUserScript)
 
  public:
   OxideQQuickUserScriptPrivate(OxideQQuickUserScript* q);
 
-  void startLoading();
-
-  OxideQQuickUserScript::State state() const { return state_; }
-  oxide::UserScript* user_script() const {
-    return user_script_.get();
-  }
-
-  QUrl url() const;
-  void setUrl(const QUrl& url);
- 
   static OxideQQuickUserScriptPrivate* get(OxideQQuickUserScript* user_script);
 
- protected:
+ private:
+  void OnScriptLoadFailed() Q_DECL_FINAL;
+  void OnScriptLoaded() Q_DECL_FINAL;
+
   OxideQQuickUserScript* q_ptr;
 
- private:
-  void OnGotFileContents(base::PlatformFileError error,
-                         const char* data,
-                         int bytes_read);
-
-  OxideQQuickUserScript::State state_;
-  scoped_ptr<oxide::UserScript> user_script_;
-  base::WeakPtrFactory<OxideQQuickUserScriptPrivate> weak_factory_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQQuickUserScriptPrivate);
+  Q_DISABLE_COPY(OxideQQuickUserScriptPrivate);
 };
 
 #endif // _OXIDE_QT_QUICK_API_USER_SCRIPT_P_P_H_

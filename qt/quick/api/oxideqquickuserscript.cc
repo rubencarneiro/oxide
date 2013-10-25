@@ -20,7 +20,27 @@
 
 #include <QtDebug>
 
-#include "shared/common/oxide_user_script.h"
+void OxideQQuickUserScriptPrivate::OnScriptLoadFailed() {
+  Q_Q(OxideQQuickUserScript);
+
+  emit q->scriptLoadFailed();
+}
+
+void OxideQQuickUserScriptPrivate::OnScriptLoaded() {
+  Q_Q(OxideQQuickUserScript);
+
+  emit q->scriptLoaded();
+}
+
+OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
+    OxideQQuickUserScript* q) :
+    q_ptr(q) {}
+
+// static
+OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
+    OxideQQuickUserScript* user_script) {
+  return user_script->d_func();
+}
 
 OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
     QObject(parent),
@@ -31,19 +51,9 @@ OxideQQuickUserScript::~OxideQQuickUserScript() {}
 void OxideQQuickUserScript::classBegin() {}
 
 void OxideQQuickUserScript::componentComplete() {
-  startLoading();
-}
-
-void OxideQQuickUserScript::startLoading() {
   Q_D(OxideQQuickUserScript);
 
   d->startLoading();
-}
-
-OxideQQuickUserScript::State OxideQQuickUserScript::state() const {
-  Q_D(const OxideQQuickUserScript);
-
-  return d->state();
 }
 
 QUrl OxideQQuickUserScript::url() const {
@@ -55,7 +65,7 @@ QUrl OxideQQuickUserScript::url() const {
 void OxideQQuickUserScript::setUrl(const QUrl& url) {
   Q_D(OxideQQuickUserScript);
 
-  if (d->state() != Constructing) {
+  if (d->state() != oxide::qt::UserScriptAdapter::Constructing) {
     qWarning() << "url is a construct-only parameter";
     return;
   }
@@ -76,7 +86,7 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
 bool OxideQQuickUserScript::emulateGreasemonkey() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->user_script()->emulate_greasemonkey();
+  return d->emulateGreasemonkey();
 }
 
 void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
@@ -86,14 +96,14 @@ void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
     return;
   }
 
-  d->user_script()->set_emulate_greasemonkey(emulate_greasemonkey);
+  d->setEmulateGreasemonkey(emulate_greasemonkey);
   emit scriptPropertyChanged();
 }
 
 bool OxideQQuickUserScript::matchAllFrames() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->user_script()->match_all_frames();
+  return d->matchAllFrames();
 }
 
 void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
@@ -103,14 +113,14 @@ void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
     return;
   }
 
-  d->user_script()->set_match_all_frames(match_all_frames);
+  d->setMatchAllFrames(match_all_frames);
   emit scriptPropertyChanged();
 }
 
 bool OxideQQuickUserScript::incognitoEnabled() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->user_script()->incognito_enabled();
+  return d->incognitoEnabled();
 }
 
 void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
@@ -120,14 +130,14 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
     return;
   }
 
-  d->user_script()->set_incognito_enabled(incognito_enabled);
+  d->setIncognitoEnabled(incognito_enabled);
   emit scriptPropertyChanged();
 }
 
 QString OxideQQuickUserScript::worldId() const {
   Q_D(const OxideQQuickUserScript);
 
-  return QString::fromStdString(d->user_script()->world_id());
+  return d->worldId();
 }
 
 void OxideQQuickUserScript::setWorldId(const QString& world_id) {
@@ -137,6 +147,6 @@ void OxideQQuickUserScript::setWorldId(const QString& world_id) {
     return;
   }
 
-  d->user_script()->set_world_id(world_id.toStdString());
+  d->setWorldId(world_id);
   emit scriptPropertyChanged();
 }

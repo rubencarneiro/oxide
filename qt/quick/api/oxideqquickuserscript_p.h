@@ -39,23 +39,11 @@ class Q_DECL_EXPORT OxideQQuickUserScript : public QObject,
   Q_DECLARE_PRIVATE(OxideQQuickUserScript)
 
  public:
-
-  enum State {
-    Constructing,
-    Loading,
-    Ready,
-    Failed
-  };
-
   OxideQQuickUserScript(QObject* parent = NULL);
   virtual ~OxideQQuickUserScript();
 
   void classBegin();
   void componentComplete();
-
-  void startLoading();
-
-  State state() const;
 
   QUrl url() const;
   void setUrl(const QUrl& url);

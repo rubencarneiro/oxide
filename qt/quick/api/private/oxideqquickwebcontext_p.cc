@@ -23,6 +23,8 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_user_script_master.h"
 
+#include "qt/core/glue/private/oxide_qt_user_script_adapter_p.h"
+
 #include "qt/quick/api/oxideqquickuserscript_p.h"
 #include "qt/quick/api/oxideqquickuserscript_p_p.h"
 
@@ -77,16 +79,19 @@ void OxideQQuickWebContextPrivate::updateUserScripts() {
 
   for (int i = 0; i < user_scripts_.size(); ++i) {
     OxideQQuickUserScript* qscript = user_scripts_.at(i);
-    if (qscript->state() == OxideQQuickUserScript::Loading) {
+    OxideQQuickUserScriptPrivate* p =
+        OxideQQuickUserScriptPrivate::get(qscript);
+    if (p->state() == oxide::qt::UserScriptAdapter::Loading) {
       return;
     }
 
-    if (qscript->state() != OxideQQuickUserScript::Ready) {
+    if (p->state() != oxide::qt::UserScriptAdapter::Ready) {
       continue;
     }
 
     scripts.push_back(
-        OxideQQuickUserScriptPrivate::get(qscript)->user_script());
+        &oxide::qt::UserScriptAdapterPrivate::get(
+          OxideQQuickUserScriptPrivate::get(qscript))->user_script());
   }
 
   context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
