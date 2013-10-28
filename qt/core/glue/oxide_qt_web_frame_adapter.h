@@ -15,53 +15,56 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_MESSAGE_HANDLER_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_MESSAGE_HANDLER_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_FRAME_ADAPTER_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_FRAME_ADAPTER_H_
 
-#include <string>
-
-#include <QList>
 #include <QScopedPointer>
-#include <QString>
 #include <QtGlobal>
+#include <QUrl>
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 
-class OxideQIncomingMessage;
+QT_BEGIN_NAMESPACE
+template <typename T> class QList;
+class QString;
+class QVariant;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
-class MessageHandlerAdapterPrivate;
-class WebFrameAdapter;
+class MessageHandlerAdapter;
+class OutgoingMessageRequestAdapter;
+class WebFrameAdapterPrivate;
 
-class Q_DECL_EXPORT MessageHandlerAdapter : public AdapterBase {
+class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
  public:
-  virtual ~MessageHandlerAdapter();
+  ~WebFrameAdapter();
 
-  QString msgId() const;
-  void setMsgId(const QString& id);
+  QUrl url() const;
 
-  QList<QString> worldIds() const;
-  void setWorldIds(const QList<QString>& ids);
+  bool sendMessage(const QString& world_id,
+                   const QString& msg_id,
+                   const QVariant& args,
+                   OutgoingMessageRequestAdapter* req);
+  void sendMessageNoReply(const QString& world_id,
+                          const QString& msg_id,
+                          const QVariant& args);
 
-  void attachHandler();
-  void detachHandler();
+  QList<MessageHandlerAdapter *>& message_handlers();
+
+  virtual void URLChanged() = 0;
 
  protected:
-  MessageHandlerAdapter();
+  WebFrameAdapter();
 
  private:
-  friend class MessageHandlerAdapterPrivate;
+  friend class WebFrameAdapterPrivate;
 
-  virtual bool OnReceiveMessage(OxideQIncomingMessage* message,
-                                WebFrameAdapter* frame,
-                                QString& error) = 0;
-
-  QScopedPointer<MessageHandlerAdapterPrivate> priv_;
+  QScopedPointer<WebFrameAdapterPrivate> priv_;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_MESSAGE_HANDLER_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_GLUE_WEB_FRAME_ADAPTER_H_

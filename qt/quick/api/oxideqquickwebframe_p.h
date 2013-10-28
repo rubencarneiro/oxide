@@ -31,8 +31,8 @@ class OxideQQuickOutgoingMessageRequest;
 class OxideQQuickWebFramePrivate;
 
 namespace oxide {
-namespace qt {
-class WebFrame;
+namespace qquick {
+class WebFrameTreeDelegate;
 }
 }
 
@@ -78,9 +78,9 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public QObject {
   void messageHandlersChanged();
 
  protected:
-  friend class oxide::qt::WebFrame;
+  friend class oxide::qquick::WebFrameTreeDelegate;
 
-  Q_DECL_HIDDEN OxideQQuickWebFrame(oxide::qt::WebFrame* owner);
+  Q_DECL_HIDDEN OxideQQuickWebFrame();
   virtual void childEvent(QChildEvent* event);
 
   QScopedPointer<OxideQQuickWebFramePrivate> d_ptr;

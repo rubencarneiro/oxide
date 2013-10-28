@@ -15,23 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_web_frame_tree.h"
+#ifndef _OXIDE_QT_CORE_GLUE_ADAPTER_BASE_H_
+#define _OXIDE_QT_CORE_GLUE_ADAPTER_BASE_H_
 
-#include "qt/core/glue/oxide_qt_web_frame_tree_delegate.h"
+#include <QObject>
+#include <QtGlobal>
 
-#include "oxide_qt_web_frame.h"
+#define OXIDE_QT_DECLARE_ADAPTER \
+  QObject* _q_func() const { return reinterpret_cast<QObject *>(q_ptr); }
 
 namespace oxide {
 namespace qt {
 
-WebFrameTree::WebFrameTree(content::RenderViewHost* rvh,
-                           WebFrameTreeDelegate* delegate) :
-    oxide::WebFrameTree(rvh),
-    delegate_(delegate) {}
+class AdapterBase {
+ public:
+  virtual ~AdapterBase() {}
 
-oxide::WebFrame* WebFrameTree::CreateFrame() {
-  return new WebFrame(delegate_->CreateFrame());
-}
+  virtual QObject* _q_func() const = 0;
+};
 
 } // namespace qt
 } // namespace oxide
+
+template <typename T>
+inline T* adapterToQObject(oxide::qt::AdapterBase* a) {
+  return qobject_cast<T *>(a->_q_func());
+}
+
+inline QObject* adapterToQObject(oxide::qt::AdapterBase* a) {
+  return qobject_cast<QObject *>(a->_q_func());
+}
+
+#endif // _OXIDE_QT_CORE_GLUE_ADAPTER_BASE_H_

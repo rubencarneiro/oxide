@@ -24,6 +24,8 @@
 
 #include "qt/core/glue/oxide_qt_outgoing_message_request_adapter.h"
 
+#include "oxide_qt_web_frame_adapter_p.h"
+
 namespace oxide {
 namespace qt {
 
@@ -50,6 +52,13 @@ void OutgoingMessageRequestAdapterPrivate::ReceiveErrorCallback(
 OutgoingMessageRequestAdapterPrivate* OutgoingMessageRequestAdapterPrivate::Create(
     OutgoingMessageRequestAdapter* adapter) {
   return new OutgoingMessageRequestAdapterPrivate(adapter);
+}
+
+void OutgoingMessageRequestAdapterPrivate::RemoveFromOwner() {
+  if (frame) {
+    frame->RemoveOutgoingMessageRequest(pub_);
+    frame = NULL;
+  }
 }
 
 base::WeakPtr<OutgoingMessageRequestAdapterPrivate>

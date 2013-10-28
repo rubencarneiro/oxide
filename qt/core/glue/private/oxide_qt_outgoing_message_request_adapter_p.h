@@ -30,6 +30,7 @@ namespace oxide {
 namespace qt {
 
 class OutgoingMessageRequestAdapter;
+class WebFrameAdapterPrivate;
 
 class OutgoingMessageRequestAdapterPrivate FINAL {
  public:
@@ -40,6 +41,8 @@ class OutgoingMessageRequestAdapterPrivate FINAL {
     return request_;
   }
 
+  void RemoveFromOwner();
+
   base::WeakPtr<OutgoingMessageRequestAdapterPrivate> GetWeakPtr();
 
   static OutgoingMessageRequestAdapterPrivate* get(
@@ -47,6 +50,7 @@ class OutgoingMessageRequestAdapterPrivate FINAL {
 
  private:
   friend class OutgoingMessageRequestAdapter;
+  friend class WebFrameAdapterPrivate;
 
   OutgoingMessageRequestAdapterPrivate(OutgoingMessageRequestAdapter* adapter);
   void ReceiveReplyCallback(const std::string& args);
@@ -54,6 +58,7 @@ class OutgoingMessageRequestAdapterPrivate FINAL {
 
   oxide::OutgoingMessageRequest request_;
   OutgoingMessageRequestAdapter* pub_;
+  WebFrameAdapterPrivate* frame;
   base::WeakPtrFactory<OutgoingMessageRequestAdapterPrivate> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(OutgoingMessageRequestAdapterPrivate);

@@ -22,17 +22,19 @@
 #include <QtDebug>
 
 #include "qt/core/api/oxideqincomingmessage.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebview_p.h"
 
 bool OxideQQuickMessageHandlerPrivate::OnReceiveMessage(
     OxideQIncomingMessage* message,
-    OxideQQuickWebFrame* frame,
+    oxide::qt::WebFrameAdapter* frame,
     QString& error) {
   QJSValueList args;
   args.append(callback.engine()->newQObject(message));
-  args.append(callback.engine()->newQObject(frame));
+  args.append(callback.engine()->newQObject(
+      adapterToQObject<OxideQQuickWebFrame>(frame)));
 
   QJSValue rv = callback.call(args);
   if (rv.isError()) {

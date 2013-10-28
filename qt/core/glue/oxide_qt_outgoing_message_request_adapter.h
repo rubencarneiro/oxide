@@ -21,6 +21,8 @@
 #include <QScopedPointer>
 #include <QtGlobal>
 
+#include "qt/core/glue/oxide_qt_adapter_base.h"
+
 QT_BEGIN_NAMESPACE
 class QString;
 class QVariant;
@@ -31,9 +33,11 @@ namespace qt {
 
 class OutgoingMessageRequestAdapterPrivate;
 
-class Q_DECL_EXPORT OutgoingMessageRequestAdapter {
+class Q_DECL_EXPORT OutgoingMessageRequestAdapter : public AdapterBase {
  public:
   virtual ~OutgoingMessageRequestAdapter();
+
+  void removeFromOwner();
 
  protected:
   OutgoingMessageRequestAdapter();

@@ -24,11 +24,11 @@
 #include "qt/core/glue/oxide_qt_outgoing_message_request_adapter.h"
 
 class OxideQQuickOutgoingMessageRequest;
-class OxideQQuickWebFramePrivate;
 
 class OxideQQuickOutgoingMessageRequestPrivate Q_DECL_FINAL :
     public oxide::qt::OutgoingMessageRequestAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickOutgoingMessageRequest)
+  OXIDE_QT_DECLARE_ADAPTER
 
  public:
   static OxideQQuickOutgoingMessageRequestPrivate* Create(
@@ -37,11 +37,8 @@ class OxideQQuickOutgoingMessageRequestPrivate Q_DECL_FINAL :
   static OxideQQuickOutgoingMessageRequestPrivate* get(
       OxideQQuickOutgoingMessageRequest* request);
 
-  void removeFromOwner();
-
   QJSValue reply_callback;
   QJSValue error_callback;
-  OxideQQuickWebFramePrivate* frame;
 
  private:
   OxideQQuickOutgoingMessageRequestPrivate(

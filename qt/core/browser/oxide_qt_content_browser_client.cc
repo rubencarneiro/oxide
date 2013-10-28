@@ -43,7 +43,7 @@ oxide::WebFrameTree* ContentBrowserClient::CreateWebFrameTree(
     return NULL;
   }
 
-  return wvp->CreateWebFrameTree(rvh);
+  return new WebFrameTree(rvh, wvp->CreateWebFrameTreeDelegate());
 }
 
 void ContentBrowserClient::GetDefaultScreenInfoImpl(

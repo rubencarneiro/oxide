@@ -32,8 +32,11 @@
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_frame_tree.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu_qquick.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
 #include "qt/core/glue/private/oxide_qt_web_context_adapter_p.h"
+
+#include "qt/quick/oxide_qquick_web_frame_tree_delegate.h"
 
 #include "qt/quick/api/oxideqquickmessagehandler_p_p.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
@@ -136,7 +139,7 @@ void OxideQQuickWebViewPrivate::RootFrameCreated(oxide::WebFrame* root) {
   Q_Q(OxideQQuickWebView);
 
   oxide::qt::WebFrame* qroot = static_cast<oxide::qt::WebFrame *>(root);
-  qroot->q_web_frame->setParent(q);
+  adapterToQObject(qroot->adapter)->setParent(q);
 }
 
 content::RenderWidgetHostView* OxideQQuickWebViewPrivate::CreateViewForWidget(
@@ -182,9 +185,9 @@ void OxideQQuickWebViewPrivate::UpdateVisibility() {
 }
 
 
-oxide::qt::WebFrameTree* OxideQQuickWebViewPrivate::CreateWebFrameTree(
-    content::RenderViewHost* rvh) {
-  return new oxide::qt::WebFrameTree(rvh);
+oxide::qt::WebFrameTreeDelegate*
+OxideQQuickWebViewPrivate::CreateWebFrameTreeDelegate() {
+  return new oxide::qquick::WebFrameTreeDelegate();
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {

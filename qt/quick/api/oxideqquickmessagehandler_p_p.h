@@ -29,6 +29,7 @@ class OxideQQuickMessageHandler;
 class OxideQQuickMessageHandlerPrivate Q_DECL_FINAL :
     public oxide::qt::MessageHandlerAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickMessageHandler)
+  OXIDE_QT_DECLARE_ADAPTER
 
  public:
   OxideQQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
@@ -42,7 +43,7 @@ class OxideQQuickMessageHandlerPrivate Q_DECL_FINAL :
 
  private:
   bool OnReceiveMessage(OxideQIncomingMessage* message,
-                        OxideQQuickWebFrame* frame,
+                        oxide::qt::WebFrameAdapter* frame,
                         QString& error) Q_DECL_FINAL;
 
   OxideQQuickMessageHandler* q_ptr;

@@ -21,9 +21,11 @@
 #include <QRectF>
 
 #include "qt/core/browser/oxide_qt_web_frame.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 
 #include "oxideqquickmessagehandler_p.h"
 #include "oxideqquickmessagehandler_p_p.h"
+#include "oxideqquickwebframe_p.h"
 
 QT_USE_NAMESPACE
 
@@ -146,7 +148,7 @@ OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
     return NULL;
   }
 
-  return root->q_web_frame;
+  return adapterToQObject<OxideQQuickWebFrame>(root->adapter);
 }
 
 QQmlListProperty<OxideQQuickMessageHandler>

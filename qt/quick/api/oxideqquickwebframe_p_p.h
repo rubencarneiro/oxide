@@ -21,35 +21,25 @@
 #include <QList>
 #include <QtGlobal>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 
 class OxideQQuickMessageHandler;
-class OxideQQuickOutgoingMessageRequest;
 class OxideQQuickWebFrame;
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
-namespace oxide {
-namespace qt {
-class WebFrame;
-}
-}
+class OxideQQuickWebFramePrivate Q_DECL_FINAL :
+    public oxide::qt::WebFrameAdapter {
+  Q_DECLARE_PUBLIC(OxideQQuickWebFrame)
+  OXIDE_QT_DECLARE_ADAPTER
 
-class OxideQQuickWebFramePrivate FINAL {
  public:
-  static OxideQQuickWebFramePrivate* Create(oxide::qt::WebFrame* owner);
-  ~OxideQQuickWebFramePrivate();
+  OxideQQuickWebFramePrivate(OxideQQuickWebFrame* q);
 
-  oxide::qt::WebFrame* owner() const { return owner_; }
-  QList<OxideQQuickMessageHandler *>& message_handlers() {
-    return message_handlers_;
-  }
-  QList<OxideQQuickOutgoingMessageRequest *>& outgoing_message_requests() {
-    return outgoing_message_requests_;
-  }
+  void URLChanged() Q_DECL_FINAL;
+
   QList<OxideQQuickWebFrame *>& children() {
     return children_;
   }
@@ -59,9 +49,6 @@ class OxideQQuickWebFramePrivate FINAL {
   static int childFrame_count(QQmlListProperty<OxideQQuickWebFrame>* prop);
   static OxideQQuickWebFrame* childFrame_at(
       QQmlListProperty<OxideQQuickWebFrame>* prop, int index);
-
-  void addOutgoingMessageRequest(OxideQQuickOutgoingMessageRequest* request);
-  void removeOutgoingMessageRequest(OxideQQuickOutgoingMessageRequest* request);
 
   static void messageHandler_append(
       QQmlListProperty<OxideQQuickMessageHandler>* prop,
@@ -75,15 +62,11 @@ class OxideQQuickWebFramePrivate FINAL {
       QQmlListProperty<OxideQQuickMessageHandler>* prop);
 
  private:
-  OxideQQuickWebFramePrivate(oxide::qt::WebFrame* owner);
-
-  oxide::qt::WebFrame* owner_;
-  QList<OxideQQuickMessageHandler *> message_handlers_;
-  QList<OxideQQuickOutgoingMessageRequest *> outgoing_message_requests_;
   // We keep this separate to QObject becase we want a way to track child frames quickly
   QList<OxideQQuickWebFrame *> children_;
+  OxideQQuickWebFrame* q_ptr;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQQuickWebFramePrivate);
+  Q_DISABLE_COPY(OxideQQuickWebFramePrivate);
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_

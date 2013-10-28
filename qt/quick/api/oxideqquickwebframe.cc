@@ -18,20 +18,100 @@
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebframe_p_p.h"
 
-#include <QByteArray>
-#include <QJsonDocument>
+#include <QtDebug>
 #include <QString>
-
-#include "qt/core/browser/oxide_qt_web_frame.h"
-#include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
 
 #include "oxideqquickmessagehandler_p.h"
 #include "oxideqquickmessagehandler_p_p.h"
 #include "oxideqquickoutgoingmessagerequest_p.h"
 #include "oxideqquickoutgoingmessagerequest_p_p.h"
 
-OxideQQuickWebFrame::OxideQQuickWebFrame(oxide::qt::WebFrame* owner) :
-    d_ptr(OxideQQuickWebFramePrivate::Create(owner)) {}
+OxideQQuickWebFramePrivate::OxideQQuickWebFramePrivate(
+    OxideQQuickWebFrame* q) :
+    q_ptr(q) {}
+
+void OxideQQuickWebFramePrivate::URLChanged() {
+  Q_Q(OxideQQuickWebFrame);
+
+  emit q->urlChanged();
+}
+
+OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
+    OxideQQuickWebFrame* frame) {
+  return frame->d_func();
+}
+
+// static
+int OxideQQuickWebFramePrivate::childFrame_count(
+    QQmlListProperty<OxideQQuickWebFrame>* prop) {
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
+      static_cast<OxideQQuickWebFrame *>(prop->object));
+
+  return p->children().count();
+}
+
+// static
+OxideQQuickWebFrame* OxideQQuickWebFramePrivate::childFrame_at(
+    QQmlListProperty<OxideQQuickWebFrame>* prop,
+    int index) {
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
+      static_cast<OxideQQuickWebFrame *>(prop->object));
+
+  return qobject_cast<OxideQQuickWebFrame *>(p->children().at(index));
+}
+
+// static
+void OxideQQuickWebFramePrivate::messageHandler_append(
+    QQmlListProperty<OxideQQuickMessageHandler>* prop,
+    OxideQQuickMessageHandler* value) {
+  if (!value) {
+    return;
+  }
+
+  OxideQQuickWebFrame* frame =
+      static_cast<OxideQQuickWebFrame *>(prop->object);
+
+  frame->addMessageHandler(value);
+}
+
+// static
+int OxideQQuickWebFramePrivate::messageHandler_count(
+    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
+        static_cast<OxideQQuickWebFrame *>(prop->object));
+
+  return p->message_handlers().size();
+}
+
+// static
+OxideQQuickMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
+    QQmlListProperty<OxideQQuickMessageHandler>* prop,
+    int index) {
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
+        static_cast<OxideQQuickWebFrame *>(prop->object));
+
+  return adapterToQObject<OxideQQuickMessageHandler>(
+      p->message_handlers().at(index));
+}
+
+// static
+void OxideQQuickWebFramePrivate::messageHandler_clear(
+    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+  OxideQQuickWebFrame* frame =
+      static_cast<OxideQQuickWebFrame *>(prop->object);
+  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(frame);
+
+  while (p->message_handlers().size() > 0) {
+    oxide::qt::MessageHandlerAdapter* handler = p->message_handlers().first();
+    p->message_handlers().removeFirst();
+    delete adapterToQObject(handler);
+  }
+
+  emit frame->messageHandlersChanged();
+}
+
+OxideQQuickWebFrame::OxideQQuickWebFrame() :
+    d_ptr(new OxideQQuickWebFramePrivate(this)) {}
 
 void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
   Q_D(OxideQQuickWebFrame);
@@ -56,7 +136,7 @@ OxideQQuickWebFrame::~OxideQQuickWebFrame() {}
 QUrl OxideQQuickWebFrame::url() const {
   Q_D(const OxideQQuickWebFrame);
 
-  return QUrl(QString::fromStdString(d->owner()->url().spec()));
+  return d->url();
 }
 
 OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
@@ -83,11 +163,19 @@ OxideQQuickWebFrame::messageHandlers() {
 void OxideQQuickWebFrame::addMessageHandler(OxideQQuickMessageHandler* handler) {
   Q_D(OxideQQuickWebFrame);
 
-  if (!d->message_handlers().contains(handler)) {
-    OxideQQuickMessageHandlerPrivate::get(handler)->removeFromCurrentOwner();
+  if (!handler) {
+    qWarning() << "Didn't specify a handler";
+    return;
+  }
+
+  OxideQQuickMessageHandlerPrivate* handlerp =
+      OxideQQuickMessageHandlerPrivate::get(handler);
+
+  if (!d->message_handlers().contains(handlerp)) {
+    handlerp->removeFromCurrentOwner();
     handler->setParent(this);
 
-    d->message_handlers().append(handler);
+    d->message_handlers().append(handlerp);
 
     emit messageHandlersChanged();
   }
@@ -97,12 +185,20 @@ void OxideQQuickWebFrame::removeMessageHandler(
     OxideQQuickMessageHandler* handler) {
   Q_D(OxideQQuickWebFrame);
 
+  if (!handler) {
+    qWarning() << "Didn't specify a handler";
+    return;
+  }
+
   if (!d) {
     return;
   }
 
-  if (d->message_handlers().contains(handler)) {
-    d->message_handlers().removeOne(handler);
+  OxideQQuickMessageHandlerPrivate* handlerp =
+      OxideQQuickMessageHandlerPrivate::get(handler);
+
+  if (d->message_handlers().contains(handlerp)) {
+    d->message_handlers().removeOne(handlerp);
     handler->setParent(NULL);
 
     emit messageHandlersChanged();
@@ -118,18 +214,11 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
   OxideQQuickOutgoingMessageRequest* request =
       new OxideQQuickOutgoingMessageRequest();
 
-  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
-
-  if (!d->owner()->SendMessage(
-          world_id.toStdString(),
-          msg_id.toStdString(),
-          QString(jsondoc.toJson()).toStdString(),
-          &oxide::qt::OutgoingMessageRequestAdapterPrivate::get(OxideQQuickOutgoingMessageRequestPrivate::get(request))->request())) {
+  if (!d->sendMessage(world_id, msg_id, args,
+                      OxideQQuickOutgoingMessageRequestPrivate::get(request))) {
     delete request;
     return NULL;
   }
-
-  d->addOutgoingMessageRequest(request);
 
   return request;
 }
@@ -139,9 +228,5 @@ void OxideQQuickWebFrame::sendMessageNoReply(const QString& world_id,
                                              const QVariant& args) {
   Q_D(OxideQQuickWebFrame);
 
-  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
-
-  d->owner()->SendMessageNoReply(world_id.toStdString(),
-                                 msg_id.toStdString(),
-                                 QString(jsondoc.toJson()).toStdString());
+  d->sendMessageNoReply(world_id, msg_id, args);
 }

@@ -41,7 +41,7 @@ QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
-class WebFrameTree;
+class WebFrameTreeDelegate;
 }
 }
 
@@ -77,7 +77,7 @@ class OxideQQuickWebViewPrivate FINAL : public oxide::WebView {
     return weak_factory_.GetWeakPtr();
   }
 
-  oxide::qt::WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh);
+  oxide::qt::WebFrameTreeDelegate* CreateWebFrameTreeDelegate();
 
   void componentComplete();
 

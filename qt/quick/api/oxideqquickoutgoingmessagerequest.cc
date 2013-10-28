@@ -23,8 +23,6 @@
 #include <QtDebug>
 #include <QVariant>
 
-#include "oxideqquickwebframe_p_p.h"
-
 void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveReply(
     const QVariant& args) {
   QJSValueList jsargs;
@@ -49,22 +47,12 @@ void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveError(
 
 OxideQQuickOutgoingMessageRequestPrivate::OxideQQuickOutgoingMessageRequestPrivate(
     OxideQQuickOutgoingMessageRequest* q) :
-    frame(NULL),
     q_ptr(q) {}
 
 // static
 OxideQQuickOutgoingMessageRequestPrivate* OxideQQuickOutgoingMessageRequestPrivate::get(
     OxideQQuickOutgoingMessageRequest* request) {
   return request->d_func();
-}
-
-void OxideQQuickOutgoingMessageRequestPrivate::removeFromOwner() {
-  Q_Q(OxideQQuickOutgoingMessageRequest);
-
-  if (frame) {
-    frame->removeOutgoingMessageRequest(q);
-    frame = NULL;
-  }
 }
 
 OxideQQuickOutgoingMessageRequest::OxideQQuickOutgoingMessageRequest() :

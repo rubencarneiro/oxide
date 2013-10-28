@@ -38,5 +38,9 @@ OutgoingMessageRequestAdapter::OutgoingMessageRequestAdapter() :
 
 OutgoingMessageRequestAdapter::~OutgoingMessageRequestAdapter() {}
 
+void OutgoingMessageRequestAdapter::removeFromOwner() {
+  priv_->RemoveFromOwner();
+}
+
 } // namespace qt
 } // namespace oxide

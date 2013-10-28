@@ -15,23 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_web_frame_tree.h"
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_FRAME_TREE_DELEGATE_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_FRAME_TREE_DELEGATE_H_
 
-#include "qt/core/glue/oxide_qt_web_frame_tree_delegate.h"
-
-#include "oxide_qt_web_frame.h"
+#include <QtGlobal>
 
 namespace oxide {
 namespace qt {
 
-WebFrameTree::WebFrameTree(content::RenderViewHost* rvh,
-                           WebFrameTreeDelegate* delegate) :
-    oxide::WebFrameTree(rvh),
-    delegate_(delegate) {}
+class WebFrameAdapter;
 
-oxide::WebFrame* WebFrameTree::CreateFrame() {
-  return new WebFrame(delegate_->CreateFrame());
-}
+class Q_DECL_EXPORT WebFrameTreeDelegate {
+ public:
+  virtual ~WebFrameTreeDelegate() {}
+
+  virtual WebFrameAdapter* CreateFrame() = 0;
+};
 
 } // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_GLUE_WEB_FRAME_TREE_DELEGATE_H_

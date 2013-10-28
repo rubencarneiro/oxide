@@ -20,19 +20,25 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/oxide_web_frame_tree.h"
 
 namespace oxide {
 namespace qt {
 
+class WebFrameTreeDelegate;
+
 class WebFrameTree FINAL : public oxide::WebFrameTree {
  public:
-  WebFrameTree(content::RenderViewHost* rvh);
+  WebFrameTree(content::RenderViewHost* rvh,
+               WebFrameTreeDelegate* delegate);
 
   oxide::WebFrame* CreateFrame() FINAL;
 
  private:
+  scoped_ptr<WebFrameTreeDelegate> delegate_;
+
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrameTree);
 };
 

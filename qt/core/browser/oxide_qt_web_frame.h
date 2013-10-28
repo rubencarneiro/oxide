@@ -23,14 +23,14 @@
 
 #include "shared/browser/oxide_web_frame.h"
 
-class OxideQQuickWebFrame;
-
 namespace oxide {
 namespace qt {
 
+class WebFrameAdapter;
+
 class WebFrame FINAL : public oxide::WebFrame {
  public:
-  WebFrame();
+  WebFrame(WebFrameAdapter* adapter);
 
   size_t GetMessageHandlerCount() const FINAL;
   oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
@@ -39,7 +39,7 @@ class WebFrame FINAL : public oxide::WebFrame {
   oxide::OutgoingMessageRequest*
       GetOutgoingMessageRequestAt(size_t index) const FINAL;
 
-  OxideQQuickWebFrame* q_web_frame;
+  WebFrameAdapter* adapter;
 
  private:
   ~WebFrame();

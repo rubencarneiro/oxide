@@ -42,7 +42,7 @@ void MessageHandlerAdapterPrivate::ReceiveMessageCallback(
 
   *error = !pub_->OnReceiveMessage(
       new OxideQIncomingMessage(message),
-      static_cast<WebFrame *>(message->frame())->q_web_frame,
+      static_cast<WebFrame *>(message->frame())->adapter,
       qerror);
 
   if (*error) {
