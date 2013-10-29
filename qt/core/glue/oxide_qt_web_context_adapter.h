@@ -33,7 +33,7 @@ namespace qt {
 class UserScriptAdapter;
 class WebContextAdapterPrivate;
 
-class WebContextAdapter {
+class Q_DECL_EXPORT WebContextAdapter {
  public:
   virtual ~WebContextAdapter();
 
