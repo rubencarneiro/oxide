@@ -118,6 +118,7 @@ void RenderWidgetHostViewDelegate::mouseMoveEvent(QMouseEvent* event) {
 
 void RenderWidgetHostViewDelegate::mousePressEvent(QMouseEvent* event) {
   ForwardMouseEvent(event);
+  setFocus(true);
 }
 
 void RenderWidgetHostViewDelegate::mouseReleaseEvent(QMouseEvent* event) {
