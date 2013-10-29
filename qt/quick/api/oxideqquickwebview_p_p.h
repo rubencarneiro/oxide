@@ -18,16 +18,12 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
-#include <QList>
+#include <QScopedPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
-#include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
-
-#include "shared/browser/oxide_message_dispatcher_browser.h"
-#include "shared/browser/oxide_web_view.h"
+#include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
@@ -36,14 +32,7 @@ class OxideQQuickWebView;
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
 template <typename T> class QQmlListProperty;
-class QSizeF;
 QT_END_NAMESPACE
-
-namespace oxide {
-namespace qt {
-class WebFrameTreeDelegate;
-}
-}
 
 struct InitData {
   InitData() : incognito(false) {}
@@ -52,36 +41,33 @@ struct InitData {
   QUrl url;
 };
 
-class OxideQQuickWebViewPrivate FINAL : public oxide::WebView {
+class OxideQQuickWebViewPrivate Q_DECL_FINAL :
+     public oxide::qt::WebViewAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
+  OXIDE_QT_DECLARE_ADAPTER
 
  public:
-  static OxideQQuickWebViewPrivate* Create(OxideQQuickWebView* view);
+  OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
   ~OxideQQuickWebViewPrivate();
 
-  size_t GetMessageHandlerCount() const FINAL;
-  oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
+  oxide::qt::WebFrameTreeDelegate* CreateWebFrameTreeDelegate() Q_DECL_FINAL;
 
-  void RootFrameCreated(oxide::WebFrame* root) FINAL;
+  void URLChanged() Q_DECL_FINAL;
+  void TitleChanged() Q_DECL_FINAL;
+  void CommandsUpdated() Q_DECL_FINAL;
 
-  content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
+  void RootFrameChanged() Q_DECL_FINAL;
 
-  gfx::Rect GetContainerBounds() FINAL;
+  void LoadStarted(const QUrl& url) Q_DECL_FINAL;
+  void LoadStopped(const QUrl& url) Q_DECL_FINAL;
+  void LoadFailed(const QUrl& url,
+                  int error_code,
+                  const QString& error_description) Q_DECL_FINAL;
+  void LoadSucceeded(const QUrl& url) Q_DECL_FINAL;
 
-  oxide::WebPopupMenu* CreatePopupMenu() FINAL;
-
-  void UpdateVisibility();
-
-  base::WeakPtr<OxideQQuickWebViewPrivate> GetWeakPtr() {
-    return weak_factory_.GetWeakPtr();
-  }
-
-  oxide::qt::WebFrameTreeDelegate* CreateWebFrameTreeDelegate();
+  QRectF GetContainerBounds() Q_DECL_FINAL;
 
   void componentComplete();
-
-  InitData* init_props() const { return init_props_.get(); }
 
   static void messageHandler_append(
       QQmlListProperty<OxideQQuickMessageHandler>* prop,
@@ -94,44 +80,19 @@ class OxideQQuickWebViewPrivate FINAL : public oxide::WebView {
   static void messageHandler_clear(
       QQmlListProperty<OxideQQuickMessageHandler>* prop);
 
-  QList<OxideQQuickMessageHandler *>& message_handlers() {
-    return message_handlers_;
-  }
-
   static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
 
-  void updateSize(const QSizeF& size);
-
-  QUrl url() const;
-  void setUrl(const QUrl& url);
-
   void addAttachedPropertyTo(QObject* object);
+
+  InitData* init_props() { return init_props_.data(); }
 
   OxideQQuickWebContext* context;
   QQmlComponent* popup_menu;
 
  private:
-  OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
-
-  void OnURLChanged() FINAL;
-  void OnTitleChanged() FINAL;
-  void OnCommandsUpdated() FINAL;
-
-  void OnRootFrameChanged() FINAL;
-
-  void OnLoadStarted(const GURL& validated_url,
-                     bool is_error_frame) FINAL;
-  void OnLoadStopped(const GURL& validated_url) FINAL;
-  void OnLoadFailed(const GURL& validated_url,
-                    int error_code,
-                    const std::string& error_description) FINAL;
-  void OnLoadSucceeded(const GURL& validated_url) FINAL;
-
-  OxideQQuickWebView* q_ptr;
-  scoped_ptr<InitData> init_props_;
+  QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
-  QList<OxideQQuickMessageHandler *> message_handlers_;
-  base::WeakPtrFactory<OxideQQuickWebViewPrivate> weak_factory_;
+  OxideQQuickWebView* q_ptr;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

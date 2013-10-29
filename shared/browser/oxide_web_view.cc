@@ -117,12 +117,24 @@ WebView::WebView() :
     root_frame_(NULL),
     notification_observer_(this) {}
 
+
+WebView::~WebView() {
+  if (web_contents_) {
+    GetBrowserContext()->RemoveWebView(this);
+    web_contents_->SetDelegate(NULL);
+  }
+}
+
 bool WebView::Init(BrowserContext* context,
                    bool incognito,
                    const gfx::Size& initial_size) {
-  DCHECK(!web_contents_) << "Called Init() more than once";
   CHECK(process_handle_.Available()) <<
         "Failed to start the browser components first!";
+
+  if (web_contents_) {
+    LOG(ERROR) << "Called Init() more than once";
+    return false;
+  }
 
   context = incognito ?
       context->GetOffTheRecordContext() :
@@ -153,16 +165,20 @@ bool WebView::Init(BrowserContext* context,
   return true;
 }
 
-void WebView::DestroyWebContents() {
+void WebView::Shutdown() {
+  if (!web_contents_) {
+    LOG(ERROR) << "Called Shutdown() on a webview that isn't initialized";
+    return;
+  }
+
+  registrar_.Remove(
+      &notification_observer_,
+      content::NOTIFICATION_RENDER_VIEW_HOST_CHANGED,
+      content::Source<content::WebContents>(web_contents_.get()));
+  Observe(NULL);
+
   GetBrowserContext()->RemoveWebView(this);
   web_contents_.reset();
-}
-
-WebView::~WebView() {
-  if (web_contents_) {
-    GetBrowserContext()->RemoveWebView(this);
-    web_contents_->SetDelegate(NULL);
-  }
 }
 
 // static

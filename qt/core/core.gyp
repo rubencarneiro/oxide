@@ -71,8 +71,8 @@
         'glue/private/oxide_qt_web_context_adapter_p.h',
         'glue/private/oxide_qt_web_frame_adapter_p.cc',
         'glue/private/oxide_qt_web_frame_adapter_p.h',
-        '../quick/api/private/oxideqquickwebview_p.cc',
-        '../quick/api/oxideqquickwebview_p_p.h',
+        'glue/private/oxide_qt_web_view_adapter_p.cc',
+        'glue/private/oxide_qt_web_view_adapter_p.h'
       ],
       'actions': [
         {
@@ -128,6 +128,8 @@
         'glue/oxide_qt_web_frame_adapter.cc',
         'glue/oxide_qt_web_frame_adapter.h',
         'glue/oxide_qt_web_frame_tree_delegate.h',
+        'glue/oxide_qt_web_view_adapter.cc',
+        'glue/oxide_qt_web_view_adapter.h',
         '../quick/api/oxideqquickmessagehandler.cc',
         '../quick/api/oxideqquickmessagehandler_p.h',
         '../quick/api/oxideqquickmessagehandler_p_p.h',
@@ -145,6 +147,7 @@
         '../quick/api/oxideqquickwebframe_p_p.h',
         '../quick/api/oxideqquickwebview.cc',
         '../quick/api/oxideqquickwebview_p.h',
+        '../quick/api/oxideqquickwebview_p_p.h',
         '../quick/oxide_qquick_web_frame_tree_delegate.cc',
         '../quick/oxide_qquick_web_frame_tree_delegate.h',
       ],

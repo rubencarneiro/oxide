@@ -64,6 +64,11 @@ class WebView : public MessageTarget,
  public:
   virtual ~WebView();
 
+  bool Init(BrowserContext* context,
+            bool incognito,
+            const gfx::Size& initial_size);
+  void Shutdown();
+
   static WebView* FromWebContents(content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
 
@@ -146,11 +151,6 @@ class WebView : public MessageTarget,
 
  protected:
   WebView();
-  bool Init(BrowserContext* context,
-            bool incognito,
-            const gfx::Size& initial_size);
-
-  void DestroyWebContents();
 
  private:
 
