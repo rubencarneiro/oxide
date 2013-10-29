@@ -15,19 +15,18 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_QQUICK_H_
-#define _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_QQUICK_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
+#define _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 
-#include <QQuickPaintedItem>
 #include <QtGlobal>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/oxide_render_widget_host_view.h"
 
 QT_BEGIN_NAMESPACE
-class QQuickItem;
 class QScreen;
 QT_END_NAMESPACE
 
@@ -37,13 +36,13 @@ namespace oxide {
 namespace qt {
 
 class BackingStore;
+class RenderWidgetHostViewDelegate;
 
-class RenderWidgetHostViewQQuick FINAL : public QQuickPaintedItem,
-                                         public oxide::RenderWidgetHostView {
+class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
  public:
-  RenderWidgetHostViewQQuick(content::RenderWidgetHost* render_widget_host,
-                             QQuickItem* container);
-  virtual ~RenderWidgetHostViewQQuick();
+  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host,
+                       RenderWidgetHostViewDelegate* delegate);
+  virtual ~RenderWidgetHostView();
 
   static void GetScreenInfo(QScreen* screen, WebKit::WebScreenInfo* result);
 
@@ -63,33 +62,16 @@ class RenderWidgetHostViewQQuick FINAL : public QQuickPaintedItem,
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
 
-  void focusInEvent(QFocusEvent* event) FINAL;
-  void focusOutEvent(QFocusEvent* event) FINAL;
-
-  void keyPressEvent(QKeyEvent* event) FINAL;
-  void keyReleaseEvent(QKeyEvent* event) FINAL;
-
-  void mouseDoubleClickEvent(QMouseEvent* event) FINAL;
-  void mouseMoveEvent(QMouseEvent* event) FINAL;
-  void mousePressEvent(QMouseEvent* event) FINAL;
-  void mouseReleaseEvent(QMouseEvent* event) FINAL;
-
-  void wheelEvent(QWheelEvent* event) FINAL;
-
-  void hoverMoveEvent(QHoverEvent* event) FINAL;
-
-  void updatePolish() FINAL;
-  void paint(QPainter* paint) FINAL;
-
  private:
   void ScheduleUpdate(const gfx::Rect& rect) FINAL;
 
   BackingStore* backing_store_;
+  scoped_ptr<RenderWidgetHostViewDelegate> delegate_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostViewQQuick);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_QQUICK_H_
+#endif // _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_H_

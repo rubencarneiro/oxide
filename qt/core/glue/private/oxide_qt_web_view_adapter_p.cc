@@ -25,7 +25,7 @@
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
-#include "qt/core/browser/oxide_qt_render_widget_host_view_qquick.h"
+#include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu_qquick.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
@@ -97,9 +97,9 @@ void WebViewAdapterPrivate::RootFrameCreated(oxide::WebFrame* root) {
 
 content::RenderWidgetHostView* WebViewAdapterPrivate::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
-  // FIXME: Split this and ask the qquick impl for a delegate
-  return new RenderWidgetHostViewQQuick(render_widget_host,
-                                        adapterToQObject<QQuickItem>(a));
+  return new RenderWidgetHostView(
+      render_widget_host,
+      a->CreateRenderWidgetHostViewDelegate());
 }
 
 gfx::Rect WebViewAdapterPrivate::GetContainerBounds() {

@@ -27,6 +27,7 @@
 
 #include "qt/core/api/oxideqloadevent.h"
 
+#include "qt/quick/oxide_qquick_render_widget_host_view_delegate.h"
 #include "qt/quick/oxide_qquick_web_frame_tree_delegate.h"
 
 #include "oxideqquickmessagehandler_p.h"
@@ -65,6 +66,13 @@ OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 oxide::qt::WebFrameTreeDelegate*
 OxideQQuickWebViewPrivate::CreateWebFrameTreeDelegate() {
   return new oxide::qquick::WebFrameTreeDelegate();
+}
+
+oxide::qt::RenderWidgetHostViewDelegate*
+OxideQQuickWebViewPrivate::CreateRenderWidgetHostViewDelegate() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::RenderWidgetHostViewDelegate(q);
 }
 
 void OxideQQuickWebViewPrivate::URLChanged() {

@@ -51,6 +51,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   ~OxideQQuickWebViewPrivate();
 
   oxide::qt::WebFrameTreeDelegate* CreateWebFrameTreeDelegate() Q_DECL_FINAL;
+  oxide::qt::RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
 
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
