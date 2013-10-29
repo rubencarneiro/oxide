@@ -48,7 +48,7 @@ class Q_DECL_EXPORT OutgoingMessageRequestAdapter : public AdapterBase {
   virtual void OnReceiveReply(const QVariant& args) = 0;
   virtual void OnReceiveError(int error, const QString& msg) = 0;
 
-  QScopedPointer<OutgoingMessageRequestAdapterPrivate> priv_;
+  QScopedPointer<OutgoingMessageRequestAdapterPrivate> priv;
 };
 
 } // namespace qt

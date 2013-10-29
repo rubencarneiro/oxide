@@ -29,22 +29,22 @@ namespace oxide {
 namespace qt {
 
 MessageHandlerAdapter::MessageHandlerAdapter() :
-    priv_(MessageHandlerAdapterPrivate::Create(this)) {}
+    priv(MessageHandlerAdapterPrivate::Create(this)) {}
 
 MessageHandlerAdapter::~MessageHandlerAdapter() {}
 
 QString MessageHandlerAdapter::msgId() const {
-  return QString::fromStdString(priv_->handler().msg_id());
+  return QString::fromStdString(priv->handler().msg_id());
 }
 
 void MessageHandlerAdapter::setMsgId(const QString& id) {
-  priv_->handler().set_msg_id(id.toStdString());
+  priv->handler().set_msg_id(id.toStdString());
 }
 
 QList<QString> MessageHandlerAdapter::worldIds() const {
   QList<QString> list;
 
-  const std::vector<std::string>& ids = priv_->handler().world_ids();
+  const std::vector<std::string>& ids = priv->handler().world_ids();
   for (std::vector<std::string>::const_iterator it = ids.begin();
        it != ids.end(); ++it) {
     list.append(QString::fromStdString(*it));
@@ -60,17 +60,17 @@ void MessageHandlerAdapter::setWorldIds(const QList<QString>& ids) {
     list.push_back(ids[i].toStdString());
   }
 
-  priv_->handler().set_world_ids(list);
+  priv->handler().set_world_ids(list);
 }
 
 void MessageHandlerAdapter::attachHandler() {
-  priv_->handler().SetCallback(
+  priv->handler().SetCallback(
       base::Bind(&MessageHandlerAdapterPrivate::ReceiveMessageCallback,
-      priv_->GetWeakPtr()));
+      priv->GetWeakPtr()));
 }
 
 void MessageHandlerAdapter::detachHandler() {
-  priv_->handler().SetCallback(oxide::MessageHandler::HandlerCallback());
+  priv->handler().SetCallback(oxide::MessageHandler::HandlerCallback());
 }
 
 } // namespace qt

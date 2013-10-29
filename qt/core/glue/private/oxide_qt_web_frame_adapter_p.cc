@@ -57,7 +57,7 @@ void WebFrameAdapterPrivate::RemoveOutgoingMessageRequest(
 
 // static
 WebFrameAdapterPrivate* WebFrameAdapterPrivate::get(WebFrameAdapter* adapter) {
-  return adapter->priv_.data();
+  return adapter->priv.data();
 }
 
 } // namespace qt

@@ -67,7 +67,7 @@ class Q_DECL_EXPORT UserScriptAdapter {
   virtual void OnScriptLoadFailed() = 0;
   virtual void OnScriptLoaded() = 0;
 
-  QScopedPointer<UserScriptAdapterPrivate> priv_;
+  QScopedPointer<UserScriptAdapterPrivate> priv;
 };
 
 } // namespace qt

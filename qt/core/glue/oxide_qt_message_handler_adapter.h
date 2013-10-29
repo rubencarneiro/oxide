@@ -58,7 +58,7 @@ class Q_DECL_EXPORT MessageHandlerAdapter : public AdapterBase {
                                 WebFrameAdapter* frame,
                                 QString& error) = 0;
 
-  QScopedPointer<MessageHandlerAdapterPrivate> priv_;
+  QScopedPointer<MessageHandlerAdapterPrivate> priv;
 };
 
 } // namespace qt

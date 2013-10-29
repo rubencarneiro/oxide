@@ -28,7 +28,7 @@ namespace qt {
 
 MessageHandlerAdapterPrivate::MessageHandlerAdapterPrivate(
     MessageHandlerAdapter* adapter) :
-    pub_(adapter),
+    a(adapter),
     weak_factory_(this) {}
 
 void MessageHandlerAdapterPrivate::ReceiveMessageCallback(
@@ -40,7 +40,7 @@ void MessageHandlerAdapterPrivate::ReceiveMessageCallback(
 
   QString qerror;
 
-  *error = !pub_->OnReceiveMessage(
+  *error = !a->OnReceiveMessage(
       new OxideQIncomingMessage(message),
       static_cast<WebFrame *>(message->frame())->adapter,
       qerror);
@@ -64,7 +64,7 @@ MessageHandlerAdapterPrivate::GetWeakPtr() {
 // static
 MessageHandlerAdapterPrivate* MessageHandlerAdapterPrivate::get(
     MessageHandlerAdapter* adapter) {
-  return adapter->priv_.data();
+  return adapter->priv.data();
 }
 
 } // namespace qt

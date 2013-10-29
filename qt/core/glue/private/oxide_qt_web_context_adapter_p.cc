@@ -181,7 +181,7 @@ bool WebContextAdapterPrivate::InUse() const {
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::get(
     WebContextAdapter* adapter) {
-  return adapter->priv_.data();
+  return adapter->priv.data();
 }
 
 } // namespace qt

@@ -53,13 +53,12 @@ WebFrame::WebFrame(WebFrameAdapter* adapter) :
 }
 
 size_t WebFrame::GetMessageHandlerCount() const {
-  return WebFrameAdapterPrivate::get(adapter)->message_handlers().size();
+  return adapter->message_handlers().size();
 }
 
 oxide::MessageHandler* WebFrame::GetMessageHandlerAt(
     size_t index) const {
-  MessageHandlerAdapter* handler =
-      WebFrameAdapterPrivate::get(adapter)->message_handlers().at(index);
+  MessageHandlerAdapter* handler = adapter->message_handlers().at(index);
   return &MessageHandlerAdapterPrivate::get(handler)->handler();
 }
 

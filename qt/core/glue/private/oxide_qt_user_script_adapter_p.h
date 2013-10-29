@@ -61,7 +61,7 @@ class UserScriptAdapterPrivate FINAL {
 
   UserScriptAdapter::State state_;
   oxide::UserScript user_script_;
-  UserScriptAdapter* pub_;
+  UserScriptAdapter* a;
   base::WeakPtrFactory<UserScriptAdapterPrivate> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserScriptAdapterPrivate);

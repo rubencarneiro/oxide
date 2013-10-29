@@ -59,7 +59,7 @@ class MessageHandlerAdapterPrivate FINAL {
                               std::string& error_desc);
 
   oxide::MessageHandler handler_;
-  MessageHandlerAdapter* pub_;
+  MessageHandlerAdapter* a;
   base::WeakPtrFactory<MessageHandlerAdapterPrivate> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(MessageHandlerAdapterPrivate);

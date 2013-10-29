@@ -25,21 +25,21 @@ namespace oxide {
 namespace qt {
 
 OutgoingMessageRequestAdapter::OutgoingMessageRequestAdapter() :
-    priv_(OutgoingMessageRequestAdapterPrivate::Create(this)) {
-  priv_->request().SetReplyCallback(
+    priv(OutgoingMessageRequestAdapterPrivate::Create(this)) {
+  priv->request().SetReplyCallback(
       base::Bind(
         &OutgoingMessageRequestAdapterPrivate::ReceiveReplyCallback,
-        priv_->GetWeakPtr()));
-  priv_->request().SetErrorCallback(
+        priv->GetWeakPtr()));
+  priv->request().SetErrorCallback(
       base::Bind(
         &OutgoingMessageRequestAdapterPrivate::ReceiveErrorCallback,
-        priv_->GetWeakPtr()));
+        priv->GetWeakPtr()));
 }
 
 OutgoingMessageRequestAdapter::~OutgoingMessageRequestAdapter() {}
 
 void OutgoingMessageRequestAdapter::removeFromOwner() {
-  priv_->RemoveFromOwner();
+  priv->RemoveFromOwner();
 }
 
 } // namespace qt

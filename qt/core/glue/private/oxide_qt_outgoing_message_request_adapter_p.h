@@ -57,7 +57,7 @@ class OutgoingMessageRequestAdapterPrivate FINAL {
   void ReceiveErrorCallback(int error, const std::string& msg);
 
   oxide::OutgoingMessageRequest request_;
-  OutgoingMessageRequestAdapter* pub_;
+  OutgoingMessageRequestAdapter* a;
   WebFrameAdapterPrivate* frame;
   base::WeakPtrFactory<OutgoingMessageRequestAdapterPrivate> weak_factory_;
 

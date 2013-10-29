@@ -30,23 +30,23 @@ namespace qt {
 WebContextAdapter::~WebContextAdapter() {}
 
 QString WebContextAdapter::product() const {
-  return QString::fromStdString(priv_->GetProduct());
+  return QString::fromStdString(priv->GetProduct());
 }
 
 void WebContextAdapter::setProduct(const QString& product) {
-  priv_->SetProduct(product.toStdString());
+  priv->SetProduct(product.toStdString());
 }
 
 QString WebContextAdapter::userAgent() const {
-  return QString::fromStdString(priv_->GetUserAgent());
+  return QString::fromStdString(priv->GetUserAgent());
 }
 
 void WebContextAdapter::setUserAgent(const QString& user_agent) {
-  priv_->SetUserAgent(user_agent.toStdString());
+  priv->SetUserAgent(user_agent.toStdString());
 }
 
 QUrl WebContextAdapter::dataPath() const {
-  QString path(QString::fromStdString(priv_->GetDataPath().value()));
+  QString path(QString::fromStdString(priv->GetDataPath().value()));
   if (path.isEmpty()) {
     return QUrl();
   }
@@ -60,11 +60,11 @@ void WebContextAdapter::setDataPath(const QUrl& url) {
     return;
   }
 
-  priv_->SetDataPath(base::FilePath(url.toLocalFile().toStdString()));
+  priv->SetDataPath(base::FilePath(url.toLocalFile().toStdString()));
 }
 
 QUrl WebContextAdapter::cachePath() const {
-  QString path(QString::fromStdString(priv_->GetCachePath().value()));
+  QString path(QString::fromStdString(priv->GetCachePath().value()));
   if (path.isEmpty()) {
     return QUrl();
   }
@@ -78,31 +78,31 @@ void WebContextAdapter::setCachePath(const QUrl& url) {
     return;
   }
 
-  priv_->SetCachePath(base::FilePath(url.toLocalFile().toStdString()));
+  priv->SetCachePath(base::FilePath(url.toLocalFile().toStdString()));
 }
 
 QString WebContextAdapter::acceptLangs() const {
-  return QString::fromStdString(priv_->GetAcceptLangs());
+  return QString::fromStdString(priv->GetAcceptLangs());
 }
 
 void WebContextAdapter::setAcceptLangs(const QString& langs) {
-  priv_->SetAcceptLangs(langs.toStdString());
+  priv->SetAcceptLangs(langs.toStdString());
 }
 
 QList<UserScriptAdapter *>& WebContextAdapter::user_scripts() {
-  return priv_->user_scripts();
+  return priv->user_scripts();
 }
 
 void WebContextAdapter::updateUserScripts() {
-  priv_->UpdateUserScripts();
+  priv->UpdateUserScripts();
 }
 
 bool WebContextAdapter::inUse() const {
-  return priv_->InUse();
+  return priv->InUse();
 }
 
 WebContextAdapter::WebContextAdapter() :
-    priv_(WebContextAdapterPrivate::Create()) {}
+    priv(WebContextAdapterPrivate::Create()) {}
 
 } // namespace qt
 } // namespace oxide

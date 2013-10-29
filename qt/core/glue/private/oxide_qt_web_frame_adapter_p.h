@@ -26,7 +26,6 @@
 namespace oxide {
 namespace qt {
 
-class MessageHandlerAdapter;
 class OutgoingMessageRequestAdapter;
 class WebFrame;
 class WebFrameAdapter;
@@ -36,9 +35,6 @@ class WebFrameAdapterPrivate FINAL {
   static WebFrameAdapterPrivate* Create();
   ~WebFrameAdapterPrivate();
 
-  QList<MessageHandlerAdapter *>& message_handlers() {
-    return message_handlers_;
-  }
   const QList<OutgoingMessageRequestAdapter *>& outgoing_message_requests() const {
     return outgoing_message_requests_;
   }
@@ -53,7 +49,6 @@ class WebFrameAdapterPrivate FINAL {
  private:
   WebFrameAdapterPrivate();
 
-  QList<MessageHandlerAdapter *> message_handlers_;
   QList<OutgoingMessageRequestAdapter *> outgoing_message_requests_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrameAdapterPrivate);

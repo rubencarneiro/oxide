@@ -31,7 +31,7 @@ namespace qt {
 
 OutgoingMessageRequestAdapterPrivate::OutgoingMessageRequestAdapterPrivate(
     OutgoingMessageRequestAdapter* adapter) :
-    pub_(adapter),
+    a(adapter),
     weak_factory_(this) {}
 
 void OutgoingMessageRequestAdapterPrivate::ReceiveReplyCallback(
@@ -39,13 +39,13 @@ void OutgoingMessageRequestAdapterPrivate::ReceiveReplyCallback(
   QJsonDocument jsondoc(QJsonDocument::fromJson(
       QByteArray(args.data(), args.length())));
 
-  pub_->OnReceiveReply(jsondoc.toVariant());
+  a->OnReceiveReply(jsondoc.toVariant());
 }
 
 void OutgoingMessageRequestAdapterPrivate::ReceiveErrorCallback(
     int error,
     const std::string& msg) {
-  pub_->OnReceiveError(error, QString::fromStdString(msg));
+  a->OnReceiveError(error, QString::fromStdString(msg));
 }
 
 // static
@@ -56,7 +56,7 @@ OutgoingMessageRequestAdapterPrivate* OutgoingMessageRequestAdapterPrivate::Crea
 
 void OutgoingMessageRequestAdapterPrivate::RemoveFromOwner() {
   if (frame) {
-    frame->RemoveOutgoingMessageRequest(pub_);
+    frame->RemoveOutgoingMessageRequest(a);
     frame = NULL;
   }
 }
@@ -69,7 +69,7 @@ OutgoingMessageRequestAdapterPrivate::GetWeakPtr() {
 // static
 OutgoingMessageRequestAdapterPrivate* OutgoingMessageRequestAdapterPrivate::get(
     OutgoingMessageRequestAdapter* adapter) {
-  return adapter->priv_.data();
+  return adapter->priv.data();
 }
 
 } // namespace qt

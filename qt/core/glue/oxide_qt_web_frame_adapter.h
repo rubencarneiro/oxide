@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_FRAME_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_FRAME_ADAPTER_H_
 
+#include <QList>
 #include <QScopedPointer>
 #include <QtGlobal>
 #include <QUrl>
@@ -25,7 +26,6 @@
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 
 QT_BEGIN_NAMESPACE
-template <typename T> class QList;
 class QString;
 class QVariant;
 QT_END_NAMESPACE
@@ -51,7 +51,9 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
                           const QString& msg_id,
                           const QVariant& args);
 
-  QList<MessageHandlerAdapter *>& message_handlers();
+  QList<MessageHandlerAdapter *>& message_handlers() {
+    return message_handlers_;
+  }
 
   virtual void URLChanged() = 0;
 
@@ -61,7 +63,8 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
  private:
   friend class WebFrameAdapterPrivate;
 
-  QScopedPointer<WebFrameAdapterPrivate> priv_;
+  QList<MessageHandlerAdapter *> message_handlers_;
+  QScopedPointer<WebFrameAdapterPrivate> priv;
 };
 
 } // namespace qt

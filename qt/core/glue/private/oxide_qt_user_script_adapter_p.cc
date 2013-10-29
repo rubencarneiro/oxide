@@ -34,7 +34,7 @@ namespace qt {
 UserScriptAdapterPrivate::UserScriptAdapterPrivate(
     UserScriptAdapter* adapter) :
     state_(UserScriptAdapter::Constructing),
-    pub_(adapter),
+    a(adapter),
     weak_factory_(this) {}
 
 void UserScriptAdapterPrivate::OnGotFileContents(base::PlatformFileError error,
@@ -44,7 +44,7 @@ void UserScriptAdapterPrivate::OnGotFileContents(base::PlatformFileError error,
 
   if (error != base::PLATFORM_FILE_OK) {
     state_ = UserScriptAdapter::Failed;
-    pub_->OnScriptLoadFailed();
+    a->OnScriptLoadFailed();
     return;
   }
 
@@ -53,7 +53,7 @@ void UserScriptAdapterPrivate::OnGotFileContents(base::PlatformFileError error,
   oxide::UserScriptMaster::ParseMetadata(&user_script_);
   state_ = UserScriptAdapter::Ready;
 
-  pub_->OnScriptLoaded();
+  a->OnScriptLoaded();
 }
 
 // static
@@ -75,14 +75,14 @@ void UserScriptAdapterPrivate::StartLoading() {
       base::Bind(&UserScriptAdapterPrivate::OnGotFileContents,
                  weak_factory_.GetWeakPtr()))) {
     state_ = UserScriptAdapter::Failed;
-    pub_->OnScriptLoadFailed();
+    a->OnScriptLoadFailed();
   }
 }
 
 // static
 UserScriptAdapterPrivate* UserScriptAdapterPrivate::get(
     UserScriptAdapter* adapter) {
-  return adapter->priv_.data();
+  return adapter->priv.data();
 }
 
 } // namespace qt

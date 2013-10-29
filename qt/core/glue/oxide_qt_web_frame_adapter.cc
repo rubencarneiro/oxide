@@ -31,12 +31,12 @@ namespace oxide {
 namespace qt {
 
 WebFrameAdapter::WebFrameAdapter() :
-    priv_(WebFrameAdapterPrivate::Create()) {}
+    priv(WebFrameAdapterPrivate::Create()) {}
 
 WebFrameAdapter::~WebFrameAdapter() {}
 
 QUrl WebFrameAdapter::url() const {
-  return QUrl(QString::fromStdString(priv_->owner->url().spec()));
+  return QUrl(QString::fromStdString(priv->owner->url().spec()));
 }
 
 bool WebFrameAdapter::sendMessage(const QString& world_id,
@@ -45,12 +45,12 @@ bool WebFrameAdapter::sendMessage(const QString& world_id,
                                   OutgoingMessageRequestAdapter* req) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
-  if (priv_->owner->SendMessage(
+  if (priv->owner->SendMessage(
       world_id.toStdString(),
       msg_id.toStdString(),
       QString(jsondoc.toJson()).toStdString(),
       &OutgoingMessageRequestAdapterPrivate::get(req)->request())) {
-    priv_->AddOutgoingMessageRequest(req);
+    priv->AddOutgoingMessageRequest(req);
     return true;
   }
 
@@ -62,14 +62,10 @@ void WebFrameAdapter::sendMessageNoReply(const QString& world_id,
                                          const QVariant& args) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
-  priv_->owner->SendMessageNoReply(
+  priv->owner->SendMessageNoReply(
       world_id.toStdString(),
       msg_id.toStdString(),
       QString(jsondoc.toJson()).toStdString());
-}
-
-QList<MessageHandlerAdapter *>& WebFrameAdapter::message_handlers() {
-  return priv_->message_handlers();
 }
 
 } // namespace qt

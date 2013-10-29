@@ -64,7 +64,7 @@ class WebContextAdapter {
  private:
   friend class WebContextAdapterPrivate;
 
-  QScopedPointer<WebContextAdapterPrivate> priv_;
+  QScopedPointer<WebContextAdapterPrivate> priv;
 };
 
 } // namespace qt
