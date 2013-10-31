@@ -27,7 +27,12 @@
 #include "shared/browser/oxide_render_widget_host_view.h"
 
 QT_BEGIN_NAMESPACE
+class QFocusEvent;
+class QKeyEvent;
+class QMouseEvent;
+class QPixmap;
 class QScreen;
+class QWheelEvent;
 QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
@@ -61,6 +66,13 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void GetScreenInfo(WebKit::WebScreenInfo* results) FINAL;
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
+
+  void ForwardFocusEvent(QFocusEvent* event);
+  void ForwardKeyEvent(QKeyEvent* event);
+  void ForwardMouseEvent(QMouseEvent* event);
+  void ForwardWheelEvent(QWheelEvent* event);
+
+  const QPixmap* GetBackingStore();
 
  private:
   void ScheduleUpdate(const gfx::Rect& rect) FINAL;

@@ -35,10 +35,9 @@ class RenderWidgetHost;
 }
 
 namespace oxide {
+namespace qt {
 
 class RenderWidgetHostView;
-
-namespace qt {
 
 class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  public:
@@ -72,11 +71,10 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   virtual void ScheduleUpdate(const QRect& rect) = 0;
 
-  content::RenderWidgetHost* GetRenderWidgetHost();
-  oxide::RenderWidgetHostView* GetRenderWidgetHostView();
-  void SetRenderWidgetHostView(oxide::RenderWidgetHostView* rwhv);
+  RenderWidgetHostView* GetRenderWidgetHostView();
+  void SetRenderWidgetHostView(RenderWidgetHostView* rwhv);
 
-  oxide::RenderWidgetHostView* rwhv_;
+  RenderWidgetHostView* rwhv_;
 };
 
 } // namespace qt
