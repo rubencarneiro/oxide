@@ -29,6 +29,7 @@
 
 #include "qt/quick/oxide_qquick_render_widget_host_view_delegate.h"
 #include "qt/quick/oxide_qquick_web_frame_tree_delegate.h"
+#include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
 #include "oxideqquickmessagehandler_p.h"
 #include "oxideqquickmessagehandler_p_p.h"
@@ -73,6 +74,13 @@ OxideQQuickWebViewPrivate::CreateRenderWidgetHostViewDelegate() {
   Q_Q(OxideQQuickWebView);
 
   return new oxide::qquick::RenderWidgetHostViewDelegate(q);
+}
+
+oxide::qt::WebPopupMenuDelegate*
+OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::WebPopupMenuDelegate(q);
 }
 
 void OxideQQuickWebViewPrivate::URLChanged() {

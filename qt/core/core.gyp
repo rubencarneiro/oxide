@@ -36,7 +36,6 @@
       ],
       'include_dirs': [
         '../..',
-        '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
       ],
       'sources': [
@@ -57,8 +56,8 @@
         'browser/oxide_qt_web_frame.h',
         'browser/oxide_qt_web_frame_tree.cc',
         'browser/oxide_qt_web_frame_tree.h',
-        'browser/oxide_qt_web_popup_menu_qquick.cc',
-        'browser/oxide_qt_web_popup_menu_qquick.h',
+        'browser/oxide_qt_web_popup_menu.cc',
+        'browser/oxide_qt_web_popup_menu.h',
         'common/oxide_qt_content_main_delegate.cc',
         'common/oxide_qt_content_main_delegate.h',
         'glue/private/oxide_qt_message_handler_adapter_p.cc',
@@ -73,13 +72,6 @@
         'glue/private/oxide_qt_web_frame_adapter_p.h',
         'glue/private/oxide_qt_web_view_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.h'
-      ],
-      'actions': [
-        {
-          'action_name': 'oxide_qt_web_popup_menu_qquick.moc',
-          'moc_input': 'browser/oxide_qt_web_popup_menu_qquick.cc',
-          'includes': [ 'moc.gypi' ]
-        },
       ],
       'variables': {
         'chromium_code': 1
@@ -101,6 +93,7 @@
       ],
       'include_dirs': [
         '../..',
+        '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
       ],
       'sources': [
@@ -130,6 +123,8 @@
         'glue/oxide_qt_web_frame_adapter.cc',
         'glue/oxide_qt_web_frame_adapter.h',
         'glue/oxide_qt_web_frame_tree_delegate.h',
+        'glue/oxide_qt_web_popup_menu_delegate.cc',
+        'glue/oxide_qt_web_popup_menu_delegate.h',
         'glue/oxide_qt_web_view_adapter.cc',
         'glue/oxide_qt_web_view_adapter.h',
         '../quick/api/oxideqquickmessagehandler.cc',
@@ -154,6 +149,8 @@
         '../quick/oxide_qquick_render_widget_host_view_delegate.h',
         '../quick/oxide_qquick_web_frame_tree_delegate.cc',
         '../quick/oxide_qquick_web_frame_tree_delegate.h',
+        '../quick/oxide_qquick_web_popup_menu_delegate.cc',
+        '../quick/oxide_qquick_web_popup_menu_delegate.h'
       ],
       'actions': [
         {
@@ -194,6 +191,11 @@
         {
           'action_name': 'moc_oxideqquickwebview.cc',
           'moc_input': '../quick/api/oxideqquickwebview_p.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_qquick_web_popup_menu_delegate.moc',
+          'moc_input': '../quick/oxide_qquick_web_popup_menu_delegate.cc',
           'includes': [ 'moc.gypi' ]
         },
       ]

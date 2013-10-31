@@ -19,28 +19,57 @@
 
 #include "base/logging.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
-#include "content/public/browser/web_contents.h"
+#include "content/public/browser/render_view_host.h"
 
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
 
-WebPopupMenu::WebPopupMenu(content::WebContents* web_contents) :
-    web_contents_(web_contents) {
-  DCHECK(web_contents_);
+WebPopupMenu::WebPopupMenu(content::RenderViewHost* rvh) :
+    content::RenderViewHostObserver(rvh),
+    shown_(false),
+    weak_factory_(this) {}
+
+WebPopupMenu::~WebPopupMenu() {}
+
+void WebPopupMenu::RenderViewHostDestroyed(content::RenderViewHost* rvh) {
+  if (shown_) {
+    static_cast<content::RenderViewHostImpl *>(rvh)->DidCancelPopupMenu();
+    HidePopup();
+  }
+}
+
+void WebPopupMenu::ShowPopup(const gfx::Rect& bounds,
+                             const std::vector<content::MenuItem>& items,
+                             int selected_item,
+                             bool allow_multiple_selection) {
+  shown_ = true;
+  Show(bounds, items, selected_item, allow_multiple_selection);
+}
+
+void WebPopupMenu::HidePopup() {
+  shown_ = false;
+  Hide();
 }
 
 void WebPopupMenu::SelectItems(const std::vector<int>& selected_indices) {
-  static_cast<content::RenderViewHostImpl *>(
-    web_contents_->GetRenderViewHost())->
-      DidSelectPopupMenuItems(selected_indices);
-  static_cast<oxide::WebContentsView *>(web_contents_->GetView())->PopupDone();
+  DCHECK(shown_);
+  render_view_host_impl()->DidSelectPopupMenuItems(selected_indices);
+  HidePopup();
 }
 
 void WebPopupMenu::Cancel() {
-  static_cast<content::RenderViewHostImpl *>(
-    web_contents_->GetRenderViewHost())->DidCancelPopupMenu();
-  static_cast<oxide::WebContentsView *>(web_contents_->GetView())->PopupDone();
+  DCHECK(shown_);
+  render_view_host_impl()->DidCancelPopupMenu();
+  HidePopup();
+}
+
+base::WeakPtr<WebPopupMenu> WebPopupMenu::GetWeakPtr() {
+  return weak_factory_.GetWeakPtr();
+}
+
+content::RenderViewHostImpl* WebPopupMenu::render_view_host_impl() const {
+  return static_cast<content::RenderViewHostImpl *>(render_view_host());
 }
 
 } // namespace oxide

@@ -123,23 +123,20 @@ void WebContentsView::ShowPopupMenu(
     const std::vector<content::MenuItem>& items,
     bool right_aligned,
     bool allow_multiple_selection) {
+  // XXX: Can this happen? Should we cancel an existing popup?
   DCHECK(!active_popup_menu_);
 
-  active_popup_menu_.reset(GetWebView()->CreatePopupMenu());
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
 
-  // FIXME: Provide away for ports to opt out of native popups entirely
-  if (!active_popup_menu_) {
-    static_cast<content::RenderViewHostImpl *>(
-        web_contents_->GetRenderViewHost())->DidCancelPopupMenu();
+  WebPopupMenu* menu = GetWebView()->CreatePopupMenu(rvh);
+  if (!menu) {
+    static_cast<content::RenderViewHostImpl *>(rvh)->DidCancelPopupMenu();
     return;
   }
+  active_popup_menu_ = menu->GetWeakPtr();
 
-  active_popup_menu_->Show(bounds, items, selected_item,
-                           allow_multiple_selection);
-}
-
-void WebContentsView::PopupDone() {
-  active_popup_menu_.reset();
+  active_popup_menu_->ShowPopup(bounds, items, selected_item,
+                                allow_multiple_selection);
 }
 
 } // namespace oxide

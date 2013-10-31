@@ -43,7 +43,7 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   gfx::Rect GetContainerBounds() FINAL;
 
-  oxide::WebPopupMenu* CreatePopupMenu() FINAL;
+  oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 
   WebFrameTreeDelegate* CreateWebFrameTreeDelegate();
 

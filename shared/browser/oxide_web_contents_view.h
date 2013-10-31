@@ -20,7 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "content/port/browser/render_view_host_delegate_view.h"
 #include "content/port/browser/web_contents_view_port.h"
 #include "ui/gfx/size.h"
@@ -87,7 +87,7 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
  private:
   content::WebContents* web_contents_;
   gfx::Size requested_size_;
-  scoped_ptr<WebPopupMenu> active_popup_menu_;
+  base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);
 };

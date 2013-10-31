@@ -147,7 +147,7 @@ class WebView : public MessageTarget,
 
   virtual gfx::Rect GetContainerBounds() = 0;
 
-  virtual WebPopupMenu* CreatePopupMenu();
+  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
  protected:
   WebView();

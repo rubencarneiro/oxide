@@ -57,20 +57,20 @@ TestWebView {
     }
 
     function test_WebView_popupMenu_single1_model() {
-      verify(currentPopupMenu.popupModel, "Should have a model");
+      verify(webView.currentPopupMenu.popupModel, "Should have a model");
 
       // Check model.elementRect
       var r = webView.getTestApi().getBoundingClientRectForSelector("#test");
-      compare(currentPopupMenu.popupModel.elementRect.x, r.x,
+      compare(webView.currentPopupMenu.popupModel.elementRect.x, r.x,
               "model.elementRect.x is wrong");
-      compare(currentPopupMenu.popupModel.elementRect.y, r.y,
+      compare(webView.currentPopupMenu.popupModel.elementRect.y, r.y,
               "model.elementRect.y is wrong");
-      compare(currentPopupMenu.popupModel.elementRect.width, r.width,
+      compare(webView.currentPopupMenu.popupModel.elementRect.width, r.width,
               "model.elementRect.width is wrong");
-      compare(currentPopupMenu.popupModel.elementRect.height, r.height,
+      compare(webView.currentPopupMenu.popupModel.elementRect.height, r.height,
               "model.elementRect.height is wrong");
 
-      compare(currentPopupMenu.popupModel.allowMultiSelect, false,
+      compare(webView.currentPopupMenu.popupModel.allowMultiSelect, false,
               "The select element doesn't allow multi-select");
 
       var data = [

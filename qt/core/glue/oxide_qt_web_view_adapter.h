@@ -39,6 +39,7 @@ class RenderWidgetHostViewDelegate;
 class WebContextAdapter;
 class WebFrameAdapter;
 class WebFrameTreeDelegate;
+class WebPopupMenuDelegate;
 class WebViewAdapterPrivate;
 
 class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
@@ -79,6 +80,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual WebFrameTreeDelegate* CreateWebFrameTreeDelegate() = 0;
   virtual RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() = 0;
+  virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;

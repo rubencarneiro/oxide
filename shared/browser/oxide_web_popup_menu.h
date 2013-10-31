@@ -22,10 +22,12 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/weak_ptr.h"
+#include "content/public/browser/render_view_host_observer.h"
 #include "content/public/common/menu_item.h"
 
 namespace content {
-class WebContents;
+class RenderViewHost;
 }
 
 namespace gfx {
@@ -34,23 +36,37 @@ class Rect;
 
 namespace oxide {
 
-class WebPopupMenu {
+class WebPopupMenu : public content::RenderViewHostObserver {
  public:
-  virtual ~WebPopupMenu() {}
+  virtual ~WebPopupMenu();
 
-  virtual void Show(const gfx::Rect& bounds,
-                    const std::vector<content::MenuItem>& items,
-                    int selected_item,
-                    bool allow_multiple_selection) = 0;
+  void RenderViewHostDestroyed(content::RenderViewHost* rvh) FINAL;
+
+  void ShowPopup(const gfx::Rect& bounds,
+                 const std::vector<content::MenuItem>& items,
+                 int selected_item,
+                 bool allow_multiple_selection);
+  void HidePopup();
 
   void SelectItems(const std::vector<int>& selected_indices);
   void Cancel();
 
+  base::WeakPtr<WebPopupMenu> GetWeakPtr();
+
+  content::RenderViewHostImpl* render_view_host_impl() const;
+
  protected:
-  WebPopupMenu(content::WebContents* web_contents);
+  WebPopupMenu(content::RenderViewHost* rvh);
 
  private:
-  content::WebContents* web_contents_;
+  virtual void Show(const gfx::Rect& bounds,
+                    const std::vector<content::MenuItem>& items,
+                    int selected_item,
+                    bool allow_multiple_selection) = 0;
+  virtual void Hide() = 0;
+
+  bool shown_;
+  base::WeakPtrFactory<WebPopupMenu> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
 };

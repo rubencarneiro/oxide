@@ -15,10 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_QQUICK_H_
-#define _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_QQUICK_H_
-
-#include <QtGlobal>
+#ifndef _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
+#define _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -26,32 +24,26 @@
 
 #include "shared/browser/oxide_web_popup_menu.h"
 
-class OxideQQuickWebView;
-
-QT_BEGIN_NAMESPACE
-class QQmlContext;
-class QQuickItem;
-QT_END_NAMESPACE
-
 namespace oxide {
 namespace qt {
 
-class WebPopupMenuQQuick FINAL : public oxide::WebPopupMenu {
- public:
-  WebPopupMenuQQuick(OxideQQuickWebView* view,
-                     content::WebContents* web_contents);
+class WebPopupMenuDelegate;
 
+class WebPopupMenu FINAL : public oxide::WebPopupMenu {
+ public:
+  WebPopupMenu(WebPopupMenuDelegate* delegate,
+               content::RenderViewHost* rvh);
+
+ private:
   void Show(const gfx::Rect& bounds,
             const std::vector<content::MenuItem>& items,
             int selected_item,
             bool allow_multiple_selection) FINAL;
+  void Hide() FINAL;
 
- private:
-  OxideQQuickWebView* view_;
-  scoped_ptr<QQmlContext> context_;
-  scoped_ptr<QQuickItem> popup_menu_;
+  scoped_ptr<WebPopupMenuDelegate> delegate_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenuQQuick);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
 };
 
 } // namespace qt

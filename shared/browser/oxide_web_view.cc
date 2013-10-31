@@ -359,7 +359,7 @@ MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
 
 void WebView::RootFrameCreated(WebFrame* root) {}
 
-WebPopupMenu* WebView::CreatePopupMenu() {
+WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
   return NULL;
 }
 
