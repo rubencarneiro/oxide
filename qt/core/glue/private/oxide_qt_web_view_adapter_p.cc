@@ -17,13 +17,10 @@
 
 #include "oxide_qt_web_view_adapter_p.h"
 
-#include <QQuickItem>
 #include <QString>
 #include <QUrl>
 
 #include "url/gurl.h"
-
-#include "qt/quick/api/oxideqquickwebview_p.h"
 
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"

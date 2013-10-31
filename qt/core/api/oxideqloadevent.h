@@ -64,10 +64,10 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
  protected:
   friend class OxideQQuickWebViewPrivate;
 
-  Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
-                                Type type,
-                                int error_code = 0,
-                                const QString& error_string = QString());
+  OxideQLoadEvent(const QUrl& url,
+                  Type type,
+                  int error_code = 0,
+                  const QString& error_string = QString());
 
  private:
   QScopedPointer<OxideQLoadEventPrivate> d_ptr;

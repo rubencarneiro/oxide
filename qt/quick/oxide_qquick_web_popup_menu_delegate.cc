@@ -94,6 +94,7 @@ PopupListModel::PopupListModel(QList<oxide::qt::MenuItem>& items,
 }
 
 int PopupListModel::rowCount(const QModelIndex& parent) const {
+  Q_UNUSED(parent);
   return items_.size();
 }
 
