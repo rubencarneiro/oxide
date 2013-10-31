@@ -17,15 +17,14 @@
 {
   'targets': [
     {
-      'target_name': 'oxide-qt',
+      'target_name': 'OxideQtCore',
       'type': 'shared_library',
       'shared_library_version': '<(oxide_qt_libversion)',
       'dependencies': [
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',
-        'system.gyp:Qt5Quick',
         '../../shared/shared.gyp:oxide_shared',
-        'oxide-qt_public',
+        'OxideQtCore_public',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_renderer',
@@ -78,13 +77,12 @@
       }
     },
     {
-      'target_name': 'oxide-qt_public',
+      'target_name': 'OxideQtCore_public',
       'type': 'static_library',
       'cflags_cc!': [ '-fno-rtti' ],
       'dependencies': [
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',
-        'system.gyp:Qt5Quick',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/skia/skia.gyp:skia',
       ],
@@ -99,12 +97,6 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqincomingmessage.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqquickmessagehandler.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqquickoutgoingmessagerequest.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqquickuserscript.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqquickwebcontext.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqquickwebframe.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqquickwebview.cc',
         'api/oxideqincomingmessage.cc',
         'api/oxideqincomingmessage.h',
         'api/oxideqloadevent.cc',
@@ -127,30 +119,6 @@
         'glue/oxide_qt_web_popup_menu_delegate.h',
         'glue/oxide_qt_web_view_adapter.cc',
         'glue/oxide_qt_web_view_adapter.h',
-        '../quick/api/oxideqquickmessagehandler.cc',
-        '../quick/api/oxideqquickmessagehandler_p.h',
-        '../quick/api/oxideqquickmessagehandler_p_p.h',
-        '../quick/api/oxideqquickoutgoingmessagerequest.cc',
-        '../quick/api/oxideqquickoutgoingmessagerequest_p.h',
-        '../quick/api/oxideqquickoutgoingmessagerequest_p_p.h',
-        '../quick/api/oxideqquickuserscript.cc',
-        '../quick/api/oxideqquickuserscript_p.h',
-        '../quick/api/oxideqquickuserscript_p_p.h',
-        '../quick/api/oxideqquickwebcontext.cc',
-        '../quick/api/oxideqquickwebcontext_p.h',
-        '../quick/api/oxideqquickwebcontext_p_p.h',
-        '../quick/api/oxideqquickwebframe.cc',
-        '../quick/api/oxideqquickwebframe_p.h',
-        '../quick/api/oxideqquickwebframe_p_p.h',
-        '../quick/api/oxideqquickwebview.cc',
-        '../quick/api/oxideqquickwebview_p.h',
-        '../quick/api/oxideqquickwebview_p_p.h',
-        '../quick/oxide_qquick_render_widget_host_view_delegate.cc',
-        '../quick/oxide_qquick_render_widget_host_view_delegate.h',
-        '../quick/oxide_qquick_web_frame_tree_delegate.cc',
-        '../quick/oxide_qquick_web_frame_tree_delegate.h',
-        '../quick/oxide_qquick_web_popup_menu_delegate.cc',
-        '../quick/oxide_qquick_web_popup_menu_delegate.h'
       ],
       'actions': [
         {
@@ -161,41 +129,6 @@
         {
           'action_name': 'moc_oxideqloadevent.cc',
           'moc_input': 'api/oxideqloadevent.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxideqquickmessagehandler.cc',
-          'moc_input': '../quick/api/oxideqquickmessagehandler_p.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxideqquickoutgoingmessagerequest.cc',
-          'moc_input': '../quick/api/oxideqquickoutgoingmessagerequest_p.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxideqquickuserscript.cc',
-          'moc_input': '../quick/api/oxideqquickuserscript_p.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxideqquickwebcontext.cc',
-          'moc_input': '../quick/api/oxideqquickwebcontext_p.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxideqquickwebframe.cc',
-          'moc_input': '../quick/api/oxideqquickwebframe_p.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxideqquickwebview.cc',
-          'moc_input': '../quick/api/oxideqquickwebview_p.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'oxide_qquick_web_popup_menu_delegate.moc',
-          'moc_input': '../quick/oxide_qquick_web_popup_menu_delegate.cc',
           'includes': [ 'moc.gypi' ]
         },
       ]

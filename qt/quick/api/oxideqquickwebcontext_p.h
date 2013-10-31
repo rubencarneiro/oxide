@@ -30,7 +30,7 @@ QT_USE_NAMESPACE
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
 
-class Q_DECL_EXPORT OxideQQuickWebContext : public QObject {
+class OxideQQuickWebContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)

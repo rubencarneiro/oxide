@@ -5,7 +5,7 @@ include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
 
 _DESTDIR = $${OXIDE_BUILD_OUT}/test
 
-QT.oxide.name = oxide-qt
+QT.oxide.name = OxideQtCore
 QT.oxide.libs = $$CHROMIUM_OUT_LIB_DIR
 
 isEmpty(TESTDATAPATH):TESTDATAPATH = $${_PRO_FILE_PWD_}

@@ -29,8 +29,8 @@
 
 class OxideQQuickMessageHandlerPrivate;
 
-class Q_DECL_EXPORT OxideQQuickMessageHandler : public QObject,
-                                                public QQmlParserStatus {
+class OxideQQuickMessageHandler : public QObject,
+                                  public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QString msgId READ msgId WRITE setMsgId NOTIFY msgIdChanged)
   Q_PROPERTY(QList<QString> worldIds READ worldIds WRITE setWorldIds NOTIFY worldIdsChanged)

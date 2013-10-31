@@ -1,5 +1,5 @@
 CONFIG += gyp disable_check
-TARGET = oxide-qt
+TARGET = OxideQtCore
 GYP_TYPE = lib
 
 include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)

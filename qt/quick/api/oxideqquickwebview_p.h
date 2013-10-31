@@ -39,7 +39,7 @@ class OxideQQuickWebFrame;
 class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
 
-class Q_DECL_EXPORT OxideQQuickWebViewAttached : public QObject {
+class OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
   Q_PROPERTY(OxideQQuickWebView* view READ view)
 
@@ -54,7 +54,7 @@ class Q_DECL_EXPORT OxideQQuickWebViewAttached : public QObject {
   OxideQQuickWebView* view_;
 };
 
-class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
+class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)

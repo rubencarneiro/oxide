@@ -10,7 +10,7 @@ SUBDIRS += renderer
 sandbox.file = qt/sandbox/sandbox.pro
 SUBDIRS += sandbox
 
-qmlplugin.file = qt/qmlplugin/qmlplugin.pro
+qmlplugin.file = qt/quick/qmlplugin.pro
 SUBDIRS += qmlplugin
 
 testutils.file = qt/tests/utils/testutils.pro

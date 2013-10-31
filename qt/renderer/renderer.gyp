@@ -20,7 +20,7 @@
       'target_name': 'oxide-renderer',
       'type': 'executable',
       'dependencies': [
-        '../core/core.gyp:oxide-qt'
+        '../core/core.gyp:OxideQtCore'
       ],
       'sources': [
         'main.cc'

@@ -53,22 +53,5 @@
         ],
       },
     },
-    {
-      'target_name': 'Qt5Quick',
-      'type': 'none',
-      'direct_dependent_settings': {
-        'cflags_cc': [
-          '<!@(<(pkg_config) --cflags Qt5Quick)'
-        ]
-      },
-      'link_settings': {
-        'ldflags': [
-          '<!@(<(pkg_config) --libs-only-L --libs-only-other Qt5Quick)',
-        ],
-        'libraries': [
-          '<!@(<(pkg_config) --libs-only-l Qt5Quick)',
-        ],
-      },
-    }
   ]
 }

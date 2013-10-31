@@ -18,7 +18,7 @@
   'variables': {
     'oxide_port_resource_subpath': 'oxide-qt',
     'oxide_port_all_targets': [
-      '../qt/core/core.gyp:oxide-qt',
+      '../qt/core/core.gyp:OxideQtCore',
       '../qt/renderer/renderer.gyp:oxide-renderer',
       '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox'
     ]
