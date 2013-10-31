@@ -22,7 +22,6 @@
 #include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
-#include <QtQml>
 #include <QUrl>
 
 class OxideQLoadEventPrivate;
@@ -73,7 +72,5 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
  private:
   QScopedPointer<OxideQLoadEventPrivate> d_ptr;
 };
-
-QML_DECLARE_TYPE(OxideQLoadEvent)
 
 #endif // OXIDE_Q_LOAD_EVENT_H

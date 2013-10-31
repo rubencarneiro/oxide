@@ -22,7 +22,6 @@
 #include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
-#include <QtQml>
 #include <QVariant>
 
 class OxideQIncomingMessagePrivate;
@@ -58,7 +57,5 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
  private:
   QScopedPointer<OxideQIncomingMessagePrivate> d_ptr;
 };
-
-QML_DECLARE_TYPE(OxideQIncomingMessage)
 
 #endif // OXIDE_Q_INCOMING_MESSAGE_H
