@@ -83,7 +83,11 @@ def main():
     os.rename(os.path.join(chromium_src_path, ".hg.bak"),
               os.path.join(chromium_src_path, ".hg"))
     CheckCall(["hg", "addremove"], chromium_src_path)
-    CheckCall(["hg", "ci", "-m", "Updated with client.py"], chromium_src_path)
+    try:
+        CheckCall(["hg", "ci", "-m", "Updated with client.py"], chromium_src_path)
+    except CalledProcessError as error:
+        if error.returncode != 1:
+            raise
 
   CheckCall(["hg", "qpush", "-a"], chromium_src_path)
 
