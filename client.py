@@ -85,7 +85,11 @@ class PatchSeries(object):
   def refresh(self):
     self._patches = []
 
-    with open(os.path.join(self.patchdir, "series"), "r") as fd:
+    series = os.path.join(self.patchdir, "series")
+    if not os.path.isfile(series):
+      return
+
+    with open(series, "r") as fd:
       for line in fd.readlines():
         if line.strip().startswith("#"):
           continue
@@ -451,7 +455,6 @@ def need_chromium_sync():
 
 def sync_chromium():
   if os.path.isdir(os.path.join(chromiumsrcdir, ".hg")):
-    CheckCall(["hg", "qpop", "-a"], chromiumsrcdir)
     shutil.rmtree(os.path.join(chromiumsrcdir, ".hg"))
     os.remove(os.path.join(chromiumsrcdir, ".hgignore"))
 
@@ -478,8 +481,11 @@ def sync_chromium_patches(patchset):
   patchset.prepare_sync()
   patchset.do_sync()
 
-def apply_chromium_patches(patch_series):
-  patch_series.top_index = len(patch_series) - 1
+def apply_chromium_patches(patchset):
+  patchset.hg_patches.top_index = len(patchset.hg_patches) - 1
+
+def unapply_chromium_patches(patchset):
+  patchset.hg_patches.top_index = -1
 
 def main():
   prepare_depot_tools()
@@ -488,10 +494,12 @@ def main():
   ensure_patch_consistency(patchset)
 
   if need_chromium_sync():
+    unapply_chromium_patches(patchset)
     sync_chromium()
+    patchset.refresh()
 
   sync_chromium_patches(patchset)
-  apply_chromium_patches(patchset.hg_patches)
+  apply_chromium_patches(patchset)
 
 if __name__ == "__main__":
   main()
