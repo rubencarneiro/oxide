@@ -62,13 +62,7 @@ class CommandDispatcher(object):
       handler = None
 
     if not handler:
-      found_help = False
-      for arg in args[1:]:
-        if arg in ("-h", "--help"):
-          found_help = True
-          break
-      if not found_help:
-        args.insert(1, "--help")
+      args.insert(1, "--help")
       parser.set_usage("usage: %prog <command> [options]")
       if parser.description:
         parser.description += "\n\n"
