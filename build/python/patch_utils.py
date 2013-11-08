@@ -146,6 +146,8 @@ class HgPatchSeries(PatchSeries):
       if not patch.applied:
         return None if i == 0 else self[i - 1]
       assert patch.active
+    # All patches are applied
+    return self[len(self) - 1]
 
   @top_patch.setter
   def top_patch(self, value):
@@ -169,6 +171,9 @@ class HgPatchSeries(PatchSeries):
 
   def apply_all(self):
     CheckCall(["hg", "qpush", "-a"], CHROMIUMSRCDIR)
+
+  def unapply_all(self):
+    CheckCall(["hg", "qpop", "-a"], CHROMIUMSRCDIR)
 
   def _update_status(self):
     applied = set()

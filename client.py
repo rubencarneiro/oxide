@@ -135,11 +135,11 @@ def sync_chromium_patches(patchset):
     print(e, file=sys.stderr)
     sys.exit(1)
 
-def apply_chromium_patches(patchset):
-  patchset.hg_patches.apply_all()
+def apply_chromium_patches(patches):
+  patches.apply_all()
 
-def unapply_chromium_patches(patchset):
-  patchset.hg_patches.top_patch = None
+def unapply_chromium_patches(patches):
+  patches.unapply_all()
 
 def main():
   prepare_depot_tools()
@@ -148,12 +148,12 @@ def main():
   ensure_patch_consistency(patchset)
 
   if need_chromium_sync():
-    unapply_chromium_patches(patchset)
+    unapply_chromium_patches(patchset.hg_patches)
     sync_chromium()
     patchset.refresh()
 
   sync_chromium_patches(patchset)
-  apply_chromium_patches(patchset)
+  apply_chromium_patches(patchset.hg_patches)
 
 if __name__ == "__main__":
   main()
