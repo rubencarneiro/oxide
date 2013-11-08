@@ -1,11 +1,12 @@
 chromium/*
-!chromium/.gclient
+gclient.conf_entries
 out/
 *.moc/
 *.obj/
 *.oxideprivate.mk
 *.pch/
 *.swp
+*.host.oxide.mk
 *.target.oxide.mk
 Makefile*
 moc_*
