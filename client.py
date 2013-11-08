@@ -61,7 +61,7 @@ def prepare_depot_tools():
   depot_tools_path = os.path.join(CHROMIUMDIR, "depot_tools")
 
   if not os.path.isdir(depot_tools_path):
-    check_call(["git", "clone", DEPOT_TOOLS, depot_tools_path])
+    CheckCall(["git", "clone", DEPOT_TOOLS, depot_tools_path])
  
   CheckCall(["git", "pull", "origin", "master"], depot_tools_path)
   CheckCall(["git", "checkout", DEPOT_TOOLS_REV], depot_tools_path)

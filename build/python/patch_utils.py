@@ -106,6 +106,8 @@ class PatchSeries(PatchList):
           self._patches.append(Patch(filename, checksum, True))
 
     # Add patches not active in the series file as inactive patches
+    if not os.path.isdir(self.patchdir):
+      return
     extra_patchfiles = [f for f in os.listdir(self.patchdir)
                         if os.path.splitext(f)[1] == ".patch" and f not in self]
     for p in extra_patchfiles:
@@ -147,17 +149,21 @@ class HgPatchSeries(PatchSeries):
 
   @top_patch.setter
   def top_patch(self, value):
+    if value is not None and type(value) != str:
+      value = value.filename
+
     if value is not None:
-      if value not in self:
-        raise Exception("The specified patch is not in this series")
+      patch = self[value]
+    else:
+      patch = None
 
-      if type(value) != str:
-        value = value.filename
+    if patch == self.top_patch:
+      return
 
-    if value is None:
+    if patch is None:
       CheckCall(["hg", "qpop", "-a"], CHROMIUMSRCDIR)
     else:
-      CheckCall(["hg", "qgoto", value], CHROMIUMSRCDIR)
+      CheckCall(["hg", "qgoto", patch.filename], CHROMIUMSRCDIR)
 
     self._update_status()
 
