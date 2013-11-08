@@ -17,6 +17,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+from __future__ import print_function
 import os
 import os.path
 import re
@@ -25,7 +26,8 @@ import sys
 from urlparse import urljoin, urlsplit
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
-from oxide_utils import CheckCall, SyncablePatchSet, CHROMIUMDIR, CHROMIUMSRCDIR, TOPSRCDIR
+from oxide_utils import CheckCall, CheckOutput, CHROMIUMDIR, CHROMIUMSRCDIR, TOPSRCDIR
+from patch_utils import SyncablePatchSet, SyncError
 
 DEPOT_TOOLS = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 DEPOT_TOOLS_REV = "3b5efdf64d35ba20f8afd4f568eb190c3f1e8e12"
@@ -33,7 +35,7 @@ DEPOT_TOOLS_REV = "3b5efdf64d35ba20f8afd4f568eb190c3f1e8e12"
 gclientfile = os.path.join(TOPSRCDIR, "gclient.conf")
 
 def get_svn_info(repo):
-  for line in CheckCall(["svn", "info", repo], want_stdout=True).readlines():
+  for line in CheckOutput(["svn", "info", repo]).split("\n"):
     m = re.match(r'^([^:]*): (.*)', line.strip())
     if not m: continue
     if m.group(1) == "URL":
@@ -68,18 +70,21 @@ def prepare_depot_tools():
 
 def ensure_patch_consistency(patchset):
   for patch in patchset.hg_patches:
-    if patch.filename in patchset.checksums:
-      if patch.checksum == patchset.checksums[patch.filename]:
-        continue
+    if (patch in patchset.old_patches and
+        patch.checksum == patchset.old_patches[patch.filename].checksum):
+      continue
 
+    # For pre-r238 checkouts
     if (patch in patchset.src_patches and
         patch.checksum == patchset.src_patches[patch.filename].checksum):
       continue
 
-    raise Exception("Patch %s in your Chromium source checkout has been "
-                    "modified. Please resolve this manually. Note, you may "
-                    "see this error if your Chromium checkout was set up "
-                    "using a revision of Oxide before r238" % patch.filename)
+    print("Patch %s in your Chromium source checkout has been "
+          "modified. Please resolve this manually. Note, you may "
+          "see this error if your Chromium checkout was created "
+          "using a revision of Oxide before r238" % patch.filename,
+          file=sys.stderr)
+    sys.exit(1)
 
 def need_chromium_sync():
   try:
@@ -123,14 +128,18 @@ def sync_chromium():
   CheckCall(["hg", "qinit"], CHROMIUMSRCDIR)
 
 def sync_chromium_patches(patchset):
-  patchset.prepare_sync()
-  patchset.do_sync()
+  try:
+    patchset.calculate_sync()
+    patchset.do_sync()
+  except SyncError as e:
+    print(e, file=sys.stderr)
+    sys.exit(1)
 
 def apply_chromium_patches(patchset):
-  patchset.hg_patches.top_index = len(patchset.hg_patches) - 1
+  patchset.hg_patches.apply_all()
 
 def unapply_chromium_patches(patchset):
-  patchset.hg_patches.top_index = -1
+  patchset.hg_patches.top_patch = None
 
 def main():
   prepare_depot_tools()
