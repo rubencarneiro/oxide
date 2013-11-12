@@ -51,7 +51,8 @@ class PatchList(object):
         if patch.filename == key:
           return patch
       raise KeyError
-
+    if type(key) == int and not key in range(len(self._patches)):
+      raise IndexError
     return self._patches[key]
 
   def __len__(self):
@@ -141,6 +142,8 @@ class HgPatchSeries(PatchSeries):
 
   @property
   def top_patch(self):
+    if len(self) == 0:
+      return None
     for i in range(len(self)):
       patch = self[i]
       if not patch.applied:
