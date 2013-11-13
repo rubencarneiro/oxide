@@ -41,7 +41,9 @@ def CheckCall(args, cwd=None):
   if r is not 0: raise CalledProcessError(r, args)
 
 def CheckOutput(args, cwd=None):
-  p = Popen(args, cwd=cwd, stdout=PIPE)
+  e = os.environ
+  e['LANG'] = 'C'
+  p = Popen(args, cwd=cwd, stdout=PIPE, env=e)
   r = p.wait()
   if r is not 0: raise CalledProcessError(r, args)
   return p.stdout.read()
