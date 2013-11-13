@@ -148,7 +148,8 @@ def main():
   ensure_patch_consistency(patchset)
 
   if need_chromium_sync():
-    unapply_chromium_patches(patchset.hg_patches)
+    if os.path.exists(CHROMIUMSRCDIR):
+      unapply_chromium_patches(patchset.hg_patches)
     sync_chromium()
     patchset.refresh()
 
