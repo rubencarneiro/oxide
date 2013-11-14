@@ -85,7 +85,9 @@ void ContentMainDelegate::PreSandboxStartup() {
   base::FilePath resource_dir;
   const char* resource_path = getenv("OXIDE_RESOURCE_PATH");
   if (resource_path) {
-    resource_dir = base::FilePath(resource_path);
+    // Make sure that we have a properly formed absolute path
+    // there are some load issues if not.
+    resource_dir = base::MakeAbsoluteFilePath(base::FilePath(resource_path));
   } else {
     Dl_info info;
     int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
