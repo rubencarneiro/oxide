@@ -19,7 +19,7 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 
 #include <QList>
-#include <QRectF>
+#include <QRect>
 #include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
@@ -95,7 +95,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
-  virtual QRectF GetContainerBounds() = 0;
+  virtual QRect GetContainerBounds() = 0;
 
   void shutdown();
 

@@ -100,11 +100,11 @@ content::RenderWidgetHostView* WebViewAdapterPrivate::CreateViewForWidget(
 }
 
 gfx::Rect WebViewAdapterPrivate::GetContainerBounds() {
-  QRectF bounds = a->GetContainerBounds();
-  return gfx::Rect(qRound(bounds.x()),
-                   qRound(bounds.y()),
-                   qRound(bounds.width()),
-                   qRound(bounds.height()));
+  QRect bounds = a->GetContainerBounds();
+  return gfx::Rect(bounds.x(),
+                   bounds.y(),
+                   bounds.width(),
+                   bounds.height());
 }
 
 oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(

@@ -144,7 +144,7 @@ oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
   return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
 }
 
-QRectF OxideQQuickWebViewPrivate::GetContainerBounds() {
+QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
   Q_Q(OxideQQuickWebView);
 
   QPointF pos(q->mapToScene(QPointF(0,0)));
@@ -153,8 +153,8 @@ QRectF OxideQQuickWebViewPrivate::GetContainerBounds() {
     pos += q->window()->position();
   }
 
-  return QRect(pos.x(), pos.y(),
-               q->width(), q->height());
+  return QRectF(pos.x(), pos.y(),
+                q->width(), q->height()).toRect();
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {
