@@ -43,7 +43,7 @@ void ContentRendererClient::RenderViewCreated(
 }
 
 void ContentRendererClient::DidCreateScriptContext(
-    WebKit::WebFrame* frame,
+    blink::WebFrame* frame,
     v8::Handle<v8::Context> context,
     int extension_group,
     int world_id) {
@@ -51,7 +51,7 @@ void ContentRendererClient::DidCreateScriptContext(
 }
 
 void ContentRendererClient::WillReleaseScriptContext(
-    WebKit::WebFrame* frame,
+    blink::WebFrame* frame,
     v8::Handle<v8::Context> context,
     int world_id) {
   message_dispatcher_->WillReleaseScriptContext(frame, context, world_id);

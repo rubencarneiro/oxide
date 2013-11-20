@@ -34,14 +34,12 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
  public:
   base::MessagePump* CreateMessagePumpForUI() FINAL;
 
-  oxide::WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh) FINAL;
-
  private:
   // Limit default constructor access to the lazy instance initializer
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
   ContentBrowserClient() {}
 
-  void GetDefaultScreenInfoImpl(WebKit::WebScreenInfo* result) FINAL;
+  void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) FINAL;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

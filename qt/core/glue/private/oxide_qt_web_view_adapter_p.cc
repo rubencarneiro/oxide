@@ -29,6 +29,7 @@
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
 #include "oxide_qt_message_handler_adapter_p.h"
+#include "oxide_qt_web_frame_adapter_p.h"
 
 namespace oxide {
 namespace qt {
@@ -72,6 +73,10 @@ void WebViewAdapterPrivate::OnLoadSucceeded(const GURL& validated_url) {
   a->LoadSucceeded(QUrl(QString::fromStdString(validated_url.spec())));
 }
 
+oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame() {
+  return new WebFrame(a->CreateWebFrame());
+}
+
 // static
 WebViewAdapterPrivate* WebViewAdapterPrivate::Create(WebViewAdapter* adapter) {
   return new WebViewAdapterPrivate(adapter);
@@ -85,11 +90,6 @@ oxide::MessageHandler* WebViewAdapterPrivate::GetMessageHandlerAt(
     size_t index) const {
   return &MessageHandlerAdapterPrivate::get(
       a->message_handlers().at(index))->handler();
-}
-
-void WebViewAdapterPrivate::RootFrameCreated(oxide::WebFrame* root) {
-  adapterToQObject(static_cast<WebFrame *>(root)->adapter)->setParent(
-      adapterToQObject(a));
 }
 
 content::RenderWidgetHostView* WebViewAdapterPrivate::CreateViewForWidget(
@@ -110,10 +110,6 @@ gfx::Rect WebViewAdapterPrivate::GetContainerBounds() {
 oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(
     content::RenderViewHost* rvh) {
   return new WebPopupMenu(a->CreateWebPopupMenuDelegate(), rvh);
-}
-
-WebFrameTreeDelegate* WebViewAdapterPrivate::CreateWebFrameTreeDelegate() {
-  return a->CreateWebFrameTreeDelegate();
 }
 
 } // namespace qt

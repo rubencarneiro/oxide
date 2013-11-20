@@ -23,11 +23,11 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
-#include "content/public/browser/render_view_host_observer.h"
+#include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/menu_item.h"
 
 namespace content {
-class RenderViewHost;
+class RenderViewHostImpl;
 }
 
 namespace gfx {
@@ -36,11 +36,11 @@ class Rect;
 
 namespace oxide {
 
-class WebPopupMenu : public content::RenderViewHostObserver {
+class WebPopupMenu : public content::WebContentsObserver {
  public:
   virtual ~WebPopupMenu();
 
-  void RenderViewHostDestroyed(content::RenderViewHost* rvh) FINAL;
+  void RenderViewDeleted(content::RenderViewHost* rvh) FINAL;
 
   void ShowPopup(const gfx::Rect& bounds,
                  const std::vector<content::MenuItem>& items,
@@ -53,7 +53,7 @@ class WebPopupMenu : public content::RenderViewHostObserver {
 
   base::WeakPtr<WebPopupMenu> GetWeakPtr();
 
-  content::RenderViewHostImpl* render_view_host_impl() const;
+  content::RenderViewHostImpl* render_view_host() const;
 
  protected:
   WebPopupMenu(content::RenderViewHost* rvh);
@@ -66,6 +66,7 @@ class WebPopupMenu : public content::RenderViewHostObserver {
   virtual void Hide() = 0;
 
   bool shown_;
+  content::RenderViewHost* render_view_host_;
   base::WeakPtrFactory<WebPopupMenu> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);

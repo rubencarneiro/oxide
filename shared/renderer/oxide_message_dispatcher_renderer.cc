@@ -87,7 +87,7 @@ MessageDispatcherRenderer::MessageDispatcherRenderer() {}
 MessageDispatcherRenderer::~MessageDispatcherRenderer() {}
 
 void MessageDispatcherRenderer::DidCreateScriptContext(
-    WebKit::WebFrame* frame,
+    blink::WebFrame* frame,
     v8::Handle<v8::Context> context,
     int world_id) {
   if (world_id < 1) {
@@ -101,7 +101,7 @@ void MessageDispatcherRenderer::DidCreateScriptContext(
 }
 
 void MessageDispatcherRenderer::WillReleaseScriptContext(
-    WebKit::WebFrame* frame,
+    blink::WebFrame* frame,
     v8::Handle<v8::Context> context,
     int world_id) {
   if (world_id < 1) {

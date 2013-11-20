@@ -25,15 +25,13 @@
 #include "base/callback.h"
 #include "base/compiler_specific.h"
 
-#include "oxide_message_dispatcher_browser.h"
-
 namespace oxide {
 
 class IncomingMessage;
 
 class MessageHandler FINAL {
  public:
-  typedef base::Callback<void(IncomingMessage*, bool*, bool*, std::string&)> HandlerCallback;
+  typedef base::Callback<void(IncomingMessage*, bool*, std::string&)> HandlerCallback;
 
   MessageHandler();
 
@@ -55,7 +53,7 @@ class MessageHandler FINAL {
 
   void SetCallback(const HandlerCallback& callback);
 
-  void OnReceiveMessage(const MessageDispatcherBrowser::V8Message& message);
+  void OnReceiveMessage(IncomingMessage* message);
 
  private:
   std::string msg_id_;

@@ -251,7 +251,7 @@ void V8MessageManager::OxideLazyGetterInner(
   };
 
   {
-    WebKit::WebScopedMicrotaskSuppression mts;
+    blink::WebScopedMicrotaskSuppression mts;
     frame_->callFunctionEvenIfScriptDisabled(function,
                                              context_->Global(),
                                              arraysize(args),
@@ -267,7 +267,7 @@ void V8MessageManager::OxideLazyGetterInner(
   info.GetReturnValue().Set(exports);
 }
 
-V8MessageManager::V8MessageManager(WebKit::WebFrame* frame,
+V8MessageManager::V8MessageManager(blink::WebFrame* frame,
                                    v8::Handle<v8::Context> context,
                                    int world_id) :
     frame_(frame),

@@ -31,17 +31,17 @@ class UserScriptScheduler FINAL : public content::RenderViewObserver {
  public:
   UserScriptScheduler(content::RenderView* render_view);
 
-  void DidFinishDocumentLoad(WebKit::WebFrame* frame) FINAL;
-  void DidFinishLoad(WebKit::WebFrame* frame) FINAL;
-  void DidCreateDocumentElement(WebKit::WebFrame* frame) FINAL;
+  void DidFinishDocumentLoad(blink::WebFrame* frame) FINAL;
+  void DidFinishLoad(blink::WebFrame* frame) FINAL;
+  void DidCreateDocumentElement(blink::WebFrame* frame) FINAL;
 
-  void FrameDetached(WebKit::WebFrame* frame) FINAL;
+  void FrameDetached(blink::WebFrame* frame) FINAL;
 
  private:
   void DoIdleInject();
 
   bool idle_posted_;
-  std::set<WebKit::WebFrame *> pending_idle_frames_;
+  std::set<blink::WebFrame *> pending_idle_frames_;
   base::WeakPtrFactory<UserScriptScheduler> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserScriptScheduler);

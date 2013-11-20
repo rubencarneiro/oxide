@@ -23,5 +23,16 @@
     'toolkit_uses_gtk': 0,
     'use_aura': 1,
     'use_gconf': 0,
+  },
+  'target_defaults': {
+    'target_conditions': [
+      ['_target_name=="content_browser"',
+        {
+          'sources/': [
+            ['exclude', 'browser/gpu/compositor_util\\.cc']
+          ]
+        }
+      ]
+    ]
   }
 }

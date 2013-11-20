@@ -24,15 +24,15 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
-#include "content/public/browser/notification_observer.h"
-#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
 
 #include "shared/browser/oxide_browser_process_handle.h"
-#include "shared/browser/oxide_message_dispatcher_browser.h"
 #include "shared/browser/oxide_message_target.h"
+#include "shared/common/oxide_message_enums.h"
+
+struct OxideMsg_SendMessage_Params;
 
 class GURL;
 
@@ -98,6 +98,9 @@ class WebView : public MessageTarget,
   WebFrame* GetRootFrame() const;
   WebFrame* FindFrameWithID(int64 frame_id) const;
 
+  void RenderViewHostChanged(content::RenderViewHost* old_host,
+                             content::RenderViewHost* new_host) FINAL;
+
   void DidStartProvisionalLoadForFrame(
       int64 frame_id,
       int64 parent_frame_id,
@@ -109,6 +112,7 @@ class WebView : public MessageTarget,
 
   void DidCommitProvisionalLoadForFrame(
       int64 frame_id,
+      const string16& frame_unique_name,
       bool is_main_frame,
       const GURL& url,
       content::PageTransition transition_type,
@@ -116,6 +120,7 @@ class WebView : public MessageTarget,
 
   void DidFailProvisionalLoad(
       int64 frame_id,
+      const string16& frame_unique_name,
       bool is_main_frame,
       const GURL& validated_url,
       int error_code,
@@ -133,14 +138,17 @@ class WebView : public MessageTarget,
                    const base::string16& error_description,
                    content::RenderViewHost* render_view_host) FINAL;
 
+  void FrameDetached(content::RenderViewHost* rvh,
+                     int64 frame_id) FINAL;
+
+  bool OnMessageReceived(const IPC::Message& message) FINAL;
+
   virtual size_t GetMessageHandlerCount() const OVERRIDE;
   virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
 
   content::WebContents* web_contents() const {
     return web_contents_.get();
   }
-
-  virtual void RootFrameCreated(WebFrame* root);
 
   virtual content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) = 0;
@@ -153,29 +161,27 @@ class WebView : public MessageTarget,
   WebView();
 
  private:
-
-  // Both WebContentsObserver and NotificationObserver have an Observe method
-  class NotificationObserver FINAL : public content::NotificationObserver {
-   public:
-    NotificationObserver(WebView* web_view);
-
-    void Observe(int type,
-                 const content::NotificationSource& source,
-                 const content::NotificationDetails& details) FINAL;
-
-   private:
-    WebView* web_view_;
-
-    DISALLOW_IMPLICIT_CONSTRUCTORS(NotificationObserver);
-  };
-
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
-  void NotifyRenderViewHostSwappedIn();
 
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
+
+  void SendErrorForV8Message(long long frame_id,
+                             const std::string& world_id,
+                             int serial,
+                             OxideMsg_SendMessage_Error::Value error_code,
+                             const std::string& error_desc);
+  bool TryDispatchV8MessageToTarget(MessageTarget* target,
+                                    WebFrame* source_frame,
+                                    const std::string& world_id,
+                                    int serial,
+                                    const std::string& msg_id,
+                                    const std::string& args);
+  void DispatchV8Message(const OxideMsg_SendMessage_Params& params);
+
+  void OnFrameCreated(int64 parent_frame_id, int64 frame_id);
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
@@ -191,14 +197,14 @@ class WebView : public MessageTarget,
                             const std::string& error_description);
   virtual void OnLoadSucceeded(const GURL& validated_url);
 
+  virtual WebFrame* CreateWebFrame() = 0;
+
   // Don't mess with the ordering of this unless you know what you
-  // are doing. The WebContents needs to disappear first, and the
-  // BrowserProcessHandle must outive everything
+  // are doing!
   BrowserProcessHandle process_handle_;
   scoped_ptr<content::WebContents> web_contents_;
+
   WebFrame* root_frame_;
-  NotificationObserver notification_observer_;
-  content::NotificationRegistrar registrar_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

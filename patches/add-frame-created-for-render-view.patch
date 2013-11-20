@@ -1,11 +1,12 @@
-Description: Add FrameCreated notifications to RenderViewObserver, so that we can track frames
-Author: Chris Coulson <chris.coulson@canonical.com>
+# HG changeset patch
+# Parent c37bb923b9db86eff01070ca6be6b868e797479e
+# User Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -244,16 +244,18 @@ WebKit::WebFrame* RenderFrameImpl::creat
-   WebKit::WebFrame* web_frame = WebFrame::create(child_render_frame,
+@@ -239,16 +239,18 @@ blink::WebFrame* RenderFrameImpl::create
+   blink::WebFrame* web_frame = WebFrame::create(child_render_frame,
                                                   child_frame_identifier);
  
    if (CommandLine::ForCurrentProcess()->HasSwitch(switches::kSitePerProcess)) {
@@ -18,25 +19,25 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return web_frame;
  }
  
- void RenderFrameImpl::didDisownOpener(WebKit::WebFrame* frame) {
+ void RenderFrameImpl::didDisownOpener(blink::WebFrame* frame) {
    render_view_->didDisownOpener(frame);
  }
  
- void RenderFrameImpl::frameDetached(WebKit::WebFrame* frame) {
+ void RenderFrameImpl::frameDetached(blink::WebFrame* frame) {
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -4508,16 +4508,21 @@ void RenderViewImpl::DidPause(WebKit::We
+@@ -4522,16 +4522,21 @@ void RenderViewImpl::DidPause(blink::Web
                                           player->hasAudio(),
                                           false));
  }
  
- void RenderViewImpl::PlayerGone(WebKit::WebMediaPlayer* player) {
+ void RenderViewImpl::PlayerGone(blink::WebMediaPlayer* player) {
    DidPause(player);
  }
  
-+void RenderViewImpl::FrameCreated(WebKit::WebFrame* parent,
-+                                  WebKit::WebFrame* frame) {
++void RenderViewImpl::FrameCreated(blink::WebFrame* parent,
++                                  blink::WebFrame* frame) {
 +  FOR_EACH_OBSERVER(RenderViewObserver, observers_, FrameCreated(parent, frame));
 +}
 +
@@ -60,7 +61,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
    typedef std::vector<linked_ptr<ImageResourceFetcher> >
        ImageResourceFetcherList;
  
-+  void FrameCreated(WebKit::WebFrame* parent, WebKit::WebFrame* frame);
++  void FrameCreated(blink::WebFrame* parent, blink::WebFrame* frame);
 +
   protected:
    // RenderWidget overrides:

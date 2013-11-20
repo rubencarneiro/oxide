@@ -34,7 +34,7 @@ except ImportError:
 
 sys.path.insert(1, os.path.join(chromium_src, 'tools', 'grit'))
 sys.path.insert(1, os.path.join(chromium_src, 'chrome', 'tools', 'build'))
-sys.path.insert(1, os.path.join(chromium_src, 'third_party', 'WebKit', 'Source', 'core', 'scripts'))
+sys.path.insert(1, os.path.join(chromium_src, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
 
 def additional_include_files(args=[]):
     specified_includes = set()

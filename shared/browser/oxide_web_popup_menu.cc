@@ -20,22 +20,23 @@
 #include "base/logging.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/public/browser/render_view_host.h"
+#include "content/public/browser/web_contents.h"
 
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
 
 WebPopupMenu::WebPopupMenu(content::RenderViewHost* rvh) :
-    content::RenderViewHostObserver(rvh),
+    content::WebContentsObserver(content::WebContents::FromRenderViewHost(rvh)),
     shown_(false),
+    render_view_host_(rvh),
     weak_factory_(this) {}
 
 WebPopupMenu::~WebPopupMenu() {}
 
-void WebPopupMenu::RenderViewHostDestroyed(content::RenderViewHost* rvh) {
+void WebPopupMenu::RenderViewDeleted(content::RenderViewHost* rvh) {
   if (shown_) {
-    static_cast<content::RenderViewHostImpl *>(rvh)->DidCancelPopupMenu();
-    HidePopup();
+    Cancel();
   }
 }
 
@@ -54,13 +55,13 @@ void WebPopupMenu::HidePopup() {
 
 void WebPopupMenu::SelectItems(const std::vector<int>& selected_indices) {
   DCHECK(shown_);
-  render_view_host_impl()->DidSelectPopupMenuItems(selected_indices);
+  render_view_host()->DidSelectPopupMenuItems(selected_indices);
   HidePopup();
 }
 
 void WebPopupMenu::Cancel() {
   DCHECK(shown_);
-  render_view_host_impl()->DidCancelPopupMenu();
+  render_view_host()->DidCancelPopupMenu();
   HidePopup();
 }
 
@@ -68,8 +69,8 @@ base::WeakPtr<WebPopupMenu> WebPopupMenu::GetWeakPtr() {
   return weak_factory_.GetWeakPtr();
 }
 
-content::RenderViewHostImpl* WebPopupMenu::render_view_host_impl() const {
-  return static_cast<content::RenderViewHostImpl *>(render_view_host());
+content::RenderViewHostImpl* WebPopupMenu::render_view_host() const {
+  return static_cast<content::RenderViewHostImpl *>(render_view_host_);
 }
 
 } // namespace oxide

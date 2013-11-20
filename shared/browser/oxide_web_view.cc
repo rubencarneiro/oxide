@@ -25,8 +25,6 @@
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_controller.h"
-#include "content/public/browser/notification_source.h"
-#include "content/public/browser/notification_types.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
 #include "net/base/net_errors.h"
@@ -38,27 +36,13 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_incoming_message.h"
+#include "oxide_message_handler.h"
+#include "oxide_outgoing_message_request.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
-#include "oxide_web_frame_tree.h"
 
 namespace oxide {
-
-WebView::NotificationObserver::NotificationObserver(WebView* web_view) :
-    web_view_(web_view) {}
-
-void WebView::NotificationObserver::Observe(
-    int type,
-    const content::NotificationSource& source,
-    const content::NotificationDetails& details) {
-  if (type != content::NOTIFICATION_RENDER_VIEW_HOST_CHANGED ||
-      content::Source<content::WebContents>(source).ptr() !=
-          web_view_->web_contents_.get()) {
-    return;
-  }
-
-  web_view_->NotifyRenderViewHostSwappedIn();
-}
 
 void WebView::NavigationStateChanged(const content::WebContents* source,
                                      unsigned changed_flags) {
@@ -78,16 +62,6 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
   }
 }
 
-void WebView::NotifyRenderViewHostSwappedIn() {
-  WebFrame* old_root = root_frame_;
-  root_frame_ = WebFrameTree::FromRenderViewHost(
-      web_contents_->GetRenderViewHost())->GetRootFrame();
-
-  if (old_root != root_frame_) {
-    OnRootFrameChanged();
-  }
-}
-
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
                                  const base::string16& error_description) {
@@ -97,6 +71,115 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
     OnLoadFailed(validated_url, error_code,
                  base::UTF16ToUTF8(error_description));
   }
+}
+
+void WebView::SendErrorForV8Message(long long frame_id,
+                                    const std::string& world_id,
+                                    int serial,
+                                    OxideMsg_SendMessage_Error::Value error_code,
+                                    const std::string& error_desc) {
+  OxideMsg_SendMessage_Params params;
+  params.frame_id = frame_id;
+  params.world_id = world_id;
+  params.serial = serial;
+  params.type = OxideMsg_SendMessage_Type::Reply;
+  params.error = error_code;
+  params.args = error_desc;
+
+  // FIXME: This is clearly broken for OOPIF, and we don't even know if this
+  //        is going to the correct RVH without OOPIF
+  web_contents()->Send(new OxideMsg_SendMessage(
+      web_contents()->GetRenderViewHost()->GetRoutingID(),
+      params));
+}
+
+bool WebView::TryDispatchV8MessageToTarget(MessageTarget* target,
+                                           WebFrame* source_frame,
+                                           const std::string& world_id,
+                                           int serial,
+                                           const std::string& msg_id,
+                                           const std::string& args) {
+  for (size_t i = 0; i < target->GetMessageHandlerCount(); ++i) {
+    MessageHandler* handler = target->GetMessageHandlerAt(i);
+
+    if (!handler->IsValid()) {
+      continue;
+    }
+
+    if (handler->msg_id() != msg_id) {
+      continue;
+    }
+
+    const std::vector<std::string>& world_ids = handler->world_ids();
+
+    for (std::vector<std::string>::const_iterator it = world_ids.begin();
+         it != world_ids.end(); ++it) {
+      if ((*it) == world_id) {
+        handler->OnReceiveMessage(
+            new IncomingMessage(source_frame, serial, world_id,
+                                msg_id, args));
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+void WebView::DispatchV8Message(const OxideMsg_SendMessage_Params& params) {
+  WebFrame* frame = FindFrameWithID(params.frame_id);
+
+  if (params.type == OxideMsg_SendMessage_Type::Message) {
+    if (!frame) {
+      // FIXME: In an OOPIF world, how do we know which process to dispatch
+      //        this error too, if we couldn't find a frame?
+      SendErrorForV8Message(params.frame_id, params.world_id, params.serial,
+                            OxideMsg_SendMessage_Error::INVALID_DESTINATION,
+                            "Invalid frame ID");
+      return;
+    }
+
+    if (!TryDispatchV8MessageToTarget(frame, frame, params.world_id,
+                                      params.serial, params.msg_id,
+                                      params.args)) {
+      if (!TryDispatchV8MessageToTarget(this, frame, params.world_id,
+                                        params.serial, params.msg_id,
+                                        params.args)) {
+        SendErrorForV8Message(params.frame_id, params.world_id, params.serial,
+                              OxideMsg_SendMessage_Error::NO_HANDLER,
+                              "No handler was found for message");
+      }
+    }
+
+    return;
+  }
+
+  if (!frame) {
+    return;
+  }
+
+  for (size_t i = 0; i < frame->GetOutgoingMessageRequestCount(); ++i) {
+    OutgoingMessageRequest* request = frame->GetOutgoingMessageRequestAt(i);
+
+    if (request->serial() == params.serial) {
+      request->OnReceiveResponse(params.args, params.error);
+      return;
+    }
+  }
+}
+
+void WebView::OnFrameCreated(int64 parent_frame_id,
+                             int64 frame_id) {
+  WebFrame* parent = FindFrameWithID(parent_frame_id);
+  if (!parent) {
+    LOG(ERROR) << "Got FrameCreated with non-existant parent";
+    return;
+  }
+
+  WebFrame* frame = CreateWebFrame();
+  frame->set_identifier(frame_id);
+  frame->set_view(this);
+  frame->SetParent(parent);
 }
 
 void WebView::OnURLChanged() {}
@@ -114,9 +197,7 @@ void WebView::OnLoadFailed(const GURL& validated_url,
 void WebView::OnLoadSucceeded(const GURL& validated_url) {}
 
 WebView::WebView() :
-    root_frame_(NULL),
-    notification_observer_(this) {}
-
+    root_frame_(NULL) {}
 
 WebView::~WebView() {
   if (web_contents_) {
@@ -151,16 +232,7 @@ bool WebView::Init(BrowserContext* context,
   }
 
   web_contents_->SetDelegate(this);
-  if (!WebFrameTree::FromRenderViewHost(web_contents_->GetRenderViewHost())) {
-    ContentClient::GetInstance()->browser()->CreateWebFrameTree(
-        web_contents_->GetRenderViewHost());
-  }
-
   Observe(web_contents_.get());
-  registrar_.Add(
-      &notification_observer_,
-      content::NOTIFICATION_RENDER_VIEW_HOST_CHANGED,
-      content::Source<content::WebContents>(web_contents_.get()));
 
   return true;
 }
@@ -171,11 +243,10 @@ void WebView::Shutdown() {
     return;
   }
 
-  registrar_.Remove(
-      &notification_observer_,
-      content::NOTIFICATION_RENDER_VIEW_HOST_CHANGED,
-      content::Source<content::WebContents>(web_contents_.get()));
   Observe(NULL);
+
+  root_frame_->DestroyFrame();
+  root_frame_ = NULL;
 
   GetBrowserContext()->RemoveWebView(this);
   web_contents_.reset();
@@ -273,7 +344,37 @@ WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
     return NULL;
   }
 
-  return root_frame_->FindFrameWithID(frame_id);
+  std::queue<WebFrame *> q;
+  q.push(const_cast<WebFrame *>(root_frame_));
+
+  while (!q.empty()) {
+    WebFrame* f = q.front();
+    q.pop();
+
+    if (f->identifier() == frame_id) {
+      return f;
+    }
+
+    f->AddChildrenToQueue(&q);
+  }
+
+  return NULL;
+}
+
+void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
+                                    content::RenderViewHost* new_host) {
+  if (root_frame_) {
+    root_frame_->DestroyFrame();
+  }
+
+  if (new_host) {
+    root_frame_ = CreateWebFrame();
+    root_frame_->set_view(this);
+  } else {
+    root_frame_ = NULL;
+  }
+
+  OnRootFrameChanged();
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -293,14 +394,11 @@ void WebView::DidStartProvisionalLoadForFrame(
 
 void WebView::DidCommitProvisionalLoadForFrame(
     int64 frame_id,
+    const string16& frame_unique_name,
     bool is_main_frame,
     const GURL& url,
     content::PageTransition transition_type,
     content::RenderViewHost* render_view_host) {
-  if (!root_frame_) {
-    return;
-  }
-
   if (is_main_frame) {
     root_frame_->set_identifier(frame_id);
   }
@@ -313,6 +411,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
 
 void WebView::DidFailProvisionalLoad(
     int64 frame_id,
+    const string16& frame_unique_name,
     bool is_main_frame,
     const GURL& validated_url,
     int error_code,
@@ -349,6 +448,28 @@ void WebView::DidFailLoad(int64 frame_id,
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
+
+void WebView::FrameDetached(content::RenderViewHost* rvh,
+                            int64 frame_id) {
+  WebFrame* frame = FindFrameWithID(frame_id);
+  if (!frame) {
+    return;
+  }
+
+  frame->DestroyFrame();
+}
+
+bool WebView::OnMessageReceived(const IPC::Message& message) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(WebView, message)
+    IPC_MESSAGE_HANDLER(OxideHostMsg_SendMessage, DispatchV8Message)
+    IPC_MESSAGE_HANDLER(OxideHostMsg_FrameCreated, OnFrameCreated)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
+
 size_t WebView::GetMessageHandlerCount() const {
   return 0;
 }
@@ -356,8 +477,6 @@ size_t WebView::GetMessageHandlerCount() const {
 MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
   return NULL;
 }
-
-void WebView::RootFrameCreated(WebFrame* root) {}
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
   return NULL;

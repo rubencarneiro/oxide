@@ -29,18 +29,12 @@ WebFrameObserver::WebFrameObserver(content::RenderView* render_view) :
 
 WebFrameObserver::~WebFrameObserver() {}
 
-void WebFrameObserver::FrameCreated(WebKit::WebFrame* parent,
-                                    WebKit::WebFrame* frame) {
+void WebFrameObserver::FrameCreated(blink::WebFrame* parent,
+                                    blink::WebFrame* frame) {
   render_view()->Send(
       new OxideHostMsg_FrameCreated(routing_id(),
                                     parent->identifier(),
                                     frame->identifier()));
-}
-
-void WebFrameObserver::FrameDetached(WebKit::WebFrame* frame) {
-  render_view()->Send(
-      new OxideHostMsg_FrameDetached(routing_id(),
-                                     frame->identifier()));
 }
 
 } // namespace oxide

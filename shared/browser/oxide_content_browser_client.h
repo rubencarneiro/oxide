@@ -64,19 +64,21 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   void ResourceDispatcherHostCreated() FINAL;
 
-  bool GetDefaultScreenInfo(WebKit::WebScreenInfo* result) FINAL;
+  void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
+                           const GURL& url,
+                           WebPreferences* prefs) FINAL;
+
+  bool GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
 
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
-
-  virtual WebFrameTree* CreateWebFrameTree(content::RenderViewHost* rvh);
 
  protected:
   // Limit default constructor access to derived classes
   ContentBrowserClient() {}
 
  private:
-  virtual void GetDefaultScreenInfoImpl(WebKit::WebScreenInfo* result) = 0;
+  virtual void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) = 0;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

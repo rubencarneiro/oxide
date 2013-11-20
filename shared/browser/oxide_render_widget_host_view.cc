@@ -151,6 +151,9 @@ void RenderWidgetHostView::OnAcceleratedCompositingStateChange() {
 
 }
 
+void RenderWidgetHostView::AcceleratedSurfaceInitialized(
+    int host_id, int route_id) {}
+
 void RenderWidgetHostView::AcceleratedSurfaceBuffersSwapped(
     const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
     int gpu_host_id) {}

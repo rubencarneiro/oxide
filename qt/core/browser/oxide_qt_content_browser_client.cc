@@ -17,13 +17,8 @@
 
 #include "oxide_qt_content_browser_client.h"
 
-#include "shared/browser/oxide_web_view.h"
-
-#include "qt/core/glue/private/oxide_qt_web_view_adapter_p.h"
-
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_render_widget_host_view.h"
-#include "oxide_qt_web_frame_tree.h"
 
 namespace oxide {
 namespace qt {
@@ -32,20 +27,8 @@ base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
 }
 
-oxide::WebFrameTree* ContentBrowserClient::CreateWebFrameTree(
-    content::RenderViewHost* rvh) {
-  WebViewAdapterPrivate* wv = static_cast<WebViewAdapterPrivate *>(
-      oxide::WebView::FromRenderViewHost(rvh));
-  if (!wv) {
-    // The first RVH created for a WebContents is before we set the delegate
-    return NULL;
-  }
-
-  return new WebFrameTree(rvh, wv->CreateWebFrameTreeDelegate());
-}
-
 void ContentBrowserClient::GetDefaultScreenInfoImpl(
-    WebKit::WebScreenInfo* result) {
+    blink::WebScreenInfo* result) {
   RenderWidgetHostView::GetScreenInfo(NULL, result);
 }
 

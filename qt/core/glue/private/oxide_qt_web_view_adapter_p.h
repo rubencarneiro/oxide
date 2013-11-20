@@ -26,7 +26,6 @@
 namespace oxide {
 namespace qt {
 
-class WebFrameTreeDelegate;
 class WebViewAdapter;
 
 class WebViewAdapterPrivate FINAL : public oxide::WebView {
@@ -36,16 +35,12 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   size_t GetMessageHandlerCount() const FINAL;
   oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
 
-  void RootFrameCreated(oxide::WebFrame* root) FINAL;
-
   content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) FINAL;
 
   gfx::Rect GetContainerBounds() FINAL;
 
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
-
-  WebFrameTreeDelegate* CreateWebFrameTreeDelegate();
 
  private:
   WebViewAdapterPrivate(WebViewAdapter* adapter);
@@ -63,6 +58,8 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
                     int error_code,
                     const std::string& error_description) FINAL;
   void OnLoadSucceeded(const GURL& validated_url) FINAL;
+
+  oxide::WebFrame* CreateWebFrame() FINAL;
 
   WebViewAdapter* a;
 

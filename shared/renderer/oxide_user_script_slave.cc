@@ -48,16 +48,16 @@ const char kUserScriptTail[] = "\n})(window);";
 
 // static
 int UserScriptSlave::GetIsolatedWorldID(const std::string& name,
-                                        WebKit::WebFrame* frame) {
+                                        blink::WebFrame* frame) {
   std::string url(kIsolatedWorldOriginProtocol);
   url.append(name);
 
   int id = IsolatedWorldMap::NameToID(name);
 
   frame->setIsolatedWorldSecurityOrigin(
-      id, WebKit::WebSecurityOrigin::createFromString(base::UTF8ToUTF16(url)));
+      id, blink::WebSecurityOrigin::createFromString(base::UTF8ToUTF16(url)));
   frame->setIsolatedWorldContentSecurityPolicy(
-      id, WebKit::WebString::fromUTF8(kIsolatedWorldCSP));
+      id, blink::WebString::fromUTF8(kIsolatedWorldCSP));
 
   return id;
 }
@@ -107,9 +107,9 @@ void UserScriptSlave::OnRenderProcessShutdown() {
   content::RenderThread::Get()->RemoveObserver(this);
 }
 
-void UserScriptSlave::InjectScripts(WebKit::WebFrame* frame,
+void UserScriptSlave::InjectScripts(blink::WebFrame* frame,
                                     UserScript::RunLocation location) {
-  WebKit::WebDataSource* data_source = frame->provisionalDataSource() ?
+  blink::WebDataSource* data_source = frame->provisionalDataSource() ?
       frame->provisionalDataSource() : frame->dataSource();
   CHECK(data_source);
   GURL data_source_url(data_source->request().url());
@@ -150,7 +150,7 @@ void UserScriptSlave::InjectScripts(WebKit::WebFrame* frame,
       content += kUserScriptTail;
     }
 
-    WebKit::WebScriptSource source(WebKit::WebString::fromUTF8(content));
+    blink::WebScriptSource source(blink::WebString::fromUTF8(content));
     int id = GetIsolatedWorldID(script->world_id(), frame);
     frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
   }

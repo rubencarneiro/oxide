@@ -89,6 +89,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
   bool CanCopyToVideoFrame() const FINAL;
 
   void OnAcceleratedCompositingStateChange() FINAL;
+  void AcceleratedSurfaceInitialized(int host_id, int route_id) FINAL;
   void AcceleratedSurfaceBuffersSwapped(
       const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
       int gpu_host_id) FINAL;

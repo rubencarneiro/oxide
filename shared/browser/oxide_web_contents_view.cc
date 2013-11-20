@@ -18,6 +18,7 @@
 #include "oxide_web_contents_view.h"
 
 #include "content/browser/renderer_host/render_view_host_impl.h"
+#include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
 
@@ -42,7 +43,19 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
-  return GetWebView()->CreateViewForWidget(render_widget_host);
+  content::RenderWidgetHostView* rvh =
+      GetWebView()->CreateViewForWidget(render_widget_host);
+  if (!rvh) {
+    return NULL;
+  }
+
+  if (!content::RenderWidgetHostImpl::From(render_widget_host)->is_hidden()) {
+    rvh->Show();
+  } else {
+    rvh->Hide();
+  }
+
+  return rvh;
 }
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForPopupWidget(

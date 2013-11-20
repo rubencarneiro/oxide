@@ -25,17 +25,11 @@
 #include "base/memory/weak_ptr.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_message_dispatcher_browser.h"
 #include "shared/browser/oxide_message_target.h"
-
-namespace content {
-class RenderViewHost;
-}
 
 namespace oxide {
 
 class OutgoingMessageRequest;
-class WebFrameTree;
 class WebView;
 
 // Represents a document frame in the renderer (a top-level frame or iframe).
@@ -43,6 +37,9 @@ class WebView;
 // of this will typically own a publicly exposed webframe
 class WebFrame : public MessageTarget {
  public:
+  // Use this to delete a WebFrame rather than calling the destructor, so
+  // that we can remove the frame from its parent before the derived destructor
+  // is called
   void DestroyFrame();
 
   int64 identifier() const {
@@ -60,12 +57,12 @@ class WebFrame : public MessageTarget {
     return parent_;
   }
 
-  void set_tree(WebFrameTree* tree) {
-    tree_ = tree;
+  WebView* view() const {
+    return view_;
   }
-
-  WebView* GetView() const;
-  content::RenderViewHost* GetRenderViewHost() const;
+  void set_view(WebView* view) {
+    view_ = view;
+  }
 
   base::WeakPtr<WebFrame> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
@@ -74,10 +71,10 @@ class WebFrame : public MessageTarget {
   void SetURL(const GURL& url);
   void SetParent(WebFrame* parent);
 
-  WebFrame* FindFrameWithID(int64 frame_id) const;
-
   size_t ChildCount() const;
   WebFrame* ChildAt(size_t index) const;
+
+  void AddChildrenToQueue(std::queue<WebFrame *>* queue) const;
 
   bool SendMessage(const std::string& world_id,
                    const std::string& msg_id,
@@ -103,8 +100,6 @@ class WebFrame : public MessageTarget {
   void AddChildFrame(WebFrame* frame);
   void RemoveChildFrame(WebFrame* frame);
 
-  void AddChildrenToQueue(std::queue<WebFrame *>* queue) const;
-
   virtual void OnChildAdded(WebFrame* child);
   virtual void OnChildRemoved(WebFrame* child);
   virtual void OnURLChanged();
@@ -113,7 +108,7 @@ class WebFrame : public MessageTarget {
   GURL url_;
   ChildVector child_frames_;
   WebFrame* parent_;
-  WebFrameTree* tree_;
+  WebView* view_;
   int next_message_serial_;
   bool destroyed_;
   base::WeakPtrFactory<WebFrame> weak_factory_;

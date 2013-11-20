@@ -264,8 +264,7 @@ void BrowserContextIOData::Init(
     context->storage()->set_cookie_store(
         content::CreatePersistentCookieStore(
             GetPath().Append(kCookiesFilename),
-            false, NULL, NULL,
-            scoped_refptr<base::SequencedTaskRunner>()));
+            false, NULL, NULL));
   }
 
   context->storage()->set_transport_security_state(
@@ -498,10 +497,17 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
 void BrowserContext::RequestMIDISysExPermission(
     int render_process_id,
     int render_view_id,
+    int bridge_id,
     const GURL& requesting_frame,
     const MIDISysExPermissionCallback& callback) {
   callback.Run(false);
 }
+
+void BrowserContext::CancelMIDISysExPermissionRequest(
+    int render_process_id,
+    int render_view_id,
+    int bridge_id,
+    const GURL& requesting_frame) {}
 
 content::ResourceContext* BrowserContext::GetResourceContext() {
   return io_data_.GetResourceContext();

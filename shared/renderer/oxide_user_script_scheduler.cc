@@ -34,10 +34,10 @@ void UserScriptScheduler::DoIdleInject() {
   UserScriptSlave* user_script_slave =
       ContentClient::GetInstance()->renderer()->user_script_slave();
 
-  for (std::set<WebKit::WebFrame *>::const_iterator it =
+  for (std::set<blink::WebFrame *>::const_iterator it =
            pending_idle_frames_.begin();
        it != pending_idle_frames_.end(); ++it) {
-    WebKit::WebFrame* f = *it;
+    blink::WebFrame* f = *it;
     user_script_slave->InjectScripts(f, UserScript::DOCUMENT_IDLE);
   }
 
@@ -49,12 +49,12 @@ UserScriptScheduler::UserScriptScheduler(content::RenderView* render_view) :
     idle_posted_(false),
     weak_factory_(this) {}
 
-void UserScriptScheduler::DidFinishDocumentLoad(WebKit::WebFrame* frame) {
+void UserScriptScheduler::DidFinishDocumentLoad(blink::WebFrame* frame) {
   ContentClient::GetInstance()->renderer()->user_script_slave()->InjectScripts(
       frame, UserScript::DOCUMENT_END);
 }
 
-void UserScriptScheduler::DidFinishLoad(WebKit::WebFrame* frame) {
+void UserScriptScheduler::DidFinishLoad(blink::WebFrame* frame) {
   pending_idle_frames_.insert(frame);
 
   if (idle_posted_) {
@@ -69,12 +69,12 @@ void UserScriptScheduler::DidFinishLoad(WebKit::WebFrame* frame) {
                  weak_factory_.GetWeakPtr()));
 }
 
-void UserScriptScheduler::DidCreateDocumentElement(WebKit::WebFrame* frame) {
+void UserScriptScheduler::DidCreateDocumentElement(blink::WebFrame* frame) {
   ContentClient::GetInstance()->renderer()->user_script_slave()->InjectScripts(
       frame, UserScript::DOCUMENT_START);
 }
 
-void UserScriptScheduler::FrameDetached(WebKit::WebFrame* frame) {
+void UserScriptScheduler::FrameDetached(blink::WebFrame* frame) {
   if (!idle_posted_) {
     return;
   }

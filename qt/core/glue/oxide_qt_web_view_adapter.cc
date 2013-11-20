@@ -24,6 +24,8 @@
 #include "qt/core/glue/private/oxide_qt_web_context_adapter_p.h"
 #include "qt/core/glue/private/oxide_qt_web_view_adapter_p.h"
 
+#include "oxide_qt_web_frame_adapter.h"
+
 namespace oxide {
 namespace qt {
 

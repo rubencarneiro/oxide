@@ -29,12 +29,7 @@
 class OxideQQuickMessageHandler;
 class OxideQQuickOutgoingMessageRequest;
 class OxideQQuickWebFramePrivate;
-
-namespace oxide {
-namespace qquick {
-class WebFrameTreeDelegate;
-}
-}
+class OxideQQuickWebViewPrivate;
 
 class OxideQQuickWebFrame : public QObject {
   Q_OBJECT
@@ -78,7 +73,7 @@ class OxideQQuickWebFrame : public QObject {
   void messageHandlersChanged();
 
  protected:
-  friend class oxide::qquick::WebFrameTreeDelegate;
+  friend class OxideQQuickWebViewPrivate;
 
   Q_DECL_HIDDEN OxideQQuickWebFrame();
   virtual void childEvent(QChildEvent* event);

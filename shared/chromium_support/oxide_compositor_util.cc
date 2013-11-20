@@ -15,23 +15,42 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_web_frame_tree.h"
+#include "base/values.h"
+#include "content/browser/gpu/compositor_util.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
 
-#include "qt/core/glue/oxide_qt_web_frame_tree_delegate.h"
+namespace content {
 
-#include "oxide_qt_web_frame.h"
-
-namespace oxide {
-namespace qt {
-
-WebFrameTree::WebFrameTree(content::RenderViewHost* rvh,
-                           WebFrameTreeDelegate* delegate) :
-    oxide::WebFrameTree(rvh),
-    delegate_(delegate) {}
-
-oxide::WebFrame* WebFrameTree::CreateFrame() {
-  return new WebFrame(delegate_->CreateFrame());
+bool IsThreadedCompositingEnabled() {
+  return false;
 }
 
-} // namespace qt
-} // namespace oxide
+bool IsForceCompositingModeEnabled() {
+  return false;
+}
+
+bool IsDelegatedRendererEnabled() {
+  return false;
+}
+
+bool IsDeadlineSchedulingEnabled() {
+  return true;
+}
+
+base::Value* GetFeatureStatus() {
+  // Currently only used by chrome://gpu
+  return NULL;
+}
+
+base::Value* GetProblems() {
+  // Currently only used by chrome://gpu
+  return NULL;
+}
+
+base::Value* GetDriverBugWorkarounds() {
+  base::ListValue* workaround_list = new base::ListValue();
+  GpuDataManagerImpl::GetInstance()->GetDriverBugWorkarounds(workaround_list);
+  return workaround_list;
+}
+
+} // namespace content

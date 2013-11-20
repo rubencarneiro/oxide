@@ -28,7 +28,6 @@
 #include "qt/core/api/oxideqloadevent.h"
 
 #include "qt/quick/oxide_qquick_render_widget_host_view_delegate.h"
-#include "qt/quick/oxide_qquick_web_frame_tree_delegate.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
 #include "oxideqquickmessagehandler_p.h"
@@ -62,11 +61,6 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     q_ptr(view) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
-}
-
-oxide::qt::WebFrameTreeDelegate*
-OxideQQuickWebViewPrivate::CreateWebFrameTreeDelegate() {
-  return new oxide::qquick::WebFrameTreeDelegate();
 }
 
 oxide::qt::RenderWidgetHostViewDelegate*
@@ -104,6 +98,13 @@ void OxideQQuickWebViewPrivate::CommandsUpdated() {
 void OxideQQuickWebViewPrivate::RootFrameChanged() {
   Q_Q(OxideQQuickWebView);
 
+  // Make the webview the QObject parent of the new root frame,
+  // to stop Qml from collecting the frame tree
+  OxideQQuickWebFrame* root = q->rootFrame();
+  if (root) {
+    root->setParent(q);
+  }
+
   emit q->rootFrameChanged();
 }
 
@@ -136,6 +137,10 @@ void OxideQQuickWebViewPrivate::LoadSucceeded(const QUrl& url) {
 
   OxideQLoadEvent event(url, OxideQLoadEvent::TypeSucceeded);
   emit q->loadingChanged(&event);
+}
+
+oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
+  return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
 }
 
 QRectF OxideQQuickWebViewPrivate::GetContainerBounds() {

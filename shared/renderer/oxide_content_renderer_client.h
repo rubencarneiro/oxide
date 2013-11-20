@@ -46,11 +46,11 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
 
   void RenderViewCreated(content::RenderView* render_view) FINAL;
 
-  void DidCreateScriptContext(WebKit::WebFrame* frame,
+  void DidCreateScriptContext(blink::WebFrame* frame,
                               v8::Handle<v8::Context> context,
                               int extension_group,
                               int world_id) FINAL;
-  void WillReleaseScriptContext(WebKit::WebFrame* frame,
+  void WillReleaseScriptContext(blink::WebFrame* frame,
                                 v8::Handle<v8::Context>,
                                 int world_id) FINAL;
 

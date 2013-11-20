@@ -4,7 +4,7 @@ Author: Chris Coulson <chris.coulson@canonical.com>
 diff --git a/tools/gyp/pylib/gyp/generator/make.py b/tools/gyp/pylib/gyp/generator/make.py
 --- a/tools/gyp/pylib/gyp/generator/make.py
 +++ b/tools/gyp/pylib/gyp/generator/make.py
-@@ -1297,16 +1297,18 @@ class MakefileWriter:
+@@ -1307,16 +1307,18 @@ class MakefileWriter:
          target = target[3:]
        target_prefix = 'lib'
        target_ext = '.a'
@@ -43,4 +43,4 @@ diff --git a/tools/gyp/pylib/gyp/input.py b/tools/gyp/pylib/gyp/input.py
    'toolset',
    'toolsets',
    'type',
-   'variants',
+ 

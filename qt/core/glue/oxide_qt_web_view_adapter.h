@@ -38,7 +38,6 @@ class MessageHandlerAdapter;
 class RenderWidgetHostViewDelegate;
 class WebContextAdapter;
 class WebFrameAdapter;
-class WebFrameTreeDelegate;
 class WebPopupMenuDelegate;
 class WebViewAdapterPrivate;
 
@@ -78,7 +77,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
     return message_handlers_;
   }
 
-  virtual WebFrameTreeDelegate* CreateWebFrameTreeDelegate() = 0;
   virtual RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() = 0;
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
 
@@ -94,6 +92,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
                           int error_code,
                           const QString& error_description) = 0;
   virtual void LoadSucceeded(const QUrl& url) = 0;
+
+  virtual WebFrameAdapter* CreateWebFrame() = 0;
 
   virtual QRectF GetContainerBounds() = 0;
 

@@ -4,8 +4,7 @@ Author: Chris Coulson <chris.coulson@canonical.com>
 diff --git a/ipc/ipc_message_start.h b/ipc/ipc_message_start.h
 --- a/ipc/ipc_message_start.h
 +++ b/ipc/ipc_message_start.h
-@@ -85,12 +85,13 @@ enum IPCMessageStart {
-   MemoryBenchmarkMsgStart,
+@@ -87,12 +87,13 @@ enum IPCMessageStart {
    WebSocketMsgStart,
    NaClHostMsgStart,
    WebRTCIdentityMsgStart,
@@ -13,6 +12,7 @@ diff --git a/ipc/ipc_message_start.h b/ipc/ipc_message_start.h
    PowerMonitorMsgStart,
    EncryptedMediaMsgStart,
    ServiceWorkerMsgStart,
+   MessagePortMsgStart,
 +  OxideMsgStart,
    LastIPCMsgStart  // Must come last.
  };

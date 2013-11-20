@@ -18,55 +18,67 @@
 #include "oxide_incoming_message.h"
 
 #include "content/public/browser/render_view_host.h"
+#include "content/public/browser/web_contents.h"
 
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_web_frame.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
 IncomingMessage::IncomingMessage(
-    const MessageDispatcherBrowser::V8Message& message) :
-    frame_(message.frame->GetWeakPtr()),
-    world_id_(message.world_id),
-    serial_(message.serial),
-    args_(message.args),
-    source_(message.dispatcher->GetWeakPtr()) {}
+    WebFrame* source_frame,
+    int serial,
+    const std::string& world_id,
+    const std::string& msg_id,
+    const std::string& args) :
+    source_frame_(source_frame->GetWeakPtr()),
+    serial_(serial),
+    world_id_(world_id),
+    msg_id_(msg_id),
+    args_(args) {}
 
 void IncomingMessage::Reply(const std::string& args) {
-  if (!source_ || !frame_ || serial_ == -1) {
+  // Check that the frame hasn't gone away
+  if (!source_frame_ || serial_ == -1) {
     return;
   }
 
   OxideMsg_SendMessage_Params params;
-  params.frame_id = frame_->identifier();
+  params.frame_id = source_frame()->identifier();
   params.world_id = world_id_;
   params.serial = serial_;
   params.type = OxideMsg_SendMessage_Type::Reply;
   params.error = OxideMsg_SendMessage_Error::OK;
   params.args = args;
 
-  source_->GetRenderViewHost()->Send(
-      new OxideMsg_SendMessage(source_->GetRenderViewHost()->GetRoutingID(),
-                               params));
+  // FIXME: This is clearly broken for OOPIF
+  content::WebContents* web_contents = source_frame()->view()->web_contents();
+  web_contents->Send(new OxideMsg_SendMessage(
+      web_contents->GetRenderViewHost()->GetRoutingID(),
+      params));
 }
 
 void IncomingMessage::Error(const std::string& msg) {
-  if (!source_ || !frame_ || serial_ == -1) {
+  // Check that the frame hasn't gone away
+  if (!source_frame_ || serial_ == -1) {
     return;
   }
 
   OxideMsg_SendMessage_Params params;
-  params.frame_id = frame_->identifier();
+  params.frame_id = source_frame()->identifier();
   params.world_id = world_id_;
   params.serial = serial_;
   params.type = OxideMsg_SendMessage_Type::Reply;
   params.error = OxideMsg_SendMessage_Error::HANDLER_REPORTED_ERROR;
   params.args = msg;
 
-  source_->GetRenderViewHost()->Send(
-      new OxideMsg_SendMessage(source_->GetRenderViewHost()->GetRoutingID(),
-                               params));
+  // FIXME: This is clearly broken for OOPIF
+  content::WebContents* web_contents = source_frame()->view()->web_contents();
+  web_contents->Send(new OxideMsg_SendMessage(
+      web_contents->GetRenderViewHost()->GetRoutingID(),
+      params));
 }
 
 } // namespace oxide
