@@ -116,5 +116,9 @@ WebFrameTreeDelegate* WebViewAdapterPrivate::CreateWebFrameTreeDelegate() {
   return a->CreateWebFrameTreeDelegate();
 }
 
+int WebViewAdapterPrivate::GetNavigationEntryCount() {
+  return GetNavigationController().GetEntryCount();
+}
+
 } // namespace qt
 } // namespace oxide

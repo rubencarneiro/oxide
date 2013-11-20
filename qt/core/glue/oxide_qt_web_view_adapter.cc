@@ -124,5 +124,9 @@ bool WebViewAdapter::isInitialized() {
   return priv->web_contents() != NULL;
 }
 
+int WebViewAdapter::getNavigationEntryCount() const {
+  return priv->GetNavigationEntryCount();
+}
+
 } // namespace qt
 } // namespace oxide

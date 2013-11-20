@@ -42,6 +42,7 @@ class Size;
 
 namespace content {
 
+class NavigationController;
 struct OpenURLParams;
 class RenderWidgetHost;
 class RenderWidgetHostView;
@@ -94,6 +95,8 @@ class WebView : public MessageTarget,
   void Hidden();
 
   BrowserContext* GetBrowserContext() const;
+
+  content::NavigationController& GetNavigationController() const;
 
   WebFrame* GetRootFrame() const;
   WebFrame* FindFrameWithID(int64 frame_id) const;

@@ -329,6 +329,12 @@ bool OxideQQuickWebView::canGoForward() const {
   return d->canGoForward();
 }
 
+int OxideQQuickWebView::navigationEntryCount() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->getNavigationEntryCount();
+}
+
 bool OxideQQuickWebView::incognito() const {
   Q_D(const OxideQQuickWebView);
 
