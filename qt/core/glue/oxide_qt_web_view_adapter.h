@@ -28,7 +28,7 @@
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 
 QT_BEGIN_NAMESPACE
-class QSizeF;
+class QSize;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -46,7 +46,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual ~WebViewAdapter();
 
   void init(WebContextAdapter* context,
-            const QSizeF& initial_size,
+            const QSize& initial_size,
             bool incognito,
             const QUrl& initial_url,
             bool visible);
@@ -65,7 +65,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   WebFrameAdapter* rootFrame() const;
 
-  void updateSize(const QSizeF& size);
+  void updateSize(const QSize& size);
   void updateVisibility(bool visible);
 
   void goBack();

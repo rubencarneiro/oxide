@@ -23,6 +23,7 @@
 #include <QRect>
 #include <QRectF>
 #include <QSizeF>
+#include <QSize>
 #include <QtQml>
 
 #include "qt/core/api/oxideqloadevent.h"
@@ -173,7 +174,7 @@ void OxideQQuickWebViewPrivate::componentComplete() {
   }
 
   init(OxideQQuickWebContextPrivate::get(context),
-       QSizeF(q->width(), q->height()),
+       QSizeF(q->width(), q->height()).toSize(),
        init_props_->incognito,
        init_props_->url,
        q->isVisible());
@@ -263,7 +264,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
   if (d->isInitialized()) {
-    d->updateSize(newGeometry.size());
+    d->updateSize(newGeometry.size().toSize());
   }
 }
 
