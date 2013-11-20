@@ -51,10 +51,6 @@ struct OxideMsg_SendMessage_Error {
     // (only valid for embedder to content script messages, and
     //  never actually sent across the wire)
     FRAME_DISAPPEARED,
-
-    // The message could not be delivered
-    // (only valid for content script to embedder messages)
-    UNDELIVERABLE = 1000
   };
 };
 
