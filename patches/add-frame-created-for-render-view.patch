@@ -1,5 +1,5 @@
 # HG changeset patch
-# Parent c37bb923b9db86eff01070ca6be6b868e797479e
+# Parent 6d1c3073852d9c32e8e5133b09931315034be696
 # User Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
@@ -7,7 +7,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 +++ b/content/renderer/render_frame_impl.cc
 @@ -239,16 +239,18 @@ blink::WebFrame* RenderFrameImpl::create
    blink::WebFrame* web_frame = WebFrame::create(child_render_frame,
-                                                  child_frame_identifier);
+                                                 child_frame_identifier);
  
    if (CommandLine::ForCurrentProcess()->HasSwitch(switches::kSitePerProcess)) {
      g_child_frame_map.Get().insert(
@@ -27,7 +27,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -4522,16 +4522,21 @@ void RenderViewImpl::DidPause(blink::Web
+@@ -4543,16 +4543,21 @@ void RenderViewImpl::DidPause(blink::Web
                                           player->hasAudio(),
                                           false));
  }

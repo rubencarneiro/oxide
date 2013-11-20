@@ -32,8 +32,8 @@
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
-#include "third_party/WebKit/public/web/WebScreenInfo.h"
 #include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 #include "ui/gfx/rect.h"
 
