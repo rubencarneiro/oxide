@@ -96,7 +96,7 @@ class WebView : public MessageTarget,
 
   BrowserContext* GetBrowserContext() const;
 
-  content::NavigationController& GetNavigationController() const;
+  content::NavigationController* GetNavigationController() const;
 
   WebFrame* GetRootFrame() const;
   WebFrame* FindFrameWithID(int64 frame_id) const;

@@ -264,8 +264,12 @@ BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
-content::NavigationController& WebView::GetNavigationController() const {
-  return web_contents_->GetController();
+content::NavigationController* WebView::GetNavigationController() const {
+  if (web_contents_) {
+    return &web_contents_->GetController();
+  } else {
+    return NULL;
+  }
 }
 
 WebFrame* WebView::GetRootFrame() const {

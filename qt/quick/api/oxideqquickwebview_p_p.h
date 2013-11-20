@@ -89,6 +89,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   InitData* init_props() { return init_props_.data(); }
 
   OxideQQuickWebContext* context;
+  OxideQQuickNavigationHistory* navigationHistory;
   QQmlComponent* popup_menu;
 
  private:

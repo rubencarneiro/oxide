@@ -117,7 +117,12 @@ WebFrameTreeDelegate* WebViewAdapterPrivate::CreateWebFrameTreeDelegate() {
 }
 
 int WebViewAdapterPrivate::GetNavigationEntryCount() {
-  return GetNavigationController().GetEntryCount();
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    return controller->GetEntryCount();
+  } else {
+    return 0;
+  }
 }
 
 } // namespace qt

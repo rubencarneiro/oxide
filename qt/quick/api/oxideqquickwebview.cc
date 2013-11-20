@@ -33,6 +33,7 @@
 
 #include "oxideqquickmessagehandler_p.h"
 #include "oxideqquickmessagehandler_p_p.h"
+#include "oxideqquicknavigationhistory_p.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 #include "oxideqquickwebframe_p.h"
@@ -57,9 +58,13 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     context(NULL),
+    navigationHistory(new OxideQQuickNavigationHistory(view)),
     popup_menu(NULL),
     init_props_(new InitData()),
-    q_ptr(view) {}
+    q_ptr(view) {
+  navigationHistory->setWebViewApdater(this);
+  navigationHistory->setWebView(view);
+}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
@@ -329,12 +334,6 @@ bool OxideQQuickWebView::canGoForward() const {
   return d->canGoForward();
 }
 
-int OxideQQuickWebView::navigationEntryCount() const {
-  Q_D(const OxideQQuickWebView);
-
-  return d->getNavigationEntryCount();
-}
-
 bool OxideQQuickWebView::incognito() const {
   Q_D(const OxideQQuickWebView);
 
@@ -452,6 +451,12 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   }
 
   d->context = context;
+}
+
+OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->navigationHistory;
 }
 
 // static
