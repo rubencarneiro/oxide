@@ -199,13 +199,8 @@ content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
 }
 
 void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  if (requested_size_.width() != size.width() ||
-      requested_size_.height() != size.height()) {
-    requested_size_ = size;
-
-    GetRenderWidgetHostImpl()->SendScreenRects();
-    GetRenderWidgetHost()->WasResized();
-  }
+  GetRenderWidgetHostImpl()->SendScreenRects();
+  GetRenderWidgetHost()->WasResized();
 }
 
 void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {

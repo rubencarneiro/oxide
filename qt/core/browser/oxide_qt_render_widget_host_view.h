@@ -61,6 +61,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   gfx::Rect GetViewBounds() const FINAL;
 
+  void SetSize(const gfx::Size& size) FINAL;
+
   content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
 
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;

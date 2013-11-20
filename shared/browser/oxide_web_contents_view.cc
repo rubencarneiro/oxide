@@ -37,9 +37,7 @@ WebView* WebContentsView::GetWebView() const {
 }
 
 void WebContentsView::CreateView(const gfx::Size& initial_size,
-                                 gfx::NativeView context) {
-  requested_size_ = initial_size;
-}
+                                 gfx::NativeView context) {}
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
@@ -91,8 +89,6 @@ void WebContentsView::OnTabCrashed(base::TerminationStatus status,
                                    int error_code) {}
 
 void WebContentsView::SizeContents(const gfx::Size& size) {
-  requested_size_ = size;
-
   content::RenderWidgetHostView* rwhv =
       web_contents_->GetRenderWidgetHostView();
   if (rwhv) {

@@ -49,6 +49,8 @@ class RenderWidgetHostViewDelegate Q_DECL_FINAL :
   QRect GetViewBounds() Q_DECL_FINAL;
   QRect GetBoundsInRootWindow() Q_DECL_FINAL;
 
+  void SetSize(const QSize& size) Q_DECL_FINAL;
+
   QScreen* GetScreen() Q_DECL_FINAL;
 
   void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;

@@ -119,7 +119,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
     return host_;
   }
 
-  void SetSize(const gfx::Size& size) FINAL;
+  void SetSize(const gfx::Size& size) OVERRIDE;
   void SetBounds(const gfx::Rect& rect) FINAL;
 
   gfx::NativeView GetNativeView() const FINAL;
@@ -144,7 +144,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
 
   bool is_hidden_;
   content::RenderWidgetHostImpl* host_;
-  gfx::Size requested_size_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

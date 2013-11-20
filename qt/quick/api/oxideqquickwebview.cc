@@ -262,11 +262,6 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
-  for (int i = 0; i < childItems().count(); ++i) {
-    QQuickItem* item = childItems().at(i);
-    item->setSize(newGeometry.size());
-  }
-
   if (d->isInitialized()) {
     d->updateSize(newGeometry.size());
   }

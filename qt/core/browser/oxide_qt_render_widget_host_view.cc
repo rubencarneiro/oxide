@@ -26,6 +26,7 @@
 #include <QPointF>
 #include <QRect>
 #include <QScreen>
+#include <QSize>
 #include <QWheelEvent>
 
 #include "base/logging.h"
@@ -533,6 +534,11 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
   return gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height());
 }
 
+void RenderWidgetHostView::SetSize(const gfx::Size& size) {
+  delegate_->SetSize(QSize(size.width(), size.height()));
+  oxide::RenderWidgetHostView::SetSize(size);
+}
+
 content::BackingStore* RenderWidgetHostView::AllocBackingStore(
     const gfx::Size& size) {
   return new BackingStore(GetRenderWidgetHost(), size);
@@ -579,8 +585,13 @@ void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
 const QPixmap* RenderWidgetHostView::GetBackingStore() {
   content::RenderWidgetHostImpl* rwh =
       content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
-  bool force_create = !rwh->empty();
-  return static_cast<BackingStore *>(rwh->GetBackingStore(force_create))->pixmap();
+  BackingStore* backing_store =
+      static_cast<BackingStore *>(rwh->GetBackingStore(!rwh->empty()));
+  if (!backing_store) {
+    return NULL;
+  }
+
+  return backing_store->pixmap();
 }
 
 } // namespace qt

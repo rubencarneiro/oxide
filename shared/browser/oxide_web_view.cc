@@ -363,6 +363,10 @@ WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
+  // Make sure the new RWHV gets the correct size
+  web_contents()->GetView()->SizeContents(
+      web_contents()->GetView()->GetContainerSize());
+
   if (root_frame_) {
     root_frame_->DestroyFrame();
   }
