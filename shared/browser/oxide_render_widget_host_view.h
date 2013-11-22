@@ -89,6 +89,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
   bool CanCopyToVideoFrame() const FINAL;
 
   void OnAcceleratedCompositingStateChange() FINAL;
+  void AcceleratedSurfaceInitialized(int host_id, int route_id) FINAL;
   void AcceleratedSurfaceBuffersSwapped(
       const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
       int gpu_host_id) FINAL;
@@ -118,7 +119,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
     return host_;
   }
 
-  void SetSize(const gfx::Size& size) FINAL;
+  void SetSize(const gfx::Size& size) OVERRIDE;
   void SetBounds(const gfx::Rect& rect) FINAL;
 
   gfx::NativeView GetNativeView() const FINAL;
@@ -143,7 +144,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
 
   bool is_hidden_;
   content::RenderWidgetHostImpl* host_;
-  gfx::Size requested_size_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

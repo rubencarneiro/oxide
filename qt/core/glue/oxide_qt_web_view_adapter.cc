@@ -24,6 +24,8 @@
 #include "qt/core/glue/private/oxide_qt_web_context_adapter_p.h"
 #include "qt/core/glue/private/oxide_qt_web_view_adapter_p.h"
 
+#include "oxide_qt_web_frame_adapter.h"
+
 namespace oxide {
 namespace qt {
 
@@ -33,14 +35,14 @@ WebViewAdapter::WebViewAdapter() :
 WebViewAdapter::~WebViewAdapter() {}
 
 void WebViewAdapter::init(WebContextAdapter* context,
-                          const QSizeF& initial_size,
+                          const QSize& initial_size,
                           bool incognito,
                           const QUrl& initial_url,
                           bool visible) {
   if (!priv->Init(
           WebContextAdapterPrivate::get(context)->GetContext(),
           incognito,
-          gfx::Size(qRound(initial_size.width()), qRound(initial_size.height())))) {
+          gfx::Size(initial_size.width(), initial_size.height()))) {
     return;
   }
 
@@ -88,8 +90,8 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
   return frame->adapter;
 }
 
-void WebViewAdapter::updateSize(const QSizeF& size) {
-  priv->UpdateSize(gfx::Size(qRound(size.width()), qRound(size.height())));
+void WebViewAdapter::updateSize(const QSize& size) {
+  priv->UpdateSize(gfx::Size(size.width(), size.height()));
 }
 
 void WebViewAdapter::updateVisibility(bool visible) {

@@ -6,7 +6,7 @@ Author: Chris Coulson <chris.coulson@canonical.com>
 diff --git a/content/browser/renderer_host/render_widget_host_view_aura.cc b/content/browser/renderer_host/render_widget_host_view_aura.cc
 --- a/content/browser/renderer_host/render_widget_host_view_aura.cc
 +++ b/content/browser/renderer_host/render_widget_host_view_aura.cc
-@@ -3372,12 +3372,13 @@ void RenderWidgetHostViewAura::DetachFro
+@@ -3362,12 +3362,13 @@ void RenderWidgetHostViewAura::DetachFro
  // static
  RenderWidgetHostView* RenderWidgetHostView::CreateViewForWidget(
      RenderWidgetHost* widget) {
@@ -24,18 +24,18 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_aura.cc b/con
 diff --git a/content/browser/renderer_host/render_widget_host_view_base.cc b/content/browser/renderer_host/render_widget_host_view_base.cc
 --- a/content/browser/renderer_host/render_widget_host_view_base.cc
 +++ b/content/browser/renderer_host/render_widget_host_view_base.cc
-@@ -7,16 +7,18 @@
- #include "base/logging.h"
+@@ -8,16 +8,18 @@
  #include "content/browser/accessibility/browser_accessibility_manager.h"
  #include "content/browser/gpu/gpu_data_manager_impl.h"
  #include "content/browser/renderer_host/basic_mouse_wheel_smooth_scroll_gesture.h"
+ #include "content/browser/renderer_host/input/synthetic_gesture_target_base.h"
  #include "content/browser/renderer_host/render_process_host_impl.h"
  #include "content/browser/renderer_host/render_widget_host_impl.h"
  #include "content/port/browser/render_widget_host_view_frame_subscriber.h"
  #include "content/port/browser/synthetic_gesture.h"
 +#include "content/public/browser/content_browser_client.h"
 +#include "content/public/common/content_client.h"
- #include "third_party/WebKit/public/web/WebScreenInfo.h"
+ #include "third_party/WebKit/public/platform/WebScreenInfo.h"
  #include "ui/gfx/display.h"
  #include "ui/gfx/screen.h"
  #include "ui/gfx/size_conversions.h"
@@ -43,23 +43,23 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.cc b/con
  
  #if defined(OS_WIN)
  #include "base/command_line.h"
-@@ -372,16 +374,22 @@ void RenderWidgetHostViewBase::DetachPlu
-   // away. This will prevent the plugin windows from getting destroyed
-   // automatically. The detached plugin windows will get cleaned up in proper
-   // sequence as part of the usual cleanup when the plugin instance goes away.
-   EnumChildWindows(parent, DetachPluginWindowsCallbackInternal, NULL);
- }
+@@ -380,16 +382,22 @@ void RenderWidgetHostViewBase::DetachPlu
  
- #endif  // OS_WIN
+ namespace {
+ 
+ // How many microseconds apart input events should be flushed.
+ const int kFlushInputRateInUs = 16666;
+ 
+ }
  
 +// static
 +bool RenderWidgetHostViewBase::GetDefaultScreenInfo(
-+    WebKit::WebScreenInfo* result) {
++    blink::WebScreenInfo* result) {
 +  return GetContentClient()->browser()->GetDefaultScreenInfo(result);
 +}
 +
  RenderWidgetHostViewBase::RenderWidgetHostViewBase()
-     : popup_type_(WebKit::WebPopupTypeNone),
+     : popup_type_(blink::WebPopupTypeNone),
        mouse_locked_(false),
        showing_context_menu_(false),
        selection_text_offset_(0),
@@ -69,16 +69,16 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.cc b/con
 diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/content/browser/renderer_host/render_widget_host_view_base.h
 --- a/content/browser/renderer_host/render_widget_host_view_base.h
 +++ b/content/browser/renderer_host/render_widget_host_view_base.h
-@@ -19,16 +19,20 @@
- #include "base/memory/scoped_ptr.h"
+@@ -20,16 +20,20 @@
  #include "base/callback_forward.h"
+ #include "base/timer/timer.h"
  #include "content/common/content_export.h"
  #include "content/port/browser/render_widget_host_view_port.h"
  #include "ui/gfx/native_widget_types.h"
  #include "ui/gfx/range/range.h"
  #include "ui/gfx/rect.h"
  
-+namespace WebKit {
++namespace blink {
 +class WebScreenInfo;
 +}
 +
@@ -90,7 +90,7 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/cont
  // subclasses.
  //
  // Note that nothing should use this class, except concrete subclasses
-@@ -97,16 +101,18 @@ class CONTENT_EXPORT RenderWidgetHostVie
+@@ -103,16 +107,18 @@ class CONTENT_EXPORT RenderWidgetHostVie
    bool HasDisplayPropertyChanged(gfx::NativeView view);
  
  #if defined(OS_WIN)
@@ -99,7 +99,7 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/cont
    static void DetachPluginWindowsCallback(HWND window);
  #endif
  
-+  static bool GetDefaultScreenInfo(WebKit::WebScreenInfo* results);
++  static bool GetDefaultScreenInfo(blink::WebScreenInfo* results);
 +
   protected:
    // Interface class only, do not construct.
@@ -122,7 +122,7 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
  }
  
 +bool ContentBrowserClient::GetDefaultScreenInfo(
-+    WebKit::WebScreenInfo* result) {
++    blink::WebScreenInfo* result) {
 +  return false;
 +}
 +
@@ -137,28 +137,25 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -71,16 +71,20 @@ namespace ui {
- class SelectFilePolicy;
- }
+@@ -31,16 +31,17 @@
+ #include "base/posix/global_descriptors.h"
+ #endif
  
- namespace fileapi {
- class ExternalMountPoints;
- class FileSystemBackend;
- }
+ class CommandLine;
+ class GURL;
+ struct WebPreferences;
  
-+namespace WebKit {
+ namespace blink {
 +class WebScreenInfo;
-+}
-+
- namespace content {
+ struct WebWindowFeatures;
+ }
  
- class AccessTokenStore;
- class BrowserChildProcessHost;
- class BrowserContext;
- class BrowserMainParts;
- class BrowserPluginGuestDelegate;
- class BrowserPpapiHost;
-@@ -563,16 +567,19 @@ class CONTENT_EXPORT ContentBrowserClien
+ namespace base {
+ class DictionaryValue;
+ class FilePath;
+ }
+ namespace crypto {
+@@ -566,16 +567,19 @@ class CONTENT_EXPORT ContentBrowserClien
        BrowserContext* browser_context,
        const base::FilePath& storage_partition_path,
        ScopedVector<fileapi::FileSystemBackend>* additional_backends) {}
@@ -168,7 +165,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
    virtual LocationProvider* OverrideSystemLocationProvider();
  
 +  // Allows an embedder to override RenderViewHostPort::GetDefaultScreenInfo
-+  virtual bool GetDefaultScreenInfo(WebKit::WebScreenInfo* result);
++  virtual bool GetDefaultScreenInfo(blink::WebScreenInfo* result);
 +
  #if defined(OS_POSIX) && !defined(OS_MACOSX)
    // Populates |mappings| with all files that need to be mapped before launching

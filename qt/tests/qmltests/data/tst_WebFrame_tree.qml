@@ -206,9 +206,6 @@ TestWebView {
         { type: WebFrame.ChildAdded, frame: frames[3] }
       ]);
       verify_tree();
-
-      // FIXME: Should test that the root frame survives a cross-RVH navigation
-      //        where the child process doesn't go away
     }
   }
 }

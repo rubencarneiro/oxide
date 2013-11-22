@@ -49,7 +49,7 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
                        RenderWidgetHostViewDelegate* delegate);
   virtual ~RenderWidgetHostView();
 
-  static void GetScreenInfo(QScreen* screen, WebKit::WebScreenInfo* result);
+  static void GetScreenInfo(QScreen* screen, blink::WebScreenInfo* result);
 
   void Blur() FINAL;
   void Focus() FINAL;
@@ -61,9 +61,11 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   gfx::Rect GetViewBounds() const FINAL;
 
+  void SetSize(const gfx::Size& size) FINAL;
+
   content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
 
-  void GetScreenInfo(WebKit::WebScreenInfo* results) FINAL;
+  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
 

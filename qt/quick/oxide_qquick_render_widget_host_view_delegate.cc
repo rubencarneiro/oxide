@@ -41,7 +41,6 @@ RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate(
     backing_store_(NULL) {
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
-  setSize(QSizeF(webview->width(), webview->height()));
 }
 
 void RenderWidgetHostViewDelegate::Blur() {
@@ -79,7 +78,16 @@ QRect RenderWidgetHostViewDelegate::GetViewBounds() {
 }
 
 QRect RenderWidgetHostViewDelegate::GetBoundsInRootWindow() {
+  if (!window()) {
+    return GetViewBounds();
+  }
+
   return window()->frameGeometry();
+}
+
+void RenderWidgetHostViewDelegate::SetSize(const QSize& size) {
+  setSize(QSizeF(size));
+  polish();
 }
 
 QScreen* RenderWidgetHostViewDelegate::GetScreen() {

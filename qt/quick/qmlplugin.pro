@@ -20,7 +20,6 @@ SOURCES += \
     api/oxideqquickwebview.cc \
     oxide_qml_plugin.cc \
     oxide_qquick_render_widget_host_view_delegate.cc \
-    oxide_qquick_web_frame_tree_delegate.cc \
     oxide_qquick_web_popup_menu_delegate.cc \
 
 HEADERS += \
@@ -38,7 +37,6 @@ HEADERS += \
     api/oxideqquickwebview_p.h \
     api/oxideqquickwebview_p_p.h \
     oxide_qquick_render_widget_host_view_delegate.h \
-    oxide_qquick_web_frame_tree_delegate.h \
     oxide_qquick_web_popup_menu_delegate.h
 
 INCLUDEPATH = $$OXIDE_SRC_ROOT

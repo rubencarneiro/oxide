@@ -34,7 +34,7 @@ except ImportError:
 
 sys.path.insert(1, os.path.join(chromium_src, 'tools', 'grit'))
 sys.path.insert(1, os.path.join(chromium_src, 'chrome', 'tools', 'build'))
-sys.path.insert(1, os.path.join(chromium_src, 'third_party', 'WebKit', 'Source', 'core', 'scripts'))
+sys.path.insert(1, os.path.join(chromium_src, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
 
 def additional_include_files(args=[]):
     specified_includes = set()
@@ -62,7 +62,7 @@ def additional_include_files(args=[]):
 if __name__ == '__main__':
     args = sys.argv[1:]
 
-    args.append(os.path.join(src_dir, 'build', 'oxide.gyp'))
+    args.append(os.path.join(src_dir, 'build', 'all.gyp'))
     args.extend(['-I' + i for i in additional_include_files(args)])
 
     args.append('--no-circular-check')

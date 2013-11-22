@@ -28,19 +28,19 @@
 
 struct OxideMsg_SendMessage_Params;
 
-namespace content {
-class RenderView;
+namespace blink {
+class WebFrame;
 }
 
-namespace WebKit {
-class WebFrame;
+namespace content {
+class RenderView;
 }
 
 namespace oxide {
 
 class V8MessageManager FINAL {
  public:
-  V8MessageManager(WebKit::WebFrame* frame,
+  V8MessageManager(blink::WebFrame* frame,
                    v8::Handle<v8::Context> context,
                    int world_id);
   ~V8MessageManager();
@@ -72,7 +72,7 @@ class V8MessageManager FINAL {
   void OxideLazyGetterInner(v8::Local<v8::String> property,
                             const v8::PropertyCallbackInfo<v8::Value>& info);
 
-  WebKit::WebFrame* frame_;
+  blink::WebFrame* frame_;
   ScopedPersistent<v8::Context> context_;
   int world_id_;
   ScopedPersistent<v8::External> closure_data_;

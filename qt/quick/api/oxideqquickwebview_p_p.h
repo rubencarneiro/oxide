@@ -50,7 +50,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
   ~OxideQQuickWebViewPrivate();
 
-  oxide::qt::WebFrameTreeDelegate* CreateWebFrameTreeDelegate() Q_DECL_FINAL;
   oxide::qt::RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
 
@@ -67,7 +66,9 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
                   const QString& error_description) Q_DECL_FINAL;
   void LoadSucceeded(const QUrl& url) Q_DECL_FINAL;
 
-  QRectF GetContainerBounds() Q_DECL_FINAL;
+  oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
+
+  QRect GetContainerBounds() Q_DECL_FINAL;
 
   void componentComplete();
 

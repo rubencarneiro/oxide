@@ -26,15 +26,16 @@
 #include <QPointF>
 #include <QRect>
 #include <QScreen>
+#include <QSize>
 #include <QWheelEvent>
 
 #include "base/logging.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
-#include "third_party/WebKit/public/web/WebScreenInfo.h"
-#include "third_party/WebKit/Source/core/platform/WindowsKeyboardCodes.h"
+#include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 #include "ui/gfx/rect.h"
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
@@ -281,19 +282,19 @@ int QInputEventStateToWebEventModifiers(QInputEvent* qevent) {
 
   int modifiers = 0;
   if (qmodifiers & Qt::ShiftModifier) {
-    modifiers |= WebKit::WebInputEvent::ShiftKey;
+    modifiers |= blink::WebInputEvent::ShiftKey;
   }
   if (qmodifiers & Qt::ControlModifier) {
-    modifiers |= WebKit::WebInputEvent::ControlKey;
+    modifiers |= blink::WebInputEvent::ControlKey;
   }
   if (qmodifiers & Qt::AltModifier) {
-    modifiers |= WebKit::WebInputEvent::AltKey;
+    modifiers |= blink::WebInputEvent::AltKey;
   }
   if (qmodifiers & Qt::MetaModifier) {
-    modifiers |= WebKit::WebInputEvent::MetaKey;
+    modifiers |= blink::WebInputEvent::MetaKey;
   }
   if (qmodifiers & Qt::KeypadModifier) {
-    modifiers |= WebKit::WebInputEvent::IsKeyPad;
+    modifiers |= blink::WebInputEvent::IsKeyPad;
   }
 
   return modifiers;
@@ -308,15 +309,15 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
 
   if (buttons & Qt::LeftButton &&
       (!mouse_down || event_button != Qt::LeftButton)) {
-    modifiers |= WebKit::WebInputEvent::LeftButtonDown;
+    modifiers |= blink::WebInputEvent::LeftButtonDown;
   }
   if (buttons & Qt::MidButton &&
       (!mouse_down || event_button != Qt::MidButton)) {
-    modifiers |= WebKit::WebInputEvent::MiddleButtonDown;
+    modifiers |= blink::WebInputEvent::MiddleButtonDown;
   }
   if (buttons & Qt::RightButton &&
       (!mouse_down || event_button != Qt::RightButton)) {
-    modifiers |= WebKit::WebInputEvent::RightButtonDown;
+    modifiers |= blink::WebInputEvent::RightButtonDown;
   }
 
   modifiers |= QInputEventStateToWebEventModifiers(qevent);
@@ -332,29 +333,29 @@ content::NativeWebKeyboardEvent QKeyEventToWebEvent(
   event.modifiers = QInputEventStateToWebEventModifiers(qevent);
 
   if (qevent->isAutoRepeat()) {
-    event.modifiers |= WebKit::WebInputEvent::IsAutoRepeat;
+    event.modifiers |= blink::WebInputEvent::IsAutoRepeat;
   }
 
   switch (qevent->type()) {
   case QEvent::KeyPress:
-    event.type = WebKit::WebInputEvent::KeyDown;
+    event.type = blink::WebInputEvent::KeyDown;
     break;
   case QEvent::KeyRelease:
-    event.type = WebKit::WebInputEvent::KeyUp;
+    event.type = blink::WebInputEvent::KeyUp;
     break;
   default:
     NOTREACHED();
   }
 
-  if (event.modifiers & WebKit::WebInputEvent::AltKey) {
+  if (event.modifiers & blink::WebInputEvent::AltKey) {
     event.isSystemKey = true;
   }
 
   int windowsKeyCode = QKeyEventKeyCodeToWebEventKeyCode(qevent);
   event.windowsKeyCode =
-      WebKit::WebKeyboardEvent::windowsKeyCodeWithoutLocation(windowsKeyCode);
+      blink::WebKeyboardEvent::windowsKeyCodeWithoutLocation(windowsKeyCode);
   event.modifiers |=
-      WebKit::WebKeyboardEvent::locationModifiersFromWindowsKeyCode(
+      blink::WebKeyboardEvent::locationModifiersFromWindowsKeyCode(
         windowsKeyCode);
   event.nativeKeyCode = qevent->key();
 
@@ -364,8 +365,8 @@ content::NativeWebKeyboardEvent QKeyEventToWebEvent(
   return event;
 }
 
-WebKit::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
-  WebKit::WebMouseEvent event;
+blink::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
+  blink::WebMouseEvent event;
 
   event.timeStampSeconds = QInputEventTimeToWebEventTime(qevent);
   event.modifiers = QMouseEventStateToWebEventModifiers(qevent);
@@ -383,17 +384,17 @@ WebKit::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
 
   switch (qevent->type()) {
   case QEvent::MouseButtonPress:
-    event.type = WebKit::WebInputEvent::MouseDown;
+    event.type = blink::WebInputEvent::MouseDown;
     event.clickCount = 1;
     break;
   case QEvent::MouseButtonRelease:
-    event.type = WebKit::WebInputEvent::MouseUp;
+    event.type = blink::WebInputEvent::MouseUp;
     break;
   case QEvent::MouseMove:
-    event.type = WebKit::WebInputEvent::MouseMove;
+    event.type = blink::WebInputEvent::MouseMove;
     break;
   case QEvent::MouseButtonDblClick:
-    event.type = WebKit::WebInputEvent::MouseDown;
+    event.type = blink::WebInputEvent::MouseDown;
     event.clickCount = 2;
     break;
   default:
@@ -402,24 +403,24 @@ WebKit::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
 
   switch(qevent->button()) {
   case Qt::LeftButton:
-    event.button = WebKit::WebMouseEvent::ButtonLeft;
+    event.button = blink::WebMouseEvent::ButtonLeft;
     break;
   case Qt::MidButton:
-    event.button = WebKit::WebMouseEvent::ButtonMiddle;
+    event.button = blink::WebMouseEvent::ButtonMiddle;
     break;
   case Qt::RightButton:
-    event.button = WebKit::WebMouseEvent::ButtonRight;
+    event.button = blink::WebMouseEvent::ButtonRight;
     break;
   default:
-    event.button = WebKit::WebMouseEvent::ButtonNone;
-    DCHECK_EQ(event.type, WebKit::WebMouseEvent::MouseMove);
+    event.button = blink::WebMouseEvent::ButtonNone;
+    DCHECK_EQ(event.type, blink::WebMouseEvent::MouseMove);
   }
 
   return event;
 }
 
-WebKit::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
-  WebKit::WebMouseWheelEvent event;
+blink::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
+  blink::WebMouseWheelEvent event;
 
   event.timeStampSeconds = QInputEventTimeToWebEventTime(qevent);
 
@@ -434,8 +435,8 @@ WebKit::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
                     qevent->modifiers());
   event.modifiers = QMouseEventStateToWebEventModifiers(&dummy);
 
-  event.type = WebKit::WebInputEvent::MouseWheel;
-  event.button = WebKit::WebMouseEvent::ButtonNone;
+  event.type = blink::WebInputEvent::MouseWheel;
+  event.button = blink::WebMouseEvent::ButtonNone;
 
   event.x = qevent->x();
   event.y = qevent->y();
@@ -480,7 +481,7 @@ RenderWidgetHostView::~RenderWidgetHostView() {}
 
 // static
 void RenderWidgetHostView::GetScreenInfo(
-    QScreen* screen, WebKit::WebScreenInfo* result) {
+    QScreen* screen, blink::WebScreenInfo* result) {
   if (!screen) {
     screen = QGuiApplication::primaryScreen();
   }
@@ -490,16 +491,16 @@ void RenderWidgetHostView::GetScreenInfo(
   result->isMonochrome = result->depth == 1;
 
   QRect rect = screen->geometry();
-  result->rect = WebKit::WebRect(rect.x(),
-                                 rect.y(),
-                                 rect.width(),
-                                 rect.height());
+  result->rect = blink::WebRect(rect.x(),
+                                rect.y(),
+                                rect.width(),
+                                rect.height());
 
   QRect availableRect = screen->availableGeometry();
-  result->availableRect = WebKit::WebRect(availableRect.x(),
-                                          availableRect.y(),
-                                          availableRect.width(),
-                                          availableRect.height());
+  result->availableRect = blink::WebRect(availableRect.x(),
+                                         availableRect.y(),
+                                         availableRect.width(),
+                                         availableRect.height());
 }
 
 void RenderWidgetHostView::Blur() {
@@ -516,10 +517,12 @@ bool RenderWidgetHostView::HasFocus() const {
 
 void RenderWidgetHostView::Show() {
   delegate_->Show();
+  WasShown();
 }
 
 void RenderWidgetHostView::Hide() {
   delegate_->Hide();
+  WasHidden();
 }
 
 bool RenderWidgetHostView::IsShowing() {
@@ -531,13 +534,18 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
   return gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height());
 }
 
+void RenderWidgetHostView::SetSize(const gfx::Size& size) {
+  delegate_->SetSize(QSize(size.width(), size.height()));
+  oxide::RenderWidgetHostView::SetSize(size);
+}
+
 content::BackingStore* RenderWidgetHostView::AllocBackingStore(
     const gfx::Size& size) {
   return new BackingStore(GetRenderWidgetHost(), size);
 }
 
 void RenderWidgetHostView::GetScreenInfo(
-    WebKit::WebScreenInfo* results) {
+    blink::WebScreenInfo* results) {
   GetScreenInfo(delegate_->GetScreen(), results);
 }
 
@@ -577,8 +585,13 @@ void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
 const QPixmap* RenderWidgetHostView::GetBackingStore() {
   content::RenderWidgetHostImpl* rwh =
       content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
-  bool force_create = !rwh->empty();
-  return static_cast<BackingStore *>(rwh->GetBackingStore(force_create))->pixmap();
+  BackingStore* backing_store =
+      static_cast<BackingStore *>(rwh->GetBackingStore(!rwh->empty()));
+  if (!backing_store) {
+    return NULL;
+  }
+
+  return backing_store->pixmap();
 }
 
 } // namespace qt

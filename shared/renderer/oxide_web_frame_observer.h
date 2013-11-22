@@ -29,9 +29,8 @@ class WebFrameObserver FINAL : public content::RenderViewObserver {
   WebFrameObserver(content::RenderView* render_view);
   virtual ~WebFrameObserver();
 
-  void FrameCreated(WebKit::WebFrame* parent,
-                    WebKit::WebFrame* frame) FINAL;
-  void FrameDetached(WebKit::WebFrame* frame) FINAL;
+  void FrameCreated(blink::WebFrame* parent,
+                    blink::WebFrame* frame) FINAL;
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebFrameObserver);

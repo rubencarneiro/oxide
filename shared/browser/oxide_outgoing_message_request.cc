@@ -38,34 +38,22 @@ void OutgoingMessageRequest::SetErrorCallback(
 }
 
 void OutgoingMessageRequest::OnReceiveResponse(
-    const MessageDispatcherBrowser::V8Response& response) {
+    const std::string& args,
+    OxideMsg_SendMessage_Error::Value error) {
   if (had_response_) {
     return;
   }
 
   had_response_ = true;
 
-  if (response.IsError()) {
+  if (error != OxideMsg_SendMessage_Error::OK) {
     if (!error_callback_.is_null()) {
-      error_callback_.Run(response.error, response.param);
+      error_callback_.Run(error, args);
     }
   } else {
     if (!reply_callback_.is_null()) {
-      reply_callback_.Run(response.param);
+      reply_callback_.Run(args);
     }
-  }
-}
-
-void OutgoingMessageRequest::SendError(int error,
-                                       const std::string& msg) {
-  if (had_response_) {
-    return;
-  }
-
-  had_response_ = true;
-
-  if (!error_callback_.is_null()) {
-    error_callback_.Run(error, msg);
   }
 }
 

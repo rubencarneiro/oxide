@@ -22,7 +22,6 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/browser_main_parts.h"
-#include "content/public/browser/render_view_host.h"
 
 namespace base {
 class MessageLoop;
@@ -43,7 +42,6 @@ class BrowserMainParts FINAL : public content::BrowserMainParts {
 
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
-  content::RenderViewHost::CreatedCallback rvh_created_callback_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);
 };

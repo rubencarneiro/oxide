@@ -23,12 +23,12 @@
 #include <QRect>
 #include <QRectF>
 #include <QSizeF>
+#include <QSize>
 #include <QtQml>
 
 #include "qt/core/api/oxideqloadevent.h"
 
 #include "qt/quick/oxide_qquick_render_widget_host_view_delegate.h"
-#include "qt/quick/oxide_qquick_web_frame_tree_delegate.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
 #include "oxideqquickmessagehandler_p.h"
@@ -69,11 +69,6 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
 
-oxide::qt::WebFrameTreeDelegate*
-OxideQQuickWebViewPrivate::CreateWebFrameTreeDelegate() {
-  return new oxide::qquick::WebFrameTreeDelegate();
-}
-
 oxide::qt::RenderWidgetHostViewDelegate*
 OxideQQuickWebViewPrivate::CreateRenderWidgetHostViewDelegate() {
   Q_Q(OxideQQuickWebView);
@@ -109,6 +104,13 @@ void OxideQQuickWebViewPrivate::CommandsUpdated() {
 void OxideQQuickWebViewPrivate::RootFrameChanged() {
   Q_Q(OxideQQuickWebView);
 
+  // Make the webview the QObject parent of the new root frame,
+  // to stop Qml from collecting the frame tree
+  OxideQQuickWebFrame* root = q->rootFrame();
+  if (root) {
+    root->setParent(q);
+  }
+
   emit q->rootFrameChanged();
 }
 
@@ -143,7 +145,11 @@ void OxideQQuickWebViewPrivate::LoadSucceeded(const QUrl& url) {
   emit q->loadingChanged(&event);
 }
 
-QRectF OxideQQuickWebViewPrivate::GetContainerBounds() {
+oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
+  return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
+}
+
+QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
   Q_Q(OxideQQuickWebView);
 
   QPointF pos(q->mapToScene(QPointF(0,0)));
@@ -152,8 +158,8 @@ QRectF OxideQQuickWebViewPrivate::GetContainerBounds() {
     pos += q->window()->position();
   }
 
-  return QRect(pos.x(), pos.y(),
-               q->width(), q->height());
+  return QRectF(pos.x(), pos.y(),
+                q->width(), q->height()).toRect();
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {
@@ -173,7 +179,7 @@ void OxideQQuickWebViewPrivate::componentComplete() {
   }
 
   init(OxideQQuickWebContextPrivate::get(context),
-       QSizeF(q->width(), q->height()),
+       QSizeF(q->width(), q->height()).toSize(),
        init_props_->incognito,
        init_props_->url,
        q->isVisible());
@@ -262,13 +268,8 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
-  for (int i = 0; i < childItems().count(); ++i) {
-    QQuickItem* item = childItems().at(i);
-    item->setSize(newGeometry.size());
-  }
-
   if (d->isInitialized()) {
-    d->updateSize(newGeometry.size());
+    d->updateSize(newGeometry.size().toSize());
   }
 }
 

@@ -57,11 +57,11 @@ class MessageDispatcherRenderer FINAL {
   MessageDispatcherRenderer();
   ~MessageDispatcherRenderer();
 
-  void DidCreateScriptContext(WebKit::WebFrame* frame,
+  void DidCreateScriptContext(blink::WebFrame* frame,
                               v8::Handle<v8::Context> context,
                               int world_id);
 
-  void WillReleaseScriptContext(WebKit::WebFrame* frame,
+  void WillReleaseScriptContext(blink::WebFrame* frame,
                                 v8::Handle<v8::Context> context,
                                 int world_id);
 

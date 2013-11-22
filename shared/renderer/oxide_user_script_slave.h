@@ -29,7 +29,7 @@
 
 #include "shared/common/oxide_user_script.h"
 
-namespace WebKit {
+namespace blink {
 class WebFrame;
 }
 
@@ -48,12 +48,12 @@ class UserScriptSlave FINAL : public content::RenderProcessObserver {
 
   void OnRenderProcessShutdown() FINAL;
 
-  void InjectScripts(WebKit::WebFrame* frame,
+  void InjectScripts(blink::WebFrame* frame,
                      UserScript::RunLocation location);
 
  private:
   static int GetIsolatedWorldID(const std::string& name,
-                                WebKit::WebFrame* frame);
+                                blink::WebFrame* frame);
   void OnUpdateUserScripts(base::SharedMemoryHandle handle);
 
   Vector user_scripts_;

@@ -17,7 +17,7 @@
 {
   'targets': [
     {
-      'target_name': 'oxide',
+      'target_name': 'All',
       'type': 'none',
       'dependencies': [
         '<@(oxide_port_all_targets)'

@@ -19,7 +19,7 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 
 #include <QList>
-#include <QRectF>
+#include <QRect>
 #include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
@@ -28,7 +28,7 @@
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 
 QT_BEGIN_NAMESPACE
-class QSizeF;
+class QSize;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -38,7 +38,6 @@ class MessageHandlerAdapter;
 class RenderWidgetHostViewDelegate;
 class WebContextAdapter;
 class WebFrameAdapter;
-class WebFrameTreeDelegate;
 class WebPopupMenuDelegate;
 class WebViewAdapterPrivate;
 
@@ -47,7 +46,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual ~WebViewAdapter();
 
   void init(WebContextAdapter* context,
-            const QSizeF& initial_size,
+            const QSize& initial_size,
             bool incognito,
             const QUrl& initial_url,
             bool visible);
@@ -66,7 +65,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   WebFrameAdapter* rootFrame() const;
 
-  void updateSize(const QSizeF& size);
+  void updateSize(const QSize& size);
   void updateVisibility(bool visible);
 
   void goBack();
@@ -78,7 +77,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
     return message_handlers_;
   }
 
-  virtual WebFrameTreeDelegate* CreateWebFrameTreeDelegate() = 0;
   virtual RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() = 0;
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
 
@@ -95,7 +93,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
                           const QString& error_description) = 0;
   virtual void LoadSucceeded(const QUrl& url) = 0;
 
-  virtual QRectF GetContainerBounds() = 0;
+  virtual WebFrameAdapter* CreateWebFrame() = 0;
+
+  virtual QRect GetContainerBounds() = 0;
 
   void shutdown();
 

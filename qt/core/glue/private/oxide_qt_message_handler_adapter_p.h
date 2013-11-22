@@ -54,7 +54,6 @@ class MessageHandlerAdapterPrivate FINAL {
 
   MessageHandlerAdapterPrivate(MessageHandlerAdapter* adapter);
   void ReceiveMessageCallback(oxide::IncomingMessage* message,
-                              bool* delivered,
                               bool* error,
                               std::string& error_desc);
 

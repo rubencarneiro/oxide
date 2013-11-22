@@ -19,11 +19,13 @@
 
 #include "base/logging.h"
 #include "content/public/browser/render_view_host.h"
+#include "content/public/browser/web_contents.h"
 
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_incoming_message.h"
 #include "oxide_web_frame.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -37,33 +39,30 @@ void MessageHandler::SetCallback(const HandlerCallback& callback) {
   callback_ = callback;
 }
 
-void MessageHandler::OnReceiveMessage(
-    const MessageDispatcherBrowser::V8Message& message) {
-  DCHECK_EQ(message.msg_id, msg_id());
+void MessageHandler::OnReceiveMessage(IncomingMessage* message) {
+  DCHECK_EQ(message->msg_id(), msg_id_);
   DCHECK(!callback_.is_null());
 
-  bool delivered = false;
   bool error = false;
   std::string error_desc;
 
-  callback_.Run(new IncomingMessage(message), &delivered, &error, error_desc);
+  callback_.Run(message, &error, error_desc);
 
-  if (!delivered || error) {
+  if (error) {
     OxideMsg_SendMessage_Params params;
-    params.frame_id = message.frame->identifier();
-    params.world_id = message.world_id;
-    params.serial = message.serial;
+    params.frame_id = message->source_frame()->identifier();
+    params.world_id = message->world_id();
+    params.serial = message->serial();
     params.type = OxideMsg_SendMessage_Type::Reply;
-    params.error = error ?
-        OxideMsg_SendMessage_Error::UNCAUGHT_EXCEPTION :
-        OxideMsg_SendMessage_Error::UNDELIVERABLE;
-    params.msg_id = message.msg_id;
+    params.error = OxideMsg_SendMessage_Error::UNCAUGHT_EXCEPTION;
     params.args = error_desc;
 
-    message.dispatcher->GetRenderViewHost()->Send(
-        new OxideMsg_SendMessage(
-          message.dispatcher->GetRenderViewHost()->GetRoutingID(),
-          params));
+    // FIXME: This is clearly broken for OOPIF
+    content::WebContents* web_contents =
+        message->source_frame()->view()->web_contents();
+    web_contents->Send(new OxideMsg_SendMessage(
+        web_contents->GetRenderViewHost()->GetRoutingID(),
+        params));
   }
 }
 

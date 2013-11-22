@@ -24,7 +24,6 @@
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_outgoing_message_request.h"
-#include "oxide_web_frame_tree.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -49,14 +48,6 @@ void WebFrame::RemoveChildFrame(WebFrame* frame) {
   }
 }
 
-void WebFrame::AddChildrenToQueue(std::queue<WebFrame *>* queue) const {
-  for (ChildVector::const_iterator it = child_frames_.begin();
-       it != child_frames_.end(); ++it) {
-    WebFrame* frame = *it;
-    queue->push(frame);
-  }
-}
-
 void WebFrame::OnChildAdded(WebFrame* child) {}
 void WebFrame::OnChildRemoved(WebFrame* child) {}
 void WebFrame::OnURLChanged() {}
@@ -64,7 +55,7 @@ void WebFrame::OnURLChanged() {}
 WebFrame::WebFrame() :
     id_(-1),
     parent_(NULL),
-    tree_(NULL),
+    view_(NULL),
     next_message_serial_(0),
     destroyed_(false),
     weak_factory_(this) {}
@@ -93,8 +84,9 @@ void WebFrame::DestroyFrame() {
       break;
     }
 
-    request->SendError(OxideMsg_SendMessage_Error::FRAME_DISAPPEARED,
-                       "The frame disappeared whilst waiting for a response");
+    request->OnReceiveResponse(
+        "The frame disappeared whilst waiting for a response",
+        OxideMsg_SendMessage_Error::FRAME_DISAPPEARED);
   }
 
   if (parent_) {
@@ -105,14 +97,6 @@ void WebFrame::DestroyFrame() {
   destroyed_ = true;
 
   delete this;
-}
-
-WebView* WebFrame::GetView() const {
-  return tree_->GetView();
-}
-
-content::RenderViewHost* WebFrame::GetRenderViewHost() const {
-  return tree_->GetRenderViewHost();
 }
 
 void WebFrame::SetURL(const GURL& url) {
@@ -126,24 +110,6 @@ void WebFrame::SetParent(WebFrame* parent) {
   parent_->AddChildFrame(this);
 }
 
-WebFrame* WebFrame::FindFrameWithID(int64 frame_id) const {
-  std::queue<WebFrame *> q;
-  q.push(const_cast<WebFrame *>(this));
-
-  while (!q.empty()) {
-    WebFrame* f = q.front();
-    q.pop();
-
-    if (f->identifier() == frame_id) {
-      return f;
-    }
-
-    f->AddChildrenToQueue(&q);
-  }
-
-  return NULL;
-}
-
 size_t WebFrame::ChildCount() const {
   return child_frames_.size();
 }
@@ -154,6 +120,14 @@ WebFrame* WebFrame::ChildAt(size_t index) const {
   }
 
   return child_frames_.at(index);
+}
+
+void WebFrame::AddChildrenToQueue(std::queue<WebFrame *>* queue) const {
+  for (ChildVector::const_iterator it = child_frames_.begin();
+       it != child_frames_.end(); ++it) {
+    WebFrame* frame = *it;
+    queue->push(frame);
+  }
 }
 
 bool WebFrame::SendMessage(const std::string& world_id,
@@ -174,8 +148,11 @@ bool WebFrame::SendMessage(const std::string& world_id,
   params.msg_id = msg_id;
   params.args = args;
 
-  return GetRenderViewHost()->Send(new OxideMsg_SendMessage(
-      GetRenderViewHost()->GetRoutingID(), params));
+  // FIXME: This is clearly broken for OOPIF
+  content::WebContents* web_contents = view()->web_contents();
+  return web_contents->Send(new OxideMsg_SendMessage(
+      web_contents->GetRenderViewHost()->GetRoutingID(),
+      params));
 }
 
 bool WebFrame::SendMessageNoReply(const std::string& world_id,
@@ -189,8 +166,11 @@ bool WebFrame::SendMessageNoReply(const std::string& world_id,
   params.msg_id = msg_id;
   params.args = args;
 
-  return GetRenderViewHost()->Send(new OxideMsg_SendMessage(
-      GetRenderViewHost()->GetRoutingID(), params));
+  // FIXME: This is clearly broken for OOPIF
+  content::WebContents* web_contents = view()->web_contents();
+  return web_contents->Send(new OxideMsg_SendMessage(
+      web_contents->GetRenderViewHost()->GetRoutingID(),
+      params));
 }
 
 size_t WebFrame::GetMessageHandlerCount() const {

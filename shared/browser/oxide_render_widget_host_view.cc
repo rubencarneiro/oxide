@@ -151,6 +151,9 @@ void RenderWidgetHostView::OnAcceleratedCompositingStateChange() {
 
 }
 
+void RenderWidgetHostView::AcceleratedSurfaceInitialized(
+    int host_id, int route_id) {}
+
 void RenderWidgetHostView::AcceleratedSurfaceBuffersSwapped(
     const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
     int gpu_host_id) {}
@@ -196,13 +199,8 @@ content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
 }
 
 void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  if (requested_size_.width() != size.width() ||
-      requested_size_.height() != size.height()) {
-    requested_size_ = size;
-
-    GetRenderWidgetHostImpl()->SendScreenRects();
-    GetRenderWidgetHost()->WasResized();
-  }
+  GetRenderWidgetHostImpl()->SendScreenRects();
+  GetRenderWidgetHost()->WasResized();
 }
 
 void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {

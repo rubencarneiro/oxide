@@ -18,11 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_OUTGOING_MESSAGE_REQUEST_H_
 #define _OXIDE_SHARED_BROWSER_OUTGOING_MESSAGE_REQUEST_H_
 
+#include <string>
+
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/compiler_specific.h"
 
-#include "shared/browser/oxide_message_dispatcher_browser.h"
+#include "shared/common/oxide_message_enums.h"
 
 namespace oxide {
 
@@ -45,8 +47,8 @@ class OutgoingMessageRequest FINAL {
   void SetReplyCallback(const ReplyCallback& callback);
   void SetErrorCallback(const ErrorCallback& callback);
 
-  void OnReceiveResponse(const MessageDispatcherBrowser::V8Response& response);
-  void SendError(int error, const std::string& msg);
+  void OnReceiveResponse(const std::string& args,
+                         OxideMsg_SendMessage_Error::Value error);
 
  private:
   int serial_;

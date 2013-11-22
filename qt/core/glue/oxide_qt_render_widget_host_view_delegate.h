@@ -54,6 +54,8 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   virtual QRect GetViewBounds() = 0;
   virtual QRect GetBoundsInRootWindow() = 0;
 
+  virtual void SetSize(const QSize& size) = 0;
+
   virtual QScreen* GetScreen() = 0;
 
   const QPixmap* GetBackingStore();

@@ -33,16 +33,13 @@ MessageHandlerAdapterPrivate::MessageHandlerAdapterPrivate(
 
 void MessageHandlerAdapterPrivate::ReceiveMessageCallback(
     oxide::IncomingMessage* message,
-    bool* delivered,
     bool* error,
     std::string& error_desc) {
-  *delivered = true;
-
   QString qerror;
 
   *error = !a->OnReceiveMessage(
       new OxideQIncomingMessage(message),
-      static_cast<WebFrame *>(message->frame())->adapter,
+      static_cast<WebFrame *>(message->source_frame())->adapter,
       qerror);
 
   if (*error) {

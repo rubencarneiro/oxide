@@ -24,29 +24,33 @@
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
 
-#include "shared/browser/oxide_message_dispatcher_browser.h"
-
 namespace oxide {
 
 class WebFrame;
 
 class IncomingMessage FINAL {
  public:
-  IncomingMessage(const MessageDispatcherBrowser::V8Message& message);
+  IncomingMessage(WebFrame* source_frame,
+                  int serial,
+                  const std::string& world_id,
+                  const std::string& msg_id,
+                  const std::string& args);
     
   void Reply(const std::string& args);
   void Error(const std::string& msg);
 
-  WebFrame* frame() const { return frame_.get(); }
+  WebFrame* source_frame() const { return source_frame_.get(); }
+  int serial() const { return serial_; }
   std::string world_id() const { return world_id_; }
+  std::string msg_id() const { return msg_id_; }
   std::string args() const { return args_; }
 
  private:
-  base::WeakPtr<WebFrame> frame_;
-  std::string world_id_;
+  base::WeakPtr<WebFrame> source_frame_;
   int serial_;
+  std::string world_id_;
+  std::string msg_id_;
   std::string args_;
-  base::WeakPtr<MessageDispatcherBrowser> source_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(IncomingMessage);
 };

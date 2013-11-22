@@ -22,6 +22,7 @@
 #include "base/logging.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/render_process_host.h"
+#include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_messages.h"
 
@@ -92,15 +93,18 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
   }
 }
 
-bool ContentBrowserClient::GetDefaultScreenInfo(
-    WebKit::WebScreenInfo* result) {
-  GetDefaultScreenInfoImpl(result);
-  return true;
+void ContentBrowserClient::OverrideWebkitPrefs(
+    content::RenderViewHost* render_view_host,
+    const GURL& url,
+    WebPreferences* prefs) {
+  prefs->force_compositing_mode = false;
+  prefs->accelerated_compositing_enabled = false;
 }
 
-WebFrameTree* ContentBrowserClient::CreateWebFrameTree(
-    content::RenderViewHost* rvh) {
-  return NULL;
+bool ContentBrowserClient::GetDefaultScreenInfo(
+    blink::WebScreenInfo* result) {
+  GetDefaultScreenInfoImpl(result);
+  return true;
 }
 
 } // namespace oxide
