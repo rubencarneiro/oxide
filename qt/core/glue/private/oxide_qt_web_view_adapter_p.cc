@@ -125,5 +125,14 @@ int WebViewAdapterPrivate::GetNavigationEntryCount() {
   }
 }
 
+int WebViewAdapterPrivate::GetNavigationCurrentEntryIndex() {
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    return controller->GetCurrentEntryIndex();
+  } else {
+    return -1;
+  }
+}
+
 } // namespace qt
 } // namespace oxide

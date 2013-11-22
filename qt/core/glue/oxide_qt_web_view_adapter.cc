@@ -128,5 +128,9 @@ int WebViewAdapter::getNavigationEntryCount() const {
   return priv->GetNavigationEntryCount();
 }
 
+int WebViewAdapter::getNavigationCurrentEntryIndex() const {
+  return priv->GetNavigationCurrentEntryIndex();
+}
+
 } // namespace qt
 } // namespace oxide

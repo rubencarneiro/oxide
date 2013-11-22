@@ -31,7 +31,7 @@ class OxideQQuickWebView;
 
 class OxideQQuickNavigationHistory : public QAbstractListModel {
   Q_OBJECT
-  Q_PROPERTY(int currentIndex READ currentIndex NOTIFY currentIndexChanged)
+  Q_PROPERTY(int currentIndex READ currentIndex NOTIFY currentIndexChanged) // TODO: make it WRITEable
   Q_ENUMS(Roles)
 
  public:
@@ -65,6 +65,7 @@ private Q_SLOTS:
 private:
   OxideQQuickWebView* webview_;
   oxide::qt::WebViewAdapter* webview_adapter_;
+  int current_index_;
 };
 
 QML_DECLARE_TYPE(OxideQQuickNavigationHistory)

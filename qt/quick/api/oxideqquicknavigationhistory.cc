@@ -23,7 +23,8 @@
 OxideQQuickNavigationHistory::OxideQQuickNavigationHistory(QObject* parent) :
     QAbstractListModel(parent),
     webview_(NULL),
-    webview_adapter_(NULL) {
+    webview_adapter_(NULL),
+    current_index_(-1) {
 }
 
 OxideQQuickNavigationHistory::~OxideQQuickNavigationHistory() {}
@@ -40,14 +41,21 @@ void OxideQQuickNavigationHistory::setWebViewApdater(
 }
 
 void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
+  Q_ASSERT(webview_adapter_ != NULL);
+
   // FIXME: batch calls to this slot before resetting the model
   beginResetModel();
   endResetModel();
+
+  int newCurrentIndex = webview_adapter_->getNavigationCurrentEntryIndex();;
+  if (newCurrentIndex != current_index_) {
+    current_index_ = newCurrentIndex;
+    Q_EMIT currentIndexChanged();
+  }
 }
 
 int OxideQQuickNavigationHistory::currentIndex() const {
-  // TODO: implement me
-  return 0;
+  return current_index_;
 }
 
 QHash<int, QByteArray> OxideQQuickNavigationHistory::roleNames() const {

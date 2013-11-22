@@ -102,6 +102,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   bool isInitialized();
 
   int getNavigationEntryCount() const;
+  int getNavigationCurrentEntryIndex() const;
 
  protected:
   WebViewAdapter();

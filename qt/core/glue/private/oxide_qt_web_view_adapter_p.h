@@ -48,6 +48,7 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   WebFrameTreeDelegate* CreateWebFrameTreeDelegate();
 
   int GetNavigationEntryCount() FINAL;
+  int GetNavigationCurrentEntryIndex() FINAL;
 
  private:
   WebViewAdapterPrivate(WebViewAdapter* adapter);
