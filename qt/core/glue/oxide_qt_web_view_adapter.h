@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 
+#include <QDateTime>
 #include <QList>
 #include <QRect>
 #include <QScopedPointer>
@@ -103,6 +104,12 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   int getNavigationEntryCount() const;
   int getNavigationCurrentEntryIndex() const;
+  int getNavigationEntryUniqueID(int index) const;
+  QUrl getNavigationEntryUrl(int index) const;
+  QUrl getNavigationEntryVirtualUrl(int index) const;
+  QString getNavigationEntryTitle(int index) const;
+  QString getNavigationEntryTitleForDisplay(int index) const;
+  QDateTime getNavigationEntryTimestamp(int index) const;
 
  protected:
   WebViewAdapter();

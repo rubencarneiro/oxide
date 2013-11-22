@@ -20,6 +20,8 @@
 #include <QString>
 #include <QUrl>
 
+#include "base/strings/utf_string_conversions.h"
+#include "content/public/browser/navigation_entry.h"
 #include "url/gurl.h"
 
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
@@ -127,6 +129,67 @@ int WebViewAdapterPrivate::GetNavigationCurrentEntryIndex() {
     return controller->GetCurrentEntryIndex();
   } else {
     return -1;
+  }
+}
+
+int WebViewAdapterPrivate::GetNavigationEntryUniqueID(int index) {
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
+    return entry->GetUniqueID();
+  } else {
+    return 0;
+  }
+}
+
+const GURL& WebViewAdapterPrivate::GetNavigationEntryUrl(int index) {
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
+    return entry->GetURL();
+  } else {
+    return GURL::EmptyGURL();
+  }
+}
+
+const GURL& WebViewAdapterPrivate::GetNavigationEntryVirtualUrl(int index) {
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
+    return entry->GetVirtualURL();
+  } else {
+    return GURL::EmptyGURL();
+  }
+}
+
+std::string WebViewAdapterPrivate::GetNavigationEntryTitle(int index) {
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
+    return base::UTF16ToUTF8(entry->GetTitle());
+  } else {
+    return std::string();
+  }
+}
+
+std::string WebViewAdapterPrivate::GetNavigationEntryTitleForDisplay(int index) {
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
+    // FIXME: pass a valid list of languages to GetTitleForDisplay()
+    return base::UTF16ToUTF8(entry->GetTitleForDisplay(std::string()));
+  } else {
+    return std::string();
+  }
+}
+
+base::Time WebViewAdapterPrivate::GetNavigationEntryTimestamp(int index) {
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
+    return entry->GetTimestamp();
+  } else {
+    return base::Time();
   }
 }
 

@@ -19,6 +19,7 @@
 #define _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_H_
 
 #include <QAbstractListModel>
+#include <QMap>
 #include <QtQml>
 
 namespace oxide {
@@ -28,6 +29,8 @@ class WebViewAdapter;
 }
 
 class OxideQQuickWebView;
+
+struct NavigationEntry;
 
 class OxideQQuickNavigationHistory : public QAbstractListModel {
   Q_OBJECT
@@ -67,6 +70,7 @@ private:
   oxide::qt::WebViewAdapter* webview_adapter_;
   int entry_count_;
   int current_index_;
+  QMap<int, NavigationEntry*> entry_cache_;
 };
 
 QML_DECLARE_TYPE(OxideQQuickNavigationHistory)
