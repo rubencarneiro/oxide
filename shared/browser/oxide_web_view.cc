@@ -245,8 +245,10 @@ void WebView::Shutdown() {
 
   Observe(NULL);
 
-  root_frame_->DestroyFrame();
-  root_frame_ = NULL;
+  if (root_frame_) {
+    root_frame_->DestroyFrame();
+    root_frame_ = NULL;
+  }
 
   GetBrowserContext()->RemoveWebView(this);
   web_contents_.reset();
