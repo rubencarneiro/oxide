@@ -263,6 +263,9 @@ WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
 }
 
 const GURL& WebView::GetURL() const {
+  if (!web_contents_) {
+    return GURL::EmptyGURL();
+  }
   return web_contents_->GetVisibleURL();
 }
 
@@ -276,14 +279,23 @@ void WebView::SetURL(const GURL& url) {
 }
 
 std::string WebView::GetTitle() const {
+  if (!web_contents_) {
+    return std::string();
+  }
   return base::UTF16ToUTF8(web_contents_->GetTitle());
 }
 
 bool WebView::CanGoBack() const {
+  if (!web_contents_) {
+    return false;
+  }
   return web_contents_->GetController().CanGoBack();
 }
 
 bool WebView::CanGoForward() const {
+  if (!web_contents_) {
+    return false;
+  }
   return web_contents_->GetController().CanGoForward();
 }
 
@@ -312,10 +324,16 @@ void WebView::Reload() {
 }
 
 bool WebView::IsIncognito() const {
+  if (!web_contents_) {
+    return false;
+  }
   return web_contents_->GetBrowserContext()->IsOffTheRecord();
 }
 
 bool WebView::IsLoading() const {
+  if (!web_contents_) {
+    return false;
+  }
   return web_contents_->IsLoading();
 }
 
