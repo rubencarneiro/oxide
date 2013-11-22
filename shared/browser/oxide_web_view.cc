@@ -263,7 +263,11 @@ WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
 }
 
 const GURL& WebView::GetURL() const {
-  return web_contents_->GetVisibleURL();
+  if (web_contents_) {
+    return web_contents_->GetVisibleURL();
+  } else {
+    return GURL::EmptyGURL();
+  }
 }
 
 void WebView::SetURL(const GURL& url) {
@@ -276,15 +280,27 @@ void WebView::SetURL(const GURL& url) {
 }
 
 std::string WebView::GetTitle() const {
-  return base::UTF16ToUTF8(web_contents_->GetTitle());
+  if (web_contents_) {
+    return base::UTF16ToUTF8(web_contents_->GetTitle());
+  } else {
+    return std::string();
+  }
 }
 
 bool WebView::CanGoBack() const {
-  return web_contents_->GetController().CanGoBack();
+  if (web_contents_) {
+    return web_contents_->GetController().CanGoBack();
+  } else {
+    return false;
+  }
 }
 
 bool WebView::CanGoForward() const {
-  return web_contents_->GetController().CanGoForward();
+  if (web_contents_) {
+    return web_contents_->GetController().CanGoForward();
+  } else {
+    return false;
+  }
 }
 
 void WebView::GoBack() {
@@ -312,11 +328,19 @@ void WebView::Reload() {
 }
 
 bool WebView::IsIncognito() const {
-  return web_contents_->GetBrowserContext()->IsOffTheRecord();
+  if (web_contents_) {
+    return web_contents_->GetBrowserContext()->IsOffTheRecord();
+  } else {
+    return false;
+  }
 }
 
 bool WebView::IsLoading() const {
-  return web_contents_->IsLoading();
+  if (web_contents_) {
+    return web_contents_->IsLoading();
+  } else {
+    return false;
+  }
 }
 
 void WebView::UpdateSize(const gfx::Size& size) {
