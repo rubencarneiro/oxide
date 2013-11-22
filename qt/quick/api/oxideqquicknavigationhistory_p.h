@@ -65,6 +65,7 @@ private Q_SLOTS:
 private:
   OxideQQuickWebView* webview_;
   oxide::qt::WebViewAdapter* webview_adapter_;
+  int entry_count_;
   int current_index_;
 };
 
