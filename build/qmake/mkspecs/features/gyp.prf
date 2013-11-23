@@ -41,7 +41,7 @@ equals(GYP_TYPE, lib) {
         install_bin.files = $${CHROMIUM_OUT_PLAT_DIR}/$${TARGET.bin_name}
         install_bin.extra = cp $${CHROMIUM_OUT_PLAT_DIR}/$${TARGET} $${CHROMIUM_OUT_PLAT_DIR}/$${TARGET.bin_name}
     }
-    install_bin.CONFIG = no_check_exist
+    install_bin.CONFIG = no_check_exist executable
     INSTALLS += install_bin
 
     !isEmpty(TARGET.post_install) {
