@@ -24,6 +24,12 @@ PRE_TARGETDEPS += gyp_make
 equals(GYP_TYPE, lib) {
     LIB0 = $${QMAKE_PREFIX_SHLIB}$${TARGET}.$${QMAKE_EXTENSION_SHLIB}
     LIB1 = $${LIB0}.$${GYP_LIBVERSION}
+
+    fix_perms.target = fix_perms
+    fix_perms.commands = chmod -x $${CHROMIUM_OUT_LIB_DIR}/$${LIB1}
+    QMAKE_EXTRA_TARGETS += fix_perms
+    POST_TARGETDEPS += fix_perms
+
     add_symlink.target = add_symlink
     add_symlink.commands = cd $${CHROMIUM_OUT_LIB_DIR}; ln -f -s $$LIB1 $$LIB0
     QMAKE_EXTRA_TARGETS += add_symlink
