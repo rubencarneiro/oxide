@@ -20,17 +20,53 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/memory/scoped_ptr.h"
+#include "base/message_loop/message_loop.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/render_process_host.h"
 #include "webkit/common/webpreferences.h"
 
+#include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_browser_main_parts.h"
+#include "oxide_message_pump.h"
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
+
+namespace {
+
+base::MessagePump* CreateMessagePumpForUI() {
+  return ContentClient::GetInstance()->browser()->
+      CreateMessagePumpForUI();
+}
+
+class BrowserMainParts : public content::BrowserMainParts {
+ public:
+  BrowserMainParts() {}
+  ~BrowserMainParts() {}
+
+  void PreEarlyInitialization() FINAL {
+    base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
+    main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
+  }
+
+  int PreCreateThreads() FINAL {
+    BrowserProcessMain::PreCreateThreads();
+    return 0;
+  }
+
+  bool MainMessageLoopRun(int* result_code) FINAL {
+    MessageLoopForUI::current()->Start();
+    return true;
+  }
+
+ private:
+  scoped_ptr<base::MessageLoop> main_message_loop_;
+};
+
+} // namespace
 
 ContentBrowserClient::~ContentBrowserClient() {}
 

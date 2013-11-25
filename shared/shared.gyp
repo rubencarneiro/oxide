@@ -160,8 +160,6 @@
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_impl.cc',
         'browser/oxide_browser_context_impl.h',
-        'browser/oxide_browser_main_parts.cc',
-        'browser/oxide_browser_main_parts.h',
         'browser/oxide_browser_process_handle.cc',
         'browser/oxide_browser_process_handle.h',
         'browser/oxide_browser_process_main.cc',
