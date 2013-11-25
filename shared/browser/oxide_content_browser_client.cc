@@ -23,6 +23,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
+#include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
 #include "webkit/common/webpreferences.h"
 
@@ -30,6 +31,7 @@
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_browser_process_main.h"
 #include "oxide_message_pump.h"
 #include "oxide_web_contents_view.h"
 
@@ -53,7 +55,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
-    BrowserProcessMain::PreCreateThreads();
+    BrowserProcessMain::CreateIOThreadDelegate();
     return 0;
   }
 

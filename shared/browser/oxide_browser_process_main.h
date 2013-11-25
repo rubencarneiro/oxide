@@ -48,25 +48,23 @@ class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
   // Returns true of the browser process components have been started
   static bool Exists();
 
+  // Ensure that the IO thread delegate is created
+  static void CreateIOThreadDelegate();
+
+  static int RunBrowserProcess(
+      const content::MainFunctionParams& main_function_params);
+  static void ShutdownBrowserProcess();
+
  private:
   friend class BrowserProcessHandle;
   friend class base::RefCounted<BrowserProcessMain>;
-  friend class BrowserMainParts;
-  friend class ContentMainDelegate;
 
   BrowserProcessMain();
   ~BrowserProcessMain();
 
   static scoped_refptr<BrowserProcessMain> GetInstance();
 
-  static void Create();
   bool Init();
-
-  static int RunBrowserProcess(
-      const content::MainFunctionParams& main_function_params);
-  static void ShutdownBrowserProcess();
-
-  static void PreCreateThreads();
 
   // XXX: Don't change the order of these unless you know what you are
   //      doing. It's important that ContentMainDelegate outlives
