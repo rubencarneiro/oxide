@@ -134,6 +134,10 @@ int WebViewAdapter::getNavigationCurrentEntryIndex() const {
   return priv->GetNavigationCurrentEntryIndex();
 }
 
+void WebViewAdapter::setNavigationCurrentEntryIndex(int index) {
+  priv->SetNavigationCurrentEntryIndex(index);
+}
+
 int WebViewAdapter::getNavigationEntryUniqueID(int index) const {
   return priv->GetNavigationEntryUniqueID(index);
 }

@@ -132,6 +132,13 @@ int WebViewAdapterPrivate::GetNavigationCurrentEntryIndex() {
   }
 }
 
+void WebViewAdapterPrivate::SetNavigationCurrentEntryIndex(int index) {
+  content::NavigationController* controller = GetNavigationController();
+  if (controller != NULL) {
+    controller->GoToIndex(index);
+  }
+}
+
 int WebViewAdapterPrivate::GetNavigationEntryUniqueID(int index) {
   content::NavigationController* controller = GetNavigationController();
   if (controller != NULL) {
@@ -176,7 +183,7 @@ std::string WebViewAdapterPrivate::GetNavigationEntryTitleForDisplay(int index) 
   content::NavigationController* controller = GetNavigationController();
   if (controller != NULL) {
     content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
-    // FIXME: pass a valid list of languages to GetTitleForDisplay()
+    // FIXME: pass a valid list of languages to GetTitleForDisplay() (e.g., prefs::kAcceptLanguages)
     return base::UTF16ToUTF8(entry->GetTitleForDisplay(std::string()));
   } else {
     return std::string();

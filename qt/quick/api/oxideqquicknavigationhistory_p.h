@@ -34,7 +34,7 @@ struct NavigationEntry;
 
 class OxideQQuickNavigationHistory : public QAbstractListModel {
   Q_OBJECT
-  Q_PROPERTY(int currentIndex READ currentIndex NOTIFY currentIndexChanged) // TODO: make it WRITEable
+  Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
   Q_ENUMS(Roles)
 
  public:
@@ -55,6 +55,7 @@ class OxideQQuickNavigationHistory : public QAbstractListModel {
   QVariant data(const QModelIndex& index, int role) const;
 
   int currentIndex() const;
+  void setCurrentIndex(int index);
 
   void setWebView(OxideQQuickWebView* webview);
   void setWebViewApdater(oxide::qt::WebViewAdapter* adapter);

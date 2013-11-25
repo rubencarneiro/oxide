@@ -95,6 +95,17 @@ int OxideQQuickNavigationHistory::currentIndex() const {
   return current_index_;
 }
 
+void OxideQQuickNavigationHistory::setCurrentIndex(int index) {
+  if ((index < 0) || (index >= entry_count_)) {
+    return;
+  }
+  if (index != current_index_) {
+    current_index_ = index;
+    webview_adapter_->setNavigationCurrentEntryIndex(index);
+    Q_EMIT currentIndexChanged();
+  }
+}
+
 QHash<int, QByteArray> OxideQQuickNavigationHistory::roleNames() const {
   static QHash<int, QByteArray> roles;
   if (roles.isEmpty()) {
