@@ -79,9 +79,39 @@ void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
       entry->timestamp = webview_adapter_->getNavigationEntryTimestamp(i);
     }
     endResetModel();
-  } else {
-    // TODO: the current entry might have changed, need to update the cache
-    // and emit dataChanged().
+  } else if (current_index_ != -1) {
+    QVector<int> roles;
+    int id = webview_adapter_->getNavigationEntryUniqueID(current_index_);
+    NavigationEntry* entry = entry_cache_.value(id);
+    QUrl url = webview_adapter_->getNavigationEntryUrl(current_index_);
+    if (url != entry->url) {
+      entry->url = url;
+      roles.append(Url);
+    }
+    QUrl virtualUrl = webview_adapter_->getNavigationEntryVirtualUrl(current_index_);
+    if (virtualUrl != entry->virtualUrl) {
+      entry->virtualUrl = virtualUrl;
+      roles.append(VirtualUrl);
+    }
+    QString title = webview_adapter_->getNavigationEntryTitle(current_index_);
+    if (title != entry->title) {
+      entry->title = title;
+      roles.append(Title);
+    }
+    QString titleForDisplay = webview_adapter_->getNavigationEntryTitleForDisplay(current_index_);
+    if (titleForDisplay != entry->titleForDisplay) {
+      entry->titleForDisplay = titleForDisplay;
+      roles.append(TitleForDisplay);
+    }
+    QDateTime timestamp = webview_adapter_->getNavigationEntryTimestamp(current_index_);
+    if (timestamp != entry->timestamp) {
+      entry->timestamp = timestamp;
+      roles.append(Timestamp);
+    }
+    if (!roles.isEmpty()) {
+      QModelIndex index = this->index(current_index_, 0);
+      Q_EMIT dataChanged(index, index, roles);
+    }
   }
 
   int newCurrentIndex = webview_adapter_->getNavigationCurrentEntryIndex();;
