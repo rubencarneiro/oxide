@@ -19,7 +19,7 @@
 #define _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_H_
 
 #include <QAbstractListModel>
-#include <QMap>
+#include <QScopedPointer>
 #include <QtQml>
 
 namespace oxide {
@@ -28,26 +28,16 @@ class WebViewAdapter;
 }
 }
 
+class OxideQQuickNavigationHistoryPrivate;
 class OxideQQuickWebView;
-
-struct NavigationEntry;
 
 class OxideQQuickNavigationHistory : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
-  Q_ENUMS(Roles)
 
  public:
   OxideQQuickNavigationHistory(QObject* parent = NULL);
   ~OxideQQuickNavigationHistory();
-
-  enum Roles {
-    Url = Qt::UserRole + 1,
-    VirtualUrl,
-    Title,
-    TitleForDisplay,
-    Timestamp
-  };
 
   // reimplemented from QAbstractListModel
   QHash<int, QByteArray> roleNames() const;
@@ -67,11 +57,9 @@ private Q_SLOTS:
   void onNavigationHistoryChanged();
 
 private:
-  OxideQQuickWebView* webview_;
-  oxide::qt::WebViewAdapter* webview_adapter_;
-  int entry_count_;
-  int current_index_;
-  QMap<int, NavigationEntry*> entry_cache_;
+  Q_DISABLE_COPY(OxideQQuickNavigationHistory)
+  QScopedPointer<OxideQQuickNavigationHistoryPrivate> d_ptr;
+  Q_DECLARE_PRIVATE(OxideQQuickNavigationHistory)
 };
 
 QML_DECLARE_TYPE(OxideQQuickNavigationHistory)

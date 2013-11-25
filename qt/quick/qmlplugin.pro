@@ -26,6 +26,7 @@ HEADERS += \
     api/oxideqquickmessagehandler_p.h \
     api/oxideqquickmessagehandler_p_p.h \
     api/oxideqquicknavigationhistory_p.h \
+    api/oxideqquicknavigationhistory_p_p.h \
     api/oxideqquickoutgoingmessagerequest_p.h \
     api/oxideqquickoutgoingmessagerequest_p_p.h \
     api/oxideqquickuserscript_p.h \

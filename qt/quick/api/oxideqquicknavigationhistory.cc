@@ -16,6 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqquicknavigationhistory_p.h"
+#include "oxideqquicknavigationhistory_p_p.h"
 #include "oxideqquickwebview_p.h"
 
 #include <QDateTime>
@@ -35,103 +36,113 @@ struct NavigationEntry {
 
 OxideQQuickNavigationHistory::OxideQQuickNavigationHistory(QObject* parent) :
     QAbstractListModel(parent),
-    webview_(NULL),
-    webview_adapter_(NULL),
-    entry_count_(0),
-    current_index_(-1) {}
+    d_ptr(new OxideQQuickNavigationHistoryPrivate) {
+  Q_D(OxideQQuickNavigationHistory);
+  d->q_ptr = this;
+  d->webview_ = NULL;
+  d->webview_adapter_ = NULL;
+  d->entry_count_ = 0;
+  d->current_index_ = -1;
+}
 
 OxideQQuickNavigationHistory::~OxideQQuickNavigationHistory() {
-  qDeleteAll(entry_cache_);
-  entry_cache_.clear();
+  Q_D(OxideQQuickNavigationHistory);
+  qDeleteAll(d->entry_cache_);
+  d->entry_cache_.clear();
 }
 
 void OxideQQuickNavigationHistory::setWebView(OxideQQuickWebView* webview) {
-  webview_ = webview;
-  connect(webview_, SIGNAL(navigationHistoryChanged()),
+  Q_D(OxideQQuickNavigationHistory);
+  d->webview_ = webview;
+  connect(webview, SIGNAL(navigationHistoryChanged()),
           SLOT(onNavigationHistoryChanged()));
 }
 
 void OxideQQuickNavigationHistory::setWebViewApdater(
     oxide::qt::WebViewAdapter *adapter) {
-  webview_adapter_ = adapter;
+  Q_D(OxideQQuickNavigationHistory);
+  d->webview_adapter_ = adapter;
 }
 
 void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
-  Q_ASSERT(webview_adapter_ != NULL);
+  Q_D(OxideQQuickNavigationHistory);
+  Q_ASSERT(d->webview_adapter_ != NULL);
 
-  int newCount = webview_adapter_->getNavigationEntryCount();
-  if (newCount != entry_count_) {
+  int newCount = d->webview_adapter_->getNavigationEntryCount();
+  if (newCount != d->entry_count_) {
     beginResetModel();
-    entry_count_ = newCount;
+    d->entry_count_ = newCount;
     for (int i = 0; i < newCount; ++i) {
-      int id = webview_adapter_->getNavigationEntryUniqueID(i);
+      int id = d->webview_adapter_->getNavigationEntryUniqueID(i);
       NavigationEntry* entry;
-      if (entry_cache_.contains(id)) {
-        entry = entry_cache_.value(id);
+      if (d->entry_cache_.contains(id)) {
+        entry = d->entry_cache_.value(id);
       } else {
         entry = new NavigationEntry;
-        entry_cache_.insert(id, entry);
+        d->entry_cache_.insert(id, entry);
       }
-      entry->url = webview_adapter_->getNavigationEntryUrl(i);
-      entry->virtualUrl = webview_adapter_->getNavigationEntryVirtualUrl(i);
-      entry->title = webview_adapter_->getNavigationEntryTitle(i);
-      entry->titleForDisplay = webview_adapter_->getNavigationEntryTitleForDisplay(i);
-      entry->timestamp = webview_adapter_->getNavigationEntryTimestamp(i);
+      entry->url = d->webview_adapter_->getNavigationEntryUrl(i);
+      entry->virtualUrl = d->webview_adapter_->getNavigationEntryVirtualUrl(i);
+      entry->title = d->webview_adapter_->getNavigationEntryTitle(i);
+      entry->titleForDisplay = d->webview_adapter_->getNavigationEntryTitleForDisplay(i);
+      entry->timestamp = d->webview_adapter_->getNavigationEntryTimestamp(i);
     }
     endResetModel();
-  } else if (current_index_ != -1) {
+  } else if (d->current_index_ != -1) {
     QVector<int> roles;
-    int id = webview_adapter_->getNavigationEntryUniqueID(current_index_);
-    NavigationEntry* entry = entry_cache_.value(id);
-    QUrl url = webview_adapter_->getNavigationEntryUrl(current_index_);
+    int id = d->webview_adapter_->getNavigationEntryUniqueID(d->current_index_);
+    NavigationEntry* entry = d->entry_cache_.value(id);
+    QUrl url = d->webview_adapter_->getNavigationEntryUrl(d->current_index_);
     if (url != entry->url) {
       entry->url = url;
-      roles.append(Url);
+      roles.append(OxideQQuickNavigationHistoryPrivate::Url);
     }
-    QUrl virtualUrl = webview_adapter_->getNavigationEntryVirtualUrl(current_index_);
+    QUrl virtualUrl = d->webview_adapter_->getNavigationEntryVirtualUrl(d->current_index_);
     if (virtualUrl != entry->virtualUrl) {
       entry->virtualUrl = virtualUrl;
-      roles.append(VirtualUrl);
+      roles.append(OxideQQuickNavigationHistoryPrivate::VirtualUrl);
     }
-    QString title = webview_adapter_->getNavigationEntryTitle(current_index_);
+    QString title = d->webview_adapter_->getNavigationEntryTitle(d->current_index_);
     if (title != entry->title) {
       entry->title = title;
-      roles.append(Title);
+      roles.append(OxideQQuickNavigationHistoryPrivate::Title);
     }
-    QString titleForDisplay = webview_adapter_->getNavigationEntryTitleForDisplay(current_index_);
+    QString titleForDisplay = d->webview_adapter_->getNavigationEntryTitleForDisplay(d->current_index_);
     if (titleForDisplay != entry->titleForDisplay) {
       entry->titleForDisplay = titleForDisplay;
-      roles.append(TitleForDisplay);
+      roles.append(OxideQQuickNavigationHistoryPrivate::TitleForDisplay);
     }
-    QDateTime timestamp = webview_adapter_->getNavigationEntryTimestamp(current_index_);
+    QDateTime timestamp = d->webview_adapter_->getNavigationEntryTimestamp(d->current_index_);
     if (timestamp != entry->timestamp) {
       entry->timestamp = timestamp;
-      roles.append(Timestamp);
+      roles.append(OxideQQuickNavigationHistoryPrivate::Timestamp);
     }
     if (!roles.isEmpty()) {
-      QModelIndex index = this->index(current_index_, 0);
+      QModelIndex index = this->index(d->current_index_, 0);
       Q_EMIT dataChanged(index, index, roles);
     }
   }
 
-  int newCurrentIndex = webview_adapter_->getNavigationCurrentEntryIndex();;
-  if (newCurrentIndex != current_index_) {
-    current_index_ = newCurrentIndex;
+  int newCurrentIndex = d->webview_adapter_->getNavigationCurrentEntryIndex();
+  if (newCurrentIndex != d->current_index_) {
+    d->current_index_ = newCurrentIndex;
     Q_EMIT currentIndexChanged();
   }
 }
 
 int OxideQQuickNavigationHistory::currentIndex() const {
-  return current_index_;
+  Q_D(const OxideQQuickNavigationHistory);
+  return d->current_index_;
 }
 
 void OxideQQuickNavigationHistory::setCurrentIndex(int index) {
-  if ((index < 0) || (index >= entry_count_)) {
+  Q_D(OxideQQuickNavigationHistory);
+  if ((index < 0) || (index >= d->entry_count_)) {
     return;
   }
-  if (index != current_index_) {
-    current_index_ = index;
-    webview_adapter_->setNavigationCurrentEntryIndex(index);
+  if (index != d->current_index_) {
+    d->current_index_ = index;
+    d->webview_adapter_->setNavigationCurrentEntryIndex(index);
     Q_EMIT currentIndexChanged();
   }
 }
@@ -139,41 +150,43 @@ void OxideQQuickNavigationHistory::setCurrentIndex(int index) {
 QHash<int, QByteArray> OxideQQuickNavigationHistory::roleNames() const {
   static QHash<int, QByteArray> roles;
   if (roles.isEmpty()) {
-    roles[Url] = "url";
-    roles[VirtualUrl] = "virtualUrl";
-    roles[Title] = "title";
-    roles[TitleForDisplay] = "titleForDisplay";
-    roles[Timestamp] = "timestamp";
+    roles[OxideQQuickNavigationHistoryPrivate::Url] = "url";
+    roles[OxideQQuickNavigationHistoryPrivate::VirtualUrl] = "virtualUrl";
+    roles[OxideQQuickNavigationHistoryPrivate::Title] = "title";
+    roles[OxideQQuickNavigationHistoryPrivate::TitleForDisplay] = "titleForDisplay";
+    roles[OxideQQuickNavigationHistoryPrivate::Timestamp] = "timestamp";
   }
   return roles;
 }
 
 int OxideQQuickNavigationHistory::rowCount(const QModelIndex& parent) const {
   Q_UNUSED(parent);
-  return entry_count_;
+  Q_D(const OxideQQuickNavigationHistory);
+  return d->entry_count_;
 }
 
 QVariant OxideQQuickNavigationHistory::data(const QModelIndex& index, int role) const {
+  Q_D(const OxideQQuickNavigationHistory);
   if (!index.isValid()) {
     return QVariant();
   }
-  int id = webview_adapter_->getNavigationEntryUniqueID(index.row());
+  int id = d->webview_adapter_->getNavigationEntryUniqueID(index.row());
   NavigationEntry* entry;
-  if (entry_cache_.contains(id)) {
-    entry = entry_cache_.value(id);
+  if (d->entry_cache_.contains(id)) {
+    entry = d->entry_cache_.value(id);
   } else {
     return QVariant();
   }
   switch (role) {
-  case Url:
+  case OxideQQuickNavigationHistoryPrivate::Url:
     return entry->url;
-  case VirtualUrl:
+  case OxideQQuickNavigationHistoryPrivate::VirtualUrl:
     return entry->virtualUrl;
-  case Title:
+  case OxideQQuickNavigationHistoryPrivate::Title:
     return entry->title;
-  case TitleForDisplay:
+  case OxideQQuickNavigationHistoryPrivate::TitleForDisplay:
     return entry->titleForDisplay;
-  case Timestamp:
+  case OxideQQuickNavigationHistoryPrivate::Timestamp:
     return entry->timestamp;
   default:
     return QVariant();
