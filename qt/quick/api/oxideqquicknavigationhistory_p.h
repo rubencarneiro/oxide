@@ -50,7 +50,7 @@ class OxideQQuickNavigationHistory : public QAbstractListModel {
   void setWebView(OxideQQuickWebView* webview);
   void setWebViewApdater(oxide::qt::WebViewAdapter* adapter);
 
- Q_SIGNALS:
+Q_SIGNALS:
   void currentIndexChanged();
 
 private Q_SLOTS:

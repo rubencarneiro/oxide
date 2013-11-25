@@ -34,7 +34,6 @@ struct NavigationEntry;
 class OxideQQuickNavigationHistoryPrivate {
   Q_DECLARE_PUBLIC(OxideQQuickNavigationHistory)
 
-public:
   enum Roles {
     Url = Qt::UserRole + 1,
     VirtualUrl,
@@ -43,7 +42,6 @@ public:
     Timestamp
   };
 
-private:
   OxideQQuickNavigationHistory* q_ptr;
   OxideQQuickWebView* webview_;
   oxide::qt::WebViewAdapter* webview_adapter_;
