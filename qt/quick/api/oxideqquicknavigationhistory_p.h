@@ -36,7 +36,7 @@ class OxideQQuickNavigationHistory : public QAbstractListModel {
   Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
 
  public:
-  OxideQQuickNavigationHistory(QObject* parent = NULL);
+  OxideQQuickNavigationHistory(oxide::qt::WebViewAdapter* adapter, OxideQQuickWebView* webview);
   ~OxideQQuickNavigationHistory();
 
   // reimplemented from QAbstractListModel
@@ -46,9 +46,6 @@ class OxideQQuickNavigationHistory : public QAbstractListModel {
 
   int currentIndex() const;
   void setCurrentIndex(int index);
-
-  void setWebView(OxideQQuickWebView* webview);
-  void setWebViewApdater(oxide::qt::WebViewAdapter* adapter);
 
 Q_SIGNALS:
   void currentIndexChanged();

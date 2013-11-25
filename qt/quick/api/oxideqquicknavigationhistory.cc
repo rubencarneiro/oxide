@@ -34,34 +34,23 @@ struct NavigationEntry {
   QDateTime timestamp;
 };
 
-OxideQQuickNavigationHistory::OxideQQuickNavigationHistory(QObject* parent) :
-    QAbstractListModel(parent),
+OxideQQuickNavigationHistory::OxideQQuickNavigationHistory(
+    oxide::qt::WebViewAdapter* adapter, OxideQQuickWebView* webview) :
+    QAbstractListModel(webview),
     d_ptr(new OxideQQuickNavigationHistoryPrivate) {
   Q_D(OxideQQuickNavigationHistory);
   d->q_ptr = this;
-  d->webview_ = NULL;
-  d->webview_adapter_ = NULL;
+  d->webview_adapter_ = adapter;
   d->entry_count_ = 0;
   d->current_index_ = -1;
+  connect(webview, SIGNAL(navigationHistoryChanged()),
+          SLOT(onNavigationHistoryChanged()));
 }
 
 OxideQQuickNavigationHistory::~OxideQQuickNavigationHistory() {
   Q_D(OxideQQuickNavigationHistory);
   qDeleteAll(d->entry_cache_);
   d->entry_cache_.clear();
-}
-
-void OxideQQuickNavigationHistory::setWebView(OxideQQuickWebView* webview) {
-  Q_D(OxideQQuickNavigationHistory);
-  d->webview_ = webview;
-  connect(webview, SIGNAL(navigationHistoryChanged()),
-          SLOT(onNavigationHistoryChanged()));
-}
-
-void OxideQQuickNavigationHistory::setWebViewApdater(
-    oxide::qt::WebViewAdapter *adapter) {
-  Q_D(OxideQQuickNavigationHistory);
-  d->webview_adapter_ = adapter;
 }
 
 void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {

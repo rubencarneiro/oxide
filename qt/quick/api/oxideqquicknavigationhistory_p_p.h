@@ -27,7 +27,6 @@ class WebViewAdapter;
 }
 
 class OxideQQuickNavigationHistory;
-class OxideQQuickWebView;
 
 struct NavigationEntry;
 
@@ -43,7 +42,6 @@ class OxideQQuickNavigationHistoryPrivate {
   };
 
   OxideQQuickNavigationHistory* q_ptr;
-  OxideQQuickWebView* webview_;
   oxide::qt::WebViewAdapter* webview_adapter_;
   int entry_count_;
   int current_index_;
