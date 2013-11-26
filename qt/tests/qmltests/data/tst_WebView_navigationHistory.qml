@@ -84,6 +84,21 @@ TestWebView {
       var title3 = "Navigation test 3";
       loadUrl(url3);
       compareAttributes(2, 1, url3, title3, "Two entries / last one updated");
+
+      loadUrl(url1);
+      compareAttributes(3, 2, url1, title1,
+                        "Three entries / current is the last one");
+
+      webView.navigationHistory.currentIndex = 0;
+      verifyLoadSucceeded();
+      compareAttributes(3, 0, url1, title1,
+                        "No new entries / current is the first one");
+
+      var url4 = "http://localhost:8080/tst_WebView_navigation4.html";
+      var title4 = "Navigation test 4";
+      loadUrl(url4);
+      compareAttributes(2, 1, url4, title4,
+                        "Entry count updated / current is the last one");
     }
   }
 }
