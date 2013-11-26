@@ -15,17 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include <QtQuickTest/quicktest.h>
-#include <QtQuickVersion>
-#if QTQUICK_VERSION >= 0x050200
-#include <QtQuick/private/qsgcontext_p.h>
-#endif
+#ifndef _OXIDE_QT_CORE_GLUE_SHARED_GL_CONTEXT_FACTORY_H_
+#define _OXIDE_QT_CORE_GLUE_SHARED_GL_CONTEXT_FACTORY_H_
 
-int main(int argc, char** argv) {
-#if QTQUICK_VERSION >= 0x050200
-  QOpenGLContext context;
-  QSGContext::setSharedOpenGLContext(&context);
-#endif
+#include <QtGlobal>
 
-  return quick_test_main(argc, argv, "qmltests", QUICK_TEST_SOURCE_DIR);
-}
+class QOpenGLContext;
+
+namespace oxide {
+namespace qt {
+
+typedef QOpenGLContext* (SharedGLContextFactory)();
+
+Q_DECL_EXPORT SharedGLContextFactory* GetSharedGLContextFactory();
+Q_DECL_EXPORT void SetSharedGLContextFactory(SharedGLContextFactory* factory);
+
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_GLUE_SHARED_GL_CONTEXT_FACTORY_H_

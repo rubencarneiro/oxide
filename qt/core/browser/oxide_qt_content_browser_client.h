@@ -41,6 +41,9 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
 
   void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) FINAL;
 
+  scoped_refptr<gfx::GLContext> CreateSharedGLContext(
+      gfx::GLShareGroup* share_group) FINAL;
+
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 

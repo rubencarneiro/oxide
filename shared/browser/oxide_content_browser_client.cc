@@ -20,11 +20,14 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
+#include "ui/gl/gl_context.h"
+#include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
@@ -44,10 +47,20 @@ base::MessagePump* CreateMessagePumpForUI() {
       CreateMessagePumpForUI();
 }
 
+class BrowserMainParts;
+BrowserMainParts* g_main_parts;
+
 class BrowserMainParts : public content::BrowserMainParts {
  public:
-  BrowserMainParts() {}
-  ~BrowserMainParts() {}
+  BrowserMainParts() {
+    DCHECK(!g_main_parts);
+    g_main_parts = this;
+  }
+
+  ~BrowserMainParts() {
+    DCHECK_EQ(g_main_parts, this);
+    g_main_parts = NULL;
+  }
 
   void PreEarlyInitialization() FINAL {
     base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
@@ -64,11 +77,21 @@ class BrowserMainParts : public content::BrowserMainParts {
     return true;
   }
 
+  void set_shared_gl_context(gfx::GLContext* context) {
+    shared_gl_context_ = context;
+  }
+
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
+  scoped_refptr<gfx::GLContext> shared_gl_context_;
 };
 
 } // namespace
+
+scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
+    gfx::GLShareGroup* share_group) {
+  return scoped_refptr<gfx::GLContext>(NULL);
+}
 
 ContentBrowserClient::~ContentBrowserClient() {}
 
@@ -143,6 +166,18 @@ bool ContentBrowserClient::GetDefaultScreenInfo(
     blink::WebScreenInfo* result) {
   GetDefaultScreenInfoImpl(result);
   return true;
+}
+
+gfx::GLShareGroup* ContentBrowserClient::CreateGLShareGroup() {
+  gfx::GLShareGroup* share_group = new gfx::GLShareGroup();
+  scoped_refptr<gfx::GLContext> share_context =
+      CreateSharedGLContext(share_group);
+  if (share_context) {
+    DCHECK_EQ(share_context->share_group(), share_group);
+    g_main_parts->set_shared_gl_context(share_context);
+  }
+
+  return share_group;
 }
 
 } // namespace oxide

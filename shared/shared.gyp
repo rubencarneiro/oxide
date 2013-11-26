@@ -185,6 +185,8 @@
         'browser/oxide_outgoing_message_request.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
+        'browser/oxide_shared_gl_context.cc',
+        'browser/oxide_shared_gl_context.h',
         'browser/oxide_ssl_config_service.cc',
         'browser/oxide_ssl_config_service.h',
         'browser/oxide_url_request_context.cc',

@@ -20,6 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "content/public/browser/content_browser_client.h"
 
 namespace base {
@@ -28,6 +29,11 @@ class MessagePump;
 
 namespace content {
 class RenderViewHost;
+}
+
+namespace gfx {
+class GLContext;
+class GLShareGroup;
 }
 
 namespace oxide {
@@ -70,6 +76,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   bool GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
 
+  gfx::GLShareGroup* CreateGLShareGroup() FINAL;
+
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
 
@@ -79,6 +87,9 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
  private:
   virtual void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) = 0;
+
+  virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
+      gfx::GLShareGroup* share_group);
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

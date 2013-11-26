@@ -1,6 +1,6 @@
 TEMPLATE = lib
 TARGET = qmloxideplugin
-QT += core gui qml quick
+QT += core gui qml quick quick-private
 CONFIG += qt plugin
 
 include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)

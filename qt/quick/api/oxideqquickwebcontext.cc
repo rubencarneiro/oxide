@@ -20,17 +20,34 @@
 
 #include <QQmlListProperty>
 #include <QtDebug>
+#include <QtQuickVersion>
+#if QTQUICK_VERSION >= 0x050200
+#include <QtQuick/private/qsgcontext_p.h>
+#endif
+
+#include "qt/core/glue/oxide_qt_shared_gl_context_factory.h"
 
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 
 namespace {
 OxideQQuickWebContext* g_default_context;
+
+QOpenGLContext* OxideQQuickSharedGLContextFactory() {
+#if QTQUICK_VERSION >= 0x050200
+  return QSGContext::sharedOpenGLContext();
+#else
+  return NULL;
+#endif
+}
+
 }
 
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
-    q_ptr(q) {}
+    q_ptr(q) {
+  oxide::qt::SetSharedGLContextFactory(OxideQQuickSharedGLContextFactory);
+}
 
 OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
     OxideQQuickWebContext* context) {

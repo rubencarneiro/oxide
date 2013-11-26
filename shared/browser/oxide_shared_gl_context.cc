@@ -15,17 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include <QtQuickTest/quicktest.h>
-#include <QtQuickVersion>
-#if QTQUICK_VERSION >= 0x050200
-#include <QtQuick/private/qsgcontext_p.h>
-#endif
+#include "oxide_shared_gl_context.h"
 
-int main(int argc, char** argv) {
-#if QTQUICK_VERSION >= 0x050200
-  QOpenGLContext context;
-  QSGContext::setSharedOpenGLContext(&context);
-#endif
+#include "base/logging.h"
 
-  return quick_test_main(argc, argv, "qmltests", QUICK_TEST_SOURCE_DIR);
+namespace oxide {
+
+SharedGLContext::SharedGLContext(gfx::GLShareGroup* share_group) :
+    gfx::GLContext(share_group) {
+  DCHECK(share_group) << "Must specify a share group!";
 }
+
+SharedGLContext::~SharedGLContext() {}
+
+bool SharedGLContext::Initialize(gfx::GLSurface* compatible_surface,
+                                 gfx::GpuPreference gpu_preference) {
+  return true;
+}
+
+void SharedGLContext::Destroy() {}
+
+bool SharedGLContext::MakeCurrent(gfx::GLSurface* surface) {
+  NOTREACHED();
+  return false;
+}
+
+void SharedGLContext::ReleaseCurrent(gfx::GLSurface* surface) {}
+
+bool SharedGLContext::IsCurrent(gfx::GLSurface* surface) {
+  return false;
+}
+
+void SharedGLContext::SetSwapInterval(int interval) {}
+
+} // namespace oxide

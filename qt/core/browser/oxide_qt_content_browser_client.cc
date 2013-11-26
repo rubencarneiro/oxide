@@ -17,11 +17,47 @@
 
 #include "oxide_qt_content_browser_client.h"
 
+#include <QGuiApplication>
+#include <QString>
+#include <QtGui/qpa/qplatformnativeinterface.h>
+
+#include "shared/browser/oxide_shared_gl_context.h"
+
+#include "qt/core/glue/oxide_qt_shared_gl_context_factory.h"
+
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_render_widget_host_view.h"
 
 namespace oxide {
 namespace qt {
+
+namespace {
+
+class SharedGLContext : public oxide::SharedGLContext {
+ public:
+  SharedGLContext(QOpenGLContext* context, gfx::GLShareGroup* share_group) :
+      oxide::SharedGLContext(share_group),
+      handle_(NULL) {
+    QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
+    QString platform = QGuiApplication::platformName();
+    if (platform == "xcb") {
+      // QXcbNativeInterface creates a GLXContext if GLX is enabled, else
+      // it creates an EGLContext is EGL is enabled, so this should be safe
+      // XXX: Check this matches the GL implementation selected by Chrome?
+      handle_ = pni->nativeResourceForContext("glxcontext", context);
+      if (!handle_) {
+        handle_ = pni->nativeResourceForContext("eglcontext", context);
+      }
+    }
+  }
+
+  void* GetHandle() OVERRIDE { return handle_; }
+
+ private:
+  void* handle_;
+};
+
+} // namespace
 
 base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
@@ -30,6 +66,27 @@ base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
 void ContentBrowserClient::GetDefaultScreenInfoImpl(
     blink::WebScreenInfo* result) {
   RenderWidgetHostView::GetScreenInfo(NULL, result);
+}
+
+scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
+    gfx::GLShareGroup* share_group) {
+  SharedGLContextFactory* factory = GetSharedGLContextFactory();
+  if (!factory) {
+    return NULL;
+  }
+
+  QOpenGLContext* qcontext = factory();
+  if (!qcontext) {
+    return NULL;
+  }
+
+  scoped_refptr<gfx::GLContext> context =
+      new SharedGLContext(qcontext, share_group);
+  if (!context->GetHandle()) {
+    context = NULL;
+  }
+
+  return context;
 }
 
 } // namespace qt
