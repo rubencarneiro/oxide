@@ -356,11 +356,10 @@ BrowserContext* WebView::GetBrowserContext() const {
 }
 
 content::NavigationController* WebView::GetNavigationController() const {
-  if (web_contents_) {
-    return &web_contents_->GetController();
-  } else {
+  if (!web_contents_) {
     return NULL;
   }
+  return &web_contents_->GetController();
 }
 
 WebFrame* WebView::GetRootFrame() const {
