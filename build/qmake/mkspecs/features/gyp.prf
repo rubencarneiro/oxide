@@ -35,12 +35,12 @@ equals(GYP_TYPE, lib) {
     QMAKE_EXTRA_TARGETS += add_symlink
     POST_TARGETDEPS += add_symlink
 
-    install_lib.path = $$LIBDIR
+    install_lib.path = $$[QT_INSTALL_LIBS]
     install_lib.files = $${CHROMIUM_OUT_LIB_DIR}/$${LIB0} $${CHROMIUM_OUT_LIB_DIR}/$${LIB1}
     install_lib.CONFIG = no_check_exist
     INSTALLS += install_lib
 } else:equals(GYP_TYPE, libexec) {
-    install_bin.path = $$LIBEXECDIR
+    install_bin.path = $$[QT_INSTALL_LIBS]/oxide-qt
     isEmpty(TARGET.bin_name) {
         install_bin.files = $${CHROMIUM_OUT_PLAT_DIR}/$${TARGET}
     } else {
@@ -51,9 +51,9 @@ equals(GYP_TYPE, lib) {
     INSTALLS += install_bin
 
     !isEmpty(TARGET.post_install) {
-        install_bin_postinst.path = $$LIBEXECDIR
-        isEmpty(TARGET.bin_name):install_bin_postinst.commands = $$TARGET.post_install $${LIBEXECDIR}/$${TARGET}
-        else:install_bin_postinst.commands = $$TARGET.post_install $${LIBEXECDIR}/$${TARGET.bin_name}
+        install_bin_postinst.path = $$[QT_INSTALL_LIBS]/oxide-qt
+        isEmpty(TARGET.bin_name):install_bin_postinst.commands = $$TARGET.post_install $$[QT_INSTALL_LIBS]/oxide-qt/$${TARGET}
+        else:install_bin_postinst.commands = $$TARGET.post_install $$[QT_INSTALL_LIBS]/oxide-qt/$${TARGET.bin_name}
         INSTALLS += install_bin_postinst
     }
 }
