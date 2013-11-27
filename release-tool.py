@@ -143,7 +143,24 @@ class SourceTreeVersion(object):
     self._dirty = True
 
 @subcommand.Command("make-tarball")
+@subcommand.CommandOption("--deb", dest="deb", action="store_true",
+                          help="Create a tarball suitable for Ubuntu / Debian "
+                               "packaging")
+@subcommand.CommandOption("-f", "--force", dest="force", action="store_true",
+                          help="Create a tarball even if the tree has "
+                               "uncommitted changes")
 def cmd_make_tarball(options, args):
+  """Create a tarball.
+
+  This command will create a source tarball, which will include the
+  appropriate Chromium checkout embedded and all Chromium patches applied.
+
+  "bzr export" is not used because the tarball includes a lot of files that
+  are not maintained in Bzr, and Bzr currently provides no mechanism for hooks
+  to extend "export". Please do not use "bzr export", as it won't work as
+  expected.
+  """
+
   from bzrlib.branch import Branch
   from bzrlib.workingtree import WorkingTree
   import tarfile
@@ -154,8 +171,14 @@ def cmd_make_tarball(options, args):
   # XXX: Qt-specific
   v = SourceTreeVersion("qt")
   basename = "oxide-qt"
+  topsrcdir = basename
 
-  filename = "%s-%s" % (basename, str(v))
+  if options.deb:
+    filename = "%s_%s" % (basename, str(v))
+  else:
+    filename = "%s-%s" % (basename, str(v))
+
+  topsrcdir = "%s-%s" % (basename, str(v))
 
   # If we're not creating a tarball from a revision with a release
   # tag, then add the revision to the filename
@@ -165,13 +188,17 @@ def cmd_make_tarball(options, args):
   tags = tag_dict[rev_id] if rev_id in tag_dict else []
   # XXX: Qt-specific
   if not any(re.match(r'QT_[0-9]+_[0-9]+_[0-9]+_[0-9]+', tag) for tag in tags):
-    filename = "%s.bzr%s" % (filename, branch.revision_id_to_revno(rev_id))
+    filename = "%s~bzr%s" % (filename, branch.revision_id_to_revno(rev_id))
+    topsrcdir = "%s~bzr%s" % (topsrcdir, branch.revision_id_to_revno(rev_id))
 
-  filename = "%s.tar.bz2" % filename
+  if options.deb:
+    filename = "%s.orig.tar.bz2" % filename
+  else:
+    filename = "%s.tar.bz2" % filename
 
   # Build list of files in bzr
   tree = WorkingTree.open(TOPSRCDIR)
-  if tree.has_changes():
+  if tree.has_changes() and not options.force:
     print("Tree has uncommitted changes. Please commit your changes and try again", file=sys.stderr)
     sys.exit(1)
 
@@ -184,25 +211,26 @@ def cmd_make_tarball(options, args):
   excludes = [re.compile(r) for r in TAR_EXCLUDE_RE_S]
 
   def tar_filter(info):
-    if any(r.search(os.path.relpath(info.name, basename)) is not None for r in excludes):
+    if any(r.search(os.path.relpath(info.name, topsrcdir)) is not None for r in excludes):
       return None
     return info
 
   with tarfile.open(os.path.join(TOPSRCDIR, filename), "w:bz2") as tar:
     # Add files from bzr
     for f in files:
-      tar.add(f, os.path.join(basename, f), filter=tar_filter, recursive=False)
+      tar.add(f, os.path.join(topsrcdir, f), filter=tar_filter, recursive=False)
 
     # Add Chromium
     chromium = os.path.relpath(CHROMIUMSRCDIR, TOPSRCDIR)
-    tar.add(chromium, os.path.join(basename, chromium), filter=tar_filter, recursive=True)
+    tar.add(chromium, os.path.join(topsrcdir, chromium), filter=tar_filter, recursive=True)
 
 @subcommand.Command("release")
 def cmd_tag(options, args):
   """Create a release from the current revision.
 
   This command will tag the current revision, and automatically increase
-  the version number. Only for non-trunk branches"""
+  the version number. Only for non-trunk branches
+  """
 
   from bzrlib.branch import Branch
   from bzrlib.errors import (
