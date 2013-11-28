@@ -44,7 +44,6 @@ TAR_EXCLUDE_RE_S = [
   r'^gclient\.conf$',
   r'^patch\-tool\.py$',
   r'^release\-tool\.py$',
-  r'(^|\/)Makefile$',
   r'\.mk$',
   r'\.o$',
   r'\.so(|\..*)$',
