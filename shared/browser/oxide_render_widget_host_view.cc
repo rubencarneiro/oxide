@@ -19,15 +19,89 @@
 
 #include "base/callback.h"
 #include "base/logging.h"
+#include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/common/gpu/client/gpu_channel_host.h"
+#include "content/common/gpu/client/webgraphicscontext3d_command_buffer_impl.h"
+#include "content/common/gpu/gpu_process_launch_causes.h"
+#include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
 #include "ui/gfx/rect.h"
+#include "url/gurl.h"
 
 namespace oxide {
+
+class OffscreenGraphicsContextRef;
+namespace {
+OffscreenGraphicsContextRef* g_offscreen_context;
+}
+
+class OffscreenGraphicsContextRef :
+    public base::RefCounted<OffscreenGraphicsContextRef> {
+ public:
+  ~OffscreenGraphicsContextRef() {
+    DCHECK_EQ(g_offscreen_context, this);
+    g_offscreen_context = NULL;
+  }
+
+  static scoped_refptr<OffscreenGraphicsContextRef> GetInstance() {
+    if (!g_offscreen_context) {
+      scoped_refptr<OffscreenGraphicsContextRef> context =
+          new OffscreenGraphicsContextRef();
+      DCHECK(g_offscreen_context);
+      return context;
+    }
+
+    return make_scoped_refptr(g_offscreen_context);
+  }
+
+  content::WebGraphicsContext3DCommandBufferImpl* context3d() const {
+    return context3d_.get();
+  }
+
+ private:
+  friend class base::RefCounted<OffscreenGraphicsContextRef>;
+
+  OffscreenGraphicsContextRef() {
+    DCHECK(!g_offscreen_context);
+    g_offscreen_context = this;
+
+    blink::WebGraphicsContext3D::Attributes attrs;
+    attrs.shareResources = true;
+    attrs.depth = false;
+    attrs.stencil = false;
+    attrs.antialias = false;
+    attrs.noAutomaticFlushes = true;
+
+    content::CauseForGpuLaunch cause =
+        content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
+    scoped_refptr<content::GpuChannelHost> gpu_channel_host(
+        content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
+    if (!gpu_channel_host) {
+      return;
+    }
+
+    GURL url("oxide://shared/OffscreenGraphicsContextRef::OffscreenGraphicsContextRef");
+    bool use_echo_for_swap_ack = true;
+
+    context3d_.reset(
+      new content::WebGraphicsContext3DCommandBufferImpl(
+          0,
+          url,
+          gpu_channel_host.get(),
+          use_echo_for_swap_ack,
+          attrs,
+          false,
+          content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits()));
+  }
+
+  scoped_ptr<content::WebGraphicsContext3DCommandBufferImpl> context3d_;
+};
 
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     content::RenderWidgetHostViewBase(),
     is_hidden_(false),
-    host_(content::RenderWidgetHostImpl::From(host)) {
+    host_(content::RenderWidgetHostImpl::From(host)),
+    graphics_context_ref_(OffscreenGraphicsContextRef::GetInstance()) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   host_->SetView(this);
@@ -180,7 +254,20 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
 }
 
 gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
-  return gfx::GLSurfaceHandle();
+  if (shared_surface_handle_.is_null()) {
+    content::WebGraphicsContext3DCommandBufferImpl* context =
+      graphics_context_ref_->context3d();
+    if (!context) {
+      return gfx::GLSurfaceHandle();
+    }
+
+    shared_surface_handle_ = gfx::GLSurfaceHandle(
+        gfx::kNullPluginWindow, gfx::TEXTURE_TRANSPORT);
+    shared_surface_handle_.parent_gpu_process_id = context->GetGPUProcessID();
+    shared_surface_handle_.parent_client_id = context->GetChannelID();
+  }
+
+  return shared_surface_handle_;
 }
 
 void RenderWidgetHostView::SetHasHorizontalScrollbar(

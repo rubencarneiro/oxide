@@ -20,7 +20,9 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
+#include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
 
 namespace content {
@@ -28,6 +30,8 @@ class RenderWidgetHostImpl;
 }
 
 namespace oxide {
+
+class OffscreenGraphicsContextRef;
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
  public:
@@ -144,6 +148,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase {
 
   bool is_hidden_;
   content::RenderWidgetHostImpl* host_;
+  scoped_refptr<OffscreenGraphicsContextRef> graphics_context_ref_;
+  gfx::GLSurfaceHandle shared_surface_handle_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };
