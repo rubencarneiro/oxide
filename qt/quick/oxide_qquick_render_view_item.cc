@@ -182,8 +182,8 @@ QSGNode* RenderViewItem::updatePaintNode(
   }
 
   node->setSize(QSizeF(width(), height()).toSize());
-  node->setBackingStore(backing_store_);
   node->setDirty(dirty_rect_);
+  node->setBackingStore(backing_store_);
 
   node->update();
 
