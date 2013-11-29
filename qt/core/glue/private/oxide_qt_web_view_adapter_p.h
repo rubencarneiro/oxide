@@ -21,6 +21,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 
+#include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
 namespace oxide {
@@ -37,6 +38,8 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) FINAL;
+
+  oxide::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
 
   gfx::Rect GetContainerBounds() FINAL;
 

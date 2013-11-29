@@ -42,6 +42,7 @@ class Size;
 
 namespace content {
 
+class JavaScriptDialogManager;
 struct OpenURLParams;
 class RenderWidgetHost;
 class RenderWidgetHostView;
@@ -145,6 +146,8 @@ class WebView : public MessageTarget,
 
   virtual size_t GetMessageHandlerCount() const OVERRIDE;
   virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
+
+  virtual content::JavaScriptDialogManager* GetJavaScriptDialogManager() OVERRIDE;
 
   content::WebContents* web_contents() const {
     return web_contents_.get();

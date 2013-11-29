@@ -22,6 +22,7 @@
 
 #include "url/gurl.h"
 
+#include "qt/core/browser/oxide_qt_javascript_dialog_manager.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
@@ -97,6 +98,11 @@ content::RenderWidgetHostView* WebViewAdapterPrivate::CreateViewForWidget(
   return new RenderWidgetHostView(
       render_widget_host,
       a->CreateRenderWidgetHostViewDelegate());
+}
+
+oxide::JavaScriptDialogManager*
+WebViewAdapterPrivate::GetJavaScriptDialogManager() {
+  return a->GetJavaScriptDialogManager();
 }
 
 gfx::Rect WebViewAdapterPrivate::GetContainerBounds() {

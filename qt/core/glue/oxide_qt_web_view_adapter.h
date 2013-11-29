@@ -34,6 +34,7 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
+class JavaScriptDialogManager;
 class MessageHandlerAdapter;
 class RenderWidgetHostViewDelegate;
 class WebContextAdapter;
@@ -94,6 +95,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void LoadSucceeded(const QUrl& url) = 0;
 
   virtual WebFrameAdapter* CreateWebFrame() = 0;
+
+  virtual JavaScriptDialogManager* GetJavaScriptDialogManager() = 0;
 
   virtual QRect GetContainerBounds() = 0;
 

@@ -68,6 +68,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
+  oxide::qt::JavaScriptDialogManager* GetJavaScriptDialogManager() Q_DECL_FINAL;
+
   QRect GetContainerBounds() Q_DECL_FINAL;
 
   void componentComplete();

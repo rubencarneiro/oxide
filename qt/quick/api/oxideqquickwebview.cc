@@ -144,6 +144,12 @@ oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
   return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
 }
 
+oxide::qt::JavaScriptDialogManager*
+OxideQQuickWebViewPrivate::GetJavaScriptDialogManager() {
+  qDebug() << Q_FUNC_INFO << "TODO";
+  return NULL;
+}
+
 QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
   Q_Q(OxideQQuickWebView);
 

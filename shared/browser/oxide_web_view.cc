@@ -502,6 +502,10 @@ MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
   return NULL;
 }
 
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+  return NULL;
+}
+
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
   return NULL;
 }

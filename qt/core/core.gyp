@@ -47,6 +47,8 @@
         'browser/oxide_qt_backing_store.h',
         'browser/oxide_qt_content_browser_client.cc',
         'browser/oxide_qt_content_browser_client.h',
+        'browser/oxide_qt_javascript_dialog_manager.cc',
+        'browser/oxide_qt_javascript_dialog_manager.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
         'browser/oxide_qt_render_widget_host_view.cc',
