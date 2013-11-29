@@ -36,23 +36,19 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qquick {
 
-class RenderViewItem;
-
 class PaintedRenderViewNode Q_DECL_FINAL : public QSGGeometryNode {
  public:
-  PaintedRenderViewNode(RenderViewItem* item);
+  PaintedRenderViewNode();
 
   QSize size() const;
   void setSize(const QSize& size);
 
-  void setDirtyRect(const QRect& rect);
+  void markDirtyRect(const QRect& rect);
   void setBackingStore(const QPixmap* pixmap);
 
   virtual void preprocess() Q_DECL_FINAL;
 
  private:
-  RenderViewItem* item_;
-
   QSize size_;
   QRect dirty_rect_;
 

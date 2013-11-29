@@ -22,9 +22,7 @@
 namespace oxide {
 namespace qquick {
 
-PaintedRenderViewNode::PaintedRenderViewNode(
-    RenderViewItem* item) :
-    item_(item),
+PaintedRenderViewNode::PaintedRenderViewNode() :
     backing_store_(NULL),
     geometry_(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4) {
   setFlag(QSGNode::UsePreprocess);
@@ -61,13 +59,14 @@ void PaintedRenderViewNode::setSize(const QSize& size) {
   image_ = QImage(size_, QImage::Format_ARGB32_Premultiplied);
   image_.fill(Qt::transparent);
 
-  setDirtyRect(QRect(QPoint(0, 0), this->size()));
-
   markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
+
+  markDirtyRect(QRect(QPoint(0, 0), size_));
 }
 
-void PaintedRenderViewNode::setDirtyRect(const QRect& rect) {
-  dirty_rect_ = rect;
+void PaintedRenderViewNode::markDirtyRect(const QRect& rect) {
+  dirty_rect_ |= rect;
+  markDirty(QSGNode::DirtyMaterial);
 }
 
 void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
@@ -77,7 +76,7 @@ void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
 
   backing_store_ = pixmap;
 
-  setDirtyRect(QRect(QPoint(0, 0), size()));
+  markDirtyRect(QRect(QPoint(0, 0), size()));
 }
 
 void PaintedRenderViewNode::preprocess() {
@@ -85,7 +84,8 @@ void PaintedRenderViewNode::preprocess() {
     return;
   }
 
-  markDirty(QSGNode::DirtyMaterial);
+  QRect dirty_rect = dirty_rect_;
+  dirty_rect_ = QRect();
 
   if (image_.isNull()) {
     return;
@@ -94,24 +94,22 @@ void PaintedRenderViewNode::preprocess() {
   QPainter painter;
   painter.begin(&image_);
 
-  if (!dirty_rect_.isNull()) {
-    painter.setClipRect(dirty_rect_);
+  if (!dirty_rect.isNull()) {
+    painter.setClipRect(dirty_rect);
   }
 
   painter.setCompositionMode(QPainter::CompositionMode_Source);
-  painter.fillRect(dirty_rect_, Qt::transparent);
+  painter.fillRect(dirty_rect, Qt::transparent);
   painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
   if (backing_store_) {
-    QRectF rect(0, 0, size_.width(), size_.height());
+    QRectF rect(0, 0, size().width(), size().height());
     painter.drawPixmap(rect, *backing_store_, rect);
   }
 
   painter.end();
 
   texture_.setImage(image_);
-
-  dirty_rect_ = QRect();
 }
 
 } // namespace qquick
