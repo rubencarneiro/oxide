@@ -31,11 +31,11 @@ PaintedRenderViewNode::PaintedRenderViewNode() :
   setMaterial(&material_);
   setOpaqueMaterial(&material_o_);
 
-  material_.setTexture(&texture_);
-  material_o_.setTexture(&texture_);
-
   texture_.setOwnsTexture(true);
   texture_.setHasAlphaChannel(true);
+
+  material_.setTexture(&texture_);
+  material_o_.setTexture(&texture_);
 }
 
 QSize PaintedRenderViewNode::size() const {
