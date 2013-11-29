@@ -59,10 +59,12 @@ void PaintedRenderViewNode::setSize(const QSize& size) {
   image_ = QImage(size_, QImage::Format_ARGB32_Premultiplied);
   image_.fill(Qt::transparent);
 
+  setDirtyRect(QRect(QPoint(0, 0), this->size()));
+
   markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 }
 
-void PaintedRenderViewNode::setDirty(const QRect& rect) {
+void PaintedRenderViewNode::setDirtyRect(const QRect& rect) {
   dirty_rect_ = rect;
 }
 
@@ -73,7 +75,7 @@ void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
 
   backing_store_ = pixmap;
 
-  setDirty(QRect(QPoint(0, 0), size()));
+  setDirtyRect(QRect(QPoint(0, 0), size()));
 }
 
 void PaintedRenderViewNode::update() {
