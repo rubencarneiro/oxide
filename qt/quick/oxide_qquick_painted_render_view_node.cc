@@ -22,8 +22,32 @@
 namespace oxide {
 namespace qquick {
 
-void PaintedRenderViewNode::updateGeometry() {
-  dirty_geometry_ = false;
+PaintedRenderViewNode::PaintedRenderViewNode(
+    RenderViewItem* item) :
+    item_(item),
+    backing_store_(NULL),
+    geometry_(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4) {
+  setGeometry(&geometry_);
+  setMaterial(&material_);
+  setOpaqueMaterial(&material_o_);
+
+  material_.setTexture(&texture_);
+  material_o_.setTexture(&texture_);
+
+  texture_.setOwnsTexture(true);
+  texture_.setHasAlphaChannel(true);
+}
+
+QSize PaintedRenderViewNode::size() const {
+  return size_;
+}
+
+void PaintedRenderViewNode::setSize(const QSize& size) {
+  if (size == size_) {
+    return;
+  }
+
+  size_ = size;
 
   QSGGeometry::updateTexturedRectGeometry(
       &geometry_,
@@ -38,8 +62,24 @@ void PaintedRenderViewNode::updateGeometry() {
   markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 }
 
-void PaintedRenderViewNode::paint() {
-  dirty_contents_ = false;
+void PaintedRenderViewNode::setDirty(const QRect& rect) {
+  dirty_rect_ = rect;
+}
+
+void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
+  if (pixmap == backing_store_) {
+    return;
+  }
+
+  backing_store_ = pixmap;
+
+  setDirty(QRect(QPoint(0, 0), size()));
+}
+
+void PaintedRenderViewNode::update() {
+  if (dirty_rect_.isEmpty()) {
+    return;
+  }
 
   markDirty(QSGNode::DirtyMaterial);
 
@@ -68,61 +108,6 @@ void PaintedRenderViewNode::paint() {
   texture_.setImage(image_);
 
   dirty_rect_ = QRect();
-}
-
-PaintedRenderViewNode::PaintedRenderViewNode(
-    RenderViewItem* item) :
-    item_(item),
-    backing_store_(NULL),
-    geometry_(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4),
-    dirty_contents_(true),
-    dirty_geometry_(true) {
-  setGeometry(&geometry_);
-  setMaterial(&material_);
-  setOpaqueMaterial(&material_o_);
-
-  material_.setTexture(&texture_);
-  material_o_.setTexture(&texture_);
-
-  texture_.setOwnsTexture(true);
-  texture_.setHasAlphaChannel(true);
-}
-
-QSize PaintedRenderViewNode::size() const {
-  return size_;
-}
-
-void PaintedRenderViewNode::setSize(const QSize& size) {
-  if (size == size_) {
-    return;
-  }
-
-  size_ = size;
-  dirty_geometry_ = true;
-}
-
-void PaintedRenderViewNode::setDirty(const QRect& rect) {
-  dirty_rect_ = rect;
-  dirty_contents_ = true;
-}
-
-void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
-  if (pixmap == backing_store_) {
-    return;
-  }
-
-  backing_store_ = pixmap;
-
-  setDirty(QRect(QPoint(0, 0), size()));
-}
-
-void PaintedRenderViewNode::update() {
-  if (dirty_geometry_) {
-    updateGeometry();
-  }
-  if (dirty_contents_) {
-    paint();
-  }
 }
 
 } // namespace qquick

@@ -51,9 +51,6 @@ class PaintedRenderViewNode Q_DECL_FINAL : public QSGGeometryNode {
   void update();
 
  private:
-  void updateGeometry();
-  void paint();
-
   RenderViewItem* item_;
 
   QSize size_;
@@ -66,9 +63,6 @@ class PaintedRenderViewNode Q_DECL_FINAL : public QSGGeometryNode {
   QSGTextureMaterial material_;
   QSGGeometry geometry_;
   QSGPlainTexture texture_;
-
-  bool dirty_contents_;
-  bool dirty_geometry_;
 };
 
 } // namespace qquick
