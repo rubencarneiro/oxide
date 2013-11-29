@@ -185,8 +185,6 @@ QSGNode* RenderViewItem::updatePaintNode(
   node->setDirtyRect(dirty_rect_);
   node->setBackingStore(backing_store_);
 
-  node->update();
-
   dirty_rect_ = QRect();
 
   return node;

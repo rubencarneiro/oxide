@@ -48,7 +48,7 @@ class PaintedRenderViewNode Q_DECL_FINAL : public QSGGeometryNode {
   void setDirtyRect(const QRect& rect);
   void setBackingStore(const QPixmap* pixmap);
 
-  void update();
+  virtual void preprocess() Q_DECL_FINAL;
 
  private:
   RenderViewItem* item_;

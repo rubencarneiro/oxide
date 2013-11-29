@@ -27,6 +27,8 @@ PaintedRenderViewNode::PaintedRenderViewNode(
     item_(item),
     backing_store_(NULL),
     geometry_(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4) {
+  setFlag(QSGNode::UsePreprocess);
+
   setGeometry(&geometry_);
   setMaterial(&material_);
   setOpaqueMaterial(&material_o_);
@@ -78,7 +80,7 @@ void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
   setDirtyRect(QRect(QPoint(0, 0), size()));
 }
 
-void PaintedRenderViewNode::update() {
+void PaintedRenderViewNode::preprocess() {
   if (dirty_rect_.isEmpty()) {
     return;
   }
