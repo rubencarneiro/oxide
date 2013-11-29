@@ -1,6 +1,6 @@
 TEMPLATE = lib
 TARGET = qmloxideplugin
-QT += core gui qml quick quick-private
+QT += core core-private gui gui-private qml quick quick-private
 CONFIG += qt plugin
 
 include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
@@ -18,7 +18,8 @@ SOURCES += \
     api/oxideqquickwebframe.cc \
     api/oxideqquickwebview.cc \
     oxide_qml_plugin.cc \
-    oxide_qquick_render_widget_host_view_delegate.cc \
+    oxide_qquick_painted_render_view_node.cc \
+    oxide_qquick_render_view_item.cc \
     oxide_qquick_web_popup_menu_delegate.cc \
 
 HEADERS += \
@@ -34,7 +35,8 @@ HEADERS += \
     api/oxideqquickwebframe_p_p.h \
     api/oxideqquickwebview_p.h \
     api/oxideqquickwebview_p_p.h \
-    oxide_qquick_render_widget_host_view_delegate.h \
+    oxide_qquick_painted_render_view_node.h \
+    oxide_qquick_render_view_item.h \
     oxide_qquick_web_popup_menu_delegate.h
 
 INCLUDEPATH = $$OXIDE_SRC_ROOT

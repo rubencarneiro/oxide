@@ -15,10 +15,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
-#define _OXIDE_QT_QUICK_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
+#ifndef _OXIDE_QT_QUICK_RENDER_VIEW_ITEM_H_
+#define _OXIDE_QT_QUICK_RENDER_VIEW_ITEM_H_
 
-#include <QQuickPaintedItem>
+#include <QQuickItem>
+#include <QRect>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
@@ -32,11 +33,11 @@ class OxideQQuickWebView;
 namespace oxide {
 namespace qquick {
 
-class RenderWidgetHostViewDelegate Q_DECL_FINAL :
-    public QQuickPaintedItem,
+class RenderViewItem Q_DECL_FINAL :
+    public QQuickItem,
     public oxide::qt::RenderWidgetHostViewDelegate {
  public:
-  RenderWidgetHostViewDelegate(OxideQQuickWebView* webview);
+  RenderViewItem(OxideQQuickWebView* webview);
 
   void Blur() Q_DECL_FINAL;
   void Focus() Q_DECL_FINAL;
@@ -69,15 +70,17 @@ class RenderWidgetHostViewDelegate Q_DECL_FINAL :
   void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
 
   void updatePolish() Q_DECL_FINAL;
-  void paint(QPainter* paint) Q_DECL_FINAL;
+  QSGNode* updatePaintNode(QSGNode* oldNode,
+                           UpdatePaintNodeData* data) Q_DECL_FINAL;
 
  private:
   void ScheduleUpdate(const QRect& rect) Q_DECL_FINAL;
 
   const QPixmap* backing_store_;
+  QRect dirty_rect_;
 };
 
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
+#endif // _OXIDE_QT_QUICK_RENDER_VIEW_ITEM_H_

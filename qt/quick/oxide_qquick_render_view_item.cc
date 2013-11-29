@@ -15,59 +15,66 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_render_widget_host_view_delegate.h"
+#include "oxide_qquick_render_view_item.h"
 
 #include <QQuickWindow>
-#include <QPainter>
-#include <QPixmap>
 #include <QPointF>
-#include <QRect>
 #include <QRectF>
 #include <QSizeF>
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
+#include "oxide_qquick_painted_render_view_node.h"
+
 namespace oxide {
 namespace qquick {
 
-void RenderWidgetHostViewDelegate::ScheduleUpdate(const QRect& rect) {
-  update(rect);
+void RenderViewItem::ScheduleUpdate(const QRect& rect) {
+  if (rect.isNull() && !dirty_rect_.isNull()) {
+    dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
+  } else {
+    dirty_rect_ |= (QRectF(0, 0, width(), height()) & rect).toAlignedRect();
+  }
+
+  update();
   polish();
 }
 
-RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate(
+RenderViewItem::RenderViewItem(
     OxideQQuickWebView* webview) :
-    QQuickPaintedItem(webview),
+    QQuickItem(webview),
     backing_store_(NULL) {
+  setFlag(QQuickItem::ItemHasContents);
+
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
 }
 
-void RenderWidgetHostViewDelegate::Blur() {
+void RenderViewItem::Blur() {
   setFocus(false);
 }
 
-void RenderWidgetHostViewDelegate::Focus() {
+void RenderViewItem::Focus() {
   setFocus(true);
 }
 
-bool RenderWidgetHostViewDelegate::HasFocus() {
+bool RenderViewItem::HasFocus() {
   return hasFocus();
 }
 
-void RenderWidgetHostViewDelegate::Show() {
+void RenderViewItem::Show() {
   setVisible(true);
 }
 
-void RenderWidgetHostViewDelegate::Hide() {
+void RenderViewItem::Hide() {
   setVisible(false);
 }
 
-bool RenderWidgetHostViewDelegate::IsShowing() {
+bool RenderViewItem::IsShowing() {
   return isVisible();
 }
 
-QRect RenderWidgetHostViewDelegate::GetViewBounds() {
+QRect RenderViewItem::GetViewBounds() {
   QPointF pos(mapToScene(QPointF(0, 0)));
   if (window()) {
     pos += window()->position();
@@ -77,7 +84,7 @@ QRect RenderWidgetHostViewDelegate::GetViewBounds() {
                qRound(width()), qRound(height()));
 }
 
-QRect RenderWidgetHostViewDelegate::GetBoundsInRootWindow() {
+QRect RenderViewItem::GetBoundsInRootWindow() {
   if (!window()) {
     return GetViewBounds();
   }
@@ -85,12 +92,12 @@ QRect RenderWidgetHostViewDelegate::GetBoundsInRootWindow() {
   return window()->frameGeometry();
 }
 
-void RenderWidgetHostViewDelegate::SetSize(const QSize& size) {
+void RenderViewItem::SetSize(const QSize& size) {
   setSize(QSizeF(size));
   polish();
 }
 
-QScreen* RenderWidgetHostViewDelegate::GetScreen() {
+QScreen* RenderViewItem::GetScreen() {
   if (!window()) {
     return NULL;
   }
@@ -98,46 +105,46 @@ QScreen* RenderWidgetHostViewDelegate::GetScreen() {
   return window()->screen();
 }
 
-void RenderWidgetHostViewDelegate::focusInEvent(QFocusEvent* event) {
+void RenderViewItem::focusInEvent(QFocusEvent* event) {
   Q_ASSERT(event->gotFocus());
   ForwardFocusEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::focusOutEvent(QFocusEvent* event) {
+void RenderViewItem::focusOutEvent(QFocusEvent* event) {
   Q_ASSERT(event->lostFocus());
   ForwardFocusEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::keyPressEvent(QKeyEvent* event) {
+void RenderViewItem::keyPressEvent(QKeyEvent* event) {
   ForwardKeyEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::keyReleaseEvent(QKeyEvent* event) {
+void RenderViewItem::keyReleaseEvent(QKeyEvent* event) {
   ForwardKeyEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::mouseDoubleClickEvent(QMouseEvent* event) {
+void RenderViewItem::mouseDoubleClickEvent(QMouseEvent* event) {
   ForwardMouseEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::mouseMoveEvent(QMouseEvent* event) {
+void RenderViewItem::mouseMoveEvent(QMouseEvent* event) {
   ForwardMouseEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::mousePressEvent(QMouseEvent* event) {
+void RenderViewItem::mousePressEvent(QMouseEvent* event) {
   ForwardMouseEvent(event);
   setFocus(true);
 }
 
-void RenderWidgetHostViewDelegate::mouseReleaseEvent(QMouseEvent* event) {
+void RenderViewItem::mouseReleaseEvent(QMouseEvent* event) {
   ForwardMouseEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::wheelEvent(QWheelEvent* event) {
+void RenderViewItem::wheelEvent(QWheelEvent* event) {
   ForwardWheelEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::hoverMoveEvent(QHoverEvent* event) {
+void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
   // QtQuick gives us a hover event unless we have a grab (which
   // happens implicitly on button press). As Chromium doesn't
   // distinguish between the 2, just give it a mouse event
@@ -155,17 +162,34 @@ void RenderWidgetHostViewDelegate::hoverMoveEvent(QHoverEvent* event) {
   event->setAccepted(me.isAccepted());
 }
 
-void RenderWidgetHostViewDelegate::updatePolish() {
+void RenderViewItem::updatePolish() {
   backing_store_ = GetBackingStore();
 }
 
-void RenderWidgetHostViewDelegate::paint(QPainter* painter) {
-  if (!backing_store_) {
-    return;
+QSGNode* RenderViewItem::updatePaintNode(
+    QSGNode* oldNode,
+    UpdatePaintNodeData* data) {
+  Q_UNUSED(data);
+
+  if (width() <= 0 || height() <= 0) {
+    delete oldNode;
+    return NULL;
   }
 
-  QRectF rect(0, 0, width(), height());
-  painter->drawPixmap(rect, *backing_store_, rect);
+  PaintedRenderViewNode* node = static_cast<PaintedRenderViewNode *>(oldNode);
+  if (!node) {
+    node = new PaintedRenderViewNode(this);
+  }
+
+  node->setSize(QSizeF(width(), height()).toSize());
+  node->setBackingStore(backing_store_);
+  node->setDirty(dirty_rect_);
+
+  node->update();
+
+  dirty_rect_ = QRect();
+
+  return node;
 }
 
 } // namespace qquick
