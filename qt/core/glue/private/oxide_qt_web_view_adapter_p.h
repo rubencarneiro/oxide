@@ -42,14 +42,6 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 
-  int GetNavigationEntryCount() FINAL;
-  int GetNavigationCurrentEntryIndex() FINAL;
-  void SetNavigationCurrentEntryIndex(int index) FINAL;
-  int GetNavigationEntryUniqueID(int index) FINAL;
-  const GURL& GetNavigationEntryUrl(int index) FINAL;
-  std::string GetNavigationEntryTitle(int index) FINAL;
-  base::Time GetNavigationEntryTimestamp(int index) FINAL;
-
  private:
   WebViewAdapterPrivate(WebViewAdapter* adapter);
 

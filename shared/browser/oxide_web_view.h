@@ -42,7 +42,6 @@ class Size;
 
 namespace content {
 
-class NavigationController;
 struct OpenURLParams;
 class RenderWidgetHost;
 class RenderWidgetHostView;
@@ -96,7 +95,13 @@ class WebView : public MessageTarget,
 
   BrowserContext* GetBrowserContext() const;
 
-  content::NavigationController* GetNavigationController() const;
+  int GetNavigationEntryCount() const;
+  int GetNavigationCurrentEntryIndex() const;
+  void SetNavigationCurrentEntryIndex(int index);
+  int GetNavigationEntryUniqueID(int index) const;
+  const GURL& GetNavigationEntryUrl(int index) const;
+  std::string GetNavigationEntryTitle(int index) const;
+  base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
   WebFrame* FindFrameWithID(int64 frame_id) const;

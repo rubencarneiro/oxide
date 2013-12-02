@@ -25,6 +25,7 @@
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_controller.h"
+#include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
 #include "net/base/net_errors.h"
@@ -355,11 +356,60 @@ BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
-content::NavigationController* WebView::GetNavigationController() const {
+int WebView::GetNavigationEntryCount() const {
   if (!web_contents_) {
-    return NULL;
+    return 0;
   }
-  return &web_contents_->GetController();
+  return web_contents_->GetController().GetEntryCount();
+}
+
+int WebView::GetNavigationCurrentEntryIndex() const {
+  if (!web_contents_) {
+    return -1;
+  }
+  return web_contents_->GetController().GetCurrentEntryIndex();
+}
+
+void WebView::SetNavigationCurrentEntryIndex(int index) {
+  if (web_contents_) {
+    web_contents_->GetController().GoToIndex(index);
+  }
+}
+
+int WebView::GetNavigationEntryUniqueID(int index) const {
+  if (!web_contents_) {
+    return 0;
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetUniqueID();
+}
+
+const GURL& WebView::GetNavigationEntryUrl(int index) const {
+  if (!web_contents_) {
+    return GURL::EmptyGURL();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetURL();
+}
+
+std::string WebView::GetNavigationEntryTitle(int index) const {
+  if (!web_contents_) {
+    return std::string();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return base::UTF16ToUTF8(entry->GetTitle());
+}
+
+base::Time WebView::GetNavigationEntryTimestamp(int index) const {
+  if (!web_contents_) {
+    return base::Time();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetTimestamp();
 }
 
 WebFrame* WebView::GetRootFrame() const {

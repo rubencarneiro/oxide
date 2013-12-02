@@ -20,8 +20,6 @@
 #include <QString>
 #include <QUrl>
 
-#include "base/strings/utf_string_conversions.h"
-#include "content/public/browser/navigation_entry.h"
 #include "url/gurl.h"
 
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
@@ -112,65 +110,6 @@ gfx::Rect WebViewAdapterPrivate::GetContainerBounds() {
 oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(
     content::RenderViewHost* rvh) {
   return new WebPopupMenu(a->CreateWebPopupMenuDelegate(), rvh);
-}
-
-int WebViewAdapterPrivate::GetNavigationEntryCount() {
-  content::NavigationController* controller = GetNavigationController();
-  if (!controller) {
-    return 0;
-  }
-  return controller->GetEntryCount();
-}
-
-int WebViewAdapterPrivate::GetNavigationCurrentEntryIndex() {
-  content::NavigationController* controller = GetNavigationController();
-  if (!controller) {
-    return -1;
-  }
-  return controller->GetCurrentEntryIndex();
-}
-
-void WebViewAdapterPrivate::SetNavigationCurrentEntryIndex(int index) {
-  content::NavigationController* controller = GetNavigationController();
-  if (controller) {
-    controller->GoToIndex(index);
-  }
-}
-
-int WebViewAdapterPrivate::GetNavigationEntryUniqueID(int index) {
-  content::NavigationController* controller = GetNavigationController();
-  if (!controller) {
-    return 0;
-  }
-  content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
-  return entry->GetUniqueID();
-}
-
-const GURL& WebViewAdapterPrivate::GetNavigationEntryUrl(int index) {
-  content::NavigationController* controller = GetNavigationController();
-  if (!controller) {
-    return GURL::EmptyGURL();
-  }
-  content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
-  return entry->GetURL();
-}
-
-std::string WebViewAdapterPrivate::GetNavigationEntryTitle(int index) {
-  content::NavigationController* controller = GetNavigationController();
-  if (!controller) {
-    return std::string();
-  }
-  content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
-  return base::UTF16ToUTF8(entry->GetTitle());
-}
-
-base::Time WebViewAdapterPrivate::GetNavigationEntryTimestamp(int index) {
-  content::NavigationController* controller = GetNavigationController();
-  if (!controller) {
-    return base::Time();
-  }
-  content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
-  return entry->GetTimestamp();
 }
 
 } // namespace qt
