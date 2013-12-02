@@ -59,16 +59,13 @@ void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
   int newCount = adapter->getNavigationEntryCount();
   if (newCount != d->entry_count) {
     beginResetModel();
+    qDeleteAll(d->entry_cache);
+    d->entry_cache.clear();
     d->entry_count = newCount;
     for (int i = 0; i < newCount; ++i) {
       int id = adapter->getNavigationEntryUniqueID(i);
-      NavigationEntry* entry;
-      if (d->entry_cache.contains(id)) {
-        entry = d->entry_cache.value(id);
-      } else {
-        entry = new NavigationEntry;
-        d->entry_cache.insert(id, entry);
-      }
+      NavigationEntry* entry = new NavigationEntry;
+      d->entry_cache.insert(id, entry);
       entry->url = adapter->getNavigationEntryUrl(i);
       entry->title = adapter->getNavigationEntryTitle(i);
       entry->timestamp = adapter->getNavigationEntryTimestamp(i);
