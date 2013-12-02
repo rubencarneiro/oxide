@@ -17,7 +17,6 @@
 
 #include "oxideqquicknavigationhistory_p.h"
 #include "oxideqquicknavigationhistory_p_p.h"
-#include "oxideqquickwebview_p.h"
 
 #include <QDateTime>
 #include <QString>
@@ -25,6 +24,8 @@
 #include <QUrl>
 
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
+
+#include "oxideqquickwebview_p.h"
 
 struct NavigationEntry {
   QUrl url;
