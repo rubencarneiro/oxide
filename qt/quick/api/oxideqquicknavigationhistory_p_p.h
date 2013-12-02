@@ -20,13 +20,8 @@
 
 #include <QMap>
 
-namespace oxide {
-namespace qt {
-class WebViewAdapter;
-}
-}
-
 class OxideQQuickNavigationHistory;
+class OxideQQuickWebView;
 
 struct NavigationEntry;
 
@@ -40,7 +35,7 @@ class OxideQQuickNavigationHistoryPrivate {
   };
 
   OxideQQuickNavigationHistory* q_ptr;
-  oxide::qt::WebViewAdapter* webview_adapter_;
+  OxideQQuickWebView* webview_;
   int entry_count_;
   int current_index_;
   QMap<int, NavigationEntry*> entry_cache_;

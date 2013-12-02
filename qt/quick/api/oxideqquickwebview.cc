@@ -58,7 +58,7 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     context(NULL),
-    navigationHistory(new OxideQQuickNavigationHistory(this, view)),
+    navigationHistory(new OxideQQuickNavigationHistory(view)),
     popup_menu(NULL),
     init_props_(new InitData()),
     q_ptr(view) {}

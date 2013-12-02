@@ -23,9 +23,8 @@
 #include <QtAlgorithms>
 #include <QUrl>
 
-#include "qt/core/glue/oxide_qt_web_view_adapter.h"
-
 #include "oxideqquickwebview_p.h"
+#include "oxideqquickwebview_p_p.h"
 
 struct NavigationEntry {
   QUrl url;
@@ -34,12 +33,12 @@ struct NavigationEntry {
 };
 
 OxideQQuickNavigationHistory::OxideQQuickNavigationHistory(
-    oxide::qt::WebViewAdapter* adapter, OxideQQuickWebView* webview) :
+    OxideQQuickWebView* webview) :
     QAbstractListModel(webview),
     d_ptr(new OxideQQuickNavigationHistoryPrivate) {
   Q_D(OxideQQuickNavigationHistory);
   d->q_ptr = this;
-  d->webview_adapter_ = adapter;
+  d->webview_ = webview;
   d->entry_count_ = 0;
   d->current_index_ = -1;
   connect(webview, SIGNAL(navigationHistoryChanged()),
@@ -54,14 +53,14 @@ OxideQQuickNavigationHistory::~OxideQQuickNavigationHistory() {
 
 void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
   Q_D(OxideQQuickNavigationHistory);
-  Q_ASSERT(d->webview_adapter_ != NULL);
 
-  int newCount = d->webview_adapter_->getNavigationEntryCount();
+  OxideQQuickWebViewPrivate* adapter = OxideQQuickWebViewPrivate::get(d->webview_);
+  int newCount = adapter->getNavigationEntryCount();
   if (newCount != d->entry_count_) {
     beginResetModel();
     d->entry_count_ = newCount;
     for (int i = 0; i < newCount; ++i) {
-      int id = d->webview_adapter_->getNavigationEntryUniqueID(i);
+      int id = adapter->getNavigationEntryUniqueID(i);
       NavigationEntry* entry;
       if (d->entry_cache_.contains(id)) {
         entry = d->entry_cache_.value(id);
@@ -69,13 +68,13 @@ void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
         entry = new NavigationEntry;
         d->entry_cache_.insert(id, entry);
       }
-      entry->url = d->webview_adapter_->getNavigationEntryUrl(i);
-      entry->title = d->webview_adapter_->getNavigationEntryTitle(i);
-      entry->timestamp = d->webview_adapter_->getNavigationEntryTimestamp(i);
+      entry->url = adapter->getNavigationEntryUrl(i);
+      entry->title = adapter->getNavigationEntryTitle(i);
+      entry->timestamp = adapter->getNavigationEntryTimestamp(i);
     }
     endResetModel();
   } else if (d->current_index_ != -1) {
-    int id = d->webview_adapter_->getNavigationEntryUniqueID(d->current_index_);
+    int id = adapter->getNavigationEntryUniqueID(d->current_index_);
     NavigationEntry* entry;
     if (d->entry_cache_.contains(id)) {
       entry = d->entry_cache_.value(id);
@@ -84,17 +83,17 @@ void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
       d->entry_cache_.insert(id, entry);
     }
     QVector<int> roles;
-    QUrl url = d->webview_adapter_->getNavigationEntryUrl(d->current_index_);
+    QUrl url = adapter->getNavigationEntryUrl(d->current_index_);
     if (url != entry->url) {
       entry->url = url;
       roles.append(OxideQQuickNavigationHistoryPrivate::Url);
     }
-    QString title = d->webview_adapter_->getNavigationEntryTitle(d->current_index_);
+    QString title = adapter->getNavigationEntryTitle(d->current_index_);
     if (title != entry->title) {
       entry->title = title;
       roles.append(OxideQQuickNavigationHistoryPrivate::Title);
     }
-    QDateTime timestamp = d->webview_adapter_->getNavigationEntryTimestamp(d->current_index_);
+    QDateTime timestamp = adapter->getNavigationEntryTimestamp(d->current_index_);
     if (timestamp != entry->timestamp) {
       entry->timestamp = timestamp;
       roles.append(OxideQQuickNavigationHistoryPrivate::Timestamp);
@@ -105,7 +104,7 @@ void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
     }
   }
 
-  int newCurrentIndex = d->webview_adapter_->getNavigationCurrentEntryIndex();
+  int newCurrentIndex = adapter->getNavigationCurrentEntryIndex();
   if (newCurrentIndex != d->current_index_) {
     d->current_index_ = newCurrentIndex;
     Q_EMIT currentIndexChanged();
@@ -124,7 +123,8 @@ void OxideQQuickNavigationHistory::setCurrentIndex(int index) {
   }
   if (index != d->current_index_) {
     d->current_index_ = index;
-    d->webview_adapter_->setNavigationCurrentEntryIndex(index);
+    OxideQQuickWebViewPrivate* adapter = OxideQQuickWebViewPrivate::get(d->webview_);
+    adapter->setNavigationCurrentEntryIndex(index);
     Q_EMIT currentIndexChanged();
   }
 }
@@ -150,7 +150,8 @@ QVariant OxideQQuickNavigationHistory::data(const QModelIndex& index, int role) 
   if (!index.isValid()) {
     return QVariant();
   }
-  int id = d->webview_adapter_->getNavigationEntryUniqueID(index.row());
+  OxideQQuickWebViewPrivate* adapter = OxideQQuickWebViewPrivate::get(d->webview_);
+  int id = adapter->getNavigationEntryUniqueID(index.row());
   NavigationEntry* entry;
   if (d->entry_cache_.contains(id)) {
     entry = d->entry_cache_.value(id);
