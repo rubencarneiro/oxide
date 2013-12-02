@@ -152,8 +152,12 @@ QVariant OxideQQuickNavigationHistory::data(const QModelIndex& index, int role) 
   if (!index.isValid()) {
     return QVariant();
   }
+  int row = index.row();
+  if ((row < 0) || (row >= d->entry_count_)) {
+    return QVariant();
+  }
   OxideQQuickWebViewPrivate* adapter = OxideQQuickWebViewPrivate::get(d->webview_);
-  int id = adapter->getNavigationEntryUniqueID(index.row());
+  int id = adapter->getNavigationEntryUniqueID(row);
   NavigationEntry* entry;
   if (d->entry_cache_.contains(id)) {
     entry = d->entry_cache_.value(id);
