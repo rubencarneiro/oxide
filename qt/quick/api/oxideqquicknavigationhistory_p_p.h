@@ -35,10 +35,10 @@ class OxideQQuickNavigationHistoryPrivate {
   };
 
   OxideQQuickNavigationHistory* q_ptr;
-  OxideQQuickWebView* webview_;
-  int entry_count_;
-  int current_index_;
-  QMap<int, NavigationEntry*> entry_cache_;
+  OxideQQuickWebView* webview;
+  int entry_count;
+  int current_index;
+  QMap<int, NavigationEntry*> entry_cache;
 };
 
 #endif // _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
