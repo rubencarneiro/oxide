@@ -25,6 +25,8 @@
 
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
+#include "oxideqquicknavigationhistory_p.h"
+
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
@@ -90,7 +92,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   InitData* init_props() { return init_props_.data(); }
 
   OxideQQuickWebContext* context;
-  OxideQQuickNavigationHistory* navigationHistory;
+  OxideQQuickNavigationHistory navigationHistory;
   QQmlComponent* popup_menu;
 
  private:

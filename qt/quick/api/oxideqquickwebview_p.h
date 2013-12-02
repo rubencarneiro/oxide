@@ -105,7 +105,7 @@ class OxideQQuickWebView : public QQuickItem {
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
 
-  OxideQQuickNavigationHistory* navigationHistory() const;
+  OxideQQuickNavigationHistory* navigationHistory();
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 

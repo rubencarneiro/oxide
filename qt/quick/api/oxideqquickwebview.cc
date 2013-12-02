@@ -33,7 +33,6 @@
 
 #include "oxideqquickmessagehandler_p.h"
 #include "oxideqquickmessagehandler_p_p.h"
-#include "oxideqquicknavigationhistory_p.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 #include "oxideqquickwebframe_p.h"
@@ -58,7 +57,7 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     context(NULL),
-    navigationHistory(new OxideQQuickNavigationHistory(view)),
+    navigationHistory(view),
     popup_menu(NULL),
     init_props_(new InitData()),
     q_ptr(view) {}
@@ -451,10 +450,10 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   d->context = context;
 }
 
-OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() const {
-  Q_D(const OxideQQuickWebView);
+OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
+  Q_D(OxideQQuickWebView);
 
-  return d->navigationHistory;
+  return &d->navigationHistory;
 }
 
 // static
