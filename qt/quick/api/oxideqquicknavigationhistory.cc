@@ -28,9 +28,7 @@
 
 struct NavigationEntry {
   QUrl url;
-  QUrl virtualUrl;
   QString title;
-  QString titleForDisplay;
   QDateTime timestamp;
 };
 
@@ -71,9 +69,7 @@ void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
         d->entry_cache_.insert(id, entry);
       }
       entry->url = d->webview_adapter_->getNavigationEntryUrl(i);
-      entry->virtualUrl = d->webview_adapter_->getNavigationEntryVirtualUrl(i);
       entry->title = d->webview_adapter_->getNavigationEntryTitle(i);
-      entry->titleForDisplay = d->webview_adapter_->getNavigationEntryTitleForDisplay(i);
       entry->timestamp = d->webview_adapter_->getNavigationEntryTimestamp(i);
     }
     endResetModel();
@@ -92,20 +88,10 @@ void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
       entry->url = url;
       roles.append(OxideQQuickNavigationHistoryPrivate::Url);
     }
-    QUrl virtualUrl = d->webview_adapter_->getNavigationEntryVirtualUrl(d->current_index_);
-    if (virtualUrl != entry->virtualUrl) {
-      entry->virtualUrl = virtualUrl;
-      roles.append(OxideQQuickNavigationHistoryPrivate::VirtualUrl);
-    }
     QString title = d->webview_adapter_->getNavigationEntryTitle(d->current_index_);
     if (title != entry->title) {
       entry->title = title;
       roles.append(OxideQQuickNavigationHistoryPrivate::Title);
-    }
-    QString titleForDisplay = d->webview_adapter_->getNavigationEntryTitleForDisplay(d->current_index_);
-    if (titleForDisplay != entry->titleForDisplay) {
-      entry->titleForDisplay = titleForDisplay;
-      roles.append(OxideQQuickNavigationHistoryPrivate::TitleForDisplay);
     }
     QDateTime timestamp = d->webview_adapter_->getNavigationEntryTimestamp(d->current_index_);
     if (timestamp != entry->timestamp) {
@@ -146,9 +132,7 @@ QHash<int, QByteArray> OxideQQuickNavigationHistory::roleNames() const {
   static QHash<int, QByteArray> roles;
   if (roles.isEmpty()) {
     roles[OxideQQuickNavigationHistoryPrivate::Url] = "url";
-    roles[OxideQQuickNavigationHistoryPrivate::VirtualUrl] = "virtualUrl";
     roles[OxideQQuickNavigationHistoryPrivate::Title] = "title";
-    roles[OxideQQuickNavigationHistoryPrivate::TitleForDisplay] = "titleForDisplay";
     roles[OxideQQuickNavigationHistoryPrivate::Timestamp] = "timestamp";
   }
   return roles;
@@ -175,12 +159,8 @@ QVariant OxideQQuickNavigationHistory::data(const QModelIndex& index, int role) 
   switch (role) {
   case OxideQQuickNavigationHistoryPrivate::Url:
     return entry->url;
-  case OxideQQuickNavigationHistoryPrivate::VirtualUrl:
-    return entry->virtualUrl;
   case OxideQQuickNavigationHistoryPrivate::Title:
     return entry->title;
-  case OxideQQuickNavigationHistoryPrivate::TitleForDisplay:
-    return entry->titleForDisplay;
   case OxideQQuickNavigationHistoryPrivate::Timestamp:
     return entry->timestamp;
   default:

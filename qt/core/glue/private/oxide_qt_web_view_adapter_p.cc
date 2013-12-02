@@ -155,15 +155,6 @@ const GURL& WebViewAdapterPrivate::GetNavigationEntryUrl(int index) {
   return entry->GetURL();
 }
 
-const GURL& WebViewAdapterPrivate::GetNavigationEntryVirtualUrl(int index) {
-  content::NavigationController* controller = GetNavigationController();
-  if (!controller) {
-    return GURL::EmptyGURL();
-  }
-  content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
-  return entry->GetVirtualURL();
-}
-
 std::string WebViewAdapterPrivate::GetNavigationEntryTitle(int index) {
   content::NavigationController* controller = GetNavigationController();
   if (!controller) {
@@ -171,16 +162,6 @@ std::string WebViewAdapterPrivate::GetNavigationEntryTitle(int index) {
   }
   content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
   return base::UTF16ToUTF8(entry->GetTitle());
-}
-
-std::string WebViewAdapterPrivate::GetNavigationEntryTitleForDisplay(int index) {
-  content::NavigationController* controller = GetNavigationController();
-  if (!controller) {
-    return std::string();
-  }
-  content::NavigationEntry* entry = controller->GetEntryAtIndex(index);
-  // FIXME: pass a valid list of languages to GetTitleForDisplay() (e.g., prefs::kAcceptLanguages)
-  return base::UTF16ToUTF8(entry->GetTitleForDisplay(std::string()));
 }
 
 base::Time WebViewAdapterPrivate::GetNavigationEntryTimestamp(int index) {

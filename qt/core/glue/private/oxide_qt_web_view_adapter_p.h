@@ -47,9 +47,7 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   void SetNavigationCurrentEntryIndex(int index) FINAL;
   int GetNavigationEntryUniqueID(int index) FINAL;
   const GURL& GetNavigationEntryUrl(int index) FINAL;
-  const GURL& GetNavigationEntryVirtualUrl(int index) FINAL;
   std::string GetNavigationEntryTitle(int index) FINAL;
-  std::string GetNavigationEntryTitleForDisplay(int index) FINAL;
   base::Time GetNavigationEntryTimestamp(int index) FINAL;
 
  private:

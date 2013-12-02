@@ -35,9 +35,7 @@ class OxideQQuickNavigationHistoryPrivate {
 
   enum Roles {
     Url = Qt::UserRole + 1,
-    VirtualUrl,
     Title,
-    TitleForDisplay,
     Timestamp
   };
 

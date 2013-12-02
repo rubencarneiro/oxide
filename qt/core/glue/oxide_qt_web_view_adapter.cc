@@ -146,16 +146,8 @@ QUrl WebViewAdapter::getNavigationEntryUrl(int index) const {
   return QUrl(QString::fromStdString(priv->GetNavigationEntryUrl(index).spec()));
 }
 
-QUrl WebViewAdapter::getNavigationEntryVirtualUrl(int index) const {
-  return QUrl(QString::fromStdString(priv->GetNavigationEntryVirtualUrl(index).spec()));
-}
-
 QString WebViewAdapter::getNavigationEntryTitle(int index) const {
   return QString::fromStdString(priv->GetNavigationEntryTitle(index));
-}
-
-QString WebViewAdapter::getNavigationEntryTitleForDisplay(int index) const {
-  return QString::fromStdString(priv->GetNavigationEntryTitleForDisplay(index));
 }
 
 QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {

@@ -107,9 +107,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void setNavigationCurrentEntryIndex(int index);
   int getNavigationEntryUniqueID(int index) const;
   QUrl getNavigationEntryUrl(int index) const;
-  QUrl getNavigationEntryVirtualUrl(int index) const;
   QString getNavigationEntryTitle(int index) const;
-  QString getNavigationEntryTitleForDisplay(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
  protected:
