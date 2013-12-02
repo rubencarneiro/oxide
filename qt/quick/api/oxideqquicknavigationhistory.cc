@@ -19,6 +19,7 @@
 #include "oxideqquicknavigationhistory_p_p.h"
 
 #include <QDateTime>
+#include <QDebug>
 #include <QString>
 #include <QtAlgorithms>
 #include <QUrl>
@@ -119,6 +120,7 @@ int OxideQQuickNavigationHistory::currentIndex() const {
 void OxideQQuickNavigationHistory::setCurrentIndex(int index) {
   Q_D(OxideQQuickNavigationHistory);
   if ((index < 0) || (index >= d->entry_count_)) {
+    qWarning() << "Invalid index:" << index;
     return;
   }
   if (index != d->current_index_) {

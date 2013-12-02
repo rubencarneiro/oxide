@@ -53,17 +53,29 @@ TestWebView {
       compareAttributes(0, -1, "", "",
                         "Navigation history should be initially empty");
 
+      webView.navigationHistory.currentIndex = 0;
+      compare(currentIndex, -1,
+              "Cannot set the current index when the history is empty");
+
       var url1 = "http://localhost:8080/tst_WebView_navigation1.html";
       var title1 = "Navigation test 1";
       loadUrl(url1);
       compareAttributes(1, 0, url1, title1,
                         "One entry / current is the first one");
 
+      webView.navigationHistory.currentIndex = -1;
+      compare(currentIndex, 0,
+              "Cannot set the current index to an invalid value");
+
       var url2 = "http://localhost:8080/tst_WebView_navigation2.html";
       var title2 = "Navigation test 2";
       loadUrl(url2);
       compareAttributes(2, 1, url2, title2,
                         "Two entries / current entry is the last one");
+
+      webView.navigationHistory.currentIndex = 3;
+      compare(currentIndex, 1,
+              "Cannot set the current index to an invalid value");
 
       webView.goBack();
       verifyLoadSucceeded();
