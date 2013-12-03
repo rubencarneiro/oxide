@@ -28,6 +28,7 @@
 #include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/notification_details.h"
+#include "content/public/browser/notification_service.h"
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/web_contents.h"
@@ -242,6 +243,11 @@ bool WebView::Init(BrowserContext* context,
 
   web_contents_->SetDelegate(this);
   WebContentsObserver::Observe(web_contents_.get());
+
+  registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
+                 content::NotificationService::AllBrowserContextsAndSources());
+  registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
+                 content::NotificationService::AllBrowserContextsAndSources());
 
   return true;
 }
