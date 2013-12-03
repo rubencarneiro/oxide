@@ -73,6 +73,18 @@ void WebViewAdapterPrivate::OnLoadSucceeded(const GURL& validated_url) {
   a->LoadSucceeded(QUrl(QString::fromStdString(validated_url.spec())));
 }
 
+void WebViewAdapterPrivate::OnNavigationEntryCommitted() {
+  a->NavigationEntryCommitted();
+}
+
+void WebViewAdapterPrivate::OnNavigationListPruned(bool from_front, int count) {
+  a->NavigationListPruned(from_front, count);
+}
+
+void WebViewAdapterPrivate::OnNavigationEntryChanged(int index) {
+  a->NavigationEntryChanged(index);
+}
+
 oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame() {
   return new WebFrame(a->CreateWebFrame());
 }

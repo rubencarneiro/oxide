@@ -51,7 +51,11 @@ Q_SIGNALS:
   void currentIndexChanged();
 
 private Q_SLOTS:
+  friend class OxideQQuickWebViewPrivate;
   void onNavigationHistoryChanged();
+  void onNavigationEntryCommitted();
+  void onNavigationListPruned(bool from_front, int count);
+  void onNavigationEntryChanged(int index);
 
 private:
   Q_DISABLE_COPY(OxideQQuickNavigationHistory)

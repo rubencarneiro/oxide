@@ -94,6 +94,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
                           const QString& error_description) = 0;
   virtual void LoadSucceeded(const QUrl& url) = 0;
 
+  virtual void NavigationEntryCommitted() = 0;
+  virtual void NavigationListPruned(bool from_front, int count) = 0;
+  virtual void NavigationEntryChanged(int index) = 0;
+
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
   virtual QRect GetContainerBounds() = 0;

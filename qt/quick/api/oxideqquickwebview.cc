@@ -141,6 +141,18 @@ void OxideQQuickWebViewPrivate::LoadSucceeded(const QUrl& url) {
   emit q->loadingChanged(&event);
 }
 
+void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
+  navigationHistory.onNavigationEntryCommitted();
+}
+
+void OxideQQuickWebViewPrivate::NavigationListPruned(bool from_front, int count) {
+  navigationHistory.onNavigationListPruned(from_front, count);
+}
+
+void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
+  navigationHistory.onNavigationEntryChanged(index);
+}
+
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
   return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
 }

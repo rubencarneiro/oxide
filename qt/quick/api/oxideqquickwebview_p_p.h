@@ -68,6 +68,10 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
                   const QString& error_description) Q_DECL_FINAL;
   void LoadSucceeded(const QUrl& url) Q_DECL_FINAL;
 
+  void NavigationEntryCommitted() Q_DECL_FINAL;
+  void NavigationListPruned(bool from_front, int count) Q_DECL_FINAL;
+  void NavigationEntryChanged(int index) Q_DECL_FINAL;
+
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
   QRect GetContainerBounds() Q_DECL_FINAL;

@@ -109,6 +109,18 @@ void OxideQQuickNavigationHistory::onNavigationHistoryChanged() {
   }
 }
 
+void OxideQQuickNavigationHistory::onNavigationEntryCommitted() {
+  qDebug() << Q_FUNC_INFO;
+}
+
+void OxideQQuickNavigationHistory::onNavigationListPruned(bool from_front, int count) {
+  qDebug() << Q_FUNC_INFO << from_front << count;
+}
+
+void OxideQQuickNavigationHistory::onNavigationEntryChanged(int index) {
+  qDebug() << Q_FUNC_INFO << index;
+}
+
 int OxideQQuickNavigationHistory::currentIndex() const {
   Q_D(const OxideQQuickNavigationHistory);
   return d->current_index;
