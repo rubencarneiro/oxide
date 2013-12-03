@@ -25,7 +25,11 @@
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_controller.h"
+#include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
+#include "content/public/browser/notification_details.h"
+#include "content/public/browser/notification_source.h"
+#include "content/public/browser/notification_types.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
 #include "net/base/net_errors.h"
@@ -197,6 +201,10 @@ void WebView::OnLoadFailed(const GURL& validated_url,
                            const std::string& error_description) {}
 void WebView::OnLoadSucceeded(const GURL& validated_url) {}
 
+void WebView::OnNavigationEntryCommitted() {}
+void WebView::OnNavigationListPruned(bool from_front, int count) {}
+void WebView::OnNavigationEntryChanged(int index) {}
+
 WebView::WebView() :
     root_frame_(NULL) {}
 
@@ -233,7 +241,7 @@ bool WebView::Init(BrowserContext* context,
   }
 
   web_contents_->SetDelegate(this);
-  Observe(web_contents_.get());
+  WebContentsObserver::Observe(web_contents_.get());
 
   return true;
 }
@@ -244,7 +252,7 @@ void WebView::Shutdown() {
     return;
   }
 
-  Observe(NULL);
+  WebContentsObserver::Observe(NULL);
 
   if (root_frame_) {
     root_frame_->DestroyFrame();
@@ -438,6 +446,18 @@ WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
   return NULL;
 }
 
+void WebView::Observe(int type,
+                      const content::NotificationSource& source,
+                      const content::NotificationDetails& details) {
+  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
+    content::PrunedDetails* pruned_details = content::Details<content::PrunedDetails>(details).ptr();
+    OnNavigationListPruned(pruned_details->from_front, pruned_details->count);
+  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
+    int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
+    OnNavigationEntryChanged(index);
+  }
+}
+
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   // Make sure the new RWHV gets the correct size
@@ -529,6 +549,10 @@ void WebView::DidFailLoad(int64 frame_id,
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
+void WebView::NavigationEntryCommitted(
+    const content::LoadCommittedDetails& load_details) {
+  OnNavigationEntryCommitted();
+}
 
 void WebView::FrameDetached(content::RenderViewHost* rvh,
                             int64 frame_id) {
