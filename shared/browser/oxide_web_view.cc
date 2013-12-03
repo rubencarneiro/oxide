@@ -455,6 +455,9 @@ WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
 void WebView::Observe(int type,
                       const content::NotificationSource& source,
                       const content::NotificationDetails& details) {
+  if (content::Source<content::NavigationController>(source).ptr() != &web_contents()->GetController()) {
+    return;
+  }
   if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
     content::PrunedDetails* pruned_details = content::Details<content::PrunedDetails>(details).ptr();
     OnNavigationListPruned(pruned_details->from_front, pruned_details->count);
