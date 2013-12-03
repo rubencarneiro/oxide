@@ -52,7 +52,6 @@ Q_SIGNALS:
 
 private Q_SLOTS:
   friend class OxideQQuickWebViewPrivate;
-  void onNavigationHistoryChanged();
   void onNavigationEntryCommitted();
   void onNavigationListPruned(bool from_front, int count);
   void onNavigationEntryChanged(int index);
