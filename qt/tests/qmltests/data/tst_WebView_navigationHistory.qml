@@ -46,7 +46,7 @@ TestWebView {
       compare(count, rCount, message);
       compare(currentIndex, rCurrentIndex, message);
       compare(currentUrl, rCurrentUrl, message);
-      compare(currentTitle, rCurrentTitle, message);
+      tryCompare(test, "currentTitle", rCurrentTitle);
     }
 
     function test_WebView_navigationHistory() {
