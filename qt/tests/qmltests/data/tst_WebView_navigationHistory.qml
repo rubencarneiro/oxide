@@ -16,7 +16,7 @@ TestWebView {
     readonly property url currentUrl: currentItem ? currentItem.url : ""
     readonly property string currentTitle: currentItem ? currentItem.title : ""
     delegate: Item {
-      readonly property string url: model.url
+      readonly property url url: model.url
       readonly property string title: model.title
     }
   }
