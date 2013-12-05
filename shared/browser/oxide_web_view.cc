@@ -37,6 +37,7 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_incoming_message.h"
+#include "oxide_javascript_dialog_manager.h"
 #include "oxide_message_handler.h"
 #include "oxide_outgoing_message_request.h"
 #include "oxide_web_contents_view.h"
@@ -503,7 +504,7 @@ MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
 }
 
 content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
-  return NULL;
+  return JavaScriptDialogManager::GetInstance();
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {

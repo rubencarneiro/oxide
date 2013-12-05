@@ -24,8 +24,10 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
+#include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
+#include "content/public/common/javascript_message_type.h"
 #include "ui/gfx/rect.h"
 
 #include "shared/browser/oxide_browser_process_handle.h"
@@ -42,7 +44,6 @@ class Size;
 
 namespace content {
 
-class JavaScriptDialogManager;
 struct OpenURLParams;
 class RenderWidgetHost;
 class RenderWidgetHostView;
@@ -159,6 +160,15 @@ class WebView : public MessageTarget,
   virtual gfx::Rect GetContainerBounds() = 0;
 
   virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
+
+  virtual void RunJavaScriptDialog(
+      const GURL& origin_url,
+      const std::string& accept_lang,
+      content::JavaScriptMessageType javascript_message_type,
+      const base::string16& message_text,
+      const base::string16& default_prompt_text,
+      const content::JavaScriptDialogManager::DialogClosedCallback& callback,
+      bool* did_suppress_message) = 0;
 
  protected:
   WebView();

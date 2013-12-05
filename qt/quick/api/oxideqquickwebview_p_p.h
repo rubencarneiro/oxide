@@ -68,9 +68,15 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
-  oxide::qt::JavaScriptDialogManager* GetJavaScriptDialogManager() Q_DECL_FINAL;
-
   QRect GetContainerBounds() Q_DECL_FINAL;
+
+  void RunJavaScriptDialog(const QUrl& origin_url,
+                           const QString& accept_lang,
+                           int javascript_message_type, // FIXME
+                           const QString& message_text,
+                           const QString& default_prompt_text,
+                           oxide::qt::JavaScriptDialogClosedCallback* callback,
+                           bool* did_suppress_message) Q_DECL_FINAL;
 
   void componentComplete();
 

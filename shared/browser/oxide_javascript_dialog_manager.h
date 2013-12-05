@@ -24,6 +24,8 @@ namespace oxide {
 
 class JavaScriptDialogManager : public content::JavaScriptDialogManager {
  public:
+  static JavaScriptDialogManager* GetInstance();
+
   void RunJavaScriptDialog(
       content::WebContents* web_contents,
       const GURL& origin_url,

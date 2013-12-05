@@ -15,19 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_JAVASCRIPT_DIALOG_MANAGER_H_
-#define _OXIDE_QT_CORE_BROWSER_JAVASCRIPT_DIALOG_MANAGER_H_
+#include "oxide_qt_javascript_dialog_closed_callback.h"
 
-#include "shared/browser/oxide_javascript_dialog_manager.h"
+#include "base/strings/utf_string_conversions.h"
+
+#include "qt/core/glue/private/oxide_qt_javascript_dialog_closed_callback_p.h"
 
 namespace oxide {
 namespace qt {
 
-class JavaScriptDialogManager FINAL : public oxide::JavaScriptDialogManager {
-  // TODO
-};
+JavaScriptDialogClosedCallback::JavaScriptDialogClosedCallback() {
+}
+
+JavaScriptDialogClosedCallback::~JavaScriptDialogClosedCallback() {
+}
+
+void JavaScriptDialogClosedCallback::run(bool success,
+                                         const QString& user_input) const {
+  priv->callback_.Run(success, base::UTF8ToUTF16(user_input.toStdString()));
+  delete this;
+}
 
 } // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_BROWSER_JAVASCRIPT_DIALOG_MANAGER_H_

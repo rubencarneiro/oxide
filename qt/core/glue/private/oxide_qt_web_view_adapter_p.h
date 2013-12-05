@@ -39,11 +39,18 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) FINAL;
 
-  oxide::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
-
   gfx::Rect GetContainerBounds() FINAL;
 
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
+
+  void RunJavaScriptDialog(
+      const GURL& origin_url,
+      const std::string& accept_lang,
+      content::JavaScriptMessageType javascript_message_type,
+      const base::string16& message_text,
+      const base::string16& default_prompt_text,
+      const content::JavaScriptDialogManager::DialogClosedCallback& callback,
+      bool* did_suppress_message) FINAL;
 
  private:
   WebViewAdapterPrivate(WebViewAdapter* adapter);

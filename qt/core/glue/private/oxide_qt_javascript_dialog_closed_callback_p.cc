@@ -15,12 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_javascript_dialog_manager.h"
+#include "oxide_qt_javascript_dialog_closed_callback_p.h"
+
+#include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
 
 namespace oxide {
 namespace qt {
 
-// TODO
+JavaScriptDialogClosedCallbackPrivate::JavaScriptDialogClosedCallbackPrivate(
+    const content::JavaScriptDialogManager::DialogClosedCallback& callback) :
+    callback_(callback) {}
+
+JavaScriptDialogClosedCallback*
+JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(
+    const content::JavaScriptDialogManager::DialogClosedCallback& callback) {
+  JavaScriptDialogClosedCallback* wrapper = new JavaScriptDialogClosedCallback;
+  wrapper->priv.reset(new JavaScriptDialogClosedCallbackPrivate(callback));
+  return wrapper;
+}
 
 } // namespace qt
 } // namespace oxide

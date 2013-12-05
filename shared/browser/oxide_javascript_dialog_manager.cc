@@ -17,7 +17,15 @@
 
 #include "oxide_javascript_dialog_manager.h"
 
+#include "base/memory/singleton.h"
+
+#include "shared/browser/oxide_web_view.h"
+
 namespace oxide {
+
+JavaScriptDialogManager* JavaScriptDialogManager::GetInstance() {
+  return Singleton<JavaScriptDialogManager>::get();
+}
 
 void JavaScriptDialogManager::RunJavaScriptDialog(
     content::WebContents* web_contents,
@@ -28,7 +36,10 @@ void JavaScriptDialogManager::RunJavaScriptDialog(
     const string16& default_prompt_text,
     const DialogClosedCallback& callback,
     bool* did_suppress_message) {
-  // TODO
+  WebView* webview = WebView::FromWebContents(web_contents);
+  webview->RunJavaScriptDialog(origin_url, accept_lang, javascript_message_type,
+                               message_text, default_prompt_text, callback,
+                               did_suppress_message);
 }
 
 void JavaScriptDialogManager::RunBeforeUnloadDialog(

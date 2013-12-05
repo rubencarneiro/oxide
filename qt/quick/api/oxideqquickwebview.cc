@@ -27,6 +27,7 @@
 #include <QtQml>
 
 #include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
 
 #include "qt/quick/oxide_qquick_render_widget_host_view_delegate.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
@@ -144,12 +145,6 @@ oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
   return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
 }
 
-oxide::qt::JavaScriptDialogManager*
-OxideQQuickWebViewPrivate::GetJavaScriptDialogManager() {
-  qDebug() << Q_FUNC_INFO << "TODO";
-  return NULL;
-}
-
 QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
   Q_Q(OxideQQuickWebView);
 
@@ -161,6 +156,23 @@ QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
 
   return QRectF(pos.x(), pos.y(),
                 q->width(), q->height()).toRect();
+}
+
+void OxideQQuickWebViewPrivate::RunJavaScriptDialog(
+    const QUrl& origin_url,
+    const QString& accept_lang,
+    int javascript_message_type, // FIXME
+    const QString& message_text,
+    const QString& default_prompt_text,
+    oxide::qt::JavaScriptDialogClosedCallback* callback,
+    bool* did_suppress_message) {
+  // TODO
+  qDebug() << Q_FUNC_INFO << origin_url << accept_lang << javascript_message_type
+           << message_text << default_prompt_text;
+  *did_suppress_message = false;
+
+  // test:
+  callback->run(true, default_prompt_text);
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {

@@ -20,14 +20,15 @@
 #include <QString>
 #include <QUrl>
 
+#include "base/strings/utf_string_conversions.h"
 #include "url/gurl.h"
 
-#include "qt/core/browser/oxide_qt_javascript_dialog_manager.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
+#include "qt/core/glue/private/oxide_qt_javascript_dialog_closed_callback_p.h"
 
 #include "oxide_qt_message_handler_adapter_p.h"
 #include "oxide_qt_web_frame_adapter_p.h"
@@ -100,11 +101,6 @@ content::RenderWidgetHostView* WebViewAdapterPrivate::CreateViewForWidget(
       a->CreateRenderWidgetHostViewDelegate());
 }
 
-oxide::JavaScriptDialogManager*
-WebViewAdapterPrivate::GetJavaScriptDialogManager() {
-  return a->GetJavaScriptDialogManager();
-}
-
 gfx::Rect WebViewAdapterPrivate::GetContainerBounds() {
   QRect bounds = a->GetContainerBounds();
   return gfx::Rect(bounds.x(),
@@ -116,6 +112,24 @@ gfx::Rect WebViewAdapterPrivate::GetContainerBounds() {
 oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(
     content::RenderViewHost* rvh) {
   return new WebPopupMenu(a->CreateWebPopupMenuDelegate(), rvh);
+}
+
+void WebViewAdapterPrivate::RunJavaScriptDialog(
+    const GURL& origin_url,
+    const std::string& accept_lang,
+    content::JavaScriptMessageType javascript_message_type,
+    const base::string16& message_text,
+    const base::string16& default_prompt_text,
+    const content::JavaScriptDialogManager::DialogClosedCallback& callback,
+    bool* did_suppress_message) {
+  a->RunJavaScriptDialog(
+      QUrl(QString::fromStdString(origin_url.spec())),
+      QString::fromStdString(accept_lang),
+      (int) javascript_message_type, // FIXME
+      QString::fromStdString(base::UTF16ToUTF8(message_text)),
+      QString::fromStdString(base::UTF16ToUTF8(default_prompt_text)),
+      JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback),
+      did_suppress_message);
 }
 
 } // namespace qt
