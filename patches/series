@@ -13,3 +13,4 @@ allow-message-loop-to-be-restarted.patch
 allow-blocking-pool-to-be-restarted.patch
 arm-crypto.patch
 arm-icu.patch
+fix-jpeg-turbo-inlines.patch
