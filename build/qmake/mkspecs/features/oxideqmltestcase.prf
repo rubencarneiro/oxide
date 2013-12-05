@@ -1,5 +1,5 @@
 CONFIG += testcase
-QT += qml qmltest oxide-private
+QT += qml qmltest oxide
 
 include($${OXIDE_QMAKE_PATH}/oxide_variables.pri)
 
