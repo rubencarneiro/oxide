@@ -12,3 +12,4 @@ dont-assert-once-only-initialization-of-icu.patch
 allow-message-loop-to-be-restarted.patch
 allow-blocking-pool-to-be-restarted.patch
 arm-crypto.patch
+arm-icu.patch
