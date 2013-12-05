@@ -36,6 +36,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_message_pump.h"
+#include "oxide_shared_gl_context.h"
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
@@ -77,6 +78,10 @@ class BrowserMainParts : public content::BrowserMainParts {
     return true;
   }
 
+  gfx::GLContext* shared_gl_context() const {
+    return shared_gl_context_;
+  }
+
   void set_shared_gl_context(gfx::GLContext* context) {
     shared_gl_context_ = context;
   }
@@ -89,7 +94,7 @@ class BrowserMainParts : public content::BrowserMainParts {
 } // namespace
 
 scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
-    gfx::GLShareGroup* share_group) {
+    oxide::GLShareGroup* share_group) {
   return scoped_refptr<gfx::GLContext>(NULL);
 }
 
@@ -168,16 +173,19 @@ bool ContentBrowserClient::GetDefaultScreenInfo(
   return true;
 }
 
-gfx::GLShareGroup* ContentBrowserClient::CreateGLShareGroup() {
-  gfx::GLShareGroup* share_group = new gfx::GLShareGroup();
-  scoped_refptr<gfx::GLContext> share_context =
-      CreateSharedGLContext(share_group);
-  if (share_context) {
+gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
+  if (!g_main_parts->shared_gl_context()) {
+    scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
+    scoped_refptr<gfx::GLContext> share_context =
+        CreateSharedGLContext(share_group);
+    if (!share_context) {
+      return NULL;
+    }
     DCHECK_EQ(share_context->share_group(), share_group);
     g_main_parts->set_shared_gl_context(share_context);
   }
 
-  return share_group;
+  return g_main_parts->shared_gl_context()->share_group();
 }
 
 } // namespace oxide

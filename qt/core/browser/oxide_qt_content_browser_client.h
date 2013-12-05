@@ -34,6 +34,10 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
  public:
   base::MessagePump* CreateMessagePumpForUI() FINAL;
 
+#if defined(USE_X11)
+  Display* GetDefaultXDisplay() FINAL;
+#endif
+
  private:
   // Limit default constructor access to the lazy instance initializer
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
@@ -42,7 +46,7 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
   void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) FINAL;
 
   scoped_refptr<gfx::GLContext> CreateSharedGLContext(
-      gfx::GLShareGroup* share_group) FINAL;
+      oxide::GLShareGroup* share_group) FINAL;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

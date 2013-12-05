@@ -19,12 +19,28 @@
 #define _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
 
 #include "ui/gl/gl_context.h"
+#include "ui/gl/gl_share_group.h"
 
 namespace oxide {
 
+class GLShareGroup FINAL : public gfx::GLShareGroup {
+ public:
+  GLShareGroup();
+
+  gfx::GLContext* GetContext() FINAL { return context_; }
+  void SetContext(gfx::GLContext* context) {
+    context_ = context;
+  }
+
+ private:
+  ~GLShareGroup();
+
+  gfx::GLContext* context_;
+};
+
 class SharedGLContext : public gfx::GLContext {
  public:
-  SharedGLContext(gfx::GLShareGroup* share_group);
+  SharedGLContext(oxide::GLShareGroup* share_group);
   virtual ~SharedGLContext();
 
   void* GetHandle() = 0;

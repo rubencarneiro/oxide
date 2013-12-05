@@ -33,11 +33,13 @@ class RenderViewHost;
 
 namespace gfx {
 class GLContext;
-class GLShareGroup;
 }
+
+typedef struct _XDisplay Display;
 
 namespace oxide {
 
+class GLShareGroup;
 class WebFrameTree;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
@@ -76,10 +78,14 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   bool GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
 
-  gfx::GLShareGroup* CreateGLShareGroup() FINAL;
+  gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
+
+#if defined(USE_X11)
+  virtual Display* GetDefaultXDisplay() = 0;
+#endif
 
  protected:
   // Limit default constructor access to derived classes
@@ -89,7 +95,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   virtual void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) = 0;
 
   virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
-      gfx::GLShareGroup* share_group);
+      oxide::GLShareGroup* share_group);
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

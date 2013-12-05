@@ -24,12 +24,25 @@
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
+#include "oxide_qquick_accelerated_render_view_node.h"
 #include "oxide_qquick_painted_render_view_node.h"
 
 namespace oxide {
 namespace qquick {
 
-void RenderViewItem::ScheduleUpdate(const QRect& rect) {
+void RenderViewItem::afterRendering() {
+  if (compositing_ack_pending_) {
+    compositing_ack_pending_ = false;
+    DidComposite(false);
+  }
+}
+
+void RenderViewItem::SchedulePaint(const QRect& rect) {
+  if (is_accelerated_compositing_) {
+    is_accelerated_compositing_state_changed_ = true;
+    is_accelerated_compositing_ = false;
+  }
+
   if (rect.isNull() && !dirty_rect_.isNull()) {
     dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
   } else {
@@ -40,14 +53,32 @@ void RenderViewItem::ScheduleUpdate(const QRect& rect) {
   polish();
 }
 
+void RenderViewItem::ScheduleComposite() {
+  if (!is_accelerated_compositing_) {
+    is_accelerated_compositing_state_changed_ = true;
+    is_accelerated_compositing_ = true;
+  }
+
+  update();
+}
+
 RenderViewItem::RenderViewItem(
     OxideQQuickWebView* webview) :
     QQuickItem(webview),
-    backing_store_(NULL) {
+    backing_store_(NULL),
+    is_accelerated_compositing_(false),
+    is_accelerated_compositing_state_changed_(false),
+    compositing_ack_pending_(false) {
   setFlag(QQuickItem::ItemHasContents);
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
+
+  QQuickWindow* win = window();
+  if (win) {
+    connect(win, SIGNAL(afterRendering()),
+            this, SLOT(afterRendering()), Qt::DirectConnection);
+  }
 }
 
 void RenderViewItem::Blur() {
@@ -162,6 +193,22 @@ void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
   event->setAccepted(me.isAccepted());
 }
 
+void RenderViewItem::itemChange(ItemChange change, ItemChangeData& value) {
+  Q_UNUSED(value);
+
+  if (change == ItemSceneChange) {
+    disconnect(this, SLOT(afterRendering()));
+
+    QQuickWindow* win = window();
+    if (!win) {
+      return;
+    }
+
+    connect(win, SIGNAL(afterRendering()),
+            this, SLOT(afterRendering()), Qt::DirectConnection);
+  }
+}
+
 void RenderViewItem::updatePolish() {
   backing_store_ = GetBackingStore();
 }
@@ -171,9 +218,36 @@ QSGNode* RenderViewItem::updatePaintNode(
     UpdatePaintNodeData* data) {
   Q_UNUSED(data);
 
+  if (is_accelerated_compositing_state_changed_) {
+    delete oldNode;
+    oldNode = NULL;
+    is_accelerated_compositing_state_changed_ = false;
+  }
+
   if (width() <= 0 || height() <= 0) {
     delete oldNode;
+    if (is_accelerated_compositing_) {
+      DidComposite(true);
+    }
     return NULL;
+  }
+
+  // FIXME: What if we had a resize between scheduling the update
+  //        on the main thread and now?
+
+  if (is_accelerated_compositing_) {
+    compositing_ack_pending_ = true;
+
+    AcceleratedRenderViewNode* node =
+        static_cast<AcceleratedRenderViewNode *>(oldNode);
+    if (!node) {
+      node = new AcceleratedRenderViewNode(this);
+    }
+
+    node->setRect(QRect(QPoint(0, 0), QSizeF(width(), height()).toSize()));
+    node->updateFrontTexture(GetFrontbufferTextureInfo());
+
+    return node;
   }
 
   PaintedRenderViewNode* node = static_cast<PaintedRenderViewNode *>(oldNode);

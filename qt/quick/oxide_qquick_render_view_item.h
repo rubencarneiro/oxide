@@ -36,6 +36,8 @@ namespace qquick {
 class RenderViewItem Q_DECL_FINAL :
     public QQuickItem,
     public oxide::qt::RenderWidgetHostViewDelegate {
+  Q_OBJECT
+
  public:
   RenderViewItem(OxideQQuickWebView* webview);
 
@@ -69,15 +71,27 @@ class RenderViewItem Q_DECL_FINAL :
 
   void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
 
+  void itemChange(ItemChange change, ItemChangeData& value) Q_DECL_FINAL;
+
   void updatePolish() Q_DECL_FINAL;
   QSGNode* updatePaintNode(QSGNode* oldNode,
                            UpdatePaintNodeData* data) Q_DECL_FINAL;
 
+ private Q_SLOTS:
+  void afterRendering();
+
  private:
-  void ScheduleUpdate(const QRect& rect) Q_DECL_FINAL;
+  void SchedulePaint(const QRect& rect) Q_DECL_FINAL;
+  void ScheduleComposite() Q_DECL_FINAL;
 
   const QPixmap* backing_store_;
   QRect dirty_rect_;
+
+  bool is_accelerated_compositing_;
+  bool is_accelerated_compositing_state_changed_;
+  bool compositing_ack_pending_;
+
+  Q_DISABLE_COPY(RenderViewItem);
 };
 
 } // namespace qquick

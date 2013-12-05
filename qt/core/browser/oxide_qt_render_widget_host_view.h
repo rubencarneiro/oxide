@@ -74,13 +74,18 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
 
+  void DidComposite(bool skipped);
+
   const QPixmap* GetBackingStore();
 
  private:
-  void ScheduleUpdate(const gfx::Rect& rect) FINAL;
+  void Paint(const gfx::Rect& rect) FINAL;
+  void BuffersSwapped(const AcknowledgeBufferPresentCallback& ack) FINAL;
 
   BackingStore* backing_store_;
   scoped_ptr<RenderWidgetHostViewDelegate> delegate_;
+
+  AcknowledgeBufferPresentCallback acknowledge_buffer_present_callback_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

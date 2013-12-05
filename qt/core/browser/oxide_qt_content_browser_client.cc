@@ -20,6 +20,9 @@
 #include <QGuiApplication>
 #include <QString>
 #include <QtGui/qpa/qplatformnativeinterface.h>
+#if defined(USE_X11)
+#include <X11/Xlib.h>
+#endif
 
 #include "shared/browser/oxide_shared_gl_context.h"
 
@@ -35,7 +38,7 @@ namespace {
 
 class SharedGLContext : public oxide::SharedGLContext {
  public:
-  SharedGLContext(QOpenGLContext* context, gfx::GLShareGroup* share_group) :
+  SharedGLContext(QOpenGLContext* context, oxide::GLShareGroup* share_group) :
       oxide::SharedGLContext(share_group),
       handle_(NULL) {
     QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
@@ -59,17 +62,13 @@ class SharedGLContext : public oxide::SharedGLContext {
 
 } // namespace
 
-base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
-  return new MessagePump();
-}
-
 void ContentBrowserClient::GetDefaultScreenInfoImpl(
     blink::WebScreenInfo* result) {
   RenderWidgetHostView::GetScreenInfo(NULL, result);
 }
 
 scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
-    gfx::GLShareGroup* share_group) {
+    oxide::GLShareGroup* share_group) {
   SharedGLContextFactory* factory = GetSharedGLContextFactory();
   if (!factory) {
     return NULL;
@@ -88,6 +87,28 @@ scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
 
   return context;
 }
+
+base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
+  return new MessagePump();
+}
+
+#if defined (USE_X11)
+Display* ContentBrowserClient::GetDefaultXDisplay() {
+  static Display* display = NULL;
+  if (!display) {
+    QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
+    display = static_cast<Display *>(
+        pni->nativeResourceForScreen("display",
+                                     QGuiApplication::primaryScreen()));
+  }
+
+  if (!display) {
+    display = XOpenDisplay(NULL);
+  }
+
+  return display;
+}
+#endif
 
 } // namespace qt
 } // namespace oxide

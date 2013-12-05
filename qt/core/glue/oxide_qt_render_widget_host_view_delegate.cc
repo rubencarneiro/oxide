@@ -23,6 +23,12 @@
 namespace oxide {
 namespace qt {
 
+TextureInfo::TextureInfo(unsigned int id, const QSize& size_in_pixels) :
+    id_(id),
+    size_in_pixels_(size_in_pixels) {}
+
+TextureInfo::~TextureInfo() {}
+
 RenderWidgetHostView* RenderWidgetHostViewDelegate::GetRenderWidgetHostView() {
   return rwhv_;
 }
@@ -48,6 +54,17 @@ void RenderWidgetHostViewDelegate::ForwardMouseEvent(QMouseEvent* event) {
 
 void RenderWidgetHostViewDelegate::ForwardWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHostView()->ForwardWheelEvent(event);
+}
+
+TextureInfo RenderWidgetHostViewDelegate::GetFrontbufferTextureInfo() {
+  oxide::TextureInfo tex = GetRenderWidgetHostView()->GetFrontbufferTextureInfo();
+  return TextureInfo(tex.id(),
+                     QSize(tex.size_in_pixels().width(),
+                           tex.size_in_pixels().height()));
+}
+
+void RenderWidgetHostViewDelegate::DidComposite(bool skipped) {
+  GetRenderWidgetHostView()->DidComposite(skipped);
 }
 
 RenderWidgetHostViewDelegate::~RenderWidgetHostViewDelegate() {}

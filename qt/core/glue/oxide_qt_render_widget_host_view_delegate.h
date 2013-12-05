@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 
 #include <QRect>
+#include <QSize>
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
@@ -38,6 +39,19 @@ namespace oxide {
 namespace qt {
 
 class RenderWidgetHostView;
+
+class Q_DECL_EXPORT TextureInfo Q_DECL_FINAL {
+ public:
+  TextureInfo(unsigned int id, const QSize& size_in_pixels);
+  ~TextureInfo();
+
+  unsigned int id() const { return id_; }
+  QSize size_in_pixels() const { return size_in_pixels_; }
+
+ private:
+  unsigned int id_;
+  QSize size_in_pixels_;
+};
 
 class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  public:
@@ -68,10 +82,14 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
 
+  TextureInfo GetFrontbufferTextureInfo();
+  void DidComposite(bool skipped);
+
  private:
   friend class RenderWidgetHostView;
 
-  virtual void ScheduleUpdate(const QRect& rect) = 0;
+  virtual void SchedulePaint(const QRect& rect) = 0;
+  virtual void ScheduleComposite() = 0;
 
   RenderWidgetHostView* GetRenderWidgetHostView();
   void SetRenderWidgetHostView(RenderWidgetHostView* rwhv);

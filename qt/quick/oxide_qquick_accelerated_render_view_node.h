@@ -15,21 +15,41 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include <QGuiApplication>
-#include <QtQuickTest/quicktest.h>
-#include <QtQuickVersion>
-#if QTQUICK_VERSION >= 0x050200
-#include <QtQuick/private/qsgcontext_p.h>
-#endif
+#ifndef _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
+#define _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
 
-int main(int argc, char** argv) {
-  QGuiApplication app(argc, argv);
+#include <QSGSimpleTextureNode>
+#include <QtGlobal>
 
-#if QTQUICK_VERSION >= 0x050200
-  QOpenGLContext context;
-  context.create();
-  QSGContext::setSharedOpenGLContext(&context);
-#endif
+QT_BEGIN_NAMESPACE
+class QSGTexture;
+QT_END_NAMESPACE
 
-  return quick_test_main(argc, argv, "qmltests", QUICK_TEST_SOURCE_DIR);
+namespace oxide {
+
+namespace qt {
+class TextureInfo;
 }
+
+namespace qquick {
+
+class RenderViewItem;
+
+class AcceleratedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
+ public:
+  AcceleratedRenderViewNode(RenderViewItem* item);
+  ~AcceleratedRenderViewNode();
+
+  void updateFrontTexture(const oxide::qt::TextureInfo& tex_info);
+
+ private:
+  RenderViewItem* item_;
+
+  QSGTexture* front_texture_;
+  QSGTexture* back_texture_;
+};
+
+} // namespace qquick
+} // namespace oxide
+
+#endif // _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_

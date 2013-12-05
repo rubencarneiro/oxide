@@ -21,12 +21,25 @@
 
 namespace oxide {
 
-SharedGLContext::SharedGLContext(gfx::GLShareGroup* share_group) :
-    gfx::GLContext(share_group) {
-  DCHECK(share_group) << "Must specify a share group!";
+GLShareGroup::~GLShareGroup() {
+  DCHECK(!context_);
 }
 
-SharedGLContext::~SharedGLContext() {}
+GLShareGroup::GLShareGroup() :
+    context_(NULL) {}
+
+SharedGLContext::SharedGLContext(oxide::GLShareGroup* share_group) :
+    gfx::GLContext(share_group) {
+  DCHECK(share_group);
+  DCHECK(!share_group->GetContext());
+  share_group->SetContext(this);
+}
+
+SharedGLContext::~SharedGLContext() {
+  oxide::GLShareGroup* sg = static_cast<oxide::GLShareGroup *>(share_group());
+  DCHECK_EQ(sg->GetContext(), this);
+  sg->SetContext(NULL);
+}
 
 bool SharedGLContext::Initialize(gfx::GLSurface* compatible_surface,
                                  gfx::GpuPreference gpu_preference) {

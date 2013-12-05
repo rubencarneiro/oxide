@@ -203,6 +203,7 @@
         'browser/oxide_web_view.cc',
         'browser/oxide_web_view.h',
         'chromium_support/oxide_compositor_util.cc',
+        'chromium_support/oxide_toolkit_utils.cc',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',
