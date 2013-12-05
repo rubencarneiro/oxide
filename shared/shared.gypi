@@ -24,7 +24,6 @@
     'toolkit_uses_gtk': 0,
     'use_aura': 1,
     'use_gconf': 0,
-    'werror': '-Werror -Wno-error=deprecated-declarations',
     'conditions': [
       ['target_arch=="arm"', {
         # XXX: Make Ubuntu-specific
@@ -39,6 +38,9 @@
     ],
   },
   'target_defaults': {
+    'cflags!': [
+      '-Werror',
+    ],
     'target_conditions': [
       ['_target_name=="content_browser"',
         {
