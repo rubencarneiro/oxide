@@ -21,11 +21,7 @@
 #include <QImage>
 #include <QRect>
 #include <QScopedPointer>
-#include <QSize>
-#include <QSGGeometry>
-#include <QSGGeometryNode>
-#include <QSGOpaqueTextureMaterial>
-#include <QSGTextureMaterial>
+#include <QSGSimpleTextureNode>
 #include <QtGlobal>
 #include <QtQuick/private/qsgtexture_p.h>
 
@@ -36,12 +32,9 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qquick {
 
-class PaintedRenderViewNode Q_DECL_FINAL : public QSGGeometryNode {
+class PaintedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  public:
   PaintedRenderViewNode();
-
-  QSize size() const;
-  void setSize(const QSize& size);
 
   void markDirtyRect(const QRect& rect);
   void setBackingStore(const QPixmap* pixmap);
@@ -49,15 +42,11 @@ class PaintedRenderViewNode Q_DECL_FINAL : public QSGGeometryNode {
   virtual void preprocess() Q_DECL_FINAL;
 
  private:
-  QSize size_;
   QRect dirty_rect_;
 
   const QPixmap* backing_store_;
   QImage image_;
 
-  QSGOpaqueTextureMaterial material_o_;
-  QSGTextureMaterial material_;
-  QSGGeometry geometry_;
   QSGPlainTexture texture_;
 };
 

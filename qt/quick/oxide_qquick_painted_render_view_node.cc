@@ -18,50 +18,19 @@
 #include "oxide_qquick_painted_render_view_node.h"
 
 #include <QPainter>
+#include <QPixmap>
 
 namespace oxide {
 namespace qquick {
 
 PaintedRenderViewNode::PaintedRenderViewNode() :
-    backing_store_(NULL),
-    geometry_(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4) {
+    backing_store_(NULL) {
   setFlag(QSGNode::UsePreprocess);
-
-  setGeometry(&geometry_);
-  setMaterial(&material_);
-  setOpaqueMaterial(&material_o_);
 
   texture_.setOwnsTexture(true);
   texture_.setHasAlphaChannel(true);
 
-  material_.setTexture(&texture_);
-  material_o_.setTexture(&texture_);
-}
-
-QSize PaintedRenderViewNode::size() const {
-  return size_;
-}
-
-void PaintedRenderViewNode::setSize(const QSize& size) {
-  if (size == size_) {
-    return;
-  }
-
-  size_ = size;
-
-  QSGGeometry::updateTexturedRectGeometry(
-      &geometry_,
-      QRectF(0, 0, size_.width(), size_.height()),
-      QRectF(0, 0, 1, 1));
-
-  texture_.setTextureSize(size_);
-
-  image_ = QImage(size_, QImage::Format_ARGB32_Premultiplied);
-  image_.fill(Qt::transparent);
-
-  markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
-
-  markDirtyRect(QRect(QPoint(0, 0), size_));
+  setTexture(&texture_);
 }
 
 void PaintedRenderViewNode::markDirtyRect(const QRect& rect) {
@@ -76,7 +45,12 @@ void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
 
   backing_store_ = pixmap;
 
-  markDirtyRect(QRect(QPoint(0, 0), size()));
+  texture_.setTextureSize(pixmap->size());
+
+  image_ = QImage(pixmap->size(), QImage::Format_ARGB32_Premultiplied);
+  image_.fill(Qt::transparent);
+
+  markDirtyRect(QRect(QPoint(0, 0), texture_.textureSize()));
 }
 
 void PaintedRenderViewNode::preprocess() {
@@ -103,7 +77,7 @@ void PaintedRenderViewNode::preprocess() {
   painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
   if (backing_store_) {
-    QRectF rect(0, 0, size().width(), size().height());
+    QRectF rect(QPoint(0, 0), texture_.textureSize());
     painter.drawPixmap(rect, *backing_store_, rect);
   }
 

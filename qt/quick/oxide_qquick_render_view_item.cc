@@ -255,9 +255,9 @@ QSGNode* RenderViewItem::updatePaintNode(
     node = new PaintedRenderViewNode();
   }
 
-  node->setSize(QSizeF(width(), height()).toSize());
-  node->markDirtyRect(dirty_rect_);
+  node->setRect(QRect(QPoint(0, 0), QSizeF(width(), height()).toSize()));
   node->setBackingStore(backing_store_);
+  node->markDirtyRect(dirty_rect_);
 
   dirty_rect_ = QRect();
 
