@@ -20,11 +20,27 @@
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
     'linux_use_tcmalloc': 0,
+    'sysroot': '',
     'toolkit_uses_gtk': 0,
     'use_aura': 1,
     'use_gconf': 0,
+    'conditions': [
+      ['target_arch=="arm"', {
+        # XXX: Make Ubuntu-specific
+        'arm_neon': 0,
+
+        'conditions': [
+          ['arm_version==7', {
+            'arm_float_abi': 'hard',
+          }],
+        ],
+      }],
+    ],
   },
   'target_defaults': {
+    'cflags!': [
+      '-Werror',
+    ],
     'target_conditions': [
       ['_target_name=="content_browser"',
         {

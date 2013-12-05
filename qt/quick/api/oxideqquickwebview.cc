@@ -284,6 +284,9 @@ OxideQQuickWebView::~OxideQQuickWebView() {
   // WebContents is destroyed now
   d->shutdown();
 
+  delete d_ptr;
+  d_ptr = NULL;
+
   QObject::disconnect(this, SIGNAL(visibleChanged()),
                       this, SLOT(visibilityChangedListener()));
 }

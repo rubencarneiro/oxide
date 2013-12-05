@@ -1,5 +1,6 @@
-Description: Support native popups in oxide
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Support native popup menus in oxide by activating the Android code
+#  in Oxide builds
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc

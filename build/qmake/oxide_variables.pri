@@ -1,7 +1,3 @@
-isEmpty(PREFIX):PREFIX = /usr/local
-isEmpty(LIBDIR):LIBDIR = $${PREFIX}/lib
-isEmpty(LIBEXECDIR):LIBEXECDIR = $${LIBDIR}/oxide-qt
-
 CHROMIUM_OUT_DIR = $${OXIDE_SRC_ROOT}/chromium/src/out
 
 equals(OXIDE_DEBUG, "1"):CHROMIUM_OUT_PLAT_DIR = $${CHROMIUM_OUT_DIR}/Debug

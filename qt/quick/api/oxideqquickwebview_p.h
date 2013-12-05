@@ -20,7 +20,6 @@
 
 #include <QQmlListProperty>
 #include <QQuickItem>
-#include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -126,7 +125,7 @@ class OxideQQuickWebView : public QQuickItem {
   virtual void geometryChanged(const QRectF& newGeometry,
                                const QRectF& oldGeometry);
 
-  QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
+  OxideQQuickWebViewPrivate* d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebView)

@@ -1,5 +1,5 @@
-Description: Add oxide::MessagePump to base::RunLoop friends
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Add oxide::MessagePump to base::RunLoop friends
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/base/run_loop.h b/base/run_loop.h
 --- a/base/run_loop.h

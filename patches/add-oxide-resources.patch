@@ -1,3 +1,6 @@
+# Description: Add our oxide_resources.grd to resource_ids
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
 diff --git a/tools/gritsettings/resource_ids b/tools/gritsettings/resource_ids
 --- a/tools/gritsettings/resource_ids
 +++ b/tools/gritsettings/resource_ids

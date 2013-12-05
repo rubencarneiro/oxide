@@ -1,7 +1,7 @@
-Description: Allow embedders to override RenderWidgetHostViewPort::GetDefaultScreenInfo
- This modifies the Aura implementation of RWHVP::GetDefaultScreenInfo so that it
- can delegate to embedders, rather than using Aura / X11 to do this
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Allow embedders to override RenderWidgetHostViewPort::GetDefaultScreenInfo
+#  This modifies the Aura implementation of RWHVP::GetDefaultScreenInfo so that it
+#  can delegate to embedders, rather than using Aura / X11 to do this
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/browser/renderer_host/render_widget_host_view_aura.cc b/content/browser/renderer_host/render_widget_host_view_aura.cc
 --- a/content/browser/renderer_host/render_widget_host_view_aura.cc

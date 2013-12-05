@@ -1,5 +1,5 @@
-Description: Make gyp work correctly when toplevel != depth
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Make gyp work correctly when toplevel != depth
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/tools/gyp/pylib/gyp/__init__.py b/tools/gyp/pylib/gyp/__init__.py
 --- a/tools/gyp/pylib/gyp/__init__.py

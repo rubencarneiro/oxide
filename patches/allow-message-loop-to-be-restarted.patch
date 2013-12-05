@@ -1,5 +1,6 @@
-Description: Reset the state of g_exited_main_message_loop when restarting the message loop
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Reset the state of g_exited_main_message_loop when restarting the message
+#  loop, as it is checked in the constructor for RenderProcessHostImpl
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/browser/browser_main_runner.cc b/content/browser/browser_main_runner.cc
 --- a/content/browser/browser_main_runner.cc

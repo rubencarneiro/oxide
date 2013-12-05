@@ -1,0 +1,28 @@
+# Description: Use the correct multi-arch path on ARM for finding NSS
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/crypto/nss_util.cc b/crypto/nss_util.cc
+--- a/crypto/nss_util.cc
++++ b/crypto/nss_util.cc
+@@ -707,17 +707,21 @@ void LoadNSSLibraries() {
+   paths.push_back(base::FilePath("/usr/lib/nss"));
+ 
+   // Ubuntu 11.10 (Oneiric) and Debian Wheezy place the libraries here.
+ #if defined(ARCH_CPU_X86_64)
+   paths.push_back(base::FilePath("/usr/lib/x86_64-linux-gnu/nss"));
+ #elif defined(ARCH_CPU_X86)
+   paths.push_back(base::FilePath("/usr/lib/i386-linux-gnu/nss"));
+ #elif defined(ARCH_CPU_ARMEL)
++# ifdef __ARM_PCS_VFP
++  paths.push_back(base::FilePath("/usr/lib/arm-linux-gnueabihf/nss"));
++# else
+   paths.push_back(base::FilePath("/usr/lib/arm-linux-gnueabi/nss"));
++# endif
+ #elif defined(ARCH_CPU_MIPSEL)
+   paths.push_back(base::FilePath("/usr/lib/mipsel-linux-gnu/nss"));
+ #endif
+ 
+   // A list of library files to load.
+   std::vector<std::string> libs;
+   libs.push_back("libsoftokn3.so");
+   libs.push_back("libfreebl3.so");

@@ -1,6 +1,8 @@
-# HG changeset patch
-# Parent fe61e06bfc85720c55ae89b8ac909849e9216c97
-# User Chris Coulson <chris.coulson@canonical.com>
+# Description: BrowserThreadGlobals is a global which is only initialized once during the
+#  process lifetime, but BrowserThreadGlobals::blocking_pool is shutdown when the browser
+#  thread bits are shutdown, preventing the embedder from starting a browser again. This
+#  patch ensures that BrowserThreadGlobals::blocking_pool gets reinitialized correctly
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/browser/browser_thread_impl.cc b/content/browser/browser_thread_impl.cc
 --- a/content/browser/browser_thread_impl.cc

@@ -1,6 +1,6 @@
-Description: Don't assert that InitializeICU is only called once. It's not harmful
- and we do this in Oxide if we delete all contexts and then create a new one
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Don't assert that InitializeICU is only called once. It's not harmful
+#  and we do this in Oxide if we delete all contexts and then create a new one
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/base/i18n/icu_util.cc b/base/i18n/icu_util.cc
 --- a/base/i18n/icu_util.cc
