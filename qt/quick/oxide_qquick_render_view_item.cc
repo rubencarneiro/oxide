@@ -31,8 +31,8 @@ namespace oxide {
 namespace qquick {
 
 void RenderViewItem::afterRendering() {
-  if (compositing_ack_pending_) {
-    compositing_ack_pending_ = false;
+  if (did_composite_) {
+    did_composite_ = false;
     DidComposite(false);
   }
 }
@@ -68,7 +68,7 @@ RenderViewItem::RenderViewItem(
     backing_store_(NULL),
     is_accelerated_compositing_(false),
     is_accelerated_compositing_state_changed_(false),
-    compositing_ack_pending_(false) {
+    did_composite_(false) {
   setFlag(QQuickItem::ItemHasContents);
 
   setAcceptedMouseButtons(Qt::AllButtons);
@@ -236,7 +236,7 @@ QSGNode* RenderViewItem::updatePaintNode(
   //        on the main thread and now?
 
   if (is_accelerated_compositing_) {
-    compositing_ack_pending_ = true;
+    did_composite_ = true;
 
     AcceleratedRenderViewNode* node =
         static_cast<AcceleratedRenderViewNode *>(oldNode);

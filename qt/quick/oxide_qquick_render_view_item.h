@@ -89,7 +89,7 @@ class RenderViewItem Q_DECL_FINAL :
 
   bool is_accelerated_compositing_;
   bool is_accelerated_compositing_state_changed_;
-  bool compositing_ack_pending_;
+  bool did_composite_;
 
   Q_DISABLE_COPY(RenderViewItem);
 };
