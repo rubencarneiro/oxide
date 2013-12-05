@@ -59,6 +59,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     context(NULL),
     popup_menu(NULL),
+    alert_dialog(NULL),
     init_props_(new InitData()),
     q_ptr(view) {}
 
@@ -158,21 +159,20 @@ QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
                 q->width(), q->height()).toRect();
 }
 
-void OxideQQuickWebViewPrivate::RunJavaScriptDialog(
+void OxideQQuickWebViewPrivate::RunJavaScriptAlert(
     const QUrl& origin_url,
     const QString& accept_lang,
-    int javascript_message_type, // FIXME
     const QString& message_text,
-    const QString& default_prompt_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
-  // TODO
-  qDebug() << Q_FUNC_INFO << origin_url << accept_lang << javascript_message_type
-           << message_text << default_prompt_text;
   *did_suppress_message = false;
-
-  // test:
-  callback->run(true, default_prompt_text);
+  if (alert_dialog) {
+    // TODO: instantiate component, display it, and hook it to the callback
+    qDebug() << Q_FUNC_INFO << origin_url << accept_lang << message_text;
+    callback->run(true);
+  } else {
+    callback->run(false);
+  }
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {
@@ -448,6 +448,23 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
 
   d->popup_menu = popup_menu;
   emit popupMenuChanged();
+}
+
+QQmlComponent* OxideQQuickWebView::alertDialog() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->alert_dialog;
+}
+
+void OxideQQuickWebView::setAlertDialog(QQmlComponent* alert_dialog) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->alert_dialog == alert_dialog) {
+    return;
+  }
+
+  d->alert_dialog = alert_dialog;
+  emit alertDialogChanged();
 }
 
 OxideQQuickWebContext* OxideQQuickWebView::context() const {

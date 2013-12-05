@@ -70,13 +70,11 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   QRect GetContainerBounds() Q_DECL_FINAL;
 
-  void RunJavaScriptDialog(const QUrl& origin_url,
-                           const QString& accept_lang,
-                           int javascript_message_type, // FIXME
-                           const QString& message_text,
-                           const QString& default_prompt_text,
-                           oxide::qt::JavaScriptDialogClosedCallback* callback,
-                           bool* did_suppress_message) Q_DECL_FINAL;
+  void RunJavaScriptAlert(const QUrl& origin_url,
+                          const QString& accept_lang,
+                          const QString& message_text,
+                          oxide::qt::JavaScriptDialogClosedCallback* callback,
+                          bool* did_suppress_message) Q_DECL_FINAL;
 
   void componentComplete();
 
@@ -99,6 +97,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   OxideQQuickWebContext* context;
   QQmlComponent* popup_menu;
+  QQmlComponent* alert_dialog;
 
  private:
   QScopedPointer<InitData> init_props_;

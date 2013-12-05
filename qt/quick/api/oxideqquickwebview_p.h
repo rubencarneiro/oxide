@@ -67,6 +67,8 @@ class OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
+  Q_PROPERTY(QQmlComponent* alertDialog READ alertDialog WRITE setAlertDialog NOTIFY alertDialogChanged)
+
   Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
@@ -99,6 +101,9 @@ class OxideQQuickWebView : public QQuickItem {
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
+  QQmlComponent* alertDialog() const;
+  void setAlertDialog(QQmlComponent* alert_dialog);
+
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
 
@@ -117,6 +122,7 @@ class OxideQQuickWebView : public QQuickItem {
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void rootFrameChanged();
   void popupMenuChanged();
+  void alertDialogChanged();
   void messageHandlersChanged();
 
  private Q_SLOTS:

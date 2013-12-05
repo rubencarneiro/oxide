@@ -98,13 +98,11 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual QRect GetContainerBounds() = 0;
 
-  virtual void RunJavaScriptDialog(const QUrl& origin_url,
-                                   const QString& accept_lang,
-                                   int javascript_message_type, // FIXME
-                                   const QString& message_text,
-                                   const QString& default_prompt_text,
-                                   JavaScriptDialogClosedCallback* callback,
-                                   bool* did_suppress_message) = 0;
+  virtual void RunJavaScriptAlert(const QUrl& origin_url,
+                                  const QString& accept_lang,
+                                  const QString& message_text,
+                                  JavaScriptDialogClosedCallback* callback,
+                                  bool* did_suppress_message) = 0;
 
   void shutdown();
 

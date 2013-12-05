@@ -122,14 +122,17 @@ void WebViewAdapterPrivate::RunJavaScriptDialog(
     const base::string16& default_prompt_text,
     const content::JavaScriptDialogManager::DialogClosedCallback& callback,
     bool* did_suppress_message) {
-  a->RunJavaScriptDialog(
-      QUrl(QString::fromStdString(origin_url.spec())),
-      QString::fromStdString(accept_lang),
-      (int) javascript_message_type, // FIXME
-      QString::fromStdString(base::UTF16ToUTF8(message_text)),
-      QString::fromStdString(base::UTF16ToUTF8(default_prompt_text)),
-      JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback),
-      did_suppress_message);
+  if (javascript_message_type == content::JAVASCRIPT_MESSAGE_TYPE_ALERT) {
+    a->RunJavaScriptAlert(
+        QUrl(QString::fromStdString(origin_url.spec())),
+        QString::fromStdString(accept_lang),
+        QString::fromStdString(base::UTF16ToUTF8(message_text)),
+        JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback),
+        did_suppress_message);
+  } else {
+    // TODO: handle other types of message (CONFIRM and PROMPT)
+    callback.Run(false, default_prompt_text);
+  }
 }
 
 } // namespace qt
