@@ -1,6 +1,5 @@
-# HG changeset patch
-# Parent 49264c014a07540183e060378da2931c659a79ff
-# User oxide
+# Description: Don't pass -m32 to the host compiler on ARM builds in ICU code
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/third_party/icu/icu.gyp b/third_party/icu/icu.gyp
 --- a/third_party/icu/icu.gyp

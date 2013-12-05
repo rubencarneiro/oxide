@@ -1,6 +1,5 @@
-# HG changeset patch
-# Parent b3f92b0055b631aaaa6f4afc94acb3e4d2bb4d7a
-# User oxide
+# Description: Use the correct multi-arch path on ARM for finding NSS
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/crypto/nss_util.cc b/crypto/nss_util.cc
 --- a/crypto/nss_util.cc
