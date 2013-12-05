@@ -59,9 +59,9 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     context(NULL),
     popup_menu(NULL),
-    alert_dialog(NULL),
     init_props_(new InitData()),
-    q_ptr(view) {}
+    q_ptr(view),
+    alert_dialog_delegate_(view) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
@@ -165,14 +165,7 @@ void OxideQQuickWebViewPrivate::RunJavaScriptAlert(
     const QString& message_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
-  *did_suppress_message = false;
-  if (alert_dialog) {
-    // TODO: instantiate component, display it, and hook it to the callback
-    qDebug() << Q_FUNC_INFO << origin_url << accept_lang << message_text;
-    callback->run(true);
-  } else {
-    callback->run(false);
-  }
+  alert_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback, did_suppress_message);
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {
@@ -453,17 +446,17 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
 QQmlComponent* OxideQQuickWebView::alertDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->alert_dialog;
+  return d->alert_dialog_delegate_.component();
 }
 
 void OxideQQuickWebView::setAlertDialog(QQmlComponent* alert_dialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->alert_dialog == alert_dialog) {
+  if (d->alert_dialog_delegate_.component() == alert_dialog) {
     return;
   }
 
-  d->alert_dialog = alert_dialog;
+  d->alert_dialog_delegate_.setComponent(alert_dialog);
   emit alertDialogChanged();
 }
 

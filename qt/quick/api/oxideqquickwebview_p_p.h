@@ -25,12 +25,16 @@
 
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
+#include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
+
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
+class QQmlContext;
+class QQuickItem;
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
@@ -97,12 +101,13 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   OxideQQuickWebContext* context;
   QQmlComponent* popup_menu;
-  QQmlComponent* alert_dialog;
 
  private:
   QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
   OxideQQuickWebView* q_ptr;
+
+  oxide::qquick::OxideQQuickAlertDialogDelegate alert_dialog_delegate_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
