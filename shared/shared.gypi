@@ -24,6 +24,7 @@
     'toolkit_uses_gtk': 0,
     'use_aura': 1,
     'use_gconf': 0,
+    'werror': '-Werror -Wno-error=deprecated-declarations',
     'conditions': [
       ['target_arch=="arm"', {
         # XXX: Make Ubuntu-specific
