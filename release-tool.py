@@ -191,9 +191,9 @@ def cmd_make_tarball(options, args):
     topsrcdir = "%s~bzr%s" % (topsrcdir, branch.revision_id_to_revno(rev_id))
 
   if options.deb:
-    filename = "%s.orig.tar.bz2" % filename
+    filename = "%s.orig.tar.xz" % filename
   else:
-    filename = "%s.tar.bz2" % filename
+    filename = "%s.tar.xz" % filename
 
   # Build list of files in bzr
   tree = WorkingTree.open(TOPSRCDIR)
@@ -214,7 +214,7 @@ def cmd_make_tarball(options, args):
       return None
     return info
 
-  with tarfile.open(os.path.join(TOPSRCDIR, filename), "w:bz2") as tar:
+  with tarfile.open(os.path.join(TOPSRCDIR, filename), "w:xz") as tar:
     # Add files from bzr
     for f in files:
       tar.add(f, os.path.join(topsrcdir, f), filter=tar_filter, recursive=False)
