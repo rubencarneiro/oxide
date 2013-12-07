@@ -25,8 +25,6 @@ namespace qquick {
 
 PaintedRenderViewNode::PaintedRenderViewNode() :
     backing_store_(NULL) {
-  setFlag(QSGNode::UsePreprocess);
-
   texture_.setOwnsTexture(true);
   texture_.setHasAlphaChannel(true);
 
@@ -35,6 +33,7 @@ PaintedRenderViewNode::PaintedRenderViewNode() :
 
 void PaintedRenderViewNode::markDirtyRect(const QRect& rect) {
   dirty_rect_ |= rect;
+  dirty_rect_ &= this->rect().toRect();
   markDirty(QSGNode::DirtyMaterial);
 }
 
@@ -45,15 +44,26 @@ void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
 
   backing_store_ = pixmap;
 
-  texture_.setTextureSize(pixmap->size());
-
-  image_ = QImage(pixmap->size(), QImage::Format_ARGB32_Premultiplied);
-  image_.fill(Qt::transparent);
-
-  markDirtyRect(QRect(QPoint(0, 0), texture_.textureSize()));
+  markDirtyRect(QRect(QPoint(0, 0), pixmap->size()));
 }
 
-void PaintedRenderViewNode::preprocess() {
+void PaintedRenderViewNode::setSize(const QSize& size) {
+  QRect rect(QPoint(0, 0), size);
+  if (rect == this->rect()) {
+    return;
+  }
+
+  setRect(rect);
+
+  texture_.setTextureSize(size);
+
+  image_ = QImage(size, QImage::Format_ARGB32_Premultiplied);
+  image_.fill(Qt::transparent);
+
+  markDirtyRect(rect);
+}
+
+void PaintedRenderViewNode::update() {
   if (dirty_rect_.isEmpty()) {
     return;
   }
@@ -77,8 +87,7 @@ void PaintedRenderViewNode::preprocess() {
   painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
   if (backing_store_) {
-    QRectF rect(QPoint(0, 0), texture_.textureSize());
-    painter.drawPixmap(rect, *backing_store_, rect);
+    painter.drawPixmap(rect(), *backing_store_, rect());
   }
 
   painter.end();

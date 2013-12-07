@@ -244,7 +244,7 @@ QSGNode* RenderViewItem::updatePaintNode(
       node = new AcceleratedRenderViewNode(this);
     }
 
-    node->setRect(QRect(QPoint(0, 0), QSizeF(width(), height()).toSize()));
+    node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
     node->updateFrontTexture(GetFrontbufferTextureInfo());
 
     return node;
@@ -255,9 +255,11 @@ QSGNode* RenderViewItem::updatePaintNode(
     node = new PaintedRenderViewNode();
   }
 
-  node->setRect(QRect(QPoint(0, 0), QSizeF(width(), height()).toSize()));
+  node->setSize(QSizeF(width(), height()).toSize());
   node->setBackingStore(backing_store_);
   node->markDirtyRect(dirty_rect_);
+
+  node->update();
 
   dirty_rect_ = QRect();
 

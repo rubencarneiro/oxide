@@ -27,6 +27,7 @@
 
 QT_BEGIN_NAMESPACE
 class QPixmap;
+class QSize;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -38,8 +39,9 @@ class PaintedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
 
   void markDirtyRect(const QRect& rect);
   void setBackingStore(const QPixmap* pixmap);
+  void setSize(const QSize& size);
 
-  virtual void preprocess() Q_DECL_FINAL;
+  void update();
 
  private:
   QRect dirty_rect_;
