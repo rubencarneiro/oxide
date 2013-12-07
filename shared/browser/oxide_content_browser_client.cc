@@ -163,6 +163,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
     WebPreferences* prefs) {
+  // XXX: This is temporary until we expose a WebPreferences API
   if (getenv("OXIDE_ENABLE_COMPOSITING") &&
       g_main_parts->shared_gl_context()) {
     prefs->force_compositing_mode = true;
