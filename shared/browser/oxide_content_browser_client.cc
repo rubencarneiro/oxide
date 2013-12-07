@@ -163,8 +163,14 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
     WebPreferences* prefs) {
-  prefs->force_compositing_mode = false;
-  prefs->accelerated_compositing_enabled = false;
+  if (getenv("OXIDE_ENABLE_COMPOSITING") &&
+      g_main_parts->shared_gl_context()) {
+    prefs->force_compositing_mode = true;
+    prefs->accelerated_compositing_enabled = true;
+  } else {
+    prefs->force_compositing_mode = false;
+    prefs->accelerated_compositing_enabled = false;
+  }
 }
 
 bool ContentBrowserClient::GetDefaultScreenInfo(
