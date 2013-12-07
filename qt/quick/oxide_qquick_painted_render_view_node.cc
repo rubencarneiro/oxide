@@ -44,7 +44,7 @@ void PaintedRenderViewNode::setBackingStore(const QPixmap* pixmap) {
 
   backing_store_ = pixmap;
 
-  markDirtyRect(QRect(QPoint(0, 0), pixmap->size()));
+  markDirtyRect(rect());
 }
 
 void PaintedRenderViewNode::setSize(const QSize& size) {
