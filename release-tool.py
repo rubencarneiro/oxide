@@ -148,6 +148,9 @@ class SourceTreeVersion(object):
 @subcommand.CommandOption("-f", "--force", dest="force", action="store_true",
                           help="Create a tarball even if the tree has "
                                "uncommitted changes")
+@subcommand.CommandOption("-c", "--compression", dest="compression", action="store",
+                          type="string", default="bz2",
+                          help="Specify the compression (gz, bz2 or xz)")
 def cmd_make_tarball(options, args):
   """Create a tarball.
 
@@ -159,6 +162,10 @@ def cmd_make_tarball(options, args):
   to extend "export". Please do not use "bzr export", as it won't work as
   expected.
   """
+
+  if options.compression not in ("gz", "bz2", "xz"):
+    print("Invalid compression (must be \"gz\", \"bz2\" or \"xz\"", file=sys.stderr)
+    sys.exit(1)
 
   from bzrlib.branch import Branch
   from bzrlib.workingtree import WorkingTree
@@ -191,9 +198,9 @@ def cmd_make_tarball(options, args):
     topsrcdir = "%s~bzr%s" % (topsrcdir, branch.revision_id_to_revno(rev_id))
 
   if options.deb:
-    filename = "%s.orig.tar.xz" % filename
+    filename = "%s.orig.tar.%s" % (filename, options.compression)
   else:
-    filename = "%s.tar.xz" % filename
+    filename = "%s.tar.%s" % (filename, options.compression)
 
   # Build list of files in bzr
   tree = WorkingTree.open(TOPSRCDIR)
@@ -214,7 +221,7 @@ def cmd_make_tarball(options, args):
       return None
     return info
 
-  with tarfile.open(os.path.join(TOPSRCDIR, filename), "w:xz") as tar:
+  with tarfile.open(os.path.join(TOPSRCDIR, filename), "w:%s" % options.compression) as tar:
     # Add files from bzr
     for f in files:
       tar.add(f, os.path.join(topsrcdir, f), filter=tar_filter, recursive=False)
