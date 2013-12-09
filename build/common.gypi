@@ -42,5 +42,8 @@
     'cflags!': [
       '-Werror',
     ],
+    'ldflags': [
+      '-B<(DEPTH)/../../build/gold'
+    ],
   }
 }
