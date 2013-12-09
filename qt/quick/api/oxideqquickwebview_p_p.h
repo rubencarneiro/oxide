@@ -27,6 +27,7 @@
 
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
@@ -121,6 +122,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qquick::OxideQQuickAlertDialogDelegate alert_dialog_delegate_;
   oxide::qquick::OxideQQuickConfirmDialogDelegate confirm_dialog_delegate_;
+  oxide::qquick::OxideQQuickPromptDialogDelegate prompt_dialog_delegate_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

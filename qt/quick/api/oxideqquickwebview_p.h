@@ -69,6 +69,7 @@ class OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(QQmlComponent* alertDialog READ alertDialog WRITE setAlertDialog NOTIFY alertDialogChanged)
   Q_PROPERTY(QQmlComponent* confirmDialog READ confirmDialog WRITE setConfirmDialog NOTIFY confirmDialogChanged)
+  Q_PROPERTY(QQmlComponent* promptDialog READ promptDialog WRITE setPromptDialog NOTIFY promptDialogChanged)
 
   Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
 
@@ -108,6 +109,9 @@ class OxideQQuickWebView : public QQuickItem {
   QQmlComponent* confirmDialog() const;
   void setConfirmDialog(QQmlComponent* confirm_dialog);
 
+  QQmlComponent* promptDialog() const;
+  void setPromptDialog(QQmlComponent* prompt_dialog);
+
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
 
@@ -128,6 +132,7 @@ class OxideQQuickWebView : public QQuickItem {
   void popupMenuChanged();
   void alertDialogChanged();
   void confirmDialogChanged();
+  void promptDialogChanged();
   void messageHandlersChanged();
 
  private Q_SLOTS:
