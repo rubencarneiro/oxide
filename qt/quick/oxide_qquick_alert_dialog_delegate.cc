@@ -85,6 +85,11 @@ void OxideQQuickAlertDialogDelegate::Show(
     const QString& message_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
+  Q_UNUSED(origin_url);
+  Q_UNUSED(accept_lang);
+
+  *did_suppress_message = false;
+
   if (!component_) {
     qWarning() << "Content requested an alert dialog, but the application hasn't provided one";
     callback->run(false);
