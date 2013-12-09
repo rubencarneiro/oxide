@@ -25,7 +25,8 @@ oxideclean.commands = \
     $(DEL_FILE) $${OXIDE_SRC_ROOT}/Makefile.oxide && \
     $(DEL_FILE) `find $$OXIDE_SRC_ROOT -name \"*.target.oxide.mk\"` && \
     $(DEL_FILE) `find $$OXIDE_SRC_ROOT -name \"*.host.oxide.mk\"` && \
-    rm -rf $$CHROMIUM_OUT_DIR
+    rm -rf $$CHROMIUM_OUT_DIR && \
+    rm -rf $${OXIDE_SRC_ROOT}/build/gold
 
 CLEAN_DEPS += oxideclean
 QMAKE_EXTRA_TARGETS += oxideclean
