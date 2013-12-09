@@ -103,6 +103,17 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
                                   const QString& message_text,
                                   JavaScriptDialogClosedCallback* callback,
                                   bool* did_suppress_message) = 0;
+  virtual void RunJavaScriptConfirm(const QUrl& origin_url,
+                                    const QString& accept_lang,
+                                    const QString& message_text,
+                                    JavaScriptDialogClosedCallback* callback,
+                                    bool* did_suppress_message) = 0;
+  virtual void RunJavaScriptPrompt(const QUrl& origin_url,
+                                   const QString& accept_lang,
+                                   const QString& message_text,
+                                   const QString& default_prompt_text,
+                                   JavaScriptDialogClosedCallback* callback,
+                                   bool* did_suppress_message) = 0;
 
   void shutdown();
 

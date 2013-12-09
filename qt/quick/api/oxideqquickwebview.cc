@@ -61,7 +61,8 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     popup_menu(NULL),
     init_props_(new InitData()),
     q_ptr(view),
-    alert_dialog_delegate_(view) {}
+    alert_dialog_delegate_(view),
+    confirm_dialog_delegate_(view) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
@@ -166,6 +167,25 @@ void OxideQQuickWebViewPrivate::RunJavaScriptAlert(
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
   alert_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback, did_suppress_message);
+}
+
+void OxideQQuickWebViewPrivate::RunJavaScriptConfirm(
+    const QUrl& origin_url,
+    const QString& accept_lang,
+    const QString& message_text,
+    oxide::qt::JavaScriptDialogClosedCallback* callback,
+    bool* did_suppress_message) {
+  confirm_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback, did_suppress_message);
+}
+
+void OxideQQuickWebViewPrivate::RunJavaScriptPrompt(
+    const QUrl& origin_url,
+    const QString& accept_lang,
+    const QString& message_text,
+    const QString& default_prompt_text,
+    oxide::qt::JavaScriptDialogClosedCallback* callback,
+    bool* did_suppress_message) {
+  qDebug() << Q_FUNC_INFO << "TODO";
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {
@@ -458,6 +478,23 @@ void OxideQQuickWebView::setAlertDialog(QQmlComponent* alert_dialog) {
 
   d->alert_dialog_delegate_.setComponent(alert_dialog);
   emit alertDialogChanged();
+}
+
+QQmlComponent* OxideQQuickWebView::confirmDialog() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->confirm_dialog_delegate_.component();
+}
+
+void OxideQQuickWebView::setConfirmDialog(QQmlComponent* confirm_dialog) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->confirm_dialog_delegate_.component() == confirm_dialog) {
+    return;
+  }
+
+  d->confirm_dialog_delegate_.setComponent(confirm_dialog);
+  emit confirmDialogChanged();
 }
 
 OxideQQuickWebContext* OxideQQuickWebView::context() const {

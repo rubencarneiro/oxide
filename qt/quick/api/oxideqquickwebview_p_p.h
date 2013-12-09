@@ -26,6 +26,7 @@
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
@@ -79,6 +80,17 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
                           const QString& message_text,
                           oxide::qt::JavaScriptDialogClosedCallback* callback,
                           bool* did_suppress_message) Q_DECL_FINAL;
+  void RunJavaScriptConfirm(const QUrl& origin_url,
+                            const QString& accept_lang,
+                            const QString& message_text,
+                            oxide::qt::JavaScriptDialogClosedCallback* callback,
+                            bool* did_suppress_message) Q_DECL_FINAL;
+  void RunJavaScriptPrompt(const QUrl& origin_url,
+                           const QString& accept_lang,
+                           const QString& message_text,
+                           const QString& default_prompt_text,
+                           oxide::qt::JavaScriptDialogClosedCallback* callback,
+                           bool* did_suppress_message) Q_DECL_FINAL;
 
   void componentComplete();
 
@@ -108,6 +120,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   OxideQQuickWebView* q_ptr;
 
   oxide::qquick::OxideQQuickAlertDialogDelegate alert_dialog_delegate_;
+  oxide::qquick::OxideQQuickConfirmDialogDelegate confirm_dialog_delegate_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
