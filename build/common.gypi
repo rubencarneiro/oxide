@@ -15,15 +15,32 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
+  'variables': {
+    'disable_nacl': 1,
+    'linux_dump_symbols': 1,
+    'linux_use_gold_binary': 0,
+    'linux_use_gold_flags': 0,
+    'linux_use_tcmalloc': 0,
+    'sysroot': '',
+    'toolkit_uses_gtk': 0,
+    'use_aura': 1,
+    'use_gconf': 0,
+    'conditions': [
+      ['target_arch=="arm"', {
+        # XXX: Make Ubuntu-specific
+        'arm_neon': 0,
+
+        'conditions': [
+          ['arm_version==7', {
+            'arm_float_abi': 'hard',
+          }],
+        ],
+      }],
+    ],
+  },
   'target_defaults': {
-    'target_conditions': [
-      ['_target_name=="content_browser"',
-        {
-          'sources/': [
-            ['exclude', 'browser/gpu/compositor_util\\.cc']
-          ]
-        }
-      ]
-    ]
+    'cflags!': [
+      '-Werror',
+    ],
   }
 }
