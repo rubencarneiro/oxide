@@ -43,7 +43,7 @@
       '-Werror',
     ],
     'ldflags': [
-      '-B<(DEPTH)/../../build/gold'
+      '-B<(PRODUCT_DIR)/../../../../build/gold'
     ],
   }
 }
