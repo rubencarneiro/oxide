@@ -37,7 +37,7 @@ class JavaScriptDialogClosedCallbackPrivate FINAL {
   JavaScriptDialogClosedCallbackPrivate(
       const content::JavaScriptDialogManager::DialogClosedCallback& callback);
   DISALLOW_COPY_AND_ASSIGN(JavaScriptDialogClosedCallbackPrivate);
-  const content::JavaScriptDialogManager::DialogClosedCallback& callback_;
+  content::JavaScriptDialogManager::DialogClosedCallback callback_;
 };
 
 } // namespace qt

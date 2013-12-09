@@ -63,8 +63,7 @@ AlertDialogContext::AlertDialogContext(
 
 void AlertDialogContext::accept() const {
   delegate_->Hide();
-  qDebug() << Q_FUNC_INFO << "TODO: invoke callback";
-  //callback_->run(true);
+  callback_->run(true);
 }
 
 OxideQQuickAlertDialogDelegate::OxideQQuickAlertDialogDelegate(
