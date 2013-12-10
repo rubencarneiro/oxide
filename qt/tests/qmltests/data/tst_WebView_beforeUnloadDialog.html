@@ -1,0 +1,17 @@
+<html>
+<body>
+  <script>
+    window.onbeforeunload = function (e) {
+      return "Confirm navigation";
+    };
+    var uri = "tst_WebView_beforeUnloadDialog2.html";
+    var base = document.baseURI;
+    var lastslash = base.lastIndexOf("/");
+    if (lastslash === -1) {
+      window.location.assign(base + "/" + uri);
+    } else {
+      window.location.assign(base.slice(0, lastslash + 1) + uri);
+    }
+  </script>
+</body>
+</html>
