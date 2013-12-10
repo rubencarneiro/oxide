@@ -22,8 +22,6 @@
 #include <QQmlComponent>
 #include <QQmlEngine>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
-
 #include "qt/quick/api/oxideqquickwebview_p.h"
 #include "qt/quick/api/oxideqquickwebview_p_p.h"
 
@@ -44,14 +42,11 @@ void OxideQQuickJavaScriptDialogDelegate::setComponent(
   component_ = component;
 }
 
-void OxideQQuickJavaScriptDialogDelegate::show(
-    QObject* contextObject,
-    oxide::qt::JavaScriptDialogClosedCallback* callback) {
+bool OxideQQuickJavaScriptDialogDelegate::show(QObject* contextObject) {
   if (!component_) {
     qWarning() << "Content requested a javascript dialog, but the application hasn't provided one";
     delete contextObject;
-    callback->run(false);
-    return;
+    return false;
   }
 
   QQmlContext* baseContext = component_->creationContext();
@@ -68,15 +63,14 @@ void OxideQQuickJavaScriptDialogDelegate::show(
   if (!item_) {
     qWarning() << "Failed to create javascript dialog";
     context_.reset();
-    callback->run(false);
-    return;
+    return false;
   }
 
   OxideQQuickWebViewPrivate::get(web_view_)->addAttachedPropertyTo(item_.data());
   item_->setParentItem(web_view_);
   component_->completeCreate();
 
-  return;
+  return true;
 }
 
 void OxideQQuickJavaScriptDialogDelegate::Hide() {

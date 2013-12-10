@@ -63,7 +63,8 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     q_ptr(view),
     alert_dialog_delegate_(view),
     confirm_dialog_delegate_(view),
-    prompt_dialog_delegate_(view) {}
+    prompt_dialog_delegate_(view),
+    before_unload_dialog_delegate_(view) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
@@ -187,6 +188,13 @@ void OxideQQuickWebViewPrivate::RunJavaScriptPrompt(
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
   prompt_dialog_delegate_.Show(origin_url, accept_lang, message_text, default_prompt_text, callback, did_suppress_message);
+}
+
+void OxideQQuickWebViewPrivate::RunBeforeUnloadDialog(
+    const QString& message_text,
+    bool is_reload,
+    oxide::qt::JavaScriptDialogClosedCallback* callback) {
+  before_unload_dialog_delegate_.Show(message_text, is_reload, callback);
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {
@@ -513,6 +521,24 @@ void OxideQQuickWebView::setPromptDialog(QQmlComponent* prompt_dialog) {
 
   d->prompt_dialog_delegate_.setComponent(prompt_dialog);
   emit promptDialogChanged();
+}
+
+QQmlComponent* OxideQQuickWebView::beforeUnloadDialog() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->before_unload_dialog_delegate_.component();
+}
+
+void OxideQQuickWebView::setBeforeUnloadDialog(
+    QQmlComponent* before_unload_dialog) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->before_unload_dialog_delegate_.component() == before_unload_dialog) {
+    return;
+  }
+
+  d->before_unload_dialog_delegate_.setComponent(before_unload_dialog);
+  emit beforeUnloadDialogChanged();
 }
 
 OxideQQuickWebContext* OxideQQuickWebView::context() const {

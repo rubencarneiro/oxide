@@ -114,6 +114,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
                                    const QString& default_prompt_text,
                                    JavaScriptDialogClosedCallback* callback,
                                    bool* did_suppress_message) = 0;
+  virtual void RunBeforeUnloadDialog(
+      const QString& message_text,
+      bool is_reload,
+      JavaScriptDialogClosedCallback* callback) = 0;
 
   void shutdown();
 

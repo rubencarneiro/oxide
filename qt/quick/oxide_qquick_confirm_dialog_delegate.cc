@@ -81,7 +81,9 @@ void OxideQQuickConfirmDialogDelegate::Show(
   *did_suppress_message = false;
 
   ConfirmDialogContext* contextObject = new ConfirmDialogContext(this, message_text, callback);
-  show(contextObject, callback);
+  if (!show(contextObject)) {
+    callback->run(false);
+  }
 }
 
 } // namespace qquick

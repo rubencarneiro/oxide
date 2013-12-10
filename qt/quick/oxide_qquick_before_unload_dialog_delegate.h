@@ -15,14 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_PROMPT_DIALOG_DELEGATE_H_
-#define _OXIDE_QT_QUICK_PROMPT_DIALOG_DELEGATE_H_
+#ifndef _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_DELEGATE_H_
+#define _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_DELEGATE_H_
 
 #include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
 class QString;
-class QUrl;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -33,20 +32,17 @@ class JavaScriptDialogClosedCallback;
 
 namespace qquick {
 
-class OxideQQuickPromptDialogDelegate Q_DECL_FINAL :
+class OxideQQuickBeforeUnloadDialogDelegate Q_DECL_FINAL :
     public OxideQQuickJavaScriptDialogDelegate {
  public:
-  OxideQQuickPromptDialogDelegate(OxideQQuickWebView* webview);
+  OxideQQuickBeforeUnloadDialogDelegate(OxideQQuickWebView* webview);
 
-  void Show(const QUrl& origin_url,
-            const QString& accept_lang,
-            const QString& message_text,
-            const QString& default_prompt_text,
-            oxide::qt::JavaScriptDialogClosedCallback* callback,
-            bool* did_suppress_message);
+  void Show(const QString& message_text,
+            bool is_reload,
+            oxide::qt::JavaScriptDialogClosedCallback* callback);
 };
 
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_PROMPT_DIALOG_DELEGATE_H_
+#endif // _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_DELEGATE_H_

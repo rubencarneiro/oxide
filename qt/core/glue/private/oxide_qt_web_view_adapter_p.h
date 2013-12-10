@@ -51,6 +51,10 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
       const base::string16& default_prompt_text,
       const content::JavaScriptDialogManager::DialogClosedCallback& callback,
       bool* did_suppress_message) FINAL;
+  void RunBeforeUnloadDialog(
+      const base::string16& message_text,
+      bool is_reload,
+      const content::JavaScriptDialogManager::DialogClosedCallback& callback) FINAL;
 
  private:
   WebViewAdapterPrivate(WebViewAdapter* adapter);

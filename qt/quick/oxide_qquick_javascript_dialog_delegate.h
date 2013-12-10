@@ -32,11 +32,6 @@ class QQuickItem;
 QT_END_NAMESPACE
 
 namespace oxide {
-
-namespace qt {
-class JavaScriptDialogClosedCallback;
-} // namespace qt
-
 namespace qquick {
 
 class OxideQQuickJavaScriptDialogDelegate {
@@ -50,8 +45,7 @@ class OxideQQuickJavaScriptDialogDelegate {
 
  protected:
   // takes ownership of contextObject
-  void show(QObject* contextObject,
-            oxide::qt::JavaScriptDialogClosedCallback* callback);
+  bool show(QObject* contextObject);
 
   OxideQQuickWebView* web_view_;
   QQmlComponent* component_;

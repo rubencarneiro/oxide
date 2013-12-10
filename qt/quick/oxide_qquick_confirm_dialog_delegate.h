@@ -26,6 +26,11 @@ class QUrl;
 QT_END_NAMESPACE
 
 namespace oxide {
+
+namespace qt {
+class JavaScriptDialogClosedCallback;
+} // namespace qt
+
 namespace qquick {
 
 class OxideQQuickConfirmDialogDelegate Q_DECL_FINAL :

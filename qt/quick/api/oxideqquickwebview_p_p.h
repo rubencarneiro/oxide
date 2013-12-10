@@ -28,6 +28,7 @@
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
@@ -92,6 +93,10 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
                            const QString& default_prompt_text,
                            oxide::qt::JavaScriptDialogClosedCallback* callback,
                            bool* did_suppress_message) Q_DECL_FINAL;
+  void RunBeforeUnloadDialog(
+      const QString& message_text,
+      bool is_reload,
+      oxide::qt::JavaScriptDialogClosedCallback* callback) Q_DECL_FINAL;
 
   void componentComplete();
 
@@ -123,6 +128,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   oxide::qquick::OxideQQuickAlertDialogDelegate alert_dialog_delegate_;
   oxide::qquick::OxideQQuickConfirmDialogDelegate confirm_dialog_delegate_;
   oxide::qquick::OxideQQuickPromptDialogDelegate prompt_dialog_delegate_;
+  oxide::qquick::OxideQQuickBeforeUnloadDialogDelegate before_unload_dialog_delegate_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

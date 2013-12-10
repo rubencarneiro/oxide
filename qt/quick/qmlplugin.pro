@@ -19,6 +19,7 @@ SOURCES += \
     api/oxideqquickwebview.cc \
     oxide_qml_plugin.cc \
     oxide_qquick_alert_dialog_delegate.cc \
+    oxide_qquick_before_unload_dialog_delegate.cc \
     oxide_qquick_confirm_dialog_delegate.cc \
     oxide_qquick_javascript_dialog_delegate.cc \
     oxide_qquick_prompt_dialog_delegate.cc \
@@ -39,6 +40,7 @@ HEADERS += \
     api/oxideqquickwebview_p.h \
     api/oxideqquickwebview_p_p.h \
     oxide_qquick_alert_dialog_delegate.h \
+    oxide_qquick_before_unload_dialog_delegate.h \
     oxide_qquick_confirm_dialog_delegate.h \
     oxide_qquick_javascript_dialog_delegate.h \
     oxide_qquick_prompt_dialog_delegate.h \

@@ -75,7 +75,9 @@ void OxideQQuickAlertDialogDelegate::Show(
   *did_suppress_message = false;
 
   AlertDialogContext* contextObject = new AlertDialogContext(this, message_text, callback);
-  show(contextObject, callback);
+  if (!show(contextObject)) {
+    callback->run(false);
+  }
 }
 
 } // namespace qquick

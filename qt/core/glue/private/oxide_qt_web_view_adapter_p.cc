@@ -151,5 +151,15 @@ void WebViewAdapterPrivate::RunJavaScriptDialog(
   }
 }
 
+void WebViewAdapterPrivate::RunBeforeUnloadDialog(
+      const base::string16& message_text,
+      bool is_reload,
+      const content::JavaScriptDialogManager::DialogClosedCallback& callback) {
+  a->RunBeforeUnloadDialog(
+      QString::fromStdString(base::UTF16ToUTF8(message_text)),
+      is_reload,
+      JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback));
+}
+
 } // namespace qt
 } // namespace oxide
