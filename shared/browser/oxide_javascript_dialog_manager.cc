@@ -56,7 +56,8 @@ bool JavaScriptDialogManager::HandleJavaScriptDialog(
     bool accept,
     const string16* prompt_override) {
   // TODO
-  return false;
+  return content::JavaScriptDialogManager::HandleJavaScriptDialog(
+      web_contents, accept, prompt_override);
 }
 
 void JavaScriptDialogManager::CancelActiveAndPendingDialogs(
