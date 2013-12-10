@@ -17,17 +17,10 @@
 
 #include "oxide_qquick_prompt_dialog_delegate.h"
 
-#include <QDebug>
 #include <QObject>
-#include <QQmlComponent>
-#include <QQmlContext>
-#include <QQmlEngine>
 #include <QString>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
-
-#include "qt/quick/api/oxideqquickwebview_p.h"
-#include "qt/quick/api/oxideqquickwebview_p_p.h"
 
 namespace oxide {
 namespace qquick {
@@ -80,16 +73,7 @@ void PromptDialogContext::reject() const {
 
 OxideQQuickPromptDialogDelegate::OxideQQuickPromptDialogDelegate(
     OxideQQuickWebView* webview) :
-    web_view_(webview),
-    component_(NULL) {}
-
-QQmlComponent* OxideQQuickPromptDialogDelegate::component() const {
-  return component_;
-}
-
-void OxideQQuickPromptDialogDelegate::setComponent(QQmlComponent* component) {
-  component_ = component;
-}
+    OxideQQuickJavaScriptDialogDelegate(webview) {}
 
 void OxideQQuickPromptDialogDelegate::Show(
     const QUrl& origin_url,
@@ -103,38 +87,8 @@ void OxideQQuickPromptDialogDelegate::Show(
 
   *did_suppress_message = false;
 
-  if (!component_) {
-    qWarning() << "Content requested a prompt dialog, but the application hasn't provided one";
-    callback->run(false);
-    return;
-  }
-
   PromptDialogContext* contextObject = new PromptDialogContext(this, message_text, default_prompt_text, callback);
-
-  QQmlContext* baseContext = component_->creationContext();
-  if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(web_view_);
-  }
-  context_.reset(new QQmlContext(baseContext));
-
-  context_->setContextProperty(QLatin1String("model"), contextObject);
-  context_->setContextObject(contextObject);
-  contextObject->setParent(context_.data());
-
-  item_.reset(qobject_cast<QQuickItem *>(component_->beginCreate(context_.data())));
-  if (!item_) {
-    qWarning() << "Failed to create prompt dialog";
-    callback->run(false);
-    return;
-  }
-
-  OxideQQuickWebViewPrivate::get(web_view_)->addAttachedPropertyTo(item_.data());
-  item_->setParentItem(web_view_);
-  component_->completeCreate();
-}
-
-void OxideQQuickPromptDialogDelegate::Hide() {
-  item_.take()->deleteLater();
+  show(contextObject, callback);
 }
 
 } // namespace qquick

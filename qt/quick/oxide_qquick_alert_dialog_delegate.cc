@@ -17,17 +17,10 @@
 
 #include "oxide_qquick_alert_dialog_delegate.h"
 
-#include <QDebug>
 #include <QObject>
-#include <QQmlComponent>
-#include <QQmlContext>
-#include <QQmlEngine>
 #include <QString>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
-
-#include "qt/quick/api/oxideqquickwebview_p.h"
-#include "qt/quick/api/oxideqquickwebview_p_p.h"
 
 namespace oxide {
 namespace qquick {
@@ -68,16 +61,7 @@ void AlertDialogContext::accept() const {
 
 OxideQQuickAlertDialogDelegate::OxideQQuickAlertDialogDelegate(
     OxideQQuickWebView* webview) :
-    web_view_(webview),
-    component_(NULL) {}
-
-QQmlComponent* OxideQQuickAlertDialogDelegate::component() const {
-  return component_;
-}
-
-void OxideQQuickAlertDialogDelegate::setComponent(QQmlComponent* component) {
-  component_ = component;
-}
+    OxideQQuickJavaScriptDialogDelegate(webview) {}
 
 void OxideQQuickAlertDialogDelegate::Show(
     const QUrl& origin_url,
@@ -90,38 +74,8 @@ void OxideQQuickAlertDialogDelegate::Show(
 
   *did_suppress_message = false;
 
-  if (!component_) {
-    qWarning() << "Content requested an alert dialog, but the application hasn't provided one";
-    callback->run(false);
-    return;
-  }
-
   AlertDialogContext* contextObject = new AlertDialogContext(this, message_text, callback);
-
-  QQmlContext* baseContext = component_->creationContext();
-  if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(web_view_);
-  }
-  context_.reset(new QQmlContext(baseContext));
-
-  context_->setContextProperty(QLatin1String("model"), contextObject);
-  context_->setContextObject(contextObject);
-  contextObject->setParent(context_.data());
-
-  item_.reset(qobject_cast<QQuickItem *>(component_->beginCreate(context_.data())));
-  if (!item_) {
-    qWarning() << "Failed to create alert dialog";
-    callback->run(false);
-    return;
-  }
-
-  OxideQQuickWebViewPrivate::get(web_view_)->addAttachedPropertyTo(item_.data());
-  item_->setParentItem(web_view_);
-  component_->completeCreate();
-}
-
-void OxideQQuickAlertDialogDelegate::Hide() {
-  item_.take()->deleteLater();
+  show(contextObject, callback);
 }
 
 } // namespace qquick

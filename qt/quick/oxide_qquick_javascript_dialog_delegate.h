@@ -15,32 +15,52 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_CONFIRM_DIALOG_DELEGATE_H_
-#define _OXIDE_QT_QUICK_CONFIRM_DIALOG_DELEGATE_H_
+#ifndef _OXIDE_QT_QUICK_JAVASCRIPT_DIALOG_DELEGATE_H_
+#define _OXIDE_QT_QUICK_JAVASCRIPT_DIALOG_DELEGATE_H_
 
-#include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
+#include <QQmlContext>
+#include <QQuickItem>
+#include <QScopedPointer>
+
+class OxideQQuickWebView;
 
 QT_BEGIN_NAMESPACE
-class QString;
-class QUrl;
+class QObject;
+class QQmlComponent;
+class QQmlContext;
+class QQuickItem;
 QT_END_NAMESPACE
 
 namespace oxide {
+
+namespace qt {
+class JavaScriptDialogClosedCallback;
+} // namespace qt
+
 namespace qquick {
 
-class OxideQQuickConfirmDialogDelegate Q_DECL_FINAL :
-    public OxideQQuickJavaScriptDialogDelegate {
+class OxideQQuickJavaScriptDialogDelegate {
  public:
-  OxideQQuickConfirmDialogDelegate(OxideQQuickWebView* webview);
+  OxideQQuickJavaScriptDialogDelegate(OxideQQuickWebView* webview);
 
-  void Show(const QUrl& origin_url,
-            const QString& accept_lang,
-            const QString& message_text,
-            oxide::qt::JavaScriptDialogClosedCallback* callback,
-            bool* did_suppress_message);
+  QQmlComponent* component() const;
+  void setComponent(QQmlComponent* component);
+
+  void Hide();
+
+ protected:
+  // takes ownership of contextObject
+  void show(QObject* contextObject,
+            oxide::qt::JavaScriptDialogClosedCallback* callback);
+
+  OxideQQuickWebView* web_view_;
+  QQmlComponent* component_;
+
+  QScopedPointer<QQuickItem> item_;
+  QScopedPointer<QQmlContext> context_;
 };
 
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_CONFIRM_DIALOG_DELEGATE_H_
+#endif // _OXIDE_QT_QUICK_JAVASCRIPT_DIALOG_DELEGATE_H_

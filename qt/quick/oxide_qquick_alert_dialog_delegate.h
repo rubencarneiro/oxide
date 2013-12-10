@@ -18,47 +18,26 @@
 #ifndef _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
 #define _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
 
-#include <QScopedPointer>
-
-class OxideQQuickWebView;
+#include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
-class QQmlComponent;
-class QQmlContext;
 class QString;
-class QQuickItem;
 class QUrl;
 QT_END_NAMESPACE
 
 namespace oxide {
-
-namespace qt {
-class JavaScriptDialogClosedCallback;
-} // namespace qt
-
 namespace qquick {
 
-class OxideQQuickAlertDialogDelegate Q_DECL_FINAL {
+class OxideQQuickAlertDialogDelegate Q_DECL_FINAL :
+    public OxideQQuickJavaScriptDialogDelegate {
  public:
   OxideQQuickAlertDialogDelegate(OxideQQuickWebView* webview);
-
-  QQmlComponent* component() const;
-  void setComponent(QQmlComponent* component);
 
   void Show(const QUrl& origin_url,
             const QString& accept_lang,
             const QString& message_text,
             oxide::qt::JavaScriptDialogClosedCallback* callback,
             bool* did_suppress_message);
-
-  void Hide();
-
- private:
-  OxideQQuickWebView* web_view_;
-  QQmlComponent* component_;
-
-  QScopedPointer<QQuickItem> item_;
-  QScopedPointer<QQmlContext> context_;
 };
 
 } // namespace qquick
