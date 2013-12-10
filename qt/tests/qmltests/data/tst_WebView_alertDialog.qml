@@ -59,7 +59,7 @@ TestWebView {
       var dialog = webView.getDialogInstance();
       compare(dialog.width, webView.width);
       compare(dialog.height, webView.height);
-      compare(dialog.message, "JavaScript alert box");
+      compare(dialog.message, "JavaScript alert dialog");
       mouseClick(dialog, dialog.width / 2, dialog.height / 2);
       verify(webView.waitFor(webView.dialogDismissed),
              "Alert dialog not dismissed");
