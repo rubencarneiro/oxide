@@ -61,12 +61,10 @@ bool JavaScriptDialogManager::HandleJavaScriptDialog(
 
 void JavaScriptDialogManager::CancelActiveAndPendingDialogs(
     content::WebContents* web_contents) {
-  // TODO
+  HandleJavaScriptDialog(web_contents, false, 0);
 }
 
 void JavaScriptDialogManager::WebContentsDestroyed(
-    content::WebContents* web_contents) {
-  // TODO
-}
+    content::WebContents* web_contents) {}
 
 } // namespace oxide
