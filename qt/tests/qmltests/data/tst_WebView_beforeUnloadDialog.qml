@@ -47,6 +47,11 @@ TestWebView {
     return (getDialogInstance() == null);
   }
 
+  function checkContents() {
+    return (webView.getTestApi().evaluateCode(
+        "document.querySelector(\"#contents\").innerHTML") === "OK");
+  }
+
   TestCase {
     id: test
     name: "WebView_beforeUnloadDialog"
@@ -67,7 +72,6 @@ TestWebView {
     }
 
     function test_customDialogComponent(data) {
-      var loadsSucceededCount = webView.loadsSucceededCount;
       webView.beforeUnloadDialog = customDialogComponent;
       webView.url = "http://localhost:8080/tst_WebView_beforeUnloadDialog.html";
       verify(webView.waitFor(webView.dialogShown),
@@ -83,7 +87,7 @@ TestWebView {
         tryCompare(webView, "url",
                    "http://localhost:8080/tst_WebView_beforeUnloadDialog2.html");
       } else {
-        tryCompare(webView, "loadsSucceededCount", loadsSucceededCount + 1);
+        verify(webView.waitFor(webView.checkContents));
       }
     }
   }

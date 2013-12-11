@@ -1,5 +1,6 @@
 <html>
 <body>
+  <p id="contents"></p>
   <script>
     window.onbeforeunload = function (e) {
       return "Confirm navigation";
@@ -12,6 +13,10 @@
     } else {
       window.location.assign(base.slice(0, lastslash + 1) + uri);
     }
+    function fillContents() {
+      document.querySelector("#contents").innerHTML = "OK";
+    }
+    window.setTimeout(fillContents, 1000);
   </script>
 </body>
 </html>
