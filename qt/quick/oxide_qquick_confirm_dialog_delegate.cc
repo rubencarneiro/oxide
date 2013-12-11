@@ -86,6 +86,24 @@ void OxideQQuickConfirmDialogDelegate::Show(
   }
 }
 
+bool OxideQQuickConfirmDialogDelegate::Handle(
+    bool accept,
+    const QString& prompt_override) {
+  Q_UNUSED(prompt_override);
+
+  if (IsShown()) {
+    ConfirmDialogContext* contextObject = qobject_cast<ConfirmDialogContext*>(context_->contextObject());
+    if (accept) {
+      contextObject->accept();
+    } else {
+      contextObject->reject();
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
 } // namespace qquick
 } // namespace oxide
 

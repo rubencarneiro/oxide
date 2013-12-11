@@ -197,6 +197,21 @@ void OxideQQuickWebViewPrivate::RunBeforeUnloadDialog(
   before_unload_dialog_delegate_.Show(message_text, is_reload, callback);
 }
 
+bool OxideQQuickWebViewPrivate::HandleJavaScriptDialog(
+    bool accept, const QString& prompt_override) {
+  if (alert_dialog_delegate_.IsShown()) {
+    return alert_dialog_delegate_.Handle(accept, prompt_override);
+  } else if (confirm_dialog_delegate_.IsShown()) {
+    return confirm_dialog_delegate_.Handle(accept, prompt_override);
+  } else if (prompt_dialog_delegate_.IsShown()) {
+    return prompt_dialog_delegate_.Handle(accept, prompt_override);
+  } else if (before_unload_dialog_delegate_.IsShown()) {
+    return before_unload_dialog_delegate_.Handle(accept, prompt_override);
+  } else {
+    return false;
+  }
+}
+
 void OxideQQuickWebViewPrivate::componentComplete() {
   Q_Q(OxideQQuickWebView);
 

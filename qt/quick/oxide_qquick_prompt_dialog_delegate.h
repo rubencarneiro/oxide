@@ -44,6 +44,7 @@ class OxideQQuickPromptDialogDelegate Q_DECL_FINAL :
             const QString& default_prompt_text,
             oxide::qt::JavaScriptDialogClosedCallback* callback,
             bool* did_suppress_message);
+  bool Handle(bool accept, const QString& prompt_override);
 };
 
 } // namespace qquick

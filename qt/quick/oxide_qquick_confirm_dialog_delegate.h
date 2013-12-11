@@ -43,6 +43,7 @@ class OxideQQuickConfirmDialogDelegate Q_DECL_FINAL :
             const QString& message_text,
             oxide::qt::JavaScriptDialogClosedCallback* callback,
             bool* did_suppress_message);
+  bool Handle(bool accept, const QString& prompt_override);
 };
 
 } // namespace qquick

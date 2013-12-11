@@ -40,6 +40,7 @@ class OxideQQuickBeforeUnloadDialogDelegate Q_DECL_FINAL :
   void Show(const QString& message_text,
             bool is_reload,
             oxide::qt::JavaScriptDialogClosedCallback* callback);
+  bool Handle(bool accept, const QString& prompt_override);
 };
 
 } // namespace qquick

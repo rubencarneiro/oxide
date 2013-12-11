@@ -173,6 +173,9 @@ class WebView : public MessageTarget,
       const base::string16& message_text,
       bool is_reload,
       const content::JavaScriptDialogManager::DialogClosedCallback& callback) = 0;
+  virtual bool HandleJavaScriptDialog(
+      bool accept,
+      const base::string16* prompt_override) = 0;
 
  protected:
   WebView();

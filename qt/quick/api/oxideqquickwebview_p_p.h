@@ -97,6 +97,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
       const QString& message_text,
       bool is_reload,
       oxide::qt::JavaScriptDialogClosedCallback* callback) Q_DECL_FINAL;
+  bool HandleJavaScriptDialog(bool accept,
+                              const QString& prompt_override) Q_DECL_FINAL;
 
   void componentComplete();
 

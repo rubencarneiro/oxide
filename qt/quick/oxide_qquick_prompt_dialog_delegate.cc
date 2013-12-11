@@ -29,6 +29,7 @@ class PromptDialogContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString message READ message CONSTANT FINAL)
   Q_PROPERTY(QString defaultValue READ defaultValue CONSTANT FINAL)
+  Q_PROPERTY(QString currentValue READ currentValue WRITE setCurrentValue NOTIFY currentValueChanged)
 
  public:
   virtual ~PromptDialogContext() {}
@@ -39,6 +40,11 @@ class PromptDialogContext : public QObject {
 
   const QString& message() const { return message_; }
   const QString& defaultValue() const { return defaultValue_; }
+  const QString& currentValue() const { return currentValue_; }
+  void setCurrentValue(const QString& value);
+
+ Q_SIGNALS:
+  void currentValueChanged() const;
 
  public Q_SLOTS:
   void accept(const QString& value) const;
@@ -48,6 +54,7 @@ class PromptDialogContext : public QObject {
   OxideQQuickPromptDialogDelegate* delegate_;
   QString message_;
   QString defaultValue_;
+  QString currentValue_;
   oxide::qt::JavaScriptDialogClosedCallback* callback_;
 };
 
@@ -60,6 +67,13 @@ PromptDialogContext::PromptDialogContext(
     message_(message),
     defaultValue_(default_value),
     callback_(callback) {}
+
+void PromptDialogContext::setCurrentValue(const QString& value) {
+  if (value != currentValue_) {
+    currentValue_ = value;
+    Q_EMIT currentValueChanged();
+  }
+}
 
 void PromptDialogContext::accept(const QString& value) const {
   delegate_->Hide();
@@ -90,6 +104,26 @@ void OxideQQuickPromptDialogDelegate::Show(
   PromptDialogContext* contextObject = new PromptDialogContext(this, message_text, default_prompt_text, callback);
   if (!show(contextObject)) {
     callback->run(false);
+  }
+}
+
+bool OxideQQuickPromptDialogDelegate::Handle(
+    bool accept,
+    const QString& prompt_override) {
+  if (IsShown()) {
+    PromptDialogContext* contextObject = qobject_cast<PromptDialogContext*>(context_->contextObject());
+    if (accept) {
+      if (!prompt_override.isNull()) {
+        contextObject->accept(prompt_override);
+      } else {
+        contextObject->accept(contextObject->currentValue());
+      }
+    } else {
+      contextObject->reject();
+    }
+    return true;
+  } else {
+    return false;
   }
 }
 

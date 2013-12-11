@@ -41,7 +41,9 @@ class OxideQQuickJavaScriptDialogDelegate {
   QQmlComponent* component() const;
   void setComponent(QQmlComponent* component);
 
+  bool IsShown() const;
   void Hide();
+  virtual bool Handle(bool accept, const QString& prompt_override) = 0;
 
  protected:
   // takes ownership of contextObject

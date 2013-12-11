@@ -152,13 +152,23 @@ void WebViewAdapterPrivate::RunJavaScriptDialog(
 }
 
 void WebViewAdapterPrivate::RunBeforeUnloadDialog(
-      const base::string16& message_text,
-      bool is_reload,
-      const content::JavaScriptDialogManager::DialogClosedCallback& callback) {
+    const base::string16& message_text,
+    bool is_reload,
+    const content::JavaScriptDialogManager::DialogClosedCallback& callback) {
   a->RunBeforeUnloadDialog(
       QString::fromStdString(base::UTF16ToUTF8(message_text)),
       is_reload,
       JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback));
+}
+
+bool WebViewAdapterPrivate::HandleJavaScriptDialog(
+    bool accept,
+    const base::string16* prompt_override) {
+  QString override;
+  if (prompt_override) {
+    override = QString::fromStdString(base::UTF16ToUTF8(*prompt_override));
+  }
+  return a->HandleJavaScriptDialog(accept, override);
 }
 
 } // namespace qt

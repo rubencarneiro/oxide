@@ -73,8 +73,12 @@ bool OxideQQuickJavaScriptDialogDelegate::show(QObject* contextObject) {
   return true;
 }
 
+bool OxideQQuickJavaScriptDialogDelegate::IsShown() const {
+  return !item_.isNull();
+}
+
 void OxideQQuickJavaScriptDialogDelegate::Hide() {
-  if (!item_.isNull()) {
+  if (IsShown()) {
     item_.take()->deleteLater();
     context_.take()->deleteLater();
   }

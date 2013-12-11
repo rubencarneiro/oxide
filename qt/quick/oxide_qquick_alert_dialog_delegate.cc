@@ -80,6 +80,21 @@ void OxideQQuickAlertDialogDelegate::Show(
   }
 }
 
+bool OxideQQuickAlertDialogDelegate::Handle(
+    bool accept,
+    const QString& prompt_override) {
+  Q_UNUSED(accept);
+  Q_UNUSED(prompt_override);
+
+  if (IsShown()) {
+    AlertDialogContext* contextObject = qobject_cast<AlertDialogContext*>(context_->contextObject());
+    contextObject->accept();
+    return true;
+  } else {
+    return false;
+  }
+}
+
 } // namespace qquick
 } // namespace oxide
 

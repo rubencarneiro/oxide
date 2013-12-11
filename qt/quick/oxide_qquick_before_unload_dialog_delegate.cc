@@ -82,6 +82,24 @@ void OxideQQuickBeforeUnloadDialogDelegate::Show(
   }
 }
 
+bool OxideQQuickBeforeUnloadDialogDelegate::Handle(
+    bool accept,
+    const QString& prompt_override) {
+  Q_UNUSED(prompt_override);
+
+  if (IsShown()) {
+    BeforeUnloadDialogContext* contextObject = qobject_cast<BeforeUnloadDialogContext*>(context_->contextObject());
+    if (accept) {
+      contextObject->accept();
+    } else {
+      contextObject->reject();
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
 } // namespace qquick
 } // namespace oxide
 

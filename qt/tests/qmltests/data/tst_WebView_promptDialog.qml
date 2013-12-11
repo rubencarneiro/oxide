@@ -12,16 +12,22 @@ TestWebView {
   Component {
     id: customDialogComponent
     Item {
+      id: customDialog
       objectName: "customDialog"
       readonly property string message: model.message
       property string value: model.defaultValue
       anchors.fill: parent
+      Binding {
+        target: model
+        property: "currentValue"
+        value: customDialog.value
+      }
       MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: {
           if (mouse.button == Qt.LeftButton) {
-            model.accept(value);
+            model.accept(customDialog.value);
           } else if (mouse.button == Qt.RightButton) {
             model.reject();
           }

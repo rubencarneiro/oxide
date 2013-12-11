@@ -118,6 +118,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
       const QString& message_text,
       bool is_reload,
       JavaScriptDialogClosedCallback* callback) = 0;
+  virtual bool HandleJavaScriptDialog(bool accept,
+                                      const QString& prompt_override) = 0;
 
   void shutdown();
 
