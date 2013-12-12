@@ -1,0 +1,76 @@
+# Description: Allow the in-process GPU components to be restarted without restarting the
+#  browser process.
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/gpu/command_buffer/service/shader_translator.cc b/gpu/command_buffer/service/shader_translator.cc
+--- a/gpu/command_buffer/service/shader_translator.cc
++++ b/gpu/command_buffer/service/shader_translator.cc
+@@ -11,23 +11,25 @@
+ #include "base/debug/trace_event.h"
+ #include "base/logging.h"
+ #include "base/strings/string_number_conversions.h"
+ 
+ namespace {
+ 
+ using gpu::gles2::ShaderTranslator;
+ 
++static bool initialized = false;
++
+ void FinalizeShaderTranslator(void* /* dummy */) {
+   TRACE_EVENT0("gpu", "ShFinalize");
+   ShFinalize();
++  initialized = false;
+ }
+ 
+ bool InitializeShaderTranslator() {
+-  static bool initialized = false;
+   if (!initialized) {
+     TRACE_EVENT0("gpu", "ShInitialize");
+     CHECK(ShInitialize());
+     base::AtExitManager::RegisterCallback(&FinalizeShaderTranslator, NULL);
+     initialized = true;
+   }
+   return initialized;
+ }
+diff --git a/third_party/angle_dx11/src/compiler/ShaderLang.cpp b/third_party/angle_dx11/src/compiler/ShaderLang.cpp
+--- a/third_party/angle_dx11/src/compiler/ShaderLang.cpp
++++ b/third_party/angle_dx11/src/compiler/ShaderLang.cpp
+@@ -42,28 +42,37 @@ static bool checkMappedNameMaxLength(con
+     ShGetInfo(handle, SH_MAPPED_NAME_MAX_LENGTH, &mappedNameMaxLength);
+     return (expectedValue == mappedNameMaxLength);
+ }
+ 
+ //
+ // Driver must call this first, once, before doing any other compiler operations.
+ // Subsequent calls to this function are no-op.
+ //
++
++static bool kInitialized = false;
++static bool kRanOnce = false;
++
+ int ShInitialize()
+ {
+-    static const bool kInitialized = InitProcess();
++    if (!kRanOnce) {
++        kInitialized = InitProcess();
++        kRanOnce = true;
++    }
+     return kInitialized ? 1 : 0;
+ }
+ 
+ //
+ // Cleanup symbol tables
+ //
+ int ShFinalize()
+ {
+     DetachProcess();
++    kInitialized = false;
++    kRanOnce = false;
+     return 1;
+ }
+ 
+ //
+ // Initialize built-in resources with minimum expected values.
+ //
+ void ShInitBuiltInResources(ShBuiltInResources* resources)
+ {

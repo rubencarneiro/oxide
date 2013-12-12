@@ -36,10 +36,12 @@ class IOThreadDelegate;
 
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
-// Chrome (which is not possible in a public API). Use BrowserProcessHandle
-// to hold a reference to this
+// Chrome (which is not possible in a public API)
 class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
  public:
+  // Return a reference to the main process components, starting them
+  // if not already started
+  static scoped_refptr<BrowserProcessMain> GetInstance();
 
   // Return the IO thread delegate, which is a container of objects
   // whose lifetime is tied to the IO thread
@@ -48,25 +50,22 @@ class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
   // Returns true of the browser process components have been started
   static bool Exists();
 
- private:
-  friend class BrowserProcessHandle;
-  friend class base::RefCounted<BrowserProcessMain>;
-  friend class BrowserMainParts;
-  friend class ContentMainDelegate;
-
-  BrowserProcessMain();
-  ~BrowserProcessMain();
-
-  static scoped_refptr<BrowserProcessMain> GetInstance();
-
-  static void Create();
-  bool Init();
+  // Ensure that the IO thread delegate is created
+  static void CreateIOThreadDelegate();
 
   static int RunBrowserProcess(
       const content::MainFunctionParams& main_function_params);
   static void ShutdownBrowserProcess();
 
-  static void PreCreateThreads();
+ private:
+  friend class BrowserProcessHandle;
+  friend class base::RefCounted<BrowserProcessMain>;
+
+  BrowserProcessMain();
+  ~BrowserProcessMain();
+
+
+  bool Init();
 
   // XXX: Don't change the order of these unless you know what you are
   //      doing. It's important that ContentMainDelegate outlives
@@ -78,6 +77,16 @@ class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
   scoped_ptr<IOThreadDelegate> io_thread_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserProcessMain);
+};
+
+class ScopedBrowserProcessHandle {
+ public:
+  ScopedBrowserProcessHandle();
+
+ private:
+  scoped_refptr<BrowserProcessMain> handle_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScopedBrowserProcessHandle);
 };
 
 } // namespace oxide

@@ -53,5 +53,14 @@
         ],
       },
     },
-  ]
+    {
+      'target_name': 'Qt5Gui-private',
+      'type': 'none',
+      'direct_dependent_settings': {
+        'cflags_cc': [
+          '-I<!(<(pkg_config) --variable includedir Qt5Gui)/QtGui/<!(<(pkg_config) --modversion Qt5Gui)'
+        ],
+      },
+    },
+  ],
 }

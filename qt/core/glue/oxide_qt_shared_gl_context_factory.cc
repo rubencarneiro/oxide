@@ -15,21 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include <QGuiApplication>
-#include <QtQuickTest/quicktest.h>
-#include <QtQuickVersion>
-#if QTQUICK_VERSION >= 0x050200
-#include <QtQuick/private/qsgcontext_p.h>
-#endif
+#include "oxide_qt_shared_gl_context_factory.h"
 
-int main(int argc, char** argv) {
-  QGuiApplication app(argc, argv);
+#include "base/logging.h"
 
-#if QTQUICK_VERSION >= 0x050200
-  QOpenGLContext context;
-  context.create();
-  QSGContext::setSharedOpenGLContext(&context);
-#endif
+#include "shared/browser/oxide_browser_process_main.h"
 
-  return quick_test_main(argc, argv, "qmltests", QUICK_TEST_SOURCE_DIR);
+namespace oxide {
+namespace qt {
+
+namespace {
+SharedGLContextFactory* g_factory;
 }
+
+SharedGLContextFactory* GetSharedGLContextFactory() {
+  return g_factory;
+}
+
+// static
+void SetSharedGLContextFactory(SharedGLContextFactory* factory) {
+  DCHECK(!oxide::BrowserProcessMain::Exists());
+
+  g_factory = factory;
+}
+
+} // namespace qt
+} // namespace oxide

@@ -122,6 +122,7 @@ def sync_chromium():
     f.write("Makefile(\.*|)$\n")
     f.write("^\.hgignore$\n")
     f.write("\.pyc$\n")
+    f.write("\.tmp$\n")
   CheckCall(["hg", "init"], CHROMIUMSRCDIR)
   hgrc = os.path.join(CHROMIUMSRCDIR, ".hg", "hgrc")
   if not os.path.isfile(hgrc):

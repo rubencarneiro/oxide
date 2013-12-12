@@ -27,8 +27,6 @@
 #include "base/files/file_path.h"
 #include "base/memory/scoped_ptr.h"
 
-#include "shared/browser/oxide_browser_process_handle.h"
-
 namespace oxide {
 
 class BrowserContext;
@@ -74,7 +72,6 @@ class WebContextAdapterPrivate FINAL {
  private:
   WebContextAdapterPrivate();
 
-  oxide::BrowserProcessHandle process_handle_;
   scoped_ptr<oxide::BrowserContext> context_;
   QList<UserScriptAdapter *> user_scripts_;
 

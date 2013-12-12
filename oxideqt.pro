@@ -15,6 +15,9 @@ SUBDIRS += sandbox
 qmlplugin.file = qt/quick/qmlplugin.pro
 SUBDIRS += qmlplugin
 
+qmlrunner.file = qt/qmlrunner/qmlrunner.pro
+SUBDIRS += qmlrunner
+
 testutils.file = qt/tests/utils/testutils.pro
 SUBDIRS += testutils
 
