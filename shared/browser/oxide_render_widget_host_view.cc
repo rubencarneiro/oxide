@@ -22,6 +22,7 @@
 #include "base/message_loop/message_loop.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/common/gpu/client/command_buffer_proxy_impl.h"
 #include "content/common/gpu/client/gpu_channel_host.h"
 #include "content/common/gpu/client/webgraphicscontext3d_command_buffer_impl.h"
 #include "content/common/gpu/gpu_channel.h"
@@ -198,7 +199,7 @@ void TextureHandle::ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref) {
 
 TextureHandle::TextureHandle() :
     resources_available_(&lock_),
-    client_id_(-1),
+    client_id_(content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId()),
     route_id_(-1),
     is_fetch_texture_resources_pending_(false),
     id_(0),
@@ -212,9 +213,8 @@ TextureHandle::~TextureHandle() {
 
 void TextureHandle::Initialize(
     content::WebGraphicsContext3DCommandBufferImpl* context) {
-  DCHECK(client_id_ == -1 && route_id_ == -1);
-  client_id_ = context->GetChannelID();
-  route_id_ = context->GetContextID();
+  DCHECK(route_id_ == -1);
+  route_id_ = context->GetCommandBufferProxy()->GetRouteID();
 }
 
 void TextureHandle::Update(const std::string& name,
@@ -498,7 +498,8 @@ gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
     shared_surface_handle_ = gfx::GLSurfaceHandle(
         gfx::kNullPluginWindow, gfx::TEXTURE_TRANSPORT);
     shared_surface_handle_.parent_gpu_process_id = context->GetGPUProcessID();
-    shared_surface_handle_.parent_client_id = context->GetChannelID();
+    shared_surface_handle_.parent_client_id =
+        context->GetCommandBufferProxy()->GetRouteID();
   }
 
   return shared_surface_handle_;

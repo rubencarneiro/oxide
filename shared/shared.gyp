@@ -75,7 +75,7 @@
       'dependencies': [
         'oxide_shared_resources',
         '<(DEPTH)/content/content_resources.gyp:content_resources',
-        '<(DEPTH)/ui/ui.gyp:ui_resources'
+        '<(DEPTH)/ui/resources/ui_resources.gyp:ui_resources'
       ],
       'actions': [
         {

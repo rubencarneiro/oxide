@@ -16,3 +16,4 @@ allow-gpu-process-to-be-restarted.patch
 comment-out-GetDefaultXDisplay.patch
 arm-crypto.patch
 arm-icu.patch
+dont-check-number-of-threads-at-startup.patch

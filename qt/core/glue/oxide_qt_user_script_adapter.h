@@ -32,6 +32,7 @@ class Q_DECL_EXPORT UserScriptAdapter {
  public:
   enum State {
     Constructing,
+    Deferred,
     Loading,
     Ready,
     Failed

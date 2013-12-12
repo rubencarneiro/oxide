@@ -37,7 +37,6 @@ class SSLConfigService;
 
 namespace oxide {
 
-class BrowserProcessMain;
 class ResourceContext;
 class URLRequestContext;
 class URLRequestContextGetter;
@@ -204,7 +203,6 @@ class BrowserContext : public content::BrowserContext {
     BrowserContextIOData* io_data_;
   };
 
-  scoped_refptr<BrowserProcessMain> process_handle_;
   IODataHandle io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   std::vector<WebView *> web_views_;

@@ -23,6 +23,7 @@
 #include "base/logging.h"
 
 #include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_user_script_master.h"
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
@@ -124,10 +125,39 @@ void WebContextAdapterPrivate::SetAcceptLangs(const std::string& langs) {
   }
 }
 
-oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
-  if (context_) {
-    return context_.get();
+void WebContextAdapterPrivate::UpdateUserScripts() {
+  if (!context_) {
+    return;
   }
+
+  std::vector<oxide::UserScript *> scripts;
+  bool wait = false;
+
+  for (int i = 0; i < user_scripts_.size(); ++i) {
+    UserScriptAdapterPrivate* script =
+        UserScriptAdapterPrivate::get(user_scripts_.at(i));
+    if (script->state() == UserScriptAdapter::Loading) {
+      wait = true;
+    } else if (script->state() == UserScriptAdapter::Deferred) {
+      script->StartLoading();
+      wait = true;
+    } else if (script->state() == UserScriptAdapter::Ready) {
+      scripts.push_back(&script->user_script());
+    }
+  }
+
+  if (!wait) {
+    context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
+  }
+}
+
+void WebContextAdapterPrivate::CompleteConstruction() {
+  DCHECK(!context_ && !process_handle_);
+
+  // We do this here rather than in the constructor because the first
+  // browser context needs to set the shared GL context before anything
+  // starts up, in order for compositing to work
+  process_handle_ = oxide::BrowserProcessMain::GetInstance();
 
   context_.reset(oxide::BrowserContext::Create(
       lazy_init_props_->data_path,
@@ -146,36 +176,6 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
   lazy_init_props_.reset();
 
   UpdateUserScripts();
-
-  return context_.get();
-}
-
-void WebContextAdapterPrivate::UpdateUserScripts() {
-  if (!context_) {
-    return;
-  }
-
-  std::vector<oxide::UserScript *> scripts;
-
-  for (int i = 0; i < user_scripts_.size(); ++i) {
-    UserScriptAdapterPrivate* script =
-        UserScriptAdapterPrivate::get(user_scripts_.at(i));
-    if (script->state() == UserScriptAdapter::Loading) {
-      return;
-    }
-
-    if (script->state() != UserScriptAdapter::Ready) {
-      continue;
-    }
-
-    scripts.push_back(&script->user_script());
-  }
-
-  context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
-}
-
-bool WebContextAdapterPrivate::InUse() const {
-  return context_ != NULL;
 }
 
 // static
