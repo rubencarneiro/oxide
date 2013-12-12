@@ -35,19 +35,6 @@ namespace {
 BrowserProcessMain* g_process;
 }
 
-// static
-scoped_refptr<BrowserProcessMain> BrowserProcessMain::GetInstance() {
-  if (!g_process) {
-    BrowserProcessMain* process = new BrowserProcessMain();
-    if (!process->Init()) {
-      // This is the only way to delete the failed BrowserProcessMain
-      scoped_refptr<BrowserProcessMain> reaper(process);
-    }
-  }
-
-  return make_scoped_refptr(g_process);
-}
-
 bool BrowserProcessMain::Init() {
   if (!main_runner_ || !main_delegate_) {
     DLOG(ERROR) << "Failed to create main components";
@@ -87,6 +74,19 @@ BrowserProcessMain::~BrowserProcessMain() {
   ui::ResourceBundle::CleanupSharedInstance();
 
   g_process = NULL;
+}
+
+// static
+scoped_refptr<BrowserProcessMain> BrowserProcessMain::GetInstance() {
+  if (!g_process) {
+    BrowserProcessMain* process = new BrowserProcessMain();
+    if (!process->Init()) {
+      // This is the only way to delete the failed BrowserProcessMain
+      scoped_refptr<BrowserProcessMain> reaper(process);
+    }
+  }
+
+  return make_scoped_refptr(g_process);
 }
 
 // static
@@ -131,5 +131,8 @@ void BrowserProcessMain::ShutdownBrowserProcess() {
     g_process->browser_main_runner_->Shutdown();
   }
 }
+
+ScopedBrowserProcessHandle::ScopedBrowserProcessHandle() :
+    handle_(BrowserProcessMain::GetInstance()) {}
 
 } // namespace oxide

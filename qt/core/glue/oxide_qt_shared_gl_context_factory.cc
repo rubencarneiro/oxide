@@ -19,6 +19,8 @@
 
 #include "base/logging.h"
 
+#include "shared/browser/oxide_browser_process_main.h"
+
 namespace oxide {
 namespace qt {
 
@@ -32,7 +34,8 @@ SharedGLContextFactory* GetSharedGLContextFactory() {
 
 // static
 void SetSharedGLContextFactory(SharedGLContextFactory* factory) {
-  DCHECK(!g_factory || g_factory == factory || !factory);
+  DCHECK(!oxide::BrowserProcessMain::Exists());
+
   g_factory = factory;
 }
 

@@ -37,6 +37,7 @@ class SSLConfigService;
 
 namespace oxide {
 
+class BrowserProcessMain;
 class ResourceContext;
 class URLRequestContext;
 class URLRequestContextGetter;
@@ -93,7 +94,7 @@ class BrowserContext : public content::BrowserContext {
   // is responsible for destroying it when it is finished with it.
   // The caller must ensure that it outlives any other consumers (ie,
   // WebView's), and must ensure that it is destroyed before all
-  // BrowserProcessHandle's have been released
+  // references to the BrowserProcessMain have been released
   static BrowserContext* Create(const base::FilePath& path,
                                 const base::FilePath& cache_path);
 
@@ -203,6 +204,7 @@ class BrowserContext : public content::BrowserContext {
     BrowserContextIOData* io_data_;
   };
 
+  scoped_refptr<BrowserProcessMain> process_handle_;
   IODataHandle io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   std::vector<WebView *> web_views_;

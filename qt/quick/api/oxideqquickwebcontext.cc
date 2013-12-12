@@ -32,6 +32,7 @@
 
 namespace {
 OxideQQuickWebContext* g_default_context;
+unsigned int g_context_count = 0;
 
 QOpenGLContext* OxideQQuickSharedGLContextFactory() {
 #if QTQUICK_VERSION >= 0x050200
@@ -46,7 +47,14 @@ QOpenGLContext* OxideQQuickSharedGLContextFactory() {
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     q_ptr(q) {
-  oxide::qt::SetSharedGLContextFactory(OxideQQuickSharedGLContextFactory);
+  if (g_context_count++ == 0) {
+    oxide::qt::SetSharedGLContextFactory(OxideQQuickSharedGLContextFactory);
+  }
+}
+
+OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {
+  Q_ASSERT(g_context_count > 0);
+  --g_context_count;
 }
 
 OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(

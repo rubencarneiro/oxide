@@ -87,15 +87,15 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   virtual Display* GetDefaultXDisplay() = 0;
 #endif
 
+  virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
+      oxide::GLShareGroup* share_group);
+
  protected:
   // Limit default constructor access to derived classes
   ContentBrowserClient() {}
 
  private:
   virtual void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) = 0;
-
-  virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
-      oxide::GLShareGroup* share_group);
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

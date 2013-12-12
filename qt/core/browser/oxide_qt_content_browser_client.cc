@@ -24,6 +24,8 @@
 #include <X11/Xlib.h>
 #endif
 
+#include "base/logging.h"
+
 #include "shared/browser/oxide_shared_gl_context.h"
 
 #include "qt/core/glue/oxide_qt_shared_gl_context_factory.h"
@@ -51,6 +53,8 @@ class SharedGLContext : public oxide::SharedGLContext {
       if (!handle_) {
         handle_ = pni->nativeResourceForContext("eglcontext", context);
       }
+    } else {
+      DLOG(WARNING) << "Unsupported platform: " << qPrintable(platform);
     }
   }
 
@@ -71,6 +75,7 @@ scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
     oxide::GLShareGroup* share_group) {
   SharedGLContextFactory* factory = GetSharedGLContextFactory();
   if (!factory) {
+    DLOG(WARNING) << "No shared GL context factory. Compositing will not work";
     return NULL;
   }
 
@@ -82,6 +87,8 @@ scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
   scoped_refptr<gfx::GLContext> context =
       new SharedGLContext(qcontext, share_group);
   if (!context->GetHandle()) {
+    DLOG(WARNING) << "No native handle for shared GL context. "
+                  << "Compositing will not work";
     context = NULL;
   }
 

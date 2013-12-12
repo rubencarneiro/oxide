@@ -360,8 +360,17 @@ BrowserContext::IODataHandle::~IODataHandle() {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
-
   GetAllContexts().push_back(this);
+
+  // We do this here rather than in the initialization list to ensure
+  // that this context is added to the global list before the main process
+  // components start, if this is the first context.
+  //
+  // If this is the first context, then our ResourceContext will not be
+  // added to the ResourceDispatcher, so we rely on
+  // oxide::ContentBrowserClient::ResourceDispatcherHostCreated()
+  // being able to add it for us
+  process_handle_ = BrowserProcessMain::GetInstance();
 
   content::BrowserContext::EnsureResourceContextInitialized(this);
 }

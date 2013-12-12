@@ -66,6 +66,14 @@ class BrowserMainParts : public content::BrowserMainParts {
   void PreEarlyInitialization() FINAL {
     base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
     main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
+  
+    scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
+    shared_gl_context_ =
+        ContentClient::GetInstance()->browser()->CreateSharedGLContext(
+          share_group);
+    if (shared_gl_context_) {
+      DCHECK_EQ(shared_gl_context_->share_group(), share_group);
+    }
   }
 
   int PreCreateThreads() FINAL {
@@ -82,21 +90,12 @@ class BrowserMainParts : public content::BrowserMainParts {
     return shared_gl_context_;
   }
 
-  void set_shared_gl_context(gfx::GLContext* context) {
-    shared_gl_context_ = context;
-  }
-
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
   scoped_refptr<gfx::GLContext> shared_gl_context_;
 };
 
 } // namespace
-
-scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
-    oxide::GLShareGroup* share_group) {
-  return scoped_refptr<gfx::GLContext>(NULL);
-}
 
 ContentBrowserClient::~ContentBrowserClient() {}
 
@@ -182,17 +181,17 @@ bool ContentBrowserClient::GetDefaultScreenInfo(
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   if (!g_main_parts->shared_gl_context()) {
-    scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
-    scoped_refptr<gfx::GLContext> share_context =
-        CreateSharedGLContext(share_group);
-    if (!share_context) {
-      return NULL;
-    }
-    DCHECK_EQ(share_context->share_group(), share_group);
-    g_main_parts->set_shared_gl_context(share_context);
+    DLOG(INFO) << "No shared GL context has been created. "
+               << "Compositing will not work";
+    return NULL;
   }
 
   return g_main_parts->shared_gl_context()->share_group();
+}
+
+scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
+    oxide::GLShareGroup* share_group) {
+  return scoped_refptr<gfx::GLContext>(NULL);
 }
 
 } // namespace oxide

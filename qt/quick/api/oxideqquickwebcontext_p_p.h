@@ -35,6 +35,7 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
 
  public:
   OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
+  ~OxideQQuickWebContextPrivate();
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
