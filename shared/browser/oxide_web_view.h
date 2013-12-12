@@ -159,6 +159,8 @@ class WebView : public MessageTarget,
   void FrameDetached(content::RenderViewHost* rvh,
                      int64 frame_id) FINAL;
 
+  void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
+
   bool OnMessageReceived(const IPC::Message& message) FINAL;
 
   virtual size_t GetMessageHandlerCount() const OVERRIDE;

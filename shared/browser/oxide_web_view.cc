@@ -573,6 +573,20 @@ void WebView::FrameDetached(content::RenderViewHost* rvh,
   frame->DestroyFrame();
 }
 
+void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
+  if (!web_contents_) {
+    return;
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  int count = controller.GetEntryCount();
+  for (int i = 0; i < count; ++i) {
+    if (controller.GetEntryAtIndex(i) == entry) {
+      OnNavigationEntryChanged(i);
+      return;
+    }
+  }
+}
+
 bool WebView::OnMessageReceived(const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(WebView, message)
