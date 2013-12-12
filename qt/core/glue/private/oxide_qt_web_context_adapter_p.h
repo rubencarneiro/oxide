@@ -25,11 +25,13 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 namespace oxide {
 
 class BrowserContext;
+class BrowserProcessMain;
 
 namespace qt {
 
@@ -61,17 +63,24 @@ class WebContextAdapterPrivate FINAL {
     return user_scripts_;
   }
 
-  oxide::BrowserContext* GetContext();
+  oxide::BrowserContext* context() { return context_.get(); }
 
   void UpdateUserScripts();
 
-  bool InUse() const;
+  void CompleteConstruction();
 
   static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
 
  private:
   WebContextAdapterPrivate();
 
+  // BrowserProcesMain needs to outlive BrowserContext. The reason
+  // that the reference to BrowserProcessMain is here and not in
+  // BrowserContext is because BrowserProcessMain has to outlive
+  // the destructor for base::SupportsUserData, from which
+  // BrowserContext inherits, because some data needs to be deleted
+  // on the IO thread
+  scoped_refptr<oxide::BrowserProcessMain> process_handle_;
   scoped_ptr<oxide::BrowserContext> context_;
   QList<UserScriptAdapter *> user_scripts_;
 

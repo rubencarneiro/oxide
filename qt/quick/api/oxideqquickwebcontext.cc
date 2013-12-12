@@ -159,13 +159,24 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
   }
 }
 
+void OxideQQuickWebContext::classBegin() {}
+
+void OxideQQuickWebContext::componentComplete() {
+  Q_D(OxideQQuickWebContext);
+
+  d->completeConstruction();
+}
+
 // static
 OxideQQuickWebContext* OxideQQuickWebContext::defaultContext() {
   if (g_default_context) {
     return g_default_context;
   }
 
-  return new OxideQQuickWebContext(true);
+  new OxideQQuickWebContext(true);
+  g_default_context->componentComplete();
+
+  return g_default_context;
 }
 
 QString OxideQQuickWebContext::product() const {
@@ -211,8 +222,8 @@ QUrl OxideQQuickWebContext::dataPath() const {
 void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->inUse()) {
-    qWarning() << "Cannot set dataPath once the context is being used";
+  if (d->constructed()) {
+    qWarning() << "Can only set dataPath during construction";
     return;
   }
 
@@ -233,8 +244,8 @@ QUrl OxideQQuickWebContext::cachePath() const {
 void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->inUse()) {
-    qWarning() << "Cannot set cachePath once the context is being used";
+  if (d->constructed()) {
+    qWarning() << "Can only set cachePath during construction";
     return;
   }
 
