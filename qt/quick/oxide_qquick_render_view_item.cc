@@ -196,9 +196,7 @@ QSGNode* RenderViewItem::updatePaintNode(
 
   if (width() <= 0 || height() <= 0) {
     delete oldNode;
-    if (is_compositing_enabled_) {
-      DidUpdate(true);
-    }
+    DidUpdate(true);
     return NULL;
   }
 
@@ -216,7 +214,6 @@ QSGNode* RenderViewItem::updatePaintNode(
     node->updateFrontTexture(GetFrontbufferTextureInfo());
 
     DidUpdate(false);
-
     return node;
   }
 
