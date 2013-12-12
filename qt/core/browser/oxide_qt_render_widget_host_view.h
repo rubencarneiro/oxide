@@ -74,7 +74,7 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
 
-  void DidComposite(bool skipped);
+  void DidUpdate(bool skipped);
 
   const QPixmap* GetBackingStore();
 

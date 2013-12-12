@@ -30,6 +30,7 @@
 #include <QString>
 #include <QStringList>
 #include <Qt>
+#include <QtQuickVersion>
 #include <QUrl>
 
 #include "QtCore/private/qabstractanimation_p.h"

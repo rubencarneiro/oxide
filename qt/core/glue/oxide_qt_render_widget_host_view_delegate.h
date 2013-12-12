@@ -83,13 +83,13 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void ForwardWheelEvent(QWheelEvent* event);
 
   TextureInfo GetFrontbufferTextureInfo();
-  void DidComposite(bool skipped);
+  void DidUpdate(bool skipped);
 
  private:
   friend class RenderWidgetHostView;
 
   virtual void SchedulePaint(const QRect& rect) = 0;
-  virtual void ScheduleComposite() = 0;
+  virtual void ScheduleUpdate() = 0;
 
   RenderWidgetHostView* GetRenderWidgetHostView();
   void SetRenderWidgetHostView(RenderWidgetHostView* rwhv);

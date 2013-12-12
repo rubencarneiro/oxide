@@ -472,7 +472,7 @@ void RenderWidgetHostView::BuffersSwapped(
     const AcknowledgeBufferPresentCallback& ack) {
   DCHECK(acknowledge_buffer_present_callback_.is_null());
   acknowledge_buffer_present_callback_ = ack;
-  delegate_->ScheduleComposite();
+  delegate_->ScheduleUpdate();
 }
 
 RenderWidgetHostView::RenderWidgetHostView(
@@ -589,7 +589,7 @@ void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
   event->accept();
 }
 
-void RenderWidgetHostView::DidComposite(bool skipped) {
+void RenderWidgetHostView::DidUpdate(bool skipped) {
   DCHECK(!acknowledge_buffer_present_callback_.is_null());
   SendAcknowledgeBufferPresent(acknowledge_buffer_present_callback_, skipped);
   acknowledge_buffer_present_callback_.Reset();

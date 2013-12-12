@@ -71,25 +71,19 @@ class RenderViewItem Q_DECL_FINAL :
 
   void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
 
-  void itemChange(ItemChange change, ItemChangeData& value) Q_DECL_FINAL;
-
   void updatePolish() Q_DECL_FINAL;
   QSGNode* updatePaintNode(QSGNode* oldNode,
                            UpdatePaintNodeData* data) Q_DECL_FINAL;
 
- private Q_SLOTS:
-  void afterRendering();
-
  private:
   void SchedulePaint(const QRect& rect) Q_DECL_FINAL;
-  void ScheduleComposite() Q_DECL_FINAL;
+  void ScheduleUpdate() Q_DECL_FINAL;
 
   const QPixmap* backing_store_;
   QRect dirty_rect_;
 
-  bool is_accelerated_compositing_;
-  bool is_accelerated_compositing_state_changed_;
-  bool did_composite_;
+  bool is_compositing_enabled_;
+  bool is_compositing_enabled_state_changed_;
 
   Q_DISABLE_COPY(RenderViewItem);
 };

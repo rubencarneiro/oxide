@@ -63,8 +63,8 @@ TextureInfo RenderWidgetHostViewDelegate::GetFrontbufferTextureInfo() {
                            tex.size_in_pixels().height()));
 }
 
-void RenderWidgetHostViewDelegate::DidComposite(bool skipped) {
-  GetRenderWidgetHostView()->DidComposite(skipped);
+void RenderWidgetHostViewDelegate::DidUpdate(bool skipped) {
+  GetRenderWidgetHostView()->DidUpdate(skipped);
 }
 
 RenderWidgetHostViewDelegate::~RenderWidgetHostViewDelegate() {}
