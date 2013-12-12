@@ -96,8 +96,7 @@ def need_chromium_sync():
   (wanted_url, wanted_rev) = get_wanted_info_from_gclient_config()
 
   if wanted_url != cur_url:
-    raise Exception("The URL specified in the gclient config doesn't match " +
-                    "the current URL")
+    return True
 
   if wanted_rev is '':
     (dummy, wanted_rev) = get_svn_info(wanted_url)

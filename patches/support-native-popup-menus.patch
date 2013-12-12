@@ -5,7 +5,7 @@
 diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc
 +++ b/content/browser/renderer_host/render_view_host_impl.cc
-@@ -1233,17 +1233,17 @@ bool RenderViewHostImpl::OnMessageReceiv
+@@ -1255,17 +1255,17 @@ bool RenderViewHostImpl::OnMessageReceiv
      IPC_MESSAGE_HANDLER(ViewHostMsg_ScriptEvalResponse, OnScriptEvalResponse)
      IPC_MESSAGE_HANDLER(ViewHostMsg_DidZoomURL, OnDidZoomURL)
      IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_RequestPermission,
@@ -24,7 +24,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
      IPC_MESSAGE_HANDLER(ViewHostMsg_DomOperationResponse,
                          OnDomOperationResponse)
      IPC_MESSAGE_HANDLER(AccessibilityHostMsg_Events, OnAccessibilityEvents)
-@@ -1908,17 +1908,17 @@ void RenderViewHostImpl::ForwardKeyboard
+@@ -1935,17 +1935,17 @@ void RenderViewHostImpl::ForwardKeyboard
    if (ignore_input_events()) {
      if (key_event.type == WebInputEvent::RawKeyDown)
        delegate_->OnIgnoredUIEvent();
@@ -43,13 +43,13 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
  
  void RenderViewHostImpl::DidCancelPopupMenu() {
    Send(new ViewMsg_SelectPopupMenuItems(GetRoutingID(), true,
-@@ -2213,17 +2213,17 @@ void RenderViewHostImpl::OnDomOperationR
-     const std::string& json_string, int automation_id) {
-   DomOperationNotificationDetails details(json_string, automation_id);
-   NotificationService::current()->Notify(
-       NOTIFICATION_DOM_OPERATION_RESPONSE,
-       Source<RenderViewHost>(this),
-       Details<DomOperationNotificationDetails>(&details));
+@@ -2241,17 +2241,17 @@ void RenderViewHostImpl::OnFocusedNodeTo
+   if (editable) {
+     base::win::DisplayVirtualKeyboard();
+   } else {
+     base::win::DismissVirtualKeyboard();
+   }
+ #endif
  }
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
@@ -65,7 +65,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
 diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/browser/renderer_host/render_view_host_impl.h
 --- a/content/browser/renderer_host/render_view_host_impl.h
 +++ b/content/browser/renderer_host/render_view_host_impl.h
-@@ -409,17 +409,19 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -414,17 +414,19 @@ class CONTENT_EXPORT RenderViewHostImpl
    void DidSelectPopupMenuItem(int selected_index);
    void DidCancelPopupMenu();
  #endif
@@ -85,14 +85,14 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
    void SendOrientationChangeEvent(int orientation);
  
    // Sets a bit indicating whether the RenderView is responsible for displaying
-@@ -602,17 +604,17 @@ class CONTENT_EXPORT RenderViewHostImpl
-   void OnShowDesktopNotification(
+@@ -608,17 +610,17 @@ class CONTENT_EXPORT RenderViewHostImpl
        const ShowDesktopNotificationHostMsgParams& params);
    void OnCancelDesktopNotification(int notification_id);
    void OnRunFileChooser(const FileChooserParams& params);
    void OnDidAccessInitialDocument();
    void OnDomOperationResponse(const std::string& json_string,
                                int automation_id);
+   void OnFocusedNodeTouched(bool editable);
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
 +#if defined(OS_MACOSX) || defined(OS_ANDROID) || defined(OXIDE_BUILD)
@@ -107,7 +107,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -1294,16 +1294,17 @@ IPC_MESSAGE_ROUTED3(ViewMsg_WindowSnapsh
+@@ -1306,16 +1306,17 @@ IPC_MESSAGE_ROUTED3(ViewMsg_WindowSnapsh
  // Notification of a change in scrollbar appearance and/or behavior.
  IPC_MESSAGE_CONTROL4(ViewMsg_UpdateScrollbarTheme,
                       float /* initial_button_delay */,
@@ -125,7 +125,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  // Sent when the browser wants the bounding boxes of the current find matches.
  //
  // If match rects are already cached on the browser side, |current_version|
-@@ -1311,22 +1312,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
+@@ -1323,22 +1324,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
  // they came in, so the renderer can tell if it needs to send updated rects.
  // Otherwise just pass -1 to always receive the list of rects.
  //
@@ -150,7 +150,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  // and whether or not to animate to the proper state.
  IPC_MESSAGE_ROUTED3(ViewMsg_UpdateTopControlsState,
                      bool /* enable_hiding */,
-@@ -1340,16 +1343,17 @@ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
+@@ -1352,16 +1355,17 @@ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
                      cc::BeginFrameArgs /* args */)
  
  // Sent by the browser when an IME update that requires acknowledgement has been
@@ -171,7 +171,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/renderer/external_popup_menu.cc b/content/renderer/external_popup_menu.cc
 --- a/content/renderer/external_popup_menu.cc
 +++ b/content/renderer/external_popup_menu.cc
-@@ -60,17 +60,17 @@ void ExternalPopupMenu::DidSelectItem(in
+@@ -64,17 +64,17 @@ void ExternalPopupMenu::DidSelectItem(in
      return;
    if (index == -1)
      popup_menu_client_->didCancel();
@@ -193,8 +193,8 @@ diff --git a/content/renderer/external_popup_menu.cc b/content/renderer/external
 diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_popup_menu.h
 --- a/content/renderer/external_popup_menu.h
 +++ b/content/renderer/external_popup_menu.h
-@@ -30,17 +30,17 @@ class ExternalPopupMenu : public blink::
-   void SetOriginScaleForEmulation(float scale);
+@@ -31,17 +31,17 @@ class ExternalPopupMenu : public blink::
+       float scale, const gfx::Point& offset);
  
  #if defined(OS_MACOSX)
    // Called when the user has selected an item. |selected_item| is -1 if the
@@ -237,7 +237,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -1460,26 +1460,30 @@ bool RenderViewImpl::OnMessageReceived(c
+@@ -1314,26 +1314,30 @@ bool RenderViewImpl::OnMessageReceived(c
                          OnSetHistoryLengthAndPrune)
      IPC_MESSAGE_HANDLER(ViewMsg_EnableViewSourceMode, OnEnableViewSourceMode)
      IPC_MESSAGE_HANDLER(ViewMsg_SetAccessibilityMode, OnSetAccessibilityMode)
@@ -268,7 +268,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_SetInLiveResize, OnSetInLiveResize)
      IPC_MESSAGE_HANDLER(ViewMsg_SetWindowVisibility, OnSetWindowVisibility)
      IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
-@@ -6433,17 +6437,17 @@ void RenderViewImpl::OnSelectPopupMenuIt
+@@ -6208,17 +6212,17 @@ void RenderViewImpl::OnSelectPopupMenuIt
      NOTREACHED();
      return;
    }
@@ -290,7 +290,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
 diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_impl.h
 --- a/content/renderer/render_view_impl.h
 +++ b/content/renderer/render_view_impl.h
-@@ -1012,27 +1012,31 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -968,27 +968,31 @@ class CONTENT_EXPORT RenderViewImpl
    void OnUpdateTimezone();
    void OnUpdateWebPreferences(const WebPreferences& prefs);
    void OnZoom(PageZoom zoom);
@@ -316,9 +316,9 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
 +#endif
  #elif defined(OS_MACOSX)
    void OnCopyToFindPboard();
-   void OnPluginImeCompositionCompleted(const string16& text, int plugin_id);
+   void OnPluginImeCompositionCompleted(const base::string16& text,
+                                        int plugin_id);
    void OnSelectPopupMenuItem(int selected_index);
    void OnSetInLiveResize(bool in_live_resize);
    void OnSetWindowVisibility(bool visible);
    void OnWindowFrameChanged(const gfx::Rect& window_frame,
-                             const gfx::Rect& view_frame);

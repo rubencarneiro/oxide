@@ -74,7 +74,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
-@@ -59,17 +59,18 @@ class SyncPointManager;
+@@ -60,17 +60,18 @@ class SyncPointManager;
  // IPC messages to the browser process IO thread on the GpuChannelManager's
  // behalf.
  class GpuChannelManager : public IPC::Listener,
@@ -94,10 +94,10 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    // Listener overrides.
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
-@@ -90,16 +91,18 @@ class GpuChannelManager : public IPC::Li
-   gpu::gles2::ProgramCache* program_cache();
- 
-   GpuMemoryManager* gpu_memory_manager() { return &gpu_memory_manager_; }
+@@ -95,16 +96,18 @@ class GpuChannelManager : public IPC::Li
+   GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
+     return &gpu_devtools_events_dispatcher_;
+   }
  
    GpuChannel* LookupChannel(int32 client_id);
  
@@ -373,7 +373,7 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -307,9 +307,13 @@ crypto::CryptoModuleBlockingPasswordDele
+@@ -311,9 +311,13 @@ crypto::CryptoModuleBlockingPasswordDele
  #endif
  
  bool ContentBrowserClient::IsPluginAllowedToCallRequestOSFileHandle(
@@ -408,7 +408,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class HttpNetworkSession;
  class NetLog;
  class SSLCertRequestInfo;
-@@ -603,13 +604,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -617,13 +618,15 @@ class CONTENT_EXPORT ContentBrowserClien
            const GURL& url);
  #endif
  
