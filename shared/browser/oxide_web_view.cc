@@ -217,12 +217,6 @@ bool WebView::Init(BrowserContext* context,
     return false;
   }
 
-  // We do this here rather than in the constructor (and rather than using
-  // ScopedBrowserProcessHandle) so that we never start the main process
-  // components until after the first context has been created. The Qt
-  // code depends on a context starting everything up
-  process_handle_ = BrowserProcessMain::GetInstance();
-
   context = incognito ?
       context->GetOffTheRecordContext() :
       context->GetOriginalContext();
