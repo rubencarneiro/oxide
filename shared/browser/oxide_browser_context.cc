@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "base/files/file_path.h"
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
@@ -53,6 +54,8 @@
 namespace oxide {
 
 namespace {
+
+base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
 
 class DefaultURLRequestContext FINAL : public URLRequestContext {
  public:
@@ -360,7 +363,7 @@ BrowserContext::IODataHandle::~IODataHandle() {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
-  GetAllContexts().push_back(this);
+  g_all_contexts.Get().push_back(this);
 
   content::BrowserContext::EnsureResourceContextInitialized(this);
 }
@@ -369,10 +372,10 @@ BrowserContext::~BrowserContext() {
   CHECK_EQ(web_views_.size(), static_cast<size_t>(0));
 
   std::vector<BrowserContext *>::iterator it;
-  for (std::vector<BrowserContext *>::iterator it = GetAllContexts().begin();
-       it != GetAllContexts().end(); ++it) {
+  for (std::vector<BrowserContext *>::iterator it = g_all_contexts.Get().begin();
+       it != g_all_contexts.Get().end(); ++it) {
     if (*it == this) {
-      GetAllContexts().erase(it);
+      g_all_contexts.Get().erase(it);
       break;
     }
   }
@@ -386,9 +389,12 @@ BrowserContext* BrowserContext::Create(const base::FilePath& path,
 
 // static
 std::vector<BrowserContext *>& BrowserContext::GetAllContexts() {
-  static std::vector<BrowserContext *> g_contexts;
+  return g_all_contexts.Get();
+}
 
-  return g_contexts;
+// static
+void BrowserContext::AssertNoContextsExist() {
+  CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
 }
 
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(

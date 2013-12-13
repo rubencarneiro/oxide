@@ -65,7 +65,7 @@ BrowserProcessMain::BrowserProcessMain() {
 
 BrowserProcessMain::~BrowserProcessMain() {
   DCHECK_EQ(g_process, this);
-  CHECK_EQ(BrowserContext::GetAllContexts().size(), static_cast<size_t>(0));
+  BrowserContext::AssertNoContextsExist();
 
   MessageLoopForUI::current()->Stop();
   main_runner_->Shutdown();
