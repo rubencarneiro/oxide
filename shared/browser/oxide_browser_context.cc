@@ -363,6 +363,10 @@ BrowserContext::IODataHandle::~IODataHandle() {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
+  CHECK(BrowserProcessMain::Exists()) <<
+      "The main browser process components must be started before " <<
+      "creating a context";
+
   g_all_contexts.Get().push_back(this);
 
   content::BrowserContext::EnsureResourceContextInitialized(this);
