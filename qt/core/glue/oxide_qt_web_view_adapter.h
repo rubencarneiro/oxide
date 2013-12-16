@@ -84,6 +84,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void TitleChanged() = 0;
   virtual void CommandsUpdated() = 0;
 
+  virtual void LoadProgressChanged(double progress) = 0;
+
   virtual void RootFrameChanged() = 0;
 
   virtual void LoadStarted(const QUrl& url) = 0;
