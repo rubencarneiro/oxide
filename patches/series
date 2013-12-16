@@ -17,4 +17,3 @@ comment-out-GetDefaultXDisplay.patch
 arm-crypto.patch
 arm-icu.patch
 dont-check-number-of-threads-at-startup.patch
-arm-no-neon.patch

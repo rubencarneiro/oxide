@@ -27,8 +27,8 @@
     'use_gconf': 0,
     'conditions': [
       ['target_arch=="arm"', {
-        # XXX: Make Ubuntu-specific
         'arm_neon': 0,
+        'arm_neon_optional': 1,
 
         'conditions': [
           ['arm_version==7', {
