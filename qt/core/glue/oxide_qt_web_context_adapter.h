@@ -56,7 +56,8 @@ class Q_DECL_EXPORT WebContextAdapter {
 
   void updateUserScripts();
 
-  bool inUse() const;
+  bool constructed() const;
+  void completeConstruction();
 
  protected:
   WebContextAdapter();

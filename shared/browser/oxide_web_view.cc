@@ -210,8 +210,7 @@ WebView::~WebView() {
 bool WebView::Init(BrowserContext* context,
                    bool incognito,
                    const gfx::Size& initial_size) {
-  CHECK(process_handle_.Available()) <<
-        "Failed to start the browser components first!";
+  DCHECK(context);
 
   if (web_contents_) {
     LOG(ERROR) << "Called Init() more than once";

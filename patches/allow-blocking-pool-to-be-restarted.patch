@@ -1,6 +1,8 @@
-# HG changeset patch
-# Parent fe61e06bfc85720c55ae89b8ac909849e9216c97
-# User Chris Coulson <chris.coulson@canonical.com>
+# Description: BrowserThreadGlobals is a global which is only initialized once during the
+#  process lifetime, but BrowserThreadGlobals::blocking_pool is shutdown when the browser
+#  thread bits are shutdown, preventing the embedder from starting a browser again. This
+#  patch ensures that BrowserThreadGlobals::blocking_pool gets reinitialized correctly
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/browser/browser_thread_impl.cc b/content/browser/browser_thread_impl.cc
 --- a/content/browser/browser_thread_impl.cc
@@ -81,7 +83,7 @@ diff --git a/content/browser/browser_thread_impl.cc b/content/browser/browser_th
    using base::subtle::AtomicWord;
    AtomicWord* storage =
        reinterpret_cast<AtomicWord*>(&globals.thread_delegates[identifier_]);
-@@ -308,39 +316,39 @@ class BrowserThreadMessageLoopProxy : pu
+@@ -308,40 +316,40 @@ class BrowserThreadMessageLoopProxy : pu
    BrowserThread::ID id_;
    DISALLOW_COPY_AND_ASSIGN(BrowserThreadMessageLoopProxy);
  };
@@ -94,6 +96,7 @@ diff --git a/content/browser/browser_thread_impl.cc b/content/browser/browser_th
 +  return g_globals.Get().blocking_pool()->PostWorkerTask(from_here, task);
  }
  
+ // static
  bool BrowserThread::PostBlockingPoolTaskAndReply(
      const tracked_objects::Location& from_here,
      const base::Closure& task,
@@ -125,4 +128,3 @@ diff --git a/content/browser/browser_thread_impl.cc b/content/browser/browser_th
      return false;
  
    BrowserThreadGlobals& globals = g_globals.Get();
-

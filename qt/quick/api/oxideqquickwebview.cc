@@ -29,7 +29,7 @@
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
 
-#include "qt/quick/oxide_qquick_render_widget_host_view_delegate.h"
+#include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
 #include "oxideqquickmessagehandler_p.h"
@@ -73,7 +73,7 @@ oxide::qt::RenderWidgetHostViewDelegate*
 OxideQQuickWebViewPrivate::CreateRenderWidgetHostViewDelegate() {
   Q_Q(OxideQQuickWebView);
 
-  return new oxide::qquick::RenderWidgetHostViewDelegate(q);
+  return new oxide::qquick::RenderViewItem(q);
 }
 
 oxide::qt::WebPopupMenuDelegate*
@@ -338,6 +338,9 @@ OxideQQuickWebView::~OxideQQuickWebView() {
   // the oxide::WebView destructor is called, so we have to ensure our
   // WebContents is destroyed now
   d->shutdown();
+
+  delete d_ptr;
+  d_ptr = NULL;
 
   QObject::disconnect(this, SIGNAL(visibleChanged()),
                       this, SLOT(visibilityChangedListener()));

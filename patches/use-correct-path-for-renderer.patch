@@ -1,5 +1,5 @@
-Description: Don't use /proc/self/exe as the renderer path. That is never correct for oxide
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Don't use /proc/self/exe as the renderer path. That is never correct for oxide
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/common/child_process_host_impl.cc b/content/common/child_process_host_impl.cc
 --- a/content/common/child_process_host_impl.cc

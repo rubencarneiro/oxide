@@ -30,8 +30,8 @@ void MessagePump::SetupRunLoop() {
 void MessagePump::Stop() {
   // We just abort immediately if this triggers to prevent potentially
   // exploitable crashes. If you hit this, it means that you're dispatching
-  // a task from the event queue without keeping a BrowserProcessHandle alive
-  // on the stack
+  // a task from the event queue without keeping a reference to
+  // the BrowserProcessMain
   CHECK_EQ(task_depth_, 0) <<
       "Someone terminated the main browser process components whilst "
       "dispatching a task from the event queue!";

@@ -25,7 +25,7 @@
 
 #include "base/logging.h"
 
-#include "shared/browser/oxide_browser_process_handle.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
 QT_USE_NAMESPACE
 
@@ -50,7 +50,7 @@ void MessagePump::timerEvent(QTimerEvent* event) {
 
   // Make sure that the main browser process components can't
   // shutdown until we've finished
-  oxide::BrowserProcessHandle handle;
+  oxide::ScopedBrowserProcessHandle handle;
 
   // Clear the timer
   ScheduleDelayedWork(base::TimeTicks());
@@ -65,7 +65,7 @@ void MessagePump::customEvent(QEvent* event) {
 
   // Make sure that the main browser process components can't
   // shutdown until we've finished
-  oxide::BrowserProcessHandle handle;
+  oxide::ScopedBrowserProcessHandle handle;
 
   bool did_work = state_->delegate->DoWork();
   if (state_->should_quit) {
@@ -100,7 +100,7 @@ MessagePump::MessagePump() :
 void MessagePump::Run(base::MessagePump::Delegate* delegate) {
   // Make sure that the main browser process components can't
   // shutdown until we've finished
-  oxide::BrowserProcessHandle handle;
+  oxide::ScopedBrowserProcessHandle handle;
 
   QEventLoop event_loop;
 

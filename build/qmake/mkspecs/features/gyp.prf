@@ -52,8 +52,8 @@ equals(GYP_TYPE, lib) {
 
     !isEmpty(TARGET.post_install) {
         install_bin_postinst.path = $$[QT_INSTALL_LIBS]/oxide-qt
-        isEmpty(TARGET.bin_name):install_bin_postinst.commands = $$TARGET.post_install $$[QT_INSTALL_LIBS]/oxide-qt/$${TARGET}
-        else:install_bin_postinst.commands = $$TARGET.post_install $$[QT_INSTALL_LIBS]/oxide-qt/$${TARGET.bin_name}
+        isEmpty(TARGET.bin_name):install_bin_postinst.commands = $$TARGET.post_install $(INSTALL_ROOT)$$[QT_INSTALL_LIBS]/oxide-qt/$${TARGET}
+        else:install_bin_postinst.commands = $$TARGET.post_install $(INSTALL_ROOT)$$[QT_INSTALL_LIBS]/oxide-qt/$${TARGET.bin_name}
         INSTALLS += install_bin_postinst
     }
 }

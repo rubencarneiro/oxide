@@ -20,6 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "content/public/browser/content_browser_client.h"
 
 namespace base {
@@ -30,8 +31,15 @@ namespace content {
 class RenderViewHost;
 }
 
+namespace gfx {
+class GLContext;
+}
+
+typedef struct _XDisplay Display;
+
 namespace oxide {
 
+class GLShareGroup;
 class WebFrameTree;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
@@ -70,8 +78,17 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   bool GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
 
+  gfx::GLShareGroup* GetGLShareGroup() FINAL;
+
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
+
+#if defined(USE_X11)
+  virtual Display* GetDefaultXDisplay() = 0;
+#endif
+
+  virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
+      oxide::GLShareGroup* share_group);
 
  protected:
   // Limit default constructor access to derived classes

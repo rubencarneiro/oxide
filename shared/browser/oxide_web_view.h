@@ -30,7 +30,6 @@
 #include "content/public/common/javascript_message_type.h"
 #include "ui/gfx/rect.h"
 
-#include "shared/browser/oxide_browser_process_handle.h"
 #include "shared/browser/oxide_message_target.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -219,11 +218,7 @@ class WebView : public MessageTarget,
 
   virtual WebFrame* CreateWebFrame() = 0;
 
-  // Don't mess with the ordering of this unless you know what you
-  // are doing!
-  BrowserProcessHandle process_handle_;
   scoped_ptr<content::WebContents> web_contents_;
-
   WebFrame* root_frame_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

@@ -15,31 +15,41 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
-#define _OXIDE_SHARED_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
+#ifndef _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
+#define _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/ref_counted.h"
+#include <QSGSimpleTextureNode>
+#include <QtGlobal>
 
-#include "shared/browser/oxide_browser_process_main.h"
+QT_BEGIN_NAMESPACE
+class QSGTexture;
+QT_END_NAMESPACE
 
 namespace oxide {
 
-// Creating the first instance of this class will start up the main
-// browser process components. These will exist until all instances
-// of this class have been destroyed
-class BrowserProcessHandle {
+namespace qt {
+class TextureInfo;
+}
+
+namespace qquick {
+
+class RenderViewItem;
+
+class AcceleratedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  public:
-  BrowserProcessHandle();
-  bool Available() const { return !!handle_; }
+  AcceleratedRenderViewNode(RenderViewItem* item);
+  ~AcceleratedRenderViewNode();
+
+  void updateFrontTexture(const oxide::qt::TextureInfo& tex_info);
 
  private:
-  scoped_refptr<BrowserProcessMain> handle_;
+  RenderViewItem* item_;
 
-  DISALLOW_COPY_AND_ASSIGN(BrowserProcessHandle);
+  QSGTexture* front_texture_;
+  QSGTexture* back_texture_;
 };
 
+} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_PUBLIC_BROWSER_BROWSER_PROCESS_HANDLE_H_
+#endif // _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
