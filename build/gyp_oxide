@@ -22,19 +22,55 @@ import os
 import os.path
 import sys
 
-src_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-chromium_src = os.path.join(src_dir, 'chromium', 'src')
+sys.path.insert(1, os.path.join(os.path.dirname(os.path.realpath(__file__)), 'python'))
+from oxide_utils import CHROMIUMSRCDIR, TOPSRCDIR, CheckCall
 
-sys.path.insert(0, os.path.join(chromium_src, 'tools', 'gyp', 'pylib'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'gyp', 'pylib'))
 try:
     import gyp
 except ImportError:
     print('Cannot find gyp module. Do you have a Chromium checkout?', file=sys.stderr)
     sys.exit(1)
 
-sys.path.insert(1, os.path.join(chromium_src, 'tools', 'grit'))
-sys.path.insert(1, os.path.join(chromium_src, 'chrome', 'tools', 'build'))
-sys.path.insert(1, os.path.join(chromium_src, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
+sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
+sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
+sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
+
+def which(file):
+    try:
+        paths = os.environ["PATH"]
+    except KeyError:
+        paths = os.defpath
+
+    for path in paths.split(":"):
+        full = os.path.join(path, file)
+        if os.access(full, os.F_OK | os.X_OK):
+            return full
+
+def setup_linker_path():
+    # We want to link with gold. Ubuntu has '-fuse-ld=gold', but as this
+    # is distro specific, we do something that is currently supportable
+    # across distributions
+    if os.access(os.path.join(TOPSRCDIR, 'build', 'gold', 'ld'),
+                 os.F_OK | os.F_OK):
+        return
+
+    try:
+        os.makedirs(os.path.join(TOPSRCDIR, 'build', 'gold'))
+    except:
+        pass
+
+    gold = which('ld.gold')
+    if not gold:
+        gold = which('ld')
+        if oxide_utils.CheckCall(['ld', '-v']).find('gold') == -1:
+            gold = None
+
+    if not gold:
+        print('Cannot find gold linker', file=sys.stderr)
+        sys.exit(1)
+
+    os.symlink(gold, os.path.join(TOPSRCDIR, 'build', 'gold', 'ld'))
 
 def additional_include_files(args=[]):
     specified_includes = set()
@@ -47,13 +83,17 @@ def additional_include_files(args=[]):
         if os.path.realpath(path) not in specified_includes:
             result.append(path)
 
-    AddInclude(os.path.join(src_dir, 'shared', 'shared.gypi'))
+    # Always include share.gypi
+    AddInclude(os.path.join(TOPSRCDIR, 'shared', 'shared.gypi'))
 
-    # Always include common.gypi.
-    AddInclude(os.path.join(chromium_src, 'build', 'common.gypi'))
+    # Always include common.gypi from Chromium
+    AddInclude(os.path.join(CHROMIUMSRCDIR, 'build', 'common.gypi'))
+
+    # Always include common.gypi from Oxide
+    AddInclude(os.path.join(TOPSRCDIR, 'build', 'common.gypi'))
 
     # Optionally add supplemental .gypi files if present.
-    supplements = glob.glob(os.path.join(chromium_src, '*', 'supplement.gypi'))
+    supplements = glob.glob(os.path.join(CHROMIUMSRCDIR, '*', 'supplement.gypi'))
     for supplement in supplements:
         AddInclude(supplement)
 
@@ -62,15 +102,17 @@ def additional_include_files(args=[]):
 if __name__ == '__main__':
     args = sys.argv[1:]
 
-    args.append(os.path.join(src_dir, 'build', 'all.gyp'))
+    setup_linker_path()
+
+    args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
     args.extend(['-I' + i for i in additional_include_files(args)])
 
     args.append('--no-circular-check')
-    args.extend(['--toplevel-dir', src_dir])
-    args.extend(['--depth', chromium_src])
+    args.extend(['--toplevel-dir', TOPSRCDIR])
+    args.extend(['--depth', CHROMIUMSRCDIR])
     args.extend(['--suffix', '.oxide'])
     args.extend(['--format', 'make'])
-    args.append('-Goutput_dir=%s' % os.path.join(chromium_src, 'out'))
+    args.append('-Goutput_dir=%s' % os.path.join(CHROMIUMSRCDIR, 'out'))
 
-    os.chdir(src_dir)
+    os.chdir(TOPSRCDIR)
     sys.exit(gyp.main(args))

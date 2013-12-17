@@ -25,6 +25,7 @@
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
 
+#include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_user_script_master.h"
 #include "shared/common/oxide_file_utils.h"
 
@@ -63,7 +64,14 @@ UserScriptAdapterPrivate* UserScriptAdapterPrivate::Create(
 }
 
 void UserScriptAdapterPrivate::StartLoading() {
-  DCHECK_EQ(state_, UserScriptAdapter::Constructing);
+  DCHECK(state_ == UserScriptAdapter::Constructing ||
+         state_ == UserScriptAdapter::Deferred);
+
+  if (!oxide::BrowserProcessMain::Exists()) {
+    state_ = UserScriptAdapter::Deferred;
+    return;
+  }
+
   state_ = UserScriptAdapter::Loading;
 
   DCHECK(user_script_.url().scheme() == "file");

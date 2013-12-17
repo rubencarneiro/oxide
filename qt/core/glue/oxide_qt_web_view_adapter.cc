@@ -40,7 +40,7 @@ void WebViewAdapter::init(WebContextAdapter* context,
                           const QUrl& initial_url,
                           bool visible) {
   if (!priv->Init(
-          WebContextAdapterPrivate::get(context)->GetContext(),
+          WebContextAdapterPrivate::get(context)->context(),
           incognito,
           gfx::Size(initial_size.width(), initial_size.height()))) {
     return;

@@ -1,5 +1,6 @@
-Description: Ensure that AddStandardScheme is unlocked during url_util::Shutdown()
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Ensure that AddStandardScheme is unlocked during url_util::Shutdown(),
+#  so that it can be properly reinitialized without restarting the process
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/url/url_util.cc b/url/url_util.cc
 --- a/url/url_util.cc

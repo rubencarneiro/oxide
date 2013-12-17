@@ -463,9 +463,16 @@ blink::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
 
 }
 
-void RenderWidgetHostView::ScheduleUpdate(const gfx::Rect& rect) {
-  delegate_->ScheduleUpdate(
+void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
+  delegate_->SchedulePaint(
       QRect(rect.x(), rect.y(), rect.width(), rect.height()));
+}
+
+void RenderWidgetHostView::BuffersSwapped(
+    const AcknowledgeBufferPresentCallback& ack) {
+  DCHECK(acknowledge_buffer_present_callback_.is_null());
+  acknowledge_buffer_present_callback_ = ack;
+  delegate_->ScheduleUpdate();
 }
 
 RenderWidgetHostView::RenderWidgetHostView(
@@ -580,6 +587,15 @@ void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHost()->ForwardWheelEvent(
       QWheelEventToWebEvent(event));
   event->accept();
+}
+
+void RenderWidgetHostView::DidUpdate(bool skipped) {
+  if (acknowledge_buffer_present_callback_.is_null()) {
+    return;
+  }
+
+  SendAcknowledgeBufferPresent(acknowledge_buffer_present_callback_, skipped);
+  acknowledge_buffer_present_callback_.Reset();
 }
 
 const QPixmap* RenderWidgetHostView::GetBackingStore() {

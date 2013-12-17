@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QQmlListProperty>
+#include <QQmlParserStatus>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -30,7 +31,8 @@ QT_USE_NAMESPACE
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
 
-class OxideQQuickWebContext : public QObject {
+class OxideQQuickWebContext : public QObject,
+                              public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
@@ -44,6 +46,9 @@ class OxideQQuickWebContext : public QObject {
  public:
   OxideQQuickWebContext(QObject* parent = NULL);
   virtual ~OxideQQuickWebContext();
+
+  void classBegin();
+  void componentComplete();
 
   static OxideQQuickWebContext* defaultContext();
 

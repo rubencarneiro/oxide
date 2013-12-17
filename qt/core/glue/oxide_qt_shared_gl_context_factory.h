@@ -15,12 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_browser_process_handle.h"
+#ifndef _OXIDE_QT_CORE_GLUE_SHARED_GL_CONTEXT_FACTORY_H_
+#define _OXIDE_QT_CORE_GLUE_SHARED_GL_CONTEXT_FACTORY_H_
+
+#include <QtGlobal>
+
+class QOpenGLContext;
 
 namespace oxide {
+namespace qt {
 
-BrowserProcessHandle::BrowserProcessHandle() {
-  handle_ = BrowserProcessMain::GetInstance();
-}
+typedef QOpenGLContext* (SharedGLContextFactory)();
 
+Q_DECL_EXPORT SharedGLContextFactory* GetSharedGLContextFactory();
+Q_DECL_EXPORT void SetSharedGLContextFactory(SharedGLContextFactory* factory);
+
+} // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_GLUE_SHARED_GL_CONTEXT_FACTORY_H_

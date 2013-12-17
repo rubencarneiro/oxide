@@ -93,11 +93,14 @@ class BrowserContext : public content::BrowserContext {
   // is responsible for destroying it when it is finished with it.
   // The caller must ensure that it outlives any other consumers (ie,
   // WebView's), and must ensure that it is destroyed before all
-  // BrowserProcessHandle's have been released
+  // references to the BrowserProcessMain have been released
   static BrowserContext* Create(const base::FilePath& path,
                                 const base::FilePath& cache_path);
 
   static std::vector<BrowserContext *>& GetAllContexts();
+
+  // Aborts if there are any live contexts
+  static void AssertNoContextsExist();
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers);
@@ -123,6 +126,9 @@ class BrowserContext : public content::BrowserContext {
 
   BrowserContextIOData* io_data() const { return io_data_.io_data(); }
 
+  // This is only used as a safety check to ensure that we outlive all
+  // WebView's. If we are destroyed with registered WebView's, then
+  // the application is aborted
   void AddWebView(WebView* wv);
   void RemoveWebView(WebView* wv);
 

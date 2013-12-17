@@ -1,5 +1,5 @@
-Description: Support library versioning in gyp
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Support library versioning in gyp
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/tools/gyp/pylib/gyp/generator/make.py b/tools/gyp/pylib/gyp/generator/make.py
 --- a/tools/gyp/pylib/gyp/generator/make.py

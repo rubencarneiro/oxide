@@ -15,15 +15,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
-  'variables': {
-    'disable_nacl': 1,
-    'linux_use_gold_binary': 0,
-    'linux_use_gold_flags': 0,
-    'linux_use_tcmalloc': 0,
-    'toolkit_uses_gtk': 0,
-    'use_aura': 1,
-    'use_gconf': 0,
-  },
   'target_defaults': {
     'target_conditions': [
       ['_target_name=="content_browser"',

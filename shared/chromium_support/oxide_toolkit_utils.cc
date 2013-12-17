@@ -15,37 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
-#define _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+#include "base/message_loop/message_pump_x11.h"
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
-#include "content/public/browser/browser_main_parts.h"
+#include "shared/browser/oxide_content_browser_client.h"
+#include "shared/common/oxide_content_client.h"
 
-namespace base {
-class MessageLoop;
+#if defined(USE_X11)
+Display* base::MessagePumpX11::GetDefaultXDisplay() {
+  return oxide::ContentClient::GetInstance()->browser()->GetDefaultXDisplay();
 }
-
-namespace oxide {
-
-class BrowserMainParts FINAL : public content::BrowserMainParts {
- public:
-  BrowserMainParts();
-  ~BrowserMainParts();
-
-  void PreEarlyInitialization() FINAL;
-
-  int PreCreateThreads() FINAL;
-
-  bool MainMessageLoopRun(int* result_code) FINAL;
-
- private:
-  scoped_ptr<base::MessageLoop> main_message_loop_;
-
-  DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);
-};
-
-};
-
-#endif // _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
+#endif

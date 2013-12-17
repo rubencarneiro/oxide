@@ -96,8 +96,7 @@ def need_chromium_sync():
   (wanted_url, wanted_rev) = get_wanted_info_from_gclient_config()
 
   if wanted_url != cur_url:
-    raise Exception("The URL specified in the gclient config doesn't match " +
-                    "the current URL")
+    return True
 
   if wanted_rev is '':
     (dummy, wanted_rev) = get_svn_info(wanted_url)
@@ -122,7 +121,15 @@ def sync_chromium():
     f.write("Makefile(\.*|)$\n")
     f.write("^\.hgignore$\n")
     f.write("\.pyc$\n")
+    f.write("\.tmp$\n")
   CheckCall(["hg", "init"], CHROMIUMSRCDIR)
+  hgrc = os.path.join(CHROMIUMSRCDIR, ".hg", "hgrc")
+  if not os.path.isfile(hgrc):
+    with open(hgrc, "w") as f:
+      f.write("[ui]\n")
+      f.write("username = oxide\n\n")
+      f.write("[extensions]\n")
+      f.write("mq =\n")
   CheckCall(["hg", "addremove"], CHROMIUMSRCDIR)
   CheckCall(["hg", "ci", "-m", "Base checkout with client.py"], CHROMIUMSRCDIR)
   CheckCall(["hg", "qinit"], CHROMIUMSRCDIR)
@@ -148,7 +155,8 @@ def main():
   ensure_patch_consistency(patchset)
 
   if need_chromium_sync():
-    unapply_chromium_patches(patchset.hg_patches)
+    if os.path.exists(CHROMIUMSRCDIR):
+      unapply_chromium_patches(patchset.hg_patches)
     sync_chromium()
     patchset.refresh()
 

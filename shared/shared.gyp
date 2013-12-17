@@ -75,7 +75,7 @@
       'dependencies': [
         'oxide_shared_resources',
         '<(DEPTH)/content/content_resources.gyp:content_resources',
-        '<(DEPTH)/ui/ui.gyp:ui_resources'
+        '<(DEPTH)/ui/resources/ui_resources.gyp:ui_resources'
       ],
       'actions': [
         {
@@ -145,6 +145,7 @@
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
+        '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/ui.gyp:ui',
         '<(DEPTH)/url/url.gyp:url_lib',
         '<(DEPTH)/webkit/common/user_agent/webkit_user_agent.gyp:user_agent'
@@ -160,10 +161,6 @@
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_impl.cc',
         'browser/oxide_browser_context_impl.h',
-        'browser/oxide_browser_main_parts.cc',
-        'browser/oxide_browser_main_parts.h',
-        'browser/oxide_browser_process_handle.cc',
-        'browser/oxide_browser_process_handle.h',
         'browser/oxide_browser_process_main.cc',
         'browser/oxide_browser_process_main.h',
         'browser/oxide_content_browser_client.cc',
@@ -187,6 +184,8 @@
         'browser/oxide_outgoing_message_request.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
+        'browser/oxide_shared_gl_context.cc',
+        'browser/oxide_shared_gl_context.h',
         'browser/oxide_ssl_config_service.cc',
         'browser/oxide_ssl_config_service.h',
         'browser/oxide_url_request_context.cc',
@@ -202,6 +201,7 @@
         'browser/oxide_web_view.cc',
         'browser/oxide_web_view.h',
         'chromium_support/oxide_compositor_util.cc',
+        'chromium_support/oxide_toolkit_utils.cc',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',

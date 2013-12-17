@@ -1,6 +1,6 @@
-# HG changeset patch
-# Parent 6d1c3073852d9c32e8e5133b09931315034be696
-# User Chris Coulson <chris.coulson@canonical.com>
+# Description: Make content::RenderViewObserver::FrameCreated() work correctly,
+#  so that we can track frames in the browser process
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc

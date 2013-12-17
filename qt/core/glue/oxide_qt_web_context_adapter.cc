@@ -97,8 +97,12 @@ void WebContextAdapter::updateUserScripts() {
   priv->UpdateUserScripts();
 }
 
-bool WebContextAdapter::inUse() const {
-  return priv->InUse();
+bool WebContextAdapter::constructed() const {
+  return priv->context() != NULL;
+}
+
+void WebContextAdapter::completeConstruction() {
+  priv->CompleteConstruction();
 }
 
 WebContextAdapter::WebContextAdapter() :

@@ -1,12 +1,12 @@
-Description: Allow embedders to override RenderWidgetHostViewPort::GetDefaultScreenInfo
- This modifies the Aura implementation of RWHVP::GetDefaultScreenInfo so that it
- can delegate to embedders, rather than using Aura / X11 to do this
-Author: Chris Coulson <chris.coulson@canonical.com>
+# Description: Allow embedders to override RenderWidgetHostViewPort::GetDefaultScreenInfo
+#  This modifies the Aura implementation of RWHVP::GetDefaultScreenInfo so that it
+#  can delegate to embedders, rather than using Aura / X11 to do this
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/browser/renderer_host/render_widget_host_view_aura.cc b/content/browser/renderer_host/render_widget_host_view_aura.cc
 --- a/content/browser/renderer_host/render_widget_host_view_aura.cc
 +++ b/content/browser/renderer_host/render_widget_host_view_aura.cc
-@@ -3362,12 +3362,13 @@ void RenderWidgetHostViewAura::DetachFro
+@@ -3456,12 +3456,13 @@ void RenderWidgetHostViewAura::DetachFro
  // static
  RenderWidgetHostView* RenderWidgetHostView::CreateViewForWidget(
      RenderWidgetHost* widget) {
@@ -24,17 +24,18 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_aura.cc b/con
 diff --git a/content/browser/renderer_host/render_widget_host_view_base.cc b/content/browser/renderer_host/render_widget_host_view_base.cc
 --- a/content/browser/renderer_host/render_widget_host_view_base.cc
 +++ b/content/browser/renderer_host/render_widget_host_view_base.cc
-@@ -8,16 +8,18 @@
+@@ -5,16 +5,18 @@
+ #include "content/browser/renderer_host/render_widget_host_view_base.h"
+ 
+ #include "base/logging.h"
  #include "content/browser/accessibility/browser_accessibility_manager.h"
  #include "content/browser/gpu/gpu_data_manager_impl.h"
- #include "content/browser/renderer_host/basic_mouse_wheel_smooth_scroll_gesture.h"
  #include "content/browser/renderer_host/input/synthetic_gesture_target_base.h"
  #include "content/browser/renderer_host/render_process_host_impl.h"
  #include "content/browser/renderer_host/render_widget_host_impl.h"
- #include "content/port/browser/render_widget_host_view_frame_subscriber.h"
- #include "content/port/browser/synthetic_gesture.h"
 +#include "content/public/browser/content_browser_client.h"
 +#include "content/public/common/content_client.h"
+ #include "content/port/browser/render_widget_host_view_frame_subscriber.h"
  #include "third_party/WebKit/public/platform/WebScreenInfo.h"
  #include "ui/gfx/display.h"
  #include "ui/gfx/screen.h"
@@ -42,8 +43,7 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.cc b/con
  #include "ui/gfx/size_f.h"
  
  #if defined(OS_WIN)
- #include "base/command_line.h"
-@@ -380,16 +382,22 @@ void RenderWidgetHostViewBase::DetachPlu
+@@ -378,16 +380,22 @@ void RenderWidgetHostViewBase::DetachPlu
  
  namespace {
  
@@ -90,7 +90,7 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/cont
  // subclasses.
  //
  // Note that nothing should use this class, except concrete subclasses
-@@ -103,16 +107,18 @@ class CONTENT_EXPORT RenderWidgetHostVie
+@@ -97,16 +101,18 @@ class CONTENT_EXPORT RenderWidgetHostVie
    bool HasDisplayPropertyChanged(gfx::NativeView view);
  
  #if defined(OS_WIN)
@@ -112,12 +112,12 @@ diff --git a/content/browser/renderer_host/render_widget_host_view_base.h b/cont
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -283,16 +283,21 @@ ui::SelectFilePolicy* ContentBrowserClie
-     WebContents* web_contents) {
+@@ -287,16 +287,21 @@ ui::SelectFilePolicy* ContentBrowserClie
+ LocationProvider* ContentBrowserClient::OverrideSystemLocationProvider() {
    return NULL;
  }
  
- LocationProvider* ContentBrowserClient::OverrideSystemLocationProvider() {
+ VibrationProvider* ContentBrowserClient::OverrideVibrationProvider() {
    return NULL;
  }
  
@@ -155,14 +155,14 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class FilePath;
  }
  namespace crypto {
-@@ -566,16 +567,19 @@ class CONTENT_EXPORT ContentBrowserClien
-       BrowserContext* browser_context,
-       const base::FilePath& storage_partition_path,
-       ScopedVector<fileapi::FileSystemBackend>* additional_backends) {}
+@@ -580,16 +581,19 @@ class CONTENT_EXPORT ContentBrowserClien
  
-   // Allows an embedder to return its own LocationProvider implementation.
+   // Allows an embedder to return its own VibrationProvider implementation.
    // Return NULL to use the default one for the platform to be created.
-   virtual LocationProvider* OverrideSystemLocationProvider();
+   // FYI: Used by an external project; please don't remove.
+   // Contact Viatcheslav Ostapenko at sl.ostapenko@samsung.com for more
+   // information.
+   virtual VibrationProvider* OverrideVibrationProvider();
  
 +  // Allows an embedder to override RenderViewHostPort::GetDefaultScreenInfo
 +  virtual bool GetDefaultScreenInfo(blink::WebScreenInfo* result);
