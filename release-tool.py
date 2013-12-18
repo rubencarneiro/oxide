@@ -32,7 +32,11 @@ from oxide_utils import (
 import subcommand
 
 TAR_EXCLUDE_RE_S = [
+  r'^chromium\/src\/chrome\/test\/data\/',
+  r'^chromium\/src\/native_client\/src\/trusted\/service_runtime\/',
+  r'^chromium\/src\/native_client\/toolchain\/',
   r'^chromium\/src\/out\/',
+  r'^chromium\/src\/third_party\/WebKit\/LayoutTests\/',
   r'(^|\/)\.git(\/|$)',
   r'(^|\/)\.gitignore$',
   r'(^|\/)\.gitattributes$',
@@ -149,7 +153,7 @@ class SourceTreeVersion(object):
                           help="Create a tarball even if the tree has "
                                "uncommitted changes")
 @subcommand.CommandOption("-c", "--compression", dest="compression", action="store",
-                          type="string", default="bz2",
+                          type="string", default="xz",
                           help="Specify the compression (gz, bz2 or xz)")
 def cmd_make_tarball(options, args):
   """Create a tarball.
