@@ -28,6 +28,7 @@
 #include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/notification_details.h"
+#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/notification_service.h"
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
@@ -207,7 +208,8 @@ void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
 WebView::WebView() :
-    root_frame_(NULL) {}
+    root_frame_(NULL),
+    registrar_(NULL) {}
 
 WebView::~WebView() {
   if (web_contents_) {
@@ -243,10 +245,11 @@ bool WebView::Init(BrowserContext* context,
   web_contents_->SetDelegate(this);
   WebContentsObserver::Observe(web_contents_.get());
 
-  registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
-                 content::NotificationService::AllBrowserContextsAndSources());
-  registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
-                 content::NotificationService::AllBrowserContextsAndSources());
+  registrar_ = new content::NotificationRegistrar;
+  registrar_->Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
+                  content::NotificationService::AllBrowserContextsAndSources());
+  registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
+                  content::NotificationService::AllBrowserContextsAndSources());
 
   return true;
 }
@@ -256,6 +259,9 @@ void WebView::Shutdown() {
     LOG(ERROR) << "Called Shutdown() on a webview that isn't initialized";
     return;
   }
+
+  delete registrar_;
+  registrar_ = NULL;
 
   WebContentsObserver::Observe(NULL);
 

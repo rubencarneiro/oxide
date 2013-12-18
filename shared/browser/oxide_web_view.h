@@ -25,7 +25,6 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/notification_observer.h"
-#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
@@ -43,6 +42,7 @@ class Size;
 
 namespace content {
 
+class NotificationRegistrar;
 struct OpenURLParams;
 class RenderWidgetHost;
 class RenderWidgetHostView;
@@ -225,7 +225,7 @@ class WebView : public MessageTarget,
   scoped_ptr<content::WebContents> web_contents_;
   WebFrame* root_frame_;
 
-  content::NotificationRegistrar registrar_;
+  content::NotificationRegistrar* registrar_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
