@@ -62,6 +62,13 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
   }
 }
 
+void WebView::LoadProgressChanged(content::WebContents* source,
+                                  double progress) {
+  DCHECK_EQ(source, web_contents_.get());
+
+  OnLoadProgressChanged(progress);
+}
+
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
                                  const base::string16& error_description) {
@@ -185,6 +192,8 @@ void WebView::OnFrameCreated(int64 parent_frame_id,
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnCommandsUpdated() {}
+
+void WebView::OnLoadProgressChanged(double progress) {}
 
 void WebView::OnRootFrameChanged() {}
 
