@@ -59,7 +59,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     context(NULL),
     popup_menu(NULL),
     init_props_(new InitData()),
-    load_progress_(100),
+    load_progress_(0),
     q_ptr(view) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
