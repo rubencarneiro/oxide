@@ -8,10 +8,19 @@ TestWebView {
   width: 200
   height: 200
 
+  // should never be true
+  readonly property bool inconsistentState: (!loading) && (loadProgress < 100)
+
   SignalSpy {
-    id: spy
+    id: loadProgressSpy
     target: webView
     signalName: "loadProgressChanged"
+  }
+
+  SignalSpy {
+    id: inconsistentStateSpy
+    target: webView
+    signalName: "inconsistentStateChanged"
   }
 
   TestCase {
@@ -19,8 +28,10 @@ TestWebView {
     when: windowShown
 
     function test_WebView_loadProgress() {
-      compare(webView.loadProgress, 0,
-              "WebView.loadProgress should be 0% before we start loading");
+      compare(webView.loadProgress, 100,
+              "WebView.loadProgress should be 100% when not loading");
+      verify(!webView.inconsistentState,
+             "WebView.loadProgress should be 100% when not loading");
 
       webView.url = "http://localhost:8080/tst_WebView_loadProgress.html";
       verify(webView.waitForLoadSucceeded(),
@@ -28,8 +39,10 @@ TestWebView {
 
       compare(webView.loadProgress, 100,
               "WebView.loadProgress should be 100% after we finish loading");
-      verify(spy.count > 0,
+      verify(loadProgressSpy.count > 0,
               "WebView.loadProgress should have changed during the load");
+      compare(inconsistentStateSpy.count, 0,
+              "WebView.loadProgress should be 100% when not loading");
     }
   }
 }
