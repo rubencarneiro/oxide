@@ -183,6 +183,8 @@ class WebView : public MessageTarget,
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
 
+  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
@@ -205,6 +207,8 @@ class WebView : public MessageTarget,
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnCommandsUpdated();
+
+  virtual void OnLoadProgressChanged(double progress);
 
   virtual void OnRootFrameChanged();
 

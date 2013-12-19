@@ -60,6 +60,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     context(NULL),
     popup_menu(NULL),
     init_props_(new InitData()),
+    load_progress_(0),
     q_ptr(view),
     alert_dialog_delegate_(view),
     confirm_dialog_delegate_(view),
@@ -99,6 +100,13 @@ void OxideQQuickWebViewPrivate::CommandsUpdated() {
   Q_Q(OxideQQuickWebView);
 
   emit q->navigationHistoryChanged();
+}
+
+void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
+  Q_Q(OxideQQuickWebView);
+
+  load_progress_ = progress * 100;
+  emit q->loadProgressChanged();
 }
 
 void OxideQQuickWebViewPrivate::RootFrameChanged() {
@@ -409,6 +417,12 @@ bool OxideQQuickWebView::loading() const {
   Q_D(const OxideQQuickWebView);
 
   return d->loading();
+}
+
+int OxideQQuickWebView::loadProgress() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->load_progress_;
 }
 
 OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {

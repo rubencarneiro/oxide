@@ -93,14 +93,12 @@ class OffscreenGraphicsContextRef :
     }
 
     GURL url("oxide://shared/OffscreenGraphicsContextRef::OffscreenGraphicsContextRef");
-    bool use_echo_for_swap_ack = true;
 
     context3d_.reset(
       new content::WebGraphicsContext3DCommandBufferImpl(
           0,
           url,
           gpu_channel_host.get(),
-          use_echo_for_swap_ack,
           attrs,
           false,
           content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits()));
