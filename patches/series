@@ -14,6 +14,5 @@ allow-blocking-pool-to-be-restarted.patch
 share-gl-resources-with-embedder.patch
 allow-gpu-process-to-be-restarted.patch
 comment-out-GetDefaultXDisplay.patch
-arm-crypto.patch
 arm-icu.patch
 dont-check-number-of-threads-at-startup.patch
