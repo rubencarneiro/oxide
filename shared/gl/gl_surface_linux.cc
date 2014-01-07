@@ -20,6 +20,7 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "ui/gl/gl_implementation.h"
+#include "ui/gl/gl_surface_egl.h"
 #include "ui/gl/gl_surface_glx.h"
 
 namespace gfx {
@@ -29,6 +30,14 @@ bool GLSurface::InitializeOneOffInternal() {
     case kGLImplementationDesktopGL: {
       if (!GLSurfaceGLX::InitializeOneOff()) {
         LOG(ERROR) << "GLSurfaceGLX::InitializeOneOff failed.";
+        return false;
+      }
+      break;
+    }
+
+    case kGLImplementationEGLGLES2: {
+      if (!GLSurfaceEGL::InitializeOneOff()) {
+        LOG(ERROR) << "GLSurfaceEGL::InitializeOneOff failed.";
         return false;
       }
       break;
@@ -53,6 +62,16 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
   switch (GetGLImplementation()) {
     case kGLImplementationDesktopGL: {
       scoped_refptr<GLSurface> surface(new PbufferGLSurfaceGLX(size));
+      if (!surface->Initialize()) {
+        return NULL;
+      }
+
+      return surface;
+    }
+
+    case kGLImplementationEGLGLES2: {
+      // XXX: Support SurfacelessEGL
+      scoped_refptr<GLSurface> surface(new PbufferGLSurfaceEGL(size));
       if (!surface->Initialize()) {
         return NULL;
       }

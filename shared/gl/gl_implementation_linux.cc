@@ -19,9 +19,12 @@
 
 #include <vector>
 
+#include "base/bind.h"
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/native_library.h"
+#include "ui/gfx/ozone/surface_factory_ozone.h"
+#include "ui/gl/gl_egl_api_implementation.h"
 #include "ui/gl/gl_gl_api_implementation.h"
 #include "ui/gl/gl_glx_api_implementation.h"
 
@@ -33,6 +36,15 @@
 namespace gfx {
 
 namespace {
+
+void GL_BINDING_CALL MarshalClearDepthToClearDepthf(GLclampd depth) {
+  glClearDepthf(static_cast<GLclampf>(depth));
+}
+
+void GL_BINDING_CALL MarshalDepthRangeToDepthRangef(GLclampd z_near,
+                                                    GLclampd z_far) {
+  glDepthRangef(static_cast<GLclampf>(z_near), static_cast<GLclampf>(z_far));
+}
 
 // Load a library, printing an error message on failure.
 base::NativeLibrary LoadLibrary(const base::FilePath& filename) {
@@ -54,19 +66,21 @@ base::NativeLibrary LoadLibrary(const char* filename) {
 void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
   GLShareGroup* share_group =
       oxide::ContentClient::instance()->browser()->GetGLShareGroup();
-  if (share_group) {
-    oxide::SharedGLContext* share_context =
-        oxide::SharedGLContext::FromGfx(share_group->GetContext());
-    if (share_context) {
-      // FIXME: Support EGL
-      DCHECK(share_context->GetImplementation() == kGLImplementationDesktopGL);
-      impls->push_back(share_context->GetImplementation());
-    }
+  if (!share_group) {
+    impls->push_back(kGLImplementationEGLGLES2);
+    return;
   }
 
-  if (impls->size() == 0) {
-    // FIXME: With no context sharing, just use EGL
+  oxide::SharedGLContext* share_context =
+      oxide::SharedGLContext::FromGfx(share_group->GetContext());
+  if (!share_context) {
+    impls->push_back(kGLImplementationEGLGLES2);
+    return;
   }
+
+  DCHECK(share_context->GetImplementation() == kGLImplementationDesktopGL ||
+         share_context->GetImplementation() == kGLImplementationEGLGLES2);
+  impls->push_back(share_context->GetImplementation());
 }
 
 bool InitializeGLBindings(GLImplementation implementation) {
@@ -100,6 +114,25 @@ bool InitializeGLBindings(GLImplementation implementation) {
       break;
     }
 
+    case kGLImplementationEGLGLES2: {
+      if (!SurfaceFactoryOzone::GetInstance()->LoadEGLGLES2Bindings(
+              base::Bind(&AddGLNativeLibrary),
+              base::Bind(&SetGLGetProcAddressProc))) {
+        return false;
+      }
+
+      SetGLImplementation(kGLImplementationEGLGLES2);
+
+      InitializeGLBindingsGL();
+      InitializeGLBindingsEGL();
+
+      // These two functions take single precision float rather than double
+      // precision float parameters in GLES.
+      ::gfx::g_driver_gl.fn.glClearDepthFn = MarshalClearDepthToClearDepthf;
+      ::gfx::g_driver_gl.fn.glDepthRangeFn = MarshalDepthRangeToDepthRangef;
+      break;
+    }
+
     default:
       NOTIMPLEMENTED();
       return false;
@@ -116,6 +149,13 @@ bool InitializeGLExtensionBindings(GLImplementation implementation,
       InitializeGLExtensionBindingsGLX(context);
       break;
     }
+
+    case kGLImplementationEGLGLES2: {
+      InitializeGLExtensionBindingsGL(context);
+      InitializeGLExtensionBindingsEGL(context);
+      break;
+    }
+
     default:
       return false;
   }
@@ -125,11 +165,13 @@ bool InitializeGLExtensionBindings(GLImplementation implementation,
 
 void InitializeDebugGLBindings() {
   InitializeDebugGLBindingsGL();
+  InitializeDebugGLBindingsEGL();
   InitializeDebugGLBindingsGLX();
 }
 
 void ClearGLBindings() {
   ClearGLBindingsGL();
+  ClearGLBindingsEGL();
   ClearGLBindingsGLX();
 
   SetGLImplementation(kGLImplementationNone);
@@ -141,6 +183,8 @@ bool GetGLWindowSystemBindingInfo(GLWindowSystemBindingInfo* info) {
   switch (GetGLImplementation()) {
     case kGLImplementationDesktopGL:
       return GetGLWindowSystemBindingInfoGLX(info);
+    case kGLImplementationEGLGLES2:
+      return GetGLWindowSystemBindingInfoEGL(info);
     default:
       return false;
   }

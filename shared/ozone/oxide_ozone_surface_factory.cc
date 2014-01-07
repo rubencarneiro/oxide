@@ -17,11 +17,32 @@
 
 #include "oxide_ozone_surface_factory.h"
 
+#include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/native_library.h"
 
 #include "shared/common/oxide_content_client.h"
 
 namespace oxide {
+
+namespace {
+
+// Load a library, printing an error message on failure.
+base::NativeLibrary LoadLibrary(const base::FilePath& filename) {
+  std::string error;
+  base::NativeLibrary library = base::LoadNativeLibrary(filename, &error);
+  if (!library) {
+    DVLOG(1) << "Failed to load " << filename.MaybeAsASCII() << ": " << error;
+    return NULL;
+  }
+  return library;
+}
+
+base::NativeLibrary LoadLibrary(const char* filename) {
+  return LoadLibrary(base::FilePath(filename));
+}
+
+} // namespace
 
 OzoneSurfaceFactory::OzoneSurfaceFactory() {}
 
@@ -50,6 +71,32 @@ gfx::AcceleratedWidget OzoneSurfaceFactory::RealizeAcceleratedWidget(
 bool OzoneSurfaceFactory::LoadEGLGLES2Bindings(
     AddGLLibraryCallback add_gl_library,
     SetGLGetProcAddressProcCallback set_gl_get_proc_address) {
+  base::NativeLibrary gles_library = LoadLibrary("libGLESv2.so.2");
+  if (!gles_library) {
+    return false;
+  }
+
+  base::NativeLibrary egl_library = LoadLibrary("libEGL.so.1");
+  if (!egl_library) {
+    base::UnloadNativeLibrary(gles_library);
+    return false;
+  }
+
+  GLGetProcAddressProc get_proc_address =
+      reinterpret_cast<GLGetProcAddressProc>(
+        base::GetFunctionPointerFromNativeLibrary(
+          egl_library, "eglGetProcAddress"));
+  if (!get_proc_address) {
+    LOG(ERROR) << "eglGetProcAddress not found.";
+    base::UnloadNativeLibrary(egl_library);
+    base::UnloadNativeLibrary(gles_library);
+    return false;
+  }
+
+  set_gl_get_proc_address.Run(get_proc_address);
+  add_gl_library.Run(egl_library);
+  add_gl_library.Run(gles_library);
+
   return true;
 }
 
