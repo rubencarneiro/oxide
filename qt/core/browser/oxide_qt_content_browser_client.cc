@@ -56,6 +56,11 @@ class SharedGLContext : public oxide::SharedGLContext {
       if (!handle_) {
         implementation_ = gfx::kGLImplementationNone;
       }
+    } else if (platform == "ubuntu") {
+      handle_ = pni->nativeResourceForContext("eglcontext", context);
+      if (handle_) {
+        implementation_ = gfx::kGLImplementationEGLGLES2;
+      }
     } else {
       DLOG(WARNING) << "Unsupported platform: " << qPrintable(platform);
     }
