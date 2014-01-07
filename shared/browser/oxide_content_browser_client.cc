@@ -26,6 +26,10 @@
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/gfx/display.h"
+#include "ui/gfx/screen.h"
+#include "ui/gfx/screen_type_delegate.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
@@ -50,6 +54,75 @@ base::MessagePump* CreateMessagePumpForUI() {
 
 class BrowserMainParts;
 BrowserMainParts* g_main_parts;
+
+class Screen : public gfx::Screen {
+ public:
+  Screen() {}
+
+  bool IsDIPEnabled() FINAL {
+    NOTIMPLEMENTED();
+    return true;
+  }
+
+  gfx::Point GetCursorScreenPoint() FINAL {
+    NOTIMPLEMENTED();
+    return gfx::Point();
+  }
+
+  gfx::NativeWindow GetWindowUnderCursor() FINAL {
+    NOTIMPLEMENTED();
+    return NULL;
+  }
+
+  gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) FINAL {
+    NOTIMPLEMENTED();
+    return NULL;
+  }
+
+  int GetNumDisplays() const FINAL {
+    NOTIMPLEMENTED();
+    return 1;
+  }
+
+  std::vector<gfx::Display> GetAllDisplays() const FINAL {
+    NOTIMPLEMENTED();
+    return std::vector<gfx::Display>();
+  }
+
+  gfx::Display GetDisplayNearestWindow(gfx::NativeView view) const FINAL {
+    NOTIMPLEMENTED();
+    return gfx::Display();
+  }
+
+  gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const FINAL {
+    NOTIMPLEMENTED();
+    return gfx::Display();
+  }
+
+  gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const FINAL {
+    NOTIMPLEMENTED();
+    return gfx::Display();
+  }
+
+  gfx::Display GetPrimaryDisplay() const FINAL {
+    blink::WebScreenInfo info;
+    ContentClient::instance()->browser()->GetDefaultScreenInfo(&info);
+
+    gfx::Display display;
+    display.set_bounds(info.rect);
+    display.set_work_area(info.availableRect);
+    display.set_device_scale_factor(info.deviceScaleFactor);
+
+    return display;
+  }
+
+  void AddObserver(gfx::DisplayObserver* observer) FINAL {
+    NOTIMPLEMENTED();
+  }
+  void RemoveObserver(gfx::DisplayObserver* observer) FINAL {
+    NOTIMPLEMENTED();
+  }
+};
 
 class BrowserMainParts : public content::BrowserMainParts {
  public:
@@ -77,6 +150,8 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
+    gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
+                                   &primary_screen_);
     BrowserProcessMain::CreateIOThreadDelegate();
     return 0;
   }
@@ -86,6 +161,10 @@ class BrowserMainParts : public content::BrowserMainParts {
     return true;
   }
 
+  void PostDestroyThreads() FINAL {
+    gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
+  }
+
   gfx::GLContext* shared_gl_context() const {
     return shared_gl_context_;
   }
@@ -93,9 +172,13 @@ class BrowserMainParts : public content::BrowserMainParts {
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
   scoped_refptr<gfx::GLContext> shared_gl_context_;
+
+  Screen primary_screen_;
 };
 
 } // namespace
+
+ContentBrowserClient::ContentBrowserClient() {}
 
 ContentBrowserClient::~ContentBrowserClient() {}
 
@@ -171,12 +254,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     prefs->force_compositing_mode = false;
     prefs->accelerated_compositing_enabled = false;
   }
-}
-
-bool ContentBrowserClient::GetDefaultScreenInfo(
-    blink::WebScreenInfo* result) {
-  GetDefaultScreenInfoImpl(result);
-  return true;
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {

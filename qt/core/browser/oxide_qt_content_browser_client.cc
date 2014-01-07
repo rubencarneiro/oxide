@@ -78,9 +78,8 @@ class SharedGLContext : public oxide::SharedGLContext {
 
 ContentBrowserClient::ContentBrowserClient() {}
 
-void ContentBrowserClient::GetDefaultScreenInfoImpl(
-    blink::WebScreenInfo* result) {
-  RenderWidgetHostView::GetScreenInfo(NULL, result);
+base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
+  return new MessagePump();
 }
 
 scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
@@ -107,8 +106,8 @@ scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
   return context;
 }
 
-base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
-  return new MessagePump();
+void ContentBrowserClient::GetDefaultScreenInfo(blink::WebScreenInfo* result) {
+  RenderWidgetHostView::GetScreenInfo(NULL, result);
 }
 
 } // namespace qt

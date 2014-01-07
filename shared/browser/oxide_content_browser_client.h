@@ -27,6 +27,10 @@ namespace base {
 class MessagePump;
 }
 
+namespace blink {
+class WebScreenInfo;
+}
+
 namespace content {
 class RenderViewHost;
 }
@@ -74,8 +78,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                            const GURL& url,
                            WebPreferences* prefs) FINAL;
 
-  bool GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
-
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
   // Extra Oxide methods
@@ -84,13 +86,13 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
       oxide::GLShareGroup* share_group);
 
+  virtual void GetDefaultScreenInfo(blink::WebScreenInfo* result) = 0;
+
  protected:
   // Limit default constructor access to derived classes
-  ContentBrowserClient() {}
+  ContentBrowserClient();
 
  private:
-  virtual void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) = 0;
-
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 
