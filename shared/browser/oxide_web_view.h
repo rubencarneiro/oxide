@@ -225,7 +225,7 @@ class WebView : public MessageTarget,
   scoped_ptr<content::WebContents> web_contents_;
   WebFrame* root_frame_;
 
-  content::NotificationRegistrar* registrar_;
+  scoped_ptr<content::NotificationRegistrar> registrar_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

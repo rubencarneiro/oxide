@@ -208,8 +208,7 @@ void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
 WebView::WebView() :
-    root_frame_(NULL),
-    registrar_(NULL) {}
+    root_frame_(NULL) {}
 
 WebView::~WebView() {
   if (web_contents_) {
@@ -245,7 +244,7 @@ bool WebView::Init(BrowserContext* context,
   web_contents_->SetDelegate(this);
   WebContentsObserver::Observe(web_contents_.get());
 
-  registrar_ = new content::NotificationRegistrar;
+  registrar_.reset(new content::NotificationRegistrar);
   registrar_->Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                   content::NotificationService::AllBrowserContextsAndSources());
   registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
@@ -260,8 +259,7 @@ void WebView::Shutdown() {
     return;
   }
 
-  delete registrar_;
-  registrar_ = NULL;
+  registrar_.reset();
 
   WebContentsObserver::Observe(NULL);
 
