@@ -23,7 +23,6 @@
     'linux_use_tcmalloc': 0,
     'sysroot': '',
     'use_aura': 1,
-    'use_clipboard_aurax11': 0,
     'use_gconf': 0,
     'use_ozone': 1,
     'ozone_platform': 'oxide',

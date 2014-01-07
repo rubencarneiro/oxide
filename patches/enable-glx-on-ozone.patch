@@ -1,6 +1,6 @@
-# HG changeset patch
-# Parent 83606cd0e23c16ef71f00aadf19cf9e0eb017610
-# User oxide
+# Description: Ozone builds of Chromium only support EGL, so add back support
+#  for GLX, which is needed to share GL resources with Qt on X11
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
