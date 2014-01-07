@@ -1,0 +1,26 @@
+# HG changeset patch
+# Parent 34185c231111c861857cec0050a016b47378f2b2
+# User oxide
+
+diff --git a/ui/ui.gyp b/ui/ui.gyp
+--- a/ui/ui.gyp
++++ b/ui/ui.gyp
+@@ -420,17 +420,17 @@
+             }],
+           ],
+         }],
+         ['use_pango==1', {
+           'dependencies': [
+             '../build/linux/system.gyp:pangocairo',
+           ],
+         }],
+-        ['use_x11==0 or use_clipboard_aurax11==1', {
++        ['OS=="win" or use_clipboard_aurax11==1', {
+           'sources!': [
+             'base/clipboard/clipboard_aura.cc',
+           ],
+         }, {
+           'sources!': [
+             'base/clipboard/clipboard_aurax11.cc',
+           ],
+         }],

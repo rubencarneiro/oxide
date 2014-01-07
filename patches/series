@@ -16,3 +16,4 @@ allow-gpu-process-to-be-restarted.patch
 arm-icu.patch
 dont-check-number-of-threads-at-startup.patch
 enable-glx-on-ozone.patch
+svn-trunk-r241390.patch
