@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
 
 #include "ui/gl/gl_context.h"
+#include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_share_group.h"
 
 namespace oxide {
@@ -43,7 +44,10 @@ class SharedGLContext : public gfx::GLContext {
   SharedGLContext(oxide::GLShareGroup* share_group);
   virtual ~SharedGLContext();
 
+  static SharedGLContext* FromGfx(gfx::GLContext* context);
+
   void* GetHandle() = 0;
+  virtual gfx::GLImplementation GetImplementation() = 0;
 
   bool Initialize(gfx::GLSurface* compatible_surface,
                   gfx::GpuPreference gpu_preference) FINAL;

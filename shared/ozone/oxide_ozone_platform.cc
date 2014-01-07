@@ -15,38 +15,38 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_main_delegate.h"
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "base/logging.h"
+#include "ui/ozone/ozone_platform.h"
 
-#include "base/lazy_instance.h"
-
-#include "qt/core/browser/oxide_qt_content_browser_client.h"
-
-#include "oxide_qt_content_client.h"
+#include "oxide_ozone_surface_factory.h"
 
 namespace oxide {
-namespace qt {
 
-namespace {
-base::LazyInstance<ContentBrowserClient> g_content_browser_client =
-    LAZY_INSTANCE_INITIALIZER;
-}
+class OzonePlatform : public ui::OzonePlatform {
+ public:
+  OzonePlatform() {}
+  virtual ~OzonePlatform() {}
 
-content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClientImpl() {
-  return g_content_browser_client.Pointer();
-}
+  gfx::SurfaceFactoryOzone* GetSurfaceFactoryOzone() OVERRIDE {
+    return &surface_factory_;
+  }
 
-oxide::ContentClient* ContentMainDelegate::CreateContentClient() {
-  return ContentClient::GetInstance();
-}
+  ui::EventFactoryOzone* GetEventFactoryOzone() OVERRIDE {
+    return NULL;
+  }
 
-ContentMainDelegate::ContentMainDelegate() {}
-
-} // namespace qt
-
-// static
-ContentMainDelegate* ContentMainDelegate::Create() {
-  return new qt::ContentMainDelegate();
-}
+ private:
+  OzoneSurfaceFactory surface_factory_;
+};
 
 } // namespace oxide
+
+namespace ui {
+
+OzonePlatform* CreateOzonePlatformOxide() {
+  return new oxide::OzonePlatform();
+}
+
+} // namespace ui

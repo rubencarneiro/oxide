@@ -32,11 +32,11 @@
 
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_message_pump.h"
-#include "oxide_shared_gl_context.h"
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
@@ -44,7 +44,7 @@ namespace oxide {
 namespace {
 
 base::MessagePump* CreateMessagePumpForUI() {
-  return ContentClient::GetInstance()->browser()->
+  return ContentClient::instance()->browser()->
       CreateMessagePumpForUI();
 }
 
@@ -69,7 +69,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   
     scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
     shared_gl_context_ =
-        ContentClient::GetInstance()->browser()->CreateSharedGLContext(
+        ContentClient::instance()->browser()->CreateSharedGLContext(
           share_group);
     if (shared_gl_context_) {
       DCHECK_EQ(shared_gl_context_->share_group(), share_group);

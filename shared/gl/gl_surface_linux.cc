@@ -1,0 +1,68 @@
+// vim:expandtab:shiftwidth=2:tabstop=2:
+// Copyright (C) 2013 Canonical Ltd.
+
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+#include "ui/gl/gl_surface.h"
+
+#include "base/logging.h"
+#include "base/memory/ref_counted.h"
+#include "ui/gl/gl_implementation.h"
+#include "ui/gl/gl_surface_glx.h"
+
+namespace gfx {
+
+bool GLSurface::InitializeOneOffInternal() {
+  switch (GetGLImplementation()) {
+    case kGLImplementationDesktopGL: {
+      if (!GLSurfaceGLX::InitializeOneOff()) {
+        LOG(ERROR) << "GLSurfaceGLX::InitializeOneOff failed.";
+        return false;
+      }
+      break;
+    }
+
+    default:
+      return false;
+  }
+
+  return true;
+}
+
+scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
+    gfx::AcceleratedWidget window) {
+  NOTREACHED();
+  return NULL;
+}
+
+
+scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
+    const gfx::Size& size) {
+  switch (GetGLImplementation()) {
+    case kGLImplementationDesktopGL: {
+      scoped_refptr<GLSurface> surface(new PbufferGLSurfaceGLX(size));
+      if (!surface->Initialize()) {
+        return NULL;
+      }
+
+      return surface;
+    }
+
+    default:
+      return NULL;
+  }
+}
+
+} // namespace gfx

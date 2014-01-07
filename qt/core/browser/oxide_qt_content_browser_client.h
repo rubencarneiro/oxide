@@ -34,14 +34,10 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
  public:
   base::MessagePump* CreateMessagePumpForUI() FINAL;
 
-#if defined(USE_X11)
-  Display* GetDefaultXDisplay() FINAL;
-#endif
-
  private:
   // Limit default constructor access to the lazy instance initializer
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
-  ContentBrowserClient() {}
+  ContentBrowserClient();
 
   void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) FINAL;
 

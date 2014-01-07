@@ -17,7 +17,6 @@
 
 #include "oxide_content_client.h"
 
-#include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "webkit/common/user_agent/user_agent.h"
 #include "webkit/common/user_agent/user_agent_util.h"
@@ -27,6 +26,26 @@
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 namespace oxide {
+
+namespace {
+ContentClient* g_inst;
+}
+
+ContentClient::ContentClient() {
+  DCHECK(!g_inst);
+  g_inst = this;
+}
+
+// static
+ContentClient* ContentClient::instance() {
+  DCHECK(g_inst);
+  return g_inst;
+}
+
+ContentClient::~ContentClient() {
+  DCHECK_EQ(g_inst, this);
+  g_inst = NULL;
+}
 
 ContentBrowserClient* ContentClient::browser() {
   return static_cast<ContentBrowserClient *>(
@@ -41,13 +60,6 @@ ContentRendererClient* ContentClient::renderer() {
 std::string ContentClient::GetUserAgent() const {
   return webkit_glue::BuildUserAgentFromProduct(
       base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
-}
-
-// static
-ContentClient* ContentClient::GetInstance() {
-  // XXX: Port-specific derivates of ContentClient will provide their own
-  //      GetInstance() which will be called from here
-  return Singleton<ContentClient>::get();
 }
 
 } // namespace oxide

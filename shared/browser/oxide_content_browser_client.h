@@ -35,8 +35,6 @@ namespace gfx {
 class GLContext;
 }
 
-typedef struct _XDisplay Display;
-
 namespace oxide {
 
 class GLShareGroup;
@@ -82,10 +80,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
-
-#if defined(USE_X11)
-  virtual Display* GetDefaultXDisplay() = 0;
-#endif
 
   virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
       oxide::GLShareGroup* share_group);

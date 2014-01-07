@@ -32,6 +32,8 @@
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "ui/gfx/ozone/surface_factory_ozone.h"
+#include "ui/ozone/ozone_platform.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
@@ -44,6 +46,8 @@ namespace {
 base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
 }
+
+ContentMainDelegate::ContentMainDelegate() {}
 
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
@@ -60,7 +64,7 @@ ContentMainDelegate::CreateContentRendererClient() {
 ContentMainDelegate::~ContentMainDelegate() {}
 
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
-  content::SetContentClient(ContentClient::GetInstance());
+  content::SetContentClient(CreateContentClient());
 
   CommandLine* command_line = CommandLine::ForCurrentProcess();
 
@@ -121,6 +125,15 @@ void ContentMainDelegate::PreSandboxStartup() {
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
       resource_dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
       ui::SCALE_FACTOR_100P);
+}
+
+void ContentMainDelegate::SandboxInitialized(const std::string& process_type) {
+  if (process_type.empty()) {
+    // Make sure that ozone and the default display are initialized before
+    // any other threads are started
+    ui::OzonePlatform::Initialize();
+    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
+  }
 }
 
 int ContentMainDelegate::RunProcess(

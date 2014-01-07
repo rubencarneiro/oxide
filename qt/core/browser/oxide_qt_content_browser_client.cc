@@ -20,13 +20,10 @@
 #include <QGuiApplication>
 #include <QString>
 #include <QtGui/qpa/qplatformnativeinterface.h>
-#if defined(USE_X11)
-#include <X11/Xlib.h>
-#endif
 
 #include "base/logging.h"
 
-#include "shared/browser/oxide_shared_gl_context.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "qt/core/glue/oxide_qt_shared_gl_context_factory.h"
 
@@ -42,16 +39,22 @@ class SharedGLContext : public oxide::SharedGLContext {
  public:
   SharedGLContext(QOpenGLContext* context, oxide::GLShareGroup* share_group) :
       oxide::SharedGLContext(share_group),
-      handle_(NULL) {
+      handle_(NULL),
+      implementation_(gfx::kGLImplementationNone) {
     QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
     QString platform = QGuiApplication::platformName();
     if (platform == "xcb") {
       // QXcbNativeInterface creates a GLXContext if GLX is enabled, else
       // it creates an EGLContext is EGL is enabled, so this should be safe
       // XXX: Check this matches the GL implementation selected by Chrome?
+      implementation_ = gfx::kGLImplementationDesktopGL;
       handle_ = pni->nativeResourceForContext("glxcontext", context);
       if (!handle_) {
+        implementation_ = gfx::kGLImplementationEGLGLES2;
         handle_ = pni->nativeResourceForContext("eglcontext", context);
+      }
+      if (!handle_) {
+        implementation_ = gfx::kGLImplementationNone;
       }
     } else {
       DLOG(WARNING) << "Unsupported platform: " << qPrintable(platform);
@@ -59,12 +62,16 @@ class SharedGLContext : public oxide::SharedGLContext {
   }
 
   void* GetHandle() OVERRIDE { return handle_; }
+  gfx::GLImplementation GetImplementation() OVERRIDE { return implementation_; }
 
  private:
   void* handle_;
+  gfx::GLImplementation implementation_;
 };
 
 } // namespace
+
+ContentBrowserClient::ContentBrowserClient() {}
 
 void ContentBrowserClient::GetDefaultScreenInfoImpl(
     blink::WebScreenInfo* result) {
@@ -98,24 +105,6 @@ scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
 base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
 }
-
-#if defined (USE_X11)
-Display* ContentBrowserClient::GetDefaultXDisplay() {
-  static Display* display = NULL;
-  if (!display) {
-    QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
-    display = static_cast<Display *>(
-        pni->nativeResourceForScreen("display",
-                                     QGuiApplication::primaryScreen()));
-  }
-
-  if (!display) {
-    display = XOpenDisplay(NULL);
-  }
-
-  return display;
-}
-#endif
 
 } // namespace qt
 } // namespace oxide

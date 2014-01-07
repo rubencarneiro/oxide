@@ -22,9 +22,15 @@
     'linux_use_gold_flags': 0,
     'linux_use_tcmalloc': 0,
     'sysroot': '',
-    'toolkit_uses_gtk': 0,
     'use_aura': 1,
     'use_gconf': 0,
+    'use_ozone': 1,
+    'ozone_platform': 'oxide',
+    'external_ozone_platforms': [
+      'oxide',
+    ],
+    'ozone_platform_dri': 0,
+    'ozone_platform_test': 0,
     'conditions': [
       ['target_arch=="arm"', {
         # XXX: Make Ubuntu-specific

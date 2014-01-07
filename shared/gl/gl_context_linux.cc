@@ -15,38 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_main_delegate.h"
+#include "ui/gl/gl_context.h"
 
-#include "base/lazy_instance.h"
+#include "base/logging.h"
+#include "base/memory/ref_counted.h"
+#include "ui/gl/gl_context_glx.h"
+#include "ui/gl/gl_implementation.h"
 
-#include "qt/core/browser/oxide_qt_content_browser_client.h"
-
-#include "oxide_qt_content_client.h"
-
-namespace oxide {
-namespace qt {
-
-namespace {
-base::LazyInstance<ContentBrowserClient> g_content_browser_client =
-    LAZY_INSTANCE_INITIALIZER;
-}
-
-content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClientImpl() {
-  return g_content_browser_client.Pointer();
-}
-
-oxide::ContentClient* ContentMainDelegate::CreateContentClient() {
-  return ContentClient::GetInstance();
-}
-
-ContentMainDelegate::ContentMainDelegate() {}
-
-} // namespace qt
+namespace gfx {
 
 // static
-ContentMainDelegate* ContentMainDelegate::Create() {
-  return new qt::ContentMainDelegate();
+scoped_refptr<GLContext> GLContext::CreateGLContext(
+    GLShareGroup* share_group,
+    GLSurface* compatible_surface,
+    GpuPreference gpu_preference) {
+  switch (GetGLImplementation()) {
+    case kGLImplementationDesktopGL: {
+      scoped_refptr<GLContext> context(new GLContextGLX(share_group));
+      if (!context->Initialize(compatible_surface, gpu_preference)) {
+        return NULL;
+      }
+
+      return context;
+    }
+
+    default:
+      return NULL;
+  }
 }
 
-} // namespace oxide
+} // namespace gfx

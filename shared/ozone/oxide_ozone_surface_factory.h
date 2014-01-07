@@ -15,30 +15,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
-#define _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
+#ifndef _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
+#define _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
 
+#include "base/basictypes.h"
 #include "base/compiler_specific.h"
-
-#include "shared/common/oxide_content_main_delegate.h"
-#include "shared/common/oxide_export.h"
+#include "ui/gfx/ozone/surface_factory_ozone.h"
 
 namespace oxide {
-namespace qt {
 
-class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
+class OzoneSurfaceFactory FINAL : public gfx::SurfaceFactoryOzone {
  public:
-  ContentMainDelegate();
+  OzoneSurfaceFactory();
 
- private:
-  content::ContentBrowserClient* CreateContentBrowserClientImpl() FINAL;
+  HardwareState InitializeHardware() FINAL;
+  void ShutdownHardware() FINAL;
 
-  oxide::ContentClient* CreateContentClient() FINAL;
+  intptr_t GetNativeDisplay() FINAL;
 
-  DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
+  gfx::AcceleratedWidget GetAcceleratedWidget() FINAL;
+  gfx::AcceleratedWidget RealizeAcceleratedWidget(
+      gfx::AcceleratedWidget w) FINAL;
+
+  bool LoadEGLGLES2Bindings(
+      AddGLLibraryCallback add_gl_library,
+      SetGLGetProcAddressProcCallback set_gl_get_proc_address) FINAL;
+
+  bool AttemptToResizeAcceleratedWidget(
+      gfx::AcceleratedWidget w,
+      const gfx::Rect& bounds) FINAL;
+
+  gfx::VSyncProvider* GetVSyncProvider(gfx::AcceleratedWidget w) FINAL;
 };
 
-} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
+#endif // _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
