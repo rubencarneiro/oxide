@@ -49,6 +49,8 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   void OnTitleChanged() FINAL;
   void OnCommandsUpdated() FINAL;
 
+  void OnLoadProgressChanged(double progress) FINAL;
+
   void OnRootFrameChanged() FINAL;
 
   void OnLoadStarted(const GURL& validated_url,

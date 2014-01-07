@@ -62,6 +62,13 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
   }
 }
 
+void WebView::LoadProgressChanged(content::WebContents* source,
+                                  double progress) {
+  DCHECK_EQ(source, web_contents_.get());
+
+  OnLoadProgressChanged(progress);
+}
+
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
                                  const base::string16& error_description) {
@@ -186,6 +193,8 @@ void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnCommandsUpdated() {}
 
+void WebView::OnLoadProgressChanged(double progress) {}
+
 void WebView::OnRootFrameChanged() {}
 
 void WebView::OnLoadStarted(const GURL& validated_url,
@@ -209,8 +218,7 @@ WebView::~WebView() {
 bool WebView::Init(BrowserContext* context,
                    bool incognito,
                    const gfx::Size& initial_size) {
-  CHECK(BrowserProcessMain::Exists()) <<
-        "Failed to start the main browser components!";
+  DCHECK(context);
 
   if (web_contents_) {
     LOG(ERROR) << "Called Init() more than once";

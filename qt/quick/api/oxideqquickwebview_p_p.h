@@ -57,6 +57,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void TitleChanged() Q_DECL_FINAL;
   void CommandsUpdated() Q_DECL_FINAL;
 
+  void LoadProgressChanged(double progress) Q_DECL_FINAL;
+
   void RootFrameChanged() Q_DECL_FINAL;
 
   void LoadStarted(const QUrl& url) Q_DECL_FINAL;
@@ -95,6 +97,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
  private:
   QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
+  int load_progress_;
   OxideQQuickWebView* q_ptr;
 };
 

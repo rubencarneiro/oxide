@@ -373,29 +373,27 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -311,9 +311,13 @@ crypto::CryptoModuleBlockingPasswordDele
- #endif
- 
- bool ContentBrowserClient::IsPluginAllowedToCallRequestOSFileHandle(
-     content::BrowserContext* browser_context,
+@@ -308,9 +308,11 @@ bool ContentBrowserClient::IsPluginAllow
      const GURL& url) {
    return false;
  }
  
-+gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
-+  return NULL;
-+}
+ bool ContentBrowserClient::IsPluginAllowedToUseDevChannelAPIs() {
+   return false;
+ }
+ 
++gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {}
 +
  }  // namespace content
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -44,16 +44,17 @@ namespace base {
+@@ -41,16 +41,17 @@ struct WebWindowFeatures;
+ }
+ 
+ namespace base {
  class DictionaryValue;
  class FilePath;
- }
- namespace crypto {
- class CryptoModuleBlockingPasswordDelegate;
  }
  
  namespace gfx {
@@ -408,15 +406,15 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class HttpNetworkSession;
  class NetLog;
  class SSLCertRequestInfo;
-@@ -617,13 +618,15 @@ class CONTENT_EXPORT ContentBrowserClien
-           const GURL& url);
- #endif
- 
+@@ -609,13 +610,15 @@ class CONTENT_EXPORT ContentBrowserClien
    // Returns true if plugin referred to by the url can use
    // pp::FileIO::RequestOSFileHandle.
    virtual bool IsPluginAllowedToCallRequestOSFileHandle(
        content::BrowserContext* browser_context,
        const GURL& url);
+ 
+   // Returns true if dev channel APIs are available for plugins.
+   virtual bool IsPluginAllowedToUseDevChannelAPIs();
 +
 +  virtual gfx::GLShareGroup* GetGLShareGroup();
  };

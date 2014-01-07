@@ -49,6 +49,10 @@ void WebViewAdapterPrivate::OnCommandsUpdated() {
   a->CommandsUpdated();
 }
 
+void WebViewAdapterPrivate::OnLoadProgressChanged(double progress) {
+  a->LoadProgressChanged(progress);
+}
+
 void WebViewAdapterPrivate::OnRootFrameChanged() {
   a->RootFrameChanged();
 }

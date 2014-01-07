@@ -25,6 +25,7 @@
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/cookie_crypto_delegate.h"
 #include "content/public/browser/cookie_store_factory.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
@@ -264,10 +265,12 @@ void BrowserContextIOData::Init(
         new net::CookieMonster(NULL, NULL));
   } else {
     DCHECK(!GetPath().empty());
+    // TODO: Provide an implementation of content::CookieCryptoDelegate
     context->storage()->set_cookie_store(
         content::CreatePersistentCookieStore(
             GetPath().Append(kCookiesFilename),
-            false, NULL, NULL));
+            false, NULL, NULL,
+            scoped_ptr<content::CookieCryptoDelegate>()));
   }
 
   context->storage()->set_transport_security_state(
@@ -363,6 +366,10 @@ BrowserContext::IODataHandle::~IODataHandle() {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
+  CHECK(BrowserProcessMain::Exists()) <<
+      "The main browser process components must be started before " <<
+      "creating a context";
+
   g_all_contexts.Get().push_back(this);
 
   content::BrowserContext::EnsureResourceContextInitialized(this);

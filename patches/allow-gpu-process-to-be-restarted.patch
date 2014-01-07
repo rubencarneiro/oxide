@@ -32,9 +32,9 @@ diff --git a/gpu/command_buffer/service/shader_translator.cc b/gpu/command_buffe
    }
    return initialized;
  }
-diff --git a/third_party/angle_dx11/src/compiler/ShaderLang.cpp b/third_party/angle_dx11/src/compiler/ShaderLang.cpp
---- a/third_party/angle_dx11/src/compiler/ShaderLang.cpp
-+++ b/third_party/angle_dx11/src/compiler/ShaderLang.cpp
+diff --git a/third_party/angle/src/compiler/ShaderLang.cpp b/third_party/angle/src/compiler/ShaderLang.cpp
+--- a/third_party/angle/src/compiler/ShaderLang.cpp
++++ b/third_party/angle/src/compiler/ShaderLang.cpp
 @@ -42,28 +42,37 @@ static bool checkMappedNameMaxLength(con
      ShGetInfo(handle, SH_MAPPED_NAME_MAX_LENGTH, &mappedNameMaxLength);
      return (expectedValue == mappedNameMaxLength);
