@@ -25,6 +25,13 @@
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_controller.h"
+#include "content/public/browser/navigation_details.h"
+#include "content/public/browser/navigation_entry.h"
+#include "content/public/browser/notification_details.h"
+#include "content/public/browser/notification_registrar.h"
+#include "content/public/browser/notification_service.h"
+#include "content/public/browser/notification_source.h"
+#include "content/public/browser/notification_types.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
 #include "net/base/net_errors.h"
@@ -205,6 +212,10 @@ void WebView::OnLoadFailed(const GURL& validated_url,
                            const std::string& error_description) {}
 void WebView::OnLoadSucceeded(const GURL& validated_url) {}
 
+void WebView::OnNavigationEntryCommitted() {}
+void WebView::OnNavigationListPruned(bool from_front, int count) {}
+void WebView::OnNavigationEntryChanged(int index) {}
+
 WebView::WebView() :
     root_frame_(NULL) {}
 
@@ -240,7 +251,13 @@ bool WebView::Init(BrowserContext* context,
   }
 
   web_contents_->SetDelegate(this);
-  Observe(web_contents_.get());
+  WebContentsObserver::Observe(web_contents_.get());
+
+  registrar_.reset(new content::NotificationRegistrar);
+  registrar_->Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
+                  content::NotificationService::AllBrowserContextsAndSources());
+  registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
+                  content::NotificationService::AllBrowserContextsAndSources());
 
   return true;
 }
@@ -251,7 +268,9 @@ void WebView::Shutdown() {
     return;
   }
 
-  Observe(NULL);
+  registrar_.reset();
+
+  WebContentsObserver::Observe(NULL);
 
   if (root_frame_) {
     root_frame_->DestroyFrame();
@@ -363,6 +382,62 @@ BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
+int WebView::GetNavigationEntryCount() const {
+  if (!web_contents_) {
+    return 0;
+  }
+  return web_contents_->GetController().GetEntryCount();
+}
+
+int WebView::GetNavigationCurrentEntryIndex() const {
+  if (!web_contents_) {
+    return -1;
+  }
+  return web_contents_->GetController().GetCurrentEntryIndex();
+}
+
+void WebView::SetNavigationCurrentEntryIndex(int index) {
+  if (web_contents_) {
+    web_contents_->GetController().GoToIndex(index);
+  }
+}
+
+int WebView::GetNavigationEntryUniqueID(int index) const {
+  if (!web_contents_) {
+    return 0;
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetUniqueID();
+}
+
+const GURL& WebView::GetNavigationEntryUrl(int index) const {
+  if (!web_contents_) {
+    return GURL::EmptyGURL();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetURL();
+}
+
+std::string WebView::GetNavigationEntryTitle(int index) const {
+  if (!web_contents_) {
+    return std::string();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return base::UTF16ToUTF8(entry->GetTitle());
+}
+
+base::Time WebView::GetNavigationEntryTimestamp(int index) const {
+  if (!web_contents_) {
+    return base::Time();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetTimestamp();
+}
+
 WebFrame* WebView::GetRootFrame() const {
   return root_frame_;
 }
@@ -387,6 +462,21 @@ WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
   }
 
   return NULL;
+}
+
+void WebView::Observe(int type,
+                      const content::NotificationSource& source,
+                      const content::NotificationDetails& details) {
+  if (content::Source<content::NavigationController>(source).ptr() != &web_contents()->GetController()) {
+    return;
+  }
+  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
+    content::PrunedDetails* pruned_details = content::Details<content::PrunedDetails>(details).ptr();
+    OnNavigationListPruned(pruned_details->from_front, pruned_details->count);
+  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
+    int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
+    OnNavigationEntryChanged(index);
+  }
 }
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -480,6 +570,10 @@ void WebView::DidFailLoad(int64 frame_id,
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
+void WebView::NavigationEntryCommitted(
+    const content::LoadCommittedDetails& load_details) {
+  OnNavigationEntryCommitted();
+}
 
 void WebView::FrameDetached(content::RenderViewHost* rvh,
                             int64 frame_id) {
@@ -489,6 +583,20 @@ void WebView::FrameDetached(content::RenderViewHost* rvh,
   }
 
   frame->DestroyFrame();
+}
+
+void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
+  if (!web_contents_) {
+    return;
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  int count = controller.GetEntryCount();
+  for (int i = 0; i < count; ++i) {
+    if (controller.GetEntryAtIndex(i) == entry) {
+      OnNavigationEntryChanged(i);
+      return;
+    }
+  }
 }
 
 bool WebView::OnMessageReceived(const IPC::Message& message) {

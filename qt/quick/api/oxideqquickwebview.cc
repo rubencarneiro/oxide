@@ -57,6 +57,7 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     context(NULL),
+    navigationHistory(view),
     popup_menu(NULL),
     init_props_(new InitData()),
     load_progress_(0),
@@ -146,6 +147,18 @@ void OxideQQuickWebViewPrivate::LoadSucceeded(const QUrl& url) {
 
   OxideQLoadEvent event(url, OxideQLoadEvent::TypeSucceeded);
   emit q->loadingChanged(&event);
+}
+
+void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
+  navigationHistory.onNavigationEntryCommitted();
+}
+
+void OxideQQuickWebViewPrivate::NavigationListPruned(bool from_front, int count) {
+  navigationHistory.onNavigationListPruned(from_front, count);
+}
+
+void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
+  navigationHistory.onNavigationEntryChanged(index);
 }
 
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
@@ -464,6 +477,12 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   }
 
   d->context = context;
+}
+
+OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
+  Q_D(OxideQQuickWebView);
+
+  return &d->navigationHistory;
 }
 
 // static
