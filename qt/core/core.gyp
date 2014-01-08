@@ -21,11 +21,18 @@
       'type': 'shared_library',
       'shared_library_version': '<(oxide_qt_libversion)',
       'dependencies': [
+        'OxideQtCore_private',
+        'OxideQtCore_public',
+      ],
+    },
+    {
+      'target_name': 'OxideQtCore_private',
+      'type': 'static_library',
+      'dependencies': [
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',
         'system.gyp:Qt5Gui-private',
         '../../shared/shared.gyp:oxide_shared',
-        'OxideQtCore_public',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_renderer',
@@ -34,6 +41,9 @@
         '<(DEPTH)/ui/ui.gyp:ui',
         '<(DEPTH)/url/url.gyp:url_lib'
       ],
+      'variables': {
+        'chromium_code': 1,
+      },
       'include_dirs': [
         '../..',
         '<(DEPTH)'
@@ -71,9 +81,6 @@
         'glue/private/oxide_qt_web_view_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.h'
       ],
-      'variables': {
-        'chromium_code': 1
-      }
     },
     {
       'target_name': 'OxideQtCore_public',
@@ -85,9 +92,9 @@
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/skia/skia.gyp:skia',
       ],
-      'export_dependent_settings': [
-        '<(DEPTH)/skia/skia.gyp:skia'
-      ],
+      'variables': {
+        'chromium_code': 1,
+      },
       'include_dirs': [
         '../..',
         '<(INTERMEDIATE_DIR)',
