@@ -130,6 +130,7 @@
       'sources': [
         'app/oxide_main.cc',
         'app/oxide_main.h',
+        'browser/compositor_util.cc',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_impl.cc',
@@ -173,7 +174,6 @@
         'browser/oxide_web_popup_menu.h',
         'browser/oxide_web_view.cc',
         'browser/oxide_web_view.h',
-        'chromium_support/oxide_compositor_util.cc',
         'chromium_support/oxide_toolkit_utils.cc',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
