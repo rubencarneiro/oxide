@@ -20,7 +20,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/app/content_main.h"
 
-#include "shared/common/oxide_content_main_delegate.h"
+#include "oxide_content_main_delegate.h"
 
 namespace oxide {
 

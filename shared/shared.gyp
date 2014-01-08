@@ -128,6 +128,8 @@
         '<(SHARED_INTERMEDIATE_DIR)/oxide',
       ],
       'sources': [
+        'app/oxide_content_main_delegate.cc',
+        'app/oxide_content_main_delegate.h',
         'app/oxide_main.cc',
         'app/oxide_main.h',
         'browser/compositor_util.cc',
@@ -179,8 +181,6 @@
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',
         'common/oxide_content_client.h',
-        'common/oxide_content_main_delegate.cc',
-        'common/oxide_content_main_delegate.h',
         'common/oxide_core_export.h',
         'common/oxide_export.h',
         'common/oxide_file_utils.cc',

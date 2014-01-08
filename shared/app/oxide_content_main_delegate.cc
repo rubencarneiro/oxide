@@ -34,9 +34,8 @@
 #include "ui/base/resource/resource_bundle.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/common/oxide_content_client.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
-
-#include "oxide_content_client.h"
 
 namespace oxide {
 
