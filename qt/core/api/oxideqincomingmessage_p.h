@@ -15,22 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqincomingmessage_p.h"
+#ifndef _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_
+#define _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_
 
-#include <QByteArray>
-#include <QJsonDocument>
+#include <QScopedPointer>
+#include <QtGlobal>
+#include <QVariant>
 
-#include "shared/browser/oxide_incoming_message.h"
-
-OxideQIncomingMessagePrivate::OxideQIncomingMessagePrivate(
-    oxide::IncomingMessage* message) :
-    incoming_(message) {
-    QJsonDocument jsondoc(QJsonDocument::fromJson(
-        QByteArray(message->args().data(), message->args().length())));
-    args_variant_ = jsondoc.toVariant();
+namespace oxide {
+class IncomingMessage;
 }
 
-OxideQIncomingMessagePrivate* OxideQIncomingMessagePrivate::Create(
-    oxide::IncomingMessage* message) {
-  return new OxideQIncomingMessagePrivate(message);
-}
+class OxideQIncomingMessage;
+
+class OxideQIncomingMessagePrivate Q_DECL_FINAL {
+ public:
+  OxideQIncomingMessagePrivate();
+
+  oxide::IncomingMessage* incoming() const {
+    return incoming_.data();
+  }
+
+  QVariant args() const { return args_; }
+
+  void Initialize(oxide::IncomingMessage* message);
+
+  static OxideQIncomingMessagePrivate* get(OxideQIncomingMessage* q);
+
+ private:
+  QScopedPointer<oxide::IncomingMessage> incoming_;
+  QVariant args_;
+};
+
+#endif // _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_

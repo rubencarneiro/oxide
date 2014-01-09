@@ -20,6 +20,7 @@
 #include "shared/browser/oxide_incoming_message.h"
 
 #include "qt/core/api/oxideqincomingmessage.h"
+#include "qt/core/api/oxideqincomingmessage_p.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/glue/oxide_qt_message_handler_adapter.h"
 
@@ -37,8 +38,11 @@ void MessageHandlerAdapterPrivate::ReceiveMessageCallback(
     std::string& error_desc) {
   QString qerror;
 
+  OxideQIncomingMessage* qmessage(new OxideQIncomingMessage());
+  OxideQIncomingMessagePrivate::get(qmessage)->Initialize(message);
+
   *error = !a->OnReceiveMessage(
-      new OxideQIncomingMessage(message),
+      qmessage,
       static_cast<WebFrame *>(message->source_frame())->adapter,
       qerror);
 
