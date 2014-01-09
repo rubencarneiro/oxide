@@ -19,7 +19,6 @@ SOURCES += \
     api/oxideqquickwebframe.cc \
     api/oxideqquickwebview.cc \
     oxide_qml_plugin.cc \
-    oxide_qquick_accelerated_render_view_node.cc \
     oxide_qquick_painted_render_view_node.cc \
     oxide_qquick_render_view_item.cc \
     oxide_qquick_web_popup_menu_delegate.cc \
@@ -39,10 +38,18 @@ HEADERS += \
     api/oxideqquickwebframe_p_p.h \
     api/oxideqquickwebview_p.h \
     api/oxideqquickwebview_p_p.h \
-    oxide_qquick_accelerated_render_view_node.h \
     oxide_qquick_painted_render_view_node.h \
     oxide_qquick_render_view_item.h \
     oxide_qquick_web_popup_menu_delegate.h
+
+lessThan(QT_MAJOR_VERSION, 5):
+else:lessThan(QT_MINOR_VERSION, 2):
+else {
+SOURCES += oxide_qquick_accelerated_render_view_node.cc
+HEADERS += oxide_qquick_accelerated_render_view_node.h
+
+DEFINES += ENABLE_COMPOSITING
+}
 
 INCLUDEPATH = $$OXIDE_SRC_ROOT
 

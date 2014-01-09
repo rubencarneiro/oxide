@@ -82,8 +82,10 @@ class RenderViewItem Q_DECL_FINAL :
   const QPixmap* backing_store_;
   QRect dirty_rect_;
 
+#if defined(ENABLE_COMPOSITING)
   bool is_compositing_enabled_;
   bool is_compositing_enabled_state_changed_;
+#endif
 
   Q_DISABLE_COPY(RenderViewItem);
 };
