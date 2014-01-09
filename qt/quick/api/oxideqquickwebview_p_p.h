@@ -63,12 +63,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void RootFrameChanged() Q_DECL_FINAL;
 
-  void LoadStarted(const QUrl& url) Q_DECL_FINAL;
-  void LoadStopped(const QUrl& url) Q_DECL_FINAL;
-  void LoadFailed(const QUrl& url,
-                  int error_code,
-                  const QString& error_description) Q_DECL_FINAL;
-  void LoadSucceeded(const QUrl& url) Q_DECL_FINAL;
+  void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
 
   void NavigationEntryCommitted() Q_DECL_FINAL;
   void NavigationListPruned(bool from_front, int count) Q_DECL_FINAL;

@@ -32,6 +32,8 @@ QT_BEGIN_NAMESPACE
 class QSize;
 QT_END_NAMESPACE
 
+class OxideQLoadEvent;
+
 namespace oxide {
 namespace qt {
 
@@ -89,12 +91,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void RootFrameChanged() = 0;
 
-  virtual void LoadStarted(const QUrl& url) = 0;
-  virtual void LoadStopped(const QUrl& url) = 0;
-  virtual void LoadFailed(const QUrl& url,
-                          int error_code,
-                          const QString& error_description) = 0;
-  virtual void LoadSucceeded(const QUrl& url) = 0;
+  virtual void LoadEvent(OxideQLoadEvent* event) = 0;
 
   virtual void NavigationEntryCommitted() = 0;
   virtual void NavigationListPruned(bool from_front, int count) = 0;

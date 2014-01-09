@@ -50,8 +50,6 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/oxide_qt_web_popup_menu_qquick.moc',
-        'api/private/oxideqloadevent_p.cc',
-        'api/private/oxideqloadevent_p.h',
         'app/oxide_qt_content_main_delegate.cc',
         'app/oxide_qt_content_main_delegate.h',
         'browser/oxide_qt_backing_store.cc',
@@ -106,6 +104,7 @@
         'api/oxideqincomingmessage_p.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
+        'api/oxideqloadevent_p.h',
         'glue/oxide_qt_adapter_base.h',
         'glue/oxide_qt_message_handler_adapter.cc',
         'glue/oxide_qt_message_handler_adapter.h',
