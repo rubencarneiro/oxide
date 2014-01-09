@@ -25,9 +25,9 @@
 
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
-#include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 
 #include "oxideqquicknavigationhistory_p.h"
 
