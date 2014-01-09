@@ -33,6 +33,7 @@ QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
 class OxideQQuickMessageHandler;
+class OxideQQuickNavigationHistory;
 class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
@@ -73,6 +74,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(QQmlComponent* beforeUnloadDialog READ beforeUnloadDialog WRITE setBeforeUnloadDialog NOTIFY beforeUnloadDialogChanged)
 
   Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
+
+  Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -120,6 +123,8 @@ class OxideQQuickWebView : public QQuickItem {
 
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
+
+  OxideQQuickNavigationHistory* navigationHistory();
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 

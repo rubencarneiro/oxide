@@ -15,28 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
-#define _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
+#ifndef _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_
+#define _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_
 
-#include "base/compiler_specific.h"
-
-#include "shared/common/oxide_content_main_delegate.h"
-#include "shared/common/oxide_export.h"
+#include <QScopedPointer>
+#include <QtGlobal>
+#include <QVariant>
 
 namespace oxide {
-namespace qt {
+class IncomingMessage;
+}
 
-class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
+class OxideQIncomingMessage;
+
+class OxideQIncomingMessagePrivate Q_DECL_FINAL {
  public:
-  ContentMainDelegate() {}
+  OxideQIncomingMessagePrivate();
+
+  oxide::IncomingMessage* incoming() const {
+    return incoming_.data();
+  }
+
+  QVariant args() const { return args_; }
+
+  void Initialize(oxide::IncomingMessage* message);
+
+  static OxideQIncomingMessagePrivate* get(OxideQIncomingMessage* q);
 
  private:
-  content::ContentBrowserClient* CreateContentBrowserClientImpl() FINAL;
-
-  DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
+  QScopedPointer<oxide::IncomingMessage> incoming_;
+  QVariant args_;
 };
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
+#endif // _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_

@@ -23,6 +23,8 @@
 #include "base/strings/utf_string_conversions.h"
 #include "url/gurl.h"
 
+#include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/api/oxideqloadevent_p.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
@@ -61,22 +63,47 @@ void WebViewAdapterPrivate::OnRootFrameChanged() {
 
 void WebViewAdapterPrivate::OnLoadStarted(const GURL& validated_url,
                                           bool is_error_frame) {
-  a->LoadStarted(QUrl(QString::fromStdString(validated_url.spec())));
+  OxideQLoadEvent event(
+      QUrl(QString::fromStdString(validated_url.spec())),
+      OxideQLoadEvent::TypeStarted);
+  a->LoadEvent(&event);
 }
 
 void WebViewAdapterPrivate::OnLoadStopped(const GURL& validated_url) {
-  a->LoadStopped(QUrl(QString::fromStdString(validated_url.spec())));
+  OxideQLoadEvent event(
+      QUrl(QString::fromStdString(validated_url.spec())),
+      OxideQLoadEvent::TypeStopped);
+  a->LoadEvent(&event);
 }
 
 void WebViewAdapterPrivate::OnLoadFailed(const GURL& validated_url,
                                          int error_code,
                                          const std::string& error_description) {
-  a->LoadFailed(QUrl(QString::fromStdString(validated_url.spec())),
-                error_code, QString::fromStdString(error_description));
+  OxideQLoadEvent event(
+      QUrl(QString::fromStdString(validated_url.spec())),
+      OxideQLoadEvent::TypeFailed,
+      OxideQLoadEventPrivate::ChromeErrorCodeToOxideErrorCode(error_code),
+      QString::fromStdString(error_description));
+  a->LoadEvent(&event);
 }
 
 void WebViewAdapterPrivate::OnLoadSucceeded(const GURL& validated_url) {
-  a->LoadSucceeded(QUrl(QString::fromStdString(validated_url.spec())));
+  OxideQLoadEvent event(
+      QUrl(QString::fromStdString(validated_url.spec())),
+      OxideQLoadEvent::TypeSucceeded);
+  a->LoadEvent(&event);
+}
+
+void WebViewAdapterPrivate::OnNavigationEntryCommitted() {
+  a->NavigationEntryCommitted();
+}
+
+void WebViewAdapterPrivate::OnNavigationListPruned(bool from_front, int count) {
+  a->NavigationListPruned(from_front, count);
+}
+
+void WebViewAdapterPrivate::OnNavigationEntryChanged(int index) {
+  a->NavigationEntryChanged(index);
 }
 
 oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame() {

@@ -26,9 +26,7 @@
 #include <QSize>
 #include <QtQml>
 
-#include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
-
 #include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
@@ -58,6 +56,7 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     context(NULL),
+    navigationHistory(view),
     popup_menu(NULL),
     init_props_(new InitData()),
     load_progress_(0),
@@ -122,35 +121,22 @@ void OxideQQuickWebViewPrivate::RootFrameChanged() {
   emit q->rootFrameChanged();
 }
 
-void OxideQQuickWebViewPrivate::LoadStarted(const QUrl& url) {
+void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   Q_Q(OxideQQuickWebView);
 
-  OxideQLoadEvent event(url, OxideQLoadEvent::TypeStarted);
-  emit q->loadingChanged(&event);
+  emit q->loadingChanged(event);
 }
 
-void OxideQQuickWebViewPrivate::LoadStopped(const QUrl& url) {
-  Q_Q(OxideQQuickWebView);
-
-  OxideQLoadEvent event(url, OxideQLoadEvent::TypeStopped);
-  emit q->loadingChanged(&event);
+void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
+  navigationHistory.onNavigationEntryCommitted();
 }
 
-void OxideQQuickWebViewPrivate::LoadFailed(const QUrl& url,
-                                           int error_code,
-                                           const QString& error_description) {
-  Q_Q(OxideQQuickWebView);
-
-  OxideQLoadEvent event(url, OxideQLoadEvent::TypeFailed,
-                        error_code, error_description);
-  emit q->loadingChanged(&event);
+void OxideQQuickWebViewPrivate::NavigationListPruned(bool from_front, int count) {
+  navigationHistory.onNavigationListPruned(from_front, count);
 }
 
-void OxideQQuickWebViewPrivate::LoadSucceeded(const QUrl& url) {
-  Q_Q(OxideQQuickWebView);
-
-  OxideQLoadEvent event(url, OxideQLoadEvent::TypeSucceeded);
-  emit q->loadingChanged(&event);
+void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
+  navigationHistory.onNavigationEntryChanged(index);
 }
 
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
@@ -588,6 +574,12 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   }
 
   d->context = context;
+}
+
+OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
+  Q_D(OxideQQuickWebView);
+
+  return &d->navigationHistory;
 }
 
 // static

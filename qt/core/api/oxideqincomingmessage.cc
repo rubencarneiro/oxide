@@ -16,18 +16,33 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqincomingmessage.h"
+#include "oxideqincomingmessage_p.h"
 
 #include <QByteArray>
 #include <QJsonDocument>
 
 #include "shared/browser/oxide_incoming_message.h"
 
-#include "qt/core/api/private/oxideqincomingmessage_p.h"
+OxideQIncomingMessagePrivate::OxideQIncomingMessagePrivate() {}
 
-OxideQIncomingMessage::OxideQIncomingMessage(
-    oxide::IncomingMessage* message) :
-    QObject(),
-    d_ptr(OxideQIncomingMessagePrivate::Create(message)) {}
+void OxideQIncomingMessagePrivate::Initialize(
+    oxide::IncomingMessage* message) {
+  Q_ASSERT(!incoming());
+  incoming_.reset(message);
+
+  QJsonDocument jsondoc(QJsonDocument::fromJson(
+      QByteArray(message->args().data(), message->args().length())));
+  args_ = jsondoc.toVariant();
+}
+
+// static
+OxideQIncomingMessagePrivate* OxideQIncomingMessagePrivate::get(
+    OxideQIncomingMessage* q) {
+  return q->d_func();
+}
+
+OxideQIncomingMessage::OxideQIncomingMessage() :
+    d_ptr(new OxideQIncomingMessagePrivate()) {}
 
 OxideQIncomingMessage::~OxideQIncomingMessage() {}
 

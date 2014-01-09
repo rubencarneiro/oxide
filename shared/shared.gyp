@@ -15,52 +15,23 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
-  'variables': {
-    'oxide_subprocess%': 'oxide-renderer',
-    'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide'
-  },
   'targets': [
-    {
-      'target_name': 'oxide_shared_generated',
-      'type': 'none',
-      'all_dependent_settings': {
-        'include_dirs': [
-          '<(SHARED_INTERMEDIATE_DIR)/oxide'
-        ]
-      },
-      'actions': [
-        {
-          'action_name': 'chrome_version_header',
-          'inputs': [
-            'common/chrome_version.h.in',
-            '<(DEPTH)/chrome/VERSION'
-          ],
-          'outputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/oxide/shared/common/chrome_version.h'
-          ],
-          'action': [
-            'python',
-            '<(DEPTH)/chrome/tools/build/version.py',
-            '-f', '<(DEPTH)/chrome/VERSION',
-            '-i', '<@(_inputs)',
-            '-o', '<@(_outputs)'
-          ]
-        }
-      ]
-    },
     {
       'target_name': 'oxide_shared_resources',
       'type': 'none',
+      'variables': {
+        'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide',
+      },
       'actions': [
         {
-          'action_name': 'oxide_shared_resources_resources',
+          'action_name': 'generate_oxide_shared_resources',
           'variables': {
             'grit_grd_file': 'oxide_resources.grd'
           },
           'includes': [ '../chromium/src/build/grit_action.gypi' ]
         }
       ],
-      'all_dependent_settings': {
+      'direct_dependent_settings': {
         'include_dirs': [
           '<(SHARED_INTERMEDIATE_DIR)/oxide'
         ]
@@ -115,23 +86,24 @@
     },
     {
       'target_name': 'oxide_shared',
-      'type': '<(component)',
-      'all_dependent_settings': {
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'variables': {
+        'chromium_code': 1,
+        'oxide_subprocess%': 'oxide-renderer',
+      },
+      'direct_dependent_settings': {
         'include_dirs': [
-          '..',
-          '<(DEPTH)'
+          '<(SHARED_INTERMEDIATE_DIR)/oxide',
         ],
-        'variables': {
-          'chromium_code': 1
-        }
       },
       'defines': [
         'OXIDE_RESOURCE_SUBPATH=\"<(oxide_port_resource_subpath)\"',
         'OXIDE_SUBPROCESS=\"<(oxide_subprocess)\"'
       ],
       'dependencies': [
-        'oxide_shared_generated',
         'oxide_packed_resources',
+        'oxide_shared_resources',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_app_both',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -152,11 +124,15 @@
       ],
       'include_dirs': [
         '..',
-        '<(DEPTH)'
+        '<(DEPTH)',
+        '<(SHARED_INTERMEDIATE_DIR)/oxide',
       ],
       'sources': [
+        'app/oxide_content_main_delegate.cc',
+        'app/oxide_content_main_delegate.h',
         'app/oxide_main.cc',
         'app/oxide_main.h',
+        'browser/compositor_util.cc',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_impl.cc',
@@ -202,14 +178,11 @@
         'browser/oxide_web_popup_menu.h',
         'browser/oxide_web_view.cc',
         'browser/oxide_web_view.h',
-        'chromium_support/oxide_compositor_util.cc',
         'chromium_support/oxide_toolkit_utils.cc',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',
         'common/oxide_content_client.h',
-        'common/oxide_content_main_delegate.cc',
-        'common/oxide_content_main_delegate.h',
         'common/oxide_core_export.h',
         'common/oxide_export.h',
         'common/oxide_file_utils.cc',
@@ -246,9 +219,25 @@
         '<(DEPTH)/extensions/common/url_pattern_set.cc',
         '<(DEPTH)/extensions/common/url_pattern_set.h'
       ],
-      'variables': {
-        'chromium_code': 1
-      }
+      'actions': [
+        {
+          'action_name': 'chrome_version_header',
+          'inputs': [
+            'common/chrome_version.h.in',
+            '<(DEPTH)/chrome/VERSION'
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/oxide/shared/common/chrome_version.h'
+          ],
+          'action': [
+            'python',
+            '<(DEPTH)/chrome/tools/build/version.py',
+            '-f', '<(DEPTH)/chrome/VERSION',
+            '-i', '<@(_inputs)',
+            '-o', '<@(_outputs)'
+          ]
+        }
+      ],
     }
   ]
 }

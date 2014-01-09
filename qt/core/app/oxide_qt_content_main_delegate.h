@@ -15,22 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqincomingmessage_p.h"
+#ifndef _OXIDE_QT_CORE_APP_CONTENT_MAIN_DELEGATE_H_
+#define _OXIDE_QT_CORE_APP_CONTENT_MAIN_DELEGATE_H_
 
-#include <QByteArray>
-#include <QJsonDocument>
+#include "base/compiler_specific.h"
 
-#include "shared/browser/oxide_incoming_message.h"
+#include "shared/app/oxide_content_main_delegate.h"
+#include "shared/common/oxide_export.h"
 
-OxideQIncomingMessagePrivate::OxideQIncomingMessagePrivate(
-    oxide::IncomingMessage* message) :
-    incoming_(message) {
-    QJsonDocument jsondoc(QJsonDocument::fromJson(
-        QByteArray(message->args().data(), message->args().length())));
-    args_variant_ = jsondoc.toVariant();
-}
+namespace oxide {
+namespace qt {
 
-OxideQIncomingMessagePrivate* OxideQIncomingMessagePrivate::Create(
-    oxide::IncomingMessage* message) {
-  return new OxideQIncomingMessagePrivate(message);
-}
+class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
+ public:
+  ContentMainDelegate() {}
+
+ private:
+  content::ContentBrowserClient* CreateContentBrowserClientImpl() FINAL;
+
+  DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
+};
+
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_APP_CONTENT_MAIN_DELEGATE_H_

@@ -15,38 +15,30 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_PRIVATE_INCOMING_MESSAGE_P_H_
-#define _OXIDE_QT_CORE_API_PRIVATE_INCOMING_MESSAGE_P_H_
+#ifndef _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
+#define _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
 
-#include <QVariant>
+#include <QMap>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
+class OxideQQuickNavigationHistory;
+class OxideQQuickWebView;
 
-namespace oxide {
-class IncomingMessage;
-}
+struct NavigationEntry;
 
-class OxideQIncomingMessagePrivate FINAL {
- public:
-  static OxideQIncomingMessagePrivate* Create(oxide::IncomingMessage* message);
+class OxideQQuickNavigationHistoryPrivate {
+  Q_DECLARE_PUBLIC(OxideQQuickNavigationHistory)
 
-  oxide::IncomingMessage* incoming() const {
-    return incoming_.get();
-  }
+  enum Roles {
+    Url = Qt::UserRole + 1,
+    Title,
+    Timestamp
+  };
 
-  QVariant args() const {
-    return args_variant_;
-  }
-
- private:
-  OxideQIncomingMessagePrivate(oxide::IncomingMessage* message);
-
-  scoped_ptr<oxide::IncomingMessage> incoming_;
-  QVariant args_variant_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQIncomingMessagePrivate);
+  OxideQQuickNavigationHistory* q_ptr;
+  OxideQQuickWebView* webview;
+  int entry_count;
+  int current_index;
+  QMap<int, NavigationEntry*> entry_cache;
 };
 
-#endif // _OXIDE_QT_CORE_API_PRIVATE_INCOMING_MESSAGE_P_H_
+#endif // _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
