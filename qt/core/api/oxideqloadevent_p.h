@@ -15,44 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_PRIVATE_LOAD_EVENT_P_H_
-#define _OXIDE_QT_CORE_API_PRIVATE_LOAD_EVENT_P_H_
+#ifndef _OXIDE_QT_CORE_API_LOAD_EVENT_P_H_
+#define _OXIDE_QT_CORE_API_LOAD_EVENT_P_H_
 
 #include <QString>
+#include <QtGlobal>
 #include <QUrl>
-
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 
-class OxideQLoadEventPrivate FINAL {
+class OxideQLoadEventPrivate Q_DECL_FINAL {
  public:
-  static OxideQLoadEventPrivate* Create(const QUrl& url,
-                                        OxideQLoadEvent::Type type,
-                                        int error_code,
-                                        const QString& error_description);
-
-  QUrl url() const;
-  OxideQLoadEvent::Type type() const;
-  OxideQLoadEvent::ErrorCode error() const;
-  QString errorString() const;
-
- private:
-  OxideQLoadEventPrivate(const QUrl& url,
+  OxideQLoadEventPrivate(QUrl url,
                          OxideQLoadEvent::Type type,
                          OxideQLoadEvent::ErrorCode error,
-                         const QString& error_description);
+                         QString error_string);
 
   static OxideQLoadEvent::ErrorCode ChromeErrorCodeToOxideErrorCode(
       int error_code);
 
-  QUrl url_;
-  OxideQLoadEvent::Type type_;
-  OxideQLoadEvent::ErrorCode error_;
-  QString error_string_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQLoadEventPrivate);
+  QUrl url;
+  OxideQLoadEvent::Type type;
+  OxideQLoadEvent::ErrorCode error;
+  QString error_string;
 };
 
-#endif // _OXIDE_QT_CORE_API_PRIVATE_LOAD_EVENT_P_H_
+#endif // _OXIDE_QT_CORE_API_LOAD_EVENT_P_H_

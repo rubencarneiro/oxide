@@ -26,6 +26,7 @@
 #include "qt/core/api/oxideqincomingmessage.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/quick/api/oxideqquickmessagehandler_p.h"
+#include "qt/quick/api/oxideqquicknavigationhistory_p.h"
 #include "qt/quick/api/oxideqquickoutgoingmessagerequest_p.h"
 #include "qt/quick/api/oxideqquickuserscript_p.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
@@ -212,6 +213,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 0, 1, "WebFrame",
         "Frames are created automatically by Oxide to represent frames in the renderer");
     qmlRegisterType<OxideQQuickWebContext>(uri, 0, 1, "WebContext");
+    qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 0, 1, "NavigationHistory",
+        "Each WebView has a NavigationHistory automatically instantiated by Oxide");
     qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
   }
 };

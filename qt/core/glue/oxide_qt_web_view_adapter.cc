@@ -126,5 +126,33 @@ bool WebViewAdapter::isInitialized() {
   return priv->web_contents() != NULL;
 }
 
+int WebViewAdapter::getNavigationEntryCount() const {
+  return priv->GetNavigationEntryCount();
+}
+
+int WebViewAdapter::getNavigationCurrentEntryIndex() const {
+  return priv->GetNavigationCurrentEntryIndex();
+}
+
+void WebViewAdapter::setNavigationCurrentEntryIndex(int index) {
+  priv->SetNavigationCurrentEntryIndex(index);
+}
+
+int WebViewAdapter::getNavigationEntryUniqueID(int index) const {
+  return priv->GetNavigationEntryUniqueID(index);
+}
+
+QUrl WebViewAdapter::getNavigationEntryUrl(int index) const {
+  return QUrl(QString::fromStdString(priv->GetNavigationEntryUrl(index).spec()));
+}
+
+QString WebViewAdapter::getNavigationEntryTitle(int index) const {
+  return QString::fromStdString(priv->GetNavigationEntryTitle(index));
+}
+
+QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
+  return QDateTime::fromMSecsSinceEpoch(priv->GetNavigationEntryTimestamp(index).ToJsTime());
+}
+
 } // namespace qt
 } // namespace oxide

@@ -25,6 +25,8 @@
 
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
+#include "oxideqquicknavigationhistory_p.h"
+
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
@@ -61,12 +63,11 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void RootFrameChanged() Q_DECL_FINAL;
 
-  void LoadStarted(const QUrl& url) Q_DECL_FINAL;
-  void LoadStopped(const QUrl& url) Q_DECL_FINAL;
-  void LoadFailed(const QUrl& url,
-                  int error_code,
-                  const QString& error_description) Q_DECL_FINAL;
-  void LoadSucceeded(const QUrl& url) Q_DECL_FINAL;
+  void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
+
+  void NavigationEntryCommitted() Q_DECL_FINAL;
+  void NavigationListPruned(bool from_front, int count) Q_DECL_FINAL;
+  void NavigationEntryChanged(int index) Q_DECL_FINAL;
 
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
@@ -92,6 +93,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   InitData* init_props() { return init_props_.data(); }
 
   OxideQQuickWebContext* context;
+  OxideQQuickNavigationHistory navigationHistory;
   QQmlComponent* popup_menu;
 
  private:

@@ -15,30 +15,30 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
-#define _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
+#ifndef _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
+#define _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
 
-#include "base/compiler_specific.h"
+#include <QMap>
 
-#include "shared/common/oxide_content_main_delegate.h"
-#include "shared/common/oxide_export.h"
+class OxideQQuickNavigationHistory;
+class OxideQQuickWebView;
 
-namespace oxide {
-namespace qt {
+struct NavigationEntry;
 
-class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
- public:
-  ContentMainDelegate();
+class OxideQQuickNavigationHistoryPrivate {
+  Q_DECLARE_PUBLIC(OxideQQuickNavigationHistory)
 
- private:
-  content::ContentBrowserClient* CreateContentBrowserClientImpl() FINAL;
+  enum Roles {
+    Url = Qt::UserRole + 1,
+    Title,
+    Timestamp
+  };
 
-  oxide::ContentClient* CreateContentClient() FINAL;
-
-  DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
+  OxideQQuickNavigationHistory* q_ptr;
+  OxideQQuickWebView* webview;
+  int entry_count;
+  int current_index;
+  QMap<int, NavigationEntry*> entry_cache;
 };
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_COMMON_CONTENT_MAIN_DELEGATE_H_
+#endif // _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_

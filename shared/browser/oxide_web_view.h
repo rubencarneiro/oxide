@@ -24,6 +24,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
+#include "content/public/browser/notification_observer.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
@@ -41,6 +42,7 @@ class Size;
 
 namespace content {
 
+class NotificationRegistrar;
 struct OpenURLParams;
 class RenderWidgetHost;
 class RenderWidgetHostView;
@@ -58,6 +60,7 @@ class WebPopupMenu;
 // this. Note that this class will hold the main browser process
 // components alive
 class WebView : public MessageTarget,
+                public content::NotificationObserver,
                 public content::WebContentsDelegate,
                 public content::WebContentsObserver {
  public:
@@ -94,8 +97,20 @@ class WebView : public MessageTarget,
 
   BrowserContext* GetBrowserContext() const;
 
+  int GetNavigationEntryCount() const;
+  int GetNavigationCurrentEntryIndex() const;
+  void SetNavigationCurrentEntryIndex(int index);
+  int GetNavigationEntryUniqueID(int index) const;
+  const GURL& GetNavigationEntryUrl(int index) const;
+  std::string GetNavigationEntryTitle(int index) const;
+  base::Time GetNavigationEntryTimestamp(int index) const;
+
   WebFrame* GetRootFrame() const;
   WebFrame* FindFrameWithID(int64 frame_id) const;
+
+  void Observe(int type,
+               const content::NotificationSource& source,
+               const content::NotificationDetails& details) FINAL;
 
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
@@ -137,8 +152,13 @@ class WebView : public MessageTarget,
                    const base::string16& error_description,
                    content::RenderViewHost* render_view_host) FINAL;
 
+  void NavigationEntryCommitted(
+      const content::LoadCommittedDetails& load_details) FINAL;
+
   void FrameDetached(content::RenderViewHost* rvh,
                      int64 frame_id) FINAL;
+
+  void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
   bool OnMessageReceived(const IPC::Message& message) FINAL;
 
@@ -200,10 +220,16 @@ class WebView : public MessageTarget,
                             const std::string& error_description);
   virtual void OnLoadSucceeded(const GURL& validated_url);
 
+  virtual void OnNavigationEntryCommitted();
+  virtual void OnNavigationListPruned(bool from_front, int count);
+  virtual void OnNavigationEntryChanged(int index);
+
   virtual WebFrame* CreateWebFrame() = 0;
 
   scoped_ptr<content::WebContents> web_contents_;
   WebFrame* root_frame_;
+
+  scoped_ptr<content::NotificationRegistrar> registrar_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

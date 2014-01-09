@@ -23,7 +23,7 @@
 #include "ui/base/resource/resource_bundle.h"
 #include "url/url_util.h"
 
-#include "shared/common/oxide_content_main_delegate.h"
+#include "shared/app/oxide_content_main_delegate.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_io_thread_delegate.h"

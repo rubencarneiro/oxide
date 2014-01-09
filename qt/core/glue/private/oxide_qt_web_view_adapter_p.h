@@ -61,6 +61,10 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
                     const std::string& error_description) FINAL;
   void OnLoadSucceeded(const GURL& validated_url) FINAL;
 
+  void OnNavigationEntryCommitted() FINAL;
+  void OnNavigationListPruned(bool from_front, int count) FINAL;
+  void OnNavigationEntryChanged(int index) FINAL;
+
   oxide::WebFrame* CreateWebFrame() FINAL;
 
   WebViewAdapter* a;

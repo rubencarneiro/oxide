@@ -21,11 +21,18 @@
       'type': 'shared_library',
       'shared_library_version': '<(oxide_qt_libversion)',
       'dependencies': [
+        'OxideQtCore_private',
+        'OxideQtCore_public',
+      ],
+    },
+    {
+      'target_name': 'OxideQtCore_private',
+      'type': 'static_library',
+      'dependencies': [
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',
         'system.gyp:Qt5Gui-private',
         '../../shared/shared.gyp:oxide_shared',
-        'OxideQtCore_public',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_renderer',
@@ -34,16 +41,17 @@
         '<(DEPTH)/ui/ui.gyp:ui',
         '<(DEPTH)/url/url.gyp:url_lib'
       ],
+      'variables': {
+        'chromium_code': 1,
+      },
       'include_dirs': [
         '../..',
         '<(DEPTH)'
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/oxide_qt_web_popup_menu_qquick.moc',
-        'api/private/oxideqincomingmessage_p.cc',
-        'api/private/oxideqincomingmessage_p.h',
-        'api/private/oxideqloadevent_p.cc',
-        'api/private/oxideqloadevent_p.h',
+        'app/oxide_qt_content_main_delegate.cc',
+        'app/oxide_qt_content_main_delegate.h',
         'browser/oxide_qt_backing_store.cc',
         'browser/oxide_qt_backing_store.h',
         'browser/oxide_qt_content_browser_client.cc',
@@ -58,8 +66,6 @@
         'browser/oxide_qt_web_popup_menu.h',
         'common/oxide_qt_content_client.cc',
         'common/oxide_qt_content_client.h',
-        'common/oxide_qt_content_main_delegate.cc',
-        'common/oxide_qt_content_main_delegate.h',
         'glue/private/oxide_qt_message_handler_adapter_p.cc',
         'glue/private/oxide_qt_message_handler_adapter_p.h',
         'glue/private/oxide_qt_outgoing_message_request_adapter_p.cc',
@@ -73,9 +79,6 @@
         'glue/private/oxide_qt_web_view_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.h'
       ],
-      'variables': {
-        'chromium_code': 1
-      }
     },
     {
       'target_name': 'OxideQtCore_public',
@@ -87,9 +90,9 @@
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/skia/skia.gyp:skia',
       ],
-      'export_dependent_settings': [
-        '<(DEPTH)/skia/skia.gyp:skia'
-      ],
+      'variables': {
+        'chromium_code': 1,
+      },
       'include_dirs': [
         '../..',
         '<(INTERMEDIATE_DIR)',
@@ -100,8 +103,10 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         'api/oxideqincomingmessage.cc',
         'api/oxideqincomingmessage.h',
+        'api/oxideqincomingmessage_p.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
+        'api/oxideqloadevent_p.h',
         'glue/oxide_qt_adapter_base.h',
         'glue/oxide_qt_message_handler_adapter.cc',
         'glue/oxide_qt_message_handler_adapter.h',

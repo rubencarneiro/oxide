@@ -26,21 +26,16 @@
 
 class OxideQIncomingMessagePrivate;
 
-namespace oxide {
-class IncomingMessage;
-namespace qt {
-class MessageHandlerAdapterPrivate;
-}
-}
-
 class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString worldId READ worldId)
   Q_PROPERTY(QVariant args READ args)
 
   Q_DECLARE_PRIVATE(OxideQIncomingMessage)
+  Q_DISABLE_COPY(OxideQIncomingMessage)
 
  public:
+  Q_DECL_HIDDEN OxideQIncomingMessage();
   virtual ~OxideQIncomingMessage();
 
   QString worldId() const;
@@ -48,11 +43,6 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
 
   Q_INVOKABLE void reply(const QVariant& args);
   Q_INVOKABLE void error(const QString& msg);
-
- protected:
-  friend class oxide::qt::MessageHandlerAdapterPrivate;
-
-  Q_DECL_HIDDEN OxideQIncomingMessage(oxide::IncomingMessage* message);
 
  private:
   QScopedPointer<OxideQIncomingMessagePrivate> d_ptr;

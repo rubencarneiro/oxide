@@ -25,7 +25,6 @@
 #include <QUrl>
 
 class OxideQLoadEventPrivate;
-class OxideQQuickWebViewPrivate;
 
 class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_OBJECT
@@ -38,9 +37,9 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_ENUMS(ErrorCode)
 
   Q_DECLARE_PRIVATE(OxideQLoadEvent)
+  Q_DISABLE_COPY(OxideQLoadEvent)
 
  public:
-  virtual ~OxideQLoadEvent();
 
   enum Type {
     TypeStarted,
@@ -56,18 +55,16 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
     ErrorFailed = 1000
   };
 
+  OxideQLoadEvent(const QUrl& url,
+                  Type type,
+                  ErrorCode error_code = ErrorNone,
+                  const QString& error_string = QString());
+  virtual ~OxideQLoadEvent();
+
   QUrl url() const;
   Type type() const;
   ErrorCode error() const;
   QString errorString() const;
-
- protected:
-  friend class OxideQQuickWebViewPrivate;
-
-  OxideQLoadEvent(const QUrl& url,
-                  Type type,
-                  int error_code = 0,
-                  const QString& error_string = QString());
 
  private:
   QScopedPointer<OxideQLoadEventPrivate> d_ptr;

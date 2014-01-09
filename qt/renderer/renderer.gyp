@@ -22,6 +22,9 @@
       'dependencies': [
         '../core/core.gyp:OxideQtCore'
       ],
+      'include_dirs': [
+        '../..',
+      ],
       'sources': [
         'main.cc'
       ],

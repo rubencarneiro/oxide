@@ -6,6 +6,7 @@ construct instances of classes from objects without RTTI, if those classes
 have a vtable. In order to avoid constraining consumers, we build all public
 classes with RTTI.
 
-All objects in this folder are compiled with RTTI. When working on these files,
-please remember that you can't construct instances of classes with vtables from
-objects that are built anywhere else in Oxide or Chromium.
+All objects in this folder (excluding those in private/) are compiled with RTTI.
+When working on these files, please remember that you can't construct instances
+of classes with vtables from objects that are built anywhere else in Oxide or
+Chromium.

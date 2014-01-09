@@ -15,38 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_PRIVATE_INCOMING_MESSAGE_P_H_
-#define _OXIDE_QT_CORE_API_PRIVATE_INCOMING_MESSAGE_P_H_
+#include "oxide_qt_content_main_delegate.h"
 
-#include <QVariant>
+#include "base/lazy_instance.h"
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
+#include "qt/core/browser/oxide_qt_content_browser_client.h"
+#include "qt/core/common/oxide_qt_content_client.h"
 
 namespace oxide {
-class IncomingMessage;
+namespace qt {
+
+namespace {
+base::LazyInstance<ContentBrowserClient> g_content_browser_client =
+    LAZY_INSTANCE_INITIALIZER;
 }
 
-class OxideQIncomingMessagePrivate FINAL {
- public:
-  static OxideQIncomingMessagePrivate* Create(oxide::IncomingMessage* message);
+content::ContentBrowserClient*
+ContentMainDelegate::CreateContentBrowserClientImpl() {
+  return g_content_browser_client.Pointer();
+}
 
-  oxide::IncomingMessage* incoming() const {
-    return incoming_.get();
-  }
+oxide::ContentClient* ContentMainDelegate::CreateContentClient() {
+  return ContentClient::GetInstance();
+}
 
-  QVariant args() const {
-    return args_variant_;
-  }
+ContentMainDelegate::ContentMainDelegate() {}
 
- private:
-  OxideQIncomingMessagePrivate(oxide::IncomingMessage* message);
+} // namespace qt
 
-  scoped_ptr<oxide::IncomingMessage> incoming_;
-  QVariant args_variant_;
+// static
+ContentMainDelegate* ContentMainDelegate::Create() {
+  return new qt::ContentMainDelegate();
+}
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(OxideQIncomingMessagePrivate);
-};
-
-#endif // _OXIDE_QT_CORE_API_PRIVATE_INCOMING_MESSAGE_P_H_
+} // namespace oxide
