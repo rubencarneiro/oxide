@@ -25,6 +25,7 @@
     'toolkit_uses_gtk': 0,
     'use_aura': 1,
     'use_gconf': 0,
+    'enable_printing': 0,
     'conditions': [
       ['target_arch=="arm"', {
         'arm_neon': 0,
