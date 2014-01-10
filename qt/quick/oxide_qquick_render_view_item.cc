@@ -24,17 +24,21 @@
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
+#if defined(ENABLE_COMPOSITING)
 #include "oxide_qquick_accelerated_render_view_node.h"
+#endif
 #include "oxide_qquick_painted_render_view_node.h"
 
 namespace oxide {
 namespace qquick {
 
 void RenderViewItem::SchedulePaint(const QRect& rect) {
+#if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_) {
     is_compositing_enabled_state_changed_ = true;
     is_compositing_enabled_ = false;
   }
+#endif
 
   if (rect.isNull() && !dirty_rect_.isNull()) {
     dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
@@ -47,20 +51,28 @@ void RenderViewItem::SchedulePaint(const QRect& rect) {
 }
 
 void RenderViewItem::ScheduleUpdate() {
+#if defined(ENABLE_COMPOSITING)
   if (!is_compositing_enabled_) {
     is_compositing_enabled_state_changed_ = true;
     is_compositing_enabled_ = true;
   }
 
   update();
+#else
+  Q_ASSERT(0);
+#endif
 }
 
 RenderViewItem::RenderViewItem(
     OxideQQuickWebView* webview) :
     QQuickItem(webview),
-    backing_store_(NULL),
-    is_compositing_enabled_(false),
+    backing_store_(NULL)
+#if defined(ENABLE_COMPOSITING)
+    , is_compositing_enabled_(false),
     is_compositing_enabled_state_changed_(false) {
+#else
+{
+#endif
   setFlag(QQuickItem::ItemHasContents);
 
   setAcceptedMouseButtons(Qt::AllButtons);
@@ -188,11 +200,13 @@ QSGNode* RenderViewItem::updatePaintNode(
     UpdatePaintNodeData* data) {
   Q_UNUSED(data);
 
+#if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_state_changed_) {
     delete oldNode;
     oldNode = NULL;
     is_compositing_enabled_state_changed_ = false;
   }
+#endif
 
   if (width() <= 0 || height() <= 0) {
     delete oldNode;
@@ -203,6 +217,7 @@ QSGNode* RenderViewItem::updatePaintNode(
   // FIXME: What if we had a resize between scheduling the update
   //        on the main thread and now?
 
+#if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_) {
     AcceleratedRenderViewNode* node =
         static_cast<AcceleratedRenderViewNode *>(oldNode);
@@ -216,6 +231,7 @@ QSGNode* RenderViewItem::updatePaintNode(
     DidUpdate(false);
     return node;
   }
+#endif
 
   PaintedRenderViewNode* node = static_cast<PaintedRenderViewNode *>(oldNode);
   if (!node) {

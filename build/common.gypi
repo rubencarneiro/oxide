@@ -31,6 +31,7 @@
     ],
     'ozone_platform_dri': 0,
     'ozone_platform_test': 0,
+    'enable_printing': 0,
     'conditions': [
       ['target_arch=="arm"', {
         'arm_neon': 0,
