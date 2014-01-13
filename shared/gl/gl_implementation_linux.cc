@@ -64,23 +64,44 @@ base::NativeLibrary LoadLibrary(const char* filename) {
 } // namespace
 
 void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
-  GLShareGroup* share_group =
-      oxide::ContentClient::instance()->browser()->GetGLShareGroup();
-  if (!share_group) {
+  std::vector<GLImplementation> supported;
+  supported.push_back(kGLImplementationDesktopGL);
+  supported.push_back(kGLImplementationEGLGLES2);
+
+  oxide::ContentBrowserClient* client =
+      oxide::ContentClient::instance()->browser();
+
+  client->GetAllowedGLImplementations(impls);
+  if (impls->size() == 0) {
     impls->push_back(kGLImplementationEGLGLES2);
-    return;
+  } else {
+    for (std::vector<GLImplementation>::iterator it = impls->begin();
+         it != impls->end(); ++it) {
+      DCHECK(std::find(supported.begin(), supported.end(), *it) !=
+             supported.end());
+    }
   }
 
-  oxide::SharedGLContext* share_context =
-      oxide::SharedGLContext::FromGfx(share_group->GetContext());
-  if (!share_context) {
-    impls->push_back(kGLImplementationEGLGLES2);
-    return;
+  GLShareGroup* group = client->GetGLShareGroup();
+  if (group) {
+    oxide::SharedGLContext* context =
+        oxide::SharedGLContext::FromGfx(group->GetContext());
+    if (context) {
+      GLImplementation preferred = context->GetImplementation();
+      DCHECK(std::find(impls->begin(), impls->end(), preferred) !=
+             impls->end());
+      if (impls->front() != preferred) {
+        impls->insert(impls->begin(), preferred);
+        for (std::vector<GLImplementation>::iterator it = impls->begin() + 1;
+             it != impls->end(); ++it) {
+          if (*it == preferred) {
+            impls->erase(it);
+            break;
+          }
+        }
+      }
+    }
   }
-
-  DCHECK(share_context->GetImplementation() == kGLImplementationDesktopGL ||
-         share_context->GetImplementation() == kGLImplementationEGLGLES2);
-  impls->push_back(share_context->GetImplementation());
 }
 
 bool InitializeGLBindings(GLImplementation implementation) {

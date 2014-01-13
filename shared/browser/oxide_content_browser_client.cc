@@ -275,4 +275,7 @@ scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
   return scoped_refptr<gfx::GLContext>(NULL);
 }
 
+void ContentBrowserClient::GetAllowedGLImplementations(
+    std::vector<gfx::GLImplementation>* impls) {}
+
 } // namespace oxide

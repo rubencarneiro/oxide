@@ -63,7 +63,7 @@ class SharedGLContext : public oxide::SharedGLContext {
         implementation_ = gfx::kGLImplementationEGLGLES2;
       }
     } else {
-      DLOG(WARNING) << "Unsupported platform: " << qPrintable(platform);
+      DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
     }
   }
 
@@ -99,6 +99,20 @@ scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
   }
 
   return context;
+}
+
+void ContentBrowserClient::GetAllowedGLImplementations(
+    std::vector<gfx::GLImplementation>* impls) {
+  QString platform = QGuiApplication::platformName();
+  if (platform == "xcb") {
+    impls->push_back(gfx::kGLImplementationDesktopGL);
+    impls->push_back(gfx::kGLImplementationEGLGLES2);
+  } else if (platform == "ubuntu" ||
+             platform == "ubuntumirclient") {
+    impls->push_back(gfx::kGLImplementationEGLGLES2);
+  } else {
+    DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
+  }
 }
 
 void ContentBrowserClient::GetDefaultScreenInfo(blink::WebScreenInfo* result) {

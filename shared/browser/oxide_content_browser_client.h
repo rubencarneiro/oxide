@@ -18,10 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 
+#include <vector>
+
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/content_browser_client.h"
+#include "ui/gl/gl_implementation.h"
 
 namespace base {
 class MessagePump;
@@ -85,6 +88,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
       oxide::GLShareGroup* share_group);
+
+  virtual void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
 
   virtual void GetDefaultScreenInfo(blink::WebScreenInfo* result) = 0;
 
