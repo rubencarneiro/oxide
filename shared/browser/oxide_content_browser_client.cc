@@ -181,13 +181,13 @@ class BrowserMainParts : public content::BrowserMainParts {
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
   }
 
-  gfx::GLContext* shared_gl_context() const {
+  oxide::SharedGLContext* shared_gl_context() const {
     return shared_gl_context_;
   }
 
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
-  scoped_refptr<gfx::GLContext> shared_gl_context_;
+  scoped_refptr<oxide::SharedGLContext> shared_gl_context_;
 
   Screen primary_screen_;
 };
@@ -264,8 +264,8 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   // XXX: This is temporary until we expose a WebPreferences API
   if (getenv("OXIDE_ENABLE_COMPOSITING") &&
       g_main_parts->shared_gl_context() &&
-      SharedGLContext::FromGfx(g_main_parts->shared_gl_context())
-          ->GetImplementation() == gfx::GetGLImplementation()) {
+      g_main_parts->shared_gl_context()->GetImplementation() ==
+          gfx::GetGLImplementation()) {
     prefs->force_compositing_mode = true;
     prefs->accelerated_compositing_enabled = true;
   } else {
@@ -282,9 +282,9 @@ gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   return g_main_parts->shared_gl_context()->share_group();
 }
 
-scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
+scoped_refptr<oxide::SharedGLContext> ContentBrowserClient::CreateSharedGLContext(
     oxide::GLShareGroup* share_group) {
-  return scoped_refptr<gfx::GLContext>(NULL);
+  return NULL;
 }
 
 void ContentBrowserClient::GetAllowedGLImplementations(

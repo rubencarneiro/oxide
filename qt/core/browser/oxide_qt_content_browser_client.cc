@@ -83,14 +83,14 @@ base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
 }
 
-scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
-    oxide::GLShareGroup* share_group) {
+scoped_refptr<oxide::SharedGLContext>
+ContentBrowserClient::CreateSharedGLContext(oxide::GLShareGroup* share_group) {
   QOpenGLContext* qcontext = WebContextAdapter::sharedGLContext();
   if (!qcontext) {
     return NULL;
   }
 
-  scoped_refptr<gfx::GLContext> context =
+  scoped_refptr<oxide::SharedGLContext> context =
       new SharedGLContext(qcontext, share_group);
   if (!context->GetHandle()) {
     DLOG(WARNING) << "Could not determine native handle for shared GL context";

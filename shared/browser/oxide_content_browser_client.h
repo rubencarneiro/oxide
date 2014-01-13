@@ -45,6 +45,7 @@ class GLContext;
 namespace oxide {
 
 class GLShareGroup;
+class SharedGLContext;
 class WebFrameTree;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
@@ -86,7 +87,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
 
-  virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
+  virtual scoped_refptr<oxide::SharedGLContext> CreateSharedGLContext(
       oxide::GLShareGroup* share_group);
 
   virtual void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);

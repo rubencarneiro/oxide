@@ -34,7 +34,7 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
  public:
   base::MessagePump* CreateMessagePumpForUI() FINAL;
 
-  scoped_refptr<gfx::GLContext> CreateSharedGLContext(
+  scoped_refptr<oxide::SharedGLContext> CreateSharedGLContext(
       oxide::GLShareGroup* share_group) FINAL;
 
   void GetAllowedGLImplementations(
