@@ -145,8 +145,11 @@ class BrowserMainParts : public content::BrowserMainParts {
     shared_gl_context_ =
         ContentClient::instance()->browser()->CreateSharedGLContext(
           share_group);
-    if (shared_gl_context_) {
-      DCHECK_EQ(shared_gl_context_->share_group(), share_group);
+    DCHECK(!shared_gl_context_ ||
+           shared_gl_context_->share_group() == share_group);
+    if (!shared_gl_context_) {
+      DLOG(INFO) << "No shared GL context has been created. "
+                 << "Compositing will not work";
     }
   }
 
@@ -262,8 +265,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   if (!g_main_parts->shared_gl_context()) {
-    DLOG(INFO) << "No shared GL context has been created. "
-               << "Compositing will not work";
     return NULL;
   }
 

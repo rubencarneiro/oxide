@@ -93,8 +93,7 @@ scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
   scoped_refptr<gfx::GLContext> context =
       new SharedGLContext(qcontext, share_group);
   if (!context->GetHandle()) {
-    DLOG(WARNING) << "No native handle for shared GL context. "
-                  << "Compositing will not work";
+    DLOG(WARNING) << "Could not determine native handle for shared GL context";
     context = NULL;
   }
 
