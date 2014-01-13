@@ -31,6 +31,7 @@
 #include "ui/gfx/screen.h"
 #include "ui/gfx/screen_type_delegate.h"
 #include "ui/gl/gl_context.h"
+#include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_share_group.h"
 #include "ui/gl/gl_surface.h"
 #include "webkit/common/webpreferences.h"
@@ -254,7 +255,9 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     WebPreferences* prefs) {
   // XXX: This is temporary until we expose a WebPreferences API
   if (getenv("OXIDE_ENABLE_COMPOSITING") &&
-      g_main_parts->shared_gl_context()) {
+      g_main_parts->shared_gl_context() &&
+      SharedGLContext::FromGfx(g_main_parts->shared_gl_context())
+          ->GetImplementation() == gfx::GetGLImplementation()) {
     prefs->force_compositing_mode = true;
     prefs->accelerated_compositing_enabled = true;
   } else {
