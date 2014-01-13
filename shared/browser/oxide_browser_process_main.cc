@@ -20,8 +20,6 @@
 #include "base/logging.h"
 #include "content/public/app/content_main_runner.h"
 #include "content/public/browser/browser_main_runner.h"
-#include "ui/base/resource/resource_bundle.h"
-#include "url/url_util.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
 
@@ -32,10 +30,25 @@
 namespace oxide {
 
 namespace {
-BrowserProcessMain* g_process;
+scoped_ptr<BrowserProcessMain> g_process;
+}
+
+BrowserProcessMain::BrowserProcessMain() :
+    did_shutdown_(false),
+    main_delegate_(ContentMainDelegate::Create()),
+    main_runner_(content::ContentMainRunner::Create()) {
+  CHECK(!g_process) << "Should only have one BrowserProcessMain";
 }
 
 bool BrowserProcessMain::Init() {
+  static bool initialized = false;
+  if (initialized) {
+    DLOG(ERROR) << "Cannot restart the main components";
+    return false;
+  }
+
+  initialized = true;
+
   if (!main_runner_ || !main_delegate_) {
     DLOG(ERROR) << "Failed to create main components";
     return false;
@@ -54,49 +67,51 @@ bool BrowserProcessMain::Init() {
   return true;
 }
 
-BrowserProcessMain::BrowserProcessMain() {
-  DCHECK(!g_process) << "Should only have one BrowserProcessMain";
+void BrowserProcessMain::Shutdown() {
+  if (did_shutdown_) {
+    return;
+  }
 
-  g_process = this;
+  did_shutdown_ = true;
 
-  main_delegate_.reset(ContentMainDelegate::Create());
-  main_runner_.reset(content::ContentMainRunner::Create());
+  BrowserContext::AssertNoContextsExist();
+
+  // XXX: Better off in BrowserProcessMainParts?
+  MessageLoopForUI::current()->Stop();
+  main_runner_->Shutdown();
 }
 
 BrowserProcessMain::~BrowserProcessMain() {
-  DCHECK_EQ(g_process, this);
-  BrowserContext::AssertNoContextsExist();
-
-  MessageLoopForUI::current()->Stop();
-  main_runner_->Shutdown();
-
-  url_util::Shutdown();
-  ui::ResourceBundle::CleanupSharedInstance();
-
-  g_process = NULL;
+  Shutdown();
 }
 
-// static
-scoped_refptr<BrowserProcessMain> BrowserProcessMain::GetInstance() {
+/* static */
+bool BrowserProcessMain::Run() {
   if (!g_process) {
-    BrowserProcessMain* process = new BrowserProcessMain();
-    if (!process->Init()) {
-      // This is the only way to delete the failed BrowserProcessMain
-      scoped_refptr<BrowserProcessMain> reaper(process);
+    g_process.reset(new BrowserProcessMain());
+    if (!g_process->Init()) {
+      g_process.reset();
     }
   }
 
-  return make_scoped_refptr(g_process);
+  return IsRunning();
+}
+
+/* static */
+void BrowserProcessMain::Quit() {
+  if (g_process) {
+    g_process->Shutdown();
+    g_process.reset();
+  }
+}
+
+bool BrowserProcessMain::IsRunning() {
+  return g_process != NULL;
 }
 
 // static
 IOThreadDelegate* BrowserProcessMain::io_thread_delegate() {
   return g_process->io_thread_delegate_.get();
-}
-
-// static
-bool BrowserProcessMain::Exists() {
-  return !!g_process;
 }
 
 // static
@@ -106,10 +121,9 @@ void BrowserProcessMain::CreateIOThreadDelegate() {
 }
 
 // static
-int BrowserProcessMain::RunBrowserProcess(
+int BrowserProcessMain::RunBrowserMain(
     const content::MainFunctionParams& main_function_params) {
   if (!g_process) {
-    LOG(ERROR) << "Cannot run the Oxide Renderer as a browser!";
     return 1;
   }
 
@@ -126,13 +140,10 @@ int BrowserProcessMain::RunBrowserProcess(
 }
 
 // static
-void BrowserProcessMain::ShutdownBrowserProcess() {
+void BrowserProcessMain::ShutdownBrowserMain() {
   if (g_process) {
     g_process->browser_main_runner_->Shutdown();
   }
 }
-
-ScopedBrowserProcessHandle::ScopedBrowserProcessHandle() :
-    handle_(BrowserProcessMain::GetInstance()) {}
 
 } // namespace oxide

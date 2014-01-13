@@ -32,7 +32,6 @@
 
 namespace {
 OxideQQuickWebContext* g_default_context;
-unsigned int g_context_count = 0;
 
 QOpenGLContext* OxideQQuickSharedGLContextFactory() {
 #if defined(ENABLE_COMPOSITING)
@@ -47,15 +46,14 @@ QOpenGLContext* OxideQQuickSharedGLContextFactory() {
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     q_ptr(q) {
-  if (g_context_count++ == 0) {
+  static bool run_once = false;
+  if (!run_once) {
+    run_once = true;
     oxide::qt::SetSharedGLContextFactory(OxideQQuickSharedGLContextFactory);
   }
 }
 
-OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {
-  Q_ASSERT(g_context_count > 0);
-  --g_context_count;
-}
+OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
 
 OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
     OxideQQuickWebContext* context) {

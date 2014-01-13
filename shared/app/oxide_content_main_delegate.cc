@@ -46,9 +46,8 @@ base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
 
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
-  DCHECK(BrowserProcessMain::Exists()) <<
-    "Creating a browser client in a non-browser process";
-  return CreateContentBrowserClientImpl();
+  NOTREACHED() << "CreateContentBrowserClient() hasn't been implemented";
+  return NULL;
 }
 
 content::ContentRendererClient*
@@ -91,7 +90,7 @@ void ContentMainDelegate::PreSandboxStartup() {
     resource_dir = base::MakeAbsoluteFilePath(base::FilePath(resource_path));
   } else {
     Dl_info info;
-    int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
+    int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::IsRunning),
                     &info);
     DCHECK_NE(rv, 0) << "Failed to determine module path";
 
@@ -126,7 +125,7 @@ int ContentMainDelegate::RunProcess(
     const std::string& process_type,
     const content::MainFunctionParams& main_function_params) {
   if (process_type.empty()) {
-    return BrowserProcessMain::RunBrowserProcess(main_function_params);
+    return BrowserProcessMain::RunBrowserMain(main_function_params);
   }
 
   return -1;
@@ -134,7 +133,7 @@ int ContentMainDelegate::RunProcess(
 
 void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
   if (process_type.empty()) {
-    BrowserProcessMain::ShutdownBrowserProcess();
+    BrowserProcessMain::ShutdownBrowserMain();
   }
 }
 

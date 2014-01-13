@@ -31,7 +31,6 @@
 namespace oxide {
 
 class BrowserContext;
-class BrowserProcessMain;
 
 namespace qt {
 
@@ -74,13 +73,6 @@ class WebContextAdapterPrivate FINAL {
  private:
   WebContextAdapterPrivate();
 
-  // BrowserProcesMain needs to outlive BrowserContext. The reason
-  // that the reference to BrowserProcessMain is here and not in
-  // BrowserContext is because BrowserProcessMain has to outlive
-  // the destructor for base::SupportsUserData, from which
-  // BrowserContext inherits, because some data needs to be deleted
-  // on the IO thread
-  scoped_refptr<oxide::BrowserProcessMain> process_handle_;
   scoped_ptr<oxide::BrowserContext> context_;
   QList<UserScriptAdapter *> user_scripts_;
 

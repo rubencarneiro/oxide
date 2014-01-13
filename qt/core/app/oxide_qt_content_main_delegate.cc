@@ -30,7 +30,7 @@ base::LazyInstance<ContentBrowserClient> g_content_browser_client =
 }
 
 content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClientImpl() {
+ContentMainDelegate::CreateContentBrowserClient() {
   return g_content_browser_client.Pointer();
 }
 

@@ -17,12 +17,15 @@
 
 #include "oxide_qt_web_context_adapter.h"
 
+#include <QCoreApplication>
+#include <QObject>
 #include <QtDebug>
 
 #include "base/files/file_path.h"
 #include "url/gurl.h"
 
 #include "qt/core/glue/private/oxide_qt_web_context_adapter_p.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
 namespace oxide {
 namespace qt {
@@ -106,7 +109,20 @@ void WebContextAdapter::completeConstruction() {
 }
 
 WebContextAdapter::WebContextAdapter() :
-    priv(WebContextAdapterPrivate::Create()) {}
+    priv(WebContextAdapterPrivate::Create()) {
+  static bool run_once = false;
+  if (!run_once) {
+    run_once = true;
+    // XXX: This seems to fire before all webviews and contexts disappear
+    //QObject::connect(QCoreApplication::instance(),
+    //                 &QCoreApplication::aboutToQuit,
+    //                 oxide::BrowserProcessMain::Quit);
+
+    // XXX: We add this for quicktest, which doesn't use QCoreApplication::exec,
+    //      and so doesn't emit aboutToQuit()
+    qAddPostRoutine(oxide::BrowserProcessMain::Quit);
+  }
+}
 
 } // namespace qt
 } // namespace oxide

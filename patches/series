@@ -7,12 +7,7 @@ support-native-popup-menus.patch
 add-oxide-messages.patch
 add-frame-created-for-render-view.patch
 add-oxide-resources.patch
-unlock-url-util-on-shutdown.patch
-dont-assert-once-only-initialization-of-icu.patch
-allow-message-loop-to-be-restarted.patch
-allow-blocking-pool-to-be-restarted.patch
 share-gl-resources-with-embedder.patch
-allow-gpu-process-to-be-restarted.patch
 comment-out-GetDefaultXDisplay.patch
 arm-icu.patch
 dont-check-number-of-threads-at-startup.patch

@@ -25,8 +25,6 @@
 
 #include "base/logging.h"
 
-#include "shared/browser/oxide_browser_process_main.h"
-
 QT_USE_NAMESPACE
 
 namespace oxide {
@@ -48,10 +46,6 @@ int GetTimeIntervalMilliseconds(const base::TimeTicks& from) {
 void MessagePump::timerEvent(QTimerEvent* event) {
   DCHECK(event->timerId() == delayed_work_timer_id_);
 
-  // Make sure that the main browser process components can't
-  // shutdown until we've finished
-  oxide::ScopedBrowserProcessHandle handle;
-
   // Clear the timer
   ScheduleDelayedWork(base::TimeTicks());
 
@@ -62,10 +56,6 @@ void MessagePump::timerEvent(QTimerEvent* event) {
 
 void MessagePump::customEvent(QEvent* event) {
   DCHECK(event->type() == g_chromium_event_type);
-
-  // Make sure that the main browser process components can't
-  // shutdown until we've finished
-  oxide::ScopedBrowserProcessHandle handle;
 
   bool did_work = state_->delegate->DoWork();
   if (state_->should_quit) {
@@ -98,10 +88,6 @@ MessagePump::MessagePump() :
 }
 
 void MessagePump::Run(base::MessagePump::Delegate* delegate) {
-  // Make sure that the main browser process components can't
-  // shutdown until we've finished
-  oxide::ScopedBrowserProcessHandle handle;
-
   QEventLoop event_loop;
 
   RunState state;

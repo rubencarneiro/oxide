@@ -34,7 +34,9 @@ SharedGLContextFactory* GetSharedGLContextFactory() {
 
 // static
 void SetSharedGLContextFactory(SharedGLContextFactory* factory) {
-  DCHECK(!oxide::BrowserProcessMain::Exists());
+  DCHECK(!oxide::BrowserProcessMain::IsRunning()) <<
+      "SetSharedGLContextFactory must be called before the browser "
+      "components are started!";
 
   g_factory = factory;
 }
