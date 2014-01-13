@@ -366,7 +366,7 @@ BrowserContext::IODataHandle::~IODataHandle() {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
-  CHECK(BrowserProcessMain::Exists()) <<
+  CHECK(BrowserProcessMain::IsRunning()) <<
       "The main browser process components must be started before " <<
       "creating a context";
 

@@ -152,12 +152,12 @@ void WebContextAdapterPrivate::UpdateUserScripts() {
 }
 
 void WebContextAdapterPrivate::CompleteConstruction() {
-  DCHECK(!context_ && !process_handle_);
+  DCHECK(!context_);
 
   // We do this here rather than in the constructor because the first
   // browser context needs to set the shared GL context before anything
   // starts up, in order for compositing to work
-  process_handle_ = oxide::BrowserProcessMain::GetInstance();
+  oxide::BrowserProcessMain::Run();
 
   context_.reset(oxide::BrowserContext::Create(
       lazy_init_props_->data_path,

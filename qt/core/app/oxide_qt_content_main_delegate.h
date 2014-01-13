@@ -30,9 +30,10 @@ class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
  public:
   ContentMainDelegate();
 
- private:
-  content::ContentBrowserClient* CreateContentBrowserClientImpl() FINAL;
+ protected:
+  content::ContentBrowserClient* CreateContentBrowserClient() FINAL;
 
+ private:
   oxide::ContentClient* CreateContentClient() FINAL;
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);

@@ -48,12 +48,10 @@ class ContentMainDelegate : public content::ContentMainDelegate {
   // Allow access to default constructor only from derived classes
   ContentMainDelegate();
 
-  content::ContentBrowserClient* CreateContentBrowserClient() FINAL;
+  content::ContentBrowserClient* CreateContentBrowserClient() OVERRIDE;
   content::ContentRendererClient* CreateContentRendererClient() FINAL;
 
  private:
-  virtual content::ContentBrowserClient* CreateContentBrowserClientImpl() = 0;
-
   virtual ContentClient* CreateContentClient() = 0;
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);

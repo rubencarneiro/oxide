@@ -25,6 +25,7 @@
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
+class QOpenGLContext;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -58,6 +59,9 @@ class Q_DECL_EXPORT WebContextAdapter {
 
   bool constructed() const;
   void completeConstruction();
+
+  static QOpenGLContext* sharedGLContext();
+  static void setSharedGLContext(QOpenGLContext* context);
 
  protected:
   WebContextAdapter();
