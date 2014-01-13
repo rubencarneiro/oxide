@@ -144,6 +144,16 @@ class BrowserMainParts : public content::BrowserMainParts {
     base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
     main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
   
+  }
+
+  int PreCreateThreads() FINAL {
+    ui::OzonePlatform::Initialize();
+    // Make sure we initialize the display handle on the main thread
+    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
+
+    gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
+                                   &primary_screen_);
+
     scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
     shared_gl_context_ =
         ContentClient::instance()->browser()->CreateSharedGLContext(
@@ -154,13 +164,6 @@ class BrowserMainParts : public content::BrowserMainParts {
       DLOG(INFO) << "No shared GL context has been created. "
                  << "Compositing will not work";
     }
-  }
-
-  int PreCreateThreads() FINAL {
-    ui::OzonePlatform::Initialize();
-    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
-    gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
-                                   &primary_screen_);
 
     // Work around a mesa race - see https://launchpad.net/bugs/1267893
     gfx::GLSurface::InitializeOneOff();
