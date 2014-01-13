@@ -32,8 +32,6 @@
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
-#include "ui/gfx/ozone/surface_factory_ozone.h"
-#include "ui/ozone/ozone_platform.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/common/oxide_content_client.h"
@@ -123,15 +121,6 @@ void ContentMainDelegate::PreSandboxStartup() {
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
       resource_dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
       ui::SCALE_FACTOR_100P);
-}
-
-void ContentMainDelegate::SandboxInitialized(const std::string& process_type) {
-  if (process_type.empty()) {
-    // Make sure that ozone and the default display are initialized before
-    // any other threads are started
-    ui::OzonePlatform::Initialize();
-    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
-  }
 }
 
 int ContentMainDelegate::RunProcess(

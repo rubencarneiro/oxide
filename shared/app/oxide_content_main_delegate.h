@@ -36,8 +36,6 @@ class ContentMainDelegate : public content::ContentMainDelegate {
 
   void PreSandboxStartup() FINAL;
 
-  void SandboxInitialized(const std::string& process_type) FINAL;
-
   int RunProcess(
       const std::string& process_type,
       const content::MainFunctionParams& main_function_params) FINAL;

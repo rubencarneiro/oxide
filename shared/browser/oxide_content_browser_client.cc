@@ -28,12 +28,14 @@
 #include "content/public/browser/render_process_host.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
+#include "ui/gfx/ozone/surface_factory_ozone.h"
 #include "ui/gfx/screen.h"
 #include "ui/gfx/screen_type_delegate.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_share_group.h"
 #include "ui/gl/gl_surface.h"
+#include "ui/ozone/ozone_platform.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
@@ -155,8 +157,11 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
+    ui::OzonePlatform::Initialize();
+    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
+
     // Work around a mesa race - see https://launchpad.net/bugs/1267893
     gfx::GLSurface::InitializeOneOff();
 
