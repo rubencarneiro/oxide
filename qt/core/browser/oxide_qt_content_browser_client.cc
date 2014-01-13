@@ -56,7 +56,8 @@ class SharedGLContext : public oxide::SharedGLContext {
       if (!handle_) {
         implementation_ = gfx::kGLImplementationNone;
       }
-    } else if (platform == "ubuntu") {
+    } else if (platform == "ubuntu" ||
+               platform == "ubuntumirclient") {
       handle_ = pni->nativeResourceForContext("eglcontext", context);
       if (handle_) {
         implementation_ = gfx::kGLImplementationEGLGLES2;
