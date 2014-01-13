@@ -22,6 +22,7 @@
 #include <QtDebug>
 
 #include "base/files/file_path.h"
+#include "base/logging.h"
 #include "url/gurl.h"
 
 #include "qt/core/glue/private/oxide_qt_web_context_adapter_p.h"
@@ -29,6 +30,10 @@
 
 namespace oxide {
 namespace qt {
+
+namespace {
+QOpenGLContext* g_shared_gl_context;
+}
 
 WebContextAdapter::~WebContextAdapter() {}
 
@@ -106,6 +111,20 @@ bool WebContextAdapter::constructed() const {
 
 void WebContextAdapter::completeConstruction() {
   priv->CompleteConstruction();
+}
+
+/* static */
+QOpenGLContext* WebContextAdapter::sharedGLContext() {
+  return g_shared_gl_context;
+}
+
+/* static */
+void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
+  DCHECK(!oxide::BrowserProcessMain::IsRunning()) <<
+      "WebContextAdapter::setSharedGLContext must be called before the "
+      "browser components are started!";
+
+  g_shared_gl_context = context;
 }
 
 WebContextAdapter::WebContextAdapter() :

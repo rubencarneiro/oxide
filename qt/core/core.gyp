@@ -112,8 +112,6 @@
         'glue/oxide_qt_outgoing_message_request_adapter.h',
         'glue/oxide_qt_render_widget_host_view_delegate.cc',
         'glue/oxide_qt_render_widget_host_view_delegate.h',
-        'glue/oxide_qt_shared_gl_context_factory.cc',
-        'glue/oxide_qt_shared_gl_context_factory.h',
         'glue/oxide_qt_user_script_adapter.cc',
         'glue/oxide_qt_user_script_adapter.h',
         'glue/oxide_qt_web_context_adapter.cc',

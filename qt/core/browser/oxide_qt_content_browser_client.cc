@@ -22,13 +22,14 @@
 #include <QtGui/qpa/qplatformnativeinterface.h>
 #if defined(USE_X11)
 #include <X11/Xlib.h>
+#undef None
 #endif
 
 #include "base/logging.h"
 
 #include "shared/browser/oxide_shared_gl_context.h"
 
-#include "qt/core/glue/oxide_qt_shared_gl_context_factory.h"
+#include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_render_widget_host_view.h"
@@ -73,13 +74,7 @@ void ContentBrowserClient::GetDefaultScreenInfoImpl(
 
 scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
     oxide::GLShareGroup* share_group) {
-  SharedGLContextFactory* factory = GetSharedGLContextFactory();
-  if (!factory) {
-    DLOG(WARNING) << "No shared GL context factory. Compositing will not work";
-    return NULL;
-  }
-
-  QOpenGLContext* qcontext = factory();
+  QOpenGLContext* qcontext = WebContextAdapter::sharedGLContext();
   if (!qcontext) {
     return NULL;
   }

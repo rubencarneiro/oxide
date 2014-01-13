@@ -25,22 +25,11 @@
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
 
-#include "qt/core/glue/oxide_qt_shared_gl_context_factory.h"
-
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 
 namespace {
 OxideQQuickWebContext* g_default_context;
-
-QOpenGLContext* OxideQQuickSharedGLContextFactory() {
-#if defined(ENABLE_COMPOSITING)
-  return QSGContext::sharedOpenGLContext();
-#else
-  return NULL;
-#endif
-}
-
 }
 
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
@@ -49,7 +38,10 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
   static bool run_once = false;
   if (!run_once) {
     run_once = true;
-    oxide::qt::SetSharedGLContextFactory(OxideQQuickSharedGLContextFactory);
+#if defined(ENABLE_COMPOSITING)
+    oxide::qt::WebContextAdapter::setSharedGLContext(
+        QSGContext::sharedOpenGLContext());
+#endif
   }
 }
 
