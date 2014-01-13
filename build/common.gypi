@@ -26,16 +26,17 @@
     'use_aura': 1,
     'use_gconf': 0,
     'enable_printing': 0,
+    'variables': {
+      'conditions': [
+        ['target_arch=="arm"', {
+          'arm_neon': 0,
+          'arm_neon_optional': 1,
+        }],
+      ],
+    },
     'conditions': [
-      ['target_arch=="arm"', {
-        'arm_neon': 0,
-        'arm_neon_optional': 1,
-
-        'conditions': [
-          ['arm_version==7', {
-            'arm_float_abi': 'hard',
-          }],
-        ],
+      ['arm_version==7', {
+        'arm_float_abi': 'hard',
       }],
     ],
   },
