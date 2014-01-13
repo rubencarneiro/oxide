@@ -21,7 +21,7 @@
 #include <QQmlListProperty>
 #include <QtDebug>
 #include <QtQuickVersion>
-#if QTQUICK_VERSION >= 0x050200
+#if defined(ENABLE_COMPOSITING)
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
 
@@ -35,7 +35,7 @@ OxideQQuickWebContext* g_default_context;
 unsigned int g_context_count = 0;
 
 QOpenGLContext* OxideQQuickSharedGLContextFactory() {
-#if QTQUICK_VERSION >= 0x050200
+#if defined(ENABLE_COMPOSITING)
   return QSGContext::sharedOpenGLContext();
 #else
   return NULL;

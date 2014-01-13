@@ -1,0 +1,25 @@
+# Description: Don't depend on gtk unnecessarily
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/build/linux/system.gyp b/build/linux/system.gyp
+--- a/build/linux/system.gyp
++++ b/build/linux/system.gyp
+@@ -24,17 +24,17 @@
+         # the rest of NSS.
+         'use_system_ssl%': 0,
+       },
+     }, {
+       'variables': {
+         'use_system_ssl%': 1,
+       },
+     }],
+-    [ 'chromeos==0', {
++    [ 'chromeos==0 and toolkit_uses_gtk==1', {
+       # Hide GTK and related dependencies for Chrome OS, so they won't get
+       # added back to Chrome OS. Don't try to use GTK on Chrome OS.
+       'targets': [
+         {
+           'target_name': 'gdk',
+           'type': 'none',
+           'conditions': [
+             ['_toolset=="target"', {
