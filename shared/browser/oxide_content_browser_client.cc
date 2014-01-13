@@ -28,6 +28,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_share_group.h"
+#include "ui/gl/gl_surface.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
@@ -77,6 +78,9 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
+    // Work around a mesa race - see https://launchpad.net/bugs/1267893
+    gfx::GLSurface::InitializeOneOff();
+
     BrowserProcessMain::CreateIOThreadDelegate();
     return 0;
   }
