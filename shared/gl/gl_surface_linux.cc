@@ -22,6 +22,7 @@
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_surface_egl.h"
 #include "ui/gl/gl_surface_glx.h"
+#include "ui/gl/gl_surface_osmesa.h"
 
 namespace gfx {
 
@@ -42,6 +43,9 @@ bool GLSurface::InitializeOneOffInternal() {
       }
       break;
     }
+
+    case kGLImplementationOSMesaGL:
+      return true;
 
     default:
       return false;
@@ -72,6 +76,15 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
     case kGLImplementationEGLGLES2: {
       // XXX: Support SurfacelessEGL
       scoped_refptr<GLSurface> surface(new PbufferGLSurfaceEGL(size));
+      if (!surface->Initialize()) {
+        return NULL;
+      }
+
+      return surface;
+    }
+
+    case kGLImplementationOSMesaGL: {
+      scoped_refptr<GLSurface> surface(new GLSurfaceOSMesa(1, size));
       if (!surface->Initialize()) {
         return NULL;
       }

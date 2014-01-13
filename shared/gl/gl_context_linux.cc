@@ -21,6 +21,7 @@
 #include "base/memory/ref_counted.h"
 #include "ui/gl/gl_context_egl.h"
 #include "ui/gl/gl_context_glx.h"
+#include "ui/gl/gl_context_osmesa.h"
 #include "ui/gl/gl_implementation.h"
 
 namespace gfx {
@@ -42,6 +43,15 @@ scoped_refptr<GLContext> GLContext::CreateGLContext(
 
     case kGLImplementationEGLGLES2: {
       scoped_refptr<GLContext> context(new GLContextEGL(share_group));
+      if (!context->Initialize(compatible_surface, gpu_preference)) {
+        return NULL;
+      }
+
+      return context;
+    }
+
+    case kGLImplementationOSMesaGL: {
+      scoped_refptr<GLContext> context(new GLContextOSMesa(share_group));
       if (!context->Initialize(compatible_surface, gpu_preference)) {
         return NULL;
       }

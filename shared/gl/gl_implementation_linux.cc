@@ -20,13 +20,14 @@
 #include <vector>
 
 #include "base/bind.h"
-#include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/native_library.h"
 #include "ui/gfx/ozone/surface_factory_ozone.h"
 #include "ui/gl/gl_egl_api_implementation.h"
 #include "ui/gl/gl_gl_api_implementation.h"
 #include "ui/gl/gl_glx_api_implementation.h"
+#include "ui/gl/gl_implementation_linux.h"
+#include "ui/gl/gl_osmesa_api_implementation.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/oxide_content_client.h"
@@ -46,34 +47,20 @@ void GL_BINDING_CALL MarshalDepthRangeToDepthRangef(GLclampd z_near,
   glDepthRangef(static_cast<GLclampf>(z_near), static_cast<GLclampf>(z_far));
 }
 
-// Load a library, printing an error message on failure.
-base::NativeLibrary LoadLibrary(const base::FilePath& filename) {
-  std::string error;
-  base::NativeLibrary library = base::LoadNativeLibrary(filename, &error);
-  if (!library) {
-    DVLOG(1) << "Failed to load " << filename.MaybeAsASCII() << ": " << error;
-    return NULL;
-  }
-  return library;
-}
-
-base::NativeLibrary LoadLibrary(const char* filename) {
-  return LoadLibrary(base::FilePath(filename));
-}
-
 } // namespace
 
 void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
   std::vector<GLImplementation> supported;
   supported.push_back(kGLImplementationDesktopGL);
   supported.push_back(kGLImplementationEGLGLES2);
+  supported.push_back(kGLImplementationOSMesaGL);
 
   oxide::ContentBrowserClient* client =
       oxide::ContentClient::instance()->browser();
 
   client->GetAllowedGLImplementations(impls);
   if (impls->size() == 0) {
-    impls->push_back(kGLImplementationEGLGLES2);
+    impls->push_back(kGLImplementationOSMesaGL);
   } else {
     for (std::vector<GLImplementation>::iterator it = impls->begin();
          it != impls->end(); ++it) {
@@ -154,6 +141,9 @@ bool InitializeGLBindings(GLImplementation implementation) {
       break;
     }
 
+    case kGLImplementationOSMesaGL:
+      return InitializeGLBindingsOSMesaGL();
+
     default:
       NOTIMPLEMENTED();
       return false;
@@ -177,6 +167,11 @@ bool InitializeGLExtensionBindings(GLImplementation implementation,
       break;
     }
 
+    case kGLImplementationOSMesaGL:
+      InitializeGLExtensionBindingsGL(context);
+      InitializeGLExtensionBindingsOSMESA(context);
+      break;
+
     default:
       return false;
   }
@@ -188,12 +183,14 @@ void InitializeDebugGLBindings() {
   InitializeDebugGLBindingsGL();
   InitializeDebugGLBindingsEGL();
   InitializeDebugGLBindingsGLX();
+  InitializeDebugGLBindingsOSMESA();
 }
 
 void ClearGLBindings() {
   ClearGLBindingsGL();
   ClearGLBindingsEGL();
   ClearGLBindingsGLX();
+  ClearGLBindingsOSMESA();
 
   SetGLImplementation(kGLImplementationNone);
 

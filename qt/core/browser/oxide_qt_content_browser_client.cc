@@ -106,6 +106,7 @@ void ContentBrowserClient::GetAllowedGLImplementations(
   if (platform == "xcb") {
     impls->push_back(gfx::kGLImplementationDesktopGL);
     impls->push_back(gfx::kGLImplementationEGLGLES2);
+    impls->push_back(gfx::kGLImplementationOSMesaGL);
   } else if (platform == "ubuntu" ||
              platform == "ubuntumirclient") {
     impls->push_back(gfx::kGLImplementationEGLGLES2);
