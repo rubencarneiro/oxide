@@ -12,3 +12,4 @@ dont-check-number-of-threads-at-startup.patch
 enable-glx-on-ozone.patch
 svn-trunk-r241390.patch
 dont-depend-on-gtk.patch
+arm-neon.patch
