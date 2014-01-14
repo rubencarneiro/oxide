@@ -12,3 +12,4 @@ comment-out-GetDefaultXDisplay.patch
 arm-icu.patch
 dont-check-number-of-threads-at-startup.patch
 dont-depend-on-gtk.patch
+arm-neon.patch

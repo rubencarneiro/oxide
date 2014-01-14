@@ -1,0 +1,59 @@
+# Description: Fix build on non-Android ARM Linux builds without NEON
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/skia/skia_library_opts.gyp b/skia/skia_library_opts.gyp
+--- a/skia/skia_library_opts.gyp
++++ b/skia/skia_library_opts.gyp
+@@ -93,17 +93,17 @@
+           ],
+           'cflags': [
+             '-fomit-frame-pointer',
+           ],
+           'sources': [
+             '../third_party/skia/src/opts/SkBitmapProcState_opts_arm.cpp',
+           ],
+         }],
+-        [ 'target_arch == "arm" and (arm_version < 7 or (arm_neon == 0 and arm_neon_optional == 1))', {
++        [ 'target_arch == "arm" and (arm_version < 7 or arm_neon == 0)', {
+           'sources': [
+             '../third_party/skia/src/opts/memset.arm.S',
+           ],
+         }],
+         [ 'target_arch == "arm" and arm_version < 6', {
+           'sources': [
+             '../third_party/skia/src/opts/SkBlitMask_opts_none.cpp',
+             '../third_party/skia/src/opts/SkBlitRow_opts_none.cpp',
+diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
+--- a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
++++ b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
+@@ -128,25 +128,29 @@ void SincResampler::InitializeCPUSpecifi
+ void SincResampler::InitializeCPUSpecificFeatures() {
+   convolve_proc_ = WebRtc_GetCPUInfo(kSSE2) ? Convolve_SSE : Convolve_C;
+ }
+ #endif
+ #elif defined(WEBRTC_ARCH_ARM_V7)
+ #if defined(WEBRTC_ARCH_ARM_NEON)
+ #define CONVOLVE_FUNC Convolve_NEON
+ void SincResampler::InitializeCPUSpecificFeatures() {}
+-#else
++#elif defined(WEBRTC_DETECT_ARM_NEON)
+ // NEON CPU detection required.  Function will be set by
+ // InitializeCPUSpecificFeatures().
+ #define CONVOLVE_FUNC convolve_proc_
+ 
+ void SincResampler::InitializeCPUSpecificFeatures() {
+   convolve_proc_ = WebRtc_GetCPUFeaturesARM() & kCPUFeatureNEON ?
+       Convolve_NEON : Convolve_C;
+ }
++#else
++// No NEON
++#define CONVOLVE_FUNC Convolve_C
++void SincResampler::InitializeCPUSpecificFeatures() {}
+ #endif
+ #else
+ // Unknown architecture.
+ #define CONVOLVE_FUNC Convolve_C
+ void SincResampler::InitializeCPUSpecificFeatures() {}
+ #endif
+ 
+ SincResampler::SincResampler(double io_sample_rate_ratio,
