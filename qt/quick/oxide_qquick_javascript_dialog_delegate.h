@@ -27,8 +27,6 @@ class OxideQQuickWebView;
 QT_BEGIN_NAMESPACE
 class QObject;
 class QQmlComponent;
-class QQmlContext;
-class QQuickItem;
 QT_END_NAMESPACE
 
 namespace oxide {
