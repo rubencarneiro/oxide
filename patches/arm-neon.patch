@@ -23,6 +23,32 @@ diff --git a/skia/skia_library_opts.gyp b/skia/skia_library_opts.gyp
            'sources': [
              '../third_party/skia/src/opts/SkBlitMask_opts_none.cpp',
              '../third_party/skia/src/opts/SkBlitRow_opts_none.cpp',
+diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/common.gypi
+--- a/third_party/webrtc/build/common.gypi
++++ b/third_party/webrtc/build/common.gypi
+@@ -194,17 +194,21 @@
+         ],
+         'conditions': [
+           ['arm_version==7', {
+             'defines': ['WEBRTC_ARCH_ARM_V7',],
+             'conditions': [
+               ['arm_neon==1', {
+                 'defines': ['WEBRTC_ARCH_ARM_NEON',],
+               }, {
+-                'defines': ['WEBRTC_DETECT_ARM_NEON',],
++                'conditions': [
++                  ['arm_neon_optional==1', {
++                    'defines': ['WEBRTC_DETECT_ARM_NEON',],
++                  }],
++                ],
+               }],
+             ],
+           }],
+         ],
+       }],
+       ['target_arch=="mipsel"', {
+         'defines': [
+           'MIPS32_LE',
 diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
 --- a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
 +++ b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
