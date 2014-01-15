@@ -150,15 +150,15 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  // and whether or not to animate to the proper state.
  IPC_MESSAGE_ROUTED3(ViewMsg_UpdateTopControlsState,
                      bool /* enable_hiding */,
-@@ -1353,16 +1356,17 @@ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
-                     cc::BeginFrameArgs /* args */)
- 
- // Sent by the browser when an IME update that requires acknowledgement has been
- // processed on the browser side.
- IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
+@@ -1358,16 +1361,17 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
  
  // Sent by the browser when we should pause video playback.
  IPC_MESSAGE_ROUTED0(ViewMsg_PauseVideo);
+ 
+ // Extracts the data at the given rect, returning it through the
+ // ViewHostMsg_SmartClipDataExtracted IPC.
+ IPC_MESSAGE_ROUTED1(ViewMsg_ExtractSmartClipData,
+                     gfx::Rect /* rect */)
 +#endif
  
  #elif defined(OS_MACOSX)
@@ -237,7 +237,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -1315,26 +1315,30 @@ bool RenderViewImpl::OnMessageReceived(c
+@@ -1315,27 +1315,31 @@ bool RenderViewImpl::OnMessageReceived(c
                          OnSetHistoryLengthAndPrune)
      IPC_MESSAGE_HANDLER(ViewMsg_EnableViewSourceMode, OnEnableViewSourceMode)
      IPC_MESSAGE_HANDLER(ViewMsg_SetAccessibilityMode, OnSetAccessibilityMode)
@@ -259,6 +259,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_UpdateTopControlsState,
                          OnUpdateTopControlsState)
      IPC_MESSAGE_HANDLER(ViewMsg_PauseVideo, OnPauseVideo)
+     IPC_MESSAGE_HANDLER(ViewMsg_ExtractSmartClipData, OnExtractSmartClipData)
 +#endif
  #elif defined(OS_MACOSX)
      IPC_MESSAGE_HANDLER(InputMsg_CopyToFindPboard, OnCopyToFindPboard)
@@ -268,7 +269,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_SetInLiveResize, OnSetInLiveResize)
      IPC_MESSAGE_HANDLER(ViewMsg_SetWindowVisibility, OnSetWindowVisibility)
      IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
-@@ -6246,17 +6250,17 @@ void RenderViewImpl::OnSelectPopupMenuIt
+@@ -6247,17 +6251,17 @@ void RenderViewImpl::OnSelectPopupMenuIt
      NOTREACHED();
      return;
    }
@@ -312,7 +313,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
                                  bool enable_showing,
                                  bool animate);
    void OnPauseVideo();
- 
+   void OnExtractSmartClipData(const gfx::Rect& rect);
 +#endif
  #elif defined(OS_MACOSX)
    void OnCopyToFindPboard();
