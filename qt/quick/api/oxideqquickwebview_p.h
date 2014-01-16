@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQWebPreferences;
 class OxideQQuickMessageHandler;
 class OxideQQuickNavigationHistory;
 class OxideQQuickWebContext;
@@ -69,6 +70,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
   Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
+  Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
 
@@ -107,6 +109,9 @@ class OxideQQuickWebView : public QQuickItem {
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
 
+  OxideQWebPreferences* preferences();
+  void setPreferences(OxideQWebPreferences* prefs);
+
   OxideQQuickNavigationHistory* navigationHistory();
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
@@ -125,6 +130,7 @@ class OxideQQuickWebView : public QQuickItem {
   void loadProgressChanged();
   void rootFrameChanged();
   void popupMenuChanged();
+  void preferencesChanged();
   void messageHandlersChanged();
 
  private Q_SLOTS:

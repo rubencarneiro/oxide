@@ -151,6 +151,13 @@ QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
                 q->width(), q->height()).toRect();
 }
 
+void OxideQQuickWebViewPrivate::NotifyWebPreferencesDestroyed() {
+  Q_Q(OxideQQuickWebView);
+
+  qWarning() << "WebPreferences was destroyed whilst still in use";
+  q->setPreferences(NULL);
+}
+
 void OxideQQuickWebViewPrivate::componentComplete() {
   Q_Q(OxideQQuickWebView);
 
@@ -450,6 +457,23 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   }
 
   d->context = context;
+}
+
+OxideQWebPreferences* OxideQQuickWebView::preferences() {
+  Q_D(OxideQQuickWebView);
+
+  return d->preferences();
+}
+
+void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
+  Q_D(OxideQQuickWebView);
+
+  if (prefs == d->preferences()) {
+    return;
+  }
+
+  d->setPreferences(prefs);
+  emit preferencesChanged();
 }
 
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {

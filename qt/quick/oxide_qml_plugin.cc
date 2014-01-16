@@ -25,6 +25,7 @@
 
 #include "qt/core/api/oxideqincomingmessage.h"
 #include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickmessagehandler_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
 #include "qt/quick/api/oxideqquickoutgoingmessagerequest_p.h"
@@ -215,6 +216,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebContext>(uri, 0, 1, "WebContext");
     qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 0, 1, "NavigationHistory",
         "Each WebView has a NavigationHistory automatically instantiated by Oxide");
+    qmlRegisterType<OxideQWebPreferences>(uri, 0, 1, "WebPreferences");
     qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
   }
 };

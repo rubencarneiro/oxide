@@ -69,6 +69,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   if (process_type.empty()) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
+    command_line->AppendSwitch(switches::kEnableViewport);
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
