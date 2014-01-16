@@ -83,6 +83,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (getenv("OXIDE_NO_SANDBOX")) {
       command_line->AppendSwitch(switches::kNoSandbox);
     }
+    if (getenv("OXIDE_SINGLE_PROCESS")) {
+      command_line->AppendSwitch(switches::kSingleProcess);
+    }
   }
 
   return false;
