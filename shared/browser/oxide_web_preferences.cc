@@ -264,6 +264,8 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
 
   // Viewport only works in compositing mode
   prefs->viewport_enabled = attributes_[ATTR_VIEWPORT_ENABLED] && compositing;
+  // XXX: Should this be a separate pref?
+  prefs->viewport_meta_enabled = prefs->viewport_enabled;
 }
 
 } // namespace oxide
