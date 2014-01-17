@@ -19,11 +19,13 @@
 
 #include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
+#include "base/strings/utf_string_conversions.h"
 #include "webkit/common/user_agent/user_agent.h"
 #include "webkit/common/user_agent/user_agent_util.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/chrome_version.h"
+#include "shared/common/oxide_i18n_messages.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 namespace oxide {
@@ -41,6 +43,10 @@ ContentRendererClient* ContentClient::renderer() {
 std::string ContentClient::GetUserAgent() const {
   return webkit_glue::BuildUserAgentFromProduct(
       base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
+}
+
+base::string16 ContentClient::GetLocalizedString(int message_id) const {
+  return base::UTF8ToUTF16(localized_message_from_id(message_id));
 }
 
 // static

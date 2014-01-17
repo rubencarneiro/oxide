@@ -40,6 +40,8 @@ class ContentClient : public content::ContentClient {
 
   virtual std::string GetUserAgent() const FINAL;
 
+  virtual base::string16 GetLocalizedString(int message_id) const FINAL;
+
  protected:
   // Limit default constructor access to derived classes and
   // our lazy instance initializer

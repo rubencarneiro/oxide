@@ -125,6 +125,7 @@
       'include_dirs': [
         '..',
         '<(DEPTH)',
+        '<(SHARED_INTERMEDIATE_DIR)',
         '<(SHARED_INTERMEDIATE_DIR)/oxide',
       ],
       'sources': [
@@ -231,6 +232,21 @@
             'python',
             '<(DEPTH)/chrome/tools/build/version.py',
             '-f', '<(DEPTH)/chrome/VERSION',
+            '-i', '<@(_inputs)',
+            '-o', '<@(_outputs)'
+          ]
+        },
+        {
+          'action_name': 'oxide_i18_messages_header',
+          'inputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_strings_en-US.rc'
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/oxide/shared/common/oxide_i18n_messages.h'
+          ],
+          'action': [
+            'python',
+            'common/oxide_i18n.py',
             '-i', '<@(_inputs)',
             '-o', '<@(_outputs)'
           ]
