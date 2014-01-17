@@ -20,6 +20,7 @@
 #include <QFocusEvent>
 #include <QGuiApplication>
 #include <QInputEvent>
+#include <QInputMethod>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPoint>
@@ -30,12 +31,14 @@
 #include <QWheelEvent>
 
 #include "base/logging.h"
+#include "base/strings/utf_string_conversions.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
+#include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/rect.h"
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
@@ -461,6 +464,41 @@ blink::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
   return event;
 }
 
+Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
+  switch (type) {
+    case ui::TEXT_INPUT_TYPE_TEXT:
+    case ui::TEXT_INPUT_TYPE_TEXT_AREA:
+    case ui::TEXT_INPUT_TYPE_CONTENT_EDITABLE:
+      return Qt::ImhPreferLowercase;
+    case ui::TEXT_INPUT_TYPE_PASSWORD:
+      return Qt::ImhHiddenText | Qt::ImhSensitiveData |
+          Qt::ImhNoAutoUppercase | Qt::ImhPreferLowercase |
+          Qt::ImhNoPredictiveText;
+    case ui::TEXT_INPUT_TYPE_SEARCH:
+      return Qt::ImhNoAutoUppercase | Qt::ImhPreferLowercase;
+    case ui::TEXT_INPUT_TYPE_EMAIL:
+      return Qt::ImhEmailCharactersOnly;
+    case ui::TEXT_INPUT_TYPE_NUMBER:
+      return Qt::ImhFormattedNumbersOnly;
+    case ui::TEXT_INPUT_TYPE_TELEPHONE:
+      return Qt::ImhDialableCharactersOnly;
+    case ui::TEXT_INPUT_TYPE_URL:
+      return Qt::ImhUrlCharactersOnly;
+    case ui::TEXT_INPUT_TYPE_DATE:
+    case ui::TEXT_INPUT_TYPE_MONTH:
+    case ui::TEXT_INPUT_TYPE_WEEK:
+      return Qt::ImhDate;
+    case ui::TEXT_INPUT_TYPE_DATE_TIME:
+    case ui::TEXT_INPUT_TYPE_DATE_TIME_LOCAL:
+    case ui::TEXT_INPUT_TYPE_DATE_TIME_FIELD:
+      return Qt::ImhDate | Qt::ImhTime;
+    case ui::TEXT_INPUT_TYPE_TIME:
+      return Qt::ImhTime;
+    default:
+      return Qt::ImhNone;
+  }
+}
+
 }
 
 void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
@@ -480,7 +518,8 @@ RenderWidgetHostView::RenderWidgetHostView(
     RenderWidgetHostViewDelegate* delegate) :
     oxide::RenderWidgetHostView(render_widget_host),
     backing_store_(NULL),
-    delegate_(delegate) {
+    delegate_(delegate),
+    input_type_(ui::TEXT_INPUT_TYPE_NONE) {
   delegate_->SetRenderWidgetHostView(this);
 }
 
@@ -561,6 +600,16 @@ gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
   return gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height());
 }
 
+void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
+                                                ui::TextInputMode mode,
+                                                bool can_compose_inline) {
+  input_type_ = type;
+
+  QInputMethod* input_method = QGuiApplication::inputMethod();
+  input_method->setVisible(type != ui::TEXT_INPUT_TYPE_NONE);
+  input_method->update(Qt::ImEnabled | Qt::ImHints | Qt::ImQueryInput);
+}
+
 void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
   if (event->gotFocus()) {
     OnFocus();
@@ -608,6 +657,32 @@ const QPixmap* RenderWidgetHostView::GetBackingStore() {
   }
 
   return backing_store->pixmap();
+}
+
+QVariant RenderWidgetHostView::InputMethodQuery(
+    Qt::InputMethodQuery query) const {
+  switch (query) {
+    case Qt::ImEnabled:
+      return input_type_ != ui::TEXT_INPUT_TYPE_NONE;
+    case Qt::ImHints:
+      return QVariant(QImHintsFromInputType(input_type_));
+    case Qt::ImCursorRectangle: {
+      gfx::Rect rect = caret_rect();
+      return QRect(rect.x(), rect.y(), rect.width(), rect.height());
+    }
+    case Qt::ImCursorPosition:
+      return static_cast<int>(selection_cursor_position() & INT_MAX);
+    case Qt::ImSurroundingText:
+      return QString::fromStdString(base::UTF16ToUTF8(selection_text_));
+    case Qt::ImCurrentSelection:
+      return QString::fromStdString(base::UTF16ToUTF8(GetSelectedText()));
+    case Qt::ImAnchorPosition:
+      return static_cast<int>(selection_anchor_position() & INT_MAX);
+    default:
+      break;
+  }
+
+  return QVariant();
 }
 
 } // namespace qt

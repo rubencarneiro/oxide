@@ -30,6 +30,7 @@
 #include "content/common/gpu/gpu_command_buffer_stub.h"
 #include "content/common/gpu/gpu_messages.h"
 #include "content/common/gpu/gpu_process_launch_causes.h"
+#include "content/common/view_messages.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "content/public/browser/browser_thread.h"
 #include "gpu/command_buffer/service/context_group.h"
@@ -37,7 +38,6 @@
 #include "gpu/command_buffer/service/mailbox_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
 #include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
-#include "ui/gfx/rect.h"
 #include "url/gurl.h"
 
 namespace oxide {
@@ -286,7 +286,9 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     host_(content::RenderWidgetHostImpl::From(host)),
     graphics_context_ref_(OffscreenGraphicsContextRef::GetInstance()),
     frontbuffer_texture_handle_(&texture_handles_[0]),
-    backbuffer_texture_handle_(&texture_handles_[1]) {
+    backbuffer_texture_handle_(&texture_handles_[1]),
+    selection_cursor_position_(0),
+    selection_anchor_position_(0) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   frontbuffer_texture_handle_->Initialize(graphics_context_ref_->context3d());
@@ -402,7 +404,21 @@ void RenderWidgetHostView::Destroy() {
 void RenderWidgetHostView::SetTooltipText(const string16& tooltip_text) {}
 
 void RenderWidgetHostView::SelectionBoundsChanged(
-    const ViewHostMsg_SelectionBounds_Params& params) {}
+    const ViewHostMsg_SelectionBounds_Params& params) {
+  caret_rect_ = gfx::UnionRects(params.anchor_rect, params.focus_rect);
+
+  if (params.is_anchor_first) {
+    selection_cursor_position_ =
+        selection_range_.GetMax() - selection_text_offset_;
+    selection_anchor_position_ =
+        selection_range_.GetMin() - selection_text_offset_;
+  } else {
+    selection_cursor_position_ =
+        selection_range_.GetMin() - selection_text_offset_;
+    selection_anchor_position_ =
+        selection_range_.GetMax() - selection_text_offset_;
+  }
+}
 
 void RenderWidgetHostView::ScrollOffsetChanged() {}
 
@@ -554,9 +570,14 @@ void RenderWidgetHostView::UnlockMouse() {}
 void RenderWidgetHostView::OnFocus() {
   GetRenderWidgetHostImpl()->GotFocus();
   GetRenderWidgetHost()->SetActive(true);
+
+  // XXX: Should we have a run-time check to see if this is required?
+  GetRenderWidgetHostImpl()->SetInputMethodActive(true);
 }
 
 void RenderWidgetHostView::OnBlur() {
+  GetRenderWidgetHostImpl()->SetInputMethodActive(false);
+
   GetRenderWidgetHost()->SetActive(false);
   GetRenderWidgetHost()->Blur();
 }

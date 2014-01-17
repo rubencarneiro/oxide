@@ -29,6 +29,7 @@
 #include "base/synchronization/lock.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "ui/gfx/native_widget_types.h"
+#include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
 
 typedef unsigned int GLuint;
@@ -36,11 +37,6 @@ typedef unsigned int GLuint;
 namespace content {
 class RenderWidgetHostImpl;
 class WebGraphicsContext3DCommandBufferImpl;
-}
-
-namespace gfx {
-class Rect;
-class Size;
 }
 
 namespace gpu {
@@ -142,9 +138,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   void SetIsLoading(bool is_loading) FINAL;
 
-  void TextInputTypeChanged(ui::TextInputType type,
-                            ui::TextInputMode mode,
-                            bool can_compose_inline) FINAL;
+  virtual void TextInputTypeChanged(ui::TextInputType type,
+                                    ui::TextInputMode mode,
+                                    bool can_compose_inline) OVERRIDE;
 
   void ImeCancelComposition() FINAL;
   void ImeCompositionRangeChanged(
@@ -238,6 +234,14 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
       const AcknowledgeBufferPresentCallback& ack,
       bool skipped);
 
+  gfx::Rect caret_rect() const { return caret_rect_; }
+  size_t selection_cursor_position() const {
+    return selection_cursor_position_;
+  }
+  size_t selection_anchor_position() const {
+    return selection_anchor_position_;
+  }
+
  private:
   virtual void Paint(const gfx::Rect& dirty_rect);
   virtual void BuffersSwapped(const AcknowledgeBufferPresentCallback& ack);
@@ -259,6 +263,10 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   TextureHandle texture_handles_[2];
   TextureHandle* frontbuffer_texture_handle_;
   TextureHandle* backbuffer_texture_handle_;
+
+  gfx::Rect caret_rect_;
+  size_t selection_cursor_position_;
+  size_t selection_anchor_position_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

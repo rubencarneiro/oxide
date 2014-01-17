@@ -29,7 +29,8 @@ TextureInfo::TextureInfo(unsigned int id, const QSize& size_in_pixels) :
 
 TextureInfo::~TextureInfo() {}
 
-RenderWidgetHostView* RenderWidgetHostViewDelegate::GetRenderWidgetHostView() {
+RenderWidgetHostView*
+RenderWidgetHostViewDelegate::GetRenderWidgetHostView() const {
   return rwhv_;
 }
 
@@ -65,6 +66,11 @@ TextureInfo RenderWidgetHostViewDelegate::GetFrontbufferTextureInfo() {
 
 void RenderWidgetHostViewDelegate::DidUpdate(bool skipped) {
   GetRenderWidgetHostView()->DidUpdate(skipped);
+}
+
+QVariant RenderWidgetHostViewDelegate::InputMethodQuery(
+    Qt::InputMethodQuery query) const {
+  return GetRenderWidgetHostView()->InputMethodQuery(query);
 }
 
 RenderWidgetHostViewDelegate::~RenderWidgetHostViewDelegate() {}
