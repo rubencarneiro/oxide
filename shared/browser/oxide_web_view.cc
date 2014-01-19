@@ -488,7 +488,9 @@ void WebView::SetWebPreferences(WebPreferences* prefs, bool send_update) {
   }
 
   web_preferences_ = prefs;
-  web_preferences_->AddWebView(this);
+  if (prefs) {
+    prefs->AddWebView(this);
+  }
 
   if (!send_update || !web_contents_) {
     return;
