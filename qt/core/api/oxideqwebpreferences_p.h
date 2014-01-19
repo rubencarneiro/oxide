@@ -43,6 +43,8 @@ class OxideQWebPreferencesPrivate Q_DECL_FINAL {
     return preferences_;
   }
 
+  bool in_destructor() const { return in_destructor_; }
+
   void AddWebView(oxide::qt::WebViewAdapter* view);
   void RemoveWebView(oxide::qt::WebViewAdapter* view);
 
