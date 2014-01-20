@@ -151,13 +151,13 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
       const gfx::Rect& scroll_rect,
       const gfx::Vector2d& scroll_delta,
       const std::vector<gfx::Rect>& copy_rects,
-      const ui::LatencyInfo& latency_info) FINAL;
+      const std::vector<ui::LatencyInfo>& latency_info) FINAL;
 
   void RenderProcessGone(base::TerminationStatus status, int error_code) FINAL;
 
   void Destroy() FINAL;
 
-  void SetTooltipText(const string16& tooltip_text) FINAL;
+  void SetTooltipText(const base::string16& tooltip_text) FINAL;
 
   void SelectionBoundsChanged(
       const ViewHostMsg_SelectionBounds_Params& params) FINAL;

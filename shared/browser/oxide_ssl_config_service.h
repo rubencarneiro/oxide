@@ -31,6 +31,9 @@ class SSLConfigService FINAL : public net::SSLConfigService {
   void GetSSLConfig(net::SSLConfig* config) FINAL;
 
  private:
+  // TODO: Allow this to be configured by the embedder
+  net::SSLConfig config_;
+
   DISALLOW_COPY_AND_ASSIGN(SSLConfigService);
 };
 
