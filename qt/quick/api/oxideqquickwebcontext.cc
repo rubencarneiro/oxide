@@ -18,6 +18,7 @@
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 
+#include <QCoreApplication>
 #include <QQmlListProperty>
 #include <QWeakPointer>
 #include <QtDebug>
@@ -153,7 +154,7 @@ QSharedPointer<OxideQQuickWebContext> OxideQQuickWebContext::defaultContext() {
   }
 
   QSharedPointer<OxideQQuickWebContext> new_context(
-      new OxideQQuickWebContext());
+      new OxideQQuickWebContext(QCoreApplication::instance()));
   new_context->componentComplete();
 
   g_default_context = new_context;
