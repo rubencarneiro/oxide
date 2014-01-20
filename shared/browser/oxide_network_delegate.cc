@@ -96,7 +96,4 @@ int NetworkDelegate::OnBeforeSocketStreamConnect(
   return net::OK;
 }
 
-void NetworkDelegate::OnRequestWaitStateChange(const net::URLRequest& request,
-                                               RequestWaitState state) {}
-
 } // namespace oxide

@@ -20,20 +20,7 @@
 namespace oxide {
 
 void SSLConfigService::GetSSLConfig(net::SSLConfig* config) {
-  // TODO: Allow this to be configured through GlobalSettings
-
-  config->rev_checking_enabled = true;
-  config->version_min = default_version_min();
-  config->version_max = default_version_max();
-  config->channel_id_enabled = true;
-  config->false_start_enabled = true;
-  config->unrestricted_ssl3_fallback_enabled = false;
-  config->send_client_cert = false;
-  config->verify_ev_cert = false;
-  config->version_fallback = false;
-  config->cert_io_enabled = true;
-
-  SetSSLConfigFlags(config);
+  *config = config_;
 }
 
 } // namespace oxide
