@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QQmlListProperty>
 #include <QQmlParserStatus>
+#include <QSharedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -50,7 +51,7 @@ class OxideQQuickWebContext : public QObject,
   void classBegin();
   void componentComplete();
 
-  static OxideQQuickWebContext* defaultContext();
+  static QSharedPointer<OxideQQuickWebContext> defaultContext();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -80,8 +81,6 @@ class OxideQQuickWebContext : public QObject,
   void scriptUpdated();
 
  private:
-  OxideQQuickWebContext(bool is_default);
-
   QScopedPointer<OxideQQuickWebContextPrivate> d_ptr;
 };
 

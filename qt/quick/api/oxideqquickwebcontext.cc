@@ -19,6 +19,7 @@
 #include "oxideqquickwebcontext_p_p.h"
 
 #include <QQmlListProperty>
+#include <QWeakPointer>
 #include <QtDebug>
 #include <QtQuickVersion>
 #if defined(ENABLE_COMPOSITING)
@@ -29,7 +30,7 @@
 #include "oxideqquickuserscript_p_p.h"
 
 namespace {
-OxideQQuickWebContext* g_default_context;
+QWeakPointer<OxideQQuickWebContext> g_default_context;
 }
 
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
@@ -131,23 +132,11 @@ void OxideQQuickWebContext::scriptUpdated() {
   d->updateUserScripts();
 }
 
-OxideQQuickWebContext::OxideQQuickWebContext(bool is_default) :
-    d_ptr(new OxideQQuickWebContextPrivate(this)) {
-  if (is_default) {
-    Q_ASSERT(!g_default_context);
-    g_default_context = this;
-  }
-}
-
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickWebContextPrivate(this)) {}
 
-OxideQQuickWebContext::~OxideQQuickWebContext() {
-  if (g_default_context == this) {
-    g_default_context = NULL;
-  }
-}
+OxideQQuickWebContext::~OxideQQuickWebContext() {}
 
 void OxideQQuickWebContext::classBegin() {}
 
@@ -158,15 +147,18 @@ void OxideQQuickWebContext::componentComplete() {
 }
 
 // static
-OxideQQuickWebContext* OxideQQuickWebContext::defaultContext() {
+QSharedPointer<OxideQQuickWebContext> OxideQQuickWebContext::defaultContext() {
   if (g_default_context) {
     return g_default_context;
   }
 
-  new OxideQQuickWebContext(true);
-  g_default_context->componentComplete();
+  QSharedPointer<OxideQQuickWebContext> new_context(
+      new OxideQQuickWebContext());
+  new_context->componentComplete();
 
-  return g_default_context;
+  g_default_context = new_context;
+
+  return new_context;
 }
 
 QString OxideQQuickWebContext::product() const {
