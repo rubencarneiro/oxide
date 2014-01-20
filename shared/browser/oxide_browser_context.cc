@@ -374,7 +374,9 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
 }
 
 BrowserContext::~BrowserContext() {
-  CHECK_EQ(web_views_.size(), static_cast<size_t>(0));
+  CHECK_EQ(web_views_.size(), static_cast<size_t>(0)) <<
+      "The BrowserContext was deleted whilst it is still in use by "
+      "one or more WebViews";
 
   std::vector<BrowserContext *>::iterator it;
   for (std::vector<BrowserContext *>::iterator it = g_all_contexts.Get().begin();
