@@ -27,6 +27,8 @@
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
 
+#include "oxideqquickglobals_p.h"
+#include "oxideqquickglobals_p_p.h"
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 
@@ -155,9 +157,18 @@ QSharedPointer<OxideQQuickWebContext> OxideQQuickWebContext::defaultContext() {
 
   QSharedPointer<OxideQQuickWebContext> new_context(
       new OxideQQuickWebContext(QCoreApplication::instance()));
-  new_context->componentComplete();
 
+  new_context->setProduct(OxideQQuickGlobals::instance()->product());
+  new_context->setUserAgent(OxideQQuickGlobals::instance()->userAgent());
+  new_context->setDataPath(OxideQQuickGlobals::instance()->dataPath());
+  new_context->setCachePath(OxideQQuickGlobals::instance()->cachePath());
+  new_context->setAcceptLangs(OxideQQuickGlobals::instance()->acceptLangs());
+
+  new_context->componentComplete();
   g_default_context = new_context;
+
+  OxideQQuickGlobalsPrivate::get(
+      OxideQQuickGlobals::instance())->defaultContextCreated();
 
   return new_context;
 }
