@@ -260,18 +260,16 @@ void BrowserContextIOData::Init(
   context->storage()->set_http_server_properties(
       new net::HttpServerPropertiesImpl());
 
-  if (IsOffTheRecord()) {
-    context->storage()->set_cookie_store(
-        new net::CookieMonster(NULL, NULL));
-  } else {
+  base::FilePath cookie_path;
+  if (!IsOffTheRecord()) {
     DCHECK(!GetPath().empty());
-    // TODO: Provide an implementation of content::CookieCryptoDelegate
-    context->storage()->set_cookie_store(
-        content::CreatePersistentCookieStore(
-            GetPath().Append(kCookiesFilename),
-            false, NULL, NULL,
-            scoped_ptr<content::CookieCryptoDelegate>()));
+    cookie_path = GetPath().Append(kCookiesFilename);
   }
+  context->storage()->set_cookie_store(content::CreateCookieStore(
+      content::CookieStoreConfig(
+        cookie_path,
+        content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
+        NULL, NULL)));
 
   context->storage()->set_transport_security_state(
       new net::TransportSecurityState());
@@ -376,7 +374,9 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
 }
 
 BrowserContext::~BrowserContext() {
-  CHECK_EQ(web_views_.size(), static_cast<size_t>(0));
+  CHECK_EQ(web_views_.size(), static_cast<size_t>(0)) <<
+      "The BrowserContext was deleted whilst it is still in use by "
+      "one or more WebViews";
 
   std::vector<BrowserContext *>::iterator it;
   for (std::vector<BrowserContext *>::iterator it = g_all_contexts.Get().begin();
@@ -520,6 +520,19 @@ void BrowserContext::CancelMIDISysExPermissionRequest(
     int render_view_id,
     int bridge_id,
     const GURL& requesting_frame) {}
+
+void BrowserContext::RequestProtectedMediaIdentifierPermission(
+    int render_process_id,
+    int render_view_id,
+    int bridge_id,
+    int group_id,
+    const GURL& requesting_frame,
+    const ProtectedMediaIdentifierPermissionCallback& callback) {
+  callback.Run(false);
+}
+
+void BrowserContext::CancelProtectedMediaIdentifierPermissionRequests(
+    int group_id) {}
 
 content::ResourceContext* BrowserContext::GetResourceContext() {
   return io_data_.GetResourceContext();

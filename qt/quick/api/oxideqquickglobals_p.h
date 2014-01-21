@@ -15,43 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_H_
-#define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_H_
+#ifndef _OXIDE_QT_QUICK_API_GLOBALS_P_H_
+#define _OXIDE_QT_QUICK_API_GLOBALS_P_H_
 
 #include <QObject>
-#include <QQmlListProperty>
-#include <QQmlParserStatus>
-#include <QSharedPointer>
+#include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
-#include <QtQml>
 #include <QUrl>
 
-QT_USE_NAMESPACE
+class OxideQQuickGlobalsPrivate;
 
-class OxideQQuickUserScript;
-class OxideQQuickWebContextPrivate;
-
-class OxideQQuickWebContext : public QObject,
-                              public QQmlParserStatus {
+class OxideQQuickGlobals : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts)
 
-  Q_DECLARE_PRIVATE(OxideQQuickWebContext)
+  Q_DECLARE_PRIVATE(OxideQQuickGlobals)
+  Q_DISABLE_COPY(OxideQQuickGlobals)
 
  public:
-  OxideQQuickWebContext(QObject* parent = NULL);
-  virtual ~OxideQQuickWebContext();
-
-  void classBegin();
-  void componentComplete();
-
-  static QSharedPointer<OxideQQuickWebContext> defaultContext();
+  static OxideQQuickGlobals* instance();
+  virtual ~OxideQQuickGlobals();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -60,15 +48,13 @@ class OxideQQuickWebContext : public QObject,
   void setUserAgent(const QString& user_agent);
 
   QUrl dataPath() const;
-  void setDataPath(const QUrl& data_url);
+  void setDataPath(const QUrl& data_path);
 
   QUrl cachePath() const;
-  void setCachePath(const QUrl& cache_url);
+  void setCachePath(const QUrl& cache_path);
 
   QString acceptLangs() const;
   void setAcceptLangs(const QString& accept_langs);
-
-  QQmlListProperty<OxideQQuickUserScript> userScripts();
 
  Q_SIGNALS:
   void productChanged();
@@ -77,13 +63,17 @@ class OxideQQuickWebContext : public QObject,
   void cachePathChanged();
   void acceptLangsChanged();
 
- private Q_SLOTS:
-  void scriptUpdated();
-
  private:
-  QScopedPointer<OxideQQuickWebContextPrivate> d_ptr;
+  OxideQQuickGlobals();
+
+  Q_PRIVATE_SLOT(d_func(), void defaultContextDestroyed());
+  Q_PRIVATE_SLOT(d_func(), void defaultContextProductChanged());
+  Q_PRIVATE_SLOT(d_func(), void defaultContextUserAgentChanged());
+  Q_PRIVATE_SLOT(d_func(), void defaultContextDataPathChanged());
+  Q_PRIVATE_SLOT(d_func(), void defaultContextCachePathChanged());
+  Q_PRIVATE_SLOT(d_func(), void defaultContextAcceptLangsChanged());
+
+  QScopedPointer<OxideQQuickGlobalsPrivate> d_ptr;
 };
 
-QML_DECLARE_TYPE(OxideQQuickWebContext)
-
-#endif // _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_H_
+#endif // _OXIDE_QT_QUICK_API_GLOBALS_P_H_

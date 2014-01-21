@@ -36,7 +36,7 @@
       'conditions': [
         ['target_arch=="arm"', {
           'arm_neon': 0,
-          'arm_neon_optional': 1,
+          'arm_neon_optional': 0,
         }],
       ],
     },

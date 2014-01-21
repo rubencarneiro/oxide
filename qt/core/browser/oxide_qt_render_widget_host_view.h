@@ -18,7 +18,9 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 #define _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 
+#include <Qt>
 #include <QtGlobal>
+#include <QVariant>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -69,6 +71,10 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
 
+  void TextInputTypeChanged(ui::TextInputType type,
+                            ui::TextInputMode mode,
+                            bool can_compose_inline) FINAL;
+
   void ForwardFocusEvent(QFocusEvent* event);
   void ForwardKeyEvent(QKeyEvent* event);
   void ForwardMouseEvent(QMouseEvent* event);
@@ -78,6 +84,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   const QPixmap* GetBackingStore();
 
+  QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
+
  private:
   void Paint(const gfx::Rect& rect) FINAL;
   void BuffersSwapped(const AcknowledgeBufferPresentCallback& ack) FINAL;
@@ -86,6 +94,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   scoped_ptr<RenderWidgetHostViewDelegate> delegate_;
 
   AcknowledgeBufferPresentCallback acknowledge_buffer_present_callback_;
+
+  ui::TextInputType input_type_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };
