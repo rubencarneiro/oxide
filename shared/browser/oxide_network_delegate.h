@@ -82,9 +82,6 @@ class NetworkDelegate FINAL : public net::NetworkDelegate {
       net::SocketStream* socket,
       const net::CompletionCallback& callback) FINAL;
 
-  void OnRequestWaitStateChange(const net::URLRequest& request,
-                                RequestWaitState state) FINAL;
-
   DISALLOW_COPY_AND_ASSIGN(NetworkDelegate);
 };
 

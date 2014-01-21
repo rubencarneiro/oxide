@@ -15,6 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#define V8_ALLOW_ACCESS_TO_RAW_HANDLE_CONSTRUCTOR
+
 #include "oxide_v8_message_manager.h"
 
 #include "base/logging.h"
@@ -60,7 +62,7 @@ class StringResource : public v8::String::ExternalAsciiStringResource {
 std::string V8MessageManager::V8StringToStdString(
     v8::Local<v8::String> string) {
   v8::String::Value v(string);
-  base::string16 s(static_cast<const char16 *>(*v), v.length());
+  base::string16 s(static_cast<const base::char16 *>(*v), v.length());
   return base::UTF16ToUTF8(s);
 }
 
@@ -91,11 +93,13 @@ void V8MessageManager::RegisterReceiveHandler(
 
 void V8MessageManager::SendMessageInner(
     const v8::FunctionCallbackInfo<v8::Value>& args) {
-  v8::HandleScope handle_scope(v8::Isolate::GetCurrent());
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::HandleScope handle_scope(isolate);
 
   if (args.Length() < 4) {
-    v8::ThrowException(v8::Exception::Error(v8::String::New(
-        "Insufficient arguments")));
+    isolate->ThrowException(v8::Exception::Error(
+        v8::String::NewFromUtf8(
+          isolate, "Insufficient arguments")));
     return;
   }
 
@@ -106,22 +110,25 @@ void V8MessageManager::SendMessageInner(
 
   if (!serial_as_val->IsInt32() || !type_as_val->IsInt32() ||
       !error_as_val->IsInt32()) {
-    v8::ThrowException(v8::Exception::Error(v8::String::New(
-        "Unexpected argument types")));
+    isolate->ThrowException(v8::Exception::Error(
+        v8::String::NewFromUtf8(
+          isolate, "Unexpected argument types")));
     return;
   }
 
   v8::Local<v8::Int32> serial = serial_as_val->ToInt32();
 
   if (!OxideMsg_SendMessage_Type::is_valid(type_as_val->ToInt32()->Value())) {
-    v8::ThrowException(v8::Exception::Error(v8::String::New(
-        "Message type value out of range")));
+    isolate->ThrowException(v8::Exception::Error(
+        v8::String::NewFromUtf8(
+          isolate, "Message type value out of range")));
     return;
   }
 
   if (!msg_id_as_val->IsString()) {
-    v8::ThrowException(v8::Exception::Error(v8::String::New(
-        "Invalid message ID")));
+    isolate->ThrowException(v8::Exception::Error(
+        v8::String::NewFromUtf8(
+          isolate, "Invalid message ID")));
     return;
   }
 
@@ -142,16 +149,17 @@ void V8MessageManager::SendMessageInner(
   if (args.Length() > 4) {
     v8::Local<v8::Value> msg_args_as_val = args[4];
     if (!msg_args_as_val->IsString()) {
-      v8::ThrowException(v8::Exception::Error(v8::String::New(
-          "Invalid argument type")));
+      isolate->ThrowException(v8::Exception::Error(
+          v8::String::NewFromUtf8(
+            isolate, "Invalid argument type")));
       return;
     }
 
     msg_args = msg_args_as_val->ToString();
   } else if (error != OxideMsg_SendMessage_Error::OK) {
-    msg_args = v8::String::Empty();
+    msg_args = v8::String::Empty(isolate);
   } else {
-    msg_args = v8::String::New("{}");
+    msg_args = v8::String::NewFromUtf8(isolate, "{}");
   }
 
   OxideMsg_SendMessage_Params params;
@@ -170,18 +178,21 @@ void V8MessageManager::SendMessageInner(
 
 void V8MessageManager::RegisterReceiveHandlerInner(
     const v8::FunctionCallbackInfo<v8::Value>& args) {
-  v8::HandleScope handle_scope(v8::Isolate::GetCurrent());
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::HandleScope handle_scope(isolate);
 
   if (args.Length() < 1) {
-    v8::ThrowException(v8::Exception::Error(v8::String::New(
-        "Insufficient arguments")));
+    isolate->ThrowException(v8::Exception::Error(
+        v8::String::NewFromUtf8(
+          isolate, "Insufficient arguments")));
     return;
   }
 
   v8::Local<v8::Value> handler_as_val = args[0];
   if (!handler_as_val->IsFunction()) {
-    v8::ThrowException(v8::Exception::Error(v8::String::New(
-        "Handler must be a function")));
+    isolate->ThrowException(v8::Exception::Error(
+        v8::String::NewFromUtf8(
+          isolate, "Handler must be a function")));
     return;
   }
 
@@ -213,16 +224,17 @@ void V8MessageManager::OxideLazyGetterInner(
       ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
         IDR_OXIDE_V8_MESSAGE_MANAGER_BINDINGS_JS));
   v8::Local<v8::String> src(
-      v8::String::NewExternal(new StringResource(raw_src)));
+      v8::String::NewExternal(isolate, new StringResource(raw_src)));
   if (src.IsEmpty() || src->Length() == 0) {
     LOG(ERROR) << "Empty source";
     return;
   }
 
-  v8::Local<v8::String> start(v8::String::New(
-    "(function(sendMessageNative, registerReceiveHandlerNative, exports) {\n"
+  v8::Local<v8::String> start(v8::String::NewFromUtf8(
+      isolate,
+      "(function(sendMessageNative, registerReceiveHandlerNative, exports) {\n"
   ));
-  v8::Local<v8::String> end(v8::String::New("\n})"));
+  v8::Local<v8::String> end(v8::String::NewFromUtf8(isolate, "\n})"));
   v8::Local<v8::String> wrapped_src(
       v8::String::Concat(start, v8::String::Concat(src, end)));
 
@@ -235,14 +247,14 @@ void V8MessageManager::OxideLazyGetterInner(
     return;
   }
 
-  v8::Local<v8::External> local_data(closure_data_.get());
+  v8::Local<v8::External> local_data(closure_data_.NewHandle(isolate));
 
   v8::Local<v8::FunctionTemplate> send_message_template(
-      v8::FunctionTemplate::New(SendMessage, local_data));
+      v8::FunctionTemplate::New(isolate, SendMessage, local_data));
   v8::Local<v8::FunctionTemplate> register_receive_handler_template(
-      v8::FunctionTemplate::New(RegisterReceiveHandler, local_data));
+      v8::FunctionTemplate::New(isolate, RegisterReceiveHandler, local_data));
 
-  v8::Local<v8::Object> exports(v8::Object::New());
+  v8::Local<v8::Object> exports(v8::Object::New(isolate));
 
   v8::Handle<v8::Value> args[] = {
     send_message_template->GetFunction(),
@@ -252,10 +264,11 @@ void V8MessageManager::OxideLazyGetterInner(
 
   {
     blink::WebScopedMicrotaskSuppression mts;
-    frame_->callFunctionEvenIfScriptDisabled(function,
-                                             context_->Global(),
-                                             arraysize(args),
-                                             args);
+    frame_->callFunctionEvenIfScriptDisabled(
+        function,
+        context_.NewHandle(isolate)->Global(),
+        arraysize(args),
+        args);
   }
   if (try_catch.HasCaught()) {
     LOG(ERROR) << "Caught exception when running script function";
@@ -273,15 +286,15 @@ V8MessageManager::V8MessageManager(blink::WebFrame* frame,
     frame_(frame),
     context_(context),
     world_id_(world_id),
-    closure_data_(v8::External::New(this)) {
+    closure_data_(v8::External::New(v8::Isolate::GetCurrent(), this)) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
   v8::HandleScope handle_scope(isolate);
   v8::Context::Scope context_scope(context);
 
-  v8::Local<v8::External> local_data(closure_data_.get());
+  v8::Local<v8::External> local_data(closure_data_.NewHandle(isolate));
 
   v8::Local<v8::Object> global(context->Global());
-  global->SetAccessor(v8::String::New("oxide"),
+  global->SetAccessor(v8::String::NewFromUtf8(isolate, "oxide"),
                       OxideLazyGetter, NULL,
                       local_data);
 }
@@ -292,24 +305,25 @@ void V8MessageManager::ReceiveMessage(
     const OxideMsg_SendMessage_Params& params) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
   v8::HandleScope handle_scope(isolate);
-  v8::Context::Scope context_scope(context_.get());
+  v8::Context::Scope context_scope(context_.NewHandle(isolate));
 
-  CHECK(!receive_handler_.get().IsEmpty());
+  CHECK(!receive_handler_.IsEmpty());
   CHECK(OxideMsg_SendMessage_Type::is_valid(params.type));
 
   v8::Handle<v8::Value> args[] = {
-    v8::Integer::New(params.serial),
-    v8::Integer::New(params.type),
-    v8::Integer::New(params.error),
-    v8::String::New(params.msg_id.data()),
-    v8::String::New(params.args.data())
+    v8::Integer::New(isolate, params.serial),
+    v8::Integer::New(isolate, params.type),
+    v8::Integer::New(isolate, params.error),
+    v8::String::NewFromUtf8(isolate, params.msg_id.data()),
+    v8::String::NewFromUtf8(isolate, params.args.data())
   };
 
   v8::TryCatch try_catch;
-  frame_->callFunctionEvenIfScriptDisabled(receive_handler_.get(),
-                                           context_->Global(),
-                                           arraysize(args),
-                                           args);
+  frame_->callFunctionEvenIfScriptDisabled(
+      receive_handler_.NewHandle(isolate),
+      context_.NewHandle(isolate)->Global(),
+      arraysize(args),
+      args);
   if (try_catch.HasCaught() &&
       params.type == OxideMsg_SendMessage_Type::Message) {
     OxideMsg_SendMessage_Params error_params;
@@ -335,7 +349,7 @@ void V8MessageManager::ReceiveMessage(
 }
 
 v8::Handle<v8::Context> V8MessageManager::v8_context() const {
-  return context_.get();
+  return context_.NewHandle(v8::Isolate::GetCurrent());
 }
 
 long long V8MessageManager::frame_id() const {

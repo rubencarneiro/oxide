@@ -517,7 +517,7 @@ void WebView::DidStartProvisionalLoadForFrame(
 
 void WebView::DidCommitProvisionalLoadForFrame(
     int64 frame_id,
-    const string16& frame_unique_name,
+    const base::string16& frame_unique_name,
     bool is_main_frame,
     const GURL& url,
     content::PageTransition transition_type,
@@ -534,7 +534,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
 
 void WebView::DidFailProvisionalLoad(
     int64 frame_id,
-    const string16& frame_unique_name,
+    const base::string16& frame_unique_name,
     bool is_main_frame,
     const GURL& validated_url,
     int error_code,

@@ -20,7 +20,6 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 namespace content {
@@ -37,35 +36,36 @@ class IOThreadDelegate;
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
 // Chrome (which is not possible in a public API)
-class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
+class BrowserProcessMain FINAL {
  public:
-  // Return a reference to the main process components, starting them
-  // if not already started
-  static scoped_refptr<BrowserProcessMain> GetInstance();
+  ~BrowserProcessMain();
+
+  // Start the browser process components if they haven't already
+  // been started
+  static bool Run();
+  static void Quit();
+
+  // Returns true of the browser process components have been started
+  static bool IsRunning();
 
   // Return the IO thread delegate, which is a container of objects
   // whose lifetime is tied to the IO thread
   static IOThreadDelegate* io_thread_delegate();
 
-  // Returns true of the browser process components have been started
-  static bool Exists();
-
   // Ensure that the IO thread delegate is created
   static void CreateIOThreadDelegate();
 
-  static int RunBrowserProcess(
+  static int RunBrowserMain(
       const content::MainFunctionParams& main_function_params);
-  static void ShutdownBrowserProcess();
+  static void ShutdownBrowserMain();
 
  private:
-  friend class BrowserProcessHandle;
-  friend class base::RefCounted<BrowserProcessMain>;
-
   BrowserProcessMain();
-  ~BrowserProcessMain();
-
 
   bool Init();
+  void Shutdown();
+
+  bool did_shutdown_;
 
   // XXX: Don't change the order of these unless you know what you are
   //      doing. It's important that ContentMainDelegate outlives
@@ -77,16 +77,6 @@ class BrowserProcessMain FINAL : public base::RefCounted<BrowserProcessMain> {
   scoped_ptr<IOThreadDelegate> io_thread_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserProcessMain);
-};
-
-class ScopedBrowserProcessHandle {
- public:
-  ScopedBrowserProcessHandle();
-
- private:
-  scoped_refptr<BrowserProcessMain> handle_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedBrowserProcessHandle);
 };
 
 } // namespace oxide

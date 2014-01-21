@@ -98,8 +98,9 @@ IOThreadDelegate::Data::throttler_manager() const {
 }
 
 IOThreadDelegate::IOThreadDelegate() :
+    net_log_(new net::NetLog()),
     data_(NULL) {
-  net_log_.reset(new net::NetLog());
+  DCHECK(!content::BrowserThread::IsThreadInitialized(content::BrowserThread::IO));
 
   content::BrowserThread::SetDelegate(content::BrowserThread::IO, this);
 }

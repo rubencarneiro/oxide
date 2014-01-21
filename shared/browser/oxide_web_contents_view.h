@@ -48,7 +48,7 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
   content::RenderWidgetHostView* CreateViewForPopupWidget(
       content::RenderWidgetHost* render_widget_host) FINAL;
 
-  void SetPageTitle(const string16& title) FINAL;
+  void SetPageTitle(const base::string16& title) FINAL;
 
   void RenderViewCreated(content::RenderViewHost* host) FINAL;
   void RenderViewSwappedIn(content::RenderViewHost* host) FINAL;

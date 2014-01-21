@@ -61,7 +61,7 @@ content::RenderWidgetHostView* WebContentsView::CreateViewForPopupWidget(
   return NULL;
 }
 
-void WebContentsView::SetPageTitle(const string16& title) {}
+void WebContentsView::SetPageTitle(const base::string16& title) {}
 
 void WebContentsView::RenderViewCreated(content::RenderViewHost* host) {}
 

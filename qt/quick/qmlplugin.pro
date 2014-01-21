@@ -11,6 +11,7 @@ TARGET.module_name = $$replace(uri, \\., /)
 DESTDIR = $${OXIDE_BUILD_OUT}/imports/$${TARGET.module_name}
 
 SOURCES += \
+    api/oxideqquickglobals.cc \
     api/oxideqquickmessagehandler.cc \
     api/oxideqquicknavigationhistory.cc \
     api/oxideqquickoutgoingmessagerequest.cc \
@@ -29,6 +30,8 @@ SOURCES += \
     oxide_qquick_web_popup_menu_delegate.cc \
 
 HEADERS += \
+    api/oxideqquickglobals_p.h \
+    api/oxideqquickgloblas_p_p.h \
     api/oxideqquickmessagehandler_p.h \
     api/oxideqquickmessagehandler_p_p.h \
     api/oxideqquicknavigationhistory_p.h \

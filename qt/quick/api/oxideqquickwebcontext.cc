@@ -18,44 +18,38 @@
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 
+#include <QCoreApplication>
 #include <QQmlListProperty>
+#include <QWeakPointer>
 #include <QtDebug>
 #include <QtQuickVersion>
 #if defined(ENABLE_COMPOSITING)
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
 
-#include "qt/core/glue/oxide_qt_shared_gl_context_factory.h"
-
+#include "oxideqquickglobals_p.h"
+#include "oxideqquickglobals_p_p.h"
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 
 namespace {
-OxideQQuickWebContext* g_default_context;
-unsigned int g_context_count = 0;
-
-QOpenGLContext* OxideQQuickSharedGLContextFactory() {
-#if defined(ENABLE_COMPOSITING)
-  return QSGContext::sharedOpenGLContext();
-#else
-  return NULL;
-#endif
-}
-
+QWeakPointer<OxideQQuickWebContext> g_default_context;
 }
 
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     q_ptr(q) {
-  if (g_context_count++ == 0) {
-    oxide::qt::SetSharedGLContextFactory(OxideQQuickSharedGLContextFactory);
+  static bool run_once = false;
+  if (!run_once) {
+    run_once = true;
+#if defined(ENABLE_COMPOSITING)
+    oxide::qt::WebContextAdapter::setSharedGLContext(
+        QSGContext::sharedOpenGLContext());
+#endif
   }
 }
 
-OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {
-  Q_ASSERT(g_context_count > 0);
-  --g_context_count;
-}
+OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
 
 OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
     OxideQQuickWebContext* context) {
@@ -141,23 +135,11 @@ void OxideQQuickWebContext::scriptUpdated() {
   d->updateUserScripts();
 }
 
-OxideQQuickWebContext::OxideQQuickWebContext(bool is_default) :
-    d_ptr(new OxideQQuickWebContextPrivate(this)) {
-  if (is_default) {
-    Q_ASSERT(!g_default_context);
-    g_default_context = this;
-  }
-}
-
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickWebContextPrivate(this)) {}
 
-OxideQQuickWebContext::~OxideQQuickWebContext() {
-  if (g_default_context == this) {
-    g_default_context = NULL;
-  }
-}
+OxideQQuickWebContext::~OxideQQuickWebContext() {}
 
 void OxideQQuickWebContext::classBegin() {}
 
@@ -168,15 +150,27 @@ void OxideQQuickWebContext::componentComplete() {
 }
 
 // static
-OxideQQuickWebContext* OxideQQuickWebContext::defaultContext() {
+QSharedPointer<OxideQQuickWebContext> OxideQQuickWebContext::defaultContext() {
   if (g_default_context) {
     return g_default_context;
   }
 
-  new OxideQQuickWebContext(true);
-  g_default_context->componentComplete();
+  QSharedPointer<OxideQQuickWebContext> new_context(
+      new OxideQQuickWebContext(QCoreApplication::instance()));
 
-  return g_default_context;
+  new_context->setProduct(OxideQQuickGlobals::instance()->product());
+  new_context->setUserAgent(OxideQQuickGlobals::instance()->userAgent());
+  new_context->setDataPath(OxideQQuickGlobals::instance()->dataPath());
+  new_context->setCachePath(OxideQQuickGlobals::instance()->cachePath());
+  new_context->setAcceptLangs(OxideQQuickGlobals::instance()->acceptLangs());
+
+  new_context->componentComplete();
+  g_default_context = new_context;
+
+  OxideQQuickGlobalsPrivate::get(
+      OxideQQuickGlobals::instance())->defaultContextCreated();
+
+  return new_context;
 }
 
 QString OxideQQuickWebContext::product() const {

@@ -218,7 +218,7 @@ void OxideQQuickWebViewPrivate::componentComplete() {
     // hierarchy. However, the default context is not in this hierarchy and
     // has no QObject parent, so we use reference counting for it instead to
     // ensure that it is freed once all webviews are closed
-    default_context_.reset(OxideQQuickWebContext::defaultContext());
+    default_context_ = OxideQQuickWebContext::defaultContext();
     context = default_context_.data();
   }
 
