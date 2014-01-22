@@ -80,7 +80,8 @@ void OxideQQuickConfirmDialogDelegate::Show(
 
   *did_suppress_message = false;
 
-  ConfirmDialogContext* contextObject = new ConfirmDialogContext(this, message_text, callback);
+  ConfirmDialogContext* contextObject =
+      new ConfirmDialogContext(this, message_text, callback);
   if (!show(contextObject)) {
     callback->run(false);
   }
@@ -92,7 +93,8 @@ bool OxideQQuickConfirmDialogDelegate::Handle(
   Q_UNUSED(prompt_override);
 
   if (IsShown()) {
-    ConfirmDialogContext* contextObject = qobject_cast<ConfirmDialogContext*>(context_->contextObject());
+    ConfirmDialogContext* contextObject =
+        qobject_cast<ConfirmDialogContext*>(context_->contextObject());
     if (accept) {
       contextObject->accept();
     } else {

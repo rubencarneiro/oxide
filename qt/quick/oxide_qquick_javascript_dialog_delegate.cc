@@ -44,7 +44,8 @@ void OxideQQuickJavaScriptDialogDelegate::setComponent(
 
 bool OxideQQuickJavaScriptDialogDelegate::show(QObject* contextObject) {
   if (!component_) {
-    qWarning() << "Content requested a javascript dialog, but the application hasn't provided one";
+    qWarning() << "Content requested a javascript dialog, "
+                  "but the application hasn't provided one";
     delete contextObject;
     return false;
   }

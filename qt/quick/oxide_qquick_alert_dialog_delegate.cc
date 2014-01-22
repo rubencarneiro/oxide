@@ -74,7 +74,8 @@ void OxideQQuickAlertDialogDelegate::Show(
 
   *did_suppress_message = false;
 
-  AlertDialogContext* contextObject = new AlertDialogContext(this, message_text, callback);
+  AlertDialogContext* contextObject =
+      new AlertDialogContext(this, message_text, callback);
   if (!show(contextObject)) {
     callback->run(false);
   }
@@ -87,7 +88,8 @@ bool OxideQQuickAlertDialogDelegate::Handle(
   Q_UNUSED(prompt_override);
 
   if (IsShown()) {
-    AlertDialogContext* contextObject = qobject_cast<AlertDialogContext*>(context_->contextObject());
+    AlertDialogContext* contextObject =
+        qobject_cast<AlertDialogContext*>(context_->contextObject());
     contextObject->accept();
     return true;
   } else {

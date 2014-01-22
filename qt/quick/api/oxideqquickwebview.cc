@@ -162,7 +162,8 @@ void OxideQQuickWebViewPrivate::RunJavaScriptAlert(
     const QString& message_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
-  alert_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback, did_suppress_message);
+  alert_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback,
+                              did_suppress_message);
 }
 
 void OxideQQuickWebViewPrivate::RunJavaScriptConfirm(
@@ -171,7 +172,8 @@ void OxideQQuickWebViewPrivate::RunJavaScriptConfirm(
     const QString& message_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
-  confirm_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback, did_suppress_message);
+  confirm_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback,
+                                did_suppress_message);
 }
 
 void OxideQQuickWebViewPrivate::RunJavaScriptPrompt(
@@ -181,7 +183,9 @@ void OxideQQuickWebViewPrivate::RunJavaScriptPrompt(
     const QString& default_prompt_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
-  prompt_dialog_delegate_.Show(origin_url, accept_lang, message_text, default_prompt_text, callback, did_suppress_message);
+  prompt_dialog_delegate_.Show(origin_url, accept_lang, message_text,
+                               default_prompt_text, callback,
+                               did_suppress_message);
 }
 
 void OxideQQuickWebViewPrivate::RunBeforeUnloadDialog(

@@ -101,7 +101,8 @@ void OxideQQuickPromptDialogDelegate::Show(
 
   *did_suppress_message = false;
 
-  PromptDialogContext* contextObject = new PromptDialogContext(this, message_text, default_prompt_text, callback);
+  PromptDialogContext* contextObject =
+      new PromptDialogContext(this, message_text, default_prompt_text, callback);
   if (!show(contextObject)) {
     callback->run(false);
   }
@@ -111,7 +112,8 @@ bool OxideQQuickPromptDialogDelegate::Handle(
     bool accept,
     const QString& prompt_override) {
   if (IsShown()) {
-    PromptDialogContext* contextObject = qobject_cast<PromptDialogContext*>(context_->contextObject());
+    PromptDialogContext* contextObject =
+        qobject_cast<PromptDialogContext*>(context_->contextObject());
     if (accept) {
       if (!prompt_override.isNull()) {
         contextObject->accept(prompt_override);

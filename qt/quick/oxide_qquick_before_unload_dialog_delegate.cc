@@ -76,7 +76,8 @@ void OxideQQuickBeforeUnloadDialogDelegate::Show(
     oxide::qt::JavaScriptDialogClosedCallback* callback) {
   Q_UNUSED(is_reload);
 
-  BeforeUnloadDialogContext* contextObject = new BeforeUnloadDialogContext(this, message_text, callback);
+  BeforeUnloadDialogContext* contextObject =
+      new BeforeUnloadDialogContext(this, message_text, callback);
   if (!show(contextObject)) {
     callback->run(true);
   }
@@ -88,7 +89,8 @@ bool OxideQQuickBeforeUnloadDialogDelegate::Handle(
   Q_UNUSED(prompt_override);
 
   if (IsShown()) {
-    BeforeUnloadDialogContext* contextObject = qobject_cast<BeforeUnloadDialogContext*>(context_->contextObject());
+    BeforeUnloadDialogContext* contextObject =
+        qobject_cast<BeforeUnloadDialogContext*>(context_->contextObject());
     if (accept) {
       contextObject->accept();
     } else {
