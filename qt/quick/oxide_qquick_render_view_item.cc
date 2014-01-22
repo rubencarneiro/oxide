@@ -73,7 +73,7 @@ RenderViewItem::RenderViewItem(
 #else
 {
 #endif
-  setFlag(QQuickItem::ItemHasContents);
+  setFlags(QQuickItem::ItemHasContents | QQuickItem::ItemAcceptsInputMethod);
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
@@ -247,6 +247,10 @@ QSGNode* RenderViewItem::updatePaintNode(
   dirty_rect_ = QRect();
 
   return node;
+}
+
+QVariant RenderViewItem::inputMethodQuery(Qt::InputMethodQuery query) const {
+  return InputMethodQuery(query);
 }
 
 } // namespace qquick

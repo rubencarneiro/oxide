@@ -75,6 +75,8 @@ class RenderViewItem Q_DECL_FINAL :
   QSGNode* updatePaintNode(QSGNode* oldNode,
                            UpdatePaintNodeData* data) Q_DECL_FINAL;
 
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
+
  private:
   void SchedulePaint(const QRect& rect) Q_DECL_FINAL;
   void ScheduleUpdate() Q_DECL_FINAL;

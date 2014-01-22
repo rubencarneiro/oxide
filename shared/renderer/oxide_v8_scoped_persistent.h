@@ -1,5 +1,6 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
 // Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013 The Chromium Authors
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -32,56 +33,70 @@ class ScopedPersistent {
   }
 
   ~ScopedPersistent() {
-    clear();
+    reset();
+  }
+
+  bool IsEmpty() const {
+    return handle_.IsEmpty();
   }
 
   void reset(v8::Handle<T> handle) {
     if (!handle.IsEmpty()) {
       handle_.Reset(GetIsolate(handle), handle);
     } else {
-      clear();
+      reset();
     }
   }
 
-  v8::Handle<T> get() const {
+  void reset() {
+    handle_.Reset();
+  }
+
+  v8::Handle<T> NewHandle() const {
     if (handle_.IsEmpty()) {
       return v8::Local<T>();
     }
 
-    return v8::Local<T>::New(v8::Isolate::GetCurrent(), handle_);
+    return v8::Local<T>::New(GetIsolate(handle_), handle_);
   }
 
-  v8::Handle<T> operator->() const {
-    return get();
+  v8::Handle<T> NewHandle(v8::Isolate* isolate) const {
+    if (handle_.IsEmpty()) {
+      return v8::Local<T>();
+    }
+
+    return v8::Local<T>::New(isolate, handle_);
   }
 
  private:
+  // Works only for objects
   template <typename S>
-  static v8::Isolate* GetIsolate(v8::Handle<S> handle) {
-    if (!handle.IsEmpty()) {
-      return GetIsolate(handle->CreationContext());
+  static v8::Isolate* GetIsolate(v8::Handle<S> object_handle) {
+    if (!object_handle.IsEmpty()) {
+      return GetIsolate(object_handle->CreationContext());
     }
 
     return v8::Isolate::GetCurrent();
   }
-  static v8::Isolate* GetIsolate(v8::Handle<v8::Context> handle) {
-    if (!handle.IsEmpty()) {
-      return handle->GetIsolate();
+
+  // Context specialization
+  static v8::Isolate* GetIsolate(v8::Handle<v8::Context> context_handle) {
+    if (!context_handle.IsEmpty()) {
+      return context_handle->GetIsolate();
     }
 
     return v8::Isolate::GetCurrent();
   }
-  static v8::Isolate* GetIsolate(v8::Handle<v8::External> handle) {
+
+  // ObjectTemplate specialization
+  static v8::Isolate* GetIsolate(
+      v8::Handle<v8::ObjectTemplate> template_handle) {
     return v8::Isolate::GetCurrent();
   }
 
-  void clear() {
-    if (handle_.IsEmpty()) {
-      return;
-    }
-
-    handle_.Dispose();
-    handle_.Clear();
+  // External specialization
+  static v8::Isolate* GetIsolate(v8::Handle<v8::External> external_handle) {
+    return v8::Isolate::GetCurrent();
   }
 
   v8::Persistent<T> handle_;

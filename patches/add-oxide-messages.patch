@@ -4,15 +4,15 @@
 diff --git a/ipc/ipc_message_start.h b/ipc/ipc_message_start.h
 --- a/ipc/ipc_message_start.h
 +++ b/ipc/ipc_message_start.h
-@@ -87,12 +87,13 @@ enum IPCMessageStart {
-   WebSocketMsgStart,
-   NaClHostMsgStart,
+@@ -89,12 +89,13 @@ enum IPCMessageStart {
    WebRTCIdentityMsgStart,
    LocalDiscoveryMsgStart,
    PowerMonitorMsgStart,
    EncryptedMediaMsgStart,
    ServiceWorkerMsgStart,
    MessagePortMsgStart,
+   EmbeddedWorkerMsgStart,
+   EmbeddedWorkerContextMsgStart,
 +  OxideMsgStart,
    LastIPCMsgStart  // Must come last.
  };

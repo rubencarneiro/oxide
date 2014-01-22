@@ -20,7 +20,9 @@
 
 #include <QRect>
 #include <QSize>
+#include <Qt>
 #include <QtGlobal>
+#include <QVariant>
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
@@ -85,13 +87,15 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   TextureInfo GetFrontbufferTextureInfo();
   void DidUpdate(bool skipped);
 
+  QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
+
  private:
   friend class RenderWidgetHostView;
 
   virtual void SchedulePaint(const QRect& rect) = 0;
   virtual void ScheduleUpdate() = 0;
 
-  RenderWidgetHostView* GetRenderWidgetHostView();
+  RenderWidgetHostView* GetRenderWidgetHostView() const;
   void SetRenderWidgetHostView(RenderWidgetHostView* rwhv);
 
   RenderWidgetHostView* rwhv_;
