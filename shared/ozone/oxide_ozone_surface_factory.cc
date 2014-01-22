@@ -20,6 +20,7 @@
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/native_library.h"
+#include "ui/gfx/vsync_provider.h"
 
 #include "shared/common/oxide_content_client.h"
 
@@ -106,9 +107,9 @@ bool OzoneSurfaceFactory::AttemptToResizeAcceleratedWidget(
   return false;
 }
 
-gfx::VSyncProvider* OzoneSurfaceFactory::GetVSyncProvider(
+scoped_ptr<gfx::VSyncProvider> OzoneSurfaceFactory::CreateVSyncProvider(
     gfx::AcceleratedWidget w) {
-  return NULL;
+  return scoped_ptr<gfx::VSyncProvider>();
 }
 
 } // namespace oxide

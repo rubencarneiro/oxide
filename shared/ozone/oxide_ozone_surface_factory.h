@@ -45,7 +45,8 @@ class OzoneSurfaceFactory FINAL : public gfx::SurfaceFactoryOzone {
       gfx::AcceleratedWidget w,
       const gfx::Rect& bounds) FINAL;
 
-  gfx::VSyncProvider* GetVSyncProvider(gfx::AcceleratedWidget w) FINAL;
+  scoped_ptr<gfx::VSyncProvider> CreateVSyncProvider(
+      gfx::AcceleratedWidget w) FINAL;
 };
 
 } // namespace oxide

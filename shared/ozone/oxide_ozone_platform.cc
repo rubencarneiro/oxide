@@ -37,6 +37,11 @@ class OzonePlatform : public ui::OzonePlatform {
     return NULL;
   }
 
+  ui::InputMethodContextFactoryOzone*
+  GetInputMethodContextFactoryOzone() OVERRIDE {
+    return NULL;
+  }
+
  private:
   OzoneSurfaceFactory surface_factory_;
 };
