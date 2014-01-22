@@ -9,10 +9,12 @@ TestWebView {
   width: 200
   height: 200
 
+  property var currentDialog: null
+
   Component {
     id: customDialogComponent
     Item {
-      objectName: "customDialog"
+      id: customDialog
       readonly property string message: model.message
       anchors.fill: parent
       MouseArea {
@@ -26,25 +28,21 @@ TestWebView {
           }
         }
       }
-    }
-  }
-
-  function getDialogInstance() {
-    for (var i in webView.children) {
-      var child = webView.children[i];
-      if (child.objectName === "customDialog") {
-        return child;
+      Component.onCompleted: {
+        WebView.view.currentDialog = customDialog;
+      }
+      Component.onDestruction: {
+        WebView.view.currentDialog = null;
       }
     }
-    return null;
   }
 
   function dialogShown() {
-    return (getDialogInstance() != null);
+    return (currentDialog != null);
   }
 
   function dialogDismissed() {
-    return (getDialogInstance() == null);
+    return (currentDialog == null);
   }
 
   TestCase {
@@ -77,7 +75,7 @@ TestWebView {
       webView.confirmDialog = customDialogComponent;
       webView.url = "http://localhost:8080/tst_WebView_confirmDialog.html";
       verify(webView.waitFor(webView.dialogShown), "Confirm dialog not shown");
-      var dialog = webView.getDialogInstance();
+      var dialog = webView.currentDialog;
       compare(dialog.width, webView.width);
       compare(dialog.height, webView.height);
       compare(dialog.message, "JavaScript confirm dialog");
