@@ -187,14 +187,14 @@ class WebView : public MessageTarget,
       const base::string16& message_text,
       const base::string16& default_prompt_text,
       const content::JavaScriptDialogManager::DialogClosedCallback& callback,
-      bool* did_suppress_message) = 0;
+      bool* did_suppress_message);
   virtual void RunBeforeUnloadDialog(
       const base::string16& message_text,
       bool is_reload,
-      const content::JavaScriptDialogManager::DialogClosedCallback& callback) = 0;
+      const content::JavaScriptDialogManager::DialogClosedCallback& callback);
   virtual bool HandleJavaScriptDialog(
       bool accept,
-      const base::string16* prompt_override) = 0;
+      const base::string16* prompt_override);
 
  protected:
   WebView();
