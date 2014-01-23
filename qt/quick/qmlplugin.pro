@@ -26,7 +26,7 @@ SOURCES += \
 
 HEADERS += \
     api/oxideqquickglobals_p.h \
-    api/oxideqquickgloblas_p_p.h \
+    api/oxideqquickglobals_p_p.h \
     api/oxideqquickmessagehandler_p.h \
     api/oxideqquickmessagehandler_p_p.h \
     api/oxideqquicknavigationhistory_p.h \
