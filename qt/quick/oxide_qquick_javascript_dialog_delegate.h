@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_JAVASCRIPT_DIALOG_DELEGATE_H_
 #define _OXIDE_QT_QUICK_JAVASCRIPT_DIALOG_DELEGATE_H_
 
+#include <QObject>
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QScopedPointer>
@@ -25,33 +26,30 @@
 class OxideQQuickWebView;
 
 QT_BEGIN_NAMESPACE
-class QObject;
 class QQmlComponent;
 QT_END_NAMESPACE
 
 namespace oxide {
 namespace qquick {
 
-class OxideQQuickJavaScriptDialogDelegate {
+class OxideQQuickJavaScriptDialogDelegate : public QObject {
  public:
-  OxideQQuickJavaScriptDialogDelegate(OxideQQuickWebView* webview);
+  OxideQQuickJavaScriptDialogDelegate(OxideQQuickWebView* webview,
+                                      QQmlComponent* component);
 
-  QQmlComponent* component() const;
-  void setComponent(QQmlComponent* component);
-
-  bool IsShown() const;
-  void Hide();
   virtual bool Handle(bool accept, const QString& prompt_override) = 0;
 
  protected:
   // takes ownership of contextObject
   bool show(QObject* contextObject);
 
+  bool isShown() const;
+
   OxideQQuickWebView* web_view_;
   QQmlComponent* component_;
 
-  QScopedPointer<QQuickItem> item_;
   QScopedPointer<QQmlContext> context_;
+  QScopedPointer<QQuickItem> item_;
 };
 
 } // namespace qquick

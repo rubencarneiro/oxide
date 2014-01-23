@@ -35,9 +35,10 @@ namespace qquick {
 class OxideQQuickBeforeUnloadDialogDelegate Q_DECL_FINAL :
     public OxideQQuickJavaScriptDialogDelegate {
  public:
-  OxideQQuickBeforeUnloadDialogDelegate(OxideQQuickWebView* webview);
+  OxideQQuickBeforeUnloadDialogDelegate(OxideQQuickWebView* webview,
+                                        QQmlComponent* component);
 
-  void Show(const QString& message_text,
+  bool Show(const QString& message_text,
             bool is_reload,
             oxide::qt::JavaScriptDialogClosedCallback* callback);
   bool Handle(bool accept, const QString& prompt_override);

@@ -56,20 +56,21 @@ ConfirmDialogContext::ConfirmDialogContext(
     callback_(callback) {}
 
 void ConfirmDialogContext::accept() const {
-  delegate_->Hide();
   callback_->run(true);
+  delegate_->deleteLater();
 }
 
 void ConfirmDialogContext::reject() const {
-  delegate_->Hide();
   callback_->run(false);
+  delegate_->deleteLater();
 }
 
 OxideQQuickConfirmDialogDelegate::OxideQQuickConfirmDialogDelegate(
-    OxideQQuickWebView* webview) :
-    OxideQQuickJavaScriptDialogDelegate(webview) {}
+    OxideQQuickWebView* webview,
+    QQmlComponent* component) :
+    OxideQQuickJavaScriptDialogDelegate(webview, component) {}
 
-void OxideQQuickConfirmDialogDelegate::Show(
+bool OxideQQuickConfirmDialogDelegate::Show(
     const QUrl& origin_url,
     const QString& accept_lang,
     const QString& message_text,
@@ -79,12 +80,7 @@ void OxideQQuickConfirmDialogDelegate::Show(
   Q_UNUSED(accept_lang);
 
   *did_suppress_message = false;
-
-  ConfirmDialogContext* contextObject =
-      new ConfirmDialogContext(this, message_text, callback);
-  if (!show(contextObject)) {
-    callback->run(false);
-  }
+  return show(new ConfirmDialogContext(this, message_text, callback));
 }
 
 bool OxideQQuickConfirmDialogDelegate::Handle(
@@ -92,7 +88,7 @@ bool OxideQQuickConfirmDialogDelegate::Handle(
     const QString& prompt_override) {
   Q_UNUSED(prompt_override);
 
-  if (IsShown()) {
+  if (isShown()) {
     ConfirmDialogContext* contextObject =
         qobject_cast<ConfirmDialogContext*>(context_->contextObject());
     if (accept) {

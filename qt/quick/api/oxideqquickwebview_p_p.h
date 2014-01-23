@@ -18,22 +18,25 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
+#include <QPointer>
 #include <QScopedPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
-#include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
-#include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
-#include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
-#include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 
 #include "oxideqquicknavigationhistory_p.h"
 
 class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
+
+namespace oxide {
+namespace qquick {
+class OxideQQuickJavaScriptDialogDelegate;
+}
+}
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
@@ -124,17 +127,17 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   OxideQQuickWebContext* context;
   OxideQQuickNavigationHistory navigationHistory;
   QQmlComponent* popup_menu;
+  QQmlComponent* alert_dialog;
+  QQmlComponent* confirm_dialog;
+  QQmlComponent* prompt_dialog;
+  QQmlComponent* before_unload_dialog;
 
  private:
   QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;
+  QPointer<oxide::qquick::OxideQQuickJavaScriptDialogDelegate> current_dialog_delegate_;
   OxideQQuickWebView* q_ptr;
-
-  oxide::qquick::OxideQQuickAlertDialogDelegate alert_dialog_delegate_;
-  oxide::qquick::OxideQQuickConfirmDialogDelegate confirm_dialog_delegate_;
-  oxide::qquick::OxideQQuickPromptDialogDelegate prompt_dialog_delegate_;
-  oxide::qquick::OxideQQuickBeforeUnloadDialogDelegate before_unload_dialog_delegate_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

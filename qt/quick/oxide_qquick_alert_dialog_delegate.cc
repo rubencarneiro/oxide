@@ -55,15 +55,16 @@ AlertDialogContext::AlertDialogContext(
     callback_(callback) {}
 
 void AlertDialogContext::accept() const {
-  delegate_->Hide();
   callback_->run(true);
+  delegate_->deleteLater();
 }
 
 OxideQQuickAlertDialogDelegate::OxideQQuickAlertDialogDelegate(
-    OxideQQuickWebView* webview) :
-    OxideQQuickJavaScriptDialogDelegate(webview) {}
+    OxideQQuickWebView* webview,
+    QQmlComponent* component) :
+    OxideQQuickJavaScriptDialogDelegate(webview, component) {}
 
-void OxideQQuickAlertDialogDelegate::Show(
+bool OxideQQuickAlertDialogDelegate::Show(
     const QUrl& origin_url,
     const QString& accept_lang,
     const QString& message_text,
@@ -73,12 +74,7 @@ void OxideQQuickAlertDialogDelegate::Show(
   Q_UNUSED(accept_lang);
 
   *did_suppress_message = false;
-
-  AlertDialogContext* contextObject =
-      new AlertDialogContext(this, message_text, callback);
-  if (!show(contextObject)) {
-    callback->run(false);
-  }
+  return show(new AlertDialogContext(this, message_text, callback));
 }
 
 bool OxideQQuickAlertDialogDelegate::Handle(
@@ -87,7 +83,7 @@ bool OxideQQuickAlertDialogDelegate::Handle(
   Q_UNUSED(accept);
   Q_UNUSED(prompt_override);
 
-  if (IsShown()) {
+  if (isShown()) {
     AlertDialogContext* contextObject =
         qobject_cast<AlertDialogContext*>(context_->contextObject());
     contextObject->accept();

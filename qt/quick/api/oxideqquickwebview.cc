@@ -27,6 +27,10 @@
 #include <QtQml>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
+#include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
@@ -58,13 +62,13 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     context(NULL),
     navigationHistory(view),
     popup_menu(NULL),
+    alert_dialog(NULL),
+    confirm_dialog(NULL),
+    prompt_dialog(NULL),
+    before_unload_dialog(NULL),
     init_props_(new InitData()),
     load_progress_(0),
-    q_ptr(view),
-    alert_dialog_delegate_(view),
-    confirm_dialog_delegate_(view),
-    prompt_dialog_delegate_(view),
-    before_unload_dialog_delegate_(view) {}
+    q_ptr(view) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
@@ -162,8 +166,24 @@ void OxideQQuickWebViewPrivate::RunJavaScriptAlert(
     const QString& message_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
-  alert_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback,
-                              did_suppress_message);
+  Q_Q(OxideQQuickWebView);
+
+  if (alert_dialog == NULL) {
+    qWarning() << "Content requested a javascript alert dialog, "
+                  "but the application hasn't provided one";
+    callback->run(false);
+    return;
+  }
+
+  oxide::qquick::OxideQQuickAlertDialogDelegate* delegate =
+      new oxide::qquick::OxideQQuickAlertDialogDelegate(q, alert_dialog);
+  if (!delegate->Show(origin_url, accept_lang, message_text,
+                      callback, did_suppress_message)) {
+    callback->run(false);
+    delete delegate;
+  } else {
+    current_dialog_delegate_ = delegate;
+  }
 }
 
 void OxideQQuickWebViewPrivate::RunJavaScriptConfirm(
@@ -172,8 +192,24 @@ void OxideQQuickWebViewPrivate::RunJavaScriptConfirm(
     const QString& message_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
-  confirm_dialog_delegate_.Show(origin_url, accept_lang, message_text, callback,
-                                did_suppress_message);
+  Q_Q(OxideQQuickWebView);
+
+  if (confirm_dialog == NULL) {
+    qWarning() << "Content requested a javascript confirm dialog, "
+                  "but the application hasn't provided one";
+    callback->run(false);
+    return;
+  }
+
+  oxide::qquick::OxideQQuickConfirmDialogDelegate* delegate =
+      new oxide::qquick::OxideQQuickConfirmDialogDelegate(q, confirm_dialog);
+  if (!delegate->Show(origin_url, accept_lang, message_text,
+                      callback, did_suppress_message)) {
+    callback->run(false);
+    delete delegate;
+  } else {
+    current_dialog_delegate_ = delegate;
+  }
 }
 
 void OxideQQuickWebViewPrivate::RunJavaScriptPrompt(
@@ -183,31 +219,56 @@ void OxideQQuickWebViewPrivate::RunJavaScriptPrompt(
     const QString& default_prompt_text,
     oxide::qt::JavaScriptDialogClosedCallback* callback,
     bool* did_suppress_message) {
-  prompt_dialog_delegate_.Show(origin_url, accept_lang, message_text,
-                               default_prompt_text, callback,
-                               did_suppress_message);
+  Q_Q(OxideQQuickWebView);
+
+  if (prompt_dialog == NULL) {
+    qWarning() << "Content requested a javascript prompt dialog, "
+                  "but the application hasn't provided one";
+    callback->run(false);
+    return;
+  }
+
+  oxide::qquick::OxideQQuickPromptDialogDelegate* delegate =
+      new oxide::qquick::OxideQQuickPromptDialogDelegate(q, prompt_dialog);
+  if (!delegate->Show(origin_url, accept_lang, message_text,
+                      default_prompt_text, callback, did_suppress_message)) {
+    callback->run(false);
+    delete delegate;
+  } else {
+    current_dialog_delegate_ = delegate;
+  }
 }
 
 void OxideQQuickWebViewPrivate::RunBeforeUnloadDialog(
     const QString& message_text,
     bool is_reload,
     oxide::qt::JavaScriptDialogClosedCallback* callback) {
-  before_unload_dialog_delegate_.Show(message_text, is_reload, callback);
+  Q_Q(OxideQQuickWebView);
+
+  if (before_unload_dialog == NULL) {
+    qWarning() << "Content requested a javascript before unload dialog, "
+                  "but the application hasn't provided one";
+    callback->run(true);
+    return;
+  }
+
+  oxide::qquick::OxideQQuickBeforeUnloadDialogDelegate* delegate =
+      new oxide::qquick::OxideQQuickBeforeUnloadDialogDelegate(
+      q, before_unload_dialog);
+  if (!delegate->Show(message_text, is_reload, callback)) {
+    callback->run(true);
+    delete delegate;
+  } else {
+    current_dialog_delegate_ = delegate;
+  }
 }
 
 bool OxideQQuickWebViewPrivate::HandleJavaScriptDialog(
     bool accept, const QString& prompt_override) {
-  if (alert_dialog_delegate_.IsShown()) {
-    return alert_dialog_delegate_.Handle(accept, prompt_override);
-  } else if (confirm_dialog_delegate_.IsShown()) {
-    return confirm_dialog_delegate_.Handle(accept, prompt_override);
-  } else if (prompt_dialog_delegate_.IsShown()) {
-    return prompt_dialog_delegate_.Handle(accept, prompt_override);
-  } else if (before_unload_dialog_delegate_.IsShown()) {
-    return before_unload_dialog_delegate_.Handle(accept, prompt_override);
-  } else {
+  if (current_dialog_delegate_.isNull()) {
     return false;
   }
+  return current_dialog_delegate_->Handle(accept, prompt_override);
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {
@@ -497,69 +558,69 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
 QQmlComponent* OxideQQuickWebView::alertDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->alert_dialog_delegate_.component();
+  return d->alert_dialog;
 }
 
 void OxideQQuickWebView::setAlertDialog(QQmlComponent* alert_dialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->alert_dialog_delegate_.component() == alert_dialog) {
+  if (d->alert_dialog == alert_dialog) {
     return;
   }
 
-  d->alert_dialog_delegate_.setComponent(alert_dialog);
+  d->alert_dialog = alert_dialog;
   emit alertDialogChanged();
 }
 
 QQmlComponent* OxideQQuickWebView::confirmDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->confirm_dialog_delegate_.component();
+  return d->confirm_dialog;
 }
 
 void OxideQQuickWebView::setConfirmDialog(QQmlComponent* confirm_dialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->confirm_dialog_delegate_.component() == confirm_dialog) {
+  if (d->confirm_dialog == confirm_dialog) {
     return;
   }
 
-  d->confirm_dialog_delegate_.setComponent(confirm_dialog);
+  d->confirm_dialog = confirm_dialog;
   emit confirmDialogChanged();
 }
 
 QQmlComponent* OxideQQuickWebView::promptDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->prompt_dialog_delegate_.component();
+  return d->prompt_dialog;
 }
 
 void OxideQQuickWebView::setPromptDialog(QQmlComponent* prompt_dialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->prompt_dialog_delegate_.component() == prompt_dialog) {
+  if (d->prompt_dialog == prompt_dialog) {
     return;
   }
 
-  d->prompt_dialog_delegate_.setComponent(prompt_dialog);
+  d->prompt_dialog = prompt_dialog;
   emit promptDialogChanged();
 }
 
 QQmlComponent* OxideQQuickWebView::beforeUnloadDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->before_unload_dialog_delegate_.component();
+  return d->before_unload_dialog;
 }
 
 void OxideQQuickWebView::setBeforeUnloadDialog(
     QQmlComponent* before_unload_dialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->before_unload_dialog_delegate_.component() == before_unload_dialog) {
+  if (d->before_unload_dialog == before_unload_dialog) {
     return;
   }
 
-  d->before_unload_dialog_delegate_.setComponent(before_unload_dialog);
+  d->before_unload_dialog = before_unload_dialog;
   emit beforeUnloadDialogChanged();
 }
 

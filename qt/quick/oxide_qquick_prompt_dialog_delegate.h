@@ -36,9 +36,10 @@ namespace qquick {
 class OxideQQuickPromptDialogDelegate Q_DECL_FINAL :
     public OxideQQuickJavaScriptDialogDelegate {
  public:
-  OxideQQuickPromptDialogDelegate(OxideQQuickWebView* webview);
+  OxideQQuickPromptDialogDelegate(OxideQQuickWebView* webview,
+                                  QQmlComponent* component);
 
-  void Show(const QUrl& origin_url,
+  bool Show(const QUrl& origin_url,
             const QString& accept_lang,
             const QString& message_text,
             const QString& default_prompt_text,

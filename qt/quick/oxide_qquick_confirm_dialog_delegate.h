@@ -36,9 +36,10 @@ namespace qquick {
 class OxideQQuickConfirmDialogDelegate Q_DECL_FINAL :
     public OxideQQuickJavaScriptDialogDelegate {
  public:
-  OxideQQuickConfirmDialogDelegate(OxideQQuickWebView* webview);
+  OxideQQuickConfirmDialogDelegate(OxideQQuickWebView* webview,
+                                   QQmlComponent* component);
 
-  void Show(const QUrl& origin_url,
+  bool Show(const QUrl& origin_url,
             const QString& accept_lang,
             const QString& message_text,
             oxide::qt::JavaScriptDialogClosedCallback* callback,

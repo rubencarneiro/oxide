@@ -29,27 +29,13 @@ namespace oxide {
 namespace qquick {
 
 OxideQQuickJavaScriptDialogDelegate::OxideQQuickJavaScriptDialogDelegate(
-    OxideQQuickWebView* webview) :
+    OxideQQuickWebView* webview,
+    QQmlComponent* component) :
+    QObject(webview),
     web_view_(webview),
-    component_(NULL) {}
-
-QQmlComponent* OxideQQuickJavaScriptDialogDelegate::component() const {
-  return component_;
-}
-
-void OxideQQuickJavaScriptDialogDelegate::setComponent(
-    QQmlComponent* component) {
-  component_ = component;
-}
+    component_(component) {}
 
 bool OxideQQuickJavaScriptDialogDelegate::show(QObject* contextObject) {
-  if (!component_) {
-    qWarning() << "Content requested a javascript dialog, "
-                  "but the application hasn't provided one";
-    delete contextObject;
-    return false;
-  }
-
   QQmlContext* baseContext = component_->creationContext();
   if (!baseContext) {
     baseContext = QQmlEngine::contextForObject(web_view_);
@@ -74,15 +60,8 @@ bool OxideQQuickJavaScriptDialogDelegate::show(QObject* contextObject) {
   return true;
 }
 
-bool OxideQQuickJavaScriptDialogDelegate::IsShown() const {
+bool OxideQQuickJavaScriptDialogDelegate::isShown() const {
   return !item_.isNull();
-}
-
-void OxideQQuickJavaScriptDialogDelegate::Hide() {
-  if (IsShown()) {
-    item_.take()->deleteLater();
-    context_.take()->deleteLater();
-  }
 }
 
 } // namespace qquick

@@ -76,20 +76,21 @@ void PromptDialogContext::setCurrentValue(const QString& value) {
 }
 
 void PromptDialogContext::accept(const QString& value) const {
-  delegate_->Hide();
   callback_->run(true, value);
+  delegate_->deleteLater();
 }
 
 void PromptDialogContext::reject() const {
-  delegate_->Hide();
   callback_->run(false);
+  delegate_->deleteLater();
 }
 
 OxideQQuickPromptDialogDelegate::OxideQQuickPromptDialogDelegate(
-    OxideQQuickWebView* webview) :
-    OxideQQuickJavaScriptDialogDelegate(webview) {}
+    OxideQQuickWebView* webview,
+    QQmlComponent* component) :
+    OxideQQuickJavaScriptDialogDelegate(webview, component) {}
 
-void OxideQQuickPromptDialogDelegate::Show(
+bool OxideQQuickPromptDialogDelegate::Show(
     const QUrl& origin_url,
     const QString& accept_lang,
     const QString& message_text,
@@ -100,18 +101,14 @@ void OxideQQuickPromptDialogDelegate::Show(
   Q_UNUSED(accept_lang);
 
   *did_suppress_message = false;
-
-  PromptDialogContext* contextObject =
-      new PromptDialogContext(this, message_text, default_prompt_text, callback);
-  if (!show(contextObject)) {
-    callback->run(false);
-  }
+  return show(new PromptDialogContext(
+      this, message_text, default_prompt_text, callback));
 }
 
 bool OxideQQuickPromptDialogDelegate::Handle(
     bool accept,
     const QString& prompt_override) {
-  if (IsShown()) {
+  if (isShown()) {
     PromptDialogContext* contextObject =
         qobject_cast<PromptDialogContext*>(context_->contextObject());
     if (accept) {

@@ -57,30 +57,27 @@ BeforeUnloadDialogContext::BeforeUnloadDialogContext(
     callback_(callback) {}
 
 void BeforeUnloadDialogContext::accept() const {
-  delegate_->Hide();
   callback_->run(true);
+  delegate_->deleteLater();
 }
 
 void BeforeUnloadDialogContext::reject() const {
-  delegate_->Hide();
   callback_->run(false);
+  delegate_->deleteLater();
 }
 
 OxideQQuickBeforeUnloadDialogDelegate::OxideQQuickBeforeUnloadDialogDelegate(
-    OxideQQuickWebView* webview) :
-    OxideQQuickJavaScriptDialogDelegate(webview) {}
+    OxideQQuickWebView* webview,
+    QQmlComponent* component) :
+    OxideQQuickJavaScriptDialogDelegate(webview, component) {}
 
-void OxideQQuickBeforeUnloadDialogDelegate::Show(
+bool OxideQQuickBeforeUnloadDialogDelegate::Show(
     const QString& message_text,
     bool is_reload,
     oxide::qt::JavaScriptDialogClosedCallback* callback) {
   Q_UNUSED(is_reload);
 
-  BeforeUnloadDialogContext* contextObject =
-      new BeforeUnloadDialogContext(this, message_text, callback);
-  if (!show(contextObject)) {
-    callback->run(true);
-  }
+  return show(new BeforeUnloadDialogContext(this, message_text, callback));
 }
 
 bool OxideQQuickBeforeUnloadDialogDelegate::Handle(
@@ -88,7 +85,7 @@ bool OxideQQuickBeforeUnloadDialogDelegate::Handle(
     const QString& prompt_override) {
   Q_UNUSED(prompt_override);
 
-  if (IsShown()) {
+  if (isShown()) {
     BeforeUnloadDialogContext* contextObject =
         qobject_cast<BeforeUnloadDialogContext*>(context_->contextObject());
     if (accept) {
