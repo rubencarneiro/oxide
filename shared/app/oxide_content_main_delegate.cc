@@ -17,6 +17,10 @@
 
 #include "oxide_content_main_delegate.h"
 
+namespace C {
+#include <libintl.h>
+}
+
 #include <dlfcn.h>
 #include <string>
 
@@ -119,6 +123,10 @@ void ContentMainDelegate::PreSandboxStartup() {
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
       resource_dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
       ui::SCALE_FACTOR_100P);
+
+  // Ensure that the gettext translation catalog is mapped in memory
+  C::textdomain("oxide");
+  C::gettext("");
 }
 
 int ContentMainDelegate::RunProcess(
