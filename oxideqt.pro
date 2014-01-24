@@ -24,6 +24,8 @@ SUBDIRS += testutils
 qmltests.file = qt/tests/qmltests/qmltests.pro
 SUBDIRS += qmltests
 
+SUBDIRS += po
+
 oxideclean.commands = \
     $(DEL_FILE) $${OXIDE_SRC_ROOT}/Makefile.oxide && \
     $(DEL_FILE) `find $$OXIDE_SRC_ROOT -name \"*.target.oxide.mk\"` && \
