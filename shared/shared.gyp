@@ -239,7 +239,7 @@
         {
           'action_name': 'oxide_i18_messages_header',
           'inputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_strings_en-US.rc'
+            '<(DEPTH)/webkit/glue/webkit_strings.grd'
           ],
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/oxide/shared/common/oxide_i18n_messages.h'
@@ -247,6 +247,7 @@
           'action': [
             'python',
             'common/oxide_i18n.py',
+            '-c', '<(DEPTH)',
             '-i', '<@(_inputs)',
             '-o', '<@(_outputs)'
           ]
