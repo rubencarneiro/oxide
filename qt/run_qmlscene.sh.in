@@ -76,12 +76,12 @@ if [ $debug -eq 1 ]; then
 
   case `basename $debugger` in
     gdb)
-      exec $debugger $debugger_args --args $qmlscene -I @OXIDE_QMLPLUGIN_DIR@ "$@"
+      exec $debugger $debugger_args --args $qmlscene -I @OXIDE_QMLPLUGIN_OUTPUT_DIR@ "$@"
       ;;
     *)
-      exec $debugger $moz_debugger_args $qmlscene -I @OXIDE_QMLPLUGIN_DIR@ "$@"
+      exec $debugger $moz_debugger_args $qmlscene -I @OXIDE_QMLPLUGIN_OUTPUT_DIR@ "$@"
       ;;
   esac
 else
-  exec $qmlscene -I @OXIDE_QMLPLUGIN_DIR@ "$@"
+  exec $qmlscene -I @OXIDE_QMLPLUGIN_OUTPUT_DIR@ "$@"
 fi

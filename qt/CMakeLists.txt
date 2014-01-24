@@ -6,7 +6,8 @@ find_package(Qt5Qml)
 find_package(Qt5Quick)
 
 set(OXIDE_LIB_VERSIONED ${OXIDE_LIB}.${QT_SO_VERSION})
-set(OXIDE_QMLPLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/imports)
+set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/imports)
+set(OXIDE_BIN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlscene.sh.in
