@@ -13,3 +13,6 @@ add_custom_target(
     COMMENT "Running gyp post build commands")
 
 add_subdirectory(quick)
+if(${WANT_OXIDEQMLSCENE})
+  add_subdirectory(qmlrunner)
+endif()
