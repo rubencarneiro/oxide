@@ -124,7 +124,6 @@ def main(args):
     gyp_args.append('--no-circular-check')
     gyp_args.extend(['--toplevel-dir', TOPSRCDIR])
     gyp_args.extend(['--depth', CHROMIUMSRCDIR])
-    gyp_args.extend(['--suffix', '.oxide'])
     gyp_args.extend(['--format', 'make'])
     gyp_args.append('-Goutput_dir=%s' % output_dir)
 

@@ -1,3 +1,10 @@
+if(EXISTS ${CMAKE_BINARY_DIR}/CMakeLists.txt)
+  message(FATAL_ERROR
+          "In-source-tree builds are unsupported. You must use a separate build "
+          "directory to build Oxide. Note that you will need to remove the "
+          "CMakeCache.txt file from the root of your source tree before continuing")
+endif()
+
 cmake_minimum_required(VERSION 2.8.11)
 project(OXIDE)
 
