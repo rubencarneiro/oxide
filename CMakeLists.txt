@@ -26,10 +26,14 @@ set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium/out)
 set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
 set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib.target)
 
-# Import the configuration for the port
+# Import the configuration for this build
 include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 if(NOT DEFINED OXIDE_LIB)
   message(FATAL_ERROR "config.make must define OXIDE_LIB")
+endif()
+
+if(${ENABLE_TESTS})
+  enable_testing()
 endif()
 
 # Allow the version number to be used in the build

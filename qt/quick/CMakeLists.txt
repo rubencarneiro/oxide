@@ -46,7 +46,9 @@ target_link_libraries(${PLUGIN} OxideLib)
 
 add_custom_command(
     TARGET ${PLUGIN} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/qmldir ${OXIDE_QMLPLUGIN_DIR}/${PLUGIN_MODULE_NAME}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CMAKE_CURRENT_SOURCE_DIR}/qmldir
+      ${OXIDE_QMLPLUGIN_DIR}/${PLUGIN_MODULE_NAME}
     COMMENT "Copying qmldir to output directory")
 
 install(FILES ${OXIDE_QMLPLUGIN_DIR}/${PLUGIN_MODULE_NAME}/qmldir

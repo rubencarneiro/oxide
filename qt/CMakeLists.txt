@@ -6,7 +6,7 @@ find_package(Qt5Qml)
 find_package(Qt5Quick)
 
 set(OXIDE_LIB_VERSIONED ${OXIDE_LIB}.${QT_SO_VERSION})
-set(OXIDE_QMLPLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/qml)
+set(OXIDE_QMLPLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/imports)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlscene.sh.in
@@ -28,6 +28,9 @@ add_custom_target(
 add_subdirectory(quick)
 if(${WANT_OXIDEQMLSCENE})
   add_subdirectory(qmlrunner)
+endif()
+if(${ENABLE_TESTS})
+  add_subdirectory(tests)
 endif()
 
 install(FILES ${OXIDE_LIB_VERSIONED} DESTINATION ${CMAKE_INSTALL_LIBDIR})
