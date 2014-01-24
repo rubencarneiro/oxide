@@ -47,16 +47,16 @@ def which(file):
         if os.access(full, os.F_OK | os.X_OK):
             return full
 
-def setup_linker_path():
+def setup_linker_path(output_dir):
     # We want to link with gold. Ubuntu has '-fuse-ld=gold', but as this
     # is distro specific, we do something that is currently supportable
     # across distributions
-    if os.access(os.path.join(TOPSRCDIR, 'build', 'gold', 'ld'),
+    if os.access(os.path.join(output_dir, 'gold', 'ld'),
                  os.F_OK | os.F_OK):
         return
 
     try:
-        os.makedirs(os.path.join(TOPSRCDIR, 'build', 'gold'))
+        os.makedirs(os.path.join(output_dir, 'gold'))
     except:
         pass
 
@@ -70,7 +70,7 @@ def setup_linker_path():
         print('Cannot find gold linker', file=sys.stderr)
         sys.exit(1)
 
-    os.symlink(gold, os.path.join(TOPSRCDIR, 'build', 'gold', 'ld'))
+    os.symlink(gold, os.path.join(output_dir, 'gold', 'ld'))
 
 def additional_include_files(args=[]):
     specified_includes = set()
@@ -99,20 +99,37 @@ def additional_include_files(args=[]):
 
     return result
 
-if __name__ == '__main__':
-    args = sys.argv[1:]
+def main(args):
+    output_dir = os.path.join(CHROMIUMSRCDIR, "out")
+    gyp_args = []
 
-    setup_linker_path()
+    skip = False
+    for i in range(len(args)):
+      if skip == True:
+        skip = False
+        continue
 
-    args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
-    args.extend(['-I' + i for i in additional_include_files(args)])
+      if args[i] == "--output-dir" and (i + 1) < len(args):
+        output_dir = args[i + 1]
+        skip = True
+      else:
+        gyp_args.append(args[i])
 
-    args.append('--no-circular-check')
-    args.extend(['--toplevel-dir', TOPSRCDIR])
-    args.extend(['--depth', CHROMIUMSRCDIR])
-    args.extend(['--suffix', '.oxide'])
-    args.extend(['--format', 'make'])
-    args.append('-Goutput_dir=%s' % os.path.join(CHROMIUMSRCDIR, 'out'))
+    setup_linker_path(output_dir)
+
+    gyp_args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
+
+    gyp_args.extend(['-I' + i for i in additional_include_files(args)])
+
+    gyp_args.append('--no-circular-check')
+    gyp_args.extend(['--toplevel-dir', TOPSRCDIR])
+    gyp_args.extend(['--depth', CHROMIUMSRCDIR])
+    gyp_args.extend(['--suffix', '.oxide'])
+    gyp_args.extend(['--format', 'make'])
+    gyp_args.append('-Goutput_dir=%s' % output_dir)
 
     os.chdir(TOPSRCDIR)
-    sys.exit(gyp.main(args))
+    sys.exit(gyp.main(gyp_args))
+
+if __name__ == "__main__":
+  main(sys.argv[1:])
