@@ -1,6 +1,15 @@
 set(PLUGIN qmloxideplugin)
 set(PLUGIN_MODULE_NAME com/canonical/Oxide)
 
+# CMake doesn't seem to provide a way to get at QT_INSTALL_QML
+execute_process(COMMAND qmake -query QT_INSTALL_QML
+                RESULT_VARIABLE _RESULT
+                OUTPUT_VARIABLE QT_INSTALL_QML
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT ${_RESULT} EQUAL 0)
+  message(FATAL_ERROR "Failed to determine QT_INSTALL_QML")
+endif()
+
 set(PLUGIN_SRCS
     api/oxideqquickglobals.cc
     api/oxideqquickmessagehandler.cc
@@ -26,7 +35,7 @@ if(NOT ${Qt5Quick_VERSION_STRING} VERSION_LESS 5.2.0)
 endif()
 
 add_library(${PLUGIN} MODULE ${PLUGIN_SRCS})
-add_dependencies(${PLUGIN} gyp_all)
+add_dependencies(${PLUGIN} gyp_postbuild)
 set_target_properties(
     ${PLUGIN} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
@@ -39,3 +48,7 @@ add_custom_command(
     TARGET ${PLUGIN} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/qmldir ${OXIDE_QMLPLUGIN_DIR}/${PLUGIN_MODULE_NAME}
     COMMENT "Copying qmldir to output directory")
+
+install(FILES ${OXIDE_QMLPLUGIN_DIR}/${PLUGIN_MODULE_NAME}/qmldir
+        DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
+install(TARGETS ${PLUGIN} DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})

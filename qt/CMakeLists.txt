@@ -1,3 +1,5 @@
+set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/oxide-qt)
+
 find_package(Qt5Core)
 find_package(Qt5Gui)
 find_package(Qt5Qml)
@@ -17,9 +19,9 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlscene.sh
          WORLD_READ WORLD_EXECUTE)
 
 add_custom_target(
-    create_symlinks ALL
-    COMMAND ${CMAKE_COMMAND} -E create_symlink ${OXIDE_LIB_VERSIONED} ${OXIDE_LIB}
-    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CHROMIUM_PRODUCT_DIR}/chrome_sandbox ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
+    gyp_postbuild ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OXIDE_LIB_VERSIONED} ${OXIDE_LIB}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHROMIUM_PRODUCT_DIR}/chrome_sandbox ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
     DEPENDS gyp_all
     COMMENT "Running gyp post build commands")
 
@@ -27,3 +29,15 @@ add_subdirectory(quick)
 if(${WANT_OXIDEQMLSCENE})
   add_subdirectory(qmlrunner)
 endif()
+
+install(FILES ${OXIDE_LIB_VERSIONED} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${OXIDE_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(FILES ${CHROMIUM_PRODUCT_DIR}/oxide.pak
+        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
+install(FILES ${CHROMIUM_PRODUCT_DIR}/oxide_100_percent.pak
+        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
+install(PROGRAMS ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
+        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ SETUID)
+install(PROGRAMS ${CHROMIUM_PRODUCT_DIR}/oxide-renderer DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})

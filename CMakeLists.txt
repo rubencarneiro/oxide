@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(OXIDE)
 
+include(GNUInstallDirs)
+
 # This will be an option if we have more than one port
 set(OXIDE_BUILD qt)
 
@@ -56,7 +58,7 @@ add_custom_target(
       -DGYP_DIR=${CHROMIUM_GYP_GENERATOR_DIR}
       -P ${CMAKE_SOURCE_DIR}/build/scripts/gyp-target-shim.cmake
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT Building gyp_all target)
+    COMMENT "Building gyp_all target")
 
 # Allow objects linked by cmake to declare a run-time dependency on the
 # main library, built with gyp
