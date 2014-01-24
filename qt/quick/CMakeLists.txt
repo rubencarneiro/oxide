@@ -1,4 +1,5 @@
 set(PLUGIN qmloxideplugin)
+set(PLUGIN_MODULE_NAME com/canonical/Oxide)
 
 set(PLUGIN_SRCS
     api/oxideqquickglobals.cc
@@ -26,7 +27,15 @@ endif()
 
 add_library(${PLUGIN} MODULE ${PLUGIN_SRCS})
 add_dependencies(${PLUGIN} gyp_all)
-set_target_properties(${PLUGIN} PROPERTIES SKIP_BUILD_RPATH TRUE AUTOMOC TRUE)
+set_target_properties(
+    ${PLUGIN} PROPERTIES
+    SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
+    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_DIR}/${PLUGIN_MODULE_NAME})
 
 qt5_use_modules(${PLUGIN} Core Gui Qml Quick)
 target_link_libraries(${PLUGIN} OxideLib)
+
+add_custom_command(
+    TARGET ${PLUGIN} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/qmldir ${OXIDE_QMLPLUGIN_DIR}/${PLUGIN_MODULE_NAME}
+    COMMENT "Copying qmldir to output directory")
