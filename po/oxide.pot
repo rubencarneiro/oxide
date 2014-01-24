@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: oxide\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-24 15:33+0100\n"
+"POT-Creation-Date: 2014-01-24 18:23+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,482 +18,486 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:16
-msgid "Choose Files"
+msgid "Details"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:18
-msgid "number of seconds ofmovie remaining"
+msgid "This is a searchable index. Enter search keywords: "
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:20
-msgid "mute"
+msgid "Clear"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:22
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:220
-msgid "Year"
+msgid "Today"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:24
-msgid "Please enter a URL."
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:108
+msgid "Day"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:26
-msgid "No recent searches"
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:196
+msgid "Month"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:28
-msgid "1024 (Medium Grade)"
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:202
+msgid "Year"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:30
-msgid "Loading..."
-msgstr ""
-
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:32
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:192
 msgid "Submit"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:34
-msgid "'$1' is used at a wrong position in '$2'."
+msgid "Reset"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:36
-msgid "Please match the requested format."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:38
-msgid "A part followed by '$1' should not contain the symbol '$2'."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:40
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:154
-msgid "audio"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:42
-msgid "mute audio track"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:44
-msgid "back 30 seconds"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:46
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:216
-msgid "Week"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:48
-msgid "check"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:50
-msgid "uncheck"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:52
-msgid "fast forward"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:54
-msgid "unmute"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:56
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:260
-msgid "Day"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:58
-msgid "current time in seconds"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:60
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:96
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:130
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:196
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:244
-msgid "Other..."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:62
-msgid "status"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:64
-msgid "dd"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:66
-msgid "jump"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:68
-msgid "Value must be $1 or later."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:70
-msgid ""
-"Please shorten this text to $2 characters or less (you are currently using "
-"$1 characters)."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:72
-msgid "This month"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:74
-msgid "Value must be $1 or earlier."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:76
-msgid "current movie status"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:78
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:172
-msgid "Month"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:80
-msgid "seek quickly forward"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:82
-msgid "press"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:84
-msgid "2048 (High Grade)"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:86
 msgid "Choose File"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:88
-msgid "Please enter a valid value. The nearest valid value is $1."
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:38
+msgid "Choose Files"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:90
-msgid "mm"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:92
-#, c-format
-msgid "Loading document: %d/%d pages..."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:94
-msgid "play"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:98
-msgid "Please include an '$1' in the email address. '$2' is missing an '$1'."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:100
-msgid "Value must be less than or equal to $1."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:102
-msgid "Today"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:104
-msgid "HTML content"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:106
-msgid "Couldn't load plug-in."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:108
-msgid "Please select one of these options."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:110
-msgid "heading"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:112
-msgid "play movie in full screen mode"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:114
-msgid ""
-"Please enter a valid value. The field is incomplete or has an invalid date."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:116
-msgid "movie time scrubber"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:118
-msgid "footer"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:120
-msgid "movie time scrubber thumb"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:122
-msgid "image map"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:124
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:222
-msgid "video"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:126
-msgid "start displaying closed captions"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:128
-msgid "elapsed time"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:132
-msgid "Drag file here"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:134
-msgid "Please select a file."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:136
-msgid "remaining time"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:138
-msgid "select"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:140
-msgid "return to real time"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:142
-msgid "Please enter a comma separated list of email addresses."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:144
-msgid "Please check this box if you want to proceed."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:146
-msgid "seek quickly back"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:148
-msgid "activate"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:150
-msgid "unmute audio track"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:152
-msgid "Please enter a part followed by '$1'. '$2' is incomplete."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:156
-msgid "fast reverse"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:158
-msgid "Clear"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:160
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:40
 msgid "No file chosen"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:162
-msgid "This document is password protected.  Please enter a password."
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:42
+msgid "Drag file here"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:164
-msgid "Please enter a number."
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:44
+msgid "$1 files"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:166
+#. TRANSLATORS: for date label
+#. TRANSLATORS: for month label
+#. TRANSLATORS: for time label
+#. TRANSLATORS: for week label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:46
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:49
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:52
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:55
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:58
+msgid "Other..."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:60
+msgid "dd"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:62
+msgid "mm"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:64
+msgid "yyyy"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:66
+msgid "This month"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:68
+msgid "This week"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:70
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:200
+msgid "Week"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:72
+msgid "No recent searches"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:74
+msgid "Recent Searches"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:76
+msgid "Clear Recent Searches"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:78
 #, c-format
 msgid "%s%d×%d"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:168
-msgid "A part following '$1' should not contain the symbol '$2'."
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:80
+msgid "HTML content"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:170
-msgid "Please enter a non-empty email address."
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:82
+msgid "link"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:174
-msgid "Week $2, $1"
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:84
+msgid "list marker"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:176
-msgid "return streaming movie to real time"
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:86
+msgid "image map"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:178
-msgid "Please enter a valid value. The two nearest valid values are $1 and $2."
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:88
+msgid "heading"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:180
-msgid "seek movie back 30 seconds"
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:90
+msgid "footer"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:182
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:238
-msgid "exit full screen"
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:92
+msgid "stepper"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:184
-msgid "movie timeline thumb"
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:94
+msgid "press"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:186
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:96
+msgid "select"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:98
+msgid "activate"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:100
+msgid "uncheck"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:102
+msgid "check"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:104
+msgid "jump"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:106
+msgid "AM/PM"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:110
 msgid "blank"
 msgstr ""
 
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:112
+msgid "Hours"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:114
+msgid "media control"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:116
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:154
+msgid "audio"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:118
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:156
+msgid "video"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:120
+msgid "mute"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:122
+msgid "unmute"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:124
+msgid "play"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:126
+msgid "pause"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:128
+msgid "movie time"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:130
+msgid "movie timeline thumb"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:132
+msgid "back 30 seconds"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:134
+msgid "return to real time"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:136
+msgid "elapsed time"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:138
+msgid "remaining time"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:140
+msgid "status"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:142
+msgid "enter full screen"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:144
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:182
+msgid "exit full screen"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:146
+msgid "fast forward"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:148
+msgid "fast reverse"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:150
+msgid "show closed captions"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:152
+msgid "hide closed captions"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:158
+msgid "mute audio track"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:160
+msgid "unmute audio track"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:162
+msgid "begin playback"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:164
+msgid "pause playback"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:166
+msgid "movie time scrubber"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:168
+msgid "movie time scrubber thumb"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:170
+msgid "seek movie back 30 seconds"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:172
+msgid "return streaming movie to real time"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:174
+msgid "current time in seconds"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:176
+msgid "number of seconds ofmovie remaining"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:178
+msgid "current movie status"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:180
+msgid "play movie in full screen mode"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:184
+msgid "seek quickly forward"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:186
+msgid "seek quickly back"
+msgstr ""
+
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:188
-msgid "$1 files"
+msgid "start displaying closed captions"
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:190
 msgid "stop displaying closed captions"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:194
-msgid "Recent Searches"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:198
-msgid "Please fill out this field."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:200
-msgid "yyyy"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:202
-msgid "Clear Recent Searches"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:204
-msgid "Details"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:206
-msgid "Reset"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:208
-msgid "Minutes"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:210
-msgid "Loading"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:212
-msgid "hide closed captions"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:214
-msgid "pause playback"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:218
-msgid "This week"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:224
-msgid "Value must be greater than or equal to $1."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:226
-msgid "list marker"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:228
-msgid "Please select one or more files."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:230
-msgid "Hours"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:232
-msgid "enter full screen"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:234
-msgid "link"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:236
-msgid "Invalid value."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:240
-msgid "Failed to load PDF document"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:242
-msgid "media control"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:246
-msgid "This is a searchable index. Enter search keywords: "
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:248
-msgid "Seconds"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:250
-msgid "stepper"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:252
-msgid "movie time"
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:254
-msgid "Please select an item in the list."
-msgstr ""
-
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:256
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:192
 msgid "Milliseconds"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:258
-msgid "pause"
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:194
+msgid "Minutes"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:262
-msgid "Please enter an email address."
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:198
+msgid "Seconds"
 msgstr ""
 
-#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:264
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:204
+msgid "2048 (High Grade)"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:206
+msgid "1024 (Medium Grade)"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:208
+msgid "Week $2, $1"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:210
+msgid "Please select one or more files."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:212
+msgid "Invalid value."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:214
+msgid "Please enter a non-empty email address."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:216
 msgid "Please enter a part following '$1'. '$2' is incomplete."
 msgstr ""
 
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:218
+msgid "Please enter a part followed by '$1'. '$2' is incomplete."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:220
+msgid "A part following '$1' should not contain the symbol '$2'."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:222
+msgid "'$1' is used at a wrong position in '$2'."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:224
+msgid "A part followed by '$1' should not contain the symbol '$2'."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:226
+msgid "Please include an '$1' in the email address. '$2' is missing an '$1'."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:228
+msgid "Please enter a comma separated list of email addresses."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:230
+msgid "Value must be greater than or equal to $1."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:232
+msgid "Value must be $1 or later."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:234
+msgid "Value must be less than or equal to $1."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:236
+msgid "Value must be $1 or earlier."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:238
+msgid ""
+"Please enter a valid value. The field is incomplete or has an invalid date."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:240
+msgid "Please enter a number."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:242
+msgid "Please fill out this field."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:244
+msgid "Please check this box if you want to proceed."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:246
+msgid "Please select a file."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:248
+msgid "Please select one of these options."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:250
+msgid "Please select an item in the list."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:252
+msgid "Please enter an email address."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:254
+msgid "Please enter a URL."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:256
+msgid "Please match the requested format."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:258
+msgid "Please enter a valid value. The two nearest valid values are $1 and $2."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:260
+msgid "Please enter a valid value. The nearest valid value is $1."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:262
+msgid ""
+"Please shorten this text to $2 characters or less (you are currently using "
+"$1 characters)."
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:264
+msgid "This document is password protected.  Please enter a password."
+msgstr ""
+
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:266
-msgid "AM/PM"
+msgid "Loading..."
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:268
-msgid "show closed captions"
+#, c-format
+msgid "Loading document: %d/%d pages..."
 msgstr ""
 
 #: obj/gen/oxide/shared/common/oxide_i18n_messages.h:270
-msgid "begin playback"
+msgid "Failed to load PDF document"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:272
+msgid "Loading"
+msgstr ""
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:274
+msgid "Couldn't load plug-in."
 msgstr ""
