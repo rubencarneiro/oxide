@@ -86,7 +86,7 @@ add_custom_target(
     gyp_all ALL
     COMMAND ${CMAKE_COMMAND} -DMAKE=$(MAKE) -DBUILDTYPE=${CHROMIUM_BUILD_TYPE}
       -DGYP_DIR=${CHROMIUM_GYP_GENERATOR_DIR}
-      -P ${CMAKE_SOURCE_DIR}/build/scripts/gyp-target-shim.cmake
+      -P ${CMAKE_SOURCE_DIR}/build/scripts/run-gyp-all-target.cmake
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building gyp_all target")
 
