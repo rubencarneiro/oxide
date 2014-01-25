@@ -6,7 +6,7 @@ execute_process(COMMAND qmake -query QT_INSTALL_QML
                 RESULT_VARIABLE _RESULT
                 OUTPUT_VARIABLE QT_INSTALL_QML
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(NOT ${_RESULT} EQUAL 0)
+if(NOT _RESULT EQUAL 0)
   message(FATAL_ERROR "Failed to determine QT_INSTALL_QML")
 endif()
 
@@ -29,7 +29,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
                     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
 
-if(NOT ${Qt5Quick_VERSION_STRING} VERSION_LESS 5.2.0)
+if(NOT Qt5Quick_VERSION_STRING VERSION_LESS 5.2.0)
   list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_render_view_node.cc)
   add_definitions(-DENABLE_COMPOSITING)
 endif()

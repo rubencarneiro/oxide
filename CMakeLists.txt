@@ -16,7 +16,8 @@ set(OXIDE_BUILD qt)
 # Required for out-of-tree builds
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
-if(DEFINED ${CMAKE_BUILD_TYPE} AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(Specified debug)
   set(CHROMIUM_BUILD_TYPE Debug)
 else()
   set(CHROMIUM_BUILD_TYPE Release)
@@ -32,7 +33,7 @@ if(NOT DEFINED OXIDE_LIB)
   message(FATAL_ERROR "config.make must define OXIDE_LIB")
 endif()
 
-if(${ENABLE_TESTS})
+if(ENABLE_TESTS)
   enable_testing()
 endif()
 
@@ -42,7 +43,7 @@ foreach(comp MAJOR MINOR BUILD PATCH)
       COMMAND python ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
       OUTPUT_VARIABLE _OUTPUT
       RESULT_VARIABLE _RESULT)
-  if(NOT ${_RESULT} EQUAL 0)
+  if(NOT _RESULT EQUAL 0)
     message(FATAL_ERROR "Failed to get version number")
   endif()
   set(OXIDE_VERSION_${comp} ${_OUTPUT})
@@ -57,7 +58,7 @@ execute_process(
       ${OXIDE_GYP_EXTRA_ARGS}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     RESULT_VARIABLE _GYP_RESULT)
-if(NOT ${_GYP_RESULT} EQUAL 0)
+if(NOT _GYP_RESULT EQUAL 0)
   message(FATAL_ERROR "Running gyp failed")
 endif()
 

@@ -15,6 +15,6 @@ endif()
 
 execute_process(COMMAND ${MAKE} -C ${GYP_DIR} -f Makefile ${BUILDTYPE_ARG} all
                 RESULT_VARIABLE _RESULT)
-if(NOT ${_RESULT} EQUAL 0)
+if(NOT _RESULT EQUAL 0)
   message(FATAL_ERROR "Failed to build gyp target")
 endif()
