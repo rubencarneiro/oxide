@@ -20,12 +20,16 @@ set(PLUGIN qmloxideplugin)
 set(PLUGIN_MODULE_NAME com/canonical/Oxide)
 
 # CMake doesn't seem to provide a way to get at QT_INSTALL_QML
-execute_process(COMMAND qmake -query QT_INSTALL_QML
+find_program(QMAKE qmake)
+if(QMAKE STREQUAL "QMAKE-NOTFOUND")
+  message(FATAL_ERROR "Could not find qmake")
+endif()
+execute_process(COMMAND ${QMAKE} -query QT_INSTALL_QML
                 RESULT_VARIABLE _RESULT
                 OUTPUT_VARIABLE QT_INSTALL_QML
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to determine QT_INSTALL_QML")
+  message(FATAL_ERROR "Failed to determine QT_INSTALL_QML from qmake")
 endif()
 
 set(PLUGIN_SRCS
