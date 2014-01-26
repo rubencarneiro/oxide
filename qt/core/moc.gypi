@@ -22,7 +22,7 @@
     '<(INTERMEDIATE_DIR)/<(_action_name)'
   ],
   'action': [
-    'moc',
+    '<(qt_moc_executable)',
     '-o',
     '<(INTERMEDIATE_DIR)/<(_action_name)',
     '<(_moc_input)'

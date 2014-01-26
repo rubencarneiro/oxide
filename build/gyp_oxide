@@ -47,11 +47,11 @@ def which(file):
         if os.access(full, os.F_OK | os.X_OK):
             return full
 
-def setup_linker_path(output_dir):
+def setup_linker_path(ld, output_dir):
     # We want to link with gold. Ubuntu has '-fuse-ld=gold', but as this
     # is distro specific, we do something that is currently supportable
     # across distributions
-    if os.access(os.path.join(output_dir, 'gold', 'ld'),
+    if os.access(os.path.join(output_dir, 'gold', ld),
                  os.F_OK | os.F_OK):
         return
 
@@ -60,17 +60,17 @@ def setup_linker_path(output_dir):
     except:
         pass
 
-    gold = which('ld.gold')
+    gold = which('%s.gold' % ld)
     if not gold:
-        gold = which('ld')
-        if oxide_utils.CheckCall(['ld', '-v']).find('gold') == -1:
+        gold = which(ld)
+        if oxide_utils.CheckCall([gold, '-v']).find('gold') == -1:
             gold = None
 
     if not gold:
         print('Cannot find gold linker', file=sys.stderr)
         sys.exit(1)
 
-    os.symlink(gold, os.path.join(output_dir, 'gold', 'ld'))
+    os.symlink(gold, os.path.join(output_dir, 'gold', ld))
 
 def additional_include_files(args=[]):
     specified_includes = set()
@@ -101,21 +101,31 @@ def additional_include_files(args=[]):
 
 def main(args):
     output_dir = os.path.join(CHROMIUMSRCDIR, "out")
+    pkg_config_paths = []
+    ld = "ld"
     gyp_args = []
 
-    skip = False
-    for i in range(len(args)):
-      if skip == True:
-        skip = False
-        continue
-
+    i = 0
+    while i < len(args):
       if args[i] == "--output-dir" and (i + 1) < len(args):
         output_dir = args[i + 1]
-        skip = True
+        i += 2
+      elif args[i] == "--pkg-config-path" and (i + 1) < len(args):
+        pkg_config_paths.append(args[i + 1])
+        i += 2
+      elif args[i] == "--ld" and (i + 1) < len(args):
+        ld = args[i + 1]
+        i += 2
       else:
         gyp_args.append(args[i])
+        i += 1
 
-    setup_linker_path(output_dir)
+    if len(pkg_config_paths):
+      if "PKG_CONFIG_PATH" in os.environ:
+        pkg_config_paths.append(os.environ["PKG_CONFIG_PATH"])
+      os.environ["PKG_CONFIG_PATH"] = ":".join(pkg_config_paths)
+
+    setup_linker_path(ld, output_dir)
 
     gyp_args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
 

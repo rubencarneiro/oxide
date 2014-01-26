@@ -16,14 +16,24 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+foreach(v MAKE GYP_DIR CC CXX)
+  if(NOT DEFINED ${v})
+    message(FATAL_ERROR "Need to define ${v}")
+  endif()
+endforeach()
+
 set(ENV{CFLAGS})
 set(ENV{CXXFLAGS})
 set(ENV{CPPFLAGS})
 set(ENV{LDFLAGS})
+set(ENV{CC} ${CC})
+set(ENV{CXX} ${CXX})
 
-if(NOT DEFINED MAKE OR NOT DEFINED GYP_DIR)
-  message(FATAL_ERROR "Need to define MAKE and GYP_DIR")
-endif()
+foreach(v CC_host CXX_host)
+  if(DEFINED ${v})
+    set(ENV{${v}} ${${v}})
+  endif()
+endforeach()
 
 if(DEFINED BUILDTYPE)
   set(BUILDTYPE_ARG BUILDTYPE=${BUILDTYPE})

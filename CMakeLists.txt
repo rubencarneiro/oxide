@@ -35,7 +35,6 @@ set(OXIDE_BUILD qt)
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
 if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-  message(Specified debug)
   set(CHROMIUM_BUILD_TYPE Debug)
 else()
   set(CHROMIUM_BUILD_TYPE Release)
@@ -45,14 +44,14 @@ set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium/out)
 set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
 set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib.target)
 
+if(ENABLE_TESTS)
+  enable_testing()
+endif()
+
 # Import the configuration for this build
 include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 if(NOT DEFINED OXIDE_LIB)
   message(FATAL_ERROR "config.make must define OXIDE_LIB")
-endif()
-
-if(ENABLE_TESTS)
-  enable_testing()
 endif()
 
 # Allow the version number to be used in the build
@@ -67,26 +66,51 @@ foreach(comp MAJOR MINOR BUILD PATCH)
   set(OXIDE_VERSION_${comp} ${_OUTPUT})
 endforeach()
 
+# Build gyp command
+set(GYP_COMMAND
+    ${CMAKE_SOURCE_DIR}/build/gyp_oxide
+    -I${OXIDE_BUILD}/${OXIDE_BUILD}.gypi
+    --output-dir ${CHROMIUM_OUTPUT_DIR}
+    --generator-output ${CHROMIUM_GYP_GENERATOR_DIR}
+    ${OXIDE_GYP_EXTRA_ARGS})
+if(CMAKE_CROSSCOMPILING)
+  if(NOT CHROMIUM_TARGET_ARCH)
+    message(FATAL_ERROR "Need to set CHROMIUM_TARGET_ARCH when cross compiling")
+  endif()
+  list(APPEND GYP_COMMAND -Dtarget_arch=${CHROMIUM_TARGET_ARCH})
+  if(CHROMIUM_PKG_CONFIG_PATH)
+    list(APPEND GYP_COMMAND --pkg-config-path ${CHROMIUM_PKG_CONFIG_PATH})
+  endif()
+  if(NOT CHROMIUM_LINKER)
+    message(FATAL_ERROR "Need to specify CHROMIUM_LINKER when cross compiling")
+  endif()
+  list(APPEND GYP_COMMAND --ld ${CHROMIUM_LINKER})
+endif()
+
 message(STATUS "Running gyp")
-execute_process(
-    COMMAND ${CMAKE_SOURCE_DIR}/build/gyp_oxide
-      -I${OXIDE_BUILD}/${OXIDE_BUILD}.gypi
-      --output-dir ${CHROMIUM_OUTPUT_DIR}
-      --generator-output ${CHROMIUM_GYP_GENERATOR_DIR}
-      ${OXIDE_GYP_EXTRA_ARGS}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    RESULT_VARIABLE _GYP_RESULT)
+execute_process(COMMAND ${GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE _GYP_RESULT)
 if(NOT _GYP_RESULT EQUAL 0)
   message(FATAL_ERROR "Running gyp failed")
 endif()
 
 # Add one target for running "make all" on the gyp generated bits.
 # ${OXIDE_BUILD}/${OXIDE_BUILD}.gypi lists the targets that "all" depends on
-add_custom_target(
-    gyp_all ALL
-    COMMAND ${CMAKE_COMMAND} -DMAKE=$(MAKE) -DBUILDTYPE=${CHROMIUM_BUILD_TYPE}
-      -DGYP_DIR=${CHROMIUM_GYP_GENERATOR_DIR}
-      -P ${CMAKE_SOURCE_DIR}/build/scripts/run-gyp-all-target.cmake
+set(BUILD_GYP_ALL_COMMAND
+    ${CMAKE_COMMAND} -DMAKE="$(MAKE)" -DBUILDTYPE=${CHROMIUM_BUILD_TYPE}
+    -DGYP_DIR=${CHROMIUM_GYP_GENERATOR_DIR}
+    -DCC=${CMAKE_C_COMPILER} -DCXX=${CMAKE_CXX_COMPILER})
+if(CMAKE_CROSSCOMPILING)
+  if(NOT CHROMIUM_C_HOST_COMPILER OR NOT CHROMIUM_CXX_HOST_COMPILER)
+    message(FATAL_ERROR "Need to specify host compilers when cross compiling")
+  endif()
+  list(APPEND BUILD_GYP_ALL_COMMAND -DCC_host=${CHROMIUM_C_HOST_COMPILER})
+  list(APPEND BUILD_GYP_ALL_COMMAND -DCXX_host=${CHROMIUM_CXX_HOST_COMPILER})
+endif()
+list(APPEND BUILD_GYP_ALL_COMMAND
+     -P ${CMAKE_SOURCE_DIR}/build/scripts/run-gyp-all-target.cmake)
+
+add_custom_target(gyp_all ALL COMMAND ${BUILD_GYP_ALL_COMMAND}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building gyp_all target")
 
