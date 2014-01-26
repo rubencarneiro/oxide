@@ -18,6 +18,6 @@ if(CMAKE_CROSSCOMPILING)
       IMPORTED_LOCATION "${QT_MOC_EXECUTABLE}")
 else()
   # This should be enough to initialize QT_MOC_EXECUTABLE
-  find_library(Qt5Core)
+  find_package(Qt5Core)
 endif()
 set(OXIDE_GYP_EXTRA_ARGS -Dso_version=${QT_SO_VERSION} -Dqt_moc_executable=${QT_MOC_EXECUTABLE})
