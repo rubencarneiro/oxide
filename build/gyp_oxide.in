@@ -36,42 +36,6 @@ sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
 sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
 sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
 
-def which(file):
-    try:
-        paths = os.environ["PATH"]
-    except KeyError:
-        paths = os.defpath
-
-    for path in paths.split(":"):
-        full = os.path.join(path, file)
-        if os.access(full, os.F_OK | os.X_OK):
-            return full
-
-def setup_linker_path(ld, output_dir):
-    # We want to link with gold. Ubuntu has '-fuse-ld=gold', but as this
-    # is distro specific, we do something that is currently supportable
-    # across distributions
-    if os.access(os.path.join(output_dir, 'gold', ld),
-                 os.F_OK | os.F_OK):
-        return
-
-    try:
-        os.makedirs(os.path.join(output_dir, 'gold'))
-    except:
-        pass
-
-    gold = which('%s.gold' % ld)
-    if not gold:
-        gold = which(ld)
-        if oxide_utils.CheckCall([gold, '-v']).find('gold') == -1:
-            gold = None
-
-    if not gold:
-        print('Cannot find gold linker', file=sys.stderr)
-        sys.exit(1)
-
-    os.symlink(gold, os.path.join(output_dir, 'gold', ld))
-
 def additional_include_files(args=[]):
     specified_includes = set()
     for arg in args:
@@ -102,16 +66,11 @@ def additional_include_files(args=[]):
 def main(args):
     output_dir = "@CHROMIUM_OUTPUT_DIR@"
     pkg_config_path = "@CHROMIUM_PKG_CONFIG_PATH@"
-    ld = "@CHROMIUM_LINKER@"
 
     if output_dir == "":
       output_dir = os.path.join(CHROMIUMSRCDIR, "out")
     if pkg_config_path != "":
       os.environ["PKG_CONFIG_PATH"] = pkg_config_path
-    if ld == "":
-      ld = "ld"
-
-    setup_linker_path(ld, output_dir)
 
     args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
 

@@ -71,6 +71,31 @@ foreach(comp MAJOR MINOR BUILD PATCH)
   set(OXIDE_VERSION_${comp} ${_OUTPUT})
 endforeach()
 
+# We want to link the core library with gold. Ubuntu has '-fuse-ld=gold',
+# but as this is distro specific, we do something that is currently
+# supportable across distributions. This creates a directory with a symlink
+# to the gold linker, and we pass -B to the compiler
+if(NOT DEFINED CHROMIUM_LINKER)
+  set(CHROMIUM_LINKER "ld")
+endif()
+set(SETUP_GOLD_COMMAND
+    ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
+    --output ${CHROMIUM_OUTPUT_DIR}/gold --ld ${CHROMIUM_LINKER})
+get_filename_component(_LINKER_NAME ${CHROMIUM_LINKER} NAME)
+add_custom_command(
+    OUTPUT ${CHROMIUM_OUTPUT_DIR}/gold/${_LINKER_NAME}
+    COMMAND ${SETUP_GOLD_COMMAND})
+add_custom_target(gold ALL
+                  DEPENDS ${CHROMIUM_OUTPUT_DIR}/gold/${_LINKER_NAME}
+                  COMMENT "Setting up gold linker")
+
+message(STATUS "Setting up gold linker")
+execute_process(COMMAND ${SETUP_GOLD_COMMAND}
+                RESULT_VARIABLE _RESULT)
+if(NOT _RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to set up gold linker. Please check that it is installed")
+endif()
+
 # We want to pass extra arguments to our gyp wrapper, but these aren't
 # recorded in the gyp regen command in Chromium's top level Makefile.
 # To work around it, we preprocess our gyp wrapper with the extra
@@ -90,9 +115,6 @@ if(CMAKE_CROSSCOMPILING)
     message(FATAL_ERROR "Need to set CHROMIUM_TARGET_ARCH when cross compiling")
   endif()
   list(APPEND GYP_COMMAND -Dtarget_arch=${CHROMIUM_TARGET_ARCH})
-  if(NOT CHROMIUM_LINKER)
-    message(FATAL_ERROR "Need to specify CHROMIUM_LINKER when cross compiling")
-  endif()
 endif()
 
 message(STATUS "Running gyp")
@@ -118,7 +140,9 @@ endif()
 list(APPEND BUILD_GYP_ALL_COMMAND
      -P ${CMAKE_SOURCE_DIR}/build/scripts/run-gyp-all-target.cmake)
 
-add_custom_target(gyp_all ALL COMMAND ${BUILD_GYP_ALL_COMMAND}
+add_custom_target(
+    gyp_all ALL COMMAND ${BUILD_GYP_ALL_COMMAND}
+    DEPENDS gold
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building gyp_all target")
 
