@@ -67,8 +67,7 @@ def main(args):
     output_dir = "@CHROMIUM_OUTPUT_DIR@"
     pkg_config_path = "@CHROMIUM_PKG_CONFIG_PATH@"
 
-    if output_dir == "":
-      output_dir = os.path.join(CHROMIUMSRCDIR, "out")
+    assert output_dir != ""
     if pkg_config_path != "":
       os.environ["PKG_CONFIG_PATH"] = pkg_config_path
 
