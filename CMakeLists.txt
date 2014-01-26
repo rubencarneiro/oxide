@@ -54,10 +54,15 @@ if(NOT DEFINED OXIDE_LIB)
   message(FATAL_ERROR "config.make must define OXIDE_LIB")
 endif()
 
+find_program(PYTHON python)
+if(PYTHON STREQUAL "PYTHON-NOTFOUND")
+  message(FATAL_ERROR "Could not find a python interpreter. Please ensure python is installed")
+endif()
+
 # Allow the version number to be used in the build
 foreach(comp MAJOR MINOR BUILD PATCH)
   execute_process(
-      COMMAND python ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
+      COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
       OUTPUT_VARIABLE _OUTPUT
       RESULT_VARIABLE _RESULT)
   if(NOT _RESULT EQUAL 0)
@@ -76,7 +81,7 @@ configure_file(
     IMMEDIATE @ONLY)
 # Build the gyp command
 set(GYP_COMMAND
-    python ${CMAKE_BINARY_DIR}/gyp_oxide
+    ${PYTHON} ${CMAKE_BINARY_DIR}/gyp_oxide
     -I${OXIDE_BUILD}/${OXIDE_BUILD}.gypi
     --generator-output ${CHROMIUM_GYP_GENERATOR_DIR}
     ${OXIDE_GYP_EXTRA_ARGS})

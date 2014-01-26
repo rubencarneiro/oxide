@@ -76,7 +76,7 @@ function(add_qml_test)
         -DCHROMIUM_LIB_DIR=${CHROMIUM_LIB_DIR} -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
         -DSERVER_DIR=${_ARGS_SERVER_DIR} -DBINARY_DIR=${CMAKE_BINARY_DIR}
         -DTEST_DIR=${_ARGS_TEST_DIR} -DTEST_NAME=${_ARGS_NAME} ${_USE_DATA_DIR}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/qmltests/run-qmltests.cmake)
+        -DPYTHON=${PYTHON} -P ${CMAKE_CURRENT_SOURCE_DIR}/qmltests/run-qmltests.cmake)
 endfunction()
 
 add_qml_test(NAME qml-api-test-noprofile TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/qmltests/api)
