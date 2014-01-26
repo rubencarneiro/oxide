@@ -22,7 +22,7 @@ import os
 import os.path
 import sys
 
-sys.path.insert(1, os.path.join(os.path.dirname(os.path.realpath(__file__)), 'python'))
+sys.path.insert(1, os.path.join("@CMAKE_SOURCE_DIR@", "build", "python"))
 from oxide_utils import CHROMIUMSRCDIR, TOPSRCDIR, CheckCall
 
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'gyp', 'pylib'))
@@ -100,45 +100,31 @@ def additional_include_files(args=[]):
     return result
 
 def main(args):
-    output_dir = os.path.join(CHROMIUMSRCDIR, "out")
-    pkg_config_paths = []
-    ld = "ld"
-    gyp_args = []
+    output_dir = "@CHROMIUM_OUTPUT_DIR@"
+    pkg_config_path = "@CHROMIUM_PKG_CONFIG_PATH@"
+    ld = "@CHROMIUM_LINKER@"
 
-    i = 0
-    while i < len(args):
-      if args[i] == "--output-dir" and (i + 1) < len(args):
-        output_dir = args[i + 1]
-        i += 2
-      elif args[i] == "--pkg-config-path" and (i + 1) < len(args):
-        pkg_config_paths.append(args[i + 1])
-        i += 2
-      elif args[i] == "--ld" and (i + 1) < len(args):
-        ld = args[i + 1]
-        i += 2
-      else:
-        gyp_args.append(args[i])
-        i += 1
-
-    if len(pkg_config_paths):
-      if "PKG_CONFIG_PATH" in os.environ:
-        pkg_config_paths.append(os.environ["PKG_CONFIG_PATH"])
-      os.environ["PKG_CONFIG_PATH"] = ":".join(pkg_config_paths)
+    if output_dir == "":
+      output_dir = os.path.join(CHROMIUMSRCDIR, "out")
+    if pkg_config_path != "":
+      os.environ["PKG_CONFIG_PATH"] = pkg_config_path
+    if ld == "":
+      ld = "ld"
 
     setup_linker_path(ld, output_dir)
 
-    gyp_args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
+    args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
 
-    gyp_args.extend(['-I' + i for i in additional_include_files(args)])
+    args.extend(['-I' + i for i in additional_include_files(args)])
 
-    gyp_args.append('--no-circular-check')
-    gyp_args.extend(['--toplevel-dir', TOPSRCDIR])
-    gyp_args.extend(['--depth', CHROMIUMSRCDIR])
-    gyp_args.extend(['--format', 'make'])
-    gyp_args.append('-Goutput_dir=%s' % output_dir)
+    args.append('--no-circular-check')
+    args.extend(['--toplevel-dir', TOPSRCDIR])
+    args.extend(['--depth', CHROMIUMSRCDIR])
+    args.extend(['--format', 'make'])
+    args.append('-Goutput_dir=%s' % output_dir)
 
     os.chdir(TOPSRCDIR)
-    sys.exit(gyp.main(gyp_args))
+    sys.exit(gyp.main(args))
 
 if __name__ == "__main__":
   main(sys.argv[1:])

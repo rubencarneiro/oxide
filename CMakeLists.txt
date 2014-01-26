@@ -66,11 +66,18 @@ foreach(comp MAJOR MINOR BUILD PATCH)
   set(OXIDE_VERSION_${comp} ${_OUTPUT})
 endforeach()
 
-# Build gyp command
+# We want to pass extra arguments to our gyp wrapper, but these aren't
+# recorded in the gyp regen command in Chromium's top level Makefile.
+# To work around it, we preprocess our gyp wrapper with the extra
+# arguments embedded
+configure_file(
+    ${CMAKE_SOURCE_DIR}/build/gyp_oxide.in
+    ${CMAKE_BINARY_DIR}/gyp_oxide
+    IMMEDIATE @ONLY)
+# Build the gyp command
 set(GYP_COMMAND
-    ${CMAKE_SOURCE_DIR}/build/gyp_oxide
+    python ${CMAKE_BINARY_DIR}/gyp_oxide
     -I${OXIDE_BUILD}/${OXIDE_BUILD}.gypi
-    --output-dir ${CHROMIUM_OUTPUT_DIR}
     --generator-output ${CHROMIUM_GYP_GENERATOR_DIR}
     ${OXIDE_GYP_EXTRA_ARGS})
 if(CMAKE_CROSSCOMPILING)
@@ -78,13 +85,9 @@ if(CMAKE_CROSSCOMPILING)
     message(FATAL_ERROR "Need to set CHROMIUM_TARGET_ARCH when cross compiling")
   endif()
   list(APPEND GYP_COMMAND -Dtarget_arch=${CHROMIUM_TARGET_ARCH})
-  if(CHROMIUM_PKG_CONFIG_PATH)
-    list(APPEND GYP_COMMAND --pkg-config-path ${CHROMIUM_PKG_CONFIG_PATH})
-  endif()
   if(NOT CHROMIUM_LINKER)
     message(FATAL_ERROR "Need to specify CHROMIUM_LINKER when cross compiling")
   endif()
-  list(APPEND GYP_COMMAND --ld ${CHROMIUM_LINKER})
 endif()
 
 message(STATUS "Running gyp")
