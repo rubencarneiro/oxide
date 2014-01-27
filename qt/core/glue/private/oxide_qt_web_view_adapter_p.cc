@@ -55,10 +55,6 @@ void WebViewAdapterPrivate::OnLoadProgressChanged(double progress) {
   a->LoadProgressChanged(progress);
 }
 
-void WebViewAdapterPrivate::OnRootFrameChanged() {
-  a->RootFrameChanged();
-}
-
 void WebViewAdapterPrivate::OnLoadStarted(const GURL& validated_url,
                                           bool is_error_frame) {
   OxideQLoadEvent event(

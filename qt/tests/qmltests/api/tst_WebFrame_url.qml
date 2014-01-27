@@ -13,7 +13,7 @@ TestWebView {
     signalName: "urlChanged"
   }
 
-  onRootFrameChanged: {
+  Component.onCompleted: {
     spy.target = webView.rootFrame;
   }
 

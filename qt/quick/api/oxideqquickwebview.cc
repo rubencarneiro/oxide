@@ -103,19 +103,6 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   emit q->loadProgressChanged();
 }
 
-void OxideQQuickWebViewPrivate::RootFrameChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  // Make the webview the QObject parent of the new root frame,
-  // to stop Qml from collecting the frame tree
-  OxideQQuickWebFrame* root = q->rootFrame();
-  if (root) {
-    root->setParent(q);
-  }
-
-  emit q->rootFrameChanged();
-}
-
 void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   Q_Q(OxideQQuickWebView);
 
@@ -291,6 +278,10 @@ void OxideQQuickWebView::componentComplete() {
   QQuickItem::componentComplete();
 
   d->componentComplete();
+
+  // Make the webview the QObject parent of the new root frame,
+  // to stop Qml from collecting the frame tree
+  rootFrame()->setParent(this);
 }
 
 QUrl OxideQQuickWebView::url() const {

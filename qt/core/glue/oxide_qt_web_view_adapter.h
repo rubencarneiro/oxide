@@ -89,8 +89,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void LoadProgressChanged(double progress) = 0;
 
-  virtual void RootFrameChanged() = 0;
-
   virtual void LoadEvent(OxideQLoadEvent* event) = 0;
 
   virtual void NavigationEntryCommitted() = 0;

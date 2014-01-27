@@ -9,12 +9,6 @@ TestWebView {
   width: 200
   height: 200
 
-  SignalSpy {
-    id: rootFrameSpy
-    target: webView
-    signalName: "rootFrameChanged"
-  }
-
   Item {
     id: spy
 
@@ -25,6 +19,7 @@ TestWebView {
     }
 
     function childFrameChanged(type, frame) {
+      console.log("childFrameChanged: type " + type + ", frame " + frame);
       qtest_eventLog.push({ type: type, frame: frame.toString() });
 
       if (type == WebFrame.ChildAdded) {
@@ -32,15 +27,15 @@ TestWebView {
       }      
     }
 
-    function rootFrameChanged() {
+    function connectToRootFrame() {
       webView.rootFrame.childFrameChanged.connect(childFrameChanged);
     }
 
     property var qtest_eventLog: []
+  }
 
-    Component.onCompleted: {
-      webView.rootFrameChanged.connect(rootFrameChanged);
-    }
+  Component.onCompleted: {
+    spy.connectToRootFrame();
   }
 
   TestCase {
@@ -54,7 +49,6 @@ TestWebView {
              "Timed out waiting for successful load");
 
       spy.clear();
-      rootFrameSpy.clear();
     }
 
     function verify_events(data) {
@@ -92,8 +86,6 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      compare(rootFrameSpy.count, 0, "Should have the same root frame");
-
       var frames1 = [
         webView.rootFrame.childFrames[0].toString(),
         webView.rootFrame.childFrames[1].toString()
@@ -108,8 +100,6 @@ TestWebView {
       webView.url = "http://localhost:8080/tst_WebFrame_tree2.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-
-      compare(rootFrameSpy.count, 0, "Should have the same root frame");
 
       var frames2 = [
         webView.rootFrame.childFrames[0].toString(),
@@ -132,8 +122,6 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      compare(rootFrameSpy.count, 0, "Should have the same root frame");
-
       frames1 = [
         webView.rootFrame.childFrames[0].toString(),
         webView.rootFrame.childFrames[1].toString()
@@ -155,8 +143,6 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      compare(rootFrameSpy.count, 1, "Should have a new root frame");
-
       var frames = [
         webView.rootFrame.childFrames[0].toString(),
         webView.rootFrame.childFrames[1].toString(),
@@ -176,8 +162,6 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      compare(rootFrameSpy.count, 2, "Should have a new root frame");
-
       verify_events([
         { type: WebFrame.ChildRemoved, frame: frames[1] },
         { type: WebFrame.ChildRemoved, frame: frames[3] },
@@ -189,8 +173,6 @@ TestWebView {
       webView.goBack();
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-
-      compare(rootFrameSpy.count, 3, "Should have a new root frame");
 
       frames = [
         webView.rootFrame.childFrames[0].toString(),

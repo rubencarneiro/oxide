@@ -82,6 +82,14 @@ class OxideTestingUtils : public QObject {
     return url;
   }
 
+  Q_INVOKABLE QObject* qObjectParent(QObject* object) {
+    if (!object) {
+      return NULL;
+    }
+
+    return object->parent();
+  }
+
   Q_INVOKABLE DestructionObserver* createDestructionObserver(QObject* object) {
     if (!object) {
       return NULL;

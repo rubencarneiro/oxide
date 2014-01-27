@@ -63,7 +63,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
-  Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
+  Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame CONSTANT)
   Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
@@ -123,7 +123,6 @@ class OxideQQuickWebView : public QQuickItem {
   void navigationHistoryChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
-  void rootFrameChanged();
   void popupMenuChanged();
   void messageHandlersChanged();
 

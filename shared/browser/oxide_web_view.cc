@@ -202,8 +202,6 @@ void WebView::OnCommandsUpdated() {}
 
 void WebView::OnLoadProgressChanged(double progress) {}
 
-void WebView::OnRootFrameChanged() {}
-
 void WebView::OnLoadStarted(const GURL& validated_url,
                             bool is_error_frame) {}
 void WebView::OnLoadStopped(const GURL& validated_url) {}
@@ -259,6 +257,9 @@ bool WebView::Init(BrowserContext* context,
   registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                   content::NotificationService::AllBrowserContextsAndSources());
 
+  root_frame_ = CreateWebFrame();
+  root_frame_->set_view(this);
+
   return true;
 }
 
@@ -272,10 +273,8 @@ void WebView::Shutdown() {
 
   WebContentsObserver::Observe(NULL);
 
-  if (root_frame_) {
-    root_frame_->DestroyFrame();
-    root_frame_ = NULL;
-  }
+  root_frame_->DestroyFrame();
+  root_frame_ = NULL;
 
   GetBrowserContext()->RemoveWebView(this);
   web_contents_.reset();
@@ -443,10 +442,6 @@ WebFrame* WebView::GetRootFrame() const {
 }
 
 WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
-  if (!root_frame_) {
-    return NULL;
-  }
-
   std::queue<WebFrame *> q;
   q.push(const_cast<WebFrame *>(root_frame_));
 
@@ -485,18 +480,9 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   web_contents()->GetView()->SizeContents(
       web_contents()->GetView()->GetContainerSize());
 
-  if (root_frame_) {
-    root_frame_->DestroyFrame();
+  while (root_frame_->ChildCount() > 0) {
+    root_frame_->ChildAt(root_frame_->ChildCount() - 1)->DestroyFrame();
   }
-
-  if (new_host) {
-    root_frame_ = CreateWebFrame();
-    root_frame_->set_view(this);
-  } else {
-    root_frame_ = NULL;
-  }
-
-  OnRootFrameChanged();
 }
 
 void WebView::DidStartProvisionalLoadForFrame(

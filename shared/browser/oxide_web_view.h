@@ -210,8 +210,6 @@ class WebView : public MessageTarget,
 
   virtual void OnLoadProgressChanged(double progress);
 
-  virtual void OnRootFrameChanged();
-
   virtual void OnLoadStarted(const GURL& validated_url,
                              bool is_error_frame);
   virtual void OnLoadStopped(const GURL& validated_url);

@@ -61,8 +61,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void LoadProgressChanged(double progress) Q_DECL_FINAL;
 
-  void RootFrameChanged() Q_DECL_FINAL;
-
   void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
 
   void NavigationEntryCommitted() Q_DECL_FINAL;
