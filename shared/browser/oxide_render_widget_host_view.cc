@@ -374,7 +374,7 @@ void RenderWidgetHostView::DidUpdateBackingStore(
     const gfx::Rect& scroll_rect,
     const gfx::Vector2d& scroll_delta,
     const std::vector<gfx::Rect>& copy_rects,
-    const ui::LatencyInfo& latency_info) {
+    const std::vector<ui::LatencyInfo>& latency_info) {
   if (is_hidden_) {
     return;
   }
@@ -401,7 +401,7 @@ void RenderWidgetHostView::Destroy() {
   delete this;
 }
 
-void RenderWidgetHostView::SetTooltipText(const string16& tooltip_text) {}
+void RenderWidgetHostView::SetTooltipText(const base::string16& tooltip_text) {}
 
 void RenderWidgetHostView::SelectionBoundsChanged(
     const ViewHostMsg_SelectionBounds_Params& params) {
@@ -511,9 +511,8 @@ gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
 
     shared_surface_handle_ = gfx::GLSurfaceHandle(
         gfx::kNullPluginWindow, gfx::TEXTURE_TRANSPORT);
-    shared_surface_handle_.parent_gpu_process_id = context->GetGPUProcessID();
     shared_surface_handle_.parent_client_id =
-        context->GetCommandBufferProxy()->GetRouteID();
+        content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId();
   }
 
   return shared_surface_handle_;
