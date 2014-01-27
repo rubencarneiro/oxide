@@ -30,7 +30,7 @@ set(ENV{OXIDE_NO_SANDBOX} 1)
 set(ENV{OXIDE_RESOURCE_PATH} ${CHROMIUM_PRODUCT_DIR})
 set(ENV{LD_LIBRARY_PATH} ${CHROMIUM_LIB_DIR})
 
-set(_COMMAND ${PYTHON) ${SOURCE_DIR}/qt/tests/runtests.py -s ${SERVER_DIR} -p 8080 ${_T} --
+set(_COMMAND ${PYTHON} ${SOURCE_DIR}/qt/tests/runtests.py -s ${SERVER_DIR} -p 8080 ${_T} --
     ${BINARY_DIR}/qt/bin/qmltest -name ${TEST_NAME} -import ${BINARY_DIR}/qt/imports -input ${TEST_DIR})
 message("Running ${_COMMAND}")
 execute_process(COMMAND ${_COMMAND} RESULT_VARIABLE _RESULT)
