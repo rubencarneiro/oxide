@@ -153,3 +153,5 @@ set(OXIDE_LIB ${CHROMIUM_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${OXIDE_LIB}${CM
 set_target_properties(OxideLib PROPERTIES IMPORTED_LOCATION ${OXIDE_LIB})
 
 add_subdirectory(${OXIDE_BUILD})
+
+add_subdirectory(po)
