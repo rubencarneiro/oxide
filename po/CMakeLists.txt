@@ -31,3 +31,12 @@ add_custom_target(
             -D ${CHROMIUM_PRODUCT_DIR} --from-code=UTF-8 --c++
             --add-comments=TRANSLATORS --package-name=${DOMAIN}
             ${I18N_SRC_FILES})
+
+foreach(PO_FILE ${PO_FILES})
+  get_filename_component(LANG ${PO_FILE} NAME_WE)
+  gettext_process_po_files(${LANG} ALL PO_FILES ${PO_FILE})
+  set(INSTALL_DIR ${CMAKE_INSTALL_LOCALEDIR}/${LANG}/LC_MESSAGES)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LANG}.gmo
+          DESTINATION ${INSTALL_DIR}
+          RENAME ${DOMAIN}.mo)
+endforeach(PO_FILE)
