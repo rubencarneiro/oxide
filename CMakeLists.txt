@@ -51,7 +51,7 @@ endif()
 # Import the configuration for this build
 include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 if(NOT DEFINED OXIDE_LIB)
-  message(FATAL_ERROR "config.make must define OXIDE_LIB")
+  message(FATAL_ERROR "config.cmake must define OXIDE_LIB")
 endif()
 
 find_program(PYTHON python)
