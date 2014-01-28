@@ -49,7 +49,12 @@ set(PLUGIN_SRCS
     api/oxideqquickwebframe.cc
     api/oxideqquickwebview.cc
     oxide_qml_plugin.cc
+    oxide_qquick_alert_dialog_delegate.cc
+    oxide_qquick_before_unload_dialog_delegate.cc
+    oxide_qquick_confirm_dialog_delegate.cc
+    oxide_qquick_javascript_dialog_delegate.cc
     oxide_qquick_painted_render_view_node.cc
+    oxide_qquick_prompt_dialog_delegate.cc
     oxide_qquick_render_view_item.cc
     oxide_qquick_web_popup_menu_delegate.cc)
 
