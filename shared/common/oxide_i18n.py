@@ -18,13 +18,8 @@ def parse_webkit_strings(webkit_strings, chromiumsrcdir):
   from grit import grd_reader, util
   from grit.node import empty, message
   res = grd_reader.Parse(webkit_strings)
-  root = res.GetRoot()
-  try:
-    substituter = root.GetSubstituter()
-  except AttributeError:
-    substituter = None
   lang = 'en'
-  for item in root.ActiveDescendants():
+  for item in res.GetRoot().ActiveDescendants():
     if isinstance(item, empty.MessagesNode):
       for subitem in item.ActiveDescendants():
         if isinstance(subitem, message.MessageNode):
@@ -34,8 +29,6 @@ def parse_webkit_strings(webkit_strings, chromiumsrcdir):
           value = value.replace('"', '\\"')
           # Replace linebreaks with a \n escape
           value = util.LINEBREAKS.sub(r'\\n', value)
-          if substituter is not None:
-            value = substituter.Substitute(value)
           comment = subitem.attrs['meaning']
           msgs.append({'key': key, 'value': value, 'comment': comment})
   return msgs
