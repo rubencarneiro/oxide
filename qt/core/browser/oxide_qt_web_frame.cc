@@ -34,15 +34,6 @@ WebFrame::~WebFrame() {
   DCHECK(!adapter);
 }
 
-void WebFrame::OnChildAdded(oxide::WebFrame* child) {
-  adapterToQObject(static_cast<WebFrame *>(child)->adapter)->setParent(
-      adapterToQObject(adapter));
-}
-
-void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
-  adapterToQObject(static_cast<WebFrame *>(child)->adapter)->setParent(NULL);
-}
-
 void WebFrame::OnURLChanged() {
   adapter->URLChanged();
 }

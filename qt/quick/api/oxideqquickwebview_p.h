@@ -123,6 +123,8 @@ class OxideQQuickWebView : public QQuickItem {
   void navigationHistoryChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
+  void frameAdded(OxideQQuickWebFrame* frame);
+  void frameRemoved(OxideQQuickWebFrame* frame);
   void popupMenuChanged();
   void messageHandlersChanged();
 

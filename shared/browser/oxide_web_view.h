@@ -176,6 +176,9 @@ class WebView : public MessageTarget,
 
   virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
+  virtual void FrameAdded(WebFrame* frame);
+  virtual void FrameRemoved(WebFrame* frame);
+
  protected:
   WebView();
 

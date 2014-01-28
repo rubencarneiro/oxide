@@ -608,4 +608,7 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
   return NULL;
 }
 
+void WebView::FrameAdded(WebFrame* frame) {}
+void WebView::FrameRemoved(WebFrame* frame) {}
+
 } // namespace oxide

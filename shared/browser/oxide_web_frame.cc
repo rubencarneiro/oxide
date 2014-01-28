@@ -32,7 +32,7 @@ void WebFrame::AddChildFrame(WebFrame* frame) {
   DCHECK_NE(frame->identifier(), -1);
 
   child_frames_.push_back(frame);
-  OnChildAdded(frame);
+  view()->FrameAdded(frame);
 }
 
 void WebFrame::RemoveChildFrame(WebFrame* frame) {
@@ -42,14 +42,12 @@ void WebFrame::RemoveChildFrame(WebFrame* frame) {
 
     if (f == frame) {
       child_frames_.erase(it);
-      OnChildRemoved(frame);
+      view()->FrameRemoved(frame);
       return;
     }
   }
 }
 
-void WebFrame::OnChildAdded(WebFrame* child) {}
-void WebFrame::OnChildRemoved(WebFrame* child) {}
 void WebFrame::OnURLChanged() {}
 
 WebFrame::WebFrame() :

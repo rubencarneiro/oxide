@@ -139,5 +139,20 @@ oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(
   return new WebPopupMenu(a->CreateWebPopupMenuDelegate(), rvh);
 }
 
+void WebViewAdapterPrivate::FrameAdded(oxide::WebFrame* frame) {
+  WebFrameAdapter* adapter = static_cast<WebFrame *>(frame)->adapter;
+  adapterToQObject(adapter)->setParent(adapterToQObject(
+      static_cast<WebFrame *>(frame->parent())->adapter));
+
+  a->FrameAdded(adapter);
+}
+
+void WebViewAdapterPrivate::FrameRemoved(oxide::WebFrame* frame) {
+  WebFrameAdapter* adapter = static_cast<WebFrame *>(frame)->adapter;
+  a->FrameRemoved(adapter);
+
+  adapterToQObject(adapter)->setParent(NULL);
+}
+
 } // namespace qt
 } // namespace oxide

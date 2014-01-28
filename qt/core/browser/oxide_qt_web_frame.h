@@ -44,8 +44,6 @@ class WebFrame FINAL : public oxide::WebFrame {
  private:
   ~WebFrame();
 
-  void OnChildAdded(oxide::WebFrame* child) FINAL;
-  void OnChildRemoved(oxide::WebFrame* child) FINAL;
   void OnURLChanged() FINAL;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);

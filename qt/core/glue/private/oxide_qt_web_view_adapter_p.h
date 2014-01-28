@@ -42,6 +42,9 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 
+  void FrameAdded(oxide::WebFrame* frame) FINAL;
+  void FrameRemoved(oxide::WebFrame* frame) FINAL;
+
  private:
   WebViewAdapterPrivate(WebViewAdapter* adapter);
 

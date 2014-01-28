@@ -111,6 +111,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QString getNavigationEntryTitle(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
+  virtual void FrameAdded(WebFrameAdapter* frame) = 0;
+  virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
+
  protected:
   WebViewAdapter();
 

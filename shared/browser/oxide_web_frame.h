@@ -100,8 +100,6 @@ class WebFrame : public MessageTarget {
   void AddChildFrame(WebFrame* frame);
   void RemoveChildFrame(WebFrame* frame);
 
-  virtual void OnChildAdded(WebFrame* child);
-  virtual void OnChildRemoved(WebFrame* child);
   virtual void OnURLChanged();
 
   int64 id_;

@@ -124,11 +124,11 @@ void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
   
   if (event->added()) {
     d->children().append(child);
-    emit childFrameChanged(ChildAdded, child);
   } else if (event->removed()) {
     d->children().removeOne(child);
-    emit childFrameChanged(ChildRemoved, child);
   }
+
+  emit childFramesChanged();
 }
 
 OxideQQuickWebFrame::~OxideQQuickWebFrame() {}

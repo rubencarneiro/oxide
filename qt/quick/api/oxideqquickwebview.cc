@@ -138,6 +138,20 @@ QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
                 q->width(), q->height()).toRect();
 }
 
+void OxideQQuickWebViewPrivate::FrameAdded(
+    oxide::qt::WebFrameAdapter* frame) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->frameAdded(adapterToQObject<OxideQQuickWebFrame>(frame));
+}
+
+void OxideQQuickWebViewPrivate::FrameRemoved(
+    oxide::qt::WebFrameAdapter* frame) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->frameRemoved(adapterToQObject<OxideQQuickWebFrame>(frame));
+}
+
 void OxideQQuickWebViewPrivate::componentComplete() {
   Q_Q(OxideQQuickWebView);
 
