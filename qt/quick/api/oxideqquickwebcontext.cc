@@ -18,7 +18,6 @@
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 
-#include <QCoreApplication>
 #include <QQmlListProperty>
 #include <QWeakPointer>
 #include <QtDebug>
@@ -156,7 +155,7 @@ QSharedPointer<OxideQQuickWebContext> OxideQQuickWebContext::defaultContext() {
   }
 
   QSharedPointer<OxideQQuickWebContext> new_context(
-      new OxideQQuickWebContext(QCoreApplication::instance()));
+      new OxideQQuickWebContext());
 
   new_context->setProduct(OxideQQuickGlobals::instance()->product());
   new_context->setUserAgent(OxideQQuickGlobals::instance()->userAgent());

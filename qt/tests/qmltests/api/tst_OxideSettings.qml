@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 0.1
-import com.canonical.Oxide.Testing 0.1
+import com.canonical.Oxide.Testing 0.1 as Testing
 
 Item {
   SignalSpy {
@@ -41,7 +41,7 @@ Item {
         { attr: "acceptLangs", signal: "acceptLangsChanged", value1: "foo", value2: "bar", constructOnly: false }
       ];
 
-      var dataPath = OxideTestingUtils.DATA_PATH;
+      var dataPath = Testing.Utils.DATA_PATH;
       if (dataPath != "") {
         r.push(
             { attr: "dataPath", signal: "dataPathChanged", value1: dataPath + "/test1", value2: dataPath + "/test2", constructOnly: true },
@@ -87,7 +87,7 @@ Item {
                 "Got the wrong value back");
       }
 
-      var destructionObs = OxideTestingUtils.createDestructionObserver(view.context);
+      var destructionObs = Testing.Utils.createDestructionObserver(view.context);
       view.destroy();
       gc();
       verify(waitFor(function() { return destructionObs.destroyed; }),
