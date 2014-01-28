@@ -13,10 +13,21 @@ TestWebView {
     name: "WebView_rootFrame"
     when: windowShown
 
-    function test_WebView_rootFrame1() {
+    function test_WebView_rootFrame1_parent() {
       verify(webView.rootFrame, "Should always have a root frame");
       compare(Utils.qObjectParent(webView.rootFrame), webView,
               "The root frame should be parented to the webview");
+    }
+
+    function test_WebView_rootFrame2_undeletable() {
+      var caught = false;
+      try {
+        webView.rootFrame.destroy();
+      } catch(e) {
+        caught = true;
+      }
+
+      verify(caught, "WebView.rootFrame.destroy() should have thrown");
     }
   }
 }

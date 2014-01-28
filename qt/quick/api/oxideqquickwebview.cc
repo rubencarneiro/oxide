@@ -19,6 +19,7 @@
 #include "oxideqquickwebview_p_p.h"
 
 #include <QPointF>
+#include <QQmlEngine>
 #include <QQuickWindow>
 #include <QRect>
 #include <QRectF>
@@ -122,7 +123,9 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
 }
 
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
-  return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
+  OxideQQuickWebFrame* frame = new OxideQQuickWebFrame();
+  QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);
+  return OxideQQuickWebFramePrivate::get(frame);
 }
 
 QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
