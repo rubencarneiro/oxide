@@ -41,6 +41,11 @@ SharedGLContext::~SharedGLContext() {
   sg->SetContext(NULL);
 }
 
+// static
+SharedGLContext* SharedGLContext::FromGfx(gfx::GLContext* context) {
+  return static_cast<SharedGLContext *>(context);
+}
+
 bool SharedGLContext::Initialize(gfx::GLSurface* compatible_surface,
                                  gfx::GpuPreference gpu_preference) {
   return true;

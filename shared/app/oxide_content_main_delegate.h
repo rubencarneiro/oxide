@@ -24,6 +24,8 @@
 
 namespace oxide {
 
+class ContentClient;
+
 class ContentMainDelegate : public content::ContentMainDelegate {
  public:
   static ContentMainDelegate* Create();
@@ -42,12 +44,14 @@ class ContentMainDelegate : public content::ContentMainDelegate {
 
  protected:
   // Allow access to default constructor only from derived classes
-  ContentMainDelegate() {}
+  ContentMainDelegate();
 
   content::ContentBrowserClient* CreateContentBrowserClient() OVERRIDE;
   content::ContentRendererClient* CreateContentRendererClient() FINAL;
 
  private:
+  virtual ContentClient* CreateContentClient() = 0;
+
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };
 

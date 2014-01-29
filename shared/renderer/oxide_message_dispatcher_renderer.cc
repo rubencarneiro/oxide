@@ -32,7 +32,7 @@ namespace oxide {
 
 void MessageDispatcherRenderer::EndPoint::OnReceiveMessage(
     const OxideMsg_SendMessage_Params& params) {
-  ContentClient::GetInstance()->renderer()->message_dispatcher()->
+  ContentClient::instance()->renderer()->message_dispatcher()->
       OnReceiveMessage(render_view(), params);
 }
 

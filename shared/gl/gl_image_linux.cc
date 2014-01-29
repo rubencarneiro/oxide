@@ -15,37 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_main_delegate.h"
+#include "ui/gl/gl_image.h"
 
-#include "base/lazy_instance.h"
+#include "base/logging.h"
 
-#include "qt/core/browser/oxide_qt_content_browser_client.h"
-#include "qt/core/common/oxide_qt_content_client.h"
+namespace gfx {
 
-namespace oxide {
-namespace qt {
-
-namespace {
-base::LazyInstance<ContentBrowserClient> g_content_browser_client =
-    LAZY_INSTANCE_INITIALIZER;
+scoped_refptr<GLImage> GLImage::CreateGLImage(gfx::PluginWindowHandle window) {
+  NOTREACHED();
+  return NULL;
 }
 
-content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClient() {
-  return g_content_browser_client.Pointer();
+scoped_refptr<GLImage> GLImage::CreateGLImageForGpuMemoryBuffer(
+    gfx::GpuMemoryBufferHandle buffer,
+    gfx::Size size,
+    unsigned internalformat) {
+  return NULL;
 }
 
-oxide::ContentClient* ContentMainDelegate::CreateContentClient() {
-  return ContentClient::GetInstance();
-}
-
-ContentMainDelegate::ContentMainDelegate() {}
-
-} // namespace qt
-
-// static
-ContentMainDelegate* ContentMainDelegate::Create() {
-  return new qt::ContentMainDelegate();
-}
-
-} // namespace oxide
+} // namespace gfx

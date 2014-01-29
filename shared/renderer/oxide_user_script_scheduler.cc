@@ -32,7 +32,7 @@ void UserScriptScheduler::DoIdleInject() {
   idle_posted_ = false;
 
   UserScriptSlave* user_script_slave =
-      ContentClient::GetInstance()->renderer()->user_script_slave();
+      ContentClient::instance()->renderer()->user_script_slave();
 
   for (std::set<blink::WebFrame *>::const_iterator it =
            pending_idle_frames_.begin();
@@ -50,7 +50,7 @@ UserScriptScheduler::UserScriptScheduler(content::RenderView* render_view) :
     weak_factory_(this) {}
 
 void UserScriptScheduler::DidFinishDocumentLoad(blink::WebFrame* frame) {
-  ContentClient::GetInstance()->renderer()->user_script_slave()->InjectScripts(
+  ContentClient::instance()->renderer()->user_script_slave()->InjectScripts(
       frame, UserScript::DOCUMENT_END);
 }
 
@@ -70,7 +70,7 @@ void UserScriptScheduler::DidFinishLoad(blink::WebFrame* frame) {
 }
 
 void UserScriptScheduler::DidCreateDocumentElement(blink::WebFrame* frame) {
-  ContentClient::GetInstance()->renderer()->user_script_slave()->InjectScripts(
+  ContentClient::instance()->renderer()->user_script_slave()->InjectScripts(
       frame, UserScript::DOCUMENT_START);
 }
 

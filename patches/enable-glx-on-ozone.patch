@@ -1,0 +1,280 @@
+# Description: Ozone builds of Chromium only support EGL, so add back support
+#  for GLX, which is needed to share GL resources with Qt on X11
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
+--- a/ui/gl/gl.gyp
++++ b/ui/gl/gl.gyp
+@@ -189,17 +189,17 @@
+             'gl_egl_api_implementation.h',
+             '<(gl_binding_output_dir)/gl_bindings_autogen_egl.cc',
+             '<(gl_binding_output_dir)/gl_bindings_autogen_egl.h',
+           ],
+           'include_dirs': [
+             '<(DEPTH)/third_party/khronos',
+         ],
+         }],
+-        ['use_x11 == 1', {
++        ['OS=="linux"', {
+           'sources': [
+             'gl_context_glx.cc',
+             'gl_context_glx.h',
+             'gl_glx_api_implementation.cc',
+             'gl_glx_api_implementation.h',
+             'gl_image_glx.cc',
+             'gl_image_glx.h',
+             'gl_surface_glx.cc',
+diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
+--- a/ui/gl/gl_bindings.h
++++ b/ui/gl/gl_bindings.h
+@@ -20,17 +20,17 @@
+ #include "build/build_config.h"
+ #include "ui/gl/gl_export.h"
+ 
+ // The standard OpenGL native extension headers are also included.
+ #if defined(OS_WIN)
+ #include <GL/wglext.h>
+ #elif defined(OS_MACOSX)
+ #include <OpenGL/OpenGL.h>
+-#elif defined(USE_X11)
++#elif defined(OS_LINUX)
+ #include <GL/glx.h>
+ #include <GL/glxext.h>
+ 
+ // Undefine some macros defined by X headers. This is why this file should only
+ // be included in .cc files.
+ #undef Bool
+ #undef None
+ #undef Status
+@@ -213,16 +213,19 @@ typedef uint64 EGLuint64CHROMIUM;
+ #if defined(OS_WIN)
+ #include "gl_bindings_autogen_egl.h"
+ #include "gl_bindings_autogen_wgl.h"
+ #elif defined(USE_X11)
+ #include "gl_bindings_autogen_egl.h"
+ #include "gl_bindings_autogen_glx.h"
+ #elif defined(USE_OZONE)
+ #include "gl_bindings_autogen_egl.h"
++#if defined(OS_LINUX)
++#include "gl_bindings_autogen_glx.h"
++#endif
+ #elif defined(OS_ANDROID)
+ #include "gl_bindings_autogen_egl.h"
+ #endif
+ 
+ namespace gfx {
+ 
+ struct GL_EXPORT DriverGL {
+   void Initialize();
+@@ -276,17 +279,17 @@ struct GL_EXPORT DriverEGL {
+   void UpdateDebugExtensionBindings();
+ 
+   ProcsEGL fn;
+   ProcsEGL debug_fn;
+   ExtensionsEGL ext;
+ };
+ #endif
+ 
+-#if defined(USE_X11)
++#if defined(OS_LINUX)
+ struct GL_EXPORT DriverGLX {
+   void InitializeBindings();
+   void InitializeExtensionBindings(GLContext* context);
+   void InitializeDebugBindings();
+   void ClearBindings();
+   void UpdateDebugExtensionBindings();
+ 
+   ProcsGLX fn;
+@@ -317,16 +320,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+ GL_EXPORT extern DriverEGL g_driver_egl;
+ GL_EXPORT extern DriverGLX g_driver_glx;
+ 
+ #elif defined(USE_OZONE)
+ 
+ GL_EXPORT extern EGLApi* g_current_egl_context;
+ GL_EXPORT extern DriverEGL g_driver_egl;
+ 
++#if defined(OS_LINUX)
++
++GL_EXPORT extern GLXApi* g_current_glx_context;
++GL_EXPORT extern DriverGLX g_driver_glx;
++
++#endif
++
+ #elif defined(OS_ANDROID)
+ 
+ GL_EXPORT extern EGLApi* g_current_egl_context;
+ GL_EXPORT extern DriverEGL g_driver_egl;
+ 
+ #endif
+ 
+ // Find an entry point to the mock GL implementation.
+diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
+--- a/ui/gl/gl_image_glx.cc
++++ b/ui/gl/gl_image_glx.cc
+@@ -7,16 +7,17 @@ extern "C" {
+ }
+ 
+ #include "ui/gl/gl_image_glx.h"
+ 
+ #include "base/basictypes.h"
+ #include "base/logging.h"
+ #include "base/memory/scoped_ptr.h"
+ #include "base/message_loop/message_loop.h"
++#include "ui/gfx/ozone/surface_factory_ozone.h"
+ #include "ui/gl/gl_bindings.h"
+ #include "ui/gl/gl_surface_glx.h"
+ 
+ namespace gfx {
+ 
+ namespace {
+ 
+ // scoped_ptr functor for XFree(). Use as follows:
+@@ -24,16 +25,21 @@ namespace {
+ // where "XVisualInfo" is any X type that is freed with XFree.
+ class ScopedPtrXFree {
+  public:
+   void operator()(void* x) const {
+     ::XFree(x);
+   }
+ };
+ 
++Display* GetDefaultXDisplay() {
++  return reinterpret_cast<Display *>(
++      SurfaceFactoryOzone::GetInstance()->GetNativeDisplay());
++}
++
+ int BindToTextureFormat(int depth) {
+   if (depth == 32)
+     return GLX_BIND_TO_TEXTURE_RGBA_EXT;
+ 
+   return GLX_BIND_TO_TEXTURE_RGB_EXT;
+ }
+ 
+ int TextureFormat(int depth) {
+@@ -41,17 +47,17 @@ int TextureFormat(int depth) {
+     return GLX_TEXTURE_FORMAT_RGBA_EXT;
+ 
+   return GLX_TEXTURE_FORMAT_RGB_EXT;
+ }
+ 
+ }  // namespace anonymous
+ 
+ GLImageGLX::GLImageGLX(gfx::PluginWindowHandle window)
+-  : display_(base::MessagePumpForUI::GetDefaultXDisplay()),
++  : display_(GetDefaultXDisplay()),
+     window_(window),
+     pixmap_(0),
+     glx_pixmap_(0) {
+ }
+ 
+ GLImageGLX::~GLImageGLX() {
+   Destroy();
+ }
+diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
+--- a/ui/gl/gl_implementation.cc
++++ b/ui/gl/gl_implementation.cc
+@@ -73,16 +73,19 @@ WGLApi* g_current_wgl_context;
+ #elif defined(USE_X11)
+ 
+ EGLApi* g_current_egl_context;
+ GLXApi* g_current_glx_context;
+ 
+ #elif defined(USE_OZONE)
+ 
+ EGLApi* g_current_egl_context;
++#if defined(OS_LINUX)
++GLXApi* g_current_glx_context;
++#endif
+ 
+ #elif defined(OS_ANDROID)
+ 
+ EGLApi* g_current_egl_context;
+ 
+ #endif
+ 
+ GLImplementation GetNamedGLImplementation(const std::string& name) {
+diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
+--- a/ui/gl/gl_surface_egl.cc
++++ b/ui/gl/gl_surface_egl.cc
+@@ -655,17 +655,17 @@ EGLSurface SurfacelessEGL::GetHandle() {
+ 
+ void* SurfacelessEGL::GetShareHandle() {
+   return NULL;
+ }
+ 
+ SurfacelessEGL::~SurfacelessEGL() {
+ }
+ 
+-#if defined(ANDROID) || defined(USE_OZONE)
++#if 0
+ 
+ // A thin subclass of |GLSurfaceOSMesa| that can be used in place
+ // of a native hardware-provided surface when a native surface
+ // provider is not available.
+ class GLSurfaceOSMesaHeadless : public GLSurfaceOSMesa {
+  public:
+   explicit GLSurfaceOSMesaHeadless(gfx::AcceleratedWidget window);
+ 
+diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
+--- a/ui/gl/gl_surface_glx.cc
++++ b/ui/gl/gl_surface_glx.cc
+@@ -16,16 +16,17 @@ extern "C" {
+ #include "base/memory/weak_ptr.h"
+ #include "base/message_loop/message_loop.h"
+ #include "base/synchronization/cancellation_flag.h"
+ #include "base/synchronization/lock.h"
+ #include "base/threading/non_thread_safe.h"
+ #include "base/threading/thread.h"
+ #include "base/time/time.h"
+ #include "third_party/mesa/src/include/GL/osmesa.h"
++#include "ui/gfx/ozone/surface_factory_ozone.h"
+ #include "ui/gfx/x/x11_types.h"
+ #include "ui/gl/gl_bindings.h"
+ #include "ui/gl/gl_implementation.h"
+ #include "ui/gl/sync_control_vsync_provider.h"
+ 
+ namespace gfx {
+ 
+ namespace {
+@@ -35,16 +36,21 @@ namespace {
+ // where "XVisualInfo" is any X type that is freed with XFree.
+ class ScopedPtrXFree {
+  public:
+   void operator()(void* x) const {
+     ::XFree(x);
+   }
+ };
+ 
++Display* GetDefaultXDisplay() {
++  return reinterpret_cast<Display *>(
++      SurfaceFactoryOzone::GetInstance()->GetNativeDisplay());
++}
++
+ Display* g_display = NULL;
+ const char* g_glx_extensions = NULL;
+ bool g_glx_context_create = false;
+ bool g_glx_create_context_robustness_supported = false;
+ bool g_glx_texture_from_pixmap_supported = false;
+ bool g_glx_oml_sync_control_supported = false;
+ 
+ // Track support of glXGetMscRateOML separately from GLX_OML_sync_control as a
+@@ -390,17 +396,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
+       base::MessageLoop::current() &&
+       base::MessageLoop::current()->type() == base::MessageLoop::TYPE_GPU;
+ 
+   if (g_create_child_windows)
+     g_display = base::MessagePumpX11::GetDefaultXDisplay();
+   else
+     g_display = base::MessagePumpForUI::GetDefaultXDisplay();
+ #else
+-  g_display = base::MessagePumpForUI::GetDefaultXDisplay();
++  g_display = GetDefaultXDisplay();
+ #endif
+ 
+   if (!g_display) {
+     LOG(ERROR) << "XOpenDisplay failed.";
+     return false;
+   }
+ 
+   int major, minor;

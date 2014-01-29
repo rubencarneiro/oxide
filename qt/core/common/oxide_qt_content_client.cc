@@ -15,37 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_main_delegate.h"
+#include "oxide_qt_content_client.h"
 
-#include "base/lazy_instance.h"
+#include <QGuiApplication>
+#include <QtGui/qpa/qplatformnativeinterface.h>
 
-#include "qt/core/browser/oxide_qt_content_browser_client.h"
-#include "qt/core/common/oxide_qt_content_client.h"
+#include "base/memory/singleton.h"
 
 namespace oxide {
 namespace qt {
 
-namespace {
-base::LazyInstance<ContentBrowserClient> g_content_browser_client =
-    LAZY_INSTANCE_INITIALIZER;
-}
-
-content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClient() {
-  return g_content_browser_client.Pointer();
-}
-
-oxide::ContentClient* ContentMainDelegate::CreateContentClient() {
-  return ContentClient::GetInstance();
-}
-
-ContentMainDelegate::ContentMainDelegate() {}
-
-} // namespace qt
+ContentClient::ContentClient() {}
 
 // static
-ContentMainDelegate* ContentMainDelegate::Create() {
-  return new qt::ContentMainDelegate();
+ContentClient* ContentClient::GetInstance() {
+  return Singleton<ContentClient>::get();
 }
 
+intptr_t ContentClient::GetNativeDisplay() {
+  static void* display =
+      QGuiApplication::platformNativeInterface()->nativeResourceForScreen(
+        "display",
+        QGuiApplication::primaryScreen());
+
+  return reinterpret_cast<intptr_t>(display);
+}
+
+} // namespace qt
 } // namespace oxide
