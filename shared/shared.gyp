@@ -208,8 +208,6 @@
         'renderer/oxide_v8_message_manager.cc',
         'renderer/oxide_v8_message_manager.h',
         'renderer/oxide_v8_scoped_persistent.h',
-        'renderer/oxide_web_frame_observer.cc',
-        'renderer/oxide_web_frame_observer.h',
         '<(DEPTH)/extensions/common/constants.cc',
         '<(DEPTH)/extensions/common/constants.h',
         '<(DEPTH)/extensions/common/error_utils.cc',
