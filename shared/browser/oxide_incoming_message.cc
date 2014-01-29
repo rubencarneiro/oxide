@@ -31,14 +31,14 @@ IncomingMessage::IncomingMessage(
     int serial,
     const std::string& world_id,
     const std::string& msg_id,
-    const std::string& payload) :
+    const std::string& args) :
     source_frame_(source_frame->GetWeakPtr()),
     serial_(serial),
     world_id_(world_id),
     msg_id_(msg_id),
-    payload_(payload) {}
+    args_(args) {}
 
-void IncomingMessage::Reply(const std::string& payload) {
+void IncomingMessage::Reply(const std::string& args) {
   // Check that the frame hasn't gone away
   if (!source_frame_ || serial_ == -1) {
     return;
@@ -49,7 +49,7 @@ void IncomingMessage::Reply(const std::string& payload) {
   params.serial = serial_;
   params.type = OxideMsg_SendMessage_Type::Reply;
   params.error = OxideMsg_SendMessage_Error::OK;
-  params.payload = payload;
+  params.payload = args;
 
   content::RenderFrameHost* rfh =
       source_frame()->frame_tree_node()->current_frame_host();

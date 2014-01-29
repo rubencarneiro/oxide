@@ -36,7 +36,7 @@ class OxideQIncomingMessagePrivate Q_DECL_FINAL {
     return incoming_.data();
   }
 
-  QVariant payload() const { return payload_; }
+  QVariant args() const { return args_; }
 
   void Initialize(oxide::IncomingMessage* message);
 
@@ -44,7 +44,7 @@ class OxideQIncomingMessagePrivate Q_DECL_FINAL {
 
  private:
   QScopedPointer<oxide::IncomingMessage> incoming_;
-  QVariant payload_;
+  QVariant args_;
 };
 
 #endif // _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_
