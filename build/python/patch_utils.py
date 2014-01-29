@@ -173,9 +173,15 @@ class HgPatchSeries(PatchSeries):
     self._update_status()
 
   def apply_all(self):
+    if not os.path.isfile(self.series):
+      return
+
     CheckCall(["hg", "qpush", "-a"], CHROMIUMSRCDIR)
 
   def unapply_all(self):
+    if not os.path.isfile(self.series):
+      return
+
     CheckCall(["hg", "qpop", "-a"], CHROMIUMSRCDIR)
 
   def _update_status(self):

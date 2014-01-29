@@ -1,2 +1,0 @@
-check.target = check
-QMAKE_EXTRA_TARGETS += check

@@ -87,6 +87,9 @@ def ensure_patch_consistency(patchset):
     sys.exit(1)
 
 def need_chromium_sync():
+  if not os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
+    return True
+
   try:
     CheckCall(["svn", "info"], CHROMIUMSRCDIR)
   except:
@@ -155,8 +158,7 @@ def main():
   ensure_patch_consistency(patchset)
 
   if need_chromium_sync():
-    if os.path.exists(CHROMIUMSRCDIR):
-      unapply_chromium_patches(patchset.hg_patches)
+    unapply_chromium_patches(patchset.hg_patches)
     sync_chromium()
     patchset.refresh()
 

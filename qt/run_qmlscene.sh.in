@@ -1,0 +1,87 @@
+#!/bin/sh
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2014 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+debug=0
+debugger="gdb"
+debugger_args=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -g | --debug)
+      debug=1
+      shift
+      ;;
+    -d | --debugger)
+      debugger=$2
+      if [ "$debugger" -ne "" ]; then
+        shift 2
+      else
+        echo "-d requires an argument"
+        exit 1
+      fi
+      ;;
+    -a | --debugger-args)
+      debugger_args=$2
+      if [ "$debugger_args" -ne "" ]; then
+        shift 2
+      else
+        echo "-a requires an argument"
+        exit 1
+      fi
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [ $# -eq 0 ]; then
+  echo "Need to specify a qmlscene binary to run"
+  exit 1
+fi
+
+qmlscene=$1
+shift
+
+export LD_LIBRARY_PATH=@CHROMIUM_LIB_DIR@${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export OXIDE_RESOURCE_PATH=@CHROMIUM_PRODUCT_DIR@
+export OXIDE_NO_SANDBOX=1
+
+if [ $debug -eq 1 ]; then
+  debugger=`which $debugger`
+  if [ ! -x $debugger ] ; then
+    echo "Invalid debugger"
+    exit 1
+  fi
+
+  case `basename $debugger` in
+    gdb)
+      exec $debugger $debugger_args --args $qmlscene -I @OXIDE_QMLPLUGIN_OUTPUT_DIR@ "$@"
+      ;;
+    *)
+      exec $debugger $moz_debugger_args $qmlscene -I @OXIDE_QMLPLUGIN_OUTPUT_DIR@ "$@"
+      ;;
+  esac
+else
+  exec $qmlscene -I @OXIDE_QMLPLUGIN_OUTPUT_DIR@ "$@"
+fi

@@ -19,7 +19,7 @@
     {
       'target_name': 'OxideQtCore',
       'type': 'shared_library',
-      'shared_library_version': '<(oxide_qt_libversion)',
+      'shared_library_version': '<(so_version)',
       'dependencies': [
         'OxideQtCore_private',
         'OxideQtCore_public',
