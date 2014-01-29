@@ -82,12 +82,7 @@ bool WebViewAdapter::loading() const {
 }
 
 WebFrameAdapter* WebViewAdapter::rootFrame() const {
-  WebFrame* frame = static_cast<WebFrame *>(priv->GetRootFrame());
-  if (!frame) {
-    return NULL;
-  }
-
-  return frame->adapter;
+  return static_cast<WebFrame *>(priv->GetRootFrame())->adapter();
 }
 
 void WebViewAdapter::updateSize(const QSize& size) {
@@ -123,7 +118,7 @@ void WebViewAdapter::shutdown() {
 }
 
 bool WebViewAdapter::isInitialized() {
-  return priv->web_contents() != NULL;
+  return priv->GetWebContents() != NULL;
 }
 
 int WebViewAdapter::getNavigationEntryCount() const {

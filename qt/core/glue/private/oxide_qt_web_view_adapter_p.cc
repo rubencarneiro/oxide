@@ -100,8 +100,9 @@ void WebViewAdapterPrivate::OnNavigationEntryChanged(int index) {
   a->NavigationEntryChanged(index);
 }
 
-oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame() {
-  return new WebFrame(a->CreateWebFrame());
+oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame(
+    content::FrameTreeNode* node) {
+  return new WebFrame(a->CreateWebFrame(), node, this);
 }
 
 // static
@@ -140,18 +141,11 @@ oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(
 }
 
 void WebViewAdapterPrivate::FrameAdded(oxide::WebFrame* frame) {
-  WebFrameAdapter* adapter = static_cast<WebFrame *>(frame)->adapter;
-  adapterToQObject(adapter)->setParent(adapterToQObject(
-      static_cast<WebFrame *>(frame->parent())->adapter));
-
-  a->FrameAdded(adapter);
+  a->FrameAdded(static_cast<WebFrame *>(frame)->adapter());
 }
 
 void WebViewAdapterPrivate::FrameRemoved(oxide::WebFrame* frame) {
-  WebFrameAdapter* adapter = static_cast<WebFrame *>(frame)->adapter;
-  a->FrameRemoved(adapter);
-
-  adapterToQObject(adapter)->setParent(NULL);
+  a->FrameRemoved(static_cast<WebFrame *>(frame)->adapter());
 }
 
 } // namespace qt

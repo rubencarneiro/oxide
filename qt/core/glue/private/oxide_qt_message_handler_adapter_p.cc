@@ -43,7 +43,7 @@ void MessageHandlerAdapterPrivate::ReceiveMessageCallback(
 
   *error = !a->OnReceiveMessage(
       qmessage,
-      static_cast<WebFrame *>(message->source_frame())->adapter,
+      static_cast<WebFrame *>(message->source_frame())->adapter(),
       qerror);
 
   if (*error) {

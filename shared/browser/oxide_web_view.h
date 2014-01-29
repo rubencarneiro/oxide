@@ -42,11 +42,13 @@ class Size;
 
 namespace content {
 
+class FrameTreeNode;
 class NotificationRegistrar;
 struct OpenURLParams;
 class RenderWidgetHost;
 class RenderWidgetHostView;
 class WebContents;
+class WebContentsImpl;
 
 } // namespace content
 
@@ -96,6 +98,7 @@ class WebView : public MessageTarget,
   void Hidden();
 
   BrowserContext* GetBrowserContext() const;
+  content::WebContents* GetWebContents() const;
 
   int GetNavigationEntryCount() const;
   int GetNavigationCurrentEntryIndex() const;
@@ -106,7 +109,7 @@ class WebView : public MessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-  WebFrame* FindFrameWithID(int64 frame_id) const;
+  WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
 
   void Observe(int type,
                const content::NotificationSource& source,
@@ -157,6 +160,8 @@ class WebView : public MessageTarget,
 
   void FrameDetached(content::RenderViewHost* rvh,
                      int64 frame_id) FINAL;
+  void FrameAttached(content::RenderViewHost* rvh,
+                     int64 parent_frame_id, int64 frame_id) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
@@ -164,10 +169,6 @@ class WebView : public MessageTarget,
 
   virtual size_t GetMessageHandlerCount() const OVERRIDE;
   virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
-
-  content::WebContents* web_contents() const {
-    return web_contents_.get();
-  }
 
   virtual content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) = 0;
@@ -205,8 +206,6 @@ class WebView : public MessageTarget,
                                     const std::string& args);
   void DispatchV8Message(const OxideMsg_SendMessage_Params& params);
 
-  void OnFrameCreated(int64 parent_frame_id, int64 frame_id);
-
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnCommandsUpdated();
@@ -225,12 +224,12 @@ class WebView : public MessageTarget,
   virtual void OnNavigationListPruned(bool from_front, int count);
   virtual void OnNavigationEntryChanged(int index);
 
-  virtual WebFrame* CreateWebFrame() = 0;
+  virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
-  scoped_ptr<content::WebContents> web_contents_;
-  WebFrame* root_frame_;
-
+  scoped_ptr<content::WebContentsImpl> web_contents_;
   scoped_ptr<content::NotificationRegistrar> registrar_;
+
+  WebFrame* root_frame_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

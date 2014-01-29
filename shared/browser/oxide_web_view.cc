@@ -21,7 +21,10 @@
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "content/browser/frame_host/frame_tree.h"
+#include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_controller.h"
@@ -102,8 +105,8 @@ void WebView::SendErrorForV8Message(long long frame_id,
 
   // FIXME: This is clearly broken for OOPIF, and we don't even know if this
   //        is going to the correct RVH without OOPIF
-  web_contents()->Send(new OxideMsg_SendMessage(
-      web_contents()->GetRenderViewHost()->GetRoutingID(),
+  GetWebContents()->Send(new OxideMsg_SendMessage(
+      GetWebContents()->GetRenderViewHost()->GetRoutingID(),
       params));
 }
 
@@ -141,7 +144,14 @@ bool WebView::TryDispatchV8MessageToTarget(MessageTarget* target,
 }
 
 void WebView::DispatchV8Message(const OxideMsg_SendMessage_Params& params) {
-  WebFrame* frame = FindFrameWithID(params.frame_id);
+  // XXX: This is temporary - the frame ID in the message is the deprecated
+  //      renderer-process unique ID
+  content::FrameTreeNode* node =
+      web_contents_->GetFrameTree()->FindByFrameID(params.frame_id);
+  WebFrame* frame = NULL;
+  if (node) {
+    frame = FindFrameWithID(node->frame_tree_node_id());
+  }
 
   if (params.type == OxideMsg_SendMessage_Type::Message) {
     if (!frame) {
@@ -180,20 +190,6 @@ void WebView::DispatchV8Message(const OxideMsg_SendMessage_Params& params) {
       return;
     }
   }
-}
-
-void WebView::OnFrameCreated(int64 parent_frame_id,
-                             int64 frame_id) {
-  WebFrame* parent = FindFrameWithID(parent_frame_id);
-  if (!parent) {
-    LOG(ERROR) << "Got FrameCreated with non-existant parent";
-    return;
-  }
-
-  WebFrame* frame = CreateWebFrame();
-  frame->set_identifier(frame_id);
-  frame->set_view(this);
-  frame->SetParent(parent);
 }
 
 void WebView::OnURLChanged() {}
@@ -242,7 +238,8 @@ bool WebView::Init(BrowserContext* context,
 
   content::WebContents::CreateParams params(context);
   params.initial_size = initial_size;
-  web_contents_.reset(content::WebContents::Create(params));
+  web_contents_.reset(static_cast<content::WebContentsImpl *>(
+      content::WebContents::Create(params)));
   if (!web_contents_) {
     LOG(ERROR) << "Failed to create WebContents";
     return false;
@@ -257,8 +254,7 @@ bool WebView::Init(BrowserContext* context,
   registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                   content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_ = CreateWebFrame();
-  root_frame_->set_view(this);
+  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
   return true;
 }
@@ -273,7 +269,7 @@ void WebView::Shutdown() {
 
   WebContentsObserver::Observe(NULL);
 
-  root_frame_->DestroyFrame();
+  root_frame_->Destroy();
   root_frame_ = NULL;
 
   GetBrowserContext()->RemoveWebView(this);
@@ -381,6 +377,10 @@ BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
+content::WebContents* WebView::GetWebContents() const {
+  return web_contents_.get();
+}
+
 int WebView::GetNavigationEntryCount() const {
   if (!web_contents_) {
     return 0;
@@ -441,7 +441,7 @@ WebFrame* WebView::GetRootFrame() const {
   return root_frame_;
 }
 
-WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
+WebFrame* WebView::FindFrameWithID(int64 frame_tree_node_id) const {
   std::queue<WebFrame *> q;
   q.push(const_cast<WebFrame *>(root_frame_));
 
@@ -449,11 +449,13 @@ WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
     WebFrame* f = q.front();
     q.pop();
 
-    if (f->identifier() == frame_id) {
+    if (f->FrameTreeNodeID() == frame_tree_node_id) {
       return f;
     }
 
-    f->AddChildrenToQueue(&q);
+    for (size_t i = 0; i < f->ChildCount(); ++i) {
+      q.push(f->ChildAt(i));
+    }
   }
 
   return NULL;
@@ -462,7 +464,8 @@ WebFrame* WebView::FindFrameWithID(int64 frame_id) const {
 void WebView::Observe(int type,
                       const content::NotificationSource& source,
                       const content::NotificationDetails& details) {
-  if (content::Source<content::NavigationController>(source).ptr() != &web_contents()->GetController()) {
+  if (content::Source<content::NavigationController>(source).ptr() !=
+      &GetWebContents()->GetController()) {
     return;
   }
   if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
@@ -477,11 +480,11 @@ void WebView::Observe(int type,
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   // Make sure the new RWHV gets the correct size
-  web_contents()->GetView()->SizeContents(
-      web_contents()->GetView()->GetContainerSize());
+  GetWebContents()->GetView()->SizeContents(
+      GetWebContents()->GetView()->GetContainerSize());
 
   while (root_frame_->ChildCount() > 0) {
-    root_frame_->ChildAt(root_frame_->ChildCount() - 1)->DestroyFrame();
+    root_frame_->ChildAt(0)->Destroy();
   }
 }
 
@@ -507,11 +510,11 @@ void WebView::DidCommitProvisionalLoadForFrame(
     const GURL& url,
     content::PageTransition transition_type,
     content::RenderViewHost* render_view_host) {
-  if (is_main_frame) {
-    root_frame_->set_identifier(frame_id);
-  }
+  content::FrameTreeNode* node =
+      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
+  DCHECK(node);
 
-  WebFrame* frame = FindFrameWithID(frame_id);
+  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
   if (frame) {
     frame->SetURL(url);
   }
@@ -563,12 +566,43 @@ void WebView::NavigationEntryCommitted(
 
 void WebView::FrameDetached(content::RenderViewHost* rvh,
                             int64 frame_id) {
-  WebFrame* frame = FindFrameWithID(frame_id);
-  if (!frame) {
+  if (!root_frame_) {
     return;
   }
 
-  frame->DestroyFrame();
+  // XXX: This is temporary until there's a better API for these events
+  //      The ID we have is only renderer-process unique
+  content::FrameTreeNode* node =
+      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
+  DCHECK(node);
+
+  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
+  DCHECK(frame);
+
+  frame->Destroy();
+}
+
+void WebView::FrameAttached(content::RenderViewHost* rvh,
+                            int64 parent_frame_id,
+                            int64 frame_id) {
+  if (!root_frame_) {
+    return;
+  }
+
+  // XXX: This is temporary until there's a better API for these events
+  //      The ID's we have are only renderer-process unique
+  content::FrameTree* tree = web_contents_->GetFrameTree();
+  content::FrameTreeNode* parent_node = tree->FindByFrameID(parent_frame_id);
+  content::FrameTreeNode* node = tree->FindByFrameID(frame_id);
+
+  DCHECK(parent_node && node);
+
+  WebFrame* parent = FindFrameWithID(parent_node->frame_tree_node_id());
+  DCHECK(parent);
+
+  WebFrame* frame = CreateWebFrame(node);
+  DCHECK(frame);
+  frame->SetParent(parent);
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -589,7 +623,6 @@ bool WebView::OnMessageReceived(const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(WebView, message)
     IPC_MESSAGE_HANDLER(OxideHostMsg_SendMessage, DispatchV8Message)
-    IPC_MESSAGE_HANDLER(OxideHostMsg_FrameCreated, OnFrameCreated)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 

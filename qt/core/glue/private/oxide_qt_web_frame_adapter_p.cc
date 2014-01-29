@@ -17,7 +17,6 @@
 
 #include "oxide_qt_web_frame_adapter_p.h"
 
-#include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 
 #include "oxide_qt_outgoing_message_request_adapter_p.h"
@@ -37,8 +36,6 @@ WebFrameAdapterPrivate::~WebFrameAdapterPrivate() {
   while (!outgoing_message_requests_.isEmpty()) {
     RemoveOutgoingMessageRequest(outgoing_message_requests_.first());
   }
-
-  owner->adapter = NULL;
 }
 
 void WebFrameAdapterPrivate::AddOutgoingMessageRequest(

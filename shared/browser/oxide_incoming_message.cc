@@ -54,7 +54,7 @@ void IncomingMessage::Reply(const std::string& args) {
   params.args = args;
 
   // FIXME: This is clearly broken for OOPIF
-  content::WebContents* web_contents = source_frame()->view()->web_contents();
+  content::WebContents* web_contents = source_frame()->view()->GetWebContents();
   web_contents->Send(new OxideMsg_SendMessage(
       web_contents->GetRenderViewHost()->GetRoutingID(),
       params));
@@ -75,7 +75,7 @@ void IncomingMessage::Error(const std::string& msg) {
   params.args = msg;
 
   // FIXME: This is clearly broken for OOPIF
-  content::WebContents* web_contents = source_frame()->view()->web_contents();
+  content::WebContents* web_contents = source_frame()->view()->GetWebContents();
   web_contents->Send(new OxideMsg_SendMessage(
       web_contents->GetRenderViewHost()->GetRoutingID(),
       params));

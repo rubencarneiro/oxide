@@ -16,10 +16,12 @@ TestWebView {
   }
 
   onFrameAdded: {
+    console.log("Frame added: " + frame.toString());
     qtest_frameEvents.push({type: "added", frame: frame.toString()});
   }
 
   onFrameRemoved: {
+    console.log("Frame removed: " + frame.toString());
     qtest_frameEvents.push({type: "removed", frame: frame.toString()});
   }
 
@@ -154,10 +156,10 @@ TestWebView {
              "Timed out waiting for successful load");
 
       verify_events([
-        { type: "removed", frame: frames[1] },
-        { type: "removed", frame: frames[3] },
         { type: "removed", frame: frames[2] },
-        { type: "removed", frame: frames[0] }
+        { type: "removed", frame: frames[3] },
+        { type: "removed", frame: frames[0] },
+        { type: "removed", frame: frames[1] }
       ]);
       verify_tree();
 

@@ -59,7 +59,7 @@ void MessageHandler::OnReceiveMessage(IncomingMessage* message) {
 
     // FIXME: This is clearly broken for OOPIF
     content::WebContents* web_contents =
-        message->source_frame()->view()->web_contents();
+        message->source_frame()->view()->GetWebContents();
     web_contents->Send(new OxideMsg_SendMessage(
         web_contents->GetRenderViewHost()->GetRoutingID(),
         params));
