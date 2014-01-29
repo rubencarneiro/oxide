@@ -27,11 +27,6 @@ namespace qt {
 WebFrameAdapterPrivate::WebFrameAdapterPrivate() :
     owner(NULL) {}
 
-// static
-WebFrameAdapterPrivate* WebFrameAdapterPrivate::Create() {
-  return new WebFrameAdapterPrivate();
-}
-
 WebFrameAdapterPrivate::~WebFrameAdapterPrivate() {
   while (!outgoing_message_requests_.isEmpty()) {
     RemoveOutgoingMessageRequest(outgoing_message_requests_.first());

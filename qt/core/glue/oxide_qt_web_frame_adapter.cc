@@ -31,7 +31,7 @@ namespace oxide {
 namespace qt {
 
 WebFrameAdapter::WebFrameAdapter() :
-    priv(WebFrameAdapterPrivate::Create()) {}
+    priv(new WebFrameAdapterPrivate()) {}
 
 WebFrameAdapter::~WebFrameAdapter() {}
 
