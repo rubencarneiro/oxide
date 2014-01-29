@@ -16,12 +16,10 @@ TestWebView {
   }
 
   onFrameAdded: {
-    console.log("Frame added: " + frame.toString());
     qtest_frameEvents.push({type: "added", frame: frame.toString()});
   }
 
   onFrameRemoved: {
-    console.log("Frame removed: " + frame.toString());
     qtest_frameEvents.push({type: "removed", frame: frame.toString()});
   }
 
