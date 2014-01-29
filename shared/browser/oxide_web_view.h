@@ -32,8 +32,6 @@
 #include "shared/browser/oxide_message_target.h"
 #include "shared/common/oxide_message_enums.h"
 
-struct OxideMsg_SendMessage_Params;
-
 class GURL;
 
 namespace gfx {
@@ -165,8 +163,6 @@ class WebView : public MessageTarget,
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
-  bool OnMessageReceived(const IPC::Message& message) FINAL;
-
   virtual size_t GetMessageHandlerCount() const OVERRIDE;
   virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
 
@@ -192,19 +188,6 @@ class WebView : public MessageTarget,
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
-
-  void SendErrorForV8Message(long long frame_id,
-                             const std::string& world_id,
-                             int serial,
-                             OxideMsg_SendMessage_Error::Value error_code,
-                             const std::string& error_desc);
-  bool TryDispatchV8MessageToTarget(MessageTarget* target,
-                                    WebFrame* source_frame,
-                                    const std::string& world_id,
-                                    int serial,
-                                    const std::string& msg_id,
-                                    const std::string& args);
-  void DispatchV8Message(const OxideMsg_SendMessage_Params& params);
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();

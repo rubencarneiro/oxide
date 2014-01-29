@@ -37,7 +37,7 @@ TestWebView {
           null,
           { msgId: "TEST", worldIds: [ "TestUtils" ],
             callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 2 });
+              msg.reply({ out: msg.payload.in * 2 });
             }
           });
       webView.addMessageHandler(handler);
@@ -86,7 +86,7 @@ TestWebView {
           webView,
           { msgId: "TEST", worldIds: [ "TestUtils" ],
             callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 2 });
+              msg.reply({ out: msg.payload.in * 2 });
             }
           });
       compare(spy.count, 1, "Should have had a messageHandlersChanged signal");

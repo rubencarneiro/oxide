@@ -17,6 +17,10 @@
 
 #include "oxide_web_frame.h"
 
+#include <map>
+#include <utility>
+
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/public/browser/render_view_host.h"
@@ -28,6 +32,12 @@
 #include "oxide_web_view.h"
 
 namespace oxide {
+
+namespace {
+typedef std::map<int64, WebFrame*> FrameMap;
+typedef FrameMap::iterator FrameMapIterator;
+base::LazyInstance<FrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
+}
 
 void WebFrame::AddChild(WebFrame* frame) {
   child_frames_.push_back(frame);
@@ -61,9 +71,21 @@ WebFrame::WebFrame(
     view_(view),
     next_message_serial_(0),
     weak_factory_(this) {
+  std::pair<FrameMapIterator, bool> rv =
+      g_frame_map.Get().insert(std::make_pair(node->frame_tree_node_id(),
+                                              this));
+  CHECK(rv.second);
 }
 
-WebFrame::~WebFrame() {}
+WebFrame::~WebFrame() {
+  g_frame_map.Get().erase(frame_tree_node_->frame_tree_node_id());
+}
+
+// static
+WebFrame* WebFrame::FromFrameTreeNode(content::FrameTreeNode* node) {
+  FrameMapIterator it = g_frame_map.Get().find(node->frame_tree_node_id());
+  return it == g_frame_map.Get().end() ? NULL : it->second;
+}
 
 void WebFrame::Destroy() {
   while (ChildCount() > 0) {
@@ -86,7 +108,7 @@ void WebFrame::Destroy() {
 
     request->OnReceiveResponse(
         "The frame disappeared whilst waiting for a response",
-        OxideMsg_SendMessage_Error::FRAME_DISAPPEARED);
+        OxideMsg_SendMessage_Error::INVALID_DESTINATION);
   }
 
   if (parent_) {
@@ -98,11 +120,7 @@ void WebFrame::Destroy() {
 }
 
 int64 WebFrame::FrameTreeNodeID() const {
-  return frame_tree_node_->frame_tree_node_id();
-}
-
-int64 WebFrame::identifier() const {
-  return frame_tree_node_->frame_id();
+  return frame_tree_node()->frame_tree_node_id();
 }
 
 void WebFrame::SetURL(const GURL& url) {
@@ -130,7 +148,7 @@ WebFrame* WebFrame::ChildAt(size_t index) const {
 
 bool WebFrame::SendMessage(const std::string& world_id,
                            const std::string& msg_id,
-                           const std::string& args,
+                           const std::string& payload,
                            OutgoingMessageRequest* req) {
   DCHECK(req);
 
@@ -139,36 +157,28 @@ bool WebFrame::SendMessage(const std::string& world_id,
   req->set_serial(serial);
 
   OxideMsg_SendMessage_Params params;
-  params.frame_id = identifier();
   params.world_id = world_id;
   params.serial = serial;
   params.type = OxideMsg_SendMessage_Type::Message;
   params.msg_id = msg_id;
-  params.args = args;
+  params.payload = payload;
 
-  // FIXME: This is clearly broken for OOPIF
-  content::WebContents* web_contents = view()->GetWebContents();
-  return web_contents->Send(new OxideMsg_SendMessage(
-      web_contents->GetRenderViewHost()->GetRoutingID(),
-      params));
+  content::RenderFrameHost* rfh = frame_tree_node()->current_frame_host();
+  return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 
 bool WebFrame::SendMessageNoReply(const std::string& world_id,
                                   const std::string& msg_id,
-                                  const std::string& args) {
+                                  const std::string& payload) {
   OxideMsg_SendMessage_Params params;
-  params.frame_id = identifier();
   params.world_id = world_id;
   params.serial = -1;
   params.type = OxideMsg_SendMessage_Type::Message;
   params.msg_id = msg_id;
-  params.args = args;
+  params.payload = payload;
 
-  // FIXME: This is clearly broken for OOPIF
-  content::WebContents* web_contents = view()->GetWebContents();
-  return web_contents->Send(new OxideMsg_SendMessage(
-      web_contents->GetRenderViewHost()->GetRoutingID(),
-      params));
+  content::RenderFrameHost* rfh = frame_tree_node()->current_frame_host();
+  return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 
 size_t WebFrame::GetMessageHandlerCount() const {

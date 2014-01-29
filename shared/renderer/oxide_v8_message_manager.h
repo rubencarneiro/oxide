@@ -28,11 +28,8 @@
 
 struct OxideMsg_SendMessage_Params;
 
-namespace blink {
-class WebFrame;
-}
-
 namespace content {
+class RenderFrame;
 class RenderView;
 }
 
@@ -40,7 +37,7 @@ namespace oxide {
 
 class V8MessageManager FINAL {
  public:
-  V8MessageManager(blink::WebFrame* frame,
+  V8MessageManager(content::RenderFrame* frame,
                    v8::Handle<v8::Context> context,
                    int world_id);
   ~V8MessageManager();
@@ -48,9 +45,7 @@ class V8MessageManager FINAL {
   void ReceiveMessage(const OxideMsg_SendMessage_Params& params);
 
   v8::Handle<v8::Context> v8_context() const;
-  long long frame_id() const;
   int world_id() const { return world_id_; }
-  content::RenderView* render_view() const;
 
  private:
   static std::string V8StringToStdString(v8::Local<v8::String> string);
@@ -72,7 +67,7 @@ class V8MessageManager FINAL {
   void OxideLazyGetterInner(v8::Local<v8::String> property,
                             const v8::PropertyCallbackInfo<v8::Value>& info);
 
-  blink::WebFrame* frame_;
+  content::RenderFrame* frame_;
   ScopedPersistent<v8::Context> context_;
   int world_id_;
   ScopedPersistent<v8::External> closure_data_;

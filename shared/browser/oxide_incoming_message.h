@@ -34,23 +34,23 @@ class IncomingMessage FINAL {
                   int serial,
                   const std::string& world_id,
                   const std::string& msg_id,
-                  const std::string& args);
+                  const std::string& payload);
     
-  void Reply(const std::string& args);
+  void Reply(const std::string& payload);
   void Error(const std::string& msg);
 
   WebFrame* source_frame() const { return source_frame_.get(); }
   int serial() const { return serial_; }
   std::string world_id() const { return world_id_; }
   std::string msg_id() const { return msg_id_; }
-  std::string args() const { return args_; }
+  std::string payload() const { return payload_; }
 
  private:
   base::WeakPtr<WebFrame> source_frame_;
   int serial_;
   std::string world_id_;
   std::string msg_id_;
-  std::string args_;
+  std::string payload_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(IncomingMessage);
 };

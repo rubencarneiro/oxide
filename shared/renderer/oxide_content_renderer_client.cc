@@ -21,7 +21,6 @@
 #include "oxide_process_observer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
-#include "oxide_web_frame_observer.h"
 
 namespace oxide {
 
@@ -32,14 +31,16 @@ ContentRendererClient::~ContentRendererClient() {}
 void ContentRendererClient::RenderThreadStarted() {
   process_observer_.reset(new ProcessObserver());
   user_script_slave_.reset(new UserScriptSlave());
-  message_dispatcher_.reset(new MessageDispatcherRenderer());
+}
+
+void ContentRendererClient::RenderFrameCreated(
+    content::RenderFrame* render_frame) {
+  new MessageDispatcherRenderer(render_frame);
 }
 
 void ContentRendererClient::RenderViewCreated(
     content::RenderView* render_view) {
   new UserScriptScheduler(render_view);
-  new MessageDispatcherRenderer::EndPoint(render_view);
-  new WebFrameObserver(render_view);
 }
 
 void ContentRendererClient::DidCreateScriptContext(
@@ -47,14 +48,16 @@ void ContentRendererClient::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int extension_group,
     int world_id) {
-  message_dispatcher_->DidCreateScriptContext(frame, context, world_id);
+  MessageDispatcherRenderer::FromWebFrame(
+      frame)->DidCreateScriptContext(context, world_id);
 }
 
 void ContentRendererClient::WillReleaseScriptContext(
     blink::WebFrame* frame,
     v8::Handle<v8::Context> context,
     int world_id) {
-  message_dispatcher_->WillReleaseScriptContext(frame, context, world_id);
+  MessageDispatcherRenderer::FromWebFrame(
+      frame)->WillReleaseScriptContext(context, world_id);
 }
 
 } // namespace oxide

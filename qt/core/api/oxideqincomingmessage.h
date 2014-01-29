@@ -29,7 +29,7 @@ class OxideQIncomingMessagePrivate;
 class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString worldId READ worldId)
-  Q_PROPERTY(QVariant args READ args)
+  Q_PROPERTY(QVariant payload READ payload)
 
   Q_DECLARE_PRIVATE(OxideQIncomingMessage)
   Q_DISABLE_COPY(OxideQIncomingMessage)
@@ -39,9 +39,9 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   virtual ~OxideQIncomingMessage();
 
   QString worldId() const;
-  QVariant args() const;
+  QVariant payload() const;
 
-  Q_INVOKABLE void reply(const QVariant& args);
+  Q_INVOKABLE void reply(const QVariant& payload);
   Q_INVOKABLE void error(const QString& msg);
 
  private:

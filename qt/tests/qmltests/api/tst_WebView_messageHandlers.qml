@@ -17,7 +17,7 @@ TestWebView {
       worldIds: [ "Foo", "TestUtils" ]
       callback: function(msg, frame) {
         webView.lastMessageFrameSource = frame;
-        msg.reply({ out: msg.args.in * 2 });
+        msg.reply({ out: msg.payload.in * 2 });
       }
     }
   ]

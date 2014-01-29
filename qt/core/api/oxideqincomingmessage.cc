@@ -31,8 +31,8 @@ void OxideQIncomingMessagePrivate::Initialize(
   incoming_.reset(message);
 
   QJsonDocument jsondoc(QJsonDocument::fromJson(
-      QByteArray(message->args().data(), message->args().length())));
-  args_ = jsondoc.toVariant();
+      QByteArray(message->payload().data(), message->payload().length())));
+  payload_ = jsondoc.toVariant();
 }
 
 // static
@@ -52,16 +52,16 @@ QString OxideQIncomingMessage::worldId() const {
   return QString::fromStdString(d->incoming()->world_id());
 }
 
-QVariant OxideQIncomingMessage::args() const {
+QVariant OxideQIncomingMessage::payload() const {
   Q_D(const OxideQIncomingMessage);
 
-  return d->args();
+  return d->payload();
 }
 
-void OxideQIncomingMessage::reply(const QVariant& args) {
+void OxideQIncomingMessage::reply(const QVariant& payload) {
   Q_D(OxideQIncomingMessage);
 
-  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
+  QJsonDocument jsondoc(QJsonDocument::fromVariant(payload));
   d->incoming()->Reply(QString(jsondoc.toJson()).toStdString());
 }
 

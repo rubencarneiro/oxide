@@ -23,6 +23,7 @@
 
 #include "base/basictypes.h"
 #include "base/memory/weak_ptr.h"
+#include "ipc/ipc_sender.h"
 #include "url/gurl.h"
 
 #include "shared/browser/oxide_message_target.h"
@@ -41,12 +42,11 @@ class WebView;
 // of this will typically own a publicly exposed webframe
 class WebFrame : public MessageTarget {
  public:
+  static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
+
   void Destroy();
 
   int64 FrameTreeNodeID() const;
-
-  // XXX: Remove this
-  int64 identifier() const;
 
   GURL url() const {
     return url_;
@@ -64,6 +64,10 @@ class WebFrame : public MessageTarget {
     return weak_factory_.GetWeakPtr();
   }
 
+  content::FrameTreeNode* frame_tree_node() const {
+    return frame_tree_node_;
+  }
+
   void SetURL(const GURL& url);
   void SetParent(WebFrame* parent);
 
@@ -72,11 +76,11 @@ class WebFrame : public MessageTarget {
 
   bool SendMessage(const std::string& world_id,
                    const std::string& msg_id,
-                   const std::string& args,
+                   const std::string& payload,
                    OutgoingMessageRequest* req);
   bool SendMessageNoReply(const std::string& world_id,
                           const std::string& msg_id,
-                          const std::string& args);
+                          const std::string& payload);
 
   virtual size_t GetMessageHandlerCount() const OVERRIDE;
   virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;

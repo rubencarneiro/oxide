@@ -19,7 +19,7 @@ TestWebView {
       callback: function(msg, frame) {
         webView.lastMessageFrameSource = frame;
         webView.lastMessageWorldId = msg.worldId;
-        msg.reply({ out: msg.args.in * 2 });
+        msg.reply({ out: msg.payload.in * 2 });
       }
     },
     MessageHandler {

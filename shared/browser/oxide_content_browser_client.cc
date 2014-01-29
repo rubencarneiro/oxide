@@ -36,6 +36,7 @@
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_message_dispatcher_browser.h"
 #include "oxide_message_pump.h"
 #include "oxide_shared_gl_context.h"
 #include "oxide_web_contents_view.h"
@@ -118,10 +119,11 @@ ContentBrowserClient::OverrideCreateWebContentsView(
   return view;
 }
 
-void ContentBrowserClient::RenderProcessHostCreated(
+void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetIsIncognitoProcess(
       host->GetBrowserContext()->IsOffTheRecord()));
+  host->AddFilter(new MessageDispatcherBrowser(host->GetID()));
 }
 
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(

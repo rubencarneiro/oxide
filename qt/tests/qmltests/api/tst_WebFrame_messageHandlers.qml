@@ -17,7 +17,7 @@ TestWebView {
       worldIds: [ "TestUtils" ]
       callback: function(msg, frame) {
         webView.lastMessageFrameSource = frame;
-        msg.reply({ out: msg.args.in * 2 });
+        msg.reply({ out: msg.payload.in * 2 });
       }
     }
   ]
@@ -55,7 +55,7 @@ TestWebView {
           { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
             callback: function(msg, frame) {
               webView.lastMessageFrameSource = frame;
-              msg.reply({ out: msg.args.in * 5 });
+              msg.reply({ out: msg.payload.in * 5 });
             }
           });
 
@@ -100,7 +100,7 @@ TestWebView {
           frame,
           { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
             callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 5 });
+              msg.reply({ out: msg.payload.in * 5 });
             }
           });
 
@@ -141,7 +141,7 @@ TestWebView {
           null,
           { msgId: "TEST", worldIds: [ "TestUtils" ],
             callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 5 });
+              msg.reply({ out: msg.payload.in * 5 });
             }
           });
 
@@ -172,7 +172,7 @@ TestWebView {
           null,
           { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
             callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 5 });
+              msg.reply({ out: msg.payload.in * 5 });
             }
           });
 
@@ -204,7 +204,7 @@ TestWebView {
           null,
           { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
             callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 5 });
+              msg.reply({ out: msg.payload.in * 5 });
             }
           });
 

@@ -41,14 +41,10 @@
 #include "url/gurl.h"
 
 #include "shared/common/oxide_content_client.h"
-#include "shared/common/oxide_messages.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
-#include "oxide_incoming_message.h"
-#include "oxide_message_handler.h"
-#include "oxide_outgoing_message_request.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 
@@ -87,108 +83,6 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
   } else {
     OnLoadFailed(validated_url, error_code,
                  base::UTF16ToUTF8(error_description));
-  }
-}
-
-void WebView::SendErrorForV8Message(long long frame_id,
-                                    const std::string& world_id,
-                                    int serial,
-                                    OxideMsg_SendMessage_Error::Value error_code,
-                                    const std::string& error_desc) {
-  OxideMsg_SendMessage_Params params;
-  params.frame_id = frame_id;
-  params.world_id = world_id;
-  params.serial = serial;
-  params.type = OxideMsg_SendMessage_Type::Reply;
-  params.error = error_code;
-  params.args = error_desc;
-
-  // FIXME: This is clearly broken for OOPIF, and we don't even know if this
-  //        is going to the correct RVH without OOPIF
-  GetWebContents()->Send(new OxideMsg_SendMessage(
-      GetWebContents()->GetRenderViewHost()->GetRoutingID(),
-      params));
-}
-
-bool WebView::TryDispatchV8MessageToTarget(MessageTarget* target,
-                                           WebFrame* source_frame,
-                                           const std::string& world_id,
-                                           int serial,
-                                           const std::string& msg_id,
-                                           const std::string& args) {
-  for (size_t i = 0; i < target->GetMessageHandlerCount(); ++i) {
-    MessageHandler* handler = target->GetMessageHandlerAt(i);
-
-    if (!handler->IsValid()) {
-      continue;
-    }
-
-    if (handler->msg_id() != msg_id) {
-      continue;
-    }
-
-    const std::vector<std::string>& world_ids = handler->world_ids();
-
-    for (std::vector<std::string>::const_iterator it = world_ids.begin();
-         it != world_ids.end(); ++it) {
-      if ((*it) == world_id) {
-        handler->OnReceiveMessage(
-            new IncomingMessage(source_frame, serial, world_id,
-                                msg_id, args));
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-void WebView::DispatchV8Message(const OxideMsg_SendMessage_Params& params) {
-  // XXX: This is temporary - the frame ID in the message is the deprecated
-  //      renderer-process unique ID
-  content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByFrameID(params.frame_id);
-  WebFrame* frame = NULL;
-  if (node) {
-    frame = FindFrameWithID(node->frame_tree_node_id());
-  }
-
-  if (params.type == OxideMsg_SendMessage_Type::Message) {
-    if (!frame) {
-      // FIXME: In an OOPIF world, how do we know which process to dispatch
-      //        this error too, if we couldn't find a frame?
-      SendErrorForV8Message(params.frame_id, params.world_id, params.serial,
-                            OxideMsg_SendMessage_Error::INVALID_DESTINATION,
-                            "Invalid frame ID");
-      return;
-    }
-
-    if (!TryDispatchV8MessageToTarget(frame, frame, params.world_id,
-                                      params.serial, params.msg_id,
-                                      params.args)) {
-      if (!TryDispatchV8MessageToTarget(this, frame, params.world_id,
-                                        params.serial, params.msg_id,
-                                        params.args)) {
-        SendErrorForV8Message(params.frame_id, params.world_id, params.serial,
-                              OxideMsg_SendMessage_Error::NO_HANDLER,
-                              "No handler was found for message");
-      }
-    }
-
-    return;
-  }
-
-  if (!frame) {
-    return;
-  }
-
-  for (size_t i = 0; i < frame->GetOutgoingMessageRequestCount(); ++i) {
-    OutgoingMessageRequest* request = frame->GetOutgoingMessageRequestAt(i);
-
-    if (request->serial() == params.serial) {
-      request->OnReceiveResponse(params.args, params.error);
-      return;
-    }
   }
 }
 
@@ -617,16 +511,6 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
       return;
     }
   }
-}
-
-bool WebView::OnMessageReceived(const IPC::Message& message) {
-  bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(WebView, message)
-    IPC_MESSAGE_HANDLER(OxideHostMsg_SendMessage, DispatchV8Message)
-    IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP()
-
-  return handled;
 }
 
 size_t WebView::GetMessageHandlerCount() const {
