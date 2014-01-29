@@ -40,6 +40,9 @@ void ContentRendererClient::RenderFrameCreated(
 
 void ContentRendererClient::RenderViewCreated(
     content::RenderView* render_view) {
+  // XXX: This is currently here because RenderFrame proxies the
+  //      notifications we're interested in to RenderView. Make this
+  //      a RenderFrameObserver when it grows the features we need
   new UserScriptScheduler(render_view);
 }
 
