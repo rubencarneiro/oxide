@@ -160,6 +160,9 @@ class WebView : public MessageTarget,
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
+  void DidUpdateFaviconURL(
+      int32 page_id, const std::vector<content::FaviconURL>& candidates) FINAL;
+
   bool OnMessageReceived(const IPC::Message& message) FINAL;
 
   virtual size_t GetMessageHandlerCount() const OVERRIDE;
@@ -206,6 +209,7 @@ class WebView : public MessageTarget,
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
+  virtual void OnIconChanged(const GURL& icon);
   virtual void OnCommandsUpdated();
 
   virtual void OnLoadProgressChanged(double progress);

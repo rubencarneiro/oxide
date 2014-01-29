@@ -58,6 +58,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
+  Q_PROPERTY(QUrl icon READ icon NOTIFY iconChanged)
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
@@ -84,6 +85,8 @@ class OxideQQuickWebView : public QQuickItem {
   void setUrl(const QUrl& url);
 
   QString title() const;
+
+  QUrl icon() const;
 
   bool canGoBack() const;
   bool canGoForward() const;
@@ -120,6 +123,7 @@ class OxideQQuickWebView : public QQuickItem {
  Q_SIGNALS:
   void urlChanged();
   void titleChanged();
+  void iconChanged();
   void navigationHistoryChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();

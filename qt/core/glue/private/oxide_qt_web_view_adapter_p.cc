@@ -47,6 +47,10 @@ void WebViewAdapterPrivate::OnTitleChanged() {
   a->TitleChanged();
 }
 
+void WebViewAdapterPrivate::OnIconChanged(const GURL& icon) {
+  a->IconChanged(QUrl(QString::fromStdString(icon.spec())));
+}
+
 void WebViewAdapterPrivate::OnCommandsUpdated() {
   a->CommandsUpdated();
 }

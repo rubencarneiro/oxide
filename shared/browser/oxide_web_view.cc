@@ -34,6 +34,7 @@
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
+#include "content/public/common/favicon_url.h"
 #include "net/base/net_errors.h"
 #include "url/gurl.h"
 
@@ -198,6 +199,7 @@ void WebView::OnFrameCreated(int64 parent_frame_id,
 
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
+void WebView::OnIconChanged(const GURL& icon) {}
 void WebView::OnCommandsUpdated() {}
 
 void WebView::OnLoadProgressChanged(double progress) {}
@@ -594,6 +596,17 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
   for (int i = 0; i < count; ++i) {
     if (controller.GetEntryAtIndex(i) == entry) {
       OnNavigationEntryChanged(i);
+      return;
+    }
+  }
+}
+
+void WebView::DidUpdateFaviconURL(
+    int32 page_id, const std::vector<content::FaviconURL>& candidates) {
+  std::vector<content::FaviconURL>::const_iterator it;
+  for (it = candidates.begin(); it != candidates.end(); ++it) {
+    if (it->icon_type == content::FaviconURL::FAVICON) {
+      OnIconChanged(it->icon_url);
       return;
     }
   }
