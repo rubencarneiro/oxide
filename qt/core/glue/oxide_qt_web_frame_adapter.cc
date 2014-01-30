@@ -16,6 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_web_frame_adapter.h"
+#include "oxide_qt_web_frame_adapter_p.h"
 
 #include <QJsonDocument>
 #include <QString>
@@ -25,10 +26,37 @@
 
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
-#include "qt/core/glue/private/oxide_qt_web_frame_adapter_p.h"
 
 namespace oxide {
 namespace qt {
+
+WebFrameAdapterPrivate::WebFrameAdapterPrivate() :
+    owner(NULL) {}
+
+WebFrameAdapterPrivate::~WebFrameAdapterPrivate() {
+  while (!outgoing_message_requests_.isEmpty()) {
+    RemoveOutgoingMessageRequest(outgoing_message_requests_.first());
+  }
+}
+
+void WebFrameAdapterPrivate::AddOutgoingMessageRequest(
+    OutgoingMessageRequestAdapter* request) {
+  DCHECK(!outgoing_message_requests_.contains(request));
+
+  OutgoingMessageRequestAdapterPrivate::get(request)->frame = this;
+  outgoing_message_requests_.append(request);
+}
+
+void WebFrameAdapterPrivate::RemoveOutgoingMessageRequest(
+    OutgoingMessageRequestAdapter* request) {
+  outgoing_message_requests_.removeOne(request);
+  OutgoingMessageRequestAdapterPrivate::get(request)->frame = NULL;
+}
+
+// static
+WebFrameAdapterPrivate* WebFrameAdapterPrivate::get(WebFrameAdapter* adapter) {
+  return adapter->priv.data();
+}
 
 WebFrameAdapter::WebFrameAdapter() :
     priv(new WebFrameAdapterPrivate()) {}

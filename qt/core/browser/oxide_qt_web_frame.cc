@@ -22,9 +22,9 @@
 #include "base/logging.h"
 
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 #include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
 #include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
-#include "qt/core/glue/private/oxide_qt_web_frame_adapter_p.h"
 
 namespace oxide {
 namespace qt {

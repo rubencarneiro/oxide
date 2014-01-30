@@ -28,10 +28,10 @@
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
 #include "oxide_qt_message_handler_adapter_p.h"
-#include "oxide_qt_web_frame_adapter_p.h"
 
 namespace oxide {
 namespace qt {
