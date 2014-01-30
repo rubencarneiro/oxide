@@ -5,7 +5,7 @@
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -189,17 +189,17 @@
+@@ -182,17 +182,17 @@
              'gl_egl_api_implementation.h',
              '<(gl_binding_output_dir)/gl_bindings_autogen_egl.cc',
              '<(gl_binding_output_dir)/gl_bindings_autogen_egl.h',
@@ -65,9 +65,9 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  namespace gfx {
  
  struct GL_EXPORT DriverGL {
-   void Initialize();
-@@ -276,17 +279,17 @@ struct GL_EXPORT DriverEGL {
-   void UpdateDebugExtensionBindings();
+   void InitializeStaticBindings();
+@@ -272,17 +275,17 @@ struct GL_EXPORT DriverEGL {
+   void ClearBindings();
  
    ProcsEGL fn;
    ProcsEGL debug_fn;
@@ -78,14 +78,14 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 -#if defined(USE_X11)
 +#if defined(OS_LINUX)
  struct GL_EXPORT DriverGLX {
-   void InitializeBindings();
-   void InitializeExtensionBindings(GLContext* context);
+   void InitializeStaticBindings();
+   void InitializeDynamicBindings(GLContext* context);
    void InitializeDebugBindings();
    void ClearBindings();
-   void UpdateDebugExtensionBindings();
  
    ProcsGLX fn;
-@@ -317,16 +320,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+   ProcsGLX debug_fn;
+@@ -312,16 +315,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -108,7 +108,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  #endif
  
- // Find an entry point to the mock GL implementation.
+ }  // namespace gfx
 diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
 --- a/ui/gl/gl_image_glx.cc
 +++ b/ui/gl/gl_image_glx.cc
@@ -174,7 +174,7 @@ diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
 diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 --- a/ui/gl/gl_implementation.cc
 +++ b/ui/gl/gl_implementation.cc
-@@ -73,16 +73,19 @@ WGLApi* g_current_wgl_context;
+@@ -59,16 +59,19 @@ WGLApi* g_current_wgl_context;
  #elif defined(USE_X11)
  
  EGLApi* g_current_egl_context;
@@ -197,7 +197,7 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
 --- a/ui/gl/gl_surface_egl.cc
 +++ b/ui/gl/gl_surface_egl.cc
-@@ -655,17 +655,17 @@ EGLSurface SurfacelessEGL::GetHandle() {
+@@ -746,17 +746,17 @@ EGLSurface SurfacelessEGL::GetHandle() {
  
  void* SurfacelessEGL::GetShareHandle() {
    return NULL;

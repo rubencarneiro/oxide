@@ -91,7 +91,7 @@ void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
   }
 }
 
-bool InitializeGLBindings(GLImplementation implementation) {
+bool InitializeStaticGLBindings(GLImplementation implementation) {
   if (GetGLImplementation() != kGLImplementationNone) {
     return true;
   }
@@ -117,8 +117,8 @@ bool InitializeGLBindings(GLImplementation implementation) {
       AddGLNativeLibrary(library);
       SetGLImplementation(kGLImplementationDesktopGL);
 
-      InitializeGLBindingsGL();
-      InitializeGLBindingsGLX();
+      InitializeStaticGLBindingsGL();
+      InitializeStaticGLBindingsGLX();
       break;
     }
 
@@ -131,8 +131,8 @@ bool InitializeGLBindings(GLImplementation implementation) {
 
       SetGLImplementation(kGLImplementationEGLGLES2);
 
-      InitializeGLBindingsGL();
-      InitializeGLBindingsEGL();
+      InitializeStaticGLBindingsGL();
+      InitializeStaticGLBindingsEGL();
 
       // These two functions take single precision float rather than double
       // precision float parameters in GLES.
@@ -142,7 +142,7 @@ bool InitializeGLBindings(GLImplementation implementation) {
     }
 
     case kGLImplementationOSMesaGL:
-      return InitializeGLBindingsOSMesaGL();
+      return InitializeStaticGLBindingsOSMesaGL();
 
     default:
       NOTIMPLEMENTED();
@@ -152,24 +152,24 @@ bool InitializeGLBindings(GLImplementation implementation) {
   return true;
 }
 
-bool InitializeGLExtensionBindings(GLImplementation implementation,
-                                   GLContext* context) {
+bool InitializeDynamicGLBindings(GLImplementation implementation,
+                                 GLContext* context) {
   switch (implementation) {
     case kGLImplementationDesktopGL: {
-      InitializeGLExtensionBindingsGL(context);
-      InitializeGLExtensionBindingsGLX(context);
+      InitializeDynamicGLBindingsGL(context);
+      InitializeDynamicGLBindingsGLX(context);
       break;
     }
 
     case kGLImplementationEGLGLES2: {
-      InitializeGLExtensionBindingsGL(context);
-      InitializeGLExtensionBindingsEGL(context);
+      InitializeDynamicGLBindingsGL(context);
+      InitializeDynamicGLBindingsEGL(context);
       break;
     }
 
     case kGLImplementationOSMesaGL:
-      InitializeGLExtensionBindingsGL(context);
-      InitializeGLExtensionBindingsOSMESA(context);
+      InitializeDynamicGLBindingsGL(context);
+      InitializeDynamicGLBindingsOSMESA(context);
       break;
 
     default:

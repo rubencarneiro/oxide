@@ -38,12 +38,12 @@ UserScriptAdapterPrivate::UserScriptAdapterPrivate(
     a(adapter),
     weak_factory_(this) {}
 
-void UserScriptAdapterPrivate::OnGotFileContents(base::PlatformFileError error,
+void UserScriptAdapterPrivate::OnGotFileContents(base::File::Error error,
                                                  const char* data,
                                                  int bytes_read) {
   DCHECK_EQ(state_, UserScriptAdapter::Loading);
 
-  if (error != base::PLATFORM_FILE_OK) {
+  if (error != base::File::FILE_OK) {
     state_ = UserScriptAdapter::Failed;
     a->OnScriptLoadFailed();
     return;
