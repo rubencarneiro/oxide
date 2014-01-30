@@ -50,9 +50,6 @@ endif()
 
 # Import the configuration for this build
 include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
-if(NOT DEFINED OXIDE_LIB)
-  message(FATAL_ERROR "config.cmake must define OXIDE_LIB")
-endif()
 
 find_program(PYTHON python)
 if(PYTHON STREQUAL "PYTHON-NOTFOUND")
@@ -145,11 +142,5 @@ add_custom_target(
     DEPENDS gold
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building gyp_all target")
-
-# Allow objects linked by cmake to declare a run-time dependency on the
-# main library, built with gyp
-add_library(OxideLib SHARED IMPORTED)
-set(OXIDE_LIB ${CHROMIUM_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${OXIDE_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
-set_target_properties(OxideLib PROPERTIES IMPORTED_LOCATION ${OXIDE_LIB})
 
 add_subdirectory(${OXIDE_BUILD})

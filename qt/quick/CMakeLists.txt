@@ -71,7 +71,7 @@ set_target_properties(
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME})
 
 qt5_use_modules(${PLUGIN} Core Gui Qml Quick)
-target_link_libraries(${PLUGIN} OxideLib)
+target_link_libraries(${PLUGIN} OxideQtCore)
 
 add_custom_command(
     TARGET ${PLUGIN} POST_BUILD

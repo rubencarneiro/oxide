@@ -1,5 +1,4 @@
-set(QT_SO_VERSION 0)
-set(OXIDE_LIB OxideQtCore)
+set(OXIDE_CORELIB_SO_VERSION 0)
 if(CMAKE_CROSSCOMPILING)
   # QT_MOC_EXECUTABLE is set by Qt5CoreConfigExtras, but it sets it to
   # the target executable rather than the host executable, which is no
@@ -20,4 +19,4 @@ else()
   # This should be enough to initialize QT_MOC_EXECUTABLE
   find_package(Qt5Core)
 endif()
-set(OXIDE_GYP_EXTRA_ARGS -Dso_version=${QT_SO_VERSION} -Dqt_moc_executable=${QT_MOC_EXECUTABLE})
+set(OXIDE_GYP_EXTRA_ARGS -Dso_version=${OXIDE_CORELIB_SO_VERSION} -Dqt_moc_executable=${QT_MOC_EXECUTABLE})
