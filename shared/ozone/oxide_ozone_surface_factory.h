@@ -15,41 +15,40 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
-#define _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
-
-#include <string>
+#ifndef _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
+#define _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "content/public/common/content_client.h"
+#include "ui/gfx/ozone/surface_factory_ozone.h"
 
 namespace oxide {
 
-class ContentBrowserClient;
-class ContentRendererClient;
-
-class ContentClient : public content::ContentClient {
+class OzoneSurfaceFactory FINAL : public gfx::SurfaceFactoryOzone {
  public:
-  static ContentClient* instance();
-  virtual ~ContentClient();
+  OzoneSurfaceFactory();
 
-  ContentBrowserClient* browser();
-  ContentRendererClient* renderer();
+  HardwareState InitializeHardware() FINAL;
+  void ShutdownHardware() FINAL;
 
-  virtual std::string GetUserAgent() const FINAL;
+  intptr_t GetNativeDisplay() FINAL;
 
-  virtual base::string16 GetLocalizedString(int message_id) const FINAL;
+  gfx::AcceleratedWidget GetAcceleratedWidget() FINAL;
+  gfx::AcceleratedWidget RealizeAcceleratedWidget(
+      gfx::AcceleratedWidget w) FINAL;
 
-  virtual intptr_t GetNativeDisplay() = 0;
+  bool LoadEGLGLES2Bindings(
+      AddGLLibraryCallback add_gl_library,
+      SetGLGetProcAddressProcCallback set_gl_get_proc_address) FINAL;
 
- protected:
-  ContentClient();
+  bool AttemptToResizeAcceleratedWidget(
+      gfx::AcceleratedWidget w,
+      const gfx::Rect& bounds) FINAL;
 
- private:
-  DISALLOW_COPY_AND_ASSIGN(ContentClient);
+  scoped_ptr<gfx::VSyncProvider> CreateVSyncProvider(
+      gfx::AcceleratedWidget w) FINAL;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
+#endif // _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_

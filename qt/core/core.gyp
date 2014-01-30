@@ -64,6 +64,8 @@
         'browser/oxide_qt_web_frame.h',
         'browser/oxide_qt_web_popup_menu.cc',
         'browser/oxide_qt_web_popup_menu.h',
+        'common/oxide_qt_content_client.cc',
+        'common/oxide_qt_content_client.h',
         'glue/private/oxide_qt_message_handler_adapter_p.cc',
         'glue/private/oxide_qt_message_handler_adapter_p.h',
         'glue/private/oxide_qt_outgoing_message_request_adapter_p.cc',

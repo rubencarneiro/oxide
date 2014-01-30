@@ -15,37 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_main_delegate.h"
+#ifndef _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_
+#define _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_
 
-#include "base/lazy_instance.h"
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
 
-#include "qt/core/browser/oxide_qt_content_browser_client.h"
-#include "qt/core/common/oxide_qt_content_client.h"
+#include "shared/common/oxide_content_client.h"
+
+template <typename Type> struct DefaultSingletonTraits;
 
 namespace oxide {
 namespace qt {
 
-namespace {
-base::LazyInstance<ContentBrowserClient> g_content_browser_client =
-    LAZY_INSTANCE_INITIALIZER;
-}
+class ContentClient FINAL : public oxide::ContentClient {
+ public:
+  static ContentClient* GetInstance();
 
-content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClient() {
-  return g_content_browser_client.Pointer();
-}
+  intptr_t GetNativeDisplay() FINAL;
 
-oxide::ContentClient* ContentMainDelegate::CreateContentClient() {
-  return ContentClient::GetInstance();
-}
+ private:
+  friend struct DefaultSingletonTraits<ContentClient>;
+  ContentClient();
 
-ContentMainDelegate::ContentMainDelegate() {}
+  DISALLOW_COPY_AND_ASSIGN(ContentClient);
+};
 
 } // namespace qt
-
-// static
-ContentMainDelegate* ContentMainDelegate::Create() {
-  return new qt::ContentMainDelegate();
-}
-
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_

@@ -15,13 +15,43 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "base/message_loop/message_pump_x11.h"
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "base/logging.h"
+#include "ui/ozone/ozone_platform.h"
 
-#include "shared/browser/oxide_content_browser_client.h"
-#include "shared/common/oxide_content_client.h"
+#include "oxide_ozone_surface_factory.h"
 
-#if defined(USE_X11)
-Display* base::MessagePumpX11::GetDefaultXDisplay() {
-  return oxide::ContentClient::GetInstance()->browser()->GetDefaultXDisplay();
+namespace oxide {
+
+class OzonePlatform : public ui::OzonePlatform {
+ public:
+  OzonePlatform() {}
+  virtual ~OzonePlatform() {}
+
+  gfx::SurfaceFactoryOzone* GetSurfaceFactoryOzone() OVERRIDE {
+    return &surface_factory_;
+  }
+
+  ui::EventFactoryOzone* GetEventFactoryOzone() OVERRIDE {
+    return NULL;
+  }
+
+  ui::InputMethodContextFactoryOzone*
+  GetInputMethodContextFactoryOzone() OVERRIDE {
+    return NULL;
+  }
+
+ private:
+  OzoneSurfaceFactory surface_factory_;
+};
+
+} // namespace oxide
+
+namespace ui {
+
+OzonePlatform* CreateOzonePlatformOxide() {
+  return new oxide::OzonePlatform();
 }
-#endif
+
+} // namespace ui

@@ -48,6 +48,8 @@ base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
 }
 
+ContentMainDelegate::ContentMainDelegate() {}
+
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
   NOTREACHED() << "CreateContentBrowserClient() hasn't been implemented";
@@ -62,7 +64,7 @@ ContentMainDelegate::CreateContentRendererClient() {
 ContentMainDelegate::~ContentMainDelegate() {}
 
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
-  content::SetContentClient(ContentClient::GetInstance());
+  content::SetContentClient(CreateContentClient());
 
   CommandLine* command_line = CommandLine::ForCurrentProcess();
 

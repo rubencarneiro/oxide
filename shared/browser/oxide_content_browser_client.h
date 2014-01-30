@@ -18,13 +18,20 @@
 #ifndef _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 
+#include <vector>
+
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/content_browser_client.h"
+#include "ui/gl/gl_implementation.h"
 
 namespace base {
 class MessagePump;
+}
+
+namespace blink {
+class WebScreenInfo;
 }
 
 namespace content {
@@ -35,11 +42,10 @@ namespace gfx {
 class GLContext;
 }
 
-typedef struct _XDisplay Display;
-
 namespace oxide {
 
 class GLShareGroup;
+class SharedGLContext;
 class WebFrameTree;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
@@ -76,27 +82,23 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                            const GURL& url,
                            WebPreferences* prefs) FINAL;
 
-  bool GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
-
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
 
-#if defined(USE_X11)
-  virtual Display* GetDefaultXDisplay() = 0;
-#endif
-
-  virtual scoped_refptr<gfx::GLContext> CreateSharedGLContext(
+  virtual scoped_refptr<oxide::SharedGLContext> CreateSharedGLContext(
       oxide::GLShareGroup* share_group);
+
+  virtual void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
+
+  virtual void GetDefaultScreenInfo(blink::WebScreenInfo* result) = 0;
 
  protected:
   // Limit default constructor access to derived classes
-  ContentBrowserClient() {}
+  ContentBrowserClient();
 
  private:
-  virtual void GetDefaultScreenInfoImpl(blink::WebScreenInfo* result) = 0;
-
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 

@@ -17,7 +17,6 @@
 
 #include "oxide_content_client.h"
 
-#include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "webkit/common/user_agent/user_agent.h"
@@ -29,6 +28,26 @@
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 namespace oxide {
+
+namespace {
+ContentClient* g_inst;
+}
+
+ContentClient::ContentClient() {
+  DCHECK(!g_inst);
+  g_inst = this;
+}
+
+// static
+ContentClient* ContentClient::instance() {
+  DCHECK(g_inst);
+  return g_inst;
+}
+
+ContentClient::~ContentClient() {
+  DCHECK_EQ(g_inst, this);
+  g_inst = NULL;
+}
 
 ContentBrowserClient* ContentClient::browser() {
   return static_cast<ContentBrowserClient *>(
@@ -47,13 +66,6 @@ std::string ContentClient::GetUserAgent() const {
 
 base::string16 ContentClient::GetLocalizedString(int message_id) const {
   return base::UTF8ToUTF16(localized_message_from_id(message_id));
-}
-
-// static
-ContentClient* ContentClient::GetInstance() {
-  // XXX: Port-specific derivates of ContentClient will provide their own
-  //      GetInstance() which will be called from here
-  return Singleton<ContentClient>::get();
 }
 
 } // namespace oxide
