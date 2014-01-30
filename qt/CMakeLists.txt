@@ -18,6 +18,17 @@
 
 set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/oxide-qt)
 
+if(CMAKE_CROSSCOMPILING)
+  # Dummy targets - not used anywhere, but this stops Qt5CoreConfigExtras.cmake
+  # from creating them and checking if the binary exists, which is broken when
+  # cross-building because it checks for the target system binary. We need the
+  # host system binaries installed, because they are in the same package as the
+  # moc in Ubuntu (qtbase5-dev-tools), which is not currently multi-arch
+  add_executable(Qt5::qmake IMPORTED)
+  add_executable(Qt5::rcc IMPORTED)
+  add_executable(Qt5::uic IMPORTED)
+endif()
+
 find_package(Qt5Core)
 find_package(Qt5Gui)
 find_package(Qt5Qml)
