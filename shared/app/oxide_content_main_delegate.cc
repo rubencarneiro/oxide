@@ -19,6 +19,7 @@
 
 #include <dlfcn.h>
 #include <string>
+#include <vector>
 
 #include "base/base_paths.h"
 #include "base/command_line.h"
@@ -69,34 +70,46 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   if (process_type.empty()) {
     // We need to override FILE_EXE in the browser process to the path of the
     // renderer, as various bits of Chrome use this to find other resources
-    base::FilePath resource_dir;
-    const char* resource_path = getenv("OXIDE_RESOURCE_PATH");
-    if (resource_path) {
+    base::FilePath subprocess_exe;
+    const char* subprocess_path = getenv("OXIDE_SUBPROCESS_PATH");
+    if (subprocess_path) {
       // Make sure that we have a properly formed absolute path
       // there are some load issues if not.
-      resource_dir = base::MakeAbsoluteFilePath(base::FilePath(resource_path));
+      subprocess_exe =
+          base::MakeAbsoluteFilePath(base::FilePath(subprocess_path));
     } else {
-      Dl_info info;
-      int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::IsRunning),
-                      &info);
-      DCHECK_NE(rv, 0) << "Failed to determine module path";
+      subprocess_exe = base::FilePath(FILE_PATH_LITERAL(OXIDE_SUBPROCESS_PATH));
+      if (!subprocess_exe.IsAbsolute()) {
+        Dl_info info;
+        int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::IsRunning),
+                        &info);
+        DCHECK_NE(rv, 0) << "Failed to determine module path";
 
-      resource_dir = base::FilePath(info.dli_fname).DirName().Append(
-          FILE_PATH_LITERAL(OXIDE_RESOURCE_SUBPATH));
+        base::FilePath subprocess_rel(subprocess_exe);
+        subprocess_exe = base::FilePath(info.dli_fname).DirName();
+
+        std::vector<base::FilePath::StringType> components;
+        subprocess_rel.GetComponents(&components);
+        for (size_t i = 0; i < components.size(); ++i) {
+          subprocess_exe = subprocess_exe.Append(components[i]);
+        }
+      }
     }
 
-    PathService::Override(
-        base::FILE_EXE,
-        resource_dir.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS)));
+    PathService::Override(base::FILE_EXE, subprocess_exe);
+
+    // Pick the correct subprocess path
+    command_line->AppendSwitchASCII(switches::kBrowserSubprocessPath,
+                                    subprocess_exe.value().c_str());
 
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
+
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
                                       renderer_cmd_prefix);
     }
-
     if (getenv("OXIDE_NO_SANDBOX")) {
       command_line->AppendSwitch(switches::kNoSandbox);
     }
