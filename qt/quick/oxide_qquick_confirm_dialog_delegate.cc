@@ -50,13 +50,11 @@ QString ConfirmDialogContext::message() const {
 }
 
 void ConfirmDialogContext::accept() const {
-  //callback_->run(true);
-  //delegate_->deleteLater();
+  delegate_->Close(true);
 }
 
 void ConfirmDialogContext::reject() const {
-  //callback_->run(false);
-  //delegate_->deleteLater();
+  delegate_->Close(false);
 }
 
 ConfirmDialogDelegate::ConfirmDialogDelegate(OxideQQuickWebView* webview) :

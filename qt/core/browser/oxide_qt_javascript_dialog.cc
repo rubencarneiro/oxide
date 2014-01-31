@@ -32,7 +32,9 @@ JavaScriptDialog::JavaScriptDialog(
 }
 
 void JavaScriptDialog::Run() {
-  delegate_->Show();
+  if (!delegate_->Show()) {
+    Close(false);
+  }
 }
 
 QUrl JavaScriptDialog::originUrl() const {

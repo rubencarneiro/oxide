@@ -57,13 +57,11 @@ BeforeUnloadDialogContext::BeforeUnloadDialogContext(
     callback_(callback) {}
 
 void BeforeUnloadDialogContext::accept() const {
-  //callback_->run(true);
-  //delegate_->deleteLater();
+  delegate_->Close(true);
 }
 
 void BeforeUnloadDialogContext::reject() const {
-  //callback_->run(false);
-  //delegate_->deleteLater();
+  delegate_->Close(false);
 }
 
 BeforeUnloadDialogDelegate::BeforeUnloadDialogDelegate(
@@ -89,7 +87,7 @@ bool BeforeUnloadDialogDelegate::Handle(
     const QString& prompt_override) {
   Q_UNUSED(prompt_override);
 
-  if (isShown()) {
+  /*if (isShown()) {
     BeforeUnloadDialogContext* contextObject =
         qobject_cast<BeforeUnloadDialogContext*>(context_->contextObject());
     if (accept) {
@@ -100,7 +98,8 @@ bool BeforeUnloadDialogDelegate::Handle(
     return true;
   } else {
     return false;
-  }
+  }*/
+  return false;
 }
 
 } // namespace qquick

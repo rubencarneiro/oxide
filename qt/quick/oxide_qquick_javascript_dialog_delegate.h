@@ -37,14 +37,13 @@ namespace qquick {
 class JavaScriptDialogDelegate : public oxide::qt::JavaScriptDialogDelegate {
  public:
   JavaScriptDialogDelegate(OxideQQuickWebView* webview);
+  ~JavaScriptDialogDelegate();
 
   //virtual bool Handle(bool accept, const QString& prompt_override) = 0;
 
  protected:
   // takes ownership of contextObject
   bool show(QObject* contextObject, QQmlComponent* component);
-
-  bool isShown() const;
 
   OxideQQuickWebView* web_view_;
 

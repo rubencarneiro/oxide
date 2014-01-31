@@ -17,6 +17,8 @@
 
 #include "oxide_qt_javascript_dialog_delegate.h"
 
+#include "base/strings/utf_string_conversions.h"
+
 #include "qt/core/browser/oxide_qt_javascript_dialog.h"
 
 namespace oxide {
@@ -26,6 +28,10 @@ JavaScriptDialogDelegate::JavaScriptDialogDelegate() :
     dialog_(NULL) {}
 
 JavaScriptDialogDelegate::~JavaScriptDialogDelegate() {}
+
+void JavaScriptDialogDelegate::Close(bool accept, const QString& user_input) {
+  dialog_->Close(accept, base::UTF8ToUTF16(user_input.toStdString()));
+}
 
 void JavaScriptDialogDelegate::SetDialog(JavaScriptDialog* dialog) {
   dialog_ = dialog;

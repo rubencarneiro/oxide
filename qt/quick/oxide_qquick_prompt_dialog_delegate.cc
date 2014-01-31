@@ -75,13 +75,11 @@ void PromptDialogContext::setCurrentValue(const QString& value) {
 }
 
 void PromptDialogContext::accept(const QString& value) const {
-  //callback_->run(true, value);
-  //delegate_->deleteLater();
+  delegate_->Close(true, value);
 }
 
 void PromptDialogContext::reject() const {
-  //callback_->run(false);
-  //delegate_->deleteLater();
+  delegate_->Close(false);
 }
 
 PromptDialogDelegate::PromptDialogDelegate(OxideQQuickWebView* webview) :

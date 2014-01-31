@@ -27,12 +27,11 @@ class JavaScriptDialog {
   virtual ~JavaScriptDialog();
 
   virtual void Run() = 0;
+  void Close(bool accept, const base::string16& user_input = base::string16());
 
   bool Handle(bool accept, const base::string16* prompt_override);
 
  protected:
-  void Close(bool accept, const base::string16& user_input);
-
   friend class JavaScriptDialogManager;
 
   GURL origin_url_;

@@ -49,8 +49,7 @@ QString AlertDialogContext::message() const {
 }
 
 void AlertDialogContext::accept() const {
-  //callback_->run(true);
-  //delegate_->deleteLater();
+  delegate_->Close(true);
 }
 
 AlertDialogDelegate::AlertDialogDelegate(OxideQQuickWebView* webview) :

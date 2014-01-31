@@ -38,7 +38,7 @@ class Q_DECL_EXPORT JavaScriptDialogDelegate {
   virtual ~JavaScriptDialogDelegate();
 
   virtual bool Show() = 0;
-  // TODO: add a Hide method
+  void Close(bool accept, const QString& user_input = QString());
 
  protected:
   JavaScriptDialogDelegate();
