@@ -15,35 +15,40 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_FILE_UTILS_H_
-#define _OXIDE_SHARED_COMMON_FILE_UTILS_H_
+#ifndef _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
+#define _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
 
 #include "base/basictypes.h"
-#include "base/callback.h"
 #include "base/compiler_specific.h"
-#include "base/files/file.h"
-
-namespace base {
-class FilePath;
-class TaskRunner;
-}
+#include "ui/gfx/ozone/surface_factory_ozone.h"
 
 namespace oxide {
 
-class FileUtils FINAL {
+class OzoneSurfaceFactory FINAL : public gfx::SurfaceFactoryOzone {
  public:
-  typedef base::Callback<void(base::File::Error,
-                              const char*,
-                              int)> GetFileContentsCallback;
+  OzoneSurfaceFactory();
 
-  static bool GetFileContents(base::TaskRunner* task_runner,
-                              const base::FilePath& file_path,
-                              const GetFileContentsCallback& callback);
+  HardwareState InitializeHardware() FINAL;
+  void ShutdownHardware() FINAL;
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(FileUtils);
+  intptr_t GetNativeDisplay() FINAL;
+
+  gfx::AcceleratedWidget GetAcceleratedWidget() FINAL;
+  gfx::AcceleratedWidget RealizeAcceleratedWidget(
+      gfx::AcceleratedWidget w) FINAL;
+
+  bool LoadEGLGLES2Bindings(
+      AddGLLibraryCallback add_gl_library,
+      SetGLGetProcAddressProcCallback set_gl_get_proc_address) FINAL;
+
+  bool AttemptToResizeAcceleratedWidget(
+      gfx::AcceleratedWidget w,
+      const gfx::Rect& bounds) FINAL;
+
+  scoped_ptr<gfx::VSyncProvider> CreateVSyncProvider(
+      gfx::AcceleratedWidget w) FINAL;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_COMMON_FILE_UTILS_H_
+#endif // _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_

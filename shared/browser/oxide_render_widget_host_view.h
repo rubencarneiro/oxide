@@ -167,7 +167,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
-      const base::Callback<void(bool, const SkBitmap&)>& callback) FINAL;
+      const base::Callback<void(bool, const SkBitmap&)>& callback,
+      const SkBitmap::Config config) FINAL;
 
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,

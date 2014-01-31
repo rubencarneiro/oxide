@@ -425,7 +425,8 @@ void RenderWidgetHostView::ScrollOffsetChanged() {}
 void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,
-    const base::Callback<void(bool, const SkBitmap&)>& callback) {
+    const base::Callback<void(bool, const SkBitmap&)>& callback,
+    const SkBitmap::Config config) {
   GetRenderWidgetHost()->GetSnapshotFromRenderer(src_subrect, callback);
 }
 

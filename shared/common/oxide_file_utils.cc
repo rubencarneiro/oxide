@@ -49,15 +49,15 @@ class GetFileContentsJob FINAL : public base::RefCounted<GetFileContentsJob> {
 
     return base::FileUtilProxy::CreateOrOpen(
         task_runner_.get(), file_path,
-        base::PLATFORM_FILE_OPEN | base::PLATFORM_FILE_READ,
+        base::File::FLAG_OPEN | base::File::FLAG_READ,
         base::Bind(&GetFileContentsJob::OnFileOpened, this));
   }
 
  private:
-  void OnFileOpened(base::PlatformFileError error,
+  void OnFileOpened(base::File::Error error,
                     base::PassPlatformFile file,
                     bool created) {
-    if (error != base::PLATFORM_FILE_OK) {
+    if (error != base::File::FILE_OK) {
       callback_.Run(error, NULL, -1);
       return;
     }
@@ -66,19 +66,19 @@ class GetFileContentsJob FINAL : public base::RefCounted<GetFileContentsJob> {
     if (!base::FileUtilProxy::GetFileInfoFromPlatformFile(
         task_runner_.get(), file_,
         base::Bind(&GetFileContentsJob::OnGotFileInfo, this))) {
-      callback_.Run(base::PLATFORM_FILE_ERROR_FAILED, NULL, -1);
+      callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
     }
   }
 
-  void OnGotFileInfo(base::PlatformFileError error,
-                     const base::PlatformFileInfo& info) {
-    if (error != base::PLATFORM_FILE_OK) {
+  void OnGotFileInfo(base::File::Error error,
+                     const base::File::Info& info) {
+    if (error != base::File::FILE_OK) {
       callback_.Run(error, NULL, -1);
       return;
     }
 
     if (info.is_directory) {
-      callback_.Run(base::PLATFORM_FILE_ERROR_NOT_A_FILE, NULL, -1);
+      callback_.Run(base::File::FILE_ERROR_NOT_A_FILE, NULL, -1);
       return;
     }
 
@@ -86,22 +86,22 @@ class GetFileContentsJob FINAL : public base::RefCounted<GetFileContentsJob> {
     if (!base::FileUtilProxy::Read(
         task_runner_.get(), file_, 0, info.size,
         base::Bind(&GetFileContentsJob::OnGotData, this))) {
-      callback_.Run(base::PLATFORM_FILE_ERROR_FAILED, NULL, -1);
+      callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
     }
   }
 
-  void OnGotData(base::PlatformFileError error,
+  void OnGotData(base::File::Error error,
                  const char* data,
                  int bytes_read) {
-    if (error != base::PLATFORM_FILE_OK) {
+    if (error != base::File::FILE_OK) {
       callback_.Run(error, NULL, -1);
       return;
     }
 
-    callback_.Run(base::PLATFORM_FILE_OK, data, bytes_read);
+    callback_.Run(base::File::FILE_OK, data, bytes_read);
   }
 
-  static void OnFileClosed(base::PlatformFileError error) {
+  static void OnFileClosed(base::File::Error error) {
     // XXX: Do something with the error?
   }
 

@@ -17,10 +17,10 @@
 {
   'targets': [
     {
-      'target_name': 'oxide-renderer',
+      'target_name': '<(oxide_renderer_name)',
       'type': 'executable',
       'dependencies': [
-        '../core/core.gyp:OxideQtCore'
+        '../core/core.gyp:<(oxide_core_name)'
       ],
       'include_dirs': [
         '../..',

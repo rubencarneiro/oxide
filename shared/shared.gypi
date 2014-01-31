@@ -23,7 +23,14 @@
             ['exclude', 'browser/gpu/compositor_util\\.cc']
           ]
         }
-      ]
+      ],
+      ['_target_name=="gl"', {
+        'sources/': [
+          ['exclude', 'gl_context_ozone\\.c'],
+          ['exclude', 'gl_image_ozone\\.c'],
+          ['exclude', 'gl_implementation_ozone\\.c'],
+        ],
+      }],
     ]
   }
 }

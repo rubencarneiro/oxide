@@ -24,8 +24,6 @@
 #include "base/compiler_specific.h"
 #include "content/public/common/content_client.h"
 
-template <typename Type> struct DefaultSingletonTraits;
-
 namespace oxide {
 
 class ContentBrowserClient;
@@ -33,18 +31,18 @@ class ContentRendererClient;
 
 class ContentClient : public content::ContentClient {
  public:
-  static ContentClient* GetInstance();
+  static ContentClient* instance();
+  virtual ~ContentClient();
 
   ContentBrowserClient* browser();
   ContentRendererClient* renderer();
 
   virtual std::string GetUserAgent() const FINAL;
 
+  virtual intptr_t GetNativeDisplay() = 0;
+
  protected:
-  // Limit default constructor access to derived classes and
-  // our lazy instance initializer
-  friend struct DefaultSingletonTraits<ContentClient>;
-  ContentClient() {}
+  ContentClient();
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ContentClient);

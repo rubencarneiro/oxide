@@ -16,16 +16,35 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/oxide-qt)
+if(CMAKE_CROSSCOMPILING)
+  # Dummy targets - not used anywhere, but this stops Qt5CoreConfigExtras.cmake
+  # from creating them and checking if the binary exists, which is broken when
+  # cross-building because it checks for the target system binary. We need the
+  # host system binaries installed, because they are in the same package as the
+  # moc in Ubuntu (qtbase5-dev-tools), which is not currently multi-arch
+  add_executable(Qt5::qmake IMPORTED)
+  add_executable(Qt5::rcc IMPORTED)
+  add_executable(Qt5::uic IMPORTED)
+endif()
+
+set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_SUBPROCESS_DIR})
+set(OXIDE_CORELIB_UNVERSIONED
+    ${CMAKE_SHARED_LIBRARY_PREFIX}${OXIDE_CORELIB_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
+set(OXIDE_CORELIB_VERSIONED ${OXIDE_CORELIB_UNVERSIONED}.${OXIDE_CORELIB_SO_VERSION})
+set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/imports)
+set(OXIDE_BIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/bin)
+
+# Allow objects linked by cmake to declare a run-time dependency on the
+# main library, built with gyp
+add_library(${OXIDE_CORELIB_NAME} SHARED IMPORTED)
+set_target_properties(
+    ${OXIDE_CORELIB_NAME}
+    PROPERTIES IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED})
 
 find_package(Qt5Core)
 find_package(Qt5Gui)
 find_package(Qt5Qml)
 find_package(Qt5Quick)
-
-set(OXIDE_LIB_VERSIONED ${OXIDE_LIB}.${QT_SO_VERSION})
-set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/imports)
-set(OXIDE_BIN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlscene.sh.in
@@ -39,8 +58,10 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlscene.sh
 
 add_custom_target(
     gyp_postbuild ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OXIDE_LIB_VERSIONED} ${OXIDE_LIB}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHROMIUM_PRODUCT_DIR}/chrome_sandbox ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_VERSIONED} ${CHROMIUM_LIB_DIR}${OXIDE_CORELIB_UNVERSIONED}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CHROMIUM_PRODUCT_DIR}/chrome_sandbox ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
     DEPENDS gyp_all
     COMMENT "Running gyp post build commands")
 
@@ -52,14 +73,21 @@ if(ENABLE_TESTS)
   add_subdirectory(tests)
 endif()
 
-install(FILES ${OXIDE_LIB_VERSIONED} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES ${OXIDE_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
+install(FILES ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_VERSIONED}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CHROMIUM_PRODUCT_DIR}/oxide.pak
         DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
 install(FILES ${CHROMIUM_PRODUCT_DIR}/oxide_100_percent.pak
         DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
+install(FILES ${CHROMIUM_PRODUCT_DIR}/icudtl.dat
+        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
+install(FILES ${CHROMIUM_PRODUCT_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ffmpegsumo${CMAKE_SHARED_LIBRARY_SUFFIX}
+        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
 install(PROGRAMS ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
         DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ SETUID)
-install(PROGRAMS ${CHROMIUM_PRODUCT_DIR}/oxide-renderer DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE
+                    GROUP_READ WORLD_EXECUTE WORLD_READ SETUID)
+install(PROGRAMS ${CHROMIUM_PRODUCT_DIR}/${OXIDE_RENDERER_NAME}
+        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})

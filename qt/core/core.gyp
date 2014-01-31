@@ -17,9 +17,9 @@
 {
   'targets': [
     {
-      'target_name': 'OxideQtCore',
+      'target_name': '<(oxide_core_name)',
       'type': 'shared_library',
-      'shared_library_version': '<(so_version)',
+      'shared_library_version': '<(oxide_core_so_version)',
       'dependencies': [
         'OxideQtCore_private',
         'OxideQtCore_public',
@@ -64,6 +64,8 @@
         'browser/oxide_qt_web_frame.h',
         'browser/oxide_qt_web_popup_menu.cc',
         'browser/oxide_qt_web_popup_menu.h',
+        'common/oxide_qt_content_client.cc',
+        'common/oxide_qt_content_client.h',
         'glue/private/oxide_qt_javascript_dialog_closed_callback_p.cc',
         'glue/private/oxide_qt_javascript_dialog_closed_callback_p.h',
         'glue/private/oxide_qt_message_handler_adapter_p.cc',
