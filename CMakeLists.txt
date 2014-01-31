@@ -39,8 +39,8 @@ if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
   set(CHROMIUM_BUILD_TYPE Release)
 endif()
-set(CHROMIUM_GYP_GENERATOR_DIR ${CMAKE_BINARY_DIR}/chromium/gyp/chromium/src)
-set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium/out)
+set(CHROMIUM_GYP_GENERATOR_DIR ${CMAKE_BINARY_DIR}/gyp/chromium/src)
+set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/chromium)
 set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
 set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib.target)
 
@@ -77,13 +77,13 @@ if(NOT DEFINED CHROMIUM_LINKER)
 endif()
 set(SETUP_GOLD_COMMAND
     ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
-    --output ${CHROMIUM_OUTPUT_DIR}/gold --ld ${CHROMIUM_LINKER})
+    --output ${CMAKE_BINARY_DIR}/gold --ld ${CHROMIUM_LINKER})
 get_filename_component(_LINKER_NAME ${CHROMIUM_LINKER} NAME)
 add_custom_command(
-    OUTPUT ${CHROMIUM_OUTPUT_DIR}/gold/${_LINKER_NAME}
+    OUTPUT ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
     COMMAND ${SETUP_GOLD_COMMAND})
 add_custom_target(gold ALL
-                  DEPENDS ${CHROMIUM_OUTPUT_DIR}/gold/${_LINKER_NAME}
+                  DEPENDS ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
                   COMMENT "Setting up gold linker")
 
 message(STATUS "Setting up gold linker")
