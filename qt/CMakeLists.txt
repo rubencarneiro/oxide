@@ -59,7 +59,7 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlscene.sh
 add_custom_target(
     gyp_postbuild ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_VERSIONED} ${CHROMIUM_LIB_DIR}${OXIDE_CORELIB_UNVERSIONED}
+      ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_VERSIONED} ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ${CHROMIUM_PRODUCT_DIR}/chrome_sandbox ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
     DEPENDS gyp_all
