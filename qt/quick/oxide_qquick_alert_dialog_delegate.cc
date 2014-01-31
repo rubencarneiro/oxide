@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,9 +18,8 @@
 #include "oxide_qquick_alert_dialog_delegate.h"
 
 #include <QObject>
-#include <QString>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
+#include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
 namespace qquick {
@@ -31,40 +30,37 @@ class AlertDialogContext : public QObject {
 
  public:
   virtual ~AlertDialogContext() {}
-  AlertDialogContext(OxideQQuickAlertDialogDelegate* delegate,
-                     const QString& message,
-                     oxide::qt::JavaScriptDialogClosedCallback* callback);
+  AlertDialogContext(AlertDialogDelegate* delegate);
 
-  const QString& message() const { return message_; }
+  QString message() const;
 
  public Q_SLOTS:
   void accept() const;
 
  private:
-  OxideQQuickAlertDialogDelegate* delegate_;
-  QString message_;
-  oxide::qt::JavaScriptDialogClosedCallback* callback_;
+  AlertDialogDelegate* delegate_;
 };
 
-AlertDialogContext::AlertDialogContext(
-    OxideQQuickAlertDialogDelegate* delegate,
-    const QString& message,
-    oxide::qt::JavaScriptDialogClosedCallback* callback) :
-    delegate_(delegate),
-    message_(message),
-    callback_(callback) {}
+AlertDialogContext::AlertDialogContext(AlertDialogDelegate* delegate) :
+    delegate_(delegate) {}
 
-void AlertDialogContext::accept() const {
-  callback_->run(true);
-  delegate_->deleteLater();
+QString AlertDialogContext::message() const {
+  return delegate_->messageText();
 }
 
-OxideQQuickAlertDialogDelegate::OxideQQuickAlertDialogDelegate(
-    OxideQQuickWebView* webview,
-    QQmlComponent* component) :
-    OxideQQuickJavaScriptDialogDelegate(webview, component) {}
+void AlertDialogContext::accept() const {
+  //callback_->run(true);
+  //delegate_->deleteLater();
+}
 
-bool OxideQQuickAlertDialogDelegate::Show(
+AlertDialogDelegate::AlertDialogDelegate(OxideQQuickWebView* webview) :
+    JavaScriptDialogDelegate(webview) {}
+
+bool AlertDialogDelegate::Show() {
+  return show(new AlertDialogContext(this), web_view_->alertDialog());
+}
+
+/*bool AlertDialogDelegate::Show(
     const QUrl& origin_url,
     const QString& accept_lang,
     const QString& message_text,
@@ -77,7 +73,7 @@ bool OxideQQuickAlertDialogDelegate::Show(
   return show(new AlertDialogContext(this, message_text, callback));
 }
 
-bool OxideQQuickAlertDialogDelegate::Handle(
+bool AlertDialogDelegate::Handle(
     bool accept,
     const QString& prompt_override) {
   Q_UNUSED(accept);
@@ -91,7 +87,7 @@ bool OxideQQuickAlertDialogDelegate::Handle(
   } else {
     return false;
   }
-}
+}*/
 
 } // namespace qquick
 } // namespace oxide

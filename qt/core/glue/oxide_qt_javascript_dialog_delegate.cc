@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,27 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
-#define _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
+#include "oxide_qt_javascript_dialog_delegate.h"
 
-#include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
+#include "qt/core/browser/oxide_qt_javascript_dialog.h"
 
 namespace oxide {
-namespace qquick {
+namespace qt {
 
-class AlertDialogContext;
+JavaScriptDialogDelegate::JavaScriptDialogDelegate() :
+    dialog_(NULL) {}
 
-class AlertDialogDelegate Q_DECL_FINAL : public JavaScriptDialogDelegate {
- public:
-  AlertDialogDelegate(OxideQQuickWebView* webview);
+JavaScriptDialogDelegate::~JavaScriptDialogDelegate() {}
 
-  bool Show();
+void JavaScriptDialogDelegate::SetDialog(JavaScriptDialog* dialog) {
+  dialog_ = dialog;
+}
 
- private:
-  friend class AlertDialogContext;
-};
+QUrl JavaScriptDialogDelegate::originUrl() const {
+  return dialog_->originUrl();
+}
 
-} // namespace qquick
+QString JavaScriptDialogDelegate::acceptLang() const {
+  return dialog_->acceptLang();
+}
+
+QString JavaScriptDialogDelegate::messageText() const {
+  return dialog_->messageText();
+}
+
+QString JavaScriptDialogDelegate::defaultPromptText() const {
+  return dialog_->defaultPromptText();
+}
+
+} // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_

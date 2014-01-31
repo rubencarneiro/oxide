@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,27 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
-#define _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
+#ifndef _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOG_H_
+#define _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOG_H_
 
-#include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
+#include "content/public/browser/javascript_dialog_manager.h"
 
 namespace oxide {
-namespace qquick {
 
-class AlertDialogContext;
-
-class AlertDialogDelegate Q_DECL_FINAL : public JavaScriptDialogDelegate {
+class JavaScriptDialog {
  public:
-  AlertDialogDelegate(OxideQQuickWebView* webview);
+  virtual ~JavaScriptDialog();
 
-  bool Show();
+  virtual void Run() = 0;
 
- private:
-  friend class AlertDialogContext;
+  bool Handle(bool accept, const base::string16* prompt_override);
+
+ protected:
+  void Close(bool accept, const base::string16& user_input);
+
+  friend class JavaScriptDialogManager;
+
+  GURL origin_url_;
+  std::string accept_lang_;
+  base::string16 message_text_;
+  base::string16 default_prompt_text_;
+
+private:
+  content::WebContents* web_contents_;
+  content::JavaScriptDialogManager::DialogClosedCallback callback_;
 };
 
-} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
+#endif // _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOG_H_

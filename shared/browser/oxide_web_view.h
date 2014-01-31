@@ -55,6 +55,7 @@ class WebContents;
 namespace oxide {
 
 class BrowserContext;
+class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
 
@@ -180,14 +181,10 @@ class WebView : public MessageTarget,
 
   virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
-  virtual void RunJavaScriptDialog(
-      const GURL& origin_url,
-      const std::string& accept_lang,
+  virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
-      const base::string16& message_text,
-      const base::string16& default_prompt_text,
-      const content::JavaScriptDialogManager::DialogClosedCallback& callback,
       bool* did_suppress_message);
+
   virtual void RunBeforeUnloadDialog(
       const base::string16& message_text,
       bool is_reload,

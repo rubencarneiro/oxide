@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,9 +18,8 @@
 #include "oxide_qquick_confirm_dialog_delegate.h"
 
 #include <QObject>
-#include <QString>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
+#include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
 namespace qquick {
@@ -31,46 +30,43 @@ class ConfirmDialogContext : public QObject {
 
  public:
   virtual ~ConfirmDialogContext() {}
-  ConfirmDialogContext(OxideQQuickConfirmDialogDelegate* delegate,
-                       const QString& message,
-                       oxide::qt::JavaScriptDialogClosedCallback* callback);
+  ConfirmDialogContext(ConfirmDialogDelegate* delegate);
 
-  const QString& message() const { return message_; }
+  QString message() const;
 
  public Q_SLOTS:
   void accept() const;
   void reject() const;
 
  private:
-  OxideQQuickConfirmDialogDelegate* delegate_;
-  QString message_;
-  oxide::qt::JavaScriptDialogClosedCallback* callback_;
+  ConfirmDialogDelegate* delegate_;
 };
 
-ConfirmDialogContext::ConfirmDialogContext(
-    OxideQQuickConfirmDialogDelegate* delegate,
-    const QString& message,
-    oxide::qt::JavaScriptDialogClosedCallback* callback) :
-    delegate_(delegate),
-    message_(message),
-    callback_(callback) {}
+ConfirmDialogContext::ConfirmDialogContext(ConfirmDialogDelegate* delegate) :
+    delegate_(delegate) {}
+
+QString ConfirmDialogContext::message() const {
+  return delegate_->messageText();
+}
 
 void ConfirmDialogContext::accept() const {
-  callback_->run(true);
-  delegate_->deleteLater();
+  //callback_->run(true);
+  //delegate_->deleteLater();
 }
 
 void ConfirmDialogContext::reject() const {
-  callback_->run(false);
-  delegate_->deleteLater();
+  //callback_->run(false);
+  //delegate_->deleteLater();
 }
 
-OxideQQuickConfirmDialogDelegate::OxideQQuickConfirmDialogDelegate(
-    OxideQQuickWebView* webview,
-    QQmlComponent* component) :
-    OxideQQuickJavaScriptDialogDelegate(webview, component) {}
+ConfirmDialogDelegate::ConfirmDialogDelegate(OxideQQuickWebView* webview) :
+    JavaScriptDialogDelegate(webview) {}
 
-bool OxideQQuickConfirmDialogDelegate::Show(
+bool ConfirmDialogDelegate::Show() {
+  return show(new ConfirmDialogContext(this), web_view_->confirmDialog());
+}
+
+/*bool OxideQQuickConfirmDialogDelegate::Show(
     const QUrl& origin_url,
     const QString& accept_lang,
     const QString& message_text,
@@ -100,7 +96,7 @@ bool OxideQQuickConfirmDialogDelegate::Handle(
   } else {
     return false;
   }
-}
+}*/
 
 } // namespace qquick
 } // namespace oxide

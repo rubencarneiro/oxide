@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,27 +15,48 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
-#define _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
+#ifndef _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_DELEGATE_H_
+#define _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_DELEGATE_H_
 
-#include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
+#include <QtGlobal>
+#include <QString>
+#include <QUrl>
 
 namespace oxide {
-namespace qquick {
+namespace qt {
 
-class AlertDialogContext;
+class JavaScriptDialog;
 
-class AlertDialogDelegate Q_DECL_FINAL : public JavaScriptDialogDelegate {
+class Q_DECL_EXPORT JavaScriptDialogDelegate {
  public:
-  AlertDialogDelegate(OxideQQuickWebView* webview);
+  enum Type {
+    TypeAlert,
+    TypeConfirm,
+    TypePrompt
+  };
 
-  bool Show();
+  virtual ~JavaScriptDialogDelegate();
 
- private:
-  friend class AlertDialogContext;
+  virtual bool Show() = 0;
+  // TODO: add a Hide method
+
+ protected:
+  JavaScriptDialogDelegate();
+
+  friend class JavaScriptDialog;
+
+  void SetDialog(JavaScriptDialog* dialog);
+
+  QUrl originUrl() const;
+  QString acceptLang() const;
+  QString messageText() const;
+  QString defaultPromptText() const;
+
+private:
+  JavaScriptDialog* dialog_;
 };
 
-} // namespace qquick
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_ALERT_DIALOG_DELEGATE_H_
+#endif // _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_DELEGATE_H_

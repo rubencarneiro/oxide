@@ -148,6 +148,8 @@
         'browser/oxide_incoming_message.h',
         'browser/oxide_io_thread_delegate.cc',
         'browser/oxide_io_thread_delegate.h',
+        'browser/oxide_javascript_dialog.cc',
+        'browser/oxide_javascript_dialog.h',
         'browser/oxide_javascript_dialog_manager.cc',
         'browser/oxide_javascript_dialog_manager.h',
         'browser/oxide_message_handler.cc',

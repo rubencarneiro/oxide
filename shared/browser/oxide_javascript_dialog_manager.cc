@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 #include "base/memory/singleton.h"
 
+#include "shared/browser/oxide_javascript_dialog.h"
 #include "shared/browser/oxide_web_view.h"
 
 namespace oxide {
@@ -34,12 +35,28 @@ void JavaScriptDialogManager::RunJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
     const base::string16& message_text,
     const base::string16& default_prompt_text,
-    const DialogClosedCallback& callback,
+    const content::JavaScriptDialogManager::DialogClosedCallback& callback,
     bool* did_suppress_message) {
   WebView* webview = WebView::FromWebContents(web_contents);
-  webview->RunJavaScriptDialog(origin_url, accept_lang, javascript_message_type,
-                               message_text, default_prompt_text, callback,
-                               did_suppress_message);
+  JavaScriptDialog* dialog = webview->CreateJavaScriptDialog(
+      javascript_message_type, did_suppress_message);
+  if (!dialog) {
+    callback.Run(false, base::string16());
+    return;
+  }
+  dialog->web_contents_ = web_contents;
+  dialog->origin_url_ = origin_url;
+  dialog->accept_lang_ = accept_lang;
+  dialog->message_text_ = message_text;
+  dialog->default_prompt_text_ = default_prompt_text;
+  dialog->callback_ = callback;
+  if (GetActiveDialog(web_contents)) {
+    std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
+    queue.push_back(dialog);
+  } else {
+    active_dialogs_[web_contents] = dialog;
+    dialog->Run();
+  }
 }
 
 void JavaScriptDialogManager::RunBeforeUnloadDialog(
@@ -66,5 +83,30 @@ void JavaScriptDialogManager::CancelActiveAndPendingDialogs(
 
 void JavaScriptDialogManager::WebContentsDestroyed(
     content::WebContents* web_contents) {}
+
+JavaScriptDialog* JavaScriptDialogManager::GetActiveDialog(
+    content::WebContents* web_contents) const {
+  std::map<content::WebContents*, JavaScriptDialog*>::const_iterator it;
+  it = active_dialogs_.find(web_contents);
+  if (it == active_dialogs_.end()) {
+    return NULL;
+  }
+  return it->second;
+}
+
+void JavaScriptDialogManager::OnDialogClosed(
+    content::WebContents* web_contents,
+    JavaScriptDialog* dialog) {
+  DCHECK_EQ(dialog, GetActiveDialog(web_contents));
+  active_dialogs_[web_contents] = NULL;
+  delete dialog;
+  std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
+  if (!queue.empty()) {
+    JavaScriptDialog* next_dialog = queue.front();
+    queue.pop_front();
+    active_dialogs_[web_contents] = next_dialog;
+    next_dialog->Run();
+  }
+}
 
 } // namespace oxide

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@
 #include <QObject>
 #include <QString>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
+#include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
 namespace qquick {
@@ -33,14 +33,11 @@ class PromptDialogContext : public QObject {
 
  public:
   virtual ~PromptDialogContext() {}
-  PromptDialogContext(OxideQQuickPromptDialogDelegate* delegate,
-                      const QString& message,
-                      const QString& default_value,
-                      oxide::qt::JavaScriptDialogClosedCallback* callback);
+  PromptDialogContext(PromptDialogDelegate* delegate);
 
-  const QString& message() const { return message_; }
-  const QString& defaultValue() const { return defaultValue_; }
-  const QString& currentValue() const { return currentValue_; }
+  QString message() const;
+  QString defaultValue() const;
+  const QString& currentValue() const;
   void setCurrentValue(const QString& value);
 
  Q_SIGNALS:
@@ -51,22 +48,24 @@ class PromptDialogContext : public QObject {
   void reject() const;
 
  private:
-  OxideQQuickPromptDialogDelegate* delegate_;
-  QString message_;
-  QString defaultValue_;
+  PromptDialogDelegate* delegate_;
   QString currentValue_;
-  oxide::qt::JavaScriptDialogClosedCallback* callback_;
 };
 
-PromptDialogContext::PromptDialogContext(
-    OxideQQuickPromptDialogDelegate* delegate,
-    const QString& message,
-    const QString& default_value,
-    oxide::qt::JavaScriptDialogClosedCallback* callback) :
-    delegate_(delegate),
-    message_(message),
-    defaultValue_(default_value),
-    callback_(callback) {}
+PromptDialogContext::PromptDialogContext(PromptDialogDelegate* delegate) :
+    delegate_(delegate) {}
+
+QString PromptDialogContext::message() const {
+  return delegate_->messageText();
+}
+
+QString PromptDialogContext::defaultValue() const {
+  return delegate_->defaultPromptText();
+}
+
+const QString& PromptDialogContext::currentValue() const {
+  return currentValue_;
+}
 
 void PromptDialogContext::setCurrentValue(const QString& value) {
   if (value != currentValue_) {
@@ -76,36 +75,23 @@ void PromptDialogContext::setCurrentValue(const QString& value) {
 }
 
 void PromptDialogContext::accept(const QString& value) const {
-  callback_->run(true, value);
-  delegate_->deleteLater();
+  //callback_->run(true, value);
+  //delegate_->deleteLater();
 }
 
 void PromptDialogContext::reject() const {
-  callback_->run(false);
-  delegate_->deleteLater();
+  //callback_->run(false);
+  //delegate_->deleteLater();
 }
 
-OxideQQuickPromptDialogDelegate::OxideQQuickPromptDialogDelegate(
-    OxideQQuickWebView* webview,
-    QQmlComponent* component) :
-    OxideQQuickJavaScriptDialogDelegate(webview, component) {}
+PromptDialogDelegate::PromptDialogDelegate(OxideQQuickWebView* webview) :
+    JavaScriptDialogDelegate(webview) {}
 
-bool OxideQQuickPromptDialogDelegate::Show(
-    const QUrl& origin_url,
-    const QString& accept_lang,
-    const QString& message_text,
-    const QString& default_prompt_text,
-    oxide::qt::JavaScriptDialogClosedCallback* callback,
-    bool* did_suppress_message) {
-  Q_UNUSED(origin_url);
-  Q_UNUSED(accept_lang);
-
-  *did_suppress_message = false;
-  return show(new PromptDialogContext(
-      this, message_text, default_prompt_text, callback));
+bool PromptDialogDelegate::Show() {
+  return show(new PromptDialogContext(this), web_view_->promptDialog());
 }
 
-bool OxideQQuickPromptDialogDelegate::Handle(
+/*bool OxideQQuickPromptDialogDelegate::Handle(
     bool accept,
     const QString& prompt_override) {
   if (isShown()) {
@@ -124,7 +110,7 @@ bool OxideQQuickPromptDialogDelegate::Handle(
   } else {
     return false;
   }
-}
+}*/
 
 } // namespace qquick
 } // namespace oxide

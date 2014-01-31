@@ -25,6 +25,7 @@
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqloadevent_p.h"
+#include "qt/core/browser/oxide_qt_javascript_dialog.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
@@ -145,41 +146,25 @@ oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(
   return new WebPopupMenu(a->CreateWebPopupMenuDelegate(), rvh);
 }
 
-void WebViewAdapterPrivate::RunJavaScriptDialog(
-    const GURL& origin_url,
-    const std::string& accept_lang,
+oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
-    const base::string16& message_text,
-    const base::string16& default_prompt_text,
-    const content::JavaScriptDialogManager::DialogClosedCallback& callback,
     bool* did_suppress_message) {
+  JavaScriptDialogDelegate::Type type;
   switch (javascript_message_type) {
   case content::JAVASCRIPT_MESSAGE_TYPE_ALERT:
-    a->RunJavaScriptAlert(
-        QUrl(QString::fromStdString(origin_url.spec())),
-        QString::fromStdString(accept_lang),
-        QString::fromStdString(base::UTF16ToUTF8(message_text)),
-        JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback),
-        did_suppress_message);
+    type = JavaScriptDialogDelegate::TypeAlert;
     break;
   case content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM:
-    a->RunJavaScriptConfirm(
-        QUrl(QString::fromStdString(origin_url.spec())),
-        QString::fromStdString(accept_lang),
-        QString::fromStdString(base::UTF16ToUTF8(message_text)),
-        JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback),
-        did_suppress_message);
+    type = JavaScriptDialogDelegate::TypeConfirm;
     break;
   case content::JAVASCRIPT_MESSAGE_TYPE_PROMPT:
-    a->RunJavaScriptPrompt(
-        QUrl(QString::fromStdString(origin_url.spec())),
-        QString::fromStdString(accept_lang),
-        QString::fromStdString(base::UTF16ToUTF8(message_text)),
-        QString::fromStdString(base::UTF16ToUTF8(default_prompt_text)),
-        JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback),
-        did_suppress_message);
+    type = JavaScriptDialogDelegate::TypePrompt;
     break;
+  default:
+    Q_UNREACHABLE();
   }
+  JavaScriptDialogDelegate* delegate = a->CreateJavaScriptDialogDelegate(type);
+  return new JavaScriptDialog(delegate, did_suppress_message);
 }
 
 void WebViewAdapterPrivate::RunBeforeUnloadDialog(

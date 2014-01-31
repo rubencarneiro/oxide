@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,8 @@
 #include <QQuickItem>
 #include <QScopedPointer>
 
+#include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
+
 class OxideQQuickWebView;
 
 QT_BEGIN_NAMESPACE
@@ -32,21 +34,19 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qquick {
 
-class OxideQQuickJavaScriptDialogDelegate : public QObject {
+class JavaScriptDialogDelegate : public oxide::qt::JavaScriptDialogDelegate {
  public:
-  OxideQQuickJavaScriptDialogDelegate(OxideQQuickWebView* webview,
-                                      QQmlComponent* component);
+  JavaScriptDialogDelegate(OxideQQuickWebView* webview);
 
-  virtual bool Handle(bool accept, const QString& prompt_override) = 0;
+  //virtual bool Handle(bool accept, const QString& prompt_override) = 0;
 
  protected:
   // takes ownership of contextObject
-  bool show(QObject* contextObject);
+  bool show(QObject* contextObject, QQmlComponent* component);
 
   bool isShown() const;
 
   OxideQQuickWebView* web_view_;
-  QQmlComponent* component_;
 
   QScopedPointer<QQmlContext> context_;
   QScopedPointer<QQuickItem> item_;

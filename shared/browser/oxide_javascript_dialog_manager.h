@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,9 +18,14 @@
 #ifndef _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOG_MANAGER_H_
 #define _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOG_MANAGER_H_
 
+#include <deque>
+#include <map>
+
 #include "content/public/browser/javascript_dialog_manager.h"
 
 namespace oxide {
+
+class JavaScriptDialog;
 
 class JavaScriptDialogManager : public content::JavaScriptDialogManager {
  public:
@@ -33,7 +38,7 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
       content::JavaScriptMessageType javascript_message_type,
       const base::string16& message_text,
       const base::string16& default_prompt_text,
-      const DialogClosedCallback& callback,
+      const content::JavaScriptDialogManager::DialogClosedCallback& callback,
       bool* did_suppress_message) FINAL;
 
   void RunBeforeUnloadDialog(content::WebContents* web_contents,
@@ -48,6 +53,20 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
   void CancelActiveAndPendingDialogs(content::WebContents* web_contents) FINAL;
 
   void WebContentsDestroyed(content::WebContents* web_contents) FINAL;
+
+ private:
+  friend class JavaScriptDialog;
+
+  // Note: chrome implements application-modal dialogs (only one dialog active
+  // for all windows and tabs at any given time), whereas we do tab-modal
+  // dialogs. See https://code.google.com/p/chromium/issues/detail?id=456.
+  std::map<content::WebContents*, JavaScriptDialog*> active_dialogs_;
+  std::map<content::WebContents*, std::deque<JavaScriptDialog*> > queues_;
+
+  JavaScriptDialog* GetActiveDialog(content::WebContents* web_contents) const;
+
+  void OnDialogClosed(content::WebContents* web_contents,
+                      JavaScriptDialog* dialog);
 };
 
 } // namespace oxide

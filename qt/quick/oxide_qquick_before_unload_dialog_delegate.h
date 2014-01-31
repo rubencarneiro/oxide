@@ -32,16 +32,19 @@ class JavaScriptDialogClosedCallback;
 
 namespace qquick {
 
-class OxideQQuickBeforeUnloadDialogDelegate Q_DECL_FINAL :
-    public OxideQQuickJavaScriptDialogDelegate {
+class BeforeUnloadDialogDelegate Q_DECL_FINAL :
+    public JavaScriptDialogDelegate {
  public:
-  OxideQQuickBeforeUnloadDialogDelegate(OxideQQuickWebView* webview,
-                                        QQmlComponent* component);
+  BeforeUnloadDialogDelegate(OxideQQuickWebView* webview,
+                             QQmlComponent* component);
 
   bool Show(const QString& message_text,
             bool is_reload,
             oxide::qt::JavaScriptDialogClosedCallback* callback);
   bool Handle(bool accept, const QString& prompt_override);
+
+  // temp
+  bool Show();
 };
 
 } // namespace qquick

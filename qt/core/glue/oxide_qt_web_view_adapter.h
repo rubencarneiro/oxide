@@ -27,6 +27,7 @@
 #include <QUrl>
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
+#include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
 class QSize;
@@ -83,6 +84,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() = 0;
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
+  virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
+      JavaScriptDialogDelegate::Type type) = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
@@ -102,22 +105,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual QRect GetContainerBounds() = 0;
 
-  virtual void RunJavaScriptAlert(const QUrl& origin_url,
-                                  const QString& accept_lang,
-                                  const QString& message_text,
-                                  JavaScriptDialogClosedCallback* callback,
-                                  bool* did_suppress_message) = 0;
-  virtual void RunJavaScriptConfirm(const QUrl& origin_url,
-                                    const QString& accept_lang,
-                                    const QString& message_text,
-                                    JavaScriptDialogClosedCallback* callback,
-                                    bool* did_suppress_message) = 0;
-  virtual void RunJavaScriptPrompt(const QUrl& origin_url,
-                                   const QString& accept_lang,
-                                   const QString& message_text,
-                                   const QString& default_prompt_text,
-                                   JavaScriptDialogClosedCallback* callback,
-                                   bool* did_suppress_message) = 0;
   virtual void RunBeforeUnloadDialog(
       const QString& message_text,
       bool is_reload,

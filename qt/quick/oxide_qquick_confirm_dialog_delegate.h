@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,31 +20,19 @@
 
 #include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
 
-QT_BEGIN_NAMESPACE
-class QString;
-class QUrl;
-QT_END_NAMESPACE
-
 namespace oxide {
-
-namespace qt {
-class JavaScriptDialogClosedCallback;
-} // namespace qt
-
 namespace qquick {
 
-class OxideQQuickConfirmDialogDelegate Q_DECL_FINAL :
-    public OxideQQuickJavaScriptDialogDelegate {
- public:
-  OxideQQuickConfirmDialogDelegate(OxideQQuickWebView* webview,
-                                   QQmlComponent* component);
+class ConfirmDialogContext;
 
-  bool Show(const QUrl& origin_url,
-            const QString& accept_lang,
-            const QString& message_text,
-            oxide::qt::JavaScriptDialogClosedCallback* callback,
-            bool* did_suppress_message);
-  bool Handle(bool accept, const QString& prompt_override);
+class ConfirmDialogDelegate Q_DECL_FINAL : public JavaScriptDialogDelegate {
+ public:
+  ConfirmDialogDelegate(OxideQQuickWebView* webview);
+
+  bool Show();
+
+ private:
+  friend class ConfirmDialogContext;
 };
 
 } // namespace qquick

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,15 +28,19 @@
 namespace oxide {
 namespace qquick {
 
-OxideQQuickJavaScriptDialogDelegate::OxideQQuickJavaScriptDialogDelegate(
-    OxideQQuickWebView* webview,
-    QQmlComponent* component) :
-    QObject(webview),
-    web_view_(webview),
-    component_(component) {}
+JavaScriptDialogDelegate::JavaScriptDialogDelegate(
+    OxideQQuickWebView* webview) :
+    web_view_(webview) {}
 
-bool OxideQQuickJavaScriptDialogDelegate::show(QObject* contextObject) {
-  QQmlContext* baseContext = component_->creationContext();
+bool JavaScriptDialogDelegate::show(QObject* contextObject,
+                                    QQmlComponent* component) {
+  if (!component) {
+    qWarning() << "Content requested a javascript dialog, "
+                  "but the application hasn't provided one";
+    delete contextObject;
+    return false;
+  }
+  QQmlContext* baseContext = component->creationContext();
   if (!baseContext) {
     baseContext = QQmlEngine::contextForObject(web_view_);
   }
@@ -46,7 +50,7 @@ bool OxideQQuickJavaScriptDialogDelegate::show(QObject* contextObject) {
   context_->setContextObject(contextObject);
   contextObject->setParent(context_.data());
 
-  item_.reset(qobject_cast<QQuickItem*>(component_->beginCreate(context_.data())));
+  item_.reset(qobject_cast<QQuickItem*>(component->beginCreate(context_.data())));
   if (!item_) {
     qWarning() << "Failed to create javascript dialog";
     context_.reset();
@@ -55,12 +59,12 @@ bool OxideQQuickJavaScriptDialogDelegate::show(QObject* contextObject) {
 
   OxideQQuickWebViewPrivate::get(web_view_)->addAttachedPropertyTo(item_.data());
   item_->setParentItem(web_view_);
-  component_->completeCreate();
+  component->completeCreate();
 
   return true;
 }
 
-bool OxideQQuickJavaScriptDialogDelegate::isShown() const {
+bool JavaScriptDialogDelegate::isShown() const {
   return !item_.isNull();
 }
 

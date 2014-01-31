@@ -34,7 +34,7 @@ class OxideQQuickWebView;
 
 namespace oxide {
 namespace qquick {
-class OxideQQuickJavaScriptDialogDelegate;
+class JavaScriptDialogDelegate;
 }
 }
 
@@ -63,6 +63,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qt::RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
+  oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
+      oxide::qt::JavaScriptDialogDelegate::Type type) Q_DECL_FINAL;
 
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
@@ -82,22 +84,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   QRect GetContainerBounds() Q_DECL_FINAL;
 
-  void RunJavaScriptAlert(const QUrl& origin_url,
-                          const QString& accept_lang,
-                          const QString& message_text,
-                          oxide::qt::JavaScriptDialogClosedCallback* callback,
-                          bool* did_suppress_message) Q_DECL_FINAL;
-  void RunJavaScriptConfirm(const QUrl& origin_url,
-                            const QString& accept_lang,
-                            const QString& message_text,
-                            oxide::qt::JavaScriptDialogClosedCallback* callback,
-                            bool* did_suppress_message) Q_DECL_FINAL;
-  void RunJavaScriptPrompt(const QUrl& origin_url,
-                           const QString& accept_lang,
-                           const QString& message_text,
-                           const QString& default_prompt_text,
-                           oxide::qt::JavaScriptDialogClosedCallback* callback,
-                           bool* did_suppress_message) Q_DECL_FINAL;
   void RunBeforeUnloadDialog(
       const QString& message_text,
       bool is_reload,
@@ -136,7 +122,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;
-  QPointer<oxide::qquick::OxideQQuickJavaScriptDialogDelegate> current_dialog_delegate_;
   OxideQQuickWebView* q_ptr;
 };
 

@@ -32,7 +32,7 @@ class BeforeUnloadDialogContext : public QObject {
  public:
   virtual ~BeforeUnloadDialogContext() {}
   BeforeUnloadDialogContext(
-      OxideQQuickBeforeUnloadDialogDelegate* delegate,
+      BeforeUnloadDialogDelegate* delegate,
       const QString& message,
       oxide::qt::JavaScriptDialogClosedCallback* callback);
 
@@ -43,13 +43,13 @@ class BeforeUnloadDialogContext : public QObject {
   void reject() const;
 
  private:
-  OxideQQuickBeforeUnloadDialogDelegate* delegate_;
+  BeforeUnloadDialogDelegate* delegate_;
   QString message_;
   oxide::qt::JavaScriptDialogClosedCallback* callback_;
 };
 
 BeforeUnloadDialogContext::BeforeUnloadDialogContext(
-    OxideQQuickBeforeUnloadDialogDelegate* delegate,
+    BeforeUnloadDialogDelegate* delegate,
     const QString& message,
     oxide::qt::JavaScriptDialogClosedCallback* callback) :
     delegate_(delegate),
@@ -57,30 +57,34 @@ BeforeUnloadDialogContext::BeforeUnloadDialogContext(
     callback_(callback) {}
 
 void BeforeUnloadDialogContext::accept() const {
-  callback_->run(true);
-  delegate_->deleteLater();
+  //callback_->run(true);
+  //delegate_->deleteLater();
 }
 
 void BeforeUnloadDialogContext::reject() const {
-  callback_->run(false);
-  delegate_->deleteLater();
+  //callback_->run(false);
+  //delegate_->deleteLater();
 }
 
-OxideQQuickBeforeUnloadDialogDelegate::OxideQQuickBeforeUnloadDialogDelegate(
+BeforeUnloadDialogDelegate::BeforeUnloadDialogDelegate(
     OxideQQuickWebView* webview,
     QQmlComponent* component) :
-    OxideQQuickJavaScriptDialogDelegate(webview, component) {}
+    JavaScriptDialogDelegate(webview) {}
 
-bool OxideQQuickBeforeUnloadDialogDelegate::Show(
+bool BeforeUnloadDialogDelegate::Show(
     const QString& message_text,
     bool is_reload,
     oxide::qt::JavaScriptDialogClosedCallback* callback) {
   Q_UNUSED(is_reload);
 
-  return show(new BeforeUnloadDialogContext(this, message_text, callback));
+  return show(new BeforeUnloadDialogContext(this, message_text, callback), NULL);
 }
 
-bool OxideQQuickBeforeUnloadDialogDelegate::Handle(
+bool BeforeUnloadDialogDelegate::Show() {
+  return false;
+}
+
+bool BeforeUnloadDialogDelegate::Handle(
     bool accept,
     const QString& prompt_override) {
   Q_UNUSED(prompt_override);

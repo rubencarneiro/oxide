@@ -43,14 +43,10 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 
-  void RunJavaScriptDialog(
-      const GURL& origin_url,
-      const std::string& accept_lang,
+  oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
-      const base::string16& message_text,
-      const base::string16& default_prompt_text,
-      const content::JavaScriptDialogManager::DialogClosedCallback& callback,
       bool* did_suppress_message) FINAL;
+
   void RunBeforeUnloadDialog(
       const base::string16& message_text,
       bool is_reload,
