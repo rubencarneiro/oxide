@@ -16,26 +16,25 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(QMLRUNNER oxideqmlscene)
+foreach(v STAGE_DIR OUTPUT_DIR)
+  if(NOT DEFINED ${v})
+    message(FATAL_ERROR "${v} must be defined")
+  endif()
+endforeach()
 
-set(QMLRUNNER_SRCS main.cc)
+foreach(f ${FILES})
+  file(INSTALL ${f} DESTINATION ${STAGE_DIR}
+       FILE_PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ)
+endforeach()
+foreach(f ${PROGRAMS})
+  file(INSTALL ${f} DESTINATION ${STAGE_DIR}
+       FILE_PERMISSIONS
+         OWNER_EXECUTE OWNER_WRITE OWNER_READ
+         GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+endforeach()
 
-include_directories(${Qt5Core_PRIVATE_INCLUDE_DIRS})
-if(NOT Qt5Quick_VERSION_STRING VERSION_LESS 5.2.0)
-  include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-                      ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-endif()
-
-add_executable(${QMLRUNNER} ${QMLRUNNER_SRCS})
-set_target_properties(
-    ${QMLRUNNER} PROPERTIES
-    SKIP_BUILD_RPATH TRUE
-    RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
-
-qt5_use_modules(${QMLRUNNER} Core Gui Qml Quick)
-
-get_target_property(_QMLRUNNER_LOCATION ${QMLRUNNER} LOCATION)
-get_filename_component(_QMLRUNNER_NAME ${_QMLRUNNER_LOCATION} NAME)
-add_custom_target(stage-oxideqmlscene
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${_QMLRUNNER_LOCATION} ${OXIDE_STAGE_DIR}/${QMLRUNNER_NAME})
+get_filename_component(WORKING_DIRECTORY ${STAGE_DIR} PATH)
+get_filename_component(STAGE_DIR_NAME ${STAGE_DIR} NAME)
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E tar czf ${OUTPUT_DIR}/oxide-qt.tar.bz2 ${STAGE_DIR_NAME}
+    WORKING_DIRECTORY ${WORKING_DIRECTORY})

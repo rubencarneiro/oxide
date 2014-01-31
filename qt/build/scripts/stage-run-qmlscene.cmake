@@ -16,26 +16,22 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(QMLRUNNER oxideqmlscene)
+foreach(v INPUT OUTPUT RENDERER)
+  if(NOT DEFINED ${v})
+    message(FATAL_ERROR "${v} must be defined")
+  endif()
+endforeach()
 
-set(QMLRUNNER_SRCS main.cc)
+set(CHROMIUM_LIB_DIR "$(dirname $(readlink -f $0))")
+set(CHROMIUM_PRODUCT_DIR "$(dirname $(readlink -f $0))")
+set(OXIDE_RENDERER_NAME ${RENDERER})
+set(OXIDE_QMLPLUGIN_OUTPUT_DIR "$(dirname $(readlink -f $0))")
 
-include_directories(${Qt5Core_PRIVATE_INCLUDE_DIRS})
-if(NOT Qt5Quick_VERSION_STRING VERSION_LESS 5.2.0)
-  include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-                      ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-endif()
+get_filename_component(OUTPUT_DIR ${OUTPUT} PATH)
+get_filename_component(OUTPUT_NAME ${OUTPUT} NAME)
+configure_file(${INPUT} ${OUTPUT_DIR}/tmp/${OUTPUT_NAME} IMMEDIATE @ONLY)
 
-add_executable(${QMLRUNNER} ${QMLRUNNER_SRCS})
-set_target_properties(
-    ${QMLRUNNER} PROPERTIES
-    SKIP_BUILD_RPATH TRUE
-    RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
-
-qt5_use_modules(${QMLRUNNER} Core Gui Qml Quick)
-
-get_target_property(_QMLRUNNER_LOCATION ${QMLRUNNER} LOCATION)
-get_filename_component(_QMLRUNNER_NAME ${_QMLRUNNER_LOCATION} NAME)
-add_custom_target(stage-oxideqmlscene
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${_QMLRUNNER_LOCATION} ${OXIDE_STAGE_DIR}/${QMLRUNNER_NAME})
+file(INSTALL ${OUTPUT_DIR}/tmp/${OUTPUT_NAME} DESTINATION ${OUTPUT_DIR}
+     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+                 GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${OUTPUT_DIR}/tmp)
