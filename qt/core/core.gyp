@@ -17,9 +17,9 @@
 {
   'targets': [
     {
-      'target_name': 'OxideQtCore',
+      'target_name': '<(oxide_core_name)',
       'type': 'shared_library',
-      'shared_library_version': '<(so_version)',
+      'shared_library_version': '<(oxide_core_so_version)',
       'dependencies': [
         'OxideQtCore_private',
         'OxideQtCore_public',
