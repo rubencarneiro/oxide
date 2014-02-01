@@ -16,6 +16,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(GNUInstallDirs)
+include(OxideCommon)
+include(OxideQtCommon)
+
 if(CMAKE_CROSSCOMPILING)
   # Dummy targets - not used anywhere, but this stops Qt5CoreConfigExtras.cmake
   # from creating them and checking if the binary exists, which is broken when
@@ -26,21 +30,6 @@ if(CMAKE_CROSSCOMPILING)
   add_executable(Qt5::rcc IMPORTED)
   add_executable(Qt5::uic IMPORTED)
 endif()
-
-set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_SUBPROCESS_DIR})
-set(OXIDE_CORELIB_UNVERSIONED
-    ${CMAKE_SHARED_LIBRARY_PREFIX}${OXIDE_CORELIB_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
-set(OXIDE_CORELIB_VERSIONED ${OXIDE_CORELIB_UNVERSIONED}.${OXIDE_CORELIB_SO_VERSION})
-set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
-set(OXIDE_BIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/bin)
-set(OXIDE_STAGE_DIR ${CMAKE_BINARY_DIR}/out/oxide)
-
-# Allow objects linked by cmake to declare a run-time dependency on the
-# main library, built with gyp
-add_library(${OXIDE_CORELIB_NAME} SHARED IMPORTED)
-set_target_properties(
-    ${OXIDE_CORELIB_NAME}
-    PROPERTIES IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED})
 
 find_package(Qt5Core)
 find_package(Qt5Gui)

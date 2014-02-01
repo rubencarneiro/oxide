@@ -17,6 +17,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 include(CMakeParseArguments)
+include(OxideCommon)
+include(OxideQtCommon)
 
 set(QML_PLUGIN qmloxidetestingplugin)
 set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
