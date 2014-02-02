@@ -40,10 +40,6 @@ void JavaScriptDialogDelegate::Handle(bool accept,
   Close(accept);
 }
 
-void JavaScriptDialogDelegate::SetDialog(JavaScriptDialog* dialog) {
-  dialog_ = dialog;
-}
-
 QUrl JavaScriptDialogDelegate::originUrl() const {
   return dialog_->originUrl();
 }

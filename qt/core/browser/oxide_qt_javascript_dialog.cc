@@ -28,7 +28,7 @@ JavaScriptDialog::JavaScriptDialog(
     JavaScriptDialogDelegate* delegate,
     bool* did_suppress_message) :
     delegate_(delegate) {
-  delegate_->SetDialog(this);
+  delegate_->dialog_ = this;
 }
 
 void JavaScriptDialog::Run() {

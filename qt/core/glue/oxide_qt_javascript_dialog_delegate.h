@@ -46,8 +46,6 @@ class Q_DECL_EXPORT JavaScriptDialogDelegate {
 
   friend class JavaScriptDialog;
 
-  void SetDialog(JavaScriptDialog* dialog);
-
   QUrl originUrl() const;
   QString acceptLang() const;
   QString messageText() const;
