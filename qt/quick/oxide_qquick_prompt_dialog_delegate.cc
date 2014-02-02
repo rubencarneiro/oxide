@@ -100,7 +100,7 @@ void PromptDialogDelegate::Handle(bool accept, const QString& prompt_override) {
     }
   } else {
     contextObject->reject();
-  } 
+  }
 }
 
 } // namespace qquick
