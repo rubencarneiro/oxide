@@ -37,6 +37,15 @@ void JavaScriptDialog::Run() {
   }
 }
 
+void JavaScriptDialog::Handle(bool accept,
+                              const base::string16* prompt_override) {
+  QString prompt;
+  if (prompt_override) {
+    prompt = QString::fromStdString(base::UTF16ToUTF8(*prompt_override));
+  }
+  delegate_->Handle(accept, prompt);
+}
+
 QUrl JavaScriptDialog::originUrl() const {
   return QUrl(QString::fromStdString(origin_url_.spec()));
 }

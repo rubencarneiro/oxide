@@ -183,12 +183,6 @@ QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
                 q->width(), q->height()).toRect();
 }
 
-bool OxideQQuickWebViewPrivate::HandleJavaScriptDialog(
-    bool accept, const QString& prompt_override) {
-  // TODO: remove me
-  return false;
-}
-
 void OxideQQuickWebViewPrivate::componentComplete() {
   Q_Q(OxideQQuickWebView);
 

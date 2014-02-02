@@ -105,9 +105,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual QRect GetContainerBounds() = 0;
 
-  virtual bool HandleJavaScriptDialog(bool accept,
-                                      const QString& prompt_override) = 0;
-
   void shutdown();
 
   bool isInitialized();

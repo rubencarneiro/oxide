@@ -88,9 +88,12 @@ bool JavaScriptDialogManager::HandleJavaScriptDialog(
     content::WebContents* web_contents,
     bool accept,
     const base::string16* prompt_override) {
-  WebView* webview = WebView::FromWebContents(web_contents);
-  return webview->HandleJavaScriptDialog(accept, prompt_override);
-  // TODO!
+  JavaScriptDialog* dialog = GetActiveDialog(web_contents);
+  if (!dialog) {
+    return false;
+  }
+  dialog->Handle(accept, prompt_override);
+  return true;
 }
 
 void JavaScriptDialogManager::CancelActiveAndPendingDialogs(

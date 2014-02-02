@@ -33,6 +33,13 @@ void JavaScriptDialogDelegate::Close(bool accept, const QString& user_input) {
   dialog_->Close(accept, base::UTF8ToUTF16(user_input.toStdString()));
 }
 
+void JavaScriptDialogDelegate::Handle(bool accept,
+                                      const QString& prompt_override) {
+  // default implementation, overridden in PromptDialogDelegate
+  Q_UNUSED(prompt_override);
+  Close(accept);
+}
+
 void JavaScriptDialogDelegate::SetDialog(JavaScriptDialog* dialog) {
   dialog_ = dialog;
 }

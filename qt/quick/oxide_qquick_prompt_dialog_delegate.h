@@ -30,6 +30,7 @@ class PromptDialogDelegate Q_DECL_FINAL : public JavaScriptDialogDelegate {
   PromptDialogDelegate(OxideQQuickWebView* webview);
 
   bool Show();
+  void Handle(bool accept, const QString& prompt_override);
 
  private:
   friend class PromptDialogContext;

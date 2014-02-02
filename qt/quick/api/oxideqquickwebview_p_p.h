@@ -85,9 +85,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   QRect GetContainerBounds() Q_DECL_FINAL;
 
-  bool HandleJavaScriptDialog(bool accept,
-                              const QString& prompt_override) Q_DECL_FINAL;
-
   void componentComplete();
 
   static void messageHandler_append(

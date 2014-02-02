@@ -36,10 +36,4 @@ void JavaScriptDialog::CouldNotShow() {
   Close(is_before_unload_dialog_);
 }
 
-bool JavaScriptDialog::Handle(bool accept,
-                              const base::string16* prompt_override) {
-  // TODO
-  return false;
-}
-
 } // namespace oxide

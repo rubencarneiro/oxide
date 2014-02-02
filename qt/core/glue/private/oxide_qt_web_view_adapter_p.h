@@ -47,8 +47,6 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message) FINAL;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() FINAL;
-  bool HandleJavaScriptDialog(bool accept,
-                              const base::string16* prompt_override) FINAL;
 
  private:
   WebViewAdapterPrivate(WebViewAdapter* adapter);

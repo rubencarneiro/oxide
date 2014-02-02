@@ -64,38 +64,6 @@ bool ConfirmDialogDelegate::Show() {
   return show(new ConfirmDialogContext(this), web_view_->confirmDialog());
 }
 
-/*bool OxideQQuickConfirmDialogDelegate::Show(
-    const QUrl& origin_url,
-    const QString& accept_lang,
-    const QString& message_text,
-    oxide::qt::JavaScriptDialogClosedCallback* callback,
-    bool* did_suppress_message) {
-  Q_UNUSED(origin_url);
-  Q_UNUSED(accept_lang);
-
-  *did_suppress_message = false;
-  return show(new ConfirmDialogContext(this, message_text, callback));
-}
-
-bool OxideQQuickConfirmDialogDelegate::Handle(
-    bool accept,
-    const QString& prompt_override) {
-  Q_UNUSED(prompt_override);
-
-  if (isShown()) {
-    ConfirmDialogContext* contextObject =
-        qobject_cast<ConfirmDialogContext*>(context_->contextObject());
-    if (accept) {
-      contextObject->accept();
-    } else {
-      contextObject->reject();
-    }
-    return true;
-  } else {
-    return false;
-  }
-}*/
-
 } // namespace qquick
 } // namespace oxide
 

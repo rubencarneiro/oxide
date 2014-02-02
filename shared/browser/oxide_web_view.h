@@ -185,9 +185,6 @@ class WebView : public MessageTarget,
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message);
   virtual JavaScriptDialog* CreateBeforeUnloadDialog();
-  virtual bool HandleJavaScriptDialog(
-      bool accept,
-      const base::string16* prompt_override);
 
  protected:
   WebView();

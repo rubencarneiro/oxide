@@ -59,35 +59,6 @@ bool AlertDialogDelegate::Show() {
   return show(new AlertDialogContext(this), web_view_->alertDialog());
 }
 
-/*bool AlertDialogDelegate::Show(
-    const QUrl& origin_url,
-    const QString& accept_lang,
-    const QString& message_text,
-    oxide::qt::JavaScriptDialogClosedCallback* callback,
-    bool* did_suppress_message) {
-  Q_UNUSED(origin_url);
-  Q_UNUSED(accept_lang);
-
-  *did_suppress_message = false;
-  return show(new AlertDialogContext(this, message_text, callback));
-}
-
-bool AlertDialogDelegate::Handle(
-    bool accept,
-    const QString& prompt_override) {
-  Q_UNUSED(accept);
-  Q_UNUSED(prompt_override);
-
-  if (isShown()) {
-    AlertDialogContext* contextObject =
-        qobject_cast<AlertDialogContext*>(context_->contextObject());
-    contextObject->accept();
-    return true;
-  } else {
-    return false;
-  }
-}*/
-
 } // namespace qquick
 } // namespace oxide
 

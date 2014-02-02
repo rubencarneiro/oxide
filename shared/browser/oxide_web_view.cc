@@ -637,9 +637,4 @@ JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return NULL;
 }
 
-bool WebView::HandleJavaScriptDialog(bool accept,
-                                     const base::string16* prompt_override) {
-  return false;
-}
-
 } // namespace oxide

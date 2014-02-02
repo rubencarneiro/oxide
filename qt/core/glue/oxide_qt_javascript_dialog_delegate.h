@@ -39,6 +39,7 @@ class Q_DECL_EXPORT JavaScriptDialogDelegate {
 
   virtual bool Show() = 0;
   void Close(bool accept, const QString& user_input = QString());
+  virtual void Handle(bool accept, const QString& prompt_override);
 
  protected:
   JavaScriptDialogDelegate();

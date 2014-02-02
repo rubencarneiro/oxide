@@ -172,15 +172,5 @@ oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateBeforeUnloadDialog() {
   return new JavaScriptDialog(delegate, &did_suppress_message);
 }
 
-bool WebViewAdapterPrivate::HandleJavaScriptDialog(
-    bool accept,
-    const base::string16* prompt_override) {
-  QString override;
-  if (prompt_override) {
-    override = QString::fromStdString(base::UTF16ToUTF8(*prompt_override));
-  }
-  return a->HandleJavaScriptDialog(accept, override);
-}
-
 } // namespace qt
 } // namespace oxide

@@ -89,26 +89,19 @@ bool PromptDialogDelegate::Show() {
   return show(new PromptDialogContext(this), web_view_->promptDialog());
 }
 
-/*bool OxideQQuickPromptDialogDelegate::Handle(
-    bool accept,
-    const QString& prompt_override) {
-  if (isShown()) {
-    PromptDialogContext* contextObject =
-        qobject_cast<PromptDialogContext*>(context_->contextObject());
-    if (accept) {
-      if (!prompt_override.isNull()) {
-        contextObject->accept(prompt_override);
-      } else {
-        contextObject->accept(contextObject->currentValue());
-      }
+void PromptDialogDelegate::Handle(bool accept, const QString& prompt_override) {
+  PromptDialogContext* contextObject =
+    qobject_cast<PromptDialogContext*>(context_->contextObject());
+  if (accept) {
+    if (prompt_override.isNull()) {
+      contextObject->accept(contextObject->currentValue());
     } else {
-      contextObject->reject();
+      contextObject->accept(prompt_override);
     }
-    return true;
   } else {
-    return false;
-  }
-}*/
+    contextObject->reject();
+  } 
+}
 
 } // namespace qquick
 } // namespace oxide

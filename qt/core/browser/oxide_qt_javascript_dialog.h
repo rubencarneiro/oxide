@@ -38,6 +38,7 @@ class JavaScriptDialog FINAL : public oxide::JavaScriptDialog {
                    bool* did_suppress_message);
 
   void Run() FINAL;
+  void Handle(bool accept, const base::string16* prompt_override) FINAL;
 
   QUrl originUrl() const;
   QString acceptLang() const;
