@@ -18,7 +18,6 @@
 #include "oxide_qquick_before_unload_dialog_delegate.h"
 
 #include <QObject>
-#include <QString>
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
 

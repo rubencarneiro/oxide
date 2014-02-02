@@ -18,7 +18,6 @@
 #include "oxide_qquick_javascript_dialog_delegate.h"
 
 #include <QDebug>
-#include <QObject>
 #include <QQmlComponent>
 #include <QQmlEngine>
 

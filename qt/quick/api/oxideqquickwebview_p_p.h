@@ -18,7 +18,6 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
-#include <QPointer>
 #include <QScopedPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
@@ -32,16 +31,8 @@ class OxideQQuickMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
 
-namespace oxide {
-namespace qquick {
-class JavaScriptDialogDelegate;
-}
-}
-
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
-class QQmlContext;
-class QQuickItem;
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
