@@ -633,11 +633,8 @@ JavaScriptDialog* WebView::CreateJavaScriptDialog(
   return NULL;
 }
 
-void WebView::RunBeforeUnloadDialog(
-    const base::string16& message_text,
-    bool is_reload,
-    const content::JavaScriptDialogManager::DialogClosedCallback& callback) {
-  callback.Run(true, base::string16());
+JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
+  return NULL;
 }
 
 bool WebView::HandleJavaScriptDialog(bool accept,

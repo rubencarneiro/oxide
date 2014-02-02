@@ -38,7 +38,6 @@ class OxideQLoadEvent;
 namespace oxide {
 namespace qt {
 
-class JavaScriptDialogClosedCallback;
 class MessageHandlerAdapter;
 class RenderWidgetHostViewDelegate;
 class WebContextAdapter;
@@ -86,6 +85,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       JavaScriptDialogDelegate::Type type) = 0;
+  virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
@@ -105,10 +105,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual QRect GetContainerBounds() = 0;
 
-  virtual void RunBeforeUnloadDialog(
-      const QString& message_text,
-      bool is_reload,
-      JavaScriptDialogClosedCallback* callback) = 0;
   virtual bool HandleJavaScriptDialog(bool accept,
                                       const QString& prompt_override) = 0;
 

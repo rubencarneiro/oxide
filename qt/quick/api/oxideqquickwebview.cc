@@ -26,7 +26,6 @@
 #include <QSize>
 #include <QtQml>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
@@ -104,6 +103,13 @@ OxideQQuickWebViewPrivate::CreateJavaScriptDialogDelegate(
   }
 }
 
+oxide::qt::JavaScriptDialogDelegate*
+OxideQQuickWebViewPrivate::CreateBeforeUnloadDialogDelegate() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::BeforeUnloadDialogDelegate(q);
+}
+
 void OxideQQuickWebViewPrivate::URLChanged() {
   Q_Q(OxideQQuickWebView);
 
@@ -175,28 +181,6 @@ QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
 
   return QRectF(pos.x(), pos.y(),
                 q->width(), q->height()).toRect();
-}
-
-void OxideQQuickWebViewPrivate::RunBeforeUnloadDialog(
-    const QString& message_text,
-    bool is_reload,
-    oxide::qt::JavaScriptDialogClosedCallback* callback) {
-  Q_Q(OxideQQuickWebView);
-
-  if (before_unload_dialog == NULL) {
-    qWarning() << "Content requested a javascript before unload dialog, "
-                  "but the application hasn't provided one";
-    callback->run(true);
-    return;
-  }
-
-  oxide::qquick::BeforeUnloadDialogDelegate* delegate =
-      new oxide::qquick::BeforeUnloadDialogDelegate(
-      q, before_unload_dialog);
-  if (!delegate->Show(message_text, is_reload, callback)) {
-    callback->run(true);
-    delete delegate;
-  }
 }
 
 bool OxideQQuickWebViewPrivate::HandleJavaScriptDialog(

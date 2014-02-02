@@ -21,11 +21,19 @@
 
 namespace oxide {
 
+JavaScriptDialog::JavaScriptDialog() :
+    is_reload_(false),
+    is_before_unload_dialog_(false) {}
+
 JavaScriptDialog::~JavaScriptDialog() {}
 
 void JavaScriptDialog::Close(bool accept, const base::string16& user_input) {
   callback_.Run(accept, user_input);
   JavaScriptDialogManager::GetInstance()->OnDialogClosed(web_contents_, this);
+}
+
+void JavaScriptDialog::CouldNotShow() {
+  Close(is_before_unload_dialog_);
 }
 
 bool JavaScriptDialog::Handle(bool accept,

@@ -65,7 +65,23 @@ void JavaScriptDialogManager::RunBeforeUnloadDialog(
     bool is_reload,
     const DialogClosedCallback& callback) {
   WebView* webview = WebView::FromWebContents(web_contents);
-  webview->RunBeforeUnloadDialog(message_text, is_reload, callback);
+  JavaScriptDialog* dialog = webview->CreateBeforeUnloadDialog();
+  if (!dialog) {
+    callback.Run(true, base::string16());
+    return;
+  }
+  dialog->web_contents_ = web_contents;
+  dialog->message_text_ = message_text;
+  dialog->is_reload_ = is_reload;
+  dialog->is_before_unload_dialog_ = true;
+  dialog->callback_ = callback;
+  if (GetActiveDialog(web_contents)) {
+    std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
+    queue.push_back(dialog);
+  } else {
+    active_dialogs_[web_contents] = dialog;
+    dialog->Run();
+  }
 }
 
 bool JavaScriptDialogManager::HandleJavaScriptDialog(
@@ -74,15 +90,19 @@ bool JavaScriptDialogManager::HandleJavaScriptDialog(
     const base::string16* prompt_override) {
   WebView* webview = WebView::FromWebContents(web_contents);
   return webview->HandleJavaScriptDialog(accept, prompt_override);
+  // TODO!
 }
 
 void JavaScriptDialogManager::CancelActiveAndPendingDialogs(
     content::WebContents* web_contents) {
   HandleJavaScriptDialog(web_contents, false, 0);
+  // TODO!
 }
 
 void JavaScriptDialogManager::WebContentsDestroyed(
-    content::WebContents* web_contents) {}
+    content::WebContents* web_contents) {
+  // TODO!
+}
 
 JavaScriptDialog* JavaScriptDialogManager::GetActiveDialog(
     content::WebContents* web_contents) const {

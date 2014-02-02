@@ -33,7 +33,7 @@ JavaScriptDialog::JavaScriptDialog(
 
 void JavaScriptDialog::Run() {
   if (!delegate_->Show()) {
-    Close(false);
+    CouldNotShow();
   }
 }
 

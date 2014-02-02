@@ -28,16 +28,21 @@ class JavaScriptDialog {
 
   virtual void Run() = 0;
   void Close(bool accept, const base::string16& user_input = base::string16());
+  void CouldNotShow();
 
   bool Handle(bool accept, const base::string16* prompt_override);
 
  protected:
   friend class JavaScriptDialogManager;
 
+  JavaScriptDialog();
+
   GURL origin_url_;
   std::string accept_lang_;
   base::string16 message_text_;
   base::string16 default_prompt_text_;
+  bool is_reload_;
+  bool is_before_unload_dialog_;
 
 private:
   content::WebContents* web_contents_;

@@ -65,6 +65,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
   oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       oxide::qt::JavaScriptDialogDelegate::Type type) Q_DECL_FINAL;
+  oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() Q_DECL_FINAL;
 
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
@@ -84,10 +85,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   QRect GetContainerBounds() Q_DECL_FINAL;
 
-  void RunBeforeUnloadDialog(
-      const QString& message_text,
-      bool is_reload,
-      oxide::qt::JavaScriptDialogClosedCallback* callback) Q_DECL_FINAL;
   bool HandleJavaScriptDialog(bool accept,
                               const QString& prompt_override) Q_DECL_FINAL;
 

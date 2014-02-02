@@ -20,7 +20,7 @@
 #include <QObject>
 #include <QString>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_closed_callback.h"
+#include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
 namespace qquick {
@@ -31,12 +31,9 @@ class BeforeUnloadDialogContext : public QObject {
 
  public:
   virtual ~BeforeUnloadDialogContext() {}
-  BeforeUnloadDialogContext(
-      BeforeUnloadDialogDelegate* delegate,
-      const QString& message,
-      oxide::qt::JavaScriptDialogClosedCallback* callback);
+  BeforeUnloadDialogContext(BeforeUnloadDialogDelegate* delegate);
 
-  const QString& message() const { return message_; }
+  QString message() const;
 
  public Q_SLOTS:
   void accept() const;
@@ -44,17 +41,15 @@ class BeforeUnloadDialogContext : public QObject {
 
  private:
   BeforeUnloadDialogDelegate* delegate_;
-  QString message_;
-  oxide::qt::JavaScriptDialogClosedCallback* callback_;
 };
 
 BeforeUnloadDialogContext::BeforeUnloadDialogContext(
-    BeforeUnloadDialogDelegate* delegate,
-    const QString& message,
-    oxide::qt::JavaScriptDialogClosedCallback* callback) :
-    delegate_(delegate),
-    message_(message),
-    callback_(callback) {}
+    BeforeUnloadDialogDelegate* delegate) :
+    delegate_(delegate) {}
+
+QString BeforeUnloadDialogContext::message() const {
+  return delegate_->messageText();
+}
 
 void BeforeUnloadDialogContext::accept() const {
   delegate_->Close(true);
@@ -65,41 +60,12 @@ void BeforeUnloadDialogContext::reject() const {
 }
 
 BeforeUnloadDialogDelegate::BeforeUnloadDialogDelegate(
-    OxideQQuickWebView* webview,
-    QQmlComponent* component) :
+    OxideQQuickWebView* webview) :
     JavaScriptDialogDelegate(webview) {}
 
-bool BeforeUnloadDialogDelegate::Show(
-    const QString& message_text,
-    bool is_reload,
-    oxide::qt::JavaScriptDialogClosedCallback* callback) {
-  Q_UNUSED(is_reload);
-
-  return show(new BeforeUnloadDialogContext(this, message_text, callback), NULL);
-}
-
 bool BeforeUnloadDialogDelegate::Show() {
-  return false;
-}
-
-bool BeforeUnloadDialogDelegate::Handle(
-    bool accept,
-    const QString& prompt_override) {
-  Q_UNUSED(prompt_override);
-
-  /*if (isShown()) {
-    BeforeUnloadDialogContext* contextObject =
-        qobject_cast<BeforeUnloadDialogContext*>(context_->contextObject());
-    if (accept) {
-      contextObject->accept();
-    } else {
-      contextObject->reject();
-    }
-    return true;
-  } else {
-    return false;
-  }*/
-  return false;
+  return show(new BeforeUnloadDialogContext(this),
+              web_view_->beforeUnloadDialog());
 }
 
 } // namespace qquick

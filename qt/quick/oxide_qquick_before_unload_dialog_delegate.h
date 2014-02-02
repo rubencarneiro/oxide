@@ -20,31 +20,20 @@
 
 #include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
 
-QT_BEGIN_NAMESPACE
-class QString;
-QT_END_NAMESPACE
-
 namespace oxide {
-
-namespace qt {
-class JavaScriptDialogClosedCallback;
-} // namespace qt
-
 namespace qquick {
+
+class BeforeUnloadDialogContext;
 
 class BeforeUnloadDialogDelegate Q_DECL_FINAL :
     public JavaScriptDialogDelegate {
  public:
-  BeforeUnloadDialogDelegate(OxideQQuickWebView* webview,
-                             QQmlComponent* component);
+  BeforeUnloadDialogDelegate(OxideQQuickWebView* webview);
 
-  bool Show(const QString& message_text,
-            bool is_reload,
-            oxide::qt::JavaScriptDialogClosedCallback* callback);
-  bool Handle(bool accept, const QString& prompt_override);
-
-  // temp
   bool Show();
+
+ private:
+  friend class BeforeUnloadDialogContext;
 };
 
 } // namespace qquick

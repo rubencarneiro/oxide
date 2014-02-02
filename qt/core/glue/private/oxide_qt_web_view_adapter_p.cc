@@ -31,7 +31,6 @@
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
-#include "qt/core/glue/private/oxide_qt_javascript_dialog_closed_callback_p.h"
 
 #include "oxide_qt_message_handler_adapter_p.h"
 #include "oxide_qt_web_frame_adapter_p.h"
@@ -167,14 +166,10 @@ oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateJavaScriptDialog(
   return new JavaScriptDialog(delegate, did_suppress_message);
 }
 
-void WebViewAdapterPrivate::RunBeforeUnloadDialog(
-    const base::string16& message_text,
-    bool is_reload,
-    const content::JavaScriptDialogManager::DialogClosedCallback& callback) {
-  a->RunBeforeUnloadDialog(
-      QString::fromStdString(base::UTF16ToUTF8(message_text)),
-      is_reload,
-      JavaScriptDialogClosedCallbackPrivate::CreateCallbackWrapper(callback));
+oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateBeforeUnloadDialog() {
+  JavaScriptDialogDelegate* delegate = a->CreateBeforeUnloadDialogDelegate();
+  bool did_suppress_message = false;
+  return new JavaScriptDialog(delegate, &did_suppress_message);
 }
 
 bool WebViewAdapterPrivate::HandleJavaScriptDialog(
