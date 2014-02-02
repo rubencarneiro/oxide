@@ -17,6 +17,8 @@
 
 #include "oxide_javascript_dialog_manager.h"
 
+#include <algorithm>
+
 #include "base/memory/singleton.h"
 
 #include "shared/browser/oxide_javascript_dialog.h"
@@ -98,13 +100,19 @@ bool JavaScriptDialogManager::HandleJavaScriptDialog(
 
 void JavaScriptDialogManager::CancelActiveAndPendingDialogs(
     content::WebContents* web_contents) {
-  HandleJavaScriptDialog(web_contents, false, 0);
-  // TODO!
+  JavaScriptDialog* dialog = GetActiveDialog(web_contents);
+  if (dialog) {
+    dialog->Cancel();
+  }
+  std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
+  while (!queue.empty()) {
+    queue.front()->Cancel();
+  }
 }
 
 void JavaScriptDialogManager::WebContentsDestroyed(
     content::WebContents* web_contents) {
-  // TODO!
+  CancelActiveAndPendingDialogs(web_contents);
 }
 
 JavaScriptDialog* JavaScriptDialogManager::GetActiveDialog(
@@ -130,6 +138,21 @@ void JavaScriptDialogManager::OnDialogClosed(
     active_dialogs_[web_contents] = next_dialog;
     next_dialog->Run();
   }
+}
+
+void JavaScriptDialogManager::OnDialogCancelled(
+    content::WebContents* web_contents,
+    JavaScriptDialog* dialog) {
+  if (dialog == GetActiveDialog(web_contents)) {
+    active_dialogs_[web_contents] = NULL;
+  } else {
+    std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
+    std::deque<JavaScriptDialog*>::iterator it =
+        std::find(queue.begin(), queue.end(), dialog);
+    DCHECK(it != queue.end());
+    queue.erase(it);
+  }
+  delete dialog;
 }
 
 } // namespace oxide

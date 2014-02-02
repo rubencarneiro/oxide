@@ -67,6 +67,8 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
 
   void OnDialogClosed(content::WebContents* web_contents,
                       JavaScriptDialog* dialog);
+  void OnDialogCancelled(content::WebContents* web_contents,
+                         JavaScriptDialog* dialog);
 };
 
 } // namespace oxide

@@ -30,6 +30,7 @@ class JavaScriptDialog {
   void Close(bool accept, const base::string16& user_input = base::string16());
   void CouldNotShow();
   virtual void Handle(bool accept, const base::string16* prompt_override) = 0;
+  void Cancel();
 
  protected:
   friend class JavaScriptDialogManager;

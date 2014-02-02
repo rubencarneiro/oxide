@@ -36,4 +36,9 @@ void JavaScriptDialog::CouldNotShow() {
   Close(is_before_unload_dialog_);
 }
 
+void JavaScriptDialog::Cancel() {
+  callback_.Run(false, base::string16());
+  JavaScriptDialogManager::GetInstance()->OnDialogCancelled(web_contents_, this);
+}
+
 } // namespace oxide
