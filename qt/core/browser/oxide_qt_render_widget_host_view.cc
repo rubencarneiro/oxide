@@ -572,7 +572,7 @@ float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
     bool ok;
     float scale = grid_unit_px.toFloat(&ok);
     if (ok) {
-      return scale;
+      return scale / 8;
     }
   }
 
