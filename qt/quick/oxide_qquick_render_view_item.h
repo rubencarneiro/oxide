@@ -49,8 +49,7 @@ class RenderViewItem Q_DECL_FINAL :
   void Hide() Q_DECL_FINAL;
   bool IsShowing() Q_DECL_FINAL;
 
-  QRect GetViewBounds() Q_DECL_FINAL;
-  QRect GetBoundsInRootWindow() Q_DECL_FINAL;
+  QRect GetViewBoundsPix() Q_DECL_FINAL;
 
   void SetSize(const QSize& size) Q_DECL_FINAL;
 
@@ -78,7 +77,7 @@ class RenderViewItem Q_DECL_FINAL :
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
  private:
-  void SchedulePaint(const QRect& rect) Q_DECL_FINAL;
+  void SchedulePaintForRectPix(const QRect& rect) Q_DECL_FINAL;
   void ScheduleUpdate() Q_DECL_FINAL;
 
   const QPixmap* backing_store_;

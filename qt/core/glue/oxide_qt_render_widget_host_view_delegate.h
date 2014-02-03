@@ -67,8 +67,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   virtual void Hide() = 0;
   virtual bool IsShowing() = 0;
 
-  virtual QRect GetViewBounds() = 0;
-  virtual QRect GetBoundsInRootWindow() = 0;
+  virtual QRect GetViewBoundsPix() = 0;
 
   virtual void SetSize(const QSize& size) = 0;
 
@@ -92,7 +91,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  private:
   friend class RenderWidgetHostView;
 
-  virtual void SchedulePaint(const QRect& rect) = 0;
+  virtual void SchedulePaintForRectPix(const QRect& rect) = 0;
   virtual void ScheduleUpdate() = 0;
 
   RenderWidgetHostView* GetRenderWidgetHostView() const;

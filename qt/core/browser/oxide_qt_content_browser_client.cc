@@ -116,7 +116,8 @@ void ContentBrowserClient::GetAllowedGLImplementations(
 }
 
 void ContentBrowserClient::GetDefaultScreenInfo(blink::WebScreenInfo* result) {
-  RenderWidgetHostView::GetScreenInfo(NULL, result);
+  RenderWidgetHostView::GetWebScreenInfoFromQScreen(
+      QGuiApplication::primaryScreen(), result);
 }
 
 } // namespace qt

@@ -51,7 +51,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
                        RenderWidgetHostViewDelegate* delegate);
   virtual ~RenderWidgetHostView();
 
-  static void GetScreenInfo(QScreen* screen, blink::WebScreenInfo* result);
+  static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
+  static void GetWebScreenInfoFromQScreen(QScreen* screen, blink::WebScreenInfo* result);
 
   void Blur() FINAL;
   void Focus() FINAL;
@@ -62,11 +63,13 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   bool IsShowing() FINAL;
 
   gfx::Rect GetViewBounds() const FINAL;
+  gfx::Size GetPhysicalBackingSize() const FINAL;
 
   void SetSize(const gfx::Size& size) FINAL;
 
   content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
 
+  float GetDeviceScaleFactor() const;
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
