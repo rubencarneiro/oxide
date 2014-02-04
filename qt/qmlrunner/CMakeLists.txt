@@ -23,9 +23,10 @@ set(QMLRUNNER oxideqmlscene)
 set(QMLRUNNER_SRCS main.cc)
 
 include_directories(${Qt5Core_PRIVATE_INCLUDE_DIRS})
-if(NOT Qt5Quick_VERSION_STRING VERSION_LESS 5.2.0)
+if(OXIDE_ENABLE_COMPOSITING)
   include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS}
                       ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
+  add_definitions(-DENABLE_COMPOSITING)
 endif()
 
 add_executable(${QMLRUNNER} ${QMLRUNNER_SRCS})

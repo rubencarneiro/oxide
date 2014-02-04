@@ -34,7 +34,7 @@
 #include <QUrl>
 
 #include "QtCore/private/qabstractanimation_p.h"
-#if QTQUICK_VERSION >= 0x050200
+#if defined(ENABLE_COMPOSITING)
 #include <QOpenGLContext>
 #include "QtQuick/private/qsgcontext_p.h"
 #endif
@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
   QGuiApplication app(argc, argv);
   app.setApplicationName("OxideQmlViewer");
 
-#if QTQUICK_VERSION >= 0x050200
+#if defined(ENABLE_COMPOSITING)
   QOpenGLContext glcontext;
   glcontext.create();
   QSGContext::setSharedOpenGLContext(&glcontext);

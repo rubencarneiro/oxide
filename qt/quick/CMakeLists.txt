@@ -55,12 +55,16 @@ set(PLUGIN_SRCS
     oxide_qquick_render_view_item.cc
     oxide_qquick_web_popup_menu_delegate.cc)
 
+find_package(Qt5Core)
+find_package(Qt5Gui)
+find_package(Qt5Quick)
+
 include_directories(${CMAKE_SOURCE_DIR}
                     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
                     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
                     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
 
-if(NOT Qt5Quick_VERSION_STRING VERSION_LESS 5.2.0)
+if(OXIDE_ENABLE_COMPOSITING)
   list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_render_view_node.cc)
   add_definitions(-DENABLE_COMPOSITING)
 endif()

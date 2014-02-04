@@ -31,11 +31,6 @@ if(CMAKE_CROSSCOMPILING)
   add_executable(Qt5::uic IMPORTED)
 endif()
 
-find_package(Qt5Core)
-find_package(Qt5Gui)
-find_package(Qt5Qml)
-find_package(Qt5Quick)
-
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlscene.sh.in
     ${CMAKE_CURRENT_BINARY_DIR}/run_qmlscene.sh

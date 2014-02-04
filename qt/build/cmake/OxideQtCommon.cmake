@@ -16,6 +16,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+if(__INCLUDED_OXIDE_QT_COMMON_CMAKE)
+  return()
+endif()
+set(__INCLUDED_OXIDE_QT_COMMON_CMAKE TRUE)
+
+include(CheckCXXSymbolExists)
+include(CMakeExpandImportedTargets)
 include(GNUInstallDirs)
 include(OxideCommon)
 include(${CMAKE_SOURCE_DIR}/qt/config.cmake)
@@ -36,3 +43,27 @@ if(NOT TARGET ${OXIDE_CORELIB_NAME})
       ${OXIDE_CORELIB_NAME}
       PROPERTIES IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED})
 endif()
+
+find_package(Qt5Core)
+find_package(Qt5Gui)
+find_package(Qt5Quick)
+
+set(CMAKE_REQUIRED_INCLUDES
+    ${Qt5Core_INCLUDE_DIRS}
+    ${Qt5Gui_INCLUDE_DIRS}
+    ${Qt5Quick_INCLUDE_DIRS}
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
+set(CMAKE_REQUIRED_DEFINITIONS
+    ${Qt5Core_DEFINITIONS}
+    ${Qt5Gui_DEFINITIONS}
+    ${Qt5Quick_DEFINITIONS})
+set(CMAKE_REQUIRED_FLAGS -fPIC)
+cmake_expand_imported_targets(
+    CMAKE_REQUIRED_LIBRARIES
+    LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Quick_LIBRARIES})
+check_cxx_symbol_exists(
+    QSGContext::setSharedOpenGLContext
+    QtQuick/private/qsgcontext_p.h
+    OXIDE_ENABLE_COMPOSITING)
