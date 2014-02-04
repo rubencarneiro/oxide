@@ -16,11 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-if(__INCLUDED_OXIDE_QT_COMMON_CMAKE)
-  return()
-endif()
-set(__INCLUDED_OXIDE_QT_COMMON_CMAKE TRUE)
-
 include(CheckCXXSymbolExists)
 include(CMakeExpandImportedTargets)
 include(GNUInstallDirs)
@@ -35,13 +30,21 @@ set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 set(OXIDE_BIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/bin)
 set(OXIDE_STAGE_DIR ${CMAKE_BINARY_DIR}/out/oxide)
 
-if(NOT TARGET ${OXIDE_CORELIB_NAME})
-  # Allow objects linked by cmake to declare a run-time dependency on the
-  # main library, built with gyp
-  add_library(${OXIDE_CORELIB_NAME} SHARED IMPORTED)
-  set_target_properties(
-      ${OXIDE_CORELIB_NAME}
-      PROPERTIES IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED})
+if(CMAKE_CROSSCOMPILING)
+  # Dummy targets - not used anywhere, but this stops Qt5CoreConfigExtras.cmake
+  # from creating them and checking if the binary exists, which is broken when
+  # cross-building because it checks for the target system binary. We need the
+  # host system binaries installed, because they are in the same package as the
+  # moc in Ubuntu (qtbase5-dev-tools), which is not currently multi-arch
+  if(NOT TARGET Qt5::qmake)
+    add_executable(Qt5::qmake IMPORTED)
+  endif()
+  if(NOT TARGET Qt5::rcc)
+    add_executable(Qt5::rcc IMPORTED)
+  endif()
+  if(NOT TARGET Qt5::uic)
+    add_executable(Qt5::uic IMPORTED)
+  endif()
 endif()
 
 find_package(Qt5Core)

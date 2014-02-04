@@ -55,29 +55,26 @@ set(PLUGIN_SRCS
     oxide_qquick_render_view_item.cc
     oxide_qquick_web_popup_menu_delegate.cc)
 
-find_package(Qt5Core)
-find_package(Qt5Gui)
-find_package(Qt5Quick)
-
-include_directories(${CMAKE_SOURCE_DIR}
-                    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-                    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-                    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-
 if(OXIDE_ENABLE_COMPOSITING)
   list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_render_view_node.cc)
-  add_definitions(-DENABLE_COMPOSITING)
 endif()
 
 add_library(${PLUGIN} MODULE ${PLUGIN_SRCS})
-add_dependencies(${PLUGIN} gyp_postbuild)
+qt5_use_modules(${PLUGIN} Core Gui Qml Quick)
+if(OXIDE_ENABLE_COMPOSITING)
+  target_compile_definitions(${PLUGIN} PRIVATE -DENABLE_COMPOSITING)
+endif()
+target_include_directories(
+    ${PLUGIN} PRIVATE
+    ${CMAKE_SOURCE_DIR}
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
+target_link_libraries(${PLUGIN} OxideQtCore)
 set_target_properties(
     ${PLUGIN} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME})
-
-qt5_use_modules(${PLUGIN} Core Gui Qml Quick)
-target_link_libraries(${PLUGIN} OxideQtCore)
 
 add_custom_command(
     TARGET ${PLUGIN} POST_BUILD

@@ -22,20 +22,20 @@ set(QMLRUNNER oxideqmlscene)
 
 set(QMLRUNNER_SRCS main.cc)
 
-include_directories(${Qt5Core_PRIVATE_INCLUDE_DIRS})
-if(OXIDE_ENABLE_COMPOSITING)
-  include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-                      ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-  add_definitions(-DENABLE_COMPOSITING)
-endif()
-
 add_executable(${QMLRUNNER} ${QMLRUNNER_SRCS})
+qt5_use_modules(${QMLRUNNER} Core Gui Qml Quick)
+target_include_directories(${QMLRUNNER} PRIVATE ${Qt5Core_PRIVATE_INCLUDE_DIRS})
+if(OXIDE_ENABLE_COMPOSITING)
+  target_compile_definitions(${QMLRUNNER} PRIVATE -DENABLE_COMPOSITING)
+  target_include_directories(
+      ${QMLRUNNER} PRIVATE
+      ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+      ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
+endif()
 set_target_properties(
     ${QMLRUNNER} PROPERTIES
     SKIP_BUILD_RPATH TRUE
     RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
-
-qt5_use_modules(${QMLRUNNER} Core Gui Qml Quick)
 
 get_target_property(_QMLRUNNER_LOCATION ${QMLRUNNER} LOCATION)
 get_filename_component(_QMLRUNNER_NAME ${_QMLRUNNER_LOCATION} NAME)

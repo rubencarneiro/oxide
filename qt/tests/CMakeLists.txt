@@ -26,13 +26,12 @@ set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
 set(QML_PLUGIN_SRCS qmltests/oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
+qt5_use_modules(${QML_PLUGIN} Core Qml)
 
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
-
-qt5_use_modules(${QML_PLUGIN} Core Qml)
 
 foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebView.qml)
   add_custom_command(
@@ -45,17 +44,17 @@ endforeach()
 set(QML_TEST qmltest)
 set(QML_TEST_SRCS qmltests/main.cc)
 
-include_directories(${Qt5Core_PRIVATE_INCLUDE_DIRS}
-                    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-                    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-
 add_executable(${QML_TEST} ${QML_TEST_SRCS})
+qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest)
+target_include_directories(
+    ${QML_TEST} PRIVATE
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
 set_target_properties(
     ${QML_TEST} PROPERTIES
     SKIP_BUILD_RPATH TRUE
     RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
-
-qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest)
 
 function(add_qml_test)
   cmake_parse_arguments(_ARGS "USE_DATA_DIR" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
