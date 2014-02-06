@@ -29,6 +29,7 @@
 #include <QRect>
 #include <QScreen>
 #include <QSize>
+#include <QTextCharFormat>
 #include <QWheelEvent>
 
 #include "base/logging.h"
@@ -36,7 +37,9 @@
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
+#include "third_party/WebKit/public/platform/WebColor.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 #include "ui/base/ime/text_input_type.h"
@@ -709,6 +712,61 @@ void RenderWidgetHostView::ForwardMouseEvent(QMouseEvent* event) {
 void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHost()->ForwardWheelEvent(
       MakeWebMouseWheelEvent(event, GetDeviceScaleFactor()));
+  event->accept();
+}
+
+void RenderWidgetHostView::ForwardInputMethodEvent(QInputMethodEvent* event) {
+  content::RenderWidgetHostImpl* rwh =
+      content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
+
+  QString preedit = event->preeditString();
+  if (preedit.isEmpty()) {
+    int selectionStart = -1;
+    int selectionLength = 0;
+    Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
+      if (attribute.type == QInputMethodEvent::Selection) {
+        selectionStart = attribute.start;
+        selectionLength = attribute.length;
+        break;
+      }
+    }
+    rwh->ImeConfirmComposition(
+        base::UTF8ToUTF16(event->commitString().toStdString()),
+        gfx::Range(selectionStart, selectionStart + selectionLength),
+        false);
+  } else {
+    std::vector<blink::WebCompositionUnderline> underlines;
+    Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
+      switch (attribute.type) {
+      case QInputMethodEvent::TextFormat: {
+        QTextCharFormat textCharFormat =
+            attribute.value.value<QTextFormat>().toCharFormat();
+        blink::WebColor color = textCharFormat.underlineColor().rgba();
+        int start = qMin(attribute.start, (attribute.start + attribute.length));
+        int end = qMax(attribute.start, (attribute.start + attribute.length));
+        blink::WebCompositionUnderline underline(start, end, color, false);
+        underlines.push_back(underline);
+        break;
+      }
+      case QInputMethodEvent::Cursor:
+        if (attribute.length > 0) {
+          // A cursor should be shown inside the preedit string at position attribute.start
+          // XXX: how does that translate to ImeSetComposition(…) ?
+        }
+        break;
+      default:
+        break;
+      }
+    }
+    int replacementStart = event->replacementStart();
+    int replacementLength = event->replacementLength();
+    rwh->ImeSetComposition(base::UTF8ToUTF16(preedit.toStdString()),
+                           underlines, replacementStart,
+                           replacementStart + replacementLength);
+  }
+
+  // XXX: in which case should we call rwh->ImeCancelComposition() ?
+
   event->accept();
 }
 

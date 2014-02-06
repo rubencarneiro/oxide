@@ -26,6 +26,7 @@
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
+class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QPixmap;
@@ -84,6 +85,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void ForwardKeyEvent(QKeyEvent* event);
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
+  void ForwardInputMethodEvent(QInputMethodEvent* event);
 
   TextureInfo GetFrontbufferTextureInfo();
   void DidUpdate(bool skipped);

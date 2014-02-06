@@ -193,16 +193,7 @@ void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
 }
 
 void RenderViewItem::inputMethodEvent(QInputMethodEvent* event) {
-  printf("Input method event:\n");
-  for (int i = 0; i < event->attributes().length(); ++i) {
-    const QInputMethodEvent::Attribute& attr = event->attributes().at(i);
-    printf("Attribute type: %d, start: %d, length: %d, value: %s\n",
-           attr.type, attr.start, attr.length, qPrintable(attr.value.toString()));
-  }
-  printf("Commit string: %s\n", qPrintable(event->commitString()));
-  printf("Preedit string: %s\n", qPrintable(event->preeditString()));
-  printf("Replacement length: %d\n", event->replacementLength());
-  printf("Replacement start: %d\n\n", event->replacementStart());
+  ForwardInputMethodEvent(event);
 }
 
 void RenderViewItem::updatePolish() {
