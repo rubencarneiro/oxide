@@ -20,7 +20,6 @@
 #include <QGuiApplication>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 
-#include "base/logging.h"
 #include "base/memory/singleton.h"
 
 namespace oxide {
@@ -38,10 +37,6 @@ intptr_t ContentClient::GetNativeDisplay() {
       QGuiApplication::platformNativeInterface()->nativeResourceForScreen(
         "display",
         QGuiApplication::primaryScreen());
-
-  CHECK(display) <<
-      "Failed to get the native display handle. Does the QPA backend "
-      "implement QPlatformNativeInterface::nativeResourceForScreen() ?";
 
   return reinterpret_cast<intptr_t>(display);
 }
