@@ -675,9 +675,13 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 bool can_compose_inline) {
   input_type_ = type;
 
+  bool enabled = type != ui::TEXT_INPUT_TYPE_NONE;
+
+  delegate_->SetInputMethodEnabled(enabled);
+
   QInputMethod* input_method = QGuiApplication::inputMethod();
-  input_method->setVisible(type != ui::TEXT_INPUT_TYPE_NONE);
-  input_method->update(Qt::ImEnabled | Qt::ImHints | Qt::ImQueryInput);
+  input_method->setVisible(enabled);
+  input_method->update(Qt::ImHints | Qt::ImQueryInput);
 }
 
 void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
@@ -732,8 +736,6 @@ const QPixmap* RenderWidgetHostView::GetBackingStore() {
 QVariant RenderWidgetHostView::InputMethodQuery(
     Qt::InputMethodQuery query) const {
   switch (query) {
-    case Qt::ImEnabled:
-      return input_type_ != ui::TEXT_INPUT_TYPE_NONE;
     case Qt::ImHints:
       return QVariant(QImHintsFromInputType(input_type_));
     case Qt::ImCursorRectangle: {

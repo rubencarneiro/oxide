@@ -55,6 +55,8 @@ class RenderViewItem Q_DECL_FINAL :
 
   QScreen* GetScreen() Q_DECL_FINAL;
 
+  void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
+
   void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
   void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
 
@@ -69,6 +71,8 @@ class RenderViewItem Q_DECL_FINAL :
   void wheelEvent(QWheelEvent* event) Q_DECL_FINAL;
 
   void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
+
+  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_FINAL;
 
   void updatePolish() Q_DECL_FINAL;
   QSGNode* updatePaintNode(QSGNode* oldNode,

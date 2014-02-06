@@ -17,6 +17,9 @@
 
 #include "oxide_qquick_render_view_item.h"
 
+#include <QGuiApplication>
+#include <QInputMethod>
+#include <QInputMethodEvent>
 #include <QQuickWindow>
 #include <QPointF>
 #include <QRectF>
@@ -73,7 +76,7 @@ RenderViewItem::RenderViewItem(
 #else
 {
 #endif
-  setFlags(QQuickItem::ItemHasContents | QQuickItem::ItemAcceptsInputMethod);
+  setFlag(QQuickItem::ItemHasContents);
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
@@ -125,6 +128,11 @@ QScreen* RenderViewItem::GetScreen() {
   }
 
   return window()->screen();
+}
+
+void RenderViewItem::SetInputMethodEnabled(bool enabled) {
+  setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
+  QGuiApplication::inputMethod()->update(Qt::ImEnabled);
 }
 
 void RenderViewItem::focusInEvent(QFocusEvent* event) {
@@ -182,6 +190,19 @@ void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
   ForwardMouseEvent(&me);
 
   event->setAccepted(me.isAccepted());
+}
+
+void RenderViewItem::inputMethodEvent(QInputMethodEvent* event) {
+  printf("Input method event:\n");
+  for (int i = 0; i < event->attributes().length(); ++i) {
+    const QInputMethodEvent::Attribute& attr = event->attributes().at(i);
+    printf("Attribute type: %d, start: %d, length: %d, value: %s\n",
+           attr.type, attr.start, attr.length, qPrintable(attr.value.toString()));
+  }
+  printf("Commit string: %s\n", qPrintable(event->commitString()));
+  printf("Preedit string: %s\n", qPrintable(event->preeditString()));
+  printf("Replacement length: %d\n", event->replacementLength());
+  printf("Replacement start: %d\n\n", event->replacementStart());
 }
 
 void RenderViewItem::updatePolish() {
@@ -243,7 +264,12 @@ QSGNode* RenderViewItem::updatePaintNode(
 }
 
 QVariant RenderViewItem::inputMethodQuery(Qt::InputMethodQuery query) const {
-  return InputMethodQuery(query);
+  switch (query) {
+    case Qt::ImEnabled:
+      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return InputMethodQuery(query);
+  }
 }
 
 } // namespace qquick

@@ -75,6 +75,8 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   const QPixmap* GetBackingStore();
 
+  virtual void SetInputMethodEnabled(bool enabled) = 0;
+
  protected:
   RenderWidgetHostViewDelegate();
 
