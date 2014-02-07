@@ -57,7 +57,7 @@ void WebPreferences::UpdateViews() {
   for (std::set<WebView *>::const_iterator it = views_.begin();
        it != views_.end(); ++it) {
     WebView* view = *it;
-    content::WebContents* contents = view->web_contents();
+    content::WebContents* contents = view->GetWebContents();
     if (!contents) {
       continue;
     }

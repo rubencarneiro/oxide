@@ -108,7 +108,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     command_line->AppendSwitch(switches::kEnableViewport);
     command_line->AppendSwitch(switches::kEnableViewportMeta);
     command_line->AppendSwitch(switches::kEnablePinch);
-    command_line->AppendSwitch(switches::kEnableOverlayScrollbars);
+    command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
 
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
