@@ -1,15 +1,14 @@
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
-use-correct-path-for-renderer.patch
-allow-embedders-to-override-get-default-screen-info.patch
 gyp-support-library-version.patch
 support-native-popup-menus.patch
 add-oxide-messages.patch
 add-oxide-resources.patch
 share-gl-resources-with-embedder.patch
-comment-out-GetDefaultXDisplay.patch
 arm-icu.patch
 dont-check-number-of-threads-at-startup.patch
+enable-glx-on-ozone.patch
 dont-depend-on-gtk.patch
 arm-neon.patch
+dont-use-egl-create-context-robustness.patch
 add-frame-attached-to-web-contents-observer.patch

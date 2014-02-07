@@ -55,6 +55,7 @@ namespace oxide {
 class BrowserContext;
 class WebFrame;
 class WebPopupMenu;
+class WebPreferences;
 
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
@@ -108,6 +109,9 @@ class WebView : public MessageTarget,
 
   WebFrame* GetRootFrame() const;
   WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
+
+  WebPreferences* GetWebPreferences();
+  void SetWebPreferences(WebPreferences* prefs, bool send_update = true);
 
   void Observe(int type,
                const content::NotificationSource& source,
@@ -213,6 +217,8 @@ class WebView : public MessageTarget,
   scoped_ptr<content::NotificationRegistrar> registrar_;
 
   WebFrame* root_frame_;
+
+  WebPreferences* web_preferences_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

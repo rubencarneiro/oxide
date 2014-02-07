@@ -21,7 +21,7 @@
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/compiler_specific.h"
-#include "base/platform_file.h"
+#include "base/files/file.h"
 
 namespace base {
 class FilePath;
@@ -32,7 +32,7 @@ namespace oxide {
 
 class FileUtils FINAL {
  public:
-  typedef base::Callback<void(base::PlatformFileError,
+  typedef base::Callback<void(base::File::Error,
                               const char*,
                               int)> GetFileContentsCallback;
 

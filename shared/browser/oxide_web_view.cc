@@ -35,10 +35,12 @@
 #include "content/public/browser/notification_service.h"
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
 #include "net/base/net_errors.h"
 #include "url/gurl.h"
+#include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
 
@@ -47,6 +49,7 @@
 #include "oxide_content_browser_client.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
+#include "oxide_web_preferences.h"
 
 namespace oxide {
 
@@ -105,9 +108,14 @@ void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
 WebView::WebView() :
-    root_frame_(NULL) {}
+    root_frame_(NULL),
+    web_preferences_(NULL) {}
 
 WebView::~WebView() {
+  if (web_preferences_) {
+    web_preferences_->RemoveWebView(this);
+  }
+
   if (web_contents_) {
     GetBrowserContext()->RemoveWebView(this);
     web_contents_->SetDelegate(NULL);
@@ -353,6 +361,34 @@ WebFrame* WebView::FindFrameWithID(int64 frame_tree_node_id) const {
   }
 
   return NULL;
+}
+
+WebPreferences* WebView::GetWebPreferences() {
+  if (!web_preferences_) {
+    SetWebPreferences(
+        ContentClient::instance()->browser()->GetDefaultWebPreferences(),
+        false);
+  }
+
+  return web_preferences_;
+}
+
+void WebView::SetWebPreferences(WebPreferences* prefs, bool send_update) {
+  if (web_preferences_) {
+    web_preferences_->RemoveWebView(this);
+  }
+
+  web_preferences_ = prefs;
+  if (prefs) {
+    prefs->AddWebView(this);
+  }
+
+  if (!send_update || !web_contents_) {
+    return;
+  }
+
+  web_contents()->GetRenderViewHost()->UpdateWebkitPreferences(
+      web_contents()->GetRenderViewHost()->GetWebkitPreferences());
 }
 
 void WebView::Observe(int type,

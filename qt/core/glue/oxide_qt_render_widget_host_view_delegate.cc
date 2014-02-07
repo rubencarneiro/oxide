@@ -57,6 +57,11 @@ void RenderWidgetHostViewDelegate::ForwardWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHostView()->ForwardWheelEvent(event);
 }
 
+void RenderWidgetHostViewDelegate::ForwardInputMethodEvent(
+    QInputMethodEvent* event) {
+  GetRenderWidgetHostView()->ForwardInputMethodEvent(event);
+}
+
 TextureInfo RenderWidgetHostViewDelegate::GetFrontbufferTextureInfo() {
   oxide::TextureInfo tex = GetRenderWidgetHostView()->GetFrontbufferTextureInfo();
   return TextureInfo(tex.id(),

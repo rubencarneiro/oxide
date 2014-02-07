@@ -24,6 +24,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "skia/ext/platform_canvas.h"
 #include "third_party/skia/include/core/SkBitmap.h"
+#include "ui/gfx/geometry/vector2d_conversions.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/rect_conversions.h"
 #include "ui/gfx/rect_f.h"
@@ -35,9 +36,10 @@ namespace oxide {
 namespace qt {
 
 BackingStore::BackingStore(
-    content::RenderWidgetHost* widget, const gfx::Size& size) :
+    content::RenderWidgetHost* widget, const gfx::Size& size, float scale) :
     content::BackingStore(widget, size),
-    pixmap_(size.width(), size.height()) {}
+    pixmap_(size.width() * scale, size.height() * scale),
+    device_scale_factor_(scale) {}
 
 void BackingStore::PaintToBackingStore(
     content::RenderProcessHost* process,
@@ -53,8 +55,8 @@ void BackingStore::PaintToBackingStore(
     return;
   }
 
-  gfx::Rect pixel_bitmap_rect = gfx::ToEnclosedRect(
-      gfx::ScaleRect(bitmap_rect, scale_factor));
+  gfx::Rect pixel_bitmap_rect =
+      gfx::ScaleToEnclosingRect(bitmap_rect, scale_factor);
   const int width = pixel_bitmap_rect.width();
   const int height = pixel_bitmap_rect.height();
 
@@ -72,19 +74,21 @@ void BackingStore::PaintToBackingStore(
              width, height, QImage::Format_ARGB32);
 
   QPainter painter(&pixmap_);
-
   for (size_t i = 0; i < copy_rects.size(); ++i) {
-    gfx::Rect copy_rect =
-        gfx::ToEnclosedRect(gfx::ScaleRect(copy_rects[i], scale_factor));
+    gfx::Rect copy_rect = copy_rects[i];
+    gfx::Rect pixel_copy_src_rect =
+        gfx::ScaleToEnclosingRect(copy_rect, scale_factor);
+    gfx::Rect pixel_copy_dst_rect =
+        gfx::ScaleToEnclosingRect(copy_rect, device_scale_factor_);
 
-    QRect src_rect(copy_rect.x() - pixel_bitmap_rect.x(),
-                   copy_rect.y() - pixel_bitmap_rect.y(),
-                   copy_rect.width(),
-                   copy_rect.height());
-    QRect dst_rect(copy_rects[i].x(),
-                   copy_rects[i].y(),
-                   copy_rects[i].width(),
-                   copy_rects[i].height());
+    QRect src_rect(pixel_copy_src_rect.x() - pixel_bitmap_rect.x(),
+                   pixel_copy_src_rect.y() - pixel_bitmap_rect.y(),
+                   pixel_copy_src_rect.width(),
+                   pixel_copy_src_rect.height());
+    QRect dst_rect(pixel_copy_dst_rect.x(),
+                   pixel_copy_dst_rect.y(),
+                   pixel_copy_dst_rect.width(),
+                   pixel_copy_dst_rect.height());
 
     painter.drawImage(dst_rect, img, src_rect);
   }
@@ -128,12 +132,17 @@ void BackingStore::ScrollBackingStore(const gfx::Vector2d& delta,
                                       const gfx::Size& view_size) {
   DCHECK(delta.x() == 0 || delta.y() == 0);
 
-  pixmap_.scroll(delta.x(),
-                 delta.y(),
-                 clip_rect.x(),
-                 clip_rect.y(),
-                 clip_rect.width(),
-                 clip_rect.height());
+  gfx::Rect pixel_rect = gfx::ToEnclosingRect(
+      gfx::ScaleRect(clip_rect, device_scale_factor_));
+  gfx::Vector2d pixel_delta = gfx::ToFlooredVector2d(
+      gfx::ScaleVector2d(delta, device_scale_factor_));
+
+  pixmap_.scroll(pixel_delta.x(),
+                 pixel_delta.y(),
+                 pixel_rect.x(),
+                 pixel_rect.y(),
+                 pixel_rect.width(),
+                 pixel_rect.height());
 }
 
 } // namespace qt

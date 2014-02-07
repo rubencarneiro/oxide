@@ -26,32 +26,110 @@
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/gfx/display.h"
+#include "ui/gfx/ozone/surface_factory_ozone.h"
+#include "ui/gfx/screen.h"
+#include "ui/gfx/screen_type_delegate.h"
 #include "ui/gl/gl_context.h"
+#include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_share_group.h"
 #include "ui/gl/gl_surface.h"
+#include "ui/ozone/ozone_platform.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_message_dispatcher_browser.h"
 #include "oxide_message_pump.h"
-#include "oxide_shared_gl_context.h"
 #include "oxide_web_contents_view.h"
+#include "oxide_web_preferences.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
 namespace {
 
 base::MessagePump* CreateMessagePumpForUI() {
-  return ContentClient::GetInstance()->browser()->
+  return ContentClient::instance()->browser()->
       CreateMessagePumpForUI();
 }
 
 class BrowserMainParts;
 BrowserMainParts* g_main_parts;
+
+class Screen : public gfx::Screen {
+ public:
+  Screen() {}
+
+  bool IsDIPEnabled() FINAL {
+    NOTIMPLEMENTED();
+    return true;
+  }
+
+  gfx::Point GetCursorScreenPoint() FINAL {
+    NOTIMPLEMENTED();
+    return gfx::Point();
+  }
+
+  gfx::NativeWindow GetWindowUnderCursor() FINAL {
+    NOTIMPLEMENTED();
+    return NULL;
+  }
+
+  gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) FINAL {
+    NOTIMPLEMENTED();
+    return NULL;
+  }
+
+  int GetNumDisplays() const FINAL {
+    NOTIMPLEMENTED();
+    return 1;
+  }
+
+  std::vector<gfx::Display> GetAllDisplays() const FINAL {
+    NOTIMPLEMENTED();
+    return std::vector<gfx::Display>();
+  }
+
+  gfx::Display GetDisplayNearestWindow(gfx::NativeView view) const FINAL {
+    NOTIMPLEMENTED();
+    return gfx::Display();
+  }
+
+  gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const FINAL {
+    NOTIMPLEMENTED();
+    return gfx::Display();
+  }
+
+  gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const FINAL {
+    NOTIMPLEMENTED();
+    return gfx::Display();
+  }
+
+  gfx::Display GetPrimaryDisplay() const FINAL {
+    blink::WebScreenInfo info;
+    ContentClient::instance()->browser()->GetDefaultScreenInfo(&info);
+
+    gfx::Display display;
+    display.set_bounds(info.rect);
+    display.set_work_area(info.availableRect);
+    display.set_device_scale_factor(info.deviceScaleFactor);
+
+    return display;
+  }
+
+  void AddObserver(gfx::DisplayObserver* observer) FINAL {
+    NOTIMPLEMENTED();
+  }
+  void RemoveObserver(gfx::DisplayObserver* observer) FINAL {
+    NOTIMPLEMENTED();
+  }
+};
 
 class BrowserMainParts : public content::BrowserMainParts {
  public:
@@ -69,16 +147,27 @@ class BrowserMainParts : public content::BrowserMainParts {
     base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
     main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
   
-    scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
-    shared_gl_context_ =
-        ContentClient::GetInstance()->browser()->CreateSharedGLContext(
-          share_group);
-    if (shared_gl_context_) {
-      DCHECK_EQ(shared_gl_context_->share_group(), share_group);
-    }
   }
 
   int PreCreateThreads() FINAL {
+    ui::OzonePlatform::Initialize();
+    // Make sure we initialize the display handle on the main thread
+    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
+
+    gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
+                                   &primary_screen_);
+
+    scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
+    shared_gl_context_ =
+        ContentClient::instance()->browser()->CreateSharedGLContext(
+          share_group);
+    DCHECK(!shared_gl_context_ ||
+           shared_gl_context_->share_group() == share_group);
+    if (!shared_gl_context_) {
+      DLOG(INFO) << "No shared GL context has been created. "
+                 << "Compositing will not work";
+    }
+
     // Work around a mesa race - see https://launchpad.net/bugs/1267893
     gfx::GLSurface::InitializeOneOff();
 
@@ -91,16 +180,24 @@ class BrowserMainParts : public content::BrowserMainParts {
     return true;
   }
 
-  gfx::GLContext* shared_gl_context() const {
+  void PostDestroyThreads() FINAL {
+    gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
+  }
+
+  oxide::SharedGLContext* shared_gl_context() const {
     return shared_gl_context_;
   }
 
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
-  scoped_refptr<gfx::GLContext> shared_gl_context_;
+  scoped_refptr<oxide::SharedGLContext> shared_gl_context_;
+
+  Screen primary_screen_;
 };
 
 } // namespace
+
+ContentBrowserClient::ContentBrowserClient() {}
 
 ContentBrowserClient::~ContentBrowserClient() {}
 
@@ -167,37 +264,32 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
 void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
-    WebPreferences* prefs) {
-  // XXX: This is temporary until we expose a WebPreferences API
-  if (getenv("OXIDE_ENABLE_COMPOSITING") &&
-      g_main_parts->shared_gl_context()) {
-    prefs->force_compositing_mode = true;
-    prefs->accelerated_compositing_enabled = true;
-  } else {
-    prefs->force_compositing_mode = false;
-    prefs->accelerated_compositing_enabled = false;
+    ::WebPreferences* prefs) {
+  WebView* view = WebView::FromRenderViewHost(render_view_host);
+  WebPreferences* web_prefs = view->GetWebPreferences();
+  if (web_prefs) {
+    web_prefs->ApplyToWebkitPrefs(prefs);
   }
-}
-
-bool ContentBrowserClient::GetDefaultScreenInfo(
-    blink::WebScreenInfo* result) {
-  GetDefaultScreenInfoImpl(result);
-  return true;
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   if (!g_main_parts->shared_gl_context()) {
-    DLOG(INFO) << "No shared GL context has been created. "
-               << "Compositing will not work";
     return NULL;
   }
 
   return g_main_parts->shared_gl_context()->share_group();
 }
 
-scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
+scoped_refptr<oxide::SharedGLContext> ContentBrowserClient::CreateSharedGLContext(
     oxide::GLShareGroup* share_group) {
-  return scoped_refptr<gfx::GLContext>(NULL);
+  return NULL;
+}
+
+void ContentBrowserClient::GetAllowedGLImplementations(
+    std::vector<gfx::GLImplementation>* impls) {}
+
+WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
+  return NULL;
 }
 
 } // namespace oxide
