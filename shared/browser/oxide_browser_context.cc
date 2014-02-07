@@ -286,7 +286,7 @@ void BrowserContextIOData::Init(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          0, // Use the default max size
+          83886080, // XXX: 80MB - Make this configurable
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }
