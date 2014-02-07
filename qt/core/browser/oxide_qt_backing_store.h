@@ -32,7 +32,9 @@ namespace qt {
 
 class BackingStore FINAL : public content::BackingStore {
  public:
-  BackingStore(content::RenderWidgetHost* widget, const gfx::Size& size);
+  BackingStore(content::RenderWidgetHost* widget,
+               const gfx::Size& size,
+               float scale);
 
   void PaintToBackingStore(
       content::RenderProcessHost* process,
@@ -54,6 +56,7 @@ class BackingStore FINAL : public content::BackingStore {
 
  private:
   QPixmap pixmap_;
+  float device_scale_factor_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BackingStore);
 };

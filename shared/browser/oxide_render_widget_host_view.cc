@@ -425,7 +425,8 @@ void RenderWidgetHostView::ScrollOffsetChanged() {}
 void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,
-    const base::Callback<void(bool, const SkBitmap&)>& callback) {
+    const base::Callback<void(bool, const SkBitmap&)>& callback,
+    const SkBitmap::Config config) {
   GetRenderWidgetHost()->GetSnapshotFromRenderer(src_subrect, callback);
 }
 
@@ -460,9 +461,7 @@ void RenderWidgetHostView::AcceleratedSurfaceBuffersSwapped(
                  gpu_host_id,
                  params_in_pixel.mailbox_name));
 
-  // FIXME: GetViewBounds() should be in DIP
-  //        See https://launchpad.net/bugs/1257721
-  if (params_in_pixel.size != GetViewBounds().size()) {
+  if (params_in_pixel.size != GetPhysicalBackingSize()) {
     SendAcknowledgeBufferPresent(ack, true);
     return;
   }
@@ -491,14 +490,6 @@ void RenderWidgetHostView::AcceleratedSurfaceRelease() {}
 bool RenderWidgetHostView::HasAcceleratedSurface(
     const gfx::Size& desired_size) {
   return false;
-}
-
-gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
-  // XXX: This default implementation assumes a scale factor of 1.0
-  //      Implementations that change this for DPI-awareness need
-  //      to also set WebScreenInfo::deviceScaleFactor in
-  //      GetScreenInfo()
-  return GetViewBounds().size();
 }
 
 gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {

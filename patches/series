@@ -1,6 +1,5 @@
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
-use-correct-path-for-renderer.patch
 gyp-support-library-version.patch
 support-native-popup-menus.patch
 add-oxide-messages.patch
@@ -12,3 +11,4 @@ dont-check-number-of-threads-at-startup.patch
 enable-glx-on-ozone.patch
 dont-depend-on-gtk.patch
 arm-neon.patch
+dont-use-egl-create-context-robustness.patch

@@ -21,7 +21,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
-#include "base/platform_file.h"
+#include "base/files/file.h"
 
 #include "shared/common/oxide_user_script.h"
 
@@ -55,7 +55,7 @@ class UserScriptAdapterPrivate FINAL {
   friend class UserScriptAdapter;
 
   UserScriptAdapterPrivate(UserScriptAdapter* adapter);
-  void OnGotFileContents(base::PlatformFileError error,
+  void OnGotFileContents(base::File::Error error,
                          const char* data,
                          int bytes_read);
 

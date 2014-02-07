@@ -1,4 +1,6 @@
-# Copyright (C) 2013 Canonical Ltd.
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2014 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,17 +16,33 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-{
-  'inputs': [
-    '<(_moc_input)'
-  ],
-  'outputs': [
-    '<(INTERMEDIATE_DIR)/<(_action_name)'
-  ],
-  'action': [
-    '<(qt_moc_executable)',
-    '-o',
-    '<(INTERMEDIATE_DIR)/<(_action_name)',
-    '<(_moc_input)'
-  ]
-}
+foreach(v MAKE GYP_DIR CC CXX)
+  if(NOT DEFINED ${v})
+    message(FATAL_ERROR "Need to define ${v}")
+  endif()
+endforeach()
+
+set(ENV{CFLAGS})
+set(ENV{CXXFLAGS})
+set(ENV{CPPFLAGS})
+set(ENV{LDFLAGS})
+set(ENV{CC} ${CC})
+set(ENV{CXX} ${CXX})
+
+foreach(v CC_host CXX_host)
+  if(DEFINED ${v})
+    set(ENV{${v}} ${${v}})
+  endif()
+endforeach()
+
+if(DEFINED BUILDTYPE)
+  set(BUILDTYPE_ARG BUILDTYPE=${BUILDTYPE})
+else()
+  set(BUILDTYPE_ARG)
+endif()
+
+execute_process(COMMAND ${MAKE} -C ${GYP_DIR} -f Makefile ${BUILDTYPE_ARG} all
+                RESULT_VARIABLE _RESULT)
+if(NOT _RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to build gyp target")
+endif()

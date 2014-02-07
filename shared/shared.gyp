@@ -90,7 +90,7 @@
       'hard_dependency': 1,
       'variables': {
         'chromium_code': 1,
-        'oxide_subprocess%': 'oxide-renderer',
+        'oxide_subprocess_path%': 'oxide-renderer',
       },
       'direct_dependent_settings': {
         'include_dirs': [
@@ -98,8 +98,7 @@
         ],
       },
       'defines': [
-        'OXIDE_RESOURCE_SUBPATH=\"<(oxide_port_resource_subpath)\"',
-        'OXIDE_SUBPROCESS=\"<(oxide_subprocess)\"'
+        'OXIDE_SUBPROCESS_PATH=\"<(oxide_subprocess_path)\"'
       ],
       'dependencies': [
         'oxide_packed_resources',

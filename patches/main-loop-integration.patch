@@ -22,10 +22,10 @@ diff --git a/base/run_loop.h b/base/run_loop.h
  class MessagePumpForUI;
  #endif
  
- #if defined(OS_IOS)
- class MessagePumpUIApplication;
+ #if defined(USE_AURA)
+ class MessagePumpDispatcher;
  #endif
-@@ -69,16 +73,17 @@ class BASE_EXPORT RunLoop {
+@@ -73,16 +77,17 @@ class BASE_EXPORT RunLoop {
    // Example:
    //   RunLoop run_loop;
    //   PostTask(run_loop.QuitClosure());

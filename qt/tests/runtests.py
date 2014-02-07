@@ -206,7 +206,7 @@ class Options(OptionParser):
                     help="Run a HTTP server from the specified directory")
     self.add_option("-p", "--server-port", action="store", type="int", dest="port",
                     help="Specify a port for the HTTP server", default=8080)
-    self.add_option("-t", "--temp-profile", action="store_true", dest="temp_profile",
+    self.add_option("-t", "--temp-datadir", action="store_true", dest="temp_datadir",
                     help="Create a temporary data directory for oxide")
 
 class Runner(object):
@@ -214,13 +214,13 @@ class Runner(object):
     self._should_shutdown = False
     self._rlist = []
     self._p = None
-    self._temp_profile = None
+    self._temp_datadir = None
 
     (opts, args) = options.parse_args()
 
-    if (opts.temp_profile):
-      self._temp_profile = tempfile.mkdtemp()
-      os.environ["OXIDE_TESTING_DATA_PATH"] = self._temp_profile
+    if (opts.temp_datadir):
+      self._temp_datadir = tempfile.mkdtemp()
+      os.environ["OXIDE_TESTING_DATA_PATH"] = self._temp_datadir
 
     http_path = os.path.abspath(opts.server) if opts.server is not None else None
     http_port = opts.port if opts.port is not None else 8080
@@ -251,8 +251,8 @@ class Runner(object):
       for i in r:
         i.handle_event()
 
-    if self._temp_profile is not None:
-      shutil.rmtree(self._temp_profile)
+    if self._temp_datadir is not None:
+      shutil.rmtree(self._temp_datadir)
 
     return self._p.returncode if self._p is not None else 0
 
