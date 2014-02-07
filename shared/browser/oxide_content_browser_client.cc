@@ -46,6 +46,8 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_message_pump.h"
 #include "oxide_web_contents_view.h"
+#include "oxide_web_preferences.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -260,17 +262,11 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
 void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
-    WebPreferences* prefs) {
-  // XXX: This is temporary until we expose a WebPreferences API
-  if (getenv("OXIDE_ENABLE_COMPOSITING") &&
-      g_main_parts->shared_gl_context() &&
-      g_main_parts->shared_gl_context()->GetImplementation() ==
-          gfx::GetGLImplementation()) {
-    prefs->force_compositing_mode = true;
-    prefs->accelerated_compositing_enabled = true;
-  } else {
-    prefs->force_compositing_mode = false;
-    prefs->accelerated_compositing_enabled = false;
+    ::WebPreferences* prefs) {
+  WebView* view = WebView::FromRenderViewHost(render_view_host);
+  WebPreferences* web_prefs = view->GetWebPreferences();
+  if (web_prefs) {
+    web_prefs->ApplyToWebkitPrefs(prefs);
   }
 }
 
@@ -289,5 +285,9 @@ scoped_refptr<oxide::SharedGLContext> ContentBrowserClient::CreateSharedGLContex
 
 void ContentBrowserClient::GetAllowedGLImplementations(
     std::vector<gfx::GLImplementation>* impls) {}
+
+WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
+  return NULL;
+}
 
 } // namespace oxide

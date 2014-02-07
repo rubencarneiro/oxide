@@ -21,6 +21,7 @@
 #include <QString>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 
 #include "shared/gl/oxide_shared_gl_context.h"
@@ -29,11 +30,15 @@
 
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_render_widget_host_view.h"
+#include "oxide_qt_web_preferences.h"
 
 namespace oxide {
 namespace qt {
 
 namespace {
+
+base::LazyInstance<WebPreferences> g_default_web_preferences =
+    LAZY_INSTANCE_INITIALIZER;
 
 class SharedGLContext : public oxide::SharedGLContext {
  public:
@@ -118,6 +123,10 @@ void ContentBrowserClient::GetAllowedGLImplementations(
 void ContentBrowserClient::GetDefaultScreenInfo(blink::WebScreenInfo* result) {
   RenderWidgetHostView::GetWebScreenInfoFromQScreen(
       QGuiApplication::primaryScreen(), result);
+}
+
+oxide::WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
+  return g_default_web_preferences.Pointer();
 }
 
 } // namespace qt

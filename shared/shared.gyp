@@ -173,6 +173,8 @@
         'browser/oxide_web_frame.h',
         'browser/oxide_web_popup_menu.cc',
         'browser/oxide_web_popup_menu.h',
+        'browser/oxide_web_preferences.cc',
+        'browser/oxide_web_preferences.h',
         'browser/oxide_web_view.cc',
         'browser/oxide_web_view.h',
         'common/oxide_constants.cc',

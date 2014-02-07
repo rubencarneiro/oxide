@@ -33,6 +33,7 @@ class QSize;
 QT_END_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQWebPreferences;
 
 namespace oxide {
 namespace qt {
@@ -113,12 +114,17 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QString getNavigationEntryTitle(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
+  OxideQWebPreferences* preferences();
+  void setPreferences(OxideQWebPreferences* prefs);
+  virtual void NotifyWebPreferencesDestroyed() = 0;
+
  protected:
   WebViewAdapter();
 
  private:
-  QList<MessageHandlerAdapter *> message_handlers_;
   QScopedPointer<WebViewAdapterPrivate> priv;
+  QList<MessageHandlerAdapter *> message_handlers_;
+  OxideQWebPreferences* preferences_;
 };
 
 } // namespace qt

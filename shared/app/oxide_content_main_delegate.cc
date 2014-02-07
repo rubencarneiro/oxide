@@ -105,6 +105,11 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
 
+    command_line->AppendSwitch(switches::kEnableViewport);
+    command_line->AppendSwitch(switches::kEnableViewportMeta);
+    command_line->AppendSwitch(switches::kEnablePinch);
+    command_line->AppendSwitch(switches::kEnableOverlayScrollbars);
+
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
@@ -112,6 +117,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     }
     if (getenv("OXIDE_NO_SANDBOX")) {
       command_line->AppendSwitch(switches::kNoSandbox);
+    }
+    if (getenv("OXIDE_SINGLE_PROCESS")) {
+      command_line->AppendSwitch(switches::kSingleProcess);
     }
   }
 

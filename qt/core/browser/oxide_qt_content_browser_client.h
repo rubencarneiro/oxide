@@ -42,6 +42,8 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
 
   void GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
 
+  oxide::WebPreferences* GetDefaultWebPreferences() FINAL;
+
  private:
   // Limit default constructor access to the lazy instance initializer
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;

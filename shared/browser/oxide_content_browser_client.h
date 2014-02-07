@@ -47,6 +47,7 @@ namespace oxide {
 class GLShareGroup;
 class SharedGLContext;
 class WebFrameTree;
+class WebPreferences;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
  public:
@@ -80,7 +81,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            const GURL& url,
-                           WebPreferences* prefs) FINAL;
+                           ::WebPreferences* prefs) FINAL;
 
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
@@ -93,6 +94,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   virtual void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
 
   virtual void GetDefaultScreenInfo(blink::WebScreenInfo* result) = 0;
+
+  virtual WebPreferences* GetDefaultWebPreferences();
 
  protected:
   // Limit default constructor access to derived classes

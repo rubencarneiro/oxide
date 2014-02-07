@@ -73,6 +73,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   QRect GetContainerBounds() Q_DECL_FINAL;
 
+  void NotifyWebPreferencesDestroyed() Q_DECL_FINAL;
+
   void componentComplete();
 
   static void messageHandler_append(
