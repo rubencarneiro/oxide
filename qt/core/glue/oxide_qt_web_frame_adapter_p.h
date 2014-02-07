@@ -32,7 +32,7 @@ class WebFrameAdapter;
 
 class WebFrameAdapterPrivate FINAL {
  public:
-  static WebFrameAdapterPrivate* Create();
+  WebFrameAdapterPrivate();
   ~WebFrameAdapterPrivate();
 
   const QList<OutgoingMessageRequestAdapter *>& outgoing_message_requests() const {
@@ -47,8 +47,6 @@ class WebFrameAdapterPrivate FINAL {
   WebFrame* owner;
 
  private:
-  WebFrameAdapterPrivate();
-
   QList<OutgoingMessageRequestAdapter *> outgoing_message_requests_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrameAdapterPrivate);

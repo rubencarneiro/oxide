@@ -77,8 +77,6 @@
         'glue/private/oxide_qt_user_script_adapter_p.h',
         'glue/private/oxide_qt_web_context_adapter_p.cc',
         'glue/private/oxide_qt_web_context_adapter_p.h',
-        'glue/private/oxide_qt_web_frame_adapter_p.cc',
-        'glue/private/oxide_qt_web_frame_adapter_p.h',
         'glue/private/oxide_qt_web_view_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.h'
       ],
@@ -127,6 +125,7 @@
         'glue/oxide_qt_web_context_adapter.h',
         'glue/oxide_qt_web_frame_adapter.cc',
         'glue/oxide_qt_web_frame_adapter.h',
+        'glue/oxide_qt_web_frame_adapter_p.h',
         'glue/oxide_qt_web_popup_menu_delegate.cc',
         'glue/oxide_qt_web_popup_menu_delegate.h',
         'glue/oxide_qt_web_view_adapter.cc',

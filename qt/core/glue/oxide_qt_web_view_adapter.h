@@ -90,8 +90,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void LoadProgressChanged(double progress) = 0;
 
-  virtual void RootFrameChanged() = 0;
-
   virtual void LoadEvent(OxideQLoadEvent* event) = 0;
 
   virtual void NavigationEntryCommitted() = 0;
@@ -117,6 +115,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   OxideQWebPreferences* preferences();
   void setPreferences(OxideQWebPreferences* prefs);
   virtual void NotifyWebPreferencesDestroyed() = 0;
+
+  virtual void FrameAdded(WebFrameAdapter* frame) = 0;
+  virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
 
  protected:
   WebViewAdapter();

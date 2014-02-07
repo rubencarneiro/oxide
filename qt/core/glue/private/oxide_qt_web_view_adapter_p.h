@@ -42,6 +42,9 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 
+  void FrameAdded(oxide::WebFrame* frame) FINAL;
+  void FrameRemoved(oxide::WebFrame* frame) FINAL;
+
  private:
   WebViewAdapterPrivate(WebViewAdapter* adapter);
 
@@ -50,8 +53,6 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   void OnCommandsUpdated() FINAL;
 
   void OnLoadProgressChanged(double progress) FINAL;
-
-  void OnRootFrameChanged() FINAL;
 
   void OnLoadStarted(const GURL& validated_url,
                      bool is_error_frame) FINAL;
@@ -65,7 +66,7 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   void OnNavigationListPruned(bool from_front, int count) FINAL;
   void OnNavigationEntryChanged(int index) FINAL;
 
-  oxide::WebFrame* CreateWebFrame() FINAL;
+  oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
 
   WebViewAdapter* a;
 

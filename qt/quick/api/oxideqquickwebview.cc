@@ -19,6 +19,7 @@
 #include "oxideqquickwebview_p_p.h"
 
 #include <QPointF>
+#include <QQmlEngine>
 #include <QQuickWindow>
 #include <QRect>
 #include <QRectF>
@@ -103,19 +104,6 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   emit q->loadProgressChanged();
 }
 
-void OxideQQuickWebViewPrivate::RootFrameChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  // Make the webview the QObject parent of the new root frame,
-  // to stop Qml from collecting the frame tree
-  OxideQQuickWebFrame* root = q->rootFrame();
-  if (root) {
-    root->setParent(q);
-  }
-
-  emit q->rootFrameChanged();
-}
-
 void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   Q_Q(OxideQQuickWebView);
 
@@ -135,7 +123,9 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
 }
 
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
-  return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
+  OxideQQuickWebFrame* frame = new OxideQQuickWebFrame();
+  QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);
+  return OxideQQuickWebFramePrivate::get(frame);
 }
 
 QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
@@ -156,6 +146,20 @@ void OxideQQuickWebViewPrivate::NotifyWebPreferencesDestroyed() {
 
   qWarning() << "WebPreferences was destroyed whilst still in use";
   q->setPreferences(NULL);
+}
+
+void OxideQQuickWebViewPrivate::FrameAdded(
+    oxide::qt::WebFrameAdapter* frame) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->frameAdded(adapterToQObject<OxideQQuickWebFrame>(frame));
+}
+
+void OxideQQuickWebViewPrivate::FrameRemoved(
+    oxide::qt::WebFrameAdapter* frame) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->frameRemoved(adapterToQObject<OxideQQuickWebFrame>(frame));
 }
 
 void OxideQQuickWebViewPrivate::componentComplete() {
@@ -298,6 +302,10 @@ void OxideQQuickWebView::componentComplete() {
   QQuickItem::componentComplete();
 
   d->componentComplete();
+
+  // Make the webview the QObject parent of the new root frame,
+  // to stop Qml from collecting the frame tree
+  rootFrame()->setParent(this);
 }
 
 QUrl OxideQQuickWebView::url() const {

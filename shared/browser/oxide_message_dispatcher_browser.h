@@ -15,26 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_web_frame_observer.h"
+#ifndef _OXIDE_SHARED_BROWSER_MESSAGE_DISPATCHER_H_
+#define _OXIDE_SHARED_BROWSER_MESSAGE_DISPATCHER_H_
 
-#include "content/public/renderer/render_view.h"
-#include "third_party/WebKit/public/web/WebFrame.h"
-
-#include "shared/common/oxide_messages.h"
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "content/public/browser/browser_message_filter.h"
 
 namespace oxide {
 
-WebFrameObserver::WebFrameObserver(content::RenderView* render_view) :
-    content::RenderViewObserver(render_view) {}
+class MessageDispatcherBrowser FINAL : public content::BrowserMessageFilter {
+ public:
+  MessageDispatcherBrowser(int render_process_id);
+  ~MessageDispatcherBrowser();
 
-WebFrameObserver::~WebFrameObserver() {}
+  bool OnMessageReceived(const IPC::Message& message,
+                         bool* message_was_ok) FINAL;
+ private:
+  const int render_process_id_;
 
-void WebFrameObserver::FrameCreated(blink::WebFrame* parent,
-                                    blink::WebFrame* frame) {
-  render_view()->Send(
-      new OxideHostMsg_FrameCreated(routing_id(),
-                                    parent->identifier(),
-                                    frame->identifier()));
-}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(MessageDispatcherBrowser);
+};
 
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_MESSAGE_DISPATCHER_H_
