@@ -30,6 +30,7 @@
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
+class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QPixmap;
@@ -82,6 +83,7 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ForwardKeyEvent(QKeyEvent* event);
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
+  void ForwardInputMethodEvent(QInputMethodEvent* event);
 
   void DidUpdate(bool skipped);
 
