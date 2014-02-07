@@ -11,3 +11,4 @@ dont-check-number-of-threads-at-startup.patch
 enable-glx-on-ozone.patch
 dont-depend-on-gtk.patch
 arm-neon.patch
+dont-use-egl-create-context-robustness.patch
