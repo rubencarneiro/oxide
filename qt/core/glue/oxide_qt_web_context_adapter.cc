@@ -233,7 +233,7 @@ QOpenGLContext* WebContextAdapter::sharedGLContext() {
 
 /* static */
 void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
-  CHECK(!oxide::BrowserProcessMain::IsRunning()) <<
+  CHECK(!oxide::BrowserProcessMain::Exists()) <<
       "WebContextAdapter::setSharedGLContext must be called before the "
       "browser components are started!";
 

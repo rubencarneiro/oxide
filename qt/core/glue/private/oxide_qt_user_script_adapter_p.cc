@@ -67,7 +67,7 @@ void UserScriptAdapterPrivate::StartLoading() {
   DCHECK(state_ == UserScriptAdapter::Constructing ||
          state_ == UserScriptAdapter::Deferred);
 
-  if (!oxide::BrowserProcessMain::IsRunning()) {
+  if (!oxide::BrowserProcessMain::Exists()) {
     state_ = UserScriptAdapter::Deferred;
     return;
   }

@@ -47,21 +47,26 @@ class BrowserProcessMain FINAL {
   ~BrowserProcessMain();
 
   // Start the browser process components if they haven't already
-  // been started
+  // been started. Cannot be called after Quit()
   static bool Run(int flags);
+
+  // Quit the browser process components if they are running
   static void Quit();
 
-  static int GetFlags();
+  // Returns true if BrowserProcessMain exists
+  static bool Exists();
 
-  // Returns true of the browser process components have been started
-  static bool IsRunning();
+  // Return the BrowserProcessMain singleton
+  static BrowserProcessMain* instance();
+
+  int flags() const { return flags_; }
 
   // Return the IO thread delegate, which is a container of objects
   // whose lifetime is tied to the IO thread
-  static IOThreadDelegate* io_thread_delegate();
+  IOThreadDelegate* io_thread_delegate() { return io_thread_delegate_.get(); }
 
   // Ensure that the IO thread delegate is created
-  static void CreateIOThreadDelegate();
+  void CreateIOThreadDelegate();
 
  private:
   // For RunBrowserMain() / ShutdownBrowserMain()
@@ -69,9 +74,9 @@ class BrowserProcessMain FINAL {
 
   BrowserProcessMain(int flags);
 
-  static int RunBrowserMain(
+  int RunBrowserMain(
       const content::MainFunctionParams& main_function_params);
-  static void ShutdownBrowserMain();
+  void ShutdownBrowserMain();
 
   bool Init();
   void Shutdown();

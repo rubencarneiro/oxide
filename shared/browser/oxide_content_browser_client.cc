@@ -171,7 +171,7 @@ class BrowserMainParts : public content::BrowserMainParts {
     // Work around a mesa race - see https://launchpad.net/bugs/1267893
     gfx::GLSurface::InitializeOneOff();
 
-    BrowserProcessMain::CreateIOThreadDelegate();
+    BrowserProcessMain::instance()->CreateIOThreadDelegate();
     return 0;
   }
 
