@@ -105,10 +105,17 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
 
-    command_line->AppendSwitch(switches::kEnableViewport);
-    command_line->AppendSwitch(switches::kEnableViewportMeta);
-    command_line->AppendSwitch(switches::kEnablePinch);
-    command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
+    if (BrowserProcessMain::GetFlags() & BrowserProcessMain::ENABLE_VIEWPORT) {
+      command_line->AppendSwitch(switches::kEnableViewport);
+      command_line->AppendSwitch(switches::kEnableViewportMeta);
+    }
+    if (BrowserProcessMain::GetFlags() & BrowserProcessMain::ENABLE_PINCH) {
+      command_line->AppendSwitch(switches::kEnablePinch);
+    }
+    if (BrowserProcessMain::GetFlags() &
+        BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
+      command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
+    }
 
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {

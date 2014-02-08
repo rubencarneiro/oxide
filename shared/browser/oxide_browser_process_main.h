@@ -38,12 +38,20 @@ class IOThreadDelegate;
 // Chrome (which is not possible in a public API)
 class BrowserProcessMain FINAL {
  public:
+  enum Flags {
+    ENABLE_VIEWPORT = 1 << 0,
+    ENABLE_OVERLAY_SCROLLBARS = 1 << 1,
+    ENABLE_PINCH = 1 << 2
+  };
+
   ~BrowserProcessMain();
 
   // Start the browser process components if they haven't already
   // been started
-  static bool Run();
+  static bool Run(int flags);
   static void Quit();
+
+  static int GetFlags();
 
   // Returns true of the browser process components have been started
   static bool IsRunning();
@@ -55,17 +63,22 @@ class BrowserProcessMain FINAL {
   // Ensure that the IO thread delegate is created
   static void CreateIOThreadDelegate();
 
+ private:
+  // For RunBrowserMain() / ShutdownBrowserMain()
+  friend class oxide::ContentMainDelegate;
+
+  BrowserProcessMain(int flags);
+
   static int RunBrowserMain(
       const content::MainFunctionParams& main_function_params);
   static void ShutdownBrowserMain();
-
- private:
-  BrowserProcessMain();
 
   bool Init();
   void Shutdown();
 
   bool did_shutdown_;
+
+  int flags_;
 
   // XXX: Don't change the order of these unless you know what you are
   //      doing. It's important that ContentMainDelegate outlives

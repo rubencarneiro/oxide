@@ -58,7 +58,8 @@ void WebContextAdapterPrivate::Init() {
   // We do this here rather than in the constructor because the first
   // browser context needs to set the shared GL context before anything
   // starts up, in order for compositing to work
-  oxide::BrowserProcessMain::Run();
+  // FIXME: What if this fails?
+  oxide::BrowserProcessMain::Run(0);
 
   context_.reset(oxide::BrowserContext::Create(
       construct_props()->data_path,

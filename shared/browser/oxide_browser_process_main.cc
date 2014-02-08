@@ -33,11 +33,38 @@ namespace {
 scoped_ptr<BrowserProcessMain> g_process;
 }
 
-BrowserProcessMain::BrowserProcessMain() :
+BrowserProcessMain::BrowserProcessMain(int flags) :
     did_shutdown_(false),
+    flags_(flags),
     main_delegate_(ContentMainDelegate::Create()),
     main_runner_(content::ContentMainRunner::Create()) {
   CHECK(!g_process) << "Should only have one BrowserProcessMain";
+}
+
+// static
+int BrowserProcessMain::RunBrowserMain(
+    const content::MainFunctionParams& main_function_params) {
+  if (!g_process) {
+    return 1;
+  }
+
+  DCHECK(!g_process->browser_main_runner_);
+
+  g_process->browser_main_runner_.reset(content::BrowserMainRunner::Create());
+  int rv = g_process->browser_main_runner_->Initialize(main_function_params);
+  if (rv != -1) {
+    LOG(ERROR) << "Failed to initialize browser main runner";
+    return rv;
+  }
+
+  return g_process->browser_main_runner_->Run();
+}
+
+// static
+void BrowserProcessMain::ShutdownBrowserMain() {
+  if (g_process) {
+    g_process->browser_main_runner_->Shutdown();
+  }
 }
 
 bool BrowserProcessMain::Init() {
@@ -50,17 +77,17 @@ bool BrowserProcessMain::Init() {
   initialized = true;
 
   if (!main_runner_ || !main_delegate_) {
-    DLOG(ERROR) << "Failed to create main components";
+    LOG(ERROR) << "Failed to create main components";
     return false;
   }
 
   if (main_runner_->Initialize(0, NULL, main_delegate_.get()) != -1) {
-    DLOG(ERROR) << "Failed to initialize main runner";
+    LOG(ERROR) << "Failed to initialize main runner";
     return false;
   }
 
   if (main_runner_->Run() != 0) {
-    DLOG(ERROR) << "Failed to run main runner";
+    LOG(ERROR) << "Failed to run main runner";
     return false;
   }
 
@@ -86,15 +113,19 @@ BrowserProcessMain::~BrowserProcessMain() {
 }
 
 /* static */
-bool BrowserProcessMain::Run() {
+bool BrowserProcessMain::Run(int flags) {
   if (!g_process) {
-    g_process.reset(new BrowserProcessMain());
+    g_process.reset(new BrowserProcessMain(flags));
     if (!g_process->Init()) {
       g_process.reset();
+      return false;
     }
   }
 
-  return IsRunning();
+  DCHECK(GetFlags() == flags) <<
+    "Can't call BrowserProcessMain::Run() multiple times with different flags";
+
+  return true;
 }
 
 /* static */
@@ -105,45 +136,25 @@ void BrowserProcessMain::Quit() {
   }
 }
 
+int BrowserProcessMain::GetFlags() {
+  DCHECK(g_process);
+  return g_process->flags_;
+}
+
 bool BrowserProcessMain::IsRunning() {
   return g_process != NULL;
 }
 
 // static
 IOThreadDelegate* BrowserProcessMain::io_thread_delegate() {
+  DCHECK(g_process);
   return g_process->io_thread_delegate_.get();
 }
 
 // static
 void BrowserProcessMain::CreateIOThreadDelegate() {
-  DCHECK(!g_process->io_thread_delegate_);
+  CHECK(!g_process->io_thread_delegate_);
   g_process->io_thread_delegate_.reset(new IOThreadDelegate());
-}
-
-// static
-int BrowserProcessMain::RunBrowserMain(
-    const content::MainFunctionParams& main_function_params) {
-  if (!g_process) {
-    return 1;
-  }
-
-  DCHECK(!g_process->browser_main_runner_);
-
-  g_process->browser_main_runner_.reset(content::BrowserMainRunner::Create());
-  int rv = g_process->browser_main_runner_->Initialize(main_function_params);
-  if (rv != -1) {
-    DLOG(ERROR) << "Failed to initialize browser main runner";
-    return rv;
-  }
-
-  return g_process->browser_main_runner_->Run();
-}
-
-// static
-void BrowserProcessMain::ShutdownBrowserMain() {
-  if (g_process) {
-    g_process->browser_main_runner_->Shutdown();
-  }
 }
 
 } // namespace oxide
