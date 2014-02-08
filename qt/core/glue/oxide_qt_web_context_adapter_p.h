@@ -15,17 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_CONTEXT_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_CONTEXT_ADAPTER_H_
-
-#include <string>
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
 
 #include <QList>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/files/file_path.h"
-#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 namespace oxide {
@@ -34,49 +30,26 @@ class BrowserContext;
 
 namespace qt {
 
-struct LazyInitProperties;
+struct ConstructProperties;
 class UserScriptAdapter;
 class WebContextAdapter;
 
 class WebContextAdapterPrivate FINAL {
  public:
-  static WebContextAdapterPrivate* Create();
-  ~WebContextAdapterPrivate();
+  WebContextAdapterPrivate();
 
-  std::string GetProduct() const;
-  void SetProduct(const std::string& product);
-
-  std::string GetUserAgent() const;
-  void SetUserAgent(const std::string& user_agent);
-
-  base::FilePath GetDataPath() const;
-  void SetDataPath(const base::FilePath& path);
-
-  base::FilePath GetCachePath() const;
-  void SetCachePath(const base::FilePath& path);
-
-  std::string GetAcceptLangs() const;
-  void SetAcceptLangs(const std::string& langs);
-
-  QList<UserScriptAdapter *>& user_scripts() {
-    return user_scripts_;
-  }
-
-  oxide::BrowserContext* context() { return context_.get(); }
-
-  void UpdateUserScripts();
-
-  void CompleteConstruction();
+  void Init();
 
   static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
 
+  oxide::BrowserContext* context() { return context_.get(); }
+  ConstructProperties* construct_props() { return construct_props_.get(); }
+
+  QList<UserScriptAdapter *> user_scripts;
+
  private:
-  WebContextAdapterPrivate();
-
   scoped_ptr<oxide::BrowserContext> context_;
-  QList<UserScriptAdapter *> user_scripts_;
-
-  scoped_ptr<LazyInitProperties> lazy_init_props_;
+  scoped_ptr<ConstructProperties> construct_props_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextAdapterPrivate);
 };
@@ -84,4 +57,4 @@ class WebContextAdapterPrivate FINAL {
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_CONTEXT_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_CONTEXT_ADAPTER_P_H_
