@@ -31,7 +31,6 @@ class BrowserContext;
 namespace qt {
 
 struct ConstructProperties;
-class UserScriptAdapter;
 class WebContextAdapter;
 
 class WebContextAdapterPrivate FINAL {
@@ -44,8 +43,6 @@ class WebContextAdapterPrivate FINAL {
 
   oxide::BrowserContext* context() { return context_.get(); }
   ConstructProperties* construct_props() { return construct_props_.get(); }
-
-  QList<UserScriptAdapter *> user_scripts;
 
  private:
   scoped_ptr<oxide::BrowserContext> context_;

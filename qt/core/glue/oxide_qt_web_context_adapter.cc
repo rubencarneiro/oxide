@@ -186,7 +186,7 @@ void WebContextAdapter::setAcceptLangs(const QString& langs) {
 }
 
 QList<UserScriptAdapter *>& WebContextAdapter::user_scripts() {
-  return priv->user_scripts;
+  return user_scripts_;
 }
 
 void WebContextAdapter::updateUserScripts() {
@@ -197,9 +197,9 @@ void WebContextAdapter::updateUserScripts() {
   std::vector<oxide::UserScript *> scripts;
   bool wait = false;
 
-  for (int i = 0; i < priv->user_scripts.size(); ++i) {
+  for (int i = 0; i < user_scripts_.size(); ++i) {
     UserScriptAdapterPrivate* script =
-        UserScriptAdapterPrivate::get(priv->user_scripts.at(i));
+        UserScriptAdapterPrivate::get(user_scripts_.at(i));
     if (script->state() == UserScriptAdapter::Loading) {
       wait = true;
     } else if (script->state() == UserScriptAdapter::Deferred) {

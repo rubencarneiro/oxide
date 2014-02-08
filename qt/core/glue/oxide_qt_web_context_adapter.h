@@ -69,6 +69,7 @@ class Q_DECL_EXPORT WebContextAdapter {
  private:
   friend class WebContextAdapterPrivate;
 
+  QList<UserScriptAdapter *> user_scripts_;
   QScopedPointer<WebContextAdapterPrivate> priv;
 };
 
