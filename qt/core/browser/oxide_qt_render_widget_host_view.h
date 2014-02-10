@@ -30,6 +30,7 @@
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
+class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QPixmap;
@@ -51,7 +52,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
                        RenderWidgetHostViewDelegate* delegate);
   virtual ~RenderWidgetHostView();
 
-  static void GetScreenInfo(QScreen* screen, blink::WebScreenInfo* result);
+  static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
+  static void GetWebScreenInfoFromQScreen(QScreen* screen, blink::WebScreenInfo* result);
 
   void Blur() FINAL;
   void Focus() FINAL;
@@ -62,11 +64,13 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   bool IsShowing() FINAL;
 
   gfx::Rect GetViewBounds() const FINAL;
+  gfx::Size GetPhysicalBackingSize() const FINAL;
 
   void SetSize(const gfx::Size& size) FINAL;
 
   content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
 
+  float GetDeviceScaleFactor() const;
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
@@ -79,6 +83,7 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ForwardKeyEvent(QKeyEvent* event);
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
+  void ForwardInputMethodEvent(QInputMethodEvent* event);
 
   void DidUpdate(bool skipped);
 

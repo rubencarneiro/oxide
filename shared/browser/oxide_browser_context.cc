@@ -186,7 +186,7 @@ class ResourceContext FINAL : public content::ResourceContext {
       request_context_(NULL) {}
 
   net::HostResolver* GetHostResolver() FINAL {
-    return BrowserProcessMain::io_thread_delegate()->host_resolver();
+    return BrowserProcessMain::instance()->io_thread_delegate()->host_resolver();
   }
 
   net::URLRequestContext* GetRequestContext() FINAL {
@@ -228,7 +228,7 @@ void BrowserContextIOData::Init(
   DefaultURLRequestContext* context = new DefaultURLRequestContext();
 
   IOThreadDelegate* io_thread_delegate =
-      BrowserProcessMain::io_thread_delegate();
+      BrowserProcessMain::instance()->io_thread_delegate();
 
   context->storage()->set_net_log(io_thread_delegate->net_log());
   context->storage()->set_host_resolver(
@@ -286,7 +286,7 @@ void BrowserContextIOData::Init(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          0, // Use the default max size
+          83886080, // XXX: 80MB - Make this configurable
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }
@@ -364,7 +364,7 @@ BrowserContext::IODataHandle::~IODataHandle() {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
-  CHECK(BrowserProcessMain::IsRunning()) <<
+  CHECK(BrowserProcessMain::Exists()) <<
       "The main browser process components must be started before " <<
       "creating a context";
 

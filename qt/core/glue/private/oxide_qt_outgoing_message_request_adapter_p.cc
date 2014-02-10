@@ -23,8 +23,7 @@
 #include <QVariant>
 
 #include "qt/core/glue/oxide_qt_outgoing_message_request_adapter.h"
-
-#include "oxide_qt_web_frame_adapter_p.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 
 namespace oxide {
 namespace qt {

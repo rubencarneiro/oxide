@@ -20,97 +20,114 @@
 #include <QGuiApplication>
 #include <QString>
 #include <QtGui/qpa/qplatformnativeinterface.h>
-#if defined(USE_X11)
-#include <X11/Xlib.h>
-#undef None
-#endif
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 
-#include "shared/browser/oxide_shared_gl_context.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_render_widget_host_view.h"
+#include "oxide_qt_web_preferences.h"
 
 namespace oxide {
 namespace qt {
 
 namespace {
 
+base::LazyInstance<WebPreferences> g_default_web_preferences =
+    LAZY_INSTANCE_INITIALIZER;
+
 class SharedGLContext : public oxide::SharedGLContext {
  public:
   SharedGLContext(QOpenGLContext* context, oxide::GLShareGroup* share_group) :
       oxide::SharedGLContext(share_group),
-      handle_(NULL) {
+      handle_(NULL),
+      implementation_(gfx::kGLImplementationNone) {
     QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
     QString platform = QGuiApplication::platformName();
     if (platform == "xcb") {
       // QXcbNativeInterface creates a GLXContext if GLX is enabled, else
       // it creates an EGLContext is EGL is enabled, so this should be safe
       // XXX: Check this matches the GL implementation selected by Chrome?
+      implementation_ = gfx::kGLImplementationDesktopGL;
       handle_ = pni->nativeResourceForContext("glxcontext", context);
       if (!handle_) {
+        implementation_ = gfx::kGLImplementationEGLGLES2;
         handle_ = pni->nativeResourceForContext("eglcontext", context);
       }
+      if (!handle_) {
+        implementation_ = gfx::kGLImplementationNone;
+      }
+    } else if (platform == "ubuntu" ||
+               platform == "ubuntumirclient") {
+      handle_ = pni->nativeResourceForContext("eglcontext", context);
+      if (handle_) {
+        implementation_ = gfx::kGLImplementationEGLGLES2;
+      }
     } else {
-      DLOG(WARNING) << "Unsupported platform: " << qPrintable(platform);
+      DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
     }
   }
 
   void* GetHandle() OVERRIDE { return handle_; }
+  gfx::GLImplementation GetImplementation() OVERRIDE { return implementation_; }
 
  private:
   void* handle_;
+  gfx::GLImplementation implementation_;
 };
 
 } // namespace
 
-void ContentBrowserClient::GetDefaultScreenInfoImpl(
-    blink::WebScreenInfo* result) {
-  RenderWidgetHostView::GetScreenInfo(NULL, result);
+ContentBrowserClient::ContentBrowserClient() {}
+
+base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
+  return new MessagePump();
 }
 
-scoped_refptr<gfx::GLContext> ContentBrowserClient::CreateSharedGLContext(
-    oxide::GLShareGroup* share_group) {
+scoped_refptr<oxide::SharedGLContext>
+ContentBrowserClient::CreateSharedGLContext(oxide::GLShareGroup* share_group) {
   QOpenGLContext* qcontext = WebContextAdapter::sharedGLContext();
   if (!qcontext) {
     return NULL;
   }
 
-  scoped_refptr<gfx::GLContext> context =
+  scoped_refptr<oxide::SharedGLContext> context =
       new SharedGLContext(qcontext, share_group);
   if (!context->GetHandle()) {
-    DLOG(WARNING) << "No native handle for shared GL context. "
-                  << "Compositing will not work";
+    DLOG(WARNING) << "Could not determine native handle for shared GL context";
     context = NULL;
   }
 
   return context;
 }
 
-base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
-  return new MessagePump();
+void ContentBrowserClient::GetAllowedGLImplementations(
+    std::vector<gfx::GLImplementation>* impls) {
+  QString platform = QGuiApplication::platformName();
+  if (platform == "xcb") {
+    impls->push_back(gfx::kGLImplementationDesktopGL);
+    impls->push_back(gfx::kGLImplementationEGLGLES2);
+    impls->push_back(gfx::kGLImplementationOSMesaGL);
+  } else if (platform == "ubuntu" ||
+             platform == "ubuntumirclient") {
+    impls->push_back(gfx::kGLImplementationEGLGLES2);
+  } else {
+    DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
+  }
 }
 
-#if defined (USE_X11)
-Display* ContentBrowserClient::GetDefaultXDisplay() {
-  static Display* display = NULL;
-  if (!display) {
-    QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
-    display = static_cast<Display *>(
-        pni->nativeResourceForScreen("display",
-                                     QGuiApplication::primaryScreen()));
-  }
-
-  if (!display) {
-    display = XOpenDisplay(NULL);
-  }
-
-  return display;
+void ContentBrowserClient::GetDefaultScreenInfo(blink::WebScreenInfo* result) {
+  RenderWidgetHostView::GetWebScreenInfoFromQScreen(
+      QGuiApplication::primaryScreen(), result);
 }
-#endif
+
+oxide::WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
+  return g_default_web_preferences.Pointer();
+}
 
 } // namespace qt
 } // namespace oxide

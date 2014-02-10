@@ -23,12 +23,12 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/linked_ptr.h"
-#include "content/public/renderer/render_view_observer.h"
+#include "content/public/renderer/render_frame_observer.h"
 #include "v8/include/v8.h"
 
 struct OxideMsg_SendMessage_Params;
 
-namespace WebKit {
+namespace blink {
 class WebFrame;
 }
 
@@ -36,40 +36,24 @@ namespace oxide {
 
 class V8MessageManager;
 
-class MessageDispatcherRenderer FINAL {
+class MessageDispatcherRenderer FINAL : public content::RenderFrameObserver {
  public:
-
-  // XXX: Not sure if this is really necessary - should we just use control
-  //      (non-routed) messages for this, and use RenderProcessObserver
-  //      instead?
-  class EndPoint FINAL : public content::RenderViewObserver {
-   public:
-    EndPoint(content::RenderView* render_view);
-
-    bool OnMessageReceived(const IPC::Message& message) FINAL;
-
-   private:
-    void OnReceiveMessage(const OxideMsg_SendMessage_Params& params);
-
-    DISALLOW_IMPLICIT_CONSTRUCTORS(EndPoint);
-  };
-
-  MessageDispatcherRenderer();
+  MessageDispatcherRenderer(content::RenderFrame* frame);
   ~MessageDispatcherRenderer();
 
-  void DidCreateScriptContext(blink::WebFrame* frame,
-                              v8::Handle<v8::Context> context,
+  static MessageDispatcherRenderer* FromWebFrame(blink::WebFrame* frame);
+
+  void DidCreateScriptContext(v8::Handle<v8::Context> context,
                               int world_id);
 
-  void WillReleaseScriptContext(blink::WebFrame* frame,
-                                v8::Handle<v8::Context> context,
+  void WillReleaseScriptContext(v8::Handle<v8::Context> context,
                                 int world_id);
 
  private:
   typedef std::vector<linked_ptr<V8MessageManager> > MessageManagerVector;
 
-  void OnReceiveMessage(content::RenderView* render_view,
-                        const OxideMsg_SendMessage_Params& params);
+  bool OnMessageReceived(const IPC::Message& message) FINAL;
+  void OnReceiveMessage(const OxideMsg_SendMessage_Params& params);
 
   MessageManagerVector message_managers_;
 

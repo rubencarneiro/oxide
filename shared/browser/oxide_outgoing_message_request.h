@@ -47,7 +47,7 @@ class OutgoingMessageRequest FINAL {
   void SetReplyCallback(const ReplyCallback& callback);
   void SetErrorCallback(const ErrorCallback& callback);
 
-  void OnReceiveResponse(const std::string& args,
+  void OnReceiveResponse(const std::string& payload,
                          OxideMsg_SendMessage_Error::Value error);
 
  private:

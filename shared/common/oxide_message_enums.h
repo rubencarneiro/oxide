@@ -44,13 +44,8 @@ struct OxideMsg_SendMessage_Error {
     // No handler was registered for this message
     NO_HANDLER,
 
-    // The handler reported an error
-    HANDLER_REPORTED_ERROR,
-
-    // The frame disappeared before sending a response was sent
-    // (only valid for embedder to content script messages, and
-    //  never actually sent across the wire)
-    FRAME_DISAPPEARED,
+    // The handler reported an error via the error() function
+    HANDLER_REPORTED_ERROR
   };
 };
 

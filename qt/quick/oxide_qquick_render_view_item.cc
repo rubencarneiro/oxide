@@ -17,6 +17,9 @@
 
 #include "oxide_qquick_render_view_item.h"
 
+#include <QGuiApplication>
+#include <QInputMethod>
+#include <QInputMethodEvent>
 #include <QQuickWindow>
 #include <QPointF>
 #include <QRectF>
@@ -32,7 +35,7 @@
 namespace oxide {
 namespace qquick {
 
-void RenderViewItem::SchedulePaint(const QRect& rect) {
+void RenderViewItem::SchedulePaintForRectPix(const QRect& rect) {
 #if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_) {
     is_compositing_enabled_state_changed_ = true;
@@ -73,7 +76,7 @@ RenderViewItem::RenderViewItem(
 #else
 {
 #endif
-  setFlags(QQuickItem::ItemHasContents | QQuickItem::ItemAcceptsInputMethod);
+  setFlag(QQuickItem::ItemHasContents);
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
@@ -103,22 +106,15 @@ bool RenderViewItem::IsShowing() {
   return isVisible();
 }
 
-QRect RenderViewItem::GetViewBounds() {
-  QPointF pos(mapToScene(QPointF(0, 0)));
-  if (window()) {
-    pos += window()->position();
+QRect RenderViewItem::GetViewBoundsPix() {
+  if (!window()) {
+    return QRect();
   }
+
+  QPointF pos(mapToScene(QPointF(0, 0)) + window()->position());
 
   return QRect(qRound(pos.x()), qRound(pos.y()),
                qRound(width()), qRound(height()));
-}
-
-QRect RenderViewItem::GetBoundsInRootWindow() {
-  if (!window()) {
-    return GetViewBounds();
-  }
-
-  return window()->frameGeometry();
 }
 
 void RenderViewItem::SetSize(const QSize& size) {
@@ -132,6 +128,11 @@ QScreen* RenderViewItem::GetScreen() {
   }
 
   return window()->screen();
+}
+
+void RenderViewItem::SetInputMethodEnabled(bool enabled) {
+  setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
+  QGuiApplication::inputMethod()->update(Qt::ImEnabled);
 }
 
 void RenderViewItem::focusInEvent(QFocusEvent* event) {
@@ -189,6 +190,10 @@ void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
   ForwardMouseEvent(&me);
 
   event->setAccepted(me.isAccepted());
+}
+
+void RenderViewItem::inputMethodEvent(QInputMethodEvent* event) {
+  ForwardInputMethodEvent(event);
 }
 
 void RenderViewItem::updatePolish() {
@@ -250,7 +255,12 @@ QSGNode* RenderViewItem::updatePaintNode(
 }
 
 QVariant RenderViewItem::inputMethodQuery(Qt::InputMethodQuery query) const {
-  return InputMethodQuery(query);
+  switch (query) {
+    case Qt::ImEnabled:
+      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return InputMethodQuery(query);
+  }
 }
 
 } // namespace qquick

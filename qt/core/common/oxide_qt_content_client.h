@@ -15,13 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "base/message_loop/message_pump_x11.h"
+#ifndef _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_
+#define _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_
 
-#include "shared/browser/oxide_content_browser_client.h"
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+
 #include "shared/common/oxide_content_client.h"
 
-#if defined(USE_X11)
-Display* base::MessagePumpX11::GetDefaultXDisplay() {
-  return oxide::ContentClient::GetInstance()->browser()->GetDefaultXDisplay();
-}
-#endif
+template <typename Type> struct DefaultSingletonTraits;
+
+namespace oxide {
+namespace qt {
+
+class ContentClient FINAL : public oxide::ContentClient {
+ public:
+  static ContentClient* GetInstance();
+
+  intptr_t GetNativeDisplay() FINAL;
+
+ private:
+  friend struct DefaultSingletonTraits<ContentClient>;
+  ContentClient();
+
+  DISALLOW_COPY_AND_ASSIGN(ContentClient);
+};
+
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_

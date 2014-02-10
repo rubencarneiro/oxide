@@ -38,7 +38,7 @@ void OutgoingMessageRequest::SetErrorCallback(
 }
 
 void OutgoingMessageRequest::OnReceiveResponse(
-    const std::string& args,
+    const std::string& payload,
     OxideMsg_SendMessage_Error::Value error) {
   if (had_response_) {
     return;
@@ -48,11 +48,11 @@ void OutgoingMessageRequest::OnReceiveResponse(
 
   if (error != OxideMsg_SendMessage_Error::OK) {
     if (!error_callback_.is_null()) {
-      error_callback_.Run(error, args);
+      error_callback_.Run(error, payload);
     }
   } else {
     if (!reply_callback_.is_null()) {
-      reply_callback_.Run(args);
+      reply_callback_.Run(payload);
     }
   }
 }

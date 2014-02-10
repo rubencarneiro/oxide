@@ -90,7 +90,7 @@
       'hard_dependency': 1,
       'variables': {
         'chromium_code': 1,
-        'oxide_subprocess%': 'oxide-renderer',
+        'oxide_subprocess_path%': 'oxide-renderer',
       },
       'direct_dependent_settings': {
         'include_dirs': [
@@ -98,8 +98,7 @@
         ],
       },
       'defines': [
-        'OXIDE_RESOURCE_SUBPATH=\"<(oxide_port_resource_subpath)\"',
-        'OXIDE_SUBPROCESS=\"<(oxide_subprocess)\"'
+        'OXIDE_SUBPROCESS_PATH=\"<(oxide_subprocess_path)\"'
       ],
       'dependencies': [
         'oxide_packed_resources',
@@ -117,7 +116,9 @@
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
+        '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
         '<(DEPTH)/ui/ui.gyp:ui',
         '<(DEPTH)/url/url.gyp:url_lib',
         '<(DEPTH)/webkit/common/user_agent/webkit_user_agent.gyp:user_agent'
@@ -147,6 +148,8 @@
         'browser/oxide_incoming_message.h',
         'browser/oxide_io_thread_delegate.cc',
         'browser/oxide_io_thread_delegate.h',
+        'browser/oxide_message_dispatcher_browser.cc',
+        'browser/oxide_message_dispatcher_browser.h',
         'browser/oxide_message_handler.cc',
         'browser/oxide_message_handler.h',
         'browser/oxide_message_pump.cc',
@@ -160,8 +163,6 @@
         'browser/oxide_outgoing_message_request.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
-        'browser/oxide_shared_gl_context.cc',
-        'browser/oxide_shared_gl_context.h',
         'browser/oxide_ssl_config_service.cc',
         'browser/oxide_ssl_config_service.h',
         'browser/oxide_url_request_context.cc',
@@ -174,9 +175,10 @@
         'browser/oxide_web_frame.h',
         'browser/oxide_web_popup_menu.cc',
         'browser/oxide_web_popup_menu.h',
+        'browser/oxide_web_preferences.cc',
+        'browser/oxide_web_preferences.h',
         'browser/oxide_web_view.cc',
         'browser/oxide_web_view.h',
-        'chromium_support/oxide_toolkit_utils.cc',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',
@@ -191,6 +193,15 @@
         'common/oxide_messages.h',
         'common/oxide_user_script.cc',
         'common/oxide_user_script.h',
+        'gl/gl_context_linux.cc',
+        'gl/gl_image_linux.cc',
+        'gl/gl_implementation_linux.cc',
+        'gl/gl_surface_linux.cc',
+        'gl/oxide_shared_gl_context.cc',
+        'gl/oxide_shared_gl_context.h',
+        'ozone/oxide_ozone_platform.cc',
+        'ozone/oxide_ozone_surface_factory.cc',
+        'ozone/oxide_ozone_surface_factory.h',
         'renderer/oxide_content_renderer_client.cc',
         'renderer/oxide_content_renderer_client.h',
         'renderer/oxide_isolated_world_map.cc',
@@ -206,8 +217,6 @@
         'renderer/oxide_v8_message_manager.cc',
         'renderer/oxide_v8_message_manager.h',
         'renderer/oxide_v8_scoped_persistent.h',
-        'renderer/oxide_web_frame_observer.cc',
-        'renderer/oxide_web_frame_observer.h',
         '<(DEPTH)/extensions/common/constants.cc',
         '<(DEPTH)/extensions/common/constants.h',
         '<(DEPTH)/extensions/common/error_utils.cc',

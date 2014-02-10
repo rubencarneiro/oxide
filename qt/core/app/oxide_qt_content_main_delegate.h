@@ -28,12 +28,14 @@ namespace qt {
 
 class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
  public:
-  ContentMainDelegate() {}
+  ContentMainDelegate();
 
  protected:
   content::ContentBrowserClient* CreateContentBrowserClient() FINAL;
 
  private:
+  oxide::ContentClient* CreateContentClient() FINAL;
+
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };
 

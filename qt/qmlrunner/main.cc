@@ -34,12 +34,12 @@
 #include <QUrl>
 
 #include "QtCore/private/qabstractanimation_p.h"
-#if QTQUICK_VERSION >= 0x050200
+#if defined(ENABLE_COMPOSITING)
 #include <QOpenGLContext>
 #include "QtQuick/private/qsgcontext_p.h"
 #endif
 
-void usage() {
+void usage(bool error) {
   qWarning("Usage: oxideqmlscene [options] <filename>");
   qWarning(" ");
   qWarning(" Options:");
@@ -50,7 +50,7 @@ void usage() {
   qWarning("  --resize-to-root ................ Resize the window to the size of the root item");
 
   qWarning(" ");
-  exit(1);
+  exit(error ? 1 : 0);
 }
 
 struct Options {
@@ -91,20 +91,21 @@ int main(int argc, char** argv) {
         options.resizeToRoot = true;
       } else if (larg == QLatin1String("-i") && i + 1 < argc) {
         imports.append(QString::fromLatin1(argv[++i]));
-      } else {
-        usage();
+      } else if (larg == QLatin1String("-h") ||
+                 larg == QLatin1String("--help")) {
+        usage(false);
       }
     }
   }
 
   if (options.file.isEmpty()) {
-    usage();
+    usage(true);
   }
 
   QGuiApplication app(argc, argv);
   app.setApplicationName("OxideQmlViewer");
 
-#if QTQUICK_VERSION >= 0x050200
+#if defined(ENABLE_COMPOSITING)
   QOpenGLContext glcontext;
   glcontext.create();
   QSGContext::setSharedOpenGLContext(&glcontext);

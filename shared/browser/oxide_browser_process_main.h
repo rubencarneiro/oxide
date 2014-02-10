@@ -38,34 +38,52 @@ class IOThreadDelegate;
 // Chrome (which is not possible in a public API)
 class BrowserProcessMain FINAL {
  public:
+  enum Flags {
+    ENABLE_VIEWPORT = 1 << 0,
+    ENABLE_OVERLAY_SCROLLBARS = 1 << 1,
+    ENABLE_PINCH = 1 << 2
+  };
+
   ~BrowserProcessMain();
 
   // Start the browser process components if they haven't already
-  // been started
-  static bool Run();
+  // been started. Cannot be called after Quit()
+  static bool Run(int flags);
+
+  // Quit the browser process components if they are running
   static void Quit();
 
-  // Returns true of the browser process components have been started
-  static bool IsRunning();
+  // Returns true if BrowserProcessMain exists
+  static bool Exists();
+
+  // Return the BrowserProcessMain singleton
+  static BrowserProcessMain* instance();
+
+  int flags() const { return flags_; }
 
   // Return the IO thread delegate, which is a container of objects
   // whose lifetime is tied to the IO thread
-  static IOThreadDelegate* io_thread_delegate();
+  IOThreadDelegate* io_thread_delegate() { return io_thread_delegate_.get(); }
 
   // Ensure that the IO thread delegate is created
-  static void CreateIOThreadDelegate();
-
-  static int RunBrowserMain(
-      const content::MainFunctionParams& main_function_params);
-  static void ShutdownBrowserMain();
+  void CreateIOThreadDelegate();
 
  private:
-  BrowserProcessMain();
+  // For RunBrowserMain() / ShutdownBrowserMain()
+  friend class oxide::ContentMainDelegate;
+
+  BrowserProcessMain(int flags);
+
+  int RunBrowserMain(
+      const content::MainFunctionParams& main_function_params);
+  void ShutdownBrowserMain();
 
   bool Init();
   void Shutdown();
 
   bool did_shutdown_;
+
+  int flags_;
 
   // XXX: Don't change the order of these unless you know what you are
   //      doing. It's important that ContentMainDelegate outlives

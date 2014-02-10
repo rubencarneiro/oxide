@@ -15,26 +15,43 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_web_frame_observer.h"
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "base/logging.h"
+#include "ui/ozone/ozone_platform.h"
 
-#include "content/public/renderer/render_view.h"
-#include "third_party/WebKit/public/web/WebFrame.h"
-
-#include "shared/common/oxide_messages.h"
+#include "oxide_ozone_surface_factory.h"
 
 namespace oxide {
 
-WebFrameObserver::WebFrameObserver(content::RenderView* render_view) :
-    content::RenderViewObserver(render_view) {}
+class OzonePlatform : public ui::OzonePlatform {
+ public:
+  OzonePlatform() {}
+  virtual ~OzonePlatform() {}
 
-WebFrameObserver::~WebFrameObserver() {}
+  gfx::SurfaceFactoryOzone* GetSurfaceFactoryOzone() OVERRIDE {
+    return &surface_factory_;
+  }
 
-void WebFrameObserver::FrameCreated(blink::WebFrame* parent,
-                                    blink::WebFrame* frame) {
-  render_view()->Send(
-      new OxideHostMsg_FrameCreated(routing_id(),
-                                    parent->identifier(),
-                                    frame->identifier()));
-}
+  ui::EventFactoryOzone* GetEventFactoryOzone() OVERRIDE {
+    return NULL;
+  }
+
+  ui::InputMethodContextFactoryOzone*
+  GetInputMethodContextFactoryOzone() OVERRIDE {
+    return NULL;
+  }
+
+ private:
+  OzoneSurfaceFactory surface_factory_;
+};
 
 } // namespace oxide
+
+namespace ui {
+
+OzonePlatform* CreateOzonePlatformOxide() {
+  return new oxide::OzonePlatform();
+}
+
+} // namespace ui

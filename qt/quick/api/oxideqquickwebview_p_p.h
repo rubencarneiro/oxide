@@ -62,8 +62,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void LoadProgressChanged(double progress) Q_DECL_FINAL;
 
-  void RootFrameChanged() Q_DECL_FINAL;
-
   void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
 
   void NavigationEntryCommitted() Q_DECL_FINAL;
@@ -73,6 +71,11 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
   QRect GetContainerBounds() Q_DECL_FINAL;
+
+  void NotifyWebPreferencesDestroyed() Q_DECL_FINAL;
+
+  void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
+  void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
 
   void componentComplete();
 
