@@ -228,6 +228,13 @@ WebPopupMenuDelegate::WebPopupMenuDelegate(OxideQQuickWebView* webview) :
     web_view_(webview),
     popup_component_(webview->popupMenu()) {}
 
+WebPopupMenuDelegate::~WebPopupMenuDelegate() {
+  if (!popup_item_.isNull()) {
+    popup_item_.take()->deleteLater();
+    popup_context_.take()->deleteLater();
+  }
+}
+
 void WebPopupMenuDelegate::Show(const QRect& bounds,
                                 QList<oxide::qt::MenuItem>& items,
                                 bool allow_multiple_selection) {
