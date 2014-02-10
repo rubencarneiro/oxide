@@ -41,7 +41,6 @@ BrowserProcessMain::BrowserProcessMain(int flags) :
   CHECK(!g_instance) << "Should only have one BrowserProcessMain";
 }
 
-// static
 int BrowserProcessMain::RunBrowserMain(
     const content::MainFunctionParams& main_function_params) {
   CHECK(!browser_main_runner_);
@@ -56,7 +55,6 @@ int BrowserProcessMain::RunBrowserMain(
   return browser_main_runner_->Run();
 }
 
-// static
 void BrowserProcessMain::ShutdownBrowserMain() {
   CHECK(browser_main_runner_);
   browser_main_runner_->Shutdown();
@@ -110,10 +108,11 @@ BrowserProcessMain::~BrowserProcessMain() {
 }
 
 // static
-bool BrowserProcessMain::Run(int flags) {
+bool BrowserProcessMain::StartIfNotRunning(int flags) {
   if (g_instance) {
     CHECK_EQ(g_instance->flags(), flags) <<
-        "BrowserProcessMain::Run() called more than once with different flags";
+        "BrowserProcessMain::StartIfNotRunning() called more than once with "
+        "different flags";
     return true;
   }
 
@@ -126,7 +125,7 @@ bool BrowserProcessMain::Run(int flags) {
 }
 
 // static
-void BrowserProcessMain::Quit() {
+void BrowserProcessMain::ShutdownIfRunning() {
   if (g_instance) {
     g_instance->Shutdown();
     g_instance.reset();

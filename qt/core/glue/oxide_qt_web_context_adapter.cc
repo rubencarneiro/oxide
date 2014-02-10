@@ -59,7 +59,7 @@ void WebContextAdapterPrivate::Init() {
   // browser context needs to set the shared GL context before anything
   // starts up, in order for compositing to work
   // FIXME: What if this fails?
-  oxide::BrowserProcessMain::Run(0);
+  oxide::BrowserProcessMain::StartIfNotRunning(0);
 
   context_.reset(oxide::BrowserContext::Create(
       construct_props()->data_path,
@@ -245,7 +245,7 @@ WebContextAdapter::WebContextAdapter() :
   static bool run_once = false;
   if (!run_once) {
     run_once = true;
-    qAddPostRoutine(oxide::BrowserProcessMain::Quit);
+    qAddPostRoutine(oxide::BrowserProcessMain::ShutdownIfRunning);
   }
 }
 

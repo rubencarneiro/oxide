@@ -48,10 +48,10 @@ class BrowserProcessMain FINAL {
 
   // Start the browser process components if they haven't already
   // been started. Cannot be called after Quit()
-  static bool Run(int flags);
+  static bool StartIfNotRunning(int flags);
 
   // Quit the browser process components if they are running
-  static void Quit();
+  static void ShutdownIfRunning();
 
   // Returns true if BrowserProcessMain exists
   static bool Exists();
