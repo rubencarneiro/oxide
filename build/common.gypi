@@ -51,7 +51,7 @@
       '-Werror',
     ],
     'ldflags': [
-      '-B<(PRODUCT_DIR)/../gold'
+      '-B<(PRODUCT_DIR)/../../../gold'
     ],
   }
 }

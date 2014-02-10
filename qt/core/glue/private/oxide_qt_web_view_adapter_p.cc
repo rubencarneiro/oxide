@@ -30,10 +30,10 @@
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
 #include "oxide_qt_message_handler_adapter_p.h"
-#include "oxide_qt_web_frame_adapter_p.h"
 
 namespace oxide {
 namespace qt {
@@ -55,10 +55,6 @@ void WebViewAdapterPrivate::OnCommandsUpdated() {
 
 void WebViewAdapterPrivate::OnLoadProgressChanged(double progress) {
   a->LoadProgressChanged(progress);
-}
-
-void WebViewAdapterPrivate::OnRootFrameChanged() {
-  a->RootFrameChanged();
 }
 
 void WebViewAdapterPrivate::OnLoadStarted(const GURL& validated_url,
@@ -106,8 +102,9 @@ void WebViewAdapterPrivate::OnNavigationEntryChanged(int index) {
   a->NavigationEntryChanged(index);
 }
 
-oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame() {
-  return new WebFrame(a->CreateWebFrame());
+oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame(
+    content::FrameTreeNode* node) {
+  return new WebFrame(a->CreateWebFrame(), node, this);
 }
 
 // static
@@ -170,6 +167,14 @@ oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateBeforeUnloadDialog() {
   JavaScriptDialogDelegate* delegate = a->CreateBeforeUnloadDialogDelegate();
   bool did_suppress_message = false;
   return new JavaScriptDialog(delegate, &did_suppress_message);
+}
+
+void WebViewAdapterPrivate::FrameAdded(oxide::WebFrame* frame) {
+  a->FrameAdded(static_cast<WebFrame *>(frame)->adapter());
+}
+
+void WebViewAdapterPrivate::FrameRemoved(oxide::WebFrame* frame) {
+  a->FrameRemoved(static_cast<WebFrame *>(frame)->adapter());
 }
 
 } // namespace qt

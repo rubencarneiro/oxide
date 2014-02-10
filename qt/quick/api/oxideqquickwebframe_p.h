@@ -35,18 +35,13 @@ class OxideQQuickWebFrame : public QObject {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
   Q_PROPERTY(OxideQQuickWebFrame* parentFrame READ parentFrame)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickWebFrame> childFrames READ childFrames NOTIFY childFrameChanged)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickWebFrame> childFrames READ childFrames NOTIFY childFramesChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers)
   Q_ENUMS(ChildFrameChangedType)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebFrame)
 
  public:
-  enum ChildFrameChangedType {
-    ChildAdded,
-    ChildRemoved
-  };
-
   virtual ~OxideQQuickWebFrame();
 
   QUrl url() const;
@@ -68,8 +63,7 @@ class OxideQQuickWebFrame : public QObject {
 
  Q_SIGNALS:
   void urlChanged();
-  void childFrameChanged(ChildFrameChangedType type,
-                         OxideQQuickWebFrame* child_frame);
+  void childFramesChanged();
   void messageHandlersChanged();
 
  protected:

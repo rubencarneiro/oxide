@@ -18,14 +18,13 @@
 #include "oxide_message_handler.h"
 
 #include "base/logging.h"
-#include "content/public/browser/render_view_host.h"
-#include "content/public/browser/web_contents.h"
+#include "content/browser/frame_host/frame_tree_node.h"
+#include "content/public/browser/render_frame_host.h"
 
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_incoming_message.h"
 #include "oxide_web_frame.h"
-#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -50,19 +49,15 @@ void MessageHandler::OnReceiveMessage(IncomingMessage* message) {
 
   if (error) {
     OxideMsg_SendMessage_Params params;
-    params.frame_id = message->source_frame()->identifier();
     params.world_id = message->world_id();
     params.serial = message->serial();
     params.type = OxideMsg_SendMessage_Type::Reply;
     params.error = OxideMsg_SendMessage_Error::UNCAUGHT_EXCEPTION;
-    params.args = error_desc;
+    params.payload = error_desc;
 
-    // FIXME: This is clearly broken for OOPIF
-    content::WebContents* web_contents =
-        message->source_frame()->view()->web_contents();
-    web_contents->Send(new OxideMsg_SendMessage(
-        web_contents->GetRenderViewHost()->GetRoutingID(),
-        params));
+    content::RenderFrameHost* rfh =
+        message->source_frame()->frame_tree_node()->current_frame_host();
+    rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
   }
 }
 

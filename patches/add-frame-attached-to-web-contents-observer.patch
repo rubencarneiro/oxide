@@ -1,0 +1,177 @@
+# Description: Add WebContentsObserver::FrameAttached(), which is the opposite of
+#  the existing FrameDetached()
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/content/browser/frame_host/frame_tree.cc b/content/browser/frame_host/frame_tree.cc
+--- a/content/browser/frame_host/frame_tree.cc
++++ b/content/browser/frame_host/frame_tree.cc
+@@ -108,16 +108,21 @@ RenderFrameHostImpl* FrameTree::AddFrame
+     return NULL;
+ 
+   scoped_ptr<FrameTreeNode> node(new FrameTreeNode(
+       this, parent->navigator(), render_frame_delegate_, render_view_delegate_,
+       render_widget_delegate_, manager_delegate_, frame_id, frame_name));
+   FrameTreeNode* node_ptr = node.get();
+   // AddChild is what creates the RenderFrameHost.
+   parent->AddChild(node.Pass(), frame_routing_id);
++  if (!on_frame_added_.is_null()) {
++    on_frame_added_.Run(
++        node_ptr->current_frame_host()->render_view_host(),
++        parent_frame_id, frame_id);
++  }
+   return node_ptr->current_frame_host();
+ }
+ 
+ void FrameTree::RemoveFrame(RenderFrameHostImpl* render_frame_host,
+                             int64 parent_frame_id,
+                             int64 frame_id) {
+   // If switches::kSitePerProcess is not specified, then the FrameTree only
+   // contains a node for the root element. However, even in this case
+@@ -160,16 +165,21 @@ RenderFrameHostImpl* FrameTree::GetMainF
+   return root_->current_frame_host();
+ }
+ 
+ void FrameTree::SetFrameRemoveListener(
+     const base::Callback<void(RenderViewHostImpl*, int64)>& on_frame_removed) {
+   on_frame_removed_ = on_frame_removed;
+ }
+ 
++void FrameTree::SetFrameAddListener(
++    const base::Callback<void(RenderViewHostImpl*, int64, int64)>& on_frame_added) {
++  on_frame_added_ = on_frame_added;
++}
++
+ void FrameTree::ClearFrameRemoveListenerForTesting() {
+   on_frame_removed_.Reset();
+ }
+ 
+ RenderViewHostImpl* FrameTree::CreateRenderViewHostForMainFrame(
+     SiteInstance* site_instance,
+     int routing_id,
+     int main_frame_routing_id,
+diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_host/frame_tree.h
+--- a/content/browser/frame_host/frame_tree.h
++++ b/content/browser/frame_host/frame_tree.h
+@@ -96,16 +96,18 @@ class CONTENT_EXPORT FrameTree {
+   RenderFrameHostImpl* GetMainFrame() const;
+ 
+   // Allows a client to listen for frame removal.  The listener should expect
+   // to receive the RenderViewHostImpl containing the frame and the renderer-
+   // specific frame ID of the removed frame.
+   // TODO(creis): These parameters will later change to be the RenderFrameHost.
+   void SetFrameRemoveListener(
+       const base::Callback<void(RenderViewHostImpl*, int64)>& on_frame_removed);
++  void SetFrameAddListener(
++      const base::Callback<void(RenderViewHostImpl*, int64, int64)>& on_frame_added);
+ 
+   void ClearFrameRemoveListenerForTesting();
+ 
+   // Creates a RenderViewHost for a new main frame RenderFrameHost in the given
+   // |site_instance|.  The RenderViewHost will have its Shutdown method called
+   // when all of the RenderFrameHosts using it are deleted.
+   RenderViewHostImpl* CreateRenderViewHostForMainFrame(
+       SiteInstance* site_instance,
+@@ -147,15 +149,16 @@ class CONTENT_EXPORT FrameTree {
+   //
+   // Must be declared before |root_| so that it is deleted afterward.  Otherwise
+   // the map will be cleared before we delete the RenderFrameHosts in the tree.
+   RenderViewHostMap render_view_host_map_;
+ 
+   scoped_ptr<FrameTreeNode> root_;
+ 
+   base::Callback<void(RenderViewHostImpl*, int64)> on_frame_removed_;
++  base::Callback<void(RenderViewHostImpl*, int64, int64)> on_frame_added_;
+ 
+   DISALLOW_COPY_AND_ASSIGN(FrameTree);
+ };
+ 
+ }  // namespace content
+ 
+ #endif  // CONTENT_BROWSER_FRAME_HOST_FRAME_TREE_H_
+diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
+--- a/content/browser/web_contents/web_contents_impl.cc
++++ b/content/browser/web_contents/web_contents_impl.cc
+@@ -397,16 +397,19 @@ WebContentsImpl::WebContentsImpl(
+       render_view_message_source_(NULL),
+       fullscreen_widget_routing_id_(MSG_ROUTING_NONE),
+       is_subframe_(false) {
+   for (size_t i = 0; i < g_created_callbacks.Get().size(); i++)
+     g_created_callbacks.Get().at(i).Run(this);
+   frame_tree_.SetFrameRemoveListener(
+       base::Bind(&WebContentsImpl::OnFrameRemoved,
+                  base::Unretained(this)));
++  frame_tree_.SetFrameAddListener(
++      base::Bind(&WebContentsImpl::OnFrameAdded,
++                 base::Unretained(this)));
+ }
+ 
+ WebContentsImpl::~WebContentsImpl() {
+   is_being_destroyed_ = true;
+ 
+   ClearAllPowerSaveBlockers();
+ 
+   for (std::set<RenderWidgetHostImpl*>::iterator iter =
+@@ -3840,9 +3843,18 @@ gfx::Size WebContentsImpl::GetSizeForNew
+ 
+ void WebContentsImpl::OnFrameRemoved(
+     RenderViewHostImpl* render_view_host,
+     int64 frame_id) {
+    FOR_EACH_OBSERVER(WebContentsObserver, observers_,
+                      FrameDetached(render_view_host, frame_id));
+ }
+ 
++void WebContentsImpl::OnFrameAdded(
++    RenderViewHostImpl* render_view_host,
++    int64 parent_frame_id,
++    int64 frame_id) {
++  FOR_EACH_OBSERVER(WebContentsObserver, observers_,
++                    FrameAttached(render_view_host, parent_frame_id, frame_id));
++
++}
++
+ }  // namespace content
+diff --git a/content/browser/web_contents/web_contents_impl.h b/content/browser/web_contents/web_contents_impl.h
+--- a/content/browser/web_contents/web_contents_impl.h
++++ b/content/browser/web_contents/web_contents_impl.h
+@@ -825,16 +825,18 @@ class CONTENT_EXPORT WebContentsImpl
+ 
+   // Clear all PowerSaveBlockers, leave power_save_blocker_ empty.
+   void ClearAllPowerSaveBlockers();
+ 
+   // Helper function to invoke WebContentsDelegate::GetSizeForNewRenderView().
+   gfx::Size GetSizeForNewRenderView() const;
+ 
+   void OnFrameRemoved(RenderViewHostImpl* render_view_host, int64 frame_id);
++  void OnFrameAdded(RenderViewHostImpl* render_view_host,
++                    int64 parent_frame_id, int64 frame_id);
+ 
+   // Adds/removes a callback called on creation of each new WebContents.
+   // Deprecated, about to remove.
+   static void AddCreatedCallback(const CreatedCallback& callback);
+   static void RemoveCreatedCallback(const CreatedCallback& callback);
+ 
+   // Data for core operation ---------------------------------------------------
+ 
+diff --git a/content/public/browser/web_contents_observer.h b/content/public/browser/web_contents_observer.h
+--- a/content/public/browser/web_contents_observer.h
++++ b/content/public/browser/web_contents_observer.h
+@@ -229,16 +229,19 @@ class CONTENT_EXPORT WebContentsObserver
+                                    const GURL& url,
+                                    const Referrer& referrer,
+                                    WindowOpenDisposition disposition,
+                                    PageTransition transition,
+                                    int64 source_frame_id) {}
+ 
+   virtual void FrameDetached(RenderViewHost* render_view_host,
+                              int64 frame_id) {}
++  virtual void FrameAttached(RenderViewHost* render_view_host,
++                             int64 parent_frame_id,
++                             int64 frame_id) {}
+ 
+   // This method is invoked when the renderer has completed its first paint
+   // after a non-empty layout.
+   virtual void DidFirstVisuallyNonEmptyPaint(int32 page_id) {}
+ 
+   // These two methods correspond to the points in time when the spinner of the
+   // tab starts and stops spinning.
+   virtual void DidStartLoading(RenderViewHost* render_view_host) {}

@@ -23,8 +23,7 @@
 #include "base/strings/string16.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/utf_string_conversions.h"
-#include "content/public/renderer/render_thread.h"
-#include "content/public/renderer/render_view.h"
+#include "content/public/renderer/render_frame.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 #include "ui/base/resource/resource_bundle.h"
@@ -145,35 +144,33 @@ void V8MessageManager::SendMessageInner(
 
   v8::Local<v8::String> msg_id = msg_id_as_val->ToString();
 
-  v8::Local<v8::String> msg_args;
+  v8::Local<v8::String> msg_payload;
   if (args.Length() > 4) {
-    v8::Local<v8::Value> msg_args_as_val = args[4];
-    if (!msg_args_as_val->IsString()) {
+    v8::Local<v8::Value> msg_payload_as_val = args[4];
+    if (!msg_payload_as_val->IsString()) {
       isolate->ThrowException(v8::Exception::Error(
           v8::String::NewFromUtf8(
             isolate, "Invalid argument type")));
       return;
     }
 
-    msg_args = msg_args_as_val->ToString();
+    msg_payload = msg_payload_as_val->ToString();
   } else if (error != OxideMsg_SendMessage_Error::OK) {
-    msg_args = v8::String::Empty(isolate);
+    msg_payload = v8::String::Empty(isolate);
   } else {
-    msg_args = v8::String::NewFromUtf8(isolate, "{}");
+    msg_payload = v8::String::NewFromUtf8(isolate, "{}");
   }
 
   OxideMsg_SendMessage_Params params;
-  params.frame_id = frame_->identifier();
   params.world_id = IsolatedWorldMap::IDToName(world_id_);
   params.serial = serial->Value();
   params.type = type;
   params.error = error;
   params.msg_id = V8StringToStdString(msg_id);
-  params.args = V8StringToStdString(msg_args);
+  params.payload = V8StringToStdString(msg_payload);
 
-  content::RenderThread::Get()->Send(
-      new OxideHostMsg_SendMessage(render_view()->GetRoutingID(),
-                                   params));
+  frame_->Send(new OxideHostMsg_SendMessage(
+      frame_->GetRoutingID(), params));
 }
 
 void V8MessageManager::RegisterReceiveHandlerInner(
@@ -264,7 +261,7 @@ void V8MessageManager::OxideLazyGetterInner(
 
   {
     blink::WebScopedMicrotaskSuppression mts;
-    frame_->callFunctionEvenIfScriptDisabled(
+    frame_->GetWebFrame()->callFunctionEvenIfScriptDisabled(
         function,
         context_.NewHandle(isolate)->Global(),
         arraysize(args),
@@ -280,7 +277,7 @@ void V8MessageManager::OxideLazyGetterInner(
   info.GetReturnValue().Set(exports);
 }
 
-V8MessageManager::V8MessageManager(blink::WebFrame* frame,
+V8MessageManager::V8MessageManager(content::RenderFrame* frame,
                                    v8::Handle<v8::Context> context,
                                    int world_id) :
     frame_(frame),
@@ -315,11 +312,11 @@ void V8MessageManager::ReceiveMessage(
     v8::Integer::New(isolate, params.type),
     v8::Integer::New(isolate, params.error),
     v8::String::NewFromUtf8(isolate, params.msg_id.data()),
-    v8::String::NewFromUtf8(isolate, params.args.data())
+    v8::String::NewFromUtf8(isolate, params.payload.data())
   };
 
   v8::TryCatch try_catch;
-  frame_->callFunctionEvenIfScriptDisabled(
+  frame_->GetWebFrame()->callFunctionEvenIfScriptDisabled(
       receive_handler_.NewHandle(isolate),
       context_.NewHandle(isolate)->Global(),
       arraysize(args),
@@ -327,7 +324,6 @@ void V8MessageManager::ReceiveMessage(
   if (try_catch.HasCaught() &&
       params.type == OxideMsg_SendMessage_Type::Message) {
     OxideMsg_SendMessage_Params error_params;
-    error_params.frame_id = params.frame_id;
     error_params.world_id = params.world_id;
     error_params.serial = params.serial;
     error_params.type = OxideMsg_SendMessage_Type::Reply;
@@ -337,27 +333,16 @@ void V8MessageManager::ReceiveMessage(
     v8::Local<v8::Message> msg(try_catch.Message());
     if (!msg.IsEmpty()) {
       v8::Local<v8::String> s(msg->Get());
-      error_params.args = V8StringToStdString(s);
-    } else {
-      error_params.args = std::string("Handler threw an exception");
+      error_params.payload = V8StringToStdString(s);
     }
 
-    content::RenderThread::Get()->Send(
-        new OxideHostMsg_SendMessage(render_view()->GetRoutingID(),
-                                     error_params));
+    frame_->Send(new OxideHostMsg_SendMessage(
+        frame_->GetRoutingID(), error_params));
   }
 }
 
 v8::Handle<v8::Context> V8MessageManager::v8_context() const {
   return context_.NewHandle(v8::Isolate::GetCurrent());
-}
-
-long long V8MessageManager::frame_id() const {
-  return frame_->identifier();
-}
-
-content::RenderView* V8MessageManager::render_view() const {
-  return content::RenderView::FromWebView(frame_->view());
 }
 
 } // namespace oxide

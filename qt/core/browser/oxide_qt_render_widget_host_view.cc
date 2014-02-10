@@ -17,6 +17,7 @@
 
 #include "oxide_qt_render_widget_host_view.h"
 
+#include <QByteArray>
 #include <QFocusEvent>
 #include <QGuiApplication>
 #include <QInputEvent>
@@ -28,6 +29,7 @@
 #include <QRect>
 #include <QScreen>
 #include <QSize>
+#include <QTextCharFormat>
 #include <QWheelEvent>
 
 #include "base/logging.h"
@@ -35,7 +37,9 @@
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
+#include "third_party/WebKit/public/platform/WebColor.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 #include "ui/base/ime/text_input_type.h"
@@ -328,7 +332,7 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   return modifiers;
 }
 
-content::NativeWebKeyboardEvent QKeyEventToWebEvent(
+content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
     QKeyEvent* qevent) {
   content::NativeWebKeyboardEvent event;
 
@@ -368,20 +372,20 @@ content::NativeWebKeyboardEvent QKeyEventToWebEvent(
   return event;
 }
 
-blink::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
+blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* qevent, float scale) {
   blink::WebMouseEvent event;
 
   event.timeStampSeconds = QInputEventTimeToWebEventTime(qevent);
   event.modifiers = QMouseEventStateToWebEventModifiers(qevent);
 
-  event.x = qevent->x();
-  event.y = qevent->y();
+  event.x = qRound(qevent->x() / scale);
+  event.y = qRound(qevent->y() / scale);
 
   event.windowX = event.x;
   event.windowY = event.y;
 
-  event.globalX = qevent->globalX();
-  event.globalY = qevent->globalY();
+  event.globalX = qRound(qevent->globalX() / scale);
+  event.globalY = qRound(qevent->globalY() / scale);
 
   event.clickCount = 0;
 
@@ -422,7 +426,7 @@ blink::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
   return event;
 }
 
-blink::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
+blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* qevent, float scale) {
   blink::WebMouseWheelEvent event;
 
   event.timeStampSeconds = QInputEventTimeToWebEventTime(qevent);
@@ -441,14 +445,14 @@ blink::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
   event.type = blink::WebInputEvent::MouseWheel;
   event.button = blink::WebMouseEvent::ButtonNone;
 
-  event.x = qevent->x();
-  event.y = qevent->y();
+  event.x = qRound(qevent->x() / scale);
+  event.y = qRound(qevent->y() / scale);
 
   event.windowX = event.x;
   event.windowY = event.y;
 
-  event.globalX = qevent->globalX();
-  event.globalY = qevent->globalY();
+  event.globalX = qRound(qevent->globalX() / scale);
+  event.globalY = qRound(qevent->globalY() / scale);
 
   // See comment in third_party/WebKit/Source/web/gtk/WebInputEventFactory.cpp
   static const float scrollbarPixelsPerTick = 160.0f / 3.0f;
@@ -502,8 +506,13 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 }
 
 void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
-  delegate_->SchedulePaint(
-      QRect(rect.x(), rect.y(), rect.width(), rect.height()));
+  gfx::Rect scaled_rect(
+      gfx::ScaleToEnclosingRect(rect, GetDeviceScaleFactor()));
+  delegate_->SchedulePaintForRectPix(
+      QRect(scaled_rect.x(),
+            scaled_rect.y(),
+            scaled_rect.width(),
+            scaled_rect.height()));
 }
 
 void RenderWidgetHostView::BuffersSwapped(
@@ -526,15 +535,60 @@ RenderWidgetHostView::RenderWidgetHostView(
 RenderWidgetHostView::~RenderWidgetHostView() {}
 
 // static
-void RenderWidgetHostView::GetScreenInfo(
-    QScreen* screen, blink::WebScreenInfo* result) {
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
+float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
+  // For some reason, the Ubuntu QPA plugin doesn't override
+  // QScreen::devicePixelRatio. However, applications using the Ubuntu
+  // SDK use something called "grid units". The relationship between
+  // grid units and device pixels is set by the "GRID_UNIT_PX" environment
+  // variable. On a screen with a DPR of 1.0f, GRID_UNIT_PX is set to 8, and
+  // 1 grid unit == 8 device pixels.
+  // If we are using the Ubuntu backend, we use GRID_UNIT_PX to derive the
+  // device pixel ratio, else we get it from QScreen::devicePixelRatio.
+  // XXX: There are 2 scenarios where this is completely broken:
+  //      1) Any apps not using the Ubuntu SDK but running with the Ubuntu
+  //         QPA plugin. In this case, we derive a DPR from GRID_UNIT_PX if
+  //         set, and the application probably uses QScreen::devicePixelRatio,
+  //         which is always 1.0f
+  //      2) Any apps using the Ubuntu SDK but not running with the Ubuntu
+  //         QPA plugin. In this case, we get the DPR from
+  //         QScreen::devicePixelRatio, and the application uses GRID_UNIX_PX
+  //         if set
+  //      I think it would be better if the Ubuntu QPA plugin did override
+  //      QScreen::devicePixelRatio (it could still get that from GRID_UNIT_PX),
+  //      and the Ubuntu SDK used this to convert between grid units and device
+  //      pixels, then we could just use QScreen::devicePixelRatio here
+
+  // Allow an override for testing
+  {
+    QByteArray force_dpr(qgetenv("OXIDE_FORCE_DPR"));
+    bool ok;
+    float scale = force_dpr.toFloat(&ok);
+    if (ok) {
+      return scale;
+    }
   }
 
+  QString platform = QGuiApplication::platformName();
+  if (platform == QLatin1String("ubuntu") ||
+      platform == QLatin1String("ubuntumirclient")) {
+    QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
+    bool ok;
+    float scale = grid_unit_px.toFloat(&ok);
+    if (ok) {
+      return scale / 8;
+    }
+  }
+
+  return float(screen->devicePixelRatio());
+}
+
+// static
+void RenderWidgetHostView::GetWebScreenInfoFromQScreen(
+    QScreen* screen, blink::WebScreenInfo* result) {
   result->depth = screen->depth();
   result->depthPerComponent = 8; // XXX: Copied the GTK impl here
   result->isMonochrome = result->depth == 1;
+  result->deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
 
   QRect rect = screen->geometry();
   result->rect = blink::WebRect(rect.x(),
@@ -576,8 +630,20 @@ bool RenderWidgetHostView::IsShowing() {
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
-  QRect rect(delegate_->GetViewBounds());
-  return gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height());
+  QScreen* screen = delegate_->GetScreen();
+  if (!screen) {
+    return gfx::Rect();
+  }
+
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::ScaleToEnclosingRect(
+      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
+                1.0f / GetDeviceScaleFactor());
+}
+
+gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::Size(rect.width(), rect.height());
 }
 
 void RenderWidgetHostView::SetSize(const gfx::Size& size) {
@@ -587,17 +653,24 @@ void RenderWidgetHostView::SetSize(const gfx::Size& size) {
 
 content::BackingStore* RenderWidgetHostView::AllocBackingStore(
     const gfx::Size& size) {
-  return new BackingStore(GetRenderWidgetHost(), size);
+  return new BackingStore(GetRenderWidgetHost(), size, GetDeviceScaleFactor());
+}
+
+float RenderWidgetHostView::GetDeviceScaleFactor() const {
+  return GetDeviceScaleFactorFromQScreen(delegate_->GetScreen());
 }
 
 void RenderWidgetHostView::GetScreenInfo(
     blink::WebScreenInfo* results) {
-  GetScreenInfo(delegate_->GetScreen(), results);
+  QScreen* screen = delegate_->GetScreen();
+  if (!screen) {
+    screen = QGuiApplication::primaryScreen();
+  }
+  GetWebScreenInfoFromQScreen(screen, results);
 }
 
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
-  QRect rect(delegate_->GetBoundsInRootWindow());
-  return gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height());
+  return GetViewBounds();
 }
 
 void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
@@ -605,9 +678,13 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 bool can_compose_inline) {
   input_type_ = type;
 
+  bool enabled = type != ui::TEXT_INPUT_TYPE_NONE;
+
+  delegate_->SetInputMethodEnabled(enabled);
+
   QInputMethod* input_method = QGuiApplication::inputMethod();
-  input_method->setVisible(type != ui::TEXT_INPUT_TYPE_NONE);
-  input_method->update(Qt::ImEnabled | Qt::ImHints | Qt::ImQueryInput);
+  input_method->setVisible(enabled);
+  input_method->update(Qt::ImHints | Qt::ImQueryInput);
 }
 
 void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
@@ -622,19 +699,74 @@ void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
 
 void RenderWidgetHostView::ForwardKeyEvent(QKeyEvent* event) {
   GetRenderWidgetHost()->ForwardKeyboardEvent(
-      QKeyEventToWebEvent(event));
+      MakeNativeWebKeyboardEvent(event));
   event->accept();
 }
 
 void RenderWidgetHostView::ForwardMouseEvent(QMouseEvent* event) {
   GetRenderWidgetHost()->ForwardMouseEvent(
-      QMouseEventToWebEvent(event));
+      MakeWebMouseEvent(event, GetDeviceScaleFactor()));
   event->accept();
 }
 
 void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHost()->ForwardWheelEvent(
-      QWheelEventToWebEvent(event));
+      MakeWebMouseWheelEvent(event, GetDeviceScaleFactor()));
+  event->accept();
+}
+
+void RenderWidgetHostView::ForwardInputMethodEvent(QInputMethodEvent* event) {
+  content::RenderWidgetHostImpl* rwh =
+      content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
+
+  QString preedit = event->preeditString();
+  if (preedit.isEmpty()) {
+    int selectionStart = -1;
+    int selectionLength = 0;
+    Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
+      if (attribute.type == QInputMethodEvent::Selection) {
+        selectionStart = attribute.start;
+        selectionLength = attribute.length;
+        break;
+      }
+    }
+    rwh->ImeConfirmComposition(
+        base::UTF8ToUTF16(event->commitString().toStdString()),
+        gfx::Range(selectionStart, selectionStart + selectionLength),
+        false);
+  } else {
+    std::vector<blink::WebCompositionUnderline> underlines;
+    Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
+      switch (attribute.type) {
+      case QInputMethodEvent::TextFormat: {
+        QTextCharFormat textCharFormat =
+            attribute.value.value<QTextFormat>().toCharFormat();
+        blink::WebColor color = textCharFormat.underlineColor().rgba();
+        int start = qMin(attribute.start, (attribute.start + attribute.length));
+        int end = qMax(attribute.start, (attribute.start + attribute.length));
+        blink::WebCompositionUnderline underline(start, end, color, false);
+        underlines.push_back(underline);
+        break;
+      }
+      case QInputMethodEvent::Cursor:
+        if (attribute.length > 0) {
+          // A cursor should be shown inside the preedit string at position attribute.start
+          // XXX: how does that translate to ImeSetComposition(…) ?
+        }
+        break;
+      default:
+        break;
+      }
+    }
+    int replacementStart = event->replacementStart();
+    int replacementLength = event->replacementLength();
+    rwh->ImeSetComposition(base::UTF8ToUTF16(preedit.toStdString()),
+                           underlines, replacementStart,
+                           replacementStart + replacementLength);
+  }
+
+  // XXX: in which case should we call rwh->ImeCancelComposition() ?
+
   event->accept();
 }
 
@@ -662,8 +794,6 @@ const QPixmap* RenderWidgetHostView::GetBackingStore() {
 QVariant RenderWidgetHostView::InputMethodQuery(
     Qt::InputMethodQuery query) const {
   switch (query) {
-    case Qt::ImEnabled:
-      return input_type_ != ui::TEXT_INPUT_TYPE_NONE;
     case Qt::ImHints:
       return QVariant(QImHintsFromInputType(input_type_));
     case Qt::ImCursorRectangle: {

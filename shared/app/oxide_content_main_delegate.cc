@@ -81,7 +81,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       subprocess_exe = base::FilePath(FILE_PATH_LITERAL(OXIDE_SUBPROCESS_PATH));
       if (!subprocess_exe.IsAbsolute()) {
         Dl_info info;
-        int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::IsRunning),
+        int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
                         &info);
         DCHECK_NE(rv, 0) << "Failed to determine module path";
 
@@ -105,6 +105,18 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
 
+    int flags = BrowserProcessMain::instance()->flags();
+    if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
+      command_line->AppendSwitch(switches::kEnableViewport);
+      command_line->AppendSwitch(switches::kEnableViewportMeta);
+    }
+    if (flags & BrowserProcessMain::ENABLE_PINCH) {
+      command_line->AppendSwitch(switches::kEnablePinch);
+    }
+    if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
+      command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
+    }
+
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
@@ -112,6 +124,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     }
     if (getenv("OXIDE_NO_SANDBOX")) {
       command_line->AppendSwitch(switches::kNoSandbox);
+    }
+    if (getenv("OXIDE_SINGLE_PROCESS")) {
+      command_line->AppendSwitch(switches::kSingleProcess);
     }
   }
 
@@ -138,15 +153,23 @@ int ContentMainDelegate::RunProcess(
     const std::string& process_type,
     const content::MainFunctionParams& main_function_params) {
   if (process_type.empty()) {
-    return BrowserProcessMain::RunBrowserMain(main_function_params);
+    if (!BrowserProcessMain::Exists()) {
+      // We arrive here if some calls the renderer with no --process-type
+      LOG(ERROR) <<
+          "The Oxide renderer cannot be used to run a browser process";
+      return 1;
+    }
+
+    return BrowserProcessMain::instance()->RunBrowserMain(
+        main_function_params);
   }
 
   return -1;
 }
 
 void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
-  if (process_type.empty()) {
-    BrowserProcessMain::ShutdownBrowserMain();
+  if (process_type.empty() && BrowserProcessMain::Exists()) {
+    BrowserProcessMain::instance()->ShutdownBrowserMain();
   }
 }
 

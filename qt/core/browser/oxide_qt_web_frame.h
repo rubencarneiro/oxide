@@ -30,7 +30,9 @@ class WebFrameAdapter;
 
 class WebFrame FINAL : public oxide::WebFrame {
  public:
-  WebFrame(WebFrameAdapter* adapter);
+  WebFrame(WebFrameAdapter* adapter,
+           content::FrameTreeNode* node,
+           oxide::WebView* view);
 
   size_t GetMessageHandlerCount() const FINAL;
   oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
@@ -39,7 +41,7 @@ class WebFrame FINAL : public oxide::WebFrame {
   oxide::OutgoingMessageRequest*
       GetOutgoingMessageRequestAt(size_t index) const FINAL;
 
-  WebFrameAdapter* adapter;
+  WebFrameAdapter* adapter() const { return adapter_; }
 
  private:
   ~WebFrame();
@@ -47,6 +49,8 @@ class WebFrame FINAL : public oxide::WebFrame {
   void OnChildAdded(oxide::WebFrame* child) FINAL;
   void OnChildRemoved(oxide::WebFrame* child) FINAL;
   void OnURLChanged() FINAL;
+
+  WebFrameAdapter* adapter_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);
 };

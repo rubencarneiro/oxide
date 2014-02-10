@@ -26,23 +26,16 @@ endif()
 cmake_minimum_required(VERSION 2.8.11)
 project(OXIDE)
 
-include(GNUInstallDirs)
-
 # This will be an option if we have more than one port
-set(OXIDE_BUILD qt)
+set(OXIDE_BUILD qt CACHE INTERNAL "")
 
 # Required for out-of-tree builds
-set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
 
-if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(CHROMIUM_BUILD_TYPE Debug)
-else()
-  set(CHROMIUM_BUILD_TYPE Release)
-endif()
-set(CHROMIUM_GYP_GENERATOR_DIR ${CMAKE_BINARY_DIR}/chromium/gyp/chromium/src)
-set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium/out)
-set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
-set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib.target)
+list(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_SOURCE_DIR}/build/cmake
+    ${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/build/cmake)
+include(OxideCommon)
 
 if(ENABLE_TESTS)
   enable_testing()
@@ -50,23 +43,6 @@ endif()
 
 # Import the configuration for this build
 include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
-
-find_program(PYTHON python)
-if(PYTHON STREQUAL "PYTHON-NOTFOUND")
-  message(FATAL_ERROR "Could not find a python interpreter. Please ensure python is installed")
-endif()
-
-# Allow the version number to be used in the build
-foreach(comp MAJOR MINOR BUILD PATCH)
-  execute_process(
-      COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
-      OUTPUT_VARIABLE _OUTPUT
-      RESULT_VARIABLE _RESULT)
-  if(NOT _RESULT EQUAL 0)
-    message(FATAL_ERROR "Failed to get version number")
-  endif()
-  set(OXIDE_VERSION_${comp} ${_OUTPUT})
-endforeach()
 
 # We want to link the core library with gold. Ubuntu has '-fuse-ld=gold',
 # but as this is distro specific, we do something that is currently
@@ -77,13 +53,13 @@ if(NOT DEFINED CHROMIUM_LINKER)
 endif()
 set(SETUP_GOLD_COMMAND
     ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
-    --output ${CHROMIUM_OUTPUT_DIR}/gold --ld ${CHROMIUM_LINKER})
-get_filename_component(_LINKER_NAME ${CHROMIUM_LINKER} NAME)
+    --output ${CMAKE_BINARY_DIR}/gold --ld ${CHROMIUM_LINKER})
+get_filename_component(LINKER_NAME ${CHROMIUM_LINKER} NAME)
 add_custom_command(
-    OUTPUT ${CHROMIUM_OUTPUT_DIR}/gold/${_LINKER_NAME}
+    OUTPUT ${CMAKE_BINARY_DIR}/gold/${LINKER_NAME}
     COMMAND ${SETUP_GOLD_COMMAND})
 add_custom_target(gold ALL
-                  DEPENDS ${CHROMIUM_OUTPUT_DIR}/gold/${_LINKER_NAME}
+                  DEPENDS ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
                   COMMENT "Setting up gold linker")
 
 message(STATUS "Setting up gold linker")

@@ -189,8 +189,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   bool HasAcceleratedSurface(const gfx::Size& desired_size) FINAL;
 
-  virtual gfx::Size GetPhysicalBackingSize() const OVERRIDE;
-
   gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
 
   void SetHasHorizontalScrollbar(bool has_horizontal_scrollbar) FINAL;

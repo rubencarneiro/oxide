@@ -17,13 +17,12 @@
 
 #include "oxide_incoming_message.h"
 
-#include "content/public/browser/render_view_host.h"
-#include "content/public/browser/web_contents.h"
+#include "content/browser/frame_host/frame_tree_node.h"
+#include "content/public/browser/render_frame_host.h"
 
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_web_frame.h"
-#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -46,18 +45,15 @@ void IncomingMessage::Reply(const std::string& args) {
   }
 
   OxideMsg_SendMessage_Params params;
-  params.frame_id = source_frame()->identifier();
   params.world_id = world_id_;
   params.serial = serial_;
   params.type = OxideMsg_SendMessage_Type::Reply;
   params.error = OxideMsg_SendMessage_Error::OK;
-  params.args = args;
+  params.payload = args;
 
-  // FIXME: This is clearly broken for OOPIF
-  content::WebContents* web_contents = source_frame()->view()->web_contents();
-  web_contents->Send(new OxideMsg_SendMessage(
-      web_contents->GetRenderViewHost()->GetRoutingID(),
-      params));
+  content::RenderFrameHost* rfh =
+      source_frame()->frame_tree_node()->current_frame_host();
+  rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 
 void IncomingMessage::Error(const std::string& msg) {
@@ -67,18 +63,15 @@ void IncomingMessage::Error(const std::string& msg) {
   }
 
   OxideMsg_SendMessage_Params params;
-  params.frame_id = source_frame()->identifier();
   params.world_id = world_id_;
   params.serial = serial_;
   params.type = OxideMsg_SendMessage_Type::Reply;
   params.error = OxideMsg_SendMessage_Error::HANDLER_REPORTED_ERROR;
-  params.args = msg;
+  params.payload = msg;
 
-  // FIXME: This is clearly broken for OOPIF
-  content::WebContents* web_contents = source_frame()->view()->web_contents();
-  web_contents->Send(new OxideMsg_SendMessage(
-      web_contents->GetRenderViewHost()->GetRoutingID(),
-      params));
+  content::RenderFrameHost* rfh =
+      source_frame()->frame_tree_node()->current_frame_host();
+  rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 
 } // namespace oxide

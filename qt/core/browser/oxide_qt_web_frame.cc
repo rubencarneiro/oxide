@@ -22,55 +22,57 @@
 #include "base/logging.h"
 
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 #include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
 #include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
-#include "qt/core/glue/private/oxide_qt_web_frame_adapter_p.h"
 
 namespace oxide {
 namespace qt {
 
 WebFrame::~WebFrame() {
-  delete adapterToQObject(adapter);
-  DCHECK(!adapter);
+  delete adapterToQObject(adapter_);
 }
 
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
-  adapterToQObject(static_cast<WebFrame *>(child)->adapter)->setParent(
-      adapterToQObject(adapter));
+  adapterToQObject(static_cast<WebFrame *>(child)->adapter())->setParent(
+      adapterToQObject(adapter_));
 }
 
 void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
-  adapterToQObject(static_cast<WebFrame *>(child)->adapter)->setParent(NULL);
+  adapterToQObject(static_cast<WebFrame *>(child)->adapter())->setParent(NULL);
 }
 
 void WebFrame::OnURLChanged() {
-  adapter->URLChanged();
+  adapter_->URLChanged();
 }
 
-WebFrame::WebFrame(WebFrameAdapter* adapter) :
-    adapter(adapter) {
+WebFrame::WebFrame(WebFrameAdapter* adapter,
+                   content::FrameTreeNode* node,
+                   oxide::WebView* view) :
+    oxide::WebFrame(node, view),
+    adapter_(adapter) {
   WebFrameAdapterPrivate::get(adapter)->owner = this;
 }
 
 size_t WebFrame::GetMessageHandlerCount() const {
-  return adapter->message_handlers().size();
+  return adapter_->message_handlers().size();
 }
 
 oxide::MessageHandler* WebFrame::GetMessageHandlerAt(
     size_t index) const {
-  MessageHandlerAdapter* handler = adapter->message_handlers().at(index);
+  MessageHandlerAdapter* handler = adapter_->message_handlers().at(index);
   return &MessageHandlerAdapterPrivate::get(handler)->handler();
 }
 
 size_t WebFrame::GetOutgoingMessageRequestCount() const {
   return WebFrameAdapterPrivate::get(
-      adapter)->outgoing_message_requests().size();
+      adapter_)->outgoing_message_requests().size();
 }
 
 oxide::OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
     size_t index) const {
   OutgoingMessageRequestAdapter* req =
-      WebFrameAdapterPrivate::get(adapter)->outgoing_message_requests().at(index);
+      WebFrameAdapterPrivate::get(adapter_)->outgoing_message_requests().at(index);
   return &OutgoingMessageRequestAdapterPrivate::get(req)->request();
 }
 

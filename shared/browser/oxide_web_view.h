@@ -34,8 +34,6 @@
 #include "shared/browser/oxide_message_target.h"
 #include "shared/common/oxide_message_enums.h"
 
-struct OxideMsg_SendMessage_Params;
-
 class GURL;
 
 namespace gfx {
@@ -44,11 +42,13 @@ class Size;
 
 namespace content {
 
+class FrameTreeNode;
 class NotificationRegistrar;
 struct OpenURLParams;
 class RenderWidgetHost;
 class RenderWidgetHostView;
 class WebContents;
+class WebContentsImpl;
 
 } // namespace content
 
@@ -58,6 +58,7 @@ class BrowserContext;
 class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
+class WebPreferences;
 
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
@@ -99,6 +100,7 @@ class WebView : public MessageTarget,
   void Hidden();
 
   BrowserContext* GetBrowserContext() const;
+  content::WebContents* GetWebContents() const;
 
   int GetNavigationEntryCount() const;
   int GetNavigationCurrentEntryIndex() const;
@@ -109,7 +111,10 @@ class WebView : public MessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-  WebFrame* FindFrameWithID(int64 frame_id) const;
+  WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
+
+  WebPreferences* GetWebPreferences();
+  void SetWebPreferences(WebPreferences* prefs, bool send_update = true);
 
   void Observe(int type,
                const content::NotificationSource& source,
@@ -160,19 +165,15 @@ class WebView : public MessageTarget,
 
   void FrameDetached(content::RenderViewHost* rvh,
                      int64 frame_id) FINAL;
+  void FrameAttached(content::RenderViewHost* rvh,
+                     int64 parent_frame_id, int64 frame_id) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
-
-  bool OnMessageReceived(const IPC::Message& message) FINAL;
 
   virtual size_t GetMessageHandlerCount() const OVERRIDE;
   virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
 
   virtual content::JavaScriptDialogManager* GetJavaScriptDialogManager() OVERRIDE;
-
-  content::WebContents* web_contents() const {
-    return web_contents_.get();
-  }
 
   virtual content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) = 0;
@@ -185,6 +186,9 @@ class WebView : public MessageTarget,
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message);
   virtual JavaScriptDialog* CreateBeforeUnloadDialog();
+
+  virtual void FrameAdded(WebFrame* frame);
+  virtual void FrameRemoved(WebFrame* frame);
 
  protected:
   WebView();
@@ -199,28 +203,11 @@ class WebView : public MessageTarget,
                           int error_code,
                           const base::string16& error_description);
 
-  void SendErrorForV8Message(long long frame_id,
-                             const std::string& world_id,
-                             int serial,
-                             OxideMsg_SendMessage_Error::Value error_code,
-                             const std::string& error_desc);
-  bool TryDispatchV8MessageToTarget(MessageTarget* target,
-                                    WebFrame* source_frame,
-                                    const std::string& world_id,
-                                    int serial,
-                                    const std::string& msg_id,
-                                    const std::string& args);
-  void DispatchV8Message(const OxideMsg_SendMessage_Params& params);
-
-  void OnFrameCreated(int64 parent_frame_id, int64 frame_id);
-
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnCommandsUpdated();
 
   virtual void OnLoadProgressChanged(double progress);
-
-  virtual void OnRootFrameChanged();
 
   virtual void OnLoadStarted(const GURL& validated_url,
                              bool is_error_frame);
@@ -234,12 +221,14 @@ class WebView : public MessageTarget,
   virtual void OnNavigationListPruned(bool from_front, int count);
   virtual void OnNavigationEntryChanged(int index);
 
-  virtual WebFrame* CreateWebFrame() = 0;
+  virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
-  scoped_ptr<content::WebContents> web_contents_;
+  scoped_ptr<content::WebContentsImpl> web_contents_;
+  scoped_ptr<content::NotificationRegistrar> registrar_;
+
   WebFrame* root_frame_;
 
-  scoped_ptr<content::NotificationRegistrar> registrar_;
+  WebPreferences* web_preferences_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

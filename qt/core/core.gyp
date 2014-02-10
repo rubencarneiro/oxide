@@ -50,6 +50,7 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/oxide_qt_web_popup_menu_qquick.moc',
+        'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_content_main_delegate.cc',
         'app/oxide_qt_content_main_delegate.h',
         'browser/oxide_qt_backing_store.cc',
@@ -66,6 +67,8 @@
         'browser/oxide_qt_web_frame.h',
         'browser/oxide_qt_web_popup_menu.cc',
         'browser/oxide_qt_web_popup_menu.h',
+        'browser/oxide_qt_web_preferences.cc',
+        'browser/oxide_qt_web_preferences.h',
         'common/oxide_qt_content_client.cc',
         'common/oxide_qt_content_client.h',
         'glue/private/oxide_qt_message_handler_adapter_p.cc',
@@ -74,10 +77,6 @@
         'glue/private/oxide_qt_outgoing_message_request_adapter_p.h',
         'glue/private/oxide_qt_user_script_adapter_p.cc',
         'glue/private/oxide_qt_user_script_adapter_p.h',
-        'glue/private/oxide_qt_web_context_adapter_p.cc',
-        'glue/private/oxide_qt_web_context_adapter_p.h',
-        'glue/private/oxide_qt_web_frame_adapter_p.cc',
-        'glue/private/oxide_qt_web_frame_adapter_p.h',
         'glue/private/oxide_qt_web_view_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.h'
       ],
@@ -103,12 +102,16 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqincomingmessage.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         'api/oxideqincomingmessage.cc',
         'api/oxideqincomingmessage.h',
         'api/oxideqincomingmessage_p.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
+        'api/oxideqwebpreferences.cc',
+        'api/oxideqwebpreferences.h',
+        'api/oxideqwebpreferences_p.h',
         'glue/oxide_qt_adapter_base.h',
         'glue/oxide_qt_javascript_dialog_delegate.cc',
         'glue/oxide_qt_javascript_dialog_delegate.h',
@@ -122,8 +125,10 @@
         'glue/oxide_qt_user_script_adapter.h',
         'glue/oxide_qt_web_context_adapter.cc',
         'glue/oxide_qt_web_context_adapter.h',
+        'glue/oxide_qt_web_context_adapter_p.h',
         'glue/oxide_qt_web_frame_adapter.cc',
         'glue/oxide_qt_web_frame_adapter.h',
+        'glue/oxide_qt_web_frame_adapter_p.h',
         'glue/oxide_qt_web_popup_menu_delegate.cc',
         'glue/oxide_qt_web_popup_menu_delegate.h',
         'glue/oxide_qt_web_view_adapter.cc',
@@ -138,6 +143,11 @@
         {
           'action_name': 'moc_oxideqloadevent.cc',
           'moc_input': 'api/oxideqloadevent.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxideqwebpreferences.cc',
+          'moc_input': 'api/oxideqwebpreferences.h',
           'includes': [ 'moc.gypi' ]
         },
       ]

@@ -26,6 +26,7 @@
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
+class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QPixmap;
@@ -67,14 +68,15 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   virtual void Hide() = 0;
   virtual bool IsShowing() = 0;
 
-  virtual QRect GetViewBounds() = 0;
-  virtual QRect GetBoundsInRootWindow() = 0;
+  virtual QRect GetViewBoundsPix() = 0;
 
   virtual void SetSize(const QSize& size) = 0;
 
   virtual QScreen* GetScreen() = 0;
 
   const QPixmap* GetBackingStore();
+
+  virtual void SetInputMethodEnabled(bool enabled) = 0;
 
  protected:
   RenderWidgetHostViewDelegate();
@@ -83,6 +85,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void ForwardKeyEvent(QKeyEvent* event);
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
+  void ForwardInputMethodEvent(QInputMethodEvent* event);
 
   TextureInfo GetFrontbufferTextureInfo();
   void DidUpdate(bool skipped);
@@ -92,7 +95,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  private:
   friend class RenderWidgetHostView;
 
-  virtual void SchedulePaint(const QRect& rect) = 0;
+  virtual void SchedulePaintForRectPix(const QRect& rect) = 0;
   virtual void ScheduleUpdate() = 0;
 
   RenderWidgetHostView* GetRenderWidgetHostView() const;

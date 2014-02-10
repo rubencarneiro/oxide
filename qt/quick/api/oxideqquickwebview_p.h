@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQWebPreferences;
 class OxideQQuickMessageHandler;
 class OxideQQuickNavigationHistory;
 class OxideQQuickWebContext;
@@ -63,7 +64,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
-  Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
+  Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame CONSTANT)
   Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
@@ -74,6 +75,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(QQmlComponent* beforeUnloadDialog READ beforeUnloadDialog WRITE setBeforeUnloadDialog NOTIFY beforeUnloadDialogChanged)
 
   Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
+  Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
 
@@ -124,6 +126,9 @@ class OxideQQuickWebView : public QQuickItem {
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
 
+  OxideQWebPreferences* preferences();
+  void setPreferences(OxideQWebPreferences* prefs);
+
   OxideQQuickNavigationHistory* navigationHistory();
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
@@ -140,12 +145,14 @@ class OxideQQuickWebView : public QQuickItem {
   void navigationHistoryChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
-  void rootFrameChanged();
+  void frameAdded(OxideQQuickWebFrame* frame);
+  void frameRemoved(OxideQQuickWebFrame* frame);
   void popupMenuChanged();
   void alertDialogChanged();
   void confirmDialogChanged();
   void promptDialogChanged();
   void beforeUnloadDialogChanged();
+  void preferencesChanged();
   void messageHandlersChanged();
 
  private Q_SLOTS:
