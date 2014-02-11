@@ -34,7 +34,7 @@ if(NOT DEFINED PYTHON)
 endif()
 
 # Allow the version number to be used in the build
-foreach(comp MAJOR MINOR BUILD PATCH)
+foreach(comp MAJOR MINOR PATCH)
   execute_process(
       COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
       OUTPUT_VARIABLE _OUTPUT

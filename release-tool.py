@@ -115,7 +115,7 @@ def cmd_make_tarball(options, args):
   tag_dict = branch.tags.get_reverse_tag_dict()
   tags = tag_dict[rev_id] if rev_id in tag_dict else []
   # XXX: Qt-specific
-  if not any(re.match(r'QT_[0-9]+_[0-9]+_[0-9]+_[0-9]+', tag) for tag in tags):
+  if not any(re.match(r'QT_[0-9]+_[0-9]+_[0-9]+', tag) for tag in tags):
     filename = "%s~bzr%s" % (filename, branch.revision_id_to_revno(rev_id))
     topsrcdir = "%s~bzr%s" % (topsrcdir, branch.revision_id_to_revno(rev_id))
 
@@ -180,7 +180,7 @@ def cmd_tag(options, args):
 
   try:
     # XXX: Qt-specific
-    tag = "QT_%s_%s_%s_%s" % (v.major, v.minor, v.build, v.patch)
+    tag = "QT_%s_%s_%s" % (v.major, v.minor, v.patch)
     rev_id = branch.last_revision()
     try:
       existing_tag = branch.tags.lookup_tag(tag)
