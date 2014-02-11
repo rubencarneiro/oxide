@@ -24,6 +24,9 @@ import shutil
 from StringIO import StringIO
 import sys
 
+sys.dont_write_bytecode = True
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
 from oxide_utils import CheckCall, GetFileChecksum, CHROMIUMDIR, CHROMIUMSRCDIR, TOPSRCDIR
 from patch_utils import HgPatchSeries, OldPatchSeries, SourcePatchSeries, SyncablePatchSet, SyncError
