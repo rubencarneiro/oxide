@@ -16,6 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(GNUInstallDirs)
 include(OxideQtCommon)
 
 set(QMLRUNNER oxideqmlscene)
@@ -38,7 +39,10 @@ set_target_properties(
     RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
 
 get_target_property(_QMLRUNNER_LOCATION ${QMLRUNNER} LOCATION)
+
+install(PROGRAMS ${_QMLRUNNER_LOCATION} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 get_filename_component(_QMLRUNNER_NAME ${_QMLRUNNER_LOCATION} NAME)
 add_custom_target(stage-oxideqmlscene
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${_QMLRUNNER_LOCATION} ${OXIDE_STAGE_DIR}/${QMLRUNNER_NAME})
+      ${_QMLRUNNER_LOCATION} ${OXIDE_STAGE_DIR}/${_QMLRUNNER_NAME})
