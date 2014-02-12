@@ -48,25 +48,30 @@ include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 # but as this is distro specific, we do something that is currently
 # supportable across distributions. This creates a directory with a symlink
 # to the gold linker, and we pass -B to the compiler
-if(NOT DEFINED CHROMIUM_LINKER)
-  set(CHROMIUM_LINKER "ld")
+execute_process(
+    COMMAND ${CMAKE_C_COMPILER} -print-prog-name=ld
+    RESULT_VARIABLE _RESULT
+    OUTPUT_VARIABLE _LINKER_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT _RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to get linker path from compiler")
 endif()
 set(SETUP_GOLD_COMMAND
     ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
-    --output ${CMAKE_BINARY_DIR}/gold --ld ${CHROMIUM_LINKER})
-get_filename_component(LINKER_NAME ${CHROMIUM_LINKER} NAME)
+    --output ${CMAKE_BINARY_DIR}/gold --ld ${_LINKER_PATH})
+get_filename_component(_LINKER_NAME ${_LINKER_PATH} NAME)
 add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/gold/${LINKER_NAME}
+    OUTPUT ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
     COMMAND ${SETUP_GOLD_COMMAND})
 add_custom_target(gold ALL
                   DEPENDS ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
-                  COMMENT "Setting up gold linker")
+                  COMMENT "Creating a symlink for gold linker")
 
-message(STATUS "Setting up gold linker")
+message(STATUS "Creating a symlink for gold linker")
 execute_process(COMMAND ${SETUP_GOLD_COMMAND}
                 RESULT_VARIABLE _RESULT)
 if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to set up gold linker. Please check that it is installed")
+  message(FATAL_ERROR "Couldn't find gold linker. Please check that it is installed")
 endif()
 
 # We want to pass extra arguments to our gyp wrapper, but these aren't
