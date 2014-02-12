@@ -17,7 +17,6 @@
 {
   'variables': {
     'disable_nacl': 1,
-    'linux_dump_symbols': 1,
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
     'linux_use_tcmalloc': 0,
