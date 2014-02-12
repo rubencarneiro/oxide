@@ -99,6 +99,9 @@ if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Release")
 else()
   list(APPEND GYP_COMMAND -Dlinux_dump_symbols=1)
 endif()
+if(CMAKE_VERBOSE_MAKEFILE)
+  list(APPEND GYP_COMMAND -Dprint_ld_stats=1)
+endif()
 
 message(STATUS "Running gyp")
 execute_process(COMMAND ${GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

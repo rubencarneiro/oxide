@@ -16,6 +16,7 @@
 
 {
   'variables': {
+    'print_ld_stats%': 0,
     'disable_nacl': 1,
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
@@ -54,9 +55,13 @@
     ],
     'ldflags': [
       '-B<(PRODUCT_DIR)/../../../gold',
-      '-Wl,--stats',
     ],
     'conditions': [
+      ['print_ld_stats==1', {
+        'ldflags': [
+          '-Wl,--stats',
+        ],
+      }],
       ['host_arch=="arm"', {
         'ldflags': [
           # Try to work around linker OOM - we only want these on native
