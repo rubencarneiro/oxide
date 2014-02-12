@@ -59,8 +59,11 @@
     'conditions': [
       ['host_arch=="arm"', {
         'ldflags': [
-          # Try to work around linker OOM
+          # Try to work around linker OOM - we only want these on native
+          # ARM builds though, hence the test for "host_arch"
           '-Wl,--no-map-whole-files',
+          '-Wl,--no-mmap-output-file',
+          '-Wl,--no-keep-memory',
         ],
       }],
     ],
