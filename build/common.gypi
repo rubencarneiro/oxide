@@ -36,12 +36,15 @@
       'conditions': [
         ['target_arch=="arm"', {
           'arm_neon': 0,
+          # Only really works correctly on Android, eg WebRtc_GetCPUFeaturesARM
+          # is missing on non-Android Linux
           'arm_neon_optional': 0,
         }],
       ],
     },
     'conditions': [
       ['arm_version==7', {
+        # Ubuntu-specific?
         'arm_float_abi': 'hard',
       }],
     ],
@@ -53,6 +56,14 @@
     'ldflags': [
       '-B<(PRODUCT_DIR)/../../../gold',
       '-Wl,--stats',
+    ],
+    'conditions': [
+      ['host_arch=="arm"', {
+        'ldflags': [
+          # Try to work around linker OOM
+          '-Wl,--no-map-whole-files',
+        ],
+      }],
     ],
   }
 }
