@@ -270,6 +270,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   if (web_prefs) {
     web_prefs->ApplyToWebkitPrefs(prefs);
   }
+
+  if (!prefs->accelerated_compositing_enabled) {
+    // Viewport mode doesn't work correctly without compositing
+    prefs->viewport_enabled = false;
+  }
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
