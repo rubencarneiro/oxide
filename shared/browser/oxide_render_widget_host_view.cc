@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -366,6 +366,8 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
 
 void RenderWidgetHostView::ImeCancelComposition() {}
 
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
+
 void RenderWidgetHostView::ImeCompositionRangeChanged(
     const gfx::Range& range,
     const std::vector<gfx::Rect>& character_bounds) {}
@@ -566,10 +568,10 @@ void RenderWidgetHostView::OnFocus() {
 }
 
 void RenderWidgetHostView::OnBlur() {
-  GetRenderWidgetHostImpl()->SetInputMethodActive(false);
-
   GetRenderWidgetHost()->SetActive(false);
   GetRenderWidgetHost()->Blur();
+
+  GetRenderWidgetHostImpl()->SetInputMethodActive(false);
 }
 
 TextureInfo RenderWidgetHostView::GetFrontbufferTextureInfo() {

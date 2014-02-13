@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -141,8 +141,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   virtual void TextInputTypeChanged(ui::TextInputType type,
                                     ui::TextInputMode mode,
                                     bool can_compose_inline) OVERRIDE;
-
-  void ImeCancelComposition() FINAL;
+  virtual void ImeCancelComposition() OVERRIDE;
+  virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
   void ImeCompositionRangeChanged(
       const gfx::Range& range,
       const std::vector<gfx::Rect>& character_bounds) FINAL;

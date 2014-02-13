@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -162,8 +162,8 @@ void RenderViewItem::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void RenderViewItem::mousePressEvent(QMouseEvent* event) {
+  forceActiveFocus();
   ForwardMouseEvent(event);
-  setFocus(true);
 }
 
 void RenderViewItem::mouseReleaseEvent(QMouseEvent* event) {
