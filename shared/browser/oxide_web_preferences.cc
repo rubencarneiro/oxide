@@ -114,7 +114,6 @@ WebPreferences::WebPreferences() :
 
   // ATTR_TOUCH_ENABLED
   // ATTR_SUPPORTS_MULTIPLE_WINDOWS
-  // ATTR_VIEWPORT_ENABLED
 }
 
 WebPreferences::~WebPreferences() {
@@ -261,11 +260,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->touch_enabled = false; // TODO: Check if touch is supported
 
   prefs->supports_multiple_windows = attributes_[ATTR_SUPPORTS_MULTIPLE_WINDOWS];
-
-  // Viewport only works in compositing mode
-  prefs->viewport_enabled = attributes_[ATTR_VIEWPORT_ENABLED] && compositing;
-  // XXX: Should this be a separate pref?
-  prefs->viewport_meta_enabled = prefs->viewport_enabled;
 }
 
 } // namespace oxide

@@ -71,7 +71,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   Q_PROPERTY(bool smoothScrollingEnabled READ smoothScrollingEnabled WRITE setSmoothScrollingEnabled NOTIFY smoothScrollingEnabledChanged)
   Q_PROPERTY(bool touchEnabled READ touchEnabled WRITE setTouchEnabled NOTIFY touchEnabledChanged)
   Q_PROPERTY(bool supportsMultipleWindows READ supportsMultipleWindows WRITE setSupportsMultipleWindows NOTIFY supportsMultipleWindowsChanged)
-  Q_PROPERTY(bool viewportEnabled READ viewportEnabled WRITE setViewportEnabled NOTIFY viewportEnabledChanged)
 
   Q_DECLARE_PRIVATE(OxideQWebPreferences)
   Q_DISABLE_COPY(OxideQWebPreferences)
@@ -156,8 +155,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void setTouchEnabled(bool enabled);
   bool supportsMultipleWindows() const;
   void setSupportsMultipleWindows(bool enabled);
-  bool viewportEnabled() const;
-  void setViewportEnabled(bool enabled);
 
  Q_SIGNALS:
   void standardFontFamilyChanged();

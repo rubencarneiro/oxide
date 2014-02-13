@@ -194,4 +194,3 @@ BOOLEAN_PREF_IMPL(acceleratedCompositingEnabled, setAcceleratedCompositingEnable
 BOOLEAN_PREF_IMPL(smoothScrollingEnabled, setSmoothScrollingEnabled, SMOOTH_SCROLLING_ENABLED)
 BOOLEAN_PREF_IMPL(touchEnabled, setTouchEnabled, TOUCH_ENABLED)
 BOOLEAN_PREF_IMPL(supportsMultipleWindows, setSupportsMultipleWindows, SUPPORTS_MULTIPLE_WINDOWS)
-BOOLEAN_PREF_IMPL(viewportEnabled, setViewportEnabled, VIEWPORT_ENABLED)
