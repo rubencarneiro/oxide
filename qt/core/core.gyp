@@ -53,6 +53,7 @@
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_content_main_delegate.cc',
         'app/oxide_qt_content_main_delegate.h',
+        'browser/oxide_default_screen_info.cc',
         'browser/oxide_qt_backing_store.cc',
         'browser/oxide_qt_backing_store.h',
         'browser/oxide_qt_content_browser_client.cc',

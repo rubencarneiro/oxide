@@ -29,7 +29,6 @@
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
 #include "oxide_qt_message_pump.h"
-#include "oxide_qt_render_widget_host_view.h"
 #include "oxide_qt_web_preferences.h"
 
 namespace oxide {
@@ -118,11 +117,6 @@ void ContentBrowserClient::GetAllowedGLImplementations(
   } else {
     DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
   }
-}
-
-void ContentBrowserClient::GetDefaultScreenInfo(blink::WebScreenInfo* result) {
-  RenderWidgetHostView::GetWebScreenInfoFromQScreen(
-      QGuiApplication::primaryScreen(), result);
 }
 
 oxide::WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {

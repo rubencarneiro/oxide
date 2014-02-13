@@ -30,10 +30,6 @@ namespace base {
 class MessagePump;
 }
 
-namespace blink {
-class WebScreenInfo;
-}
-
 namespace content {
 class RenderViewHost;
 }
@@ -92,8 +88,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
       oxide::GLShareGroup* share_group);
 
   virtual void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
-
-  virtual void GetDefaultScreenInfo(blink::WebScreenInfo* result) = 0;
 
   virtual WebPreferences* GetDefaultWebPreferences();
 

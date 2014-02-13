@@ -44,6 +44,7 @@
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_default_screen_info.h"
 #include "oxide_message_dispatcher_browser.h"
 #include "oxide_message_pump.h"
 #include "oxide_web_contents_view.h"
@@ -112,8 +113,7 @@ class Screen : public gfx::Screen {
   }
 
   gfx::Display GetPrimaryDisplay() const FINAL {
-    blink::WebScreenInfo info;
-    ContentClient::instance()->browser()->GetDefaultScreenInfo(&info);
+    blink::WebScreenInfo info(GetDefaultWebScreenInfo());
 
     gfx::Display display;
     display.set_bounds(info.rect);

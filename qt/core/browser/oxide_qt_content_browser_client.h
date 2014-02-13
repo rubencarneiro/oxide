@@ -40,8 +40,6 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
   void GetAllowedGLImplementations(
       std::vector<gfx::GLImplementation>* impls) FINAL;
 
-  void GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
-
   oxide::WebPreferences* GetDefaultWebPreferences() FINAL;
 
  private:

@@ -32,6 +32,7 @@
 #include "qt/core/glue/private/oxide_qt_user_script_adapter_p.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_form_factor.h"
 #include "shared/browser/oxide_user_script_master.h"
 
 namespace oxide {
@@ -39,6 +40,19 @@ namespace qt {
 
 namespace {
 QOpenGLContext* g_shared_gl_context;
+
+int GetProcessFlags() {
+  switch (oxide::GetFormFactorHint()) {
+    case FORM_FACTOR_TABLET:
+    case FORM_FACTOR_PHONE:
+      return oxide::BrowserProcessMain::ENABLE_VIEWPORT |
+             oxide::BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS |
+             oxide::BrowserProcessMain::ENABLE_PINCH;
+    default:
+      return 0;
+  }
+}
+
 }
 
 struct ConstructProperties {
@@ -59,7 +73,8 @@ void WebContextAdapterPrivate::Init() {
   // browser context needs to set the shared GL context before anything
   // starts up, in order for compositing to work
   // FIXME: What if this fails?
-  oxide::BrowserProcessMain::StartIfNotRunning(0);
+  static int flags = GetProcessFlags();
+  oxide::BrowserProcessMain::StartIfNotRunning(flags);
 
   context_.reset(oxide::BrowserContext::Create(
       construct_props()->data_path,
