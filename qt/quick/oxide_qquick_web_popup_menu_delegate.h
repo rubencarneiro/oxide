@@ -37,7 +37,6 @@ class WebPopupMenuDelegate Q_DECL_FINAL :
     public oxide::qt::WebPopupMenuDelegate {
  public:
   WebPopupMenuDelegate(OxideQQuickWebView* webview);
-  ~WebPopupMenuDelegate();
 
   void Show(const QRect& bounds,
             QList<oxide::qt::MenuItem>& items,
