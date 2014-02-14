@@ -4,3 +4,4 @@ CMakeFiles/
 gclient.conf_entries
 objdir*
 *.swp
+qt/examples/oxide-test-browser/*.click
