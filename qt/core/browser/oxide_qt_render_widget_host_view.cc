@@ -604,15 +604,11 @@ void RenderWidgetHostView::GetWebScreenInfoFromQScreen(
 }
 
 void RenderWidgetHostView::Blur() {
-  GetRenderWidgetHostImpl()->SetInputMethodActive(false);
   delegate_->Blur();
-  GetRenderWidgetHostImpl()->Blur();
 }
 
 void RenderWidgetHostView::Focus() {
-  GetRenderWidgetHostImpl()->SetInputMethodActive(true);
   delegate_->Focus();
-  GetRenderWidgetHostImpl()->Focus();
 }
 
 bool RenderWidgetHostView::HasFocus() const {

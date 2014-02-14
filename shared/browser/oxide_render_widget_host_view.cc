@@ -568,10 +568,10 @@ void RenderWidgetHostView::OnFocus() {
 }
 
 void RenderWidgetHostView::OnBlur() {
+  GetRenderWidgetHostImpl()->SetInputMethodActive(false);
+
   GetRenderWidgetHost()->SetActive(false);
   GetRenderWidgetHost()->Blur();
-
-  GetRenderWidgetHostImpl()->SetInputMethodActive(false);
 }
 
 TextureInfo RenderWidgetHostView::GetFrontbufferTextureInfo() {
