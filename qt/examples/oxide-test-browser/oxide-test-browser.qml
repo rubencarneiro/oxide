@@ -14,7 +14,6 @@ MainView {
         id: page
         anchors.fill: parent
 
-        //property var url: "http://people.canonical.com/~jamie/oxide-test/index.html"
         property var url: Qt.resolvedUrl("./index.html")
         //property var url: "http://start.ubuntu.com/"
 
@@ -22,76 +21,76 @@ MainView {
             webView.url = locationField.text
         }
 
-        Button  {
-            id: backButton
-            text: "Back"
-            height: locationField.height
-            anchors  {
-                left: parent.left
-            }
-            onClicked: {
-                webView.goBack()
-            }
-        }
+        Column {
+            anchors.fill: parent
+            Row {
+                id: navRow
+                width: parent.width
+                height: locationField.height
+                Button  {
+                    id: backButton
+                    iconSource: "image://theme/go-previous"
+                    height: locationField.height
+                    width: height
 
-        Button  {
-            id: forwardButton
-            text: "Forward"
-            height: locationField.height
-            anchors  {
-                left: backButton.right
-            }
-            onClicked: {
-                webView.goForward()
-            }
-        }
+                    onClicked: {
+                        webView.goBack()
+                    }
+                }
 
-        TextField {
-            id: locationField
-            width: parent.width - backButton.width - forwardButton.width - goButton.width
-            text: page.url
-            anchors  {
-                left: forwardButton.right
-            }
-            Keys.onReturnPressed: {
-                page.updateWebView()
-            }
-        }
+                Button  {
+                    id: forwardButton
+                    iconSource: "image://theme/go-next"
+                    height: locationField.height
+                    width: height
 
-        Button  {
-            id: goButton
-            text: "Go"
-            height: locationField.height
-            anchors  {
-                left: locationField.right
+                    onClicked: {
+                        webView.goForward()
+                    }
+                }
+
+                TextField {
+                    id: locationField
+                    width: parent.width - backButton.width -
+                           forwardButton.width - goButton.width
+                    text: page.url
+
+                    Keys.onReturnPressed: {
+                        page.updateWebView()
+                    }
+                }
+
+                Button  {
+                    id: goButton
+                    //iconSource: "image://theme/media-playback-start"
+                    text: i18n.tr("Go")
+                    height: locationField.height
+                    width: height + units.gu(2)
+
+                    onClicked: {
+                        page.updateWebView()
+                    }
+                }
             }
 
-            onClicked: {
-                page.updateWebView()
-            }
-        }
+            WebView {
+                id: webView
+                width: parent.width
+                height: parent.height - navRow.height - statusLabel.height
+                url: page.url
+                focus: true
 
-        WebView {
-            id: webView
-            width: parent.width
-            height: parent.height - backButton.height - statusLabel.height
-            anchors {
-                bottom: statusLabel.top
+                onUrlChanged: {
+                    locationField.text = url
+                }
             }
-            url: page.url
-            focus: true
 
-            onUrlChanged: {
-                locationField.text = url
-            }
-        }
-
-        Label {
-            id: statusLabel
-            text: webView.loading ? "Loading (%1%%)".arg(webView.loadProgress) : "Page loaded"
-            width: parent.width
-            anchors  {
-                bottom: parent.bottom
+            Label {
+                id: statusLabel
+                text: webView.loading ?
+                      i18n.tr("Loading") + " (%1%%)".arg(webView.loadProgress) :
+                      i18n.tr("Page loaded")
+                width: parent.width
             }
         }
     }
