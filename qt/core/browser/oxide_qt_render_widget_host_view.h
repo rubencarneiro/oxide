@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -78,6 +78,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void TextInputTypeChanged(ui::TextInputType type,
                             ui::TextInputMode mode,
                             bool can_compose_inline) FINAL;
+  void ImeCancelComposition() FINAL;
+  void FocusedNodeChanged(bool is_editable_node) FINAL;
 
   void ForwardFocusEvent(QFocusEvent* event);
   void ForwardKeyEvent(QKeyEvent* event);
