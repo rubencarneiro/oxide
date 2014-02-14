@@ -15,8 +15,8 @@ MainView {
         anchors.fill: parent
 
         //property var url: "http://people.canonical.com/~jamie/oxide-test/index.html"
-        //property var url: Qt.resolvedUrl("./index.html")
-        property var url: "http://www.ubuntu.com/"
+        property var url: Qt.resolvedUrl("./index.html")
+        //property var url: "http://start.ubuntu.com/"
 
         function updateWebView() {
             webView.url = locationField.text
@@ -74,9 +74,9 @@ MainView {
         WebView {
             id: webView
             width: parent.width
-            height: parent.height - backButton.height - statusField.height
+            height: parent.height - backButton.height - statusLabel.height
             anchors {
-                bottom: statusField.top
+                bottom: statusLabel.top
             }
             url: page.url
             focus: true
@@ -84,23 +84,12 @@ MainView {
             onUrlChanged: {
                 locationField.text = url
             }
-
-            onLoadProgressChanged: {
-                if (loadProgress < 100) {
-                    statusField.text = "Loading: (" + loadProgress + "%)"
-                } else {
-                    statusField.text = "Page loaded"
-                }
-            }
         }
 
-        TextField {
-            id: statusField
-            enabled: false
-            text: ""
-            color: "#000000"
+        Label {
+            id: statusLabel
+            text: webView.loading ? "Loading (%1%%)".arg(webView.loadProgress) : "Page loaded"
             width: parent.width
-            height: locationField.height / 2
             anchors  {
                 bottom: parent.bottom
             }

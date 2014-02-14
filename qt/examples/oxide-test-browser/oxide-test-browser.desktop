@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Oxide Test Browser
 Comment=Oxide Test Browser
-Exec=/usr/bin/qmlscene ocide-test-browser.qml
+Exec=/usr/bin/qmlscene oxide-test-browser.qml
 Icon=qmlscene
 Terminal=false
 Type=Application
