@@ -51,23 +51,10 @@ MainView {
 
                 TextField {
                     id: locationField
-                    width: parent.width - backButton.width -
-                           forwardButton.width - goButton.width
+                    width: parent.width - backButton.width - forwardButton.width
                     text: page.url
 
-                    Keys.onReturnPressed: {
-                        page.updateWebView()
-                    }
-                }
-
-                Button  {
-                    id: goButton
-                    //iconSource: "image://theme/media-playback-start"
-                    text: i18n.tr("Go")
-                    height: locationField.height
-                    width: height + units.gu(2)
-
-                    onClicked: {
+                    onAccepted: {
                         page.updateWebView()
                     }
                 }
@@ -88,7 +75,7 @@ MainView {
             Label {
                 id: statusLabel
                 text: webView.loading ?
-                      i18n.tr("Loading") + " (%1%%)".arg(webView.loadProgress) :
+                      i18n.tr("Loading") + " (%1%)".arg(webView.loadProgress) :
                       i18n.tr("Page loaded")
                 width: parent.width
             }
