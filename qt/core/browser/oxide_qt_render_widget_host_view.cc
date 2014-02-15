@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -677,19 +677,37 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 ui::TextInputMode mode,
                                                 bool can_compose_inline) {
   input_type_ = type;
+  QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
+  if (HasFocus() && (type != ui::TEXT_INPUT_TYPE_NONE) &&
+      !QGuiApplication::inputMethod()->isVisible()) {
+    delegate_->SetInputMethodEnabled(true);
+    QGuiApplication::inputMethod()->show();
+  }
+}
 
-  bool enabled = type != ui::TEXT_INPUT_TYPE_NONE;
+void RenderWidgetHostView::ImeCancelComposition() {
+  // TODO: should we call QGuiApplication::inputMethod()->commit() ?
+}
 
-  delegate_->SetInputMethodEnabled(enabled);
-
-  QInputMethod* input_method = QGuiApplication::inputMethod();
-  input_method->setVisible(enabled);
-  input_method->update(Qt::ImHints | Qt::ImQueryInput);
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
+  if (!HasFocus()) {
+    return;
+  }
+  delegate_->SetInputMethodEnabled(is_editable_node);
+  if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
+    QGuiApplication::inputMethod()->setVisible(is_editable_node);
+  }
 }
 
 void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
   if (event->gotFocus()) {
     OnFocus();
+    if ((input_type_ != ui::TEXT_INPUT_TYPE_NONE) &&
+        !QGuiApplication::inputMethod()->isVisible()) {
+      // the focused node hasn’t changed and it is an input field
+      delegate_->SetInputMethodEnabled(true);
+      QGuiApplication::inputMethod()->show();
+    }
   } else {
     OnBlur();
   }

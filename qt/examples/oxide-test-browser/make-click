@@ -1,0 +1,35 @@
+#!/bin/sh
+set -e
+
+if [ ! -x "/usr/bin/click" ]; then
+    echo "Installing click"
+    sudo apt-get install click
+fi
+
+arch="all"
+
+tmpdir=`mktemp -d`
+trap "rm -rf $tmpdir" EXIT HUP INT QUIT TERM
+
+cd `dirname $0`
+topdir=`pwd`
+appname=`basename "$topdir"`
+cp -a ./*.desktop "$tmpdir"
+cp -a ./*.html "$tmpdir"
+cp -a ./*.json "$tmpdir"
+cp -a ./*.qml "$tmpdir"
+cd "$tmpdir"
+
+echo "Adjust the desktop file"
+name=`grep '"name"' ./manifest.json | sed 's/.*: "//g' | cut -d '"' -f 1`
+version=`grep '"version"' ./manifest.json | sed 's/.*: "//g' | cut -d '"' -f 1`
+sed -i "s#^Exec=.*#Exec=qmlscene ${appname}.qml#g" ./${appname}.desktop
+
+cd "$topdir"
+echo "Running: click build $tmpdir"
+click build "$tmpdir"
+
+echo ""
+echo "Install with:"
+echo " sudo click install --force-missing-framework --user=$USER ./${name}_${version}_${arch}.click (desktop)"
+echo " sudo -H -u phablet pkcon install-local ./${name}_${version}_${arch}.click (touch)"

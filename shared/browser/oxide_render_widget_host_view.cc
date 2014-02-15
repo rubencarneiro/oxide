@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -365,6 +365,8 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 bool can_compose_inline) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {}
+
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
 
 void RenderWidgetHostView::ImeCompositionRangeChanged(
     const gfx::Range& range,
