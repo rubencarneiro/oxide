@@ -12,3 +12,4 @@ dont-depend-on-gtk.patch
 arm-neon.patch
 dont-use-egl-create-context-robustness.patch
 add-frame-attached-to-web-contents-observer.patch
+change-overlay-scrollbar-type.patch
