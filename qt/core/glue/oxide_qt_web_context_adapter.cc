@@ -46,8 +46,7 @@ int GetProcessFlags() {
     case FORM_FACTOR_TABLET:
     case FORM_FACTOR_PHONE:
       return oxide::BrowserProcessMain::ENABLE_VIEWPORT |
-             oxide::BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS |
-             oxide::BrowserProcessMain::ENABLE_PINCH;
+             oxide::BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS;
     default:
       return 0;
   }

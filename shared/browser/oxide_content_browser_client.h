@@ -91,6 +91,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   virtual WebPreferences* GetDefaultWebPreferences();
 
+  virtual bool IsTouchSupported();
+
  protected:
   // Limit default constructor access to derived classes
   ContentBrowserClient();

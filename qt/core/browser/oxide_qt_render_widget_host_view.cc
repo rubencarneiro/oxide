@@ -30,10 +30,12 @@
 #include <QScreen>
 #include <QSize>
 #include <QTextCharFormat>
+#include <QTouchEvent>
 #include <QWheelEvent>
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/time/time.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
@@ -43,6 +45,8 @@
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 #include "ui/base/ime/text_input_type.h"
+#include "ui/events/event.h"
+#include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/rect.h"
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
@@ -330,6 +334,22 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   modifiers |= QInputEventStateToWebEventModifiers(qevent);
 
   return modifiers;
+}
+
+ui::EventType QTouchPointStateToEventType(Qt::TouchPointState state) {
+  switch (state) {
+    case Qt::TouchPointPressed:
+      return ui::ET_TOUCH_PRESSED;
+    case Qt::TouchPointMoved:
+      return ui::ET_TOUCH_MOVED;
+    case Qt::TouchPointStationary:
+      return ui::ET_TOUCH_STATIONARY;
+    case Qt::TouchPointReleased:
+      return ui::ET_TOUCH_RELEASED;
+    default:
+      NOTREACHED();
+      return ui::ET_UNKNOWN;
+  }
 }
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
@@ -784,6 +804,50 @@ void RenderWidgetHostView::ForwardInputMethodEvent(QInputMethodEvent* event) {
   }
 
   // XXX: in which case should we call rwh->ImeCancelComposition() ?
+
+  event->accept();
+}
+
+void RenderWidgetHostView::ForwardTouchEvent(QTouchEvent* event) {
+  base::TimeDelta timestamp(base::TimeDelta::FromMilliseconds(event->timestamp()));
+  float scale = 1 / GetDeviceScaleFactor();
+
+  for (int i = 0; i < event->touchPoints().size(); ++i) {
+    const QTouchEvent::TouchPoint& touch_point = event->touchPoints().at(i);
+
+    int touch_id;
+    std::map<int, int>::iterator it = touch_id_map_.find(touch_point.id());
+    if (it != touch_id_map_.end()) {
+      touch_id = it->second;
+    } else {
+      touch_id = 0;
+      for (std::map<int, int>::iterator it = touch_id_map_.begin();
+           it != touch_id_map_.end(); ++it) {
+        touch_id = std::max(touch_id, it->second + 1);
+      }
+      touch_id_map_[touch_point.id()] = touch_id;
+    }
+
+    ui::TouchEvent ui_event(
+        QTouchPointStateToEventType(touch_point.state()),
+        gfx::ScalePoint(gfx::PointF(
+          touch_point.pos().x(), touch_point.pos().y()), scale),
+        0,
+        touch_id,
+        timestamp,
+        0.0f, 0.0f,
+        0.0f,
+        float(touch_point.pressure()));
+    ui_event.set_root_location(
+        gfx::ScalePoint(gfx::PointF(
+          touch_point.screenPos().x(), touch_point.screenPos().y()), scale));
+
+    HandleTouchEvent(ui_event);
+
+    if (touch_point.state() == Qt::TouchPointReleased) {
+      touch_id_map_.erase(touch_point.id());
+    }
+  }
 
   event->accept();
 }

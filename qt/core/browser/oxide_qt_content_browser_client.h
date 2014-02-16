@@ -42,6 +42,8 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
 
   oxide::WebPreferences* GetDefaultWebPreferences() FINAL;
 
+  bool IsTouchSupported() FINAL;
+
  private:
   // Limit default constructor access to the lazy instance initializer
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;

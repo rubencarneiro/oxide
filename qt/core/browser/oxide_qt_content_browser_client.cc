@@ -18,7 +18,9 @@
 #include "oxide_qt_content_browser_client.h"
 
 #include <QGuiApplication>
+#include <QList>
 #include <QString>
+#include <QTouchDevice>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "base/lazy_instance.h"
@@ -121,6 +123,11 @@ void ContentBrowserClient::GetAllowedGLImplementations(
 
 oxide::WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
   return g_default_web_preferences.Pointer();
+}
+
+bool ContentBrowserClient::IsTouchSupported() {
+  // XXX: Is there a way to get notified if a touch device is added?
+  return QTouchDevice::devices().size() > 0;
 }
 
 } // namespace qt

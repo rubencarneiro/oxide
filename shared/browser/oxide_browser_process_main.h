@@ -40,8 +40,7 @@ class BrowserProcessMain FINAL {
  public:
   enum Flags {
     ENABLE_VIEWPORT = 1 << 0,
-    ENABLE_OVERLAY_SCROLLBARS = 1 << 1,
-    ENABLE_PINCH = 1 << 2
+    ENABLE_OVERLAY_SCROLLBARS = 1 << 1
   };
 
   ~BrowserProcessMain();

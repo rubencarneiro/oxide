@@ -109,8 +109,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
       command_line->AppendSwitch(switches::kEnableViewport);
       command_line->AppendSwitch(switches::kEnableViewportMeta);
-    }
-    if (flags & BrowserProcessMain::ENABLE_PINCH) {
       command_line->AppendSwitch(switches::kEnablePinch);
     }
     if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {

@@ -265,6 +265,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
     ::WebPreferences* prefs) {
+
   WebView* view = WebView::FromRenderViewHost(render_view_host);
   WebPreferences* web_prefs = view->GetWebPreferences();
   if (web_prefs) {
@@ -283,6 +284,9 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     }
     prefs->viewport_enabled = false;
   }
+
+  prefs->device_supports_mouse = true; // XXX: Can we detect this?
+  prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
@@ -303,6 +307,10 @@ void ContentBrowserClient::GetAllowedGLImplementations(
 
 WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
   return NULL;
+}
+
+bool ContentBrowserClient::IsTouchSupported() {
+  return false;
 }
 
 } // namespace oxide

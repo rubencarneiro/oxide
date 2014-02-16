@@ -18,10 +18,13 @@
 #include "oxide_render_widget_host_view.h"
 
 #include "base/bind.h"
+#include "base/command_line.h"
 #include "base/logging.h"
+#include "base/memory/scoped_vector.h"
 #include "base/message_loop/message_loop.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/browser/renderer_host/ui_events_helper.h"
 #include "content/common/gpu/client/command_buffer_proxy_impl.h"
 #include "content/common/gpu/client/gpu_channel_host.h"
 #include "content/common/gpu/client/webgraphicscontext3d_command_buffer_impl.h"
@@ -33,11 +36,13 @@
 #include "content/common/view_messages.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/common/content_switches.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
 #include "gpu/command_buffer/service/mailbox_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
 #include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
+#include "ui/events/event.h"
 #include "url/gurl.h"
 
 namespace oxide {
@@ -45,6 +50,28 @@ namespace oxide {
 class OffscreenGraphicsContextRef;
 namespace {
 OffscreenGraphicsContextRef* g_offscreen_context;
+
+void UpdateWebTouchEventAfterDispatch(blink::WebTouchEvent* event,
+                                      blink::WebTouchPoint* point) {
+  if (point->state != blink::WebTouchPoint::StateReleased &&
+      point->state != blink::WebTouchPoint::StateCancelled) {
+    return;
+  }
+  --event->touchesLength;
+  for (unsigned i = point - event->touches;
+       i < event->touchesLength;
+       ++i) {
+    event->touches[i] = event->touches[i + 1];
+  }
+}
+
+bool ShouldSendPinchGesture() {
+  static bool pinch_allowed =
+      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnableViewport) ||
+      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnablePinch);
+  return pinch_allowed;
+}
+
 }
 
 class OffscreenGraphicsContextRef :
@@ -280,6 +307,50 @@ void RenderWidgetHostView::SendAcknowledgeBufferPresentOnMainThread(
   ack.Run(skipped);
 }
 
+void RenderWidgetHostView::ProcessGestures(
+    ui::GestureRecognizer::Gestures* gestures) {
+  if (!gestures) {
+    return;
+  }
+
+  for (ui::GestureRecognizer::Gestures::iterator it = gestures->begin();
+       it != gestures->end(); ++it) {
+    ForwardGestureEventToRenderer(*it);
+  }
+}
+
+void RenderWidgetHostView::ForwardGestureEventToRenderer(
+    ui::GestureEvent* event) {
+  if ((event->type() == ui::ET_GESTURE_PINCH_BEGIN ||
+       event->type() == ui::ET_GESTURE_PINCH_UPDATE ||
+       event->type() == ui::ET_GESTURE_PINCH_END) &&
+      !ShouldSendPinchGesture()) {
+    return;
+  }
+
+  blink::WebGestureEvent gesture(
+      content::MakeWebGestureEventFromUIEvent(*event));
+  gesture.x = event->x();
+  gesture.y = event->y();
+  gesture.globalX = event->root_location().x();
+  gesture.globalY = event->root_location().y();
+
+  if (event->type() == ui::ET_GESTURE_TAP_DOWN) {
+    // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
+    // event to stop any in-progress flings.
+    blink::WebGestureEvent fling_cancel = gesture;
+    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
+    fling_cancel.sourceDevice = blink::WebGestureEvent::Touchscreen;
+    host_->ForwardGestureEvent(fling_cancel);
+  }
+
+  if (gesture.type == blink::WebInputEvent::Undefined) {
+    return;
+  }
+
+  host_->ForwardGestureEventWithLatencyInfo(gesture, *event->latency());
+}
+
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     content::RenderWidgetHostViewBase(),
     is_hidden_(false),
@@ -288,11 +359,14 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     frontbuffer_texture_handle_(&texture_handles_[0]),
     backbuffer_texture_handle_(&texture_handles_[1]),
     selection_cursor_position_(0),
-    selection_anchor_position_(0) {
+    selection_anchor_position_(0),
+    gesture_recognizer_(ui::GestureRecognizer::Create()) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   frontbuffer_texture_handle_->Initialize(graphics_context_ref_->context3d());
   backbuffer_texture_handle_->Initialize(graphics_context_ref_->context3d());
+
+  gesture_recognizer_->AddGestureEventHelper(this);
 
   host_->SetView(this);
 }
@@ -311,6 +385,21 @@ void RenderWidgetHostView::SendAcknowledgeBufferPresent(
       FROM_HERE,
       base::Bind(&RenderWidgetHostView::SendAcknowledgeBufferPresentOnMainThread,
                  ack, skipped));  
+}
+
+void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {
+  if (host_->ShouldForwardTouchEvent()) {
+    blink::WebTouchPoint* point =
+        content::UpdateWebTouchEventFromUIEvent(event, &touch_event_);
+    if (point) {
+      host_->ForwardTouchEventWithLatencyInfo(touch_event_, ui::LatencyInfo());
+      UpdateWebTouchEventAfterDispatch(&touch_event_, point);
+    }
+  } else {
+    scoped_ptr<ui::GestureRecognizer::Gestures> gestures(
+        gesture_recognizer_->ProcessTouchEventForGesture(event, ui::ER_UNHANDLED, this));
+    ProcessGestures(gestures.get());
+  }
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {}
@@ -511,6 +600,27 @@ gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
   return shared_surface_handle_;
 }
 
+void RenderWidgetHostView::ProcessAckedTouchEvent(
+    const content::TouchEventWithLatencyInfo& touch,
+    content::InputEventAckState ack_result) {
+  ScopedVector<ui::TouchEvent> events;
+  if (!content::MakeUITouchEventsFromWebTouchEvents(
+      touch, &events, content::LOCAL_COORDINATES)) {
+    return;
+  }
+
+  ui::EventResult result =
+      (ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED) ?
+        ui::ER_HANDLED : ui::ER_UNHANDLED;
+  for (ScopedVector<ui::TouchEvent>::iterator it = events.begin(),
+       end = events.end(); it != end; ++it)  {
+    ui::TouchEvent* event = *it;
+    scoped_ptr<ui::GestureRecognizer::Gestures> gestures(
+        gesture_recognizer_->ProcessTouchEventForGesture(*event, result, this));
+    ProcessGestures(gestures.get());
+  }
+}
+
 void RenderWidgetHostView::SetHasHorizontalScrollbar(
     bool has_horizontal_scrollbar) {}
 
@@ -576,6 +686,30 @@ void RenderWidgetHostView::OnBlur() {
 
 TextureInfo RenderWidgetHostView::GetFrontbufferTextureInfo() {
   return frontbuffer_texture_handle_->GetTextureInfo();
+}
+
+bool RenderWidgetHostView::CanDispatchToConsumer(
+    ui::GestureConsumer* consumer) {
+  DCHECK_EQ(this, static_cast<RenderWidgetHostView *>(consumer));
+  return true;
+}
+
+void RenderWidgetHostView::DispatchPostponedGestureEvent(
+    ui::GestureEvent* event) {
+  ForwardGestureEventToRenderer(event);
+}
+
+void RenderWidgetHostView::DispatchCancelTouchEvent(ui::TouchEvent* event) {
+  if (!host_->ShouldForwardTouchEvent()) {
+    return;
+  }
+
+  DCHECK_EQ(event->type(), ui::ET_TOUCH_CANCELLED);
+  blink::WebTouchEvent cancel_event;
+  cancel_event.type = blink::WebInputEvent::TouchCancel;
+  cancel_event.timeStampSeconds = event->time_stamp().InSecondsF();
+  host_->ForwardTouchEventWithLatencyInfo(
+      cancel_event, *event->latency());
 }
 
 } // namespace oxide

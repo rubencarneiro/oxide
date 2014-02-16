@@ -111,8 +111,8 @@ WebPreferences::WebPreferences() :
 
   SetAttribute(ATTR_ACCELERATED_COMPOSITING_ENABLED, true);
   SetAttribute(ATTR_SMOOTH_SCROLLING_ENABLED, true);
+  SetAttribute(ATTR_TOUCH_ENABLED, true);
 
-  // ATTR_TOUCH_ENABLED
   // ATTR_SUPPORTS_MULTIPLE_WINDOWS
 }
 
@@ -257,7 +257,7 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
 
   prefs->enable_scroll_animator = attributes_[ATTR_SMOOTH_SCROLLING_ENABLED];
 
-  prefs->touch_enabled = false; // TODO: Check if touch is supported
+  prefs->touch_enabled = attributes_[ATTR_TOUCH_ENABLED];
 
   prefs->supports_multiple_windows = attributes_[ATTR_SUPPORTS_MULTIPLE_WINDOWS];
 }

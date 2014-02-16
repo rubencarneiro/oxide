@@ -31,6 +31,7 @@ class QKeyEvent;
 class QMouseEvent;
 class QPixmap;
 class QScreen;
+class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
@@ -86,6 +87,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
   void ForwardInputMethodEvent(QInputMethodEvent* event);
+  void ForwardTouchEvent(QTouchEvent* event);
 
   TextureInfo GetFrontbufferTextureInfo();
   void DidUpdate(bool skipped);

@@ -24,6 +24,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QSizeF>
+#include <QTouchEvent>
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
@@ -194,6 +195,13 @@ void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
 
 void RenderViewItem::inputMethodEvent(QInputMethodEvent* event) {
   ForwardInputMethodEvent(event);
+}
+
+void RenderViewItem::touchEvent(QTouchEvent* event) {
+  if (event->type() == QEvent::TouchBegin) {
+    forceActiveFocus();
+  }
+  ForwardTouchEvent(event);
 }
 
 void RenderViewItem::updatePolish() {
