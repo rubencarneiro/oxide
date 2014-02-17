@@ -120,7 +120,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     }
 
-    // We need both of this here to test compositing support
+    // We need both of this here to test compositing support. It's also needed
+    // to work around a mesa race - see https://launchpad.net/bugs/1267893
     gfx::GLSurface::InitializeOneOff();
 
     SharedGLContext* shared_gl_context =
