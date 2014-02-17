@@ -28,6 +28,7 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/path_service.h"
+#include "cc/base/switches.h"
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
@@ -142,6 +143,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kEnableViewport);
       command_line->AppendSwitch(switches::kEnableViewportMeta);
       command_line->AppendSwitch(switches::kEnablePinch);
+      if (getenv("OXIDE_ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
+        command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
+      }
     }
     if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
