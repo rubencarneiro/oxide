@@ -109,6 +109,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     command_line->AppendSwitch(switches::kInProcessGPU);
 
     command_line->AppendSwitch(switches::kDisableDelegatedRenderer);
+    command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
 
     int flags = BrowserProcessMain::instance()->flags();
     if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
