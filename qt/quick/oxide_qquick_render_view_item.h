@@ -74,6 +74,8 @@ class RenderViewItem Q_DECL_FINAL :
 
   void inputMethodEvent(QInputMethodEvent* event) Q_DECL_FINAL;
 
+  void touchEvent(QTouchEvent * event) Q_DECL_FINAL;
+
   void updatePolish() Q_DECL_FINAL;
   QSGNode* updatePaintNode(QSGNode* oldNode,
                            UpdatePaintNodeData* data) Q_DECL_FINAL;

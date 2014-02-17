@@ -27,8 +27,10 @@
 
 #include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "url/gurl.h"
 
+#include "qt/core/gl/oxide_qt_shared_gl_context.h"
 #include "qt/core/glue/private/oxide_qt_user_script_adapter_p.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -46,8 +48,7 @@ int GetProcessFlags() {
     case FORM_FACTOR_TABLET:
     case FORM_FACTOR_PHONE:
       return oxide::BrowserProcessMain::ENABLE_VIEWPORT |
-             oxide::BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS |
-             oxide::BrowserProcessMain::ENABLE_PINCH;
+             oxide::BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS;
     default:
       return 0;
   }
@@ -73,8 +74,12 @@ void WebContextAdapterPrivate::Init() {
   // browser context needs to set the shared GL context before anything
   // starts up, in order for compositing to work
   // FIXME: What if this fails?
-  static int flags = GetProcessFlags();
-  oxide::BrowserProcessMain::StartIfNotRunning(flags);
+  if (!oxide::BrowserProcessMain::Exists()) {
+    scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
+    oxide::BrowserProcessMain::StartIfNotRunning(
+        GetProcessFlags(),
+        shared_gl_context);
+  }
 
   context_.reset(oxide::BrowserContext::Create(
       construct_props()->data_path,

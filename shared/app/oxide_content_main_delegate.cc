@@ -28,14 +28,18 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/path_service.h"
+#include "cc/base/switches.h"
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "ui/gl/gl_implementation.h"
+#include "ui/gl/gl_surface.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 namespace oxide {
@@ -105,13 +109,43 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
 
+    command_line->AppendSwitch(switches::kDisableDelegatedRenderer);
+    command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
+
     int flags = BrowserProcessMain::instance()->flags();
+
+    // We need both of this here to test compositing support. It's also needed
+    // to work around a mesa race - see https://launchpad.net/bugs/1267893
+    gfx::GLSurface::InitializeOneOff();
+
+    SharedGLContext* shared_gl_context =
+        BrowserProcessMain::instance()->shared_gl_context();
+    if (shared_gl_context &&
+        shared_gl_context->GetImplementation() == gfx::GetGLImplementation()) {
+      command_line->AppendSwitch(switches::kForceCompositingMode);
+      command_line->AppendSwitch(switches::kEnableThreadedCompositing);
+      command_line->AppendSwitch(switches::kEnableAcceleratedScrollableFrames);
+      command_line->AppendSwitch(switches::kEnableCompositedScrollingForFrames);
+    } else {
+      command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
+      command_line->AppendSwitch(switches::kDisableForceCompositingMode);
+      command_line->AppendSwitch(switches::kDisableThreadedCompositing);
+
+      if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
+        flags &= ~BrowserProcessMain::ENABLE_VIEWPORT;
+        LOG(WARNING) <<
+          "Disabling viewport mode and pinch gestures, which do not work "
+          "correctly without compositing";
+      }
+    }
+
     if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
       command_line->AppendSwitch(switches::kEnableViewport);
       command_line->AppendSwitch(switches::kEnableViewportMeta);
-    }
-    if (flags & BrowserProcessMain::ENABLE_PINCH) {
       command_line->AppendSwitch(switches::kEnablePinch);
+      if (getenv("OXIDE_ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
+        command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
+      }
     }
     if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);

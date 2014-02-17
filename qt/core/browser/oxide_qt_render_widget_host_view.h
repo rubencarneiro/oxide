@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 #define _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 
+#include <map>
 #include <Qt>
 #include <QtGlobal>
 #include <QVariant>
@@ -35,6 +36,7 @@ class QKeyEvent;
 class QMouseEvent;
 class QPixmap;
 class QScreen;
+class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
@@ -86,6 +88,7 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ForwardMouseEvent(QMouseEvent* event);
   void ForwardWheelEvent(QWheelEvent* event);
   void ForwardInputMethodEvent(QInputMethodEvent* event);
+  void ForwardTouchEvent(QTouchEvent* event);
 
   void DidUpdate(bool skipped);
 
@@ -103,6 +106,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   AcknowledgeBufferPresentCallback acknowledge_buffer_present_callback_;
 
   ui::TextInputType input_type_;
+
+  std::map<int, int> touch_id_map_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

@@ -15,38 +15,40 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_CONTENT_BROWSER_CLIENT_H_
-#define _OXIDE_QT_CORE_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#ifndef _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_
+#define _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_
+
+#include <QtGlobal>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
+#include "ui/gl/gl_implementation.h"
 
-#include "shared/browser/oxide_content_browser_client.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 
-namespace base {
-template <typename Type> struct DefaultLazyInstanceTraits;
-}
+QT_BEGIN_NAMESPACE
+class QOpenGLContext;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
-class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
+class SharedGLContext FINAL : public oxide::SharedGLContext {
  public:
-  base::MessagePump* CreateMessagePumpForUI() FINAL;
+  static scoped_refptr<SharedGLContext> Create();
 
-  oxide::WebPreferences* GetDefaultWebPreferences() FINAL;
-
-  bool IsTouchSupported() FINAL;
+  void* GetHandle() FINAL { return handle_; }
+  gfx::GLImplementation GetImplementation() FINAL { return implementation_; }
 
  private:
-  // Limit default constructor access to the lazy instance initializer
-  friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
-  ContentBrowserClient();
+  SharedGLContext(QOpenGLContext* context);
 
-  DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
+  void* handle_;
+  gfx::GLImplementation implementation_;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_CONTENT_BROWSER_CLIENT_H_
+#endif // _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_

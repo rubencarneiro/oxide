@@ -67,7 +67,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   Q_PROPERTY(bool tabsToLinks READ tabsToLinks WRITE setTabsToLinks NOTIFY tabsToLinksChanged)
   Q_PROPERTY(bool caretBrowsingEnabled READ caretBrowsingEnabled WRITE setCaretBrowsingEnabled NOTIFY caretBrowsingEnabledChanged)
 
-  Q_PROPERTY(bool acceleratedCompositingEnabled READ acceleratedCompositingEnabled WRITE setAcceleratedCompositingEnabled NOTIFY acceleratedCompositingEnabledChanged)
   Q_PROPERTY(bool smoothScrollingEnabled READ smoothScrollingEnabled WRITE setSmoothScrollingEnabled NOTIFY smoothScrollingEnabledChanged)
   Q_PROPERTY(bool touchEnabled READ touchEnabled WRITE setTouchEnabled NOTIFY touchEnabledChanged)
   Q_PROPERTY(bool supportsMultipleWindows READ supportsMultipleWindows WRITE setSupportsMultipleWindows NOTIFY supportsMultipleWindowsChanged)
@@ -147,8 +146,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   bool caretBrowsingEnabled() const;
   void setCaretBrowsingEnabled(bool enabled);
 
-  bool acceleratedCompositingEnabled() const;
-  void setAcceleratedCompositingEnabled(bool enabled);
   bool smoothScrollingEnabled() const;
   void setSmoothScrollingEnabled(bool enabled);
   bool touchEnabled() const;
@@ -196,11 +193,9 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void tabsToLinksChanged();
   void caretBrowsingEnabledChanged();
 
-  void acceleratedCompositingEnabledChanged();
   void smoothScrollingEnabledChanged();
   void touchEnabledChanged();
   void supportsMultipleWindowsChanged();
-  void viewportEnabledChanged();
 
  private:
   QScopedPointer<OxideQWebPreferencesPrivate> d_ptr;

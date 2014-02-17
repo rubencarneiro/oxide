@@ -15,42 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "base/values.h"
-#include "content/browser/gpu/compositor_util.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
+#ifndef _OXIDE_SHARED_GL_GL_IMPLEMENTATION_H_
+#define _OXIDE_SHARED_GL_GL_IMPLEMENTATION_H_
 
-namespace content {
+#include <vector>
+#include "ui/gl/gl_implementation.h"
 
-bool IsThreadedCompositingEnabled() {
-  return false;
+namespace oxide {
+
+void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
+
 }
 
-bool IsForceCompositingModeEnabled() {
-  return false;
-}
-
-bool IsDelegatedRendererEnabled() {
-  return false;
-}
-
-bool IsDeadlineSchedulingEnabled() {
-  return true;
-}
-
-base::Value* GetFeatureStatus() {
-  // Currently only used by chrome://gpu
-  return NULL;
-}
-
-base::Value* GetProblems() {
-  // Currently only used by chrome://gpu
-  return NULL;
-}
-
-base::Value* GetDriverBugWorkarounds() {
-  base::ListValue* workaround_list = new base::ListValue();
-  GpuDataManagerImpl::GetInstance()->GetDriverBugWorkarounds(workaround_list);
-  return workaround_list;
-}
-
-} // namespace content
+#endif // _OXIDE_SHARED_GL_GL_IMPLEMENTATION_H_

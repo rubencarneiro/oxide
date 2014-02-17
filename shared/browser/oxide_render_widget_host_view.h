@@ -24,10 +24,14 @@
 #include "base/callback.h"
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/synchronization/condition_variable.h"
 #include "base/synchronization/lock.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
+#include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/events/gestures/gesture_recognizer.h"
+#include "ui/events/gestures/gesture_types.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
@@ -43,6 +47,11 @@ namespace gpu {
 namespace gles2 {
 class TextureRef;
 }
+}
+
+namespace ui {
+class GestureRecognizer;
+class TouchEvent;
 }
 
 namespace oxide {
@@ -116,6 +125,8 @@ class TextureHandle FINAL {
 };
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
+                             public ui::GestureEventHelper,
+                             public ui::GestureConsumer,
                              public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
   virtual ~RenderWidgetHostView();
@@ -191,6 +202,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
 
+  void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
+                              content::InputEventAckState ack_result) FINAL;
+
   void SetHasHorizontalScrollbar(bool has_horizontal_scrollbar) FINAL;
   void SetScrollOffsetPinning(bool is_pinned_to_left,
                               bool is_pinned_to_right) FINAL;
@@ -224,6 +238,10 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   TextureInfo GetFrontbufferTextureInfo();
 
+  bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
+  void DispatchPostponedGestureEvent(ui::GestureEvent* event) FINAL;
+  void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
+
  protected:
   typedef base::Callback<void(bool)> AcknowledgeBufferPresentCallback;
 
@@ -241,6 +259,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
     return selection_anchor_position_;
   }
 
+  void HandleTouchEvent(const ui::TouchEvent& event);
+
  private:
   virtual void Paint(const gfx::Rect& dirty_rect);
   virtual void BuffersSwapped(const AcknowledgeBufferPresentCallback& ack);
@@ -251,6 +271,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   static void SendAcknowledgeBufferPresentOnMainThread(
       const AcknowledgeBufferPresentCallback& ack,
       bool skipped);
+
+  void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
+  void ForwardGestureEventToRenderer(ui::GestureEvent* event);
 
   bool is_hidden_;
 
@@ -266,6 +289,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;
   size_t selection_anchor_position_;
+
+  scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
+  blink::WebTouchEvent touch_event_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };
