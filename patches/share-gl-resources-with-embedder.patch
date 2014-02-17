@@ -135,7 +135,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -47,38 +49,51 @@ GpuChildThread::GpuChildThread(GpuWatchd
+@@ -47,41 +49,54 @@ GpuChildThread::GpuChildThread(GpuWatchd
      : dead_on_arrival_(dead_on_arrival),
        gpu_info_(gpu_info),
        deferred_messages_(deferred_messages),
@@ -163,11 +163,14 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    DCHECK(
        CommandLine::ForCurrentProcess()->HasSwitch(switches::kSingleProcess) ||
        CommandLine::ForCurrentProcess()->HasSwitch(switches::kInProcessGPU));
+ #if !defined(OS_ANDROID)
    // For single process and in-process GPU mode, we need to load and
    // initialize the GL implementation and locate the GL entry points here.
-   if (!gfx::GLSurface::InitializeOneOff()) {
-     VLOG(1) << "gfx::GLSurface::InitializeOneOff()";
-   }
+   // On Android, GLSurface::InitializeOneOff() is called from BrowserMainLoop
+   // before getting here. crbug.com/326295
+   if (!gfx::GLSurface::InitializeOneOff())
+     VLOG(1) << "gfx::GLSurface::InitializeOneOff failed";
+ #endif
 +  DCHECK(!g_instance);
 +  g_instance = this;
    g_thread_safe_sender.Get() = thread_safe_sender();
@@ -189,7 +192,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -145,17 +160,18 @@ void GpuChildThread::OnInitialize() {
+@@ -148,17 +163,18 @@ void GpuChildThread::OnInitialize() {
  
    // Defer creation of the render thread. This is to prevent it from handling
    // IPC messages before the sandbox has been enabled and all other necessary
@@ -373,7 +376,7 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -308,9 +308,11 @@ bool ContentBrowserClient::IsPluginAllow
+@@ -303,9 +303,11 @@ bool ContentBrowserClient::IsPluginAllow
      const GURL& url) {
    return false;
  }
@@ -388,7 +391,7 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -41,16 +41,17 @@ struct WebWindowFeatures;
+@@ -40,16 +40,17 @@ struct WebWindowFeatures;
  }
  
  namespace base {
@@ -406,7 +409,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class HttpNetworkSession;
  class NetLog;
  class SSLCertRequestInfo;
-@@ -609,13 +610,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -614,13 +615,15 @@ class CONTENT_EXPORT ContentBrowserClien
    // Returns true if plugin referred to by the url can use
    // pp::FileIO::RequestOSFileHandle.
    virtual bool IsPluginAllowedToCallRequestOSFileHandle(

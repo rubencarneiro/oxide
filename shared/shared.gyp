@@ -97,6 +97,9 @@
           '<(SHARED_INTERMEDIATE_DIR)/oxide',
         ],
       },
+      'export_dependent_settings': [
+        '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',
+      ],
       'defines': [
         'OXIDE_SUBPROCESS_PATH=\"<(oxide_subprocess_path)\"'
       ],
@@ -117,6 +120,8 @@
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
+        # Not used directly. Should content_browser have this in export_dependent_settings?
+        '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',

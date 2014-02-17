@@ -506,16 +506,16 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
   return NULL;
 }
 
-void BrowserContext::RequestMIDISysExPermission(
+void BrowserContext::RequestMidiSysExPermission(
     int render_process_id,
     int render_view_id,
     int bridge_id,
     const GURL& requesting_frame,
-    const MIDISysExPermissionCallback& callback) {
+    const MidiSysExPermissionCallback& callback) {
   callback.Run(false);
 }
 
-void BrowserContext::CancelMIDISysExPermissionRequest(
+void BrowserContext::CancelMidiSysExPermissionRequest(
     int render_process_id,
     int render_view_id,
     int bridge_id,

@@ -37,6 +37,7 @@
 #include "content/gpu/gpu_child_thread.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/common/content_switches.h"
+#include "gpu/command_buffer/common/mailbox.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
 #include "gpu/command_buffer/service/mailbox_manager.h"
@@ -179,8 +180,7 @@ void TextureHandle::FetchTextureResourcesOnGpuThread() {
   gpu::gles2::Texture* texture =
       gpu_channel_manager->mailbox_manager()->ConsumeTexture(
         GL_TEXTURE_2D,
-        *reinterpret_cast<const gpu::gles2::MailboxName *>(
-          mailbox_name_.data()));
+        *reinterpret_cast<const gpu::Mailbox *>(mailbox_name_.data()));
 
   if (texture) {
     content::GpuChannel* channel =

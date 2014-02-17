@@ -5,7 +5,7 @@
 diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc
 +++ b/content/browser/renderer_host/render_view_host_impl.cc
-@@ -1273,17 +1273,17 @@ bool RenderViewHostImpl::OnMessageReceiv
+@@ -1291,17 +1291,17 @@ bool RenderViewHostImpl::OnMessageReceiv
      IPC_MESSAGE_HANDLER(ViewHostMsg_ScriptEvalResponse, OnScriptEvalResponse)
      IPC_MESSAGE_HANDLER(ViewHostMsg_DidZoomURL, OnDidZoomURL)
      IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_RequestPermission,
@@ -24,7 +24,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
      IPC_MESSAGE_HANDLER(ViewHostMsg_DomOperationResponse,
                          OnDomOperationResponse)
      IPC_MESSAGE_HANDLER(AccessibilityHostMsg_Events, OnAccessibilityEvents)
-@@ -1944,17 +1944,17 @@ void RenderViewHostImpl::ForwardKeyboard
+@@ -1849,17 +1849,17 @@ void RenderViewHostImpl::ForwardKeyboard
    if (ignore_input_events()) {
      if (key_event.type == WebInputEvent::RawKeyDown)
        delegate_->OnIgnoredUIEvent();
@@ -43,7 +43,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
  
  void RenderViewHostImpl::DidCancelPopupMenu() {
    Send(new ViewMsg_SelectPopupMenuItems(GetRoutingID(), true,
-@@ -2208,17 +2208,17 @@ void RenderViewHostImpl::OnFocusedNodeTo
+@@ -2102,17 +2102,17 @@ void RenderViewHostImpl::OnFocusedNodeTo
      virtual_keyboard_requested_ = base::win::DisplayVirtualKeyboard();
    } else {
      virtual_keyboard_requested_ = false;
@@ -65,7 +65,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
 diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/browser/renderer_host/render_view_host_impl.h
 --- a/content/browser/renderer_host/render_view_host_impl.h
 +++ b/content/browser/renderer_host/render_view_host_impl.h
-@@ -405,17 +405,19 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -442,17 +442,19 @@ class CONTENT_EXPORT RenderViewHostImpl
    void DidSelectPopupMenuItem(int selected_index);
    void DidCancelPopupMenu();
  #endif
@@ -85,7 +85,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
    void SendOrientationChangeEvent(int orientation);
  
    // TODO(creis): Remove this when we replace frame IDs with RenderFrameHost
-@@ -583,17 +585,17 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -626,17 +628,17 @@ class CONTENT_EXPORT RenderViewHostImpl
        const ShowDesktopNotificationHostMsgParams& params);
    void OnCancelDesktopNotification(int notification_id);
    void OnRunFileChooser(const FileChooserParams& params);
@@ -100,14 +100,14 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
  #endif
  
   private:
-   friend class TestRenderViewHost;
-   FRIEND_TEST_ALL_PREFIXES(RenderViewHostTest, BasicRenderFrameHost);
-   FRIEND_TEST_ALL_PREFIXES(RenderViewHostTest, RoutingIdSane);
- 
+   // TODO(nasko): Temporarily friend RenderFrameHostImpl, so we don't duplicate
+   // utility functions and state needed in both classes, while we move frame
+   // specific code away from this class.
+   friend class RenderFrameHostImpl;
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -1287,16 +1287,17 @@ IPC_ENUM_TRAITS_MAX_VALUE(blink::Scrolle
+@@ -1151,16 +1151,17 @@ IPC_ENUM_TRAITS_MAX_VALUE(blink::Scrolle
  IPC_MESSAGE_CONTROL5(ViewMsg_UpdateScrollbarTheme,
                       float /* initial_button_delay */,
                       float /* autoscroll_button_delay */,
@@ -125,7 +125,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  // Sent when the browser wants the bounding boxes of the current find matches.
  //
  // If match rects are already cached on the browser side, |current_version|
-@@ -1304,22 +1305,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
+@@ -1168,22 +1169,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
  // they came in, so the renderer can tell if it needs to send updated rects.
  // Otherwise just pass -1 to always receive the list of rects.
  //
@@ -150,7 +150,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  // and whether or not to animate to the proper state.
  IPC_MESSAGE_ROUTED3(ViewMsg_UpdateTopControlsState,
                      bool /* enable_hiding */,
-@@ -1338,16 +1341,17 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
+@@ -1202,16 +1205,17 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
  
  // Sent by the browser when we should pause video playback.
  IPC_MESSAGE_ROUTED0(ViewMsg_PauseVideo);
@@ -215,7 +215,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -308,17 +308,17 @@ void RenderThreadImpl::Init() {
+@@ -309,17 +309,17 @@ void RenderThreadImpl::Init() {
    base::debug::TraceLog::GetInstance()->SetThreadSortIndex(
        base::PlatformThread::CurrentId(),
        kTraceEventRendererMainThreadSortIndex);
@@ -237,7 +237,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -1326,27 +1326,31 @@ bool RenderViewImpl::OnMessageReceived(c
+@@ -1276,27 +1276,31 @@ bool RenderViewImpl::OnMessageReceived(c
                          OnSetHistoryLengthAndPrune)
      IPC_MESSAGE_HANDLER(ViewMsg_EnableViewSourceMode, OnEnableViewSourceMode)
      IPC_MESSAGE_HANDLER(ViewMsg_SetAccessibilityMode, OnSetAccessibilityMode)
@@ -269,7 +269,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_SetInLiveResize, OnSetInLiveResize)
      IPC_MESSAGE_HANDLER(ViewMsg_SetWindowVisibility, OnSetWindowVisibility)
      IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
-@@ -6020,17 +6024,17 @@ void RenderViewImpl::OnSelectPopupMenuIt
+@@ -5575,17 +5579,17 @@ void RenderViewImpl::OnSelectPopupMenuIt
      NOTREACHED();
      return;
    }
@@ -291,7 +291,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
 diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_impl.h
 --- a/content/renderer/render_view_impl.h
 +++ b/content/renderer/render_view_impl.h
-@@ -982,27 +982,31 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -961,27 +961,31 @@ class CONTENT_EXPORT RenderViewImpl
    void OnUpdateTimezone();
    void OnUpdateWebPreferences(const WebPreferences& prefs);
    void OnZoom(PageZoom zoom);

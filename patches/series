@@ -13,4 +13,3 @@ arm-neon.patch
 dont-use-egl-create-context-robustness.patch
 add-frame-attached-to-web-contents-observer.patch
 dont-force-enable-software-compositor.patch
-change-overlay-scrollbar-type.patch
