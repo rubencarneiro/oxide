@@ -249,19 +249,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     web_prefs->ApplyToWebkitPrefs(prefs);
   }
 
-  if (!prefs->accelerated_compositing_enabled &&
-      prefs->viewport_enabled) {
-    // Viewport mode doesn't work correctly without compositing
-    static bool warn_once = false;
-    if (!warn_once) {
-      LOG(WARNING) <<
-          "Disabling viewport mode, which does not work correctly without "
-          "compositing";
-      warn_once = true;
-    }
-    prefs->viewport_enabled = false;
-  }
-
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
 }

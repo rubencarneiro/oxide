@@ -112,14 +112,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
 
     int flags = BrowserProcessMain::instance()->flags();
-    if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
-      command_line->AppendSwitch(switches::kEnableViewport);
-      command_line->AppendSwitch(switches::kEnableViewportMeta);
-      command_line->AppendSwitch(switches::kEnablePinch);
-    }
-    if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
-      command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
-    }
 
     // We need both of this here to test compositing support. It's also needed
     // to work around a mesa race - see https://launchpad.net/bugs/1267893
@@ -137,6 +129,22 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
       command_line->AppendSwitch(switches::kDisableForceCompositingMode);
       command_line->AppendSwitch(switches::kDisableThreadedCompositing);
+
+      if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
+        flags &= ~BrowserProcessMain::ENABLE_VIEWPORT;
+        LOG(WARNING) <<
+          "Disabling viewport mode and pinch gestures, which do not work "
+          "correctly without compositing";
+      }
+    }
+
+    if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
+      command_line->AppendSwitch(switches::kEnableViewport);
+      command_line->AppendSwitch(switches::kEnableViewportMeta);
+      command_line->AppendSwitch(switches::kEnablePinch);
+    }
+    if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
+      command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     }
 
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
