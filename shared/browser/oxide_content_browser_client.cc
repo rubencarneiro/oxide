@@ -34,8 +34,6 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_share_group.h"
-#include "ui/gl/gl_surface.h"
-#include "ui/ozone/ozone_platform.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
@@ -150,26 +148,11 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
-    ui::OzonePlatform::Initialize();
     // Make sure we initialize the display handle on the main thread
     gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
 
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
-
-    scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
-    shared_gl_context_ =
-        ContentClient::instance()->browser()->CreateSharedGLContext(
-          share_group);
-    DCHECK(!shared_gl_context_ ||
-           shared_gl_context_->share_group() == share_group);
-    if (!shared_gl_context_) {
-      DLOG(INFO) << "No shared GL context has been created. "
-                 << "Compositing will not work";
-    }
-
-    // Work around a mesa race - see https://launchpad.net/bugs/1267893
-    gfx::GLSurface::InitializeOneOff();
 
     BrowserProcessMain::instance()->CreateIOThreadDelegate();
     return 0;
@@ -184,14 +167,8 @@ class BrowserMainParts : public content::BrowserMainParts {
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
   }
 
-  oxide::SharedGLContext* shared_gl_context() const {
-    return shared_gl_context_;
-  }
-
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
-  scoped_refptr<oxide::SharedGLContext> shared_gl_context_;
-
   Screen primary_screen_;
 };
 
@@ -290,20 +267,14 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
-  if (!g_main_parts->shared_gl_context()) {
+  SharedGLContext* context =
+      BrowserProcessMain::instance()->shared_gl_context();
+  if (!context) {
     return NULL;
   }
 
-  return g_main_parts->shared_gl_context()->share_group();
+  return context->share_group();
 }
-
-scoped_refptr<oxide::SharedGLContext> ContentBrowserClient::CreateSharedGLContext(
-    oxide::GLShareGroup* share_group) {
-  return NULL;
-}
-
-void ContentBrowserClient::GetAllowedGLImplementations(
-    std::vector<gfx::GLImplementation>* impls) {}
 
 WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
   return NULL;

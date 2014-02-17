@@ -24,7 +24,6 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/content_browser_client.h"
-#include "ui/gl/gl_implementation.h"
 
 namespace base {
 class MessagePump;
@@ -83,11 +82,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
-
-  virtual scoped_refptr<oxide::SharedGLContext> CreateSharedGLContext(
-      oxide::GLShareGroup* share_group);
-
-  virtual void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
 
   virtual WebPreferences* GetDefaultWebPreferences();
 

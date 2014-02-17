@@ -21,37 +21,11 @@
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
-#include "ui/gl/gl_context.h"
-#include "ui/gl/gl_implementation.h"
-#include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
 
-#include "shared/common/oxide_content_client.h"
-#include "shared/gl/oxide_shared_gl_context.h"
-
-#include "oxide_content_browser_client.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
-
-namespace {
-
-bool SupportsCompositing() {
-  gfx::GLShareGroup* group =
-      ContentClient::instance()->browser()->GetGLShareGroup();
-  if (!group) {
-    return false;
-  }
-
-  SharedGLContext* context = SharedGLContext::FromGfx(group->GetContext());
-  if (!context) {
-    return false;
-  }
-
-  return context->GetImplementation() == gfx::GetGLImplementation();
-}
-
-} // namespace
 
 void WebPreferences::UpdateViews() {
   for (std::set<WebView *>::const_iterator it = views_.begin();
@@ -109,7 +83,6 @@ WebPreferences::WebPreferences() :
 
   // ATTR_CARET_BROWSING_ENABLED
 
-  SetAttribute(ATTR_ACCELERATED_COMPOSITING_ENABLED, true);
   SetAttribute(ATTR_SMOOTH_SCROLLING_ENABLED, true);
   SetAttribute(ATTR_TOUCH_ENABLED, true);
 
@@ -248,12 +221,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
 
   prefs->tabs_to_links = attributes_[ATTR_TABS_TO_LINKS];
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
-
-  bool compositing =
-      attributes_[ATTR_ACCELERATED_COMPOSITING_ENABLED] &&
-      SupportsCompositing();
-  prefs->accelerated_compositing_enabled = compositing;
-  prefs->force_compositing_mode = compositing;
 
   prefs->enable_scroll_animator = attributes_[ATTR_SMOOTH_SCROLLING_ENABLED];
 

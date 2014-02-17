@@ -17,13 +17,6 @@
 {
   'target_defaults': {
     'target_conditions': [
-      ['_target_name=="content_browser"',
-        {
-          'sources/': [
-            ['exclude', 'browser/gpu/compositor_util\\.cc']
-          ]
-        }
-      ],
       ['_target_name=="gl"', {
         'sources/': [
           ['exclude', 'gl_context_ozone\\.c'],

@@ -33,9 +33,12 @@
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "ui/gl/gl_implementation.h"
+#include "ui/gl/gl_surface.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 namespace oxide {
@@ -105,6 +108,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
 
+    command_line->AppendSwitch(switches::kDisableDelegatedRenderer);
+
     int flags = BrowserProcessMain::instance()->flags();
     if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
       command_line->AppendSwitch(switches::kEnableViewport);
@@ -113,6 +118,21 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     }
     if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
+    }
+
+    // We need both of this here to test compositing support
+    gfx::GLSurface::InitializeOneOff();
+
+    SharedGLContext* shared_gl_context =
+        BrowserProcessMain::instance()->shared_gl_context();
+    if (shared_gl_context &&
+        shared_gl_context->GetImplementation() == gfx::GetGLImplementation()) {
+      command_line->AppendSwitch(switches::kForceCompositingMode);
+      command_line->AppendSwitch(switches::kEnableThreadedCompositing);
+    } else {
+      command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
+      command_line->AppendSwitch(switches::kDisableForceCompositingMode);
+      command_line->AppendSwitch(switches::kDisableThreadedCompositing);
     }
 
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");

@@ -15,31 +15,27 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
-#define _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
+#include "shared/gl/oxide_gl_implementation.h"
 
-#include "ui/gl/gl_context.h"
-#include "ui/gl/gl_implementation.h"
+#include <QGuiApplication>
+#include <QString>
+
+#include "base/logging.h"
 
 namespace oxide {
 
-class SharedGLContext : public gfx::GLContext {
- public:
-  SharedGLContext();
-  virtual ~SharedGLContext();
+void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls) {
+  QString platform = QGuiApplication::platformName();
+  if (platform == "xcb") {
+    impls->push_back(gfx::kGLImplementationDesktopGL);
+    impls->push_back(gfx::kGLImplementationEGLGLES2);
+    impls->push_back(gfx::kGLImplementationOSMesaGL);
+  } else if (platform == "ubuntu" ||
+             platform == "ubuntumirclient") {
+    impls->push_back(gfx::kGLImplementationEGLGLES2);
+  } else {
+    DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
+  }
+}
 
-  void* GetHandle() = 0;
-  virtual gfx::GLImplementation GetImplementation() = 0;
-
-  bool Initialize(gfx::GLSurface* compatible_surface,
-                  gfx::GpuPreference gpu_preference) FINAL;
-  void Destroy() FINAL;
-  bool MakeCurrent(gfx::GLSurface* surface) FINAL;
-  void ReleaseCurrent(gfx::GLSurface* surface) FINAL;
-  bool IsCurrent(gfx::GLSurface* surface) FINAL;
-  void SetSwapInterval(int interval) FINAL;
-};
-
-} // namespace oxide
-
-#endif // _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
+}
