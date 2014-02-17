@@ -83,12 +83,12 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ImeCancelComposition() FINAL;
   void FocusedNodeChanged(bool is_editable_node) FINAL;
 
-  void ForwardFocusEvent(QFocusEvent* event);
-  void ForwardKeyEvent(QKeyEvent* event);
-  void ForwardMouseEvent(QMouseEvent* event);
-  void ForwardWheelEvent(QWheelEvent* event);
-  void ForwardInputMethodEvent(QInputMethodEvent* event);
-  void ForwardTouchEvent(QTouchEvent* event);
+  void HandleFocusEvent(QFocusEvent* event);
+  void HandleKeyEvent(QKeyEvent* event);
+  void HandleMouseEvent(QMouseEvent* event);
+  void HandleWheelEvent(QWheelEvent* event);
+  void HandleInputMethodEvent(QInputMethodEvent* event);
+  void HandleTouchEvent(QTouchEvent* event);
 
   void DidUpdate(bool skipped);
 

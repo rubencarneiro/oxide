@@ -50,6 +50,7 @@
 #include "ui/gfx/rect.h"
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
+#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_p.h"
 
 #include "oxide_qt_backing_store.h"
 
@@ -549,7 +550,7 @@ RenderWidgetHostView::RenderWidgetHostView(
     backing_store_(NULL),
     delegate_(delegate),
     input_type_(ui::TEXT_INPUT_TYPE_NONE) {
-  delegate_->SetRenderWidgetHostView(this);
+  RenderWidgetHostViewDelegatePrivate::get(delegate)->rwhv = this;
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {}
@@ -719,7 +720,7 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   }
 }
 
-void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
+void RenderWidgetHostView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus()) {
     OnFocus();
     if ((input_type_ != ui::TEXT_INPUT_TYPE_NONE) &&
@@ -735,25 +736,25 @@ void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardKeyEvent(QKeyEvent* event) {
+void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
   GetRenderWidgetHost()->ForwardKeyboardEvent(
       MakeNativeWebKeyboardEvent(event));
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardMouseEvent(QMouseEvent* event) {
+void RenderWidgetHostView::HandleMouseEvent(QMouseEvent* event) {
   GetRenderWidgetHost()->ForwardMouseEvent(
       MakeWebMouseEvent(event, GetDeviceScaleFactor()));
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
+void RenderWidgetHostView::HandleWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHost()->ForwardWheelEvent(
       MakeWebMouseWheelEvent(event, GetDeviceScaleFactor()));
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardInputMethodEvent(QInputMethodEvent* event) {
+void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
   content::RenderWidgetHostImpl* rwh =
       content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
 
@@ -808,7 +809,7 @@ void RenderWidgetHostView::ForwardInputMethodEvent(QInputMethodEvent* event) {
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardTouchEvent(QTouchEvent* event) {
+void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
   base::TimeDelta timestamp(base::TimeDelta::FromMilliseconds(event->timestamp()));
   float scale = 1 / GetDeviceScaleFactor();
 
@@ -842,7 +843,7 @@ void RenderWidgetHostView::ForwardTouchEvent(QTouchEvent* event) {
         gfx::ScalePoint(gfx::PointF(
           touch_point.screenPos().x(), touch_point.screenPos().y()), scale));
 
-    HandleTouchEvent(ui_event);
+    oxide::RenderWidgetHostView::HandleTouchEvent(ui_event);
 
     if (touch_point.state() == Qt::TouchPointReleased) {
       touch_id_map_.erase(touch_point.id());

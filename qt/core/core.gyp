@@ -126,6 +126,7 @@
         'glue/oxide_qt_outgoing_message_request_adapter.h',
         'glue/oxide_qt_render_widget_host_view_delegate.cc',
         'glue/oxide_qt_render_widget_host_view_delegate.h',
+        'glue/oxide_qt_render_widget_host_view_delegate_p.h',
         'glue/oxide_qt_user_script_adapter.cc',
         'glue/oxide_qt_user_script_adapter.h',
         'glue/oxide_qt_web_context_adapter.cc',

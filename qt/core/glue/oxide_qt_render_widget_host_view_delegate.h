@@ -42,7 +42,7 @@ class RenderWidgetHost;
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostView;
+class RenderWidgetHostViewDelegatePrivate;
 
 class Q_DECL_EXPORT TextureInfo Q_DECL_FINAL {
  public:
@@ -75,35 +75,31 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   virtual QScreen* GetScreen() = 0;
 
-  const QPixmap* GetBackingStore();
-
   virtual void SetInputMethodEnabled(bool enabled) = 0;
+
+  virtual void SchedulePaintForRectPix(const QRect& rect) = 0;
+  virtual void ScheduleUpdate() = 0;
 
  protected:
   RenderWidgetHostViewDelegate();
 
-  void ForwardFocusEvent(QFocusEvent* event);
-  void ForwardKeyEvent(QKeyEvent* event);
-  void ForwardMouseEvent(QMouseEvent* event);
-  void ForwardWheelEvent(QWheelEvent* event);
-  void ForwardInputMethodEvent(QInputMethodEvent* event);
-  void ForwardTouchEvent(QTouchEvent* event);
+  void HandleFocusEvent(QFocusEvent* event);
+  void HandleKeyEvent(QKeyEvent* event);
+  void HandleMouseEvent(QMouseEvent* event);
+  void HandleWheelEvent(QWheelEvent* event);
+  void HandleInputMethodEvent(QInputMethodEvent* event);
+  void HandleTouchEvent(QTouchEvent* event);
 
   TextureInfo GetFrontbufferTextureInfo();
   void DidUpdate(bool skipped);
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
+  const QPixmap* GetBackingStore();
+
  private:
-  friend class RenderWidgetHostView;
-
-  virtual void SchedulePaintForRectPix(const QRect& rect) = 0;
-  virtual void ScheduleUpdate() = 0;
-
-  RenderWidgetHostView* GetRenderWidgetHostView() const;
-  void SetRenderWidgetHostView(RenderWidgetHostView* rwhv);
-
-  RenderWidgetHostView* rwhv_;
+  friend class RenderWidgetHostViewDelegatePrivate;
+  QScopedPointer<RenderWidgetHostViewDelegatePrivate> priv;
 };
 
 } // namespace qt
