@@ -53,6 +53,43 @@
 
 namespace oxide {
 
+void WebView::DispatchLoadFailed(const GURL& validated_url,
+                                 int error_code,
+                                 const base::string16& error_description) {
+  if (error_code == net::ERR_ABORTED) {
+    OnLoadStopped(validated_url);
+  } else {
+    OnLoadFailed(validated_url, error_code,
+                 base::UTF16ToUTF8(error_description));
+  }
+}
+
+void WebView::BrowserContextDestroyed(BrowserContext* context) {
+  CHECK(0) << "The browser context was destroyed whilst still in use";
+}
+
+void WebView::NotifyUserAgentStringChanged() {
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  web_contents_->SetUserAgentOverride(browser_context()->GetUserAgent());
+}
+
+void WebView::Observe(int type,
+                      const content::NotificationSource& source,
+                      const content::NotificationDetails& details) {
+  if (content::Source<content::NavigationController>(source).ptr() !=
+      &GetWebContents()->GetController()) {
+    return;
+  }
+  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
+    content::PrunedDetails* pruned_details = content::Details<content::PrunedDetails>(details).ptr();
+    OnNavigationListPruned(pruned_details->from_front, pruned_details->count);
+  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
+    int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
+    OnNavigationEntryChanged(index);
+  }
+}
+
 void WebView::NavigationStateChanged(const content::WebContents* source,
                                      unsigned changed_flags) {
   DCHECK_EQ(source, web_contents_.get());
@@ -78,25 +115,146 @@ void WebView::LoadProgressChanged(content::WebContents* source,
   OnLoadProgressChanged(progress);
 }
 
-void WebView::DispatchLoadFailed(const GURL& validated_url,
-                                 int error_code,
-                                 const base::string16& error_description) {
-  if (error_code == net::ERR_ABORTED) {
-    OnLoadStopped(validated_url);
-  } else {
-    OnLoadFailed(validated_url, error_code,
-                 base::UTF16ToUTF8(error_description));
+void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
+                                    content::RenderViewHost* new_host) {
+  // Make sure the new RWHV gets the correct size
+  GetWebContents()->GetView()->SizeContents(
+      GetWebContents()->GetView()->GetContainerSize());
+
+  while (root_frame_->ChildCount() > 0) {
+    root_frame_->ChildAt(0)->Destroy();
   }
 }
 
-void WebView::BrowserContextDestroyed(BrowserContext* context) {
-  CHECK(0) << "The browser context was destroyed whilst still in use";
+void WebView::DidStartProvisionalLoadForFrame(
+    int64 frame_id,
+    int64 parent_frame_id,
+    bool is_main_frame,
+    const GURL& validated_url,
+    bool is_error_frame,
+    bool is_iframe_srcdoc,
+    content::RenderViewHost* render_view_host) {
+  if (!is_main_frame) {
+    return;
+  }
+
+  OnLoadStarted(validated_url, is_error_frame);
 }
 
-void WebView::NotifyUserAgentStringChanged() {
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(browser_context()->GetUserAgent());
+void WebView::DidCommitProvisionalLoadForFrame(
+    int64 frame_id,
+    const base::string16& frame_unique_name,
+    bool is_main_frame,
+    const GURL& url,
+    content::PageTransition transition_type,
+    content::RenderViewHost* render_view_host) {
+  content::FrameTreeNode* node =
+      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
+  DCHECK(node);
+
+  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
+  if (frame) {
+    frame->SetURL(url);
+  }
+}
+
+void WebView::DidFailProvisionalLoad(
+    int64 frame_id,
+    const base::string16& frame_unique_name,
+    bool is_main_frame,
+    const GURL& validated_url,
+    int error_code,
+    const base::string16& error_description,
+    content::RenderViewHost* render_view_host) {
+  if (!is_main_frame) {
+    return;
+  }
+
+  DispatchLoadFailed(validated_url, error_code, error_description);
+}
+
+void WebView::DidFinishLoad(int64 frame_id,
+                            const GURL& validated_url,
+                            bool is_main_frame,
+                            content::RenderViewHost* render_view_host) {
+  if (!is_main_frame) {
+    return;
+  }
+
+  OnLoadSucceeded(validated_url);
+}
+
+void WebView::DidFailLoad(int64 frame_id,
+                          const GURL& validated_url,
+                          bool is_main_frame,
+                          int error_code,
+                          const base::string16& error_description,
+                          content::RenderViewHost* render_view_host) {
+  if (!is_main_frame) {
+    return;
+  }
+
+  DispatchLoadFailed(validated_url, error_code, error_description);
+}
+
+void WebView::NavigationEntryCommitted(
+    const content::LoadCommittedDetails& load_details) {
+  OnNavigationEntryCommitted();
+}
+
+void WebView::FrameDetached(content::RenderViewHost* rvh,
+                            int64 frame_id) {
+  if (!root_frame_) {
+    return;
+  }
+
+  // XXX: This is temporary until there's a better API for these events
+  //      The ID we have is only renderer-process unique
+  content::FrameTreeNode* node =
+      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
+  DCHECK(node);
+
+  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
+  DCHECK(frame);
+
+  frame->Destroy();
+}
+
+void WebView::FrameAttached(content::RenderViewHost* rvh,
+                            int64 parent_frame_id,
+                            int64 frame_id) {
+  if (!root_frame_) {
+    return;
+  }
+
+  // XXX: This is temporary until there's a better API for these events
+  //      The ID's we have are only renderer-process unique
+  content::FrameTree* tree = web_contents_->GetFrameTree();
+  content::FrameTreeNode* parent_node = tree->FindByFrameID(parent_frame_id);
+  content::FrameTreeNode* node = tree->FindByFrameID(frame_id);
+
+  DCHECK(parent_node && node);
+
+  WebFrame* parent = FindFrameWithID(parent_node->frame_tree_node_id());
+  DCHECK(parent);
+
+  WebFrame* frame = CreateWebFrame(node);
+  DCHECK(frame);
+  frame->SetParent(parent);
+}
+
+void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
+  if (!web_contents_) {
+    return;
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  int count = controller.GetEntryCount();
+  for (int i = 0; i < count; ++i) {
+    if (controller.GetEntryAtIndex(i) == entry) {
+      OnNavigationEntryChanged(i);
+      return;
+    }
+  }
 }
 
 void WebView::OnURLChanged() {}
@@ -406,163 +564,12 @@ void WebView::SetWebPreferences(WebPreferences* prefs, bool send_update) {
       web_contents()->GetRenderViewHost()->GetWebkitPreferences());
 }
 
-void WebView::Observe(int type,
-                      const content::NotificationSource& source,
-                      const content::NotificationDetails& details) {
-  if (content::Source<content::NavigationController>(source).ptr() !=
-      &GetWebContents()->GetController()) {
-    return;
-  }
-  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
-    content::PrunedDetails* pruned_details = content::Details<content::PrunedDetails>(details).ptr();
-    OnNavigationListPruned(pruned_details->from_front, pruned_details->count);
-  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
-    int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
-    OnNavigationEntryChanged(index);
-  }
+WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
+  return NULL;
 }
 
-void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
-                                    content::RenderViewHost* new_host) {
-  // Make sure the new RWHV gets the correct size
-  GetWebContents()->GetView()->SizeContents(
-      GetWebContents()->GetView()->GetContainerSize());
-
-  while (root_frame_->ChildCount() > 0) {
-    root_frame_->ChildAt(0)->Destroy();
-  }
-}
-
-void WebView::DidStartProvisionalLoadForFrame(
-    int64 frame_id,
-    int64 parent_frame_id,
-    bool is_main_frame,
-    const GURL& validated_url,
-    bool is_error_frame,
-    bool is_iframe_srcdoc,
-    content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
-    return;
-  }
-
-  OnLoadStarted(validated_url, is_error_frame);
-}
-
-void WebView::DidCommitProvisionalLoadForFrame(
-    int64 frame_id,
-    const base::string16& frame_unique_name,
-    bool is_main_frame,
-    const GURL& url,
-    content::PageTransition transition_type,
-    content::RenderViewHost* render_view_host) {
-  content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
-  DCHECK(node);
-
-  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
-  if (frame) {
-    frame->SetURL(url);
-  }
-}
-
-void WebView::DidFailProvisionalLoad(
-    int64 frame_id,
-    const base::string16& frame_unique_name,
-    bool is_main_frame,
-    const GURL& validated_url,
-    int error_code,
-    const base::string16& error_description,
-    content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
-    return;
-  }
-
-  DispatchLoadFailed(validated_url, error_code, error_description);
-}
-
-void WebView::DidFinishLoad(int64 frame_id,
-                            const GURL& validated_url,
-                            bool is_main_frame,
-                            content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
-    return;
-  }
-
-  OnLoadSucceeded(validated_url);
-}
-
-void WebView::DidFailLoad(int64 frame_id,
-                          const GURL& validated_url,
-                          bool is_main_frame,
-                          int error_code,
-                          const base::string16& error_description,
-                          content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
-    return;
-  }
-
-  DispatchLoadFailed(validated_url, error_code, error_description);
-}
-
-void WebView::NavigationEntryCommitted(
-    const content::LoadCommittedDetails& load_details) {
-  OnNavigationEntryCommitted();
-}
-
-void WebView::FrameDetached(content::RenderViewHost* rvh,
-                            int64 frame_id) {
-  if (!root_frame_) {
-    return;
-  }
-
-  // XXX: This is temporary until there's a better API for these events
-  //      The ID we have is only renderer-process unique
-  content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
-  DCHECK(node);
-
-  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
-  DCHECK(frame);
-
-  frame->Destroy();
-}
-
-void WebView::FrameAttached(content::RenderViewHost* rvh,
-                            int64 parent_frame_id,
-                            int64 frame_id) {
-  if (!root_frame_) {
-    return;
-  }
-
-  // XXX: This is temporary until there's a better API for these events
-  //      The ID's we have are only renderer-process unique
-  content::FrameTree* tree = web_contents_->GetFrameTree();
-  content::FrameTreeNode* parent_node = tree->FindByFrameID(parent_frame_id);
-  content::FrameTreeNode* node = tree->FindByFrameID(frame_id);
-
-  DCHECK(parent_node && node);
-
-  WebFrame* parent = FindFrameWithID(parent_node->frame_tree_node_id());
-  DCHECK(parent);
-
-  WebFrame* frame = CreateWebFrame(node);
-  DCHECK(frame);
-  frame->SetParent(parent);
-}
-
-void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
-  if (!web_contents_) {
-    return;
-  }
-  const content::NavigationController& controller = web_contents_->GetController();
-  int count = controller.GetEntryCount();
-  for (int i = 0; i < count; ++i) {
-    if (controller.GetEntryAtIndex(i) == entry) {
-      OnNavigationEntryChanged(i);
-      return;
-    }
-  }
-}
+void WebView::FrameAdded(WebFrame* frame) {}
+void WebView::FrameRemoved(WebFrame* frame) {}
 
 size_t WebView::GetMessageHandlerCount() const {
   return 0;
@@ -571,12 +578,5 @@ size_t WebView::GetMessageHandlerCount() const {
 MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
   return NULL;
 }
-
-WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
-  return NULL;
-}
-
-void WebView::FrameAdded(WebFrame* frame) {}
-void WebView::FrameRemoved(WebFrame* frame) {}
 
 } // namespace oxide
