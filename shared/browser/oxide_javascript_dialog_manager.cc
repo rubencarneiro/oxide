@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include "base/memory/singleton.h"
+#include "content/public/browser/browser_thread.h"
 
 #include "shared/browser/oxide_javascript_dialog.h"
 #include "shared/browser/oxide_web_view.h"
@@ -130,7 +131,8 @@ void JavaScriptDialogManager::OnDialogClosed(
     JavaScriptDialog* dialog) {
   DCHECK_EQ(dialog, GetActiveDialog(web_contents));
   active_dialogs_[web_contents] = NULL;
-  delete dialog;
+  content::BrowserThread::DeleteSoon(
+      content::BrowserThread::UI, FROM_HERE, dialog);
   std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
   if (!queue.empty()) {
     JavaScriptDialog* next_dialog = queue.front();
@@ -152,7 +154,8 @@ void JavaScriptDialogManager::OnDialogCancelled(
     DCHECK(it != queue.end());
     queue.erase(it);
   }
-  delete dialog;
+  content::BrowserThread::DeleteSoon(
+      content::BrowserThread::UI, FROM_HERE, dialog);
 }
 
 } // namespace oxide

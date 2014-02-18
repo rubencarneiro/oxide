@@ -37,7 +37,6 @@ namespace qquick {
 class JavaScriptDialogDelegate : public oxide::qt::JavaScriptDialogDelegate {
  public:
   JavaScriptDialogDelegate(OxideQQuickWebView* webview);
-  ~JavaScriptDialogDelegate();
 
  protected:
   // takes ownership of contextObject

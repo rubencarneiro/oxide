@@ -31,13 +31,6 @@ JavaScriptDialogDelegate::JavaScriptDialogDelegate(
     OxideQQuickWebView* webview) :
     web_view_(webview) {}
 
-JavaScriptDialogDelegate::~JavaScriptDialogDelegate() {
-  if (!item_.isNull()) {
-    item_.take()->deleteLater();
-    context_.take()->deleteLater();
-  }
-}
-
 bool JavaScriptDialogDelegate::show(QObject* contextObject,
                                     QQmlComponent* component) {
   if (!component) {
