@@ -32,22 +32,18 @@
 
 namespace oxide {
 
-std::string BrowserContextIODataImpl::GetProductLocked() const {
-  if (!product_.empty()) {
-    // Avoid COW races
-    return std::string(product_.data(), product_.size());
-  }
-
-  return base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING);
-}
-
 BrowserContextIODataImpl::BrowserContextIODataImpl(
     const base::FilePath& path,
     const base::FilePath& cache_path) :
     ssl_config_service_(new SSLConfigService()),
     http_user_agent_settings_(new HttpUserAgentSettings(this)),
     path_(path),
-    cache_path_(cache_path) {}
+    cache_path_(cache_path),
+    product_(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
+    user_agent_(webkit_glue::BuildUserAgentFromProduct(product_)),
+    default_user_agent_string_(true),
+    // FIXME: Get from translations
+    accept_langs_("en-us,en") {}
 
 net::SSLConfigService*
 BrowserContextIODataImpl::ssl_config_service() const {
@@ -71,48 +67,52 @@ base::FilePath BrowserContextIODataImpl::GetCachePath() const {
   return cache_path_;
 }
 
+// Called on IO thread and UI thread
 std::string BrowserContextIODataImpl::GetAcceptLangs() const {
   base::AutoLock lock(lock_);
-  if (!accept_langs_.empty()) {
-    // Avoid COW races
-    return std::string(accept_langs_.data(), accept_langs_.size());
-  }
-
-  // FIXME: Get this from translations
-  return "en-us,en";
+  // Force a copy now to avoid COW races
+  return std::string(accept_langs_.c_str());
 }
 
+// Only called on UI thread
 void BrowserContextIODataImpl::SetAcceptLangs(const std::string& langs) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-
   base::AutoLock lock(lock_);
   accept_langs_ = langs;
 }
 
+// Only called on UI thread
 std::string BrowserContextIODataImpl::GetProduct() const {
-  base::AutoLock lock(lock_);
-  return GetProductLocked();
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  return product_;
 }
 
+// Only called on UI thread
 void BrowserContextIODataImpl::SetProduct(const std::string& product) {
-  base::AutoLock lock(lock_);
-  product_ = product;
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  product_ = product.empty() ?
+      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING) : product;
+  if (default_user_agent_string_) {
+    SetUserAgent(std::string());
+  }
 }
 
+// Called on IO thread and UI thread
 std::string BrowserContextIODataImpl::GetUserAgent() const {
   base::AutoLock lock(lock_);
-  if (!user_agent_.empty()) {
-    // Avoid COW races
-    return std::string(user_agent_.data(), user_agent_.size());
-  }
-
-  return webkit_glue::BuildUserAgentFromProduct(GetProductLocked());
+  // Force a copy now to avoid COW races
+  return std::string(user_agent_.c_str());
 }
 
+// Only called on UI thread
 void BrowserContextIODataImpl::SetUserAgent(
     const std::string& user_agent) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   base::AutoLock lock(lock_);
-  user_agent_ = user_agent;
+  user_agent_ = user_agent.empty() ?
+      webkit_glue::BuildUserAgentFromProduct(product_) :
+      user_agent;
+  default_user_agent_string_ = user_agent.empty();
 }
 
 bool BrowserContextIODataImpl::IsOffTheRecord() const {

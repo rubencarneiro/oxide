@@ -93,6 +93,12 @@ void WebView::BrowserContextDestroyed(BrowserContext* context) {
   CHECK(0) << "The browser context was destroyed whilst still in use";
 }
 
+void WebView::NotifyUserAgentStringChanged() {
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  web_contents_->SetUserAgentOverride(browser_context()->GetUserAgent());
+}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnCommandsUpdated() {}
@@ -152,6 +158,9 @@ bool WebView::Init(BrowserContext* context,
 
   web_contents_->SetDelegate(this);
   WebContentsObserver::Observe(web_contents_.get());
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  web_contents_->SetUserAgentOverride(context->GetUserAgent());
 
   registrar_.reset(new content::NotificationRegistrar);
   registrar_->Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
@@ -204,6 +213,9 @@ void WebView::SetURL(const GURL& url) {
   }
 
   content::NavigationController::LoadURLParams params(url);
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
   web_contents_->GetController().LoadURLWithParams(params);
 }
 

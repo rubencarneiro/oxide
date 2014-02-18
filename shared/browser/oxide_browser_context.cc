@@ -447,6 +447,12 @@ std::string BrowserContext::GetProduct() const {
 
 void BrowserContext::SetProduct(const std::string& product) {
   io_data_.SetProduct(product);
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyUserAgentStringChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyUserAgentStringChanged());
 }
 
 std::string BrowserContext::GetUserAgent() const {
@@ -455,6 +461,12 @@ std::string BrowserContext::GetUserAgent() const {
 
 void BrowserContext::SetUserAgent(const std::string& user_agent) {
   io_data_.SetUserAgent(user_agent);
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyUserAgentStringChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyUserAgentStringChanged());
 }
 
 void BrowserContext::AddObserver(BrowserContextObserver* observer) {

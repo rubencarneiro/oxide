@@ -195,7 +195,9 @@ class WebView : public MessageTarget,
                           int error_code,
                           const base::string16& error_description);
 
+  // BrowserContextObserver
   void BrowserContextDestroyed(BrowserContext* context) FINAL;
+  void NotifyUserAgentStringChanged() FINAL;
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();

@@ -28,6 +28,8 @@ class BrowserContextObserver {
 
   virtual void BrowserContextDestroyed(BrowserContext* context) {}
 
+  virtual void NotifyUserAgentStringChanged() {}
+
   void OnBrowserContextDestruction();
 
  protected:
