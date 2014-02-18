@@ -67,8 +67,7 @@ TestWebView {
     function test_WebContext_userAgent2_custom_product() {
       webView.context.product = "Oxide";
       compare(productSpy.count, 1, "Expected a signal when changing the product");
-      // FIXME:
-      //compare(userAgentSpy.count, 1, "Expected a signal when changing the product");
+      compare(userAgentSpy.count, 1, "Expected a signal when changing the product");
       compare(webView.context.product, "Oxide",
               "Unexpected value read back from WebContext.product");
 
@@ -76,13 +75,11 @@ TestWebView {
 
       webView.context.product = webView.context.product;
       compare(productSpy.count, 1, "Shouldn't have had a signal");
-      // FIXME:
-      //compare(userAgentSpy.count, 1, "Shouldn't have had a signal");
+      compare(userAgentSpy.count, 1, "Shouldn't have had a signal");
 
       webView.context.product = "";
       compare(productSpy.count, 2, "Expected a signal when changing the product");
-      // FIXME:
-      //compare(userAgentSpy.count, 2, "Expected a signal when changing the product");
+      compare(userAgentSpy.count, 2, "Expected a signal when changing the product");
 
       var product = webView.context.product;
       var product_re = new RegExp("Chrome/[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+");
@@ -101,9 +98,8 @@ TestWebView {
       verifyUserAgent(re);
 
       webView.context.product = "Foo";
-      // FIXME:
-      //compare(userAgentSpy.count, 1,
-      //        "Shouldn't have had a signal when changing the product");
+      compare(userAgentSpy.count, 1,
+              "Shouldn't have had a signal when changing the product");
 
       verifyUserAgent(re);
 
