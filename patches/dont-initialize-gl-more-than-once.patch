@@ -1,0 +1,27 @@
+# Description: Don't call gfx::GLSurace::InitializeOneOff() more than once.
+#  We call it from ContentMainDelegate, as we need it fairly early on and it
+#  needs to be initialized on the main thread
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
+--- a/content/gpu/gpu_child_thread.cc
++++ b/content/gpu/gpu_child_thread.cc
+@@ -66,17 +66,17 @@ GpuChildThread::GpuChildThread(const std
+       in_browser_process_(true),
+       share_group_(share_group) {
+ #if defined(OS_WIN)
+   target_services_ = NULL;
+ #endif
+   DCHECK(
+       CommandLine::ForCurrentProcess()->HasSwitch(switches::kSingleProcess) ||
+       CommandLine::ForCurrentProcess()->HasSwitch(switches::kInProcessGPU));
+-#if !defined(OS_ANDROID)
++#if 0
+   // For single process and in-process GPU mode, we need to load and
+   // initialize the GL implementation and locate the GL entry points here.
+   // On Android, GLSurface::InitializeOneOff() is called from BrowserMainLoop
+   // before getting here. crbug.com/326295
+   if (!gfx::GLSurface::InitializeOneOff())
+     VLOG(1) << "gfx::GLSurface::InitializeOneOff failed";
+ #endif
+   DCHECK(!g_instance);

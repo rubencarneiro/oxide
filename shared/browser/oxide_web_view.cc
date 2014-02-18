@@ -53,6 +53,43 @@
 
 namespace oxide {
 
+void WebView::DispatchLoadFailed(const GURL& validated_url,
+                                 int error_code,
+                                 const base::string16& error_description) {
+  if (error_code == net::ERR_ABORTED) {
+    OnLoadStopped(validated_url);
+  } else {
+    OnLoadFailed(validated_url, error_code,
+                 base::UTF16ToUTF8(error_description));
+  }
+}
+
+void WebView::BrowserContextDestroyed(BrowserContext* context) {
+  CHECK(0) << "The browser context was destroyed whilst still in use";
+}
+
+void WebView::NotifyUserAgentStringChanged() {
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  web_contents_->SetUserAgentOverride(browser_context()->GetUserAgent());
+}
+
+void WebView::Observe(int type,
+                      const content::NotificationSource& source,
+                      const content::NotificationDetails& details) {
+  if (content::Source<content::NavigationController>(source).ptr() !=
+      &GetWebContents()->GetController()) {
+    return;
+  }
+  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
+    content::PrunedDetails* pruned_details = content::Details<content::PrunedDetails>(details).ptr();
+    OnNavigationListPruned(pruned_details->from_front, pruned_details->count);
+  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
+    int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
+    OnNavigationEntryChanged(index);
+  }
+}
+
 void WebView::NavigationStateChanged(const content::WebContents* source,
                                      unsigned changed_flags) {
   DCHECK_EQ(source, web_contents_.get());
@@ -76,335 +113,6 @@ void WebView::LoadProgressChanged(content::WebContents* source,
   DCHECK_EQ(source, web_contents_.get());
 
   OnLoadProgressChanged(progress);
-}
-
-void WebView::DispatchLoadFailed(const GURL& validated_url,
-                                 int error_code,
-                                 const base::string16& error_description) {
-  if (error_code == net::ERR_ABORTED) {
-    OnLoadStopped(validated_url);
-  } else {
-    OnLoadFailed(validated_url, error_code,
-                 base::UTF16ToUTF8(error_description));
-  }
-}
-
-void WebView::OnURLChanged() {}
-void WebView::OnTitleChanged() {}
-void WebView::OnCommandsUpdated() {}
-
-void WebView::OnLoadProgressChanged(double progress) {}
-
-void WebView::OnLoadStarted(const GURL& validated_url,
-                            bool is_error_frame) {}
-void WebView::OnLoadStopped(const GURL& validated_url) {}
-void WebView::OnLoadFailed(const GURL& validated_url,
-                           int error_code,
-                           const std::string& error_description) {}
-void WebView::OnLoadSucceeded(const GURL& validated_url) {}
-
-void WebView::OnNavigationEntryCommitted() {}
-void WebView::OnNavigationListPruned(bool from_front, int count) {}
-void WebView::OnNavigationEntryChanged(int index) {}
-
-WebView::WebView() :
-    root_frame_(NULL),
-    web_preferences_(NULL) {}
-
-WebView::~WebView() {
-  if (web_preferences_) {
-    web_preferences_->RemoveWebView(this);
-  }
-
-  if (web_contents_) {
-    GetBrowserContext()->RemoveWebView(this);
-    web_contents_->SetDelegate(NULL);
-  }
-}
-
-bool WebView::Init(BrowserContext* context,
-                   bool incognito,
-                   const gfx::Size& initial_size) {
-  DCHECK(context);
-
-  if (web_contents_) {
-    LOG(ERROR) << "Called Init() more than once";
-    return false;
-  }
-
-  context = incognito ?
-      context->GetOffTheRecordContext() :
-      context->GetOriginalContext();
-
-  context->AddWebView(this);
-
-  content::WebContents::CreateParams params(context);
-  params.initial_size = initial_size;
-  web_contents_.reset(static_cast<content::WebContentsImpl *>(
-      content::WebContents::Create(params)));
-  if (!web_contents_) {
-    LOG(ERROR) << "Failed to create WebContents";
-    return false;
-  }
-
-  web_contents_->SetDelegate(this);
-  WebContentsObserver::Observe(web_contents_.get());
-
-  registrar_.reset(new content::NotificationRegistrar);
-  registrar_->Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
-                  content::NotificationService::AllBrowserContextsAndSources());
-  registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
-                  content::NotificationService::AllBrowserContextsAndSources());
-
-  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
-
-  return true;
-}
-
-void WebView::Shutdown() {
-  if (!web_contents_) {
-    LOG(ERROR) << "Called Shutdown() on a webview that isn't initialized";
-    return;
-  }
-
-  registrar_.reset();
-
-  WebContentsObserver::Observe(NULL);
-
-  root_frame_->Destroy();
-  root_frame_ = NULL;
-
-  GetBrowserContext()->RemoveWebView(this);
-  web_contents_.reset();
-}
-
-// static
-WebView* WebView::FromWebContents(content::WebContents* web_contents) {
-  return static_cast<WebView *>(web_contents->GetDelegate());
-}
-
-// static
-WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
-  return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
-}
-
-const GURL& WebView::GetURL() const {
-  if (!web_contents_) {
-    return GURL::EmptyGURL();
-  }
-  return web_contents_->GetVisibleURL();
-}
-
-void WebView::SetURL(const GURL& url) {
-  if (!url.is_valid()) {
-    return;
-  }
-
-  content::NavigationController::LoadURLParams params(url);
-  web_contents_->GetController().LoadURLWithParams(params);
-}
-
-std::string WebView::GetTitle() const {
-  if (!web_contents_) {
-    return std::string();
-  }
-  return base::UTF16ToUTF8(web_contents_->GetTitle());
-}
-
-bool WebView::CanGoBack() const {
-  if (!web_contents_) {
-    return false;
-  }
-  return web_contents_->GetController().CanGoBack();
-}
-
-bool WebView::CanGoForward() const {
-  if (!web_contents_) {
-    return false;
-  }
-  return web_contents_->GetController().CanGoForward();
-}
-
-void WebView::GoBack() {
-  if (!CanGoBack()) {
-    return;
-  }
-
-  web_contents_->GetController().GoBack();
-}
-
-void WebView::GoForward() {
-  if (!CanGoForward()) {
-    return;
-  }
-
-  web_contents_->GetController().GoForward();
-}
-
-void WebView::Stop() {
-  web_contents_->Stop();
-}
-
-void WebView::Reload() {
-  web_contents_->GetController().Reload(true);
-}
-
-bool WebView::IsIncognito() const {
-  if (!web_contents_) {
-    return false;
-  }
-  return web_contents_->GetBrowserContext()->IsOffTheRecord();
-}
-
-bool WebView::IsLoading() const {
-  if (!web_contents_) {
-    return false;
-  }
-  return web_contents_->IsLoading();
-}
-
-void WebView::UpdateSize(const gfx::Size& size) {
-  web_contents_->GetView()->SizeContents(size);
-}
-
-void WebView::Shown() {
-  web_contents_->WasShown();
-}
-
-void WebView::Hidden() {
-  web_contents_->WasHidden();
-}
-
-BrowserContext* WebView::GetBrowserContext() const {
-  return BrowserContext::FromContent(web_contents_->GetBrowserContext());
-}
-
-content::WebContents* WebView::GetWebContents() const {
-  return web_contents_.get();
-}
-
-int WebView::GetNavigationEntryCount() const {
-  if (!web_contents_) {
-    return 0;
-  }
-  return web_contents_->GetController().GetEntryCount();
-}
-
-int WebView::GetNavigationCurrentEntryIndex() const {
-  if (!web_contents_) {
-    return -1;
-  }
-  return web_contents_->GetController().GetCurrentEntryIndex();
-}
-
-void WebView::SetNavigationCurrentEntryIndex(int index) {
-  if (web_contents_) {
-    web_contents_->GetController().GoToIndex(index);
-  }
-}
-
-int WebView::GetNavigationEntryUniqueID(int index) const {
-  if (!web_contents_) {
-    return 0;
-  }
-  const content::NavigationController& controller = web_contents_->GetController();
-  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
-  return entry->GetUniqueID();
-}
-
-const GURL& WebView::GetNavigationEntryUrl(int index) const {
-  if (!web_contents_) {
-    return GURL::EmptyGURL();
-  }
-  const content::NavigationController& controller = web_contents_->GetController();
-  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
-  return entry->GetURL();
-}
-
-std::string WebView::GetNavigationEntryTitle(int index) const {
-  if (!web_contents_) {
-    return std::string();
-  }
-  const content::NavigationController& controller = web_contents_->GetController();
-  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
-  return base::UTF16ToUTF8(entry->GetTitle());
-}
-
-base::Time WebView::GetNavigationEntryTimestamp(int index) const {
-  if (!web_contents_) {
-    return base::Time();
-  }
-  const content::NavigationController& controller = web_contents_->GetController();
-  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
-  return entry->GetTimestamp();
-}
-
-WebFrame* WebView::GetRootFrame() const {
-  return root_frame_;
-}
-
-WebFrame* WebView::FindFrameWithID(int64 frame_tree_node_id) const {
-  std::queue<WebFrame *> q;
-  q.push(const_cast<WebFrame *>(root_frame_));
-
-  while (!q.empty()) {
-    WebFrame* f = q.front();
-    q.pop();
-
-    if (f->FrameTreeNodeID() == frame_tree_node_id) {
-      return f;
-    }
-
-    for (size_t i = 0; i < f->ChildCount(); ++i) {
-      q.push(f->ChildAt(i));
-    }
-  }
-
-  return NULL;
-}
-
-WebPreferences* WebView::GetWebPreferences() {
-  if (!web_preferences_) {
-    SetWebPreferences(
-        ContentClient::instance()->browser()->GetDefaultWebPreferences(),
-        false);
-  }
-
-  return web_preferences_;
-}
-
-void WebView::SetWebPreferences(WebPreferences* prefs, bool send_update) {
-  if (web_preferences_) {
-    web_preferences_->RemoveWebView(this);
-  }
-
-  web_preferences_ = prefs;
-  if (prefs) {
-    prefs->AddWebView(this);
-  }
-
-  if (!send_update || !web_contents_) {
-    return;
-  }
-
-  web_contents()->GetRenderViewHost()->UpdateWebkitPreferences(
-      web_contents()->GetRenderViewHost()->GetWebkitPreferences());
-}
-
-void WebView::Observe(int type,
-                      const content::NotificationSource& source,
-                      const content::NotificationDetails& details) {
-  if (content::Source<content::NavigationController>(source).ptr() !=
-      &GetWebContents()->GetController()) {
-    return;
-  }
-  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
-    content::PrunedDetails* pruned_details = content::Details<content::PrunedDetails>(details).ptr();
-    OnNavigationListPruned(pruned_details->from_front, pruned_details->count);
-  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
-    int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
-    OnNavigationEntryChanged(index);
-  }
 }
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -549,12 +257,311 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
   }
 }
 
-size_t WebView::GetMessageHandlerCount() const {
-  return 0;
+void WebView::OnURLChanged() {}
+void WebView::OnTitleChanged() {}
+void WebView::OnCommandsUpdated() {}
+
+void WebView::OnLoadProgressChanged(double progress) {}
+
+void WebView::OnLoadStarted(const GURL& validated_url,
+                            bool is_error_frame) {}
+void WebView::OnLoadStopped(const GURL& validated_url) {}
+void WebView::OnLoadFailed(const GURL& validated_url,
+                           int error_code,
+                           const std::string& error_description) {}
+void WebView::OnLoadSucceeded(const GURL& validated_url) {}
+
+void WebView::OnNavigationEntryCommitted() {}
+void WebView::OnNavigationListPruned(bool from_front, int count) {}
+void WebView::OnNavigationEntryChanged(int index) {}
+
+WebView::WebView() :
+    root_frame_(NULL),
+    web_preferences_(NULL) {}
+
+WebView::~WebView() {
+  if (web_preferences_) {
+    web_preferences_->RemoveWebView(this);
+  }
+
+  if (web_contents_) {
+    web_contents_->SetDelegate(NULL);
+  }
 }
 
-MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
+bool WebView::Init(BrowserContext* context,
+                   bool incognito,
+                   const gfx::Size& initial_size) {
+  DCHECK(context);
+
+  if (web_contents_) {
+    LOG(ERROR) << "Called Init() more than once";
+    return false;
+  }
+
+  context = incognito ?
+      context->GetOffTheRecordContext() :
+      context->GetOriginalContext();
+
+  BrowserContextObserver::Observe(context);
+
+  content::WebContents::CreateParams params(context);
+  params.initial_size = initial_size;
+  web_contents_.reset(static_cast<content::WebContentsImpl *>(
+      content::WebContents::Create(params)));
+  if (!web_contents_) {
+    LOG(ERROR) << "Failed to create WebContents";
+    return false;
+  }
+
+  web_contents_->SetDelegate(this);
+  WebContentsObserver::Observe(web_contents_.get());
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  web_contents_->SetUserAgentOverride(context->GetUserAgent());
+
+  registrar_.reset(new content::NotificationRegistrar);
+  registrar_->Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
+                  content::NotificationService::AllBrowserContextsAndSources());
+  registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
+                  content::NotificationService::AllBrowserContextsAndSources());
+
+  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
+
+  return true;
+}
+
+void WebView::Shutdown() {
+  if (!web_contents_) {
+    LOG(ERROR) << "Called Shutdown() on a webview that isn't initialized";
+    return;
+  }
+
+  registrar_.reset();
+
+  WebContentsObserver::Observe(NULL);
+
+  root_frame_->Destroy();
+  root_frame_ = NULL;
+
+  BrowserContextObserver::Observe(NULL);
+  web_contents_.reset();
+}
+
+// static
+WebView* WebView::FromWebContents(content::WebContents* web_contents) {
+  return static_cast<WebView *>(web_contents->GetDelegate());
+}
+
+// static
+WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
+  return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+}
+
+const GURL& WebView::GetURL() const {
+  if (!web_contents_) {
+    return GURL::EmptyGURL();
+  }
+  return web_contents_->GetVisibleURL();
+}
+
+void WebView::SetURL(const GURL& url) {
+  if (!url.is_valid()) {
+    return;
+  }
+
+  content::NavigationController::LoadURLParams params(url);
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
+  web_contents_->GetController().LoadURLWithParams(params);
+}
+
+std::string WebView::GetTitle() const {
+  if (!web_contents_) {
+    return std::string();
+  }
+  return base::UTF16ToUTF8(web_contents_->GetTitle());
+}
+
+bool WebView::CanGoBack() const {
+  if (!web_contents_) {
+    return false;
+  }
+  return web_contents_->GetController().CanGoBack();
+}
+
+bool WebView::CanGoForward() const {
+  if (!web_contents_) {
+    return false;
+  }
+  return web_contents_->GetController().CanGoForward();
+}
+
+void WebView::GoBack() {
+  if (!CanGoBack()) {
+    return;
+  }
+
+  web_contents_->GetController().GoBack();
+}
+
+void WebView::GoForward() {
+  if (!CanGoForward()) {
+    return;
+  }
+
+  web_contents_->GetController().GoForward();
+}
+
+void WebView::Stop() {
+  web_contents_->Stop();
+}
+
+void WebView::Reload() {
+  web_contents_->GetController().Reload(true);
+}
+
+bool WebView::IsIncognito() const {
+  if (!browser_context()) {
+    return false;
+  }
+  return browser_context()->IsOffTheRecord();
+}
+
+bool WebView::IsLoading() const {
+  if (!web_contents_) {
+    return false;
+  }
+  return web_contents_->IsLoading();
+}
+
+void WebView::UpdateSize(const gfx::Size& size) {
+  web_contents_->GetView()->SizeContents(size);
+}
+
+void WebView::Shown() {
+  web_contents_->WasShown();
+}
+
+void WebView::Hidden() {
+  web_contents_->WasHidden();
+}
+
+BrowserContext* WebView::GetBrowserContext() const {
+  return browser_context();
+}
+
+content::WebContents* WebView::GetWebContents() const {
+  return web_contents_.get();
+}
+
+int WebView::GetNavigationEntryCount() const {
+  if (!web_contents_) {
+    return 0;
+  }
+  return web_contents_->GetController().GetEntryCount();
+}
+
+int WebView::GetNavigationCurrentEntryIndex() const {
+  if (!web_contents_) {
+    return -1;
+  }
+  return web_contents_->GetController().GetCurrentEntryIndex();
+}
+
+void WebView::SetNavigationCurrentEntryIndex(int index) {
+  if (web_contents_) {
+    web_contents_->GetController().GoToIndex(index);
+  }
+}
+
+int WebView::GetNavigationEntryUniqueID(int index) const {
+  if (!web_contents_) {
+    return 0;
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetUniqueID();
+}
+
+const GURL& WebView::GetNavigationEntryUrl(int index) const {
+  if (!web_contents_) {
+    return GURL::EmptyGURL();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetURL();
+}
+
+std::string WebView::GetNavigationEntryTitle(int index) const {
+  if (!web_contents_) {
+    return std::string();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return base::UTF16ToUTF8(entry->GetTitle());
+}
+
+base::Time WebView::GetNavigationEntryTimestamp(int index) const {
+  if (!web_contents_) {
+    return base::Time();
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
+  return entry->GetTimestamp();
+}
+
+WebFrame* WebView::GetRootFrame() const {
+  return root_frame_;
+}
+
+WebFrame* WebView::FindFrameWithID(int64 frame_tree_node_id) const {
+  std::queue<WebFrame *> q;
+  q.push(const_cast<WebFrame *>(root_frame_));
+
+  while (!q.empty()) {
+    WebFrame* f = q.front();
+    q.pop();
+
+    if (f->FrameTreeNodeID() == frame_tree_node_id) {
+      return f;
+    }
+
+    for (size_t i = 0; i < f->ChildCount(); ++i) {
+      q.push(f->ChildAt(i));
+    }
+  }
+
   return NULL;
+}
+
+WebPreferences* WebView::GetWebPreferences() {
+  if (!web_preferences_) {
+    SetWebPreferences(
+        ContentClient::instance()->browser()->GetDefaultWebPreferences(),
+        false);
+  }
+
+  return web_preferences_;
+}
+
+void WebView::SetWebPreferences(WebPreferences* prefs, bool send_update) {
+  if (web_preferences_) {
+    web_preferences_->RemoveWebView(this);
+  }
+
+  web_preferences_ = prefs;
+  if (prefs) {
+    prefs->AddWebView(this);
+  }
+
+  if (!send_update || !web_contents_) {
+    return;
+  }
+
+  web_contents()->GetRenderViewHost()->UpdateWebkitPreferences(
+      web_contents()->GetRenderViewHost()->GetWebkitPreferences());
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
@@ -563,5 +570,13 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
 
 void WebView::FrameAdded(WebFrame* frame) {}
 void WebView::FrameRemoved(WebFrame* frame) {}
+
+size_t WebView::GetMessageHandlerCount() const {
+  return 0;
+}
+
+MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
+  return NULL;
+}
 
 } // namespace oxide

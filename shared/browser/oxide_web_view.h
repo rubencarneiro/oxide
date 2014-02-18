@@ -29,6 +29,7 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_message_target.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -61,6 +62,7 @@ class WebPreferences;
 // this. Note that this class will hold the main browser process
 // components alive
 class WebView : public MessageTarget,
+                public BrowserContextObserver,
                 public content::NotificationObserver,
                 public content::WebContentsDelegate,
                 public content::WebContentsObserver {
@@ -113,10 +115,43 @@ class WebView : public MessageTarget,
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs, bool send_update = true);
 
+  virtual content::RenderWidgetHostView* CreateViewForWidget(
+      content::RenderWidgetHost* render_widget_host) = 0;
+
+  virtual gfx::Rect GetContainerBounds() = 0;
+
+  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
+
+  virtual void FrameAdded(WebFrame* frame);
+  virtual void FrameRemoved(WebFrame* frame);
+
+  // MessageTarget
+  virtual size_t GetMessageHandlerCount() const OVERRIDE;
+  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
+
+ protected:
+  WebView();
+
+ private:
+  void DispatchLoadFailed(const GURL& validated_url,
+                          int error_code,
+                          const base::string16& error_description);
+
+  // BrowserContextObserver
+  void BrowserContextDestroyed(BrowserContext* context) FINAL;
+  void NotifyUserAgentStringChanged() FINAL;
+
+  // content::NotificationObserver
   void Observe(int type,
                const content::NotificationSource& source,
                const content::NotificationDetails& details) FINAL;
 
+  // content::WebContentsDelegate
+  void NavigationStateChanged(const content::WebContents* source,
+                              unsigned changed_flags) FINAL;
+  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+
+  // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
 
@@ -166,32 +201,6 @@ class WebView : public MessageTarget,
                      int64 parent_frame_id, int64 frame_id) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
-
-  virtual size_t GetMessageHandlerCount() const OVERRIDE;
-  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
-
-  virtual content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) = 0;
-
-  virtual gfx::Rect GetContainerBounds() = 0;
-
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
-
-  virtual void FrameAdded(WebFrame* frame);
-  virtual void FrameRemoved(WebFrame* frame);
-
- protected:
-  WebView();
-
- private:
-  void NavigationStateChanged(const content::WebContents* source,
-                              unsigned changed_flags) FINAL;
-
-  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
-
-  void DispatchLoadFailed(const GURL& validated_url,
-                          int error_code,
-                          const base::string16& error_description);
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
