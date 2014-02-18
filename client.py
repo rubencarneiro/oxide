@@ -177,7 +177,7 @@ def main():
   shutil.copyfile(GCLIENTFILE, GCLIENTFILECOPY)
   shutil.copystat(GCLIENTFILE, GCLIENTFILECOPY)
 
-  if full_sync:
+  if full_sync and os.path.isdir(CHROMIUMSRCDIR):
     shutil.rmtree(CHROMIUMSRCDIR)
   if need_sync:
     sync_chromium()
