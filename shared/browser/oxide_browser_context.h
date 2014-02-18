@@ -24,6 +24,7 @@
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
+#include "base/observer_list.h"
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
@@ -37,11 +38,11 @@ class SSLConfigService;
 
 namespace oxide {
 
+class BrowserContextObserver;
 class ResourceContext;
 class URLRequestContext;
 class URLRequestContextGetter;
 class UserScriptMaster;
-class WebView;
 
 class BrowserContextIOData {
  public:
@@ -126,11 +127,8 @@ class BrowserContext : public content::BrowserContext {
 
   BrowserContextIOData* io_data() const { return io_data_.io_data(); }
 
-  // This is only used as a safety check to ensure that we outlive all
-  // WebView's. If we are destroyed with registered WebView's, then
-  // the application is aborted
-  void AddWebView(WebView* wv);
-  void RemoveWebView(WebView* wv);
+  void AddObserver(BrowserContextObserver* observer);
+  void RemoveObserver(BrowserContextObserver* observer);
 
   virtual UserScriptMaster& UserScriptManager() = 0;
 
@@ -222,7 +220,7 @@ class BrowserContext : public content::BrowserContext {
 
   IODataHandle io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
-  std::vector<WebView *> web_views_;
+  ObserverList<BrowserContextObserver> observers_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

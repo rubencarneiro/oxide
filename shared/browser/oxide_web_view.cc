@@ -89,6 +89,10 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
   }
 }
 
+void WebView::BrowserContextDestroyed(BrowserContext* context) {
+  CHECK(0) << "The browser context was destroyed whilst still in use";
+}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnCommandsUpdated() {}
@@ -117,7 +121,6 @@ WebView::~WebView() {
   }
 
   if (web_contents_) {
-    GetBrowserContext()->RemoveWebView(this);
     web_contents_->SetDelegate(NULL);
   }
 }
@@ -136,7 +139,7 @@ bool WebView::Init(BrowserContext* context,
       context->GetOffTheRecordContext() :
       context->GetOriginalContext();
 
-  context->AddWebView(this);
+  BrowserContextObserver::Observe(context);
 
   content::WebContents::CreateParams params(context);
   params.initial_size = initial_size;
@@ -174,7 +177,7 @@ void WebView::Shutdown() {
   root_frame_->Destroy();
   root_frame_ = NULL;
 
-  GetBrowserContext()->RemoveWebView(this);
+  BrowserContextObserver::Observe(NULL);
   web_contents_.reset();
 }
 
@@ -250,10 +253,10 @@ void WebView::Reload() {
 }
 
 bool WebView::IsIncognito() const {
-  if (!web_contents_) {
+  if (!browser_context()) {
     return false;
   }
-  return web_contents_->GetBrowserContext()->IsOffTheRecord();
+  return browser_context()->IsOffTheRecord();
 }
 
 bool WebView::IsLoading() const {
@@ -276,7 +279,7 @@ void WebView::Hidden() {
 }
 
 BrowserContext* WebView::GetBrowserContext() const {
-  return BrowserContext::FromContent(web_contents_->GetBrowserContext());
+  return browser_context();
 }
 
 content::WebContents* WebView::GetWebContents() const {

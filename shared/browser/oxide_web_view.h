@@ -29,6 +29,7 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_message_target.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -61,6 +62,7 @@ class WebPreferences;
 // this. Note that this class will hold the main browser process
 // components alive
 class WebView : public MessageTarget,
+                public BrowserContextObserver,
                 public content::NotificationObserver,
                 public content::WebContentsDelegate,
                 public content::WebContentsObserver {
@@ -192,6 +194,8 @@ class WebView : public MessageTarget,
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
+
+  void BrowserContextDestroyed(BrowserContext* context) FINAL;
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
