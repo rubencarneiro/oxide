@@ -21,8 +21,10 @@
 #include <libudev.h>
 #include <stdlib.h>
 
-#include "shared/browser/oxide_default_screen_info.h"
+#include "base/logging.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
+
+#include "shared/browser/oxide_default_screen_info.h"
 
 namespace oxide {
 
@@ -84,6 +86,7 @@ FormFactor GetFormFactorHint() {
     } else if (!strcmp(force, "phone")) {
       form_factor = FORM_FACTOR_PHONE;
     } else {
+      LOG(ERROR) << "Unrecognized value for OXIDE_FORCE_FORM_FACTOR";
       initialized = false;
     }
   }
