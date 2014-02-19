@@ -21,13 +21,13 @@
 
 namespace oxide {
 
+void BrowserContextObserver::OnBrowserContextDestruction() {
+  browser_context_ = NULL;
+  BrowserContextDestroyed();
+}
+
 BrowserContextObserver::BrowserContextObserver() :
     browser_context_(NULL) {}
-
-BrowserContextObserver::BrowserContextObserver(BrowserContext* context) :
-    browser_context_(context) {
-  Observe(context);
-}
 
 void BrowserContextObserver::Observe(BrowserContext* context) {
   if (context == browser_context_) {
@@ -46,13 +46,6 @@ BrowserContextObserver::~BrowserContextObserver() {
   if (browser_context_) {
     browser_context_->RemoveObserver(this);
   }
-}
-
-void BrowserContextObserver::OnBrowserContextDestruction() {
-  browser_context_->RemoveObserver(this);
-  BrowserContext* context = browser_context_;
-  browser_context_ = NULL;
-  BrowserContextDestroyed(context);
 }
 
 } // namespace oxide

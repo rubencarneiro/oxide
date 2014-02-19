@@ -127,9 +127,6 @@ class BrowserContext : public content::BrowserContext {
 
   BrowserContextIOData* io_data() const { return io_data_.io_data(); }
 
-  void AddObserver(BrowserContextObserver* observer);
-  void RemoveObserver(BrowserContextObserver* observer);
-
   virtual UserScriptMaster& UserScriptManager() = 0;
 
   virtual net::URLRequestContextGetter* GetRequestContext() OVERRIDE;
@@ -183,6 +180,8 @@ class BrowserContext : public content::BrowserContext {
   BrowserContext(BrowserContextIOData* io_data);
 
  private:
+  friend class BrowserContextObserver;
+
   class IODataHandle {
    public:
     IODataHandle(BrowserContextIOData* data) : io_data_(data) {}
@@ -217,6 +216,9 @@ class BrowserContext : public content::BrowserContext {
    private:
     BrowserContextIOData* io_data_;
   };
+
+  void AddObserver(BrowserContextObserver* observer);
+  void RemoveObserver(BrowserContextObserver* observer);
 
   IODataHandle io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;

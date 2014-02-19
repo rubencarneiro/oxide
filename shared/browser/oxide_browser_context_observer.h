@@ -26,21 +26,22 @@ class BrowserContextObserver {
  public:
   virtual ~BrowserContextObserver();
 
-  virtual void BrowserContextDestroyed(BrowserContext* context) {}
+  virtual void BrowserContextDestroyed() {}
 
   virtual void NotifyUserAgentStringChanged() {}
 
-  void OnBrowserContextDestruction();
-
  protected:
   BrowserContextObserver();
-  BrowserContextObserver(BrowserContext* context);
 
   void Observe(BrowserContext* context);
 
   BrowserContext* browser_context() const { return browser_context_; }
 
  private:
+  friend class BrowserContext;
+
+  void OnBrowserContextDestruction();
+
   BrowserContext* browser_context_;
 };
 

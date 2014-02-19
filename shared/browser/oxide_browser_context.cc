@@ -363,6 +363,14 @@ BrowserContext::IODataHandle::~IODataHandle() {
   io_data_ = NULL;
 }
 
+void BrowserContext::AddObserver(BrowserContextObserver* observer) {
+  observers_.AddObserver(observer);
+}
+
+void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
+  observers_.RemoveObserver(observer);
+}
+
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
   CHECK(BrowserProcessMain::Exists()) <<
@@ -467,14 +475,6 @@ void BrowserContext::SetUserAgent(const std::string& user_agent) {
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     GetOffTheRecordContext()->observers_,
                     NotifyUserAgentStringChanged());
-}
-
-void BrowserContext::AddObserver(BrowserContextObserver* observer) {
-  observers_.AddObserver(observer);
-}
-
-void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
-  observers_.RemoveObserver(observer);
 }
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
