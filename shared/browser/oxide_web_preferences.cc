@@ -188,6 +188,14 @@ void WebPreferences::SetAttribute(Attr attr, bool val) {
   if (val == attributes_[attr]) {
     return;
   }
+
+  if (attr == ATTR_SUPPORTS_MULTIPLE_WINDOWS && val) {
+    LOG(WARNING) <<
+        "Oxide currently doesn't support window.open(). "
+        "See https://launchpad.net/bugs/1240749";
+    return;
+  }
+
   attributes_[attr] = val;
   NotifyObserversOfChange();
 }
