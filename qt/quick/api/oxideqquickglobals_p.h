@@ -25,6 +25,7 @@
 #include <QUrl>
 
 class OxideQQuickGlobalsPrivate;
+class OxideQQuickWebContext;
 
 class OxideQQuickGlobals : public QObject {
   Q_OBJECT
@@ -33,6 +34,8 @@ class OxideQQuickGlobals : public QObject {
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
+
+  Q_PROPERTY(OxideQQuickWebContext* _defaultWebContext READ _defaultWebContext)
 
   Q_DECLARE_PRIVATE(OxideQQuickGlobals)
   Q_DISABLE_COPY(OxideQQuickGlobals)
@@ -55,6 +58,8 @@ class OxideQQuickGlobals : public QObject {
 
   QString acceptLangs() const;
   void setAcceptLangs(const QString& accept_langs);
+
+  OxideQQuickWebContext* _defaultWebContext();
 
  Q_SIGNALS:
   void productChanged();

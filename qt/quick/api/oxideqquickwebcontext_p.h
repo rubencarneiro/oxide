@@ -51,7 +51,7 @@ class OxideQQuickWebContext : public QObject,
   void classBegin();
   void componentComplete();
 
-  static QSharedPointer<OxideQQuickWebContext> defaultContext();
+  Q_DECL_EXPORT static QSharedPointer<OxideQQuickWebContext> defaultContext();
 
   QString product() const;
   void setProduct(const QString& product);

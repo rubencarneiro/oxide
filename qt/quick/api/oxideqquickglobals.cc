@@ -207,4 +207,22 @@ void OxideQQuickGlobals::setAcceptLangs(const QString& accept_langs) {
   }
 }
 
+OxideQQuickWebContext* OxideQQuickGlobals::_defaultWebContext() {
+  Q_D(OxideQQuickGlobals);
+  static bool warn_once = false;
+  if (!warn_once) {
+    qWarning("_defaultWebContext() is not intended for public use. "
+             "The Oxide global object provides a means to configure "
+             "some paramters for the default WebContext. Please "
+             "use this instead.");
+    warn_once = true;
+  }
+
+  if (!d->has_default_context()) {
+    return NULL;
+  }
+
+  return OxideQQuickWebContext::defaultContext().data();
+}
+
 #include "moc_oxideqquickglobals_p.cpp"

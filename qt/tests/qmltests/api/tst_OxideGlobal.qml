@@ -41,7 +41,7 @@ Item {
         { attr: "acceptLangs", signal: "acceptLangsChanged", value1: "foo", value2: "bar", constructOnly: false }
       ];
 
-      var dataPath = Testing.Utils.DATA_PATH;
+      var dataPath = Testing.OxideTestingUtils.DATA_PATH;
       if (dataPath != "") {
         r.push(
             { attr: "dataPath", signal: "dataPathChanged", value1: dataPath + "/test1", value2: dataPath + "/test2", constructOnly: true },
@@ -62,7 +62,7 @@ Item {
               "Got the wrong value back");
 
       var view = webView.createObject(null, {});
-      compare(view.context[data.attr], data.value1,
+      compare(Oxide._defaultWebContext[data.attr], data.value1,
               "Got the wrong value back from the default context");
 
       var expectedCount = 1;
@@ -76,18 +76,19 @@ Item {
       compare(spy.count, expectedCount, "Unexpected number of signals");
       compare(Oxide[data.attr], expectedVal,
               "Got the wrong value back");
-      compare(view.context[data.attr], expectedVal,
+      compare(Oxide._defaultWebContext[data.attr], expectedVal,
               "Got the wrong value back from the default context");
 
       if (!data.constructOnly) {
-        view.context[data.attr] = data.value1;
+        Oxide._defaultWebContext[data.attr] = data.value1;
         compare(spy.count, expectedCount + 1,
                 "Setting attribute on the default context should generate a signal");
         compare(Oxide[data.attr], data.value1,
                 "Got the wrong value back");
       }
 
-      var destructionObs = Testing.Utils.createDestructionObserver(view.context);
+      var destructionObs = Testing.OxideTestingUtils.createDestructionObserver(
+          Oxide._defaultWebContext);
       view.destroy();
       gc();
       verify(waitFor(function() { return destructionObs.destroyed; }),
