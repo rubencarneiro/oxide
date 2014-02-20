@@ -297,6 +297,9 @@ WebView::~WebView() {
   if (web_contents_) {
     web_contents_->SetDelegate(NULL);
   }
+  if (root_frame_) {
+    root_frame_->Destroy();
+  }
 }
 
 bool WebView::Init(BrowserContext* context,
@@ -339,23 +342,6 @@ bool WebView::Init(BrowserContext* context,
   root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
   return true;
-}
-
-void WebView::Shutdown() {
-  if (!web_contents_) {
-    LOG(ERROR) << "Called Shutdown() on a webview that isn't initialized";
-    return;
-  }
-
-  registrar_.reset();
-
-  WebContentsObserver::Observe(NULL);
-
-  root_frame_->Destroy();
-  root_frame_ = NULL;
-
-  BrowserContextObserver::Observe(NULL);
-  web_contents_.reset();
 }
 
 // static

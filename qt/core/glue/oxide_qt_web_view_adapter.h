@@ -100,8 +100,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual QRect GetContainerBounds() = 0;
 
-  void shutdown();
-
   bool isInitialized();
 
   int getNavigationEntryCount() const;

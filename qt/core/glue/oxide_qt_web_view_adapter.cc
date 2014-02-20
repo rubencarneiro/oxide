@@ -119,10 +119,6 @@ void WebViewAdapter::reload() {
   priv->Reload();
 }
 
-void WebViewAdapter::shutdown() {
-  priv->Shutdown();
-}
-
 bool WebViewAdapter::isInitialized() {
   return priv->GetWebContents() != NULL;
 }

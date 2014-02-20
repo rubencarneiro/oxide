@@ -166,18 +166,15 @@ void OxideQQuickWebViewPrivate::componentComplete() {
 
   Q_ASSERT(init_props_);
 
-  if (!context) {
-    // Ok, we handle the default context a bit differently. If our context
-    // comes from setContext(), then we don't hold a strong reference to it
-    // because it will be owned by someone else in the QML object
-    // hierarchy. However, the default context is not in this hierarchy and
-    // has no QObject parent, so we use reference counting for it instead to
-    // ensure that it is freed once all webviews are closed
+  OxideQQuickWebContext* context_in_use = context;
+  if (!context_in_use) {
+    // The default context is reference counted and not exposed to the
+    // embedder
     default_context_ = OxideQQuickWebContext::defaultContext();
-    context = default_context_.data();
+    context_in_use = default_context_.data();
   }
 
-  init(OxideQQuickWebContextPrivate::get(context),
+  init(OxideQQuickWebContextPrivate::get(context_in_use),
        QSizeF(q->width(), q->height()).toSize(),
        init_props_->incognito,
        init_props_->url,
@@ -282,11 +279,16 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
 
-  // This is a bit hacky, but when we are using the default context,
-  // we hold a reference to it. We release this reference before
-  // the oxide::WebView destructor is called, so we have to ensure our
-  // WebContents is destroyed now
-  d->shutdown();
+  // The default context is reference counted, and OxideQQuickWebViewPrivate
+  // (our d_ptr) holds our reference to it. When destroying the d_ptr,
+  // we need to hold a temporary reference to the default context to stop
+  // it from being destroyed before the destructor for WebViewAdapter is
+  // called, otherwise our oxide::WebView will outlive its context (and
+  // this is not allowed)
+  QSharedPointer<OxideQQuickWebContext> death_grip;
+  if (!d->context) {
+    death_grip = OxideQQuickWebContext::defaultContext();
+  }
 
   delete d_ptr;
   d_ptr = NULL;
