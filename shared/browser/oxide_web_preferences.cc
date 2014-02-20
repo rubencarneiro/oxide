@@ -19,25 +19,24 @@
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
-#include "content/public/browser/render_view_host.h"
-#include "content/public/browser/web_contents.h"
 #include "webkit/common/webpreferences.h"
 
-#include "oxide_web_view.h"
+#include "oxide_web_preferences_observer.h"
 
 namespace oxide {
 
-void WebPreferences::UpdateViews() {
-  for (std::set<WebView *>::const_iterator it = views_.begin();
-       it != views_.end(); ++it) {
-    WebView* view = *it;
-    content::WebContents* contents = view->GetWebContents();
-    if (!contents) {
-      continue;
-    }
-    contents->GetRenderViewHost()->UpdateWebkitPreferences(
-        contents->GetRenderViewHost()->GetWebkitPreferences());
-  }
+void WebPreferences::NotifyObserversOfChange() {
+  FOR_EACH_OBSERVER(WebPreferencesObserver,
+                    observers_,
+                    WebPreferencesValueChanged());
+}
+
+void WebPreferences::AddObserver(WebPreferencesObserver* observer) {
+  observers_.AddObserver(observer);
+}
+
+void WebPreferences::RemoveObserver(WebPreferencesObserver* observer) {
+  observers_.RemoveObserver(observer);
 }
 
 WebPreferences::WebPreferences() :
@@ -90,7 +89,9 @@ WebPreferences::WebPreferences() :
 }
 
 WebPreferences::~WebPreferences() {
-  CHECK(views_.empty());
+  FOR_EACH_OBSERVER(WebPreferencesObserver,
+                    observers_,
+                    OnWebPreferencesDestruction());
 }
 
 std::string WebPreferences::StandardFontFamily() const {
@@ -98,8 +99,12 @@ std::string WebPreferences::StandardFontFamily() const {
 }
 
 void WebPreferences::SetStandardFontFamily(const std::string& font) {
-  standard_font_family_ = base::UTF8ToUTF16(font);
-  UpdateViews();
+  base::string16 value = base::UTF8ToUTF16(font);
+  if (value == standard_font_family_) {
+    return;
+  }
+  standard_font_family_ = value;
+  NotifyObserversOfChange();
 }
 
 std::string WebPreferences::FixedFontFamily() const {
@@ -107,8 +112,12 @@ std::string WebPreferences::FixedFontFamily() const {
 }
 
 void WebPreferences::SetFixedFontFamily(const std::string& font) {
-  fixed_font_family_ = base::UTF8ToUTF16(font);
-  UpdateViews();
+  base::string16 value = base::UTF8ToUTF16(font);
+  if (value == fixed_font_family_) {
+    return;
+  }
+  fixed_font_family_ = value;
+  NotifyObserversOfChange();
 }
 
 std::string WebPreferences::SerifFontFamily() const {
@@ -116,8 +125,12 @@ std::string WebPreferences::SerifFontFamily() const {
 }
 
 void WebPreferences::SetSerifFontFamily(const std::string& font) {
-  serif_font_family_ = base::UTF8ToUTF16(font);
-  UpdateViews();
+  base::string16 value = base::UTF8ToUTF16(font);
+  if (value == serif_font_family_) {
+    return;
+  }
+  serif_font_family_ = value;
+  NotifyObserversOfChange();
 }
 
 std::string WebPreferences::SansSerifFontFamily() const {
@@ -125,47 +138,58 @@ std::string WebPreferences::SansSerifFontFamily() const {
 }
 
 void WebPreferences::SetSansSerifFontFamily(const std::string& font) {
-  sans_serif_font_family_ = base::UTF8ToUTF16(font);
-  UpdateViews();
+  base::string16 value = base::UTF8ToUTF16(font);
+  if (value == sans_serif_font_family_) {
+    return;
+  }
+  sans_serif_font_family_ = value;
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::SetDefaultEncoding(const std::string& encoding) {
+  if (encoding == default_encoding_) {
+    return;
+  }
   default_encoding_ = encoding;
-  UpdateViews();
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::SetDefaultFontSize(unsigned size) {
+  if (size == default_font_size_) {
+    return;
+  }
   default_font_size_ = size;
-  UpdateViews();
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::SetDefaultFixedFontSize(unsigned size) {
+  if (size == default_fixed_font_size_) {
+    return;
+  }
   default_fixed_font_size_ = size;
-  UpdateViews();
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::SetMinimumFontSize(unsigned size) {
+  if (size == minimum_font_size_) {
+    return;
+  }
   minimum_font_size_ = size;
-  UpdateViews();
+  NotifyObserversOfChange();
 }
 
 bool WebPreferences::TestAttribute(Attr attr) const {
-  DCHECK(attr < ATTR_LAST && attr >= 0);
+  CHECK(attr < ATTR_LAST && attr >= 0);
   return attributes_[attr];
 }
 
 void WebPreferences::SetAttribute(Attr attr, bool val) {
-  DCHECK(attr < ATTR_LAST && attr >= 0);
+  CHECK(attr < ATTR_LAST && attr >= 0);
+  if (val == attributes_[attr]) {
+    return;
+  }
   attributes_[attr] = val;
-  UpdateViews();
-}
-
-void WebPreferences::AddWebView(WebView* view) {
-  views_.insert(view);
-}
-
-void WebPreferences::RemoveWebView(WebView* view) {
-  views_.erase(view);
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {

@@ -15,43 +15,40 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_ADAPTER_BASE_H_
-#define _OXIDE_QT_CORE_GLUE_ADAPTER_BASE_H_
+#include "oxide_web_preferences_observer.h"
 
-#include <QObject>
-#include <QtGlobal>
+#include "base/logging.h"
+
+#include "oxide_web_preferences.h"
 
 namespace oxide {
-namespace qt {
 
-class AdapterBase {
- public:
-  virtual ~AdapterBase() {}
+void WebPreferencesObserver::OnWebPreferencesDestruction() {
+  DCHECK(web_preferences_);
+  web_preferences_ = NULL;
+  WebPreferencesDestroyed();
+}
 
-  QObject* api_handle() { return q_ptr; }
+WebPreferencesObserver::WebPreferencesObserver() :
+    web_preferences_(NULL) {}
 
- protected:
-  AdapterBase(QObject* q) :
-      q_ptr(q) {
-    Q_ASSERT(q);
+void WebPreferencesObserver::Observe(WebPreferences* preferences) {
+  if (web_preferences_ == preferences) {
+    return;
   }
-  AdapterBase();
+  if (web_preferences_) {
+    web_preferences_->RemoveObserver(this);
+  }
+  web_preferences_ = preferences;
+  if (web_preferences_) {
+    web_preferences_->AddObserver(this);
+  }
+}
 
-  QObject* q_ptr;
-};
+WebPreferencesObserver::~WebPreferencesObserver() {
+  if (web_preferences_) {
+    web_preferences_->RemoveObserver(this);
+  }
+}
 
-} // namespace qt
 } // namespace oxide
-
-template <typename T>
-inline T* adapterToQObject(oxide::qt::AdapterBase* a) {
-  if (!a) return NULL;
-  return qobject_cast<T *>(a->api_handle());
-}
-
-inline QObject* adapterToQObject(oxide::qt::AdapterBase* a) {
-  if (!a) return NULL;
-  return qobject_cast<QObject *>(a->api_handle());
-}
-
-#endif // _OXIDE_QT_CORE_GLUE_ADAPTER_BASE_H_

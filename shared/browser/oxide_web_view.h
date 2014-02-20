@@ -31,6 +31,7 @@
 
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_message_target.h"
+#include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
 
 class GURL;
@@ -63,6 +64,7 @@ class WebPreferences;
 // components alive
 class WebView : public MessageTarget,
                 public BrowserContextObserver,
+                public WebPreferencesObserver,
                 public content::NotificationObserver,
                 public content::WebContentsDelegate,
                 public content::WebContentsObserver {
@@ -113,7 +115,7 @@ class WebView : public MessageTarget,
   WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
 
   WebPreferences* GetWebPreferences();
-  void SetWebPreferences(WebPreferences* prefs, bool send_update = true);
+  void SetWebPreferences(WebPreferences* prefs);
 
   virtual content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) = 0;
@@ -138,8 +140,12 @@ class WebView : public MessageTarget,
                           const base::string16& error_description);
 
   // BrowserContextObserver
-  void BrowserContextDestroyed(BrowserContext* context) FINAL;
+  void BrowserContextDestroyed() FINAL;
   void NotifyUserAgentStringChanged() FINAL;
+
+  // WebPreferencesObserver
+  void WebPreferencesDestroyed() FINAL;
+  void WebPreferencesValueChanged() FINAL;
 
   // content::NotificationObserver
   void Observe(int type,
@@ -220,14 +226,14 @@ class WebView : public MessageTarget,
   virtual void OnNavigationListPruned(bool from_front, int count);
   virtual void OnNavigationEntryChanged(int index);
 
+  virtual void OnWebPreferencesChanged();
+
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   scoped_ptr<content::NotificationRegistrar> registrar_;
 
   WebFrame* root_frame_;
-
-  WebPreferences* web_preferences_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

@@ -18,14 +18,26 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_PREFERENCES_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_PREFERENCES_H_
 
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+
 #include "shared/browser/oxide_web_preferences.h"
+
+class OxideQWebPreferences;
 
 namespace oxide {
 namespace qt {
 
 class WebPreferences FINAL : public oxide::WebPreferences {
  public:
-  WebPreferences();
+  WebPreferences(OxideQWebPreferences* api_handle);
+
+  OxideQWebPreferences* api_handle() const { return api_handle_; }
+
+ private:
+  OxideQWebPreferences* api_handle_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WebPreferences);
 };
 
 } // namespace qt

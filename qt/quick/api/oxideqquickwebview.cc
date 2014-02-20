@@ -55,12 +55,12 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
+    oxide::qt::WebViewAdapter(view),
     context(NULL),
     navigationHistory(view),
     popup_menu(NULL),
     init_props_(new InitData()),
-    load_progress_(0),
-    q_ptr(view) {}
+    load_progress_(0) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
@@ -141,11 +141,10 @@ QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
                 q->width(), q->height()).toRect();
 }
 
-void OxideQQuickWebViewPrivate::NotifyWebPreferencesDestroyed() {
+void OxideQQuickWebViewPrivate::OnWebPreferencesChanged() {
   Q_Q(OxideQQuickWebView);
 
-  qWarning() << "WebPreferences was destroyed whilst still in use";
-  q->setPreferences(NULL);
+  emit q->preferencesChanged();
 }
 
 void OxideQQuickWebViewPrivate::FrameAdded(
@@ -481,7 +480,8 @@ void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
   }
 
   d->setPreferences(prefs);
-  emit preferencesChanged();
+  // We don't emit a signal here, as we get OnWebPreferencesChanged(),
+  // which also happens if our WebPreferences are destroyed
 }
 
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {

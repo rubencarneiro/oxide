@@ -64,7 +64,7 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
   }
 }
 
-void WebView::BrowserContextDestroyed(BrowserContext* context) {
+void WebView::BrowserContextDestroyed() {
   CHECK(0) << "The browser context was destroyed whilst still in use";
 }
 
@@ -72,6 +72,19 @@ void WebView::NotifyUserAgentStringChanged() {
   // See https://launchpad.net/bugs/1279900 and the comment in
   // HttpUserAgentSettings::GetUserAgent()
   web_contents_->SetUserAgentOverride(browser_context()->GetUserAgent());
+}
+
+void WebView::WebPreferencesDestroyed() {
+  OnWebPreferencesChanged();
+  WebPreferencesValueChanged();
+}
+
+void WebView::WebPreferencesValueChanged() {
+  if (!web_contents_) {
+    return;
+  }
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
 }
 
 void WebView::Observe(int type,
@@ -275,15 +288,12 @@ void WebView::OnNavigationEntryCommitted() {}
 void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
+void WebView::OnWebPreferencesChanged() {}
+
 WebView::WebView() :
-    root_frame_(NULL),
-    web_preferences_(NULL) {}
+    root_frame_(NULL) {}
 
 WebView::~WebView() {
-  if (web_preferences_) {
-    web_preferences_->RemoveWebView(this);
-  }
-
   if (web_contents_) {
     web_contents_->SetDelegate(NULL);
   }
@@ -537,31 +547,17 @@ WebFrame* WebView::FindFrameWithID(int64 frame_tree_node_id) const {
 }
 
 WebPreferences* WebView::GetWebPreferences() {
-  if (!web_preferences_) {
-    SetWebPreferences(
-        ContentClient::instance()->browser()->GetDefaultWebPreferences(),
-        false);
-  }
-
-  return web_preferences_;
+  return web_preferences();
 }
 
-void WebView::SetWebPreferences(WebPreferences* prefs, bool send_update) {
-  if (web_preferences_) {
-    web_preferences_->RemoveWebView(this);
-  }
-
-  web_preferences_ = prefs;
-  if (prefs) {
-    prefs->AddWebView(this);
-  }
-
-  if (!send_update || !web_contents_) {
+void WebView::SetWebPreferences(WebPreferences* prefs) {
+  if (prefs == web_preferences()) {
     return;
   }
 
-  web_contents()->GetRenderViewHost()->UpdateWebkitPreferences(
-      web_contents()->GetRenderViewHost()->GetWebkitPreferences());
+  WebPreferencesObserver::Observe(prefs);
+  OnWebPreferencesChanged();
+  WebPreferencesValueChanged();
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {

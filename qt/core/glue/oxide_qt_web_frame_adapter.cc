@@ -58,7 +58,8 @@ WebFrameAdapterPrivate* WebFrameAdapterPrivate::get(WebFrameAdapter* adapter) {
   return adapter->priv.data();
 }
 
-WebFrameAdapter::WebFrameAdapter() :
+WebFrameAdapter::WebFrameAdapter(QObject* q) :
+    AdapterBase(q),
     priv(new WebFrameAdapterPrivate()) {}
 
 WebFrameAdapter::~WebFrameAdapter() {}

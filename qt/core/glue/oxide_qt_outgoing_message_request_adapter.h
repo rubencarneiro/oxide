@@ -40,7 +40,7 @@ class Q_DECL_EXPORT OutgoingMessageRequestAdapter : public AdapterBase {
   void removeFromOwner();
 
  protected:
-  OutgoingMessageRequestAdapter();
+  OutgoingMessageRequestAdapter(QObject* q);
 
  private:
   friend class OutgoingMessageRequestAdapterPrivate;

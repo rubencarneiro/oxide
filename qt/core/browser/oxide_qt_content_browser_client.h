@@ -34,8 +34,6 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
  public:
   base::MessagePump* CreateMessagePumpForUI() FINAL;
 
-  oxide::WebPreferences* GetDefaultWebPreferences() FINAL;
-
   bool IsTouchSupported() FINAL;
 
  private:

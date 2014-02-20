@@ -20,27 +20,15 @@
 #include <QList>
 #include <QTouchDevice>
 
-#include "base/lazy_instance.h"
-
 #include "oxide_qt_message_pump.h"
-#include "oxide_qt_web_preferences.h"
 
 namespace oxide {
 namespace qt {
-
-namespace {
-base::LazyInstance<WebPreferences> g_default_web_preferences =
-    LAZY_INSTANCE_INITIALIZER;
-}
 
 ContentBrowserClient::ContentBrowserClient() {}
 
 base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
-}
-
-oxide::WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
-  return g_default_web_preferences.Pointer();
 }
 
 bool ContentBrowserClient::IsTouchSupported() {

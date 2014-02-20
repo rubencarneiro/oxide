@@ -28,7 +28,8 @@
 namespace oxide {
 namespace qt {
 
-MessageHandlerAdapter::MessageHandlerAdapter() :
+MessageHandlerAdapter::MessageHandlerAdapter(QObject* q) :
+    AdapterBase(q),
     priv(MessageHandlerAdapterPrivate::Create(this)) {}
 
 MessageHandlerAdapter::~MessageHandlerAdapter() {}

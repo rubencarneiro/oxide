@@ -47,7 +47,7 @@ bool OxideQQuickMessageHandlerPrivate::OnReceiveMessage(
 
 OxideQQuickMessageHandlerPrivate::OxideQQuickMessageHandlerPrivate(
     OxideQQuickMessageHandler* q) :
-    q_ptr(q) {}
+    oxide::qt::MessageHandlerAdapter(q) {}
 
 void OxideQQuickMessageHandlerPrivate::removeFromCurrentOwner() {
   Q_Q(OxideQQuickMessageHandler);

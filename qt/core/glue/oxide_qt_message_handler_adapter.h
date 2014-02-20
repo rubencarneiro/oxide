@@ -49,7 +49,7 @@ class Q_DECL_EXPORT MessageHandlerAdapter : public AdapterBase {
   void detachHandler();
 
  protected:
-  MessageHandlerAdapter();
+  MessageHandlerAdapter(QObject* q);
 
  private:
   friend class MessageHandlerAdapterPrivate;

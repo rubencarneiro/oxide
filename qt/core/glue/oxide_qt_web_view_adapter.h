@@ -114,18 +114,18 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   OxideQWebPreferences* preferences();
   void setPreferences(OxideQWebPreferences* prefs);
-  virtual void NotifyWebPreferencesDestroyed() = 0;
+  void WebPreferencesChanged();
+  virtual void OnWebPreferencesChanged() = 0;
 
   virtual void FrameAdded(WebFrameAdapter* frame) = 0;
   virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
 
  protected:
-  WebViewAdapter();
+  WebViewAdapter(QObject* q);
 
  private:
   QScopedPointer<WebViewAdapterPrivate> priv;
   QList<MessageHandlerAdapter *> message_handlers_;
-  OxideQWebPreferences* preferences_;
 };
 
 } // namespace qt

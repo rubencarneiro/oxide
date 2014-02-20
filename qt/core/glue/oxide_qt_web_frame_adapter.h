@@ -58,7 +58,7 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
   virtual void URLChanged() = 0;
 
  protected:
-  WebFrameAdapter();
+  WebFrameAdapter(QObject* q);
 
  private:
   friend class WebFrameAdapterPrivate;

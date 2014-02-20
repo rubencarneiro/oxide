@@ -42,7 +42,6 @@ namespace oxide {
 class GLShareGroup;
 class SharedGLContext;
 class WebFrameTree;
-class WebPreferences;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
  public:
@@ -82,8 +81,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
-
-  virtual WebPreferences* GetDefaultWebPreferences();
 
   virtual bool IsTouchSupported();
 

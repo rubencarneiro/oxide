@@ -242,12 +242,14 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
     ::WebPreferences* prefs) {
-
   WebView* view = WebView::FromRenderViewHost(render_view_host);
   WebPreferences* web_prefs = view->GetWebPreferences();
-  if (web_prefs) {
-    web_prefs->ApplyToWebkitPrefs(prefs);
+  if (!web_prefs) {
+    DLOG(WARNING) << "No WebPreferences on WebView";
+    return;
   }
+
+  web_prefs->ApplyToWebkitPrefs(prefs);
 
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
@@ -261,10 +263,6 @@ gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   }
 
   return context->share_group();
-}
-
-WebPreferences* ContentBrowserClient::GetDefaultWebPreferences() {
-  return NULL;
 }
 
 bool ContentBrowserClient::IsTouchSupported() {
