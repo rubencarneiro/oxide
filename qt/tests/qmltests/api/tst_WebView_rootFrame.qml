@@ -15,7 +15,7 @@ TestWebView {
 
     function test_WebView_rootFrame1_parent() {
       verify(webView.rootFrame, "Should always have a root frame");
-      compare(Utils.qObjectParent(webView.rootFrame), webView,
+      compare(OxideTestingUtils.qObjectParent(webView.rootFrame), webView,
               "The root frame should be parented to the webview");
     }
 

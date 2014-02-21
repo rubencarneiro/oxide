@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,10 +30,12 @@
 #include <QScreen>
 #include <QSize>
 #include <QTextCharFormat>
+#include <QTouchEvent>
 #include <QWheelEvent>
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/time/time.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
@@ -43,9 +45,12 @@
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 #include "ui/base/ime/text_input_type.h"
+#include "ui/events/event.h"
+#include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/rect.h"
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
+#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_p.h"
 
 #include "oxide_qt_backing_store.h"
 
@@ -332,6 +337,22 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   return modifiers;
 }
 
+ui::EventType QTouchPointStateToEventType(Qt::TouchPointState state) {
+  switch (state) {
+    case Qt::TouchPointPressed:
+      return ui::ET_TOUCH_PRESSED;
+    case Qt::TouchPointMoved:
+      return ui::ET_TOUCH_MOVED;
+    case Qt::TouchPointStationary:
+      return ui::ET_TOUCH_STATIONARY;
+    case Qt::TouchPointReleased:
+      return ui::ET_TOUCH_RELEASED;
+    default:
+      NOTREACHED();
+      return ui::ET_UNKNOWN;
+  }
+}
+
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
     QKeyEvent* qevent) {
   content::NativeWebKeyboardEvent event;
@@ -529,7 +550,7 @@ RenderWidgetHostView::RenderWidgetHostView(
     backing_store_(NULL),
     delegate_(delegate),
     input_type_(ui::TEXT_INPUT_TYPE_NONE) {
-  delegate_->SetRenderWidgetHostView(this);
+  RenderWidgetHostViewDelegatePrivate::get(delegate)->rwhv = this;
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {}
@@ -677,19 +698,37 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 ui::TextInputMode mode,
                                                 bool can_compose_inline) {
   input_type_ = type;
-
-  bool enabled = type != ui::TEXT_INPUT_TYPE_NONE;
-
-  delegate_->SetInputMethodEnabled(enabled);
-
-  QInputMethod* input_method = QGuiApplication::inputMethod();
-  input_method->setVisible(enabled);
-  input_method->update(Qt::ImHints | Qt::ImQueryInput);
+  QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
+  if (HasFocus() && (type != ui::TEXT_INPUT_TYPE_NONE) &&
+      !QGuiApplication::inputMethod()->isVisible()) {
+    delegate_->SetInputMethodEnabled(true);
+    QGuiApplication::inputMethod()->show();
+  }
 }
 
-void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
+void RenderWidgetHostView::ImeCancelComposition() {
+  // TODO: should we call QGuiApplication::inputMethod()->commit() ?
+}
+
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
+  if (!HasFocus()) {
+    return;
+  }
+  delegate_->SetInputMethodEnabled(is_editable_node);
+  if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
+    QGuiApplication::inputMethod()->setVisible(is_editable_node);
+  }
+}
+
+void RenderWidgetHostView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus()) {
     OnFocus();
+    if ((input_type_ != ui::TEXT_INPUT_TYPE_NONE) &&
+        !QGuiApplication::inputMethod()->isVisible()) {
+      // the focused node hasn’t changed and it is an input field
+      delegate_->SetInputMethodEnabled(true);
+      QGuiApplication::inputMethod()->show();
+    }
   } else {
     OnBlur();
   }
@@ -697,25 +736,25 @@ void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardKeyEvent(QKeyEvent* event) {
+void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
   GetRenderWidgetHost()->ForwardKeyboardEvent(
       MakeNativeWebKeyboardEvent(event));
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardMouseEvent(QMouseEvent* event) {
+void RenderWidgetHostView::HandleMouseEvent(QMouseEvent* event) {
   GetRenderWidgetHost()->ForwardMouseEvent(
       MakeWebMouseEvent(event, GetDeviceScaleFactor()));
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
+void RenderWidgetHostView::HandleWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHost()->ForwardWheelEvent(
       MakeWebMouseWheelEvent(event, GetDeviceScaleFactor()));
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardInputMethodEvent(QInputMethodEvent* event) {
+void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
   content::RenderWidgetHostImpl* rwh =
       content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
 
@@ -766,6 +805,50 @@ void RenderWidgetHostView::ForwardInputMethodEvent(QInputMethodEvent* event) {
   }
 
   // XXX: in which case should we call rwh->ImeCancelComposition() ?
+
+  event->accept();
+}
+
+void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
+  base::TimeDelta timestamp(base::TimeDelta::FromMilliseconds(event->timestamp()));
+  float scale = 1 / GetDeviceScaleFactor();
+
+  for (int i = 0; i < event->touchPoints().size(); ++i) {
+    const QTouchEvent::TouchPoint& touch_point = event->touchPoints().at(i);
+
+    int touch_id;
+    std::map<int, int>::iterator it = touch_id_map_.find(touch_point.id());
+    if (it != touch_id_map_.end()) {
+      touch_id = it->second;
+    } else {
+      touch_id = 0;
+      for (std::map<int, int>::iterator it = touch_id_map_.begin();
+           it != touch_id_map_.end(); ++it) {
+        touch_id = std::max(touch_id, it->second + 1);
+      }
+      touch_id_map_[touch_point.id()] = touch_id;
+    }
+
+    ui::TouchEvent ui_event(
+        QTouchPointStateToEventType(touch_point.state()),
+        gfx::ScalePoint(gfx::PointF(
+          touch_point.pos().x(), touch_point.pos().y()), scale),
+        0,
+        touch_id,
+        timestamp,
+        0.0f, 0.0f,
+        0.0f,
+        float(touch_point.pressure()));
+    ui_event.set_root_location(
+        gfx::ScalePoint(gfx::PointF(
+          touch_point.screenPos().x(), touch_point.screenPos().y()), scale));
+
+    oxide::RenderWidgetHostView::HandleTouchEvent(ui_event);
+
+    if (touch_point.state() == Qt::TouchPointReleased) {
+      touch_id_map_.erase(touch_point.id());
+    }
+  }
 
   event->accept();
 }

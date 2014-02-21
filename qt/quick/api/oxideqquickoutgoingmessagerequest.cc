@@ -47,7 +47,7 @@ void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveError(
 
 OxideQQuickOutgoingMessageRequestPrivate::OxideQQuickOutgoingMessageRequestPrivate(
     OxideQQuickOutgoingMessageRequest* q) :
-    q_ptr(q) {}
+    oxide::qt::OutgoingMessageRequestAdapter(q) {}
 
 // static
 OxideQQuickOutgoingMessageRequestPrivate* OxideQQuickOutgoingMessageRequestPrivate::get(

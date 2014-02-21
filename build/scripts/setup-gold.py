@@ -44,7 +44,7 @@ def which(file):
 def main(argv):
   parser = OptionParser()
   parser.add_option("--output", dest="output", help="Output directory")
-  parser.add_option("--ld", dest="ld", help="Linker source path")
+  parser.add_option("--ld", dest="ld", help="Linker path")
 
   (options, args) = parser.parse_args(argv)
 

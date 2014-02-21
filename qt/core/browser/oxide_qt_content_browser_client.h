@@ -34,15 +34,7 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
  public:
   base::MessagePump* CreateMessagePumpForUI() FINAL;
 
-  scoped_refptr<oxide::SharedGLContext> CreateSharedGLContext(
-      oxide::GLShareGroup* share_group) FINAL;
-
-  void GetAllowedGLImplementations(
-      std::vector<gfx::GLImplementation>* impls) FINAL;
-
-  void GetDefaultScreenInfo(blink::WebScreenInfo* result) FINAL;
-
-  oxide::WebPreferences* GetDefaultWebPreferences() FINAL;
+  bool IsTouchSupported() FINAL;
 
  private:
   // Limit default constructor access to the lazy instance initializer

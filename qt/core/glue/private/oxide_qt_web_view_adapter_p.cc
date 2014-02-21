@@ -102,6 +102,10 @@ void WebViewAdapterPrivate::OnNavigationEntryChanged(int index) {
   a->NavigationEntryChanged(index);
 }
 
+void WebViewAdapterPrivate::OnWebPreferencesChanged() {
+  a->WebPreferencesChanged();
+}
+
 oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame(
     content::FrameTreeNode* node) {
   return new WebFrame(a->CreateWebFrame(), node, this);

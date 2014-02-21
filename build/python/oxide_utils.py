@@ -35,7 +35,7 @@ class VersionFileParserError(Exception):
 class VersionFileParser(object):
   def __init__(self, file):
     self._dirty = False
-    self._v = [None for i in range(4)]
+    self._v = [None for i in range(3)]
 
     self._filename = file
 
@@ -47,10 +47,8 @@ class VersionFileParser(object):
             self._v[0] = r.match(line.strip()).group(1)
           elif line.startswith("MINOR="):
             self._v[1] = r.match(line.strip()).group(1)
-          elif line.startswith("BUILD="):
-            self._v[2] = r.match(line.strip()).group(1)
           elif line.startswith("PATCH="):
-            self._v[3] = r.match(line.strip()).group(1)
+            self._v[2] = r.match(line.strip()).group(1)
           else:
             raise VersionFileParserError("Unrecognized line '%s'" % line.strip())
         except VersionFileParserError:
@@ -62,7 +60,7 @@ class VersionFileParser(object):
       raise VersionFileParserError("Incomplete version number")
 
   def __str__(self):
-    return "%s.%s.%s.%s" % (self._v[0], self._v[1], self._v[2], self._v[3])
+    return "%s.%s.%s" % (self._v[0], self._v[1], self._v[2])
 
   def update(self):
     if not self._dirty:
@@ -71,8 +69,7 @@ class VersionFileParser(object):
     with open(self._filename, "w") as fd:
       fd.write("MAJOR=%s\n" % self._v[0])
       fd.write("MINOR=%s\n" % self._v[1])
-      fd.write("BUILD=%s\n" % self._v[2])
-      fd.write("PATCH=%s" % self._v[3])
+      fd.write("PATCH=%s" % self._v[2])
 
     self._dirty = False
 
@@ -95,21 +92,12 @@ class VersionFileParser(object):
     self._dirty = True
 
   @property
-  def build(self):
-    return self._v[2]
-
-  @build.setter
-  def build(self, build):
-    self._v[2] = build
-    self._dirty = True
-
-  @property
   def patch(self):
-    return self._v[3]
+    return self._v[2]
 
   @patch.setter
   def patch(self, patch):
-    self._v[3] = patch
+    self._v[2] = patch
     self._dirty = True
 
 def GetFileChecksum(file):

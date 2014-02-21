@@ -28,10 +28,9 @@ class OxideQQuickOutgoingMessageRequest;
 class OxideQQuickOutgoingMessageRequestPrivate Q_DECL_FINAL :
     public oxide::qt::OutgoingMessageRequestAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickOutgoingMessageRequest)
-  OXIDE_QT_DECLARE_ADAPTER
 
  public:
-  static OxideQQuickOutgoingMessageRequestPrivate* Create(
+  OxideQQuickOutgoingMessageRequestPrivate(
       OxideQQuickOutgoingMessageRequest* q);
 
   static OxideQQuickOutgoingMessageRequestPrivate* get(
@@ -41,13 +40,8 @@ class OxideQQuickOutgoingMessageRequestPrivate Q_DECL_FINAL :
   QJSValue error_callback;
 
  private:
-  OxideQQuickOutgoingMessageRequestPrivate(
-      OxideQQuickOutgoingMessageRequest* q);
-
   void OnReceiveReply(const QVariant& args) Q_DECL_FINAL;
   void OnReceiveError(int error, const QString& msg) Q_DECL_FINAL;
-
-  OxideQQuickOutgoingMessageRequest* q_ptr;
 };
 
 #endif // _OXIDE_QT_QUICK_API_OUTGOING_MESSAGE_REQUEST_P_P_H_

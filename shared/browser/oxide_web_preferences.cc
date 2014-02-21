@@ -19,51 +19,24 @@
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
-#include "content/public/browser/render_view_host.h"
-#include "content/public/browser/web_contents.h"
-#include "ui/gl/gl_context.h"
-#include "ui/gl/gl_implementation.h"
-#include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
 
-#include "shared/common/oxide_content_client.h"
-#include "shared/gl/oxide_shared_gl_context.h"
-
-#include "oxide_content_browser_client.h"
-#include "oxide_web_view.h"
+#include "oxide_web_preferences_observer.h"
 
 namespace oxide {
 
-namespace {
-
-bool SupportsCompositing() {
-  gfx::GLShareGroup* group =
-      ContentClient::instance()->browser()->GetGLShareGroup();
-  if (!group) {
-    return false;
-  }
-
-  SharedGLContext* context = SharedGLContext::FromGfx(group->GetContext());
-  if (!context) {
-    return false;
-  }
-
-  return context->GetImplementation() == gfx::GetGLImplementation();
+void WebPreferences::NotifyObserversOfChange() {
+  FOR_EACH_OBSERVER(WebPreferencesObserver,
+                    observers_,
+                    WebPreferencesValueChanged());
 }
 
-} // namespace
+void WebPreferences::AddObserver(WebPreferencesObserver* observer) {
+  observers_.AddObserver(observer);
+}
 
-void WebPreferences::UpdateViews() {
-  for (std::set<WebView *>::const_iterator it = views_.begin();
-       it != views_.end(); ++it) {
-    WebView* view = *it;
-    content::WebContents* contents = view->GetWebContents();
-    if (!contents) {
-      continue;
-    }
-    contents->GetRenderViewHost()->UpdateWebkitPreferences(
-        contents->GetRenderViewHost()->GetWebkitPreferences());
-  }
+void WebPreferences::RemoveObserver(WebPreferencesObserver* observer) {
+  observers_.RemoveObserver(observer);
 }
 
 WebPreferences::WebPreferences() :
@@ -109,16 +82,16 @@ WebPreferences::WebPreferences() :
 
   // ATTR_CARET_BROWSING_ENABLED
 
-  SetAttribute(ATTR_ACCELERATED_COMPOSITING_ENABLED, true);
   SetAttribute(ATTR_SMOOTH_SCROLLING_ENABLED, true);
+  SetAttribute(ATTR_TOUCH_ENABLED, true);
 
-  // ATTR_TOUCH_ENABLED
   // ATTR_SUPPORTS_MULTIPLE_WINDOWS
-  // ATTR_VIEWPORT_ENABLED
 }
 
 WebPreferences::~WebPreferences() {
-  CHECK(views_.empty());
+  FOR_EACH_OBSERVER(WebPreferencesObserver,
+                    observers_,
+                    OnWebPreferencesDestruction());
 }
 
 std::string WebPreferences::StandardFontFamily() const {
@@ -126,8 +99,12 @@ std::string WebPreferences::StandardFontFamily() const {
 }
 
 void WebPreferences::SetStandardFontFamily(const std::string& font) {
-  standard_font_family_ = base::UTF8ToUTF16(font);
-  UpdateViews();
+  base::string16 value = base::UTF8ToUTF16(font);
+  if (value == standard_font_family_) {
+    return;
+  }
+  standard_font_family_ = value;
+  NotifyObserversOfChange();
 }
 
 std::string WebPreferences::FixedFontFamily() const {
@@ -135,8 +112,12 @@ std::string WebPreferences::FixedFontFamily() const {
 }
 
 void WebPreferences::SetFixedFontFamily(const std::string& font) {
-  fixed_font_family_ = base::UTF8ToUTF16(font);
-  UpdateViews();
+  base::string16 value = base::UTF8ToUTF16(font);
+  if (value == fixed_font_family_) {
+    return;
+  }
+  fixed_font_family_ = value;
+  NotifyObserversOfChange();
 }
 
 std::string WebPreferences::SerifFontFamily() const {
@@ -144,8 +125,12 @@ std::string WebPreferences::SerifFontFamily() const {
 }
 
 void WebPreferences::SetSerifFontFamily(const std::string& font) {
-  serif_font_family_ = base::UTF8ToUTF16(font);
-  UpdateViews();
+  base::string16 value = base::UTF8ToUTF16(font);
+  if (value == serif_font_family_) {
+    return;
+  }
+  serif_font_family_ = value;
+  NotifyObserversOfChange();
 }
 
 std::string WebPreferences::SansSerifFontFamily() const {
@@ -153,47 +138,66 @@ std::string WebPreferences::SansSerifFontFamily() const {
 }
 
 void WebPreferences::SetSansSerifFontFamily(const std::string& font) {
-  sans_serif_font_family_ = base::UTF8ToUTF16(font);
-  UpdateViews();
+  base::string16 value = base::UTF8ToUTF16(font);
+  if (value == sans_serif_font_family_) {
+    return;
+  }
+  sans_serif_font_family_ = value;
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::SetDefaultEncoding(const std::string& encoding) {
+  if (encoding == default_encoding_) {
+    return;
+  }
   default_encoding_ = encoding;
-  UpdateViews();
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::SetDefaultFontSize(unsigned size) {
+  if (size == default_font_size_) {
+    return;
+  }
   default_font_size_ = size;
-  UpdateViews();
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::SetDefaultFixedFontSize(unsigned size) {
+  if (size == default_fixed_font_size_) {
+    return;
+  }
   default_fixed_font_size_ = size;
-  UpdateViews();
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::SetMinimumFontSize(unsigned size) {
+  if (size == minimum_font_size_) {
+    return;
+  }
   minimum_font_size_ = size;
-  UpdateViews();
+  NotifyObserversOfChange();
 }
 
 bool WebPreferences::TestAttribute(Attr attr) const {
-  DCHECK(attr < ATTR_LAST && attr >= 0);
+  CHECK(attr < ATTR_LAST && attr >= 0);
   return attributes_[attr];
 }
 
 void WebPreferences::SetAttribute(Attr attr, bool val) {
-  DCHECK(attr < ATTR_LAST && attr >= 0);
+  CHECK(attr < ATTR_LAST && attr >= 0);
+  if (val == attributes_[attr]) {
+    return;
+  }
+
+  if (attr == ATTR_SUPPORTS_MULTIPLE_WINDOWS && val) {
+    LOG(WARNING) <<
+        "Oxide currently doesn't support window.open(). "
+        "See https://launchpad.net/bugs/1240749";
+    return;
+  }
+
   attributes_[attr] = val;
-  UpdateViews();
-}
-
-void WebPreferences::AddWebView(WebView* view) {
-  views_.insert(view);
-}
-
-void WebPreferences::RemoveWebView(WebView* view) {
-  views_.erase(view);
+  NotifyObserversOfChange();
 }
 
 void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
@@ -250,22 +254,11 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->tabs_to_links = attributes_[ATTR_TABS_TO_LINKS];
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
 
-  bool compositing =
-      attributes_[ATTR_ACCELERATED_COMPOSITING_ENABLED] &&
-      SupportsCompositing();
-  prefs->accelerated_compositing_enabled = compositing;
-  prefs->force_compositing_mode = compositing;
-
   prefs->enable_scroll_animator = attributes_[ATTR_SMOOTH_SCROLLING_ENABLED];
 
-  prefs->touch_enabled = false; // TODO: Check if touch is supported
+  prefs->touch_enabled = attributes_[ATTR_TOUCH_ENABLED];
 
   prefs->supports_multiple_windows = attributes_[ATTR_SUPPORTS_MULTIPLE_WINDOWS];
-
-  // Viewport only works in compositing mode
-  prefs->viewport_enabled = attributes_[ATTR_VIEWPORT_ENABLED] && compositing;
-  // XXX: Should this be a separate pref?
-  prefs->viewport_meta_enabled = prefs->viewport_enabled;
 }
 
 } // namespace oxide

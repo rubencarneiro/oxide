@@ -20,31 +20,13 @@
 
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
-OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate() :
+OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
+    OxideQWebPreferences* q) :
+    preferences(q),
     in_destructor_(false) {}
 
 OxideQWebPreferencesPrivate::~OxideQWebPreferencesPrivate() {
   in_destructor_ = true;
-
-  for (std::set<oxide::qt::WebViewAdapter *>::const_iterator it = views_.begin();
-       it != views_.end(); ++it) {
-    oxide::qt::WebViewAdapter* view = *it;
-    view->NotifyWebPreferencesDestroyed();
-  }
-}
-
-void OxideQWebPreferencesPrivate::AddWebView(oxide::qt::WebViewAdapter* view) {
-  Q_ASSERT(!in_destructor_);
-  views_.insert(view);
-}
-
-void OxideQWebPreferencesPrivate::RemoveWebView(
-    oxide::qt::WebViewAdapter* view) {
-  if (in_destructor_) {
-    return;
-  }
-
-  views_.erase(view);
 }
 
 // static

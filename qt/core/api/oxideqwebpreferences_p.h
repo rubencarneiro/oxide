@@ -18,41 +18,24 @@
 #ifndef _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
 #define _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
 
-#include <set>
 #include <QtGlobal>
 
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 
 class OxideQWebPreferences;
 
-namespace oxide {
-namespace qt {
-class WebViewAdapter;
-} // namespace qt
-} // namespace oxide
-
 class OxideQWebPreferencesPrivate Q_DECL_FINAL {
  public:
-  OxideQWebPreferencesPrivate();
+  OxideQWebPreferencesPrivate(OxideQWebPreferences* q);
   ~OxideQWebPreferencesPrivate();
-
-  oxide::qt::WebPreferences& preferences() {
-    return preferences_;
-  }
-  const oxide::qt::WebPreferences& preferences() const {
-    return preferences_;
-  }
 
   bool in_destructor() const { return in_destructor_; }
 
-  void AddWebView(oxide::qt::WebViewAdapter* view);
-  void RemoveWebView(oxide::qt::WebViewAdapter* view);
-
   static OxideQWebPreferencesPrivate* get(OxideQWebPreferences* q);
 
+  oxide::qt::WebPreferences preferences;
+
  private:
-  oxide::qt::WebPreferences preferences_;
-  std::set<oxide::qt::WebViewAdapter *> views_;
   bool in_destructor_;
 };
 

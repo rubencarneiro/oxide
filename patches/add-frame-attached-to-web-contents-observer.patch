@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/frame_tree.cc b/content/browser/frame_host/frame_tree.cc
 --- a/content/browser/frame_host/frame_tree.cc
 +++ b/content/browser/frame_host/frame_tree.cc
-@@ -108,16 +108,21 @@ RenderFrameHostImpl* FrameTree::AddFrame
+@@ -117,16 +117,21 @@ RenderFrameHostImpl* FrameTree::AddFrame
      return NULL;
  
    scoped_ptr<FrameTreeNode> node(new FrameTreeNode(
@@ -27,7 +27,7 @@ diff --git a/content/browser/frame_host/frame_tree.cc b/content/browser/frame_ho
                              int64 frame_id) {
    // If switches::kSitePerProcess is not specified, then the FrameTree only
    // contains a node for the root element. However, even in this case
-@@ -160,16 +165,21 @@ RenderFrameHostImpl* FrameTree::GetMainF
+@@ -179,16 +184,21 @@ RenderFrameHostImpl* FrameTree::GetMainF
    return root_->current_frame_host();
  }
  
@@ -52,7 +52,7 @@ diff --git a/content/browser/frame_host/frame_tree.cc b/content/browser/frame_ho
 diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_host/frame_tree.h
 --- a/content/browser/frame_host/frame_tree.h
 +++ b/content/browser/frame_host/frame_tree.h
-@@ -96,16 +96,18 @@ class CONTENT_EXPORT FrameTree {
+@@ -105,16 +105,18 @@ class CONTENT_EXPORT FrameTree {
    RenderFrameHostImpl* GetMainFrame() const;
  
    // Allows a client to listen for frame removal.  The listener should expect
@@ -71,11 +71,11 @@ diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_hos
    // when all of the RenderFrameHosts using it are deleted.
    RenderViewHostImpl* CreateRenderViewHostForMainFrame(
        SiteInstance* site_instance,
-@@ -147,15 +149,16 @@ class CONTENT_EXPORT FrameTree {
-   //
-   // Must be declared before |root_| so that it is deleted afterward.  Otherwise
-   // the map will be cleared before we delete the RenderFrameHosts in the tree.
-   RenderViewHostMap render_view_host_map_;
+@@ -164,15 +166,16 @@ class CONTENT_EXPORT FrameTree {
+   // background. When the SwapOutACK is received, they will be deleted. In the
+   // meantime, they are kept in this map, as they should not be reused (part of
+   // their state is already gone away).
+   RenderViewHostMultiMap render_view_host_pending_shutdown_map_;
  
    scoped_ptr<FrameTreeNode> root_;
  
@@ -91,7 +91,7 @@ diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_hos
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -397,16 +397,19 @@ WebContentsImpl::WebContentsImpl(
+@@ -316,16 +316,19 @@ WebContentsImpl::WebContentsImpl(
        render_view_message_source_(NULL),
        fullscreen_widget_routing_id_(MSG_ROUTING_NONE),
        is_subframe_(false) {
@@ -111,7 +111,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
    ClearAllPowerSaveBlockers();
  
    for (std::set<RenderWidgetHostImpl*>::iterator iter =
-@@ -3840,9 +3843,18 @@ gfx::Size WebContentsImpl::GetSizeForNew
+@@ -3636,16 +3639,25 @@ gfx::Size WebContentsImpl::GetSizeForNew
  
  void WebContentsImpl::OnFrameRemoved(
      RenderViewHostImpl* render_view_host,
@@ -129,11 +129,18 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 +
 +}
 +
- }  // namespace content
+ void WebContentsImpl::OnPreferredSizeChanged(const gfx::Size& old_size) {
+   if (!delegate_)
+     return;
+   const gfx::Size new_size = GetPreferredSize();
+   if (new_size != old_size)
+     delegate_->UpdatePreferredSize(this, new_size);
+ }
+ 
 diff --git a/content/browser/web_contents/web_contents_impl.h b/content/browser/web_contents/web_contents_impl.h
 --- a/content/browser/web_contents/web_contents_impl.h
 +++ b/content/browser/web_contents/web_contents_impl.h
-@@ -825,16 +825,18 @@ class CONTENT_EXPORT WebContentsImpl
+@@ -834,16 +834,18 @@ class CONTENT_EXPORT WebContentsImpl
  
    // Clear all PowerSaveBlockers, leave power_save_blocker_ empty.
    void ClearAllPowerSaveBlockers();
@@ -145,17 +152,17 @@ diff --git a/content/browser/web_contents/web_contents_impl.h b/content/browser/
 +  void OnFrameAdded(RenderViewHostImpl* render_view_host,
 +                    int64 parent_frame_id, int64 frame_id);
  
+   // Helper method that's called whenever |preferred_size_| or
+   // |preferred_size_for_capture_| changes, to propagate the new value to the
+   // |delegate_|.
+   void OnPreferredSizeChanged(const gfx::Size& old_size);
+ 
    // Adds/removes a callback called on creation of each new WebContents.
    // Deprecated, about to remove.
-   static void AddCreatedCallback(const CreatedCallback& callback);
-   static void RemoveCreatedCallback(const CreatedCallback& callback);
- 
-   // Data for core operation ---------------------------------------------------
- 
 diff --git a/content/public/browser/web_contents_observer.h b/content/public/browser/web_contents_observer.h
 --- a/content/public/browser/web_contents_observer.h
 +++ b/content/public/browser/web_contents_observer.h
-@@ -229,16 +229,19 @@ class CONTENT_EXPORT WebContentsObserver
+@@ -230,16 +230,19 @@ class CONTENT_EXPORT WebContentsObserver
                                     const GURL& url,
                                     const Referrer& referrer,
                                     WindowOpenDisposition disposition,

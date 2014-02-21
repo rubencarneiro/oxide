@@ -37,8 +37,8 @@ QT_USE_NAMESPACE
 
 namespace {
 
-QObject* GlobalSettingsSingletonFactory(QQmlEngine* engine,
-                                        QJSEngine* script_engine) {
+QObject* GlobalSingletonFactory(QQmlEngine* engine,
+                                QJSEngine* script_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(script_engine);
 
@@ -55,7 +55,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide"));
 
     qmlRegisterSingletonType<OxideQQuickGlobals>(
-        uri, 0, 1, "OxideSettings", GlobalSettingsSingletonFactory);
+        uri, 0, 1, "Oxide", GlobalSingletonFactory);
     qmlRegisterUncreatableType<OxideQIncomingMessage>(uri, 0, 1, "IncomingMessage",
         "IncomingMessages are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQLoadEvent>(uri, 0, 1, "LoadEvent",

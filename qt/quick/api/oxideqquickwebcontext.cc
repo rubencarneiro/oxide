@@ -185,8 +185,14 @@ void OxideQQuickWebContext::setProduct(const QString& product) {
     return;
   }
 
+  QString old_user_agent = userAgent();
+
   d->setProduct(product);
   emit productChanged();
+
+  if (userAgent() != old_user_agent) {
+    emit userAgentChanged();
+  }
 }
 
 QString OxideQQuickWebContext::userAgent() const {
