@@ -67,6 +67,8 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   void OnNavigationListPruned(bool from_front, int count) FINAL;
   void OnNavigationEntryChanged(int index) FINAL;
 
+  void OnWebPreferencesChanged() FINAL;
+
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
 
   WebViewAdapter* a;

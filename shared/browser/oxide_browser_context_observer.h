@@ -15,42 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "base/values.h"
-#include "content/browser/gpu/compositor_util.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
+#ifndef _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_OBSERVER_H_
+#define _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_OBSERVER_H_
 
-namespace content {
+namespace oxide {
 
-bool IsThreadedCompositingEnabled() {
-  return false;
-}
+class BrowserContext;
 
-bool IsForceCompositingModeEnabled() {
-  return false;
-}
+class BrowserContextObserver {
+ public:
+  virtual ~BrowserContextObserver();
 
-bool IsDelegatedRendererEnabled() {
-  return false;
-}
+  virtual void BrowserContextDestroyed() {}
 
-bool IsDeadlineSchedulingEnabled() {
-  return true;
-}
+  virtual void NotifyUserAgentStringChanged() {}
 
-base::Value* GetFeatureStatus() {
-  // Currently only used by chrome://gpu
-  return NULL;
-}
+ protected:
+  BrowserContextObserver();
 
-base::Value* GetProblems() {
-  // Currently only used by chrome://gpu
-  return NULL;
-}
+  void Observe(BrowserContext* context);
 
-base::Value* GetDriverBugWorkarounds() {
-  base::ListValue* workaround_list = new base::ListValue();
-  GpuDataManagerImpl::GetInstance()->GetDriverBugWorkarounds(workaround_list);
-  return workaround_list;
-}
+  BrowserContext* browser_context() const { return browser_context_; }
 
-} // namespace content
+ private:
+  friend class BrowserContext;
+
+  void OnBrowserContextDestruction();
+
+  BrowserContext* browser_context_;
+};
+
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_OBSERVER_H_

@@ -46,7 +46,6 @@ struct InitData {
 class OxideQQuickWebViewPrivate Q_DECL_FINAL :
      public oxide::qt::WebViewAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
-  OXIDE_QT_DECLARE_ADAPTER
 
  public:
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
@@ -72,7 +71,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   QRect GetContainerBounds() Q_DECL_FINAL;
 
-  void NotifyWebPreferencesDestroyed() Q_DECL_FINAL;
+  void OnWebPreferencesChanged() Q_DECL_FINAL;
 
   void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
   void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
@@ -105,7 +104,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;
   QUrl icon_;
-  OxideQQuickWebView* q_ptr;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

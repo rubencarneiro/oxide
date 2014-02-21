@@ -24,6 +24,7 @@
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
+#include "base/observer_list.h"
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
@@ -37,11 +38,11 @@ class SSLConfigService;
 
 namespace oxide {
 
+class BrowserContextObserver;
 class ResourceContext;
 class URLRequestContext;
 class URLRequestContextGetter;
 class UserScriptMaster;
-class WebView;
 
 class BrowserContextIOData {
  public:
@@ -126,12 +127,6 @@ class BrowserContext : public content::BrowserContext {
 
   BrowserContextIOData* io_data() const { return io_data_.io_data(); }
 
-  // This is only used as a safety check to ensure that we outlive all
-  // WebView's. If we are destroyed with registered WebView's, then
-  // the application is aborted
-  void AddWebView(WebView* wv);
-  void RemoveWebView(WebView* wv);
-
   virtual UserScriptMaster& UserScriptManager() = 0;
 
   virtual net::URLRequestContextGetter* GetRequestContext() OVERRIDE;
@@ -147,14 +142,14 @@ class BrowserContext : public content::BrowserContext {
           const base::FilePath& partition_path,
           bool in_memory) OVERRIDE;
 
-  virtual void RequestMIDISysExPermission(
+  virtual void RequestMidiSysExPermission(
       int render_process_id,
       int render_view_id,
       int bridge_id,
       const GURL& requesting_frame,
-      const MIDISysExPermissionCallback& callback) OVERRIDE;
+      const MidiSysExPermissionCallback& callback) OVERRIDE;
 
-  virtual void CancelMIDISysExPermissionRequest(
+  virtual void CancelMidiSysExPermissionRequest(
       int render_process_id,
       int render_view_id,
       int bridge_id,
@@ -185,6 +180,8 @@ class BrowserContext : public content::BrowserContext {
   BrowserContext(BrowserContextIOData* io_data);
 
  private:
+  friend class BrowserContextObserver;
+
   class IODataHandle {
    public:
     IODataHandle(BrowserContextIOData* data) : io_data_(data) {}
@@ -220,9 +217,12 @@ class BrowserContext : public content::BrowserContext {
     BrowserContextIOData* io_data_;
   };
 
+  void AddObserver(BrowserContextObserver* observer);
+  void RemoveObserver(BrowserContextObserver* observer);
+
   IODataHandle io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
-  std::vector<WebView *> web_views_;
+  ObserverList<BrowserContextObserver> observers_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

@@ -24,7 +24,9 @@
 namespace oxide {
 namespace qt {
 
-OutgoingMessageRequestAdapter::OutgoingMessageRequestAdapter() :
+OutgoingMessageRequestAdapter::OutgoingMessageRequestAdapter(
+    QObject* q) :
+    AdapterBase(q),
     priv(OutgoingMessageRequestAdapterPrivate::Create(this)) {
   priv->request().SetReplyCallback(
       base::Bind(

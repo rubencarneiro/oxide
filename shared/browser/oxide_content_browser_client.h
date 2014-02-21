@@ -24,14 +24,9 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/content_browser_client.h"
-#include "ui/gl/gl_implementation.h"
 
 namespace base {
 class MessagePump;
-}
-
-namespace blink {
-class WebScreenInfo;
 }
 
 namespace content {
@@ -47,7 +42,6 @@ namespace oxide {
 class GLShareGroup;
 class SharedGLContext;
 class WebFrameTree;
-class WebPreferences;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
  public:
@@ -88,14 +82,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   // Extra Oxide methods
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
 
-  virtual scoped_refptr<oxide::SharedGLContext> CreateSharedGLContext(
-      oxide::GLShareGroup* share_group);
-
-  virtual void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
-
-  virtual void GetDefaultScreenInfo(blink::WebScreenInfo* result) = 0;
-
-  virtual WebPreferences* GetDefaultWebPreferences();
+  virtual bool IsTouchSupported();
 
  protected:
   // Limit default constructor access to derived classes

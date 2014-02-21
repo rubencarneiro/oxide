@@ -18,18 +18,18 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_PREFERENCES_H_
 #define _OXIDE_SHARED_BROWSER_WEB_PREFERENCES_H_
 
-#include <set>
 #include <string>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/observer_list.h"
 #include "base/strings/string16.h"
 
 class WebPreferences;
 
 namespace oxide {
 
-class WebView;
+class WebPreferencesObserver;
 
 class WebPreferences {
  public:
@@ -65,11 +65,9 @@ class WebPreferences {
     ATTR_TABS_TO_LINKS, // whether pressing |TAB\ focuses links
     ATTR_CARET_BROWSING_ENABLED,
 
-    ATTR_ACCELERATED_COMPOSITING_ENABLED,
     ATTR_SMOOTH_SCROLLING_ENABLED,
     ATTR_TOUCH_ENABLED,
     ATTR_SUPPORTS_MULTIPLE_WINDOWS,
-    ATTR_VIEWPORT_ENABLED,
 
     ATTR_LAST
   };
@@ -109,13 +107,15 @@ class WebPreferences {
   bool TestAttribute(Attr attr) const;
   void SetAttribute(Attr attr, bool val);
 
-  void AddWebView(WebView* view);
-  void RemoveWebView(WebView* view);
-
   void ApplyToWebkitPrefs(::WebPreferences* prefs);
 
  private:
-  void UpdateViews();
+  friend class WebPreferencesObserver;
+
+  void NotifyObserversOfChange();
+
+  void AddObserver(WebPreferencesObserver* observer);
+  void RemoveObserver(WebPreferencesObserver* observer);
 
   base::string16 standard_font_family_;
   base::string16 fixed_font_family_;
@@ -128,7 +128,7 @@ class WebPreferences {
 
   bool attributes_[ATTR_LAST];
 
-  std::set<WebView *> views_;
+  ObserverList<WebPreferencesObserver> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(WebPreferences);
 };

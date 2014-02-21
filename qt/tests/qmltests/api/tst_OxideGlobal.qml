@@ -6,7 +6,7 @@ import com.canonical.Oxide.Testing 0.1 as Testing
 Item {
   SignalSpy {
     id: spy
-    target: OxideSettings
+    target: Oxide
   }
 
   Component {
@@ -16,7 +16,7 @@ Item {
 
   TestCase {
     id: test
-    name: "OxideSettings"
+    name: "OxideGlobal"
     when: windowShown
 
     function waitFor(predicate, timeout) {
@@ -34,14 +34,14 @@ Item {
       spy.signalName = "";
     }
 
-    function test_OxideSettings_data() {
+    function test_OxideGlobal_data() {
       var r = [
         { attr: "product", signal: "productChanged", value1: "Test1", value2: "Test2", constructOnly: false },
         { attr: "userAgent", signal: "userAgentChanged", value1: "Test1", value2: "Test2", contructOnly: false },
         { attr: "acceptLangs", signal: "acceptLangsChanged", value1: "foo", value2: "bar", constructOnly: false }
       ];
 
-      var dataPath = Testing.Utils.DATA_PATH;
+      var dataPath = Testing.OxideTestingUtils.DATA_PATH;
       if (dataPath != "") {
         r.push(
             { attr: "dataPath", signal: "dataPathChanged", value1: dataPath + "/test1", value2: dataPath + "/test2", constructOnly: true },
@@ -52,48 +52,49 @@ Item {
       return r;
     }
 
-    function test_OxideSettings(data) {
+    function test_OxideGlobal(data) {
       spy.signalName = data.signal;
 
-      OxideSettings[data.attr] = data.value1;
+      Oxide[data.attr] = data.value1;
       compare(spy.count, 1,
               "Setting attribute before context exists should have generated a signal");
-      compare(OxideSettings[data.attr], data.value1,
+      compare(Oxide[data.attr], data.value1,
               "Got the wrong value back");
 
       var view = webView.createObject(null, {});
-      compare(view.context[data.attr], data.value1,
+      compare(Oxide._defaultWebContext[data.attr], data.value1,
               "Got the wrong value back from the default context");
 
       var expectedCount = 1;
       var expectedVal;
 
-      OxideSettings[data.attr] = data.value2;
+      Oxide[data.attr] = data.value2;
       expectedVal = data.constructOnly ? data.value1 : data.value2;
       if (!data.constructOnly) {
         expectedCount++;
       }
       compare(spy.count, expectedCount, "Unexpected number of signals");
-      compare(OxideSettings[data.attr], expectedVal,
+      compare(Oxide[data.attr], expectedVal,
               "Got the wrong value back");
-      compare(view.context[data.attr], expectedVal,
+      compare(Oxide._defaultWebContext[data.attr], expectedVal,
               "Got the wrong value back from the default context");
 
       if (!data.constructOnly) {
-        view.context[data.attr] = data.value1;
+        Oxide._defaultWebContext[data.attr] = data.value1;
         compare(spy.count, expectedCount + 1,
                 "Setting attribute on the default context should generate a signal");
-        compare(OxideSettings[data.attr], data.value1,
+        compare(Oxide[data.attr], data.value1,
                 "Got the wrong value back");
       }
 
-      var destructionObs = Testing.Utils.createDestructionObserver(view.context);
+      var destructionObs = Testing.OxideTestingUtils.createDestructionObserver(
+          Oxide._defaultWebContext);
       view.destroy();
       gc();
       verify(waitFor(function() { return destructionObs.destroyed; }),
              "Timed out waiting for WebView to be destroyed");
 
-      compare(OxideSettings[data.attr], data.value1,
+      compare(Oxide[data.attr], data.value1,
               "Got the wrong value back");
     }
   }

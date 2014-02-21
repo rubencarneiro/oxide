@@ -16,8 +16,8 @@
 
 {
   'variables': {
+    'print_ld_stats%': 0,
     'disable_nacl': 1,
-    'linux_dump_symbols': 1,
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
     'linux_use_tcmalloc': 0,
@@ -36,12 +36,15 @@
       'conditions': [
         ['target_arch=="arm"', {
           'arm_neon': 0,
+          # Only really works correctly on Android, eg WebRtc_GetCPUFeaturesARM
+          # is missing on non-Android Linux
           'arm_neon_optional': 0,
         }],
       ],
     },
     'conditions': [
       ['arm_version==7', {
+        # Ubuntu-specific?
         'arm_float_abi': 'hard',
       }],
     ],
@@ -51,7 +54,23 @@
       '-Werror',
     ],
     'ldflags': [
-      '-B<(PRODUCT_DIR)/../../../gold'
+      '-B<(PRODUCT_DIR)/../../../gold',
+    ],
+    'conditions': [
+      ['print_ld_stats==1', {
+        'ldflags': [
+          '-Wl,--stats',
+        ],
+      }],
+      ['host_arch=="arm"', {
+        'ldflags': [
+          # Try to work around linker OOM - we only want these on native
+          # ARM builds though, hence the test for "host_arch"
+          '-Wl,--no-map-whole-files',
+          '-Wl,--no-keep-memory',
+          '-Wl,--no-keep-files-mapped',
+        ],
+      }],
     ],
   }
 }

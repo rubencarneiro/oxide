@@ -17,33 +17,39 @@
 
 #include "oxide_shared_gl_context.h"
 
+#include "ui/gl/gl_share_group.h"
+
 #include "base/logging.h"
 
 namespace oxide {
 
-GLShareGroup::~GLShareGroup() {
-  DCHECK(!context_);
-}
+namespace {
 
-GLShareGroup::GLShareGroup() :
-    context_(NULL) {}
+class GLShareGroup FINAL : public gfx::GLShareGroup {
+ public:
+  GLShareGroup(SharedGLContext* context) :
+      context_(context) {}
 
-SharedGLContext::SharedGLContext(oxide::GLShareGroup* share_group) :
-    gfx::GLContext(share_group) {
-  DCHECK(share_group);
-  DCHECK(!share_group->GetContext());
-  share_group->SetContext(this);
-}
+  gfx::GLContext* GetContext() FINAL { return context_; }
+  void ClearContext() { context_ = NULL; }
+
+ private:
+  ~GLShareGroup() {
+    DCHECK(!context_);
+  }
+
+  SharedGLContext* context_;
+};
+
+} // namespace
+
+SharedGLContext::SharedGLContext() :
+    gfx::GLContext(new GLShareGroup(this)) {}
 
 SharedGLContext::~SharedGLContext() {
   oxide::GLShareGroup* sg = static_cast<oxide::GLShareGroup *>(share_group());
   DCHECK_EQ(sg->GetContext(), this);
-  sg->SetContext(NULL);
-}
-
-// static
-SharedGLContext* SharedGLContext::FromGfx(gfx::GLContext* context) {
-  return static_cast<SharedGLContext *>(context);
+  sg->ClearContext();
 }
 
 bool SharedGLContext::Initialize(gfx::GLSurface* compatible_surface,

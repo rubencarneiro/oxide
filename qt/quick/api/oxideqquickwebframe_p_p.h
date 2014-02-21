@@ -33,7 +33,6 @@ QT_END_NAMESPACE
 class OxideQQuickWebFramePrivate Q_DECL_FINAL :
     public oxide::qt::WebFrameAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebFrame)
-  OXIDE_QT_DECLARE_ADAPTER
 
  public:
   OxideQQuickWebFramePrivate(OxideQQuickWebFrame* q);
@@ -64,7 +63,6 @@ class OxideQQuickWebFramePrivate Q_DECL_FINAL :
  private:
   // We keep this separate to QObject becase we want a way to track child frames quickly
   QList<OxideQQuickWebFrame *> children_;
-  OxideQQuickWebFrame* q_ptr;
 
   Q_DISABLE_COPY(OxideQQuickWebFramePrivate);
 };

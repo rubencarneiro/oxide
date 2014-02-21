@@ -29,7 +29,9 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_message_target.h"
+#include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
 
 class GURL;
@@ -61,6 +63,8 @@ class WebPreferences;
 // this. Note that this class will hold the main browser process
 // components alive
 class WebView : public MessageTarget,
+                public BrowserContextObserver,
+                public WebPreferencesObserver,
                 public content::NotificationObserver,
                 public content::WebContentsDelegate,
                 public content::WebContentsObserver {
@@ -70,7 +74,6 @@ class WebView : public MessageTarget,
   bool Init(BrowserContext* context,
             bool incognito,
             const gfx::Size& initial_size);
-  void Shutdown();
 
   static WebView* FromWebContents(content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
@@ -111,12 +114,52 @@ class WebView : public MessageTarget,
   WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
 
   WebPreferences* GetWebPreferences();
-  void SetWebPreferences(WebPreferences* prefs, bool send_update = true);
+  void SetWebPreferences(WebPreferences* prefs);
 
+  virtual content::RenderWidgetHostView* CreateViewForWidget(
+      content::RenderWidgetHost* render_widget_host) = 0;
+
+  virtual gfx::Rect GetContainerBounds() = 0;
+
+  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
+
+  virtual void FrameAdded(WebFrame* frame);
+  virtual void FrameRemoved(WebFrame* frame);
+
+  void DidUpdateFaviconURL(
+      int32 page_id, const std::vector<content::FaviconURL>& candidates) FINAL;
+
+  // MessageTarget
+  virtual size_t GetMessageHandlerCount() const OVERRIDE;
+  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
+
+ protected:
+  WebView();
+
+ private:
+  void DispatchLoadFailed(const GURL& validated_url,
+                          int error_code,
+                          const base::string16& error_description);
+
+  // BrowserContextObserver
+  void BrowserContextDestroyed() FINAL;
+  void NotifyUserAgentStringChanged() FINAL;
+
+  // WebPreferencesObserver
+  void WebPreferencesDestroyed() FINAL;
+  void WebPreferencesValueChanged() FINAL;
+
+  // content::NotificationObserver
   void Observe(int type,
                const content::NotificationSource& source,
                const content::NotificationDetails& details) FINAL;
 
+  // content::WebContentsDelegate
+  void NavigationStateChanged(const content::WebContents* source,
+                              unsigned changed_flags) FINAL;
+  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+
+  // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
 
@@ -167,35 +210,6 @@ class WebView : public MessageTarget,
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
-  void DidUpdateFaviconURL(
-      int32 page_id, const std::vector<content::FaviconURL>& candidates) FINAL;
-
-  virtual size_t GetMessageHandlerCount() const OVERRIDE;
-  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
-
-  virtual content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) = 0;
-
-  virtual gfx::Rect GetContainerBounds() = 0;
-
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
-
-  virtual void FrameAdded(WebFrame* frame);
-  virtual void FrameRemoved(WebFrame* frame);
-
- protected:
-  WebView();
-
- private:
-  void NavigationStateChanged(const content::WebContents* source,
-                              unsigned changed_flags) FINAL;
-
-  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
-
-  void DispatchLoadFailed(const GURL& validated_url,
-                          int error_code,
-                          const base::string16& error_description);
-
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnIconChanged(const GURL& icon);
@@ -215,14 +229,14 @@ class WebView : public MessageTarget,
   virtual void OnNavigationListPruned(bool from_front, int count);
   virtual void OnNavigationEntryChanged(int index);
 
+  virtual void OnWebPreferencesChanged();
+
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   scoped_ptr<content::NotificationRegistrar> registrar_;
 
   WebFrame* root_frame_;
-
-  WebPreferences* web_preferences_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

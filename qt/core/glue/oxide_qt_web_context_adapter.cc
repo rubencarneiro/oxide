@@ -27,11 +27,14 @@
 
 #include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "url/gurl.h"
 
+#include "qt/core/gl/oxide_qt_shared_gl_context.h"
 #include "qt/core/glue/private/oxide_qt_user_script_adapter_p.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_form_factor.h"
 #include "shared/browser/oxide_user_script_master.h"
 
 namespace oxide {
@@ -39,6 +42,18 @@ namespace qt {
 
 namespace {
 QOpenGLContext* g_shared_gl_context;
+
+int GetProcessFlags() {
+  switch (oxide::GetFormFactorHint()) {
+    case FORM_FACTOR_TABLET:
+    case FORM_FACTOR_PHONE:
+      return oxide::BrowserProcessMain::ENABLE_VIEWPORT |
+             oxide::BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS;
+    default:
+      return 0;
+  }
+}
+
 }
 
 struct ConstructProperties {
@@ -59,7 +74,12 @@ void WebContextAdapterPrivate::Init() {
   // browser context needs to set the shared GL context before anything
   // starts up, in order for compositing to work
   // FIXME: What if this fails?
-  oxide::BrowserProcessMain::Run(0);
+  if (!oxide::BrowserProcessMain::Exists()) {
+    scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
+    oxide::BrowserProcessMain::StartIfNotRunning(
+        GetProcessFlags(),
+        shared_gl_context);
+  }
 
   context_.reset(oxide::BrowserContext::Create(
       construct_props()->data_path,
@@ -245,7 +265,7 @@ WebContextAdapter::WebContextAdapter() :
   static bool run_once = false;
   if (!run_once) {
     run_once = true;
-    qAddPostRoutine(oxide::BrowserProcessMain::Quit);
+    qAddPostRoutine(oxide::BrowserProcessMain::ShutdownIfRunning);
   }
 }
 

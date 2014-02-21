@@ -27,7 +27,9 @@ set(QML_PLUGIN_SRCS qmltests/oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
 qt5_use_modules(${QML_PLUGIN} Core Qml)
-
+target_include_directories(
+    ${QML_PLUGIN} PRIVATE
+    ${CMAKE_SOURCE_DIR})
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
@@ -51,6 +53,9 @@ target_include_directories(
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
+if(OXIDE_ENABLE_COMPOSITING)
+  target_compile_definitions(${QML_TEST} PRIVATE -DENABLE_COMPOSITING)
+endif()
 set_target_properties(
     ${QML_TEST} PROPERTIES
     SKIP_BUILD_RPATH TRUE

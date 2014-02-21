@@ -15,10 +15,16 @@ TestWebView {
     id: popup
     property var popupModel: model
 
+    anchors.fill: parent
+
     function getView() { return data[0]; }
 
     Component.onCompleted: {
       WebView.view.currentPopupMenu = popup;
+    }
+
+    Component.onDestruction: {
+      WebView.view.currentPopupMenu = null;
     }
 
     ListView {
@@ -30,6 +36,14 @@ TestWebView {
         property bool enabled: model.enabled
         property bool selected: model.selected
         property bool isSeparator: model.isSeparator
+      }
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      onClicked: {
+        popupModel.items.select(2)
+        popupModel.accept()
       }
     }
   }
@@ -137,6 +151,16 @@ TestWebView {
       }
 
       webView.currentPopupMenu.popupModel.cancel();
+    }
+
+    function test_WebView_popupMenu_single5_userInteraction() {
+      var popup = webView.currentPopupMenu;
+      mouseClick(popup, popup.width / 2, popup.height / 2, Qt.LeftButton);
+      verify(webView.waitFor(function() { return (webView.currentPopupMenu == null); }),
+             "Timed out waiting for popup to hide");
+      var r = webView.getTestApi().evaluateCode(
+          "document.querySelector(\"#test\").selectedIndex");
+      compare(r, 2, "selectedIndex does not match the user selection");
     }
   }
 }

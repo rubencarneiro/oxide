@@ -47,6 +47,7 @@
 #include "shared/common/oxide_constants.h"
 
 #include "oxide_browser_context_impl.h"
+#include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_io_thread_delegate.h"
 #include "oxide_off_the_record_browser_context_impl.h"
@@ -362,6 +363,14 @@ BrowserContext::IODataHandle::~IODataHandle() {
   io_data_ = NULL;
 }
 
+void BrowserContext::AddObserver(BrowserContextObserver* observer) {
+  observers_.AddObserver(observer);
+}
+
+void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
+  observers_.RemoveObserver(observer);
+}
+
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
   CHECK(BrowserProcessMain::Exists()) <<
@@ -374,9 +383,9 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
 }
 
 BrowserContext::~BrowserContext() {
-  CHECK_EQ(web_views_.size(), static_cast<size_t>(0)) <<
-      "The BrowserContext was deleted whilst it is still in use by "
-      "one or more WebViews";
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    observers_,
+                    OnBrowserContextDestruction());
 
   std::vector<BrowserContext *>::iterator it;
   for (std::vector<BrowserContext *>::iterator it = g_all_contexts.Get().begin();
@@ -446,6 +455,12 @@ std::string BrowserContext::GetProduct() const {
 
 void BrowserContext::SetProduct(const std::string& product) {
   io_data_.SetProduct(product);
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyUserAgentStringChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyUserAgentStringChanged());
 }
 
 std::string BrowserContext::GetUserAgent() const {
@@ -454,21 +469,12 @@ std::string BrowserContext::GetUserAgent() const {
 
 void BrowserContext::SetUserAgent(const std::string& user_agent) {
   io_data_.SetUserAgent(user_agent);
-}
-
-void BrowserContext::AddWebView(WebView* wv) {
-  web_views_.push_back(wv);
-}
-
-void BrowserContext::RemoveWebView(WebView* wv) {
-  std::vector<WebView *>::iterator it;
-  for (std::vector<WebView *>::iterator it = web_views_.begin();
-       it != web_views_.end(); ++it) {
-    if (*it == wv) {
-      web_views_.erase(it);
-      break;
-    }
-  }
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyUserAgentStringChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyUserAgentStringChanged());
 }
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
@@ -506,16 +512,16 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
   return NULL;
 }
 
-void BrowserContext::RequestMIDISysExPermission(
+void BrowserContext::RequestMidiSysExPermission(
     int render_process_id,
     int render_view_id,
     int bridge_id,
     const GURL& requesting_frame,
-    const MIDISysExPermissionCallback& callback) {
+    const MidiSysExPermissionCallback& callback) {
   callback.Run(false);
 }
 
-void BrowserContext::CancelMIDISysExPermissionRequest(
+void BrowserContext::CancelMidiSysExPermissionRequest(
     int render_process_id,
     int render_view_id,
     int bridge_id,

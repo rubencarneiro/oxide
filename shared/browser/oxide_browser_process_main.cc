@@ -22,6 +22,7 @@
 #include "content/public/browser/browser_main_runner.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_io_thread_delegate.h"
@@ -33,15 +34,17 @@ namespace {
 scoped_ptr<BrowserProcessMain> g_instance;
 }
 
-BrowserProcessMain::BrowserProcessMain(int flags) :
+BrowserProcessMain::BrowserProcessMain(
+    int flags,
+    scoped_refptr<oxide::SharedGLContext> shared_gl_context) :
     did_shutdown_(false),
     flags_(flags),
+    shared_gl_context_(shared_gl_context),
     main_delegate_(ContentMainDelegate::Create()),
     main_runner_(content::ContentMainRunner::Create()) {
   CHECK(!g_instance) << "Should only have one BrowserProcessMain";
 }
 
-// static
 int BrowserProcessMain::RunBrowserMain(
     const content::MainFunctionParams& main_function_params) {
   CHECK(!browser_main_runner_);
@@ -56,7 +59,6 @@ int BrowserProcessMain::RunBrowserMain(
   return browser_main_runner_->Run();
 }
 
-// static
 void BrowserProcessMain::ShutdownBrowserMain() {
   CHECK(browser_main_runner_);
   browser_main_runner_->Shutdown();
@@ -71,6 +73,11 @@ bool BrowserProcessMain::Init() {
   }
 
   initialized = true;
+
+  if (!shared_gl_context_) {
+    DLOG(INFO) << "No shared GL context has been created. "
+               << "Compositing will not work";
+  }
 
   if (!main_runner_ || !main_delegate_) {
     LOG(ERROR) << "Failed to create the Oxide main components";
@@ -110,14 +117,20 @@ BrowserProcessMain::~BrowserProcessMain() {
 }
 
 // static
-bool BrowserProcessMain::Run(int flags) {
+bool BrowserProcessMain::StartIfNotRunning(
+    int flags,
+    scoped_refptr<oxide::SharedGLContext> shared_gl_context) {
   if (g_instance) {
     CHECK_EQ(g_instance->flags(), flags) <<
-        "BrowserProcessMain::Run() called more than once with different flags";
+        "BrowserProcessMain::StartIfNotRunning() called more than once with "
+        "different flags";
+    CHECK_EQ(g_instance->shared_gl_context(), shared_gl_context) <<
+        "BrowserProcessMain::StartIfNotRunning() called more than once with "
+        "a different shared GL context";
     return true;
   }
 
-  g_instance.reset(new BrowserProcessMain(flags));
+  g_instance.reset(new BrowserProcessMain(flags, shared_gl_context));
   if (!g_instance->Init()) {
     g_instance.reset();
   }
@@ -126,7 +139,7 @@ bool BrowserProcessMain::Run(int flags) {
 }
 
 // static
-void BrowserProcessMain::Quit() {
+void BrowserProcessMain::ShutdownIfRunning() {
   if (g_instance) {
     g_instance->Shutdown();
     g_instance.reset();

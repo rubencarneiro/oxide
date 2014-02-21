@@ -20,6 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 namespace content {
@@ -32,6 +33,7 @@ namespace oxide {
 
 class ContentMainDelegate;
 class IOThreadDelegate;
+class SharedGLContext;
 
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
@@ -40,18 +42,19 @@ class BrowserProcessMain FINAL {
  public:
   enum Flags {
     ENABLE_VIEWPORT = 1 << 0,
-    ENABLE_OVERLAY_SCROLLBARS = 1 << 1,
-    ENABLE_PINCH = 1 << 2
+    ENABLE_OVERLAY_SCROLLBARS = 1 << 1
   };
 
   ~BrowserProcessMain();
 
   // Start the browser process components if they haven't already
   // been started. Cannot be called after Quit()
-  static bool Run(int flags);
+  static bool StartIfNotRunning(
+      int flags,
+      scoped_refptr<oxide::SharedGLContext> shared_gl_context);
 
   // Quit the browser process components if they are running
-  static void Quit();
+  static void ShutdownIfRunning();
 
   // Returns true if BrowserProcessMain exists
   static bool Exists();
@@ -60,6 +63,10 @@ class BrowserProcessMain FINAL {
   static BrowserProcessMain* instance();
 
   int flags() const { return flags_; }
+
+  oxide::SharedGLContext* shared_gl_context() const {
+    return shared_gl_context_.get();
+  }
 
   // Return the IO thread delegate, which is a container of objects
   // whose lifetime is tied to the IO thread
@@ -72,7 +79,9 @@ class BrowserProcessMain FINAL {
   // For RunBrowserMain() / ShutdownBrowserMain()
   friend class oxide::ContentMainDelegate;
 
-  BrowserProcessMain(int flags);
+  BrowserProcessMain(
+      int flags,
+      scoped_refptr<oxide::SharedGLContext> shared_gl_context);
 
   int RunBrowserMain(
       const content::MainFunctionParams& main_function_params);
@@ -84,6 +93,8 @@ class BrowserProcessMain FINAL {
   bool did_shutdown_;
 
   int flags_;
+
+  scoped_refptr<oxide::SharedGLContext> shared_gl_context_;
 
   // XXX: Don't change the order of these unless you know what you are
   //      doing. It's important that ContentMainDelegate outlives

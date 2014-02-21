@@ -23,7 +23,8 @@
 namespace oxide {
 namespace qt {
 
-WebPreferences::WebPreferences() {
+WebPreferences::WebPreferences(OxideQWebPreferences* api_handle) :
+    api_handle_(api_handle) {
   QFont font;
 
   font.setStyleHint(QFont::Serif);

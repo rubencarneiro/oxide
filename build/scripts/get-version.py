@@ -41,7 +41,7 @@ def main(args):
 
   component = args[1].lower()
 
-  if component not in ["major", "minor", "build", "patch"]:
+  if component not in ["major", "minor", "patch"]:
     print("Invalid component", file=sys.stderr)
     sys.exit(1)
 

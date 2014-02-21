@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QSizeF>
+#include <QTouchEvent>
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
@@ -34,37 +35,6 @@
 
 namespace oxide {
 namespace qquick {
-
-void RenderViewItem::SchedulePaintForRectPix(const QRect& rect) {
-#if defined(ENABLE_COMPOSITING)
-  if (is_compositing_enabled_) {
-    is_compositing_enabled_state_changed_ = true;
-    is_compositing_enabled_ = false;
-  }
-#endif
-
-  if (rect.isNull() && !dirty_rect_.isNull()) {
-    dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
-  } else {
-    dirty_rect_ |= (QRectF(0, 0, width(), height()) & rect).toAlignedRect();
-  }
-
-  update();
-  polish();
-}
-
-void RenderViewItem::ScheduleUpdate() {
-#if defined(ENABLE_COMPOSITING)
-  if (!is_compositing_enabled_) {
-    is_compositing_enabled_state_changed_ = true;
-    is_compositing_enabled_ = true;
-  }
-
-  update();
-#else
-  Q_ASSERT(0);
-#endif
-}
 
 RenderViewItem::RenderViewItem(
     OxideQQuickWebView* webview) :
@@ -135,43 +105,74 @@ void RenderViewItem::SetInputMethodEnabled(bool enabled) {
   QGuiApplication::inputMethod()->update(Qt::ImEnabled);
 }
 
+void RenderViewItem::SchedulePaintForRectPix(const QRect& rect) {
+#if defined(ENABLE_COMPOSITING)
+  if (is_compositing_enabled_) {
+    is_compositing_enabled_state_changed_ = true;
+    is_compositing_enabled_ = false;
+  }
+#endif
+
+  if (rect.isNull() && !dirty_rect_.isNull()) {
+    dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
+  } else {
+    dirty_rect_ |= (QRectF(0, 0, width(), height()) & rect).toAlignedRect();
+  }
+
+  update();
+  polish();
+}
+
+void RenderViewItem::ScheduleUpdate() {
+#if defined(ENABLE_COMPOSITING)
+  if (!is_compositing_enabled_) {
+    is_compositing_enabled_state_changed_ = true;
+    is_compositing_enabled_ = true;
+  }
+
+  update();
+#else
+  Q_ASSERT(0);
+#endif
+}
+
 void RenderViewItem::focusInEvent(QFocusEvent* event) {
   Q_ASSERT(event->gotFocus());
-  ForwardFocusEvent(event);
+  HandleFocusEvent(event);
 }
 
 void RenderViewItem::focusOutEvent(QFocusEvent* event) {
   Q_ASSERT(event->lostFocus());
-  ForwardFocusEvent(event);
+  HandleFocusEvent(event);
 }
 
 void RenderViewItem::keyPressEvent(QKeyEvent* event) {
-  ForwardKeyEvent(event);
+  HandleKeyEvent(event);
 }
 
 void RenderViewItem::keyReleaseEvent(QKeyEvent* event) {
-  ForwardKeyEvent(event);
+  HandleKeyEvent(event);
 }
 
 void RenderViewItem::mouseDoubleClickEvent(QMouseEvent* event) {
-  ForwardMouseEvent(event);
+  HandleMouseEvent(event);
 }
 
 void RenderViewItem::mouseMoveEvent(QMouseEvent* event) {
-  ForwardMouseEvent(event);
+  HandleMouseEvent(event);
 }
 
 void RenderViewItem::mousePressEvent(QMouseEvent* event) {
-  ForwardMouseEvent(event);
-  setFocus(true);
+  forceActiveFocus();
+  HandleMouseEvent(event);
 }
 
 void RenderViewItem::mouseReleaseEvent(QMouseEvent* event) {
-  ForwardMouseEvent(event);
+  HandleMouseEvent(event);
 }
 
 void RenderViewItem::wheelEvent(QWheelEvent* event) {
-  ForwardWheelEvent(event);
+  HandleWheelEvent(event);
 }
 
 void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
@@ -187,13 +188,20 @@ void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
                  Qt::NoButton,
                  event->modifiers());
 
-  ForwardMouseEvent(&me);
+  HandleMouseEvent(&me);
 
   event->setAccepted(me.isAccepted());
 }
 
 void RenderViewItem::inputMethodEvent(QInputMethodEvent* event) {
-  ForwardInputMethodEvent(event);
+  HandleInputMethodEvent(event);
+}
+
+void RenderViewItem::touchEvent(QTouchEvent* event) {
+  if (event->type() == QEvent::TouchBegin) {
+    forceActiveFocus();
+  }
+  HandleTouchEvent(event);
 }
 
 void RenderViewItem::updatePolish() {

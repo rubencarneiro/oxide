@@ -63,6 +63,7 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
 
   std::string product_;
   std::string user_agent_;
+  bool default_user_agent_string_;
 
   std::string accept_langs_;
 

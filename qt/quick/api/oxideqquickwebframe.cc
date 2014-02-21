@@ -28,7 +28,7 @@
 
 OxideQQuickWebFramePrivate::OxideQQuickWebFramePrivate(
     OxideQQuickWebFrame* q) :
-    q_ptr(q) {}
+    oxide::qt::WebFrameAdapter(q) {}
 
 void OxideQQuickWebFramePrivate::URLChanged() {
   Q_Q(OxideQQuickWebFrame);

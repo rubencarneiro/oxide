@@ -4,9 +4,9 @@
 diff --git a/tools/gritsettings/resource_ids b/tools/gritsettings/resource_ids
 --- a/tools/gritsettings/resource_ids
 +++ b/tools/gritsettings/resource_ids
-@@ -216,9 +216,12 @@
+@@ -196,9 +196,12 @@
    },
-   "components/dom_distiller_resources.grd": {
+   "components/component_resources.grd": {
      "includes": [30250],
    },
    "third_party/WebKit/public/blink_resources.grd": {
