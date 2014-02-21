@@ -55,7 +55,7 @@ TestApiHost.prototype = {
 
   get documentURI() {
     return this.waitForResult(
-        this._frame.sendMessage("TestUtils",
+        this._frame.sendMessage("oxide://testutils/",
                                 "GET-DOCUMENT-URI",
                                 {})).location;
   },
@@ -63,7 +63,7 @@ TestApiHost.prototype = {
   evaluateCode: function(code, wrap) {
     return this.waitForResult(
         this._frame.sendMessage(
-          "TestUtils",
+          "oxide://testutils/",
           "EVALUATE-CODE",
           { code: code,
             wrap: wrap === undefined ? false : wrap })).result;
@@ -71,14 +71,14 @@ TestApiHost.prototype = {
 
   getBoundingClientRectForSelector: function(selector) {
     return this.waitForResult(
-        this._frame.sendMessage("TestUtils",
+        this._frame.sendMessage("oxide://testutils/",
                                 "GET-BOUNDING-CLIENT-RECT",
                                 { selector: selector }));
   },
 
   sendMessageToSelf: function(id, args) {
     var r = this.waitForResult(
-        this._frame.sendMessage("TestUtils",
+        this._frame.sendMessage("oxide://testutils/",
                                 "SEND-MESSAGE-TO-SELF",
                                 { id: id, args: args } ));
     if (r.error > 0) {

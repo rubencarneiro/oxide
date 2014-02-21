@@ -14,7 +14,7 @@ TestWebView {
   messageHandlers: [
     MessageHandler {
       msgId: "TEST"
-      worldIds: [ "TestUtils" ]
+      contexts: [ "oxide://testutils/" ]
       callback: function(msg, frame) {
         webView.lastMessageFrameSource = frame;
         msg.reply({ out: msg.args.in * 2 });
@@ -52,7 +52,7 @@ TestWebView {
 
       var handler = messageHandler.createObject(
           null,
-          { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
+          { msgId: "TEST", contexts: [ "http://foo/", "oxide://testutils/" ],
             callback: function(msg, frame) {
               webView.lastMessageFrameSource = frame;
               msg.reply({ out: msg.args.in * 5 });
@@ -98,7 +98,7 @@ TestWebView {
 
       var handler = messageHandler.createObject(
           frame,
-          { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
+          { msgId: "TEST", contexts: [ "http://foo/", "oxide://testutils/" ],
             callback: function(msg, frame) {
               msg.reply({ out: msg.args.in * 5 });
             }
@@ -139,7 +139,7 @@ TestWebView {
 
       var handler = messageHandler.createObject(
           null,
-          { msgId: "TEST", worldIds: [ "TestUtils" ],
+          { msgId: "TEST", contexts: [ "oxide://testutils/" ],
             callback: function(msg, frame) {
               msg.reply({ out: msg.args.in * 5 });
             }
@@ -161,7 +161,7 @@ TestWebView {
               "Should have had a response from the webview handler");
     }
 
-    function test_WebFrame_messageHandlers4_noMatchingWorldId() {
+    function test_WebFrame_messageHandlers4_noMatchingContext() {
       webView.url = "http://localhost:8080/tst_WebFrame_messageHandlers.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
@@ -170,7 +170,7 @@ TestWebView {
 
       var handler = messageHandler.createObject(
           null,
-          { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
+          { msgId: "TEST", contexts: [ "http://foo/", "oxide://testutils/" ],
             callback: function(msg, frame) {
               msg.reply({ out: msg.args.in * 5 });
             }
@@ -187,7 +187,7 @@ TestWebView {
       compare(sendMessage(), 50,
               "Should have had a response from the frame handler");
 
-      frame.messageHandlers[0].worldIds = [ "Foo" ];
+      frame.messageHandlers[0].contexts = [ "http://foo/" ];
       compare(sendMessage(), 20,
               "Should have had a response from the webview handler");
 
@@ -202,7 +202,7 @@ TestWebView {
 
       var handler = messageHandler.createObject(
           null,
-          { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
+          { msgId: "TEST", contexts: [ "http://foo/", "oxide://testutils/" ],
             callback: function(msg, frame) {
               msg.reply({ out: msg.args.in * 5 });
             }

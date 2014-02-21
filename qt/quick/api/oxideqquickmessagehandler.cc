@@ -96,17 +96,17 @@ void OxideQQuickMessageHandler::setMsgId(const QString& id) {
   emit msgIdChanged();
 }
 
-QList<QString> OxideQQuickMessageHandler::worldIds() const {
+QList<QUrl> OxideQQuickMessageHandler::contexts() const {
   Q_D(const OxideQQuickMessageHandler);
 
-  return d->worldIds();
+  return d->contexts();
 }
 
-void OxideQQuickMessageHandler::setWorldIds(const QList<QString>& ids) {
+void OxideQQuickMessageHandler::setContexts(const QList<QUrl>& contexts) {
   Q_D(OxideQQuickMessageHandler);
 
-  d->setWorldIds(ids);
-  emit worldIdsChanged();
+  d->setContexts(contexts);
+  emit contextsChanged();
 }
 
 QJSValue OxideQQuickMessageHandler::callback() const {

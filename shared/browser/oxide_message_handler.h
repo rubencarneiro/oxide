@@ -24,6 +24,7 @@
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/compiler_specific.h"
+#include "url/gurl.h"
 
 namespace oxide {
 
@@ -42,11 +43,11 @@ class MessageHandler FINAL {
     msg_id_ = id;
   }
 
-  const std::vector<std::string>& world_ids() const {
-    return world_ids_;
+  const std::vector<GURL>& contexts() const {
+    return contexts_;
   }
-  void set_world_ids(const std::vector<std::string>& ids) {
-    world_ids_ = ids;
+  void set_contexts(const std::vector<GURL>& contexts) {
+    contexts_ = contexts;
   }
 
   bool IsValid() const;
@@ -57,7 +58,7 @@ class MessageHandler FINAL {
 
  private:
   std::string msg_id_;
-  std::vector<std::string> world_ids_;
+  std::vector<GURL> contexts_;
   HandlerCallback callback_;
 
   DISALLOW_COPY_AND_ASSIGN(MessageHandler);

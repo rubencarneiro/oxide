@@ -19,7 +19,6 @@
 #define _OXIDE_QT_CORE_GLUE_USER_SCRIPT_ADAPTER_H_
 
 #include <QScopedPointer>
-#include <QString>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -54,8 +53,8 @@ class Q_DECL_EXPORT UserScriptAdapter {
   bool incognitoEnabled() const;
   void setIncognitoEnabled(bool enabled);
 
-  QString worldId() const;
-  void setWorldId(const QString& id);
+  QUrl context() const;
+  bool setContext(const QUrl& context);
 
   void startLoading();
 

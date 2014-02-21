@@ -17,11 +17,12 @@
 
 #include "oxide_qt_user_script_adapter.h"
 
+#include <QDebug>
+
 #include "url/gurl.h"
 
-#include "shared/common/oxide_user_script.h"
-
 #include "qt/core/glue/private/oxide_qt_user_script_adapter_p.h"
+#include "shared/common/oxide_user_script.h"
 
 namespace oxide {
 namespace qt {
@@ -67,12 +68,17 @@ void UserScriptAdapter::setIncognitoEnabled(bool enabled) {
   priv->user_script().set_incognito_enabled(enabled);
 }
 
-QString UserScriptAdapter::worldId() const {
-  return QString::fromStdString(priv->user_script().world_id());
+QUrl UserScriptAdapter::context() const {
+  return QUrl(QString::fromStdString(priv->user_script().context().spec()));
 }
 
-void UserScriptAdapter::setWorldId(const QString& id) {
-  priv->user_script().set_world_id(id.toStdString());
+bool UserScriptAdapter::setContext(const QUrl& context) {
+  if (!context.isValid()) {
+    qWarning() << "Invalid URL for UserScript.context";
+    return false;
+  }
+  priv->user_script().set_context(GURL(context.toString().toStdString()));
+  return true;
 }
 
 void UserScriptAdapter::startLoading() {

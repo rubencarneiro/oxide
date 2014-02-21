@@ -27,7 +27,7 @@ IPC_ENUM_TRAITS(OxideMsg_SendMessage_Type::Value)
 IPC_ENUM_TRAITS(OxideMsg_SendMessage_Error::Value)
 
 IPC_STRUCT_BEGIN(OxideMsg_SendMessage_Params)
-  IPC_STRUCT_MEMBER(std::string, world_id)
+  IPC_STRUCT_MEMBER(std::string, context)
   IPC_STRUCT_MEMBER(int, serial)
   IPC_STRUCT_MEMBER(OxideMsg_SendMessage_Type::Value, type)
   IPC_STRUCT_MEMBER(OxideMsg_SendMessage_Error::Value, error)

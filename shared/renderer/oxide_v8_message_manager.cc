@@ -162,7 +162,7 @@ void V8MessageManager::SendMessageInner(
   }
 
   OxideMsg_SendMessage_Params params;
-  params.world_id = IsolatedWorldMap::IDToName(world_id_);
+  params.context = IsolatedWorldMap::URLFromID(world_id_).spec();
   params.serial = serial->Value();
   params.type = type;
   params.error = error;
@@ -324,7 +324,7 @@ void V8MessageManager::ReceiveMessage(
   if (try_catch.HasCaught() &&
       params.type == OxideMsg_SendMessage_Type::Message) {
     OxideMsg_SendMessage_Params error_params;
-    error_params.world_id = params.world_id;
+    error_params.context = params.context;
     error_params.serial = params.serial;
     error_params.type = OxideMsg_SendMessage_Type::Reply;
     error_params.error = OxideMsg_SendMessage_Error::UNCAUGHT_EXCEPTION;

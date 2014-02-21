@@ -14,7 +14,7 @@ TestWebView {
   messageHandlers: [
     MessageHandler {
       msgId: "TEST"
-      worldIds: [ "Foo", "TestUtils" ]
+      contexts: [ "http://foo/", "oxide://testutils/" ]
       callback: function(msg, frame) {
         webView.lastMessageFrameSource = frame;
         msg.reply({ out: msg.args.in * 2 });
@@ -83,7 +83,7 @@ TestWebView {
       webView.messageHandlers[0].msgId = "TEST";
     }
 
-    function test_WebView_messageHandlers4_noMatchingWorld() {
+    function test_WebView_messageHandlers4_noMatchingContext() {
       webView.url = "http://localhost:8080/tst_WebView_messageHandlers1.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -94,7 +94,7 @@ TestWebView {
 
       compare(sendMessage(), 20, "Should have had a response");
 
-      webView.messageHandlers[0].worldIds = [ "Yaaaaaa" ];
+      webView.messageHandlers[0].contexts = [ "http://foo/" ];
 
       try {
         sendMessage();
@@ -105,7 +105,7 @@ TestWebView {
                 "Unexpected error type");
       }
 
-      webView.messageHandlers[0].worldIds = [ "Foo", "TestUtils" ];
+      webView.messageHandlers[0].contexts = [ "http://foo/", "oxide://testutils/" ];
     }
 
     function test_WebView_messageHandlers5_noCallback() {

@@ -26,6 +26,7 @@
 #include "ipc/ipc_message.h"
 #include "ipc/ipc_message_macros.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
+#include "url/gurl.h"
 
 #include "shared/common/oxide_messages.h"
 
@@ -46,7 +47,7 @@ void MessageDispatcherRenderer::OnReceiveMessage(
   for (MessageManagerVector::iterator it = message_managers_.begin();
        it != message_managers_.end(); ++it) {
     linked_ptr<V8MessageManager> mm = *it;
-    if (mm->world_id() == IsolatedWorldMap::NameToID(params.world_id)) {
+    if (mm->world_id() == IsolatedWorldMap::IDFromURL(GURL(params.context))) {
       mm->ReceiveMessage(params);
       return;
     }
@@ -57,7 +58,7 @@ void MessageDispatcherRenderer::OnReceiveMessage(
   }
 
   OxideMsg_SendMessage_Params error_params;
-  error_params.world_id = params.world_id;
+  error_params.context = params.context;
   error_params.serial = params.serial;
   error_params.type = OxideMsg_SendMessage_Type::Reply;
   error_params.error = OxideMsg_SendMessage_Error::INVALID_DESTINATION;

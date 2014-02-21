@@ -85,11 +85,11 @@ class UserScript FINAL {
     match_all_frames_ = match_all;
   }
 
-  std::string world_id() const {
-    return world_id_;
+  GURL context() const {
+    return context_;
   }
-  void set_world_id(const std::string& world_id) {
-    world_id_ = world_id;
+  void set_context(const GURL& context) {
+    context_ = context;
   }
 
   bool incognito_enabled() const {
@@ -146,7 +146,7 @@ class UserScript FINAL {
   bool incognito_enabled_;
   bool emulate_greasemonkey_;
 
-  std::string world_id_;
+  GURL context_;
 
   std::string contents_;
 

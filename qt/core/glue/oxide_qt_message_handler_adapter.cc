@@ -21,9 +21,8 @@
 
 #include "base/bind.h"
 
-#include "shared/browser/oxide_incoming_message.h"
-
 #include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
+#include "shared/browser/oxide_incoming_message.h"
 
 namespace oxide {
 namespace qt {
@@ -42,26 +41,26 @@ void MessageHandlerAdapter::setMsgId(const QString& id) {
   priv->handler().set_msg_id(id.toStdString());
 }
 
-QList<QString> MessageHandlerAdapter::worldIds() const {
-  QList<QString> list;
+QList<QUrl> MessageHandlerAdapter::contexts() const {
+  QList<QUrl> list;
 
-  const std::vector<std::string>& ids = priv->handler().world_ids();
-  for (std::vector<std::string>::const_iterator it = ids.begin();
-       it != ids.end(); ++it) {
-    list.append(QString::fromStdString(*it));
+  const std::vector<GURL>& contexts = priv->handler().contexts();
+  for (std::vector<GURL>::const_iterator it = contexts.begin();
+       it != contexts.end(); ++it) {
+    list.append(QUrl(QString::fromStdString((*it).spec())));
   }
 
   return list;
 }
 
-void MessageHandlerAdapter::setWorldIds(const QList<QString>& ids) {
-  std::vector<std::string> list;
+void MessageHandlerAdapter::setContexts(const QList<QUrl>& contexts) {
+  std::vector<GURL> list;
 
-  for (int i = 0; i < ids.size(); ++i) {
-    list.push_back(ids[i].toStdString());
+  for (int i = 0; i < contexts.size(); ++i) {
+    list.push_back(GURL(contexts[i].toString().toStdString()));
   }
 
-  priv->handler().set_world_ids(list);
+  priv->handler().set_contexts(list);
 }
 
 void MessageHandlerAdapter::attachHandler() {

@@ -12,7 +12,7 @@ TestWebView {
   messageHandlers: [
     MessageHandler {
       msgId: "TEST-THROW"
-      worldIds: [ "TestUtils" ]
+      contexts: [ "oxide://testutils/" ]
       callback: function(msg, frame) {
         throw Error("This is an exception");
       }
@@ -61,22 +61,22 @@ TestWebView {
       webView.messageHandlers[0].msgId = orig;
     }
 
-    function test_MessageHandler3_worldIds() {
-      spy.signalName = "worldIdsChanged";
+    function test_MessageHandler3_contexts() {
+      spy.signalName = "contextsChanged";
       spy.clear();
 
-      var orig = webView.messageHandlers[0].worldIds;
+      var orig = webView.messageHandlers[0].contexts;
 
-      webView.messageHandlers[0].worldIds = [ "Foo", "Bar" ];
+      webView.messageHandlers[0].contexts = [ "http://foo/", "http://bar/" ];
       compare(spy.count, 1, "Should have had a signal");
-      compare(webView.messageHandlers[0].worldIds.length, 2,
-              "Should have 2 IDs");
-      compare(webView.messageHandlers[0].worldIds[0], "Foo",
-              "Unexpected ID");
-      compare(webView.messageHandlers[0].worldIds[1], "Bar",
-              "Unexpected ID");
+      compare(webView.messageHandlers[0].contexts.length, 2,
+              "Should have 2 contexts");
+      compare(webView.messageHandlers[0].contexts[0], "http://foo/",
+              "Unexpected context");
+      compare(webView.messageHandlers[0].contexts[1], "http://bar/",
+              "Unexpected context");
 
-      webView.messageHandlers[0].worldIds = orig;
+      webView.messageHandlers[0].contexts = orig;
     }
 
     function test_MessageHandler4_callback() {

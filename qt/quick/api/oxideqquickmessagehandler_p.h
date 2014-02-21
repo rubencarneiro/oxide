@@ -26,6 +26,7 @@
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
+#include <QUrl>
 
 class OxideQQuickMessageHandlerPrivate;
 
@@ -33,7 +34,7 @@ class OxideQQuickMessageHandler : public QObject,
                                   public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QString msgId READ msgId WRITE setMsgId NOTIFY msgIdChanged)
-  Q_PROPERTY(QList<QString> worldIds READ worldIds WRITE setWorldIds NOTIFY worldIdsChanged)
+  Q_PROPERTY(QList<QUrl> contexts READ contexts WRITE setContexts NOTIFY contextsChanged)
   Q_PROPERTY(QJSValue callback READ callback WRITE setCallback NOTIFY callbackChanged)
 
   Q_DECLARE_PRIVATE(OxideQQuickMessageHandler)
@@ -45,8 +46,8 @@ class OxideQQuickMessageHandler : public QObject,
   QString msgId() const;
   void setMsgId(const QString& id);
 
-  QList<QString> worldIds() const;
-  void setWorldIds(const QList<QString>& ids);
+  QList<QUrl> contexts() const;
+  void setContexts(const QList<QUrl>& contexts);
 
   QJSValue callback() const;
   void setCallback(const QJSValue& callback);
@@ -56,7 +57,7 @@ class OxideQQuickMessageHandler : public QObject,
 
  Q_SIGNALS:
   void msgIdChanged();
-  void worldIdsChanged();
+  void contextsChanged();
   void callbackChanged();
 
  private:

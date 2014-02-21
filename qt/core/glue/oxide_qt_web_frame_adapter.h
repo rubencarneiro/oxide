@@ -43,11 +43,11 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
 
   QUrl url() const;
 
-  bool sendMessage(const QString& world_id,
+  bool sendMessage(const QUrl& context,
                    const QString& msg_id,
                    const QVariant& args,
                    OutgoingMessageRequestAdapter* req);
-  void sendMessageNoReply(const QString& world_id,
+  void sendMessageNoReply(const QUrl& context,
                           const QString& msg_id,
                           const QVariant& args);
 

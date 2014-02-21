@@ -74,11 +74,11 @@ class WebFrame : public MessageTarget {
   size_t ChildCount() const;
   WebFrame* ChildAt(size_t index) const;
 
-  bool SendMessage(const std::string& world_id,
+  bool SendMessage(const GURL& context,
                    const std::string& msg_id,
                    const std::string& payload,
                    OutgoingMessageRequest* req);
-  bool SendMessageNoReply(const std::string& world_id,
+  bool SendMessageNoReply(const GURL& context,
                           const std::string& msg_id,
                           const std::string& payload);
 

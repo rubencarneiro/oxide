@@ -206,7 +206,7 @@ void OxideQQuickWebFrame::removeMessageHandler(
 }
 
 OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
-    const QString& world_id,
+    const QUrl& context,
     const QString& msg_id,
     const QVariant& args) {
   Q_D(OxideQQuickWebFrame);
@@ -214,7 +214,7 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
   OxideQQuickOutgoingMessageRequest* request =
       new OxideQQuickOutgoingMessageRequest();
 
-  if (!d->sendMessage(world_id, msg_id, args,
+  if (!d->sendMessage(context, msg_id, args,
                       OxideQQuickOutgoingMessageRequestPrivate::get(request))) {
     delete request;
     return NULL;
@@ -223,10 +223,10 @@ OxideQQuickOutgoingMessageRequest* OxideQQuickWebFrame::sendMessage(
   return request;
 }
 
-void OxideQQuickWebFrame::sendMessageNoReply(const QString& world_id,
+void OxideQQuickWebFrame::sendMessageNoReply(const QUrl& context,
                                              const QString& msg_id,
                                              const QVariant& args) {
   Q_D(OxideQQuickWebFrame);
 
-  d->sendMessageNoReply(world_id, msg_id, args);
+  d->sendMessageNoReply(context, msg_id, args);
 }

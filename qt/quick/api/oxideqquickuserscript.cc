@@ -134,19 +134,20 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
   emit scriptPropertyChanged();
 }
 
-QString OxideQQuickUserScript::worldId() const {
+QUrl OxideQQuickUserScript::context() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->worldId();
+  return d->context();
 }
 
-void OxideQQuickUserScript::setWorldId(const QString& world_id) {
+void OxideQQuickUserScript::setContext(const QUrl& context) {
   Q_D(OxideQQuickUserScript);
 
-  if (world_id == worldId()) {
+  if (context == this->context()) {
     return;
   }
 
-  d->setWorldId(world_id);
-  emit scriptPropertyChanged();
+  if (d->setContext(context)) {
+    emit scriptPropertyChanged();
+  }
 }

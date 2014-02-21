@@ -18,6 +18,7 @@
 #include "oxide_user_script_slave.h"
 
 #include <map>
+#include <string>
 
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
@@ -41,21 +42,17 @@ namespace oxide {
 
 namespace {
 const char kIsolatedWorldCSP[] = "script-src 'self'";
-const char kIsolatedWorldOriginProtocol[] = "oxide-world://";
 const char kUserScriptHead[] = "(function (unsafeWindow) {\n";
 const char kUserScriptTail[] = "\n})(window);";
 }
 
 // static
-int UserScriptSlave::GetIsolatedWorldID(const std::string& name,
+int UserScriptSlave::GetIsolatedWorldID(const GURL& url,
                                         blink::WebFrame* frame) {
-  std::string url(kIsolatedWorldOriginProtocol);
-  url.append(name);
-
-  int id = IsolatedWorldMap::NameToID(name);
+  int id = IsolatedWorldMap::IDFromURL(url);
 
   frame->setIsolatedWorldSecurityOrigin(
-      id, blink::WebSecurityOrigin::createFromString(base::UTF8ToUTF16(url)));
+      id, blink::WebSecurityOrigin::createFromString(base::UTF8ToUTF16(url.spec())));
   frame->setIsolatedWorldContentSecurityPolicy(
       id, blink::WebString::fromUTF8(kIsolatedWorldCSP));
 
@@ -121,7 +118,7 @@ void UserScriptSlave::InjectScripts(blink::WebFrame* frame,
        it != user_scripts_.end(); ++it) {
     linked_ptr<UserScript>& script = *it;
 
-    if (script->content().empty() || script->world_id().empty()) {
+    if (script->content().empty() || !script->context().is_valid()) {
       continue;
     }
 
@@ -151,7 +148,7 @@ void UserScriptSlave::InjectScripts(blink::WebFrame* frame,
     }
 
     blink::WebScriptSource source(blink::WebString::fromUTF8(content));
-    int id = GetIsolatedWorldID(script->world_id(), frame);
+    int id = GetIsolatedWorldID(script->context(), frame);
     frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
   }
 }

@@ -54,10 +54,10 @@ class OxideQQuickWebFrame : public QObject {
   Q_INVOKABLE void removeMessageHandler(OxideQQuickMessageHandler* handler);
 
   Q_INVOKABLE OxideQQuickOutgoingMessageRequest*
-      sendMessage(const QString& world_id,
+      sendMessage(const QUrl& context,
                   const QString& msg_id,
                   const QVariant& args);
-  Q_INVOKABLE void sendMessageNoReply(const QString& world_id,
+  Q_INVOKABLE void sendMessageNoReply(const QUrl& context,
                                       const QString& msg_id,
                                       const QVariant& args);
 

@@ -20,15 +20,15 @@
 
 #include <QObject>
 #include <QScopedPointer>
-#include <QString>
 #include <QtGlobal>
+#include <QUrl>
 #include <QVariant>
 
 class OxideQIncomingMessagePrivate;
 
 class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QString worldId READ worldId)
+  Q_PROPERTY(QUrl context READ context)
   Q_PROPERTY(QVariant args READ args)
 
   Q_DECLARE_PRIVATE(OxideQIncomingMessage)
@@ -38,7 +38,7 @@ class Q_DECL_EXPORT OxideQIncomingMessage : public QObject {
   Q_DECL_HIDDEN OxideQIncomingMessage();
   virtual ~OxideQIncomingMessage();
 
-  QString worldId() const;
+  QUrl context() const;
   QVariant args() const;
 
   Q_INVOKABLE void reply(const QVariant& args);

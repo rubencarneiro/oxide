@@ -77,7 +77,7 @@ WebView {
     dataPath: Testing.Utils.DATA_PATH
     userScripts: [
       UserScript {
-        worldId: "TestUtils"
+        context: "oxide://testutils/"
         url: Qt.resolvedUrl("TestUtilsSlave.js")
         incognitoEnabled: true
         matchAllFrames: true

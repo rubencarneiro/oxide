@@ -24,6 +24,7 @@
 #include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
+#include <QUrl>
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 
@@ -42,8 +43,8 @@ class Q_DECL_EXPORT MessageHandlerAdapter : public AdapterBase {
   QString msgId() const;
   void setMsgId(const QString& id);
 
-  QList<QString> worldIds() const;
-  void setWorldIds(const QList<QString>& ids);
+  QList<QUrl> contexts() const;
+  void setContexts(const QList<QUrl>& contexts);
 
   void attachHandler();
   void detachHandler();

@@ -29,6 +29,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "ipc/ipc_message.h"
 #include "ipc/ipc_message_macros.h"
+#include "url/gurl.h"
 
 #include "shared/common/oxide_messages.h"
 
@@ -124,6 +125,8 @@ class MessageReceiver {
  private:
   bool TryDispatchMessageToTarget(MessageTarget* target,
                                   WebFrame* source_frame) {
+    GURL context(params_.context);
+
     for (size_t i = 0; i < target->GetMessageHandlerCount(); ++i) {
       MessageHandler* handler = target->GetMessageHandlerAt(i);
 
@@ -135,14 +138,14 @@ class MessageReceiver {
         continue;
       }
 
-      const std::vector<std::string>& world_ids = handler->world_ids();
+      const std::vector<GURL>& contexts = handler->contexts();
 
-      for (std::vector<std::string>::const_iterator it = world_ids.begin();
-           it != world_ids.end(); ++it) {
-        if ((*it) == params_.world_id) {
+      for (std::vector<GURL>::const_iterator it = contexts.begin();
+           it != contexts.end(); ++it) {
+        if ((*it) == context) {
           handler->OnReceiveMessage(
               new IncomingMessage(source_frame, params_.serial,
-                                  params_.world_id, params_.msg_id,
+                                  context, params_.msg_id,
                                   params_.payload));
           return true;
         }
@@ -156,7 +159,7 @@ class MessageReceiver {
                    OxideMsg_SendMessage_Error::Value type,
                    const std::string& msg) {
     OxideMsg_SendMessage_Params params;
-    params.world_id = params_.world_id;
+    params.context = params_.context;
     params.serial = params_.serial;
     params.type = OxideMsg_SendMessage_Type::Reply;
     params.msg_id = params_.msg_id;

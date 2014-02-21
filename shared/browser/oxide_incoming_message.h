@@ -23,6 +23,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
+#include "url/gurl.h"
 
 namespace oxide {
 
@@ -32,7 +33,7 @@ class IncomingMessage FINAL {
  public:
   IncomingMessage(WebFrame* source_frame,
                   int serial,
-                  const std::string& world_id,
+                  const GURL& context,
                   const std::string& msg_id,
                   const std::string& args);
     
@@ -41,14 +42,14 @@ class IncomingMessage FINAL {
 
   WebFrame* source_frame() const { return source_frame_.get(); }
   int serial() const { return serial_; }
-  std::string world_id() const { return world_id_; }
+  GURL context() const { return context_; }
   std::string msg_id() const { return msg_id_; }
   std::string args() const { return args_; }
 
  private:
   base::WeakPtr<WebFrame> source_frame_;
   int serial_;
-  std::string world_id_;
+  GURL context_;
   std::string msg_id_;
   std::string args_;
 

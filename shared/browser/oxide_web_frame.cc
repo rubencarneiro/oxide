@@ -146,7 +146,7 @@ WebFrame* WebFrame::ChildAt(size_t index) const {
   return child_frames_.at(index);
 }
 
-bool WebFrame::SendMessage(const std::string& world_id,
+bool WebFrame::SendMessage(const GURL& context,
                            const std::string& msg_id,
                            const std::string& payload,
                            OutgoingMessageRequest* req) {
@@ -157,7 +157,7 @@ bool WebFrame::SendMessage(const std::string& world_id,
   req->set_serial(serial);
 
   OxideMsg_SendMessage_Params params;
-  params.world_id = world_id;
+  params.context = context.spec();
   params.serial = serial;
   params.type = OxideMsg_SendMessage_Type::Message;
   params.msg_id = msg_id;
@@ -167,11 +167,11 @@ bool WebFrame::SendMessage(const std::string& world_id,
   return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 
-bool WebFrame::SendMessageNoReply(const std::string& world_id,
+bool WebFrame::SendMessageNoReply(const GURL& context,
                                   const std::string& msg_id,
                                   const std::string& payload) {
   OxideMsg_SendMessage_Params params;
-  params.world_id = world_id;
+  params.context = context.spec();
   params.serial = -1;
   params.type = OxideMsg_SendMessage_Type::Message;
   params.msg_id = msg_id;

@@ -29,12 +29,12 @@ namespace oxide {
 IncomingMessage::IncomingMessage(
     WebFrame* source_frame,
     int serial,
-    const std::string& world_id,
+    const GURL& context,
     const std::string& msg_id,
     const std::string& args) :
     source_frame_(source_frame->GetWeakPtr()),
     serial_(serial),
-    world_id_(world_id),
+    context_(context),
     msg_id_(msg_id),
     args_(args) {}
 
@@ -45,7 +45,7 @@ void IncomingMessage::Reply(const std::string& args) {
   }
 
   OxideMsg_SendMessage_Params params;
-  params.world_id = world_id_;
+  params.context = context_.spec();
   params.serial = serial_;
   params.type = OxideMsg_SendMessage_Type::Reply;
   params.error = OxideMsg_SendMessage_Error::OK;
@@ -63,7 +63,7 @@ void IncomingMessage::Error(const std::string& msg) {
   }
 
   OxideMsg_SendMessage_Params params;
-  params.world_id = world_id_;
+  params.context = context_.spec();
   params.serial = serial_;
   params.type = OxideMsg_SendMessage_Type::Reply;
   params.error = OxideMsg_SendMessage_Error::HANDLER_REPORTED_ERROR;

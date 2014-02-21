@@ -68,14 +68,14 @@ QUrl WebFrameAdapter::url() const {
   return QUrl(QString::fromStdString(priv->owner->url().spec()));
 }
 
-bool WebFrameAdapter::sendMessage(const QString& world_id,
+bool WebFrameAdapter::sendMessage(const QUrl& context,
                                   const QString& msg_id,
                                   const QVariant& args,
                                   OutgoingMessageRequestAdapter* req) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
   if (priv->owner->SendMessage(
-      world_id.toStdString(),
+      GURL(context.toString().toStdString()),
       msg_id.toStdString(),
       QString(jsondoc.toJson()).toStdString(),
       &OutgoingMessageRequestAdapterPrivate::get(req)->request())) {
@@ -86,13 +86,13 @@ bool WebFrameAdapter::sendMessage(const QString& world_id,
   return false;
 }
 
-void WebFrameAdapter::sendMessageNoReply(const QString& world_id,
+void WebFrameAdapter::sendMessageNoReply(const QUrl& context,
                                          const QString& msg_id,
                                          const QVariant& args) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
   priv->owner->SendMessageNoReply(
-      world_id.toStdString(),
+      GURL(context.toString().toStdString()),
       msg_id.toStdString(),
       QString(jsondoc.toJson()).toStdString());
 }

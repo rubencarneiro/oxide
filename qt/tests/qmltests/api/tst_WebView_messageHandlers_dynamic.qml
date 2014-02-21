@@ -35,7 +35,7 @@ TestWebView {
 
       var handler = messageHandler.createObject(
           null,
-          { msgId: "TEST", worldIds: [ "TestUtils" ],
+          { msgId: "TEST", contexts: [ "oxide://testutils/" ],
             callback: function(msg, frame) {
               msg.reply({ out: msg.args.in * 2 });
             }
@@ -84,7 +84,7 @@ TestWebView {
 
       var handler = messageHandler.createObject(
           webView,
-          { msgId: "TEST", worldIds: [ "TestUtils" ],
+          { msgId: "TEST", contexts: [ "oxide://testutils/" ],
             callback: function(msg, frame) {
               msg.reply({ out: msg.args.in * 2 });
             }

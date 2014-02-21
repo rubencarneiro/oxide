@@ -20,6 +20,7 @@
 
 #include <QByteArray>
 #include <QJsonDocument>
+#include <QString>
 
 #include "shared/browser/oxide_incoming_message.h"
 
@@ -46,10 +47,10 @@ OxideQIncomingMessage::OxideQIncomingMessage() :
 
 OxideQIncomingMessage::~OxideQIncomingMessage() {}
 
-QString OxideQIncomingMessage::worldId() const {
+QUrl OxideQIncomingMessage::context() const {
   Q_D(const OxideQIncomingMessage);
 
-  return QString::fromStdString(d->incoming()->world_id());
+  return QUrl(QString::fromStdString(d->incoming()->context().spec()));
 }
 
 QVariant OxideQIncomingMessage::args() const {

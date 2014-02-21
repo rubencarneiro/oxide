@@ -10,24 +10,24 @@ TestWebView {
   height: 200
 
   property QtObject lastMessageFrameSource: null
-  property string lastMessageWorldId: ""
+  property string lastMessageContext: ""
 
   messageHandlers: [
     MessageHandler {
       msgId: "TEST-REPLY"
-      worldIds: [ "TestUtils" ]
+      contexts: [ "oxide://testutils/" ]
       callback: function(msg, frame) {
         webView.lastMessageFrameSource = frame;
-        webView.lastMessageWorldId = msg.worldId;
+        webView.lastMessageContext = msg.context;
         msg.reply({ out: msg.args.in * 2 });
       }
     },
     MessageHandler {
       msgId: "TEST-ERROR"
-      worldIds: [ "TestUtils" ]
+      contexts: [ "oxide://testutils/" ]
       callback: function(msg, frame) {
         webView.lastMessageFrameSource = frame;
-        webView.lastMessageWorldId = msg.worldId;
+        webView.lastMessageContext = msg.context;
         msg.error("This is an error");
       }
     }
@@ -40,7 +40,7 @@ TestWebView {
 
     function init() {
       webView.lastMessageFrameSource = null;
-      webView.lastMessageWorldId = "";
+      webView.lastMessageContext = "";
     }
 
     function test_IncomingMessage1_reply() {
@@ -53,8 +53,8 @@ TestWebView {
               "Invalid response from message handler");
       compare(webView.lastMessageFrameSource, webView.rootFrame,
               "Invalid source frame for message");
-      compare(webView.lastMessageWorldId, "TestUtils",
-              "Invalid world ID for message");
+      compare(webView.lastMessageContext, "oxide://testutils/",
+              "Invalid context for message");
     }
 
     function test_IncomingMessage1_error() {
@@ -74,8 +74,8 @@ TestWebView {
 
       compare(webView.lastMessageFrameSource, webView.rootFrame,
               "Invalid source frame for message");
-      compare(webView.lastMessageWorldId, "TestUtils",
-              "Invalid world ID for message");
+      compare(webView.lastMessageContext, "oxide://testutils/",
+              "Invalid context for message");
     }
   }
 }
