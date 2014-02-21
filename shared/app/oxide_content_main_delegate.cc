@@ -160,6 +160,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kNoSandbox);
     }
     if (getenv("OXIDE_SINGLE_PROCESS")) {
+      LOG(WARNING) <<
+          "User scripts currently don't work correctly in single process "
+          "mode. See https://launchpad.net/bugs/1283291";
       command_line->AppendSwitch(switches::kSingleProcess);
     }
   }
