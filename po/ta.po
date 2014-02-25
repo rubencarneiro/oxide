@@ -1,0 +1,644 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: oxide\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-02-25 15:44+0100\n"
+"PO-Revision-Date: 2014-02-25 16:45+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ta\n"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:27
+msgctxt "IDS_DETAILS_WITHOUT_SUMMARY_LABEL"
+msgid "Details"
+msgstr "விவரங்கள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:29
+msgctxt "IDS_SEARCHABLE_INDEX_INTRO"
+msgid "This is a searchable index. Enter search keywords: "
+msgstr "இது தேடக்கூடிய பொருளடக்கம். தேடல் சொற்களை உள்ளிடுக: "
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:31
+msgctxt "IDS_FORM_CALENDAR_CLEAR"
+msgid "Clear"
+msgstr "அழி"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:33
+msgctxt "IDS_FORM_CALENDAR_TODAY"
+msgid "Today"
+msgstr "இன்று"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:35
+msgctxt "IDS_FORM_DATE_FORMAT_DAY_IN_MONTH"
+msgid "Day"
+msgstr "நாள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:37
+msgctxt "IDS_FORM_DATE_FORMAT_MONTH"
+msgid "Month"
+msgstr "மாதம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:39
+msgctxt "IDS_FORM_DATE_FORMAT_YEAR"
+msgid "Year"
+msgstr "ஆண்டு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:41
+msgctxt "IDS_FORM_SUBMIT_LABEL"
+msgid "Submit"
+msgstr "சமர்ப்பி"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:43
+msgctxt "IDS_FORM_INPUT_ALT"
+msgid "Submit"
+msgstr "சமர்ப்பி"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:45
+msgctxt "IDS_FORM_RESET_LABEL"
+msgid "Reset"
+msgstr "மீட்டமை"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:47
+msgctxt "IDS_FORM_FILE_BUTTON_LABEL"
+msgid "Choose File"
+msgstr "கோப்பைத் தேர்வு செய்க"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:49
+msgctxt "IDS_FORM_MULTIPLE_FILES_BUTTON_LABEL"
+msgid "Choose Files"
+msgstr "கோப்புகளைத் தேர்வுசெய்க"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:51
+msgctxt "IDS_FORM_FILE_NO_FILE_LABEL"
+msgid "No file chosen"
+msgstr "எந்த கோப்பும் தேர்ந்தெடுக்கப்படவில்லை"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:53
+msgctxt "IDS_FORM_FILE_NO_FILE_DRAG_LABEL"
+msgid "Drag file here"
+msgstr "கோப்பை இங்கே இழுத்து வருக"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:55
+msgctxt "IDS_FORM_FILE_MULTIPLE_UPLOAD"
+msgid "$1 files"
+msgstr "$1 கோப்புகள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:57
+msgctxt "IDS_FORM_OTHER_COLOR_LABEL"
+msgid "Other..."
+msgstr "மற்றவை…"
+
+#. TRANSLATORS: for date label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:60
+msgctxt "IDS_FORM_OTHER_DATE_LABEL"
+msgid "Other..."
+msgstr "மற்றவை…"
+
+#. TRANSLATORS: for month label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:63
+msgctxt "IDS_FORM_OTHER_MONTH_LABEL"
+msgid "Other..."
+msgstr "மற்றவை…"
+
+#. TRANSLATORS: for time label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:66
+msgctxt "IDS_FORM_OTHER_TIME_LABEL"
+msgid "Other..."
+msgstr "மற்றவை…"
+
+#. TRANSLATORS: for week label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:69
+msgctxt "IDS_FORM_OTHER_WEEK_LABEL"
+msgid "Other..."
+msgstr "மற்றவை…"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:71
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_DAY_OF_MONTH_FIELD"
+msgid "dd"
+msgstr "dd"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:73
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_MONTH_FIELD"
+msgid "mm"
+msgstr "mm"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:75
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_YEAR_FIELD"
+msgid "yyyy"
+msgstr "yyyy"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:77
+msgctxt "IDS_FORM_THIS_MONTH_LABEL"
+msgid "This month"
+msgstr "இந்த மாதம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:79
+msgctxt "IDS_FORM_THIS_WEEK_LABEL"
+msgid "This week"
+msgstr "இந்த வாரம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:81
+msgctxt "IDS_FORM_WEEK_NUMBER_LABEL"
+msgid "Week"
+msgstr "வாரம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:83
+msgctxt "IDS_RECENT_SEARCHES_NONE"
+msgid "No recent searches"
+msgstr "சமீபத்திய தேடல்கள் எதுவுமில்லை"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:85
+msgctxt "IDS_RECENT_SEARCHES"
+msgid "Recent Searches"
+msgstr "சமீபத்திய தேடல்கள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:87
+msgctxt "IDS_RECENT_SEARCHES_CLEAR"
+msgid "Clear Recent Searches"
+msgstr "சமீபத்திய தேடல்களை சுத்தமாக்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:89
+#, c-format
+msgctxt "IDS_IMAGE_TITLE_FOR_FILENAME"
+msgid "%s%d×%d"
+msgstr "%s%d×%d"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:91
+msgctxt "IDS_AX_ROLE_WEB_AREA"
+msgid "HTML content"
+msgstr "HTML உள்ளடக்கம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:93
+msgctxt "IDS_AX_ROLE_LINK"
+msgid "link"
+msgstr "இணைப்பு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:95
+msgctxt "IDS_AX_ROLE_LIST_MARKER"
+msgid "list marker"
+msgstr "பட்டியல் குறிப்பான்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:97
+msgctxt "IDS_AX_ROLE_IMAGE_MAP"
+msgid "image map"
+msgstr "பட மேப்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:99
+msgctxt "IDS_AX_ROLE_HEADING"
+msgid "heading"
+msgstr "தலைப்பு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:101
+msgctxt "IDS_AX_ROLE_FOOTER"
+msgid "footer"
+msgstr "அடிக்குறிப்பு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:103
+msgctxt "IDS_AX_ROLE_STEPPER"
+msgid "stepper"
+msgstr "ஸ்டெப்பர்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:105
+msgctxt "IDS_AX_BUTTON_ACTION_VERB"
+msgid "press"
+msgstr "அழுத்துக"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:107
+msgctxt "IDS_AX_RADIO_BUTTON_ACTION_VERB"
+msgid "select"
+msgstr "தேர்ந்தெடு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:109
+msgctxt "IDS_AX_TEXT_FIELD_ACTION_VERB"
+msgid "activate"
+msgstr "செயல்படுத்து"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:111
+msgctxt "IDS_AX_CHECKED_CHECK_BOX_ACTION_VERB"
+msgid "uncheck"
+msgstr "தேர்வு நீக்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:113
+msgctxt "IDS_AX_UNCHECKED_CHECK_BOX_ACTION_VERB"
+msgid "check"
+msgstr "சரிபார்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:115
+msgctxt "IDS_AX_LINK_ACTION_VERB"
+msgid "jump"
+msgstr "தாவு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:117
+msgctxt "IDS_AX_AM_PM_FIELD_TEXT"
+msgid "AM/PM"
+msgstr "AM/PM"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:119
+msgctxt "IDS_AX_DAY_OF_MONTH_FIELD_TEXT"
+msgid "Day"
+msgstr "நாள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:121
+msgctxt "IDS_AX_DATE_TIME_FIELD_EMPTY_VALUE_TEXT"
+msgid "blank"
+msgstr "வெற்று"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:123
+msgctxt "IDS_AX_HOUR_FIELD_TEXT"
+msgid "Hours"
+msgstr "மணிநேரம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:125
+msgctxt "IDS_AX_MEDIA_DEFAULT"
+msgid "media control"
+msgstr "மீடியா கட்டுப்பாடு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:127
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT"
+msgid "audio"
+msgstr "ஆடியோ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:129
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT"
+msgid "video"
+msgstr "வீடியோ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:131
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON"
+msgid "mute"
+msgstr "ஒலியடக்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:133
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON"
+msgid "unmute"
+msgstr "ஒலி இயக்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:135
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON"
+msgid "play"
+msgstr "இயக்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:137
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON"
+msgid "pause"
+msgstr "இடைநிறுத்து"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:139
+msgctxt "IDS_AX_MEDIA_SLIDER"
+msgid "movie time"
+msgstr "மூவி நேரம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:141
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB"
+msgid "movie timeline thumb"
+msgstr "மூவி டைம்லைன் சிறுபடம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:143
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY"
+msgid "elapsed time"
+msgstr "முடிவடைந்த நேரம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:145
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY"
+msgid "remaining time"
+msgstr "மீதமுள்ள நேரம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:147
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY"
+msgid "status"
+msgstr "நிலை"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:149
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON"
+msgid "enter full screen"
+msgstr "முழுத்திரைக்குச் செல்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:151
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON"
+msgid "exit full screen"
+msgstr "முழுத்திரையிலிருந்து வெளியேறு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:153
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON"
+msgid "show closed captions"
+msgstr "மூடப்பட்ட தலைப்புகளைக் காட்டு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:155
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON"
+msgid "hide closed captions"
+msgstr "மூடப்பட்ட தலைப்புகளை மறை"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:157
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT_HELP"
+msgid "audio"
+msgstr "ஆடியோ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:159
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT_HELP"
+msgid "video"
+msgstr "வீடியோ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:161
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON_HELP"
+msgid "mute audio track"
+msgstr "ஆடியோ டிராக்கை முடக்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:163
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON_HELP"
+msgid "unmute audio track"
+msgstr "ஆடியோ டிராக்கை இயக்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:165
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON_HELP"
+msgid "begin playback"
+msgstr "மறுஇயக்கத்தைத் தொடங்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:167
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON_HELP"
+msgid "pause playback"
+msgstr "மறுஇயக்கத்தை இடைநிறுத்து"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:169
+msgctxt "IDS_AX_MEDIA_SLIDER_HELP"
+msgid "movie time scrubber"
+msgstr "மூவி நேர ஸ்க்ரப்பர்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:171
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB_HELP"
+msgid "movie time scrubber thumb"
+msgstr "மூவி நேர ஸ்க்ரப்பர் சிறுபடம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:173
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY_HELP"
+msgid "current time in seconds"
+msgstr "நடப்பு நேரம் வினாடிகளில்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:175
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY_HELP"
+msgid "number of seconds ofmovie remaining"
+msgstr "மீதமுள்ள மூவியின் வினாடிகள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:177
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY_HELP"
+msgid "current movie status"
+msgstr "மூவியின் நடப்பு நிலை"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:179
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON_HELP"
+msgid "play movie in full screen mode"
+msgstr "மூவியை முழுத்திரைப் பயன்முறையில் இயக்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:181
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON_HELP"
+msgid "exit full screen"
+msgstr "முழுத்திரையிலிருந்து வெளியேறு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:183
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "start displaying closed captions"
+msgstr "மூடப்பட்ட தலைப்புகளைக் காட்டுவதைத் தொடங்கு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:185
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "stop displaying closed captions"
+msgstr "மூடப்பட்ட தலைப்புகளைக் காட்டுவதை நிறுத்து"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:187
+msgctxt "IDS_AX_MILLISECOND_FIELD_TEXT"
+msgid "Milliseconds"
+msgstr "மில்லிவினாடிகள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:189
+msgctxt "IDS_AX_MINUTE_FIELD_TEXT"
+msgid "Minutes"
+msgstr "நிமிடங்கள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:191
+msgctxt "IDS_AX_MONTH_FIELD_TEXT"
+msgid "Month"
+msgstr "மாதம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:193
+msgctxt "IDS_AX_SECOND_FIELD_TEXT"
+msgid "Seconds"
+msgstr "வினாடிகள்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:195
+msgctxt "IDS_AX_WEEK_OF_YEAR_FIELD_TEXT"
+msgid "Week"
+msgstr "வாரம்"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:197
+msgctxt "IDS_AX_YEAR_FIELD_TEXT"
+msgid "Year"
+msgstr "ஆண்டு"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:199
+msgctxt "IDS_KEYGEN_HIGH_GRADE_KEY"
+msgid "2048 (High Grade)"
+msgstr "2048 (உயர் தரம்)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:201
+msgctxt "IDS_KEYGEN_MED_GRADE_KEY"
+msgid "1024 (Medium Grade)"
+msgstr "1024 (இடைநிலைத் தரம்)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:203
+msgctxt "IDS_FORM_INPUT_WEEK_TEMPLATE"
+msgid "Week $2, $1"
+msgstr "வாரம் $2, $1"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:205
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_MULTIPLE_FILE"
+msgid "Please select one or more files."
+msgstr "ஒன்று அல்லது அதற்குமேற்பட்ட கோப்புகளைத் தேர்ந்தெடுங்கள்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:207
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH"
+msgid "Invalid value."
+msgstr "செல்லாத மதிப்பு."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:209
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY"
+msgid "Please enter a non-empty email address."
+msgstr "காலி அல்லாத மின்னஞ்சல் முகவரியை உள்ளிடவும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:211
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_DOMAIN"
+msgid "Please enter a part following '$1'. '$2' is incomplete."
+msgstr ""
+"'$1' ஐத் தொடர்ந்து ஒரு பகுதியை உள்ளிடவும். '$2' முழுமைப்பெறாமல் உள்ளது."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:213
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_LOCAL"
+msgid "Please enter a part followed by '$1'. '$2' is incomplete."
+msgstr ""
+"'$1' ஐத் தொடர்ந்து ஒரு பகுதியை உள்ளிடவும். '$2' முழுமைப் பெறாமல் உள்ளது."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:215
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOMAIN"
+msgid "A part following '$1' should not contain the symbol '$2'."
+msgstr "'$1' ஐத் தொடரும் பகுதியில், '$2' சின்னம் இருக்கக்கூடாது."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:217
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOTS"
+msgid "'$1' is used at a wrong position in '$2'."
+msgstr "$2 இல் தவறான இடத்தில் '$1' பயன்படுத்தபட்டுள்ளது."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:219
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_LOCAL"
+msgid "A part followed by '$1' should not contain the symbol '$2'."
+msgstr "'$1' ஐத் தொடர்ந்து வரும் பகுதியில் '$2' சின்னம் இருக்கக்கூடாது."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:221
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_NO_AT_SIGN"
+msgid "Please include an '$1' in the email address. '$2' is missing an '$1'."
+msgstr "மின்னஞ்சல் முகவரியில் '$1' ஐச் சேர்க்கவும். '$1' இல் '$2' இல்லை."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:223
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_MULTIPLE_EMAIL"
+msgid "Please enter a comma separated list of email addresses."
+msgstr ""
+"காற்புள்ளியால் பிரிக்கப்பட்ட மின்னஞ்சல் முகவரிகளின் பட்டியலை உள்ளிடுக."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:225
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW"
+msgid "Value must be greater than or equal to $1."
+msgstr ""
+"மதிப்பானது, கண்டிப்பாக $1 ஐ விட அதிகமாக அல்லது அதற்குச் சமமாக இருக்க "
+"வேண்டும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:227
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW_DATETIME"
+msgid "Value must be $1 or later."
+msgstr "மதிப்பானது $1 அல்லது அதற்குப் பின்பு இருக்க வேண்டும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:229
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW"
+msgid "Value must be less than or equal to $1."
+msgstr ""
+"மதிப்பானது கண்டிப்பாக $1 ஐ விடக்குறைவாக அல்லது அதற்குச் சமமாக இருக்க "
+"வேண்டும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:231
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW_DATETIME"
+msgid "Value must be $1 or earlier."
+msgstr "மதிப்பு $1 அல்லது அதற்கு முன்பு இருக்க வேண்டும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:233
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_DATETIME"
+msgid ""
+"Please enter a valid value. The field is incomplete or has an invalid date."
+msgstr ""
+"சரியான மதிப்பை உள்ளிடவும். இந்தப் புலம் முழுமையற்றதாக உள்ளது அல்லது தவறான "
+"தேதியைக் கொண்டுள்ளது."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:235
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_NUMBER"
+msgid "Please enter a number."
+msgstr "எண்ணை உள்ளிடுக."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:237
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING"
+msgid "Please fill out this field."
+msgstr "இந்தப் புலத்தை நிரப்புக."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:239
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_CHECKBOX"
+msgid "Please check this box if you want to proceed."
+msgstr "தொடர விரும்பினால், இந்தப் பெட்டியைத் தேர்ந்தெடுங்கள்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:241
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_FILE"
+msgid "Please select a file."
+msgstr "ஒரு கோப்பை தேர்ந்தெடுக்கவும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:243
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_RADIO"
+msgid "Please select one of these options."
+msgstr "தயவுசெய்து இந்த விருப்பங்களில் ஒன்றைத் தேர்ந்தெடுங்கள்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:245
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_SELECT"
+msgid "Please select an item in the list."
+msgstr "பட்டியலிலிருந்து ஒரு உருப்படியைத் தேர்ந்தெடுங்கள்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:247
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL"
+msgid "Please enter an email address."
+msgstr "ஒரு மின்னஞ்சல் முகவரியை உள்ளிடவும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:249
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_URL"
+msgid "Please enter a URL."
+msgstr "URL ஐ உள்ளிடுக."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:251
+msgctxt "IDS_FORM_VALIDATION_PATTERN_MISMATCH"
+msgid "Please match the requested format."
+msgstr "கோரிய வடிவமைப்பில் தருக."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:253
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH"
+msgid ""
+"Please enter a valid value. The two nearest valid values are $1 and $2."
+msgstr ""
+"சரியான மதிப்பை உள்ளிடவும். $1 மற்றும் $2 ஆகியவை மிக நெருக்கமான சரியான இரண்டு"
+" மதிப்புகளாகும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:255
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH_CLOSE_TO_LIMIT"
+msgid "Please enter a valid value. The nearest valid value is $1."
+msgstr ""
+"சரியான மதிப்பை உள்ளிடவும்.  $1 என்பது நெருக்கமாக உள்ள சரியான மதிப்பாகும்."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:257
+msgctxt "IDS_FORM_VALIDATION_TOO_LONG"
+msgid ""
+"Please shorten this text to $2 characters or less (you are currently using "
+"$1 characters)."
+msgstr ""
+"இந்த உரையை $2 எழுத்துக்குறிகள் அல்லது அதற்கும் குறைவாக சுருக்கிடுங்கள் "
+"(நீங்கள் தற்போது $1 எழுத்துக்குறிகளைப் பயன்படுத்துகிறீர்கள்)."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:259
+msgctxt "IDS_PDF_NEED_PASSWORD"
+msgid "This document is password protected.  Please enter a password."
+msgstr ""
+"இந்த ஆவணம் கடவுச்சொல் பாதுகாக்கப்பட்ட ஒன்று. தயவுசெய்து ஒரு கடவுச்சொல்லை "
+"உள்ளிடுக."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:261
+msgctxt "IDS_PDF_PAGE_LOADING"
+msgid "Loading..."
+msgstr "நினைவேறுகிறது..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:263
+#, c-format
+msgctxt "IDS_PDF_LOADING_PROGRESS"
+msgid "Loading document: %d/%d pages..."
+msgstr "ஆவணத்தை ஏற்றுகிறது: %d/%d பக்கங்கள்..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:265
+msgctxt "IDS_PDF_PAGE_LOAD_FAILED"
+msgid "Failed to load PDF document"
+msgstr "PDF ஆவணத்தை ஏற்றுவது தோல்வியடைந்தது"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:267
+msgctxt "IDS_PDF_PROGRESS_LOADING"
+msgid "Loading"
+msgstr "ஏற்றுகிறது"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:269
+msgctxt "IDS_PLUGIN_INITIALIZATION_ERROR"
+msgid "Couldn't load plug-in."
+msgstr "செருகுநிரல் ஏற்றப்படவில்லை."

@@ -1,0 +1,637 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: oxide\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-02-25 15:44+0100\n"
+"PO-Revision-Date: 2014-02-25 16:45+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ml\n"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:27
+msgctxt "IDS_DETAILS_WITHOUT_SUMMARY_LABEL"
+msgid "Details"
+msgstr "വിശദാംശങ്ങള്‍‌"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:29
+msgctxt "IDS_SEARCHABLE_INDEX_INTRO"
+msgid "This is a searchable index. Enter search keywords: "
+msgstr "ഇത് തിരയാവുന്ന സൂചികയാണ്. തിരയല്‍ കീവേഡുകള്‍ നല്‍കുക: "
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:31
+msgctxt "IDS_FORM_CALENDAR_CLEAR"
+msgid "Clear"
+msgstr "മായ്‌ക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:33
+msgctxt "IDS_FORM_CALENDAR_TODAY"
+msgid "Today"
+msgstr "ഇന്ന്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:35
+msgctxt "IDS_FORM_DATE_FORMAT_DAY_IN_MONTH"
+msgid "Day"
+msgstr "ദിവസം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:37
+msgctxt "IDS_FORM_DATE_FORMAT_MONTH"
+msgid "Month"
+msgstr "മാസം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:39
+msgctxt "IDS_FORM_DATE_FORMAT_YEAR"
+msgid "Year"
+msgstr "വര്‍ഷം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:41
+msgctxt "IDS_FORM_SUBMIT_LABEL"
+msgid "Submit"
+msgstr "സമര്‍പ്പിക്കൂ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:43
+msgctxt "IDS_FORM_INPUT_ALT"
+msgid "Submit"
+msgstr "സമര്‍പ്പിക്കൂ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:45
+msgctxt "IDS_FORM_RESET_LABEL"
+msgid "Reset"
+msgstr "വീണ്ടും സജ്ജീകരിക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:47
+msgctxt "IDS_FORM_FILE_BUTTON_LABEL"
+msgid "Choose File"
+msgstr "ഫയല്‍ തിരഞ്ഞെടുക്കൂ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:49
+msgctxt "IDS_FORM_MULTIPLE_FILES_BUTTON_LABEL"
+msgid "Choose Files"
+msgstr "ഫയലുകൾ തിരഞ്ഞെടുക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:51
+msgctxt "IDS_FORM_FILE_NO_FILE_LABEL"
+msgid "No file chosen"
+msgstr "ഒരു ഫയലും തിരഞ്ഞെടുത്തിട്ടില്ല"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:53
+msgctxt "IDS_FORM_FILE_NO_FILE_DRAG_LABEL"
+msgid "Drag file here"
+msgstr "ഇവിടെ ഫയല്‍ ഇഴയ്ക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:55
+msgctxt "IDS_FORM_FILE_MULTIPLE_UPLOAD"
+msgid "$1 files"
+msgstr "$1 ഫയലുകള്‍"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:57
+msgctxt "IDS_FORM_OTHER_COLOR_LABEL"
+msgid "Other..."
+msgstr "മറ്റുള്ളവ..."
+
+#. TRANSLATORS: for date label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:60
+msgctxt "IDS_FORM_OTHER_DATE_LABEL"
+msgid "Other..."
+msgstr "മറ്റുള്ളവ..."
+
+#. TRANSLATORS: for month label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:63
+msgctxt "IDS_FORM_OTHER_MONTH_LABEL"
+msgid "Other..."
+msgstr "മറ്റുള്ളവ..."
+
+#. TRANSLATORS: for time label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:66
+msgctxt "IDS_FORM_OTHER_TIME_LABEL"
+msgid "Other..."
+msgstr "മറ്റുള്ളവ..."
+
+#. TRANSLATORS: for week label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:69
+msgctxt "IDS_FORM_OTHER_WEEK_LABEL"
+msgid "Other..."
+msgstr "മറ്റുള്ളവ..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:71
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_DAY_OF_MONTH_FIELD"
+msgid "dd"
+msgstr "തീയതി"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:73
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_MONTH_FIELD"
+msgid "mm"
+msgstr "മാസം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:75
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_YEAR_FIELD"
+msgid "yyyy"
+msgstr "വർഷം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:77
+msgctxt "IDS_FORM_THIS_MONTH_LABEL"
+msgid "This month"
+msgstr "ഈ മാസം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:79
+msgctxt "IDS_FORM_THIS_WEEK_LABEL"
+msgid "This week"
+msgstr "ഈ ആഴ്‌ച"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:81
+msgctxt "IDS_FORM_WEEK_NUMBER_LABEL"
+msgid "Week"
+msgstr "ആഴ്‌ച"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:83
+msgctxt "IDS_RECENT_SEARCHES_NONE"
+msgid "No recent searches"
+msgstr "സമീപകാല തിരയലുകള്‍ ഇല്ല"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:85
+msgctxt "IDS_RECENT_SEARCHES"
+msgid "Recent Searches"
+msgstr "സമീപകാല തിരയലുകള്‍"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:87
+msgctxt "IDS_RECENT_SEARCHES_CLEAR"
+msgid "Clear Recent Searches"
+msgstr "അടുത്തിടെയുള്ള തിരയലുകള്‍ മായ്ക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:89
+#, c-format
+msgctxt "IDS_IMAGE_TITLE_FOR_FILENAME"
+msgid "%s%d×%d"
+msgstr "%s%d×%d"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:91
+msgctxt "IDS_AX_ROLE_WEB_AREA"
+msgid "HTML content"
+msgstr "HTML ഉള്ളടക്കം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:93
+msgctxt "IDS_AX_ROLE_LINK"
+msgid "link"
+msgstr "ലിങ്ക്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:95
+msgctxt "IDS_AX_ROLE_LIST_MARKER"
+msgid "list marker"
+msgstr "പട്ടിക മാര്‍ക്കര്‍"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:97
+msgctxt "IDS_AX_ROLE_IMAGE_MAP"
+msgid "image map"
+msgstr "ഇമേജ് മാപ്പ്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:99
+msgctxt "IDS_AX_ROLE_HEADING"
+msgid "heading"
+msgstr "തലക്കെട്ട്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:101
+msgctxt "IDS_AX_ROLE_FOOTER"
+msgid "footer"
+msgstr "അടിക്കുറിപ്പ്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:103
+msgctxt "IDS_AX_ROLE_STEPPER"
+msgid "stepper"
+msgstr "സ്റ്റെപ്പർ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:105
+msgctxt "IDS_AX_BUTTON_ACTION_VERB"
+msgid "press"
+msgstr "അമര്‍ത്തുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:107
+msgctxt "IDS_AX_RADIO_BUTTON_ACTION_VERB"
+msgid "select"
+msgstr "തിരഞ്ഞെടുക്കൂ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:109
+msgctxt "IDS_AX_TEXT_FIELD_ACTION_VERB"
+msgid "activate"
+msgstr "ആക്റ്റിവേറ്റ് ചെയ്യുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:111
+msgctxt "IDS_AX_CHECKED_CHECK_BOX_ACTION_VERB"
+msgid "uncheck"
+msgstr "അണ്‍ചെക്ക് ചെയ്യുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:113
+msgctxt "IDS_AX_UNCHECKED_CHECK_BOX_ACTION_VERB"
+msgid "check"
+msgstr "പരിശോധിക്കൂ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:115
+msgctxt "IDS_AX_LINK_ACTION_VERB"
+msgid "jump"
+msgstr "jump"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:117
+msgctxt "IDS_AX_AM_PM_FIELD_TEXT"
+msgid "AM/PM"
+msgstr "AM/PM"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:119
+msgctxt "IDS_AX_DAY_OF_MONTH_FIELD_TEXT"
+msgid "Day"
+msgstr "ദിവസം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:121
+msgctxt "IDS_AX_DATE_TIME_FIELD_EMPTY_VALUE_TEXT"
+msgid "blank"
+msgstr "ശൂന്യം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:123
+msgctxt "IDS_AX_HOUR_FIELD_TEXT"
+msgid "Hours"
+msgstr "മണിക്കൂര്‍‌"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:125
+msgctxt "IDS_AX_MEDIA_DEFAULT"
+msgid "media control"
+msgstr "മീഡിയ നിയന്ത്രണം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:127
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT"
+msgid "audio"
+msgstr "ഓഡിയോ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:129
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT"
+msgid "video"
+msgstr "വീഡിയോ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:131
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON"
+msgid "mute"
+msgstr "നിശബ്‌ദമാക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:133
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON"
+msgid "unmute"
+msgstr "ശബ്‌ദമുള്ളതാക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:135
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON"
+msgid "play"
+msgstr "പ്ലേ ചെയ്യുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:137
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON"
+msgid "pause"
+msgstr "താല്‍‌ക്കാലികമായി നിര്‍‌ത്തുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:139
+msgctxt "IDS_AX_MEDIA_SLIDER"
+msgid "movie time"
+msgstr "മൂവി ടൈം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:141
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB"
+msgid "movie timeline thumb"
+msgstr "മൂവി ടൈംലൈൻ തമ്പ്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:143
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY"
+msgid "elapsed time"
+msgstr "കഴിഞ്ഞ സമയം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:145
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY"
+msgid "remaining time"
+msgstr "അവശേഷിക്കുന്ന സമയം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:147
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY"
+msgid "status"
+msgstr "നില"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:149
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON"
+msgid "enter full screen"
+msgstr "പൂർണ്ണ സ്‌ക്രീനിലേക്ക് പോവുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:151
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON"
+msgid "exit full screen"
+msgstr "പൂർണ്ണ സ്‌ക്രീനിൽ നിന്ന് പുറത്തുകടക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:153
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON"
+msgid "show closed captions"
+msgstr "അടച്ച അടിക്കുറിപ്പുകൾ കാണിക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:155
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON"
+msgid "hide closed captions"
+msgstr "അടച്ച അടിക്കുറിപ്പുകൾ മറയ്‌ക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:157
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT_HELP"
+msgid "audio"
+msgstr "ഓഡിയോ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:159
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT_HELP"
+msgid "video"
+msgstr "വീഡിയോ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:161
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON_HELP"
+msgid "mute audio track"
+msgstr "ഓഡിയോ ട്രാക്ക് നിശബ്‌ദമാക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:163
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON_HELP"
+msgid "unmute audio track"
+msgstr "ഓഡിയോ ട്രാക്ക് ശബ്‌ദമുള്ളതാക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:165
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON_HELP"
+msgid "begin playback"
+msgstr "പ്ലേബാക്ക് ആരംഭിക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:167
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON_HELP"
+msgid "pause playback"
+msgstr "പ്ലേബാക്ക് താൽക്കാലികമായി നിർത്തുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:169
+msgctxt "IDS_AX_MEDIA_SLIDER_HELP"
+msgid "movie time scrubber"
+msgstr "മൂവി ടൈം സ്‌ക്രബ്ബർ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:171
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB_HELP"
+msgid "movie time scrubber thumb"
+msgstr "മൂവി ടൈം സ്‌ക്രബ്ബർ തമ്പ്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:173
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY_HELP"
+msgid "current time in seconds"
+msgstr "നിലവിലെ സമയം നിമിഷങ്ങളിൽ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:175
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY_HELP"
+msgid "number of seconds ofmovie remaining"
+msgstr "മൂവിയുടെ അവശേഷിക്കുന്ന നിമിഷങ്ങളുടെ എണ്ണം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:177
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY_HELP"
+msgid "current movie status"
+msgstr "നിലവിലെ മൂവി നില"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:179
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON_HELP"
+msgid "play movie in full screen mode"
+msgstr "പൂർണ്ണ സ്‌ക്രീൻ മോഡിൽ മൂവി പ്ലേ ചെയ്യുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:181
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON_HELP"
+msgid "exit full screen"
+msgstr "പൂർണ്ണ സ്‌ക്രീനിൽ നിന്ന് പുറത്തുകടക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:183
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "start displaying closed captions"
+msgstr "അടച്ച അടിക്കുറിപ്പുകൾ പ്രദർശിപ്പിക്കുന്നത് ആരംഭിക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:185
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "stop displaying closed captions"
+msgstr "അടച്ച അടിക്കുറിപ്പുകൾ പ്രദർശിപ്പിക്കുന്നത് നിർത്തുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:187
+msgctxt "IDS_AX_MILLISECOND_FIELD_TEXT"
+msgid "Milliseconds"
+msgstr "മില്ലിസെക്കൻഡ്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:189
+msgctxt "IDS_AX_MINUTE_FIELD_TEXT"
+msgid "Minutes"
+msgstr "മിനിറ്റ്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:191
+msgctxt "IDS_AX_MONTH_FIELD_TEXT"
+msgid "Month"
+msgstr "മാസം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:193
+msgctxt "IDS_AX_SECOND_FIELD_TEXT"
+msgid "Seconds"
+msgstr "സെക്കൻഡ്"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:195
+msgctxt "IDS_AX_WEEK_OF_YEAR_FIELD_TEXT"
+msgid "Week"
+msgstr "ആഴ്‌ച"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:197
+msgctxt "IDS_AX_YEAR_FIELD_TEXT"
+msgid "Year"
+msgstr "വര്‍ഷം"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:199
+msgctxt "IDS_KEYGEN_HIGH_GRADE_KEY"
+msgid "2048 (High Grade)"
+msgstr "2048 (High Grade)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:201
+msgctxt "IDS_KEYGEN_MED_GRADE_KEY"
+msgid "1024 (Medium Grade)"
+msgstr "1024 (മീഡിയം ഗ്രേഡ്)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:203
+msgctxt "IDS_FORM_INPUT_WEEK_TEMPLATE"
+msgid "Week $2, $1"
+msgstr "ആഴ്‌ച $2, $1"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:205
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_MULTIPLE_FILE"
+msgid "Please select one or more files."
+msgstr "ഒന്നോ അതില്‍ക്കൂടുതലോ ഫയലുകള്‍ ദയവായി തിരഞ്ഞെടുക്കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:207
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH"
+msgid "Invalid value."
+msgstr "അസാധുവായ മൂല്യം."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:209
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY"
+msgid "Please enter a non-empty email address."
+msgstr "ശൂന്യമായിടാതെ, ഇമെയിൽ വിലാസം നൽകുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:211
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_DOMAIN"
+msgid "Please enter a part following '$1'. '$2' is incomplete."
+msgstr "'$1' എന്നതിനുശേഷം ഒരു ഭാഗം നൽകുക.'$2' അപൂർണ്ണമാണ്."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:213
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_LOCAL"
+msgid "Please enter a part followed by '$1'. '$2' is incomplete."
+msgstr "'$1' എന്നതിനുശേഷം ഒരു ഭാഗം നൽകുക.'$2' അപൂർണ്ണമാണ്."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:215
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOMAIN"
+msgid "A part following '$1' should not contain the symbol '$2'."
+msgstr "'$1' എന്നതിനുശേഷം വരുന്ന ഭാഗത്തിൽ '$2' ചിഹ്നം ഉണ്ടാകരുത്."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:217
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOTS"
+msgid "'$1' is used at a wrong position in '$2'."
+msgstr "'$1', '$2' എന്നതിൽ തെറ്റായ സ്ഥാനത്താണ് ഉപയോഗിച്ചിരിക്കുന്നത്."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:219
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_LOCAL"
+msgid "A part followed by '$1' should not contain the symbol '$2'."
+msgstr "'$1' എന്നതിനുശേഷം വരുന്ന ഒരു ഭാഗത്തിൽ '$2' ചിഹ്നം ഉണ്ടാകരുത്."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:221
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_NO_AT_SIGN"
+msgid "Please include an '$1' in the email address. '$2' is missing an '$1'."
+msgstr ""
+"ഇമെയിൽ വിലാസത്തിൽ '$1' ഉൾപ്പെടുത്തുക. '$2' എന്നതിൽ ഒരു '$1' കാണുന്നില്ല."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:223
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_MULTIPLE_EMAIL"
+msgid "Please enter a comma separated list of email addresses."
+msgstr ""
+"ഇമെയില്‍ വിലാസങ്ങളുടെ കോമയാല്‍ വേര്‍തിരിച്ച ഒരു പട്ടിക ദയവായി നല്‍കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:225
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW"
+msgid "Value must be greater than or equal to $1."
+msgstr "മൂല്യം $1 എന്നതില്‍ കൂടുതലോ സമമോ ആയിരിക്കണം."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:227
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW_DATETIME"
+msgid "Value must be $1 or later."
+msgstr "മൂല്യം $1 എന്നതോ അതിനുശേഷമുള്ള തീയതിയോ ആയിരിക്കണം."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:229
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW"
+msgid "Value must be less than or equal to $1."
+msgstr "മൂല്യം $1 എന്നതില്‍ കുറവോ സമമോ ആയിരിക്കണം."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:231
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW_DATETIME"
+msgid "Value must be $1 or earlier."
+msgstr "മൂല്യം $1 എന്നതോ അതിനുമുമ്പുള്ള തീയതിയോ ആയിരിക്കണം."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:233
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_DATETIME"
+msgid ""
+"Please enter a valid value. The field is incomplete or has an invalid date."
+msgstr ""
+"ഒരു സാധുതയുള്ള മൂല്യം നൽകുക. ഫീൽഡ് പൂർണ്ണമല്ല അല്ലെങ്കിൽ അസാധുവായ "
+"തീയതിയിലുള്ളതാണ്."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:235
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_NUMBER"
+msgid "Please enter a number."
+msgstr "ഒരു നമ്പർ നൽകുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:237
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING"
+msgid "Please fill out this field."
+msgstr "ദയവായി ഈ ഫീല്‍ഡ് പൂരിപ്പിക്കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:239
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_CHECKBOX"
+msgid "Please check this box if you want to proceed."
+msgstr ""
+"നിങ്ങള്‍ തുടരാന്‍ താല്‍പ്പര്യപ്പെടുന്നെങ്കില്‍ ഈ ബോക്സ് ദയവായി പരിശോധിക്കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:241
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_FILE"
+msgid "Please select a file."
+msgstr "ദയവായി ഒരു ഫയല്‍ തരം തിരഞ്ഞെടുക്കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:243
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_RADIO"
+msgid "Please select one of these options."
+msgstr "ഈ ഓപ്ഷനുകളിലൊന്ന് ദയവായി തിരഞ്ഞെടുക്കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:245
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_SELECT"
+msgid "Please select an item in the list."
+msgstr "പട്ടികയിലെ ഒരു ഇനം ദയവായി തിരഞ്ഞെടുക്കുക"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:247
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL"
+msgid "Please enter an email address."
+msgstr "ദയവായി ഒരു ഇമെയില്‍ വിലാസം നല്‍കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:249
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_URL"
+msgid "Please enter a URL."
+msgstr "ദയവായി ഒരു URL നല്‍കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:251
+msgctxt "IDS_FORM_VALIDATION_PATTERN_MISMATCH"
+msgid "Please match the requested format."
+msgstr "അഭ്യര്‍ത്ഥി ച്ചഫോര്‍മാറ്റ് ദയവായി പൊരുത്തപ്പെടുത്തുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:253
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH"
+msgid ""
+"Please enter a valid value. The two nearest valid values are $1 and $2."
+msgstr ""
+"സാധുവായ മൂല്യം നൽകുക. സാധുവായ ഏറ്റവുമടുത്ത രണ്ട് മൂല്യങ്ങൾ $1, $2 "
+"എന്നിവയാണ്."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:255
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH_CLOSE_TO_LIMIT"
+msgid "Please enter a valid value. The nearest valid value is $1."
+msgstr "സാധുവായ ഒരു മൂല്യം നൽകുക. ഏറ്റവുമടുത്ത സാധുവായ മൂല്യം $1 ആണ്."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:257
+msgctxt "IDS_FORM_VALIDATION_TOO_LONG"
+msgid ""
+"Please shorten this text to $2 characters or less (you are currently using "
+"$1 characters)."
+msgstr ""
+"ഈ വാചകത്തെ $2 അല്ലെങ്കില്‍ അതില്‍‌ക്കുറവ് പ്രതീകങ്ങളായി ദയവായി കുറയ്ക്കുക "
+"(നിങ്ങള്‍ നിലവില്‍ $1 പ്രതീകങ്ങള്‍ ഉപയോഗിക്കുകയാണ്)."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:259
+msgctxt "IDS_PDF_NEED_PASSWORD"
+msgid "This document is password protected.  Please enter a password."
+msgstr "ഈ പ്രമാണം പാസ്‌വേഡ് പരിരക്ഷിതമാണ്.  ദയവായി ഒരു പാസ്‌വേഡ് നല്‍‌കുക."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:261
+msgctxt "IDS_PDF_PAGE_LOADING"
+msgid "Loading..."
+msgstr "ലോഡ്ചെയ്യുന്നു..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:263
+#, c-format
+msgctxt "IDS_PDF_LOADING_PROGRESS"
+msgid "Loading document: %d/%d pages..."
+msgstr "പ്രമാണങ്ങള്‍ ലോഡുചെയ്യുന്നു: %d/%d പേജുകള്‍..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:265
+msgctxt "IDS_PDF_PAGE_LOAD_FAILED"
+msgid "Failed to load PDF document"
+msgstr "PDF പ്രമാണം ലോഡുചെയ്യുന്നത് പരാജയപ്പെട്ടു"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:267
+msgctxt "IDS_PDF_PROGRESS_LOADING"
+msgid "Loading"
+msgstr "ലോഡുചെയ്യുന്നു"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:269
+msgctxt "IDS_PLUGIN_INITIALIZATION_ERROR"
+msgid "Couldn't load plug-in."
+msgstr "പ്ലഗ്-ഇൻ ലോഡുചെയ്യാൻ കഴിഞ്ഞില്ല."

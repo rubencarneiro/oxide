@@ -1,0 +1,632 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: oxide\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-02-25 15:44+0100\n"
+"PO-Revision-Date: 2014-02-25 16:45+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: sl\n"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:27
+msgctxt "IDS_DETAILS_WITHOUT_SUMMARY_LABEL"
+msgid "Details"
+msgstr "Podrobnosti"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:29
+msgctxt "IDS_SEARCHABLE_INDEX_INTRO"
+msgid "This is a searchable index. Enter search keywords: "
+msgstr "To je kazalo, ki omogoča iskanje. Vnesite ključne besede za iskanje: "
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:31
+msgctxt "IDS_FORM_CALENDAR_CLEAR"
+msgid "Clear"
+msgstr "Počisti"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:33
+msgctxt "IDS_FORM_CALENDAR_TODAY"
+msgid "Today"
+msgstr "Danes"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:35
+msgctxt "IDS_FORM_DATE_FORMAT_DAY_IN_MONTH"
+msgid "Day"
+msgstr "Dan"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:37
+msgctxt "IDS_FORM_DATE_FORMAT_MONTH"
+msgid "Month"
+msgstr "Mesec"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:39
+msgctxt "IDS_FORM_DATE_FORMAT_YEAR"
+msgid "Year"
+msgstr "Leto"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:41
+msgctxt "IDS_FORM_SUBMIT_LABEL"
+msgid "Submit"
+msgstr "Pošlji"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:43
+msgctxt "IDS_FORM_INPUT_ALT"
+msgid "Submit"
+msgstr "Pošlji"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:45
+msgctxt "IDS_FORM_RESET_LABEL"
+msgid "Reset"
+msgstr "Ponastavi"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:47
+msgctxt "IDS_FORM_FILE_BUTTON_LABEL"
+msgid "Choose File"
+msgstr "Izberi datoteko"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:49
+msgctxt "IDS_FORM_MULTIPLE_FILES_BUTTON_LABEL"
+msgid "Choose Files"
+msgstr "Izberi datoteke"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:51
+msgctxt "IDS_FORM_FILE_NO_FILE_LABEL"
+msgid "No file chosen"
+msgstr "Nobena datoteka ni izbrana"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:53
+msgctxt "IDS_FORM_FILE_NO_FILE_DRAG_LABEL"
+msgid "Drag file here"
+msgstr "Datoteko povleci sem"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:55
+msgctxt "IDS_FORM_FILE_MULTIPLE_UPLOAD"
+msgid "$1 files"
+msgstr "Število datotek: $1"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:57
+msgctxt "IDS_FORM_OTHER_COLOR_LABEL"
+msgid "Other..."
+msgstr "Drugo ..."
+
+#. TRANSLATORS: for date label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:60
+msgctxt "IDS_FORM_OTHER_DATE_LABEL"
+msgid "Other..."
+msgstr "Drugo ..."
+
+#. TRANSLATORS: for month label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:63
+msgctxt "IDS_FORM_OTHER_MONTH_LABEL"
+msgid "Other..."
+msgstr "Drugo ..."
+
+#. TRANSLATORS: for time label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:66
+msgctxt "IDS_FORM_OTHER_TIME_LABEL"
+msgid "Other..."
+msgstr "Drugo ..."
+
+#. TRANSLATORS: for week label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:69
+msgctxt "IDS_FORM_OTHER_WEEK_LABEL"
+msgid "Other..."
+msgstr "Drugo ..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:71
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_DAY_OF_MONTH_FIELD"
+msgid "dd"
+msgstr "dd"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:73
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_MONTH_FIELD"
+msgid "mm"
+msgstr "mm"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:75
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_YEAR_FIELD"
+msgid "yyyy"
+msgstr "llll"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:77
+msgctxt "IDS_FORM_THIS_MONTH_LABEL"
+msgid "This month"
+msgstr "Ta mesec"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:79
+msgctxt "IDS_FORM_THIS_WEEK_LABEL"
+msgid "This week"
+msgstr "Ta teden"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:81
+msgctxt "IDS_FORM_WEEK_NUMBER_LABEL"
+msgid "Week"
+msgstr "Teden"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:83
+msgctxt "IDS_RECENT_SEARCHES_NONE"
+msgid "No recent searches"
+msgstr "Ni zadnjih iskanj"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:85
+msgctxt "IDS_RECENT_SEARCHES"
+msgid "Recent Searches"
+msgstr "Zadnja iskanja"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:87
+msgctxt "IDS_RECENT_SEARCHES_CLEAR"
+msgid "Clear Recent Searches"
+msgstr "Počisti zadnja iskanja"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:89
+#, c-format
+msgctxt "IDS_IMAGE_TITLE_FOR_FILENAME"
+msgid "%s%d×%d"
+msgstr "%s%d×%d"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:91
+msgctxt "IDS_AX_ROLE_WEB_AREA"
+msgid "HTML content"
+msgstr "Vsebina HTML"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:93
+msgctxt "IDS_AX_ROLE_LINK"
+msgid "link"
+msgstr "povezava"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:95
+msgctxt "IDS_AX_ROLE_LIST_MARKER"
+msgid "list marker"
+msgstr "označevalnik seznama"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:97
+msgctxt "IDS_AX_ROLE_IMAGE_MAP"
+msgid "image map"
+msgstr "slikovni zemljevid"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:99
+msgctxt "IDS_AX_ROLE_HEADING"
+msgid "heading"
+msgstr "naslov"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:101
+msgctxt "IDS_AX_ROLE_FOOTER"
+msgid "footer"
+msgstr "noga"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:103
+msgctxt "IDS_AX_ROLE_STEPPER"
+msgid "stepper"
+msgstr "kontrolnik"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:105
+msgctxt "IDS_AX_BUTTON_ACTION_VERB"
+msgid "press"
+msgstr "pritisni"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:107
+msgctxt "IDS_AX_RADIO_BUTTON_ACTION_VERB"
+msgid "select"
+msgstr "izberi"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:109
+msgctxt "IDS_AX_TEXT_FIELD_ACTION_VERB"
+msgid "activate"
+msgstr "aktiviraj"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:111
+msgctxt "IDS_AX_CHECKED_CHECK_BOX_ACTION_VERB"
+msgid "uncheck"
+msgstr "počisti izbor"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:113
+msgctxt "IDS_AX_UNCHECKED_CHECK_BOX_ACTION_VERB"
+msgid "check"
+msgstr "potrdi"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:115
+msgctxt "IDS_AX_LINK_ACTION_VERB"
+msgid "jump"
+msgstr "skoči"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:117
+msgctxt "IDS_AX_AM_PM_FIELD_TEXT"
+msgid "AM/PM"
+msgstr "Dopoldne/popoldne"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:119
+msgctxt "IDS_AX_DAY_OF_MONTH_FIELD_TEXT"
+msgid "Day"
+msgstr "Dan"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:121
+msgctxt "IDS_AX_DATE_TIME_FIELD_EMPTY_VALUE_TEXT"
+msgid "blank"
+msgstr "prazno"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:123
+msgctxt "IDS_AX_HOUR_FIELD_TEXT"
+msgid "Hours"
+msgstr "Ure"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:125
+msgctxt "IDS_AX_MEDIA_DEFAULT"
+msgid "media control"
+msgstr "nadziranje predstavnosti"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:127
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT"
+msgid "audio"
+msgstr "zvok"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:129
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT"
+msgid "video"
+msgstr "video"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:131
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON"
+msgid "mute"
+msgstr "nemo"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:133
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON"
+msgid "unmute"
+msgstr "vklop zvoka"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:135
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON"
+msgid "play"
+msgstr "predvajanje"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:137
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON"
+msgid "pause"
+msgstr "premor"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:139
+msgctxt "IDS_AX_MEDIA_SLIDER"
+msgid "movie time"
+msgstr "čas filma"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:141
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB"
+msgid "movie timeline thumb"
+msgstr "sličica časovne premice filma"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:143
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY"
+msgid "elapsed time"
+msgstr "pretečeni čas"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:145
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY"
+msgid "remaining time"
+msgstr "preostali čas"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:147
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY"
+msgid "status"
+msgstr "stanje"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:149
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON"
+msgid "enter full screen"
+msgstr "prehod v celozaslonski način"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:151
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON"
+msgid "exit full screen"
+msgstr "izhod iz celozaslonskega načina"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:153
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON"
+msgid "show closed captions"
+msgstr "prikaz podnapisov"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:155
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON"
+msgid "hide closed captions"
+msgstr "skrivanje podnapisov"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:157
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT_HELP"
+msgid "audio"
+msgstr "zvok"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:159
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT_HELP"
+msgid "video"
+msgstr "video"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:161
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON_HELP"
+msgid "mute audio track"
+msgstr "izklop zvoka za zvočni posnetek"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:163
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON_HELP"
+msgid "unmute audio track"
+msgstr "vklop zvoka za zvočni posnetek"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:165
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON_HELP"
+msgid "begin playback"
+msgstr "začetek predvajanja"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:167
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON_HELP"
+msgid "pause playback"
+msgstr "začasna ustavitev predvajanja"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:169
+msgctxt "IDS_AX_MEDIA_SLIDER_HELP"
+msgid "movie time scrubber"
+msgstr "časovni krmilnik za predvajanje filma"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:171
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB_HELP"
+msgid "movie time scrubber thumb"
+msgstr "sličica časovnega krmilnika za predvajanje filma"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:173
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY_HELP"
+msgid "current time in seconds"
+msgstr "trenutni čas v sekundah"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:175
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY_HELP"
+msgid "number of seconds ofmovie remaining"
+msgstr "preostale sekunde filma"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:177
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY_HELP"
+msgid "current movie status"
+msgstr "trenutno stanje filma"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:179
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON_HELP"
+msgid "play movie in full screen mode"
+msgstr "predvajanje filma v celozaslonskem načinu"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:181
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON_HELP"
+msgid "exit full screen"
+msgstr "izhod iz celozaslonskega načina"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:183
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "start displaying closed captions"
+msgstr "začetek predvajanja podnapisov"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:185
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "stop displaying closed captions"
+msgstr "ustavitev prikazovanja podnapisov"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:187
+msgctxt "IDS_AX_MILLISECOND_FIELD_TEXT"
+msgid "Milliseconds"
+msgstr "Milisekunde"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:189
+msgctxt "IDS_AX_MINUTE_FIELD_TEXT"
+msgid "Minutes"
+msgstr "Minute"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:191
+msgctxt "IDS_AX_MONTH_FIELD_TEXT"
+msgid "Month"
+msgstr "Mesec"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:193
+msgctxt "IDS_AX_SECOND_FIELD_TEXT"
+msgid "Seconds"
+msgstr "Sekunde"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:195
+msgctxt "IDS_AX_WEEK_OF_YEAR_FIELD_TEXT"
+msgid "Week"
+msgstr "Teden"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:197
+msgctxt "IDS_AX_YEAR_FIELD_TEXT"
+msgid "Year"
+msgstr "Leto"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:199
+msgctxt "IDS_KEYGEN_HIGH_GRADE_KEY"
+msgid "2048 (High Grade)"
+msgstr "2048 (visoka stopnja)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:201
+msgctxt "IDS_KEYGEN_MED_GRADE_KEY"
+msgid "1024 (Medium Grade)"
+msgstr "1024 (srednja stopnja)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:203
+msgctxt "IDS_FORM_INPUT_WEEK_TEMPLATE"
+msgid "Week $2, $1"
+msgstr "$2. teden, $1"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:205
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_MULTIPLE_FILE"
+msgid "Please select one or more files."
+msgstr "Izberite eno ali več datotek."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:207
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH"
+msgid "Invalid value."
+msgstr "Neveljavna vrednost."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:209
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY"
+msgid "Please enter a non-empty email address."
+msgstr "Vnesite e-poštni naslov (polje ne sme biti prazno)."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:211
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_DOMAIN"
+msgid "Please enter a part following '$1'. '$2' is incomplete."
+msgstr "Vnesite nekaj po znaku »$1«. Naslov »$2« je nepopoln."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:213
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_LOCAL"
+msgid "Please enter a part followed by '$1'. '$2' is incomplete."
+msgstr "Vnesite nekaj in nato $1. Naslov »$2« je nepopoln."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:215
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOMAIN"
+msgid "A part following '$1' should not contain the symbol '$2'."
+msgstr "Del po »$1« ne sme vsebovati znaka »$2«."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:217
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOTS"
+msgid "'$1' is used at a wrong position in '$2'."
+msgstr "»$1« je na napačnem mestu v »$2«."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:219
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_LOCAL"
+msgid "A part followed by '$1' should not contain the symbol '$2'."
+msgstr "Del pred »$1« ne sme vsebovati znaka »$2«."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:221
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_NO_AT_SIGN"
+msgid "Please include an '$1' in the email address. '$2' is missing an '$1'."
+msgstr "V e-poštnem naslovu mora biti znak »$1«. V naslovu »$2« manjka »$1«."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:223
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_MULTIPLE_EMAIL"
+msgid "Please enter a comma separated list of email addresses."
+msgstr "Vnesite seznam e-poštnih naslovov, ločenih z vejicami"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:225
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW"
+msgid "Value must be greater than or equal to $1."
+msgstr "Vrednost mora biti večja od $1 ali enaka."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:227
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW_DATETIME"
+msgid "Value must be $1 or later."
+msgstr "Vrednost mora biti $1 ali pozneje."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:229
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW"
+msgid "Value must be less than or equal to $1."
+msgstr "Vrednost mora biti manjša od $1 ali enaka."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:231
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW_DATETIME"
+msgid "Value must be $1 or earlier."
+msgstr "Vrednost mora biti $1 ali prej."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:233
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_DATETIME"
+msgid ""
+"Please enter a valid value. The field is incomplete or has an invalid date."
+msgstr ""
+"Vnesite veljavno vrednost. Vnos v polje je nepopoln ali vsebuje neveljaven "
+"datum."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:235
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_NUMBER"
+msgid "Please enter a number."
+msgstr "Vnesite številko."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:237
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING"
+msgid "Please fill out this field."
+msgstr "Izpolnite to polje"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:239
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_CHECKBOX"
+msgid "Please check this box if you want to proceed."
+msgstr "Potrdite to polje, če želite nadaljevati."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:241
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_FILE"
+msgid "Please select a file."
+msgstr "Izberite datoteko."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:243
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_RADIO"
+msgid "Please select one of these options."
+msgstr "Izberite eno od teh možnosti."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:245
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_SELECT"
+msgid "Please select an item in the list."
+msgstr "Izberite element s seznama."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:247
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL"
+msgid "Please enter an email address."
+msgstr "Vnesite e-poštni naslov"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:249
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_URL"
+msgid "Please enter a URL."
+msgstr "Vnesite URL."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:251
+msgctxt "IDS_FORM_VALIDATION_PATTERN_MISMATCH"
+msgid "Please match the requested format."
+msgstr "Poskrbite za ujemanje z zahtevano obliko."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:253
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH"
+msgid ""
+"Please enter a valid value. The two nearest valid values are $1 and $2."
+msgstr "Vnesite veljavno vrednost. Najbližji veljavni vrednosti sta $1 in $2."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:255
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH_CLOSE_TO_LIMIT"
+msgid "Please enter a valid value. The nearest valid value is $1."
+msgstr "Vnesite veljavno vrednost. Najbližja veljavna vrednost je $1."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:257
+msgctxt "IDS_FORM_VALIDATION_TOO_LONG"
+msgid ""
+"Please shorten this text to $2 characters or less (you are currently using "
+"$1 characters)."
+msgstr ""
+"Skrajšajte to besedilo na $2 znakov ali manj (trenutno uporabljate $1 "
+"znakov)."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:259
+msgctxt "IDS_PDF_NEED_PASSWORD"
+msgid "This document is password protected.  Please enter a password."
+msgstr "Dokument je zaščiten z geslom. Vnesite geslo."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:261
+msgctxt "IDS_PDF_PAGE_LOADING"
+msgid "Loading..."
+msgstr "Nalagam ..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:263
+#, c-format
+msgctxt "IDS_PDF_LOADING_PROGRESS"
+msgid "Loading document: %d/%d pages..."
+msgstr "Nalaganje dokumenta: %d/%d strani ..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:265
+msgctxt "IDS_PDF_PAGE_LOAD_FAILED"
+msgid "Failed to load PDF document"
+msgstr "Dokumenta PDF ni bilo mogoče naložiti"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:267
+msgctxt "IDS_PDF_PROGRESS_LOADING"
+msgid "Loading"
+msgstr "Nalaganje"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:269
+msgctxt "IDS_PLUGIN_INITIALIZATION_ERROR"
+msgid "Couldn't load plug-in."
+msgstr "Vtičnika ni bilo mogoče naložiti."

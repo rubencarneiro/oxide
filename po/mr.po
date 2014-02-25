@@ -1,0 +1,630 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: oxide\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-02-25 15:44+0100\n"
+"PO-Revision-Date: 2014-02-25 16:45+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: mr\n"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:27
+msgctxt "IDS_DETAILS_WITHOUT_SUMMARY_LABEL"
+msgid "Details"
+msgstr "तपशील"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:29
+msgctxt "IDS_SEARCHABLE_INDEX_INTRO"
+msgid "This is a searchable index. Enter search keywords: "
+msgstr "ही शोध घेण्यायोग्य अनुक्रमणिका आहे. शोध कीवर्ड प्रविष्ट करा: "
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:31
+msgctxt "IDS_FORM_CALENDAR_CLEAR"
+msgid "Clear"
+msgstr "साफ करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:33
+msgctxt "IDS_FORM_CALENDAR_TODAY"
+msgid "Today"
+msgstr "आज"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:35
+msgctxt "IDS_FORM_DATE_FORMAT_DAY_IN_MONTH"
+msgid "Day"
+msgstr "दिवस"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:37
+msgctxt "IDS_FORM_DATE_FORMAT_MONTH"
+msgid "Month"
+msgstr "महिना"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:39
+msgctxt "IDS_FORM_DATE_FORMAT_YEAR"
+msgid "Year"
+msgstr "वर्ष"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:41
+msgctxt "IDS_FORM_SUBMIT_LABEL"
+msgid "Submit"
+msgstr "सबमिट करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:43
+msgctxt "IDS_FORM_INPUT_ALT"
+msgid "Submit"
+msgstr "सबमिट करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:45
+msgctxt "IDS_FORM_RESET_LABEL"
+msgid "Reset"
+msgstr "रीसेट करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:47
+msgctxt "IDS_FORM_FILE_BUTTON_LABEL"
+msgid "Choose File"
+msgstr "फाइल निवडा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:49
+msgctxt "IDS_FORM_MULTIPLE_FILES_BUTTON_LABEL"
+msgid "Choose Files"
+msgstr "फायली निवडा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:51
+msgctxt "IDS_FORM_FILE_NO_FILE_LABEL"
+msgid "No file chosen"
+msgstr "कोणतीही फाइल निवडलेली नाही"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:53
+msgctxt "IDS_FORM_FILE_NO_FILE_DRAG_LABEL"
+msgid "Drag file here"
+msgstr "फाइल येथे ड्रॅग करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:55
+msgctxt "IDS_FORM_FILE_MULTIPLE_UPLOAD"
+msgid "$1 files"
+msgstr "$1 फायली"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:57
+msgctxt "IDS_FORM_OTHER_COLOR_LABEL"
+msgid "Other..."
+msgstr "अन्य..."
+
+#. TRANSLATORS: for date label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:60
+msgctxt "IDS_FORM_OTHER_DATE_LABEL"
+msgid "Other..."
+msgstr "अन्य..."
+
+#. TRANSLATORS: for month label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:63
+msgctxt "IDS_FORM_OTHER_MONTH_LABEL"
+msgid "Other..."
+msgstr "अन्य..."
+
+#. TRANSLATORS: for time label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:66
+msgctxt "IDS_FORM_OTHER_TIME_LABEL"
+msgid "Other..."
+msgstr "अन्य..."
+
+#. TRANSLATORS: for week label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:69
+msgctxt "IDS_FORM_OTHER_WEEK_LABEL"
+msgid "Other..."
+msgstr "अन्य..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:71
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_DAY_OF_MONTH_FIELD"
+msgid "dd"
+msgstr "dd"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:73
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_MONTH_FIELD"
+msgid "mm"
+msgstr "mm"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:75
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_YEAR_FIELD"
+msgid "yyyy"
+msgstr "yyyy"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:77
+msgctxt "IDS_FORM_THIS_MONTH_LABEL"
+msgid "This month"
+msgstr "या महिन्यात"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:79
+msgctxt "IDS_FORM_THIS_WEEK_LABEL"
+msgid "This week"
+msgstr "या आठवड्यात"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:81
+msgctxt "IDS_FORM_WEEK_NUMBER_LABEL"
+msgid "Week"
+msgstr "आठवडा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:83
+msgctxt "IDS_RECENT_SEARCHES_NONE"
+msgid "No recent searches"
+msgstr "अलीकडील शोध नाहीत"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:85
+msgctxt "IDS_RECENT_SEARCHES"
+msgid "Recent Searches"
+msgstr "अलीकडील शोध"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:87
+msgctxt "IDS_RECENT_SEARCHES_CLEAR"
+msgid "Clear Recent Searches"
+msgstr "अलीकडील शोध साफ करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:89
+#, c-format
+msgctxt "IDS_IMAGE_TITLE_FOR_FILENAME"
+msgid "%s%d×%d"
+msgstr "%s%d×%d"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:91
+msgctxt "IDS_AX_ROLE_WEB_AREA"
+msgid "HTML content"
+msgstr "HTML सामुग्री"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:93
+msgctxt "IDS_AX_ROLE_LINK"
+msgid "link"
+msgstr "दुवा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:95
+msgctxt "IDS_AX_ROLE_LIST_MARKER"
+msgid "list marker"
+msgstr "सूची चिन्हक"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:97
+msgctxt "IDS_AX_ROLE_IMAGE_MAP"
+msgid "image map"
+msgstr "प्रतिमा नकाशा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:99
+msgctxt "IDS_AX_ROLE_HEADING"
+msgid "heading"
+msgstr "शीर्षलेख"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:101
+msgctxt "IDS_AX_ROLE_FOOTER"
+msgid "footer"
+msgstr "अधोलेख"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:103
+msgctxt "IDS_AX_ROLE_STEPPER"
+msgid "stepper"
+msgstr "stepper"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:105
+msgctxt "IDS_AX_BUTTON_ACTION_VERB"
+msgid "press"
+msgstr "दाबा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:107
+msgctxt "IDS_AX_RADIO_BUTTON_ACTION_VERB"
+msgid "select"
+msgstr "निवडा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:109
+msgctxt "IDS_AX_TEXT_FIELD_ACTION_VERB"
+msgid "activate"
+msgstr "सक्रिय करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:111
+msgctxt "IDS_AX_CHECKED_CHECK_BOX_ACTION_VERB"
+msgid "uncheck"
+msgstr "अनचेक"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:113
+msgctxt "IDS_AX_UNCHECKED_CHECK_BOX_ACTION_VERB"
+msgid "check"
+msgstr "तपासा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:115
+msgctxt "IDS_AX_LINK_ACTION_VERB"
+msgid "jump"
+msgstr "जंप करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:117
+msgctxt "IDS_AX_AM_PM_FIELD_TEXT"
+msgid "AM/PM"
+msgstr "AM/PM"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:119
+msgctxt "IDS_AX_DAY_OF_MONTH_FIELD_TEXT"
+msgid "Day"
+msgstr "दिवस"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:121
+msgctxt "IDS_AX_DATE_TIME_FIELD_EMPTY_VALUE_TEXT"
+msgid "blank"
+msgstr "रिक्त"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:123
+msgctxt "IDS_AX_HOUR_FIELD_TEXT"
+msgid "Hours"
+msgstr "तास"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:125
+msgctxt "IDS_AX_MEDIA_DEFAULT"
+msgid "media control"
+msgstr "माध्यम नियंत्रण"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:127
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT"
+msgid "audio"
+msgstr "ऑडिओ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:129
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT"
+msgid "video"
+msgstr "व्हिडिओ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:131
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON"
+msgid "mute"
+msgstr "नि:शब्द करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:133
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON"
+msgid "unmute"
+msgstr "सशब्द करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:135
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON"
+msgid "play"
+msgstr "प्ले करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:137
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON"
+msgid "pause"
+msgstr "विराम द्या"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:139
+msgctxt "IDS_AX_MEDIA_SLIDER"
+msgid "movie time"
+msgstr "चित्रपटाची वेळ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:141
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB"
+msgid "movie timeline thumb"
+msgstr "चित्रपट टाइमलाइन थंब"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:143
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY"
+msgid "elapsed time"
+msgstr "लोटलेला अवधी"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:145
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY"
+msgid "remaining time"
+msgstr "शिल्लक वेळ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:147
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY"
+msgid "status"
+msgstr "स्थिती"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:149
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON"
+msgid "enter full screen"
+msgstr "पूर्ण स्क्रीन प्रविष्ट करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:151
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON"
+msgid "exit full screen"
+msgstr "पूर्ण स्क्रीनमधून निर्गमन करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:153
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON"
+msgid "show closed captions"
+msgstr "बंद मथळा दर्शवा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:155
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON"
+msgid "hide closed captions"
+msgstr "बंद मथळा लपवा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:157
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT_HELP"
+msgid "audio"
+msgstr "ऑडिओ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:159
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT_HELP"
+msgid "video"
+msgstr "व्हिडिओ"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:161
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON_HELP"
+msgid "mute audio track"
+msgstr "ऑडिओ ट्रॅक निःशब्द करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:163
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON_HELP"
+msgid "unmute audio track"
+msgstr "ऑडिओ ट्रॅक सशब्द करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:165
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON_HELP"
+msgid "begin playback"
+msgstr "प्लेबॅक आरंभ करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:167
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON_HELP"
+msgid "pause playback"
+msgstr "प्लेबॅकला विराम द्या"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:169
+msgctxt "IDS_AX_MEDIA_SLIDER_HELP"
+msgid "movie time scrubber"
+msgstr "चित्रपट वेळ स्क्रबर"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:171
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB_HELP"
+msgid "movie time scrubber thumb"
+msgstr "चित्रपट वेळ स्क्रबर थंब"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:173
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY_HELP"
+msgid "current time in seconds"
+msgstr "वर्तमान वेळ सेकंदांमध्ये"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:175
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY_HELP"
+msgid "number of seconds ofmovie remaining"
+msgstr "चित्रपटाचे शिल्लक सेकंद"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:177
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY_HELP"
+msgid "current movie status"
+msgstr "वर्तमान चित्रपट स्थिती"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:179
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON_HELP"
+msgid "play movie in full screen mode"
+msgstr "पूर्ण स्क्रीन मोडमध्ये चित्रपट प्ले करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:181
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON_HELP"
+msgid "exit full screen"
+msgstr "पूर्ण स्क्रीनमधून निर्गमन करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:183
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "start displaying closed captions"
+msgstr "बंद मथळा प्रदर्शित करणे प्रारंभ करा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:185
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "stop displaying closed captions"
+msgstr "बंद मथळा प्रदर्शित करणे थांबवा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:187
+msgctxt "IDS_AX_MILLISECOND_FIELD_TEXT"
+msgid "Milliseconds"
+msgstr "मिलिसेकंद"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:189
+msgctxt "IDS_AX_MINUTE_FIELD_TEXT"
+msgid "Minutes"
+msgstr "मिनिटे"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:191
+msgctxt "IDS_AX_MONTH_FIELD_TEXT"
+msgid "Month"
+msgstr "महिना"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:193
+msgctxt "IDS_AX_SECOND_FIELD_TEXT"
+msgid "Seconds"
+msgstr "सेकंद"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:195
+msgctxt "IDS_AX_WEEK_OF_YEAR_FIELD_TEXT"
+msgid "Week"
+msgstr "आठवडा"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:197
+msgctxt "IDS_AX_YEAR_FIELD_TEXT"
+msgid "Year"
+msgstr "वर्ष"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:199
+msgctxt "IDS_KEYGEN_HIGH_GRADE_KEY"
+msgid "2048 (High Grade)"
+msgstr "2048 (उच्च ग्रेड)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:201
+msgctxt "IDS_KEYGEN_MED_GRADE_KEY"
+msgid "1024 (Medium Grade)"
+msgstr "1024 (मध्यम प्रत)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:203
+msgctxt "IDS_FORM_INPUT_WEEK_TEMPLATE"
+msgid "Week $2, $1"
+msgstr "आठवडा $2, $1"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:205
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_MULTIPLE_FILE"
+msgid "Please select one or more files."
+msgstr "कृपया एक किंवा अधिक फायली निवडा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:207
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH"
+msgid "Invalid value."
+msgstr "अवैध मूल्य."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:209
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY"
+msgid "Please enter a non-empty email address."
+msgstr "कृपया एक रिक्त-नसलेला ईमेल पत्ता प्रविष्ट करा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:211
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_DOMAIN"
+msgid "Please enter a part following '$1'. '$2' is incomplete."
+msgstr "कृपया '$1' चे अनुसरण करणारा भाग प्रविष्ट करा. '$2' अपूर्ण आहे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:213
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_LOCAL"
+msgid "Please enter a part followed by '$1'. '$2' is incomplete."
+msgstr "कृपया '$1' मागुन येणारा भाग प्रविष्ट करा. '$2' अपूर्ण आहे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:215
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOMAIN"
+msgid "A part following '$1' should not contain the symbol '$2'."
+msgstr "'$1' चे अनुसरण करणार्‍या भागामध्ये '$2' चिन्ह नसावे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:217
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOTS"
+msgid "'$1' is used at a wrong position in '$2'."
+msgstr "'$1' '$2' मध्ये चुकीच्या स्थितीवर वापरले आहे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:219
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_LOCAL"
+msgid "A part followed by '$1' should not contain the symbol '$2'."
+msgstr "'$1' मागुन येणार्‍या भागामध्ये '$2' चिन्ह नसावे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:221
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_NO_AT_SIGN"
+msgid "Please include an '$1' in the email address. '$2' is missing an '$1'."
+msgstr "कृपया ईमेल पत्त्यामध्ये '$1' समाविष्ट करा. '$2' '$1' गमावत आहे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:223
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_MULTIPLE_EMAIL"
+msgid "Please enter a comma separated list of email addresses."
+msgstr "कृपया ईमेल पत्त्यांची स्वल्पविरामाद्वारे विभक्त सूची प्रविष्ट करा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:225
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW"
+msgid "Value must be greater than or equal to $1."
+msgstr "मूल्य $1 पेक्षा मोठे किंवा समान असावे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:227
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW_DATETIME"
+msgid "Value must be $1 or later."
+msgstr "मूल्य $1 किंवा नंतरचे असणे आवश्यक आहे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:229
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW"
+msgid "Value must be less than or equal to $1."
+msgstr "मूल्य $1 पेक्षा कमी किंवा समान असावे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:231
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW_DATETIME"
+msgid "Value must be $1 or earlier."
+msgstr "मूल्य $1 किंवा आधीचे असणे आवश्यक आहे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:233
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_DATETIME"
+msgid ""
+"Please enter a valid value. The field is incomplete or has an invalid date."
+msgstr ""
+"कृपया एक वैध मूल्य प्रविष्ट करा. फील्ड अपूर्ण आहे किंवा अवैध तारीख आहे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:235
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_NUMBER"
+msgid "Please enter a number."
+msgstr "कृपया एक नंबर प्रविष्ट करा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:237
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING"
+msgid "Please fill out this field."
+msgstr "कृपया हे फील्ड भरा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:239
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_CHECKBOX"
+msgid "Please check this box if you want to proceed."
+msgstr "कृपया आपण पुढे चालू ठेवू इच्छित असल्यास हा बॉक्स पहा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:241
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_FILE"
+msgid "Please select a file."
+msgstr "कृपया एखादी फाइल निवडा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:243
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_RADIO"
+msgid "Please select one of these options."
+msgstr "कृपया या पर्यायांपैकी एक निवडा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:245
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_SELECT"
+msgid "Please select an item in the list."
+msgstr "कृपया सूचीमधील आयटम निवडा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:247
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL"
+msgid "Please enter an email address."
+msgstr "कृपया एक ईमेल पत्ता प्रविष्ट करा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:249
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_URL"
+msgid "Please enter a URL."
+msgstr "कृपया एखादी URL प्रविष्ट करा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:251
+msgctxt "IDS_FORM_VALIDATION_PATTERN_MISMATCH"
+msgid "Please match the requested format."
+msgstr "कृपया विनंती केलेले स्वरूपन जुळवा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:253
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH"
+msgid ""
+"Please enter a valid value. The two nearest valid values are $1 and $2."
+msgstr "कृपया एक वैध मूल्य प्रविष्ट करा. दोन जवळील वैध मूल्ये $1 आणि $2 आहेत."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:255
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH_CLOSE_TO_LIMIT"
+msgid "Please enter a valid value. The nearest valid value is $1."
+msgstr "कृपया एक वैध मूल्य प्रविष्ट करा. जवळील वैध मूल्य $1 आहे."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:257
+msgctxt "IDS_FORM_VALIDATION_TOO_LONG"
+msgid ""
+"Please shorten this text to $2 characters or less (you are currently using "
+"$1 characters)."
+msgstr ""
+"कृपया हा मजकूर $2 वर्ण लहान किंवा कमी करा (आपण सध्या $1 वर्ण वापरत आहात)."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:259
+msgctxt "IDS_PDF_NEED_PASSWORD"
+msgid "This document is password protected.  Please enter a password."
+msgstr "हा दस्तऐवज संकेतशब्द संरक्षित आहे. कृपया संकेतशब्द प्रविष्ट करा."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:261
+msgctxt "IDS_PDF_PAGE_LOADING"
+msgid "Loading..."
+msgstr "लोड करीत आहे..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:263
+#, c-format
+msgctxt "IDS_PDF_LOADING_PROGRESS"
+msgid "Loading document: %d/%d pages..."
+msgstr "दस्तऐवज लोड करत आहे: %d/%d पृष्ठे..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:265
+msgctxt "IDS_PDF_PAGE_LOAD_FAILED"
+msgid "Failed to load PDF document"
+msgstr "PDF दस्तऐवज लोड करणे अयशस्वी"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:267
+msgctxt "IDS_PDF_PROGRESS_LOADING"
+msgid "Loading"
+msgstr "लोड करीत आहे"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:269
+msgctxt "IDS_PLUGIN_INITIALIZATION_ERROR"
+msgid "Couldn't load plug-in."
+msgstr "प्लग-इन लोड करणे शक्य झाले नाही."

@@ -1,0 +1,628 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: oxide\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-02-25 15:44+0100\n"
+"PO-Revision-Date: 2014-02-25 16:45+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ko\n"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:27
+msgctxt "IDS_DETAILS_WITHOUT_SUMMARY_LABEL"
+msgid "Details"
+msgstr "세부정보"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:29
+msgctxt "IDS_SEARCHABLE_INDEX_INTRO"
+msgid "This is a searchable index. Enter search keywords: "
+msgstr "이것은 검색 색인합니다. 검색 키워드 입력: "
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:31
+msgctxt "IDS_FORM_CALENDAR_CLEAR"
+msgid "Clear"
+msgstr "삭제"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:33
+msgctxt "IDS_FORM_CALENDAR_TODAY"
+msgid "Today"
+msgstr "오늘"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:35
+msgctxt "IDS_FORM_DATE_FORMAT_DAY_IN_MONTH"
+msgid "Day"
+msgstr "일"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:37
+msgctxt "IDS_FORM_DATE_FORMAT_MONTH"
+msgid "Month"
+msgstr "월"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:39
+msgctxt "IDS_FORM_DATE_FORMAT_YEAR"
+msgid "Year"
+msgstr "연도"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:41
+msgctxt "IDS_FORM_SUBMIT_LABEL"
+msgid "Submit"
+msgstr "제출"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:43
+msgctxt "IDS_FORM_INPUT_ALT"
+msgid "Submit"
+msgstr "제출"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:45
+msgctxt "IDS_FORM_RESET_LABEL"
+msgid "Reset"
+msgstr "재설정"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:47
+msgctxt "IDS_FORM_FILE_BUTTON_LABEL"
+msgid "Choose File"
+msgstr "파일 선택"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:49
+msgctxt "IDS_FORM_MULTIPLE_FILES_BUTTON_LABEL"
+msgid "Choose Files"
+msgstr "파일 선택"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:51
+msgctxt "IDS_FORM_FILE_NO_FILE_LABEL"
+msgid "No file chosen"
+msgstr "선택된 파일 없음"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:53
+msgctxt "IDS_FORM_FILE_NO_FILE_DRAG_LABEL"
+msgid "Drag file here"
+msgstr "여기로 파일 드래그"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:55
+msgctxt "IDS_FORM_FILE_MULTIPLE_UPLOAD"
+msgid "$1 files"
+msgstr "파일 $1개"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:57
+msgctxt "IDS_FORM_OTHER_COLOR_LABEL"
+msgid "Other..."
+msgstr "기타..."
+
+#. TRANSLATORS: for date label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:60
+msgctxt "IDS_FORM_OTHER_DATE_LABEL"
+msgid "Other..."
+msgstr "다른 일자..."
+
+#. TRANSLATORS: for month label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:63
+msgctxt "IDS_FORM_OTHER_MONTH_LABEL"
+msgid "Other..."
+msgstr "다른 달..."
+
+#. TRANSLATORS: for time label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:66
+msgctxt "IDS_FORM_OTHER_TIME_LABEL"
+msgid "Other..."
+msgstr "다른 시간..."
+
+#. TRANSLATORS: for week label
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:69
+msgctxt "IDS_FORM_OTHER_WEEK_LABEL"
+msgid "Other..."
+msgstr "다른 주..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:71
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_DAY_OF_MONTH_FIELD"
+msgid "dd"
+msgstr "일"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:73
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_MONTH_FIELD"
+msgid "mm"
+msgstr "월"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:75
+msgctxt "IDS_FORM_PLACEHOLDER_FOR_YEAR_FIELD"
+msgid "yyyy"
+msgstr "연도"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:77
+msgctxt "IDS_FORM_THIS_MONTH_LABEL"
+msgid "This month"
+msgstr "이번 달"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:79
+msgctxt "IDS_FORM_THIS_WEEK_LABEL"
+msgid "This week"
+msgstr "이번 주"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:81
+msgctxt "IDS_FORM_WEEK_NUMBER_LABEL"
+msgid "Week"
+msgstr "주"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:83
+msgctxt "IDS_RECENT_SEARCHES_NONE"
+msgid "No recent searches"
+msgstr "최근 수행된 검색 없음"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:85
+msgctxt "IDS_RECENT_SEARCHES"
+msgid "Recent Searches"
+msgstr "최근 수행된 검색"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:87
+msgctxt "IDS_RECENT_SEARCHES_CLEAR"
+msgid "Clear Recent Searches"
+msgstr "최근 검색 삭제"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:89
+#, c-format
+msgctxt "IDS_IMAGE_TITLE_FOR_FILENAME"
+msgid "%s%d×%d"
+msgstr "%s%d×%d"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:91
+msgctxt "IDS_AX_ROLE_WEB_AREA"
+msgid "HTML content"
+msgstr "HTML 콘텐츠"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:93
+msgctxt "IDS_AX_ROLE_LINK"
+msgid "link"
+msgstr "링크"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:95
+msgctxt "IDS_AX_ROLE_LIST_MARKER"
+msgid "list marker"
+msgstr "목록 표시기"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:97
+msgctxt "IDS_AX_ROLE_IMAGE_MAP"
+msgid "image map"
+msgstr "이미지 지도"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:99
+msgctxt "IDS_AX_ROLE_HEADING"
+msgid "heading"
+msgstr "항목"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:101
+msgctxt "IDS_AX_ROLE_FOOTER"
+msgid "footer"
+msgstr "바닥글"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:103
+msgctxt "IDS_AX_ROLE_STEPPER"
+msgid "stepper"
+msgstr "증감자"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:105
+msgctxt "IDS_AX_BUTTON_ACTION_VERB"
+msgid "press"
+msgstr "누르기"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:107
+msgctxt "IDS_AX_RADIO_BUTTON_ACTION_VERB"
+msgid "select"
+msgstr "선택"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:109
+msgctxt "IDS_AX_TEXT_FIELD_ACTION_VERB"
+msgid "activate"
+msgstr "활성화"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:111
+msgctxt "IDS_AX_CHECKED_CHECK_BOX_ACTION_VERB"
+msgid "uncheck"
+msgstr "선택취소"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:113
+msgctxt "IDS_AX_UNCHECKED_CHECK_BOX_ACTION_VERB"
+msgid "check"
+msgstr "선택"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:115
+msgctxt "IDS_AX_LINK_ACTION_VERB"
+msgid "jump"
+msgstr "건너뛰기"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:117
+msgctxt "IDS_AX_AM_PM_FIELD_TEXT"
+msgid "AM/PM"
+msgstr "오전/오후"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:119
+msgctxt "IDS_AX_DAY_OF_MONTH_FIELD_TEXT"
+msgid "Day"
+msgstr "일"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:121
+msgctxt "IDS_AX_DATE_TIME_FIELD_EMPTY_VALUE_TEXT"
+msgid "blank"
+msgstr "비어 있음"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:123
+msgctxt "IDS_AX_HOUR_FIELD_TEXT"
+msgid "Hours"
+msgstr "시간"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:125
+msgctxt "IDS_AX_MEDIA_DEFAULT"
+msgid "media control"
+msgstr "미디어 컨트롤"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:127
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT"
+msgid "audio"
+msgstr "오디오"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:129
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT"
+msgid "video"
+msgstr "동영상"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:131
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON"
+msgid "mute"
+msgstr "음소거"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:133
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON"
+msgid "unmute"
+msgstr "음소거 해제"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:135
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON"
+msgid "play"
+msgstr "재생"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:137
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON"
+msgid "pause"
+msgstr "일시중지"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:139
+msgctxt "IDS_AX_MEDIA_SLIDER"
+msgid "movie time"
+msgstr "영화 시간"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:141
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB"
+msgid "movie timeline thumb"
+msgstr "영화 타임라인 썸"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:143
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY"
+msgid "elapsed time"
+msgstr "경과 시간"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:145
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY"
+msgid "remaining time"
+msgstr "남은 시간"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:147
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY"
+msgid "status"
+msgstr "상태"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:149
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON"
+msgid "enter full screen"
+msgstr "전체화면 열기"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:151
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON"
+msgid "exit full screen"
+msgstr "전체화면 닫기"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:153
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON"
+msgid "show closed captions"
+msgstr "캡션 표시"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:155
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON"
+msgid "hide closed captions"
+msgstr "캡션 숨기기"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:157
+msgctxt "IDS_AX_MEDIA_AUDIO_ELEMENT_HELP"
+msgid "audio"
+msgstr "오디오"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:159
+msgctxt "IDS_AX_MEDIA_VIDEO_ELEMENT_HELP"
+msgid "video"
+msgstr "동영상"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:161
+msgctxt "IDS_AX_MEDIA_MUTE_BUTTON_HELP"
+msgid "mute audio track"
+msgstr "오디오 트랙 음소거"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:163
+msgctxt "IDS_AX_MEDIA_UNMUTE_BUTTON_HELP"
+msgid "unmute audio track"
+msgstr "오디오 트랙 음소거 해제"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:165
+msgctxt "IDS_AX_MEDIA_PLAY_BUTTON_HELP"
+msgid "begin playback"
+msgstr "재생 시작"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:167
+msgctxt "IDS_AX_MEDIA_PAUSE_BUTTON_HELP"
+msgid "pause playback"
+msgstr "재생 일시중지"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:169
+msgctxt "IDS_AX_MEDIA_SLIDER_HELP"
+msgid "movie time scrubber"
+msgstr "영화 시간 스크러버"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:171
+msgctxt "IDS_AX_MEDIA_SLIDER_THUMB_HELP"
+msgid "movie time scrubber thumb"
+msgstr "영화 시간 스크러버 썸"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:173
+msgctxt "IDS_AX_MEDIA_CURRENT_TIME_DISPLAY_HELP"
+msgid "current time in seconds"
+msgstr "현재 시간(초)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:175
+msgctxt "IDS_AX_MEDIA_TIME_REMAINING_DISPLAY_HELP"
+msgid "number of seconds ofmovie remaining"
+msgstr "영화 남은 시간(초)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:177
+msgctxt "IDS_AX_MEDIA_STATUS_DISPLAY_HELP"
+msgid "current movie status"
+msgstr "현재 영화 상태"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:179
+msgctxt "IDS_AX_MEDIA_ENTER_FULL_SCREEN_BUTTON_HELP"
+msgid "play movie in full screen mode"
+msgstr "전체화면 모드로 영화 재생"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:181
+msgctxt "IDS_AX_MEDIA_EXIT_FULL_SCREEN_BUTTON_HELP"
+msgid "exit full screen"
+msgstr "전체화면 닫기"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:183
+msgctxt "IDS_AX_MEDIA_SHOW_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "start displaying closed captions"
+msgstr "캡션 표시 시작"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:185
+msgctxt "IDS_AX_MEDIA_HIDE_CLOSED_CAPTIONS_BUTTON_HELP"
+msgid "stop displaying closed captions"
+msgstr "캡션 표시 중지"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:187
+msgctxt "IDS_AX_MILLISECOND_FIELD_TEXT"
+msgid "Milliseconds"
+msgstr "밀리초"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:189
+msgctxt "IDS_AX_MINUTE_FIELD_TEXT"
+msgid "Minutes"
+msgstr "분"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:191
+msgctxt "IDS_AX_MONTH_FIELD_TEXT"
+msgid "Month"
+msgstr "월"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:193
+msgctxt "IDS_AX_SECOND_FIELD_TEXT"
+msgid "Seconds"
+msgstr "초"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:195
+msgctxt "IDS_AX_WEEK_OF_YEAR_FIELD_TEXT"
+msgid "Week"
+msgstr "주"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:197
+msgctxt "IDS_AX_YEAR_FIELD_TEXT"
+msgid "Year"
+msgstr "연도"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:199
+msgctxt "IDS_KEYGEN_HIGH_GRADE_KEY"
+msgid "2048 (High Grade)"
+msgstr "2048(높은 등급)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:201
+msgctxt "IDS_KEYGEN_MED_GRADE_KEY"
+msgid "1024 (Medium Grade)"
+msgstr "1024(중간 등급)"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:203
+msgctxt "IDS_FORM_INPUT_WEEK_TEMPLATE"
+msgid "Week $2, $1"
+msgstr "$1, $2번째 주"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:205
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_MULTIPLE_FILE"
+msgid "Please select one or more files."
+msgstr "파일을 한 개 이상 선택하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:207
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH"
+msgid "Invalid value."
+msgstr "값이 잘못되었습니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:209
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY"
+msgid "Please enter a non-empty email address."
+msgstr "비어 있지 않은 이메일 주소를 입력해 주세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:211
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_DOMAIN"
+msgid "Please enter a part following '$1'. '$2' is incomplete."
+msgstr "'$1' 뒷 부분을 입력해 주세요. '$2'(이)가 완전하지 않습니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:213
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_EMPTY_LOCAL"
+msgid "Please enter a part followed by '$1'. '$2' is incomplete."
+msgstr "'$1' 앞 부분을 입력해 주세요. '$2'(이)가 완전하지 않습니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:215
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOMAIN"
+msgid "A part following '$1' should not contain the symbol '$2'."
+msgstr "'$1' 다음 부분에 '$2' 기호가 포함되면 안됩니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:217
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_DOTS"
+msgid "'$1' is used at a wrong position in '$2'."
+msgstr "'$2'에서 '$1'의 위치가 잘못되었습니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:219
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_INVALID_LOCAL"
+msgid "A part followed by '$1' should not contain the symbol '$2'."
+msgstr "'$1' 앞 부분에 '$2' 기호가 포함되면 안됩니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:221
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL_NO_AT_SIGN"
+msgid "Please include an '$1' in the email address. '$2' is missing an '$1'."
+msgstr "이메일 주소에 '$1'를 포함해 주세요. '$2'에 '$1'가 없습니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:223
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_MULTIPLE_EMAIL"
+msgid "Please enter a comma separated list of email addresses."
+msgstr "이메일 주소를 쉼표로 구분하여 입력하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:225
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW"
+msgid "Value must be greater than or equal to $1."
+msgstr "값은 $1 이상이어야 합니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:227
+msgctxt "IDS_FORM_VALIDATION_RANGE_UNDERFLOW_DATETIME"
+msgid "Value must be $1 or later."
+msgstr "값은 $1 이후여야 합니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:229
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW"
+msgid "Value must be less than or equal to $1."
+msgstr "값은 $1 이하여야 합니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:231
+msgctxt "IDS_FORM_VALIDATION_RANGE_OVERFLOW_DATETIME"
+msgid "Value must be $1 or earlier."
+msgstr "값은 $1 이전이어야 합니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:233
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_DATETIME"
+msgid ""
+"Please enter a valid value. The field is incomplete or has an invalid date."
+msgstr "유효한 값을 입력하세요. 입력을 완료하지 않았거나 날짜가 잘못되었습니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:235
+msgctxt "IDS_FORM_VALIDATION_BAD_INPUT_NUMBER"
+msgid "Please enter a number."
+msgstr "숫자를 입력하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:237
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING"
+msgid "Please fill out this field."
+msgstr "이 입력란을 작성하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:239
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_CHECKBOX"
+msgid "Please check this box if you want to proceed."
+msgstr "계속하려면 이 확인란을 선택하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:241
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_FILE"
+msgid "Please select a file."
+msgstr "파일을 선택하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:243
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_RADIO"
+msgid "Please select one of these options."
+msgstr "다음 옵션 중 하나를 선택하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:245
+msgctxt "IDS_FORM_VALIDATION_VALUE_MISSING_SELECT"
+msgid "Please select an item in the list."
+msgstr "목록에서 항목을 선택하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:247
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_EMAIL"
+msgid "Please enter an email address."
+msgstr "이메일 주소를 입력하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:249
+msgctxt "IDS_FORM_VALIDATION_TYPE_MISMATCH_URL"
+msgid "Please enter a URL."
+msgstr "URL을 입력하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:251
+msgctxt "IDS_FORM_VALIDATION_PATTERN_MISMATCH"
+msgid "Please match the requested format."
+msgstr "요청한 형식과 일치시키세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:253
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH"
+msgid ""
+"Please enter a valid value. The two nearest valid values are $1 and $2."
+msgstr "유효한 값을 입력해 주세요. 가장 근접한 유효 값 2개는 $1 및 $2입니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:255
+msgctxt "IDS_FORM_VALIDATION_STEP_MISMATCH_CLOSE_TO_LIMIT"
+msgid "Please enter a valid value. The nearest valid value is $1."
+msgstr "유효한 값을 입력해 주세요. 가장 근접한 유효 값은 $1입니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:257
+msgctxt "IDS_FORM_VALIDATION_TOO_LONG"
+msgid ""
+"Please shorten this text to $2 characters or less (you are currently using "
+"$1 characters)."
+msgstr "이 텍스트를 $2자 이하로 줄이세요(현재 $1자 사용 중)."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:259
+msgctxt "IDS_PDF_NEED_PASSWORD"
+msgid "This document is password protected.  Please enter a password."
+msgstr "문서가 비밀번호로 보호되고 있습니다. 비밀번호를 입력하세요."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:261
+msgctxt "IDS_PDF_PAGE_LOADING"
+msgid "Loading..."
+msgstr "로드 중..."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:263
+#, c-format
+msgctxt "IDS_PDF_LOADING_PROGRESS"
+msgid "Loading document: %d/%d pages..."
+msgstr "문서 로드 중: %d/%d페이지"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:265
+msgctxt "IDS_PDF_PAGE_LOAD_FAILED"
+msgid "Failed to load PDF document"
+msgstr "PDF 문서를 로드하지 못했습니다."
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:267
+msgctxt "IDS_PDF_PROGRESS_LOADING"
+msgid "Loading"
+msgstr "로드 중"
+
+#: obj/gen/oxide/shared/common/oxide_i18n_messages.h:269
+msgctxt "IDS_PLUGIN_INITIALIZATION_ERROR"
+msgid "Couldn't load plug-in."
+msgstr "플러그인을 로드할 수 없습니다."
