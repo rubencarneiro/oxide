@@ -11,13 +11,14 @@ import codecs
 import os.path
 import sys
 
-def parse_webkit_strings(webkit_strings, chromiumsrcdir):
-  msgs = []
-  if chromiumsrcdir is not None:
-    sys.path.insert(0, os.path.join(chromiumsrcdir, 'tools', 'grit'))
-  from grit import grd_reader, util
+def parse_webkit_strings(webkit_strings):
+  from grit import grd_reader
+  return grd_reader.Parse(webkit_strings)
+
+def extract_messages(res):
+  from grit import util
   from grit.node import empty, message
-  res = grd_reader.Parse(webkit_strings)
+  msgs = []
   lang = 'en'
   for item in res.GetRoot().ActiveDescendants():
     if isinstance(item, empty.MessagesNode):
@@ -83,7 +84,10 @@ if __name__ == '__main__':
   parser.add_argument('-i', dest='input', required=True)
   parser.add_argument('-o', dest='output', required=True)
   args = parser.parse_args()
-  msgs = parse_webkit_strings(args.input, args.chromiumsrcdir)
+  if args.chromiumsrcdir is not None:
+    sys.path.insert(0, os.path.join(args.chromiumsrcdir, 'tools', 'grit'))
+  res = parse_webkit_strings(args.input)
+  msgs = extract_messages(res)
   filename = os.path.basename(args.input)
   output = output_strings_header(filename, msgs)
   write_output_to_file(output, args.output)
