@@ -21,20 +21,19 @@
 #include <QQmlEngine>
 #include <QtDebug>
 
-#include "qt/core/api/oxideqscriptmessage.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 
+#include "oxideqquickscriptmessage_p.h"
+#include "oxideqquickscriptmessage_p_p.h"
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebview_p.h"
 
 bool OxideQQuickScriptMessageHandlerPrivate::OnReceiveMessage(
-    OxideQScriptMessage* message,
-    oxide::qt::WebFrameAdapter* frame,
+    oxide::qt::ScriptMessageAdapter* message,
     QString& error) {
   QJSValueList args;
-  args.append(callback.engine()->newQObject(message));
   args.append(callback.engine()->newQObject(
-      adapterToQObject<OxideQQuickWebFrame>(frame)));
+      adapterToQObject<OxideQQuickScriptMessage>(message)));
 
   QJSValue rv = callback.call(args);
   if (rv.isError()) {
@@ -43,6 +42,12 @@ bool OxideQQuickScriptMessageHandlerPrivate::OnReceiveMessage(
   }
 
   return true;
+}
+
+oxide::qt::ScriptMessageAdapter*
+OxideQQuickScriptMessageHandlerPrivate::CreateScriptMessage() {
+  OxideQQuickScriptMessage* message = new OxideQQuickScriptMessage();
+  return OxideQQuickScriptMessagePrivate::get(message);
 }
 
 OxideQQuickScriptMessageHandlerPrivate::OxideQQuickScriptMessageHandlerPrivate(

@@ -15,47 +15,47 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_SCRIPT_MESSAGE_P_H_
-#define _OXIDE_QT_CORE_API_SCRIPT_MESSAGE_P_H_
+#ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_
+#define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_
 
-#include <QtGlobal>
-#include <QVariant>
-
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 
 namespace oxide {
+
 class ScriptMessage;
 class ScriptMessageImplBrowser;
-}
 
-class OxideQScriptMessage;
+namespace qt {
 
-class OxideQScriptMessagePrivate Q_DECL_FINAL {
+class ScriptMessageAdapter;
+
+class ScriptMessageAdapterPrivate FINAL {
  public:
-  OxideQScriptMessagePrivate();
+  ScriptMessageAdapterPrivate(ScriptMessageAdapter* adapter);
 
-  oxide::ScriptMessageImplBrowser* incoming() const {
-    return incoming_;
-  }
-
-  QVariant args() const { return args_; }
+  oxide::ScriptMessageImplBrowser* incoming() const { return incoming_; }
 
   void Initialize(oxide::ScriptMessage* message);
   void Consume(scoped_ptr<oxide::ScriptMessage> message);
   void Invalidate();
 
-  static OxideQScriptMessagePrivate* get(OxideQScriptMessage* q);
+  static ScriptMessageAdapterPrivate* get(ScriptMessageAdapter* adapter);
 
-  base::WeakPtr<OxideQScriptMessagePrivate> GetWeakPtr() {
+  base::WeakPtr<ScriptMessageAdapterPrivate> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
   }
 
  private:
+  ScriptMessageAdapter* a;
   oxide::ScriptMessageImplBrowser* incoming_;
   scoped_ptr<oxide::ScriptMessage> owned_incoming_;
-  QVariant args_;
-  base::WeakPtrFactory<OxideQScriptMessagePrivate> weak_factory_;
+  base::WeakPtrFactory<ScriptMessageAdapterPrivate> weak_factory_;
 };
 
-#endif // _OXIDE_QT_CORE_API_SCRIPT_MESSAGE_P_H_
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_

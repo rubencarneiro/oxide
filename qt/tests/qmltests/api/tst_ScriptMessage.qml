@@ -16,8 +16,8 @@ TestWebView {
     ScriptMessageHandler {
       msgId: "TEST-REPLY"
       contexts: [ "oxide://testutils/" ]
-      callback: function(msg, frame) {
-        webView.lastMessageFrameSource = frame;
+      callback: function(msg) {
+        webView.lastMessageFrameSource = msg.frame;
         webView.lastMessageContext = msg.context;
         msg.reply({ out: msg.args.in * 2 });
       }
@@ -25,8 +25,8 @@ TestWebView {
     ScriptMessageHandler {
       msgId: "TEST-ERROR"
       contexts: [ "oxide://testutils/" ]
-      callback: function(msg, frame) {
-        webView.lastMessageFrameSource = frame;
+      callback: function(msg) {
+        webView.lastMessageFrameSource = msg.frame;
         webView.lastMessageContext = msg.context;
         msg.error("This is an error");
       }

@@ -15,52 +15,48 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_H_
+#define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_H_
 
-#include <string>
-
-#include <QList>
 #include <QScopedPointer>
-#include <QString>
 #include <QtGlobal>
 #include <QUrl>
+#include <QVariant>
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
+
+QT_BEGIN_NAMESPACE
+class QString;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
-class ScriptMessageAdapter;
-class ScriptMessageHandlerAdapterPrivate;
+class ScriptMessageAdapterPrivate;
+class WebFrameAdapter;
 
-class Q_DECL_EXPORT ScriptMessageHandlerAdapter : public AdapterBase {
+class Q_DECL_EXPORT ScriptMessageAdapter : public AdapterBase {
  public:
-  virtual ~ScriptMessageHandlerAdapter();
+  virtual ~ScriptMessageAdapter();
 
-  QString msgId() const;
-  void setMsgId(const QString& id);
+  WebFrameAdapter* frame() const;
+  QUrl context() const;
+  void reply(const QVariant& args);
+  void error(const QString& msg);
 
-  QList<QUrl> contexts() const;
-  void setContexts(const QList<QUrl>& contexts);
-
-  void attachHandler();
-  void detachHandler();
+  QVariant args() const { return args_; }
 
  protected:
-  ScriptMessageHandlerAdapter(QObject* q);
+  ScriptMessageAdapter(QObject* q);
 
  private:
-  friend class ScriptMessageHandlerAdapterPrivate;
+  friend class ScriptMessageAdapterPrivate;
 
-  virtual bool OnReceiveMessage(ScriptMessageAdapter* message,
-                                QString& error) = 0;
-  virtual ScriptMessageAdapter* CreateScriptMessage() = 0;
-
-  QScopedPointer<ScriptMessageHandlerAdapterPrivate> priv;
+  QVariant args_;
+  QScopedPointer<ScriptMessageAdapterPrivate> priv;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_H_

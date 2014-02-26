@@ -15,37 +15,21 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_SCRIPT_MESSAGE_H
-#define OXIDE_Q_SCRIPT_MESSAGE_H
+#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
+#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
 
-#include <QObject>
-#include <QScopedPointer>
 #include <QtGlobal>
-#include <QUrl>
-#include <QVariant>
 
-class OxideQScriptMessagePrivate;
+#include "qt/core/glue/oxide_qt_script_message_adapter.h"
 
-class Q_DECL_EXPORT OxideQScriptMessage : public QObject {
-  Q_OBJECT
-  Q_PROPERTY(QUrl context READ context)
-  Q_PROPERTY(QVariant args READ args)
+class OxideQQuickScriptMessage;
 
-  Q_DECLARE_PRIVATE(OxideQScriptMessage)
-  Q_DISABLE_COPY(OxideQScriptMessage)
-
+class OxideQQuickScriptMessagePrivate Q_DECL_FINAL :
+    public oxide::qt::ScriptMessageAdapter {
  public:
-  Q_DECL_HIDDEN OxideQScriptMessage();
-  virtual ~OxideQScriptMessage();
+  OxideQQuickScriptMessagePrivate(OxideQQuickScriptMessage* q);
 
-  QUrl context() const;
-  QVariant args() const;
-
-  Q_INVOKABLE void reply(const QVariant& args);
-  Q_INVOKABLE void error(const QString& msg);
-
- private:
-  QScopedPointer<OxideQScriptMessagePrivate> d_ptr;
+  static OxideQQuickScriptMessagePrivate* get(OxideQQuickScriptMessage* q);
 };
 
-#endif // OXIDE_Q_SCRIPT_MESSAGE_H
+#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_

@@ -22,12 +22,9 @@
 
 #include "base/bind.h"
 
-#include "shared/browser/oxide_script_message_impl_browser.h"
-#include "qt/core/api/oxideqscriptmessage.h"
-#include "qt/core/api/oxideqscriptmessage_p.h"
-#include "qt/core/browser/oxide_qt_web_frame.h"
+#include "shared/common/oxide_script_message.h"
 
-#include "oxide_qt_script_message_handler_adapter.h"
+#include "oxide_qt_script_message_adapter_p.h"
 
 namespace oxide {
 namespace qt {
@@ -47,21 +44,18 @@ bool ScriptMessageHandlerAdapterPrivate::ReceiveMessageCallback(
     std::string* error_desc) {
   QString qerror;
 
-  OxideQScriptMessage* qmessage = new OxideQScriptMessage();
+  ScriptMessageAdapter* qmessage = a->CreateScriptMessage();
 
   // We use a weak pointer here in case the callback deletes it
-  base::WeakPtr<OxideQScriptMessagePrivate> p(
-      OxideQScriptMessagePrivate::get(qmessage)->GetWeakPtr());
+  base::WeakPtr<ScriptMessageAdapterPrivate> p(
+      ScriptMessageAdapterPrivate::get(qmessage)->GetWeakPtr());
 
   // This passes a pointer to oxide::ScriptMessage, but we retain
   // ownership of it because we may want to access it after the
   // callback runs
   p->Initialize(message->get());
 
-  bool success = a->OnReceiveMessage(
-      qmessage,
-      static_cast<WebFrame *>(p->incoming()->GetSourceFrame())->GetAdapter(),
-      qerror);
+  bool success = a->OnReceiveMessage(qmessage, qerror);
 
   if (!success) {
     *error_desc = qerror.toStdString();

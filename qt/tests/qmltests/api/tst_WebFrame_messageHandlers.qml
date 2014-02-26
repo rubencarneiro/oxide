@@ -15,8 +15,8 @@ TestWebView {
     ScriptMessageHandler {
       msgId: "TEST"
       contexts: [ "oxide://testutils/" ]
-      callback: function(msg, frame) {
-        webView.lastMessageFrameSource = frame;
+      callback: function(msg) {
+        webView.lastMessageFrameSource = msg.frame;
         msg.reply({ out: msg.args.in * 2 });
       }
     }
@@ -53,8 +53,8 @@ TestWebView {
       var handler = messageHandler.createObject(
           null,
           { msgId: "TEST", contexts: [ "http://foo/", "oxide://testutils/" ],
-            callback: function(msg, frame) {
-              webView.lastMessageFrameSource = frame;
+            callback: function(msg) {
+              webView.lastMessageFrameSource = msg.frame;
               msg.reply({ out: msg.args.in * 5 });
             }
           });
@@ -99,7 +99,7 @@ TestWebView {
       var handler = messageHandler.createObject(
           frame,
           { msgId: "TEST", contexts: [ "http://foo/", "oxide://testutils/" ],
-            callback: function(msg, frame) {
+            callback: function(msg) {
               msg.reply({ out: msg.args.in * 5 });
             }
           });
@@ -140,7 +140,7 @@ TestWebView {
       var handler = messageHandler.createObject(
           null,
           { msgId: "TEST", contexts: [ "oxide://testutils/" ],
-            callback: function(msg, frame) {
+            callback: function(msg) {
               msg.reply({ out: msg.args.in * 5 });
             }
           });
@@ -171,7 +171,7 @@ TestWebView {
       var handler = messageHandler.createObject(
           null,
           { msgId: "TEST", contexts: [ "http://foo/", "oxide://testutils/" ],
-            callback: function(msg, frame) {
+            callback: function(msg) {
               msg.reply({ out: msg.args.in * 5 });
             }
           });
@@ -203,7 +203,7 @@ TestWebView {
       var handler = messageHandler.createObject(
           null,
           { msgId: "TEST", contexts: [ "http://foo/", "oxide://testutils/" ],
-            callback: function(msg, frame) {
+            callback: function(msg) {
               msg.reply({ out: msg.args.in * 5 });
             }
           });

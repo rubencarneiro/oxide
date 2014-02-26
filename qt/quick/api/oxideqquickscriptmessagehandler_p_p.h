@@ -24,7 +24,6 @@
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter.h"
 
 class OxideQQuickScriptMessageHandler;
-class OxideQScriptMessage;
 
 class OxideQQuickScriptMessageHandlerPrivate Q_DECL_FINAL :
     public oxide::qt::ScriptMessageHandlerAdapter {
@@ -41,9 +40,9 @@ class OxideQQuickScriptMessageHandlerPrivate Q_DECL_FINAL :
   QJSValue callback;
 
  private:
-  bool OnReceiveMessage(OxideQScriptMessage* message,
-                        oxide::qt::WebFrameAdapter* frame,
+  bool OnReceiveMessage(oxide::qt::ScriptMessageAdapter* message,
                         QString& error) Q_DECL_FINAL;
+  oxide::qt::ScriptMessageAdapter* CreateScriptMessage() Q_DECL_FINAL;
 
   Q_DISABLE_COPY(OxideQQuickScriptMessageHandlerPrivate);
 };

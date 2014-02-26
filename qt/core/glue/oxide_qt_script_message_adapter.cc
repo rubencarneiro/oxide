@@ -15,57 +15,68 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqscriptmessage.h"
-#include "oxideqscriptmessage_p.h"
+#include "oxide_qt_script_message_adapter.h"
+#include "oxide_qt_script_message_adapter_p.h"
 
 #include <QByteArray>
 #include <QJsonDocument>
 #include <QString>
 
-#include "base/logging.h"
-
+#include "qt/core/browser/oxide_qt_web_frame.h"
 #include "shared/browser/oxide_script_message_impl_browser.h"
-#include "shared/common/oxide_script_message_request.h"
 
-OxideQScriptMessagePrivate::OxideQScriptMessagePrivate() :
+namespace oxide {
+namespace qt {
+
+ScriptMessageAdapterPrivate::ScriptMessageAdapterPrivate(
+    ScriptMessageAdapter* adapter) :
+    a(adapter),
     incoming_(NULL),
     weak_factory_(this) {}
 
-void OxideQScriptMessagePrivate::Initialize(oxide::ScriptMessage* message) {
+void ScriptMessageAdapterPrivate::Initialize(oxide::ScriptMessage* message) {
   DCHECK(!incoming());
   incoming_ = static_cast<oxide::ScriptMessageImplBrowser *>(message);
 
   QJsonDocument jsondoc(QJsonDocument::fromJson(
       QByteArray(message->args().data(), message->args().length())));
-  args_ = jsondoc.toVariant();
+  a->args_ = jsondoc.toVariant();
 }
 
-void OxideQScriptMessagePrivate::Consume(
+void ScriptMessageAdapterPrivate::Consume(
     scoped_ptr<oxide::ScriptMessage> message) {
   DCHECK_EQ(incoming(), message.get());
   DCHECK(!owned_incoming_);
   owned_incoming_ = message.Pass();
 }
 
-void OxideQScriptMessagePrivate::Invalidate() {
+void ScriptMessageAdapterPrivate::Invalidate() {
   incoming_ = NULL;
 }
 
 // static
-OxideQScriptMessagePrivate* OxideQScriptMessagePrivate::get(
-    OxideQScriptMessage* q) {
-  return q->d_func();
+ScriptMessageAdapterPrivate* ScriptMessageAdapterPrivate::get(
+    ScriptMessageAdapter* adapter) {
+  return adapter->priv.data();
 }
 
-OxideQScriptMessage::OxideQScriptMessage() :
-    d_ptr(new OxideQScriptMessagePrivate()) {}
+ScriptMessageAdapter::ScriptMessageAdapter(QObject* q) :
+    AdapterBase(q),
+    priv(new ScriptMessageAdapterPrivate(this)) {}
 
-OxideQScriptMessage::~OxideQScriptMessage() {}
+ScriptMessageAdapter::~ScriptMessageAdapter() {}
 
-QUrl OxideQScriptMessage::context() const {
-  Q_D(const OxideQScriptMessage);
+WebFrameAdapter* ScriptMessageAdapter::frame() const {
+  oxide::ScriptMessageImplBrowser* message = priv->incoming();
+  if (!message) {
+    return NULL;
+  }
 
-  oxide::ScriptMessageImplBrowser* message = d->incoming();
+  return static_cast<WebFrame *>(message->GetSourceFrame())->GetAdapter();
+}
+
+QUrl ScriptMessageAdapter::context() const {
+  oxide::ScriptMessageImplBrowser* message = priv->incoming();
   if (!message) {
     return QUrl();
   }
@@ -73,16 +84,8 @@ QUrl OxideQScriptMessage::context() const {
   return QUrl(QString::fromStdString(message->context().spec()));
 }
 
-QVariant OxideQScriptMessage::args() const {
-  Q_D(const OxideQScriptMessage);
-
-  return d->args();
-}
-
-void OxideQScriptMessage::reply(const QVariant& args) {
-  Q_D(OxideQScriptMessage);
-
-  oxide::ScriptMessageImplBrowser* message = d->incoming();
+void ScriptMessageAdapter::reply(const QVariant& args) {
+  oxide::ScriptMessageImplBrowser* message = priv->incoming();
   if (!message) {
     return;
   }
@@ -91,10 +94,8 @@ void OxideQScriptMessage::reply(const QVariant& args) {
   message->Reply(QString(jsondoc.toJson()).toStdString());
 }
 
-void OxideQScriptMessage::error(const QString& msg) {
-  Q_D(OxideQScriptMessage);
-
-  oxide::ScriptMessageImplBrowser* message = d->incoming();
+void ScriptMessageAdapter::error(const QString& msg) {
+  oxide::ScriptMessageImplBrowser* message = priv->incoming();
   if (!message) {
     return;
   }
@@ -103,3 +104,6 @@ void OxideQScriptMessage::error(const QString& msg) {
       oxide::ScriptMessageRequest::ERROR_HANDLER_REPORTED_ERROR,
       msg.toStdString());
 }
+
+} // namespace qt
+} // namespace oxide

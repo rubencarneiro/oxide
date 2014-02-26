@@ -15,8 +15,8 @@ TestWebView {
     ScriptMessageHandler {
       msgId: "TEST"
       contexts: [ "http://foo/", "oxide://testutils/" ]
-      callback: function(msg, frame) {
-        webView.lastMessageFrameSource = frame;
+      callback: function(msg) {
+        webView.lastMessageFrameSource = msg.frame;
         msg.reply({ out: msg.args.in * 2 });
       }
     }

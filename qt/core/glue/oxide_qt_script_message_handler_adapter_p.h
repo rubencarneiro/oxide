@@ -27,6 +27,9 @@
 #include "shared/common/oxide_script_message_handler.h"
 
 namespace oxide {
+
+class ScriptMessage;
+
 namespace qt {
 
 class ScriptMessageHandlerAdapter;

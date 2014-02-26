@@ -22,10 +22,10 @@
 #include <QQmlExtensionPlugin>
 
 #include "qt/core/api/oxideqloadevent.h"
-#include "qt/core/api/oxideqscriptmessage.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
+#include "qt/quick/api/oxideqquickscriptmessage_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagehandler_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagerequest_p.h"
 #include "qt/quick/api/oxideqquickuserscript_p.h"
@@ -56,7 +56,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterSingletonType<OxideQQuickGlobals>(
         uri, 0, 1, "Oxide", GlobalSingletonFactory);
-    qmlRegisterUncreatableType<OxideQScriptMessage>(uri, 0, 1, "ScriptMessage",
+    qmlRegisterUncreatableType<OxideQQuickScriptMessage>(uri, 0, 1, "ScriptMessage",
         "ScriptMessages are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQLoadEvent>(uri, 0, 1, "LoadEvent",
         "LoadEvent' are created automatically by Oxide");

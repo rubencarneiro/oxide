@@ -101,15 +101,11 @@
         '<(DEPTH)'
       ],
       'sources': [
-        '<(INTERMEDIATE_DIR)/moc_oxideqscriptmessage.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
-        'api/oxideqscriptmessage.cc',
-        'api/oxideqscriptmessage.h',
-        'api/oxideqscriptmessage_p.h',
         'api/oxideqwebpreferences.cc',
         'api/oxideqwebpreferences.h',
         'api/oxideqwebpreferences_p.h',
@@ -117,6 +113,9 @@
         'glue/oxide_qt_render_widget_host_view_delegate.cc',
         'glue/oxide_qt_render_widget_host_view_delegate.h',
         'glue/oxide_qt_render_widget_host_view_delegate_p.h',
+        'glue/oxide_qt_script_message_adapter.cc',
+        'glue/oxide_qt_script_message_adapter.h',
+        'glue/oxide_qt_script_message_adapter_p.h',
         'glue/oxide_qt_script_message_handler_adapter.cc',
         'glue/oxide_qt_script_message_handler_adapter.h',
         'glue/oxide_qt_script_message_handler_adapter_p.h',
@@ -141,11 +140,6 @@
         {
           'action_name': 'moc_oxideqloadevent.cc',
           'moc_input': 'api/oxideqloadevent.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxideqscriptmessage.cc',
-          'moc_input': 'api/oxideqscriptmessage.h',
           'includes': [ 'moc.gypi' ]
         },
         {
