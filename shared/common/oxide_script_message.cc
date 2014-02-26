@@ -38,16 +38,20 @@ ScriptMessage::~ScriptMessage() {
 }
 
 void ScriptMessage::Reply(const std::string& args) {
-  DCHECK(!has_responded_);
+  if (has_responded_) {
+    return;
+  }
   has_responded_ = true;
   DoSendReply(args);
 }
 
 void ScriptMessage::Error(ScriptMessageRequest::Error code,
                           const std::string& msg) {
-  DCHECK(!has_responded_);
   DCHECK(code != ScriptMessageRequest::ERROR_OK) <<
       "Use Reply() for non-error responses";
+  if (has_responded_) {
+    return;
+  }
   has_responded_ = true;
   DoSendError(code, msg);
 }
