@@ -74,8 +74,6 @@
         'gl/oxide_gl_implementation.cc',
         'gl/oxide_qt_shared_gl_context.cc',
         'gl/oxide_qt_shared_gl_context.h',
-        'glue/private/oxide_qt_user_script_adapter_p.cc',
-        'glue/private/oxide_qt_user_script_adapter_p.h',
         'glue/private/oxide_qt_web_view_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.h'
       ],
@@ -127,6 +125,7 @@
         'glue/oxide_qt_script_message_request_adapter_p.h',
         'glue/oxide_qt_user_script_adapter.cc',
         'glue/oxide_qt_user_script_adapter.h',
+        'glue/oxide_qt_user_script_adapter_p.h',
         'glue/oxide_qt_web_context_adapter.cc',
         'glue/oxide_qt_web_context_adapter.h',
         'glue/oxide_qt_web_context_adapter_p.h',

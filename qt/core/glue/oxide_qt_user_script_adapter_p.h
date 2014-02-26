@@ -25,44 +25,41 @@
 
 #include "shared/common/oxide_user_script.h"
 
-#include "qt/core/glue/oxide_qt_user_script_adapter.h"
-
 namespace oxide {
+
+class AsyncFileJob;
+
 namespace qt {
 
 class UserScriptAdapter;
 
 class UserScriptAdapterPrivate FINAL {
  public:
-  static UserScriptAdapterPrivate* Create(UserScriptAdapter* adapter);
+  enum State {
+    Constructing,
+    Loading,
+    Loaded,
+    FailedLoad
+  };
 
-  const oxide::UserScript& user_script() const {
-    return user_script_;
-  }
-  oxide::UserScript& user_script() {
-    return user_script_;
-  }
+  UserScriptAdapterPrivate(UserScriptAdapter* adapter);
 
-  UserScriptAdapter::State state() const {
-    return state_;
-  }
-
-  void StartLoading();
+  bool Load();
 
   static UserScriptAdapterPrivate* get(UserScriptAdapter* adapter);
+
+  State state;
+  oxide::UserScript user_script;
 
  private:
   friend class UserScriptAdapter;
 
-  UserScriptAdapterPrivate(UserScriptAdapter* adapter);
   void OnGotFileContents(base::File::Error error,
                          const char* data,
                          int bytes_read);
 
-  UserScriptAdapter::State state_;
-  oxide::UserScript user_script_;
   UserScriptAdapter* a;
-  base::WeakPtrFactory<UserScriptAdapterPrivate> weak_factory_;
+  scoped_ptr<AsyncFileJob> load_job_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserScriptAdapterPrivate);
 };

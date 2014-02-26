@@ -51,7 +51,9 @@ class OxideQQuickWebContext : public QObject,
   void classBegin();
   void componentComplete();
 
-  Q_DECL_EXPORT static QSharedPointer<OxideQQuickWebContext> defaultContext();
+  static void ensureChromiumStarted();
+
+  static QSharedPointer<OxideQQuickWebContext> defaultContext();
 
   QString product() const;
   void setProduct(const QString& product);

@@ -29,17 +29,7 @@ class UserScriptAdapterPrivate;
 
 class Q_DECL_EXPORT UserScriptAdapter {
  public:
-  enum State {
-    Constructing,
-    Deferred,
-    Loading,
-    Ready,
-    Failed
-  };
-
   virtual ~UserScriptAdapter();
-
-  State state() const;
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -54,9 +44,9 @@ class Q_DECL_EXPORT UserScriptAdapter {
   void setIncognitoEnabled(bool enabled);
 
   QUrl context() const;
-  bool setContext(const QUrl& context);
+  void setContext(const QUrl& context);
 
-  void startLoading();
+  void completeConstruction();
 
  protected:
   UserScriptAdapter();

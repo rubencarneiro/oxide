@@ -38,14 +38,7 @@ QWeakPointer<OxideQQuickWebContext> g_default_context;
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     q_ptr(q) {
-  static bool run_once = false;
-  if (!run_once) {
-    run_once = true;
-#if defined(ENABLE_COMPOSITING)
-    oxide::qt::WebContextAdapter::setSharedGLContext(
-        QSGContext::sharedOpenGLContext());
-#endif
-  }
+  OxideQQuickWebContext::ensureChromiumStarted();
 }
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
@@ -146,6 +139,20 @@ void OxideQQuickWebContext::componentComplete() {
   Q_D(OxideQQuickWebContext);
 
   d->completeConstruction();
+}
+
+// static
+void OxideQQuickWebContext::ensureChromiumStarted() {
+  static bool started = false;
+  if (started) {
+    return;
+  }
+  started = true;
+#if defined(ENABLE_COMPOSITING)
+  oxide::qt::WebContextAdapter::setSharedGLContext(
+      QSGContext::sharedOpenGLContext());
+#endif
+  oxide::qt::WebContextAdapter::ensureChromiumStarted();
 }
 
 // static
