@@ -33,8 +33,8 @@ QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
 class OxideQWebPreferences;
-class OxideQQuickMessageHandler;
 class OxideQQuickNavigationHistory;
+class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
@@ -65,7 +65,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame CONSTANT)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
@@ -99,9 +99,9 @@ class OxideQQuickWebView : public QQuickItem {
 
   OxideQQuickWebFrame* rootFrame() const;
 
-  QQmlListProperty<OxideQQuickMessageHandler> messageHandlers();
-  Q_INVOKABLE void addMessageHandler(OxideQQuickMessageHandler* handler);
-  Q_INVOKABLE void removeMessageHandler(OxideQQuickMessageHandler* handler);
+  QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers();
+  Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
+  Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);

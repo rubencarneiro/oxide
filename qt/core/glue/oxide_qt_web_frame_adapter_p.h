@@ -18,15 +18,12 @@
 #ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_FRAME_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_FRAME_ADAPTER_H_
 
-#include <QList>
-
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 
 namespace oxide {
 namespace qt {
 
-class OutgoingMessageRequestAdapter;
 class WebFrame;
 class WebFrameAdapter;
 
@@ -35,20 +32,11 @@ class WebFrameAdapterPrivate FINAL {
   WebFrameAdapterPrivate();
   ~WebFrameAdapterPrivate();
 
-  const QList<OutgoingMessageRequestAdapter *>& outgoing_message_requests() const {
-    return outgoing_message_requests_;
-  }
-
-  void AddOutgoingMessageRequest(OutgoingMessageRequestAdapter* request);
-  void RemoveOutgoingMessageRequest(OutgoingMessageRequestAdapter* request);
-
   static WebFrameAdapterPrivate* get(WebFrameAdapter* adapter);
 
   WebFrame* owner;
 
  private:
-  QList<OutgoingMessageRequestAdapter *> outgoing_message_requests_;
-
   DISALLOW_COPY_AND_ASSIGN(WebFrameAdapterPrivate);
 };
 

@@ -29,6 +29,7 @@
 #include "url/gurl.h"
 
 #include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_script_message_request.h"
 
 #include "oxide_isolated_world_map.h"
 #include "oxide_v8_message_manager.h"
@@ -61,7 +62,7 @@ void MessageDispatcherRenderer::OnReceiveMessage(
   error_params.context = params.context;
   error_params.serial = params.serial;
   error_params.type = OxideMsg_SendMessage_Type::Reply;
-  error_params.error = OxideMsg_SendMessage_Error::INVALID_DESTINATION;
+  error_params.error = ScriptMessageRequest::ERROR_INVALID_DESTINATION;
   error_params.msg_id = params.msg_id;
   error_params.payload = std::string(
       "Could not deliver message. The specified world ID does not exist");

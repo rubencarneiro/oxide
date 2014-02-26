@@ -15,45 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_outgoing_message_request.h"
+#include "oxide_script_message_handler.h"
+
+#include "base/logging.h"
+
+#include "oxide_script_message.h"
+#include "oxide_script_message_request.h"
 
 namespace oxide {
 
-OutgoingMessageRequest::OutgoingMessageRequest() :
-    serial_(-1),
-    had_response_(false) {}
+ScriptMessageHandler::ScriptMessageHandler() {}
 
-bool OutgoingMessageRequest::IsWaiting() const {
-  return !had_response_;
+bool ScriptMessageHandler::IsValid() const {
+  return !msg_id().empty() && contexts().size() > 0 && !callback_.is_null();
 }
 
-void OutgoingMessageRequest::SetReplyCallback(
-    const ReplyCallback& callback) {
-  reply_callback_ = callback;
+void ScriptMessageHandler::SetCallback(const HandlerCallback& callback) {
+  callback_ = callback;
 }
 
-void OutgoingMessageRequest::SetErrorCallback(
-    const ErrorCallback& callback) {
-  error_callback_ = callback;
-}
+void ScriptMessageHandler::OnReceiveMessage(scoped_ptr<ScriptMessage> message) {
+  DCHECK_EQ(message->msg_id(), msg_id());
+  DCHECK(!callback_.is_null());
 
-void OutgoingMessageRequest::OnReceiveResponse(
-    const std::string& payload,
-    OxideMsg_SendMessage_Error::Value error) {
-  if (had_response_) {
-    return;
-  }
+  std::string error_desc;
+  bool success = callback_.Run(&message, &error_desc);
 
-  had_response_ = true;
-
-  if (error != OxideMsg_SendMessage_Error::OK) {
-    if (!error_callback_.is_null()) {
-      error_callback_.Run(error, payload);
-    }
-  } else {
-    if (!reply_callback_.is_null()) {
-      reply_callback_.Run(payload);
-    }
+  if (!success) {
+    DCHECK(message);
+    message->Error(ScriptMessageRequest::ERROR_UNCAUGHT_EXCEPTION,
+                   error_desc);
   }
 }
 

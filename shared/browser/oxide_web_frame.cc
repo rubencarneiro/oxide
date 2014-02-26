@@ -26,9 +26,7 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 
-#include "shared/common/oxide_messages.h"
-
-#include "oxide_outgoing_message_request.h"
+#include "oxide_script_message_request_impl_browser.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -37,6 +35,14 @@ namespace {
 typedef std::map<int64, WebFrame*> FrameMap;
 typedef FrameMap::iterator FrameMapIterator;
 base::LazyInstance<FrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
+}
+
+size_t WebFrame::GetScriptMessageHandlerCount() const {
+  return 0;
+}
+
+ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(size_t index) const {
+  return NULL;
 }
 
 void WebFrame::AddChild(WebFrame* frame) {
@@ -54,6 +60,30 @@ void WebFrame::RemoveChild(WebFrame* frame) {
       OnChildRemoved(frame);
       view()->FrameRemoved(frame);
       child_frames_.erase(it);
+      return;
+    }
+  }
+}
+
+void WebFrame::AddScriptMessageRequest(ScriptMessageRequestImplBrowser* req) {
+  for (ScriptMessageRequestVector::iterator it =
+        current_script_message_requests_.begin();
+       it != current_script_message_requests_.end(); ++it) {
+    if ((*it) == req) {
+      return;
+    }
+  }
+
+  current_script_message_requests_.push_back(req);
+}
+
+void WebFrame::RemoveScriptMessageRequest(
+    ScriptMessageRequestImplBrowser* req) {
+  for (ScriptMessageRequestVector::iterator it =
+        current_script_message_requests_.begin();
+       it != current_script_message_requests_.end(); ++it) {
+    if ((*it) == req) {
+      current_script_message_requests_.erase(it);
       return;
     }
   }
@@ -78,26 +108,17 @@ WebFrame::WebFrame(
 }
 
 WebFrame::~WebFrame() {
-  g_frame_map.Get().erase(frame_tree_node_->frame_tree_node_id());
-}
-
-// static
-WebFrame* WebFrame::FromFrameTreeNode(content::FrameTreeNode* node) {
-  FrameMapIterator it = g_frame_map.Get().find(node->frame_tree_node_id());
-  return it == g_frame_map.Get().end() ? NULL : it->second;
-}
-
-void WebFrame::Destroy() {
   while (ChildCount() > 0) {
-    ChildAt(0)->Destroy();
+    delete ChildAt(0);
   }
 
   while (true) {
-    OutgoingMessageRequest* request = NULL;
-    for (size_t i = 0; i < GetOutgoingMessageRequestCount(); ++i) {
-      OutgoingMessageRequest* tmp = GetOutgoingMessageRequestAt(i);
-      if (tmp->IsWaiting()) {
-        request = tmp;
+    ScriptMessageRequestImplBrowser* request = NULL;
+    for (ScriptMessageRequestVector::iterator it =
+          current_script_message_requests_.begin();
+         it != current_script_message_requests_.end(); ++it) {
+      if ((*it)->IsWaitingForResponse()) {
+        request = *it;
         break;
       }
     }
@@ -108,15 +129,20 @@ void WebFrame::Destroy() {
 
     request->OnReceiveResponse(
         "The frame disappeared whilst waiting for a response",
-        OxideMsg_SendMessage_Error::INVALID_DESTINATION);
+        ScriptMessageRequest::ERROR_INVALID_DESTINATION);
   }
 
   if (parent_) {
     parent_->RemoveChild(this);
-    parent_ = NULL;
   }
 
-  delete this;
+  g_frame_map.Get().erase(frame_tree_node_->frame_tree_node_id());
+}
+
+// static
+WebFrame* WebFrame::FromFrameTreeNode(content::FrameTreeNode* node) {
+  FrameMapIterator it = g_frame_map.Get().find(node->frame_tree_node_id());
+  return it == g_frame_map.Get().end() ? NULL : it->second;
 }
 
 int64 WebFrame::FrameTreeNodeID() const {
@@ -146,56 +172,30 @@ WebFrame* WebFrame::ChildAt(size_t index) const {
   return child_frames_.at(index);
 }
 
-bool WebFrame::SendMessage(const GURL& context,
-                           const std::string& msg_id,
-                           const std::string& payload,
-                           OutgoingMessageRequest* req) {
-  DCHECK(req);
+ScriptMessageRequestImplBrowser* WebFrame::SendMessage(
+    const GURL& context,
+    const std::string& msg_id,
+    const std::string& args) {
+  ScriptMessageRequestImplBrowser* request =
+      new ScriptMessageRequestImplBrowser(this, next_message_serial_++,
+                                          context, msg_id, args);
+  if (!request->SendMessage()) {
+    delete request;
+    return NULL;
+  }
 
-  int serial = next_message_serial_++;
-
-  req->set_serial(serial);
-
-  OxideMsg_SendMessage_Params params;
-  params.context = context.spec();
-  params.serial = serial;
-  params.type = OxideMsg_SendMessage_Type::Message;
-  params.msg_id = msg_id;
-  params.payload = payload;
-
-  content::RenderFrameHost* rfh = frame_tree_node()->current_frame_host();
-  return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
+  return request;
 }
 
 bool WebFrame::SendMessageNoReply(const GURL& context,
                                   const std::string& msg_id,
-                                  const std::string& payload) {
-  OxideMsg_SendMessage_Params params;
-  params.context = context.spec();
-  params.serial = -1;
-  params.type = OxideMsg_SendMessage_Type::Message;
-  params.msg_id = msg_id;
-  params.payload = payload;
-
-  content::RenderFrameHost* rfh = frame_tree_node()->current_frame_host();
-  return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
-}
-
-size_t WebFrame::GetMessageHandlerCount() const {
-  return 0;
-}
-
-MessageHandler* WebFrame::GetMessageHandlerAt(size_t index) const {
-  return NULL;
-}
-
-size_t WebFrame::GetOutgoingMessageRequestCount() const {
-  return 0;
-}
-
-OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
-    size_t index) const {
-  return NULL;
+                                  const std::string& args) {
+  ScriptMessageRequestImplBrowser* request =
+      new ScriptMessageRequestImplBrowser(this, next_message_serial_++,
+                                          context, msg_id, args);
+  bool res = request->SendMessage();
+  delete request;
+  return res;
 }
 
 } // namespace oxide

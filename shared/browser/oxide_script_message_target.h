@@ -15,34 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_outgoing_message_request_adapter.h"
-
-#include "base/bind.h"
-
-#include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
+#ifndef _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_TARGET_H_
+#define _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_TARGET_H_
 
 namespace oxide {
-namespace qt {
 
-OutgoingMessageRequestAdapter::OutgoingMessageRequestAdapter(
-    QObject* q) :
-    AdapterBase(q),
-    priv(OutgoingMessageRequestAdapterPrivate::Create(this)) {
-  priv->request().SetReplyCallback(
-      base::Bind(
-        &OutgoingMessageRequestAdapterPrivate::ReceiveReplyCallback,
-        priv->GetWeakPtr()));
-  priv->request().SetErrorCallback(
-      base::Bind(
-        &OutgoingMessageRequestAdapterPrivate::ReceiveErrorCallback,
-        priv->GetWeakPtr()));
-}
+class ScriptMessageHandler;
 
-OutgoingMessageRequestAdapter::~OutgoingMessageRequestAdapter() {}
+class ScriptMessageTarget {
+ public:
+  virtual size_t GetScriptMessageHandlerCount() const = 0;
+  virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const = 0;
+};
 
-void OutgoingMessageRequestAdapter::removeFromOwner() {
-  priv->RemoveFromOwner();
-}
-
-} // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_TARGET_H_

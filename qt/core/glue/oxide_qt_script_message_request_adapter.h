@@ -15,19 +15,41 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_MESSAGE_TARGET_H_
-#define _OXIDE_SHARED_BROWSER_MESSAGE_TARGET_H_
+#ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_
+#define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_
+
+#include <QScopedPointer>
+#include <QtGlobal>
+
+#include "qt/core/glue/oxide_qt_adapter_base.h"
+
+QT_BEGIN_NAMESPACE
+class QString;
+class QVariant;
+QT_END_NAMESPACE
 
 namespace oxide {
+namespace qt {
 
-class MessageHandler;
+class ScriptMessageRequestAdapterPrivate;
 
-class MessageTarget {
+class Q_DECL_EXPORT ScriptMessageRequestAdapter : public AdapterBase {
  public:
-  virtual size_t GetMessageHandlerCount() const = 0;
-  virtual MessageHandler* GetMessageHandlerAt(size_t index) const = 0;
+  virtual ~ScriptMessageRequestAdapter();
+
+ protected:
+  ScriptMessageRequestAdapter(QObject* q);
+
+ private:
+  friend class ScriptMessageRequestAdapterPrivate;
+
+  virtual void OnReceiveReply(const QVariant& args) = 0;
+  virtual void OnReceiveError(int error, const QString& msg) = 0;
+
+  QScopedPointer<ScriptMessageRequestAdapterPrivate> priv;
 };
 
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_MESSAGE_TARGET_H_
+#endif // _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_

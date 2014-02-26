@@ -30,8 +30,8 @@
 #include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
-#include "oxideqquickmessagehandler_p.h"
-#include "oxideqquickmessagehandler_p_p.h"
+#include "oxideqquickscriptmessagehandler_p.h"
+#include "oxideqquickscriptmessagehandler_p_p.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 #include "oxideqquickwebframe_p.h"
@@ -185,8 +185,8 @@ void OxideQQuickWebViewPrivate::componentComplete() {
 
 // static
 void OxideQQuickWebViewPrivate::messageHandler_append(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop,
-    OxideQQuickMessageHandler* message_handler) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
+    OxideQQuickScriptMessageHandler* message_handler) {
   if (!message_handler) {
     return;
   }
@@ -199,7 +199,7 @@ void OxideQQuickWebViewPrivate::messageHandler_append(
 
 // static
 int OxideQQuickWebViewPrivate::messageHandler_count(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
@@ -207,8 +207,8 @@ int OxideQQuickWebViewPrivate::messageHandler_count(
 }
 
 // static
-OxideQQuickMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop,
+OxideQQuickScriptMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
     int index) {
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
@@ -217,13 +217,13 @@ OxideQQuickMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
     return NULL;
   }
 
-  return adapterToQObject<OxideQQuickMessageHandler>(
+  return adapterToQObject<OxideQQuickScriptMessageHandler>(
       p->message_handlers().at(index));
 }
 
 // static
 void OxideQQuickWebViewPrivate::messageHandler_clear(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
   OxideQQuickWebView* web_view =
       static_cast<OxideQQuickWebView *>(prop->object);
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(web_view);
@@ -378,9 +378,9 @@ OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   return adapterToQObject<OxideQQuickWebFrame>(d->rootFrame());
 }
 
-QQmlListProperty<OxideQQuickMessageHandler>
+QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebView::messageHandlers() {
-  return QQmlListProperty<OxideQQuickMessageHandler>(
+  return QQmlListProperty<OxideQQuickScriptMessageHandler>(
       this, NULL,
       OxideQQuickWebViewPrivate::messageHandler_append,
       OxideQQuickWebViewPrivate::messageHandler_count,
@@ -389,7 +389,7 @@ OxideQQuickWebView::messageHandlers() {
 }
 
 void OxideQQuickWebView::addMessageHandler(
-    OxideQQuickMessageHandler* handler) {
+    OxideQQuickScriptMessageHandler* handler) {
   Q_D(OxideQQuickWebView);
 
   if (!handler) {
@@ -397,8 +397,8 @@ void OxideQQuickWebView::addMessageHandler(
     return;
   }
 
-  OxideQQuickMessageHandlerPrivate* handlerp =
-      OxideQQuickMessageHandlerPrivate::get(handler);
+  OxideQQuickScriptMessageHandlerPrivate* handlerp =
+      OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
   if (!d->message_handlers().contains(handlerp)) {
     handlerp->removeFromCurrentOwner();
@@ -411,7 +411,7 @@ void OxideQQuickWebView::addMessageHandler(
 }
 
 void OxideQQuickWebView::removeMessageHandler(
-    OxideQQuickMessageHandler* handler) {
+    OxideQQuickScriptMessageHandler* handler) {
   Q_D(OxideQQuickWebView);
 
   if (!handler) {
@@ -423,8 +423,8 @@ void OxideQQuickWebView::removeMessageHandler(
     return;
   }
 
-  OxideQQuickMessageHandlerPrivate* handlerp =
-      OxideQQuickMessageHandlerPrivate::get(handler);
+  OxideQQuickScriptMessageHandlerPrivate* handlerp =
+      OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
   if (d->message_handlers().contains(handlerp)) {
     d->message_handlers().removeOne(handlerp);

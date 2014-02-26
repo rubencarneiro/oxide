@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_incoming_message.h"
+#include "oxide_script_message_impl_browser.h"
 
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/public/browser/render_frame_host.h"
@@ -26,52 +26,50 @@
 
 namespace oxide {
 
-IncomingMessage::IncomingMessage(
-    WebFrame* source_frame,
-    int serial,
-    const GURL& context,
-    const std::string& msg_id,
-    const std::string& args) :
-    source_frame_(source_frame->GetWeakPtr()),
-    serial_(serial),
-    context_(context),
-    msg_id_(msg_id),
-    args_(args) {}
+void ScriptMessageImplBrowser::MakeParams(
+    OxideMsg_SendMessage_Params* params) {
+  params->context = context().spec();
+  params->serial = serial();
+  params->type = OxideMsg_SendMessage_Type::Reply;
+}
 
-void IncomingMessage::Reply(const std::string& args) {
+void ScriptMessageImplBrowser::SendResponse(
+    const OxideMsg_SendMessage_Params& params) {
   // Check that the frame hasn't gone away
-  if (!source_frame_ || serial_ == -1) {
+  if (!source_frame()) {
     return;
   }
 
+  content::RenderFrameHost* rfh =
+      source_frame()->frame_tree_node()->current_frame_host();
+  rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
+}
+
+void ScriptMessageImplBrowser::DoSendReply(const std::string& args) {
   OxideMsg_SendMessage_Params params;
-  params.context = context_.spec();
-  params.serial = serial_;
-  params.type = OxideMsg_SendMessage_Type::Reply;
-  params.error = OxideMsg_SendMessage_Error::OK;
+  MakeParams(&params);
+  params.error = ScriptMessageRequest::ERROR_OK;
   params.payload = args;
 
-  content::RenderFrameHost* rfh =
-      source_frame()->frame_tree_node()->current_frame_host();
-  rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
+  SendResponse(params);
 }
 
-void IncomingMessage::Error(const std::string& msg) {
-  // Check that the frame hasn't gone away
-  if (!source_frame_ || serial_ == -1) {
-    return;
-  }
-
+void ScriptMessageImplBrowser::DoSendError(ScriptMessageRequest::Error code,
+                                           const std::string& msg) {
   OxideMsg_SendMessage_Params params;
-  params.context = context_.spec();
-  params.serial = serial_;
-  params.type = OxideMsg_SendMessage_Type::Reply;
-  params.error = OxideMsg_SendMessage_Error::HANDLER_REPORTED_ERROR;
+  MakeParams(&params);
+  params.error = code;
   params.payload = msg;
 
-  content::RenderFrameHost* rfh =
-      source_frame()->frame_tree_node()->current_frame_host();
-  rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
+  SendResponse(params);
 }
+
+ScriptMessageImplBrowser::ScriptMessageImplBrowser(WebFrame* source_frame,
+                                                   int serial,
+                                                   const GURL& context,
+                                                   const std::string& msg_id,
+                                                   const std::string& args) :
+    ScriptMessage(serial, context, msg_id, args),
+    source_frame_(source_frame->GetWeakPtr()) {}
 
 } // namespace oxide

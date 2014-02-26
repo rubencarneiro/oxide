@@ -15,20 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqquickmessagehandler_p.h"
-#include "oxideqquickmessagehandler_p_p.h"
+#include "oxideqquickscriptmessagehandler_p.h"
+#include "oxideqquickscriptmessagehandler_p_p.h"
 
 #include <QQmlEngine>
 #include <QtDebug>
 
-#include "qt/core/api/oxideqincomingmessage.h"
+#include "qt/core/api/oxideqscriptmessage.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebview_p.h"
 
-bool OxideQQuickMessageHandlerPrivate::OnReceiveMessage(
-    OxideQIncomingMessage* message,
+bool OxideQQuickScriptMessageHandlerPrivate::OnReceiveMessage(
+    OxideQScriptMessage* message,
     oxide::qt::WebFrameAdapter* frame,
     QString& error) {
   QJSValueList args;
@@ -45,12 +45,12 @@ bool OxideQQuickMessageHandlerPrivate::OnReceiveMessage(
   return true;
 }
 
-OxideQQuickMessageHandlerPrivate::OxideQQuickMessageHandlerPrivate(
-    OxideQQuickMessageHandler* q) :
-    oxide::qt::MessageHandlerAdapter(q) {}
+OxideQQuickScriptMessageHandlerPrivate::OxideQQuickScriptMessageHandlerPrivate(
+    OxideQQuickScriptMessageHandler* q) :
+    oxide::qt::ScriptMessageHandlerAdapter(q) {}
 
-void OxideQQuickMessageHandlerPrivate::removeFromCurrentOwner() {
-  Q_Q(OxideQQuickMessageHandler);
+void OxideQQuickScriptMessageHandlerPrivate::removeFromCurrentOwner() {
+  Q_Q(OxideQQuickScriptMessageHandler);
 
   // XXX: Is there a better way of doing this? Perhaps by notifying
   //      the existing owner that the handler has a new parent?
@@ -64,29 +64,31 @@ void OxideQQuickMessageHandlerPrivate::removeFromCurrentOwner() {
 }
 
 // static
-OxideQQuickMessageHandlerPrivate* OxideQQuickMessageHandlerPrivate::get(
-    OxideQQuickMessageHandler* message_handler) {
+OxideQQuickScriptMessageHandlerPrivate*
+OxideQQuickScriptMessageHandlerPrivate::get(
+    OxideQQuickScriptMessageHandler* message_handler) {
   return message_handler->d_func();
 }
 
-OxideQQuickMessageHandler::OxideQQuickMessageHandler(QObject* parent) :
+OxideQQuickScriptMessageHandler::OxideQQuickScriptMessageHandler(
+    QObject* parent) :
     QObject(parent),
-    d_ptr(new OxideQQuickMessageHandlerPrivate(this)) {}
+    d_ptr(new OxideQQuickScriptMessageHandlerPrivate(this)) {}
 
-OxideQQuickMessageHandler::~OxideQQuickMessageHandler() {
-  Q_D(OxideQQuickMessageHandler);
+OxideQQuickScriptMessageHandler::~OxideQQuickScriptMessageHandler() {
+  Q_D(OxideQQuickScriptMessageHandler);
 
   d->removeFromCurrentOwner();
 }
 
-QString OxideQQuickMessageHandler::msgId() const {
-  Q_D(const OxideQQuickMessageHandler);
+QString OxideQQuickScriptMessageHandler::msgId() const {
+  Q_D(const OxideQQuickScriptMessageHandler);
 
   return d->msgId();
 }
 
-void OxideQQuickMessageHandler::setMsgId(const QString& id) {
-  Q_D(OxideQQuickMessageHandler);
+void OxideQQuickScriptMessageHandler::setMsgId(const QString& id) {
+  Q_D(OxideQQuickScriptMessageHandler);
 
   if (id == d->msgId()) {
     return;
@@ -96,27 +98,28 @@ void OxideQQuickMessageHandler::setMsgId(const QString& id) {
   emit msgIdChanged();
 }
 
-QList<QUrl> OxideQQuickMessageHandler::contexts() const {
-  Q_D(const OxideQQuickMessageHandler);
+QList<QUrl> OxideQQuickScriptMessageHandler::contexts() const {
+  Q_D(const OxideQQuickScriptMessageHandler);
 
   return d->contexts();
 }
 
-void OxideQQuickMessageHandler::setContexts(const QList<QUrl>& contexts) {
-  Q_D(OxideQQuickMessageHandler);
+void OxideQQuickScriptMessageHandler::setContexts(
+    const QList<QUrl>& contexts) {
+  Q_D(OxideQQuickScriptMessageHandler);
 
   d->setContexts(contexts);
   emit contextsChanged();
 }
 
-QJSValue OxideQQuickMessageHandler::callback() const {
-  Q_D(const OxideQQuickMessageHandler);
+QJSValue OxideQQuickScriptMessageHandler::callback() const {
+  Q_D(const OxideQQuickScriptMessageHandler);
 
   return d->callback;
 }
 
-void OxideQQuickMessageHandler::setCallback(const QJSValue& callback) {
-  Q_D(OxideQQuickMessageHandler);
+void OxideQQuickScriptMessageHandler::setCallback(const QJSValue& callback) {
+  Q_D(OxideQQuickScriptMessageHandler);
 
   if (callback.strictlyEquals(d->callback)) {
     return;
@@ -140,9 +143,9 @@ void OxideQQuickMessageHandler::setCallback(const QJSValue& callback) {
   emit callbackChanged();
 }
 
-void OxideQQuickMessageHandler::classBegin() {}
+void OxideQQuickScriptMessageHandler::classBegin() {}
 
-void OxideQQuickMessageHandler::componentComplete() {
+void OxideQQuickScriptMessageHandler::componentComplete() {
   if (OxideQQuickWebView* view = qobject_cast<OxideQQuickWebView *>(parent())) {
     view->addMessageHandler(this);
   } else if (OxideQQuickWebFrame* frame =

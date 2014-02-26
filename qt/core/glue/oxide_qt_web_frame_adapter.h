@@ -33,8 +33,8 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class MessageHandlerAdapter;
-class OutgoingMessageRequestAdapter;
+class ScriptMessageHandlerAdapter;
+class ScriptMessageRequestAdapter;
 class WebFrameAdapterPrivate;
 
 class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
@@ -46,12 +46,12 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
   bool sendMessage(const QUrl& context,
                    const QString& msg_id,
                    const QVariant& args,
-                   OutgoingMessageRequestAdapter* req);
+                   ScriptMessageRequestAdapter* req);
   void sendMessageNoReply(const QUrl& context,
                           const QString& msg_id,
                           const QVariant& args);
 
-  QList<MessageHandlerAdapter *>& message_handlers() {
+  QList<ScriptMessageHandlerAdapter *>& message_handlers() {
     return message_handlers_;
   }
 
@@ -63,7 +63,7 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
  private:
   friend class WebFrameAdapterPrivate;
 
-  QList<MessageHandlerAdapter *> message_handlers_;
+  QList<ScriptMessageHandlerAdapter *> message_handlers_;
   QScopedPointer<WebFrameAdapterPrivate> priv;
 };
 

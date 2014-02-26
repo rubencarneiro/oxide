@@ -15,55 +15,43 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_MESSAGE_HANDLER_H_
-#define _OXIDE_SHARED_BROWSER_MESSAGE_HANDLER_H_
+#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
+#define _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
 
 #include <string>
-#include <vector>
 
 #include "base/basictypes.h"
-#include "base/callback.h"
 #include "base/compiler_specific.h"
-#include "url/gurl.h"
+#include "base/memory/scoped_ptr.h"
+
+#include "shared/common/oxide_script_message_handler.h"
 
 namespace oxide {
+namespace qt {
 
-class IncomingMessage;
+class ScriptMessageHandlerAdapter;
 
-class MessageHandler FINAL {
+class ScriptMessageHandlerAdapterPrivate FINAL {
  public:
-  typedef base::Callback<void(IncomingMessage*, bool*, std::string&)> HandlerCallback;
+  ScriptMessageHandlerAdapterPrivate(ScriptMessageHandlerAdapter* adapter);
 
-  MessageHandler();
+  static ScriptMessageHandlerAdapterPrivate* get(
+      ScriptMessageHandlerAdapter* adapter);
 
-  std::string msg_id() const {
-    return msg_id_;
-  }
-  void set_msg_id(const std::string& id) {
-    msg_id_ = id;
-  }
-
-  const std::vector<GURL>& contexts() const {
-    return contexts_;
-  }
-  void set_contexts(const std::vector<GURL>& contexts) {
-    contexts_ = contexts;
-  }
-
-  bool IsValid() const;
-
-  void SetCallback(const HandlerCallback& callback);
-
-  void OnReceiveMessage(IncomingMessage* message);
+  oxide::ScriptMessageHandler handler;
 
  private:
-  std::string msg_id_;
-  std::vector<GURL> contexts_;
-  HandlerCallback callback_;
+  friend class ScriptMessageHandlerAdapter;
 
-  DISALLOW_COPY_AND_ASSIGN(MessageHandler);
+  bool ReceiveMessageCallback(scoped_ptr<oxide::ScriptMessage>* message,
+                              std::string* error_desc);
+
+  ScriptMessageHandlerAdapter* a;
+
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageHandlerAdapterPrivate);
 };
 
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_MESSAGE_HANDLER_H_
+#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_

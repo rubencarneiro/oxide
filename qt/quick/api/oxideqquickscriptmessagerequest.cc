@@ -15,25 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqquickoutgoingmessagerequest_p.h"
-#include "oxideqquickoutgoingmessagerequest_p_p.h"
+#include "oxideqquickscriptmessagerequest_p.h"
+#include "oxideqquickscriptmessagerequest_p_p.h"
 
 #include <QJSEngine>
 #include <QString>
 #include <QtDebug>
 #include <QVariant>
 
-void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveReply(
+void OxideQQuickScriptMessageRequestPrivate::OnReceiveReply(
     const QVariant& args) {
   QJSValueList jsargs;
   jsargs.append(reply_callback.engine()->toScriptValue(args));
 
   reply_callback.call(jsargs);
-
-  removeFromOwner();
 }
 
-void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveError(
+void OxideQQuickScriptMessageRequestPrivate::OnReceiveError(
     int error,
     const QString& msg) {
   QJSValueList jsargs;
@@ -41,39 +39,32 @@ void OxideQQuickOutgoingMessageRequestPrivate::OnReceiveError(
   jsargs.append(QJSValue(msg));
 
   error_callback.call(jsargs);
-
-  removeFromOwner();
 }
 
-OxideQQuickOutgoingMessageRequestPrivate::OxideQQuickOutgoingMessageRequestPrivate(
-    OxideQQuickOutgoingMessageRequest* q) :
-    oxide::qt::OutgoingMessageRequestAdapter(q) {}
+OxideQQuickScriptMessageRequestPrivate::OxideQQuickScriptMessageRequestPrivate(
+    OxideQQuickScriptMessageRequest* q) :
+    oxide::qt::ScriptMessageRequestAdapter(q) {}
 
 // static
-OxideQQuickOutgoingMessageRequestPrivate* OxideQQuickOutgoingMessageRequestPrivate::get(
-    OxideQQuickOutgoingMessageRequest* request) {
+OxideQQuickScriptMessageRequestPrivate* OxideQQuickScriptMessageRequestPrivate::get(
+    OxideQQuickScriptMessageRequest* request) {
   return request->d_func();
 }
 
-OxideQQuickOutgoingMessageRequest::OxideQQuickOutgoingMessageRequest() :
-    QObject(),
-    d_ptr(new OxideQQuickOutgoingMessageRequestPrivate(this)) {}
+OxideQQuickScriptMessageRequest::OxideQQuickScriptMessageRequest() :
+    d_ptr(new OxideQQuickScriptMessageRequestPrivate(this)) {}
 
-OxideQQuickOutgoingMessageRequest::~OxideQQuickOutgoingMessageRequest() {
-  Q_D(OxideQQuickOutgoingMessageRequest);
+OxideQQuickScriptMessageRequest::~OxideQQuickScriptMessageRequest() {}
 
-  d->removeFromOwner();
-}
-
-QJSValue OxideQQuickOutgoingMessageRequest::replyCallback() const {
-  Q_D(const OxideQQuickOutgoingMessageRequest);
+QJSValue OxideQQuickScriptMessageRequest::replyCallback() const {
+  Q_D(const OxideQQuickScriptMessageRequest);
 
   return d->reply_callback;
 }
 
-void OxideQQuickOutgoingMessageRequest::setReplyCallback(
+void OxideQQuickScriptMessageRequest::setReplyCallback(
     const QJSValue& callback) {
-  Q_D(OxideQQuickOutgoingMessageRequest);
+  Q_D(OxideQQuickScriptMessageRequest);
 
   if (d->reply_callback.strictlyEquals(callback)) {
     return;
@@ -88,15 +79,15 @@ void OxideQQuickOutgoingMessageRequest::setReplyCallback(
   emit replyCallbackChanged();
 }
 
-QJSValue OxideQQuickOutgoingMessageRequest::errorCallback() const {
-  Q_D(const OxideQQuickOutgoingMessageRequest);
+QJSValue OxideQQuickScriptMessageRequest::errorCallback() const {
+  Q_D(const OxideQQuickScriptMessageRequest);
 
   return d->error_callback;
 }
 
-void OxideQQuickOutgoingMessageRequest::setErrorCallback(
+void OxideQQuickScriptMessageRequest::setErrorCallback(
     const QJSValue& callback) {
-  Q_D(OxideQQuickOutgoingMessageRequest);
+  Q_D(OxideQQuickScriptMessageRequest);
 
   if (d->error_callback.strictlyEquals(callback)) {
     return;

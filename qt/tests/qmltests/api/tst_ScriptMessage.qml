@@ -13,7 +13,7 @@ TestWebView {
   property string lastMessageContext: ""
 
   messageHandlers: [
-    MessageHandler {
+    ScriptMessageHandler {
       msgId: "TEST-REPLY"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg, frame) {
@@ -22,7 +22,7 @@ TestWebView {
         msg.reply({ out: msg.args.in * 2 });
       }
     },
-    MessageHandler {
+    ScriptMessageHandler {
       msgId: "TEST-ERROR"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg, frame) {
@@ -35,7 +35,7 @@ TestWebView {
 
   TestCase {
     id: test
-    name: "IncomingMessage"
+    name: "ScriptMessage"
     when: windowShown
 
     function init() {
@@ -43,8 +43,8 @@ TestWebView {
       webView.lastMessageContext = "";
     }
 
-    function test_IncomingMessage1_reply() {
-      webView.url = "http://localhost:8080/tst_IncomingMessage.html";
+    function test_ScriptMessage1_reply() {
+      webView.url = "http://localhost:8080/tst_ScriptMessage.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -57,8 +57,8 @@ TestWebView {
               "Invalid context for message");
     }
 
-    function test_IncomingMessage1_error() {
-      webView.url = "http://localhost:8080/tst_IncomingMessage.html";
+    function test_ScriptMessage1_error() {
+      webView.url = "http://localhost:8080/tst_ScriptMessage.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -67,7 +67,7 @@ TestWebView {
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorHandlerReportedError,
+        compare(e.error, ScriptMessageRequest.ErrorHandlerReportedError,
                 "Unexpected error type");
         compare(e.message, "This is an error", "Unexpected error message");
       }

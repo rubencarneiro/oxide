@@ -10,7 +10,7 @@ TestWebView {
   height: 200
 
   messageHandlers: [
-    MessageHandler {
+    ScriptMessageHandler {
       msgId: "TEST-THROW"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg, frame) {
@@ -26,11 +26,11 @@ TestWebView {
 
   TestCase {
     id: test
-    name: "MessageHandler"
+    name: "ScriptMessageHandler"
     when: windowShown
 
-    function test_MessageHandler1_throw() {
-      webView.url = "http://localhost:8080/tst_MessageHandler.html";
+    function test_ScriptMessageHandler1_throw() {
+      webView.url = "http://localhost:8080/tst_ScriptMessageHandler.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -39,13 +39,13 @@ TestWebView {
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorUncaughtException,
+        compare(e.error, ScriptMessageRequest.ErrorUncaughtException,
                 "Unexpected error type");
         compare(e.message, "Error: This is an exception", "Unexpected error message");
       }
     }
 
-    function test_MessageHandler2_msgId() {
+    function test_ScriptMessageHandler2_msgId() {
       spy.signalName = "msgIdChanged";
       spy.clear();
 
@@ -61,7 +61,7 @@ TestWebView {
       webView.messageHandlers[0].msgId = orig;
     }
 
-    function test_MessageHandler3_contexts() {
+    function test_ScriptMessageHandler3_contexts() {
       spy.signalName = "contextsChanged";
       spy.clear();
 
@@ -79,7 +79,7 @@ TestWebView {
       webView.messageHandlers[0].contexts = orig;
     }
 
-    function test_MessageHandler4_callback() {
+    function test_ScriptMessageHandler4_callback() {
       spy.signalName = "callbackChanged";
       spy.clear();
 

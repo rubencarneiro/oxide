@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_MESSAGE_HANDLER_P_H_
-#define _OXIDE_QT_QUICK_API_MESSAGE_HANDLER_P_H_
+#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_H_
+#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_H_
 
 #include <QJSValue>
 #include <QList>
@@ -28,20 +28,20 @@
 #include <QtQml>
 #include <QUrl>
 
-class OxideQQuickMessageHandlerPrivate;
+class OxideQQuickScriptMessageHandlerPrivate;
 
-class OxideQQuickMessageHandler : public QObject,
-                                  public QQmlParserStatus {
+class OxideQQuickScriptMessageHandler : public QObject,
+                                        public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QString msgId READ msgId WRITE setMsgId NOTIFY msgIdChanged)
   Q_PROPERTY(QList<QUrl> contexts READ contexts WRITE setContexts NOTIFY contextsChanged)
   Q_PROPERTY(QJSValue callback READ callback WRITE setCallback NOTIFY callbackChanged)
 
-  Q_DECLARE_PRIVATE(OxideQQuickMessageHandler)
+  Q_DECLARE_PRIVATE(OxideQQuickScriptMessageHandler)
 
  public:
-  OxideQQuickMessageHandler(QObject* parent = NULL);
-  virtual ~OxideQQuickMessageHandler();
+  OxideQQuickScriptMessageHandler(QObject* parent = NULL);
+  virtual ~OxideQQuickScriptMessageHandler();
 
   QString msgId() const;
   void setMsgId(const QString& id);
@@ -61,9 +61,9 @@ class OxideQQuickMessageHandler : public QObject,
   void callbackChanged();
 
  private:
-  QScopedPointer<OxideQQuickMessageHandlerPrivate> d_ptr;
+  QScopedPointer<OxideQQuickScriptMessageHandlerPrivate> d_ptr;
 };
 
-QML_DECLARE_TYPE(OxideQQuickMessageHandler)
+QML_DECLARE_TYPE(OxideQQuickScriptMessageHandler)
 
-#endif // _OXIDE_QT_QUICK_API_MESSAGE_HANDLER_P_H_
+#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_H_

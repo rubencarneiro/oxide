@@ -15,37 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_MESSAGE_HANDLER_P_P_H_
-#define _OXIDE_QT_QUICK_API_MESSAGE_HANDLER_P_P_H_
+#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_P_H_
+#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_P_H_
 
 #include <QJSValue>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_message_handler_adapter.h"
+#include "qt/core/glue/oxide_qt_script_message_handler_adapter.h"
 
-class OxideQIncomingMessage;
-class OxideQQuickMessageHandler;
+class OxideQQuickScriptMessageHandler;
+class OxideQScriptMessage;
 
-class OxideQQuickMessageHandlerPrivate Q_DECL_FINAL :
-    public oxide::qt::MessageHandlerAdapter {
-  Q_DECLARE_PUBLIC(OxideQQuickMessageHandler)
+class OxideQQuickScriptMessageHandlerPrivate Q_DECL_FINAL :
+    public oxide::qt::ScriptMessageHandlerAdapter {
+  Q_DECLARE_PUBLIC(OxideQQuickScriptMessageHandler)
 
  public:
-  OxideQQuickMessageHandlerPrivate(OxideQQuickMessageHandler* q);
+  OxideQQuickScriptMessageHandlerPrivate(OxideQQuickScriptMessageHandler* q);
 
   void removeFromCurrentOwner();
 
-  static OxideQQuickMessageHandlerPrivate* get(
-      OxideQQuickMessageHandler* message_handler);
+  static OxideQQuickScriptMessageHandlerPrivate* get(
+      OxideQQuickScriptMessageHandler* message_handler);
 
   QJSValue callback;
 
  private:
-  bool OnReceiveMessage(OxideQIncomingMessage* message,
+  bool OnReceiveMessage(OxideQScriptMessage* message,
                         oxide::qt::WebFrameAdapter* frame,
                         QString& error) Q_DECL_FINAL;
 
-  Q_DISABLE_COPY(OxideQQuickMessageHandlerPrivate);
+  Q_DISABLE_COPY(OxideQQuickScriptMessageHandlerPrivate);
 };
 
-#endif // _OXIDE_QT_QUICK_API_MESSAGE_HANDLER_P_P_H_
+#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_P_H_

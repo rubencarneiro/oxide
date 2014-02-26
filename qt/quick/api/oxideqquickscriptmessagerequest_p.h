@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_OUTGOING_MESSAGE_REQUEST_P_H_
-#define _OXIDE_QT_QUICK_API_OUTGOING_MESSAGE_REQUEST_P_H_
+#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_H_
+#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_H_
 
 #include <QJSValue>
 #include <QObject>
@@ -24,18 +24,18 @@
 #include <QtGlobal>
 #include <QtQml>
 
-class OxideQQuickOutgoingMessageRequestPrivate;
+class OxideQQuickScriptMessageRequestPrivate;
 
-class OxideQQuickOutgoingMessageRequest : public QObject {
+class OxideQQuickScriptMessageRequest : public QObject {
   Q_OBJECT
   Q_PROPERTY(QJSValue onreply READ replyCallback WRITE setReplyCallback NOTIFY replyCallbackChanged)
   Q_PROPERTY(QJSValue onerror READ errorCallback WRITE setErrorCallback NOTIFY errorCallbackChanged)
   Q_ENUMS(ErrorCode)
 
-  Q_DECLARE_PRIVATE(OxideQQuickOutgoingMessageRequest)
+  Q_DECLARE_PRIVATE(OxideQQuickScriptMessageRequest)
 
  public:
-  virtual ~OxideQQuickOutgoingMessageRequest();
+  virtual ~OxideQQuickScriptMessageRequest();
 
   enum ErrorCode {
     ErrorNone,
@@ -59,12 +59,12 @@ class OxideQQuickOutgoingMessageRequest : public QObject {
  protected:
   friend class OxideQQuickWebFrame;
 
-  Q_DECL_HIDDEN OxideQQuickOutgoingMessageRequest();
+  OxideQQuickScriptMessageRequest();
 
  private:
-  QScopedPointer<OxideQQuickOutgoingMessageRequestPrivate> d_ptr;
+  QScopedPointer<OxideQQuickScriptMessageRequestPrivate> d_ptr;
 };
 
-QML_DECLARE_TYPE(OxideQQuickOutgoingMessageRequest);
+QML_DECLARE_TYPE(OxideQQuickScriptMessageRequest);
 
-#endif // _OXIDE_QT_QUICK_API_OUTGOING_MESSAGE_REQUEST_P_H_
+#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_H_

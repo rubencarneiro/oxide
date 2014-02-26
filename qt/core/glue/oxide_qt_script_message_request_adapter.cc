@@ -15,25 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_outgoing_message_request_adapter_p.h"
+#include "oxide_qt_script_message_request_adapter.h"
+#include "oxide_qt_script_message_request_adapter_p.h"
 
 #include <QByteArray>
 #include <QJsonDocument>
 #include <QString>
 #include <QVariant>
 
-#include "qt/core/glue/oxide_qt_outgoing_message_request_adapter.h"
-#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
+#include "base/bind.h"
 
 namespace oxide {
 namespace qt {
 
-OutgoingMessageRequestAdapterPrivate::OutgoingMessageRequestAdapterPrivate(
-    OutgoingMessageRequestAdapter* adapter) :
-    a(adapter),
-    weak_factory_(this) {}
+ScriptMessageRequestAdapterPrivate::ScriptMessageRequestAdapterPrivate(
+    ScriptMessageRequestAdapter* adapter) :
+    a(adapter) {}
 
-void OutgoingMessageRequestAdapterPrivate::ReceiveReplyCallback(
+void ScriptMessageRequestAdapterPrivate::ReceiveReplyCallback(
     const std::string& args) {
   QJsonDocument jsondoc(QJsonDocument::fromJson(
       QByteArray(args.data(), args.length())));
@@ -41,35 +40,39 @@ void OutgoingMessageRequestAdapterPrivate::ReceiveReplyCallback(
   a->OnReceiveReply(jsondoc.toVariant());
 }
 
-void OutgoingMessageRequestAdapterPrivate::ReceiveErrorCallback(
-    int error,
+void ScriptMessageRequestAdapterPrivate::ReceiveErrorCallback(
+    oxide::ScriptMessageRequest::Error error,
     const std::string& msg) {
   a->OnReceiveError(error, QString::fromStdString(msg));
 }
 
 // static
-OutgoingMessageRequestAdapterPrivate* OutgoingMessageRequestAdapterPrivate::Create(
-    OutgoingMessageRequestAdapter* adapter) {
-  return new OutgoingMessageRequestAdapterPrivate(adapter);
-}
-
-void OutgoingMessageRequestAdapterPrivate::RemoveFromOwner() {
-  if (frame) {
-    frame->RemoveOutgoingMessageRequest(a);
-    frame = NULL;
-  }
-}
-
-base::WeakPtr<OutgoingMessageRequestAdapterPrivate>
-OutgoingMessageRequestAdapterPrivate::GetWeakPtr() {
-  return weak_factory_.GetWeakPtr();
-}
-
-// static
-OutgoingMessageRequestAdapterPrivate* OutgoingMessageRequestAdapterPrivate::get(
-    OutgoingMessageRequestAdapter* adapter) {
+ScriptMessageRequestAdapterPrivate* ScriptMessageRequestAdapterPrivate::get(
+    ScriptMessageRequestAdapter* adapter) {
   return adapter->priv.data();
 }
+
+void ScriptMessageRequestAdapterPrivate::SetRequest(
+    oxide::ScriptMessageRequestImplBrowser* req) {
+  DCHECK(!request_ && req);
+  request_.reset(req);
+
+  request_->SetReplyCallback(
+      base::Bind(
+        &ScriptMessageRequestAdapterPrivate::ReceiveReplyCallback,
+        base::Unretained(this)));
+  request_->SetErrorCallback(
+      base::Bind(
+        &ScriptMessageRequestAdapterPrivate::ReceiveErrorCallback,
+        base::Unretained(this)));
+}
+
+ScriptMessageRequestAdapter::ScriptMessageRequestAdapter(
+    QObject* q) :
+    AdapterBase(q),
+    priv(new ScriptMessageRequestAdapterPrivate(this)) {}
+
+ScriptMessageRequestAdapter::~ScriptMessageRequestAdapter() {}
 
 } // namespace qt
 } // namespace oxide

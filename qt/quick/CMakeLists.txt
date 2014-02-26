@@ -43,9 +43,9 @@ endif()
 
 set(PLUGIN_SRCS
     api/oxideqquickglobals.cc
-    api/oxideqquickmessagehandler.cc
     api/oxideqquicknavigationhistory.cc
-    api/oxideqquickoutgoingmessagerequest.cc
+    api/oxideqquickscriptmessagehandler.cc
+    api/oxideqquickscriptmessagerequest.cc
     api/oxideqquickuserscript.cc
     api/oxideqquickwebcontext.cc
     api/oxideqquickwebframe.cc

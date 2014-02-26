@@ -15,26 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_OUTGOING_MESSAGE_REQUEST_P_P_H_
-#define _OXIDE_QT_QUICK_API_OUTGOING_MESSAGE_REQUEST_P_P_H_
+#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_
+#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_
 
 #include <QJSValue>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_outgoing_message_request_adapter.h"
+#include "qt/core/glue/oxide_qt_script_message_request_adapter.h"
 
-class OxideQQuickOutgoingMessageRequest;
+class OxideQQuickScriptMessageRequest;
 
-class OxideQQuickOutgoingMessageRequestPrivate Q_DECL_FINAL :
-    public oxide::qt::OutgoingMessageRequestAdapter {
-  Q_DECLARE_PUBLIC(OxideQQuickOutgoingMessageRequest)
+class OxideQQuickScriptMessageRequestPrivate Q_DECL_FINAL :
+    public oxide::qt::ScriptMessageRequestAdapter {
+  Q_DECLARE_PUBLIC(OxideQQuickScriptMessageRequest)
 
  public:
-  OxideQQuickOutgoingMessageRequestPrivate(
-      OxideQQuickOutgoingMessageRequest* q);
+  OxideQQuickScriptMessageRequestPrivate(
+      OxideQQuickScriptMessageRequest* q);
 
-  static OxideQQuickOutgoingMessageRequestPrivate* get(
-      OxideQQuickOutgoingMessageRequest* request);
+  static OxideQQuickScriptMessageRequestPrivate* get(
+      OxideQQuickScriptMessageRequest* request);
 
   QJSValue reply_callback;
   QJSValue error_callback;
@@ -44,4 +44,4 @@ class OxideQQuickOutgoingMessageRequestPrivate Q_DECL_FINAL :
   void OnReceiveError(int error, const QString& msg) Q_DECL_FINAL;
 };
 
-#endif // _OXIDE_QT_QUICK_API_OUTGOING_MESSAGE_REQUEST_P_P_H_
+#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_

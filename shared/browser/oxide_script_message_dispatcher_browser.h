@@ -15,36 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_
-#define _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_
+#ifndef _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
+#define _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
 
-#include <QScopedPointer>
-#include <QtGlobal>
-#include <QVariant>
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "content/public/browser/browser_message_filter.h"
 
 namespace oxide {
-class IncomingMessage;
-}
 
-class OxideQIncomingMessage;
-
-class OxideQIncomingMessagePrivate Q_DECL_FINAL {
+class ScriptMessageDispatcherBrowser FINAL :
+    public content::BrowserMessageFilter {
  public:
-  OxideQIncomingMessagePrivate();
+  ScriptMessageDispatcherBrowser(int render_process_id);
+  ~ScriptMessageDispatcherBrowser();
 
-  oxide::IncomingMessage* incoming() const {
-    return incoming_.data();
-  }
-
-  QVariant args() const { return args_; }
-
-  void Initialize(oxide::IncomingMessage* message);
-
-  static OxideQIncomingMessagePrivate* get(OxideQIncomingMessage* q);
-
+  bool OnMessageReceived(const IPC::Message& message,
+                         bool* message_was_ok) FINAL;
  private:
-  QScopedPointer<oxide::IncomingMessage> incoming_;
-  QVariant args_;
+  const int render_process_id_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageDispatcherBrowser);
 };
 
-#endif // _OXIDE_QT_CORE_API_INCOMING_MESSAGE_P_H_
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_

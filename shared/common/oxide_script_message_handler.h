@@ -15,48 +15,56 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_OUTGOING_MESSAGE_REQUEST_H_
-#define _OXIDE_SHARED_BROWSER_OUTGOING_MESSAGE_REQUEST_H_
+#ifndef _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_HANDLER_H_
+#define _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_HANDLER_H_
 
 #include <string>
+#include <vector>
 
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/compiler_specific.h"
-
-#include "shared/common/oxide_message_enums.h"
+#include "base/memory/scoped_ptr.h"
+#include "url/gurl.h"
 
 namespace oxide {
 
-class OutgoingMessageRequest FINAL {
+class ScriptMessage;
+
+class ScriptMessageHandler FINAL {
  public:
-  typedef base::Callback<void(const std::string&)> ReplyCallback;
-  typedef base::Callback<void(int, const std::string&)> ErrorCallback;
+  typedef base::Callback<bool(scoped_ptr<ScriptMessage>*, std::string*)> HandlerCallback;
 
-  OutgoingMessageRequest();
+  ScriptMessageHandler();
 
-  int serial() const {
-    return serial_;
+  std::string msg_id() const {
+    return msg_id_;
   }
-  void set_serial(int serial) {
-    serial_ = serial;
+  void set_msg_id(const std::string& id) {
+    msg_id_ = id;
   }
 
-  bool IsWaiting() const;
+  const std::vector<GURL>& contexts() const {
+    return contexts_;
+  }
+  void set_contexts(const std::vector<GURL>& contexts) {
+    contexts_ = contexts;
+  }
 
-  void SetReplyCallback(const ReplyCallback& callback);
-  void SetErrorCallback(const ErrorCallback& callback);
+  bool IsValid() const;
 
-  void OnReceiveResponse(const std::string& payload,
-                         OxideMsg_SendMessage_Error::Value error);
+  void SetCallback(const HandlerCallback& callback);
+
+  void OnReceiveMessage(scoped_ptr<ScriptMessage> message);
 
  private:
-  int serial_;
-  bool had_response_;
-  ReplyCallback reply_callback_;
-  ErrorCallback error_callback_;
+  std::string msg_id_;
+  std::vector<GURL> contexts_;
+  HandlerCallback callback_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageHandler);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_OUTGOING_MESSAGE_REQUEST_H_
+#endif // _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_HANDLER_H_

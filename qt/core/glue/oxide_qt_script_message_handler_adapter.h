@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_MESSAGE_HANDLER_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_MESSAGE_HANDLER_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
+#define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
 
 #include <string>
 
@@ -28,17 +28,17 @@
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 
-class OxideQIncomingMessage;
+class OxideQScriptMessage;
 
 namespace oxide {
 namespace qt {
 
-class MessageHandlerAdapterPrivate;
+class ScriptMessageHandlerAdapterPrivate;
 class WebFrameAdapter;
 
-class Q_DECL_EXPORT MessageHandlerAdapter : public AdapterBase {
+class Q_DECL_EXPORT ScriptMessageHandlerAdapter : public AdapterBase {
  public:
-  virtual ~MessageHandlerAdapter();
+  virtual ~ScriptMessageHandlerAdapter();
 
   QString msgId() const;
   void setMsgId(const QString& id);
@@ -50,19 +50,19 @@ class Q_DECL_EXPORT MessageHandlerAdapter : public AdapterBase {
   void detachHandler();
 
  protected:
-  MessageHandlerAdapter(QObject* q);
+  ScriptMessageHandlerAdapter(QObject* q);
 
  private:
-  friend class MessageHandlerAdapterPrivate;
+  friend class ScriptMessageHandlerAdapterPrivate;
 
-  virtual bool OnReceiveMessage(OxideQIncomingMessage* message,
+  virtual bool OnReceiveMessage(OxideQScriptMessage* message,
                                 WebFrameAdapter* frame,
                                 QString& error) = 0;
 
-  QScopedPointer<MessageHandlerAdapterPrivate> priv;
+  QScopedPointer<ScriptMessageHandlerAdapterPrivate> priv;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_MESSAGE_HANDLER_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_

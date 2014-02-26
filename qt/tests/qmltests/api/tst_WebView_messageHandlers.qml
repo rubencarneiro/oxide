@@ -12,7 +12,7 @@ TestWebView {
   property QtObject lastMessageFrameSource: null
 
   messageHandlers: [
-    MessageHandler {
+    ScriptMessageHandler {
       msgId: "TEST"
       contexts: [ "http://foo/", "oxide://testutils/" ]
       callback: function(msg, frame) {
@@ -76,7 +76,7 @@ TestWebView {
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
+        compare(e.error, ScriptMessageRequest.ErrorNoHandler,
                 "Unexpected error type");
       }
 
@@ -101,7 +101,7 @@ TestWebView {
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
+        compare(e.error, ScriptMessageRequest.ErrorNoHandler,
                 "Unexpected error type");
       }
 
@@ -127,7 +127,7 @@ TestWebView {
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
+        compare(e.error, ScriptMessageRequest.ErrorNoHandler,
                 "Unexpected error type");
       }
 

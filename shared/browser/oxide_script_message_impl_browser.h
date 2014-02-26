@@ -15,47 +15,47 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_INCOMING_MESSAGE_H_
-#define _OXIDE_SHARED_BROWSER_INCOMING_MESSAGE_H_
+#ifndef _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_H_
+#define _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_H_
 
 #include <string>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
-#include "url/gurl.h"
+
+#include "shared/common/oxide_script_message.h"
+
+class GURL;
+class OxideMsg_SendMessage_Params;
 
 namespace oxide {
 
 class WebFrame;
 
-class IncomingMessage FINAL {
+class ScriptMessageImplBrowser FINAL : public ScriptMessage {
  public:
-  IncomingMessage(WebFrame* source_frame,
-                  int serial,
-                  const GURL& context,
-                  const std::string& msg_id,
-                  const std::string& args);
+  ScriptMessageImplBrowser(WebFrame* source_frame,
+                           int serial,
+                           const GURL& context,
+                           const std::string& msg_is,
+                           const std::string& args);
     
-  void Reply(const std::string& args);
-  void Error(const std::string& msg);
-
   WebFrame* source_frame() const { return source_frame_.get(); }
-  int serial() const { return serial_; }
-  GURL context() const { return context_; }
-  std::string msg_id() const { return msg_id_; }
-  std::string args() const { return args_; }
 
  private:
-  base::WeakPtr<WebFrame> source_frame_;
-  int serial_;
-  GURL context_;
-  std::string msg_id_;
-  std::string args_;
+  void MakeParams(OxideMsg_SendMessage_Params* params);
+  void SendResponse(const OxideMsg_SendMessage_Params& params);
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(IncomingMessage);
+  void DoSendReply(const std::string& args) FINAL;
+  void DoSendError(ScriptMessageRequest::Error code,
+                   const std::string& msg) FINAL;
+
+  base::WeakPtr<WebFrame> source_frame_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageImplBrowser);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_INCOMING_MESSAGE_H_
+#endif // _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_H_

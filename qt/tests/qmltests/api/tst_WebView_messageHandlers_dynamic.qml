@@ -11,7 +11,7 @@ TestWebView {
 
   Component {
     id: messageHandler
-    MessageHandler {}
+    ScriptMessageHandler {}
   }
 
   SignalSpy {
@@ -73,7 +73,7 @@ TestWebView {
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
+        compare(e.error, ScriptMessageRequest.ErrorNoHandler,
                 "Unexpected error type");
       }
     }
@@ -121,7 +121,7 @@ TestWebView {
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, OutgoingMessageRequest.ErrorNoHandler,
+        compare(e.error, ScriptMessageRequest.ErrorNoHandler,
                 "Unexpected error type");
       }
     }

@@ -15,28 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_MESSAGE_DISPATCHER_H_
-#define _OXIDE_SHARED_BROWSER_MESSAGE_DISPATCHER_H_
+#ifndef OXIDE_Q_SCRIPT_MESSAGE_H
+#define OXIDE_Q_SCRIPT_MESSAGE_H
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "content/public/browser/browser_message_filter.h"
+#include <QObject>
+#include <QScopedPointer>
+#include <QtGlobal>
+#include <QUrl>
+#include <QVariant>
 
-namespace oxide {
+class OxideQScriptMessagePrivate;
 
-class MessageDispatcherBrowser FINAL : public content::BrowserMessageFilter {
+class Q_DECL_EXPORT OxideQScriptMessage : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(QUrl context READ context)
+  Q_PROPERTY(QVariant args READ args)
+
+  Q_DECLARE_PRIVATE(OxideQScriptMessage)
+  Q_DISABLE_COPY(OxideQScriptMessage)
+
  public:
-  MessageDispatcherBrowser(int render_process_id);
-  ~MessageDispatcherBrowser();
+  Q_DECL_HIDDEN OxideQScriptMessage();
+  virtual ~OxideQScriptMessage();
 
-  bool OnMessageReceived(const IPC::Message& message,
-                         bool* message_was_ok) FINAL;
+  QUrl context() const;
+  QVariant args() const;
+
+  Q_INVOKABLE void reply(const QVariant& args);
+  Q_INVOKABLE void error(const QString& msg);
+
  private:
-  const int render_process_id_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(MessageDispatcherBrowser);
+  QScopedPointer<OxideQScriptMessagePrivate> d_ptr;
 };
 
-} // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_MESSAGE_DISPATCHER_H_
+#endif // OXIDE_Q_SCRIPT_MESSAGE_H

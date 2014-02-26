@@ -12,7 +12,7 @@ TestWebView {
   property QtObject lastMessageFrameSource: null
 
   messageHandlers: [
-    MessageHandler {
+    ScriptMessageHandler {
       msgId: "TEST"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg, frame) {
@@ -24,7 +24,7 @@ TestWebView {
 
   Component {
     id: messageHandler
-    MessageHandler {}
+    ScriptMessageHandler {}
   }
 
   SignalSpy {

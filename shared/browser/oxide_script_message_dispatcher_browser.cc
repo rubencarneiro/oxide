@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_message_dispatcher_browser.h"
+#include "oxide_script_message_dispatcher_browser.h"
 
 #include <string>
 #include <vector>
@@ -32,11 +32,12 @@
 #include "url/gurl.h"
 
 #include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_script_message_handler.h"
+#include "shared/common/oxide_script_message_request.h"
 
-#include "oxide_incoming_message.h"
-#include "oxide_message_handler.h"
-#include "oxide_message_target.h"
-#include "oxide_outgoing_message_request.h"
+#include "oxide_script_message_impl_browser.h"
+#include "oxide_script_message_request_impl_browser.h"
+#include "oxide_script_message_target.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_view.h"
 
@@ -68,7 +69,7 @@ class MessageReceiver {
         content::RenderFrameHostImpl::FromID(render_process_id_, routing_id_);
     if (!rfh) {
       if (!is_reply) {
-        ReturnError(NULL, OxideMsg_SendMessage_Error::INVALID_DESTINATION,
+        ReturnError(NULL, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
                     "Could not find a RenderFrameHost corresponding to the "
                     "specified routing ID");
       }
@@ -78,7 +79,7 @@ class MessageReceiver {
     WebFrame* frame = WebFrame::FromFrameTreeNode(rfh->frame_tree_node());
     if (!frame) {
       if (!is_reply) {
-        ReturnError(rfh, OxideMsg_SendMessage_Error::INVALID_DESTINATION,
+        ReturnError(rfh, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
                     "The RenderFrameHost does not have a corresponding WebFrame");
       }
       return;
@@ -91,31 +92,36 @@ class MessageReceiver {
         return;
       }
 
+      scoped_ptr<ScriptMessageImplBrowser> message(
+          new ScriptMessageImplBrowser(frame, params_.serial,
+                                       GURL(params_.context),
+                                       params_.msg_id, params_.payload));
       WebFrame* target = frame;
       WebView* view = frame->view();
 
       while (target) {
         DCHECK_EQ(target->view(), view);
-        if (TryDispatchMessageToTarget(target, frame)) {
+        if (TryDispatchMessageToTarget(target, message)) {
           break;
         }
 
         target = target->parent();
       }
 
-      if (!target && !TryDispatchMessageToTarget(view, frame)) {
-        ReturnError(
-            rfh, OxideMsg_SendMessage_Error::NO_HANDLER,
-            std::string("Could not find a handler for message"));
+      if (!target && !TryDispatchMessageToTarget(view, message)) {
+        message->Error(ScriptMessageRequest::ERROR_NO_HANDLER,
+                       "Could not find a handler for message");
       }
 
       return;
     }
 
-    for (size_t i = 0; i < frame->GetOutgoingMessageRequestCount(); ++i) {
-      OutgoingMessageRequest* request = frame->GetOutgoingMessageRequestAt(i);
-
-      if (request->serial() == params_.serial) {
+    for (WebFrame::ScriptMessageRequestVector::const_iterator it =
+          frame->current_script_message_requests().begin();
+         it != frame->current_script_message_requests().end(); ++it) {
+      ScriptMessageRequestImplBrowser* request = *it;
+      if (request->serial() == params_.serial &&
+          request->IsWaitingForResponse()) {
         request->OnReceiveResponse(params_.payload, params_.error);
         return;
       }
@@ -123,18 +129,17 @@ class MessageReceiver {
   }
 
  private:
-  bool TryDispatchMessageToTarget(MessageTarget* target,
-                                  WebFrame* source_frame) {
-    GURL context(params_.context);
-
-    for (size_t i = 0; i < target->GetMessageHandlerCount(); ++i) {
-      MessageHandler* handler = target->GetMessageHandlerAt(i);
+  bool TryDispatchMessageToTarget(
+      ScriptMessageTarget* target,
+      scoped_ptr<ScriptMessageImplBrowser>& message) {
+    for (size_t i = 0; i < target->GetScriptMessageHandlerCount(); ++i) {
+      ScriptMessageHandler* handler = target->GetScriptMessageHandlerAt(i);
 
       if (!handler->IsValid()) {
         continue;
       }
 
-      if (handler->msg_id() != params_.msg_id) {
+      if (handler->msg_id() != message->msg_id()) {
         continue;
       }
 
@@ -142,11 +147,8 @@ class MessageReceiver {
 
       for (std::vector<GURL>::const_iterator it = contexts.begin();
            it != contexts.end(); ++it) {
-        if ((*it) == context) {
-          handler->OnReceiveMessage(
-              new IncomingMessage(source_frame, params_.serial,
-                                  context, params_.msg_id,
-                                  params_.payload));
+        if ((*it) == message->context()) {
+          handler->OnReceiveMessage(message.PassAs<oxide::ScriptMessage>());
           return true;
         }
       }
@@ -156,7 +158,7 @@ class MessageReceiver {
   }
 
   void ReturnError(content::RenderFrameHost* rfh,
-                   OxideMsg_SendMessage_Error::Value type,
+                   ScriptMessageRequest::Error type,
                    const std::string& msg) {
     OxideMsg_SendMessage_Params params;
     params.context = params_.context;
@@ -189,16 +191,17 @@ class MessageReceiver {
 
 } // namespace
 
-MessageDispatcherBrowser::MessageDispatcherBrowser(
+ScriptMessageDispatcherBrowser::ScriptMessageDispatcherBrowser(
     int render_process_id) :
     render_process_id_(render_process_id) {}
 
-MessageDispatcherBrowser::~MessageDispatcherBrowser() {}
+ScriptMessageDispatcherBrowser::~ScriptMessageDispatcherBrowser() {}
 
-bool MessageDispatcherBrowser::OnMessageReceived(const IPC::Message& message,
-                                                 bool* message_was_ok) {
+bool ScriptMessageDispatcherBrowser::OnMessageReceived(
+    const IPC::Message& message,
+    bool* message_was_ok) {
   bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP_EX(MessageDispatcherBrowser, message, *message_was_ok)
+  IPC_BEGIN_MESSAGE_MAP_EX(ScriptMessageDispatcherBrowser, message, *message_was_ok)
     IPC_MESSAGE_FORWARD(OxideHostMsg_SendMessage,
                         new MessageReceiver(render_process_id_,
                                             message.routing_id()),

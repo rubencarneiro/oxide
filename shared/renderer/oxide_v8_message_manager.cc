@@ -29,6 +29,7 @@
 #include "ui/base/resource/resource_bundle.h"
 
 #include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_script_message_request.h"
 
 #include "oxide_isolated_world_map.h"
 
@@ -135,11 +136,11 @@ void V8MessageManager::SendMessageInner(
       static_cast<OxideMsg_SendMessage_Type::Value>(
         type_as_val->ToInt32()->Value());
 
-  OxideMsg_SendMessage_Error::Value error =
-      static_cast<OxideMsg_SendMessage_Error::Value>(
+  ScriptMessageRequest::Error error =
+      static_cast<ScriptMessageRequest::Error>(
         error_as_val->ToInt32()->Value());
   if (type != OxideMsg_SendMessage_Type::Reply) {
-    error = OxideMsg_SendMessage_Error::OK;
+    error = ScriptMessageRequest::ERROR_OK;
   }
 
   v8::Local<v8::String> msg_id = msg_id_as_val->ToString();
@@ -155,7 +156,7 @@ void V8MessageManager::SendMessageInner(
     }
 
     msg_payload = msg_payload_as_val->ToString();
-  } else if (error != OxideMsg_SendMessage_Error::OK) {
+  } else if (error != ScriptMessageRequest::ERROR_OK) {
     msg_payload = v8::String::Empty(isolate);
   } else {
     msg_payload = v8::String::NewFromUtf8(isolate, "{}");
@@ -327,7 +328,7 @@ void V8MessageManager::ReceiveMessage(
     error_params.context = params.context;
     error_params.serial = params.serial;
     error_params.type = OxideMsg_SendMessage_Type::Reply;
-    error_params.error = OxideMsg_SendMessage_Error::UNCAUGHT_EXCEPTION;
+    error_params.error = ScriptMessageRequest::ERROR_UNCAUGHT_EXCEPTION;
     error_params.msg_id = params.msg_id;
 
     v8::Local<v8::Message> msg(try_catch.Message());
