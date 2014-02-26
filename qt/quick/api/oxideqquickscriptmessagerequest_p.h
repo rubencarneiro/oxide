@@ -43,7 +43,7 @@ class OxideQQuickScriptMessageRequest : public QObject {
     ErrorUncaughtException,
     ErrorNoHandler,
     ErrorHandlerReportedError,
-    ErrorFrameDisappeared
+    ErrorHandlerDidNotRespond
   };
 
   QJSValue replyCallback() const;

@@ -33,7 +33,8 @@ ScriptMessage::ScriptMessage(int serial,
 
 ScriptMessage::~ScriptMessage() {
   if (!has_responded_) {
-    // FIXME: Respond with an error
+    Error(ScriptMessageRequest::ERROR_HANDLER_DID_NOT_RESPOND,
+          "The handler failed to send a response");
   }
 }
 

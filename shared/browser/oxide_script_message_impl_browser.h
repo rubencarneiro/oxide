@@ -22,7 +22,6 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/weak_ptr.h"
 
 #include "shared/common/oxide_script_message.h"
 
@@ -40,8 +39,8 @@ class ScriptMessageImplBrowser FINAL : public ScriptMessage {
                            const GURL& context,
                            const std::string& msg_is,
                            const std::string& args);
-    
-  WebFrame* source_frame() const { return source_frame_.get(); }
+
+  WebFrame* GetSourceFrame() const;  
 
  private:
   void MakeParams(OxideMsg_SendMessage_Params* params);
@@ -50,8 +49,6 @@ class ScriptMessageImplBrowser FINAL : public ScriptMessage {
   void DoSendReply(const std::string& args) FINAL;
   void DoSendError(ScriptMessageRequest::Error code,
                    const std::string& msg) FINAL;
-
-  base::WeakPtr<WebFrame> source_frame_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageImplBrowser);
 };

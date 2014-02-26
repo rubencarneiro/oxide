@@ -22,13 +22,14 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/supports_user_data.h"
 #include "url/gurl.h"
 
 #include "shared/common/oxide_script_message_request.h"
 
 namespace oxide {
 
-class ScriptMessage {
+class ScriptMessage : public base::SupportsUserData {
  public:
   virtual ~ScriptMessage();
 

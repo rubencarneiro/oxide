@@ -41,7 +41,9 @@ class ScriptMessageRequest {
     ERROR_NO_HANDLER,
 
     // The handler reporter an error via the error() function
-    ERROR_HANDLER_REPORTED_ERROR
+    ERROR_HANDLER_REPORTED_ERROR,
+
+    ERROR_HANDLER_DID_NOT_RESPOND
   };
 
   virtual ~ScriptMessageRequest();

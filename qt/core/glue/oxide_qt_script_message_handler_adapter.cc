@@ -60,7 +60,7 @@ bool ScriptMessageHandlerAdapterPrivate::ReceiveMessageCallback(
 
   bool success = a->OnReceiveMessage(
       qmessage,
-      static_cast<WebFrame *>(p->incoming()->source_frame())->GetAdapter(),
+      static_cast<WebFrame *>(p->incoming()->GetSourceFrame())->GetAdapter(),
       qerror);
 
   if (!success) {
