@@ -708,7 +708,7 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
 }
 
 void RenderWidgetHostView::ImeCancelComposition() {
-  // TODO: should we call QGuiApplication::inputMethod()->commit() ?
+  QGuiApplication::inputMethod()->reset();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -761,23 +761,33 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
 
   QString preedit = event->preeditString();
   if (preedit.isEmpty()) {
-    int selectionStart = -1;
-    int selectionLength = 0;
-    Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
-      if (attribute.type == QInputMethodEvent::Selection) {
-        selectionStart = attribute.start;
-        selectionLength = attribute.length;
-        break;
-      }
+    int replacementStart = event->replacementStart();
+    int replacementLength = event->replacementLength();
+    gfx::Range replacementRange = gfx::Range::InvalidRange();
+    if (replacementLength > 0) {
+      replacementRange.set_start(replacementStart);
+      replacementRange.set_end(replacementStart + replacementLength);
     }
     rwh->ImeConfirmComposition(
         base::UTF8ToUTF16(event->commitString().toStdString()),
-        gfx::Range(selectionStart, selectionStart + selectionLength),
-        false);
+        replacementRange, false);
   } else {
     std::vector<blink::WebCompositionUnderline> underlines;
+    int cursorPosition = -1;
+    gfx::Range selectionRange = gfx::Range::InvalidRange();
     Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
       switch (attribute.type) {
+      case QInputMethodEvent::Cursor:
+        if (attribute.length > 0) {
+          cursorPosition = attribute.start;
+        }
+        break;
+      case QInputMethodEvent::Selection:
+        selectionRange.set_start(
+            qMin(attribute.start, (attribute.start + attribute.length)));
+        selectionRange.set_end(
+            qMax(attribute.start, (attribute.start + attribute.length)));
+        break;
       case QInputMethodEvent::TextFormat: {
         QTextCharFormat textCharFormat =
             attribute.value.value<QTextFormat>().toCharFormat();
@@ -788,24 +798,17 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
         underlines.push_back(underline);
         break;
       }
-      case QInputMethodEvent::Cursor:
-        if (attribute.length > 0) {
-          // A cursor should be shown inside the preedit string at position attribute.start
-          // XXX: how does that translate to ImeSetComposition(…) ?
-        }
-        break;
       default:
         break;
       }
     }
-    int replacementStart = event->replacementStart();
-    int replacementLength = event->replacementLength();
-    rwh->ImeSetComposition(base::UTF8ToUTF16(preedit.toStdString()),
-                           underlines, replacementStart,
-                           replacementStart + replacementLength);
+    if (!selectionRange.IsValid()) {
+      int position = (cursorPosition >= 0) ? cursorPosition : preedit.length();
+      selectionRange = gfx::Range(position);
+    }
+    rwh->ImeSetComposition(base::UTF8ToUTF16(preedit.toStdString()), underlines,
+                           selectionRange.start(), selectionRange.end());
   }
-
-  // XXX: in which case should we call rwh->ImeCancelComposition() ?
 
   event->accept();
 }
