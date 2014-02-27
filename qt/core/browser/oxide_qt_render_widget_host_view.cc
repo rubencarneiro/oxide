@@ -385,7 +385,8 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
   event.modifiers |=
       blink::WebKeyboardEvent::locationModifiersFromWindowsKeyCode(
         windowsKeyCode);
-  event.nativeKeyCode = qevent->key();
+  event.nativeKeyCode = qevent->nativeVirtualKey();
+  event.setKeyIdentifierFromWindowsKeyCode();
 
   const unsigned short* text = qevent->text().utf16();
   memcpy(&event.text, text, qMin(sizeof(event.text), sizeof(text)));
