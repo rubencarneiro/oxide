@@ -31,7 +31,7 @@ void ScriptMessageRequestObjectHandler::GetOnReply(
 
   ScriptMessageRequestImplRenderer* req =
       static_cast<ScriptMessageRequestImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.This()));
+        ScriptOwnedObject::FromScriptHandle(info.Holder()));
   if (!req) {
     return;
   }
@@ -60,7 +60,7 @@ void ScriptMessageRequestObjectHandler::SetOnReply(
 
   ScriptMessageRequestImplRenderer* req =
       static_cast<ScriptMessageRequestImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.This()));
+        ScriptOwnedObject::FromScriptHandle(info.Holder()));
   if (!req) {
     isolate->ThrowException(v8::Exception::Error(
         v8::String::NewFromUtf8(
@@ -84,7 +84,7 @@ void ScriptMessageRequestObjectHandler::GetOnError(
 
   ScriptMessageRequestImplRenderer* req =
       static_cast<ScriptMessageRequestImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.This()));
+        ScriptOwnedObject::FromScriptHandle(info.Holder()));
   if (!req) {
     isolate->ThrowException(v8::Exception::Error(
         v8::String::NewFromUtf8(
@@ -116,7 +116,7 @@ void ScriptMessageRequestObjectHandler::SetOnError(
 
   ScriptMessageRequestImplRenderer* req =
       static_cast<ScriptMessageRequestImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.This()));
+        ScriptOwnedObject::FromScriptHandle(info.Holder()));
   if (!req) {
     return;
   }

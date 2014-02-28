@@ -50,7 +50,7 @@ void ScriptMessageObjectHandler::Reply(
 
   ScriptMessageImplRenderer* message =
       static_cast<ScriptMessageImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.This()));
+        ScriptOwnedObject::FromScriptHandle(info.Holder()));
   if (!message) {
     isolate->ThrowException(v8::Exception::Error(
         v8::String::NewFromUtf8(
@@ -93,7 +93,7 @@ void ScriptMessageObjectHandler::Error(
 
   ScriptMessageImplRenderer* message =
       static_cast<ScriptMessageImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.This()));
+        ScriptOwnedObject::FromScriptHandle(info.Holder()));
   if (!message) {
     isolate->ThrowException(v8::Exception::Error(
         v8::String::NewFromUtf8(
@@ -136,7 +136,7 @@ void ScriptMessageObjectHandler::GetArgs(
 
   ScriptMessageImplRenderer* message =
       static_cast<ScriptMessageImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.This()));
+        ScriptOwnedObject::FromScriptHandle(info.Holder()));
   if (!message) {
     return;
   }
