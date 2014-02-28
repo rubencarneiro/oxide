@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_RENDERER_MESSAGE_DISPATCHER_H_
-#define _OXIDE_SHARED_RENDERER_MESSAGE_DISPATCHER_H_
+#ifndef _OXIDE_SHARED_RENDERER_SCRIPT_MESSAGE_DISPATCHER_H_
+#define _OXIDE_SHARED_RENDERER_SCRIPT_MESSAGE_DISPATCHER_H_
 
 #include <vector>
 
@@ -26,6 +26,8 @@
 #include "content/public/renderer/render_frame_observer.h"
 #include "v8/include/v8.h"
 
+#include "shared/common/oxide_script_message_request.h"
+
 struct OxideMsg_SendMessage_Params;
 
 namespace blink {
@@ -34,14 +36,14 @@ class WebFrame;
 
 namespace oxide {
 
-class V8MessageManager;
+class ScriptMessageManager;
 
-class MessageDispatcherRenderer FINAL : public content::RenderFrameObserver {
+class ScriptMessageDispatcherRenderer FINAL : public content::RenderFrameObserver {
  public:
-  MessageDispatcherRenderer(content::RenderFrame* frame);
-  ~MessageDispatcherRenderer();
+  ScriptMessageDispatcherRenderer(content::RenderFrame* frame);
+  ~ScriptMessageDispatcherRenderer();
 
-  static MessageDispatcherRenderer* FromWebFrame(blink::WebFrame* frame);
+  static ScriptMessageDispatcherRenderer* FromWebFrame(blink::WebFrame* frame);
 
   void DidCreateScriptContext(v8::Handle<v8::Context> context,
                               int world_id);
@@ -50,16 +52,20 @@ class MessageDispatcherRenderer FINAL : public content::RenderFrameObserver {
                                 int world_id);
 
  private:
-  typedef std::vector<linked_ptr<V8MessageManager> > MessageManagerVector;
+  typedef std::vector<linked_ptr<ScriptMessageManager> > ScriptMessageManagerVector;
 
   bool OnMessageReceived(const IPC::Message& message) FINAL;
   void OnReceiveMessage(const OxideMsg_SendMessage_Params& params);
 
-  MessageManagerVector message_managers_;
+  void ReturnError(ScriptMessageRequest::Error error,
+                   const std::string& msg,
+                   const OxideMsg_SendMessage_Params& orig);
 
-  DISALLOW_COPY_AND_ASSIGN(MessageDispatcherRenderer);
+  ScriptMessageManagerVector script_message_managers_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageDispatcherRenderer);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_RENDERER_MESSAGE_DISPATCHER_H_
+#endif // _OXIDE_SHARED_RENDERER_SCRIPT_MESSAGE_DISPATCHER_H_

@@ -17,8 +17,8 @@
 
 #include "oxide_content_renderer_client.h"
 
-#include "oxide_message_dispatcher_renderer.h"
 #include "oxide_process_observer.h"
+#include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
 
@@ -35,7 +35,7 @@ void ContentRendererClient::RenderThreadStarted() {
 
 void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
-  new MessageDispatcherRenderer(render_frame);
+  new ScriptMessageDispatcherRenderer(render_frame);
 }
 
 void ContentRendererClient::RenderViewCreated(
@@ -51,7 +51,7 @@ void ContentRendererClient::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int extension_group,
     int world_id) {
-  MessageDispatcherRenderer::FromWebFrame(
+  ScriptMessageDispatcherRenderer::FromWebFrame(
       frame)->DidCreateScriptContext(context, world_id);
 }
 
@@ -59,7 +59,7 @@ void ContentRendererClient::WillReleaseScriptContext(
     blink::WebFrame* frame,
     v8::Handle<v8::Context> context,
     int world_id) {
-  MessageDispatcherRenderer::FromWebFrame(
+  ScriptMessageDispatcherRenderer::FromWebFrame(
       frame)->WillReleaseScriptContext(context, world_id);
 }
 

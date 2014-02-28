@@ -16,60 +16,41 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_RENDERER_V8_SCOPED_PERSISTENT_H_
-#define _OXIDE_SHARED_RENDERER_V8_SCOPED_PERSISTENT_H_
+#ifndef _OXIDE_SHARED_RENDERER_V8_UNSAFE_PERSISTENT_H_
+#define _OXIDE_SHARED_RENDERER_V8_UNSAFE_PERSISTENT_H_
 
 #include "v8/include/v8.h"
 
 namespace oxide {
 
 template <typename T>
-class ScopedPersistent {
+class UnsafePersistent {
  public:
-  ScopedPersistent() {}
+  UnsafePersistent() : value_(0) {}
 
-  ScopedPersistent(v8::Isolate* isolate, v8::Handle<T> handle) {
-    reset(isolate, handle);
+  explicit UnsafePersistent(v8::Persistent<T>* handle) {
+    value_ = handle->ClearAndLeak();
   }
 
-  ~ScopedPersistent() {
-    reset();
+  UnsafePersistent(v8::Isolate* isolate, const v8::Handle<T>& handle) {
+    v8::Persistent<T> persistent(isolate, handle);
+    value_ = persistent.ClearAndLeak();
   }
 
-  bool IsEmpty() const {
-    return handle_.IsEmpty();
+  void dispose() {
+    v8::Persistent<T> handle(value_);
+    handle.Reset();
+    value_ = 0;
   }
 
-  void reset(v8::Isolate* isolate, v8::Handle<T> handle) {
-    if (!handle.IsEmpty()) {
-      handle_.Reset(isolate, handle);
-    } else {
-      reset();
-    }
-  }
-
-  void reset() {
-    handle_.Reset();
-  }
-
-  v8::Handle<T> NewHandle(v8::Isolate* isolate) const {
-    if (handle_.IsEmpty()) {
-      return v8::Local<T>();
-    }
-
-    return v8::Local<T>::New(isolate, handle_);
-  }
-
-  template <typename P>
-  void SetWeak(P* parameters,
-               typename v8::WeakCallbackData<T, P>::Callback callback) {
-    handle_.SetWeak(parameters, callback);
+  v8::Local<T> newLocal(v8::Isolate* isolate) {
+    return v8::Local<T>::New(isolate, v8::Local<T>(value_));
   }
 
  private:
-  v8::Persistent<T> handle_;
+  T* value_;
 };
-
+ 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_RENDERER_V8_SCOPED_PERSISTENT_H_
+#endif // _OXIDE_SHARED_RENDERER_V8_UNSAFE_PERSISTENT_H_
