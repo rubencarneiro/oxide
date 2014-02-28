@@ -25,27 +25,11 @@
 
 namespace oxide {
 
-void ScriptMessageImplRenderer::DoSendReply(const std::string& args) {
-  SendResponse(ScriptMessageRequest::ERROR_OK, args);
-}
-
-void ScriptMessageImplRenderer::DoSendError(ScriptMessageRequest::Error code,
-                                            const std::string& msg) {
-  SendResponse(code, msg);
-}
-
-void ScriptMessageImplRenderer::SendResponse(ScriptMessageRequest::Error error,
-                                             const std::string& payload) {
+void ScriptMessageImplRenderer::DoSendResponse(
+    const OxideMsg_SendMessage_Params& params) {
   if (!manager()) {
     return;
   }
-
-  OxideMsg_SendMessage_Params params;
-  params.context = context().spec();
-  params.serial = serial();
-  params.type = OxideMsg_SendMessage_Type::Reply;
-  params.error = error;
-  params.payload = payload;
 
   content::RenderFrame* frame = manager()->frame();
   frame->Send(new OxideHostMsg_SendMessage(frame->GetRoutingID(), params));

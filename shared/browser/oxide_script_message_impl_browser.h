@@ -26,7 +26,6 @@
 #include "shared/common/oxide_script_message.h"
 
 class GURL;
-class OxideMsg_SendMessage_Params;
 
 namespace oxide {
 
@@ -43,12 +42,7 @@ class ScriptMessageImplBrowser FINAL : public ScriptMessage {
   WebFrame* GetSourceFrame() const;  
 
  private:
-  void MakeParams(OxideMsg_SendMessage_Params* params);
-  void SendResponse(const OxideMsg_SendMessage_Params& params);
-
-  void DoSendReply(const std::string& args) FINAL;
-  void DoSendError(ScriptMessageRequest::Error code,
-                   const std::string& msg) FINAL;
+  void DoSendResponse(const OxideMsg_SendMessage_Params& params) FINAL;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageImplBrowser);
 };

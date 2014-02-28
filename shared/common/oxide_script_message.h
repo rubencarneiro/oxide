@@ -27,6 +27,8 @@
 
 #include "shared/common/oxide_script_message_request.h"
 
+class OxideMsg_SendMessage_Params;
+
 namespace oxide {
 
 class ScriptMessage : public base::SupportsUserData {
@@ -49,9 +51,9 @@ class ScriptMessage : public base::SupportsUserData {
                 const std::string& args);
 
  private:
-  virtual void DoSendReply(const std::string& args) = 0;
-  virtual void DoSendError(ScriptMessageRequest::Error code,
-                           const std::string& msg) = 0;
+  virtual void DoSendResponse(const OxideMsg_SendMessage_Params& params) = 0;
+
+  void MakeParams(OxideMsg_SendMessage_Params* params);
 
   int serial_;
   GURL context_;

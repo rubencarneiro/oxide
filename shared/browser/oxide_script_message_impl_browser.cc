@@ -44,14 +44,7 @@ class SourceFrameData : public base::SupportsUserData::Data {
 
 }
 
-void ScriptMessageImplBrowser::MakeParams(
-    OxideMsg_SendMessage_Params* params) {
-  params->context = context().spec();
-  params->serial = serial();
-  params->type = OxideMsg_SendMessage_Type::Reply;
-}
-
-void ScriptMessageImplBrowser::SendResponse(
+void ScriptMessageImplBrowser::DoSendResponse(
     const OxideMsg_SendMessage_Params& params) {
   // Check that the frame hasn't gone away
   if (!GetSourceFrame()) {
@@ -61,25 +54,6 @@ void ScriptMessageImplBrowser::SendResponse(
   content::RenderFrameHost* rfh =
       GetSourceFrame()->frame_tree_node()->current_frame_host();
   rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
-}
-
-void ScriptMessageImplBrowser::DoSendReply(const std::string& args) {
-  OxideMsg_SendMessage_Params params;
-  MakeParams(&params);
-  params.error = ScriptMessageRequest::ERROR_OK;
-  params.payload = args;
-
-  SendResponse(params);
-}
-
-void ScriptMessageImplBrowser::DoSendError(ScriptMessageRequest::Error code,
-                                           const std::string& msg) {
-  OxideMsg_SendMessage_Params params;
-  MakeParams(&params);
-  params.error = code;
-  params.payload = msg;
-
-  SendResponse(params);
 }
 
 ScriptMessageImplBrowser::ScriptMessageImplBrowser(WebFrame* source_frame,

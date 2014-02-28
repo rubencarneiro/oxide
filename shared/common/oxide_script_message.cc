@@ -19,7 +19,17 @@
 
 #include "base/logging.h"
 
+#include "oxide_messages.h"
+#include "oxide_script_message.h"
+
 namespace oxide {
+
+void ScriptMessage::MakeParams(OxideMsg_SendMessage_Params* params) {
+  params->context = context().spec();
+  params->serial = serial();
+  params->type = OxideMsg_SendMessage_Type::Reply;
+  params->msg_id = msg_id();
+}
 
 ScriptMessage::ScriptMessage(int serial,
                              const GURL& context,
@@ -42,8 +52,15 @@ void ScriptMessage::Reply(const std::string& args) {
   if (has_responded_) {
     return;
   }
+
   has_responded_ = true;
-  DoSendReply(args);
+
+  OxideMsg_SendMessage_Params params;
+  MakeParams(&params);
+  params.error = ScriptMessageRequest::ERROR_OK;
+  params.payload = args;
+
+  DoSendResponse(params);
 }
 
 void ScriptMessage::Error(ScriptMessageRequest::Error code,
@@ -53,8 +70,15 @@ void ScriptMessage::Error(ScriptMessageRequest::Error code,
   if (has_responded_) {
     return;
   }
+
   has_responded_ = true;
-  DoSendError(code, msg);
+
+  OxideMsg_SendMessage_Params params;
+  MakeParams(&params);
+  params.error = code;
+  params.payload = msg;
+
+  DoSendResponse(params);
 }
 
 } // namespace oxide

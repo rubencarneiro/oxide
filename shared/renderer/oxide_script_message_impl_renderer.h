@@ -42,12 +42,7 @@ class ScriptMessageImplRenderer FINAL : public ScriptMessage,
                             const v8::Handle<v8::Object>& handle);
 
  private:
-  void DoSendReply(const std::string& args) FINAL;
-  void DoSendError(ScriptMessageRequest::Error code,
-                   const std::string& msg) FINAL;
-
-  void SendResponse(ScriptMessageRequest::Error error,
-                    const std::string& payload);
+  void DoSendResponse(const OxideMsg_SendMessage_Params& params) FINAL;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageImplRenderer);
 };
