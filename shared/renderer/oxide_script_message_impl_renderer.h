@@ -32,8 +32,8 @@ namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageImplRenderer FINAL : public ScriptMessage,
-                                        public ScriptOwnedObject {
+class ScriptMessageImplRenderer FINAL : public ScriptOwnedObject,
+                                        public ScriptMessage {
  public:
   ScriptMessageImplRenderer(ScriptMessageManager* mm,
                             int serial,

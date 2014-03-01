@@ -41,7 +41,7 @@ ScriptMessageImplRenderer::ScriptMessageImplRenderer(
     const std::string& msg_id,
     const std::string& args,
     const v8::Handle<v8::Object>& handle) :
-    ScriptMessage(serial, mm->GetContextURL(), msg_id, args),
-    ScriptOwnedObject(mm, handle) {}
+    ScriptOwnedObject(mm, handle),
+    ScriptMessage(serial, mm->GetContextURL(), msg_id, args) {}
 
 } // namespace oxide
