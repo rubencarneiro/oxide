@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QScopedPointer>
+#include <QString>
 #include <QtGlobal>
 #include <QUrl>
 #include <QVariant>
@@ -35,6 +36,7 @@ class OxideQQuickScriptMessage : public QObject {
   Q_OBJECT
   Q_PROPERTY(OxideQQuickWebFrame* frame READ frame CONSTANT)
   Q_PROPERTY(QUrl context READ context CONSTANT)
+  Q_PROPERTY(QString id READ msgId CONSTANT)
   Q_PROPERTY(QVariant args READ args CONSTANT)
 
   Q_DECLARE_PRIVATE(OxideQQuickScriptMessage)
@@ -46,6 +48,7 @@ class OxideQQuickScriptMessage : public QObject {
 
   OxideQQuickWebFrame* frame() const;
   QUrl context() const;
+  QString msgId() const;
   QVariant args() const;
 
   Q_INVOKABLE void reply(const QVariant& args);

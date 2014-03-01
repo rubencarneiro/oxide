@@ -10,7 +10,6 @@ TestWebView {
   height: 200
 
   property QtObject lastMessageFrameSource: null
-  property string lastMessageContext: ""
 
   messageHandlers: [
     ScriptMessageHandler {
@@ -18,8 +17,7 @@ TestWebView {
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
         webView.lastMessageFrameSource = msg.frame;
-        webView.lastMessageContext = msg.context;
-        msg.reply({ out: msg.args.in * 2 });
+        msg.reply({ out: msg.args.in, id: msg.id, context: msg.context });
       }
     },
     ScriptMessageHandler {
@@ -27,7 +25,6 @@ TestWebView {
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
         webView.lastMessageFrameSource = msg.frame;
-        webView.lastMessageContext = msg.context;
         msg.error("This is an error");
       }
     }
@@ -40,7 +37,6 @@ TestWebView {
 
     function init() {
       webView.lastMessageFrameSource = null;
-      webView.lastMessageContext = "";
     }
 
     function test_ScriptMessage1_reply() {
@@ -48,13 +44,12 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      compare(webView.getTestApi().sendMessageToSelf(
-                  "TEST-REPLY", { in: 10 }).out, 20,
-              "Invalid response from message handler");
+      var res = webView.getTestApi().sendMessageToSelf("TEST-REPLY", { in: 10 });
+      compare(res.out, 10, "Invalid response from message handler");
       compare(webView.lastMessageFrameSource, webView.rootFrame,
               "Invalid source frame for message");
-      compare(webView.lastMessageContext, "oxide://testutils/",
-              "Invalid context for message");
+      compare(res.context, "oxide://testutils/", "Invalid context for message");
+      compare(res.id, "TEST-REPLY", "Invalid ID for message");
     }
 
     function test_ScriptMessage1_error() {
@@ -74,8 +69,6 @@ TestWebView {
 
       compare(webView.lastMessageFrameSource, webView.rootFrame,
               "Invalid source frame for message");
-      compare(webView.lastMessageContext, "oxide://testutils/",
-              "Invalid context for message");
     }
   }
 }

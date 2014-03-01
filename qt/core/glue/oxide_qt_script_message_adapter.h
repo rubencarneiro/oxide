@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_H_
 
 #include <QScopedPointer>
+#include <QString>
 #include <QtGlobal>
 #include <QUrl>
 #include <QVariant>
@@ -40,6 +41,7 @@ class Q_DECL_EXPORT ScriptMessageAdapter : public AdapterBase {
   virtual ~ScriptMessageAdapter();
 
   WebFrameAdapter* frame() const;
+  QString msgId() const;
   QUrl context() const;
   void reply(const QVariant& args);
   void error(const QString& msg);

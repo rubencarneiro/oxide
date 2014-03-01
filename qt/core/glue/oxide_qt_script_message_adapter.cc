@@ -75,6 +75,15 @@ WebFrameAdapter* ScriptMessageAdapter::frame() const {
   return static_cast<WebFrame *>(message->GetSourceFrame())->GetAdapter();
 }
 
+QString ScriptMessageAdapter::msgId() const {
+  oxide::ScriptMessageImplBrowser* message = priv->incoming();
+  if (!message) {
+    return QString();
+  }
+
+  return QString::fromStdString(message->msg_id());
+}
+
 QUrl ScriptMessageAdapter::context() const {
   oxide::ScriptMessageImplBrowser* message = priv->incoming();
   if (!message) {

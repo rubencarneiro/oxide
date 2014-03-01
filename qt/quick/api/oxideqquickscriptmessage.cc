@@ -48,6 +48,12 @@ QUrl OxideQQuickScriptMessage::context() const {
   return d->context();
 }
 
+QString OxideQQuickScriptMessage::msgId() const {
+  Q_D(const OxideQQuickScriptMessage);
+
+  return d->msgId();
+}
+
 QVariant OxideQQuickScriptMessage::args() const {
   Q_D(const OxideQQuickScriptMessage);
 
