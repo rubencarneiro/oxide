@@ -22,18 +22,21 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "v8/include/v8.h"
 
 #include "shared/common/oxide_script_message_request.h"
-#include "shared/renderer/oxide_script_owned_object.h"
+#include "shared/renderer/oxide_script_referenced_object.h"
 #include "shared/renderer/oxide_v8_scoped_persistent.h"
 
 namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageRequestImplRenderer FINAL : public ScriptMessageRequest,
-                                               public ScriptOwnedObject {
+class ScriptMessageRequestImplRenderer FINAL :
+    public base::RefCounted<ScriptMessageRequestImplRenderer>,
+    public ScriptMessageRequest,
+    public ScriptReferencedObject<ScriptMessageRequestImplRenderer> {
  public:
   ScriptMessageRequestImplRenderer(ScriptMessageManager* mm,
                                    int serial,

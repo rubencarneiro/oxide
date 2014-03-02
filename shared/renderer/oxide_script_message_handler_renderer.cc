@@ -43,15 +43,14 @@ std::string V8StringToStdString(
 }
 
 bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
-    scoped_ptr<ScriptMessage>* message,
-    std::string* error) {
+    ScriptMessage* message, std::string* error) {
   v8::HandleScope handle_scope(manager_->isolate());
   v8::Context::Scope context_scope(manager_->GetV8Context());
 
   v8::Handle<v8::Function> function(callback_.NewHandle(manager_->isolate()));
 
   ScriptMessageImplRenderer* m =
-      static_cast<ScriptMessageImplRenderer *>(message->get());
+      static_cast<ScriptMessageImplRenderer *>(message);
 
   v8::Handle<v8::Value> argv[] = {
     m->GetHandle()
@@ -73,10 +72,6 @@ bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
     *error = V8StringToStdString(try_catch.Message()->Get());
     return false;
   }
-
-  // In this case, forget the pointer. ScriptMessage will be deleted when
-  // the JS handle is cleaned up by V8
-  (void) message->release();
 
   return true;
 }

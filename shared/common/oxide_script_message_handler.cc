@@ -34,15 +34,14 @@ void ScriptMessageHandler::SetCallback(const HandlerCallback& callback) {
   callback_ = callback;
 }
 
-void ScriptMessageHandler::OnReceiveMessage(scoped_ptr<ScriptMessage> message) {
+void ScriptMessageHandler::OnReceiveMessage(ScriptMessage* message) {
   DCHECK_EQ(message->msg_id(), msg_id());
   DCHECK(!callback_.is_null());
 
   std::string error_desc;
-  bool success = callback_.Run(&message, &error_desc);
+  bool success = callback_.Run(message, &error_desc);
 
   if (!success) {
-    DCHECK(message);
     message->Error(ScriptMessageRequest::ERROR_UNCAUGHT_EXCEPTION,
                    error_desc);
   }

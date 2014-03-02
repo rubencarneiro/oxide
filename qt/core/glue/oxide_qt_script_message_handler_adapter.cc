@@ -40,38 +40,16 @@ ScriptMessageHandlerAdapterPrivate* ScriptMessageHandlerAdapterPrivate::get(
 }
 
 bool ScriptMessageHandlerAdapterPrivate::ReceiveMessageCallback(
-    scoped_ptr<oxide::ScriptMessage>* message,
-    std::string* error_desc) {
+    oxide::ScriptMessage* message, std::string* error_desc) {
   QString qerror;
 
   ScriptMessageAdapter* qmessage = a->CreateScriptMessage();
-
-  // We use a weak pointer here in case the callback deletes it
-  base::WeakPtr<ScriptMessageAdapterPrivate> p(
-      ScriptMessageAdapterPrivate::get(qmessage)->GetWeakPtr());
-
-  // This passes a pointer to oxide::ScriptMessage, but we retain
-  // ownership of it because we may want to access it after the
-  // callback runs
-  p->Initialize(message->get());
+  ScriptMessageAdapterPrivate::get(qmessage)->Initialize(message);
 
   bool success = a->OnReceiveMessage(qmessage, qerror);
 
   if (!success) {
     *error_desc = qerror.toStdString();
-    if (p) {
-      // If the callback failed, we clear its pointer to the
-      // oxide::ScriptMessage, which we retain ownership of
-      p->Invalidate();
-    }
-  } else if (p) {
-    // If the callback succeeded, we transfer ownership of the
-    // oxide::ScriptMessage to it
-    p->Consume(message->Pass());
-  } else {
-    // The callback succeeded and the OxideQScriptMessage was deleted.
-    // Consume the oxide::ScriptMessage
-    message->reset();
   }
 
   return success;

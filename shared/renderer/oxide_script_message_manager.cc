@@ -20,6 +20,7 @@
 #include "oxide_script_message_manager.h"
 
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "base/strings/string16.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/utf_string_conversions.h"
@@ -195,7 +196,7 @@ void ScriptMessageManager::SendMessageInner(
   v8::Handle<v8::Object> handle(
       script_message_request_object_handler_.NewInstance());
 
-  ScriptMessageRequestImplRenderer* req =
+  scoped_refptr<ScriptMessageRequestImplRenderer> req =
       new ScriptMessageRequestImplRenderer(
         this, next_message_id_++, V8StringToStdString(msg_id),
         V8StringToStdString(msg_args), handle);

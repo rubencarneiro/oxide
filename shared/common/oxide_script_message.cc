@@ -24,6 +24,16 @@
 
 namespace oxide {
 
+// static
+void ScriptMessageTraits::Destruct(const ScriptMessage* x) {
+  ScriptMessage* self = const_cast<ScriptMessage *>(x);
+  if (!x->has_responded_) {
+    self->Error(ScriptMessageRequest::ERROR_HANDLER_DID_NOT_RESPOND,
+                "The handler failed to send a response");
+  }
+  delete x;
+}
+
 void ScriptMessage::MakeParams(OxideMsg_SendMessage_Params* params) {
   params->context = context().spec();
   params->serial = serial();
@@ -41,12 +51,7 @@ ScriptMessage::ScriptMessage(int serial,
     args_(args),
     has_responded_(false) {}
 
-ScriptMessage::~ScriptMessage() {
-  if (!has_responded_) {
-    Error(ScriptMessageRequest::ERROR_HANDLER_DID_NOT_RESPOND,
-          "The handler failed to send a response");
-  }
-}
+ScriptMessage::~ScriptMessage() {}
 
 void ScriptMessage::Reply(const std::string& args) {
   if (has_responded_) {

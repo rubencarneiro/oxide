@@ -26,14 +26,15 @@
 
 #include "shared/common/oxide_script_message.h"
 
-#include "shared/renderer/oxide_script_owned_object.h"
+#include "shared/renderer/oxide_script_referenced_object.h"
 
 namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageImplRenderer FINAL : public ScriptOwnedObject,
-                                        public ScriptMessage {
+class ScriptMessageImplRenderer FINAL :
+    public ScriptMessage,
+    public ScriptReferencedObject<ScriptMessageImplRenderer> {
  public:
   ScriptMessageImplRenderer(ScriptMessageManager* mm,
                             int serial,
@@ -42,6 +43,7 @@ class ScriptMessageImplRenderer FINAL : public ScriptOwnedObject,
                             const v8::Handle<v8::Object>& handle);
 
  private:
+  ~ScriptMessageImplRenderer();
   void DoSendResponse(const OxideMsg_SendMessage_Params& params) FINAL;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageImplRenderer);

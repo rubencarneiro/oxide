@@ -20,7 +20,7 @@
 #include "base/bind.h"
 
 #include "oxide_script_message_request_impl_renderer.h"
-#include "oxide_script_owned_object.h"
+#include "oxide_script_referenced_object.h"
 
 namespace oxide {
 
@@ -30,8 +30,8 @@ void ScriptMessageRequestObjectHandler::GetOnReply(
   v8::HandleScope handle_scope(isolate);
 
   ScriptMessageRequestImplRenderer* req =
-      static_cast<ScriptMessageRequestImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.Holder()));
+      ScriptReferencedObject<ScriptMessageRequestImplRenderer>::FromScriptHandle(
+        info.Holder());
   if (!req) {
     return;
   }
@@ -59,8 +59,8 @@ void ScriptMessageRequestObjectHandler::SetOnReply(
   }
 
   ScriptMessageRequestImplRenderer* req =
-      static_cast<ScriptMessageRequestImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.Holder()));
+      ScriptReferencedObject<ScriptMessageRequestImplRenderer>::FromScriptHandle(
+        info.Holder());
   if (!req) {
     isolate->ThrowException(v8::Exception::Error(
         v8::String::NewFromUtf8(
@@ -83,8 +83,8 @@ void ScriptMessageRequestObjectHandler::GetOnError(
   v8::HandleScope handle_scope(isolate);
 
   ScriptMessageRequestImplRenderer* req =
-      static_cast<ScriptMessageRequestImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.Holder()));
+      ScriptReferencedObject<ScriptMessageRequestImplRenderer>::FromScriptHandle(
+        info.Holder());
   if (!req) {
     isolate->ThrowException(v8::Exception::Error(
         v8::String::NewFromUtf8(
@@ -115,8 +115,8 @@ void ScriptMessageRequestObjectHandler::SetOnError(
   }
 
   ScriptMessageRequestImplRenderer* req =
-      static_cast<ScriptMessageRequestImplRenderer *>(
-        ScriptOwnedObject::FromScriptHandle(info.Holder()));
+      ScriptReferencedObject<ScriptMessageRequestImplRenderer>::FromScriptHandle(
+        info.Holder());
   if (!req) {
     return;
   }

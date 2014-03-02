@@ -100,7 +100,7 @@ ScriptMessageRequestImplRenderer::ScriptMessageRequestImplRenderer(
     const std::string& args,
     const v8::Handle<v8::Object>& handle) :
     ScriptMessageRequest(serial, mm->GetContextURL(), msg_id, args),
-    ScriptOwnedObject(mm, handle) {
+    ScriptReferencedObject<ScriptMessageRequestImplRenderer>(mm, handle) {
   manager()->AddScriptMessageRequest(this);
 }
 

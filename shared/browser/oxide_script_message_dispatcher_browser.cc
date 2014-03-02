@@ -23,6 +23,7 @@
 #include "base/bind.h"
 #include "base/callback.h"
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
@@ -92,7 +93,7 @@ class MessageReceiver {
         return;
       }
 
-      scoped_ptr<ScriptMessageImplBrowser> message(
+      scoped_refptr<ScriptMessageImplBrowser> message(
           new ScriptMessageImplBrowser(frame, params_.serial,
                                        GURL(params_.context),
                                        params_.msg_id, params_.payload));
@@ -130,8 +131,7 @@ class MessageReceiver {
 
  private:
   bool TryDispatchMessageToTarget(
-      ScriptMessageTarget* target,
-      scoped_ptr<ScriptMessageImplBrowser>& message) {
+      ScriptMessageTarget* target, ScriptMessageImplBrowser* message) {
     for (size_t i = 0; i < target->GetScriptMessageHandlerCount(); ++i) {
       ScriptMessageHandler* handler = target->GetScriptMessageHandlerAt(i);
 
@@ -148,7 +148,7 @@ class MessageReceiver {
       for (std::vector<GURL>::const_iterator it = contexts.begin();
            it != contexts.end(); ++it) {
         if ((*it) == message->context()) {
-          handler->OnReceiveMessage(message.PassAs<oxide::ScriptMessage>());
+          handler->OnReceiveMessage(message);
           return true;
         }
       }

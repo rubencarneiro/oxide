@@ -31,8 +31,7 @@ namespace qt {
 ScriptMessageAdapterPrivate::ScriptMessageAdapterPrivate(
     ScriptMessageAdapter* adapter) :
     a(adapter),
-    incoming_(NULL),
-    weak_factory_(this) {}
+    incoming_(NULL) {}
 
 void ScriptMessageAdapterPrivate::Initialize(oxide::ScriptMessage* message) {
   DCHECK(!incoming());
@@ -41,17 +40,6 @@ void ScriptMessageAdapterPrivate::Initialize(oxide::ScriptMessage* message) {
   QJsonDocument jsondoc(QJsonDocument::fromJson(
       QByteArray(message->args().data(), message->args().length())));
   a->args_ = jsondoc.toVariant();
-}
-
-void ScriptMessageAdapterPrivate::Consume(
-    scoped_ptr<oxide::ScriptMessage> message) {
-  DCHECK_EQ(incoming(), message.get());
-  DCHECK(!owned_incoming_);
-  owned_incoming_ = message.Pass();
-}
-
-void ScriptMessageAdapterPrivate::Invalidate() {
-  incoming_ = NULL;
 }
 
 // static
@@ -67,49 +55,24 @@ ScriptMessageAdapter::ScriptMessageAdapter(QObject* q) :
 ScriptMessageAdapter::~ScriptMessageAdapter() {}
 
 WebFrameAdapter* ScriptMessageAdapter::frame() const {
-  oxide::ScriptMessageImplBrowser* message = priv->incoming();
-  if (!message) {
-    return NULL;
-  }
-
-  return static_cast<WebFrame *>(message->GetSourceFrame())->GetAdapter();
+  return static_cast<WebFrame *>(priv->incoming()->source_frame())->GetAdapter();
 }
 
 QString ScriptMessageAdapter::msgId() const {
-  oxide::ScriptMessageImplBrowser* message = priv->incoming();
-  if (!message) {
-    return QString();
-  }
-
-  return QString::fromStdString(message->msg_id());
+  return QString::fromStdString(priv->incoming()->msg_id());
 }
 
 QUrl ScriptMessageAdapter::context() const {
-  oxide::ScriptMessageImplBrowser* message = priv->incoming();
-  if (!message) {
-    return QUrl();
-  }
-
-  return QUrl(QString::fromStdString(message->context().spec()));
+  return QUrl(QString::fromStdString(priv->incoming()->context().spec()));
 }
 
 void ScriptMessageAdapter::reply(const QVariant& args) {
-  oxide::ScriptMessageImplBrowser* message = priv->incoming();
-  if (!message) {
-    return;
-  }
-
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
-  message->Reply(QString(jsondoc.toJson()).toStdString());
+  priv->incoming()->Reply(QString(jsondoc.toJson()).toStdString());
 }
 
 void ScriptMessageAdapter::error(const QString& msg) {
-  oxide::ScriptMessageImplBrowser* message = priv->incoming();
-  if (!message) {
-    return;
-  }
-
-  message->Error(
+  priv->incoming()->Error(
       oxide::ScriptMessageRequest::ERROR_HANDLER_REPORTED_ERROR,
       msg.toStdString());
 }

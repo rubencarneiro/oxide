@@ -20,8 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
+#include "base/memory/ref_counted.h"
 
 namespace oxide {
 
@@ -36,23 +35,15 @@ class ScriptMessageAdapterPrivate FINAL {
  public:
   ScriptMessageAdapterPrivate(ScriptMessageAdapter* adapter);
 
-  oxide::ScriptMessageImplBrowser* incoming() const { return incoming_; }
+  oxide::ScriptMessageImplBrowser* incoming() const { return incoming_.get(); }
 
   void Initialize(oxide::ScriptMessage* message);
-  void Consume(scoped_ptr<oxide::ScriptMessage> message);
-  void Invalidate();
 
   static ScriptMessageAdapterPrivate* get(ScriptMessageAdapter* adapter);
 
-  base::WeakPtr<ScriptMessageAdapterPrivate> GetWeakPtr() {
-    return weak_factory_.GetWeakPtr();
-  }
-
  private:
   ScriptMessageAdapter* a;
-  oxide::ScriptMessageImplBrowser* incoming_;
-  scoped_ptr<oxide::ScriptMessage> owned_incoming_;
-  base::WeakPtrFactory<ScriptMessageAdapterPrivate> weak_factory_;
+  scoped_refptr<oxide::ScriptMessageImplBrowser> incoming_;
 };
 
 } // namespace qt

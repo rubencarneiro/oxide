@@ -22,7 +22,6 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "shared/common/oxide_script_message_handler.h"
 
@@ -46,7 +45,7 @@ class ScriptMessageHandlerAdapterPrivate FINAL {
  private:
   friend class ScriptMessageHandlerAdapter;
 
-  bool ReceiveMessageCallback(scoped_ptr<oxide::ScriptMessage>* message,
+  bool ReceiveMessageCallback(oxide::ScriptMessage* message,
                               std::string* error_desc);
 
   ScriptMessageHandlerAdapter* a;

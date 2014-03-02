@@ -24,7 +24,6 @@
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
 #include "url/gurl.h"
 
 namespace oxide {
@@ -33,7 +32,7 @@ class ScriptMessage;
 
 class ScriptMessageHandler FINAL {
  public:
-  typedef base::Callback<bool(scoped_ptr<ScriptMessage>*, std::string*)> HandlerCallback;
+  typedef base::Callback<bool(ScriptMessage*, std::string*)> HandlerCallback;
 
   ScriptMessageHandler();
 
@@ -55,7 +54,7 @@ class ScriptMessageHandler FINAL {
 
   void SetCallback(const HandlerCallback& callback);
 
-  void OnReceiveMessage(scoped_ptr<ScriptMessage> message);
+  void OnReceiveMessage(ScriptMessage* message);
 
  private:
   std::string msg_id_;

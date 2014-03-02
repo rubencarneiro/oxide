@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "base/lazy_instance.h"
+#include "base/memory/ref_counted.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
 #include "ipc/ipc_message.h"
@@ -75,31 +76,17 @@ void ScriptMessageDispatcherRenderer::OnReceiveMessage(
 
     v8::Handle<v8::Object> handle(
         mm->script_message_object_handler().NewInstance());
+    scoped_refptr<ScriptMessageImplRenderer> message(
+        new ScriptMessageImplRenderer(mm.get(), params.serial, params.msg_id,
+                                      params.payload, handle));
 
-    {
-      scoped_ptr<ScriptMessageImplRenderer> message(
-          new ScriptMessageImplRenderer(mm.get(), params.serial, params.msg_id,
-                                        params.payload, handle));
-
-      // This is a bit ugly. The JS handle will delete the native message
-      // object when it is cleaned up by V8, but the native message object
-      // is currently owned by a scoped_ptr (due to the way
-      // ScriptMessageHandler works).
-      // If we don't find a handler for this message, this inner scope
-      // ensures that the native message object is deleted before exiting
-      // the current V8 handle scope.
-      // If we do find a handler, ownership of the native message object
-      // is transferred to it, and our current V8 scope ensures that the JS
-      // handle remains alive regardless of what the handler does
-
-      ScriptMessageHandlerRenderer* handler =
-          mm->GetHandlerForMsgID(message->msg_id());
-      if (handler) {
-        handler->handler().OnReceiveMessage(message.PassAs<ScriptMessage>());
-      } else {
-        message->Error(ScriptMessageRequest::ERROR_NO_HANDLER,
-                       "Could not find a handler for message");
-      }
+    ScriptMessageHandlerRenderer* handler =
+        mm->GetHandlerForMsgID(message->msg_id());
+    if (handler) {
+      handler->handler().OnReceiveMessage(message);
+    } else {
+      message->Error(ScriptMessageRequest::ERROR_NO_HANDLER,
+                     "Could not find a handler for message");
     }
 
     return;
