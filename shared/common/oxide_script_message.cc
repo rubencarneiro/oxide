@@ -51,7 +51,9 @@ ScriptMessage::ScriptMessage(int serial,
     args_(args),
     has_responded_(false) {}
 
-ScriptMessage::~ScriptMessage() {}
+ScriptMessage::~ScriptMessage() {
+  DCHECK(has_responded_);
+}
 
 void ScriptMessage::Reply(const std::string& args) {
   if (has_responded_) {
