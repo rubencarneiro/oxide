@@ -147,7 +147,11 @@ void UserScriptAdapter::completeConstruction() {
 
   priv->state = UserScriptAdapterPrivate::Loading;
 
-  DCHECK(priv->user_script.url().scheme() == "file");
+  if (priv->user_script.url().scheme() != "file") {
+    OnScriptLoadFailed();
+    return;
+  }
+
   if (!priv->Load()) {
     priv->state = UserScriptAdapterPrivate::FailedLoad;
     OnScriptLoadFailed();

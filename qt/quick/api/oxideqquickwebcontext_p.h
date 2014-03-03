@@ -71,8 +71,8 @@ class OxideQQuickWebContext : public QObject,
   void setAcceptLangs(const QString& accept_langs);
 
   QQmlListProperty<OxideQQuickUserScript> userScripts();
-  void addUserScript(OxideQQuickUserScript* user_script);
-  void removeUserScript(OxideQQuickUserScript* user_script);
+  Q_INVOKABLE void addUserScript(OxideQQuickUserScript* user_script);
+  Q_INVOKABLE void removeUserScript(OxideQQuickUserScript* user_script);
 
  Q_SIGNALS:
   void productChanged();
