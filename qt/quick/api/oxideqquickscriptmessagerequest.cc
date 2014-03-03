@@ -25,6 +25,10 @@
 
 void OxideQQuickScriptMessageRequestPrivate::OnReceiveReply(
     const QVariant& args) {
+  if (!reply_callback.engine()) {
+    return;
+  }
+
   QJSValueList jsargs;
   jsargs.append(reply_callback.engine()->toScriptValue(args));
 
