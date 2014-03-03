@@ -228,9 +228,11 @@ void OxideQQuickWebViewPrivate::messageHandler_clear(
       static_cast<OxideQQuickWebView *>(prop->object);
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(web_view);
 
-  p->message_handlers().clear();
-
-  emit web_view->messageHandlersChanged();
+  while (p->message_handlers().size() > 0) {
+    web_view->removeMessageHandler(
+        adapterToQObject<OxideQQuickScriptMessageHandler>(
+          p->message_handlers().at(0)));
+  }
 }
 
 // static
@@ -409,17 +411,19 @@ void OxideQQuickWebView::addMessageHandler(
     return;
   }
 
-  OxideQQuickScriptMessageHandlerPrivate* handlerp =
+  OxideQQuickScriptMessageHandlerPrivate* hd =
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->message_handlers().contains(handlerp)) {
-    handlerp->removeFromCurrentOwner();
+  if (!d->message_handlers().contains(hd)) {
+    hd->removeFromCurrentOwner();
     handler->setParent(this);
-
-    d->message_handlers().append(handlerp);
-
-    emit messageHandlersChanged();
+  } else {
+    d->message_handlers().removeOne(hd);
   }
+
+  d->message_handlers().append(hd);
+
+  emit messageHandlersChanged();
 }
 
 void OxideQQuickWebView::removeMessageHandler(
@@ -431,15 +435,17 @@ void OxideQQuickWebView::removeMessageHandler(
     return;
   }
 
-  OxideQQuickScriptMessageHandlerPrivate* handlerp =
+  OxideQQuickScriptMessageHandlerPrivate* hd =
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (d->message_handlers().contains(handlerp)) {
-    d->message_handlers().removeOne(handlerp);
-    handler->setParent(NULL);
-
-    emit messageHandlersChanged();
+  if (!d->message_handlers().contains(hd)) {
+    return;
   }
+
+  handler->setParent(NULL);
+  d->message_handlers().removeOne(hd);
+
+  emit messageHandlersChanged();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
