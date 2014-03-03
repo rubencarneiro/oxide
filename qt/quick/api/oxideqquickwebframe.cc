@@ -105,9 +105,8 @@ OxideQQuickWebFrame::~OxideQQuickWebFrame() {
   Q_D(OxideQQuickWebFrame);
 
   while (d->message_handlers().size() > 0) {
-    removeMessageHandler(
-        adapterToQObject<OxideQQuickScriptMessageHandler>(
-          d->message_handlers().at(0)));
+    delete adapterToQObject<OxideQQuickScriptMessageHandler>(
+        d->message_handlers().at(0));
   }
 }
 

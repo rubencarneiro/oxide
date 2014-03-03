@@ -287,9 +287,8 @@ OxideQQuickWebView::~OxideQQuickWebView() {
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
   while (d->message_handlers().size() > 0) {
-    removeMessageHandler(
-        adapterToQObject<OxideQQuickScriptMessageHandler>(
-          d->message_handlers().at(0)));
+    delete adapterToQObject<OxideQQuickScriptMessageHandler>(
+        d->message_handlers().at(0));
   }
 
   // The default context is reference counted, and OxideQQuickWebViewPrivate
