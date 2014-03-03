@@ -68,16 +68,18 @@ void ScriptMessageDispatcherRenderer::OnReceiveMessage(
     return;
   }
 
-  if (!is_reply) {
-    DCHECK_EQ(params.type, OxideMsg_SendMessage_Type::Message);
+  DCHECK(OxideMsg_SendMessage_Type::is_valid(params.type));
 
+  if (!is_reply) {
     v8::HandleScope handle_scope(mm->isolate());
     v8::Context::Scope context_scope(mm->GetV8Context());
 
     v8::Handle<v8::Object> handle(
         mm->script_message_object_handler().NewInstance());
     scoped_refptr<ScriptMessageImplRenderer> message(
-        new ScriptMessageImplRenderer(mm.get(), params.serial, params.msg_id,
+        new ScriptMessageImplRenderer(mm.get(), params.serial,
+                                      params.type == OxideMsg_SendMessage_Type::Message,
+                                      params.msg_id,
                                       params.payload, handle));
 
     ScriptMessageHandlerRenderer* handler =

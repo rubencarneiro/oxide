@@ -53,11 +53,13 @@ class ScriptMessage :
   GURL context() const { return context_; }
   std::string msg_id() const { return msg_id_; }
   std::string args() const { return args_; }
+  bool want_reply() const { return !has_responded_; }
 
  protected:
   friend struct ScriptMessageTraits;
   ScriptMessage(int serial,
                 const GURL& context,
+                bool want_reply,
                 const std::string& msg_id,
                 const std::string& args);
   virtual ~ScriptMessage();

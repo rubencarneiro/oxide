@@ -178,7 +178,7 @@ ScriptMessageRequestImplBrowser* WebFrame::SendMessage(
     const std::string& args) {
   ScriptMessageRequestImplBrowser* request =
       new ScriptMessageRequestImplBrowser(this, next_message_serial_++,
-                                          context, msg_id, args);
+                                          context, true, msg_id, args);
   if (!request->SendMessage()) {
     delete request;
     return NULL;
@@ -192,7 +192,7 @@ bool WebFrame::SendMessageNoReply(const GURL& context,
                                   const std::string& args) {
   ScriptMessageRequestImplBrowser* request =
       new ScriptMessageRequestImplBrowser(this, next_message_serial_++,
-                                          context, msg_id, args);
+                                          context, false, msg_id, args);
   bool res = request->SendMessage();
   delete request;
   return res;

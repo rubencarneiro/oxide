@@ -40,10 +40,11 @@ void ScriptMessageImplRenderer::DoSendResponse(
 ScriptMessageImplRenderer::ScriptMessageImplRenderer(
     ScriptMessageManager* mm,
     int serial,
+    bool want_reply,
     const std::string& msg_id,
     const std::string& args,
     const v8::Handle<v8::Object>& handle) :
-    ScriptMessage(serial, mm->GetContextURL(), msg_id, args),
+    ScriptMessage(serial, mm->GetContextURL(), want_reply, msg_id, args),
     ScriptReferencedObject<ScriptMessageImplRenderer>(mm, handle) {}
 
 } // namespace oxide

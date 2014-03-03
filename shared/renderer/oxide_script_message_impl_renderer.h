@@ -38,6 +38,7 @@ class ScriptMessageImplRenderer FINAL :
  public:
   ScriptMessageImplRenderer(ScriptMessageManager* mm,
                             int serial,
+                            bool want_reply,
                             const std::string& msg_id,
                             const std::string& args,
                             const v8::Handle<v8::Object>& handle);

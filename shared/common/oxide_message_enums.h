@@ -22,11 +22,12 @@ struct OxideMsg_SendMessage_Type {
  public:
   enum Value {
     Message,
+    MessageNoReply,
     Reply
   };
 
   static bool is_valid(int type) {
-    return type == Message || type == Reply;
+    return type == Message || type == MessageNoReply || type == Reply;
   }
 };
 

@@ -172,16 +172,13 @@ void ScriptMessageManager::SendMessageInner(
   DCHECK_EQ(isolate, this->isolate());
   v8::HandleScope handle_scope(isolate);
 
-  if (args.Length() < 2) {
-    isolate->ThrowException(v8::Exception::Error(
-        v8::String::NewFromUtf8(
-          isolate, "Insufficient number of arguments")));
-    return;
-  }
+  DCHECK(args.Length() == 3);
 
-  v8::Local<v8::Value> msg_id_as_val = args[0];
-  v8::Local<v8::Value> msg_args_as_val = args[1];
+  v8::Local<v8::Value> msg_want_reply_as_val = args[0];
+  v8::Local<v8::Value> msg_id_as_val = args[1];
+  v8::Local<v8::Value> msg_args_as_val = args[2];
 
+  DCHECK(msg_want_reply_as_val->IsBoolean());
   if (!msg_id_as_val->IsString()) {
     isolate->ThrowException(v8::Exception::Error(
         v8::String::NewFromUtf8(
@@ -190,6 +187,7 @@ void ScriptMessageManager::SendMessageInner(
   }
   DCHECK(msg_args_as_val->IsString());
 
+  v8::Local<v8::Boolean> msg_want_reply = msg_want_reply_as_val->ToBoolean();
   v8::Local<v8::String> msg_id = msg_id_as_val.As<v8::String>();
   v8::Local<v8::String> msg_args = msg_args_as_val.As<v8::String>();
 
@@ -198,11 +196,14 @@ void ScriptMessageManager::SendMessageInner(
 
   scoped_refptr<ScriptMessageRequestImplRenderer> req =
       new ScriptMessageRequestImplRenderer(
-        this, next_message_id_++, V8StringToStdString(msg_id),
+        this, next_message_id_++, msg_want_reply->Value(),
+        V8StringToStdString(msg_id),
         V8StringToStdString(msg_args), handle);
   req->SendMessage();
 
-  args.GetReturnValue().Set(handle);
+  if (msg_want_reply->Value()) {
+    args.GetReturnValue().Set(handle);
+  }
 }
 
 // static

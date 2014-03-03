@@ -41,6 +41,7 @@ class ScriptMessageRequestImplBrowser FINAL : public ScriptMessageRequest {
   ScriptMessageRequestImplBrowser(WebFrame* frame,
                                   int serial,
                                   const GURL& context,
+                                  bool want_reply,
                                   const std::string& msg_id,
                                   const std::string& args);
   virtual ~ScriptMessageRequestImplBrowser();
@@ -49,7 +50,7 @@ class ScriptMessageRequestImplBrowser FINAL : public ScriptMessageRequest {
   void SetErrorCallback(const ErrorCallback& callback);
 
  private:
-  bool DoSendMessage() FINAL;
+  bool DoSendMessage(const OxideMsg_SendMessage_Params& params) FINAL;
 
   void OnReply(const std::string& args) FINAL;
   void OnError(Error error, const std::string& msg) FINAL;

@@ -77,6 +77,12 @@ class MessageReceiver {
       return;
     }
 
+    if (!OxideMsg_SendMessage_Type::is_valid(params_.type)) {
+      LOG(ERROR) << "Renderer sent bad message type";
+      rfh->GetProcess()->ReceivedBadMessage();
+      return;
+    }
+
     WebFrame* frame = WebFrame::FromFrameTreeNode(rfh->frame_tree_node());
     if (!frame) {
       if (!is_reply) {
@@ -87,15 +93,10 @@ class MessageReceiver {
     }
 
     if (!is_reply) {
-      if (params_.type != OxideMsg_SendMessage_Type::Message) {
-        LOG(ERROR) << "Invalid message type from renderer";
-        rfh->GetProcess()->ReceivedBadMessage();
-        return;
-      }
-
       scoped_refptr<ScriptMessageImplBrowser> message(
           new ScriptMessageImplBrowser(frame, params_.serial,
                                        GURL(params_.context),
+                                       params_.type == OxideMsg_SendMessage_Type::Message,
                                        params_.msg_id, params_.payload));
       WebFrame* target = frame;
       WebView* view = frame->view();

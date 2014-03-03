@@ -43,13 +43,14 @@ void ScriptMessage::MakeParams(OxideMsg_SendMessage_Params* params) {
 
 ScriptMessage::ScriptMessage(int serial,
                              const GURL& context,
+                             bool want_reply,
                              const std::string& msg_id,
                              const std::string& args) :
     serial_(serial),
     context_(context),
     msg_id_(msg_id),
     args_(args),
-    has_responded_(false) {}
+    has_responded_(!want_reply) {}
 
 ScriptMessage::~ScriptMessage() {
   DCHECK(has_responded_);

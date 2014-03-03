@@ -19,14 +19,18 @@
 
 #include "base/logging.h"
 
+#include "shared/common/oxide_messages.h"
+
 namespace oxide {
 
 ScriptMessageRequest::ScriptMessageRequest(int serial,
                                            const GURL& context,
+                                           bool want_reply,
                                            const std::string& msg_id,
                                            const std::string& args) :
     serial_(serial),
     context_(context),
+    want_reply_(want_reply),
     msg_id_(msg_id),
     args_(args),
     has_sent_message_(false),
@@ -37,7 +41,17 @@ ScriptMessageRequest::~ScriptMessageRequest() {}
 bool ScriptMessageRequest::SendMessage() {
   DCHECK(!has_sent_message_);
   has_sent_message_ = true;
-  return DoSendMessage();
+
+  OxideMsg_SendMessage_Params params;
+  params.context = context().spec();
+  params.serial = serial();
+  params.type =
+      want_reply_ ? OxideMsg_SendMessage_Type::Message :
+                    OxideMsg_SendMessage_Type::MessageNoReply;
+  params.msg_id = msg_id();
+  params.payload = args();
+
+  return DoSendMessage(params);
 }
 
 bool ScriptMessageRequest::IsWaitingForResponse() const {

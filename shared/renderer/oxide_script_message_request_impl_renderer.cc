@@ -34,14 +34,8 @@ ScriptMessageRequestImplRenderer::~ScriptMessageRequestImplRenderer() {
   }
 }
 
-bool ScriptMessageRequestImplRenderer::DoSendMessage() {
-  OxideMsg_SendMessage_Params params;
-  params.context = context().spec();
-  params.serial = serial();
-  params.type = OxideMsg_SendMessage_Type::Message;
-  params.msg_id = msg_id();
-  params.payload = args();
-
+bool ScriptMessageRequestImplRenderer::DoSendMessage(
+    const OxideMsg_SendMessage_Params& params) {
   content::RenderFrame* frame = manager()->frame();
   return frame->Send(new OxideHostMsg_SendMessage(
       frame->GetRoutingID(), params));
@@ -102,10 +96,11 @@ void ScriptMessageRequestImplRenderer::DispatchResponse(
 ScriptMessageRequestImplRenderer::ScriptMessageRequestImplRenderer(
     ScriptMessageManager* mm,
     int serial,
+    bool want_reply,
     const std::string& msg_id,
     const std::string& args,
     const v8::Handle<v8::Object>& handle) :
-    ScriptMessageRequest(serial, mm->GetContextURL(), msg_id, args),
+    ScriptMessageRequest(serial, mm->GetContextURL(), want_reply, msg_id, args),
     ScriptReferencedObject<ScriptMessageRequestImplRenderer>(mm, handle) {
   manager()->AddScriptMessageRequest(this);
 }

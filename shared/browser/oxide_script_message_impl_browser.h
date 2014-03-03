@@ -37,6 +37,7 @@ class ScriptMessageImplBrowser FINAL : public ScriptMessage {
   ScriptMessageImplBrowser(WebFrame* source_frame,
                            int serial,
                            const GURL& context,
+                           bool want_reply,
                            const std::string& msg_is,
                            const std::string& args);
 

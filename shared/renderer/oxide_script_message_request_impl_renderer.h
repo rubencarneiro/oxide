@@ -40,6 +40,7 @@ class ScriptMessageRequestImplRenderer FINAL :
  public:
   ScriptMessageRequestImplRenderer(ScriptMessageManager* mm,
                                    int serial,
+                                   bool want_reply,
                                    const std::string& msg_id,
                                    const std::string& args,
                                    const v8::Handle<v8::Object>& handle);
@@ -56,7 +57,7 @@ class ScriptMessageRequestImplRenderer FINAL :
   friend class base::RefCounted<ScriptMessageRequestImplRenderer>;
   ~ScriptMessageRequestImplRenderer();
 
-  bool DoSendMessage() FINAL;
+  bool DoSendMessage(const OxideMsg_SendMessage_Params& params) FINAL;
 
   void OnReply(const std::string& args) FINAL;
   void OnError(Error error, const std::string& msg) FINAL;

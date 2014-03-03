@@ -24,6 +24,8 @@
 #include "base/compiler_specific.h"
 #include "url/gurl.h"
 
+class OxideMsg_SendMessage_Params;
+
 namespace oxide {
 
 class ScriptMessageRequest {
@@ -62,17 +64,19 @@ class ScriptMessageRequest {
  protected:
   ScriptMessageRequest(int serial,
                        const GURL& context,
+                       bool want_reply,
                        const std::string& msg_id,
                        const std::string& args);
 
  private:
-  virtual bool DoSendMessage() = 0;
+  virtual bool DoSendMessage(const OxideMsg_SendMessage_Params& params) = 0;
 
   virtual void OnReply(const std::string& args) = 0;
   virtual void OnError(Error error, const std::string& msg) = 0;
 
   int serial_;
   GURL context_;
+  bool want_reply_;
   std::string msg_id_;
   std::string args_;
   bool has_sent_message_;
