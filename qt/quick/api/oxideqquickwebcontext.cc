@@ -43,6 +43,10 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
 
+void OxideQQuickWebContextPrivate::scriptUpdated() {
+  updateUserScripts();
+}
+
 OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
     OxideQQuickWebContext* context) {
   return context->d_func();
@@ -119,12 +123,6 @@ void OxideQQuickWebContextPrivate::userScript_clear(
   }
 
   p->updateUserScripts();
-}
-
-void OxideQQuickWebContext::scriptUpdated() {
-  Q_D(OxideQQuickWebContext);
-
-  d->updateUserScripts();
 }
 
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
@@ -290,3 +288,4 @@ OxideQQuickWebContext::userScripts() {
       OxideQQuickWebContextPrivate::userScript_clear);
 }
 
+#include "moc_oxideqquickwebcontext_p.cpp"

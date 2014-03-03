@@ -37,6 +37,8 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
   ~OxideQQuickWebContextPrivate();
 
+  void scriptUpdated();
+
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
   static void userScript_append(QQmlListProperty<OxideQQuickUserScript>* prop,

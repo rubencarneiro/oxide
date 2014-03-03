@@ -79,8 +79,8 @@ class OxideQQuickWebContext : public QObject,
   void cachePathChanged();
   void acceptLangsChanged();
 
- private Q_SLOTS:
-  void scriptUpdated();
+ private:
+  Q_PRIVATE_SLOT(d_func(), void scriptUpdated());
 
  private:
   QScopedPointer<OxideQQuickWebContextPrivate> d_ptr;
