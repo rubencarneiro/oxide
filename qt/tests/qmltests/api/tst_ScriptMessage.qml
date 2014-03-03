@@ -40,7 +40,7 @@ TestWebView {
     }
 
     function test_ScriptMessage1_reply() {
-      webView.url = "http://localhost:8080/tst_ScriptMessage.html";
+      webView.url = "http://localhost:8080/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -53,7 +53,7 @@ TestWebView {
     }
 
     function test_ScriptMessage1_error() {
-      webView.url = "http://localhost:8080/tst_ScriptMessage.html";
+      webView.url = "http://localhost:8080/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

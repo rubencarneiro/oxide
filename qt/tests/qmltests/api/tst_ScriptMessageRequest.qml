@@ -14,7 +14,7 @@ TestWebView {
   }
 
   function init() {
-    webView.url = "http://localhost:8080/tst_ScriptMessageRequest.html";
+    webView.url = "http://localhost:8080/empty.html";
     verify(webView.waitForSuccessfulLoad(),
            "Timed out waiting for successful load");
   }

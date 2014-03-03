@@ -23,7 +23,7 @@ TestWebView {
       while (webView.rootFrame.messageHandlers.length > 0) {
         webView.rootFrame.removeMessageHandler(webView.rootFrame.messageHandlers[0]);
       }
-      webView.url = "http://localhost:8080/tst_ScriptMessageRouting_no_match.html";
+      webView.url = "http://localhost:8080/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
     }

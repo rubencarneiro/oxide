@@ -15,7 +15,7 @@ TestWebView {
     when: windowShown
 
     function test_bug1287261() {
-      webView.url = "http://localhost:8080/tst_bug1287261.html"
+      webView.url = "http://localhost:8080/empty.html"
       verify(webView.waitForLoadSucceeded());
 
       var hadError = false;
