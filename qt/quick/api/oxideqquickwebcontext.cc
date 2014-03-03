@@ -56,6 +56,18 @@ void OxideQQuickWebContextPrivate::userScriptWillBeDeleted() {
   q->removeUserScript(sender);  
 }
 
+void OxideQQuickWebContextPrivate::detachUserScriptSignals(
+    OxideQQuickUserScript* user_script) {
+  Q_Q(OxideQQuickWebContext);
+
+  QObject::disconnect(user_script, SIGNAL(scriptLoaded()),
+                      q, SLOT(userScriptUpdated()));
+  QObject::disconnect(user_script, SIGNAL(scriptPropertyChanged()),
+                      q, SLOT(userScriptUpdated()));
+  QObject::disconnect(user_script, SIGNAL(scriptWillBeDeleted()),
+                      q, SLOT(userScriptWillBeDeleted()));
+}
+
 OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
     OxideQQuickWebContext* context) {
   return context->d_func();
@@ -114,9 +126,9 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
 
-  while (d->user_scripts().size() > 0) {
-    removeUserScript(
-        adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(0)));
+  for (int i = 0; i < d->user_scripts().size(); ++i) {
+    d->detachUserScriptSignals(
+        adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));
   }
 }
 
@@ -289,12 +301,12 @@ void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
       OxideQQuickUserScriptPrivate::get(user_script);
 
   if (!d->user_scripts().contains(ud)) {
-    QObject::connect(user_script, SIGNAL(scriptLoaded()),
-                     this, SLOT(userScriptUpdated()));
-    QObject::connect(user_script, SIGNAL(scriptPropertyChanged()),
-                     this, SLOT(userScriptUpdated()));
-    QObject::connect(user_script, SIGNAL(scriptWillBeDeleted()),
-                     this, SLOT(userScriptWillBeDeleted()));
+    connect(user_script, SIGNAL(scriptLoaded()),
+            this, SLOT(userScriptUpdated()));
+    connect(user_script, SIGNAL(scriptPropertyChanged()),
+            this, SLOT(userScriptUpdated()));
+    connect(user_script, SIGNAL(scriptWillBeDeleted()),
+            this, SLOT(userScriptWillBeDeleted()));
     if (!user_script->parent()) {
       user_script->setParent(this);
     }
@@ -323,12 +335,7 @@ void OxideQQuickWebContext::removeUserScript(
     return;
   }
 
-  QObject::disconnect(user_script, SIGNAL(scriptLoaded()),
-                      this, SLOT(userScriptUpdated()));
-  QObject::disconnect(user_script, SIGNAL(scriptPropertyChanged()),
-                      this, SLOT(userScriptUpdated()));
-  QObject::disconnect(user_script, SIGNAL(scriptWillBeDeleted()),
-                      this, SLOT(userScriptWillBeDeleted()));
+  d->detachUserScriptSignals(user_script);
   if (user_script->parent() == this) {
     user_script->setParent(NULL);
   }
