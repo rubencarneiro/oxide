@@ -61,20 +61,6 @@ OxideQQuickWebFrame* OxideQQuickWebFramePrivate::childFrame_at(
 }
 
 // static
-void OxideQQuickWebFramePrivate::messageHandler_append(
-    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
-    OxideQQuickScriptMessageHandler* value) {
-  if (!value) {
-    return;
-  }
-
-  OxideQQuickWebFrame* frame =
-      static_cast<OxideQQuickWebFrame *>(prop->object);
-
-  frame->addMessageHandler(value);
-}
-
-// static
 int OxideQQuickWebFramePrivate::messageHandler_count(
     QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
   OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
@@ -92,23 +78,6 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
 
   return adapterToQObject<OxideQQuickScriptMessageHandler>(
       p->message_handlers().at(index));
-}
-
-// static
-void OxideQQuickWebFramePrivate::messageHandler_clear(
-    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
-  OxideQQuickWebFrame* frame =
-      static_cast<OxideQQuickWebFrame *>(prop->object);
-  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(frame);
-
-  while (p->message_handlers().size() > 0) {
-    oxide::qt::ScriptMessageHandlerAdapter* handler =
-        p->message_handlers().first();
-    p->message_handlers().removeFirst();
-    delete adapterToQObject(handler);
-  }
-
-  emit frame->messageHandlersChanged();
 }
 
 OxideQQuickWebFrame::OxideQQuickWebFrame() :
@@ -163,10 +132,8 @@ QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebFrame::messageHandlers() {
   return QQmlListProperty<OxideQQuickScriptMessageHandler>(
       this, NULL,
-      OxideQQuickWebFramePrivate::messageHandler_append,
       OxideQQuickWebFramePrivate::messageHandler_count,
-      OxideQQuickWebFramePrivate::messageHandler_at,
-      OxideQQuickWebFramePrivate::messageHandler_clear);
+      OxideQQuickWebFramePrivate::messageHandler_at);
 }
 
 void OxideQQuickWebFrame::addMessageHandler(

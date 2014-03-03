@@ -49,16 +49,11 @@ class OxideQQuickWebFramePrivate Q_DECL_FINAL :
   static OxideQQuickWebFrame* childFrame_at(
       QQmlListProperty<OxideQQuickWebFrame>* prop, int index);
 
-  static void messageHandler_append(
-      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
-      OxideQQuickScriptMessageHandler* value);
   static int messageHandler_count(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
   static OxideQQuickScriptMessageHandler* messageHandler_at(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
       int index);
-  static void messageHandler_clear(
-      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
  private:
   // We keep this separate to QObject becase we want a way to track child frames quickly

@@ -36,7 +36,7 @@ class OxideQQuickWebFrame : public QObject {
   Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
   Q_PROPERTY(OxideQQuickWebFrame* parentFrame READ parentFrame)
   Q_PROPERTY(QQmlListProperty<OxideQQuickWebFrame> childFrames READ childFrames NOTIFY childFramesChanged)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
   Q_ENUMS(ChildFrameChangedType)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebFrame)
