@@ -13,18 +13,19 @@ TestWebView {
     id: spy
   }
 
-  function init() {
-    webView.url = "http://localhost:8080/empty.html";
-    verify(webView.waitForSuccessfulLoad(),
-           "Timed out waiting for successful load");
-  }
 
   TestCase {
     id: test
     name: "ScriptMessageRequest"
     when: windowShown
 
-    function test_ScriptMessageRequest_onreply() {
+    function init() {
+      webView.url = "http://localhost:8080/empty.html";
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+    }
+
+    function test_ScriptMessageRequest1_onreply() {
       var req = webView.rootFrame.sendMessage("http://foo/", "FOO", {});
       spy.target = req;
       spy.signalName = "replyCallbackChanged";
@@ -48,7 +49,7 @@ TestWebView {
       compare(req.onreply, null, "Unexpected handler");
     }
 
-    function test_ScriptMessageRequest_onerror() {
+    function test_ScriptMessageRequest2_onerror() {
       var req = webView.rootFrame.sendMessage("http://foo/", "FOO", {});
       spy.target = req;
       spy.signalName = "errorCallbackChanged";
@@ -70,6 +71,81 @@ TestWebView {
       req.onerror = null;
       compare(spy.count, 2, "Should have had a signal");
       compare(req.onerror, null, "Unexpected handler");
+    }
+
+    function test_ScriptMessageRequest3_invalid_dest() {
+      var req = webView.rootFrame.sendMessage("http://foo/", "GET-DOCUMENT-URI", {});
+      var hasError = false;
+      var errorCode;
+      req.onerror = function(code, msg) {
+        hasError = true;
+        errorCode = code;
+      };
+
+      verify(webView.waitFor(function() { return hasError; }),
+             "Timed out waiting for error");
+      compare(errorCode, ScriptMessageRequest.ErrorDestinationNotFound,
+              "Unexpected error code");
+    }
+
+    function test_ScriptMessageRequest4_handler_throws() {
+      var req = webView.rootFrame.sendMessage("oxide://testutils/", "GENERATE-JS-EXCEPTION", {});
+      var hasError = false;
+      var errorCode;
+      req.onerror = function(code, msg) {
+        hasError = true;
+        errorCode = code;
+      };
+
+      verify(webView.waitFor(function() { return hasError; }),
+             "Timed out waiting for error");
+      compare(errorCode, ScriptMessageRequest.ErrorUncaughtException,
+              "Unexpected error code");
+    }
+
+    function test_ScriptMessageRequest5_no_handler() {
+      var req = webView.rootFrame.sendMessage("oxide://testutils/", "BLAAAAAAAAAAAAAH", {});
+      var hasError = false;
+      var errorCode;
+      req.onerror = function(code, msg) {
+        hasError = true;
+        errorCode = code;
+      };
+
+      verify(webView.waitFor(function() { return hasError; }),
+             "Timed out waiting for error");
+      compare(errorCode, ScriptMessageRequest.ErrorNoHandler,
+              "Unexpected error code");
+    }
+
+    function test_ScriptMessageRequest6_handler_report_error() {
+      var req = webView.rootFrame.sendMessage("oxide://testutils/", "EVALUATE-CODE", { code: "foo" });
+      var hasError = false;
+      var errorCode;
+      req.onerror = function(code, msg) {
+        hasError = true;
+        errorCode = code;
+      };
+
+      verify(webView.waitFor(function() { return hasError; }),
+             "Timed out waiting for error");
+      compare(errorCode, ScriptMessageRequest.ErrorHandlerReportedError,
+              "Unexpected error code");
+    }
+
+    function test_ScriptMessageRequest7_handler_no_response() {
+      var req = webView.rootFrame.sendMessage("oxide://testutils/", "DONT-RESPOND", {});
+      var hasError = false;
+      var errorCode;
+      req.onerror = function(code, msg) {
+        hasError = true;
+        errorCode = code;
+      };
+
+      verify(webView.waitFor(function() { return hasError; }),
+             "Timed out waiting for error");
+      compare(errorCode, ScriptMessageRequest.ErrorHandlerDidNotRespond,
+              "Unexpected error code");
     }
   }
 }
