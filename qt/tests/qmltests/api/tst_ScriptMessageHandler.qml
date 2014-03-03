@@ -1,8 +1,14 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 0.1
+import com.canonical.Oxide.Testing 0.1
 
-Item {
+TestWebView {
+  id: webView
+  focus: true
+  width: 200
+  height: 200
+
   ScriptMessageHandler {
     id: handler
   }
@@ -11,6 +17,16 @@ Item {
     id: spy
     target: handler
   }
+
+  messageHandlers: [
+    ScriptMessageHandler {
+      msgId: "TEST-THROW"
+      contexts: [ "oxide://testutils/" ]
+      callback: function(msg) {
+        throw Error("This is an error");
+      }
+    }
+  ]
 
   TestCase {
     id: test
@@ -60,6 +76,21 @@ Item {
 
       handler.callback = handler.callback;
       compare(spy.count, 1, "Shouldn't have had a signal");
+    }
+
+    function test_ScriptMessageHandler4_throws() {
+      webView.url = "http://localhost:8080/empty.html";
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+      try {
+        webView.getTestApi().sendMessageToSelf("TEST-THROW", {});
+        fail("Should have thrown");
+      } catch(e) {
+        verify(e instanceof TestUtils.MessageError, "Invalid exception type");
+        compare(e.error, ScriptMessageRequest.ErrorUncaughtException,
+                "Unexpected error type");
+        compare(e.message, "Error: This is an error", "Unexpected error message");
+      }
     }
   }
 }
