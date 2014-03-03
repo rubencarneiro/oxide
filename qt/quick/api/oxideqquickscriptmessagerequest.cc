@@ -74,7 +74,7 @@ void OxideQQuickScriptMessageRequest::setReplyCallback(
     return;
   }
 
-  if (!callback.isCallable()) {
+  if (!callback.isCallable() && !callback.isNull() && !callback.isUndefined()) {
     qWarning() << "Invalid callback";
     return;
   }
@@ -97,7 +97,7 @@ void OxideQQuickScriptMessageRequest::setErrorCallback(
     return;
   }
 
-  if (!callback.isCallable()) {
+  if (!callback.isCallable() && !callback.isNull() && !callback.isUndefined()) {
     qWarning() << "Invalid callback";
     return;
   }
