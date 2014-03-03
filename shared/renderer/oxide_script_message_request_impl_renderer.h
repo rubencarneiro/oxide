@@ -43,7 +43,6 @@ class ScriptMessageRequestImplRenderer FINAL :
                                    const std::string& msg_id,
                                    const std::string& args,
                                    const v8::Handle<v8::Object>& handle);
-  ~ScriptMessageRequestImplRenderer();
 
   v8::Handle<v8::Function> GetOnReplyCallback(v8::Isolate* isolate) const;
   void SetOnReplyCallback(v8::Isolate* isolate,
@@ -54,6 +53,9 @@ class ScriptMessageRequestImplRenderer FINAL :
                           v8::Handle<v8::Function> callback);
 
  private:
+  friend class base::RefCounted<ScriptMessageRequestImplRenderer>;
+  ~ScriptMessageRequestImplRenderer();
+
   bool DoSendMessage() FINAL;
 
   void OnReply(const std::string& args) FINAL;

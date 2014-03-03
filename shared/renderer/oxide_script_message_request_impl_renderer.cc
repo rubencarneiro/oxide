@@ -28,6 +28,12 @@
 
 namespace oxide {
 
+ScriptMessageRequestImplRenderer::~ScriptMessageRequestImplRenderer() {
+  if (manager()) {
+    manager()->RemoveScriptMessageRequest(this);
+  }
+}
+
 bool ScriptMessageRequestImplRenderer::DoSendMessage() {
   OxideMsg_SendMessage_Params params;
   params.context = context().spec();
@@ -102,12 +108,6 @@ ScriptMessageRequestImplRenderer::ScriptMessageRequestImplRenderer(
     ScriptMessageRequest(serial, mm->GetContextURL(), msg_id, args),
     ScriptReferencedObject<ScriptMessageRequestImplRenderer>(mm, handle) {
   manager()->AddScriptMessageRequest(this);
-}
-
-ScriptMessageRequestImplRenderer::~ScriptMessageRequestImplRenderer() {
-  if (manager()) {
-    manager()->RemoveScriptMessageRequest(this);
-  }
 }
 
 v8::Handle<v8::Function>
