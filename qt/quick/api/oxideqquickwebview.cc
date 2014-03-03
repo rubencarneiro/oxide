@@ -279,6 +279,17 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
 
+  QObject::disconnect(this, SIGNAL(visibleChanged()),
+                      this, SLOT(visibilityChangedListener()));
+
+  // Do this before our d_ptr is cleared, as these call back in to us
+  // when they are deleted
+  while (d->message_handlers().size() > 0) {
+    removeMessageHandler(
+        adapterToQObject<OxideQQuickScriptMessageHandler>(
+          d->message_handlers().at(0)));
+  }
+
   // The default context is reference counted, and OxideQQuickWebViewPrivate
   // (our d_ptr) holds our reference to it. When destroying the d_ptr,
   // we need to hold a temporary reference to the default context to stop
@@ -290,11 +301,8 @@ OxideQQuickWebView::~OxideQQuickWebView() {
     death_grip = OxideQQuickWebContext::defaultContext();
   }
 
-  delete d_ptr;
-  d_ptr = NULL;
-
-  QObject::disconnect(this, SIGNAL(visibleChanged()),
-                      this, SLOT(visibilityChangedListener()));
+  // Have to do this whilst death_grip is in scope
+  d_ptr.reset();
 }
 
 void OxideQQuickWebView::componentComplete() {
@@ -420,10 +428,6 @@ void OxideQQuickWebView::removeMessageHandler(
 
   if (!handler) {
     qWarning() << "Didn't specify a handler";
-    return;
-  }
-
-  if (!d) {
     return;
   }
 

@@ -132,7 +132,15 @@ void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
   emit childFramesChanged();
 }
 
-OxideQQuickWebFrame::~OxideQQuickWebFrame() {}
+OxideQQuickWebFrame::~OxideQQuickWebFrame() {
+  Q_D(OxideQQuickWebFrame);
+
+  while (d->message_handlers().size() > 0) {
+    removeMessageHandler(
+        adapterToQObject<OxideQQuickScriptMessageHandler>(
+          d->message_handlers().at(0)));
+  }
+}
 
 QUrl OxideQQuickWebFrame::url() const {
   Q_D(const OxideQQuickWebFrame);
@@ -189,10 +197,6 @@ void OxideQQuickWebFrame::removeMessageHandler(
 
   if (!handler) {
     qWarning() << "Didn't specify a handler";
-    return;
-  }
-
-  if (!d) {
     return;
   }
 
