@@ -76,7 +76,8 @@ UserScriptAdapterPrivate* UserScriptAdapterPrivate::get(
   return adapter->priv.data();
 }
 
-UserScriptAdapter::UserScriptAdapter() :
+UserScriptAdapter::UserScriptAdapter(QObject* q) :
+    AdapterBase(q),
     priv(new UserScriptAdapterPrivate(this)) {}
 
 UserScriptAdapter::~UserScriptAdapter() {}

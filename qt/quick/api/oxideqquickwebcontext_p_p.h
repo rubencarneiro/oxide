@@ -37,7 +37,8 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
   ~OxideQQuickWebContextPrivate();
 
-  void scriptUpdated();
+  void userScriptUpdated();
+  void userScriptWillBeDeleted();
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 

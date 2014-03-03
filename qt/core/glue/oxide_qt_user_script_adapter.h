@@ -22,12 +22,14 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/glue/oxide_qt_adapter_base.h"
+
 namespace oxide {
 namespace qt {
 
 class UserScriptAdapterPrivate;
 
-class Q_DECL_EXPORT UserScriptAdapter {
+class Q_DECL_EXPORT UserScriptAdapter : public AdapterBase {
  public:
   virtual ~UserScriptAdapter();
 
@@ -49,7 +51,7 @@ class Q_DECL_EXPORT UserScriptAdapter {
   void completeConstruction();
 
  protected:
-  UserScriptAdapter();
+  UserScriptAdapter(QObject* q);
 
  private:
   friend class UserScriptAdapterPrivate;

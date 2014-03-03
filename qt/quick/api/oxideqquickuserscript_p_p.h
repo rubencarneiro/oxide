@@ -38,8 +38,6 @@ class OxideQQuickUserScriptPrivate Q_DECL_FINAL :
   void OnScriptLoadFailed() Q_DECL_FINAL;
   void OnScriptLoaded() Q_DECL_FINAL;
 
-  OxideQQuickUserScript* q_ptr;
-
   Q_DISABLE_COPY(OxideQQuickUserScriptPrivate);
 };
 

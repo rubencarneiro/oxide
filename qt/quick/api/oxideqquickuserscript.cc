@@ -34,7 +34,7 @@ void OxideQQuickUserScriptPrivate::OnScriptLoaded() {
 
 OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
     OxideQQuickUserScript* q) :
-    q_ptr(q) {}
+    oxide::qt::UserScriptAdapter(q) {}
 
 // static
 OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
@@ -49,7 +49,9 @@ OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
   OxideQQuickWebContext::ensureChromiumStarted();
 }
 
-OxideQQuickUserScript::~OxideQQuickUserScript() {}
+OxideQQuickUserScript::~OxideQQuickUserScript() {
+  emit scriptWillBeDeleted();
+}
 
 void OxideQQuickUserScript::classBegin() {}
 
