@@ -307,6 +307,10 @@ void OxideQQuickWebView::componentComplete() {
   // Make the webview the QObject parent of the new root frame,
   // to stop Qml from collecting the frame tree
   rootFrame()->setParent(this);
+
+  // Initialization created the root frame. This is the only time
+  // this is emitted
+  emit rootFrameChanged();
 }
 
 QUrl OxideQQuickWebView::url() const {
