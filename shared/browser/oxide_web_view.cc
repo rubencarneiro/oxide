@@ -174,7 +174,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
         frame_id, render_view_host->GetProcess()->GetID());
   DCHECK(node);
 
-  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
+  WebFrame* frame = WebFrame::FromFrameTreeNode(node);
   if (frame) {
     frame->SetURL(url);
   }
@@ -235,7 +235,7 @@ void WebView::FrameDetached(content::RenderViewHost* rvh,
         frame_routing_id, rvh->GetProcess()->GetID());
   DCHECK(node);
 
-  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
+  WebFrame* frame = WebFrame::FromFrameTreeNode(node);
   delete frame;
 }
 
@@ -256,7 +256,7 @@ void WebView::FrameAttached(content::RenderViewHost* rvh,
 
   DCHECK(parent_node && node);
 
-  WebFrame* parent = FindFrameWithID(parent_node->frame_tree_node_id());
+  WebFrame* parent = WebFrame::FromFrameTreeNode(parent_node);
   DCHECK(parent);
 
   WebFrame* frame = CreateWebFrame(node);
@@ -514,26 +514,6 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 
 WebFrame* WebView::GetRootFrame() const {
   return root_frame_.get();
-}
-
-WebFrame* WebView::FindFrameWithID(int64 frame_tree_node_id) const {
-  std::queue<WebFrame *> q;
-  q.push(const_cast<WebFrame *>(root_frame_.get()));
-
-  while (!q.empty()) {
-    WebFrame* f = q.front();
-    q.pop();
-
-    if (f->FrameTreeNodeID() == frame_tree_node_id) {
-      return f;
-    }
-
-    for (size_t i = 0; i < f->ChildCount(); ++i) {
-      q.push(f->ChildAt(i));
-    }
-  }
-
-  return NULL;
 }
 
 WebPreferences* WebView::GetWebPreferences() {

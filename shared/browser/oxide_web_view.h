@@ -111,7 +111,6 @@ class WebView : public ScriptMessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-  WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
