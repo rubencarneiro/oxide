@@ -814,7 +814,7 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
 }
 
 void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
-  base::TimeDelta timestamp(base::TimeDelta::FromMilliseconds(event->timestamp()));
+  base::TimeDelta timestamp(base::TimeTicks::Now() - base::TimeTicks());
   float scale = 1 / GetDeviceScaleFactor();
 
   for (int i = 0; i < event->touchPoints().size(); ++i) {
