@@ -1,0 +1,15 @@
+<html>
+<body></body>
+<script>
+
+try {
+  oxide.sendMessage("FOO", {});
+} catch(e) {
+  var el = document.createElement("p");
+  el.innerHTML = e.toString();
+  el.className = "exception";
+  document.body.appendChild(el);
+}
+
+</script>
+</html>

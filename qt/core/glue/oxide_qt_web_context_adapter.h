@@ -63,6 +63,8 @@ class Q_DECL_EXPORT WebContextAdapter {
   static QOpenGLContext* sharedGLContext();
   static void setSharedGLContext(QOpenGLContext* context);
 
+  static void ensureChromiumStarted();
+
  protected:
   WebContextAdapter();
 

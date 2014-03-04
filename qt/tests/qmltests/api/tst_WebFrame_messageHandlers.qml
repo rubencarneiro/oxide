@@ -9,26 +9,18 @@ TestWebView {
   width: 200
   height: 200
 
-  property QtObject lastMessageFrameSource: null
-
   messageHandlers: [
-    MessageHandler {
-      msgId: "TEST"
-      worldIds: [ "TestUtils" ]
-      callback: function(msg, frame) {
-        webView.lastMessageFrameSource = frame;
-        msg.reply({ out: msg.args.in * 2 });
-      }
-    }
+    ScriptMessageHandler {}
   ]
 
   Component {
     id: messageHandler
-    MessageHandler {}
+    ScriptMessageHandler {}
   }
 
   SignalSpy {
     id: spy
+    target: webView.rootFrame
     signalName: "messageHandlersChanged"
   }
 
@@ -38,41 +30,21 @@ TestWebView {
     when: windowShown
 
     function init() {
-      webView.lastMessageFrameSource = null;
       spy.clear();
     }
 
-    function test_WebFrame_messageHandlers1() {
-      webView.url = "http://localhost:8080/tst_WebFrame_messageHandlers.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for a successful load");
+    function test_WebFrame_messageHandlers1_add_unowned() {
+      var frame = webView.rootFrame;
 
-      var frame = webView.rootFrame.childFrames[0];
-      spy.target = frame;
-
-      var handler = messageHandler.createObject(
-          null,
-          { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
-            callback: function(msg, frame) {
-              webView.lastMessageFrameSource = frame;
-              msg.reply({ out: msg.args.in * 5 });
-            }
-          });
-
+      var handler = messageHandler.createObject(null, {});
       frame.addMessageHandler(handler);
+
       compare(spy.count, 1, "Should have had a messageHandlersChanged signal");
       compare(frame.messageHandlers.length, 1, "Should have one handler now");
       compare(frame.messageHandlers[0], handler,
               "Got the wrong handler back");
-
-      function sendMessage() {
-        return webView.getTestApiForFrame(frame).sendMessageToSelf(
-            "TEST", { in: 10 }).out;
-      }
-
-      compare(sendMessage(), 50,
-              "Should have had a response from the frame handler");
-      compare(webView.lastMessageFrameSource, frame, "Invalid frame");
+      compare(OxideTestingUtils.qObjectParent(handler), frame,
+              "Message handler should be owned by the frame");
 
       handler = null;
       gc();
@@ -82,40 +54,18 @@ TestWebView {
       frame.removeMessageHandler(handler);
       compare(spy.count, 2, "Should have had a messageHandlersChanged signal");
       compare(frame.messageHandlers.length, 0, "Should have no handlers now");
-
-      compare(sendMessage(), 20,
-              "Should have had a response from the webview handler");
-      compare(webView.lastMessageFrameSource, frame, "Invalid frame");
     }
 
-    function test_WebFrame_messageHandlers2() {
-      webView.url = "http://localhost:8080/tst_WebFrame_messageHandlers.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for a successful load");
+    function test_WebFrame_messageHandlers2_create_with_parent_frame() {
+      var frame = webView.rootFrame
 
-      var frame = webView.rootFrame.childFrames[0];
-      spy.target = frame;
-
-      var handler = messageHandler.createObject(
-          frame,
-          { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
-            callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 5 });
-            }
-          });
-
+      var handler = messageHandler.createObject(frame, {});
       compare(spy.count, 1, "Should have had a messageHandlersChanged signal");
       compare(frame.messageHandlers.length, 1, "Should have one handler now");
       compare(frame.messageHandlers[0], handler,
               "Got the wrong handler back");
-
-      function sendMessage() {
-        return webView.getTestApiForFrame(frame).sendMessageToSelf(
-            "TEST", { in: 10 }).out;
-      }
-
-      compare(sendMessage(), 50,
-              "Should have had a response from the frame handler");
+      compare(OxideTestingUtils.qObjectParent(handler), frame,
+              "Message handler should be owned by the frame");
 
       handler = null;
       gc();
@@ -125,104 +75,47 @@ TestWebView {
       frame.removeMessageHandler(handler);
       compare(spy.count, 2, "Should have had a messageHandlersChanged signal");
       compare(frame.messageHandlers.length, 0, "Should have no handlers now");
-
-      compare(sendMessage(), 20,
-              "Should have had a response from the webview handler");
     }
 
-    function test_WebFrame_messageHandlers3_noMatchingId() {
+    function test_WebFrame_messageHandlers3_add_already_owned() {
       webView.url = "http://localhost:8080/tst_WebFrame_messageHandlers.html";
       verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for a successful load");
+             "Timed out waiting for successful load");
 
       var frame = webView.rootFrame.childFrames[0];
 
-      var handler = messageHandler.createObject(
-          null,
-          { msgId: "TEST", worldIds: [ "TestUtils" ],
-            callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 5 });
-            }
-          });
+      var handler = messageHandler.createObject(webView.rootFrame, {});
+      compare(spy.count, 1, "Should have had a signal");
+      compare(webView.rootFrame.messageHandlers.length, 1,
+              "Should have 1 handler on the root frame");
+      compare(frame.messageHandlers.length, 0,
+              "Should have no handlers on the child frame");
 
       frame.addMessageHandler(handler);
-      compare(frame.messageHandlers.length, 1, "Should have one handler now");
+      compare(spy.count, 2, "Should have had a signal");
+      compare(webView.rootFrame.messageHandlers.length, 0,
+              "Should have no handlers on the root frame");
+      compare(frame.messageHandlers.length, 1,
+              "Should have 1 handler on the child frame");
+      compare(OxideTestingUtils.qObjectParent(handler), frame,
+              "Incorrect parent");
 
-      function sendMessage() {
-        return webView.getTestApiForFrame(frame).sendMessageToSelf(
-            "TEST", { in: 10 }).out;
-      }
-
-      compare(sendMessage(), 50,
-              "Should have had a response from the frame handler");
-
-      frame.messageHandlers[0].msgId = "TEST2";
-      compare(sendMessage(), 20,
-              "Should have had a response from the webview handler");
+      frame.removeMessageHandler(handler);
     }
 
-    function test_WebFrame_messageHandlers4_noMatchingWorldId() {
-      webView.url = "http://localhost:8080/tst_WebFrame_messageHandlers.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for a successful load");
+    function test_WebFrame_messageHandlers4_add_already_owned_by_view() {
+      var frame = webView.rootFrame;
+      spy.target = webView;
 
-      var frame = webView.rootFrame.childFrames[0];
-
-      var handler = messageHandler.createObject(
-          null,
-          { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
-            callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 5 });
-            }
-          });
-
+      var handler = webView.messageHandlers[0];
       frame.addMessageHandler(handler);
-      compare(frame.messageHandlers.length, 1, "Should have one handler now");
-
-      function sendMessage() {
-        return webView.getTestApiForFrame(frame).sendMessageToSelf(
-            "TEST", { in: 10 }).out;
-      }
-
-      compare(sendMessage(), 50,
-              "Should have had a response from the frame handler");
-
-      frame.messageHandlers[0].worldIds = [ "Foo" ];
-      compare(sendMessage(), 20,
-              "Should have had a response from the webview handler");
-
-    }
-
-    function test_WebFrame_messageHandlers5_noCallback() {
-      webView.url = "http://localhost:8080/tst_WebFrame_messageHandlers.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for a successful load");
-
-      var frame = webView.rootFrame.childFrames[0];
-
-      var handler = messageHandler.createObject(
-          null,
-          { msgId: "TEST", worldIds: [ "Foo", "TestUtils" ],
-            callback: function(msg, frame) {
-              msg.reply({ out: msg.args.in * 5 });
-            }
-          });
-
-      frame.addMessageHandler(handler);
-      compare(frame.messageHandlers.length, 1, "Should have one handler now");
-
-      function sendMessage() {
-        return webView.getTestApiForFrame(frame).sendMessageToSelf(
-            "TEST", { in: 10 }).out;
-      }
-      
-      compare(sendMessage(), 50,
-              "Should have had a response from the frame handler");
-
-      frame.messageHandlers[0].callback = null;
-      compare(sendMessage(), 20,
-              "Should have had a response from the webview handler");
-
+      compare(spy.count, 1, "Should have had a signal");
+      compare(webView.messageHandlers.length, 0,
+              "WebView should have no handlers now");
+      compare(frame.messageHandlers.length, 1,
+              "Frame should have adopted message handler");
+      compare(OxideTestingUtils.qObjectParent(handler), frame,
+              "Incorrect parent");
     }
   }
 }

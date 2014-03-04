@@ -30,8 +30,8 @@
 #include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
-#include "oxideqquickmessagehandler_p.h"
-#include "oxideqquickmessagehandler_p_p.h"
+#include "oxideqquickscriptmessagehandler_p.h"
+#include "oxideqquickscriptmessagehandler_p_p.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 #include "oxideqquickwebframe_p.h"
@@ -185,8 +185,8 @@ void OxideQQuickWebViewPrivate::componentComplete() {
 
 // static
 void OxideQQuickWebViewPrivate::messageHandler_append(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop,
-    OxideQQuickMessageHandler* message_handler) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
+    OxideQQuickScriptMessageHandler* message_handler) {
   if (!message_handler) {
     return;
   }
@@ -199,7 +199,7 @@ void OxideQQuickWebViewPrivate::messageHandler_append(
 
 // static
 int OxideQQuickWebViewPrivate::messageHandler_count(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
@@ -207,8 +207,8 @@ int OxideQQuickWebViewPrivate::messageHandler_count(
 }
 
 // static
-OxideQQuickMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop,
+OxideQQuickScriptMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
     int index) {
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
@@ -217,20 +217,22 @@ OxideQQuickMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
     return NULL;
   }
 
-  return adapterToQObject<OxideQQuickMessageHandler>(
+  return adapterToQObject<OxideQQuickScriptMessageHandler>(
       p->message_handlers().at(index));
 }
 
 // static
 void OxideQQuickWebViewPrivate::messageHandler_clear(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
   OxideQQuickWebView* web_view =
       static_cast<OxideQQuickWebView *>(prop->object);
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(web_view);
 
-  p->message_handlers().clear();
-
-  emit web_view->messageHandlersChanged();
+  while (p->message_handlers().size() > 0) {
+    web_view->removeMessageHandler(
+        adapterToQObject<OxideQQuickScriptMessageHandler>(
+          p->message_handlers().at(0)));
+  }
 }
 
 // static
@@ -279,6 +281,16 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
 
+  QObject::disconnect(this, SIGNAL(visibleChanged()),
+                      this, SLOT(visibilityChangedListener()));
+
+  // Do this before our d_ptr is cleared, as these call back in to us
+  // when they are deleted
+  while (d->message_handlers().size() > 0) {
+    delete adapterToQObject<OxideQQuickScriptMessageHandler>(
+        d->message_handlers().at(0));
+  }
+
   // The default context is reference counted, and OxideQQuickWebViewPrivate
   // (our d_ptr) holds our reference to it. When destroying the d_ptr,
   // we need to hold a temporary reference to the default context to stop
@@ -290,11 +302,8 @@ OxideQQuickWebView::~OxideQQuickWebView() {
     death_grip = OxideQQuickWebContext::defaultContext();
   }
 
-  delete d_ptr;
-  d_ptr = NULL;
-
-  QObject::disconnect(this, SIGNAL(visibleChanged()),
-                      this, SLOT(visibilityChangedListener()));
+  // Have to do this whilst death_grip is in scope
+  d_ptr.reset();
 }
 
 void OxideQQuickWebView::componentComplete() {
@@ -307,6 +316,10 @@ void OxideQQuickWebView::componentComplete() {
   // Make the webview the QObject parent of the new root frame,
   // to stop Qml from collecting the frame tree
   rootFrame()->setParent(this);
+
+  // Initialization created the root frame. This is the only time
+  // this is emitted
+  emit rootFrameChanged();
 }
 
 QUrl OxideQQuickWebView::url() const {
@@ -378,9 +391,9 @@ OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   return adapterToQObject<OxideQQuickWebFrame>(d->rootFrame());
 }
 
-QQmlListProperty<OxideQQuickMessageHandler>
+QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebView::messageHandlers() {
-  return QQmlListProperty<OxideQQuickMessageHandler>(
+  return QQmlListProperty<OxideQQuickScriptMessageHandler>(
       this, NULL,
       OxideQQuickWebViewPrivate::messageHandler_append,
       OxideQQuickWebViewPrivate::messageHandler_count,
@@ -389,7 +402,7 @@ OxideQQuickWebView::messageHandlers() {
 }
 
 void OxideQQuickWebView::addMessageHandler(
-    OxideQQuickMessageHandler* handler) {
+    OxideQQuickScriptMessageHandler* handler) {
   Q_D(OxideQQuickWebView);
 
   if (!handler) {
@@ -397,21 +410,23 @@ void OxideQQuickWebView::addMessageHandler(
     return;
   }
 
-  OxideQQuickMessageHandlerPrivate* handlerp =
-      OxideQQuickMessageHandlerPrivate::get(handler);
+  OxideQQuickScriptMessageHandlerPrivate* hd =
+      OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->message_handlers().contains(handlerp)) {
-    handlerp->removeFromCurrentOwner();
+  if (!d->message_handlers().contains(hd)) {
+    hd->removeFromCurrentOwner();
     handler->setParent(this);
-
-    d->message_handlers().append(handlerp);
-
-    emit messageHandlersChanged();
+  } else {
+    d->message_handlers().removeOne(hd);
   }
+
+  d->message_handlers().append(hd);
+
+  emit messageHandlersChanged();
 }
 
 void OxideQQuickWebView::removeMessageHandler(
-    OxideQQuickMessageHandler* handler) {
+    OxideQQuickScriptMessageHandler* handler) {
   Q_D(OxideQQuickWebView);
 
   if (!handler) {
@@ -419,19 +434,17 @@ void OxideQQuickWebView::removeMessageHandler(
     return;
   }
 
-  if (!d) {
+  OxideQQuickScriptMessageHandlerPrivate* hd =
+      OxideQQuickScriptMessageHandlerPrivate::get(handler);
+
+  if (!d->message_handlers().contains(hd)) {
     return;
   }
 
-  OxideQQuickMessageHandlerPrivate* handlerp =
-      OxideQQuickMessageHandlerPrivate::get(handler);
+  handler->setParent(NULL);
+  d->message_handlers().removeOne(hd);
 
-  if (d->message_handlers().contains(handlerp)) {
-    d->message_handlers().removeOne(handlerp);
-    handler->setParent(NULL);
-
-    emit messageHandlersChanged();
-  }
+  emit messageHandlersChanged();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {

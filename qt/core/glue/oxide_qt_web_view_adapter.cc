@@ -88,7 +88,12 @@ bool WebViewAdapter::loading() const {
 }
 
 WebFrameAdapter* WebViewAdapter::rootFrame() const {
-  return static_cast<WebFrame *>(priv->GetRootFrame())->adapter();
+  WebFrame* frame = static_cast<WebFrame *>(priv->GetRootFrame());
+  if (!frame) {
+    return NULL;
+  }
+
+  return frame->GetAdapter();
 }
 
 void WebViewAdapter::updateSize(const QSize& size) {

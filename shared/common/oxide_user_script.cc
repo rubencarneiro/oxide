@@ -120,7 +120,7 @@ void UserScript::Pickle(::Pickle* pickle) const {
   pickle->WriteBool(match_all_frames());
   pickle->WriteBool(incognito_enabled());
   pickle->WriteBool(emulate_greasemonkey());
-  pickle->WriteString(world_id());
+  pickle->WriteString(context().spec());
 
   PickleGlobs(pickle, include_globs_);
   PickleGlobs(pickle, exclude_globs_);
@@ -138,7 +138,10 @@ void UserScript::Unpickle(const ::Pickle& pickle, PickleIterator* iter) {
   CHECK(pickle.ReadBool(iter, &match_all_frames_));
   CHECK(pickle.ReadBool(iter, &incognito_enabled_));
   CHECK(pickle.ReadBool(iter, &emulate_greasemonkey_));
-  CHECK(pickle.ReadString(iter, &world_id_));
+
+  std::string context_spec;
+  CHECK(pickle.ReadString(iter, &context_spec));
+  context_ = GURL(context_spec);
 
   UnpickleGlobs(pickle, iter, include_globs_);
   UnpickleGlobs(pickle, iter, exclude_globs_);

@@ -29,7 +29,7 @@ TestWebView {
       compare(webView.loadProgress, 0,
               "WebView.loadProgress should initially be 0%");
 
-      webView.url = "http://localhost:8080/tst_WebView_loadProgress.html";
+      webView.url = "http://localhost:8080/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 

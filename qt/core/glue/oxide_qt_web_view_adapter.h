@@ -38,8 +38,8 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
-class MessageHandlerAdapter;
 class RenderWidgetHostViewDelegate;
+class ScriptMessageHandlerAdapter;
 class WebContextAdapter;
 class WebFrameAdapter;
 class WebPopupMenuDelegate;
@@ -77,7 +77,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void stop();
   void reload();
 
-  QList<MessageHandlerAdapter *>& message_handlers() {
+  QList<ScriptMessageHandlerAdapter *>& message_handlers() {
     return message_handlers_;
   }
 
@@ -123,7 +123,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
  private:
   QScopedPointer<WebViewAdapterPrivate> priv;
-  QList<MessageHandlerAdapter *> message_handlers_;
+  QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };
 
 } // namespace qt

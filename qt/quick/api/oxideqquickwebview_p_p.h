@@ -27,7 +27,7 @@
 
 #include "oxideqquicknavigationhistory_p.h"
 
-class OxideQQuickMessageHandler;
+class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
 
@@ -78,15 +78,15 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void componentComplete();
 
   static void messageHandler_append(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop,
-      OxideQQuickMessageHandler* message_handler);
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
+      OxideQQuickScriptMessageHandler* message_handler);
   static int messageHandler_count(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop);
-  static OxideQQuickMessageHandler* messageHandler_at(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop,
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
+  static OxideQQuickScriptMessageHandler* messageHandler_at(
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
       int index);
   static void messageHandler_clear(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop);
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
   static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
 

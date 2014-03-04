@@ -40,7 +40,7 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebContext)
 
@@ -51,7 +51,9 @@ class OxideQQuickWebContext : public QObject,
   void classBegin();
   void componentComplete();
 
-  Q_DECL_EXPORT static QSharedPointer<OxideQQuickWebContext> defaultContext();
+  static void ensureChromiumStarted();
+
+  static QSharedPointer<OxideQQuickWebContext> defaultContext();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -69,6 +71,8 @@ class OxideQQuickWebContext : public QObject,
   void setAcceptLangs(const QString& accept_langs);
 
   QQmlListProperty<OxideQQuickUserScript> userScripts();
+  Q_INVOKABLE void addUserScript(OxideQQuickUserScript* user_script);
+  Q_INVOKABLE void removeUserScript(OxideQQuickUserScript* user_script);
 
  Q_SIGNALS:
   void productChanged();
@@ -76,9 +80,11 @@ class OxideQQuickWebContext : public QObject,
   void dataPathChanged();
   void cachePathChanged();
   void acceptLangsChanged();
+  void userScriptsChanged();
 
- private Q_SLOTS:
-  void scriptUpdated();
+ private:
+  Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());
+  Q_PRIVATE_SLOT(d_func(), void userScriptWillBeDeleted());
 
  private:
   QScopedPointer<OxideQQuickWebContextPrivate> d_ptr;

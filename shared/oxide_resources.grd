@@ -8,7 +8,7 @@
   </outputs>
   <release seq="1">
     <includes>
-      <include name="IDR_OXIDE_V8_MESSAGE_MANAGER_BINDINGS_JS" file="renderer/oxide_v8_message_manager_bindings.js" type="BINDATA" />
+      <include name="IDR_OXIDE_SCRIPT_MESSAGE_MANAGER_BINDINGS_JS" file="renderer/oxide_script_message_manager_bindings.js" type="BINDATA" />
     </includes>
   </release>
 </grit>
