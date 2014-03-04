@@ -18,17 +18,16 @@
 #ifndef _OXIDE_SHARED_RENDERER_ISOLATED_WORLD_MAP_H_
 #define _OXIDE_SHARED_RENDERER_ISOLATED_WORLD_MAP_H_
 
-#include <string>
-
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "url/gurl.h"
 
 namespace oxide {
 
 class IsolatedWorldMap FINAL {
  public:
-  static int NameToID(const std::string& name);
-  static std::string IDToName(int id);
+  static int IDFromURL(const GURL& url);
+  static GURL URLFromID(int id);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(IsolatedWorldMap);

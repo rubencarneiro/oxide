@@ -51,3 +51,9 @@ oxide.addMessageHandler("SEND-MESSAGE-TO-SELF", function(msg) {
     msg.reply({error: error, response: desc});
   };
 });
+
+oxide.addMessageHandler("GENERATE-JS-EXCEPTION", function(msg) {
+  throw Exception("This is an error");
+});
+
+oxide.addMessageHandler("DONT-RESPOND", function(msg) {});

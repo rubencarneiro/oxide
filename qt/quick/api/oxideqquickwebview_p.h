@@ -20,6 +20,7 @@
 
 #include <QQmlListProperty>
 #include <QQuickItem>
+#include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -33,8 +34,8 @@ QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
 class OxideQWebPreferences;
-class OxideQQuickMessageHandler;
 class OxideQQuickNavigationHistory;
+class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
@@ -65,8 +66,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
-  Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame CONSTANT)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
+  Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
@@ -102,9 +103,9 @@ class OxideQQuickWebView : public QQuickItem {
 
   OxideQQuickWebFrame* rootFrame() const;
 
-  QQmlListProperty<OxideQQuickMessageHandler> messageHandlers();
-  Q_INVOKABLE void addMessageHandler(OxideQQuickMessageHandler* handler);
-  Q_INVOKABLE void removeMessageHandler(OxideQQuickMessageHandler* handler);
+  QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers();
+  Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
+  Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
@@ -132,6 +133,7 @@ class OxideQQuickWebView : public QQuickItem {
   void navigationHistoryChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
+  void rootFrameChanged();
   void frameAdded(OxideQQuickWebFrame* frame);
   void frameRemoved(OxideQQuickWebFrame* frame);
   void popupMenuChanged();
@@ -145,7 +147,7 @@ class OxideQQuickWebView : public QQuickItem {
   virtual void geometryChanged(const QRectF& newGeometry,
                                const QRectF& oldGeometry);
 
-  OxideQQuickWebViewPrivate* d_ptr;
+  QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebView)

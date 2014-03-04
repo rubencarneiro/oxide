@@ -65,6 +65,14 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
   }
 }
 
+size_t WebView::GetScriptMessageHandlerCount() const {
+  return 0;
+}
+
+ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(size_t index) const {
+  return NULL;
+}
+
 void WebView::BrowserContextDestroyed() {
   CHECK(0) << "The browser context was destroyed whilst still in use";
 }
@@ -136,7 +144,7 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
       GetWebContents()->GetView()->GetContainerSize());
 
   while (root_frame_->ChildCount() > 0) {
-    root_frame_->ChildAt(0)->Destroy();
+    delete root_frame_->ChildAt(0);
   }
 }
 
@@ -229,9 +237,7 @@ void WebView::FrameDetached(content::RenderViewHost* rvh,
   DCHECK(node);
 
   WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
-  DCHECK(frame);
-
-  frame->Destroy();
+  delete frame;
 }
 
 void WebView::FrameAttached(content::RenderViewHost* rvh,
@@ -292,15 +298,11 @@ void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
 
-WebView::WebView() :
-    root_frame_(NULL) {}
+WebView::WebView() {}
 
 WebView::~WebView() {
   if (web_contents_) {
     web_contents_->SetDelegate(NULL);
-  }
-  if (root_frame_) {
-    root_frame_->Destroy();
   }
 }
 
@@ -341,7 +343,7 @@ bool WebView::Init(BrowserContext* context,
   registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                   content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
+  root_frame_.reset(CreateWebFrame(web_contents_->GetFrameTree()->root()));
 
   return true;
 }
@@ -511,12 +513,12 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_;
+  return root_frame_.get();
 }
 
 WebFrame* WebView::FindFrameWithID(int64 frame_tree_node_id) const {
   std::queue<WebFrame *> q;
-  q.push(const_cast<WebFrame *>(root_frame_));
+  q.push(const_cast<WebFrame *>(root_frame_.get()));
 
   while (!q.empty()) {
     WebFrame* f = q.front();
@@ -564,14 +566,6 @@ void WebView::DidUpdateFaviconURL(
       return;
     }
   }
-}
-
-size_t WebView::GetMessageHandlerCount() const {
-  return 0;
-}
-
-MessageHandler* WebView::GetMessageHandlerAt(size_t index) const {
-  return NULL;
 }
 
 } // namespace oxide

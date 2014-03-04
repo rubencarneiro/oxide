@@ -8,6 +8,12 @@ TestWebView {
   width: 200
   height: 200
 
+  SignalSpy {
+    id: spy
+    target: webView
+    signalName: "rootFrameChanged"
+  }
+
   TestCase {
     id: test
     name: "WebView_rootFrame"
@@ -28,6 +34,10 @@ TestWebView {
       }
 
       verify(caught, "WebView.rootFrame.destroy() should have thrown");
+    }
+
+    function test_WebView_rootFrame3_creation_signal() {
+      compare(spy.count, 1, "Should have had 1 signal during construction");
     }
   }
 }

@@ -34,23 +34,18 @@ class WebFrame FINAL : public oxide::WebFrame {
            content::FrameTreeNode* node,
            oxide::WebView* view);
 
-  size_t GetMessageHandlerCount() const FINAL;
-  oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
-
-  size_t GetOutgoingMessageRequestCount() const FINAL;
-  oxide::OutgoingMessageRequest*
-      GetOutgoingMessageRequestAt(size_t index) const FINAL;
-
-  WebFrameAdapter* adapter() const { return adapter_; }
+  WebFrameAdapter* GetAdapter() const;
 
  private:
   ~WebFrame();
 
+  size_t GetScriptMessageHandlerCount() const FINAL;
+  oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const FINAL;
+
   void OnChildAdded(oxide::WebFrame* child) FINAL;
   void OnChildRemoved(oxide::WebFrame* child) FINAL;
   void OnURLChanged() FINAL;
-
-  WebFrameAdapter* adapter_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);
 };

@@ -30,7 +30,7 @@
 #include "ui/gfx/rect.h"
 
 #include "shared/browser/oxide_browser_context_observer.h"
-#include "shared/browser/oxide_message_target.h"
+#include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -62,7 +62,7 @@ class WebPreferences;
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
 // components alive
-class WebView : public MessageTarget,
+class WebView : public ScriptMessageTarget,
                 public BrowserContextObserver,
                 public WebPreferencesObserver,
                 public content::NotificationObserver,
@@ -129,10 +129,6 @@ class WebView : public MessageTarget,
   void DidUpdateFaviconURL(
       int32 page_id, const std::vector<content::FaviconURL>& candidates) FINAL;
 
-  // MessageTarget
-  virtual size_t GetMessageHandlerCount() const OVERRIDE;
-  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
-
  protected:
   WebView();
 
@@ -140,6 +136,11 @@ class WebView : public MessageTarget,
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
+
+  // ScriptMessageTarget
+  virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
+  virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const OVERRIDE;
 
   // BrowserContextObserver
   void BrowserContextDestroyed() FINAL;
@@ -235,8 +236,7 @@ class WebView : public MessageTarget,
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   scoped_ptr<content::NotificationRegistrar> registrar_;
-
-  WebFrame* root_frame_;
+  scoped_ptr<WebFrame> root_frame_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
