@@ -19,6 +19,7 @@
 
 #include <map>
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 
 namespace oxide {
@@ -27,39 +28,39 @@ namespace {
 
 int g_next_isolated_world_id = 1;
 
-std::map<std::string, int>& GetIsolatedWorldMap() {
-  static std::map<std::string, int> g_isolated_world_map;
-
-  return g_isolated_world_map;
-}
+typedef std::map<GURL, int> WorldIDMap;
+typedef WorldIDMap::iterator WorldIDMapIterator;
+base::LazyInstance<WorldIDMap> g_isolated_world_map =
+    LAZY_INSTANCE_INITIALIZER;
 
 } // namespace
 
 // static
-int IsolatedWorldMap::NameToID(const std::string& name) {
-  DCHECK(!name.empty());
+int IsolatedWorldMap::IDFromURL(const GURL& url) {
+  CHECK(url.is_valid());
 
-  std::map<std::string, int>::iterator it = GetIsolatedWorldMap().find(name);
-  if (it != GetIsolatedWorldMap().end()) {
+  WorldIDMapIterator it = g_isolated_world_map.Get().find(url);
+  if (it != g_isolated_world_map.Get().end()) {
     return it->second;
   }
 
   int new_id = g_next_isolated_world_id++;
-  GetIsolatedWorldMap()[name] = new_id;
+  g_isolated_world_map.Get()[url] = new_id;
 
   return new_id;
 }
 
 // static
-std::string IsolatedWorldMap::IDToName(int id) {
-  for (std::map<std::string, int>::iterator it = GetIsolatedWorldMap().begin();
-       it != GetIsolatedWorldMap().end(); ++it) {
+GURL IsolatedWorldMap::URLFromID(int id) {
+  for (WorldIDMapIterator it = g_isolated_world_map.Get().begin();
+       it != g_isolated_world_map.Get().end(); ++it) {
     if (it->second == id) {
       return it->first;
     }
   }
 
-  return std::string();
+  DCHECK(0) << "Invalid world ID";
+  return GURL();
 }
 
 } // namespace oxide

@@ -18,7 +18,7 @@
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 
-#include <QtDebug>
+#include "oxideqquickwebcontext_p.h"
 
 void OxideQQuickUserScriptPrivate::OnScriptLoadFailed() {
   Q_Q(OxideQQuickUserScript);
@@ -34,7 +34,7 @@ void OxideQQuickUserScriptPrivate::OnScriptLoaded() {
 
 OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
     OxideQQuickUserScript* q) :
-    q_ptr(q) {}
+    oxide::qt::UserScriptAdapter(q) {}
 
 // static
 OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
@@ -44,16 +44,21 @@ OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
 
 OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
     QObject(parent),
-    d_ptr(new OxideQQuickUserScriptPrivate(this)) {}
+    d_ptr(new OxideQQuickUserScriptPrivate(this)) {
+  // Script loading uses Chromium's file thread
+  OxideQQuickWebContext::ensureChromiumStarted();
+}
 
-OxideQQuickUserScript::~OxideQQuickUserScript() {}
+OxideQQuickUserScript::~OxideQQuickUserScript() {
+  emit scriptWillBeDeleted();
+}
 
 void OxideQQuickUserScript::classBegin() {}
 
 void OxideQQuickUserScript::componentComplete() {
   Q_D(OxideQQuickUserScript);
 
-  d->startLoading();
+  d->completeConstruction();
 }
 
 QUrl OxideQQuickUserScript::url() const {
@@ -64,21 +69,6 @@ QUrl OxideQQuickUserScript::url() const {
 
 void OxideQQuickUserScript::setUrl(const QUrl& url) {
   Q_D(OxideQQuickUserScript);
-
-  if (d->state() != oxide::qt::UserScriptAdapter::Constructing) {
-    qWarning() << "url is a construct-only parameter";
-    return;
-  }
-
-  if (!url.isLocalFile()) {
-    qWarning() << "Only local files are currently supported";
-    return;
-  }
-
-  if (!url.isValid()) {
-    qWarning() << "Invalid URL";
-    return;
-  }
 
   d->setUrl(url);
 }
@@ -134,19 +124,19 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
   emit scriptPropertyChanged();
 }
 
-QString OxideQQuickUserScript::worldId() const {
+QUrl OxideQQuickUserScript::context() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->worldId();
+  return d->context();
 }
 
-void OxideQQuickUserScript::setWorldId(const QString& world_id) {
+void OxideQQuickUserScript::setContext(const QUrl& context) {
   Q_D(OxideQQuickUserScript);
 
-  if (world_id == worldId()) {
+  if (context == this->context()) {
     return;
   }
 
-  d->setWorldId(world_id);
+  d->setContext(context);
   emit scriptPropertyChanged();
 }

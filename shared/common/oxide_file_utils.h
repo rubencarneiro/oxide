@@ -22,6 +22,7 @@
 #include "base/callback.h"
 #include "base/compiler_specific.h"
 #include "base/files/file.h"
+#include "base/memory/ref_counted.h"
 
 namespace base {
 class FilePath;
@@ -30,15 +31,27 @@ class TaskRunner;
 
 namespace oxide {
 
+class AsyncFileJobImpl;
+
+class AsyncFileJob {
+ public:
+  virtual ~AsyncFileJob();
+  AsyncFileJob(AsyncFileJobImpl* impl);
+
+ protected:
+  scoped_refptr<AsyncFileJobImpl> impl_;
+};
+
 class FileUtils FINAL {
  public:
   typedef base::Callback<void(base::File::Error,
                               const char*,
                               int)> GetFileContentsCallback;
 
-  static bool GetFileContents(base::TaskRunner* task_runner,
-                              const base::FilePath& file_path,
-                              const GetFileContentsCallback& callback);
+  static AsyncFileJob* GetFileContents(
+      base::TaskRunner* task_runner,
+      const base::FilePath& file_path,
+      const GetFileContentsCallback& callback);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(FileUtils);

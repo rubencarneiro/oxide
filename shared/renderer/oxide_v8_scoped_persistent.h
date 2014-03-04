@@ -28,8 +28,8 @@ class ScopedPersistent {
  public:
   ScopedPersistent() {}
 
-  ScopedPersistent(v8::Handle<T> handle) {
-    reset(handle);
+  ScopedPersistent(v8::Isolate* isolate, v8::Handle<T> handle) {
+    reset(isolate, handle);
   }
 
   ~ScopedPersistent() {
@@ -40,9 +40,9 @@ class ScopedPersistent {
     return handle_.IsEmpty();
   }
 
-  void reset(v8::Handle<T> handle) {
+  void reset(v8::Isolate* isolate, v8::Handle<T> handle) {
     if (!handle.IsEmpty()) {
-      handle_.Reset(GetIsolate(handle), handle);
+      handle_.Reset(isolate, handle);
     } else {
       reset();
     }
@@ -50,14 +50,6 @@ class ScopedPersistent {
 
   void reset() {
     handle_.Reset();
-  }
-
-  v8::Handle<T> NewHandle() const {
-    if (handle_.IsEmpty()) {
-      return v8::Local<T>();
-    }
-
-    return v8::Local<T>::New(GetIsolate(handle_), handle_);
   }
 
   v8::Handle<T> NewHandle(v8::Isolate* isolate) const {
@@ -68,37 +60,13 @@ class ScopedPersistent {
     return v8::Local<T>::New(isolate, handle_);
   }
 
+  template <typename P>
+  void SetWeak(P* parameters,
+               typename v8::WeakCallbackData<T, P>::Callback callback) {
+    handle_.SetWeak(parameters, callback);
+  }
+
  private:
-  // Works only for objects
-  template <typename S>
-  static v8::Isolate* GetIsolate(v8::Handle<S> object_handle) {
-    if (!object_handle.IsEmpty()) {
-      return GetIsolate(object_handle->CreationContext());
-    }
-
-    return v8::Isolate::GetCurrent();
-  }
-
-  // Context specialization
-  static v8::Isolate* GetIsolate(v8::Handle<v8::Context> context_handle) {
-    if (!context_handle.IsEmpty()) {
-      return context_handle->GetIsolate();
-    }
-
-    return v8::Isolate::GetCurrent();
-  }
-
-  // ObjectTemplate specialization
-  static v8::Isolate* GetIsolate(
-      v8::Handle<v8::ObjectTemplate> template_handle) {
-    return v8::Isolate::GetCurrent();
-  }
-
-  // External specialization
-  static v8::Isolate* GetIsolate(v8::Handle<v8::External> external_handle) {
-    return v8::Isolate::GetCurrent();
-  }
-
   v8::Persistent<T> handle_;
 };
 

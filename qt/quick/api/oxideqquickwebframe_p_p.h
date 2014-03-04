@@ -23,7 +23,7 @@
 
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 
-class OxideQQuickMessageHandler;
+class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebFrame;
 
 QT_BEGIN_NAMESPACE
@@ -49,16 +49,11 @@ class OxideQQuickWebFramePrivate Q_DECL_FINAL :
   static OxideQQuickWebFrame* childFrame_at(
       QQmlListProperty<OxideQQuickWebFrame>* prop, int index);
 
-  static void messageHandler_append(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop,
-      OxideQQuickMessageHandler* value);
   static int messageHandler_count(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop);
-  static OxideQQuickMessageHandler* messageHandler_at(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop,
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
+  static OxideQQuickScriptMessageHandler* messageHandler_at(
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
       int index);
-  static void messageHandler_clear(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop);
 
  private:
   // We keep this separate to QObject becase we want a way to track child frames quickly

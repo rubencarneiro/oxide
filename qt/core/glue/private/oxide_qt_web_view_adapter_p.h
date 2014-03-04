@@ -33,8 +33,9 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
  public:
   static WebViewAdapterPrivate* Create(WebViewAdapter* adapter);
 
-  size_t GetMessageHandlerCount() const FINAL;
-  oxide::MessageHandler* GetMessageHandlerAt(size_t index) const FINAL;
+  size_t GetScriptMessageHandlerCount() const FINAL;
+  oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const FINAL;
 
   content::RenderWidgetHostView* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host) FINAL;

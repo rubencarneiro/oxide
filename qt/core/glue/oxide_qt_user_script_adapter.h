@@ -19,28 +19,19 @@
 #define _OXIDE_QT_CORE_GLUE_USER_SCRIPT_ADAPTER_H_
 
 #include <QScopedPointer>
-#include <QString>
 #include <QtGlobal>
 #include <QUrl>
+
+#include "qt/core/glue/oxide_qt_adapter_base.h"
 
 namespace oxide {
 namespace qt {
 
 class UserScriptAdapterPrivate;
 
-class Q_DECL_EXPORT UserScriptAdapter {
+class Q_DECL_EXPORT UserScriptAdapter : public AdapterBase {
  public:
-  enum State {
-    Constructing,
-    Deferred,
-    Loading,
-    Ready,
-    Failed
-  };
-
   virtual ~UserScriptAdapter();
-
-  State state() const;
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -54,13 +45,13 @@ class Q_DECL_EXPORT UserScriptAdapter {
   bool incognitoEnabled() const;
   void setIncognitoEnabled(bool enabled);
 
-  QString worldId() const;
-  void setWorldId(const QString& id);
+  QUrl context() const;
+  void setContext(const QUrl& context);
 
-  void startLoading();
+  void completeConstruction();
 
  protected:
-  UserScriptAdapter();
+  UserScriptAdapter(QObject* q);
 
  private:
   friend class UserScriptAdapterPrivate;

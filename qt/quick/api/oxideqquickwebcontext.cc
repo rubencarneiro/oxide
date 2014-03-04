@@ -38,17 +38,35 @@ QWeakPointer<OxideQQuickWebContext> g_default_context;
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     q_ptr(q) {
-  static bool run_once = false;
-  if (!run_once) {
-    run_once = true;
-#if defined(ENABLE_COMPOSITING)
-    oxide::qt::WebContextAdapter::setSharedGLContext(
-        QSGContext::sharedOpenGLContext());
-#endif
-  }
+  OxideQQuickWebContext::ensureChromiumStarted();
 }
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
+
+void OxideQQuickWebContextPrivate::userScriptUpdated() {
+  updateUserScripts();
+}
+
+void OxideQQuickWebContextPrivate::userScriptWillBeDeleted() {
+  Q_Q(OxideQQuickWebContext);
+
+  OxideQQuickUserScript* sender =
+      qobject_cast<OxideQQuickUserScript *>(q->sender());
+  Q_ASSERT(sender);
+  q->removeUserScript(sender);  
+}
+
+void OxideQQuickWebContextPrivate::detachUserScriptSignals(
+    OxideQQuickUserScript* user_script) {
+  Q_Q(OxideQQuickWebContext);
+
+  QObject::disconnect(user_script, SIGNAL(scriptLoaded()),
+                      q, SLOT(userScriptUpdated()));
+  QObject::disconnect(user_script, SIGNAL(scriptPropertyChanged()),
+                      q, SLOT(userScriptUpdated()));
+  QObject::disconnect(user_script, SIGNAL(scriptWillBeDeleted()),
+                      q, SLOT(userScriptWillBeDeleted()));
+}
 
 OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
     OxideQQuickWebContext* context) {
@@ -62,83 +80,57 @@ void OxideQQuickWebContextPrivate::userScript_append(
     return;
   }
 
-  OxideQQuickUserScriptPrivate* script_priv =
-      OxideQQuickUserScriptPrivate::get(user_script);
-
   OxideQQuickWebContext* context =
       static_cast<OxideQQuickWebContext *>(prop->object);
-  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(context);
 
-  if (!p->user_scripts().isEmpty() &&
-      p->user_scripts().contains(script_priv)) {
-    p->user_scripts().removeOne(script_priv);
-    p->user_scripts().append(script_priv);
-  } else {
-    QObject::connect(user_script, SIGNAL(scriptLoaded()),
-                     context, SLOT(scriptUpdated()));
-    QObject::connect(user_script, SIGNAL(scriptPropertyChanged()),
-                     context, SLOT(scriptUpdated()));
-    p->user_scripts().append(script_priv);
-  }
-
-  p->updateUserScripts();
+  context->addUserScript(user_script);
 }
 
 int OxideQQuickWebContextPrivate::userScript_count(
     QQmlListProperty<OxideQQuickUserScript>* prop) {
-  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(
+  OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(
         static_cast<OxideQQuickWebContext *>(prop->object));
 
-  return p->user_scripts().size();
+  return cd->user_scripts().size();
 }
 
 OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
     QQmlListProperty<OxideQQuickUserScript>* prop,
     int index) {
-  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(
+  OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(
         static_cast<OxideQQuickWebContext *>(prop->object));
 
-  if (index >= p->user_scripts().size()) {
+  if (index >= cd->user_scripts().size()) {
     return NULL;
   }
 
-  // XXX: Should we have a better way to get from adapter to public object?
-  return static_cast<OxideQQuickUserScriptPrivate *>(
-      p->user_scripts().at(index))->q_func();
+  return adapterToQObject<OxideQQuickUserScript>(cd->user_scripts().at(index));
 }
 
 void OxideQQuickWebContextPrivate::userScript_clear(
     QQmlListProperty<OxideQQuickUserScript>* prop) {
   OxideQQuickWebContext* context =
       static_cast<OxideQQuickWebContext *>(prop->object);
-  OxideQQuickWebContextPrivate* p = OxideQQuickWebContextPrivate::get(context);
+  OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(context);
 
-  while (p->user_scripts().size() > 0) {
-    // XXX: Should we have a better way to get from adapter to public object?
-    OxideQQuickUserScriptPrivate* script =
-        static_cast<OxideQQuickUserScriptPrivate *>(p->user_scripts().first());
-    p->user_scripts().removeFirst();
-    QObject::disconnect(script->q_func(), SIGNAL(scriptLoaded()),
-                        context, SLOT(scriptUpdated()));
-    QObject::disconnect(script->q_func(), SIGNAL(scriptPropertyChanged()),
-                        context, SLOT(scriptUpdated()));
-    delete script->q_func();
+  while (cd->user_scripts().size() > 0) {
+    context->removeUserScript(
+        adapterToQObject<OxideQQuickUserScript>(cd->user_scripts().at(0)));
   }
-
-  p->updateUserScripts();
-}
-
-void OxideQQuickWebContext::scriptUpdated() {
-  Q_D(OxideQQuickWebContext);
-
-  d->updateUserScripts();
 }
 
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickWebContextPrivate(this)) {}
 
-OxideQQuickWebContext::~OxideQQuickWebContext() {}
+OxideQQuickWebContext::~OxideQQuickWebContext() {
+  Q_D(OxideQQuickWebContext);
+
+  for (int i = 0; i < d->user_scripts().size(); ++i) {
+    d->detachUserScriptSignals(
+        adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));
+  }
+}
 
 void OxideQQuickWebContext::classBegin() {}
 
@@ -146,6 +138,20 @@ void OxideQQuickWebContext::componentComplete() {
   Q_D(OxideQQuickWebContext);
 
   d->completeConstruction();
+}
+
+// static
+void OxideQQuickWebContext::ensureChromiumStarted() {
+  static bool started = false;
+  if (started) {
+    return;
+  }
+  started = true;
+#if defined(ENABLE_COMPOSITING)
+  oxide::qt::WebContextAdapter::setSharedGLContext(
+      QSGContext::sharedOpenGLContext());
+#endif
+  oxide::qt::WebContextAdapter::ensureChromiumStarted();
 }
 
 // static
@@ -283,3 +289,60 @@ OxideQQuickWebContext::userScripts() {
       OxideQQuickWebContextPrivate::userScript_clear);
 }
 
+void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
+  Q_D(OxideQQuickWebContext);
+
+  if (!user_script) {
+    qWarning() << "Must specify a user script";
+    return;
+  }
+
+  OxideQQuickUserScriptPrivate* ud =
+      OxideQQuickUserScriptPrivate::get(user_script);
+
+  if (!d->user_scripts().contains(ud)) {
+    connect(user_script, SIGNAL(scriptLoaded()),
+            this, SLOT(userScriptUpdated()));
+    connect(user_script, SIGNAL(scriptPropertyChanged()),
+            this, SLOT(userScriptUpdated()));
+    connect(user_script, SIGNAL(scriptWillBeDeleted()),
+            this, SLOT(userScriptWillBeDeleted()));
+    if (!user_script->parent()) {
+      user_script->setParent(this);
+    }
+  } else {
+    d->user_scripts().removeOne(ud);
+  }
+
+  d->user_scripts().append(ud);
+
+  emit userScriptsChanged();
+}
+
+void OxideQQuickWebContext::removeUserScript(
+    OxideQQuickUserScript* user_script) {
+  Q_D(OxideQQuickWebContext);
+
+  if (!user_script) {
+    qWarning() << "Must specify a user script";
+    return;
+  }
+
+  OxideQQuickUserScriptPrivate* ud =
+      OxideQQuickUserScriptPrivate::get(user_script);
+
+  if (!d->user_scripts().contains(ud)) {
+    return;
+  }
+
+  d->detachUserScriptSignals(user_script);
+  if (user_script->parent() == this) {
+    user_script->setParent(NULL);
+  }
+
+  d->user_scripts().removeOne(ud);
+
+  emit userScriptsChanged();
+}
+
+#include "moc_oxideqquickwebcontext_p.cpp"

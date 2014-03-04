@@ -23,10 +23,11 @@
 
 #include "base/basictypes.h"
 #include "base/memory/weak_ptr.h"
+#include "base/supports_user_data.h"
 #include "ipc/ipc_sender.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_message_target.h"
+#include "shared/browser/oxide_script_message_target.h"
 
 namespace content {
 class FrameTreeNode;
@@ -34,17 +35,20 @@ class FrameTreeNode;
 
 namespace oxide {
 
-class OutgoingMessageRequest;
+class ScriptMessageRequestImplBrowser;
 class WebView;
 
 // Represents a document frame in the renderer (a top-level frame or iframe).
 // This is designed to be subclassed by each implementation. Each instance
 // of this will typically own a publicly exposed webframe
-class WebFrame : public MessageTarget {
+class WebFrame : public ScriptMessageTarget,
+                 public base::SupportsUserData {
  public:
-  static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
+  typedef std::vector<ScriptMessageRequestImplBrowser *> ScriptMessageRequestVector;
 
-  void Destroy();
+  virtual ~WebFrame();
+
+  static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
 
   int64 FrameTreeNodeID() const;
 
@@ -74,29 +78,34 @@ class WebFrame : public MessageTarget {
   size_t ChildCount() const;
   WebFrame* ChildAt(size_t index) const;
 
-  bool SendMessage(const std::string& world_id,
-                   const std::string& msg_id,
-                   const std::string& payload,
-                   OutgoingMessageRequest* req);
-  bool SendMessageNoReply(const std::string& world_id,
+  ScriptMessageRequestImplBrowser* SendMessage(const GURL& context,
+                                               const std::string& msg_id,
+                                               const std::string& args);
+  bool SendMessageNoReply(const GURL& context,
                           const std::string& msg_id,
-                          const std::string& payload);
+                          const std::string& args);
 
-  virtual size_t GetMessageHandlerCount() const OVERRIDE;
-  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
-
-  virtual size_t GetOutgoingMessageRequestCount() const;
-  virtual OutgoingMessageRequest* GetOutgoingMessageRequestAt(size_t index) const;
+  const ScriptMessageRequestVector& current_script_message_requests() const {
+    return current_script_message_requests_;
+  }
 
  protected:
   WebFrame(content::FrameTreeNode* node, WebView* view);
-  virtual ~WebFrame();
 
  private:
+  friend class ScriptMessageRequestImplBrowser;
   typedef std::vector<WebFrame *> ChildVector;
+
+  // ScriptMessageTarget
+  virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
+  virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const OVERRIDE;
 
   void AddChild(WebFrame* frame);
   void RemoveChild(WebFrame* frame);
+
+  void AddScriptMessageRequest(ScriptMessageRequestImplBrowser* req);
+  void RemoveScriptMessageRequest(ScriptMessageRequestImplBrowser* req);
 
   virtual void OnChildAdded(WebFrame* child);
   virtual void OnChildRemoved(WebFrame* child);
@@ -108,6 +117,7 @@ class WebFrame : public MessageTarget {
   WebFrame* parent_;
   WebView* view_;
   int next_message_serial_;
+  ScriptMessageRequestVector current_script_message_requests_;
   base::WeakPtrFactory<WebFrame> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);

@@ -25,7 +25,8 @@
 #include "url/gurl.h"
 
 #include "qt/core/browser/oxide_qt_web_frame.h"
-#include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
+
+#include "oxide_qt_script_message_request_adapter_p.h"
 
 namespace oxide {
 namespace qt {
@@ -33,25 +34,7 @@ namespace qt {
 WebFrameAdapterPrivate::WebFrameAdapterPrivate() :
     owner(NULL) {}
 
-WebFrameAdapterPrivate::~WebFrameAdapterPrivate() {
-  while (!outgoing_message_requests_.isEmpty()) {
-    RemoveOutgoingMessageRequest(outgoing_message_requests_.first());
-  }
-}
-
-void WebFrameAdapterPrivate::AddOutgoingMessageRequest(
-    OutgoingMessageRequestAdapter* request) {
-  DCHECK(!outgoing_message_requests_.contains(request));
-
-  OutgoingMessageRequestAdapterPrivate::get(request)->frame = this;
-  outgoing_message_requests_.append(request);
-}
-
-void WebFrameAdapterPrivate::RemoveOutgoingMessageRequest(
-    OutgoingMessageRequestAdapter* request) {
-  outgoing_message_requests_.removeOne(request);
-  OutgoingMessageRequestAdapterPrivate::get(request)->frame = NULL;
-}
+WebFrameAdapterPrivate::~WebFrameAdapterPrivate() {}
 
 // static
 WebFrameAdapterPrivate* WebFrameAdapterPrivate::get(WebFrameAdapter* adapter) {
@@ -68,31 +51,32 @@ QUrl WebFrameAdapter::url() const {
   return QUrl(QString::fromStdString(priv->owner->url().spec()));
 }
 
-bool WebFrameAdapter::sendMessage(const QString& world_id,
+bool WebFrameAdapter::sendMessage(const QUrl& context,
                                   const QString& msg_id,
                                   const QVariant& args,
-                                  OutgoingMessageRequestAdapter* req) {
+                                  ScriptMessageRequestAdapter* req) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
-  if (priv->owner->SendMessage(
-      world_id.toStdString(),
-      msg_id.toStdString(),
-      QString(jsondoc.toJson()).toStdString(),
-      &OutgoingMessageRequestAdapterPrivate::get(req)->request())) {
-    priv->AddOutgoingMessageRequest(req);
-    return true;
+  oxide::ScriptMessageRequestImplBrowser* smrib =
+      priv->owner->SendMessage(GURL(context.toString().toStdString()),
+                               msg_id.toStdString(),
+                               QString(jsondoc.toJson()).toStdString());
+  if (!smrib) {
+    return false;
   }
 
-  return false;
+  ScriptMessageRequestAdapterPrivate::get(req)->SetRequest(smrib);
+
+  return true;
 }
 
-void WebFrameAdapter::sendMessageNoReply(const QString& world_id,
+void WebFrameAdapter::sendMessageNoReply(const QUrl& context,
                                          const QString& msg_id,
                                          const QVariant& args) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
   priv->owner->SendMessageNoReply(
-      world_id.toStdString(),
+      GURL(context.toString().toStdString()),
       msg_id.toStdString(),
       QString(jsondoc.toJson()).toStdString());
 }

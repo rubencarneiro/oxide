@@ -31,11 +31,12 @@
 #include "url/gurl.h"
 
 #include "qt/core/gl/oxide_qt_shared_gl_context.h"
-#include "qt/core/glue/private/oxide_qt_user_script_adapter_p.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_form_factor.h"
 #include "shared/browser/oxide_user_script_master.h"
+
+#include "oxide_qt_user_script_adapter_p.h"
 
 namespace oxide {
 namespace qt {
@@ -69,17 +70,6 @@ WebContextAdapterPrivate::WebContextAdapterPrivate() :
 
 void WebContextAdapterPrivate::Init() {
   DCHECK(!context_);
-
-  // We do this here rather than in the constructor because the first
-  // browser context needs to set the shared GL context before anything
-  // starts up, in order for compositing to work
-  // FIXME: What if this fails?
-  if (!oxide::BrowserProcessMain::Exists()) {
-    scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
-    oxide::BrowserProcessMain::StartIfNotRunning(
-        GetProcessFlags(),
-        shared_gl_context);
-  }
 
   context_.reset(oxide::BrowserContext::Create(
       construct_props()->data_path,
@@ -216,25 +206,20 @@ void WebContextAdapter::updateUserScripts() {
   }
 
   std::vector<oxide::UserScript *> scripts;
-  bool wait = false;
 
   for (int i = 0; i < user_scripts_.size(); ++i) {
     UserScriptAdapterPrivate* script =
         UserScriptAdapterPrivate::get(user_scripts_.at(i));
-    if (script->state() == UserScriptAdapter::Loading) {
-      wait = true;
-    } else if (script->state() == UserScriptAdapter::Deferred) {
-      script->StartLoading();
-      wait = true;
-    } else if (script->state() == UserScriptAdapter::Ready) {
-      scripts.push_back(&script->user_script());
+    if (script->state == UserScriptAdapterPrivate::Loading ||
+        script->state == UserScriptAdapterPrivate::Constructing) {
+      return;
+    } else if (script->state == UserScriptAdapterPrivate::Loaded) {
+      scripts.push_back(&script->user_script);
     }
   }
 
-  if (!wait) {
-    priv->context()->UserScriptManager().SerializeUserScriptsAndSendUpdates(
-        scripts);
-  }
+  priv->context()->UserScriptManager().SerializeUserScriptsAndSendUpdates(
+      scripts);
 }
 
 bool WebContextAdapter::constructed() const {
@@ -258,6 +243,16 @@ void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
       "browser components are started!";
 
   g_shared_gl_context = context;
+}
+
+/* static */
+void WebContextAdapter::ensureChromiumStarted() {
+  if (!oxide::BrowserProcessMain::Exists()) {
+    scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
+    oxide::BrowserProcessMain::StartIfNotRunning(
+        GetProcessFlags(),
+        shared_gl_context);
+  }
 }
 
 WebContextAdapter::WebContextAdapter() :
