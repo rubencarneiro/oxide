@@ -37,7 +37,6 @@
 #include "content/gpu/gpu_child_thread.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/common/content_switches.h"
-#include "gpu/command_buffer/common/mailbox.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
 #include "gpu/command_buffer/service/mailbox_manager.h"
@@ -129,7 +128,8 @@ class OffscreenGraphicsContextRef :
           gpu_channel_host.get(),
           attrs,
           false,
-          content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits()));
+          content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
+          NULL));
     context3d_->makeContextCurrent();
   }
 
@@ -170,7 +170,7 @@ void TextureHandle::FetchTextureResourcesOnGpuThread() {
   DCHECK(is_fetch_texture_resources_pending_);
   is_fetch_texture_resources_pending_ = false;
 
-  if (mailbox_name_.empty()) {
+  if (mailbox_.IsZero()) {
     resources_available_.Signal();
     return;
   }
@@ -179,8 +179,7 @@ void TextureHandle::FetchTextureResourcesOnGpuThread() {
       content::GpuChildThread::instance()->gpu_channel_manager();
   gpu::gles2::Texture* texture =
       gpu_channel_manager->mailbox_manager()->ConsumeTexture(
-        GL_TEXTURE_2D,
-        *reinterpret_cast<const gpu::Mailbox *>(mailbox_name_.data()));
+        GL_TEXTURE_2D, mailbox_);
 
   if (texture) {
     content::GpuChannel* channel =
@@ -212,7 +211,7 @@ void TextureHandle::ReleaseTextureRef() {
 
   id_ = 0;
   ref_ = NULL;
-  mailbox_name_.clear();
+  mailbox_.SetZero();
 }
 
 // static
@@ -242,19 +241,19 @@ void TextureHandle::Initialize(
   route_id_ = context->GetCommandBufferProxy()->GetRouteID();
 }
 
-void TextureHandle::Update(const std::string& name,
+void TextureHandle::Update(const gpu::Mailbox& mailbox,
                            const gfx::Size& size_in_pixels) {
   DCHECK(client_id_ != -1 && route_id_ != -1);
 
   size_in_pixels_ = size_in_pixels;
 
-  if (name == mailbox_name_) {
+  if (mailbox == mailbox_) {
     return;
   }
 
   base::AutoLock lock(lock_);
   ReleaseTextureRef();
-  mailbox_name_ = name;
+  mailbox_ = mailbox;
 
   if (!is_fetch_texture_resources_pending_) {
     is_fetch_texture_resources_pending_ = true;
@@ -285,12 +284,12 @@ void RenderWidgetHostView::BuffersSwapped(
 void RenderWidgetHostView::SendAcknowledgeBufferPresentImpl(
     int32 route_id,
     int gpu_host_id,
-    const std::string& mailbox_name,
+    const gpu::Mailbox& mailbox,
     bool skipped) {
   AcceleratedSurfaceMsg_BufferPresented_Params ack;
   ack.sync_point = 0;
   if (skipped) {
-    ack.mailbox_name = mailbox_name;
+    ack.mailbox = mailbox;
     std::swap(backbuffer_texture_handle_, frontbuffer_texture_handle_);
   }
 
@@ -542,7 +541,7 @@ void RenderWidgetHostView::AcceleratedSurfaceBuffersSwapped(
     const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
     int gpu_host_id) {
   std::swap(backbuffer_texture_handle_, frontbuffer_texture_handle_);
-  frontbuffer_texture_handle_->Update(params_in_pixel.mailbox_name,
+  frontbuffer_texture_handle_->Update(params_in_pixel.mailbox,
                                       params_in_pixel.size);
 
   AcknowledgeBufferPresentCallback ack(
@@ -550,7 +549,7 @@ void RenderWidgetHostView::AcceleratedSurfaceBuffersSwapped(
                  AsWeakPtr(),
                  params_in_pixel.route_id,
                  gpu_host_id,
-                 params_in_pixel.mailbox_name));
+                 params_in_pixel.mailbox));
 
   if (params_in_pixel.size != GetPhysicalBackingSize()) {
     SendAcknowledgeBufferPresent(ack, true);
@@ -570,7 +569,7 @@ void RenderWidgetHostView::AcceleratedSurfacePostSubBuffer(
                  AsWeakPtr(),
                  params_in_pixel.route_id,
                  gpu_host_id,
-                 params_in_pixel.mailbox_name));
+                 params_in_pixel.mailbox));
   SendAcknowledgeBufferPresent(ack, true);
 }
 

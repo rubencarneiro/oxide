@@ -29,6 +29,7 @@
 #include "base/synchronization/condition_variable.h"
 #include "base/synchronization/lock.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
+#include "gpu/command_buffer/common/mailbox.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/events/gestures/gesture_recognizer.h"
 #include "ui/events/gestures/gesture_types.h"
@@ -77,7 +78,7 @@ class TextureHandle FINAL {
   ~TextureHandle();
 
   void Initialize(content::WebGraphicsContext3DCommandBufferImpl* context);
-  void Update(const std::string& name,
+  void Update(const gpu::Mailbox& mailbox,
               const gfx::Size& size_in_pixels);
 
   TextureInfo GetTextureInfo();
@@ -117,7 +118,7 @@ class TextureHandle FINAL {
   // resources with the embedding compositor
   GLuint id_;
   gpu::gles2::TextureRef* ref_;
-  std::string mailbox_name_;
+  gpu::Mailbox mailbox_;
   gfx::Size size_in_pixels_;
   scoped_refptr<GpuThreadCallbackContext> callback_context_;
 
@@ -266,7 +267,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   virtual void BuffersSwapped(const AcknowledgeBufferPresentCallback& ack);
   void SendAcknowledgeBufferPresentImpl(int32 route_id,
                                         int gpu_host_id,
-                                        const std::string& mailbox_name,
+                                        const gpu::Mailbox& mailbox,
                                         bool skipped);
   static void SendAcknowledgeBufferPresentOnMainThread(
       const AcknowledgeBufferPresentCallback& ack,

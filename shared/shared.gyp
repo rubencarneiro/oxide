@@ -270,7 +270,7 @@
           ],
           'action': [
             'python',
-            '<(DEPTH)/chrome/tools/build/version.py',
+            '<(DEPTH)/build/util/version.py',
             '-f', '<(DEPTH)/chrome/VERSION',
             '-i', '<@(_inputs)',
             '-o', '<@(_outputs)'

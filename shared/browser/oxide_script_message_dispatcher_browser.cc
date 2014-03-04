@@ -194,6 +194,7 @@ class MessageReceiver {
 
 ScriptMessageDispatcherBrowser::ScriptMessageDispatcherBrowser(
     int render_process_id) :
+    content::BrowserMessageFilter(OxideMsgStart),
     render_process_id_(render_process_id) {}
 
 ScriptMessageDispatcherBrowser::~ScriptMessageDispatcherBrowser() {}

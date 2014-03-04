@@ -202,9 +202,10 @@ class WebView : public ScriptMessageTarget,
       const content::LoadCommittedDetails& load_details) FINAL;
 
   void FrameDetached(content::RenderViewHost* rvh,
-                     int64 frame_id) FINAL;
+                     int64 frame_routing_id) FINAL;
   void FrameAttached(content::RenderViewHost* rvh,
-                     int64 parent_frame_id, int64 frame_id) FINAL;
+                     int64 parent_frame_routing_id,
+                     int64 frame_routing_id) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 

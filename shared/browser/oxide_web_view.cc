@@ -170,7 +170,8 @@ void WebView::DidCommitProvisionalLoadForFrame(
     content::PageTransition transition_type,
     content::RenderViewHost* render_view_host) {
   content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
+      web_contents_->GetFrameTree()->FindByRoutingID(
+        frame_id, render_view_host->GetProcess()->GetID());
   DCHECK(node);
 
   WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
@@ -224,15 +225,14 @@ void WebView::NavigationEntryCommitted(
 }
 
 void WebView::FrameDetached(content::RenderViewHost* rvh,
-                            int64 frame_id) {
+                            int64 frame_routing_id) {
   if (!root_frame_) {
     return;
   }
 
-  // XXX: This is temporary until there's a better API for these events
-  //      The ID we have is only renderer-process unique
   content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
+      web_contents_->GetFrameTree()->FindByRoutingID(
+        frame_routing_id, rvh->GetProcess()->GetID());
   DCHECK(node);
 
   WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
@@ -240,17 +240,19 @@ void WebView::FrameDetached(content::RenderViewHost* rvh,
 }
 
 void WebView::FrameAttached(content::RenderViewHost* rvh,
-                            int64 parent_frame_id,
-                            int64 frame_id) {
+                            int64 parent_frame_routing_id,
+                            int64 frame_routing_id) {
   if (!root_frame_) {
     return;
   }
 
-  // XXX: This is temporary until there's a better API for these events
-  //      The ID's we have are only renderer-process unique
   content::FrameTree* tree = web_contents_->GetFrameTree();
-  content::FrameTreeNode* parent_node = tree->FindByFrameID(parent_frame_id);
-  content::FrameTreeNode* node = tree->FindByFrameID(frame_id);
+  int process_id = rvh->GetProcess()->GetID();
+
+  content::FrameTreeNode* parent_node =
+      tree->FindByRoutingID(parent_frame_routing_id, process_id);
+  content::FrameTreeNode* node =
+      tree->FindByRoutingID(frame_routing_id, process_id);
 
   DCHECK(parent_node && node);
 

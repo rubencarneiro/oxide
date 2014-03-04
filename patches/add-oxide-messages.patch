@@ -4,8 +4,7 @@
 diff --git a/ipc/ipc_message_start.h b/ipc/ipc_message_start.h
 --- a/ipc/ipc_message_start.h
 +++ b/ipc/ipc_message_start.h
-@@ -89,12 +89,13 @@ enum IPCMessageStart {
-   WebRTCIdentityMsgStart,
+@@ -90,12 +90,13 @@ enum IPCMessageStart {
    LocalDiscoveryMsgStart,
    PowerMonitorMsgStart,
    EncryptedMediaMsgStart,
@@ -13,6 +12,7 @@ diff --git a/ipc/ipc_message_start.h b/ipc/ipc_message_start.h
    MessagePortMsgStart,
    EmbeddedWorkerMsgStart,
    EmbeddedWorkerContextMsgStart,
+   CastMsgStart,
 +  OxideMsgStart,
    LastIPCMsgStart  // Must come last.
  };
