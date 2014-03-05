@@ -46,6 +46,7 @@ class RenderWidgetHostViewDelegatePrivate;
 
 class Q_DECL_EXPORT TextureInfo Q_DECL_FINAL {
  public:
+  TextureInfo();
   TextureInfo(unsigned int id, const QSize& size_in_pixels);
   ~TextureInfo();
 

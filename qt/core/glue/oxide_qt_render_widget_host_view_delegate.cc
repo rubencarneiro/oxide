@@ -28,6 +28,9 @@
 namespace oxide {
 namespace qt {
 
+TextureInfo::TextureInfo() :
+    id_(0) {}
+
 TextureInfo::TextureInfo(unsigned int id, const QSize& size_in_pixels) :
     id_(id),
     size_in_pixels_(size_in_pixels) {}

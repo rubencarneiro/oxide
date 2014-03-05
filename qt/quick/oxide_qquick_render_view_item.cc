@@ -131,6 +131,7 @@ void RenderViewItem::ScheduleUpdate() {
   }
 
   update();
+  polish();
 #else
   Q_ASSERT(0);
 #endif
@@ -205,7 +206,18 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 }
 
 void RenderViewItem::updatePolish() {
-  backing_store_ = GetBackingStore();
+  backing_store_ = NULL;
+#if defined(ENABLE_COMPOSITING)
+  texture_info_ = oxide::qt::TextureInfo();
+
+  if (is_compositing_enabled_) {
+    texture_info_ = GetCurrentTextureInfo();
+  } else {
+#else
+  {
+#endif
+    backing_store_ = GetBackingStore();
+  }
 }
 
 QSGNode* RenderViewItem::updatePaintNode(
@@ -239,7 +251,7 @@ QSGNode* RenderViewItem::updatePaintNode(
     }
 
     node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
-    node->updateFrontTexture(GetCurrentTextureInfo());
+    node->updateFrontTexture(texture_info_);
 
     DidUpdate(false);
     return node;

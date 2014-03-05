@@ -488,6 +488,8 @@ void RenderWidgetHostView::OnBlur() {
 }
 
 TextureHandle* RenderWidgetHostView::GetCurrentTextureHandle() {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
   if (IsInBufferSwap()) {
     return backbuffer_texture_handle_;
   }

@@ -87,6 +87,9 @@ class RenderViewItem Q_DECL_FINAL :
 
  private:
   const QPixmap* backing_store_;
+#if defined(ENABLE_COMPOSITING)
+  oxide::qt::TextureInfo texture_info_;
+#endif
   QRect dirty_rect_;
 
 #if defined(ENABLE_COMPOSITING)
