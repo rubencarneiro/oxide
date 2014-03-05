@@ -230,7 +230,7 @@ void RenderWidgetHostView::WasShown() {
 
   is_hidden_ = false;
 
-  GetRenderWidgetHostImpl()->WasShown();
+  host()->WasShown();
 }
 
 void RenderWidgetHostView::WasHidden() {
@@ -240,7 +240,7 @@ void RenderWidgetHostView::WasHidden() {
 
   is_hidden_ = true;
 
-  GetRenderWidgetHostImpl()->WasHidden();
+  host()->WasHidden();
 }
 
 void RenderWidgetHostView::MovePluginWindows(
@@ -440,7 +440,7 @@ content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
 }
 
 void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  GetRenderWidgetHostImpl()->SendScreenRects();
+  host()->SendScreenRects();
   GetRenderWidgetHost()->WasResized();
 }
 
@@ -473,15 +473,15 @@ bool RenderWidgetHostView::LockMouse() {
 void RenderWidgetHostView::UnlockMouse() {}
 
 void RenderWidgetHostView::OnFocus() {
-  GetRenderWidgetHostImpl()->GotFocus();
+  host()->GotFocus();
   GetRenderWidgetHost()->SetActive(true);
 
   // XXX: Should we have a run-time check to see if this is required?
-  GetRenderWidgetHostImpl()->SetInputMethodActive(true);
+  host()->SetInputMethodActive(true);
 }
 
 void RenderWidgetHostView::OnBlur() {
-  GetRenderWidgetHostImpl()->SetInputMethodActive(false);
+  host()->SetInputMethodActive(false);
 
   GetRenderWidgetHost()->SetActive(false);
   GetRenderWidgetHost()->Blur();

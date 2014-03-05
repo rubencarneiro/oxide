@@ -139,9 +139,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
-  content::RenderWidgetHostImpl* GetRenderWidgetHostImpl() const {
-    return host_;
-  }
+  content::RenderWidgetHostImpl* host() const { return host_; }
 
   void SetSize(const gfx::Size& size) OVERRIDE;
   void SetBounds(const gfx::Rect& rect) FINAL;
