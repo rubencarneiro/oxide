@@ -244,6 +244,83 @@ BrowserContext::IODataHandle::~IODataHandle() {
   io_data_ = NULL;
 }
 
+net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
+  return GetStoragePartition(this, NULL)->GetURLRequestContext();
+}
+
+net::URLRequestContextGetter*
+BrowserContext::GetRequestContextForRenderProcess(int renderer_child_id) {
+  content::RenderProcessHost* host =
+      content::RenderProcessHost::FromID(renderer_child_id);
+
+  return host->GetStoragePartition()->GetURLRequestContext();
+}
+
+net::URLRequestContextGetter* BrowserContext::GetMediaRequestContext() {
+  return GetRequestContext();
+}
+
+net::URLRequestContextGetter*
+BrowserContext::GetMediaRequestContextForRenderProcess(int renderer_child_id) {
+  content::RenderProcessHost* host =
+      content::RenderProcessHost::FromID(renderer_child_id);
+
+  return host->GetStoragePartition()->GetMediaURLRequestContext();
+}
+
+net::URLRequestContextGetter*
+BrowserContext::GetMediaRequestContextForStoragePartition(
+    const base::FilePath& partition_path,
+    bool in_memory) {
+  // We don't return any storage partition names from
+  // ContentBrowserClient::GetStoragePartitionConfigForSite(), so it's a
+  // bug to hit this
+  NOTREACHED() << "Invalid request for request context for storage partition";
+  return NULL;
+}
+
+void BrowserContext::RequestMidiSysExPermission(
+    int render_process_id,
+    int render_view_id,
+    int bridge_id,
+    const GURL& requesting_frame,
+    const MidiSysExPermissionCallback& callback) {
+  callback.Run(false);
+}
+
+void BrowserContext::CancelMidiSysExPermissionRequest(
+    int render_process_id,
+    int render_view_id,
+    int bridge_id,
+    const GURL& requesting_frame) {}
+
+void BrowserContext::RequestProtectedMediaIdentifierPermission(
+    int render_process_id,
+    int render_view_id,
+    int bridge_id,
+    int group_id,
+    const GURL& requesting_frame,
+    const ProtectedMediaIdentifierPermissionCallback& callback) {
+  callback.Run(false);
+}
+
+void BrowserContext::CancelProtectedMediaIdentifierPermissionRequests(
+    int group_id) {}
+
+content::DownloadManagerDelegate*
+    BrowserContext::GetDownloadManagerDelegate() {
+  return NULL;
+}
+
+content::GeolocationPermissionContext*
+    BrowserContext::GetGeolocationPermissionContext() {
+  return NULL;
+}
+
+quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
+  return NULL;
+}
+
 void BrowserContext::AddObserver(BrowserContextObserver* observer) {
   observers_.AddObserver(observer);
 }
@@ -358,85 +435,8 @@ void BrowserContext::SetUserAgent(const std::string& user_agent) {
                     NotifyUserAgentStringChanged());
 }
 
-net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
-  return GetStoragePartition(this, NULL)->GetURLRequestContext();
-}
-
-net::URLRequestContextGetter*
-BrowserContext::GetRequestContextForRenderProcess(int renderer_child_id) {
-  content::RenderProcessHost* host =
-      content::RenderProcessHost::FromID(renderer_child_id);
-
-  return host->GetStoragePartition()->GetURLRequestContext();
-}
-
-net::URLRequestContextGetter* BrowserContext::GetMediaRequestContext() {
-  return GetRequestContext();
-}
-
-net::URLRequestContextGetter*
-BrowserContext::GetMediaRequestContextForRenderProcess(int renderer_child_id) {
-  content::RenderProcessHost* host =
-      content::RenderProcessHost::FromID(renderer_child_id);
-
-  return host->GetStoragePartition()->GetMediaURLRequestContext();
-}
-
-net::URLRequestContextGetter*
-BrowserContext::GetMediaRequestContextForStoragePartition(
-    const base::FilePath& partition_path,
-    bool in_memory) {
-  // We don't return any storage partition names from
-  // ContentBrowserClient::GetStoragePartitionConfigForSite(), so it's a
-  // bug to hit this
-  NOTREACHED() << "Invalid request for request context for storage partition";
-  return NULL;
-}
-
-void BrowserContext::RequestMidiSysExPermission(
-    int render_process_id,
-    int render_view_id,
-    int bridge_id,
-    const GURL& requesting_frame,
-    const MidiSysExPermissionCallback& callback) {
-  callback.Run(false);
-}
-
-void BrowserContext::CancelMidiSysExPermissionRequest(
-    int render_process_id,
-    int render_view_id,
-    int bridge_id,
-    const GURL& requesting_frame) {}
-
-void BrowserContext::RequestProtectedMediaIdentifierPermission(
-    int render_process_id,
-    int render_view_id,
-    int bridge_id,
-    int group_id,
-    const GURL& requesting_frame,
-    const ProtectedMediaIdentifierPermissionCallback& callback) {
-  callback.Run(false);
-}
-
-void BrowserContext::CancelProtectedMediaIdentifierPermissionRequests(
-    int group_id) {}
-
 content::ResourceContext* BrowserContext::GetResourceContext() {
   return io_data()->GetResourceContext();
-}
-
-content::DownloadManagerDelegate*
-    BrowserContext::GetDownloadManagerDelegate() {
-  return NULL;
-}
-
-content::GeolocationPermissionContext*
-    BrowserContext::GetGeolocationPermissionContext() {
-  return NULL;
-}
-
-quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
-  return NULL;
 }
 
 } // namespace oxide

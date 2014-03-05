@@ -37,16 +37,16 @@ class OffTheRecordBrowserContextIODataImpl FINAL :
   base::FilePath GetCachePath() const FINAL;
   bool SetCachePath(const base::FilePath& cache_path) FINAL;
 
-  std::string GetAcceptLangs() const;
-  void SetAcceptLangs(const std::string& langs);
+  std::string GetAcceptLangs() const FINAL;
+  void SetAcceptLangs(const std::string& langs) FINAL;
 
-  std::string GetProduct() const;
-  void SetProduct(const std::string& product);
+  std::string GetProduct() const FINAL;
+  void SetProduct(const std::string& product) FINAL;
 
-  std::string GetUserAgent() const;
-  void SetUserAgent(const std::string& user_agent);
+  std::string GetUserAgent() const FINAL;
+  void SetUserAgent(const std::string& user_agent) FINAL;
 
-  bool IsOffTheRecord() const;
+  bool IsOffTheRecord() const FINAL;
 
  private:
   BrowserContextIOData* original_io_data_;

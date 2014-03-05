@@ -22,6 +22,7 @@
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/synchronization/lock.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_user_script_master.h"
@@ -49,7 +50,7 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   bool IsOffTheRecord() const FINAL;
 
  private:
-  std::string GetProductLocked() const;
+  mutable base::Lock lock_;
 
   base::FilePath path_;
   base::FilePath cache_path_;

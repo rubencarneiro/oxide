@@ -26,7 +26,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
-#include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
 
@@ -73,10 +72,9 @@ class BrowserContextIOData {
  protected:
   BrowserContextIOData();
 
-  mutable base::Lock lock_;
+ private:
   bool initialized_;
 
- private:
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
   scoped_ptr<net::FtpNetworkLayer> ftp_transaction_factory_;
@@ -135,52 +133,7 @@ class BrowserContext : public content::BrowserContext {
 
   virtual UserScriptMaster& UserScriptManager() = 0;
 
-  virtual net::URLRequestContextGetter* GetRequestContext() OVERRIDE;
-  virtual net::URLRequestContextGetter* GetRequestContextForRenderProcess(
-      int renderer_child_id) OVERRIDE;
-
-  virtual net::URLRequestContextGetter* GetMediaRequestContext() OVERRIDE;
-  virtual net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
-      int renderer_child_id) OVERRIDE;
-
-  virtual net::URLRequestContextGetter*
-      GetMediaRequestContextForStoragePartition(
-          const base::FilePath& partition_path,
-          bool in_memory) OVERRIDE;
-
-  virtual void RequestMidiSysExPermission(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      const GURL& requesting_frame,
-      const MidiSysExPermissionCallback& callback) OVERRIDE;
-
-  virtual void CancelMidiSysExPermissionRequest(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      const GURL& requesting_frame) OVERRIDE;
-
-  virtual void RequestProtectedMediaIdentifierPermission(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      int group_id,
-      const GURL& requesting_frame,
-      const ProtectedMediaIdentifierPermissionCallback& callback) OVERRIDE;
-
-  virtual void CancelProtectedMediaIdentifierPermissionRequests(
-      int group_id) OVERRIDE;
-
-  virtual content::ResourceContext* GetResourceContext() OVERRIDE;
-
-  virtual content::DownloadManagerDelegate*
-      GetDownloadManagerDelegate() OVERRIDE;
-
-  virtual content::GeolocationPermissionContext*
-      GetGeolocationPermissionContext() OVERRIDE;
-
-  virtual quota::SpecialStoragePolicy* GetSpecialStoragePolicy() OVERRIDE;
+  content::ResourceContext* GetResourceContext() FINAL;
 
  protected:
   BrowserContext(BrowserContextIOData* io_data);
@@ -198,6 +151,50 @@ class BrowserContext : public content::BrowserContext {
    private:
     BrowserContextIOData* io_data_;
   };
+
+  net::URLRequestContextGetter* GetRequestContext() FINAL;
+  net::URLRequestContextGetter* GetRequestContextForRenderProcess(
+      int renderer_child_id) FINAL;
+
+  net::URLRequestContextGetter* GetMediaRequestContext() FINAL;
+  net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
+      int renderer_child_id) FINAL;
+
+  net::URLRequestContextGetter*
+      GetMediaRequestContextForStoragePartition(
+          const base::FilePath& partition_path,
+          bool in_memory) FINAL;
+
+  void RequestMidiSysExPermission(
+      int render_process_id,
+      int render_view_id,
+      int bridge_id,
+      const GURL& requesting_frame,
+      const MidiSysExPermissionCallback& callback) FINAL;
+
+  void CancelMidiSysExPermissionRequest(
+      int render_process_id,
+      int render_view_id,
+      int bridge_id,
+      const GURL& requesting_frame) FINAL;
+
+  void RequestProtectedMediaIdentifierPermission(
+      int render_process_id,
+      int render_view_id,
+      int bridge_id,
+      int group_id,
+      const GURL& requesting_frame,
+      const ProtectedMediaIdentifierPermissionCallback& callback) FINAL;
+
+  void CancelProtectedMediaIdentifierPermissionRequests(
+      int group_id) FINAL;
+
+  content::DownloadManagerDelegate* GetDownloadManagerDelegate() FINAL;
+
+  content::GeolocationPermissionContext*
+      GetGeolocationPermissionContext() FINAL;
+
+  quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
