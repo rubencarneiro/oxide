@@ -28,14 +28,30 @@
 namespace oxide {
 namespace qt {
 
-TextureInfo::TextureInfo() :
-    id_(0) {}
+TextureHandleImpl::TextureHandleImpl() {}
 
-TextureInfo::TextureInfo(unsigned int id, const QSize& size_in_pixels) :
-    id_(id),
-    size_in_pixels_(size_in_pixels) {}
+TextureHandleImpl::~TextureHandleImpl() {}
 
-TextureInfo::~TextureInfo() {}
+unsigned int TextureHandleImpl::GetID() const {
+  if (!handle_) {
+    return 0;
+  }
+
+  return handle_->GetID();
+}
+
+QSize TextureHandleImpl::GetSize() const {
+  if (!handle_) {
+    return QSize();
+  }
+
+  gfx::Size size(handle_->GetSize());
+  return QSize(size.width(), size.height());
+}
+
+void TextureHandleImpl::SetHandle(oxide::TextureHandle* handle) {
+  handle_ = handle;
+}
 
 RenderWidgetHostViewDelegatePrivate::RenderWidgetHostViewDelegatePrivate() :
     rwhv(NULL) {}
@@ -76,12 +92,10 @@ void RenderWidgetHostViewDelegate::HandleTouchEvent(
   priv->rwhv->HandleTouchEvent(event);
 }
 
-TextureInfo RenderWidgetHostViewDelegate::GetCurrentTextureInfo() {
-  scoped_refptr<oxide::TextureHandle> handle(
+TextureHandle* RenderWidgetHostViewDelegate::GetCurrentTextureHandle() {
+  priv->current_texture_handle_.SetHandle(
       priv->rwhv->GetCurrentTextureHandle());
-  gfx::Size size(handle->GetSize());
-  return TextureInfo(handle->GetID(),
-                     QSize(size.width(), size.height()));
+  return &priv->current_texture_handle_;
 }
 
 void RenderWidgetHostViewDelegate::DidUpdate(bool skipped) {

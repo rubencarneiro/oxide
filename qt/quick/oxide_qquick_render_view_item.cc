@@ -41,7 +41,8 @@ RenderViewItem::RenderViewItem(
     QQuickItem(webview),
     backing_store_(NULL)
 #if defined(ENABLE_COMPOSITING)
-    , is_compositing_enabled_(false),
+    , texture_handle_(NULL),
+    is_compositing_enabled_(false),
     is_compositing_enabled_state_changed_(false) {
 #else
 {
@@ -208,10 +209,10 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 void RenderViewItem::updatePolish() {
   backing_store_ = NULL;
 #if defined(ENABLE_COMPOSITING)
-  texture_info_ = oxide::qt::TextureInfo();
+  texture_handle_ = NULL;
 
   if (is_compositing_enabled_) {
-    texture_info_ = GetCurrentTextureInfo();
+    texture_handle_ = GetCurrentTextureHandle();
   } else {
 #else
   {
@@ -251,7 +252,7 @@ QSGNode* RenderViewItem::updatePaintNode(
     }
 
     node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
-    node->updateFrontTexture(texture_info_);
+    node->updateFrontTexture(texture_handle_);
 
     DidUpdate(false);
     return node;

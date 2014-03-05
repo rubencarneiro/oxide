@@ -44,18 +44,13 @@ namespace qt {
 
 class RenderWidgetHostViewDelegatePrivate;
 
-class Q_DECL_EXPORT TextureInfo Q_DECL_FINAL {
+class Q_DECL_EXPORT TextureHandle {
  public:
-  TextureInfo();
-  TextureInfo(unsigned int id, const QSize& size_in_pixels);
-  ~TextureInfo();
+  TextureHandle() {}
+  virtual ~TextureHandle() {}
 
-  unsigned int id() const { return id_; }
-  QSize size_in_pixels() const { return size_in_pixels_; }
-
- private:
-  unsigned int id_;
-  QSize size_in_pixels_;
+  virtual unsigned int GetID() const = 0;
+  virtual QSize GetSize() const = 0;
 };
 
 class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
@@ -91,7 +86,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleInputMethodEvent(QInputMethodEvent* event);
   void HandleTouchEvent(QTouchEvent* event);
 
-  TextureInfo GetCurrentTextureInfo();
+  TextureHandle* GetCurrentTextureHandle();
   void DidUpdate(bool skipped);
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
