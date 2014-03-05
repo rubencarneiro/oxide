@@ -90,7 +90,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleInputMethodEvent(QInputMethodEvent* event);
   void HandleTouchEvent(QTouchEvent* event);
 
-  TextureInfo GetFrontbufferTextureInfo();
+  TextureInfo GetCurrentTextureInfo();
   void DidUpdate(bool skipped);
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;

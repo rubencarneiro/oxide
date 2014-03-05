@@ -239,7 +239,7 @@ QSGNode* RenderViewItem::updatePaintNode(
     }
 
     node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
-    node->updateFrontTexture(GetFrontbufferTextureInfo());
+    node->updateFrontTexture(GetCurrentTextureInfo());
 
     DidUpdate(false);
     return node;

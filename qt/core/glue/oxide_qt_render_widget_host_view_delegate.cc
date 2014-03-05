@@ -18,6 +18,10 @@
 #include "oxide_qt_render_widget_host_view_delegate.h"
 #include "oxide_qt_render_widget_host_view_delegate_p.h"
 
+#include "base/memory/ref_counted.h"
+#include "ui/gfx/size.h"
+
+#include "shared/browser/oxide_gpu_utils.h"
 #include "qt/core/browser/oxide_qt_backing_store.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 
@@ -69,11 +73,12 @@ void RenderWidgetHostViewDelegate::HandleTouchEvent(
   priv->rwhv->HandleTouchEvent(event);
 }
 
-TextureInfo RenderWidgetHostViewDelegate::GetFrontbufferTextureInfo() {
-  oxide::TextureInfo tex = priv->rwhv->GetFrontbufferTextureInfo();
-  return TextureInfo(tex.id(),
-                     QSize(tex.size_in_pixels().width(),
-                           tex.size_in_pixels().height()));
+TextureInfo RenderWidgetHostViewDelegate::GetCurrentTextureInfo() {
+  scoped_refptr<oxide::TextureHandle> handle(
+      priv->rwhv->GetCurrentTextureHandle());
+  gfx::Size size(handle->GetSize());
+  return TextureInfo(handle->GetID(),
+                     QSize(size.width(), size.height()));
 }
 
 void RenderWidgetHostViewDelegate::DidUpdate(bool skipped) {

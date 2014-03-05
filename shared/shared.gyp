@@ -152,6 +152,8 @@
         'browser/oxide_default_screen_info.h',
         'browser/oxide_form_factor.h',
         'browser/oxide_form_factor_linux.cc',
+        'browser/oxide_gpu_utils.cc',
+        'browser/oxide_gpu_utils.h',
         'browser/oxide_http_user_agent_settings.cc',
         'browser/oxide_http_user_agent_settings.h',
         'browser/oxide_io_thread_delegate.cc',

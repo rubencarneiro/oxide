@@ -537,10 +537,7 @@ void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
             scaled_rect.height()));
 }
 
-void RenderWidgetHostView::BuffersSwapped(
-    const AcknowledgeBufferPresentCallback& ack) {
-  DCHECK(acknowledge_buffer_present_callback_.is_null());
-  acknowledge_buffer_present_callback_ = ack;
+void RenderWidgetHostView::BuffersSwapped() {
   delegate_->ScheduleUpdate();
 }
 
@@ -858,12 +855,7 @@ void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
 }
 
 void RenderWidgetHostView::DidUpdate(bool skipped) {
-  if (acknowledge_buffer_present_callback_.is_null()) {
-    return;
-  }
-
-  SendAcknowledgeBufferPresent(acknowledge_buffer_present_callback_, skipped);
-  acknowledge_buffer_present_callback_.Reset();
+  AcknowledgeBuffersSwapped(skipped);
 }
 
 const QPixmap* RenderWidgetHostView::GetBackingStore() {
