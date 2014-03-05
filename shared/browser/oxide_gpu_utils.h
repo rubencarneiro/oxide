@@ -25,9 +25,11 @@
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
 
-template <typename Type> struct DefaultSingletonTraits;
-
 typedef unsigned int GLuint;
+
+namespace base {
+template <typename Type> class DeleteHelper;
+}
 
 namespace content {
 class WebGraphicsContext3DCommandBufferImpl;
@@ -60,7 +62,12 @@ class GpuUtils FINAL {
   scoped_ptr<WGC3DCBI> offscreen_context_;
 };
 
-class TextureHandle : public base::RefCountedThreadSafe<TextureHandle> {
+struct TextureHandleTraits {
+  static void Destruct(const TextureHandle* x);
+};
+
+class TextureHandle :
+    public base::RefCountedThreadSafe<TextureHandle, TextureHandleTraits> {
  public:
   virtual void Consume(const gpu::Mailbox& mailbox,
                        const gfx::Size& size) = 0;
@@ -69,7 +76,8 @@ class TextureHandle : public base::RefCountedThreadSafe<TextureHandle> {
   virtual GLuint GetID() = 0;
 
  protected:
-  friend class base::RefCountedThreadSafe<TextureHandle>;
+  friend struct TextureHandleTraits;
+  friend class base::DeleteHelper<TextureHandle>;
 
   TextureHandle() {}
   virtual ~TextureHandle() {}

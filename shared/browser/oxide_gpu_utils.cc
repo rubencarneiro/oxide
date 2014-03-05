@@ -17,6 +17,7 @@
 
 #include "oxide_gpu_utils.h"
 
+#include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "base/synchronization/condition_variable.h"
 #include "base/synchronization/lock.h"
@@ -28,6 +29,7 @@
 #include "content/common/gpu/gpu_command_buffer_stub.h"
 #include "content/common/gpu/gpu_process_launch_causes.h"
 #include "content/gpu/gpu_child_thread.h"
+#include "content/public/browser/browser_thread.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
@@ -48,6 +50,21 @@ void ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref) {
   ref->Release();
 }
 
+}
+
+// static
+void TextureHandleTraits::Destruct(const TextureHandle* x) {
+  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    delete x;
+    return;
+  }
+
+  if (!content::BrowserThread::DeleteSoon(content::BrowserThread::UI,
+                                          FROM_HERE, x)) {
+    LOG(ERROR) <<
+        "TextureHandle won't be deleted. This could be due to it "
+        "being leaked until after Chromium shutdown has begun";
+  }
 }
 
 class TextureHandleImpl : public TextureHandle {
@@ -80,6 +97,8 @@ class TextureHandleImpl : public TextureHandle {
 };
 
 void TextureHandleImpl::Clear() {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
   if (ref_) {
     content::GpuChildThread::instance()->message_loop()->PostTask(
         FROM_HERE,
@@ -136,6 +155,8 @@ TextureHandleImpl::TextureHandleImpl(int32 client_id, int32 route_id) :
     service_id_(0) {}
 
 TextureHandleImpl::~TextureHandleImpl() {
+  base::AutoLock lock(lock_);
+  DCHECK(!is_fetch_texture_resources_pending_);
   Clear();
 }
 
