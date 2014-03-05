@@ -31,7 +31,6 @@
 #include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/notification_details.h"
-#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/notification_service.h"
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
@@ -337,11 +336,10 @@ bool WebView::Init(BrowserContext* context,
   // HttpUserAgentSettings::GetUserAgent()
   web_contents_->SetUserAgentOverride(context->GetUserAgent());
 
-  registrar_.reset(new content::NotificationRegistrar);
-  registrar_->Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
-                  content::NotificationService::AllBrowserContextsAndSources());
-  registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
-                  content::NotificationService::AllBrowserContextsAndSources());
+  registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
+                 content::NotificationService::AllBrowserContextsAndSources());
+  registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
+                 content::NotificationService::AllBrowserContextsAndSources());
 
   root_frame_.reset(CreateWebFrame(web_contents_->GetFrameTree()->root()));
 

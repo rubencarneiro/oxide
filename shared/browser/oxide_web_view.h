@@ -25,6 +25,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/notification_observer.h"
+#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
@@ -231,7 +232,7 @@ class WebView : public ScriptMessageTarget,
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
-  scoped_ptr<content::NotificationRegistrar> registrar_;
+  content::NotificationRegistrar registrar_;
   scoped_ptr<WebFrame> root_frame_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
