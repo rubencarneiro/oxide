@@ -81,6 +81,7 @@ class BrowserContextIOData {
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
   scoped_ptr<net::FtpNetworkLayer> ftp_transaction_factory_;
   scoped_ptr<net::HttpServerProperties> http_server_properties_;
+  scoped_ptr<net::NetworkDelegate> network_delegate_;
 
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;

@@ -51,6 +51,7 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread_delegate.h"
+#include "oxide_network_delegate.h"
 #include "oxide_off_the_record_browser_context_impl.h"
 #include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
@@ -113,6 +114,7 @@ void BrowserContextIOData::Init(
   http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
   ftp_transaction_factory_.reset(
       new net::FtpNetworkLayer(io_thread_delegate->host_resolver()));
+  network_delegate_.reset(new NetworkDelegate());
 
   // TODO: We want persistent storage here (for non-incognito), but the
   //       persistent implementation used in Chrome uses the preferences
@@ -130,7 +132,7 @@ void BrowserContextIOData::Init(
       io_thread_delegate->http_auth_handler_factory());
   context->set_proxy_service(io_thread_delegate->proxy_service());
   storage->set_ssl_config_service(ssl_config_service_.get());
-  context->set_network_delegate(io_thread_delegate->network_delegate());
+  context->set_network_delegate(network_delegate_.get());
   context->set_http_user_agent_settings(http_user_agent_settings_.get());
   context->set_throttler_manager(io_thread_delegate->throttler_manager());
 
