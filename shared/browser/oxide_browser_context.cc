@@ -253,7 +253,7 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
 }
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
-    io_data_(io_data) {
+    io_data_handle_(io_data) {
   CHECK(BrowserProcessMain::Exists()) <<
       "The main browser process components must be started before " <<
       "creating a context";
@@ -306,7 +306,7 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
 }
 
 bool BrowserContext::IsOffTheRecord() const {
-  return io_data_.IsOffTheRecord();
+  return io_data()->IsOffTheRecord();
 }
 
 bool BrowserContext::IsSameContext(BrowserContext* other) const {
@@ -315,27 +315,27 @@ bool BrowserContext::IsSameContext(BrowserContext* other) const {
 }
 
 base::FilePath BrowserContext::GetPath() const {
-  return io_data_.GetPath();
+  return io_data()->GetPath();
 }
 
 base::FilePath BrowserContext::GetCachePath() const {
-  return io_data_.GetCachePath();
+  return io_data()->GetCachePath();
 }
 
 std::string BrowserContext::GetAcceptLangs() const {
-  return io_data_.GetAcceptLangs();
+  return io_data()->GetAcceptLangs();
 }
 
 void BrowserContext::SetAcceptLangs(const std::string& langs) {
-  io_data_.SetAcceptLangs(langs);
+  io_data()->SetAcceptLangs(langs);
 }
 
 std::string BrowserContext::GetProduct() const {
-  return io_data_.GetProduct();
+  return io_data()->GetProduct();
 }
 
 void BrowserContext::SetProduct(const std::string& product) {
-  io_data_.SetProduct(product);
+  io_data()->SetProduct(product);
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     GetOriginalContext()->observers_,
                     NotifyUserAgentStringChanged());
@@ -345,11 +345,11 @@ void BrowserContext::SetProduct(const std::string& product) {
 }
 
 std::string BrowserContext::GetUserAgent() const {
-  return io_data_.GetUserAgent();
+  return io_data()->GetUserAgent();
 }
 
 void BrowserContext::SetUserAgent(const std::string& user_agent) {
-  io_data_.SetUserAgent(user_agent);
+  io_data()->SetUserAgent(user_agent);
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     GetOriginalContext()->observers_,
                     NotifyUserAgentStringChanged());
@@ -422,7 +422,7 @@ void BrowserContext::CancelProtectedMediaIdentifierPermissionRequests(
     int group_id) {}
 
 content::ResourceContext* BrowserContext::GetResourceContext() {
-  return io_data_.GetResourceContext();
+  return io_data()->GetResourceContext();
 }
 
 content::DownloadManagerDelegate*

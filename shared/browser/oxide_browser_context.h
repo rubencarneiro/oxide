@@ -131,7 +131,7 @@ class BrowserContext : public content::BrowserContext {
   std::string GetUserAgent() const;
   void SetUserAgent(const std::string& user_agent);
 
-  BrowserContextIOData* io_data() const { return io_data_.io_data(); }
+  BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 
   virtual UserScriptMaster& UserScriptManager() = 0;
 
@@ -195,30 +195,6 @@ class BrowserContext : public content::BrowserContext {
 
     BrowserContextIOData* io_data() const { return io_data_; }
 
-    bool IsOffTheRecord() const { return io_data_->IsOffTheRecord(); }
-
-    base::FilePath GetPath() const { return io_data_->GetPath(); }
-    base::FilePath GetCachePath() const { return io_data_->GetCachePath(); }
-
-    std::string GetAcceptLangs() const { return io_data_->GetAcceptLangs(); }
-    void SetAcceptLangs(const std::string& langs) {
-      io_data_->SetAcceptLangs(langs);
-    }
-
-    std::string GetProduct() const { return io_data_->GetProduct(); }
-    void SetProduct(const std::string& product) {
-      io_data_->SetProduct(product);
-    }
-
-    std::string GetUserAgent() const { return io_data_->GetUserAgent(); }
-    void SetUserAgent(const std::string& user_agent) {
-      io_data_->SetUserAgent(user_agent);
-    }
-
-    content::ResourceContext* GetResourceContext() {
-      return io_data_->GetResourceContext();
-    }
-
    private:
     BrowserContextIOData* io_data_;
   };
@@ -226,7 +202,7 @@ class BrowserContext : public content::BrowserContext {
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
 
-  IODataHandle io_data_;
+  IODataHandle io_data_handle_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
 
