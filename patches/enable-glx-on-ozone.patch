@@ -323,7 +323,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
 --- a/ui/gl/gl_image_glx.cc
 +++ b/ui/gl/gl_image_glx.cc
-@@ -7,16 +7,17 @@ extern "C" {
+@@ -7,32 +7,38 @@ extern "C" {
  }
  
  #include "ui/gl/gl_image_glx.h"
@@ -341,10 +341,9 @@ diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
  namespace {
  
  // scoped_ptr functor for XFree(). Use as follows:
-@@ -24,16 +25,21 @@ namespace {
+ //   scoped_ptr<XVisualInfo, ScopedPtrXFree> foo(...);
  // where "XVisualInfo" is any X type that is freed with XFree.
- class ScopedPtrXFree {
-  public:
+ struct ScopedPtrXFree {
    void operator()(void* x) const {
      ::XFree(x);
    }
@@ -363,7 +362,7 @@ diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
  }
  
  int TextureFormat(int depth) {
-@@ -41,17 +47,17 @@ int TextureFormat(int depth) {
+@@ -40,17 +46,17 @@ int TextureFormat(int depth) {
      return GLX_TEXTURE_FORMAT_RGBA_EXT;
  
    return GLX_TEXTURE_FORMAT_RGB_EXT;
@@ -408,7 +407,7 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
 --- a/ui/gl/gl_surface_egl.cc
 +++ b/ui/gl/gl_surface_egl.cc
-@@ -746,17 +746,17 @@ EGLSurface SurfacelessEGL::GetHandle() {
+@@ -761,17 +761,17 @@ EGLSurface SurfacelessEGL::GetHandle() {
  
  void* SurfacelessEGL::GetShareHandle() {
    return NULL;
@@ -448,10 +447,10 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  namespace gfx {
  
  namespace {
-@@ -35,16 +36,21 @@ namespace {
+@@ -34,16 +35,21 @@ namespace {
+ //   scoped_ptr<XVisualInfo, ScopedPtrXFree> foo(...);
  // where "XVisualInfo" is any X type that is freed with XFree.
- class ScopedPtrXFree {
-  public:
+ struct ScopedPtrXFree {
    void operator()(void* x) const {
      ::XFree(x);
    }
@@ -470,7 +469,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  bool g_glx_oml_sync_control_supported = false;
  
  // Track support of glXGetMscRateOML separately from GLX_OML_sync_control as a
-@@ -390,17 +396,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
+@@ -389,17 +395,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
        base::MessageLoop::current() &&
        base::MessageLoop::current()->type() == base::MessageLoop::TYPE_GPU;
  

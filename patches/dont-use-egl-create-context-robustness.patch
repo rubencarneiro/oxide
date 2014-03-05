@@ -6,7 +6,7 @@
 diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
 --- a/ui/gl/gl_surface_egl.cc
 +++ b/ui/gl/gl_surface_egl.cc
-@@ -263,18 +263,18 @@ bool GLSurfaceEGL::InitializeOneOff() {
+@@ -266,18 +266,18 @@ bool GLSurfaceEGL::InitializeOneOff() {
          return false;
        }
      }
@@ -21,9 +21,9 @@ diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
 +  //    HasEGLExtension("EGL_EXT_create_context_robustness");
    g_egl_sync_control_supported =
        HasEGLExtension("EGL_CHROMIUM_sync_control");
+   g_egl_window_fixed_size_supported =
+       HasEGLExtension("EGL_ANGLE_window_fixed_size");
  
    // Check if SurfacelessEGL is supported.
    g_egl_surfaceless_context_supported =
        HasEGLExtension("EGL_KHR_surfaceless_context");
-   if (g_egl_surfaceless_context_supported) {
-     // EGL_KHR_surfaceless_context is supported but ensure
