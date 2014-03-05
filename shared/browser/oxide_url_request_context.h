@@ -24,6 +24,7 @@
 #include "content/public/browser/content_browser_client.h"
 #include "net/url_request/url_request_context.h"
 #include "net/url_request/url_request_context_getter.h"
+#include "net/url_request/url_request_context_storage.h"
 
 namespace base {
 
@@ -35,20 +36,16 @@ namespace oxide {
 
 class BrowserContextIOData;
 
-class URLRequestContext : public net::URLRequestContext {
+class URLRequestContext FINAL : public net::URLRequestContext,
+                                public base::SupportsWeakPtr<URLRequestContext> {
  public:
-  virtual ~URLRequestContext() {}
+  URLRequestContext();
+  ~URLRequestContext();
 
-  base::WeakPtr<URLRequestContext> GetWeakPtr() {
-    return weak_factory_.GetWeakPtr();
-  }
-
- protected:
-  URLRequestContext() :
-      weak_factory_(this) {}
+  net::URLRequestContextStorage* storage() { return &storage_; }
 
  private:
-  base::WeakPtrFactory<URLRequestContext> weak_factory_;
+  net::URLRequestContextStorage storage_;
 
   DISALLOW_COPY_AND_ASSIGN(URLRequestContext);
 };

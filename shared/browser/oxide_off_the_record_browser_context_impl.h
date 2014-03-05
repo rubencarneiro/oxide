@@ -32,9 +32,6 @@ class OffTheRecordBrowserContextIODataImpl FINAL :
  public:
   OffTheRecordBrowserContextIODataImpl(BrowserContextIOData* original_io_data);
 
-  net::SSLConfigService* ssl_config_service() const FINAL;
-  net::HttpUserAgentSettings* http_user_agent_settings() const FINAL;
-
   base::FilePath GetPath() const FINAL;
   bool SetPath(const base::FilePath& path) FINAL;
   base::FilePath GetCachePath() const FINAL;

@@ -24,6 +24,7 @@
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
@@ -31,6 +32,8 @@
 
 namespace net {
 
+class FtpNetworkLayer;
+class HttpServerProperties;
 class HttpUserAgentSettings;
 class SSLConfigService;
 
@@ -47,9 +50,6 @@ class UserScriptMaster;
 class BrowserContextIOData {
  public:
   virtual ~BrowserContextIOData();
-
-  virtual net::SSLConfigService* ssl_config_service() const = 0;
-  virtual net::HttpUserAgentSettings* http_user_agent_settings() const = 0;
 
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
@@ -77,6 +77,11 @@ class BrowserContextIOData {
   bool initialized_;
 
  private:
+  scoped_refptr<net::SSLConfigService> ssl_config_service_;
+  scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
+  scoped_ptr<net::FtpNetworkLayer> ftp_transaction_factory_;
+  scoped_ptr<net::HttpServerProperties> http_server_properties_;
+
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
 };

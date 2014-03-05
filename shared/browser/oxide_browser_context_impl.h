@@ -21,7 +21,6 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
-#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 #include "oxide_browser_context.h"
@@ -35,9 +34,6 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
  public:
   BrowserContextIODataImpl(const base::FilePath& path,
                            const base::FilePath& cache_path);
-
-  net::SSLConfigService* ssl_config_service() const FINAL;
-  net::HttpUserAgentSettings* http_user_agent_settings() const FINAL;
 
   base::FilePath GetPath() const FINAL;
   base::FilePath GetCachePath() const FINAL;
@@ -54,9 +50,6 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
 
  private:
   std::string GetProductLocked() const;
-
-  scoped_refptr<net::SSLConfigService> ssl_config_service_;
-  scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
 
   base::FilePath path_;
   base::FilePath cache_path_;

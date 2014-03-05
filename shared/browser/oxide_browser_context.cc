@@ -49,136 +49,16 @@
 #include "oxide_browser_context_impl.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread_delegate.h"
 #include "oxide_off_the_record_browser_context_impl.h"
+#include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
 
 namespace oxide {
 
 namespace {
-
 base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
-
-class DefaultURLRequestContext FINAL : public URLRequestContext {
- public:
-  DefaultURLRequestContext() :
-      storage_(this) {}
-
-  class Storage FINAL {
-   public:
-    Storage(DefaultURLRequestContext* owner) :
-        owner_(owner) {}
-
-    void set_net_log(net::NetLog* net_log) {
-      owner_->set_net_log(net_log);
-    }
-
-    void set_host_resolver(net::HostResolver* host_resolver) {
-      owner_->set_host_resolver(host_resolver);
-    }
-
-    void set_cert_verifier(net::CertVerifier* cert_verifier) {
-      owner_->set_cert_verifier(cert_verifier);
-    }
-
-    void set_server_bound_cert_service(
-        net::ServerBoundCertService* server_bound_cert_service) {
-      server_bound_cert_service_.reset(server_bound_cert_service);
-      owner_->set_server_bound_cert_service(server_bound_cert_service);
-    }
-
-    void set_fraudulent_certificate_reporter(
-        net::FraudulentCertificateReporter* fraudulent_certificate_reporter) {
-      owner_->set_fraudulent_certificate_reporter(
-          fraudulent_certificate_reporter);
-    }
-
-    void set_http_auth_handler_factory(
-        net::HttpAuthHandlerFactory* http_auth_handler_factory) {
-      owner_->set_http_auth_handler_factory(http_auth_handler_factory);
-    }
-
-    void set_proxy_service(net::ProxyService* proxy_service) {
-      owner_->set_proxy_service(proxy_service);
-    }
-
-    void set_ssl_config_service(net::SSLConfigService* ssl_config_service) {
-      owner_->set_ssl_config_service(ssl_config_service);
-    }
-
-    void set_network_delegate(net::NetworkDelegate* network_delegate) {
-      owner_->set_network_delegate(network_delegate);
-    }
-
-    void set_http_server_properties(
-        net::HttpServerProperties* http_server_properties) {
-      http_server_properties_.reset(http_server_properties);
-      owner_->set_http_server_properties(http_server_properties->GetWeakPtr());
-    }
-
-    void set_http_user_agent_settings(
-        net::HttpUserAgentSettings* http_user_agent_settings) {
-      owner_->set_http_user_agent_settings(http_user_agent_settings);
-    }
-
-    void set_cookie_store(net::CookieStore* cookie_store) {
-      // We hold a strong reference to this, but net::URLRequestContext
-      // already has a scoped_refptr
-      owner_->set_cookie_store(cookie_store);
-    }
-
-    void set_transport_security_state(
-        net::TransportSecurityState* transport_security_state) {
-      transport_security_state_.reset(transport_security_state);
-      owner_->set_transport_security_state(transport_security_state);
-    }
-
-    void set_http_transaction_factory(
-        net::HttpTransactionFactory* http_transaction_factory) {
-      http_transaction_factory_.reset(http_transaction_factory);
-      owner_->set_http_transaction_factory(http_transaction_factory);
-    }
-
-    void set_job_factory(net::URLRequestJobFactory* job_factory) {
-      job_factory_.reset(job_factory);
-      owner_->set_job_factory(job_factory);
-    }
-
-    void set_throttler_manager(
-        net::URLRequestThrottlerManager* throttler_manager) {
-      owner_->set_throttler_manager(throttler_manager);
-    }
-
-    net::FtpTransactionFactory* ftp_transaction_factory() const {
-      return ftp_transaction_factory_.get();
-    }
-
-    void set_ftp_transaction_factory(
-        net::FtpTransactionFactory* ftp_transaction_factory) {
-      ftp_transaction_factory_.reset(ftp_transaction_factory);
-    }
-
-   private:
-    DefaultURLRequestContext* owner_;
-
-    // This needs to outlive job_factory_
-    scoped_ptr<net::FtpTransactionFactory> ftp_transaction_factory_;
-
-    scoped_ptr<net::ServerBoundCertService> server_bound_cert_service_;
-    scoped_ptr<net::HttpServerProperties> http_server_properties_;
-    scoped_ptr<net::TransportSecurityState> transport_security_state_;
-    scoped_ptr<net::HttpTransactionFactory> http_transaction_factory_;
-    scoped_ptr<net::URLRequestJobFactory> job_factory_;
-  };
-
-  Storage* storage() { return &storage_; }
-
- private:
-  Storage storage_;
-
-  DISALLOW_COPY_AND_ASSIGN(DefaultURLRequestContext);
-};
-
 } // namespace
 
 class ResourceContext FINAL : public content::ResourceContext {
@@ -226,54 +106,55 @@ void BrowserContextIOData::Init(
 
   initialized_ = true;
 
-  DefaultURLRequestContext* context = new DefaultURLRequestContext();
-
   IOThreadDelegate* io_thread_delegate =
       BrowserProcessMain::instance()->io_thread_delegate();
 
-  context->storage()->set_net_log(io_thread_delegate->net_log());
-  context->storage()->set_host_resolver(
-      io_thread_delegate->host_resolver());
-  context->storage()->set_cert_verifier(
-      io_thread_delegate->cert_verifier());
-  context->storage()->set_http_auth_handler_factory(
-      io_thread_delegate->http_auth_handler_factory());
-  context->storage()->set_proxy_service(
-      io_thread_delegate->proxy_service());
-  context->storage()->set_ssl_config_service(ssl_config_service());
-  context->storage()->set_network_delegate(
-      io_thread_delegate->network_delegate());
-  context->storage()->set_http_user_agent_settings(http_user_agent_settings());
-  context->storage()->set_throttler_manager(
-      io_thread_delegate->throttler_manager());
-
-  // TODO: We want persistent storage here (for non-incognito), but 
-  //       SQLiteServerBoundCertStore is part of chrome
-  context->storage()->set_server_bound_cert_service(
-      new net::ServerBoundCertService(
-          new net::DefaultServerBoundCertStore(NULL),
-          base::WorkerPool::GetTaskRunner(true)));
+  ssl_config_service_ = new SSLConfigService();
+  http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
+  ftp_transaction_factory_.reset(
+      new net::FtpNetworkLayer(io_thread_delegate->host_resolver()));
 
   // TODO: We want persistent storage here (for non-incognito), but the
   //       persistent implementation used in Chrome uses the preferences
   //       system, which we don't want. We need our own implementation,
   //       backed either by sqlite or a text file
-  context->storage()->set_http_server_properties(
-      new net::HttpServerPropertiesImpl());
+  http_server_properties_.reset(new net::HttpServerPropertiesImpl());
+
+  URLRequestContext* context = new URLRequestContext();
+  net::URLRequestContextStorage* storage = context->storage();
+
+  context->set_net_log(io_thread_delegate->net_log());
+  context->set_host_resolver(io_thread_delegate->host_resolver());
+  context->set_cert_verifier(io_thread_delegate->cert_verifier());
+  context->set_http_auth_handler_factory(
+      io_thread_delegate->http_auth_handler_factory());
+  context->set_proxy_service(io_thread_delegate->proxy_service());
+  storage->set_ssl_config_service(ssl_config_service_.get());
+  context->set_network_delegate(io_thread_delegate->network_delegate());
+  context->set_http_user_agent_settings(http_user_agent_settings_.get());
+  context->set_throttler_manager(io_thread_delegate->throttler_manager());
+
+  // TODO: We want persistent storage here (for non-incognito), but 
+  //       SQLiteServerBoundCertStore is part of chrome
+  storage->set_server_bound_cert_service(
+      new net::ServerBoundCertService(
+          new net::DefaultServerBoundCertStore(NULL),
+          base::WorkerPool::GetTaskRunner(true)));
+
+  context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
   base::FilePath cookie_path;
   if (!IsOffTheRecord()) {
     DCHECK(!GetPath().empty());
     cookie_path = GetPath().Append(kCookiesFilename);
   }
-  context->storage()->set_cookie_store(content::CreateCookieStore(
+  storage->set_cookie_store(content::CreateCookieStore(
       content::CookieStoreConfig(
         cookie_path,
         content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
         NULL, NULL)));
 
-  context->storage()->set_transport_security_state(
-      new net::TransportSecurityState());
+  storage->set_transport_security_state(new net::TransportSecurityState());
   // TODO: Need to implement net::TransportSecurityState::Delegate in order
   //       to have persistence for non-incognito mode. There is an
   //       implementation in Chrome which is backed by a json file
@@ -308,12 +189,12 @@ void BrowserContextIOData::Init(
       context->http_server_properties();
   session_params.net_log = context->net_log();
 
-  context->storage()->set_http_transaction_factory(
+  storage->set_http_transaction_factory(
       new net::HttpCache(session_params, cache_backend));
 
   net::URLRequestJobFactoryImpl* job_factory =
       new net::URLRequestJobFactoryImpl();
-  context->storage()->set_job_factory(job_factory);
+  storage->set_job_factory(job_factory);
 
   bool set_protocol = false;
   for (content::ProtocolHandlerMap::iterator it = protocol_handlers.begin();
@@ -334,11 +215,9 @@ void BrowserContextIOData::Init(
       oxide::kDataScheme, new net::DataProtocolHandler());
   DCHECK(set_protocol);
 
-  context->storage()->set_ftp_transaction_factory(
-      new net::FtpNetworkLayer(context->host_resolver()));
   set_protocol = job_factory->SetProtocolHandler(
-      oxide::kFtpScheme, new net::FtpProtocolHandler(
-          context->storage()->ftp_transaction_factory()));
+      oxide::kFtpScheme,
+      new net::FtpProtocolHandler(ftp_transaction_factory_.get()));
   DCHECK(set_protocol);
 
   main_request_context_.reset(context);

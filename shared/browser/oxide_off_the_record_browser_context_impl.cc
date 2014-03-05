@@ -28,17 +28,6 @@ OffTheRecordBrowserContextIODataImpl::OffTheRecordBrowserContextIODataImpl(
     BrowserContextIOData* original_io_data) :
     original_io_data_(original_io_data) {}
 
-net::SSLConfigService*
-OffTheRecordBrowserContextIODataImpl::ssl_config_service() const {
-  return original_io_data_->ssl_config_service();
-}
-
-net::HttpUserAgentSettings*
-OffTheRecordBrowserContextIODataImpl::http_user_agent_settings() const {
-  return original_io_data_->http_user_agent_settings();
-}
-
-
 base::FilePath
 OffTheRecordBrowserContextIODataImpl::GetPath() const {
   return base::FilePath();

@@ -26,17 +26,13 @@
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_content_client.h"
 
-#include "oxide_http_user_agent_settings.h"
 #include "oxide_off_the_record_browser_context_impl.h"
-#include "oxide_ssl_config_service.h"
 
 namespace oxide {
 
 BrowserContextIODataImpl::BrowserContextIODataImpl(
     const base::FilePath& path,
     const base::FilePath& cache_path) :
-    ssl_config_service_(new SSLConfigService()),
-    http_user_agent_settings_(new HttpUserAgentSettings(this)),
     path_(path),
     cache_path_(cache_path),
     product_(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
@@ -44,16 +40,6 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     default_user_agent_string_(true),
     // FIXME: Get from translations
     accept_langs_("en-us,en") {}
-
-net::SSLConfigService*
-BrowserContextIODataImpl::ssl_config_service() const {
-  return ssl_config_service_.get();
-}
-
-net::HttpUserAgentSettings*
-BrowserContextIODataImpl::http_user_agent_settings() const {
-  return http_user_agent_settings_.get();
-}
 
 base::FilePath BrowserContextIODataImpl::GetPath() const {
   return path_;
