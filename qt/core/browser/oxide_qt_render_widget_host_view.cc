@@ -811,7 +811,11 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
 }
 
 void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
-  base::TimeDelta timestamp(base::TimeDelta::FromMilliseconds(event->timestamp()));
+  // The event’s timestamp is not guaranteed to have the same origin as the
+  // internal timedelta used by chromium to calculate speed and displacement
+  // for a fling gesture, so we can’t use it.
+  base::TimeDelta timestamp(base::TimeTicks::Now() - base::TimeTicks());
+
   float scale = 1 / GetDeviceScaleFactor();
 
   for (int i = 0; i < event->touchPoints().size(); ++i) {
