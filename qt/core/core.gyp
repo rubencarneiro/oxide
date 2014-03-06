@@ -36,6 +36,7 @@
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
+        '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
@@ -74,6 +75,7 @@
         'gl/oxide_gl_implementation.cc',
         'gl/oxide_qt_shared_gl_context.cc',
         'gl/oxide_qt_shared_gl_context.h',
+        'glue/private/oxide_qt_web_context_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.h'
       ],

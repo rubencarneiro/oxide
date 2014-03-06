@@ -15,41 +15,34 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_DELEGATE_H_
-#define _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_DELEGATE_H_
+#include "../oxide_qt_web_context_adapter_p.h"
+#include "../oxide_qt_web_context_adapter.h"
 
-#include "base/memory/ref_counted.h"
-#include "net/base/completion_callback.h"
-#include "net/base/net_errors.h"
+#include "base/logging.h"
 
-class GURL;
-
-namespace net {
-class HttpRequestHeaders;
-class HttpResponseHeaders;
-class URLRequest;
-}
+#include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_browser_context_delegate.h"
 
 namespace oxide {
+namespace qt {
 
-class BrowserContextDelegate :
-    public base::RefCountedThreadSafe<BrowserContextDelegate> {
+class BrowserContextDelegate : public oxide::BrowserContextDelegate {
  public:
-  // Called on the IO thread
+  BrowserContextDelegate() {}
+  virtual ~BrowserContextDelegate() {}
+
   virtual int OnBeforeURLRequest(net::URLRequest* request,
                                  const net::CompletionCallback& callback,
                                  GURL* new_url) {
     return net::OK;
   }
 
-  // Called on the IO thread
   virtual int OnBeforeSendHeaders(net::URLRequest* request,
                                   const net::CompletionCallback& callback,
                                   net::HttpRequestHeaders* headers) {
     return net::OK;
   }
 
-  // Called on the IO thread
   virtual int OnHeadersReceived(
       net::URLRequest* request,
       const net::CompletionCallback& callback,
@@ -57,14 +50,44 @@ class BrowserContextDelegate :
       scoped_refptr<net::HttpResponseHeaders>* override_response_headers) {
     return net::OK;
   }
-
- protected:
-  friend class base::RefCountedThreadSafe<BrowserContextDelegate>;
-
-  BrowserContextDelegate() {}
-  virtual ~BrowserContextDelegate() {}
 };
 
-} // namespace oxide
+WebContextAdapterPrivate::WebContextAdapterPrivate() :
+    construct_props_(new ConstructProperties()),
+    context_delegate_(new BrowserContextDelegate()) {}
 
-#endif // _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_DELEGATE_H_
+WebContextAdapterPrivate::~WebContextAdapterPrivate() {
+  if (context()) {
+    context()->SetDelegate(NULL);
+  }
+}
+
+void WebContextAdapterPrivate::Init() {
+  DCHECK(!context_);
+
+  context_.reset(oxide::BrowserContext::Create(
+      construct_props()->data_path,
+      construct_props()->cache_path));
+
+  if (!construct_props()->product.empty()) {
+    context()->SetProduct(construct_props()->product);
+  }
+  if (!construct_props()->user_agent.empty()) {
+    context()->SetUserAgent(construct_props()->user_agent);
+  }
+  if (!construct_props()->accept_langs.empty()) {
+    context()->SetAcceptLangs(construct_props()->accept_langs);
+  }
+  context()->SetDelegate(context_delegate_);
+
+  construct_props_.reset();
+}
+
+// static
+WebContextAdapterPrivate* WebContextAdapterPrivate::get(
+    WebContextAdapter* adapter) {
+  return adapter->priv.data();
+}
+
+} // namespace qt
+} // namespace oxide

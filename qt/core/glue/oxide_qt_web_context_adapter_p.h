@@ -19,9 +19,12 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
 
 #include <QList>
+#include <string>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/files/file_path.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 namespace oxide {
@@ -30,12 +33,23 @@ class BrowserContext;
 
 namespace qt {
 
+class BrowserContextDelegate;
 struct ConstructProperties;
 class WebContextAdapter;
 
 class WebContextAdapterPrivate FINAL {
  public:
+
+  struct ConstructProperties {
+    std::string product;
+    std::string user_agent;
+    base::FilePath data_path;
+    base::FilePath cache_path;
+    std::string accept_langs;
+  };
+
   WebContextAdapterPrivate();
+  ~WebContextAdapterPrivate();
 
   void Init();
 
@@ -47,6 +61,7 @@ class WebContextAdapterPrivate FINAL {
  private:
   scoped_ptr<oxide::BrowserContext> context_;
   scoped_ptr<ConstructProperties> construct_props_;
+  scoped_refptr<BrowserContextDelegate> context_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextAdapterPrivate);
 };

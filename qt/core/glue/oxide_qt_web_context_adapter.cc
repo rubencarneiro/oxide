@@ -25,7 +25,6 @@
 #include <QObject>
 #include <QtDebug>
 
-#include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "url/gurl.h"
@@ -55,43 +54,6 @@ int GetProcessFlags() {
   }
 }
 
-}
-
-struct ConstructProperties {
-  std::string product;
-  std::string user_agent;
-  base::FilePath data_path;
-  base::FilePath cache_path;
-  std::string accept_langs;
-};
-
-WebContextAdapterPrivate::WebContextAdapterPrivate() :
-    construct_props_(new ConstructProperties()) {}
-
-void WebContextAdapterPrivate::Init() {
-  DCHECK(!context_);
-
-  context_.reset(oxide::BrowserContext::Create(
-      construct_props()->data_path,
-      construct_props()->cache_path));
-
-  if (!construct_props()->product.empty()) {
-    context()->SetProduct(construct_props()->product);
-  }
-  if (!construct_props()->user_agent.empty()) {
-    context()->SetUserAgent(construct_props()->user_agent);
-  }
-  if (!construct_props()->accept_langs.empty()) {
-    context()->SetAcceptLangs(construct_props()->accept_langs);
-  }
-
-  construct_props_.reset();
-}
-
-// static
-WebContextAdapterPrivate* WebContextAdapterPrivate::get(
-    WebContextAdapter* adapter) {
-  return adapter->priv.data();
 }
 
 WebContextAdapter::~WebContextAdapter() {}
