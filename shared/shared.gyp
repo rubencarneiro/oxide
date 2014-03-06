@@ -141,6 +141,7 @@
         'app/oxide_main.h',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
+        'browser/oxide_browser_context_delegate.h',
         'browser/oxide_browser_context_impl.cc',
         'browser/oxide_browser_context_impl.h',
         'browser/oxide_browser_context_observer.cc',

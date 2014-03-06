@@ -26,6 +26,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
+#include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
 
@@ -40,6 +41,7 @@ class SSLConfigService;
 
 namespace oxide {
 
+class BrowserContextDelegate;
 class BrowserContextObserver;
 class ResourceContext;
 class URLRequestContext;
@@ -49,6 +51,8 @@ class UserScriptMaster;
 class BrowserContextIOData {
  public:
   virtual ~BrowserContextIOData();
+
+  scoped_refptr<BrowserContextDelegate> GetDelegate();
 
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
@@ -73,7 +77,14 @@ class BrowserContextIOData {
   BrowserContextIOData();
 
  private:
+  friend class BrowserContext;
+
+  void SetDelegate(BrowserContextDelegate* delegate);
+
   bool initialized_;
+
+  base::Lock delegate_lock_;
+  scoped_refptr<BrowserContextDelegate> delegate_;
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
@@ -109,6 +120,8 @@ class BrowserContext : public content::BrowserContext {
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers);
+
+  void SetDelegate(BrowserContextDelegate* delegate);
 
   virtual BrowserContext* GetOffTheRecordContext() = 0;
   virtual BrowserContext* GetOriginalContext() = 0;
@@ -199,9 +212,12 @@ class BrowserContext : public content::BrowserContext {
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
 
+  void SetDelegateImpl(BrowserContextDelegate* delegate);
+
   IODataHandle io_data_handle_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
+  scoped_refptr<BrowserContextDelegate> delegate_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

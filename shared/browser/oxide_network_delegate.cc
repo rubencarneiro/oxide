@@ -17,7 +17,11 @@
 
 #include "oxide_network_delegate.h"
 
+#include "base/memory/ref_counted.h"
 #include "net/base/net_errors.h"
+
+#include "oxide_browser_context.h"
+#include "oxide_browser_context_delegate.h"
 
 namespace oxide {
 
@@ -25,14 +29,24 @@ int NetworkDelegate::OnBeforeURLRequest(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
     GURL* new_url) {
-  return net::OK;
+  scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
+  if (!delegate) {
+    return net::OK;
+  }
+
+  return delegate->OnBeforeURLRequest(request, callback, new_url);
 }
 
 int NetworkDelegate::OnBeforeSendHeaders(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
     net::HttpRequestHeaders* headers) {
-  return net::OK;
+  scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
+  if (!delegate) {
+    return net::OK;
+  }
+
+  return delegate->OnBeforeSendHeaders(request, callback, headers);
 }
 
 void NetworkDelegate::OnSendHeaders(net::URLRequest* request,
@@ -43,7 +57,14 @@ int NetworkDelegate::OnHeadersReceived(
     const net::CompletionCallback& callback,
     const net::HttpResponseHeaders* original_response_headers,
     scoped_refptr<net::HttpResponseHeaders>* override_response_headers) {
-  return net::OK;
+  scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
+  if (!delegate) {
+    return net::OK;
+  }
+
+  return delegate->OnHeadersReceived(
+      request, callback, original_response_headers,
+      override_response_headers);
 }
 
 void NetworkDelegate::OnBeforeRedirect(net::URLRequest* request,
@@ -95,5 +116,8 @@ int NetworkDelegate::OnBeforeSocketStreamConnect(
     const net::CompletionCallback& callback) {
   return net::OK;
 }
+
+NetworkDelegate::NetworkDelegate(BrowserContextIOData* context) :
+    context_(context) {}
 
 } // namespace oxide

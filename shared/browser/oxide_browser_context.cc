@@ -47,6 +47,7 @@
 #include "shared/common/oxide_constants.h"
 
 #include "oxide_browser_context_impl.h"
+#include "oxide_browser_context_delegate.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_http_user_agent_settings.h"
@@ -92,12 +93,22 @@ class ResourceContext FINAL : public content::ResourceContext {
   DISALLOW_COPY_AND_ASSIGN(ResourceContext);
 };
 
+void BrowserContextIOData::SetDelegate(BrowserContextDelegate* delegate) {
+  base::AutoLock lock(delegate_lock_);
+  delegate_ = delegate;
+}
+
 BrowserContextIOData::BrowserContextIOData() :
     initialized_(false),
     resource_context_(new ResourceContext()) {}
 
 BrowserContextIOData::~BrowserContextIOData() {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+}
+
+scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
+  base::AutoLock lock(delegate_lock_);
+  return delegate_;
 }
 
 void BrowserContextIOData::Init(
@@ -114,7 +125,7 @@ void BrowserContextIOData::Init(
   http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
   ftp_transaction_factory_.reset(
       new net::FtpNetworkLayer(io_thread_delegate->host_resolver()));
-  network_delegate_.reset(new NetworkDelegate());
+  network_delegate_.reset(new NetworkDelegate(this));
 
   // TODO: We want persistent storage here (for non-incognito), but the
   //       persistent implementation used in Chrome uses the preferences
@@ -329,6 +340,10 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
+void BrowserContext::SetDelegateImpl(BrowserContextDelegate* delegate) {
+  delegate_ = delegate;
+}
+
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_handle_(io_data) {
   CHECK(BrowserProcessMain::Exists()) <<
@@ -380,6 +395,14 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
       URLRequestContextGetter::CreateMain(protocol_handlers, io_data());
 
   return main_request_context_getter_;
+}
+
+void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {
+  GetOriginalContext()->SetDelegateImpl(delegate);
+  GetOffTheRecordContext()->SetDelegateImpl(delegate);
+
+  GetOriginalContext()->io_data()->SetDelegate(delegate);
+  GetOffTheRecordContext()->io_data()->SetDelegate(delegate);
 }
 
 bool BrowserContext::IsOffTheRecord() const {
