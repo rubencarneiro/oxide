@@ -212,12 +212,9 @@ class BrowserContext : public content::BrowserContext {
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
 
-  void SetDelegateImpl(BrowserContextDelegate* delegate);
-
   IODataHandle io_data_handle_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
-  scoped_refptr<BrowserContextDelegate> delegate_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

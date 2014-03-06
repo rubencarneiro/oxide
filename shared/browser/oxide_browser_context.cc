@@ -340,10 +340,6 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
-void BrowserContext::SetDelegateImpl(BrowserContextDelegate* delegate) {
-  delegate_ = delegate;
-}
-
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_handle_(io_data) {
   CHECK(BrowserProcessMain::Exists()) <<
@@ -398,9 +394,6 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
 }
 
 void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {
-  GetOriginalContext()->SetDelegateImpl(delegate);
-  GetOffTheRecordContext()->SetDelegateImpl(delegate);
-
   GetOriginalContext()->io_data()->SetDelegate(delegate);
   GetOffTheRecordContext()->io_data()->SetDelegate(delegate);
 }
