@@ -34,18 +34,21 @@ namespace oxide {
 class BrowserContextDelegate :
     public base::RefCountedThreadSafe<BrowserContextDelegate> {
  public:
+  // Called on the IO thread
   virtual int OnBeforeURLRequest(net::URLRequest* request,
                                  const net::CompletionCallback& callback,
                                  GURL* new_url) {
     return net::OK;
   }
 
+  // Called on the IO thread
   virtual int OnBeforeSendHeaders(net::URLRequest* request,
                                   const net::CompletionCallback& callback,
                                   net::HttpRequestHeaders* headers) {
     return net::OK;
   }
 
+  // Called on the IO thread
   virtual int OnHeadersReceived(
       net::URLRequest* request,
       const net::CompletionCallback& callback,
