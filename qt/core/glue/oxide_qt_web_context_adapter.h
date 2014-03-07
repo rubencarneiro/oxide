@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 
 #include <QScopedPointer>
+#include <QSharedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QUrl>
@@ -27,6 +28,9 @@ QT_BEGIN_NAMESPACE
 template <typename T> class QList;
 class QOpenGLContext;
 QT_END_NAMESPACE
+
+class OxideQBeforeSendHeadersEvent;
+class OxideQBeforeURLRequestEvent;
 
 namespace oxide {
 namespace qt {
@@ -37,6 +41,17 @@ class WebContextAdapterPrivate;
 class Q_DECL_EXPORT WebContextAdapter {
  public:
   virtual ~WebContextAdapter();
+
+  class IOThreadDelegate {
+   public:
+    virtual ~IOThreadDelegate() {}
+
+    virtual void OnBeforeURLRequest(
+        const QSharedPointer<OxideQBeforeURLRequestEvent>& event) = 0;
+
+    virtual void OnBeforeSendHeaders(
+        const QSharedPointer<OxideQBeforeSendHeadersEvent>& event) = 0;
+  };
 
   QString product() const;
   void setProduct(const QString& product);
@@ -66,7 +81,7 @@ class Q_DECL_EXPORT WebContextAdapter {
   static void ensureChromiumStarted();
 
  protected:
-  WebContextAdapter();
+  WebContextAdapter(IOThreadDelegate* io_delegate);
 
  private:
   friend class WebContextAdapterPrivate;

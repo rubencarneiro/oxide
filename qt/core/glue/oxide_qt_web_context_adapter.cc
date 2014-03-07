@@ -217,8 +217,8 @@ void WebContextAdapter::ensureChromiumStarted() {
   }
 }
 
-WebContextAdapter::WebContextAdapter() :
-    priv(new WebContextAdapterPrivate()) {
+WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
+    priv(new WebContextAdapterPrivate(this, io_delegate)) {
   static bool run_once = false;
   if (!run_once) {
     run_once = true;

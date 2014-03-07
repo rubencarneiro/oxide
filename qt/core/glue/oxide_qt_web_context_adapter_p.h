@@ -27,6 +27,8 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/glue/oxide_qt_web_context_adapter.h"
+
 namespace oxide {
 
 class BrowserContext;
@@ -35,7 +37,6 @@ namespace qt {
 
 class BrowserContextDelegate;
 struct ConstructProperties;
-class WebContextAdapter;
 
 class WebContextAdapterPrivate FINAL {
  public:
@@ -48,7 +49,8 @@ class WebContextAdapterPrivate FINAL {
     std::string accept_langs;
   };
 
-  WebContextAdapterPrivate();
+  WebContextAdapterPrivate(WebContextAdapter* adapter,
+                           WebContextAdapter::IOThreadDelegate* io_delegate);
   ~WebContextAdapterPrivate();
 
   void Init();
@@ -59,6 +61,8 @@ class WebContextAdapterPrivate FINAL {
   ConstructProperties* construct_props() { return construct_props_.get(); }
 
  private:
+  friend class WebContextAdapter;
+
   scoped_ptr<oxide::BrowserContext> context_;
   scoped_ptr<ConstructProperties> construct_props_;
   scoped_refptr<BrowserContextDelegate> context_delegate_;

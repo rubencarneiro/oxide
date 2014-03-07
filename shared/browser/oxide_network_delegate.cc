@@ -63,8 +63,7 @@ int NetworkDelegate::OnHeadersReceived(
   }
 
   return delegate->OnHeadersReceived(
-      request, callback, original_response_headers,
-      override_response_headers);
+      request, callback, original_response_headers, override_response_headers);
 }
 
 void NetworkDelegate::OnBeforeRedirect(net::URLRequest* request,

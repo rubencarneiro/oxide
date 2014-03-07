@@ -19,9 +19,10 @@
 #include "oxideqquickwebcontext_p_p.h"
 
 #include <QQmlListProperty>
-#include <QWeakPointer>
+#include <QSharedPointer>
 #include <QtDebug>
 #include <QtQuickVersion>
+#include <QWeakPointer>
 #if defined(ENABLE_COMPOSITING)
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
@@ -33,10 +34,28 @@
 
 namespace {
 QWeakPointer<OxideQQuickWebContext> g_default_context;
+
+class IOThreadDelegate : public oxide::qt::WebContextAdapter::IOThreadDelegate {
+ public:
+  IOThreadDelegate() {}
+  virtual ~IOThreadDelegate() {}
+
+  virtual void OnBeforeURLRequest(
+      const QSharedPointer<OxideQBeforeURLRequestEvent>& event) {
+    printf("OnBeforeURLRequest\n");
+  }
+
+  virtual void OnBeforeSendHeaders(
+      const QSharedPointer<OxideQBeforeSendHeadersEvent>& event) {
+    printf("OnBeforeSendHeaders\n");
+  }
+};
+
 }
 
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
+    oxide::qt::WebContextAdapter(new ::IOThreadDelegate()),
     q_ptr(q) {
   OxideQQuickWebContext::ensureChromiumStarted();
 }

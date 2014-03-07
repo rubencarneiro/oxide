@@ -104,10 +104,14 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
+        'api/oxideqnetworkcallbackevents.cc',
+        'api/oxideqnetworkcallbackevents.h',
+        'api/oxideqnetworkcallbackevents_p.h',
         'api/oxideqwebpreferences.cc',
         'api/oxideqwebpreferences.h',
         'api/oxideqwebpreferences_p.h',
@@ -143,6 +147,11 @@
           'action_name': 'moc_oxideqloadevent.cc',
           'moc_input': 'api/oxideqloadevent.h',
           'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxideqnetworkcallbackevents.cc',
+          'moc_input': 'api/oxideqnetworkcallbackevents.h',
+          'includes': [ 'moc.gypi' ],
         },
         {
           'action_name': 'moc_oxideqwebpreferences.cc',
