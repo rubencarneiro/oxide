@@ -18,6 +18,9 @@
 #include "oxideqnetworkcallbackevents.h"
 #include "oxideqnetworkcallbackevents_p.h"
 
+#include <QThread>
+
+#include "base/logging.h"
 #include "net/http/http_request_headers.h"
 #include "url/gurl.h"
 
@@ -52,7 +55,9 @@ OxideQNetworkCallbackEvent::OxideQNetworkCallbackEvent(
     OxideQNetworkCallbackEventPrivate& dd) :
     d_ptr(&dd) {}
 
-OxideQNetworkCallbackEvent::~OxideQNetworkCallbackEvent() {}
+OxideQNetworkCallbackEvent::~OxideQNetworkCallbackEvent() {
+  DCHECK_EQ(thread(), QThread::currentThread());
+}
 
 bool OxideQNetworkCallbackEvent::requestCancelled() const {
   Q_D(const OxideQNetworkCallbackEvent);
