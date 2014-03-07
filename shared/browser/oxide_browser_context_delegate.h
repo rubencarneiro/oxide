@@ -24,6 +24,10 @@
 
 class GURL;
 
+namespace base {
+template <typename Type> class DeleteHelper;
+}
+
 namespace net {
 class HttpRequestHeaders;
 class HttpResponseHeaders;
@@ -32,8 +36,12 @@ class URLRequest;
 
 namespace oxide {
 
+struct BrowserContextDelegateTraits {
+  static void Destruct(const BrowserContextDelegate* x);
+};
+
 class BrowserContextDelegate :
-    public base::RefCountedThreadSafe<BrowserContextDelegate> {
+    public base::RefCountedThreadSafe<BrowserContextDelegate, BrowserContextDelegateTraits> {
  public:
   // Called on the IO thread
   virtual int OnBeforeURLRequest(net::URLRequest* request,
@@ -59,7 +67,8 @@ class BrowserContextDelegate :
   }
 
  protected:
-  friend class base::RefCountedThreadSafe<BrowserContextDelegate>;
+  friend class BrowserContextDelegateTraits;
+  friend class base::DeleteHelper<BrowserContextDelegate>;
 
   BrowserContextDelegate() {}
   virtual ~BrowserContextDelegate() {}
