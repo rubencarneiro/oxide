@@ -40,6 +40,7 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 
+#include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
@@ -244,6 +245,10 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
 
     rdhi->AddResourceContext(c->GetResourceContext());
   }
+}
+
+content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {
+  return new AccessTokenStore();
 }
 
 void ContentBrowserClient::OverrideWebkitPrefs(
