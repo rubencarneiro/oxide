@@ -302,16 +302,18 @@ void RenderWidgetHostView::SelectionBoundsChanged(
     const ViewHostMsg_SelectionBounds_Params& params) {
   caret_rect_ = gfx::UnionRects(params.anchor_rect, params.focus_rect);
 
-  if (params.is_anchor_first) {
-    selection_cursor_position_ =
-        selection_range_.GetMax() - selection_text_offset_;
-    selection_anchor_position_ =
-        selection_range_.GetMin() - selection_text_offset_;
-  } else {
-    selection_cursor_position_ =
-        selection_range_.GetMin() - selection_text_offset_;
-    selection_anchor_position_ =
-        selection_range_.GetMax() - selection_text_offset_;
+  if (selection_range_.IsValid()) {
+    if (params.is_anchor_first) {
+      selection_cursor_position_ =
+          selection_range_.GetMax() - selection_text_offset_;
+      selection_anchor_position_ =
+          selection_range_.GetMin() - selection_text_offset_;
+    } else {
+      selection_cursor_position_ =
+          selection_range_.GetMin() - selection_text_offset_;
+      selection_anchor_position_ =
+          selection_range_.GetMax() - selection_text_offset_;
+    }
   }
 }
 
