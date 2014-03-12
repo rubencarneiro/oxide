@@ -35,6 +35,30 @@
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 
+// NetworkDelegateWorker runs a script on a dedicated worker thread. It
+// can exchange messages with the UI thread, and provide entry points
+// for handling events from Chromium's IO thread. For handling events from
+// Chromium, we post an event to the helper thread and block the IO thread
+// until this is completed.
+
+// There are several classes involved to make NetworkDelegateWorker function:
+// - NetworkDelegateWorkerHelperThreadController:
+//    This object lives on the helper thread, and is responsible for
+//    evaluating JS code. It receives events from the other objects via
+//    several slots
+//
+// - NetworkDelegateWorkerUIThreadController:
+//    This lives on the UI thread. It delivers signals to slots on
+//    NetworkDelegateWorkerHelperThreadController for starting
+//    the worker and sending messages. It has slots for receiving signals
+//    from NetworkDelegateWorkerHelperThreadController, for receiving
+//    messages and errors
+//
+// - NetworkDelegateWorkerIOThreadController:
+//    This lives on the UI thread but is accessed from Chromium's IO thread.
+//    It delivers blocking signals to slots on NetworkDelegateHelperThreadController
+//    for processing network related events from Chromium
+
 using namespace oxide::qquick;
 
 namespace oxide {
