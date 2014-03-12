@@ -81,6 +81,18 @@ void OffTheRecordBrowserContextIODataImpl::SetProduct(
   original_io_data_->SetProduct(product);
 }
 
+bool
+OffTheRecordBrowserContextIODataImpl::ShouldInjectOxideApiInMainWorld() const {
+  return original_io_data_->ShouldInjectOxideApiInMainWorld();
+}
+
+void
+OffTheRecordBrowserContextIODataImpl::SetShouldInjectOxideApiInMainWorld(
+    bool inject_oxide_api_in_main_world) {
+  original_io_data_->SetShouldInjectOxideApiInMainWorld(
+      inject_oxide_api_in_main_world);
+}
+
 std::string
 OffTheRecordBrowserContextIODataImpl::GetUserAgent() const {
   return original_io_data_->GetUserAgent();

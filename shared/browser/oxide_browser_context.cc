@@ -428,6 +428,16 @@ bool BrowserContext::IsOffTheRecord() const {
   return io_data_.IsOffTheRecord();
 }
 
+bool BrowserContext::ShouldInjectOxideApiInMainWorld() const {
+  return io_data_.ShouldInjectOxideApiInMainWorld();
+}
+
+void BrowserContext::SetShouldInjectOxideApiInMainWorld(
+    bool should_inject_oxide_api_in_main_world) {
+  io_data_.SetShouldInjectOxideApiInMainWorld(
+      should_inject_oxide_api_in_main_world);
+}
+
 bool BrowserContext::IsSameContext(BrowserContext* other) const {
   return other->GetOriginalContext() == this ||
          other->GetOffTheRecordContext() == this;

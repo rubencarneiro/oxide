@@ -22,9 +22,13 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 
+#include "shared/common/oxide_constants.h"
+
 namespace oxide {
 
 namespace {
+
+const GURL g_oxide_main_world_private_url("oxide-private://main-world-private");
 
 int g_next_isolated_world_id = 1;
 
@@ -39,6 +43,9 @@ base::LazyInstance<WorldIDMap> g_isolated_world_map =
 int IsolatedWorldMap::IDFromURL(const GURL& url) {
   CHECK(url.is_valid());
 
+  if (url == g_oxide_main_world_private_url)
+    return kMainWorldId;
+
   WorldIDMapIterator it = g_isolated_world_map.Get().find(url);
   if (it != g_isolated_world_map.Get().end()) {
     return it->second;
@@ -52,6 +59,10 @@ int IsolatedWorldMap::IDFromURL(const GURL& url) {
 
 // static
 GURL IsolatedWorldMap::URLFromID(int id) {
+  if (id == kMainWorldId)
+    // TODO put as a constant
+    return g_oxide_main_world_private_url;
+
   for (WorldIDMapIterator it = g_isolated_world_map.Get().begin();
        it != g_isolated_world_map.Get().end(); ++it) {
     if (it->second == id) {

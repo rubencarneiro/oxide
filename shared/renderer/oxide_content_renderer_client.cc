@@ -35,7 +35,9 @@ void ContentRendererClient::RenderThreadStarted() {
 
 void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
-  new ScriptMessageDispatcherRenderer(render_frame);
+  new ScriptMessageDispatcherRenderer(
+      render_frame,
+      ProcessObserver::InjectOxideJsExtensionsInMainWorld());
 }
 
 void ContentRendererClient::RenderViewCreated(

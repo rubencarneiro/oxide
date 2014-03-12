@@ -97,7 +97,8 @@ UserScript::UserScript() :
     run_location_(DOCUMENT_END),
     match_all_frames_(false),
     incognito_enabled_(false),
-    emulate_greasemonkey_(false) {}
+    emulate_greasemonkey_(false),
+    inject_in_main_world_(false) {}
 
 void UserScript::add_exclude_glob(const std::string& glob) {
   exclude_globs_.push_back(glob);
@@ -120,6 +121,7 @@ void UserScript::Pickle(::Pickle* pickle) const {
   pickle->WriteBool(match_all_frames());
   pickle->WriteBool(incognito_enabled());
   pickle->WriteBool(emulate_greasemonkey());
+  pickle->WriteBool(inject_in_main_world());
   pickle->WriteString(context().spec());
 
   PickleGlobs(pickle, include_globs_);
@@ -138,6 +140,7 @@ void UserScript::Unpickle(const ::Pickle& pickle, PickleIterator* iter) {
   CHECK(pickle.ReadBool(iter, &match_all_frames_));
   CHECK(pickle.ReadBool(iter, &incognito_enabled_));
   CHECK(pickle.ReadBool(iter, &emulate_greasemonkey_));
+  CHECK(pickle.ReadBool(iter, &inject_in_main_world_));
 
   std::string context_spec;
   CHECK(pickle.ReadString(iter, &context_spec));

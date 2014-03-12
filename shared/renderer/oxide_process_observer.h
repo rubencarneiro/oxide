@@ -33,9 +33,12 @@ class ProcessObserver FINAL : public content::RenderProcessObserver {
   void OnRenderProcessShutdown() FINAL;
 
   static bool IsOffTheRecord();
+  static bool InjectOxideJsExtensionsInMainWorld();
 
  private:
   void OnSetIsIncognitoProcess(bool incognito);
+  void OnInjectOxideJsExtensionsInMainWorld(
+      bool inject_oxide_js_in_main_world);
 
   DISALLOW_COPY_AND_ASSIGN(ProcessObserver);
 };

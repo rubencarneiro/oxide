@@ -50,6 +50,9 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   std::string GetUserAgent() const FINAL;
   void SetUserAgent(const std::string& user_agent) FINAL;
 
+  bool ShouldInjectOxideApiInMainWorld() const FINAL;
+  void SetShouldInjectOxideApiInMainWorld(bool) FINAL;
+
   bool IsOffTheRecord() const FINAL;
 
  private:
@@ -66,6 +69,8 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   bool default_user_agent_string_;
 
   std::string accept_langs_;
+
+  bool inject_oxide_api_in_main_world_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextIODataImpl);
 };

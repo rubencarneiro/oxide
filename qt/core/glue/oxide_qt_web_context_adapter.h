@@ -47,6 +47,9 @@ class Q_DECL_EXPORT WebContextAdapter {
   QUrl dataPath() const;
   void setDataPath(const QUrl& url);
 
+  bool injectOxideApiInMainWorld() const;
+  void setInjectOxideApiInMainWorld(bool inject_oxide_api_in_main_world);
+
   QUrl cachePath() const;
   void setCachePath(const QUrl& url);
 

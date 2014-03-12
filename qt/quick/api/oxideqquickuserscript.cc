@@ -73,6 +73,23 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
   d->setUrl(url);
 }
 
+bool OxideQQuickUserScript::privateInjectedInMainWorld() const {
+  Q_D(const OxideQQuickUserScript);
+
+  return d->privateInjectedInMainWorld();
+}
+
+void OxideQQuickUserScript::setPrivateInjectedInMainWorld(bool in_main_world) {
+  Q_D(OxideQQuickUserScript);
+
+  if (in_main_world == privateInjectedInMainWorld()) {
+    return;
+  }
+
+  d->setPrivateInjectedInMainWorld(in_main_world);
+  emit scriptPropertyChanged();
+}
+
 bool OxideQQuickUserScript::emulateGreasemonkey() const {
   Q_D(const OxideQQuickUserScript);
 

@@ -26,10 +26,16 @@ namespace oxide {
 
 namespace {
 bool g_is_off_the_record = true;
+bool g_inject_oxide_js_in_main_world = false;
 }
 
 void ProcessObserver::OnSetIsIncognitoProcess(bool incognito) {
   g_is_off_the_record = incognito;
+}
+
+void ProcessObserver::OnInjectOxideJsExtensionsInMainWorld(
+      bool inject_oxide_js_in_main_world) {
+  g_inject_oxide_js_in_main_world = inject_oxide_js_in_main_world;
 }
 
 ProcessObserver::ProcessObserver() {
@@ -40,6 +46,8 @@ bool ProcessObserver::OnControlMessageReceived(const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(ProcessObserver, message)
     IPC_MESSAGE_HANDLER(OxideMsg_SetIsIncognitoProcess, OnSetIsIncognitoProcess)
+    IPC_MESSAGE_HANDLER(OxideMsg_InjectOxideJsExtensionsInMainWorld,
+			OnInjectOxideJsExtensionsInMainWorld)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 
@@ -53,6 +61,11 @@ void ProcessObserver::OnRenderProcessShutdown() {
 // static
 bool ProcessObserver::IsOffTheRecord() {
   return g_is_off_the_record;
+}
+
+// static
+bool ProcessObserver::InjectOxideJsExtensionsInMainWorld() {
+  return g_inject_oxide_js_in_main_world;
 }
 
 } // namespace oxide

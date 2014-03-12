@@ -49,6 +49,9 @@ class OffTheRecordBrowserContextIODataImpl FINAL :
   std::string GetUserAgent() const;
   void SetUserAgent(const std::string& user_agent);
 
+  bool ShouldInjectOxideApiInMainWorld() const FINAL;
+  void SetShouldInjectOxideApiInMainWorld(bool) FINAL;
+
   bool IsOffTheRecord() const;
 
  private:

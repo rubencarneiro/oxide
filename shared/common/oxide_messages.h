@@ -41,6 +41,9 @@ IPC_STRUCT_END()
 IPC_MESSAGE_CONTROL1(OxideMsg_SetIsIncognitoProcess,
                      bool)
 
+IPC_MESSAGE_CONTROL1(OxideMsg_InjectOxideJsExtensionsInMainWorld,
+                     bool)
+
 IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserScripts,
                      base::SharedMemoryHandle)
 

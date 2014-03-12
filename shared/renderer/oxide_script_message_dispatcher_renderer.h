@@ -40,7 +40,8 @@ class ScriptMessageManager;
 
 class ScriptMessageDispatcherRenderer FINAL : public content::RenderFrameObserver {
  public:
-  ScriptMessageDispatcherRenderer(content::RenderFrame* frame);
+  ScriptMessageDispatcherRenderer(content::RenderFrame* frame,
+				  bool inject_api_in_main_world = false);
   ~ScriptMessageDispatcherRenderer();
 
   static ScriptMessageDispatcherRenderer* FromWebFrame(blink::WebFrame* frame);

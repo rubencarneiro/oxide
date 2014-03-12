@@ -43,7 +43,8 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     user_agent_(webkit_glue::BuildUserAgentFromProduct(product_)),
     default_user_agent_string_(true),
     // FIXME: Get from translations
-    accept_langs_("en-us,en") {}
+    accept_langs_("en-us,en"),
+    inject_oxide_api_in_main_world_(false) {}
 
 net::SSLConfigService*
 BrowserContextIODataImpl::ssl_config_service() const {
@@ -79,6 +80,18 @@ void BrowserContextIODataImpl::SetAcceptLangs(const std::string& langs) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   base::AutoLock lock(lock_);
   accept_langs_ = langs;
+}
+
+bool BrowserContextIODataImpl::ShouldInjectOxideApiInMainWorld() const {
+  base::AutoLock lock(lock_);
+  return inject_oxide_api_in_main_world_;
+}
+
+void BrowserContextIODataImpl::SetShouldInjectOxideApiInMainWorld(
+      bool inject_oxide_api_in_main_world) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  base::AutoLock lock(lock_);
+  inject_oxide_api_in_main_world_ = inject_oxide_api_in_main_world;
 }
 
 // Only called on UI thread

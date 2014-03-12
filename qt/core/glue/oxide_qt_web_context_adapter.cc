@@ -58,11 +58,14 @@ int GetProcessFlags() {
 }
 
 struct ConstructProperties {
+  ConstructProperties() :
+    inject_oxide_api_in_main_world(false) {}
   std::string product;
   std::string user_agent;
   base::FilePath data_path;
   base::FilePath cache_path;
   std::string accept_langs;
+  bool inject_oxide_api_in_main_world;
 };
 
 WebContextAdapterPrivate::WebContextAdapterPrivate() :
@@ -125,6 +128,25 @@ void WebContextAdapter::setUserAgent(const QString& user_agent) {
     priv->context()->SetUserAgent(user_agent.toStdString());
   } else {
     priv->construct_props()->user_agent = user_agent.toStdString();
+  }
+}
+
+bool WebContextAdapter::injectOxideApiInMainWorld() const {
+  if (priv->context()) {
+    return priv->context()->ShouldInjectOxideApiInMainWorld();
+  }
+
+  return priv->construct_props()->inject_oxide_api_in_main_world;
+}
+
+void WebContextAdapter::setInjectOxideApiInMainWorld(
+      bool inject_oxide_api_in_main_world) {
+  if (priv->context()) {
+    priv->context()->SetShouldInjectOxideApiInMainWorld(
+      inject_oxide_api_in_main_world);
+  } else {
+    priv->construct_props()->inject_oxide_api_in_main_world =
+      inject_oxide_api_in_main_world;
   }
 }
 

@@ -29,6 +29,8 @@ extern const char kDataScheme[];
 extern const char kFileScheme[];
 extern const char kFtpScheme[];
 
+extern const int kMainWorldId;
+
 } // namespace oxide
 
 #endif // _OXIDE_SHARED_COMMON_CONSTANTS_H_

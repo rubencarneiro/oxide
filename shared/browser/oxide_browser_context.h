@@ -57,6 +57,9 @@ class BrowserContextIOData {
   virtual std::string GetAcceptLangs() const = 0;
   virtual void SetAcceptLangs(const std::string& langs) = 0;
 
+  virtual bool ShouldInjectOxideApiInMainWorld() const = 0;
+  virtual void SetShouldInjectOxideApiInMainWorld(bool) = 0;
+
   virtual std::string GetProduct() const = 0;
   virtual void SetProduct(const std::string& product) = 0;
 
@@ -115,6 +118,9 @@ class BrowserContext : public content::BrowserContext {
 
   base::FilePath GetPath() const FINAL;
   base::FilePath GetCachePath() const;
+
+  bool ShouldInjectOxideApiInMainWorld() const FINAL;
+  void SetShouldInjectOxideApiInMainWorld(bool);
 
   std::string GetAcceptLangs() const;
   void SetAcceptLangs(const std::string& langs);
@@ -202,6 +208,15 @@ class BrowserContext : public content::BrowserContext {
     std::string GetProduct() const { return io_data_->GetProduct(); }
     void SetProduct(const std::string& product) {
       io_data_->SetProduct(product);
+    }
+
+    bool ShouldInjectOxideApiInMainWorld() const {
+      return io_data_->ShouldInjectOxideApiInMainWorld();
+    }
+    void SetShouldInjectOxideApiInMainWorld(
+        bool should_inject_oxide_api_in_main_world) {
+      io_data_->SetShouldInjectOxideApiInMainWorld(
+          should_inject_oxide_api_in_main_world);
     }
 
     std::string GetUserAgent() const { return io_data_->GetUserAgent(); }

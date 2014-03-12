@@ -27,4 +27,6 @@ const char kDataScheme[] = "data";
 const char kFileScheme[] = "file";
 const char kFtpScheme[] = "ftp";
 
+const int kMainWorldId = 0;
+
 } // namespace oxide
