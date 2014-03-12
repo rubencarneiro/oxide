@@ -54,6 +54,12 @@ OxideQNetworkCallbackEvent::OxideQNetworkCallbackEvent(
 
 OxideQNetworkCallbackEvent::~OxideQNetworkCallbackEvent() {}
 
+QUrl OxideQNetworkCallbackEvent::url() const {
+  Q_D(const OxideQNetworkCallbackEvent);
+
+  return d->url;
+}
+
 bool OxideQNetworkCallbackEvent::requestCancelled() const {
   Q_D(const OxideQNetworkCallbackEvent);
 
@@ -79,21 +85,17 @@ OxideQBeforeURLRequestEvent::OxideQBeforeURLRequestEvent() :
 
 OxideQBeforeURLRequestEvent::~OxideQBeforeURLRequestEvent() {}
 
-QUrl OxideQBeforeURLRequestEvent::url() const {
+QUrl OxideQBeforeURLRequestEvent::redirectUrl() const {
   Q_D(const OxideQBeforeURLRequestEvent);
 
   if (!d->new_url) {
     return QUrl();
   }
 
-  if (d->new_url->is_empty()) {
-    return d->current_url;
-  }
-
   return QUrl(QString::fromStdString(d->new_url->spec()));
 }
 
-void OxideQBeforeURLRequestEvent::setUrl(const QUrl& url) {
+void OxideQBeforeURLRequestEvent::setRedirectUrl(const QUrl& url) {
   Q_D(OxideQBeforeURLRequestEvent);
 
   if (!d->new_url) {

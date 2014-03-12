@@ -31,6 +31,7 @@ class OxideQNetworkCallbackEventPrivate;
 class Q_DECL_EXPORT OxideQNetworkCallbackEvent : public QObject {
   Q_OBJECT
 
+  Q_PROPERTY(QUrl url READ url)
   Q_PROPERTY(bool requestCancelled READ requestCancelled)
 
   Q_DECLARE_PRIVATE(OxideQNetworkCallbackEvent)
@@ -39,6 +40,7 @@ class Q_DECL_EXPORT OxideQNetworkCallbackEvent : public QObject {
  public:
   virtual ~OxideQNetworkCallbackEvent();
 
+  QUrl url() const;
   bool requestCancelled() const;
   Q_INVOKABLE void cancelRequest();
 
@@ -51,7 +53,7 @@ class Q_DECL_EXPORT OxideQNetworkCallbackEvent : public QObject {
 class Q_DECL_EXPORT OxideQBeforeURLRequestEvent : public OxideQNetworkCallbackEvent {
   Q_OBJECT
 
-  Q_PROPERTY(QUrl url READ url WRITE setUrl)
+  Q_PROPERTY(QUrl redirectUrl READ redirectUrl WRITE setRedirectUrl)
 
   Q_DECLARE_PRIVATE(OxideQBeforeURLRequestEvent)
   Q_DISABLE_COPY(OxideQBeforeURLRequestEvent)
@@ -60,8 +62,8 @@ class Q_DECL_EXPORT OxideQBeforeURLRequestEvent : public OxideQNetworkCallbackEv
   Q_DECL_HIDDEN OxideQBeforeURLRequestEvent();
   virtual ~OxideQBeforeURLRequestEvent();
 
-  QUrl url() const;
-  void setUrl(const QUrl& url);
+  QUrl redirectUrl() const;
+  void setRedirectUrl(const QUrl& url);
 };
 
 class Q_DECL_EXPORT OxideQBeforeSendHeadersEvent : public OxideQNetworkCallbackEvent {

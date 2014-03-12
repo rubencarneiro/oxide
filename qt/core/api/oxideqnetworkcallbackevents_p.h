@@ -35,6 +35,7 @@ class OxideQNetworkCallbackEventPrivate {
  public:
   virtual ~OxideQNetworkCallbackEventPrivate();
 
+  QUrl url;
   bool *request_cancelled;
 
  protected:
@@ -48,7 +49,6 @@ class OxideQBeforeURLRequestEventPrivate Q_DECL_FINAL :
 
   static OxideQBeforeURLRequestEventPrivate* get(OxideQBeforeURLRequestEvent* q);
 
-  QUrl current_url;
   GURL* new_url;
 
  private:
