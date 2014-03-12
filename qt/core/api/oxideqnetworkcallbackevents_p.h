@@ -35,13 +35,10 @@ class OxideQNetworkCallbackEventPrivate {
  public:
   virtual ~OxideQNetworkCallbackEventPrivate();
 
+  bool *request_cancelled;
+
  protected:
   OxideQNetworkCallbackEventPrivate();
-
- private:
-  friend class OxideQNetworkCallbackEvent;
-
-  bool request_cancelled;
 };
 
 class OxideQBeforeURLRequestEventPrivate Q_DECL_FINAL :

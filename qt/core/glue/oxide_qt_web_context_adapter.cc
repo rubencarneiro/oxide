@@ -217,6 +217,11 @@ void WebContextAdapter::ensureChromiumStarted() {
   }
 }
 
+oxide::qt::WebContextAdapter::IOThreadDelegate*
+WebContextAdapter::getIOThreadDelegate() const {
+  return priv->GetIOThreadDelegate();
+}
+
 WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
     priv(new WebContextAdapterPrivate(this, io_delegate)) {
   static bool run_once = false;

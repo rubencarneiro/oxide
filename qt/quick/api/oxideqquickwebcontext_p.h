@@ -29,6 +29,7 @@
 
 QT_USE_NAMESPACE
 
+class OxideQQuickNetworkDelegateWorker;
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
 
@@ -41,6 +42,8 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
+  Q_PROPERTY(OxideQQuickNetworkDelegateWorker* beforeURLRequestHandler READ beforeURLRequestHandler WRITE setBeforeURLRequestHandler NOTIFY beforeURLRequestHandlerChanged)
+  Q_PROPERTY(OxideQQuickNetworkDelegateWorker* beforeSendHeadersHandler READ beforeSendHeadersHandler WRITE setBeforeSendHeadersHandler NOTIFY beforeSendHeadersHandlerChanged)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebContext)
 
@@ -74,6 +77,12 @@ class OxideQQuickWebContext : public QObject,
   Q_INVOKABLE void addUserScript(OxideQQuickUserScript* user_script);
   Q_INVOKABLE void removeUserScript(OxideQQuickUserScript* user_script);
 
+  OxideQQuickNetworkDelegateWorker* beforeURLRequestHandler() const;
+  void setBeforeURLRequestHandler(OxideQQuickNetworkDelegateWorker* worker);
+
+  OxideQQuickNetworkDelegateWorker* beforeSendHeadersHandler() const;
+  void setBeforeSendHeadersHandler(OxideQQuickNetworkDelegateWorker* worker);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -81,6 +90,8 @@ class OxideQQuickWebContext : public QObject,
   void cachePathChanged();
   void acceptLangsChanged();
   void userScriptsChanged();
+  void beforeURLRequestHandlerChanged();
+  void beforeSendHeadersHandlerChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

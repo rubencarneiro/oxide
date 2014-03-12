@@ -17,11 +17,11 @@
 
 #include "../oxide_qt_web_context_adapter_p.h"
 
-#include <QSharedPointer>
 #include <QString>
 #include <QUrl>
 
 #include "base/logging.h"
+#include "content/public/browser/browser_thread.h"
 #include "net/base/net_errors.h"
 #include "net/url_request/url_request.h"
 
@@ -35,12 +35,19 @@ namespace qt {
 
 class BrowserContextDelegate : public oxide::BrowserContextDelegate {
  public:
-  BrowserContextDelegate(WebContextAdapter* adapter,
+  BrowserContextDelegate(WebContextAdapterPrivate* ui_delegate,
                          WebContextAdapter::IOThreadDelegate* io_delegate) :
-      ui_thread_delegate_(adapter),
-      io_thread_delegate_(io_delegate) {}
+      ui_thread_delegate_(ui_delegate->AsWeakPtr()),
+      io_thread_delegate_(io_delegate) {
+  }
+
   virtual ~BrowserContextDelegate() {}
 
+  WebContextAdapter::IOThreadDelegate* io_thread_delegate() const {
+    return io_thread_delegate_.get();
+  }
+
+ private:
   virtual int OnBeforeURLRequest(net::URLRequest* request,
                                  const net::CompletionCallback& callback,
                                  GURL* new_url) {
@@ -48,15 +55,17 @@ class BrowserContextDelegate : public oxide::BrowserContextDelegate {
       return net::OK;
     }
 
-    QSharedPointer<OxideQBeforeURLRequestEvent> event(
-        new OxideQBeforeURLRequestEvent());
-    OxideQBeforeURLRequestEventPrivate::get(event.data())->new_url = new_url;
-    OxideQBeforeURLRequestEventPrivate::get(event.data())->current_url =
+    bool cancelled = false;
+
+    OxideQBeforeURLRequestEvent* event = new OxideQBeforeURLRequestEvent();
+    OxideQBeforeURLRequestEventPrivate::get(event)->request_cancelled = &cancelled;
+    OxideQBeforeURLRequestEventPrivate::get(event)->new_url = new_url;
+    OxideQBeforeURLRequestEventPrivate::get(event)->current_url =
         QUrl(QString::fromStdString(request->url().spec()));
 
     io_thread_delegate_->OnBeforeURLRequest(event);
 
-    return event->requestCancelled() ? net::ERR_ABORTED : net::OK;
+    return cancelled ? net::ERR_ABORTED : net::OK;
   }
 
   virtual int OnBeforeSendHeaders(net::URLRequest* request,
@@ -66,31 +75,29 @@ class BrowserContextDelegate : public oxide::BrowserContextDelegate {
       return net::OK;
     }
 
-    QSharedPointer<OxideQBeforeSendHeadersEvent> event(
-        new OxideQBeforeSendHeadersEvent());
-    OxideQBeforeSendHeadersEventPrivate::get(event.data())->headers = headers;
+    bool cancelled = false;
+
+    OxideQBeforeSendHeadersEvent* event = new OxideQBeforeSendHeadersEvent();
+    OxideQBeforeSendHeadersEventPrivate::get(event)->request_cancelled = &cancelled;
+    OxideQBeforeSendHeadersEventPrivate::get(event)->headers = headers;
 
     io_thread_delegate_->OnBeforeSendHeaders(event);
 
-    return event->requestCancelled() ? net::ERR_ABORTED : net::OK;
+    return cancelled ? net::ERR_ABORTED : net::OK;
   }
 
- private:
-  WebContextAdapter* ui_thread_delegate_;
+  base::WeakPtr<WebContextAdapterPrivate> ui_thread_delegate_;
   scoped_ptr<WebContextAdapter::IOThreadDelegate> io_thread_delegate_;
 };
 
 WebContextAdapterPrivate::WebContextAdapterPrivate(
     WebContextAdapter* adapter,
     WebContextAdapter::IOThreadDelegate* io_delegate) :
+    adapter(adapter),
     construct_props_(new ConstructProperties()),
-    context_delegate_(new BrowserContextDelegate(adapter, io_delegate)) {}
+    context_delegate_(new BrowserContextDelegate(this, io_delegate)) {}
 
-WebContextAdapterPrivate::~WebContextAdapterPrivate() {
-  if (context()) {
-    context()->SetDelegate(NULL);
-  }
-}
+WebContextAdapterPrivate::~WebContextAdapterPrivate() {}
 
 void WebContextAdapterPrivate::Init() {
   DCHECK(!context_);
@@ -117,6 +124,11 @@ void WebContextAdapterPrivate::Init() {
 WebContextAdapterPrivate* WebContextAdapterPrivate::get(
     WebContextAdapter* adapter) {
   return adapter->priv.data();
+}
+
+WebContextAdapter::IOThreadDelegate*
+WebContextAdapterPrivate::GetIOThreadDelegate() const {
+  return context_delegate_->io_thread_delegate();
 }
 
 } // namespace qt

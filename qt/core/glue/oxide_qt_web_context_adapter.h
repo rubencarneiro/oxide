@@ -19,7 +19,6 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 
 #include <QScopedPointer>
-#include <QSharedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QUrl>
@@ -46,11 +45,9 @@ class Q_DECL_EXPORT WebContextAdapter {
    public:
     virtual ~IOThreadDelegate() {}
 
-    virtual void OnBeforeURLRequest(
-        const QSharedPointer<OxideQBeforeURLRequestEvent>& event) = 0;
+    virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) = 0;
 
-    virtual void OnBeforeSendHeaders(
-        const QSharedPointer<OxideQBeforeSendHeadersEvent>& event) = 0;
+    virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) = 0;
   };
 
   QString product() const;
@@ -79,6 +76,8 @@ class Q_DECL_EXPORT WebContextAdapter {
   static void setSharedGLContext(QOpenGLContext* context);
 
   static void ensureChromiumStarted();
+
+  IOThreadDelegate* getIOThreadDelegate() const;
 
  protected:
   WebContextAdapter(IOThreadDelegate* io_delegate);

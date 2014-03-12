@@ -18,14 +18,11 @@
 #include "oxideqnetworkcallbackevents.h"
 #include "oxideqnetworkcallbackevents_p.h"
 
-#include <QThread>
-
-#include "base/logging.h"
 #include "net/http/http_request_headers.h"
 #include "url/gurl.h"
 
 OxideQNetworkCallbackEventPrivate::OxideQNetworkCallbackEventPrivate() :
-    request_cancelled(false) {}
+    request_cancelled(NULL) {}
 
 OxideQNetworkCallbackEventPrivate::~OxideQNetworkCallbackEventPrivate() {}
 
@@ -55,20 +52,26 @@ OxideQNetworkCallbackEvent::OxideQNetworkCallbackEvent(
     OxideQNetworkCallbackEventPrivate& dd) :
     d_ptr(&dd) {}
 
-OxideQNetworkCallbackEvent::~OxideQNetworkCallbackEvent() {
-  DCHECK_EQ(thread(), QThread::currentThread());
-}
+OxideQNetworkCallbackEvent::~OxideQNetworkCallbackEvent() {}
 
 bool OxideQNetworkCallbackEvent::requestCancelled() const {
   Q_D(const OxideQNetworkCallbackEvent);
 
-  return d->request_cancelled;
+  if (!d->request_cancelled) {
+    return false;
+  }
+
+  return *(d->request_cancelled);
 }
 
 void OxideQNetworkCallbackEvent::cancelRequest() {
   Q_D(OxideQNetworkCallbackEvent);
 
-  d->request_cancelled = true;
+  if (!d->request_cancelled) {
+    return;
+  }
+
+  *(d->request_cancelled) = true;
 }
 
 OxideQBeforeURLRequestEvent::OxideQBeforeURLRequestEvent() :

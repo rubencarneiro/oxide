@@ -41,9 +41,12 @@ else()
   set(QT_INSTALL_QML "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/qt5/qml")
 endif()
 
+qt5_wrap_cpp(MOC_EXTRA api/oxideqquicknetworkdelegateworker_p_p.h)
+
 set(PLUGIN_SRCS
     api/oxideqquickglobals.cc
     api/oxideqquicknavigationhistory.cc
+    api/oxideqquicknetworkdelegateworker.cc
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc
     api/oxideqquickscriptmessagerequest.cc
@@ -54,7 +57,8 @@ set(PLUGIN_SRCS
     oxide_qml_plugin.cc
     oxide_qquick_painted_render_view_node.cc
     oxide_qquick_render_view_item.cc
-    oxide_qquick_web_popup_menu_delegate.cc)
+    oxide_qquick_web_popup_menu_delegate.cc
+    ${MOC_EXTRA})
 
 if(OXIDE_ENABLE_COMPOSITING)
   list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_render_view_node.cc)

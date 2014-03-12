@@ -26,6 +26,7 @@
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
@@ -38,7 +39,8 @@ namespace qt {
 class BrowserContextDelegate;
 struct ConstructProperties;
 
-class WebContextAdapterPrivate FINAL {
+class WebContextAdapterPrivate FINAL :
+    public base::SupportsWeakPtr<WebContextAdapterPrivate> {
  public:
 
   struct ConstructProperties {
@@ -57,11 +59,16 @@ class WebContextAdapterPrivate FINAL {
 
   static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
 
+  WebContextAdapter::IOThreadDelegate* GetIOThreadDelegate() const;
+
   oxide::BrowserContext* context() { return context_.get(); }
   ConstructProperties* construct_props() { return construct_props_.get(); }
 
  private:
+  friend class BrowserContextDelegate;
   friend class WebContextAdapter;
+
+  WebContextAdapter* adapter;
 
   scoped_ptr<oxide::BrowserContext> context_;
   scoped_ptr<ConstructProperties> construct_props_;
