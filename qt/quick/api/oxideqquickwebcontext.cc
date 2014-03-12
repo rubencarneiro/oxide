@@ -50,38 +50,38 @@ class WebContextIOThreadDelegate :
     public oxide::qt::WebContextAdapter::IOThreadDelegate {
  public:
   WebContextIOThreadDelegate() :
-      before_url_request_controller(NULL),
-      before_send_headers_controller(NULL) {}
+      network_request_delegate(NULL) {}
   virtual ~WebContextIOThreadDelegate() {}
 
   virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) {
-    // FIXME(chrisccoulson): Should move |event| to the helper thread,
-    //  where it will be consumed
     QMutexLocker locker(&lock);
-    if (!before_url_request_controller) {
+    if (!network_request_delegate) {
       delete event;
       return;
     }
 
-    emit before_url_request_controller->beforeURLRequest(event);
+    // FIXME(chrisccoulson): Should move |event| to the helper thread,
+    //  where it will be consumed
+
+    emit network_request_delegate->beforeURLRequest(event);
   }
 
   virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) {
-    // FIXME(chrisccoulson): Should move |event| to the helper thread,
-    //  where it will be consumed
     QMutexLocker locker(&lock);
-    if (!before_send_headers_controller) {
+    if (!network_request_delegate) {
       delete event;
       return;
     }
 
-    emit before_send_headers_controller->beforeSendHeaders(event);
+    // FIXME(chrisccoulson): Should move |event| to the helper thread,
+    //  where it will be consumed
+
+    emit network_request_delegate->beforeSendHeaders(event);
   }
 
   QMutex lock;
 
-  NetworkDelegateWorkerIOThreadController* before_url_request_controller;
-  NetworkDelegateWorkerIOThreadController* before_send_headers_controller;
+  NetworkDelegateWorkerIOThreadController* network_request_delegate;
 };
 
 } // namespace qquick
@@ -89,11 +89,11 @@ class WebContextIOThreadDelegate :
 
 bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
     OxideQQuickNetworkDelegateWorker* worker,
-    OxideQQuickNetworkDelegateWorker** ui_slot,
+    QScopedPointer<OxideQQuickNetworkDelegateWorker>* ui_slot,
     oxide::qquick::NetworkDelegateWorkerIOThreadController** io_slot) {
   Q_Q(OxideQQuickWebContext);
 
-  if (*ui_slot == worker) {
+  if ((*ui_slot).data() == worker) {
     return false;
   }
 
@@ -112,8 +112,8 @@ bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
         worker)->io_thread_controller.data();
   }
 
-  OxideQQuickNetworkDelegateWorker* old_worker = *ui_slot;
-  *ui_slot = worker;
+  OxideQQuickNetworkDelegateWorker* old_worker = (*ui_slot).data();
+  (*ui_slot).reset(worker);
 
   {
     QMutexLocker lock(&io_thread_delegate_->lock);
@@ -121,8 +121,7 @@ bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
   }
 
   if (old_worker &&
-      old_worker != q->beforeURLRequestHandler() &&
-      old_worker != q->beforeSendHeadersHandler()) {
+      old_worker != q->networkRequestDelegate()) {
     old_worker->setParent(NULL);
   }
 
@@ -134,9 +133,7 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     oxide::qt::WebContextAdapter(new oxide::qquick::WebContextIOThreadDelegate()),
     q_ptr(q),
     io_thread_delegate_(
-        static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
-    before_url_request_worker_(NULL),
-    before_send_headers_worker_(NULL) {}
+        static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())) {}
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
 
@@ -144,11 +141,8 @@ void OxideQQuickWebContextPrivate::networkDelegateWorkerDestroyed(
     OxideQQuickNetworkDelegateWorker* worker) {
   Q_Q(OxideQQuickWebContext);
 
-  if (worker == q->beforeURLRequestHandler()) {
-    q->setBeforeURLRequestHandler(NULL);
-  }
-  if (worker == q->beforeSendHeadersHandler()) {
-    q->setBeforeSendHeadersHandler(NULL);
+  if (worker == q->networkRequestDelegate()) {
+    q->setNetworkRequestDelegate(NULL);
   }
 }
 
@@ -241,10 +235,6 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
     d->detachUserScriptSignals(
         adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));
   }
-
-  // These call back in to us when deleted, so do it now to prevent a crash
-  delete d->before_url_request_worker_;
-  delete d->before_send_headers_worker_;
 }
 
 void OxideQQuickWebContext::classBegin() {}
@@ -461,40 +451,21 @@ void OxideQQuickWebContext::removeUserScript(
 }
 
 OxideQQuickNetworkDelegateWorker*
-OxideQQuickWebContext::beforeURLRequestHandler() const {
+OxideQQuickWebContext::networkRequestDelegate() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->before_url_request_worker_;
+  return d->network_request_delegate_.data();
 }
 
-void OxideQQuickWebContext::setBeforeURLRequestHandler(
-    OxideQQuickNetworkDelegateWorker* worker) {
+void OxideQQuickWebContext::setNetworkRequestDelegate(
+    OxideQQuickNetworkDelegateWorker* delegate) {
   Q_D(OxideQQuickWebContext);
 
   if (d->attachNetworkDelegateWorker(
-        worker,
-        &d->before_url_request_worker_,
-        &d->io_thread_delegate_->before_url_request_controller)) {
-    emit beforeURLRequestHandlerChanged();
-  }
-}
-
-OxideQQuickNetworkDelegateWorker*
-OxideQQuickWebContext::beforeSendHeadersHandler() const {
-  Q_D(const OxideQQuickWebContext);
-
-  return d->before_send_headers_worker_;
-}
-
-void OxideQQuickWebContext::setBeforeSendHeadersHandler(
-    OxideQQuickNetworkDelegateWorker* worker) {
-  Q_D(OxideQQuickWebContext);
-
-  if (d->attachNetworkDelegateWorker(
-        worker,
-        &d->before_send_headers_worker_,
-        &d->io_thread_delegate_->before_send_headers_controller)) {
-    emit beforeSendHeadersHandlerChanged();
+      delegate,
+      &d->network_request_delegate_,
+      &d->io_thread_delegate_->network_request_delegate)) {
+    emit networkRequestDelegateChanged();
   }
 }
 
