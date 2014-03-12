@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_API_NETWORK_CALLBACK_EVENTS_P_H_
 #define _OXIDE_QT_CORE_API_NETWORK_CALLBACK_EVENTS_P_H_
 
+#include <QString>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -35,11 +36,17 @@ class OxideQNetworkCallbackEventPrivate {
  public:
   virtual ~OxideQNetworkCallbackEventPrivate();
 
-  QUrl url;
   bool *request_cancelled;
 
  protected:
-  OxideQNetworkCallbackEventPrivate();
+  OxideQNetworkCallbackEventPrivate(const QUrl& url,
+                                    const QString& method);
+
+ private:
+  friend class OxideQNetworkCallbackEvent;
+
+  QUrl url_;
+  QString method_;
 };
 
 class OxideQBeforeURLRequestEventPrivate Q_DECL_FINAL :
@@ -54,7 +61,7 @@ class OxideQBeforeURLRequestEventPrivate Q_DECL_FINAL :
  private:
   friend class OxideQBeforeURLRequestEvent;
 
-  OxideQBeforeURLRequestEventPrivate();
+  OxideQBeforeURLRequestEventPrivate(const QUrl& url, const QString& method);
 };
 
 class OxideQBeforeSendHeadersEventPrivate Q_DECL_FINAL :
@@ -69,7 +76,7 @@ class OxideQBeforeSendHeadersEventPrivate Q_DECL_FINAL :
  private:
   friend class OxideQBeforeSendHeadersEvent;
 
-  OxideQBeforeSendHeadersEventPrivate();
+  OxideQBeforeSendHeadersEventPrivate(const QUrl& url, const QString& method);
 };
 
 #endif // _OXIDE_QT_CORE_API_NETWORK_CALLBACK_EVENTS_P_H_

@@ -21,12 +21,17 @@
 #include "net/http/http_request_headers.h"
 #include "url/gurl.h"
 
-OxideQNetworkCallbackEventPrivate::OxideQNetworkCallbackEventPrivate() :
-    request_cancelled(NULL) {}
+OxideQNetworkCallbackEventPrivate::OxideQNetworkCallbackEventPrivate(
+    const QUrl& url, const QString& method) :
+    request_cancelled(NULL),
+    url_(url),
+    method_(method) {}
 
 OxideQNetworkCallbackEventPrivate::~OxideQNetworkCallbackEventPrivate() {}
 
-OxideQBeforeURLRequestEventPrivate::OxideQBeforeURLRequestEventPrivate() :
+OxideQBeforeURLRequestEventPrivate::OxideQBeforeURLRequestEventPrivate(
+    const QUrl& url, const QString& method) :
+    OxideQNetworkCallbackEventPrivate(url, method),
     new_url(NULL) {}
 
 OxideQBeforeURLRequestEventPrivate::~OxideQBeforeURLRequestEventPrivate() {}
@@ -37,7 +42,9 @@ OxideQBeforeURLRequestEventPrivate* OxideQBeforeURLRequestEventPrivate::get(
   return q->d_func();
 }
 
-OxideQBeforeSendHeadersEventPrivate::OxideQBeforeSendHeadersEventPrivate() :
+OxideQBeforeSendHeadersEventPrivate::OxideQBeforeSendHeadersEventPrivate(
+    const QUrl& url, const QString& method) :
+    OxideQNetworkCallbackEventPrivate(url, method),
     headers(NULL) {}
 
 OxideQBeforeSendHeadersEventPrivate::~OxideQBeforeSendHeadersEventPrivate() {}
@@ -57,7 +64,13 @@ OxideQNetworkCallbackEvent::~OxideQNetworkCallbackEvent() {}
 QUrl OxideQNetworkCallbackEvent::url() const {
   Q_D(const OxideQNetworkCallbackEvent);
 
-  return d->url;
+  return d->url_;
+}
+
+QString OxideQNetworkCallbackEvent::method() const {
+  Q_D(const OxideQNetworkCallbackEvent);
+
+  return d->method_;
 }
 
 bool OxideQNetworkCallbackEvent::requestCancelled() const {
@@ -80,8 +93,11 @@ void OxideQNetworkCallbackEvent::cancelRequest() {
   *(d->request_cancelled) = true;
 }
 
-OxideQBeforeURLRequestEvent::OxideQBeforeURLRequestEvent() :
-    OxideQNetworkCallbackEvent(*new OxideQBeforeURLRequestEventPrivate()) {}
+OxideQBeforeURLRequestEvent::OxideQBeforeURLRequestEvent(
+    const QUrl& url,
+    const QString& method) :
+    OxideQNetworkCallbackEvent(
+      *new OxideQBeforeURLRequestEventPrivate(url, method)) {}
 
 OxideQBeforeURLRequestEvent::~OxideQBeforeURLRequestEvent() {}
 
@@ -105,8 +121,11 @@ void OxideQBeforeURLRequestEvent::setRedirectUrl(const QUrl& url) {
   *(d->new_url) = GURL(url.toString().toStdString());
 }
 
-OxideQBeforeSendHeadersEvent::OxideQBeforeSendHeadersEvent() :
-    OxideQNetworkCallbackEvent(*new OxideQBeforeSendHeadersEventPrivate()) {}
+OxideQBeforeSendHeadersEvent::OxideQBeforeSendHeadersEvent(
+    const QUrl& url,
+    const QString& method) :
+    OxideQNetworkCallbackEvent(
+      *new OxideQBeforeSendHeadersEventPrivate(url, method)) {}
 
 OxideQBeforeSendHeadersEvent::~OxideQBeforeSendHeadersEvent() {}
 

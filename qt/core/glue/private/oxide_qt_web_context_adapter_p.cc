@@ -57,11 +57,13 @@ class BrowserContextDelegate : public oxide::BrowserContextDelegate {
 
     bool cancelled = false;
 
-    OxideQBeforeURLRequestEvent* event = new OxideQBeforeURLRequestEvent();
+    OxideQBeforeURLRequestEvent* event =
+        new OxideQBeforeURLRequestEvent(
+          QUrl(QString::fromStdString(request->url().spec())),
+          QString::fromStdString(request->method()));
 
     OxideQBeforeURLRequestEventPrivate* eventp =
         OxideQBeforeURLRequestEventPrivate::get(event);
-    eventp->url = QUrl(QString::fromStdString(request->url().spec()));
     eventp->request_cancelled = &cancelled;
     eventp->new_url = new_url;
 
@@ -79,11 +81,13 @@ class BrowserContextDelegate : public oxide::BrowserContextDelegate {
 
     bool cancelled = false;
 
-    OxideQBeforeSendHeadersEvent* event = new OxideQBeforeSendHeadersEvent();
+    OxideQBeforeSendHeadersEvent* event =
+        new OxideQBeforeSendHeadersEvent(
+          QUrl(QString::fromStdString(request->url().spec())),
+          QString::fromStdString(request->method()));
 
     OxideQBeforeSendHeadersEventPrivate* eventp =
         OxideQBeforeSendHeadersEventPrivate::get(event);
-    eventp->url = QUrl(QString::fromStdString(request->url().spec()));
     eventp->request_cancelled = &cancelled;
     eventp->headers = headers;
 
