@@ -30,6 +30,8 @@
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
 
+#include "qt/core/api/oxideqnetworkcallbackevents.h"
+
 #include "oxideqquickglobals_p.h"
 #include "oxideqquickglobals_p_p.h"
 #include "oxideqquicknetworkdelegateworker_p.h"
@@ -56,18 +58,24 @@ class WebContextIOThreadDelegate :
     // FIXME(chrisccoulson): Should move |event| to the helper thread,
     //  where it will be consumed
     QMutexLocker locker(&lock);
-    if (before_url_request_controller) {
-      emit before_url_request_controller->beforeURLRequest(event);
+    if (!before_url_request_controller) {
+      delete event;
+      return;
     }
+
+    emit before_url_request_controller->beforeURLRequest(event);
   }
 
   virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) {
     // FIXME(chrisccoulson): Should move |event| to the helper thread,
     //  where it will be consumed
     QMutexLocker locker(&lock);
-    if (before_send_headers_controller) {
-      emit before_send_headers_controller->beforeSendHeaders(event);
+    if (!before_send_headers_controller) {
+      delete event;
+      return;
     }
+
+    emit before_send_headers_controller->beforeSendHeaders(event);
   }
 
   QMutex lock;
