@@ -89,11 +89,11 @@ class WebContextIOThreadDelegate :
 
 bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
     OxideQQuickNetworkDelegateWorker* worker,
-    QScopedPointer<OxideQQuickNetworkDelegateWorker>* ui_slot,
+    OxideQQuickNetworkDelegateWorker** ui_slot,
     oxide::qquick::NetworkDelegateWorkerIOThreadController** io_slot) {
   Q_Q(OxideQQuickWebContext);
 
-  if ((*ui_slot).data() == worker) {
+  if (*ui_slot == worker) {
     return false;
   }
 
@@ -112,8 +112,8 @@ bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
         worker)->io_thread_controller.data();
   }
 
-  OxideQQuickNetworkDelegateWorker* old_worker = (*ui_slot).data();
-  (*ui_slot).reset(worker);
+  OxideQQuickNetworkDelegateWorker* old_worker = *ui_slot;
+  *ui_slot = worker;
 
   {
     QMutexLocker lock(&io_thread_delegate_->lock);
@@ -133,7 +133,8 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     oxide::qt::WebContextAdapter(new oxide::qquick::WebContextIOThreadDelegate()),
     q_ptr(q),
     io_thread_delegate_(
-        static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())) {}
+        static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
+    network_request_delegate_(NULL) {}
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
 
@@ -235,6 +236,10 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
     d->detachUserScriptSignals(
         adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));
   }
+
+  // These call back in to us when destroyed, so delete them now in order
+  // to avoid a reentrancy crash
+  delete d->network_request_delegate_;
 }
 
 void OxideQQuickWebContext::classBegin() {}
@@ -454,7 +459,7 @@ OxideQQuickNetworkDelegateWorker*
 OxideQQuickWebContext::networkRequestDelegate() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->network_request_delegate_.data();
+  return d->network_request_delegate_;
 }
 
 void OxideQQuickWebContext::setNetworkRequestDelegate(

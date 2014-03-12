@@ -18,7 +18,6 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 
-#include <QScopedPointer>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
@@ -67,17 +66,14 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
  private:
   bool attachNetworkDelegateWorker(
       OxideQQuickNetworkDelegateWorker* worker,
-      QScopedPointer<OxideQQuickNetworkDelegateWorker>* ui_slot,
+      OxideQQuickNetworkDelegateWorker** ui_slot,
       oxide::qquick::NetworkDelegateWorkerIOThreadController** io_slot);
 
   OxideQQuickWebContext* q_ptr;
 
   oxide::qquick::WebContextIOThreadDelegate* io_thread_delegate_;
 
-  // We assume ownership of these and ensure they are deleted before our
-  // QObject destructor is called, else they will call back in to a partially
-  // destroyed WebContext
-  QScopedPointer<OxideQQuickNetworkDelegateWorker> network_request_delegate_;
+  OxideQQuickNetworkDelegateWorker* network_request_delegate_;
 
   Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };
