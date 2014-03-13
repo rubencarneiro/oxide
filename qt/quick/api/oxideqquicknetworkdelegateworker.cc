@@ -31,6 +31,7 @@
 #include <QVariant>
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
+#include "qt/core/api/oxideqstoragepermissionrequest.h"
 
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
@@ -138,6 +139,7 @@ class NetworkDelegateWorkerHelperThreadController : public QObject {
 
   void beforeURLRequest(OxideQBeforeURLRequestEvent* event);
   void beforeSendHeaders(OxideQBeforeSendHeadersEvent* event);
+  void storagePermissionRequest(OxideQStoragePermissionRequest* req);
 
  private:
   bool running_;
@@ -271,6 +273,25 @@ void NetworkDelegateWorkerHelperThreadController::beforeSendHeaders(
   delete event;
 }
 
+void NetworkDelegateWorkerHelperThreadController::storagePermissionRequest(
+    OxideQStoragePermissionRequest* req) {
+  if (!running_) {
+    return;
+  }
+
+  QJSValue func = exports_.property("onStoragePermissionRequest");
+  if (!func.isCallable()) {
+    return;
+  }
+
+  QJSValueList argv;
+  argv.append(engine_->newQObject(req));
+
+  func.call(argv);
+
+  delete req;
+}
+
 } // namespace qquick
 } // namespace oxide
 
@@ -312,6 +333,9 @@ OxideQQuickNetworkDelegateWorker::OxideQQuickNetworkDelegateWorker() :
   connect(d->io_thread_controller.data(), SIGNAL(beforeSendHeaders(OxideQBeforeSendHeadersEvent*)),
           d->helper_thread_controller_, SLOT(beforeSendHeaders(OxideQBeforeSendHeadersEvent*)),
           Qt::BlockingQueuedConnection);
+  connect(d->io_thread_controller.data(), SIGNAL(storagePermissionRequest(OxideQStoragePermissionRequest*)),
+          d->helper_thread_controller_, SLOT(storagePermissionRequest(OxideQStoragePermissionRequest*)),
+          Qt::BlockingQueuedConnection);
 }
 
 OxideQQuickNetworkDelegateWorker::~OxideQQuickNetworkDelegateWorker() {
@@ -336,6 +360,8 @@ OxideQQuickNetworkDelegateWorker::~OxideQQuickNetworkDelegateWorker() {
              d->helper_thread_controller_, SLOT(beforeURLRequest(OxideQBeforeURLRequestEvent*)));
   disconnect(d->io_thread_controller.data(), SIGNAL(beforeSendHeaders(OxideQBeforeSendHeadersEvent*)),
              d->helper_thread_controller_, SLOT(beforeSendHeaders(OxideQBeforeSendHeadersEvent*)));
+  disconnect(d->io_thread_controller.data(), SIGNAL(storagePermissionRequest(OxideQStoragePermissionRequest*)),
+             d->helper_thread_controller_, SLOT(storagePermissionRequest(OxideQStoragePermissionRequest*)));
 }
 
 void OxideQQuickNetworkDelegateWorker::classBegin() {}

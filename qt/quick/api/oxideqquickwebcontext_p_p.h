@@ -74,6 +74,7 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   oxide::qquick::WebContextIOThreadDelegate* io_thread_delegate_;
 
   OxideQQuickNetworkDelegateWorker* network_request_delegate_;
+  OxideQQuickNetworkDelegateWorker* storage_access_permission_delegate_;
 
   Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };

@@ -19,6 +19,7 @@
 
 #include "base/memory/ref_counted.h"
 #include "net/base/net_errors.h"
+#include "net/url_request/url_request.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_context_delegate.h"
@@ -91,13 +92,17 @@ net::NetworkDelegate::AuthRequiredResponse NetworkDelegate::OnAuthRequired(
 
 bool NetworkDelegate::OnCanGetCookies(const net::URLRequest& request,
                                       const net::CookieList& cookie_list) {
-  return true;
+  return context_->CanAccessCookies(request.url(),
+                                    request.first_party_for_cookies(),
+                                    false);
 }
 
 bool NetworkDelegate::OnCanSetCookie(const net::URLRequest& request,
                                      const std::string& cookie_line,
                                      net::CookieOptions* options) {
-  return true;
+  return context_->CanAccessCookies(request.url(),
+                                    request.first_party_for_cookies(),
+                                    true);
 }
 
 bool NetworkDelegate::OnCanAccessFile(const net::URLRequest& request,

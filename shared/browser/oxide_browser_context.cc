@@ -22,6 +22,7 @@
 #include "base/files/file_path.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/supports_user_data.h"
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
@@ -30,6 +31,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
+#include "net/base/net_errors.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/ftp/ftp_network_layer.h"
 #include "net/http/http_cache.h"
@@ -60,7 +62,23 @@
 namespace oxide {
 
 namespace {
+
 base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
+
+const char kBrowserContextKey[] = "oxide_browser_context_data";
+
+class ContextData : public base::SupportsUserData::Data {
+ public:
+  ContextData(BrowserContextIOData* context) :
+      context_(context) {}
+  virtual ~ContextData() {}
+
+  BrowserContextIOData* context() const { return context_; }
+
+ private:
+  BrowserContextIOData* context_;
+};
+
 } // namespace
 
 class ResourceContext FINAL : public content::ResourceContext {
@@ -113,17 +131,36 @@ void BrowserContextIOData::SetDelegate(BrowserContextDelegate* delegate) {
   delegate_ = delegate;
 }
 
+void BrowserContextIOData::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
+  base::AutoLock lock(cookie_policy_lock_);
+  cookie_policy_.set_type(policy);
+}
+
 BrowserContextIOData::BrowserContextIOData() :
     initialized_(false),
-    resource_context_(new ResourceContext()) {}
+    cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+    resource_context_(new ResourceContext()) {
+  resource_context_->SetUserData(kBrowserContextKey, new ContextData(this));
+}
 
 BrowserContextIOData::~BrowserContextIOData() {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
 }
 
+// static
+BrowserContextIOData* BrowserContextIOData::FromResourceContext(
+    content::ResourceContext* resource_context) {
+  return static_cast<ContextData *>(
+      resource_context->GetUserData(kBrowserContextKey))->context();
+}
+
 scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
   base::AutoLock lock(delegate_lock_);
   return delegate_;
+}
+
+net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
+  return cookie_policy_.type();
 }
 
 void BrowserContextIOData::Init(
@@ -261,6 +298,27 @@ URLRequestContext* BrowserContextIOData::GetMainRequestContext() {
 
 content::ResourceContext* BrowserContextIOData::GetResourceContext() {
   return resource_context_.get();
+}
+
+bool BrowserContextIOData::CanAccessCookies(const GURL& url,
+                                            const GURL& first_party_url,
+                                            bool write) {
+  scoped_refptr<BrowserContextDelegate> delegate(GetDelegate());
+  if (delegate) {
+    StoragePermission res =
+        delegate->CanAccessStorage(url, first_party_url, write,
+                                   STORAGE_TYPE_COOKIES);
+    if (res != STORAGE_PERMISSION_UNDEFINED) {
+      return res == STORAGE_PERMISSION_ALLOW;
+    }
+  }
+
+  base::AutoLock lock(cookie_policy_lock_);
+  if (write) {
+    return cookie_policy_.CanSetCookie(url, first_party_url) == net::OK;
+  }
+
+  return cookie_policy_.CanGetCookies(url, first_party_url) == net::OK;
 }
 
 BrowserContext::IODataHandle::~IODataHandle() {
@@ -464,6 +522,15 @@ void BrowserContext::SetUserAgent(const std::string& user_agent) {
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     GetOffTheRecordContext()->observers_,
                     NotifyUserAgentStringChanged());
+}
+
+net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
+  return io_data()->GetCookiePolicy();
+}
+
+void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
+  GetOriginalContext()->io_data()->SetCookiePolicy(policy);
+  GetOffTheRecordContext()->io_data()->SetCookiePolicy(policy);
 }
 
 content::ResourceContext* BrowserContext::GetResourceContext() {

@@ -71,6 +71,21 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;
 
+  bool AllowGetCookie(const GURL& url,
+                      const GURL& first_party,
+                      const net::CookieList& cookie_list,
+                      content::ResourceContext* context,
+                      int render_process_id,
+                      int render_frame_id) FINAL;
+
+  bool AllowSetCookie(const GURL& url,
+                      const GURL& first_party,
+                      const std::string& cookie_line,
+                      content::ResourceContext* context,
+                      int render_process_id,
+                      int render_frame_id,
+                      net::CookieOptions* options) FINAL;
+
   void ResourceDispatcherHostCreated() FINAL;
 
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,

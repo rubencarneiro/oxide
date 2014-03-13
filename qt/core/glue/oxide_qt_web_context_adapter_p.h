@@ -27,6 +27,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "net/base/static_cookie_policy.h"
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
@@ -49,6 +50,7 @@ class WebContextAdapterPrivate FINAL :
     base::FilePath data_path;
     base::FilePath cache_path;
     std::string accept_langs;
+    net::StaticCookiePolicy::Type cookie_policy;
   };
 
   WebContextAdapterPrivate(WebContextAdapter* adapter,

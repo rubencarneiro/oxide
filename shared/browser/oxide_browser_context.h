@@ -29,6 +29,11 @@
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
+#include "net/base/static_cookie_policy.h"
+
+namespace content {
+class ResourceContext;
+}
 
 namespace net {
 
@@ -52,7 +57,12 @@ class BrowserContextIOData {
  public:
   virtual ~BrowserContextIOData();
 
+  static BrowserContextIOData* FromResourceContext(
+      content::ResourceContext* context);
+
   scoped_refptr<BrowserContextDelegate> GetDelegate();
+
+  net::StaticCookiePolicy::Type GetCookiePolicy() const;
 
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
@@ -73,6 +83,10 @@ class BrowserContextIOData {
   URLRequestContext* GetMainRequestContext();
   content::ResourceContext* GetResourceContext();
 
+  bool CanAccessCookies(const GURL& url,
+                        const GURL& first_party_url,
+                        bool write);
+
  protected:
   BrowserContextIOData();
 
@@ -80,11 +94,15 @@ class BrowserContextIOData {
   friend class BrowserContext;
 
   void SetDelegate(BrowserContextDelegate* delegate);
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
   bool initialized_;
 
   base::Lock delegate_lock_;
   scoped_refptr<BrowserContextDelegate> delegate_;
+
+  base::Lock cookie_policy_lock_;
+  net::StaticCookiePolicy cookie_policy_;
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
@@ -141,6 +159,9 @@ class BrowserContext : public content::BrowserContext {
 
   std::string GetUserAgent() const;
   void SetUserAgent(const std::string& user_agent);
+
+  net::StaticCookiePolicy::Type GetCookiePolicy() const;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
   BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 

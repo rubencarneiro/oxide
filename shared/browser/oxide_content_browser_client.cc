@@ -224,6 +224,27 @@ std::string ContentBrowserClient::GetAcceptLangs(
   return BrowserContext::FromContent(browser_context)->GetAcceptLangs();
 }
 
+bool ContentBrowserClient::AllowGetCookie(const GURL& url,
+                                          const GURL& first_party,
+                                          const net::CookieList& cookie_list,
+                                          content::ResourceContext* context,
+                                          int render_process_id,
+                                          int render_frame_id) {
+  return BrowserContextIOData::FromResourceContext(
+      context)->CanAccessCookies(url, first_party, false);
+}
+
+bool ContentBrowserClient::AllowSetCookie(const GURL& url,
+                                          const GURL& first_party,
+                                          const std::string& cookie_line,
+                                          content::ResourceContext* context,
+                                          int render_process_id,
+                                          int render_frame_id,
+                                          net::CookieOptions* options) {
+  return BrowserContextIOData::FromResourceContext(
+      context)->CanAccessCookies(url, first_party, true);
+}
+
 void ContentBrowserClient::ResourceDispatcherHostCreated() {
   std::vector<BrowserContext *>& contexts = BrowserContext::GetAllContexts();
 

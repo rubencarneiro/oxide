@@ -29,6 +29,8 @@
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
+#include "qt/core/api/oxideqstoragepermissionrequest.h"
+#include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 
 namespace oxide {
 namespace qt {
@@ -94,6 +96,31 @@ class BrowserContextDelegate : public oxide::BrowserContextDelegate {
     io_thread_delegate_->OnBeforeSendHeaders(event);
 
     return cancelled ? net::ERR_ABORTED : net::OK;
+  }
+
+  virtual oxide::StoragePermission CanAccessStorage(
+      const GURL& url,
+      const GURL& first_party_url,
+      bool write,
+      oxide::StorageType type) {
+    oxide::StoragePermission result = oxide::STORAGE_PERMISSION_UNDEFINED;
+
+    if (!io_thread_delegate_) {
+      return result;
+    }
+
+    OxideQStoragePermissionRequest* req =
+        new OxideQStoragePermissionRequest(
+          QUrl(QString::fromStdString(url.spec())),
+          QUrl(QString::fromStdString(first_party_url.spec())),
+          write,
+          static_cast<OxideQStoragePermissionRequest::Type>(type));
+
+    OxideQStoragePermissionRequestPrivate::get(req)->permission = &result;
+
+    io_thread_delegate_->HandleStoragePermissionRequest(req);
+
+    return result;
   }
 
   base::WeakPtr<WebContextAdapterPrivate> ui_thread_delegate_;

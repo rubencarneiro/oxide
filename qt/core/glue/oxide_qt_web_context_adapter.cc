@@ -27,6 +27,7 @@
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "net/base/static_cookie_policy.h"
 #include "url/gurl.h"
 
 #include "qt/core/gl/oxide_qt_shared_gl_context.h"
@@ -217,13 +218,49 @@ void WebContextAdapter::ensureChromiumStarted() {
   }
 }
 
-oxide::qt::WebContextAdapter::IOThreadDelegate*
+WebContextAdapter::IOThreadDelegate*
 WebContextAdapter::getIOThreadDelegate() const {
   return priv->GetIOThreadDelegate();
 }
 
+WebContextAdapter::CookiePolicy WebContextAdapter::cookiePolicy() const {
+  if (priv->context()) {
+    return static_cast<CookiePolicy>(priv->context()->GetCookiePolicy());
+  }
+
+  return static_cast<CookiePolicy>(priv->construct_props()->cookie_policy);
+}
+
+void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
+  if (priv->context()) {
+    priv->context()->SetCookiePolicy(
+        static_cast<net::StaticCookiePolicy::Type>(policy));
+  } else {
+    priv->construct_props()->cookie_policy =
+        static_cast<net::StaticCookiePolicy::Type>(policy);
+  }
+}
+
 WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
     priv(new WebContextAdapterPrivate(this, io_delegate)) {
+
+  COMPILE_ASSERT(
+      CookiePolicyAllowAll == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+      cookie_enums_allowall_doesnt_match);
+  COMPILE_ASSERT(
+      CookiePolicyBlockThirdParty == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::BLOCK_SETTING_THIRD_PARTY_COOKIES),
+      cookie_enums_block3rdparty_doesnt_match);
+  COMPILE_ASSERT(
+      CookiePolicyBlockAll == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::BLOCK_ALL_COOKIES),
+      cookie_enums_blockall_doesnt_match);
+  COMPILE_ASSERT(
+      CookiePolicyStrictBlockThirdParty == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::BLOCK_ALL_THIRD_PARTY_COOKIES),
+      cookie_enums_strictblock3rdparty_doesnt_match);
+
   static bool run_once = false;
   if (!run_once) {
     run_once = true;

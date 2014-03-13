@@ -31,6 +31,7 @@
 #endif
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
+#include "qt/core/api/oxideqstoragepermissionrequest.h"
 
 #include "oxideqquickglobals_p.h"
 #include "oxideqquickglobals_p_p.h"
@@ -50,7 +51,8 @@ class WebContextIOThreadDelegate :
     public oxide::qt::WebContextAdapter::IOThreadDelegate {
  public:
   WebContextIOThreadDelegate() :
-      network_request_delegate(NULL) {}
+      network_request_delegate(NULL),
+      storage_access_permission_delegate(NULL) {}
   virtual ~WebContextIOThreadDelegate() {}
 
   virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) {
@@ -79,9 +81,24 @@ class WebContextIOThreadDelegate :
     emit network_request_delegate->beforeSendHeaders(event);
   }
 
+  virtual void HandleStoragePermissionRequest(
+      OxideQStoragePermissionRequest* req) {
+    QMutexLocker locker(&lock);
+    if (!storage_access_permission_delegate) {
+      delete req;
+      return;
+    }
+
+    // FIXME(chrisccoulson): Should move |req| to the helper thread,
+    //  where it will be consumed
+
+    emit storage_access_permission_delegate->storagePermissionRequest(req);
+  }
+
   QMutex lock;
 
   NetworkDelegateWorkerIOThreadController* network_request_delegate;
+  NetworkDelegateWorkerIOThreadController* storage_access_permission_delegate;
 };
 
 } // namespace qquick
@@ -121,7 +138,8 @@ bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
   }
 
   if (old_worker &&
-      old_worker != q->networkRequestDelegate()) {
+      old_worker != q->networkRequestDelegate() &&
+      old_worker != q->storageAccessPermissionDelegate()) {
     old_worker->setParent(NULL);
   }
 
@@ -134,7 +152,8 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     q_ptr(q),
     io_thread_delegate_(
         static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
-    network_request_delegate_(NULL) {}
+    network_request_delegate_(NULL),
+    storage_access_permission_delegate_(NULL) {}
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
 
@@ -144,6 +163,9 @@ void OxideQQuickWebContextPrivate::networkDelegateWorkerDestroyed(
 
   if (worker == q->networkRequestDelegate()) {
     q->setNetworkRequestDelegate(NULL);
+  }
+  if (worker == q->storageAccessPermissionDelegate()) {
+    q->setStorageAccessPermissionDelegate(NULL);
   }
 }
 
@@ -240,6 +262,7 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
   // These call back in to us when destroyed, so delete them now in order
   // to avoid a reentrancy crash
   delete d->network_request_delegate_;
+  delete d->storage_access_permission_delegate_;
 }
 
 void OxideQQuickWebContext::classBegin() {}
@@ -455,6 +478,28 @@ void OxideQQuickWebContext::removeUserScript(
   emit userScriptsChanged();
 }
 
+OxideQQuickWebContext::CookiePolicy OxideQQuickWebContext::cookiePolicy() const {
+  Q_D(const OxideQQuickWebContext);
+
+  // FIXME: Add compile-time asserts for this cast
+  return static_cast<CookiePolicy>(d->cookiePolicy());
+}
+
+void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
+  Q_D(OxideQQuickWebContext);
+
+  oxide::qt::WebContextAdapter::CookiePolicy p =
+      static_cast<oxide::qt::WebContextAdapter::CookiePolicy>(policy);
+
+  if (p == d->cookiePolicy()) {
+    return;
+  }
+
+  d->setCookiePolicy(p);
+
+  emit cookiePolicyChanged();
+}
+
 OxideQQuickNetworkDelegateWorker*
 OxideQQuickWebContext::networkRequestDelegate() const {
   Q_D(const OxideQQuickWebContext);
@@ -471,6 +516,25 @@ void OxideQQuickWebContext::setNetworkRequestDelegate(
       &d->network_request_delegate_,
       &d->io_thread_delegate_->network_request_delegate)) {
     emit networkRequestDelegateChanged();
+  }
+}
+
+OxideQQuickNetworkDelegateWorker*
+OxideQQuickWebContext::storageAccessPermissionDelegate() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->storage_access_permission_delegate_;
+}
+
+void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
+    OxideQQuickNetworkDelegateWorker* delegate) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->attachNetworkDelegateWorker(
+      delegate,
+      &d->storage_access_permission_delegate_,
+      &d->io_thread_delegate_->storage_access_permission_delegate)) {
+    emit storageAccessPermissionDelegateChanged();
   }
 }
 

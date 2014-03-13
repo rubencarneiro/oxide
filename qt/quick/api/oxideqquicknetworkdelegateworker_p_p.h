@@ -25,6 +25,7 @@
 
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
+class OxideQStoragePermissionRequest;
 class OxideQQuickNetworkDelegateWorker;
 
 namespace oxide {
@@ -43,6 +44,7 @@ class NetworkDelegateWorkerIOThreadController : public QObject {
  Q_SIGNALS:
   void beforeURLRequest(OxideQBeforeURLRequestEvent* event);
   void beforeSendHeaders(OxideQBeforeSendHeadersEvent* event);
+  void storagePermissionRequest(OxideQStoragePermissionRequest* req);
 };
 
 }

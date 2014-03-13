@@ -36,8 +36,25 @@ class URLRequest;
 
 namespace oxide {
 
+class BrowserContextDelegate;
+
 struct BrowserContextDelegateTraits {
   static void Destruct(const BrowserContextDelegate* x);
+};
+
+enum StorageType {
+  STORAGE_TYPE_COOKIES,
+  STORAGE_TYPE_APPCACHE,
+  STORAGE_TYPE_LOCAL_STORAGE,
+  STORAGE_TYPE_SESSION_STORAGE,
+  STORAGE_TYPE_INDEXEDDB,
+  STORAGE_TYPE_WEBDB
+};
+
+enum StoragePermission {
+  STORAGE_PERMISSION_UNDEFINED, // Will fall back to default cookie policy
+  STORAGE_PERMISSION_DENY,
+  STORAGE_PERMISSION_ALLOW
 };
 
 class BrowserContextDelegate :
@@ -64,6 +81,14 @@ class BrowserContextDelegate :
       const net::HttpResponseHeaders* original_response_headers,
       scoped_refptr<net::HttpResponseHeaders>* override_response_headers) {
     return net::OK;
+  }
+
+  // Called on the IO thread
+  virtual StoragePermission CanAccessStorage(const GURL& url,
+                                             const GURL& first_party_url,
+                                             bool write,
+                                             StorageType type) {
+    return STORAGE_PERMISSION_UNDEFINED;
   }
 
  protected:
