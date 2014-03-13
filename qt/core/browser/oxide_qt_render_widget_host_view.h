@@ -65,6 +65,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void Hide() FINAL;
   bool IsShowing() FINAL;
 
+  void UpdateCursor(const WebCursor& cursor) FINAL;
+
   gfx::Rect GetViewBounds() const FINAL;
   gfx::Size GetPhysicalBackingSize() const FINAL;
 

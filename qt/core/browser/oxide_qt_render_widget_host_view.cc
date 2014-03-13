@@ -32,6 +32,8 @@
 #include <QTextCharFormat>
 #include <QTouchEvent>
 #include <QWheelEvent>
+#include <QCursor>
+#include <QImage>
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
@@ -48,6 +50,8 @@
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/rect.h"
+#include "shared/browser/oxide_form_factor.h"
+#include "webkit/common/cursors/webcursor.h"
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_p.h"
@@ -648,6 +652,138 @@ void RenderWidgetHostView::Hide() {
 
 bool RenderWidgetHostView::IsShowing() {
   return delegate_->IsShowing();
+}
+
+inline QCursor webcursor_to_qt_cursor(blink::WebCursorInfo::Type type) {
+  Qt::CursorShape cs = Qt::ArrowCursor;
+  switch (type) {
+  case blink::WebCursorInfo::TypeCross:
+    cs = Qt::CrossCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeHand:
+    cs = Qt::PointingHandCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeCell:
+  case blink::WebCursorInfo::TypeIBeam:
+    cs = Qt::IBeamCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeWait:
+    cs = Qt::WaitCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeHelp:
+    cs = Qt::WhatsThisCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeEastResize:
+  case blink::WebCursorInfo::TypeWestResize:
+  case blink::WebCursorInfo::TypeEastWestResize:
+    cs = Qt::SizeHorCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeNorthResize:
+  case blink::WebCursorInfo::TypeSouthResize:
+  case blink::WebCursorInfo::TypeNorthSouthResize:
+    cs = Qt::SizeVerCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeNorthEastResize:
+  case blink::WebCursorInfo::TypeSouthWestResize:
+    cs = Qt::SizeBDiagCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeNorthWestResize:
+  case blink::WebCursorInfo::TypeSouthEastResize:
+    cs = Qt::SizeFDiagCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeNorthEastSouthWestResize:
+  case blink::WebCursorInfo::TypeNorthWestSouthEastResize:
+  case blink::WebCursorInfo::TypeMove:
+    cs = Qt::SizeAllCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeColumnResize:
+    cs = Qt::SplitHCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeRowResize:
+    cs = Qt::SplitVCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeMiddlePanning:
+  case blink::WebCursorInfo::TypeEastPanning:
+  case blink::WebCursorInfo::TypeNorthPanning:
+  case blink::WebCursorInfo::TypeNorthEastPanning:
+  case blink::WebCursorInfo::TypeNorthWestPanning:
+  case blink::WebCursorInfo::TypeSouthPanning:
+  case blink::WebCursorInfo::TypeSouthEastPanning:
+  case blink::WebCursorInfo::TypeSouthWestPanning:
+  case blink::WebCursorInfo::TypeWestPanning:
+  case blink::WebCursorInfo::TypeGrab:
+  case blink::WebCursorInfo::TypeGrabbing:
+    cs = Qt::ClosedHandCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeProgress:
+    cs = Qt::BusyCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeNoDrop:
+  case blink::WebCursorInfo::TypeNotAllowed:
+    cs = Qt::ForbiddenCursor;
+    break;
+
+  case blink::WebCursorInfo::TypeCopy:
+  case blink::WebCursorInfo::TypeContextMenu:
+  case blink::WebCursorInfo::TypeVerticalText:
+  case blink::WebCursorInfo::TypeAlias:
+  case blink::WebCursorInfo::TypeZoomIn:
+  case blink::WebCursorInfo::TypeZoomOut:
+  case blink::WebCursorInfo::TypeCustom:
+  case blink::WebCursorInfo::TypePointer:
+  case blink::WebCursorInfo::TypeNone:
+  default:
+    break;
+  }
+  return QCursor(cs);
+}
+
+void RenderWidgetHostView::UpdateCursor(const WebCursor& cursor) {
+  if (GetFormFactorHint() != FORM_FACTOR_DESKTOP) {
+    return; // Cursor only on desktop
+  }
+
+  WebCursor::CursorInfo cursor_info;
+
+  cursor.GetCursorInfo(&cursor_info);
+  if (cursor.IsCustom()) {
+    QImage::Format format = QImage::Format_Invalid;
+    switch (cursor_info.custom_image.config()) {
+    case SkBitmap::kRGB_565_Config: format = QImage::Format_RGB16;
+    case SkBitmap::kARGB_4444_Config: format = QImage::Format_ARGB4444_Premultiplied;
+    case SkBitmap::kARGB_8888_Config: format = QImage::Format_ARGB32_Premultiplied;
+    default: ;
+    }
+    if (format == QImage::Format_Invalid) {
+      return;
+    }
+    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
+                        cursor_info.custom_image.width(),
+                        cursor_info.custom_image.height(),
+                        cursor_info.custom_image.rowBytes(),
+                        format);
+
+    QPixmap cursor_pixmap;
+    if (cursor_pixmap.convertFromImage(cursor_image)) {
+      delegate_->UpdateCursor(QCursor(cursor_pixmap));
+    }
+  } else {
+    delegate_->UpdateCursor(webcursor_to_qt_cursor(cursor_info.type));
+  }
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
