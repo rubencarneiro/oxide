@@ -88,6 +88,9 @@ void WebContextAdapterPrivate::Init() {
     context()->SetAcceptLangs(construct_props()->accept_langs);
   }
 
+  context()->SetShouldInjectOxideApiInMainWorld(
+      construct_props()->inject_oxide_api_in_main_world);
+
   construct_props_.reset();
 }
 

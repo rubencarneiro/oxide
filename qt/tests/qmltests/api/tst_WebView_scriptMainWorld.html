@@ -1,0 +1,17 @@
+<html>
+
+<script>
+try {
+  oxide.sendMessage("FOO", {});
+  document.querySelector("#result").innerHTML = "oxide.postMessage";
+} catch(e) {
+  document.querySelector("#result").className = "error";
+}
+</script>
+
+<body>
+  <iframe src="about:blank"></iframe>
+  <div id="result"></div>
+</body>
+</html>
+

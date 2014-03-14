@@ -40,7 +40,7 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
-  Q_PROPERTY(bool injectOxideApiInMainWorld READ injectOxideApiInMainWorld WRITE setInjectOxideApiInMainWorld NOTIFY injectOxideApiInMainWorldChanged)
+  Q_PROPERTY(bool __injectOxideApiInMainWorld READ injectOxideApiInMainWorld WRITE setInjectOxideApiInMainWorld NOTIFY injectOxideApiInMainWorldChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebContext)

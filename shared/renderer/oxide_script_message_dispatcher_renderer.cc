@@ -146,10 +146,15 @@ ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
 
   if (inject_api_in_main_world &&
       frame->GetWebFrame() == frame->GetRenderView()->GetWebView()->mainFrame()) {
+    v8::HandleScope handle_scope(v8::Isolate::GetCurrent());
+    v8::Local<v8::Context>
+      context = frame->GetWebFrame()->mainWorldScriptContext();
+    v8::Context::Scope context_scope(context);
+
     // Only in the main frame
     script_message_managers_.push_back(
         linked_ptr<ScriptMessageManager>(new ScriptMessageManager(frame,
-                                                                  frame->GetWebFrame()->mainWorldScriptContext(),
+                                                                  context,
                                                                   oxide::kMainWorldId)));
   }
 }
