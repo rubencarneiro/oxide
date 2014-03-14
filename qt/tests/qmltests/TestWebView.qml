@@ -78,7 +78,7 @@ WebView {
   property int qtest_expectedLoadsStoppedCount: 0
 
   context: WebContext {
-    dataPath: Testing.Utils.DATA_PATH
+    dataPath: Testing.OxideTestingUtils.DATA_PATH
     userScripts: [
       UserScript {
         context: "oxide://testutils/"
