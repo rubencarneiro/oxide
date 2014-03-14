@@ -42,17 +42,16 @@ TestWebView {
     function verifyUserAgent(re) {
       var userAgent = webView.context.userAgent;
 
-      webView.url = "http://localhost:8080/tst_WebContext_userAgent.py"
+      webView.url = "http://localhost:8080/get-headers.py"
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
       verify(re.test(userAgent), "Unexpected user agent string: " + userAgent);
 
-      var res = webView.getTestApi().evaluateCode(
-          "var el = document.querySelectorAll(\".ua\"); \
-           if (el.length == 0) return undefined; \
-           return el[0].innerHTML;", true);
-      compare(res, userAgent, "Unexpected User-Agent header");
+      var headers = JSON.parse(
+          webView.getTestApi().evaluateCode(
+            "return document.body.children[0].innerHTML", true));
+      compare(headers["user-agent"], userAgent, "Unexpected User-Agent header");
     }
 
     function test_WebContext_userAgent1_defaults() {

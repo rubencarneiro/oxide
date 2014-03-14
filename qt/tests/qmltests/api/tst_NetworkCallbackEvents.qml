@@ -73,11 +73,11 @@ TestWebView {
 
     function test_NetworkCallbackEvents2_BeforeSendHeaders_data() {
       return [
-        { url: "http://localhost:8080/tst_NetworkCallbackEvents.py", "User-Agent": "Oxide Test", "Foo": undefined },
-        { url: "http://localhost:8080/tst_NetworkCallbackEvents.py?override-ua", "User-Agent": "Bleurgh", "Foo": undefined },
+        { url: "http://localhost:8080/get-headers.py", "User-Agent": "Oxide Test", "Foo": undefined },
+        { url: "http://localhost:8080/get-headers.py?override-ua", "User-Agent": "Bleurgh", "Foo": undefined },
         // XXX: Clearing the User-Agent doesn't work - it seems to get added back later
-        // { url: "http://localhost:8080/tst_NetworkCallbackEvents.py?clear-ua", "User-Agent": undefined, "Foo": undefined },
-        { url: "http://localhost:8080/tst_NetworkCallbackEvents.py?add-foo", "User-Agent": "Oxide Test", "Foo": "Bar" }
+        // { url: "http://localhost:8080/get-headers.py?clear-ua", "User-Agent": undefined, "Foo": undefined },
+        { url: "http://localhost:8080/get-headers.py?add-foo", "User-Agent": "Oxide Test", "Foo": "Bar" }
       ];
     }
 
@@ -97,20 +97,11 @@ TestWebView {
       compare(webView.workerMessages[0].hasFoo, false);
       compare(webView.workerMessages[0].Foo, "");
 
-      function getHeader(header) {
-        return webView.getTestApi().evaluateCode(
-            "var el = document.querySelectorAll(\".header\");\
-             for (var i = 0; i < el.length; ++i) {\
-               var h = el[i].innerHTML.split(\"=\")[0];\
-               var v = el[i].innerHTML.split(\"=\")[1];\
-               if (h == \"" + header + "\") return v;\
-             }\
-             return undefined;",
-             true);
-      }
+      var headers = JSON.parse(webView.getTestApi().evaluateCode(
+          "return document.body.children[0].innerHTML", true));
 
-      compare(getHeader("User-Agent"), data["User-Agent"]);
-      compare(getHeader("Foo"), data["Foo"]);
+      compare(headers["user-agent"], data["User-Agent"]);
+      compare(headers["foo"], data["Foo"]);
     }
   }
 }
