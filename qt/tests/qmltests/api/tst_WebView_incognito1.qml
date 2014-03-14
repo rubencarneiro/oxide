@@ -23,20 +23,15 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      webView.url = "http://localhost:8080/tst_WebView_incognito2.py"
+      webView.url = "http://localhost:8080/get-cookies.py"
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      var res = webView.getTestApi().evaluateCode(
-          "var el = document.querySelectorAll(\".cookie\"); \
-           for (var i = 0; i < el.length; ++i) { \
-             var name = el[i].innerHTML.split(\"=\")[0]; \
-             var value = el[i].innerHTML.split(\"=\")[1]; \
-             if (name == \"foo\") return value; \
-           } \
-           return undefined;",
-           true);
-      compare(res, "bar", "Cookie was not set correctly");
+      console.log(webView.getTestApi().evaluateCode(
+          "return document.body.children[0].innerHTML", true));
+      var cookies = JSON.parse(webView.getTestApi().evaluateCode(
+          "return document.body.children[0].innerHTML", true));
+      compare(cookies["foo"], "bar", "Cookie was not set correctly");
     }
   }
 }
