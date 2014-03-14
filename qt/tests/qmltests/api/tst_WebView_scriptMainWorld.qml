@@ -25,6 +25,11 @@ TestWebView {
     WebContext {}
   }
 
+  Component {
+    id: scriptMessageHandler
+    ScriptMessageHandler {}
+  }
+
   TestCase {
     id: test
     name: "WebView_scriptMainWorld"
@@ -55,10 +60,11 @@ return el.innerHTML;", true);
     }
 
     function test_can_inject_in_main_world_with_no_oxide_api() {
+      webView.context.__injectOxideApiInMainWorld = false;
       var otherContext = webContext.createObject(null, {});
       var script = userScript.createObject(null, {
         context: "oxide-private://main-world-private",
-	privateInjectedInMainWorld: true,
+	injectInMainWorld: true,
 	url: "file://localhost:8080/tst_WebView_scriptMainWorld_user_script.js"});
 
       webView.context.addUserScript(script);
@@ -81,11 +87,11 @@ return el.innerHTML;", true);
               "Unexpected result message");
     }
 
-    function test_WebContext_userScripts3_deleted_by_someone_else() {
+    function test_can_inject_in_main_world_with_oxide_api() {
       var otherContext = webContext.createObject(null, {});
       var script = userScript.createObject(null, {
         context: "oxide-private://main-world-private",
-	privateInjectedInMainWorld: true,
+	injectInMainWorld: true,
 	url: "file://localhost:8080/tst_WebView_scriptMainWorld_user_script.js"});
 
       webView.context.__injectOxideApiInMainWorld = true;
@@ -108,5 +114,35 @@ return el.innerHTML;", true);
       compare(res, "Main world content script found oxide.postMessage",
               "Unexpected result message");
     }
+
+    function test_receive_message_from_main_world_userscript() {
+      var otherContext = webContext.createObject(null, {});
+      var script = userScript.createObject(null, {
+        context: "oxide-private://main-world-private",
+	injectInMainWorld: true,
+	url: "file://localhost:8080/tst_WebView_scriptMainWorld_user_script.js"});
+
+      var received = null;
+      var frame = webView.rootFrame;
+      var handler = messageHandler.createObject(null, {
+        msgId: "from-user-script",
+	contexts: ["oxide-private://main-world-private"],
+	callback: function(msg, frame) {
+	  received = msg.args;
+	}
+      });
+      frame.addMessageHandler(handler);
+
+      webView.context.__injectOxideApiInMainWorld = true;
+      webView.context.addUserScript(script);
+
+      webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+
+      verify(received != null, "Did not receive message from the main frame's userscript");
+      compare(received.data, "mydata" , "Did not receive message from the main frame's userscript");
+    }
+
   }
 }
