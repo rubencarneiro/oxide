@@ -64,14 +64,14 @@ QString WebContextAdapter::product() const {
     return QString::fromStdString(priv->context()->GetProduct());
   }
 
-  return QString::fromStdString(priv->construct_props()->product);
+  return QString::fromStdString(priv->construct_props_->product);
 }
 
 void WebContextAdapter::setProduct(const QString& product) {
   if (priv->context()) {
     priv->context()->SetProduct(product.toStdString());
   } else {
-    priv->construct_props()->product = product.toStdString();
+    priv->construct_props_->product = product.toStdString();
   }
 }
 
@@ -80,14 +80,14 @@ QString WebContextAdapter::userAgent() const {
     return QString::fromStdString(priv->context()->GetUserAgent());
   }
 
-  return QString::fromStdString(priv->construct_props()->user_agent);
+  return QString::fromStdString(priv->construct_props_->user_agent);
 }
 
 void WebContextAdapter::setUserAgent(const QString& user_agent) {
   if (priv->context()) {
     priv->context()->SetUserAgent(user_agent.toStdString());
   } else {
-    priv->construct_props()->user_agent = user_agent.toStdString();
+    priv->construct_props_->user_agent = user_agent.toStdString();
   }
 }
 
@@ -96,7 +96,7 @@ QUrl WebContextAdapter::dataPath() const {
   if (priv->context()) {
     path = priv->context()->GetPath();
   } else {
-    path = priv->construct_props()->data_path;
+    path = priv->construct_props_->data_path;
   }
 
   if (path.empty()) {
@@ -113,7 +113,7 @@ void WebContextAdapter::setDataPath(const QUrl& url) {
   }
 
   DCHECK(!priv->context());
-  priv->construct_props()->data_path =
+  priv->construct_props_->data_path =
       base::FilePath(url.toLocalFile().toStdString());
 }
 
@@ -122,7 +122,7 @@ QUrl WebContextAdapter::cachePath() const {
   if (priv->context()) {
     path = priv->context()->GetCachePath();
   } else {
-    path = priv->construct_props()->cache_path;
+    path = priv->construct_props_->cache_path;
   }
 
   if (path.empty()) {
@@ -139,7 +139,7 @@ void WebContextAdapter::setCachePath(const QUrl& url) {
   }
 
   DCHECK(!priv->context());
-  priv->construct_props()->cache_path =
+  priv->construct_props_->cache_path =
       base::FilePath(url.toLocalFile().toStdString());
 }
 
@@ -148,14 +148,14 @@ QString WebContextAdapter::acceptLangs() const {
     return QString::fromStdString(priv->context()->GetAcceptLangs());
   }
 
-  return QString::fromStdString(priv->construct_props()->accept_langs);
+  return QString::fromStdString(priv->construct_props_->accept_langs);
 }
 
 void WebContextAdapter::setAcceptLangs(const QString& langs) {
   if (priv->context()) {
     priv->context()->SetAcceptLangs(langs.toStdString());
   } else {
-    priv->construct_props()->accept_langs = langs.toStdString();
+    priv->construct_props_->accept_langs = langs.toStdString();
   }
 }
 
@@ -228,7 +228,7 @@ WebContextAdapter::CookiePolicy WebContextAdapter::cookiePolicy() const {
     return static_cast<CookiePolicy>(priv->context()->GetCookiePolicy());
   }
 
-  return static_cast<CookiePolicy>(priv->construct_props()->cookie_policy);
+  return static_cast<CookiePolicy>(priv->construct_props_->cookie_policy);
 }
 
 void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
@@ -236,7 +236,7 @@ void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
     priv->context()->SetCookiePolicy(
         static_cast<net::StaticCookiePolicy::Type>(policy));
   } else {
-    priv->construct_props()->cookie_policy =
+    priv->construct_props_->cookie_policy =
         static_cast<net::StaticCookiePolicy::Type>(policy);
   }
 }

@@ -43,17 +43,21 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
  public:
-  OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
   ~OxideQQuickWebContextPrivate();
 
   void networkDelegateWorkerDestroyed(OxideQQuickNetworkDelegateWorker* worker);
+
+  static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
+
+  static void ensureChromiumStarted();
+
+ private:
+  OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
 
   void userScriptUpdated();
   void userScriptWillBeDeleted();
 
   void detachUserScriptSignals(OxideQQuickUserScript* script);
-
-  static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
   static void userScript_append(QQmlListProperty<OxideQQuickUserScript>* prop,
                                 OxideQQuickUserScript* user_script);
@@ -63,7 +67,6 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       int index);
   static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
 
- private:
   bool attachNetworkDelegateWorker(
       OxideQQuickNetworkDelegateWorker* worker,
       OxideQQuickNetworkDelegateWorker** ui_slot,

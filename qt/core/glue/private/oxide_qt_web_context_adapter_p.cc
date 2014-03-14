@@ -134,28 +134,28 @@ WebContextAdapterPrivate::WebContextAdapterPrivate(
     construct_props_(new ConstructProperties()),
     context_delegate_(new BrowserContextDelegate(this, io_delegate)) {}
 
-WebContextAdapterPrivate::~WebContextAdapterPrivate() {}
-
 void WebContextAdapterPrivate::Init() {
   DCHECK(!context_);
 
   context_.reset(oxide::BrowserContext::Create(
-      construct_props()->data_path,
-      construct_props()->cache_path));
+      construct_props_->data_path,
+      construct_props_->cache_path));
 
-  if (!construct_props()->product.empty()) {
-    context()->SetProduct(construct_props()->product);
+  if (!construct_props_->product.empty()) {
+    context()->SetProduct(construct_props_->product);
   }
-  if (!construct_props()->user_agent.empty()) {
-    context()->SetUserAgent(construct_props()->user_agent);
+  if (!construct_props_->user_agent.empty()) {
+    context()->SetUserAgent(construct_props_->user_agent);
   }
-  if (!construct_props()->accept_langs.empty()) {
-    context()->SetAcceptLangs(construct_props()->accept_langs);
+  if (!construct_props_->accept_langs.empty()) {
+    context()->SetAcceptLangs(construct_props_->accept_langs);
   }
   context()->SetDelegate(context_delegate_);
 
   construct_props_.reset();
 }
+
+WebContextAdapterPrivate::~WebContextAdapterPrivate() {}
 
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::get(

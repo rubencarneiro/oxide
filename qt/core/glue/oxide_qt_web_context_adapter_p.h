@@ -43,6 +43,17 @@ struct ConstructProperties;
 class WebContextAdapterPrivate FINAL :
     public base::SupportsWeakPtr<WebContextAdapterPrivate> {
  public:
+  ~WebContextAdapterPrivate();
+
+  static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
+
+  WebContextAdapter::IOThreadDelegate* GetIOThreadDelegate() const;
+
+  oxide::BrowserContext* context() { return context_.get(); }
+
+ private:
+  friend class BrowserContextDelegate;
+  friend class WebContextAdapter;
 
   struct ConstructProperties {
     std::string product;
@@ -55,20 +66,8 @@ class WebContextAdapterPrivate FINAL :
 
   WebContextAdapterPrivate(WebContextAdapter* adapter,
                            WebContextAdapter::IOThreadDelegate* io_delegate);
-  ~WebContextAdapterPrivate();
 
   void Init();
-
-  static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
-
-  WebContextAdapter::IOThreadDelegate* GetIOThreadDelegate() const;
-
-  oxide::BrowserContext* context() { return context_.get(); }
-  ConstructProperties* construct_props() { return construct_props_.get(); }
-
- private:
-  friend class BrowserContextDelegate;
-  friend class WebContextAdapter;
 
   WebContextAdapter* adapter;
 

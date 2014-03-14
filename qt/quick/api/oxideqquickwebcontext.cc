@@ -107,48 +107,6 @@ class WebContextIOThreadDelegate :
 } // namespace qquick
 } // namespace oxide
 
-bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
-    OxideQQuickNetworkDelegateWorker* worker,
-    OxideQQuickNetworkDelegateWorker** ui_slot,
-    oxide::qquick::NetworkDelegateWorkerIOThreadController** io_slot) {
-  Q_Q(OxideQQuickWebContext);
-
-  if (*ui_slot == worker) {
-    return false;
-  }
-
-  oxide::qquick::NetworkDelegateWorkerIOThreadController* controller = NULL;
-
-  if (worker) {
-    OxideQQuickWebContext* parent =
-        qobject_cast<OxideQQuickWebContext *>(worker->parent());
-    if (parent && parent != q) {
-      qWarning() << "Can't add NetworkDelegateWorker to more than one WebContext";
-      return false;
-    }
-
-    worker->setParent(q);
-    controller = OxideQQuickNetworkDelegateWorkerPrivate::get(
-        worker)->io_thread_controller.data();
-  }
-
-  OxideQQuickNetworkDelegateWorker* old_worker = *ui_slot;
-  *ui_slot = worker;
-
-  {
-    QMutexLocker lock(&io_thread_delegate_->lock);
-    *io_slot = controller;
-  }
-
-  if (old_worker &&
-      old_worker != q->networkRequestDelegate() &&
-      old_worker != q->storageAccessPermissionDelegate()) {
-    old_worker->setParent(NULL);
-  }
-
-  return true;
-}
-
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     oxide::qt::WebContextAdapter(new oxide::qquick::WebContextIOThreadDelegate()),
@@ -157,20 +115,6 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
         static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
     network_request_delegate_(NULL),
     storage_access_permission_delegate_(NULL) {}
-
-OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
-
-void OxideQQuickWebContextPrivate::networkDelegateWorkerDestroyed(
-    OxideQQuickNetworkDelegateWorker* worker) {
-  Q_Q(OxideQQuickWebContext);
-
-  if (worker == q->networkRequestDelegate()) {
-    q->setNetworkRequestDelegate(NULL);
-  }
-  if (worker == q->storageAccessPermissionDelegate()) {
-    q->setStorageAccessPermissionDelegate(NULL);
-  }
-}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
   updateUserScripts();
@@ -195,11 +139,6 @@ void OxideQQuickWebContextPrivate::detachUserScriptSignals(
                       q, SLOT(userScriptUpdated()));
   QObject::disconnect(user_script, SIGNAL(scriptWillBeDeleted()),
                       q, SLOT(userScriptWillBeDeleted()));
-}
-
-OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
-    OxideQQuickWebContext* context) {
-  return context->d_func();
 }
 
 void OxideQQuickWebContextPrivate::userScript_append(
@@ -248,10 +187,85 @@ void OxideQQuickWebContextPrivate::userScript_clear(
   }
 }
 
+bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
+    OxideQQuickNetworkDelegateWorker* worker,
+    OxideQQuickNetworkDelegateWorker** ui_slot,
+    oxide::qquick::NetworkDelegateWorkerIOThreadController** io_slot) {
+  Q_Q(OxideQQuickWebContext);
+
+  if (*ui_slot == worker) {
+    return false;
+  }
+
+  oxide::qquick::NetworkDelegateWorkerIOThreadController* controller = NULL;
+
+  if (worker) {
+    OxideQQuickWebContext* parent =
+        qobject_cast<OxideQQuickWebContext *>(worker->parent());
+    if (parent && parent != q) {
+      qWarning() << "Can't add NetworkDelegateWorker to more than one WebContext";
+      return false;
+    }
+
+    worker->setParent(q);
+    controller = OxideQQuickNetworkDelegateWorkerPrivate::get(
+        worker)->io_thread_controller.data();
+  }
+
+  OxideQQuickNetworkDelegateWorker* old_worker = *ui_slot;
+  *ui_slot = worker;
+
+  {
+    QMutexLocker lock(&io_thread_delegate_->lock);
+    *io_slot = controller;
+  }
+
+  if (old_worker &&
+      old_worker != q->networkRequestDelegate() &&
+      old_worker != q->storageAccessPermissionDelegate()) {
+    old_worker->setParent(NULL);
+  }
+
+  return true;
+}
+
+OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
+
+void OxideQQuickWebContextPrivate::networkDelegateWorkerDestroyed(
+    OxideQQuickNetworkDelegateWorker* worker) {
+  Q_Q(OxideQQuickWebContext);
+
+  if (worker == q->networkRequestDelegate()) {
+    q->setNetworkRequestDelegate(NULL);
+  }
+  if (worker == q->storageAccessPermissionDelegate()) {
+    q->setStorageAccessPermissionDelegate(NULL);
+  }
+}
+
+OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
+    OxideQQuickWebContext* context) {
+  return context->d_func();
+}
+
+// static
+void OxideQQuickWebContextPrivate::ensureChromiumStarted() {
+  static bool started = false;
+  if (started) {
+    return;
+  }
+  started = true;
+#if defined(ENABLE_COMPOSITING)
+  oxide::qt::WebContextAdapter::setSharedGLContext(
+      QSGContext::sharedOpenGLContext());
+#endif
+  oxide::qt::WebContextAdapter::ensureChromiumStarted();
+}
+
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickWebContextPrivate(this)) {
-  ensureChromiumStarted();
+  OxideQQuickWebContextPrivate::ensureChromiumStarted();
 }
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {
@@ -274,20 +288,6 @@ void OxideQQuickWebContext::componentComplete() {
   Q_D(OxideQQuickWebContext);
 
   d->completeConstruction();
-}
-
-// static
-void OxideQQuickWebContext::ensureChromiumStarted() {
-  static bool started = false;
-  if (started) {
-    return;
-  }
-  started = true;
-#if defined(ENABLE_COMPOSITING)
-  oxide::qt::WebContextAdapter::setSharedGLContext(
-      QSGContext::sharedOpenGLContext());
-#endif
-  oxide::qt::WebContextAdapter::ensureChromiumStarted();
 }
 
 // static
