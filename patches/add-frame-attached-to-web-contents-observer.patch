@@ -5,73 +5,74 @@
 diff --git a/content/browser/frame_host/frame_tree.cc b/content/browser/frame_host/frame_tree.cc
 --- a/content/browser/frame_host/frame_tree.cc
 +++ b/content/browser/frame_host/frame_tree.cc
-@@ -117,16 +117,21 @@ RenderFrameHostImpl* FrameTree::AddFrame
-     return NULL;
- 
+@@ -110,16 +110,22 @@ RenderFrameHostImpl* FrameTree::AddFrame
+                                          int new_routing_id,
+                                          const std::string& frame_name) {
    scoped_ptr<FrameTreeNode> node(new FrameTreeNode(
        this, parent->navigator(), render_frame_delegate_, render_view_delegate_,
-       render_widget_delegate_, manager_delegate_, frame_id, frame_name));
+       render_widget_delegate_, manager_delegate_, frame_name));
    FrameTreeNode* node_ptr = node.get();
    // AddChild is what creates the RenderFrameHost.
-   parent->AddChild(node.Pass(), frame_routing_id);
+   parent->AddChild(node.Pass(), new_routing_id);
 +  if (!on_frame_added_.is_null()) {
 +    on_frame_added_.Run(
 +        node_ptr->current_frame_host()->render_view_host(),
-+        parent_frame_id, frame_id);
++        parent->current_frame_host()->GetRoutingID(),
++        node_ptr->current_frame_host()->GetRoutingID());
 +  }
    return node_ptr->current_frame_host();
  }
  
- void FrameTree::RemoveFrame(RenderFrameHostImpl* render_frame_host,
-                             int64 parent_frame_id,
-                             int64 frame_id) {
-   // If switches::kSitePerProcess is not specified, then the FrameTree only
-   // contains a node for the root element. However, even in this case
-@@ -179,16 +184,21 @@ RenderFrameHostImpl* FrameTree::GetMainF
+ void FrameTree::RemoveFrame(FrameTreeNode* child) {
+   FrameTreeNode* parent = child->parent();
+   if (!parent) {
+     NOTREACHED() << "Unexpected RemoveFrame call for main frame.";
+     return;
+@@ -154,16 +160,21 @@ RenderFrameHostImpl* FrameTree::GetMainF
    return root_->current_frame_host();
  }
  
  void FrameTree::SetFrameRemoveListener(
-     const base::Callback<void(RenderViewHostImpl*, int64)>& on_frame_removed) {
+     const base::Callback<void(RenderViewHostImpl*, int)>& on_frame_removed) {
    on_frame_removed_ = on_frame_removed;
  }
  
 +void FrameTree::SetFrameAddListener(
-+    const base::Callback<void(RenderViewHostImpl*, int64, int64)>& on_frame_added) {
++    const base::Callback<void(RenderViewHostImpl*, int, int)>& on_frame_added) {
 +  on_frame_added_ = on_frame_added;
 +}
 +
- void FrameTree::ClearFrameRemoveListenerForTesting() {
-   on_frame_removed_.Reset();
- }
- 
  RenderViewHostImpl* FrameTree::CreateRenderViewHostForMainFrame(
      SiteInstance* site_instance,
      int routing_id,
      int main_frame_routing_id,
+     bool swapped_out,
+     bool hidden) {
+   DCHECK(main_frame_routing_id != MSG_ROUTING_NONE);
+   RenderViewHostMap::iterator iter =
 diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_host/frame_tree.h
 --- a/content/browser/frame_host/frame_tree.h
 +++ b/content/browser/frame_host/frame_tree.h
-@@ -105,16 +105,18 @@ class CONTENT_EXPORT FrameTree {
+@@ -89,16 +89,18 @@ class CONTENT_EXPORT FrameTree {
    RenderFrameHostImpl* GetMainFrame() const;
  
    // Allows a client to listen for frame removal.  The listener should expect
    // to receive the RenderViewHostImpl containing the frame and the renderer-
-   // specific frame ID of the removed frame.
+   // specific frame routing ID of the removed frame.
    // TODO(creis): These parameters will later change to be the RenderFrameHost.
    void SetFrameRemoveListener(
-       const base::Callback<void(RenderViewHostImpl*, int64)>& on_frame_removed);
+       const base::Callback<void(RenderViewHostImpl*, int)>& on_frame_removed);
 +  void SetFrameAddListener(
-+      const base::Callback<void(RenderViewHostImpl*, int64, int64)>& on_frame_added);
- 
-   void ClearFrameRemoveListenerForTesting();
++      const base::Callback<void(RenderViewHostImpl*, int, int)>& on_frame_added);
  
    // Creates a RenderViewHost for a new main frame RenderFrameHost in the given
    // |site_instance|.  The RenderViewHost will have its Shutdown method called
    // when all of the RenderFrameHosts using it are deleted.
    RenderViewHostImpl* CreateRenderViewHostForMainFrame(
        SiteInstance* site_instance,
-@@ -164,15 +166,16 @@ class CONTENT_EXPORT FrameTree {
+       int routing_id,
+       int main_frame_routing_id,
+@@ -141,15 +143,16 @@ class CONTENT_EXPORT FrameTree {
    // background. When the SwapOutACK is received, they will be deleted. In the
    // meantime, they are kept in this map, as they should not be reused (part of
    // their state is already gone away).
@@ -79,8 +80,8 @@ diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_hos
  
    scoped_ptr<FrameTreeNode> root_;
  
-   base::Callback<void(RenderViewHostImpl*, int64)> on_frame_removed_;
-+  base::Callback<void(RenderViewHostImpl*, int64, int64)> on_frame_added_;
+   base::Callback<void(RenderViewHostImpl*, int)> on_frame_removed_;
++  base::Callback<void(RenderViewHostImpl*, int, int)> on_frame_added_;
  
    DISALLOW_COPY_AND_ASSIGN(FrameTree);
  };
@@ -91,7 +92,7 @@ diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_hos
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -316,16 +316,19 @@ WebContentsImpl::WebContentsImpl(
+@@ -317,16 +317,19 @@ WebContentsImpl::WebContentsImpl(
        render_view_message_source_(NULL),
        fullscreen_widget_routing_id_(MSG_ROUTING_NONE),
        is_subframe_(false) {
@@ -108,24 +109,24 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
  WebContentsImpl::~WebContentsImpl() {
    is_being_destroyed_ = true;
  
-   ClearAllPowerSaveBlockers();
- 
-   for (std::set<RenderWidgetHostImpl*>::iterator iter =
+   // Delete all RFH pending shutdown, which will lead the corresponding RVH to
+   // shutdown and be deleted as well.
+   frame_tree_.ForEach(
 @@ -3636,16 +3639,25 @@ gfx::Size WebContentsImpl::GetSizeForNew
  
  void WebContentsImpl::OnFrameRemoved(
      RenderViewHostImpl* render_view_host,
-     int64 frame_id) {
+     int frame_routing_id) {
     FOR_EACH_OBSERVER(WebContentsObserver, observers_,
-                      FrameDetached(render_view_host, frame_id));
+                      FrameDetached(render_view_host, frame_routing_id));
  }
  
 +void WebContentsImpl::OnFrameAdded(
 +    RenderViewHostImpl* render_view_host,
-+    int64 parent_frame_id,
-+    int64 frame_id) {
++    int parent_frame_routing_id,
++    int frame_routing_id) {
 +  FOR_EACH_OBSERVER(WebContentsObserver, observers_,
-+                    FrameAttached(render_view_host, parent_frame_id, frame_id));
++                    FrameAttached(render_view_host, parent_frame_routing_id, frame_routing_id));
 +
 +}
 +
@@ -140,17 +141,17 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 diff --git a/content/browser/web_contents/web_contents_impl.h b/content/browser/web_contents/web_contents_impl.h
 --- a/content/browser/web_contents/web_contents_impl.h
 +++ b/content/browser/web_contents/web_contents_impl.h
-@@ -834,16 +834,18 @@ class CONTENT_EXPORT WebContentsImpl
- 
+@@ -835,16 +835,18 @@ class CONTENT_EXPORT WebContentsImpl
    // Clear all PowerSaveBlockers, leave power_save_blocker_ empty.
    void ClearAllPowerSaveBlockers();
  
    // Helper function to invoke WebContentsDelegate::GetSizeForNewRenderView().
    gfx::Size GetSizeForNewRenderView() const;
  
-   void OnFrameRemoved(RenderViewHostImpl* render_view_host, int64 frame_id);
+   void OnFrameRemoved(RenderViewHostImpl* render_view_host,
+                       int frame_routing_id);
 +  void OnFrameAdded(RenderViewHostImpl* render_view_host,
-+                    int64 parent_frame_id, int64 frame_id);
++                    int parent_frame_routing_id, int frame_routing_id);
  
    // Helper method that's called whenever |preferred_size_| or
    // |preferred_size_for_capture_| changes, to propagate the new value to the

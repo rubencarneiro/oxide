@@ -2,20 +2,231 @@
 #  for GLX, which is needed to share GL resources with Qt on X11
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
+diff --git a/build/linux/system.gyp b/build/linux/system.gyp
+--- a/build/linux/system.gyp
++++ b/build/linux/system.gyp
+@@ -106,52 +106,16 @@
+           ],
+         },
+       ],  # targets
+     }],
+     [ 'use_x11==1', {
+       # Hide X11 and related dependencies when use_x11=0
+       'targets': [
+         {
+-          'target_name': 'x11',
+-          'type': 'none',
+-          'toolsets': ['host', 'target'],
+-          'conditions': [
+-            ['_toolset=="target"', {
+-              'direct_dependent_settings': {
+-                'cflags': [
+-                  '<!@(<(pkg-config) --cflags x11)',
+-                ],
+-              },
+-              'link_settings': {
+-                'ldflags': [
+-                  '<!@(<(pkg-config) --libs-only-L --libs-only-other x11 xi)',
+-                ],
+-                'libraries': [
+-                  '<!@(<(pkg-config) --libs-only-l x11 xi)',
+-                ],
+-              },
+-            }, {
+-              'direct_dependent_settings': {
+-                'cflags': [
+-                  '<!@(pkg-config --cflags x11)',
+-                ],
+-              },
+-              'link_settings': {
+-                'ldflags': [
+-                  '<!@(pkg-config --libs-only-L --libs-only-other x11 xi)',
+-                ],
+-                'libraries': [
+-                  '<!@(pkg-config --libs-only-l x11 xi)',
+-                ],
+-              },
+-            }],
+-          ],
+-        },
+-        {
+           'target_name': 'xcursor',
+           'type': 'none',
+           'direct_dependent_settings': {
+             'cflags': [
+               '<!@(<(pkg-config) --cflags xcursor)',
+             ],
+           },
+           'link_settings': {
+@@ -159,33 +123,16 @@
+               '<!@(<(pkg-config) --libs-only-L --libs-only-other xcursor)',
+             ],
+             'libraries': [
+               '<!@(<(pkg-config) --libs-only-l xcursor)',
+             ],
+           },
+         },
+         {
+-          'target_name': 'xcomposite',
+-          'type': 'none',
+-          'direct_dependent_settings': {
+-            'cflags': [
+-              '<!@(<(pkg-config) --cflags xcomposite)',
+-            ],
+-          },
+-          'link_settings': {
+-            'ldflags': [
+-              '<!@(<(pkg-config) --libs-only-L --libs-only-other xcomposite)',
+-            ],
+-            'libraries': [
+-              '<!@(<(pkg-config) --libs-only-l xcomposite)',
+-            ],
+-          },
+-        },
+-        {
+           'target_name': 'xdamage',
+           'type': 'none',
+           'direct_dependent_settings': {
+             'cflags': [
+               '<!@(<(pkg-config) --cflags xdamage)',
+             ],
+           },
+           'link_settings': {
+@@ -193,33 +140,16 @@
+               '<!@(<(pkg-config) --libs-only-L --libs-only-other xdamage)',
+             ],
+             'libraries': [
+               '<!@(<(pkg-config) --libs-only-l xdamage)',
+             ],
+           },
+         },
+         {
+-          'target_name': 'xext',
+-          'type': 'none',
+-          'direct_dependent_settings': {
+-            'cflags': [
+-              '<!@(<(pkg-config) --cflags xext)',
+-            ],
+-          },
+-          'link_settings': {
+-            'ldflags': [
+-              '<!@(<(pkg-config) --libs-only-L --libs-only-other xext)',
+-            ],
+-            'libraries': [
+-              '<!@(<(pkg-config) --libs-only-l xext)',
+-            ],
+-          },
+-        },
+-        {
+           'target_name': 'xfixes',
+           'type': 'none',
+           'direct_dependent_settings': {
+             'cflags': [
+               '<!@(<(pkg-config) --cflags xfixes)',
+             ],
+           },
+           'link_settings': {
+@@ -978,16 +908,86 @@
+                 ],
+               },
+             }],
+           ]
+         }],
+       ],
+     },
+     {
++      'target_name': 'x11',
++      'type': 'none',
++      'toolsets': ['host', 'target'],
++      'conditions': [
++        ['_toolset=="target"', {
++          'direct_dependent_settings': {
++            'cflags': [
++              '<!@(<(pkg-config) --cflags x11)',
++            ],
++          },
++          'link_settings': {
++            'ldflags': [
++              '<!@(<(pkg-config) --libs-only-L --libs-only-other x11 xi)',
++            ],
++            'libraries': [
++              '<!@(<(pkg-config) --libs-only-l x11 xi)',
++            ],
++          },
++        }, {
++          'direct_dependent_settings': {
++            'cflags': [
++              '<!@(pkg-config --cflags x11)',
++            ],
++          },
++          'link_settings': {
++            'ldflags': [
++              '<!@(pkg-config --libs-only-L --libs-only-other x11 xi)',
++            ],
++            'libraries': [
++              '<!@(pkg-config --libs-only-l x11 xi)',
++            ],
++          },
++        }],
++      ],
++    },
++    {
++      'target_name': 'xcomposite',
++      'type': 'none',
++      'direct_dependent_settings': {
++        'cflags': [
++          '<!@(<(pkg-config) --cflags xcomposite)',
++        ],
++      },
++      'link_settings': {
++        'ldflags': [
++          '<!@(<(pkg-config) --libs-only-L --libs-only-other xcomposite)',
++        ],
++        'libraries': [
++          '<!@(<(pkg-config) --libs-only-l xcomposite)',
++        ],
++      },
++    },
++    {
++      'target_name': 'xext',
++      'type': 'none',
++      'direct_dependent_settings': {
++        'cflags': [
++          '<!@(<(pkg-config) --cflags xext)',
++        ],
++      },
++      'link_settings': {
++        'ldflags': [
++          '<!@(<(pkg-config) --libs-only-L --libs-only-other xext)',
++        ],
++        'libraries': [
++          '<!@(<(pkg-config) --libs-only-l xext)',
++        ],
++      },
++    },
++    {
+       'target_name': 'udev',
+       'type': 'none',
+       'conditions': [
+         # libudev is not available on *BSD
+         ['_toolset=="target" and os_bsd!=1', {
+           'direct_dependent_settings': {
+             'cflags': [
+               '<!@(<(pkg-config) --cflags libudev)'
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -182,17 +182,17 @@
-             'gl_egl_api_implementation.h',
-             '<(gl_binding_output_dir)/gl_bindings_autogen_egl.cc',
-             '<(gl_binding_output_dir)/gl_bindings_autogen_egl.h',
-           ],
-           'include_dirs': [
-             '<(DEPTH)/third_party/khronos',
+@@ -186,17 +186,17 @@
          ],
          }],
+         ['OS in ("android", "linux")', {
+           'sources': [
+             'gl_implementation_osmesa.cc',
+             'gl_implementation_osmesa.h',
+           ],
+         }],
 -        ['use_x11 == 1', {
-+        ['OS=="linux"', {
++        ['OS == "linux"', {
            'sources': [
              'gl_context_glx.cc',
              'gl_context_glx.h',
@@ -66,7 +277,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -272,17 +275,17 @@ struct GL_EXPORT DriverEGL {
+@@ -276,17 +279,17 @@ struct GL_EXPORT DriverEGL {
    void ClearBindings();
  
    ProcsEGL fn;
@@ -85,7 +296,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -312,16 +315,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -316,16 +319,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -112,7 +323,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
 --- a/ui/gl/gl_image_glx.cc
 +++ b/ui/gl/gl_image_glx.cc
-@@ -7,16 +7,17 @@ extern "C" {
+@@ -7,32 +7,38 @@ extern "C" {
  }
  
  #include "ui/gl/gl_image_glx.h"
@@ -130,10 +341,9 @@ diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
  namespace {
  
  // scoped_ptr functor for XFree(). Use as follows:
-@@ -24,16 +25,21 @@ namespace {
+ //   scoped_ptr<XVisualInfo, ScopedPtrXFree> foo(...);
  // where "XVisualInfo" is any X type that is freed with XFree.
- class ScopedPtrXFree {
-  public:
+ struct ScopedPtrXFree {
    void operator()(void* x) const {
      ::XFree(x);
    }
@@ -152,7 +362,7 @@ diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
  }
  
  int TextureFormat(int depth) {
-@@ -41,17 +47,17 @@ int TextureFormat(int depth) {
+@@ -40,17 +46,17 @@ int TextureFormat(int depth) {
      return GLX_TEXTURE_FORMAT_RGBA_EXT;
  
    return GLX_TEXTURE_FORMAT_RGB_EXT;
@@ -197,7 +407,7 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
 --- a/ui/gl/gl_surface_egl.cc
 +++ b/ui/gl/gl_surface_egl.cc
-@@ -746,17 +746,17 @@ EGLSurface SurfacelessEGL::GetHandle() {
+@@ -761,17 +761,17 @@ EGLSurface SurfacelessEGL::GetHandle() {
  
  void* SurfacelessEGL::GetShareHandle() {
    return NULL;
@@ -237,10 +447,10 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  namespace gfx {
  
  namespace {
-@@ -35,16 +36,21 @@ namespace {
+@@ -34,16 +35,21 @@ namespace {
+ //   scoped_ptr<XVisualInfo, ScopedPtrXFree> foo(...);
  // where "XVisualInfo" is any X type that is freed with XFree.
- class ScopedPtrXFree {
-  public:
+ struct ScopedPtrXFree {
    void operator()(void* x) const {
      ::XFree(x);
    }
@@ -259,7 +469,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  bool g_glx_oml_sync_control_supported = false;
  
  // Track support of glXGetMscRateOML separately from GLX_OML_sync_control as a
-@@ -390,17 +396,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
+@@ -389,17 +395,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
        base::MessageLoop::current() &&
        base::MessageLoop::current()->type() == base::MessageLoop::TYPE_GPU;
  

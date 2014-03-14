@@ -272,8 +272,12 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
-    QQuickItem(parent),
-    d_ptr(new OxideQQuickWebViewPrivate(this)) {
+    QQuickItem(parent) {
+  // WebView instantiates NotificationRegistrar, which starts
+  // NotificationService, which uses LazyInstance. Start Chromium now
+  // else we'll crash
+  OxideQQuickWebContext::ensureChromiumStarted();
+  d_ptr.reset(new OxideQQuickWebViewPrivate(this));
   QObject::connect(this, SIGNAL(visibleChanged()),
                    this, SLOT(visibilityChangedListener()));
 }

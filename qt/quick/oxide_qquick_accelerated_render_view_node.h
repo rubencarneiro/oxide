@@ -28,7 +28,7 @@ QT_END_NAMESPACE
 namespace oxide {
 
 namespace qt {
-class TextureInfo;
+class TextureHandle;
 }
 
 namespace qquick {
@@ -40,7 +40,7 @@ class AcceleratedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
   AcceleratedRenderViewNode(RenderViewItem* item);
   ~AcceleratedRenderViewNode();
 
-  void updateFrontTexture(const oxide::qt::TextureInfo& tex_info);
+  void updateFrontTexture(oxide::qt::TextureHandle* texture_handle);
 
  private:
   RenderViewItem* item_;

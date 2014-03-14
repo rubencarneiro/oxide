@@ -53,7 +53,7 @@ bool GetValue(const base::StringPiece& line,
     return false;
   }
 
-  TrimWhitespaceASCII(temp, TRIM_ALL, value);
+  base::TrimWhitespaceASCII(temp, base::TRIM_ALL, value);
   return true;
 }
 

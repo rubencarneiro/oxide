@@ -40,24 +40,24 @@ AcceleratedRenderViewNode::~AcceleratedRenderViewNode() {
 }
 
 void AcceleratedRenderViewNode::updateFrontTexture(
-    const oxide::qt::TextureInfo& tex_info) {
+    oxide::qt::TextureHandle* texture_handle) {
   if (front_texture_ &&
-      static_cast<unsigned int>(front_texture_->textureId()) == tex_info.id() &&
-      front_texture_->textureSize() == tex_info.size_in_pixels()) {
+      static_cast<unsigned int>(front_texture_->textureId()) == texture_handle->GetID() &&
+      front_texture_->textureSize() == texture_handle->GetSize()) {
     markDirty(QSGNode::DirtyMaterial);
     return;
   }
 
   if (!back_texture_ ||
-      static_cast<unsigned int>(back_texture_->textureId()) != tex_info.id() ||
-      back_texture_->textureSize() != tex_info.size_in_pixels()) {
+      static_cast<unsigned int>(back_texture_->textureId()) != texture_handle->GetID() ||
+      back_texture_->textureSize() != texture_handle->GetSize()) {
     delete back_texture_;
     back_texture_ = NULL;
 
     back_texture_ =
         item_->window()->createTextureFromId(
-          tex_info.id(),
-          tex_info.size_in_pixels(),
+          texture_handle->GetID(),
+          texture_handle->GetSize(),
           QQuickWindow::TextureHasAlphaChannel);
   }
 

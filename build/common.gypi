@@ -24,6 +24,7 @@
     'sysroot': '',
     'use_aura': 1,
     'use_gconf': 0,
+    'use_gnome_keyring': 0,
     'use_ozone': 1,
     'ozone_platform': 'oxide',
     'external_ozone_platforms': [

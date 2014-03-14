@@ -25,6 +25,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/notification_observer.h"
+#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
@@ -111,7 +112,6 @@ class WebView : public ScriptMessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-  WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
@@ -202,9 +202,10 @@ class WebView : public ScriptMessageTarget,
       const content::LoadCommittedDetails& load_details) FINAL;
 
   void FrameDetached(content::RenderViewHost* rvh,
-                     int64 frame_id) FINAL;
+                     int64 frame_routing_id) FINAL;
   void FrameAttached(content::RenderViewHost* rvh,
-                     int64 parent_frame_id, int64 frame_id) FINAL;
+                     int64 parent_frame_routing_id,
+                     int64 frame_routing_id) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
@@ -231,7 +232,7 @@ class WebView : public ScriptMessageTarget,
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
-  scoped_ptr<content::NotificationRegistrar> registrar_;
+  content::NotificationRegistrar registrar_;
   scoped_ptr<WebFrame> root_frame_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

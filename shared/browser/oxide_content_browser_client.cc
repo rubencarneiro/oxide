@@ -43,6 +43,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
+#include "oxide_gpu_utils.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_web_contents_view.h"
@@ -144,7 +145,6 @@ class BrowserMainParts : public content::BrowserMainParts {
   void PreEarlyInitialization() FINAL {
     base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
     main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
-  
   }
 
   int PreCreateThreads() FINAL {
@@ -158,9 +158,17 @@ class BrowserMainParts : public content::BrowserMainParts {
     return 0;
   }
 
+  void PreMainMessageLoopRun() FINAL {
+    GpuUtils::Initialize();
+  }
+
   bool MainMessageLoopRun(int* result_code) FINAL {
     MessageLoopForUI::current()->Start();
     return true;
+  }
+
+  void PostMainMessageLoopRun() FINAL {
+    GpuUtils::Terminate();
   }
 
   void PostDestroyThreads() FINAL {

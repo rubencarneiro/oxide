@@ -187,7 +187,6 @@ BOOLEAN_PREF_IMPL(textAreasAreResizable, setTextAreasAreResizable, TEXT_AREAS_AR
 BOOLEAN_PREF_IMPL(localStorageEnabled, setLocalStorageEnabled, LOCAL_STORAGE_ENABLED)
 BOOLEAN_PREF_IMPL(databasesEnabled, setDatabasesEnabled, DATABASES_ENABLED)
 BOOLEAN_PREF_IMPL(appCacheEnabled, setAppCacheEnabled, APP_CACHE_ENABLED)
-BOOLEAN_PREF_IMPL(fullscreenEnabled, setFullscreenEnabled, FULLSCREEN_ENABLED)
 BOOLEAN_PREF_IMPL(tabsToLinks, setTabsToLinks, TABS_TO_LINKS)
 BOOLEAN_PREF_IMPL(caretBrowsingEnabled, setCaretBrowsingEnabled, CARET_BROWSING_ENABLED)
 BOOLEAN_PREF_IMPL(smoothScrollingEnabled, setSmoothScrollingEnabled, SMOOTH_SCROLLING_ENABLED)

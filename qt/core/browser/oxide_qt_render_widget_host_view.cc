@@ -537,10 +537,7 @@ void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
             scaled_rect.height()));
 }
 
-void RenderWidgetHostView::BuffersSwapped(
-    const AcknowledgeBufferPresentCallback& ack) {
-  DCHECK(acknowledge_buffer_present_callback_.is_null());
-  acknowledge_buffer_present_callback_ = ack;
+void RenderWidgetHostView::BuffersSwapped() {
   delegate_->ScheduleUpdate();
 }
 
@@ -814,7 +811,11 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
 }
 
 void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
-  base::TimeDelta timestamp(base::TimeDelta::FromMilliseconds(event->timestamp()));
+  // The event’s timestamp is not guaranteed to have the same origin as the
+  // internal timedelta used by chromium to calculate speed and displacement
+  // for a fling gesture, so we can’t use it.
+  base::TimeDelta timestamp(base::TimeTicks::Now() - base::TimeTicks());
+
   float scale = 1 / GetDeviceScaleFactor();
 
   for (int i = 0; i < event->touchPoints().size(); ++i) {
@@ -858,12 +859,7 @@ void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
 }
 
 void RenderWidgetHostView::DidUpdate(bool skipped) {
-  if (acknowledge_buffer_present_callback_.is_null()) {
-    return;
-  }
-
-  SendAcknowledgeBufferPresent(acknowledge_buffer_present_callback_, skipped);
-  acknowledge_buffer_present_callback_.Reset();
+  AcknowledgeBuffersSwapped(skipped);
 }
 
 const QPixmap* RenderWidgetHostView::GetBackingStore() {
