@@ -276,7 +276,7 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   // WebView instantiates NotificationRegistrar, which starts
   // NotificationService, which uses LazyInstance. Start Chromium now
   // else we'll crash
-  OxideQQuickWebContext::ensureChromiumStarted();
+  OxideQQuickWebContextPrivate::ensureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
   QObject::connect(this, SIGNAL(visibleChanged()),
                    this, SLOT(visibilityChangedListener()));
