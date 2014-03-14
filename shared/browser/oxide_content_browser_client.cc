@@ -174,10 +174,6 @@ class BrowserMainParts : public content::BrowserMainParts {
 
 } // namespace
 
-ContentBrowserClient::ContentBrowserClient() {}
-
-ContentBrowserClient::~ContentBrowserClient() {}
-
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
   return new BrowserMainParts();
@@ -289,5 +285,9 @@ gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
 bool ContentBrowserClient::IsTouchSupported() {
   return false;
 }
+
+ContentBrowserClient::ContentBrowserClient() {}
+
+ContentBrowserClient::~ContentBrowserClient() {}
 
 } // namespace oxide

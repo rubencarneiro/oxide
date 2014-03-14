@@ -47,6 +47,13 @@ class ContentBrowserClient : public content::ContentBrowserClient {
  public:
   virtual ~ContentBrowserClient();
 
+  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
+
+ protected:
+  // Limit default constructor access to derived classes
+  ContentBrowserClient();
+
+ private:
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) FINAL;
 
@@ -94,16 +101,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
-  // Extra Oxide methods
-  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
-
   virtual bool IsTouchSupported();
 
- protected:
-  // Limit default constructor access to derived classes
-  ContentBrowserClient();
-
- private:
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 
