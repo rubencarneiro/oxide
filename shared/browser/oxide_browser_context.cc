@@ -424,6 +424,15 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
   content::BrowserContext::EnsureResourceContextInitialized(this);
 }
 
+void BrowserContext::OnUserAgentChanged() {
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyUserAgentStringChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyUserAgentStringChanged());
+}
+
 BrowserContext::~BrowserContext() {
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     observers_,
@@ -492,36 +501,8 @@ std::string BrowserContext::GetAcceptLangs() const {
   return io_data()->GetAcceptLangs();
 }
 
-void BrowserContext::SetAcceptLangs(const std::string& langs) {
-  io_data()->SetAcceptLangs(langs);
-}
-
-std::string BrowserContext::GetProduct() const {
-  return io_data()->GetProduct();
-}
-
-void BrowserContext::SetProduct(const std::string& product) {
-  io_data()->SetProduct(product);
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOriginalContext()->observers_,
-                    NotifyUserAgentStringChanged());
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOffTheRecordContext()->observers_,
-                    NotifyUserAgentStringChanged());
-}
-
 std::string BrowserContext::GetUserAgent() const {
   return io_data()->GetUserAgent();
-}
-
-void BrowserContext::SetUserAgent(const std::string& user_agent) {
-  io_data()->SetUserAgent(user_agent);
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOriginalContext()->observers_,
-                    NotifyUserAgentStringChanged());
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOffTheRecordContext()->observers_,
-                    NotifyUserAgentStringChanged());
 }
 
 net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {

@@ -68,13 +68,8 @@ class BrowserContextIOData {
   virtual base::FilePath GetCachePath() const = 0;
 
   virtual std::string GetAcceptLangs() const = 0;
-  virtual void SetAcceptLangs(const std::string& langs) = 0;
-
-  virtual std::string GetProduct() const = 0;
-  virtual void SetProduct(const std::string& product) = 0;
 
   virtual std::string GetUserAgent() const = 0;
-  virtual void SetUserAgent(const std::string& user_agent) = 0;
 
   virtual bool IsOffTheRecord() const = 0;
 
@@ -152,13 +147,13 @@ class BrowserContext : public content::BrowserContext {
   base::FilePath GetCachePath() const;
 
   std::string GetAcceptLangs() const;
-  void SetAcceptLangs(const std::string& langs);
+  virtual void SetAcceptLangs(const std::string& langs) = 0;
 
-  std::string GetProduct() const;
-  void SetProduct(const std::string& product);
+  virtual std::string GetProduct() const = 0;
+  virtual void SetProduct(const std::string& product) = 0;
 
-  std::string GetUserAgent() const;
-  void SetUserAgent(const std::string& user_agent);
+  virtual std::string GetUserAgent() const;
+  virtual void SetUserAgent(const std::string& user_agent) = 0;
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
@@ -171,6 +166,8 @@ class BrowserContext : public content::BrowserContext {
 
  protected:
   BrowserContext(BrowserContextIOData* io_data);
+
+  void OnUserAgentChanged();
 
  private:
   friend class BrowserContextObserver;

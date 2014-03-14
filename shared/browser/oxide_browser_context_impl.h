@@ -40,12 +40,10 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   base::FilePath GetCachePath() const FINAL;
 
   std::string GetAcceptLangs() const FINAL;
-  void SetAcceptLangs(const std::string& langs) FINAL;
+  void SetAcceptLangs(const std::string& langs);
 
-  std::string GetProduct() const FINAL;
-  void SetProduct(const std::string& product) FINAL;
   std::string GetUserAgent() const FINAL;
-  void SetUserAgent(const std::string& user_agent) FINAL;
+  void SetUserAgent(const std::string& user_agent);
 
   bool IsOffTheRecord() const FINAL;
 
@@ -55,9 +53,7 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   base::FilePath path_;
   base::FilePath cache_path_;
 
-  std::string product_;
   std::string user_agent_;
-  bool default_user_agent_string_;
 
   std::string accept_langs_;
 
@@ -69,6 +65,13 @@ class BrowserContextImpl FINAL : public BrowserContext {
   BrowserContext* GetOffTheRecordContext() FINAL;
   BrowserContext* GetOriginalContext() FINAL;
 
+  void SetAcceptLangs(const std::string& langs) FINAL;
+
+  std::string GetProduct() const FINAL;
+  void SetProduct(const std::string& product) FINAL;
+
+  void SetUserAgent(const std::string& user_agent) FINAL;
+
   UserScriptMaster& UserScriptManager() FINAL;
 
  private:
@@ -78,6 +81,8 @@ class BrowserContextImpl FINAL : public BrowserContext {
                      const base::FilePath& cache_path);
 
   scoped_ptr<OffTheRecordBrowserContextImpl> otr_context_;
+  std::string product_;
+  bool default_user_agent_string_;
   UserScriptMaster user_script_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextImpl);

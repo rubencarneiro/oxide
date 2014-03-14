@@ -33,21 +33,9 @@ OffTheRecordBrowserContextIODataImpl::GetPath() const {
   return base::FilePath();
 }
 
-bool OffTheRecordBrowserContextIODataImpl::SetPath(
-    const base::FilePath& path) {
-  LOG(ERROR) << "Cannot set the data path for the OTR context";
-  return false;
-}
-
 base::FilePath
 OffTheRecordBrowserContextIODataImpl::GetCachePath() const {
   return base::FilePath();
-}
-
-bool OffTheRecordBrowserContextIODataImpl::SetCachePath(
-    const base::FilePath& cache_path) {
-  LOG(ERROR) << "Cannot set the cache path for the OTR context";
-  return false;
 }
 
 std::string
@@ -55,29 +43,9 @@ OffTheRecordBrowserContextIODataImpl::GetAcceptLangs() const {
   return original_io_data_->GetAcceptLangs();
 }
 
-void OffTheRecordBrowserContextIODataImpl::SetAcceptLangs(
-    const std::string& langs) {
-  original_io_data_->SetAcceptLangs(langs);
-}
-
-std::string
-OffTheRecordBrowserContextIODataImpl::GetProduct() const {
-  return original_io_data_->GetProduct();
-}
-
-void OffTheRecordBrowserContextIODataImpl::SetProduct(
-    const std::string& product) {
-  original_io_data_->SetProduct(product);
-}
-
 std::string
 OffTheRecordBrowserContextIODataImpl::GetUserAgent() const {
   return original_io_data_->GetUserAgent();
-}
-
-void OffTheRecordBrowserContextIODataImpl::SetUserAgent(
-    const std::string& user_agent) {
-  original_io_data_->SetUserAgent(user_agent);
 }
 
 bool OffTheRecordBrowserContextIODataImpl::IsOffTheRecord() const {
@@ -98,6 +66,23 @@ BrowserContext* OffTheRecordBrowserContextImpl::GetOffTheRecordContext() {
 
 BrowserContext* OffTheRecordBrowserContextImpl::GetOriginalContext() {
   return original_context_;
+}
+
+void OffTheRecordBrowserContextImpl::SetAcceptLangs(const std::string& langs) {
+  original_context_->SetAcceptLangs(langs);
+}
+
+std::string OffTheRecordBrowserContextImpl::GetProduct() const {
+  return original_context_->GetProduct();
+}
+
+void OffTheRecordBrowserContextImpl::SetProduct(const std::string& product) {
+  original_context_->SetProduct(product);
+}
+
+void OffTheRecordBrowserContextImpl::SetUserAgent(
+    const std::string& user_agent) {
+  original_context_->SetUserAgent(user_agent);
 }
 
 UserScriptMaster& OffTheRecordBrowserContextImpl::UserScriptManager() {
