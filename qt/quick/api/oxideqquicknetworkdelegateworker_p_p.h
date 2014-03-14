@@ -42,9 +42,7 @@ class NetworkDelegateWorkerIOThreadController : public QObject {
   virtual ~NetworkDelegateWorkerIOThreadController();
 
  Q_SIGNALS:
-  void beforeURLRequest(OxideQBeforeURLRequestEvent* event);
-  void beforeSendHeaders(OxideQBeforeSendHeadersEvent* event);
-  void storagePermissionRequest(OxideQStoragePermissionRequest* req);
+  void callEntryPointInWorker(const QString& entry, QObject* data);
 };
 
 }

@@ -65,7 +65,8 @@ class WebContextIOThreadDelegate :
     // FIXME(chrisccoulson): Should move |event| to the helper thread,
     //  where it will be consumed
 
-    emit network_request_delegate->beforeURLRequest(event);
+    emit network_request_delegate->callEntryPointInWorker("onBeforeURLRequest",
+                                                          event);
   }
 
   virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) {
@@ -78,7 +79,8 @@ class WebContextIOThreadDelegate :
     // FIXME(chrisccoulson): Should move |event| to the helper thread,
     //  where it will be consumed
 
-    emit network_request_delegate->beforeSendHeaders(event);
+    emit network_request_delegate->callEntryPointInWorker("onBeforeSendHeaders",
+                                                          event);
   }
 
   virtual void HandleStoragePermissionRequest(
@@ -92,7 +94,8 @@ class WebContextIOThreadDelegate :
     // FIXME(chrisccoulson): Should move |req| to the helper thread,
     //  where it will be consumed
 
-    emit storage_access_permission_delegate->storagePermissionRequest(req);
+    emit storage_access_permission_delegate->callEntryPointInWorker(
+        "onStoragePermissionRequest", req);
   }
 
   QMutex lock;
