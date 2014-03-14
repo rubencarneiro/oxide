@@ -35,7 +35,8 @@ TestWebView {
     }
 
     property var slots: [
-      { prop: "networkRequestDelegate", signal: "networkRequestDelegateChanged" }
+      { prop: "networkRequestDelegate", signal: "networkRequestDelegateChanged" },
+      { prop: "storageAccessPermissionDelegate", signal: "storageAccessPermissionDelegateChanged" }
     ]
 
     function test_WebContext_networkDelegates1_assign_unparented_data() {
@@ -77,7 +78,7 @@ TestWebView {
       compare(OxideTestingUtils.qObjectParent(d), context2,
               "Shouldn't have been reparented");
 
-      context2[data.prop] = d;
+      context2[data.prop] = null;
     }
 
     function test_WebContext_networkDelegates3_reparent_data() {
@@ -117,6 +118,28 @@ TestWebView {
       
       compare(spy.count, 2, "Expected a signal");
       compare(context[data.prop], null, "Value should have been cleared");
+    }
+
+    function test_WebContext_networkDelegates5_shared() {
+      var d = networkDelegateWorkerFactory.createObject(null, {});
+      context.networkRequestDelegate = d;
+      context.storageAccessPermissionDelegate = d;
+
+      compare(context.networkRequestDelegate, d);
+      compare(context.storageAccessPermissionDelegate, d);
+      compare(OxideTestingUtils.qObjectParent(d), context);
+
+      context.networkRequestDelegate = null;
+
+      compare(context.networkRequestDelegate, null);
+      compare(context.storageAccessPermissionDelegate, d);
+      compare(OxideTestingUtils.qObjectParent(d), context);
+
+      context.storageAccessPermissionDelegate = null;
+
+      compare(context.networkRequestDelegate, null);
+      compare(context.storageAccessPermissionDelegate, null);
+      compare(OxideTestingUtils.qObjectParent(d), null);
     }
   }
 }
