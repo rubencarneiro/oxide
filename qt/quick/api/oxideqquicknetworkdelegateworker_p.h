@@ -40,6 +40,8 @@ class OxideQQuickNetworkDelegateWorker : public QObject,
   Q_DECLARE_PRIVATE(OxideQQuickNetworkDelegateWorker)
   Q_DISABLE_COPY(OxideQQuickNetworkDelegateWorker)
 
+  Q_INTERFACES(QQmlParserStatus)
+
  public:
   OxideQQuickNetworkDelegateWorker();
   virtual ~OxideQQuickNetworkDelegateWorker();

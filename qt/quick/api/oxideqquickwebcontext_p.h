@@ -51,6 +51,8 @@ class OxideQQuickWebContext : public QObject,
   Q_DECLARE_PRIVATE(OxideQQuickWebContext)
   Q_DISABLE_COPY(OxideQQuickWebContext)
 
+  Q_INTERFACES(QQmlParserStatus)
+
  public:
 
   enum CookiePolicy {
