@@ -23,7 +23,7 @@
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
-class OxideQQuickNetworkDelegateWorker;
+class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickWebContext;
 class OxideQQuickUserScript;
 
@@ -34,7 +34,7 @@ QT_END_NAMESPACE
 
 namespace oxide {
 namespace qquick {
-class NetworkDelegateWorkerIOThreadController;
+class WebContextDelegateWorkerIOThreadController;
 class WebContextIOThreadDelegate;
 }
 }
@@ -48,7 +48,7 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
  public:
   ~OxideQQuickWebContextPrivate();
 
-  void networkDelegateWorkerDestroyed(OxideQQuickNetworkDelegateWorker* worker);
+  void delegateWorkerDestroyed(OxideQQuickWebContextDelegateWorker* worker);
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
@@ -74,17 +74,17 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       int index);
   static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
 
-  bool attachNetworkDelegateWorker(
-      OxideQQuickNetworkDelegateWorker* worker,
-      OxideQQuickNetworkDelegateWorker** ui_slot,
-      oxide::qquick::NetworkDelegateWorkerIOThreadController** io_slot);
+  bool attachDelegateWorker(
+      OxideQQuickWebContextDelegateWorker* worker,
+      OxideQQuickWebContextDelegateWorker** ui_slot,
+      oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot);
 
   OxideQQuickWebContext* q_ptr;
 
   oxide::qquick::WebContextIOThreadDelegate* io_thread_delegate_;
 
-  OxideQQuickNetworkDelegateWorker* network_request_delegate_;
-  OxideQQuickNetworkDelegateWorker* storage_access_permission_delegate_;
+  OxideQQuickWebContextDelegateWorker* network_request_delegate_;
+  OxideQQuickWebContextDelegateWorker* storage_access_permission_delegate_;
 
   Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };

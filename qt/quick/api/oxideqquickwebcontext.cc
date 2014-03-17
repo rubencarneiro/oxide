@@ -35,10 +35,10 @@
 
 #include "oxideqquickglobals_p.h"
 #include "oxideqquickglobals_p_p.h"
-#include "oxideqquicknetworkdelegateworker_p.h"
-#include "oxideqquicknetworkdelegateworker_p_p.h"
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
+#include "oxideqquickwebcontextdelegateworker_p.h"
+#include "oxideqquickwebcontextdelegateworker_p_p.h"
 
 namespace {
 QWeakPointer<OxideQQuickWebContext> g_default_context;
@@ -100,8 +100,8 @@ class WebContextIOThreadDelegate :
 
   QMutex lock;
 
-  NetworkDelegateWorkerIOThreadController* network_request_delegate;
-  NetworkDelegateWorkerIOThreadController* storage_access_permission_delegate;
+  WebContextDelegateWorkerIOThreadController* network_request_delegate;
+  WebContextDelegateWorkerIOThreadController* storage_access_permission_delegate;
 };
 
 } // namespace qquick
@@ -187,32 +187,32 @@ void OxideQQuickWebContextPrivate::userScript_clear(
   }
 }
 
-bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
-    OxideQQuickNetworkDelegateWorker* worker,
-    OxideQQuickNetworkDelegateWorker** ui_slot,
-    oxide::qquick::NetworkDelegateWorkerIOThreadController** io_slot) {
+bool OxideQQuickWebContextPrivate::attachDelegateWorker(
+    OxideQQuickWebContextDelegateWorker* worker,
+    OxideQQuickWebContextDelegateWorker** ui_slot,
+    oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot) {
   Q_Q(OxideQQuickWebContext);
 
   if (*ui_slot == worker) {
     return false;
   }
 
-  oxide::qquick::NetworkDelegateWorkerIOThreadController* controller = NULL;
+  oxide::qquick::WebContextDelegateWorkerIOThreadController* controller = NULL;
 
   if (worker) {
     OxideQQuickWebContext* parent =
         qobject_cast<OxideQQuickWebContext *>(worker->parent());
     if (parent && parent != q) {
-      qWarning() << "Can't add NetworkDelegateWorker to more than one WebContext";
+      qWarning() << "Can't add WebContextDelegateWorker to more than one WebContext";
       return false;
     }
 
     worker->setParent(q);
-    controller = OxideQQuickNetworkDelegateWorkerPrivate::get(
+    controller = OxideQQuickWebContextDelegateWorkerPrivate::get(
         worker)->io_thread_controller.data();
   }
 
-  OxideQQuickNetworkDelegateWorker* old_worker = *ui_slot;
+  OxideQQuickWebContextDelegateWorker* old_worker = *ui_slot;
   *ui_slot = worker;
 
   {
@@ -231,8 +231,8 @@ bool OxideQQuickWebContextPrivate::attachNetworkDelegateWorker(
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
 
-void OxideQQuickWebContextPrivate::networkDelegateWorkerDestroyed(
-    OxideQQuickNetworkDelegateWorker* worker) {
+void OxideQQuickWebContextPrivate::delegateWorkerDestroyed(
+    OxideQQuickWebContextDelegateWorker* worker) {
   Q_Q(OxideQQuickWebContext);
 
   if (worker == q->networkRequestDelegate()) {
@@ -506,7 +506,7 @@ void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
   emit cookiePolicyChanged();
 }
 
-OxideQQuickNetworkDelegateWorker*
+OxideQQuickWebContextDelegateWorker*
 OxideQQuickWebContext::networkRequestDelegate() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -514,10 +514,10 @@ OxideQQuickWebContext::networkRequestDelegate() const {
 }
 
 void OxideQQuickWebContext::setNetworkRequestDelegate(
-    OxideQQuickNetworkDelegateWorker* delegate) {
+    OxideQQuickWebContextDelegateWorker* delegate) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->attachNetworkDelegateWorker(
+  if (d->attachDelegateWorker(
       delegate,
       &d->network_request_delegate_,
       &d->io_thread_delegate_->network_request_delegate)) {
@@ -525,7 +525,7 @@ void OxideQQuickWebContext::setNetworkRequestDelegate(
   }
 }
 
-OxideQQuickNetworkDelegateWorker*
+OxideQQuickWebContextDelegateWorker*
 OxideQQuickWebContext::storageAccessPermissionDelegate() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -533,10 +533,10 @@ OxideQQuickWebContext::storageAccessPermissionDelegate() const {
 }
 
 void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
-    OxideQQuickNetworkDelegateWorker* delegate) {
+    OxideQQuickWebContextDelegateWorker* delegate) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->attachNetworkDelegateWorker(
+  if (d->attachDelegateWorker(
       delegate,
       &d->storage_access_permission_delegate_,
       &d->io_thread_delegate_->storage_access_permission_delegate)) {

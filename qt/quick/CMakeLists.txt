@@ -42,18 +42,18 @@ else()
 endif()
 
 qt5_wrap_cpp(MOC_EXTRA
-             api/oxideqquicknetworkdelegateworker_p_p.h
-             api/oxideqquickwebcontext_p_p.h)
+             api/oxideqquickwebcontext_p_p.h
+             api/oxideqquickwebcontextdelegateworker_p_p.h)
 
 set(PLUGIN_SRCS
     api/oxideqquickglobals.cc
     api/oxideqquicknavigationhistory.cc
-    api/oxideqquicknetworkdelegateworker.cc
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc
     api/oxideqquickscriptmessagerequest.cc
     api/oxideqquickuserscript.cc
     api/oxideqquickwebcontext.cc
+    api/oxideqquickwebcontextdelegateworker.cc
     api/oxideqquickwebframe.cc
     api/oxideqquickwebview.cc
     oxide_qml_plugin.cc

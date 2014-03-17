@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqquicknetworkdelegateworker_p.h"
-#include "oxideqquicknetworkdelegateworker_p_p.h"
+#include "oxideqquickwebcontextdelegateworker_p.h"
+#include "oxideqquickwebcontextdelegateworker_p_p.h"
 
 #include <QByteArray>
 #include <QFile>
@@ -33,26 +33,26 @@
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 
-// NetworkDelegateWorker runs a script on a dedicated worker thread. It
+// WebContextDelegateWorker runs a script on a dedicated worker thread. It
 // can exchange messages with the UI thread, and provide entry points
 // for handling events from Chromium's IO thread. For handling events from
 // Chromium, we post an event to the helper thread and block the IO thread
 // until this is completed.
 
-// There are several classes involved to make NetworkDelegateWorker function:
-// - NetworkDelegateWorkerHelperThreadController:
+// There are several classes involved to make WebContextDelegateWorker function:
+// - WebContextDelegateWorkerHelperThreadController:
 //    This object lives on the helper thread, and is responsible for
 //    evaluating JS code. It receives events from the other objects via
 //    several slots
 //
-// - NetworkDelegateWorkerUIThreadController:
+// - WebContextDelegateWorkerUIThreadController:
 //    This lives on the UI thread. It delivers signals to slots on
-//    NetworkDelegateWorkerHelperThreadController for starting
+//    WebContextDelegateWorkerHelperThreadController for starting
 //    the worker and sending messages. It has slots for receiving signals
-//    from NetworkDelegateWorkerHelperThreadController, for receiving
+//    from WebContextDelegateWorkerHelperThreadController, for receiving
 //    messages and errors
 //
-// - NetworkDelegateWorkerIOThreadController:
+// - WebContextDelegateWorkerIOThreadController:
 //    This lives on the UI thread but is accessed from Chromium's IO thread.
 //    It delivers blocking signals to slots on NetworkDelegateHelperThreadController
 //    for processing network related events from Chromium
@@ -93,15 +93,15 @@ class NetworkDelegateHelperThread : public QThread {
 
 NetworkDelegateHelperThread* NetworkDelegateHelperThread::s_instance;
 
-class NetworkDelegateWorkerApi : public QObject {
+class WebContextDelegateWorkerApi : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QJSValue onMessage READ onMessage WRITE setOnMessage)
 
  public:
-  NetworkDelegateWorkerApi(
-      NetworkDelegateWorkerHelperThreadController* controller);
-  virtual ~NetworkDelegateWorkerApi() {}
+  WebContextDelegateWorkerApi(
+      WebContextDelegateWorkerHelperThreadController* controller);
+  virtual ~WebContextDelegateWorkerApi() {}
 
   QJSValue onMessage() const {
     return on_message_handler_;
@@ -113,18 +113,18 @@ class NetworkDelegateWorkerApi : public QObject {
   Q_INVOKABLE void sendMessage(const QVariant& message);
 
  private:
-  NetworkDelegateWorkerHelperThreadController* controller_;
+  WebContextDelegateWorkerHelperThreadController* controller_;
   QJSValue on_message_handler_;
 };
 
-class NetworkDelegateWorkerHelperThreadController : public QObject {
+class WebContextDelegateWorkerHelperThreadController : public QObject {
   Q_OBJECT
 
  public:
-  NetworkDelegateWorkerHelperThreadController() :
+  WebContextDelegateWorkerHelperThreadController() :
       running_(false),
       api_(this) {}
-  virtual ~NetworkDelegateWorkerHelperThreadController() {}
+  virtual ~WebContextDelegateWorkerHelperThreadController() {}
 
  Q_SIGNALS:
   void sendMessage(const QVariant& message);
@@ -138,33 +138,33 @@ class NetworkDelegateWorkerHelperThreadController : public QObject {
 
  private:
   bool running_;
-  NetworkDelegateWorkerApi api_;
+  WebContextDelegateWorkerApi api_;
   QScopedPointer<QJSEngine> engine_;
   QJSValue exports_;
 };
 
-class NetworkDelegateWorkerUIThreadController : public QObject {
+class WebContextDelegateWorkerUIThreadController : public QObject {
   Q_OBJECT
 
  public:
-  NetworkDelegateWorkerUIThreadController() {}
-  virtual ~NetworkDelegateWorkerUIThreadController() {}
+  WebContextDelegateWorkerUIThreadController() {}
+  virtual ~WebContextDelegateWorkerUIThreadController() {}
 
  Q_SIGNALS:
   void runScript(const QUrl& source);
   void sendMessage(const QVariant& message);
 };
 
-NetworkDelegateWorkerIOThreadController::NetworkDelegateWorkerIOThreadController() {}
+WebContextDelegateWorkerIOThreadController::WebContextDelegateWorkerIOThreadController() {}
 
-NetworkDelegateWorkerIOThreadController::~NetworkDelegateWorkerIOThreadController() {}
+WebContextDelegateWorkerIOThreadController::~WebContextDelegateWorkerIOThreadController() {}
 
-NetworkDelegateWorkerApi::NetworkDelegateWorkerApi(
-    NetworkDelegateWorkerHelperThreadController* controller) :
+WebContextDelegateWorkerApi::WebContextDelegateWorkerApi(
+    WebContextDelegateWorkerHelperThreadController* controller) :
     QObject(controller),
     controller_(controller) {}
    
-void NetworkDelegateWorkerApi::sendMessage(const QVariant& message) {
+void WebContextDelegateWorkerApi::sendMessage(const QVariant& message) {
   if (message.type() != QVariant::Map &&
       message.type() != QVariant::List &&
       message.type() != QVariant::StringList) {
@@ -174,7 +174,7 @@ void NetworkDelegateWorkerApi::sendMessage(const QVariant& message) {
   Q_EMIT controller_->sendMessage(message);
 }
 
-void NetworkDelegateWorkerHelperThreadController::runScript(const QUrl& source) {
+void WebContextDelegateWorkerHelperThreadController::runScript(const QUrl& source) {
   Q_ASSERT(!running_);
 
   // QJSEngine is created here instead of the constructor, as it must be
@@ -213,7 +213,7 @@ void NetworkDelegateWorkerHelperThreadController::runScript(const QUrl& source) 
   running_ = true;
 }
 
-void NetworkDelegateWorkerHelperThreadController::receiveMessage(
+void WebContextDelegateWorkerHelperThreadController::receiveMessage(
     const QVariant& message) {
   if (!running_) {
     return;
@@ -230,7 +230,7 @@ void NetworkDelegateWorkerHelperThreadController::receiveMessage(
   func.call(argv);
 }
 
-void NetworkDelegateWorkerHelperThreadController::callEntryPointInWorker(
+void WebContextDelegateWorkerHelperThreadController::callEntryPointInWorker(
     const QString& entry, QObject* data) {
   if (!running_) {
     return;
@@ -252,25 +252,25 @@ void NetworkDelegateWorkerHelperThreadController::callEntryPointInWorker(
 } // namespace qquick
 } // namespace oxide
 
-OxideQQuickNetworkDelegateWorkerPrivate::OxideQQuickNetworkDelegateWorkerPrivate() :
-    io_thread_controller(new NetworkDelegateWorkerIOThreadController()),
+OxideQQuickWebContextDelegateWorkerPrivate::OxideQQuickWebContextDelegateWorkerPrivate() :
+    io_thread_controller(new WebContextDelegateWorkerIOThreadController()),
     constructed_(false),
-    helper_thread_controller_(new NetworkDelegateWorkerHelperThreadController()),
-    ui_thread_controller_(new NetworkDelegateWorkerUIThreadController()) {}
+    helper_thread_controller_(new WebContextDelegateWorkerHelperThreadController()),
+    ui_thread_controller_(new WebContextDelegateWorkerUIThreadController()) {}
 
-OxideQQuickNetworkDelegateWorkerPrivate::~OxideQQuickNetworkDelegateWorkerPrivate() {
+OxideQQuickWebContextDelegateWorkerPrivate::~OxideQQuickWebContextDelegateWorkerPrivate() {
   helper_thread_controller_->deleteLater();
 }
 
 // static
-OxideQQuickNetworkDelegateWorkerPrivate*
-OxideQQuickNetworkDelegateWorkerPrivate::get(OxideQQuickNetworkDelegateWorker* q) {
+OxideQQuickWebContextDelegateWorkerPrivate*
+OxideQQuickWebContextDelegateWorkerPrivate::get(OxideQQuickWebContextDelegateWorker* q) {
   return q->d_func();
 }
 
-OxideQQuickNetworkDelegateWorker::OxideQQuickNetworkDelegateWorker() :
-    d_ptr(new OxideQQuickNetworkDelegateWorkerPrivate()) {
-  Q_D(OxideQQuickNetworkDelegateWorker);
+OxideQQuickWebContextDelegateWorker::OxideQQuickWebContextDelegateWorker() :
+    d_ptr(new OxideQQuickWebContextDelegateWorkerPrivate()) {
+  Q_D(OxideQQuickWebContextDelegateWorker);
 
   d->helper_thread_controller_->moveToThread(NetworkDelegateHelperThread::instance());
 
@@ -289,12 +289,12 @@ OxideQQuickNetworkDelegateWorker::OxideQQuickNetworkDelegateWorker() :
           Qt::BlockingQueuedConnection);
 }
 
-OxideQQuickNetworkDelegateWorker::~OxideQQuickNetworkDelegateWorker() {
-  Q_D(OxideQQuickNetworkDelegateWorker);
+OxideQQuickWebContextDelegateWorker::~OxideQQuickWebContextDelegateWorker() {
+  Q_D(OxideQQuickWebContextDelegateWorker);
 
   OxideQQuickWebContext* context = qobject_cast<OxideQQuickWebContext *>(parent());
   if (context) {
-    OxideQQuickWebContextPrivate::get(context)->networkDelegateWorkerDestroyed(this);
+    OxideQQuickWebContextPrivate::get(context)->delegateWorkerDestroyed(this);
   }
 
   disconnect(d->ui_thread_controller_.data(), SIGNAL(runScript(const QUrl&)),
@@ -311,50 +311,50 @@ OxideQQuickNetworkDelegateWorker::~OxideQQuickNetworkDelegateWorker() {
              d->helper_thread_controller_, SLOT(callEntryPointInWorker(const QString&, QObject*)));
 }
 
-void OxideQQuickNetworkDelegateWorker::classBegin() {}
+void OxideQQuickWebContextDelegateWorker::classBegin() {}
 
-void OxideQQuickNetworkDelegateWorker::componentComplete() {
-  Q_D(OxideQQuickNetworkDelegateWorker);
+void OxideQQuickWebContextDelegateWorker::componentComplete() {
+  Q_D(OxideQQuickWebContextDelegateWorker);
 
   Q_ASSERT(!d->constructed_);
   d->constructed_ = true;
 
   if (d->source_.isEmpty()) {
-    qWarning() << "NetworkDelegateWorker.source not set";
+    qWarning() << "WebContextDelegateWorker.source not set";
     return;
   }
 
   Q_EMIT d->ui_thread_controller_->runScript(d->source_);
 }
 
-QUrl OxideQQuickNetworkDelegateWorker::source() const {
-  Q_D(const OxideQQuickNetworkDelegateWorker);
+QUrl OxideQQuickWebContextDelegateWorker::source() const {
+  Q_D(const OxideQQuickWebContextDelegateWorker);
 
   return d->source_;
 }
 
-void OxideQQuickNetworkDelegateWorker::setSource(const QUrl& source) {
-  Q_D(OxideQQuickNetworkDelegateWorker);
+void OxideQQuickWebContextDelegateWorker::setSource(const QUrl& source) {
+  Q_D(OxideQQuickWebContextDelegateWorker);
 
   if (!source.isLocalFile() && !source.isEmpty()) {
-    qWarning() << "NetworkDelegateWorker.source only supports local file URL's";
+    qWarning() << "WebContextDelegateWorker.source only supports local file URL's";
     return;
   }
 
   d->source_ = source;
 }
 
-void OxideQQuickNetworkDelegateWorker::sendMessage(const QVariant& message) {
-  Q_D(OxideQQuickNetworkDelegateWorker);
+void OxideQQuickWebContextDelegateWorker::sendMessage(const QVariant& message) {
+  Q_D(OxideQQuickWebContextDelegateWorker);
 
   if (message.type() != QVariant::Map &&
       message.type() != QVariant::List &&
       message.type() != QVariant::StringList) {
-    qWarning() << "Called NetworkDelegateWorker.sendMessage with an invalid argument";
+    qWarning() << "Called WebContextDelegateWorker.sendMessage with an invalid argument";
     return;
   }
 
   Q_EMIT d->ui_thread_controller_->sendMessage(message);
 }
 
-#include "oxideqquicknetworkdelegateworker.moc"
+#include "oxideqquickwebcontextdelegateworker.moc"

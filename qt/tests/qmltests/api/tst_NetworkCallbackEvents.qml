@@ -9,7 +9,7 @@ TestWebView {
   property var workerMessageType: ""
   property var workerMessages: []
 
-  context.networkRequestDelegate: NetworkDelegateWorker {
+  context.networkRequestDelegate: WebContextDelegateWorker {
     source: Qt.resolvedUrl("tst_NetworkCallbackEvents.js")
 
     onMessage: {

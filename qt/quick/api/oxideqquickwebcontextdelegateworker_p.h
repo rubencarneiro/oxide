@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_NETWORK_DELEGATE_WORKER_P_H_
-#define _OXIDE_QT_QUICK_API_NETWORK_DELEGATE_WORKER_P_H_
+#ifndef _OXIDE_QT_QUICK_API_WEB_CONTEXT_DELEGATE_WORKER_P_H_
+#define _OXIDE_QT_QUICK_API_WEB_CONTEXT_DELEGATE_WORKER_P_H_
 
 #include <QObject>
 #include <QQmlParserStatus>
@@ -29,22 +29,22 @@ class QString;
 class QVariant;
 QT_END_NAMESPACE
 
-class OxideQQuickNetworkDelegateWorkerPrivate;
+class OxideQQuickWebContextDelegateWorkerPrivate;
 
-class OxideQQuickNetworkDelegateWorker : public QObject,
-                                         public QQmlParserStatus {
+class OxideQQuickWebContextDelegateWorker : public QObject,
+                                            public QQmlParserStatus {
   Q_OBJECT
 
   Q_PROPERTY(QUrl source READ source WRITE setSource)
 
-  Q_DECLARE_PRIVATE(OxideQQuickNetworkDelegateWorker)
-  Q_DISABLE_COPY(OxideQQuickNetworkDelegateWorker)
+  Q_DECLARE_PRIVATE(OxideQQuickWebContextDelegateWorker)
+  Q_DISABLE_COPY(OxideQQuickWebContextDelegateWorker)
 
   Q_INTERFACES(QQmlParserStatus)
 
  public:
-  OxideQQuickNetworkDelegateWorker();
-  virtual ~OxideQQuickNetworkDelegateWorker();
+  OxideQQuickWebContextDelegateWorker();
+  virtual ~OxideQQuickWebContextDelegateWorker();
 
   virtual void classBegin();
   virtual void componentComplete();
@@ -60,7 +60,7 @@ class OxideQQuickNetworkDelegateWorker : public QObject,
   void error(const QString& error);
 
  private:
-  QScopedPointer<OxideQQuickNetworkDelegateWorkerPrivate> d_ptr;
+  QScopedPointer<OxideQQuickWebContextDelegateWorkerPrivate> d_ptr;
 };
 
-#endif // _OXIDE_QT_QUICK_API_NETWORK_DELEGATE_WORKER_P_H_
+#endif // _OXIDE_QT_QUICK_API_WEB_CONTEXT_DELEGATE_WORKER_P_H_

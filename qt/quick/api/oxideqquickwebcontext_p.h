@@ -29,7 +29,7 @@
 
 QT_USE_NAMESPACE
 
-class OxideQQuickNetworkDelegateWorker;
+class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
 
@@ -43,8 +43,8 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
   Q_PROPERTY(CookiePolicy cookiePolicy READ cookiePolicy WRITE setCookiePolicy NOTIFY cookiePolicyChanged)
-  Q_PROPERTY(OxideQQuickNetworkDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
-  Q_PROPERTY(OxideQQuickNetworkDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
+  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
+  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
 
   Q_ENUMS(CookiePolicy)
 
@@ -92,11 +92,11 @@ class OxideQQuickWebContext : public QObject,
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
-  OxideQQuickNetworkDelegateWorker* networkRequestDelegate() const;
-  void setNetworkRequestDelegate(OxideQQuickNetworkDelegateWorker* delegate);
+  OxideQQuickWebContextDelegateWorker* networkRequestDelegate() const;
+  void setNetworkRequestDelegate(OxideQQuickWebContextDelegateWorker* delegate);
 
-  OxideQQuickNetworkDelegateWorker* storageAccessPermissionDelegate() const;
-  void setStorageAccessPermissionDelegate(OxideQQuickNetworkDelegateWorker* delegate);
+  OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate() const;
+  void setStorageAccessPermissionDelegate(OxideQQuickWebContextDelegateWorker* delegate);
 
  Q_SIGNALS:
   void productChanged();

@@ -20,13 +20,13 @@ TestWebView {
   }
 
   Component {
-    id: "networkDelegateWorkerFactory"
-    NetworkDelegateWorker {}
+    id: "webContextDelegateWorkerFactory"
+    WebContextDelegateWorker {}
   }
 
   TestCase {
     id: test
-    name: "WebContext_networkDelegates"
+    name: "WebContext_delegateWorkers"
     when: windowShown
 
     function init() {
@@ -39,14 +39,14 @@ TestWebView {
       { prop: "storageAccessPermissionDelegate", signal: "storageAccessPermissionDelegateChanged" }
     ]
 
-    function test_WebContext_networkDelegates1_assign_unparented_data() {
+    function test_WebContext_delegateWorkers1_assign_unparented_data() {
       return slots;
     }
 
-    function test_WebContext_networkDelegates1_assign_unparented(data) {
+    function test_WebContext_delegateWorkers1_assign_unparented(data) {
       spy.signalName = data.signal;
 
-      var d = networkDelegateWorkerFactory.createObject(null, {});
+      var d = webContextDelegateWorkerFactory.createObject(null, {});
 
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
@@ -63,14 +63,14 @@ TestWebView {
               "Delegate should not have a parent");
     }
 
-    function test_WebContext_networkDelegates2_assign_already_in_use_data() {
+    function test_WebContext_delegateWorkers2_assign_already_in_use_data() {
       return slots;
     }
 
-    function test_WebContext_networkDelegates2_assign_already_in_use(data) {
+    function test_WebContext_delegateWorkers2_assign_already_in_use(data) {
       spy.signalName = data.signal;
 
-      var d = networkDelegateWorkerFactory.createObject(null, {});
+      var d = webContextDelegateWorkerFactory.createObject(null, {});
       context2[data.prop] = d;
       context[data.prop] = d;
       compare(spy.count, 0, "Shouldn't have had a signal");
@@ -81,14 +81,14 @@ TestWebView {
       context2[data.prop] = null;
     }
 
-    function test_WebContext_networkDelegates3_reparent_data() {
+    function test_WebContext_delegateWorkers3_reparent_data() {
       return slots;
     }
 
-    function test_WebContext_networkDelegates3_reparent(data) {
+    function test_WebContext_delegateWorkers3_reparent(data) {
       spy.signalName = data.signal;
 
-      var d = networkDelegateWorkerFactory.createObject(top, {});
+      var d = webContextDelegateWorkerFactory.createObject(top, {});
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
       compare(spy.count, 1, "Expected a signal");
@@ -96,14 +96,14 @@ TestWebView {
               "Delegate should be parented to the WebContext");
     }
 
-    function test_WebContext_networkDelegates4_delete_in_use_data() {
+    function test_WebContext_delegateWorkers4_delete_in_use_data() {
       return slots;
     }
 
-    function test_WebContext_networkDelegates4_delete_in_use(data) {
+    function test_WebContext_delegateWorkers4_delete_in_use(data) {
       spy.signalName = data.signal;
 
-      var d = networkDelegateWorkerFactory.createObject(null, {});
+      var d = webContextDelegateWorkerFactory.createObject(null, {});
 
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
@@ -120,8 +120,8 @@ TestWebView {
       compare(context[data.prop], null, "Value should have been cleared");
     }
 
-    function test_WebContext_networkDelegates5_shared() {
-      var d = networkDelegateWorkerFactory.createObject(null, {});
+    function test_WebContext_delegateWorkers5_shared() {
+      var d = webContextDelegateWorkerFactory.createObject(null, {});
       context.networkRequestDelegate = d;
       context.storageAccessPermissionDelegate = d;
 
