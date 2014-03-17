@@ -9,7 +9,7 @@ def handler(request):
   html.write("<html></html>")
 
   request.send_response(200)
-  request.send_header("Content-type", "application/json")
+  request.send_header("Content-type", "text/html")
   request.send_header("Content-Length", html.tell())
   request.send_header("Cache-Control", "no-cache")
 
