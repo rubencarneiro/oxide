@@ -58,6 +58,8 @@ class Q_DECL_EXPORT WebContextAdapter {
     virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) = 0;
 
     virtual void HandleStoragePermissionRequest(OxideQStoragePermissionRequest* req) = 0;
+
+    virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) = 0;
   };
 
   QString product() const;

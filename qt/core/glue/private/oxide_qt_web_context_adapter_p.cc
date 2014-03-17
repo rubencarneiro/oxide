@@ -123,6 +123,20 @@ class BrowserContextDelegate : public oxide::BrowserContextDelegate {
     return result;
   }
 
+  virtual bool GetUserAgentOverride(const GURL& url,
+                                    std::string* user_agent) {
+    if (!io_thread_delegate_) {
+      return false;
+    }
+
+    QString new_user_agent;
+    bool overridden = io_thread_delegate_->GetUserAgentOverride(
+        QUrl(QString::fromStdString(url.spec())), &new_user_agent);
+
+    *user_agent = new_user_agent.toStdString();
+    return overridden;
+  }
+
   base::WeakPtr<WebContextAdapterPrivate> ui_thread_delegate_;
   scoped_ptr<WebContextAdapter::IOThreadDelegate> io_thread_delegate_;
 };

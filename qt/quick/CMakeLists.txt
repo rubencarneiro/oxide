@@ -56,6 +56,7 @@ set(PLUGIN_SRCS
     api/oxideqquickwebcontextdelegateworker.cc
     api/oxideqquickwebframe.cc
     api/oxideqquickwebview.cc
+    api/oxidequseragentoverriderequest.cc
     oxide_qml_plugin.cc
     oxide_qquick_painted_render_view_node.cc
     oxide_qquick_render_view_item.cc

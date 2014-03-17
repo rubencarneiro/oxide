@@ -45,6 +45,7 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(CookiePolicy cookiePolicy READ cookiePolicy WRITE setCookiePolicy NOTIFY cookiePolicyChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
+  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
 
   Q_ENUMS(CookiePolicy)
 
@@ -98,6 +99,9 @@ class OxideQQuickWebContext : public QObject,
   OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate() const;
   void setStorageAccessPermissionDelegate(OxideQQuickWebContextDelegateWorker* delegate);
 
+  OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate() const;
+  void setUserAgentOverrideDelegate(OxideQQuickWebContextDelegateWorker* delegate);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -108,6 +112,7 @@ class OxideQQuickWebContext : public QObject,
   void cookiePolicyChanged();
   void networkRequestDelegateChanged();
   void storageAccessPermissionDelegateChanged();
+  void userAgentOverrideDelegateChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());
