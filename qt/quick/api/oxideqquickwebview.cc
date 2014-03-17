@@ -73,7 +73,7 @@ void OxideQQuickWebViewPrivate::detachContextSignals() {
   if (context) {
     QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
                         SIGNAL(initialized()),
-                        q, SLOT(contextIntialized()));
+                        q, SLOT(contextInitialized()));
     QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
                         SIGNAL(willBeDestroyed()),
                         q, SLOT(contextWillBeDestroyed()));
