@@ -53,6 +53,10 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
   view_ = view;
 }
 
+void OxideQQuickWebViewPrivate::contextInitialized() {
+  completeConstruction();
+}
+
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     oxide::qt::WebViewAdapter(view),
@@ -161,7 +165,7 @@ void OxideQQuickWebViewPrivate::FrameRemoved(
   emit q->frameRemoved(adapterToQObject<OxideQQuickWebFrame>(frame));
 }
 
-void OxideQQuickWebViewPrivate::componentComplete() {
+void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
   Q_ASSERT(init_props_);
@@ -181,6 +185,14 @@ void OxideQQuickWebViewPrivate::componentComplete() {
        q->isVisible());
 
   init_props_.reset();
+
+  // Make the webview the QObject parent of the new root frame,
+  // to stop Qml from collecting the frame tree
+  q->rootFrame()->setParent(q);
+
+  // Initialization created the root frame. This is the only time
+  // this is emitted
+  emit q->rootFrameChanged();
 }
 
 // static
@@ -285,8 +297,13 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
 
-  QObject::disconnect(this, SIGNAL(visibleChanged()),
-                      this, SLOT(visibilityChangedListener()));
+  disconnect(this, SIGNAL(visibleChanged()),
+             this, SLOT(visibilityChangedListener()));
+  if (d->context) {
+    disconnect(OxideQQuickWebContextPrivate::get(d->context),
+               SIGNAL(initialized()),
+               this, SLOT(contextIntialized()));
+  }
 
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
@@ -315,15 +332,10 @@ void OxideQQuickWebView::componentComplete() {
 
   QQuickItem::componentComplete();
 
-  d->componentComplete();
-
-  // Make the webview the QObject parent of the new root frame,
-  // to stop Qml from collecting the frame tree
-  rootFrame()->setParent(this);
-
-  // Initialization created the root frame. This is the only time
-  // this is emitted
-  emit rootFrameChanged();
+  if (!d->context ||
+      OxideQQuickWebContextPrivate::get(d->context)->isInitialized()) {
+    d->completeConstruction();
+  }
 }
 
 QUrl OxideQQuickWebView::url() const {
@@ -482,6 +494,19 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
     return;
   }
 
+  if (context == d->context) {
+    return;
+  }
+
+  if (d->context) {
+    disconnect(OxideQQuickWebContextPrivate::get(context), SIGNAL(initialized()),
+               this, SLOT(contextIntialized()));
+  }
+  if (context) {
+    connect(OxideQQuickWebContextPrivate::get(context), SIGNAL(initialized()),
+            this, SLOT(contextInitialized()));
+  }
+
   d->context = context;
 }
 
@@ -538,3 +563,5 @@ void OxideQQuickWebView::reload() {
 
   d->reload();
 }
+
+#include "moc_oxideqquickwebview_p.cpp"

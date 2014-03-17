@@ -140,6 +140,8 @@ class OxideQQuickWebView : public QQuickItem {
   void visibilityChangedListener();
 
  private:
+  Q_PRIVATE_SLOT(d_func(), void contextInitialized());
+
   virtual void geometryChanged(const QRectF& newGeometry,
                                const QRectF& oldGeometry);
 

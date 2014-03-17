@@ -222,11 +222,11 @@ void WebContextAdapter::updateUserScripts() {
       scripts);
 }
 
-bool WebContextAdapter::constructed() const {
+bool WebContextAdapter::isInitialized() const {
   return priv->context() != NULL;
 }
 
-void WebContextAdapter::completeConstruction() {
+void WebContextAdapter::init() {
   priv->Init();
   updateUserScripts();
 }

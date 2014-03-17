@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 
+#include <QObject>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
@@ -30,7 +31,9 @@ template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
 class OxideQQuickWebContextPrivate Q_DECL_FINAL :
+    public QObject,
     public oxide::qt::WebContextAdapter {
+  Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
  public:
@@ -51,6 +54,9 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       QQmlListProperty<OxideQQuickUserScript>* prop,
       int index);
   static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
+
+  Q_SIGNALS:
+   void initialized();
 
  private:
   OxideQQuickWebContext* q_ptr;
