@@ -46,6 +46,7 @@
 #include "oxide_gpu_utils.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
+#include "oxide_user_agent_override_provider.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
@@ -201,7 +202,8 @@ void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetIsIncognitoProcess(
       host->GetBrowserContext()->IsOffTheRecord()));
-  host->AddFilter(new ScriptMessageDispatcherBrowser(host->GetID()));
+  host->AddFilter(new ScriptMessageDispatcherBrowser(host));
+  host->AddFilter(new UserAgentOverrideProvider(host));
 }
 
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(

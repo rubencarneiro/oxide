@@ -178,6 +178,8 @@
         'browser/oxide_ssl_config_service.h',
         'browser/oxide_url_request_context.cc',
         'browser/oxide_url_request_context.h',
+        'browser/oxide_user_agent_override_provider.cc',
+        'browser/oxide_user_agent_override_provider.h',
         'browser/oxide_user_script_master.cc',
         'browser/oxide_user_script_master.h',
         'browser/oxide_web_contents_view.cc',

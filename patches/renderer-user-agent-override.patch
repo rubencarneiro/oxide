@@ -7,7 +7,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -177,9 +177,16 @@ bool ContentRendererClient::ShouldEnable
+@@ -177,9 +177,15 @@ bool ContentRendererClient::ShouldEnable
  }
  
  blink::WebWorkerPermissionClientProxy*
@@ -17,7 +17,6 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
  }
  
 +bool ContentRendererClient::GetUserAgentOverride(
-+    RenderFrame* render_frame,
 +    const GURL& url,
 +    std::string* user_agent) {
 +  return false;
@@ -27,7 +26,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -258,13 +258,17 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -258,13 +258,16 @@ class CONTENT_EXPORT ContentRendererClie
    // this renderer process. Currently, we apply the policy only to a renderer
    // process running on a normal page from the web.
    virtual bool ShouldEnableSiteIsolationPolicy() const;
@@ -37,8 +36,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
        CreateWorkerPermissionClientProxy(RenderFrame* render_frame,
                                          blink::WebFrame* frame);
 +
-+  virtual bool GetUserAgentOverride(RenderFrame* render_frame,
-+                                    const GURL& url,
++  virtual bool GetUserAgentOverride(const GURL& url,
 +                                    std::string* user_agent);
  };
  
@@ -60,7 +58,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 +
 +  std::string embedder_override;
 +  if (GetContentClient()->renderer()->GetUserAgentOverride(
-+      this, url, &embedder_override)) {
++      url, &embedder_override)) {
 +    return WebString::fromUTF8(embedder_override);
 +  }
 +

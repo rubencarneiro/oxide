@@ -18,6 +18,7 @@
 #include "oxide_content_renderer_client.h"
 
 #include "content/public/renderer/render_frame.h"
+#include "content/public/renderer/render_thread.h"
 
 #include "shared/common/oxide_messages.h"
 
@@ -64,12 +65,11 @@ void ContentRendererClient::WillReleaseScriptContext(
 }
 
 bool ContentRendererClient::GetUserAgentOverride(
-    content::RenderFrame* render_frame,
     const GURL& url,
     std::string* user_agent) {
   bool overridden = false;
-  render_frame->Send(new OxideHostMsg_GetUserAgentOverride(
-      render_frame->GetRoutingID(), url, user_agent, &overridden));
+  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
+      url, user_agent, &overridden));
 
   return overridden;
 }

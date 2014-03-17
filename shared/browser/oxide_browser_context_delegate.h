@@ -91,6 +91,12 @@ class BrowserContextDelegate :
     return STORAGE_PERMISSION_UNDEFINED;
   }
 
+  // Called on the IO thread
+  virtual bool GetUserAgentOverride(const GURL& url,
+                                    std::string* user_agent) {
+    return false;
+  }
+
  protected:
   friend class BrowserContextDelegateTraits;
   friend class base::DeleteHelper<BrowserContextDelegate>;

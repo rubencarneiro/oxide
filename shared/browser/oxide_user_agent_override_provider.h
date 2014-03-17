@@ -15,12 +15,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
-#define _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
+#ifndef _OXIDE_SHARED_BROWSER_USER_AGENT_OVERRIDE_PROVIDER_H_
+#define _OXIDE_SHARED_BROWSER_USER_AGENT_OVERRIDE_PROVIDER_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "content/public/browser/browser_message_filter.h"
+
+class GURL;
 
 namespace content {
 class RenderProcessHost;
@@ -28,20 +30,25 @@ class RenderProcessHost;
 
 namespace oxide {
 
-class ScriptMessageDispatcherBrowser FINAL :
-    public content::BrowserMessageFilter {
- public:
-  ScriptMessageDispatcherBrowser(content::RenderProcessHost* render_process_host);
-  ~ScriptMessageDispatcherBrowser();
+class BrowserContextIOData;
 
+class UserAgentOverrideProvider FINAL : public content::BrowserMessageFilter {
+ public:
+  UserAgentOverrideProvider(content::RenderProcessHost* render_process_host);
+  ~UserAgentOverrideProvider();
+
+ private:
   bool OnMessageReceived(const IPC::Message& message,
                          bool* message_was_ok) FINAL;
- private:
-  const int render_process_id_;
+  void OnGetUserAgentOverride(const GURL& url,
+                              std::string* user_agent,
+                              bool* overridden);
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageDispatcherBrowser);
+  BrowserContextIOData* context_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(UserAgentOverrideProvider);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
+#endif // _OXIDE_SHARED_BROWSER_USER_AGENT_OVERRIDE_PROVIDER_H_

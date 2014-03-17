@@ -52,10 +52,10 @@ IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
 IPC_MESSAGE_ROUTED1(OxideMsg_SendMessage,
                     OxideMsg_SendMessage_Params)
 
-IPC_SYNC_MESSAGE_ROUTED1_2(OxideHostMsg_GetUserAgentOverride,
-                           GURL,
-                           std::string,
-                           bool)
+IPC_SYNC_MESSAGE_CONTROL1_2(OxideHostMsg_GetUserAgentOverride,
+                            GURL,
+                            std::string,
+                            bool)
 
 IPC_MESSAGE_ROUTED2(OxideHostMsg_FrameCreated,
                     long long /* parent */,
