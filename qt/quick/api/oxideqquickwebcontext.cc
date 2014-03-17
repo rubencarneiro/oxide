@@ -518,7 +518,23 @@ void OxideQQuickWebContext::removeUserScript(
 OxideQQuickWebContext::CookiePolicy OxideQQuickWebContext::cookiePolicy() const {
   Q_D(const OxideQQuickWebContext);
 
-  // FIXME: Add compile-time asserts for this cast
+  Q_STATIC_ASSERT(
+      CookiePolicyAllowAll ==
+      static_cast<CookiePolicy>(
+        oxide::qt::WebContextAdapter::CookiePolicyAllowAll));
+  Q_STATIC_ASSERT(
+      CookiePolicyBlockThirdParty ==
+      static_cast<CookiePolicy>(
+        oxide::qt::WebContextAdapter::CookiePolicyBlockThirdParty));
+  Q_STATIC_ASSERT(
+      CookiePolicyBlockAll ==
+      static_cast<CookiePolicy>(
+        oxide::qt::WebContextAdapter::CookiePolicyBlockAll));
+  Q_STATIC_ASSERT(
+      CookiePolicyStrictBlockThirdParty ==
+      static_cast<CookiePolicy>(
+        oxide::qt::WebContextAdapter::CookiePolicyStrictBlockThirdParty));
+
   return static_cast<CookiePolicy>(d->cookiePolicy());
 }
 
