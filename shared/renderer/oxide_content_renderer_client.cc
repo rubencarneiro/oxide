@@ -17,6 +17,10 @@
 
 #include "oxide_content_renderer_client.h"
 
+#include "content/public/renderer/render_frame.h"
+
+#include "shared/common/oxide_messages.h"
+
 #include "oxide_process_observer.h"
 #include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
@@ -57,6 +61,17 @@ void ContentRendererClient::WillReleaseScriptContext(
     int world_id) {
   ScriptMessageDispatcherRenderer::FromWebFrame(
       frame)->WillReleaseScriptContext(context, world_id);
+}
+
+bool ContentRendererClient::GetUserAgentOverride(
+    content::RenderFrame* render_frame,
+    const GURL& url,
+    std::string* user_agent) {
+  bool overridden = false;
+  render_frame->Send(new OxideHostMsg_GetUserAgentOverride(
+      render_frame->GetRoutingID(), url, user_agent, &overridden));
+
+  return overridden;
 }
 
 ContentRendererClient::ContentRendererClient() {}

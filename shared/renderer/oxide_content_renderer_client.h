@@ -52,6 +52,10 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
                                 v8::Handle<v8::Context>,
                                 int world_id) FINAL;
 
+  bool GetUserAgentOverride(content::RenderFrame* render_frame,
+                            const GURL& url,
+                            std::string* user_agent) FINAL;
+
   scoped_ptr<ProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;
 
