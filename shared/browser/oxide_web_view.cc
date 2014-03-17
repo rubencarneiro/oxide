@@ -43,7 +43,6 @@
 
 #include "shared/common/oxide_content_client.h"
 
-#include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_web_contents_view.h"
@@ -71,14 +70,10 @@ ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(size_t index) const {
   return NULL;
 }
 
-void WebView::BrowserContextDestroyed() {
-  CHECK(0) << "The browser context was destroyed whilst still in use";
-}
-
 void WebView::NotifyUserAgentStringChanged() {
   // See https://launchpad.net/bugs/1279900 and the comment in
   // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(browser_context()->GetUserAgent());
+  web_contents_->SetUserAgentOverride(context_->GetUserAgent());
 }
 
 void WebView::WebPreferencesDestroyed() {
@@ -320,6 +315,7 @@ bool WebView::Init(BrowserContext* context,
       context->GetOriginalContext();
 
   BrowserContextObserver::Observe(context);
+  context_ = context;
 
   content::WebContents::CreateParams params(context);
   params.initial_size = initial_size;
@@ -421,10 +417,10 @@ void WebView::Reload() {
 }
 
 bool WebView::IsIncognito() const {
-  if (!browser_context()) {
+  if (!context_) {
     return false;
   }
-  return browser_context()->IsOffTheRecord();
+  return context_->IsOffTheRecord();
 }
 
 bool WebView::IsLoading() const {
@@ -447,7 +443,7 @@ void WebView::Hidden() {
 }
 
 BrowserContext* WebView::GetBrowserContext() const {
-  return browser_context();
+  return context_;
 }
 
 content::WebContents* WebView::GetWebContents() const {

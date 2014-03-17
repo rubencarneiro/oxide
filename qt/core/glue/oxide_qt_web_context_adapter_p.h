@@ -24,6 +24,8 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "shared/browser/oxide_browser_context.h"
+
 namespace oxide {
 
 class BrowserContext;
@@ -41,11 +43,11 @@ class WebContextAdapterPrivate FINAL {
 
   static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
 
-  oxide::BrowserContext* context() { return context_.get(); }
+  oxide::BrowserContext* context() { return context_; }
   ConstructProperties* construct_props() { return construct_props_.get(); }
 
  private:
-  scoped_ptr<oxide::BrowserContext> context_;
+  ScopedBrowserContext context_;
   scoped_ptr<ConstructProperties> construct_props_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextAdapterPrivate);

@@ -57,6 +57,29 @@ void OxideQQuickWebViewPrivate::contextInitialized() {
   completeConstruction();
 }
 
+void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
+  Q_Q(OxideQQuickWebView);
+
+  // XXX: Our underlying BrowserContext lives on, so we're left in a
+  // bit of a weird state here (WebView.context will return no context,
+  // which is a lie)
+  context = NULL;
+  emit q->contextChanged();
+}
+
+void OxideQQuickWebViewPrivate::detachContextSignals() {
+  Q_Q(OxideQQuickWebView);
+
+  if (context) {
+    QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
+                        SIGNAL(initialized()),
+                        q, SLOT(contextIntialized()));
+    QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
+                        SIGNAL(willBeDestroyed()),
+                        q, SLOT(contextWillBeDestroyed()));
+  }
+}
+
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     oxide::qt::WebViewAdapter(view),
@@ -299,11 +322,7 @@ OxideQQuickWebView::~OxideQQuickWebView() {
 
   disconnect(this, SIGNAL(visibleChanged()),
              this, SLOT(visibilityChangedListener()));
-  if (d->context) {
-    disconnect(OxideQQuickWebContextPrivate::get(d->context),
-               SIGNAL(initialized()),
-               this, SLOT(contextIntialized()));
-  }
+  d->detachContextSignals();
 
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
@@ -311,26 +330,18 @@ OxideQQuickWebView::~OxideQQuickWebView() {
     delete adapterToQObject<OxideQQuickScriptMessageHandler>(
         d->message_handlers().at(0));
   }
-
-  // The default context is reference counted, and OxideQQuickWebViewPrivate
-  // (our d_ptr) holds our reference to it. When destroying the d_ptr,
-  // we need to hold a temporary reference to the default context to stop
-  // it from being destroyed before the destructor for WebViewAdapter is
-  // called, otherwise our oxide::WebView will outlive its context (and
-  // this is not allowed)
-  QSharedPointer<OxideQQuickWebContext> death_grip;
-  if (!d->context) {
-    death_grip = OxideQQuickWebContext::defaultContext();
-  }
-
-  // Have to do this whilst death_grip is in scope
-  d_ptr.reset();
 }
 
 void OxideQQuickWebView::componentComplete() {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::componentComplete();
+
+  if (d->context) {
+    connect(OxideQQuickWebContextPrivate::get(d->context),
+            SIGNAL(initialized()),
+            this, SLOT(contextInitialized()));
+  }
 
   if (!d->context ||
       OxideQQuickWebContextPrivate::get(d->context)->isInitialized()) {
@@ -498,16 +509,14 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
     return;
   }
 
-  if (d->context) {
-    disconnect(OxideQQuickWebContextPrivate::get(context), SIGNAL(initialized()),
-               this, SLOT(contextIntialized()));
-  }
+  d->detachContextSignals();
   if (context) {
-    connect(OxideQQuickWebContextPrivate::get(context), SIGNAL(initialized()),
-            this, SLOT(contextInitialized()));
+    connect(OxideQQuickWebContextPrivate::get(context), SIGNAL(willBeDestroyed()),
+            this, SLOT(contextWillBeDestroyed()));
   }
 
   d->context = context;
+  emit contextChanged();
 }
 
 OxideQWebPreferences* OxideQQuickWebView::preferences() {

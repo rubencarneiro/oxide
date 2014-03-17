@@ -55,8 +55,9 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       int index);
   static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
 
-  Q_SIGNALS:
-   void initialized();
+ Q_SIGNALS:
+  void initialized();
+  void willBeDestroyed();
 
  private:
   OxideQQuickWebContext* q_ptr;

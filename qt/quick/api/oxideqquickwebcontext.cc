@@ -126,6 +126,8 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
 
+  emit d->willBeDestroyed();
+
   for (int i = 0; i < d->user_scripts().size(); ++i) {
     d->detachUserScriptSignals(
         adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));

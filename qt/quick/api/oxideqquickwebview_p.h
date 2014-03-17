@@ -70,7 +70,7 @@ class OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
-  Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
+  Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext NOTIFY contextChanged)
   Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
@@ -133,6 +133,7 @@ class OxideQQuickWebView : public QQuickItem {
   void frameAdded(OxideQQuickWebFrame* frame);
   void frameRemoved(OxideQQuickWebFrame* frame);
   void popupMenuChanged();
+  void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
 
@@ -141,6 +142,7 @@ class OxideQQuickWebView : public QQuickItem {
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextInitialized());
+  Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
 
   virtual void geometryChanged(const QRectF& newGeometry,
                                const QRectF& oldGeometry);

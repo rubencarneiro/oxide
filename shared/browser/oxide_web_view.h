@@ -30,6 +30,7 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
@@ -140,7 +141,6 @@ class WebView : public ScriptMessageTarget,
       size_t index) const OVERRIDE;
 
   // BrowserContextObserver
-  void BrowserContextDestroyed() FINAL;
   void NotifyUserAgentStringChanged() FINAL;
 
   // WebPreferencesObserver
@@ -231,6 +231,7 @@ class WebView : public ScriptMessageTarget,
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
+  ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
   content::NotificationRegistrar registrar_;
   scoped_ptr<WebFrame> root_frame_;

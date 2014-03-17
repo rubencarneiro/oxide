@@ -81,7 +81,8 @@ class BrowserContextIOData {
   scoped_ptr<ResourceContext> resource_context_;
 };
 
-class BrowserContext : public content::BrowserContext {
+class BrowserContext : public content::BrowserContext,
+                       public base::RefCounted<BrowserContext> {
  public:
   virtual ~BrowserContext();
 
@@ -225,6 +226,63 @@ class BrowserContext : public content::BrowserContext {
   ObserverList<BrowserContextObserver> observers_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
+};
+
+class ScopedBrowserContext FINAL {
+ public:
+  ScopedBrowserContext() :
+      context_(NULL),
+      ref_context_(NULL) {}
+  ScopedBrowserContext(BrowserContext* context) :
+      context_(context),
+      ref_context_(context ? context->GetOriginalContext() : NULL) {
+    if (ref_context_) {
+      ref_context_->AddRef();
+    }
+  }
+  ScopedBrowserContext(const ScopedBrowserContext& other) :
+      context_(other.context_),
+      ref_context_(other.ref_context_) {
+    if (ref_context_) {
+      ref_context_->AddRef();
+    }
+  }
+
+  ~ScopedBrowserContext() {
+    if (ref_context_) {
+      ref_context_->Release();
+    }
+  }
+
+  BrowserContext* get() const { return context_; }
+  operator BrowserContext*() const { return context_; }
+  BrowserContext* operator->() const {
+    assert(context_);
+    return context_;
+  }
+
+  ScopedBrowserContext& operator=(BrowserContext* context) {
+    BrowserContext* ref_context = context ? context->GetOriginalContext() : NULL;
+    if (ref_context) {
+      ref_context->AddRef();
+    }
+    BrowserContext* old = ref_context_;
+    context_ = context;
+    ref_context_ = ref_context;
+    if (old) {
+      old->Release();
+    }
+    return *this;
+  }
+
+  ScopedBrowserContext& operator=(const ScopedBrowserContext& other) {
+    *this = other.get();
+    return *this;
+  }
+
+ private:
+  BrowserContext* context_;
+  BrowserContext* ref_context_;
 };
 
 } // namespace oxide

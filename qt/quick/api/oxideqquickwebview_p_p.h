@@ -100,6 +100,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
  private:
   void contextInitialized();
+  void contextWillBeDestroyed();
+  void detachContextSignals();
 
   QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
