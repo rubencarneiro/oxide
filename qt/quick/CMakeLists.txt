@@ -41,7 +41,9 @@ else()
   set(QT_INSTALL_QML "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/qt5/qml")
 endif()
 
-qt5_wrap_cpp(MOC_EXTRA api/oxideqquicknetworkdelegateworker_p_p.h)
+qt5_wrap_cpp(MOC_EXTRA
+             api/oxideqquicknetworkdelegateworker_p_p.h
+             api/oxideqquickwebcontext_p_p.h)
 
 set(PLUGIN_SRCS
     api/oxideqquickglobals.cc

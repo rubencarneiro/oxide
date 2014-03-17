@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 
+#include <QObject>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
@@ -39,7 +40,9 @@ class WebContextIOThreadDelegate;
 }
 
 class OxideQQuickWebContextPrivate Q_DECL_FINAL :
+    public QObject,
     public oxide::qt::WebContextAdapter {
+  Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
  public:
@@ -50,6 +53,10 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
   static void ensureChromiumStarted();
+
+ Q_SIGNALS:
+  void initialized();
+  void willBeDestroyed();
 
  private:
   OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);

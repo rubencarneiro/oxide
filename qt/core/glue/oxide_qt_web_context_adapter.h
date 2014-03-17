@@ -79,8 +79,8 @@ class Q_DECL_EXPORT WebContextAdapter {
 
   void updateUserScripts();
 
-  bool constructed() const;
-  void completeConstruction();
+  bool isInitialized() const;
+  void init();
 
   static QOpenGLContext* sharedGLContext();
   static void setSharedGLContext(QOpenGLContext* context);

@@ -96,12 +96,20 @@ BrowserContextImpl::BrowserContextImpl(const base::FilePath& path,
   SetUserAgent(std::string());
 }
 
+BrowserContextImpl::~BrowserContextImpl() {
+  // If the OTR context outlives us, we leave it with dangling pointers.
+  // This is bad, hence we make it a release mode abort
+  CHECK(!otr_context_ || otr_context_->HasOneRef()) <<
+      "Unexpected reference count for OTR BrowserContext. Did you use "
+      "scoped_refptr instead of ScopedBrowserContext?";
+}
+
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
   if (!otr_context_) {
-    otr_context_.reset(new OffTheRecordBrowserContextImpl(this));
+    otr_context_ = new OffTheRecordBrowserContextImpl(this);
   }
 
-  return otr_context_.get();
+  return otr_context_;
 }
 
 BrowserContext* BrowserContextImpl::GetOriginalContext() {

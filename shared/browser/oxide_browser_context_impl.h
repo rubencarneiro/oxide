@@ -62,6 +62,8 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
 
 class BrowserContextImpl FINAL : public BrowserContext {
  public:
+  ~BrowserContextImpl();
+
   BrowserContext* GetOffTheRecordContext() FINAL;
   BrowserContext* GetOriginalContext() FINAL;
 
@@ -80,7 +82,7 @@ class BrowserContextImpl FINAL : public BrowserContext {
   BrowserContextImpl(const base::FilePath& path,
                      const base::FilePath& cache_path);
 
-  scoped_ptr<OffTheRecordBrowserContextImpl> otr_context_;
+  scoped_refptr<OffTheRecordBrowserContextImpl> otr_context_;
   std::string product_;
   bool default_user_agent_string_;
   UserScriptMaster user_script_manager_;

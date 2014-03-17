@@ -271,6 +271,8 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
 
+  emit d->willBeDestroyed();
+
   for (int i = 0; i < d->user_scripts().size(); ++i) {
     d->detachUserScriptSignals(
         adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));
@@ -287,7 +289,8 @@ void OxideQQuickWebContext::classBegin() {}
 void OxideQQuickWebContext::componentComplete() {
   Q_D(OxideQQuickWebContext);
 
-  d->completeConstruction();
+  d->init();
+  emit d->initialized();
 }
 
 // static
@@ -363,7 +366,7 @@ QUrl OxideQQuickWebContext::dataPath() const {
 void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->constructed()) {
+  if (d->isInitialized()) {
     qWarning() << "Can only set dataPath during construction";
     return;
   }
@@ -385,7 +388,7 @@ QUrl OxideQQuickWebContext::cachePath() const {
 void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->constructed()) {
+  if (d->isInitialized()) {
     qWarning() << "Can only set cachePath during construction";
     return;
   }

@@ -31,6 +31,8 @@
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
+#include "shared/browser/oxide_browser_context.h"
+
 namespace oxide {
 
 class BrowserContext;
@@ -49,7 +51,7 @@ class WebContextAdapterPrivate FINAL :
 
   WebContextAdapter::IOThreadDelegate* GetIOThreadDelegate() const;
 
-  oxide::BrowserContext* context() { return context_.get(); }
+  oxide::BrowserContext* context() { return context_; }
 
  private:
   friend class BrowserContextDelegate;
@@ -71,7 +73,7 @@ class WebContextAdapterPrivate FINAL :
 
   WebContextAdapter* adapter;
 
-  scoped_ptr<oxide::BrowserContext> context_;
+  ScopedBrowserContext context_;
   scoped_ptr<ConstructProperties> construct_props_;
   scoped_refptr<BrowserContextDelegate> context_delegate_;
 
