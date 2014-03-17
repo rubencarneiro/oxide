@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 def handler(request):
   html = StringIO()
-  html.write("<html></html>");
+  html.write("<html></html>")
 
   expires = datetime.utcnow()
   expires += timedelta(hours=100)
