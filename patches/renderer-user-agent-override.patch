@@ -1,0 +1,74 @@
+# Description: Reach out to the embedder for a UA string override from
+#  RenderFrameImpl::userAgentOverride(). This is called from Blink for
+#  navigator.userAgent, and we already return an override from here
+#  (which is our default)
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
+--- a/content/public/renderer/content_renderer_client.cc
++++ b/content/public/renderer/content_renderer_client.cc
+@@ -177,9 +177,16 @@ bool ContentRendererClient::ShouldEnable
+ }
+ 
+ blink::WebWorkerPermissionClientProxy*
+ ContentRendererClient::CreateWorkerPermissionClientProxy(
+     RenderFrame* render_frame, blink::WebFrame* frame) {
+   return NULL;
+ }
+ 
++bool ContentRendererClient::GetUserAgentOverride(
++    RenderFrame* render_frame,
++    const GURL& url,
++    std::string* user_agent) {
++  return false;
++}
++
+ }  // namespace content
+diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
+--- a/content/public/renderer/content_renderer_client.h
++++ b/content/public/renderer/content_renderer_client.h
+@@ -258,13 +258,17 @@ class CONTENT_EXPORT ContentRendererClie
+   // this renderer process. Currently, we apply the policy only to a renderer
+   // process running on a normal page from the web.
+   virtual bool ShouldEnableSiteIsolationPolicy() const;
+ 
+   // Creates a permission client proxy for in-renderer worker.
+   virtual blink::WebWorkerPermissionClientProxy*
+       CreateWorkerPermissionClientProxy(RenderFrame* render_frame,
+                                         blink::WebFrame* frame);
++
++  virtual bool GetUserAgentOverride(RenderFrame* render_frame,
++                                    const GURL& url,
++                                    std::string* user_agent);
+ };
+ 
+ }  // namespace content
+ 
+ #endif  // CONTENT_PUBLIC_RENDERER_CONTENT_RENDERER_CLIENT_H_
+diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
+--- a/content/renderer/render_frame_impl.cc
++++ b/content/renderer/render_frame_impl.cc
+@@ -2016,16 +2016,23 @@ bool RenderFrameImpl::willCheckAndDispat
+   return render_view_->willCheckAndDispatchMessageEvent(
+       sourceFrame, targetFrame, targetOrigin, event);
+ }
+ 
+ blink::WebString RenderFrameImpl::userAgentOverride(
+     blink::WebFrame* frame,
+     const blink::WebURL& url) {
+   DCHECK(!frame_ || frame_ == frame);
++
++  std::string embedder_override;
++  if (GetContentClient()->renderer()->GetUserAgentOverride(
++      this, url, &embedder_override)) {
++    return WebString::fromUTF8(embedder_override);
++  }
++
+   if (!render_view_->webview() || !render_view_->webview()->mainFrame() ||
+       render_view_->renderer_preferences_.user_agent_override.empty()) {
+     return blink::WebString();
+   }
+ 
+   // If we're in the middle of committing a load, the data source we need
+   // will still be provisional.
+   WebFrame* main_frame = render_view_->webview()->mainFrame();
