@@ -24,10 +24,6 @@
 
 namespace oxide {
 
-ContentRendererClient::ContentRendererClient() {}
-
-ContentRendererClient::~ContentRendererClient() {}
-
 void ContentRendererClient::RenderThreadStarted() {
   process_observer_.reset(new ProcessObserver());
   user_script_slave_.reset(new UserScriptSlave());
@@ -62,5 +58,9 @@ void ContentRendererClient::WillReleaseScriptContext(
   ScriptMessageDispatcherRenderer::FromWebFrame(
       frame)->WillReleaseScriptContext(context, world_id);
 }
+
+ContentRendererClient::ContentRendererClient() {}
+
+ContentRendererClient::~ContentRendererClient() {}
 
 } // namespace oxide

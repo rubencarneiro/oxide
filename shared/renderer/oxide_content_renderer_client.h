@@ -38,6 +38,7 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
     return user_script_slave_.get();
   }
 
+ private:
   void RenderThreadStarted() FINAL;
 
   void RenderFrameCreated(content::RenderFrame* render_frame) FINAL;
@@ -51,7 +52,6 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
                                 v8::Handle<v8::Context>,
                                 int world_id) FINAL;
 
- private:
   scoped_ptr<ProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;
 
