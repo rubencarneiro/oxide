@@ -36,7 +36,8 @@ TestWebView {
 
     property var slots: [
       { prop: "networkRequestDelegate", signal: "networkRequestDelegateChanged" },
-      { prop: "storageAccessPermissionDelegate", signal: "storageAccessPermissionDelegateChanged" }
+      { prop: "storageAccessPermissionDelegate", signal: "storageAccessPermissionDelegateChanged" },
+      { prop: "userAgentOverrideDelegate", signal: "userAgentOverrideDelegateChanged" }
     ]
 
     function test_WebContext_delegateWorkers1_assign_unparented_data() {
