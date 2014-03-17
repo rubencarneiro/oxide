@@ -66,7 +66,6 @@ class OxideQQuickUserScript : public QObject,
   void scriptLoaded();
   void scriptLoadFailed();
   void scriptPropertyChanged();
-  void scriptWillBeDeleted();
 
  protected:
   QScopedPointer<OxideQQuickUserScriptPrivate> d_ptr;

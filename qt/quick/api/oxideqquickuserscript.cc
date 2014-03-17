@@ -50,7 +50,9 @@ OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
 }
 
 OxideQQuickUserScript::~OxideQQuickUserScript() {
-  emit scriptWillBeDeleted();
+  Q_D(OxideQQuickUserScript);
+
+  emit d->willBeDeleted();
 }
 
 void OxideQQuickUserScript::classBegin() {}
