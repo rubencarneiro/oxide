@@ -48,24 +48,24 @@ TestWebView {
       var res;
       try {
         res = webView.getTestApi().evaluateCode("\
-var el = document.querySelector(\".error\");\
-if (el) throw Exception();\
+var el = window.document.getElementById(\"result\");\
+if (!el) throw Exception();\
 return el.innerHTML;", true);
       } catch(e) {
-        fail("oxide.sendMessage not found");
+        fail("'Result' DOM element not found: " + JSON.stringify(e));
       }
 
-      compare(res, "Found oxide.postMessage",
+      compare(res, "oxide.postMessage",
               "Unexpected result message");
     }
 
     function test_can_inject_in_main_world_with_no_oxide_api() {
       webView.context.__injectOxideApiInMainWorld = false;
-      var otherContext = webContext.createObject(null, {});
+      var otherContext =  webContext.createObject(null, {});
       var script = userScript.createObject(null, {
         context: "oxide-private://main-world-private",
 	injectInMainWorld: true,
-	url: "file://localhost:8080/tst_WebView_scriptMainWorld_user_script.js"});
+	url: "tst_WebView_scriptMainWorld_user_script.js"});
 
       webView.context.addUserScript(script);
 
@@ -76,7 +76,7 @@ return el.innerHTML;", true);
       var res;
       try {
         res = webView.getTestApi().evaluateCode("\
-var el = document.querySelector(\"#result\");\
+var el = document.getElementById(\"result\");\
 if (!el) throw Exception();\
 return el.innerHTML;", true);
       } catch(e) {
@@ -88,13 +88,13 @@ return el.innerHTML;", true);
     }
 
     function test_can_inject_in_main_world_with_oxide_api() {
+      webView.context.__injectOxideApiInMainWorld = true;
       var otherContext = webContext.createObject(null, {});
       var script = userScript.createObject(null, {
         context: "oxide-private://main-world-private",
 	injectInMainWorld: true,
-	url: "file://localhost:8080/tst_WebView_scriptMainWorld_user_script.js"});
+	url: "tst_WebView_scriptMainWorld_user_script.js"});
 
-      webView.context.__injectOxideApiInMainWorld = true;
       webView.context.addUserScript(script);
 
       webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
@@ -104,7 +104,7 @@ return el.innerHTML;", true);
       var res;
       try {
         res = webView.getTestApi().evaluateCode("\
-var el = document.querySelector(\"#result\");\
+var el = document.getElementById(\"result\");\
 if (!el) throw Exception();\
 return el.innerHTML;", true);
       } catch(e) {
@@ -120,11 +120,11 @@ return el.innerHTML;", true);
       var script = userScript.createObject(null, {
         context: "oxide-private://main-world-private",
 	injectInMainWorld: true,
-	url: "file://localhost:8080/tst_WebView_scriptMainWorld_user_script.js"});
+	url: "tst_WebView_scriptMainWorld_user_script.js"});
 
       var received = null;
       var frame = webView.rootFrame;
-      var handler = messageHandler.createObject(null, {
+      var handler = scriptMessageHandler.createObject(null, {
         msgId: "from-user-script",
 	contexts: ["oxide-private://main-world-private"],
 	callback: function(msg, frame) {

@@ -3,13 +3,14 @@
 <script>
 try {
   oxide.sendMessage("FOO", {});
-  document.querySelector("#result").innerHTML = "oxide.postMessage";
+  document.getElementById("result").innerHTML = "oxide.postMessage";
 } catch(e) {
-  document.querySelector("#result").className = "error";
+  document.getElementById("result").className = "error";
 }
 </script>
 
 <body>
+  <h1>SCRIPT MAIN WORLD test</h1>
   <iframe src="about:blank"></iframe>
   <div id="result"></div>
 </body>
