@@ -478,13 +478,13 @@ void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
             this, SLOT(userScriptUpdated()));
     connect(ud, SIGNAL(willBeDeleted()),
             this, SLOT(userScriptWillBeDeleted()));
-    if (!user_script->parent()) {
-      user_script->setParent(this);
-    }
   } else {
     d->user_scripts().removeOne(ud);
   }
 
+  if (!user_script->parent()) {
+    user_script->setParent(this);
+  }
   d->user_scripts().append(ud);
 
   emit userScriptsChanged();

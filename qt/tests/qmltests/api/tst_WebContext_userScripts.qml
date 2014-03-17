@@ -97,5 +97,23 @@ TestWebView {
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.context.userScripts.length, 1, "Unexpected number of user scripts");
     }
+
+    function test_WebContext_userScripts4_readd_unowned() {
+      var otherContext = webContext.createObject(null, {});
+      var script = userScript.createObject(null, {});
+      otherContext.addUserScript(script);
+
+      webView.context.addUserScript(script);
+
+      otherContext.removeUserScript(script);
+      compare(OxideTestingUtils.qObjectParent(script), null,
+              "UserScript should be unowned");
+
+      webView.context.addUserScript(script);
+      compare(OxideTestingUtils.qObjectParent(script), webView.context,
+              "Context should now own UserScript");
+
+      webView.context.removeUserScript(script);
+    }
   }
 }
