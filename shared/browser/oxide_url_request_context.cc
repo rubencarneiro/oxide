@@ -28,12 +28,11 @@ namespace oxide {
 
 namespace {
 
-class DefaultURLRequestContextGetter FINAL : public URLRequestContextGetter {
+class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
  public:
-  DefaultURLRequestContextGetter(
+  MainURLRequestContextGetter(
       content::ProtocolHandlerMap* protocol_handlers,
       BrowserContextIOData* context) :
-      URLRequestContextGetter(),
       context_(context) {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
@@ -42,8 +41,9 @@ class DefaultURLRequestContextGetter FINAL : public URLRequestContextGetter {
     DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
 
     if (!url_request_context_) {
+      DCHECK(context_);
       context_->Init(protocol_handlers_);
-      url_request_context_ = context_->GetMainRequestContext()->GetWeakPtr();
+      url_request_context_ = context_->GetMainRequestContext()->AsWeakPtr();
       context_ = NULL;
     }
 
@@ -52,13 +52,17 @@ class DefaultURLRequestContextGetter FINAL : public URLRequestContextGetter {
 
  private:
   content::ProtocolHandlerMap protocol_handlers_;
-  // XXX: Can we outlive the context IO data?
   BrowserContextIOData* context_;
 
-  DISALLOW_COPY_AND_ASSIGN(DefaultURLRequestContextGetter);
+  DISALLOW_COPY_AND_ASSIGN(MainURLRequestContextGetter);
 };
 
 } // namespace
+
+URLRequestContext::URLRequestContext() :
+    storage_(this) {}
+
+URLRequestContext::~URLRequestContext() {}
 
 URLRequestContextGetter::URLRequestContextGetter() {}
 
@@ -68,8 +72,7 @@ URLRequestContextGetter::~URLRequestContextGetter() {}
 URLRequestContextGetter* URLRequestContextGetter::CreateMain(
     content::ProtocolHandlerMap* protocol_handlers,
     BrowserContextIOData* context) {
-  return new DefaultURLRequestContextGetter(protocol_handlers,
-                                            context);
+  return new MainURLRequestContextGetter(protocol_handlers, context);
 }
 
 scoped_refptr<base::SingleThreadTaskRunner>

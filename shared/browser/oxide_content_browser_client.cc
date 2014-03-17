@@ -46,6 +46,7 @@
 #include "oxide_gpu_utils.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
+#include "oxide_user_agent_override_provider.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
@@ -182,10 +183,6 @@ class BrowserMainParts : public content::BrowserMainParts {
 
 } // namespace
 
-ContentBrowserClient::ContentBrowserClient() {}
-
-ContentBrowserClient::~ContentBrowserClient() {}
-
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
   return new BrowserMainParts();
@@ -205,7 +202,8 @@ void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetIsIncognitoProcess(
       host->GetBrowserContext()->IsOffTheRecord()));
-  host->AddFilter(new ScriptMessageDispatcherBrowser(host->GetID()));
+  host->AddFilter(new ScriptMessageDispatcherBrowser(host));
+  host->AddFilter(new UserAgentOverrideProvider(host));
 }
 
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
@@ -230,6 +228,27 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
   return BrowserContext::FromContent(browser_context)->GetAcceptLangs();
+}
+
+bool ContentBrowserClient::AllowGetCookie(const GURL& url,
+                                          const GURL& first_party,
+                                          const net::CookieList& cookie_list,
+                                          content::ResourceContext* context,
+                                          int render_process_id,
+                                          int render_frame_id) {
+  return BrowserContextIOData::FromResourceContext(
+      context)->CanAccessCookies(url, first_party, false);
+}
+
+bool ContentBrowserClient::AllowSetCookie(const GURL& url,
+                                          const GURL& first_party,
+                                          const std::string& cookie_line,
+                                          content::ResourceContext* context,
+                                          int render_process_id,
+                                          int render_frame_id,
+                                          net::CookieOptions* options) {
+  return BrowserContextIOData::FromResourceContext(
+      context)->CanAccessCookies(url, first_party, true);
 }
 
 void ContentBrowserClient::ResourceDispatcherHostCreated() {
@@ -276,5 +295,9 @@ gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
 bool ContentBrowserClient::IsTouchSupported() {
   return false;
 }
+
+ContentBrowserClient::ContentBrowserClient() {}
+
+ContentBrowserClient::~ContentBrowserClient() {}
 
 } // namespace oxide

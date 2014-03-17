@@ -22,12 +22,16 @@
 #include "base/compiler_specific.h"
 #include "content/public/browser/browser_message_filter.h"
 
+namespace content {
+class RenderProcessHost;
+}
+
 namespace oxide {
 
 class ScriptMessageDispatcherBrowser FINAL :
     public content::BrowserMessageFilter {
  public:
-  ScriptMessageDispatcherBrowser(int render_process_id);
+  ScriptMessageDispatcherBrowser(content::RenderProcessHost* render_process_host);
   ~ScriptMessageDispatcherBrowser();
 
   bool OnMessageReceived(const IPC::Message& message,

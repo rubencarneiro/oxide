@@ -1,0 +1,51 @@
+// vim:expandtab:shiftwidth=2:tabstop=2:
+// Copyright (C) 2013 Canonical Ltd.
+
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+#ifndef _OXIDE_QT_QUICK_API_USER_AGENT_OVERRIDE_REQUEST_P_H_
+#define _OXIDE_QT_QUICK_API_USER_AGENT_OVERRIDE_REQUEST_P_H_
+
+#include <QObject>
+#include <QScopedPointer>
+#include <QString>
+#include <QtGlobal>
+#include <QUrl>
+
+class OxideQUserAgentOverrideRequestPrivate;
+
+class OxideQUserAgentOverrideRequest : public QObject {
+  Q_OBJECT
+
+  Q_PROPERTY(QUrl url READ url)
+  Q_PROPERTY(QString userAgentOverride READ userAgentOverride WRITE setUserAgentOverride)
+
+  Q_DECLARE_PRIVATE(OxideQUserAgentOverrideRequest)
+  Q_DISABLE_COPY(OxideQUserAgentOverrideRequest)
+
+ public:
+  virtual ~OxideQUserAgentOverrideRequest();
+  OxideQUserAgentOverrideRequest(const QUrl& url);
+
+  QUrl url() const;
+
+  QString userAgentOverride() const;
+  void setUserAgentOverride(const QString& user_agent);
+
+ private:
+  QScopedPointer<OxideQUserAgentOverrideRequestPrivate> d_ptr;
+};
+
+#endif // _OXIDE_QT_QUICK_API_USER_AGENT_OVERRIDE_REQUEST_P_H_

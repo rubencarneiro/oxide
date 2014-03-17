@@ -77,17 +77,7 @@ WebView {
   property int qtest_expectedLoadsFailedCount: 0
   property int qtest_expectedLoadsStoppedCount: 0
 
-  context: WebContext {
-    dataPath: Testing.OxideTestingUtils.DATA_PATH
-    userScripts: [
-      UserScript {
-        context: "oxide://testutils/"
-        url: Qt.resolvedUrl("TestUtilsSlave.js")
-        incognitoEnabled: true
-        matchAllFrames: true
-      }
-    ]
-  }
+  context: TestWebContext {}
 
   Item {
     Component.onCompleted: {

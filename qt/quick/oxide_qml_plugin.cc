@@ -30,6 +30,7 @@
 #include "qt/quick/api/oxideqquickscriptmessagerequest_p.h"
 #include "qt/quick/api/oxideqquickuserscript_p.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
+#include "qt/quick/api/oxideqquickwebcontextdelegateworker_p.h"
 #include "qt/quick/api/oxideqquickwebframe_p.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
@@ -71,6 +72,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "Each WebView has a NavigationHistory automatically instantiated by Oxide");
     qmlRegisterType<OxideQWebPreferences>(uri, 0, 1, "WebPreferences");
     qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
+    qmlRegisterType<OxideQQuickWebContextDelegateWorker>(uri, 0, 1, "WebContextDelegateWorker");
   }
 };
 

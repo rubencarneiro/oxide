@@ -28,6 +28,10 @@ template <typename T> class QList;
 class QOpenGLContext;
 QT_END_NAMESPACE
 
+class OxideQBeforeSendHeadersEvent;
+class OxideQBeforeURLRequestEvent;
+class OxideQStoragePermissionRequest;
+
 namespace oxide {
 namespace qt {
 
@@ -37,6 +41,26 @@ class WebContextAdapterPrivate;
 class Q_DECL_EXPORT WebContextAdapter {
  public:
   virtual ~WebContextAdapter();
+
+  enum CookiePolicy {
+    CookiePolicyAllowAll,
+    CookiePolicyBlockThirdParty,
+    CookiePolicyBlockAll,
+    CookiePolicyStrictBlockThirdParty
+  };
+
+  class IOThreadDelegate {
+   public:
+    virtual ~IOThreadDelegate() {}
+
+    virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) = 0;
+
+    virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) = 0;
+
+    virtual void HandleStoragePermissionRequest(OxideQStoragePermissionRequest* req) = 0;
+
+    virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) = 0;
+  };
 
   QString product() const;
   void setProduct(const QString& product);
@@ -65,8 +89,13 @@ class Q_DECL_EXPORT WebContextAdapter {
 
   static void ensureChromiumStarted();
 
+  IOThreadDelegate* getIOThreadDelegate() const;
+
+  CookiePolicy cookiePolicy() const;
+  void setCookiePolicy(CookiePolicy policy);
+
  protected:
-  WebContextAdapter();
+  WebContextAdapter(IOThreadDelegate* io_delegate);
 
  private:
   friend class WebContextAdapterPrivate;

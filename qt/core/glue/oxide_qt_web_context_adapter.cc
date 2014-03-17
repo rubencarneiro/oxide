@@ -25,9 +25,9 @@
 #include <QObject>
 #include <QtDebug>
 
-#include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "net/base/static_cookie_policy.h"
 #include "url/gurl.h"
 
 #include "qt/core/gl/oxide_qt_shared_gl_context.h"
@@ -57,43 +57,6 @@ int GetProcessFlags() {
 
 }
 
-struct ConstructProperties {
-  std::string product;
-  std::string user_agent;
-  base::FilePath data_path;
-  base::FilePath cache_path;
-  std::string accept_langs;
-};
-
-WebContextAdapterPrivate::WebContextAdapterPrivate() :
-    construct_props_(new ConstructProperties()) {}
-
-void WebContextAdapterPrivate::Init() {
-  DCHECK(!context_);
-
-  context_ = oxide::BrowserContext::Create(
-      construct_props()->data_path,
-      construct_props()->cache_path);
-
-  if (!construct_props()->product.empty()) {
-    context()->SetProduct(construct_props()->product);
-  }
-  if (!construct_props()->user_agent.empty()) {
-    context()->SetUserAgent(construct_props()->user_agent);
-  }
-  if (!construct_props()->accept_langs.empty()) {
-    context()->SetAcceptLangs(construct_props()->accept_langs);
-  }
-
-  construct_props_.reset();
-}
-
-// static
-WebContextAdapterPrivate* WebContextAdapterPrivate::get(
-    WebContextAdapter* adapter) {
-  return adapter->priv.data();
-}
-
 WebContextAdapter::~WebContextAdapter() {}
 
 QString WebContextAdapter::product() const {
@@ -101,14 +64,14 @@ QString WebContextAdapter::product() const {
     return QString::fromStdString(priv->context()->GetProduct());
   }
 
-  return QString::fromStdString(priv->construct_props()->product);
+  return QString::fromStdString(priv->construct_props_->product);
 }
 
 void WebContextAdapter::setProduct(const QString& product) {
   if (priv->context()) {
     priv->context()->SetProduct(product.toStdString());
   } else {
-    priv->construct_props()->product = product.toStdString();
+    priv->construct_props_->product = product.toStdString();
   }
 }
 
@@ -117,14 +80,14 @@ QString WebContextAdapter::userAgent() const {
     return QString::fromStdString(priv->context()->GetUserAgent());
   }
 
-  return QString::fromStdString(priv->construct_props()->user_agent);
+  return QString::fromStdString(priv->construct_props_->user_agent);
 }
 
 void WebContextAdapter::setUserAgent(const QString& user_agent) {
   if (priv->context()) {
     priv->context()->SetUserAgent(user_agent.toStdString());
   } else {
-    priv->construct_props()->user_agent = user_agent.toStdString();
+    priv->construct_props_->user_agent = user_agent.toStdString();
   }
 }
 
@@ -133,7 +96,7 @@ QUrl WebContextAdapter::dataPath() const {
   if (priv->context()) {
     path = priv->context()->GetPath();
   } else {
-    path = priv->construct_props()->data_path;
+    path = priv->construct_props_->data_path;
   }
 
   if (path.empty()) {
@@ -150,7 +113,7 @@ void WebContextAdapter::setDataPath(const QUrl& url) {
   }
 
   DCHECK(!priv->context());
-  priv->construct_props()->data_path =
+  priv->construct_props_->data_path =
       base::FilePath(url.toLocalFile().toStdString());
 }
 
@@ -159,7 +122,7 @@ QUrl WebContextAdapter::cachePath() const {
   if (priv->context()) {
     path = priv->context()->GetCachePath();
   } else {
-    path = priv->construct_props()->cache_path;
+    path = priv->construct_props_->cache_path;
   }
 
   if (path.empty()) {
@@ -176,7 +139,7 @@ void WebContextAdapter::setCachePath(const QUrl& url) {
   }
 
   DCHECK(!priv->context());
-  priv->construct_props()->cache_path =
+  priv->construct_props_->cache_path =
       base::FilePath(url.toLocalFile().toStdString());
 }
 
@@ -185,14 +148,14 @@ QString WebContextAdapter::acceptLangs() const {
     return QString::fromStdString(priv->context()->GetAcceptLangs());
   }
 
-  return QString::fromStdString(priv->construct_props()->accept_langs);
+  return QString::fromStdString(priv->construct_props_->accept_langs);
 }
 
 void WebContextAdapter::setAcceptLangs(const QString& langs) {
   if (priv->context()) {
     priv->context()->SetAcceptLangs(langs.toStdString());
   } else {
-    priv->construct_props()->accept_langs = langs.toStdString();
+    priv->construct_props_->accept_langs = langs.toStdString();
   }
 }
 
@@ -255,8 +218,49 @@ void WebContextAdapter::ensureChromiumStarted() {
   }
 }
 
-WebContextAdapter::WebContextAdapter() :
-    priv(new WebContextAdapterPrivate()) {
+WebContextAdapter::IOThreadDelegate*
+WebContextAdapter::getIOThreadDelegate() const {
+  return priv->GetIOThreadDelegate();
+}
+
+WebContextAdapter::CookiePolicy WebContextAdapter::cookiePolicy() const {
+  if (priv->context()) {
+    return static_cast<CookiePolicy>(priv->context()->GetCookiePolicy());
+  }
+
+  return static_cast<CookiePolicy>(priv->construct_props_->cookie_policy);
+}
+
+void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
+  if (priv->context()) {
+    priv->context()->SetCookiePolicy(
+        static_cast<net::StaticCookiePolicy::Type>(policy));
+  } else {
+    priv->construct_props_->cookie_policy =
+        static_cast<net::StaticCookiePolicy::Type>(policy);
+  }
+}
+
+WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
+    priv(new WebContextAdapterPrivate(this, io_delegate)) {
+
+  COMPILE_ASSERT(
+      CookiePolicyAllowAll == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+      cookie_enums_allowall_doesnt_match);
+  COMPILE_ASSERT(
+      CookiePolicyBlockThirdParty == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::BLOCK_SETTING_THIRD_PARTY_COOKIES),
+      cookie_enums_block3rdparty_doesnt_match);
+  COMPILE_ASSERT(
+      CookiePolicyBlockAll == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::BLOCK_ALL_COOKIES),
+      cookie_enums_blockall_doesnt_match);
+  COMPILE_ASSERT(
+      CookiePolicyStrictBlockThirdParty == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::BLOCK_ALL_THIRD_PARTY_COOKIES),
+      cookie_enums_strictblock3rdparty_doesnt_match);
+
   static bool run_once = false;
   if (!run_once) {
     run_once = true;

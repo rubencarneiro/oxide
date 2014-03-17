@@ -23,12 +23,21 @@
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
+class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickWebContext;
 class OxideQQuickUserScript;
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QQmlListProperty;
+class QThread;
 QT_END_NAMESPACE
+
+namespace oxide {
+namespace qquick {
+class WebContextDelegateWorkerIOThreadController;
+class WebContextIOThreadDelegate;
+}
+}
 
 class OxideQQuickWebContextPrivate Q_DECL_FINAL :
     public QObject,
@@ -37,15 +46,25 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
  public:
-  OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
   ~OxideQQuickWebContextPrivate();
+
+  void delegateWorkerDestroyed(OxideQQuickWebContextDelegateWorker* worker);
+
+  static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
+
+  static void ensureChromiumStarted();
+
+ Q_SIGNALS:
+  void initialized();
+  void willBeDestroyed();
+
+ private:
+  OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
 
   void userScriptUpdated();
   void userScriptWillBeDeleted();
 
   void detachUserScriptSignals(OxideQQuickUserScript* script);
-
-  static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
   static void userScript_append(QQmlListProperty<OxideQQuickUserScript>* prop,
                                 OxideQQuickUserScript* user_script);
@@ -55,12 +74,18 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       int index);
   static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
 
- Q_SIGNALS:
-  void initialized();
-  void willBeDestroyed();
+  bool attachDelegateWorker(
+      OxideQQuickWebContextDelegateWorker* worker,
+      OxideQQuickWebContextDelegateWorker** ui_slot,
+      oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot);
 
- private:
   OxideQQuickWebContext* q_ptr;
+
+  oxide::qquick::WebContextIOThreadDelegate* io_thread_delegate_;
+
+  OxideQQuickWebContextDelegateWorker* network_request_delegate_;
+  OxideQQuickWebContextDelegateWorker* storage_access_permission_delegate_;
+  OxideQQuickWebContextDelegateWorker* user_agent_override_delegate_;
 
   Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };

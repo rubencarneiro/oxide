@@ -2,16 +2,14 @@ from cStringIO import StringIO
 
 def handler(request):
   html = StringIO()
-  html.write("<html><body><h1>Sent cookies:</h1>")
+  html.write("<html><body><h1>Sent Headers:</h1>")
 
-  try:
-    cookies = request.headers["Cookie"].split(";")
-    for cookie in cookies:
-      name = cookie.split("=")[0]
-      value = cookie.split("=")[1]
-      html.write("<div class=\"cookie\">" + name + "=" + value + "</div>")
-  except:
-    pass
+  for h in [ "User-Agent", "Foo" ]:
+    try:
+      val = request.headers[h]
+      html.write("<div class=\"header\">" + h + "=" + val + "</div>")
+    except:
+      pass
 
   html.write("</body></html>")
 

@@ -41,7 +41,9 @@ else()
   set(QT_INSTALL_QML "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/qt5/qml")
 endif()
 
-qt5_wrap_cpp(MOC_EXTRA api/oxideqquickwebcontext_p_p.h)
+qt5_wrap_cpp(MOC_EXTRA
+             api/oxideqquickwebcontext_p_p.h
+             api/oxideqquickwebcontextdelegateworker_p_p.h)
 
 set(PLUGIN_SRCS
     api/oxideqquickglobals.cc
@@ -51,8 +53,10 @@ set(PLUGIN_SRCS
     api/oxideqquickscriptmessagerequest.cc
     api/oxideqquickuserscript.cc
     api/oxideqquickwebcontext.cc
+    api/oxideqquickwebcontextdelegateworker.cc
     api/oxideqquickwebframe.cc
     api/oxideqquickwebview.cc
+    api/oxidequseragentoverriderequest.cc
     oxide_qml_plugin.cc
     oxide_qquick_painted_render_view_node.cc
     oxide_qquick_render_view_item.cc

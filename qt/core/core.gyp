@@ -36,6 +36,7 @@
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
+        '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
@@ -74,6 +75,7 @@
         'gl/oxide_gl_implementation.cc',
         'gl/oxide_qt_shared_gl_context.cc',
         'gl/oxide_qt_shared_gl_context.h',
+        'glue/private/oxide_qt_web_context_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.cc',
         'glue/private/oxide_qt_web_view_adapter_p.h'
       ],
@@ -102,10 +104,18 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
+        'api/oxideqnetworkcallbackevents.cc',
+        'api/oxideqnetworkcallbackevents.h',
+        'api/oxideqnetworkcallbackevents_p.h',
+        'api/oxideqstoragepermissionrequest.cc',
+        'api/oxideqstoragepermissionrequest.h',
+        'api/oxideqstoragepermissionrequest_p.h',
         'api/oxideqwebpreferences.cc',
         'api/oxideqwebpreferences.h',
         'api/oxideqwebpreferences_p.h',
@@ -141,6 +151,16 @@
           'action_name': 'moc_oxideqloadevent.cc',
           'moc_input': 'api/oxideqloadevent.h',
           'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxideqnetworkcallbackevents.cc',
+          'moc_input': 'api/oxideqnetworkcallbackevents.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
+          'action_name': 'moc_oxideqstoragepermissionrequest.cc',
+          'moc_input': 'api/oxideqstoragepermissionrequest.h',
+          'includes': [ 'moc.gypi' ],
         },
         {
           'action_name': 'moc_oxideqwebpreferences.cc',

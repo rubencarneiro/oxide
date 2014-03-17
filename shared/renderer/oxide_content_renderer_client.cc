@@ -17,16 +17,17 @@
 
 #include "oxide_content_renderer_client.h"
 
+#include "content/public/renderer/render_frame.h"
+#include "content/public/renderer/render_thread.h"
+
+#include "shared/common/oxide_messages.h"
+
 #include "oxide_process_observer.h"
 #include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
 
 namespace oxide {
-
-ContentRendererClient::ContentRendererClient() {}
-
-ContentRendererClient::~ContentRendererClient() {}
 
 void ContentRendererClient::RenderThreadStarted() {
   process_observer_.reset(new ProcessObserver());
@@ -62,5 +63,19 @@ void ContentRendererClient::WillReleaseScriptContext(
   ScriptMessageDispatcherRenderer::FromWebFrame(
       frame)->WillReleaseScriptContext(context, world_id);
 }
+
+bool ContentRendererClient::GetUserAgentOverride(
+    const GURL& url,
+    std::string* user_agent) {
+  bool overridden = false;
+  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
+      url, user_agent, &overridden));
+
+  return overridden;
+}
+
+ContentRendererClient::ContentRendererClient() {}
+
+ContentRendererClient::~ContentRendererClient() {}
 
 } // namespace oxide
