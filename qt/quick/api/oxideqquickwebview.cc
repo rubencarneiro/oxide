@@ -110,6 +110,20 @@ void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   emit q->loadingChanged(event);
 }
 
+void OxideQQuickWebViewPrivate::AddMessageToConsole(
+    int level,
+    const QString& message,
+    int line_no,
+    const QString& source_id) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->messageToConsoleAdded(
+      level,
+      message,
+      line_no,
+      source_id);
+}
+
 void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
   navigationHistory.onNavigationEntryCommitted();
 }

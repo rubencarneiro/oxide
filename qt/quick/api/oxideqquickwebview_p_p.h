@@ -61,6 +61,11 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void LoadProgressChanged(double progress) Q_DECL_FINAL;
 
   void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
+  
+  void AddMessageToConsole(int level,
+			   const QString& message,
+			   int line_no,
+			   const QString& source_id) Q_DECL_FINAL;
 
   void NavigationEntryCommitted() Q_DECL_FINAL;
   void NavigationListPruned(bool from_front, int count) Q_DECL_FINAL;

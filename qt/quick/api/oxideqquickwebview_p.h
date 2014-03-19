@@ -135,6 +135,10 @@ class OxideQQuickWebView : public QQuickItem {
   void popupMenuChanged();
   void preferencesChanged();
   void messageHandlersChanged();
+  void messageToConsoleAdded(int level,
+			     const QString& message,
+			     int line_no,
+			     const QString& source_id);
 
  private Q_SLOTS:
   void visibilityChangedListener();
