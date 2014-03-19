@@ -147,13 +147,16 @@ void OxideQQuickWebFrame::addMessageHandler(
   OxideQQuickScriptMessageHandlerPrivate* hd =
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->message_handlers().contains(hd)) {
-    hd->removeFromCurrentOwner();
-    handler->setParent(this);
-  } else {
+  if (hd->isActive() && handler->parent() != this) {
+    qWarning() << "MessageHandler can't be added to more than one message target";
+    return;
+  }
+
+  if (d->message_handlers().contains(hd)) {
     d->message_handlers().removeOne(hd);
   }
 
+  handler->setParent(this);
   d->message_handlers().append(hd);
 
   emit messageHandlersChanged();

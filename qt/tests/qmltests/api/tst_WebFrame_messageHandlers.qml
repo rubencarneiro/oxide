@@ -30,6 +30,7 @@ TestWebView {
     when: windowShown
 
     function init() {
+      spy.target = webView.rootFrame;
       spy.clear();
     }
 
@@ -92,15 +93,15 @@ TestWebView {
               "Should have no handlers on the child frame");
 
       frame.addMessageHandler(handler);
-      compare(spy.count, 2, "Should have had a signal");
-      compare(webView.rootFrame.messageHandlers.length, 0,
-              "Should have no handlers on the root frame");
-      compare(frame.messageHandlers.length, 1,
-              "Should have 1 handler on the child frame");
-      compare(OxideTestingUtils.qObjectParent(handler), frame,
+      compare(spy.count, 1, "Should have had a signal");
+      compare(webView.rootFrame.messageHandlers.length, 1,
+              "Should still have a handler on the root frame");
+      compare(frame.messageHandlers.length, 0,
+              "Should have no handlers on the child frame");
+      compare(OxideTestingUtils.qObjectParent(handler), webView.rootFrame,
               "Incorrect parent");
 
-      frame.removeMessageHandler(handler);
+      webView.rootFrame.removeMessageHandler(handler);
     }
 
     function test_WebFrame_messageHandlers4_add_already_owned_by_view() {
@@ -109,13 +110,31 @@ TestWebView {
 
       var handler = webView.messageHandlers[0];
       frame.addMessageHandler(handler);
-      compare(spy.count, 1, "Should have had a signal");
-      compare(webView.messageHandlers.length, 0,
-              "WebView should have no handlers now");
-      compare(frame.messageHandlers.length, 1,
-              "Frame should have adopted message handler");
-      compare(OxideTestingUtils.qObjectParent(handler), frame,
+      compare(spy.count, 0, "Should not have had a signal");
+      compare(webView.messageHandlers.length, 1,
+              "WebView should still have a handler");
+      compare(frame.messageHandlers.length, 0,
+              "Frame should not have adopted message handler");
+      compare(OxideTestingUtils.qObjectParent(handler), webView,
               "Incorrect parent");
+    }
+
+    function test_WebFrame_messageHandlers5_remove_on_destroy() {
+      var frame = webView.rootFrame;
+      var handler = messageHandler.createObject(frame, {});
+
+      compare(spy.count, 1, "Should have had a signal");
+      compare(frame.messageHandlers.length, 1,
+              "WebFrame should have a handler");
+
+      var obs = OxideTestingUtils.createDestructionObserver(handler);
+      handler.destroy();
+      verify(webView.waitFor(function() { return obs.destroyed; }),
+             "Timed out waiting for handler to be destroyed");
+
+      compare(spy.count, 2, "Should have had a signal");
+      compare(frame.messageHandlers.length, 0,
+              "Expected no handlers on the WebFrame now");
     }
   }
 }

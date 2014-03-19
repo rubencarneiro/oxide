@@ -25,17 +25,15 @@
 
 #include "oxideqquickscriptmessage_p.h"
 #include "oxideqquickscriptmessage_p_p.h"
-#include "oxideqquickwebframe_p.h"
-#include "oxideqquickwebview_p.h"
 
 bool OxideQQuickScriptMessageHandlerPrivate::OnReceiveMessage(
     oxide::qt::ScriptMessageAdapter* message,
     QString& error) {
   QJSValueList args;
-  args.append(callback.engine()->newQObject(
+  args.append(callback_.engine()->newQObject(
       adapterToQObject<OxideQQuickScriptMessage>(message)));
 
-  QJSValue rv = callback.call(args);
+  QJSValue rv = callback_.call(args);
   if (rv.isError()) {
     error = rv.toString();
     return false;
@@ -54,18 +52,19 @@ OxideQQuickScriptMessageHandlerPrivate::OxideQQuickScriptMessageHandlerPrivate(
     OxideQQuickScriptMessageHandler* q) :
     oxide::qt::ScriptMessageHandlerAdapter(q) {}
 
-void OxideQQuickScriptMessageHandlerPrivate::removeFromCurrentOwner() {
+bool OxideQQuickScriptMessageHandlerPrivate::isActive() {
   Q_Q(OxideQQuickScriptMessageHandler);
 
-  // XXX: Is there a better way of doing this? Perhaps by notifying
-  //      the existing owner that the handler has a new parent?
-  if (OxideQQuickWebFrame* frame =
-      qobject_cast<OxideQQuickWebFrame *>(q->parent())) {
-    frame->removeMessageHandler(q);
-  } else if (OxideQQuickWebView* view =
-             qobject_cast<OxideQQuickWebView *>(q->parent())) {
-    view->removeMessageHandler(q);
+  if (!q->parent()) {
+    return false;
   }
+
+  if (q->parent()->inherits("OxideQQuickWebFrame") ||
+      q->parent()->inherits("OxideQQuickWebView")) {
+    return true;
+  }
+
+  return false;
 }
 
 // static
@@ -83,7 +82,13 @@ OxideQQuickScriptMessageHandler::OxideQQuickScriptMessageHandler(
 OxideQQuickScriptMessageHandler::~OxideQQuickScriptMessageHandler() {
   Q_D(OxideQQuickScriptMessageHandler);
 
-  d->removeFromCurrentOwner();
+  if (d->isActive()) {
+    bool res = QMetaObject::invokeMethod(
+        parent(), "removeMessageHandler",
+        Qt::DirectConnection,
+        Q_ARG(OxideQQuickScriptMessageHandler*, this));
+    Q_ASSERT(res);
+  }
 }
 
 QString OxideQQuickScriptMessageHandler::msgId() const {
@@ -120,13 +125,13 @@ void OxideQQuickScriptMessageHandler::setContexts(
 QJSValue OxideQQuickScriptMessageHandler::callback() const {
   Q_D(const OxideQQuickScriptMessageHandler);
 
-  return d->callback;
+  return d->callback_;
 }
 
 void OxideQQuickScriptMessageHandler::setCallback(const QJSValue& callback) {
   Q_D(OxideQQuickScriptMessageHandler);
 
-  if (callback.strictlyEquals(d->callback)) {
+  if (callback.strictlyEquals(d->callback_)) {
     return;
   }
 
@@ -137,7 +142,7 @@ void OxideQQuickScriptMessageHandler::setCallback(const QJSValue& callback) {
     return;
   }
 
-  d->callback = callback;
+  d->callback_ = callback;
 
   if (is_null) {
     d->detachHandler();
@@ -151,10 +156,11 @@ void OxideQQuickScriptMessageHandler::setCallback(const QJSValue& callback) {
 void OxideQQuickScriptMessageHandler::classBegin() {}
 
 void OxideQQuickScriptMessageHandler::componentComplete() {
-  if (OxideQQuickWebView* view = qobject_cast<OxideQQuickWebView *>(parent())) {
-    view->addMessageHandler(this);
-  } else if (OxideQQuickWebFrame* frame =
-             qobject_cast<OxideQQuickWebFrame *>(parent())) {
-    frame->addMessageHandler(this);
+  Q_D(OxideQQuickScriptMessageHandler);
+
+  if (d->isActive()) {
+    QMetaObject::invokeMethod(parent(), "addMessageHandler",
+                              Qt::DirectConnection,
+                              Q_ARG(OxideQQuickScriptMessageHandler*, this));
   }
 }
