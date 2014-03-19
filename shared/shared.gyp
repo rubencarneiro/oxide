@@ -122,12 +122,12 @@
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
         # Not used directly. Should content_browser have this in export_dependent_settings?
         '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',
+        '<(DEPTH)/ui/base/ui_base.gyp:ui_base',
+        '<(DEPTH)/ui/events/events.gyp:events',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
-        '<(DEPTH)/ui/ui.gyp:ui',
         '<(DEPTH)/url/url.gyp:url_lib',
-        '<(DEPTH)/webkit/common/user_agent/webkit_user_agent.gyp:user_agent'
       ],
       'include_dirs': [
         '..',

@@ -153,21 +153,8 @@ TestWebView {
              "Should be able to get a first-party cookie");
       verify(!_test_can_set_third_party(),
              "Shouldn't be able to set a third-party cookie");
-      verify(_test_can_get_third_party(),
-             "Should be able to get a third-party cookie");
-    }
-
-    function test_WebContext_cookiePolicy4_strictBlockThirdParty() {
-      webView.context.cookiePolicy = WebContext.CookiePolicyStrictBlockThirdParty;
-
-      verify(_test_can_set_first_party(),
-             "Should be able to set a first-party cookie");
-      verify(_test_can_get_first_party(),
-             "Should be able to get a first-party cookie");
-      verify(!_test_can_set_third_party(),
-             "Shouldn't be able to set a third-party cookie");
       verify(!_test_can_get_third_party(),
-             "Shouldn't be able to get a third-party cookie");
+             "Should be able to get a third-party cookie");
     }
   }
 }

@@ -20,8 +20,7 @@
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/browser_thread.h"
-#include "webkit/common/user_agent/user_agent.h"
-#include "webkit/common/user_agent/user_agent_util.h"
+#include "content/public/common/user_agent.h"
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_content_client.h"
@@ -135,7 +134,7 @@ void BrowserContextImpl::SetProduct(const std::string& product) {
 void BrowserContextImpl::SetUserAgent(const std::string& user_agent) {
   static_cast<BrowserContextIODataImpl *>(io_data())->SetUserAgent(
       user_agent.empty() ?
-        webkit_glue::BuildUserAgentFromProduct(product_) :
+        content::BuildUserAgentFromProduct(product_) :
         user_agent);
   default_user_agent_string_ = user_agent.empty();
 

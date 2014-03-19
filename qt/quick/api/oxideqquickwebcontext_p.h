@@ -58,9 +58,8 @@ class OxideQQuickWebContext : public QObject,
 
   enum CookiePolicy {
     CookiePolicyAllowAll,
-    CookiePolicyBlockThirdParty,
     CookiePolicyBlockAll,
-    CookiePolicyStrictBlockThirdParty
+    CookiePolicyBlockThirdParty
   };
 
   OxideQQuickWebContext(QObject* parent = NULL);

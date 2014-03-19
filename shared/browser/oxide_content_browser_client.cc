@@ -55,9 +55,9 @@ namespace oxide {
 
 namespace {
 
-base::MessagePump* CreateMessagePumpForUI() {
-  return ContentClient::instance()->browser()->
-      CreateMessagePumpForUI();
+scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
+  return make_scoped_ptr(
+      ContentClient::instance()->browser()->CreateMessagePumpForUI());
 }
 
 class BrowserMainParts;
@@ -208,9 +208,11 @@ void ContentBrowserClient::RenderProcessWillLaunch(
 
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
     content::BrowserContext* browser_context,
-    content::ProtocolHandlerMap* protocol_handlers) {
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   return BrowserContext::FromContent(
-      browser_context)->CreateRequestContext(protocol_handlers);
+      browser_context)->CreateRequestContext(protocol_handlers,
+                                             protocol_interceptors.Pass());
 }
 
 net::URLRequestContextGetter*
@@ -218,7 +220,8 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
     content::BrowserContext* browser_context,
     const base::FilePath& partition_path,
     bool in_memory,
-    content::ProtocolHandlerMap* protocol_handlers) {
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";

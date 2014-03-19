@@ -249,17 +249,13 @@ WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
         net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
       cookie_enums_allowall_doesnt_match);
   COMPILE_ASSERT(
-      CookiePolicyBlockThirdParty == static_cast<CookiePolicy>(
-        net::StaticCookiePolicy::BLOCK_SETTING_THIRD_PARTY_COOKIES),
-      cookie_enums_block3rdparty_doesnt_match);
-  COMPILE_ASSERT(
       CookiePolicyBlockAll == static_cast<CookiePolicy>(
         net::StaticCookiePolicy::BLOCK_ALL_COOKIES),
       cookie_enums_blockall_doesnt_match);
   COMPILE_ASSERT(
-      CookiePolicyStrictBlockThirdParty == static_cast<CookiePolicy>(
+      CookiePolicyBlockThirdParty == static_cast<CookiePolicy>(
         net::StaticCookiePolicy::BLOCK_ALL_THIRD_PARTY_COOKIES),
-      cookie_enums_strictblock3rdparty_doesnt_match);
+      cookie_enums_blockall3rdparty_doesnt_match);
 
   static bool run_once = false;
   if (!run_once) {

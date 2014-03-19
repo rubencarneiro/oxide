@@ -44,6 +44,7 @@
 #include "net/url_request/data_protocol_handler.h"
 #include "net/url_request/file_protocol_handler.h"
 #include "net/url_request/ftp_protocol_handler.h"
+#include "net/url_request/protocol_intercept_job_factory.h"
 #include "net/url_request/url_request_job_factory_impl.h"
 
 #include "shared/common/oxide_constants.h"
@@ -164,7 +165,8 @@ net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
 }
 
 void BrowserContextIOData::Init(
-    content::ProtocolHandlerMap& protocol_handlers) {
+    content::ProtocolHandlerMap& protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
   DCHECK(!initialized_);
 
@@ -257,9 +259,8 @@ void BrowserContextIOData::Init(
   storage->set_http_transaction_factory(
       new net::HttpCache(session_params, cache_backend));
 
-  net::URLRequestJobFactoryImpl* job_factory =
-      new net::URLRequestJobFactoryImpl();
-  storage->set_job_factory(job_factory);
+  scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
+      new net::URLRequestJobFactoryImpl());
 
   bool set_protocol = false;
   for (content::ProtocolHandlerMap::iterator it = protocol_handlers.begin();
@@ -269,6 +270,7 @@ void BrowserContextIOData::Init(
                                                    it->second.release());
     DCHECK(set_protocol);
   }
+  protocol_handlers.clear();
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFileScheme,
@@ -285,9 +287,22 @@ void BrowserContextIOData::Init(
       new net::FtpProtocolHandler(ftp_transaction_factory_.get()));
   DCHECK(set_protocol);
 
+  scoped_ptr<net::URLRequestJobFactory> top_job_factory(
+      job_factory.PassAs<net::URLRequestJobFactory>());
+
+  for (content::ProtocolHandlerScopedVector::reverse_iterator it =
+         protocol_interceptors.rbegin();
+       it != protocol_interceptors.rend();
+       ++it) {
+    top_job_factory.reset(new net::ProtocolInterceptJobFactory(
+        top_job_factory.Pass(), make_scoped_ptr(*it)));
+  }
+  protocol_interceptors.weak_clear();
+
+  storage->set_job_factory(top_job_factory.release());
+
   main_request_context_.reset(context);
   resource_context_->request_context_ = context;
-  protocol_handlers.clear();
 }
 
 URLRequestContext* BrowserContextIOData::GetMainRequestContext() {
@@ -465,12 +480,15 @@ void BrowserContext::AssertNoContextsExist() {
 }
 
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
-    content::ProtocolHandlerMap* protocol_handlers) {
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   DCHECK(!main_request_context_getter_);
 
   main_request_context_getter_ =
-      URLRequestContextGetter::CreateMain(protocol_handlers, io_data());
+      URLRequestContextGetter::CreateMain(io_data(),
+                                          protocol_handlers,
+                                          protocol_interceptors.Pass());
 
   return main_request_context_getter_;
 }

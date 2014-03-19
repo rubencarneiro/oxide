@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/frame_tree.cc b/content/browser/frame_host/frame_tree.cc
 --- a/content/browser/frame_host/frame_tree.cc
 +++ b/content/browser/frame_host/frame_tree.cc
-@@ -110,16 +110,22 @@ RenderFrameHostImpl* FrameTree::AddFrame
+@@ -111,16 +111,22 @@ RenderFrameHostImpl* FrameTree::AddFrame
                                           int new_routing_id,
                                           const std::string& frame_name) {
    scoped_ptr<FrameTreeNode> node(new FrameTreeNode(
@@ -28,8 +28,8 @@ diff --git a/content/browser/frame_host/frame_tree.cc b/content/browser/frame_ho
    if (!parent) {
      NOTREACHED() << "Unexpected RemoveFrame call for main frame.";
      return;
-@@ -154,16 +160,21 @@ RenderFrameHostImpl* FrameTree::GetMainF
-   return root_->current_frame_host();
+@@ -164,16 +170,21 @@ void FrameTree::SetFocusedFrame(FrameTre
+   focused_frame_tree_node_id_ = node->frame_tree_node_id();
  }
  
  void FrameTree::SetFrameRemoveListener(
@@ -53,8 +53,8 @@ diff --git a/content/browser/frame_host/frame_tree.cc b/content/browser/frame_ho
 diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_host/frame_tree.h
 --- a/content/browser/frame_host/frame_tree.h
 +++ b/content/browser/frame_host/frame_tree.h
-@@ -89,16 +89,18 @@ class CONTENT_EXPORT FrameTree {
-   RenderFrameHostImpl* GetMainFrame() const;
+@@ -95,16 +95,18 @@ class CONTENT_EXPORT FrameTree {
+   void SetFocusedFrame(FrameTreeNode* node);
  
    // Allows a client to listen for frame removal.  The listener should expect
    // to receive the RenderViewHostImpl containing the frame and the renderer-
@@ -72,13 +72,13 @@ diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_hos
        SiteInstance* site_instance,
        int routing_id,
        int main_frame_routing_id,
-@@ -141,15 +143,16 @@ class CONTENT_EXPORT FrameTree {
-   // background. When the SwapOutACK is received, they will be deleted. In the
-   // meantime, they are kept in this map, as they should not be reused (part of
+@@ -149,15 +151,16 @@ class CONTENT_EXPORT FrameTree {
    // their state is already gone away).
    RenderViewHostMultiMap render_view_host_pending_shutdown_map_;
  
    scoped_ptr<FrameTreeNode> root_;
+ 
+   int64 focused_frame_tree_node_id_;
  
    base::Callback<void(RenderViewHostImpl*, int)> on_frame_removed_;
 +  base::Callback<void(RenderViewHostImpl*, int, int)> on_frame_added_;
@@ -92,7 +92,7 @@ diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_hos
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -317,16 +317,19 @@ WebContentsImpl::WebContentsImpl(
+@@ -336,16 +336,19 @@ WebContentsImpl::WebContentsImpl(
        render_view_message_source_(NULL),
        fullscreen_widget_routing_id_(MSG_ROUTING_NONE),
        is_subframe_(false) {
@@ -112,7 +112,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
    // Delete all RFH pending shutdown, which will lead the corresponding RVH to
    // shutdown and be deleted as well.
    frame_tree_.ForEach(
-@@ -3636,16 +3639,25 @@ gfx::Size WebContentsImpl::GetSizeForNew
+@@ -3617,16 +3620,25 @@ gfx::Size WebContentsImpl::GetSizeForNew
  
  void WebContentsImpl::OnFrameRemoved(
      RenderViewHostImpl* render_view_host,
@@ -141,7 +141,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 diff --git a/content/browser/web_contents/web_contents_impl.h b/content/browser/web_contents/web_contents_impl.h
 --- a/content/browser/web_contents/web_contents_impl.h
 +++ b/content/browser/web_contents/web_contents_impl.h
-@@ -835,16 +835,18 @@ class CONTENT_EXPORT WebContentsImpl
+@@ -818,16 +818,18 @@ class CONTENT_EXPORT WebContentsImpl
    // Clear all PowerSaveBlockers, leave power_save_blocker_ empty.
    void ClearAllPowerSaveBlockers();
  
@@ -163,7 +163,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.h b/content/browser/
 diff --git a/content/public/browser/web_contents_observer.h b/content/public/browser/web_contents_observer.h
 --- a/content/public/browser/web_contents_observer.h
 +++ b/content/public/browser/web_contents_observer.h
-@@ -230,16 +230,19 @@ class CONTENT_EXPORT WebContentsObserver
+@@ -231,16 +231,19 @@ class CONTENT_EXPORT WebContentsObserver
                                     const GURL& url,
                                     const Referrer& referrer,
                                     WindowOpenDisposition disposition,

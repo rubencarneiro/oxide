@@ -32,7 +32,7 @@ class HttpUserAgentSettings FINAL : public net::HttpUserAgentSettings {
 
   std::string GetAcceptLanguage() const FINAL;
 
-  std::string GetUserAgent(const GURL& url) const FINAL;
+  std::string GetUserAgent() const FINAL;
 
  private:
   BrowserContextIOData* context_;

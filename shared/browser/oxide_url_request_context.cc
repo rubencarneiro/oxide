@@ -31,9 +31,11 @@ namespace {
 class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
  public:
   MainURLRequestContextGetter(
+      BrowserContextIOData* context,
       content::ProtocolHandlerMap* protocol_handlers,
-      BrowserContextIOData* context) :
-      context_(context) {
+      content::ProtocolHandlerScopedVector protocol_interceptors) :
+      context_(context),
+      protocol_interceptors_(protocol_interceptors.Pass()) {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
 
@@ -42,7 +44,7 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
 
     if (!url_request_context_) {
       DCHECK(context_);
-      context_->Init(protocol_handlers_);
+      context_->Init(protocol_handlers_, protocol_interceptors_.Pass());
       url_request_context_ = context_->GetMainRequestContext()->AsWeakPtr();
       context_ = NULL;
     }
@@ -51,8 +53,9 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
   }
 
  private:
-  content::ProtocolHandlerMap protocol_handlers_;
   BrowserContextIOData* context_;
+  content::ProtocolHandlerMap protocol_handlers_;
+  content::ProtocolHandlerScopedVector protocol_interceptors_;
 
   DISALLOW_COPY_AND_ASSIGN(MainURLRequestContextGetter);
 };
@@ -70,9 +73,12 @@ URLRequestContextGetter::~URLRequestContextGetter() {}
 
 // static
 URLRequestContextGetter* URLRequestContextGetter::CreateMain(
+    BrowserContextIOData* context,
     content::ProtocolHandlerMap* protocol_handlers,
-    BrowserContextIOData* context) {
-  return new MainURLRequestContextGetter(protocol_handlers, context);
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
+  return new MainURLRequestContextGetter(context,
+                                         protocol_handlers,
+                                         protocol_interceptors.Pass());
 }
 
 scoped_refptr<base::SingleThreadTaskRunner>

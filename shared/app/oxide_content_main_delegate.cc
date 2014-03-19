@@ -124,8 +124,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
         shared_gl_context->GetImplementation() == gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kForceCompositingMode);
       command_line->AppendSwitch(switches::kEnableThreadedCompositing);
-      command_line->AppendSwitch(switches::kEnableAcceleratedScrollableFrames);
-      command_line->AppendSwitch(switches::kEnableCompositedScrollingForFrames);
     } else {
       command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
       command_line->AppendSwitch(switches::kDisableForceCompositingMode);

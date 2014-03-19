@@ -73,7 +73,8 @@ class BrowserContextIOData {
 
   virtual bool IsOffTheRecord() const = 0;
 
-  void Init(content::ProtocolHandlerMap& protocol_handlers);
+  void Init(content::ProtocolHandlerMap& protocol_handlers,
+            content::ProtocolHandlerScopedVector protocol_interceptors);
 
   URLRequestContext* GetMainRequestContext();
   content::ResourceContext* GetResourceContext();
@@ -133,7 +134,8 @@ class BrowserContext : public content::BrowserContext,
   static void AssertNoContextsExist();
 
   net::URLRequestContextGetter* CreateRequestContext(
-      content::ProtocolHandlerMap* protocol_handlers);
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors);
 
   void SetDelegate(BrowserContextDelegate* delegate);
 

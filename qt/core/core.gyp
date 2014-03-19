@@ -39,8 +39,11 @@
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
+        '<(DEPTH)/ui/base/ui_base.gyp:ui_base',
+        '<(DEPTH)/ui/events/events.gyp:events',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
-        '<(DEPTH)/ui/ui.gyp:ui',
+        '<(DEPTH)/ui/surface/surface.gyp:surface',
         '<(DEPTH)/url/url.gyp:url_lib'
       ],
       'variables': {
@@ -91,7 +94,7 @@
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
-        '<(DEPTH)/ui/ui.gyp:ui',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/url/url.gyp:url_lib'
       ],
       'variables': {

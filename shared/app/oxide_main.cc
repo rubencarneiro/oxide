@@ -26,7 +26,12 @@ namespace oxide {
 
 int OxideMain(int argc, const char** argv) {
   scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
-  return content::ContentMain(argc, argv, delegate.get());
+
+  content::ContentMainParams params(delegate.get());
+  params.argc = argc;
+  params.argv = argv;
+
+  return content::ContentMain(params);
 }
 
 } // namespace oxide

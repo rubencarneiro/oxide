@@ -174,7 +174,7 @@ ScriptMessageObjectHandler::ScriptMessageObjectHandler(
       isolate,
       "(function(o) { return JSON.stringify(o); })"));
   v8::TryCatch try_catch;
-  v8::Local<v8::Script> stringify_script(v8::Script::New(stringify_src));
+  v8::Local<v8::Script> stringify_script(v8::Script::Compile(stringify_src));
   {
     blink::WebScopedMicrotaskSuppression mts;
     stringify_func_.reset(isolate, stringify_script->Run().As<v8::Function>());

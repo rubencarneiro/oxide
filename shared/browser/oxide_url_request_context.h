@@ -55,8 +55,9 @@ class URLRequestContextGetter : public net::URLRequestContextGetter {
   virtual ~URLRequestContextGetter();
 
   static URLRequestContextGetter* CreateMain(
+      BrowserContextIOData* context,
       content::ProtocolHandlerMap* protocol_handlers,
-      BrowserContextIOData* context);
+      content::ProtocolHandlerScopedVector protocol_interceptors);
 
   scoped_refptr<base::SingleThreadTaskRunner> GetNetworkTaskRunner() const FINAL;
 

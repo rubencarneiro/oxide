@@ -1,0 +1,27 @@
+# Description: This fixes an exception caused by RULE_INPUT_PATH usage
+#  in mojom_bindings_generator.gypi
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/tools/gyp/pylib/gyp/generator/make.py b/tools/gyp/pylib/gyp/generator/make.py
+--- a/tools/gyp/pylib/gyp/generator/make.py
++++ b/tools/gyp/pylib/gyp/generator/make.py
+@@ -1179,17 +1179,19 @@ class MakefileWriter:
+       if includes:
+         includes = map(Sourceify, map(self.Absolutify, includes))
+       self.WriteList(includes, 'INCS_%s' % configname, prefix='-I')
+ 
+     compilable = filter(Compilable, sources)
+     objs = map(self.Objectify, map(self.Absolutify, map(Target, compilable)))
+     self.WriteList(objs, 'OBJS')
+ 
++    variables_with_spaces = re.compile(r'\$\([^ ]* \$<\)')
+     for obj in objs:
++      obj = re.sub(variables_with_spaces, '', obj)
+       assert ' ' not in obj, (
+           "Spaces in object filenames not supported (%s)"  % obj)
+     self.WriteLn('# Add to the list of files we specially track '
+                  'dependencies for.')
+     self.WriteLn('all_deps += $(OBJS)')
+     self.WriteLn()
+ 
+     # Make sure our dependencies are built first.

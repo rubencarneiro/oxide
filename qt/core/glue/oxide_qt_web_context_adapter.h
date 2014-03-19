@@ -44,9 +44,8 @@ class Q_DECL_EXPORT WebContextAdapter {
 
   enum CookiePolicy {
     CookiePolicyAllowAll,
-    CookiePolicyBlockThirdParty,
     CookiePolicyBlockAll,
-    CookiePolicyStrictBlockThirdParty
+    CookiePolicyBlockThirdParty
   };
 
   class IOThreadDelegate {
