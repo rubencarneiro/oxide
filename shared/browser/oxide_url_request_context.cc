@@ -27,19 +27,19 @@
 
 namespace oxide {
 
-class URLRequestContextFactory {
+class URLRequestContextInitializer {
  public:
-  URLRequestContextFactory() {}
-  virtual ~URLRequestContextFactory() {}
+  URLRequestContextInitializer() {}
+  virtual ~URLRequestContextInitializer() {}
 
   virtual void Initialize(scoped_ptr<URLRequestContext> context) = 0;
 };
 
 namespace {
 
-class MainURLRequestContextFactory : public URLRequestContextFactory {
+class MainURLRequestContextInitializer : public URLRequestContextInitializer {
  public:
-  MainURLRequestContextFactory(
+  MainURLRequestContextInitializer(
       BrowserContextIOData* context,
       content::ProtocolHandlerMap* protocol_handlers,
       content::ProtocolHandlerScopedVector protocol_interceptors) :
@@ -60,6 +60,17 @@ class MainURLRequestContextFactory : public URLRequestContextFactory {
   content::ProtocolHandlerScopedVector protocol_interceptors_;
 };
 
+class SystemURLRequestContextInitializer :
+    public URLRequestContextInitializer {
+ public:
+  SystemURLRequestContextInitializer() {}
+
+  void Initialize(scoped_ptr<URLRequestContext> request_context) FINAL {
+    IOThreadGlobals::GetInstance()->InitializeSystemURLRequestContext(
+        request_context.Pass());
+  }
+};
+
 } // namespace
 
 URLRequestContext::URLRequestContext() :
@@ -68,14 +79,14 @@ URLRequestContext::URLRequestContext() :
 URLRequestContext::~URLRequestContext() {}
 
 URLRequestContextGetter::URLRequestContextGetter(
-    URLRequestContextFactory* factory) :
-    factory_(factory) {}
+    URLRequestContextInitializer* initializer) :
+    initializer_(initializer) {}
 
 net::URLRequestContext* URLRequestContextGetter::GetURLRequestContext() {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
 
   if (!url_request_context_) {
-    DCHECK(factory_);
+    DCHECK(initializer_);
 
     scoped_ptr<URLRequestContext> context(new URLRequestContext());
 
@@ -89,9 +100,9 @@ net::URLRequestContext* URLRequestContextGetter::GetURLRequestContext() {
     context->set_throttler_manager(io_thread_globals->throttler_manager());
 
     url_request_context_ = context->AsWeakPtr();
-    factory_->Initialize(context.Pass());
+    initializer_->Initialize(context.Pass());
 
-    factory_.reset();
+    initializer_.reset();
   }
 
   return url_request_context_.get();
@@ -111,9 +122,14 @@ URLRequestContextGetter* URLRequestContextGetter::CreateMain(
     content::ProtocolHandlerMap* protocol_handlers,
     content::ProtocolHandlerScopedVector protocol_interceptors) {
   return new URLRequestContextGetter(
-      new MainURLRequestContextFactory(context,
-                                       protocol_handlers,
-                                       protocol_interceptors.Pass()));
+      new MainURLRequestContextInitializer(context,
+                                           protocol_handlers,
+                                           protocol_interceptors.Pass()));
+}
+
+// static
+URLRequestContextGetter* URLRequestContextGetter::CreateSystem() {
+  return new URLRequestContextGetter(new SystemURLRequestContextInitializer());
 }
 
 } // namespace oxide

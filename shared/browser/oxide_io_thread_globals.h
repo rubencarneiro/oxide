@@ -34,11 +34,15 @@ class HostResolver;
 class HttpAuthHandlerFactory;
 class NetLog;
 class ProxyService;
+class URLRequestContextGetter;
 class URLRequestThrottlerManager;
 
 } // namespace net
 
 namespace oxide {
+
+class URLRequestContext;
+class URLRequestContextGetter;
 
 // This object manages the lifetime of objects that are tied to the
 // IO thread
@@ -48,7 +52,7 @@ class IOThreadGlobals FINAL : public content::BrowserThreadDelegate {
   ~IOThreadGlobals();
 
   net::NetLog* net_log() const {
-    return net_log_.get();
+    return data_->net_log();
   }
 
   net::HostResolver* host_resolver() const {
@@ -71,32 +75,30 @@ class IOThreadGlobals FINAL : public content::BrowserThreadDelegate {
     return data_->throttler_manager();
   }
 
-  // Called on the IO thread
-  void Init() FINAL;
+  net::URLRequestContextGetter* GetSystemURLRequestContext();
 
-  // Called on the IO thread
-  void InitAsync() FINAL;
-
-  // Called on the IO thread
-  void CleanUp() FINAL;
+  void InitializeSystemURLRequestContext(
+      scoped_ptr<URLRequestContext> request_context);
 
  private:
    friend struct DefaultSingletonTraits<IOThreadGlobals>;
 
   class Data FINAL : public base::NonThreadSafe {
-   public:
-    Data(IOThreadGlobals* owner);
+    friend class IOThreadGlobals;
+
+    Data();
     ~Data();
 
+    void InitializeRequestContext(scoped_ptr<URLRequestContext> request_context);
+
+    net::NetLog* net_log() const;
     net::HostResolver* host_resolver() const;
     net::CertVerifier* cert_verifier() const;
     net::HttpAuthHandlerFactory* http_auth_handler_factory() const;
     net::ProxyService* proxy_service() const;
     net::URLRequestThrottlerManager* throttler_manager() const;
 
-   private:
-    IOThreadGlobals* owner_;
-
+    scoped_ptr<net::NetLog> net_log_;
     // host_resolver_ needs to outlive http_auth_handler_factory_
     scoped_ptr<net::HostResolver> host_resolver_;
     scoped_ptr<net::CertVerifier> cert_verifier_;
@@ -104,14 +106,20 @@ class IOThreadGlobals FINAL : public content::BrowserThreadDelegate {
     scoped_ptr<net::ProxyService> proxy_service_;
     scoped_ptr<net::URLRequestThrottlerManager> throttler_manager_;
 
-    DISALLOW_IMPLICIT_CONSTRUCTORS(Data);
+    scoped_ptr<URLRequestContext> system_request_context_;
+
+    DISALLOW_COPY_AND_ASSIGN(Data);
   };
 
   IOThreadGlobals();
 
-  scoped_ptr<net::NetLog> net_log_;
+  // Called on the IO thread
+  void Init() FINAL;
+  void InitAsync() FINAL;
+  void CleanUp() FINAL;
 
   Data* data_;
+  scoped_refptr<URLRequestContextGetter> system_request_context_getter_;
 
   DISALLOW_COPY_AND_ASSIGN(IOThreadGlobals);
 };
