@@ -191,16 +191,9 @@ void BrowserContextIOData::Init(
   URLRequestContext* context = main_request_context_.get();
   net::URLRequestContextStorage* storage = context->storage();
 
-  context->set_net_log(io_thread_globals->net_log());
-  context->set_host_resolver(io_thread_globals->host_resolver());
-  context->set_cert_verifier(io_thread_globals->cert_verifier());
-  context->set_http_auth_handler_factory(
-      io_thread_globals->http_auth_handler_factory());
-  context->set_proxy_service(io_thread_globals->proxy_service());
   storage->set_ssl_config_service(ssl_config_service_.get());
   context->set_network_delegate(network_delegate_.get());
   context->set_http_user_agent_settings(http_user_agent_settings_.get());
-  context->set_throttler_manager(io_thread_globals->throttler_manager());
 
   // TODO: We want persistent storage here (for non-incognito), but 
   //       SQLiteServerBoundCertStore is part of chrome

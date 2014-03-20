@@ -23,6 +23,7 @@
 #include "content/public/browser/browser_thread.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_io_thread_globals.h"
 
 namespace oxide {
 
@@ -77,6 +78,16 @@ net::URLRequestContext* URLRequestContextGetter::GetURLRequestContext() {
     DCHECK(factory_);
 
     scoped_ptr<URLRequestContext> context(new URLRequestContext());
+
+    IOThreadGlobals* io_thread_globals = IOThreadGlobals::GetInstance();
+    context->set_net_log(io_thread_globals->net_log());
+    context->set_host_resolver(io_thread_globals->host_resolver());
+    context->set_cert_verifier(io_thread_globals->cert_verifier());
+    context->set_http_auth_handler_factory(
+        io_thread_globals->http_auth_handler_factory());
+    context->set_proxy_service(io_thread_globals->proxy_service());
+    context->set_throttler_manager(io_thread_globals->throttler_manager());
+
     url_request_context_ = context->AsWeakPtr();
     factory_->Initialize(context.Pass());
 
