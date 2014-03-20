@@ -26,11 +26,19 @@
 
 namespace oxide {
 
+class URLRequestContextFactory {
+ public:
+  URLRequestContextFactory() {}
+  virtual ~URLRequestContextFactory() {}
+
+  virtual URLRequestContext* Initialize() = 0;
+};
+
 namespace {
 
-class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
+class MainURLRequestContextFactory : public URLRequestContextFactory {
  public:
-  MainURLRequestContextGetter(
+  MainURLRequestContextFactory(
       BrowserContextIOData* context,
       content::ProtocolHandlerMap* protocol_handlers,
       content::ProtocolHandlerScopedVector protocol_interceptors) :
@@ -39,25 +47,15 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
 
-  net::URLRequestContext* GetURLRequestContext() OVERRIDE {
-    DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
-
-    if (!url_request_context_) {
-      DCHECK(context_);
-      context_->Init(protocol_handlers_, protocol_interceptors_.Pass());
-      url_request_context_ = context_->GetMainRequestContext()->AsWeakPtr();
-      context_ = NULL;
-    }
-
-    return url_request_context_.get();
+  URLRequestContext* Initialize() FINAL {
+    context_->Init(protocol_handlers_, protocol_interceptors_.Pass());
+    return context_->GetMainRequestContext();
   }
 
  private:
   BrowserContextIOData* context_;
   content::ProtocolHandlerMap protocol_handlers_;
   content::ProtocolHandlerScopedVector protocol_interceptors_;
-
-  DISALLOW_COPY_AND_ASSIGN(MainURLRequestContextGetter);
 };
 
 } // namespace
@@ -67,7 +65,27 @@ URLRequestContext::URLRequestContext() :
 
 URLRequestContext::~URLRequestContext() {}
 
-URLRequestContextGetter::URLRequestContextGetter() {}
+URLRequestContextGetter::URLRequestContextGetter(
+    URLRequestContextFactory* factory) :
+    factory_(factory) {}
+
+net::URLRequestContext* URLRequestContextGetter::GetURLRequestContext() {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+
+  if (!url_request_context_) {
+    DCHECK(factory_);
+    url_request_context_ = factory_->Initialize()->AsWeakPtr();
+    factory_.reset();
+  }
+
+  return url_request_context_.get();
+}
+
+scoped_refptr<base::SingleThreadTaskRunner>
+URLRequestContextGetter::GetNetworkTaskRunner() const {
+  return content::BrowserThread::GetMessageLoopProxyForThread(
+      content::BrowserThread::IO);
+}
 
 URLRequestContextGetter::~URLRequestContextGetter() {}
 
@@ -76,15 +94,10 @@ URLRequestContextGetter* URLRequestContextGetter::CreateMain(
     BrowserContextIOData* context,
     content::ProtocolHandlerMap* protocol_handlers,
     content::ProtocolHandlerScopedVector protocol_interceptors) {
-  return new MainURLRequestContextGetter(context,
-                                         protocol_handlers,
-                                         protocol_interceptors.Pass());
-}
-
-scoped_refptr<base::SingleThreadTaskRunner>
-URLRequestContextGetter::GetNetworkTaskRunner() const {
-  return content::BrowserThread::GetMessageLoopProxyForThread(
-      content::BrowserThread::IO);
+  return new URLRequestContextGetter(
+      new MainURLRequestContextFactory(context,
+                                       protocol_handlers,
+                                       protocol_interceptors.Pass()));
 }
 
 } // namespace oxide

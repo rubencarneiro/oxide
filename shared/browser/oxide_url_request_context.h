@@ -35,6 +35,7 @@ class SingleThreadTaskRunner;
 namespace oxide {
 
 class BrowserContextIOData;
+class URLRequestContextFactory;
 
 class URLRequestContext FINAL : public net::URLRequestContext,
                                 public base::SupportsWeakPtr<URLRequestContext> {
@@ -50,7 +51,7 @@ class URLRequestContext FINAL : public net::URLRequestContext,
   DISALLOW_COPY_AND_ASSIGN(URLRequestContext);
 };
 
-class URLRequestContextGetter : public net::URLRequestContextGetter {
+class URLRequestContextGetter FINAL : public net::URLRequestContextGetter {
  public:
   virtual ~URLRequestContextGetter();
 
@@ -59,11 +60,13 @@ class URLRequestContextGetter : public net::URLRequestContextGetter {
       content::ProtocolHandlerMap* protocol_handlers,
       content::ProtocolHandlerScopedVector protocol_interceptors);
 
+ private:
+  URLRequestContextGetter(URLRequestContextFactory* factory);
+
+  net::URLRequestContext* GetURLRequestContext() FINAL;
   scoped_refptr<base::SingleThreadTaskRunner> GetNetworkTaskRunner() const FINAL;
 
- protected:
-  URLRequestContextGetter();
-
+  scoped_ptr<URLRequestContextFactory> factory_;
   base::WeakPtr<URLRequestContext> url_request_context_;
 
  private:
