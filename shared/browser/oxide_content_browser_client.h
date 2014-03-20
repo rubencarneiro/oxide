@@ -24,14 +24,9 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/content_browser_client.h"
-#include "ui/gl/gl_implementation.h"
 
 namespace base {
 class MessagePump;
-}
-
-namespace blink {
-class WebScreenInfo;
 }
 
 namespace content {
@@ -52,6 +47,13 @@ class ContentBrowserClient : public content::ContentBrowserClient {
  public:
   virtual ~ContentBrowserClient();
 
+  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
+
+ protected:
+  // Limit default constructor access to derived classes
+  ContentBrowserClient();
+
+ private:
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) FINAL;
 
@@ -60,45 +62,49 @@ class ContentBrowserClient : public content::ContentBrowserClient {
       content::RenderViewHostDelegateView** render_view_host_delegate_view)
       FINAL;
 
-  void RenderProcessHostCreated(content::RenderProcessHost* host) FINAL;
+  void RenderProcessWillLaunch(content::RenderProcessHost* host) FINAL;
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::BrowserContext* browser_context,
-      content::ProtocolHandlerMap* protocol_handlers) FINAL;
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
 
   net::URLRequestContextGetter*
       CreateRequestContextForStoragePartition(
         content::BrowserContext* browser_context,
         const base::FilePath& partition_path,
         bool in_memory,
-        content::ProtocolHandlerMap* protocol_handlers) FINAL;
+        content::ProtocolHandlerMap* protocol_handlers,
+        content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
 
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;
+
+  bool AllowGetCookie(const GURL& url,
+                      const GURL& first_party,
+                      const net::CookieList& cookie_list,
+                      content::ResourceContext* context,
+                      int render_process_id,
+                      int render_frame_id) FINAL;
+
+  bool AllowSetCookie(const GURL& url,
+                      const GURL& first_party,
+                      const std::string& cookie_line,
+                      content::ResourceContext* context,
+                      int render_process_id,
+                      int render_frame_id,
+                      net::CookieOptions* options) FINAL;
 
   void ResourceDispatcherHostCreated() FINAL;
 
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            const GURL& url,
-                           WebPreferences* prefs) FINAL;
+                           ::WebPreferences* prefs) FINAL;
 
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
-  // Extra Oxide methods
-  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
+  virtual bool IsTouchSupported();
 
-  virtual scoped_refptr<oxide::SharedGLContext> CreateSharedGLContext(
-      oxide::GLShareGroup* share_group);
-
-  virtual void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
-
-  virtual void GetDefaultScreenInfo(blink::WebScreenInfo* result) = 0;
-
- protected:
-  // Limit default constructor access to derived classes
-  ContentBrowserClient();
-
- private:
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 

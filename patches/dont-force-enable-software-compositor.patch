@@ -1,0 +1,26 @@
+# Description: Don't force enable the software compositor, so we can support
+#  a non-compositing mode in Oxide
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/browser/gpu/gpu_data_manager_impl_private.cc
+--- a/content/browser/gpu/gpu_data_manager_impl_private.cc
++++ b/content/browser/gpu/gpu_data_manager_impl_private.cc
+@@ -951,17 +951,17 @@ GpuDataManagerImplPrivate::GpuDataManage
+     command_line->AppendSwitch(switches::kDisableAccelerated2dCanvas);
+     command_line->AppendSwitch(switches::kDisableAcceleratedLayers);
+   }
+   if (command_line->HasSwitch(switches::kDisableGpu))
+     DisableHardwareAcceleration();
+   if (command_line->HasSwitch(switches::kEnableSoftwareCompositing))
+     use_software_compositor_ = true;
+   // TODO(jbauman): enable for Chrome OS
+-#if (defined(USE_AURA) && !defined(OS_CHROMEOS)) || defined(OS_MACOSX)
++#if 0
+   use_software_compositor_ = true;
+ #endif
+ 
+ #if defined(OS_MACOSX)
+   CGGetActiveDisplayList (0, NULL, &display_count_);
+   CGDisplayRegisterReconfigurationCallback(DisplayReconfigCallback, owner_);
+ #endif  // OS_MACOSX
+ 

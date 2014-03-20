@@ -26,8 +26,8 @@
 #include <QUrl>
 #include <QVariant>
 
-class OxideQQuickMessageHandler;
-class OxideQQuickOutgoingMessageRequest;
+class OxideQQuickScriptMessageHandler;
+class OxideQQuickScriptMessageRequest;
 class OxideQQuickWebFramePrivate;
 class OxideQQuickWebViewPrivate;
 
@@ -35,18 +35,13 @@ class OxideQQuickWebFrame : public QObject {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
   Q_PROPERTY(OxideQQuickWebFrame* parentFrame READ parentFrame)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickWebFrame> childFrames READ childFrames NOTIFY childFrameChanged)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickWebFrame> childFrames READ childFrames NOTIFY childFramesChanged)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
   Q_ENUMS(ChildFrameChangedType)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebFrame)
 
  public:
-  enum ChildFrameChangedType {
-    ChildAdded,
-    ChildRemoved
-  };
-
   virtual ~OxideQQuickWebFrame();
 
   QUrl url() const;
@@ -54,28 +49,27 @@ class OxideQQuickWebFrame : public QObject {
   OxideQQuickWebFrame* parentFrame() const;
   QQmlListProperty<OxideQQuickWebFrame> childFrames();
 
-  QQmlListProperty<OxideQQuickMessageHandler> messageHandlers();
-  Q_INVOKABLE void addMessageHandler(OxideQQuickMessageHandler* handler);
-  Q_INVOKABLE void removeMessageHandler(OxideQQuickMessageHandler* handler);
+  QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers();
+  Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
+  Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
-  Q_INVOKABLE OxideQQuickOutgoingMessageRequest*
-      sendMessage(const QString& world_id,
+  Q_INVOKABLE OxideQQuickScriptMessageRequest*
+      sendMessage(const QUrl& context,
                   const QString& msg_id,
                   const QVariant& args);
-  Q_INVOKABLE void sendMessageNoReply(const QString& world_id,
+  Q_INVOKABLE void sendMessageNoReply(const QUrl& context,
                                       const QString& msg_id,
                                       const QVariant& args);
 
  Q_SIGNALS:
   void urlChanged();
-  void childFrameChanged(ChildFrameChangedType type,
-                         OxideQQuickWebFrame* child_frame);
+  void childFramesChanged();
   void messageHandlersChanged();
 
  protected:
   friend class OxideQQuickWebViewPrivate;
 
-  Q_DECL_HIDDEN OxideQQuickWebFrame();
+  OxideQQuickWebFrame();
   virtual void childEvent(QChildEvent* event);
 
   QScopedPointer<OxideQQuickWebFramePrivate> d_ptr;

@@ -26,7 +26,6 @@
 
 namespace oxide {
 
-class MessageDispatcherRenderer;
 class ProcessObserver;
 class UserScriptSlave;
 
@@ -38,12 +37,11 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
   UserScriptSlave* user_script_slave() const {
     return user_script_slave_.get();
   }
-  MessageDispatcherRenderer* message_dispatcher() const {
-    return message_dispatcher_.get();
-  }
 
+ private:
   void RenderThreadStarted() FINAL;
 
+  void RenderFrameCreated(content::RenderFrame* render_frame) FINAL;
   void RenderViewCreated(content::RenderView* render_view) FINAL;
 
   void DidCreateScriptContext(blink::WebFrame* frame,
@@ -54,10 +52,11 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
                                 v8::Handle<v8::Context>,
                                 int world_id) FINAL;
 
- private:
+  bool GetUserAgentOverride(const GURL& url,
+                            std::string* user_agent) FINAL;
+
   scoped_ptr<ProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;
-  scoped_ptr<MessageDispatcherRenderer> message_dispatcher_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };

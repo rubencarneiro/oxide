@@ -24,9 +24,11 @@
 
 namespace oxide {
 
+class BrowserContextIOData;
+
 class NetworkDelegate FINAL : public net::NetworkDelegate {
  public:
-  NetworkDelegate() {}
+  NetworkDelegate(BrowserContextIOData* context);
 
  private:
   int OnBeforeURLRequest(net::URLRequest* request,
@@ -36,7 +38,6 @@ class NetworkDelegate FINAL : public net::NetworkDelegate {
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
                           net::HttpRequestHeaders* headers) FINAL;
-
 
   void OnSendHeaders(net::URLRequest* request,
                      const net::HttpRequestHeaders& headers) FINAL;
@@ -81,6 +82,8 @@ class NetworkDelegate FINAL : public net::NetworkDelegate {
   int OnBeforeSocketStreamConnect(
       net::SocketStream* socket,
       const net::CompletionCallback& callback) FINAL;
+
+  BrowserContextIOData* context_;
 
   DISALLOW_COPY_AND_ASSIGN(NetworkDelegate);
 };

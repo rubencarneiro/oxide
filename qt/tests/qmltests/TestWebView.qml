@@ -12,6 +12,8 @@ WebView {
   readonly property alias loadsFailedCount: webView.qtest_loadsFailedCount
   readonly property alias loadsStoppedCount: webView.qtest_loadsStoppedCount
 
+  property bool gcDuringWait: false
+
   function clearLoadEventCounters() {
     qtest_loadsStartedCount = 0;
     qtest_loadsSucceededCount = 0;
@@ -55,10 +57,12 @@ WebView {
 
   function waitFor(predicate, timeout) {
     timeout = timeout || 5000;
-    var i = 0;
-    while (i < timeout && !predicate()) {
+    var end = Date.now() + timeout;
+    var i = Date.now();
+    while (i < end && !predicate()) {
       qtest_testResult.wait(50);
-      i += 50;
+      if (gcDuringWait) gc();
+      i = Date.now();
     }
     return predicate();
   }
@@ -73,17 +77,7 @@ WebView {
   property int qtest_expectedLoadsFailedCount: 0
   property int qtest_expectedLoadsStoppedCount: 0
 
-  context: WebContext {
-    dataPath: Testing.Utils.DATA_PATH
-    userScripts: [
-      UserScript {
-        worldId: "TestUtils"
-        url: Qt.resolvedUrl("TestUtilsSlave.js")
-        incognitoEnabled: true
-        matchAllFrames: true
-      }
-    ]
-  }
+  context: TestWebContext {}
 
   Item {
     Component.onCompleted: {

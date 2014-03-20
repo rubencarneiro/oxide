@@ -49,12 +49,16 @@ class RenderViewItem Q_DECL_FINAL :
   void Hide() Q_DECL_FINAL;
   bool IsShowing() Q_DECL_FINAL;
 
-  QRect GetViewBounds() Q_DECL_FINAL;
-  QRect GetBoundsInRootWindow() Q_DECL_FINAL;
+  QRect GetViewBoundsPix() Q_DECL_FINAL;
 
   void SetSize(const QSize& size) Q_DECL_FINAL;
 
   QScreen* GetScreen() Q_DECL_FINAL;
+
+  void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
+
+  void SchedulePaintForRectPix(const QRect& rect) Q_DECL_FINAL;
+  void ScheduleUpdate() Q_DECL_FINAL;
 
   void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
   void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
@@ -71,6 +75,10 @@ class RenderViewItem Q_DECL_FINAL :
 
   void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
 
+  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_FINAL;
+
+  void touchEvent(QTouchEvent * event) Q_DECL_FINAL;
+
   void updatePolish() Q_DECL_FINAL;
   QSGNode* updatePaintNode(QSGNode* oldNode,
                            UpdatePaintNodeData* data) Q_DECL_FINAL;
@@ -78,10 +86,10 @@ class RenderViewItem Q_DECL_FINAL :
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
  private:
-  void SchedulePaint(const QRect& rect) Q_DECL_FINAL;
-  void ScheduleUpdate() Q_DECL_FINAL;
-
   const QPixmap* backing_store_;
+#if defined(ENABLE_COMPOSITING)
+  oxide::qt::TextureHandle* texture_handle_;
+#endif
   QRect dirty_rect_;
 
 #if defined(ENABLE_COMPOSITING)

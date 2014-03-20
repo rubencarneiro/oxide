@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,10 +17,14 @@
 
 #include "oxide_qquick_render_view_item.h"
 
+#include <QGuiApplication>
+#include <QInputMethod>
+#include <QInputMethodEvent>
 #include <QQuickWindow>
 #include <QPointF>
 #include <QRectF>
 #include <QSizeF>
+#include <QTouchEvent>
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
@@ -32,48 +36,18 @@
 namespace oxide {
 namespace qquick {
 
-void RenderViewItem::SchedulePaint(const QRect& rect) {
-#if defined(ENABLE_COMPOSITING)
-  if (is_compositing_enabled_) {
-    is_compositing_enabled_state_changed_ = true;
-    is_compositing_enabled_ = false;
-  }
-#endif
-
-  if (rect.isNull() && !dirty_rect_.isNull()) {
-    dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
-  } else {
-    dirty_rect_ |= (QRectF(0, 0, width(), height()) & rect).toAlignedRect();
-  }
-
-  update();
-  polish();
-}
-
-void RenderViewItem::ScheduleUpdate() {
-#if defined(ENABLE_COMPOSITING)
-  if (!is_compositing_enabled_) {
-    is_compositing_enabled_state_changed_ = true;
-    is_compositing_enabled_ = true;
-  }
-
-  update();
-#else
-  Q_ASSERT(0);
-#endif
-}
-
 RenderViewItem::RenderViewItem(
     OxideQQuickWebView* webview) :
     QQuickItem(webview),
     backing_store_(NULL)
 #if defined(ENABLE_COMPOSITING)
-    , is_compositing_enabled_(false),
+    , texture_handle_(NULL),
+    is_compositing_enabled_(false),
     is_compositing_enabled_state_changed_(false) {
 #else
 {
 #endif
-  setFlags(QQuickItem::ItemHasContents | QQuickItem::ItemAcceptsInputMethod);
+  setFlag(QQuickItem::ItemHasContents);
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
@@ -103,22 +77,15 @@ bool RenderViewItem::IsShowing() {
   return isVisible();
 }
 
-QRect RenderViewItem::GetViewBounds() {
-  QPointF pos(mapToScene(QPointF(0, 0)));
-  if (window()) {
-    pos += window()->position();
+QRect RenderViewItem::GetViewBoundsPix() {
+  if (!window()) {
+    return QRect();
   }
+
+  QPointF pos(mapToScene(QPointF(0, 0)) + window()->position());
 
   return QRect(qRound(pos.x()), qRound(pos.y()),
                qRound(width()), qRound(height()));
-}
-
-QRect RenderViewItem::GetBoundsInRootWindow() {
-  if (!window()) {
-    return GetViewBounds();
-  }
-
-  return window()->frameGeometry();
 }
 
 void RenderViewItem::SetSize(const QSize& size) {
@@ -134,43 +101,80 @@ QScreen* RenderViewItem::GetScreen() {
   return window()->screen();
 }
 
+void RenderViewItem::SetInputMethodEnabled(bool enabled) {
+  setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
+  QGuiApplication::inputMethod()->update(Qt::ImEnabled);
+}
+
+void RenderViewItem::SchedulePaintForRectPix(const QRect& rect) {
+#if defined(ENABLE_COMPOSITING)
+  if (is_compositing_enabled_) {
+    is_compositing_enabled_state_changed_ = true;
+    is_compositing_enabled_ = false;
+  }
+#endif
+
+  if (rect.isNull() && !dirty_rect_.isNull()) {
+    dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
+  } else {
+    dirty_rect_ |= (QRectF(0, 0, width(), height()) & rect).toAlignedRect();
+  }
+
+  update();
+  polish();
+}
+
+void RenderViewItem::ScheduleUpdate() {
+#if defined(ENABLE_COMPOSITING)
+  if (!is_compositing_enabled_) {
+    is_compositing_enabled_state_changed_ = true;
+    is_compositing_enabled_ = true;
+  }
+
+  update();
+  polish();
+#else
+  Q_ASSERT(0);
+#endif
+}
+
 void RenderViewItem::focusInEvent(QFocusEvent* event) {
   Q_ASSERT(event->gotFocus());
-  ForwardFocusEvent(event);
+  HandleFocusEvent(event);
 }
 
 void RenderViewItem::focusOutEvent(QFocusEvent* event) {
   Q_ASSERT(event->lostFocus());
-  ForwardFocusEvent(event);
+  HandleFocusEvent(event);
 }
 
 void RenderViewItem::keyPressEvent(QKeyEvent* event) {
-  ForwardKeyEvent(event);
+  HandleKeyEvent(event);
 }
 
 void RenderViewItem::keyReleaseEvent(QKeyEvent* event) {
-  ForwardKeyEvent(event);
+  HandleKeyEvent(event);
 }
 
 void RenderViewItem::mouseDoubleClickEvent(QMouseEvent* event) {
-  ForwardMouseEvent(event);
+  HandleMouseEvent(event);
 }
 
 void RenderViewItem::mouseMoveEvent(QMouseEvent* event) {
-  ForwardMouseEvent(event);
+  HandleMouseEvent(event);
 }
 
 void RenderViewItem::mousePressEvent(QMouseEvent* event) {
-  ForwardMouseEvent(event);
-  setFocus(true);
+  forceActiveFocus();
+  HandleMouseEvent(event);
 }
 
 void RenderViewItem::mouseReleaseEvent(QMouseEvent* event) {
-  ForwardMouseEvent(event);
+  HandleMouseEvent(event);
 }
 
 void RenderViewItem::wheelEvent(QWheelEvent* event) {
-  ForwardWheelEvent(event);
+  HandleWheelEvent(event);
 }
 
 void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
@@ -186,13 +190,35 @@ void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
                  Qt::NoButton,
                  event->modifiers());
 
-  ForwardMouseEvent(&me);
+  HandleMouseEvent(&me);
 
   event->setAccepted(me.isAccepted());
 }
 
+void RenderViewItem::inputMethodEvent(QInputMethodEvent* event) {
+  HandleInputMethodEvent(event);
+}
+
+void RenderViewItem::touchEvent(QTouchEvent* event) {
+  if (event->type() == QEvent::TouchBegin) {
+    forceActiveFocus();
+  }
+  HandleTouchEvent(event);
+}
+
 void RenderViewItem::updatePolish() {
-  backing_store_ = GetBackingStore();
+  backing_store_ = NULL;
+#if defined(ENABLE_COMPOSITING)
+  texture_handle_ = NULL;
+
+  if (is_compositing_enabled_) {
+    texture_handle_ = GetCurrentTextureHandle();
+  } else {
+#else
+  {
+#endif
+    backing_store_ = GetBackingStore();
+  }
 }
 
 QSGNode* RenderViewItem::updatePaintNode(
@@ -226,7 +252,7 @@ QSGNode* RenderViewItem::updatePaintNode(
     }
 
     node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
-    node->updateFrontTexture(GetFrontbufferTextureInfo());
+    node->updateFrontTexture(texture_handle_);
 
     DidUpdate(false);
     return node;
@@ -250,7 +276,12 @@ QSGNode* RenderViewItem::updatePaintNode(
 }
 
 QVariant RenderViewItem::inputMethodQuery(Qt::InputMethodQuery query) const {
-  return InputMethodQuery(query);
+  switch (query) {
+    case Qt::ImEnabled:
+      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return InputMethodQuery(query);
+  }
 }
 
 } // namespace qquick

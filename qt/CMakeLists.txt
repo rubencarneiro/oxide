@@ -16,33 +16,36 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/oxide-qt)
-
-find_package(Qt5Core)
-find_package(Qt5Gui)
-find_package(Qt5Qml)
-find_package(Qt5Quick)
-
-set(OXIDE_LIB_VERSIONED ${OXIDE_LIB}.${QT_SO_VERSION})
-set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/imports)
-set(OXIDE_BIN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin)
+include(GNUInstallDirs)
+include(OxideCommon)
+include(OxideQtCommon)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlscene.sh.in
     ${CMAKE_CURRENT_BINARY_DIR}/run_qmlscene.sh
     IMMEDIATE @ONLY)
 file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlscene.sh
-     DESTINATION ${CMAKE_BINARY_DIR}
+     DESTINATION ${CMAKE_BINARY_DIR}/out
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE 
          GROUP_READ GROUP_EXECUTE
          WORLD_READ WORLD_EXECUTE)
 
 add_custom_target(
     gyp_postbuild ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OXIDE_LIB_VERSIONED} ${OXIDE_LIB}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHROMIUM_PRODUCT_DIR}/chrome_sandbox ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_VERSIONED} ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CHROMIUM_PRODUCT_DIR}/chrome_sandbox ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
     DEPENDS gyp_all
     COMMENT "Running gyp post build commands")
+
+# Allow objects linked by cmake to declare a run-time dependency on the
+# main library, built with gyp
+add_library(${OXIDE_CORELIB_NAME} SHARED IMPORTED)
+add_dependencies(${OXIDE_CORELIB_NAME} gyp_postbuild)
+set_target_properties(
+    ${OXIDE_CORELIB_NAME}
+    PROPERTIES IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED})
 
 add_subdirectory(quick)
 if(ENABLE_OXIDEQMLSCENE)
@@ -52,14 +55,50 @@ if(ENABLE_TESTS)
   add_subdirectory(tests)
 endif()
 
-install(FILES ${OXIDE_LIB_VERSIONED} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES ${OXIDE_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+set(OXIDE_INSTALL_LIB_FILES
+    ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_VERSIONED})
+set(OXIDE_INSTALL_LIBEXEC_FILES
+    ${CHROMIUM_PRODUCT_DIR}/oxide.pak
+    ${CHROMIUM_PRODUCT_DIR}/oxide_100_percent.pak
+    ${CHROMIUM_PRODUCT_DIR}/icudtl.dat
+    ${CHROMIUM_PRODUCT_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ffmpegsumo${CMAKE_SHARED_LIBRARY_SUFFIX})
+set(OXIDE_INSTALL_LIBEXEC_PROGRAMS
+    ${CHROMIUM_PRODUCT_DIR}/${OXIDE_RENDERER_NAME})
 
-install(FILES ${CHROMIUM_PRODUCT_DIR}/oxide.pak
+install(FILES ${OXIDE_INSTALL_LIB_FILES}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${OXIDE_INSTALL_LIBEXEC_FILES}
         DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
-install(FILES ${CHROMIUM_PRODUCT_DIR}/oxide_100_percent.pak
+install(PROGRAMS ${OXIDE_INSTALL_LIBEXEC_PROGRAMS}
         DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
 install(PROGRAMS ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
         DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ SETUID)
-install(PROGRAMS ${CHROMIUM_PRODUCT_DIR}/oxide-renderer DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE
+                    GROUP_READ WORLD_EXECUTE WORLD_READ SETUID)
+
+list(APPEND PACKAGE_FILES ${OXIDE_INSTALL_LIB_FILES})
+list(APPEND PACKAGE_FILES ${OXIDE_INSTALL_LIBEXEC_FILES})
+list(APPEND PACKAGE_PROGRAMS ${OXIDE_INSTALL_LIBEXEC_PROGRAMS})
+list(APPEND PACKAGE_PROGRAMS ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox)
+
+add_custom_target(
+    stage-run-qmlscene
+    COMMAND ${CMAKE_COMMAND}
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/run_qmlscene.sh.in
+      -DOUTPUT=${OXIDE_STAGE_DIR}/run_qmlscene.sh
+      -DRENDERER=${OXIDE_RENDERER_NAME}
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/stage-run-qmlscene.cmake)
+add_custom_target(
+    package
+    COMMAND ${CMAKE_COMMAND}
+      "-DFILES=\"${PACKAGE_FILES}\"" "-DPROGRAMS=\"${PACKAGE_PROGRAMS}\""
+      -DSTAGE_DIR=${OXIDE_STAGE_DIR}
+      -DOUTPUT_DIR=${CMAKE_BINARY_DIR}/out
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/package.cmake
+    DEPENDS stage-quick stage-run-qmlscene
+    COMMENT "Creating compressed archive")
+if(ENABLE_OXIDEQMLSCENE)
+  add_dependencies(package stage-oxideqmlscene)
+endif()

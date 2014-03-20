@@ -26,23 +26,16 @@ endif()
 cmake_minimum_required(VERSION 2.8.11)
 project(OXIDE)
 
-include(GNUInstallDirs)
-
 # This will be an option if we have more than one port
-set(OXIDE_BUILD qt)
+set(OXIDE_BUILD qt CACHE INTERNAL "")
 
 # Required for out-of-tree builds
-set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
 
-if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(CHROMIUM_BUILD_TYPE Debug)
-else()
-  set(CHROMIUM_BUILD_TYPE Release)
-endif()
-set(CHROMIUM_GYP_GENERATOR_DIR ${CMAKE_BINARY_DIR}/chromium/gyp/chromium/src)
-set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium/out)
-set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
-set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib.target)
+list(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_SOURCE_DIR}/build/cmake
+    ${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/build/cmake)
+include(OxideCommon)
 
 if(ENABLE_TESTS)
   enable_testing()
@@ -50,50 +43,35 @@ endif()
 
 # Import the configuration for this build
 include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
-if(NOT DEFINED OXIDE_LIB)
-  message(FATAL_ERROR "config.cmake must define OXIDE_LIB")
-endif()
-
-find_program(PYTHON python)
-if(PYTHON STREQUAL "PYTHON-NOTFOUND")
-  message(FATAL_ERROR "Could not find a python interpreter. Please ensure python is installed")
-endif()
-
-# Allow the version number to be used in the build
-foreach(comp MAJOR MINOR BUILD PATCH)
-  execute_process(
-      COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
-      OUTPUT_VARIABLE _OUTPUT
-      RESULT_VARIABLE _RESULT)
-  if(NOT _RESULT EQUAL 0)
-    message(FATAL_ERROR "Failed to get version number")
-  endif()
-  set(OXIDE_VERSION_${comp} ${_OUTPUT})
-endforeach()
 
 # We want to link the core library with gold. Ubuntu has '-fuse-ld=gold',
 # but as this is distro specific, we do something that is currently
 # supportable across distributions. This creates a directory with a symlink
 # to the gold linker, and we pass -B to the compiler
-if(NOT DEFINED CHROMIUM_LINKER)
-  set(CHROMIUM_LINKER "ld")
+execute_process(
+    COMMAND ${CMAKE_C_COMPILER} -print-prog-name=ld
+    RESULT_VARIABLE _RESULT
+    OUTPUT_VARIABLE _LINKER_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT _RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to get linker path from compiler")
 endif()
 set(SETUP_GOLD_COMMAND
     ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
-    --output ${CHROMIUM_OUTPUT_DIR}/gold --ld ${CHROMIUM_LINKER})
-get_filename_component(_LINKER_NAME ${CHROMIUM_LINKER} NAME)
+    --output ${CMAKE_BINARY_DIR}/gold --ld ${_LINKER_PATH})
+get_filename_component(_LINKER_NAME ${_LINKER_PATH} NAME)
 add_custom_command(
-    OUTPUT ${CHROMIUM_OUTPUT_DIR}/gold/${_LINKER_NAME}
+    OUTPUT ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
     COMMAND ${SETUP_GOLD_COMMAND})
 add_custom_target(gold ALL
-                  DEPENDS ${CHROMIUM_OUTPUT_DIR}/gold/${_LINKER_NAME}
-                  COMMENT "Setting up gold linker")
+                  DEPENDS ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
+                  COMMENT "Creating a symlink for gold linker")
 
-message(STATUS "Setting up gold linker")
+message(STATUS "Creating a symlink for gold linker")
 execute_process(COMMAND ${SETUP_GOLD_COMMAND}
                 RESULT_VARIABLE _RESULT)
 if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to set up gold linker. Please check that it is installed")
+  message(FATAL_ERROR "Couldn't find gold linker. Please check that it is installed")
 endif()
 
 # We want to pass extra arguments to our gyp wrapper, but these aren't
@@ -116,6 +94,14 @@ if(CMAKE_CROSSCOMPILING)
   endif()
   list(APPEND GYP_COMMAND -Dtarget_arch=${CHROMIUM_TARGET_ARCH})
 endif()
+if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Release")
+  list(APPEND GYP_COMMAND -Dlinux_dump_symbols=0)
+else()
+  list(APPEND GYP_COMMAND -Dlinux_dump_symbols=1)
+endif()
+if(CMAKE_VERBOSE_MAKEFILE)
+  list(APPEND GYP_COMMAND -Dprint_ld_stats=1)
+endif()
 
 message(STATUS "Running gyp")
 execute_process(COMMAND ${GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -129,7 +115,8 @@ endif()
 set(BUILD_GYP_ALL_COMMAND
     ${CMAKE_COMMAND} -DMAKE="$(MAKE)" -DBUILDTYPE=${CHROMIUM_BUILD_TYPE}
     -DGYP_DIR=${CHROMIUM_GYP_GENERATOR_DIR}
-    -DCC=${CMAKE_C_COMPILER} -DCXX=${CMAKE_CXX_COMPILER})
+    -DCC=${CMAKE_C_COMPILER} -DCXX=${CMAKE_CXX_COMPILER}
+    -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE})
 if(CMAKE_CROSSCOMPILING)
   if(NOT CHROMIUM_C_HOST_COMPILER OR NOT CHROMIUM_CXX_HOST_COMPILER)
     message(FATAL_ERROR "Need to specify host compilers when cross compiling")
@@ -145,12 +132,6 @@ add_custom_target(
     DEPENDS gold
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building gyp_all target")
-
-# Allow objects linked by cmake to declare a run-time dependency on the
-# main library, built with gyp
-add_library(OxideLib SHARED IMPORTED)
-set(OXIDE_LIB ${CHROMIUM_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${OXIDE_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
-set_target_properties(OxideLib PROPERTIES IMPORTED_LOCATION ${OXIDE_LIB})
 
 add_subdirectory(${OXIDE_BUILD})
 

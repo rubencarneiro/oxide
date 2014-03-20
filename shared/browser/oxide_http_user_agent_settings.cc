@@ -39,8 +39,21 @@ std::string HttpUserAgentSettings::GetAcceptLanguage() const {
   return http_accept_language_;
 }
 
-std::string HttpUserAgentSettings::GetUserAgent(const GURL& url) const {
+std::string HttpUserAgentSettings::GetUserAgent() const {
   // TODO: Add support for overrides
+  // XXX: We use this for a per-context user agent setting - however,
+  //      this does not work. URLRequestHttpJob only uses this value if the
+  //      request doesn't have a User-Agent header already. All
+  //      requests coming from Blink have a User-Agent header, which is either
+  //      the one set by WebContents::SetUserAgentOverride() or the one
+  //      returned by ContentClient::GetUserAgent(), so this value is ignored.
+  //      We could maybe change blink to not set the header if the override
+  //      setting hasn't been set. Or we could change URLRequestHttpJob to
+  //      set the User-Agent header to the value returned from here
+  //      unconditionally (but that would break per-webview overrides)
+  //      For now, we actually set the per context user agent setting
+  //      via WebContents::SetUserAgentOverride for each webview
+  //      See https://launchpad.net/bugs/1279900
   return context_->GetUserAgent();
 }
 

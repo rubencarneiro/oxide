@@ -27,7 +27,7 @@
 
 #include "oxideqquicknavigationhistory_p.h"
 
-class OxideQQuickMessageHandler;
+class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
 
@@ -46,7 +46,6 @@ struct InitData {
 class OxideQQuickWebViewPrivate Q_DECL_FINAL :
      public oxide::qt::WebViewAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
-  OXIDE_QT_DECLARE_ADAPTER
 
  public:
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
@@ -61,8 +60,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void LoadProgressChanged(double progress) Q_DECL_FINAL;
 
-  void RootFrameChanged() Q_DECL_FINAL;
-
   void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
 
   void NavigationEntryCommitted() Q_DECL_FINAL;
@@ -73,18 +70,23 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   QRect GetContainerBounds() Q_DECL_FINAL;
 
-  void componentComplete();
+  void OnWebPreferencesChanged() Q_DECL_FINAL;
+
+  void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
+  void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
+
+  void completeConstruction();
 
   static void messageHandler_append(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop,
-      OxideQQuickMessageHandler* message_handler);
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
+      OxideQQuickScriptMessageHandler* message_handler);
   static int messageHandler_count(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop);
-  static OxideQQuickMessageHandler* messageHandler_at(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop,
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
+  static OxideQQuickScriptMessageHandler* messageHandler_at(
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
       int index);
   static void messageHandler_clear(
-      QQmlListProperty<OxideQQuickMessageHandler>* prop);
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
   static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
 
@@ -97,10 +99,13 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QQmlComponent* popup_menu;
 
  private:
+  void contextInitialized();
+  void contextWillBeDestroyed();
+  void detachContextSignals();
+
   QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;
-  OxideQQuickWebView* q_ptr;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

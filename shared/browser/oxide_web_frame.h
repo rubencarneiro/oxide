@@ -23,31 +23,34 @@
 
 #include "base/basictypes.h"
 #include "base/memory/weak_ptr.h"
+#include "base/supports_user_data.h"
+#include "ipc/ipc_sender.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_message_target.h"
+#include "shared/browser/oxide_script_message_target.h"
+
+namespace content {
+class FrameTreeNode;
+}
 
 namespace oxide {
 
-class OutgoingMessageRequest;
+class ScriptMessageRequestImplBrowser;
 class WebView;
 
 // Represents a document frame in the renderer (a top-level frame or iframe).
 // This is designed to be subclassed by each implementation. Each instance
 // of this will typically own a publicly exposed webframe
-class WebFrame : public MessageTarget {
+class WebFrame : public ScriptMessageTarget,
+                 public base::SupportsUserData {
  public:
-  // Use this to delete a WebFrame rather than calling the destructor, so
-  // that we can remove the frame from its parent before the derived destructor
-  // is called
-  void DestroyFrame();
+  typedef std::vector<ScriptMessageRequestImplBrowser *> ScriptMessageRequestVector;
 
-  int64 identifier() const {
-    return id_;
-  }
-  void set_identifier(int64 id) {
-    id_ = id;
-  }
+  virtual ~WebFrame();
+
+  static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
+
+  int64 FrameTreeNodeID() const;
 
   GURL url() const {
     return url_;
@@ -60,12 +63,13 @@ class WebFrame : public MessageTarget {
   WebView* view() const {
     return view_;
   }
-  void set_view(WebView* view) {
-    view_ = view;
-  }
 
   base::WeakPtr<WebFrame> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
+  }
+
+  content::FrameTreeNode* frame_tree_node() const {
+    return frame_tree_node_;
   }
 
   void SetURL(const GURL& url);
@@ -74,43 +78,46 @@ class WebFrame : public MessageTarget {
   size_t ChildCount() const;
   WebFrame* ChildAt(size_t index) const;
 
-  void AddChildrenToQueue(std::queue<WebFrame *>* queue) const;
-
-  bool SendMessage(const std::string& world_id,
-                   const std::string& msg_id,
-                   const std::string& args,
-                   OutgoingMessageRequest* req);
-  bool SendMessageNoReply(const std::string& world_id,
+  ScriptMessageRequestImplBrowser* SendMessage(const GURL& context,
+                                               const std::string& msg_id,
+                                               const std::string& args);
+  bool SendMessageNoReply(const GURL& context,
                           const std::string& msg_id,
                           const std::string& args);
 
-  virtual size_t GetMessageHandlerCount() const OVERRIDE;
-  virtual MessageHandler* GetMessageHandlerAt(size_t index) const OVERRIDE;
-
-  virtual size_t GetOutgoingMessageRequestCount() const;
-  virtual OutgoingMessageRequest* GetOutgoingMessageRequestAt(size_t index) const;
+  const ScriptMessageRequestVector& current_script_message_requests() const {
+    return current_script_message_requests_;
+  }
 
  protected:
-  WebFrame();
-  virtual ~WebFrame();
+  WebFrame(content::FrameTreeNode* node, WebView* view);
 
  private:
+  friend class ScriptMessageRequestImplBrowser;
   typedef std::vector<WebFrame *> ChildVector;
 
-  void AddChildFrame(WebFrame* frame);
-  void RemoveChildFrame(WebFrame* frame);
+  // ScriptMessageTarget
+  virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
+  virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const OVERRIDE;
+
+  void AddChild(WebFrame* frame);
+  void RemoveChild(WebFrame* frame);
+
+  void AddScriptMessageRequest(ScriptMessageRequestImplBrowser* req);
+  void RemoveScriptMessageRequest(ScriptMessageRequestImplBrowser* req);
 
   virtual void OnChildAdded(WebFrame* child);
   virtual void OnChildRemoved(WebFrame* child);
   virtual void OnURLChanged();
 
-  int64 id_;
+  content::FrameTreeNode* frame_tree_node_;
   GURL url_;
   ChildVector child_frames_;
   WebFrame* parent_;
   WebView* view_;
   int next_message_serial_;
-  bool destroyed_;
+  ScriptMessageRequestVector current_script_message_requests_;
   base::WeakPtrFactory<WebFrame> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);

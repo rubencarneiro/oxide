@@ -25,6 +25,7 @@
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "content/public/browser/browser_thread.h"
 #include "content/public/common/menu_item.h"
 #include "ui/gfx/rect.h"
 
@@ -92,7 +93,8 @@ void WebPopupMenu::Show(const gfx::Rect& bounds,
 }
 
 void WebPopupMenu::Hide() {
-  delete this;
+  content::BrowserThread::DeleteSoon(
+      content::BrowserThread::UI, FROM_HERE, this);
 }
 
 } // namespace qt

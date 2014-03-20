@@ -16,6 +16,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(OxideQtCommon)
+
 set(PLUGIN qmloxideplugin)
 set(PLUGIN_MODULE_NAME com/canonical/Oxide)
 
@@ -39,39 +41,49 @@ else()
   set(QT_INSTALL_QML "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/qt5/qml")
 endif()
 
+qt5_wrap_cpp(MOC_EXTRA
+             api/oxideqquickuserscript_p_p.h
+             api/oxideqquickwebcontext_p_p.h
+             api/oxideqquickwebcontextdelegateworker_p_p.h)
+
 set(PLUGIN_SRCS
     api/oxideqquickglobals.cc
-    api/oxideqquickmessagehandler.cc
     api/oxideqquicknavigationhistory.cc
-    api/oxideqquickoutgoingmessagerequest.cc
+    api/oxideqquickscriptmessage.cc
+    api/oxideqquickscriptmessagehandler.cc
+    api/oxideqquickscriptmessagerequest.cc
     api/oxideqquickuserscript.cc
     api/oxideqquickwebcontext.cc
+    api/oxideqquickwebcontextdelegateworker.cc
     api/oxideqquickwebframe.cc
     api/oxideqquickwebview.cc
+    api/oxidequseragentoverriderequest.cc
     oxide_qml_plugin.cc
     oxide_qquick_painted_render_view_node.cc
     oxide_qquick_render_view_item.cc
-    oxide_qquick_web_popup_menu_delegate.cc)
+    oxide_qquick_web_popup_menu_delegate.cc
+    ${MOC_EXTRA})
 
-include_directories(${CMAKE_SOURCE_DIR}
-                    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-                    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-                    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-
-if(NOT Qt5Quick_VERSION_STRING VERSION_LESS 5.2.0)
+if(OXIDE_ENABLE_COMPOSITING)
   list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_render_view_node.cc)
-  add_definitions(-DENABLE_COMPOSITING)
 endif()
 
 add_library(${PLUGIN} MODULE ${PLUGIN_SRCS})
-add_dependencies(${PLUGIN} gyp_postbuild)
+qt5_use_modules(${PLUGIN} Core Gui Qml Quick)
+if(OXIDE_ENABLE_COMPOSITING)
+  target_compile_definitions(${PLUGIN} PRIVATE -DENABLE_COMPOSITING)
+endif()
+target_include_directories(
+    ${PLUGIN} PRIVATE
+    ${CMAKE_SOURCE_DIR}
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
+target_link_libraries(${PLUGIN} OxideQtCore)
 set_target_properties(
     ${PLUGIN} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME})
-
-qt5_use_modules(${PLUGIN} Core Gui Qml Quick)
-target_link_libraries(${PLUGIN} OxideLib)
 
 add_custom_command(
     TARGET ${PLUGIN} POST_BUILD
@@ -83,3 +95,11 @@ add_custom_command(
 install(FILES ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir
         DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
 install(TARGETS ${PLUGIN} DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
+
+get_target_property(_PLUGIN_LOCATION ${PLUGIN} LOCATION)
+get_filename_component(_PLUGIN_NAME ${_PLUGIN_LOCATION} NAME)
+add_custom_target(stage-quick
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_PLUGIN_LOCATION}
+      ${OXIDE_STAGE_DIR}/${PLUGIN_MODULE_NAME}/${_PLUGIN_NAME}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir
+      ${OXIDE_STAGE_DIR}/${PLUGIN_MODULE_NAME}/qmldir)

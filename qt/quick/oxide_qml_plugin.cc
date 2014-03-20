@@ -21,14 +21,16 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
-#include "qt/core/api/oxideqincomingmessage.h"
 #include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
-#include "qt/quick/api/oxideqquickmessagehandler_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
-#include "qt/quick/api/oxideqquickoutgoingmessagerequest_p.h"
+#include "qt/quick/api/oxideqquickscriptmessage_p.h"
+#include "qt/quick/api/oxideqquickscriptmessagehandler_p.h"
+#include "qt/quick/api/oxideqquickscriptmessagerequest_p.h"
 #include "qt/quick/api/oxideqquickuserscript_p.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
+#include "qt/quick/api/oxideqquickwebcontextdelegateworker_p.h"
 #include "qt/quick/api/oxideqquickwebframe_p.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
@@ -36,8 +38,8 @@ QT_USE_NAMESPACE
 
 namespace {
 
-QObject* GlobalSettingsSingletonFactory(QQmlEngine* engine,
-                                        QJSEngine* script_engine) {
+QObject* GlobalSingletonFactory(QQmlEngine* engine,
+                                QJSEngine* script_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(script_engine);
 
@@ -54,21 +56,23 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide"));
 
     qmlRegisterSingletonType<OxideQQuickGlobals>(
-        uri, 0, 1, "OxideSettings", GlobalSettingsSingletonFactory);
-    qmlRegisterUncreatableType<OxideQIncomingMessage>(uri, 0, 1, "IncomingMessage",
-        "IncomingMessages are created automatically by Oxide");
+        uri, 0, 1, "Oxide", GlobalSingletonFactory);
+    qmlRegisterUncreatableType<OxideQQuickScriptMessage>(uri, 0, 1, "ScriptMessage",
+        "ScriptMessages are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQLoadEvent>(uri, 0, 1, "LoadEvent",
         "LoadEvent' are created automatically by Oxide");
-    qmlRegisterUncreatableType<OxideQQuickOutgoingMessageRequest>(uri, 0, 1, "OutgoingMessageRequest",
+    qmlRegisterUncreatableType<OxideQQuickScriptMessageRequest>(uri, 0, 1, "ScriptMessageRequest",
         "OutgoingMessageRequests are created automatically by WebFrame.sendMessage");
     qmlRegisterType<OxideQQuickUserScript>(uri, 0, 1, "UserScript");
-    qmlRegisterType<OxideQQuickMessageHandler>(uri, 0, 1, "MessageHandler");
+    qmlRegisterType<OxideQQuickScriptMessageHandler>(uri, 0, 1, "ScriptMessageHandler");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 0, 1, "WebFrame",
         "Frames are created automatically by Oxide to represent frames in the renderer");
     qmlRegisterType<OxideQQuickWebContext>(uri, 0, 1, "WebContext");
     qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 0, 1, "NavigationHistory",
         "Each WebView has a NavigationHistory automatically instantiated by Oxide");
+    qmlRegisterType<OxideQWebPreferences>(uri, 0, 1, "WebPreferences");
     qmlRegisterType<OxideQQuickWebView>(uri, 0, 1, "WebView");
+    qmlRegisterType<OxideQQuickWebContextDelegateWorker>(uri, 0, 1, "WebContextDelegateWorker");
   }
 };
 

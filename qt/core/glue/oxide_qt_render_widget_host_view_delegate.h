@@ -26,10 +26,12 @@
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
+class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QPixmap;
 class QScreen;
+class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
@@ -40,19 +42,15 @@ class RenderWidgetHost;
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostView;
+class RenderWidgetHostViewDelegatePrivate;
 
-class Q_DECL_EXPORT TextureInfo Q_DECL_FINAL {
+class Q_DECL_EXPORT TextureHandle {
  public:
-  TextureInfo(unsigned int id, const QSize& size_in_pixels);
-  ~TextureInfo();
+  TextureHandle() {}
+  virtual ~TextureHandle() {}
 
-  unsigned int id() const { return id_; }
-  QSize size_in_pixels() const { return size_in_pixels_; }
-
- private:
-  unsigned int id_;
-  QSize size_in_pixels_;
+  virtual unsigned int GetID() const = 0;
+  virtual QSize GetSize() const = 0;
 };
 
 class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
@@ -67,38 +65,37 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   virtual void Hide() = 0;
   virtual bool IsShowing() = 0;
 
-  virtual QRect GetViewBounds() = 0;
-  virtual QRect GetBoundsInRootWindow() = 0;
+  virtual QRect GetViewBoundsPix() = 0;
 
   virtual void SetSize(const QSize& size) = 0;
 
   virtual QScreen* GetScreen() = 0;
 
-  const QPixmap* GetBackingStore();
+  virtual void SetInputMethodEnabled(bool enabled) = 0;
+
+  virtual void SchedulePaintForRectPix(const QRect& rect) = 0;
+  virtual void ScheduleUpdate() = 0;
 
  protected:
   RenderWidgetHostViewDelegate();
 
-  void ForwardFocusEvent(QFocusEvent* event);
-  void ForwardKeyEvent(QKeyEvent* event);
-  void ForwardMouseEvent(QMouseEvent* event);
-  void ForwardWheelEvent(QWheelEvent* event);
+  void HandleFocusEvent(QFocusEvent* event);
+  void HandleKeyEvent(QKeyEvent* event);
+  void HandleMouseEvent(QMouseEvent* event);
+  void HandleWheelEvent(QWheelEvent* event);
+  void HandleInputMethodEvent(QInputMethodEvent* event);
+  void HandleTouchEvent(QTouchEvent* event);
 
-  TextureInfo GetFrontbufferTextureInfo();
+  TextureHandle* GetCurrentTextureHandle();
   void DidUpdate(bool skipped);
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
+  const QPixmap* GetBackingStore();
+
  private:
-  friend class RenderWidgetHostView;
-
-  virtual void SchedulePaint(const QRect& rect) = 0;
-  virtual void ScheduleUpdate() = 0;
-
-  RenderWidgetHostView* GetRenderWidgetHostView() const;
-  void SetRenderWidgetHostView(RenderWidgetHostView* rwhv);
-
-  RenderWidgetHostView* rwhv_;
+  friend class RenderWidgetHostViewDelegatePrivate;
+  QScopedPointer<RenderWidgetHostViewDelegatePrivate> priv;
 };
 
 } // namespace qt

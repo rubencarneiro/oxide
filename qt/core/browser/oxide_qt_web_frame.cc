@@ -22,56 +22,68 @@
 #include "base/logging.h"
 
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
-#include "qt/core/glue/private/oxide_qt_message_handler_adapter_p.h"
-#include "qt/core/glue/private/oxide_qt_outgoing_message_request_adapter_p.h"
-#include "qt/core/glue/private/oxide_qt_web_frame_adapter_p.h"
+#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
+#include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 
 namespace oxide {
 namespace qt {
 
-WebFrame::~WebFrame() {
-  delete adapterToQObject(adapter);
-  DCHECK(!adapter);
+namespace {
+const char kAdapterKey[] = "adapter";
+
+class AdapterData : public base::SupportsUserData::Data {
+ public:
+  AdapterData(WebFrameAdapter* adapter) :
+      adapter(adapter) {}
+
+  ~AdapterData() {
+    delete adapterToQObject(adapter);
+  }
+
+  WebFrameAdapter* adapter;
+};
+
+}
+
+WebFrame::~WebFrame() {}
+
+oxide::ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
+    size_t index) const {
+  ScriptMessageHandlerAdapter* handler = GetAdapter()->message_handlers().at(index);
+  return &ScriptMessageHandlerAdapterPrivate::get(handler)->handler;
+}
+
+size_t WebFrame::GetScriptMessageHandlerCount() const {
+  return GetAdapter()->message_handlers().size();
 }
 
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
-  adapterToQObject(static_cast<WebFrame *>(child)->adapter)->setParent(
-      adapterToQObject(adapter));
+  QObject* child_api = adapterToQObject(static_cast<WebFrame *>(child)->GetAdapter());
+  QObject* this_api = adapterToQObject(GetAdapter());
+
+  child_api->setParent(this_api);
 }
 
 void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
-  adapterToQObject(static_cast<WebFrame *>(child)->adapter)->setParent(NULL);
+  QObject* child_api = adapterToQObject(static_cast<WebFrame *>(child)->GetAdapter());
+
+  child_api->setParent(NULL);
 }
 
 void WebFrame::OnURLChanged() {
-  adapter->URLChanged();
+  GetAdapter()->URLChanged();
 }
 
-WebFrame::WebFrame(WebFrameAdapter* adapter) :
-    adapter(adapter) {
+WebFrame::WebFrame(WebFrameAdapter* adapter,
+                   content::FrameTreeNode* node,
+                   oxide::WebView* view) :
+    oxide::WebFrame(node, view) {
+  SetUserData(kAdapterKey, new AdapterData(adapter));
   WebFrameAdapterPrivate::get(adapter)->owner = this;
 }
 
-size_t WebFrame::GetMessageHandlerCount() const {
-  return adapter->message_handlers().size();
-}
-
-oxide::MessageHandler* WebFrame::GetMessageHandlerAt(
-    size_t index) const {
-  MessageHandlerAdapter* handler = adapter->message_handlers().at(index);
-  return &MessageHandlerAdapterPrivate::get(handler)->handler();
-}
-
-size_t WebFrame::GetOutgoingMessageRequestCount() const {
-  return WebFrameAdapterPrivate::get(
-      adapter)->outgoing_message_requests().size();
-}
-
-oxide::OutgoingMessageRequest* WebFrame::GetOutgoingMessageRequestAt(
-    size_t index) const {
-  OutgoingMessageRequestAdapter* req =
-      WebFrameAdapterPrivate::get(adapter)->outgoing_message_requests().at(index);
-  return &OutgoingMessageRequestAdapterPrivate::get(req)->request();
+WebFrameAdapter* WebFrame::GetAdapter() const {
+  return static_cast<AdapterData *>(GetUserData(kAdapterKey))->adapter;
 }
 
 } // namespace qt

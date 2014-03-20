@@ -18,6 +18,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/logging.h"
+#include "ui/events/ozone/event_factory_ozone.h"
 #include "ui/ozone/ozone_platform.h"
 
 #include "oxide_ozone_surface_factory.h"
@@ -34,7 +35,7 @@ class OzonePlatform : public ui::OzonePlatform {
   }
 
   ui::EventFactoryOzone* GetEventFactoryOzone() OVERRIDE {
-    return NULL;
+    return &event_factory_;
   }
 
   ui::InputMethodContextFactoryOzone*
@@ -42,8 +43,13 @@ class OzonePlatform : public ui::OzonePlatform {
     return NULL;
   }
 
+  ui::CursorFactoryOzone* GetCursorFactoryOzone() OVERRIDE {
+    return NULL;
+  }
+
  private:
   OzoneSurfaceFactory surface_factory_;
+  ui::EventFactoryOzone event_factory_;
 };
 
 } // namespace oxide

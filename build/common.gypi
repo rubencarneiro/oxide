@@ -16,14 +16,15 @@
 
 {
   'variables': {
+    'print_ld_stats%': 0,
     'disable_nacl': 1,
-    'linux_dump_symbols': 1,
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
     'linux_use_tcmalloc': 0,
     'sysroot': '',
     'use_aura': 1,
     'use_gconf': 0,
+    'use_gnome_keyring': 0,
     'use_ozone': 1,
     'ozone_platform': 'oxide',
     'external_ozone_platforms': [
@@ -36,22 +37,46 @@
       'conditions': [
         ['target_arch=="arm"', {
           'arm_neon': 0,
+          # Only really works correctly on Android, eg WebRtc_GetCPUFeaturesARM
+          # is missing on non-Android Linux
           'arm_neon_optional': 0,
         }],
       ],
     },
     'conditions': [
       ['arm_version==7', {
+        # Ubuntu-specific?
         'arm_float_abi': 'hard',
       }],
     ],
   },
   'target_defaults': {
     'cflags!': [
+      # Should remove this
       '-Werror',
     ],
     'ldflags': [
-      '-B<(PRODUCT_DIR)/../gold'
+      '-B<(PRODUCT_DIR)/../../../gold',
+    ],
+    'ldflags!': [
+      # Currently get a bunch of "warning: hidden symbol" warnings from harfbuzz with gold
+      '-Wl,--fatal-warnings',
+    ],
+    'conditions': [
+      ['print_ld_stats==1', {
+        'ldflags': [
+          '-Wl,--stats',
+        ],
+      }],
+      ['host_arch=="arm"', {
+        'ldflags': [
+          # Try to work around linker OOM - we only want these on native
+          # ARM builds though, hence the test for "host_arch"
+          '-Wl,--no-map-whole-files',
+          '-Wl,--no-keep-memory',
+          '-Wl,--no-keep-files-mapped',
+        ],
+      }],
     ],
   }
 }

@@ -23,6 +23,7 @@ namespace C {
 
 #include <dlfcn.h>
 #include <string>
+#include <vector>
 
 #include "base/base_paths.h"
 #include "base/command_line.h"
@@ -31,14 +32,18 @@ namespace C {
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/path_service.h"
+#include "cc/base/switches.h"
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "ui/gl/gl_implementation.h"
+#include "ui/gl/gl_surface.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 namespace oxide {
@@ -67,20 +72,100 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(CreateContentClient());
 
   CommandLine* command_line = CommandLine::ForCurrentProcess();
-
   std::string process_type =
       command_line->GetSwitchValueASCII(switches::kProcessType);
+
   if (process_type.empty()) {
+    // We need to override FILE_EXE in the browser process to the path of the
+    // renderer, as various bits of Chrome use this to find other resources
+    base::FilePath subprocess_exe;
+    const char* subprocess_path = getenv("OXIDE_SUBPROCESS_PATH");
+    if (subprocess_path) {
+      // Make sure that we have a properly formed absolute path
+      // there are some load issues if not.
+      subprocess_exe =
+          base::MakeAbsoluteFilePath(base::FilePath(subprocess_path));
+    } else {
+      subprocess_exe = base::FilePath(FILE_PATH_LITERAL(OXIDE_SUBPROCESS_PATH));
+      if (!subprocess_exe.IsAbsolute()) {
+        Dl_info info;
+        int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
+                        &info);
+        DCHECK_NE(rv, 0) << "Failed to determine module path";
+
+        base::FilePath subprocess_rel(subprocess_exe);
+        subprocess_exe = base::FilePath(info.dli_fname).DirName();
+
+        std::vector<base::FilePath::StringType> components;
+        subprocess_rel.GetComponents(&components);
+        for (size_t i = 0; i < components.size(); ++i) {
+          subprocess_exe = subprocess_exe.Append(components[i]);
+        }
+      }
+    }
+
+    PathService::Override(base::FILE_EXE, subprocess_exe);
+
+    // Pick the correct subprocess path
+    command_line->AppendSwitchASCII(switches::kBrowserSubprocessPath,
+                                    subprocess_exe.value().c_str());
+
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
+
+    command_line->AppendSwitch(switches::kDisableDelegatedRenderer);
+    command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
+
+    int flags = BrowserProcessMain::instance()->flags();
+
+    // We need both of this here to test compositing support. It's also needed
+    // to work around a mesa race - see https://launchpad.net/bugs/1267893
+    gfx::GLSurface::InitializeOneOff();
+
+    SharedGLContext* shared_gl_context =
+        BrowserProcessMain::instance()->shared_gl_context();
+    if (shared_gl_context &&
+        shared_gl_context->GetImplementation() == gfx::GetGLImplementation()) {
+      command_line->AppendSwitch(switches::kForceCompositingMode);
+      command_line->AppendSwitch(switches::kEnableThreadedCompositing);
+    } else {
+      command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
+      command_line->AppendSwitch(switches::kDisableForceCompositingMode);
+      command_line->AppendSwitch(switches::kDisableThreadedCompositing);
+
+      if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
+        flags &= ~BrowserProcessMain::ENABLE_VIEWPORT;
+        LOG(WARNING) <<
+          "Disabling viewport mode and pinch gestures, which do not work "
+          "correctly without compositing";
+      }
+    }
+
+    if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
+      command_line->AppendSwitch(switches::kEnableViewport);
+      command_line->AppendSwitch(switches::kEnableViewportMeta);
+      command_line->AppendSwitch(switches::kEnablePinch);
+      if (getenv("OXIDE_ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
+        command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
+      }
+    }
+    if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
+      command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
+    }
+
     const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
                                       renderer_cmd_prefix);
     }
-
     if (getenv("OXIDE_NO_SANDBOX")) {
       command_line->AppendSwitch(switches::kNoSandbox);
+    }
+    if (getenv("OXIDE_SINGLE_PROCESS")) {
+      LOG(WARNING) <<
+          "User scripts currently don't work correctly in single process "
+          "mode. See https://launchpad.net/bugs/1283291";
+      command_line->AppendSwitch(switches::kSingleProcess);
     }
   }
 
@@ -88,42 +173,18 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
-  base::FilePath resource_dir;
-  const char* resource_path = getenv("OXIDE_RESOURCE_PATH");
-  if (resource_path) {
-    // Make sure that we have a properly formed absolute path
-    // there are some load issues if not.
-    resource_dir = base::MakeAbsoluteFilePath(base::FilePath(resource_path));
-  } else {
-    Dl_info info;
-    int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::IsRunning),
-                    &info);
-    DCHECK_NE(rv, 0) << "Failed to determine module path";
-
-    resource_dir =
-        base::FilePath(info.dli_fname).DirName().Append(
-          FILE_PATH_LITERAL(OXIDE_RESOURCE_SUBPATH));
-  }
-
-  base::FilePath renderer =
-      resource_dir.Append(FILE_PATH_LITERAL(OXIDE_SUBPROCESS));
-
-  std::string process_type =
-      CommandLine::ForCurrentProcess()->
-        GetSwitchValueASCII(switches::kProcessType);
-  if (process_type.empty()) {
-    PathService::Override(base::FILE_EXE, renderer);
-  }
-
   // The locale passed here doesn't matter, as there aren't any
   // localized resources to load
   ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
 
+  base::FilePath dir_exe;
+  PathService::Get(base::DIR_EXE, &dir_exe);
+
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
-      resource_dir.Append(FILE_PATH_LITERAL("oxide.pak")),
+      dir_exe.Append(FILE_PATH_LITERAL("oxide.pak")),
       ui::SCALE_FACTOR_NONE);
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
-      resource_dir.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
+      dir_exe.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
       ui::SCALE_FACTOR_100P);
 
   // Ensure that the gettext translation catalog is mapped in memory
@@ -135,15 +196,23 @@ int ContentMainDelegate::RunProcess(
     const std::string& process_type,
     const content::MainFunctionParams& main_function_params) {
   if (process_type.empty()) {
-    return BrowserProcessMain::RunBrowserMain(main_function_params);
+    if (!BrowserProcessMain::Exists()) {
+      // We arrive here if some calls the renderer with no --process-type
+      LOG(ERROR) <<
+          "The Oxide renderer cannot be used to run a browser process";
+      return 1;
+    }
+
+    return BrowserProcessMain::instance()->RunBrowserMain(
+        main_function_params);
   }
 
   return -1;
 }
 
 void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
-  if (process_type.empty()) {
-    BrowserProcessMain::ShutdownBrowserMain();
+  if (process_type.empty() && BrowserProcessMain::Exists()) {
+    BrowserProcessMain::instance()->ShutdownBrowserMain();
   }
 }
 

@@ -33,7 +33,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
  GpuChannelManager::ImageOperation::~ImageOperation() {
  }
  
- GpuChannelManager::GpuChannelManager(ChildThread* gpu_child_thread,
+ GpuChannelManager::GpuChannelManager(MessageRouter* router,
                                       GpuWatchdog* watchdog,
                                       base::MessageLoopProxy* io_message_loop,
 -                                     base::WaitableEvent* shutdown_event)
@@ -42,17 +42,17 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
      : weak_factory_(this),
        io_message_loop_(io_message_loop),
        shutdown_event_(shutdown_event),
-       gpu_child_thread_(gpu_child_thread),
+       router_(router),
 +      share_group_(share_group),
        gpu_memory_manager_(
            this,
            GpuMemoryManager::kDefaultMaxSurfacesWithFrontbufferSoftLimit),
        watchdog_(watchdog),
        sync_point_manager_(new SyncPointManager) {
-   DCHECK(gpu_child_thread);
+   DCHECK(router_);
    DCHECK(io_message_loop);
    DCHECK(shutdown_event);
-@@ -117,16 +119,18 @@ void GpuChannelManager::OnEstablishChann
+@@ -115,16 +117,18 @@ void GpuChannelManager::OnEstablishChann
    IPC::ChannelHandle channel_handle;
  
    gfx::GLShareGroup* share_group = NULL;
@@ -74,13 +74,13 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
-@@ -60,17 +60,18 @@ class SyncPointManager;
- // IPC messages to the browser process IO thread on the GpuChannelManager's
- // behalf.
+@@ -53,17 +53,18 @@ class SyncPointManager;
+ // managing the lifetimes of GPU channels and forwarding IPC requests from the
+ // browser process to them based on the corresponding renderer ID.
  class GpuChannelManager : public IPC::Listener,
                            public IPC::Sender {
   public:
-   GpuChannelManager(ChildThread* gpu_child_thread,
+   GpuChannelManager(MessageRouter* router,
                      GpuWatchdog* watchdog,
                      base::MessageLoopProxy* io_message_loop,
 -                    base::WaitableEvent* shutdown_event);
@@ -94,7 +94,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    // Listener overrides.
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
-@@ -95,16 +96,18 @@ class GpuChannelManager : public IPC::Li
+@@ -88,16 +89,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
      return &gpu_devtools_events_dispatcher_;
    }
@@ -135,7 +135,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -47,38 +49,51 @@ GpuChildThread::GpuChildThread(GpuWatchd
+@@ -47,41 +49,54 @@ GpuChildThread::GpuChildThread(GpuWatchd
      : dead_on_arrival_(dead_on_arrival),
        gpu_info_(gpu_info),
        deferred_messages_(deferred_messages),
@@ -163,11 +163,14 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    DCHECK(
        CommandLine::ForCurrentProcess()->HasSwitch(switches::kSingleProcess) ||
        CommandLine::ForCurrentProcess()->HasSwitch(switches::kInProcessGPU));
+ #if !defined(OS_ANDROID)
    // For single process and in-process GPU mode, we need to load and
    // initialize the GL implementation and locate the GL entry points here.
-   if (!gfx::GLSurface::InitializeOneOff()) {
-     VLOG(1) << "gfx::GLSurface::InitializeOneOff()";
-   }
+   // On Android, GLSurface::InitializeOneOff() is called from BrowserMainLoop
+   // before getting here. crbug.com/326295
+   if (!gfx::GLSurface::InitializeOneOff())
+     VLOG(1) << "gfx::GLSurface::InitializeOneOff failed";
+ #endif
 +  DCHECK(!g_instance);
 +  g_instance = this;
    g_thread_safe_sender.Get() = thread_safe_sender();
@@ -189,13 +192,13 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -145,17 +160,18 @@ void GpuChildThread::OnInitialize() {
+@@ -148,17 +163,18 @@ void GpuChildThread::OnInitialize() {
  
    // Defer creation of the render thread. This is to prevent it from handling
    // IPC messages before the sandbox has been enabled and all other necessary
    // initialization has succeeded.
    gpu_channel_manager_.reset(
-       new GpuChannelManager(this,
+       new GpuChannelManager(GetRouter(),
                              watchdog_thread_.get(),
                              ChildProcess::current()->io_message_loop_proxy(),
 -                            ChildProcess::current()->GetShutDownEvent()));
@@ -373,27 +376,29 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -308,9 +308,11 @@ bool ContentBrowserClient::IsPluginAllow
-     const GURL& url) {
+@@ -310,9 +310,13 @@ bool ContentBrowserClient::IsPluginAllow
    return false;
  }
  
- bool ContentBrowserClient::IsPluginAllowedToUseDevChannelAPIs() {
-   return false;
+ net::CookieStore* ContentBrowserClient::OverrideCookieStoreForRenderProcess(
+     int render_process_id) {
+   return NULL;
  }
  
-+gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {}
++gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
++  return NULL;
++}
 +
  }  // namespace content
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -41,16 +41,17 @@ struct WebWindowFeatures;
+@@ -43,16 +43,17 @@ class DictionaryValue;
+ class FilePath;
  }
  
- namespace base {
- class DictionaryValue;
- class FilePath;
+ namespace blink {
+ struct WebWindowFeatures;
  }
  
  namespace gfx {
@@ -403,18 +408,18 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  
  namespace net {
  class CookieOptions;
+ class CookieStore;
  class HttpNetworkSession;
  class NetLog;
- class SSLCertRequestInfo;
-@@ -609,13 +610,15 @@ class CONTENT_EXPORT ContentBrowserClien
-   // Returns true if plugin referred to by the url can use
-   // pp::FileIO::RequestOSFileHandle.
-   virtual bool IsPluginAllowedToCallRequestOSFileHandle(
-       content::BrowserContext* browser_context,
-       const GURL& url);
- 
+@@ -630,13 +631,15 @@ class CONTENT_EXPORT ContentBrowserClien
    // Returns true if dev channel APIs are available for plugins.
    virtual bool IsPluginAllowedToUseDevChannelAPIs();
+ 
+   // Returns a special cookie store to use for a given render process, or NULL
+   // if the default cookie store should be used
+   // This is called on the IO thread.
+   virtual net::CookieStore* OverrideCookieStoreForRenderProcess(
+       int render_process_id_);
 +
 +  virtual gfx::GLShareGroup* GetGLShareGroup();
  };

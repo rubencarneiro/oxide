@@ -18,7 +18,6 @@
 #ifndef _OXIDE_SHARED_RENDERER_USER_SCRIPT_SLAVE_H_
 #define _OXIDE_SHARED_RENDERER_USER_SCRIPT_SLAVE_H_
 
-#include <string>
 #include <vector>
 
 #include "base/basictypes.h"
@@ -28,6 +27,8 @@
 #include "content/public/renderer/render_process_observer.h"
 
 #include "shared/common/oxide_user_script.h"
+
+class GURL;
 
 namespace blink {
 class WebFrame;
@@ -52,7 +53,7 @@ class UserScriptSlave FINAL : public content::RenderProcessObserver {
                      UserScript::RunLocation location);
 
  private:
-  static int GetIsolatedWorldID(const std::string& name,
+  static int GetIsolatedWorldID(const GURL& url,
                                 blink::WebFrame* frame);
   void OnUpdateUserScripts(base::SharedMemoryHandle handle);
 

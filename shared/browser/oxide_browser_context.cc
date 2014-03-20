@@ -22,6 +22,7 @@
 #include "base/files/file_path.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/supports_user_data.h"
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
@@ -30,6 +31,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
+#include "net/base/net_errors.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/ftp/ftp_network_layer.h"
 #include "net/http/http_cache.h"
@@ -42,14 +44,20 @@
 #include "net/url_request/data_protocol_handler.h"
 #include "net/url_request/file_protocol_handler.h"
 #include "net/url_request/ftp_protocol_handler.h"
+#include "net/url_request/protocol_intercept_job_factory.h"
 #include "net/url_request/url_request_job_factory_impl.h"
 
 #include "shared/common/oxide_constants.h"
 
 #include "oxide_browser_context_impl.h"
+#include "oxide_browser_context_delegate.h"
+#include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread_delegate.h"
+#include "oxide_network_delegate.h"
 #include "oxide_off_the_record_browser_context_impl.h"
+#include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
 
 namespace oxide {
@@ -58,124 +66,18 @@ namespace {
 
 base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
 
-class DefaultURLRequestContext FINAL : public URLRequestContext {
+const char kBrowserContextKey[] = "oxide_browser_context_data";
+
+class ContextData : public base::SupportsUserData::Data {
  public:
-  DefaultURLRequestContext() :
-      storage_(this) {}
+  ContextData(BrowserContextIOData* context) :
+      context_(context) {}
+  virtual ~ContextData() {}
 
-  class Storage FINAL {
-   public:
-    Storage(DefaultURLRequestContext* owner) :
-        owner_(owner) {}
-
-    void set_net_log(net::NetLog* net_log) {
-      owner_->set_net_log(net_log);
-    }
-
-    void set_host_resolver(net::HostResolver* host_resolver) {
-      owner_->set_host_resolver(host_resolver);
-    }
-
-    void set_cert_verifier(net::CertVerifier* cert_verifier) {
-      owner_->set_cert_verifier(cert_verifier);
-    }
-
-    void set_server_bound_cert_service(
-        net::ServerBoundCertService* server_bound_cert_service) {
-      server_bound_cert_service_.reset(server_bound_cert_service);
-      owner_->set_server_bound_cert_service(server_bound_cert_service);
-    }
-
-    void set_fraudulent_certificate_reporter(
-        net::FraudulentCertificateReporter* fraudulent_certificate_reporter) {
-      owner_->set_fraudulent_certificate_reporter(
-          fraudulent_certificate_reporter);
-    }
-
-    void set_http_auth_handler_factory(
-        net::HttpAuthHandlerFactory* http_auth_handler_factory) {
-      owner_->set_http_auth_handler_factory(http_auth_handler_factory);
-    }
-
-    void set_proxy_service(net::ProxyService* proxy_service) {
-      owner_->set_proxy_service(proxy_service);
-    }
-
-    void set_ssl_config_service(net::SSLConfigService* ssl_config_service) {
-      owner_->set_ssl_config_service(ssl_config_service);
-    }
-
-    void set_network_delegate(net::NetworkDelegate* network_delegate) {
-      owner_->set_network_delegate(network_delegate);
-    }
-
-    void set_http_server_properties(
-        net::HttpServerProperties* http_server_properties) {
-      http_server_properties_.reset(http_server_properties);
-      owner_->set_http_server_properties(http_server_properties->GetWeakPtr());
-    }
-
-    void set_http_user_agent_settings(
-        net::HttpUserAgentSettings* http_user_agent_settings) {
-      owner_->set_http_user_agent_settings(http_user_agent_settings);
-    }
-
-    void set_cookie_store(net::CookieStore* cookie_store) {
-      // We hold a strong reference to this, but net::URLRequestContext
-      // already has a scoped_refptr
-      owner_->set_cookie_store(cookie_store);
-    }
-
-    void set_transport_security_state(
-        net::TransportSecurityState* transport_security_state) {
-      transport_security_state_.reset(transport_security_state);
-      owner_->set_transport_security_state(transport_security_state);
-    }
-
-    void set_http_transaction_factory(
-        net::HttpTransactionFactory* http_transaction_factory) {
-      http_transaction_factory_.reset(http_transaction_factory);
-      owner_->set_http_transaction_factory(http_transaction_factory);
-    }
-
-    void set_job_factory(net::URLRequestJobFactory* job_factory) {
-      job_factory_.reset(job_factory);
-      owner_->set_job_factory(job_factory);
-    }
-
-    void set_throttler_manager(
-        net::URLRequestThrottlerManager* throttler_manager) {
-      owner_->set_throttler_manager(throttler_manager);
-    }
-
-    net::FtpTransactionFactory* ftp_transaction_factory() const {
-      return ftp_transaction_factory_.get();
-    }
-
-    void set_ftp_transaction_factory(
-        net::FtpTransactionFactory* ftp_transaction_factory) {
-      ftp_transaction_factory_.reset(ftp_transaction_factory);
-    }
-
-   private:
-    DefaultURLRequestContext* owner_;
-
-    // This needs to outlive job_factory_
-    scoped_ptr<net::FtpTransactionFactory> ftp_transaction_factory_;
-
-    scoped_ptr<net::ServerBoundCertService> server_bound_cert_service_;
-    scoped_ptr<net::HttpServerProperties> http_server_properties_;
-    scoped_ptr<net::TransportSecurityState> transport_security_state_;
-    scoped_ptr<net::HttpTransactionFactory> http_transaction_factory_;
-    scoped_ptr<net::URLRequestJobFactory> job_factory_;
-  };
-
-  Storage* storage() { return &storage_; }
+  BrowserContextIOData* context() const { return context_; }
 
  private:
-  Storage storage_;
-
-  DISALLOW_COPY_AND_ASSIGN(DefaultURLRequestContext);
+  BrowserContextIOData* context_;
 };
 
 } // namespace
@@ -186,7 +88,7 @@ class ResourceContext FINAL : public content::ResourceContext {
       request_context_(NULL) {}
 
   net::HostResolver* GetHostResolver() FINAL {
-    return BrowserProcessMain::io_thread_delegate()->host_resolver();
+    return BrowserProcessMain::instance()->io_thread_delegate()->host_resolver();
   }
 
   net::URLRequestContext* GetRequestContext() FINAL {
@@ -210,69 +112,116 @@ class ResourceContext FINAL : public content::ResourceContext {
   DISALLOW_COPY_AND_ASSIGN(ResourceContext);
 };
 
+// static
+void BrowserContextDelegateTraits::Destruct(const BrowserContextDelegate* x) {
+  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    delete x;
+    return;
+  }
+
+  if (!content::BrowserThread::DeleteSoon(content::BrowserThread::UI,
+                                          FROM_HERE, x)) {
+    LOG(ERROR) <<
+        "BrowserContextDelegate won't be deleted. This could be due to it "
+        "being leaked until after Chromium shutdown has begun";
+  }
+}
+
+void BrowserContextIOData::SetDelegate(BrowserContextDelegate* delegate) {
+  base::AutoLock lock(delegate_lock_);
+  delegate_ = delegate;
+}
+
+void BrowserContextIOData::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
+  base::AutoLock lock(cookie_policy_lock_);
+  cookie_policy_.set_type(policy);
+}
+
 BrowserContextIOData::BrowserContextIOData() :
     initialized_(false),
-    resource_context_(new ResourceContext()) {}
+    cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+    resource_context_(new ResourceContext()) {
+  resource_context_->SetUserData(kBrowserContextKey, new ContextData(this));
+}
 
 BrowserContextIOData::~BrowserContextIOData() {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
 }
 
+// static
+BrowserContextIOData* BrowserContextIOData::FromResourceContext(
+    content::ResourceContext* resource_context) {
+  return static_cast<ContextData *>(
+      resource_context->GetUserData(kBrowserContextKey))->context();
+}
+
+scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
+  base::AutoLock lock(delegate_lock_);
+  return delegate_;
+}
+
+net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
+  return cookie_policy_.type();
+}
+
 void BrowserContextIOData::Init(
-    content::ProtocolHandlerMap& protocol_handlers) {
+    content::ProtocolHandlerMap& protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
   DCHECK(!initialized_);
 
   initialized_ = true;
 
-  DefaultURLRequestContext* context = new DefaultURLRequestContext();
-
   IOThreadDelegate* io_thread_delegate =
-      BrowserProcessMain::io_thread_delegate();
+      BrowserProcessMain::instance()->io_thread_delegate();
 
-  context->storage()->set_net_log(io_thread_delegate->net_log());
-  context->storage()->set_host_resolver(
-      io_thread_delegate->host_resolver());
-  context->storage()->set_cert_verifier(
-      io_thread_delegate->cert_verifier());
-  context->storage()->set_http_auth_handler_factory(
-      io_thread_delegate->http_auth_handler_factory());
-  context->storage()->set_proxy_service(
-      io_thread_delegate->proxy_service());
-  context->storage()->set_ssl_config_service(ssl_config_service());
-  context->storage()->set_network_delegate(
-      io_thread_delegate->network_delegate());
-  context->storage()->set_http_user_agent_settings(http_user_agent_settings());
-  context->storage()->set_throttler_manager(
-      io_thread_delegate->throttler_manager());
-
-  // TODO: We want persistent storage here (for non-incognito), but 
-  //       SQLiteServerBoundCertStore is part of chrome
-  context->storage()->set_server_bound_cert_service(
-      new net::ServerBoundCertService(
-          new net::DefaultServerBoundCertStore(NULL),
-          base::WorkerPool::GetTaskRunner(true)));
+  ssl_config_service_ = new SSLConfigService();
+  http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
+  ftp_transaction_factory_.reset(
+      new net::FtpNetworkLayer(io_thread_delegate->host_resolver()));
+  network_delegate_.reset(new NetworkDelegate(this));
 
   // TODO: We want persistent storage here (for non-incognito), but the
   //       persistent implementation used in Chrome uses the preferences
   //       system, which we don't want. We need our own implementation,
   //       backed either by sqlite or a text file
-  context->storage()->set_http_server_properties(
-      new net::HttpServerPropertiesImpl());
+  http_server_properties_.reset(new net::HttpServerPropertiesImpl());
+
+  URLRequestContext* context = new URLRequestContext();
+  net::URLRequestContextStorage* storage = context->storage();
+
+  context->set_net_log(io_thread_delegate->net_log());
+  context->set_host_resolver(io_thread_delegate->host_resolver());
+  context->set_cert_verifier(io_thread_delegate->cert_verifier());
+  context->set_http_auth_handler_factory(
+      io_thread_delegate->http_auth_handler_factory());
+  context->set_proxy_service(io_thread_delegate->proxy_service());
+  storage->set_ssl_config_service(ssl_config_service_.get());
+  context->set_network_delegate(network_delegate_.get());
+  context->set_http_user_agent_settings(http_user_agent_settings_.get());
+  context->set_throttler_manager(io_thread_delegate->throttler_manager());
+
+  // TODO: We want persistent storage here (for non-incognito), but 
+  //       SQLiteServerBoundCertStore is part of chrome
+  storage->set_server_bound_cert_service(
+      new net::ServerBoundCertService(
+          new net::DefaultServerBoundCertStore(NULL),
+          base::WorkerPool::GetTaskRunner(true)));
+
+  context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
   base::FilePath cookie_path;
   if (!IsOffTheRecord()) {
     DCHECK(!GetPath().empty());
     cookie_path = GetPath().Append(kCookiesFilename);
   }
-  context->storage()->set_cookie_store(content::CreateCookieStore(
+  storage->set_cookie_store(content::CreateCookieStore(
       content::CookieStoreConfig(
         cookie_path,
         content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
         NULL, NULL)));
 
-  context->storage()->set_transport_security_state(
-      new net::TransportSecurityState());
+  storage->set_transport_security_state(new net::TransportSecurityState());
   // TODO: Need to implement net::TransportSecurityState::Delegate in order
   //       to have persistence for non-incognito mode. There is an
   //       implementation in Chrome which is backed by a json file
@@ -286,7 +235,7 @@ void BrowserContextIOData::Init(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          0, // Use the default max size
+          83886080, // XXX: 80MB - Make this configurable
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }
@@ -307,12 +256,11 @@ void BrowserContextIOData::Init(
       context->http_server_properties();
   session_params.net_log = context->net_log();
 
-  context->storage()->set_http_transaction_factory(
+  storage->set_http_transaction_factory(
       new net::HttpCache(session_params, cache_backend));
 
-  net::URLRequestJobFactoryImpl* job_factory =
-      new net::URLRequestJobFactoryImpl();
-  context->storage()->set_job_factory(job_factory);
+  scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
+      new net::URLRequestJobFactoryImpl());
 
   bool set_protocol = false;
   for (content::ProtocolHandlerMap::iterator it = protocol_handlers.begin();
@@ -322,6 +270,7 @@ void BrowserContextIOData::Init(
                                                    it->second.release());
     DCHECK(set_protocol);
   }
+  protocol_handlers.clear();
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFileScheme,
@@ -333,16 +282,27 @@ void BrowserContextIOData::Init(
       oxide::kDataScheme, new net::DataProtocolHandler());
   DCHECK(set_protocol);
 
-  context->storage()->set_ftp_transaction_factory(
-      new net::FtpNetworkLayer(context->host_resolver()));
   set_protocol = job_factory->SetProtocolHandler(
-      oxide::kFtpScheme, new net::FtpProtocolHandler(
-          context->storage()->ftp_transaction_factory()));
+      oxide::kFtpScheme,
+      new net::FtpProtocolHandler(ftp_transaction_factory_.get()));
   DCHECK(set_protocol);
+
+  scoped_ptr<net::URLRequestJobFactory> top_job_factory(
+      job_factory.PassAs<net::URLRequestJobFactory>());
+
+  for (content::ProtocolHandlerScopedVector::reverse_iterator it =
+         protocol_interceptors.rbegin();
+       it != protocol_interceptors.rend();
+       ++it) {
+    top_job_factory.reset(new net::ProtocolInterceptJobFactory(
+        top_job_factory.Pass(), make_scoped_ptr(*it)));
+  }
+  protocol_interceptors.weak_clear();
+
+  storage->set_job_factory(top_job_factory.release());
 
   main_request_context_.reset(context);
   resource_context_->request_context_ = context;
-  protocol_handlers.clear();
 }
 
 URLRequestContext* BrowserContextIOData::GetMainRequestContext() {
@@ -355,120 +315,32 @@ content::ResourceContext* BrowserContextIOData::GetResourceContext() {
   return resource_context_.get();
 }
 
+bool BrowserContextIOData::CanAccessCookies(const GURL& url,
+                                            const GURL& first_party_url,
+                                            bool write) {
+  scoped_refptr<BrowserContextDelegate> delegate(GetDelegate());
+  if (delegate) {
+    StoragePermission res =
+        delegate->CanAccessStorage(url, first_party_url, write,
+                                   STORAGE_TYPE_COOKIES);
+    if (res != STORAGE_PERMISSION_UNDEFINED) {
+      return res == STORAGE_PERMISSION_ALLOW;
+    }
+  }
+
+  base::AutoLock lock(cookie_policy_lock_);
+  if (write) {
+    return cookie_policy_.CanSetCookie(url, first_party_url) == net::OK;
+  }
+
+  return cookie_policy_.CanGetCookies(url, first_party_url) == net::OK;
+}
+
 BrowserContext::IODataHandle::~IODataHandle() {
   // Schedule this to be destroyed on the IO thread
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
                                      FROM_HERE, io_data_);
   io_data_ = NULL;
-}
-
-BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
-    io_data_(io_data) {
-  CHECK(BrowserProcessMain::IsRunning()) <<
-      "The main browser process components must be started before " <<
-      "creating a context";
-
-  g_all_contexts.Get().push_back(this);
-
-  content::BrowserContext::EnsureResourceContextInitialized(this);
-}
-
-BrowserContext::~BrowserContext() {
-  CHECK_EQ(web_views_.size(), static_cast<size_t>(0)) <<
-      "The BrowserContext was deleted whilst it is still in use by "
-      "one or more WebViews";
-
-  std::vector<BrowserContext *>::iterator it;
-  for (std::vector<BrowserContext *>::iterator it = g_all_contexts.Get().begin();
-       it != g_all_contexts.Get().end(); ++it) {
-    if (*it == this) {
-      g_all_contexts.Get().erase(it);
-      break;
-    }
-  }
-}
-
-// static
-BrowserContext* BrowserContext::Create(const base::FilePath& path,
-                                       const base::FilePath& cache_path) {
-  return new BrowserContextImpl(path, cache_path);
-}
-
-// static
-std::vector<BrowserContext *>& BrowserContext::GetAllContexts() {
-  return g_all_contexts.Get();
-}
-
-// static
-void BrowserContext::AssertNoContextsExist() {
-  CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
-}
-
-net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
-    content::ProtocolHandlerMap* protocol_handlers) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-  DCHECK(!main_request_context_getter_);
-
-  main_request_context_getter_ =
-      URLRequestContextGetter::CreateMain(protocol_handlers, io_data());
-
-  return main_request_context_getter_;
-}
-
-bool BrowserContext::IsOffTheRecord() const {
-  return io_data_.IsOffTheRecord();
-}
-
-bool BrowserContext::IsSameContext(BrowserContext* other) const {
-  return other->GetOriginalContext() == this ||
-         other->GetOffTheRecordContext() == this;
-}
-
-base::FilePath BrowserContext::GetPath() const {
-  return io_data_.GetPath();
-}
-
-base::FilePath BrowserContext::GetCachePath() const {
-  return io_data_.GetCachePath();
-}
-
-std::string BrowserContext::GetAcceptLangs() const {
-  return io_data_.GetAcceptLangs();
-}
-
-void BrowserContext::SetAcceptLangs(const std::string& langs) {
-  io_data_.SetAcceptLangs(langs);
-}
-
-std::string BrowserContext::GetProduct() const {
-  return io_data_.GetProduct();
-}
-
-void BrowserContext::SetProduct(const std::string& product) {
-  io_data_.SetProduct(product);
-}
-
-std::string BrowserContext::GetUserAgent() const {
-  return io_data_.GetUserAgent();
-}
-
-void BrowserContext::SetUserAgent(const std::string& user_agent) {
-  io_data_.SetUserAgent(user_agent);
-}
-
-void BrowserContext::AddWebView(WebView* wv) {
-  web_views_.push_back(wv);
-}
-
-void BrowserContext::RemoveWebView(WebView* wv) {
-  std::vector<WebView *>::iterator it;
-  for (std::vector<WebView *>::iterator it = web_views_.begin();
-       it != web_views_.end(); ++it) {
-    if (*it == wv) {
-      web_views_.erase(it);
-      break;
-    }
-  }
 }
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
@@ -506,16 +378,16 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
   return NULL;
 }
 
-void BrowserContext::RequestMIDISysExPermission(
+void BrowserContext::RequestMidiSysExPermission(
     int render_process_id,
     int render_view_id,
     int bridge_id,
     const GURL& requesting_frame,
-    const MIDISysExPermissionCallback& callback) {
+    const MidiSysExPermissionCallback& callback) {
   callback.Run(false);
 }
 
-void BrowserContext::CancelMIDISysExPermissionRequest(
+void BrowserContext::CancelMidiSysExPermissionRequest(
     int render_process_id,
     int render_view_id,
     int bridge_id,
@@ -534,10 +406,6 @@ void BrowserContext::RequestProtectedMediaIdentifierPermission(
 void BrowserContext::CancelProtectedMediaIdentifierPermissionRequests(
     int group_id) {}
 
-content::ResourceContext* BrowserContext::GetResourceContext() {
-  return io_data_.GetResourceContext();
-}
-
 content::DownloadManagerDelegate*
     BrowserContext::GetDownloadManagerDelegate() {
   return NULL;
@@ -550,6 +418,122 @@ content::GeolocationPermissionContext*
 
 quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
   return NULL;
+}
+
+void BrowserContext::AddObserver(BrowserContextObserver* observer) {
+  observers_.AddObserver(observer);
+}
+
+void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
+  observers_.RemoveObserver(observer);
+}
+
+BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
+    io_data_handle_(io_data) {
+  CHECK(BrowserProcessMain::Exists()) <<
+      "The main browser process components must be started before " <<
+      "creating a context";
+
+  g_all_contexts.Get().push_back(this);
+
+  content::BrowserContext::EnsureResourceContextInitialized(this);
+}
+
+void BrowserContext::OnUserAgentChanged() {
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyUserAgentStringChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyUserAgentStringChanged());
+}
+
+BrowserContext::~BrowserContext() {
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    observers_,
+                    OnBrowserContextDestruction());
+
+  std::vector<BrowserContext *>::iterator it;
+  for (std::vector<BrowserContext *>::iterator it = g_all_contexts.Get().begin();
+       it != g_all_contexts.Get().end(); ++it) {
+    if (*it == this) {
+      g_all_contexts.Get().erase(it);
+      break;
+    }
+  }
+}
+
+// static
+BrowserContext* BrowserContext::Create(const base::FilePath& path,
+                                       const base::FilePath& cache_path) {
+  return new BrowserContextImpl(path, cache_path);
+}
+
+// static
+std::vector<BrowserContext *>& BrowserContext::GetAllContexts() {
+  return g_all_contexts.Get();
+}
+
+// static
+void BrowserContext::AssertNoContextsExist() {
+  CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
+}
+
+net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  DCHECK(!main_request_context_getter_);
+
+  main_request_context_getter_ =
+      URLRequestContextGetter::CreateMain(io_data(),
+                                          protocol_handlers,
+                                          protocol_interceptors.Pass());
+
+  return main_request_context_getter_;
+}
+
+void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {
+  GetOriginalContext()->io_data()->SetDelegate(delegate);
+  GetOffTheRecordContext()->io_data()->SetDelegate(delegate);
+}
+
+bool BrowserContext::IsOffTheRecord() const {
+  return io_data()->IsOffTheRecord();
+}
+
+bool BrowserContext::IsSameContext(BrowserContext* other) const {
+  return other->GetOriginalContext() == this ||
+         other->GetOffTheRecordContext() == this;
+}
+
+base::FilePath BrowserContext::GetPath() const {
+  return io_data()->GetPath();
+}
+
+base::FilePath BrowserContext::GetCachePath() const {
+  return io_data()->GetCachePath();
+}
+
+std::string BrowserContext::GetAcceptLangs() const {
+  return io_data()->GetAcceptLangs();
+}
+
+std::string BrowserContext::GetUserAgent() const {
+  return io_data()->GetUserAgent();
+}
+
+net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
+  return io_data()->GetCookiePolicy();
+}
+
+void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
+  GetOriginalContext()->io_data()->SetCookiePolicy(policy);
+  GetOffTheRecordContext()->io_data()->SetCookiePolicy(policy);
+}
+
+content::ResourceContext* BrowserContext::GetResourceContext() {
+  return io_data()->GetResourceContext();
 }
 
 } // namespace oxide

@@ -18,12 +18,17 @@
 #ifndef _OXIDE_QT_QUICK_API_USER_SCRIPT_P_P_H_
 #define _OXIDE_QT_QUICK_API_USER_SCRIPT_P_P_H_
 
+#include <QObject>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_user_script_adapter.h"
 
+#include "qt/quick/api/oxideqquickuserscript_p.h"
+
 class OxideQQuickUserScriptPrivate Q_DECL_FINAL :
+    public QObject,
     public oxide::qt::UserScriptAdapter {
+  Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickUserScript)
 
  public:
@@ -31,14 +36,15 @@ class OxideQQuickUserScriptPrivate Q_DECL_FINAL :
 
   static OxideQQuickUserScriptPrivate* get(OxideQQuickUserScript* user_script);
 
+ Q_SIGNALS:
+  void willBeDeleted();
+
  private:
   // To map this back to public object
   friend class OxideQQuickWebContextPrivate;
 
   void OnScriptLoadFailed() Q_DECL_FINAL;
   void OnScriptLoaded() Q_DECL_FINAL;
-
-  OxideQQuickUserScript* q_ptr;
 
   Q_DISABLE_COPY(OxideQQuickUserScriptPrivate);
 };

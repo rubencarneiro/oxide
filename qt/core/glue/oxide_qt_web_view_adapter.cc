@@ -17,20 +17,26 @@
 
 #include "oxide_qt_web_view_adapter.h"
 
+#include "base/logging.h"
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
 
+#include "qt/core/api/oxideqwebpreferences.h"
+#include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
-#include "qt/core/glue/private/oxide_qt_web_context_adapter_p.h"
 #include "qt/core/glue/private/oxide_qt_web_view_adapter_p.h"
 
+#include "oxide_qt_web_context_adapter_p.h"
 #include "oxide_qt_web_frame_adapter.h"
 
 namespace oxide {
 namespace qt {
 
-WebViewAdapter::WebViewAdapter() :
-    priv(WebViewAdapterPrivate::Create(this)) {}
+WebViewAdapter::WebViewAdapter(QObject* q) :
+    AdapterBase(q),
+    priv(WebViewAdapterPrivate::Create(this)) {
+  setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
+}
 
 WebViewAdapter::~WebViewAdapter() {}
 
@@ -87,7 +93,7 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
     return NULL;
   }
 
-  return frame->adapter;
+  return frame->GetAdapter();
 }
 
 void WebViewAdapter::updateSize(const QSize& size) {
@@ -118,12 +124,8 @@ void WebViewAdapter::reload() {
   priv->Reload();
 }
 
-void WebViewAdapter::shutdown() {
-  priv->Shutdown();
-}
-
 bool WebViewAdapter::isInitialized() {
-  return priv->web_contents() != NULL;
+  return priv->GetWebContents() != NULL;
 }
 
 int WebViewAdapter::getNavigationEntryCount() const {
@@ -152,6 +154,47 @@ QString WebViewAdapter::getNavigationEntryTitle(int index) const {
 
 QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
   return QDateTime::fromMSecsSinceEpoch(priv->GetNavigationEntryTimestamp(index).ToJsTime());
+}
+
+OxideQWebPreferences* WebViewAdapter::preferences() {
+  if (!priv->GetWebPreferences()) {
+    setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
+  }
+  return static_cast<WebPreferences *>(priv->GetWebPreferences())->api_handle();
+}
+
+void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
+  OxideQWebPreferences* old = NULL;
+  if (WebPreferences* o =
+      static_cast<WebPreferences *>(priv->GetWebPreferences())) {
+    old = o->api_handle();
+  }
+
+  if (!prefs) {
+    prefs = new OxideQWebPreferences(adapterToQObject(this));
+  }
+  if (!prefs->parent()) {
+    prefs->setParent(adapterToQObject(this));
+  }
+  priv->SetWebPreferences(
+      &OxideQWebPreferencesPrivate::get(prefs)->preferences);
+
+  if (!old) {
+    return;
+  }
+
+  if (!OxideQWebPreferencesPrivate::get(old)->in_destructor() &&
+      old->parent() == adapterToQObject(this)) {
+    delete old;
+  }
+}
+
+void WebViewAdapter::WebPreferencesChanged() {
+  if (!priv->GetWebPreferences()) {
+    setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
+  } else if (isInitialized()) {
+    OnWebPreferencesChanged();
+  }
 }
 
 } // namespace qt

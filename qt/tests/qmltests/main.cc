@@ -20,7 +20,7 @@
 #include <QString>
 #include <QtQuickTest/quicktest.h>
 #include <QtQuickVersion>
-#if QTQUICK_VERSION >= 0x050200
+#if defined(ENABLE_COMPOSITING)
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
 
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 
   QGuiApplication app(filtered_argc, filtered_argv);
 
-#if QTQUICK_VERSION >= 0x050200
+#if defined(ENABLE_COMPOSITING)
   QOpenGLContext context;
   context.create();
   QSGContext::setSharedOpenGLContext(&context);

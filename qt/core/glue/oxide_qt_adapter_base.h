@@ -21,9 +21,6 @@
 #include <QObject>
 #include <QtGlobal>
 
-#define OXIDE_QT_DECLARE_ADAPTER \
-  QObject* _q_func() const { return reinterpret_cast<QObject *>(q_ptr); }
-
 namespace oxide {
 namespace qt {
 
@@ -31,7 +28,16 @@ class AdapterBase {
  public:
   virtual ~AdapterBase() {}
 
-  virtual QObject* _q_func() const = 0;
+  QObject* api_handle() { return q_ptr; }
+
+ protected:
+  AdapterBase(QObject* q) :
+      q_ptr(q) {
+    Q_ASSERT(q);
+  }
+  AdapterBase();
+
+  QObject* q_ptr;
 };
 
 } // namespace qt
@@ -40,12 +46,12 @@ class AdapterBase {
 template <typename T>
 inline T* adapterToQObject(oxide::qt::AdapterBase* a) {
   if (!a) return NULL;
-  return qobject_cast<T *>(a->_q_func());
+  return qobject_cast<T *>(a->api_handle());
 }
 
 inline QObject* adapterToQObject(oxide::qt::AdapterBase* a) {
   if (!a) return NULL;
-  return qobject_cast<QObject *>(a->_q_func());
+  return qobject_cast<QObject *>(a->api_handle());
 }
 
 #endif // _OXIDE_QT_CORE_GLUE_ADAPTER_BASE_H_

@@ -15,173 +15,171 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_web_context_adapter_p.h"
+#include "../oxide_qt_web_context_adapter_p.h"
 
-#include <string>
-#include <vector>
+#include <QString>
+#include <QUrl>
 
 #include "base/logging.h"
+#include "content/public/browser/browser_thread.h"
+#include "net/base/net_errors.h"
+#include "net/url_request/url_request.h"
 
 #include "shared/browser/oxide_browser_context.h"
-#include "shared/browser/oxide_browser_process_main.h"
-#include "shared/browser/oxide_user_script_master.h"
-
-#include "qt/core/glue/oxide_qt_web_context_adapter.h"
-
-#include "oxide_qt_user_script_adapter_p.h"
+#include "shared/browser/oxide_browser_context_delegate.h"
+#include "qt/core/api/oxideqnetworkcallbackevents.h"
+#include "qt/core/api/oxideqnetworkcallbackevents_p.h"
+#include "qt/core/api/oxideqstoragepermissionrequest.h"
+#include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 
 namespace oxide {
 namespace qt {
 
-struct LazyInitProperties {
-  std::string product;
-  std::string user_agent;
-  base::FilePath data_path;
-  base::FilePath cache_path;
-  std::string accept_langs;
+class BrowserContextDelegate : public oxide::BrowserContextDelegate {
+ public:
+  BrowserContextDelegate(WebContextAdapterPrivate* ui_delegate,
+                         WebContextAdapter::IOThreadDelegate* io_delegate) :
+      ui_thread_delegate_(ui_delegate->AsWeakPtr()),
+      io_thread_delegate_(io_delegate) {
+  }
+
+  virtual ~BrowserContextDelegate() {}
+
+  WebContextAdapter::IOThreadDelegate* io_thread_delegate() const {
+    return io_thread_delegate_.get();
+  }
+
+ private:
+  virtual int OnBeforeURLRequest(net::URLRequest* request,
+                                 const net::CompletionCallback& callback,
+                                 GURL* new_url) {
+    if (!io_thread_delegate_) {
+      return net::OK;
+    }
+
+    bool cancelled = false;
+
+    OxideQBeforeURLRequestEvent* event =
+        new OxideQBeforeURLRequestEvent(
+          QUrl(QString::fromStdString(request->url().spec())),
+          QString::fromStdString(request->method()));
+
+    OxideQBeforeURLRequestEventPrivate* eventp =
+        OxideQBeforeURLRequestEventPrivate::get(event);
+    eventp->request_cancelled = &cancelled;
+    eventp->new_url = new_url;
+
+    io_thread_delegate_->OnBeforeURLRequest(event);
+
+    return cancelled ? net::ERR_ABORTED : net::OK;
+  }
+
+  virtual int OnBeforeSendHeaders(net::URLRequest* request,
+                                  const net::CompletionCallback& callback,
+                                  net::HttpRequestHeaders* headers) {
+    if (!io_thread_delegate_) {
+      return net::OK;
+    }
+
+    bool cancelled = false;
+
+    OxideQBeforeSendHeadersEvent* event =
+        new OxideQBeforeSendHeadersEvent(
+          QUrl(QString::fromStdString(request->url().spec())),
+          QString::fromStdString(request->method()));
+
+    OxideQBeforeSendHeadersEventPrivate* eventp =
+        OxideQBeforeSendHeadersEventPrivate::get(event);
+    eventp->request_cancelled = &cancelled;
+    eventp->headers = headers;
+
+    io_thread_delegate_->OnBeforeSendHeaders(event);
+
+    return cancelled ? net::ERR_ABORTED : net::OK;
+  }
+
+  virtual oxide::StoragePermission CanAccessStorage(
+      const GURL& url,
+      const GURL& first_party_url,
+      bool write,
+      oxide::StorageType type) {
+    oxide::StoragePermission result = oxide::STORAGE_PERMISSION_UNDEFINED;
+
+    if (!io_thread_delegate_) {
+      return result;
+    }
+
+    OxideQStoragePermissionRequest* req =
+        new OxideQStoragePermissionRequest(
+          QUrl(QString::fromStdString(url.spec())),
+          QUrl(QString::fromStdString(first_party_url.spec())),
+          write,
+          static_cast<OxideQStoragePermissionRequest::Type>(type));
+
+    OxideQStoragePermissionRequestPrivate::get(req)->permission = &result;
+
+    io_thread_delegate_->HandleStoragePermissionRequest(req);
+
+    return result;
+  }
+
+  virtual bool GetUserAgentOverride(const GURL& url,
+                                    std::string* user_agent) {
+    if (!io_thread_delegate_) {
+      return false;
+    }
+
+    QString new_user_agent;
+    bool overridden = io_thread_delegate_->GetUserAgentOverride(
+        QUrl(QString::fromStdString(url.spec())), &new_user_agent);
+
+    *user_agent = new_user_agent.toStdString();
+    return overridden;
+  }
+
+  base::WeakPtr<WebContextAdapterPrivate> ui_thread_delegate_;
+  scoped_ptr<WebContextAdapter::IOThreadDelegate> io_thread_delegate_;
 };
 
-WebContextAdapterPrivate::WebContextAdapterPrivate() :
-    lazy_init_props_(new LazyInitProperties()) {}
+WebContextAdapterPrivate::WebContextAdapterPrivate(
+    WebContextAdapter* adapter,
+    WebContextAdapter::IOThreadDelegate* io_delegate) :
+    adapter(adapter),
+    construct_props_(new ConstructProperties()),
+    context_delegate_(new BrowserContextDelegate(this, io_delegate)) {}
 
-// static
-WebContextAdapterPrivate* WebContextAdapterPrivate::Create() {
-  return new WebContextAdapterPrivate();
+void WebContextAdapterPrivate::Init() {
+  DCHECK(!context_);
+
+  context_ = oxide::BrowserContext::Create(
+      construct_props_->data_path,
+      construct_props_->cache_path);
+
+  if (!construct_props_->product.empty()) {
+    context()->SetProduct(construct_props_->product);
+  }
+  if (!construct_props_->user_agent.empty()) {
+    context()->SetUserAgent(construct_props_->user_agent);
+  }
+  if (!construct_props_->accept_langs.empty()) {
+    context()->SetAcceptLangs(construct_props_->accept_langs);
+  }
+  context()->SetDelegate(context_delegate_);
+
+  construct_props_.reset();
 }
 
 WebContextAdapterPrivate::~WebContextAdapterPrivate() {}
-
-std::string WebContextAdapterPrivate::GetProduct() const {
-  if (context_) {
-    return context_->GetProduct();
-  }
-
-  return lazy_init_props_->product;
-}
-
-void WebContextAdapterPrivate::SetProduct(const std::string& product) {
-  if (context_) {
-    context_->SetProduct(product);
-  } else {
-    lazy_init_props_->product = product;
-  }
-}
-
-std::string WebContextAdapterPrivate::GetUserAgent() const {
-  if (context_) {
-    return context_->GetUserAgent();
-  }
-
-  return lazy_init_props_->user_agent;
-}
-
-void WebContextAdapterPrivate::SetUserAgent(const std::string& user_agent) {
-  if (context_) {
-    context_->SetUserAgent(user_agent);
-  } else {
-    lazy_init_props_->user_agent = user_agent;
-  }
-}
-
-base::FilePath WebContextAdapterPrivate::GetDataPath() const {
-  if (context_) {
-    return context_->GetPath();
-  }
-
-  return lazy_init_props_->data_path;
-}
-
-void WebContextAdapterPrivate::SetDataPath(const base::FilePath& path) {
-  DCHECK(!context_);
-  lazy_init_props_->data_path = path;
-}
-
-base::FilePath WebContextAdapterPrivate::GetCachePath() const {
-  if (context_) {
-    return context_->GetCachePath();
-  }
-
-  return lazy_init_props_->cache_path;
-}
-
-void WebContextAdapterPrivate::SetCachePath(const base::FilePath& path) {
-  DCHECK(!context_);
-  lazy_init_props_->cache_path = path;
-}
-
-std::string WebContextAdapterPrivate::GetAcceptLangs() const {
-  if (context_) {
-    return context_->GetAcceptLangs();
-  }
-
-  return lazy_init_props_->accept_langs;
-}
-
-void WebContextAdapterPrivate::SetAcceptLangs(const std::string& langs) {
-  if (context_) {
-    context_->SetAcceptLangs(langs);
-  } else {
-    lazy_init_props_->accept_langs = langs;
-  }
-}
-
-void WebContextAdapterPrivate::UpdateUserScripts() {
-  if (!context_) {
-    return;
-  }
-
-  std::vector<oxide::UserScript *> scripts;
-  bool wait = false;
-
-  for (int i = 0; i < user_scripts_.size(); ++i) {
-    UserScriptAdapterPrivate* script =
-        UserScriptAdapterPrivate::get(user_scripts_.at(i));
-    if (script->state() == UserScriptAdapter::Loading) {
-      wait = true;
-    } else if (script->state() == UserScriptAdapter::Deferred) {
-      script->StartLoading();
-      wait = true;
-    } else if (script->state() == UserScriptAdapter::Ready) {
-      scripts.push_back(&script->user_script());
-    }
-  }
-
-  if (!wait) {
-    context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
-  }
-}
-
-void WebContextAdapterPrivate::CompleteConstruction() {
-  DCHECK(!context_);
-
-  // We do this here rather than in the constructor because the first
-  // browser context needs to set the shared GL context before anything
-  // starts up, in order for compositing to work
-  oxide::BrowserProcessMain::Run();
-
-  context_.reset(oxide::BrowserContext::Create(
-      lazy_init_props_->data_path,
-      lazy_init_props_->cache_path));
-
-  if (!lazy_init_props_->product.empty()) {
-    context_->SetProduct(lazy_init_props_->product);
-  }
-  if (!lazy_init_props_->user_agent.empty()) {
-    context_->SetUserAgent(lazy_init_props_->user_agent);
-  }
-  if (!lazy_init_props_->accept_langs.empty()) {
-    context_->SetAcceptLangs(lazy_init_props_->accept_langs);
-  }
-
-  lazy_init_props_.reset();
-
-  UpdateUserScripts();
-}
 
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::get(
     WebContextAdapter* adapter) {
   return adapter->priv.data();
+}
+
+WebContextAdapter::IOThreadDelegate*
+WebContextAdapterPrivate::GetIOThreadDelegate() const {
+  return context_delegate_->io_thread_delegate();
 }
 
 } // namespace qt

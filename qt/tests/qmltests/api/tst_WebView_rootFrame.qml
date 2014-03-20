@@ -8,44 +8,36 @@ TestWebView {
   width: 200
   height: 200
 
+  SignalSpy {
+    id: spy
+    target: webView
+    signalName: "rootFrameChanged"
+  }
+
   TestCase {
     id: test
     name: "WebView_rootFrame"
     when: windowShown
 
-    SignalSpy {
-      id: spy
-      target: webView
-      signalName: "rootFrameChanged"
+    function test_WebView_rootFrame1_parent() {
+      verify(webView.rootFrame, "Should always have a root frame");
+      compare(OxideTestingUtils.qObjectParent(webView.rootFrame), webView,
+              "The root frame should be parented to the webview");
     }
 
-    function test_WebView_rootFrame1() {
-      verify(!webView.rootFrame, "Shouldn't have a frame yet");
+    function test_WebView_rootFrame2_undeletable() {
+      var caught = false;
+      try {
+        webView.rootFrame.destroy();
+      } catch(e) {
+        caught = true;
+      }
 
-      webView.url = "http://localhost:8080/tst_WebView_rootFrame.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
+      verify(caught, "WebView.rootFrame.destroy() should have thrown");
+    }
 
-      compare(spy.count, 1, "Should have a root frame");
-      verify(webView.rootFrame, "Should have a root frame");
-
-      var root = webView.rootFrame;
-
-      webView.url = "about:blank";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-
-      compare(spy.count, 2, "Should have a new root frame");
-      verify(webView.rootFrame, "Should have a root frame");
-
-      compare(root.sendMessage, undefined, "The old root frame should no longer exist");
-
-      webView.goBack();
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-
-      compare(spy.count, 3, "Should have the old root frame back again now");
-      verify(webView.rootFrame, "Should have a root frame");
+    function test_WebView_rootFrame3_creation_signal() {
+      compare(spy.count, 1, "Should have had 1 signal during construction");
     }
   }
 }

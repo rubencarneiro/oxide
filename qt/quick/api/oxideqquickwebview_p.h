@@ -20,6 +20,7 @@
 
 #include <QQmlListProperty>
 #include <QQuickItem>
+#include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -32,8 +33,9 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
-class OxideQQuickMessageHandler;
+class OxideQWebPreferences;
 class OxideQQuickNavigationHistory;
+class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
@@ -64,11 +66,12 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
+  Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
-  Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
+  Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext NOTIFY contextChanged)
+  Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
 
@@ -97,15 +100,18 @@ class OxideQQuickWebView : public QQuickItem {
 
   OxideQQuickWebFrame* rootFrame() const;
 
-  QQmlListProperty<OxideQQuickMessageHandler> messageHandlers();
-  Q_INVOKABLE void addMessageHandler(OxideQQuickMessageHandler* handler);
-  Q_INVOKABLE void removeMessageHandler(OxideQQuickMessageHandler* handler);
+  QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers();
+  Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
+  Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
+
+  OxideQWebPreferences* preferences();
+  void setPreferences(OxideQWebPreferences* prefs);
 
   OxideQQuickNavigationHistory* navigationHistory();
 
@@ -124,17 +130,24 @@ class OxideQQuickWebView : public QQuickItem {
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
   void rootFrameChanged();
+  void frameAdded(OxideQQuickWebFrame* frame);
+  void frameRemoved(OxideQQuickWebFrame* frame);
   void popupMenuChanged();
+  void contextChanged();
+  void preferencesChanged();
   void messageHandlersChanged();
 
  private Q_SLOTS:
   void visibilityChangedListener();
 
  private:
+  Q_PRIVATE_SLOT(d_func(), void contextInitialized());
+  Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
+
   virtual void geometryChanged(const QRectF& newGeometry,
                                const QRectF& oldGeometry);
 
-  OxideQQuickWebViewPrivate* d_ptr;
+  QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebView)

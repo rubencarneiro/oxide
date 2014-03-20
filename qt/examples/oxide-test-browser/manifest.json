@@ -1,0 +1,14 @@
+{
+    "description": "Test browser using Oxide",
+    "framework": "ubuntu-sdk-13.10",
+    "hooks": {
+        "oxide-test-browser": {
+            "apparmor": "oxide-test-browser.json",
+            "desktop": "oxide-test-browser.desktop"
+        }
+    },
+    "maintainer": "Oxide Developers <oxide-developers@lists.launchpad.net>",
+    "name": "com.ubuntu.developer.oxide-developers.oxide-test-browser",
+    "title": "Oxide test browser",
+    "version": "0.1"
+}

@@ -20,6 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 namespace content {
@@ -32,40 +33,68 @@ namespace oxide {
 
 class ContentMainDelegate;
 class IOThreadDelegate;
+class SharedGLContext;
 
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
 // Chrome (which is not possible in a public API)
 class BrowserProcessMain FINAL {
  public:
+  enum Flags {
+    ENABLE_VIEWPORT = 1 << 0,
+    ENABLE_OVERLAY_SCROLLBARS = 1 << 1
+  };
+
   ~BrowserProcessMain();
 
   // Start the browser process components if they haven't already
-  // been started
-  static bool Run();
-  static void Quit();
+  // been started. Cannot be called after Quit()
+  static bool StartIfNotRunning(
+      int flags,
+      scoped_refptr<oxide::SharedGLContext> shared_gl_context);
 
-  // Returns true of the browser process components have been started
-  static bool IsRunning();
+  // Quit the browser process components if they are running
+  static void ShutdownIfRunning();
+
+  // Returns true if BrowserProcessMain exists
+  static bool Exists();
+
+  // Return the BrowserProcessMain singleton
+  static BrowserProcessMain* instance();
+
+  int flags() const { return flags_; }
+
+  oxide::SharedGLContext* shared_gl_context() const {
+    return shared_gl_context_.get();
+  }
 
   // Return the IO thread delegate, which is a container of objects
   // whose lifetime is tied to the IO thread
-  static IOThreadDelegate* io_thread_delegate();
+  IOThreadDelegate* io_thread_delegate() { return io_thread_delegate_.get(); }
 
   // Ensure that the IO thread delegate is created
-  static void CreateIOThreadDelegate();
-
-  static int RunBrowserMain(
-      const content::MainFunctionParams& main_function_params);
-  static void ShutdownBrowserMain();
+  void CreateIOThreadDelegate();
 
  private:
-  BrowserProcessMain();
+  // For RunBrowserMain() / ShutdownBrowserMain()
+  friend class oxide::ContentMainDelegate;
+
+  BrowserProcessMain(
+      int flags,
+      scoped_refptr<oxide::SharedGLContext> shared_gl_context);
+
+  int RunBrowserMain(
+      const content::MainFunctionParams& main_function_params);
+  void ShutdownBrowserMain();
 
   bool Init();
   void Shutdown();
 
   bool did_shutdown_;
+
+  int flags_;
+
+  scoped_refptr<oxide::SharedGLContext> shared_gl_context_;
 
   // XXX: Don't change the order of these unless you know what you are
   //      doing. It's important that ContentMainDelegate outlives

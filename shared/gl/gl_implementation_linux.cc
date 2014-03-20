@@ -26,12 +26,14 @@
 #include "ui/gl/gl_egl_api_implementation.h"
 #include "ui/gl/gl_gl_api_implementation.h"
 #include "ui/gl/gl_glx_api_implementation.h"
-#include "ui/gl/gl_implementation_linux.h"
+#include "ui/gl/gl_implementation_osmesa.h"
 #include "ui/gl/gl_osmesa_api_implementation.h"
+#include "ui/gl/gl_share_group.h"
+#include "ui/ozone/ozone_platform.h"
 
-#include "shared/browser/oxide_content_browser_client.h"
-#include "shared/common/oxide_content_client.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
+#include "oxide_gl_implementation.h"
 #include "oxide_shared_gl_context.h"
 
 namespace gfx {
@@ -55,10 +57,8 @@ void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
   supported.push_back(kGLImplementationEGLGLES2);
   supported.push_back(kGLImplementationOSMesaGL);
 
-  oxide::ContentBrowserClient* client =
-      oxide::ContentClient::instance()->browser();
+  oxide::GetAllowedGLImplementations(impls);
 
-  client->GetAllowedGLImplementations(impls);
   if (impls->size() == 0) {
     impls->push_back(kGLImplementationOSMesaGL);
   } else {
@@ -69,32 +69,35 @@ void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
     }
   }
 
-  GLShareGroup* group = client->GetGLShareGroup();
+  GLShareGroup* group = NULL;
+  oxide::SharedGLContext* context =
+      oxide::BrowserProcessMain::instance()->shared_gl_context();
+  if (context) {
+    group = context->share_group();
+  }
   if (group) {
-    oxide::SharedGLContext* context =
-        oxide::SharedGLContext::FromGfx(group->GetContext());
-    if (context) {
-      GLImplementation preferred = context->GetImplementation();
-      DCHECK(std::find(impls->begin(), impls->end(), preferred) !=
-             impls->end());
-      if (impls->front() != preferred) {
-        impls->insert(impls->begin(), preferred);
-        for (std::vector<GLImplementation>::iterator it = impls->begin() + 1;
-             it != impls->end(); ++it) {
-          if (*it == preferred) {
-            impls->erase(it);
-            break;
-          }
+    GLImplementation preferred = context->GetImplementation();
+    DCHECK(std::find(impls->begin(), impls->end(), preferred) !=
+           impls->end());
+    if (impls->front() != preferred) {
+      impls->insert(impls->begin(), preferred);
+      for (std::vector<GLImplementation>::iterator it = impls->begin() + 1;
+           it != impls->end(); ++it) {
+        if (*it == preferred) {
+          impls->erase(it);
+          break;
         }
       }
     }
   }
 }
 
-bool InitializeGLBindings(GLImplementation implementation) {
+bool InitializeStaticGLBindings(GLImplementation implementation) {
   if (GetGLImplementation() != kGLImplementationNone) {
     return true;
   }
+
+  ui::OzonePlatform::Initialize();
 
   switch (implementation) {
     case kGLImplementationDesktopGL: {
@@ -117,8 +120,8 @@ bool InitializeGLBindings(GLImplementation implementation) {
       AddGLNativeLibrary(library);
       SetGLImplementation(kGLImplementationDesktopGL);
 
-      InitializeGLBindingsGL();
-      InitializeGLBindingsGLX();
+      InitializeStaticGLBindingsGL();
+      InitializeStaticGLBindingsGLX();
       break;
     }
 
@@ -131,8 +134,8 @@ bool InitializeGLBindings(GLImplementation implementation) {
 
       SetGLImplementation(kGLImplementationEGLGLES2);
 
-      InitializeGLBindingsGL();
-      InitializeGLBindingsEGL();
+      InitializeStaticGLBindingsGL();
+      InitializeStaticGLBindingsEGL();
 
       // These two functions take single precision float rather than double
       // precision float parameters in GLES.
@@ -142,7 +145,7 @@ bool InitializeGLBindings(GLImplementation implementation) {
     }
 
     case kGLImplementationOSMesaGL:
-      return InitializeGLBindingsOSMesaGL();
+      return InitializeStaticGLBindingsOSMesaGL();
 
     default:
       NOTIMPLEMENTED();
@@ -152,24 +155,24 @@ bool InitializeGLBindings(GLImplementation implementation) {
   return true;
 }
 
-bool InitializeGLExtensionBindings(GLImplementation implementation,
-                                   GLContext* context) {
+bool InitializeDynamicGLBindings(GLImplementation implementation,
+                                 GLContext* context) {
   switch (implementation) {
     case kGLImplementationDesktopGL: {
-      InitializeGLExtensionBindingsGL(context);
-      InitializeGLExtensionBindingsGLX(context);
+      InitializeDynamicGLBindingsGL(context);
+      InitializeDynamicGLBindingsGLX(context);
       break;
     }
 
     case kGLImplementationEGLGLES2: {
-      InitializeGLExtensionBindingsGL(context);
-      InitializeGLExtensionBindingsEGL(context);
+      InitializeDynamicGLBindingsGL(context);
+      InitializeDynamicGLBindingsEGL(context);
       break;
     }
 
     case kGLImplementationOSMesaGL:
-      InitializeGLExtensionBindingsGL(context);
-      InitializeGLExtensionBindingsOSMESA(context);
+      InitializeDynamicGLBindingsGL(context);
+      InitializeDynamicGLBindingsOSMESA(context);
       break;
 
     default:

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,7 @@
 
 #include "oxide_qt_render_widget_host_view.h"
 
+#include <QByteArray>
 #include <QFocusEvent>
 #include <QGuiApplication>
 #include <QInputEvent>
@@ -28,20 +29,28 @@
 #include <QRect>
 #include <QScreen>
 #include <QSize>
+#include <QTextCharFormat>
+#include <QTouchEvent>
 #include <QWheelEvent>
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/time/time.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
+#include "third_party/WebKit/public/platform/WebColor.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 #include "ui/base/ime/text_input_type.h"
+#include "ui/events/event.h"
+#include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/rect.h"
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
+#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_p.h"
 
 #include "oxide_qt_backing_store.h"
 
@@ -328,7 +337,23 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   return modifiers;
 }
 
-content::NativeWebKeyboardEvent QKeyEventToWebEvent(
+ui::EventType QTouchPointStateToEventType(Qt::TouchPointState state) {
+  switch (state) {
+    case Qt::TouchPointPressed:
+      return ui::ET_TOUCH_PRESSED;
+    case Qt::TouchPointMoved:
+      return ui::ET_TOUCH_MOVED;
+    case Qt::TouchPointStationary:
+      return ui::ET_TOUCH_STATIONARY;
+    case Qt::TouchPointReleased:
+      return ui::ET_TOUCH_RELEASED;
+    default:
+      NOTREACHED();
+      return ui::ET_UNKNOWN;
+  }
+}
+
+content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
     QKeyEvent* qevent) {
   content::NativeWebKeyboardEvent event;
 
@@ -360,7 +385,8 @@ content::NativeWebKeyboardEvent QKeyEventToWebEvent(
   event.modifiers |=
       blink::WebKeyboardEvent::locationModifiersFromWindowsKeyCode(
         windowsKeyCode);
-  event.nativeKeyCode = qevent->key();
+  event.nativeKeyCode = qevent->nativeVirtualKey();
+  event.setKeyIdentifierFromWindowsKeyCode();
 
   const unsigned short* text = qevent->text().utf16();
   memcpy(&event.text, text, qMin(sizeof(event.text), sizeof(text)));
@@ -368,20 +394,20 @@ content::NativeWebKeyboardEvent QKeyEventToWebEvent(
   return event;
 }
 
-blink::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
+blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* qevent, float scale) {
   blink::WebMouseEvent event;
 
   event.timeStampSeconds = QInputEventTimeToWebEventTime(qevent);
   event.modifiers = QMouseEventStateToWebEventModifiers(qevent);
 
-  event.x = qevent->x();
-  event.y = qevent->y();
+  event.x = qRound(qevent->x() / scale);
+  event.y = qRound(qevent->y() / scale);
 
   event.windowX = event.x;
   event.windowY = event.y;
 
-  event.globalX = qevent->globalX();
-  event.globalY = qevent->globalY();
+  event.globalX = qRound(qevent->globalX() / scale);
+  event.globalY = qRound(qevent->globalY() / scale);
 
   event.clickCount = 0;
 
@@ -422,7 +448,7 @@ blink::WebMouseEvent QMouseEventToWebEvent(QMouseEvent* qevent) {
   return event;
 }
 
-blink::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
+blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* qevent, float scale) {
   blink::WebMouseWheelEvent event;
 
   event.timeStampSeconds = QInputEventTimeToWebEventTime(qevent);
@@ -441,14 +467,14 @@ blink::WebMouseWheelEvent QWheelEventToWebEvent(QWheelEvent* qevent) {
   event.type = blink::WebInputEvent::MouseWheel;
   event.button = blink::WebMouseEvent::ButtonNone;
 
-  event.x = qevent->x();
-  event.y = qevent->y();
+  event.x = qRound(qevent->x() / scale);
+  event.y = qRound(qevent->y() / scale);
 
   event.windowX = event.x;
   event.windowY = event.y;
 
-  event.globalX = qevent->globalX();
-  event.globalY = qevent->globalY();
+  event.globalX = qRound(qevent->globalX() / scale);
+  event.globalY = qRound(qevent->globalY() / scale);
 
   // See comment in third_party/WebKit/Source/web/gtk/WebInputEventFactory.cpp
   static const float scrollbarPixelsPerTick = 160.0f / 3.0f;
@@ -502,14 +528,16 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 }
 
 void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
-  delegate_->SchedulePaint(
-      QRect(rect.x(), rect.y(), rect.width(), rect.height()));
+  gfx::Rect scaled_rect(
+      gfx::ScaleToEnclosingRect(rect, GetDeviceScaleFactor()));
+  delegate_->SchedulePaintForRectPix(
+      QRect(scaled_rect.x(),
+            scaled_rect.y(),
+            scaled_rect.width(),
+            scaled_rect.height()));
 }
 
-void RenderWidgetHostView::BuffersSwapped(
-    const AcknowledgeBufferPresentCallback& ack) {
-  DCHECK(acknowledge_buffer_present_callback_.is_null());
-  acknowledge_buffer_present_callback_ = ack;
+void RenderWidgetHostView::BuffersSwapped() {
   delegate_->ScheduleUpdate();
 }
 
@@ -520,21 +548,66 @@ RenderWidgetHostView::RenderWidgetHostView(
     backing_store_(NULL),
     delegate_(delegate),
     input_type_(ui::TEXT_INPUT_TYPE_NONE) {
-  delegate_->SetRenderWidgetHostView(this);
+  RenderWidgetHostViewDelegatePrivate::get(delegate)->rwhv = this;
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {}
 
 // static
-void RenderWidgetHostView::GetScreenInfo(
-    QScreen* screen, blink::WebScreenInfo* result) {
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
+float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
+  // For some reason, the Ubuntu QPA plugin doesn't override
+  // QScreen::devicePixelRatio. However, applications using the Ubuntu
+  // SDK use something called "grid units". The relationship between
+  // grid units and device pixels is set by the "GRID_UNIT_PX" environment
+  // variable. On a screen with a DPR of 1.0f, GRID_UNIT_PX is set to 8, and
+  // 1 grid unit == 8 device pixels.
+  // If we are using the Ubuntu backend, we use GRID_UNIT_PX to derive the
+  // device pixel ratio, else we get it from QScreen::devicePixelRatio.
+  // XXX: There are 2 scenarios where this is completely broken:
+  //      1) Any apps not using the Ubuntu SDK but running with the Ubuntu
+  //         QPA plugin. In this case, we derive a DPR from GRID_UNIT_PX if
+  //         set, and the application probably uses QScreen::devicePixelRatio,
+  //         which is always 1.0f
+  //      2) Any apps using the Ubuntu SDK but not running with the Ubuntu
+  //         QPA plugin. In this case, we get the DPR from
+  //         QScreen::devicePixelRatio, and the application uses GRID_UNIX_PX
+  //         if set
+  //      I think it would be better if the Ubuntu QPA plugin did override
+  //      QScreen::devicePixelRatio (it could still get that from GRID_UNIT_PX),
+  //      and the Ubuntu SDK used this to convert between grid units and device
+  //      pixels, then we could just use QScreen::devicePixelRatio here
+
+  // Allow an override for testing
+  {
+    QByteArray force_dpr(qgetenv("OXIDE_FORCE_DPR"));
+    bool ok;
+    float scale = force_dpr.toFloat(&ok);
+    if (ok) {
+      return scale;
+    }
   }
 
+  QString platform = QGuiApplication::platformName();
+  if (platform == QLatin1String("ubuntu") ||
+      platform == QLatin1String("ubuntumirclient")) {
+    QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
+    bool ok;
+    float scale = grid_unit_px.toFloat(&ok);
+    if (ok) {
+      return scale / 8;
+    }
+  }
+
+  return float(screen->devicePixelRatio());
+}
+
+// static
+void RenderWidgetHostView::GetWebScreenInfoFromQScreen(
+    QScreen* screen, blink::WebScreenInfo* result) {
   result->depth = screen->depth();
   result->depthPerComponent = 8; // XXX: Copied the GTK impl here
   result->isMonochrome = result->depth == 1;
+  result->deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
 
   QRect rect = screen->geometry();
   result->rect = blink::WebRect(rect.x(),
@@ -576,8 +649,20 @@ bool RenderWidgetHostView::IsShowing() {
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
-  QRect rect(delegate_->GetViewBounds());
-  return gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height());
+  QScreen* screen = delegate_->GetScreen();
+  if (!screen) {
+    return gfx::Rect();
+  }
+
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::ScaleToEnclosingRect(
+      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
+                1.0f / GetDeviceScaleFactor());
+}
+
+gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::Size(rect.width(), rect.height());
 }
 
 void RenderWidgetHostView::SetSize(const gfx::Size& size) {
@@ -587,32 +672,61 @@ void RenderWidgetHostView::SetSize(const gfx::Size& size) {
 
 content::BackingStore* RenderWidgetHostView::AllocBackingStore(
     const gfx::Size& size) {
-  return new BackingStore(GetRenderWidgetHost(), size);
+  return new BackingStore(GetRenderWidgetHost(), size, GetDeviceScaleFactor());
+}
+
+float RenderWidgetHostView::GetDeviceScaleFactor() const {
+  return GetDeviceScaleFactorFromQScreen(delegate_->GetScreen());
 }
 
 void RenderWidgetHostView::GetScreenInfo(
     blink::WebScreenInfo* results) {
-  GetScreenInfo(delegate_->GetScreen(), results);
+  QScreen* screen = delegate_->GetScreen();
+  if (!screen) {
+    screen = QGuiApplication::primaryScreen();
+  }
+  GetWebScreenInfoFromQScreen(screen, results);
 }
 
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
-  QRect rect(delegate_->GetBoundsInRootWindow());
-  return gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height());
+  return GetViewBounds();
 }
 
 void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 ui::TextInputMode mode,
                                                 bool can_compose_inline) {
   input_type_ = type;
-
-  QInputMethod* input_method = QGuiApplication::inputMethod();
-  input_method->setVisible(type != ui::TEXT_INPUT_TYPE_NONE);
-  input_method->update(Qt::ImEnabled | Qt::ImHints | Qt::ImQueryInput);
+  QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
+  if (HasFocus() && (type != ui::TEXT_INPUT_TYPE_NONE) &&
+      !QGuiApplication::inputMethod()->isVisible()) {
+    delegate_->SetInputMethodEnabled(true);
+    QGuiApplication::inputMethod()->show();
+  }
 }
 
-void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
+void RenderWidgetHostView::ImeCancelComposition() {
+  QGuiApplication::inputMethod()->reset();
+}
+
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
+  if (!HasFocus()) {
+    return;
+  }
+  delegate_->SetInputMethodEnabled(is_editable_node);
+  if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
+    QGuiApplication::inputMethod()->setVisible(is_editable_node);
+  }
+}
+
+void RenderWidgetHostView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus()) {
     OnFocus();
+    if ((input_type_ != ui::TEXT_INPUT_TYPE_NONE) &&
+        !QGuiApplication::inputMethod()->isVisible()) {
+      // the focused node hasn’t changed and it is an input field
+      delegate_->SetInputMethodEnabled(true);
+      QGuiApplication::inputMethod()->show();
+    }
   } else {
     OnBlur();
   }
@@ -620,31 +734,132 @@ void RenderWidgetHostView::ForwardFocusEvent(QFocusEvent* event) {
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardKeyEvent(QKeyEvent* event) {
+void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
   GetRenderWidgetHost()->ForwardKeyboardEvent(
-      QKeyEventToWebEvent(event));
+      MakeNativeWebKeyboardEvent(event));
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardMouseEvent(QMouseEvent* event) {
+void RenderWidgetHostView::HandleMouseEvent(QMouseEvent* event) {
   GetRenderWidgetHost()->ForwardMouseEvent(
-      QMouseEventToWebEvent(event));
+      MakeWebMouseEvent(event, GetDeviceScaleFactor()));
   event->accept();
 }
 
-void RenderWidgetHostView::ForwardWheelEvent(QWheelEvent* event) {
+void RenderWidgetHostView::HandleWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHost()->ForwardWheelEvent(
-      QWheelEventToWebEvent(event));
+      MakeWebMouseWheelEvent(event, GetDeviceScaleFactor()));
+  event->accept();
+}
+
+void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
+  content::RenderWidgetHostImpl* rwh =
+      content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
+
+  QString preedit = event->preeditString();
+  if (preedit.isEmpty()) {
+    int replacementStart = event->replacementStart();
+    int replacementLength = event->replacementLength();
+    gfx::Range replacementRange = gfx::Range::InvalidRange();
+    if (replacementLength > 0) {
+      replacementRange.set_start(replacementStart);
+      replacementRange.set_end(replacementStart + replacementLength);
+    }
+    rwh->ImeConfirmComposition(
+        base::UTF8ToUTF16(event->commitString().toStdString()),
+        replacementRange, false);
+  } else {
+    std::vector<blink::WebCompositionUnderline> underlines;
+    int cursorPosition = -1;
+    gfx::Range selectionRange = gfx::Range::InvalidRange();
+    Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
+      switch (attribute.type) {
+      case QInputMethodEvent::Cursor:
+        if (attribute.length > 0) {
+          cursorPosition = attribute.start;
+        }
+        break;
+      case QInputMethodEvent::Selection:
+        selectionRange.set_start(
+            qMin(attribute.start, (attribute.start + attribute.length)));
+        selectionRange.set_end(
+            qMax(attribute.start, (attribute.start + attribute.length)));
+        break;
+      case QInputMethodEvent::TextFormat: {
+        QTextCharFormat textCharFormat =
+            attribute.value.value<QTextFormat>().toCharFormat();
+        blink::WebColor color = textCharFormat.underlineColor().rgba();
+        int start = qMin(attribute.start, (attribute.start + attribute.length));
+        int end = qMax(attribute.start, (attribute.start + attribute.length));
+        blink::WebCompositionUnderline underline(start, end, color, false);
+        underlines.push_back(underline);
+        break;
+      }
+      default:
+        break;
+      }
+    }
+    if (!selectionRange.IsValid()) {
+      int position = (cursorPosition >= 0) ? cursorPosition : preedit.length();
+      selectionRange = gfx::Range(position);
+    }
+    rwh->ImeSetComposition(base::UTF8ToUTF16(preedit.toStdString()), underlines,
+                           selectionRange.start(), selectionRange.end());
+  }
+
+  event->accept();
+}
+
+void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
+  // The event’s timestamp is not guaranteed to have the same origin as the
+  // internal timedelta used by chromium to calculate speed and displacement
+  // for a fling gesture, so we can’t use it.
+  base::TimeDelta timestamp(base::TimeTicks::Now() - base::TimeTicks());
+
+  float scale = 1 / GetDeviceScaleFactor();
+
+  for (int i = 0; i < event->touchPoints().size(); ++i) {
+    const QTouchEvent::TouchPoint& touch_point = event->touchPoints().at(i);
+
+    int touch_id;
+    std::map<int, int>::iterator it = touch_id_map_.find(touch_point.id());
+    if (it != touch_id_map_.end()) {
+      touch_id = it->second;
+    } else {
+      touch_id = 0;
+      for (std::map<int, int>::iterator it = touch_id_map_.begin();
+           it != touch_id_map_.end(); ++it) {
+        touch_id = std::max(touch_id, it->second + 1);
+      }
+      touch_id_map_[touch_point.id()] = touch_id;
+    }
+
+    ui::TouchEvent ui_event(
+        QTouchPointStateToEventType(touch_point.state()),
+        gfx::ScalePoint(gfx::PointF(
+          touch_point.pos().x(), touch_point.pos().y()), scale),
+        0,
+        touch_id,
+        timestamp,
+        0.0f, 0.0f,
+        0.0f,
+        float(touch_point.pressure()));
+    ui_event.set_root_location(
+        gfx::ScalePoint(gfx::PointF(
+          touch_point.screenPos().x(), touch_point.screenPos().y()), scale));
+
+    oxide::RenderWidgetHostView::HandleTouchEvent(ui_event);
+
+    if (touch_point.state() == Qt::TouchPointReleased) {
+      touch_id_map_.erase(touch_point.id());
+    }
+  }
+
   event->accept();
 }
 
 void RenderWidgetHostView::DidUpdate(bool skipped) {
-  if (acknowledge_buffer_present_callback_.is_null()) {
-    return;
-  }
-
-  SendAcknowledgeBufferPresent(acknowledge_buffer_present_callback_, skipped);
-  acknowledge_buffer_present_callback_.Reset();
+  AcknowledgeBuffersSwapped(skipped);
 }
 
 const QPixmap* RenderWidgetHostView::GetBackingStore() {
@@ -662,8 +877,6 @@ const QPixmap* RenderWidgetHostView::GetBackingStore() {
 QVariant RenderWidgetHostView::InputMethodQuery(
     Qt::InputMethodQuery query) const {
   switch (query) {
-    case Qt::ImEnabled:
-      return input_type_ != ui::TEXT_INPUT_TYPE_NONE;
     case Qt::ImHints:
       return QVariant(QImHintsFromInputType(input_type_));
     case Qt::ImCursorRectangle: {

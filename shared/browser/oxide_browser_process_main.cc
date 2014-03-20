@@ -18,10 +18,12 @@
 #include "oxide_browser_process_main.h"
 
 #include "base/logging.h"
+#include "content/public/app/content_main.h"
 #include "content/public/app/content_main_runner.h"
 #include "content/public/browser/browser_main_runner.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_io_thread_delegate.h"
@@ -30,37 +32,67 @@
 namespace oxide {
 
 namespace {
-scoped_ptr<BrowserProcessMain> g_process;
+scoped_ptr<BrowserProcessMain> g_instance;
 }
 
-BrowserProcessMain::BrowserProcessMain() :
+BrowserProcessMain::BrowserProcessMain(
+    int flags,
+    scoped_refptr<oxide::SharedGLContext> shared_gl_context) :
     did_shutdown_(false),
+    flags_(flags),
+    shared_gl_context_(shared_gl_context),
     main_delegate_(ContentMainDelegate::Create()),
     main_runner_(content::ContentMainRunner::Create()) {
-  CHECK(!g_process) << "Should only have one BrowserProcessMain";
+  CHECK(!g_instance) << "Should only have one BrowserProcessMain";
+}
+
+int BrowserProcessMain::RunBrowserMain(
+    const content::MainFunctionParams& main_function_params) {
+  CHECK(!browser_main_runner_);
+
+  browser_main_runner_.reset(content::BrowserMainRunner::Create());
+  int rv = browser_main_runner_->Initialize(main_function_params);
+  if (rv != -1) {
+    LOG(ERROR) << "Failed to initialize the Oxide browser main runner";
+    return rv;
+  }
+
+  return browser_main_runner_->Run();
+}
+
+void BrowserProcessMain::ShutdownBrowserMain() {
+  CHECK(browser_main_runner_);
+  browser_main_runner_->Shutdown();
 }
 
 bool BrowserProcessMain::Init() {
   static bool initialized = false;
   if (initialized) {
-    DLOG(ERROR) << "Cannot restart the main components";
+    LOG(ERROR) <<
+        "Cannot restart the Oxide main components once they have been shut down";
     return false;
   }
 
   initialized = true;
 
+  if (!shared_gl_context_) {
+    DLOG(INFO) << "No shared GL context has been created. "
+               << "Compositing will not work";
+  }
+
   if (!main_runner_ || !main_delegate_) {
-    DLOG(ERROR) << "Failed to create main components";
+    LOG(ERROR) << "Failed to create the Oxide main components";
     return false;
   }
 
-  if (main_runner_->Initialize(0, NULL, main_delegate_.get()) != -1) {
-    DLOG(ERROR) << "Failed to initialize main runner";
+  content::ContentMainParams params(main_delegate_.get());
+  if (main_runner_->Initialize(params) != -1) {
+    LOG(ERROR) << "Failed to initialize Oxide main runner";
     return false;
   }
 
   if (main_runner_->Run() != 0) {
-    DLOG(ERROR) << "Failed to run main runner";
+    LOG(ERROR) << "Failed to run the Oxide main runner";
     return false;
   }
 
@@ -82,68 +114,55 @@ void BrowserProcessMain::Shutdown() {
 }
 
 BrowserProcessMain::~BrowserProcessMain() {
-  Shutdown();
-}
-
-/* static */
-bool BrowserProcessMain::Run() {
-  if (!g_process) {
-    g_process.reset(new BrowserProcessMain());
-    if (!g_process->Init()) {
-      g_process.reset();
-    }
-  }
-
-  return IsRunning();
-}
-
-/* static */
-void BrowserProcessMain::Quit() {
-  if (g_process) {
-    g_process->Shutdown();
-    g_process.reset();
-  }
-}
-
-bool BrowserProcessMain::IsRunning() {
-  return g_process != NULL;
+  CHECK(did_shutdown_) <<
+      "BrowserProcessMain is being deleted without calling Quit()";
 }
 
 // static
-IOThreadDelegate* BrowserProcessMain::io_thread_delegate() {
-  return g_process->io_thread_delegate_.get();
+bool BrowserProcessMain::StartIfNotRunning(
+    int flags,
+    scoped_refptr<oxide::SharedGLContext> shared_gl_context) {
+  if (g_instance) {
+    CHECK_EQ(g_instance->flags(), flags) <<
+        "BrowserProcessMain::StartIfNotRunning() called more than once with "
+        "different flags";
+    CHECK_EQ(g_instance->shared_gl_context(), shared_gl_context) <<
+        "BrowserProcessMain::StartIfNotRunning() called more than once with "
+        "a different shared GL context";
+    return true;
+  }
+
+  g_instance.reset(new BrowserProcessMain(flags, shared_gl_context));
+  if (!g_instance->Init()) {
+    g_instance.reset();
+  }
+
+  return Exists();
 }
 
 // static
+void BrowserProcessMain::ShutdownIfRunning() {
+  if (g_instance) {
+    g_instance->Shutdown();
+    g_instance.reset();
+  }
+}
+
+// static
+bool BrowserProcessMain::Exists() {
+  return g_instance != NULL;
+}
+
+// static
+BrowserProcessMain* BrowserProcessMain::instance() {
+  CHECK(g_instance) << "BrowserProcessMain instance hasn't been created yet";
+  return g_instance.get();
+}
+
 void BrowserProcessMain::CreateIOThreadDelegate() {
-  DCHECK(!g_process->io_thread_delegate_);
-  g_process->io_thread_delegate_.reset(new IOThreadDelegate());
-}
-
-// static
-int BrowserProcessMain::RunBrowserMain(
-    const content::MainFunctionParams& main_function_params) {
-  if (!g_process) {
-    return 1;
-  }
-
-  DCHECK(!g_process->browser_main_runner_);
-
-  g_process->browser_main_runner_.reset(content::BrowserMainRunner::Create());
-  int rv = g_process->browser_main_runner_->Initialize(main_function_params);
-  if (rv != -1) {
-    DLOG(ERROR) << "Failed to initialize browser main runner";
-    return rv;
-  }
-
-  return g_process->browser_main_runner_->Run();
-}
-
-// static
-void BrowserProcessMain::ShutdownBrowserMain() {
-  if (g_process) {
-    g_process->browser_main_runner_->Shutdown();
-  }
+  CHECK(!io_thread_delegate_) <<
+      "BrowserProcessMain::CreateIOThreadDelegate() called more than once";
+  io_thread_delegate_.reset(new IOThreadDelegate());
 }
 
 } // namespace oxide

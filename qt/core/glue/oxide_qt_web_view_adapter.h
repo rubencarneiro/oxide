@@ -33,12 +33,13 @@ class QSize;
 QT_END_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQWebPreferences;
 
 namespace oxide {
 namespace qt {
 
-class MessageHandlerAdapter;
 class RenderWidgetHostViewDelegate;
+class ScriptMessageHandlerAdapter;
 class WebContextAdapter;
 class WebFrameAdapter;
 class WebPopupMenuDelegate;
@@ -76,7 +77,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void stop();
   void reload();
 
-  QList<MessageHandlerAdapter *>& message_handlers() {
+  QList<ScriptMessageHandlerAdapter *>& message_handlers() {
     return message_handlers_;
   }
 
@@ -89,8 +90,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void LoadProgressChanged(double progress) = 0;
 
-  virtual void RootFrameChanged() = 0;
-
   virtual void LoadEvent(OxideQLoadEvent* event) = 0;
 
   virtual void NavigationEntryCommitted() = 0;
@@ -100,8 +99,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
   virtual QRect GetContainerBounds() = 0;
-
-  void shutdown();
 
   bool isInitialized();
 
@@ -113,12 +110,20 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QString getNavigationEntryTitle(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
+  OxideQWebPreferences* preferences();
+  void setPreferences(OxideQWebPreferences* prefs);
+  void WebPreferencesChanged();
+  virtual void OnWebPreferencesChanged() = 0;
+
+  virtual void FrameAdded(WebFrameAdapter* frame) = 0;
+  virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
+
  protected:
-  WebViewAdapter();
+  WebViewAdapter(QObject* q);
 
  private:
-  QList<MessageHandlerAdapter *> message_handlers_;
   QScopedPointer<WebViewAdapterPrivate> priv;
+  QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };
 
 } // namespace qt

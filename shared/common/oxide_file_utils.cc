@@ -21,105 +21,158 @@
 #include "base/callback.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util_proxy.h"
-#include "base/memory/ref_counted.h"
 #include "base/message_loop/message_loop_proxy.h"
 
 namespace oxide {
 
+class AsyncFileJobImpl : public base::RefCounted<AsyncFileJobImpl> {
+ public:
+  AsyncFileJobImpl(base::TaskRunner* task_runner) :
+      task_runner_(task_runner),
+      cancelled_(false) {}
+
+  virtual ~AsyncFileJobImpl() {}
+
+  virtual void Run() = 0;
+  void Cancel() { cancelled_ = true; }
+
+  base::TaskRunner* task_runner() const { return task_runner_.get(); }
+  bool cancelled() const { return cancelled_; }
+
+ private:
+  scoped_refptr<base::TaskRunner> task_runner_;
+  bool cancelled_;
+};
+
 namespace {
 
-class GetFileContentsJob FINAL : public base::RefCounted<GetFileContentsJob> {
+class GetFileContentsJobImpl : public AsyncFileJobImpl {
  public:
-  GetFileContentsJob() :
+  GetFileContentsJobImpl(base::TaskRunner* task_runner,
+                         const base::FilePath& file_path,
+                         const FileUtils::GetFileContentsCallback& callback) :
+      AsyncFileJobImpl(task_runner),
+      file_path_(file_path),
+      callback_(callback),
       file_(base::kInvalidPlatformFileValue) {}
 
-  ~GetFileContentsJob() {
+  ~GetFileContentsJobImpl() {
     if (file_ != base::kInvalidPlatformFileValue) {
       base::FileUtilProxy::Close(
-          task_runner_.get(), file_,
-          base::Bind(&GetFileContentsJob::OnFileClosed));
+          task_runner(), file_,
+          base::Bind(&GetFileContentsJobImpl::OnFileClosed));
     }
   }
 
-  bool Run(base::TaskRunner* task_runner,
-           const base::FilePath& file_path,
-           const FileUtils::GetFileContentsCallback& callback) {
-    task_runner_ = task_runner;
-    callback_ = callback;
+ private:
+  void Run() {
+    if (cancelled()) {
+      return;
+    }
 
-    return base::FileUtilProxy::CreateOrOpen(
-        task_runner_.get(), file_path,
-        base::PLATFORM_FILE_OPEN | base::PLATFORM_FILE_READ,
-        base::Bind(&GetFileContentsJob::OnFileOpened, this));
+    if (!base::FileUtilProxy::CreateOrOpen(
+        task_runner(), file_path_,
+        base::File::FLAG_OPEN | base::File::FLAG_READ,
+        base::Bind(&GetFileContentsJobImpl::OnFileOpened, this))) {
+      callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
+    }
   }
 
- private:
-  void OnFileOpened(base::PlatformFileError error,
+  void OnFileOpened(base::File::Error error,
                     base::PassPlatformFile file,
                     bool created) {
-    if (error != base::PLATFORM_FILE_OK) {
+    if (cancelled()) {
+      return;
+    }
+
+    if (error != base::File::FILE_OK) {
       callback_.Run(error, NULL, -1);
       return;
     }
 
     file_ = file.ReleaseValue();
     if (!base::FileUtilProxy::GetFileInfoFromPlatformFile(
-        task_runner_.get(), file_,
-        base::Bind(&GetFileContentsJob::OnGotFileInfo, this))) {
-      callback_.Run(base::PLATFORM_FILE_ERROR_FAILED, NULL, -1);
+        task_runner(), file_,
+        base::Bind(&GetFileContentsJobImpl::OnGotFileInfo, this))) {
+      callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
     }
   }
 
-  void OnGotFileInfo(base::PlatformFileError error,
-                     const base::PlatformFileInfo& info) {
-    if (error != base::PLATFORM_FILE_OK) {
+  void OnGotFileInfo(base::File::Error error,
+                     const base::File::Info& info) {
+    if (cancelled()) {
+      return;
+    }
+
+    if (error != base::File::FILE_OK) {
       callback_.Run(error, NULL, -1);
       return;
     }
 
     if (info.is_directory) {
-      callback_.Run(base::PLATFORM_FILE_ERROR_NOT_A_FILE, NULL, -1);
+      callback_.Run(base::File::FILE_ERROR_NOT_A_FILE, NULL, -1);
       return;
     }
 
     // XXX: info.size is int64, but Read() takes an int
     if (!base::FileUtilProxy::Read(
-        task_runner_.get(), file_, 0, info.size,
-        base::Bind(&GetFileContentsJob::OnGotData, this))) {
-      callback_.Run(base::PLATFORM_FILE_ERROR_FAILED, NULL, -1);
+        task_runner(), file_, 0, info.size,
+        base::Bind(&GetFileContentsJobImpl::OnGotData, this))) {
+      callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
     }
   }
 
-  void OnGotData(base::PlatformFileError error,
+  void OnGotData(base::File::Error error,
                  const char* data,
                  int bytes_read) {
-    if (error != base::PLATFORM_FILE_OK) {
+    if (cancelled()) {
+      return;
+    }
+
+    if (error != base::File::FILE_OK) {
       callback_.Run(error, NULL, -1);
       return;
     }
 
-    callback_.Run(base::PLATFORM_FILE_OK, data, bytes_read);
+    callback_.Run(base::File::FILE_OK, data, bytes_read);
   }
 
-  static void OnFileClosed(base::PlatformFileError error) {
-    // XXX: Do something with the error?
-  }
+  static void OnFileClosed(base::File::Error error) {}
 
-  scoped_refptr<base::TaskRunner> task_runner_;
+  base::FilePath file_path_;
   FileUtils::GetFileContentsCallback callback_;
   base::PlatformFile file_;
+};
 
-  DISALLOW_COPY_AND_ASSIGN(GetFileContentsJob);
+class GetFileContentsJob : public AsyncFileJob {
+ public:
+  GetFileContentsJob(base::TaskRunner* task_runner,
+                     const base::FilePath& file_path,
+                     const FileUtils::GetFileContentsCallback& callback) :
+      AsyncFileJob(new GetFileContentsJobImpl(
+        task_runner, file_path, callback)) {}
 };
 
 } // namespace
 
+AsyncFileJob::~AsyncFileJob() {
+  impl_->Cancel();
+}
+
+AsyncFileJob::AsyncFileJob(AsyncFileJobImpl* impl) :
+    impl_(impl) {
+  impl_->Run();
+}
+
 // static
-bool FileUtils::GetFileContents(base::TaskRunner* task_runner,
+AsyncFileJob* FileUtils::GetFileContents(base::TaskRunner* task_runner,
                                 const base::FilePath& file_path,
                                 const GetFileContentsCallback& callback) {
-  scoped_refptr<GetFileContentsJob> job = new GetFileContentsJob();
-  return job->Run(task_runner, file_path, callback);
+  if (callback.is_null()) {
+    return NULL;
+  }
+
+  return new GetFileContentsJob(task_runner, file_path, callback);
 }
 
 } // namespace oxide

@@ -1,0 +1,29 @@
+# Description: Don't use EGL_EXT_create_context_robustness. Contexts created by
+#  Qt don't use this, and shared contexts must all be created with the same
+#  attributes
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
+--- a/ui/gl/gl_surface_egl.cc
++++ b/ui/gl/gl_surface_egl.cc
+@@ -266,18 +266,18 @@ bool GLSurfaceEGL::InitializeOneOff() {
+         return false;
+       }
+     }
+   }
+ 
+ #endif
+ 
+   g_egl_extensions = eglQueryString(g_display, EGL_EXTENSIONS);
+-  g_egl_create_context_robustness_supported =
+-      HasEGLExtension("EGL_EXT_create_context_robustness");
++  //g_egl_create_context_robustness_supported =
++  //    HasEGLExtension("EGL_EXT_create_context_robustness");
+   g_egl_sync_control_supported =
+       HasEGLExtension("EGL_CHROMIUM_sync_control");
+   g_egl_window_fixed_size_supported =
+       HasEGLExtension("EGL_ANGLE_window_fixed_size");
+ 
+   // Check if SurfacelessEGL is supported.
+   g_egl_surfaceless_context_supported =
+       HasEGLExtension("EGL_KHR_surfaceless_context");

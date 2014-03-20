@@ -34,8 +34,6 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_share_group.h"
-#include "ui/gl/gl_surface.h"
-#include "ui/ozone/ozone_platform.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
@@ -44,16 +42,22 @@
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_default_screen_info.h"
+#include "oxide_gpu_utils.h"
 #include "oxide_message_pump.h"
+#include "oxide_script_message_dispatcher_browser.h"
+#include "oxide_user_agent_override_provider.h"
 #include "oxide_web_contents_view.h"
+#include "oxide_web_preferences.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
 namespace {
 
-base::MessagePump* CreateMessagePumpForUI() {
-  return ContentClient::instance()->browser()->
-      CreateMessagePumpForUI();
+scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
+  return make_scoped_ptr(
+      ContentClient::instance()->browser()->CreateMessagePumpForUI());
 }
 
 class BrowserMainParts;
@@ -109,8 +113,7 @@ class Screen : public gfx::Screen {
   }
 
   gfx::Display GetPrimaryDisplay() const FINAL {
-    blink::WebScreenInfo info;
-    ContentClient::instance()->browser()->GetDefaultScreenInfo(&info);
+    blink::WebScreenInfo info(GetDefaultWebScreenInfo());
 
     gfx::Display display;
     display.set_bounds(info.rect);
@@ -143,33 +146,21 @@ class BrowserMainParts : public content::BrowserMainParts {
   void PreEarlyInitialization() FINAL {
     base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
     main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
-  
   }
 
   int PreCreateThreads() FINAL {
-    ui::OzonePlatform::Initialize();
     // Make sure we initialize the display handle on the main thread
     gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
 
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
 
-    scoped_refptr<oxide::GLShareGroup> share_group = new oxide::GLShareGroup();
-    shared_gl_context_ =
-        ContentClient::instance()->browser()->CreateSharedGLContext(
-          share_group);
-    DCHECK(!shared_gl_context_ ||
-           shared_gl_context_->share_group() == share_group);
-    if (!shared_gl_context_) {
-      DLOG(INFO) << "No shared GL context has been created. "
-                 << "Compositing will not work";
-    }
-
-    // Work around a mesa race - see https://launchpad.net/bugs/1267893
-    gfx::GLSurface::InitializeOneOff();
-
-    BrowserProcessMain::CreateIOThreadDelegate();
+    BrowserProcessMain::instance()->CreateIOThreadDelegate();
     return 0;
+  }
+
+  void PreMainMessageLoopRun() FINAL {
+    GpuUtils::Initialize();
   }
 
   bool MainMessageLoopRun(int* result_code) FINAL {
@@ -177,26 +168,20 @@ class BrowserMainParts : public content::BrowserMainParts {
     return true;
   }
 
+  void PostMainMessageLoopRun() FINAL {
+    GpuUtils::Terminate();
+  }
+
   void PostDestroyThreads() FINAL {
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
   }
 
-  oxide::SharedGLContext* shared_gl_context() const {
-    return shared_gl_context_;
-  }
-
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
-  scoped_refptr<oxide::SharedGLContext> shared_gl_context_;
-
   Screen primary_screen_;
 };
 
 } // namespace
-
-ContentBrowserClient::ContentBrowserClient() {}
-
-ContentBrowserClient::~ContentBrowserClient() {}
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
@@ -213,17 +198,21 @@ ContentBrowserClient::OverrideCreateWebContentsView(
   return view;
 }
 
-void ContentBrowserClient::RenderProcessHostCreated(
+void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetIsIncognitoProcess(
       host->GetBrowserContext()->IsOffTheRecord()));
+  host->AddFilter(new ScriptMessageDispatcherBrowser(host));
+  host->AddFilter(new UserAgentOverrideProvider(host));
 }
 
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
     content::BrowserContext* browser_context,
-    content::ProtocolHandlerMap* protocol_handlers) {
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   return BrowserContext::FromContent(
-      browser_context)->CreateRequestContext(protocol_handlers);
+      browser_context)->CreateRequestContext(protocol_handlers,
+                                             protocol_interceptors.Pass());
 }
 
 net::URLRequestContextGetter*
@@ -231,7 +220,8 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
     content::BrowserContext* browser_context,
     const base::FilePath& partition_path,
     bool in_memory,
-    content::ProtocolHandlerMap* protocol_handlers) {
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
@@ -241,6 +231,27 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
   return BrowserContext::FromContent(browser_context)->GetAcceptLangs();
+}
+
+bool ContentBrowserClient::AllowGetCookie(const GURL& url,
+                                          const GURL& first_party,
+                                          const net::CookieList& cookie_list,
+                                          content::ResourceContext* context,
+                                          int render_process_id,
+                                          int render_frame_id) {
+  return BrowserContextIOData::FromResourceContext(
+      context)->CanAccessCookies(url, first_party, false);
+}
+
+bool ContentBrowserClient::AllowSetCookie(const GURL& url,
+                                          const GURL& first_party,
+                                          const std::string& cookie_line,
+                                          content::ResourceContext* context,
+                                          int render_process_id,
+                                          int render_frame_id,
+                                          net::CookieOptions* options) {
+  return BrowserContextIOData::FromResourceContext(
+      context)->CanAccessCookies(url, first_party, true);
 }
 
 void ContentBrowserClient::ResourceDispatcherHostCreated() {
@@ -260,34 +271,36 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
 void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
-    WebPreferences* prefs) {
-  // XXX: This is temporary until we expose a WebPreferences API
-  if (getenv("OXIDE_ENABLE_COMPOSITING") &&
-      g_main_parts->shared_gl_context() &&
-      g_main_parts->shared_gl_context()->GetImplementation() ==
-          gfx::GetGLImplementation()) {
-    prefs->force_compositing_mode = true;
-    prefs->accelerated_compositing_enabled = true;
-  } else {
-    prefs->force_compositing_mode = false;
-    prefs->accelerated_compositing_enabled = false;
+    ::WebPreferences* prefs) {
+  WebView* view = WebView::FromRenderViewHost(render_view_host);
+  WebPreferences* web_prefs = view->GetWebPreferences();
+  if (!web_prefs) {
+    DLOG(WARNING) << "No WebPreferences on WebView";
+    return;
   }
+
+  web_prefs->ApplyToWebkitPrefs(prefs);
+
+  prefs->device_supports_mouse = true; // XXX: Can we detect this?
+  prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
-  if (!g_main_parts->shared_gl_context()) {
+  SharedGLContext* context =
+      BrowserProcessMain::instance()->shared_gl_context();
+  if (!context) {
     return NULL;
   }
 
-  return g_main_parts->shared_gl_context()->share_group();
+  return context->share_group();
 }
 
-scoped_refptr<oxide::SharedGLContext> ContentBrowserClient::CreateSharedGLContext(
-    oxide::GLShareGroup* share_group) {
-  return NULL;
+bool ContentBrowserClient::IsTouchSupported() {
+  return false;
 }
 
-void ContentBrowserClient::GetAllowedGLImplementations(
-    std::vector<gfx::GLImplementation>* impls) {}
+ContentBrowserClient::ContentBrowserClient() {}
+
+ContentBrowserClient::~ContentBrowserClient() {}
 
 } // namespace oxide

@@ -13,7 +13,7 @@ TestWebView {
     signalName: "urlChanged"
   }
 
-  onRootFrameChanged: {
+  Component.onCompleted: {
     spy.target = webView.rootFrame;
   }
 
@@ -23,7 +23,7 @@ TestWebView {
     when: windowShown
 
     function test_WebFrame_url1() {
-      webView.url = "http://localhost:8080/tst_WebFrame_url.html";
+      webView.url = "http://localhost:8080/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

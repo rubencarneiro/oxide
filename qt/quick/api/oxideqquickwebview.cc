@@ -19,6 +19,7 @@
 #include "oxideqquickwebview_p_p.h"
 
 #include <QPointF>
+#include <QQmlEngine>
 #include <QQuickWindow>
 #include <QRect>
 #include <QRectF>
@@ -29,8 +30,8 @@
 #include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
-#include "oxideqquickmessagehandler_p.h"
-#include "oxideqquickmessagehandler_p_p.h"
+#include "oxideqquickscriptmessagehandler_p.h"
+#include "oxideqquickscriptmessagehandler_p_p.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 #include "oxideqquickwebframe_p.h"
@@ -52,14 +53,41 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
   view_ = view;
 }
 
+void OxideQQuickWebViewPrivate::contextInitialized() {
+  completeConstruction();
+}
+
+void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
+  Q_Q(OxideQQuickWebView);
+
+  // XXX: Our underlying BrowserContext lives on, so we're left in a
+  // bit of a weird state here (WebView.context will return no context,
+  // which is a lie)
+  context = NULL;
+  emit q->contextChanged();
+}
+
+void OxideQQuickWebViewPrivate::detachContextSignals() {
+  Q_Q(OxideQQuickWebView);
+
+  if (context) {
+    QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
+                        SIGNAL(initialized()),
+                        q, SLOT(contextInitialized()));
+    QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
+                        SIGNAL(willBeDestroyed()),
+                        q, SLOT(contextWillBeDestroyed()));
+  }
+}
+
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
+    oxide::qt::WebViewAdapter(view),
     context(NULL),
     navigationHistory(view),
     popup_menu(NULL),
     init_props_(new InitData()),
-    load_progress_(0),
-    q_ptr(view) {}
+    load_progress_(0) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
@@ -103,19 +131,6 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   emit q->loadProgressChanged();
 }
 
-void OxideQQuickWebViewPrivate::RootFrameChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  // Make the webview the QObject parent of the new root frame,
-  // to stop Qml from collecting the frame tree
-  OxideQQuickWebFrame* root = q->rootFrame();
-  if (root) {
-    root->setParent(q);
-  }
-
-  emit q->rootFrameChanged();
-}
-
 void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   Q_Q(OxideQQuickWebView);
 
@@ -135,7 +150,9 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
 }
 
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
-  return OxideQQuickWebFramePrivate::get(new OxideQQuickWebFrame());
+  OxideQQuickWebFrame* frame = new OxideQQuickWebFrame();
+  QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);
+  return OxideQQuickWebFramePrivate::get(frame);
 }
 
 QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
@@ -151,35 +168,60 @@ QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
                 q->width(), q->height()).toRect();
 }
 
-void OxideQQuickWebViewPrivate::componentComplete() {
+void OxideQQuickWebViewPrivate::OnWebPreferencesChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->preferencesChanged();
+}
+
+void OxideQQuickWebViewPrivate::FrameAdded(
+    oxide::qt::WebFrameAdapter* frame) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->frameAdded(adapterToQObject<OxideQQuickWebFrame>(frame));
+}
+
+void OxideQQuickWebViewPrivate::FrameRemoved(
+    oxide::qt::WebFrameAdapter* frame) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->frameRemoved(adapterToQObject<OxideQQuickWebFrame>(frame));
+}
+
+void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
   Q_ASSERT(init_props_);
 
-  if (!context) {
-    // Ok, we handle the default context a bit differently. If our context
-    // comes from setContext(), then we don't hold a strong reference to it
-    // because it will be owned by someone else in the QML object
-    // hierarchy. However, the default context is not in this hierarchy and
-    // has no QObject parent, so we use reference counting for it instead to
-    // ensure that it is freed once all webviews are closed
+  OxideQQuickWebContext* context_in_use = context;
+  if (!context_in_use) {
+    // The default context is reference counted and not exposed to the
+    // embedder
     default_context_ = OxideQQuickWebContext::defaultContext();
-    context = default_context_.data();
+    context_in_use = default_context_.data();
   }
 
-  init(OxideQQuickWebContextPrivate::get(context),
+  init(OxideQQuickWebContextPrivate::get(context_in_use),
        QSizeF(q->width(), q->height()).toSize(),
        init_props_->incognito,
        init_props_->url,
        q->isVisible());
 
   init_props_.reset();
+
+  // Make the webview the QObject parent of the new root frame,
+  // to stop Qml from collecting the frame tree
+  q->rootFrame()->setParent(q);
+
+  // Initialization created the root frame. This is the only time
+  // this is emitted
+  emit q->rootFrameChanged();
 }
 
 // static
 void OxideQQuickWebViewPrivate::messageHandler_append(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop,
-    OxideQQuickMessageHandler* message_handler) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
+    OxideQQuickScriptMessageHandler* message_handler) {
   if (!message_handler) {
     return;
   }
@@ -192,7 +234,7 @@ void OxideQQuickWebViewPrivate::messageHandler_append(
 
 // static
 int OxideQQuickWebViewPrivate::messageHandler_count(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
@@ -200,8 +242,8 @@ int OxideQQuickWebViewPrivate::messageHandler_count(
 }
 
 // static
-OxideQQuickMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop,
+OxideQQuickScriptMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
     int index) {
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
@@ -210,20 +252,22 @@ OxideQQuickMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
     return NULL;
   }
 
-  return adapterToQObject<OxideQQuickMessageHandler>(
+  return adapterToQObject<OxideQQuickScriptMessageHandler>(
       p->message_handlers().at(index));
 }
 
 // static
 void OxideQQuickWebViewPrivate::messageHandler_clear(
-    QQmlListProperty<OxideQQuickMessageHandler>* prop) {
+    QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
   OxideQQuickWebView* web_view =
       static_cast<OxideQQuickWebView *>(prop->object);
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(web_view);
 
-  p->message_handlers().clear();
-
-  emit web_view->messageHandlersChanged();
+  while (p->message_handlers().size() > 0) {
+    web_view->removeMessageHandler(
+        adapterToQObject<OxideQQuickScriptMessageHandler>(
+          p->message_handlers().at(0)));
+  }
 }
 
 // static
@@ -263,8 +307,12 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
-    QQuickItem(parent),
-    d_ptr(new OxideQQuickWebViewPrivate(this)) {
+    QQuickItem(parent) {
+  // WebView instantiates NotificationRegistrar, which starts
+  // NotificationService, which uses LazyInstance. Start Chromium now
+  // else we'll crash
+  OxideQQuickWebContextPrivate::ensureChromiumStarted();
+  d_ptr.reset(new OxideQQuickWebViewPrivate(this));
   QObject::connect(this, SIGNAL(visibleChanged()),
                    this, SLOT(visibilityChangedListener()));
 }
@@ -272,17 +320,16 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
 
-  // This is a bit hacky, but when we are using the default context,
-  // we hold a reference to it. We release this reference before
-  // the oxide::WebView destructor is called, so we have to ensure our
-  // WebContents is destroyed now
-  d->shutdown();
+  disconnect(this, SIGNAL(visibleChanged()),
+             this, SLOT(visibilityChangedListener()));
+  d->detachContextSignals();
 
-  delete d_ptr;
-  d_ptr = NULL;
-
-  QObject::disconnect(this, SIGNAL(visibleChanged()),
-                      this, SLOT(visibilityChangedListener()));
+  // Do this before our d_ptr is cleared, as these call back in to us
+  // when they are deleted
+  while (d->message_handlers().size() > 0) {
+    delete adapterToQObject<OxideQQuickScriptMessageHandler>(
+        d->message_handlers().at(0));
+  }
 }
 
 void OxideQQuickWebView::componentComplete() {
@@ -290,7 +337,16 @@ void OxideQQuickWebView::componentComplete() {
 
   QQuickItem::componentComplete();
 
-  d->componentComplete();
+  if (d->context) {
+    connect(OxideQQuickWebContextPrivate::get(d->context),
+            SIGNAL(initialized()),
+            this, SLOT(contextInitialized()));
+  }
+
+  if (!d->context ||
+      OxideQQuickWebContextPrivate::get(d->context)->isInitialized()) {
+    d->completeConstruction();
+  }
 }
 
 QUrl OxideQQuickWebView::url() const {
@@ -362,9 +418,9 @@ OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   return adapterToQObject<OxideQQuickWebFrame>(d->rootFrame());
 }
 
-QQmlListProperty<OxideQQuickMessageHandler>
+QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebView::messageHandlers() {
-  return QQmlListProperty<OxideQQuickMessageHandler>(
+  return QQmlListProperty<OxideQQuickScriptMessageHandler>(
       this, NULL,
       OxideQQuickWebViewPrivate::messageHandler_append,
       OxideQQuickWebViewPrivate::messageHandler_count,
@@ -373,7 +429,7 @@ OxideQQuickWebView::messageHandlers() {
 }
 
 void OxideQQuickWebView::addMessageHandler(
-    OxideQQuickMessageHandler* handler) {
+    OxideQQuickScriptMessageHandler* handler) {
   Q_D(OxideQQuickWebView);
 
   if (!handler) {
@@ -381,21 +437,26 @@ void OxideQQuickWebView::addMessageHandler(
     return;
   }
 
-  OxideQQuickMessageHandlerPrivate* handlerp =
-      OxideQQuickMessageHandlerPrivate::get(handler);
+  OxideQQuickScriptMessageHandlerPrivate* hd =
+      OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->message_handlers().contains(handlerp)) {
-    handlerp->removeFromCurrentOwner();
-    handler->setParent(this);
-
-    d->message_handlers().append(handlerp);
-
-    emit messageHandlersChanged();
+  if (hd->isActive() && handler->parent() != this) {
+    qWarning() << "MessageHandler can't be added to more than one message target";
+    return;
   }
+
+  if (d->message_handlers().contains(hd)) {
+    d->message_handlers().removeOne(hd);
+  }
+
+  handler->setParent(this);
+  d->message_handlers().append(hd);
+
+  emit messageHandlersChanged();
 }
 
 void OxideQQuickWebView::removeMessageHandler(
-    OxideQQuickMessageHandler* handler) {
+    OxideQQuickScriptMessageHandler* handler) {
   Q_D(OxideQQuickWebView);
 
   if (!handler) {
@@ -403,19 +464,17 @@ void OxideQQuickWebView::removeMessageHandler(
     return;
   }
 
-  if (!d) {
+  OxideQQuickScriptMessageHandlerPrivate* hd =
+      OxideQQuickScriptMessageHandlerPrivate::get(handler);
+
+  if (!d->message_handlers().contains(hd)) {
     return;
   }
 
-  OxideQQuickMessageHandlerPrivate* handlerp =
-      OxideQQuickMessageHandlerPrivate::get(handler);
+  handler->setParent(NULL);
+  d->message_handlers().removeOne(hd);
 
-  if (d->message_handlers().contains(handlerp)) {
-    d->message_handlers().removeOne(handlerp);
-    handler->setParent(NULL);
-
-    emit messageHandlersChanged();
-  }
+  emit messageHandlersChanged();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
@@ -449,7 +508,36 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
     return;
   }
 
+  if (context == d->context) {
+    return;
+  }
+
+  d->detachContextSignals();
+  if (context) {
+    connect(OxideQQuickWebContextPrivate::get(context), SIGNAL(willBeDestroyed()),
+            this, SLOT(contextWillBeDestroyed()));
+  }
+
   d->context = context;
+  emit contextChanged();
+}
+
+OxideQWebPreferences* OxideQQuickWebView::preferences() {
+  Q_D(OxideQQuickWebView);
+
+  return d->preferences();
+}
+
+void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
+  Q_D(OxideQQuickWebView);
+
+  if (prefs == d->preferences()) {
+    return;
+  }
+
+  d->setPreferences(prefs);
+  // We don't emit a signal here, as we get OnWebPreferencesChanged(),
+  // which also happens if our WebPreferences are destroyed
 }
 
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
@@ -487,3 +575,5 @@ void OxideQQuickWebView::reload() {
 
   d->reload();
 }
+
+#include "moc_oxideqquickwebview_p.cpp"

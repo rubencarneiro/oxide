@@ -21,7 +21,6 @@
 #include <QObject>
 #include <QQmlParserStatus>
 #include <QScopedPointer>
-#include <QString>
 #include <QtQml>
 #include <QUrl>
 
@@ -34,9 +33,12 @@ class OxideQQuickUserScript : public QObject,
   Q_PROPERTY(bool emulateGreasemonkey READ emulateGreasemonkey WRITE setEmulateGreasemonkey NOTIFY scriptPropertyChanged)
   Q_PROPERTY(bool matchAllFrames READ matchAllFrames WRITE setMatchAllFrames NOTIFY scriptPropertyChanged)
   Q_PROPERTY(bool incognitoEnabled READ incognitoEnabled WRITE setIncognitoEnabled NOTIFY scriptPropertyChanged)
-  Q_PROPERTY(QString worldId READ worldId WRITE setWorldId NOTIFY scriptPropertyChanged)
+  Q_PROPERTY(QUrl context READ context WRITE setContext NOTIFY scriptPropertyChanged)
 
   Q_DECLARE_PRIVATE(OxideQQuickUserScript)
+  Q_DISABLE_COPY(OxideQQuickUserScript)
+
+  Q_INTERFACES(QQmlParserStatus)
 
  public:
   OxideQQuickUserScript(QObject* parent = NULL);
@@ -57,8 +59,8 @@ class OxideQQuickUserScript : public QObject,
   bool incognitoEnabled() const;
   void setIncognitoEnabled(bool incognito_enabled);
 
-  QString worldId() const;
-  void setWorldId(const QString& world_id);
+  QUrl context() const;
+  void setContext(const QUrl& context);
 
  Q_SIGNALS:
   void scriptLoaded();

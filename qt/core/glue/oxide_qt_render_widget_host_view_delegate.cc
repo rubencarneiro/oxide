@@ -16,68 +16,102 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_render_widget_host_view_delegate.h"
+#include "oxide_qt_render_widget_host_view_delegate_p.h"
 
+#include "base/memory/ref_counted.h"
+#include "ui/gfx/size.h"
+
+#include "shared/browser/oxide_gpu_utils.h"
 #include "qt/core/browser/oxide_qt_backing_store.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 
 namespace oxide {
 namespace qt {
 
-TextureInfo::TextureInfo(unsigned int id, const QSize& size_in_pixels) :
-    id_(id),
-    size_in_pixels_(size_in_pixels) {}
+TextureHandleImpl::TextureHandleImpl() {}
 
-TextureInfo::~TextureInfo() {}
+TextureHandleImpl::~TextureHandleImpl() {}
 
-RenderWidgetHostView*
-RenderWidgetHostViewDelegate::GetRenderWidgetHostView() const {
-  return rwhv_;
+unsigned int TextureHandleImpl::GetID() const {
+  if (!handle_) {
+    return 0;
+  }
+
+  return handle_->GetID();
 }
 
-void RenderWidgetHostViewDelegate::SetRenderWidgetHostView(
-    RenderWidgetHostView* rwhv) {
-  rwhv_ = rwhv;
+QSize TextureHandleImpl::GetSize() const {
+  if (!handle_) {
+    return QSize();
+  }
+
+  gfx::Size size(handle_->GetSize());
+  return QSize(size.width(), size.height());
 }
 
-RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate() {}
-
-void RenderWidgetHostViewDelegate::ForwardFocusEvent(QFocusEvent* event) {
-  GetRenderWidgetHostView()->ForwardFocusEvent(event);
+void TextureHandleImpl::SetHandle(oxide::TextureHandle* handle) {
+  handle_ = handle;
 }
 
-void RenderWidgetHostViewDelegate::ForwardKeyEvent(QKeyEvent* event) {
-  GetRenderWidgetHostView()->ForwardKeyEvent(event);
+RenderWidgetHostViewDelegatePrivate::RenderWidgetHostViewDelegatePrivate() :
+    rwhv(NULL) {}
+
+// static
+RenderWidgetHostViewDelegatePrivate*
+RenderWidgetHostViewDelegatePrivate::get(
+    RenderWidgetHostViewDelegate* delegate) {
+  return delegate->priv.data();
 }
 
-void RenderWidgetHostViewDelegate::ForwardMouseEvent(QMouseEvent* event) {
-  GetRenderWidgetHostView()->ForwardMouseEvent(event);
+RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate() :
+    priv(new RenderWidgetHostViewDelegatePrivate()) {}
+
+void RenderWidgetHostViewDelegate::HandleFocusEvent(QFocusEvent* event) {
+  priv->rwhv->HandleFocusEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::ForwardWheelEvent(QWheelEvent* event) {
-  GetRenderWidgetHostView()->ForwardWheelEvent(event);
+void RenderWidgetHostViewDelegate::HandleKeyEvent(QKeyEvent* event) {
+  priv->rwhv->HandleKeyEvent(event);
 }
 
-TextureInfo RenderWidgetHostViewDelegate::GetFrontbufferTextureInfo() {
-  oxide::TextureInfo tex = GetRenderWidgetHostView()->GetFrontbufferTextureInfo();
-  return TextureInfo(tex.id(),
-                     QSize(tex.size_in_pixels().width(),
-                           tex.size_in_pixels().height()));
+void RenderWidgetHostViewDelegate::HandleMouseEvent(QMouseEvent* event) {
+  priv->rwhv->HandleMouseEvent(event);
+}
+
+void RenderWidgetHostViewDelegate::HandleWheelEvent(QWheelEvent* event) {
+  priv->rwhv->HandleWheelEvent(event);
+}
+
+void RenderWidgetHostViewDelegate::HandleInputMethodEvent(
+    QInputMethodEvent* event) {
+  priv->rwhv->HandleInputMethodEvent(event);
+}
+
+void RenderWidgetHostViewDelegate::HandleTouchEvent(
+    QTouchEvent* event) {
+  priv->rwhv->HandleTouchEvent(event);
+}
+
+TextureHandle* RenderWidgetHostViewDelegate::GetCurrentTextureHandle() {
+  priv->current_texture_handle_.SetHandle(
+      priv->rwhv->GetCurrentTextureHandle());
+  return &priv->current_texture_handle_;
 }
 
 void RenderWidgetHostViewDelegate::DidUpdate(bool skipped) {
-  GetRenderWidgetHostView()->DidUpdate(skipped);
+  priv->rwhv->DidUpdate(skipped);
 }
 
 QVariant RenderWidgetHostViewDelegate::InputMethodQuery(
     Qt::InputMethodQuery query) const {
-  return GetRenderWidgetHostView()->InputMethodQuery(query);
+  return priv->rwhv->InputMethodQuery(query);
+}
+
+const QPixmap* RenderWidgetHostViewDelegate::GetBackingStore() {
+  return priv->rwhv->GetBackingStore();
 }
 
 RenderWidgetHostViewDelegate::~RenderWidgetHostViewDelegate() {}
-
-const QPixmap* RenderWidgetHostViewDelegate::GetBackingStore() {
-  return GetRenderWidgetHostView()->GetBackingStore();
-}
 
 } // namespace qt
 } // namespace oxide

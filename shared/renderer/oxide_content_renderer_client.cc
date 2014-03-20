@@ -17,29 +17,34 @@
 
 #include "oxide_content_renderer_client.h"
 
-#include "oxide_message_dispatcher_renderer.h"
+#include "content/public/renderer/render_frame.h"
+#include "content/public/renderer/render_thread.h"
+
+#include "shared/common/oxide_messages.h"
+
 #include "oxide_process_observer.h"
+#include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
-#include "oxide_web_frame_observer.h"
 
 namespace oxide {
-
-ContentRendererClient::ContentRendererClient() {}
-
-ContentRendererClient::~ContentRendererClient() {}
 
 void ContentRendererClient::RenderThreadStarted() {
   process_observer_.reset(new ProcessObserver());
   user_script_slave_.reset(new UserScriptSlave());
-  message_dispatcher_.reset(new MessageDispatcherRenderer());
+}
+
+void ContentRendererClient::RenderFrameCreated(
+    content::RenderFrame* render_frame) {
+  new ScriptMessageDispatcherRenderer(render_frame);
 }
 
 void ContentRendererClient::RenderViewCreated(
     content::RenderView* render_view) {
+  // XXX: This is currently here because RenderFrame proxies the
+  //      notifications we're interested in to RenderView. Make this
+  //      a RenderFrameObserver when it grows the features we need
   new UserScriptScheduler(render_view);
-  new MessageDispatcherRenderer::EndPoint(render_view);
-  new WebFrameObserver(render_view);
 }
 
 void ContentRendererClient::DidCreateScriptContext(
@@ -47,14 +52,30 @@ void ContentRendererClient::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int extension_group,
     int world_id) {
-  message_dispatcher_->DidCreateScriptContext(frame, context, world_id);
+  ScriptMessageDispatcherRenderer::FromWebFrame(
+      frame)->DidCreateScriptContext(context, world_id);
 }
 
 void ContentRendererClient::WillReleaseScriptContext(
     blink::WebFrame* frame,
     v8::Handle<v8::Context> context,
     int world_id) {
-  message_dispatcher_->WillReleaseScriptContext(frame, context, world_id);
+  ScriptMessageDispatcherRenderer::FromWebFrame(
+      frame)->WillReleaseScriptContext(context, world_id);
 }
+
+bool ContentRendererClient::GetUserAgentOverride(
+    const GURL& url,
+    std::string* user_agent) {
+  bool overridden = false;
+  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
+      url, user_agent, &overridden));
+
+  return overridden;
+}
+
+ContentRendererClient::ContentRendererClient() {}
+
+ContentRendererClient::~ContentRendererClient() {}
 
 } // namespace oxide

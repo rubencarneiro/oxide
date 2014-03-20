@@ -22,36 +22,13 @@ struct OxideMsg_SendMessage_Type {
  public:
   enum Value {
     Message,
+    MessageNoReply,
     Reply
   };
 
   static bool is_valid(int type) {
-    return type == Message || type == Reply;
+    return type == Message || type == MessageNoReply || type == Reply;
   }
-};
-
-struct OxideMsg_SendMessage_Error {
- public:
-  enum Value {
-    OK,
-
-    // The frame ID or world name were invalid
-    INVALID_DESTINATION,
-
-    // The message handler threw an error
-    UNCAUGHT_EXCEPTION,
-
-    // No handler was registered for this message
-    NO_HANDLER,
-
-    // The handler reported an error
-    HANDLER_REPORTED_ERROR,
-
-    // The frame disappeared before sending a response was sent
-    // (only valid for embedder to content script messages, and
-    //  never actually sent across the wire)
-    FRAME_DISAPPEARED,
-  };
 };
 
 #endif // _OXIDE_SHARED_COMMON_MESSAGE_ENUMS_H_
