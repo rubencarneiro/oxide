@@ -32,24 +32,14 @@ class OffTheRecordBrowserContextIODataImpl FINAL :
  public:
   OffTheRecordBrowserContextIODataImpl(BrowserContextIOData* original_io_data);
 
-  net::SSLConfigService* ssl_config_service() const FINAL;
-  net::HttpUserAgentSettings* http_user_agent_settings() const FINAL;
-
   base::FilePath GetPath() const FINAL;
-  bool SetPath(const base::FilePath& path) FINAL;
   base::FilePath GetCachePath() const FINAL;
-  bool SetCachePath(const base::FilePath& cache_path) FINAL;
 
-  std::string GetAcceptLangs() const;
-  void SetAcceptLangs(const std::string& langs);
+  std::string GetAcceptLangs() const FINAL;
 
-  std::string GetProduct() const;
-  void SetProduct(const std::string& product);
+  std::string GetUserAgent() const FINAL;
 
-  std::string GetUserAgent() const;
-  void SetUserAgent(const std::string& user_agent);
-
-  bool IsOffTheRecord() const;
+  bool IsOffTheRecord() const FINAL;
 
  private:
   BrowserContextIOData* original_io_data_;
@@ -61,6 +51,13 @@ class OffTheRecordBrowserContextImpl FINAL : public BrowserContext {
  public:
   BrowserContext* GetOffTheRecordContext() FINAL;
   BrowserContext* GetOriginalContext() FINAL;
+
+  void SetAcceptLangs(const std::string& langs) FINAL;
+
+  std::string GetProduct() const FINAL;
+  void SetProduct(const std::string& product) FINAL;
+
+  void SetUserAgent(const std::string& user_agent) FINAL;
 
   UserScriptMaster& UserScriptManager() FINAL;
 

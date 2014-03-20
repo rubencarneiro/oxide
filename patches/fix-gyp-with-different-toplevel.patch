@@ -1,10 +1,18 @@
-# Description: Make gyp work correctly when toplevel != depth
+# Description: Make gyp work correctly when toplevel != depth. This does 2
+#  things:
+#  1) It makes LIB_DIR work correctly, eg, libvpx.gyp refers to the following:
+#      "<(LIB_DIR)/third_party/libvpx/libvpx_asm_offsets_vpx_scale.a"
+#     However, libvpx_asm_offsets_vpx_scale.a is stored at:
+#      obj.target/chromium/src/third_party/libvpx/libvpx_asm_offsets_vpx_scale.a
+#  2) Uses the toplevel directory for the regen flags. The regen target chdirs
+#     to this, so using depth is wrong (it results in, eg, -I../../qt/qt.gypi
+#     rather than -Iqt/qt.gypi
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/tools/gyp/pylib/gyp/__init__.py b/tools/gyp/pylib/gyp/__init__.py
 --- a/tools/gyp/pylib/gyp/__init__.py
 +++ b/tools/gyp/pylib/gyp/__init__.py
-@@ -192,17 +192,17 @@ def RegenerateFlags(options):
+@@ -190,17 +190,17 @@ def RegenerateFlags(options):
    object (even in the absence of the environment variables.)
  
    Any path options will be normalized relative to depth.
@@ -23,6 +31,7 @@ diff --git a/tools/gyp/pylib/gyp/__init__.py b/tools/gyp/pylib/gyp/__init__.py
      return value
  
    # We always want to ignore the environment when regenerating, to avoid
+
 diff --git a/tools/gyp/pylib/gyp/generator/make.py b/tools/gyp/pylib/gyp/generator/make.py
 --- a/tools/gyp/pylib/gyp/generator/make.py
 +++ b/tools/gyp/pylib/gyp/generator/make.py

@@ -18,8 +18,7 @@
 #include "oxide_content_client.h"
 
 #include "base/strings/stringprintf.h"
-#include "webkit/common/user_agent/user_agent.h"
-#include "webkit/common/user_agent/user_agent_util.h"
+#include "content/public/common/user_agent.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/chrome_version.h"
@@ -58,7 +57,7 @@ ContentRendererClient* ContentClient::renderer() {
 }
 
 std::string ContentClient::GetUserAgent() const {
-  return webkit_glue::BuildUserAgentFromProduct(
+  return content::BuildUserAgentFromProduct(
       base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
 }
 

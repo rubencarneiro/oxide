@@ -79,12 +79,12 @@ TestWebView {
       var handler = messageHandler.createObject(otherView, {});
 
       webView.addMessageHandler(handler);
-      compare(spy.count, 1, "Should have had a signal");
-      compare(otherView.messageHandlers.length, 0,
-              "Should have no handlers on the other view");
-      compare(webView.messageHandlers.length, 1,
-              "Should have 1 handler on our view");
-      compare(OxideTestingUtils.qObjectParent(handler), webView,
+      compare(spy.count, 0, "Should not have had a signal");
+      compare(otherView.messageHandlers.length, 1,
+              "Should still have a handler on the other view");
+      compare(webView.messageHandlers.length, 0,
+              "Should have no handlers on our view");
+      compare(OxideTestingUtils.qObjectParent(handler), otherView,
               "Incorrect parent");
 
       webView.removeMessageHandler(handler);
@@ -95,13 +95,30 @@ TestWebView {
       var handler = messageHandler.createObject(frame, {});
 
       webView.addMessageHandler(handler);
-      compare(spy.count, 1, "Should have had a signal");
-      compare(frame.messageHandlers.length, 0,
-              "Frame should have no handlers now");
-      compare(webView.messageHandlers.length, 1,
-              "View should have adopted message handler");
-      compare(OxideTestingUtils.qObjectParent(handler), webView,
+      compare(spy.count, 0, "Should not have had a signal");
+      compare(frame.messageHandlers.length, 1,
+              "Frame should still have a handler");
+      compare(webView.messageHandlers.length, 0,
+              "View should not have adopted message handler");
+      compare(OxideTestingUtils.qObjectParent(handler), frame,
               "Incorrect parent");
+    }
+
+    function test_WebView_messageHandlers5_remove_on_destroy() {
+      var handler = messageHandler.createObject(webView, {});
+
+      compare(spy.count, 1, "Should have had a signal");
+      compare(webView.messageHandlers.length, 1,
+              "WebView should have a handler");
+
+      var obs = OxideTestingUtils.createDestructionObserver(handler);
+      handler.destroy();
+      verify(webView.waitFor(function() { return obs.destroyed; }),
+             "Timed out waiting for handler to be destroyed");
+
+      compare(spy.count, 2, "Should have had a signal");
+      compare(webView.messageHandlers.length, 0,
+              "Expected no handlers in the WebView now");
     }
   }
 }

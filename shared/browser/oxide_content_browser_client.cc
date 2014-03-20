@@ -43,8 +43,10 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
+#include "oxide_gpu_utils.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
+#include "oxide_user_agent_override_provider.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
@@ -53,9 +55,9 @@ namespace oxide {
 
 namespace {
 
-base::MessagePump* CreateMessagePumpForUI() {
-  return ContentClient::instance()->browser()->
-      CreateMessagePumpForUI();
+scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
+  return make_scoped_ptr(
+      ContentClient::instance()->browser()->CreateMessagePumpForUI());
 }
 
 class BrowserMainParts;
@@ -144,7 +146,6 @@ class BrowserMainParts : public content::BrowserMainParts {
   void PreEarlyInitialization() FINAL {
     base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
     main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
-  
   }
 
   int PreCreateThreads() FINAL {
@@ -158,9 +159,17 @@ class BrowserMainParts : public content::BrowserMainParts {
     return 0;
   }
 
+  void PreMainMessageLoopRun() FINAL {
+    GpuUtils::Initialize();
+  }
+
   bool MainMessageLoopRun(int* result_code) FINAL {
     MessageLoopForUI::current()->Start();
     return true;
+  }
+
+  void PostMainMessageLoopRun() FINAL {
+    GpuUtils::Terminate();
   }
 
   void PostDestroyThreads() FINAL {
@@ -173,10 +182,6 @@ class BrowserMainParts : public content::BrowserMainParts {
 };
 
 } // namespace
-
-ContentBrowserClient::ContentBrowserClient() {}
-
-ContentBrowserClient::~ContentBrowserClient() {}
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
@@ -197,14 +202,17 @@ void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetIsIncognitoProcess(
       host->GetBrowserContext()->IsOffTheRecord()));
-  host->AddFilter(new ScriptMessageDispatcherBrowser(host->GetID()));
+  host->AddFilter(new ScriptMessageDispatcherBrowser(host));
+  host->AddFilter(new UserAgentOverrideProvider(host));
 }
 
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
     content::BrowserContext* browser_context,
-    content::ProtocolHandlerMap* protocol_handlers) {
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   return BrowserContext::FromContent(
-      browser_context)->CreateRequestContext(protocol_handlers);
+      browser_context)->CreateRequestContext(protocol_handlers,
+                                             protocol_interceptors.Pass());
 }
 
 net::URLRequestContextGetter*
@@ -212,7 +220,8 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
     content::BrowserContext* browser_context,
     const base::FilePath& partition_path,
     bool in_memory,
-    content::ProtocolHandlerMap* protocol_handlers) {
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
@@ -222,6 +231,27 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
   return BrowserContext::FromContent(browser_context)->GetAcceptLangs();
+}
+
+bool ContentBrowserClient::AllowGetCookie(const GURL& url,
+                                          const GURL& first_party,
+                                          const net::CookieList& cookie_list,
+                                          content::ResourceContext* context,
+                                          int render_process_id,
+                                          int render_frame_id) {
+  return BrowserContextIOData::FromResourceContext(
+      context)->CanAccessCookies(url, first_party, false);
+}
+
+bool ContentBrowserClient::AllowSetCookie(const GURL& url,
+                                          const GURL& first_party,
+                                          const std::string& cookie_line,
+                                          content::ResourceContext* context,
+                                          int render_process_id,
+                                          int render_frame_id,
+                                          net::CookieOptions* options) {
+  return BrowserContextIOData::FromResourceContext(
+      context)->CanAccessCookies(url, first_party, true);
 }
 
 void ContentBrowserClient::ResourceDispatcherHostCreated() {
@@ -268,5 +298,9 @@ gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
 bool ContentBrowserClient::IsTouchSupported() {
   return false;
 }
+
+ContentBrowserClient::ContentBrowserClient() {}
+
+ContentBrowserClient::~ContentBrowserClient() {}
 
 } // namespace oxide

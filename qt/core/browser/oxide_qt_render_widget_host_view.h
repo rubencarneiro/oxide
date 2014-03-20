@@ -98,12 +98,10 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
  private:
   void Paint(const gfx::Rect& rect) FINAL;
-  void BuffersSwapped(const AcknowledgeBufferPresentCallback& ack) FINAL;
+  void BuffersSwapped() FINAL;
 
   BackingStore* backing_store_;
   scoped_ptr<RenderWidgetHostViewDelegate> delegate_;
-
-  AcknowledgeBufferPresentCallback acknowledge_buffer_present_callback_;
 
   ui::TextInputType input_type_;
 

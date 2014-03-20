@@ -76,7 +76,6 @@ WebPreferences::WebPreferences() :
   // ATTR_LOCAL_STORAGE_ENABLED
   // ATTR_DATABASES_ENABLED
   // ATTR_APP_CACHE_ENABLED
-  // ATTR_FULLSCREEN_ENABLED
 
   SetAttribute(ATTR_TABS_TO_LINKS, true);
 
@@ -249,7 +248,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->local_storage_enabled = attributes_[ATTR_LOCAL_STORAGE_ENABLED];
   prefs->databases_enabled = attributes_[ATTR_DATABASES_ENABLED];
   prefs->application_cache_enabled = attributes_[ATTR_APP_CACHE_ENABLED];
-  prefs->fullscreen_enabled = attributes_[ATTR_FULLSCREEN_ENABLED];
 
   prefs->tabs_to_links = attributes_[ATTR_TABS_TO_LINKS];
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];

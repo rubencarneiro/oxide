@@ -115,7 +115,7 @@ void ScriptMessageManager::OxideLazyGetterInner(
   v8::Local<v8::String> wrapped_src(
       v8::String::Concat(start, v8::String::Concat(src, end)));
 
-  v8::Local<v8::Script> script(v8::Script::New(wrapped_src));
+  v8::Local<v8::Script> script(v8::Script::Compile(wrapped_src));
 
   v8::TryCatch try_catch;
   v8::Local<v8::Function> function(script->Run().As<v8::Function>());

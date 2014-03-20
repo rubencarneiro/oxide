@@ -62,7 +62,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   Q_PROPERTY(bool localStorageEnabled READ localStorageEnabled WRITE setLocalStorageEnabled NOTIFY localStorageEnabledChanged)
   Q_PROPERTY(bool databasesEnabled READ databasesEnabled WRITE setDatabasesEnabled NOTIFY databasesEnabledChanged)
   Q_PROPERTY(bool appCacheEnabled READ appCacheEnabled WRITE setAppCacheEnabled NOTIFY appCacheEnabledChanged)
-  Q_PROPERTY(bool fullscreenEnabled READ fullscreenEnabled WRITE setFullscreenEnabled NOTIFY fullscreenEnabledChanged)
 
   Q_PROPERTY(bool tabsToLinks READ tabsToLinks WRITE setTabsToLinks NOTIFY tabsToLinksChanged)
   Q_PROPERTY(bool caretBrowsingEnabled READ caretBrowsingEnabled WRITE setCaretBrowsingEnabled NOTIFY caretBrowsingEnabledChanged)
@@ -138,8 +137,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void setDatabasesEnabled(bool enabled);
   bool appCacheEnabled() const;
   void setAppCacheEnabled(bool enabled);
-  bool fullscreenEnabled() const;
-  void setFullscreenEnabled(bool enabled);
 
   bool tabsToLinks() const;
   void setTabsToLinks(bool enabled);
@@ -188,7 +185,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void localStorageEnabledChanged();
   void databasesEnabledChanged();
   void appCacheEnabledChanged();
-  void fullscreenEnabledChanged();
 
   void tabsToLinksChanged();
   void caretBrowsingEnabledChanged();

@@ -35,7 +35,7 @@ set_target_properties(
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 
-foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebView.qml)
+foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebContext.qml TestWebView.qml)
   add_custom_command(
       TARGET ${QML_PLUGIN} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different

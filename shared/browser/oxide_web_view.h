@@ -26,11 +26,13 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/notification_observer.h"
+#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
@@ -114,7 +116,6 @@ class WebView : public ScriptMessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-  WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
@@ -150,7 +151,6 @@ class WebView : public ScriptMessageTarget,
       size_t index) const OVERRIDE;
 
   // BrowserContextObserver
-  void BrowserContextDestroyed() FINAL;
   void NotifyUserAgentStringChanged() FINAL;
 
   // WebPreferencesObserver
@@ -212,9 +212,10 @@ class WebView : public ScriptMessageTarget,
       const content::LoadCommittedDetails& load_details) FINAL;
 
   void FrameDetached(content::RenderViewHost* rvh,
-                     int64 frame_id) FINAL;
+                     int64 frame_routing_id) FINAL;
   void FrameAttached(content::RenderViewHost* rvh,
-                     int64 parent_frame_id, int64 frame_id) FINAL;
+                     int64 parent_frame_routing_id,
+                     int64 frame_routing_id) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
@@ -240,8 +241,9 @@ class WebView : public ScriptMessageTarget,
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
+  ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
-  scoped_ptr<content::NotificationRegistrar> registrar_;
+  content::NotificationRegistrar registrar_;
   scoped_ptr<WebFrame> root_frame_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

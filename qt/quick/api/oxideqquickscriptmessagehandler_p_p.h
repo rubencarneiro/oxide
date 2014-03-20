@@ -32,17 +32,17 @@ class OxideQQuickScriptMessageHandlerPrivate Q_DECL_FINAL :
  public:
   OxideQQuickScriptMessageHandlerPrivate(OxideQQuickScriptMessageHandler* q);
 
-  void removeFromCurrentOwner();
+  bool isActive();
 
   static OxideQQuickScriptMessageHandlerPrivate* get(
       OxideQQuickScriptMessageHandler* message_handler);
-
-  QJSValue callback;
 
  private:
   bool OnReceiveMessage(oxide::qt::ScriptMessageAdapter* message,
                         QString& error) Q_DECL_FINAL;
   oxide::qt::ScriptMessageAdapter* CreateScriptMessage() Q_DECL_FINAL;
+
+  QJSValue callback_;
 
   Q_DISABLE_COPY(OxideQQuickScriptMessageHandlerPrivate);
 };

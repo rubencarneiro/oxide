@@ -18,6 +18,7 @@
 #include "oxide_browser_process_main.h"
 
 #include "base/logging.h"
+#include "content/public/app/content_main.h"
 #include "content/public/app/content_main_runner.h"
 #include "content/public/browser/browser_main_runner.h"
 
@@ -84,7 +85,8 @@ bool BrowserProcessMain::Init() {
     return false;
   }
 
-  if (main_runner_->Initialize(0, NULL, main_delegate_.get()) != -1) {
+  content::ContentMainParams params(main_delegate_.get());
+  if (main_runner_->Initialize(params) != -1) {
     LOG(ERROR) << "Failed to initialize Oxide main runner";
     return false;
   }

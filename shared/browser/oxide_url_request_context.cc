@@ -28,13 +28,14 @@ namespace oxide {
 
 namespace {
 
-class DefaultURLRequestContextGetter FINAL : public URLRequestContextGetter {
+class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
  public:
-  DefaultURLRequestContextGetter(
+  MainURLRequestContextGetter(
+      BrowserContextIOData* context,
       content::ProtocolHandlerMap* protocol_handlers,
-      BrowserContextIOData* context) :
-      URLRequestContextGetter(),
-      context_(context) {
+      content::ProtocolHandlerScopedVector protocol_interceptors) :
+      context_(context),
+      protocol_interceptors_(protocol_interceptors.Pass()) {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
 
@@ -42,8 +43,9 @@ class DefaultURLRequestContextGetter FINAL : public URLRequestContextGetter {
     DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
 
     if (!url_request_context_) {
-      context_->Init(protocol_handlers_);
-      url_request_context_ = context_->GetMainRequestContext()->GetWeakPtr();
+      DCHECK(context_);
+      context_->Init(protocol_handlers_, protocol_interceptors_.Pass());
+      url_request_context_ = context_->GetMainRequestContext()->AsWeakPtr();
       context_ = NULL;
     }
 
@@ -51,14 +53,19 @@ class DefaultURLRequestContextGetter FINAL : public URLRequestContextGetter {
   }
 
  private:
-  content::ProtocolHandlerMap protocol_handlers_;
-  // XXX: Can we outlive the context IO data?
   BrowserContextIOData* context_;
+  content::ProtocolHandlerMap protocol_handlers_;
+  content::ProtocolHandlerScopedVector protocol_interceptors_;
 
-  DISALLOW_COPY_AND_ASSIGN(DefaultURLRequestContextGetter);
+  DISALLOW_COPY_AND_ASSIGN(MainURLRequestContextGetter);
 };
 
 } // namespace
+
+URLRequestContext::URLRequestContext() :
+    storage_(this) {}
+
+URLRequestContext::~URLRequestContext() {}
 
 URLRequestContextGetter::URLRequestContextGetter() {}
 
@@ -66,10 +73,12 @@ URLRequestContextGetter::~URLRequestContextGetter() {}
 
 // static
 URLRequestContextGetter* URLRequestContextGetter::CreateMain(
+    BrowserContextIOData* context,
     content::ProtocolHandlerMap* protocol_handlers,
-    BrowserContextIOData* context) {
-  return new DefaultURLRequestContextGetter(protocol_handlers,
-                                            context);
+    content::ProtocolHandlerScopedVector protocol_interceptors) {
+  return new MainURLRequestContextGetter(context,
+                                         protocol_handlers,
+                                         protocol_interceptors.Pass());
 }
 
 scoped_refptr<base::SingleThreadTaskRunner>

@@ -36,6 +36,9 @@ class OxideQQuickUserScript : public QObject,
   Q_PROPERTY(QUrl context READ context WRITE setContext NOTIFY scriptPropertyChanged)
 
   Q_DECLARE_PRIVATE(OxideQQuickUserScript)
+  Q_DISABLE_COPY(OxideQQuickUserScript)
+
+  Q_INTERFACES(QQmlParserStatus)
 
  public:
   OxideQQuickUserScript(QObject* parent = NULL);
@@ -63,7 +66,6 @@ class OxideQQuickUserScript : public QObject,
   void scriptLoaded();
   void scriptLoadFailed();
   void scriptPropertyChanged();
-  void scriptWillBeDeleted();
 
  protected:
   QScopedPointer<OxideQQuickUserScriptPrivate> d_ptr;

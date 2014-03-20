@@ -57,6 +57,33 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
   view_ = view;
 }
 
+void OxideQQuickWebViewPrivate::contextInitialized() {
+  completeConstruction();
+}
+
+void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
+  Q_Q(OxideQQuickWebView);
+
+  // XXX: Our underlying BrowserContext lives on, so we're left in a
+  // bit of a weird state here (WebView.context will return no context,
+  // which is a lie)
+  context = NULL;
+  emit q->contextChanged();
+}
+
+void OxideQQuickWebViewPrivate::detachContextSignals() {
+  Q_Q(OxideQQuickWebView);
+
+  if (context) {
+    QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
+                        SIGNAL(initialized()),
+                        q, SLOT(contextInitialized()));
+    QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
+                        SIGNAL(willBeDestroyed()),
+                        q, SLOT(contextWillBeDestroyed()));
+  }
+}
+
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     oxide::qt::WebViewAdapter(view),
@@ -193,7 +220,7 @@ void OxideQQuickWebViewPrivate::FrameRemoved(
   emit q->frameRemoved(adapterToQObject<OxideQQuickWebFrame>(frame));
 }
 
-void OxideQQuickWebViewPrivate::componentComplete() {
+void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
   Q_ASSERT(init_props_);
@@ -213,6 +240,14 @@ void OxideQQuickWebViewPrivate::componentComplete() {
        q->isVisible());
 
   init_props_.reset();
+
+  // Make the webview the QObject parent of the new root frame,
+  // to stop Qml from collecting the frame tree
+  q->rootFrame()->setParent(q);
+
+  // Initialization created the root frame. This is the only time
+  // this is emitted
+  emit q->rootFrameChanged();
 }
 
 // static
@@ -304,8 +339,12 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
-    QQuickItem(parent),
-    d_ptr(new OxideQQuickWebViewPrivate(this)) {
+    QQuickItem(parent) {
+  // WebView instantiates NotificationRegistrar, which starts
+  // NotificationService, which uses LazyInstance. Start Chromium now
+  // else we'll crash
+  OxideQQuickWebContextPrivate::ensureChromiumStarted();
+  d_ptr.reset(new OxideQQuickWebViewPrivate(this));
   QObject::connect(this, SIGNAL(visibleChanged()),
                    this, SLOT(visibilityChangedListener()));
 }
@@ -313,8 +352,9 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
 
-  QObject::disconnect(this, SIGNAL(visibleChanged()),
-                      this, SLOT(visibilityChangedListener()));
+  disconnect(this, SIGNAL(visibleChanged()),
+             this, SLOT(visibilityChangedListener()));
+  d->detachContextSignals();
 
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
@@ -322,20 +362,6 @@ OxideQQuickWebView::~OxideQQuickWebView() {
     delete adapterToQObject<OxideQQuickScriptMessageHandler>(
         d->message_handlers().at(0));
   }
-
-  // The default context is reference counted, and OxideQQuickWebViewPrivate
-  // (our d_ptr) holds our reference to it. When destroying the d_ptr,
-  // we need to hold a temporary reference to the default context to stop
-  // it from being destroyed before the destructor for WebViewAdapter is
-  // called, otherwise our oxide::WebView will outlive its context (and
-  // this is not allowed)
-  QSharedPointer<OxideQQuickWebContext> death_grip;
-  if (!d->context) {
-    death_grip = OxideQQuickWebContext::defaultContext();
-  }
-
-  // Have to do this whilst death_grip is in scope
-  d_ptr.reset();
 }
 
 void OxideQQuickWebView::componentComplete() {
@@ -343,15 +369,16 @@ void OxideQQuickWebView::componentComplete() {
 
   QQuickItem::componentComplete();
 
-  d->componentComplete();
+  if (d->context) {
+    connect(OxideQQuickWebContextPrivate::get(d->context),
+            SIGNAL(initialized()),
+            this, SLOT(contextInitialized()));
+  }
 
-  // Make the webview the QObject parent of the new root frame,
-  // to stop Qml from collecting the frame tree
-  rootFrame()->setParent(this);
-
-  // Initialization created the root frame. This is the only time
-  // this is emitted
-  emit rootFrameChanged();
+  if (!d->context ||
+      OxideQQuickWebContextPrivate::get(d->context)->isInitialized()) {
+    d->completeConstruction();
+  }
 }
 
 QUrl OxideQQuickWebView::url() const {
@@ -445,13 +472,16 @@ void OxideQQuickWebView::addMessageHandler(
   OxideQQuickScriptMessageHandlerPrivate* hd =
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->message_handlers().contains(hd)) {
-    hd->removeFromCurrentOwner();
-    handler->setParent(this);
-  } else {
+  if (hd->isActive() && handler->parent() != this) {
+    qWarning() << "MessageHandler can't be added to more than one message target";
+    return;
+  }
+
+  if (d->message_handlers().contains(hd)) {
     d->message_handlers().removeOne(hd);
   }
 
+  handler->setParent(this);
   d->message_handlers().append(hd);
 
   emit messageHandlersChanged();
@@ -579,7 +609,18 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
     return;
   }
 
+  if (context == d->context) {
+    return;
+  }
+
+  d->detachContextSignals();
+  if (context) {
+    connect(OxideQQuickWebContextPrivate::get(context), SIGNAL(willBeDestroyed()),
+            this, SLOT(contextWillBeDestroyed()));
+  }
+
   d->context = context;
+  emit contextChanged();
 }
 
 OxideQWebPreferences* OxideQQuickWebView::preferences() {
@@ -635,3 +676,5 @@ void OxideQQuickWebView::reload() {
 
   d->reload();
 }
+
+#include "moc_oxideqquickwebview_p.cpp"

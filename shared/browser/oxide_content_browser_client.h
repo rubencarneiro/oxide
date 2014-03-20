@@ -47,6 +47,13 @@ class ContentBrowserClient : public content::ContentBrowserClient {
  public:
   virtual ~ContentBrowserClient();
 
+  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
+
+ protected:
+  // Limit default constructor access to derived classes
+  ContentBrowserClient();
+
+ private:
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) FINAL;
 
@@ -59,17 +66,34 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::BrowserContext* browser_context,
-      content::ProtocolHandlerMap* protocol_handlers) FINAL;
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
 
   net::URLRequestContextGetter*
       CreateRequestContextForStoragePartition(
         content::BrowserContext* browser_context,
         const base::FilePath& partition_path,
         bool in_memory,
-        content::ProtocolHandlerMap* protocol_handlers) FINAL;
+        content::ProtocolHandlerMap* protocol_handlers,
+        content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
 
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;
+
+  bool AllowGetCookie(const GURL& url,
+                      const GURL& first_party,
+                      const net::CookieList& cookie_list,
+                      content::ResourceContext* context,
+                      int render_process_id,
+                      int render_frame_id) FINAL;
+
+  bool AllowSetCookie(const GURL& url,
+                      const GURL& first_party,
+                      const std::string& cookie_line,
+                      content::ResourceContext* context,
+                      int render_process_id,
+                      int render_frame_id,
+                      net::CookieOptions* options) FINAL;
 
   void ResourceDispatcherHostCreated() FINAL;
 
@@ -79,16 +103,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
-  // Extra Oxide methods
-  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
-
   virtual bool IsTouchSupported();
 
- protected:
-  // Limit default constructor access to derived classes
-  ContentBrowserClient();
-
- private:
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 

@@ -18,30 +18,129 @@
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 
+#include <QMutex>
+#include <QMutexLocker>
 #include <QQmlListProperty>
-#include <QWeakPointer>
+#include <QSharedPointer>
 #include <QtDebug>
+#include <QThread>
 #include <QtQuickVersion>
+#include <QWeakPointer>
 #if defined(ENABLE_COMPOSITING)
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
+
+#include "qt/core/api/oxideqnetworkcallbackevents.h"
+#include "qt/core/api/oxideqstoragepermissionrequest.h"
 
 #include "oxideqquickglobals_p.h"
 #include "oxideqquickglobals_p_p.h"
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
+#include "oxideqquickwebcontextdelegateworker_p.h"
+#include "oxideqquickwebcontextdelegateworker_p_p.h"
+#include "oxidequseragentoverriderequest_p.h"
+#include "oxidequseragentoverriderequest_p_p.h"
 
 namespace {
 QWeakPointer<OxideQQuickWebContext> g_default_context;
 }
 
+namespace oxide {
+namespace qquick {
+
+class WebContextIOThreadDelegate :
+    public oxide::qt::WebContextAdapter::IOThreadDelegate {
+ public:
+  WebContextIOThreadDelegate() :
+      network_request_delegate(NULL),
+      storage_access_permission_delegate(NULL),
+      user_agent_override_delegate(NULL) {}
+  virtual ~WebContextIOThreadDelegate() {}
+
+  virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) {
+    QMutexLocker locker(&lock);
+    if (!network_request_delegate) {
+      delete event;
+      return;
+    }
+
+    // FIXME(chrisccoulson): Should move |event| to the helper thread,
+    //  where it will be consumed
+
+    emit network_request_delegate->callEntryPointInWorker("onBeforeURLRequest",
+                                                          event);
+  }
+
+  virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) {
+    QMutexLocker locker(&lock);
+    if (!network_request_delegate) {
+      delete event;
+      return;
+    }
+
+    // FIXME(chrisccoulson): Should move |event| to the helper thread,
+    //  where it will be consumed
+
+    emit network_request_delegate->callEntryPointInWorker("onBeforeSendHeaders",
+                                                          event);
+  }
+
+  virtual void HandleStoragePermissionRequest(
+      OxideQStoragePermissionRequest* req) {
+    QMutexLocker locker(&lock);
+    if (!storage_access_permission_delegate) {
+      delete req;
+      return;
+    }
+
+    // FIXME(chrisccoulson): Should move |req| to the helper thread,
+    //  where it will be consumed
+
+    emit storage_access_permission_delegate->callEntryPointInWorker(
+        "onStoragePermissionRequest", req);
+  }
+
+  virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) {
+    bool did_override = false;
+
+    QMutexLocker locker(&lock);
+    if (!user_agent_override_delegate) {
+      return did_override;
+    }
+
+    OxideQUserAgentOverrideRequest* req = new OxideQUserAgentOverrideRequest(url);
+
+    OxideQUserAgentOverrideRequestPrivate* p =
+        OxideQUserAgentOverrideRequestPrivate::get(req);
+    p->did_override = &did_override;
+    p->user_agent = user_agent;
+
+    emit user_agent_override_delegate->callEntryPointInWorker(
+        "onGetUserAgentOverride", req);
+
+    return did_override;
+  }
+
+  QMutex lock;
+
+  WebContextDelegateWorkerIOThreadController* network_request_delegate;
+  WebContextDelegateWorkerIOThreadController* storage_access_permission_delegate;
+  WebContextDelegateWorkerIOThreadController* user_agent_override_delegate;
+};
+
+} // namespace qquick
+} // namespace oxide
+
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
-    q_ptr(q) {
-  OxideQQuickWebContext::ensureChromiumStarted();
-}
-
-OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
+    oxide::qt::WebContextAdapter(new oxide::qquick::WebContextIOThreadDelegate()),
+    q_ptr(q),
+    io_thread_delegate_(
+        static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
+    network_request_delegate_(NULL),
+    storage_access_permission_delegate_(NULL),
+    user_agent_override_delegate_(NULL) {}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
   updateUserScripts();
@@ -50,10 +149,10 @@ void OxideQQuickWebContextPrivate::userScriptUpdated() {
 void OxideQQuickWebContextPrivate::userScriptWillBeDeleted() {
   Q_Q(OxideQQuickWebContext);
 
-  OxideQQuickUserScript* sender =
-      qobject_cast<OxideQQuickUserScript *>(q->sender());
+  OxideQQuickUserScriptPrivate* sender =
+      qobject_cast<OxideQQuickUserScriptPrivate *>(q->sender());
   Q_ASSERT(sender);
-  q->removeUserScript(sender);  
+  q->removeUserScript(adapterToQObject<OxideQQuickUserScript>(sender));  
 }
 
 void OxideQQuickWebContextPrivate::detachUserScriptSignals(
@@ -64,13 +163,9 @@ void OxideQQuickWebContextPrivate::detachUserScriptSignals(
                       q, SLOT(userScriptUpdated()));
   QObject::disconnect(user_script, SIGNAL(scriptPropertyChanged()),
                       q, SLOT(userScriptUpdated()));
-  QObject::disconnect(user_script, SIGNAL(scriptWillBeDeleted()),
+  QObject::disconnect(OxideQQuickUserScriptPrivate::get(user_script),
+                      SIGNAL(willBeDeleted()),
                       q, SLOT(userScriptWillBeDeleted()));
-}
-
-OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
-    OxideQQuickWebContext* context) {
-  return context->d_func();
 }
 
 void OxideQQuickWebContextPrivate::userScript_append(
@@ -119,29 +214,73 @@ void OxideQQuickWebContextPrivate::userScript_clear(
   }
 }
 
-OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
-    QObject(parent),
-    d_ptr(new OxideQQuickWebContextPrivate(this)) {}
+bool OxideQQuickWebContextPrivate::attachDelegateWorker(
+    OxideQQuickWebContextDelegateWorker* worker,
+    OxideQQuickWebContextDelegateWorker** ui_slot,
+    oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot) {
+  Q_Q(OxideQQuickWebContext);
 
-OxideQQuickWebContext::~OxideQQuickWebContext() {
-  Q_D(OxideQQuickWebContext);
+  if (*ui_slot == worker) {
+    return false;
+  }
 
-  for (int i = 0; i < d->user_scripts().size(); ++i) {
-    d->detachUserScriptSignals(
-        adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));
+  oxide::qquick::WebContextDelegateWorkerIOThreadController* controller = NULL;
+
+  if (worker) {
+    OxideQQuickWebContext* parent =
+        qobject_cast<OxideQQuickWebContext *>(worker->parent());
+    if (parent && parent != q) {
+      qWarning() << "Can't add WebContextDelegateWorker to more than one WebContext";
+      return false;
+    }
+
+    worker->setParent(q);
+    controller = OxideQQuickWebContextDelegateWorkerPrivate::get(
+        worker)->io_thread_controller.data();
+  }
+
+  OxideQQuickWebContextDelegateWorker* old_worker = *ui_slot;
+  *ui_slot = worker;
+
+  {
+    QMutexLocker lock(&io_thread_delegate_->lock);
+    *io_slot = controller;
+  }
+
+  if (old_worker &&
+      old_worker != q->networkRequestDelegate() &&
+      old_worker != q->storageAccessPermissionDelegate() &&
+      old_worker != q->userAgentOverrideDelegate()) {
+    old_worker->setParent(NULL);
+  }
+
+  return true;
+}
+
+OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
+
+void OxideQQuickWebContextPrivate::delegateWorkerDestroyed(
+    OxideQQuickWebContextDelegateWorker* worker) {
+  Q_Q(OxideQQuickWebContext);
+
+  if (worker == q->networkRequestDelegate()) {
+    q->setNetworkRequestDelegate(NULL);
+  }
+  if (worker == q->storageAccessPermissionDelegate()) {
+    q->setStorageAccessPermissionDelegate(NULL);
+  }
+  if (worker == q->userAgentOverrideDelegate()) {
+    q->setUserAgentOverrideDelegate(NULL);
   }
 }
 
-void OxideQQuickWebContext::classBegin() {}
-
-void OxideQQuickWebContext::componentComplete() {
-  Q_D(OxideQQuickWebContext);
-
-  d->completeConstruction();
+OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
+    OxideQQuickWebContext* context) {
+  return context->d_func();
 }
 
 // static
-void OxideQQuickWebContext::ensureChromiumStarted() {
+void OxideQQuickWebContextPrivate::ensureChromiumStarted() {
   static bool started = false;
   if (started) {
     return;
@@ -152,6 +291,38 @@ void OxideQQuickWebContext::ensureChromiumStarted() {
       QSGContext::sharedOpenGLContext());
 #endif
   oxide::qt::WebContextAdapter::ensureChromiumStarted();
+}
+
+OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
+    QObject(parent),
+    d_ptr(new OxideQQuickWebContextPrivate(this)) {
+  OxideQQuickWebContextPrivate::ensureChromiumStarted();
+}
+
+OxideQQuickWebContext::~OxideQQuickWebContext() {
+  Q_D(OxideQQuickWebContext);
+
+  emit d->willBeDestroyed();
+
+  for (int i = 0; i < d->user_scripts().size(); ++i) {
+    d->detachUserScriptSignals(
+        adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));
+  }
+
+  // These call back in to us when destroyed, so delete them now in order
+  // to avoid a reentrancy crash
+  delete d->network_request_delegate_;
+  delete d->storage_access_permission_delegate_;
+  delete d->user_agent_override_delegate_;
+}
+
+void OxideQQuickWebContext::classBegin() {}
+
+void OxideQQuickWebContext::componentComplete() {
+  Q_D(OxideQQuickWebContext);
+
+  d->init();
+  emit d->initialized();
 }
 
 // static
@@ -227,7 +398,7 @@ QUrl OxideQQuickWebContext::dataPath() const {
 void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->constructed()) {
+  if (d->isInitialized()) {
     qWarning() << "Can only set dataPath during construction";
     return;
   }
@@ -249,7 +420,7 @@ QUrl OxideQQuickWebContext::cachePath() const {
 void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->constructed()) {
+  if (d->isInitialized()) {
     qWarning() << "Can only set cachePath during construction";
     return;
   }
@@ -305,15 +476,15 @@ void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
             this, SLOT(userScriptUpdated()));
     connect(user_script, SIGNAL(scriptPropertyChanged()),
             this, SLOT(userScriptUpdated()));
-    connect(user_script, SIGNAL(scriptWillBeDeleted()),
+    connect(ud, SIGNAL(willBeDeleted()),
             this, SLOT(userScriptWillBeDeleted()));
-    if (!user_script->parent()) {
-      user_script->setParent(this);
-    }
   } else {
     d->user_scripts().removeOne(ud);
   }
 
+  if (!user_script->parent()) {
+    user_script->setParent(this);
+  }
   d->user_scripts().append(ud);
 
   emit userScriptsChanged();
@@ -343,6 +514,97 @@ void OxideQQuickWebContext::removeUserScript(
   d->user_scripts().removeOne(ud);
 
   emit userScriptsChanged();
+}
+
+OxideQQuickWebContext::CookiePolicy OxideQQuickWebContext::cookiePolicy() const {
+  Q_D(const OxideQQuickWebContext);
+
+  Q_STATIC_ASSERT(
+      CookiePolicyAllowAll ==
+      static_cast<CookiePolicy>(
+        oxide::qt::WebContextAdapter::CookiePolicyAllowAll));
+  Q_STATIC_ASSERT(
+      CookiePolicyBlockAll ==
+      static_cast<CookiePolicy>(
+        oxide::qt::WebContextAdapter::CookiePolicyBlockAll));
+  Q_STATIC_ASSERT(
+      CookiePolicyBlockThirdParty ==
+      static_cast<CookiePolicy>(
+        oxide::qt::WebContextAdapter::CookiePolicyBlockThirdParty));
+
+  return static_cast<CookiePolicy>(d->cookiePolicy());
+}
+
+void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
+  Q_D(OxideQQuickWebContext);
+
+  oxide::qt::WebContextAdapter::CookiePolicy p =
+      static_cast<oxide::qt::WebContextAdapter::CookiePolicy>(policy);
+
+  if (p == d->cookiePolicy()) {
+    return;
+  }
+
+  d->setCookiePolicy(p);
+
+  emit cookiePolicyChanged();
+}
+
+OxideQQuickWebContextDelegateWorker*
+OxideQQuickWebContext::networkRequestDelegate() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->network_request_delegate_;
+}
+
+void OxideQQuickWebContext::setNetworkRequestDelegate(
+    OxideQQuickWebContextDelegateWorker* delegate) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->attachDelegateWorker(
+      delegate,
+      &d->network_request_delegate_,
+      &d->io_thread_delegate_->network_request_delegate)) {
+    emit networkRequestDelegateChanged();
+  }
+}
+
+OxideQQuickWebContextDelegateWorker*
+OxideQQuickWebContext::storageAccessPermissionDelegate() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->storage_access_permission_delegate_;
+}
+
+void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
+    OxideQQuickWebContextDelegateWorker* delegate) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->attachDelegateWorker(
+      delegate,
+      &d->storage_access_permission_delegate_,
+      &d->io_thread_delegate_->storage_access_permission_delegate)) {
+    emit storageAccessPermissionDelegateChanged();
+  }
+}
+
+OxideQQuickWebContextDelegateWorker*
+OxideQQuickWebContext::userAgentOverrideDelegate() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->user_agent_override_delegate_;
+}
+
+void OxideQQuickWebContext::setUserAgentOverrideDelegate(
+    OxideQQuickWebContextDelegateWorker* delegate) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->attachDelegateWorker(
+      delegate,
+      &d->user_agent_override_delegate_,
+      &d->io_thread_delegate_->user_agent_override_delegate)) {
+    emit userAgentOverrideDelegateChanged();
+  }
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

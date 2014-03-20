@@ -31,7 +31,6 @@ class CertVerifier;
 class HostResolver;
 class HttpAuthHandlerFactory;
 class NetLog;
-class NetworkDelegate;
 class ProxyService;
 class URLRequestThrottlerManager;
 
@@ -66,10 +65,6 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
     return data_->proxy_service();
   }
 
-  net::NetworkDelegate* network_delegate() const {
-    return data_->network_delegate();
-  }
-
   net::URLRequestThrottlerManager* throttler_manager() const {
     return data_->throttler_manager();
   }
@@ -94,7 +89,6 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
     net::CertVerifier* cert_verifier() const;
     net::HttpAuthHandlerFactory* http_auth_handler_factory() const;
     net::ProxyService* proxy_service() const;
-    net::NetworkDelegate* network_delegate() const;
     net::URLRequestThrottlerManager* throttler_manager() const;
 
    private:
@@ -105,7 +99,6 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
     scoped_ptr<net::CertVerifier> cert_verifier_;
     scoped_ptr<net::HttpAuthHandlerFactory> http_auth_handler_factory_;
     scoped_ptr<net::ProxyService> proxy_service_;
-    scoped_ptr<net::NetworkDelegate> network_delegate_;
     scoped_ptr<net::URLRequestThrottlerManager> throttler_manager_;
 
     DISALLOW_IMPLICIT_CONSTRUCTORS(Data);

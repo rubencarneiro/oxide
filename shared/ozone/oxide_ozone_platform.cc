@@ -43,6 +43,10 @@ class OzonePlatform : public ui::OzonePlatform {
     return NULL;
   }
 
+  ui::CursorFactoryOzone* GetCursorFactoryOzone() OVERRIDE {
+    return NULL;
+  }
+
  private:
   OzoneSurfaceFactory surface_factory_;
   ui::EventFactoryOzone event_factory_;

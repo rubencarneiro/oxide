@@ -24,6 +24,7 @@
     'sysroot': '',
     'use_aura': 1,
     'use_gconf': 0,
+    'use_gnome_keyring': 0,
     'use_ozone': 1,
     'ozone_platform': 'oxide',
     'external_ozone_platforms': [
@@ -51,10 +52,15 @@
   },
   'target_defaults': {
     'cflags!': [
+      # Should remove this
       '-Werror',
     ],
     'ldflags': [
       '-B<(PRODUCT_DIR)/../../../gold',
+    ],
+    'ldflags!': [
+      # Currently get a bunch of "warning: hidden symbol" warnings from harfbuzz with gold
+      '-Wl,--fatal-warnings',
     ],
     'conditions': [
       ['print_ld_stats==1', {

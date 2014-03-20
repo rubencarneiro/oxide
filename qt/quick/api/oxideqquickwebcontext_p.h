@@ -29,6 +29,7 @@
 
 QT_USE_NAMESPACE
 
+class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
 
@@ -41,17 +42,31 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
+  Q_PROPERTY(CookiePolicy cookiePolicy READ cookiePolicy WRITE setCookiePolicy NOTIFY cookiePolicyChanged)
+  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
+  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
+  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
+
+  Q_ENUMS(CookiePolicy)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebContext)
+  Q_DISABLE_COPY(OxideQQuickWebContext)
+
+  Q_INTERFACES(QQmlParserStatus)
 
  public:
+
+  enum CookiePolicy {
+    CookiePolicyAllowAll,
+    CookiePolicyBlockAll,
+    CookiePolicyBlockThirdParty
+  };
+
   OxideQQuickWebContext(QObject* parent = NULL);
   virtual ~OxideQQuickWebContext();
 
   void classBegin();
   void componentComplete();
-
-  static void ensureChromiumStarted();
 
   static QSharedPointer<OxideQQuickWebContext> defaultContext();
 
@@ -74,6 +89,18 @@ class OxideQQuickWebContext : public QObject,
   Q_INVOKABLE void addUserScript(OxideQQuickUserScript* user_script);
   Q_INVOKABLE void removeUserScript(OxideQQuickUserScript* user_script);
 
+  CookiePolicy cookiePolicy() const;
+  void setCookiePolicy(CookiePolicy policy);
+
+  OxideQQuickWebContextDelegateWorker* networkRequestDelegate() const;
+  void setNetworkRequestDelegate(OxideQQuickWebContextDelegateWorker* delegate);
+
+  OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate() const;
+  void setStorageAccessPermissionDelegate(OxideQQuickWebContextDelegateWorker* delegate);
+
+  OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate() const;
+  void setUserAgentOverrideDelegate(OxideQQuickWebContextDelegateWorker* delegate);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -81,6 +108,10 @@ class OxideQQuickWebContext : public QObject,
   void cachePathChanged();
   void acceptLangsChanged();
   void userScriptsChanged();
+  void cookiePolicyChanged();
+  void networkRequestDelegateChanged();
+  void storageAccessPermissionDelegateChanged();
+  void userAgentOverrideDelegateChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

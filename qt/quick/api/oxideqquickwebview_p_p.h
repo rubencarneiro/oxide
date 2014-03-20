@@ -78,7 +78,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
   void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
 
-  void componentComplete();
+  void completeConstruction();
 
   static void messageHandler_append(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
@@ -106,6 +106,10 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QQmlComponent* before_unload_dialog;
 
  private:
+  void contextInitialized();
+  void contextWillBeDestroyed();
+  void detachContextSignals();
+
   QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;

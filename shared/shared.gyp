@@ -122,12 +122,12 @@
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
         # Not used directly. Should content_browser have this in export_dependent_settings?
         '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',
+        '<(DEPTH)/ui/base/ui_base.gyp:ui_base',
+        '<(DEPTH)/ui/events/events.gyp:events',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
-        '<(DEPTH)/ui/ui.gyp:ui',
         '<(DEPTH)/url/url.gyp:url_lib',
-        '<(DEPTH)/webkit/common/user_agent/webkit_user_agent.gyp:user_agent'
       ],
       'include_dirs': [
         '..',
@@ -141,6 +141,7 @@
         'app/oxide_main.h',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
+        'browser/oxide_browser_context_delegate.h',
         'browser/oxide_browser_context_impl.cc',
         'browser/oxide_browser_context_impl.h',
         'browser/oxide_browser_context_observer.cc',
@@ -152,6 +153,8 @@
         'browser/oxide_default_screen_info.h',
         'browser/oxide_form_factor.h',
         'browser/oxide_form_factor_linux.cc',
+        'browser/oxide_gpu_utils.cc',
+        'browser/oxide_gpu_utils.h',
         'browser/oxide_http_user_agent_settings.cc',
         'browser/oxide_http_user_agent_settings.h',
         'browser/oxide_io_thread_delegate.cc',
@@ -179,6 +182,8 @@
         'browser/oxide_ssl_config_service.h',
         'browser/oxide_url_request_context.cc',
         'browser/oxide_url_request_context.h',
+        'browser/oxide_user_agent_override_provider.cc',
+        'browser/oxide_user_agent_override_provider.h',
         'browser/oxide_user_script_master.cc',
         'browser/oxide_user_script_master.h',
         'browser/oxide_web_contents_view.cc',
@@ -274,7 +279,7 @@
           ],
           'action': [
             'python',
-            '<(DEPTH)/chrome/tools/build/version.py',
+            '<(DEPTH)/build/util/version.py',
             '-f', '<(DEPTH)/chrome/VERSION',
             '-i', '<@(_inputs)',
             '-o', '<@(_outputs)'

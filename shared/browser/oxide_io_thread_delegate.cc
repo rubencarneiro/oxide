@@ -26,8 +26,6 @@
 #include "net/proxy/proxy_service.h"
 #include "net/url_request/url_request_throttler_manager.h"
 
-#include "oxide_network_delegate.h"
-
 namespace oxide {
 
 IOThreadDelegate::Data::Data(IOThreadDelegate* owner) :
@@ -51,7 +49,6 @@ IOThreadDelegate::Data::Data(IOThreadDelegate* owner) :
                                                         4,
                                                         owner_->net_log()));
 
-  network_delegate_.reset(new NetworkDelegate());
   throttler_manager_.reset(new net::URLRequestThrottlerManager());
 }
 
@@ -82,12 +79,6 @@ net::ProxyService* IOThreadDelegate::Data::proxy_service() const {
   DCHECK(CalledOnValidThread());
 
   return proxy_service_.get();
-}
-
-net::NetworkDelegate* IOThreadDelegate::Data::network_delegate() const {
-  DCHECK(CalledOnValidThread());
-
-  return network_delegate_.get();
 }
 
 net::URLRequestThrottlerManager*

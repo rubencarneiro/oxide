@@ -41,7 +41,8 @@ RenderViewItem::RenderViewItem(
     QQuickItem(webview),
     backing_store_(NULL)
 #if defined(ENABLE_COMPOSITING)
-    , is_compositing_enabled_(false),
+    , texture_handle_(NULL),
+    is_compositing_enabled_(false),
     is_compositing_enabled_state_changed_(false) {
 #else
 {
@@ -131,6 +132,7 @@ void RenderViewItem::ScheduleUpdate() {
   }
 
   update();
+  polish();
 #else
   Q_ASSERT(0);
 #endif
@@ -205,7 +207,18 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 }
 
 void RenderViewItem::updatePolish() {
-  backing_store_ = GetBackingStore();
+  backing_store_ = NULL;
+#if defined(ENABLE_COMPOSITING)
+  texture_handle_ = NULL;
+
+  if (is_compositing_enabled_) {
+    texture_handle_ = GetCurrentTextureHandle();
+  } else {
+#else
+  {
+#endif
+    backing_store_ = GetBackingStore();
+  }
 }
 
 QSGNode* RenderViewItem::updatePaintNode(
@@ -239,7 +252,7 @@ QSGNode* RenderViewItem::updatePaintNode(
     }
 
     node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
-    node->updateFrontTexture(GetFrontbufferTextureInfo());
+    node->updateFrontTexture(texture_handle_);
 
     DidUpdate(false);
     return node;

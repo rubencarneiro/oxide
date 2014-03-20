@@ -39,7 +39,7 @@ std::string HttpUserAgentSettings::GetAcceptLanguage() const {
   return http_accept_language_;
 }
 
-std::string HttpUserAgentSettings::GetUserAgent(const GURL& url) const {
+std::string HttpUserAgentSettings::GetUserAgent() const {
   // TODO: Add support for overrides
   // XXX: We use this for a per-context user agent setting - however,
   //      this does not work. URLRequestHttpJob only uses this value if the

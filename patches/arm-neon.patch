@@ -4,7 +4,7 @@
 diff --git a/skia/skia_library_opts.gyp b/skia/skia_library_opts.gyp
 --- a/skia/skia_library_opts.gyp
 +++ b/skia/skia_library_opts.gyp
-@@ -93,17 +93,17 @@
+@@ -94,17 +94,17 @@
            ],
            'cflags': [
              '-fomit-frame-pointer',
@@ -26,7 +26,7 @@ diff --git a/skia/skia_library_opts.gyp b/skia/skia_library_opts.gyp
 diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/common.gypi
 --- a/third_party/webrtc/build/common.gypi
 +++ b/third_party/webrtc/build/common.gypi
-@@ -194,17 +194,21 @@
+@@ -197,17 +197,21 @@
          ],
          'conditions': [
            ['arm_version==7', {
@@ -52,7 +52,7 @@ diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/com
 diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
 --- a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
 +++ b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
-@@ -128,25 +128,29 @@ void SincResampler::InitializeCPUSpecifi
+@@ -127,25 +127,29 @@ void SincResampler::InitializeCPUSpecifi
  void SincResampler::InitializeCPUSpecificFeatures() {
    convolve_proc_ = WebRtc_GetCPUInfo(kSSE2) ? Convolve_SSE : Convolve_C;
  }
@@ -63,7 +63,7 @@ diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third
  void SincResampler::InitializeCPUSpecificFeatures() {}
 -#else
 +#elif defined(WEBRTC_DETECT_ARM_NEON)
- // NEON CPU detection required.  Function will be set by
+ // ARM CPU detection required.  Function will be set by
  // InitializeCPUSpecificFeatures().
  #define CONVOLVE_FUNC convolve_proc_
  
