@@ -105,6 +105,7 @@ IOThreadGlobals::Data::throttler_manager() const {
 void IOThreadGlobals::Data::InitializeRequestContext(
     scoped_ptr<URLRequestContext> request_context) {
   DCHECK(CalledOnValidThread());
+  DCHECK(!system_request_context_);
 
   system_request_context_ = request_context.Pass();
   URLRequestContext* context = system_request_context_.get();
