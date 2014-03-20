@@ -31,7 +31,7 @@ class URLRequestContextFactory {
   URLRequestContextFactory() {}
   virtual ~URLRequestContextFactory() {}
 
-  virtual URLRequestContext* Initialize() = 0;
+  virtual void Initialize(scoped_ptr<URLRequestContext> context) = 0;
 };
 
 namespace {
@@ -47,9 +47,10 @@ class MainURLRequestContextFactory : public URLRequestContextFactory {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
 
-  URLRequestContext* Initialize() FINAL {
-    context_->Init(protocol_handlers_, protocol_interceptors_.Pass());
-    return context_->GetMainRequestContext();
+  void Initialize(scoped_ptr<URLRequestContext> request_context) FINAL {
+    context_->Init(request_context.Pass(),
+                   protocol_handlers_,
+                   protocol_interceptors_.Pass());
   }
 
  private:
@@ -74,7 +75,11 @@ net::URLRequestContext* URLRequestContextGetter::GetURLRequestContext() {
 
   if (!url_request_context_) {
     DCHECK(factory_);
-    url_request_context_ = factory_->Initialize()->AsWeakPtr();
+
+    scoped_ptr<URLRequestContext> context(new URLRequestContext());
+    url_request_context_ = context->AsWeakPtr();
+    factory_->Initialize(context.Pass());
+
     factory_.reset();
   }
 

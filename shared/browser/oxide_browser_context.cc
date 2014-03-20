@@ -165,6 +165,7 @@ net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
 }
 
 void BrowserContextIOData::Init(
+    scoped_ptr<URLRequestContext> main_request_context,
     content::ProtocolHandlerMap& protocol_handlers,
     content::ProtocolHandlerScopedVector protocol_interceptors) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
@@ -186,7 +187,8 @@ void BrowserContextIOData::Init(
   //       backed either by sqlite or a text file
   http_server_properties_.reset(new net::HttpServerPropertiesImpl());
 
-  URLRequestContext* context = new URLRequestContext();
+  main_request_context_ = main_request_context.Pass();
+  URLRequestContext* context = main_request_context_.get();
   net::URLRequestContextStorage* storage = context->storage();
 
   context->set_net_log(io_thread_globals->net_log());
@@ -300,14 +302,7 @@ void BrowserContextIOData::Init(
 
   storage->set_job_factory(top_job_factory.release());
 
-  main_request_context_.reset(context);
   resource_context_->request_context_ = context;
-}
-
-URLRequestContext* BrowserContextIOData::GetMainRequestContext() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
-  DCHECK(initialized_);
-  return main_request_context_.get();
 }
 
 content::ResourceContext* BrowserContextIOData::GetResourceContext() {
