@@ -18,6 +18,7 @@
 #include "oxide_io_thread_globals.h"
 
 #include "base/logging.h"
+#include "base/memory/singleton.h"
 #include "content/public/browser/browser_thread.h"
 #include "net/base/net_log.h"
 #include "net/cert/cert_verifier.h"
@@ -91,9 +92,15 @@ IOThreadGlobals::Data::throttler_manager() const {
 IOThreadGlobals::IOThreadGlobals() :
     net_log_(new net::NetLog()),
     data_(NULL) {
-  DCHECK(!content::BrowserThread::IsThreadInitialized(content::BrowserThread::IO));
+  DCHECK(!content::BrowserThread::IsThreadInitialized(content::BrowserThread::IO)) <<
+      "IOThreadGlobals cannot be created after the IO thread has started";
 
   content::BrowserThread::SetDelegate(content::BrowserThread::IO, this);
+}
+
+// static
+IOThreadGlobals* IOThreadGlobals::GetInstance() {
+  return Singleton<IOThreadGlobals>::get();
 }
 
 IOThreadGlobals::~IOThreadGlobals() {

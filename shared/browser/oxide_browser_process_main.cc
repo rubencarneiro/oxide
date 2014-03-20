@@ -26,7 +26,6 @@
 #include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_io_thread_globals.h"
 #include "oxide_message_pump.h"
 
 namespace oxide {
@@ -157,12 +156,6 @@ bool BrowserProcessMain::Exists() {
 BrowserProcessMain* BrowserProcessMain::instance() {
   CHECK(g_instance) << "BrowserProcessMain instance hasn't been created yet";
   return g_instance.get();
-}
-
-void BrowserProcessMain::CreateIOThreadGlobals() {
-  CHECK(!io_thread_globals_) <<
-      "BrowserProcessMain::CreateIOThreadGlobals() called more than once";
-  io_thread_globals_.reset(new IOThreadGlobals());
 }
 
 } // namespace oxide

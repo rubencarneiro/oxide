@@ -25,6 +25,8 @@
 #include "base/threading/non_thread_safe.h"
 #include "content/public/browser/browser_thread_delegate.h"
 
+template <typename T> struct DefaultSingletonTraits;
+
 namespace net {
 
 class CertVerifier;
@@ -42,7 +44,7 @@ namespace oxide {
 // IO thread
 class IOThreadGlobals FINAL : public content::BrowserThreadDelegate {
  public:
-  IOThreadGlobals();
+  static IOThreadGlobals* GetInstance();
   ~IOThreadGlobals();
 
   net::NetLog* net_log() const {
@@ -79,6 +81,7 @@ class IOThreadGlobals FINAL : public content::BrowserThreadDelegate {
   void CleanUp() FINAL;
 
  private:
+   friend struct DefaultSingletonTraits<IOThreadGlobals>;
 
   class Data FINAL : public base::NonThreadSafe {
    public:
@@ -103,6 +106,8 @@ class IOThreadGlobals FINAL : public content::BrowserThreadDelegate {
 
     DISALLOW_IMPLICIT_CONSTRUCTORS(Data);
   };
+
+  IOThreadGlobals();
 
   scoped_ptr<net::NetLog> net_log_;
 

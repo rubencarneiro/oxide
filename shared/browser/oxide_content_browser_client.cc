@@ -44,6 +44,7 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
 #include "oxide_gpu_utils.h"
+#include "oxide_io_thread_globals.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
@@ -155,7 +156,9 @@ class BrowserMainParts : public content::BrowserMainParts {
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
 
-    BrowserProcessMain::instance()->CreateIOThreadGlobals();
+    // Ensure that IOThreadGlobals is created before the IO thread starts
+    IOThreadGlobals::GetInstance();
+
     return 0;
   }
 

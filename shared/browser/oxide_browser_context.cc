@@ -88,7 +88,7 @@ class ResourceContext FINAL : public content::ResourceContext {
       request_context_(NULL) {}
 
   net::HostResolver* GetHostResolver() FINAL {
-    return BrowserProcessMain::instance()->io_thread_globals()->host_resolver();
+    return IOThreadGlobals::GetInstance()->host_resolver();
   }
 
   net::URLRequestContext* GetRequestContext() FINAL {
@@ -172,8 +172,7 @@ void BrowserContextIOData::Init(
 
   initialized_ = true;
 
-  IOThreadGlobals* io_thread_globals =
-      BrowserProcessMain::instance()->io_thread_globals();
+  IOThreadGlobals* io_thread_globals = IOThreadGlobals::GetInstance();
 
   ssl_config_service_ = new SSLConfigService();
   http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
