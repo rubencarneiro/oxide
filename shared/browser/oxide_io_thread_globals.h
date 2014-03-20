@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_IO_THREAD_DELEGATE_H_
-#define _OXIDE_SHARED_BROWSER_IO_THREAD_DELEGATE_H_
+#ifndef _OXIDE_SHARED_BROWSER_IO_THREAD_GLOBALS_H_
+#define _OXIDE_SHARED_BROWSER_IO_THREAD_GLOBALS_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -40,10 +40,10 @@ namespace oxide {
 
 // This object manages the lifetime of objects that are tied to the
 // IO thread
-class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
+class IOThreadGlobals FINAL : public content::BrowserThreadDelegate {
  public:
-  IOThreadDelegate();
-  ~IOThreadDelegate();
+  IOThreadGlobals();
+  ~IOThreadGlobals();
 
   net::NetLog* net_log() const {
     return net_log_.get();
@@ -82,7 +82,7 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
 
   class Data FINAL : public base::NonThreadSafe {
    public:
-    Data(IOThreadDelegate* owner);
+    Data(IOThreadGlobals* owner);
     ~Data();
 
     net::HostResolver* host_resolver() const;
@@ -92,7 +92,7 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
     net::URLRequestThrottlerManager* throttler_manager() const;
 
    private:
-    IOThreadDelegate* owner_;
+    IOThreadGlobals* owner_;
 
     // host_resolver_ needs to outlive http_auth_handler_factory_
     scoped_ptr<net::HostResolver> host_resolver_;
@@ -108,9 +108,9 @@ class IOThreadDelegate FINAL : public content::BrowserThreadDelegate {
 
   Data* data_;
 
-  DISALLOW_COPY_AND_ASSIGN(IOThreadDelegate);
+  DISALLOW_COPY_AND_ASSIGN(IOThreadGlobals);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_IO_THREAD_DELEGATE_H_
+#endif // _OXIDE_SHARED_BROWSER_IO_THREAD_GLOBALS_H_

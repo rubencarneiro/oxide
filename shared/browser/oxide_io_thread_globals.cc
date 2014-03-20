@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_io_thread_delegate.h"
+#include "oxide_io_thread_globals.h"
 
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
@@ -28,7 +28,7 @@
 
 namespace oxide {
 
-IOThreadDelegate::Data::Data(IOThreadDelegate* owner) :
+IOThreadGlobals::Data::Data(IOThreadGlobals* owner) :
     owner_(owner) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
 
@@ -52,43 +52,43 @@ IOThreadDelegate::Data::Data(IOThreadDelegate* owner) :
   throttler_manager_.reset(new net::URLRequestThrottlerManager());
 }
 
-IOThreadDelegate::Data::~Data() {
+IOThreadGlobals::Data::~Data() {
   DCHECK(CalledOnValidThread());
 }
 
-net::HostResolver* IOThreadDelegate::Data::host_resolver() const {
+net::HostResolver* IOThreadGlobals::Data::host_resolver() const {
   DCHECK(CalledOnValidThread());
 
   return host_resolver_.get();
 }
 
-net::CertVerifier* IOThreadDelegate::Data::cert_verifier() const {
+net::CertVerifier* IOThreadGlobals::Data::cert_verifier() const {
   DCHECK(CalledOnValidThread());
 
   return cert_verifier_.get();
 }
 
 net::HttpAuthHandlerFactory* 
-IOThreadDelegate::Data::http_auth_handler_factory() const {
+IOThreadGlobals::Data::http_auth_handler_factory() const {
   DCHECK(CalledOnValidThread());
 
   return http_auth_handler_factory_.get();
 }
 
-net::ProxyService* IOThreadDelegate::Data::proxy_service() const {
+net::ProxyService* IOThreadGlobals::Data::proxy_service() const {
   DCHECK(CalledOnValidThread());
 
   return proxy_service_.get();
 }
 
 net::URLRequestThrottlerManager*
-IOThreadDelegate::Data::throttler_manager() const {
+IOThreadGlobals::Data::throttler_manager() const {
   DCHECK(CalledOnValidThread());
 
   return throttler_manager_.get();
 }
 
-IOThreadDelegate::IOThreadDelegate() :
+IOThreadGlobals::IOThreadGlobals() :
     net_log_(new net::NetLog()),
     data_(NULL) {
   DCHECK(!content::BrowserThread::IsThreadInitialized(content::BrowserThread::IO));
@@ -96,21 +96,21 @@ IOThreadDelegate::IOThreadDelegate() :
   content::BrowserThread::SetDelegate(content::BrowserThread::IO, this);
 }
 
-IOThreadDelegate::~IOThreadDelegate() {
+IOThreadGlobals::~IOThreadGlobals() {
   DCHECK(!data_) << "We're being deleted before Cleanup() was called";
 
   content::BrowserThread::SetDelegate(content::BrowserThread::IO, NULL);
 }
 
-void IOThreadDelegate::Init() {
+void IOThreadGlobals::Init() {
   DCHECK(!data_);
 
   data_ = new Data(this);
 }
 
-void IOThreadDelegate::InitAsync() {}
+void IOThreadGlobals::InitAsync() {}
 
-void IOThreadDelegate::CleanUp() {
+void IOThreadGlobals::CleanUp() {
   DCHECK(data_);
 
   delete data_;

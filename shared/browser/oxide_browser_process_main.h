@@ -32,7 +32,7 @@ class MainFunctionParams;
 namespace oxide {
 
 class ContentMainDelegate;
-class IOThreadDelegate;
+class IOThreadGlobals;
 class SharedGLContext;
 
 // This class basically encapsulates the process-wide bits that would
@@ -70,10 +70,10 @@ class BrowserProcessMain FINAL {
 
   // Return the IO thread delegate, which is a container of objects
   // whose lifetime is tied to the IO thread
-  IOThreadDelegate* io_thread_delegate() { return io_thread_delegate_.get(); }
+  IOThreadGlobals* io_thread_globals() { return io_thread_globals_.get(); }
 
   // Ensure that the IO thread delegate is created
-  void CreateIOThreadDelegate();
+  void CreateIOThreadGlobals();
 
  private:
   // For RunBrowserMain() / ShutdownBrowserMain()
@@ -103,7 +103,7 @@ class BrowserProcessMain FINAL {
   scoped_ptr<content::ContentMainRunner> main_runner_;
   scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
 
-  scoped_ptr<IOThreadDelegate> io_thread_delegate_;
+  scoped_ptr<IOThreadGlobals> io_thread_globals_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserProcessMain);
 };

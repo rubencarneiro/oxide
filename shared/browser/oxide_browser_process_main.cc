@@ -26,7 +26,7 @@
 #include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_io_thread_delegate.h"
+#include "oxide_io_thread_globals.h"
 #include "oxide_message_pump.h"
 
 namespace oxide {
@@ -159,10 +159,10 @@ BrowserProcessMain* BrowserProcessMain::instance() {
   return g_instance.get();
 }
 
-void BrowserProcessMain::CreateIOThreadDelegate() {
-  CHECK(!io_thread_delegate_) <<
-      "BrowserProcessMain::CreateIOThreadDelegate() called more than once";
-  io_thread_delegate_.reset(new IOThreadDelegate());
+void BrowserProcessMain::CreateIOThreadGlobals() {
+  CHECK(!io_thread_globals_) <<
+      "BrowserProcessMain::CreateIOThreadGlobals() called more than once";
+  io_thread_globals_.reset(new IOThreadGlobals());
 }
 
 } // namespace oxide

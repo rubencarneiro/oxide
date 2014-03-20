@@ -155,7 +155,7 @@ class BrowserMainParts : public content::BrowserMainParts {
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
 
-    BrowserProcessMain::instance()->CreateIOThreadDelegate();
+    BrowserProcessMain::instance()->CreateIOThreadGlobals();
     return 0;
   }
 
