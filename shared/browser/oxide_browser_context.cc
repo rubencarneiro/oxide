@@ -37,6 +37,7 @@
 #include "net/http/http_cache.h"
 #include "net/http/http_network_session.h"
 #include "net/http/http_server_properties_impl.h"
+#include "net/http/transport_security_persister.h"
 #include "net/http/transport_security_state.h"
 #include "net/ssl/default_server_bound_cert_store.h"
 #include "net/ssl/server_bound_cert_service.h"
@@ -179,13 +180,22 @@ void BrowserContextIOData::Init(
   http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
   ftp_transaction_factory_.reset(
       new net::FtpNetworkLayer(io_thread_globals->host_resolver()));
-  network_delegate_.reset(new NetworkDelegate(this));
 
   // TODO: We want persistent storage here (for non-incognito), but the
   //       persistent implementation used in Chrome uses the preferences
   //       system, which we don't want. We need our own implementation,
   //       backed either by sqlite or a text file
   http_server_properties_.reset(new net::HttpServerPropertiesImpl());
+
+  network_delegate_.reset(new NetworkDelegate(this));
+  transport_security_state_.reset(new net::TransportSecurityState());
+  transport_security_persister_.reset(
+      new net::TransportSecurityPersister(
+        transport_security_state_.get(),
+        GetPath(),
+        content::BrowserThread::GetMessageLoopProxyForThread(
+          content::BrowserThread::FILE),
+        IsOffTheRecord()));
 
   main_request_context_ = main_request_context.Pass();
   URLRequestContext* context = main_request_context_.get();
@@ -215,10 +225,7 @@ void BrowserContextIOData::Init(
         content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
         NULL, NULL)));
 
-  storage->set_transport_security_state(new net::TransportSecurityState());
-  // TODO: Need to implement net::TransportSecurityState::Delegate in order
-  //       to have persistence for non-incognito mode. There is an
-  //       implementation in Chrome which is backed by a json file
+  storage->set_transport_security_state(transport_security_state_.get());
 
   net::HttpCache::BackendFactory* cache_backend = NULL;
   if (IsOffTheRecord()) {

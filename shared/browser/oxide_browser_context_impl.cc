@@ -79,10 +79,6 @@ void BrowserContextIODataImpl::SetUserAgent(
 }
 
 bool BrowserContextIODataImpl::IsOffTheRecord() const {
-  if (GetPath().empty()) {
-    return true;
-  }
-
   return false;
 }
 

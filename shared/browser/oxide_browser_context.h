@@ -41,6 +41,8 @@ class FtpNetworkLayer;
 class HttpServerProperties;
 class HttpUserAgentSettings;
 class SSLConfigService;
+class TransportSecurityPersister;
+class TransportSecurityState;
 
 }
 
@@ -105,6 +107,9 @@ class BrowserContextIOData {
   scoped_ptr<net::FtpNetworkLayer> ftp_transaction_factory_;
   scoped_ptr<net::HttpServerProperties> http_server_properties_;
   scoped_ptr<net::NetworkDelegate> network_delegate_;
+
+  scoped_ptr<net::TransportSecurityState> transport_security_state_;
+  scoped_ptr<net::TransportSecurityPersister> transport_security_persister_;
 
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
