@@ -225,7 +225,7 @@ void BrowserContextIOData::Init(
         content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
         NULL, NULL)));
 
-  storage->set_transport_security_state(transport_security_state_.get());
+  context->set_transport_security_state(transport_security_state_.get());
 
   net::HttpCache::BackendFactory* cache_backend = NULL;
   if (IsOffTheRecord()) {
