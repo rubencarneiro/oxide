@@ -118,6 +118,16 @@ class BrowserContextIOData {
 class BrowserContext : public content::BrowserContext,
                        public base::RefCounted<BrowserContext> {
  public:
+
+  struct Params {
+    Params(const base::FilePath& path,
+           const base::FilePath& cache_path) :
+        path(path), cache_path(path) {}
+
+    base::FilePath path;
+    base::FilePath cache_path;
+  };
+
   virtual ~BrowserContext();
 
   static BrowserContext* FromContent(
@@ -130,8 +140,7 @@ class BrowserContext : public content::BrowserContext,
   // The caller must ensure that it outlives any other consumers (ie,
   // WebView's), and must ensure that it is destroyed before all
   // references to the BrowserProcessMain have been released
-  static BrowserContext* Create(const base::FilePath& path,
-                                const base::FilePath& cache_path);
+  static BrowserContext* Create(const Params& params);
 
   static std::vector<BrowserContext *>& GetAllContexts();
 

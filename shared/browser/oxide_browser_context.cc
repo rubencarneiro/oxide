@@ -458,9 +458,8 @@ BrowserContext::~BrowserContext() {
 }
 
 // static
-BrowserContext* BrowserContext::Create(const base::FilePath& path,
-                                       const base::FilePath& cache_path) {
-  return new BrowserContextImpl(path, cache_path);
+BrowserContext* BrowserContext::Create(const Params& params) {
+  return new BrowserContextImpl(params);
 }
 
 // static
