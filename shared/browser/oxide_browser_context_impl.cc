@@ -30,10 +30,9 @@
 namespace oxide {
 
 BrowserContextIODataImpl::BrowserContextIODataImpl(
-    const base::FilePath& path,
-    const base::FilePath& cache_path) :
-    path_(path),
-    cache_path_(cache_path),
+    const BrowserContext::Params& params) :
+    path_(params.path),
+    cache_path_(params.cache_path),
     // FIXME: Get from translations
     accept_langs_("en-us,en") {}
 
@@ -79,16 +78,11 @@ void BrowserContextIODataImpl::SetUserAgent(
 }
 
 bool BrowserContextIODataImpl::IsOffTheRecord() const {
-  if (GetPath().empty()) {
-    return true;
-  }
-
   return false;
 }
 
-BrowserContextImpl::BrowserContextImpl(const base::FilePath& path,
-                                       const base::FilePath& cache_path) :
-    BrowserContext(new BrowserContextIODataImpl(path, cache_path)),
+BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params) :
+    BrowserContext(new BrowserContextIODataImpl(params)),
     product_(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
     default_user_agent_string_(true),
     user_script_manager_(this) {

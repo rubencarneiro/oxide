@@ -40,10 +40,12 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 
+#include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
 #include "oxide_gpu_utils.h"
+#include "oxide_io_thread_globals.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
@@ -155,7 +157,9 @@ class BrowserMainParts : public content::BrowserMainParts {
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
 
-    BrowserProcessMain::instance()->CreateIOThreadDelegate();
+    // Ensure that IOThreadGlobals is created before the IO thread starts
+    IOThreadGlobals::GetInstance();
+
     return 0;
   }
 
@@ -266,6 +270,10 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
 
     rdhi->AddResourceContext(c->GetResourceContext());
   }
+}
+
+content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {
+  return new AccessTokenStore();
 }
 
 void ContentBrowserClient::OverrideWebkitPrefs(
