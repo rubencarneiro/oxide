@@ -215,8 +215,7 @@ void BrowserContextIOData::Init(
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
   base::FilePath cookie_path;
-  if (!IsOffTheRecord()) {
-    DCHECK(!GetPath().empty());
+  if (!IsOffTheRecord() && !GetPath().empty()) {
     cookie_path = GetPath().Append(kCookiesFilename);
   }
   storage->set_cookie_store(content::CreateCookieStore(
@@ -228,10 +227,9 @@ void BrowserContextIOData::Init(
   context->set_transport_security_state(transport_security_state_.get());
 
   net::HttpCache::BackendFactory* cache_backend = NULL;
-  if (IsOffTheRecord()) {
+  if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
-    DCHECK(!GetCachePath().empty());
     cache_backend = new net::HttpCache::DefaultBackend(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
