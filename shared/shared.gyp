@@ -139,6 +139,8 @@
         'app/oxide_content_main_delegate.h',
         'app/oxide_main.cc',
         'app/oxide_main.h',
+        'browser/oxide_access_token_store.cc',
+        'browser/oxide_access_token_store.h',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_delegate.h',
