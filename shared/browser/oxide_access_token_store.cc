@@ -19,6 +19,8 @@
 
 #include "base/logging.h"
 
+#include "oxide_io_thread_globals.h"
+
 namespace oxide {
 
 AccessTokenStore::AccessTokenStore() {}
@@ -27,10 +29,8 @@ void AccessTokenStore::LoadAccessTokens(
     const LoadAccessTokensCallbackType& callback) {
   NOTIMPLEMENTED();
   AccessTokenStore::AccessTokenSet set;
-  // TODO: use the system request context getter that Chris will expose
-  // (see https://bugs.launchpad.net/oxide/+bug/1268898) once done with
-  // https://code.launchpad.net/~chrisccoulson/oxide/network-callbacks
-  net::URLRequestContextGetter* context = NULL;
+  net::URLRequestContextGetter* context =
+      IOThreadGlobals::GetInstance()->GetSystemURLRequestContext();
   callback.Run(set, context);
 }
 
