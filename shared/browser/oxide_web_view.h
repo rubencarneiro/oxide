@@ -135,8 +135,6 @@ class WebView : public ScriptMessageTarget,
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
 
-  virtual content::JavaScriptDialogManager* GetJavaScriptDialogManager() OVERRIDE;
-
  protected:
   WebView();
 
@@ -166,6 +164,7 @@ class WebView : public ScriptMessageTarget,
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
 
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
