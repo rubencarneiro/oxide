@@ -53,6 +53,9 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qt::RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
+  oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
+      oxide::qt::JavaScriptDialogDelegate::Type type) Q_DECL_FINAL;
+  oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() Q_DECL_FINAL;
 
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
@@ -97,6 +100,10 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   OxideQQuickWebContext* context;
   OxideQQuickNavigationHistory navigationHistory;
   QQmlComponent* popup_menu;
+  QQmlComponent* alert_dialog;
+  QQmlComponent* confirm_dialog;
+  QQmlComponent* prompt_dialog;
+  QQmlComponent* before_unload_dialog;
 
  private:
   void contextInitialized();
