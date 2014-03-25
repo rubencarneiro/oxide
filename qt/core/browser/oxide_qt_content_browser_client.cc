@@ -20,6 +20,7 @@
 #include <QList>
 #include <QTouchDevice>
 
+#include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
 
 namespace oxide {
@@ -29,6 +30,11 @@ ContentBrowserClient::ContentBrowserClient() {}
 
 base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
+}
+
+content::LocationProvider*
+ContentBrowserClient::OverrideSystemLocationProvider() {
+  return new LocationProvider();
 }
 
 bool ContentBrowserClient::IsTouchSupported() {

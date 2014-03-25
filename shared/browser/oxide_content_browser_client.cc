@@ -284,6 +284,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
 }
 
+content::LocationProvider*
+ContentBrowserClient::OverrideSystemLocationProvider() {
+  return NULL;
+}
+
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   SharedGLContext* context =
       BrowserProcessMain::instance()->shared_gl_context();

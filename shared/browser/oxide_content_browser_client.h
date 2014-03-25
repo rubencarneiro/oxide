@@ -103,6 +103,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                            const GURL& url,
                            ::WebPreferences* prefs) FINAL;
 
+  virtual content::LocationProvider* OverrideSystemLocationProvider();
+
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
   virtual bool IsTouchSupported();
