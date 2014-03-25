@@ -17,11 +17,13 @@
 
 #include "oxide_browser_context.h"
 
+#include <algorithm>
 #include <vector>
 
 #include "base/files/file_path.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/weak_ptr.h"
 #include "base/supports_user_data.h"
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
@@ -55,7 +57,7 @@
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_http_user_agent_settings.h"
-#include "oxide_io_thread_globals.h"
+#include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
 #include "oxide_off_the_record_browser_context_impl.h"
 #include "oxide_ssl_config_service.h"
@@ -81,6 +83,38 @@ class ContextData : public base::SupportsUserData::Data {
   BrowserContextIOData* context_;
 };
 
+class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
+ public:
+  MainURLRequestContextGetter(
+      BrowserContextIOData* context,
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors) :
+      context_(context),
+      protocol_interceptors_(protocol_interceptors.Pass()) {
+    std::swap(protocol_handlers_, *protocol_handlers);
+  }
+
+  net::URLRequestContext* GetURLRequestContext() FINAL {
+    DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+
+    if (!url_request_context_) {
+      DCHECK(context_);
+      url_request_context_ = context_->CreateMainRequestContext(
+          protocol_handlers_, protocol_interceptors_.Pass())->AsWeakPtr();
+      context_ = NULL;
+    }
+
+    return url_request_context_.get();
+  }
+
+ private:
+  BrowserContextIOData* context_;
+  content::ProtocolHandlerMap protocol_handlers_;
+  content::ProtocolHandlerScopedVector protocol_interceptors_;
+
+  base::WeakPtr<URLRequestContext> url_request_context_;
+};
+
 } // namespace
 
 class ResourceContext FINAL : public content::ResourceContext {
@@ -89,7 +123,7 @@ class ResourceContext FINAL : public content::ResourceContext {
       request_context_(NULL) {}
 
   net::HostResolver* GetHostResolver() FINAL {
-    return IOThreadGlobals::GetInstance()->host_resolver();
+    return IOThread::instance()->globals()->host_resolver();
   }
 
   net::URLRequestContext* GetRequestContext() FINAL {
@@ -139,7 +173,6 @@ void BrowserContextIOData::SetCookiePolicy(net::StaticCookiePolicy::Type policy)
 }
 
 BrowserContextIOData::BrowserContextIOData() :
-    initialized_(false),
     cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     resource_context_(new ResourceContext()) {
   resource_context_->SetUserData(kBrowserContextKey, new ContextData(this));
@@ -165,16 +198,13 @@ net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
   return cookie_policy_.type();
 }
 
-void BrowserContextIOData::Init(
-    scoped_ptr<URLRequestContext> main_request_context,
+URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     content::ProtocolHandlerMap& protocol_handlers,
     content::ProtocolHandlerScopedVector protocol_interceptors) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
-  DCHECK(!initialized_);
+  DCHECK(!main_request_context_);
 
-  initialized_ = true;
-
-  IOThreadGlobals* io_thread_globals = IOThreadGlobals::GetInstance();
+  IOThread::Globals* io_thread_globals = IOThread::instance()->globals();
 
   ssl_config_service_ = new SSLConfigService();
   http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
@@ -197,7 +227,7 @@ void BrowserContextIOData::Init(
           content::BrowserThread::FILE),
         IsOffTheRecord()));
 
-  main_request_context_ = main_request_context.Pass();
+  main_request_context_.reset(new URLRequestContext());
   URLRequestContext* context = main_request_context_.get();
   net::URLRequestContextStorage* storage = context->storage();
 
@@ -301,6 +331,7 @@ void BrowserContextIOData::Init(
   storage->set_job_factory(top_job_factory.release());
 
   resource_context_->request_context_ = context;
+  return main_request_context_.get();
 }
 
 content::ResourceContext* BrowserContextIOData::GetResourceContext() {
@@ -477,9 +508,9 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
   DCHECK(!main_request_context_getter_);
 
   main_request_context_getter_ =
-      URLRequestContextGetter::CreateMain(io_data(),
-                                          protocol_handlers,
-                                          protocol_interceptors.Pass());
+      new MainURLRequestContextGetter(io_data(),
+                                      protocol_handlers,
+                                      protocol_interceptors.Pass());
 
   return main_request_context_getter_;
 }

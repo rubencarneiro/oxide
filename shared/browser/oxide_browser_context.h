@@ -75,9 +75,9 @@ class BrowserContextIOData {
 
   virtual bool IsOffTheRecord() const = 0;
 
-  void Init(scoped_ptr<URLRequestContext> main_request_context,
-            content::ProtocolHandlerMap& protocol_handlers,
-            content::ProtocolHandlerScopedVector protocol_interceptors);
+  URLRequestContext* CreateMainRequestContext(
+      content::ProtocolHandlerMap& protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors);
 
   content::ResourceContext* GetResourceContext();
 
@@ -93,8 +93,6 @@ class BrowserContextIOData {
 
   void SetDelegate(BrowserContextDelegate* delegate);
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
-
-  bool initialized_;
 
   base::Lock delegate_lock_;
   scoped_refptr<BrowserContextDelegate> delegate_;

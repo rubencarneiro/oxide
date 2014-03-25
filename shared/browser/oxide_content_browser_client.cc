@@ -45,7 +45,7 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
 #include "oxide_gpu_utils.h"
-#include "oxide_io_thread_globals.h"
+#include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
@@ -61,9 +61,6 @@ scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
   return make_scoped_ptr(
       ContentClient::instance()->browser()->CreateMessagePumpForUI());
 }
-
-class BrowserMainParts;
-BrowserMainParts* g_main_parts;
 
 class Screen : public gfx::Screen {
  public:
@@ -135,15 +132,8 @@ class Screen : public gfx::Screen {
 
 class BrowserMainParts : public content::BrowserMainParts {
  public:
-  BrowserMainParts() {
-    DCHECK(!g_main_parts);
-    g_main_parts = this;
-  }
-
-  ~BrowserMainParts() {
-    DCHECK_EQ(g_main_parts, this);
-    g_main_parts = NULL;
-  }
+  BrowserMainParts() {}
+  ~BrowserMainParts() {}
 
   void PreEarlyInitialization() FINAL {
     base::MessageLoop::InitMessagePumpForUIFactory(CreateMessagePumpForUI);
@@ -157,8 +147,7 @@ class BrowserMainParts : public content::BrowserMainParts {
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
 
-    // Ensure that IOThreadGlobals is created before the IO thread starts
-    IOThreadGlobals::GetInstance();
+    io_thread_.reset(new IOThread());
 
     return 0;
   }
@@ -178,10 +167,12 @@ class BrowserMainParts : public content::BrowserMainParts {
 
   void PostDestroyThreads() FINAL {
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
+    io_thread_.reset();
   }
 
  private:
   scoped_ptr<base::MessageLoop> main_message_loop_;
+  scoped_ptr<IOThread> io_thread_;
   Screen primary_screen_;
 };
 

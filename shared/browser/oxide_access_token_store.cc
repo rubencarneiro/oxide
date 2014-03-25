@@ -19,7 +19,7 @@
 
 #include "base/logging.h"
 
-#include "oxide_io_thread_globals.h"
+#include "oxide_io_thread.h"
 
 namespace oxide {
 
@@ -30,7 +30,7 @@ void AccessTokenStore::LoadAccessTokens(
   NOTIMPLEMENTED();
   AccessTokenStore::AccessTokenSet set;
   net::URLRequestContextGetter* context =
-      IOThreadGlobals::GetInstance()->GetSystemURLRequestContext();
+      IOThread::instance()->GetSystemURLRequestContext();
   callback.Run(set, context);
 }
 
