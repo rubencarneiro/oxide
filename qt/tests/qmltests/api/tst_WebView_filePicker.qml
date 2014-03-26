@@ -17,6 +17,7 @@ TestWebView {
     Item {
       id: filePicker
       readonly property bool allowMultipleFiles: model.allowMultipleFiles
+      readonly property bool directory: model.directory
       readonly property string defaultFileName: model.defaultFileName
       readonly property var acceptTypes: model.acceptTypes
       anchors.fill: parent
@@ -75,10 +76,13 @@ TestWebView {
 
     function test_customFilePickerComponent_data() {
       return [
-        { page: "tst_WebView_filePicker_single.html", allowMultipleFiles: false, acceptTypes: ["text/plain", "text/html"], filenames: ["tst_WebView_filePicker_data.txt"], button: Qt.LeftButton, selected: 1 },
-        { page: "tst_WebView_filePicker_multiple.html", allowMultipleFiles: true, acceptTypes: ["text/plain", "text/html"], filenames: ["tst_WebView_filePicker_data.html", "tst_WebView_filePicker_data.txt"], button: Qt.LeftButton, selected: 2 },
-        { page: "tst_WebView_filePicker_single.html", allowMultipleFiles: false, acceptTypes: ["text/plain", "text/html"], filenames: ["tst_WebView_filePicker_data.html", "tst_WebView_filePicker_data.txt"], button: Qt.LeftButton, selected: 1 },
-        { page: "tst_WebView_filePicker_single.html", allowMultipleFiles: false, acceptTypes: ["text/plain", "text/html"], filenames: [], button: Qt.RightButton, selected: 0 }
+        { page: "tst_WebView_filePicker_single.html", allowMultipleFiles: false, directory: false, acceptTypes: ["text/plain", "text/html"], filenames: ["tst_WebView_filePicker_data.txt"], button: Qt.LeftButton, selected: 1 },
+        { page: "tst_WebView_filePicker_multiple.html", allowMultipleFiles: true, directory: false, acceptTypes: ["text/plain", "text/html"], filenames: ["tst_WebView_filePicker_data.html", "tst_WebView_filePicker_data.txt"], button: Qt.LeftButton, selected: 2 },
+        { page: "tst_WebView_filePicker_single.html", allowMultipleFiles: false, directory: false, acceptTypes: ["text/plain", "text/html"], filenames: ["tst_WebView_filePicker_data.html", "tst_WebView_filePicker_data.txt"], button: Qt.LeftButton, selected: 1 },
+        { page: "tst_WebView_filePicker_single.html", allowMultipleFiles: false, directory: false, acceptTypes: ["text/plain", "text/html"], filenames: [], button: Qt.RightButton, selected: 0 },
+        { page: "tst_WebView_filePicker_directory.html", allowMultipleFiles: false, directory: true, acceptTypes: [], filenames: ["directory"], expected: ["directory/file1.txt", "directory/subdirectory/.", "directory/subdirectory/file2.txt", "directory/subdirectory/file3.txt"], button: Qt.LeftButton, selected: 4 },
+        { page: "tst_WebView_filePicker_directory.html", allowMultipleFiles: false, directory: true, acceptTypes: [], filenames: ["directory", "tst_WebView_filePicker_data.txt"], expected: ["directory/file1.txt", "directory/subdirectory/.", "directory/subdirectory/file2.txt", "directory/subdirectory/file3.txt"], button: Qt.LeftButton, selected: 4 },
+        { page: "tst_WebView_filePicker_directory.html", allowMultipleFiles: false, directory: true, acceptTypes: [], filenames: ["tst_WebView_filePicker_data.txt", "directory"], expected: [], button: Qt.LeftButton, selected: 0 }
       ];
     }
 
@@ -93,6 +97,7 @@ TestWebView {
       compare(filePicker.width, webView.width);
       compare(filePicker.height, webView.height);
       compare(filePicker.allowMultipleFiles, data.allowMultipleFiles);
+      compare(filePicker.directory, data.directory);
       compare(filePicker.acceptTypes, data.acceptTypes);
       webView.filenames = data.filenames.map(resolvedFilepath);
       mouseClick(filePicker, filePicker.width / 2, filePicker.height / 2,
@@ -102,10 +107,20 @@ TestWebView {
       compare(webView.getTestApi().evaluateCode(
               "document.querySelector(\"#filePicker\").files.length"),
               data.selected);
-      for (var i = 0; i < data.selected; ++i) {
-        compare(webView.getTestApi().evaluateCode(
-            "document.querySelector(\"#filePicker\").files[%1].name".arg(i)),
-            data.filenames[i]);
+      if (data.directory) {
+        var filepaths = [];
+        for (var i = 0; i < data.selected; ++i) {
+          filepaths.push(webView.getTestApi().evaluateCode(
+              "document.querySelector(\"#filePicker\").files[%1].webkitRelativePath".arg(i)));
+        }
+        filepaths.sort();
+        compare(filepaths, data.expected);
+      } else {
+        for (var i = 0; i < data.selected; ++i) {
+          compare(webView.getTestApi().evaluateCode(
+              "document.querySelector(\"#filePicker\").files[%1].name".arg(i)),
+              data.filenames[i]);
+        }
       }
     }
   }

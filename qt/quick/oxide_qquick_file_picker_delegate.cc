@@ -33,6 +33,7 @@ namespace qquick {
 class FilePickerContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool allowMultipleFiles READ allowMultipleFiles CONSTANT FINAL)
+  Q_PROPERTY(bool directory READ directory CONSTANT FINAL)
   Q_PROPERTY(QString title READ title CONSTANT FINAL)
   Q_PROPERTY(QString defaultFileName READ defaultFileName CONSTANT FINAL)
   Q_PROPERTY(QStringList acceptTypes READ acceptTypes CONSTANT FINAL)
@@ -46,6 +47,7 @@ class FilePickerContext : public QObject {
                     const QStringList& accept_types);
 
   bool allowMultipleFiles() const;
+  bool directory() const;
   const QString& title() const { return title_; }
   const QString& defaultFileName() const { return default_file_name_; }
   const QStringList& acceptTypes() const { return accept_types_; }
@@ -78,8 +80,12 @@ bool FilePickerContext::allowMultipleFiles() const {
   return (mode_ == oxide::qt::FilePickerDelegate::OpenMultiple);
 }
 
+bool FilePickerContext::directory() const {
+  return (mode_ == oxide::qt::FilePickerDelegate::UploadFolder);
+}
+
 void FilePickerContext::accept(const QVariant& files) const {
-  QList<QFileInfo> info;
+  QFileInfoList info;
   Q_FOREACH(const QString& file, files.toStringList()) {
     info.append(QFileInfo(file));
   }
@@ -91,7 +97,7 @@ void FilePickerContext::accept(const QVariant& files) const {
 }
 
 void FilePickerContext::reject() const {
-  delegate_->Done(QList<QFileInfo>(), mode_);
+  delegate_->Done(QFileInfoList(), mode_);
 }
 
 FilePickerDelegate::FilePickerDelegate(OxideQQuickWebView* webview) :
@@ -108,7 +114,7 @@ void FilePickerDelegate::Show(Mode mode,
     qWarning() << "Content requested a file picker, "
                   "but the application hasn't provided one";
     delete contextObject;
-    Done(QList<QFileInfo>(), mode);
+    Done(QFileInfoList(), mode);
     return;
   }
   QQmlContext* baseContext = component->creationContext();
@@ -125,7 +131,7 @@ void FilePickerDelegate::Show(Mode mode,
   if (!item_) {
     qWarning() << "Failed to create file picker";
     context_.reset();
-    Done(QList<QFileInfo>(), mode);
+    Done(QFileInfoList(), mode);
     return;
   }
 

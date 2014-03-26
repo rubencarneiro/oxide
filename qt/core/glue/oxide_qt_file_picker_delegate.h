@@ -18,11 +18,10 @@
 #ifndef _OXIDE_QT_CORE_GLUE_FILE_PICKER_DELEGATE_H_
 #define _OXIDE_QT_CORE_GLUE_FILE_PICKER_DELEGATE_H_
 
-#include <QList>
+#include <QFileInfo>
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
-class QFileInfo;
 class QString;
 class QStringList;
 QT_END_NAMESPACE
@@ -48,7 +47,7 @@ class Q_DECL_EXPORT FilePickerDelegate {
                     const QString& title,
                     const QFileInfo& defaultFileName,
                     const QStringList& acceptTypes) = 0;
-  void Done(const QList<QFileInfo>& files, Mode mode);
+  void Done(const QFileInfoList& files, Mode mode);
 
  protected:
   FilePickerDelegate();

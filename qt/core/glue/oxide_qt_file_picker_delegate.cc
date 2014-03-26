@@ -19,7 +19,7 @@
 
 #include <vector>
 
-#include <QFileInfo>
+#include <QDir>
 
 #include "base/files/file_path.h"
 #include "content/public/common/file_chooser_params.h"
@@ -35,12 +35,38 @@ FilePickerDelegate::FilePickerDelegate() :
 
 FilePickerDelegate::~FilePickerDelegate() {}
 
-void FilePickerDelegate::Done(const QList<QFileInfo>& files,
+static std::vector<ui::SelectedFileInfo> enumerate(const QDir& dir) {
+  std::vector<ui::SelectedFileInfo> enumerated;
+  QDir::Filters filters =
+      QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden;
+  Q_FOREACH (const QFileInfo& file, dir.entryInfoList(filters)) {
+    if (file.isDir()) {
+      QString directoryPath = file.absoluteFilePath() + QStringLiteral("/.");
+      base::FilePath path(directoryPath.toStdString());
+      enumerated.push_back(ui::SelectedFileInfo(path, path));
+      std::vector<ui::SelectedFileInfo> contents =
+          enumerate(file.absoluteFilePath());
+      enumerated.insert(enumerated.end(), contents.begin(), contents.end());
+    } else {
+      base::FilePath path(file.absoluteFilePath().toStdString());
+      enumerated.push_back(ui::SelectedFileInfo(path, path));
+    }
+  }
+  return enumerated;
+}
+
+void FilePickerDelegate::Done(const QFileInfoList& files,
                               FilePickerDelegate::Mode mode) {
   std::vector<ui::SelectedFileInfo> selection;
-  Q_FOREACH(const QFileInfo& file, files) {
-    base::FilePath path(file.filePath().toStdString());
-    selection.push_back(ui::SelectedFileInfo(path, path));
+  if (mode == FilePickerDelegate::UploadFolder) {
+    if (!files.isEmpty() && files.first().isDir()) {
+      selection = enumerate(files.first().absoluteFilePath());
+    }
+  } else {
+    Q_FOREACH (const QFileInfo& file, files) {
+      base::FilePath path(file.filePath().toStdString());
+      selection.push_back(ui::SelectedFileInfo(path, path));
+    }
   }
   content::FileChooserParams::Mode permissions;
   if (mode == FilePickerDelegate::Open) {
