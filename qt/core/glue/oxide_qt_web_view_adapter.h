@@ -39,6 +39,7 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
+class FilePickerDelegate;
 class RenderWidgetHostViewDelegate;
 class ScriptMessageHandlerAdapter;
 class WebContextAdapter;
@@ -87,6 +88,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       JavaScriptDialogDelegate::Type type) = 0;
   virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;
+  virtual FilePickerDelegate* CreateFilePickerDelegate() = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;

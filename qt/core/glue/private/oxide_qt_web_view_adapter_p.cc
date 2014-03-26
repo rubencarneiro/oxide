@@ -25,6 +25,7 @@
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqloadevent_p.h"
+#include "qt/core/browser/oxide_qt_file_picker.h"
 #include "qt/core/browser/oxide_qt_javascript_dialog.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
@@ -170,6 +171,11 @@ oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateBeforeUnloadDialog() {
   JavaScriptDialogDelegate* delegate = a->CreateBeforeUnloadDialogDelegate();
   bool did_suppress_message = false;
   return new JavaScriptDialog(delegate, &did_suppress_message);
+}
+
+oxide::FilePicker*
+WebViewAdapterPrivate::CreateFilePicker(content::RenderViewHost* rvh) {
+  return new FilePicker(a->CreateFilePickerDelegate(), rvh);
 }
 
 void WebViewAdapterPrivate::FrameAdded(oxide::WebFrame* frame) {

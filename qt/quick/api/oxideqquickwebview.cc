@@ -30,6 +30,7 @@
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_file_picker_delegate.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
@@ -94,6 +95,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     confirm_dialog(NULL),
     prompt_dialog(NULL),
     before_unload_dialog(NULL),
+    file_picker(NULL),
     init_props_(new InitData()),
     load_progress_(0) {}
 
@@ -136,6 +138,13 @@ OxideQQuickWebViewPrivate::CreateBeforeUnloadDialogDelegate() {
   Q_Q(OxideQQuickWebView);
 
   return new oxide::qquick::BeforeUnloadDialogDelegate(q);
+}
+
+oxide::qt::FilePickerDelegate*
+OxideQQuickWebViewPrivate::CreateFilePickerDelegate() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::FilePickerDelegate(q);
 }
 
 void OxideQQuickWebViewPrivate::URLChanged() {
@@ -593,6 +602,23 @@ void OxideQQuickWebView::setBeforeUnloadDialog(
 
   d->before_unload_dialog = before_unload_dialog;
   emit beforeUnloadDialogChanged();
+}
+
+QQmlComponent* OxideQQuickWebView::filePicker() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->file_picker;
+}
+
+void OxideQQuickWebView::setFilePicker(QQmlComponent* file_picker) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->file_picker == file_picker) {
+    return;
+  }
+
+  d->file_picker = file_picker;
+  emit filePickerChanged();
 }
 
 OxideQQuickWebContext* OxideQQuickWebView::context() const {

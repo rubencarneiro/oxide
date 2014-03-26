@@ -56,6 +56,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       oxide::qt::JavaScriptDialogDelegate::Type type) Q_DECL_FINAL;
   oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() Q_DECL_FINAL;
+  oxide::qt::FilePickerDelegate* CreateFilePickerDelegate() Q_DECL_FINAL;
 
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
@@ -104,6 +105,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QQmlComponent* confirm_dialog;
   QQmlComponent* prompt_dialog;
   QQmlComponent* before_unload_dialog;
+  QQmlComponent* file_picker;
 
  private:
   void contextInitialized();

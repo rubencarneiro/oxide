@@ -24,6 +24,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
@@ -59,6 +60,7 @@ class WebContentsImpl;
 namespace oxide {
 
 class BrowserContext;
+class FilePicker;
 class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
@@ -132,6 +134,8 @@ class WebView : public ScriptMessageTarget,
       bool* did_suppress_message);
   virtual JavaScriptDialog* CreateBeforeUnloadDialog();
 
+  virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
+
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
 
@@ -165,6 +169,8 @@ class WebView : public ScriptMessageTarget,
                               unsigned changed_flags) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
   content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
+  void RunFileChooser(content::WebContents* web_contents,
+                      const content::FileChooserParams& params) FINAL;
 
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -244,6 +250,7 @@ class WebView : public ScriptMessageTarget,
   scoped_ptr<content::WebContentsImpl> web_contents_;
   content::NotificationRegistrar registrar_;
   scoped_ptr<WebFrame> root_frame_;
+  base::WeakPtr<FilePicker> active_file_picker_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
