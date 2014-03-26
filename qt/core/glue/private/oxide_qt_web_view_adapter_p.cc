@@ -20,10 +20,12 @@
 #include <QString>
 #include <QUrl>
 
+#include "base/strings/utf_string_conversions.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqloadevent_p.h"
+#include "qt/core/browser/oxide_qt_javascript_dialog.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
@@ -141,6 +143,33 @@ gfx::Rect WebViewAdapterPrivate::GetContainerBounds() {
 oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(
     content::RenderViewHost* rvh) {
   return new WebPopupMenu(a->CreateWebPopupMenuDelegate(), rvh);
+}
+
+oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  JavaScriptDialogDelegate::Type type;
+  switch (javascript_message_type) {
+  case content::JAVASCRIPT_MESSAGE_TYPE_ALERT:
+    type = JavaScriptDialogDelegate::TypeAlert;
+    break;
+  case content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM:
+    type = JavaScriptDialogDelegate::TypeConfirm;
+    break;
+  case content::JAVASCRIPT_MESSAGE_TYPE_PROMPT:
+    type = JavaScriptDialogDelegate::TypePrompt;
+    break;
+  default:
+    Q_UNREACHABLE();
+  }
+  JavaScriptDialogDelegate* delegate = a->CreateJavaScriptDialogDelegate(type);
+  return new JavaScriptDialog(delegate, did_suppress_message);
+}
+
+oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateBeforeUnloadDialog() {
+  JavaScriptDialogDelegate* delegate = a->CreateBeforeUnloadDialogDelegate();
+  bool did_suppress_message = false;
+  return new JavaScriptDialog(delegate, &did_suppress_message);
 }
 
 void WebViewAdapterPrivate::FrameAdded(oxide::WebFrame* frame) {
