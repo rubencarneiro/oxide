@@ -148,4 +148,10 @@ void WebContentsView::ShowPopupMenu(
                                 allow_multiple_selection);
 }
 
+void WebContentsView::HidePopupMenu() {
+  if (active_popup_menu_) {
+    active_popup_menu_->HidePopup();
+  }
+}
+
 } // namespace oxide

@@ -81,7 +81,7 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
                      const std::vector<content::MenuItem>& items,
                      bool right_aligned,
                      bool allow_multiple_selection) FINAL;
-  void PopupDone();
+  void HidePopupMenu() FINAL;
 
  private:
   content::WebContents* web_contents_;

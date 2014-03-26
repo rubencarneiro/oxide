@@ -36,6 +36,7 @@
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_surface.h"
+#include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/common/oxide_content_client.h"
