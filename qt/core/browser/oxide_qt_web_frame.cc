@@ -22,7 +22,6 @@
 #include "base/logging.h"
 
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
-#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 
 namespace oxide {
@@ -79,7 +78,7 @@ WebFrame::WebFrame(WebFrameAdapter* adapter,
                    oxide::WebView* view) :
     oxide::WebFrame(node, view) {
   SetUserData(kAdapterKey, new AdapterData(adapter));
-  WebFrameAdapterPrivate::get(adapter)->owner = this;
+  adapter->owner_ = this;
 }
 
 WebFrameAdapter* WebFrame::GetAdapter() const {
