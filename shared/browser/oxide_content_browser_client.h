@@ -97,6 +97,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   void ResourceDispatcherHostCreated() FINAL;
 
+  content::AccessTokenStore* CreateAccessTokenStore() FINAL;
+
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            const GURL& url,
                            ::WebPreferences* prefs) FINAL;

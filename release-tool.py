@@ -35,23 +35,50 @@ from oxide_utils import (
 )
 import subcommand
 
-TAR_EXCLUDE_RE_S = [
-  r'^chromium\/src\/chrome\/test\/data\/',
-  r'^chromium\/src\/native_client\/src\/trusted\/service_runtime\/',
-  r'^chromium\/src\/native_client\/toolchain\/',
-  r'^chromium\/src\/out\/',
-  r'^chromium\/src\/third_party\/WebKit\/LayoutTests\/',
+TAR_EXCLUDE_DIRS = [
+  '.bzrignore',
+  '.channel',
+  'chromium/src/breakpad/src/processor/testdata',
+  'chromium/src/chrome/browser/resources/tracing/tests',
+  'chromium/src/chrome/common/extensions/docs',
+  'chromium/src/chrome/test/data',
+  'chromium/src/courgette/testdata',
+  'chromium/src/native_client/src/trusted/service_runtime/testdata',
+  'chromium/src/native_client/toolchain',
+  'chromium/src/out',
+  'chromium/src/ppapi/examples',
+  'chromium/src/ppapi/native_client/tests',
+  'chromium/src/third_party/angle/samples/gles2_book',
+  'chromium/src/third_party/hunspell/tests',
+  'chromium/src/third_party/mesa/src/src/gallium/state_trackers/d3d1x/w32api',
+  'chromium/src/third_party/xdg-utils/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/arch/x86/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/dbgfmts/dwarf2/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/objfmts/bin/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/objfmts/coff/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/objfmts/elf/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/objfmts/macho/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/objfmts/rdf/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/objfmts/win32/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/objfmts/win64/tests',
+  'chromium/src/third_party/yasm/source/patched-yasm/modules/objfmts/xdf/tests',
+  'chromium/src/third_party/WebKit/LayoutTests',
+  'chromium/src/third_party/WebKit/Tools/Scripts',
+  'chromium/src/tools/gyp/test',
+  'chromium/src/v8/test',
+  'chromium/src/webkit/tools/test/reference_build',
+  'client.py',
+  'gclient.conf',
+  'patch-tool.py',
+  'release-tool.py',
+]
+
+TAR_EXCLUDE_REGEXPS = [
   r'(^|\/)\.git(\/|$)',
   r'(^|\/)\.gitignore$',
   r'(^|\/)\.gitattributes$',
   r'(^|\/)\.hg(\/|$)',
   r'(^|\/)\.svn(\/|$)',
-  r'^\.bzrignore$',
-  r'^\.channel$',
-  r'^client\.py$',
-  r'^gclient\.conf$',
-  r'^patch\-tool\.py$',
-  r'^release\-tool\.py$',
   r'\.mk$',
   r'\.o$',
   r'\.so(|\..*)$',
@@ -139,10 +166,15 @@ def cmd_make_tarball(options, args):
   finally:
     lock.unlock()
 
-  excludes = [re.compile(r) for r in TAR_EXCLUDE_RE_S]
+  re_excludes = [re.compile(r) for r in TAR_EXCLUDE_REGEXPS]
 
   def tar_filter(info):
-    if any(r.search(os.path.relpath(info.name, topsrcdir)) is not None for r in excludes):
+    (root, ext) = os.path.splitext(info.name)
+    if ext == ".gyp" or ext == ".gypi":
+      return info
+    if any(os.path.relpath(info.name, topsrcdir).startswith(r) for r in TAR_EXCLUDE_DIRS):
+      return None
+    if any(r.search(os.path.relpath(info.name, topsrcdir)) is not None for r in re_excludes):
       return None
     return info
 

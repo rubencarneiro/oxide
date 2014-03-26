@@ -24,10 +24,12 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
+#include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
+#include "content/public/common/javascript_message_type.h"
 #include "ui/gfx/rect.h"
 
 #include "shared/browser/oxide_browser_context.h"
@@ -57,6 +59,7 @@ class WebContentsImpl;
 namespace oxide {
 
 class BrowserContext;
+class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
@@ -124,6 +127,11 @@ class WebView : public ScriptMessageTarget,
 
   virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
+  virtual JavaScriptDialog* CreateJavaScriptDialog(
+      content::JavaScriptMessageType javascript_message_type,
+      bool* did_suppress_message);
+  virtual JavaScriptDialog* CreateBeforeUnloadDialog();
+
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
 
@@ -156,6 +164,7 @@ class WebView : public ScriptMessageTarget,
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
 
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,

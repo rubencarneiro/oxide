@@ -151,9 +151,10 @@ WebContextAdapterPrivate::WebContextAdapterPrivate(
 void WebContextAdapterPrivate::Init() {
   DCHECK(!context_);
 
-  context_ = oxide::BrowserContext::Create(
+  oxide::BrowserContext::Params params(
       construct_props_->data_path,
       construct_props_->cache_path);
+  context_ = oxide::BrowserContext::Create(params);
 
   if (!construct_props_->product.empty()) {
     context()->SetProduct(construct_props_->product);

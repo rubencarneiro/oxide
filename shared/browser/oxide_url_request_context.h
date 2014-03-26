@@ -20,8 +20,8 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
-#include "content/public/browser/content_browser_client.h"
 #include "net/url_request/url_request_context.h"
 #include "net/url_request/url_request_context_getter.h"
 #include "net/url_request/url_request_context_storage.h"
@@ -54,17 +54,13 @@ class URLRequestContextGetter : public net::URLRequestContextGetter {
  public:
   virtual ~URLRequestContextGetter();
 
-  static URLRequestContextGetter* CreateMain(
-      BrowserContextIOData* context,
-      content::ProtocolHandlerMap* protocol_handlers,
-      content::ProtocolHandlerScopedVector protocol_interceptors);
-
-  scoped_refptr<base::SingleThreadTaskRunner> GetNetworkTaskRunner() const FINAL;
-
  protected:
   URLRequestContextGetter();
 
-  base::WeakPtr<URLRequestContext> url_request_context_;
+ private:
+  scoped_refptr<base::SingleThreadTaskRunner> GetNetworkTaskRunner() const FINAL;
+
+  scoped_refptr<base::SingleThreadTaskRunner> network_task_runner_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(URLRequestContextGetter);

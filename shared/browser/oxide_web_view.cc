@@ -45,6 +45,7 @@
 
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_javascript_dialog_manager.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_preferences.h"
@@ -528,7 +529,21 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
   return NULL;
 }
 
+JavaScriptDialog* WebView::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  return NULL;
+}
+
+JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
+  return NULL;
+}
+
 void WebView::FrameAdded(WebFrame* frame) {}
 void WebView::FrameRemoved(WebFrame* frame) {}
+
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+  return JavaScriptDialogManager::GetInstance();
+}
 
 } // namespace oxide

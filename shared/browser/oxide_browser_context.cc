@@ -17,11 +17,13 @@
 
 #include "oxide_browser_context.h"
 
+#include <algorithm>
 #include <vector>
 
 #include "base/files/file_path.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/weak_ptr.h"
 #include "base/supports_user_data.h"
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
@@ -37,6 +39,7 @@
 #include "net/http/http_cache.h"
 #include "net/http/http_network_session.h"
 #include "net/http/http_server_properties_impl.h"
+#include "net/http/transport_security_persister.h"
 #include "net/http/transport_security_state.h"
 #include "net/ssl/default_server_bound_cert_store.h"
 #include "net/ssl/server_bound_cert_service.h"
@@ -54,7 +57,7 @@
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_http_user_agent_settings.h"
-#include "oxide_io_thread_delegate.h"
+#include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
 #include "oxide_off_the_record_browser_context_impl.h"
 #include "oxide_ssl_config_service.h"
@@ -80,6 +83,38 @@ class ContextData : public base::SupportsUserData::Data {
   BrowserContextIOData* context_;
 };
 
+class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
+ public:
+  MainURLRequestContextGetter(
+      BrowserContextIOData* context,
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors) :
+      context_(context),
+      protocol_interceptors_(protocol_interceptors.Pass()) {
+    std::swap(protocol_handlers_, *protocol_handlers);
+  }
+
+  net::URLRequestContext* GetURLRequestContext() FINAL {
+    DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+
+    if (!url_request_context_) {
+      DCHECK(context_);
+      url_request_context_ = context_->CreateMainRequestContext(
+          protocol_handlers_, protocol_interceptors_.Pass())->AsWeakPtr();
+      context_ = NULL;
+    }
+
+    return url_request_context_.get();
+  }
+
+ private:
+  BrowserContextIOData* context_;
+  content::ProtocolHandlerMap protocol_handlers_;
+  content::ProtocolHandlerScopedVector protocol_interceptors_;
+
+  base::WeakPtr<URLRequestContext> url_request_context_;
+};
+
 } // namespace
 
 class ResourceContext FINAL : public content::ResourceContext {
@@ -88,7 +123,7 @@ class ResourceContext FINAL : public content::ResourceContext {
       request_context_(NULL) {}
 
   net::HostResolver* GetHostResolver() FINAL {
-    return BrowserProcessMain::instance()->io_thread_delegate()->host_resolver();
+    return IOThread::instance()->globals()->host_resolver();
   }
 
   net::URLRequestContext* GetRequestContext() FINAL {
@@ -138,7 +173,6 @@ void BrowserContextIOData::SetCookiePolicy(net::StaticCookiePolicy::Type policy)
 }
 
 BrowserContextIOData::BrowserContextIOData() :
-    initialized_(false),
     cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     resource_context_(new ResourceContext()) {
   resource_context_->SetUserData(kBrowserContextKey, new ContextData(this));
@@ -164,22 +198,18 @@ net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
   return cookie_policy_.type();
 }
 
-void BrowserContextIOData::Init(
+URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     content::ProtocolHandlerMap& protocol_handlers,
     content::ProtocolHandlerScopedVector protocol_interceptors) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
-  DCHECK(!initialized_);
+  DCHECK(!main_request_context_);
 
-  initialized_ = true;
-
-  IOThreadDelegate* io_thread_delegate =
-      BrowserProcessMain::instance()->io_thread_delegate();
+  IOThread::Globals* io_thread_globals = IOThread::instance()->globals();
 
   ssl_config_service_ = new SSLConfigService();
   http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
   ftp_transaction_factory_.reset(
-      new net::FtpNetworkLayer(io_thread_delegate->host_resolver()));
-  network_delegate_.reset(new NetworkDelegate(this));
+      new net::FtpNetworkLayer(io_thread_globals->host_resolver()));
 
   // TODO: We want persistent storage here (for non-incognito), but the
   //       persistent implementation used in Chrome uses the preferences
@@ -187,19 +217,23 @@ void BrowserContextIOData::Init(
   //       backed either by sqlite or a text file
   http_server_properties_.reset(new net::HttpServerPropertiesImpl());
 
-  URLRequestContext* context = new URLRequestContext();
+  network_delegate_.reset(new NetworkDelegate(this));
+  transport_security_state_.reset(new net::TransportSecurityState());
+  transport_security_persister_.reset(
+      new net::TransportSecurityPersister(
+        transport_security_state_.get(),
+        GetPath(),
+        content::BrowserThread::GetMessageLoopProxyForThread(
+          content::BrowserThread::FILE),
+        IsOffTheRecord()));
+
+  main_request_context_.reset(new URLRequestContext());
+  URLRequestContext* context = main_request_context_.get();
   net::URLRequestContextStorage* storage = context->storage();
 
-  context->set_net_log(io_thread_delegate->net_log());
-  context->set_host_resolver(io_thread_delegate->host_resolver());
-  context->set_cert_verifier(io_thread_delegate->cert_verifier());
-  context->set_http_auth_handler_factory(
-      io_thread_delegate->http_auth_handler_factory());
-  context->set_proxy_service(io_thread_delegate->proxy_service());
   storage->set_ssl_config_service(ssl_config_service_.get());
   context->set_network_delegate(network_delegate_.get());
   context->set_http_user_agent_settings(http_user_agent_settings_.get());
-  context->set_throttler_manager(io_thread_delegate->throttler_manager());
 
   // TODO: We want persistent storage here (for non-incognito), but 
   //       SQLiteServerBoundCertStore is part of chrome
@@ -211,8 +245,7 @@ void BrowserContextIOData::Init(
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
   base::FilePath cookie_path;
-  if (!IsOffTheRecord()) {
-    DCHECK(!GetPath().empty());
+  if (!IsOffTheRecord() && !GetPath().empty()) {
     cookie_path = GetPath().Append(kCookiesFilename);
   }
   storage->set_cookie_store(content::CreateCookieStore(
@@ -221,16 +254,12 @@ void BrowserContextIOData::Init(
         content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
         NULL, NULL)));
 
-  storage->set_transport_security_state(new net::TransportSecurityState());
-  // TODO: Need to implement net::TransportSecurityState::Delegate in order
-  //       to have persistence for non-incognito mode. There is an
-  //       implementation in Chrome which is backed by a json file
+  context->set_transport_security_state(transport_security_state_.get());
 
   net::HttpCache::BackendFactory* cache_backend = NULL;
-  if (IsOffTheRecord()) {
+  if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
-    DCHECK(!GetCachePath().empty());
     cache_backend = new net::HttpCache::DefaultBackend(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
@@ -301,13 +330,7 @@ void BrowserContextIOData::Init(
 
   storage->set_job_factory(top_job_factory.release());
 
-  main_request_context_.reset(context);
   resource_context_->request_context_ = context;
-}
-
-URLRequestContext* BrowserContextIOData::GetMainRequestContext() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
-  DCHECK(initialized_);
   return main_request_context_.get();
 }
 
@@ -464,9 +487,8 @@ BrowserContext::~BrowserContext() {
 }
 
 // static
-BrowserContext* BrowserContext::Create(const base::FilePath& path,
-                                       const base::FilePath& cache_path) {
-  return new BrowserContextImpl(path, cache_path);
+BrowserContext* BrowserContext::Create(const Params& params) {
+  return new BrowserContextImpl(params);
 }
 
 // static
@@ -486,9 +508,9 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
   DCHECK(!main_request_context_getter_);
 
   main_request_context_getter_ =
-      URLRequestContextGetter::CreateMain(io_data(),
-                                          protocol_handlers,
-                                          protocol_interceptors.Pass());
+      new MainURLRequestContextGetter(io_data(),
+                                      protocol_handlers,
+                                      protocol_interceptors.Pass());
 
   return main_request_context_getter_;
 }

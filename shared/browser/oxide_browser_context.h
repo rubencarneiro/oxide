@@ -41,6 +41,8 @@ class FtpNetworkLayer;
 class HttpServerProperties;
 class HttpUserAgentSettings;
 class SSLConfigService;
+class TransportSecurityPersister;
+class TransportSecurityState;
 
 }
 
@@ -73,10 +75,10 @@ class BrowserContextIOData {
 
   virtual bool IsOffTheRecord() const = 0;
 
-  void Init(content::ProtocolHandlerMap& protocol_handlers,
-            content::ProtocolHandlerScopedVector protocol_interceptors);
+  URLRequestContext* CreateMainRequestContext(
+      content::ProtocolHandlerMap& protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors);
 
-  URLRequestContext* GetMainRequestContext();
   content::ResourceContext* GetResourceContext();
 
   bool CanAccessCookies(const GURL& url,
@@ -92,8 +94,6 @@ class BrowserContextIOData {
   void SetDelegate(BrowserContextDelegate* delegate);
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
-  bool initialized_;
-
   base::Lock delegate_lock_;
   scoped_refptr<BrowserContextDelegate> delegate_;
 
@@ -106,6 +106,9 @@ class BrowserContextIOData {
   scoped_ptr<net::HttpServerProperties> http_server_properties_;
   scoped_ptr<net::NetworkDelegate> network_delegate_;
 
+  scoped_ptr<net::TransportSecurityState> transport_security_state_;
+  scoped_ptr<net::TransportSecurityPersister> transport_security_persister_;
+
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
 };
@@ -113,6 +116,16 @@ class BrowserContextIOData {
 class BrowserContext : public content::BrowserContext,
                        public base::RefCounted<BrowserContext> {
  public:
+
+  struct Params {
+    Params(const base::FilePath& path,
+           const base::FilePath& cache_path) :
+        path(path), cache_path(path) {}
+
+    base::FilePath path;
+    base::FilePath cache_path;
+  };
+
   virtual ~BrowserContext();
 
   static BrowserContext* FromContent(
@@ -125,8 +138,7 @@ class BrowserContext : public content::BrowserContext,
   // The caller must ensure that it outlives any other consumers (ie,
   // WebView's), and must ensure that it is destroyed before all
   // references to the BrowserProcessMain have been released
-  static BrowserContext* Create(const base::FilePath& path,
-                                const base::FilePath& cache_path);
+  static BrowserContext* Create(const Params& params);
 
   static std::vector<BrowserContext *>& GetAllContexts();
 

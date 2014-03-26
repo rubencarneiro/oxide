@@ -33,8 +33,7 @@ class OffTheRecordBrowserContextImpl;
 
 class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
  public:
-  BrowserContextIODataImpl(const base::FilePath& path,
-                           const base::FilePath& cache_path);
+  BrowserContextIODataImpl(const BrowserContext::Params& params);
 
   base::FilePath GetPath() const FINAL;
   base::FilePath GetCachePath() const FINAL;
@@ -79,8 +78,7 @@ class BrowserContextImpl FINAL : public BrowserContext {
  private:
   friend class BrowserContext;
 
-  BrowserContextImpl(const base::FilePath& path,
-                     const base::FilePath& cache_path);
+  BrowserContextImpl(const BrowserContext::Params& params);
 
   scoped_refptr<OffTheRecordBrowserContextImpl> otr_context_;
   std::string product_;

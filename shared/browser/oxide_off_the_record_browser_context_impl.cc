@@ -30,12 +30,12 @@ OffTheRecordBrowserContextIODataImpl::OffTheRecordBrowserContextIODataImpl(
 
 base::FilePath
 OffTheRecordBrowserContextIODataImpl::GetPath() const {
-  return base::FilePath();
+  return original_io_data_->GetPath();
 }
 
 base::FilePath
 OffTheRecordBrowserContextIODataImpl::GetCachePath() const {
-  return base::FilePath();
+  return original_io_data_->GetCachePath();
 }
 
 std::string
