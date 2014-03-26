@@ -38,7 +38,7 @@ WebPopupMenu::WebPopupMenu(WebPopupMenuDelegate* delegate,
                            content::RenderViewHost* rvh) :
     oxide::WebPopupMenu(rvh),
     delegate_(delegate) {
-  delegate_->SetWebPopupMenu(this);
+  delegate_->menu_ = this;
 }
 
 void WebPopupMenu::Show(const gfx::Rect& bounds,
@@ -92,7 +92,8 @@ void WebPopupMenu::Show(const gfx::Rect& bounds,
                   qitems, allow_multiple_selection);
 }
 
-void WebPopupMenu::Hide() {
+void WebPopupMenu::OnHide() {
+  delegate_->Hide();
   content::BrowserThread::DeleteSoon(
       content::BrowserThread::UI, FROM_HERE, this);
 }

@@ -26,51 +26,47 @@
 
 namespace oxide {
 
-WebPopupMenu::WebPopupMenu(content::RenderViewHost* rvh) :
-    content::WebContentsObserver(content::WebContents::FromRenderViewHost(rvh)),
-    shown_(false),
-    render_view_host_(rvh),
-    weak_factory_(this) {}
-
-WebPopupMenu::~WebPopupMenu() {}
-
 void WebPopupMenu::RenderViewDeleted(content::RenderViewHost* rvh) {
-  if (shown_) {
-    Cancel();
+  if (rvh != render_view_host_) {
+    return;
   }
-}
-
-void WebPopupMenu::ShowPopup(const gfx::Rect& bounds,
-                             const std::vector<content::MenuItem>& items,
-                             int selected_item,
-                             bool allow_multiple_selection) {
-  shown_ = true;
-  Show(bounds, items, selected_item, allow_multiple_selection);
-}
-
-void WebPopupMenu::HidePopup() {
-  shown_ = false;
+  render_view_host_ = NULL;
   Hide();
 }
 
+WebPopupMenu::WebPopupMenu(content::RenderViewHost* rvh) :
+    content::WebContentsObserver(content::WebContents::FromRenderViewHost(rvh)),
+    popup_was_hidden_(false),
+    render_view_host_(static_cast<content::RenderViewHostImpl *>(rvh)) {}
+
+WebPopupMenu::~WebPopupMenu() {
+  if (!popup_was_hidden_) {
+    render_view_host_->DidCancelPopupMenu();
+  }
+}
+
+void WebPopupMenu::Hide() {
+  if (popup_was_hidden_) {
+    return;
+  }
+  popup_was_hidden_ = true;
+  OnHide();
+}
+
 void WebPopupMenu::SelectItems(const std::vector<int>& selected_indices) {
-  DCHECK(shown_);
-  render_view_host()->DidSelectPopupMenuItems(selected_indices);
-  HidePopup();
+  DCHECK(!popup_was_hidden_);
+  render_view_host_->DidSelectPopupMenuItems(selected_indices);
+  Hide();
 }
 
 void WebPopupMenu::Cancel() {
-  DCHECK(shown_);
-  render_view_host()->DidCancelPopupMenu();
-  HidePopup();
+  DCHECK(!popup_was_hidden_);
+  render_view_host_->DidCancelPopupMenu();
+  Hide();
 }
 
-base::WeakPtr<WebPopupMenu> WebPopupMenu::GetWeakPtr() {
-  return weak_factory_.GetWeakPtr();
-}
-
-content::RenderViewHostImpl* WebPopupMenu::render_view_host() const {
-  return static_cast<content::RenderViewHostImpl *>(render_view_host_);
+bool WebPopupMenu::WasHidden() const {
+  return popup_was_hidden_;
 }
 
 } // namespace oxide

@@ -37,6 +37,7 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
+#include "content/public/common/menu_item.h"
 #include "net/base/net_errors.h"
 #include "url/gurl.h"
 #include "webkit/common/webpreferences.h"
@@ -48,6 +49,7 @@
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
+#include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
 
 namespace oxide {
@@ -293,6 +295,10 @@ void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
 
+WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
+  return NULL;
+}
+
 WebView::WebView() {}
 
 WebView::~WebView() {
@@ -525,10 +531,6 @@ void WebView::SetWebPreferences(WebPreferences* prefs) {
   WebPreferencesValueChanged();
 }
 
-WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
-  return NULL;
-}
-
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
     bool* did_suppress_message) {
@@ -541,6 +543,30 @@ JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
 
 void WebView::FrameAdded(WebFrame* frame) {}
 void WebView::FrameRemoved(WebFrame* frame) {}
+
+void WebView::ShowPopupMenu(const gfx::Rect& bounds,
+                            int selected_item,
+                            const std::vector<content::MenuItem>& items,
+                            bool allow_multiple_selection) {
+  DCHECK(!active_popup_menu_ || active_popup_menu_->WasHidden());
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  WebPopupMenu* menu = CreatePopupMenu(rvh);
+  if (!menu) {
+    static_cast<content::RenderViewHostImpl *>(rvh)->DidCancelPopupMenu();
+    return;
+  }
+
+  active_popup_menu_ = menu->AsWeakPtr();
+
+  menu->Show(bounds, items, selected_item, allow_multiple_selection);
+}
+
+void WebView::HidePopupMenu() {
+  if (active_popup_menu_ && !active_popup_menu_->WasHidden()) {
+    active_popup_menu_->Hide();
+  }
+}
 
 content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
   return JavaScriptDialogManager::GetInstance();

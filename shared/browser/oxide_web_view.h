@@ -24,6 +24,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
@@ -47,6 +48,7 @@ class Size;
 namespace content {
 
 class FrameTreeNode;
+struct MenuItem;
 class NotificationRegistrar;
 struct OpenURLParams;
 class RenderWidgetHost;
@@ -125,8 +127,6 @@ class WebView : public ScriptMessageTarget,
 
   virtual gfx::Rect GetContainerBounds() = 0;
 
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
-
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message);
@@ -134,6 +134,12 @@ class WebView : public ScriptMessageTarget,
 
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
+
+  void ShowPopupMenu(const gfx::Rect& bounds,
+                     int selected_item,
+                     const std::vector<content::MenuItem>& items,
+                     bool allow_multiple_selection);
+  void HidePopupMenu();
 
  protected:
   WebView();
@@ -239,11 +245,13 @@ class WebView : public ScriptMessageTarget,
   virtual void OnWebPreferencesChanged();
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
+  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
   ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
   content::NotificationRegistrar registrar_;
   scoped_ptr<WebFrame> root_frame_;
+  base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

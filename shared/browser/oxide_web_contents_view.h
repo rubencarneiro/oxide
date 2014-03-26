@@ -30,7 +30,6 @@ class WebContents;
 
 namespace oxide {
 
-class WebPopupMenu;
 class WebView;
 
 class WebContentsView FINAL : public content::WebContentsViewPort,
@@ -85,7 +84,6 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
 
  private:
   content::WebContents* web_contents_;
-  base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);
 };
