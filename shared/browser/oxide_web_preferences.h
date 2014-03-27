@@ -61,11 +61,10 @@ class WebPreferences {
     ATTR_APP_CACHE_ENABLED,
 
     ATTR_TABS_TO_LINKS, // whether pressing |TAB\ focuses links
-    ATTR_CARET_BROWSING_ENABLED,
+    ATTR_CARET_BROWSING_ENABLED, // Not used anywhere in Chrome. Consider removing
 
-    ATTR_SMOOTH_SCROLLING_ENABLED,
     ATTR_TOUCH_ENABLED,
-    ATTR_SUPPORTS_MULTIPLE_WINDOWS,
+    ATTR_SUPPORTS_MULTIPLE_WINDOWS, // Should get rid of this
 
     ATTR_LAST
   };

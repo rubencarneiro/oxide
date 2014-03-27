@@ -80,7 +80,6 @@ WebPreferences::WebPreferences() :
 
   // ATTR_CARET_BROWSING_ENABLED
 
-  SetAttribute(ATTR_SMOOTH_SCROLLING_ENABLED, true);
   SetAttribute(ATTR_TOUCH_ENABLED, true);
 
   // ATTR_SUPPORTS_MULTIPLE_WINDOWS
@@ -249,8 +248,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
 
   prefs->tabs_to_links = attributes_[ATTR_TABS_TO_LINKS];
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
-
-  prefs->enable_scroll_animator = attributes_[ATTR_SMOOTH_SCROLLING_ENABLED];
 
   prefs->touch_enabled = attributes_[ATTR_TOUCH_ENABLED];
 

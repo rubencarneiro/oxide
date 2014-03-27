@@ -282,6 +282,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
+  prefs->enable_scroll_animator = true;
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
