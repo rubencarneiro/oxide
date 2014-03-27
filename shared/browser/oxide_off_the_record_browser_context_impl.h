@@ -32,6 +32,9 @@ class OffTheRecordBrowserContextIODataImpl FINAL :
  public:
   OffTheRecordBrowserContextIODataImpl(BrowserContextIOData* original_io_data);
 
+  net::StaticCookiePolicy::Type GetCookiePolicy() const FINAL;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
+
   base::FilePath GetPath() const FINAL;
   base::FilePath GetCachePath() const FINAL;
 

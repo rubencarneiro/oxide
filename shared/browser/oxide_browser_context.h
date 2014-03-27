@@ -64,7 +64,8 @@ class BrowserContextIOData {
 
   scoped_refptr<BrowserContextDelegate> GetDelegate();
 
-  net::StaticCookiePolicy::Type GetCookiePolicy() const;
+  virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
+  virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
 
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
@@ -92,13 +93,9 @@ class BrowserContextIOData {
   friend class BrowserContext;
 
   void SetDelegate(BrowserContextDelegate* delegate);
-  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
   base::Lock delegate_lock_;
   scoped_refptr<BrowserContextDelegate> delegate_;
-
-  base::Lock cookie_policy_lock_;
-  net::StaticCookiePolicy cookie_policy_;
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;

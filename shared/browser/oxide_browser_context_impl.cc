@@ -34,7 +34,19 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     path_(params.path),
     cache_path_(params.cache_path),
     // FIXME: Get from translations
-    accept_langs_("en-us,en") {}
+    accept_langs_("en-us,en"),
+    cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES) {}
+
+net::StaticCookiePolicy::Type BrowserContextIODataImpl::GetCookiePolicy() const {
+  base::AutoLock lock(lock_);
+  return cookie_policy_;
+}
+
+void BrowserContextIODataImpl::SetCookiePolicy(
+    net::StaticCookiePolicy::Type cookie_policy) {
+  base::AutoLock lock(lock_);
+  cookie_policy_ = cookie_policy;
+}
 
 base::FilePath BrowserContextIODataImpl::GetPath() const {
   return path_;

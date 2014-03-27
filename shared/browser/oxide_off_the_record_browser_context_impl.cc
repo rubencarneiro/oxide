@@ -28,6 +28,16 @@ OffTheRecordBrowserContextIODataImpl::OffTheRecordBrowserContextIODataImpl(
     BrowserContextIOData* original_io_data) :
     original_io_data_(original_io_data) {}
 
+net::StaticCookiePolicy::Type
+OffTheRecordBrowserContextIODataImpl::GetCookiePolicy() const {
+  return original_io_data_->GetCookiePolicy();
+}
+
+void OffTheRecordBrowserContextIODataImpl::SetCookiePolicy(
+    net::StaticCookiePolicy::Type cookie_policy) {
+  original_io_data_->SetCookiePolicy(cookie_policy);
+}
+
 base::FilePath
 OffTheRecordBrowserContextIODataImpl::GetPath() const {
   return original_io_data_->GetPath();

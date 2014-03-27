@@ -167,13 +167,7 @@ void BrowserContextIOData::SetDelegate(BrowserContextDelegate* delegate) {
   delegate_ = delegate;
 }
 
-void BrowserContextIOData::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
-  base::AutoLock lock(cookie_policy_lock_);
-  cookie_policy_.set_type(policy);
-}
-
 BrowserContextIOData::BrowserContextIOData() :
-    cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     resource_context_(new ResourceContext()) {
   resource_context_->SetUserData(kBrowserContextKey, new ContextData(this));
 }
@@ -192,10 +186,6 @@ BrowserContextIOData* BrowserContextIOData::FromResourceContext(
 scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
   base::AutoLock lock(delegate_lock_);
   return delegate_;
-}
-
-net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
-  return cookie_policy_.type();
 }
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
@@ -351,12 +341,12 @@ bool BrowserContextIOData::CanAccessCookies(const GURL& url,
     }
   }
 
-  base::AutoLock lock(cookie_policy_lock_);
+  net::StaticCookiePolicy policy(GetCookiePolicy());
   if (write) {
-    return cookie_policy_.CanSetCookie(url, first_party_url) == net::OK;
+    return policy.CanSetCookie(url, first_party_url) == net::OK;
   }
 
-  return cookie_policy_.CanGetCookies(url, first_party_url) == net::OK;
+  return policy.CanGetCookies(url, first_party_url) == net::OK;
 }
 
 BrowserContext::IODataHandle::~IODataHandle() {
@@ -550,8 +540,7 @@ net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
 }
 
 void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
-  GetOriginalContext()->io_data()->SetCookiePolicy(policy);
-  GetOffTheRecordContext()->io_data()->SetCookiePolicy(policy);
+  io_data()->SetCookiePolicy(policy);
 }
 
 content::ResourceContext* BrowserContext::GetResourceContext() {

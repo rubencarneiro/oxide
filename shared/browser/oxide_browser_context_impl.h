@@ -35,6 +35,9 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
  public:
   BrowserContextIODataImpl(const BrowserContext::Params& params);
 
+  net::StaticCookiePolicy::Type GetCookiePolicy() const FINAL;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
+
   base::FilePath GetPath() const FINAL;
   base::FilePath GetCachePath() const FINAL;
 
@@ -53,8 +56,9 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   base::FilePath cache_path_;
 
   std::string user_agent_;
-
   std::string accept_langs_;
+
+  net::StaticCookiePolicy::Type cookie_policy_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextIODataImpl);
 };
