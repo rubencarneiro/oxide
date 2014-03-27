@@ -76,6 +76,11 @@ void WebView::NotifyUserAgentStringChanged() {
   web_contents_->SetUserAgentOverride(context_->GetUserAgent());
 }
 
+void WebView::NotifyPopupBlockerEnabledChanged() {
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+}
+
 void WebView::WebPreferencesDestroyed() {
   OnWebPreferencesChanged();
   WebPreferencesValueChanged();

@@ -55,7 +55,6 @@ WebPreferences::WebPreferences() :
   SetAttribute(ATTR_REMOTE_FONTS_ENABLED, true);
   SetAttribute(ATTR_JAVASCRIPT_ENABLED, true);
   SetAttribute(ATTR_WEB_SECURITY_ENABLED, true);
-  SetAttribute(ATTR_POPUP_BLOCKER_ENABLED, true);
 
   // ATTR_ALLOW_SCRIPTS_TO_CLOSE_WINDOWS
   // ATTR_JAVASCRIPT_CAN_ACCESS_CLIPBOARD
@@ -219,8 +218,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
 
   prefs->javascript_enabled = attributes_[ATTR_JAVASCRIPT_ENABLED];
   prefs->web_security_enabled = attributes_[ATTR_WEB_SECURITY_ENABLED];
-  prefs->javascript_can_open_windows_automatically =
-      !attributes_[ATTR_POPUP_BLOCKER_ENABLED];
   prefs->allow_scripts_to_close_windows =
       attributes_[ATTR_ALLOW_SCRIPTS_TO_CLOSE_WINDOWS];
   prefs->javascript_can_access_clipboard =

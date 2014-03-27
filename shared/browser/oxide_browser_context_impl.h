@@ -38,6 +38,9 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   net::StaticCookiePolicy::Type GetCookiePolicy() const FINAL;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
 
+  bool IsPopupBlockerEnabled() const FINAL;
+  void SetIsPopupBlockerEnabled(bool enabled);
+
   base::FilePath GetPath() const FINAL;
   base::FilePath GetCachePath() const FINAL;
 
@@ -59,6 +62,7 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   std::string accept_langs_;
 
   net::StaticCookiePolicy::Type cookie_policy_;
+  bool popup_blocker_enabled_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextIODataImpl);
 };
@@ -76,6 +80,7 @@ class BrowserContextImpl FINAL : public BrowserContext {
   void SetProduct(const std::string& product) FINAL;
 
   void SetUserAgent(const std::string& user_agent) FINAL;
+  void SetIsPopupBlockerEnabled(bool enabled) FINAL;
 
   UserScriptMaster& UserScriptManager() FINAL;
 

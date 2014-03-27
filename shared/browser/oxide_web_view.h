@@ -142,6 +142,7 @@ class WebView : public ScriptMessageTarget,
 
   // BrowserContextObserver
   void NotifyUserAgentStringChanged() FINAL;
+  void NotifyPopupBlockerEnabledChanged() FINAL;
 
   // WebPreferencesObserver
   void WebPreferencesDestroyed() FINAL;

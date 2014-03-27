@@ -35,7 +35,8 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     cache_path_(params.cache_path),
     // FIXME: Get from translations
     accept_langs_("en-us,en"),
-    cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES) {}
+    cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+    popup_blocker_enabled_(true) {}
 
 net::StaticCookiePolicy::Type BrowserContextIODataImpl::GetCookiePolicy() const {
   base::AutoLock lock(lock_);
@@ -46,6 +47,14 @@ void BrowserContextIODataImpl::SetCookiePolicy(
     net::StaticCookiePolicy::Type cookie_policy) {
   base::AutoLock lock(lock_);
   cookie_policy_ = cookie_policy;
+}
+
+bool BrowserContextIODataImpl::IsPopupBlockerEnabled() const {
+  return popup_blocker_enabled_;
+}
+
+void BrowserContextIODataImpl::SetIsPopupBlockerEnabled(bool enabled) {
+  popup_blocker_enabled_ = enabled;
 }
 
 base::FilePath BrowserContextIODataImpl::GetPath() const {
@@ -145,6 +154,13 @@ void BrowserContextImpl::SetUserAgent(const std::string& user_agent) {
   default_user_agent_string_ = user_agent.empty();
 
   OnUserAgentChanged();
+}
+
+void BrowserContextImpl::SetIsPopupBlockerEnabled(bool enabled) {
+  static_cast<BrowserContextIODataImpl *>(
+      io_data())->SetIsPopupBlockerEnabled(enabled);
+
+  OnPopupBlockerEnabledChanged();
 }
 
 UserScriptMaster& BrowserContextImpl::UserScriptManager() {

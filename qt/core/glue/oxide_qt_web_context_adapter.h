@@ -93,6 +93,9 @@ class Q_DECL_EXPORT WebContextAdapter {
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
+  bool popupBlockerEnabled() const;
+  void setPopupBlockerEnabled(bool enabled);
+
  protected:
   WebContextAdapter(IOThreadDelegate* io_delegate);
 

@@ -461,6 +461,15 @@ void BrowserContext::OnUserAgentChanged() {
                     NotifyUserAgentStringChanged());
 }
 
+void BrowserContext::OnPopupBlockerEnabledChanged() {
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyPopupBlockerEnabledChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyPopupBlockerEnabledChanged());
+}
+
 BrowserContext::~BrowserContext() {
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     observers_,
@@ -541,6 +550,10 @@ net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
 
 void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
   io_data()->SetCookiePolicy(policy);
+}
+
+bool BrowserContext::IsPopupBlockerEnabled() const {
+  return io_data()->IsPopupBlockerEnabled();
 }
 
 content::ResourceContext* BrowserContext::GetResourceContext() {

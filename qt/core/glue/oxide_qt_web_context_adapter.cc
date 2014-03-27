@@ -241,6 +241,22 @@ void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
   }
 }
 
+bool WebContextAdapter::popupBlockerEnabled() const {
+  if (priv->context()) {
+    return priv->context()->IsPopupBlockerEnabled();
+  }
+
+  return priv->construct_props_->popup_blocker_enabled;
+}
+
+void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
+  if (priv->context()) {
+    priv->context()->SetIsPopupBlockerEnabled(enabled);
+  } else {
+    priv->construct_props_->popup_blocker_enabled = enabled;
+  }
+}
+
 WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
     priv(new WebContextAdapterPrivate(this, io_delegate)) {
 

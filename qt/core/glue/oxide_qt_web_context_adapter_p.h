@@ -58,12 +58,15 @@ class WebContextAdapterPrivate FINAL :
   friend class WebContextAdapter;
 
   struct ConstructProperties {
+    ConstructProperties();
+
     std::string product;
     std::string user_agent;
     base::FilePath data_path;
     base::FilePath cache_path;
     std::string accept_langs;
     net::StaticCookiePolicy::Type cookie_policy;
+    bool popup_blocker_enabled;
   };
 
   WebContextAdapterPrivate(WebContextAdapter* adapter,

@@ -141,6 +141,10 @@ class BrowserContextDelegate : public oxide::BrowserContextDelegate {
   scoped_ptr<WebContextAdapter::IOThreadDelegate> io_thread_delegate_;
 };
 
+WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
+    cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+    popup_blocker_enabled(true) {}
+
 WebContextAdapterPrivate::WebContextAdapterPrivate(
     WebContextAdapter* adapter,
     WebContextAdapter::IOThreadDelegate* io_delegate) :
@@ -165,6 +169,9 @@ void WebContextAdapterPrivate::Init() {
   if (!construct_props_->accept_langs.empty()) {
     context()->SetAcceptLangs(construct_props_->accept_langs);
   }
+  context()->SetCookiePolicy(construct_props_->cookie_policy);
+  context()->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
+
   context()->SetDelegate(context_delegate_);
 
   construct_props_.reset();

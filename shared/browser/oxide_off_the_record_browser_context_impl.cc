@@ -38,6 +38,10 @@ void OffTheRecordBrowserContextIODataImpl::SetCookiePolicy(
   original_io_data_->SetCookiePolicy(cookie_policy);
 }
 
+bool OffTheRecordBrowserContextIODataImpl::IsPopupBlockerEnabled() const {
+  return original_io_data_->IsPopupBlockerEnabled();
+}
+
 base::FilePath
 OffTheRecordBrowserContextIODataImpl::GetPath() const {
   return original_io_data_->GetPath();
@@ -93,6 +97,10 @@ void OffTheRecordBrowserContextImpl::SetProduct(const std::string& product) {
 void OffTheRecordBrowserContextImpl::SetUserAgent(
     const std::string& user_agent) {
   original_context_->SetUserAgent(user_agent);
+}
+
+void OffTheRecordBrowserContextImpl::SetIsPopupBlockerEnabled(bool enabled) {
+  original_context_->SetIsPopupBlockerEnabled(enabled);
 }
 
 UserScriptMaster& OffTheRecordBrowserContextImpl::UserScriptManager() {

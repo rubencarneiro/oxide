@@ -67,6 +67,8 @@ class BrowserContextIOData {
   virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
   virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
 
+  virtual bool IsPopupBlockerEnabled() const = 0;
+
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
 
@@ -170,6 +172,9 @@ class BrowserContext : public content::BrowserContext,
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
+  bool IsPopupBlockerEnabled() const;
+  virtual void SetIsPopupBlockerEnabled(bool enabled) = 0;
+
   BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 
   virtual UserScriptMaster& UserScriptManager() = 0;
@@ -180,6 +185,7 @@ class BrowserContext : public content::BrowserContext,
   BrowserContext(BrowserContextIOData* io_data);
 
   void OnUserAgentChanged();
+  void OnPopupBlockerEnabledChanged();
 
  private:
   friend class BrowserContextObserver;

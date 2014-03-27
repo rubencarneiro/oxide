@@ -172,7 +172,6 @@ void OxideQWebPreferences::setMinimumFontSize(unsigned size) {
 BOOLEAN_PREF_IMPL(remoteFontsEnabled, setRemoteFontsEnabled, REMOTE_FONTS_ENABLED)
 BOOLEAN_PREF_IMPL(javascriptEnabled, setJavascriptEnabled, JAVASCRIPT_ENABLED)
 BOOLEAN_PREF_IMPL(webSecurityEnabled, setWebSecurityEnabled, WEB_SECURITY_ENABLED)
-BOOLEAN_PREF_IMPL(popupBlockerEnabled, setPopupBlockerEnabled, POPUP_BLOCKER_ENABLED)
 BOOLEAN_PREF_IMPL(allowScriptsToCloseWindows, setAllowScriptsToCloseWindows, ALLOW_SCRIPTS_TO_CLOSE_WINDOWS)
 BOOLEAN_PREF_IMPL(javascriptCanAccessClipboard, setJavascriptCanAccessClipboard, JAVASCRIPT_CAN_ACCESS_CLIPBOARD)
 BOOLEAN_PREF_IMPL(hyperlinkAuditingEnabled, setHyperlinkAuditingEnabled, HYPERLINK_AUDITING_ENABLED)

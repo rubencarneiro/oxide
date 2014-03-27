@@ -282,6 +282,9 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
+
+  prefs->javascript_can_open_windows_automatically =
+      !view->GetBrowserContext()->IsPopupBlockerEnabled();
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {

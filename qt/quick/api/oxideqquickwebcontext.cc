@@ -550,6 +550,24 @@ void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
   emit cookiePolicyChanged();
 }
 
+bool OxideQQuickWebContext::popupBlockerEnabled() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->popupBlockerEnabled();
+}
+
+void OxideQQuickWebContext::setPopupBlockerEnabled(bool enabled) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->popupBlockerEnabled() == enabled) {
+    return;
+  }
+
+  d->setPopupBlockerEnabled(enabled);
+
+  emit popupBlockerEnabledChanged();
+}
+
 OxideQQuickWebContextDelegateWorker*
 OxideQQuickWebContext::networkRequestDelegate() const {
   Q_D(const OxideQQuickWebContext);
