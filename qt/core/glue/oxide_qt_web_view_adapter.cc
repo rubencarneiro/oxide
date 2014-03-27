@@ -34,37 +34,45 @@ namespace qt {
 
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
-    priv(WebView::Create(this)) {
+    priv(WebView::Create(this)),
+    construct_props_(new ConstructProperties()) {
   setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
 }
 
 WebViewAdapter::~WebViewAdapter() {}
 
-void WebViewAdapter::init(WebContextAdapter* context,
-                          const QSize& initial_size,
-                          bool incognito,
-                          const QUrl& initial_url,
+void WebViewAdapter::init(const QSize& initial_size,
                           bool visible) {
   if (!priv->Init(
-          WebContextAdapterPrivate::get(context)->context(),
-          incognito,
+          WebContextAdapterPrivate::get(construct_props_->context)->context(),
+          construct_props_->incognito,
           gfx::Size(initial_size.width(), initial_size.height()))) {
     return;
   }
 
-  if (!initial_url.isEmpty()) {
-    priv->SetURL(GURL(initial_url.toString().toStdString()));
+  if (!construct_props_->url.isEmpty()) {
+    priv->SetURL(GURL(construct_props_->url.toString().toStdString()));
   }
+
+  construct_props_.reset();
 
   updateVisibility(visible);
 }
 
 QUrl WebViewAdapter::url() const {
+  if (construct_props_) {
+    return construct_props_->url;
+  }
+
   return QUrl(QString::fromStdString(priv->GetURL().spec()));
 }
 
 void WebViewAdapter::setUrl(const QUrl& url) {
-  priv->SetURL(GURL(url.toString().toStdString()));
+  if (construct_props_) {
+    construct_props_->url = url;
+  } else {
+    priv->SetURL(GURL(url.toString().toStdString()));
+  }
 }
 
 QString WebViewAdapter::title() const {
@@ -80,7 +88,20 @@ bool WebViewAdapter::canGoForward() const {
 }
 
 bool WebViewAdapter::incognito() const {
-  return priv->IsIncognito();
+  if (construct_props_) {
+    return construct_props_->incognito;
+  }
+
+  return priv->IsIncognito();  
+}
+
+void WebViewAdapter::setIncognito(bool incognito) {
+  if (!construct_props_) {
+    LOG(WARNING) << "Cannot change incognito mode after WebView is initialized";
+    return;
+  }
+
+  construct_props_->incognito = incognito;
 }
 
 bool WebViewAdapter::loading() const {
@@ -94,6 +115,29 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
   }
 
   return frame->GetAdapter();
+}
+
+WebContextAdapter* WebViewAdapter::context() const {
+  if (construct_props_) {
+    return construct_props_->context;
+  }
+
+  WebContextAdapterPrivate* context =
+      WebContextAdapterPrivate::FromBrowserContext(priv->GetBrowserContext());
+  if (!context) {
+    return NULL;
+  }
+
+  return context->adapter();
+}
+
+void WebViewAdapter::setContext(WebContextAdapter* context) {
+  if (!construct_props_) {
+    LOG(WARNING) << "WebView context must be set during construction";
+    return;
+  }
+
+  construct_props_->context = context;
 }
 
 void WebViewAdapter::updateSize(const QSize& size) {

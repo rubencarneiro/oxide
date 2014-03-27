@@ -49,10 +49,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  public:
   virtual ~WebViewAdapter();
 
-  void init(WebContextAdapter* context,
-            const QSize& initial_size,
-            bool incognito,
-            const QUrl& initial_url,
+  void init(const QSize& initial_size,
             bool visible);
 
   QUrl url() const;
@@ -64,10 +61,14 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   bool canGoForward() const;
 
   bool incognito() const;
+  void setIncognito(bool incognito);
 
   bool loading() const;
 
   WebFrameAdapter* rootFrame() const;
+
+  WebContextAdapter* context() const;
+  void setContext(WebContextAdapter* context);
 
   void updateSize(const QSize& size);
   void updateVisibility(bool visible);
@@ -122,8 +123,20 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   WebViewAdapter(QObject* q);
 
  private:
+
+  struct ConstructProperties {
+    ConstructProperties() :
+        incognito(false),
+        context(NULL) {}
+
+    QUrl url;
+    bool incognito;
+    WebContextAdapter* context;
+  };
+
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
+  QScopedPointer<ConstructProperties> construct_props_;
 };
 
 } // namespace qt

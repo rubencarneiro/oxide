@@ -47,8 +47,11 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   ~WebContextAdapterPrivate();
 
   static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
+  static WebContextAdapterPrivate* FromBrowserContext(
+      oxide::BrowserContext* context);
 
-  oxide::BrowserContext* context() { return context_; }
+  WebContextAdapter* adapter() const { return adapter_; }
+  oxide::BrowserContext* context() const { return context_; }
 
  private:
   friend class WebContextAdapter;

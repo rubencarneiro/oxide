@@ -134,8 +134,7 @@ class WebContextIOThreadDelegate :
 
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
-    oxide::qt::WebContextAdapter(new oxide::qquick::WebContextIOThreadDelegate()),
-    q_ptr(q),
+    oxide::qt::WebContextAdapter(q, new oxide::qquick::WebContextIOThreadDelegate()),
     io_thread_delegate_(
         static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
     network_request_delegate_(NULL),

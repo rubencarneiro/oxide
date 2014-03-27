@@ -29,19 +29,13 @@
 
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
+class OxideQQuickWebContextPrivate;
 class OxideQQuickWebView;
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
-
-struct InitData {
-  InitData() : incognito(false) {}
-
-  bool incognito;
-  QUrl url;
-};
 
 class OxideQQuickWebViewPrivate Q_DECL_FINAL :
      public oxide::qt::WebViewAdapter {
@@ -92,20 +86,17 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void addAttachedPropertyTo(QObject* object);
 
-  InitData* init_props() { return init_props_.data(); }
-
-  OxideQQuickWebContext* context;
   OxideQQuickNavigationHistory navigationHistory;
   QQmlComponent* popup_menu;
 
  private:
   void contextInitialized();
   void contextWillBeDestroyed();
-  void detachContextSignals();
+  void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
-  QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;
+  bool constructed_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

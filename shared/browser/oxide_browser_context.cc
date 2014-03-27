@@ -163,6 +163,8 @@ void BrowserContextDelegateTraits::Destruct(const BrowserContextDelegate* x) {
 }
 
 void BrowserContextIOData::SetDelegate(BrowserContextDelegate* delegate) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
   base::AutoLock lock(delegate_lock_);
   delegate_ = delegate;
 }
@@ -512,6 +514,10 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
                                       protocol_interceptors.Pass());
 
   return main_request_context_getter_;
+}
+
+BrowserContextDelegate* BrowserContext::GetDelegate() const {
+  return io_data()->GetDelegate();
 }
 
 void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {

@@ -182,5 +182,11 @@ WebContextAdapterPrivate* WebContextAdapterPrivate::get(
   return adapter->priv;
 }
 
+// static
+WebContextAdapterPrivate* WebContextAdapterPrivate::FromBrowserContext(
+    oxide::BrowserContext* context) {
+  return static_cast<WebContextAdapterPrivate *>(context->GetDelegate());
+}
+
 } // namespace qt
 } // namespace oxide

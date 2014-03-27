@@ -22,6 +22,8 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/glue/oxide_qt_adapter_base.h"
+
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
 class QOpenGLContext;
@@ -37,7 +39,7 @@ namespace qt {
 class UserScriptAdapter;
 class WebContextAdapterPrivate;
 
-class Q_DECL_EXPORT WebContextAdapter {
+class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  public:
   virtual ~WebContextAdapter();
 
@@ -96,7 +98,8 @@ class Q_DECL_EXPORT WebContextAdapter {
   void setPopupBlockerEnabled(bool enabled);
 
  protected:
-  WebContextAdapter(IOThreadDelegate* io_delegate);
+  WebContextAdapter(QObject* q,
+                    IOThreadDelegate* io_delegate);
 
  private:
   friend class WebContextAdapterPrivate;

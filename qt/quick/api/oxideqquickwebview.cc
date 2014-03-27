@@ -54,7 +54,9 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 }
 
 void OxideQQuickWebViewPrivate::contextInitialized() {
-  completeConstruction();
+  if (constructed_) {
+    completeConstruction();
+  }
 }
 
 void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
@@ -63,31 +65,30 @@ void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
   // XXX: Our underlying BrowserContext lives on, so we're left in a
   // bit of a weird state here (WebView.context will return no context,
   // which is a lie)
-  context = NULL;
   emit q->contextChanged();
 }
 
-void OxideQQuickWebViewPrivate::detachContextSignals() {
+void OxideQQuickWebViewPrivate::detachContextSignals(
+    OxideQQuickWebContextPrivate* context) {
   Q_Q(OxideQQuickWebView);
 
-  if (context) {
-    QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
-                        SIGNAL(initialized()),
-                        q, SLOT(contextInitialized()));
-    QObject::disconnect(OxideQQuickWebContextPrivate::get(context),
-                        SIGNAL(willBeDestroyed()),
-                        q, SLOT(contextWillBeDestroyed()));
+  if (!context) {
+    return;
   }
+
+  QObject::disconnect(context, SIGNAL(initialized()),
+                      q, SLOT(contextInitialized()));
+  QObject::disconnect(context, SIGNAL(willBeDestroyed()),
+                      q, SLOT(contextWillBeDestroyed()));
 }
 
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     oxide::qt::WebViewAdapter(view),
-    context(NULL),
     navigationHistory(view),
     popup_menu(NULL),
-    init_props_(new InitData()),
-    load_progress_(0) {}
+    load_progress_(0),
+    constructed_(false) {}
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
 }
@@ -191,23 +192,17 @@ void OxideQQuickWebViewPrivate::FrameRemoved(
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
-  Q_ASSERT(init_props_);
-
-  OxideQQuickWebContext* context_in_use = context;
+  OxideQQuickWebContext* context_in_use =
+      adapterToQObject<OxideQQuickWebContext>(context());
   if (!context_in_use) {
     // The default context is reference counted and not exposed to the
     // embedder
     default_context_ = OxideQQuickWebContext::defaultContext();
-    context_in_use = default_context_.data();
+    setContext(OxideQQuickWebContextPrivate::get(default_context_.data()));
   }
 
-  init(OxideQQuickWebContextPrivate::get(context_in_use),
-       QSizeF(q->width(), q->height()).toSize(),
-       init_props_->incognito,
-       init_props_->url,
+  init(QSizeF(q->width(), q->height()).toSize(),
        q->isVisible());
-
-  init_props_.reset();
 
   // Make the webview the QObject parent of the new root frame,
   // to stop Qml from collecting the frame tree
@@ -322,7 +317,8 @@ OxideQQuickWebView::~OxideQQuickWebView() {
 
   disconnect(this, SIGNAL(visibleChanged()),
              this, SLOT(visibilityChangedListener()));
-  d->detachContextSignals();
+  d->detachContextSignals(
+      static_cast<OxideQQuickWebContextPrivate *>(d->context()));
 
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
@@ -335,16 +331,13 @@ OxideQQuickWebView::~OxideQQuickWebView() {
 void OxideQQuickWebView::componentComplete() {
   Q_D(OxideQQuickWebView);
 
+  Q_ASSERT(!d->constructed_);
+  d->constructed_ = true;
+
   QQuickItem::componentComplete();
 
-  if (d->context) {
-    connect(OxideQQuickWebContextPrivate::get(d->context),
-            SIGNAL(initialized()),
-            this, SLOT(contextInitialized()));
-  }
-
-  if (!d->context ||
-      OxideQQuickWebContextPrivate::get(d->context)->isInitialized()) {
+  if (!d->context() ||
+      static_cast<OxideQQuickWebContextPrivate *>(d->context())->isInitialized()) {
     d->completeConstruction();
   }
 }
@@ -358,11 +351,7 @@ QUrl OxideQQuickWebView::url() const {
 void OxideQQuickWebView::setUrl(const QUrl& url) {
   Q_D(OxideQQuickWebView);
 
-  if (d->init_props()) {
-    d->init_props()->url = url;
-  } else {
-    d->setUrl(url);
-  }
+  d->setUrl(url);
 }
 
 QString OxideQQuickWebView::title() const {
@@ -392,12 +381,7 @@ bool OxideQQuickWebView::incognito() const {
 void OxideQQuickWebView::setIncognito(bool incognito) {
   Q_D(OxideQQuickWebView);
 
-  if (d->isInitialized()) {
-    qWarning() << "Cannot change incognito mode after initialization";
-    return;
-  }
-
-  d->init_props()->incognito = incognito;
+  d->setIncognito(incognito);
 }
 
 bool OxideQQuickWebView::loading() const {
@@ -497,28 +481,36 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
 OxideQQuickWebContext* OxideQQuickWebView::context() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->context;
+  if (d->default_context_) {
+    return NULL;
+  }
+
+  return adapterToQObject<OxideQQuickWebContext>(d->context());
 }
 
 void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   Q_D(OxideQQuickWebView);
 
-  if (!d->init_props()) {
-    qWarning() << "The context can only be set at construction time";
+  oxide::qt::WebContextAdapter* old = d->context();
+
+  if (context == adapterToQObject<OxideQQuickWebContext>(old)) {
+    return;
+  }
+  d->setContext(OxideQQuickWebContextPrivate::get(context));
+  if (old == d->context()) {
     return;
   }
 
-  if (context == d->context) {
-    return;
-  }
-
-  d->detachContextSignals();
-  if (context) {
-    connect(OxideQQuickWebContextPrivate::get(context), SIGNAL(willBeDestroyed()),
+  d->detachContextSignals(static_cast<OxideQQuickWebContextPrivate *>(old));
+  if (d->context()) {
+    connect(static_cast<OxideQQuickWebContextPrivate *>(d->context()),
+            SIGNAL(willBeDestroyed()),
             this, SLOT(contextWillBeDestroyed()));
+    connect(static_cast<OxideQQuickWebContextPrivate *>(d->context()),
+            SIGNAL(initialized()),
+            this, SLOT(contextInitialized()));
   }
 
-  d->context = context;
   emit contextChanged();
 }
 

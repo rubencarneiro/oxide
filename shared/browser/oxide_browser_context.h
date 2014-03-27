@@ -148,6 +148,7 @@ class BrowserContext : public content::BrowserContext,
       content::ProtocolHandlerMap* protocol_handlers,
       content::ProtocolHandlerScopedVector protocol_interceptors);
 
+  BrowserContextDelegate* GetDelegate() const;
   void SetDelegate(BrowserContextDelegate* delegate);
 
   virtual BrowserContext* GetOffTheRecordContext() = 0;
