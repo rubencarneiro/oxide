@@ -249,7 +249,7 @@ void RenderWidgetHostView::MovePluginWindows(
 
 void RenderWidgetHostView::Blur() {}
 
-void RenderWidgetHostView::UpdateCursor(const WebCursor& cursor) {}
+void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {}
 
 void RenderWidgetHostView::SetIsLoading(bool is_loading) {}
 

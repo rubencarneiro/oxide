@@ -6,7 +6,7 @@ diff --git a/tools/gritsettings/resource_ids b/tools/gritsettings/resource_ids
 +++ b/tools/gritsettings/resource_ids
 @@ -194,9 +194,12 @@
    },
-   "components/resources/component_scaled_resources.grd": {
+   "components/resources/components_scaled_resources.grd": {
      "structures": [30350],
    },
    "third_party/WebKit/public/blink_resources.grd": {

@@ -19,7 +19,6 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_FRAME_ADAPTER_H_
 
 #include <QList>
-#include <QScopedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -35,7 +34,7 @@ namespace qt {
 
 class ScriptMessageHandlerAdapter;
 class ScriptMessageRequestAdapter;
-class WebFrameAdapterPrivate;
+class WebFrame;
 
 class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
  public:
@@ -61,10 +60,10 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
   WebFrameAdapter(QObject* q);
 
  private:
-  friend class WebFrameAdapterPrivate;
+  friend class WebFrame;
+  WebFrame* owner_;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
-  QScopedPointer<WebFrameAdapterPrivate> priv;
 };
 
 } // namespace qt

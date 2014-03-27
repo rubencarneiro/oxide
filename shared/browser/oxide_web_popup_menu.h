@@ -36,38 +36,32 @@ class Rect;
 
 namespace oxide {
 
-class WebPopupMenu : public content::WebContentsObserver {
+class WebPopupMenu : public content::WebContentsObserver,
+                     public base::SupportsWeakPtr<WebPopupMenu> {
  public:
   virtual ~WebPopupMenu();
 
-  void RenderViewDeleted(content::RenderViewHost* rvh) FINAL;
-
-  void ShowPopup(const gfx::Rect& bounds,
-                 const std::vector<content::MenuItem>& items,
-                 int selected_item,
-                 bool allow_multiple_selection);
-  void HidePopup();
+  virtual void Show(const gfx::Rect& bounds,
+                    const std::vector<content::MenuItem>& items,
+                    int selected_item,
+                    bool allow_multiple_selection) = 0;
+  void Hide();
 
   void SelectItems(const std::vector<int>& selected_indices);
   void Cancel();
 
-  base::WeakPtr<WebPopupMenu> GetWeakPtr();
-
-  content::RenderViewHostImpl* render_view_host() const;
+  bool WasHidden() const;
 
  protected:
   WebPopupMenu(content::RenderViewHost* rvh);
 
  private:
-  virtual void Show(const gfx::Rect& bounds,
-                    const std::vector<content::MenuItem>& items,
-                    int selected_item,
-                    bool allow_multiple_selection) = 0;
-  virtual void Hide() = 0;
+  void RenderViewDeleted(content::RenderViewHost* rvh) FINAL;
 
-  bool shown_;
-  content::RenderViewHost* render_view_host_;
-  base::WeakPtrFactory<WebPopupMenu> weak_factory_;
+  virtual void OnHide() = 0;
+
+  bool popup_was_hidden_;
+  content::RenderViewHostImpl* render_view_host_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
 };

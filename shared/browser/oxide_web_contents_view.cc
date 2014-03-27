@@ -17,12 +17,10 @@
 
 #include "oxide_web_contents_view.h"
 
-#include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
 
-#include "oxide_web_popup_menu.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -132,20 +130,12 @@ void WebContentsView::ShowPopupMenu(
     const std::vector<content::MenuItem>& items,
     bool right_aligned,
     bool allow_multiple_selection) {
-  // XXX: Can this happen? Should we cancel an existing popup?
-  DCHECK(!active_popup_menu_);
+  GetWebView()->ShowPopupMenu(bounds, selected_item, items,
+                              allow_multiple_selection);
+}
 
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-
-  WebPopupMenu* menu = GetWebView()->CreatePopupMenu(rvh);
-  if (!menu) {
-    static_cast<content::RenderViewHostImpl *>(rvh)->DidCancelPopupMenu();
-    return;
-  }
-  active_popup_menu_ = menu->GetWeakPtr();
-
-  active_popup_menu_->ShowPopup(bounds, items, selected_item,
-                                allow_multiple_selection);
+void WebContentsView::HidePopupMenu() {
+  GetWebView()->HidePopupMenu();
 }
 
 } // namespace oxide
