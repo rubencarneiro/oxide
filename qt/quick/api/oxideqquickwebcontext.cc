@@ -550,6 +550,45 @@ void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
   emit cookiePolicyChanged();
 }
 
+OxideQQuickWebContext::SessionCookieMode
+OxideQQuickWebContext::sessionCookieMode() const {
+  Q_D(const OxideQQuickWebContext);
+
+  Q_STATIC_ASSERT(
+      SessionCookieModeEphemeral ==
+      static_cast<SessionCookieMode>(
+        oxide::qt::WebContextAdapter::SessionCookieModeEphemeral));
+  Q_STATIC_ASSERT(
+      SessionCookieModePersistent ==
+      static_cast<SessionCookieMode>(
+        oxide::qt::WebContextAdapter::SessionCookieModePersistent));
+  Q_STATIC_ASSERT(
+      SessionCookieModeRestored ==
+      static_cast<SessionCookieMode>(
+        oxide::qt::WebContextAdapter::SessionCookieModeRestored));
+  return static_cast<SessionCookieMode>(d->sessionCookieMode());
+}
+
+void OxideQQuickWebContext::setSessionCookieMode(SessionCookieMode mode) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->isInitialized()) {
+    qWarning() << "Can only set sessionCookieMode during construction";
+    return;
+  }
+
+  oxide::qt::WebContextAdapter::SessionCookieMode m =
+      static_cast<oxide::qt::WebContextAdapter::SessionCookieMode>(mode);
+
+  if (m == d->sessionCookieMode()) {
+    return;
+  }
+
+  d->setSessionCookieMode(m);
+
+  emit sessionCookieModeChanged();
+}
+
 OxideQQuickWebContextDelegateWorker*
 OxideQQuickWebContext::networkRequestDelegate() const {
   Q_D(const OxideQQuickWebContext);

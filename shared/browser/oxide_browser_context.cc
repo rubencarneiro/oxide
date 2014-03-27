@@ -172,8 +172,14 @@ void BrowserContextIOData::SetCookiePolicy(net::StaticCookiePolicy::Type policy)
   cookie_policy_.set_type(policy);
 }
 
+void BrowserContextIOData::SetSessionCookieMode(
+    content::CookieStoreConfig::SessionCookieMode mode) {
+  session_cookie_mode_ = mode;
+}
+
 BrowserContextIOData::BrowserContextIOData() :
     cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+    session_cookie_mode_(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
     resource_context_(new ResourceContext()) {
   resource_context_->SetUserData(kBrowserContextKey, new ContextData(this));
 }
@@ -196,6 +202,11 @@ scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
 
 net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
   return cookie_policy_.type();
+}
+
+content::CookieStoreConfig::SessionCookieMode
+BrowserContextIOData::GetSessionCookieMode() const {
+  return session_cookie_mode_;
 }
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
@@ -251,7 +262,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   storage->set_cookie_store(content::CreateCookieStore(
       content::CookieStoreConfig(
         cookie_path,
-        content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
+        GetSessionCookieMode(),
         NULL, NULL)));
 
   context->set_transport_security_state(transport_security_state_.get());
@@ -552,6 +563,10 @@ net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
 void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
   GetOriginalContext()->io_data()->SetCookiePolicy(policy);
   GetOffTheRecordContext()->io_data()->SetCookiePolicy(policy);
+}
+
+content::CookieStoreConfig::SessionCookieMode BrowserContext::GetSessionCookieMode() const {
+  return io_data()->GetSessionCookieMode();
 }
 
 content::ResourceContext* BrowserContext::GetResourceContext() {

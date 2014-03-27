@@ -29,6 +29,7 @@
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
+#include "content/public/browser/cookie_store_factory.h"
 #include "net/base/static_cookie_policy.h"
 
 namespace content {
@@ -65,6 +66,7 @@ class BrowserContextIOData {
   scoped_refptr<BrowserContextDelegate> GetDelegate();
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
 
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
@@ -87,6 +89,7 @@ class BrowserContextIOData {
 
  protected:
   BrowserContextIOData();
+  void SetSessionCookieMode(content::CookieStoreConfig::SessionCookieMode mode);
 
  private:
   friend class BrowserContext;
@@ -99,6 +102,8 @@ class BrowserContextIOData {
 
   base::Lock cookie_policy_lock_;
   net::StaticCookiePolicy cookie_policy_;
+
+  content::CookieStoreConfig::SessionCookieMode session_cookie_mode_;
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
@@ -119,11 +124,13 @@ class BrowserContext : public content::BrowserContext,
 
   struct Params {
     Params(const base::FilePath& path,
-           const base::FilePath& cache_path) :
-        path(path), cache_path(path) {}
+           const base::FilePath& cache_path,
+           const content::CookieStoreConfig::SessionCookieMode session_cookie_mode) :
+        path(path), cache_path(path), session_cookie_mode(session_cookie_mode) {}
 
     base::FilePath path;
     base::FilePath cache_path;
+    content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
   };
 
   virtual ~BrowserContext();
@@ -172,6 +179,8 @@ class BrowserContext : public content::BrowserContext,
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
+
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
 
   BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 

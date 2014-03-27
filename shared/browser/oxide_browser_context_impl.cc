@@ -34,7 +34,9 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     path_(params.path),
     cache_path_(params.cache_path),
     // FIXME: Get from translations
-    accept_langs_("en-us,en") {}
+    accept_langs_("en-us,en") {
+  SetSessionCookieMode(params.session_cookie_mode);
+}
 
 base::FilePath BrowserContextIODataImpl::GetPath() const {
   return path_;

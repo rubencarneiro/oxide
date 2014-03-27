@@ -58,12 +58,16 @@ class WebContextAdapterPrivate FINAL :
   friend class WebContextAdapter;
 
   struct ConstructProperties {
+    ConstructProperties():
+      session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES) {}
+
     std::string product;
     std::string user_agent;
     base::FilePath data_path;
     base::FilePath cache_path;
     std::string accept_langs;
     net::StaticCookiePolicy::Type cookie_policy;
+    content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
   };
 
   WebContextAdapterPrivate(WebContextAdapter* adapter,

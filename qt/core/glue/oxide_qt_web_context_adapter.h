@@ -48,6 +48,12 @@ class Q_DECL_EXPORT WebContextAdapter {
     CookiePolicyBlockThirdParty
   };
 
+  enum SessionCookieMode {
+    SessionCookieModeEphemeral,
+    SessionCookieModePersistent,
+    SessionCookieModeRestored
+  };
+
   class IOThreadDelegate {
    public:
     virtual ~IOThreadDelegate() {}
@@ -92,6 +98,9 @@ class Q_DECL_EXPORT WebContextAdapter {
 
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
+
+  SessionCookieMode sessionCookieMode() const;
+  void setSessionCookieMode(SessionCookieMode mode);
 
  protected:
   WebContextAdapter(IOThreadDelegate* io_delegate);
