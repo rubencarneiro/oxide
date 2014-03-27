@@ -95,6 +95,22 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                       int render_frame_id,
                       net::CookieOptions* options) FINAL;
 
+  bool CanCreateWindow(const GURL& opener_url,
+                       const GURL& opener_top_level_frame_url,
+                       const GURL& source_origin,
+                       WindowContainerType container_type,
+                       const GURL& target_url,
+                       const content::Referrer& referrer,
+                       WindowOpenDisposition disposition,
+                       const blink::WebWindowFeatures& features,
+                       bool user_gesture,
+                       bool opener_suppressed,
+                       content::ResourceContext* context,
+                       int render_process_id,
+                       bool is_guest,
+                       int opener_id,
+                       bool* no_javascript_access) FINAL;
+
   void ResourceDispatcherHostCreated() FINAL;
 
   content::AccessTokenStore* CreateAccessTokenStore() FINAL;
