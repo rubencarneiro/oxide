@@ -42,8 +42,14 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
-  OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
   ~OxideQQuickWebViewPrivate();
+
+  static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
+
+  void addAttachedPropertyTo(QObject* object);
+
+ private:
+  OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
   oxide::qt::RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
@@ -82,21 +88,16 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   static void messageHandler_clear(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
-  static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
-
-  void addAttachedPropertyTo(QObject* object);
-
-  OxideQQuickNavigationHistory navigationHistory;
-  QQmlComponent* popup_menu;
-
- private:
   void contextInitialized();
   void contextWillBeDestroyed();
+  void visibilityChanged();
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
   QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;
   bool constructed_;
+  OxideQQuickNavigationHistory navigation_history_;
+  QQmlComponent* popup_menu_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

@@ -53,45 +53,13 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
   view_ = view;
 }
 
-void OxideQQuickWebViewPrivate::contextInitialized() {
-  if (constructed_) {
-    completeConstruction();
-  }
-}
-
-void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
-  Q_Q(OxideQQuickWebView);
-
-  // XXX: Our underlying BrowserContext lives on, so we're left in a
-  // bit of a weird state here (WebView.context will return no context,
-  // which is a lie)
-  emit q->contextChanged();
-}
-
-void OxideQQuickWebViewPrivate::detachContextSignals(
-    OxideQQuickWebContextPrivate* context) {
-  Q_Q(OxideQQuickWebView);
-
-  if (!context) {
-    return;
-  }
-
-  QObject::disconnect(context, SIGNAL(initialized()),
-                      q, SLOT(contextInitialized()));
-  QObject::disconnect(context, SIGNAL(willBeDestroyed()),
-                      q, SLOT(contextWillBeDestroyed()));
-}
-
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     oxide::qt::WebViewAdapter(view),
-    navigationHistory(view),
-    popup_menu(NULL),
     load_progress_(0),
-    constructed_(false) {}
-
-OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {
-}
+    constructed_(false),
+    navigation_history_(view),
+    popup_menu_(NULL) {}
 
 oxide::qt::RenderWidgetHostViewDelegate*
 OxideQQuickWebViewPrivate::CreateRenderWidgetHostViewDelegate() {
@@ -139,15 +107,15 @@ void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
 }
 
 void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
-  navigationHistory.onNavigationEntryCommitted();
+  navigation_history_.onNavigationEntryCommitted();
 }
 
 void OxideQQuickWebViewPrivate::NavigationListPruned(bool from_front, int count) {
-  navigationHistory.onNavigationListPruned(from_front, count);
+  navigation_history_.onNavigationListPruned(from_front, count);
 }
 
 void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
-  navigationHistory.onNavigationEntryChanged(index);
+  navigation_history_.onNavigationEntryChanged(index);
 }
 
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
@@ -265,6 +233,47 @@ void OxideQQuickWebViewPrivate::messageHandler_clear(
   }
 }
 
+void OxideQQuickWebViewPrivate::contextInitialized() {
+  if (constructed_) {
+    completeConstruction();
+  }
+}
+
+void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
+  Q_Q(OxideQQuickWebView);
+
+  // XXX: Our underlying BrowserContext lives on, so we're left in a
+  // bit of a weird state here (WebView.context will return no context,
+  // which is a lie)
+  emit q->contextChanged();
+}
+
+void OxideQQuickWebViewPrivate::visibilityChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  if (!isInitialized()) {
+    return;
+  }
+
+  updateVisibility(q->isVisible());
+}
+
+void OxideQQuickWebViewPrivate::detachContextSignals(
+    OxideQQuickWebContextPrivate* context) {
+  Q_Q(OxideQQuickWebView);
+
+  if (!context) {
+    return;
+  }
+
+  QObject::disconnect(context, SIGNAL(initialized()),
+                      q, SLOT(contextInitialized()));
+  QObject::disconnect(context, SIGNAL(willBeDestroyed()),
+                      q, SLOT(contextWillBeDestroyed()));
+}
+
+OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
+
 // static
 OxideQQuickWebViewPrivate* OxideQQuickWebViewPrivate::get(
     OxideQQuickWebView* view) {
@@ -278,16 +287,6 @@ void OxideQQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
       qobject_cast<OxideQQuickWebViewAttached *>(
         qmlAttachedPropertiesObject<OxideQQuickWebView>(object));
   attached->setView(q);
-}
-
-void OxideQQuickWebView::visibilityChangedListener() {
-  Q_D(OxideQQuickWebView);
-
-  if (!d->isInitialized()) {
-    return;
-  }
-
-  d->updateVisibility(isVisible());
 }
 
 void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
@@ -464,17 +463,17 @@ void OxideQQuickWebView::removeMessageHandler(
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->popup_menu;
+  return d->popup_menu_;
 }
 
 void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->popup_menu == popup_menu) {
+  if (d->popup_menu_ == popup_menu) {
     return;
   }
 
-  d->popup_menu = popup_menu;
+  d->popup_menu_ = popup_menu;
   emit popupMenuChanged();
 }
 
@@ -535,7 +534,7 @@ void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
   Q_D(OxideQQuickWebView);
 
-  return &d->navigationHistory;
+  return &d->navigation_history_;
 }
 
 // static
