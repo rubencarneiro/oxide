@@ -42,7 +42,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   Q_PROPERTY(unsigned minimumFontSize READ minimumFontSize WRITE setMinimumFontSize NOTIFY minimumFontSizeChanged)
 
   Q_PROPERTY(bool javascriptEnabled READ javascriptEnabled WRITE setJavascriptEnabled NOTIFY javascriptEnabledChanged)
-  Q_PROPERTY(bool webSecurityEnabled READ webSecurityEnabled WRITE setWebSecurityEnabled NOTIFY webSecurityEnabledChanged)
   Q_PROPERTY(bool popupBlockerEnabled READ popupBlockerEnabled WRITE setPopupBlockerEnabled NOTIFY popupBlockerEnabledChanged)
   Q_PROPERTY(bool allowScriptsToCloseWindows READ allowScriptsToCloseWindows WRITE setAllowScriptsToCloseWindows NOTIFY allowScriptsToCloseWindowsChanged)
   Q_PROPERTY(bool javascriptCanAccessClipboard READ javascriptCanAccessClipboard WRITE setJavascriptCanAccessClipboard NOTIFY javascriptCanAccessClipboardChanged)
@@ -101,8 +100,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
 
   bool javascriptEnabled() const;
   void setJavascriptEnabled(bool enabled);
-  bool webSecurityEnabled() const;
-  void setWebSecurityEnabled(bool enabled);
   bool popupBlockerEnabled() const;
   void setPopupBlockerEnabled(bool enabled);
   bool allowScriptsToCloseWindows() const;
@@ -165,7 +162,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void minimumFontSizeChanged();
 
   void javascriptEnabledChanged();
-  void webSecurityEnabledChanged();
   void popupBlockerEnabledChanged();
   void allowScriptsToCloseWindowsChanged();
   void javascriptCanAccessClipboardChanged();
