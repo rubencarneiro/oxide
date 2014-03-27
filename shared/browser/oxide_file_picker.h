@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "base/memory/weak_ptr.h"
+#include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/file_chooser_params.h"
 #include "ui/shell_dialogs/selected_file_info.h"
 
@@ -30,7 +31,8 @@ class RenderViewHost;
 
 namespace oxide {
 
-class FilePicker : public base::SupportsWeakPtr<FilePicker> {
+class FilePicker : public content::WebContentsObserver,
+                   public base::SupportsWeakPtr<FilePicker> {
  public:
   virtual ~FilePicker();
 
@@ -42,6 +44,8 @@ class FilePicker : public base::SupportsWeakPtr<FilePicker> {
   FilePicker(content::RenderViewHost* rvh);
 
  private:
+  void RenderViewDeleted(content::RenderViewHost* rvh) FINAL;
+
   content::RenderViewHost* render_view_host_;
 };
 

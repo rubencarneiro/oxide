@@ -27,6 +27,15 @@ FilePicker::FilePicker(content::RenderViewHost* rvh) :
 
 FilePicker::~FilePicker() {}
 
+void FilePicker::RenderViewDeleted(content::RenderViewHost* rvh) {
+  if (rvh != render_view_host_) {
+    return;
+  }
+  render_view_host_ = NULL;
+  content::BrowserThread::DeleteSoon(
+      content::BrowserThread::UI, FROM_HERE, this);
+}
+
 void FilePicker::Done(const std::vector<ui::SelectedFileInfo>& files,
                       content::FileChooserParams::Mode permissions) {
   render_view_host_->FilesSelectedInChooser(files, permissions);
