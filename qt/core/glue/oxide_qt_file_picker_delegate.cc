@@ -60,6 +60,8 @@ void FilePickerDelegate::Done(const QFileInfoList& files,
   std::vector<ui::SelectedFileInfo> selection;
   if (mode == FilePickerDelegate::UploadFolder) {
     if (!files.isEmpty() && files.first().isDir()) {
+      // XXX: chrome does this asynchronously on a background thread
+      // (see net::DirectoryLister)
       selection = enumerate(files.first().absoluteFilePath());
     }
   } else {
