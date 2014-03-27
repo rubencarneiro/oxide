@@ -73,14 +73,14 @@
         'browser/oxide_qt_web_popup_menu.h',
         'browser/oxide_qt_web_preferences.cc',
         'browser/oxide_qt_web_preferences.h',
+        'browser/oxide_qt_web_view.cc',
+        'browser/oxide_qt_web_view.h',
         'common/oxide_qt_content_client.cc',
         'common/oxide_qt_content_client.h',
         'gl/oxide_gl_implementation.cc',
         'gl/oxide_qt_shared_gl_context.cc',
         'gl/oxide_qt_shared_gl_context.h',
         'glue/private/oxide_qt_web_context_adapter_p.cc',
-        'glue/private/oxide_qt_web_view_adapter_p.cc',
-        'glue/private/oxide_qt_web_view_adapter_p.h'
       ],
     },
     {

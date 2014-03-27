@@ -43,7 +43,7 @@ class ScriptMessageHandlerAdapter;
 class WebContextAdapter;
 class WebFrameAdapter;
 class WebPopupMenuDelegate;
-class WebViewAdapterPrivate;
+class WebView;
 
 class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  public:
@@ -122,7 +122,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   WebViewAdapter(QObject* q);
 
  private:
-  QScopedPointer<WebViewAdapterPrivate> priv;
+  QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };
 

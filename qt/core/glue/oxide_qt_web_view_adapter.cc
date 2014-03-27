@@ -24,7 +24,7 @@
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
-#include "qt/core/glue/private/oxide_qt_web_view_adapter_p.h"
+#include "qt/core/browser/oxide_qt_web_view.h"
 
 #include "oxide_qt_web_context_adapter_p.h"
 #include "oxide_qt_web_frame_adapter.h"
@@ -34,7 +34,7 @@ namespace qt {
 
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
-    priv(WebViewAdapterPrivate::Create(this)) {
+    priv(WebView::Create(this)) {
   setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
 }
 

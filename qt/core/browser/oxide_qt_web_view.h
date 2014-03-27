@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_VIEW_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_VIEW_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
+#define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -28,9 +28,12 @@ namespace qt {
 
 class WebViewAdapter;
 
-class WebViewAdapterPrivate FINAL : public oxide::WebView {
+class WebView FINAL : public oxide::WebView {
  public:
-  static WebViewAdapterPrivate* Create(WebViewAdapter* adapter);
+  static WebView* Create(WebViewAdapter* adapter);
+
+ private:
+  WebView(WebViewAdapter* adapter);
 
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -45,9 +48,6 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   void FrameAdded(oxide::WebFrame* frame) FINAL;
   void FrameRemoved(oxide::WebFrame* frame) FINAL;
-
- private:
-  WebViewAdapterPrivate(WebViewAdapter* adapter);
 
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
@@ -71,12 +71,12 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
 
-  WebViewAdapter* a;
+  WebViewAdapter* adapter;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebViewAdapterPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_VIEW_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
