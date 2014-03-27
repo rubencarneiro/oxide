@@ -753,7 +753,8 @@ inline QCursor webcursor_to_qt_cursor(blink::WebCursorInfo::Type type) {
 }
 
 void RenderWidgetHostView::UpdateCursor(const WebCursor& cursor) {
-  if (GetFormFactorHint() != FORM_FACTOR_DESKTOP) {
+  static FormFactor formFactor = GetFormFactorHint();
+  if (formFactor != FORM_FACTOR_DESKTOP) {
     return; // Cursor only on desktop
   }
 
