@@ -18,7 +18,6 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 
-#include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QUrl>
@@ -103,7 +102,9 @@ class Q_DECL_EXPORT WebContextAdapter {
   friend class WebContextAdapterPrivate;
 
   QList<UserScriptAdapter *> user_scripts_;
-  QScopedPointer<WebContextAdapterPrivate> priv;
+  // This is a strong-ref. We can't use scoped_refptr here, so we manage
+  // it manually
+  WebContextAdapterPrivate* priv;
 };
 
 } // namespace qt

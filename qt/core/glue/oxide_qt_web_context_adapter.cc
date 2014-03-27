@@ -57,7 +57,10 @@ int GetProcessFlags() {
 
 }
 
-WebContextAdapter::~WebContextAdapter() {}
+WebContextAdapter::~WebContextAdapter() {
+  priv->Destroy();
+  priv->Release();
+}
 
 QString WebContextAdapter::product() const {
   if (priv->context()) {
@@ -220,7 +223,7 @@ void WebContextAdapter::ensureChromiumStarted() {
 
 WebContextAdapter::IOThreadDelegate*
 WebContextAdapter::getIOThreadDelegate() const {
-  return priv->GetIOThreadDelegate();
+  return priv->io_thread_delegate_.get();
 }
 
 WebContextAdapter::CookiePolicy WebContextAdapter::cookiePolicy() const {
@@ -258,7 +261,9 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
 }
 
 WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
-    priv(new WebContextAdapterPrivate(this, io_delegate)) {
+    priv(WebContextAdapterPrivate::Create(this, io_delegate)) {
+
+  priv->AddRef();
 
   COMPILE_ASSERT(
       CookiePolicyAllowAll == static_cast<CookiePolicy>(
