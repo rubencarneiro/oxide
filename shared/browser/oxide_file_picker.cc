@@ -23,14 +23,9 @@
 namespace oxide {
 
 FilePicker::FilePicker(content::RenderViewHost* rvh) :
-    render_view_host_(rvh),
-    weak_factory_(this) {}
+    render_view_host_(rvh) {}
 
 FilePicker::~FilePicker() {}
-
-base::WeakPtr<FilePicker> FilePicker::GetWeakPtr() {
-  return weak_factory_.GetWeakPtr();
-}
 
 void FilePicker::Done(const std::vector<ui::SelectedFileInfo>& files,
                       content::FileChooserParams::Mode permissions) {

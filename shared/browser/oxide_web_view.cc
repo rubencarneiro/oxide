@@ -587,7 +587,7 @@ void WebView::RunFileChooser(content::WebContents* web_contents,
     rvh->FilesSelectedInChooser(empty, params.mode);
     return;
   }
-  active_file_picker_ = filePicker->GetWeakPtr();
+  active_file_picker_ = filePicker->AsWeakPtr();
   active_file_picker_->Run(params);
 }
 

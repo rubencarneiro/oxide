@@ -30,11 +30,9 @@ class RenderViewHost;
 
 namespace oxide {
 
-class FilePicker {
+class FilePicker : public base::SupportsWeakPtr<FilePicker> {
  public:
   virtual ~FilePicker();
-
-  base::WeakPtr<FilePicker> GetWeakPtr();
 
   virtual void Run(const content::FileChooserParams& params) = 0;
   void Done(const std::vector<ui::SelectedFileInfo>& files,
@@ -45,7 +43,6 @@ class FilePicker {
 
  private:
   content::RenderViewHost* render_view_host_;
-  base::WeakPtrFactory<FilePicker> weak_factory_;
 };
 
 } // namespace oxide
