@@ -47,6 +47,7 @@ class Size;
 
 namespace content {
 
+class FrameTree;
 class FrameTreeNode;
 struct MenuItem;
 class NotificationRegistrar;
@@ -118,6 +119,7 @@ class WebView : public ScriptMessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
+  content::FrameTree* GetFrameTree();
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);

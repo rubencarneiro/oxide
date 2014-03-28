@@ -22,6 +22,7 @@
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
@@ -96,14 +97,14 @@ void WebFrame::OnURLChanged() {}
 WebFrame::WebFrame(
     content::FrameTreeNode* node,
     WebView* view) :
-    frame_tree_node_(node),
+    frame_tree_node_id_(node->frame_tree_node_id()),
     parent_(NULL),
     view_(view),
     next_message_serial_(0),
     weak_factory_(this),
     destroyed_(false) {
   std::pair<FrameMapIterator, bool> rv =
-      g_frame_map.Get().insert(std::make_pair(node->frame_tree_node_id(),
+      g_frame_map.Get().insert(std::make_pair(frame_tree_node_id_,
                                               this));
   CHECK(rv.second);
 }
@@ -141,7 +142,7 @@ void WebFrame::Destroy() {
     parent_->RemoveChild(this);
   }
 
-  g_frame_map.Get().erase(frame_tree_node_->frame_tree_node_id());
+  g_frame_map.Get().erase(frame_tree_node_id_);
 
   destroyed_ = true;
   delete this;
@@ -153,8 +154,8 @@ WebFrame* WebFrame::FromFrameTreeNode(content::FrameTreeNode* node) {
   return it == g_frame_map.Get().end() ? NULL : it->second;
 }
 
-int64 WebFrame::FrameTreeNodeID() const {
-  return frame_tree_node()->frame_tree_node_id();
+content::FrameTreeNode* WebFrame::GetFrameTreeNode() {
+  return view_->GetFrameTree()->FindByID(frame_tree_node_id_);
 }
 
 void WebFrame::SetURL(const GURL& url) {

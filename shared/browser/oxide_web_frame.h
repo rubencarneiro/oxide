@@ -48,8 +48,6 @@ class WebFrame : public ScriptMessageTarget {
 
   static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
 
-  int64 FrameTreeNodeID() const;
-
   GURL url() const {
     return url_;
   }
@@ -66,9 +64,11 @@ class WebFrame : public ScriptMessageTarget {
     return weak_factory_.GetWeakPtr();
   }
 
-  content::FrameTreeNode* frame_tree_node() const {
-    return frame_tree_node_;
+  int64 frame_tree_node_id() const {
+    return frame_tree_node_id_;
   }
+
+  content::FrameTreeNode* GetFrameTreeNode();
 
   void SetURL(const GURL& url);
   void SetParent(WebFrame* parent);
@@ -110,7 +110,7 @@ class WebFrame : public ScriptMessageTarget {
   virtual void OnChildRemoved(WebFrame* child);
   virtual void OnURLChanged();
 
-  content::FrameTreeNode* frame_tree_node_;
+  int64 frame_tree_node_id_;
   GURL url_;
   ChildVector child_frames_;
   WebFrame* parent_;

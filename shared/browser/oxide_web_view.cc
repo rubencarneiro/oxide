@@ -521,6 +521,10 @@ WebFrame* WebView::GetRootFrame() const {
   return root_frame_;
 }
 
+content::FrameTree* WebView::GetFrameTree() {
+  return web_contents_->GetFrameTree();
+}
+
 WebPreferences* WebView::GetWebPreferences() {
   return web_preferences();
 }
