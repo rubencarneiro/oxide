@@ -181,6 +181,15 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigationHistory.onNavigationEntryChanged(index);
 }
 
+bool OxideQQuickWebViewPrivate::NavigationRequested(const QString &url) {
+  Q_Q(OxideQQuickWebView);
+
+  OxideQQuickNavigationRequest request(url);
+  emit q->navigationRequested(&request);
+
+  return request.accept();
+}
+
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
   OxideQQuickWebFrame* frame = new OxideQQuickWebFrame();
   QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);

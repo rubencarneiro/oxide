@@ -56,6 +56,30 @@ class OxideQQuickWebViewAttached : public QObject {
   OxideQQuickWebView* view_;
 };
 
+class OxideQQuickNavigationRequest: public QObject {
+  Q_OBJECT
+  Q_PROPERTY(bool accept READ accept WRITE setAccept)
+  Q_PROPERTY(QString url READ url)
+ public:
+  OxideQQuickNavigationRequest(const QString &url): accept_(false), url_(url) {}
+
+  bool accept() {
+    return accept_;
+  }
+  void setAccept(bool value) {
+    accept_ = value;
+  }
+
+  const QString& url() {
+    return url_;
+  }
+ private:
+  bool accept_;
+  const QString url_;
+};
+
+QML_DECLARE_TYPE(OxideQQuickNavigationRequest)
+
 class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
@@ -144,6 +168,7 @@ class OxideQQuickWebView : public QQuickItem {
   void urlChanged();
   void titleChanged();
   void navigationHistoryChanged();
+  void navigationRequested(OxideQQuickNavigationRequest *request);
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
   void rootFrameChanged();

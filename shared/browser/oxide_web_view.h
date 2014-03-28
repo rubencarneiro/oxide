@@ -138,6 +138,7 @@ class WebView : public ScriptMessageTarget,
  protected:
   WebView();
 
+  scoped_ptr<content::WebContentsImpl> web_contents_;
  private:
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
@@ -241,7 +242,6 @@ class WebView : public ScriptMessageTarget,
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
   ScopedBrowserContext context_;
-  scoped_ptr<content::WebContentsImpl> web_contents_;
   content::NotificationRegistrar registrar_;
   scoped_ptr<WebFrame> root_frame_;
 

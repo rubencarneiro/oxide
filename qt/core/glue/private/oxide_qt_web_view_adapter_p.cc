@@ -22,6 +22,8 @@
 
 #include "base/strings/utf_string_conversions.h"
 #include "url/gurl.h"
+#include "content/public/browser/navigation_controller.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqloadevent_p.h"
@@ -39,6 +41,29 @@ namespace qt {
 
 WebViewAdapterPrivate::WebViewAdapterPrivate(WebViewAdapter* adapter) :
     a(adapter) {}
+
+content::WebContents* WebViewAdapterPrivate::OpenURLFromTab(content::WebContents* source,
+                                                            const content::OpenURLParams& p) {
+  if (a->NavigationRequested(QString::fromStdString(p.url.spec()))) {
+    content::NavigationController& controller = web_contents_->GetController();
+
+    content::NavigationController::LoadURLParams params(p.url);
+
+    params.referrer = p.referrer;
+    params.redirect_chain = p.redirect_chain;
+    params.should_replace_current_entry = true;
+    params.is_renderer_initiated = p.is_renderer_initiated;
+    params.extra_headers = p.extra_headers;
+    params.transition_type = p.transition;
+    params.frame_tree_node_id = p.frame_tree_node_id;
+    controller.LoadURLWithParams(params);
+
+    return web_contents_.get();
+  }
+
+  return NULL;
+}
+
 
 void WebViewAdapterPrivate::OnURLChanged() {
   a->URLChanged();

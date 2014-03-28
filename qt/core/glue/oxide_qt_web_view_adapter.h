@@ -99,6 +99,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void NavigationEntryCommitted() = 0;
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
+  virtual bool NavigationRequested(const QString &url) = 0;
 
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 

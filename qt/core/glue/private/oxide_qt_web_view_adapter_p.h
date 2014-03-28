@@ -33,6 +33,9 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
  public:
   static WebViewAdapterPrivate* Create(WebViewAdapter* adapter);
 
+  content::WebContents* OpenURLFromTab(content::WebContents* source,
+                                       const content::OpenURLParams& params) OVERRIDE;
+
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const FINAL;
