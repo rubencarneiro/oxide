@@ -389,7 +389,7 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
   event.setKeyIdentifierFromWindowsKeyCode();
 
   const unsigned short* text = qevent->text().utf16();
-  memcpy(&event.text, text, qMin(sizeof(event.text), sizeof(text)));
+  memcpy(event.text, text, qMin(sizeof(event.text), sizeof(*text)));
 
   return event;
 }
