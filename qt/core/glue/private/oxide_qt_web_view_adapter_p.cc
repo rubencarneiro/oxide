@@ -172,11 +172,11 @@ oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateBeforeUnloadDialog() {
 }
 
 void WebViewAdapterPrivate::FrameAdded(oxide::WebFrame* frame) {
-  a->FrameAdded(static_cast<WebFrame *>(frame)->GetAdapter());
+  a->FrameAdded(static_cast<WebFrame *>(frame)->adapter());
 }
 
 void WebViewAdapterPrivate::FrameRemoved(oxide::WebFrame* frame) {
-  a->FrameRemoved(static_cast<WebFrame *>(frame)->GetAdapter());
+  a->FrameRemoved(static_cast<WebFrame *>(frame)->adapter());
 }
 
 } // namespace qt

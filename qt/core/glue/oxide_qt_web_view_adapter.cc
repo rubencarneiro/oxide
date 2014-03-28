@@ -93,7 +93,7 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
     return NULL;
   }
 
-  return frame->GetAdapter();
+  return frame->adapter();
 }
 
 void WebViewAdapter::updateSize(const QSize& size) {

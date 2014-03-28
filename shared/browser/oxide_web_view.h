@@ -250,7 +250,7 @@ class WebView : public ScriptMessageTarget,
   ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
   content::NotificationRegistrar registrar_;
-  scoped_ptr<WebFrame> root_frame_;
+  WebFrame* root_frame_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

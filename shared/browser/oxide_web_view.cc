@@ -140,7 +140,7 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
       GetWebContents()->GetView()->GetContainerSize());
 
   while (root_frame_->ChildCount() > 0) {
-    delete root_frame_->ChildAt(0);
+    root_frame_->ChildAt(0)->Destroy();
   }
 }
 
@@ -233,7 +233,7 @@ void WebView::FrameDetached(content::RenderViewHost* rvh,
   DCHECK(node);
 
   WebFrame* frame = WebFrame::FromFrameTreeNode(node);
-  delete frame;
+  frame->Destroy();
 }
 
 void WebView::FrameAttached(content::RenderViewHost* rvh,
@@ -299,9 +299,13 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
   return NULL;
 }
 
-WebView::WebView() {}
+WebView::WebView() :
+    root_frame_(NULL) {}
 
 WebView::~WebView() {
+  if (root_frame_) {
+    root_frame_->Destroy();
+  }
   if (web_contents_) {
     web_contents_->SetDelegate(NULL);
   }
@@ -344,7 +348,7 @@ bool WebView::Init(BrowserContext* context,
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_.reset(CreateWebFrame(web_contents_->GetFrameTree()->root()));
+  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
   return true;
 }
@@ -514,7 +518,7 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_.get();
+  return root_frame_;
 }
 
 WebPreferences* WebView::GetWebPreferences() {

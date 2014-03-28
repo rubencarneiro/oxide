@@ -23,7 +23,6 @@
 
 #include "base/basictypes.h"
 #include "base/memory/weak_ptr.h"
-#include "base/supports_user_data.h"
 #include "ipc/ipc_sender.h"
 #include "url/gurl.h"
 
@@ -41,12 +40,11 @@ class WebView;
 // Represents a document frame in the renderer (a top-level frame or iframe).
 // This is designed to be subclassed by each implementation. Each instance
 // of this will typically own a publicly exposed webframe
-class WebFrame : public ScriptMessageTarget,
-                 public base::SupportsUserData {
+class WebFrame : public ScriptMessageTarget {
  public:
   typedef std::vector<ScriptMessageRequestImplBrowser *> ScriptMessageRequestVector;
 
-  virtual ~WebFrame();
+  void Destroy();
 
   static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
 
@@ -91,6 +89,7 @@ class WebFrame : public ScriptMessageTarget,
 
  protected:
   WebFrame(content::FrameTreeNode* node, WebView* view);
+  virtual ~WebFrame();
 
  private:
   friend class ScriptMessageRequestImplBrowser;
@@ -119,6 +118,7 @@ class WebFrame : public ScriptMessageTarget,
   int next_message_serial_;
   ScriptMessageRequestVector current_script_message_requests_;
   base::WeakPtrFactory<WebFrame> weak_factory_;
+  bool destroyed_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);
 };

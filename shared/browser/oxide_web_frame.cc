@@ -100,7 +100,8 @@ WebFrame::WebFrame(
     parent_(NULL),
     view_(view),
     next_message_serial_(0),
-    weak_factory_(this) {
+    weak_factory_(this),
+    destroyed_(false) {
   std::pair<FrameMapIterator, bool> rv =
       g_frame_map.Get().insert(std::make_pair(node->frame_tree_node_id(),
                                               this));
@@ -108,8 +109,12 @@ WebFrame::WebFrame(
 }
 
 WebFrame::~WebFrame() {
+  CHECK(destroyed_) << "WebFrame deleted without calling Destroy()";
+}
+
+void WebFrame::Destroy() {
   while (ChildCount() > 0) {
-    delete ChildAt(0);
+    ChildAt(0)->Destroy();
   }
 
   while (true) {
@@ -137,6 +142,9 @@ WebFrame::~WebFrame() {
   }
 
   g_frame_map.Get().erase(frame_tree_node_->frame_tree_node_id());
+
+  destroyed_ = true;
+  delete this;
 }
 
 // static
