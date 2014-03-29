@@ -140,10 +140,11 @@ class OxideQQuickWebView : public QQuickItem {
  private:
   Q_PRIVATE_SLOT(d_func(), void contextInitialized());
   Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
-  Q_PRIVATE_SLOT(d_func(), void visibilityChanged());
 
-  virtual void geometryChanged(const QRectF& newGeometry,
-                               const QRectF& oldGeometry);
+  void geometryChanged(const QRectF& newGeometry,
+                       const QRectF& oldGeometry) Q_DECL_FINAL;
+  void itemChange(QQuickItem::ItemChange change,
+                  const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

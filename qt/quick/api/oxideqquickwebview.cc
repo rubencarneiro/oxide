@@ -240,16 +240,6 @@ void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
   emit q->contextChanged();
 }
 
-void OxideQQuickWebViewPrivate::visibilityChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  if (!isInitialized()) {
-    return;
-  }
-
-  updateVisibility(q->isVisible());
-}
-
 void OxideQQuickWebViewPrivate::detachContextSignals(
     OxideQQuickWebContextPrivate* context) {
   Q_Q(OxideQQuickWebView);
@@ -292,6 +282,21 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
   }
 }
 
+void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
+                                    const QQuickItem::ItemChangeData& value) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::itemChange(change, value);
+
+  if (!d->isInitialized()) {
+    return;
+  }
+
+  if (change == QQuickItem::ItemVisibleHasChanged) {
+    d->updateVisibility(value.boolValue);
+  }
+}
+
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
     QQuickItem(parent) {
   // WebView instantiates NotificationRegistrar, which starts
@@ -299,15 +304,11 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   // else we'll crash
   OxideQQuickWebContextPrivate::ensureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
-  QObject::connect(this, SIGNAL(visibleChanged()),
-                   this, SLOT(visibilityChangedListener()));
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
 
-  disconnect(this, SIGNAL(visibleChanged()),
-             this, SLOT(visibilityChangedListener()));
   d->detachContextSignals(
       static_cast<OxideQQuickWebContextPrivate *>(d->context()));
 
