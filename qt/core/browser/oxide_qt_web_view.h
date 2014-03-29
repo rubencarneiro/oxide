@@ -32,15 +32,14 @@ class WebView FINAL : public oxide::WebView {
  public:
   static WebView* Create(WebViewAdapter* adapter);
 
+  WebViewAdapter* adapter() const { return adapter_; }
+
  private:
   WebView(WebViewAdapter* adapter);
 
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const FINAL;
-
-  content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
 
   gfx::Rect GetContainerBounds() FINAL;
 
@@ -71,7 +70,7 @@ class WebView FINAL : public oxide::WebView {
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
 
-  WebViewAdapter* adapter;
+  WebViewAdapter* adapter_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

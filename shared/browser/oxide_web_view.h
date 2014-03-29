@@ -47,8 +47,6 @@ namespace content {
 class FrameTreeNode;
 class NotificationRegistrar;
 struct OpenURLParams;
-class RenderWidgetHost;
-class RenderWidgetHostView;
 class WebContents;
 class WebContentsImpl;
 
@@ -116,9 +114,6 @@ class WebView : public ScriptMessageTarget,
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
-
-  virtual content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) = 0;
 
   virtual gfx::Rect GetContainerBounds() = 0;
 

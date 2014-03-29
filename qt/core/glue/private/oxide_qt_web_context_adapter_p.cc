@@ -31,6 +31,9 @@
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/core/api/oxideqstoragepermissionrequest_p.h"
+#include "qt/core/browser/oxide_qt_render_widget_host_view_factory.h"
+
+#include "../oxide_qt_render_widget_host_view_delegate_factory.h"
 
 namespace oxide {
 namespace qt {
@@ -42,15 +45,18 @@ WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::Create(
     WebContextAdapter* adapter,
-    WebContextAdapter::IOThreadDelegate* io_delegate) {
-  return new WebContextAdapterPrivate(adapter, io_delegate);
+    WebContextAdapter::IOThreadDelegate* io_delegate,
+    RenderWidgetHostViewDelegateFactory* view_factory) {
+  return new WebContextAdapterPrivate(adapter, io_delegate, view_factory);
 }
 
 WebContextAdapterPrivate::WebContextAdapterPrivate(
     WebContextAdapter* adapter,
-    WebContextAdapter::IOThreadDelegate* io_delegate) :
+    WebContextAdapter::IOThreadDelegate* io_delegate,
+    RenderWidgetHostViewDelegateFactory* view_factory) :
     adapter_(adapter),
     io_thread_delegate_(io_delegate),
+    view_factory_(view_factory),
     construct_props_(new ConstructProperties()) {}
 
 void WebContextAdapterPrivate::Init() {
@@ -76,6 +82,9 @@ void WebContextAdapterPrivate::Init() {
   context()->SetDelegate(this);
 
   construct_props_.reset();
+
+  // BrowserContext takes ownership of this
+  new RenderWidgetHostViewFactory(context_.get(), view_factory_.release());
 }
 
 void WebContextAdapterPrivate::Destroy() {

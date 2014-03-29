@@ -27,7 +27,6 @@
 #include <QSize>
 #include <QtQml>
 
-#include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
 #include "oxideqquickscriptmessagehandler_p.h"
@@ -60,13 +59,6 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     constructed_(false),
     navigation_history_(view),
     popup_menu_(NULL) {}
-
-oxide::qt::RenderWidgetHostViewDelegate*
-OxideQQuickWebViewPrivate::CreateRenderWidgetHostViewDelegate() {
-  Q_Q(OxideQQuickWebView);
-
-  return new oxide::qquick::RenderViewItem(q);
-}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {

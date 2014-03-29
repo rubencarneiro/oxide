@@ -41,6 +41,7 @@ namespace qt {
 
 class BrowserContextDelegate;
 struct ConstructProperties;
+class RenderWidgetHostViewDelegateFactory;
 
 class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
  public:
@@ -70,9 +71,11 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   static WebContextAdapterPrivate* Create(
       WebContextAdapter* adapter,
-      WebContextAdapter::IOThreadDelegate* io_delegate);
+      WebContextAdapter::IOThreadDelegate* io_delegate,
+      RenderWidgetHostViewDelegateFactory* view_factory);
   WebContextAdapterPrivate(WebContextAdapter* adapter,
-                           WebContextAdapter::IOThreadDelegate* io_delegate);
+                           WebContextAdapter::IOThreadDelegate* io_delegate,
+                           RenderWidgetHostViewDelegateFactory* view_factory);
 
   void Init();
   void Destroy();
@@ -94,6 +97,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   WebContextAdapter* adapter_;
   scoped_ptr<WebContextAdapter::IOThreadDelegate> io_thread_delegate_;
+  scoped_ptr<RenderWidgetHostViewDelegateFactory> view_factory_;
 
   ScopedBrowserContext context_;
   scoped_ptr<ConstructProperties> construct_props_;

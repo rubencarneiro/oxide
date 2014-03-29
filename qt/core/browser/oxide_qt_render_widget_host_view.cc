@@ -53,6 +53,7 @@
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_p.h"
 
 #include "oxide_qt_backing_store.h"
+#include "oxide_qt_web_view.h"
 
 QT_USE_NAMESPACE
 
@@ -552,6 +553,10 @@ RenderWidgetHostView::RenderWidgetHostView(
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {}
+
+void RenderWidgetHostView::Init(oxide::WebView* view) {
+  delegate_->Init(static_cast<WebView *>(view)->adapter());
+}
 
 // static
 float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {

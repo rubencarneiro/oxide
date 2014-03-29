@@ -43,6 +43,7 @@ namespace oxide {
 namespace qt {
 
 class RenderWidgetHostViewDelegatePrivate;
+class WebViewAdapter;
 
 class Q_DECL_EXPORT TextureHandle {
  public:
@@ -56,6 +57,8 @@ class Q_DECL_EXPORT TextureHandle {
 class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  public:
   virtual ~RenderWidgetHostViewDelegate();
+
+  virtual void Init(WebViewAdapter* view) = 0;
 
   virtual void Blur() = 0;
   virtual void Focus() = 0;

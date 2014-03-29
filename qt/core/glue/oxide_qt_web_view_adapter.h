@@ -38,7 +38,6 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostViewDelegate;
 class ScriptMessageHandlerAdapter;
 class WebContextAdapter;
 class WebFrameAdapter;
@@ -82,7 +81,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
     return message_handlers_;
   }
 
-  virtual RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() = 0;
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
 
   virtual void URLChanged() = 0;

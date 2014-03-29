@@ -26,6 +26,7 @@
 #include <QSizeF>
 #include <QTouchEvent>
 
+#include "qt/core/glue/oxide_qt_web_view_adapter.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
 #if defined(ENABLE_COMPOSITING)
@@ -36,9 +37,8 @@
 namespace oxide {
 namespace qquick {
 
-RenderViewItem::RenderViewItem(
-    OxideQQuickWebView* webview) :
-    QQuickItem(webview),
+RenderViewItem::RenderViewItem() :
+    QQuickItem(),
     backing_store_(NULL)
 #if defined(ENABLE_COMPOSITING)
     , texture_handle_(NULL),
@@ -51,6 +51,10 @@ RenderViewItem::RenderViewItem(
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
+}
+
+void RenderViewItem::Init(oxide::qt::WebViewAdapter* view) {
+  setParentItem(adapterToQObject<OxideQQuickWebView>(view));
 }
 
 void RenderViewItem::Blur() {

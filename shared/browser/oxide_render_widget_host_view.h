@@ -47,6 +47,7 @@ class TouchEvent;
 namespace oxide {
 
 class TextureHandle;
+class WebView;
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
@@ -54,6 +55,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
   virtual ~RenderWidgetHostView();
+
+  virtual void Init(WebView* view) = 0;
 
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) FINAL;

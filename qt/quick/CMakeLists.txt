@@ -61,6 +61,7 @@ set(PLUGIN_SRCS
     oxide_qml_plugin.cc
     oxide_qquick_painted_render_view_node.cc
     oxide_qquick_render_view_item.cc
+    oxide_qquick_render_view_item_factory.cc
     oxide_qquick_web_popup_menu_delegate.cc
     ${MOC_EXTRA})
 

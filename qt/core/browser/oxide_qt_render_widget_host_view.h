@@ -54,6 +54,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
                        RenderWidgetHostViewDelegate* delegate);
   virtual ~RenderWidgetHostView();
 
+  void Init(oxide::WebView* view) FINAL;
+
   static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
   static void GetWebScreenInfoFromQScreen(QScreen* screen, blink::WebScreenInfo* result);
 

@@ -29,7 +29,6 @@
 #include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
-#include "oxide_qt_render_widget_host_view.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
 
@@ -37,27 +36,20 @@ namespace oxide {
 namespace qt {
 
 WebView::WebView(WebViewAdapter* adapter) :
-    adapter(adapter) {}
+    adapter_(adapter) {}
 
 size_t WebView::GetScriptMessageHandlerCount() const {
-  return adapter->message_handlers().size();
+  return adapter_->message_handlers().size();
 }
 
 oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
   return &ScriptMessageHandlerAdapterPrivate::get(
-      adapter->message_handlers().at(index))->handler;
-}
-
-content::RenderWidgetHostView* WebView::CreateViewForWidget(
-    content::RenderWidgetHost* render_widget_host) {
-  return new RenderWidgetHostView(
-      render_widget_host,
-      adapter->CreateRenderWidgetHostViewDelegate());
+      adapter_->message_handlers().at(index))->handler;
 }
 
 gfx::Rect WebView::GetContainerBounds() {
-  QRect bounds = adapter->GetContainerBounds();
+  QRect bounds = adapter_->GetContainerBounds();
   return gfx::Rect(bounds.x(),
                    bounds.y(),
                    bounds.width(),
@@ -65,31 +57,31 @@ gfx::Rect WebView::GetContainerBounds() {
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
-  return new WebPopupMenu(adapter->CreateWebPopupMenuDelegate(), rvh);
+  return new WebPopupMenu(adapter_->CreateWebPopupMenuDelegate(), rvh);
 }
 
 void WebView::FrameAdded(oxide::WebFrame* frame) {
-  adapter->FrameAdded(static_cast<WebFrame *>(frame)->GetAdapter());
+  adapter_->FrameAdded(static_cast<WebFrame *>(frame)->GetAdapter());
 }
 
 void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  adapter->FrameRemoved(static_cast<WebFrame *>(frame)->GetAdapter());
+  adapter_->FrameRemoved(static_cast<WebFrame *>(frame)->GetAdapter());
 }
 
 void WebView::OnURLChanged() {
-  adapter->URLChanged();
+  adapter_->URLChanged();
 }
 
 void WebView::OnTitleChanged() {
-  adapter->TitleChanged();
+  adapter_->TitleChanged();
 }
 
 void WebView::OnCommandsUpdated() {
-  adapter->CommandsUpdated();
+  adapter_->CommandsUpdated();
 }
 
 void WebView::OnLoadProgressChanged(double progress) {
-  adapter->LoadProgressChanged(progress);
+  adapter_->LoadProgressChanged(progress);
 }
 
 void WebView::OnLoadStarted(const GURL& validated_url,
@@ -97,14 +89,14 @@ void WebView::OnLoadStarted(const GURL& validated_url,
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       OxideQLoadEvent::TypeStarted);
-  adapter->LoadEvent(&event);
+  adapter_->LoadEvent(&event);
 }
 
 void WebView::OnLoadStopped(const GURL& validated_url) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       OxideQLoadEvent::TypeStopped);
-  adapter->LoadEvent(&event);
+  adapter_->LoadEvent(&event);
 }
 
 void WebView::OnLoadFailed(const GURL& validated_url,
@@ -115,34 +107,34 @@ void WebView::OnLoadFailed(const GURL& validated_url,
       OxideQLoadEvent::TypeFailed,
       OxideQLoadEventPrivate::ChromeErrorCodeToOxideErrorCode(error_code),
       QString::fromStdString(error_description));
-  adapter->LoadEvent(&event);
+  adapter_->LoadEvent(&event);
 }
 
 void WebView::OnLoadSucceeded(const GURL& validated_url) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       OxideQLoadEvent::TypeSucceeded);
-  adapter->LoadEvent(&event);
+  adapter_->LoadEvent(&event);
 }
 
 void WebView::OnNavigationEntryCommitted() {
-  adapter->NavigationEntryCommitted();
+  adapter_->NavigationEntryCommitted();
 }
 
 void WebView::OnNavigationListPruned(bool from_front, int count) {
-  adapter->NavigationListPruned(from_front, count);
+  adapter_->NavigationListPruned(from_front, count);
 }
 
 void WebView::OnNavigationEntryChanged(int index) {
-  adapter->NavigationEntryChanged(index);
+  adapter_->NavigationEntryChanged(index);
 }
 
 void WebView::OnWebPreferencesChanged() {
-  adapter->WebPreferencesChanged();
+  adapter_->WebPreferencesChanged();
 }
 
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
-  return new WebFrame(adapter->CreateWebFrame(), node, this);
+  return new WebFrame(adapter_->CreateWebFrame(), node, this);
 }
 
 // static

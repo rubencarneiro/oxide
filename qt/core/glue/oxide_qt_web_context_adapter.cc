@@ -260,10 +260,12 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
   }
 }
 
-WebContextAdapter::WebContextAdapter(QObject* q,
-                                     IOThreadDelegate* io_delegate) :
+WebContextAdapter::WebContextAdapter(
+    QObject* q,
+    IOThreadDelegate* io_delegate,
+    RenderWidgetHostViewDelegateFactory* view_factory) :
     AdapterBase(q),
-    priv(WebContextAdapterPrivate::Create(this, io_delegate)) {
+    priv(WebContextAdapterPrivate::Create(this, io_delegate, view_factory)) {
 
   priv->AddRef();
 
