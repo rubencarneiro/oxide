@@ -56,34 +56,14 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   void Init(oxide::WebView* view) FINAL;
 
-  static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
   static void GetWebScreenInfoFromQScreen(QScreen* screen, blink::WebScreenInfo* result);
-
-  void Blur() FINAL;
-  void Focus() FINAL;
-  bool HasFocus() const FINAL;
-
-  void Show() FINAL;
-  void Hide() FINAL;
-  bool IsShowing() FINAL;
 
   gfx::Rect GetViewBounds() const FINAL;
   gfx::Size GetPhysicalBackingSize() const FINAL;
 
   void SetSize(const gfx::Size& size) FINAL;
 
-  content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
-
   float GetDeviceScaleFactor() const;
-  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
-
-  gfx::Rect GetBoundsInRootWindow() FINAL;
-
-  void TextInputTypeChanged(ui::TextInputType type,
-                            ui::TextInputMode mode,
-                            bool can_compose_inline) FINAL;
-  void ImeCancelComposition() FINAL;
-  void FocusedNodeChanged(bool is_editable_node) FINAL;
 
   void HandleFocusEvent(QFocusEvent* event);
   void HandleKeyEvent(QKeyEvent* event);
@@ -99,6 +79,28 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
  private:
+  static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
+
+  void Blur() FINAL;
+  void Focus() FINAL;
+  bool HasFocus() const FINAL;
+
+  void Show() FINAL;
+  void Hide() FINAL;
+  bool IsShowing() FINAL;
+
+  content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
+
+  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
+
+  gfx::Rect GetBoundsInRootWindow() FINAL;
+
+  void TextInputTypeChanged(ui::TextInputType type,
+                            ui::TextInputMode mode,
+                            bool can_compose_inline) FINAL;
+  void ImeCancelComposition() FINAL;
+  void FocusedNodeChanged(bool is_editable_node) FINAL;
+
   void Paint(const gfx::Rect& rect) FINAL;
   void BuffersSwapped() FINAL;
 

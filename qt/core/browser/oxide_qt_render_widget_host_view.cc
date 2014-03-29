@@ -528,36 +528,6 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 }
 
-void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
-  gfx::Rect scaled_rect(
-      gfx::ScaleToEnclosingRect(rect, GetDeviceScaleFactor()));
-  delegate_->SchedulePaintForRectPix(
-      QRect(scaled_rect.x(),
-            scaled_rect.y(),
-            scaled_rect.width(),
-            scaled_rect.height()));
-}
-
-void RenderWidgetHostView::BuffersSwapped() {
-  delegate_->ScheduleUpdate();
-}
-
-RenderWidgetHostView::RenderWidgetHostView(
-    content::RenderWidgetHost* render_widget_host,
-    RenderWidgetHostViewDelegate* delegate) :
-    oxide::RenderWidgetHostView(render_widget_host),
-    backing_store_(NULL),
-    delegate_(delegate),
-    input_type_(ui::TEXT_INPUT_TYPE_NONE) {
-  RenderWidgetHostViewDelegatePrivate::get(delegate)->rwhv = this;
-}
-
-RenderWidgetHostView::~RenderWidgetHostView() {}
-
-void RenderWidgetHostView::Init(oxide::WebView* view) {
-  delegate_->Init(static_cast<WebView *>(view)->adapter());
-}
-
 // static
 float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   // For some reason, the Ubuntu QPA plugin doesn't override
@@ -606,27 +576,6 @@ float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   return float(screen->devicePixelRatio());
 }
 
-// static
-void RenderWidgetHostView::GetWebScreenInfoFromQScreen(
-    QScreen* screen, blink::WebScreenInfo* result) {
-  result->depth = screen->depth();
-  result->depthPerComponent = 8; // XXX: Copied the GTK impl here
-  result->isMonochrome = result->depth == 1;
-  result->deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
-
-  QRect rect = screen->geometry();
-  result->rect = blink::WebRect(rect.x(),
-                                rect.y(),
-                                rect.width(),
-                                rect.height());
-
-  QRect availableRect = screen->availableGeometry();
-  result->availableRect = blink::WebRect(availableRect.x(),
-                                         availableRect.y(),
-                                         availableRect.width(),
-                                         availableRect.height());
-}
-
 void RenderWidgetHostView::Blur() {
   delegate_->Blur();
 }
@@ -653,35 +602,9 @@ bool RenderWidgetHostView::IsShowing() {
   return delegate_->IsShowing();
 }
 
-gfx::Rect RenderWidgetHostView::GetViewBounds() const {
-  QScreen* screen = delegate_->GetScreen();
-  if (!screen) {
-    return gfx::Rect();
-  }
-
-  QRect rect(delegate_->GetViewBoundsPix());
-  return gfx::ScaleToEnclosingRect(
-      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
-                1.0f / GetDeviceScaleFactor());
-}
-
-gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
-  QRect rect(delegate_->GetViewBoundsPix());
-  return gfx::Size(rect.width(), rect.height());
-}
-
-void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  delegate_->SetSize(QSize(size.width(), size.height()));
-  oxide::RenderWidgetHostView::SetSize(size);
-}
-
 content::BackingStore* RenderWidgetHostView::AllocBackingStore(
     const gfx::Size& size) {
   return new BackingStore(GetRenderWidgetHost(), size, GetDeviceScaleFactor());
-}
-
-float RenderWidgetHostView::GetDeviceScaleFactor() const {
-  return GetDeviceScaleFactorFromQScreen(delegate_->GetScreen());
 }
 
 void RenderWidgetHostView::GetScreenInfo(
@@ -721,6 +644,83 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
     QGuiApplication::inputMethod()->setVisible(is_editable_node);
   }
+}
+
+void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
+  gfx::Rect scaled_rect(
+      gfx::ScaleToEnclosingRect(rect, GetDeviceScaleFactor()));
+  delegate_->SchedulePaintForRectPix(
+      QRect(scaled_rect.x(),
+            scaled_rect.y(),
+            scaled_rect.width(),
+            scaled_rect.height()));
+}
+
+void RenderWidgetHostView::BuffersSwapped() {
+  delegate_->ScheduleUpdate();
+}
+
+RenderWidgetHostView::RenderWidgetHostView(
+    content::RenderWidgetHost* render_widget_host,
+    RenderWidgetHostViewDelegate* delegate) :
+    oxide::RenderWidgetHostView(render_widget_host),
+    backing_store_(NULL),
+    delegate_(delegate),
+    input_type_(ui::TEXT_INPUT_TYPE_NONE) {
+  RenderWidgetHostViewDelegatePrivate::get(delegate)->rwhv = this;
+}
+
+RenderWidgetHostView::~RenderWidgetHostView() {}
+
+void RenderWidgetHostView::Init(oxide::WebView* view) {
+  delegate_->Init(static_cast<WebView *>(view)->adapter());
+}
+
+// static
+void RenderWidgetHostView::GetWebScreenInfoFromQScreen(
+    QScreen* screen, blink::WebScreenInfo* result) {
+  result->depth = screen->depth();
+  result->depthPerComponent = 8; // XXX: Copied the GTK impl here
+  result->isMonochrome = result->depth == 1;
+  result->deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
+
+  QRect rect = screen->geometry();
+  result->rect = blink::WebRect(rect.x(),
+                                rect.y(),
+                                rect.width(),
+                                rect.height());
+
+  QRect availableRect = screen->availableGeometry();
+  result->availableRect = blink::WebRect(availableRect.x(),
+                                         availableRect.y(),
+                                         availableRect.width(),
+                                         availableRect.height());
+}
+
+gfx::Rect RenderWidgetHostView::GetViewBounds() const {
+  QScreen* screen = delegate_->GetScreen();
+  if (!screen) {
+    return gfx::Rect();
+  }
+
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::ScaleToEnclosingRect(
+      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
+                1.0f / GetDeviceScaleFactor());
+}
+
+gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::Size(rect.width(), rect.height());
+}
+
+void RenderWidgetHostView::SetSize(const gfx::Size& size) {
+  delegate_->SetSize(QSize(size.width(), size.height()));
+  oxide::RenderWidgetHostView::SetSize(size);
+}
+
+float RenderWidgetHostView::GetDeviceScaleFactor() const {
+  return GetDeviceScaleFactorFromQScreen(delegate_->GetScreen());
 }
 
 void RenderWidgetHostView::HandleFocusEvent(QFocusEvent* event) {
