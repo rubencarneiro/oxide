@@ -69,7 +69,9 @@ class OxideQQuickWebContext : public QObject,
   void classBegin();
   void componentComplete();
 
+  // XXX(chrisccoulson): Will be cleaned up in https://launchpad.net/bugs/1297552
   static QSharedPointer<OxideQQuickWebContext> defaultContext();
+  static OxideQQuickWebContext* unsafeGetDefaultContext();
 
   QString product() const;
   void setProduct(const QString& product);

@@ -82,8 +82,6 @@ WebPreferences::WebPreferences() :
 
   SetAttribute(ATTR_SMOOTH_SCROLLING_ENABLED, true);
   SetAttribute(ATTR_TOUCH_ENABLED, true);
-
-  // ATTR_SUPPORTS_MULTIPLE_WINDOWS
 }
 
 WebPreferences::~WebPreferences() {
@@ -187,13 +185,6 @@ void WebPreferences::SetAttribute(Attr attr, bool val) {
     return;
   }
 
-  if (attr == ATTR_SUPPORTS_MULTIPLE_WINDOWS && val) {
-    LOG(WARNING) <<
-        "Oxide currently doesn't support window.open(). "
-        "See https://launchpad.net/bugs/1240749";
-    return;
-  }
-
   attributes_[attr] = val;
   NotifyObserversOfChange();
 }
@@ -252,8 +243,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->enable_scroll_animator = attributes_[ATTR_SMOOTH_SCROLLING_ENABLED];
 
   prefs->touch_enabled = attributes_[ATTR_TOUCH_ENABLED];
-
-  prefs->supports_multiple_windows = attributes_[ATTR_SUPPORTS_MULTIPLE_WINDOWS];
 }
 
 } // namespace oxide

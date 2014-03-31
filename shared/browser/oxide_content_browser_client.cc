@@ -309,6 +309,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   prefs->javascript_can_open_windows_automatically =
       !view->GetBrowserContext()->IsPopupBlockerEnabled();
+  prefs->supports_multiple_windows = view->CanCreateWindows();
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {

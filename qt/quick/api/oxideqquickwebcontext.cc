@@ -352,6 +352,11 @@ QSharedPointer<OxideQQuickWebContext> OxideQQuickWebContext::defaultContext() {
   return new_context;
 }
 
+// static
+OxideQQuickWebContext* OxideQQuickWebContext::unsafeGetDefaultContext() {
+  return g_default_context.data();
+}
+
 QString OxideQQuickWebContext::product() const {
   Q_D(const OxideQQuickWebContext);
 

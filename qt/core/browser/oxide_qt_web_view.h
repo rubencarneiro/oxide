@@ -20,6 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/weak_ptr.h"
 
 #include "shared/browser/oxide_web_view.h"
 
@@ -28,14 +29,19 @@ namespace qt {
 
 class WebViewAdapter;
 
-class WebView FINAL : public oxide::WebView {
+class WebView FINAL : public oxide::WebView,
+                      public base::SupportsWeakPtr<WebView> {
  public:
   static WebView* Create(WebViewAdapter* adapter);
 
   WebViewAdapter* adapter() const { return adapter_; }
 
  private:
+  friend class WebViewAdapter;
+
   WebView(WebViewAdapter* adapter);
+
+  bool Init(const oxide::WebView::Params& params) FINAL;
 
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -47,6 +53,8 @@ class WebView FINAL : public oxide::WebView {
 
   void FrameAdded(oxide::WebFrame* frame) FINAL;
   void FrameRemoved(oxide::WebFrame* frame) FINAL;
+
+  bool CanCreateWindows() const FINAL;
 
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
@@ -69,6 +77,11 @@ class WebView FINAL : public oxide::WebView {
   void OnWebPreferencesChanged() FINAL;
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
+
+  oxide::WebView* CreateNewWebView(const GURL& target_url,
+                                   const gfx::Rect& initial_pos,
+                                   WindowOpenDisposition disposition,
+                                   bool user_gesture) FINAL;
 
   WebViewAdapter* adapter_;
 

@@ -38,6 +38,7 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
 #include "net/base/net_errors.h"
+#include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
 #include "webkit/common/webpreferences.h"
 
@@ -45,11 +46,62 @@
 
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_preferences.h"
 
 namespace oxide {
+
+namespace {
+
+class ScopedNewContentsHolder {
+ public:
+  ScopedNewContentsHolder(content::WebContents* contents, bool* was_blocked) :
+      contents_(contents), was_blocked_(was_blocked) {}
+
+  ~ScopedNewContentsHolder() {
+    if (contents_ && was_blocked_) {
+      *was_blocked_ = true;
+    }
+  }
+
+  content::WebContents* Release() {
+    return contents_.release();
+  }
+
+ private:
+  scoped_ptr<content::WebContents> contents_;
+  bool* was_blocked_;
+};
+
+}
+
+class WebView::PendingContents FINAL : public content::WebContentsObserver {
+ public:
+  PendingContents(content::WebContentsObserver* owner,
+                  content::WebContents* contents,
+                  const GURL& target_url,
+                  int64 source_frame_id) :
+      content::WebContentsObserver(contents),
+      owner_(owner),
+      target_url_(target_url),
+      source_frame_id_(source_frame_id) {}
+
+  void WebContentsDestroyed(content::WebContents* contents) {
+    owner_->WebContentsDestroyed(contents);
+  }
+
+  GURL target_url() const { return target_url_; }
+  int64 source_frame_id() const { return source_frame_id_; }
+
+ private:
+  content::WebContentsObserver* owner_;
+  GURL target_url_;
+  int64 source_frame_id_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(PendingContents);
+};
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
@@ -128,6 +180,61 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
   }
 }
 
+void WebView::WebContentsCreated(content::WebContents* source,
+                                 int64 source_frame_id,
+                                 const base::string16& frame_name,
+                                 const GURL& target_url,
+                                 content::WebContents* new_contents) {
+  pending_contents_[new_contents] = linked_ptr<PendingContents>(
+      new PendingContents(this, new_contents, target_url, source_frame_id));
+}
+
+void WebView::AddNewContents(content::WebContents* source,
+                             content::WebContents* new_contents,
+                             WindowOpenDisposition disposition,
+                             const gfx::Rect& initial_pos,
+                             bool user_gesture,
+                             bool* was_blocked) {
+  DCHECK_EQ(source, web_contents_.get());
+  DCHECK_EQ(GetBrowserContext(),
+            BrowserContext::FromContent(new_contents->GetBrowserContext()));
+  CHECK(disposition == NEW_FOREGROUND_TAB ||
+        disposition == NEW_BACKGROUND_TAB ||
+        disposition == NEW_POPUP ||
+        disposition == NEW_WINDOW) << "Unexpected disposition";
+
+  ScopedNewContentsHolder holder(new_contents, was_blocked);
+
+  PendingContentsMap::iterator it = pending_contents_.find(new_contents);
+  if (it == pending_contents_.end()) {
+    return;
+  }
+
+  linked_ptr<PendingContents> pending(it->second);
+  pending_contents_.erase(it);
+
+  WebView* new_view = CreateNewWebView(pending->target_url(),
+                                       initial_pos,
+                                       disposition,
+                                       user_gesture);
+  if (!new_view) {
+    return;
+  }
+
+  RenderWidgetHostView* rwhv = static_cast<RenderWidgetHostView *>(
+      new_contents->GetRenderWidgetHostView());
+  if (rwhv) {
+    rwhv->Init(new_view);
+  }
+
+  Params params;
+  params.context = GetBrowserContext();
+  params.contents = holder.Release();
+  params.incognito = IsIncognito();
+
+  new_view->Init(params);
+}
+
 void WebView::LoadProgressChanged(content::WebContents* source,
                                   double progress) {
   DCHECK_EQ(source, web_contents_.get());
@@ -144,6 +251,14 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   while (root_frame_->ChildCount() > 0) {
     delete root_frame_->ChildAt(0);
   }
+}
+
+void WebView::WebContentsDestroyed(content::WebContents* contents) {
+  if (contents == web_contents_.get()) {
+    return;
+  }
+
+  pending_contents_.erase(contents);
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -297,45 +412,49 @@ void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
 
-WebView::WebView() {}
-
-WebView::~WebView() {
-  if (web_contents_) {
-    web_contents_->SetDelegate(NULL);
-  }
+WebView* WebView::CreateNewWebView(const GURL& target_url,
+                                   const gfx::Rect& initial_pos,
+                                   WindowOpenDisposition disposition,
+                                   bool user_gesture) {
+  return NULL;
 }
 
-bool WebView::Init(BrowserContext* context,
-                   bool incognito,
-                   const gfx::Size& initial_size) {
-  DCHECK(context);
+WebView::WebView() {}
 
-  if (web_contents_) {
-    LOG(ERROR) << "Called Init() more than once";
-    return false;
+bool WebView::Init(const Params& params) {
+  CHECK(params.context);
+  CHECK(!web_contents_);
+
+  if (params.contents) {
+    CHECK(params.context ==
+          BrowserContext::FromContent(params.contents->GetBrowserContext()));
+    CHECK(params.incognito == params.context->IsOffTheRecord());
+
+    context_ = params.context;
+    web_contents_.reset(static_cast<content::WebContentsImpl *>(
+        params.contents));
+  } else {
+    context_ = params.incognito ?
+        params.context->GetOffTheRecordContext() :
+        params.context->GetOriginalContext();
+
+    content::WebContents::CreateParams params(context_);
+    params.initial_size = GetContainerBounds().size();
+    web_contents_.reset(static_cast<content::WebContentsImpl *>(
+        content::WebContents::Create(params)));
+    if (!web_contents_) {
+      LOG(ERROR) << "Failed to create WebContents";
+      return false;
+    }
   }
 
-  context = incognito ?
-      context->GetOffTheRecordContext() :
-      context->GetOriginalContext();
-
-  BrowserContextObserver::Observe(context);
-  context_ = context;
-
-  content::WebContents::CreateParams params(context);
-  params.initial_size = initial_size;
-  web_contents_.reset(static_cast<content::WebContentsImpl *>(
-      content::WebContents::Create(params)));
-  if (!web_contents_) {
-    LOG(ERROR) << "Failed to create WebContents";
-    return false;
-  }
+  BrowserContextObserver::Observe(context_);
 
   web_contents_->SetDelegate(this);
   WebContentsObserver::Observe(web_contents_.get());
   // See https://launchpad.net/bugs/1279900 and the comment in
   // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(context->GetUserAgent());
+  web_contents_->SetUserAgentOverride(context_->GetUserAgent());
 
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                  content::NotificationService::AllBrowserContextsAndSources());
@@ -345,6 +464,12 @@ bool WebView::Init(BrowserContext* context,
   root_frame_.reset(CreateWebFrame(web_contents_->GetFrameTree()->root()));
 
   return true;
+}
+
+WebView::~WebView() {
+  if (web_contents_) {
+    web_contents_->SetDelegate(NULL);
+  }
 }
 
 // static
@@ -535,5 +660,9 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
 
 void WebView::FrameAdded(WebFrame* frame) {}
 void WebView::FrameRemoved(WebFrame* frame) {}
+
+bool WebView::CanCreateWindows() const {
+  return false;
+}
 
 } // namespace oxide

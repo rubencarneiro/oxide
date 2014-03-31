@@ -24,6 +24,8 @@
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqloadevent_p.h"
+#include "qt/core/api/oxideqnewviewrequest.h"
+#include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
@@ -37,6 +39,21 @@ namespace qt {
 
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter) {}
+
+bool WebView::Init(const oxide::WebView::Params& params) {
+  if (!oxide::WebView::Init(params)) {
+    return false;
+  }
+
+  if (adapter_->IsVisible()) {
+    Shown();
+  } else {
+    Hidden();
+  }
+
+  adapter_->Initialized();
+  return true;
+}
 
 size_t WebView::GetScriptMessageHandlerCount() const {
   return adapter_->message_handlers().size();
@@ -66,6 +83,10 @@ void WebView::FrameAdded(oxide::WebFrame* frame) {
 
 void WebView::FrameRemoved(oxide::WebFrame* frame) {
   adapter_->FrameRemoved(static_cast<WebFrame *>(frame)->GetAdapter());
+}
+
+bool WebView::CanCreateWindows() const {
+  return adapter_->CanCreateWindows();
 }
 
 void WebView::OnURLChanged() {
@@ -135,6 +156,44 @@ void WebView::OnWebPreferencesChanged() {
 
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
   return new WebFrame(adapter_->CreateWebFrame(), node, this);
+}
+
+oxide::WebView* WebView::CreateNewWebView(const GURL& target_url,
+                                          const gfx::Rect& initial_pos,
+                                          WindowOpenDisposition disposition,
+                                          bool user_gesture) {
+  OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
+
+  switch (disposition) {
+    case CURRENT_TAB:
+      d = OxideQNewViewRequest::DispositionCurrentTab;
+      break;
+    case NEW_FOREGROUND_TAB:
+      d = OxideQNewViewRequest::DispositionNewForegroundTab;
+      break;
+    case NEW_BACKGROUND_TAB:
+      d = OxideQNewViewRequest::DispositionNewBackgroundTab;
+      break;
+    case NEW_POPUP:
+      d = OxideQNewViewRequest::DispositionNewPopup;
+      break;
+    case NEW_WINDOW:
+      d = OxideQNewViewRequest::DispositionNewWindow;
+      break;
+    default:
+      NOTREACHED();
+  }
+
+  OxideQNewViewRequest request(QUrl(QString::fromStdString(target_url.spec())),
+                               QRect(initial_pos.x(),
+                                     initial_pos.y(),
+                                     initial_pos.width(),
+                                     initial_pos.height()),
+                               d, user_gesture);
+
+  adapter_->NewViewRequested(&request);
+
+  return OxideQNewViewRequestPrivate::get(&request)->view.get();
 }
 
 // static

@@ -53,6 +53,9 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
 
+  void OnInitialized(bool orig_incognito,
+                     oxide::qt::WebContextAdapter* orig_context) Q_DECL_FINAL;
+
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
   void CommandsUpdated() Q_DECL_FINAL;
@@ -68,11 +71,16 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
   QRect GetContainerBounds() Q_DECL_FINAL;
+  bool IsVisible() const Q_DECL_FINAL;
 
   void OnWebPreferencesChanged() Q_DECL_FINAL;
 
   void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
   void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
+
+  bool CanCreateWindows() const Q_DECL_FINAL;
+
+  void NewViewRequested(OxideQNewViewRequest* request) Q_DECL_FINAL;
 
   void completeConstruction();
 
@@ -89,6 +97,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void contextInitialized();
   void contextWillBeDestroyed();
+  void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
   QSharedPointer<OxideQQuickWebContext> default_context_;

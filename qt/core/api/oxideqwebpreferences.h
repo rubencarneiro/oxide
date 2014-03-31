@@ -67,7 +67,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
 
   Q_PROPERTY(bool smoothScrollingEnabled READ smoothScrollingEnabled WRITE setSmoothScrollingEnabled NOTIFY smoothScrollingEnabledChanged)
   Q_PROPERTY(bool touchEnabled READ touchEnabled WRITE setTouchEnabled NOTIFY touchEnabledChanged)
-  Q_PROPERTY(bool supportsMultipleWindows READ supportsMultipleWindows WRITE setSupportsMultipleWindows NOTIFY supportsMultipleWindowsChanged)
 
   Q_DECLARE_PRIVATE(OxideQWebPreferences)
   Q_DISABLE_COPY(OxideQWebPreferences)
@@ -144,8 +143,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void setSmoothScrollingEnabled(bool enabled);
   bool touchEnabled() const;
   void setTouchEnabled(bool enabled);
-  bool supportsMultipleWindows() const;
-  void setSupportsMultipleWindows(bool enabled);
 
  Q_SIGNALS:
   void standardFontFamilyChanged();
@@ -187,7 +184,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
 
   void smoothScrollingEnabledChanged();
   void touchEnabledChanged();
-  void supportsMultipleWindowsChanged();
 
  private:
   QScopedPointer<OxideQWebPreferencesPrivate> d_ptr;

@@ -18,11 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 
+#include <map>
 #include <string>
 #include <vector>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/linked_ptr.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
@@ -71,10 +73,6 @@ class WebView : public ScriptMessageTarget,
  public:
   virtual ~WebView();
 
-  bool Init(BrowserContext* context,
-            bool incognito,
-            const gfx::Size& initial_size);
-
   static WebView* FromWebContents(content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
 
@@ -122,8 +120,24 @@ class WebView : public ScriptMessageTarget,
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
 
+  virtual bool CanCreateWindows() const;
+
  protected:
+
+  struct Params {
+    Params() :
+        context(NULL),
+        contents(NULL),
+        incognito(false) {}
+
+    BrowserContext* context;
+    content::WebContents* contents;
+    bool incognito;
+  };
+
   WebView();
+
+  virtual bool Init(const Params& params);
 
  private:
   void DispatchLoadFailed(const GURL& validated_url,
@@ -151,11 +165,23 @@ class WebView : public ScriptMessageTarget,
   // content::WebContentsDelegate
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
+  void WebContentsCreated(content::WebContents* source,
+                          int64 source_frame_id,
+                          const base::string16& frame_name,
+                          const GURL& target_url,
+                          content::WebContents* new_contents) FINAL;
+  void AddNewContents(content::WebContents* source,
+                      content::WebContents* new_contents,
+                      WindowOpenDisposition disposition,
+                      const gfx::Rect& initial_pos,
+                      bool user_gesture,
+                      bool* was_blocked) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
 
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
+  void WebContentsDestroyed(content::WebContents* contents) FINAL;
 
   void DidStartProvisionalLoadForFrame(
       int64 frame_id,
@@ -227,10 +253,19 @@ class WebView : public ScriptMessageTarget,
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
 
+  virtual WebView* CreateNewWebView(const GURL& target_url,
+                                    const gfx::Rect& initial_pos,
+                                    WindowOpenDisposition disposition,
+                                    bool user_gesture);
+
   ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
   content::NotificationRegistrar registrar_;
   scoped_ptr<WebFrame> root_frame_;
+
+  class PendingContents;
+  typedef std::map<content::WebContents*, linked_ptr<PendingContents> > PendingContentsMap;
+  PendingContentsMap pending_contents_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

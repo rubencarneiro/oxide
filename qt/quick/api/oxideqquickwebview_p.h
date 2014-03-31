@@ -33,6 +33,7 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQNewViewRequest;
 class OxideQWebPreferences;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
@@ -62,7 +63,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
-  Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
+  Q_PROPERTY(bool incognito READ incognito WRITE setIncognito NOTIFY incognitoChanged)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
@@ -74,6 +75,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
+
+  Q_PROPERTY(OxideQNewViewRequest* request WRITE setRequest)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -115,6 +118,8 @@ class OxideQQuickWebView : public QQuickItem {
 
   OxideQQuickNavigationHistory* navigationHistory();
 
+  void setRequest(OxideQNewViewRequest* request);
+
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
  public Q_SLOTS:
@@ -127,6 +132,7 @@ class OxideQQuickWebView : public QQuickItem {
   void urlChanged();
   void titleChanged();
   void navigationHistoryChanged();
+  void incognitoChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
   void rootFrameChanged();
@@ -136,6 +142,7 @@ class OxideQQuickWebView : public QQuickItem {
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
+  void newViewRequested(OxideQNewViewRequest* request);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextInitialized());

@@ -110,6 +110,7 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         'api/oxideqloadevent.cc',
@@ -118,6 +119,9 @@
         'api/oxideqnetworkcallbackevents.cc',
         'api/oxideqnetworkcallbackevents.h',
         'api/oxideqnetworkcallbackevents_p.h',
+        'api/oxideqnewviewrequest.cc',
+        'api/oxideqnewviewrequest.h',
+        'api/oxideqnewviewrequest_p.h',
         'api/oxideqstoragepermissionrequest.cc',
         'api/oxideqstoragepermissionrequest.h',
         'api/oxideqstoragepermissionrequest_p.h',
@@ -161,6 +165,11 @@
         {
           'action_name': 'moc_oxideqnetworkcallbackevents.cc',
           'moc_input': 'api/oxideqnetworkcallbackevents.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
+          'action_name': 'moc_oxideqnewviewrequest.cc',
+          'moc_input': 'api/oxideqnewviewrequest.h',
           'includes': [ 'moc.gypi' ],
         },
         {

@@ -33,6 +33,7 @@ class QSize;
 QT_END_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQNewViewRequest;
 class OxideQWebPreferences;
 
 namespace oxide {
@@ -48,8 +49,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  public:
   virtual ~WebViewAdapter();
 
-  void init(const QSize& initial_size,
-            bool visible);
+  void init();
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -81,7 +81,44 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
     return message_handlers_;
   }
 
+  bool isInitialized();
+
+  int getNavigationEntryCount() const;
+  int getNavigationCurrentEntryIndex() const;
+  void setNavigationCurrentEntryIndex(int index);
+  int getNavigationEntryUniqueID(int index) const;
+  QUrl getNavigationEntryUrl(int index) const;
+  QString getNavigationEntryTitle(int index) const;
+  QDateTime getNavigationEntryTimestamp(int index) const;
+
+  OxideQWebPreferences* preferences();
+  void setPreferences(OxideQWebPreferences* prefs);
+
+  void setRequest(OxideQNewViewRequest* request);
+
+ protected:
+  WebViewAdapter(QObject* q);
+
+ private:
+  friend class WebView;
+
+  struct ConstructProperties {
+    ConstructProperties() :
+        incognito(false),
+        context(NULL) {}
+
+    QUrl url;
+    bool incognito;
+    WebContextAdapter* context;
+  };
+
+  void Initialized();
+  void WebPreferencesChanged();
+
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
+
+  virtual void OnInitialized(bool orig_incognito,
+                             WebContextAdapter* orig_context) = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
@@ -98,43 +135,21 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
   virtual QRect GetContainerBounds() = 0;
+  virtual bool IsVisible() const = 0;
 
-  bool isInitialized();
-
-  int getNavigationEntryCount() const;
-  int getNavigationCurrentEntryIndex() const;
-  void setNavigationCurrentEntryIndex(int index);
-  int getNavigationEntryUniqueID(int index) const;
-  QUrl getNavigationEntryUrl(int index) const;
-  QString getNavigationEntryTitle(int index) const;
-  QDateTime getNavigationEntryTimestamp(int index) const;
-
-  OxideQWebPreferences* preferences();
-  void setPreferences(OxideQWebPreferences* prefs);
-  void WebPreferencesChanged();
   virtual void OnWebPreferencesChanged() = 0;
 
   virtual void FrameAdded(WebFrameAdapter* frame) = 0;
   virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
 
- protected:
-  WebViewAdapter(QObject* q);
+  virtual bool CanCreateWindows() const = 0;
 
- private:
-
-  struct ConstructProperties {
-    ConstructProperties() :
-        incognito(false),
-        context(NULL) {}
-
-    QUrl url;
-    bool incognito;
-    WebContextAdapter* context;
-  };
+  virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
   QScopedPointer<ConstructProperties> construct_props_;
+  bool created_with_new_view_request_;
 };
 
 } // namespace qt
