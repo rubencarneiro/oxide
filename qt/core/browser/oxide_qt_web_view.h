@@ -44,6 +44,9 @@ class WebView FINAL : public oxide::WebView,
 
   bool Init(const oxide::WebView::Params& params) FINAL;
 
+  content::WebContents* OpenURLFromTab(content::WebContents* source,
+                                       const content::OpenURLParams& params) OVERRIDE;
+
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const FINAL;

@@ -464,6 +464,8 @@ bool WebView::Init(const Params& params) {
   // HttpUserAgentSettings::GetUserAgent()
   web_contents_->SetUserAgentOverride(context_->GetUserAgent());
 
+  web_contents_->GetMutableRendererPrefs()->browser_handles_non_local_top_level_requests = true;
+
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                  content::NotificationService::AllBrowserContextsAndSources());
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,

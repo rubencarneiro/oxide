@@ -155,6 +155,8 @@ class WebView : public ScriptMessageTarget,
 
   virtual bool Init(const Params& params);
 
+  scoped_ptr<content::WebContentsImpl> web_contents_;
+
  private:
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
@@ -277,7 +279,6 @@ class WebView : public ScriptMessageTarget,
                                     bool user_gesture);
 
   ScopedBrowserContext context_;
-  scoped_ptr<content::WebContentsImpl> web_contents_;
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;

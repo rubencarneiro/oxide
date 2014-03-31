@@ -63,6 +63,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "LoadEvent' are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 0, 1, "NavigationHistory",
         "Each WebView has a NavigationHistory automatically instantiated by Oxide");
+    qmlRegisterUncreatableType<OxideQQuickNavigationRequest>(uri, 0, 1, "NavigationRequest",
+        "Cannot create separate instance of NavigationRequest");
     qmlRegisterUncreatableType<OxideQNewViewRequest>(uri, 0, 1, "NewViewRequest",
         "NewViewRequest is created by Oxide");
     qmlRegisterUncreatableType<OxideQQuickScriptMessage>(uri, 0, 1, "ScriptMessage",
