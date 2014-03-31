@@ -17,16 +17,12 @@ Column {
     width: 200
     height: 200
 
-    property var created: null
-
     property string lastRequestUrl: ""
     property rect lastRequestPosition: Qt.rect(0,0,0,0)
     property int lastRequestDisposition: NewViewRequest.DispositionCurrentTab
     property bool lastRequestUserGesture: false
 
     onNewViewRequested: {
-      created = webViewFactory.createObject(column, { request: request, width: 200, height: 200 });
-
       lastRequestUrl = request.url;
       lastRequestPosition = request.position;
       lastRequestDisposition = request.disposition;
@@ -46,10 +42,6 @@ Column {
     when: windowShown
 
     function init() {
-      if (webView.created) {
-        webView.created.destroy();
-        webView.created = null;
-      }
       webView.context.popupBlockerEnabled = true;
       spy.clear()
     }
