@@ -17,65 +17,36 @@
 
 #include "oxide_url_request_context.h"
 
-#include <algorithm>
-
-#include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
 
-#include "oxide_browser_context.h"
+#include "oxide_io_thread.h"
 
 namespace oxide {
 
-namespace {
+URLRequestContext::URLRequestContext() :
+    storage_(this) {
+  set_net_log(IOThread::instance()->net_log());
 
-class DefaultURLRequestContextGetter FINAL : public URLRequestContextGetter {
- public:
-  DefaultURLRequestContextGetter(
-      content::ProtocolHandlerMap* protocol_handlers,
-      BrowserContextIOData* context) :
-      URLRequestContextGetter(),
-      context_(context) {
-    std::swap(protocol_handlers_, *protocol_handlers);
-  }
-
-  net::URLRequestContext* GetURLRequestContext() OVERRIDE {
-    DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
-
-    if (!url_request_context_) {
-      context_->Init(protocol_handlers_);
-      url_request_context_ = context_->GetMainRequestContext()->GetWeakPtr();
-      context_ = NULL;
-    }
-
-    return url_request_context_.get();
-  }
-
- private:
-  content::ProtocolHandlerMap protocol_handlers_;
-  // XXX: Can we outlive the context IO data?
-  BrowserContextIOData* context_;
-
-  DISALLOW_COPY_AND_ASSIGN(DefaultURLRequestContextGetter);
-};
-
-} // namespace
-
-URLRequestContextGetter::URLRequestContextGetter() {}
-
-URLRequestContextGetter::~URLRequestContextGetter() {}
-
-// static
-URLRequestContextGetter* URLRequestContextGetter::CreateMain(
-    content::ProtocolHandlerMap* protocol_handlers,
-    BrowserContextIOData* context) {
-  return new DefaultURLRequestContextGetter(protocol_handlers,
-                                            context);
+  IOThread::Globals* io_thread_globals = IOThread::instance()->globals();
+  set_host_resolver(io_thread_globals->host_resolver());
+  set_cert_verifier(io_thread_globals->cert_verifier());
+  set_http_auth_handler_factory(
+      io_thread_globals->http_auth_handler_factory());
+  set_proxy_service(io_thread_globals->proxy_service());
+  set_throttler_manager(io_thread_globals->throttler_manager());
 }
+
+URLRequestContext::~URLRequestContext() {}
 
 scoped_refptr<base::SingleThreadTaskRunner>
 URLRequestContextGetter::GetNetworkTaskRunner() const {
-  return content::BrowserThread::GetMessageLoopProxyForThread(
-      content::BrowserThread::IO);
+  return network_task_runner_;
 }
+
+URLRequestContextGetter::URLRequestContextGetter() :
+    network_task_runner_(content::BrowserThread::GetMessageLoopProxyForThread(
+      content::BrowserThread::IO)) {}
+
+URLRequestContextGetter::~URLRequestContextGetter() {}
 
 } // namespace oxide

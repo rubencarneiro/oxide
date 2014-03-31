@@ -171,7 +171,6 @@ void OxideQWebPreferences::setMinimumFontSize(unsigned size) {
 
 BOOLEAN_PREF_IMPL(remoteFontsEnabled, setRemoteFontsEnabled, REMOTE_FONTS_ENABLED)
 BOOLEAN_PREF_IMPL(javascriptEnabled, setJavascriptEnabled, JAVASCRIPT_ENABLED)
-BOOLEAN_PREF_IMPL(webSecurityEnabled, setWebSecurityEnabled, WEB_SECURITY_ENABLED)
 BOOLEAN_PREF_IMPL(popupBlockerEnabled, setPopupBlockerEnabled, POPUP_BLOCKER_ENABLED)
 BOOLEAN_PREF_IMPL(allowScriptsToCloseWindows, setAllowScriptsToCloseWindows, ALLOW_SCRIPTS_TO_CLOSE_WINDOWS)
 BOOLEAN_PREF_IMPL(javascriptCanAccessClipboard, setJavascriptCanAccessClipboard, JAVASCRIPT_CAN_ACCESS_CLIPBOARD)
@@ -187,9 +186,7 @@ BOOLEAN_PREF_IMPL(textAreasAreResizable, setTextAreasAreResizable, TEXT_AREAS_AR
 BOOLEAN_PREF_IMPL(localStorageEnabled, setLocalStorageEnabled, LOCAL_STORAGE_ENABLED)
 BOOLEAN_PREF_IMPL(databasesEnabled, setDatabasesEnabled, DATABASES_ENABLED)
 BOOLEAN_PREF_IMPL(appCacheEnabled, setAppCacheEnabled, APP_CACHE_ENABLED)
-BOOLEAN_PREF_IMPL(fullscreenEnabled, setFullscreenEnabled, FULLSCREEN_ENABLED)
 BOOLEAN_PREF_IMPL(tabsToLinks, setTabsToLinks, TABS_TO_LINKS)
 BOOLEAN_PREF_IMPL(caretBrowsingEnabled, setCaretBrowsingEnabled, CARET_BROWSING_ENABLED)
-BOOLEAN_PREF_IMPL(smoothScrollingEnabled, setSmoothScrollingEnabled, SMOOTH_SCROLLING_ENABLED)
 BOOLEAN_PREF_IMPL(touchEnabled, setTouchEnabled, TOUCH_ENABLED)
 BOOLEAN_PREF_IMPL(supportsMultipleWindows, setSupportsMultipleWindows, SUPPORTS_MULTIPLE_WINDOWS)

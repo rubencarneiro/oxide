@@ -18,6 +18,7 @@
 #include "oxide_browser_process_main.h"
 
 #include "base/logging.h"
+#include "content/public/app/content_main.h"
 #include "content/public/app/content_main_runner.h"
 #include "content/public/browser/browser_main_runner.h"
 
@@ -25,7 +26,6 @@
 #include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_io_thread_delegate.h"
 #include "oxide_message_pump.h"
 
 namespace oxide {
@@ -84,7 +84,8 @@ bool BrowserProcessMain::Init() {
     return false;
   }
 
-  if (main_runner_->Initialize(0, NULL, main_delegate_.get()) != -1) {
+  content::ContentMainParams params(main_delegate_.get());
+  if (main_runner_->Initialize(params) != -1) {
     LOG(ERROR) << "Failed to initialize Oxide main runner";
     return false;
   }
@@ -155,12 +156,6 @@ bool BrowserProcessMain::Exists() {
 BrowserProcessMain* BrowserProcessMain::instance() {
   CHECK(g_instance) << "BrowserProcessMain instance hasn't been created yet";
   return g_instance.get();
-}
-
-void BrowserProcessMain::CreateIOThreadDelegate() {
-  CHECK(!io_thread_delegate_) <<
-      "BrowserProcessMain::CreateIOThreadDelegate() called more than once";
-  io_thread_delegate_.reset(new IOThreadDelegate());
 }
 
 } // namespace oxide

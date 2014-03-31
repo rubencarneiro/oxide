@@ -26,27 +26,17 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
-#include "base/synchronization/condition_variable.h"
 #include "base/synchronization/lock.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/events/gestures/gesture_recognizer.h"
 #include "ui/events/gestures/gesture_types.h"
-#include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/rect.h"
-#include "ui/gfx/size.h"
 
 typedef unsigned int GLuint;
 
 namespace content {
 class RenderWidgetHostImpl;
-class WebGraphicsContext3DCommandBufferImpl;
-}
-
-namespace gpu {
-namespace gles2 {
-class TextureRef;
-}
 }
 
 namespace ui {
@@ -56,73 +46,7 @@ class TouchEvent;
 
 namespace oxide {
 
-class OffscreenGraphicsContextRef;
-
-class TextureInfo FINAL {
- public:
-  TextureInfo(GLuint id, const gfx::Size& size_in_pixels);
-  ~TextureInfo();
-
-  GLuint id() const { return id_; }
-  gfx::Size size_in_pixels() const { return size_in_pixels_; }
-
- private:
-  GLuint id_;
-  gfx::Size size_in_pixels_;
-};
-
-class TextureHandle FINAL {
- public:
-  TextureHandle();
-  ~TextureHandle();
-
-  void Initialize(content::WebGraphicsContext3DCommandBufferImpl* context);
-  void Update(const std::string& name,
-              const gfx::Size& size_in_pixels);
-
-  TextureInfo GetTextureInfo();
-
- private:
-
-  class GpuThreadCallbackContext :
-      public base::RefCountedThreadSafe<GpuThreadCallbackContext> {
-   public:
-    GpuThreadCallbackContext(TextureHandle* handle);
-
-    void Invalidate();
-    void FetchTextureResources();
-
-   private:
-    friend class base::RefCountedThreadSafe<GpuThreadCallbackContext>;
-    ~GpuThreadCallbackContext();
- 
-    base::Lock lock_;
-    TextureHandle* handle_;
-  };
-
-  void FetchTextureResourcesOnGpuThread();
-  void ReleaseTextureRef();
-  static void ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref);
-
-  base::Lock lock_;
-  base::ConditionVariable resources_available_;
-
-  int32 client_id_;
-  int32 route_id_;
-
-  bool is_fetch_texture_resources_pending_;
-
-  // This is a deliberate layer violation. Textures normally live in the GPU
-  // process, but we run an in-process GPU thread so that we can share
-  // resources with the embedding compositor
-  GLuint id_;
-  gpu::gles2::TextureRef* ref_;
-  std::string mailbox_name_;
-  gfx::Size size_in_pixels_;
-  scoped_refptr<GpuThreadCallbackContext> callback_context_;
-
-  DISALLOW_COPY_AND_ASSIGN(TextureHandle);
-};
+class TextureHandle;
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
@@ -145,7 +69,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   virtual void Blur() OVERRIDE;
 
-  void UpdateCursor(const WebCursor& cursor) FINAL;
+  void UpdateCursor(const content::WebCursor& cursor) FINAL;
 
   void SetIsLoading(bool is_loading) FINAL;
 
@@ -215,9 +139,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
-  content::RenderWidgetHostImpl* GetRenderWidgetHostImpl() const {
-    return host_;
-  }
+  content::RenderWidgetHostImpl* host() const { return host_; }
 
   void SetSize(const gfx::Size& size) OVERRIDE;
   void SetBounds(const gfx::Rect& rect) FINAL;
@@ -236,20 +158,16 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void OnFocus();
   void OnBlur();
 
-  TextureInfo GetFrontbufferTextureInfo();
+  TextureHandle* GetCurrentTextureHandle();
 
   bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
   void DispatchPostponedGestureEvent(ui::GestureEvent* event) FINAL;
   void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
 
  protected:
-  typedef base::Callback<void(bool)> AcknowledgeBufferPresentCallback;
-
   RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
 
-  static void SendAcknowledgeBufferPresent(
-      const AcknowledgeBufferPresentCallback& ack,
-      bool skipped);
+  void AcknowledgeBuffersSwapped(bool skipped);
 
   gfx::Rect caret_rect() const { return caret_rect_; }
   size_t selection_cursor_position() const {
@@ -262,15 +180,18 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void HandleTouchEvent(const ui::TouchEvent& event);
 
  private:
+  typedef base::Callback<void(bool)> AcknowledgeBufferPresentCallback;
+
   virtual void Paint(const gfx::Rect& dirty_rect);
-  virtual void BuffersSwapped(const AcknowledgeBufferPresentCallback& ack);
-  void SendAcknowledgeBufferPresentImpl(int32 route_id,
-                                        int gpu_host_id,
-                                        const std::string& mailbox_name,
-                                        bool skipped);
+  virtual void BuffersSwapped();
+  void SendAcknowledgeBufferPresent(int32 route_id,
+                                    int gpu_host_id,
+                                    const gpu::Mailbox& mailbox,
+                                    bool skipped);
   static void SendAcknowledgeBufferPresentOnMainThread(
-      const AcknowledgeBufferPresentCallback& ack,
+      AcknowledgeBufferPresentCallback ack,
       bool skipped);
+  bool IsInBufferSwap();
 
   void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
   void ForwardGestureEventToRenderer(ui::GestureEvent* event);
@@ -279,10 +200,12 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   content::RenderWidgetHostImpl* host_;
 
-  scoped_refptr<OffscreenGraphicsContextRef> graphics_context_ref_;
   gfx::GLSurfaceHandle shared_surface_handle_;
 
-  TextureHandle texture_handles_[2];
+  base::Lock acknowledge_buffer_present_callback_lock_;
+  AcknowledgeBufferPresentCallback acknowledge_buffer_present_callback_;
+
+  scoped_refptr<TextureHandle> textures_[2];
   TextureHandle* frontbuffer_texture_handle_;
   TextureHandle* backbuffer_texture_handle_;
 

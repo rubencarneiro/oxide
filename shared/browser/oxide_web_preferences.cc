@@ -54,7 +54,6 @@ WebPreferences::WebPreferences() :
 
   SetAttribute(ATTR_REMOTE_FONTS_ENABLED, true);
   SetAttribute(ATTR_JAVASCRIPT_ENABLED, true);
-  SetAttribute(ATTR_WEB_SECURITY_ENABLED, true);
   SetAttribute(ATTR_POPUP_BLOCKER_ENABLED, true);
 
   // ATTR_ALLOW_SCRIPTS_TO_CLOSE_WINDOWS
@@ -76,13 +75,11 @@ WebPreferences::WebPreferences() :
   // ATTR_LOCAL_STORAGE_ENABLED
   // ATTR_DATABASES_ENABLED
   // ATTR_APP_CACHE_ENABLED
-  // ATTR_FULLSCREEN_ENABLED
 
   SetAttribute(ATTR_TABS_TO_LINKS, true);
 
   // ATTR_CARET_BROWSING_ENABLED
 
-  SetAttribute(ATTR_SMOOTH_SCROLLING_ENABLED, true);
   SetAttribute(ATTR_TOUCH_ENABLED, true);
 
   // ATTR_SUPPORTS_MULTIPLE_WINDOWS
@@ -219,7 +216,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->remote_fonts_enabled = attributes_[ATTR_REMOTE_FONTS_ENABLED];
 
   prefs->javascript_enabled = attributes_[ATTR_JAVASCRIPT_ENABLED];
-  prefs->web_security_enabled = attributes_[ATTR_WEB_SECURITY_ENABLED];
   prefs->javascript_can_open_windows_automatically =
       !attributes_[ATTR_POPUP_BLOCKER_ENABLED];
   prefs->allow_scripts_to_close_windows =
@@ -249,12 +245,9 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->local_storage_enabled = attributes_[ATTR_LOCAL_STORAGE_ENABLED];
   prefs->databases_enabled = attributes_[ATTR_DATABASES_ENABLED];
   prefs->application_cache_enabled = attributes_[ATTR_APP_CACHE_ENABLED];
-  prefs->fullscreen_enabled = attributes_[ATTR_FULLSCREEN_ENABLED];
 
   prefs->tabs_to_links = attributes_[ATTR_TABS_TO_LINKS];
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
-
-  prefs->enable_scroll_animator = attributes_[ATTR_SMOOTH_SCROLLING_ENABLED];
 
   prefs->touch_enabled = attributes_[ATTR_TOUCH_ENABLED];
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,30 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_FRAME_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_FRAME_ADAPTER_H_
+#include "oxide_javascript_dialog.h"
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "shared/browser/oxide_javascript_dialog_manager.h"
 
 namespace oxide {
-namespace qt {
 
-class WebFrame;
-class WebFrameAdapter;
+JavaScriptDialog::JavaScriptDialog() :
+    is_reload_(false),
+    is_before_unload_dialog_(false) {}
 
-class WebFrameAdapterPrivate FINAL {
- public:
-  WebFrameAdapterPrivate();
-  ~WebFrameAdapterPrivate();
+JavaScriptDialog::~JavaScriptDialog() {}
 
-  static WebFrameAdapterPrivate* get(WebFrameAdapter* adapter);
+void JavaScriptDialog::Close(bool accept, const base::string16& user_input) {
+  callback_.Run(accept, user_input);
+  JavaScriptDialogManager::GetInstance()->OnDialogClosed(web_contents_, this);
+}
 
-  WebFrame* owner;
+void JavaScriptDialog::CouldNotShow() {
+  Close(is_before_unload_dialog_);
+}
 
- private:
-  DISALLOW_COPY_AND_ASSIGN(WebFrameAdapterPrivate);
-};
+void JavaScriptDialog::Cancel() {
+  callback_.Run(false, base::string16());
+  JavaScriptDialogManager::GetInstance()->OnDialogCancelled(web_contents_, this);
+}
 
-} // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_FRAME_ADAPTER_H_

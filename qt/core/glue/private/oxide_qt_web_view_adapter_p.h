@@ -21,6 +21,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 
+#include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
 namespace oxide {
@@ -42,6 +43,11 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   gfx::Rect GetContainerBounds() FINAL;
 
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
+
+  oxide::JavaScriptDialog* CreateJavaScriptDialog(
+      content::JavaScriptMessageType javascript_message_type,
+      bool* did_suppress_message) FINAL;
+  oxide::JavaScriptDialog* CreateBeforeUnloadDialog() FINAL;
 
   void FrameAdded(oxide::WebFrame* frame) FINAL;
   void FrameRemoved(oxide::WebFrame* frame) FINAL;

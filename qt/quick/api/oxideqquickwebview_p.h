@@ -71,7 +71,12 @@ class OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
-  Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext)
+  Q_PROPERTY(QQmlComponent* alertDialog READ alertDialog WRITE setAlertDialog NOTIFY alertDialogChanged)
+  Q_PROPERTY(QQmlComponent* confirmDialog READ confirmDialog WRITE setConfirmDialog NOTIFY confirmDialogChanged)
+  Q_PROPERTY(QQmlComponent* promptDialog READ promptDialog WRITE setPromptDialog NOTIFY promptDialogChanged)
+  Q_PROPERTY(QQmlComponent* beforeUnloadDialog READ beforeUnloadDialog WRITE setBeforeUnloadDialog NOTIFY beforeUnloadDialogChanged)
+
+  Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext NOTIFY contextChanged)
   Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
@@ -110,6 +115,18 @@ class OxideQQuickWebView : public QQuickItem {
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
+  QQmlComponent* alertDialog() const;
+  void setAlertDialog(QQmlComponent* alert_dialog);
+
+  QQmlComponent* confirmDialog() const;
+  void setConfirmDialog(QQmlComponent* confirm_dialog);
+
+  QQmlComponent* promptDialog() const;
+  void setPromptDialog(QQmlComponent* prompt_dialog);
+
+  QQmlComponent* beforeUnloadDialog() const;
+  void setBeforeUnloadDialog(QQmlComponent* before_unload_dialog);
+
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
 
@@ -137,6 +154,11 @@ class OxideQQuickWebView : public QQuickItem {
   void frameAdded(OxideQQuickWebFrame* frame);
   void frameRemoved(OxideQQuickWebFrame* frame);
   void popupMenuChanged();
+  void alertDialogChanged();
+  void confirmDialogChanged();
+  void promptDialogChanged();
+  void beforeUnloadDialogChanged();
+  void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
 
@@ -144,6 +166,9 @@ class OxideQQuickWebView : public QQuickItem {
   void visibilityChangedListener();
 
  private:
+  Q_PRIVATE_SLOT(d_func(), void contextInitialized());
+  Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
+
   virtual void geometryChanged(const QRectF& newGeometry,
                                const QRectF& oldGeometry);
 

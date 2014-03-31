@@ -24,11 +24,16 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
+#include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/notification_observer.h"
+#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
+#include "content/public/common/javascript_message_type.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
@@ -42,7 +47,9 @@ class Size;
 
 namespace content {
 
+class FrameTree;
 class FrameTreeNode;
+struct MenuItem;
 class NotificationRegistrar;
 struct OpenURLParams;
 class RenderWidgetHost;
@@ -55,6 +62,7 @@ class WebContentsImpl;
 namespace oxide {
 
 class BrowserContext;
+class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
@@ -111,7 +119,7 @@ class WebView : public ScriptMessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-  WebFrame* FindFrameWithID(int64 frame_tree_node_id) const;
+  content::FrameTree* GetFrameTree();
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
@@ -121,13 +129,19 @@ class WebView : public ScriptMessageTarget,
 
   virtual gfx::Rect GetContainerBounds() = 0;
 
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
+  virtual JavaScriptDialog* CreateJavaScriptDialog(
+      content::JavaScriptMessageType javascript_message_type,
+      bool* did_suppress_message);
+  virtual JavaScriptDialog* CreateBeforeUnloadDialog();
 
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
 
-  void DidUpdateFaviconURL(
-      int32 page_id, const std::vector<content::FaviconURL>& candidates) FINAL;
+  void ShowPopupMenu(const gfx::Rect& bounds,
+                     int selected_item,
+                     const std::vector<content::MenuItem>& items,
+                     bool allow_multiple_selection);
+  void HidePopupMenu();
 
  protected:
   WebView();
@@ -143,7 +157,6 @@ class WebView : public ScriptMessageTarget,
       size_t index) const OVERRIDE;
 
   // BrowserContextObserver
-  void BrowserContextDestroyed() FINAL;
   void NotifyUserAgentStringChanged() FINAL;
 
   // WebPreferencesObserver
@@ -159,6 +172,7 @@ class WebView : public ScriptMessageTarget,
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
 
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -205,11 +219,15 @@ class WebView : public ScriptMessageTarget,
       const content::LoadCommittedDetails& load_details) FINAL;
 
   void FrameDetached(content::RenderViewHost* rvh,
-                     int64 frame_id) FINAL;
+                     int64 frame_routing_id) FINAL;
   void FrameAttached(content::RenderViewHost* rvh,
-                     int64 parent_frame_id, int64 frame_id) FINAL;
+                     int64 parent_frame_routing_id,
+                     int64 frame_routing_id) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
+
+  void DidUpdateFaviconURL(
+      int32 page_id, const std::vector<content::FaviconURL>& candidates) FINAL;
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
@@ -233,10 +251,13 @@ class WebView : public ScriptMessageTarget,
   virtual void OnWebPreferencesChanged();
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
+  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
+  ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
-  scoped_ptr<content::NotificationRegistrar> registrar_;
-  scoped_ptr<WebFrame> root_frame_;
+  content::NotificationRegistrar registrar_;
+  WebFrame* root_frame_;
+  base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

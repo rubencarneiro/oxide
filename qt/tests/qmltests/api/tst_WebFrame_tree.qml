@@ -27,7 +27,7 @@ TestWebView {
 
   TestCase {
     id: test
-    name: WebFrame_tree
+    name: "WebFrame_tree"
     when: windowShown
 
     function init() {

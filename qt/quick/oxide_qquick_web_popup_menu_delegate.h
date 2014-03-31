@@ -25,7 +25,6 @@
 class OxideQQuickWebView;
 
 QT_BEGIN_NAMESPACE
-class QQmlComponent;
 class QQmlContext;
 class QQuickItem;
 QT_END_NAMESPACE
@@ -40,12 +39,11 @@ class WebPopupMenuDelegate Q_DECL_FINAL :
 
   void Show(const QRect& bounds,
             QList<oxide::qt::MenuItem>& items,
-            bool allow_multiple_selection);
+            bool allow_multiple_selection) Q_DECL_FINAL;
+  void Hide() Q_DECL_FINAL;
 
  private:
   OxideQQuickWebView* web_view_;
-  QQmlComponent* popup_component_;
-
   QScopedPointer<QQuickItem> popup_item_;
   QScopedPointer<QQmlContext> popup_context_;
 };

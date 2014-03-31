@@ -134,7 +134,7 @@ class TestProcess(object):
 
 class TestHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
   def is_python_request(self):
-    (root, ext) = os.path.splitext(self.path)
+    (root, ext) = os.path.splitext(self.translate_path(self.path))
     if ext == ".py":
       return True
 

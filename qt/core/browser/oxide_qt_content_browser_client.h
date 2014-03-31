@@ -31,15 +31,13 @@ namespace oxide {
 namespace qt {
 
 class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
- public:
-  base::MessagePump* CreateMessagePumpForUI() FINAL;
-
-  bool IsTouchSupported() FINAL;
-
- private:
   // Limit default constructor access to the lazy instance initializer
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
   ContentBrowserClient();
+
+  base::MessagePump* CreateMessagePumpForUI() FINAL;
+
+  bool IsTouchSupported() FINAL;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

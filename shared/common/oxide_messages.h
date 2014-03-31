@@ -18,8 +18,10 @@
 #include <string>
 
 #include "base/memory/shared_memory.h"
+#include "content/public/common/common_param_traits.h"
 #include "ipc/ipc_message_macros.h"
 #include "ipc/ipc_message_start.h"
+#include "url/gurl.h"
 
 #include "shared/common/oxide_message_enums.h"
 #include "shared/common/oxide_script_message_request.h"
@@ -49,6 +51,11 @@ IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
 
 IPC_MESSAGE_ROUTED1(OxideMsg_SendMessage,
                     OxideMsg_SendMessage_Params)
+
+IPC_SYNC_MESSAGE_CONTROL1_2(OxideHostMsg_GetUserAgentOverride,
+                            GURL,
+                            std::string,
+                            bool)
 
 IPC_MESSAGE_ROUTED2(OxideHostMsg_FrameCreated,
                     long long /* parent */,

@@ -19,10 +19,19 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
 
 #include <QList>
+#include <string>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/files/file_path.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
+#include "net/base/static_cookie_policy.h"
+
+#include "qt/core/glue/oxide_qt_web_context_adapter.h"
+
+#include "shared/browser/oxide_browser_context.h"
 
 namespace oxide {
 
@@ -30,23 +39,43 @@ class BrowserContext;
 
 namespace qt {
 
+class BrowserContextDelegate;
 struct ConstructProperties;
-class WebContextAdapter;
 
-class WebContextAdapterPrivate FINAL {
+class WebContextAdapterPrivate FINAL :
+    public base::SupportsWeakPtr<WebContextAdapterPrivate> {
  public:
-  WebContextAdapterPrivate();
-
-  void Init();
+  ~WebContextAdapterPrivate();
 
   static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
 
-  oxide::BrowserContext* context() { return context_.get(); }
-  ConstructProperties* construct_props() { return construct_props_.get(); }
+  WebContextAdapter::IOThreadDelegate* GetIOThreadDelegate() const;
+
+  oxide::BrowserContext* context() { return context_; }
 
  private:
-  scoped_ptr<oxide::BrowserContext> context_;
+  friend class BrowserContextDelegate;
+  friend class WebContextAdapter;
+
+  struct ConstructProperties {
+    std::string product;
+    std::string user_agent;
+    base::FilePath data_path;
+    base::FilePath cache_path;
+    std::string accept_langs;
+    net::StaticCookiePolicy::Type cookie_policy;
+  };
+
+  WebContextAdapterPrivate(WebContextAdapter* adapter,
+                           WebContextAdapter::IOThreadDelegate* io_delegate);
+
+  void Init();
+
+  WebContextAdapter* adapter;
+
+  ScopedBrowserContext context_;
   scoped_ptr<ConstructProperties> construct_props_;
+  scoped_refptr<BrowserContextDelegate> context_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextAdapterPrivate);
 };

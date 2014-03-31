@@ -20,40 +20,21 @@
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/browser_thread.h"
-#include "webkit/common/user_agent/user_agent.h"
-#include "webkit/common/user_agent/user_agent_util.h"
+#include "content/public/common/user_agent.h"
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_content_client.h"
 
-#include "oxide_http_user_agent_settings.h"
 #include "oxide_off_the_record_browser_context_impl.h"
-#include "oxide_ssl_config_service.h"
 
 namespace oxide {
 
 BrowserContextIODataImpl::BrowserContextIODataImpl(
-    const base::FilePath& path,
-    const base::FilePath& cache_path) :
-    ssl_config_service_(new SSLConfigService()),
-    http_user_agent_settings_(new HttpUserAgentSettings(this)),
-    path_(path),
-    cache_path_(cache_path),
-    product_(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
-    user_agent_(webkit_glue::BuildUserAgentFromProduct(product_)),
-    default_user_agent_string_(true),
+    const BrowserContext::Params& params) :
+    path_(params.path),
+    cache_path_(params.cache_path),
     // FIXME: Get from translations
     accept_langs_("en-us,en") {}
-
-net::SSLConfigService*
-BrowserContextIODataImpl::ssl_config_service() const {
-  return ssl_config_service_.get();
-}
-
-net::HttpUserAgentSettings*
-BrowserContextIODataImpl::http_user_agent_settings() const {
-  return http_user_agent_settings_.get();
-}
 
 base::FilePath BrowserContextIODataImpl::GetPath() const {
   return path_;
@@ -81,22 +62,6 @@ void BrowserContextIODataImpl::SetAcceptLangs(const std::string& langs) {
   accept_langs_ = langs;
 }
 
-// Only called on UI thread
-std::string BrowserContextIODataImpl::GetProduct() const {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-  return product_;
-}
-
-// Only called on UI thread
-void BrowserContextIODataImpl::SetProduct(const std::string& product) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-  product_ = product.empty() ?
-      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING) : product;
-  if (default_user_agent_string_) {
-    SetUserAgent(std::string());
-  }
-}
-
 // Called on IO thread and UI thread
 std::string BrowserContextIODataImpl::GetUserAgent() const {
   base::AutoLock lock(lock_);
@@ -109,35 +74,65 @@ void BrowserContextIODataImpl::SetUserAgent(
     const std::string& user_agent) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   base::AutoLock lock(lock_);
-  user_agent_ = user_agent.empty() ?
-      webkit_glue::BuildUserAgentFromProduct(product_) :
-      user_agent;
-  default_user_agent_string_ = user_agent.empty();
+  user_agent_ = user_agent;
 }
 
 bool BrowserContextIODataImpl::IsOffTheRecord() const {
-  if (GetPath().empty()) {
-    return true;
-  }
-
   return false;
 }
 
-BrowserContextImpl::BrowserContextImpl(const base::FilePath& path,
-                                       const base::FilePath& cache_path) :
-    BrowserContext(new BrowserContextIODataImpl(path, cache_path)),
-    user_script_manager_(this) {}
+BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params) :
+    BrowserContext(new BrowserContextIODataImpl(params)),
+    product_(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
+    default_user_agent_string_(true),
+    user_script_manager_(this) {
+  SetUserAgent(std::string());
+}
+
+BrowserContextImpl::~BrowserContextImpl() {
+  // If the OTR context outlives us, we leave it with dangling pointers.
+  // This is bad, hence we make it a release mode abort
+  CHECK(!otr_context_ || otr_context_->HasOneRef()) <<
+      "Unexpected reference count for OTR BrowserContext. Did you use "
+      "scoped_refptr instead of ScopedBrowserContext?";
+}
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
   if (!otr_context_) {
-    otr_context_.reset(new OffTheRecordBrowserContextImpl(this));
+    otr_context_ = new OffTheRecordBrowserContextImpl(this);
   }
 
-  return otr_context_.get();
+  return otr_context_;
 }
 
 BrowserContext* BrowserContextImpl::GetOriginalContext() {
   return this;
+}
+
+void BrowserContextImpl::SetAcceptLangs(const std::string& langs) {
+  static_cast<BrowserContextIODataImpl *>(io_data())->SetAcceptLangs(langs);
+}
+
+std::string BrowserContextImpl::GetProduct() const {
+  return product_;
+}
+
+void BrowserContextImpl::SetProduct(const std::string& product) {
+  product_ = product.empty() ?
+      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING) : product;
+  if (default_user_agent_string_) {
+    SetUserAgent(std::string());
+  }
+}
+
+void BrowserContextImpl::SetUserAgent(const std::string& user_agent) {
+  static_cast<BrowserContextIODataImpl *>(io_data())->SetUserAgent(
+      user_agent.empty() ?
+        content::BuildUserAgentFromProduct(product_) :
+        user_agent);
+  default_user_agent_string_ = user_agent.empty();
+
+  OnUserAgentChanged();
 }
 
 UserScriptMaster& BrowserContextImpl::UserScriptManager() {

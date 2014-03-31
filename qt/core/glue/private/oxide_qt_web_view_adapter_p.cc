@@ -20,16 +20,17 @@
 #include <QString>
 #include <QUrl>
 
+#include "base/strings/utf_string_conversions.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqloadevent_p.h"
+#include "qt/core/browser/oxide_qt_javascript_dialog.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_popup_menu.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
-#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
 namespace oxide {
@@ -147,12 +148,39 @@ oxide::WebPopupMenu* WebViewAdapterPrivate::CreatePopupMenu(
   return new WebPopupMenu(a->CreateWebPopupMenuDelegate(), rvh);
 }
 
+oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  JavaScriptDialogDelegate::Type type;
+  switch (javascript_message_type) {
+  case content::JAVASCRIPT_MESSAGE_TYPE_ALERT:
+    type = JavaScriptDialogDelegate::TypeAlert;
+    break;
+  case content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM:
+    type = JavaScriptDialogDelegate::TypeConfirm;
+    break;
+  case content::JAVASCRIPT_MESSAGE_TYPE_PROMPT:
+    type = JavaScriptDialogDelegate::TypePrompt;
+    break;
+  default:
+    Q_UNREACHABLE();
+  }
+  JavaScriptDialogDelegate* delegate = a->CreateJavaScriptDialogDelegate(type);
+  return new JavaScriptDialog(delegate, did_suppress_message);
+}
+
+oxide::JavaScriptDialog* WebViewAdapterPrivate::CreateBeforeUnloadDialog() {
+  JavaScriptDialogDelegate* delegate = a->CreateBeforeUnloadDialogDelegate();
+  bool did_suppress_message = false;
+  return new JavaScriptDialog(delegate, &did_suppress_message);
+}
+
 void WebViewAdapterPrivate::FrameAdded(oxide::WebFrame* frame) {
-  a->FrameAdded(static_cast<WebFrame *>(frame)->GetAdapter());
+  a->FrameAdded(static_cast<WebFrame *>(frame)->adapter());
 }
 
 void WebViewAdapterPrivate::FrameRemoved(oxide::WebFrame* frame) {
-  a->FrameRemoved(static_cast<WebFrame *>(frame)->GetAdapter());
+  a->FrameRemoved(static_cast<WebFrame *>(frame)->adapter());
 }
 
 } // namespace qt

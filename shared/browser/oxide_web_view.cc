@@ -31,7 +31,6 @@
 #include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/notification_details.h"
-#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/notification_service.h"
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
@@ -39,17 +38,19 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
 #include "content/public/common/favicon_url.h"
+#include "content/public/common/menu_item.h"
 #include "net/base/net_errors.h"
 #include "url/gurl.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
 
-#include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_javascript_dialog_manager.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
+#include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
 
 namespace oxide {
@@ -73,14 +74,10 @@ ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(size_t index) const {
   return NULL;
 }
 
-void WebView::BrowserContextDestroyed() {
-  CHECK(0) << "The browser context was destroyed whilst still in use";
-}
-
 void WebView::NotifyUserAgentStringChanged() {
   // See https://launchpad.net/bugs/1279900 and the comment in
   // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(browser_context()->GetUserAgent());
+  web_contents_->SetUserAgentOverride(context_->GetUserAgent());
 }
 
 void WebView::WebPreferencesDestroyed() {
@@ -144,7 +141,7 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
       GetWebContents()->GetView()->GetContainerSize());
 
   while (root_frame_->ChildCount() > 0) {
-    delete root_frame_->ChildAt(0);
+    root_frame_->ChildAt(0)->Destroy();
   }
 }
 
@@ -171,10 +168,11 @@ void WebView::DidCommitProvisionalLoadForFrame(
     content::PageTransition transition_type,
     content::RenderViewHost* render_view_host) {
   content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
+      web_contents_->GetFrameTree()->FindByRoutingID(
+        frame_id, render_view_host->GetProcess()->GetID());
   DCHECK(node);
 
-  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
+  WebFrame* frame = WebFrame::FromFrameTreeNode(node);
   if (frame) {
     frame->SetURL(url);
   }
@@ -225,37 +223,38 @@ void WebView::NavigationEntryCommitted(
 }
 
 void WebView::FrameDetached(content::RenderViewHost* rvh,
-                            int64 frame_id) {
+                            int64 frame_routing_id) {
   if (!root_frame_) {
     return;
   }
 
-  // XXX: This is temporary until there's a better API for these events
-  //      The ID we have is only renderer-process unique
   content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByFrameID(frame_id);
+      web_contents_->GetFrameTree()->FindByRoutingID(
+        frame_routing_id, rvh->GetProcess()->GetID());
   DCHECK(node);
 
-  WebFrame* frame = FindFrameWithID(node->frame_tree_node_id());
-  delete frame;
+  WebFrame* frame = WebFrame::FromFrameTreeNode(node);
+  frame->Destroy();
 }
 
 void WebView::FrameAttached(content::RenderViewHost* rvh,
-                            int64 parent_frame_id,
-                            int64 frame_id) {
+                            int64 parent_frame_routing_id,
+                            int64 frame_routing_id) {
   if (!root_frame_) {
     return;
   }
 
-  // XXX: This is temporary until there's a better API for these events
-  //      The ID's we have are only renderer-process unique
   content::FrameTree* tree = web_contents_->GetFrameTree();
-  content::FrameTreeNode* parent_node = tree->FindByFrameID(parent_frame_id);
-  content::FrameTreeNode* node = tree->FindByFrameID(frame_id);
+  int process_id = rvh->GetProcess()->GetID();
+
+  content::FrameTreeNode* parent_node =
+      tree->FindByRoutingID(parent_frame_routing_id, process_id);
+  content::FrameTreeNode* node =
+      tree->FindByRoutingID(frame_routing_id, process_id);
 
   DCHECK(parent_node && node);
 
-  WebFrame* parent = FindFrameWithID(parent_node->frame_tree_node_id());
+  WebFrame* parent = WebFrame::FromFrameTreeNode(parent_node);
   DCHECK(parent);
 
   WebFrame* frame = CreateWebFrame(node);
@@ -272,6 +271,17 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
   for (int i = 0; i < count; ++i) {
     if (controller.GetEntryAtIndex(i) == entry) {
       OnNavigationEntryChanged(i);
+      return;
+    }
+  }
+}
+
+void WebView::DidUpdateFaviconURL(
+    int32 page_id, const std::vector<content::FaviconURL>& candidates) {
+  std::vector<content::FaviconURL>::const_iterator it;
+  for (it = candidates.begin(); it != candidates.end(); ++it) {
+    if (it->icon_type == content::FaviconURL::FAVICON) {
+      OnIconChanged(it->icon_url);
       return;
     }
   }
@@ -298,9 +308,17 @@ void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
 
-WebView::WebView() {}
+WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
+  return NULL;
+}
+
+WebView::WebView() :
+    root_frame_(NULL) {}
 
 WebView::~WebView() {
+  if (root_frame_) {
+    root_frame_->Destroy();
+  }
   if (web_contents_) {
     web_contents_->SetDelegate(NULL);
   }
@@ -321,6 +339,7 @@ bool WebView::Init(BrowserContext* context,
       context->GetOriginalContext();
 
   BrowserContextObserver::Observe(context);
+  context_ = context;
 
   content::WebContents::CreateParams params(context);
   params.initial_size = initial_size;
@@ -337,13 +356,12 @@ bool WebView::Init(BrowserContext* context,
   // HttpUserAgentSettings::GetUserAgent()
   web_contents_->SetUserAgentOverride(context->GetUserAgent());
 
-  registrar_.reset(new content::NotificationRegistrar);
-  registrar_->Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
-                  content::NotificationService::AllBrowserContextsAndSources());
-  registrar_->Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
-                  content::NotificationService::AllBrowserContextsAndSources());
+  registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
+                 content::NotificationService::AllBrowserContextsAndSources());
+  registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
+                 content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_.reset(CreateWebFrame(web_contents_->GetFrameTree()->root()));
+  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
   return true;
 }
@@ -423,10 +441,10 @@ void WebView::Reload() {
 }
 
 bool WebView::IsIncognito() const {
-  if (!browser_context()) {
+  if (!context_) {
     return false;
   }
-  return browser_context()->IsOffTheRecord();
+  return context_->IsOffTheRecord();
 }
 
 bool WebView::IsLoading() const {
@@ -449,7 +467,7 @@ void WebView::Hidden() {
 }
 
 BrowserContext* WebView::GetBrowserContext() const {
-  return browser_context();
+  return context_;
 }
 
 content::WebContents* WebView::GetWebContents() const {
@@ -513,27 +531,11 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_.get();
+  return root_frame_;
 }
 
-WebFrame* WebView::FindFrameWithID(int64 frame_tree_node_id) const {
-  std::queue<WebFrame *> q;
-  q.push(const_cast<WebFrame *>(root_frame_.get()));
-
-  while (!q.empty()) {
-    WebFrame* f = q.front();
-    q.pop();
-
-    if (f->FrameTreeNodeID() == frame_tree_node_id) {
-      return f;
-    }
-
-    for (size_t i = 0; i < f->ChildCount(); ++i) {
-      q.push(f->ChildAt(i));
-    }
-  }
-
-  return NULL;
+content::FrameTree* WebView::GetFrameTree() {
+  return web_contents_->GetFrameTree();
 }
 
 WebPreferences* WebView::GetWebPreferences() {
@@ -550,22 +552,45 @@ void WebView::SetWebPreferences(WebPreferences* prefs) {
   WebPreferencesValueChanged();
 }
 
-WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
+JavaScriptDialog* WebView::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  return NULL;
+}
+
+JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return NULL;
 }
 
 void WebView::FrameAdded(WebFrame* frame) {}
 void WebView::FrameRemoved(WebFrame* frame) {}
 
-void WebView::DidUpdateFaviconURL(
-    int32 page_id, const std::vector<content::FaviconURL>& candidates) {
-  std::vector<content::FaviconURL>::const_iterator it;
-  for (it = candidates.begin(); it != candidates.end(); ++it) {
-    if (it->icon_type == content::FaviconURL::FAVICON) {
-      OnIconChanged(it->icon_url);
-      return;
-    }
+void WebView::ShowPopupMenu(const gfx::Rect& bounds,
+                            int selected_item,
+                            const std::vector<content::MenuItem>& items,
+                            bool allow_multiple_selection) {
+  DCHECK(!active_popup_menu_ || active_popup_menu_->WasHidden());
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  WebPopupMenu* menu = CreatePopupMenu(rvh);
+  if (!menu) {
+    static_cast<content::RenderViewHostImpl *>(rvh)->DidCancelPopupMenu();
+    return;
   }
+
+  active_popup_menu_ = menu->AsWeakPtr();
+
+  menu->Show(bounds, items, selected_item, allow_multiple_selection);
+}
+
+void WebView::HidePopupMenu() {
+  if (active_popup_menu_ && !active_popup_menu_->WasHidden()) {
+    active_popup_menu_->Hide();
+  }
+}
+
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+  return JavaScriptDialogManager::GetInstance();
 }
 
 } // namespace oxide

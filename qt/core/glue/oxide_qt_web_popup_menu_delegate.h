@@ -54,6 +54,7 @@ class Q_DECL_EXPORT WebPopupMenuDelegate {
   virtual void Show(const QRect& bounds,
                     QList<MenuItem>& items,
                     bool allow_multiple_selection) = 0;
+  virtual void Hide() = 0;
 
   void SelectItems(const QList<int>& selected_indices);
   void Cancel();
@@ -63,11 +64,7 @@ class Q_DECL_EXPORT WebPopupMenuDelegate {
 
  private:
   friend class WebPopupMenu;
-
-  WebPopupMenu* GetWebPopupMenu() const;
-  void SetWebPopupMenu(WebPopupMenu* menu);
-
-  WebPopupMenu* web_popup_menu_;
+  WebPopupMenu* menu_;
 };
 
 } // namespace qt

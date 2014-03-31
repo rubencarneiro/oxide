@@ -36,6 +36,7 @@
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_surface.h"
+#include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/common/oxide_content_client.h"
@@ -124,8 +125,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
         shared_gl_context->GetImplementation() == gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kForceCompositingMode);
       command_line->AppendSwitch(switches::kEnableThreadedCompositing);
-      command_line->AppendSwitch(switches::kEnableAcceleratedScrollableFrames);
-      command_line->AppendSwitch(switches::kEnableCompositedScrollingForFrames);
     } else {
       command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
       command_line->AppendSwitch(switches::kDisableForceCompositingMode);

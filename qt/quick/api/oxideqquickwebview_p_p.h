@@ -53,6 +53,9 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qt::RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
+  oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
+      oxide::qt::JavaScriptDialogDelegate::Type type) Q_DECL_FINAL;
+  oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() Q_DECL_FINAL;
 
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
@@ -76,7 +79,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
   void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
 
-  void componentComplete();
+  void completeConstruction();
 
   static void messageHandler_append(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
@@ -98,8 +101,16 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   OxideQQuickWebContext* context;
   OxideQQuickNavigationHistory navigationHistory;
   QQmlComponent* popup_menu;
+  QQmlComponent* alert_dialog;
+  QQmlComponent* confirm_dialog;
+  QQmlComponent* prompt_dialog;
+  QQmlComponent* before_unload_dialog;
 
  private:
+  void contextInitialized();
+  void contextWillBeDestroyed();
+  void detachContextSignals();
+
   QScopedPointer<InitData> init_props_;
   QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;

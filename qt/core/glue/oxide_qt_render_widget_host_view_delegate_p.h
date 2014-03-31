@@ -18,13 +18,33 @@
 #ifndef _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_P_H_
 #define _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_P_H_
 
+#include <QSize>
+
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 
 namespace oxide {
+
+class TextureHandle;
+
 namespace qt {
 
 class RenderWidgetHostView;
+
+class TextureHandleImpl FINAL : public TextureHandle {
+ public:
+  TextureHandleImpl();
+  ~TextureHandleImpl();
+
+  unsigned int GetID() const FINAL;
+  QSize GetSize() const FINAL;
+
+  void SetHandle(oxide::TextureHandle* handle);
+
+ private:
+  scoped_refptr<oxide::TextureHandle> handle_;
+};
 
 class RenderWidgetHostViewDelegatePrivate FINAL {
  public:
@@ -34,6 +54,7 @@ class RenderWidgetHostViewDelegatePrivate FINAL {
       RenderWidgetHostViewDelegate* delegate);
 
   RenderWidgetHostView* rwhv;
+  TextureHandleImpl current_texture_handle_;
 };
 
 } // namespace qt

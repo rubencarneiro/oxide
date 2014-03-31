@@ -21,8 +21,8 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
-#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/synchronization/lock.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_user_script_master.h"
@@ -33,37 +33,26 @@ class OffTheRecordBrowserContextImpl;
 
 class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
  public:
-  BrowserContextIODataImpl(const base::FilePath& path,
-                           const base::FilePath& cache_path);
-
-  net::SSLConfigService* ssl_config_service() const FINAL;
-  net::HttpUserAgentSettings* http_user_agent_settings() const FINAL;
+  BrowserContextIODataImpl(const BrowserContext::Params& params);
 
   base::FilePath GetPath() const FINAL;
   base::FilePath GetCachePath() const FINAL;
 
   std::string GetAcceptLangs() const FINAL;
-  void SetAcceptLangs(const std::string& langs) FINAL;
+  void SetAcceptLangs(const std::string& langs);
 
-  std::string GetProduct() const FINAL;
-  void SetProduct(const std::string& product) FINAL;
   std::string GetUserAgent() const FINAL;
-  void SetUserAgent(const std::string& user_agent) FINAL;
+  void SetUserAgent(const std::string& user_agent);
 
   bool IsOffTheRecord() const FINAL;
 
  private:
-  std::string GetProductLocked() const;
-
-  scoped_refptr<net::SSLConfigService> ssl_config_service_;
-  scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
+  mutable base::Lock lock_;
 
   base::FilePath path_;
   base::FilePath cache_path_;
 
-  std::string product_;
   std::string user_agent_;
-  bool default_user_agent_string_;
 
   std::string accept_langs_;
 
@@ -72,18 +61,28 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
 
 class BrowserContextImpl FINAL : public BrowserContext {
  public:
+  ~BrowserContextImpl();
+
   BrowserContext* GetOffTheRecordContext() FINAL;
   BrowserContext* GetOriginalContext() FINAL;
+
+  void SetAcceptLangs(const std::string& langs) FINAL;
+
+  std::string GetProduct() const FINAL;
+  void SetProduct(const std::string& product) FINAL;
+
+  void SetUserAgent(const std::string& user_agent) FINAL;
 
   UserScriptMaster& UserScriptManager() FINAL;
 
  private:
   friend class BrowserContext;
 
-  BrowserContextImpl(const base::FilePath& path,
-                     const base::FilePath& cache_path);
+  BrowserContextImpl(const BrowserContext::Params& params);
 
-  scoped_ptr<OffTheRecordBrowserContextImpl> otr_context_;
+  scoped_refptr<OffTheRecordBrowserContextImpl> otr_context_;
+  std::string product_;
+  bool default_user_agent_string_;
   UserScriptMaster user_script_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextImpl);

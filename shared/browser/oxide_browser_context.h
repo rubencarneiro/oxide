@@ -24,20 +24,31 @@
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
+#include "net/base/static_cookie_policy.h"
+
+namespace content {
+class ResourceContext;
+}
 
 namespace net {
 
+class FtpNetworkLayer;
+class HttpServerProperties;
 class HttpUserAgentSettings;
 class SSLConfigService;
+class TransportSecurityPersister;
+class TransportSecurityState;
 
 }
 
 namespace oxide {
 
+class BrowserContextDelegate;
 class BrowserContextObserver;
 class ResourceContext;
 class URLRequestContext;
@@ -48,41 +59,73 @@ class BrowserContextIOData {
  public:
   virtual ~BrowserContextIOData();
 
-  virtual net::SSLConfigService* ssl_config_service() const = 0;
-  virtual net::HttpUserAgentSettings* http_user_agent_settings() const = 0;
+  static BrowserContextIOData* FromResourceContext(
+      content::ResourceContext* context);
+
+  scoped_refptr<BrowserContextDelegate> GetDelegate();
+
+  net::StaticCookiePolicy::Type GetCookiePolicy() const;
 
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
 
   virtual std::string GetAcceptLangs() const = 0;
-  virtual void SetAcceptLangs(const std::string& langs) = 0;
-
-  virtual std::string GetProduct() const = 0;
-  virtual void SetProduct(const std::string& product) = 0;
 
   virtual std::string GetUserAgent() const = 0;
-  virtual void SetUserAgent(const std::string& user_agent) = 0;
 
   virtual bool IsOffTheRecord() const = 0;
 
-  void Init(content::ProtocolHandlerMap& protocol_handlers);
+  URLRequestContext* CreateMainRequestContext(
+      content::ProtocolHandlerMap& protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors);
 
-  URLRequestContext* GetMainRequestContext();
   content::ResourceContext* GetResourceContext();
+
+  bool CanAccessCookies(const GURL& url,
+                        const GURL& first_party_url,
+                        bool write);
 
  protected:
   BrowserContextIOData();
 
-  mutable base::Lock lock_;
-  bool initialized_;
-
  private:
+  friend class BrowserContext;
+
+  void SetDelegate(BrowserContextDelegate* delegate);
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
+
+  base::Lock delegate_lock_;
+  scoped_refptr<BrowserContextDelegate> delegate_;
+
+  base::Lock cookie_policy_lock_;
+  net::StaticCookiePolicy cookie_policy_;
+
+  scoped_refptr<net::SSLConfigService> ssl_config_service_;
+  scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
+  scoped_ptr<net::FtpNetworkLayer> ftp_transaction_factory_;
+  scoped_ptr<net::HttpServerProperties> http_server_properties_;
+  scoped_ptr<net::NetworkDelegate> network_delegate_;
+
+  scoped_ptr<net::TransportSecurityState> transport_security_state_;
+  scoped_ptr<net::TransportSecurityPersister> transport_security_persister_;
+
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
 };
 
-class BrowserContext : public content::BrowserContext {
+class BrowserContext : public content::BrowserContext,
+                       public base::RefCounted<BrowserContext> {
  public:
+
+  struct Params {
+    Params(const base::FilePath& path,
+           const base::FilePath& cache_path) :
+        path(path), cache_path(path) {}
+
+    base::FilePath path;
+    base::FilePath cache_path;
+  };
+
   virtual ~BrowserContext();
 
   static BrowserContext* FromContent(
@@ -95,8 +138,7 @@ class BrowserContext : public content::BrowserContext {
   // The caller must ensure that it outlives any other consumers (ie,
   // WebView's), and must ensure that it is destroyed before all
   // references to the BrowserProcessMain have been released
-  static BrowserContext* Create(const base::FilePath& path,
-                                const base::FilePath& cache_path);
+  static BrowserContext* Create(const Params& params);
 
   static std::vector<BrowserContext *>& GetAllContexts();
 
@@ -104,7 +146,10 @@ class BrowserContext : public content::BrowserContext {
   static void AssertNoContextsExist();
 
   net::URLRequestContextGetter* CreateRequestContext(
-      content::ProtocolHandlerMap* protocol_handlers);
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::ProtocolHandlerScopedVector protocol_interceptors);
+
+  void SetDelegate(BrowserContextDelegate* delegate);
 
   virtual BrowserContext* GetOffTheRecordContext() = 0;
   virtual BrowserContext* GetOriginalContext() = 0;
@@ -117,67 +162,27 @@ class BrowserContext : public content::BrowserContext {
   base::FilePath GetCachePath() const;
 
   std::string GetAcceptLangs() const;
-  void SetAcceptLangs(const std::string& langs);
+  virtual void SetAcceptLangs(const std::string& langs) = 0;
 
-  std::string GetProduct() const;
-  void SetProduct(const std::string& product);
+  virtual std::string GetProduct() const = 0;
+  virtual void SetProduct(const std::string& product) = 0;
 
-  std::string GetUserAgent() const;
-  void SetUserAgent(const std::string& user_agent);
+  virtual std::string GetUserAgent() const;
+  virtual void SetUserAgent(const std::string& user_agent) = 0;
 
-  BrowserContextIOData* io_data() const { return io_data_.io_data(); }
+  net::StaticCookiePolicy::Type GetCookiePolicy() const;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
+
+  BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 
   virtual UserScriptMaster& UserScriptManager() = 0;
 
-  virtual net::URLRequestContextGetter* GetRequestContext() OVERRIDE;
-  virtual net::URLRequestContextGetter* GetRequestContextForRenderProcess(
-      int renderer_child_id) OVERRIDE;
-
-  virtual net::URLRequestContextGetter* GetMediaRequestContext() OVERRIDE;
-  virtual net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
-      int renderer_child_id) OVERRIDE;
-
-  virtual net::URLRequestContextGetter*
-      GetMediaRequestContextForStoragePartition(
-          const base::FilePath& partition_path,
-          bool in_memory) OVERRIDE;
-
-  virtual void RequestMidiSysExPermission(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      const GURL& requesting_frame,
-      const MidiSysExPermissionCallback& callback) OVERRIDE;
-
-  virtual void CancelMidiSysExPermissionRequest(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      const GURL& requesting_frame) OVERRIDE;
-
-  virtual void RequestProtectedMediaIdentifierPermission(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      int group_id,
-      const GURL& requesting_frame,
-      const ProtectedMediaIdentifierPermissionCallback& callback) OVERRIDE;
-
-  virtual void CancelProtectedMediaIdentifierPermissionRequests(
-      int group_id) OVERRIDE;
-
-  virtual content::ResourceContext* GetResourceContext() OVERRIDE;
-
-  virtual content::DownloadManagerDelegate*
-      GetDownloadManagerDelegate() OVERRIDE;
-
-  virtual content::GeolocationPermissionContext*
-      GetGeolocationPermissionContext() OVERRIDE;
-
-  virtual quota::SpecialStoragePolicy* GetSpecialStoragePolicy() OVERRIDE;
+  content::ResourceContext* GetResourceContext() FINAL;
 
  protected:
   BrowserContext(BrowserContextIOData* io_data);
+
+  void OnUserAgentChanged();
 
  private:
   friend class BrowserContextObserver;
@@ -189,42 +194,119 @@ class BrowserContext : public content::BrowserContext {
 
     BrowserContextIOData* io_data() const { return io_data_; }
 
-    bool IsOffTheRecord() const { return io_data_->IsOffTheRecord(); }
-
-    base::FilePath GetPath() const { return io_data_->GetPath(); }
-    base::FilePath GetCachePath() const { return io_data_->GetCachePath(); }
-
-    std::string GetAcceptLangs() const { return io_data_->GetAcceptLangs(); }
-    void SetAcceptLangs(const std::string& langs) {
-      io_data_->SetAcceptLangs(langs);
-    }
-
-    std::string GetProduct() const { return io_data_->GetProduct(); }
-    void SetProduct(const std::string& product) {
-      io_data_->SetProduct(product);
-    }
-
-    std::string GetUserAgent() const { return io_data_->GetUserAgent(); }
-    void SetUserAgent(const std::string& user_agent) {
-      io_data_->SetUserAgent(user_agent);
-    }
-
-    content::ResourceContext* GetResourceContext() {
-      return io_data_->GetResourceContext();
-    }
-
    private:
     BrowserContextIOData* io_data_;
   };
 
+  net::URLRequestContextGetter* GetRequestContext() FINAL;
+  net::URLRequestContextGetter* GetRequestContextForRenderProcess(
+      int renderer_child_id) FINAL;
+
+  net::URLRequestContextGetter* GetMediaRequestContext() FINAL;
+  net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
+      int renderer_child_id) FINAL;
+
+  net::URLRequestContextGetter*
+      GetMediaRequestContextForStoragePartition(
+          const base::FilePath& partition_path,
+          bool in_memory) FINAL;
+
+  void RequestMidiSysExPermission(
+      int render_process_id,
+      int render_view_id,
+      int bridge_id,
+      const GURL& requesting_frame,
+      const MidiSysExPermissionCallback& callback) FINAL;
+
+  void CancelMidiSysExPermissionRequest(
+      int render_process_id,
+      int render_view_id,
+      int bridge_id,
+      const GURL& requesting_frame) FINAL;
+
+  void RequestProtectedMediaIdentifierPermission(
+      int render_process_id,
+      int render_view_id,
+      int bridge_id,
+      int group_id,
+      const GURL& requesting_frame,
+      const ProtectedMediaIdentifierPermissionCallback& callback) FINAL;
+
+  void CancelProtectedMediaIdentifierPermissionRequests(
+      int group_id) FINAL;
+
+  content::DownloadManagerDelegate* GetDownloadManagerDelegate() FINAL;
+
+  content::GeolocationPermissionContext*
+      GetGeolocationPermissionContext() FINAL;
+
+  quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
+
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
 
-  IODataHandle io_data_;
+  IODataHandle io_data_handle_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
+};
+
+class ScopedBrowserContext FINAL {
+ public:
+  ScopedBrowserContext() :
+      context_(NULL),
+      ref_context_(NULL) {}
+  ScopedBrowserContext(BrowserContext* context) :
+      context_(context),
+      ref_context_(context ? context->GetOriginalContext() : NULL) {
+    if (ref_context_) {
+      ref_context_->AddRef();
+    }
+  }
+  ScopedBrowserContext(const ScopedBrowserContext& other) :
+      context_(other.context_),
+      ref_context_(other.ref_context_) {
+    if (ref_context_) {
+      ref_context_->AddRef();
+    }
+  }
+
+  ~ScopedBrowserContext() {
+    if (ref_context_) {
+      ref_context_->Release();
+    }
+  }
+
+  BrowserContext* get() const { return context_; }
+  operator BrowserContext*() const { return context_; }
+  BrowserContext* operator->() const {
+    assert(context_);
+    return context_;
+  }
+
+  ScopedBrowserContext& operator=(BrowserContext* context) {
+    BrowserContext* ref_context = context ? context->GetOriginalContext() : NULL;
+    if (ref_context) {
+      ref_context->AddRef();
+    }
+    BrowserContext* old = ref_context_;
+    context_ = context;
+    ref_context_ = ref_context;
+    if (old) {
+      old->Release();
+    }
+    return *this;
+  }
+
+  ScopedBrowserContext& operator=(const ScopedBrowserContext& other) {
+    *this = other.get();
+    return *this;
+  }
+
+ private:
+  BrowserContext* context_;
+  BrowserContext* ref_context_;
 };
 
 } // namespace oxide

@@ -225,13 +225,13 @@ void PopupMenuContext::cancel() {
 } // namespace
 
 WebPopupMenuDelegate::WebPopupMenuDelegate(OxideQQuickWebView* webview) :
-    web_view_(webview),
-    popup_component_(webview->popupMenu()) {}
+    web_view_(webview) {}
 
 void WebPopupMenuDelegate::Show(const QRect& bounds,
                                 QList<oxide::qt::MenuItem>& items,
                                 bool allow_multiple_selection) {
-  if (!popup_component_) {
+  QQmlComponent* popup_component = web_view_->popupMenu();
+  if (!popup_component) {
     qWarning() << "Content requested a popup menu, but the application hasn't provided one";
     Cancel();
     return;
@@ -240,7 +240,7 @@ void WebPopupMenuDelegate::Show(const QRect& bounds,
   PopupMenuContext* contextObject =
       new PopupMenuContext(this, bounds, items, allow_multiple_selection);
 
-  QQmlContext* baseContext = popup_component_->creationContext();
+  QQmlContext* baseContext = popup_component->creationContext();
   if (!baseContext) {
     baseContext = QQmlEngine::contextForObject(web_view_);
   }
@@ -251,7 +251,7 @@ void WebPopupMenuDelegate::Show(const QRect& bounds,
   contextObject->setParent(popup_context_.data());
 
   popup_item_.reset(qobject_cast<QQuickItem *>(
-      popup_component_->beginCreate(popup_context_.data())));
+      popup_component->beginCreate(popup_context_.data())));
   if (!popup_item_) {
     qWarning() << "Failed to create popup";
     Cancel();
@@ -262,7 +262,13 @@ void WebPopupMenuDelegate::Show(const QRect& bounds,
       popup_item_.data());
   popup_item_->setParentItem(web_view_);
 
-  popup_component_->completeCreate();
+  popup_component->completeCreate();
+}
+
+void WebPopupMenuDelegate::Hide() {
+  if (popup_item_) {
+    popup_item_->setVisible(false);
+  }
 }
 
 } // namespace qquick
