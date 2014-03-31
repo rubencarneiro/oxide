@@ -1,0 +1,16 @@
+<html>
+<body>
+  <p id="result"></p>
+  <p id="value"></p>
+  <script>
+    var result = prompt("JavaScript prompt dialog", "default value");
+    if (result != null) {
+      document.querySelector("#result").innerHTML = "OK";
+      document.querySelector("#value").innerHTML = result.toUpperCase();
+    } else {
+      document.querySelector("#result").innerHTML = "NOK";
+      document.querySelector("#value").innerHTML = "";
+    }
+  </script>
+</body>
+</html>

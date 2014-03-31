@@ -20,6 +20,7 @@
 #include <QString>
 #include <QUrl>
 
+#include "base/strings/utf_string_conversions.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqloadevent.h"
@@ -28,9 +29,9 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
-#include "qt/core/glue/oxide_qt_web_frame_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
+#include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
 
@@ -77,12 +78,39 @@ oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
   return new WebPopupMenu(adapter_->CreateWebPopupMenuDelegate(), rvh);
 }
 
+oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  JavaScriptDialogDelegate::Type type;
+  switch (javascript_message_type) {
+  case content::JAVASCRIPT_MESSAGE_TYPE_ALERT:
+    type = JavaScriptDialogDelegate::TypeAlert;
+    break;
+  case content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM:
+    type = JavaScriptDialogDelegate::TypeConfirm;
+    break;
+  case content::JAVASCRIPT_MESSAGE_TYPE_PROMPT:
+    type = JavaScriptDialogDelegate::TypePrompt;
+    break;
+  default:
+    Q_UNREACHABLE();
+  }
+  JavaScriptDialogDelegate* delegate = adapter_->CreateJavaScriptDialogDelegate(type);
+  return new JavaScriptDialog(delegate, did_suppress_message);
+}
+
+oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
+  JavaScriptDialogDelegate* delegate = adapter_->CreateBeforeUnloadDialogDelegate();
+  bool did_suppress_message = false;
+  return new JavaScriptDialog(delegate, &did_suppress_message);
+}
+
 void WebView::FrameAdded(oxide::WebFrame* frame) {
-  adapter_->FrameAdded(static_cast<WebFrame *>(frame)->GetAdapter());
+  adapter_->FrameAdded(static_cast<WebFrame *>(frame)->adapter());
 }
 
 void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  adapter_->FrameRemoved(static_cast<WebFrame *>(frame)->GetAdapter());
+  adapter_->FrameRemoved(static_cast<WebFrame *>(frame)->adapter());
 }
 
 bool WebView::CanCreateWindows() const {

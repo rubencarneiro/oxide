@@ -28,6 +28,11 @@
 #include <QSize>
 #include <QtQml>
 
+#include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
 #include "oxideqquickscriptmessagehandler_p.h"
@@ -59,13 +64,41 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     load_progress_(0),
     constructed_(false),
     navigation_history_(view),
-    popup_menu_(NULL) {}
+    popup_menu_(NULL),
+    alert_dialog_(NULL),
+    confirm_dialog_(NULL),
+    prompt_dialog_(NULL),
+    before_unload_dialog_(NULL) {}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
   Q_Q(OxideQQuickWebView);
 
   return new oxide::qquick::WebPopupMenuDelegate(q);
+}
+
+oxide::qt::JavaScriptDialogDelegate*
+OxideQQuickWebViewPrivate::CreateJavaScriptDialogDelegate(
+    oxide::qt::JavaScriptDialogDelegate::Type type) {
+  Q_Q(OxideQQuickWebView);
+
+  switch (type) {
+  case oxide::qt::JavaScriptDialogDelegate::TypeAlert:
+    return new oxide::qquick::AlertDialogDelegate(q);
+  case oxide::qt::JavaScriptDialogDelegate::TypeConfirm:
+    return new oxide::qquick::ConfirmDialogDelegate(q);
+  case oxide::qt::JavaScriptDialogDelegate::TypePrompt:
+    return new oxide::qquick::PromptDialogDelegate(q);
+  default:
+    Q_UNREACHABLE();
+  }
+}
+
+oxide::qt::JavaScriptDialogDelegate*
+OxideQQuickWebViewPrivate::CreateBeforeUnloadDialogDelegate() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::BeforeUnloadDialogDelegate(q);
 }
 
 void OxideQQuickWebViewPrivate::OnInitialized(
@@ -531,6 +564,75 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
 
   d->popup_menu_ = popup_menu;
   emit popupMenuChanged();
+}
+
+QQmlComponent* OxideQQuickWebView::alertDialog() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->alert_dialog_;
+}
+
+void OxideQQuickWebView::setAlertDialog(QQmlComponent* alert_dialog) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->alert_dialog_ == alert_dialog) {
+    return;
+  }
+
+  d->alert_dialog_ = alert_dialog;
+  emit alertDialogChanged();
+}
+
+QQmlComponent* OxideQQuickWebView::confirmDialog() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->confirm_dialog_;
+}
+
+void OxideQQuickWebView::setConfirmDialog(QQmlComponent* confirm_dialog) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->confirm_dialog_ == confirm_dialog) {
+    return;
+  }
+
+  d->confirm_dialog_ = confirm_dialog;
+  emit confirmDialogChanged();
+}
+
+QQmlComponent* OxideQQuickWebView::promptDialog() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->prompt_dialog_;
+}
+
+void OxideQQuickWebView::setPromptDialog(QQmlComponent* prompt_dialog) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->prompt_dialog_ == prompt_dialog) {
+    return;
+  }
+
+  d->prompt_dialog_ = prompt_dialog;
+  emit promptDialogChanged();
+}
+
+QQmlComponent* OxideQQuickWebView::beforeUnloadDialog() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->before_unload_dialog_;
+}
+
+void OxideQQuickWebView::setBeforeUnloadDialog(
+    QQmlComponent* before_unload_dialog) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->before_unload_dialog_ == before_unload_dialog) {
+    return;
+  }
+
+  d->before_unload_dialog_ = before_unload_dialog;
+  emit beforeUnloadDialogChanged();
 }
 
 OxideQQuickWebContext* OxideQQuickWebView::context() const {

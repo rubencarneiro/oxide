@@ -26,10 +26,13 @@
 #include "base/compiler_specific.h"
 #include "base/memory/linked_ptr.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
+#include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
+#include "content/public/common/javascript_message_type.h"
 #include "ui/gfx/rect.h"
 
 #include "shared/browser/oxide_browser_context.h"
@@ -46,7 +49,9 @@ class Size;
 
 namespace content {
 
+class FrameTree;
 class FrameTreeNode;
+struct MenuItem;
 class NotificationRegistrar;
 struct OpenURLParams;
 class WebContents;
@@ -57,6 +62,7 @@ class WebContentsImpl;
 namespace oxide {
 
 class BrowserContext;
+class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
@@ -109,18 +115,28 @@ class WebView : public ScriptMessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
+  content::FrameTree* GetFrameTree();
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
 
   virtual gfx::Rect GetContainerBounds() = 0;
 
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
+  virtual JavaScriptDialog* CreateJavaScriptDialog(
+      content::JavaScriptMessageType javascript_message_type,
+      bool* did_suppress_message);
+  virtual JavaScriptDialog* CreateBeforeUnloadDialog();
 
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
 
   virtual bool CanCreateWindows() const;
+
+  void ShowPopupMenu(const gfx::Rect& bounds,
+                     int selected_item,
+                     const std::vector<content::MenuItem>& items,
+                     bool allow_multiple_selection);
+  void HidePopupMenu();
 
  protected:
 
@@ -177,6 +193,7 @@ class WebView : public ScriptMessageTarget,
                       bool user_gesture,
                       bool* was_blocked) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
 
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -252,6 +269,7 @@ class WebView : public ScriptMessageTarget,
   virtual void OnWebPreferencesChanged();
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
+  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
   virtual WebView* CreateNewWebView(const GURL& target_url,
                                     const gfx::Rect& initial_pos,
@@ -261,7 +279,8 @@ class WebView : public ScriptMessageTarget,
   ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
   content::NotificationRegistrar registrar_;
-  scoped_ptr<WebFrame> root_frame_;
+  WebFrame* root_frame_;
+  base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   class PendingContents;
   typedef std::map<content::WebContents*, linked_ptr<PendingContents> > PendingContentsMap;

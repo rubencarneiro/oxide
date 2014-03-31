@@ -135,7 +135,7 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
     return NULL;
   }
 
-  return frame->GetAdapter();
+  return frame->adapter();
 }
 
 WebContextAdapter* WebViewAdapter::context() const {

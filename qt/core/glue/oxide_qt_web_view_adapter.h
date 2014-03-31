@@ -27,6 +27,7 @@
 #include <QUrl>
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
+#include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
 class QSize;
@@ -116,6 +117,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void WebPreferencesChanged();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
+  virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
+      JavaScriptDialogDelegate::Type type) = 0;
+  virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;
 
   virtual void OnInitialized(bool orig_incognito,
                              WebContextAdapter* orig_context) = 0;

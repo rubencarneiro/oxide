@@ -37,6 +37,7 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_view.h"
+#include "content/public/common/menu_item.h"
 #include "net/base/net_errors.h"
 #include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
@@ -46,9 +47,11 @@
 
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
+#include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
 
 namespace oxide {
@@ -249,7 +252,7 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
       GetWebContents()->GetView()->GetContainerSize());
 
   while (root_frame_->ChildCount() > 0) {
-    delete root_frame_->ChildAt(0);
+    root_frame_->ChildAt(0)->Destroy();
   }
 }
 
@@ -350,7 +353,7 @@ void WebView::FrameDetached(content::RenderViewHost* rvh,
   DCHECK(node);
 
   WebFrame* frame = WebFrame::FromFrameTreeNode(node);
-  delete frame;
+  frame->Destroy();
 }
 
 void WebView::FrameAttached(content::RenderViewHost* rvh,
@@ -412,6 +415,10 @@ void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
 
+WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
+  return NULL;
+}
+
 WebView* WebView::CreateNewWebView(const GURL& target_url,
                                    const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition,
@@ -419,7 +426,8 @@ WebView* WebView::CreateNewWebView(const GURL& target_url,
   return NULL;
 }
 
-WebView::WebView() {}
+WebView::WebView() :
+    root_frame_(NULL) {}
 
 bool WebView::Init(const Params& params) {
   CHECK(params.context);
@@ -461,12 +469,15 @@ bool WebView::Init(const Params& params) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_.reset(CreateWebFrame(web_contents_->GetFrameTree()->root()));
+  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
   return true;
 }
 
 WebView::~WebView() {
+  if (root_frame_) {
+    root_frame_->Destroy();
+  }
   if (web_contents_) {
     web_contents_->SetDelegate(NULL);
   }
@@ -637,7 +648,11 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_.get();
+  return root_frame_;
+}
+
+content::FrameTree* WebView::GetFrameTree() {
+  return web_contents_->GetFrameTree();
 }
 
 WebPreferences* WebView::GetWebPreferences() {
@@ -654,7 +669,13 @@ void WebView::SetWebPreferences(WebPreferences* prefs) {
   WebPreferencesValueChanged();
 }
 
-WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
+JavaScriptDialog* WebView::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  return NULL;
+}
+
+JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return NULL;
 }
 
@@ -663,6 +684,34 @@ void WebView::FrameRemoved(WebFrame* frame) {}
 
 bool WebView::CanCreateWindows() const {
   return false;
+}
+
+void WebView::ShowPopupMenu(const gfx::Rect& bounds,
+                            int selected_item,
+                            const std::vector<content::MenuItem>& items,
+                            bool allow_multiple_selection) {
+  DCHECK(!active_popup_menu_ || active_popup_menu_->WasHidden());
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  WebPopupMenu* menu = CreatePopupMenu(rvh);
+  if (!menu) {
+    static_cast<content::RenderViewHostImpl *>(rvh)->DidCancelPopupMenu();
+    return;
+  }
+
+  active_popup_menu_ = menu->AsWeakPtr();
+
+  menu->Show(bounds, items, selected_item, allow_multiple_selection);
+}
+
+void WebView::HidePopupMenu() {
+  if (active_popup_menu_ && !active_popup_menu_->WasHidden()) {
+    active_popup_menu_->Hide();
+  }
+}
+
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+  return JavaScriptDialogManager::GetInstance();
 }
 
 } // namespace oxide

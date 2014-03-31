@@ -39,7 +39,7 @@ class WebPopupMenu FINAL : public oxide::WebPopupMenu {
             const std::vector<content::MenuItem>& items,
             int selected_item,
             bool allow_multiple_selection) FINAL;
-  void Hide() FINAL;
+  void OnHide() FINAL;
 
   scoped_ptr<WebPopupMenuDelegate> delegate_;
 

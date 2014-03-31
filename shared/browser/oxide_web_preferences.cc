@@ -54,7 +54,6 @@ WebPreferences::WebPreferences() :
 
   SetAttribute(ATTR_REMOTE_FONTS_ENABLED, true);
   SetAttribute(ATTR_JAVASCRIPT_ENABLED, true);
-  SetAttribute(ATTR_WEB_SECURITY_ENABLED, true);
 
   // ATTR_ALLOW_SCRIPTS_TO_CLOSE_WINDOWS
   // ATTR_JAVASCRIPT_CAN_ACCESS_CLIPBOARD
@@ -80,7 +79,6 @@ WebPreferences::WebPreferences() :
 
   // ATTR_CARET_BROWSING_ENABLED
 
-  SetAttribute(ATTR_SMOOTH_SCROLLING_ENABLED, true);
   SetAttribute(ATTR_TOUCH_ENABLED, true);
 }
 
@@ -208,7 +206,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->remote_fonts_enabled = attributes_[ATTR_REMOTE_FONTS_ENABLED];
 
   prefs->javascript_enabled = attributes_[ATTR_JAVASCRIPT_ENABLED];
-  prefs->web_security_enabled = attributes_[ATTR_WEB_SECURITY_ENABLED];
   prefs->allow_scripts_to_close_windows =
       attributes_[ATTR_ALLOW_SCRIPTS_TO_CLOSE_WINDOWS];
   prefs->javascript_can_access_clipboard =
@@ -239,8 +236,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
 
   prefs->tabs_to_links = attributes_[ATTR_TABS_TO_LINKS];
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
-
-  prefs->enable_scroll_animator = attributes_[ATTR_SMOOTH_SCROLLING_ENABLED];
 
   prefs->touch_enabled = attributes_[ATTR_TOUCH_ENABLED];
 }

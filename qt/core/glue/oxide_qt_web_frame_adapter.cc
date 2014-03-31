@@ -16,7 +16,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_web_frame_adapter.h"
-#include "oxide_qt_web_frame_adapter_p.h"
 
 #include <QJsonDocument>
 #include <QString>
@@ -31,24 +30,14 @@
 namespace oxide {
 namespace qt {
 
-WebFrameAdapterPrivate::WebFrameAdapterPrivate() :
-    owner(NULL) {}
-
-WebFrameAdapterPrivate::~WebFrameAdapterPrivate() {}
-
-// static
-WebFrameAdapterPrivate* WebFrameAdapterPrivate::get(WebFrameAdapter* adapter) {
-  return adapter->priv.data();
-}
-
 WebFrameAdapter::WebFrameAdapter(QObject* q) :
     AdapterBase(q),
-    priv(new WebFrameAdapterPrivate()) {}
+    owner_(NULL) {}
 
 WebFrameAdapter::~WebFrameAdapter() {}
 
 QUrl WebFrameAdapter::url() const {
-  return QUrl(QString::fromStdString(priv->owner->url().spec()));
+  return QUrl(QString::fromStdString(owner_->url().spec()));
 }
 
 bool WebFrameAdapter::sendMessage(const QUrl& context,
@@ -58,9 +47,9 @@ bool WebFrameAdapter::sendMessage(const QUrl& context,
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
   oxide::ScriptMessageRequestImplBrowser* smrib =
-      priv->owner->SendMessage(GURL(context.toString().toStdString()),
-                               msg_id.toStdString(),
-                               QString(jsondoc.toJson()).toStdString());
+      owner_->SendMessage(GURL(context.toString().toStdString()),
+                          msg_id.toStdString(),
+                          QString(jsondoc.toJson()).toStdString());
   if (!smrib) {
     return false;
   }
@@ -75,7 +64,7 @@ void WebFrameAdapter::sendMessageNoReply(const QUrl& context,
                                          const QVariant& args) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
-  priv->owner->SendMessageNoReply(
+  owner_->SendMessageNoReply(
       GURL(context.toString().toStdString()),
       msg_id.toStdString(),
       QString(jsondoc.toJson()).toStdString());

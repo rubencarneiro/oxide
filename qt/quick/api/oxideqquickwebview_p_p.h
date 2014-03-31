@@ -52,6 +52,9 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
+  oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
+      oxide::qt::JavaScriptDialogDelegate::Type type) Q_DECL_FINAL;
+  oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() Q_DECL_FINAL;
 
   void OnInitialized(bool orig_incognito,
                      oxide::qt::WebContextAdapter* orig_context) Q_DECL_FINAL;
@@ -105,6 +108,11 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   bool constructed_;
   OxideQQuickNavigationHistory navigation_history_;
   QQmlComponent* popup_menu_;
+  QQmlComponent* alert_dialog_;
+  QQmlComponent* confirm_dialog_;
+  QQmlComponent* prompt_dialog_;
+  QQmlComponent* before_unload_dialog_;
+
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

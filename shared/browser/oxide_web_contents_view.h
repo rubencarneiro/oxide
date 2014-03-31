@@ -30,7 +30,6 @@ class WebContents;
 
 namespace oxide {
 
-class WebPopupMenu;
 class WebView;
 
 class WebContentsView FINAL : public content::WebContentsViewPort,
@@ -81,11 +80,10 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
                      const std::vector<content::MenuItem>& items,
                      bool right_aligned,
                      bool allow_multiple_selection) FINAL;
-  void PopupDone();
+  void HidePopupMenu() FINAL;
 
  private:
   content::WebContents* web_contents_;
-  base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);
 };
