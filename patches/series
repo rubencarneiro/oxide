@@ -10,7 +10,7 @@ dont-check-number-of-threads-at-startup.patch
 enable-glx-on-ozone.patch
 dont-depend-on-gtk.patch
 arm-neon.patch
-dont-use-egl-create-context-robustness.patch
+dont-use-gl-create-context-robustness.patch
 add-frame-attached-to-web-contents-observer.patch
 dont-force-enable-software-compositor.patch
 dont-initialize-gl-more-than-once.patch
