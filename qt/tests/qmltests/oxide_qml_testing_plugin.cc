@@ -115,9 +115,9 @@ class OxideQmlTestingPlugin : public QQmlExtensionPlugin {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide.Testing"));
 
     qmlRegisterSingletonType<OxideTestingUtils>(
-        uri, 0, 1, "OxideTestingUtils", UtilsFactory);
+        uri, 1, 0, "OxideTestingUtils", UtilsFactory);
     qmlRegisterUncreatableType<DestructionObserver>(
-        uri, 0, 1, "DestructionObserver",
+        uri, 1, 0, "DestructionObserver",
         "Create this with OxideTestingUtils.createDestructionObserver()");
   }
 };
