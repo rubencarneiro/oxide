@@ -64,7 +64,10 @@ class BrowserContextIOData {
 
   scoped_refptr<BrowserContextDelegate> GetDelegate();
 
-  net::StaticCookiePolicy::Type GetCookiePolicy() const;
+  virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
+  virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
+
+  virtual bool IsPopupBlockerEnabled() const = 0;
 
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
@@ -92,13 +95,9 @@ class BrowserContextIOData {
   friend class BrowserContext;
 
   void SetDelegate(BrowserContextDelegate* delegate);
-  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
   base::Lock delegate_lock_;
   scoped_refptr<BrowserContextDelegate> delegate_;
-
-  base::Lock cookie_policy_lock_;
-  net::StaticCookiePolicy cookie_policy_;
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
@@ -149,6 +148,7 @@ class BrowserContext : public content::BrowserContext,
       content::ProtocolHandlerMap* protocol_handlers,
       content::ProtocolHandlerScopedVector protocol_interceptors);
 
+  BrowserContextDelegate* GetDelegate() const;
   void SetDelegate(BrowserContextDelegate* delegate);
 
   virtual BrowserContext* GetOffTheRecordContext() = 0;
@@ -173,6 +173,9 @@ class BrowserContext : public content::BrowserContext,
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
+  bool IsPopupBlockerEnabled() const;
+  virtual void SetIsPopupBlockerEnabled(bool enabled) = 0;
+
   BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 
   virtual UserScriptMaster& UserScriptManager() = 0;
@@ -183,6 +186,7 @@ class BrowserContext : public content::BrowserContext,
   BrowserContext(BrowserContextIOData* io_data);
 
   void OnUserAgentChanged();
+  void OnPopupBlockerEnabledChanged();
 
  private:
   friend class BrowserContextObserver;

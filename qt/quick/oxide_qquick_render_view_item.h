@@ -28,9 +28,13 @@ QT_BEGIN_NAMESPACE
 class QPixmap;
 QT_END_NAMESPACE
 
-class OxideQQuickWebView;
 
 namespace oxide {
+
+namespace qt {
+class WebViewAdapter;
+}
+
 namespace qquick {
 
 class RenderViewItem Q_DECL_FINAL :
@@ -39,7 +43,9 @@ class RenderViewItem Q_DECL_FINAL :
   Q_OBJECT
 
  public:
-  RenderViewItem(OxideQQuickWebView* webview);
+  RenderViewItem();
+
+  void Init(oxide::qt::WebViewAdapter* view) Q_DECL_FINAL;
 
   void Blur() Q_DECL_FINAL;
   void Focus() Q_DECL_FINAL;

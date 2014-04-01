@@ -23,8 +23,9 @@
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
+#include "qt/quick/api/oxideqquickwebcontext_p.h"
+
 class OxideQQuickWebContextDelegateWorker;
-class OxideQQuickWebContext;
 class OxideQQuickUserScript;
 
 QT_BEGIN_NAMESPACE
@@ -78,8 +79,6 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       OxideQQuickWebContextDelegateWorker* worker,
       OxideQQuickWebContextDelegateWorker** ui_slot,
       oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot);
-
-  OxideQQuickWebContext* q_ptr;
 
   oxide::qquick::WebContextIOThreadDelegate* io_thread_delegate_;
 

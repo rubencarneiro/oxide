@@ -54,7 +54,6 @@ WebPreferences::WebPreferences() :
 
   SetAttribute(ATTR_REMOTE_FONTS_ENABLED, true);
   SetAttribute(ATTR_JAVASCRIPT_ENABLED, true);
-  SetAttribute(ATTR_POPUP_BLOCKER_ENABLED, true);
 
   // ATTR_ALLOW_SCRIPTS_TO_CLOSE_WINDOWS
   // ATTR_JAVASCRIPT_CAN_ACCESS_CLIPBOARD
@@ -81,8 +80,6 @@ WebPreferences::WebPreferences() :
   // ATTR_CARET_BROWSING_ENABLED
 
   SetAttribute(ATTR_TOUCH_ENABLED, true);
-
-  // ATTR_SUPPORTS_MULTIPLE_WINDOWS
 }
 
 WebPreferences::~WebPreferences() {
@@ -186,13 +183,6 @@ void WebPreferences::SetAttribute(Attr attr, bool val) {
     return;
   }
 
-  if (attr == ATTR_SUPPORTS_MULTIPLE_WINDOWS && val) {
-    LOG(WARNING) <<
-        "Oxide currently doesn't support window.open(). "
-        "See https://launchpad.net/bugs/1240749";
-    return;
-  }
-
   attributes_[attr] = val;
   NotifyObserversOfChange();
 }
@@ -216,8 +206,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->remote_fonts_enabled = attributes_[ATTR_REMOTE_FONTS_ENABLED];
 
   prefs->javascript_enabled = attributes_[ATTR_JAVASCRIPT_ENABLED];
-  prefs->javascript_can_open_windows_automatically =
-      !attributes_[ATTR_POPUP_BLOCKER_ENABLED];
   prefs->allow_scripts_to_close_windows =
       attributes_[ATTR_ALLOW_SCRIPTS_TO_CLOSE_WINDOWS];
   prefs->javascript_can_access_clipboard =
@@ -250,8 +238,6 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
 
   prefs->touch_enabled = attributes_[ATTR_TOUCH_ENABLED];
-
-  prefs->supports_multiple_windows = attributes_[ATTR_SUPPORTS_MULTIPLE_WINDOWS];
 }
 
 } // namespace oxide

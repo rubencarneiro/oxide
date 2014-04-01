@@ -40,7 +40,6 @@ class WebPreferences {
     ATTR_REMOTE_FONTS_ENABLED,
 
     ATTR_JAVASCRIPT_ENABLED,
-    ATTR_POPUP_BLOCKER_ENABLED,
     ATTR_ALLOW_SCRIPTS_TO_CLOSE_WINDOWS,
     ATTR_JAVASCRIPT_CAN_ACCESS_CLIPBOARD,
 
@@ -64,7 +63,6 @@ class WebPreferences {
     ATTR_CARET_BROWSING_ENABLED, // Not used anywhere in Chrome. Consider removing
 
     ATTR_TOUCH_ENABLED,
-    ATTR_SUPPORTS_MULTIPLE_WINDOWS, // Should get rid of this
 
     ATTR_LAST
   };

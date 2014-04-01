@@ -15,11 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_VIEW_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_VIEW_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
+#define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/weak_ptr.h"
 
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
@@ -29,16 +30,23 @@ namespace qt {
 
 class WebViewAdapter;
 
-class WebViewAdapterPrivate FINAL : public oxide::WebView {
+class WebView FINAL : public oxide::WebView,
+                      public base::SupportsWeakPtr<WebView> {
  public:
-  static WebViewAdapterPrivate* Create(WebViewAdapter* adapter);
+  static WebView* Create(WebViewAdapter* adapter);
+
+  WebViewAdapter* adapter() const { return adapter_; }
+
+ private:
+  friend class WebViewAdapter;
+
+  WebView(WebViewAdapter* adapter);
+
+  bool Init(const oxide::WebView::Params& params) FINAL;
 
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const FINAL;
-
-  content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
 
   gfx::Rect GetContainerBounds() FINAL;
 
@@ -52,8 +60,7 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
   void FrameAdded(oxide::WebFrame* frame) FINAL;
   void FrameRemoved(oxide::WebFrame* frame) FINAL;
 
- private:
-  WebViewAdapterPrivate(WebViewAdapter* adapter);
+  bool CanCreateWindows() const FINAL;
 
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
@@ -75,14 +82,23 @@ class WebViewAdapterPrivate FINAL : public oxide::WebView {
 
   void OnWebPreferencesChanged() FINAL;
 
+  bool ShouldHandleNavigation(const GURL& url,
+                              WindowOpenDisposition disposition,
+                              bool user_gesture) FINAL;
+
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
 
-  WebViewAdapter* a;
+  oxide::WebView* CreateNewWebView(const GURL& target_url,
+                                   const gfx::Rect& initial_pos,
+                                   WindowOpenDisposition disposition,
+                                   bool user_gesture) FINAL;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebViewAdapterPrivate);
+  WebViewAdapter* adapter_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_VIEW_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_

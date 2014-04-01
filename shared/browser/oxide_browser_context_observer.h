@@ -30,6 +30,8 @@ class BrowserContextObserver {
 
   virtual void NotifyUserAgentStringChanged() {}
 
+  virtual void NotifyPopupBlockerEnabledChanged() {}
+
  protected:
   BrowserContextObserver();
 

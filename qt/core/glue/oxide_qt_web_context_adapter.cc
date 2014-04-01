@@ -57,7 +57,10 @@ int GetProcessFlags() {
 
 }
 
-WebContextAdapter::~WebContextAdapter() {}
+WebContextAdapter::~WebContextAdapter() {
+  priv->Destroy();
+  priv->Release();
+}
 
 QString WebContextAdapter::product() const {
   if (priv->context()) {
@@ -220,7 +223,7 @@ void WebContextAdapter::ensureChromiumStarted() {
 
 WebContextAdapter::IOThreadDelegate*
 WebContextAdapter::getIOThreadDelegate() const {
-  return priv->GetIOThreadDelegate();
+  return priv->io_thread_delegate_.get();
 }
 
 WebContextAdapter::CookiePolicy WebContextAdapter::cookiePolicy() const {
@@ -241,8 +244,30 @@ void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
   }
 }
 
-WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
-    priv(new WebContextAdapterPrivate(this, io_delegate)) {
+bool WebContextAdapter::popupBlockerEnabled() const {
+  if (priv->context()) {
+    return priv->context()->IsPopupBlockerEnabled();
+  }
+
+  return priv->construct_props_->popup_blocker_enabled;
+}
+
+void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
+  if (priv->context()) {
+    priv->context()->SetIsPopupBlockerEnabled(enabled);
+  } else {
+    priv->construct_props_->popup_blocker_enabled = enabled;
+  }
+}
+
+WebContextAdapter::WebContextAdapter(
+    QObject* q,
+    IOThreadDelegate* io_delegate,
+    RenderWidgetHostViewDelegateFactory* view_factory) :
+    AdapterBase(q),
+    priv(WebContextAdapterPrivate::Create(this, io_delegate, view_factory)) {
+
+  priv->AddRef();
 
   COMPILE_ASSERT(
       CookiePolicyAllowAll == static_cast<CookiePolicy>(

@@ -32,6 +32,7 @@
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
+#include "qt/quick/oxide_qquick_render_view_item_factory.h"
 
 #include "oxideqquickglobals_p.h"
 #include "oxideqquickglobals_p_p.h"
@@ -134,8 +135,10 @@ class WebContextIOThreadDelegate :
 
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
-    oxide::qt::WebContextAdapter(new oxide::qquick::WebContextIOThreadDelegate()),
-    q_ptr(q),
+    oxide::qt::WebContextAdapter(
+        q,
+        new oxide::qquick::WebContextIOThreadDelegate(),
+        new oxide::qquick::RenderViewItemFactory()),
     io_thread_delegate_(
         static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
     network_request_delegate_(NULL),
@@ -349,6 +352,11 @@ QSharedPointer<OxideQQuickWebContext> OxideQQuickWebContext::defaultContext() {
   return new_context;
 }
 
+// static
+OxideQQuickWebContext* OxideQQuickWebContext::unsafeGetDefaultContext() {
+  return g_default_context.data();
+}
+
 QString OxideQQuickWebContext::product() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -548,6 +556,24 @@ void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
   d->setCookiePolicy(p);
 
   emit cookiePolicyChanged();
+}
+
+bool OxideQQuickWebContext::popupBlockerEnabled() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->popupBlockerEnabled();
+}
+
+void OxideQQuickWebContext::setPopupBlockerEnabled(bool enabled) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->popupBlockerEnabled() == enabled) {
+    return;
+  }
+
+  d->setPopupBlockerEnabled(enabled);
+
+  emit popupBlockerEnabledChanged();
 }
 
 OxideQQuickWebContextDelegateWorker*

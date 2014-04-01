@@ -21,10 +21,11 @@
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
 
+#include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
-#include "qt/core/glue/private/oxide_qt_web_view_adapter_p.h"
+#include "qt/core/browser/oxide_qt_web_view.h"
 
 #include "oxide_qt_web_context_adapter_p.h"
 #include "oxide_qt_web_frame_adapter.h"
@@ -32,39 +33,67 @@
 namespace oxide {
 namespace qt {
 
+void WebViewAdapter::Initialized() {
+  DCHECK(isInitialized());
+
+  OnInitialized(construct_props_->incognito,
+                construct_props_->context);
+  construct_props_.reset();
+}
+
+void WebViewAdapter::WebPreferencesChanged() {
+  if (!priv->GetWebPreferences()) {
+    setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
+  } else if (isInitialized()) {
+    OnWebPreferencesChanged();
+  }
+}
+
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
-    priv(WebViewAdapterPrivate::Create(this)) {
+    priv(WebView::Create(this)),
+    construct_props_(new ConstructProperties()),
+    created_with_new_view_request_(false) {
   setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
 }
 
 WebViewAdapter::~WebViewAdapter() {}
 
-void WebViewAdapter::init(WebContextAdapter* context,
-                          const QSize& initial_size,
-                          bool incognito,
-                          const QUrl& initial_url,
-                          bool visible) {
-  if (!priv->Init(
-          WebContextAdapterPrivate::get(context)->context(),
-          incognito,
-          gfx::Size(initial_size.width(), initial_size.height()))) {
+void WebViewAdapter::init() {
+  if (created_with_new_view_request_ || isInitialized()) {
     return;
   }
 
-  if (!initial_url.isEmpty()) {
-    priv->SetURL(GURL(initial_url.toString().toStdString()));
+  // construct_props_ is deleted in Initialized()
+  QUrl url = construct_props_->url;
+
+  oxide::WebView::Params params;
+  params.context = WebContextAdapterPrivate::get(construct_props_->context)->context();
+  params.incognito = construct_props_->incognito;
+  if (!priv->Init(params)) {
+    return;
   }
 
-  updateVisibility(visible);
+  if (!url.isEmpty()) {
+    priv->SetURL(GURL(url.toString().toStdString()));
+  }
+
 }
 
 QUrl WebViewAdapter::url() const {
+  if (construct_props_) {
+    return construct_props_->url;
+  }
+
   return QUrl(QString::fromStdString(priv->GetURL().spec()));
 }
 
 void WebViewAdapter::setUrl(const QUrl& url) {
-  priv->SetURL(GURL(url.toString().toStdString()));
+  if (construct_props_) {
+    construct_props_->url = url;
+  } else {
+    priv->SetURL(GURL(url.toString().toStdString()));
+  }
 }
 
 QString WebViewAdapter::title() const {
@@ -80,7 +109,20 @@ bool WebViewAdapter::canGoForward() const {
 }
 
 bool WebViewAdapter::incognito() const {
-  return priv->IsIncognito();
+  if (construct_props_) {
+    return construct_props_->incognito;
+  }
+
+  return priv->IsIncognito();  
+}
+
+void WebViewAdapter::setIncognito(bool incognito) {
+  if (!construct_props_) {
+    LOG(WARNING) << "Cannot change incognito mode after WebView is initialized";
+    return;
+  }
+
+  construct_props_->incognito = incognito;
 }
 
 bool WebViewAdapter::loading() const {
@@ -94,6 +136,29 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
   }
 
   return frame->adapter();
+}
+
+WebContextAdapter* WebViewAdapter::context() const {
+  if (construct_props_) {
+    return construct_props_->context;
+  }
+
+  WebContextAdapterPrivate* context =
+      WebContextAdapterPrivate::FromBrowserContext(priv->GetBrowserContext());
+  if (!context) {
+    return NULL;
+  }
+
+  return context->adapter();
+}
+
+void WebViewAdapter::setContext(WebContextAdapter* context) {
+  if (!construct_props_) {
+    LOG(WARNING) << "WebView context must be set during construction";
+    return;
+  }
+
+  construct_props_->context = context;
 }
 
 void WebViewAdapter::updateSize(const QSize& size) {
@@ -189,12 +254,24 @@ void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
   }
 }
 
-void WebViewAdapter::WebPreferencesChanged() {
-  if (!priv->GetWebPreferences()) {
-    setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
-  } else if (isInitialized()) {
-    OnWebPreferencesChanged();
+void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
+  if (isInitialized()) {
+    LOG(WARNING) << "Cannot assign NewViewRequest to an already constructed WebView";
+    return;
   }
+
+  if (created_with_new_view_request_) {
+    return;
+  }
+
+  OxideQNewViewRequestPrivate* rd = OxideQNewViewRequestPrivate::get(request);
+  if (rd->view) {
+    LOG(WARNING) << "Cannot assign NewViewRequest to more than one WebView";
+    return;
+  }
+
+  rd->view = priv->AsWeakPtr();
+  created_with_new_view_request_ = true;
 }
 
 } // namespace qt

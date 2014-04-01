@@ -26,12 +26,12 @@
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
 #include "net/base/static_cookie_policy.h"
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
 #include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_browser_context_delegate.h"
 
 namespace oxide {
 
@@ -41,41 +41,66 @@ namespace qt {
 
 class BrowserContextDelegate;
 struct ConstructProperties;
+class RenderWidgetHostViewDelegateFactory;
 
-class WebContextAdapterPrivate FINAL :
-    public base::SupportsWeakPtr<WebContextAdapterPrivate> {
+class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
  public:
   ~WebContextAdapterPrivate();
 
   static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
+  static WebContextAdapterPrivate* FromBrowserContext(
+      oxide::BrowserContext* context);
 
-  WebContextAdapter::IOThreadDelegate* GetIOThreadDelegate() const;
-
-  oxide::BrowserContext* context() { return context_; }
+  WebContextAdapter* adapter() const { return adapter_; }
+  oxide::BrowserContext* context() const { return context_; }
 
  private:
-  friend class BrowserContextDelegate;
   friend class WebContextAdapter;
 
   struct ConstructProperties {
+    ConstructProperties();
+
     std::string product;
     std::string user_agent;
     base::FilePath data_path;
     base::FilePath cache_path;
     std::string accept_langs;
     net::StaticCookiePolicy::Type cookie_policy;
+    bool popup_blocker_enabled;
   };
 
+  static WebContextAdapterPrivate* Create(
+      WebContextAdapter* adapter,
+      WebContextAdapter::IOThreadDelegate* io_delegate,
+      RenderWidgetHostViewDelegateFactory* view_factory);
   WebContextAdapterPrivate(WebContextAdapter* adapter,
-                           WebContextAdapter::IOThreadDelegate* io_delegate);
+                           WebContextAdapter::IOThreadDelegate* io_delegate,
+                           RenderWidgetHostViewDelegateFactory* view_factory);
 
   void Init();
+  void Destroy();
 
-  WebContextAdapter* adapter;
+  // oxide::BrowserContextDelegate
+  int OnBeforeURLRequest(net::URLRequest* request,
+                         const net::CompletionCallback& callback,
+                         GURL* new_url) FINAL;
+  int OnBeforeSendHeaders(net::URLRequest* request,
+                          const net::CompletionCallback& callback,
+                          net::HttpRequestHeaders* headers) FINAL;
+  oxide::StoragePermission CanAccessStorage(
+      const GURL& url,
+      const GURL& first_party_url,
+      bool write,
+      oxide::StorageType type) FINAL;
+  bool GetUserAgentOverride(const GURL& url,
+                            std::string* user_agent) FINAL;
+
+  WebContextAdapter* adapter_;
+  scoped_ptr<WebContextAdapter::IOThreadDelegate> io_thread_delegate_;
+  scoped_ptr<RenderWidgetHostViewDelegateFactory> view_factory_;
 
   ScopedBrowserContext context_;
   scoped_ptr<ConstructProperties> construct_props_;
-  scoped_refptr<BrowserContextDelegate> context_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextAdapterPrivate);
 };

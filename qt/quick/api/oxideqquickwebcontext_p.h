@@ -43,6 +43,7 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
   Q_PROPERTY(CookiePolicy cookiePolicy READ cookiePolicy WRITE setCookiePolicy NOTIFY cookiePolicyChanged)
+  Q_PROPERTY(bool popupBlockerEnabled READ popupBlockerEnabled WRITE setPopupBlockerEnabled NOTIFY popupBlockerEnabledChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
@@ -68,7 +69,9 @@ class OxideQQuickWebContext : public QObject,
   void classBegin();
   void componentComplete();
 
+  // XXX(chrisccoulson): Will be cleaned up in https://launchpad.net/bugs/1297552
   static QSharedPointer<OxideQQuickWebContext> defaultContext();
+  static OxideQQuickWebContext* unsafeGetDefaultContext();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -92,6 +95,9 @@ class OxideQQuickWebContext : public QObject,
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
+  bool popupBlockerEnabled() const;
+  void setPopupBlockerEnabled(bool enabled);
+
   OxideQQuickWebContextDelegateWorker* networkRequestDelegate() const;
   void setNetworkRequestDelegate(OxideQQuickWebContextDelegateWorker* delegate);
 
@@ -109,6 +115,7 @@ class OxideQQuickWebContext : public QObject,
   void acceptLangsChanged();
   void userScriptsChanged();
   void cookiePolicyChanged();
+  void popupBlockerEnabledChanged();
   void networkRequestDelegateChanged();
   void storageAccessPermissionDelegateChanged();
   void userAgentOverrideDelegateChanged();
