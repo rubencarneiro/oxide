@@ -86,8 +86,11 @@ void FillLoadURLParamsFromOpenURLParams(
 class ScopedNewContentsHolder {
  public:
   ScopedNewContentsHolder(content::WebContents* contents,
-                          bool* was_blocked = NULL) :
+                          bool* was_blocked) :
       contents_(contents), was_blocked_(was_blocked) {}
+
+  ScopedNewContentsHolder(content::WebContents* contents) :
+      contents_(contents), was_blocked_(NULL) {}
 
   ~ScopedNewContentsHolder() {
     if (contents_ && was_blocked_) {
