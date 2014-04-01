@@ -38,6 +38,11 @@ void OffTheRecordBrowserContextIODataImpl::SetCookiePolicy(
   original_io_data_->SetCookiePolicy(cookie_policy);
 }
 
+content::CookieStoreConfig::SessionCookieMode
+OffTheRecordBrowserContextIODataImpl::GetSessionCookieMode() const {
+  return content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES;
+}
+
 bool OffTheRecordBrowserContextIODataImpl::IsPopupBlockerEnabled() const {
   return original_io_data_->IsPopupBlockerEnabled();
 }

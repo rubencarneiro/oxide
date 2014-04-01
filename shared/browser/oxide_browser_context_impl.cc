@@ -36,6 +36,7 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     // FIXME: Get from translations
     accept_langs_("en-us,en"),
     cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+    session_cookie_mode_(params.session_cookie_mode),
     popup_blocker_enabled_(true) {}
 
 net::StaticCookiePolicy::Type BrowserContextIODataImpl::GetCookiePolicy() const {
@@ -47,6 +48,11 @@ void BrowserContextIODataImpl::SetCookiePolicy(
     net::StaticCookiePolicy::Type cookie_policy) {
   base::AutoLock lock(lock_);
   cookie_policy_ = cookie_policy;
+}
+
+content::CookieStoreConfig::SessionCookieMode
+BrowserContextIODataImpl::GetSessionCookieMode() const {
+  return session_cookie_mode_;
 }
 
 bool BrowserContextIODataImpl::IsPopupBlockerEnabled() const {

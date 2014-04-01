@@ -50,6 +50,12 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
     CookiePolicyBlockThirdParty
   };
 
+  enum SessionCookieMode {
+    SessionCookieModeEphemeral,
+    SessionCookieModePersistent,
+    SessionCookieModeRestored
+  };
+
   class IOThreadDelegate {
    public:
     virtual ~IOThreadDelegate() {}
@@ -94,6 +100,9 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
+
+  SessionCookieMode sessionCookieMode() const;
+  void setSessionCookieMode(SessionCookieMode mode);
 
   bool popupBlockerEnabled() const;
   void setPopupBlockerEnabled(bool enabled);

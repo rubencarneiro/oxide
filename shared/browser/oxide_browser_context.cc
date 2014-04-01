@@ -29,7 +29,6 @@
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/cookie_crypto_delegate.h"
-#include "content/public/browser/cookie_store_factory.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
@@ -241,10 +240,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     cookie_path = GetPath().Append(kCookiesFilename);
   }
   storage->set_cookie_store(content::CreateCookieStore(
-      content::CookieStoreConfig(
-        cookie_path,
-        content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
-        NULL, NULL)));
+      content::CookieStoreConfig(cookie_path,
+                                 GetSessionCookieMode(),
+                                 NULL, NULL)));
 
   context->set_transport_security_state(transport_security_state_.get());
 
@@ -556,6 +554,11 @@ net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
 
 void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
   io_data()->SetCookiePolicy(policy);
+}
+
+content::CookieStoreConfig::SessionCookieMode
+BrowserContext::GetSessionCookieMode() const {
+  return io_data()->GetSessionCookieMode();
 }
 
 bool BrowserContext::IsPopupBlockerEnabled() const {

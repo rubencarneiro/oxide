@@ -66,6 +66,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
     base::FilePath cache_path;
     std::string accept_langs;
     net::StaticCookiePolicy::Type cookie_policy;
+    content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
     bool popup_blocker_enabled;
   };
 

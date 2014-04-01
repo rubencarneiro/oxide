@@ -29,6 +29,7 @@
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
+#include "content/public/browser/cookie_store_factory.h"
 #include "net/base/static_cookie_policy.h"
 
 namespace content {
@@ -66,6 +67,7 @@ class BrowserContextIOData {
 
   virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
   virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
+  virtual content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const = 0;
 
   virtual bool IsPopupBlockerEnabled() const = 0;
 
@@ -118,11 +120,13 @@ class BrowserContext : public content::BrowserContext,
 
   struct Params {
     Params(const base::FilePath& path,
-           const base::FilePath& cache_path) :
-        path(path), cache_path(cache_path) {}
+           const base::FilePath& cache_path,
+           const content::CookieStoreConfig::SessionCookieMode session_cookie_mode) :
+        path(path), cache_path(cache_path), session_cookie_mode(session_cookie_mode) {}
 
     base::FilePath path;
     base::FilePath cache_path;
+    content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
   };
 
   virtual ~BrowserContext();
@@ -172,6 +176,8 @@ class BrowserContext : public content::BrowserContext,
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
+
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
 
   bool IsPopupBlockerEnabled() const;
   virtual void SetIsPopupBlockerEnabled(bool enabled) = 0;

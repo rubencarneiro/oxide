@@ -244,6 +244,41 @@ void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
   }
 }
 
+WebContextAdapter::SessionCookieMode
+WebContextAdapter::sessionCookieMode() const {
+  content::CookieStoreConfig::SessionCookieMode mode;
+  if (priv->context()) {
+    mode = priv->context()->GetSessionCookieMode();
+  } else {
+    mode = priv->construct_props_->session_cookie_mode;
+  }
+
+  switch (mode) {
+    case content::CookieStoreConfig::PERSISTANT_SESSION_COOKIES:
+      return SessionCookieModePersistent;
+    case content::CookieStoreConfig::RESTORED_SESSION_COOKIES:
+      return SessionCookieModeRestored;
+    default:
+      return SessionCookieModeEphemeral;
+  }
+}
+
+void WebContextAdapter::setSessionCookieMode(SessionCookieMode mode) {
+  DCHECK(!priv->context());
+  content::CookieStoreConfig::SessionCookieMode cookie_mode;
+  switch (mode) {
+    case SessionCookieModePersistent:
+      cookie_mode = content::CookieStoreConfig::PERSISTANT_SESSION_COOKIES;
+      break;
+    case SessionCookieModeRestored:
+      cookie_mode = content::CookieStoreConfig::RESTORED_SESSION_COOKIES;
+      break;
+    default:
+      cookie_mode = content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES;
+  }
+  priv->construct_props_->session_cookie_mode = cookie_mode;
+}
+
 bool WebContextAdapter::popupBlockerEnabled() const {
   if (priv->context()) {
     return priv->context()->IsPopupBlockerEnabled();

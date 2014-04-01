@@ -43,12 +43,14 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
   Q_PROPERTY(CookiePolicy cookiePolicy READ cookiePolicy WRITE setCookiePolicy NOTIFY cookiePolicyChanged)
+  Q_PROPERTY(SessionCookieMode sessionCookieMode READ sessionCookieMode WRITE setSessionCookieMode NOTIFY sessionCookieModeChanged)
   Q_PROPERTY(bool popupBlockerEnabled READ popupBlockerEnabled WRITE setPopupBlockerEnabled NOTIFY popupBlockerEnabledChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
 
   Q_ENUMS(CookiePolicy)
+  Q_ENUMS(SessionCookieMode)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebContext)
   Q_DISABLE_COPY(OxideQQuickWebContext)
@@ -61,6 +63,12 @@ class OxideQQuickWebContext : public QObject,
     CookiePolicyAllowAll,
     CookiePolicyBlockAll,
     CookiePolicyBlockThirdParty
+  };
+
+  enum SessionCookieMode {
+    SessionCookieModeEphemeral,
+    SessionCookieModePersistent,
+    SessionCookieModeRestored
   };
 
   OxideQQuickWebContext(QObject* parent = NULL);
@@ -95,6 +103,9 @@ class OxideQQuickWebContext : public QObject,
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
+  SessionCookieMode sessionCookieMode() const;
+  void setSessionCookieMode(SessionCookieMode mode);
+
   bool popupBlockerEnabled() const;
   void setPopupBlockerEnabled(bool enabled);
 
@@ -115,6 +126,7 @@ class OxideQQuickWebContext : public QObject,
   void acceptLangsChanged();
   void userScriptsChanged();
   void cookiePolicyChanged();
+  void sessionCookieModeChanged();
   void popupBlockerEnabledChanged();
   void networkRequestDelegateChanged();
   void storageAccessPermissionDelegateChanged();

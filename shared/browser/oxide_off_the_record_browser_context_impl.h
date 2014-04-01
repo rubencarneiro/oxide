@@ -34,6 +34,7 @@ class OffTheRecordBrowserContextIODataImpl FINAL :
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const FINAL;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const FINAL;
 
   bool IsPopupBlockerEnabled() const FINAL;
 
