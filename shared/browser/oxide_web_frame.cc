@@ -150,7 +150,12 @@ void WebFrame::Destroy() {
 
 // static
 WebFrame* WebFrame::FromFrameTreeNode(content::FrameTreeNode* node) {
-  FrameMapIterator it = g_frame_map.Get().find(node->frame_tree_node_id());
+  return FromFrameTreeNodeID(node->frame_tree_node_id());
+}
+
+// static
+WebFrame* WebFrame::FromFrameTreeNodeID(int64 frame_tree_node_id) {
+  FrameMapIterator it = g_frame_map.Get().find(frame_tree_node_id);
   return it == g_frame_map.Get().end() ? NULL : it->second;
 }
 

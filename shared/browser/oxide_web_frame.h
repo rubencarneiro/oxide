@@ -47,6 +47,7 @@ class WebFrame : public ScriptMessageTarget {
   void Destroy();
 
   static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
+  static WebFrame* FromFrameTreeNodeID(int64 frame_tree_node_id);
 
   GURL url() const {
     return url_;

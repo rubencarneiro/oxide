@@ -175,15 +175,6 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
 }
 
-bool OxideQQuickWebViewPrivate::NavigationRequested(const QString &url) {
-  Q_Q(OxideQQuickWebView);
-
-  OxideQQuickNavigationRequest request(url);
-  emit q->navigationRequested(&request);
-
-  return request.accept();
-}
-
 oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
   OxideQQuickWebFrame* frame = new OxideQQuickWebFrame();
   QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);
@@ -235,6 +226,13 @@ bool OxideQQuickWebViewPrivate::CanCreateWindows() const {
   static const QMetaMethod signal =
       QMetaMethod::fromSignal(&OxideQQuickWebView::newViewRequested);
   return q->isSignalConnected(signal);
+}
+
+void OxideQQuickWebViewPrivate::NavigationRequested(
+    OxideQNavigationRequest* request) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->navigationRequested(request);
 }
 
 void OxideQQuickWebViewPrivate::NewViewRequested(
@@ -696,6 +694,13 @@ OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
   Q_D(OxideQQuickWebView);
 
   return &d->navigation_history_;
+}
+
+// This exists purely to remove a moc warning. We don't store this request
+// anywhere, it's only a transient object and I can't think of any possible
+// reason why anybody would want to read it back
+OxideQNewViewRequest* OxideQQuickWebView::request() const {
+  return NULL;
 }
 
 void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {

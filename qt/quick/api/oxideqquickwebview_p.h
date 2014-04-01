@@ -33,6 +33,7 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQNavigationRequest;
 class OxideQNewViewRequest;
 class OxideQWebPreferences;
 class OxideQQuickNavigationHistory;
@@ -56,30 +57,6 @@ class OxideQQuickWebViewAttached : public QObject {
  private:
   OxideQQuickWebView* view_;
 };
-
-class OxideQQuickNavigationRequest: public QObject {
-  Q_OBJECT
-  Q_PROPERTY(bool accept READ accept WRITE setAccept)
-  Q_PROPERTY(QString url READ url)
- public:
-  OxideQQuickNavigationRequest(const QString &url): accept_(false), url_(url) {}
-
-  bool accept() {
-    return accept_;
-  }
-  void setAccept(bool value) {
-    accept_ = value;
-  }
-
-  const QString& url() {
-    return url_;
-  }
- private:
-  bool accept_;
-  const QString url_;
-};
-
-QML_DECLARE_TYPE(OxideQQuickNavigationRequest)
 
 class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
@@ -105,7 +82,7 @@ class OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
 
-  Q_PROPERTY(OxideQNewViewRequest* request WRITE setRequest)
+  Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -159,6 +136,7 @@ class OxideQQuickWebView : public QQuickItem {
 
   OxideQQuickNavigationHistory* navigationHistory();
 
+  OxideQNewViewRequest* request() const;
   void setRequest(OxideQNewViewRequest* request);
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
@@ -187,7 +165,7 @@ class OxideQQuickWebView : public QQuickItem {
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
-  void navigationRequested(OxideQQuickNavigationRequest *request);
+  void navigationRequested(OxideQNavigationRequest *request);
   void newViewRequested(OxideQNewViewRequest* request);
 
  private:

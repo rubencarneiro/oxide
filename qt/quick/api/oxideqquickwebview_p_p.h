@@ -70,7 +70,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void NavigationEntryCommitted() Q_DECL_FINAL;
   void NavigationListPruned(bool from_front, int count) Q_DECL_FINAL;
   void NavigationEntryChanged(int index) Q_DECL_FINAL;
-  bool NavigationRequested(const QString &url) Q_DECL_FINAL;
 
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
@@ -84,6 +83,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   bool CanCreateWindows() const Q_DECL_FINAL;
 
+  void NavigationRequested(OxideQNavigationRequest* request) Q_DECL_FINAL;
   void NewViewRequested(OxideQNewViewRequest* request) Q_DECL_FINAL;
 
   void completeConstruction();

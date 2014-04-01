@@ -44,9 +44,6 @@ class WebView FINAL : public oxide::WebView,
 
   bool Init(const oxide::WebView::Params& params) FINAL;
 
-  content::WebContents* OpenURLFromTab(content::WebContents* source,
-                                       const content::OpenURLParams& params) OVERRIDE;
-
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const FINAL;
@@ -84,6 +81,10 @@ class WebView FINAL : public oxide::WebView,
   void OnNavigationEntryChanged(int index) FINAL;
 
   void OnWebPreferencesChanged() FINAL;
+
+  bool ShouldHandleNavigation(const GURL& url,
+                              WindowOpenDisposition disposition,
+                              bool user_gesture) FINAL;
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
 

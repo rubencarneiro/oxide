@@ -155,12 +155,13 @@ class WebView : public ScriptMessageTarget,
 
   virtual bool Init(const Params& params);
 
-  scoped_ptr<content::WebContentsImpl> web_contents_;
 
  private:
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
+  bool InitCreatedWebView(WebView* view,
+                          content::WebContents* contents);
 
   // ScriptMessageTarget
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
@@ -181,6 +182,8 @@ class WebView : public ScriptMessageTarget,
                const content::NotificationDetails& details) FINAL;
 
   // content::WebContentsDelegate
+  content::WebContents* OpenURLFromTab(content::WebContents* source,
+                                       const content::OpenURLParams& params) FINAL;
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
   void WebContentsCreated(content::WebContents* source,
@@ -270,6 +273,10 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnWebPreferencesChanged();
 
+  virtual bool ShouldHandleNavigation(const GURL& url,
+                                      WindowOpenDisposition disposition,
+                                      bool user_gesture);
+
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
@@ -278,7 +285,12 @@ class WebView : public ScriptMessageTarget,
                                     WindowOpenDisposition disposition,
                                     bool user_gesture);
 
+  // Please don't change the order of these. It's important that context_
+  // outlives web_contents_, otherwise web_contents_ gets left with a dangling
+  // pointer to its BrowserContext
   ScopedBrowserContext context_;
+  scoped_ptr<content::WebContentsImpl> web_contents_;
+
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;

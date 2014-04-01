@@ -27,6 +27,7 @@
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqloadevent_p.h"
+#include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
@@ -184,6 +185,39 @@ void WebView::OnWebPreferencesChanged() {
   adapter_->WebPreferencesChanged();
 }
 
+bool WebView::ShouldHandleNavigation(const GURL& url,
+                                     WindowOpenDisposition disposition,
+                                     bool user_gesture) {
+  OxideQNavigationRequest::Disposition d = OxideQNavigationRequest::DispositionNewWindow;
+
+  switch (disposition) {
+    case CURRENT_TAB:
+      d = OxideQNavigationRequest::DispositionCurrentTab;
+      break;
+    case NEW_FOREGROUND_TAB:
+      d = OxideQNavigationRequest::DispositionNewForegroundTab;
+      break;
+    case NEW_BACKGROUND_TAB:
+      d = OxideQNavigationRequest::DispositionNewBackgroundTab;
+      break;
+    case NEW_POPUP:
+      d = OxideQNavigationRequest::DispositionNewPopup;
+      break;
+    case NEW_WINDOW:
+      d = OxideQNavigationRequest::DispositionNewWindow;
+      break;
+    default:
+      NOTREACHED();
+  }
+
+  OxideQNavigationRequest request(QUrl(QString::fromStdString(url.spec())),
+                                  d, user_gesture);
+
+  adapter_->NavigationRequested(&request);
+
+  return request.action() == OxideQNavigationRequest::ActionAccept;
+}
+
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
   return new WebFrame(adapter_->CreateWebFrame(), node, this);
 }
@@ -224,28 +258,6 @@ oxide::WebView* WebView::CreateNewWebView(const GURL& target_url,
   adapter_->NewViewRequested(&request);
 
   return OxideQNewViewRequestPrivate::get(&request)->view.get();
-}
-
-content::WebContents* WebViewAdapterPrivate::OpenURLFromTab(content::WebContents* source,
-                                                            const content::OpenURLParams& p) {
-  if (a->NavigationRequested(QString::fromStdString(p.url.spec()))) {
-    content::NavigationController& controller = web_contents_->GetController();
-
-    content::NavigationController::LoadURLParams params(p.url);
-
-    params.referrer = p.referrer;
-    params.redirect_chain = p.redirect_chain;
-    params.should_replace_current_entry = true;
-    params.is_renderer_initiated = p.is_renderer_initiated;
-    params.extra_headers = p.extra_headers;
-    params.transition_type = p.transition;
-    params.frame_tree_node_id = p.frame_tree_node_id;
-    controller.LoadURLWithParams(params);
-
-    return web_contents_.get();
-  }
-
-  return NULL;
 }
 
 // static

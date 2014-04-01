@@ -7,11 +7,6 @@ Column {
   id: column
   focus: true
 
-  Component {
-    id: webViewFactory
-    WebView {}
-  }
-
   TestWebView {
     id: webView
     width: 200
@@ -48,10 +43,14 @@ Column {
 
     function test_NewViewRequest1_from_user_gesture_data() {
       return [
-        { selector: "#button1", button: Qt.LeftButton, modifiers: Qt.NoModifier, disposition: NewViewRequest.DispositionNewForegroundTab },
-        { selector: "#button1", button: Qt.LeftButton, modifiers: Qt.ShiftModifier, disposition: NewViewRequest.DispositionNewWindow },
-        { selector: "#button2", button: Qt.LeftButton, modifiers: Qt.NoModifier, disposition: NewViewRequest.DispositionNewPopup },
-        { selector: "#button2", button: Qt.LeftButton, modifiers: Qt.ShiftModifier, disposition: NewViewRequest.DispositionNewPopup }
+        { selector: "#button1", modifiers: Qt.NoModifier, disposition: NewViewRequest.DispositionNewForegroundTab },
+        { selector: "#button1", modifiers: Qt.ShiftModifier, disposition: NewViewRequest.DispositionNewWindow },
+        { selector: "#button1", modifiers: Qt.ControlModifier, disposition: NewViewRequest.DispositionNewBackgroundTab },
+        { selector: "#button1", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NewViewRequest.DispositionNewForegroundTab },
+        { selector: "#button2", modifiers: Qt.NoModifier, disposition: NewViewRequest.DispositionNewPopup },
+        { selector: "#button2", modifiers: Qt.ShiftModifier, disposition: NewViewRequest.DispositionNewPopup },
+        { selector: "#button2", modifiers: Qt.ControlModifier, disposition: NewViewRequest.DispositionNewBackgroundTab },
+        { selector: "#button2", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NewViewRequest.DispositionNewForegroundTab }
       ];
     }
 
@@ -61,7 +60,7 @@ Column {
              "Timed out waiting for successful load");
 
       var r = webView.getTestApi().getBoundingClientRectForSelector(data.selector);
-      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, data.button, data.modifiers);
+      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton, data.modifiers);
 
       spy.wait();
 

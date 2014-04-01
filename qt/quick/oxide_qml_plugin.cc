@@ -22,6 +22,7 @@
 #include <QQmlExtensionPlugin>
 
 #include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
@@ -63,7 +64,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "LoadEvent' are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 0, 1, "NavigationHistory",
         "Each WebView has a NavigationHistory automatically instantiated by Oxide");
-    qmlRegisterUncreatableType<OxideQQuickNavigationRequest>(uri, 0, 1, "NavigationRequest",
+    qmlRegisterUncreatableType<OxideQNavigationRequest>(uri, 0, 1, "NavigationRequest",
         "Cannot create separate instance of NavigationRequest");
     qmlRegisterUncreatableType<OxideQNewViewRequest>(uri, 0, 1, "NewViewRequest",
         "NewViewRequest is created by Oxide");

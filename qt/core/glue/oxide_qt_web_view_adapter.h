@@ -34,6 +34,7 @@ class QSize;
 QT_END_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQNavigationRequest;
 class OxideQNewViewRequest;
 class OxideQWebPreferences;
 
@@ -135,7 +136,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void NavigationEntryCommitted() = 0;
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
-  virtual bool NavigationRequested(const QString &url) = 0;
 
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
@@ -149,6 +149,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual bool CanCreateWindows() const = 0;
 
+  virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
   virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
 
   QScopedPointer<WebView> priv;
