@@ -80,10 +80,16 @@ TestWebView {
       ];
     }
 
+    // Test that we get an onNavigationRequested signal for all renderer-initiated
+    // top-level navigations (also verifies that we don't get one for browser-
+    // initiated navigations)
     function test_NavigationRequest1_from_user_gestures(data) {
       webView.url = "http://localhost:8080/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
+
+      compare(spy.count, 0,
+              "Shouldn't get an onNavigationRequested signal for browser-initiated navigation");
 
       var r = webView.getTestApi().getBoundingClientRectForSelector(data.link);
       mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton, data.modifiers);
@@ -95,7 +101,7 @@ TestWebView {
         newViewSpy.wait();
       }
 
-      compare(spy.count, 1, "Should have had a signal");
+      compare(spy.count, 1, "Should have had an onNavigationRequested signal");
       compare(webView.lastRequestUrl, data.url);
       compare(webView.lastRequestDisposition, data.disposition);
       compare(webView.lastRequestUserGesture, true);
@@ -105,10 +111,16 @@ TestWebView {
       return test_NavigationRequest1_from_user_gestures_data();
     }
 
+    // Verify that the userGesture property indicates the appropriate value
+    // for renderer-initiated top-level navigations that don't come from an
+    // input event
     function test_NavigationRequest2_no_user_gesture(data) {
       webView.url = "http://localhost:8080/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
+
+      compare(spy.count, 0,
+              "Shouldn't get an onNavigationRequested signal for browser-initiated navigation");
 
       webView.getTestApi().evaluateCode(
 "var e = document.createEvent(\"HTMLEvents\");
@@ -118,7 +130,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       verify(webView.waitForLoadSucceeded());
       compare(newViewSpy.count, 0);
 
-      compare(spy.count, 1, "Should have had a signal");
+      compare(spy.count, 1, "Should have had an onNavigationRequested signal")
       compare(webView.lastRequestUrl, data.url);
       compare(webView.lastRequestDisposition, NavigationRequest.DispositionCurrentTab);
       compare(webView.lastRequestUserGesture, false);
@@ -128,6 +140,12 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       return test_NavigationRequest1_from_user_gestures_data();
     }
 
+    // Verify that rejecting an onNavigationRequested request for all
+    // renderer-initiated top-level navigations blocks the navigation and that
+    // we don't get any onNewViewRequested signals.
+    //
+    // XXX(chrisccoulson): This is a bit hacky, because we use a 100ms delay
+    // before verifying no loads started
     function test_NavigationRequest3_reject(data) {
       webView.shouldReject = true;
 
@@ -139,7 +157,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
 
       var r = webView.getTestApi().getBoundingClientRectForSelector(data.link);
       mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton, data.modifiers);
-      webView.waitFor(function() { return false; }, 100); // XXX: Is there a better way of doing this?
+      webView.waitFor(function() { return false; }, 100);
 
       compare(spy.count, 1);
       compare(newViewSpy.count, 0, "Shouldn't have called onNewViewRequested for rejected navigation");
@@ -150,6 +168,12 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       return test_NavigationRequest1_from_user_gestures_data();
     }
 
+    // Verify that we don't get an onNavigationRequested signal for
+    // renderer-initiated subframe navigations unless the disposition is not
+    // DispositionCurrentTab.
+    // We get them for other dispositions via
+    // content::RenderFrameImpl::loadURLExternally(), which is called from
+    // WebCore::DocumentLoader::shouldContinueForNavigationPolicy()
     function test_NavigationRequest4_subframe(data) {
       webView.url = "http://localhost:8080/tst_NavigationRequest2.html";
       verify(webView.waitForLoadSucceeded(),

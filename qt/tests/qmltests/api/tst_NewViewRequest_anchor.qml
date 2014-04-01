@@ -55,6 +55,11 @@ Column {
       ];
     }
 
+    // Verify that anchor elements with target="_blank" generate
+    // onNewViewRequested signals, and that they don't generate
+    // onNavigationRequested signals (these result in new windows created via
+    // createWindowForRequest() in blink, bypassing the normal
+    // decidePolicyForNavigation path - see WebCore::FrameLoader::load())
     function test_NewViewRequest1_from_user_gesture(data) {
       webView.url = "http://localhost:8080/tst_NewViewRequest_anchor.html";
       verify(webView.waitForLoadSucceeded(),
