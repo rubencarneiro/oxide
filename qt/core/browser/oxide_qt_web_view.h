@@ -49,6 +49,7 @@ class WebView FINAL : public oxide::WebView,
       size_t index) const FINAL;
 
   gfx::Rect GetContainerBounds() FINAL;
+  bool IsVisible() const FINAL;
 
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 

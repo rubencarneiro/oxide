@@ -166,11 +166,7 @@ void WebViewAdapter::updateSize(const QSize& size) {
 }
 
 void WebViewAdapter::updateVisibility(bool visible) {
-  if (visible) {
-    priv->Shown();
-  } else {
-    priv->Hidden();
-  }
+  priv->UpdateVisibility(visible);
 }
 
 void WebViewAdapter::goBack() {

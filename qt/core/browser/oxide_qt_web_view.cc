@@ -49,12 +49,6 @@ bool WebView::Init(const oxide::WebView::Params& params) {
     return false;
   }
 
-  if (adapter_->IsVisible()) {
-    Shown();
-  } else {
-    Hidden();
-  }
-
   adapter_->Initialized();
   return true;
 }
@@ -75,6 +69,10 @@ gfx::Rect WebView::GetContainerBounds() {
                    bounds.y(),
                    bounds.width(),
                    bounds.height());
+}
+
+bool WebView::IsVisible() const {
+  return adapter_->IsVisible();
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {

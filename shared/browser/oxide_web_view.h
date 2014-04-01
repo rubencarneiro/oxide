@@ -100,8 +100,7 @@ class WebView : public ScriptMessageTarget,
   bool IsLoading() const;
 
   void UpdateSize(const gfx::Size& size);
-  void Shown();
-  void Hidden();
+  void UpdateVisibility(bool visible);
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -120,7 +119,9 @@ class WebView : public ScriptMessageTarget,
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
 
+  gfx::Size GetContainerSize();
   virtual gfx::Rect GetContainerBounds() = 0;
+  virtual bool IsVisible() const = 0;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,

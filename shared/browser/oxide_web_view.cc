@@ -253,7 +253,7 @@ content::WebContents* WebView::OpenURLFromTab(
   // to do that, I think we need to create WebContents with our SiteInstance.
   // We also need to set content_params.opener to our WebContents
   content::WebContents::CreateParams contents_params(GetBrowserContext(), NULL);
-  contents_params.initial_size = web_contents_->GetView()->GetContainerSize();
+  contents_params.initial_size = GetContainerSize();
   contents_params.initially_hidden = params.disposition == NEW_BACKGROUND_TAB;
 
   ScopedNewContentsHolder holder(
@@ -354,10 +354,6 @@ void WebView::LoadProgressChanged(content::WebContents* source,
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
-  // Make sure the new RWHV gets the correct size
-  GetWebContents()->GetView()->SizeContents(
-      GetWebContents()->GetView()->GetContainerSize());
-
   while (root_frame_->ChildCount() > 0) {
     root_frame_->ChildAt(0)->Destroy();
   }
@@ -552,6 +548,9 @@ bool WebView::Init(const Params& params) {
     context_ = BrowserContext::FromContent(params.contents->GetBrowserContext());
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
         params.contents));
+
+    UpdateVisibility(IsVisible());
+    UpdateSize(GetContainerSize());
   } else {
     CHECK(params.context);
 
@@ -560,7 +559,8 @@ bool WebView::Init(const Params& params) {
         params.context->GetOriginalContext();
 
     content::WebContents::CreateParams params(context_);
-    params.initial_size = GetContainerBounds().size();
+    params.initial_size = GetContainerSize();
+    params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
         content::WebContents::Create(params)));
     if (!web_contents_) {
@@ -688,15 +688,21 @@ bool WebView::IsLoading() const {
 }
 
 void WebView::UpdateSize(const gfx::Size& size) {
-  web_contents_->GetView()->SizeContents(size);
+  content::RenderWidgetHostView* rwhv =
+      web_contents_->GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  rwhv->SetSize(size);
 }
 
-void WebView::Shown() {
-  web_contents_->WasShown();
-}
-
-void WebView::Hidden() {
-  web_contents_->WasHidden();
+void WebView::UpdateVisibility(bool visible) {
+  if (visible) {
+    web_contents_->WasShown();
+  } else {
+    web_contents_->WasHidden();
+  }
 }
 
 BrowserContext* WebView::GetBrowserContext() const {
@@ -783,6 +789,10 @@ void WebView::SetWebPreferences(WebPreferences* prefs) {
   WebPreferencesObserver::Observe(prefs);
   OnWebPreferencesChanged();
   WebPreferencesValueChanged();
+}
+
+gfx::Size WebView::GetContainerSize() {
+  return GetContainerBounds().size();
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
