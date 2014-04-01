@@ -119,7 +119,7 @@ class BrowserContext : public content::BrowserContext,
   struct Params {
     Params(const base::FilePath& path,
            const base::FilePath& cache_path) :
-        path(path), cache_path(path) {}
+        path(path), cache_path(cache_path) {}
 
     base::FilePath path;
     base::FilePath cache_path;
