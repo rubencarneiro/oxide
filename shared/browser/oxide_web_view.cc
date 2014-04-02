@@ -249,6 +249,14 @@ content::WebContents* WebView::OpenURLFromTab(
     return web_contents_.get();
   }
 
+  WebView* new_view = CreateNewWebView(params.url,
+                                       GetContainerBounds(),
+                                       params.disposition,
+                                       params.user_gesture);
+  if (!new_view) {
+    return NULL;
+  }
+
   // XXX(chrisccoulson): Is there a way to tell when the opener shouldn't
   // be suppressed?
   bool opener_suppressed = true;
@@ -260,22 +268,14 @@ content::WebContents* WebView::OpenURLFromTab(
   contents_params.initially_hidden = params.disposition == NEW_BACKGROUND_TAB;
   contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
 
-  ScopedNewContentsHolder holder(
+  scoped_ptr<content::WebContents> contents(
       content::WebContents::Create(contents_params));
-  if (!holder.contents()) {
+  if (!contents) {
     LOG(ERROR) << "Failed to create new WebContents for navigation";
     return NULL;
   }
   
-  WebView* new_view = CreateNewWebView(params.url,
-                                       GetContainerBounds(),
-                                       params.disposition,
-                                       params.user_gesture);
-  if (!new_view) {
-    return NULL;
-  }
-
-  if (!InitCreatedWebView(new_view, holder.Release())) {
+  if (!InitCreatedWebView(new_view, contents.release())) {
     return NULL;
   }
 
