@@ -154,11 +154,7 @@ WebContextAdapter* WebViewAdapter::context() const {
 }
 
 void WebViewAdapter::setContext(WebContextAdapter* context) {
-  if (!construct_props_) {
-    LOG(WARNING) << "WebView context must be set during construction";
-    return;
-  }
-
+  DCHECK(construct_props_);
   construct_props_->context = context;
 }
 

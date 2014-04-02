@@ -121,13 +121,6 @@ void OxideQQuickWebViewPrivate::OnInitialized(
     detachContextSignals(static_cast<OxideQQuickWebContextPrivate *>(orig_context));
     attachContextSignals(static_cast<OxideQQuickWebContextPrivate *>(context()));
 
-    if (adapterToQObject<OxideQQuickWebContext>(context()) ==
-        OxideQQuickWebContext::unsafeGetDefaultContext()) {
-      default_context_ = OxideQQuickWebContext::defaultContext();
-    } else {
-      default_context_.reset();
-    }
-
     emit q->contextChanged();
   }
 }
@@ -245,13 +238,9 @@ void OxideQQuickWebViewPrivate::NewViewRequested(
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
-  OxideQQuickWebContext* context_in_use =
-      adapterToQObject<OxideQQuickWebContext>(context());
-  if (!context_in_use) {
-    // The default context is reference counted and not exposed to the
-    // embedder
-    default_context_ = OxideQQuickWebContext::defaultContext();
-    setContext(OxideQQuickWebContextPrivate::get(default_context_.data()));
+  if (!context()) {
+    OxideQQuickWebContext* c = OxideQQuickWebContext::defaultContext(true);
+    setContext(OxideQQuickWebContextPrivate::get(c));
   }
 
   init();
@@ -645,29 +634,43 @@ void OxideQQuickWebView::setBeforeUnloadDialog(
 OxideQQuickWebContext* OxideQQuickWebView::context() const {
   Q_D(const OxideQQuickWebView);
 
-  if (d->default_context_) {
+  OxideQQuickWebContext* c =
+      adapterToQObject<OxideQQuickWebContext>(d->context());
+  if (c == OxideQQuickWebContext::defaultContext(false)) {
     return NULL;
   }
 
-  return adapterToQObject<OxideQQuickWebContext>(d->context());
+  return c;
 }
 
 void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   Q_D(OxideQQuickWebView);
 
-  oxide::qt::WebContextAdapter* old = d->context();
-  OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(context);
+  if (d->isInitialized()) {
+    qWarning() << "WebView context must be set during construction";
+    return;
+  }
 
+  if (context == OxideQQuickWebContext::defaultContext(false)) {
+    qWarning() <<
+        "Setting WebView context to default context is unnecessary. WebView "
+        "will automatically use the default context if it is created without "
+        "one";
+    return;
+  }
+
+  oxide::qt::WebContextAdapter* old = d->context();
   if (context == adapterToQObject<OxideQQuickWebContext>(old)) {
     return;
   }
-  d->setContext(cd);
-  if (old == d->context()) {
-    return;
-  }
-
   d->detachContextSignals(static_cast<OxideQQuickWebContextPrivate *>(old));
+
+  OxideQQuickWebContextPrivate* cd = NULL;
+  if (context) {
+    cd = OxideQQuickWebContextPrivate::get(context);
+  }
   d->attachContextSignals(cd);
+  d->setContext(cd);
 
   emit contextChanged();
 }

@@ -21,7 +21,6 @@
 #include <QObject>
 #include <QQmlListProperty>
 #include <QQmlParserStatus>
-#include <QSharedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -77,9 +76,7 @@ class OxideQQuickWebContext : public QObject,
   void classBegin();
   void componentComplete();
 
-  // XXX(chrisccoulson): Will be cleaned up in https://launchpad.net/bugs/1297552
-  static QSharedPointer<OxideQQuickWebContext> defaultContext();
-  static OxideQQuickWebContext* unsafeGetDefaultContext();
+  static OxideQQuickWebContext* defaultContext(bool create);
 
   QString product() const;
   void setProduct(const QString& product);

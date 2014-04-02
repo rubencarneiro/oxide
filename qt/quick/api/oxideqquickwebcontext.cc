@@ -20,12 +20,12 @@
 
 #include <QMutex>
 #include <QMutexLocker>
+#include <QQmlEngine>
 #include <QQmlListProperty>
 #include <QSharedPointer>
 #include <QtDebug>
 #include <QThread>
 #include <QtQuickVersion>
-#include <QWeakPointer>
 #if defined(ENABLE_COMPOSITING)
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
@@ -34,8 +34,6 @@
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/quick/oxide_qquick_render_view_item_factory.h"
 
-#include "oxideqquickglobals_p.h"
-#include "oxideqquickglobals_p_p.h"
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 #include "oxideqquickwebcontextdelegateworker_p.h"
@@ -44,7 +42,15 @@
 #include "oxidequseragentoverriderequest_p_p.h"
 
 namespace {
-QWeakPointer<OxideQQuickWebContext> g_default_context;
+
+OxideQQuickWebContext* g_default_context;
+
+void DestroyDefaultContext() {
+  OxideQQuickWebContext* context = g_default_context;
+  g_default_context = NULL;
+  delete context;
+}
+
 }
 
 namespace oxide {
@@ -306,6 +312,8 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
 
+  Q_ASSERT(this != g_default_context);
+
   emit d->willBeDestroyed();
 
   for (int i = 0; i < d->userScripts().size(); ++i) {
@@ -330,32 +338,22 @@ void OxideQQuickWebContext::componentComplete() {
 }
 
 // static
-QSharedPointer<OxideQQuickWebContext> OxideQQuickWebContext::defaultContext() {
+OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
   if (g_default_context) {
     return g_default_context;
   }
 
-  QSharedPointer<OxideQQuickWebContext> new_context(
-      new OxideQQuickWebContext());
+  if (!create) {
+    return NULL;
+  }
 
-  new_context->setProduct(OxideQQuickGlobals::instance()->product());
-  new_context->setUserAgent(OxideQQuickGlobals::instance()->userAgent());
-  new_context->setDataPath(OxideQQuickGlobals::instance()->dataPath());
-  new_context->setCachePath(OxideQQuickGlobals::instance()->cachePath());
-  new_context->setAcceptLangs(OxideQQuickGlobals::instance()->acceptLangs());
+  g_default_context = new OxideQQuickWebContext();
+  g_default_context->componentComplete();
+  qAddPostRoutine(DestroyDefaultContext);
 
-  new_context->componentComplete();
-  g_default_context = new_context;
+  QQmlEngine::setObjectOwnership(g_default_context, QQmlEngine::CppOwnership);
 
-  OxideQQuickGlobalsPrivate::get(
-      OxideQQuickGlobals::instance())->defaultContextCreated();
-
-  return new_context;
-}
-
-// static
-OxideQQuickWebContext* OxideQQuickWebContext::unsafeGetDefaultContext() {
-  return g_default_context.data();
+  return g_default_context;
 }
 
 QString OxideQQuickWebContext::product() const {
@@ -408,7 +406,7 @@ void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
   Q_D(OxideQQuickWebContext);
 
   if (d->isInitialized()) {
-    qWarning() << "Can only set dataPath during construction";
+    qWarning() << "Cannot set WebContext.dataPath once the context is in use";
     return;
   }
 
@@ -430,7 +428,7 @@ void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
   Q_D(OxideQQuickWebContext);
 
   if (d->isInitialized()) {
-    qWarning() << "Can only set cachePath during construction";
+    qWarning() << "Cannot set WebContext.cachePath once the context is in use";
     return;
   }
 
@@ -582,7 +580,7 @@ void OxideQQuickWebContext::setSessionCookieMode(SessionCookieMode mode) {
   Q_D(OxideQQuickWebContext);
 
   if (d->isInitialized()) {
-    qWarning() << "Can only set sessionCookieMode during construction";
+    qWarning() << "Cannot set WebContext.sessionCookieMode once the context is in use";
     return;
   }
 

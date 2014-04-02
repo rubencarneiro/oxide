@@ -19,7 +19,6 @@
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
 #include <QScopedPointer>
-#include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -104,7 +103,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
-  QSharedPointer<OxideQQuickWebContext> default_context_;
   int load_progress_;
   bool constructed_;
   OxideQQuickNavigationHistory navigation_history_;
