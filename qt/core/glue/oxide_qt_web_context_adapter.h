@@ -84,12 +84,10 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   QString acceptLangs() const;
   void setAcceptLangs(const QString& langs);
 
-  QList<UserScriptAdapter *>& user_scripts();
-
+  QList<UserScriptAdapter *>& userScripts();
   void updateUserScripts();
 
   bool isInitialized() const;
-  void init();
 
   static QOpenGLContext* sharedGLContext();
   static void setSharedGLContext(QOpenGLContext* context);
@@ -115,7 +113,6 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  private:
   friend class WebContextAdapterPrivate;
 
-  QList<UserScriptAdapter *> user_scripts_;
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually
   WebContextAdapterPrivate* priv;

@@ -42,6 +42,7 @@ namespace qt {
 class BrowserContextDelegate;
 struct ConstructProperties;
 class RenderWidgetHostViewDelegateFactory;
+class UserScriptAdapter;
 
 class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
  public:
@@ -52,7 +53,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
       oxide::BrowserContext* context);
 
   WebContextAdapter* adapter() const { return adapter_; }
-  oxide::BrowserContext* context() const { return context_; }
+  oxide::BrowserContext* GetContext();
 
  private:
   friend class WebContextAdapter;
@@ -78,8 +79,8 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
                            WebContextAdapter::IOThreadDelegate* io_delegate,
                            RenderWidgetHostViewDelegateFactory* view_factory);
 
-  void Init();
   void Destroy();
+  void UpdateUserScripts();
 
   // oxide::BrowserContextDelegate
   int OnBeforeURLRequest(net::URLRequest* request,
@@ -102,6 +103,8 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   ScopedBrowserContext context_;
   scoped_ptr<ConstructProperties> construct_props_;
+
+  QList<UserScriptAdapter *> user_scripts_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextAdapterPrivate);
 };

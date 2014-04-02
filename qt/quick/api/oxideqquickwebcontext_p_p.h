@@ -49,6 +49,8 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
  public:
   ~OxideQQuickWebContextPrivate();
 
+  bool isConstructed() const { return constructed_; }
+
   void delegateWorkerDestroyed(OxideQQuickWebContextDelegateWorker* worker);
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
@@ -56,7 +58,7 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   static void ensureChromiumStarted();
 
  Q_SIGNALS:
-  void initialized();
+  void constructed();
   void willBeDestroyed();
 
  private:
@@ -79,6 +81,8 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       OxideQQuickWebContextDelegateWorker* worker,
       OxideQQuickWebContextDelegateWorker** ui_slot,
       oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot);
+
+  bool constructed_;
 
   oxide::qquick::WebContextIOThreadDelegate* io_thread_delegate_;
 

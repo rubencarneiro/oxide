@@ -68,7 +68,8 @@ void WebViewAdapter::init() {
   QUrl url = construct_props_->url;
 
   oxide::WebView::Params params;
-  params.context = WebContextAdapterPrivate::get(construct_props_->context)->context();
+  params.context =
+      WebContextAdapterPrivate::get(construct_props_->context)->GetContext();
   params.incognito = construct_props_->incognito;
   if (!priv->Init(params)) {
     return;

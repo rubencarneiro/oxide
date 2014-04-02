@@ -99,7 +99,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   static void messageHandler_clear(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
-  void contextInitialized();
+  void contextConstructed();
   void contextWillBeDestroyed();
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);

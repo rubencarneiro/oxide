@@ -139,6 +139,7 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
         q,
         new oxide::qquick::WebContextIOThreadDelegate(),
         new oxide::qquick::RenderViewItemFactory()),
+    constructed_(false),
     io_thread_delegate_(
         static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
     network_request_delegate_(NULL),
@@ -189,7 +190,7 @@ int OxideQQuickWebContextPrivate::userScript_count(
   OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(
         static_cast<OxideQQuickWebContext *>(prop->object));
 
-  return cd->user_scripts().size();
+  return cd->userScripts().size();
 }
 
 OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
@@ -198,11 +199,11 @@ OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
   OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(
         static_cast<OxideQQuickWebContext *>(prop->object));
 
-  if (index >= cd->user_scripts().size()) {
+  if (index >= cd->userScripts().size()) {
     return NULL;
   }
 
-  return adapterToQObject<OxideQQuickUserScript>(cd->user_scripts().at(index));
+  return adapterToQObject<OxideQQuickUserScript>(cd->userScripts().at(index));
 }
 
 void OxideQQuickWebContextPrivate::userScript_clear(
@@ -211,9 +212,9 @@ void OxideQQuickWebContextPrivate::userScript_clear(
       static_cast<OxideQQuickWebContext *>(prop->object);
   OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(context);
 
-  while (cd->user_scripts().size() > 0) {
+  while (cd->userScripts().size() > 0) {
     context->removeUserScript(
-        adapterToQObject<OxideQQuickUserScript>(cd->user_scripts().at(0)));
+        adapterToQObject<OxideQQuickUserScript>(cd->userScripts().at(0)));
   }
 }
 
@@ -307,9 +308,9 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
 
   emit d->willBeDestroyed();
 
-  for (int i = 0; i < d->user_scripts().size(); ++i) {
+  for (int i = 0; i < d->userScripts().size(); ++i) {
     d->detachUserScriptSignals(
-        adapterToQObject<OxideQQuickUserScript>(d->user_scripts().at(i)));
+        adapterToQObject<OxideQQuickUserScript>(d->userScripts().at(i)));
   }
 
   // These call back in to us when destroyed, so delete them now in order
@@ -324,8 +325,8 @@ void OxideQQuickWebContext::classBegin() {}
 void OxideQQuickWebContext::componentComplete() {
   Q_D(OxideQQuickWebContext);
 
-  d->init();
-  emit d->initialized();
+  d->constructed_ = true;
+  emit d->constructed();
 }
 
 // static
@@ -479,7 +480,7 @@ void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
   OxideQQuickUserScriptPrivate* ud =
       OxideQQuickUserScriptPrivate::get(user_script);
 
-  if (!d->user_scripts().contains(ud)) {
+  if (!d->userScripts().contains(ud)) {
     connect(user_script, SIGNAL(scriptLoaded()),
             this, SLOT(userScriptUpdated()));
     connect(user_script, SIGNAL(scriptPropertyChanged()),
@@ -487,13 +488,13 @@ void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
     connect(ud, SIGNAL(willBeDeleted()),
             this, SLOT(userScriptWillBeDeleted()));
   } else {
-    d->user_scripts().removeOne(ud);
+    d->userScripts().removeOne(ud);
   }
 
   if (!user_script->parent()) {
     user_script->setParent(this);
   }
-  d->user_scripts().append(ud);
+  d->userScripts().append(ud);
 
   emit userScriptsChanged();
 }
@@ -510,7 +511,7 @@ void OxideQQuickWebContext::removeUserScript(
   OxideQQuickUserScriptPrivate* ud =
       OxideQQuickUserScriptPrivate::get(user_script);
 
-  if (!d->user_scripts().contains(ud)) {
+  if (!d->userScripts().contains(ud)) {
     return;
   }
 
@@ -519,7 +520,7 @@ void OxideQQuickWebContext::removeUserScript(
     user_script->setParent(NULL);
   }
 
-  d->user_scripts().removeOne(ud);
+  d->userScripts().removeOne(ud);
 
   emit userScriptsChanged();
 }

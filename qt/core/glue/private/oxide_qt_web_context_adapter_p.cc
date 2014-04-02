@@ -25,15 +25,18 @@
 #include "net/base/net_errors.h"
 #include "net/url_request/url_request.h"
 
-#include "shared/browser/oxide_browser_context.h"
-#include "shared/browser/oxide_browser_context_delegate.h"
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view_factory.h"
+#include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_browser_context_delegate.h"
+#include "shared/browser/oxide_user_script_master.h"
 
 #include "../oxide_qt_render_widget_host_view_delegate_factory.h"
+#include "../oxide_qt_user_script_adapter.h"
+#include "../oxide_qt_user_script_adapter_p.h"
 
 namespace oxide {
 namespace qt {
@@ -60,40 +63,32 @@ WebContextAdapterPrivate::WebContextAdapterPrivate(
     view_factory_(view_factory),
     construct_props_(new ConstructProperties()) {}
 
-void WebContextAdapterPrivate::Init() {
-  DCHECK(!context_);
-
-  oxide::BrowserContext::Params params(
-      construct_props_->data_path,
-      construct_props_->cache_path,
-      construct_props_->session_cookie_mode);
-  context_ = oxide::BrowserContext::Create(params);
-
-  if (!construct_props_->product.empty()) {
-    context()->SetProduct(construct_props_->product);
-  }
-  if (!construct_props_->user_agent.empty()) {
-    context()->SetUserAgent(construct_props_->user_agent);
-  }
-  if (!construct_props_->accept_langs.empty()) {
-    context()->SetAcceptLangs(construct_props_->accept_langs);
-  }
-  context()->SetCookiePolicy(construct_props_->cookie_policy);
-  context()->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
-
-  context()->SetDelegate(this);
-
-  construct_props_.reset();
-
-  // BrowserContext takes ownership of this
-  new RenderWidgetHostViewFactory(context_.get(), view_factory_.release());
-}
-
 void WebContextAdapterPrivate::Destroy() {
   if (context_) {
     context_->SetDelegate(NULL);
   }
   adapter_ = NULL;
+}
+
+void WebContextAdapterPrivate::UpdateUserScripts() {
+  if (!context_) {
+    return;
+  }
+
+  std::vector<oxide::UserScript *> scripts;
+
+  for (int i = 0; i < user_scripts_.size(); ++i) {
+    UserScriptAdapterPrivate* script =
+        UserScriptAdapterPrivate::get(user_scripts_.at(i));
+    if (script->state == UserScriptAdapterPrivate::Loading ||
+        script->state == UserScriptAdapterPrivate::Constructing) {
+      return;
+    } else if (script->state == UserScriptAdapterPrivate::Loaded) {
+      scripts.push_back(&script->user_script);
+    }
+  }
+
+  context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
 }
 
 int WebContextAdapterPrivate::OnBeforeURLRequest(
@@ -197,6 +192,43 @@ WebContextAdapterPrivate* WebContextAdapterPrivate::get(
 WebContextAdapterPrivate* WebContextAdapterPrivate::FromBrowserContext(
     oxide::BrowserContext* context) {
   return static_cast<WebContextAdapterPrivate *>(context->GetDelegate());
+}
+
+oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
+  if (context_) {
+    return context_;
+  }
+
+  DCHECK(construct_props_);
+
+  oxide::BrowserContext::Params params(
+      construct_props_->data_path,
+      construct_props_->cache_path,
+      construct_props_->session_cookie_mode);
+  context_ = oxide::BrowserContext::Create(params);
+
+  if (!construct_props_->product.empty()) {
+    context_->SetProduct(construct_props_->product);
+  }
+  if (!construct_props_->user_agent.empty()) {
+    context_->SetUserAgent(construct_props_->user_agent);
+  }
+  if (!construct_props_->accept_langs.empty()) {
+    context_->SetAcceptLangs(construct_props_->accept_langs);
+  }
+  context_->SetCookiePolicy(construct_props_->cookie_policy);
+  context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
+
+  context_->SetDelegate(this);
+
+  construct_props_.reset();
+
+  // BrowserContext takes ownership of this
+  new RenderWidgetHostViewFactory(context_.get(), view_factory_.release());
+
+  UpdateUserScripts();
+
+  return context_;
 }
 
 } // namespace qt

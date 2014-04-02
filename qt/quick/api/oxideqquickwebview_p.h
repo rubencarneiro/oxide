@@ -169,7 +169,7 @@ class OxideQQuickWebView : public QQuickItem {
   void newViewRequested(OxideQNewViewRequest* request);
 
  private:
-  Q_PRIVATE_SLOT(d_func(), void contextInitialized());
+  Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
 
   void geometryChanged(const QRectF& newGeometry,

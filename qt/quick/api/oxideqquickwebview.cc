@@ -309,7 +309,7 @@ void OxideQQuickWebViewPrivate::messageHandler_clear(
   }
 }
 
-void OxideQQuickWebViewPrivate::contextInitialized() {
+void OxideQQuickWebViewPrivate::contextConstructed() {
   if (constructed_) {
     completeConstruction();
   }
@@ -334,8 +334,8 @@ void OxideQQuickWebViewPrivate::attachContextSignals(
 
   QObject::connect(context, SIGNAL(willBeDestroyed()),
                    q, SLOT(contextWillBeDestroyed()));
-  QObject::connect(context, SIGNAL(initialized()),
-                   q, SLOT(contextInitialized()));
+  QObject::connect(context, SIGNAL(constructed()),
+                   q, SLOT(contextConstructed()));
 }
 
 void OxideQQuickWebViewPrivate::detachContextSignals(
@@ -346,8 +346,8 @@ void OxideQQuickWebViewPrivate::detachContextSignals(
     return;
   }
 
-  QObject::disconnect(context, SIGNAL(initialized()),
-                      q, SLOT(contextInitialized()));
+  QObject::disconnect(context, SIGNAL(constructed()),
+                      q, SLOT(contextConstructed()));
   QObject::disconnect(context, SIGNAL(willBeDestroyed()),
                       q, SLOT(contextWillBeDestroyed()));
 }
@@ -427,7 +427,7 @@ void OxideQQuickWebView::componentComplete() {
   QQuickItem::componentComplete();
 
   if (!d->context() ||
-      static_cast<OxideQQuickWebContextPrivate *>(d->context())->isInitialized()) {
+      static_cast<OxideQQuickWebContextPrivate *>(d->context())->isConstructed()) {
     d->completeConstruction();
   }
 }
