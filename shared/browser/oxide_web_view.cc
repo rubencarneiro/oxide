@@ -217,6 +217,16 @@ content::WebContents* WebView::OpenURLFromTab(
     const content::OpenURLParams& params) {
   DCHECK_EQ(source, web_contents_.get());
 
+  if (params.disposition != CURRENT_TAB &&
+      params.disposition != NEW_FOREGROUND_TAB &&
+      params.disposition != NEW_BACKGROUND_TAB &&
+      params.disposition != NEW_POPUP &&
+      params.disposition != NEW_WINDOW) {
+    LOG(WARNING) << "Unexpected disposition";
+    return NULL;
+  }
+
+  // Block popups
   if ((params.disposition == NEW_FOREGROUND_TAB ||
        params.disposition == NEW_BACKGROUND_TAB ||
        params.disposition == NEW_WINDOW ||
@@ -225,6 +235,11 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
+  // Without --site-per-process, frame_tree_node_id is always -1. That's ok,
+  // because we only get called for top-level frames anyway. With
+  // --site-per-process, we might get called for subframes that are the
+  // toplevel within their renderer process, so we use the frame ID (which
+  // won't be -1) to look up its corresponding WebFrame
   bool top_level = params.frame_tree_node_id == -1;
   if (!top_level) {
     WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
@@ -232,6 +247,7 @@ content::WebContents* WebView::OpenURLFromTab(
     top_level = frame->parent() == NULL;
   }
 
+  // Give the application a chance to block the navigation
   if (params.is_renderer_initiated &&
       top_level &&
       !ShouldHandleNavigation(params.url,
@@ -323,12 +339,16 @@ void WebView::AddNewContents(content::WebContents* source,
   DCHECK_EQ(source, web_contents_.get());
   DCHECK_EQ(GetBrowserContext(),
             BrowserContext::FromContent(new_contents->GetBrowserContext()));
-  CHECK(disposition == NEW_FOREGROUND_TAB ||
-        disposition == NEW_BACKGROUND_TAB ||
-        disposition == NEW_POPUP ||
-        disposition == NEW_WINDOW) << "Unexpected disposition";
 
   ScopedNewContentsHolder holder(new_contents, was_blocked);
+
+  if (disposition != NEW_FOREGROUND_TAB &&
+      disposition != NEW_BACKGROUND_TAB &&
+      disposition != NEW_POPUP &&
+      disposition != NEW_WINDOW) {
+    LOG(WARNING) << "Unexpected disposition";
+    return;
+  }
 
   PendingContentsMap::iterator it = pending_contents_.find(holder.contents());
   if (it == pending_contents_.end()) {
