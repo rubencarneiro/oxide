@@ -52,7 +52,9 @@ void BrowserContextIODataImpl::SetCookiePolicy(
 
 content::CookieStoreConfig::SessionCookieMode
 BrowserContextIODataImpl::GetSessionCookieMode() const {
-  return session_cookie_mode_;
+  return GetPath().empty() ?
+      content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES :
+      session_cookie_mode_;
 }
 
 bool BrowserContextIODataImpl::IsPopupBlockerEnabled() const {
