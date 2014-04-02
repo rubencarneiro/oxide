@@ -297,10 +297,12 @@ void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
 
-void WebView::OnAddMessageToConsole(int32 level,
-				    const base::string16& message,
-				    int32 line_no,
-				    const base::string16& source_id) {}
+bool WebView::OnAddMessageToConsole(int32 level,
+                                    const base::string16& message,
+                                    int32 line_no,
+                                    const base::string16& source_id) {
+  return false;
+}
 
 WebView::WebView() {}
 
@@ -541,12 +543,11 @@ void WebView::FrameAdded(WebFrame* frame) {}
 void WebView::FrameRemoved(WebFrame* frame) {}
 
 bool WebView::AddMessageToConsole(content::WebContents* source,
-				  int32 level,
-				  const base::string16& message,
-				  int32 line_no,
-				  const base::string16& source_id) {
-  
-  OnAddMessageToConsole(level, message, line_no, source_id);
+                                  int32 level,
+                                  const base::string16& message,
+                                  int32 line_no,
+                                  const base::string16& source_id) {
+  return OnAddMessageToConsole(level, message, line_no, source_id);
 }
 
 } // namespace oxide

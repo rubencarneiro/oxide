@@ -117,8 +117,13 @@ void OxideQQuickWebViewPrivate::AddMessageToConsole(
     const QString& source_id) {
   Q_Q(OxideQQuickWebView);
 
-  emit q->messageToConsoleAdded(
-      level,
+  OxideQQuickWebView::LogMessageSeverityLevel oxideLevel =
+    OxideQQuickWebView::LogSeverityInfo;
+  if (level >= 0 && level <= OxideQQuickWebView::LogSeverityFatal) {
+    oxideLevel = static_cast<OxideQQuickWebView::LogMessageSeverityLevel>(level);
+  }
+  emit q->javaScriptConsoleMessage(
+      oxideLevel,
       message,
       line_no,
       source_id);

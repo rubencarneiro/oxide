@@ -101,9 +101,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual QRect GetContainerBounds() = 0;
 
   virtual void AddMessageToConsole(int level,
-				   const QString& message,
-				   int line_no,
-				   const QString& source_id) = 0;
+                                   const QString& message,
+                                   int line_no,
+                                   const QString& source_id) = 0;
 
   bool isInitialized();
 

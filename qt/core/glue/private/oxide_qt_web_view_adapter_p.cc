@@ -104,14 +104,17 @@ void WebViewAdapterPrivate::OnWebPreferencesChanged() {
   a->WebPreferencesChanged();
 }
 
-void WebViewAdapterPrivate::OnAddMessageToConsole(int level,
-						  const base::string16& message,
-						  int line_no,
-						  const base::string16& source_id) {
-  a->AddMessageToConsole(level,
+bool WebViewAdapterPrivate::OnAddMessageToConsole(
+    int level,
+    const base::string16& message,
+    int line_no,
+    const base::string16& source_id) {
+  a->AddMessageToConsole(
+      level,
       QString::fromStdString(base::UTF16ToUTF8(message)),
       line_no,
       QString::fromStdString(base::UTF16ToUTF8(source_id)));
+  return true;
 }
 
 oxide::WebFrame* WebViewAdapterPrivate::CreateWebFrame(

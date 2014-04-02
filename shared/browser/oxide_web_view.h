@@ -233,10 +233,10 @@ class WebView : public ScriptMessageTarget,
   virtual void OnNavigationListPruned(bool from_front, int count);
   virtual void OnNavigationEntryChanged(int index);
 
-  virtual void OnAddMessageToConsole(int32 level,
-				     const base::string16& message,
-				     int32 line_no,
-				     const base::string16& source_id);
+  virtual bool OnAddMessageToConsole(int32 level,
+                                     const base::string16& message,
+                                     int32 line_no,
+                                     const base::string16& source_id);
 
   virtual void OnWebPreferencesChanged();
 
