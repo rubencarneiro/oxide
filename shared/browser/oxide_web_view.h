@@ -188,7 +188,7 @@ class WebView : public ScriptMessageTarget,
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
   void WebContentsCreated(content::WebContents* source,
-                          int64 source_frame_id,
+                          int source_frame_id,
                           const base::string16& frame_name,
                           const GURL& target_url,
                           content::WebContents* new_contents) FINAL;

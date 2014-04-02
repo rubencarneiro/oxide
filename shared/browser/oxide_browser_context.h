@@ -226,6 +226,7 @@ class BrowserContext : public content::BrowserContext,
       int render_view_id,
       int bridge_id,
       const GURL& requesting_frame,
+      bool user_gesture,
       const MidiSysExPermissionCallback& callback) FINAL;
 
   void CancelMidiSysExPermissionRequest(

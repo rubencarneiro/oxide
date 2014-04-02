@@ -1,0 +1,34 @@
+# Description: Remove -Wno-#pragma-messages, as it results in a
+#  compile error:
+#  cc: error: unrecognized command line option '-Wno-'
+#  I assume that if this works with ninja, this is an escaping
+#  issue with the makefile generator
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/third_party/opus/opus.gyp b/third_party/opus/opus.gyp
+--- a/third_party/opus/opus.gyp
++++ b/third_party/opus/opus.gyp
+@@ -45,23 +45,16 @@
+             'USE_ALLOCA',
+             'inline=__inline',
+           ],
+           'msvs_disabled_warnings': [
+             4305,  # Disable truncation warning in celt/pitch.c .
+             4334,  # Disable 32-bit shift warning in src/opus_encoder.c .
+           ],
+         }],
+-        [ 'os_posix==1 and OS!="android"', {
+-          'cflags': [
+-            # Suppress a warning given by opus_decoder.c that tells us
+-            # optimizations are turned off.
+-            '-Wno-#pragma-messages',
+-          ],
+-        }],
+         ['use_opus_fixed_point==0', {
+           'include_dirs': [
+             'src/silk/float',
+           ],
+           'sources/': [
+             ['exclude', '/fixed/[^/]*_FIX.(h|c)$'],
+           ],
+         }, {

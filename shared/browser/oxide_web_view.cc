@@ -118,7 +118,7 @@ class WebView::PendingContents FINAL : public content::WebContentsObserver {
   PendingContents(content::WebContentsObserver* owner,
                   content::WebContents* contents,
                   const GURL& target_url,
-                  int64 source_frame_id) :
+                  int source_frame_id) :
       content::WebContentsObserver(contents),
       owner_(owner),
       target_url_(target_url),
@@ -129,12 +129,12 @@ class WebView::PendingContents FINAL : public content::WebContentsObserver {
   }
 
   GURL target_url() const { return target_url_; }
-  int64 source_frame_id() const { return source_frame_id_; }
+  int source_frame_id() const { return source_frame_id_; }
 
  private:
   content::WebContentsObserver* owner_;
   GURL target_url_;
-  int64 source_frame_id_;
+  int source_frame_id_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(PendingContents);
 };
@@ -322,7 +322,7 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
 }
 
 void WebView::WebContentsCreated(content::WebContents* source,
-                                 int64 source_frame_id,
+                                 int source_frame_id,
                                  const base::string16& frame_name,
                                  const GURL& target_url,
                                  content::WebContents* new_contents) {
