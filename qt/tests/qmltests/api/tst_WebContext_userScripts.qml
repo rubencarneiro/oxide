@@ -90,9 +90,7 @@ TestWebView {
       compare(OxideTestingUtils.qObjectParent(script), otherContext,
               "UserScript should still be owned by the other context");
 
-      var obs = OxideTestingUtils.createDestructionObserver(script);
-      otherContext.destroy();
-      verify(webView.waitFor(function() { return obs.destroyed; }));
+      OxideTestingUtils.destroyQObjectNow(otherContext);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.context.userScripts.length, 1, "Unexpected number of user scripts");

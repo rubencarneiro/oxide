@@ -19,16 +19,6 @@ Item {
     name: "OxideGlobal"
     when: windowShown
 
-    function waitFor(predicate, timeout) {
-      timeout = timeout || 5000;
-      var i = 0;
-      while (i < timeout && !predicate()) {
-        wait(50);
-        i += 50;
-      }
-      return predicate();
-    }
-
     function init() {
       spy.clear();
       spy.signalName = "";
@@ -87,12 +77,8 @@ Item {
                 "Got the wrong value back");
       }
 
-      var destructionObs = Testing.OxideTestingUtils.createDestructionObserver(
-          Oxide._defaultWebContext);
-      view.destroy();
-      gc();
-      verify(waitFor(function() { return destructionObs.destroyed; }),
-             "Timed out waiting for WebView to be destroyed");
+      Testing.OxideTestingUtils.destroyQObjectNow(view);
+      verify(!Oxide._defaultWebContext);
 
       compare(Oxide[data.attr], data.value1,
               "Got the wrong value back");

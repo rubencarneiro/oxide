@@ -90,6 +90,14 @@ class OxideTestingUtils : public QObject {
     return object->parent();
   }
 
+  Q_INVOKABLE void destroyQObjectNow(QObject* object) {
+    if (!object) {
+      return;
+    }
+
+    delete object;
+  }
+
   Q_INVOKABLE DestructionObserver* createDestructionObserver(QObject* object) {
     if (!object) {
       return NULL;

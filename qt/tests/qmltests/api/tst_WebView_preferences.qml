@@ -43,16 +43,11 @@ TestWebView {
               "Should have a new preference object");
       compare(OxideTestingUtils.qObjectParent(webView.preferences), webView,
               "WebView should own its default preferences");
-      gc();
-      verify(webView.waitFor(function() { return destructionObserver.destroyed; }),
+      verify(destructionObserver.destroyed,
              "The default preference object should have been destroyed");
 
-      destructionObserver = OxideTestingUtils.createDestructionObserver(
-          webView.preferences);
       var oldSetting = webView.preferences.javascriptEnabled = !webView.preferences.javascriptEnabled;
-      webView.preferences.destroy();
-      gc();
-      verify(webView.waitFor(function() { return destructionObserver.destroyed; }));
+      OxideTestingUtils.destroyQObjectNow(webView.preferences);
 
       compare(spy.count, 2,
               "Deleting our preference object should have caused a signal");

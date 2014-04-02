@@ -47,9 +47,7 @@ TestWebView {
 
       while (requests.length > 0) {
         var req = requests.pop();
-        var obs = OxideTestingUtils.createDestructionObserver(req);
-        req.destroy();
-        verify(webView.waitFor(function() { return obs.destroyed; }));
+        OxideTestingUtils.destroyQObjectNow(req);
       }
     }
   }

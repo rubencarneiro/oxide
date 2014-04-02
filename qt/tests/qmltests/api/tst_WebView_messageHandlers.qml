@@ -111,10 +111,7 @@ TestWebView {
       compare(webView.messageHandlers.length, 1,
               "WebView should have a handler");
 
-      var obs = OxideTestingUtils.createDestructionObserver(handler);
-      handler.destroy();
-      verify(webView.waitFor(function() { return obs.destroyed; }),
-             "Timed out waiting for handler to be destroyed");
+      OxideTestingUtils.destroyQObjectNow(handler);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.messageHandlers.length, 0,

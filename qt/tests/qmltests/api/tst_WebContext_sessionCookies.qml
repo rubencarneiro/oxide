@@ -19,8 +19,8 @@ TestCase {
 
   function _deleteWebView(webView) {
     var context = webView.context;
-    webView.destroy();
-    context.destroy();
+    OxideTestingUtils.destroyQObjectNow(webView);
+    OxideTestingUtils.destroyQObjectNow(context);
   }
 
   function _clear(webView) {
