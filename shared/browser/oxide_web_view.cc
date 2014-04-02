@@ -249,12 +249,16 @@ content::WebContents* WebView::OpenURLFromTab(
     return web_contents_.get();
   }
 
-  // XXX(chrisccoulson): This doesn't preserve the opener chain. If we want
-  // to do that, I think we need to create WebContents with our SiteInstance.
-  // We also need to set content_params.opener to our WebContents
-  content::WebContents::CreateParams contents_params(GetBrowserContext(), NULL);
+  // XXX(chrisccoulson): Is there a way to tell when the opener shouldn't
+  // be suppressed?
+  bool opener_suppressed = true;
+
+  content::WebContents::CreateParams contents_params(
+      GetBrowserContext(),
+      opener_suppressed ? NULL : web_contents_->GetSiteInstance());
   contents_params.initial_size = GetContainerSize();
   contents_params.initially_hidden = params.disposition == NEW_BACKGROUND_TAB;
+  contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
 
   ScopedNewContentsHolder holder(
       content::WebContents::Create(contents_params));
