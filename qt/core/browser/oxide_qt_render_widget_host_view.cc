@@ -757,6 +757,23 @@ void RenderWidgetHostView::HandleWheelEvent(QWheelEvent* event) {
   event->accept();
 }
 
+// Qt input methods don’t generate key events, but a lot of web pages out there
+// rely on keydown and keyup events to e.g. perform search-as-you-type or
+// enable/disable a submit button based on the contents of a text input field,
+// so we send a fake pair of keydown/keyup events.
+// This mimicks what is done in GtkIMContextWrapper::HandlePreeditChanged(…)
+// and GtkIMContextWrapper::HandleCommit(…)
+// (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
+static void sendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* rwh,
+                                        blink::WebInputEvent::Type type) {
+  const int kCompositionEventKeyCode = 229;
+  content::NativeWebKeyboardEvent fake_event;
+  fake_event.windowsKeyCode = kCompositionEventKeyCode;
+  fake_event.skip_in_browser = true;
+  fake_event.type = type;
+  rwh->ForwardKeyboardEvent(fake_event);
+}
+
 void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
   content::RenderWidgetHostImpl* rwh =
       content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
@@ -770,9 +787,11 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
       replacementRange.set_start(replacementStart);
       replacementRange.set_end(replacementStart + replacementLength);
     }
+    sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::RawKeyDown);
     rwh->ImeConfirmComposition(
         base::UTF8ToUTF16(event->commitString().toStdString()),
         replacementRange, false);
+    sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::KeyUp);
   } else {
     std::vector<blink::WebCompositionUnderline> underlines;
     int cursorPosition = -1;
@@ -808,8 +827,10 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
       int position = (cursorPosition >= 0) ? cursorPosition : preedit.length();
       selectionRange = gfx::Range(position);
     }
+    sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::RawKeyDown);
     rwh->ImeSetComposition(base::UTF8ToUTF16(preedit.toStdString()), underlines,
                            selectionRange.start(), selectionRange.end());
+    sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::KeyUp);
   }
 
   event->accept();
