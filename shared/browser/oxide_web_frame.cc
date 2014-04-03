@@ -92,7 +92,6 @@ void WebFrame::RemoveScriptMessageRequest(
 
 void WebFrame::OnChildAdded(WebFrame* child) {}
 void WebFrame::OnChildRemoved(WebFrame* child) {}
-void WebFrame::OnURLChanged() {}
 
 WebFrame::WebFrame(
     content::FrameTreeNode* node,
@@ -159,13 +158,12 @@ WebFrame* WebFrame::FromFrameTreeNodeID(int64 frame_tree_node_id) {
   return it == g_frame_map.Get().end() ? NULL : it->second;
 }
 
-content::FrameTreeNode* WebFrame::GetFrameTreeNode() {
-  return view_->GetFrameTree()->FindByID(frame_tree_node_id_);
+GURL WebFrame::GetURL() const {
+  return const_cast<WebFrame *>(this)->GetFrameTreeNode()->current_url();
 }
 
-void WebFrame::SetURL(const GURL& url) {
-  url_ = url;
-  OnURLChanged();
+content::FrameTreeNode* WebFrame::GetFrameTreeNode() {
+  return view_->GetFrameTree()->FindByID(frame_tree_node_id_);
 }
 
 void WebFrame::SetParent(WebFrame* parent) {

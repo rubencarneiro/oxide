@@ -49,10 +49,6 @@ void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
   child_api->setParent(NULL);
 }
 
-void WebFrame::OnURLChanged() {
-  adapter_->URLChanged();
-}
-
 WebFrame::WebFrame(WebFrameAdapter* adapter,
                    content::FrameTreeNode* node,
                    oxide::WebView* view) :
@@ -60,6 +56,10 @@ WebFrame::WebFrame(WebFrameAdapter* adapter,
     api_handle_(adapterToQObject(adapter)),
     adapter_(adapter) {
   adapter->owner_ = this;
+}
+
+void WebFrame::URLChanged() {
+  adapter_->URLChanged();
 }
 
 } // namespace qt

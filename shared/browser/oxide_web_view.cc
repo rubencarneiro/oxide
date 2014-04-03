@@ -420,7 +420,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
 
   WebFrame* frame = WebFrame::FromFrameTreeNode(node);
   if (frame) {
-    frame->SetURL(url);
+    frame->URLChanged();
   }
 }
 
