@@ -17,6 +17,8 @@
 
 #include "oxide_qt_web_view_adapter.h"
 
+#include <QtDebug>
+
 #include "base/logging.h"
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
@@ -119,7 +121,7 @@ bool WebViewAdapter::incognito() const {
 
 void WebViewAdapter::setIncognito(bool incognito) {
   if (!construct_props_) {
-    LOG(WARNING) << "Cannot change incognito mode after WebView is initialized";
+    qWarning() << "Cannot change incognito mode after WebView is initialized";
     return;
   }
 
@@ -249,7 +251,7 @@ void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
 
 void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
   if (isInitialized()) {
-    LOG(WARNING) << "Cannot assign NewViewRequest to an already constructed WebView";
+    qWarning() << "Cannot assign NewViewRequest to an already constructed WebView";
     return;
   }
 
@@ -259,7 +261,7 @@ void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
 
   OxideQNewViewRequestPrivate* rd = OxideQNewViewRequestPrivate::get(request);
   if (rd->view) {
-    LOG(WARNING) << "Cannot assign NewViewRequest to more than one WebView";
+    qWarning() << "Cannot assign NewViewRequest to more than one WebView";
     return;
   }
 
