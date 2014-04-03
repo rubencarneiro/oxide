@@ -40,11 +40,10 @@ class OxideQQuickUserScriptPrivate Q_DECL_FINAL :
   void willBeDeleted();
 
  private:
-  // To map this back to public object
-  friend class OxideQQuickWebContextPrivate;
-
   void OnScriptLoadFailed() Q_DECL_FINAL;
   void OnScriptLoaded() Q_DECL_FINAL;
+
+  bool constructed_;
 
   Q_DISABLE_COPY(OxideQQuickUserScriptPrivate);
 };

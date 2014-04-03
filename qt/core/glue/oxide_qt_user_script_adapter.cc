@@ -87,11 +87,6 @@ QUrl UserScriptAdapter::url() const {
 }
 
 void UserScriptAdapter::setUrl(const QUrl& url) {
-  if (priv->state != UserScriptAdapterPrivate::Constructing) {
-    qWarning() << "UserScript url is a construct-only parameter";
-    return;
-  }
-
   if (!url.isLocalFile()) {
     qWarning() << "UserScript url must be set to a local file";
     return;
@@ -142,7 +137,7 @@ void UserScriptAdapter::setContext(const QUrl& context) {
   priv->user_script.set_context(GURL(context.toString().toStdString()));
 }
 
-void UserScriptAdapter::completeConstruction() {
+void UserScriptAdapter::init() {
   DCHECK_EQ(priv->state, UserScriptAdapterPrivate::Constructing);
 
   priv->state = UserScriptAdapterPrivate::Loading;

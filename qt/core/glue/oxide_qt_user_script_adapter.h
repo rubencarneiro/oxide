@@ -48,7 +48,7 @@ class Q_DECL_EXPORT UserScriptAdapter : public AdapterBase {
   QUrl context() const;
   void setContext(const QUrl& context);
 
-  void completeConstruction();
+  void init();
 
  protected:
   UserScriptAdapter(QObject* q);
