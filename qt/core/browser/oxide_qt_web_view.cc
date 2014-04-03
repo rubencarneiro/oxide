@@ -24,6 +24,7 @@
 #include "url/gurl.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/browser/web_contents/web_contents_impl.h"
+#include "net/base/net_errors.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
@@ -43,8 +44,11 @@ namespace qt {
 namespace {
 
 OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
-  if (error_code == 0) {
+  if (error_code == net::OK) {
     return OxideQLoadEvent::ErrorDomainNone;
+  }
+  if (net::IsCertificateError(error_code)) {
+    return OxideQLoadEvent::ErrorDomainCertificate;
   }
   if (-1 >= error_code && error_code > -100) {
     return OxideQLoadEvent::ErrorDomainInternal;
@@ -60,12 +64,6 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
   }
   if (-400 >= error_code && error_code > -500) {
     return OxideQLoadEvent::ErrorDomainCache;
-  }
-  if (-500 >= error_code && error_code > -600) {
-    if (-501 >= error_code && error_code > -504) {
-      return OxideQLoadEvent::ErrorDomainCertificate;
-    } 
-    return OxideQLoadEvent::ErrorDomainInternal;
   }
   if (-600 >= error_code && error_code > -700) {
     return OxideQLoadEvent::ErrorDomainFTP;
