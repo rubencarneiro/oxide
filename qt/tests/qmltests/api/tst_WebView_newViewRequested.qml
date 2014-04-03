@@ -90,6 +90,8 @@ Column {
       compare(created.url, "http://localhost:8080/empty.html", "Unexpected URL");
       compare(created.context, webView1.context, "Unexpected context");
       compare(created.incognito, webView1.incognito, "WebView.incognito should match opener");
+
+      webView1.waitFor(function() { return created.loading == false; });
       verify(created.getTestApi().evaluateCode("return window.opener != null;", true));
     }
 
