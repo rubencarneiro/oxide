@@ -28,13 +28,14 @@ class OxideQLoadEventPrivate;
 
 class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QUrl url READ url)
-  Q_PROPERTY(Type type READ type)
-  Q_PROPERTY(ErrorCode error READ error)
-  Q_PROPERTY(QString errorString READ errorString)
+  Q_PROPERTY(QUrl url READ url CONSTANT)
+  Q_PROPERTY(Type type READ type CONSTANT)
+  Q_PROPERTY(ErrorDomain errorDomain READ errorDomain CONSTANT)
+  Q_PROPERTY(QString errorString READ errorString CONSTANT)
+  Q_PROPERTY(int errorCode READ errorCode CONSTANT)
 
   Q_ENUMS(Type)
-  Q_ENUMS(ErrorCode)
+  Q_ENUMS(ErrorDomain)
 
   Q_DECLARE_PRIVATE(OxideQLoadEvent)
   Q_DISABLE_COPY(OxideQLoadEvent)
@@ -48,23 +49,29 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
     TypeFailed
   };
 
-  enum ErrorCode {
-    ErrorNone,
-    ErrorUnexpected,
-    ErrorNameNotResolved,
-    ErrorFailed = 1000
+  enum ErrorDomain {
+    ErrorDomainNone,
+    ErrorDomainInternal,
+    ErrorDomainConnection,
+    ErrorDomainCertificate,
+    ErrorDomainHTTP,
+    ErrorDomainCache,
+    ErrorDomainFTP,
+    ErrorDomainDNS
   };
 
-  OxideQLoadEvent(const QUrl& url,
-                  Type type,
-                  ErrorCode error_code = ErrorNone,
-                  const QString& error_string = QString());
+  Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
+                                Type type,
+                                ErrorDomain error_domain = ErrorDomainNone,
+                                const QString& error_string = QString(),
+                                int error_code = 0);
   virtual ~OxideQLoadEvent();
 
   QUrl url() const;
   Type type() const;
-  ErrorCode error() const;
+  ErrorDomain errorDomain() const;
   QString errorString() const;
+  int errorCode() const;
 
  private:
   QScopedPointer<OxideQLoadEventPrivate> d_ptr;

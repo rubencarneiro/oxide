@@ -26,7 +26,6 @@
 #include "content/browser/web_contents/web_contents_impl.h"
 
 #include "qt/core/api/oxideqloadevent.h"
-#include "qt/core/api/oxideqloadevent_p.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -40,6 +39,45 @@
 
 namespace oxide {
 namespace qt {
+
+namespace {
+
+OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
+  if (error_code == 0) {
+    return OxideQLoadEvent::ErrorDomainNone;
+  }
+  if (-1 >= error_code && error_code > -100) {
+    return OxideQLoadEvent::ErrorDomainInternal;
+  }
+  if (-100 >= error_code && error_code > -200) {
+    return OxideQLoadEvent::ErrorDomainConnection;
+  }
+  if (-200 >= error_code && error_code > -300) {
+    return OxideQLoadEvent::ErrorDomainCertificate;
+  }
+  if (-300 >= error_code && error_code > -400) {
+    return OxideQLoadEvent::ErrorDomainHTTP;
+  }
+  if (-400 >= error_code && error_code > -500) {
+    return OxideQLoadEvent::ErrorDomainCache;
+  }
+  if (-500 >= error_code && error_code > -600) {
+    if (-501 >= error_code && error_code > -504) {
+      return OxideQLoadEvent::ErrorDomainCertificate;
+    } 
+    return OxideQLoadEvent::ErrorDomainInternal;
+  }
+  if (-600 >= error_code && error_code > -700) {
+    return OxideQLoadEvent::ErrorDomainFTP;
+  }
+  if (-800 >= error_code && error_code > -900) {
+    return OxideQLoadEvent::ErrorDomainDNS;
+  }
+
+  return OxideQLoadEvent::ErrorDomainInternal;
+}
+
+}
 
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter) {}
@@ -155,8 +193,9 @@ void WebView::OnLoadFailed(const GURL& validated_url,
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       OxideQLoadEvent::TypeFailed,
-      OxideQLoadEventPrivate::ChromeErrorCodeToOxideErrorCode(error_code),
-      QString::fromStdString(error_description));
+      ErrorDomainFromErrorCode(error_code),
+      QString::fromStdString(error_description),
+      error_code);
   adapter_->LoadEvent(&event);
 }
 
