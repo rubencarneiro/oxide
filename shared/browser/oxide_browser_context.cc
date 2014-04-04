@@ -492,11 +492,6 @@ BrowserContext* BrowserContext::Create(const Params& params) {
 }
 
 // static
-std::vector<BrowserContext *>& BrowserContext::GetAllContexts() {
-  return g_all_contexts.Get();
-}
-
-// static
 void BrowserContext::AssertNoContextsExist() {
   CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
 }

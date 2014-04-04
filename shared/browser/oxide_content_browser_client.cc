@@ -23,7 +23,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
-#include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
@@ -271,20 +270,6 @@ bool ContentBrowserClient::CanCreateWindow(
 
   return !BrowserContextIOData::FromResourceContext(
       context)->IsPopupBlockerEnabled();
-}
-
-void ContentBrowserClient::ResourceDispatcherHostCreated() {
-  std::vector<BrowserContext *>& contexts = BrowserContext::GetAllContexts();
-
-  content::ResourceDispatcherHostImpl* rdhi =
-      content::ResourceDispatcherHostImpl::Get();
-
-  for (std::vector<BrowserContext *>::iterator it = contexts.begin();
-       it != contexts.end(); ++it) {
-    BrowserContext* c = *it;
-
-    rdhi->AddResourceContext(c->GetResourceContext());
-  }
 }
 
 content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {

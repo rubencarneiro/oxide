@@ -143,8 +143,6 @@ class BrowserContext : public content::BrowserContext,
   // references to the BrowserProcessMain have been released
   static BrowserContext* Create(const Params& params);
 
-  static std::vector<BrowserContext *>& GetAllContexts();
-
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();
 

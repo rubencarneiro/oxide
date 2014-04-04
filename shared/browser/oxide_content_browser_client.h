@@ -111,8 +111,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                        int opener_id,
                        bool* no_javascript_access) FINAL;
 
-  void ResourceDispatcherHostCreated() FINAL;
-
   content::AccessTokenStore* CreateAccessTokenStore() FINAL;
 
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
