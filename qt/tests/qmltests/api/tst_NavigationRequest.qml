@@ -191,7 +191,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       webView.url = "http://localhost:8080/tst_NavigationRequest2.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      console.log(spy.count);
+
       var frame = webView.rootFrame.childFrames[0];
 
       frameSpy.target = frame;

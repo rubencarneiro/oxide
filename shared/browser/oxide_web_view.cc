@@ -220,12 +220,21 @@ content::WebContents* WebView::OpenURLFromTab(
     top_level = frame->parent() == NULL;
   }
 
+  // Coerce all non CURRENT_TAB navigations that don't come from a user
+  // gesture to NEW_POPUP
   WindowOpenDisposition disposition = params.disposition;
   if (disposition != CURRENT_TAB && !params.user_gesture) {
     disposition = NEW_POPUP;
   }
 
-  // Give the application a chance to block the navigation
+  // If we can't create new windows, this should be a CURRENT_TAB navigation
+  if (!CanCreateWindows()) {
+    disposition = CURRENT_TAB;
+  }
+
+  // Give the application a chance to block the navigation if it is
+  // renderer initiated and it's a top-level navigation or requires a
+  // new webview
   if (params.is_renderer_initiated &&
       (top_level || disposition != CURRENT_TAB) &&
       !ShouldHandleNavigation(params.url,
