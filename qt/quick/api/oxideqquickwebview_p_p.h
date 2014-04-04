@@ -117,7 +117,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QQmlComponent* confirm_dialog_;
   QQmlComponent* prompt_dialog_;
   QQmlComponent* before_unload_dialog_;
-  QQmlComponent* file_picker;
+  QQmlComponent* file_picker_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

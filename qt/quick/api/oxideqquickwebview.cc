@@ -70,7 +70,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     confirm_dialog_(NULL),
     prompt_dialog_(NULL),
     before_unload_dialog_(NULL),
-    file_picker(NULL) {}
+    file_picker_(NULL) {}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
@@ -662,17 +662,17 @@ void OxideQQuickWebView::setBeforeUnloadDialog(
 QQmlComponent* OxideQQuickWebView::filePicker() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->file_picker;
+  return d->file_picker_;
 }
 
 void OxideQQuickWebView::setFilePicker(QQmlComponent* file_picker) {
   Q_D(OxideQQuickWebView);
 
-  if (d->file_picker == file_picker) {
+  if (d->file_picker_ == file_picker) {
     return;
   }
 
-  d->file_picker = file_picker;
+  d->file_picker_ = file_picker;
   emit filePickerChanged();
 }
 
