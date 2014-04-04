@@ -94,10 +94,8 @@ class WebView FINAL : public oxide::WebView,
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
 
-  oxide::WebView* CreateNewWebView(const GURL& target_url,
-                                   const gfx::Rect& initial_pos,
-                                   WindowOpenDisposition disposition,
-                                   bool user_gesture) FINAL;
+  oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
+                                   WindowOpenDisposition disposition) FINAL;
 
   WebViewAdapter* adapter_;
 

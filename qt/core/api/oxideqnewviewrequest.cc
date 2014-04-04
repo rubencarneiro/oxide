@@ -19,14 +19,10 @@
 #include "oxideqnewviewrequest_p.h"
 
 OxideQNewViewRequestPrivate::OxideQNewViewRequestPrivate(
-    const QUrl& url,
     const QRect& position,
-    OxideQNewViewRequest::Disposition disposition,
-    bool user_gesture) :
-    url_(url),
+    OxideQNewViewRequest::Disposition disposition) :
     position_(position),
-    disposition_(disposition),
-    user_gesture_(user_gesture) {}
+    disposition_(disposition) {}
 
 OxideQNewViewRequestPrivate::~OxideQNewViewRequestPrivate() {}
 
@@ -36,20 +32,11 @@ OxideQNewViewRequestPrivate* OxideQNewViewRequestPrivate::get(
   return q->d_func();
 }
 
-OxideQNewViewRequest::OxideQNewViewRequest(const QUrl& url,
-                                           const QRect& position,
-                                           Disposition disposition,
-                                           bool user_gesture) :
-    d_ptr(new OxideQNewViewRequestPrivate(
-      url, position, disposition, user_gesture)) {}
+OxideQNewViewRequest::OxideQNewViewRequest(const QRect& position,
+                                           Disposition disposition) :
+    d_ptr(new OxideQNewViewRequestPrivate(position, disposition)) {}
 
 OxideQNewViewRequest::~OxideQNewViewRequest() {}
-
-QUrl OxideQNewViewRequest::url() const {
-  Q_D(const OxideQNewViewRequest);
-
-  return d->url_;
-}
 
 QRect OxideQNewViewRequest::position() const {
   Q_D(const OxideQNewViewRequest);
@@ -67,10 +54,4 @@ OxideQNewViewRequest::Disposition OxideQNewViewRequest::disposition() const {
   Q_D(const OxideQNewViewRequest);
 
   return d->disposition_;
-}
-
-bool OxideQNewViewRequest::userGesture() const {
-  Q_D(const OxideQNewViewRequest);
-
-  return d->user_gesture_;
 }

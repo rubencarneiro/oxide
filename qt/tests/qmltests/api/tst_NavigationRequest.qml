@@ -65,18 +65,27 @@ TestWebView {
       newViewSpy.clear();
       frameSpy.clear();
       webView.shouldReject = false;
+      webView.context.popupBlockerEnabled = true;
     }
 
     function test_NavigationRequest1_from_user_gestures_data() {
       return [
-        { link: "#link1", url: "http://localhost:8888/", local: false, modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionCurrentTab },
-        { link: "#link1", url: "http://localhost:8888/", local: false, modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow },
-        { link: "#link1", url: "http://localhost:8888/", local: false, modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab },
-        { link: "#link1", url: "http://localhost:8888/", local: false, modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab },
-        { link: "#link2", url: "http://localhost:8080/empty.html", local: true, modifiers: Qt.NoModifier, request: false, disposition: NavigationRequest.DispositionCurrentTab },
-        { link: "#link2", url: "http://localhost:8080/empty.html", local: true, modifiers: Qt.ShiftModifier, request: false, disposition: NavigationRequest.DispositionNewWindow },
-        { link: "#link2", url: "http://localhost:8080/empty.html", local: true, modifiers: Qt.ControlModifier, request: false, disposition: NavigationRequest.DispositionNewBackgroundTab },
-        { link: "#link2", url: "http://localhost:8080/empty.html", local: true, modifiers: Qt.ShiftModifier | Qt.ControlModifier, request: false, disposition: NavigationRequest.DispositionNewForegroundTab }
+        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionCurrentTab, current: true },
+        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: true },
+        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: true },
+        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: true },
+        { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: false },
+        { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
+        // { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: false },
+        { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
+        // { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewPopup, current: false },
+        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewPopup, current: false },
+        { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
+        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
       ];
     }
 
@@ -96,7 +105,6 @@ TestWebView {
 
       if (data.disposition == NavigationRequest.DispositionCurrentTab) {
         verify(webView.waitForLoadSucceeded());
-        compare(newViewSpy.count, 0);
       } else {
         newViewSpy.wait();
       }
@@ -115,6 +123,8 @@ TestWebView {
     // for renderer-initiated top-level navigations that don't come from an
     // input event
     function test_NavigationRequest2_no_user_gesture(data) {
+      webView.context.popupBlockerEnabled = false;
+
       webView.url = "http://localhost:8080/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -127,12 +137,15 @@ TestWebView {
 e.initEvent(\"click\", true, false);
 document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
 
-      verify(webView.waitForLoadSucceeded());
-      compare(newViewSpy.count, 0);
+      if (data.current) {
+        verify(webView.waitForLoadSucceeded());
+      } else {
+        newViewSpy.wait();
+      }
 
       compare(spy.count, 1, "Should have had an onNavigationRequested signal")
-      compare(webView.lastRequestUrl, data.url);
-      compare(webView.lastRequestDisposition, NavigationRequest.DispositionCurrentTab);
+      compare(webView.lastRequestUrl, "http://localhost:8080/empty.html");
+      compare(webView.lastRequestDisposition, data.current ? NavigationRequest.DispositionCurrentTab : NavigationRequest.DispositionNewPopup );
       compare(webView.lastRequestUserGesture, false);
     }
 

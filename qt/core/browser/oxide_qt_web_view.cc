@@ -270,10 +270,8 @@ oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
   return new WebFrame(adapter_->CreateWebFrame(), node, this);
 }
 
-oxide::WebView* WebView::CreateNewWebView(const GURL& target_url,
-                                          const gfx::Rect& initial_pos,
-                                          WindowOpenDisposition disposition,
-                                          bool user_gesture) {
+oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
+                                          WindowOpenDisposition disposition) {
   OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
 
   switch (disposition) {
@@ -296,12 +294,10 @@ oxide::WebView* WebView::CreateNewWebView(const GURL& target_url,
       NOTREACHED();
   }
 
-  OxideQNewViewRequest request(QUrl(QString::fromStdString(target_url.spec())),
-                               QRect(initial_pos.x(),
+  OxideQNewViewRequest request(QRect(initial_pos.x(),
                                      initial_pos.y(),
                                      initial_pos.width(),
-                                     initial_pos.height()),
-                               d, user_gesture);
+                                     initial_pos.height()), d);
 
   adapter_->NewViewRequested(&request);
 

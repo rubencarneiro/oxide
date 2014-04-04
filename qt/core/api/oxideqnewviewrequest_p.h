@@ -20,7 +20,6 @@
 
 #include <QRect>
 #include <QtGlobal>
-#include <QUrl>
 
 #include "base/memory/weak_ptr.h"
 
@@ -43,15 +42,11 @@ class OxideQNewViewRequestPrivate Q_DECL_FINAL {
  private:
   friend class OxideQNewViewRequest;
 
-  OxideQNewViewRequestPrivate(const QUrl& url,
-                              const QRect& position,
-                              OxideQNewViewRequest::Disposition disposition,
-                              bool user_gesture);
+  OxideQNewViewRequestPrivate(const QRect& position,
+                              OxideQNewViewRequest::Disposition disposition);
 
-  QUrl url_;
   QRect position_;
   OxideQNewViewRequest::Disposition disposition_;
-  bool user_gesture_;
 };
 
 #endif // _OXIDE_QT_CORE_API_NEW_VIEW_REQUEST_P_H_

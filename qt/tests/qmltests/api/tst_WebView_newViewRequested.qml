@@ -92,7 +92,7 @@ Column {
       compare(created.incognito, webView1.incognito, "WebView.incognito should match opener");
 
       webView1.waitFor(function() { return created.loading == false; });
-      verify(created.getTestApi().evaluateCode("return window.opener != null;", true));
+      compare(created.getTestApi().evaluateCode("return window.opener.document.domain;", true), "localhost");
     }
 
     function test_WebView_newViewRequested2_incorrect() {

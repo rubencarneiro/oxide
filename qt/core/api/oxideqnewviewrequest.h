@@ -23,17 +23,14 @@
 #include <QRectF>
 #include <QScopedPointer>
 #include <QtGlobal>
-#include <QUrl>
 
 class OxideQNewViewRequestPrivate;
 
 class Q_DECL_EXPORT OxideQNewViewRequest Q_DECL_FINAL : public QObject {
   Q_OBJECT
 
-  Q_PROPERTY(QUrl url READ url CONSTANT)
   Q_PROPERTY(QRectF position READ positionF CONSTANT)
   Q_PROPERTY(Disposition disposition READ disposition CONSTANT)
-  Q_PROPERTY(bool userGesture READ userGesture CONSTANT)
 
   Q_ENUMS(Disposition)
 
@@ -50,17 +47,13 @@ class Q_DECL_EXPORT OxideQNewViewRequest Q_DECL_FINAL : public QObject {
     DispositionNewWindow
   };
 
-  Q_DECL_HIDDEN OxideQNewViewRequest(const QUrl& url,
-                                     const QRect& position,
-                                     Disposition disposition,
-                                     bool user_gesture);
+  Q_DECL_HIDDEN OxideQNewViewRequest(const QRect& position,
+                                     Disposition disposition);
   ~OxideQNewViewRequest();
 
-  QUrl url() const;
   QRect position() const;
   QRectF positionF() const;
   Disposition disposition() const;
-  bool userGesture() const;
 
  private:
   QScopedPointer<OxideQNewViewRequestPrivate> d_ptr;

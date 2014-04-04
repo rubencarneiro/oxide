@@ -1,0 +1,191 @@
+# HG changeset patch
+# Parent a332058bf988c907f2ee17eb2278febda2c639db
+# User oxide
+
+diff --git a/content/browser/renderer_host/render_process_host_impl.cc b/content/browser/renderer_host/render_process_host_impl.cc
+--- a/content/browser/renderer_host/render_process_host_impl.cc
++++ b/content/browser/renderer_host/render_process_host_impl.cc
+@@ -1558,16 +1558,20 @@ bool RenderProcessHostImpl::SuddenTermin
+ base::TimeDelta RenderProcessHostImpl::GetChildProcessIdleTime() const {
+   return base::TimeTicks::Now() - child_process_activity_time_;
+ }
+ 
+ void RenderProcessHostImpl::ResumeRequestsForView(int route_id) {
+   widget_helper_->ResumeRequestsForView(route_id);
+ }
+ 
++void RenderProcessHostImpl::CancelRequestsForView(int route_id) {
++  widget_helper_->CancelRequestsForView(route_id);
++}
++
+ void RenderProcessHostImpl::FilterURL(bool empty_allowed, GURL* url) {
+   FilterURL(this, empty_allowed, url);
+ }
+ 
+ #if defined(ENABLE_WEBRTC)
+ void RenderProcessHostImpl::EnableAecDump(const base::FilePath& file) {
+   DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
+   BrowserThread::PostTaskAndReplyWithResult(
+diff --git a/content/browser/renderer_host/render_process_host_impl.h b/content/browser/renderer_host/render_process_host_impl.h
+--- a/content/browser/renderer_host/render_process_host_impl.h
++++ b/content/browser/renderer_host/render_process_host_impl.h
+@@ -123,16 +123,17 @@ class CONTENT_EXPORT RenderProcessHostIm
+   virtual void SetSuddenTerminationAllowed(bool enabled) OVERRIDE;
+   virtual bool SuddenTerminationAllowed() const OVERRIDE;
+   virtual IPC::ChannelProxy* GetChannel() OVERRIDE;
+   virtual void AddFilter(BrowserMessageFilter* filter) OVERRIDE;
+   virtual bool FastShutdownForPageCount(size_t count) OVERRIDE;
+   virtual bool FastShutdownStarted() const OVERRIDE;
+   virtual base::TimeDelta GetChildProcessIdleTime() const OVERRIDE;
+   virtual void ResumeRequestsForView(int route_id) OVERRIDE;
++  virtual void CancelRequestsForView(int route_id) OVERRIDE;
+   virtual void FilterURL(bool empty_allowed, GURL* url) OVERRIDE;
+ #if defined(ENABLE_WEBRTC)
+   virtual void EnableAecDump(const base::FilePath& file) OVERRIDE;
+   virtual void DisableAecDump() OVERRIDE;
+   virtual void SetWebRtcLogMessageCallback(
+       base::Callback<void(const std::string&)> callback) OVERRIDE;
+ #endif
+   virtual void ResumeDeferredNavigation(const GlobalRequestID& request_id)
+diff --git a/content/browser/renderer_host/render_widget_helper.cc b/content/browser/renderer_host/render_widget_helper.cc
+--- a/content/browser/renderer_host/render_widget_helper.cc
++++ b/content/browser/renderer_host/render_widget_helper.cc
+@@ -187,16 +187,25 @@ void RenderWidgetHelper::ResumeRequestsF
+   if (route_id != MSG_ROUTING_NONE) {
+     BrowserThread::PostTask(
+         BrowserThread::IO, FROM_HERE,
+         base::Bind(&RenderWidgetHelper::OnResumeRequestsForView,
+             this, route_id));
+   }
+ }
+ 
++void RenderWidgetHelper::CancelRequestsForView(int route_id) {
++  if (route_id != MSG_ROUTING_NONE) {
++    BrowserThread::PostTask(
++        BrowserThread::IO, FROM_HERE,
++        base::Bind(&RenderWidgetHelper::OnCancelRequestsForView,
++            this, route_id));
++  }
++}
++
+ void RenderWidgetHelper::DidReceiveBackingStoreMsg(const IPC::Message& msg) {
+   int render_widget_id = msg.routing_id();
+ 
+   BackingStoreMsgProxy* proxy = new BackingStoreMsgProxy(this, msg);
+   {
+     base::AutoLock lock(pending_paints_lock_);
+ 
+     pending_paints_[render_widget_id].push_back(proxy);
+@@ -294,16 +303,21 @@ void RenderWidgetHelper::OnCreateWindowO
+         session_storage_namespace);
+ }
+ 
+ void RenderWidgetHelper::OnResumeRequestsForView(int route_id) {
+   resource_dispatcher_host_->ResumeBlockedRequestsForRoute(
+       render_process_id_, route_id);
+ }
+ 
++void RenderWidgetHelper::OnCancelRequestsForView(int route_id) {
++  resource_dispatcher_host_->CancelBlockedRequestsForRoute(
++      render_process_id_, route_id);
++}
++
+ void RenderWidgetHelper::CreateNewWidget(int opener_id,
+                                          blink::WebPopupType popup_type,
+                                          int* route_id,
+                                          int* surface_id) {
+   *route_id = GetNextRoutingID();
+   *surface_id = GpuSurfaceTracker::Get()->AddSurfaceForRenderer(
+       render_process_id_, *route_id);
+   BrowserThread::PostTask(
+diff --git a/content/browser/renderer_host/render_widget_helper.h b/content/browser/renderer_host/render_widget_helper.h
+--- a/content/browser/renderer_host/render_widget_helper.h
++++ b/content/browser/renderer_host/render_widget_helper.h
+@@ -129,16 +129,20 @@ class RenderWidgetHelper
+   void ResumeDeferredNavigation(const GlobalRequestID& request_id);
+   bool WaitForBackingStoreMsg(int render_widget_id,
+                               const base::TimeDelta& max_delay,
+                               IPC::Message* msg);
+   // Called to resume the requests for a view after it's ready. The view was
+   // created by CreateNewWindow which initially blocked the requests.
+   void ResumeRequestsForView(int route_id);
+ 
++  // Called to cancel the requests for a view if we're going to close it
++  // without displaying it
++  void CancelRequestsForView(int route_id);
++
+ #if defined(OS_POSIX) && !defined(TOOLKIT_GTK) && !defined(OS_ANDROID)
+   // Given the id of a transport DIB, return a mapping to it or NULL on error.
+   TransportDIB* MapTransportDIB(TransportDIB::Id dib_id);
+ #endif
+ 
+   // IO THREAD ONLY -----------------------------------------------------------
+ 
+   // Called on the IO thread when a BackingStore message is received.
+@@ -199,16 +203,18 @@ class RenderWidgetHelper
+       const ViewHostMsg_CreateWindow_Params& params,
+       int route_id,
+       int main_frame_route_id,
+       SessionStorageNamespace* session_storage_namespace);
+ 
+   // Called on the IO thread after a window was created on the UI thread.
+   void OnResumeRequestsForView(int route_id);
+ 
++  void OnCancelRequestsForView(int route_id);
++
+   // Called on the UI thread to finish creating a widget.
+   void OnCreateWidgetOnUI(int opener_id,
+                           int route_id,
+                           blink::WebPopupType popup_type);
+ 
+   // Called on the UI thread to create a fullscreen widget.
+   void OnCreateFullscreenWidgetOnUI(int opener_id, int route_id);
+ 
+diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
+--- a/content/browser/web_contents/web_contents_impl.cc
++++ b/content/browser/web_contents/web_contents_impl.cc
+@@ -1345,18 +1345,18 @@ void WebContentsImpl::CreateNewWindow(
+                                           params.disposition,
+                                           params.user_gesture)) {
+     if (route_id != MSG_ROUTING_NONE &&
+         !RenderViewHost::FromID(render_process_id, route_id)) {
+       // If the embedder didn't create a WebContents for this route, we need to
+       // delete the RenderView that had already been created.
+       Send(new ViewMsg_Close(route_id));
+     }
+-    GetRenderViewHost()->GetProcess()->ResumeRequestsForView(route_id);
+-    GetRenderViewHost()->GetProcess()->ResumeRequestsForView(
++    GetRenderViewHost()->GetProcess()->CancelRequestsForView(route_id);
++    GetRenderViewHost()->GetProcess()->CancelRequestsForView(
+         main_frame_route_id);
+     return;
+   }
+ 
+   // Create the new web contents. This will automatically create the new
+   // WebContentsView. In the future, we may want to create the view separately.
+   WebContentsImpl* new_contents =
+       new WebContentsImpl(GetBrowserContext(),
+diff --git a/content/public/browser/render_process_host.h b/content/public/browser/render_process_host.h
+--- a/content/public/browser/render_process_host.h
++++ b/content/public/browser/render_process_host.h
+@@ -203,16 +203,20 @@ class CONTENT_EXPORT RenderProcessHost :
+   // This is a rough indicator and its resolution should not be better than
+   // 10 milliseconds.
+   virtual base::TimeDelta GetChildProcessIdleTime() const = 0;
+ 
+   // Called to resume the requests for a view created through window.open that
+   // were initially blocked.
+   virtual void ResumeRequestsForView(int route_id) = 0;
+ 
++  // Called to cancel the requests for a view created through window.open that
++  // we're going to close
++  virtual void CancelRequestsForView(int route_id) = 0;
++
+   // Checks that the given renderer can request |url|, if not it sets it to
+   // about:blank.
+   // |empty_allowed| must be set to false for navigations for security reasons.
+   virtual void FilterURL(bool empty_allowed, GURL* url) = 0;
+ 
+ #if defined(ENABLE_WEBRTC)
+   virtual void EnableAecDump(const base::FilePath& file) = 0;
+   virtual void DisableAecDump() = 0;

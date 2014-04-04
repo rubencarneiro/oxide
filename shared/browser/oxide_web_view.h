@@ -18,7 +18,6 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 
-#include <map>
 #include <string>
 #include <vector>
 
@@ -193,6 +192,16 @@ class WebView : public ScriptMessageTarget,
                                        const content::OpenURLParams& params) FINAL;
   void NavigationStateChanged(const content::WebContents* source,
                               unsigned changed_flags) FINAL;
+  bool ShouldCreateWebContents(
+      content::WebContents* source,
+      int route_id,
+      WindowContainerType window_container_type,
+      const base::string16& frame_name,
+      const GURL& target_url,
+      const std::string& partition_id,
+      content::SessionStorageNamespace* session_storage_namespace,
+      WindowOpenDisposition disposition,
+      bool user_gesture) FINAL;
   void WebContentsCreated(content::WebContents* source,
                           int source_frame_id,
                           const base::string16& frame_name,
@@ -210,7 +219,6 @@ class WebView : public ScriptMessageTarget,
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
-  void WebContentsDestroyed(content::WebContents* contents) FINAL;
 
   void DidStartProvisionalLoadForFrame(
       int64 frame_id,
@@ -292,10 +300,8 @@ class WebView : public ScriptMessageTarget,
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
 
-  virtual WebView* CreateNewWebView(const GURL& target_url,
-                                    const gfx::Rect& initial_pos,
-                                    WindowOpenDisposition disposition,
-                                    bool user_gesture);
+  virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
+                                    WindowOpenDisposition disposition);
 
   // Please don't change the order of these. It's important that context_
   // outlives web_contents_, otherwise web_contents_ gets left with a dangling
@@ -306,10 +312,6 @@ class WebView : public ScriptMessageTarget,
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
-
-  class PendingContents;
-  typedef std::map<content::WebContents*, linked_ptr<PendingContents> > PendingContentsMap;
-  PendingContentsMap pending_contents_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

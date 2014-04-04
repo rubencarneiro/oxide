@@ -113,32 +113,6 @@ class ScopedNewContentsHolder {
 
 }
 
-class WebView::PendingContents FINAL : public content::WebContentsObserver {
- public:
-  PendingContents(content::WebContentsObserver* owner,
-                  content::WebContents* contents,
-                  const GURL& target_url,
-                  int source_frame_id) :
-      content::WebContentsObserver(contents),
-      owner_(owner),
-      target_url_(target_url),
-      source_frame_id_(source_frame_id) {}
-
-  void WebContentsDestroyed(content::WebContents* contents) {
-    owner_->WebContentsDestroyed(contents);
-  }
-
-  GURL target_url() const { return target_url_; }
-  int source_frame_id() const { return source_frame_id_; }
-
- private:
-  content::WebContentsObserver* owner_;
-  GURL target_url_;
-  int source_frame_id_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(PendingContents);
-};
-
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
                                  const base::string16& error_description) {
@@ -222,7 +196,6 @@ content::WebContents* WebView::OpenURLFromTab(
       params.disposition != NEW_BACKGROUND_TAB &&
       params.disposition != NEW_POPUP &&
       params.disposition != NEW_WINDOW) {
-    LOG(WARNING) << "Unexpected disposition";
     return NULL;
   }
 
@@ -247,30 +220,27 @@ content::WebContents* WebView::OpenURLFromTab(
     top_level = frame->parent() == NULL;
   }
 
+  WindowOpenDisposition disposition = params.disposition;
+  if (disposition != CURRENT_TAB && !params.user_gesture) {
+    disposition = NEW_POPUP;
+  }
+
   // Give the application a chance to block the navigation
   if (params.is_renderer_initiated &&
-      top_level &&
+      (top_level || disposition != CURRENT_TAB) &&
       !ShouldHandleNavigation(params.url,
-                              params.disposition,
+                              disposition,
                               params.user_gesture)) {
     return NULL;
   }
 
-  if (params.disposition == CURRENT_TAB) {
+  if (disposition == CURRENT_TAB) {
     content::NavigationController::LoadURLParams load_params(params.url);
     FillLoadURLParamsFromOpenURLParams(&load_params, params);
 
     web_contents_->GetController().LoadURLWithParams(load_params);
 
     return web_contents_.get();
-  }
-
-  WebView* new_view = CreateNewWebView(params.url,
-                                       GetContainerBounds(),
-                                       params.disposition,
-                                       params.user_gesture);
-  if (!new_view) {
-    return NULL;
   }
 
   // XXX(chrisccoulson): Is there a way to tell when the opener shouldn't
@@ -290,7 +260,12 @@ content::WebContents* WebView::OpenURLFromTab(
     LOG(ERROR) << "Failed to create new WebContents for navigation";
     return NULL;
   }
-  
+
+  WebView* new_view = CreateNewWebView(GetContainerBounds(), disposition);
+  if (!new_view) {
+    return NULL;
+  }
+
   if (!InitCreatedWebView(new_view, contents.release())) {
     return NULL;
   }
@@ -321,14 +296,37 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
   }
 }
 
+bool WebView::ShouldCreateWebContents(
+    content::WebContents* source,
+    int route_id,
+    WindowContainerType window_container_type,
+    const base::string16& frame_name,
+    const GURL& target_url,
+    const std::string& partition_id,
+    content::SessionStorageNamespace* session_storage_namespace,
+    WindowOpenDisposition disposition,
+    bool user_gesture) {
+  DCHECK_EQ(source, web_contents_.get());
+
+  if (disposition != NEW_FOREGROUND_TAB &&
+      disposition != NEW_BACKGROUND_TAB &&
+      disposition != NEW_POPUP &&
+      disposition != NEW_WINDOW) {
+    return false;
+  }
+
+  // Note that popup blocking was done on the IO thread
+
+  return ShouldHandleNavigation(target_url,
+                                user_gesture ? disposition : NEW_POPUP,
+                                user_gesture);
+}
+
 void WebView::WebContentsCreated(content::WebContents* source,
                                  int source_frame_id,
                                  const base::string16& frame_name,
                                  const GURL& target_url,
-                                 content::WebContents* new_contents) {
-  pending_contents_[new_contents] = linked_ptr<PendingContents>(
-      new PendingContents(this, new_contents, target_url, source_frame_id));
-}
+                                 content::WebContents* new_contents) {}
 
 void WebView::AddNewContents(content::WebContents* source,
                              content::WebContents* new_contents,
@@ -339,29 +337,15 @@ void WebView::AddNewContents(content::WebContents* source,
   DCHECK_EQ(source, web_contents_.get());
   DCHECK_EQ(GetBrowserContext(),
             BrowserContext::FromContent(new_contents->GetBrowserContext()));
+  DCHECK(disposition == NEW_FOREGROUND_TAB ||
+         disposition == NEW_BACKGROUND_TAB ||
+         disposition == NEW_POPUP ||
+         disposition == NEW_WINDOW);
 
   ScopedNewContentsHolder holder(new_contents, was_blocked);
-
-  if (disposition != NEW_FOREGROUND_TAB &&
-      disposition != NEW_BACKGROUND_TAB &&
-      disposition != NEW_POPUP &&
-      disposition != NEW_WINDOW) {
-    LOG(WARNING) << "Unexpected disposition";
-    return;
-  }
-
-  PendingContentsMap::iterator it = pending_contents_.find(holder.contents());
-  if (it == pending_contents_.end()) {
-    return;
-  }
-
-  linked_ptr<PendingContents> pending(it->second);
-  pending_contents_.erase(it);
-
-  WebView* new_view = CreateNewWebView(pending->target_url(),
-                                       initial_pos,
-                                       disposition,
-                                       user_gesture);
+  
+  WebView* new_view = CreateNewWebView(initial_pos,
+                                       user_gesture ? disposition : NEW_POPUP);
   if (!new_view) {
     return;
   }
@@ -381,14 +365,6 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   while (root_frame_->ChildCount() > 0) {
     root_frame_->ChildAt(0)->Destroy();
   }
-}
-
-void WebView::WebContentsDestroyed(content::WebContents* contents) {
-  if (contents == web_contents_.get()) {
-    return;
-  }
-
-  pending_contents_.erase(contents);
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -559,10 +535,8 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
   return NULL;
 }
 
-WebView* WebView::CreateNewWebView(const GURL& target_url,
-                                   const gfx::Rect& initial_pos,
-                                   WindowOpenDisposition disposition,
-                                   bool user_gesture) {
+WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
+                                   WindowOpenDisposition disposition) {
   return NULL;
 }
 
