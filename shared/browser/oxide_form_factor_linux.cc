@@ -33,11 +33,9 @@ namespace oxide {
 namespace {
 
 bool IsUbuntuPhoneOrTablet() {
-  base::NativeLibraryLoadError error;
   base::ScopedNativeLibrary egl(
-      base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), &error));
+      base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
   if (!egl.is_valid()) {
-    LOG(ERROR) << "Failed to load library (error: " << error.ToString() << ")";
     return false;
   }
 
