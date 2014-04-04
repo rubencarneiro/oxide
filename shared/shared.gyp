@@ -107,7 +107,6 @@
         'oxide_packed_resources',
         'oxide_shared_resources',
         '<(DEPTH)/base/base.gyp:base',
-        '<(DEPTH)/build/linux/system.gyp:udev',
         '<(DEPTH)/content/content.gyp:content_app_both',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
