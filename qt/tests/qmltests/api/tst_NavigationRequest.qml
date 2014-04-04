@@ -82,6 +82,7 @@ TestWebView {
         { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: false },
         { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
         { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        // XXX(chrisccoulson): These 2 disabled due to https://launchpad.net/bugs/1302743
         // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewPopup, current: false },
         // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewPopup, current: false },
         { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
