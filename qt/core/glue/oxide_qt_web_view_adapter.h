@@ -34,28 +34,25 @@ class QSize;
 QT_END_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQNavigationRequest;
+class OxideQNewViewRequest;
 class OxideQWebPreferences;
 
 namespace oxide {
 namespace qt {
 
 class FilePickerDelegate;
-class RenderWidgetHostViewDelegate;
 class ScriptMessageHandlerAdapter;
 class WebContextAdapter;
 class WebFrameAdapter;
 class WebPopupMenuDelegate;
-class WebViewAdapterPrivate;
+class WebView;
 
 class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  public:
   virtual ~WebViewAdapter();
 
-  void init(WebContextAdapter* context,
-            const QSize& initial_size,
-            bool incognito,
-            const QUrl& initial_url,
-            bool visible);
+  void init();
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -66,10 +63,14 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   bool canGoForward() const;
 
   bool incognito() const;
+  void setIncognito(bool incognito);
 
   bool loading() const;
 
   WebFrameAdapter* rootFrame() const;
+
+  WebContextAdapter* context() const;
+  void setContext(WebContextAdapter* context);
 
   void updateSize(const QSize& size);
   void updateVisibility(bool visible);
@@ -83,12 +84,48 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
     return message_handlers_;
   }
 
-  virtual RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() = 0;
+  bool isInitialized();
+
+  int getNavigationEntryCount() const;
+  int getNavigationCurrentEntryIndex() const;
+  void setNavigationCurrentEntryIndex(int index);
+  int getNavigationEntryUniqueID(int index) const;
+  QUrl getNavigationEntryUrl(int index) const;
+  QString getNavigationEntryTitle(int index) const;
+  QDateTime getNavigationEntryTimestamp(int index) const;
+
+  OxideQWebPreferences* preferences();
+  void setPreferences(OxideQWebPreferences* prefs);
+
+  void setRequest(OxideQNewViewRequest* request);
+
+ protected:
+  WebViewAdapter(QObject* q);
+
+ private:
+  friend class WebView;
+
+  struct ConstructProperties {
+    ConstructProperties() :
+        incognito(false),
+        context(NULL) {}
+
+    QUrl url;
+    bool incognito;
+    WebContextAdapter* context;
+  };
+
+  void Initialized();
+  void WebPreferencesChanged();
+
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       JavaScriptDialogDelegate::Type type) = 0;
   virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;
   virtual FilePickerDelegate* CreateFilePickerDelegate() = 0;
+
+  virtual void OnInitialized(bool orig_incognito,
+                             WebContextAdapter* orig_context) = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
@@ -106,30 +143,27 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual QRect GetContainerBounds() = 0;
 
-  bool isInitialized();
+  virtual bool IsVisible() const = 0;
 
-  int getNavigationEntryCount() const;
-  int getNavigationCurrentEntryIndex() const;
-  void setNavigationCurrentEntryIndex(int index);
-  int getNavigationEntryUniqueID(int index) const;
-  QUrl getNavigationEntryUrl(int index) const;
-  QString getNavigationEntryTitle(int index) const;
-  QDateTime getNavigationEntryTimestamp(int index) const;
+  virtual void AddMessageToConsole(int level,
+                                   const QString& message,
+                                   int line_no,
+                                   const QString& source_id) = 0;
 
-  OxideQWebPreferences* preferences();
-  void setPreferences(OxideQWebPreferences* prefs);
-  void WebPreferencesChanged();
   virtual void OnWebPreferencesChanged() = 0;
 
   virtual void FrameAdded(WebFrameAdapter* frame) = 0;
   virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
 
- protected:
-  WebViewAdapter(QObject* q);
+  virtual bool CanCreateWindows() const = 0;
 
- private:
-  QScopedPointer<WebViewAdapterPrivate> priv;
+  virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
+  virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
+
+  QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
+  QScopedPointer<ConstructProperties> construct_props_;
+  bool created_with_new_view_request_;
 };
 
 } // namespace qt

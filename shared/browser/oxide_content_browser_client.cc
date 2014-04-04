@@ -249,6 +249,30 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
       context)->CanAccessCookies(url, first_party, true);
 }
 
+bool ContentBrowserClient::CanCreateWindow(
+    const GURL& opener_url,
+    const GURL& opener_top_level_frame_url,
+    const GURL& source_origin,
+    WindowContainerType container_type,
+    const GURL& target_url,
+    const content::Referrer& referrer,
+    WindowOpenDisposition disposition,
+    const blink::WebWindowFeatures& features,
+    bool user_gesture,
+    bool opener_suppressed,
+    content::ResourceContext* context,
+    int render_process_id,
+    bool is_guest,
+    int opener_id,
+    bool* no_javascript_access) {
+  if (user_gesture) {
+    return true;
+  }
+
+  return !BrowserContextIOData::FromResourceContext(
+      context)->IsPopupBlockerEnabled();
+}
+
 void ContentBrowserClient::ResourceDispatcherHostCreated() {
   std::vector<BrowserContext *>& contexts = BrowserContext::GetAllContexts();
 
@@ -282,6 +306,12 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
+
+  prefs->javascript_can_open_windows_automatically =
+      !view->GetBrowserContext()->IsPopupBlockerEnabled();
+  prefs->supports_multiple_windows = view->CanCreateWindows();
+
+  prefs->enable_scroll_animator = true;
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {

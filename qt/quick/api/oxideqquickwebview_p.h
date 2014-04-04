@@ -33,6 +33,8 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQNavigationRequest;
+class OxideQNewViewRequest;
 class OxideQWebPreferences;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
@@ -58,11 +60,14 @@ class OxideQQuickWebViewAttached : public QObject {
 
 class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
+
+  Q_ENUMS(LogMessageSeverityLevel);
+
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
-  Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
+  Q_PROPERTY(bool incognito READ incognito WRITE setIncognito NOTIFY incognitoChanged)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
@@ -82,11 +87,22 @@ class OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
 
+  Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
+
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
   OxideQQuickWebView(QQuickItem* parent = NULL);
   virtual ~OxideQQuickWebView();
+
+  enum LogMessageSeverityLevel {
+    LogSeverityVerbose = -1,
+    LogSeverityInfo,
+    LogSeverityWarning,
+    LogSeverityError,
+    LogSeverityErrorReport,
+    LogSeverityFatal
+  };
 
   void componentComplete();
 
@@ -137,6 +153,9 @@ class OxideQQuickWebView : public QQuickItem {
 
   OxideQQuickNavigationHistory* navigationHistory();
 
+  OxideQNewViewRequest* request() const;
+  void setRequest(OxideQNewViewRequest* request);
+
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
  public Q_SLOTS:
@@ -149,6 +168,7 @@ class OxideQQuickWebView : public QQuickItem {
   void urlChanged();
   void titleChanged();
   void navigationHistoryChanged();
+  void incognitoChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
   void rootFrameChanged();
@@ -163,16 +183,21 @@ class OxideQQuickWebView : public QQuickItem {
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
-
- private Q_SLOTS:
-  void visibilityChangedListener();
+  void navigationRequested(OxideQNavigationRequest *request);
+  void newViewRequested(OxideQNewViewRequest* request);
+  void javaScriptConsoleMessage(LogMessageSeverityLevel level,
+                                const QString& message,
+                                int lineNumber,
+                                const QString& sourceId);
 
  private:
-  Q_PRIVATE_SLOT(d_func(), void contextInitialized());
+  Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
 
-  virtual void geometryChanged(const QRectF& newGeometry,
-                               const QRectF& oldGeometry);
+  void geometryChanged(const QRectF& newGeometry,
+                       const QRectF& oldGeometry) Q_DECL_FINAL;
+  void itemChange(QQuickItem::ItemChange change,
+                  const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

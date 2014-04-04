@@ -22,6 +22,7 @@
           ['exclude', 'gl_context_ozone\\.c'],
           ['exclude', 'gl_image_ozone\\.c'],
           ['exclude', 'gl_implementation_ozone\\.c'],
+          ['exclude', 'gl_surface_ozone\\.c'],
         ],
       }],
     ]

@@ -37,7 +37,7 @@ WebFrameAdapter::WebFrameAdapter(QObject* q) :
 WebFrameAdapter::~WebFrameAdapter() {}
 
 QUrl WebFrameAdapter::url() const {
-  return QUrl(QString::fromStdString(owner_->url().spec()));
+  return QUrl(QString::fromStdString(owner_->GetURL().spec()));
 }
 
 bool WebFrameAdapter::sendMessage(const QUrl& context,

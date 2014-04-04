@@ -27,62 +27,39 @@
 namespace oxide {
 namespace qt {
 
-namespace {
-const char kAdapterKey[] = "adapter";
-
-class AdapterData : public base::SupportsUserData::Data {
- public:
-  AdapterData(WebFrameAdapter* adapter) :
-      adapter(adapter) {}
-
-  ~AdapterData() {
-    delete adapterToQObject(adapter);
-  }
-
-  WebFrameAdapter* adapter;
-};
-
-}
-
 WebFrame::~WebFrame() {}
 
 oxide::ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
     size_t index) const {
-  ScriptMessageHandlerAdapter* handler = GetAdapter()->message_handlers().at(index);
+  ScriptMessageHandlerAdapter* handler = adapter_->message_handlers().at(index);
   return &ScriptMessageHandlerAdapterPrivate::get(handler)->handler;
 }
 
 size_t WebFrame::GetScriptMessageHandlerCount() const {
-  return GetAdapter()->message_handlers().size();
+  return adapter_->message_handlers().size();
 }
 
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
-  QObject* child_api = adapterToQObject(static_cast<WebFrame *>(child)->GetAdapter());
-  QObject* this_api = adapterToQObject(GetAdapter());
-
-  child_api->setParent(this_api);
+  QObject* child_api = static_cast<WebFrame *>(child)->api_handle();
+  child_api->setParent(api_handle());
 }
 
 void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
-  QObject* child_api = adapterToQObject(static_cast<WebFrame *>(child)->GetAdapter());
-
+  QObject* child_api = static_cast<WebFrame *>(child)->api_handle();
   child_api->setParent(NULL);
-}
-
-void WebFrame::OnURLChanged() {
-  GetAdapter()->URLChanged();
 }
 
 WebFrame::WebFrame(WebFrameAdapter* adapter,
                    content::FrameTreeNode* node,
                    oxide::WebView* view) :
-    oxide::WebFrame(node, view) {
-  SetUserData(kAdapterKey, new AdapterData(adapter));
+    oxide::WebFrame(node, view),
+    api_handle_(adapterToQObject(adapter)),
+    adapter_(adapter) {
   adapter->owner_ = this;
 }
 
-WebFrameAdapter* WebFrame::GetAdapter() const {
-  return static_cast<AdapterData *>(GetUserData(kAdapterKey))->adapter;
+void WebFrame::URLChanged() {
+  adapter_->URLChanged();
 }
 
 } // namespace qt

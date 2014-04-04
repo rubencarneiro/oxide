@@ -53,6 +53,7 @@
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_p.h"
 
 #include "oxide_qt_backing_store.h"
+#include "oxide_qt_web_view.h"
 
 QT_USE_NAMESPACE
 
@@ -389,7 +390,7 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
   event.setKeyIdentifierFromWindowsKeyCode();
 
   const unsigned short* text = qevent->text().utf16();
-  memcpy(&event.text, text, qMin(sizeof(event.text), sizeof(text)));
+  memcpy(event.text, text, qMin(sizeof(event.text), sizeof(*text)));
 
   return event;
 }
@@ -527,32 +528,6 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 }
 
-void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
-  gfx::Rect scaled_rect(
-      gfx::ScaleToEnclosingRect(rect, GetDeviceScaleFactor()));
-  delegate_->SchedulePaintForRectPix(
-      QRect(scaled_rect.x(),
-            scaled_rect.y(),
-            scaled_rect.width(),
-            scaled_rect.height()));
-}
-
-void RenderWidgetHostView::BuffersSwapped() {
-  delegate_->ScheduleUpdate();
-}
-
-RenderWidgetHostView::RenderWidgetHostView(
-    content::RenderWidgetHost* render_widget_host,
-    RenderWidgetHostViewDelegate* delegate) :
-    oxide::RenderWidgetHostView(render_widget_host),
-    backing_store_(NULL),
-    delegate_(delegate),
-    input_type_(ui::TEXT_INPUT_TYPE_NONE) {
-  RenderWidgetHostViewDelegatePrivate::get(delegate)->rwhv = this;
-}
-
-RenderWidgetHostView::~RenderWidgetHostView() {}
-
 // static
 float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   // For some reason, the Ubuntu QPA plugin doesn't override
@@ -601,27 +576,6 @@ float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   return float(screen->devicePixelRatio());
 }
 
-// static
-void RenderWidgetHostView::GetWebScreenInfoFromQScreen(
-    QScreen* screen, blink::WebScreenInfo* result) {
-  result->depth = screen->depth();
-  result->depthPerComponent = 8; // XXX: Copied the GTK impl here
-  result->isMonochrome = result->depth == 1;
-  result->deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
-
-  QRect rect = screen->geometry();
-  result->rect = blink::WebRect(rect.x(),
-                                rect.y(),
-                                rect.width(),
-                                rect.height());
-
-  QRect availableRect = screen->availableGeometry();
-  result->availableRect = blink::WebRect(availableRect.x(),
-                                         availableRect.y(),
-                                         availableRect.width(),
-                                         availableRect.height());
-}
-
 void RenderWidgetHostView::Blur() {
   delegate_->Blur();
 }
@@ -648,35 +602,9 @@ bool RenderWidgetHostView::IsShowing() {
   return delegate_->IsShowing();
 }
 
-gfx::Rect RenderWidgetHostView::GetViewBounds() const {
-  QScreen* screen = delegate_->GetScreen();
-  if (!screen) {
-    return gfx::Rect();
-  }
-
-  QRect rect(delegate_->GetViewBoundsPix());
-  return gfx::ScaleToEnclosingRect(
-      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
-                1.0f / GetDeviceScaleFactor());
-}
-
-gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
-  QRect rect(delegate_->GetViewBoundsPix());
-  return gfx::Size(rect.width(), rect.height());
-}
-
-void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  delegate_->SetSize(QSize(size.width(), size.height()));
-  oxide::RenderWidgetHostView::SetSize(size);
-}
-
 content::BackingStore* RenderWidgetHostView::AllocBackingStore(
     const gfx::Size& size) {
   return new BackingStore(GetRenderWidgetHost(), size, GetDeviceScaleFactor());
-}
-
-float RenderWidgetHostView::GetDeviceScaleFactor() const {
-  return GetDeviceScaleFactorFromQScreen(delegate_->GetScreen());
 }
 
 void RenderWidgetHostView::GetScreenInfo(
@@ -718,6 +646,83 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   }
 }
 
+void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
+  gfx::Rect scaled_rect(
+      gfx::ScaleToEnclosingRect(rect, GetDeviceScaleFactor()));
+  delegate_->SchedulePaintForRectPix(
+      QRect(scaled_rect.x(),
+            scaled_rect.y(),
+            scaled_rect.width(),
+            scaled_rect.height()));
+}
+
+void RenderWidgetHostView::BuffersSwapped() {
+  delegate_->ScheduleUpdate();
+}
+
+RenderWidgetHostView::RenderWidgetHostView(
+    content::RenderWidgetHost* render_widget_host,
+    RenderWidgetHostViewDelegate* delegate) :
+    oxide::RenderWidgetHostView(render_widget_host),
+    backing_store_(NULL),
+    delegate_(delegate),
+    input_type_(ui::TEXT_INPUT_TYPE_NONE) {
+  RenderWidgetHostViewDelegatePrivate::get(delegate)->rwhv = this;
+}
+
+RenderWidgetHostView::~RenderWidgetHostView() {}
+
+void RenderWidgetHostView::Init(oxide::WebView* view) {
+  delegate_->Init(static_cast<WebView *>(view)->adapter());
+}
+
+// static
+void RenderWidgetHostView::GetWebScreenInfoFromQScreen(
+    QScreen* screen, blink::WebScreenInfo* result) {
+  result->depth = screen->depth();
+  result->depthPerComponent = 8; // XXX: Copied the GTK impl here
+  result->isMonochrome = result->depth == 1;
+  result->deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
+
+  QRect rect = screen->geometry();
+  result->rect = blink::WebRect(rect.x(),
+                                rect.y(),
+                                rect.width(),
+                                rect.height());
+
+  QRect availableRect = screen->availableGeometry();
+  result->availableRect = blink::WebRect(availableRect.x(),
+                                         availableRect.y(),
+                                         availableRect.width(),
+                                         availableRect.height());
+}
+
+gfx::Rect RenderWidgetHostView::GetViewBounds() const {
+  QScreen* screen = delegate_->GetScreen();
+  if (!screen) {
+    return gfx::Rect();
+  }
+
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::ScaleToEnclosingRect(
+      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
+                1.0f / GetDeviceScaleFactor());
+}
+
+gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::Size(rect.width(), rect.height());
+}
+
+void RenderWidgetHostView::SetSize(const gfx::Size& size) {
+  delegate_->SetSize(QSize(size.width(), size.height()));
+  oxide::RenderWidgetHostView::SetSize(size);
+}
+
+float RenderWidgetHostView::GetDeviceScaleFactor() const {
+  return GetDeviceScaleFactorFromQScreen(delegate_->GetScreen());
+}
+
 void RenderWidgetHostView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus()) {
     OnFocus();
@@ -752,6 +757,23 @@ void RenderWidgetHostView::HandleWheelEvent(QWheelEvent* event) {
   event->accept();
 }
 
+// Qt input methods don’t generate key events, but a lot of web pages out there
+// rely on keydown and keyup events to e.g. perform search-as-you-type or
+// enable/disable a submit button based on the contents of a text input field,
+// so we send a fake pair of keydown/keyup events.
+// This mimicks what is done in GtkIMContextWrapper::HandlePreeditChanged(…)
+// and GtkIMContextWrapper::HandleCommit(…)
+// (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
+static void sendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* rwh,
+                                        blink::WebInputEvent::Type type) {
+  const int kCompositionEventKeyCode = 229;
+  content::NativeWebKeyboardEvent fake_event;
+  fake_event.windowsKeyCode = kCompositionEventKeyCode;
+  fake_event.skip_in_browser = true;
+  fake_event.type = type;
+  rwh->ForwardKeyboardEvent(fake_event);
+}
+
 void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
   content::RenderWidgetHostImpl* rwh =
       content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
@@ -765,9 +787,11 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
       replacementRange.set_start(replacementStart);
       replacementRange.set_end(replacementStart + replacementLength);
     }
+    sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::RawKeyDown);
     rwh->ImeConfirmComposition(
         base::UTF8ToUTF16(event->commitString().toStdString()),
         replacementRange, false);
+    sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::KeyUp);
   } else {
     std::vector<blink::WebCompositionUnderline> underlines;
     int cursorPosition = -1;
@@ -803,8 +827,10 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
       int position = (cursorPosition >= 0) ? cursorPosition : preedit.length();
       selectionRange = gfx::Range(position);
     }
+    sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::RawKeyDown);
     rwh->ImeSetComposition(base::UTF8ToUTF16(preedit.toStdString()), underlines,
                            selectionRange.start(), selectionRange.end());
+    sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::KeyUp);
   }
 
   event->accept();

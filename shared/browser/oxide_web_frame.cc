@@ -22,6 +22,7 @@
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
@@ -91,25 +92,29 @@ void WebFrame::RemoveScriptMessageRequest(
 
 void WebFrame::OnChildAdded(WebFrame* child) {}
 void WebFrame::OnChildRemoved(WebFrame* child) {}
-void WebFrame::OnURLChanged() {}
 
 WebFrame::WebFrame(
     content::FrameTreeNode* node,
     WebView* view) :
-    frame_tree_node_(node),
+    frame_tree_node_id_(node->frame_tree_node_id()),
     parent_(NULL),
     view_(view),
     next_message_serial_(0),
-    weak_factory_(this) {
+    weak_factory_(this),
+    destroyed_(false) {
   std::pair<FrameMapIterator, bool> rv =
-      g_frame_map.Get().insert(std::make_pair(node->frame_tree_node_id(),
+      g_frame_map.Get().insert(std::make_pair(frame_tree_node_id_,
                                               this));
   CHECK(rv.second);
 }
 
 WebFrame::~WebFrame() {
+  CHECK(destroyed_) << "WebFrame deleted without calling Destroy()";
+}
+
+void WebFrame::Destroy() {
   while (ChildCount() > 0) {
-    delete ChildAt(0);
+    ChildAt(0)->Destroy();
   }
 
   while (true) {
@@ -136,22 +141,29 @@ WebFrame::~WebFrame() {
     parent_->RemoveChild(this);
   }
 
-  g_frame_map.Get().erase(frame_tree_node_->frame_tree_node_id());
+  g_frame_map.Get().erase(frame_tree_node_id_);
+
+  destroyed_ = true;
+  delete this;
 }
 
 // static
 WebFrame* WebFrame::FromFrameTreeNode(content::FrameTreeNode* node) {
-  FrameMapIterator it = g_frame_map.Get().find(node->frame_tree_node_id());
+  return FromFrameTreeNodeID(node->frame_tree_node_id());
+}
+
+// static
+WebFrame* WebFrame::FromFrameTreeNodeID(int64 frame_tree_node_id) {
+  FrameMapIterator it = g_frame_map.Get().find(frame_tree_node_id);
   return it == g_frame_map.Get().end() ? NULL : it->second;
 }
 
-int64 WebFrame::FrameTreeNodeID() const {
-  return frame_tree_node()->frame_tree_node_id();
+GURL WebFrame::GetURL() const {
+  return const_cast<WebFrame *>(this)->GetFrameTreeNode()->current_url();
 }
 
-void WebFrame::SetURL(const GURL& url) {
-  url_ = url;
-  OnURLChanged();
+content::FrameTreeNode* WebFrame::GetFrameTreeNode() {
+  return view_->GetFrameTree()->FindByID(frame_tree_node_id_);
 }
 
 void WebFrame::SetParent(WebFrame* parent) {
