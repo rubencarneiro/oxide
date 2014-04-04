@@ -68,7 +68,6 @@ bool IsUbuntuPhoneOrTablet() {
     return false;
   }
   const char* vendor = eglQueryString(display, EGL_VENDOR);
-  LOG(INFO) << "EGL vendor: " << vendor;
 
   typedef EGLBoolean (*f_eglTerminate)(EGLDisplay);
   f_eglTerminate eglTerminate =
