@@ -140,7 +140,13 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
   virtual QRect GetContainerBounds() = 0;
+
   virtual bool IsVisible() const = 0;
+
+  virtual void AddMessageToConsole(int level,
+                                   const QString& message,
+                                   int line_no,
+                                   const QString& source_id) = 0;
 
   virtual void OnWebPreferencesChanged() = 0;
 

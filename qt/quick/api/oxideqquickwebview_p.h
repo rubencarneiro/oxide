@@ -60,6 +60,9 @@ class OxideQQuickWebViewAttached : public QObject {
 
 class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
+
+  Q_ENUMS(LogMessageSeverityLevel);
+
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
@@ -89,6 +92,15 @@ class OxideQQuickWebView : public QQuickItem {
  public:
   OxideQQuickWebView(QQuickItem* parent = NULL);
   virtual ~OxideQQuickWebView();
+
+  enum LogMessageSeverityLevel {
+    LogSeverityVerbose = -1,
+    LogSeverityInfo,
+    LogSeverityWarning,
+    LogSeverityError,
+    LogSeverityErrorReport,
+    LogSeverityFatal
+  };
 
   void componentComplete();
 
@@ -167,6 +179,10 @@ class OxideQQuickWebView : public QQuickItem {
   void messageHandlersChanged();
   void navigationRequested(OxideQNavigationRequest *request);
   void newViewRequested(OxideQNewViewRequest* request);
+  void javaScriptConsoleMessage(LogMessageSeverityLevel level,
+                                const QString& message,
+                                int lineNumber,
+                                const QString& sourceId);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());

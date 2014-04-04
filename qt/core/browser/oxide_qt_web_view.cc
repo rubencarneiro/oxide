@@ -89,6 +89,19 @@ bool WebView::Init(const oxide::WebView::Params& params) {
   return true;
 }
 
+bool WebView::OnAddMessageToConsole(
+    int level,
+    const base::string16& message,
+    int line_no,
+    const base::string16& source_id) {
+  adapter_->AddMessageToConsole(
+      level,
+      QString::fromStdString(base::UTF16ToUTF8(message)),
+      line_no,
+      QString::fromStdString(base::UTF16ToUTF8(source_id)));
+  return true;
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return adapter_->message_handlers().size();
 }

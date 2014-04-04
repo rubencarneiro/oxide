@@ -542,6 +542,13 @@ void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
 
+bool WebView::OnAddMessageToConsole(int32 level,
+                                    const base::string16& message,
+                                    int32 line_no,
+                                    const base::string16& source_id) {
+  return false;
+}
+
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
                                      bool user_gesture) {
@@ -862,6 +869,14 @@ void WebView::HidePopupMenu() {
 
 content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
   return JavaScriptDialogManager::GetInstance();
+}
+
+bool WebView::AddMessageToConsole(content::WebContents* source,
+                                  int32 level,
+                                  const base::string16& message,
+                                  int32 line_no,
+                                  const base::string16& source_id) {
+  return OnAddMessageToConsole(level, message, line_no, source_id);
 }
 
 } // namespace oxide

@@ -81,6 +81,11 @@ class WebView FINAL : public oxide::WebView,
   void OnNavigationListPruned(bool from_front, int count) FINAL;
   void OnNavigationEntryChanged(int index) FINAL;
 
+  bool OnAddMessageToConsole(int32 level,
+                             const base::string16& message,
+                             int32 line_no,
+                             const base::string16& source_id) FINAL;
+  
   void OnWebPreferencesChanged() FINAL;
 
   bool ShouldHandleNavigation(const GURL& url,
