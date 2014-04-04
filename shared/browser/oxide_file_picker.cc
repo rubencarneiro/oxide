@@ -39,6 +39,7 @@ void FilePicker::RenderViewDeleted(content::RenderViewHost* rvh) {
 void FilePicker::Done(const std::vector<ui::SelectedFileInfo>& files,
                       content::FileChooserParams::Mode permissions) {
   render_view_host_->FilesSelectedInChooser(files, permissions);
+  OnHide();
   content::BrowserThread::DeleteSoon(
       content::BrowserThread::UI, FROM_HERE, this);
 }

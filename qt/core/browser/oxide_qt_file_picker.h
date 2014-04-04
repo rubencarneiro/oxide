@@ -36,6 +36,8 @@ class FilePicker FINAL : public oxide::FilePicker {
   void Run(const content::FileChooserParams& params) FINAL;
 
  private:
+  void OnHide() FINAL;
+
   scoped_ptr<FilePickerDelegate> delegate_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(FilePicker);

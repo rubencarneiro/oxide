@@ -140,6 +140,12 @@ void FilePickerDelegate::Show(Mode mode,
   component->completeCreate();
 }
 
+void FilePickerDelegate::Hide() {
+  if (!item_.isNull()) {
+    item_->setVisible(false);
+  }
+}
+
 } // namespace qquick
 } // namespace oxide
 

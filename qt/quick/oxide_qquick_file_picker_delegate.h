@@ -37,10 +37,12 @@ class FilePickerDelegate Q_DECL_FINAL : public oxide::qt::FilePickerDelegate {
  public:
   FilePickerDelegate(OxideQQuickWebView* webview);
 
+ protected:
   void Show(Mode mode,
             const QString& title,
             const QFileInfo& defaultFileName,
             const QStringList& acceptTypes);
+  void Hide();
 
  private:
   OxideQQuickWebView* web_view_;

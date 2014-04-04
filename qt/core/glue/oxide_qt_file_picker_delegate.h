@@ -43,16 +43,18 @@ class Q_DECL_EXPORT FilePickerDelegate {
 
   virtual ~FilePickerDelegate();
 
-  virtual void Show(Mode mode,
-                    const QString& title,
-                    const QFileInfo& defaultFileName,
-                    const QStringList& acceptTypes) = 0;
   void Done(const QFileInfoList& files, Mode mode);
 
  protected:
   FilePickerDelegate();
 
   friend class FilePicker;
+
+  virtual void Show(Mode mode,
+                    const QString& title,
+                    const QFileInfo& defaultFileName,
+                    const QStringList& acceptTypes) = 0;
+  virtual void Hide() = 0;
 
 private:
   FilePicker* file_picker_;

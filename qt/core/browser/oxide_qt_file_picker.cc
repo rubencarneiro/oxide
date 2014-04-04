@@ -56,5 +56,9 @@ void FilePicker::Run(const content::FileChooserParams& params) {
   delegate_->Show(mode, title, defaultFileName, acceptTypes);
 }
 
+void FilePicker::OnHide() {
+  delegate_->Hide();
+}
+
 } // namespace qt
 } // namespace oxide

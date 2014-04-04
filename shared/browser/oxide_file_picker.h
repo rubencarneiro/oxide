@@ -44,6 +44,8 @@ class FilePicker : public content::WebContentsObserver,
   FilePicker(content::RenderViewHost* rvh);
 
  private:
+  virtual void OnHide() = 0;
+
   void RenderViewDeleted(content::RenderViewHost* rvh) FINAL;
 
   content::RenderViewHost* render_view_host_;
