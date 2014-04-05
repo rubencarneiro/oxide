@@ -221,11 +221,11 @@ content::WebContents* WebView::OpenURLFromTab(
   }
 
   WindowOpenDisposition disposition = params.disposition;
-  int64 frame_tree_node_id = params.frame_tree_node_id;
+  content::OpenURLParams local_params(params);
 
   // Coerce all non CURRENT_TAB navigations that don't come from a user
   // gesture to NEW_POPUP
-  if (disposition != CURRENT_TAB && !params.user_gesture) {
+  if (disposition != CURRENT_TAB && !local_params.user_gesture) {
     disposition = NEW_POPUP;
   }
 
@@ -234,7 +234,7 @@ content::WebContents* WebView::OpenURLFromTab(
   if (!CanCreateWindows() && disposition != CURRENT_TAB) {
     disposition = CURRENT_TAB;
     if (!top_level) {
-      frame_tree_node_id = GetFrameTree()->root()->frame_tree_node_id();
+      local_params.frame_tree_node_id = GetFrameTree()->root()->frame_tree_node_id();
       top_level = true;
     }
   }
@@ -242,17 +242,17 @@ content::WebContents* WebView::OpenURLFromTab(
   // Give the application a chance to block the navigation if it is
   // renderer initiated and it's a top-level navigation or requires a
   // new webview
-  if (params.is_renderer_initiated &&
+  if (local_params.is_renderer_initiated &&
       (top_level || disposition != CURRENT_TAB) &&
-      !ShouldHandleNavigation(params.url,
+      !ShouldHandleNavigation(local_params.url,
                               disposition,
-                              params.user_gesture)) {
+                              local_params.user_gesture)) {
     return NULL;
   }
 
   if (disposition == CURRENT_TAB) {
-    content::NavigationController::LoadURLParams load_params(params.url);
-    FillLoadURLParamsFromOpenURLParams(&load_params, params);
+    content::NavigationController::LoadURLParams load_params(local_params.url);
+    FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
     web_contents_->GetController().LoadURLWithParams(load_params);
 
@@ -267,7 +267,7 @@ content::WebContents* WebView::OpenURLFromTab(
       GetBrowserContext(),
       opener_suppressed ? NULL : web_contents_->GetSiteInstance());
   contents_params.initial_size = GetContainerSize();
-  contents_params.initially_hidden = params.disposition == NEW_BACKGROUND_TAB;
+  contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
   contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
 
   scoped_ptr<content::WebContents> contents(
@@ -286,8 +286,8 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
-  content::NavigationController::LoadURLParams load_params(params.url);
-  FillLoadURLParamsFromOpenURLParams(&load_params, params);
+  content::NavigationController::LoadURLParams load_params(local_params.url);
+  FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
   new_view->GetWebContents()->GetController().LoadURLWithParams(load_params);
 
