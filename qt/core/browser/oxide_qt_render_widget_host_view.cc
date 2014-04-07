@@ -746,6 +746,12 @@ void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
 }
 
 void RenderWidgetHostView::HandleMouseEvent(QMouseEvent* event) {
+  if (!(event->button() == Qt::LeftButton ||
+        event->button() == Qt::MidButton ||
+        event->button() == Qt::RightButton)) {
+    return;
+  }
+
   GetRenderWidgetHost()->ForwardMouseEvent(
       MakeWebMouseEvent(event, GetDeviceScaleFactor()));
   event->accept();
