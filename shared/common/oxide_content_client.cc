@@ -19,6 +19,7 @@
 
 #include "base/strings/stringprintf.h"
 #include "content/public/common/user_agent.h"
+#include "ui/base/l10n/l10n_util.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/chrome_version.h"
@@ -28,6 +29,15 @@ namespace oxide {
 
 namespace {
 ContentClient* g_inst;
+}
+
+std::string ContentClient::GetUserAgent() const {
+  return content::BuildUserAgentFromProduct(
+      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
+}
+
+base::string16 ContentClient::GetLocalizedString(int message_id) const {
+  return l10n_util::GetStringUTF16(message_id);
 }
 
 ContentClient::ContentClient() {
@@ -54,11 +64,6 @@ ContentBrowserClient* ContentClient::browser() {
 ContentRendererClient* ContentClient::renderer() {
   return static_cast<ContentRendererClient *>(
       content::ContentClient::renderer());
-}
-
-std::string ContentClient::GetUserAgent() const {
-  return content::BuildUserAgentFromProduct(
-      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
 }
 
 } // namespace oxide

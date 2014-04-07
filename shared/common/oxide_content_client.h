@@ -37,14 +37,16 @@ class ContentClient : public content::ContentClient {
   ContentBrowserClient* browser();
   ContentRendererClient* renderer();
 
-  virtual std::string GetUserAgent() const FINAL;
-
   virtual intptr_t GetNativeDisplay() = 0;
 
  protected:
   ContentClient();
 
  private:
+  std::string GetUserAgent() const FINAL;
+
+  base::string16 GetLocalizedString(int message_id) const FINAL;
+
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
 };
 

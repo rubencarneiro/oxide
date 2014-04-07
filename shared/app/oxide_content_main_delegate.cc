@@ -102,6 +102,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     }
 
     PathService::Override(base::FILE_EXE, subprocess_exe);
+    PathService::Override(base::FILE_MODULE, subprocess_exe);
 
     // Pick the correct subprocess path
     command_line->AppendSwitchASCII(switches::kBrowserSubprocessPath,
@@ -170,9 +171,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
-  // The locale passed here doesn't matter, as there aren't any
-  // localized resources to load
-  ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
+  ui::ResourceBundle::InitSharedInstanceLocaleOnly(std::string(), NULL);
 
   base::FilePath dir_exe;
   PathService::Get(base::DIR_EXE, &dir_exe);
