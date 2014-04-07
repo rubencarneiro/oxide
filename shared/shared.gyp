@@ -194,6 +194,8 @@
         'browser/oxide_content_browser_client.cc',
         'browser/oxide_content_browser_client.h',
         'browser/oxide_default_screen_info.h',
+        'browser/oxide_file_picker.cc',
+        'browser/oxide_file_picker.h',
         'browser/oxide_form_factor.h',
         'browser/oxide_form_factor_linux.cc',
         'browser/oxide_gpu_utils.cc',
@@ -329,7 +331,7 @@
             '-i', '<@(_inputs)',
             '-o', '<@(_outputs)'
           ]
-        }
+        },
       ],
     }
   ]

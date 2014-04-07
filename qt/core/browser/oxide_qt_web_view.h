@@ -58,6 +58,8 @@ class WebView FINAL : public oxide::WebView,
       bool* did_suppress_message) FINAL;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() FINAL;
 
+  oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) FINAL;
+
   void FrameAdded(oxide::WebFrame* frame) FINAL;
   void FrameRemoved(oxide::WebFrame* frame) FINAL;
 

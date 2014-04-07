@@ -47,6 +47,7 @@
 
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view.h"
@@ -826,6 +827,10 @@ JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return NULL;
 }
 
+FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
+  return NULL;
+}
+
 void WebView::FrameAdded(WebFrame* frame) {}
 void WebView::FrameRemoved(WebFrame* frame) {}
 
@@ -859,6 +864,20 @@ void WebView::HidePopupMenu() {
 
 content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
   return JavaScriptDialogManager::GetInstance();
+}
+
+void WebView::RunFileChooser(content::WebContents* web_contents,
+                             const content::FileChooserParams& params) {
+  DCHECK(!active_file_picker_);
+  content::RenderViewHost* rvh = web_contents->GetRenderViewHost();
+  FilePicker* filePicker = CreateFilePicker(rvh);
+  if (!filePicker) {
+    std::vector<ui::SelectedFileInfo> empty;
+    rvh->FilesSelectedInChooser(empty, params.mode);
+    return;
+  }
+  active_file_picker_ = filePicker->AsWeakPtr();
+  active_file_picker_->Run(params);
 }
 
 bool WebView::AddMessageToConsole(content::WebContents* source,

@@ -34,6 +34,7 @@
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
+#include "oxide_qt_file_picker.h"
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
@@ -153,6 +154,10 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   JavaScriptDialogDelegate* delegate = adapter_->CreateBeforeUnloadDialogDelegate();
   bool did_suppress_message = false;
   return new JavaScriptDialog(delegate, &did_suppress_message);
+}
+
+oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
+  return new FilePicker(adapter_->CreateFilePickerDelegate(), rvh);
 }
 
 void WebView::FrameAdded(oxide::WebFrame* frame) {

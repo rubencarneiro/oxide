@@ -80,6 +80,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(QQmlComponent* promptDialog READ promptDialog WRITE setPromptDialog NOTIFY promptDialogChanged)
   Q_PROPERTY(QQmlComponent* beforeUnloadDialog READ beforeUnloadDialog WRITE setBeforeUnloadDialog NOTIFY beforeUnloadDialogChanged)
 
+  Q_PROPERTY(QQmlComponent* filePicker READ filePicker WRITE setFilePicker NOTIFY filePickerChanged)
+
   Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext NOTIFY contextChanged)
   Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
@@ -140,6 +142,9 @@ class OxideQQuickWebView : public QQuickItem {
   QQmlComponent* beforeUnloadDialog() const;
   void setBeforeUnloadDialog(QQmlComponent* before_unload_dialog);
 
+  QQmlComponent* filePicker() const;
+  void setFilePicker(QQmlComponent* file_picker);
+
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
 
@@ -174,6 +179,7 @@ class OxideQQuickWebView : public QQuickItem {
   void confirmDialogChanged();
   void promptDialogChanged();
   void beforeUnloadDialogChanged();
+  void filePickerChanged();
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();

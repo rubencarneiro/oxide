@@ -61,6 +61,7 @@ class WebContentsImpl;
 namespace oxide {
 
 class BrowserContext;
+class FilePicker;
 class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
@@ -132,6 +133,8 @@ class WebView : public ScriptMessageTarget,
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message);
   virtual JavaScriptDialog* CreateBeforeUnloadDialog();
+
+  virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
@@ -215,6 +218,8 @@ class WebView : public ScriptMessageTarget,
                       bool* was_blocked) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
   content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
+  void RunFileChooser(content::WebContents* web_contents,
+                      const content::FileChooserParams& params) FINAL;
 
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -312,6 +317,7 @@ class WebView : public ScriptMessageTarget,
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
+  base::WeakPtr<FilePicker> active_file_picker_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
