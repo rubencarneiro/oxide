@@ -25,6 +25,7 @@
 #include "base/message_loop/message_loop.h"
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
+#include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/ozone/surface_factory_ozone.h"
@@ -37,6 +38,7 @@
 
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_net_resource_provider.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_access_token_store.h"
@@ -153,6 +155,7 @@ class BrowserMainParts : public content::BrowserMainParts {
 
   void PreMainMessageLoopRun() FINAL {
     GpuUtils::Initialize();
+    net::NetModule::SetResourceProvider(NetResourceProvider);
   }
 
   bool MainMessageLoopRun(int* result_code) FINAL {

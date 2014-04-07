@@ -182,6 +182,9 @@ void ContentMainDelegate::PreSandboxStartup() {
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
       dir_exe.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
       ui::SCALE_FACTOR_100P);
+  ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
+      dir_exe.Append(FILE_PATH_LITERAL("oxide_200_percent.pak")),
+      ui::SCALE_FACTOR_200P);
 }
 
 int ContentMainDelegate::RunProcess(

@@ -42,7 +42,9 @@
       'dependencies': [
         'oxide_extra_resources',
         '<(DEPTH)/content/content_resources.gyp:content_resources',
+        '<(DEPTH)/net/net.gyp:net_resources',
         '<(DEPTH)/ui/resources/ui_resources.gyp:ui_resources',
+        '<(DEPTH)/webkit/webkit_resources.gyp:webkit_resources',
         '<(DEPTH)/webkit/webkit_resources.gyp:webkit_strings',
       ],
       'actions': [
@@ -51,7 +53,9 @@
           'variables': {
             'pak_inputs': [
               '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak',
-              '<(SHARED_INTERMEDIATE_DIR)/oxide/oxide_resources.pak'
+              '<(SHARED_INTERMEDIATE_DIR)/net/net_resources.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/oxide/oxide_resources.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/webkit/blink_resources.pak',
             ]
           },
           'inputs': [
@@ -67,7 +71,8 @@
           'action_name': 'repack_oxide_100_percent',
           'variables': {
             'pak_inputs': [
-              '<(SHARED_INTERMEDIATE_DIR)/ui/ui_resources/ui_resources_100_percent.pak'
+              '<(SHARED_INTERMEDIATE_DIR)/ui/ui_resources/ui_resources_100_percent.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_resources_100_percent.pak',
             ]
           },
           'inputs': [
@@ -76,6 +81,23 @@
           ],
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/repack/oxide_100_percent.pak'
+          ],
+          'action': ['python', '<(repack_path)', '<@(_outputs)', '<@(pak_inputs)']
+        },
+        {
+          'action_name': 'repack_oxide_200_percent',
+          'variables': {
+            'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/ui/ui_resources/ui_resources_200_percent.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_resources_200_percent.pak',
+            ]
+          },
+          'inputs': [
+            '<(repack_path)',
+            '<@(pak_inputs)'
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/repack/oxide_200_percent.pak'
           ],
           'action': ['python', '<(repack_path)', '<@(_outputs)', '<@(pak_inputs)']
         },
@@ -115,6 +137,12 @@
           'destination': '<(PRODUCT_DIR)',
           'files': [
             '<(SHARED_INTERMEDIATE_DIR)/repack/oxide_100_percent.pak'
+          ],
+        },
+        {
+          'destination': '<(PRODUCT_DIR)',
+          'files': [
+            '<(SHARED_INTERMEDIATE_DIR)/repack/oxide_200_percent.pak'
           ],
         },
         {
@@ -257,6 +285,8 @@
         'common/oxide_message_generator.cc',
         'common/oxide_message_generator.h',
         'common/oxide_messages.h',
+        'common/oxide_net_resource_provider.cc',
+        'common/oxide_net_resource_provider.h',
         'common/oxide_script_message.cc',
         'common/oxide_script_message.h',
         'common/oxide_script_message_handler.cc',

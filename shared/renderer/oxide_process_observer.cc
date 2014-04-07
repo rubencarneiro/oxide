@@ -19,8 +19,10 @@
 
 #include "content/public/renderer/render_thread.h"
 #include "ipc/ipc_message_macros.h"
+#include "net/base/net_module.h"
 
 #include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_net_resource_provider.h"
 
 namespace oxide {
 
@@ -33,6 +35,7 @@ void ProcessObserver::OnSetIsIncognitoProcess(bool incognito) {
 }
 
 ProcessObserver::ProcessObserver() {
+  net::NetModule::SetResourceProvider(NetResourceProvider);
   content::RenderThread::Get()->AddObserver(this);
 }
 
