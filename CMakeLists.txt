@@ -102,6 +102,11 @@ endif()
 if(CMAKE_VERBOSE_MAKEFILE)
   list(APPEND GYP_COMMAND -Dprint_ld_stats=1)
 endif()
+if(ENABLE_PROPRIETARY_CODECS)
+  list(APPEND GYP_COMMAND -Dffmpeg_branding=Chrome)
+else()
+  list(APPEND GYP_COMMAND -Dffmpeg_branding=Chromium)
+endif()
 
 message(STATUS "Running gyp")
 execute_process(COMMAND ${GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
