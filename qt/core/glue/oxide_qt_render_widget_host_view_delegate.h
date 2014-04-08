@@ -68,6 +68,8 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   virtual void Hide() = 0;
   virtual bool IsShowing() = 0;
 
+  virtual void UpdateCursor(const QCursor& cursor) = 0;
+
   virtual QRect GetViewBoundsPix() = 0;
 
   virtual void SetSize(const QSize& size) = 0;

@@ -19,6 +19,7 @@
 #define _OXIDE_QT_QUICK_RENDER_VIEW_ITEM_H_
 
 #include <QQuickItem>
+#include <QCursor>
 #include <QRect>
 #include <QtGlobal>
 
@@ -54,6 +55,8 @@ class RenderViewItem Q_DECL_FINAL :
   void Show() Q_DECL_FINAL;
   void Hide() Q_DECL_FINAL;
   bool IsShowing() Q_DECL_FINAL;
+
+  void UpdateCursor(const QCursor& cursor) Q_DECL_FINAL;
 
   QRect GetViewBoundsPix() Q_DECL_FINAL;
 

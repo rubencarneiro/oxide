@@ -101,7 +101,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   virtual void Blur() OVERRIDE;
 
-  void UpdateCursor(const content::WebCursor& cursor) FINAL;
+  void UpdateCursor(const content::WebCursor& cursor) OVERRIDE;
 
   void SetIsLoading(bool is_loading) FINAL;
 
