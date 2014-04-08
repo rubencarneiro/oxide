@@ -854,7 +854,6 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
 
 void RenderWidgetHostView::SetSize(const gfx::Size& size) {
   delegate_->SetSize(QSize(size.width(), size.height()));
-  oxide::RenderWidgetHostView::SetSize(size);
 }
 
 float RenderWidgetHostView::GetDeviceScaleFactor() const {
@@ -1027,6 +1026,10 @@ void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
   }
 
   event->accept();
+}
+
+void RenderWidgetHostView::HandleGeometryChanged() {
+  OnResize();
 }
 
 void RenderWidgetHostView::DidUpdate(bool skipped) {

@@ -90,6 +90,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleWheelEvent(QWheelEvent* event);
   void HandleInputMethodEvent(QInputMethodEvent* event);
   void HandleTouchEvent(QTouchEvent* event);
+  void HandleGeometryChanged();
 
   TextureHandle* GetCurrentTextureHandle();
   void DidUpdate(bool skipped);

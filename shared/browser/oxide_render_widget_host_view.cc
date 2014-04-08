@@ -461,6 +461,11 @@ void RenderWidgetHostView::OnBlur() {
   GetRenderWidgetHost()->Blur();
 }
 
+void RenderWidgetHostView::OnResize() {
+  host()->SendScreenRects();
+  GetRenderWidgetHost()->WasResized();
+}
+
 void RenderWidgetHostView::AcknowledgeBuffersSwapped(bool skipped) {
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
     // Don't need lock on UI thread, as this is in the only thread that
@@ -504,11 +509,6 @@ RenderWidgetHostView::~RenderWidgetHostView() {}
 
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
   return host_;
-}
-
-void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  host()->SendScreenRects();
-  GetRenderWidgetHost()->WasResized();
 }
 
 void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {

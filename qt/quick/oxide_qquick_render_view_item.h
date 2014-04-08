@@ -95,6 +95,9 @@ class RenderViewItem Q_DECL_FINAL :
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
  private:
+  void geometryChanged(const QRectF& new_geometry,
+                       const QRectF& old_geometry) Q_DECL_FINAL;
+
   const QPixmap* backing_store_;
 #if defined(ENABLE_COMPOSITING)
   oxide::qt::TextureHandle* texture_handle_;

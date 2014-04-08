@@ -71,6 +71,7 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void HandleWheelEvent(QWheelEvent* event);
   void HandleInputMethodEvent(QInputMethodEvent* event);
   void HandleTouchEvent(QTouchEvent* event);
+  void HandleGeometryChanged();
 
   void DidUpdate(bool skipped);
 

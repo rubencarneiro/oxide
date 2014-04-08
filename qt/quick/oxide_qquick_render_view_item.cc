@@ -37,6 +37,12 @@
 namespace oxide {
 namespace qquick {
 
+void RenderViewItem::geometryChanged(const QRectF& new_geometry,
+                                     const QRectF& old_geometry) {
+  QQuickItem::geometryChanged(new_geometry, old_geometry);
+  HandleGeometryChanged();
+}
+
 RenderViewItem::RenderViewItem() :
     QQuickItem(),
     backing_store_(NULL)

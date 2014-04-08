@@ -61,7 +61,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
   content::RenderWidgetHostImpl* host() const { return host_; }
 
-  virtual void SetSize(const gfx::Size& size) OVERRIDE;
   void SetBounds(const gfx::Rect& rect) FINAL;
 
   TextureHandle* GetCurrentTextureHandle();
@@ -74,6 +73,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   void OnFocus();
   void OnBlur();
+  void OnResize();
 
   void AcknowledgeBuffersSwapped(bool skipped);
 
