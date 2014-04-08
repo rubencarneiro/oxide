@@ -39,15 +39,24 @@
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
+#include "shared/sandbox_ipc/oxide_sandbox_ipc_process.h"
 
 namespace oxide {
 
 namespace {
+
 base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
+
+struct MainFunction {
+  const char* name;
+  int (*function)(const content::MainFunctionParams&);
+};
+
 }
 
 ContentMainDelegate::ContentMainDelegate() {}
@@ -200,6 +209,15 @@ int ContentMainDelegate::RunProcess(
 
     return BrowserProcessMain::instance()->RunBrowserMain(
         main_function_params);
+  }
+
+  static const MainFunction kMainFunctions[] = {
+    { kSandboxIPCProcess, SandboxIPCProcessMain }
+  };
+
+  for (size_t i = 0; i < arraysize(kMainFunctions); ++i) {
+    if (process_type == kMainFunctions[i].name)
+      return kMainFunctions[i].function(main_function_params);
   }
 
   return -1;

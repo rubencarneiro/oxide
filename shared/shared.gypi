@@ -17,12 +17,17 @@
 {
   'target_defaults': {
     'target_conditions': [
+      ['_target_name=="content_browser"', {
+        'sources/': [
+          ['exclude', 'render_sandbox_host_linux\\.cc'],
+        ],
+      }],
       ['_target_name=="gl"', {
         'sources/': [
-          ['exclude', 'gl_context_ozone\\.c'],
-          ['exclude', 'gl_image_ozone\\.c'],
-          ['exclude', 'gl_implementation_ozone\\.c'],
-          ['exclude', 'gl_surface_ozone\\.c'],
+          ['exclude', 'gl_context_ozone\\.cc'],
+          ['exclude', 'gl_image_ozone\\.cc'],
+          ['exclude', 'gl_implementation_ozone\\.cc'],
+          ['exclude', 'gl_surface_ozone\\.cc'],
         ],
       }],
     ]

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_constants.h"
+#ifndef _OXIDE_SHARED_SANDBOX_IPC_SANDBOX_IPC_PROCESS_H_
+#define _OXIDE_SHARED_SANDBOX_IPC_SANDBOX_IPC_PROCESS_H_
+
+namespace content {
+struct MainFunctionParams;
+}
 
 namespace oxide {
 
-const base::FilePath::CharType kCacheDirname[] = FILE_PATH_LITERAL("Cache");
-const base::FilePath::CharType kCookiesFilename[] =
-    FILE_PATH_LITERAL("cookies.sqlite");
-
-const char kDataScheme[] = "data";
-const char kFileScheme[] = "file";
-const char kFtpScheme[] = "ftp";
-
-const char kSandboxIPCProcess[] = "sandbox-ipc";
-const char kSandboxExe[] = "sandbox-exe";
+int SandboxIPCProcessMain(const content::MainFunctionParams& params);
 
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_SANDBOX_IPC_SANDBOX_IPC_PROCESS_H_
