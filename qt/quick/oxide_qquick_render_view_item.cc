@@ -82,7 +82,7 @@ bool RenderViewItem::IsShowing() {
 }
 
 void RenderViewItem::UpdateCursor(const QCursor& cursor) {
-  window()->setCursor(cursor);
+  setCursor(cursor);
 }
 
 QRect RenderViewItem::GetViewBoundsPix() {
