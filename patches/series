@@ -14,5 +14,4 @@ add-frame-attached-to-web-contents-observer.patch
 dont-initialize-gl-more-than-once.patch
 renderer-user-agent-override.patch
 fix-gyp-space-in-object-filename-exception.patch
-remove-broken-gcc-option.patch
 expose-extra-properties-for-should-create-webcontents.patch

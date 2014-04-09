@@ -64,6 +64,8 @@
     'cflags!': [
       # Should remove this
       '-Werror',
+      # Causes a build error (the '#' should probably be escaped in the makefile)
+      '-Wno-#pragma-messages',
     ],
     'ldflags': [
       '-B<(PRODUCT_DIR)/../../../gold',
