@@ -120,7 +120,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
 
-    command_line->AppendSwitch(switches::kDisableDelegatedRenderer);
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
 
     int flags = BrowserProcessMain::instance()->flags();
@@ -131,11 +130,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 
     SharedGLContext* shared_gl_context =
         BrowserProcessMain::instance()->shared_gl_context();
-    if (shared_gl_context &&
-        shared_gl_context->GetImplementation() == gfx::GetGLImplementation()) {
-      command_line->AppendSwitch(switches::kForceCompositingMode);
-      command_line->AppendSwitch(switches::kEnableThreadedCompositing);
-    } else {
+    if (!shared_gl_context ||
+        shared_gl_context->GetImplementation() != gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
       command_line->AppendSwitch(switches::kDisableForceCompositingMode);
       command_line->AppendSwitch(switches::kDisableThreadedCompositing);

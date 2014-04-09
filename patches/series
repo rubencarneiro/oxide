@@ -11,7 +11,6 @@ dont-depend-on-gtk.patch
 arm-neon.patch
 dont-use-gl-create-context-robustness.patch
 add-frame-attached-to-web-contents-observer.patch
-dont-force-enable-software-compositor.patch
 dont-initialize-gl-more-than-once.patch
 renderer-user-agent-override.patch
 fix-gyp-space-in-object-filename-exception.patch

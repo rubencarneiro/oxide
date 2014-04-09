@@ -19,6 +19,7 @@
     'target_conditions': [
       ['_target_name=="content_browser"', {
         'sources/': [
+          ['exclude', 'compositor_util\\.cc'],
           ['exclude', 'render_sandbox_host_linux\\.cc'],
         ],
       }],

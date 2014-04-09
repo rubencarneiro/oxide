@@ -19,12 +19,18 @@
 
 #include <vector>
 
+#include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
+#include "content/browser/gpu/compositor_util.h"
+#include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/browser_main_parts.h"
+#include "content/public/browser/gpu_data_manager.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/common/content_switches.h"
+#include "gpu/config/gpu_feature_type.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
@@ -284,13 +290,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     const GURL& url,
     ::WebPreferences* prefs) {
   WebView* view = WebView::FromRenderViewHost(render_view_host);
-  WebPreferences* web_prefs = view->GetWebPreferences();
-  if (!web_prefs) {
-    DLOG(WARNING) << "No WebPreferences on WebView";
-    return;
-  }
-
-  web_prefs->ApplyToWebkitPrefs(prefs);
 
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
@@ -300,6 +299,35 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->supports_multiple_windows = view->CanCreateWindows();
 
   prefs->enable_scroll_animator = true;
+
+  const base::CommandLine& command_line =
+      *base::CommandLine::ForCurrentProcess();
+  content::GpuDataManager* gpu_data_manager =
+      content::GpuDataManager::GetInstance();
+
+  // GpuDataManagerImplPrivate turns all of these on unconditionally in Aura
+  // builds, so we make them all conditional again
+  prefs->force_compositing_mode = content::IsForceCompositingModeEnabled();
+  prefs->accelerated_compositing_enabled =
+      content::GpuProcessHost::gpu_enabled() &&
+      !command_line.HasSwitch(switches::kDisableAcceleratedCompositing) &&
+      !gpu_data_manager->IsFeatureBlacklisted(
+        gpu::GPU_FEATURE_TYPE_ACCELERATED_COMPOSITING);
+  prefs->accelerated_compositing_for_3d_transforms_enabled =
+      prefs->accelerated_compositing_for_animation_enabled =
+        !command_line.HasSwitch(switches::kDisableAcceleratedLayers) &&
+        !gpu_data_manager->IsFeatureBlacklisted(gpu::GPU_FEATURE_TYPE_3D_CSS);
+  prefs->accelerated_compositing_for_video_enabled =
+      !command_line.HasSwitch(switches::kDisableAcceleratedVideo) &&
+      !gpu_data_manager->IsFeatureBlacklisted(gpu::GPU_FEATURE_TYPE_ACCELERATED_VIDEO);
+
+  WebPreferences* web_prefs = view->GetWebPreferences();
+  if (!web_prefs) {
+    DLOG(WARNING) << "No WebPreferences on WebView";
+    return;
+  }
+
+  web_prefs->ApplyToWebkitPrefs(prefs);
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
