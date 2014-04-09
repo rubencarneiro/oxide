@@ -74,7 +74,7 @@ bool IsThreadedCompositingEnabled() {
 
 bool IsForceCompositingModeEnabled() {
   if (IsThreadedCompositingEnabled()) {
-    return false;
+    return true;
   }
 
   const base::CommandLine command_line =
