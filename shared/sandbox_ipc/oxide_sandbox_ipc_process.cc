@@ -61,6 +61,13 @@ using content::LinuxSandbox;
 
 namespace oxide {
 
+// SandboxIPCProcess is a straight copy from Chromium -
+// content/browser/renderer_host/render_sandbox_host_linux.cc
+
+// Copyright (c) 2012 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 class SandboxIPCProcess  {
  public:
   // lifeline_fd: this is the read end of a pipe which the browser process
