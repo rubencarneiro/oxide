@@ -54,7 +54,6 @@
 #include "ui/gfx/rect.h"
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
-#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_p.h"
 #include "shared/browser/oxide_form_factor.h"
 
 #include "oxide_qt_backing_store.h"
@@ -805,7 +804,7 @@ RenderWidgetHostView::RenderWidgetHostView(
     backing_store_(NULL),
     delegate_(delegate),
     input_type_(ui::TEXT_INPUT_TYPE_NONE) {
-  RenderWidgetHostViewDelegatePrivate::get(delegate)->rwhv = this;
+  delegate->rwhv_ = this;
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {}

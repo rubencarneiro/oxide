@@ -42,7 +42,7 @@ class RenderWidgetHost;
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostViewDelegatePrivate;
+class RenderWidgetHostView;
 class WebViewAdapter;
 
 class Q_DECL_EXPORT TextureHandle {
@@ -92,16 +92,22 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleTouchEvent(QTouchEvent* event);
   void HandleGeometryChanged();
 
-  TextureHandle* GetCurrentTextureHandle();
+  TextureHandle* texture_handle() const { return texture_handle_.data(); }
+  void UpdateTextureHandle();
+
   void DidUpdate(bool skipped);
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
   const QPixmap* GetBackingStore();
+  void UpdateBackingStore();
 
  private:
-  friend class RenderWidgetHostViewDelegatePrivate;
-  QScopedPointer<RenderWidgetHostViewDelegatePrivate> priv;
+  friend class RenderWidgetHostView;
+
+  RenderWidgetHostView* rwhv_;
+  QScopedPointer<TextureHandle> texture_handle_;
+  const QPixmap* backing_store_;
 };
 
 } // namespace qt

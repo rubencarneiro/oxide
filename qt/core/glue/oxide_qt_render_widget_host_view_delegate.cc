@@ -16,7 +16,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_render_widget_host_view_delegate.h"
-#include "oxide_qt_render_widget_host_view_delegate_p.h"
 
 #include "base/memory/ref_counted.h"
 #include "ui/gfx/size.h"
@@ -28,9 +27,21 @@
 namespace oxide {
 namespace qt {
 
-TextureHandleImpl::TextureHandleImpl() {}
+namespace {
 
-TextureHandleImpl::~TextureHandleImpl() {}
+class TextureHandleImpl FINAL : public TextureHandle {
+ public:
+  TextureHandleImpl() {}
+  ~TextureHandleImpl() {}
+
+  unsigned int GetID() const FINAL;
+  QSize GetSize() const FINAL;
+
+  void SetHandle(oxide::TextureHandle* handle);
+
+ private:
+  scoped_refptr<oxide::TextureHandle> handle_;
+};
 
 unsigned int TextureHandleImpl::GetID() const {
   if (!handle_) {
@@ -53,66 +64,65 @@ void TextureHandleImpl::SetHandle(oxide::TextureHandle* handle) {
   handle_ = handle;
 }
 
-RenderWidgetHostViewDelegatePrivate::RenderWidgetHostViewDelegatePrivate() :
-    rwhv(NULL) {}
-
-// static
-RenderWidgetHostViewDelegatePrivate*
-RenderWidgetHostViewDelegatePrivate::get(
-    RenderWidgetHostViewDelegate* delegate) {
-  return delegate->priv.data();
 }
 
 RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate() :
-    priv(new RenderWidgetHostViewDelegatePrivate()) {}
+    rwhv_(NULL),
+    texture_handle_(new TextureHandleImpl()),
+    backing_store_(NULL) {}
 
 void RenderWidgetHostViewDelegate::HandleFocusEvent(QFocusEvent* event) {
-  priv->rwhv->HandleFocusEvent(event);
+  rwhv_->HandleFocusEvent(event);
 }
 
 void RenderWidgetHostViewDelegate::HandleKeyEvent(QKeyEvent* event) {
-  priv->rwhv->HandleKeyEvent(event);
+  rwhv_->HandleKeyEvent(event);
 }
 
 void RenderWidgetHostViewDelegate::HandleMouseEvent(QMouseEvent* event) {
-  priv->rwhv->HandleMouseEvent(event);
+  rwhv_->HandleMouseEvent(event);
 }
 
 void RenderWidgetHostViewDelegate::HandleWheelEvent(QWheelEvent* event) {
-  priv->rwhv->HandleWheelEvent(event);
+  rwhv_->HandleWheelEvent(event);
 }
 
 void RenderWidgetHostViewDelegate::HandleInputMethodEvent(
     QInputMethodEvent* event) {
-  priv->rwhv->HandleInputMethodEvent(event);
+  rwhv_->HandleInputMethodEvent(event);
 }
 
 void RenderWidgetHostViewDelegate::HandleTouchEvent(
     QTouchEvent* event) {
-  priv->rwhv->HandleTouchEvent(event);
+  rwhv_->HandleTouchEvent(event);
 }
 
 void RenderWidgetHostViewDelegate::HandleGeometryChanged() {
-  priv->rwhv->HandleGeometryChanged();
+  rwhv_->HandleGeometryChanged();
 }
 
-TextureHandle* RenderWidgetHostViewDelegate::GetCurrentTextureHandle() {
-  priv->current_texture_handle_.SetHandle(
-      priv->rwhv->GetCurrentTextureHandle());
-  return &priv->current_texture_handle_;
+void RenderWidgetHostViewDelegate::UpdateTextureHandle() {
+  static_cast<TextureHandleImpl *>(texture_handle_.data())->SetHandle(
+      rwhv_->GetCurrentTextureHandle());
 }
 
 void RenderWidgetHostViewDelegate::DidUpdate(bool skipped) {
-  priv->rwhv->DidUpdate(skipped);
+  rwhv_->DidUpdate(skipped);
 }
 
 QVariant RenderWidgetHostViewDelegate::InputMethodQuery(
     Qt::InputMethodQuery query) const {
-  return priv->rwhv->InputMethodQuery(query);
+  return rwhv_->InputMethodQuery(query);
 }
 
 const QPixmap* RenderWidgetHostViewDelegate::GetBackingStore() {
-  return priv->rwhv->GetBackingStore();
+  const QPixmap* backing_store = backing_store_;
+  backing_store_ = NULL;
+  return backing_store;
+}
+
+void RenderWidgetHostViewDelegate::UpdateBackingStore() {
+  backing_store_ = rwhv_->GetBackingStore();
 }
 
 RenderWidgetHostViewDelegate::~RenderWidgetHostViewDelegate() {}

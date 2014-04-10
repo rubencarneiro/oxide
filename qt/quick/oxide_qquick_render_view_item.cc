@@ -44,11 +44,9 @@ void RenderViewItem::geometryChanged(const QRectF& new_geometry,
 }
 
 RenderViewItem::RenderViewItem() :
-    QQuickItem(),
-    backing_store_(NULL)
+    QQuickItem()
 #if defined(ENABLE_COMPOSITING)
-    , texture_handle_(NULL),
-    is_compositing_enabled_(false),
+    , is_compositing_enabled_(false),
     is_compositing_enabled_state_changed_(false) {
 #else
 {
@@ -221,17 +219,15 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 }
 
 void RenderViewItem::updatePolish() {
-  backing_store_ = NULL;
 #if defined(ENABLE_COMPOSITING)
-  texture_handle_ = NULL;
 
   if (is_compositing_enabled_) {
-    texture_handle_ = GetCurrentTextureHandle();
+    UpdateTextureHandle();
   } else {
 #else
   {
 #endif
-    backing_store_ = GetBackingStore();
+    UpdateBackingStore();
   }
 }
 
@@ -263,7 +259,7 @@ QSGNode* RenderViewItem::updatePaintNode(
     }
 
     node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
-    node->updateFrontTexture(texture_handle_);
+    node->updateFrontTexture(texture_handle());
 
     DidUpdate(false);
     return node;
@@ -275,15 +271,17 @@ QSGNode* RenderViewItem::updatePaintNode(
     node = new PaintedRenderViewNode();
   }
 
+  const QPixmap* backing_store = GetBackingStore();
+
   QSize size;
-  if (backing_store_) {
-    size = QSize(backing_store_->width(), backing_store_->height());
+  if (backing_store) {
+    size = QSize(backing_store->width(), backing_store->height());
   } else {
     size = QSizeF(width(), height()).toSize();
   }
 
   node->setSize(size);
-  node->setBackingStore(backing_store_);
+  node->setBackingStore(backing_store);
   node->markDirtyRect(dirty_rect_);
 
   node->update();

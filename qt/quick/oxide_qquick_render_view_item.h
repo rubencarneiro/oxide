@@ -25,11 +25,6 @@
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
 
-QT_BEGIN_NAMESPACE
-class QPixmap;
-QT_END_NAMESPACE
-
-
 namespace oxide {
 
 namespace qt {
@@ -98,10 +93,6 @@ class RenderViewItem Q_DECL_FINAL :
   void geometryChanged(const QRectF& new_geometry,
                        const QRectF& old_geometry) Q_DECL_FINAL;
 
-  const QPixmap* backing_store_;
-#if defined(ENABLE_COMPOSITING)
-  oxide::qt::TextureHandle* texture_handle_;
-#endif
   QRect dirty_rect_;
 
 #if defined(ENABLE_COMPOSITING)
