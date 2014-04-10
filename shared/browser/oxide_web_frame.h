@@ -47,10 +47,9 @@ class WebFrame : public ScriptMessageTarget {
   void Destroy();
 
   static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
+  static WebFrame* FromFrameTreeNodeID(int64 frame_tree_node_id);
 
-  GURL url() const {
-    return url_;
-  }
+  GURL GetURL() const;
 
   WebFrame* parent() const {
     return parent_;
@@ -70,7 +69,8 @@ class WebFrame : public ScriptMessageTarget {
 
   content::FrameTreeNode* GetFrameTreeNode();
 
-  void SetURL(const GURL& url);
+  virtual void URLChanged() = 0;
+
   void SetParent(WebFrame* parent);
 
   size_t ChildCount() const;
@@ -108,10 +108,8 @@ class WebFrame : public ScriptMessageTarget {
 
   virtual void OnChildAdded(WebFrame* child);
   virtual void OnChildRemoved(WebFrame* child);
-  virtual void OnURLChanged();
 
   int64 frame_tree_node_id_;
-  GURL url_;
   ChildVector child_frames_;
   WebFrame* parent_;
   WebView* view_;

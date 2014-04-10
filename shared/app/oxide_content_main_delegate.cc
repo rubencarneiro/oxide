@@ -39,15 +39,24 @@
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
+#include "shared/sandbox_ipc/oxide_sandbox_ipc_process.h"
 
 namespace oxide {
 
 namespace {
+
 base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
+
+struct MainFunction {
+  const char* name;
+  int (*function)(const content::MainFunctionParams&);
+};
+
 }
 
 ContentMainDelegate::ContentMainDelegate() {}
@@ -102,6 +111,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     }
 
     PathService::Override(base::FILE_EXE, subprocess_exe);
+    PathService::Override(base::FILE_MODULE, subprocess_exe);
 
     // Pick the correct subprocess path
     command_line->AppendSwitchASCII(switches::kBrowserSubprocessPath,
@@ -110,7 +120,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
 
-    command_line->AppendSwitch(switches::kDisableDelegatedRenderer);
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
 
     int flags = BrowserProcessMain::instance()->flags();
@@ -121,11 +130,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 
     SharedGLContext* shared_gl_context =
         BrowserProcessMain::instance()->shared_gl_context();
-    if (shared_gl_context &&
-        shared_gl_context->GetImplementation() == gfx::GetGLImplementation()) {
-      command_line->AppendSwitch(switches::kForceCompositingMode);
-      command_line->AppendSwitch(switches::kEnableThreadedCompositing);
-    } else {
+    if (!shared_gl_context ||
+        shared_gl_context->GetImplementation() != gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
       command_line->AppendSwitch(switches::kDisableForceCompositingMode);
       command_line->AppendSwitch(switches::kDisableThreadedCompositing);
@@ -170,9 +176,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
-  // The locale passed here doesn't matter, as there aren't any
-  // localized resources to load
-  ui::ResourceBundle::InitSharedInstanceLocaleOnly("en-US", NULL);
+  ui::ResourceBundle::InitSharedInstanceLocaleOnly(std::string(), NULL);
 
   base::FilePath dir_exe;
   PathService::Get(base::DIR_EXE, &dir_exe);
@@ -183,6 +187,9 @@ void ContentMainDelegate::PreSandboxStartup() {
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
       dir_exe.Append(FILE_PATH_LITERAL("oxide_100_percent.pak")),
       ui::SCALE_FACTOR_100P);
+  ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
+      dir_exe.Append(FILE_PATH_LITERAL("oxide_200_percent.pak")),
+      ui::SCALE_FACTOR_200P);
 }
 
 int ContentMainDelegate::RunProcess(
@@ -198,6 +205,15 @@ int ContentMainDelegate::RunProcess(
 
     return BrowserProcessMain::instance()->RunBrowserMain(
         main_function_params);
+  }
+
+  static const MainFunction kMainFunctions[] = {
+    { kSandboxIPCProcess, SandboxIPCProcessMain }
+  };
+
+  for (size_t i = 0; i < arraysize(kMainFunctions); ++i) {
+    if (process_type == kMainFunctions[i].name)
+      return kMainFunctions[i].function(main_function_params);
   }
 
   return -1;

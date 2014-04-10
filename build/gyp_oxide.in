@@ -22,7 +22,7 @@ import os
 import os.path
 import sys
 
-sys.path.insert(1, os.path.join("@CMAKE_SOURCE_DIR@", "build", "python"))
+sys.path.insert(0, os.path.join("@CMAKE_SOURCE_DIR@", "build", "python"))
 from oxide_utils import CHROMIUMSRCDIR, TOPSRCDIR, CheckCall
 
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'gyp', 'pylib'))
@@ -32,9 +32,11 @@ except ImportError:
     print('Cannot find gyp module. Do you have a Chromium checkout?', file=sys.stderr)
     sys.exit(1)
 
-sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
-sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
-sys.path.insert(1, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
+
+sys.path.insert(0, os.path.join("@CMAKE_SOURCE_DIR@", "build", "scripts"))
 
 def additional_include_files(args=[]):
     specified_includes = set()

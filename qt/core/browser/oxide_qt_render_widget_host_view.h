@@ -54,8 +54,33 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
                        RenderWidgetHostViewDelegate* delegate);
   virtual ~RenderWidgetHostView();
 
-  static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
+  void Init(oxide::WebView* view) FINAL;
+
   static void GetWebScreenInfoFromQScreen(QScreen* screen, blink::WebScreenInfo* result);
+
+  gfx::Rect GetViewBounds() const FINAL;
+  gfx::Size GetPhysicalBackingSize() const FINAL;
+
+  void SetSize(const gfx::Size& size) FINAL;
+
+  float GetDeviceScaleFactor() const;
+
+  void HandleFocusEvent(QFocusEvent* event);
+  void HandleKeyEvent(QKeyEvent* event);
+  void HandleMouseEvent(QMouseEvent* event);
+  void HandleWheelEvent(QWheelEvent* event);
+  void HandleInputMethodEvent(QInputMethodEvent* event);
+  void HandleTouchEvent(QTouchEvent* event);
+  void HandleGeometryChanged();
+
+  void DidUpdate(bool skipped);
+
+  const QPixmap* GetBackingStore();
+
+  QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
+
+ private:
+  static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
 
   void Blur() FINAL;
   void Focus() FINAL;
@@ -65,14 +90,10 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void Hide() FINAL;
   bool IsShowing() FINAL;
 
-  gfx::Rect GetViewBounds() const FINAL;
-  gfx::Size GetPhysicalBackingSize() const FINAL;
-
-  void SetSize(const gfx::Size& size) FINAL;
+  void UpdateCursor(const content::WebCursor& cursor) FINAL;
 
   content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
 
-  float GetDeviceScaleFactor() const;
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
@@ -83,20 +104,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ImeCancelComposition() FINAL;
   void FocusedNodeChanged(bool is_editable_node) FINAL;
 
-  void HandleFocusEvent(QFocusEvent* event);
-  void HandleKeyEvent(QKeyEvent* event);
-  void HandleMouseEvent(QMouseEvent* event);
-  void HandleWheelEvent(QWheelEvent* event);
-  void HandleInputMethodEvent(QInputMethodEvent* event);
-  void HandleTouchEvent(QTouchEvent* event);
-
-  void DidUpdate(bool skipped);
-
-  const QPixmap* GetBackingStore();
-
-  QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
-
- private:
   void Paint(const gfx::Rect& rect) FINAL;
   void BuffersSwapped() FINAL;
 

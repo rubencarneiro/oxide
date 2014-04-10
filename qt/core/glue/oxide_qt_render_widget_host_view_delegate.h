@@ -43,6 +43,7 @@ namespace oxide {
 namespace qt {
 
 class RenderWidgetHostViewDelegatePrivate;
+class WebViewAdapter;
 
 class Q_DECL_EXPORT TextureHandle {
  public:
@@ -57,6 +58,8 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  public:
   virtual ~RenderWidgetHostViewDelegate();
 
+  virtual void Init(WebViewAdapter* view) = 0;
+
   virtual void Blur() = 0;
   virtual void Focus() = 0;
   virtual bool HasFocus() = 0;
@@ -64,6 +67,8 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   virtual void Show() = 0;
   virtual void Hide() = 0;
   virtual bool IsShowing() = 0;
+
+  virtual void UpdateCursor(const QCursor& cursor) = 0;
 
   virtual QRect GetViewBoundsPix() = 0;
 
@@ -85,6 +90,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleWheelEvent(QWheelEvent* event);
   void HandleInputMethodEvent(QInputMethodEvent* event);
   void HandleTouchEvent(QTouchEvent* event);
+  void HandleGeometryChanged();
 
   TextureHandle* GetCurrentTextureHandle();
   void DidUpdate(bool skipped);

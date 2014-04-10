@@ -5,7 +5,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -106,52 +106,16 @@
+@@ -110,52 +110,16 @@
            ],
          },
        ],  # targets
@@ -58,7 +58,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -159,33 +123,16 @@
+@@ -163,33 +127,16 @@
                '<!@(<(pkg-config) --libs-only-L --libs-only-other xcursor)',
              ],
              'libraries': [
@@ -92,7 +92,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -193,33 +140,16 @@
+@@ -197,33 +144,16 @@
                '<!@(<(pkg-config) --libs-only-L --libs-only-other xdamage)',
              ],
              'libraries': [
@@ -126,7 +126,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -978,16 +908,86 @@
+@@ -985,16 +915,86 @@
                  ],
                },
              }],
@@ -216,7 +216,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -186,17 +186,17 @@
+@@ -191,17 +191,17 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -323,7 +323,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
 --- a/ui/gl/gl_image_glx.cc
 +++ b/ui/gl/gl_image_glx.cc
-@@ -7,32 +7,38 @@ extern "C" {
+@@ -7,30 +7,36 @@ extern "C" {
  }
  
  #include "ui/gl/gl_image_glx.h"
@@ -344,9 +344,7 @@ diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
  //   scoped_ptr<XVisualInfo, ScopedPtrXFree> foo(...);
  // where "XVisualInfo" is any X type that is freed with XFree.
  struct ScopedPtrXFree {
-   void operator()(void* x) const {
-     ::XFree(x);
-   }
+   void operator()(void* x) const { ::XFree(x); }
  };
  
 +Display* GetDefaultXDisplay() {
@@ -362,7 +360,7 @@ diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
  }
  
  int TextureFormat(int depth) {
-@@ -40,17 +46,17 @@ int TextureFormat(int depth) {
+@@ -38,17 +44,17 @@ int TextureFormat(int depth) {
      return GLX_TEXTURE_FORMAT_RGBA_EXT;
  
    return GLX_TEXTURE_FORMAT_RGB_EXT;
@@ -371,16 +369,16 @@ diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
  }  // namespace anonymous
  
  GLImageGLX::GLImageGLX(gfx::PluginWindowHandle window)
--  : display_(base::MessagePumpForUI::GetDefaultXDisplay()),
-+  : display_(GetDefaultXDisplay()),
-     window_(window),
-     pixmap_(0),
-     glx_pixmap_(0) {
- }
+-    : display_(base::MessagePumpForUI::GetDefaultXDisplay()),
++    : display_(GetDefaultXDisplay()),
+       window_(window),
+       pixmap_(0),
+       glx_pixmap_(0) {}
  
- GLImageGLX::~GLImageGLX() {
-   Destroy();
- }
+ GLImageGLX::~GLImageGLX() { Destroy(); }
+ 
+ bool GLImageGLX::Initialize() {
+   if (!GLSurfaceGLX::IsTextureFromPixmapSupported()) {
 diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 --- a/ui/gl/gl_implementation.cc
 +++ b/ui/gl/gl_implementation.cc
@@ -404,28 +402,6 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
  #endif
  
  GLImplementation GetNamedGLImplementation(const std::string& name) {
-diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
---- a/ui/gl/gl_surface_egl.cc
-+++ b/ui/gl/gl_surface_egl.cc
-@@ -761,17 +761,17 @@ EGLSurface SurfacelessEGL::GetHandle() {
- 
- void* SurfacelessEGL::GetShareHandle() {
-   return NULL;
- }
- 
- SurfacelessEGL::~SurfacelessEGL() {
- }
- 
--#if defined(ANDROID) || defined(USE_OZONE)
-+#if 0
- 
- // A thin subclass of |GLSurfaceOSMesa| that can be used in place
- // of a native hardware-provided surface when a native surface
- // provider is not available.
- class GLSurfaceOSMesaHeadless : public GLSurfaceOSMesa {
-  public:
-   explicit GLSurfaceOSMesaHeadless(gfx::AcceleratedWidget window);
- 
 diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
 --- a/ui/gl/gl_surface_glx.cc
 +++ b/ui/gl/gl_surface_glx.cc

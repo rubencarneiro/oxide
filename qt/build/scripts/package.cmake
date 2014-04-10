@@ -33,6 +33,12 @@ foreach(f ${PROGRAMS})
          GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
 endforeach()
 
+file(GLOB LOCALE_FILES "${LOCALES}/*.pak")
+foreach(f ${LOCALE_FILES})
+  file(INSTALL ${f} DESTINATION ${STAGE_DIR}/locales
+       FILE_PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ)
+endforeach()
+
 get_filename_component(WORKING_DIRECTORY ${STAGE_DIR} PATH)
 get_filename_component(STAGE_DIR_NAME ${STAGE_DIR} NAME)
 execute_process(

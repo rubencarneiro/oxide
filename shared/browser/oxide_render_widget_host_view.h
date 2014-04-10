@@ -47,6 +47,7 @@ class TouchEvent;
 namespace oxide {
 
 class TextureHandle;
+class WebView;
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
@@ -55,13 +56,44 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
  public:
   virtual ~RenderWidgetHostView();
 
+  virtual void Init(WebView* view) = 0;
+
+  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
+  content::RenderWidgetHostImpl* host() const { return host_; }
+
+  void SetBounds(const gfx::Rect& rect) FINAL;
+
+  TextureHandle* GetCurrentTextureHandle();
+
+ protected:
+  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
+
+  void WasShown() FINAL;
+  void WasHidden() FINAL;
+
+  void OnFocus();
+  void OnBlur();
+  void OnResize();
+
+  void AcknowledgeBuffersSwapped(bool skipped);
+
+  gfx::Rect caret_rect() const { return caret_rect_; }
+  size_t selection_cursor_position() const {
+    return selection_cursor_position_;
+  }
+  size_t selection_anchor_position() const {
+    return selection_anchor_position_;
+  }
+
+  void HandleTouchEvent(const ui::TouchEvent& event);
+
+ private:
+  typedef base::Callback<void(bool)> AcknowledgeBufferPresentCallback;
+
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) FINAL;
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) FINAL;
-
-  void WasShown() FINAL;
-  void WasHidden() FINAL;
 
   void MovePluginWindows(
       const gfx::Vector2d& scroll_offset,
@@ -69,7 +101,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   virtual void Blur() OVERRIDE;
 
-  void UpdateCursor(const content::WebCursor& cursor) FINAL;
+  void UpdateCursor(const content::WebCursor& cursor) OVERRIDE;
 
   void SetIsLoading(bool is_loading) FINAL;
 
@@ -138,49 +170,20 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 
-  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
-  content::RenderWidgetHostImpl* host() const { return host_; }
-
-  void SetSize(const gfx::Size& size) OVERRIDE;
-  void SetBounds(const gfx::Rect& rect) FINAL;
-
   gfx::NativeView GetNativeView() const FINAL;
   gfx::NativeViewId GetNativeViewId() const FINAL;
   gfx::NativeViewAccessible GetNativeViewAccessible() FINAL;
 
-  void Focus() OVERRIDE;
+  virtual void Focus() OVERRIDE;
 
   bool IsSurfaceAvailableForCopy() const FINAL;
 
   bool LockMouse() FINAL;
   void UnlockMouse() FINAL;
 
-  void OnFocus();
-  void OnBlur();
-
-  TextureHandle* GetCurrentTextureHandle();
-
   bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
   void DispatchPostponedGestureEvent(ui::GestureEvent* event) FINAL;
   void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
-
- protected:
-  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
-
-  void AcknowledgeBuffersSwapped(bool skipped);
-
-  gfx::Rect caret_rect() const { return caret_rect_; }
-  size_t selection_cursor_position() const {
-    return selection_cursor_position_;
-  }
-  size_t selection_anchor_position() const {
-    return selection_anchor_position_;
-  }
-
-  void HandleTouchEvent(const ui::TouchEvent& event);
-
- private:
-  typedef base::Callback<void(bool)> AcknowledgeBufferPresentCallback;
 
   virtual void Paint(const gfx::Rect& dirty_rect);
   virtual void BuffersSwapped();

@@ -18,10 +18,11 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 
-#include <QScopedPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QUrl>
+
+#include "qt/core/glue/oxide_qt_adapter_base.h"
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
@@ -35,10 +36,11 @@ class OxideQStoragePermissionRequest;
 namespace oxide {
 namespace qt {
 
+class RenderWidgetHostViewDelegateFactory;
 class UserScriptAdapter;
 class WebContextAdapterPrivate;
 
-class Q_DECL_EXPORT WebContextAdapter {
+class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  public:
   virtual ~WebContextAdapter();
 
@@ -46,6 +48,12 @@ class Q_DECL_EXPORT WebContextAdapter {
     CookiePolicyAllowAll,
     CookiePolicyBlockAll,
     CookiePolicyBlockThirdParty
+  };
+
+  enum SessionCookieMode {
+    SessionCookieModeEphemeral,
+    SessionCookieModePersistent,
+    SessionCookieModeRestored
   };
 
   class IOThreadDelegate {
@@ -76,12 +84,10 @@ class Q_DECL_EXPORT WebContextAdapter {
   QString acceptLangs() const;
   void setAcceptLangs(const QString& langs);
 
-  QList<UserScriptAdapter *>& user_scripts();
-
+  QList<UserScriptAdapter *>& userScripts();
   void updateUserScripts();
 
   bool isInitialized() const;
-  void init();
 
   static QOpenGLContext* sharedGLContext();
   static void setSharedGLContext(QOpenGLContext* context);
@@ -93,14 +99,23 @@ class Q_DECL_EXPORT WebContextAdapter {
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
+  SessionCookieMode sessionCookieMode() const;
+  void setSessionCookieMode(SessionCookieMode mode);
+
+  bool popupBlockerEnabled() const;
+  void setPopupBlockerEnabled(bool enabled);
+
  protected:
-  WebContextAdapter(IOThreadDelegate* io_delegate);
+  WebContextAdapter(QObject* q,
+                    IOThreadDelegate* io_delegate,
+                    RenderWidgetHostViewDelegateFactory* view_factory);
 
  private:
   friend class WebContextAdapterPrivate;
 
-  QList<UserScriptAdapter *> user_scripts_;
-  QScopedPointer<WebContextAdapterPrivate> priv;
+  // This is a strong-ref. We can't use scoped_refptr here, so we manage
+  // it manually
+  WebContextAdapterPrivate* priv;
 };
 
 } // namespace qt

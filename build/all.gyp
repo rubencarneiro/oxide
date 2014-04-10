@@ -20,7 +20,8 @@
       'target_name': 'All',
       'type': 'none',
       'dependencies': [
-        '<@(oxide_all_targets)'
+        '<@(oxide_all_targets)',
+        '<(DEPTH)/third_party/ffmpeg/ffmpeg.gyp:ffmpegsumo',
       ]
     }
   ]

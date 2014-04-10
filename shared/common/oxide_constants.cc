@@ -27,4 +27,7 @@ const char kDataScheme[] = "data";
 const char kFileScheme[] = "file";
 const char kFtpScheme[] = "ftp";
 
+const char kSandboxIPCProcess[] = "sandbox-ipc";
+const char kSandboxExe[] = "sandbox-exe";
+
 } // namespace oxide

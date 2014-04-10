@@ -19,6 +19,7 @@
 #define _OXIDE_QT_QUICK_RENDER_VIEW_ITEM_H_
 
 #include <QQuickItem>
+#include <QCursor>
 #include <QRect>
 #include <QtGlobal>
 
@@ -28,9 +29,13 @@ QT_BEGIN_NAMESPACE
 class QPixmap;
 QT_END_NAMESPACE
 
-class OxideQQuickWebView;
 
 namespace oxide {
+
+namespace qt {
+class WebViewAdapter;
+}
+
 namespace qquick {
 
 class RenderViewItem Q_DECL_FINAL :
@@ -39,7 +44,9 @@ class RenderViewItem Q_DECL_FINAL :
   Q_OBJECT
 
  public:
-  RenderViewItem(OxideQQuickWebView* webview);
+  RenderViewItem();
+
+  void Init(oxide::qt::WebViewAdapter* view) Q_DECL_FINAL;
 
   void Blur() Q_DECL_FINAL;
   void Focus() Q_DECL_FINAL;
@@ -48,6 +55,8 @@ class RenderViewItem Q_DECL_FINAL :
   void Show() Q_DECL_FINAL;
   void Hide() Q_DECL_FINAL;
   bool IsShowing() Q_DECL_FINAL;
+
+  void UpdateCursor(const QCursor& cursor) Q_DECL_FINAL;
 
   QRect GetViewBoundsPix() Q_DECL_FINAL;
 
@@ -86,6 +95,9 @@ class RenderViewItem Q_DECL_FINAL :
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
  private:
+  void geometryChanged(const QRectF& new_geometry,
+                       const QRectF& old_geometry) Q_DECL_FINAL;
+
   const QPixmap* backing_store_;
 #if defined(ENABLE_COMPOSITING)
   oxide::qt::TextureHandle* texture_handle_;

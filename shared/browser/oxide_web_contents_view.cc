@@ -18,9 +18,10 @@
 #include "oxide_web_contents_view.h"
 
 #include "content/browser/renderer_host/render_widget_host_impl.h"
-#include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
 
+#include "oxide_render_widget_host_view.h"
+#include "oxide_render_widget_host_view_factory.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -39,19 +40,26 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
-  content::RenderWidgetHostView* rvh =
-      GetWebView()->CreateViewForWidget(render_widget_host);
-  if (!rvh) {
+  RenderWidgetHostViewFactory* factory =
+      RenderWidgetHostViewFactory::FromWebContents(web_contents_);
+  RenderWidgetHostView* rwhv = factory->CreateViewForWidget(render_widget_host);
+
+  if (!rwhv) {
     return NULL;
   }
 
-  if (!content::RenderWidgetHostImpl::From(render_widget_host)->is_hidden()) {
-    rvh->Show();
-  } else {
-    rvh->Hide();
+  WebView* view = GetWebView();
+  if (view) {
+    rwhv->Init(view);
   }
 
-  return rvh;
+  if (!content::RenderWidgetHostImpl::From(render_widget_host)->is_hidden()) {
+    rwhv->Show();
+  } else {
+    rwhv->Hide();
+  }
+
+  return rwhv;
 }
 
 content::RenderWidgetHostView* WebContentsView::CreateViewForPopupWidget(

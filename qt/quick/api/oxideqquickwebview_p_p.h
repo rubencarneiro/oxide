@@ -19,7 +19,6 @@
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
 #include <QScopedPointer>
-#include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -29,6 +28,7 @@
 
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
+class OxideQQuickWebContextPrivate;
 class OxideQQuickWebView;
 
 QT_BEGIN_NAMESPACE
@@ -36,26 +36,28 @@ class QQmlComponent;
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
-struct InitData {
-  InitData() : incognito(false) {}
-
-  bool incognito;
-  QUrl url;
-};
-
 class OxideQQuickWebViewPrivate Q_DECL_FINAL :
      public oxide::qt::WebViewAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
-  OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
   ~OxideQQuickWebViewPrivate();
 
-  oxide::qt::RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
+  static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
+
+  void addAttachedPropertyTo(QObject* object);
+
+ private:
+  OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
+
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
   oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       oxide::qt::JavaScriptDialogDelegate::Type type) Q_DECL_FINAL;
   oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() Q_DECL_FINAL;
+  oxide::qt::FilePickerDelegate* CreateFilePickerDelegate() Q_DECL_FINAL;
+
+  void OnInitialized(bool orig_incognito,
+                     oxide::qt::WebContextAdapter* orig_context) Q_DECL_FINAL;
 
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
@@ -65,6 +67,11 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void LoadProgressChanged(double progress) Q_DECL_FINAL;
 
   void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
+  
+  void AddMessageToConsole(int level,
+			   const QString& message,
+			   int line_no,
+			   const QString& source_id) Q_DECL_FINAL;
 
   void NavigationEntryCommitted() Q_DECL_FINAL;
   void NavigationListPruned(bool from_front, int count) Q_DECL_FINAL;
@@ -73,11 +80,17 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
   QRect GetContainerBounds() Q_DECL_FINAL;
+  bool IsVisible() const Q_DECL_FINAL;
 
   void OnWebPreferencesChanged() Q_DECL_FINAL;
 
   void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
   void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
+
+  bool CanCreateWindows() const Q_DECL_FINAL;
+
+  void NavigationRequested(OxideQNavigationRequest* request) Q_DECL_FINAL;
+  void NewViewRequested(OxideQNewViewRequest* request) Q_DECL_FINAL;
 
   void completeConstruction();
 
@@ -92,29 +105,21 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   static void messageHandler_clear(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
-  static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
-
-  void addAttachedPropertyTo(QObject* object);
-
-  InitData* init_props() { return init_props_.data(); }
-
-  OxideQQuickWebContext* context;
-  OxideQQuickNavigationHistory navigationHistory;
-  QQmlComponent* popup_menu;
-  QQmlComponent* alert_dialog;
-  QQmlComponent* confirm_dialog;
-  QQmlComponent* prompt_dialog;
-  QQmlComponent* before_unload_dialog;
-
- private:
-  void contextInitialized();
+  void contextConstructed();
   void contextWillBeDestroyed();
-  void detachContextSignals();
+  void attachContextSignals(OxideQQuickWebContextPrivate* context);
+  void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
-  QScopedPointer<InitData> init_props_;
-  QSharedPointer<OxideQQuickWebContext> default_context_;
+  bool constructed_;
   int load_progress_;
   QUrl icon_;
+  OxideQQuickNavigationHistory navigation_history_;
+  QQmlComponent* popup_menu_;
+  QQmlComponent* alert_dialog_;
+  QQmlComponent* confirm_dialog_;
+  QQmlComponent* prompt_dialog_;
+  QQmlComponent* before_unload_dialog_;
+  QQmlComponent* file_picker_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

@@ -92,6 +92,10 @@ void RenderWidgetHostViewDelegate::HandleTouchEvent(
   priv->rwhv->HandleTouchEvent(event);
 }
 
+void RenderWidgetHostViewDelegate::HandleGeometryChanged() {
+  priv->rwhv->HandleGeometryChanged();
+}
+
 TextureHandle* RenderWidgetHostViewDelegate::GetCurrentTextureHandle() {
   priv->current_texture_handle_.SetHandle(
       priv->rwhv->GetCurrentTextureHandle());

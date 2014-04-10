@@ -29,6 +29,7 @@
 #include "base/synchronization/lock.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
+#include "content/public/browser/cookie_store_factory.h"
 #include "net/base/static_cookie_policy.h"
 
 namespace content {
@@ -64,7 +65,11 @@ class BrowserContextIOData {
 
   scoped_refptr<BrowserContextDelegate> GetDelegate();
 
-  net::StaticCookiePolicy::Type GetCookiePolicy() const;
+  virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
+  virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
+  virtual content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const = 0;
+
+  virtual bool IsPopupBlockerEnabled() const = 0;
 
   virtual base::FilePath GetPath() const = 0;
   virtual base::FilePath GetCachePath() const = 0;
@@ -92,13 +97,9 @@ class BrowserContextIOData {
   friend class BrowserContext;
 
   void SetDelegate(BrowserContextDelegate* delegate);
-  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
   base::Lock delegate_lock_;
   scoped_refptr<BrowserContextDelegate> delegate_;
-
-  base::Lock cookie_policy_lock_;
-  net::StaticCookiePolicy cookie_policy_;
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
@@ -119,11 +120,13 @@ class BrowserContext : public content::BrowserContext,
 
   struct Params {
     Params(const base::FilePath& path,
-           const base::FilePath& cache_path) :
-        path(path), cache_path(path) {}
+           const base::FilePath& cache_path,
+           const content::CookieStoreConfig::SessionCookieMode session_cookie_mode) :
+        path(path), cache_path(cache_path), session_cookie_mode(session_cookie_mode) {}
 
     base::FilePath path;
     base::FilePath cache_path;
+    content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
   };
 
   virtual ~BrowserContext();
@@ -140,8 +143,6 @@ class BrowserContext : public content::BrowserContext,
   // references to the BrowserProcessMain have been released
   static BrowserContext* Create(const Params& params);
 
-  static std::vector<BrowserContext *>& GetAllContexts();
-
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();
 
@@ -149,6 +150,7 @@ class BrowserContext : public content::BrowserContext,
       content::ProtocolHandlerMap* protocol_handlers,
       content::ProtocolHandlerScopedVector protocol_interceptors);
 
+  BrowserContextDelegate* GetDelegate() const;
   void SetDelegate(BrowserContextDelegate* delegate);
 
   virtual BrowserContext* GetOffTheRecordContext() = 0;
@@ -173,6 +175,11 @@ class BrowserContext : public content::BrowserContext,
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
+
+  bool IsPopupBlockerEnabled() const;
+  virtual void SetIsPopupBlockerEnabled(bool enabled) = 0;
+
   BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 
   virtual UserScriptMaster& UserScriptManager() = 0;
@@ -183,6 +190,7 @@ class BrowserContext : public content::BrowserContext,
   BrowserContext(BrowserContextIOData* io_data);
 
   void OnUserAgentChanged();
+  void OnPopupBlockerEnabledChanged();
 
  private:
   friend class BrowserContextObserver;
@@ -216,6 +224,7 @@ class BrowserContext : public content::BrowserContext,
       int render_view_id,
       int bridge_id,
       const GURL& requesting_frame,
+      bool user_gesture,
       const MidiSysExPermissionCallback& callback) FINAL;
 
   void CancelMidiSysExPermissionRequest(

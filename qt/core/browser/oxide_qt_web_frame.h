@@ -44,6 +44,8 @@ class WebFrame FINAL : public oxide::WebFrame {
   WebFrameAdapter* adapter() const { return adapter_; }
   QObject* api_handle() const { return api_handle_.data(); }
 
+  void URLChanged() FINAL;
+
  private:
   ~WebFrame();
 
@@ -53,7 +55,6 @@ class WebFrame FINAL : public oxide::WebFrame {
 
   void OnChildAdded(oxide::WebFrame* child) FINAL;
   void OnChildRemoved(oxide::WebFrame* child) FINAL;
-  void OnURLChanged() FINAL;
 
   QScopedPointer<QObject> api_handle_;
   WebFrameAdapter* adapter_;
