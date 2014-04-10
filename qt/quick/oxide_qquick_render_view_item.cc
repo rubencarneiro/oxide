@@ -254,9 +254,6 @@ QSGNode* RenderViewItem::updatePaintNode(
     return NULL;
   }
 
-  // FIXME: What if we had a resize between scheduling the update
-  //        on the main thread and now?
-
 #if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_) {
     AcceleratedRenderViewNode* node =
@@ -278,7 +275,14 @@ QSGNode* RenderViewItem::updatePaintNode(
     node = new PaintedRenderViewNode();
   }
 
-  node->setSize(QSizeF(width(), height()).toSize());
+  QSize size;
+  if (backing_store_) {
+    size = QSize(backing_store_->width(), backing_store_->height());
+  } else {
+    size = QSizeF(width(), height()).toSize();
+  }
+
+  node->setSize(size);
   node->setBackingStore(backing_store_);
   node->markDirtyRect(dirty_rect_);
 
