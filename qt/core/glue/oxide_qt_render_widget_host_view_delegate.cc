@@ -106,8 +106,8 @@ void RenderWidgetHostViewDelegate::UpdateTextureHandle() {
       rwhv_->GetCurrentTextureHandle());
 }
 
-void RenderWidgetHostViewDelegate::DidUpdate(bool skipped) {
-  rwhv_->DidUpdate(skipped);
+void RenderWidgetHostViewDelegate::DidComposite(bool skipped) {
+  rwhv_->DidComposite(skipped);
 }
 
 QVariant RenderWidgetHostViewDelegate::InputMethodQuery(

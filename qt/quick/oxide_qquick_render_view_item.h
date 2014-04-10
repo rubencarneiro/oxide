@@ -95,10 +95,9 @@ class RenderViewItem Q_DECL_FINAL :
 
   QRect dirty_rect_;
 
-#if defined(ENABLE_COMPOSITING)
   bool is_compositing_enabled_;
   bool is_compositing_enabled_state_changed_;
-#endif
+  bool composite_requested_by_chromium_;
 
   Q_DISABLE_COPY(RenderViewItem);
 };

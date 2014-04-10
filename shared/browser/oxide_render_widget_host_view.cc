@@ -323,11 +323,6 @@ void RenderWidgetHostView::SendAcknowledgeBufferPresent(
     int gpu_host_id,
     const gpu::Mailbox& mailbox,
     bool skipped) {
-  {
-    base::AutoLock lock(acknowledge_buffer_present_callback_lock_);
-    acknowledge_buffer_present_callback_.Reset();
-  }
-
   AcceleratedSurfaceMsg_BufferPresented_Params ack;
   ack.sync_point = 0;
   if (skipped) {
@@ -351,6 +346,7 @@ void RenderWidgetHostView::SendAcknowledgeBufferPresentOnMainThread(
 
 bool RenderWidgetHostView::IsInBufferSwap() {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  base::AutoLock lock(acknowledge_buffer_present_callback_lock_);
   return !acknowledge_buffer_present_callback_.is_null();
 }
 
@@ -462,27 +458,22 @@ void RenderWidgetHostView::OnResize() {
 }
 
 void RenderWidgetHostView::AcknowledgeBuffersSwapped(bool skipped) {
-  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    // Don't need lock on UI thread, as this is in the only thread that
-    // modifies it
-    if (!acknowledge_buffer_present_callback_.is_null()) {
-      SendAcknowledgeBufferPresentOnMainThread(
-          acknowledge_buffer_present_callback_, skipped);
-    }
-    return;
-  }
-
   base::AutoLock lock(acknowledge_buffer_present_callback_lock_);
 
-  if (acknowledge_buffer_present_callback_.is_null()) {
-    return;
+  DCHECK(!acknowledge_buffer_present_callback_.is_null());
+
+  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    SendAcknowledgeBufferPresentOnMainThread(
+        acknowledge_buffer_present_callback_, skipped);
+  } else {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&RenderWidgetHostView::SendAcknowledgeBufferPresentOnMainThread,
+                   acknowledge_buffer_present_callback_, skipped));
   }
 
-  content::BrowserThread::PostTask(
-      content::BrowserThread::UI,
-      FROM_HERE,
-      base::Bind(&RenderWidgetHostView::SendAcknowledgeBufferPresentOnMainThread,
-                 acknowledge_buffer_present_callback_, skipped));  
+  acknowledge_buffer_present_callback_.Reset();
 }
 
 void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {

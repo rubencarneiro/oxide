@@ -44,13 +44,10 @@ void RenderViewItem::geometryChanged(const QRectF& new_geometry,
 }
 
 RenderViewItem::RenderViewItem() :
-    QQuickItem()
-#if defined(ENABLE_COMPOSITING)
-    , is_compositing_enabled_(false),
-    is_compositing_enabled_state_changed_(false) {
-#else
-{
-#endif
+    QQuickItem(),
+    is_compositing_enabled_(false),
+    is_compositing_enabled_state_changed_(false),
+    composite_requested_by_chromium_(false) {
   setFlag(QQuickItem::ItemHasContents);
 
   setAcceptedMouseButtons(Qt::AllButtons);
@@ -119,12 +116,10 @@ void RenderViewItem::SetInputMethodEnabled(bool enabled) {
 }
 
 void RenderViewItem::SchedulePaintForRectPix(const QRect& rect) {
-#if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_) {
     is_compositing_enabled_state_changed_ = true;
     is_compositing_enabled_ = false;
   }
-#endif
 
   if (rect.isNull() && !dirty_rect_.isNull()) {
     dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
@@ -142,6 +137,8 @@ void RenderViewItem::ScheduleUpdate() {
     is_compositing_enabled_state_changed_ = true;
     is_compositing_enabled_ = true;
   }
+
+  composite_requested_by_chromium_ = true;
 
   update();
   polish();
@@ -219,14 +216,9 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 }
 
 void RenderViewItem::updatePolish() {
-#if defined(ENABLE_COMPOSITING)
-
   if (is_compositing_enabled_) {
     UpdateTextureHandle();
   } else {
-#else
-  {
-#endif
     UpdateBackingStore();
   }
 }
@@ -236,17 +228,20 @@ QSGNode* RenderViewItem::updatePaintNode(
     UpdatePaintNodeData* data) {
   Q_UNUSED(data);
 
-#if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_state_changed_) {
     delete oldNode;
     oldNode = NULL;
     is_compositing_enabled_state_changed_ = false;
   }
-#endif
+
+  bool composite_requested_by_chromium = composite_requested_by_chromium_;
+  composite_requested_by_chromium_ = false;
 
   if (width() <= 0 || height() <= 0) {
     delete oldNode;
-    DidUpdate(true);
+    if (composite_requested_by_chromium) {
+      DidComposite(true);
+    }
     return NULL;
   }
 
@@ -264,9 +259,14 @@ QSGNode* RenderViewItem::updatePaintNode(
     node->setRect(QRect(QPoint(0, 0), size));
     node->updateFrontTexture(texture_handle());
 
-    DidUpdate(false);
+    if (composite_requested_by_chromium) {
+      DidComposite(false);
+    }
+
     return node;
   }
+#else
+  Q_ASSERT(!is_compositing_enabled_);
 #endif
 
   PaintedRenderViewNode* node = static_cast<PaintedRenderViewNode *>(oldNode);

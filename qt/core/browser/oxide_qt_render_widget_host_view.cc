@@ -1031,7 +1031,7 @@ void RenderWidgetHostView::HandleGeometryChanged() {
   OnResize();
 }
 
-void RenderWidgetHostView::DidUpdate(bool skipped) {
+void RenderWidgetHostView::DidComposite(bool skipped) {
   AcknowledgeBuffersSwapped(skipped);
 }
 

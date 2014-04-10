@@ -73,7 +73,7 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void HandleTouchEvent(QTouchEvent* event);
   void HandleGeometryChanged();
 
-  void DidUpdate(bool skipped);
+  void DidComposite(bool skipped);
 
   const QPixmap* GetBackingStore();
 

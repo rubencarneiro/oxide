@@ -95,7 +95,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   TextureHandle* texture_handle() const { return texture_handle_.data(); }
   void UpdateTextureHandle();
 
-  void DidUpdate(bool skipped);
+  void DidComposite(bool skipped);
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
