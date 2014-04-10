@@ -36,7 +36,6 @@
     'ozone_platform_dri': 0,
     'ozone_platform_test': 0,
     'enable_printing': 0,
-    'proprietary_codecs': 1,
     'variables': {
       'conditions': [
         ['target_arch=="arm"', {
