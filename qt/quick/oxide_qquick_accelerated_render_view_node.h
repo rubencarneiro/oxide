@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
 #define _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
 
+#include <QScopedPointer>
 #include <QSGSimpleTextureNode>
 #include <QtGlobal>
 
@@ -45,8 +46,8 @@ class AcceleratedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  private:
   RenderViewItem* item_;
 
-  QSGTexture* front_texture_;
-  QSGTexture* back_texture_;
+  QScopedPointer<QSGTexture> front_texture_;
+  QScopedPointer<QSGTexture> back_texture_;
 };
 
 } // namespace qquick

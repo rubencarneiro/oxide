@@ -258,7 +258,10 @@ QSGNode* RenderViewItem::updatePaintNode(
       node = new AcceleratedRenderViewNode(this);
     }
 
-    node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
+    QSize size = texture_handle()->GetSize();
+    size = size.boundedTo(QSizeF(width(), height()).toSize());
+
+    node->setRect(QRect(QPoint(0, 0), size));
     node->updateFrontTexture(texture_handle());
 
     DidUpdate(false);
@@ -276,6 +279,7 @@ QSGNode* RenderViewItem::updatePaintNode(
   QSize size;
   if (backing_store) {
     size = QSize(backing_store->width(), backing_store->height());
+    size = size.boundedTo(QSizeF(width(), height()).toSize());
   } else {
     size = QSizeF(width(), height()).toSize();
   }

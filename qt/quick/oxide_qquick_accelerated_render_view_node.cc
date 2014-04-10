@@ -28,16 +28,11 @@ namespace oxide {
 namespace qquick {
 
 AcceleratedRenderViewNode::AcceleratedRenderViewNode(RenderViewItem* item) :
-    item_(item),
-    front_texture_(NULL),
-    back_texture_(NULL) {
+    item_(item) {
   setTextureCoordinatesTransform(QSGSimpleTextureNode::MirrorVertically);
 }
 
-AcceleratedRenderViewNode::~AcceleratedRenderViewNode() {
-  delete front_texture_;
-  delete back_texture_;
-}
+AcceleratedRenderViewNode::~AcceleratedRenderViewNode() {}
 
 void AcceleratedRenderViewNode::updateFrontTexture(
     oxide::qt::TextureHandle* texture_handle) {
@@ -51,18 +46,15 @@ void AcceleratedRenderViewNode::updateFrontTexture(
   if (!back_texture_ ||
       static_cast<unsigned int>(back_texture_->textureId()) != texture_handle->GetID() ||
       back_texture_->textureSize() != texture_handle->GetSize()) {
-    delete back_texture_;
-    back_texture_ = NULL;
-
-    back_texture_ =
+    back_texture_.reset(
         item_->window()->createTextureFromId(
           texture_handle->GetID(),
           texture_handle->GetSize(),
-          QQuickWindow::TextureHasAlphaChannel);
+          QQuickWindow::TextureHasAlphaChannel));
   }
 
-  std::swap(front_texture_, back_texture_);
-  setTexture(front_texture_);
+  front_texture_.swap(back_texture_);
+  setTexture(front_texture_.data());
 }
 
 } // namespace qquick

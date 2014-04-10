@@ -192,11 +192,6 @@ void RenderWidgetHostView::AcceleratedSurfaceBuffersSwapped(
                    params_in_pixel.mailbox);
   }
 
-  if (params_in_pixel.size != GetPhysicalBackingSize()) {
-    AcknowledgeBuffersSwapped(true);
-    return;
-  }
-
   BuffersSwapped();
 }
 
