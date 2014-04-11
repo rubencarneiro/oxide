@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,10 +18,12 @@
 #include "oxide_form_factor.h"
 
 #include <algorithm>
-#include <libudev.h>
-#include <stdlib.h>
 
+#include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/scoped_native_library.h"
+#include "base/strings/string_util.h"
+#include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 #include "shared/browser/oxide_default_screen_info.h"
@@ -30,40 +32,54 @@ namespace oxide {
 
 namespace {
 
-class ScopedUdevContext {
- public:
-  ScopedUdevContext() :
-      u_(udev_new()),
-      e_(udev_enumerate_new(u_)) {}
-
-  ~ScopedUdevContext() {
-    udev_enumerate_unref(e_);
-    udev_unref(u_);
-  }
-
-  operator struct udev_enumerate*() { return e_; }
-
- private:
-  struct udev* u_;
-  struct udev_enumerate* e_;
-};
-
 bool IsUbuntuPhoneOrTablet() {
-  ScopedUdevContext u;
-
-  if (udev_enumerate_add_match_subsystem(u, "android_usb") < 0) {
+  base::ScopedNativeLibrary egl(
+      base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
+  if (!egl.is_valid()) {
     return false;
   }
 
-  if (udev_enumerate_scan_devices(u) < 0) {
+  typedef EGLDisplay (*f_eglGetDisplay)(NativeDisplayType);
+  f_eglGetDisplay eglGetDisplay =
+      reinterpret_cast<f_eglGetDisplay>(egl.GetFunctionPointer("eglGetDisplay"));
+  if (!eglGetDisplay) {
+    LOG(ERROR) << "Failed to resolve eglGetDisplay";
+    return false;
+  }
+  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+  typedef EGLBoolean (*f_eglInitialize)(EGLDisplay, EGLint*, EGLint*);
+  f_eglInitialize eglInitialize =
+      reinterpret_cast<f_eglInitialize>(egl.GetFunctionPointer("eglInitialize"));
+  if (!eglInitialize) {
+    LOG(ERROR) << "Failed to resolve eglInitialize";
+    return false;
+  }
+  if (!eglInitialize(display, NULL, NULL)) {
+    LOG(ERROR) << "eglInitialize failed";
     return false;
   }
 
-  if (!udev_enumerate_get_list_entry(u)) {
+  typedef const char* (*f_eglQueryString)(EGLDisplay, EGLint);
+  f_eglQueryString eglQueryString =
+      reinterpret_cast<f_eglQueryString>(egl.GetFunctionPointer("eglQueryString"));
+  if (!eglQueryString) {
+    LOG(ERROR) << "Failed to resolve eglQueryString";
     return false;
   }
+  const char* vendor = eglQueryString(display, EGL_VENDOR);
 
-  return true;
+  typedef EGLBoolean (*f_eglTerminate)(EGLDisplay);
+  f_eglTerminate eglTerminate =
+      reinterpret_cast<f_eglTerminate>(egl.GetFunctionPointer("eglTerminate"));
+  if (!eglTerminate) {
+      LOG(ERROR) << "Failed to resolve eglTerminate";
+  }
+  if (!eglTerminate(display)) {
+    LOG(ERROR) << "eglTerminate failed";
+  }
+
+  return LowerCaseEqualsASCII(std::string(vendor), "android");
 }
 
 }

@@ -192,7 +192,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -148,17 +163,18 @@ void GpuChildThread::OnInitialize() {
+@@ -147,17 +162,18 @@ void GpuChildThread::OnInitialize() {
  
    // Defer creation of the render thread. This is to prevent it from handling
    // IPC messages before the sandbox has been enabled and all other necessary
@@ -204,14 +204,14 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 -                            ChildProcess::current()->GetShutDownEvent()));
 +                            ChildProcess::current()->GetShutDownEvent(),
 +                            share_group_.get()));
- 
-   // Ensure the browser process receives the GPU info before a reply to any
-   // subsequent IPC it might send.
-   if (!in_browser_process_)
-     Send(new GpuHostMsg_GraphicsInfoCollected(gpu_info_));
  }
  
  void GpuChildThread::StopWatchdog() {
+   if (watchdog_thread_.get()) {
+     watchdog_thread_->Stop();
+   }
+ }
+ 
 diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 --- a/content/gpu/gpu_child_thread.h
 +++ b/content/gpu/gpu_child_thread.h
@@ -393,7 +393,7 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -43,16 +43,17 @@ class DictionaryValue;
+@@ -44,16 +44,17 @@ class DictionaryValue;
  class FilePath;
  }
  
@@ -411,7 +411,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -630,13 +631,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -640,13 +641,15 @@ class CONTENT_EXPORT ContentBrowserClien
    // Returns true if dev channel APIs are available for plugins.
    virtual bool IsPluginAllowedToUseDevChannelAPIs();
  

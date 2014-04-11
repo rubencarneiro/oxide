@@ -1,0 +1,76 @@
+# HG changeset patch
+# Parent 93ddb2b66f2cf5a8ae8986160f88c765cc8e55a8
+# User oxide
+
+diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
+--- a/content/browser/web_contents/web_contents_impl.cc
++++ b/content/browser/web_contents/web_contents_impl.cc
+@@ -1336,17 +1336,19 @@ void WebContentsImpl::CreateNewWindow(
+ 
+   if (delegate_ &&
+       !delegate_->ShouldCreateWebContents(this,
+                                           route_id,
+                                           params.window_container_type,
+                                           params.frame_name,
+                                           params.target_url,
+                                           partition_id,
+-                                          session_storage_namespace)) {
++                                          session_storage_namespace,
++                                          params.disposition,
++                                          params.user_gesture)) {
+     if (route_id != MSG_ROUTING_NONE &&
+         !RenderViewHost::FromID(render_process_id, route_id)) {
+       // If the embedder didn't create a WebContents for this route, we need to
+       // delete the RenderView that had already been created.
+       Send(new ViewMsg_Close(route_id));
+     }
+     GetRenderViewHost()->GetProcess()->ResumeRequestsForView(route_id);
+     GetRenderViewHost()->GetProcess()->ResumeRequestsForView(
+diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/browser/web_contents_delegate.cc
+--- a/content/public/browser/web_contents_delegate.cc
++++ b/content/public/browser/web_contents_delegate.cc
+@@ -127,17 +127,19 @@ bool WebContentsDelegate::OnGoToEntryOff
+ 
+ bool WebContentsDelegate::ShouldCreateWebContents(
+     WebContents* web_contents,
+     int route_id,
+     WindowContainerType window_container_type,
+     const base::string16& frame_name,
+     const GURL& target_url,
+     const std::string& partition_id,
+-    SessionStorageNamespace* session_storage_namespace) {
++    SessionStorageNamespace* session_storage_namespace,
++    WindowOpenDisposition window_open_disposition,
++    bool user_gesture) {
+   return true;
+ }
+ 
+ JavaScriptDialogManager* WebContentsDelegate::GetJavaScriptDialogManager() {
+   return NULL;
+ }
+ 
+ bool WebContentsDelegate::EmbedsFullscreenWidget() const {
+diff --git a/content/public/browser/web_contents_delegate.h b/content/public/browser/web_contents_delegate.h
+--- a/content/public/browser/web_contents_delegate.h
++++ b/content/public/browser/web_contents_delegate.h
+@@ -295,17 +295,19 @@ class CONTENT_EXPORT WebContentsDelegate
+   // be destroyed.
+   virtual bool ShouldCreateWebContents(
+       WebContents* web_contents,
+       int route_id,
+       WindowContainerType window_container_type,
+       const base::string16& frame_name,
+       const GURL& target_url,
+       const std::string& partition_id,
+-      SessionStorageNamespace* session_storage_namespace);
++      SessionStorageNamespace* session_storage_namespace,
++      WindowOpenDisposition window_open_disposition,
++      bool user_gesture);
+ 
+   // Notifies the delegate about the creation of a new WebContents. This
+   // typically happens when popups are created.
+   virtual void WebContentsCreated(WebContents* source_contents,
+                                   int opener_render_frame_id,
+                                   const base::string16& frame_name,
+                                   const GURL& target_url,
+                                   WebContents* new_contents) {}

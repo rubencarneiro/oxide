@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 0.1
-import com.canonical.Oxide.Testing 0.1
+import com.canonical.Oxide 1.0
+import com.canonical.Oxide.Testing 1.0
 
 TestWebView {
   id: webView
@@ -127,10 +127,7 @@ TestWebView {
       compare(frame.messageHandlers.length, 1,
               "WebFrame should have a handler");
 
-      var obs = OxideTestingUtils.createDestructionObserver(handler);
-      handler.destroy();
-      verify(webView.waitFor(function() { return obs.destroyed; }),
-             "Timed out waiting for handler to be destroyed");
+      OxideTestingUtils.destroyQObjectNow(handler);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(frame.messageHandlers.length, 0,

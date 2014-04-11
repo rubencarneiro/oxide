@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_FRAME_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_FRAME_ADAPTER_H_
-
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#ifndef _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_FACTORY_H_
+#define _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_FACTORY_H_
 
 namespace oxide {
 namespace qt {
 
-class WebFrame;
-class WebFrameAdapter;
+class RenderWidgetHostViewDelegate;
 
-class WebFrameAdapterPrivate FINAL {
+class RenderWidgetHostViewDelegateFactory {
  public:
-  WebFrameAdapterPrivate();
-  ~WebFrameAdapterPrivate();
+  RenderWidgetHostViewDelegateFactory() {}
+  virtual ~RenderWidgetHostViewDelegateFactory() {}
 
-  static WebFrameAdapterPrivate* get(WebFrameAdapter* adapter);
-
-  WebFrame* owner;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(WebFrameAdapterPrivate);
+  virtual RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() = 0;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_WEB_FRAME_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_FACTORY_H_

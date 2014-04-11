@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,29 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_LOAD_EVENT_P_H_
-#define _OXIDE_QT_CORE_API_LOAD_EVENT_P_H_
+#ifndef _OXIDE_QQUICK_RENDER_VIEW_ITEM_FACTORY_H_
+#define _OXIDE_QQUICK_RENDER_VIEW_ITEM_FACTORY_H_
 
-#include <QString>
 #include <QtGlobal>
-#include <QUrl>
 
-#include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_factory.h"
 
-class OxideQLoadEventPrivate Q_DECL_FINAL {
+namespace oxide {
+namespace qquick {
+
+class RenderViewItemFactory Q_DECL_FINAL :
+    public oxide::qt::RenderWidgetHostViewDelegateFactory {
  public:
-  OxideQLoadEventPrivate(QUrl url,
-                         OxideQLoadEvent::Type type,
-                         OxideQLoadEvent::ErrorCode error,
-                         QString error_string);
+  RenderViewItemFactory();
 
-  static OxideQLoadEvent::ErrorCode ChromeErrorCodeToOxideErrorCode(
-      int error_code);
-
-  QUrl url;
-  OxideQLoadEvent::Type type;
-  OxideQLoadEvent::ErrorCode error;
-  QString error_string;
+  oxide::qt::RenderWidgetHostViewDelegate*
+  CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
 };
 
-#endif // _OXIDE_QT_CORE_API_LOAD_EVENT_P_H_
+} // namespace qquick
+} // namespace oxide
+
+#endif // _OXIDE_QQUICK_RENDER_VIEW_ITEM_FACTORY_H_

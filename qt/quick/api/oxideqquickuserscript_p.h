@@ -29,7 +29,7 @@ class OxideQQuickUserScriptPrivate;
 class OxideQQuickUserScript : public QObject,
                               public QQmlParserStatus {
   Q_OBJECT
-  Q_PROPERTY(QUrl url READ url WRITE setUrl)
+  Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY scriptPropertyChanged)
   Q_PROPERTY(bool emulateGreasemonkey READ emulateGreasemonkey WRITE setEmulateGreasemonkey NOTIFY scriptPropertyChanged)
   Q_PROPERTY(bool matchAllFrames READ matchAllFrames WRITE setMatchAllFrames NOTIFY scriptPropertyChanged)
   Q_PROPERTY(bool incognitoEnabled READ incognitoEnabled WRITE setIncognitoEnabled NOTIFY scriptPropertyChanged)

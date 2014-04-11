@@ -25,7 +25,10 @@
     'use_aura': 1,
     'use_gconf': 0,
     'use_gnome_keyring': 0,
+    'use_mojo': 0,
     'use_ozone': 1,
+    'toolkit_views': 0,
+    'enable_plugins': 0,
     'ozone_platform': 'oxide',
     'external_ozone_platforms': [
       'oxide',
@@ -48,12 +51,20 @@
         # Ubuntu-specific?
         'arm_float_abi': 'hard',
       }],
+      ['host_arch=="arm"', {
+        # This is desparate - we're trying to avoid linker OOM on native ARM
+        # builds. This is unnecessary on ARM cross builds, hence the test for
+        # "host_arch".
+        'remove_webcore_debug_symbols': 1,
+      }],
     ],
   },
   'target_defaults': {
     'cflags!': [
       # Should remove this
       '-Werror',
+      # Causes a build error (the '#' should probably be escaped in the makefile)
+      '-Wno-#pragma-messages',
     ],
     'ldflags': [
       '-B<(PRODUCT_DIR)/../../../gold',

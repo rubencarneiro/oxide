@@ -26,6 +26,7 @@
 #include <QSizeF>
 #include <QTouchEvent>
 
+#include "qt/core/glue/oxide_qt_web_view_adapter.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
 #if defined(ENABLE_COMPOSITING)
@@ -36,21 +37,25 @@
 namespace oxide {
 namespace qquick {
 
-RenderViewItem::RenderViewItem(
-    OxideQQuickWebView* webview) :
-    QQuickItem(webview),
-    backing_store_(NULL)
-#if defined(ENABLE_COMPOSITING)
-    , texture_handle_(NULL),
+void RenderViewItem::geometryChanged(const QRectF& new_geometry,
+                                     const QRectF& old_geometry) {
+  QQuickItem::geometryChanged(new_geometry, old_geometry);
+  HandleGeometryChanged();
+}
+
+RenderViewItem::RenderViewItem() :
+    QQuickItem(),
     is_compositing_enabled_(false),
-    is_compositing_enabled_state_changed_(false) {
-#else
-{
-#endif
+    is_compositing_enabled_state_changed_(false),
+    composite_requested_by_chromium_(false) {
   setFlag(QQuickItem::ItemHasContents);
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
+}
+
+void RenderViewItem::Init(oxide::qt::WebViewAdapter* view) {
+  setParentItem(adapterToQObject<OxideQQuickWebView>(view));
 }
 
 void RenderViewItem::Blur() {
@@ -75,6 +80,10 @@ void RenderViewItem::Hide() {
 
 bool RenderViewItem::IsShowing() {
   return isVisible();
+}
+
+void RenderViewItem::UpdateCursor(const QCursor& cursor) {
+  setCursor(cursor);
 }
 
 QRect RenderViewItem::GetViewBoundsPix() {
@@ -107,12 +116,10 @@ void RenderViewItem::SetInputMethodEnabled(bool enabled) {
 }
 
 void RenderViewItem::SchedulePaintForRectPix(const QRect& rect) {
-#if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_) {
     is_compositing_enabled_state_changed_ = true;
     is_compositing_enabled_ = false;
   }
-#endif
 
   if (rect.isNull() && !dirty_rect_.isNull()) {
     dirty_rect_ = QRectF(0, 0, width(), height()).toAlignedRect();
@@ -130,6 +137,8 @@ void RenderViewItem::ScheduleUpdate() {
     is_compositing_enabled_state_changed_ = true;
     is_compositing_enabled_ = true;
   }
+
+  composite_requested_by_chromium_ = true;
 
   update();
   polish();
@@ -207,17 +216,10 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 }
 
 void RenderViewItem::updatePolish() {
-  backing_store_ = NULL;
-#if defined(ENABLE_COMPOSITING)
-  texture_handle_ = NULL;
-
   if (is_compositing_enabled_) {
-    texture_handle_ = GetCurrentTextureHandle();
+    UpdateTextureHandle();
   } else {
-#else
-  {
-#endif
-    backing_store_ = GetBackingStore();
+    UpdateBackingStore();
   }
 }
 
@@ -226,22 +228,22 @@ QSGNode* RenderViewItem::updatePaintNode(
     UpdatePaintNodeData* data) {
   Q_UNUSED(data);
 
-#if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_state_changed_) {
     delete oldNode;
     oldNode = NULL;
     is_compositing_enabled_state_changed_ = false;
   }
-#endif
+
+  bool composite_requested_by_chromium = composite_requested_by_chromium_;
+  composite_requested_by_chromium_ = false;
 
   if (width() <= 0 || height() <= 0) {
     delete oldNode;
-    DidUpdate(true);
+    if (composite_requested_by_chromium) {
+      DidComposite(true);
+    }
     return NULL;
   }
-
-  // FIXME: What if we had a resize between scheduling the update
-  //        on the main thread and now?
 
 #if defined(ENABLE_COMPOSITING)
   if (is_compositing_enabled_) {
@@ -251,12 +253,20 @@ QSGNode* RenderViewItem::updatePaintNode(
       node = new AcceleratedRenderViewNode(this);
     }
 
-    node->setRect(QRectF(QPointF(0, 0), QSizeF(width(), height())));
-    node->updateFrontTexture(texture_handle_);
+    QSize size = texture_handle()->GetSize();
+    size = size.boundedTo(QSizeF(width(), height()).toSize());
 
-    DidUpdate(false);
+    node->setRect(QRect(QPoint(0, 0), size));
+    node->updateFrontTexture(texture_handle());
+
+    if (composite_requested_by_chromium) {
+      DidComposite(false);
+    }
+
     return node;
   }
+#else
+  Q_ASSERT(!is_compositing_enabled_);
 #endif
 
   PaintedRenderViewNode* node = static_cast<PaintedRenderViewNode *>(oldNode);
@@ -264,8 +274,18 @@ QSGNode* RenderViewItem::updatePaintNode(
     node = new PaintedRenderViewNode();
   }
 
-  node->setSize(QSizeF(width(), height()).toSize());
-  node->setBackingStore(backing_store_);
+  const QPixmap* backing_store = GetBackingStore();
+
+  QSize size;
+  if (backing_store) {
+    size = QSize(backing_store->width(), backing_store->height());
+    size = size.boundedTo(QSizeF(width(), height()).toSize());
+  } else {
+    size = QSizeF(width(), height()).toSize();
+  }
+
+  node->setSize(size);
+  node->setBackingStore(backing_store);
   node->markDirtyRect(dirty_rect_);
 
   node->update();

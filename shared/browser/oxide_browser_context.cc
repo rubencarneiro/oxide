@@ -29,7 +29,6 @@
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/cookie_crypto_delegate.h"
-#include "content/public/browser/cookie_store_factory.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
@@ -163,17 +162,13 @@ void BrowserContextDelegateTraits::Destruct(const BrowserContextDelegate* x) {
 }
 
 void BrowserContextIOData::SetDelegate(BrowserContextDelegate* delegate) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
   base::AutoLock lock(delegate_lock_);
   delegate_ = delegate;
 }
 
-void BrowserContextIOData::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
-  base::AutoLock lock(cookie_policy_lock_);
-  cookie_policy_.set_type(policy);
-}
-
 BrowserContextIOData::BrowserContextIOData() :
-    cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     resource_context_(new ResourceContext()) {
   resource_context_->SetUserData(kBrowserContextKey, new ContextData(this));
 }
@@ -192,10 +187,6 @@ BrowserContextIOData* BrowserContextIOData::FromResourceContext(
 scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
   base::AutoLock lock(delegate_lock_);
   return delegate_;
-}
-
-net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
-  return cookie_policy_.type();
 }
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
@@ -249,10 +240,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     cookie_path = GetPath().Append(kCookiesFilename);
   }
   storage->set_cookie_store(content::CreateCookieStore(
-      content::CookieStoreConfig(
-        cookie_path,
-        content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES,
-        NULL, NULL)));
+      content::CookieStoreConfig(cookie_path,
+                                 GetSessionCookieMode(),
+                                 NULL, NULL)));
 
   context->set_transport_security_state(transport_security_state_.get());
 
@@ -351,12 +341,12 @@ bool BrowserContextIOData::CanAccessCookies(const GURL& url,
     }
   }
 
-  base::AutoLock lock(cookie_policy_lock_);
+  net::StaticCookiePolicy policy(GetCookiePolicy());
   if (write) {
-    return cookie_policy_.CanSetCookie(url, first_party_url) == net::OK;
+    return policy.CanSetCookie(url, first_party_url) == net::OK;
   }
 
-  return cookie_policy_.CanGetCookies(url, first_party_url) == net::OK;
+  return policy.CanGetCookies(url, first_party_url) == net::OK;
 }
 
 BrowserContext::IODataHandle::~IODataHandle() {
@@ -406,6 +396,7 @@ void BrowserContext::RequestMidiSysExPermission(
     int render_view_id,
     int bridge_id,
     const GURL& requesting_frame,
+    bool user_gesture,
     const MidiSysExPermissionCallback& callback) {
   callback.Run(false);
 }
@@ -471,6 +462,15 @@ void BrowserContext::OnUserAgentChanged() {
                     NotifyUserAgentStringChanged());
 }
 
+void BrowserContext::OnPopupBlockerEnabledChanged() {
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyPopupBlockerEnabledChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyPopupBlockerEnabledChanged());
+}
+
 BrowserContext::~BrowserContext() {
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     observers_,
@@ -492,11 +492,6 @@ BrowserContext* BrowserContext::Create(const Params& params) {
 }
 
 // static
-std::vector<BrowserContext *>& BrowserContext::GetAllContexts() {
-  return g_all_contexts.Get();
-}
-
-// static
 void BrowserContext::AssertNoContextsExist() {
   CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
 }
@@ -513,6 +508,10 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
                                       protocol_interceptors.Pass());
 
   return main_request_context_getter_;
+}
+
+BrowserContextDelegate* BrowserContext::GetDelegate() const {
+  return io_data()->GetDelegate();
 }
 
 void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {
@@ -550,8 +549,16 @@ net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
 }
 
 void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
-  GetOriginalContext()->io_data()->SetCookiePolicy(policy);
-  GetOffTheRecordContext()->io_data()->SetCookiePolicy(policy);
+  io_data()->SetCookiePolicy(policy);
+}
+
+content::CookieStoreConfig::SessionCookieMode
+BrowserContext::GetSessionCookieMode() const {
+  return io_data()->GetSessionCookieMode();
+}
+
+bool BrowserContext::IsPopupBlockerEnabled() const {
+  return io_data()->IsPopupBlockerEnabled();
 }
 
 content::ResourceContext* BrowserContext::GetResourceContext() {

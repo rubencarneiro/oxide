@@ -34,7 +34,8 @@ void OxideQQuickUserScriptPrivate::OnScriptLoaded() {
 
 OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
     OxideQQuickUserScript* q) :
-    oxide::qt::UserScriptAdapter(q) {}
+    oxide::qt::UserScriptAdapter(q),
+    constructed_(false) {}
 
 // static
 OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
@@ -60,7 +61,8 @@ void OxideQQuickUserScript::classBegin() {}
 void OxideQQuickUserScript::componentComplete() {
   Q_D(OxideQQuickUserScript);
 
-  d->completeConstruction();
+  d->constructed_ = true;
+  d->init();
 }
 
 QUrl OxideQQuickUserScript::url() const {
@@ -72,7 +74,17 @@ QUrl OxideQQuickUserScript::url() const {
 void OxideQQuickUserScript::setUrl(const QUrl& url) {
   Q_D(OxideQQuickUserScript);
 
+  if (d->constructed_) {
+    qWarning() << "UserScript url is a construct-only parameter";
+    return;
+  }
+
+  if (url == d->url()) {
+    return;
+  }
+
   d->setUrl(url);
+  emit scriptPropertyChanged();
 }
 
 bool OxideQQuickUserScript::emulateGreasemonkey() const {

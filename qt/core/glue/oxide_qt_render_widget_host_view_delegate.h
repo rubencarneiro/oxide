@@ -42,7 +42,8 @@ class RenderWidgetHost;
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostViewDelegatePrivate;
+class RenderWidgetHostView;
+class WebViewAdapter;
 
 class Q_DECL_EXPORT TextureHandle {
  public:
@@ -57,6 +58,8 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  public:
   virtual ~RenderWidgetHostViewDelegate();
 
+  virtual void Init(WebViewAdapter* view) = 0;
+
   virtual void Blur() = 0;
   virtual void Focus() = 0;
   virtual bool HasFocus() = 0;
@@ -64,6 +67,8 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   virtual void Show() = 0;
   virtual void Hide() = 0;
   virtual bool IsShowing() = 0;
+
+  virtual void UpdateCursor(const QCursor& cursor) = 0;
 
   virtual QRect GetViewBoundsPix() = 0;
 
@@ -85,17 +90,24 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleWheelEvent(QWheelEvent* event);
   void HandleInputMethodEvent(QInputMethodEvent* event);
   void HandleTouchEvent(QTouchEvent* event);
+  void HandleGeometryChanged();
 
-  TextureHandle* GetCurrentTextureHandle();
-  void DidUpdate(bool skipped);
+  TextureHandle* texture_handle() const { return texture_handle_.data(); }
+  void UpdateTextureHandle();
+
+  void DidComposite(bool skipped);
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
   const QPixmap* GetBackingStore();
+  void UpdateBackingStore();
 
  private:
-  friend class RenderWidgetHostViewDelegatePrivate;
-  QScopedPointer<RenderWidgetHostViewDelegatePrivate> priv;
+  friend class RenderWidgetHostView;
+
+  RenderWidgetHostView* rwhv_;
+  QScopedPointer<TextureHandle> texture_handle_;
+  const QPixmap* backing_store_;
 };
 
 } // namespace qt

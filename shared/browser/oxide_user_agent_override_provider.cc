@@ -44,6 +44,7 @@ void UserAgentOverrideProvider::OnGetUserAgentOverride(const GURL& url,
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
   if (!delegate) {
     *overridden = false;
+    return;
   }
 
   *overridden = delegate->GetUserAgentOverride(url, user_agent);

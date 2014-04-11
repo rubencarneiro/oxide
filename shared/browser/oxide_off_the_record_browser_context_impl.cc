@@ -28,6 +28,25 @@ OffTheRecordBrowserContextIODataImpl::OffTheRecordBrowserContextIODataImpl(
     BrowserContextIOData* original_io_data) :
     original_io_data_(original_io_data) {}
 
+net::StaticCookiePolicy::Type
+OffTheRecordBrowserContextIODataImpl::GetCookiePolicy() const {
+  return original_io_data_->GetCookiePolicy();
+}
+
+void OffTheRecordBrowserContextIODataImpl::SetCookiePolicy(
+    net::StaticCookiePolicy::Type cookie_policy) {
+  original_io_data_->SetCookiePolicy(cookie_policy);
+}
+
+content::CookieStoreConfig::SessionCookieMode
+OffTheRecordBrowserContextIODataImpl::GetSessionCookieMode() const {
+  return content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES;
+}
+
+bool OffTheRecordBrowserContextIODataImpl::IsPopupBlockerEnabled() const {
+  return original_io_data_->IsPopupBlockerEnabled();
+}
+
 base::FilePath
 OffTheRecordBrowserContextIODataImpl::GetPath() const {
   return original_io_data_->GetPath();
@@ -83,6 +102,10 @@ void OffTheRecordBrowserContextImpl::SetProduct(const std::string& product) {
 void OffTheRecordBrowserContextImpl::SetUserAgent(
     const std::string& user_agent) {
   original_context_->SetUserAgent(user_agent);
+}
+
+void OffTheRecordBrowserContextImpl::SetIsPopupBlockerEnabled(bool enabled) {
+  original_context_->SetIsPopupBlockerEnabled(enabled);
 }
 
 UserScriptMaster& OffTheRecordBrowserContextImpl::UserScriptManager() {

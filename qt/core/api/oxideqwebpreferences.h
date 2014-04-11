@@ -42,8 +42,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   Q_PROPERTY(unsigned minimumFontSize READ minimumFontSize WRITE setMinimumFontSize NOTIFY minimumFontSizeChanged)
 
   Q_PROPERTY(bool javascriptEnabled READ javascriptEnabled WRITE setJavascriptEnabled NOTIFY javascriptEnabledChanged)
-  Q_PROPERTY(bool webSecurityEnabled READ webSecurityEnabled WRITE setWebSecurityEnabled NOTIFY webSecurityEnabledChanged)
-  Q_PROPERTY(bool popupBlockerEnabled READ popupBlockerEnabled WRITE setPopupBlockerEnabled NOTIFY popupBlockerEnabledChanged)
   Q_PROPERTY(bool allowScriptsToCloseWindows READ allowScriptsToCloseWindows WRITE setAllowScriptsToCloseWindows NOTIFY allowScriptsToCloseWindowsChanged)
   Q_PROPERTY(bool javascriptCanAccessClipboard READ javascriptCanAccessClipboard WRITE setJavascriptCanAccessClipboard NOTIFY javascriptCanAccessClipboardChanged)
 
@@ -66,9 +64,7 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   Q_PROPERTY(bool tabsToLinks READ tabsToLinks WRITE setTabsToLinks NOTIFY tabsToLinksChanged)
   Q_PROPERTY(bool caretBrowsingEnabled READ caretBrowsingEnabled WRITE setCaretBrowsingEnabled NOTIFY caretBrowsingEnabledChanged)
 
-  Q_PROPERTY(bool smoothScrollingEnabled READ smoothScrollingEnabled WRITE setSmoothScrollingEnabled NOTIFY smoothScrollingEnabledChanged)
   Q_PROPERTY(bool touchEnabled READ touchEnabled WRITE setTouchEnabled NOTIFY touchEnabledChanged)
-  Q_PROPERTY(bool supportsMultipleWindows READ supportsMultipleWindows WRITE setSupportsMultipleWindows NOTIFY supportsMultipleWindowsChanged)
 
   Q_DECLARE_PRIVATE(OxideQWebPreferences)
   Q_DISABLE_COPY(OxideQWebPreferences)
@@ -101,10 +97,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
 
   bool javascriptEnabled() const;
   void setJavascriptEnabled(bool enabled);
-  bool webSecurityEnabled() const;
-  void setWebSecurityEnabled(bool enabled);
-  bool popupBlockerEnabled() const;
-  void setPopupBlockerEnabled(bool enabled);
   bool allowScriptsToCloseWindows() const;
   void setAllowScriptsToCloseWindows(bool allow);
   bool javascriptCanAccessClipboard() const;
@@ -143,12 +135,8 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   bool caretBrowsingEnabled() const;
   void setCaretBrowsingEnabled(bool enabled);
 
-  bool smoothScrollingEnabled() const;
-  void setSmoothScrollingEnabled(bool enabled);
   bool touchEnabled() const;
   void setTouchEnabled(bool enabled);
-  bool supportsMultipleWindows() const;
-  void setSupportsMultipleWindows(bool enabled);
 
  Q_SIGNALS:
   void standardFontFamilyChanged();
@@ -165,8 +153,6 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void minimumFontSizeChanged();
 
   void javascriptEnabledChanged();
-  void webSecurityEnabledChanged();
-  void popupBlockerEnabledChanged();
   void allowScriptsToCloseWindowsChanged();
   void javascriptCanAccessClipboardChanged();
 
@@ -189,9 +175,7 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void tabsToLinksChanged();
   void caretBrowsingEnabledChanged();
 
-  void smoothScrollingEnabledChanged();
   void touchEnabledChanged();
-  void supportsMultipleWindowsChanged();
 
  private:
   QScopedPointer<OxideQWebPreferencesPrivate> d_ptr;

@@ -55,7 +55,7 @@ ScriptMessageAdapter::ScriptMessageAdapter(QObject* q) :
 ScriptMessageAdapter::~ScriptMessageAdapter() {}
 
 WebFrameAdapter* ScriptMessageAdapter::frame() const {
-  return static_cast<WebFrame *>(priv->incoming()->source_frame())->GetAdapter();
+  return static_cast<WebFrame *>(priv->incoming()->source_frame())->adapter();
 }
 
 QString ScriptMessageAdapter::msgId() const {

@@ -5,7 +5,7 @@
 diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc
 +++ b/content/browser/renderer_host/render_view_host_impl.cc
-@@ -1134,19 +1134,17 @@ bool RenderViewHostImpl::OnMessageReceiv
+@@ -1156,20 +1156,18 @@ bool RenderViewHostImpl::OnMessageReceiv
      IPC_MESSAGE_HANDLER(ViewHostMsg_ScriptEvalResponse, OnScriptEvalResponse)
      IPC_MESSAGE_HANDLER(ViewHostMsg_DidZoomURL, OnDidZoomURL)
      IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_RequestPermission,
@@ -16,6 +16,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
                          OnCancelDesktopNotification)
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
      IPC_MESSAGE_HANDLER(ViewHostMsg_ShowPopup, OnShowPopup)
+     IPC_MESSAGE_HANDLER(ViewHostMsg_HidePopup, OnHidePopup)
 -#endif
      IPC_MESSAGE_HANDLER(ViewHostMsg_RunFileChooser, OnRunFileChooser)
      IPC_MESSAGE_HANDLER(ViewHostMsg_DidAccessInitialDocument,
@@ -25,7 +26,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
                          OnAccessibilityLocationChanges)
      IPC_MESSAGE_HANDLER(ViewHostMsg_FocusedNodeTouched, OnFocusedNodeTouched)
      // Have the super handle all other messages.
-@@ -1629,28 +1627,26 @@ void RenderViewHostImpl::ForwardKeyboard
+@@ -1637,28 +1635,26 @@ void RenderViewHostImpl::ForwardKeyboard
    if (ignore_input_events()) {
      if (key_event.type == WebInputEvent::RawKeyDown)
        delegate_->OnIgnoredUIEvent();
@@ -54,7 +55,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
  
  void RenderViewHostImpl::DidCancelPopupMenu() {
    Send(new ViewMsg_SelectPopupMenuItem(GetRoutingID(), -1));
-@@ -1876,31 +1872,29 @@ void RenderViewHostImpl::OnFocusedNodeTo
+@@ -1887,17 +1883,16 @@ void RenderViewHostImpl::OnFocusedNodeTo
      virtual_keyboard_requested_ = base::win::DisplayVirtualKeyboard();
    } else {
      virtual_keyboard_requested_ = false;
@@ -72,10 +73,14 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
                          params.item_height,
                          params.item_font_size,
                          params.selected_item,
-                         params.popup_items,
-                         params.right_aligned,
-                         params.allow_multiple_selection);
+@@ -1907,17 +1902,16 @@ void RenderViewHostImpl::OnShowPopup(
    }
+ }
+ 
+ void RenderViewHostImpl::OnHidePopup() {
+   RenderViewHostDelegateView* view = delegate_->GetDelegateView();
+   if (view)
+     view->HidePopupMenu();
  }
 -#endif
  
@@ -89,7 +94,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
 diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/browser/renderer_host/render_view_host_impl.h
 --- a/content/browser/renderer_host/render_view_host_impl.h
 +++ b/content/browser/renderer_host/render_view_host_impl.h
-@@ -426,20 +426,20 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -429,20 +429,20 @@ class CONTENT_EXPORT RenderViewHostImpl
    void DidSelectPopupMenuItem(int selected_index);
    void DidCancelPopupMenu();
  #endif
@@ -111,7 +116,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
      return main_frame_routing_id_;
    }
  
-@@ -590,19 +590,17 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -588,20 +588,18 @@ class CONTENT_EXPORT RenderViewHostImpl
                                                int callback_id);
    void OnShowDesktopNotification(
        const ShowDesktopNotificationHostMsgParams& params);
@@ -122,6 +127,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
    void OnShowPopup(const ViewHostMsg_ShowPopup_Params& params);
+   void OnHidePopup();
 -#endif
  
   private:
@@ -134,7 +140,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -1025,22 +1025,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
+@@ -999,22 +999,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
  // they came in, so the renderer can tell if it needs to send updated rects.
  // Otherwise just pass -1 to always receive the list of rects.
  //
@@ -159,7 +165,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
                      bool /* animate */)
  
  IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNeeded)
-@@ -1055,18 +1057,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
+@@ -1029,18 +1031,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
  
  // Sent by the browser when we should pause video playback.
  IPC_MESSAGE_ROUTED0(ViewMsg_PauseVideo);
@@ -180,10 +186,55 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  IPC_MESSAGE_ROUTED2(ViewMsg_WindowFrameChanged,
                      gfx::Rect /* window frame */,
                      gfx::Rect /* content view frame */)
+@@ -1170,22 +1173,20 @@ IPC_MESSAGE_ROUTED0(ViewHostMsg_Close)
+ IPC_MESSAGE_ROUTED0(ViewHostMsg_UpdateScreenRects_ACK)
+ 
+ // Sent by the renderer process to request that the browser move the view.
+ // This corresponds to the window.resizeTo() and window.moveTo() APIs, and
+ // the browser may ignore this message.
+ IPC_MESSAGE_ROUTED1(ViewHostMsg_RequestMove,
+                     gfx::Rect /* position */)
+ 
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
+ // Message to show/hide a popup menu using native controls.
+ IPC_MESSAGE_ROUTED1(ViewHostMsg_ShowPopup,
+                     ViewHostMsg_ShowPopup_Params)
+ IPC_MESSAGE_ROUTED0(ViewHostMsg_HidePopup)
+-#endif
+ 
+ // Response from ViewMsg_ScriptEvalRequest. The ID is the parameter supplied
+ // to ViewMsg_ScriptEvalRequest. The result has the value returned by the
+ // script as its only element, one of Null, Boolean, Integer, Real, Date, or
+ // String.
+ IPC_MESSAGE_ROUTED2(ViewHostMsg_ScriptEvalResponse,
+                     int  /* id */,
+                     base::ListValue  /* result */)
+diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
+--- a/content/content_renderer.gypi
++++ b/content/content_renderer.gypi
+@@ -130,16 +130,18 @@
+     'renderer/dom_storage/dom_storage_dispatcher.h',
+     'renderer/dom_storage/dom_storage_proxy.h',
+     'renderer/dom_storage/webstoragearea_impl.cc',
+     'renderer/dom_storage/webstoragearea_impl.h',
+     'renderer/dom_storage/webstoragenamespace_impl.cc',
+     'renderer/dom_storage/webstoragenamespace_impl.h',
+     'renderer/drop_data_builder.cc',
+     'renderer/drop_data_builder.h',
++    'renderer/external_popup_menu.cc',
++    'renderer/external_popup_menu.h',
+     'renderer/fetchers/image_resource_fetcher.cc',
+     'renderer/fetchers/image_resource_fetcher.h',
+     'renderer/fetchers/multi_resolution_image_resource_fetcher.cc',
+     'renderer/fetchers/multi_resolution_image_resource_fetcher.h',
+     'renderer/fetchers/resource_fetcher_impl.cc',
+     'renderer/fetchers/resource_fetcher_impl.h',
+     'renderer/gamepad_shared_memory_reader.cc',
+     'renderer/gamepad_shared_memory_reader.h',
 diff --git a/content/renderer/external_popup_menu.cc b/content/renderer/external_popup_menu.cc
 --- a/content/renderer/external_popup_menu.cc
 +++ b/content/renderer/external_popup_menu.cc
-@@ -64,21 +64,19 @@ void ExternalPopupMenu::DidSelectItem(in
+@@ -65,21 +65,19 @@ void ExternalPopupMenu::DidSelectItem(in
      return;
    if (index == -1)
      popup_menu_client_->didCancel();
@@ -232,7 +283,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -324,20 +324,18 @@ void RenderThreadImpl::Init() {
+@@ -328,20 +328,18 @@ void RenderThreadImpl::Init() {
    base::debug::TraceLog::GetInstance()->SetThreadSortIndex(
        base::PlatformThread::CurrentId(),
        kTraceEventRendererMainThreadSortIndex);
@@ -256,7 +307,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -1149,22 +1149,25 @@ bool RenderViewImpl::OnMessageReceived(c
+@@ -1144,22 +1144,25 @@ bool RenderViewImpl::OnMessageReceived(c
      IPC_MESSAGE_HANDLER(ViewMsg_ReleaseDisambiguationPopupDIB,
                          OnReleaseDisambiguationPopupDIB)
      IPC_MESSAGE_HANDLER(ViewMsg_WindowSnapshotCompleted,
@@ -275,7 +326,6 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
 -#elif defined(OS_MACOSX)
 +#endif
 +#if defined(OS_MACOSX)
-     IPC_MESSAGE_HANDLER(InputMsg_CopyToFindPboard, OnCopyToFindPboard)
      IPC_MESSAGE_HANDLER(ViewMsg_PluginImeCompositionCompleted,
                          OnPluginImeCompositionCompleted)
      IPC_MESSAGE_HANDLER(ViewMsg_SelectPopupMenuItem, OnSelectPopupMenuItem)
@@ -283,10 +333,30 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_SetWindowVisibility, OnSetWindowVisibility)
      IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
  #endif
-@@ -4896,31 +4899,29 @@ void RenderViewImpl::OnSelectPopupMenuIt
-     NOTREACHED();
-     return;
+     // Adding a new message? Add platform independent ones first, then put the
+@@ -1611,17 +1614,17 @@ WebWidget* RenderViewImpl::createPopupMe
+         screen_metrics_emulator_.get());
    }
+   return widget->webwidget();
+ }
+ 
+ WebExternalPopupMenu* RenderViewImpl::createExternalPopupMenu(
+     const WebPopupMenuInfo& popup_menu_info,
+     WebExternalPopupMenuClient* popup_menu_client) {
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
++#if 1
+   // An IPC message is sent to the browser to build and display the actual
+   // popup.  The user could have time to click a different select by the time
+   // the popup is shown.  In that case external_popup_menu_ is non NULL.
+   // By returning NULL in that case, we instruct WebKit to cancel that new
+   // popup.  So from the user perspective, only the first one will show, and
+   // will have to close the first one before another one can be shown.
+   if (external_popup_menu_)
+     return NULL;
+@@ -4731,39 +4734,35 @@ WebMediaPlayer* RenderViewImpl::CreateAn
+ void RenderViewImpl::OnSelectPopupMenuItem(int selected_index) {
+   if (external_popup_menu_ == NULL)
+     return;
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
@@ -307,6 +377,15 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
    external_popup_menu_.reset();
  }
 -#endif
+-
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
++
+ void RenderViewImpl::DidHideExternalPopupMenu() {
+   // We need to clear external_popup_menu_ as soon as ExternalPopupMenu::close
+   // is called. Otherwise, createExternalPopupMenu() for new popup will fail.
+   external_popup_menu_.reset();
+ }
+-#endif
  
  void RenderViewImpl::OnShowContextMenu(const gfx::Point& location) {
    context_menu_source_type_ = ui::MENU_SOURCE_TOUCH_EDIT_MENU;
@@ -318,7 +397,27 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
 diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_impl.h
 --- a/content/renderer/render_view_impl.h
 +++ b/content/renderer/render_view_impl.h
-@@ -946,26 +946,29 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -269,19 +269,17 @@ class CONTENT_EXPORT RenderViewImpl
+       blink::WebFrame* frame,
+       const blink::WebURLRequest& failed_request,
+       const blink::WebURLError& error,
+       bool replace);
+ 
+ #if defined(OS_ANDROID)
+   void DismissDateTimeDialog();
+ #endif
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
+   void DidHideExternalPopupMenu();
+-#endif
+ 
+   bool is_loading() const { return frames_in_progress_ != 0; }
+ 
+   void FrameDidStartLoading(blink::WebFrame* frame);
+   void FrameDidStopLoading(blink::WebFrame* frame);
+ 
+   void FrameDidChangeLoadProgress(blink::WebFrame* frame,
+                                   double load_progress);
+@@ -953,26 +951,29 @@ class CONTENT_EXPORT RenderViewImpl
    void OnZoom(PageZoom zoom);
    void OnEnableViewSourceMode();
    void OnDisownOpener();
@@ -341,7 +440,6 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
 -#elif defined(OS_MACOSX)
 +#endif
 +#if defined(OS_MACOSX)
-   void OnCopyToFindPboard();
    void OnPluginImeCompositionCompleted(const base::string16& text,
                                         int plugin_id);
    void OnSelectPopupMenuItem(int selected_index);
@@ -349,3 +447,76 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
    void OnSetWindowVisibility(bool visible);
    void OnWindowFrameChanged(const gfx::Rect& window_frame,
                              const gfx::Rect& view_frame);
+ #endif
+@@ -1396,20 +1397,18 @@ class CONTENT_EXPORT RenderViewImpl
+   // is passed to us upon creation.  WebKit asks for this ID upon first use and
+   // uses it whenever asking the browser process to allocate new storage areas.
+   int64 session_storage_namespace_id_;
+ 
+   // Stores edit commands associated to the next key event.
+   // Shall be cleared as soon as the next key event is processed.
+   EditCommands edit_commands_;
+ 
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
+   // The external popup for the currently showing select popup.
+   scoped_ptr<ExternalPopupMenu> external_popup_menu_;
+-#endif
+ 
+   // All the registered observers.  We expect this list to be small, so vector
+   // is fine.
+   ObserverList<RenderViewObserver> observers_;
+ 
+   // Wraps the |webwidget_| as a MouseLockDispatcher::LockTarget interface.
+   scoped_ptr<MouseLockDispatcher::LockTarget> webwidget_mouse_lock_target_;
+ 
+diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
+--- a/content/renderer/render_widget.cc
++++ b/content/renderer/render_widget.cc
+@@ -576,23 +576,21 @@ void RenderWidget::SetPopupOriginAdjustm
+ void RenderWidget::SetScreenMetricsEmulationParameters(
+     float device_scale_factor,
+     const gfx::Point& root_layer_offset,
+     float root_layer_scale) {
+   // This is only supported in RenderView.
+   NOTREACHED();
+ }
+ 
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
+ void RenderWidget::SetExternalPopupOriginAdjustmentsForEmulation(
+     ExternalPopupMenu* popup, ScreenMetricsEmulator* emulator) {
+   popup->SetOriginScaleAndOffsetForEmulation(
+       emulator->scale(), emulator->offset());
+ }
+-#endif
+ 
+ void RenderWidget::OnShowHostContextMenu(ContextMenuParams* params) {
+   if (screen_metrics_emulator_)
+     screen_metrics_emulator_->OnShowContextMenu(params);
+ }
+ 
+ void RenderWidget::ScheduleCompositeWithForcedRedraw() {
+   if (compositor_) {
+diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
+--- a/content/renderer/render_widget.h
++++ b/content/renderer/render_widget.h
+@@ -322,20 +322,18 @@ class CONTENT_EXPORT RenderWidget
+               bool is_fullscreen,
+               ResizeAck resize_ack);
+   // Used to force the size of a window when running layout tests.
+   void ResizeSynchronously(const gfx::Rect& new_position);
+   virtual void SetScreenMetricsEmulationParameters(
+       float device_scale_factor,
+       const gfx::Point& root_layer_offset,
+       float root_layer_scale);
+-#if defined(OS_MACOSX) || defined(OS_ANDROID)
+   void SetExternalPopupOriginAdjustmentsForEmulation(
+       ExternalPopupMenu* popup, ScreenMetricsEmulator* emulator);
+-#endif
+ 
+   // RenderWidget IPC message handlers
+   void OnHandleInputEvent(const blink::WebInputEvent* event,
+                           const ui::LatencyInfo& latency_info,
+                           bool keyboard_shortcut);
+   void OnCursorVisibilityChange(bool is_visible);
+   void OnMouseCaptureLost();
+   virtual void OnSetFocus(bool enable);

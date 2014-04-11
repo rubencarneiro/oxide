@@ -28,8 +28,9 @@ namespace oxide {
 
 bool ScriptMessageRequestImplBrowser::DoSendMessage(
     const OxideMsg_SendMessage_Params& params) {
-  content::RenderFrameHost* rfh =
-      frame_->frame_tree_node()->current_frame_host();
+ 
+  content::FrameTreeNode* node = frame_->GetFrameTreeNode();
+  content::RenderFrameHost* rfh = node->current_frame_host();
   return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 

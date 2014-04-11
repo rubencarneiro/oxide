@@ -33,6 +33,8 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class OxideQLoadEvent;
+class OxideQNavigationRequest;
+class OxideQNewViewRequest;
 class OxideQWebPreferences;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
@@ -58,11 +60,14 @@ class OxideQQuickWebViewAttached : public QObject {
 
 class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
+
+  Q_ENUMS(LogMessageSeverityLevel);
+
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
-  Q_PROPERTY(bool incognito READ incognito WRITE setIncognito)
+  Q_PROPERTY(bool incognito READ incognito WRITE setIncognito NOTIFY incognitoChanged)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
@@ -75,16 +80,29 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(QQmlComponent* promptDialog READ promptDialog WRITE setPromptDialog NOTIFY promptDialogChanged)
   Q_PROPERTY(QQmlComponent* beforeUnloadDialog READ beforeUnloadDialog WRITE setBeforeUnloadDialog NOTIFY beforeUnloadDialogChanged)
 
+  Q_PROPERTY(QQmlComponent* filePicker READ filePicker WRITE setFilePicker NOTIFY filePickerChanged)
+
   Q_PROPERTY(OxideQQuickWebContext* context READ context WRITE setContext NOTIFY contextChanged)
   Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
+
+  Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
   OxideQQuickWebView(QQuickItem* parent = NULL);
   virtual ~OxideQQuickWebView();
+
+  enum LogMessageSeverityLevel {
+    LogSeverityVerbose = -1,
+    LogSeverityInfo,
+    LogSeverityWarning,
+    LogSeverityError,
+    LogSeverityErrorReport,
+    LogSeverityFatal
+  };
 
   void componentComplete();
 
@@ -124,6 +142,9 @@ class OxideQQuickWebView : public QQuickItem {
   QQmlComponent* beforeUnloadDialog() const;
   void setBeforeUnloadDialog(QQmlComponent* before_unload_dialog);
 
+  QQmlComponent* filePicker() const;
+  void setFilePicker(QQmlComponent* file_picker);
+
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);
 
@@ -131,6 +152,9 @@ class OxideQQuickWebView : public QQuickItem {
   void setPreferences(OxideQWebPreferences* prefs);
 
   OxideQQuickNavigationHistory* navigationHistory();
+
+  OxideQNewViewRequest* request() const;
+  void setRequest(OxideQNewViewRequest* request);
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
@@ -144,6 +168,7 @@ class OxideQQuickWebView : public QQuickItem {
   void urlChanged();
   void titleChanged();
   void navigationHistoryChanged();
+  void incognitoChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
   void loadProgressChanged();
   void rootFrameChanged();
@@ -154,19 +179,25 @@ class OxideQQuickWebView : public QQuickItem {
   void confirmDialogChanged();
   void promptDialogChanged();
   void beforeUnloadDialogChanged();
+  void filePickerChanged();
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
-
- private Q_SLOTS:
-  void visibilityChangedListener();
+  void navigationRequested(OxideQNavigationRequest *request);
+  void newViewRequested(OxideQNewViewRequest* request);
+  void javaScriptConsoleMessage(LogMessageSeverityLevel level,
+                                const QString& message,
+                                int lineNumber,
+                                const QString& sourceId);
 
  private:
-  Q_PRIVATE_SLOT(d_func(), void contextInitialized());
+  Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
 
-  virtual void geometryChanged(const QRectF& newGeometry,
-                               const QRectF& oldGeometry);
+  void geometryChanged(const QRectF& newGeometry,
+                       const QRectF& oldGeometry) Q_DECL_FINAL;
+  void itemChange(QQuickItem::ItemChange change,
+                  const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

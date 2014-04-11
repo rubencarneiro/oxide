@@ -25,25 +25,17 @@
 namespace oxide {
 namespace qt {
 
-WebPopupMenu* WebPopupMenuDelegate::GetWebPopupMenu() const {
-  return web_popup_menu_;
-}
-
-void WebPopupMenuDelegate::SetWebPopupMenu(WebPopupMenu* menu) {
-  web_popup_menu_ = menu;
-}
-
 WebPopupMenuDelegate::WebPopupMenuDelegate() :
-    web_popup_menu_(NULL) {}
+    menu_(NULL) {}
 
 WebPopupMenuDelegate::~WebPopupMenuDelegate() {}
 
 void WebPopupMenuDelegate::SelectItems(const QList<int>& selected_indices) {
-  GetWebPopupMenu()->SelectItems(selected_indices.toVector().toStdVector());
+  menu_->SelectItems(selected_indices.toVector().toStdVector());
 }
 
 void WebPopupMenuDelegate::Cancel() {
-  GetWebPopupMenu()->Cancel();
+  menu_->Cancel();
 }
 
 } // namespace qt

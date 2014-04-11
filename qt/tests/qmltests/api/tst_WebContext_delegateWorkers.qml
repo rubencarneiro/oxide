@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 0.1
-import com.canonical.Oxide.Testing 0.1
+import com.canonical.Oxide 1.0
+import com.canonical.Oxide.Testing 1.0
 
 TestWebView {
   id: top
@@ -112,10 +112,7 @@ TestWebView {
       compare(OxideTestingUtils.qObjectParent(d), context,
               "Delegate should be parented to the WebContext");
 
-      var obs = OxideTestingUtils.createDestructionObserver(d);
-      d.destroy();
-      verify(top.waitFor(function() { return obs.destroyed; }),
-             "Failed to destroy object");
+      OxideTestingUtils.destroyQObjectNow(d);
       
       compare(spy.count, 2, "Expected a signal");
       compare(context[data.prop], null, "Value should have been cleared");

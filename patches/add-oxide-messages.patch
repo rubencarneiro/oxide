@@ -4,17 +4,21 @@
 diff --git a/ipc/ipc_message_start.h b/ipc/ipc_message_start.h
 --- a/ipc/ipc_message_start.h
 +++ b/ipc/ipc_message_start.h
-@@ -94,12 +94,13 @@ enum IPCMessageStart {
-   MessagePortMsgStart,
-   EmbeddedWorkerMsgStart,
-   EmbeddedWorkerContextMsgStart,
-   CastMsgStart,
-   CdmMsgStart,
-   ScreenOrientationMsgStart,
-   MediaStreamTrackMetricsHostMsgStart,
-   ChromeExtensionMsgStart,
-+  OxideMsgStart,
-   LastIPCMsgStart  // Must come last.
- };
+@@ -5,16 +5,17 @@
+ #ifndef IPC_IPC_MESSAGE_START_H_
+ #define IPC_IPC_MESSAGE_START_H_
  
- #endif  // IPC_IPC_MESSAGE_START_H_
+ // Used by IPC_BEGIN_MESSAGES so that each message class starts from a unique
+ // base.  Messages have unique IDs across channels in order for the IPC logging
+ // code to figure out the message class from its ID.
+ enum IPCMessageStart {
+   AutomationMsgStart = 0,
++  OxideMsgStart,
+   FrameMsgStart,
+   ViewMsgStart,
+   InputMsgStart,
+   PluginMsgStart,
+   PluginProcessMsgStart,
+   ProfileImportMsgStart,
+   TestMsgStart,
+   DevToolsMsgStart,

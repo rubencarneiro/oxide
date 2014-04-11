@@ -16,38 +16,32 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqloadevent.h"
-#include "oxideqloadevent_p.h"
 
-#include "net/base/net_errors.h"
+class OxideQLoadEventPrivate {
+ public:
+  ~OxideQLoadEventPrivate() {}
+  OxideQLoadEventPrivate(const QUrl& url,
+                         OxideQLoadEvent::Type type,
+                         OxideQLoadEvent::ErrorDomain error_domain,
+                         const QString& error_string,
+                         int error_code) :
+      url(url), type(type), error_domain(error_domain),
+      error_string(error_string), error_code(error_code) {}
 
-OxideQLoadEventPrivate::OxideQLoadEventPrivate(
-    QUrl url,
-    OxideQLoadEvent::Type type,
-    OxideQLoadEvent::ErrorCode error,
-    QString error_string) :
-    url(url), type(type), error(error), error_string(error_string) {}
-
-// static
-OxideQLoadEvent::ErrorCode
-OxideQLoadEventPrivate::ChromeErrorCodeToOxideErrorCode(int error_code) {
-  switch (error_code) {
-    case 0:
-      return OxideQLoadEvent::ErrorNone;
-    case net::ERR_UNEXPECTED:
-      return OxideQLoadEvent::ErrorUnexpected;
-    case net::ERR_NAME_NOT_RESOLVED:
-      return OxideQLoadEvent::ErrorNameNotResolved;
-    default:
-      return OxideQLoadEvent::ErrorFailed;
-  }
-}
+  QUrl url;
+  OxideQLoadEvent::Type type;
+  OxideQLoadEvent::ErrorDomain error_domain;
+  QString error_string;
+  int error_code;
+};
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  Type type,
-                                 ErrorCode error_code,
-                                 const QString& error_description) :
+                                 ErrorDomain error_domain,
+                                 const QString& error_string,
+                                 int error_code) :
     d_ptr(new OxideQLoadEventPrivate(
-        url, type, error_code, error_description)) {}
+        url, type, error_domain, error_string, error_code)) {}
 
 OxideQLoadEvent::~OxideQLoadEvent() {}
 
@@ -63,14 +57,20 @@ OxideQLoadEvent::Type OxideQLoadEvent::type() const {
   return d->type;
 }
 
-OxideQLoadEvent::ErrorCode OxideQLoadEvent::error() const {
+OxideQLoadEvent::ErrorDomain OxideQLoadEvent::errorDomain() const {
   Q_D(const OxideQLoadEvent);
 
-  return d->error;
+  return d->error_domain;
 }
 
 QString OxideQLoadEvent::errorString() const {
   Q_D(const OxideQLoadEvent);
 
   return d->error_string;
+}
+
+int OxideQLoadEvent::errorCode() const {
+  Q_D(const OxideQLoadEvent);
+
+  return d->error_code;
 }

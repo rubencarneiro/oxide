@@ -23,7 +23,6 @@
 
 #include "base/basictypes.h"
 #include "base/memory/weak_ptr.h"
-#include "base/supports_user_data.h"
 #include "ipc/ipc_sender.h"
 #include "url/gurl.h"
 
@@ -41,20 +40,16 @@ class WebView;
 // Represents a document frame in the renderer (a top-level frame or iframe).
 // This is designed to be subclassed by each implementation. Each instance
 // of this will typically own a publicly exposed webframe
-class WebFrame : public ScriptMessageTarget,
-                 public base::SupportsUserData {
+class WebFrame : public ScriptMessageTarget {
  public:
   typedef std::vector<ScriptMessageRequestImplBrowser *> ScriptMessageRequestVector;
 
-  virtual ~WebFrame();
+  void Destroy();
 
   static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
+  static WebFrame* FromFrameTreeNodeID(int64 frame_tree_node_id);
 
-  int64 FrameTreeNodeID() const;
-
-  GURL url() const {
-    return url_;
-  }
+  GURL GetURL() const;
 
   WebFrame* parent() const {
     return parent_;
@@ -68,11 +63,14 @@ class WebFrame : public ScriptMessageTarget,
     return weak_factory_.GetWeakPtr();
   }
 
-  content::FrameTreeNode* frame_tree_node() const {
-    return frame_tree_node_;
+  int64 frame_tree_node_id() const {
+    return frame_tree_node_id_;
   }
 
-  void SetURL(const GURL& url);
+  content::FrameTreeNode* GetFrameTreeNode();
+
+  virtual void URLChanged() = 0;
+
   void SetParent(WebFrame* parent);
 
   size_t ChildCount() const;
@@ -91,6 +89,7 @@ class WebFrame : public ScriptMessageTarget,
 
  protected:
   WebFrame(content::FrameTreeNode* node, WebView* view);
+  virtual ~WebFrame();
 
  private:
   friend class ScriptMessageRequestImplBrowser;
@@ -109,16 +108,15 @@ class WebFrame : public ScriptMessageTarget,
 
   virtual void OnChildAdded(WebFrame* child);
   virtual void OnChildRemoved(WebFrame* child);
-  virtual void OnURLChanged();
 
-  content::FrameTreeNode* frame_tree_node_;
-  GURL url_;
+  int64 frame_tree_node_id_;
   ChildVector child_frames_;
   WebFrame* parent_;
   WebView* view_;
   int next_message_serial_;
   ScriptMessageRequestVector current_script_message_requests_;
   base::WeakPtrFactory<WebFrame> weak_factory_;
+  bool destroyed_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);
 };

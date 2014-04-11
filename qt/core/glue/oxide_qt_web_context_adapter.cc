@@ -34,9 +34,6 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_form_factor.h"
-#include "shared/browser/oxide_user_script_master.h"
-
-#include "oxide_qt_user_script_adapter_p.h"
 
 namespace oxide {
 namespace qt {
@@ -57,35 +54,38 @@ int GetProcessFlags() {
 
 }
 
-WebContextAdapter::~WebContextAdapter() {}
+WebContextAdapter::~WebContextAdapter() {
+  priv->Destroy();
+  priv->Release();
+}
 
 QString WebContextAdapter::product() const {
-  if (priv->context()) {
-    return QString::fromStdString(priv->context()->GetProduct());
+  if (isInitialized()) {
+    return QString::fromStdString(priv->context_->GetProduct());
   }
 
   return QString::fromStdString(priv->construct_props_->product);
 }
 
 void WebContextAdapter::setProduct(const QString& product) {
-  if (priv->context()) {
-    priv->context()->SetProduct(product.toStdString());
+  if (isInitialized()) {
+    priv->context_->SetProduct(product.toStdString());
   } else {
     priv->construct_props_->product = product.toStdString();
   }
 }
 
 QString WebContextAdapter::userAgent() const {
-  if (priv->context()) {
-    return QString::fromStdString(priv->context()->GetUserAgent());
+  if (isInitialized()) {
+    return QString::fromStdString(priv->context_->GetUserAgent());
   }
 
   return QString::fromStdString(priv->construct_props_->user_agent);
 }
 
 void WebContextAdapter::setUserAgent(const QString& user_agent) {
-  if (priv->context()) {
-    priv->context()->SetUserAgent(user_agent.toStdString());
+  if (isInitialized()) {
+    priv->context_->SetUserAgent(user_agent.toStdString());
   } else {
     priv->construct_props_->user_agent = user_agent.toStdString();
   }
@@ -93,8 +93,8 @@ void WebContextAdapter::setUserAgent(const QString& user_agent) {
 
 QUrl WebContextAdapter::dataPath() const {
   base::FilePath path;
-  if (priv->context()) {
-    path = priv->context()->GetPath();
+  if (isInitialized()) {
+    path = priv->context_->GetPath();
   } else {
     path = priv->construct_props_->data_path;
   }
@@ -112,15 +112,15 @@ void WebContextAdapter::setDataPath(const QUrl& url) {
     return;
   }
 
-  DCHECK(!priv->context());
+  DCHECK(!isInitialized());
   priv->construct_props_->data_path =
       base::FilePath(url.toLocalFile().toStdString());
 }
 
 QUrl WebContextAdapter::cachePath() const {
   base::FilePath path;
-  if (priv->context()) {
-    path = priv->context()->GetCachePath();
+  if (isInitialized()) {
+    path = priv->context_->GetCachePath();
   } else {
     path = priv->construct_props_->cache_path;
   }
@@ -138,60 +138,37 @@ void WebContextAdapter::setCachePath(const QUrl& url) {
     return;
   }
 
-  DCHECK(!priv->context());
+  DCHECK(!isInitialized());
   priv->construct_props_->cache_path =
       base::FilePath(url.toLocalFile().toStdString());
 }
 
 QString WebContextAdapter::acceptLangs() const {
-  if (priv->context()) {
-    return QString::fromStdString(priv->context()->GetAcceptLangs());
+  if (isInitialized()) {
+    return QString::fromStdString(priv->context_->GetAcceptLangs());
   }
 
   return QString::fromStdString(priv->construct_props_->accept_langs);
 }
 
 void WebContextAdapter::setAcceptLangs(const QString& langs) {
-  if (priv->context()) {
-    priv->context()->SetAcceptLangs(langs.toStdString());
+  if (isInitialized()) {
+    priv->context_->SetAcceptLangs(langs.toStdString());
   } else {
     priv->construct_props_->accept_langs = langs.toStdString();
   }
 }
 
-QList<UserScriptAdapter *>& WebContextAdapter::user_scripts() {
-  return user_scripts_;
+QList<UserScriptAdapter *>& WebContextAdapter::userScripts() {
+  return priv->user_scripts_;
 }
 
 void WebContextAdapter::updateUserScripts() {
-  if (!priv->context()) {
-    return;
-  }
-
-  std::vector<oxide::UserScript *> scripts;
-
-  for (int i = 0; i < user_scripts_.size(); ++i) {
-    UserScriptAdapterPrivate* script =
-        UserScriptAdapterPrivate::get(user_scripts_.at(i));
-    if (script->state == UserScriptAdapterPrivate::Loading ||
-        script->state == UserScriptAdapterPrivate::Constructing) {
-      return;
-    } else if (script->state == UserScriptAdapterPrivate::Loaded) {
-      scripts.push_back(&script->user_script);
-    }
-  }
-
-  priv->context()->UserScriptManager().SerializeUserScriptsAndSendUpdates(
-      scripts);
+  priv->UpdateUserScripts();
 }
 
 bool WebContextAdapter::isInitialized() const {
-  return priv->context() != NULL;
-}
-
-void WebContextAdapter::init() {
-  priv->Init();
-  updateUserScripts();
+  return priv->context_ != NULL;
 }
 
 /* static */
@@ -220,20 +197,20 @@ void WebContextAdapter::ensureChromiumStarted() {
 
 WebContextAdapter::IOThreadDelegate*
 WebContextAdapter::getIOThreadDelegate() const {
-  return priv->GetIOThreadDelegate();
+  return priv->io_thread_delegate_.get();
 }
 
 WebContextAdapter::CookiePolicy WebContextAdapter::cookiePolicy() const {
-  if (priv->context()) {
-    return static_cast<CookiePolicy>(priv->context()->GetCookiePolicy());
+  if (isInitialized()) {
+    return static_cast<CookiePolicy>(priv->context_->GetCookiePolicy());
   }
 
   return static_cast<CookiePolicy>(priv->construct_props_->cookie_policy);
 }
 
 void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
-  if (priv->context()) {
-    priv->context()->SetCookiePolicy(
+  if (isInitialized()) {
+    priv->context_->SetCookiePolicy(
         static_cast<net::StaticCookiePolicy::Type>(policy));
   } else {
     priv->construct_props_->cookie_policy =
@@ -241,8 +218,65 @@ void WebContextAdapter::setCookiePolicy(CookiePolicy policy) {
   }
 }
 
-WebContextAdapter::WebContextAdapter(IOThreadDelegate* io_delegate) :
-    priv(new WebContextAdapterPrivate(this, io_delegate)) {
+WebContextAdapter::SessionCookieMode
+WebContextAdapter::sessionCookieMode() const {
+  content::CookieStoreConfig::SessionCookieMode mode;
+  if (isInitialized()) {
+    mode = priv->context_->GetSessionCookieMode();
+  } else {
+    mode = priv->construct_props_->session_cookie_mode;
+  }
+
+  switch (mode) {
+    case content::CookieStoreConfig::PERSISTANT_SESSION_COOKIES:
+      return SessionCookieModePersistent;
+    case content::CookieStoreConfig::RESTORED_SESSION_COOKIES:
+      return SessionCookieModeRestored;
+    default:
+      return SessionCookieModeEphemeral;
+  }
+}
+
+void WebContextAdapter::setSessionCookieMode(SessionCookieMode mode) {
+  DCHECK(!isInitialized());
+  content::CookieStoreConfig::SessionCookieMode cookie_mode;
+  switch (mode) {
+    case SessionCookieModePersistent:
+      cookie_mode = content::CookieStoreConfig::PERSISTANT_SESSION_COOKIES;
+      break;
+    case SessionCookieModeRestored:
+      cookie_mode = content::CookieStoreConfig::RESTORED_SESSION_COOKIES;
+      break;
+    default:
+      cookie_mode = content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES;
+  }
+  priv->construct_props_->session_cookie_mode = cookie_mode;
+}
+
+bool WebContextAdapter::popupBlockerEnabled() const {
+  if (isInitialized()) {
+    return priv->context_->IsPopupBlockerEnabled();
+  }
+
+  return priv->construct_props_->popup_blocker_enabled;
+}
+
+void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
+  if (isInitialized()) {
+    priv->context_->SetIsPopupBlockerEnabled(enabled);
+  } else {
+    priv->construct_props_->popup_blocker_enabled = enabled;
+  }
+}
+
+WebContextAdapter::WebContextAdapter(
+    QObject* q,
+    IOThreadDelegate* io_delegate,
+    RenderWidgetHostViewDelegateFactory* view_factory) :
+    AdapterBase(q),
+    priv(WebContextAdapterPrivate::Create(this, io_delegate, view_factory)) {
+
+  priv->AddRef();
 
   COMPILE_ASSERT(
       CookiePolicyAllowAll == static_cast<CookiePolicy>(

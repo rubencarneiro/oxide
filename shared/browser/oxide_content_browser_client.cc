@@ -19,13 +19,19 @@
 
 #include <vector>
 
+#include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
-#include "content/browser/loader/resource_dispatcher_host_impl.h"
+#include "content/browser/gpu/compositor_util.h"
+#include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/browser_main_parts.h"
+#include "content/public/browser/gpu_data_manager.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/common/content_switches.h"
+#include "gpu/config/gpu_feature_type.h"
+#include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/ozone/surface_factory_ozone.h"
@@ -38,6 +44,7 @@
 
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_net_resource_provider.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_access_token_store.h"
@@ -154,6 +161,7 @@ class BrowserMainParts : public content::BrowserMainParts {
 
   void PreMainMessageLoopRun() FINAL {
     GpuUtils::Initialize();
+    net::NetModule::SetResourceProvider(NetResourceProvider);
   }
 
   bool MainMessageLoopRun(int* result_code) FINAL {
@@ -249,18 +257,28 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
       context)->CanAccessCookies(url, first_party, true);
 }
 
-void ContentBrowserClient::ResourceDispatcherHostCreated() {
-  std::vector<BrowserContext *>& contexts = BrowserContext::GetAllContexts();
-
-  content::ResourceDispatcherHostImpl* rdhi =
-      content::ResourceDispatcherHostImpl::Get();
-
-  for (std::vector<BrowserContext *>::iterator it = contexts.begin();
-       it != contexts.end(); ++it) {
-    BrowserContext* c = *it;
-
-    rdhi->AddResourceContext(c->GetResourceContext());
+bool ContentBrowserClient::CanCreateWindow(
+    const GURL& opener_url,
+    const GURL& opener_top_level_frame_url,
+    const GURL& source_origin,
+    WindowContainerType container_type,
+    const GURL& target_url,
+    const content::Referrer& referrer,
+    WindowOpenDisposition disposition,
+    const blink::WebWindowFeatures& features,
+    bool user_gesture,
+    bool opener_suppressed,
+    content::ResourceContext* context,
+    int render_process_id,
+    bool is_guest,
+    int opener_id,
+    bool* no_javascript_access) {
+  if (user_gesture) {
+    return true;
   }
+
+  return !BrowserContextIOData::FromResourceContext(
+      context)->IsPopupBlockerEnabled();
 }
 
 content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {
@@ -272,6 +290,37 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     const GURL& url,
     ::WebPreferences* prefs) {
   WebView* view = WebView::FromRenderViewHost(render_view_host);
+
+  prefs->device_supports_mouse = true; // XXX: Can we detect this?
+  prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
+
+  prefs->javascript_can_open_windows_automatically =
+      !view->GetBrowserContext()->IsPopupBlockerEnabled();
+  prefs->supports_multiple_windows = view->CanCreateWindows();
+
+  prefs->enable_scroll_animator = true;
+
+  const base::CommandLine& command_line =
+      *base::CommandLine::ForCurrentProcess();
+  content::GpuDataManager* gpu_data_manager =
+      content::GpuDataManager::GetInstance();
+
+  // GpuDataManagerImplPrivate turns all of these on unconditionally in Aura
+  // builds, so we make them all conditional again
+  prefs->force_compositing_mode = content::IsForceCompositingModeEnabled();
+  prefs->accelerated_compositing_enabled =
+      content::GpuProcessHost::gpu_enabled() &&
+      !command_line.HasSwitch(switches::kDisableAcceleratedCompositing) &&
+      !gpu_data_manager->IsFeatureBlacklisted(
+        gpu::GPU_FEATURE_TYPE_ACCELERATED_COMPOSITING);
+  prefs->accelerated_compositing_for_3d_transforms_enabled =
+      prefs->accelerated_compositing_for_animation_enabled =
+        !command_line.HasSwitch(switches::kDisableAcceleratedLayers) &&
+        !gpu_data_manager->IsFeatureBlacklisted(gpu::GPU_FEATURE_TYPE_3D_CSS);
+  prefs->accelerated_compositing_for_video_enabled =
+      !command_line.HasSwitch(switches::kDisableAcceleratedVideo) &&
+      !gpu_data_manager->IsFeatureBlacklisted(gpu::GPU_FEATURE_TYPE_ACCELERATED_VIDEO);
+
   WebPreferences* web_prefs = view->GetWebPreferences();
   if (!web_prefs) {
     DLOG(WARNING) << "No WebPreferences on WebView";
@@ -279,9 +328,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   }
 
   web_prefs->ApplyToWebkitPrefs(prefs);
-
-  prefs->device_supports_mouse = true; // XXX: Can we detect this?
-  prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
 }
 
 content::LocationProvider*
