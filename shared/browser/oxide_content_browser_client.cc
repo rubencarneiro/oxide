@@ -291,6 +291,13 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     ::WebPreferences* prefs) {
   WebView* view = WebView::FromRenderViewHost(render_view_host);
 
+  WebPreferences* web_prefs = view->GetWebPreferences();
+  if (web_prefs) {
+    web_prefs->ApplyToWebkitPrefs(prefs);
+  } else {
+    DLOG(WARNING) << "No WebPreferences on WebView";
+  }
+
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
 
@@ -320,14 +327,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->accelerated_compositing_for_video_enabled =
       !command_line.HasSwitch(switches::kDisableAcceleratedVideo) &&
       !gpu_data_manager->IsFeatureBlacklisted(gpu::GPU_FEATURE_TYPE_ACCELERATED_VIDEO);
-
-  WebPreferences* web_prefs = view->GetWebPreferences();
-  if (!web_prefs) {
-    DLOG(WARNING) << "No WebPreferences on WebView";
-    return;
-  }
-
-  web_prefs->ApplyToWebkitPrefs(prefs);
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
