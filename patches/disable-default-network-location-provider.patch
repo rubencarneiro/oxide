@@ -1,0 +1,17 @@
+# Description: Disable the default network location provider
+# (which queries googleapis.com) in order to allow a custom location provider
+# implementation to be used.
+# Author: Olivier Tilloy <olivier.tilloy@canonical.com>
+
+diff --git a/content/browser/geolocation/location_arbitrator_impl.cc b/content/browser/geolocation/location_arbitrator_impl.cc
+--- a/content/browser/geolocation/location_arbitrator_impl.cc
++++ b/content/browser/geolocation/location_arbitrator_impl.cc
+@@ -150,7 +150,7 @@
+     net::URLRequestContextGetter* context,
+     const GURL& url,
+     const base::string16& access_token) {
+-#if defined(OS_ANDROID)
++#if 1
+   // Android uses its own SystemLocationProvider.
+   return NULL;
+ #else
