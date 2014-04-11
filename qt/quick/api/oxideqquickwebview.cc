@@ -419,6 +419,8 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   // else we'll crash
   OxideQQuickWebContextPrivate::ensureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
+
+  setFlags(QQuickItem::ItemIsFocusScope);
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {
