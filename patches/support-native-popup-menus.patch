@@ -5,8 +5,8 @@
 diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc
 +++ b/content/browser/renderer_host/render_view_host_impl.cc
-@@ -1156,20 +1156,18 @@ bool RenderViewHostImpl::OnMessageReceiv
-     IPC_MESSAGE_HANDLER(ViewHostMsg_ScriptEvalResponse, OnScriptEvalResponse)
+@@ -1059,20 +1059,18 @@ bool RenderViewHostImpl::OnMessageReceiv
+ #endif
      IPC_MESSAGE_HANDLER(ViewHostMsg_DidZoomURL, OnDidZoomURL)
      IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_RequestPermission,
                          OnRequestDesktopNotificationPermission)
@@ -26,7 +26,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
                          OnAccessibilityLocationChanges)
      IPC_MESSAGE_HANDLER(ViewHostMsg_FocusedNodeTouched, OnFocusedNodeTouched)
      // Have the super handle all other messages.
-@@ -1637,28 +1635,26 @@ void RenderViewHostImpl::ForwardKeyboard
+@@ -1497,28 +1495,26 @@ void RenderViewHostImpl::ForwardKeyboard
    if (ignore_input_events()) {
      if (key_event.type == WebInputEvent::RawKeyDown)
        delegate_->OnIgnoredUIEvent();
@@ -55,7 +55,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
  
  void RenderViewHostImpl::DidCancelPopupMenu() {
    Send(new ViewMsg_SelectPopupMenuItem(GetRoutingID(), -1));
-@@ -1887,17 +1883,16 @@ void RenderViewHostImpl::OnFocusedNodeTo
+@@ -1724,17 +1720,16 @@ void RenderViewHostImpl::OnFocusedNodeTo
      virtual_keyboard_requested_ = base::win::DisplayVirtualKeyboard();
    } else {
      virtual_keyboard_requested_ = false;
@@ -73,7 +73,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
                          params.item_height,
                          params.item_font_size,
                          params.selected_item,
-@@ -1907,17 +1902,16 @@ void RenderViewHostImpl::OnShowPopup(
+@@ -1744,17 +1739,16 @@ void RenderViewHostImpl::OnShowPopup(
    }
  }
  
@@ -94,7 +94,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
 diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/browser/renderer_host/render_view_host_impl.h
 --- a/content/browser/renderer_host/render_view_host_impl.h
 +++ b/content/browser/renderer_host/render_view_host_impl.h
-@@ -429,20 +429,20 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -401,20 +401,20 @@ class CONTENT_EXPORT RenderViewHostImpl
    void DidSelectPopupMenuItem(int selected_index);
    void DidCancelPopupMenu();
  #endif
@@ -116,7 +116,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
      return main_frame_routing_id_;
    }
  
-@@ -588,20 +588,18 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -545,20 +545,18 @@ class CONTENT_EXPORT RenderViewHostImpl
                                                int callback_id);
    void OnShowDesktopNotification(
        const ShowDesktopNotificationHostMsgParams& params);
@@ -140,7 +140,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -999,22 +999,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
+@@ -960,22 +960,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
  // they came in, so the renderer can tell if it needs to send updated rects.
  // Otherwise just pass -1 to always receive the list of rects.
  //
@@ -165,7 +165,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
                      bool /* animate */)
  
  IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNeeded)
-@@ -1029,18 +1031,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
+@@ -990,18 +992,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
  
  // Sent by the browser when we should pause video playback.
  IPC_MESSAGE_ROUTED0(ViewMsg_PauseVideo);
@@ -186,7 +186,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  IPC_MESSAGE_ROUTED2(ViewMsg_WindowFrameChanged,
                      gfx::Rect /* window frame */,
                      gfx::Rect /* content view frame */)
-@@ -1170,22 +1173,20 @@ IPC_MESSAGE_ROUTED0(ViewHostMsg_Close)
+@@ -1131,22 +1134,20 @@ IPC_MESSAGE_ROUTED0(ViewHostMsg_Close)
  IPC_MESSAGE_ROUTED0(ViewHostMsg_UpdateScreenRects_ACK)
  
  // Sent by the renderer process to request that the browser move the view.
@@ -202,17 +202,17 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  IPC_MESSAGE_ROUTED0(ViewHostMsg_HidePopup)
 -#endif
  
- // Response from ViewMsg_ScriptEvalRequest. The ID is the parameter supplied
- // to ViewMsg_ScriptEvalRequest. The result has the value returned by the
- // script as its only element, one of Null, Boolean, Integer, Real, Date, or
- // String.
- IPC_MESSAGE_ROUTED2(ViewHostMsg_ScriptEvalResponse,
-                     int  /* id */,
-                     base::ListValue  /* result */)
+ // Result of string search in the page.
+ // Response to ViewMsg_Find with the results of the requested find-in-page
+ // search, the number of matches found and the selection rect (in screen
+ // coordinates) for the string found. If |final_update| is false, it signals
+ // that this is not the last Find_Reply message - more will be sent as the
+ // scoping effort continues.
+ IPC_MESSAGE_ROUTED5(ViewHostMsg_Find_Reply,
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -130,16 +130,18 @@
+@@ -133,16 +133,18 @@
      'renderer/dom_storage/dom_storage_dispatcher.h',
      'renderer/dom_storage/dom_storage_proxy.h',
      'renderer/dom_storage/webstoragearea_impl.cc',
@@ -283,7 +283,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -328,20 +328,18 @@ void RenderThreadImpl::Init() {
+@@ -325,20 +325,18 @@ void RenderThreadImpl::Init() {
    base::debug::TraceLog::GetInstance()->SetThreadSortIndex(
        base::PlatformThread::CurrentId(),
        kTraceEventRendererMainThreadSortIndex);
@@ -307,7 +307,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -1144,22 +1144,25 @@ bool RenderViewImpl::OnMessageReceived(c
+@@ -1138,22 +1138,25 @@ bool RenderViewImpl::OnMessageReceived(c
      IPC_MESSAGE_HANDLER(ViewMsg_ReleaseDisambiguationPopupDIB,
                          OnReleaseDisambiguationPopupDIB)
      IPC_MESSAGE_HANDLER(ViewMsg_WindowSnapshotCompleted,
@@ -334,7 +334,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
  #endif
      // Adding a new message? Add platform independent ones first, then put the
-@@ -1611,17 +1614,17 @@ WebWidget* RenderViewImpl::createPopupMe
+@@ -1551,17 +1554,17 @@ WebWidget* RenderViewImpl::createPopupMe
          screen_metrics_emulator_.get());
    }
    return widget->webwidget();
@@ -353,7 +353,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
    // will have to close the first one before another one can be shown.
    if (external_popup_menu_)
      return NULL;
-@@ -4731,39 +4734,35 @@ WebMediaPlayer* RenderViewImpl::CreateAn
+@@ -4482,39 +4485,35 @@ WebMediaPlayer* RenderViewImpl::CreateAn
  void RenderViewImpl::OnSelectPopupMenuItem(int selected_index) {
    if (external_popup_menu_ == NULL)
      return;
@@ -417,7 +417,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
  
    void FrameDidChangeLoadProgress(blink::WebFrame* frame,
                                    double load_progress);
-@@ -953,26 +951,29 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -906,26 +904,29 @@ class CONTENT_EXPORT RenderViewImpl
    void OnZoom(PageZoom zoom);
    void OnEnableViewSourceMode();
    void OnDisownOpener();
@@ -448,7 +448,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
    void OnWindowFrameChanged(const gfx::Rect& window_frame,
                              const gfx::Rect& view_frame);
  #endif
-@@ -1396,20 +1397,18 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -1353,20 +1354,18 @@ class CONTENT_EXPORT RenderViewImpl
    // is passed to us upon creation.  WebKit asks for this ID upon first use and
    // uses it whenever asking the browser process to allocate new storage areas.
    int64 session_storage_namespace_id_;
@@ -472,7 +472,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
 diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
 --- a/content/renderer/render_widget.cc
 +++ b/content/renderer/render_widget.cc
-@@ -576,23 +576,21 @@ void RenderWidget::SetPopupOriginAdjustm
+@@ -556,23 +556,21 @@ void RenderWidget::SetPopupOriginAdjustm
  void RenderWidget::SetScreenMetricsEmulationParameters(
      float device_scale_factor,
      const gfx::Point& root_layer_offset,
@@ -499,7 +499,7 @@ diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.
 diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
 --- a/content/renderer/render_widget.h
 +++ b/content/renderer/render_widget.h
-@@ -322,20 +322,18 @@ class CONTENT_EXPORT RenderWidget
+@@ -330,20 +330,18 @@ class CONTENT_EXPORT RenderWidget
                bool is_fullscreen,
                ResizeAck resize_ack);
    // Used to force the size of a window when running layout tests.

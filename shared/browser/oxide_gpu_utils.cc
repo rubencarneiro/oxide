@@ -212,7 +212,7 @@ GpuUtils::GpuUtils() {
   GURL url("oxide://OffscreenGraphicsContext");
 
   offscreen_context_.reset(new WGC3DCBI(
-      0, url, gpu_channel_host.get(), attrs, false, false,
+      0, url, gpu_channel_host.get(), attrs, false,
       content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
       NULL));
   offscreen_context_->makeContextCurrent();

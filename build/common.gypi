@@ -72,6 +72,8 @@
     'ldflags!': [
       # Currently get a bunch of "warning: hidden symbol" warnings from harfbuzz with gold
       '-Wl,--fatal-warnings',
+      # Applicable only for BFD linker
+      '-Wl,--reduce-memory-overheads',
     ],
     'conditions': [
       ['print_ld_stats==1', {

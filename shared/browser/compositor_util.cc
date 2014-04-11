@@ -103,6 +103,22 @@ bool IsImplSidePaintingEnabled() {
   return false;
 }
 
+bool IsGpuRasterizationEnabled() {
+  if (!IsImplSidePaintingEnabled()) {
+    return false;
+  }
+
+  return false;
+}
+
+bool IsForceGpuRasterizationEnabled() {
+  if (!IsImplSidePaintingEnabled()) {
+    return false;
+  }
+
+  return false;
+}
+
 base::Value* GetFeatureStatus() {
   return NULL;
 }

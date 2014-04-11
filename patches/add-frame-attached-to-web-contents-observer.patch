@@ -92,10 +92,10 @@ diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_hos
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -336,16 +336,19 @@ WebContentsImpl::WebContentsImpl(
-       render_view_message_source_(NULL),
+@@ -340,16 +340,19 @@ WebContentsImpl::WebContentsImpl(
        fullscreen_widget_routing_id_(MSG_ROUTING_NONE),
-       is_subframe_(false) {
+       is_subframe_(false),
+       last_dialog_suppressed_(false) {
    for (size_t i = 0; i < g_created_callbacks.Get().size(); i++)
      g_created_callbacks.Get().at(i).Run(this);
    frame_tree_.SetFrameRemoveListener(
@@ -112,7 +112,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
    // Delete all RFH pending shutdown, which will lead the corresponding RVH to
    // shutdown and be deleted as well.
    frame_tree_.ForEach(
-@@ -3617,16 +3620,25 @@ gfx::Size WebContentsImpl::GetSizeForNew
+@@ -3830,16 +3833,25 @@ gfx::Size WebContentsImpl::GetSizeForNew
  
  void WebContentsImpl::OnFrameRemoved(
      RenderViewHostImpl* render_view_host,
@@ -141,7 +141,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 diff --git a/content/browser/web_contents/web_contents_impl.h b/content/browser/web_contents/web_contents_impl.h
 --- a/content/browser/web_contents/web_contents_impl.h
 +++ b/content/browser/web_contents/web_contents_impl.h
-@@ -818,16 +818,18 @@ class CONTENT_EXPORT WebContentsImpl
+@@ -840,16 +840,18 @@ class CONTENT_EXPORT WebContentsImpl
    // Clear all PowerSaveBlockers, leave power_save_blocker_ empty.
    void ClearAllPowerSaveBlockers();
  
