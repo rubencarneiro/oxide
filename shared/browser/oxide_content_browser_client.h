@@ -119,6 +119,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
+  void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;
+
   virtual bool IsTouchSupported();
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);

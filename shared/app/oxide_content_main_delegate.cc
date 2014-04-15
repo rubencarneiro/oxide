@@ -41,6 +41,7 @@
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_paths.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 #include "shared/sandbox_ipc/oxide_sandbox_ipc_process.h"
@@ -76,6 +77,8 @@ ContentMainDelegate::~ContentMainDelegate() {}
 
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(CreateContentClient());
+
+  RegisterPathProvider();
 
   CommandLine* command_line = CommandLine::ForCurrentProcess();
   std::string process_type =

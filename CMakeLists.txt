@@ -109,6 +109,11 @@ else()
   list(APPEND GYP_COMMAND -Dffmpeg_branding=Chromium)
   list(APPEND GYP_COMMAND -Dproprietary_codecs=0)
 endif()
+if(ENABLE_PLUGINS)
+  list(APPEND GYP_COMMAND -Denable_plugins=1)
+else()
+  list(APPEND GYP_COMMAND -Denable_plugins=0)
+endif()
 
 message(STATUS "Running gyp")
 execute_process(COMMAND ${GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

@@ -60,6 +60,13 @@
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 
+#if defined(ENABLE_PLUGINS)
+#include "content/public/browser/browser_ppapi_host.h"
+#include "ppapi/host/ppapi_host.h"
+
+#include "oxide_pepper_host_factory_browser.h"
+#endif
+
 namespace oxide {
 
 namespace {
@@ -337,6 +344,13 @@ gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   }
 
   return context->share_group();
+}
+
+void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {
+#if defined(ENABLE_PLUGINS)
+  host->GetPpapiHost()->AddHostFactoryFilter(
+      scoped_ptr<ppapi::host::HostFactory>(new PepperHostFactoryBrowser(host)));
+#endif
 }
 
 bool ContentBrowserClient::IsTouchSupported() {

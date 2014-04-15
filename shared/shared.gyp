@@ -293,6 +293,8 @@
         'common/oxide_messages.h',
         'common/oxide_net_resource_provider.cc',
         'common/oxide_net_resource_provider.h',
+        'common/oxide_paths.cc',
+        'common/oxide_paths.h',
         'common/oxide_script_message.cc',
         'common/oxide_script_message.h',
         'common/oxide_script_message_handler.cc',
@@ -351,6 +353,21 @@
         '<(DEPTH)/extensions/common/url_pattern.h',
         '<(DEPTH)/extensions/common/url_pattern_set.cc',
         '<(DEPTH)/extensions/common/url_pattern_set.h'
+      ],
+      'conditions': [
+        ['enable_plugins==1', {
+          'sources': [
+            'browser/oxide_pepper_host_factory_browser.cc',
+            'browser/oxide_pepper_host_factory_browser.h',
+            'browser/oxide_pepper_talk_host.cc',
+            'browser/oxide_pepper_talk_host.h',
+          ],
+          'dependencies': [
+            '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_host',
+            '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_proxy',
+            '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_shared',
+          ],
+        }],
       ],
       'actions': [
         {

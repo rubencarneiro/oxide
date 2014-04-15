@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,43 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
-#define _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
-
-#include <string>
+#ifndef _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
+#define _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "content/public/common/content_client.h"
+#include "ppapi/host/host_factory.h"
+
+namespace content {
+class BrowserPpapiHost;
+}
 
 namespace oxide {
 
-class ContentBrowserClient;
-class ContentRendererClient;
-
-class ContentClient : public content::ContentClient {
+class PepperHostFactoryBrowser FINAL : public ppapi::host::HostFactory {
  public:
-  static ContentClient* instance();
-  virtual ~ContentClient();
+  PepperHostFactoryBrowser(content::BrowserPpapiHost* host);
+  ~PepperHostFactoryBrowser();
 
-  ContentBrowserClient* browser();
-  ContentRendererClient* renderer();
-
-  virtual intptr_t GetNativeDisplay() = 0;
-
- protected:
-  ContentClient();
+  scoped_ptr<ppapi::host::ResourceHost> CreateResourceHost(
+      ppapi::host::PpapiHost* host,
+      const ppapi::proxy::ResourceMessageCallParams& params,
+      PP_Instance instance,
+      const IPC::Message& message) FINAL;
 
  private:
-  void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) FINAL;
+  content::BrowserPpapiHost* host_;
 
-  std::string GetUserAgent() const FINAL;
-
-  base::string16 GetLocalizedString(int message_id) const FINAL;
-
-  DISALLOW_COPY_AND_ASSIGN(ContentClient);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(PepperHostFactoryBrowser);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_COMMON_CONTENT_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
