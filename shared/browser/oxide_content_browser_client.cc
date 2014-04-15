@@ -280,6 +280,8 @@ bool ContentBrowserClient::CanCreateWindow(
     bool is_guest,
     int opener_id,
     bool* no_javascript_access) {
+  *no_javascript_access = false;
+
   if (user_gesture) {
     return true;
   }
