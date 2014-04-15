@@ -46,8 +46,27 @@ namespace {
 base::LazyInstance<scoped_refptr<GpuUtils> > g_instance =
     LAZY_INSTANCE_INITIALIZER;
 
-void ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref) {
+content::GpuCommandBufferStub* LookupCommandBuffer(int32 client_id,
+                                                   int32 route_id) {
+  content::GpuChannelManager* gpu_channel_manager =
+      content::GpuChildThread::instance()->gpu_channel_manager();
+  content::GpuChannel* channel =
+      gpu_channel_manager->LookupChannel(client_id);
+  if (!channel) {
+    return NULL;
+  }
+
+  return channel->LookupCommandBuffer(route_id);
+}
+
+void ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref,
+                                  int32 client_id,
+                                  int32 route_id) {
   DCHECK(content::GpuChildThread::message_loop_proxy()->RunsTasksOnCurrentThread());
+  if (content::GpuCommandBufferStub* command_buffer =
+          LookupCommandBuffer(client_id, route_id)) {
+    command_buffer->decoder()->MakeCurrent();
+  }
   ref->Release();
 }
 
@@ -104,7 +123,9 @@ void TextureHandleImpl::Clear() {
   if (ref_) {
     content::GpuChildThread::message_loop_proxy()->PostTask(
         FROM_HERE,
-        base::Bind(&ReleaseTextureRefOnGpuThread, base::Unretained(ref_)));
+        base::Bind(&ReleaseTextureRefOnGpuThread,
+                   base::Unretained(ref_),
+                   client_id_, route_id_));
   }
 
   service_id_ = 0;
@@ -174,19 +195,15 @@ void TextureHandleImpl::UpdateTextureResourcesOnGpuThread() {
         GL_TEXTURE_2D, mailbox_);
 
   if (texture) {
-    content::GpuChannel* channel =
-        gpu_channel_manager->LookupChannel(client_id_);
-    if (channel) {
-      content::GpuCommandBufferStub* command_buffer =
-          channel->LookupCommandBuffer(route_id_);
-      if (command_buffer) {
-        ref_ = new gpu::gles2::TextureRef(
-            command_buffer->decoder()->GetContextGroup()->texture_manager(),
-            client_id_,
-            texture);
-        ref_->AddRef();
-        service_id_ = texture->service_id();
-      }
+    content::GpuCommandBufferStub* command_buffer =
+        LookupCommandBuffer(client_id_, route_id_);
+    if (command_buffer) {
+      ref_ = new gpu::gles2::TextureRef(
+          command_buffer->decoder()->GetContextGroup()->texture_manager(),
+          client_id_,
+          texture);
+      ref_->AddRef();
+      service_id_ = texture->service_id();
     }
   }
 
