@@ -45,8 +45,7 @@ namespace {
 GpuUtils* g_instance;
 
 void ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref) {
-  DCHECK_EQ(base::MessageLoop::current(),
-            content::GpuChildThread::instance()->message_loop());
+  DCHECK(content::GpuChildThread::message_loop_proxy()->RunsTasksOnCurrentThread());
   ref->Release();
 }
 
@@ -100,7 +99,7 @@ void TextureHandleImpl::Clear() {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
 
   if (ref_) {
-    content::GpuChildThread::instance()->message_loop()->PostTask(
+    content::GpuChildThread::message_loop_proxy()->PostTask(
         FROM_HERE,
         base::Bind(&ReleaseTextureRefOnGpuThread, base::Unretained(ref_)));
   }
@@ -173,7 +172,7 @@ void TextureHandleImpl::Consume(const gpu::Mailbox& mailbox,
 
   if (!is_fetch_texture_resources_pending_) {
     is_fetch_texture_resources_pending_ = true;
-    content::GpuChildThread::instance()->message_loop()->PostTask(
+    content::GpuChildThread::message_loop_proxy()->PostTask(
         FROM_HERE,
         base::Bind(&TextureHandleImpl::FetchTextureResourcesOnGpuThread, this));
   }
