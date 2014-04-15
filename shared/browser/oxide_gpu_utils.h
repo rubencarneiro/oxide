@@ -18,10 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_GPU_UTILS_H_
 #define _OXIDE_SHARED_BROWSER_GPU_UTILS_H_
 
+#include <queue>
+
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/synchronization/lock.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
 
@@ -42,13 +45,14 @@ class Mailbox;
 namespace oxide {
 
 class TextureHandle;
+class TextureHandleImpl;
 
-class GpuUtils FINAL {
+class GpuUtils FINAL : public base::RefCountedThreadSafe<GpuUtils> {
  public:
   static void Initialize();
-  static void Terminate();
+  void Destroy();
 
-  static GpuUtils* instance();
+  static scoped_refptr<GpuUtils> instance();
 
   gfx::GLSurfaceHandle GetSharedSurfaceHandle();
 
@@ -56,10 +60,20 @@ class GpuUtils FINAL {
 
  private:
   typedef content::WebGraphicsContext3DCommandBufferImpl WGC3DCBI;
+  friend class base::RefCountedThreadSafe<GpuUtils>;
+  friend class TextureHandleImpl;
 
   GpuUtils();
+  ~GpuUtils();
+
+  bool FetchTextureResources(TextureHandleImpl* handle);
+  void FetchTextureResourcesOnGpuThread();
 
   scoped_ptr<WGC3DCBI> offscreen_context_;
+
+  base::Lock fetch_texture_resources_lock_;
+  bool is_fetch_texture_resources_pending_;
+  std::queue<scoped_refptr<TextureHandleImpl> > fetch_texture_resources_queue_;
 };
 
 struct TextureHandleTraits {

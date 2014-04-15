@@ -177,7 +177,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   void PostMainMessageLoopRun() FINAL {
-    GpuUtils::Terminate();
+    GpuUtils::instance()->Destroy();
   }
 
   void PostDestroyThreads() FINAL {

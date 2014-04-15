@@ -17,6 +17,7 @@
 
 #include "oxide_gpu_utils.h"
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "base/synchronization/condition_variable.h"
@@ -42,7 +43,8 @@ namespace oxide {
 
 namespace {
 
-GpuUtils* g_instance;
+base::LazyInstance<scoped_refptr<GpuUtils> > g_instance =
+    LAZY_INSTANCE_INITIALIZER;
 
 void ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref) {
   DCHECK(content::GpuChildThread::message_loop_proxy()->RunsTasksOnCurrentThread());
@@ -77,9 +79,10 @@ class TextureHandleImpl : public TextureHandle {
   virtual gfx::Size GetSize() const OVERRIDE;
   virtual GLuint GetID() OVERRIDE;
 
+  void UpdateTextureResourcesOnGpuThread();
+
  private:
   void Clear();
-  void FetchTextureResourcesOnGpuThread();
 
   base::Lock lock_;
   base::ConditionVariable resources_available_;
@@ -109,7 +112,52 @@ void TextureHandleImpl::Clear() {
   ref_ = NULL;
 }
 
-void TextureHandleImpl::FetchTextureResourcesOnGpuThread() {
+TextureHandleImpl::TextureHandleImpl(int32 client_id, int32 route_id) :
+    resources_available_(&lock_),
+    is_fetch_texture_resources_pending_(false),
+    client_id_(client_id),
+    route_id_(route_id),
+    ref_(NULL),
+    service_id_(0) {}
+
+TextureHandleImpl::~TextureHandleImpl() {
+  base::AutoLock lock(lock_);
+  DCHECK(!is_fetch_texture_resources_pending_);
+  Clear();
+}
+
+void TextureHandleImpl::Consume(const gpu::Mailbox& mailbox,
+                                const gfx::Size& size) {
+  if (mailbox == mailbox_ && size == size_) {
+    return;
+  }
+
+  base::AutoLock lock(lock_);
+  Clear();
+  size_ = size;
+  mailbox_ = mailbox;
+
+  if (!is_fetch_texture_resources_pending_ &&
+      GpuUtils::instance()->FetchTextureResources(this)) {
+    is_fetch_texture_resources_pending_ = true;
+  }
+}
+
+gfx::Size TextureHandleImpl::GetSize() const {
+  return size_;
+}
+
+GLuint TextureHandleImpl::GetID() {
+  base::AutoLock lock(lock_);
+  if (is_fetch_texture_resources_pending_) {
+    resources_available_.Wait();
+    DCHECK(!is_fetch_texture_resources_pending_);
+  }
+
+  return service_id_;
+}
+
+void TextureHandleImpl::UpdateTextureResourcesOnGpuThread() {
   base::AutoLock lock(lock_);
   DCHECK(is_fetch_texture_resources_pending_);
   is_fetch_texture_resources_pending_ = false;
@@ -145,54 +193,8 @@ void TextureHandleImpl::FetchTextureResourcesOnGpuThread() {
   resources_available_.Signal();
 }
 
-TextureHandleImpl::TextureHandleImpl(int32 client_id, int32 route_id) :
-    resources_available_(&lock_),
-    is_fetch_texture_resources_pending_(false),
-    client_id_(client_id),
-    route_id_(route_id),
-    ref_(NULL),
-    service_id_(0) {}
-
-TextureHandleImpl::~TextureHandleImpl() {
-  base::AutoLock lock(lock_);
-  DCHECK(!is_fetch_texture_resources_pending_);
-  Clear();
-}
-
-void TextureHandleImpl::Consume(const gpu::Mailbox& mailbox,
-                                const gfx::Size& size) {
-  if (mailbox == mailbox_ && size == size_) {
-    return;
-  }
-
-  base::AutoLock lock(lock_);
-  Clear();
-  size_ = size;
-  mailbox_ = mailbox;
-
-  if (!is_fetch_texture_resources_pending_) {
-    is_fetch_texture_resources_pending_ = true;
-    content::GpuChildThread::message_loop_proxy()->PostTask(
-        FROM_HERE,
-        base::Bind(&TextureHandleImpl::FetchTextureResourcesOnGpuThread, this));
-  }
-}
-
-gfx::Size TextureHandleImpl::GetSize() const {
-  return size_;
-}
-
-GLuint TextureHandleImpl::GetID() {
-  base::AutoLock lock(lock_);
-  if (is_fetch_texture_resources_pending_) {
-    resources_available_.Wait();
-    DCHECK(!is_fetch_texture_resources_pending_);
-  }
-
-  return service_id_;
-}
-
-GpuUtils::GpuUtils() {
+GpuUtils::GpuUtils() :
+    is_fetch_texture_resources_pending_(false) {
   blink::WebGraphicsContext3D::Attributes attrs;
   attrs.shareResources = true;
   attrs.depth = false;
@@ -217,21 +219,52 @@ GpuUtils::GpuUtils() {
   offscreen_context_->makeContextCurrent();
 }
 
+GpuUtils::~GpuUtils() {}
+
+bool GpuUtils::FetchTextureResources(TextureHandleImpl* handle) {
+  base::AutoLock lock(fetch_texture_resources_lock_);
+
+  if (!is_fetch_texture_resources_pending_) {
+    if (!content::GpuChildThread::message_loop_proxy()->PostTask(
+            FROM_HERE,
+            base::Bind(&GpuUtils::FetchTextureResourcesOnGpuThread, this))) {
+      return false;
+    }
+    is_fetch_texture_resources_pending_ = true;
+  }
+
+  fetch_texture_resources_queue_.push(handle);
+  return true;
+}
+
+void GpuUtils::FetchTextureResourcesOnGpuThread() {
+  std::queue<scoped_refptr<TextureHandleImpl> > queue;
+  {
+    base::AutoLock lock(fetch_texture_resources_lock_);
+    is_fetch_texture_resources_pending_ = false;
+    std::swap(queue, fetch_texture_resources_queue_);
+  }
+
+  while (!queue.empty()) {
+    scoped_refptr<TextureHandleImpl> handle = queue.front();
+    queue.pop();
+    handle->UpdateTextureResourcesOnGpuThread();
+  }
+}
+
 // static
 void GpuUtils::Initialize() {
-  DCHECK(!g_instance);
-  g_instance = new GpuUtils();
+  DCHECK(!g_instance.Get());
+  g_instance.Get() = new GpuUtils();
+}
+
+void GpuUtils::Destroy() {
+  offscreen_context_.reset();
 }
 
 // static
-void GpuUtils::Terminate() {
-  DCHECK(g_instance);
-  delete g_instance;
-}
-
-// static
-GpuUtils* GpuUtils::instance() {
-  return g_instance;
+scoped_refptr<GpuUtils> GpuUtils::instance() {
+  return g_instance.Get();
 }
 
 gfx::GLSurfaceHandle GpuUtils::GetSharedSurfaceHandle() {
