@@ -188,18 +188,16 @@ void TextureHandleImpl::UpdateTextureResourcesOnGpuThread() {
     return;
   }
 
-  content::GpuChannelManager* gpu_channel_manager =
-      content::GpuChildThread::instance()->gpu_channel_manager();
-  gpu::gles2::Texture* texture =
-      gpu_channel_manager->mailbox_manager()->ConsumeTexture(
-        GL_TEXTURE_2D, mailbox_);
-
-  if (texture) {
-    content::GpuCommandBufferStub* command_buffer =
-        LookupCommandBuffer(client_id_, route_id_);
-    if (command_buffer) {
+  content::GpuCommandBufferStub* command_buffer =
+      LookupCommandBuffer(client_id_, route_id_);
+  if (command_buffer) {
+    gpu::gles2::ContextGroup* group =
+        command_buffer->decoder()->GetContextGroup();
+    gpu::gles2::Texture* texture =
+        group->mailbox_manager()->ConsumeTexture(GL_TEXTURE_2D, mailbox_);
+    if (texture) {
       ref_ = new gpu::gles2::TextureRef(
-          command_buffer->decoder()->GetContextGroup()->texture_manager(),
+          group->texture_manager(),
           client_id_,
           texture);
       ref_->AddRef();
