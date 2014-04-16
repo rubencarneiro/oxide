@@ -58,6 +58,27 @@ struct MainFunction {
   int (*function)(const content::MainFunctionParams&);
 };
 
+bool IsEnvironmentOptionEnabled(const char* option) {
+  std::string name("OXIDE_");
+  name += option;
+
+  const char* val = getenv(name.c_str());
+  if (!val) {
+    return false;
+  }
+
+  std::string v(val);
+
+  return !v.empty() && v == "1";
+}
+
+const char* GetEnvironmentOption(const char* option) {
+  std::string name("OXIDE_");
+  name += option;
+
+  return getenv(name.c_str());
+}
+
 }
 
 ContentMainDelegate::ContentMainDelegate() {}
@@ -88,7 +109,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // We need to override FILE_EXE in the browser process to the path of the
     // renderer, as various bits of Chrome use this to find other resources
     base::FilePath subprocess_exe;
-    const char* subprocess_path = getenv("OXIDE_SUBPROCESS_PATH");
+    const char* subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
     if (subprocess_path) {
       // Make sure that we have a properly formed absolute path
       // there are some load issues if not.
@@ -151,7 +172,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kEnableViewport);
       command_line->AppendSwitch(switches::kEnableViewportMeta);
       command_line->AppendSwitch(switches::kEnablePinch);
-      if (getenv("OXIDE_ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
+      if (IsEnvironmentOptionEnabled("ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
         command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
       }
     }
@@ -159,24 +180,24 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     }
 
-    const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
+    const char* renderer_cmd_prefix = GetEnvironmentOption("RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
                                       renderer_cmd_prefix);
     }
-    if (getenv("OXIDE_NO_SANDBOX")) {
+    if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
       command_line->AppendSwitch(switches::kNoSandbox);
     }
-    if (getenv("OXIDE_SINGLE_PROCESS")) {
+    if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
       LOG(WARNING) <<
           "User scripts currently don't work correctly in single process "
           "mode. See https://launchpad.net/bugs/1283291";
       command_line->AppendSwitch(switches::kSingleProcess);
     }
-    if (getenv("OXIDE_ALLOW_SANDBOX_DEBUGGING")) {
+    if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
       command_line->AppendSwitch(switches::kAllowSandboxDebugging);
     }
-    if (getenv("OXIDE_EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
+    if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
       command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
     }
   }
