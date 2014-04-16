@@ -173,6 +173,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
           "mode. See https://launchpad.net/bugs/1283291";
       command_line->AppendSwitch(switches::kSingleProcess);
     }
+    if (getenv("OXIDE_ALLOW_SANDBOX_DEBUGGING")) {
+      command_line->AppendSwitch(switches::kAllowSandboxDebugging);
+    }
   }
 
   return false;
