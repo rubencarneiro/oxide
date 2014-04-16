@@ -68,6 +68,14 @@ namespace {
 
 base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
 
+const base::FilePath::CharType kCacheDirname[] = FILE_PATH_LITERAL("Cache");
+const base::FilePath::CharType kCookiesFilename[] =
+    FILE_PATH_LITERAL("cookies.sqlite");
+
+const char kDataScheme[] = "data";
+const char kFileScheme[] = "file";
+const char kFtpScheme[] = "ftp";
+
 const char kBrowserContextKey[] = "oxide_browser_context_data";
 
 class ContextData : public base::SupportsUserData::Data {
