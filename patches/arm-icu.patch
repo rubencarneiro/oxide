@@ -27,4 +27,4 @@ diff --git a/third_party/icu/icu.gyp b/third_party/icu/icu.gyp
            }],
          ],
        }],
-     ],
+       ['(OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris" \

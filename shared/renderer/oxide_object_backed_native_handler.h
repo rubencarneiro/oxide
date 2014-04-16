@@ -19,15 +19,14 @@
 #define _OXIDE_SHARED_RENDERER_OBJECT_BACKED_NATIVE_HANDLER_H_
 
 #include <string>
-#include <vector>
 
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/compiler_specific.h"
 #include "v8/include/v8.h"
+#include "v8/include/v8-util.h"
 
 #include "shared/renderer/oxide_v8_scoped_persistent.h"
-#include "shared/renderer/oxide_v8_unsafe_persistent.h"
 
 namespace oxide {
 
@@ -66,7 +65,7 @@ class ObjectBackedNativeHandler {
 
   ScriptMessageManager* manager_;
 
-  typedef std::vector<UnsafePersistent<v8::Object> > RouterData;
+  typedef v8::PersistentValueVector<v8::Object> RouterData;
   RouterData router_data_;
 
   ScopedPersistent<v8::ObjectTemplate> object_template_;

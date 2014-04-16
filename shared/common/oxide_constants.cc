@@ -21,5 +21,6 @@ namespace switches {
 
 const char kSandboxExe[] = "sandbox-exe";
 const char kEnableGoogleTalkPlugin[] = "enable-google-talk-plugin";
+const char kDisableForceCompositingMode[] = "disable-force-compositing-mode";
 
 } // namespace switches

@@ -342,7 +342,6 @@
         'renderer/oxide_user_script_slave.cc',
         'renderer/oxide_user_script_slave.h',
         'renderer/oxide_v8_scoped_persistent.h',
-        'renderer/oxide_v8_unsafe_persistent.h',
         'sandbox_ipc/oxide_sandbox_ipc_process.cc',
         'sandbox_ipc/oxide_sandbox_ipc_process.h',
         '<(DEPTH)/extensions/common/constants.cc',

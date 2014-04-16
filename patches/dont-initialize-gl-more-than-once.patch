@@ -24,4 +24,4 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    if (!gfx::GLSurface::InitializeOneOff())
      VLOG(1) << "gfx::GLSurface::InitializeOneOff failed";
  #endif
-   DCHECK(!g_instance);
+   g_lazy_tls.Pointer()->Set(this);

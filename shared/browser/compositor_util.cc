@@ -22,6 +22,8 @@
 #include "content/public/common/content_switches.h"
 #include "gpu/config/gpu_feature_type.h"
 
+#include "shared/common/oxide_constants.h"
+
 namespace content {
 
 namespace {
