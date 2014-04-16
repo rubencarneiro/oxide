@@ -18,9 +18,9 @@
 #include "oxide_qt_location_provider.h"
 
 #include <QDebug>
-#include <QtPositioning/QGeoCoordinate>
-#include <QtPositioning/QGeoPositionInfo>
-#include <QtPositioning/QGeoPositionInfoSource>
+#include <QGeoCoordinate>
+#include <QGeoPositionInfo>
+#include <QGeoPositionInfoSource>
 
 namespace oxide {
 namespace qt {
