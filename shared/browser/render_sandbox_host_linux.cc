@@ -72,9 +72,9 @@ void RenderSandboxHostLinux::Init(const std::string& sandbox_path) {
   CHECK(PathService::Get(base::FILE_EXE, &exe));
   base::CommandLine cmd_line(exe);
 
-  cmd_line.AppendSwitchASCII(switches::kProcessType, oxide::kSandboxIPCProcess);
+  cmd_line.AppendSwitchASCII(switches::kProcessType, switches::kSandboxIPCProcess);
   if (!sandbox_path.empty()) {
-    cmd_line.AppendSwitchASCII(oxide::kSandboxExe, sandbox_path.c_str());
+    cmd_line.AppendSwitchASCII(switches::kSandboxExe, sandbox_path.c_str());
   }
 
   base::FileHandleMappingVector fds_to_map;

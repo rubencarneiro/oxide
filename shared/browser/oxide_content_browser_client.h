@@ -80,6 +80,9 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;
 
+  void AppendExtraCommandLineSwitches(base::CommandLine* command_line,
+                                      int child_process_id) FINAL;
+
   bool AllowGetCookie(const GURL& url,
                       const GURL& first_party,
                       const net::CookieList& cookie_list,

@@ -176,6 +176,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (getenv("OXIDE_ALLOW_SANDBOX_DEBUGGING")) {
       command_line->AppendSwitch(switches::kAllowSandboxDebugging);
     }
+    if (getenv("OXIDE_EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
+      command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
+    }
   }
 
   return false;
@@ -214,7 +217,7 @@ int ContentMainDelegate::RunProcess(
   }
 
   static const MainFunction kMainFunctions[] = {
-    { kSandboxIPCProcess, SandboxIPCProcessMain }
+    { switches::kSandboxIPCProcess, SandboxIPCProcessMain }
   };
 
   for (size_t i = 0; i < arraysize(kMainFunctions); ++i) {

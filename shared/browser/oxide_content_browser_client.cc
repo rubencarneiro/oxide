@@ -17,6 +17,7 @@
 
 #include "oxide_content_browser_client.h"
 
+#include <string>
 #include <vector>
 
 #include "base/command_line.h"
@@ -42,6 +43,7 @@
 #include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
 
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_net_resource_provider.h"
@@ -241,6 +243,20 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
   return BrowserContext::FromContent(browser_context)->GetAcceptLangs();
+}
+
+void ContentBrowserClient::AppendExtraCommandLineSwitches(
+    base::CommandLine* command_line,
+    int child_process_id) {
+  std::string process_type =
+      command_line->GetSwitchValueASCII(switches::kProcessType);
+  if (process_type == switches::kRendererProcess) {
+    static const char* const kSwitchNames[] = {
+      switches::kEnableGoogleTalkPlugin
+    };
+    command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
+                                   kSwitchNames, arraysize(kSwitchNames));
+  }
 }
 
 bool ContentBrowserClient::AllowGetCookie(const GURL& url,

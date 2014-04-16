@@ -26,12 +26,14 @@
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 #if defined(ENABLE_PLUGINS)
+#include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/path_service.h"
 #include "content/public/common/pepper_plugin_info.h"
 #include "content/public/common/webplugininfo.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
 
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_paths.h"
 #endif
 
@@ -44,7 +46,8 @@ ContentClient* g_inst;
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
 #if defined(ENABLE_PLUGINS)
-  static char* enable_gtalk = getenv("OXIDE_EXPERIMENTAL_ENABLE_GTALK_PLUGIN");
+  base::CommandLine& cmd_line = *base::CommandLine::ForCurrentProcess();
+  bool enable_gtalk = cmd_line.HasSwitch(switches::kEnableGoogleTalkPlugin);
   base::FilePath path;
   if (enable_gtalk && PathService::Get(FILE_O1D_PLUGIN, &path)) {
     content::PepperPluginInfo o1d;

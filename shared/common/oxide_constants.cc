@@ -17,9 +17,9 @@
 
 #include "oxide_constants.h"
 
-namespace oxide {
+namespace switches {
 
-const char kSandboxIPCProcess[] = "sandbox-ipc";
 const char kSandboxExe[] = "sandbox-exe";
+const char kEnableGoogleTalkPlugin[] = "enable-google-talk-plugin";
 
-} // namespace oxide
+} // namespace switches

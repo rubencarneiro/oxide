@@ -698,7 +698,7 @@ void SandboxIPCProcess::EnsureWebKitInitialized() {
 int SandboxIPCProcessMain(const content::MainFunctionParams& params) {
   const CommandLine& command_line = params.command_line;
 
-  std::string sandbox(command_line.GetSwitchValueASCII(kSandboxExe));
+  std::string sandbox(command_line.GetSwitchValueASCII(switches::kSandboxExe));
 
   SandboxIPCProcess process(kSandboxIPCLifelinePipeFd,
                             kSandboxIPCSocketPairFd,

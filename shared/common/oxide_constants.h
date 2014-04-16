@@ -23,14 +23,18 @@
 
 namespace oxide {
 
-extern const char kSandboxIPCProcess[];
-extern const char kSandboxExe[];
-
 const int kSandboxIPCSocketPairFd =
     kPrimaryIPCChannel + base::GlobalDescriptors::kBaseDescriptor;
 const int kSandboxIPCLifelinePipeFd =
     kPrimaryIPCChannel + base::GlobalDescriptors::kBaseDescriptor + 1;
 
 } // namespace oxide
+
+namespace switches {
+
+extern const char kSandboxExe[];
+extern const char kEnableGoogleTalkPlugin[];
+
+} // namespace switches
 
 #endif // _OXIDE_SHARED_COMMON_CONSTANTS_H_
