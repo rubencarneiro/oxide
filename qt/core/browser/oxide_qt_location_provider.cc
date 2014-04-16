@@ -17,6 +17,7 @@
 
 #include "oxide_qt_location_provider.h"
 
+#include <QDebug>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtPositioning/QGeoPositionInfoSource>
@@ -50,29 +51,36 @@ LocationProvider::~LocationProvider() {
 
 bool LocationProvider::StartProvider(bool high_accuracy) {
   Q_UNUSED(high_accuracy);
+  qDebug() << Q_FUNC_INFO << high_accuracy;
   if (!source_) {
     source_ = QGeoPositionInfoSource::createDefaultSource(this);
     if (!source_) {
       return false;
     }
+    qDebug() << Q_FUNC_INFO << "default geolocation source created:" << source_->sourceName();
     connect(source_, SIGNAL(positionUpdated(const QGeoPositionInfo&)),
             SLOT(positionUpdated(const QGeoPositionInfo&)));
     connect(source_, SIGNAL(updateTimeout()), SLOT(updateTimeout()));
   }
   if (is_permission_granted_) {
+    qDebug() << Q_FUNC_INFO << "starting geolocation updates";
     source_->startUpdates();
   }
   return true;
 }
 
 void LocationProvider::StopProvider() {
+  qDebug() << Q_FUNC_INFO;
   if (source_) {
+    qDebug() << Q_FUNC_INFO << "stopping geolocation updates";
     source_->stopUpdates();
+    delete source_;
     source_ = NULL;
   }
 }
 
 void LocationProvider::GetPosition(content::Geoposition* position) {
+  qDebug() << Q_FUNC_INFO;
   if (source_) {
     QGeoPositionInfo info = source_->lastKnownPosition();
     if (info.isValid()) {
@@ -88,6 +96,7 @@ void LocationProvider::RequestRefresh() {
 }
 
 void LocationProvider::OnPermissionGranted() {
+  qDebug() << Q_FUNC_INFO;
   if (!is_permission_granted_) {
     is_permission_granted_ = true;
     RequestRefresh();
@@ -95,12 +104,14 @@ void LocationProvider::OnPermissionGranted() {
 }
 
 void LocationProvider::positionUpdated(const QGeoPositionInfo& info) {
+  qDebug() << Q_FUNC_INFO << info;
   if (info.isValid()) {
     NotifyCallback(geopositionFromQt(info));
   }
 }
 
 void LocationProvider::updateTimeout() {
+  qDebug() << Q_FUNC_INFO;
   content::Geoposition position;
   position.error_code = content::Geoposition::ERROR_CODE_TIMEOUT;
   NotifyCallback(position);
