@@ -82,6 +82,12 @@ void RenderSandboxHostLinux::Init(const std::string& sandbox_path) {
   fds_to_map.push_back(std::make_pair(pipefds[0], oxide::kSandboxIPCLifelinePipeFd));
 
   base::LaunchOptions options;
+  // allow_new_privs defaults to false, which causes LaunchProcess to call
+  // prctl(PR_SET_NO_NEW_PRIVS...) in the child. However, the Sandbox IPC
+  // process relies on executing the suid sandbox for mapping socket inode
+  // numbers to PID's on behalf of the zygote, and PR_SET_NO_NEW_PRIVS breaks
+  // this
+  options.allow_new_privs = true;
   options.fds_to_remap = &fds_to_map;
   base::LaunchProcess(cmd_line.argv(), options, &pid_);
   CHECK(pid_ != -1);
