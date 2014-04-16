@@ -44,8 +44,9 @@ ContentClient* g_inst;
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
 #if defined(ENABLE_PLUGINS)
+  static char* enable_gtalk = getenv("OXIDE_EXPERIMENTAL_ENABLE_GTALK_PLUGIN");
   base::FilePath path;
-  if (PathService::Get(FILE_O1D_PLUGIN, &path)) {
+  if (enable_gtalk && PathService::Get(FILE_O1D_PLUGIN, &path)) {
     content::PepperPluginInfo o1d;
     o1d.path = path;
     o1d.name = "Google Talk Plugin Video Renderer";
@@ -60,7 +61,7 @@ void ContentClient::AddPepperPlugins(
     plugins->push_back(o1d);
   }
 
-  if (PathService::Get(FILE_GTALK_PLUGIN, &path)) {
+  if (enable_gtalk && PathService::Get(FILE_GTALK_PLUGIN, &path)) {
     content::PepperPluginInfo gtalk;
     gtalk.path = path;
     gtalk.name = "Google Talk Plugin";
