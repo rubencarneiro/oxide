@@ -31,10 +31,19 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
   position.latitude = coord.latitude();
   position.longitude = coord.longitude();
   position.altitude = coord.altitude();
-  position.accuracy = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
-  position.altitude_accuracy =
-      info.attribute(QGeoPositionInfo::VerticalAccuracy);
-  position.speed = info.attribute(QGeoPositionInfo::GroundSpeed);
+  if (info.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
+    position.accuracy = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
+  } else {
+    // accuracy is mandatory
+    position.accuracy = 1000; // XXX: which accuracy to set (in meters)?
+  }
+  if (info.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
+    position.altitude_accuracy =
+        info.attribute(QGeoPositionInfo::VerticalAccuracy);
+  }
+  if (info.hasAttribute(QGeoPositionInfo::GroundSpeed)) {
+    position.speed = info.attribute(QGeoPositionInfo::GroundSpeed);
+  }
   position.timestamp =
       base::Time::FromJsTime(info.timestamp().toMSecsSinceEpoch());
   return position;
