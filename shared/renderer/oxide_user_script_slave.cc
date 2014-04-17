@@ -27,7 +27,7 @@
 #include "third_party/WebKit/public/platform/WebString.h"
 #include "third_party/WebKit/public/platform/WebURLRequest.h"
 #include "third_party/WebKit/public/web/WebDataSource.h"
-#include "third_party/WebKit/public/web/WebFrame.h"
+#include "third_party/WebKit/public/web/WebLocalFrame.h"
 #include "third_party/WebKit/public/web/WebScriptSource.h"
 #include "third_party/WebKit/public/web/WebSecurityOrigin.h"
 #include "url/gurl.h"
@@ -48,7 +48,7 @@ const char kUserScriptTail[] = "\n})(window);";
 
 // static
 int UserScriptSlave::GetIsolatedWorldID(const GURL& url,
-                                        blink::WebFrame* frame) {
+                                        blink::WebLocalFrame* frame) {
   int id = IsolatedWorldMap::IDFromURL(url);
 
   frame->setIsolatedWorldSecurityOrigin(
@@ -104,7 +104,7 @@ void UserScriptSlave::OnRenderProcessShutdown() {
   content::RenderThread::Get()->RemoveObserver(this);
 }
 
-void UserScriptSlave::InjectScripts(blink::WebFrame* frame,
+void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
                                     UserScript::RunLocation location) {
   blink::WebDataSource* data_source = frame->provisionalDataSource() ?
       frame->provisionalDataSource() : frame->dataSource();

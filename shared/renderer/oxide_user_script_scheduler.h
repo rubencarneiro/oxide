@@ -25,6 +25,10 @@
 #include "base/memory/weak_ptr.h"
 #include "content/public/renderer/render_view_observer.h"
 
+namespace blink {
+class WebFrame;
+}
+
 namespace oxide {
 
 class UserScriptScheduler FINAL : public content::RenderViewObserver {
@@ -35,7 +39,7 @@ class UserScriptScheduler FINAL : public content::RenderViewObserver {
   void DidFinishLoad(blink::WebLocalFrame* frame) FINAL;
   void DidCreateDocumentElement(blink::WebLocalFrame* frame) FINAL;
 
-  void FrameDetached(blink::WebLocalFrame* frame) FINAL;
+  void FrameDetached(blink::WebFrame* frame) FINAL;
 
  private:
   void DoIdleInject();

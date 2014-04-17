@@ -19,6 +19,8 @@
 
 #include "base/bind.h"
 #include "base/message_loop/message_loop.h"
+#include "third_party/WebKit/public/web/WebFrame.h"
+#include "third_party/WebKit/public/web/WebLocalFrame.h"
 
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_user_script.h"
@@ -74,12 +76,15 @@ void UserScriptScheduler::DidCreateDocumentElement(blink::WebLocalFrame* frame) 
       frame, UserScript::DOCUMENT_START);
 }
 
-void UserScriptScheduler::FrameDetached(blink::WebLocalFrame* frame) {
+void UserScriptScheduler::FrameDetached(blink::WebFrame* frame) {
   if (!idle_posted_) {
     return;
   }
 
-  pending_idle_frames_.erase(frame);
+  blink::WebLocalFrame* local_frame = frame->toWebLocalFrame();
+  if (local_frame) {
+    pending_idle_frames_.erase(local_frame);
+  }
 }
 
 } // namespace oxide
