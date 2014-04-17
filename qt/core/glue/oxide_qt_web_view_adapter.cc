@@ -132,6 +132,14 @@ bool WebViewAdapter::loading() const {
   return priv->IsLoading();
 }
 
+bool WebViewAdapter::fullscreen() const {
+  return priv->IsFullscreen();
+}
+
+void WebViewAdapter::setFullscreen(bool fullscreen) {
+  priv->SetIsFullscreen(fullscreen);
+}
+
 WebFrameAdapter* WebViewAdapter::rootFrame() const {
   WebFrame* frame = static_cast<WebFrame *>(priv->GetRootFrame());
   if (!frame) {

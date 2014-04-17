@@ -165,25 +165,6 @@ void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   emit q->loadingChanged(event);
 }
 
-void OxideQQuickWebViewPrivate::AddMessageToConsole(
-    int level,
-    const QString& message,
-    int line_no,
-    const QString& source_id) {
-  Q_Q(OxideQQuickWebView);
-
-  OxideQQuickWebView::LogMessageSeverityLevel oxideLevel =
-    OxideQQuickWebView::LogSeverityInfo;
-  if (level >= 0 && level <= OxideQQuickWebView::LogSeverityFatal) {
-    oxideLevel = static_cast<OxideQQuickWebView::LogMessageSeverityLevel>(level);
-  }
-  emit q->javaScriptConsoleMessage(
-      oxideLevel,
-      message,
-      line_no,
-      source_id);
-}
-
 void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
   navigation_history_.onNavigationEntryCommitted();
 }
@@ -219,6 +200,31 @@ bool OxideQQuickWebViewPrivate::IsVisible() const {
   Q_Q(const OxideQQuickWebView);
 
   return q->isVisible();
+}
+
+void OxideQQuickWebViewPrivate::AddMessageToConsole(
+    int level,
+    const QString& message,
+    int line_no,
+    const QString& source_id) {
+  Q_Q(OxideQQuickWebView);
+
+  OxideQQuickWebView::LogMessageSeverityLevel oxideLevel =
+    OxideQQuickWebView::LogSeverityInfo;
+  if (level >= 0 && level <= OxideQQuickWebView::LogSeverityFatal) {
+    oxideLevel = static_cast<OxideQQuickWebView::LogMessageSeverityLevel>(level);
+  }
+  emit q->javaScriptConsoleMessage(
+      oxideLevel,
+      message,
+      line_no,
+      source_id);
+}
+
+void OxideQQuickWebViewPrivate::ToggleFullscreenMode(bool enter) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->fullscreenRequested(enter);
 }
 
 void OxideQQuickWebViewPrivate::OnWebPreferencesChanged() {
@@ -502,6 +508,23 @@ bool OxideQQuickWebView::loading() const {
   Q_D(const OxideQQuickWebView);
 
   return d->loading();
+}
+
+bool OxideQQuickWebView::fullscreen() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->fullscreen();
+}
+
+void OxideQQuickWebView::setFullscreen(bool fullscreen) {
+  Q_D(OxideQQuickWebView);
+
+  if (fullscreen == d->fullscreen()) {
+    return;
+  }
+
+  d->setFullscreen(fullscreen);
+  emit fullscreenChanged();
 }
 
 int OxideQQuickWebView::loadProgress() const {

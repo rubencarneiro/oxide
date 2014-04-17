@@ -67,11 +67,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
   
-  void AddMessageToConsole(int level,
-			   const QString& message,
-			   int line_no,
-			   const QString& source_id) Q_DECL_FINAL;
-
   void NavigationEntryCommitted() Q_DECL_FINAL;
   void NavigationListPruned(bool from_front, int count) Q_DECL_FINAL;
   void NavigationEntryChanged(int index) Q_DECL_FINAL;
@@ -80,6 +75,13 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   QRect GetContainerBounds() Q_DECL_FINAL;
   bool IsVisible() const Q_DECL_FINAL;
+
+  void AddMessageToConsole(int level,
+			   const QString& message,
+			   int line_no,
+			   const QString& source_id) Q_DECL_FINAL;
+
+  void ToggleFullscreenMode(bool enter) Q_DECL_FINAL;
 
   void OnWebPreferencesChanged() Q_DECL_FINAL;
 

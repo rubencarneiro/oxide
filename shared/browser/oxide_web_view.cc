@@ -377,6 +377,44 @@ void WebView::LoadProgressChanged(content::WebContents* source,
   OnLoadProgressChanged(progress);
 }
 
+bool WebView::AddMessageToConsole(content::WebContents* source,
+                                  int32 level,
+                                  const base::string16& message,
+                                  int32 line_no,
+                                  const base::string16& source_id) {
+  return OnAddMessageToConsole(level, message, line_no, source_id);
+}
+
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+  return JavaScriptDialogManager::GetInstance();
+}
+
+void WebView::RunFileChooser(content::WebContents* web_contents,
+                             const content::FileChooserParams& params) {
+  DCHECK(!active_file_picker_);
+  content::RenderViewHost* rvh = web_contents->GetRenderViewHost();
+  FilePicker* filePicker = CreateFilePicker(rvh);
+  if (!filePicker) {
+    std::vector<ui::SelectedFileInfo> empty;
+    rvh->FilesSelectedInChooser(empty, params.mode);
+    return;
+  }
+  active_file_picker_ = filePicker->AsWeakPtr();
+  active_file_picker_->Run(params);
+}
+
+void WebView::ToggleFullscreenModeForTab(content::WebContents* source,
+                                         bool enter) {
+  DCHECK_EQ(source, web_contents_.get());
+  OnToggleFullscreenMode(enter);
+}
+
+bool WebView::IsFullscreenForTabOrPending(
+    const content::WebContents* source) const {
+  DCHECK_EQ(source, web_contents_.get());
+  return is_fullscreen_;
+}
+
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   while (root_frame_->ChildCount() > 0) {
@@ -542,6 +580,8 @@ bool WebView::OnAddMessageToConsole(int32 level,
   return false;
 }
 
+void WebView::OnToggleFullscreenMode(bool enter) {}
+
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
                                      bool user_gesture) {
@@ -558,7 +598,8 @@ WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 }
 
 WebView::WebView() :
-    root_frame_(NULL) {}
+    root_frame_(NULL),
+    is_fullscreen_(false) {}
 
 bool WebView::Init(const Params& params) {
   CHECK(!web_contents_);
@@ -707,6 +748,22 @@ bool WebView::IsLoading() const {
     return false;
   }
   return web_contents_->IsLoading();
+}
+
+bool WebView::IsFullscreen() const {
+  if (!web_contents_) {
+    return false;
+  }
+  return is_fullscreen_;
+}
+
+void WebView::SetIsFullscreen(bool fullscreen) {
+  if (fullscreen != is_fullscreen_) {
+    is_fullscreen_ = fullscreen;
+    if (web_contents_) {
+      web_contents_->GetRenderViewHost()->WasResized();
+    }
+  }
 }
 
 void WebView::UpdateSize(const gfx::Size& size) {
@@ -860,32 +917,6 @@ void WebView::HidePopupMenu() {
   if (active_popup_menu_ && !active_popup_menu_->WasHidden()) {
     active_popup_menu_->Hide();
   }
-}
-
-content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
-  return JavaScriptDialogManager::GetInstance();
-}
-
-void WebView::RunFileChooser(content::WebContents* web_contents,
-                             const content::FileChooserParams& params) {
-  DCHECK(!active_file_picker_);
-  content::RenderViewHost* rvh = web_contents->GetRenderViewHost();
-  FilePicker* filePicker = CreateFilePicker(rvh);
-  if (!filePicker) {
-    std::vector<ui::SelectedFileInfo> empty;
-    rvh->FilesSelectedInChooser(empty, params.mode);
-    return;
-  }
-  active_file_picker_ = filePicker->AsWeakPtr();
-  active_file_picker_->Run(params);
-}
-
-bool WebView::AddMessageToConsole(content::WebContents* source,
-                                  int32 level,
-                                  const base::string16& message,
-                                  int32 line_no,
-                                  const base::string16& source_id) {
-  return OnAddMessageToConsole(level, message, line_no, source_id);
 }
 
 } // namespace oxide

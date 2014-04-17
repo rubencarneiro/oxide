@@ -69,6 +69,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito NOTIFY incognitoChanged)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+  Q_PROPERTY(bool fullscreen READ fullscreen WRITE setFullscreen NOTIFY fullscreenChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
@@ -118,6 +119,9 @@ class OxideQQuickWebView : public QQuickItem {
   void setIncognito(bool incognito);
 
   bool loading() const;
+
+  bool fullscreen() const;
+  void setFullscreen(bool fullscreen);
 
   int loadProgress() const;
 
@@ -170,6 +174,7 @@ class OxideQQuickWebView : public QQuickItem {
   void navigationHistoryChanged();
   void incognitoChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
+  void fullscreenChanged();
   void loadProgressChanged();
   void rootFrameChanged();
   void frameAdded(OxideQQuickWebFrame* frame);
@@ -183,6 +188,7 @@ class OxideQQuickWebView : public QQuickItem {
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
+  void fullscreenRequested(bool fullscreen);
   void navigationRequested(OxideQNavigationRequest *request);
   void newViewRequested(OxideQNewViewRequest* request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,

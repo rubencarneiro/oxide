@@ -99,6 +99,9 @@ class WebView : public ScriptMessageTarget,
 
   bool IsLoading() const;
 
+  bool IsFullscreen() const;
+  void SetIsFullscreen(bool fullscreen);
+
   void UpdateSize(const gfx::Size& size);
   void UpdateVisibility(bool visible);
 
@@ -112,12 +115,6 @@ class WebView : public ScriptMessageTarget,
   const GURL& GetNavigationEntryUrl(int index) const;
   std::string GetNavigationEntryTitle(int index) const;
   base::Time GetNavigationEntryTimestamp(int index) const;
-
-  bool AddMessageToConsole(content::WebContents* source,
-			   int32 level,
-			   const base::string16& message,
-			   int32 line_no,
-			   const base::string16& source_id);
 
   WebFrame* GetRootFrame() const;
   content::FrameTree* GetFrameTree();
@@ -217,9 +214,18 @@ class WebView : public ScriptMessageTarget,
                       bool user_gesture,
                       bool* was_blocked) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+  bool AddMessageToConsole(content::WebContents* source,
+			   int32 level,
+			   const base::string16& message,
+			   int32 line_no,
+			   const base::string16& source_id) FINAL;
   content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) FINAL;
+  void ToggleFullscreenModeForTab(content::WebContents* source,
+                                  bool enter) FINAL;
+  bool IsFullscreenForTabOrPending(
+      const content::WebContents* source) const FINAL;
 
   // content::WebContentsObserver
   void RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -296,6 +302,8 @@ class WebView : public ScriptMessageTarget,
                                      int32 line_no,
                                      const base::string16& source_id);
 
+  virtual void OnToggleFullscreenMode(bool enter);
+
   virtual void OnWebPreferencesChanged();
 
   virtual bool ShouldHandleNavigation(const GURL& url,
@@ -316,6 +324,7 @@ class WebView : public ScriptMessageTarget,
 
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;
+  bool is_fullscreen_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 
