@@ -113,7 +113,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
         incognito(false),
         context(NULL) {}
 
-    QUrl url;
     bool incognito;
     WebContextAdapter* context;
   };

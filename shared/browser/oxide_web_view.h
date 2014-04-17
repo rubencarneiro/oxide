@@ -322,6 +322,8 @@ class WebView : public ScriptMessageTarget,
   ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
 
+  GURL initial_url_;
+
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;
   bool is_fullscreen_;

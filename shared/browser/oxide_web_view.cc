@@ -649,6 +649,12 @@ bool WebView::Init(const Params& params) {
 
   root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
+  if (!initial_url_.is_empty() && !params.contents) {
+    SetURL(initial_url_);
+    initial_url_ = GURL();
+  }
+  SetIsFullscreen(is_fullscreen_);
+
   return true;
 }
 
@@ -673,13 +679,18 @@ WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
 
 const GURL& WebView::GetURL() const {
   if (!web_contents_) {
-    return GURL::EmptyGURL();
+    return initial_url_;
   }
   return web_contents_->GetVisibleURL();
 }
 
 void WebView::SetURL(const GURL& url) {
   if (!url.is_valid()) {
+    return;
+  }
+
+  if (!web_contents_) {
+    initial_url_ = url;
     return;
   }
 
@@ -751,9 +762,6 @@ bool WebView::IsLoading() const {
 }
 
 bool WebView::IsFullscreen() const {
-  if (!web_contents_) {
-    return false;
-  }
   return is_fullscreen_;
 }
 

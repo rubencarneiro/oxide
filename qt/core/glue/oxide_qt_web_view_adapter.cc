@@ -66,37 +66,20 @@ void WebViewAdapter::init() {
     return;
   }
 
-  // construct_props_ is deleted in Initialized()
-  QUrl url = construct_props_->url;
-
   oxide::WebView::Params params;
   params.context =
       WebContextAdapterPrivate::get(construct_props_->context)->GetContext();
   params.incognito = construct_props_->incognito;
-  if (!priv->Init(params)) {
-    return;
-  }
 
-  if (!url.isEmpty()) {
-    priv->SetURL(GURL(url.toString().toStdString()));
-  }
-
+  priv->Init(params);
 }
 
 QUrl WebViewAdapter::url() const {
-  if (construct_props_) {
-    return construct_props_->url;
-  }
-
   return QUrl(QString::fromStdString(priv->GetURL().spec()));
 }
 
 void WebViewAdapter::setUrl(const QUrl& url) {
-  if (construct_props_) {
-    construct_props_->url = url;
-  } else {
-    priv->SetURL(GURL(url.toString().toStdString()));
-  }
+  priv->SetURL(GURL(url.toString().toStdString()));
 }
 
 QString WebViewAdapter::title() const {
