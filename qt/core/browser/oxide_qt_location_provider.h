@@ -18,10 +18,13 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 #define _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 
+#include "base/message_loop/message_loop.h"
 #include "content/browser/geolocation/location_provider_base.h"
 
+#include <QMutex>
 #include <QObject>
 #include <QtGlobal>
+#include <QThread>
 
 QT_BEGIN_NAMESPACE
 class QGeoPositionInfo;
@@ -30,6 +33,8 @@ QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
+
+class LocationWorkerThread;
 
 class LocationProvider Q_DECL_FINAL : public QObject,
                                       public content::LocationProviderBase {
@@ -48,15 +53,55 @@ class LocationProvider Q_DECL_FINAL : public QObject,
 
   void OnPermissionGranted();
 
+ protected:
+  friend class LocationSource;
+
+  void notifyCallbackOnGeolocationThread(const content::Geoposition& position);
+
+ private:
+  base::MessageLoop* message_loop_;
+  bool is_permission_granted_;
+  LocationWorkerThread* worker_;
+
+  Q_DISABLE_COPY(LocationProvider)
+};
+
+class LocationSource Q_DECL_FINAL : public QObject {
+  Q_OBJECT
+
+ public:
+  LocationSource(LocationProvider* provider, bool start);
+  ~LocationSource();
+
+  QGeoPositionInfo lastKnownPosition() const;
+  void requestUpdate() const;
+
  private Q_SLOTS:
   void positionUpdated(const QGeoPositionInfo&);
   void updateTimeout();
 
  private:
-  bool is_permission_granted_;
+  LocationProvider* provider_;
   QGeoPositionInfoSource* source_;
+};
 
-  Q_DISABLE_COPY(LocationProvider)
+class LocationWorkerThread Q_DECL_FINAL : public QThread {
+  Q_OBJECT
+
+ public:
+  LocationWorkerThread(LocationProvider* provider, bool start);
+
+  QGeoPositionInfo lastKnownPosition();
+  void requestUpdate();
+
+ protected:
+  void run();
+
+ private:
+  LocationProvider* provider_;
+  bool start_;
+  QMutex mutex_;
+  LocationSource* source_;
 };
 
 } // namespace qt

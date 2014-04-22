@@ -17,10 +17,17 @@
 
 #include "oxide_qt_location_provider.h"
 
-#include <QDebug>
+#include <cfloat>
+
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
 #include <QGeoPositionInfoSource>
+#include <QMutexLocker>
+
+#include "base/bind.h"
+#include "base/location.h"
+
+Q_DECLARE_METATYPE(QGeoPositionInfo)
 
 namespace oxide {
 namespace qt {
@@ -35,7 +42,7 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
     position.accuracy = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
   } else {
     // accuracy is mandatory
-    position.accuracy = 1000; // XXX: which accuracy to set (in meters)?
+    position.accuracy = DBL_MAX;
   }
   if (info.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
     position.altitude_accuracy =
@@ -51,8 +58,9 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
 
 LocationProvider::LocationProvider(QObject* parent) :
     QObject(parent),
+    message_loop_(base::MessageLoop::current()),
     is_permission_granted_(false),
-    source_(NULL) {}
+    worker_(NULL) {}
 
 LocationProvider::~LocationProvider() {
   StopProvider();
@@ -60,38 +68,32 @@ LocationProvider::~LocationProvider() {
 
 bool LocationProvider::StartProvider(bool high_accuracy) {
   Q_UNUSED(high_accuracy);
-  qDebug() << Q_FUNC_INFO << high_accuracy;
-  if (!source_) {
-    source_ = QGeoPositionInfoSource::createDefaultSource(this);
-    if (!source_) {
-      return false;
-    }
-    qDebug() << Q_FUNC_INFO << "default geolocation source created:" << source_->sourceName();
-    connect(source_, SIGNAL(positionUpdated(const QGeoPositionInfo&)),
-            SLOT(positionUpdated(const QGeoPositionInfo&)));
-    connect(source_, SIGNAL(updateTimeout()), SLOT(updateTimeout()));
+  if (worker_) {
+    return worker_->isRunning();
   }
-  if (is_permission_granted_) {
-    qDebug() << Q_FUNC_INFO << "starting geolocation updates";
-    source_->startUpdates();
+  worker_ = new LocationWorkerThread(this, is_permission_granted_);
+  worker_->start();
+  if (worker_->isRunning()) {
+    return true;
+  } else {
+    delete worker_;
+    worker_ = NULL;
+    return false;
   }
-  return true;
 }
 
 void LocationProvider::StopProvider() {
-  qDebug() << Q_FUNC_INFO;
-  if (source_) {
-    qDebug() << Q_FUNC_INFO << "stopping geolocation updates";
-    source_->stopUpdates();
-    delete source_;
-    source_ = NULL;
+  if (worker_) {
+    worker_->quit();
+    worker_->wait();
+    delete worker_;
+    worker_ = NULL;
   }
 }
 
 void LocationProvider::GetPosition(content::Geoposition* position) {
-  qDebug() << Q_FUNC_INFO;
-  if (source_) {
-    QGeoPositionInfo info = source_->lastKnownPosition();
+  if (worker_) {
+    QGeoPositionInfo info = worker_->lastKnownPosition();
     if (info.isValid()) {
       *position = geopositionFromQt(info);
     }
@@ -99,31 +101,108 @@ void LocationProvider::GetPosition(content::Geoposition* position) {
 }
 
 void LocationProvider::RequestRefresh() {
-  if (is_permission_granted_ && source_) {
-    source_->requestUpdate();
+  if (is_permission_granted_ && worker_) {
+    worker_->requestUpdate();
   }
 }
 
 void LocationProvider::OnPermissionGranted() {
-  qDebug() << Q_FUNC_INFO;
   if (!is_permission_granted_) {
     is_permission_granted_ = true;
     RequestRefresh();
   }
 }
 
-void LocationProvider::positionUpdated(const QGeoPositionInfo& info) {
-  qDebug() << Q_FUNC_INFO << info;
-  if (info.isValid()) {
-    NotifyCallback(geopositionFromQt(info));
+void LocationProvider::notifyCallbackOnGeolocationThread(
+    const content::Geoposition& position) {
+  message_loop_->PostTask(FROM_HERE,
+                          base::Bind(&LocationProvider::NotifyCallback,
+                                     base::Unretained(this),
+                                     position));
+}
+
+LocationSource::LocationSource(LocationProvider* provider, bool start) :
+    QObject(),
+    provider_(provider),
+    source_(NULL) {
+  source_ = QGeoPositionInfoSource::createDefaultSource(this);
+  if (source_) {
+    qRegisterMetaType<QGeoPositionInfo>();
+    connect(source_, SIGNAL(positionUpdated(const QGeoPositionInfo&)),
+            SLOT(positionUpdated(const QGeoPositionInfo&)));
+    connect(source_, SIGNAL(updateTimeout()), SLOT(updateTimeout()));
+    if (start) {
+      source_->requestUpdate();
+    }
   }
 }
 
-void LocationProvider::updateTimeout() {
-  qDebug() << Q_FUNC_INFO;
+LocationSource::~LocationSource() {
+  if (source_) {
+    source_->disconnect(this);
+    source_->stopUpdates();
+    delete source_;
+    source_ = NULL;
+  }
+}
+
+QGeoPositionInfo LocationSource::lastKnownPosition() const {
+  if (source_) {
+    return source_->lastKnownPosition();
+  } else {
+    return QGeoPositionInfo();
+  }
+}
+
+void LocationSource::requestUpdate() const {
+  if (source_) {
+    source_->requestUpdate();
+  }
+}
+
+void LocationSource::positionUpdated(const QGeoPositionInfo& info) {
+  if (info.isValid()) {
+    provider_->notifyCallbackOnGeolocationThread(geopositionFromQt(info));
+  }
+}
+
+void LocationSource::updateTimeout() {
   content::Geoposition position;
   position.error_code = content::Geoposition::ERROR_CODE_TIMEOUT;
-  NotifyCallback(position);
+  provider_->notifyCallbackOnGeolocationThread(position);
+}
+
+LocationWorkerThread::LocationWorkerThread(LocationProvider* provider,
+                                           bool start) :
+    QThread(),
+    provider_(provider),
+    start_(start),
+    source_(NULL) {}
+
+void LocationWorkerThread::run() {
+  mutex_.lock();
+  source_ = new LocationSource(provider_, start_);
+  mutex_.unlock();
+  exec();
+  mutex_.lock();
+  delete source_;
+  mutex_.unlock();
+}
+
+QGeoPositionInfo LocationWorkerThread::lastKnownPosition() {
+  QMutexLocker locker(&mutex_);
+  if (source_) {
+    return source_->lastKnownPosition();
+  } else {
+    return QGeoPositionInfo();
+  }
+}
+
+void LocationWorkerThread::requestUpdate() {
+  QMutexLocker locker(&mutex_);
+  if (source_) {
+    source_->requestUpdate();
+  }
 }
 
 } // namespace qt
