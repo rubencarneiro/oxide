@@ -71,7 +71,6 @@ class LocationSource Q_DECL_FINAL : public QObject {
 
  public:
   LocationSource(LocationProvider* provider, bool start);
-  ~LocationSource();
 
   QGeoPositionInfo lastKnownPosition() const;
   void requestUpdate() const;

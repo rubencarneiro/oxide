@@ -11,9 +11,9 @@ TestWebView {
 
   property string testcase: ""
 
-  function expect_result(expected) {
+  function expect_result(selector, expected) {
     var result = webView.getTestApi().evaluateCode(
-        "document.querySelector(\"#location\").innerHTML");
+        "document.querySelector(\"#" + selector + "\").innerHTML");
     return (result === expected);
   }
 
@@ -21,7 +21,7 @@ TestWebView {
     name: "geolocation"
     when: windowShown
 
-    function test_geolocation_data() {
+    function test_geolocation_get_data() {
       return [
         { testcase: "", result: "OK" },
         { testcase: "timeout", result: "TIMEOUT" },
@@ -30,12 +30,21 @@ TestWebView {
       ];
     }
 
-    function test_geolocation(data) {
+    function test_geolocation_get(data) {
       webView.testcase = data.testcase;
-      webView.url = "http://localhost:8080/tst_geolocation.html";
+      webView.url = "http://localhost:8080/tst_geolocation_get.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      verify(webView.waitFor(function() { return expect_result(data.result); }));
+      verify(webView.waitFor(function() { return expect_result("location", data.result); }));
+    }
+
+    function test_geolocation_watch() {
+      webView.testcase = "";
+      webView.url = "http://localhost:8080/tst_geolocation_watch.html";
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+      verify(webView.waitFor(function() { return expect_result("updates", "5"); }, 15000));
+      verify(expect_result("errors", "0"));
     }
   }
 }

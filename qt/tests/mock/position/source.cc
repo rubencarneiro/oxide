@@ -21,7 +21,6 @@
 #include <QGeoCoordinate>
 #include <QGuiApplication>
 #include <QtGlobal>
-#include <QTimer>
 
 namespace {
 
@@ -41,6 +40,7 @@ QGeoPositionInfo randomPosition() {
 
 SourceMock::SourceMock(QObject* parent) : QGeoPositionInfoSource(parent) {
   qsrand(QDateTime::currentDateTime().toTime_t());
+  connect(&timer_, SIGNAL(timeout()), SLOT(requestUpdate()));
 }
 
 QGeoPositionInfo SourceMock::lastKnownPosition(
@@ -61,9 +61,13 @@ QGeoPositionInfoSource::Error SourceMock::error() const {
   return NoError;
 }
 
-void SourceMock::startUpdates() {}
+void SourceMock::startUpdates() {
+  timer_.start(1000);
+}
 
-void SourceMock::stopUpdates() {}
+void SourceMock::stopUpdates() {
+  timer_.stop();
+}
 
 void SourceMock::requestUpdate(int timeout) {
   Q_UNUSED(timeout);

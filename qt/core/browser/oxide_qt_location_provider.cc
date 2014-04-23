@@ -132,17 +132,8 @@ LocationSource::LocationSource(LocationProvider* provider, bool start) :
     connect(source_, SIGNAL(error(QGeoPositionInfoSource::Error)),
             SLOT(error(QGeoPositionInfoSource::Error)));
     if (start) {
-      source_->requestUpdate();
+      source_->startUpdates();
     }
-  }
-}
-
-LocationSource::~LocationSource() {
-  if (source_) {
-    source_->disconnect(this);
-    source_->stopUpdates();
-    delete source_;
-    source_ = NULL;
   }
 }
 

@@ -19,6 +19,7 @@
 #define _OXIDE_QT_TESTS_MOCK_POSITION_SOURCE_H_
 
 #include <QGeoPositionInfoSource>
+#include <QTimer>
 
 class SourceMock : public QGeoPositionInfoSource
 {
@@ -40,6 +41,9 @@ class SourceMock : public QGeoPositionInfoSource
 
  private Q_SLOTS:
   void sendUpdate();
+
+ private:
+  QTimer timer_;
 };
 
 #endif // _OXIDE_QT_TESTS_MOCK_POSITION_SOURCE_H_
