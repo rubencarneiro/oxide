@@ -16,25 +16,16 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-foreach(v OXIDE_SUBPROCESS_PATH CHROMIUM_LIB_DIR SOURCE_DIR SERVER_DIR QMLTEST_BINARY IMPORT_DIR TEST_DIR TEST_NAME PYTHON)
-  if(NOT DEFINED ${v})
-    message(FATAL_ERROR "Must specify ${v}")
-  endif()
-endforeach()
+set(PLUGIN mock)
 
-if(USE_DATA_DIR)
-  set(_T -t)
-endif()
+set(PLUGIN_SRCS
+    source.cc
+    plugin.cc)
 
-set(ENV{OXIDE_NO_SANDBOX} 1)
-set(ENV{OXIDE_SUBPROCESS_PATH} ${OXIDE_SUBPROCESS_PATH})
-set(ENV{LD_LIBRARY_PATH} ${CHROMIUM_LIB_DIR})
-set(ENV{QT_PLUGIN_PATH} ${QT_PLUGIN_PATH})
+set(CMAKE_AUTOMOC ON)
 
-set(_COMMAND ${PYTHON} ${SOURCE_DIR}/qt/tests/runtests.py -s ${SERVER_DIR} -p 8080 ${_T} --
-    ${QMLTEST_BINARY} -name ${TEST_NAME} -import ${IMPORT_DIR} -input ${TEST_DIR})
-message("Running ${_COMMAND}")
-execute_process(COMMAND ${_COMMAND} RESULT_VARIABLE _RESULT)
-if(NOT ${_RESULT} EQUAL 0)
-  message(FATAL_ERROR "Tests ${TEST_NAME} failed!")
-endif()
+add_definitions(-DQT_PLUGIN)
+
+add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
+
+qt5_use_modules(${PLUGIN} Core Positioning)

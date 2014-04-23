@@ -1,0 +1,21 @@
+<html>
+<body>
+  <h1>geolocation</h1>
+  <div id="location"></div>
+  <script>
+    function success(position) {
+      document.querySelector('#location').innerHTML = 'OK';
+    }
+
+    function error(err) {
+      document.querySelector('#location').innerHTML = 'FAIL';
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(success, error);
+    } else {
+      error('not supported');
+    }
+  </script>
+</body>
+</html>

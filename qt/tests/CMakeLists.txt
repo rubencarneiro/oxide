@@ -20,6 +20,8 @@ include(CMakeParseArguments)
 include(OxideCommon)
 include(OxideQtCommon)
 
+add_subdirectory(mock)
+
 set(QML_PLUGIN qmloxidetestingplugin)
 set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
 
@@ -87,6 +89,7 @@ function(add_qml_test)
         -DSERVER_DIR=${_ARGS_SERVER_DIR} -DQMLTEST_BINARY=${QMLTEST_BINARY}
         -DIMPORT_DIR=${OXIDE_QMLPLUGIN_OUTPUT_DIR} -DTEST_DIR=${_ARGS_TEST_DIR}
         -DTEST_NAME=${_ARGS_NAME} ${_USE_DATA_DIR} -DPYTHON=${PYTHON}
+        -DQT_PLUGIN_PATH=${CMAKE_CURRENT_BINARY_DIR}/mock
         -P ${CMAKE_CURRENT_SOURCE_DIR}/qmltests/run-qmltests.cmake)
 endfunction()
 
