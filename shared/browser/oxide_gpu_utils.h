@@ -24,28 +24,23 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
+#include "base/synchronization/condition_variable.h"
 #include "base/synchronization/lock.h"
+#include "gpu/command_buffer/common/mailbox.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
 
 typedef unsigned int GLuint;
 
-namespace base {
-template <typename Type> class DeleteHelper;
-}
-
 namespace content {
 class WebGraphicsContext3DCommandBufferImpl;
 }
 
-namespace gpu {
-class Mailbox;
-}
-
 namespace oxide {
 
-class TextureHandle;
-class TextureHandleImpl;
+class AcceleratedFrameHandle;
+class RenderWidgetHostView;
 
 class GpuUtils FINAL : public base::RefCountedThreadSafe<GpuUtils> {
  public:
@@ -56,45 +51,75 @@ class GpuUtils FINAL : public base::RefCountedThreadSafe<GpuUtils> {
 
   gfx::GLSurfaceHandle GetSharedSurfaceHandle();
 
-  TextureHandle* CreateTextureHandle();
+  AcceleratedFrameHandle* GetAcceleratedFrameHandle(
+      RenderWidgetHostView* rwhv,
+      uint32 surface_id,
+      const gpu::Mailbox& mailbox,
+      uint32 sync_point,
+      const gfx::Size& size,
+      float scale);
 
  private:
   typedef content::WebGraphicsContext3DCommandBufferImpl WGC3DCBI;
   friend class base::RefCountedThreadSafe<GpuUtils>;
-  friend class TextureHandleImpl;
+  friend class AcceleratedFrameHandle;
 
   GpuUtils();
   ~GpuUtils();
 
-  bool FetchTextureResources(TextureHandleImpl* handle);
+  bool FetchTextureResources(AcceleratedFrameHandle* handle);
   void FetchTextureResourcesOnGpuThread();
 
   scoped_ptr<WGC3DCBI> offscreen_context_;
 
   base::Lock fetch_texture_resources_lock_;
   bool is_fetch_texture_resources_pending_;
-  std::queue<scoped_refptr<TextureHandleImpl> > fetch_texture_resources_queue_;
+  std::queue<scoped_refptr<AcceleratedFrameHandle> > fetch_texture_resources_queue_;
 };
 
-struct TextureHandleTraits {
-  static void Destruct(const TextureHandle* x);
-};
-
-class TextureHandle :
-    public base::RefCountedThreadSafe<TextureHandle, TextureHandleTraits> {
+class AcceleratedFrameHandle :
+    public base::RefCountedThreadSafe<AcceleratedFrameHandle> {
  public:
-  virtual void Consume(const gpu::Mailbox& mailbox,
-                       const gfx::Size& size) = 0;
 
-  virtual gfx::Size GetSize() const = 0;
-  virtual GLuint GetID() = 0;
+  GLuint GetTextureID();
+  gfx::Size size_in_pixels() const { return size_in_pixels_; }
+  float device_scale_factor() const { return device_scale_factor_; }
+  gpu::Mailbox mailbox() const { return mailbox_; }
 
- protected:
-  friend struct TextureHandleTraits;
-  friend class base::DeleteHelper<TextureHandle>;
+  void WasFreed();
 
-  TextureHandle() {}
-  virtual ~TextureHandle() {}
+ private:
+  friend class base::RefCountedThreadSafe<AcceleratedFrameHandle>;
+  friend class GpuUtils;
+
+  AcceleratedFrameHandle(int32 client_id,
+                         int32 route_id,
+                         RenderWidgetHostView* rwhv,
+                         uint32 surface_id,
+                         const gpu::Mailbox& mailbox,
+                         uint32 sync_point,
+                         const gfx::Size& size,
+                         float scale);
+  virtual ~AcceleratedFrameHandle();
+
+  void UpdateTextureResourcesOnGpuThread();
+  void OnSyncPointRetired();
+
+  int32 client_id_;
+  int32 route_id_;
+
+  base::WeakPtr<RenderWidgetHostView> rwhv_;
+  uint32 surface_id_;
+  gpu::Mailbox mailbox_;
+  uint32 sync_point_;
+  gfx::Size size_in_pixels_;
+  float device_scale_factor_;
+
+  base::Lock lock_;
+  base::ConditionVariable resources_available_condition_;
+  bool did_fetch_texture_resources_;
+
+  GLuint service_id_;
 };
 
 } // namespace oxide

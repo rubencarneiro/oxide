@@ -17,83 +17,16 @@
 
 #include "content/browser/gpu/compositor_util.h"
 
-#include "base/command_line.h"
+#include "base/values.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
-#include "content/public/common/content_switches.h"
-#include "gpu/config/gpu_feature_type.h"
-
-#include "shared/common/oxide_constants.h"
 
 namespace content {
 
-namespace {
-
-bool CanDoAcceleratedCompositing() {
-  const GpuDataManagerImpl* manager = GpuDataManagerImpl::GetInstance();
-
-  // Don't use force compositing mode if gpu access has been blocked or
-  // accelerated compositing is blacklisted.
-  if (!manager->GpuAccessAllowed(NULL) ||
-      manager->IsFeatureBlacklisted(
-          gpu::GPU_FEATURE_TYPE_ACCELERATED_COMPOSITING)) {
-    return false;
-  }
-
-  // Check for SwiftShader.
-  if (manager->ShouldUseSwiftShader()) {
-    return false;
-  }
-
-  const base::CommandLine& command_line =
-      *base::CommandLine::ForCurrentProcess();
-  if (command_line.HasSwitch(switches::kDisableAcceleratedCompositing)) {
-    return false;
-  }
-
-  return true;
-}
-
-bool IsForceCompositingModeBlacklisted() {
-  return GpuDataManagerImpl::GetInstance()->IsFeatureBlacklisted(
-      gpu::GPU_FEATURE_TYPE_FORCE_COMPOSITING_MODE);
-}
-
-}
-
 bool IsThreadedCompositingEnabled() {
-  const base::CommandLine command_line =
-      *base::CommandLine::ForCurrentProcess();
-
-  if (command_line.HasSwitch(switches::kDisableForceCompositingMode) ||
-      command_line.HasSwitch(switches::kDisableThreadedCompositing) ||
-      !CanDoAcceleratedCompositing() ||
-      IsForceCompositingModeBlacklisted()) {
-    return false;
-  }
-
   return true;
 }
 
 bool IsForceCompositingModeEnabled() {
-  if (IsThreadedCompositingEnabled()) {
-    return true;
-  }
-
-  const base::CommandLine command_line =
-      *base::CommandLine::ForCurrentProcess();
-
-  if (command_line.HasSwitch(switches::kDisableForceCompositingMode)) {
-    return false;
-  }
-
-  if (command_line.HasSwitch(switches::kForceCompositingMode)) {
-    return true;
-  }
-
-  if (!CanDoAcceleratedCompositing() || IsForceCompositingModeBlacklisted()) {
-    return false;
-  }
-
   return true;
 }
 

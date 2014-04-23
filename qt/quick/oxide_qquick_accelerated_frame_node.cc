@@ -15,46 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_accelerated_render_view_node.h"
+#include "oxide_qquick_accelerated_frame_node.h"
 
 #include <QQuickWindow>
 #include <QSGTexture>
-
-#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
 
 #include "oxide_qquick_render_view_item.h"
 
 namespace oxide {
 namespace qquick {
 
-AcceleratedRenderViewNode::AcceleratedRenderViewNode(RenderViewItem* item) :
+AcceleratedFrameNode::AcceleratedFrameNode(RenderViewItem* item) :
     item_(item) {
   setTextureCoordinatesTransform(QSGSimpleTextureNode::MirrorVertically);
 }
 
-AcceleratedRenderViewNode::~AcceleratedRenderViewNode() {}
+AcceleratedFrameNode::~AcceleratedFrameNode() {}
 
-void AcceleratedRenderViewNode::updateFrontTexture(
-    oxide::qt::TextureHandle* texture_handle) {
-  if (front_texture_ &&
-      static_cast<unsigned int>(front_texture_->textureId()) == texture_handle->GetID() &&
-      front_texture_->textureSize() == texture_handle->GetSize()) {
-    markDirty(QSGNode::DirtyMaterial);
-    return;
-  }
-
-  if (!back_texture_ ||
-      static_cast<unsigned int>(back_texture_->textureId()) != texture_handle->GetID() ||
-      back_texture_->textureSize() != texture_handle->GetSize()) {
-    back_texture_.reset(
-        item_->window()->createTextureFromId(
-          texture_handle->GetID(),
-          texture_handle->GetSize(),
-          QQuickWindow::TextureHasAlphaChannel));
-  }
-
-  front_texture_.swap(back_texture_);
-  setTexture(front_texture_.data());
+void AcceleratedFrameNode::updateTexture(unsigned int texture_id,
+                                         const QSize& size) {
+  texture_.reset(item_->window()->createTextureFromId(
+      texture_id, size,
+      QQuickWindow::TextureHasAlphaChannel));
+  setTexture(texture_.data());
 }
 
 } // namespace qquick

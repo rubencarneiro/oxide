@@ -17,27 +17,34 @@
 
 #include "oxide_gpu_utils.h"
 
+#include "base/bind.h"
+#include "base/callback.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
-#include "base/synchronization/condition_variable.h"
-#include "base/synchronization/lock.h"
+#include "cc/output/compositor_frame_ack.h"
+#include "cc/output/gl_frame_data.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
+#include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/common/gpu/client/gpu_channel_host.h"
 #include "content/common/gpu/client/webgraphicscontext3d_command_buffer_impl.h"
 #include "content/common/gpu/gpu_channel.h"
 #include "content/common/gpu/gpu_channel_manager.h"
 #include "content/common/gpu/gpu_command_buffer_stub.h"
 #include "content/common/gpu/gpu_process_launch_causes.h"
+#include "content/common/gpu/sync_point_manager.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "content/public/browser/browser_thread.h"
-#include "gpu/command_buffer/common/mailbox.h"
+#include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_widget_host.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
 #include "gpu/command_buffer/service/mailbox_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
 #include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
 #include "url/gurl.h"
+
+#include "oxide_render_widget_host_view.h"
 
 namespace oxide {
 
@@ -59,153 +66,6 @@ content::GpuCommandBufferStub* LookupCommandBuffer(int32 client_id,
   return channel->LookupCommandBuffer(route_id);
 }
 
-void ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref,
-                                  int32 client_id,
-                                  int32 route_id) {
-  DCHECK(content::GpuChildThread::message_loop_proxy()->RunsTasksOnCurrentThread());
-  if (content::GpuCommandBufferStub* command_buffer =
-          LookupCommandBuffer(client_id, route_id)) {
-    command_buffer->decoder()->MakeCurrent();
-  }
-  ref->Release();
-}
-
-}
-
-// static
-void TextureHandleTraits::Destruct(const TextureHandle* x) {
-  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    delete x;
-    return;
-  }
-
-  if (!content::BrowserThread::DeleteSoon(content::BrowserThread::UI,
-                                          FROM_HERE, x)) {
-    LOG(ERROR) <<
-        "TextureHandle won't be deleted. This could be due to it "
-        "being leaked until after Chromium shutdown has begun";
-  }
-}
-
-class TextureHandleImpl : public TextureHandle {
- public:
-  TextureHandleImpl(int32 client_id, int32 route_id);
-  ~TextureHandleImpl();
-
-  virtual void Consume(const gpu::Mailbox& mailbox,
-                       const gfx::Size& size) OVERRIDE;
-
-  virtual gfx::Size GetSize() const OVERRIDE;
-  virtual GLuint GetID() OVERRIDE;
-
-  void UpdateTextureResourcesOnGpuThread();
-
- private:
-  void Clear();
-
-  base::Lock lock_;
-  base::ConditionVariable resources_available_;
-
-  bool is_fetch_texture_resources_pending_;
-
-  int32 client_id_;
-  int32 route_id_;
-
-  gpu::gles2::TextureRef* ref_;
-  gpu::Mailbox mailbox_;
-  gfx::Size size_;
-  GLuint service_id_;
-};
-
-void TextureHandleImpl::Clear() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-
-  if (ref_) {
-    content::GpuChildThread::message_loop_proxy()->PostTask(
-        FROM_HERE,
-        base::Bind(&ReleaseTextureRefOnGpuThread,
-                   base::Unretained(ref_),
-                   client_id_, route_id_));
-  }
-
-  service_id_ = 0;
-  mailbox_.SetZero();
-  ref_ = NULL;
-}
-
-TextureHandleImpl::TextureHandleImpl(int32 client_id, int32 route_id) :
-    resources_available_(&lock_),
-    is_fetch_texture_resources_pending_(false),
-    client_id_(client_id),
-    route_id_(route_id),
-    ref_(NULL),
-    service_id_(0) {}
-
-TextureHandleImpl::~TextureHandleImpl() {
-  base::AutoLock lock(lock_);
-  DCHECK(!is_fetch_texture_resources_pending_);
-  Clear();
-}
-
-void TextureHandleImpl::Consume(const gpu::Mailbox& mailbox,
-                                const gfx::Size& size) {
-  if (mailbox == mailbox_ && size == size_) {
-    return;
-  }
-
-  base::AutoLock lock(lock_);
-  Clear();
-  size_ = size;
-  mailbox_ = mailbox;
-
-  if (!is_fetch_texture_resources_pending_ &&
-      GpuUtils::instance()->FetchTextureResources(this)) {
-    is_fetch_texture_resources_pending_ = true;
-  }
-}
-
-gfx::Size TextureHandleImpl::GetSize() const {
-  return size_;
-}
-
-GLuint TextureHandleImpl::GetID() {
-  base::AutoLock lock(lock_);
-  if (is_fetch_texture_resources_pending_) {
-    resources_available_.Wait();
-    DCHECK(!is_fetch_texture_resources_pending_);
-  }
-
-  return service_id_;
-}
-
-void TextureHandleImpl::UpdateTextureResourcesOnGpuThread() {
-  base::AutoLock lock(lock_);
-  DCHECK(is_fetch_texture_resources_pending_);
-  is_fetch_texture_resources_pending_ = false;
-
-  if (mailbox_.IsZero()) {
-    resources_available_.Signal();
-    return;
-  }
-
-  content::GpuCommandBufferStub* command_buffer =
-      LookupCommandBuffer(client_id_, route_id_);
-  if (command_buffer) {
-    gpu::gles2::ContextGroup* group =
-        command_buffer->decoder()->GetContextGroup();
-    gpu::gles2::Texture* texture =
-        group->mailbox_manager()->ConsumeTexture(GL_TEXTURE_2D, mailbox_);
-    if (texture) {
-      ref_ = new gpu::gles2::TextureRef(
-          group->texture_manager(),
-          client_id_,
-          texture);
-      ref_->AddRef();
-      service_id_ = texture->service_id();
-    }
-  }
-
-  resources_available_.Signal();
 }
 
 GpuUtils::GpuUtils() :
@@ -236,7 +96,7 @@ GpuUtils::GpuUtils() :
 
 GpuUtils::~GpuUtils() {}
 
-bool GpuUtils::FetchTextureResources(TextureHandleImpl* handle) {
+bool GpuUtils::FetchTextureResources(AcceleratedFrameHandle* handle) {
   base::AutoLock lock(fetch_texture_resources_lock_);
 
   if (!is_fetch_texture_resources_pending_) {
@@ -253,7 +113,7 @@ bool GpuUtils::FetchTextureResources(TextureHandleImpl* handle) {
 }
 
 void GpuUtils::FetchTextureResourcesOnGpuThread() {
-  std::queue<scoped_refptr<TextureHandleImpl> > queue;
+  std::queue<scoped_refptr<AcceleratedFrameHandle> > queue;
   {
     base::AutoLock lock(fetch_texture_resources_lock_);
     is_fetch_texture_resources_pending_ = false;
@@ -261,7 +121,7 @@ void GpuUtils::FetchTextureResourcesOnGpuThread() {
   }
 
   while (!queue.empty()) {
-    scoped_refptr<TextureHandleImpl> handle = queue.front();
+    scoped_refptr<AcceleratedFrameHandle> handle = queue.front();
     queue.pop();
     handle->UpdateTextureResourcesOnGpuThread();
   }
@@ -294,14 +154,112 @@ gfx::GLSurfaceHandle GpuUtils::GetSharedSurfaceHandle() {
   return handle;
 }
 
-TextureHandle* GpuUtils::CreateTextureHandle() {
-  if (!offscreen_context_) {
-    return NULL;
+AcceleratedFrameHandle* GpuUtils::GetAcceleratedFrameHandle(
+    RenderWidgetHostView* rwhv,
+    uint32 surface_id,
+    const gpu::Mailbox& mailbox,
+    uint32 sync_point,
+    const gfx::Size& size,
+    float scale) {
+  return new AcceleratedFrameHandle(
+      content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId(),
+      offscreen_context_->GetCommandBufferProxy()->GetRouteID(),
+      rwhv, surface_id, mailbox, sync_point, size, scale);
+}
+
+GLuint AcceleratedFrameHandle::GetTextureID() {
+  base::AutoLock lock(lock_);
+  if (did_fetch_texture_resources_) {
+    return service_id_;
   }
 
-  return new TextureHandleImpl(
-      content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId(),
-      offscreen_context_->GetCommandBufferProxy()->GetRouteID());
+  resources_available_condition_.Wait();
+  DCHECK(did_fetch_texture_resources_);
+  return service_id_;  
+}
+
+void AcceleratedFrameHandle::WasFreed() {
+  base::AutoLock lock(lock_);
+  mailbox_.SetZero();
+  service_id_ = 0;
+}
+
+AcceleratedFrameHandle::AcceleratedFrameHandle(
+    int32 client_id,
+    int32 route_id,
+    RenderWidgetHostView* rwhv,
+    uint32 surface_id,
+    const gpu::Mailbox& mailbox,
+    uint32 sync_point,
+    const gfx::Size& size,
+    float scale)
+    : client_id_(client_id),
+      route_id_(route_id),
+      rwhv_(rwhv->AsWeakPtr()),
+      surface_id_(surface_id),
+      mailbox_(mailbox),
+      sync_point_(sync_point),
+      size_in_pixels_(size),
+      device_scale_factor_(scale),
+      resources_available_condition_(&lock_),
+      did_fetch_texture_resources_(false),
+      service_id_(0) {
+  GpuUtils::instance()->FetchTextureResources(this);
+}
+
+AcceleratedFrameHandle::~AcceleratedFrameHandle() {
+  if (!mailbox_.IsZero() && rwhv_ && rwhv_->host()) {
+    cc::CompositorFrameAck ack;
+    ack.gl_frame_data.reset(new cc::GLFrameData());
+    ack.gl_frame_data->mailbox = mailbox_;
+    ack.gl_frame_data->sync_point = 0;
+    ack.gl_frame_data->size = size_in_pixels_;
+    content::RenderWidgetHostImpl::SendReclaimCompositorResources(
+        rwhv_->host()->GetRoutingID(),
+        surface_id_,
+        rwhv_->host()->GetProcess()->GetID(),
+        ack);
+  }
+}
+
+void AcceleratedFrameHandle::UpdateTextureResourcesOnGpuThread() {
+  content::SyncPointManager* manager =
+      content::GpuChildThread::instance()->gpu_channel_manager()->sync_point_manager();
+  if (manager->IsSyncPointRetired(sync_point_)) {
+    OnSyncPointRetired();
+    return;
+  }
+
+  manager->AddSyncPointCallback(
+      sync_point_,
+      base::Bind(&AcceleratedFrameHandle::OnSyncPointRetired,
+                 this));
+}
+
+void AcceleratedFrameHandle::OnSyncPointRetired() {
+  base::AutoLock lock(lock_);
+  DCHECK(!did_fetch_texture_resources_);
+  did_fetch_texture_resources_ = true;
+
+  if (mailbox_.IsZero()) {
+    resources_available_condition_.Signal();
+    return;
+  }
+
+  content::GpuCommandBufferStub* command_buffer =
+      LookupCommandBuffer(client_id_, route_id_);
+  if (command_buffer) {
+    gpu::gles2::ContextGroup* group =
+        command_buffer->decoder()->GetContextGroup();
+    gpu::gles2::Texture* texture =
+        group->mailbox_manager()->ConsumeTexture(GL_TEXTURE_2D, mailbox_);
+    if (texture) {
+      service_id_ = texture->service_id();
+      // XXX(chrisccoulson): Do we leak |texture| here?
+    }
+  }
+
+  resources_available_condition_.Signal();
 }
 
 } // namespace oxide
