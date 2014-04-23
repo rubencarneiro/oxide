@@ -46,7 +46,8 @@ void RenderViewItem::geometryChanged(const QRectF& new_geometry,
 RenderViewItem::RenderViewItem() :
     QQuickItem(),
     received_new_compositor_frame_(false) {
-  setFlag(QQuickItem::ItemHasContents);
+  setFlags(QQuickItem::ItemHasContents |
+           QQuickItem::ItemClipsChildrenToShape);
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
