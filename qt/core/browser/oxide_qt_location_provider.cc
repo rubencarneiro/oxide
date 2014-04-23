@@ -21,7 +21,6 @@
 
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
-#include <QGeoPositionInfoSource>
 #include <QMutexLocker>
 
 #include "base/bind.h"
@@ -130,7 +129,8 @@ LocationSource::LocationSource(LocationProvider* provider, bool start) :
     qRegisterMetaType<QGeoPositionInfo>();
     connect(source_, SIGNAL(positionUpdated(const QGeoPositionInfo&)),
             SLOT(positionUpdated(const QGeoPositionInfo&)));
-    connect(source_, SIGNAL(updateTimeout()), SLOT(updateTimeout()));
+    connect(source_, SIGNAL(error(QGeoPositionInfoSource::Error)),
+            SLOT(error(QGeoPositionInfoSource::Error)));
     if (start) {
       source_->requestUpdate();
     }
@@ -163,12 +163,27 @@ void LocationSource::requestUpdate() const {
 void LocationSource::positionUpdated(const QGeoPositionInfo& info) {
   if (info.isValid()) {
     provider_->notifyCallbackOnGeolocationThread(geopositionFromQt(info));
+  } else {
+    content::Geoposition error;
+    error.error_code = content::Geoposition::ERROR_CODE_POSITION_UNAVAILABLE;
+    provider_->notifyCallbackOnGeolocationThread(error);
   }
 }
 
-void LocationSource::updateTimeout() {
+void LocationSource::error(QGeoPositionInfoSource::Error error) {
   content::Geoposition position;
-  position.error_code = content::Geoposition::ERROR_CODE_TIMEOUT;
+  switch (error) {
+    case QGeoPositionInfoSource::AccessError:
+    case QGeoPositionInfoSource::ClosedError:
+      position.error_code = content::Geoposition::ERROR_CODE_PERMISSION_DENIED;
+      break;
+    case QGeoPositionInfoSource::UnknownSourceError:
+      position.error_code = content::Geoposition::ERROR_CODE_POSITION_UNAVAILABLE;
+      break;
+    case QGeoPositionInfoSource::NoError:
+    default:
+      return;
+  }
   provider_->notifyCallbackOnGeolocationThread(position);
 }
 

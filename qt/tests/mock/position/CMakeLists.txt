@@ -28,4 +28,4 @@ add_definitions(-DQT_PLUGIN)
 
 add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
 
-qt5_use_modules(${PLUGIN} Core Positioning)
+qt5_use_modules(${PLUGIN} Core Gui Positioning)

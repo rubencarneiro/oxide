@@ -9,22 +9,33 @@ TestWebView {
   width: 200
   height: 200
 
-  function geolocation_succeeded() {
+  property string testcase: ""
+
+  function expect_result(expected) {
     var result = webView.getTestApi().evaluateCode(
         "document.querySelector(\"#location\").innerHTML");
-    return (result === "OK");
+    return (result === expected);
   }
 
   TestCase {
     name: "geolocation"
     when: windowShown
 
-    function test_geolocation() {
+    function test_geolocation_data() {
+      return [
+        { testcase: "", result: "OK" },
+        { testcase: "timeout", result: "TIMEOUT" },
+        { testcase: "error-permission", result: "PERMISSION DENIED" },
+        { testcase: "error-unavailable", result: "POSITION UNAVAILABLE" }
+      ];
+    }
+
+    function test_geolocation(data) {
+      webView.testcase = data.testcase;
       webView.url = "http://localhost:8080/tst_geolocation.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      verify(webView.waitFor(webView.geolocation_succeeded),
-             "Geolocation failed");
+      verify(webView.waitFor(function() { return expect_result(data.result); }));
     }
   }
 }

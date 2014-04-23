@@ -21,6 +21,7 @@
 #include "base/message_loop/message_loop.h"
 #include "content/browser/geolocation/location_provider_base.h"
 
+#include <QGeoPositionInfoSource>
 #include <QMutex>
 #include <QObject>
 #include <QtGlobal>
@@ -28,7 +29,6 @@
 
 QT_BEGIN_NAMESPACE
 class QGeoPositionInfo;
-class QGeoPositionInfoSource;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -77,8 +77,8 @@ class LocationSource Q_DECL_FINAL : public QObject {
   void requestUpdate() const;
 
  private Q_SLOTS:
-  void positionUpdated(const QGeoPositionInfo&);
-  void updateTimeout();
+  void positionUpdated(const QGeoPositionInfo& info);
+  void error(QGeoPositionInfoSource::Error error);
 
  private:
   LocationProvider* provider_;

@@ -3,18 +3,28 @@
   <h1>geolocation</h1>
   <div id="location"></div>
   <script>
+    function report_result(result) {
+      document.querySelector('#location').innerHTML = result;
+    }
+
     function success(position) {
-      document.querySelector('#location').innerHTML = 'OK';
+      report_result('OK');
     }
 
     function error(err) {
-      document.querySelector('#location').innerHTML = 'FAIL';
+      if (err.code === 1) {
+        report_result('PERMISSION DENIED');
+      } else if (err.code === 2) {
+        report_result('POSITION UNAVAILABLE');
+      } else if (err.code === 3) {
+        report_result('TIMEOUT');
+      }
     }
 
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(success, error);
+      navigator.geolocation.getCurrentPosition(success, error, { timeout: 3000});
     } else {
-      error('not supported');
+      report_result('NOT SUPPORTED');
     }
   </script>
 </body>

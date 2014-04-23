@@ -19,6 +19,7 @@
 
 #include <QDateTime>
 #include <QGeoCoordinate>
+#include <QGuiApplication>
 #include <QtGlobal>
 #include <QTimer>
 
@@ -66,7 +67,24 @@ void SourceMock::stopUpdates() {}
 
 void SourceMock::requestUpdate(int timeout) {
   Q_UNUSED(timeout);
-  QTimer::singleShot((int) rand(1., 1000.), this, SLOT(sendUpdate()));
+  QString testcase;
+  QObject* focusObject = QGuiApplication::focusObject();
+  if (focusObject) {
+    QVariant property = focusObject->property("testcase");
+    if (property.isValid()) {
+      testcase = property.toString();
+    }
+  }
+  if (testcase == "timeout") {
+    Q_EMIT updateTimeout();
+  } else if (testcase == "error-permission") {
+    Q_EMIT QGeoPositionInfoSource::error(QGeoPositionInfoSource::AccessError);
+  } else if (testcase == "error-unavailable") {
+    Q_EMIT QGeoPositionInfoSource::error(
+        QGeoPositionInfoSource::UnknownSourceError);
+  } else {
+    QTimer::singleShot((int) rand(1., 1000.), this, SLOT(sendUpdate()));
+  }
 }
 
 void SourceMock::sendUpdate() {
