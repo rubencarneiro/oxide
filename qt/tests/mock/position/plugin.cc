@@ -24,7 +24,7 @@ QGeoPositionInfoSource* PositionMock::positionInfoSource(QObject* parent) {
 }
 
 QGeoSatelliteInfoSource* PositionMock::satelliteInfoSource(QObject* parent) {
-  Q_UNUSED(parent)
+  Q_UNUSED(parent);
   return 0;
 }
 
