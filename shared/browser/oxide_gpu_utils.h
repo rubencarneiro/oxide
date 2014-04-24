@@ -37,6 +37,12 @@ namespace content {
 class WebGraphicsContext3DCommandBufferImpl;
 }
 
+namespace gpu {
+namespace gles2 {
+class TextureRef;
+}
+}
+
 namespace oxide {
 
 class AcceleratedFrameHandle;
@@ -105,6 +111,8 @@ class AcceleratedFrameHandle :
   void UpdateTextureResourcesOnGpuThread();
   void OnSyncPointRetired();
 
+  void FreeTextureRef();
+
   int32 client_id_;
   int32 route_id_;
 
@@ -119,6 +127,7 @@ class AcceleratedFrameHandle :
   base::ConditionVariable resources_available_condition_;
   bool did_fetch_texture_resources_;
 
+  gpu::gles2::TextureRef* ref_;
   GLuint service_id_;
 };
 

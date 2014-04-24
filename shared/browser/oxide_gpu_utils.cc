@@ -66,6 +66,17 @@ content::GpuCommandBufferStub* LookupCommandBuffer(int32 client_id,
   return channel->LookupCommandBuffer(route_id);
 }
 
+void ReleaseTextureRefOnGpuThread(gpu::gles2::TextureRef* ref,
+                                  int32 client_id,
+                                  int32 route_id) {
+  DCHECK(content::GpuChildThread::message_loop_proxy()->RunsTasksOnCurrentThread());
+  if (content::GpuCommandBufferStub* command_buffer =
+          LookupCommandBuffer(client_id, route_id)) {
+    command_buffer->decoder()->MakeCurrent();
+  }
+  ref->Release();
+}
+
 }
 
 GpuUtils::GpuUtils() :
@@ -182,6 +193,7 @@ void AcceleratedFrameHandle::WasFreed() {
   base::AutoLock lock(lock_);
   mailbox_.SetZero();
   service_id_ = 0;
+  FreeTextureRef();
 }
 
 AcceleratedFrameHandle::AcceleratedFrameHandle(
@@ -203,11 +215,14 @@ AcceleratedFrameHandle::AcceleratedFrameHandle(
       device_scale_factor_(scale),
       resources_available_condition_(&lock_),
       did_fetch_texture_resources_(false),
+      ref_(NULL),
       service_id_(0) {
   GpuUtils::instance()->FetchTextureResources(this);
 }
 
 AcceleratedFrameHandle::~AcceleratedFrameHandle() {
+  FreeTextureRef();
+
   if (!mailbox_.IsZero() && rwhv_ && rwhv_->host()) {
     cc::CompositorFrameAck ack;
     ack.gl_frame_data.reset(new cc::GLFrameData());
@@ -254,12 +269,26 @@ void AcceleratedFrameHandle::OnSyncPointRetired() {
     gpu::gles2::Texture* texture =
         group->mailbox_manager()->ConsumeTexture(GL_TEXTURE_2D, mailbox_);
     if (texture) {
+      ref_ = new gpu::gles2::TextureRef(group->texture_manager(),
+                                        client_id_,
+                                        texture);
+      ref_->AddRef();
       service_id_ = texture->service_id();
-      // XXX(chrisccoulson): Do we leak |texture| here?
     }
   }
 
   resources_available_condition_.Signal();
+}
+
+void AcceleratedFrameHandle::FreeTextureRef() {
+  if (ref_) {
+    content::GpuChildThread::message_loop_proxy()->PostTask(
+        FROM_HERE,
+        base::Bind(&ReleaseTextureRefOnGpuThread,
+                   base::Unretained(ref_),
+                   client_id_, route_id_));
+    ref_ = NULL;
+  }
 }
 
 } // namespace oxide
