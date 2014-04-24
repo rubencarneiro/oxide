@@ -215,12 +215,18 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 
 void RenderViewItem::updatePolish() {
   if (GetCompositorFrameType() ==
-      oxide::qt::COMPOSITOR_FRAME_TYPE_ACCELERATED) {
-    accelerated_frame_data_ = GetAcceleratedFrameTextureHandle();
-  } else if (GetCompositorFrameType() ==
-             oxide::qt::COMPOSITOR_FRAME_TYPE_SOFTWARE) {
+      oxide::qt::COMPOSITOR_FRAME_TYPE_SOFTWARE) {
     software_frame_data_ = GetSoftwareFrameImage();
   }
+#if defined(ENABLE_COMPOSITING)
+  else if (GetCompositorFrameType() ==
+           oxide::qt::COMPOSITOR_FRAME_TYPE_ACCELERATED) {
+    accelerated_frame_data_ = GetAcceleratedFrameTextureHandle();
+  }
+#else
+  Q_ASSERT(GetCompositorFrameType() !=
+           oxide::qt::COMPOSITOR_FRAME_TYPE_ACCELERATED);
+#endif
 }
 
 QSGNode* RenderViewItem::updatePaintNode(
