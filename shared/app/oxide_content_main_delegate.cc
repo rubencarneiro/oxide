@@ -159,13 +159,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (!shared_gl_context ||
         shared_gl_context->GetImplementation() != gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
-
-      if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
-        flags &= ~BrowserProcessMain::ENABLE_VIEWPORT;
-        LOG(WARNING) <<
-          "Disabling viewport mode and pinch gestures, which do not work "
-          "correctly without compositing";
-      }
     }
 
     if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
