@@ -64,6 +64,8 @@ void RenderViewItem::DidUpdatePaintNode(oxide::qt::CompositorFrameType type) {
     received_new_compositor_frame_ = false;
     DidComposite();
   }
+  software_frame_data_ = QImage();
+  accelerated_frame_data_ = oxide::qt::AcceleratedFrameTextureHandle();
 }
 
 RenderViewItem::RenderViewItem() :
