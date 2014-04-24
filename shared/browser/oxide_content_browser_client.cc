@@ -51,6 +51,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
+#include "oxide_form_factor.h"
 #include "oxide_gpu_utils.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
@@ -254,6 +255,22 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     };
     command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                    kSwitchNames, arraysize(kSwitchNames));
+
+    const char* form_factor_string = NULL;
+    switch (GetFormFactorHint()) {
+      case FORM_FACTOR_DESKTOP:
+        form_factor_string = switches::kFormFactorDesktop;
+        break;
+      case FORM_FACTOR_TABLET:
+        form_factor_string = switches::kFormFactorTablet;
+        break;
+      case FORM_FACTOR_PHONE:
+        form_factor_string = switches::kFormFactorPhone;
+        break;
+      default:
+        NOTREACHED();
+    }
+    command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
   }
 }
 
@@ -329,6 +346,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->supports_multiple_windows = view->CanCreateWindows();
 
   prefs->enable_scroll_animator = true;
+
+  FormFactor form_factor = GetFormFactorHint();
+  if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
+    prefs->shrinks_standalone_images_to_fit = false;
+  }
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {

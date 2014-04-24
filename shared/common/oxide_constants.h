@@ -35,6 +35,10 @@ namespace switches {
 extern const char kSandboxExe[];
 extern const char kEnableGoogleTalkPlugin[];
 extern const char kDisableForceCompositingMode[];
+extern const char kFormFactor[];
+extern const char kFormFactorDesktop[];
+extern const char kFormFactorTablet[];
+extern const char kFormFactorPhone[];
 
 } // namespace switches
 

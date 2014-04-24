@@ -160,8 +160,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
 
-    if (GetFormFactorHint() == FORM_FACTOR_PHONE ||
-        GetFormFactorHint() == FORM_FACTOR_TABLET) {
+    FormFactor form_factor = GetFormFactorHint();
+    if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
       command_line->AppendSwitch(switches::kEnableViewport);
       command_line->AppendSwitch(switches::kEnableViewportMeta);
       command_line->AppendSwitch(switches::kEnablePinch);

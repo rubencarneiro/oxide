@@ -22,5 +22,9 @@ namespace switches {
 const char kSandboxExe[] = "sandbox-exe";
 const char kEnableGoogleTalkPlugin[] = "enable-google-talk-plugin";
 const char kDisableForceCompositingMode[] = "disable-force-compositing-mode";
+const char kFormFactor[] = "form-factor";
+const char kFormFactorDesktop[] = "desktop";
+const char kFormFactorTablet[] = "tablet";
+const char kFormFactorPhone[] = "phone";
 
 } // namespace switches
