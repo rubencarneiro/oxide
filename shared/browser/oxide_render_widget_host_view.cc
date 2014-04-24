@@ -63,6 +63,12 @@ bool ShouldSendPinchGesture() {
   return pinch_allowed;
 }
 
+bool IsUsingSoftwareCompositing() {
+  static bool sw_compositing =
+      CommandLine::ForCurrentProcess()->HasSwitch(switches::kDisableGpuCompositing);
+  return sw_compositing;
+}
+
 }
 
 SoftwareFrameHandle::SoftwareFrameHandle(RenderWidgetHostView* rwhv,
@@ -230,12 +236,6 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
 void RenderWidgetHostView::OnSwapCompositorFrame(
     uint32 output_surface_id,
     scoped_ptr<cc::CompositorFrame> frame) {
-  if (!frame->software_frame_data && !frame->gl_frame_data) {
-    DLOG(ERROR) << "Invalid swap compositor frame message received";
-    host_->GetProcess()->ReceivedBadMessage();
-    return;
-  }
-
   {
     base::AutoLock lock(compositor_frame_ack_callback_lock_);
     if (!compositor_frame_ack_callback_.is_null()) {
@@ -246,17 +246,20 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
 
     compositor_frame_ack_callback_ =
         base::Bind(&RenderWidgetHostView::SendSwapCompositorFrameAck,
-                   AsWeakPtr(), output_surface_id,
-                   frame->gl_frame_data ? true : false);
+                   AsWeakPtr(), output_surface_id);
   }
 
-  DCHECK(!previous_software_frame_ && !previous_accelerated_frame_);
+  if (IsUsingSoftwareCompositing()) {
+    DCHECK(!current_accelerated_frame_ && !previous_accelerated_frame_);
+    DCHECK(!previous_software_frame_);
 
-  previous_software_frame_.swap(current_software_frame_);
-  previous_accelerated_frame_.swap(current_accelerated_frame_);
+    if (!frame->software_frame_data) {
+      DLOG(ERROR) << "Invalid swap software compositor frame message received";
+      host_->GetProcess()->ReceivedBadMessage();
+      return;
+    }
 
-  if (frame->software_frame_data) {
-    DCHECK(!previous_accelerated_frame_);
+    previous_software_frame_.swap(current_software_frame_);
 
     scoped_ptr<cc::SharedBitmap> shared_bitmap =
         content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
@@ -284,13 +287,16 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  DCHECK(!previous_software_frame_);
+  DCHECK(!current_software_frame_ && previous_software_frame_);
+  DCHECK(!previous_accelerated_frame_);
 
-  if (frame->gl_frame_data->mailbox.IsZero()) {
-    DLOG(ERROR) << "Renderer didn't specify mailbox";
+  if (!frame->gl_frame_data || frame->gl_frame_data->mailbox.IsZero()) {
+    DLOG(ERROR) << "Invalid swap accelerated compositor frame message received";
     host_->GetProcess()->ReceivedBadMessage();
     return;
   }
+
+  previous_accelerated_frame_.swap(current_accelerated_frame_);
 
   current_accelerated_frame_ =
       GpuUtils::instance()->GetAcceleratedFrameHandle(
@@ -421,10 +427,9 @@ void RenderWidgetHostView::SwapAcceleratedFrame() {
   DidCommitCompositorFrame();
 }
 
-void RenderWidgetHostView::SendSwapCompositorFrameAck(uint32 surface_id,
-                                                      bool accelerated) {
+void RenderWidgetHostView::SendSwapCompositorFrameAck(uint32 surface_id) {
   cc::CompositorFrameAck ack;
-  if (!accelerated) {
+  if (IsUsingSoftwareCompositing()) {
     if (previous_software_frame_) {
       ack.last_software_frame_id = previous_software_frame_->frame_id();
 

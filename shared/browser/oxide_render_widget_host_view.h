@@ -227,7 +227,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   virtual void SwapSoftwareFrame();
   virtual void SwapAcceleratedFrame();
 
-  void SendSwapCompositorFrameAck(uint32 surface_id, bool accelerated);
+  void SendSwapCompositorFrameAck(uint32 surface_id);
   static void SendSwapCompositorFrameAckOnMainThread(
       SendSwapCompositorFrameAckCallback ack);
 
