@@ -57,7 +57,7 @@ class GpuUtils FINAL : public base::RefCountedThreadSafe<GpuUtils> {
 
   gfx::GLSurfaceHandle GetSharedSurfaceHandle();
 
-  AcceleratedFrameHandle* GetAcceleratedFrameHandle(
+  scoped_refptr<AcceleratedFrameHandle> GetAcceleratedFrameHandle(
       RenderWidgetHostView* rwhv,
       uint32 surface_id,
       const gpu::Mailbox& mailbox,
@@ -68,7 +68,6 @@ class GpuUtils FINAL : public base::RefCountedThreadSafe<GpuUtils> {
  private:
   typedef content::WebGraphicsContext3DCommandBufferImpl WGC3DCBI;
   friend class base::RefCountedThreadSafe<GpuUtils>;
-  friend class AcceleratedFrameHandle;
 
   GpuUtils();
   ~GpuUtils();

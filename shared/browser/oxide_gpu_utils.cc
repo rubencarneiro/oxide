@@ -165,17 +165,19 @@ gfx::GLSurfaceHandle GpuUtils::GetSharedSurfaceHandle() {
   return handle;
 }
 
-AcceleratedFrameHandle* GpuUtils::GetAcceleratedFrameHandle(
+scoped_refptr<AcceleratedFrameHandle> GpuUtils::GetAcceleratedFrameHandle(
     RenderWidgetHostView* rwhv,
     uint32 surface_id,
     const gpu::Mailbox& mailbox,
     uint32 sync_point,
     const gfx::Size& size,
     float scale) {
-  return new AcceleratedFrameHandle(
+  scoped_refptr<AcceleratedFrameHandle> handle = new AcceleratedFrameHandle(
       content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId(),
       offscreen_context_->GetCommandBufferProxy()->GetRouteID(),
       rwhv, surface_id, mailbox, sync_point, size, scale);
+  FetchTextureResources(handle);
+  return handle;
 }
 
 GLuint AcceleratedFrameHandle::GetTextureID() {
@@ -216,9 +218,7 @@ AcceleratedFrameHandle::AcceleratedFrameHandle(
       resources_available_condition_(&lock_),
       did_fetch_texture_resources_(false),
       ref_(NULL),
-      service_id_(0) {
-  GpuUtils::instance()->FetchTextureResources(this);
-}
+      service_id_(0) {}
 
 AcceleratedFrameHandle::~AcceleratedFrameHandle() {
   FreeTextureRef();
