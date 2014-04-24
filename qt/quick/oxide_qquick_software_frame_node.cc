@@ -15,23 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_main.h"
+#include "oxide_qquick_software_frame_node.h"
 
-#include "base/memory/scoped_ptr.h"
-#include "content/public/app/content_main.h"
+#include <QImage>
+#include <QQuickWindow>
 
-#include "oxide_content_main_delegate.h"
+#include "oxide_qquick_render_view_item.h"
 
 namespace oxide {
+namespace qquick {
 
-int OxideMain(int argc, const char** argv) {
-  scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+SoftwareFrameNode::SoftwareFrameNode(RenderViewItem* item)
+    : item_(item) {}
 
-  content::ContentMainParams params(delegate.get());
-  params.argc = argc;
-  params.argv = argv;
-
-  return content::ContentMain(params);
+void SoftwareFrameNode::setImage(const QImage& image) {
+  texture_.reset(item_->window()->createTextureFromImage(
+      image, QQuickWindow::TextureHasAlphaChannel));
+  setTexture(texture_.data());
 }
 
+} // namespace qquick
 } // namespace oxide

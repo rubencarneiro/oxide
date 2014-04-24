@@ -143,8 +143,10 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
-
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
+
+    // Stop-gap measure until we support the delegated renderer
+    command_line->AppendSwitch(cc::switches::kCompositeToMailbox);
 
     int flags = BrowserProcessMain::instance()->flags();
 
@@ -156,9 +158,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
         BrowserProcessMain::instance()->shared_gl_context();
     if (!shared_gl_context ||
         shared_gl_context->GetImplementation() != gfx::GetGLImplementation()) {
-      command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
-      command_line->AppendSwitch(switches::kDisableForceCompositingMode);
-      command_line->AppendSwitch(switches::kDisableThreadedCompositing);
+      command_line->AppendSwitch(switches::kDisableGpuCompositing);
 
       if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
         flags &= ~BrowserProcessMain::ENABLE_VIEWPORT;

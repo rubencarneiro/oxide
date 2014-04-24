@@ -56,7 +56,6 @@
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
 #include "shared/browser/oxide_form_factor.h"
 
-#include "oxide_qt_backing_store.h"
 #include "oxide_qt_web_view.h"
 
 QT_USE_NAMESPACE
@@ -739,11 +738,6 @@ void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
   }
 }
 
-content::BackingStore* RenderWidgetHostView::AllocBackingStore(
-    const gfx::Size& size) {
-  return new BackingStore(GetRenderWidgetHost(), size, GetDeviceScaleFactor());
-}
-
 void RenderWidgetHostView::GetScreenInfo(
     blink::WebScreenInfo* results) {
   QScreen* screen = delegate_->GetScreen();
@@ -783,17 +777,13 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   }
 }
 
-void RenderWidgetHostView::Paint(const gfx::Rect& rect) {
-  gfx::Rect scaled_rect(
-      gfx::ScaleToEnclosingRect(rect, GetDeviceScaleFactor()));
-  delegate_->SchedulePaintForRectPix(
-      QRect(scaled_rect.x(),
-            scaled_rect.y(),
-            scaled_rect.width(),
-            scaled_rect.height()));
+void RenderWidgetHostView::SwapSoftwareFrame() {
+  delegate_->SetCompositorFrameType(COMPOSITOR_FRAME_TYPE_SOFTWARE);
+  delegate_->ScheduleUpdate();
 }
 
-void RenderWidgetHostView::BuffersSwapped() {
+void RenderWidgetHostView::SwapAcceleratedFrame() {
+  delegate_->SetCompositorFrameType(COMPOSITOR_FRAME_TYPE_ACCELERATED);
   delegate_->ScheduleUpdate();
 }
 
@@ -801,7 +791,6 @@ RenderWidgetHostView::RenderWidgetHostView(
     content::RenderWidgetHost* render_widget_host,
     RenderWidgetHostViewDelegate* delegate) :
     oxide::RenderWidgetHostView(render_widget_host),
-    backing_store_(NULL),
     delegate_(delegate),
     input_type_(ui::TEXT_INPUT_TYPE_NONE) {
   delegate->rwhv_ = this;
@@ -1029,22 +1018,6 @@ void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
 
 void RenderWidgetHostView::HandleGeometryChanged() {
   OnResize();
-}
-
-void RenderWidgetHostView::DidComposite(bool skipped) {
-  AcknowledgeBuffersSwapped(skipped);
-}
-
-const QPixmap* RenderWidgetHostView::GetBackingStore() {
-  content::RenderWidgetHostImpl* rwh =
-      content::RenderWidgetHostImpl::From(GetRenderWidgetHost());
-  BackingStore* backing_store =
-      static_cast<BackingStore *>(rwh->GetBackingStore(!rwh->empty()));
-  if (!backing_store) {
-    return NULL;
-  }
-
-  return backing_store->pixmap();
 }
 
 QVariant RenderWidgetHostView::InputMethodQuery(

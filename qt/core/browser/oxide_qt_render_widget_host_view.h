@@ -45,7 +45,6 @@ QT_USE_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class BackingStore;
 class RenderWidgetHostViewDelegate;
 
 class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
@@ -73,10 +72,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void HandleTouchEvent(QTouchEvent* event);
   void HandleGeometryChanged();
 
-  void DidComposite(bool skipped);
-
-  const QPixmap* GetBackingStore();
-
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
  private:
@@ -92,8 +87,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   void UpdateCursor(const content::WebCursor& cursor) FINAL;
 
-  content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
-
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
@@ -104,10 +97,9 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ImeCancelComposition() FINAL;
   void FocusedNodeChanged(bool is_editable_node) FINAL;
 
-  void Paint(const gfx::Rect& rect) FINAL;
-  void BuffersSwapped() FINAL;
+  void SwapSoftwareFrame() FINAL;
+  void SwapAcceleratedFrame() FINAL;
 
-  BackingStore* backing_store_;
   scoped_ptr<RenderWidgetHostViewDelegate> delegate_;
 
   ui::TextInputType input_type_;

@@ -59,8 +59,6 @@
         'app/oxide_qt_content_main_delegate.cc',
         'app/oxide_qt_content_main_delegate.h',
         'browser/oxide_default_screen_info.cc',
-        'browser/oxide_qt_backing_store.cc',
-        'browser/oxide_qt_backing_store.h',
         'browser/oxide_qt_content_browser_client.cc',
         'browser/oxide_qt_content_browser_client.h',
         'browser/oxide_qt_file_picker.cc',

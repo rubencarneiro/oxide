@@ -17,59 +17,29 @@
 
 #include "oxide_qt_render_widget_host_view_delegate.h"
 
-#include "base/memory/ref_counted.h"
 #include "ui/gfx/size.h"
 
 #include "shared/browser/oxide_gpu_utils.h"
-#include "qt/core/browser/oxide_qt_backing_store.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 
 namespace oxide {
 namespace qt {
 
-namespace {
-
-class TextureHandleImpl FINAL : public TextureHandle {
- public:
-  TextureHandleImpl() {}
-  ~TextureHandleImpl() {}
-
-  unsigned int GetID() const FINAL;
-  QSize GetSize() const FINAL;
-
-  void SetHandle(oxide::TextureHandle* handle);
-
- private:
-  scoped_refptr<oxide::TextureHandle> handle_;
-};
-
-unsigned int TextureHandleImpl::GetID() const {
+unsigned int AcceleratedFrameTextureHandle::GetID() {
   if (!handle_) {
     return 0;
   }
 
-  return handle_->GetID();
+  return handle_->GetTextureID();
 }
 
-QSize TextureHandleImpl::GetSize() const {
-  if (!handle_) {
-    return QSize();
-  }
-
-  gfx::Size size(handle_->GetSize());
-  return QSize(size.width(), size.height());
-}
-
-void TextureHandleImpl::SetHandle(oxide::TextureHandle* handle) {
-  handle_ = handle;
-}
-
+bool AcceleratedFrameTextureHandle::IsValid() {
+  return handle_ != NULL;
 }
 
 RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate() :
     rwhv_(NULL),
-    texture_handle_(new TextureHandleImpl()),
-    backing_store_(NULL) {}
+    compositor_frame_type_(COMPOSITOR_FRAME_TYPE_INVALID) {}
 
 void RenderWidgetHostViewDelegate::HandleFocusEvent(QFocusEvent* event) {
   rwhv_->HandleFocusEvent(event);
@@ -101,13 +71,34 @@ void RenderWidgetHostViewDelegate::HandleGeometryChanged() {
   rwhv_->HandleGeometryChanged();
 }
 
-void RenderWidgetHostViewDelegate::UpdateTextureHandle() {
-  static_cast<TextureHandleImpl *>(texture_handle_.data())->SetHandle(
-      rwhv_->GetCurrentTextureHandle());
+CompositorFrameType
+RenderWidgetHostViewDelegate::GetCompositorFrameType() const {
+  return compositor_frame_type_;
 }
 
-void RenderWidgetHostViewDelegate::DidComposite(bool skipped) {
-  rwhv_->DidComposite(skipped);
+QImage RenderWidgetHostViewDelegate::GetSoftwareFrameImage() {
+  DCHECK_EQ(compositor_frame_type_, COMPOSITOR_FRAME_TYPE_SOFTWARE);
+  oxide::SoftwareFrameHandle* handle = rwhv_->GetCurrentSoftwareFrameHandle();
+
+  return QImage(static_cast<uchar *>(handle->GetPixels()),
+                handle->size_in_pixels().width(),
+                handle->size_in_pixels().height(),
+                QImage::Format_ARGB32);
+}
+
+AcceleratedFrameTextureHandle
+RenderWidgetHostViewDelegate::GetAcceleratedFrameTextureHandle() {
+  DCHECK_EQ(compositor_frame_type_, COMPOSITOR_FRAME_TYPE_ACCELERATED);
+  oxide::AcceleratedFrameHandle* handle = rwhv_->GetCurrentAcceleratedFrameHandle();
+
+  return AcceleratedFrameTextureHandle(
+      handle,
+      QSize(handle->size_in_pixels().width(),
+            handle->size_in_pixels().height()));
+}
+
+void RenderWidgetHostViewDelegate::DidComposite() {
+  rwhv_->DidCommitCompositorFrame();
 }
 
 QVariant RenderWidgetHostViewDelegate::InputMethodQuery(
@@ -115,17 +106,14 @@ QVariant RenderWidgetHostViewDelegate::InputMethodQuery(
   return rwhv_->InputMethodQuery(query);
 }
 
-const QPixmap* RenderWidgetHostViewDelegate::GetBackingStore() {
-  const QPixmap* backing_store = backing_store_;
-  backing_store_ = NULL;
-  return backing_store;
-}
-
-void RenderWidgetHostViewDelegate::UpdateBackingStore() {
-  backing_store_ = rwhv_->GetBackingStore();
-}
-
 RenderWidgetHostViewDelegate::~RenderWidgetHostViewDelegate() {}
+
+void RenderWidgetHostViewDelegate::SetCompositorFrameType(
+    CompositorFrameType type) {
+  DCHECK(compositor_frame_type_ == COMPOSITOR_FRAME_TYPE_INVALID ||
+         compositor_frame_type_ == type);
+  compositor_frame_type_ = type;
+}
 
 } // namespace qt
 } // namespace oxide

@@ -20,6 +20,7 @@
 
 #include <QQuickItem>
 #include <QCursor>
+#include <QImage>
 #include <QRect>
 #include <QtGlobal>
 
@@ -61,7 +62,6 @@ class RenderViewItem Q_DECL_FINAL :
 
   void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
 
-  void SchedulePaintForRectPix(const QRect& rect) Q_DECL_FINAL;
   void ScheduleUpdate() Q_DECL_FINAL;
 
   void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
@@ -90,14 +90,17 @@ class RenderViewItem Q_DECL_FINAL :
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
  private:
+  friend class UpdatePaintNodeContext;
+
   void geometryChanged(const QRectF& new_geometry,
                        const QRectF& old_geometry) Q_DECL_FINAL;
+  void DidUpdatePaintNode(oxide::qt::CompositorFrameType type);
 
-  QRect dirty_rect_;
+  bool received_new_compositor_frame_;
+  oxide::qt::CompositorFrameType last_composited_frame_type_;
 
-  bool is_compositing_enabled_;
-  bool is_compositing_enabled_state_changed_;
-  bool composite_requested_by_chromium_;
+  QImage software_frame_data_;
+  oxide::qt::AcceleratedFrameTextureHandle accelerated_frame_data_;
 
   Q_DISABLE_COPY(RenderViewItem);
 };

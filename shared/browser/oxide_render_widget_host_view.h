@@ -35,6 +35,10 @@
 
 typedef unsigned int GLuint;
 
+namespace cc {
+class SharedBitmap;
+}
+
 namespace content {
 class RenderWidgetHostImpl;
 }
@@ -46,8 +50,35 @@ class TouchEvent;
 
 namespace oxide {
 
-class TextureHandle;
+class AcceleratedFrameHandle;
+class RenderWidgetHostView;
 class WebView;
+
+class SoftwareFrameHandle FINAL {
+ public:
+  SoftwareFrameHandle(RenderWidgetHostView* rwhv,
+                      unsigned frame_id,
+                      uint32 surface_id,
+                      scoped_ptr<cc::SharedBitmap> bitmap,
+                      const gfx::Size& size,
+                      float scale);
+  ~SoftwareFrameHandle();
+
+  void* GetPixels();
+  unsigned frame_id() const { return frame_id_; }
+  gfx::Size size_in_pixels() const { return size_in_pixels_; }
+  float device_scale_factor() const { return device_scale_factor_; }
+
+  void WasFreed();
+
+ private:
+  RenderWidgetHostView* rwhv_;
+  unsigned frame_id_;
+  uint32 surface_id_;
+  scoped_ptr<cc::SharedBitmap> bitmap_;
+  gfx::Size size_in_pixels_;
+  float device_scale_factor_;
+};
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
@@ -63,7 +94,10 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   void SetBounds(const gfx::Rect& rect) FINAL;
 
-  TextureHandle* GetCurrentTextureHandle();
+  SoftwareFrameHandle* GetCurrentSoftwareFrameHandle();
+  AcceleratedFrameHandle* GetCurrentAcceleratedFrameHandle();
+
+  void DidCommitCompositorFrame();
 
  protected:
   RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
@@ -74,8 +108,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void OnFocus();
   void OnBlur();
   void OnResize();
-
-  void AcknowledgeBuffersSwapped(bool skipped);
 
   gfx::Rect caret_rect() const { return caret_rect_; }
   size_t selection_cursor_position() const {
@@ -88,12 +120,14 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void HandleTouchEvent(const ui::TouchEvent& event);
 
  private:
-  typedef base::Callback<void(bool)> AcknowledgeBufferPresentCallback;
+  typedef base::Callback<void(void)> SendSwapCompositorFrameAckCallback;
 
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) FINAL;
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) FINAL;
+
+  content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
 
   void MovePluginWindows(
       const gfx::Vector2d& scroll_offset,
@@ -156,6 +190,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   bool HasAcceleratedSurface(const gfx::Size& desired_size) FINAL;
 
+  void OnSwapCompositorFrame(uint32 output_surface_id,
+                             scoped_ptr<cc::CompositorFrame> frame) FINAL;
+
   gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
 
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
@@ -185,16 +222,14 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void DispatchPostponedGestureEvent(ui::GestureEvent* event) FINAL;
   void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
 
-  virtual void Paint(const gfx::Rect& dirty_rect);
-  virtual void BuffersSwapped();
-  void SendAcknowledgeBufferPresent(int32 route_id,
-                                    int gpu_host_id,
-                                    const gpu::Mailbox& mailbox,
-                                    bool skipped);
-  static void SendAcknowledgeBufferPresentOnMainThread(
-      AcknowledgeBufferPresentCallback ack,
-      bool skipped);
-  bool IsInBufferSwap();
+  bool ShouldCompositeNewFrame();
+
+  virtual void SwapSoftwareFrame();
+  virtual void SwapAcceleratedFrame();
+
+  void SendSwapCompositorFrameAck(uint32 surface_id);
+  static void SendSwapCompositorFrameAckOnMainThread(
+      SendSwapCompositorFrameAckCallback ack);
 
   void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
   void ForwardGestureEventToRenderer(ui::GestureEvent* event);
@@ -205,12 +240,13 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   gfx::GLSurfaceHandle shared_surface_handle_;
 
-  base::Lock acknowledge_buffer_present_callback_lock_;
-  AcknowledgeBufferPresentCallback acknowledge_buffer_present_callback_;
+  base::Lock compositor_frame_ack_callback_lock_;
+  SendSwapCompositorFrameAckCallback compositor_frame_ack_callback_;
 
-  scoped_refptr<TextureHandle> textures_[2];
-  TextureHandle* frontbuffer_texture_handle_;
-  TextureHandle* backbuffer_texture_handle_;
+  scoped_refptr<AcceleratedFrameHandle> current_accelerated_frame_;
+  scoped_refptr<AcceleratedFrameHandle> previous_accelerated_frame_;
+  scoped_ptr<SoftwareFrameHandle> current_software_frame_;
+  scoped_ptr<SoftwareFrameHandle> previous_software_frame_;
 
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;

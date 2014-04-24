@@ -15,44 +15,38 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_PAINTED_RENDER_VIEW_NODE_H_
-#define _OXIDE_QT_QUICK_PAINTED_RENDER_VIEW_NODE_H_
+#ifndef _OXIDE_QQUICK_ACCELERATED_FRAME_NODE_H_
+#define _OXIDE_QQUICK_ACCELERATED_FRAME_NODE_H_
 
-#include <QImage>
-#include <QRect>
 #include <QScopedPointer>
 #include <QSGSimpleTextureNode>
 #include <QtGlobal>
-#include <QtQuick/private/qsgtexture_p.h>
 
 QT_BEGIN_NAMESPACE
-class QPixmap;
+class QSGTexture;
 class QSize;
 QT_END_NAMESPACE
 
 namespace oxide {
 namespace qquick {
 
-class PaintedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
+class RenderViewItem;
+
+class AcceleratedFrameNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  public:
-  PaintedRenderViewNode();
+  AcceleratedFrameNode(RenderViewItem* item);
+  ~AcceleratedFrameNode();
 
-  void markDirtyRect(const QRect& rect);
-  void setBackingStore(const QPixmap* pixmap);
-  void setSize(const QSize& size);
-
-  void update();
+  void updateTexture(unsigned int texture_id,
+                     const QSize& size);
 
  private:
-  QRect dirty_rect_;
+  RenderViewItem* item_;
 
-  const QPixmap* backing_store_;
-  QImage image_;
-
-  QSGPlainTexture texture_;
+  QScopedPointer<QSGTexture> texture_;
 };
 
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_PAINTED_RENDER_VIEW_NODE_H_
+#endif // _OXIDE_QQUICK_ACCELERATED_FRAME_NODE_H_
