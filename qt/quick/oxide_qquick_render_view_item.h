@@ -90,10 +90,14 @@ class RenderViewItem Q_DECL_FINAL :
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
  private:
+  friend class UpdatePaintNodeContext;
+
   void geometryChanged(const QRectF& new_geometry,
                        const QRectF& old_geometry) Q_DECL_FINAL;
+  void DidUpdatePaintNode(oxide::qt::CompositorFrameType type);
 
   bool received_new_compositor_frame_;
+  oxide::qt::CompositorFrameType last_composited_frame_type_;
 
   QImage software_frame_data_;
   oxide::qt::AcceleratedFrameTextureHandle accelerated_frame_data_;

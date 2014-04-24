@@ -79,9 +79,6 @@ RenderWidgetHostViewDelegate::GetCompositorFrameType() const {
 QImage RenderWidgetHostViewDelegate::GetSoftwareFrameImage() {
   DCHECK_EQ(compositor_frame_type_, COMPOSITOR_FRAME_TYPE_SOFTWARE);
   oxide::SoftwareFrameHandle* handle = rwhv_->GetCurrentSoftwareFrameHandle();
-  if (!handle) {
-    return QImage();
-  }
 
   return QImage(static_cast<uchar *>(handle->GetPixels()),
                 handle->size_in_pixels().width(),
@@ -93,9 +90,6 @@ AcceleratedFrameTextureHandle
 RenderWidgetHostViewDelegate::GetAcceleratedFrameTextureHandle() {
   DCHECK_EQ(compositor_frame_type_, COMPOSITOR_FRAME_TYPE_ACCELERATED);
   oxide::AcceleratedFrameHandle* handle = rwhv_->GetCurrentAcceleratedFrameHandle();
-  if (!handle) {
-    return AcceleratedFrameTextureHandle();
-  }
 
   return AcceleratedFrameTextureHandle(
       handle,
