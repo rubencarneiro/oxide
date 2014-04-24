@@ -529,82 +529,6 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
   }
 }
 
-}
-
-// static
-float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
-  // For some reason, the Ubuntu QPA plugin doesn't override
-  // QScreen::devicePixelRatio. However, applications using the Ubuntu
-  // SDK use something called "grid units". The relationship between
-  // grid units and device pixels is set by the "GRID_UNIT_PX" environment
-  // variable. On a screen with a DPR of 1.0f, GRID_UNIT_PX is set to 8, and
-  // 1 grid unit == 8 device pixels.
-  // If we are using the Ubuntu backend, we use GRID_UNIT_PX to derive the
-  // device pixel ratio, else we get it from QScreen::devicePixelRatio.
-  // XXX: There are 2 scenarios where this is completely broken:
-  //      1) Any apps not using the Ubuntu SDK but running with the Ubuntu
-  //         QPA plugin. In this case, we derive a DPR from GRID_UNIT_PX if
-  //         set, and the application probably uses QScreen::devicePixelRatio,
-  //         which is always 1.0f
-  //      2) Any apps using the Ubuntu SDK but not running with the Ubuntu
-  //         QPA plugin. In this case, we get the DPR from
-  //         QScreen::devicePixelRatio, and the application uses GRID_UNIX_PX
-  //         if set
-  //      I think it would be better if the Ubuntu QPA plugin did override
-  //      QScreen::devicePixelRatio (it could still get that from GRID_UNIT_PX),
-  //      and the Ubuntu SDK used this to convert between grid units and device
-  //      pixels, then we could just use QScreen::devicePixelRatio here
-
-  // Allow an override for testing
-  {
-    QByteArray force_dpr(qgetenv("OXIDE_FORCE_DPR"));
-    bool ok;
-    float scale = force_dpr.toFloat(&ok);
-    if (ok) {
-      return scale;
-    }
-  }
-
-  QString platform = QGuiApplication::platformName();
-  if (platform == QLatin1String("ubuntu") ||
-      platform == QLatin1String("ubuntumirclient")) {
-    QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
-    bool ok;
-    float scale = grid_unit_px.toFloat(&ok);
-    if (ok) {
-      return scale / 8;
-    }
-  }
-
-  return float(screen->devicePixelRatio());
-}
-
-void RenderWidgetHostView::Blur() {
-  delegate_->Blur();
-}
-
-void RenderWidgetHostView::Focus() {
-  delegate_->Focus();
-}
-
-bool RenderWidgetHostView::HasFocus() const {
-  return delegate_->HasFocus();
-}
-
-void RenderWidgetHostView::Show() {
-  delegate_->Show();
-  WasShown();
-}
-
-void RenderWidgetHostView::Hide() {
-  delegate_->Hide();
-  WasHidden();
-}
-
-bool RenderWidgetHostView::IsShowing() {
-  return delegate_->IsShowing();
-}
-
 inline QCursor webcursor_to_qt_cursor(blink::WebCursorInfo::Type type) {
   Qt::CursorShape cs = Qt::ArrowCursor;
   switch (type) {
@@ -703,34 +627,80 @@ inline QCursor webcursor_to_qt_cursor(blink::WebCursorInfo::Type type) {
   return QCursor(cs);
 }
 
-void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
-  content::WebCursor::CursorInfo cursor_info;
+}
 
-  cursor.GetCursorInfo(&cursor_info);
-  if (cursor.IsCustom()) {
-    QImage::Format format = QImage::Format_Invalid;
-    switch (cursor_info.custom_image.config()) {
-    case SkBitmap::kRGB_565_Config: format = QImage::Format_RGB16;
-    case SkBitmap::kARGB_4444_Config: format = QImage::Format_ARGB4444_Premultiplied;
-    case SkBitmap::kARGB_8888_Config: format = QImage::Format_ARGB32_Premultiplied;
-    default: ;
-    }
-    if (format == QImage::Format_Invalid) {
-      return;
-    }
-    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
-                        cursor_info.custom_image.width(),
-                        cursor_info.custom_image.height(),
-                        cursor_info.custom_image.rowBytes(),
-                        format);
+// static
+float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
+  // For some reason, the Ubuntu QPA plugin doesn't override
+  // QScreen::devicePixelRatio. However, applications using the Ubuntu
+  // SDK use something called "grid units". The relationship between
+  // grid units and device pixels is set by the "GRID_UNIT_PX" environment
+  // variable. On a screen with a DPR of 1.0f, GRID_UNIT_PX is set to 8, and
+  // 1 grid unit == 8 device pixels.
+  // If we are using the Ubuntu backend, we use GRID_UNIT_PX to derive the
+  // device pixel ratio, else we get it from QScreen::devicePixelRatio.
+  // XXX: There are 2 scenarios where this is completely broken:
+  //      1) Any apps not using the Ubuntu SDK but running with the Ubuntu
+  //         QPA plugin. In this case, we derive a DPR from GRID_UNIT_PX if
+  //         set, and the application probably uses QScreen::devicePixelRatio,
+  //         which is always 1.0f
+  //      2) Any apps using the Ubuntu SDK but not running with the Ubuntu
+  //         QPA plugin. In this case, we get the DPR from
+  //         QScreen::devicePixelRatio, and the application uses GRID_UNIX_PX
+  //         if set
+  //      I think it would be better if the Ubuntu QPA plugin did override
+  //      QScreen::devicePixelRatio (it could still get that from GRID_UNIT_PX),
+  //      and the Ubuntu SDK used this to convert between grid units and device
+  //      pixels, then we could just use QScreen::devicePixelRatio here
 
-    QPixmap cursor_pixmap;
-    if (cursor_pixmap.convertFromImage(cursor_image)) {
-      delegate_->UpdateCursor(QCursor(cursor_pixmap));
+  // Allow an override for testing
+  {
+    QByteArray force_dpr(qgetenv("OXIDE_FORCE_DPR"));
+    bool ok;
+    float scale = force_dpr.toFloat(&ok);
+    if (ok) {
+      return scale;
     }
-  } else {
-    delegate_->UpdateCursor(webcursor_to_qt_cursor(cursor_info.type));
   }
+
+  QString platform = QGuiApplication::platformName();
+  if (platform == QLatin1String("ubuntu") ||
+      platform == QLatin1String("ubuntumirclient")) {
+    QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
+    bool ok;
+    float scale = grid_unit_px.toFloat(&ok);
+    if (ok) {
+      return scale / 8;
+    }
+  }
+
+  return float(screen->devicePixelRatio());
+}
+
+void RenderWidgetHostView::Blur() {
+  delegate_->Blur();
+}
+
+void RenderWidgetHostView::Focus() {
+  delegate_->Focus();
+}
+
+bool RenderWidgetHostView::HasFocus() const {
+  return delegate_->HasFocus();
+}
+
+void RenderWidgetHostView::Show() {
+  delegate_->Show();
+  WasShown();
+}
+
+void RenderWidgetHostView::Hide() {
+  delegate_->Hide();
+  WasHidden();
+}
+
+bool RenderWidgetHostView::IsShowing() {
+  return delegate_->IsShowing();
 }
 
 void RenderWidgetHostView::GetScreenInfo(
@@ -780,6 +750,36 @@ void RenderWidgetHostView::SwapSoftwareFrame() {
 void RenderWidgetHostView::SwapAcceleratedFrame() {
   delegate_->SetCompositorFrameType(COMPOSITOR_FRAME_TYPE_ACCELERATED);
   delegate_->ScheduleUpdate();
+}
+
+void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {
+  content::WebCursor::CursorInfo cursor_info;
+
+  cursor.GetCursorInfo(&cursor_info);
+  if (cursor.IsCustom()) {
+    QImage::Format format = QImage::Format_Invalid;
+    switch (cursor_info.custom_image.config()) {
+    case SkBitmap::kRGB_565_Config: format = QImage::Format_RGB16;
+    case SkBitmap::kARGB_4444_Config: format = QImage::Format_ARGB4444_Premultiplied;
+    case SkBitmap::kARGB_8888_Config: format = QImage::Format_ARGB32_Premultiplied;
+    default: ;
+    }
+    if (format == QImage::Format_Invalid) {
+      return;
+    }
+    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
+                        cursor_info.custom_image.width(),
+                        cursor_info.custom_image.height(),
+                        cursor_info.custom_image.rowBytes(),
+                        format);
+
+    QPixmap cursor_pixmap;
+    if (cursor_pixmap.convertFromImage(cursor_image)) {
+      delegate_->UpdateCursor(QCursor(cursor_pixmap));
+    }
+  } else {
+    delegate_->UpdateCursor(webcursor_to_qt_cursor(cursor_info.type));
+  }
 }
 
 RenderWidgetHostView::RenderWidgetHostView(

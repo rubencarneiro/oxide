@@ -28,6 +28,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/synchronization/lock.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
+#include "content/common/cursors/webcursor.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/events/gestures/gesture_recognizer.h"
 #include "ui/events/gestures/gesture_types.h"
@@ -135,8 +136,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   virtual void Blur() OVERRIDE;
 
-  void UpdateCursor(const content::WebCursor& cursor) OVERRIDE;
-
+  void UpdateCursor(const content::WebCursor& cursor) FINAL;
   void SetIsLoading(bool is_loading) FINAL;
 
   virtual void TextInputTypeChanged(ui::TextInputType type,
@@ -227,6 +227,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   virtual void SwapSoftwareFrame();
   virtual void SwapAcceleratedFrame();
 
+  virtual void OnUpdateCursor(const content::WebCursor& cursor);
+
   void SendSwapCompositorFrameAck(uint32 surface_id);
   static void SendSwapCompositorFrameAckOnMainThread(
       SendSwapCompositorFrameAckCallback ack);
@@ -251,6 +253,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;
   size_t selection_anchor_position_;
+
+  bool is_loading_;
+  content::WebCursor last_cursor_;
 
   scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
   blink::WebTouchEvent touch_event_;

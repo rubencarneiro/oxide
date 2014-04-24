@@ -34,6 +34,7 @@
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/content_switches.h"
+#include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "ui/events/event.h"
 
 #include "oxide_gpu_utils.h"
@@ -130,9 +131,25 @@ void RenderWidgetHostView::MovePluginWindows(
 
 void RenderWidgetHostView::Blur() {}
 
-void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {}
+void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
+  last_cursor_ = cursor;
+  if (!is_loading_) {
+    OnUpdateCursor(cursor);
+  }
+}
 
-void RenderWidgetHostView::SetIsLoading(bool is_loading) {}
+void RenderWidgetHostView::SetIsLoading(bool is_loading) {
+  if (is_loading != is_loading_) {
+    is_loading_ = is_loading;
+    if (is_loading) {
+      content::WebCursor::CursorInfo busy_cursor_info(blink::WebCursorInfo::TypeWait);
+      content::WebCursor busy_cursor(busy_cursor_info);
+      OnUpdateCursor(busy_cursor);
+    } else {
+      OnUpdateCursor(last_cursor_);
+    }
+  }
+}
 
 void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 ui::TextInputMode mode,
@@ -427,6 +444,8 @@ void RenderWidgetHostView::SwapAcceleratedFrame() {
   DidCommitCompositorFrame();
 }
 
+void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {}
+
 void RenderWidgetHostView::SendSwapCompositorFrameAck(uint32 surface_id) {
   cc::CompositorFrameAck ack;
   if (IsUsingSoftwareCompositing()) {
@@ -512,6 +531,7 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     host_(content::RenderWidgetHostImpl::From(host)),
     selection_cursor_position_(0),
     selection_anchor_position_(0),
+    is_loading_(false),
     gesture_recognizer_(ui::GestureRecognizer::Create()) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 

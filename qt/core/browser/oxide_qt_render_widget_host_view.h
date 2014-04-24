@@ -85,8 +85,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void Hide() FINAL;
   bool IsShowing() FINAL;
 
-  void UpdateCursor(const content::WebCursor& cursor) FINAL;
-
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
@@ -99,6 +97,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   void SwapSoftwareFrame() FINAL;
   void SwapAcceleratedFrame() FINAL;
+
+  void OnUpdateCursor(const content::WebCursor& cursor) FINAL;
 
   scoped_ptr<RenderWidgetHostViewDelegate> delegate_;
 
