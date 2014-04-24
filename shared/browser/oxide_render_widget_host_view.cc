@@ -108,16 +108,12 @@ void SoftwareFrameHandle::WasFreed() {
 void RenderWidgetHostView::InitAsPopup(
     content::RenderWidgetHostView* parent_host_view,
     const gfx::Rect& pos) {
-  NOTIMPLEMENTED() <<
-      "InitAsPopup() shouldn't be called until "
-      "WebContentsViewPort::CreateViewForPopupWidget() is implemented";
+  NOTREACHED() << "Popup RenderWidgetHostView's are not supported";
 }
 
 void RenderWidgetHostView::InitAsFullscreen(
     content::RenderWidgetHostView* reference_host_view) {
-  NOTIMPLEMENTED() <<
-      "InitAsFullScreen() shouldn't be called until "
-      "WebContentsViewPort::CreateViewForPopupWidget() is implemented";
+  NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
 }
 
 content::BackingStore* RenderWidgetHostView::AllocBackingStore(
@@ -370,7 +366,7 @@ void RenderWidgetHostView::OnAccessibilityEvents(
     const std::vector<AccessibilityHostMsg_EventParams>& params) {}
 
 void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {
-  NOTIMPLEMENTED() << "InitAsChild() isn't used. Please use Init() instead";
+  NOTREACHED() << "InitAsChild() isn't used. Please use Init() instead";
 }
 
 gfx::NativeView RenderWidgetHostView::GetNativeView() const {
