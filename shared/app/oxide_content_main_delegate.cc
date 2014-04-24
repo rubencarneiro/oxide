@@ -39,6 +39,7 @@
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_form_factor.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_paths.h"
@@ -148,8 +149,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // Stop-gap measure until we support the delegated renderer
     command_line->AppendSwitch(cc::switches::kCompositeToMailbox);
 
-    int flags = BrowserProcessMain::instance()->flags();
-
     // We need both of this here to test compositing support. It's also needed
     // to work around a mesa race - see https://launchpad.net/bugs/1267893
     gfx::GLSurface::InitializeOneOff();
@@ -161,15 +160,14 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
 
-    if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
+    if (GetFormFactorHint() == FORM_FACTOR_PHONE ||
+        GetFormFactorHint() == FORM_FACTOR_TABLET) {
       command_line->AppendSwitch(switches::kEnableViewport);
       command_line->AppendSwitch(switches::kEnableViewportMeta);
       command_line->AppendSwitch(switches::kEnablePinch);
       if (IsEnvironmentOptionEnabled("ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
         command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
       }
-    }
-    if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     }
 
