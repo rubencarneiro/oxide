@@ -28,6 +28,7 @@
     'use_mojo': 0,
     'use_ozone': 1,
     'toolkit_views': 0,
+    'toolkit_uses_gtk': 0,
     'ozone_platform': 'oxide',
     'external_ozone_platforms': [
       'oxide',

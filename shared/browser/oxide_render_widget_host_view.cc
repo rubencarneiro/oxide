@@ -116,11 +116,6 @@ void RenderWidgetHostView::InitAsFullscreen(
   NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
 }
 
-content::BackingStore* RenderWidgetHostView::AllocBackingStore(
-    const gfx::Size& size) {
-  return NULL;
-}
-
 void RenderWidgetHostView::MovePluginWindows(
     const gfx::Vector2d& scroll_offset,
     const std::vector<content::WebPluginGeometry>& moves) {}
@@ -355,9 +350,6 @@ void RenderWidgetHostView::SetHasHorizontalScrollbar(
 
 void RenderWidgetHostView::SetScrollOffsetPinning(bool is_pinned_to_left,
                                                   bool is_pinned_to_right) {}
-
-void RenderWidgetHostView::OnAccessibilityEvents(
-    const std::vector<AccessibilityHostMsg_EventParams>& params) {}
 
 void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {
   NOTREACHED() << "InitAsChild() isn't used. Please use Init() instead";
@@ -602,14 +594,6 @@ void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {
 
 RenderWidgetHostView::~RenderWidgetHostView() {}
 
-content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
-  return host_;
-}
-
-void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
-  SetSize(rect.size());
-}
-
 SoftwareFrameHandle* RenderWidgetHostView::GetCurrentSoftwareFrameHandle() {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   return current_software_frame_.get();
@@ -636,6 +620,14 @@ void RenderWidgetHostView::DidCommitCompositorFrame() {
   }
 
   compositor_frame_ack_callback_.Reset();
+}
+
+content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
+  return host_;
+}
+
+void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
+  SetSize(rect.size());
 }
 
 } // namespace oxide

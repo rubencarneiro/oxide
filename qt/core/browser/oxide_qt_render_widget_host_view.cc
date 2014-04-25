@@ -681,41 +681,6 @@ void RenderWidgetHostView::Blur() {
   delegate_->Blur();
 }
 
-void RenderWidgetHostView::Focus() {
-  delegate_->Focus();
-}
-
-bool RenderWidgetHostView::HasFocus() const {
-  return delegate_->HasFocus();
-}
-
-void RenderWidgetHostView::Show() {
-  delegate_->Show();
-  WasShown();
-}
-
-void RenderWidgetHostView::Hide() {
-  delegate_->Hide();
-  WasHidden();
-}
-
-bool RenderWidgetHostView::IsShowing() {
-  return delegate_->IsShowing();
-}
-
-void RenderWidgetHostView::GetScreenInfo(
-    blink::WebScreenInfo* results) {
-  QScreen* screen = delegate_->GetScreen();
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
-  }
-  GetWebScreenInfoFromQScreen(screen, results);
-}
-
-gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
-  return GetViewBounds();
-}
-
 void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 ui::TextInputMode mode,
                                                 bool can_compose_inline) {
@@ -740,6 +705,41 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
     QGuiApplication::inputMethod()->setVisible(is_editable_node);
   }
+}
+
+void RenderWidgetHostView::GetScreenInfo(
+    blink::WebScreenInfo* results) {
+  QScreen* screen = delegate_->GetScreen();
+  if (!screen) {
+    screen = QGuiApplication::primaryScreen();
+  }
+  GetWebScreenInfoFromQScreen(screen, results);
+}
+
+gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
+  return GetViewBounds();
+}
+
+void RenderWidgetHostView::Focus() {
+  delegate_->Focus();
+}
+
+bool RenderWidgetHostView::HasFocus() const {
+  return delegate_->HasFocus();
+}
+
+void RenderWidgetHostView::Show() {
+  delegate_->Show();
+  WasShown();
+}
+
+void RenderWidgetHostView::Hide() {
+  delegate_->Hide();
+  WasHidden();
+}
+
+bool RenderWidgetHostView::IsShowing() {
+  return delegate_->IsShowing();
 }
 
 void RenderWidgetHostView::SwapSoftwareFrame() {
@@ -816,27 +816,6 @@ void RenderWidgetHostView::GetWebScreenInfoFromQScreen(
                                          availableRect.y(),
                                          availableRect.width(),
                                          availableRect.height());
-}
-
-gfx::Rect RenderWidgetHostView::GetViewBounds() const {
-  QScreen* screen = delegate_->GetScreen();
-  if (!screen) {
-    return gfx::Rect();
-  }
-
-  QRect rect(delegate_->GetViewBoundsPix());
-  return gfx::ScaleToEnclosingRect(
-      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
-                1.0f / GetDeviceScaleFactor());
-}
-
-gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
-  QRect rect(delegate_->GetViewBoundsPix());
-  return gfx::Size(rect.width(), rect.height());
-}
-
-void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  delegate_->SetSize(QSize(size.width(), size.height()));
 }
 
 float RenderWidgetHostView::GetDeviceScaleFactor() const {
@@ -1037,6 +1016,27 @@ QVariant RenderWidgetHostView::InputMethodQuery(
   }
 
   return QVariant();
+}
+
+gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::Size(rect.width(), rect.height());
+}
+
+void RenderWidgetHostView::SetSize(const gfx::Size& size) {
+  delegate_->SetSize(QSize(size.width(), size.height()));
+}
+
+gfx::Rect RenderWidgetHostView::GetViewBounds() const {
+  QScreen* screen = delegate_->GetScreen();
+  if (!screen) {
+    return gfx::Rect();
+  }
+
+  QRect rect(delegate_->GetViewBoundsPix());
+  return gfx::ScaleToEnclosingRect(
+      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
+                1.0f / GetDeviceScaleFactor());
 }
 
 } // namespace qt

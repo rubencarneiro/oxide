@@ -32,6 +32,9 @@ except ImportError:
     print('Cannot find gyp module. Do you have a Chromium checkout?', file=sys.stderr)
     sys.exit(1)
 
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'build'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'generate_shim_headers'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))

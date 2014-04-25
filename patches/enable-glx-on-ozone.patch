@@ -126,7 +126,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -985,16 +915,86 @@
+@@ -1023,16 +953,86 @@
                  ],
                },
              }],
@@ -213,10 +213,102 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
            'direct_dependent_settings': {
              'cflags': [
                '<!@(<(pkg-config) --cflags libudev)'
+diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
+--- a/ui/gfx/gfx.gyp
++++ b/ui/gfx/gfx.gyp
+@@ -371,17 +371,17 @@
+         }],
+         ['OS=="android" or OS=="ios"', {
+           'sources!': [
+             'render_text.cc',
+             'render_text.h',
+             'text_utils_skia.cc',
+           ],
+         }],
+-        ['use_x11==1', {
++        ['OS == "linux"', {
+           'dependencies': [
+             'gfx_x11',
+           ],
+         }],
+         ['use_pango==1', {
+           'dependencies': [
+             '<(DEPTH)/build/linux/system.gyp:pangocairo',
+           ],
+@@ -524,29 +524,37 @@
+           ],
+           'variables': {
+             'test_suite_name': 'gfx_unittests',
+           },
+           'includes': [ '../../build/apk_test.gypi' ],
+         },
+       ],
+     }],
+-    ['use_x11 == 1', {
++    ['OS == "linux"', {
+       'targets': [
+         {
+           'target_name': 'gfx_x11',
+           'type': '<(component)',
+           'dependencies': [
+             '../../base/base.gyp:base',
+             '../../build/linux/system.gyp:x11',
+             'gfx_geometry',
+           ],
+           'defines': [
+             'GFX_IMPLEMENTATION',
+           ],
++          # Need 'target_conditions' to override filename_rules
++          'target_conditions': [
++            ['OS == "linux"', {
++              'sources/': [
++                ['include', '^x/'],
++              ],
++            }],
++          ],
+           'sources': [
+             'x/x11_atom_cache.cc',
+             'x/x11_atom_cache.h',
+             'x/x11_connection.cc',
+             'x/x11_connection.h',
+             'x/x11_error_tracker.cc',
+             'x/x11_error_tracker.h',
+             'x/x11_types.cc',
+diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
+--- a/ui/gfx/x/x11_types.cc
++++ b/ui/gfx/x/x11_types.cc
+@@ -2,24 +2,23 @@
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+ 
+ #include "ui/gfx/x/x11_types.h"
+ 
+ #include <X11/Xlib.h>
+ 
+ #include "base/message_loop/message_loop.h"
++#include "ui/gfx/ozone/surface_factory_ozone.h"
+ 
+ namespace gfx {
+ 
+ XDisplay* GetXDisplay() {
+-  static XDisplay* display = NULL;
+-  if (!display)
+-    display = XOpenDisplay(NULL);
+-  return display;
++  return reinterpret_cast<Display *>(
++      SurfaceFactoryOzone::GetInstance()->GetNativeDisplay());
+ }
+ 
+ void PutARGBImage(XDisplay* display,
+                   void* visual, int depth,
+                   XID pixmap, void* pixmap_gc,
+                   const uint8* data,
+                   int width, int height) {
+   PutARGBImage(display,
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -191,17 +191,17 @@
+@@ -193,17 +193,17 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -257,7 +349,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -213,16 +213,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -217,16 +217,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -277,7 +369,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -276,17 +279,17 @@ struct GL_EXPORT DriverEGL {
+@@ -280,17 +283,17 @@ struct GL_EXPORT DriverEGL {
    void ClearBindings();
  
    ProcsEGL fn;
@@ -296,7 +388,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -316,16 +319,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -320,16 +323,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -320,65 +412,6 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #endif
  
  }  // namespace gfx
-diff --git a/ui/gl/gl_image_glx.cc b/ui/gl/gl_image_glx.cc
---- a/ui/gl/gl_image_glx.cc
-+++ b/ui/gl/gl_image_glx.cc
-@@ -7,30 +7,36 @@ extern "C" {
- }
- 
- #include "ui/gl/gl_image_glx.h"
- 
- #include "base/basictypes.h"
- #include "base/logging.h"
- #include "base/memory/scoped_ptr.h"
- #include "base/message_loop/message_loop.h"
-+#include "ui/gfx/ozone/surface_factory_ozone.h"
- #include "ui/gl/gl_bindings.h"
- #include "ui/gl/gl_surface_glx.h"
- 
- namespace gfx {
- 
- namespace {
- 
- // scoped_ptr functor for XFree(). Use as follows:
- //   scoped_ptr<XVisualInfo, ScopedPtrXFree> foo(...);
- // where "XVisualInfo" is any X type that is freed with XFree.
- struct ScopedPtrXFree {
-   void operator()(void* x) const { ::XFree(x); }
- };
- 
-+Display* GetDefaultXDisplay() {
-+  return reinterpret_cast<Display *>(
-+      SurfaceFactoryOzone::GetInstance()->GetNativeDisplay());
-+}
-+
- int BindToTextureFormat(int depth) {
-   if (depth == 32)
-     return GLX_BIND_TO_TEXTURE_RGBA_EXT;
- 
-   return GLX_BIND_TO_TEXTURE_RGB_EXT;
- }
- 
- int TextureFormat(int depth) {
-@@ -38,17 +44,17 @@ int TextureFormat(int depth) {
-     return GLX_TEXTURE_FORMAT_RGBA_EXT;
- 
-   return GLX_TEXTURE_FORMAT_RGB_EXT;
- }
- 
- }  // namespace anonymous
- 
- GLImageGLX::GLImageGLX(gfx::PluginWindowHandle window)
--    : display_(base::MessagePumpForUI::GetDefaultXDisplay()),
-+    : display_(GetDefaultXDisplay()),
-       window_(window),
-       pixmap_(0),
-       glx_pixmap_(0) {}
- 
- GLImageGLX::~GLImageGLX() { Destroy(); }
- 
- bool GLImageGLX::Initialize() {
-   if (!GLSurfaceGLX::IsTextureFromPixmapSupported()) {
 diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 --- a/ui/gl/gl_implementation.cc
 +++ b/ui/gl/gl_implementation.cc
@@ -402,65 +435,3 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
  #endif
  
  GLImplementation GetNamedGLImplementation(const std::string& name) {
-diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
---- a/ui/gl/gl_surface_glx.cc
-+++ b/ui/gl/gl_surface_glx.cc
-@@ -16,16 +16,17 @@ extern "C" {
- #include "base/memory/weak_ptr.h"
- #include "base/message_loop/message_loop.h"
- #include "base/synchronization/cancellation_flag.h"
- #include "base/synchronization/lock.h"
- #include "base/threading/non_thread_safe.h"
- #include "base/threading/thread.h"
- #include "base/time/time.h"
- #include "third_party/mesa/src/include/GL/osmesa.h"
-+#include "ui/gfx/ozone/surface_factory_ozone.h"
- #include "ui/gfx/x/x11_types.h"
- #include "ui/gl/gl_bindings.h"
- #include "ui/gl/gl_implementation.h"
- #include "ui/gl/sync_control_vsync_provider.h"
- 
- namespace gfx {
- 
- namespace {
-@@ -34,16 +35,21 @@ namespace {
- //   scoped_ptr<XVisualInfo, ScopedPtrXFree> foo(...);
- // where "XVisualInfo" is any X type that is freed with XFree.
- struct ScopedPtrXFree {
-   void operator()(void* x) const {
-     ::XFree(x);
-   }
- };
- 
-+Display* GetDefaultXDisplay() {
-+  return reinterpret_cast<Display *>(
-+      SurfaceFactoryOzone::GetInstance()->GetNativeDisplay());
-+}
-+
- Display* g_display = NULL;
- const char* g_glx_extensions = NULL;
- bool g_glx_context_create = false;
- bool g_glx_create_context_robustness_supported = false;
- bool g_glx_texture_from_pixmap_supported = false;
- bool g_glx_oml_sync_control_supported = false;
- 
- // Track support of glXGetMscRateOML separately from GLX_OML_sync_control as a
-@@ -389,17 +395,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
-       base::MessageLoop::current() &&
-       base::MessageLoop::current()->type() == base::MessageLoop::TYPE_GPU;
- 
-   if (g_create_child_windows)
-     g_display = base::MessagePumpX11::GetDefaultXDisplay();
-   else
-     g_display = base::MessagePumpForUI::GetDefaultXDisplay();
- #else
--  g_display = base::MessagePumpForUI::GetDefaultXDisplay();
-+  g_display = GetDefaultXDisplay();
- #endif
- 
-   if (!g_display) {
-     LOG(ERROR) << "XOpenDisplay failed.";
-     return false;
-   }
- 
-   int major, minor;

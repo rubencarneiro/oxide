@@ -93,19 +93,22 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   virtual void Init(WebView* view) = 0;
 
-  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
   content::RenderWidgetHostImpl* host() const { return host_; }
-
-  void SetBounds(const gfx::Rect& rect) FINAL;
 
   SoftwareFrameHandle* GetCurrentSoftwareFrameHandle();
   AcceleratedFrameHandle* GetCurrentAcceleratedFrameHandle();
 
   void DidCommitCompositorFrame();
 
+  // content::RenderWidgetHost
+  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
+
+  void SetBounds(const gfx::Rect& rect) FINAL;
+
  protected:
   RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
 
+  // content::RenderWidgetHostViewPort
   void WasShown() FINAL;
   void WasHidden() FINAL;
 
@@ -126,12 +129,11 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
  private:
   typedef base::Callback<void(void)> SendSwapCompositorFrameAckCallback;
 
+  // content::RenderWidgetHostViewPort
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) FINAL;
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) FINAL;
-
-  content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
 
   void MovePluginWindows(
       const gfx::Vector2d& scroll_offset,
@@ -205,9 +207,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void SetScrollOffsetPinning(bool is_pinned_to_left,
                               bool is_pinned_to_right) FINAL;
 
-  void OnAccessibilityEvents(
-      const std::vector<AccessibilityHostMsg_EventParams>& params) FINAL;
-
+  // content::RenderWidgetHostView
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 
   gfx::NativeView GetNativeView() const FINAL;
@@ -221,11 +221,15 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   bool LockMouse() FINAL;
   void UnlockMouse() FINAL;
 
+  // ui::GestureEventHelper
   bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
   void DispatchPostponedGestureEvent(ui::GestureEvent* event) FINAL;
   void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
 
+  // AcceleratedFrameHandle::Client
   void OnTextureResourcesAvailable(AcceleratedFrameHandle* handle) FINAL;
+
+  // ===================
 
   bool ShouldCompositeNewFrame();
 

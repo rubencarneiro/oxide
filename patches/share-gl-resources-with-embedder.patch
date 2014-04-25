@@ -384,14 +384,14 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -310,9 +310,13 @@ bool ContentBrowserClient::IsPluginAllow
-   return false;
- }
- 
- net::CookieStore* ContentBrowserClient::OverrideCookieStoreForRenderProcess(
-     int render_process_id) {
+@@ -313,9 +313,13 @@ net::CookieStore* ContentBrowserClient::
+ #if defined(VIDEO_HOLE)
+ ExternalVideoSurfaceContainer*
+ ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
+     WebContents* web_contents) {
    return NULL;
  }
+ #endif
  
 +gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
 +  return NULL;
@@ -419,15 +419,15 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -640,13 +641,15 @@ class CONTENT_EXPORT ContentBrowserClien
-   // Returns true if dev channel APIs are available for plugins.
-   virtual bool IsPluginAllowedToUseDevChannelAPIs();
- 
-   // Returns a special cookie store to use for a given render process, or NULL
-   // if the default cookie store should be used
-   // This is called on the IO thread.
-   virtual net::CookieStore* OverrideCookieStoreForRenderProcess(
+@@ -642,13 +643,15 @@ class CONTENT_EXPORT ContentBrowserClien
        int render_process_id_);
+ 
+ #if defined(VIDEO_HOLE)
+   // Allows an embedder to provide its own ExternalVideoSurfaceContainer
+   // implementation.  Return NULL to disable external surface video.
+   virtual ExternalVideoSurfaceContainer*
+   OverrideCreateExternalVideoSurfaceContainer(WebContents* web_contents);
+ #endif
 +
 +  virtual gfx::GLShareGroup* GetGLShareGroup();
  };

@@ -57,11 +57,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   static void GetWebScreenInfoFromQScreen(QScreen* screen, blink::WebScreenInfo* result);
 
-  gfx::Rect GetViewBounds() const FINAL;
-  gfx::Size GetPhysicalBackingSize() const FINAL;
-
-  void SetSize(const gfx::Size& size) FINAL;
-
   float GetDeviceScaleFactor() const;
 
   void HandleFocusEvent(QFocusEvent* event);
@@ -74,20 +69,18 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
+  // content::RenderWidgetHostViewPort
+  gfx::Size GetPhysicalBackingSize() const FINAL;
+
+  // content::RenderWidgetHostView
+  void SetSize(const gfx::Size& size) FINAL;
+  gfx::Rect GetViewBounds() const FINAL;
+
  private:
   static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
 
+  // content::RenderWidgetHostViewPort
   void Blur() FINAL;
-  void Focus() FINAL;
-  bool HasFocus() const FINAL;
-
-  void Show() FINAL;
-  void Hide() FINAL;
-  bool IsShowing() FINAL;
-
-  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
-
-  gfx::Rect GetBoundsInRootWindow() FINAL;
 
   void TextInputTypeChanged(ui::TextInputType type,
                             ui::TextInputMode mode,
@@ -95,6 +88,19 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void ImeCancelComposition() FINAL;
   void FocusedNodeChanged(bool is_editable_node) FINAL;
 
+  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
+
+  gfx::Rect GetBoundsInRootWindow() FINAL;
+
+  // content::RenderWidgetHostViewPort
+  void Focus() FINAL;
+  bool HasFocus() const FINAL;
+
+  void Show() FINAL;
+  void Hide() FINAL;
+  bool IsShowing() FINAL;
+
+  // RenderWidgetHostView
   void SwapSoftwareFrame() FINAL;
   void SwapAcceleratedFrame() FINAL;
 
