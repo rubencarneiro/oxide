@@ -56,13 +56,10 @@ class WebPreferences {
     ATTR_TEXT_AREAS_ARE_RESIZABLE,
 
     ATTR_LOCAL_STORAGE_ENABLED,
-    ATTR_DATABASES_ENABLED,
     ATTR_APP_CACHE_ENABLED,
 
     ATTR_TABS_TO_LINKS, // whether pressing |TAB\ focuses links
     ATTR_CARET_BROWSING_ENABLED, // Not used anywhere in Chrome. Consider removing
-
-    ATTR_TOUCH_ENABLED,
 
     ATTR_LAST
   };

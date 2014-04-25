@@ -338,8 +338,9 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     DLOG(WARNING) << "No WebPreferences on WebView";
   }
 
+  prefs->touch_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
-  prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
+  prefs->device_supports_touch = IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
       !view->GetBrowserContext()->IsPopupBlockerEnabled();
