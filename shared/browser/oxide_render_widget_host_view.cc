@@ -263,7 +263,9 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 
   if (IsUsingSoftwareCompositing()) {
-    DCHECK(!current_accelerated_frame_ && !previous_accelerated_frame_);
+    DCHECK(!pending_accelerated_frame_ &&
+           !current_accelerated_frame_ &&
+           !previous_accelerated_frame_);
     DCHECK(!previous_software_frame_);
 
     if (!frame->software_frame_data) {
@@ -301,7 +303,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 
   DCHECK(!current_software_frame_ && previous_software_frame_);
-  DCHECK(!previous_accelerated_frame_);
+  DCHECK(!pending_accelerated_frame_ && !previous_accelerated_frame_);
 
   if (!frame->gl_frame_data || frame->gl_frame_data->mailbox.IsZero()) {
     DLOG(ERROR) << "Invalid swap accelerated compositor frame message received";
@@ -309,22 +311,14 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  previous_accelerated_frame_.swap(current_accelerated_frame_);
-
-  current_accelerated_frame_ =
+  pending_accelerated_frame_ =
       GpuUtils::instance()->GetAcceleratedFrameHandle(
-        this,
+        this, this,
         output_surface_id,
         frame->gl_frame_data->mailbox,
         frame->gl_frame_data->sync_point,
         frame->gl_frame_data->size,
         frame->metadata.device_scale_factor);
-
-  if (!ShouldCompositeNewFrame()) {
-    DidCommitCompositorFrame();
-  } else {
-    SwapAcceleratedFrame();
-  }
 }
 
 gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
@@ -417,6 +411,21 @@ void RenderWidgetHostView::DispatchCancelTouchEvent(ui::TouchEvent* event) {
       cancel_event, *event->latency());
 }
 
+void RenderWidgetHostView::OnTextureResourcesAvailable(
+    AcceleratedFrameHandle* handle) {
+  DCHECK_EQ(handle, pending_accelerated_frame_.get());
+  DCHECK(!previous_accelerated_frame_);
+
+  previous_accelerated_frame_.swap(current_accelerated_frame_);
+  current_accelerated_frame_.swap(pending_accelerated_frame_);
+
+  if (!ShouldCompositeNewFrame()) {
+    DidCommitCompositorFrame();
+  } else {
+    SwapAcceleratedFrame();
+  }
+}
+
 bool RenderWidgetHostView::ShouldCompositeNewFrame() {
   if (is_hidden_) {
     return false;
@@ -429,18 +438,6 @@ bool RenderWidgetHostView::ShouldCompositeNewFrame() {
 
   return true;
 }
-
-void RenderWidgetHostView::SwapSoftwareFrame() {
-  NOTIMPLEMENTED();
-  DidCommitCompositorFrame();
-}
-
-void RenderWidgetHostView::SwapAcceleratedFrame() {
-  NOTIMPLEMENTED();
-  DidCommitCompositorFrame();
-}
-
-void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {}
 
 void RenderWidgetHostView::SendSwapCompositorFrameAck(uint32 surface_id) {
   cc::CompositorFrameAck ack;
@@ -520,6 +517,18 @@ void RenderWidgetHostView::ForwardGestureEventToRenderer(
 
   host_->ForwardGestureEventWithLatencyInfo(gesture, *event->latency());
 }
+
+void RenderWidgetHostView::SwapSoftwareFrame() {
+  NOTIMPLEMENTED();
+  DidCommitCompositorFrame();
+}
+
+void RenderWidgetHostView::SwapAcceleratedFrame() {
+  NOTIMPLEMENTED();
+  DidCommitCompositorFrame();
+}
+
+void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {}
 
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     content::RenderWidgetHostViewBase(),

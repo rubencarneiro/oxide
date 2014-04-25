@@ -34,6 +34,8 @@
 #include "ui/events/gestures/gesture_types.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/oxide_gpu_utils.h"
+
 typedef unsigned int GLuint;
 
 namespace cc {
@@ -84,6 +86,7 @@ class SoftwareFrameHandle FINAL {
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
                              public ui::GestureConsumer,
+                             public AcceleratedFrameHandle::Client,
                              public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
   virtual ~RenderWidgetHostView();
@@ -222,12 +225,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void DispatchPostponedGestureEvent(ui::GestureEvent* event) FINAL;
   void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
 
+  void OnTextureResourcesAvailable(AcceleratedFrameHandle* handle) FINAL;
+
   bool ShouldCompositeNewFrame();
-
-  virtual void SwapSoftwareFrame();
-  virtual void SwapAcceleratedFrame();
-
-  virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
   void SendSwapCompositorFrameAck(uint32 surface_id);
   static void SendSwapCompositorFrameAckOnMainThread(
@@ -235,6 +235,11 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
   void ForwardGestureEventToRenderer(ui::GestureEvent* event);
+
+  virtual void SwapSoftwareFrame();
+  virtual void SwapAcceleratedFrame();
+
+  virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
   bool is_hidden_;
 
@@ -245,6 +250,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   base::Lock compositor_frame_ack_callback_lock_;
   SendSwapCompositorFrameAckCallback compositor_frame_ack_callback_;
 
+  scoped_refptr<AcceleratedFrameHandle> pending_accelerated_frame_;
   scoped_refptr<AcceleratedFrameHandle> current_accelerated_frame_;
   scoped_refptr<AcceleratedFrameHandle> previous_accelerated_frame_;
   scoped_ptr<SoftwareFrameHandle> current_software_frame_;
