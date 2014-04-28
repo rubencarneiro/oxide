@@ -25,6 +25,7 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
+#include "content/public/browser/native_web_keyboard_event.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
@@ -316,6 +317,49 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
+}
+
+QKeyEvent* WebView::HandleKeyboardEvent(content::NativeWebKeyboardEvent *event) {
+  QEvent::Type tp = QEvent::None;
+
+  switch (event->type) {
+  case blink::WebInputEvent::KeyDown:
+    tp = QEvent::KeyPress;
+    break;
+  case blink::WebInputEvent::KeyUp:
+    tp = QEvent::KeyRelease;
+    break;
+  default:
+    NOTREACHED();
+  }
+
+  //(XXX) Check how to get the key back from the NativeWebKeyboardEvent
+  int key = 1;
+
+  Qt::KeyboardModifiers qmodifiers;
+  if (event->modifiers & blink::WebInputEvent::ShiftKey) {
+    qmodifiers |= Qt::ShiftModifier;
+  }
+  if (event->modifiers & blink::WebInputEvent::ControlKey) {
+    qmodifiers |= Qt::ControlModifier;
+  }
+  if (event->modifiers & blink::WebInputEvent::AltKey) {
+    qmodifiers |= Qt::AltModifier;
+  }
+  if (event->modifiers & blink::WebInputEvent::MetaKey) {
+    qmodifiers |= Qt::MetaModifier;
+  }
+  if (event->modifiers & blink::WebInputEvent::IsKeyPad) {
+    qmodifiers |= Qt::KeypadModifier;
+  }
+
+  bool autorep = false;
+  if (event->modifiers & blink::WebInputEvent::IsAutoRepeat) {
+    autorep = true;
+  }
+
+  //(XXX) Check how to add this event to the queue of unprocessed events
+  return new QKeyEvent(tp, key, qmodifiers, QString::fromUtf16(event->text, sizeof(event->text)), autorep);
 }
 
 } // namespace qt

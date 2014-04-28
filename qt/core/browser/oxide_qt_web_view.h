@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
+#include <QKeyEvent>
+
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
@@ -100,6 +102,8 @@ class WebView FINAL : public oxide::WebView,
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;
+
+  QKeyEvent* HandleKeyboardEvent(content::NativeWebKeyboardEvent *event);
 
   WebViewAdapter* adapter_;
 
