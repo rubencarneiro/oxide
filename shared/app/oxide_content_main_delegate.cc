@@ -145,6 +145,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
+    command_line->AppendSwitch(switches::kDisableGestureDebounce);
 
     // Stop-gap measure until we support the delegated renderer
     command_line->AppendSwitch(cc::switches::kCompositeToMailbox);
@@ -164,6 +165,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
       command_line->AppendSwitch(switches::kEnableViewport);
       command_line->AppendSwitch(switches::kEnableViewportMeta);
+      command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
       command_line->AppendSwitch(switches::kEnablePinch);
       if (IsEnvironmentOptionEnabled("ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
         command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
