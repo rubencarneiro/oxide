@@ -320,10 +320,10 @@ WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
 }
 
-void WebView::HandleKeyboardEvent(content::NativeWebKeyboardEvent *event) {
+void WebView::HandleKeyboardEvent(content::WebContents* source, const content::NativeWebKeyboardEvent& event) {
   QEvent::Type tp = QEvent::None;
 
-  switch (event->type) {
+  switch (event.type) {
   case blink::WebInputEvent::KeyDown:
     tp = QEvent::KeyPress;
     break;
@@ -338,26 +338,26 @@ void WebView::HandleKeyboardEvent(content::NativeWebKeyboardEvent *event) {
   int key = 0;
 
   Qt::KeyboardModifiers qmodifiers;
-  if (event->modifiers & blink::WebInputEvent::ShiftKey) {
+  if (event.modifiers & blink::WebInputEvent::ShiftKey) {
     qmodifiers |= Qt::ShiftModifier;
   }
-  if (event->modifiers & blink::WebInputEvent::ControlKey) {
+  if (event.modifiers & blink::WebInputEvent::ControlKey) {
     qmodifiers |= Qt::ControlModifier;
   }
-  if (event->modifiers & blink::WebInputEvent::AltKey) {
+  if (event.modifiers & blink::WebInputEvent::AltKey) {
     qmodifiers |= Qt::AltModifier;
   }
-  if (event->modifiers & blink::WebInputEvent::MetaKey) {
+  if (event.modifiers & blink::WebInputEvent::MetaKey) {
     qmodifiers |= Qt::MetaModifier;
   }
-  if (event->modifiers & blink::WebInputEvent::IsKeyPad) {
+  if (event.modifiers & blink::WebInputEvent::IsKeyPad) {
     qmodifiers |= Qt::KeypadModifier;
   }
 
-  QString text = QString::fromUtf16(event->text, sizeof(event->text));
+  QString text = QString::fromUtf16(event.text, sizeof(event.text));
 
   bool autorep = false;
-  if (event->modifiers & blink::WebInputEvent::IsAutoRepeat) {
+  if (event.modifiers & blink::WebInputEvent::IsAutoRepeat) {
     autorep = true;
   }
 
