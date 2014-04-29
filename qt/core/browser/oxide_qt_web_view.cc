@@ -19,6 +19,7 @@
 
 #include <QString>
 #include <QUrl>
+#include <QCoreApplication>
 
 #include "base/strings/utf_string_conversions.h"
 #include "url/gurl.h"
@@ -319,7 +320,7 @@ WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
 }
 
-QKeyEvent* WebView::HandleKeyboardEvent(content::NativeWebKeyboardEvent *event) {
+void WebView::HandleKeyboardEvent(content::NativeWebKeyboardEvent *event) {
   QEvent::Type tp = QEvent::None;
 
   switch (event->type) {
@@ -334,7 +335,7 @@ QKeyEvent* WebView::HandleKeyboardEvent(content::NativeWebKeyboardEvent *event) 
   }
 
   //(XXX) Check how to get the key back from the NativeWebKeyboardEvent
-  int key = 1;
+  int key = 0;
 
   Qt::KeyboardModifiers qmodifiers;
   if (event->modifiers & blink::WebInputEvent::ShiftKey) {
@@ -353,13 +354,16 @@ QKeyEvent* WebView::HandleKeyboardEvent(content::NativeWebKeyboardEvent *event) 
     qmodifiers |= Qt::KeypadModifier;
   }
 
+  QString text = QString::fromUtf16(event->text, sizeof(event->text));
+
   bool autorep = false;
   if (event->modifiers & blink::WebInputEvent::IsAutoRepeat) {
     autorep = true;
   }
 
-  //(XXX) Check how to add this event to the queue of unprocessed events
-  return new QKeyEvent(tp, key, qmodifiers, QString::fromUtf16(event->text, sizeof(event->text)), autorep);
+  QKeyEvent* qevent = new QKeyEvent(tp, key, qmodifiers, text, autorep);
+
+  QCoreApplication::postEvent(adapterToQObject(adapter_), qevent);
 }
 
 } // namespace qt
