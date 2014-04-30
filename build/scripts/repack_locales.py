@@ -15,7 +15,7 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..',
-                             'chromium', 'src', 'tools', 'grit'))
+                             'third_party', 'chromium', 'src', 'tools', 'grit'))
 from grit.format import data_pack
 
 # The gyp "branding" variable.
