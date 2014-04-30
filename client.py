@@ -29,15 +29,23 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
-from oxide_utils import CheckCall, CheckOutput, CHROMIUMDIR, CHROMIUMSRCDIR, TOPSRCDIR
+from oxide_utils import CheckCall, CheckOutput, CHROMIUMSRCDIR, TOPSRCDIR
 from patch_utils import SyncablePatchSet, SyncError
 
-DEPOT_TOOLS = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
-DEPOT_TOOLS_REV = "d9839e8e7a078df40b33b76bf25c4a2f3199d3be"
+DEPOT_TOOLS_GIT_URL = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
+DEPOT_TOOLS_GIT_REV = "d9839e8e7a078df40b33b76bf25c4a2f3199d3be"
+DEPOT_TOOLS_PATH = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
+DEPOT_TOOLS_OLD_PATH = os.path.join(TOPSRCDIR, "chromium", "depot_tools")
 
 GCLIENTFILE = os.path.join(TOPSRCDIR, "gclient.conf")
-GCLIENTFILECOPY = os.path.join(CHROMIUMDIR, ".gclient")
-DEPOTTOOLSPATH = os.path.join(CHROMIUMDIR, "depot_tools")
+GCLIENTFILECOPY = os.path.join(os.path.dirname(CHROMIUMSRCDIR), ".gclient")
+
+def is_git_repo(repo):
+  try:
+    CheckCall(["git", "status"], repo)
+    return True
+  except:
+    return False
 
 def get_svn_info(repo):
   for line in CheckOutput(["svn", "info", repo]).split("\n"):
@@ -61,14 +69,17 @@ def get_wanted_info_from_gclient_config():
     return SplitUrlRevision(gclient_dict["solutions"][0]["url"])
 
 def prepare_depot_tools():
-  if not os.path.isdir(DEPOTTOOLSPATH):
-    CheckCall(["git", "clone", DEPOT_TOOLS, DEPOTTOOLSPATH])
- 
-  CheckCall(["git", "pull", "origin", "master"], DEPOTTOOLSPATH)
-  CheckCall(["git", "checkout", DEPOT_TOOLS_REV], DEPOTTOOLSPATH)
+  if is_git_repo(DEPOT_TOOLS_OLD_PATH) and not is_git_repo(DEPOT_TOOLS_PATH):
+    os.rename(DEPOT_TOOLS_OLD_PATH, DEPOT_TOOLS_PATH)
 
-  sys.path.insert(0, DEPOTTOOLSPATH)
-  os.environ["PATH"] = DEPOTTOOLSPATH + ":" + os.getenv("PATH")
+  if not os.path.isdir(DEPOT_TOOLS_PATH):
+    CheckCall(["git", "clone", DEPOT_TOOLS_GIT_URL, DEPOT_TOOLS_PATH])
+ 
+  CheckCall(["git", "pull", "origin", "master"], DEPOT_TOOLS_PATH)
+  CheckCall(["git", "checkout", DEPOT_TOOLS_GIT_REV], DEPOT_TOOLS_PATH)
+
+  sys.path.insert(0, DEPOT_TOOLS_PATH)
+  os.environ["PATH"] = DEPOT_TOOLS_PATH + ":" + os.getenv("PATH")
 
 def ensure_patch_consistency():
   patchset = SyncablePatchSet()
@@ -131,8 +142,8 @@ def sync_chromium():
     os.remove(os.path.join(CHROMIUMSRCDIR, ".hgignore"))
 
   # Don't use the gclient shell wrapper, as it updates depot_tools
-  CheckCall([sys.executable, os.path.join(DEPOTTOOLSPATH, "gclient.py"),
-             "sync", "-D"], CHROMIUMDIR)
+  CheckCall([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
+             "sync", "-D"], os.path.dirname(CHROMIUMSRCDIR))
 
   with open(os.path.join(CHROMIUMSRCDIR, ".hgignore"), "w") as f:
     f.write("~$\n")
@@ -174,8 +185,16 @@ def main():
 
   (need_sync, full_sync) = check_chromium_status()
 
+  chromium_dir = os.path.dirname(CHROMIUMSRCDIR)
+  if not os.path.isdir(chromium_dir):
+    os.makedirs(chromium_dir)
+
   shutil.copyfile(GCLIENTFILE, GCLIENTFILECOPY)
   shutil.copystat(GCLIENTFILE, GCLIENTFILECOPY)
+
+  old_chromium_dir = os.path.join(TOPSRCDIR, "chromium")
+  if os.path.isdir(old_chromium_dir):
+    shutil.rmtree(old_chromium_dir)
 
   if full_sync and os.path.isdir(CHROMIUMSRCDIR):
     shutil.rmtree(CHROMIUMSRCDIR)

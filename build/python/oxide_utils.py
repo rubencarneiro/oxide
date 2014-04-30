@@ -26,8 +26,7 @@ import shutil
 from subprocess import Popen, CalledProcessError, PIPE
 
 TOPSRCDIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
-CHROMIUMDIR = os.path.join(TOPSRCDIR, "chromium")
-CHROMIUMSRCDIR = os.path.join(CHROMIUMDIR, "src")
+CHROMIUMSRCDIR = os.path.join(TOPSRCDIR, "third_party", "chromium", "src")
 
 class VersionFileParserError(Exception):
   pass
