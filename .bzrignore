@@ -1,7 +1,7 @@
-chromium/*
 CMakeCache.txt
 CMakeFiles/
 gclient.conf_entries
 objdir*
+third_party/*
 *.swp
 qt/examples/oxide-test-browser/*.click
