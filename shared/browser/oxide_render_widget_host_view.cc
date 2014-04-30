@@ -297,7 +297,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  DCHECK(!current_software_frame_ && previous_software_frame_);
+  DCHECK(!current_software_frame_ && !previous_software_frame_);
   DCHECK(!pending_accelerated_frame_ && !previous_accelerated_frame_);
 
   if (!frame->gl_frame_data || frame->gl_frame_data->mailbox.IsZero()) {
