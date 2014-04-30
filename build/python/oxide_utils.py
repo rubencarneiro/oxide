@@ -27,6 +27,7 @@ from subprocess import Popen, CalledProcessError, PIPE
 
 TOPSRCDIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
 CHROMIUMSRCDIR = os.path.join(TOPSRCDIR, "third_party", "chromium", "src")
+NINJADIR = os.path.join(TOPSRCDIR, "third_party", "ninja")
 
 class VersionFileParserError(Exception):
   pass
