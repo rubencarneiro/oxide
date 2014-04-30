@@ -29,16 +29,13 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
-from oxide_utils import CheckCall, CheckOutput, CHROMIUMSRCDIR, NINJADIR, TOPSRCDIR
+from oxide_utils import CheckCall, CheckOutput, CHROMIUMSRCDIR, TOPSRCDIR
 from patch_utils import SyncablePatchSet, SyncError
 
 DEPOT_TOOLS_GIT_URL = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 DEPOT_TOOLS_GIT_REV = "3f802b8b1f20b44a54f2c32a9e721ac82c16c472"
 DEPOT_TOOLS_PATH = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
 DEPOT_TOOLS_OLD_PATH = os.path.join(TOPSRCDIR, "chromium", "depot_tools")
-
-NINJA_GIT_URL = "https://github.com/martine/ninja.git"
-NINJA_GIT_REV = "tags/v1.4.0"
 
 CHROMIUM_SVN_URL = "http://src.chromium.org/chrome/releases/%s"
 CHROMIUM_GCLIENT_SPEC = (
@@ -223,7 +220,6 @@ def sync_chromium_patches():
 
 def main():
   prepare_depot_tools()
-  checkout_git_repo(NINJA_GIT_URL, NINJADIR, NINJA_GIT_REV)
 
   ensure_patch_consistency()
 

@@ -29,7 +29,6 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
 from oxide_utils import (
   CHROMIUMSRCDIR,
-  NINJADIR,
   TOPSRCDIR,
   CheckCall,
   VersionFileParser
@@ -187,10 +186,6 @@ def cmd_make_tarball(options, args):
     # Add Chromium
     chromium = os.path.relpath(CHROMIUMSRCDIR, TOPSRCDIR)
     tar.add(chromium, os.path.join(topsrcdir, chromium), filter=tar_filter, recursive=True)
-
-    # Add Ninja
-    ninja = os.path.relpath(NINJADIR, TOPSRCDIR)
-    tar.add(ninja, os.path.join(topsrcdir, ninja), filter=tar_filter, recursive=True)
 
 @subcommand.Command("release")
 def cmd_tag(options, args):
