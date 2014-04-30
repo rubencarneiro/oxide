@@ -33,19 +33,46 @@ from oxide_utils import CheckCall, CheckOutput, CHROMIUMSRCDIR, TOPSRCDIR
 from patch_utils import SyncablePatchSet, SyncError
 
 DEPOT_TOOLS_GIT_URL = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
-DEPOT_TOOLS_GIT_REV = "d9839e8e7a078df40b33b76bf25c4a2f3199d3be"
+DEPOT_TOOLS_GIT_REV = "3f802b8b1f20b44a54f2c32a9e721ac82c16c472"
 DEPOT_TOOLS_PATH = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
 DEPOT_TOOLS_OLD_PATH = os.path.join(TOPSRCDIR, "chromium", "depot_tools")
 
-GCLIENTFILE = os.path.join(TOPSRCDIR, "gclient.conf")
-GCLIENTFILECOPY = os.path.join(os.path.dirname(CHROMIUMSRCDIR), ".gclient")
+CHROMIUM_SVN_URL = "http://src.chromium.org/chrome/releases/%s"
+CHROMIUM_GCLIENT_SPEC = (
+  "solutions = ["
+    "{ \"name\": \"release\", "
+      "\"url\": \"%s\", "
+      "\"deps_file\": \"DEPS\", "
+      "\"managed\": False, "
+      "\"custom_deps\": "
+        "{ \"build\": None, "
+          "\"build/scripts/command_wrapper/bin\": None, "
+          "\"build/scripts/private/data/reliability\": None, "
+          "\"build/scripts/tools/deps2git\": None, "
+          "\"build/scripts/gsd_generate_index\": None, "
+          "\"build/scripts/private/data/reliability\": None, "
+          "\"build/third_party/cbuildbot_chromite\": None, "
+          "\"build/third_party/lighttpd\": None, "
+          "\"build/third_party/xvfb\": None, "
+          "\"depot_tools\": None, "
+          "\"src/chrome/tools/test/reference_build/chrome_win\": None, "
+          "\"src/chrome_frame/tools/test/reference_build/chrome_win\": None, "
+          "\"src/chrome/tools/test/reference_build/chrome_linux\": None, "
+          "\"src/chrome/tools/test/reference_build/chrome_mac\": None, "
+          "\"src/third_party/hunspell_dictionaries\": None "
+        "}, "
+      "\"safesync_url\": \"\", "
+    "} "
+  "]"
+)
+CHROMIUM_CHECKOUT_STAMP = os.path.join(os.path.dirname(CHROMIUMSRCDIR), ".checkout_stamp")
 
-def is_git_repo(repo):
+def is_svn_repo(repo):
   try:
-    CheckCall(["git", "status"], repo)
-    return True
+    CheckCall(["svn", "info"], repo)
   except:
     return False
+  return True
 
 def get_svn_info(repo):
   for line in CheckOutput(["svn", "info", repo]).split("\n"):
@@ -58,25 +85,37 @@ def get_svn_info(repo):
 
   return (url, rev)
 
-def get_wanted_info_from_gclient_config():
-  from gclient_utils import SplitUrlRevision
-  with open(GCLIENTFILE, "r") as fd:
-    gclient_dict = {}
-    exec(fd.read(), gclient_dict)
-    assert "solutions" in gclient_dict
-    assert len(gclient_dict["solutions"]) == 1
-    assert gclient_dict["solutions"][0]["name"] == "src"
-    return SplitUrlRevision(gclient_dict["solutions"][0]["url"])
+def is_git_repo(repo):
+  try:
+    CheckCall(["git", "status"], repo)
+  except:
+    return False
+  return True
+
+def checkout_git_repo(repo, path, commit):
+  if not is_git_repo(path):
+    if os.path.isdir(path):
+      shutil.rmtree(path)
+    CheckCall(["git", "clone", repo, path])
+
+  CheckCall(["git", "fetch"], path)
+  CheckCall(["git", "checkout", commit], path)
+
+def get_chromium_version():
+  with open(os.path.join(TOPSRCDIR, "CHROMIUM_VERSION"), "r") as fd:
+    return fd.read().strip()
+
+def get_chromium_svn_url():
+  return CHROMIUM_SVN_URL % get_chromium_version()
+
+def get_chromium_gclient_spec():
+  return CHROMIUM_GCLIENT_SPEC % get_chromium_svn_url()
 
 def prepare_depot_tools():
   if is_git_repo(DEPOT_TOOLS_OLD_PATH) and not is_git_repo(DEPOT_TOOLS_PATH):
     os.rename(DEPOT_TOOLS_OLD_PATH, DEPOT_TOOLS_PATH)
 
-  if not os.path.isdir(DEPOT_TOOLS_PATH):
-    CheckCall(["git", "clone", DEPOT_TOOLS_GIT_URL, DEPOT_TOOLS_PATH])
- 
-  CheckCall(["git", "pull", "origin", "master"], DEPOT_TOOLS_PATH)
-  CheckCall(["git", "checkout", DEPOT_TOOLS_GIT_REV], DEPOT_TOOLS_PATH)
+  checkout_git_repo(DEPOT_TOOLS_GIT_URL, DEPOT_TOOLS_PATH, DEPOT_TOOLS_GIT_REV)
 
   sys.path.insert(0, DEPOT_TOOLS_PATH)
   os.environ["PATH"] = DEPOT_TOOLS_PATH + ":" + os.getenv("PATH")
@@ -100,40 +139,33 @@ def ensure_patch_consistency():
           file=sys.stderr)
     sys.exit(1)
 
-def check_chromium_status():
-  # Force full sync if running "svn info" fails
-  try:
-    CheckCall(["svn", "info"], CHROMIUMSRCDIR)
-  except:
-    return (True, True)
+def needs_chromium_sync():
+  release_repo = os.path.join(os.path.dirname(CHROMIUMSRCDIR), "release_deps")
+  # Need to sync if there is no release deps svn repo
+  if not is_svn_repo(release_repo):
+    return True
 
-  need_sync = False
+  # Need to sync for a new release
+  if get_svn_info(release_repo)[0] != get_chromium_svn_url():
+    return True
+
+  # Need to sync if there is no svn repo
+  if not is_svn_repo(CHROMIUMSRCDIR):
+    return True
+
   # Need a sync if there is no .hg folder
   if not os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
-    need_sync = True
+    return True
 
-  # Don't try a sync if we have a .hg folder and the gclient file hasn't changed
-  if (not need_sync and os.path.isfile(GCLIENTFILECOPY) and
-      os.stat(GCLIENTFILE).st_mtime <= os.stat(GCLIENTFILECOPY).st_mtime):
-    return (False, False)
+  # Sync if we don't have a stamp file
+  if not os.path.isfile(CHROMIUM_CHECKOUT_STAMP):
+    return True
 
-  (cur_url, cur_rev) = get_svn_info(CHROMIUMSRCDIR)
-  (wanted_url, wanted_rev) = get_wanted_info_from_gclient_config()
+  # Sync if this script has been updated since the last checkout
+  if (os.stat(__file__).st_mtime > os.stat(CHROMIUM_CHECKOUT_STAMP).st_mtime):
+    return True
 
-  # Force full sync if the branch has changed
-  if wanted_url != cur_url:
-    return (True, True)
-
-  if need_sync:
-    return (True, False)
-
-  if wanted_rev is '':
-    (dummy, wanted_rev) = get_svn_info(wanted_url)
-
-  if wanted_rev == cur_rev:
-    return (False, False)
-
-  return (True, False)
+  return False
 
 def sync_chromium():
   if os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
@@ -141,9 +173,15 @@ def sync_chromium():
     shutil.rmtree(os.path.join(CHROMIUMSRCDIR, ".hg"))
     os.remove(os.path.join(CHROMIUMSRCDIR, ".hgignore"))
 
+  chromium_dir = os.path.dirname(CHROMIUMSRCDIR)
+  if not os.path.isdir(chromium_dir):
+    os.makedirs(chromium_dir)
+
   # Don't use the gclient shell wrapper, as it updates depot_tools
   CheckCall([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
-             "sync", "-D"], os.path.dirname(CHROMIUMSRCDIR))
+             "config", "--spec", get_chromium_gclient_spec()], chromium_dir)
+  CheckCall([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
+             "sync", "-D"], chromium_dir)
 
   with open(os.path.join(CHROMIUMSRCDIR, ".hgignore"), "w") as f:
     f.write("~$\n")
@@ -168,6 +206,8 @@ def sync_chromium():
   CheckCall(["hg", "ci", "-m", "Base checkout with client.py"], CHROMIUMSRCDIR)
   CheckCall(["hg", "qinit"], CHROMIUMSRCDIR)
 
+  open(CHROMIUM_CHECKOUT_STAMP, "w").close()
+
 def sync_chromium_patches():
   patchset = SyncablePatchSet()
   try:
@@ -183,22 +223,11 @@ def main():
 
   ensure_patch_consistency()
 
-  (need_sync, full_sync) = check_chromium_status()
-
-  chromium_dir = os.path.dirname(CHROMIUMSRCDIR)
-  if not os.path.isdir(chromium_dir):
-    os.makedirs(chromium_dir)
-
-  shutil.copyfile(GCLIENTFILE, GCLIENTFILECOPY)
-  shutil.copystat(GCLIENTFILE, GCLIENTFILECOPY)
-
   old_chromium_dir = os.path.join(TOPSRCDIR, "chromium")
   if os.path.isdir(old_chromium_dir):
     shutil.rmtree(old_chromium_dir)
 
-  if full_sync and os.path.isdir(CHROMIUMSRCDIR):
-    shutil.rmtree(CHROMIUMSRCDIR)
-  if need_sync:
+  if needs_chromium_sync():
     sync_chromium()
 
   sync_chromium_patches()
