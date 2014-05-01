@@ -29,7 +29,7 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
-from oxide_utils import CheckCall, CheckOutput, CHROMIUMSRCDIR, TOPSRCDIR
+from oxide_utils import CheckCall, CheckOutput, GetChecksum, GetFileChecksum, CHROMIUMSRCDIR, TOPSRCDIR
 from patch_utils import SyncablePatchSet, SyncError
 
 DEPOT_TOOLS_GIT_URL = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
@@ -65,7 +65,7 @@ CHROMIUM_GCLIENT_SPEC = (
     "} "
   "]"
 )
-CHROMIUM_CHECKOUT_STAMP = os.path.join(os.path.dirname(CHROMIUMSRCDIR), ".checkout_stamp")
+CHROMIUM_GCLIENT_FILE = os.path.join(os.path.dirname(CHROMIUMSRCDIR), ".gclient")
 
 def is_svn_repo(repo):
   try:
@@ -157,12 +157,13 @@ def needs_chromium_sync():
   if not os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
     return True
 
-  # Sync if we don't have a stamp file
-  if not os.path.isfile(CHROMIUM_CHECKOUT_STAMP):
+  # Sync if there is no .gclient file
+  if not os.path.isfile(CHROMIUM_GCLIENT_FILE):
     return True
 
-  # Sync if this script has been updated since the last checkout
-  if (os.stat(__file__).st_mtime > os.stat(CHROMIUM_CHECKOUT_STAMP).st_mtime):
+  # Sync if the gclient spec has changed
+  if (GetFileChecksum(CHROMIUM_GCLIENT_FILE) !=
+      GetChecksum(get_chromium_gclient_spec())):
     return True
 
   return False
@@ -205,8 +206,6 @@ def sync_chromium():
   CheckCall(["hg", "addremove"], CHROMIUMSRCDIR)
   CheckCall(["hg", "ci", "-m", "Base checkout with client.py"], CHROMIUMSRCDIR)
   CheckCall(["hg", "qinit"], CHROMIUMSRCDIR)
-
-  open(CHROMIUM_CHECKOUT_STAMP, "w").close()
 
 def sync_chromium_patches():
   patchset = SyncablePatchSet()

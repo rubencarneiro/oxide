@@ -99,12 +99,15 @@ class VersionFileParser(object):
     self._v[2] = patch
     self._dirty = True
 
+def GetChecksum(contents):
+  h = hashlib.sha256()
+  h.update(contents)
+  return base64.b16encode(h.digest())
+
 def GetFileChecksum(file):
   """Return a SHA256 hash from the contents of the specified filename"""
-  h = hashlib.sha256()
   with open(file, "r") as fd:
-    h.update(fd.read())
-  return base64.b16encode(h.digest())
+    return GetChecksum(fd.read())
 
 def CheckCall(args, cwd=None):
   p = Popen(args, cwd=cwd)
