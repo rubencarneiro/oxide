@@ -74,17 +74,9 @@ if(NOT _RESULT EQUAL 0)
   message(FATAL_ERROR "Couldn't find gold linker. Please check that it is installed")
 endif()
 
-# We want to pass extra arguments to our gyp wrapper, but these aren't
-# recorded in the gyp regen command in Chromium's top level Makefile.
-# To work around it, we preprocess our gyp wrapper with the extra
-# arguments embedded
-configure_file(
-    ${CMAKE_SOURCE_DIR}/build/gyp_oxide.in
-    ${CMAKE_BINARY_DIR}/gyp_oxide
-    IMMEDIATE @ONLY)
 # Build the gyp command
 set(GYP_COMMAND
-    ${PYTHON} ${CMAKE_BINARY_DIR}/gyp_oxide
+    ${PYTHON} ${CMAKE_SOURCE_DIR}/build/gyp_oxide
     -I${OXIDE_BUILD}/${OXIDE_BUILD}.gypi
     --generator-output ${CHROMIUM_OUTPUT_DIR}
     -Goutput_dir=${CHROMIUM_OUTPUT_DIR}
@@ -126,6 +118,7 @@ if(CMAKE_CROSSCOMPILING)
   set(ENV{CC_host} ${CHROMIUM_C_HOST_COMPILER})
   set(ENV{CXX_host} ${CHROMIUM_CXX_HOST_COMPILER})
   set(ENV{AR_host} ${CHROMIUM_HOST_AR})
+  set(ENV{PKG_CONFIG_PATH} ${CHROMIUM_PKG_CONFIG_PATH})
 else()
   set(ENV{CC} ${CMAKE_C_COMPILER})
   set(ENV{CXX} ${CMAKE_CXX_COMPILER})
