@@ -69,10 +69,8 @@ def additional_include_files(args=[]):
     return result
 
 def main(args):
-    output_dir = "@CHROMIUM_OUTPUT_DIR@"
     pkg_config_path = "@CHROMIUM_PKG_CONFIG_PATH@"
 
-    assert output_dir != ""
     if pkg_config_path != "":
       os.environ["PKG_CONFIG_PATH"] = pkg_config_path
 
@@ -83,8 +81,7 @@ def main(args):
     args.append('--no-circular-check')
     args.extend(['--toplevel-dir', TOPSRCDIR])
     args.extend(['--depth', CHROMIUMSRCDIR])
-    args.extend(['--format', 'make'])
-    args.append('-Goutput_dir=%s' % output_dir)
+    args.extend(['--format', 'ninja'])
 
     os.chdir(TOPSRCDIR)
     sys.exit(gyp.main(args))

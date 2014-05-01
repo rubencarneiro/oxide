@@ -86,7 +86,8 @@ configure_file(
 set(GYP_COMMAND
     ${PYTHON} ${CMAKE_BINARY_DIR}/gyp_oxide
     -I${OXIDE_BUILD}/${OXIDE_BUILD}.gypi
-    --generator-output ${CHROMIUM_GYP_GENERATOR_DIR}
+    --generator-output ${CHROMIUM_OUTPUT_DIR}
+    -Goutput_dir=${CHROMIUM_OUTPUT_DIR}
     ${OXIDE_GYP_EXTRA_ARGS})
 if(CMAKE_CROSSCOMPILING)
   if(NOT CHROMIUM_TARGET_ARCH)
@@ -115,6 +116,22 @@ else()
   list(APPEND GYP_COMMAND -Denable_plugins=1)
 endif()
 
+if(CMAKE_CROSSCOMPILING)
+  if(NOT CHROMIUM_C_HOST_COMPILER OR NOT CHROMIUM_CXX_HOST_COMPILER OR NOT CHROMIUM_HOST_AR)
+    message(FATAL_ERROR "Need to specify host compilers when cross compiling")
+  endif()
+  set(ENV{CC_target} ${CMAKE_C_COMPILER})
+  set(ENV{CXX_target} ${CMAKE_CXX_COMPILER})
+  set(ENV{AR_target} ${CMAKE_AR})
+  set(ENV{CC_host} ${CHROMIUM_C_HOST_COMPILER})
+  set(ENV{CXX_host} ${CHROMIUM_CXX_HOST_COMPILER})
+  set(ENV{AR_host} ${CHROMIUM_HOST_AR})
+else()
+  set(ENV{CC} ${CMAKE_C_COMPILER})
+  set(ENV{CXX} ${CMAKE_CXX_COMPILER})
+  set(ENV{AR} ${CMAKE_AR})
+endif()
+
 message(STATUS "Running gyp")
 execute_process(COMMAND ${GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 RESULT_VARIABLE _GYP_RESULT)
@@ -122,25 +139,19 @@ if(NOT _GYP_RESULT EQUAL 0)
   message(FATAL_ERROR "Running gyp failed")
 endif()
 
-# Add one target for running "make all" on the gyp generated bits.
+# Add one target for running "ninja all" on the gyp generated bits.
 # ${OXIDE_BUILD}/${OXIDE_BUILD}.gypi lists the targets that "all" depends on
-set(BUILD_GYP_ALL_COMMAND
-    ${CMAKE_COMMAND} -DMAKE="$(MAKE)" -DBUILDTYPE=${CHROMIUM_BUILD_TYPE}
-    -DGYP_DIR=${CHROMIUM_GYP_GENERATOR_DIR}
-    -DCC=${CMAKE_C_COMPILER} -DCXX=${CMAKE_CXX_COMPILER}
-    -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE})
-if(CMAKE_CROSSCOMPILING)
-  if(NOT CHROMIUM_C_HOST_COMPILER OR NOT CHROMIUM_CXX_HOST_COMPILER)
-    message(FATAL_ERROR "Need to specify host compilers when cross compiling")
-  endif()
-  list(APPEND BUILD_GYP_ALL_COMMAND -DCC_host=${CHROMIUM_C_HOST_COMPILER})
-  list(APPEND BUILD_GYP_ALL_COMMAND -DCXX_host=${CHROMIUM_CXX_HOST_COMPILER})
+find_program(NINJA_EXE ninja)
+if(NINJA_EXE STREQUAL "NINJA_EXE-NOTFOUND")
+  message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
 endif()
-list(APPEND BUILD_GYP_ALL_COMMAND
-     -P ${CMAKE_SOURCE_DIR}/build/scripts/run-gyp-all-target.cmake)
-
+set(NINJA_BUILD_COMMAND ${NINJA_EXE} -C ${CHROMIUM_PRODUCT_DIR})
+if(CMAKE_VERBOSE_MAKEFILE)
+  list(APPEND NINJA_BUILD_COMMAND -v)
+endif()
+list(APPEND NINJA_BUILD_COMMAND all)
 add_custom_target(
-    gyp_all ALL COMMAND ${BUILD_GYP_ALL_COMMAND}
+    gyp_all ALL COMMAND ${NINJA_BUILD_COMMAND} 
     DEPENDS gold
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building gyp_all target")
