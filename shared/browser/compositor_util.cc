@@ -17,16 +17,24 @@
 
 #include "content/browser/gpu/compositor_util.h"
 
+#include "base/command_line.h"
 #include "base/values.h"
+#include "cc/base/switches.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 
 namespace content {
 
-bool IsThreadedCompositingEnabled() {
-  return true;
+bool IsPinchVirtualViewportEnabled() {
+  const CommandLine& command_line = *CommandLine::ForCurrentProcess();
+
+  if (command_line.HasSwitch(cc::switches::kEnablePinchVirtualViewport)) {
+    return true;
+  }
+
+  return false;
 }
 
-bool IsForceCompositingModeEnabled() {
+bool IsThreadedCompositingEnabled() {
   return true;
 }
 

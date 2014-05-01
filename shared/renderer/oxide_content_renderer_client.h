@@ -48,9 +48,6 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
                               v8::Handle<v8::Context> context,
                               int extension_group,
                               int world_id) FINAL;
-  void WillReleaseScriptContext(blink::WebFrame* frame,
-                                v8::Handle<v8::Context>,
-                                int world_id) FINAL;
 
   bool GetUserAgentOverride(const GURL& url,
                             std::string* user_agent) FINAL;

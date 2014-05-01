@@ -47,6 +47,34 @@ base::LazyInstance<ScriptMessageDispatcherMap> g_dispatcher_map =
     LAZY_INSTANCE_INITIALIZER;
 }
 
+void ScriptMessageDispatcherRenderer::WillReleaseScriptContext(
+    v8::Handle<v8::Context> context,
+    int world_id) {
+  if (world_id < 1) {
+    return;
+  }
+
+  v8::HandleScope handle_scope(context->GetIsolate());
+
+  for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
+       it != script_message_managers_.end(); ++it) {
+    if ((*it)->GetV8Context() == context) {
+      script_message_managers_.erase(it);
+      break;
+    }
+  }
+}
+
+bool ScriptMessageDispatcherRenderer::OnMessageReceived(const IPC::Message& message) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(ScriptMessageDispatcherRenderer, message)
+    IPC_MESSAGE_HANDLER(OxideMsg_SendMessage, OnReceiveMessage)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
+
 void ScriptMessageDispatcherRenderer::OnReceiveMessage(
     const OxideMsg_SendMessage_Params& params) {
   bool is_reply = params.type == OxideMsg_SendMessage_Type::Reply;
@@ -123,16 +151,6 @@ void ScriptMessageDispatcherRenderer::ReturnError(
   Send(new OxideHostMsg_SendMessage(routing_id(), params));
 }
 
-bool ScriptMessageDispatcherRenderer::OnMessageReceived(const IPC::Message& message) {
-  bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(ScriptMessageDispatcherRenderer, message)
-    IPC_MESSAGE_HANDLER(OxideMsg_SendMessage, OnReceiveMessage)
-    IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP()
-
-  return handled;
-}
-
 ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
     content::RenderFrame* frame) :
     content::RenderFrameObserver(frame) {
@@ -172,24 +190,6 @@ void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
       linked_ptr<ScriptMessageManager>(new ScriptMessageManager(render_frame(),
                                                                 context,
                                                                 world_id)));
-}
-
-void ScriptMessageDispatcherRenderer::WillReleaseScriptContext(
-    v8::Handle<v8::Context> context,
-    int world_id) {
-  if (world_id < 1) {
-    return;
-  }
-
-  v8::HandleScope handle_scope(context->GetIsolate());
-
-  for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
-       it != script_message_managers_.end(); ++it) {
-    if ((*it)->GetV8Context() == context) {
-      script_message_managers_.erase(it);
-      break;
-    }
-  }
 }
 
 } // namespace oxide

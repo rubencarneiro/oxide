@@ -74,14 +74,6 @@ void ContentRendererClient::DidCreateScriptContext(
       frame)->DidCreateScriptContext(context, world_id);
 }
 
-void ContentRendererClient::WillReleaseScriptContext(
-    blink::WebFrame* frame,
-    v8::Handle<v8::Context> context,
-    int world_id) {
-  ScriptMessageDispatcherRenderer::FromWebFrame(
-      frame)->WillReleaseScriptContext(context, world_id);
-}
-
 bool ContentRendererClient::GetUserAgentOverride(
     const GURL& url,
     std::string* user_agent) {

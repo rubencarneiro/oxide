@@ -15,12 +15,6 @@ TestWebView {
     signalName: "navigationHistoryChanged"
   }
 
-  SignalSpy {
-    id: urlSpy
-    target: webView
-    signalName: "urlChanged"
-  }
-
   TestCase {
     id: test
     name: "WebView_navigation"
@@ -172,7 +166,6 @@ TestWebView {
       };
       webView.loadingChanged.connect(doStop);
       webView.clearLoadEventCounters();
-      urlSpy.clear();
 
       var url = "http://localhost:8080/tst_WebView_navigation1.html";
 
@@ -185,8 +178,7 @@ TestWebView {
               "There should be no successful loads");
       compare(webView.loadsFailedCount, 0,
               "There should be no failed loads");
-      compare(urlSpy.count, 0, "Didn't expect a urlChanged event");
-      compare(webView.url, url, "Incorrect WebView.url");
+      compare(webView.url, "about:blank", "Incorrect WebView.url");
     }
   }
 }
