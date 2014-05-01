@@ -48,6 +48,7 @@ include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 # but as this is distro specific, we do something that is currently
 # supportable across distributions. This creates a directory with a symlink
 # to the gold linker, and we pass -B to the compiler
+message(STATUS "Asking the compiler for the linker it uses")
 execute_process(
     COMMAND ${CMAKE_C_COMPILER} -print-prog-name=ld
     RESULT_VARIABLE _RESULT
@@ -65,13 +66,13 @@ add_custom_command(
     COMMAND ${SETUP_GOLD_COMMAND})
 add_custom_target(gold ALL
                   DEPENDS ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
-                  COMMENT "Creating a symlink for gold linker")
+                  COMMENT "Creating a symlink for the gold linker")
 
-message(STATUS "Creating a symlink for gold linker")
+message(STATUS "Creating a symlink for the gold linker")
 execute_process(COMMAND ${SETUP_GOLD_COMMAND}
                 RESULT_VARIABLE _RESULT)
 if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Couldn't find gold linker. Please check that it is installed")
+  message(FATAL_ERROR "Couldn't find a gold linker. Please check that it is installed")
 endif()
 
 # Build the gyp command
@@ -147,6 +148,6 @@ add_custom_target(
     gyp_all ALL COMMAND ${NINJA_BUILD_COMMAND} 
     DEPENDS gold
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Building gyp_all target")
+    COMMENT "Building the GYP \"all\" target")
 
 add_subdirectory(${OXIDE_BUILD})
