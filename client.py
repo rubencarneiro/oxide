@@ -37,13 +37,15 @@ DEPOT_TOOLS_GIT_REV = "3f802b8b1f20b44a54f2c32a9e721ac82c16c472"
 DEPOT_TOOLS_PATH = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
 DEPOT_TOOLS_OLD_PATH = os.path.join(TOPSRCDIR, "chromium", "depot_tools")
 
+CHROMIUM_RELEASE_DEPS_PATH = os.path.join(os.path.dirname(CHROMIUMSRCDIR), "release_deps")
+
 CHROMIUM_SVN_URL = "http://src.chromium.org/chrome/releases/%s"
 CHROMIUM_GCLIENT_SPEC = (
   "solutions = ["
     "{ \"name\": \"release_deps\", "
       "\"url\": \"%s\", "
       "\"deps_file\": \"DEPS\", "
-      "\"managed\": False, "
+      "\"managed\": True, "
       "\"custom_deps\": "
         "{ \"build\": None, "
           "\"build/scripts/command_wrapper/bin\": None, "
@@ -142,11 +144,11 @@ def ensure_patch_consistency():
 def needs_chromium_sync():
   release_repo = os.path.join(os.path.dirname(CHROMIUMSRCDIR), "release_deps")
   # Need to sync if there is no release deps svn repo
-  if not is_svn_repo(release_repo):
+  if not is_svn_repo(CHROMIUM_RELEASE_DEPS_PATH):
     return True
 
   # Need to sync for a new release
-  if get_svn_info(release_repo)[0] != get_chromium_svn_url():
+  if get_svn_info(CHROMIUM_RELEASE_DEPS_PATH)[0] != get_chromium_svn_url():
     return True
 
   # Need to sync if there is no svn repo
@@ -177,6 +179,10 @@ def sync_chromium():
   chromium_dir = os.path.dirname(CHROMIUMSRCDIR)
   if not os.path.isdir(chromium_dir):
     os.makedirs(chromium_dir)
+
+  if (is_svn_repo(CHROMIUM_RELEASE_DEPS_PATH) and
+      get_svn_info(CHROMIUM_RELEASE_DEPS_PATH)[0] != get_chromium_svn_url()):
+    shutil.rmtree(CHROMIUM_RELEASE_DEPS_PATH)
 
   # Don't use the gclient shell wrapper, as it updates depot_tools
   CheckCall([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
