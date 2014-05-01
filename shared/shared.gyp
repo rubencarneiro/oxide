@@ -28,10 +28,10 @@
           'variables': {
             'grit_grd_file': 'oxide_resources.grd'
           },
-          'includes': [ '../chromium/src/build/grit_action.gypi' ]
+          'includes': [ '../third_party/chromium/src/build/grit_action.gypi' ]
         }
       ],
-      'includes': [ '../chromium/src/build/grit_target.gypi' ],
+      'includes': [ '../third_party/chromium/src/build/grit_target.gypi' ],
     },
     {
       'target_name': 'oxide_packed_resources',

@@ -313,12 +313,10 @@ class SyncablePatchSet:
   series of patches in revision control, and a copy of this series in the
   Chromium source checkout
   """
-  def __init__(self, src = SourcePatchSeries(),
-               hg = HgPatchSeries(),
-               old_patches = OldPatchSeries()):
-    self.src_patches = src
-    self.hg_patches = hg
-    self.old_patches = old_patches
+  def __init__(self, src = None, hg = None, old_patches = None):
+    self.src_patches = src or SourcePatchSeries()
+    self.hg_patches = hg or HgPatchSeries()
+    self.old_patches = old_patches or OldPatchSeries()
     self.result = None
 
   def calculate_sync(self):
