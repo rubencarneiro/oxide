@@ -20,7 +20,7 @@
     'disable_nacl': 1,
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
-    'linux_use_tcmalloc': 0,
+    'use_allocator': 'none',
     'sysroot': '',
     'use_aura': 1,
     'use_gconf': 0,
