@@ -57,7 +57,7 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
 }
 
 LocationProvider::LocationProvider() :
-    message_loop_(base::MessageLoop::current()),
+    proxy_(base::MessageLoopProxy::current()),
     is_permission_granted_(false),
     worker_(NULL) {}
 
@@ -118,10 +118,9 @@ void LocationProvider::OnPermissionGranted() {
 
 void LocationProvider::notifyCallbackOnGeolocationThread(
     const content::Geoposition& position) {
-  message_loop_->PostTask(FROM_HERE,
-                          base::Bind(&LocationProvider::NotifyCallback,
-                                     base::Unretained(this),
-                                     position));
+  proxy_->PostTask(FROM_HERE, base::Bind(&LocationProvider::NotifyCallback,
+                                         base::Unretained(this),
+                                         position));
 }
 
 LocationSource::LocationSource(LocationProvider* provider, bool start) :

@@ -18,7 +18,7 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 #define _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 
-#include "base/message_loop/message_loop.h"
+#include "base/message_loop/message_loop_proxy.h"
 #include "content/browser/geolocation/location_provider_base.h"
 
 #include <QGeoPositionInfoSource>
@@ -56,7 +56,7 @@ class LocationProvider Q_DECL_FINAL : public content::LocationProviderBase {
   void notifyCallbackOnGeolocationThread(const content::Geoposition& position);
 
  private:
-  base::MessageLoop* message_loop_;
+  base::MessageLoopProxy* proxy_;
   bool is_permission_granted_;
   LocationWorkerThread* worker_;
 
