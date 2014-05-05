@@ -91,15 +91,8 @@ void LocationProvider::StopProvider() {
 }
 
 void LocationProvider::GetPosition(content::Geoposition* position) {
-  if (worker_) {
-    // FIXME: the following call is done on an object that lives in a different
-    // thread, this is potentially unsafe! See if it can be done asynchronously
-    // on its thread and communicate the result back to this thread.
-    QGeoPositionInfo info = worker_->lastKnownPosition();
-    if (info.isValid()) {
-      *position = geopositionFromQt(info);
-    }
-  }
+  DCHECK(position);
+  *position = position_;
 }
 
 void LocationProvider::RequestRefresh() {
@@ -116,11 +109,18 @@ void LocationProvider::OnPermissionGranted() {
   }
 }
 
+void LocationProvider::cachePosition(const content::Geoposition& position) {
+  position_ = position;
+}
+
 void LocationProvider::notifyCallbackOnGeolocationThread(
     const content::Geoposition& position) {
+  if (position.Validate()) {
+    proxy_->PostTask(FROM_HERE, base::Bind(&LocationProvider::cachePosition,
+                                           base::Unretained(this), position));
+  }
   proxy_->PostTask(FROM_HERE, base::Bind(&LocationProvider::NotifyCallback,
-                                         base::Unretained(this),
-                                         position));
+                                         base::Unretained(this), position));
 }
 
 LocationSource::LocationSource(LocationProvider* provider, bool start) :
@@ -137,14 +137,6 @@ LocationSource::LocationSource(LocationProvider* provider, bool start) :
     if (start) {
       source_->startUpdates();
     }
-  }
-}
-
-QGeoPositionInfo LocationSource::lastKnownPosition() const {
-  if (source_) {
-    return source_->lastKnownPosition();
-  } else {
-    return QGeoPositionInfo();
   }
 }
 
@@ -196,15 +188,6 @@ void LocationWorkerThread::run() {
   mutex_.lock();
   delete source_;
   mutex_.unlock();
-}
-
-QGeoPositionInfo LocationWorkerThread::lastKnownPosition() {
-  QMutexLocker locker(&mutex_);
-  if (source_) {
-    return source_->lastKnownPosition();
-  } else {
-    return QGeoPositionInfo();
-  }
 }
 
 void LocationWorkerThread::requestUpdate() {

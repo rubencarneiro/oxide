@@ -55,12 +55,14 @@ class LocationProvider FINAL : public content::LocationProviderBase {
  protected:
   friend class LocationSource;
 
+  void cachePosition(const content::Geoposition& position);
   void notifyCallbackOnGeolocationThread(const content::Geoposition& position);
 
  private:
   base::MessageLoopProxy* proxy_;
   bool is_permission_granted_;
   LocationWorkerThread* worker_;
+  content::Geoposition position_;
 
   DISALLOW_COPY_AND_ASSIGN(LocationProvider);
 };
@@ -71,7 +73,6 @@ class LocationSource Q_DECL_FINAL : public QObject {
  public:
   LocationSource(LocationProvider* provider, bool start);
 
-  QGeoPositionInfo lastKnownPosition() const;
   void requestUpdate() const;
 
  private Q_SLOTS:
@@ -88,8 +89,6 @@ class LocationWorkerThread Q_DECL_FINAL : public QThread {
 
  public:
   LocationWorkerThread(LocationProvider* provider, bool start);
-
-  QGeoPositionInfo lastKnownPosition();
 
  public Q_SLOTS:
   void requestUpdate();
