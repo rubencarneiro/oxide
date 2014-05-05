@@ -21,6 +21,7 @@
 
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
+#include <QMetaObject>
 #include <QMutexLocker>
 
 #include "base/bind.h"
@@ -91,6 +92,9 @@ void LocationProvider::StopProvider() {
 
 void LocationProvider::GetPosition(content::Geoposition* position) {
   if (worker_) {
+    // FIXME: the following call is done on an object that lives in a different
+    // thread, this is potentially unsafe! See if it can be done asynchronously
+    // on its thread and communicate the result back to this thread.
     QGeoPositionInfo info = worker_->lastKnownPosition();
     if (info.isValid()) {
       *position = geopositionFromQt(info);
@@ -100,7 +104,8 @@ void LocationProvider::GetPosition(content::Geoposition* position) {
 
 void LocationProvider::RequestRefresh() {
   if (is_permission_granted_ && worker_) {
-    worker_->requestUpdate();
+    QMetaObject::invokeMethod(worker_, SLOT(requestUpdate()),
+                              Qt::QueuedConnection);
   }
 }
 

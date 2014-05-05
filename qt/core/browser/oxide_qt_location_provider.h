@@ -88,6 +88,8 @@ class LocationWorkerThread Q_DECL_FINAL : public QThread {
   LocationWorkerThread(LocationProvider* provider, bool start);
 
   QGeoPositionInfo lastKnownPosition();
+
+ public Q_SLOTS:
   void requestUpdate();
 
  protected:
