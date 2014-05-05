@@ -41,14 +41,14 @@ class LocationProvider Q_DECL_FINAL : public content::LocationProviderBase {
   LocationProvider();
   ~LocationProvider();
 
-  bool StartProvider(bool high_accuracy);
-  void StopProvider();
+  bool StartProvider(bool high_accuracy) Q_DECL_FINAL;
+  void StopProvider() Q_DECL_FINAL;
 
-  void GetPosition(content::Geoposition* position);
+  void GetPosition(content::Geoposition* position) Q_DECL_FINAL;
 
-  void RequestRefresh();
+  void RequestRefresh() Q_DECL_FINAL;
 
-  void OnPermissionGranted();
+  void OnPermissionGranted() Q_DECL_FINAL;
 
  protected:
   friend class LocationSource;
