@@ -55,8 +55,7 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
   return position;
 }
 
-LocationProvider::LocationProvider(QObject* parent) :
-    QObject(parent),
+LocationProvider::LocationProvider() :
     message_loop_(base::MessageLoop::current()),
     is_permission_granted_(false),
     worker_(NULL) {}

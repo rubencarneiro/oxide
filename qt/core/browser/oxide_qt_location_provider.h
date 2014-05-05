@@ -36,12 +36,9 @@ namespace qt {
 
 class LocationWorkerThread;
 
-class LocationProvider Q_DECL_FINAL : public QObject,
-                                      public content::LocationProviderBase {
-  Q_OBJECT
-
+class LocationProvider Q_DECL_FINAL : public content::LocationProviderBase {
  public:
-  LocationProvider(QObject* parent = NULL);
+  LocationProvider();
   ~LocationProvider();
 
   bool StartProvider(bool high_accuracy);
