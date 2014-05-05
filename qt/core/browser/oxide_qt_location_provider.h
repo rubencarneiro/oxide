@@ -24,19 +24,18 @@
 #include "content/browser/geolocation/location_provider_base.h"
 
 #include <QGeoPositionInfoSource>
-#include <QMutex>
 #include <QObject>
 #include <QtGlobal>
-#include <QThread>
 
 QT_BEGIN_NAMESPACE
 class QGeoPositionInfo;
+class QThread;
 QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
-class LocationWorkerThread;
+class LocationSource;
 
 class LocationProvider FINAL : public content::LocationProviderBase {
  public:
@@ -61,7 +60,8 @@ class LocationProvider FINAL : public content::LocationProviderBase {
  private:
   base::MessageLoopProxy* proxy_;
   bool is_permission_granted_;
-  LocationWorkerThread* worker_;
+  LocationSource* source_;
+  QThread* worker_thread_;
   content::Geoposition position_;
 
   DISALLOW_COPY_AND_ASSIGN(LocationProvider);
@@ -71,8 +71,11 @@ class LocationSource Q_DECL_FINAL : public QObject {
   Q_OBJECT
 
  public:
-  LocationSource(LocationProvider* provider, bool start);
+  LocationSource(LocationProvider* provider);
 
+ public Q_SLOTS:
+  void initOnWorkerThread();
+  void startUpdates() const;
   void requestUpdate() const;
 
  private Q_SLOTS:
@@ -82,25 +85,6 @@ class LocationSource Q_DECL_FINAL : public QObject {
  private:
   LocationProvider* provider_;
   QGeoPositionInfoSource* source_;
-};
-
-class LocationWorkerThread Q_DECL_FINAL : public QThread {
-  Q_OBJECT
-
- public:
-  LocationWorkerThread(LocationProvider* provider, bool start);
-
- public Q_SLOTS:
-  void requestUpdate();
-
- protected:
-  void run();
-
- private:
-  LocationProvider* provider_;
-  bool start_;
-  QMutex mutex_;
-  LocationSource* source_;
 };
 
 } // namespace qt

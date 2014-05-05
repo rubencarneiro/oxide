@@ -22,10 +22,11 @@
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
 #include <QMetaObject>
-#include <QMutexLocker>
+#include <QThread>
 
 #include "base/bind.h"
 #include "base/location.h"
+#include "base/logging.h"
 
 Q_DECLARE_METATYPE(QGeoPositionInfo)
 
@@ -59,7 +60,8 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
 LocationProvider::LocationProvider() :
     proxy_(base::MessageLoopProxy::current()),
     is_permission_granted_(false),
-    worker_(NULL) {}
+    source_(NULL),
+    worker_thread_(NULL) {}
 
 LocationProvider::~LocationProvider() {
   StopProvider();
@@ -67,26 +69,37 @@ LocationProvider::~LocationProvider() {
 
 bool LocationProvider::StartProvider(bool high_accuracy) {
   Q_UNUSED(high_accuracy);
-  if (worker_) {
-    return worker_->isRunning();
+  if (worker_thread_) {
+    return worker_thread_->isRunning();
   }
-  worker_ = new LocationWorkerThread(this, is_permission_granted_);
-  worker_->start();
-  if (worker_->isRunning()) {
+  DCHECK(!source_);
+  source_ = new LocationSource(this);
+  worker_thread_ = new QThread();
+  source_->moveToThread(worker_thread_);
+  QObject::connect(worker_thread_, SIGNAL(finished()),
+                   source_, SLOT(deleteLater()));
+  worker_thread_->start();
+  QMetaObject::invokeMethod(source_, "initOnWorkerThread", Qt::QueuedConnection);
+  if (is_permission_granted_) {
+    QMetaObject::invokeMethod(source_, "startUpdates", Qt::QueuedConnection);
+  }
+  if (worker_thread_->isRunning()) {
     return true;
   } else {
-    delete worker_;
-    worker_ = NULL;
+    delete worker_thread_;
+    worker_thread_ = NULL;
+    delete source_;
+    source_ = NULL;
     return false;
   }
 }
 
 void LocationProvider::StopProvider() {
-  if (worker_) {
-    worker_->quit();
-    worker_->wait();
-    delete worker_;
-    worker_ = NULL;
+  if (worker_thread_) {
+    worker_thread_->quit();
+    worker_thread_->wait();
+    delete worker_thread_;
+    worker_thread_ = NULL;
   }
 }
 
@@ -96,16 +109,17 @@ void LocationProvider::GetPosition(content::Geoposition* position) {
 }
 
 void LocationProvider::RequestRefresh() {
-  if (is_permission_granted_ && worker_) {
-    QMetaObject::invokeMethod(worker_, SLOT(requestUpdate()),
-                              Qt::QueuedConnection);
+  if (is_permission_granted_ && source_) {
+    QMetaObject::invokeMethod(source_, "requestUpdate", Qt::QueuedConnection);
   }
 }
 
 void LocationProvider::OnPermissionGranted() {
   if (!is_permission_granted_) {
     is_permission_granted_ = true;
-    RequestRefresh();
+    if (worker_thread_) {
+      QMetaObject::invokeMethod(source_, "startUpdates", Qt::QueuedConnection);
+    }
   }
 }
 
@@ -123,10 +137,14 @@ void LocationProvider::notifyCallbackOnGeolocationThread(
                                          base::Unretained(this), position));
 }
 
-LocationSource::LocationSource(LocationProvider* provider, bool start) :
+LocationSource::LocationSource(LocationProvider* provider) :
     QObject(),
     provider_(provider),
-    source_(NULL) {
+    source_(NULL) {}
+
+void LocationSource::initOnWorkerThread() {
+  DCHECK(!source_);
+  DCHECK_EQ(thread(), QThread::currentThread());
   source_ = QGeoPositionInfoSource::createDefaultSource(this);
   if (source_) {
     qRegisterMetaType<QGeoPositionInfo>();
@@ -134,9 +152,12 @@ LocationSource::LocationSource(LocationProvider* provider, bool start) :
             SLOT(positionUpdated(const QGeoPositionInfo&)));
     connect(source_, SIGNAL(error(QGeoPositionInfoSource::Error)),
             SLOT(error(QGeoPositionInfoSource::Error)));
-    if (start) {
-      source_->startUpdates();
-    }
+  }
+}
+
+void LocationSource::startUpdates() const {
+  if (source_) {
+    source_->startUpdates();
   }
 }
 
@@ -171,30 +192,6 @@ void LocationSource::error(QGeoPositionInfoSource::Error error) {
       return;
   }
   provider_->notifyCallbackOnGeolocationThread(position);
-}
-
-LocationWorkerThread::LocationWorkerThread(LocationProvider* provider,
-                                           bool start) :
-    QThread(),
-    provider_(provider),
-    start_(start),
-    source_(NULL) {}
-
-void LocationWorkerThread::run() {
-  mutex_.lock();
-  source_ = new LocationSource(provider_, start_);
-  mutex_.unlock();
-  exec();
-  mutex_.lock();
-  delete source_;
-  mutex_.unlock();
-}
-
-void LocationWorkerThread::requestUpdate() {
-  QMutexLocker locker(&mutex_);
-  if (source_) {
-    source_->requestUpdate();
-  }
 }
 
 } // namespace qt
