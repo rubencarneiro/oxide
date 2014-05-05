@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 #define _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 
+#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/message_loop/message_loop_proxy.h"
 #include "content/browser/geolocation/location_provider_base.h"
 
@@ -36,19 +38,19 @@ namespace qt {
 
 class LocationWorkerThread;
 
-class LocationProvider Q_DECL_FINAL : public content::LocationProviderBase {
+class LocationProvider FINAL : public content::LocationProviderBase {
  public:
   LocationProvider();
   ~LocationProvider();
 
-  bool StartProvider(bool high_accuracy) Q_DECL_FINAL;
-  void StopProvider() Q_DECL_FINAL;
+  bool StartProvider(bool high_accuracy) FINAL;
+  void StopProvider() FINAL;
 
-  void GetPosition(content::Geoposition* position) Q_DECL_FINAL;
+  void GetPosition(content::Geoposition* position) FINAL;
 
-  void RequestRefresh() Q_DECL_FINAL;
+  void RequestRefresh() FINAL;
 
-  void OnPermissionGranted() Q_DECL_FINAL;
+  void OnPermissionGranted() FINAL;
 
  protected:
   friend class LocationSource;
@@ -60,7 +62,7 @@ class LocationProvider Q_DECL_FINAL : public content::LocationProviderBase {
   bool is_permission_granted_;
   LocationWorkerThread* worker_;
 
-  Q_DISABLE_COPY(LocationProvider)
+  DISALLOW_COPY_AND_ASSIGN(LocationProvider);
 };
 
 class LocationSource Q_DECL_FINAL : public QObject {
