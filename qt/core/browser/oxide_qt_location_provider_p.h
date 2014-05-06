@@ -40,6 +40,7 @@ class LocationSource Q_DECL_FINAL : public QObject {
  public Q_SLOTS:
   void initOnWorkerThread();
   void startUpdates() const;
+  void stopUpdates() const;
   void requestUpdate() const;
 
  private Q_SLOTS:

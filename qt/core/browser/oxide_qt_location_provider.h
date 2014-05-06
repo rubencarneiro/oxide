@@ -65,6 +65,8 @@ class LocationProvider FINAL : public content::LocationProviderBase {
   QThread* worker_thread_;
   content::Geoposition position_;
 
+  void invokeOnWorkerThread(const char* method) const;
+
   DISALLOW_COPY_AND_ASSIGN(LocationProvider);
 };
 

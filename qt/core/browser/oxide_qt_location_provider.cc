@@ -67,23 +67,28 @@ LocationProvider::LocationProvider() :
 
 LocationProvider::~LocationProvider() {
   StopProvider();
+  if (worker_thread_) {
+    worker_thread_->quit();
+    worker_thread_->wait();
+    delete worker_thread_;
+  }
 }
 
 bool LocationProvider::StartProvider(bool high_accuracy) {
   Q_UNUSED(high_accuracy);
-  if (worker_thread_) {
-    return worker_thread_->isRunning();
+  if (!worker_thread_) {
+    worker_thread_ = new QThread();
   }
-  DCHECK(!source_);
-  source_ = new LocationSource(this);
-  worker_thread_ = new QThread();
-  source_->moveToThread(worker_thread_);
-  QObject::connect(worker_thread_, SIGNAL(finished()),
-                   source_, SLOT(deleteLater()));
   worker_thread_->start();
-  QMetaObject::invokeMethod(source_, "initOnWorkerThread", Qt::QueuedConnection);
+  if (!source_) {
+    source_ = new LocationSource(this);
+    source_->moveToThread(worker_thread_);
+    QObject::connect(worker_thread_, SIGNAL(finished()),
+                     source_, SLOT(deleteLater()));
+    invokeOnWorkerThread("initOnWorkerThread");
+  }
   if (is_permission_granted_) {
-    QMetaObject::invokeMethod(source_, "startUpdates", Qt::QueuedConnection);
+    invokeOnWorkerThread("startUpdates");
   }
   if (worker_thread_->isRunning()) {
     return true;
@@ -97,12 +102,7 @@ bool LocationProvider::StartProvider(bool high_accuracy) {
 }
 
 void LocationProvider::StopProvider() {
-  if (worker_thread_) {
-    worker_thread_->quit();
-    worker_thread_->wait();
-    delete worker_thread_;
-    worker_thread_ = NULL;
-  }
+  invokeOnWorkerThread("stopUpdates");
 }
 
 void LocationProvider::GetPosition(content::Geoposition* position) {
@@ -111,17 +111,15 @@ void LocationProvider::GetPosition(content::Geoposition* position) {
 }
 
 void LocationProvider::RequestRefresh() {
-  if (is_permission_granted_ && source_) {
-    QMetaObject::invokeMethod(source_, "requestUpdate", Qt::QueuedConnection);
+  if (is_permission_granted_) {
+    invokeOnWorkerThread("requestUpdate");
   }
 }
 
 void LocationProvider::OnPermissionGranted() {
   if (!is_permission_granted_) {
     is_permission_granted_ = true;
-    if (worker_thread_) {
-      QMetaObject::invokeMethod(source_, "startUpdates", Qt::QueuedConnection);
-    }
+    invokeOnWorkerThread("startUpdates");
   }
 }
 
@@ -137,6 +135,12 @@ void LocationProvider::notifyCallbackOnGeolocationThread(
   }
   proxy_->PostTask(FROM_HERE, base::Bind(&LocationProvider::NotifyCallback,
                                          base::Unretained(this), position));
+}
+
+void LocationProvider::invokeOnWorkerThread(const char* method) const {
+  if (source_) {
+    QMetaObject::invokeMethod(source_, method, Qt::QueuedConnection);
+  }
 }
 
 LocationSource::LocationSource(LocationProvider* provider) :
@@ -160,6 +164,12 @@ void LocationSource::initOnWorkerThread() {
 void LocationSource::startUpdates() const {
   if (source_) {
     source_->startUpdates();
+  }
+}
+
+void LocationSource::stopUpdates() const {
+  if (source_) {
+    source_->stopUpdates();
   }
 }
 
