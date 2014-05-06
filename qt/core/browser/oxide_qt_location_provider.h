@@ -18,19 +18,20 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 #define _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 
-#include "base/compiler_specific.h"
-#include "base/macros.h"
-#include "base/message_loop/message_loop_proxy.h"
-#include "content/browser/geolocation/location_provider_base.h"
-
-#include <QGeoPositionInfoSource>
-#include <QObject>
 #include <QtGlobal>
 
+#include "base/compiler_specific.h"
+#include "base/macros.h"
+#include "content/browser/geolocation/location_provider_base.h"
+#include "content/public/common/geoposition.h"
+
 QT_BEGIN_NAMESPACE
-class QGeoPositionInfo;
 class QThread;
 QT_END_NAMESPACE
+
+namespace base {
+class MessageLoopProxy;
+}
 
 namespace oxide {
 namespace qt {
@@ -65,26 +66,6 @@ class LocationProvider FINAL : public content::LocationProviderBase {
   content::Geoposition position_;
 
   DISALLOW_COPY_AND_ASSIGN(LocationProvider);
-};
-
-class LocationSource Q_DECL_FINAL : public QObject {
-  Q_OBJECT
-
- public:
-  LocationSource(LocationProvider* provider);
-
- public Q_SLOTS:
-  void initOnWorkerThread();
-  void startUpdates() const;
-  void requestUpdate() const;
-
- private Q_SLOTS:
-  void positionUpdated(const QGeoPositionInfo& info);
-  void error(QGeoPositionInfoSource::Error error);
-
- private:
-  LocationProvider* provider_;
-  QGeoPositionInfoSource* source_;
 };
 
 } // namespace qt

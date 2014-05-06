@@ -94,7 +94,7 @@
       'actions': [
         {
           'action_name': 'moc_oxide_qt_location_provider.cc',
-          'moc_input': 'browser/oxide_qt_location_provider.h',
+          'moc_input': 'browser/oxide_qt_location_provider_p.h',
           'includes': [ 'moc.gypi' ]
         },
       ]

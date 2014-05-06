@@ -16,6 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_location_provider.h"
+#include "oxide_qt_location_provider_p.h"
 
 #include <cfloat>
 
@@ -27,6 +28,7 @@
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
+#include "base/message_loop/message_loop_proxy.h"
 
 Q_DECLARE_METATYPE(QGeoPositionInfo)
 
