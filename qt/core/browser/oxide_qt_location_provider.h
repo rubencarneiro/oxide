@@ -57,8 +57,10 @@ class LocationProvider FINAL : public content::LocationProviderBase {
 
   void cachePosition(const content::Geoposition& position);
   void notifyCallbackOnGeolocationThread(const content::Geoposition& position);
+  void doNotifyCallback(const content::Geoposition& position);
 
  private:
+  bool running_;
   base::MessageLoopProxy* proxy_;
   bool is_permission_granted_;
   LocationSource* source_;

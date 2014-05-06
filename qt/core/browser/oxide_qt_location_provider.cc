@@ -60,6 +60,7 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
 }
 
 LocationProvider::LocationProvider() :
+    running_(false),
     proxy_(base::MessageLoopProxy::current()),
     is_permission_granted_(false),
     source_(NULL),
@@ -87,12 +88,14 @@ bool LocationProvider::StartProvider(bool high_accuracy) {
                      source_, SLOT(deleteLater()));
     invokeOnWorkerThread("initOnWorkerThread");
   }
+  running_ = true;
   if (is_permission_granted_) {
     invokeOnWorkerThread("startUpdates");
   }
   if (worker_thread_->isRunning()) {
     return true;
   } else {
+    running_ = false;
     delete worker_thread_;
     worker_thread_ = NULL;
     delete source_;
@@ -102,6 +105,7 @@ bool LocationProvider::StartProvider(bool high_accuracy) {
 }
 
 void LocationProvider::StopProvider() {
+  running_ = false;
   invokeOnWorkerThread("stopUpdates");
 }
 
@@ -133,8 +137,14 @@ void LocationProvider::notifyCallbackOnGeolocationThread(
     proxy_->PostTask(FROM_HERE, base::Bind(&LocationProvider::cachePosition,
                                            base::Unretained(this), position));
   }
-  proxy_->PostTask(FROM_HERE, base::Bind(&LocationProvider::NotifyCallback,
+  proxy_->PostTask(FROM_HERE, base::Bind(&LocationProvider::doNotifyCallback,
                                          base::Unretained(this), position));
+}
+
+void LocationProvider::doNotifyCallback(const content::Geoposition& position) {
+  if (running_) {
+    NotifyCallback(position);
+  }
 }
 
 void LocationProvider::invokeOnWorkerThread(const char* method) const {
