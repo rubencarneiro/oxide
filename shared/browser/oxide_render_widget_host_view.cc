@@ -105,6 +105,83 @@ void SoftwareFrameHandle::WasFreed() {
   bitmap_.reset();
 }
 
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
+
+void RenderWidgetHostView::OnSwapCompositorFrame(
+    uint32 output_surface_id,
+    scoped_ptr<cc::CompositorFrame> frame) {
+  {
+    base::AutoLock lock(compositor_frame_ack_callback_lock_);
+    if (!compositor_frame_ack_callback_.is_null()) {
+      DLOG(ERROR) << "Received new compositor frame with pending ack";
+      host_->GetProcess()->ReceivedBadMessage();
+      return;
+    }
+
+    compositor_frame_ack_callback_ =
+        base::Bind(&RenderWidgetHostView::SendSwapCompositorFrameAck,
+                   AsWeakPtr(), output_surface_id);
+  }
+
+  if (IsUsingSoftwareCompositing()) {
+    DCHECK(!pending_accelerated_frame_ &&
+           !current_accelerated_frame_ &&
+           !previous_accelerated_frame_);
+    DCHECK(!previous_software_frame_);
+
+    if (!frame->software_frame_data) {
+      DLOG(ERROR) << "Invalid swap software compositor frame message received";
+      host_->GetProcess()->ReceivedBadMessage();
+      return;
+    }
+
+    previous_software_frame_.swap(current_software_frame_);
+
+    scoped_ptr<cc::SharedBitmap> shared_bitmap =
+        content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
+          frame->software_frame_data->size,
+          frame->software_frame_data->bitmap_id);
+    if (!shared_bitmap) {
+      DLOG(ERROR) << "Failed to create shared bitmap for software frame";
+      host_->GetProcess()->ReceivedBadMessage();
+      return;
+    }
+
+    current_software_frame_.reset(
+        new SoftwareFrameHandle(this,
+                                frame->software_frame_data->id,
+                                output_surface_id,
+                                shared_bitmap.Pass(),
+                                frame->software_frame_data->size,
+                                frame->metadata.device_scale_factor));
+
+    if (!ShouldCompositeNewFrame()) {
+      DidCommitCompositorFrame();
+    } else {
+      SwapSoftwareFrame();
+    }
+    return;
+  }
+
+  DCHECK(!current_software_frame_ && !previous_software_frame_);
+  DCHECK(!pending_accelerated_frame_ && !previous_accelerated_frame_);
+
+  if (!frame->gl_frame_data || frame->gl_frame_data->mailbox.IsZero()) {
+    DLOG(ERROR) << "Invalid swap accelerated compositor frame message received";
+    host_->GetProcess()->ReceivedBadMessage();
+    return;
+  }
+
+  pending_accelerated_frame_ =
+      GpuUtils::instance()->GetAcceleratedFrameHandle(
+        this, this,
+        output_surface_id,
+        frame->gl_frame_data->mailbox,
+        frame->gl_frame_data->sync_point,
+        frame->gl_frame_data->size,
+        frame->metadata.device_scale_factor);
+}
+
 void RenderWidgetHostView::InitAsPopup(
     content::RenderWidgetHostView* parent_host_view,
     const gfx::Rect& pos) {
@@ -117,7 +194,6 @@ void RenderWidgetHostView::InitAsFullscreen(
 }
 
 void RenderWidgetHostView::MovePluginWindows(
-    const gfx::Vector2d& scroll_offset,
     const std::vector<content::WebPluginGeometry>& moves) {}
 
 void RenderWidgetHostView::Blur() {}
@@ -147,18 +223,6 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 bool can_compose_inline) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {}
-
-void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
-
-void RenderWidgetHostView::ImeCompositionRangeChanged(
-    const gfx::Range& range,
-    const std::vector<gfx::Rect>& character_bounds) {}
-
-void RenderWidgetHostView::DidUpdateBackingStore(
-    const gfx::Rect& scroll_rect,
-    const gfx::Vector2d& scroll_delta,
-    const std::vector<gfx::Rect>& copy_rects,
-    const std::vector<ui::LatencyInfo>& latency_info) {}
 
 void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
                                              int error_code) {
@@ -241,81 +305,6 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
   return false;
 }
 
-void RenderWidgetHostView::OnSwapCompositorFrame(
-    uint32 output_surface_id,
-    scoped_ptr<cc::CompositorFrame> frame) {
-  {
-    base::AutoLock lock(compositor_frame_ack_callback_lock_);
-    if (!compositor_frame_ack_callback_.is_null()) {
-      DLOG(ERROR) << "Received new compositor frame with pending ack";
-      host_->GetProcess()->ReceivedBadMessage();
-      return;
-    }
-
-    compositor_frame_ack_callback_ =
-        base::Bind(&RenderWidgetHostView::SendSwapCompositorFrameAck,
-                   AsWeakPtr(), output_surface_id);
-  }
-
-  if (IsUsingSoftwareCompositing()) {
-    DCHECK(!pending_accelerated_frame_ &&
-           !current_accelerated_frame_ &&
-           !previous_accelerated_frame_);
-    DCHECK(!previous_software_frame_);
-
-    if (!frame->software_frame_data) {
-      DLOG(ERROR) << "Invalid swap software compositor frame message received";
-      host_->GetProcess()->ReceivedBadMessage();
-      return;
-    }
-
-    previous_software_frame_.swap(current_software_frame_);
-
-    scoped_ptr<cc::SharedBitmap> shared_bitmap =
-        content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
-          frame->software_frame_data->size,
-          frame->software_frame_data->bitmap_id);
-    if (!shared_bitmap) {
-      DLOG(ERROR) << "Failed to create shared bitmap for software frame";
-      host_->GetProcess()->ReceivedBadMessage();
-      return;
-    }
-
-    current_software_frame_.reset(
-        new SoftwareFrameHandle(this,
-                                frame->software_frame_data->id,
-                                output_surface_id,
-                                shared_bitmap.Pass(),
-                                frame->software_frame_data->size,
-                                frame->metadata.device_scale_factor));
-
-    if (!ShouldCompositeNewFrame()) {
-      DidCommitCompositorFrame();
-    } else {
-      SwapSoftwareFrame();
-    }
-    return;
-  }
-
-  DCHECK(!current_software_frame_ && !previous_software_frame_);
-  DCHECK(!pending_accelerated_frame_ && !previous_accelerated_frame_);
-
-  if (!frame->gl_frame_data || frame->gl_frame_data->mailbox.IsZero()) {
-    DLOG(ERROR) << "Invalid swap accelerated compositor frame message received";
-    host_->GetProcess()->ReceivedBadMessage();
-    return;
-  }
-
-  pending_accelerated_frame_ =
-      GpuUtils::instance()->GetAcceleratedFrameHandle(
-        this, this,
-        output_surface_id,
-        frame->gl_frame_data->mailbox,
-        frame->gl_frame_data->sync_point,
-        frame->gl_frame_data->size,
-        frame->metadata.device_scale_factor);
-}
-
 gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
   if (shared_surface_handle_.is_null()) {
     shared_surface_handle_ = GpuUtils::instance()->GetSharedSurfaceHandle();
@@ -345,11 +334,12 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
   }
 }
 
-void RenderWidgetHostView::SetHasHorizontalScrollbar(
-    bool has_horizontal_scrollbar) {}
-
 void RenderWidgetHostView::SetScrollOffsetPinning(bool is_pinned_to_left,
                                                   bool is_pinned_to_right) {}
+
+void RenderWidgetHostView::ImeCompositionRangeChanged(
+    const gfx::Range& range,
+    const std::vector<gfx::Rect>& character_bounds) {}
 
 void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {
   NOTREACHED() << "InitAsChild() isn't used. Please use Init() instead";

@@ -145,7 +145,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
-    command_line->AppendSwitch(switches::kDisableGestureDebounce);
 
     // Stop-gap measure until we support the delegated renderer
     command_line->AppendSwitch(cc::switches::kCompositeToMailbox);

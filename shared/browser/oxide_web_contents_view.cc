@@ -18,11 +18,25 @@
 #include "oxide_web_contents_view.h"
 
 #include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/web_contents.h"
 
 #include "oxide_render_widget_host_view.h"
 #include "oxide_render_widget_host_view_factory.h"
 #include "oxide_web_view.h"
+
+namespace content {
+
+WebContentsView* CreateWebContentsView(
+    WebContentsImpl* web_contents,
+    WebContentsViewDelegate* delegate,
+    RenderViewHostDelegateView** render_view_host_delegate_view) {
+  oxide::WebContentsView* rv = new oxide::WebContentsView(web_contents);
+  *render_view_host_delegate_view = rv;
+  return rv;
+}
+
+} // namespace content
 
 namespace oxide {
 
@@ -34,46 +48,6 @@ WebContentsView::~WebContentsView() {}
 WebView* WebContentsView::GetWebView() const {
   return WebView::FromWebContents(web_contents_);
 }
-
-void WebContentsView::CreateView(const gfx::Size& initial_size,
-                                 gfx::NativeView context) {}
-
-content::RenderWidgetHostView* WebContentsView::CreateViewForWidget(
-    content::RenderWidgetHost* render_widget_host) {
-  RenderWidgetHostViewFactory* factory =
-      RenderWidgetHostViewFactory::FromWebContents(web_contents_);
-  RenderWidgetHostView* rwhv = factory->CreateViewForWidget(render_widget_host);
-
-  if (!rwhv) {
-    return NULL;
-  }
-
-  WebView* view = GetWebView();
-  if (view) {
-    rwhv->Init(view);
-  }
-
-  if (!content::RenderWidgetHostImpl::From(render_widget_host)->is_hidden()) {
-    rwhv->Show();
-  } else {
-    rwhv->Hide();
-  }
-
-  return rwhv;
-}
-
-content::RenderWidgetHostView* WebContentsView::CreateViewForPopupWidget(
-    content::RenderWidgetHost* render_widget_host) {
-  return NULL;
-}
-
-void WebContentsView::SetPageTitle(const base::string16& title) {}
-
-void WebContentsView::RenderViewCreated(content::RenderViewHost* host) {}
-
-void WebContentsView::RenderViewSwappedIn(content::RenderViewHost* host) {}
-
-void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 
 gfx::NativeView WebContentsView::GetNativeView() const {
   return NULL;
@@ -90,9 +64,6 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
   *out = GetWebView()->GetContainerBounds();
 }
-
-void WebContentsView::OnTabCrashed(base::TerminationStatus status,
-                                   int error_code) {}
 
 void WebContentsView::SizeContents(const gfx::Size& size) {
   content::RenderWidgetHostView* rwhv =
@@ -131,6 +102,46 @@ gfx::Rect WebContentsView::GetViewBounds() const {
 
   return gfx::Rect();
 }
+
+void WebContentsView::CreateView(const gfx::Size& initial_size,
+                                 gfx::NativeView context) {}
+
+content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
+    content::RenderWidgetHost* render_widget_host) {
+  RenderWidgetHostViewFactory* factory =
+      RenderWidgetHostViewFactory::FromWebContents(web_contents_);
+  RenderWidgetHostView* rwhv = factory->CreateViewForWidget(render_widget_host);
+
+  if (!rwhv) {
+    return NULL;
+  }
+
+  WebView* view = GetWebView();
+  if (view) {
+    rwhv->Init(view);
+  }
+
+  if (!content::RenderWidgetHostImpl::From(render_widget_host)->is_hidden()) {
+    rwhv->Show();
+  } else {
+    rwhv->Hide();
+  }
+
+  return rwhv;
+}
+
+content::RenderWidgetHostViewBase* WebContentsView::CreateViewForPopupWidget(
+    content::RenderWidgetHost* render_widget_host) {
+  return NULL;
+}
+
+void WebContentsView::SetPageTitle(const base::string16& title) {}
+
+void WebContentsView::RenderViewCreated(content::RenderViewHost* host) {}
+
+void WebContentsView::RenderViewSwappedIn(content::RenderViewHost* host) {}
+
+void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 
 void WebContentsView::ShowPopupMenu(
     const gfx::Rect& bounds,

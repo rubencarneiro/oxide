@@ -346,9 +346,8 @@ ui::EventType QTouchPointStateToEventType(Qt::TouchPointState state) {
     case Qt::TouchPointPressed:
       return ui::ET_TOUCH_PRESSED;
     case Qt::TouchPointMoved:
-      return ui::ET_TOUCH_MOVED;
     case Qt::TouchPointStationary:
-      return ui::ET_TOUCH_STATIONARY;
+      return ui::ET_TOUCH_MOVED;
     case Qt::TouchPointReleased:
       return ui::ET_TOUCH_RELEASED;
     default:
@@ -677,6 +676,16 @@ float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   return float(screen->devicePixelRatio());
 }
 
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
+  if (!HasFocus()) {
+    return;
+  }
+  delegate_->SetInputMethodEnabled(is_editable_node);
+  if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
+    QGuiApplication::inputMethod()->setVisible(is_editable_node);
+  }
+}
+
 void RenderWidgetHostView::Blur() {
   delegate_->Blur();
 }
@@ -695,16 +704,6 @@ void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
 
 void RenderWidgetHostView::ImeCancelComposition() {
   QGuiApplication::inputMethod()->reset();
-}
-
-void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
-  if (!HasFocus()) {
-    return;
-  }
-  delegate_->SetInputMethodEnabled(is_editable_node);
-  if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
-    QGuiApplication::inputMethod()->setVisible(is_editable_node);
-  }
 }
 
 void RenderWidgetHostView::GetScreenInfo(

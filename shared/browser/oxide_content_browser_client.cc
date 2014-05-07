@@ -57,7 +57,6 @@
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
-#include "oxide_web_contents_view.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 
@@ -197,16 +196,6 @@ class BrowserMainParts : public content::BrowserMainParts {
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
   return new BrowserMainParts();
-}
-
-content::WebContentsViewPort*
-ContentBrowserClient::OverrideCreateWebContentsView(
-    content::WebContents* web_contents,
-    content::RenderViewHostDelegateView** render_view_host_delegate_view) {
-  WebContentsView* view = new WebContentsView(web_contents);
-  *render_view_host_delegate_view = view;
-
-  return view;
 }
 
 void ContentBrowserClient::RenderProcessWillLaunch(

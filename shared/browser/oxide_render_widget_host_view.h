@@ -100,7 +100,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   void DidCommitCompositorFrame();
 
-  // content::RenderWidgetHost
+  // content::RenderWidgetHostView
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
 
   void SetBounds(const gfx::Rect& rect) FINAL;
@@ -108,7 +108,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
  protected:
   RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
 
-  // content::RenderWidgetHostViewPort
+  // content::RenderWidgetHostViewBase
   void WasShown() FINAL;
   void WasHidden() FINAL;
 
@@ -129,14 +129,18 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
  private:
   typedef base::Callback<void(void)> SendSwapCompositorFrameAckCallback;
 
-  // content::RenderWidgetHostViewPort
+  // content::RenderWidgetHostViewBase
+  virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
+
+  void OnSwapCompositorFrame(uint32 output_surface_id,
+                             scoped_ptr<cc::CompositorFrame> frame) FINAL;
+
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) FINAL;
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) FINAL;
 
   void MovePluginWindows(
-      const gfx::Vector2d& scroll_offset,
       const std::vector<content::WebPluginGeometry>& moves) FINAL;
 
   virtual void Blur() OVERRIDE;
@@ -148,16 +152,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                                     ui::TextInputMode mode,
                                     bool can_compose_inline) OVERRIDE;
   virtual void ImeCancelComposition() OVERRIDE;
-  virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
-  void ImeCompositionRangeChanged(
-      const gfx::Range& range,
-      const std::vector<gfx::Rect>& character_bounds) FINAL;
-
-  void DidUpdateBackingStore(
-      const gfx::Rect& scroll_rect,
-      const gfx::Vector2d& scroll_delta,
-      const std::vector<gfx::Rect>& copy_rects,
-      const std::vector<ui::LatencyInfo>& latency_info) FINAL;
 
   void RenderProcessGone(base::TerminationStatus status, int error_code) FINAL;
 
@@ -195,17 +189,17 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   bool HasAcceleratedSurface(const gfx::Size& desired_size) FINAL;
 
-  void OnSwapCompositorFrame(uint32 output_surface_id,
-                             scoped_ptr<cc::CompositorFrame> frame) FINAL;
-
   gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
 
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) FINAL;
 
-  void SetHasHorizontalScrollbar(bool has_horizontal_scrollbar) FINAL;
   void SetScrollOffsetPinning(bool is_pinned_to_left,
                               bool is_pinned_to_right) FINAL;
+
+  void ImeCompositionRangeChanged(
+      const gfx::Range& range,
+      const std::vector<gfx::Rect>& character_bounds) FINAL;
 
   // content::RenderWidgetHostView
   void InitAsChild(gfx::NativeView parent_view) FINAL;

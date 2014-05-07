@@ -57,11 +57,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) FINAL;
 
-  content::WebContentsViewPort* OverrideCreateWebContentsView(
-      content::WebContents* web_contents,
-      content::RenderViewHostDelegateView** render_view_host_delegate_view)
-      FINAL;
-
   void RenderProcessWillLaunch(content::RenderProcessHost* host) FINAL;
 
   net::URLRequestContextGetter* CreateRequestContext(

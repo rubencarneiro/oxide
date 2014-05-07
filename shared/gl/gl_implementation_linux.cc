@@ -101,7 +101,7 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
 
   switch (implementation) {
     case kGLImplementationDesktopGL: {
-      base::NativeLibrary library = LoadLibrary("libGL.so.1");
+      base::NativeLibrary library = LoadLibraryAndPrintError("libGL.so.1");
       if (!library) {
         return false;
       }

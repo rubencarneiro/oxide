@@ -5,7 +5,7 @@
 diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc
 +++ b/content/browser/renderer_host/render_view_host_impl.cc
-@@ -1029,20 +1029,18 @@ bool RenderViewHostImpl::OnMessageReceiv
+@@ -1022,20 +1022,18 @@ bool RenderViewHostImpl::OnMessageReceiv
      IPC_MESSAGE_HANDLER(ViewHostMsg_TakeFocus, OnTakeFocus)
      IPC_MESSAGE_HANDLER(ViewHostMsg_FocusedNodeChanged, OnFocusedNodeChanged)
      IPC_MESSAGE_HANDLER(ViewHostMsg_ClosePage_ACK, OnClosePageACK)
@@ -26,7 +26,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
      // Have the super handle all other messages.
      IPC_MESSAGE_UNHANDLED(
          handled = RenderWidgetHostImpl::OnMessageReceived(msg))
-@@ -1478,28 +1476,26 @@ void RenderViewHostImpl::ForwardKeyboard
+@@ -1458,28 +1456,26 @@ void RenderViewHostImpl::ForwardKeyboard
    if (ignore_input_events()) {
      if (key_event.type == WebInputEvent::RawKeyDown)
        delegate_->OnIgnoredUIEvent();
@@ -55,7 +55,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
  
  void RenderViewHostImpl::DidCancelPopupMenu() {
    Send(new ViewMsg_SelectPopupMenuItem(GetRoutingID(), -1));
-@@ -1683,17 +1679,16 @@ void RenderViewHostImpl::OnFocusedNodeTo
+@@ -1659,17 +1655,16 @@ void RenderViewHostImpl::OnFocusedNodeTo
      virtual_keyboard_requested_ = base::win::DisplayVirtualKeyboard();
    } else {
      virtual_keyboard_requested_ = false;
@@ -73,7 +73,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
                          params.item_height,
                          params.item_font_size,
                          params.selected_item,
-@@ -1703,17 +1698,16 @@ void RenderViewHostImpl::OnShowPopup(
+@@ -1679,17 +1674,16 @@ void RenderViewHostImpl::OnShowPopup(
    }
  }
  
@@ -94,7 +94,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
 diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/browser/renderer_host/render_view_host_impl.h
 --- a/content/browser/renderer_host/render_view_host_impl.h
 +++ b/content/browser/renderer_host/render_view_host_impl.h
-@@ -386,20 +386,20 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -385,20 +385,20 @@ class CONTENT_EXPORT RenderViewHostImpl
    void DidSelectPopupMenuItem(int selected_index);
    void DidCancelPopupMenu();
  #endif
@@ -116,7 +116,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
      return main_frame_routing_id_;
    }
  
-@@ -524,20 +524,18 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -519,20 +519,18 @@ class CONTENT_EXPORT RenderViewHostImpl
    void OnAccessibilityEvents(
        const std::vector<AccessibilityHostMsg_EventParams>& params);
    void OnAccessibilityLocationChanges(
@@ -140,7 +140,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -942,22 +942,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
+@@ -922,22 +922,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
  // they came in, so the renderer can tell if it needs to send updated rects.
  // Otherwise just pass -1 to always receive the list of rects.
  //
@@ -165,7 +165,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
                      bool /* animate */)
  
  IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNeeded)
-@@ -972,18 +974,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
+@@ -952,18 +954,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
  
  // Sent by the browser when we should pause video playback.
  IPC_MESSAGE_ROUTED0(ViewMsg_PauseVideo);
@@ -186,7 +186,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  IPC_MESSAGE_ROUTED2(ViewMsg_WindowFrameChanged,
                      gfx::Rect /* window frame */,
                      gfx::Rect /* content view frame */)
-@@ -1109,22 +1112,20 @@ IPC_MESSAGE_ROUTED0(ViewHostMsg_Close)
+@@ -1089,22 +1092,20 @@ IPC_MESSAGE_ROUTED0(ViewHostMsg_Close)
  IPC_MESSAGE_ROUTED0(ViewHostMsg_UpdateScreenRects_ACK)
  
  // Sent by the renderer process to request that the browser move the view.
@@ -212,7 +212,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -134,16 +134,18 @@
+@@ -132,16 +132,18 @@
      'renderer/dom_storage/dom_storage_dispatcher.h',
      'renderer/dom_storage/dom_storage_proxy.h',
      'renderer/dom_storage/webstoragearea_impl.cc',
@@ -307,7 +307,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -1156,22 +1156,25 @@ bool RenderViewImpl::OnMessageReceived(c
+@@ -1125,22 +1125,25 @@ bool RenderViewImpl::OnMessageReceived(c
      IPC_MESSAGE_HANDLER(ViewMsg_ReleaseDisambiguationPopupBitmap,
                          OnReleaseDisambiguationPopupBitmap)
      IPC_MESSAGE_HANDLER(ViewMsg_WindowSnapshotCompleted,
@@ -334,7 +334,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
  #endif
      // Adding a new message? Add platform independent ones first, then put the
-@@ -1560,17 +1563,17 @@ WebWidget* RenderViewImpl::createPopupMe
+@@ -1510,17 +1513,17 @@ WebWidget* RenderViewImpl::createPopupMe
          screen_metrics_emulator_.get());
    }
    return widget->webwidget();
@@ -353,7 +353,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
    // will have to close the first one before another one can be shown.
    if (external_popup_menu_)
      return NULL;
-@@ -4211,39 +4214,35 @@ WebMediaPlayer* RenderViewImpl::CreateAn
+@@ -3923,39 +3926,35 @@ void RenderViewImpl::DismissDateTimeDial
  void RenderViewImpl::OnSelectPopupMenuItem(int selected_index) {
    if (external_popup_menu_ == NULL)
      return;
@@ -397,11 +397,11 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
 diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_impl.h
 --- a/content/renderer/render_view_impl.h
 +++ b/content/renderer/render_view_impl.h
-@@ -276,19 +276,17 @@ class CONTENT_EXPORT RenderViewImpl
-       blink::WebFrame* frame,
-       const blink::WebURLRequest& failed_request,
-       const blink::WebURLError& error,
-       bool replace);
+@@ -263,19 +263,17 @@ class CONTENT_EXPORT RenderViewImpl
+   // Returns true if the chooser was successfully scheduled. False means we
+   // didn't schedule anything.
+   bool ScheduleFileChooser(const FileChooserParams& params,
+                            blink::WebFileChooserCompletion* completion);
  
  #if defined(OS_ANDROID)
    void DismissDateTimeDialog();
@@ -417,7 +417,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
  
    void FrameDidChangeLoadProgress(blink::WebFrame* frame,
                                    double load_progress);
-@@ -821,26 +819,29 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -782,26 +780,29 @@ class CONTENT_EXPORT RenderViewImpl
    void OnZoom(PageZoom zoom);
    void OnEnableViewSourceMode();
    void OnDisownOpener();
@@ -448,7 +448,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
    void OnWindowFrameChanged(const gfx::Rect& window_frame,
                              const gfx::Rect& view_frame);
  #endif
-@@ -1267,20 +1268,18 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -1197,20 +1198,18 @@ class CONTENT_EXPORT RenderViewImpl
    // is passed to us upon creation.  WebKit asks for this ID upon first use and
    // uses it whenever asking the browser process to allocate new storage areas.
    int64 session_storage_namespace_id_;
@@ -472,7 +472,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
 diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
 --- a/content/renderer/render_widget.cc
 +++ b/content/renderer/render_widget.cc
-@@ -550,23 +550,21 @@ void RenderWidget::SetPopupOriginAdjustm
+@@ -553,23 +553,21 @@ void RenderWidget::SetPopupOriginAdjustm
  void RenderWidget::SetScreenMetricsEmulationParameters(
      float device_scale_factor,
      const gfx::Point& root_layer_offset,

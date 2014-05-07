@@ -21,8 +21,8 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
-#include "content/port/browser/render_view_host_delegate_view.h"
-#include "content/port/browser/web_contents_view_port.h"
+#include "content/browser/renderer_host/render_view_host_delegate_view.h"
+#include "content/browser/web_contents/web_contents_view.h"
 
 namespace content {
 class WebContents;
@@ -32,7 +32,7 @@ namespace oxide {
 
 class WebView;
 
-class WebContentsView FINAL : public content::WebContentsViewPort,
+class WebContentsView FINAL : public content::WebContentsView,
                               public content::RenderViewHostDelegateView {
  public:
   ~WebContentsView();
@@ -40,27 +40,12 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
 
   WebView* GetWebView() const;
 
-  void CreateView(const gfx::Size& initial_size,
-                  gfx::NativeView context) FINAL;
-  content::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
-  content::RenderWidgetHostView* CreateViewForPopupWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
-
-  void SetPageTitle(const base::string16& title) FINAL;
-
-  void RenderViewCreated(content::RenderViewHost* host) FINAL;
-  void RenderViewSwappedIn(content::RenderViewHost* host) FINAL;
-
-  void SetOverscrollControllerEnabled(bool enabled) FINAL;
-
+  // content::WebContentsView
   gfx::NativeView GetNativeView() const FINAL;
   gfx::NativeView GetContentNativeView() const FINAL;
   gfx::NativeWindow GetTopLevelNativeWindow() const FINAL;
 
   void GetContainerBounds(gfx::Rect* out) const FINAL;
-
-  void OnTabCrashed(base::TerminationStatus status, int error_code) FINAL;
 
   void SizeContents(const gfx::Size& size) FINAL;
 
@@ -73,6 +58,21 @@ class WebContentsView FINAL : public content::WebContentsViewPort,
 
   gfx::Rect GetViewBounds() const FINAL;
 
+  void CreateView(const gfx::Size& initial_size,
+                  gfx::NativeView context) FINAL;
+  content::RenderWidgetHostViewBase* CreateViewForWidget(
+      content::RenderWidgetHost* render_widget_host) FINAL;
+  content::RenderWidgetHostViewBase* CreateViewForPopupWidget(
+      content::RenderWidgetHost* render_widget_host) FINAL;
+
+  void SetPageTitle(const base::string16& title) FINAL;
+
+  void RenderViewCreated(content::RenderViewHost* host) FINAL;
+  void RenderViewSwappedIn(content::RenderViewHost* host) FINAL;
+
+  void SetOverscrollControllerEnabled(bool enabled) FINAL;
+
+  // content::RenderViewHostDelegateView
   void ShowPopupMenu(const gfx::Rect& bounds,
                      int item_height,
                      double item_font_size,

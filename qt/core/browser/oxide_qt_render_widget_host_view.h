@@ -69,7 +69,7 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
-  // content::RenderWidgetHostViewPort
+  // content::RenderWidgetHostViewBase
   gfx::Size GetPhysicalBackingSize() const FINAL;
 
   // content::RenderWidgetHostView
@@ -79,20 +79,21 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
  private:
   static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
 
-  // content::RenderWidgetHostViewPort
+  // content::RenderWidgetHostViewBase
+  void FocusedNodeChanged(bool is_editable_node) FINAL;
+
   void Blur() FINAL;
 
   void TextInputTypeChanged(ui::TextInputType type,
                             ui::TextInputMode mode,
                             bool can_compose_inline) FINAL;
   void ImeCancelComposition() FINAL;
-  void FocusedNodeChanged(bool is_editable_node) FINAL;
 
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
 
   gfx::Rect GetBoundsInRootWindow() FINAL;
 
-  // content::RenderWidgetHostViewPort
+  // content::RenderWidgetHostView
   void Focus() FINAL;
   bool HasFocus() const FINAL;
 
