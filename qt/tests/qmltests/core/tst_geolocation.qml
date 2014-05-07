@@ -17,6 +17,10 @@ TestWebView {
     return (result === expected);
   }
 
+  onGeolocationPermissionRequested: {
+    request.accept();
+  }
+
   TestCase {
     name: "geolocation"
     when: windowShown
