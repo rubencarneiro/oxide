@@ -51,6 +51,7 @@ namespace oxide {
 
 class BrowserContextDelegate;
 class BrowserContextObserver;
+class GeolocationPermissionContext;
 class ResourceContext;
 class URLRequestContext;
 class URLRequestContextGetter;
@@ -257,6 +258,8 @@ class BrowserContext : public content::BrowserContext,
   IODataHandle io_data_handle_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
+
+  scoped_refptr<GeolocationPermissionContext> geolocation_permission_context_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

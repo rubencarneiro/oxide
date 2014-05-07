@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
@@ -191,6 +192,8 @@ class OxideQQuickWebView : public QQuickItem {
   void fullscreenRequested(bool fullscreen);
   void navigationRequested(OxideQNavigationRequest *request);
   void newViewRequested(OxideQNewViewRequest* request);
+  void geolocationPermissionRequested(
+      OxideQGeolocationPermissionRequest* request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,
                                 const QString& message,
                                 int lineNumber,

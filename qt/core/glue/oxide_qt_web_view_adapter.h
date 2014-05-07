@@ -33,6 +33,7 @@ QT_BEGIN_NAMESPACE
 class QSize;
 QT_END_NAMESPACE
 
+class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
@@ -163,6 +164,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
   virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
+
+  virtual void RequestGeolocationPermission(
+      OxideQGeolocationPermissionRequest* request) = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

@@ -85,6 +85,9 @@ class WebView FINAL : public oxide::WebView,
 
   void OnWebPreferencesChanged() FINAL;
 
+  void OnRequestGeolocationPermission(
+      scoped_ptr<oxide::GeolocationPermissionRequest> request) FINAL;
+
   bool OnAddMessageToConsole(int32 level,
                              const base::string16& message,
                              int32 line_no,

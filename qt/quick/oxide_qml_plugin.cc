@@ -24,6 +24,7 @@
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
+#include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
@@ -60,6 +61,9 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterSingletonType<OxideQQuickGlobals>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
 
+    qmlRegisterUncreatableType<OxideQGeolocationPermissionRequest>(uri, 1, 0,
+        "GeolocationPermissionRequest",
+        "GeolocationPermissionRequest is created by Oxide");
     qmlRegisterUncreatableType<OxideQLoadEvent>(uri, 1, 0, "LoadEvent",
         "LoadEvent' are created automatically by Oxide");
     qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 1, 0, "NavigationHistory",

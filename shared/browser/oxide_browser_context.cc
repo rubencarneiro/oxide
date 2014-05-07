@@ -55,6 +55,7 @@
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_geolocation_permission_context.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
@@ -435,7 +436,11 @@ content::DownloadManagerDelegate*
 
 content::GeolocationPermissionContext*
     BrowserContext::GetGeolocationPermissionContext() {
-  return NULL;
+  if (!geolocation_permission_context_) {
+    geolocation_permission_context_ = new GeolocationPermissionContext();
+  }
+
+  return geolocation_permission_context_;
 }
 
 quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {

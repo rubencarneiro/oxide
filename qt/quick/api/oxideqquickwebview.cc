@@ -28,6 +28,7 @@
 #include <QSize>
 #include <QtQml>
 
+#include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
@@ -267,6 +268,14 @@ void OxideQQuickWebViewPrivate::NewViewRequested(
   Q_Q(OxideQQuickWebView);
 
   emit q->newViewRequested(request);
+}
+
+void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
+    OxideQGeolocationPermissionRequest* request) {
+  Q_Q(OxideQQuickWebView);
+
+  QQmlEngine::setObjectOwnership(request, QQmlEngine::JavaScriptOwnership);
+  emit q->geolocationPermissionRequested(request);
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
