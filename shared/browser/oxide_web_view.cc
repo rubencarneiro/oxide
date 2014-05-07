@@ -415,6 +415,10 @@ bool WebView::IsFullscreenForTabOrPending(
   return is_fullscreen_;
 }
 
+void WebView::RenderProcessGone(base::TerminationStatus status) {
+  geolocation_permission_requests_.CancelAllPending();
+}
+
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   while (root_frame_->ChildCount() > 0) {
@@ -496,6 +500,9 @@ void WebView::DidFailLoad(int64 frame_id,
 
 void WebView::NavigationEntryCommitted(
     const content::LoadCommittedDetails& load_details) {
+  if (load_details.is_navigation_to_different_page()) {
+    geolocation_permission_requests_.CancelAllPending();
+  }
   OnNavigationEntryCommitted();
 }
 
@@ -572,6 +579,9 @@ void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
+
+void WebView::OnRequestGeolocationPermission(
+    scoped_ptr<GeolocationPermissionRequest> request) {}
 
 bool WebView::OnAddMessageToConsole(int32 level,
                                     const base::string16& message,
@@ -882,27 +892,6 @@ gfx::Size WebView::GetContainerSize() {
   return GetContainerBounds().size();
 }
 
-JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type,
-    bool* did_suppress_message) {
-  return NULL;
-}
-
-JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  return NULL;
-}
-
-FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
-  return NULL;
-}
-
-void WebView::FrameAdded(WebFrame* frame) {}
-void WebView::FrameRemoved(WebFrame* frame) {}
-
-bool WebView::CanCreateWindows() const {
-  return false;
-}
-
 void WebView::ShowPopupMenu(const gfx::Rect& bounds,
                             int selected_item,
                             const std::vector<content::MenuItem>& items,
@@ -925,6 +914,43 @@ void WebView::HidePopupMenu() {
   if (active_popup_menu_ && !active_popup_menu_->WasHidden()) {
     active_popup_menu_->Hide();
   }
+}
+
+void WebView::RequestGeolocationPermission(
+    const PermissionRequest::ID& id,
+    const GURL& origin,
+    const base::Callback<void(bool)>& callback) {
+  scoped_ptr<GeolocationPermissionRequest> request(
+      new GeolocationPermissionRequest(
+        &geolocation_permission_requests_, id, origin,
+        web_contents_->GetLastCommittedURL().GetOrigin(), callback));
+  OnRequestGeolocationPermission(request.Pass());
+}
+
+void WebView::CancelGeolocationPermissionRequest(
+    const PermissionRequest::ID& id) {
+  geolocation_permission_requests_.CancelPendingRequestWithID(id);
+}
+
+JavaScriptDialog* WebView::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  return NULL;
+}
+
+JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
+  return NULL;
+}
+
+FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
+  return NULL;
+}
+
+void WebView::FrameAdded(WebFrame* frame) {}
+void WebView::FrameRemoved(WebFrame* frame) {}
+
+bool WebView::CanCreateWindows() const {
+  return false;
 }
 
 } // namespace oxide

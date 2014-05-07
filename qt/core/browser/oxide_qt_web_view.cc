@@ -30,6 +30,8 @@
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqnewviewrequest_p.h"
+#include "qt/core/api/oxideqpermissionrequest.h"
+#include "qt/core/api/oxideqpermissionrequest_p.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
@@ -223,6 +225,17 @@ void WebView::OnNavigationEntryChanged(int index) {
 
 void WebView::OnWebPreferencesChanged() {
   adapter_->WebPreferencesChanged();
+}
+
+void WebView::OnRequestGeolocationPermission(
+    scoped_ptr<oxide::GeolocationPermissionRequest> request) {
+  OxideQGeolocationPermissionRequest* qreq =
+      new OxideQGeolocationPermissionRequest();
+  OxideQPermissionRequestPrivate::get(qreq)->Init(
+      request.PassAs<oxide::PermissionRequest>());
+
+  // The embedder takes ownership of this
+  adapter_->RequestGeolocationPermission(qreq);
 }
 
 bool WebView::OnAddMessageToConsole(
