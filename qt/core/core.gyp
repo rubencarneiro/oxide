@@ -32,6 +32,7 @@
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',
         'system.gyp:Qt5Gui-private',
+        'system.gyp:Qt5Positioning',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -54,7 +55,7 @@
         '<(DEPTH)'
       ],
       'sources': [
-        '<(INTERMEDIATE_DIR)/oxide_qt_web_popup_menu_qquick.moc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_location_provider.cc',
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_content_main_delegate.cc',
         'app/oxide_qt_content_main_delegate.h',
@@ -65,6 +66,8 @@
         'browser/oxide_qt_file_picker.h',
         'browser/oxide_qt_javascript_dialog.cc',
         'browser/oxide_qt_javascript_dialog.h',
+        'browser/oxide_qt_location_provider.cc',
+        'browser/oxide_qt_location_provider.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
         'browser/oxide_qt_render_widget_host_view.cc',
@@ -86,6 +89,13 @@
         'gl/oxide_qt_shared_gl_context.h',
         'glue/private/oxide_qt_web_context_adapter_p.cc',
       ],
+      'actions': [
+        {
+          'action_name': 'moc_oxide_qt_location_provider.cc',
+          'moc_input': 'browser/oxide_qt_location_provider_p.h',
+          'includes': [ 'moc.gypi' ]
+        },
+      ]
     },
     {
       'target_name': 'OxideQtCore_public',

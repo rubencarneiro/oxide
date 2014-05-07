@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_browser_client.h"
+#ifndef _OXIDE_QT_TESTS_MOCK_POSITION_PLUGIN_H_
+#define _OXIDE_QT_TESTS_MOCK_POSITION_PLUGIN_H_
 
-#include <QList>
-#include <QTouchDevice>
+#include <QGeoPositionInfoSourceFactory>
+#include <QObject>
 
-#include "oxide_qt_location_provider.h"
-#include "oxide_qt_message_pump.h"
+class PositionMock : public QObject, public QGeoPositionInfoSourceFactory
+{
+  Q_OBJECT
 
-namespace oxide {
-namespace qt {
+  Q_PLUGIN_METADATA(IID "org.qt-project.qt.position.sourcefactory/5.0"
+                    FILE "plugin.json")
 
-ContentBrowserClient::ContentBrowserClient() {}
+  Q_INTERFACES(QGeoPositionInfoSourceFactory)
 
-base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
-  return new MessagePump();
-}
+ public:
+  QGeoPositionInfoSource* positionInfoSource(QObject* parent);
+  QGeoSatelliteInfoSource* satelliteInfoSource(QObject* parent);
+  QGeoAreaMonitorSource* areaMonitor(QObject* parent);
+};
 
-content::LocationProvider*
-ContentBrowserClient::OverrideSystemLocationProvider() {
-  return new LocationProvider();
-}
-
-bool ContentBrowserClient::IsTouchSupported() {
-  // XXX: Is there a way to get notified if a touch device is added?
-  return QTouchDevice::devices().size() > 0;
-}
-
-} // namespace qt
-} // namespace oxide
+#endif // _OXIDE_QT_TESTS_MOCK_POSITION_PLUGIN_H_
