@@ -120,6 +120,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                            const GURL& url,
                            ::WebPreferences* prefs) FINAL;
 
+  virtual content::LocationProvider* OverrideSystemLocationProvider() OVERRIDE;
+
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;

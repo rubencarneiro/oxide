@@ -354,6 +354,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   }
 }
 
+content::LocationProvider*
+ContentBrowserClient::OverrideSystemLocationProvider() {
+  return NULL;
+}
+
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   SharedGLContext* context =
       BrowserProcessMain::instance()->shared_gl_context();
