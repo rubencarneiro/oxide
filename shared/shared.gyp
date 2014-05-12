@@ -243,6 +243,8 @@
         'browser/oxide_javascript_dialog.h',
         'browser/oxide_javascript_dialog_manager.cc',
         'browser/oxide_javascript_dialog_manager.h',
+        'browser/oxide_language_utils_linux.cc',
+        'browser/oxide_language_utils_linux.h',
         'browser/oxide_message_pump.cc',
         'browser/oxide_message_pump.h',
         'browser/oxide_network_delegate.cc',
