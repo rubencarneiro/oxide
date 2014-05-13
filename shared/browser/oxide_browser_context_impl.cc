@@ -25,7 +25,6 @@
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_content_client.h"
 
-#include "oxide_language_utils_linux.h"
 #include "oxide_off_the_record_browser_context_impl.h"
 
 namespace oxide {
@@ -35,7 +34,7 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     path_(params.path),
     cache_path_(params.cache_path),
     // FIXME: Get from translations
-    accept_langs_(getAcceptLanguageTags()),
+    accept_langs_("en-us,en"),
     cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode_(params.session_cookie_mode),
     popup_blocker_enabled_(true) {}
