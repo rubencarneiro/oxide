@@ -92,7 +92,7 @@ diff --git a/content/browser/frame_host/frame_tree.h b/content/browser/frame_hos
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -353,16 +353,19 @@ WebContentsImpl::WebContentsImpl(
+@@ -354,16 +354,19 @@ WebContentsImpl::WebContentsImpl(
        fullscreen_widget_routing_id_(MSG_ROUTING_NONE),
        is_subframe_(false),
        last_dialog_suppressed_(false) {
@@ -109,10 +109,10 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
  WebContentsImpl::~WebContentsImpl() {
    is_being_destroyed_ = true;
  
-   // If there is an interstitial page being shown, tell it to close down early
-   // so that this contents will be alive enough to handle all the UI triggered
-   // by that. <http://crbug.com/363564>
-@@ -3978,16 +3981,25 @@ gfx::Size WebContentsImpl::GetSizeForNew
+   // Delete all RFH pending shutdown, which will lead the corresponding RVH to
+   // shutdown and be deleted as well.
+   frame_tree_.ForEach(
+@@ -3963,16 +3966,25 @@ gfx::Size WebContentsImpl::GetSizeForNew
  
  void WebContentsImpl::OnFrameRemoved(
      RenderViewHostImpl* render_view_host,
@@ -141,7 +141,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 diff --git a/content/browser/web_contents/web_contents_impl.h b/content/browser/web_contents/web_contents_impl.h
 --- a/content/browser/web_contents/web_contents_impl.h
 +++ b/content/browser/web_contents/web_contents_impl.h
-@@ -856,16 +856,18 @@ class CONTENT_EXPORT WebContentsImpl
+@@ -852,16 +852,18 @@ class CONTENT_EXPORT WebContentsImpl
    // Clear all PowerSaveBlockers, leave power_save_blocker_ empty.
    void ClearAllPowerSaveBlockers();
  

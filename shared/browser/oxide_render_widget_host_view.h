@@ -217,7 +217,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   // ui::GestureEventHelper
   bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
-  void DispatchPostponedGestureEvent(ui::GestureEvent* event) FINAL;
+  void DispatchGestureEvent(ui::GestureEvent* event) FINAL;
   void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
 
   // AcceleratedFrameHandle::Client

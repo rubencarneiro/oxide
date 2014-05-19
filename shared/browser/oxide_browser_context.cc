@@ -443,6 +443,11 @@ content::GeolocationPermissionContext*
   return geolocation_permission_context_;
 }
 
+content::BrowserPluginGuestManagerDelegate*
+BrowserContext::GetGuestManagerDelegate() {
+  return NULL;
+}
+
 quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
   return NULL;
 }

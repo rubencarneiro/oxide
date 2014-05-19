@@ -26,7 +26,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -255,13 +255,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -256,13 +256,16 @@ class CONTENT_EXPORT ContentRendererClie
    // this renderer process. Currently, we apply the policy only to a renderer
    // process running on a normal page from the web.
    virtual bool ShouldEnableSiteIsolationPolicy() const;
@@ -46,10 +46,10 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2560,16 +2560,23 @@ bool RenderFrameImpl::willCheckAndDispat
-   // * is_swapped_out_
-   return render_view_->willCheckAndDispatchMessageEvent(
-       sourceFrame, targetFrame, targetOrigin, event);
+@@ -2753,16 +2753,23 @@ bool RenderFrameImpl::willCheckAndDispat
+ 
+   Send(new ViewHostMsg_RouteMessageEvent(render_view_->routing_id_, params));
+   return true;
  }
  
  blink::WebString RenderFrameImpl::userAgentOverride(blink::WebLocalFrame* frame,

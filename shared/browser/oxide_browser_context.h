@@ -250,6 +250,8 @@ class BrowserContext : public content::BrowserContext,
   content::GeolocationPermissionContext*
       GetGeolocationPermissionContext() FINAL;
 
+  content::BrowserPluginGuestManagerDelegate* GetGuestManagerDelegate() FINAL;
+
   quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
 
   void AddObserver(BrowserContextObserver* observer);
