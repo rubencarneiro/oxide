@@ -19,7 +19,6 @@
 
 #include <QString>
 #include <QUrl>
-#include <QCoreApplication>
 
 #include "base/strings/utf_string_conversions.h"
 #include "url/gurl.h"
