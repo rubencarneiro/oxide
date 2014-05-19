@@ -515,6 +515,9 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
   const unsigned short* text = qevent->text().utf16();
   memcpy(event.unmodifiedText, text, qMin(sizeof(event.unmodifiedText), sizeof(*text)));
 
+  COMPILE_ASSERT(sizeof(event.unmodifiedText) == sizeof(event.text),
+                 text_member_sizes_dont_match);
+
   if (event.modifiers & blink::WebInputEvent::ControlKey) {
     event.text[0] = GetControlCharacter(
         event.windowsKeyCode,
