@@ -335,6 +335,10 @@ WebView* WebView::Create(WebViewAdapter* adapter) {
 
 void WebView::HandleKeyboardEvent(content::WebContents* source,
                                   const content::NativeWebKeyboardEvent& event) {
+  if (event.skip_in_browser) {
+    return;
+  }
+
   DCHECK(event.os_event);
 
   QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
