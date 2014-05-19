@@ -17,6 +17,7 @@
 
 #include "oxide_qt_web_view.h"
 
+#include <QKeyEvent>
 #include <QString>
 #include <QUrl>
 
@@ -323,7 +324,11 @@ WebView* WebView::Create(WebViewAdapter* adapter) {
 void WebView::HandleKeyboardEvent(content::WebContents* source,
                                   const content::NativeWebKeyboardEvent& event) {
   DCHECK(event.os_event);
-  adapter_->HandleKeyboardEvent(reinterpret_cast<QKeyEvent *>(event.os_event));
+
+  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
+  DCHECK(!qevent->isAccepted());
+
+  adapter_->HandleKeyboardEvent(qevent);
 }
 
 } // namespace qt
