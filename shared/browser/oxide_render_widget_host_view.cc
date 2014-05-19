@@ -37,7 +37,15 @@
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "ui/events/event.h"
 
+#include "oxide_default_screen_info.h"
 #include "oxide_gpu_utils.h"
+
+namespace content {
+void RenderWidgetHostViewBase::GetDefaultScreenInfo(
+    blink::WebScreenInfo* results) {
+  *results = oxide::GetDefaultWebScreenInfo();
+}
+}
 
 namespace oxide {
 

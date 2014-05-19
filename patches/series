@@ -13,4 +13,3 @@ dont-initialize-gl-more-than-once.patch
 renderer-user-agent-override.patch
 expose-extra-properties-for-should-create-webcontents.patch
 disable-default-network-location-provider.patch
-override-default-web-contents-view.patch
