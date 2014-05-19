@@ -106,8 +106,6 @@ class WebView FINAL : public oxide::WebView,
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;
 
-  int WebEventKeyCodeToQKeyEventKeyCode(
-                           const content::NativeWebKeyboardEvent& event);
   void HandleKeyboardEvent(content::WebContents* source,
                            const content::NativeWebKeyboardEvent& event);
 

@@ -27,7 +27,6 @@
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
 #include "content/public/browser/native_web_keyboard_event.h"
-#include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
