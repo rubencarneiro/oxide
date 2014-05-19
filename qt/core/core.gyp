@@ -58,6 +58,7 @@
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_content_main_delegate.cc',
         'app/oxide_qt_content_main_delegate.h',
+        'browser/native_web_keyboard_event_oxide.cc',
         'browser/oxide_default_screen_info.cc',
         'browser/oxide_qt_content_browser_client.cc',
         'browser/oxide_qt_content_browser_client.h',

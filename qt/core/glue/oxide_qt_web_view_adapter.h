@@ -30,6 +30,7 @@
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
+class QKeyEvent;
 class QSize;
 QT_END_NAMESPACE
 
@@ -163,6 +164,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
   virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
+
+  virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

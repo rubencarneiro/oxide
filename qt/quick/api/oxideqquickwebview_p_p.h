@@ -93,6 +93,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void NavigationRequested(OxideQNavigationRequest* request) Q_DECL_FINAL;
   void NewViewRequested(OxideQNewViewRequest* request) Q_DECL_FINAL;
 
+  void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
+
   void completeConstruction();
 
   static void messageHandler_append(
