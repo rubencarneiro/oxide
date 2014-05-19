@@ -339,6 +339,11 @@ void WebView::HandleKeyboardEvent(content::WebContents* source,
     return;
   }
 
+  if (event.type != blink::WebInputEvent::RawKeyDown &&
+      event.type != blink::WebInputEvent::KeyUp) {
+    return;
+  }
+
   DCHECK(event.os_event);
 
   QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
