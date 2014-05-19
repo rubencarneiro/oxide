@@ -1003,9 +1003,8 @@ void RenderWidgetHostView::HandleWheelEvent(QWheelEvent* event) {
 // (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
 static void sendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* rwh,
                                         blink::WebInputEvent::Type type) {
-  const int kCompositionEventKeyCode = 229;
   content::NativeWebKeyboardEvent fake_event;
-  fake_event.windowsKeyCode = kCompositionEventKeyCode;
+  fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
   fake_event.skip_in_browser = true;
   fake_event.type = type;
   rwh->ForwardKeyboardEvent(fake_event);
