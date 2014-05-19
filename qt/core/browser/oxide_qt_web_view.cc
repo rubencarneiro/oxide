@@ -17,6 +17,7 @@
 
 #include "oxide_qt_web_view.h"
 
+#include <QKeyEvent>
 #include <QString>
 #include <QUrl>
 
@@ -25,6 +26,8 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
+#include "content/public/browser/native_web_keyboard_event.h"
+#include "third_party/WebKit/Source/platform/WindowsKeyboardCodes.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
@@ -329,6 +332,16 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
+}
+
+void WebView::HandleKeyboardEvent(content::WebContents* source,
+                                  const content::NativeWebKeyboardEvent& event) {
+  DCHECK(event.os_event);
+
+  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
+  DCHECK(!qevent->isAccepted());
+
+  adapter_->HandleKeyboardEvent(qevent);
 }
 
 } // namespace qt
