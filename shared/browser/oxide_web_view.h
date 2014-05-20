@@ -86,6 +86,10 @@ class WebView : public ScriptMessageTarget,
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
 
+  void LoadData(const std::string& encodedData,
+                const std::string& mimeType,
+                const GURL& baseUrl);
+
   std::string GetTitle() const;
 
   bool CanGoBack() const;

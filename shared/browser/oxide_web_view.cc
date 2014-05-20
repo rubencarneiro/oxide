@@ -38,6 +38,7 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/menu_item.h"
+#include "content/public/common/url_constants.h"
 #include "net/base/net_errors.h"
 #include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
@@ -709,6 +710,22 @@ void WebView::SetURL(const GURL& url) {
   // HttpUserAgentSettings::GetUserAgent()
   params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
   params.transition_type = content::PAGE_TRANSITION_TYPED;
+  web_contents_->GetController().LoadURLWithParams(params);
+}
+
+void WebView::LoadData(const std::string& encodedData,
+                       const std::string& mimeType,
+                       const GURL& baseUrl) {
+  std::string url("data:");
+  url.append(mimeType);
+  url.append(",");
+  url.append(encodedData);
+
+  content::NavigationController::LoadURLParams params((GURL(url)));
+  params.load_type = content::NavigationController::LOAD_TYPE_DATA;
+  params.base_url_for_data_url = baseUrl;
+  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
+  params.can_load_local_resources = true;
   web_contents_->GetController().LoadURLWithParams(params);
 }
 

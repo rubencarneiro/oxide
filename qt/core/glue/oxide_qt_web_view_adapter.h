@@ -84,6 +84,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void goForward();
   void stop();
   void reload();
+  void loadHtml(const QString& html, const QUrl& baseUrl);
 
   QList<ScriptMessageHandlerAdapter *>& message_handlers() {
     return message_handlers_;
