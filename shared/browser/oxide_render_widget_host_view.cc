@@ -33,11 +33,13 @@
 #include "content/common/view_messages.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "ui/events/event.h"
 
 #include "oxide_gpu_utils.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -122,6 +124,22 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
         base::Bind(&RenderWidgetHostView::SendSwapCompositorFrameAck,
                    AsWeakPtr(), output_surface_id);
   }
+
+  content::RenderViewHost* rvh = content::RenderViewHost::From(host());
+  WebView* webview = WebView::FromRenderViewHost(rvh);
+  gfx::Vector2dF root_scroll_offset = frame->metadata.root_scroll_offset;
+  gfx::SizeF root_layer_size = frame->metadata.root_layer_size;
+  gfx::SizeF viewport_size = frame->metadata.viewport_size;
+  if (root_scroll_offset != frame_metadata_.root_scroll_offset) {
+    webview->RootScrollOffsetChanged(root_scroll_offset);
+  }
+  if (root_layer_size != frame_metadata_.root_layer_size) {
+    webview->RootLayerSizeChanged(root_layer_size);
+  }
+  if (viewport_size != frame_metadata_.viewport_size) {
+    webview->ViewportSizeChanged(viewport_size);
+  }
+  frame_metadata_ = frame->metadata;
 
   if (IsUsingSoftwareCompositing()) {
     DCHECK(!pending_accelerated_frame_ &&

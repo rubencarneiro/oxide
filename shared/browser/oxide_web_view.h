@@ -153,6 +153,10 @@ class WebView : public ScriptMessageTarget,
 
   virtual bool CanCreateWindows() const;
 
+  virtual void RootScrollOffsetChanged(const gfx::Vector2dF& offset);
+  virtual void RootLayerSizeChanged(const gfx::SizeF& size);
+  virtual void ViewportSizeChanged(const gfx::SizeF& size);
+
  protected:
 
   struct Params {

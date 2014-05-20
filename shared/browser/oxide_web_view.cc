@@ -953,4 +953,8 @@ bool WebView::CanCreateWindows() const {
   return false;
 }
 
+void WebView::RootScrollOffsetChanged(const gfx::Vector2dF& offset) {}
+void WebView::RootLayerSizeChanged(const gfx::SizeF& size) {}
+void WebView::ViewportSizeChanged(const gfx::SizeF& size) {}
+
 } // namespace oxide

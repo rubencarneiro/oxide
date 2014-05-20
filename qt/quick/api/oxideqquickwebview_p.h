@@ -18,9 +18,11 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_H_
 
+#include <QPointF>
 #include <QQmlListProperty>
 #include <QQuickItem>
 #include <QScopedPointer>
+#include <QSizeF>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
@@ -74,6 +76,10 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
+
+  Q_PROPERTY(QPointF scrollOffset READ scrollOffset NOTIFY scrollOffsetChanged)
+  Q_PROPERTY(QSizeF layerSize READ layerSize NOTIFY layerSizeChanged)
+  Q_PROPERTY(QSizeF viewportSize READ viewportSize NOTIFY viewportSizeChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
@@ -132,6 +138,10 @@ class OxideQQuickWebView : public QQuickItem {
   Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
   Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
+  const QPointF& scrollOffset() const;
+  const QSizeF& layerSize() const;
+  const QSizeF& viewportSize() const;
+
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
@@ -189,6 +199,9 @@ class OxideQQuickWebView : public QQuickItem {
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
+  void scrollOffsetChanged();
+  void layerSizeChanged();
+  void viewportSizeChanged();
   void fullscreenRequested(bool fullscreen);
   void navigationRequested(OxideQNavigationRequest *request);
   void newViewRequested(OxideQNewViewRequest* request);
