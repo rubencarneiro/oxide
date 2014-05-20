@@ -38,8 +38,16 @@
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "ui/events/event.h"
 
+#include "oxide_default_screen_info.h"
 #include "oxide_gpu_utils.h"
 #include "oxide_web_view.h"
+
+namespace content {
+void RenderWidgetHostViewBase::GetDefaultScreenInfo(
+    blink::WebScreenInfo* results) {
+  *results = oxide::GetDefaultWebScreenInfo();
+}
+}
 
 namespace oxide {
 
@@ -393,8 +401,7 @@ bool RenderWidgetHostView::CanDispatchToConsumer(
   return true;
 }
 
-void RenderWidgetHostView::DispatchPostponedGestureEvent(
-    ui::GestureEvent* event) {
+void RenderWidgetHostView::DispatchGestureEvent(ui::GestureEvent* event) {
   ForwardGestureEventToRenderer(event);
 }
 

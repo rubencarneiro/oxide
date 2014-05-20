@@ -30,6 +30,7 @@
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
+class QKeyEvent;
 class QPointF;
 class QSize;
 class QSizeF;
@@ -173,6 +174,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void RootScrollOffsetChanged(const QPointF& offset) = 0;
   virtual void RootLayerSizeChanged(const QSizeF& size) = 0;
   virtual void ViewportSizeChanged(const QSizeF& size) = 0;
+
+  virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

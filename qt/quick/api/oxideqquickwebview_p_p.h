@@ -102,6 +102,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void RootLayerSizeChanged(const QSizeF& size) Q_DECL_FINAL;
   void ViewportSizeChanged(const QSizeF& size) Q_DECL_FINAL;
 
+  void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
+
   void completeConstruction();
 
   static void messageHandler_append(

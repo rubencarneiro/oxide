@@ -18,6 +18,7 @@
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
+#include <QKeyEvent>
 #include <QMetaMethod>
 #include <QPointF>
 #include <QQmlEngine>
@@ -297,6 +298,17 @@ void OxideQQuickWebViewPrivate::ViewportSizeChanged(const QSizeF& size) {
 
   viewport_size_ = size;
   emit q->viewportSizeChanged();
+}
+
+void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
+  Q_Q(OxideQQuickWebView);
+
+  QQuickWindow* w = q->window();
+  if (!w) {
+    return;
+  }
+
+  w->sendEvent(q, event);
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
