@@ -726,6 +726,7 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
+  params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
   web_contents_->GetController().LoadURLWithParams(params);
 }
 
