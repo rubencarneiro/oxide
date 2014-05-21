@@ -1,0 +1,14 @@
+<html>
+  <body style="width: 2000px; height: 2000px">
+    <div style="position: fixed">
+      <div id="scrollLeft">0</div>
+      <div id="scrollTop">0</div>
+    </div>
+    <script>
+      document.defaultView.addEventListener('scroll', function(event) {
+        document.querySelector("#scrollLeft").innerHTML = document.body.scrollLeft;
+        document.querySelector("#scrollTop").innerHTML = document.body.scrollTop;
+      });
+    </script>
+  </body>
+</html>
