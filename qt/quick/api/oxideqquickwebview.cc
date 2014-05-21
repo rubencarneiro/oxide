@@ -833,4 +833,10 @@ void OxideQQuickWebView::reload() {
   d->reload();
 }
 
+void OxideQQuickWebView::loadHtml(const QString& html, const QUrl& baseUrl) {
+  Q_D(OxideQQuickWebView);
+
+  d->loadHtml(html, baseUrl);
+}
+
 #include "moc_oxideqquickwebview_p.cpp"

@@ -168,6 +168,7 @@ class OxideQQuickWebView : public QQuickItem {
   void goForward();
   void stop();
   void reload();
+  void loadHtml(const QString& html, const QUrl& baseUrl = QUrl());
 
  Q_SIGNALS:
   void urlChanged();

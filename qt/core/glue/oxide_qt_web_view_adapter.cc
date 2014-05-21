@@ -175,6 +175,13 @@ void WebViewAdapter::reload() {
   priv->Reload();
 }
 
+void WebViewAdapter::loadHtml(const QString& html, const QUrl& baseUrl) {
+  QByteArray encodedData = html.toUtf8().toPercentEncoding();
+  priv->LoadData(std::string(encodedData.constData(), encodedData.length()),
+                 "text/html;charset=UTF-8",
+                 GURL(baseUrl.toString().toStdString()));
+}
+
 bool WebViewAdapter::isInitialized() {
   return priv->GetWebContents() != NULL;
 }
