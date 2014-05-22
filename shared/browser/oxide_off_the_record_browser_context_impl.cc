@@ -33,11 +33,6 @@ OffTheRecordBrowserContextIODataImpl::GetCookiePolicy() const {
   return original_io_data_->GetCookiePolicy();
 }
 
-void OffTheRecordBrowserContextIODataImpl::SetCookiePolicy(
-    net::StaticCookiePolicy::Type cookie_policy) {
-  original_io_data_->SetCookiePolicy(cookie_policy);
-}
-
 content::CookieStoreConfig::SessionCookieMode
 OffTheRecordBrowserContextIODataImpl::GetSessionCookieMode() const {
   return content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES;
@@ -102,6 +97,11 @@ void OffTheRecordBrowserContextImpl::SetProduct(const std::string& product) {
 void OffTheRecordBrowserContextImpl::SetUserAgent(
     const std::string& user_agent) {
   original_context_->SetUserAgent(user_agent);
+}
+
+void OffTheRecordBrowserContextImpl::SetCookiePolicy(
+    net::StaticCookiePolicy::Type policy) {
+  original_context_->SetCookiePolicy(policy);
 }
 
 void OffTheRecordBrowserContextImpl::SetIsPopupBlockerEnabled(bool enabled) {

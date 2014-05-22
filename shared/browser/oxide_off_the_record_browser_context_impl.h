@@ -33,7 +33,6 @@ class OffTheRecordBrowserContextIODataImpl FINAL :
   OffTheRecordBrowserContextIODataImpl(BrowserContextIOData* original_io_data);
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const FINAL;
-  void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
   content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const FINAL;
 
   bool IsPopupBlockerEnabled() const FINAL;
@@ -64,6 +63,7 @@ class OffTheRecordBrowserContextImpl FINAL : public BrowserContext {
   void SetProduct(const std::string& product) FINAL;
 
   void SetUserAgent(const std::string& user_agent) FINAL;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
   void SetIsPopupBlockerEnabled(bool enabled) FINAL;
 
   UserScriptMaster& UserScriptManager() FINAL;

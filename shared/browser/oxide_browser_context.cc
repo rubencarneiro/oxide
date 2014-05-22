@@ -566,10 +566,6 @@ net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
   return io_data()->GetCookiePolicy();
 }
 
-void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
-  io_data()->SetCookiePolicy(policy);
-}
-
 content::CookieStoreConfig::SessionCookieMode
 BrowserContext::GetSessionCookieMode() const {
   return io_data()->GetSessionCookieMode();
