@@ -198,6 +198,7 @@ void RenderViewItem::hoverMoveEvent(QHoverEvent* event) {
                  Qt::NoButton,
                  Qt::NoButton,
                  event->modifiers());
+  me.accept();
 
   HandleMouseEvent(&me);
 
