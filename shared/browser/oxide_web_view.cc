@@ -21,6 +21,7 @@
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/supports_user_data.h"
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
@@ -59,6 +60,21 @@
 namespace oxide {
 
 namespace {
+
+const char kWebViewKey[] = "oxide_web_view_data";
+
+// SupportsUserData implementations own their data. This class exists
+// because we don't want WebContents to own WebView (it's the other way
+// around)
+class WebViewUserData : public base::SupportsUserData::Data {
+ public:
+  WebViewUserData(WebView* view) : view_(view) {}
+
+  WebView* view() const { return view_; }
+
+ private:
+  WebView* view_;
+};
 
 void FillLoadURLParamsFromOpenURLParams(
     content::NavigationController::LoadURLParams* load_params,
@@ -646,6 +662,7 @@ bool WebView::Init(const Params& params) {
   BrowserContextObserver::Observe(context_);
 
   web_contents_->SetDelegate(this);
+  web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
   WebContentsObserver::Observe(web_contents_.get());
   // See https://launchpad.net/bugs/1279900 and the comment in
   // HttpUserAgentSettings::GetUserAgent()
@@ -680,7 +697,13 @@ WebView::~WebView() {
 
 // static
 WebView* WebView::FromWebContents(content::WebContents* web_contents) {
-  return static_cast<WebView *>(web_contents->GetDelegate());
+  WebViewUserData* data = static_cast<WebViewUserData *>(
+      web_contents->GetUserData(kWebViewKey));
+  if (!data) {
+    return NULL;
+  }
+
+  return data->view();
 }
 
 // static
