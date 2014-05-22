@@ -988,6 +988,7 @@ void RenderWidgetHostView::HandleMouseEvent(QMouseEvent* event) {
         event->button() == Qt::MidButton ||
         event->button() == Qt::RightButton ||
         event->button() == Qt::NoButton)) {
+    event->ignore();
     return;
   }
 
