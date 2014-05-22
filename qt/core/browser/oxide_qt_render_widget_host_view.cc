@@ -970,8 +970,6 @@ void RenderWidgetHostView::HandleFocusEvent(QFocusEvent* event) {
   } else {
     OnBlur();
   }
-
-  event->accept();
 }
 
 void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
@@ -983,8 +981,6 @@ void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
     GetRenderWidgetHost()->ForwardKeyboardEvent(
         MakeNativeWebKeyboardEvent(event, true));
   }
-
-  event->accept();
 }
 
 void RenderWidgetHostView::HandleMouseEvent(QMouseEvent* event) {
@@ -997,13 +993,11 @@ void RenderWidgetHostView::HandleMouseEvent(QMouseEvent* event) {
 
   GetRenderWidgetHost()->ForwardMouseEvent(
       MakeWebMouseEvent(event, GetDeviceScaleFactor()));
-  event->accept();
 }
 
 void RenderWidgetHostView::HandleWheelEvent(QWheelEvent* event) {
   GetRenderWidgetHost()->ForwardWheelEvent(
       MakeWebMouseWheelEvent(event, GetDeviceScaleFactor()));
-  event->accept();
 }
 
 // Qt input methods don’t generate key events, but a lot of web pages out there
@@ -1080,8 +1074,6 @@ void RenderWidgetHostView::HandleInputMethodEvent(QInputMethodEvent* event) {
                            selectionRange.start(), selectionRange.end());
     sendFakeCompositionKeyEvent(rwh, blink::WebInputEvent::KeyUp);
   }
-
-  event->accept();
 }
 
 void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
@@ -1128,8 +1120,6 @@ void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
       touch_id_map_.erase(touch_point.id());
     }
   }
-
-  event->accept();
 }
 
 void RenderWidgetHostView::HandleGeometryChanged() {
