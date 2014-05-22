@@ -480,7 +480,9 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
     QKeyEvent* qevent, bool is_char) {
   content::NativeWebKeyboardEvent event;
 
-  event.os_event = reinterpret_cast<gfx::NativeEvent>(new QKeyEvent(*qevent));
+  QKeyEvent* os_event = new QKeyEvent(*qevent);
+  os_event->setAccepted(false);
+  event.os_event = reinterpret_cast<gfx::NativeEvent>(os_event);
 
   event.timeStampSeconds = QInputEventTimeToWebEventTime(qevent);
   event.modifiers = QInputEventStateToWebEventModifiers(qevent);
