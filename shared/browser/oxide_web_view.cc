@@ -79,9 +79,6 @@ class WebViewUserData : public base::SupportsUserData::Data {
 void FillLoadURLParamsFromOpenURLParams(
     content::NavigationController::LoadURLParams* load_params,
     const content::OpenURLParams& params) {
-  load_params->override_user_agent =
-      content::NavigationController::UA_OVERRIDE_TRUE;
-
   load_params->transition_type = params.transition;
   load_params->frame_tree_node_id = params.frame_tree_node_id;
   load_params->referrer = params.referrer;
@@ -134,12 +131,6 @@ size_t WebView::GetScriptMessageHandlerCount() const {
 
 ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(size_t index) const {
   return NULL;
-}
-
-void WebView::NotifyUserAgentStringChanged() {
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(GetBrowserContext()->GetUserAgent());
 }
 
 void WebView::NotifyPopupBlockerEnabledChanged() {
@@ -240,7 +231,8 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
     content::NavigationController::LoadURLParams load_params(local_params.url);
     FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
-    web_contents_->GetController().LoadURLWithParams(load_params);
+    WebViewContentsHelper::FromWebContents(
+        web_contents_.get())->LoadURLWithParams(load_params);
 
     return web_contents_.get();
   }
@@ -277,7 +269,8 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
   content::NavigationController::LoadURLParams load_params(local_params.url);
   FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
-  new_view->GetWebContents()->GetController().LoadURLWithParams(load_params);
+  WebViewContentsHelper::FromWebContents(
+      new_view->GetWebContents())->LoadURLWithParams(load_params);
 
   return new_view->GetWebContents();
 }
@@ -593,12 +586,6 @@ bool WebView::Init(const Params& params) {
   BrowserContextObserver::Observe(GetBrowserContext());
   WebContentsObserver::Observe(web_contents_.get());
 
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(GetBrowserContext()->GetUserAgent());
-
-  web_contents_->GetMutableRendererPrefs()->browser_handles_non_local_top_level_requests = true;
-
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                  content::NotificationService::AllBrowserContextsAndSources());
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
@@ -655,11 +642,9 @@ void WebView::SetURL(const GURL& url) {
   }
 
   content::NavigationController::LoadURLParams params(url);
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
   params.transition_type = content::PAGE_TRANSITION_TYPED;
-  web_contents_->GetController().LoadURLWithParams(params);
+  WebViewContentsHelper::FromWebContents(
+      web_contents_.get())->LoadURLWithParams(params);
 }
 
 void WebView::LoadData(const std::string& encodedData,
@@ -675,8 +660,8 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
-  params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
-  web_contents_->GetController().LoadURLWithParams(params);
+  WebViewContentsHelper::FromWebContents(
+      web_contents_.get())->LoadURLWithParams(params);
 }
 
 std::string WebView::GetTitle() const {

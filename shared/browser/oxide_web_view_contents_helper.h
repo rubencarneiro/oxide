@@ -21,18 +21,21 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/supports_user_data.h"
+#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 
 #include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_browser_context_observer.h"
 
 namespace oxide {
 
 class WebViewContentsHelperDelegate;
 
-class WebViewContentsHelper FINAL : public base::SupportsUserData::Data,
-                                    public content::WebContentsDelegate,
-                                    public content::WebContentsObserver {
+class WebViewContentsHelper FINAL : private BrowserContextObserver,
+                                    private base::SupportsUserData::Data,
+                                    private content::WebContentsDelegate,
+                                    private content::WebContentsObserver {
  public:
   WebViewContentsHelper(content::WebContents* contents);
 
@@ -40,8 +43,14 @@ class WebViewContentsHelper FINAL : public base::SupportsUserData::Data,
 
   void SetDelegate(WebViewContentsHelperDelegate* delegate);
 
+  void LoadURLWithParams(
+      const content::NavigationController::LoadURLParams& params);
+
  private:
   ~WebViewContentsHelper();
+
+  // BrowserContextObserver implementation
+  void NotifyUserAgentStringChanged() FINAL;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,

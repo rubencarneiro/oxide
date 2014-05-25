@@ -187,7 +187,6 @@ class WebView : public ScriptMessageTarget,
       size_t index) const OVERRIDE;
 
   // BrowserContextObserver
-  void NotifyUserAgentStringChanged() FINAL;
   void NotifyPopupBlockerEnabledChanged() FINAL;
 
   // WebPreferencesObserver

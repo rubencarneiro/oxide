@@ -25,6 +25,7 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/file_chooser_params.h"
+#include "content/public/common/renderer_preferences.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/shell_dialogs/selected_file_info.h"
 
@@ -44,6 +45,12 @@ WebViewContentsHelper::~WebViewContentsHelper() {
   if (web_contents()) {
     web_contents()->SetDelegate(NULL);
   }
+}
+
+void WebViewContentsHelper::NotifyUserAgentStringChanged() {
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  web_contents()->SetUserAgentOverride(context_->GetUserAgent());
 }
 
 content::WebContents* WebViewContentsHelper::OpenURLFromTab(
@@ -208,6 +215,18 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
 
   contents->SetDelegate(this);
   contents->SetUserData(kWebViewContentsHelperKey, this);
+
+  BrowserContextObserver::Observe(context_);
+
+  // This must come before SetUserAgentOverride, as we rely on that to
+  // to sync this to the renderer, if it already exists
+  content::RendererPreferences* renderer_prefs =
+      web_contents()->GetMutableRendererPrefs();
+  renderer_prefs->browser_handles_non_local_top_level_requests = true;
+
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  web_contents()->SetUserAgentOverride(context_->GetUserAgent());
 }
 
 // static
@@ -220,6 +239,15 @@ WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
 void WebViewContentsHelper::SetDelegate(
     WebViewContentsHelperDelegate* delegate) {
   delegate_ = delegate;
+}
+
+void WebViewContentsHelper::LoadURLWithParams(
+    const content::NavigationController::LoadURLParams& params) {
+  content::NavigationController::LoadURLParams p(params);
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  p.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
+  web_contents()->GetController().LoadURLWithParams(p);
 }
 
 } // namespace oxide
