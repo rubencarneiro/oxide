@@ -67,6 +67,7 @@ class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
+class WebViewContentsHelper;
 
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
@@ -310,6 +311,7 @@ class WebView : public ScriptMessageTarget,
                                     WindowOpenDisposition disposition);
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
+  WebViewContentsHelper* web_contents_helper_;
 
   GURL initial_url_;
 

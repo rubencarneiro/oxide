@@ -231,8 +231,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
     content::NavigationController::LoadURLParams load_params(local_params.url);
     FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
-    WebViewContentsHelper::FromWebContents(
-        web_contents_.get())->LoadURLWithParams(load_params);
+    web_contents_helper_->LoadURLWithParams(load_params);
 
     return web_contents_.get();
   }
@@ -541,9 +540,10 @@ WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
   return NULL;
 }
 
-WebView::WebView() :
-    root_frame_(NULL),
-    is_fullscreen_(false) {}
+WebView::WebView()
+    : web_contents_helper_(NULL),
+      root_frame_(NULL),
+      is_fullscreen_(false) {}
 
 bool WebView::Init(const Params& params) {
   CHECK(!web_contents_);
@@ -579,9 +579,11 @@ bool WebView::Init(const Params& params) {
     new WebViewContentsHelper(web_contents_.get());
   }
 
-  web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
+  web_contents_helper_ =
+      WebViewContentsHelper::FromWebContents(web_contents_.get());
+  web_contents_helper_->SetDelegate(this);
 
-  WebViewContentsHelper::FromWebContents(web_contents_.get())->SetDelegate(this);
+  web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
 
   BrowserContextObserver::Observe(GetBrowserContext());
   WebContentsObserver::Observe(web_contents_.get());
@@ -606,6 +608,7 @@ WebView::~WebView() {
   if (root_frame_) {
     root_frame_->Destroy();
   }
+  web_contents_helper_ = NULL;
 }
 
 // static
@@ -643,8 +646,7 @@ void WebView::SetURL(const GURL& url) {
 
   content::NavigationController::LoadURLParams params(url);
   params.transition_type = content::PAGE_TRANSITION_TYPED;
-  WebViewContentsHelper::FromWebContents(
-      web_contents_.get())->LoadURLWithParams(params);
+  web_contents_helper_->LoadURLWithParams(params);
 }
 
 void WebView::LoadData(const std::string& encodedData,
@@ -660,8 +662,7 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
-  WebViewContentsHelper::FromWebContents(
-      web_contents_.get())->LoadURLWithParams(params);
+  web_contents_helper_->LoadURLWithParams(params);
 }
 
 std::string WebView::GetTitle() const {
