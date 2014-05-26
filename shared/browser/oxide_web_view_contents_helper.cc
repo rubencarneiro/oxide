@@ -93,6 +93,10 @@ void WebViewContentsHelper::NotifyUserAgentStringChanged() {
 void WebViewContentsHelper::WebPreferencesDestroyed() {
   CHECK(!owns_web_preferences_) <<
       "Somebody destroyed a WebPreferences owned by us!";
+  // Create a new WebPreferences immediately. We do this via
+  // ContentBrowserClient to handle the case where we don't yet have
+  // a WebView to allow us to create a full WebPreferences object with
+  // public API
   WebPreferencesObserver::Observe(
       ContentClient::instance()->browser()->CreateWebPreferences());
   owns_web_preferences_ = true;
@@ -317,7 +321,7 @@ WebPreferences* WebViewContentsHelper::GetWebPreferences() const {
 }
 
 void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
-  DCHECK(!preferences || preferences->IsOwnedByEmbedder());
+  CHECK(!preferences || preferences->IsOwnedByEmbedder());
   if (preferences == GetWebPreferences()) {
     return;
   }
