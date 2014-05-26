@@ -780,8 +780,8 @@ void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
   }
 
   d->setPreferences(prefs);
-  // We don't emit a signal here, as we get OnWebPreferencesChanged(),
-  // which also happens if our WebPreferences are destroyed
+
+  emit preferencesChanged();
 }
 
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {

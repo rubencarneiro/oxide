@@ -63,6 +63,8 @@ class WebViewContentsHelperDelegate {
   virtual bool RunFileChooser(const content::FileChooserParams& params) = 0;
 
   virtual void ToggleFullscreenMode(bool enter) = 0;
+
+  virtual void NotifyWebPreferencesDestroyed() = 0;
 };
 
 } // namespace oxide

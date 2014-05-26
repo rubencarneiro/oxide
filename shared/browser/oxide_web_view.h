@@ -192,7 +192,6 @@ class WebView : public ScriptMessageTarget,
 
   // WebPreferencesObserver
   void WebPreferencesDestroyed() FINAL;
-  void WebPreferencesValueChanged() FINAL;
 
   // content::NotificationObserver
   void Observe(int type,
@@ -216,6 +215,7 @@ class WebView : public ScriptMessageTarget,
                            const base::string16& source_id) FINAL;
   bool RunFileChooser(const content::FileChooserParams& params) FINAL;
   void ToggleFullscreenMode(bool enter) FINAL;
+  void NotifyWebPreferencesDestroyed() FINAL;
 
   // content::WebContentsObserver
   void RenderProcessGone(base::TerminationStatus status) FINAL;
@@ -295,7 +295,7 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnToggleFullscreenMode(bool enter);
 
-  virtual void OnWebPreferencesChanged();
+  virtual void OnWebPreferencesDestroyed();
 
   virtual void OnRequestGeolocationPermission(
       scoped_ptr<GeolocationPermissionRequest> request);
@@ -314,6 +314,7 @@ class WebView : public ScriptMessageTarget,
   WebViewContentsHelper* web_contents_helper_;
 
   GURL initial_url_;
+  WebPreferences* initial_preferences_;
 
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;

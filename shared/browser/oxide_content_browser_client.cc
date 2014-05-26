@@ -59,6 +59,7 @@
 #include "oxide_user_agent_override_provider.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
+#include "oxide_web_view_contents_helper.h"
 
 #if defined(ENABLE_PLUGINS)
 #include "content/public/browser/browser_ppapi_host.h"
@@ -318,13 +319,14 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
     ::WebPreferences* prefs) {
-  WebView* view = WebView::FromRenderViewHost(render_view_host);
+  WebViewContentsHelper* contents_helper =
+      WebViewContentsHelper::FromRenderViewHost(render_view_host);
 
-  WebPreferences* web_prefs = view->GetWebPreferences();
+  WebPreferences* web_prefs = contents_helper->GetWebPreferences();
   if (web_prefs) {
     web_prefs->ApplyToWebkitPrefs(prefs);
   } else {
-    DLOG(WARNING) << "No WebPreferences on WebView";
+    DLOG(ERROR) << "No WebPreferences for WebContents";
   }
 
   prefs->touch_enabled = true;
@@ -332,14 +334,21 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->device_supports_touch = IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
-      !view->GetBrowserContext()->IsPopupBlockerEnabled();
-  prefs->supports_multiple_windows = view->CanCreateWindows();
+      !contents_helper->GetBrowserContext()->IsPopupBlockerEnabled();
 
   prefs->enable_scroll_animator = true;
 
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
     prefs->shrinks_standalone_images_to_fit = false;
+  }
+
+  // FIXME: If there is no WebView now, make sure we update WebPreferences
+  //  when the WebContents is adopted
+  prefs->supports_multiple_windows = false;
+  WebView* view = WebView::FromRenderViewHost(render_view_host);
+  if (view) {
+    prefs->supports_multiple_windows = view->CanCreateWindows();
   }
 }
 

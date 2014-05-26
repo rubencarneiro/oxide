@@ -27,30 +27,48 @@
 
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_observer.h"
+#include "shared/browser/oxide_web_preferences_observer.h"
 
 namespace oxide {
 
+class WebPreferences;
 class WebViewContentsHelperDelegate;
 
 class WebViewContentsHelper FINAL : private BrowserContextObserver,
+                                    private WebPreferencesObserver,
                                     private base::SupportsUserData::Data,
                                     private content::WebContentsDelegate,
                                     private content::WebContentsObserver {
  public:
-  WebViewContentsHelper(content::WebContents* contents);
+  static void Attach(content::WebContents* contents,
+                     content::WebContents* opener = NULL);
 
   static WebViewContentsHelper* FromWebContents(content::WebContents* contents);
+  static WebViewContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
 
   void SetDelegate(WebViewContentsHelperDelegate* delegate);
 
   void LoadURLWithParams(
       const content::NavigationController::LoadURLParams& params);
 
+  BrowserContext* GetBrowserContext() const;
+
+  WebPreferences* GetWebPreferences() const;
+  void SetWebPreferences(WebPreferences* preferences);
+
  private:
+  WebViewContentsHelper(content::WebContents* contents,
+                        WebPreferences* preferences = NULL);
+
   ~WebViewContentsHelper();
 
   // BrowserContextObserver implementation
   void NotifyUserAgentStringChanged() FINAL;
+
+  // WebPreferencesObserver implementation
+  void WebPreferencesDestroyed() FINAL;
+  void WebPreferencesValueChanged() FINAL;
+  void WebPreferencesAdopted() FINAL;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
@@ -94,6 +112,10 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
 
   ScopedBrowserContext context_;
   WebViewContentsHelperDelegate* delegate_;
+
+  // WebPreferences are normally owned by the embedder, but we create a
+  // WebPreferences instance that is initially owned by us
+  bool owns_web_preferences_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebViewContentsHelper);
 };

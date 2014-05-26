@@ -121,7 +121,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   };
 
   void Initialized();
-  void WebPreferencesChanged();
+  void WebPreferencesDestroyed();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(

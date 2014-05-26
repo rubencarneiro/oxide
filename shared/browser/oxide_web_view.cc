@@ -54,7 +54,6 @@
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
-#include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
 
 namespace oxide {
@@ -139,16 +138,8 @@ void WebView::NotifyPopupBlockerEnabledChanged() {
 }
 
 void WebView::WebPreferencesDestroyed() {
-  OnWebPreferencesChanged();
-  WebPreferencesValueChanged();
-}
-
-void WebView::WebPreferencesValueChanged() {
-  if (!web_contents_) {
-    return;
-  }
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  initial_preferences_ = NULL;
+  OnWebPreferencesDestroyed();
 }
 
 void WebView::Observe(int type,
@@ -254,7 +245,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
     return NULL;
   }
 
-  new WebViewContentsHelper(contents.get());
+  WebViewContentsHelper::Attach(contents.get(), web_contents_.get());
 
   WebView* new_view = CreateNewWebView(GetContainerBounds(), disposition);
   if (!new_view) {
@@ -346,6 +337,10 @@ bool WebView::RunFileChooser(const content::FileChooserParams& params) {
 
 void WebView::ToggleFullscreenMode(bool enter) {
   OnToggleFullscreenMode(enter);
+}
+
+void WebView::NotifyWebPreferencesDestroyed() {
+  OnWebPreferencesDestroyed();
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
@@ -511,7 +506,7 @@ void WebView::OnNavigationEntryCommitted() {}
 void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
-void WebView::OnWebPreferencesChanged() {}
+void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
     scoped_ptr<GeolocationPermissionRequest> request) {}
@@ -542,6 +537,7 @@ WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 
 WebView::WebView()
     : web_contents_helper_(NULL),
+      initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false) {}
 
@@ -576,7 +572,7 @@ bool WebView::Init(const Params& params) {
       return false;
     }
 
-    new WebViewContentsHelper(web_contents_.get());
+    WebViewContentsHelper::Attach(web_contents_.get());
   }
 
   web_contents_helper_ =
@@ -595,6 +591,11 @@ bool WebView::Init(const Params& params) {
 
   root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
+  if (initial_preferences_) {
+    SetWebPreferences(initial_preferences_);
+    WebPreferencesObserver::Observe(NULL);
+    initial_preferences_ = NULL;
+  }
   if (!initial_url_.is_empty() && !params.contents) {
     SetURL(initial_url_);
     initial_url_ = GURL();
@@ -608,6 +609,7 @@ WebView::~WebView() {
   if (root_frame_) {
     root_frame_->Destroy();
   }
+  initial_preferences_ = NULL;
   web_contents_helper_ = NULL;
 }
 
@@ -829,17 +831,20 @@ content::FrameTree* WebView::GetFrameTree() {
 }
 
 WebPreferences* WebView::GetWebPreferences() {
-  return web_preferences();
+  if (!web_contents_helper_) {
+    return initial_preferences_;
+  }
+
+  return web_contents_helper_->GetWebPreferences();
 }
 
 void WebView::SetWebPreferences(WebPreferences* prefs) {
-  if (prefs == web_preferences()) {
-    return;
+  if (!web_contents_helper_) {
+    initial_preferences_ = prefs;
+    WebPreferencesObserver::Observe(prefs);
+  } else {
+    web_contents_helper_->SetWebPreferences(prefs);
   }
-
-  WebPreferencesObserver::Observe(prefs);
-  OnWebPreferencesChanged();
-  WebPreferencesValueChanged();
 }
 
 gfx::Size WebView::GetContainerSize() {

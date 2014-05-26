@@ -20,6 +20,8 @@
 #include <QFont>
 #include <QString>
 
+#include "base/logging.h"
+
 namespace oxide {
 namespace qt {
 
@@ -36,6 +38,10 @@ WebPreferences::WebPreferences(OxideQWebPreferences* api_handle) :
 
   font.setStyleHint(QFont::Monospace);
   SetFixedFontFamily(font.defaultFamily().toStdString());
+}
+
+WebPreferences::~WebPreferences() {
+  CHECK(!api_handle_);
 }
 
 } // namespace qt

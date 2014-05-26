@@ -85,7 +85,7 @@ class WebView FINAL : public oxide::WebView,
   void OnNavigationListPruned(bool from_front, int count) FINAL;
   void OnNavigationEntryChanged(int index) FINAL;
 
-  void OnWebPreferencesChanged() FINAL;
+  void OnWebPreferencesDestroyed() FINAL;
 
   void OnRequestGeolocationPermission(
       scoped_ptr<oxide::GeolocationPermissionRequest> request) FINAL;

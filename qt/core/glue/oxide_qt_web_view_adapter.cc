@@ -27,6 +27,7 @@
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
+#include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 
 #include "oxide_qt_web_context_adapter_p.h"
@@ -38,26 +39,37 @@ namespace qt {
 void WebViewAdapter::Initialized() {
   DCHECK(isInitialized());
 
+  WebPreferences* prefs = static_cast<WebPreferences* >(
+      priv->GetWebPreferences());
+  if (prefs->IsOwnedByEmbedder()) {
+    WebPreferences* source = prefs;
+    prefs = new WebPreferences();
+    prefs->CopyFrom(source);
+  }
+
+  // This creates a new WebPreferences QObject that is owned by the WebView
+  OxideQWebPreferencesPrivate::Adopt(prefs, adapterToQObject(this));
+  priv->SetWebPreferences(prefs);
+
   OnInitialized(construct_props_->incognito,
                 construct_props_->context);
   construct_props_.reset();
 }
 
-void WebViewAdapter::WebPreferencesChanged() {
-  if (!priv->GetWebPreferences()) {
-    setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
-  } else if (isInitialized()) {
-    OnWebPreferencesChanged();
+void WebViewAdapter::WebPreferencesDestroyed() {
+  WebPreferences* prefs = static_cast<WebPreferences *>(
+      priv->GetWebPreferences());
+  if (prefs) {
+    OxideQWebPreferencesPrivate::Adopt(prefs, adapterToQObject(this));
   }
+  OnWebPreferencesChanged();
 }
 
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
     priv(WebView::Create(this)),
     construct_props_(new ConstructProperties()),
-    created_with_new_view_request_(false) {
-  setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
-}
+    created_with_new_view_request_(false) {}
 
 WebViewAdapter::~WebViewAdapter() {}
 
@@ -215,10 +227,15 @@ QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
 }
 
 OxideQWebPreferences* WebViewAdapter::preferences() {
-  if (!priv->GetWebPreferences()) {
-    setPreferences(new OxideQWebPreferences(adapterToQObject(this)));
+  WebPreferences* prefs =
+      static_cast<WebPreferences *>(priv->GetWebPreferences());
+  if (!prefs) {
+    OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
+    prefs = OxideQWebPreferencesPrivate::get(p)->preferences();
+    priv->SetWebPreferences(prefs);
   }
-  return static_cast<WebPreferences *>(priv->GetWebPreferences())->api_handle();
+
+  return prefs->api_handle();
 }
 
 void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
@@ -235,7 +252,7 @@ void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
     prefs->setParent(adapterToQObject(this));
   }
   priv->SetWebPreferences(
-      &OxideQWebPreferencesPrivate::get(prefs)->preferences);
+      OxideQWebPreferencesPrivate::get(prefs)->preferences());
 
   if (!old) {
     return;

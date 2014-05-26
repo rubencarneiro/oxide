@@ -42,12 +42,15 @@ namespace oxide {
 class GLShareGroup;
 class SharedGLContext;
 class WebFrameTree;
+class WebPreferences;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
  public:
   virtual ~ContentBrowserClient();
 
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
+
+  virtual WebPreferences* CreateWebPreferences() = 0;
 
  protected:
   // Limit default constructor access to derived classes

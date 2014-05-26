@@ -225,8 +225,8 @@ void WebView::OnNavigationEntryChanged(int index) {
   adapter_->NavigationEntryChanged(index);
 }
 
-void WebView::OnWebPreferencesChanged() {
-  adapter_->WebPreferencesChanged();
+void WebView::OnWebPreferencesDestroyed() {
+  adapter_->WebPreferencesDestroyed();
 }
 
 void WebView::OnRequestGeolocationPermission(

@@ -28,8 +28,13 @@
 #include "content/public/common/renderer_preferences.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/shell_dialogs/selected_file_info.h"
+#include "webkit/common/webpreferences.h"
 
+#include "shared/common/oxide_content_client.h"
+
+#include "oxide_content_browser_client.h"
 #include "oxide_javascript_dialog_manager.h"
+#include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "oxide_web_view_contents_helper_delegate.h"
 
@@ -41,9 +46,41 @@ const char kWebViewContentsHelperKey[] = "oxide_web_view_contents_helper_data";
 
 #define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
 
+WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
+                                             WebPreferences* preferences)
+    : BrowserContextObserver(
+          BrowserContext::FromContent(contents->GetBrowserContext())),
+      WebPreferencesObserver(preferences ? preferences :
+          ContentClient::instance()->browser()->CreateWebPreferences()),
+      content::WebContentsObserver(contents),
+      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
+      delegate_(NULL),
+      owns_web_preferences_(preferences ? false : true) {
+  DCHECK(!FromWebContents(web_contents()));
+
+  web_contents()->SetDelegate(this);
+  web_contents()->SetUserData(kWebViewContentsHelperKey, this);
+
+  // This must come before SetUserAgentOverride, as we rely on that to
+  // to sync this to the renderer, if it already exists
+  content::RendererPreferences* renderer_prefs =
+      web_contents()->GetMutableRendererPrefs();
+  renderer_prefs->browser_handles_non_local_top_level_requests = true;
+
+  // See https://launchpad.net/bugs/1279900 and the comment in
+  // HttpUserAgentSettings::GetUserAgent()
+  web_contents()->SetUserAgentOverride(context_->GetUserAgent());
+}
+
 WebViewContentsHelper::~WebViewContentsHelper() {
   if (web_contents()) {
     web_contents()->SetDelegate(NULL);
+  }
+  if (owns_web_preferences_) {
+    // Disconnect the observer to prevent it from calling back in to us
+    // via a vfunc, which it shouldn't do now we're in our destructor
+    WebPreferencesObserver::Observe(NULL);
+    delete web_preferences();
   }
 }
 
@@ -51,6 +88,29 @@ void WebViewContentsHelper::NotifyUserAgentStringChanged() {
   // See https://launchpad.net/bugs/1279900 and the comment in
   // HttpUserAgentSettings::GetUserAgent()
   web_contents()->SetUserAgentOverride(context_->GetUserAgent());
+}
+
+void WebViewContentsHelper::WebPreferencesDestroyed() {
+  CHECK(!owns_web_preferences_) <<
+      "Somebody destroyed a WebPreferences owned by us!";
+  WebPreferencesObserver::Observe(
+      ContentClient::instance()->browser()->CreateWebPreferences());
+  owns_web_preferences_ = true;
+
+  WebPreferencesValueChanged();
+
+  if (delegate_) {
+    delegate_->NotifyWebPreferencesDestroyed();
+  }
+}
+
+void WebViewContentsHelper::WebPreferencesValueChanged() {
+  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
+  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+}
+
+void WebViewContentsHelper::WebPreferencesAdopted() {
+  owns_web_preferences_ = false;
 }
 
 content::WebContents* WebViewContentsHelper::OpenURLFromTab(
@@ -107,7 +167,7 @@ void WebViewContentsHelper::WebContentsCreated(
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  new WebViewContentsHelper(new_contents);
+  Attach(new_contents, web_contents());
 }
 
 void WebViewContentsHelper::AddNewContents(content::WebContents* source,
@@ -207,25 +267,18 @@ bool WebViewContentsHelper::IsFullscreenForTabOrPending(
   return view->IsFullscreen();
 }
 
-WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
-    : BrowserContextObserver(BrowserContext::FromContent(contents->GetBrowserContext())),
-      content::WebContentsObserver(contents),
-      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
-      delegate_(NULL) {
-  DCHECK(!FromWebContents(contents));
+// static
+void WebViewContentsHelper::Attach(content::WebContents* contents,
+                                   content::WebContents* opener) {
+  WebPreferences* preferences = NULL;
+  if (opener) {
+    WebViewContentsHelper* opener_helper =
+        WebViewContentsHelper::FromWebContents(opener);
+    DCHECK(opener_helper);
+    preferences = opener_helper->GetWebPreferences();
+  }
 
-  contents->SetDelegate(this);
-  contents->SetUserData(kWebViewContentsHelperKey, this);
-
-  // This must come before SetUserAgentOverride, as we rely on that to
-  // to sync this to the renderer, if it already exists
-  content::RendererPreferences* renderer_prefs =
-      web_contents()->GetMutableRendererPrefs();
-  renderer_prefs->browser_handles_non_local_top_level_requests = true;
-
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  web_contents()->SetUserAgentOverride(context_->GetUserAgent());
+  new WebViewContentsHelper(contents, preferences);
 }
 
 // static
@@ -233,6 +286,12 @@ WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
     content::WebContents* contents) {
   return static_cast<WebViewContentsHelper *>(
       contents->GetUserData(kWebViewContentsHelperKey));
+}
+
+// static
+WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
+    content::RenderViewHost* rvh) {
+  return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
 }
 
 void WebViewContentsHelper::SetDelegate(
@@ -247,6 +306,26 @@ void WebViewContentsHelper::LoadURLWithParams(
   // HttpUserAgentSettings::GetUserAgent()
   p.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
   web_contents()->GetController().LoadURLWithParams(p);
+}
+
+BrowserContext* WebViewContentsHelper::GetBrowserContext() const {
+  return context_;
+}
+
+WebPreferences* WebViewContentsHelper::GetWebPreferences() const {
+  return web_preferences();
+}
+
+void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
+  DCHECK(!preferences || preferences->IsOwnedByEmbedder());
+  if (preferences == GetWebPreferences()) {
+    return;
+  }
+
+  owns_web_preferences_ = false;
+
+  WebPreferencesObserver::Observe(preferences);
+  WebPreferencesValueChanged();
 }
 
 } // namespace oxide
