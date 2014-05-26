@@ -43,7 +43,6 @@
 #include "net/base/net_errors.h"
 #include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
-#include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
 
@@ -130,11 +129,6 @@ size_t WebView::GetScriptMessageHandlerCount() const {
 
 ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(size_t index) const {
   return NULL;
-}
-
-void WebView::NotifyPopupBlockerEnabledChanged() {
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
 }
 
 void WebView::WebPreferencesDestroyed() {
@@ -581,7 +575,6 @@ bool WebView::Init(const Params& params) {
 
   web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
 
-  BrowserContextObserver::Observe(GetBrowserContext());
   WebContentsObserver::Observe(web_contents_.get());
 
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,

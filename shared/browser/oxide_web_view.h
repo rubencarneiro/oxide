@@ -34,7 +34,6 @@
 #include "ui/gfx/rect.h"
 
 #include "shared/browser/oxide_browser_context.h"
-#include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
@@ -73,7 +72,6 @@ class WebViewContentsHelper;
 // this. Note that this class will hold the main browser process
 // components alive
 class WebView : public ScriptMessageTarget,
-                private BrowserContextObserver,
                 private WebPreferencesObserver,
                 private WebViewContentsHelperDelegate,
                 private content::NotificationObserver,
@@ -186,9 +184,6 @@ class WebView : public ScriptMessageTarget,
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
   virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const OVERRIDE;
-
-  // BrowserContextObserver
-  void NotifyPopupBlockerEnabledChanged() FINAL;
 
   // WebPreferencesObserver
   void WebPreferencesDestroyed() FINAL;

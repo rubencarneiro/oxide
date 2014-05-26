@@ -90,6 +90,11 @@ void WebViewContentsHelper::NotifyUserAgentStringChanged() {
   web_contents()->SetUserAgentOverride(context_->GetUserAgent());
 }
 
+void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
+  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
+  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+}
+
 void WebViewContentsHelper::WebPreferencesDestroyed() {
   CHECK(!owns_web_preferences_) <<
       "Somebody destroyed a WebPreferences owned by us!";
