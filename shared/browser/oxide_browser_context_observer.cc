@@ -26,8 +26,15 @@ void BrowserContextObserver::OnBrowserContextDestruction() {
   BrowserContextDestroyed();
 }
 
-BrowserContextObserver::BrowserContextObserver() :
-    browser_context_(NULL) {}
+BrowserContextObserver::BrowserContextObserver()
+    : browser_context_(NULL) {}
+
+BrowserContextObserver::BrowserContextObserver(BrowserContext* context)
+    : browser_context_(context) {
+  if (context) {
+    context->AddObserver(this);
+  }
+}
 
 void BrowserContextObserver::Observe(BrowserContext* context) {
   if (context == browser_context_) {

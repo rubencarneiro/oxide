@@ -208,15 +208,14 @@ bool WebViewContentsHelper::IsFullscreenForTabOrPending(
 }
 
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
-    : content::WebContentsObserver(contents),
+    : BrowserContextObserver(BrowserContext::FromContent(contents->GetBrowserContext())),
+      content::WebContentsObserver(contents),
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       delegate_(NULL) {
   DCHECK(!FromWebContents(contents));
 
   contents->SetDelegate(this);
   contents->SetUserData(kWebViewContentsHelperKey, this);
-
-  BrowserContextObserver::Observe(context_);
 
   // This must come before SetUserAgentOverride, as we rely on that to
   // to sync this to the renderer, if it already exists
