@@ -30,13 +30,18 @@
 #include <QString>
 #include <QStringList>
 #include <Qt>
+#include <QtGlobal>
 #include <QtQuickVersion>
 #include <QUrl>
 
 #include "QtCore/private/qabstractanimation_p.h"
 #if defined(ENABLE_COMPOSITING)
 #include <QOpenGLContext>
-#include "QtQuick/private/qsgcontext_p.h"
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#include <QtQuick/private/qsgcontext_p.h>
+#else
+#include <QtGui/private/qopenglcontext_p.h>
+#endif
 #endif
 
 void usage(bool error) {
@@ -108,7 +113,11 @@ int main(int argc, char** argv) {
 #if defined(ENABLE_COMPOSITING)
   QOpenGLContext glcontext;
   glcontext.create();
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
   QSGContext::setSharedOpenGLContext(&glcontext);
+#else
+  QOpenGLContextPrivate::setGlobalShareContext(&glcontext);
+#endif
 #endif
 
   QUnifiedTimer::instance()->setSlowModeEnabled(options.slowAnimations);
