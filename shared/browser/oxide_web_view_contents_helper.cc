@@ -84,6 +84,13 @@ WebViewContentsHelper::~WebViewContentsHelper() {
   }
 }
 
+void WebViewContentsHelper::UpdateWebPreferences() {
+  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
+  if (rvh) {
+    rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  }
+}
+
 void WebViewContentsHelper::NotifyUserAgentStringChanged() {
   // See https://launchpad.net/bugs/1279900 and the comment in
   // HttpUserAgentSettings::GetUserAgent()
@@ -91,8 +98,7 @@ void WebViewContentsHelper::NotifyUserAgentStringChanged() {
 }
 
 void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
-  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  UpdateWebPreferences();
 }
 
 void WebViewContentsHelper::WebPreferencesDestroyed() {
@@ -114,8 +120,7 @@ void WebViewContentsHelper::WebPreferencesDestroyed() {
 }
 
 void WebViewContentsHelper::WebPreferencesValueChanged() {
-  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  UpdateWebPreferences();
 }
 
 void WebViewContentsHelper::WebPreferencesAdopted() {

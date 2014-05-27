@@ -62,6 +62,8 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
 
   ~WebViewContentsHelper();
 
+  void UpdateWebPreferences();
+
   // BrowserContextObserver implementation
   void NotifyUserAgentStringChanged() FINAL;
   void NotifyPopupBlockerEnabledChanged() FINAL;
