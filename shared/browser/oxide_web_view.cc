@@ -43,6 +43,7 @@
 #include "net/base/net_errors.h"
 #include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
+#include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
 
@@ -549,6 +550,13 @@ bool WebView::Init(const Params& params) {
 
     UpdateVisibility(IsVisible());
     UpdateSize(GetContainerSize());
+
+    // Update our preferences in case something has changed (like
+    // CanCreateWindows())
+    content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+    if (rvh) {
+      rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+    }
   } else {
     CHECK(params.context);
 
