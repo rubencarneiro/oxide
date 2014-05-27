@@ -56,7 +56,7 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       delegate_(NULL),
       owns_web_preferences_(preferences ? false : true) {
-  DCHECK(!FromWebContents(web_contents()));
+  CHECK(!FromWebContents(web_contents()));
 
   web_contents()->SetDelegate(this);
   web_contents()->SetUserData(kWebViewContentsHelperKey, this);
