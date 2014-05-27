@@ -141,6 +141,8 @@ class WebView : public ScriptMessageTarget,
   void CancelGeolocationPermissionRequest(
       const PermissionRequest::ID& id);
 
+  void UpdateWebPreferences();
+
   virtual gfx::Rect GetContainerBounds() = 0;
   virtual bool IsVisible() const = 0;
 

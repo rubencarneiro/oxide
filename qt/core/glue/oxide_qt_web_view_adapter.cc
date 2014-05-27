@@ -284,5 +284,9 @@ void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
   created_with_new_view_request_ = true;
 }
 
+void WebViewAdapter::updateWebPreferences() {
+  priv->UpdateWebPreferences();
+}
+
 } // namespace qt
 } // namespace oxide

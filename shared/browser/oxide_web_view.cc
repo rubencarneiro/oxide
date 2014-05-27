@@ -553,10 +553,7 @@ bool WebView::Init(const Params& params) {
 
     // Update our preferences in case something has changed (like
     // CanCreateWindows())
-    content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-    if (rvh) {
-      rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
-    }
+    UpdateWebPreferences();
   } else {
     CHECK(params.context);
 
@@ -890,6 +887,17 @@ void WebView::RequestGeolocationPermission(
 void WebView::CancelGeolocationPermissionRequest(
     const PermissionRequest::ID& id) {
   geolocation_permission_requests_.CancelPendingRequestWithID(id);
+}
+
+void WebView::UpdateWebPreferences() {
+  if (!web_contents_) {
+    return;
+  }
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (rvh) {
+    rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  }
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(

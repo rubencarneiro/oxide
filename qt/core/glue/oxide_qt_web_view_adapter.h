@@ -105,6 +105,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void setRequest(OxideQNewViewRequest* request);
 
+  void updateWebPreferences();
+
  protected:
   WebViewAdapter(QObject* q);
 
