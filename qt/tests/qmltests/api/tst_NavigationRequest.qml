@@ -161,7 +161,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
     // renderer-initiated top-level navigations blocks the navigation and that
     // we don't get any onNewViewRequested signals.
     //
-    // XXX(chrisccoulson): This is a bit hacky, because we use a 100ms delay
+    // XXX(chrisccoulson): This is a bit hacky, because we use a 200ms delay
     // before verifying no loads started
     function test_NavigationRequest3_reject(data) {
       webView.shouldReject = true;
@@ -174,9 +174,12 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
 
       var r = webView.getTestApi().getBoundingClientRectForSelector(data.link);
       mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton, data.modifiers);
+
+      spy.wait();
+      compare(spy.count, 1);
+
       webView.waitFor(function() { return false; }, 100);
 
-      compare(spy.count, 1);
       compare(newViewSpy.count, 0, "Shouldn't have called onNewViewRequested for rejected navigation");
       compare(webView.loadsStartedCount, 0, "Shouldn't have started a load for rejected navigation");
     }
