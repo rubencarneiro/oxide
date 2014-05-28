@@ -127,11 +127,11 @@ TestWebView {
     // for renderer-initiated top-level navigations that don't come from an
     // input event
     function test_NavigationRequest2_no_user_gesture(data) {
-      webView.context.popupBlockerEnabled = false;
-
       webView.url = "http://localhost:8080/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
+
+      webView.context.popupBlockerEnabled = false;
 
       compare(spy.count, 0,
               "Shouldn't get an onNavigationRequested signal for browser-initiated navigation");
