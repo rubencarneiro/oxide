@@ -30,11 +30,10 @@
     'toolkit_views': 0,
     'toolkit_uses_gtk': 0,
     'ozone_platform': 'oxide',
+    'ozone_auto_platforms': 0,
     'external_ozone_platforms': [
       'oxide',
     ],
-    'ozone_platform_dri': 0,
-    'ozone_platform_test': 0,
     'enable_printing': 0,
     'variables': {
       'conditions': [

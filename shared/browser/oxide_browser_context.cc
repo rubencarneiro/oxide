@@ -443,8 +443,7 @@ content::GeolocationPermissionContext*
   return geolocation_permission_context_;
 }
 
-content::BrowserPluginGuestManagerDelegate*
-BrowserContext::GetGuestManagerDelegate() {
+content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
   return NULL;
 }
 

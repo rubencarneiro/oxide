@@ -38,16 +38,14 @@ class OzonePlatform : public ui::OzonePlatform {
     return &event_factory_;
   }
 
-  ui::InputMethodContextFactoryOzone*
-  GetInputMethodContextFactoryOzone() OVERRIDE {
-    return NULL;
-  }
-
   ui::CursorFactoryOzone* GetCursorFactoryOzone() OVERRIDE {
     return NULL;
   }
 
  private:
+  void InitializeUI() OVERRIDE {}
+  void InitializeGPU() OVERRIDE {}
+
   OzoneSurfaceFactory surface_factory_;
   ui::EventFactoryOzone event_factory_;
 };

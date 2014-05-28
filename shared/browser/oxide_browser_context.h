@@ -249,7 +249,7 @@ class BrowserContext : public content::BrowserContext,
   content::GeolocationPermissionContext*
       GetGeolocationPermissionContext() FINAL;
 
-  content::BrowserPluginGuestManagerDelegate* GetGuestManagerDelegate() FINAL;
+  content::BrowserPluginGuestManager* GetGuestManager() FINAL;
 
   quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
 

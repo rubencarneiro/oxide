@@ -200,16 +200,15 @@ ScriptMessageDispatcherBrowser::ScriptMessageDispatcherBrowser(
 ScriptMessageDispatcherBrowser::~ScriptMessageDispatcherBrowser() {}
 
 bool ScriptMessageDispatcherBrowser::OnMessageReceived(
-    const IPC::Message& message,
-    bool* message_was_ok) {
+    const IPC::Message& message) {
   bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP_EX(ScriptMessageDispatcherBrowser, message, *message_was_ok)
+  IPC_BEGIN_MESSAGE_MAP(ScriptMessageDispatcherBrowser, message)
     IPC_MESSAGE_FORWARD(OxideHostMsg_SendMessage,
                         new MessageReceiver(render_process_id_,
                                             message.routing_id()),
                         MessageReceiver::OnReceiveMessage)
     IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP_EX()
+  IPC_END_MESSAGE_MAP()
 
   return handled;
 }
