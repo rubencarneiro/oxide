@@ -29,10 +29,13 @@ TestWebView {
     lastRequestUserGesture = request.userGesture;
   }
 
-  // XXX(chrisccoulson): If we don't do this, then all future calls to
-  // onNewViewRequested fail (we get a null request object)
+  Component {
+    id: webViewFactory
+    WebView {}
+  }
+
   onNewViewRequested: {
-    var r = request;
+    webViewFactory.createObject(webView, { request: request });
   }
 
   SignalSpy {
