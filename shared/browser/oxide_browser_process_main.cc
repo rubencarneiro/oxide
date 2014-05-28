@@ -35,10 +35,8 @@ scoped_ptr<BrowserProcessMain> g_instance;
 }
 
 BrowserProcessMain::BrowserProcessMain(
-    int flags,
     scoped_refptr<oxide::SharedGLContext> shared_gl_context) :
     did_shutdown_(false),
-    flags_(flags),
     shared_gl_context_(shared_gl_context),
     main_delegate_(ContentMainDelegate::Create()),
     main_runner_(content::ContentMainRunner::Create()) {
@@ -119,19 +117,15 @@ BrowserProcessMain::~BrowserProcessMain() {
 
 // static
 bool BrowserProcessMain::StartIfNotRunning(
-    int flags,
     scoped_refptr<oxide::SharedGLContext> shared_gl_context) {
   if (g_instance) {
-    CHECK_EQ(g_instance->flags(), flags) <<
-        "BrowserProcessMain::StartIfNotRunning() called more than once with "
-        "different flags";
     CHECK_EQ(g_instance->shared_gl_context(), shared_gl_context) <<
         "BrowserProcessMain::StartIfNotRunning() called more than once with "
         "a different shared GL context";
     return true;
   }
 
-  g_instance.reset(new BrowserProcessMain(flags, shared_gl_context));
+  g_instance.reset(new BrowserProcessMain(shared_gl_context));
   if (!g_instance->Init()) {
     g_instance.reset();
   }

@@ -16,34 +16,16 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-foreach(v MAKE GYP_DIR CC CXX)
-  if(NOT DEFINED ${v})
-    message(FATAL_ERROR "Need to define ${v}")
-  endif()
-endforeach()
+set(PLUGIN mock)
 
-set(ENV{CFLAGS})
-set(ENV{CXXFLAGS})
-set(ENV{CPPFLAGS})
-set(ENV{LDFLAGS})
-set(ENV{CC} ${CC})
-set(ENV{CXX} ${CXX})
+set(PLUGIN_SRCS
+    source.cc
+    plugin.cc)
 
-foreach(v CC_host CXX_host)
-  if(DEFINED ${v})
-    set(ENV{${v}} ${${v}})
-  endif()
-endforeach()
+set(CMAKE_AUTOMOC ON)
 
-set(MAKE_COMMAND ${MAKE} -C ${GYP_DIR} -f Makefile all)
-if(DEFINED BUILDTYPE)
-  list(APPEND MAKE_COMMAND BUILDTYPE=${BUILDTYPE})
-endif()
-if(CMAKE_VERBOSE_MAKEFILE)
-  list(APPEND MAKE_COMMAND V=1)
-endif()
+add_definitions(-DQT_PLUGIN)
 
-execute_process(COMMAND ${MAKE_COMMAND} RESULT_VARIABLE _RESULT)
-if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to build gyp target")
-endif()
+add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
+
+qt5_use_modules(${PLUGIN} Core Gui Positioning)

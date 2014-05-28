@@ -57,11 +57,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) FINAL;
 
-  content::WebContentsViewPort* OverrideCreateWebContentsView(
-      content::WebContents* web_contents,
-      content::RenderViewHostDelegateView** render_view_host_delegate_view)
-      FINAL;
-
   void RenderProcessWillLaunch(content::RenderProcessHost* host) FINAL;
 
   net::URLRequestContextGetter* CreateRequestContext(
@@ -79,6 +74,9 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;
+
+  void AppendExtraCommandLineSwitches(base::CommandLine* command_line,
+                                      int child_process_id) FINAL;
 
   bool AllowGetCookie(const GURL& url,
                       const GURL& first_party,
@@ -117,7 +115,11 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                            const GURL& url,
                            ::WebPreferences* prefs) FINAL;
 
+  virtual content::LocationProvider* OverrideSystemLocationProvider() OVERRIDE;
+
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
+
+  void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;
 
   virtual bool IsTouchSupported();
 

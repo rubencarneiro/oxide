@@ -17,6 +17,7 @@
 
 #include "oxide_content_browser_client.h"
 
+#include <string>
 #include <vector>
 
 #include "base/command_line.h"
@@ -27,10 +28,8 @@
 #include "content/browser/gpu/compositor_util.h"
 #include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/browser_main_parts.h"
-#include "content/public/browser/gpu_data_manager.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/content_switches.h"
-#include "gpu/config/gpu_feature_type.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
@@ -42,6 +41,7 @@
 #include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
 
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_net_resource_provider.h"
@@ -51,14 +51,21 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
+#include "oxide_form_factor.h"
 #include "oxide_gpu_utils.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
-#include "oxide_web_contents_view.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
+
+#if defined(ENABLE_PLUGINS)
+#include "content/public/browser/browser_ppapi_host.h"
+#include "ppapi/host/ppapi_host.h"
+
+#include "oxide_pepper_host_factory_browser.h"
+#endif
 
 namespace oxide {
 
@@ -170,7 +177,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   void PostMainMessageLoopRun() FINAL {
-    GpuUtils::Terminate();
+    GpuUtils::instance()->Destroy();
   }
 
   void PostDestroyThreads() FINAL {
@@ -189,16 +196,6 @@ class BrowserMainParts : public content::BrowserMainParts {
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
   return new BrowserMainParts();
-}
-
-content::WebContentsViewPort*
-ContentBrowserClient::OverrideCreateWebContentsView(
-    content::WebContents* web_contents,
-    content::RenderViewHostDelegateView** render_view_host_delegate_view) {
-  WebContentsView* view = new WebContentsView(web_contents);
-  *render_view_host_delegate_view = view;
-
-  return view;
 }
 
 void ContentBrowserClient::RenderProcessWillLaunch(
@@ -234,6 +231,36 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
   return BrowserContext::FromContent(browser_context)->GetAcceptLangs();
+}
+
+void ContentBrowserClient::AppendExtraCommandLineSwitches(
+    base::CommandLine* command_line,
+    int child_process_id) {
+  std::string process_type =
+      command_line->GetSwitchValueASCII(switches::kProcessType);
+  if (process_type == switches::kRendererProcess) {
+    static const char* const kSwitchNames[] = {
+      switches::kEnableGoogleTalkPlugin
+    };
+    command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
+                                   kSwitchNames, arraysize(kSwitchNames));
+
+    const char* form_factor_string = NULL;
+    switch (GetFormFactorHint()) {
+      case FORM_FACTOR_DESKTOP:
+        form_factor_string = switches::kFormFactorDesktop;
+        break;
+      case FORM_FACTOR_TABLET:
+        form_factor_string = switches::kFormFactorTablet;
+        break;
+      case FORM_FACTOR_PHONE:
+        form_factor_string = switches::kFormFactorPhone;
+        break;
+      default:
+        NOTREACHED();
+    }
+    command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
+  }
 }
 
 bool ContentBrowserClient::AllowGetCookie(const GURL& url,
@@ -273,6 +300,8 @@ bool ContentBrowserClient::CanCreateWindow(
     bool is_guest,
     int opener_id,
     bool* no_javascript_access) {
+  *no_javascript_access = false;
+
   if (user_gesture) {
     return true;
   }
@@ -291,8 +320,16 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     ::WebPreferences* prefs) {
   WebView* view = WebView::FromRenderViewHost(render_view_host);
 
+  WebPreferences* web_prefs = view->GetWebPreferences();
+  if (web_prefs) {
+    web_prefs->ApplyToWebkitPrefs(prefs);
+  } else {
+    DLOG(WARNING) << "No WebPreferences on WebView";
+  }
+
+  prefs->touch_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
-  prefs->device_supports_touch = prefs->touch_enabled && IsTouchSupported();
+  prefs->device_supports_touch = IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
       !view->GetBrowserContext()->IsPopupBlockerEnabled();
@@ -300,34 +337,15 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   prefs->enable_scroll_animator = true;
 
-  const base::CommandLine& command_line =
-      *base::CommandLine::ForCurrentProcess();
-  content::GpuDataManager* gpu_data_manager =
-      content::GpuDataManager::GetInstance();
-
-  // GpuDataManagerImplPrivate turns all of these on unconditionally in Aura
-  // builds, so we make them all conditional again
-  prefs->force_compositing_mode = content::IsForceCompositingModeEnabled();
-  prefs->accelerated_compositing_enabled =
-      content::GpuProcessHost::gpu_enabled() &&
-      !command_line.HasSwitch(switches::kDisableAcceleratedCompositing) &&
-      !gpu_data_manager->IsFeatureBlacklisted(
-        gpu::GPU_FEATURE_TYPE_ACCELERATED_COMPOSITING);
-  prefs->accelerated_compositing_for_3d_transforms_enabled =
-      prefs->accelerated_compositing_for_animation_enabled =
-        !command_line.HasSwitch(switches::kDisableAcceleratedLayers) &&
-        !gpu_data_manager->IsFeatureBlacklisted(gpu::GPU_FEATURE_TYPE_3D_CSS);
-  prefs->accelerated_compositing_for_video_enabled =
-      !command_line.HasSwitch(switches::kDisableAcceleratedVideo) &&
-      !gpu_data_manager->IsFeatureBlacklisted(gpu::GPU_FEATURE_TYPE_ACCELERATED_VIDEO);
-
-  WebPreferences* web_prefs = view->GetWebPreferences();
-  if (!web_prefs) {
-    DLOG(WARNING) << "No WebPreferences on WebView";
-    return;
+  FormFactor form_factor = GetFormFactorHint();
+  if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
+    prefs->shrinks_standalone_images_to_fit = false;
   }
+}
 
-  web_prefs->ApplyToWebkitPrefs(prefs);
+content::LocationProvider*
+ContentBrowserClient::OverrideSystemLocationProvider() {
+  return NULL;
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
@@ -338,6 +356,13 @@ gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   }
 
   return context->share_group();
+}
+
+void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {
+#if defined(ENABLE_PLUGINS)
+  host->GetPpapiHost()->AddHostFactoryFilter(
+      scoped_ptr<ppapi::host::HostFactory>(new PepperHostFactoryBrowser(host)));
+#endif
 }
 
 bool ContentBrowserClient::IsTouchSupported() {

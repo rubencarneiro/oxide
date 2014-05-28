@@ -17,6 +17,7 @@
 
 #include "oxide_qt_web_view.h"
 
+#include <QKeyEvent>
 #include <QString>
 #include <QUrl>
 
@@ -25,11 +26,14 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
+#include "content/public/browser/native_web_keyboard_event.h"
 
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqnewviewrequest_p.h"
+#include "qt/core/api/oxideqpermissionrequest.h"
+#include "qt/core/api/oxideqpermissionrequest_p.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
@@ -87,19 +91,6 @@ bool WebView::Init(const oxide::WebView::Params& params) {
   }
 
   adapter_->Initialized();
-  return true;
-}
-
-bool WebView::OnAddMessageToConsole(
-    int level,
-    const base::string16& message,
-    int line_no,
-    const base::string16& source_id) {
-  adapter_->AddMessageToConsole(
-      level,
-      QString::fromStdString(base::UTF16ToUTF8(message)),
-      line_no,
-      QString::fromStdString(base::UTF16ToUTF8(source_id)));
   return true;
 }
 
@@ -242,6 +233,34 @@ void WebView::OnWebPreferencesChanged() {
   adapter_->WebPreferencesChanged();
 }
 
+void WebView::OnRequestGeolocationPermission(
+    scoped_ptr<oxide::GeolocationPermissionRequest> request) {
+  OxideQGeolocationPermissionRequest* qreq =
+      new OxideQGeolocationPermissionRequest();
+  OxideQPermissionRequestPrivate::get(qreq)->Init(
+      request.PassAs<oxide::PermissionRequest>());
+
+  // The embedder takes ownership of this
+  adapter_->RequestGeolocationPermission(qreq);
+}
+
+bool WebView::OnAddMessageToConsole(
+    int level,
+    const base::string16& message,
+    int line_no,
+    const base::string16& source_id) {
+  adapter_->AddMessageToConsole(
+      level,
+      QString::fromStdString(base::UTF16ToUTF8(message)),
+      line_no,
+      QString::fromStdString(base::UTF16ToUTF8(source_id)));
+  return true;
+}
+
+void WebView::OnToggleFullscreenMode(bool enter) {
+  adapter_->ToggleFullscreenMode(enter);
+}
+
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
                                      bool user_gesture) {
@@ -316,6 +335,25 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
+}
+
+void WebView::HandleKeyboardEvent(content::WebContents* source,
+                                  const content::NativeWebKeyboardEvent& event) {
+  if (event.skip_in_browser) {
+    return;
+  }
+
+  if (event.type != blink::WebInputEvent::RawKeyDown &&
+      event.type != blink::WebInputEvent::KeyUp) {
+    return;
+  }
+
+  DCHECK(event.os_event);
+
+  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
+  DCHECK(!qevent->isAccepted());
+
+  adapter_->HandleKeyboardEvent(qevent);
 }
 
 } // namespace qt

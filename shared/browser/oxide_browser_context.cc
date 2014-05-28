@@ -55,6 +55,7 @@
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_geolocation_permission_context.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
@@ -67,6 +68,14 @@ namespace oxide {
 namespace {
 
 base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
+
+const base::FilePath::CharType kCacheDirname[] = FILE_PATH_LITERAL("Cache");
+const base::FilePath::CharType kCookiesFilename[] =
+    FILE_PATH_LITERAL("cookies.sqlite");
+
+const char kDataScheme[] = "data";
+const char kFileScheme[] = "file";
+const char kFtpScheme[] = "ftp";
 
 const char kBrowserContextKey[] = "oxide_browser_context_data";
 
@@ -427,6 +436,15 @@ content::DownloadManagerDelegate*
 
 content::GeolocationPermissionContext*
     BrowserContext::GetGeolocationPermissionContext() {
+  if (!geolocation_permission_context_) {
+    geolocation_permission_context_ = new GeolocationPermissionContext();
+  }
+
+  return geolocation_permission_context_;
+}
+
+content::BrowserPluginGuestManagerDelegate*
+BrowserContext::GetGuestManagerDelegate() {
   return NULL;
 }
 
@@ -546,10 +564,6 @@ std::string BrowserContext::GetUserAgent() const {
 
 net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
   return io_data()->GetCookiePolicy();
-}
-
-void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
-  io_data()->SetCookiePolicy(policy);
 }
 
 content::CookieStoreConfig::SessionCookieMode

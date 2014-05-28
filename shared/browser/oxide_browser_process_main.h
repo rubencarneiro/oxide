@@ -39,17 +39,11 @@ class SharedGLContext;
 // Chrome (which is not possible in a public API)
 class BrowserProcessMain FINAL {
  public:
-  enum Flags {
-    ENABLE_VIEWPORT = 1 << 0,
-    ENABLE_OVERLAY_SCROLLBARS = 1 << 1
-  };
-
   ~BrowserProcessMain();
 
   // Start the browser process components if they haven't already
   // been started. Cannot be called after Quit()
   static bool StartIfNotRunning(
-      int flags,
       scoped_refptr<oxide::SharedGLContext> shared_gl_context);
 
   // Quit the browser process components if they are running
@@ -61,8 +55,6 @@ class BrowserProcessMain FINAL {
   // Return the BrowserProcessMain singleton
   static BrowserProcessMain* instance();
 
-  int flags() const { return flags_; }
-
   oxide::SharedGLContext* shared_gl_context() const {
     return shared_gl_context_.get();
   }
@@ -72,7 +64,6 @@ class BrowserProcessMain FINAL {
   friend class oxide::ContentMainDelegate;
 
   BrowserProcessMain(
-      int flags,
       scoped_refptr<oxide::SharedGLContext> shared_gl_context);
 
   int RunBrowserMain(
@@ -83,8 +74,6 @@ class BrowserProcessMain FINAL {
   void Shutdown();
 
   bool did_shutdown_;
-
-  int flags_;
 
   scoped_refptr<oxide::SharedGLContext> shared_gl_context_;
 

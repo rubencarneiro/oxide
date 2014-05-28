@@ -51,6 +51,7 @@ namespace oxide {
 
 class BrowserContextDelegate;
 class BrowserContextObserver;
+class GeolocationPermissionContext;
 class ResourceContext;
 class URLRequestContext;
 class URLRequestContextGetter;
@@ -66,7 +67,6 @@ class BrowserContextIOData {
   scoped_refptr<BrowserContextDelegate> GetDelegate();
 
   virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
-  virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
   virtual content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const = 0;
 
   virtual bool IsPopupBlockerEnabled() const = 0;
@@ -173,7 +173,7 @@ class BrowserContext : public content::BrowserContext,
   virtual void SetUserAgent(const std::string& user_agent) = 0;
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
-  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
+  virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
 
   content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
 
@@ -249,6 +249,8 @@ class BrowserContext : public content::BrowserContext,
   content::GeolocationPermissionContext*
       GetGeolocationPermissionContext() FINAL;
 
+  content::BrowserPluginGuestManagerDelegate* GetGuestManagerDelegate() FINAL;
+
   quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
 
   void AddObserver(BrowserContextObserver* observer);
@@ -257,6 +259,8 @@ class BrowserContext : public content::BrowserContext,
   IODataHandle io_data_handle_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
+
+  scoped_refptr<GeolocationPermissionContext> geolocation_permission_context_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

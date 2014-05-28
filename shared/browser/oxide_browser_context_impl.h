@@ -36,7 +36,7 @@ class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
   BrowserContextIODataImpl(const BrowserContext::Params& params);
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const FINAL;
-  void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
   content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const FINAL;
 
   bool IsPopupBlockerEnabled() const FINAL;
@@ -82,6 +82,7 @@ class BrowserContextImpl FINAL : public BrowserContext {
   void SetProduct(const std::string& product) FINAL;
 
   void SetUserAgent(const std::string& user_agent) FINAL;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
   void SetIsPopupBlockerEnabled(bool enabled) FINAL;
 
   UserScriptMaster& UserScriptManager() FINAL;

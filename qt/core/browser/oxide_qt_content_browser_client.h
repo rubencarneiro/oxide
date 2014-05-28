@@ -37,6 +37,8 @@ class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
 
   base::MessagePump* CreateMessagePumpForUI() FINAL;
 
+  content::LocationProvider* OverrideSystemLocationProvider() FINAL;
+
   bool IsTouchSupported() FINAL;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);

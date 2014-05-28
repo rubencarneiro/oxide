@@ -48,13 +48,13 @@ class ScriptMessageDispatcherRenderer FINAL : public content::RenderFrameObserve
   void DidCreateScriptContext(v8::Handle<v8::Context> context,
                               int world_id);
 
-  void WillReleaseScriptContext(v8::Handle<v8::Context> context,
-                                int world_id);
-
  private:
   typedef std::vector<linked_ptr<ScriptMessageManager> > ScriptMessageManagerVector;
 
+  void WillReleaseScriptContext(v8::Handle<v8::Context> context,
+                                int world_id) FINAL;
   bool OnMessageReceived(const IPC::Message& message) FINAL;
+
   void OnReceiveMessage(const OxideMsg_SendMessage_Params& params);
 
   void ReturnError(ScriptMessageRequest::Error error,

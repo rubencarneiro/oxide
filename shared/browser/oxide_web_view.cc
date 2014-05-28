@@ -25,6 +25,7 @@
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
+#include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_controller.h"
@@ -36,9 +37,9 @@
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
-#include "content/public/browser/web_contents_view.h"
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/menu_item.h"
+#include "content/public/common/url_constants.h"
 #include "net/base/net_errors.h"
 #include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
@@ -378,6 +379,48 @@ void WebView::LoadProgressChanged(content::WebContents* source,
   OnLoadProgressChanged(progress);
 }
 
+bool WebView::AddMessageToConsole(content::WebContents* source,
+                                  int32 level,
+                                  const base::string16& message,
+                                  int32 line_no,
+                                  const base::string16& source_id) {
+  return OnAddMessageToConsole(level, message, line_no, source_id);
+}
+
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+  return JavaScriptDialogManager::GetInstance();
+}
+
+void WebView::RunFileChooser(content::WebContents* web_contents,
+                             const content::FileChooserParams& params) {
+  DCHECK(!active_file_picker_);
+  content::RenderViewHost* rvh = web_contents->GetRenderViewHost();
+  FilePicker* filePicker = CreateFilePicker(rvh);
+  if (!filePicker) {
+    std::vector<ui::SelectedFileInfo> empty;
+    rvh->FilesSelectedInChooser(empty, params.mode);
+    return;
+  }
+  active_file_picker_ = filePicker->AsWeakPtr();
+  active_file_picker_->Run(params);
+}
+
+void WebView::ToggleFullscreenModeForTab(content::WebContents* source,
+                                         bool enter) {
+  DCHECK_EQ(source, web_contents_.get());
+  OnToggleFullscreenMode(enter);
+}
+
+bool WebView::IsFullscreenForTabOrPending(
+    const content::WebContents* source) const {
+  DCHECK_EQ(source, web_contents_.get());
+  return is_fullscreen_;
+}
+
+void WebView::RenderProcessGone(base::TerminationStatus status) {
+  geolocation_permission_requests_.CancelAllPending();
+}
+
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   while (root_frame_->ChildCount() > 0) {
@@ -459,6 +502,9 @@ void WebView::DidFailLoad(int64 frame_id,
 
 void WebView::NavigationEntryCommitted(
     const content::LoadCommittedDetails& load_details) {
+  if (load_details.is_navigation_to_different_page()) {
+    geolocation_permission_requests_.CancelAllPending();
+  }
   OnNavigationEntryCommitted();
 }
 
@@ -548,12 +594,17 @@ void WebView::OnNavigationEntryChanged(int index) {}
 
 void WebView::OnWebPreferencesChanged() {}
 
+void WebView::OnRequestGeolocationPermission(
+    scoped_ptr<GeolocationPermissionRequest> request) {}
+
 bool WebView::OnAddMessageToConsole(int32 level,
                                     const base::string16& message,
                                     int32 line_no,
                                     const base::string16& source_id) {
   return false;
 }
+
+void WebView::OnToggleFullscreenMode(bool enter) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
@@ -571,7 +622,8 @@ WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 }
 
 WebView::WebView() :
-    root_frame_(NULL) {}
+    root_frame_(NULL),
+    is_fullscreen_(false) {}
 
 bool WebView::Init(const Params& params) {
   CHECK(!web_contents_);
@@ -621,6 +673,12 @@ bool WebView::Init(const Params& params) {
 
   root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
+  if (!initial_url_.is_empty() && !params.contents) {
+    SetURL(initial_url_);
+    initial_url_ = GURL();
+  }
+  SetIsFullscreen(is_fullscreen_);
+
   return true;
 }
 
@@ -645,7 +703,7 @@ WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
 
 const GURL& WebView::GetURL() const {
   if (!web_contents_) {
-    return GURL::EmptyGURL();
+    return initial_url_;
   }
   return web_contents_->GetVisibleURL();
 }
@@ -655,11 +713,33 @@ void WebView::SetURL(const GURL& url) {
     return;
   }
 
+  if (!web_contents_) {
+    initial_url_ = url;
+    return;
+  }
+
   content::NavigationController::LoadURLParams params(url);
   // See https://launchpad.net/bugs/1279900 and the comment in
   // HttpUserAgentSettings::GetUserAgent()
   params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
   params.transition_type = content::PAGE_TRANSITION_TYPED;
+  web_contents_->GetController().LoadURLWithParams(params);
+}
+
+void WebView::LoadData(const std::string& encodedData,
+                       const std::string& mimeType,
+                       const GURL& baseUrl) {
+  std::string url("data:");
+  url.append(mimeType);
+  url.append(",");
+  url.append(encodedData);
+
+  content::NavigationController::LoadURLParams params((GURL(url)));
+  params.load_type = content::NavigationController::LOAD_TYPE_DATA;
+  params.base_url_for_data_url = baseUrl;
+  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
+  params.can_load_local_resources = true;
+  params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
   web_contents_->GetController().LoadURLWithParams(params);
 }
 
@@ -720,6 +800,19 @@ bool WebView::IsLoading() const {
     return false;
   }
   return web_contents_->IsLoading();
+}
+
+bool WebView::IsFullscreen() const {
+  return is_fullscreen_;
+}
+
+void WebView::SetIsFullscreen(bool fullscreen) {
+  if (fullscreen != is_fullscreen_) {
+    is_fullscreen_ = fullscreen;
+    if (web_contents_) {
+      web_contents_->GetRenderViewHost()->WasResized();
+    }
+  }
 }
 
 void WebView::UpdateSize(const gfx::Size& size) {
@@ -830,27 +923,6 @@ gfx::Size WebView::GetContainerSize() {
   return GetContainerBounds().size();
 }
 
-JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type,
-    bool* did_suppress_message) {
-  return NULL;
-}
-
-JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  return NULL;
-}
-
-FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
-  return NULL;
-}
-
-void WebView::FrameAdded(WebFrame* frame) {}
-void WebView::FrameRemoved(WebFrame* frame) {}
-
-bool WebView::CanCreateWindows() const {
-  return false;
-}
-
 void WebView::ShowPopupMenu(const gfx::Rect& bounds,
                             int selected_item,
                             const std::vector<content::MenuItem>& items,
@@ -875,30 +947,41 @@ void WebView::HidePopupMenu() {
   }
 }
 
-content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
-  return JavaScriptDialogManager::GetInstance();
+void WebView::RequestGeolocationPermission(
+    const PermissionRequest::ID& id,
+    const GURL& origin,
+    const base::Callback<void(bool)>& callback) {
+  scoped_ptr<GeolocationPermissionRequest> request(
+      new GeolocationPermissionRequest(
+        &geolocation_permission_requests_, id, origin,
+        web_contents_->GetLastCommittedURL().GetOrigin(), callback));
+  OnRequestGeolocationPermission(request.Pass());
 }
 
-void WebView::RunFileChooser(content::WebContents* web_contents,
-                             const content::FileChooserParams& params) {
-  DCHECK(!active_file_picker_);
-  content::RenderViewHost* rvh = web_contents->GetRenderViewHost();
-  FilePicker* filePicker = CreateFilePicker(rvh);
-  if (!filePicker) {
-    std::vector<ui::SelectedFileInfo> empty;
-    rvh->FilesSelectedInChooser(empty, params.mode);
-    return;
-  }
-  active_file_picker_ = filePicker->AsWeakPtr();
-  active_file_picker_->Run(params);
+void WebView::CancelGeolocationPermissionRequest(
+    const PermissionRequest::ID& id) {
+  geolocation_permission_requests_.CancelPendingRequestWithID(id);
 }
 
-bool WebView::AddMessageToConsole(content::WebContents* source,
-                                  int32 level,
-                                  const base::string16& message,
-                                  int32 line_no,
-                                  const base::string16& source_id) {
-  return OnAddMessageToConsole(level, message, line_no, source_id);
+JavaScriptDialog* WebView::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  return NULL;
+}
+
+JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
+  return NULL;
+}
+
+FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
+  return NULL;
+}
+
+void WebView::FrameAdded(WebFrame* frame) {}
+void WebView::FrameRemoved(WebFrame* frame) {}
+
+bool WebView::CanCreateWindows() const {
+  return false;
 }
 
 } // namespace oxide

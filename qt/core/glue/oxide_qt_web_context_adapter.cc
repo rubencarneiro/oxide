@@ -33,25 +33,12 @@
 #include "qt/core/gl/oxide_qt_shared_gl_context.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
-#include "shared/browser/oxide_form_factor.h"
 
 namespace oxide {
 namespace qt {
 
 namespace {
 QOpenGLContext* g_shared_gl_context;
-
-int GetProcessFlags() {
-  switch (oxide::GetFormFactorHint()) {
-    case FORM_FACTOR_TABLET:
-    case FORM_FACTOR_PHONE:
-      return oxide::BrowserProcessMain::ENABLE_VIEWPORT |
-             oxide::BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS;
-    default:
-      return 0;
-  }
-}
-
 }
 
 WebContextAdapter::~WebContextAdapter() {
@@ -189,9 +176,7 @@ void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
 void WebContextAdapter::ensureChromiumStarted() {
   if (!oxide::BrowserProcessMain::Exists()) {
     scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
-    oxide::BrowserProcessMain::StartIfNotRunning(
-        GetProcessFlags(),
-        shared_gl_context);
+    oxide::BrowserProcessMain::StartIfNotRunning(shared_gl_context);
   }
 }
 

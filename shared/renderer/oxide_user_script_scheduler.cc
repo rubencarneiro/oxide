@@ -19,6 +19,8 @@
 
 #include "base/bind.h"
 #include "base/message_loop/message_loop.h"
+#include "third_party/WebKit/public/web/WebFrame.h"
+#include "third_party/WebKit/public/web/WebLocalFrame.h"
 
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_user_script.h"
@@ -34,10 +36,10 @@ void UserScriptScheduler::DoIdleInject() {
   UserScriptSlave* user_script_slave =
       ContentClient::instance()->renderer()->user_script_slave();
 
-  for (std::set<blink::WebFrame *>::const_iterator it =
+  for (std::set<blink::WebLocalFrame *>::const_iterator it =
            pending_idle_frames_.begin();
        it != pending_idle_frames_.end(); ++it) {
-    blink::WebFrame* f = *it;
+    blink::WebLocalFrame* f = *it;
     user_script_slave->InjectScripts(f, UserScript::DOCUMENT_IDLE);
   }
 
@@ -49,12 +51,12 @@ UserScriptScheduler::UserScriptScheduler(content::RenderView* render_view) :
     idle_posted_(false),
     weak_factory_(this) {}
 
-void UserScriptScheduler::DidFinishDocumentLoad(blink::WebFrame* frame) {
+void UserScriptScheduler::DidFinishDocumentLoad(blink::WebLocalFrame* frame) {
   ContentClient::instance()->renderer()->user_script_slave()->InjectScripts(
       frame, UserScript::DOCUMENT_END);
 }
 
-void UserScriptScheduler::DidFinishLoad(blink::WebFrame* frame) {
+void UserScriptScheduler::DidFinishLoad(blink::WebLocalFrame* frame) {
   pending_idle_frames_.insert(frame);
 
   if (idle_posted_) {
@@ -69,7 +71,7 @@ void UserScriptScheduler::DidFinishLoad(blink::WebFrame* frame) {
                  weak_factory_.GetWeakPtr()));
 }
 
-void UserScriptScheduler::DidCreateDocumentElement(blink::WebFrame* frame) {
+void UserScriptScheduler::DidCreateDocumentElement(blink::WebLocalFrame* frame) {
   ContentClient::instance()->renderer()->user_script_slave()->InjectScripts(
       frame, UserScript::DOCUMENT_START);
 }
@@ -79,7 +81,10 @@ void UserScriptScheduler::FrameDetached(blink::WebFrame* frame) {
     return;
   }
 
-  pending_idle_frames_.erase(frame);
+  blink::WebLocalFrame* local_frame = frame->toWebLocalFrame();
+  if (local_frame) {
+    pending_idle_frames_.erase(local_frame);
+  }
 }
 
 } // namespace oxide

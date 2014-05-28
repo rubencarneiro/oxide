@@ -48,7 +48,7 @@ set_target_properties(
     PROPERTIES IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_UNVERSIONED})
 
 add_subdirectory(quick)
-if(ENABLE_OXIDEQMLSCENE)
+if(NOT DEFINED ENABLE_OXIDEQMLSCENE OR ENABLE_OXIDEQMLSCENE EQUAL 1)
   add_subdirectory(qmlrunner)
 endif()
 if(ENABLE_TESTS)
@@ -104,6 +104,6 @@ add_custom_target(
       -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/package.cmake
     DEPENDS stage-quick stage-run-qmlscene
     COMMENT "Creating compressed archive")
-if(ENABLE_OXIDEQMLSCENE)
+if(NOT DEFINED ENABLE_OXIDEQMLSCENE OR ENABLE_OXIDEQMLSCENE EQUAL 1)
   add_dependencies(package stage-oxideqmlscene)
 endif()

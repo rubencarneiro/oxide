@@ -31,30 +31,30 @@ diff --git a/tools/gyp/pylib/gyp/__init__.py b/tools/gyp/pylib/gyp/__init__.py
      return value
  
    # We always want to ignore the environment when regenerating, to avoid
-
-diff --git a/tools/gyp/pylib/gyp/generator/make.py b/tools/gyp/pylib/gyp/generator/make.py
---- a/tools/gyp/pylib/gyp/generator/make.py
-+++ b/tools/gyp/pylib/gyp/generator/make.py
-@@ -85,17 +85,21 @@ def CalculateVariables(default_variables
-     COMPILABLE_EXTENSIONS.update({'.m': 'objc', '.mm' : 'objcxx'})
+diff --git a/tools/gyp/pylib/gyp/generator/ninja.py b/tools/gyp/pylib/gyp/generator/ninja.py
+--- a/tools/gyp/pylib/gyp/generator/ninja.py
++++ b/tools/gyp/pylib/gyp/generator/ninja.py
+@@ -1529,18 +1529,22 @@ def CalculateVariables(default_variables
    else:
      operating_system = flavor
      if flavor == 'android':
        operating_system = 'linux'  # Keep this legacy behavior for now.
      default_variables.setdefault('OS', operating_system)
      default_variables.setdefault('SHARED_LIB_SUFFIX', '.so')
-     default_variables.setdefault('SHARED_LIB_DIR','$(builddir)/lib.$(TOOLSET)')
--    default_variables.setdefault('LIB_DIR', '$(obj).$(TOOLSET)')
+     default_variables.setdefault('SHARED_LIB_DIR',
+                                  os.path.join('$!PRODUCT_DIR', 'lib'))
 +    offset = '.'
 +    if 'options' in params:
 +      offset = os.path.relpath(params['options'].depth,
 +                               params['options'].toplevel_dir)
-+    default_variables.setdefault('LIB_DIR', os.path.join('$(obj).$(TOOLSET)', offset))
+     default_variables.setdefault('LIB_DIR',
+-                                 os.path.join('$!PRODUCT_DIR', 'obj'))
++                                 os.path.join('$!PRODUCT_DIR', 'obj', offset))
  
+ def ComputeOutputDir(params):
+   """Returns the path from the toplevel_dir to the build output directory."""
+   # generator_dir: relative path from pwd to where make puts build files.
+   # Makes migrating from make to ninja easier, ninja doesn't put anything here.
+   generator_dir = os.path.relpath(params['options'].generator_output or '.')
  
- def CalculateGeneratorInputInfo(params):
-   """Calculate the generator specific info that gets fed to input (called by
-   gyp)."""
-   generator_flags = params.get('generator_flags', {})
-   android_ndk_version = generator_flags.get('android_ndk_version', None)
-   # Android NDK requires a strict link order.
+   # output_dir: relative path from generator_dir to the build directory.

@@ -18,11 +18,25 @@
 #include "oxide_web_contents_view.h"
 
 #include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/web_contents.h"
 
 #include "oxide_render_widget_host_view.h"
 #include "oxide_render_widget_host_view_factory.h"
 #include "oxide_web_view.h"
+
+namespace content {
+
+WebContentsView* CreateWebContentsView(
+    WebContentsImpl* web_contents,
+    WebContentsViewDelegate* delegate,
+    RenderViewHostDelegateView** render_view_host_delegate_view) {
+  oxide::WebContentsView* rv = new oxide::WebContentsView(web_contents);
+  *render_view_host_delegate_view = rv;
+  return rv;
+}
+
+} // namespace content
 
 namespace oxide {
 
@@ -35,10 +49,64 @@ WebView* WebContentsView::GetWebView() const {
   return WebView::FromWebContents(web_contents_);
 }
 
+gfx::NativeView WebContentsView::GetNativeView() const {
+  return NULL;
+}
+
+gfx::NativeView WebContentsView::GetContentNativeView() const {
+  return NULL;
+}
+
+gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
+  return NULL;
+}
+
+void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
+  *out = GetWebView()->GetContainerBounds();
+}
+
+void WebContentsView::SizeContents(const gfx::Size& size) {
+  content::RenderWidgetHostView* rwhv =
+      web_contents_->GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->SetSize(size);
+  }
+}
+
+void WebContentsView::Focus() {
+  NOTREACHED();
+}
+
+void WebContentsView::SetInitialFocus() {
+  NOTREACHED();
+}
+
+void WebContentsView::StoreFocus() {
+  NOTREACHED();
+}
+
+void WebContentsView::RestoreFocus() {
+  NOTREACHED();
+}
+
+content::DropData* WebContentsView::GetDropData() const {
+  return NULL;
+}
+
+gfx::Rect WebContentsView::GetViewBounds() const {
+  content::RenderWidgetHostView* rwhv =
+      web_contents_->GetRenderWidgetHostView();
+  if (rwhv) {
+    return rwhv->GetViewBounds();
+  }
+
+  return gfx::Rect();
+}
+
 void WebContentsView::CreateView(const gfx::Size& initial_size,
                                  gfx::NativeView context) {}
 
-content::RenderWidgetHostView* WebContentsView::CreateViewForWidget(
+content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
   RenderWidgetHostViewFactory* factory =
       RenderWidgetHostViewFactory::FromWebContents(web_contents_);
@@ -62,7 +130,7 @@ content::RenderWidgetHostView* WebContentsView::CreateViewForWidget(
   return rwhv;
 }
 
-content::RenderWidgetHostView* WebContentsView::CreateViewForPopupWidget(
+content::RenderWidgetHostViewBase* WebContentsView::CreateViewForPopupWidget(
     content::RenderWidgetHost* render_widget_host) {
   return NULL;
 }
@@ -74,61 +142,6 @@ void WebContentsView::RenderViewCreated(content::RenderViewHost* host) {}
 void WebContentsView::RenderViewSwappedIn(content::RenderViewHost* host) {}
 
 void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
-
-gfx::NativeView WebContentsView::GetNativeView() const {
-  return NULL;
-}
-
-gfx::NativeView WebContentsView::GetContentNativeView() const {
-  return NULL;
-}
-
-gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
-  return NULL;
-}
-
-void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  *out = GetWebView()->GetContainerBounds();
-}
-
-void WebContentsView::OnTabCrashed(base::TerminationStatus status,
-                                   int error_code) {}
-
-void WebContentsView::SizeContents(const gfx::Size& size) {
-  content::RenderWidgetHostView* rwhv =
-      web_contents_->GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->SetSize(size);
-  }
-}
-
-void WebContentsView::Focus() {
-  content::RenderWidgetHostView* rwhv =
-      web_contents_->GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->Focus();
-  }
-}
-
-void WebContentsView::SetInitialFocus() {}
-
-void WebContentsView::StoreFocus() {}
-
-void WebContentsView::RestoreFocus() {}
-
-content::DropData* WebContentsView::GetDropData() const {
-  return NULL;
-}
-
-gfx::Rect WebContentsView::GetViewBounds() const {
-  content::RenderWidgetHostView* rwhv =
-      web_contents_->GetRenderWidgetHostView();
-  if (rwhv) {
-    return rwhv->GetViewBounds();
-  }
-
-  return gfx::Rect();
-}
 
 void WebContentsView::ShowPopupMenu(
     const gfx::Rect& bounds,

@@ -36,6 +36,7 @@
 
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_observer.h"
+#include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
@@ -85,6 +86,10 @@ class WebView : public ScriptMessageTarget,
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
 
+  void LoadData(const std::string& encodedData,
+                const std::string& mimeType,
+                const GURL& baseUrl);
+
   std::string GetTitle() const;
 
   bool CanGoBack() const;
@@ -98,6 +103,9 @@ class WebView : public ScriptMessageTarget,
   bool IsIncognito() const;
 
   bool IsLoading() const;
+
+  bool IsFullscreen() const;
+  void SetIsFullscreen(bool fullscreen);
 
   void UpdateSize(const gfx::Size& size);
   void UpdateVisibility(bool visible);
@@ -113,12 +121,6 @@ class WebView : public ScriptMessageTarget,
   std::string GetNavigationEntryTitle(int index) const;
   base::Time GetNavigationEntryTimestamp(int index) const;
 
-  bool AddMessageToConsole(content::WebContents* source,
-			   int32 level,
-			   const base::string16& message,
-			   int32 line_no,
-			   const base::string16& source_id);
-
   WebFrame* GetRootFrame() const;
   content::FrameTree* GetFrameTree();
 
@@ -126,6 +128,20 @@ class WebView : public ScriptMessageTarget,
   void SetWebPreferences(WebPreferences* prefs);
 
   gfx::Size GetContainerSize();
+
+  void ShowPopupMenu(const gfx::Rect& bounds,
+                     int selected_item,
+                     const std::vector<content::MenuItem>& items,
+                     bool allow_multiple_selection);
+  void HidePopupMenu();
+
+  void RequestGeolocationPermission(
+      const PermissionRequest::ID& id,
+      const GURL& origin,
+      const base::Callback<void(bool)>& callback);
+  void CancelGeolocationPermissionRequest(
+      const PermissionRequest::ID& id);
+
   virtual gfx::Rect GetContainerBounds() = 0;
   virtual bool IsVisible() const = 0;
 
@@ -140,12 +156,6 @@ class WebView : public ScriptMessageTarget,
   virtual void FrameRemoved(WebFrame* frame);
 
   virtual bool CanCreateWindows() const;
-
-  void ShowPopupMenu(const gfx::Rect& bounds,
-                     int selected_item,
-                     const std::vector<content::MenuItem>& items,
-                     bool allow_multiple_selection);
-  void HidePopupMenu();
 
  protected:
 
@@ -217,11 +227,21 @@ class WebView : public ScriptMessageTarget,
                       bool user_gesture,
                       bool* was_blocked) FINAL;
   void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+  bool AddMessageToConsole(content::WebContents* source,
+			   int32 level,
+			   const base::string16& message,
+			   int32 line_no,
+			   const base::string16& source_id) FINAL;
   content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) FINAL;
+  void ToggleFullscreenModeForTab(content::WebContents* source,
+                                  bool enter) FINAL;
+  bool IsFullscreenForTabOrPending(
+      const content::WebContents* source) const FINAL;
 
   // content::WebContentsObserver
+  void RenderProcessGone(base::TerminationStatus status) FINAL;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
 
@@ -300,7 +320,12 @@ class WebView : public ScriptMessageTarget,
                                      int32 line_no,
                                      const base::string16& source_id);
 
+  virtual void OnToggleFullscreenMode(bool enter);
+
   virtual void OnWebPreferencesChanged();
+
+  virtual void OnRequestGeolocationPermission(
+      scoped_ptr<GeolocationPermissionRequest> request);
 
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,
@@ -318,10 +343,15 @@ class WebView : public ScriptMessageTarget,
   ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
 
+  GURL initial_url_;
+
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;
+  bool is_fullscreen_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
+
+  PermissionRequestManager geolocation_permission_requests_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

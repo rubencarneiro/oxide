@@ -18,6 +18,8 @@
 #include "oxideqwebpreferences.h"
 #include "oxideqwebpreferences_p.h"
 
+#include <QtDebug>
+
 OxideQWebPreferences::~OxideQWebPreferences() {}
 
 OxideQWebPreferences::OxideQWebPreferences(QObject* parent) :
@@ -169,6 +171,15 @@ void OxideQWebPreferences::setMinimumFontSize(unsigned size) {
     Q_EMIT getter##Changed(); \
   }
 
+#define DEPRECATED_BOOLEAN_PREF_IMPL(getter, setter, value) \
+  bool OxideQWebPreferences::getter() const { \
+    return value; \
+  } \
+\
+  void OxideQWebPreferences::setter(bool val) { \
+    qWarning() << #getter " is deprecated and has no effect"; \
+  }
+
 BOOLEAN_PREF_IMPL(remoteFontsEnabled, setRemoteFontsEnabled, REMOTE_FONTS_ENABLED)
 BOOLEAN_PREF_IMPL(javascriptEnabled, setJavascriptEnabled, JAVASCRIPT_ENABLED)
 BOOLEAN_PREF_IMPL(allowScriptsToCloseWindows, setAllowScriptsToCloseWindows, ALLOW_SCRIPTS_TO_CLOSE_WINDOWS)
@@ -183,8 +194,8 @@ BOOLEAN_PREF_IMPL(loadsImagesAutomatically, setLoadsImagesAutomatically, LOADS_I
 BOOLEAN_PREF_IMPL(shrinksStandaloneImagesToFit, setShrinksStandaloneImagesToFit, SHRINKS_STANDALONE_IMAGES_TO_FIT)
 BOOLEAN_PREF_IMPL(textAreasAreResizable, setTextAreasAreResizable, TEXT_AREAS_ARE_RESIZABLE)
 BOOLEAN_PREF_IMPL(localStorageEnabled, setLocalStorageEnabled, LOCAL_STORAGE_ENABLED)
-BOOLEAN_PREF_IMPL(databasesEnabled, setDatabasesEnabled, DATABASES_ENABLED)
+DEPRECATED_BOOLEAN_PREF_IMPL(databasesEnabled, setDatabasesEnabled, true)
 BOOLEAN_PREF_IMPL(appCacheEnabled, setAppCacheEnabled, APP_CACHE_ENABLED)
 BOOLEAN_PREF_IMPL(tabsToLinks, setTabsToLinks, TABS_TO_LINKS)
 BOOLEAN_PREF_IMPL(caretBrowsingEnabled, setCaretBrowsingEnabled, CARET_BROWSING_ENABLED)
-BOOLEAN_PREF_IMPL(touchEnabled, setTouchEnabled, TOUCH_ENABLED)
+DEPRECATED_BOOLEAN_PREF_IMPL(touchEnabled, setTouchEnabled, true)

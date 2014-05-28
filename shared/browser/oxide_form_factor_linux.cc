@@ -47,6 +47,10 @@ bool IsUbuntuPhoneOrTablet() {
     return false;
   }
   EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  if (display == EGL_NO_DISPLAY) {
+    LOG(ERROR) << "Failed to get EGL default display";
+    return false;
+  }
 
   typedef EGLBoolean (*f_eglInitialize)(EGLDisplay, EGLint*, EGLint*);
   f_eglInitialize eglInitialize =

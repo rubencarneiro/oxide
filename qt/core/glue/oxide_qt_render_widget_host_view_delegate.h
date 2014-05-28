@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 #define _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 
+#include <QImage>
 #include <QRect>
 #include <QSize>
 #include <Qt>
@@ -29,7 +30,6 @@ class QFocusEvent;
 class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
-class QPixmap;
 class QScreen;
 class QTouchEvent;
 class QWheelEvent;
@@ -40,18 +40,36 @@ class RenderWidgetHost;
 }
 
 namespace oxide {
+
+class AcceleratedFrameHandle;
+
 namespace qt {
 
-class RenderWidgetHostViewDelegatePrivate;
+class RenderWidgetHostView;
 class WebViewAdapter;
 
-class Q_DECL_EXPORT TextureHandle {
- public:
-  TextureHandle() {}
-  virtual ~TextureHandle() {}
+enum CompositorFrameType {
+  COMPOSITOR_FRAME_TYPE_INVALID,
+  COMPOSITOR_FRAME_TYPE_SOFTWARE,
+  COMPOSITOR_FRAME_TYPE_ACCELERATED
+};
 
-  virtual unsigned int GetID() const = 0;
-  virtual QSize GetSize() const = 0;
+class Q_DECL_EXPORT AcceleratedFrameTextureHandle Q_DECL_FINAL {
+ public:
+  AcceleratedFrameTextureHandle() : handle_(NULL) {}
+  AcceleratedFrameTextureHandle(oxide::AcceleratedFrameHandle* handle,
+                                const QSize& size)
+      : handle_(handle), size_(size) {}
+  virtual ~AcceleratedFrameTextureHandle() {}
+
+  unsigned int GetID();
+  QSize size() const { return size_; }
+
+  bool IsValid();
+
+ private:
+  oxide::AcceleratedFrameHandle* handle_;
+  QSize size_;
 };
 
 class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
@@ -78,8 +96,9 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
-  virtual void SchedulePaintForRectPix(const QRect& rect) = 0;
   virtual void ScheduleUpdate() = 0;
+
+  void SetCompositorFrameType(CompositorFrameType type);
 
  protected:
   RenderWidgetHostViewDelegate();
@@ -92,16 +111,19 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleTouchEvent(QTouchEvent* event);
   void HandleGeometryChanged();
 
-  TextureHandle* GetCurrentTextureHandle();
-  void DidUpdate(bool skipped);
+  CompositorFrameType GetCompositorFrameType() const;
+  QImage GetSoftwareFrameImage();
+  AcceleratedFrameTextureHandle GetAcceleratedFrameTextureHandle();
+
+  void DidComposite();
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
-  const QPixmap* GetBackingStore();
-
  private:
-  friend class RenderWidgetHostViewDelegatePrivate;
-  QScopedPointer<RenderWidgetHostViewDelegatePrivate> priv;
+  friend class RenderWidgetHostView;
+
+  RenderWidgetHostView* rwhv_;
+  CompositorFrameType compositor_frame_type_;
 };
 
 } // namespace qt

@@ -72,14 +72,11 @@ WebPreferences::WebPreferences() :
   SetAttribute(ATTR_TEXT_AREAS_ARE_RESIZABLE, true);
 
   // ATTR_LOCAL_STORAGE_ENABLED
-  // ATTR_DATABASES_ENABLED
   // ATTR_APP_CACHE_ENABLED
 
   SetAttribute(ATTR_TABS_TO_LINKS, true);
 
   // ATTR_CARET_BROWSING_ENABLED
-
-  SetAttribute(ATTR_TOUCH_ENABLED, true);
 }
 
 WebPreferences::~WebPreferences() {
@@ -231,13 +228,10 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
   prefs->text_areas_are_resizable = attributes_[ATTR_TEXT_AREAS_ARE_RESIZABLE];
 
   prefs->local_storage_enabled = attributes_[ATTR_LOCAL_STORAGE_ENABLED];
-  prefs->databases_enabled = attributes_[ATTR_DATABASES_ENABLED];
   prefs->application_cache_enabled = attributes_[ATTR_APP_CACHE_ENABLED];
 
   prefs->tabs_to_links = attributes_[ATTR_TABS_TO_LINKS];
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
-
-  prefs->touch_enabled = attributes_[ATTR_TOUCH_ENABLED];
 }
 
 } // namespace oxide

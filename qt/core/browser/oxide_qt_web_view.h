@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
+#include <QKeyEvent>
+
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
@@ -84,12 +86,17 @@ class WebView FINAL : public oxide::WebView,
   void OnNavigationListPruned(bool from_front, int count) FINAL;
   void OnNavigationEntryChanged(int index) FINAL;
 
+  void OnWebPreferencesChanged() FINAL;
+
+  void OnRequestGeolocationPermission(
+      scoped_ptr<oxide::GeolocationPermissionRequest> request) FINAL;
+
   bool OnAddMessageToConsole(int32 level,
                              const base::string16& message,
                              int32 line_no,
                              const base::string16& source_id) FINAL;
-  
-  void OnWebPreferencesChanged() FINAL;
+
+  void OnToggleFullscreenMode(bool enter) FINAL;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
@@ -99,6 +106,9 @@ class WebView FINAL : public oxide::WebView,
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;
+
+  void HandleKeyboardEvent(content::WebContents* source,
+                           const content::NativeWebKeyboardEvent& event);
 
   WebViewAdapter* adapter_;
 

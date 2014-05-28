@@ -28,12 +28,19 @@
 #include "base/memory/weak_ptr.h"
 #include "base/synchronization/lock.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
+#include "content/common/cursors/webcursor.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/events/gestures/gesture_recognizer.h"
 #include "ui/events/gestures/gesture_types.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/oxide_gpu_utils.h"
+
 typedef unsigned int GLuint;
+
+namespace cc {
+class SharedBitmap;
+}
 
 namespace content {
 class RenderWidgetHostImpl;
@@ -46,36 +53,68 @@ class TouchEvent;
 
 namespace oxide {
 
-class TextureHandle;
+class AcceleratedFrameHandle;
+class RenderWidgetHostView;
 class WebView;
+
+class SoftwareFrameHandle FINAL {
+ public:
+  SoftwareFrameHandle(RenderWidgetHostView* rwhv,
+                      unsigned frame_id,
+                      uint32 surface_id,
+                      scoped_ptr<cc::SharedBitmap> bitmap,
+                      const gfx::Size& size,
+                      float scale);
+  ~SoftwareFrameHandle();
+
+  void* GetPixels();
+  unsigned frame_id() const { return frame_id_; }
+  gfx::Size size_in_pixels() const { return size_in_pixels_; }
+  float device_scale_factor() const { return device_scale_factor_; }
+
+  void WasFreed();
+
+ private:
+  RenderWidgetHostView* rwhv_;
+  unsigned frame_id_;
+  uint32 surface_id_;
+  scoped_ptr<cc::SharedBitmap> bitmap_;
+  gfx::Size size_in_pixels_;
+  float device_scale_factor_;
+};
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
                              public ui::GestureConsumer,
+                             public AcceleratedFrameHandle::Client,
                              public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
   virtual ~RenderWidgetHostView();
 
   virtual void Init(WebView* view) = 0;
 
-  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
   content::RenderWidgetHostImpl* host() const { return host_; }
 
-  void SetBounds(const gfx::Rect& rect) FINAL;
+  SoftwareFrameHandle* GetCurrentSoftwareFrameHandle();
+  AcceleratedFrameHandle* GetCurrentAcceleratedFrameHandle();
 
-  TextureHandle* GetCurrentTextureHandle();
+  void DidCommitCompositorFrame();
+
+  // content::RenderWidgetHostView
+  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
+
+  void SetBounds(const gfx::Rect& rect) FINAL;
 
  protected:
   RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
 
+  // content::RenderWidgetHostViewBase
   void WasShown() FINAL;
   void WasHidden() FINAL;
 
   void OnFocus();
   void OnBlur();
   void OnResize();
-
-  void AcknowledgeBuffersSwapped(bool skipped);
 
   gfx::Rect caret_rect() const { return caret_rect_; }
   size_t selection_cursor_position() const {
@@ -88,7 +127,13 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void HandleTouchEvent(const ui::TouchEvent& event);
 
  private:
-  typedef base::Callback<void(bool)> AcknowledgeBufferPresentCallback;
+  typedef base::Callback<void(void)> SendSwapCompositorFrameAckCallback;
+
+  // content::RenderWidgetHostViewBase
+  virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
+
+  void OnSwapCompositorFrame(uint32 output_surface_id,
+                             scoped_ptr<cc::CompositorFrame> frame) FINAL;
 
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) FINAL;
@@ -96,29 +141,17 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
       content::RenderWidgetHostView* reference_host_view) FINAL;
 
   void MovePluginWindows(
-      const gfx::Vector2d& scroll_offset,
       const std::vector<content::WebPluginGeometry>& moves) FINAL;
 
   virtual void Blur() OVERRIDE;
 
-  void UpdateCursor(const content::WebCursor& cursor) OVERRIDE;
-
+  void UpdateCursor(const content::WebCursor& cursor) FINAL;
   void SetIsLoading(bool is_loading) FINAL;
 
   virtual void TextInputTypeChanged(ui::TextInputType type,
                                     ui::TextInputMode mode,
                                     bool can_compose_inline) OVERRIDE;
   virtual void ImeCancelComposition() OVERRIDE;
-  virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
-  void ImeCompositionRangeChanged(
-      const gfx::Range& range,
-      const std::vector<gfx::Rect>& character_bounds) FINAL;
-
-  void DidUpdateBackingStore(
-      const gfx::Rect& scroll_rect,
-      const gfx::Vector2d& scroll_delta,
-      const std::vector<gfx::Rect>& copy_rects,
-      const std::vector<ui::LatencyInfo>& latency_info) FINAL;
 
   void RenderProcessGone(base::TerminationStatus status, int error_code) FINAL;
 
@@ -161,13 +194,14 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) FINAL;
 
-  void SetHasHorizontalScrollbar(bool has_horizontal_scrollbar) FINAL;
   void SetScrollOffsetPinning(bool is_pinned_to_left,
                               bool is_pinned_to_right) FINAL;
 
-  void OnAccessibilityEvents(
-      const std::vector<AccessibilityHostMsg_EventParams>& params) FINAL;
+  void ImeCompositionRangeChanged(
+      const gfx::Range& range,
+      const std::vector<gfx::Rect>& character_bounds) FINAL;
 
+  // content::RenderWidgetHostView
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 
   gfx::NativeView GetNativeView() const FINAL;
@@ -181,23 +215,29 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   bool LockMouse() FINAL;
   void UnlockMouse() FINAL;
 
+  // ui::GestureEventHelper
   bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
-  void DispatchPostponedGestureEvent(ui::GestureEvent* event) FINAL;
+  void DispatchGestureEvent(ui::GestureEvent* event) FINAL;
   void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
 
-  virtual void Paint(const gfx::Rect& dirty_rect);
-  virtual void BuffersSwapped();
-  void SendAcknowledgeBufferPresent(int32 route_id,
-                                    int gpu_host_id,
-                                    const gpu::Mailbox& mailbox,
-                                    bool skipped);
-  static void SendAcknowledgeBufferPresentOnMainThread(
-      AcknowledgeBufferPresentCallback ack,
-      bool skipped);
-  bool IsInBufferSwap();
+  // AcceleratedFrameHandle::Client
+  void OnTextureResourcesAvailable(AcceleratedFrameHandle* handle) FINAL;
+
+  // ===================
+
+  bool ShouldCompositeNewFrame();
+
+  void SendSwapCompositorFrameAck(uint32 surface_id);
+  static void SendSwapCompositorFrameAckOnMainThread(
+      SendSwapCompositorFrameAckCallback ack);
 
   void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
   void ForwardGestureEventToRenderer(ui::GestureEvent* event);
+
+  virtual void SwapSoftwareFrame();
+  virtual void SwapAcceleratedFrame();
+
+  virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
   bool is_hidden_;
 
@@ -205,16 +245,21 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   gfx::GLSurfaceHandle shared_surface_handle_;
 
-  base::Lock acknowledge_buffer_present_callback_lock_;
-  AcknowledgeBufferPresentCallback acknowledge_buffer_present_callback_;
+  base::Lock compositor_frame_ack_callback_lock_;
+  SendSwapCompositorFrameAckCallback compositor_frame_ack_callback_;
 
-  scoped_refptr<TextureHandle> textures_[2];
-  TextureHandle* frontbuffer_texture_handle_;
-  TextureHandle* backbuffer_texture_handle_;
+  scoped_refptr<AcceleratedFrameHandle> pending_accelerated_frame_;
+  scoped_refptr<AcceleratedFrameHandle> current_accelerated_frame_;
+  scoped_refptr<AcceleratedFrameHandle> previous_accelerated_frame_;
+  scoped_ptr<SoftwareFrameHandle> current_software_frame_;
+  scoped_ptr<SoftwareFrameHandle> previous_software_frame_;
 
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;
   size_t selection_anchor_position_;
+
+  bool is_loading_;
+  content::WebCursor last_cursor_;
 
   scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
   blink::WebTouchEvent touch_event_;

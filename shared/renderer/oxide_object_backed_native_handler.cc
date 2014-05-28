@@ -15,8 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#define V8_ALLOW_ACCESS_TO_RAW_HANDLE_CONSTRUCTOR 1
-
 #include "oxide_object_backed_native_handler.h"
 
 #include "base/logging.h"
@@ -132,7 +130,7 @@ void ObjectBackedNativeHandler::RouteFunction(
   object_template_.NewHandle(manager_->isolate())->Set(
       manager_->isolate(), name.c_str(), function_template);
 
-  router_data_.push_back(UnsafePersistent<v8::Object>(&data));
+  router_data_.Append(local_data);
 }
 
 void ObjectBackedNativeHandler::RouteAccessor(
@@ -164,12 +162,13 @@ void ObjectBackedNativeHandler::RouteAccessor(
       v8::String::NewFromUtf8(manager_->isolate(), name.c_str()),
       GetterRouter, SetterRouter, local_data, v8::DEFAULT, attr);
 
-  router_data_.push_back(UnsafePersistent<v8::Object>(&data));
+  router_data_.Append(local_data);
 }
 
 ObjectBackedNativeHandler::ObjectBackedNativeHandler(
     ScriptMessageManager* manager) :
     manager_(manager),
+    router_data_(manager->isolate()),
     object_template_(manager->isolate(),
                      v8::ObjectTemplate::New(manager->isolate())) {}
 
@@ -177,9 +176,8 @@ ObjectBackedNativeHandler::~ObjectBackedNativeHandler() {
   v8::HandleScope handle_scope(manager_->isolate());
   v8::Context::Scope context_scope(manager_->GetV8Context());
 
-  for (RouterData::iterator it = router_data_.begin();
-       it != router_data_.end(); ++it) {
-    v8::Handle<v8::Object> data(it->newLocal(manager_->isolate()));
+  for (size_t i = 0; i < router_data_.Size(); ++i) {
+    v8::Handle<v8::Object> data = router_data_.Get(i);
     v8::Handle<v8::Value> handler_function_value(
         data->Get(v8::String::NewFromUtf8(manager_->isolate(),
                                           kHandlerFunction)));
@@ -208,8 +206,8 @@ ObjectBackedNativeHandler::~ObjectBackedNativeHandler() {
                                            kHandlerSetter));
     }
     data->Delete(v8::String::NewFromUtf8(manager_->isolate(), kPropertyName));
-    it->dispose();
   }
+  router_data_.Clear();
 }
 
 v8::Handle<v8::Object> ObjectBackedNativeHandler::NewInstance() {

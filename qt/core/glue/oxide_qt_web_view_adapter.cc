@@ -66,37 +66,20 @@ void WebViewAdapter::init() {
     return;
   }
 
-  // construct_props_ is deleted in Initialized()
-  QUrl url = construct_props_->url;
-
   oxide::WebView::Params params;
   params.context =
       WebContextAdapterPrivate::get(construct_props_->context)->GetContext();
   params.incognito = construct_props_->incognito;
-  if (!priv->Init(params)) {
-    return;
-  }
 
-  if (!url.isEmpty()) {
-    priv->SetURL(GURL(url.toString().toStdString()));
-  }
-
+  priv->Init(params);
 }
 
 QUrl WebViewAdapter::url() const {
-  if (construct_props_) {
-    return construct_props_->url;
-  }
-
   return QUrl(QString::fromStdString(priv->GetURL().spec()));
 }
 
 void WebViewAdapter::setUrl(const QUrl& url) {
-  if (construct_props_) {
-    construct_props_->url = url;
-  } else {
-    priv->SetURL(GURL(url.toString().toStdString()));
-  }
+  priv->SetURL(GURL(url.toString().toStdString()));
 }
 
 QString WebViewAdapter::title() const {
@@ -130,6 +113,14 @@ void WebViewAdapter::setIncognito(bool incognito) {
 
 bool WebViewAdapter::loading() const {
   return priv->IsLoading();
+}
+
+bool WebViewAdapter::fullscreen() const {
+  return priv->IsFullscreen();
+}
+
+void WebViewAdapter::setFullscreen(bool fullscreen) {
+  priv->SetIsFullscreen(fullscreen);
 }
 
 WebFrameAdapter* WebViewAdapter::rootFrame() const {
@@ -182,6 +173,13 @@ void WebViewAdapter::stop() {
 
 void WebViewAdapter::reload() {
   priv->Reload();
+}
+
+void WebViewAdapter::loadHtml(const QString& html, const QUrl& baseUrl) {
+  QByteArray encodedData = html.toUtf8().toPercentEncoding();
+  priv->LoadData(std::string(encodedData.constData(), encodedData.length()),
+                 "text/html;charset=UTF-8",
+                 GURL(baseUrl.toString().toStdString()));
 }
 
 bool WebViewAdapter::isInitialized() {

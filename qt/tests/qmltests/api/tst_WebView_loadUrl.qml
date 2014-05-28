@@ -35,10 +35,10 @@ TestWebView {
 
     function test_WebView_loadUrl1_data() {
       return [
-        { url: "http://localhost:8080/empty.html", succeeded: 1, failed: 0 },
-        { url: Qt.resolvedUrl("./empty.html"), succeeded: 1, failed: 0 },
-        { url: "about:blank", succeeded: 1, failed: 0 },
-        { url: "foo://bar.com", succeeded: 1, failed: 1, documentURI: "data:text/html,chromewebdata" }
+        { url: "http://localhost:8080/empty.html", fail: false },
+        { url: Qt.resolvedUrl("./empty.html"), fail: false },
+        { url: "about:blank", fail: false },
+        { url: "foo://bar.com", fail: true, documentURI: "data:text/html,chromewebdata" }
       ];
     }
 
@@ -47,13 +47,13 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 
-      compare(spy.count, 1, "Got an unexpected number of url changes");
+      compare(spy.count, data.fail ? 2 : 1, "Got an unexpected number of url changes");
 
-      compare(webView.loadsSucceededCount, data.succeeded,
+      compare(webView.loadsSucceededCount, 1,
               "Got an unexpected number of successful loads");
-      compare(webView.loadsFailedCount, data.failed,
+      compare(webView.loadsFailedCount, data.fail ? 1 : 0,
               "Got an unexpected number of failed loads");
-      compare(webView.loadsStartedCount, data.succeeded + data.failed,
+      compare(webView.loadsStartedCount, data.fail ? 2 : 1,
               "Got an unexpected number of started loads");
       compare(webView.url, data.url,
               "WebView.url is incorrect");

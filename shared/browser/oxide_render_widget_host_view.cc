@@ -21,15 +21,31 @@
 #include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/scoped_vector.h"
+#include "cc/output/compositor_frame.h"
+#include "cc/output/compositor_frame_ack.h"
+#include "cc/output/gl_frame_data.h"
+#include "cc/output/software_frame_data.h"
+#include "cc/resources/shared_bitmap.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/renderer_host/ui_events_helper.h"
 #include "content/common/gpu/gpu_messages.h"
+#include "content/common/host_shared_bitmap_manager.h"
 #include "content/common/view_messages.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/render_process_host.h"
 #include "content/public/common/content_switches.h"
+#include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "ui/events/event.h"
 
+#include "oxide_default_screen_info.h"
 #include "oxide_gpu_utils.h"
+
+namespace content {
+void RenderWidgetHostViewBase::GetDefaultScreenInfo(
+    blink::WebScreenInfo* results) {
+  *results = oxide::GetDefaultWebScreenInfo();
+}
+}
 
 namespace oxide {
 
@@ -56,65 +72,165 @@ bool ShouldSendPinchGesture() {
   return pinch_allowed;
 }
 
+bool IsUsingSoftwareCompositing() {
+  static bool sw_compositing =
+      CommandLine::ForCurrentProcess()->HasSwitch(switches::kDisableGpuCompositing);
+  return sw_compositing;
+}
+
+}
+
+SoftwareFrameHandle::SoftwareFrameHandle(RenderWidgetHostView* rwhv,
+                                         unsigned frame_id,
+                                         uint32 surface_id,
+                                         scoped_ptr<cc::SharedBitmap> bitmap,
+                                         const gfx::Size& size,
+                                         float scale)
+    : rwhv_(rwhv),
+      frame_id_(frame_id),
+      surface_id_(surface_id),
+      bitmap_(bitmap.Pass()),
+      size_in_pixels_(size),
+      device_scale_factor_(scale) {}
+
+SoftwareFrameHandle::~SoftwareFrameHandle() {
+  if (bitmap_ && rwhv_->host()) {
+    cc::CompositorFrameAck ack;
+    ack.last_software_frame_id = frame_id_;
+    content::RenderWidgetHostImpl::SendReclaimCompositorResources(
+        rwhv_->host()->GetRoutingID(),
+        surface_id_,
+        rwhv_->host()->GetProcess()->GetID(),
+        ack);
+  }
+}
+
+void* SoftwareFrameHandle::GetPixels() {
+  return bitmap_->pixels();
+}
+
+void SoftwareFrameHandle::WasFreed() {
+  bitmap_.reset();
+}
+
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
+
+void RenderWidgetHostView::OnSwapCompositorFrame(
+    uint32 output_surface_id,
+    scoped_ptr<cc::CompositorFrame> frame) {
+  {
+    base::AutoLock lock(compositor_frame_ack_callback_lock_);
+    if (!compositor_frame_ack_callback_.is_null()) {
+      DLOG(ERROR) << "Received new compositor frame with pending ack";
+      host_->GetProcess()->ReceivedBadMessage();
+      return;
+    }
+
+    compositor_frame_ack_callback_ =
+        base::Bind(&RenderWidgetHostView::SendSwapCompositorFrameAck,
+                   AsWeakPtr(), output_surface_id);
+  }
+
+  if (IsUsingSoftwareCompositing()) {
+    DCHECK(!pending_accelerated_frame_ &&
+           !current_accelerated_frame_ &&
+           !previous_accelerated_frame_);
+    DCHECK(!previous_software_frame_);
+
+    if (!frame->software_frame_data) {
+      DLOG(ERROR) << "Invalid swap software compositor frame message received";
+      host_->GetProcess()->ReceivedBadMessage();
+      return;
+    }
+
+    previous_software_frame_.swap(current_software_frame_);
+
+    scoped_ptr<cc::SharedBitmap> shared_bitmap =
+        content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
+          frame->software_frame_data->size,
+          frame->software_frame_data->bitmap_id);
+    if (!shared_bitmap) {
+      DLOG(ERROR) << "Failed to create shared bitmap for software frame";
+      host_->GetProcess()->ReceivedBadMessage();
+      return;
+    }
+
+    current_software_frame_.reset(
+        new SoftwareFrameHandle(this,
+                                frame->software_frame_data->id,
+                                output_surface_id,
+                                shared_bitmap.Pass(),
+                                frame->software_frame_data->size,
+                                frame->metadata.device_scale_factor));
+
+    if (!ShouldCompositeNewFrame()) {
+      DidCommitCompositorFrame();
+    } else {
+      SwapSoftwareFrame();
+    }
+    return;
+  }
+
+  DCHECK(!current_software_frame_ && !previous_software_frame_);
+  DCHECK(!pending_accelerated_frame_ && !previous_accelerated_frame_);
+
+  if (!frame->gl_frame_data || frame->gl_frame_data->mailbox.IsZero()) {
+    DLOG(ERROR) << "Invalid swap accelerated compositor frame message received";
+    host_->GetProcess()->ReceivedBadMessage();
+    return;
+  }
+
+  pending_accelerated_frame_ =
+      GpuUtils::instance()->GetAcceleratedFrameHandle(
+        this, this,
+        output_surface_id,
+        frame->gl_frame_data->mailbox,
+        frame->gl_frame_data->sync_point,
+        frame->gl_frame_data->size,
+        frame->metadata.device_scale_factor);
 }
 
 void RenderWidgetHostView::InitAsPopup(
     content::RenderWidgetHostView* parent_host_view,
     const gfx::Rect& pos) {
-  NOTIMPLEMENTED() <<
-      "InitAsPopup() shouldn't be called until "
-      "WebContentsViewPort::CreateViewForPopupWidget() is implemented";
+  NOTREACHED() << "Popup RenderWidgetHostView's are not supported";
 }
 
 void RenderWidgetHostView::InitAsFullscreen(
     content::RenderWidgetHostView* reference_host_view) {
-  NOTIMPLEMENTED() <<
-      "InitAsFullScreen() shouldn't be called until "
-      "WebContentsViewPort::CreateViewForPopupWidget() is implemented";
+  NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
 }
 
 void RenderWidgetHostView::MovePluginWindows(
-    const gfx::Vector2d& scroll_offset,
     const std::vector<content::WebPluginGeometry>& moves) {}
 
 void RenderWidgetHostView::Blur() {}
 
-void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {}
+void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
+  last_cursor_ = cursor;
+  if (!is_loading_) {
+    OnUpdateCursor(cursor);
+  }
+}
 
-void RenderWidgetHostView::SetIsLoading(bool is_loading) {}
+void RenderWidgetHostView::SetIsLoading(bool is_loading) {
+  if (is_loading != is_loading_) {
+    is_loading_ = is_loading;
+    if (is_loading) {
+      content::WebCursor::CursorInfo busy_cursor_info(blink::WebCursorInfo::TypeWait);
+      content::WebCursor busy_cursor(busy_cursor_info);
+      OnUpdateCursor(busy_cursor);
+    } else {
+      OnUpdateCursor(last_cursor_);
+    }
+  }
+}
 
 void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 ui::TextInputMode mode,
                                                 bool can_compose_inline) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {}
-
-void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
-
-void RenderWidgetHostView::ImeCompositionRangeChanged(
-    const gfx::Range& range,
-    const std::vector<gfx::Rect>& character_bounds) {}
-
-void RenderWidgetHostView::DidUpdateBackingStore(
-    const gfx::Rect& scroll_rect,
-    const gfx::Vector2d& scroll_delta,
-    const std::vector<gfx::Rect>& copy_rects,
-    const std::vector<ui::LatencyInfo>& latency_info) {
-  if (is_hidden_) {
-    return;
-  }
-
-  Paint(scroll_rect);
-
-  for (size_t i = 0; i < copy_rects.size(); ++i) {
-    gfx::Rect rect = gfx::SubtractRects(copy_rects[i], scroll_rect);
-    if (rect.IsEmpty()) {
-      continue;
-    }
-
-    Paint(rect);
-  }
-}
 
 void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
                                              int error_code) {
@@ -154,7 +270,7 @@ void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Size& dst_size,
     const base::Callback<void(bool, const SkBitmap&)>& callback,
     const SkBitmap::Config config) {
-  GetRenderWidgetHost()->GetSnapshotFromRenderer(src_subrect, callback);
+  callback.Run(false, SkBitmap());
 }
 
 void RenderWidgetHostView::CopyFromCompositingSurfaceToVideoFrame(
@@ -177,45 +293,15 @@ void RenderWidgetHostView::AcceleratedSurfaceInitialized(
 void RenderWidgetHostView::AcceleratedSurfaceBuffersSwapped(
     const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
     int gpu_host_id) {
-  DCHECK(!IsInBufferSwap());
-
-  backbuffer_texture_handle_->Consume(params_in_pixel.mailbox,
-                                      params_in_pixel.size);
-
-  {
-    base::AutoLock lock(acknowledge_buffer_present_callback_lock_);
-    acknowledge_buffer_present_callback_ =
-        base::Bind(&RenderWidgetHostView::SendAcknowledgeBufferPresent,
-                   AsWeakPtr(),
-                   params_in_pixel.route_id,
-                   gpu_host_id,
-                   params_in_pixel.mailbox);
-  }
-
-  if (params_in_pixel.size != GetPhysicalBackingSize()) {
-    AcknowledgeBuffersSwapped(true);
-    return;
-  }
-
-  BuffersSwapped();
+  DLOG(ERROR) << "Old compositor mode is not supported";
+  host_->GetProcess()->ReceivedBadMessage();
 }
 
 void RenderWidgetHostView::AcceleratedSurfacePostSubBuffer(
       const GpuHostMsg_AcceleratedSurfacePostSubBuffer_Params& params_in_pixel,
       int gpu_host_id) {
-  DCHECK(!IsInBufferSwap());
-  NOTIMPLEMENTED() << "PostSubBuffer is not implemented";
-
-  {
-    base::AutoLock lock(acknowledge_buffer_present_callback_lock_);
-    acknowledge_buffer_present_callback_ =
-        base::Bind(&RenderWidgetHostView::SendAcknowledgeBufferPresent,
-                   AsWeakPtr(),
-                   params_in_pixel.route_id,
-                   gpu_host_id,
-                   params_in_pixel.mailbox);
-  }
-  AcknowledgeBuffersSwapped(true);
+  DLOG(ERROR) << "Old compositor mode is not supported";
+  host_->GetProcess()->ReceivedBadMessage();
 }
 
 void RenderWidgetHostView::AcceleratedSurfaceSuspend() {}
@@ -256,17 +342,15 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
   }
 }
 
-void RenderWidgetHostView::SetHasHorizontalScrollbar(
-    bool has_horizontal_scrollbar) {}
-
 void RenderWidgetHostView::SetScrollOffsetPinning(bool is_pinned_to_left,
                                                   bool is_pinned_to_right) {}
 
-void RenderWidgetHostView::OnAccessibilityEvents(
-    const std::vector<AccessibilityHostMsg_EventParams>& params) {}
+void RenderWidgetHostView::ImeCompositionRangeChanged(
+    const gfx::Range& range,
+    const std::vector<gfx::Rect>& character_bounds) {}
 
 void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {
-  NOTIMPLEMENTED() << "InitAsChild() isn't used. Please use Init() instead";
+  NOTREACHED() << "InitAsChild() isn't used. Please use Init() instead";
 }
 
 gfx::NativeView RenderWidgetHostView::GetNativeView() const {
@@ -299,8 +383,7 @@ bool RenderWidgetHostView::CanDispatchToConsumer(
   return true;
 }
 
-void RenderWidgetHostView::DispatchPostponedGestureEvent(
-    ui::GestureEvent* event) {
+void RenderWidgetHostView::DispatchGestureEvent(ui::GestureEvent* event) {
   ForwardGestureEventToRenderer(event);
 }
 
@@ -317,46 +400,67 @@ void RenderWidgetHostView::DispatchCancelTouchEvent(ui::TouchEvent* event) {
       cancel_event, *event->latency());
 }
 
-void RenderWidgetHostView::Paint(const gfx::Rect& dirty_rect) {}
+void RenderWidgetHostView::OnTextureResourcesAvailable(
+    AcceleratedFrameHandle* handle) {
+  DCHECK_EQ(handle, pending_accelerated_frame_.get());
+  DCHECK(!previous_accelerated_frame_);
 
-void RenderWidgetHostView::BuffersSwapped() {
-  AcknowledgeBuffersSwapped(true);
+  previous_accelerated_frame_.swap(current_accelerated_frame_);
+  current_accelerated_frame_.swap(pending_accelerated_frame_);
+
+  if (!ShouldCompositeNewFrame()) {
+    DidCommitCompositorFrame();
+  } else {
+    SwapAcceleratedFrame();
+  }
 }
 
-void RenderWidgetHostView::SendAcknowledgeBufferPresent(
-    int32 route_id,
-    int gpu_host_id,
-    const gpu::Mailbox& mailbox,
-    bool skipped) {
-  {
-    base::AutoLock lock(acknowledge_buffer_present_callback_lock_);
-    acknowledge_buffer_present_callback_.Reset();
+bool RenderWidgetHostView::ShouldCompositeNewFrame() {
+  if (is_hidden_) {
+    return false;
   }
 
-  AcceleratedSurfaceMsg_BufferPresented_Params ack;
-  ack.sync_point = 0;
-  if (skipped) {
-    ack.mailbox = mailbox;
+  gfx::Rect bounds(GetViewBounds());
+  if (bounds.width() <= 0 || bounds.height() <= 0) {
+    return false;
+  }
+
+  return true;
+}
+
+void RenderWidgetHostView::SendSwapCompositorFrameAck(uint32 surface_id) {
+  cc::CompositorFrameAck ack;
+  if (IsUsingSoftwareCompositing()) {
+    if (previous_software_frame_) {
+      ack.last_software_frame_id = previous_software_frame_->frame_id();
+
+      previous_software_frame_->WasFreed();
+      previous_software_frame_.reset();
+    }
+
   } else {
-    std::swap(backbuffer_texture_handle_, frontbuffer_texture_handle_);
+    ack.gl_frame_data.reset(new cc::GLFrameData());
+    if (previous_accelerated_frame_) {
+      ack.gl_frame_data->mailbox = previous_accelerated_frame_->mailbox();
+      ack.gl_frame_data->sync_point = 0;
+      ack.gl_frame_data->size = previous_accelerated_frame_->size_in_pixels();
+
+      previous_accelerated_frame_->WasFreed();
+      previous_accelerated_frame_ = NULL;
+    }
   }
 
-  content::RenderWidgetHostImpl::AcknowledgeBufferPresent(
-      route_id,
-      gpu_host_id,
+  content::RenderWidgetHostImpl::SendSwapCompositorFrameAck(
+      host_->GetRoutingID(),
+      surface_id,
+      host_->GetProcess()->GetID(),
       ack);
 }
 
 // static
-void RenderWidgetHostView::SendAcknowledgeBufferPresentOnMainThread(
-    AcknowledgeBufferPresentCallback ack,
-    bool skipped) {
-  ack.Run(skipped);
-}
-
-bool RenderWidgetHostView::IsInBufferSwap() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-  return !acknowledge_buffer_present_callback_.is_null();
+void RenderWidgetHostView::SendSwapCompositorFrameAckOnMainThread(
+    SendSwapCompositorFrameAckCallback ack) {
+  ack.Run();
 }
 
 void RenderWidgetHostView::ProcessGestures(
@@ -403,23 +507,27 @@ void RenderWidgetHostView::ForwardGestureEventToRenderer(
   host_->ForwardGestureEventWithLatencyInfo(gesture, *event->latency());
 }
 
+void RenderWidgetHostView::SwapSoftwareFrame() {
+  NOTIMPLEMENTED();
+  DidCommitCompositorFrame();
+}
+
+void RenderWidgetHostView::SwapAcceleratedFrame() {
+  NOTIMPLEMENTED();
+  DidCommitCompositorFrame();
+}
+
+void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {}
+
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     content::RenderWidgetHostViewBase(),
     is_hidden_(false),
     host_(content::RenderWidgetHostImpl::From(host)),
-    frontbuffer_texture_handle_(NULL),
-    backbuffer_texture_handle_(NULL),
     selection_cursor_position_(0),
     selection_anchor_position_(0),
+    is_loading_(false),
     gesture_recognizer_(ui::GestureRecognizer::Create()) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
-
-  textures_[0] = GpuUtils::instance()->CreateTextureHandle();
-  textures_[1] = GpuUtils::instance()->CreateTextureHandle();
-  if (textures_[0]) {
-    frontbuffer_texture_handle_ = textures_[0];
-    backbuffer_texture_handle_ = textures_[1];
-  }
 
   gesture_recognizer_->AddGestureEventHelper(this);
 
@@ -466,30 +574,6 @@ void RenderWidgetHostView::OnResize() {
   GetRenderWidgetHost()->WasResized();
 }
 
-void RenderWidgetHostView::AcknowledgeBuffersSwapped(bool skipped) {
-  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    // Don't need lock on UI thread, as this is in the only thread that
-    // modifies it
-    if (!acknowledge_buffer_present_callback_.is_null()) {
-      SendAcknowledgeBufferPresentOnMainThread(
-          acknowledge_buffer_present_callback_, skipped);
-    }
-    return;
-  }
-
-  base::AutoLock lock(acknowledge_buffer_present_callback_lock_);
-
-  if (acknowledge_buffer_present_callback_.is_null()) {
-    return;
-  }
-
-  content::BrowserThread::PostTask(
-      content::BrowserThread::UI,
-      FROM_HERE,
-      base::Bind(&RenderWidgetHostView::SendAcknowledgeBufferPresentOnMainThread,
-                 acknowledge_buffer_present_callback_, skipped));  
-}
-
 void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {
   if (host_->ShouldForwardTouchEvent()) {
     blink::WebTouchPoint* point =
@@ -507,22 +591,40 @@ void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {
 
 RenderWidgetHostView::~RenderWidgetHostView() {}
 
+SoftwareFrameHandle* RenderWidgetHostView::GetCurrentSoftwareFrameHandle() {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  return current_software_frame_.get();
+}
+
+AcceleratedFrameHandle* RenderWidgetHostView::GetCurrentAcceleratedFrameHandle() {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  return current_accelerated_frame_.get();
+}
+
+void RenderWidgetHostView::DidCommitCompositorFrame() {
+  base::AutoLock lock(compositor_frame_ack_callback_lock_);
+
+  DCHECK(!compositor_frame_ack_callback_.is_null());
+
+  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    SendSwapCompositorFrameAckOnMainThread(compositor_frame_ack_callback_);
+  } else {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&RenderWidgetHostView::SendSwapCompositorFrameAckOnMainThread,
+                   compositor_frame_ack_callback_));
+  }
+
+  compositor_frame_ack_callback_.Reset();
+}
+
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
   return host_;
 }
 
 void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
   SetSize(rect.size());
-}
-
-TextureHandle* RenderWidgetHostView::GetCurrentTextureHandle() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-
-  if (IsInBufferSwap()) {
-    return backbuffer_texture_handle_;
-  }
-
-  return frontbuffer_texture_handle_;
 }
 
 } // namespace oxide

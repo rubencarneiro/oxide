@@ -30,9 +30,11 @@
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
+class QKeyEvent;
 class QSize;
 QT_END_NAMESPACE
 
+class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
@@ -67,6 +69,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   bool loading() const;
 
+  bool fullscreen() const;
+  void setFullscreen(bool fullscreen);
+
   WebFrameAdapter* rootFrame() const;
 
   WebContextAdapter* context() const;
@@ -79,6 +84,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void goForward();
   void stop();
   void reload();
+  void loadHtml(const QString& html, const QUrl& baseUrl);
 
   QList<ScriptMessageHandlerAdapter *>& message_handlers() {
     return message_handlers_;
@@ -110,7 +116,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
         incognito(false),
         context(NULL) {}
 
-    QUrl url;
     bool incognito;
     WebContextAdapter* context;
   };
@@ -151,6 +156,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
                                    int line_no,
                                    const QString& source_id) = 0;
 
+  virtual void ToggleFullscreenMode(bool enter) = 0;
+
   virtual void OnWebPreferencesChanged() = 0;
 
   virtual void FrameAdded(WebFrameAdapter* frame) = 0;
@@ -160,6 +167,11 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
   virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
+
+  virtual void RequestGeolocationPermission(
+      OxideQGeolocationPermissionRequest* request) = 0;
+
+  virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

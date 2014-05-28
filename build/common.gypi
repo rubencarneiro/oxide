@@ -20,7 +20,7 @@
     'disable_nacl': 1,
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
-    'linux_use_tcmalloc': 0,
+    'use_allocator': 'none',
     'sysroot': '',
     'use_aura': 1,
     'use_gconf': 0,
@@ -28,7 +28,7 @@
     'use_mojo': 0,
     'use_ozone': 1,
     'toolkit_views': 0,
-    'enable_plugins': 0,
+    'toolkit_uses_gtk': 0,
     'ozone_platform': 'oxide',
     'external_ozone_platforms': [
       'oxide',
@@ -36,7 +36,6 @@
     'ozone_platform_dri': 0,
     'ozone_platform_test': 0,
     'enable_printing': 0,
-    'proprietary_codecs': 1,
     'variables': {
       'conditions': [
         ['target_arch=="arm"', {
@@ -64,8 +63,6 @@
     'cflags!': [
       # Should remove this
       '-Werror',
-      # Causes a build error (the '#' should probably be escaped in the makefile)
-      '-Wno-#pragma-messages',
     ],
     'ldflags': [
       '-B<(PRODUCT_DIR)/../../../gold',
@@ -73,6 +70,8 @@
     'ldflags!': [
       # Currently get a bunch of "warning: hidden symbol" warnings from harfbuzz with gold
       '-Wl,--fatal-warnings',
+      # Applicable only for BFD linker
+      '-Wl,--reduce-memory-overheads',
     ],
     'conditions': [
       ['print_ld_stats==1', {

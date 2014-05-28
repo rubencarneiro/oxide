@@ -64,15 +64,15 @@ set(PLUGIN_SRCS
     oxide_qquick_confirm_dialog_delegate.cc
     oxide_qquick_file_picker_delegate.cc
     oxide_qquick_javascript_dialog_delegate.cc
-    oxide_qquick_painted_render_view_node.cc
     oxide_qquick_prompt_dialog_delegate.cc
     oxide_qquick_render_view_item.cc
     oxide_qquick_render_view_item_factory.cc
+    oxide_qquick_software_frame_node.cc
     oxide_qquick_web_popup_menu_delegate.cc
     ${MOC_EXTRA})
 
 if(OXIDE_ENABLE_COMPOSITING)
-  list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_render_view_node.cc)
+  list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_frame_node.cc)
 endif()
 
 add_library(${PLUGIN} MODULE ${PLUGIN_SRCS})

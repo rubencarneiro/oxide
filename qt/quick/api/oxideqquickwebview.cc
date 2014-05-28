@@ -18,6 +18,7 @@
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
+#include <QKeyEvent>
 #include <QMetaMethod>
 #include <QPointF>
 #include <QQmlEngine>
@@ -28,6 +29,7 @@
 #include <QSize>
 #include <QtQml>
 
+#include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
@@ -174,25 +176,6 @@ void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   emit q->loadingChanged(event);
 }
 
-void OxideQQuickWebViewPrivate::AddMessageToConsole(
-    int level,
-    const QString& message,
-    int line_no,
-    const QString& source_id) {
-  Q_Q(OxideQQuickWebView);
-
-  OxideQQuickWebView::LogMessageSeverityLevel oxideLevel =
-    OxideQQuickWebView::LogSeverityInfo;
-  if (level >= 0 && level <= OxideQQuickWebView::LogSeverityFatal) {
-    oxideLevel = static_cast<OxideQQuickWebView::LogMessageSeverityLevel>(level);
-  }
-  emit q->javaScriptConsoleMessage(
-      oxideLevel,
-      message,
-      line_no,
-      source_id);
-}
-
 void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
   navigation_history_.onNavigationEntryCommitted();
 }
@@ -228,6 +211,31 @@ bool OxideQQuickWebViewPrivate::IsVisible() const {
   Q_Q(const OxideQQuickWebView);
 
   return q->isVisible();
+}
+
+void OxideQQuickWebViewPrivate::AddMessageToConsole(
+    int level,
+    const QString& message,
+    int line_no,
+    const QString& source_id) {
+  Q_Q(OxideQQuickWebView);
+
+  OxideQQuickWebView::LogMessageSeverityLevel oxideLevel =
+    OxideQQuickWebView::LogSeverityInfo;
+  if (level >= 0 && level <= OxideQQuickWebView::LogSeverityFatal) {
+    oxideLevel = static_cast<OxideQQuickWebView::LogMessageSeverityLevel>(level);
+  }
+  emit q->javaScriptConsoleMessage(
+      oxideLevel,
+      message,
+      line_no,
+      source_id);
+}
+
+void OxideQQuickWebViewPrivate::ToggleFullscreenMode(bool enter) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->fullscreenRequested(enter);
 }
 
 void OxideQQuickWebViewPrivate::OnWebPreferencesChanged() {
@@ -270,6 +278,25 @@ void OxideQQuickWebViewPrivate::NewViewRequested(
   Q_Q(OxideQQuickWebView);
 
   emit q->newViewRequested(request);
+}
+
+void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
+    OxideQGeolocationPermissionRequest* request) {
+  Q_Q(OxideQQuickWebView);
+
+  QQmlEngine::setObjectOwnership(request, QQmlEngine::JavaScriptOwnership);
+  emit q->geolocationPermissionRequested(request);
+}
+
+void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
+  Q_Q(OxideQQuickWebView);
+
+  QQuickWindow* w = q->window();
+  if (!w) {
+    return;
+  }
+
+  w->sendEvent(q, event);
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -428,6 +455,8 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   // else we'll crash
   OxideQQuickWebContextPrivate::ensureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
+
+  setFlags(QQuickItem::ItemIsFocusScope);
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {
@@ -515,6 +544,23 @@ bool OxideQQuickWebView::loading() const {
   Q_D(const OxideQQuickWebView);
 
   return d->loading();
+}
+
+bool OxideQQuickWebView::fullscreen() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->fullscreen();
+}
+
+void OxideQQuickWebView::setFullscreen(bool fullscreen) {
+  Q_D(OxideQQuickWebView);
+
+  if (fullscreen == d->fullscreen()) {
+    return;
+  }
+
+  d->setFullscreen(fullscreen);
+  emit fullscreenChanged();
 }
 
 int OxideQQuickWebView::loadProgress() const {
@@ -800,6 +846,12 @@ void OxideQQuickWebView::reload() {
   Q_D(OxideQQuickWebView);
 
   d->reload();
+}
+
+void OxideQQuickWebView::loadHtml(const QString& html, const QUrl& baseUrl) {
+  Q_D(OxideQQuickWebView);
+
+  d->loadHtml(html, baseUrl);
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

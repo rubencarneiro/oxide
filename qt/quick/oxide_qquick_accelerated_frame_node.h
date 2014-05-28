@@ -1,6 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
 // Copyright (C) 2013 Canonical Ltd.
-// Copyright (C) 2013 The Chromium Authors
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -16,41 +15,38 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_RENDERER_V8_UNSAFE_PERSISTENT_H_
-#define _OXIDE_SHARED_RENDERER_V8_UNSAFE_PERSISTENT_H_
+#ifndef _OXIDE_QQUICK_ACCELERATED_FRAME_NODE_H_
+#define _OXIDE_QQUICK_ACCELERATED_FRAME_NODE_H_
 
-#include "v8/include/v8.h"
+#include <QScopedPointer>
+#include <QSGSimpleTextureNode>
+#include <QtGlobal>
+
+QT_BEGIN_NAMESPACE
+class QSGTexture;
+class QSize;
+QT_END_NAMESPACE
 
 namespace oxide {
+namespace qquick {
 
-template <typename T>
-class UnsafePersistent {
+class RenderViewItem;
+
+class AcceleratedFrameNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  public:
-  UnsafePersistent() : value_(0) {}
+  AcceleratedFrameNode(RenderViewItem* item);
+  ~AcceleratedFrameNode();
 
-  explicit UnsafePersistent(v8::Persistent<T>* handle) {
-    value_ = handle->ClearAndLeak();
-  }
-
-  UnsafePersistent(v8::Isolate* isolate, const v8::Handle<T>& handle) {
-    v8::Persistent<T> persistent(isolate, handle);
-    value_ = persistent.ClearAndLeak();
-  }
-
-  void dispose() {
-    v8::Persistent<T> handle(value_);
-    handle.Reset();
-    value_ = 0;
-  }
-
-  v8::Local<T> newLocal(v8::Isolate* isolate) {
-    return v8::Local<T>::New(isolate, v8::Local<T>(value_));
-  }
+  void updateTexture(unsigned int texture_id,
+                     const QSize& size);
 
  private:
-  T* value_;
+  RenderViewItem* item_;
+
+  QScopedPointer<QSGTexture> texture_;
 };
- 
+
+} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_RENDERER_V8_UNSAFE_PERSISTENT_H_
+#endif // _OXIDE_QQUICK_ACCELERATED_FRAME_NODE_H_

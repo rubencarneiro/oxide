@@ -18,10 +18,16 @@
 #include <QGuiApplication>
 #include <QLatin1String>
 #include <QString>
+#include <QtGlobal>
 #include <QtQuickTest/quicktest.h>
 #include <QtQuickVersion>
 #if defined(ENABLE_COMPOSITING)
+#include <QOpenGLContext>
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 #include <QtQuick/private/qsgcontext_p.h>
+#else
+#include <QtGui/private/qopenglcontext_p.h>
+#endif
 #endif
 
 static QString stripQuotes(const QString& in) {
@@ -59,7 +65,11 @@ int main(int argc, char** argv) {
 #if defined(ENABLE_COMPOSITING)
   QOpenGLContext context;
   context.create();
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
   QSGContext::setSharedOpenGLContext(&context);
+#else
+  QOpenGLContextPrivate::setGlobalShareContext(&context);
+#endif
 #endif
 
   return quick_test_main(filtered_argc, filtered_argv,

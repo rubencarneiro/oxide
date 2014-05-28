@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,44 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_PAINTED_RENDER_VIEW_NODE_H_
-#define _OXIDE_QT_QUICK_PAINTED_RENDER_VIEW_NODE_H_
+#ifndef _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
+#define _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
 
-#include <QImage>
-#include <QRect>
-#include <QScopedPointer>
-#include <QSGSimpleTextureNode>
-#include <QtGlobal>
-#include <QtQuick/private/qsgtexture_p.h>
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "ppapi/host/host_factory.h"
 
-QT_BEGIN_NAMESPACE
-class QPixmap;
-class QSize;
-QT_END_NAMESPACE
+namespace content {
+class BrowserPpapiHost;
+}
 
 namespace oxide {
-namespace qquick {
 
-class PaintedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
+class PepperHostFactoryBrowser FINAL : public ppapi::host::HostFactory {
  public:
-  PaintedRenderViewNode();
+  PepperHostFactoryBrowser(content::BrowserPpapiHost* host);
+  ~PepperHostFactoryBrowser();
 
-  void markDirtyRect(const QRect& rect);
-  void setBackingStore(const QPixmap* pixmap);
-  void setSize(const QSize& size);
-
-  void update();
+  scoped_ptr<ppapi::host::ResourceHost> CreateResourceHost(
+      ppapi::host::PpapiHost* host,
+      const ppapi::proxy::ResourceMessageCallParams& params,
+      PP_Instance instance,
+      const IPC::Message& message) FINAL;
 
  private:
-  QRect dirty_rect_;
+  content::BrowserPpapiHost* host_;
 
-  const QPixmap* backing_store_;
-  QImage image_;
-
-  QSGPlainTexture texture_;
+  DISALLOW_IMPLICIT_CONSTRUCTORS(PepperHostFactoryBrowser);
 };
 
-} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_PAINTED_RENDER_VIEW_NODE_H_
+#endif // _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_

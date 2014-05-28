@@ -27,7 +27,7 @@ diff --git a/base/threading/thread.cc b/base/threading/thread.cc
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -27,21 +27,23 @@ GpuChannelManager::ImageOperation::Image
+@@ -28,21 +28,23 @@ GpuChannelManager::ImageOperation::Image
  }
  
  GpuChannelManager::ImageOperation::~ImageOperation() {
@@ -52,7 +52,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
    DCHECK(router_);
    DCHECK(io_message_loop);
    DCHECK(shutdown_event);
-@@ -115,16 +117,18 @@ void GpuChannelManager::OnEstablishChann
+@@ -123,16 +125,18 @@ void GpuChannelManager::OnEstablishChann
    IPC::ChannelHandle channel_handle;
  
    gfx::GLShareGroup* share_group = NULL;
@@ -74,7 +74,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
-@@ -53,17 +53,18 @@ class SyncPointManager;
+@@ -54,17 +54,18 @@ class SyncPointManager;
  // managing the lifetimes of GPU channels and forwarding IPC requests from the
  // browser process to them based on the corresponding renderer ID.
  class GpuChannelManager : public IPC::Listener,
@@ -94,7 +94,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    // Listener overrides.
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
-@@ -88,16 +89,18 @@ class GpuChannelManager : public IPC::Li
+@@ -90,16 +91,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
      return &gpu_devtools_events_dispatcher_;
    }
@@ -116,17 +116,22 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
-@@ -20,16 +20,18 @@
+@@ -17,18 +17,22 @@
+ #include "gpu/config/gpu_info_collector.h"
+ #include "ipc/ipc_channel_handle.h"
+ #include "ipc/ipc_sync_message_filter.h"
  #include "ui/gl/gl_implementation.h"
  
  namespace content {
  namespace {
  
++static base::LazyInstance<base::ThreadLocalPointer<GpuChildThread> > g_lazy_tls =
++    LAZY_INSTANCE_INITIALIZER;
  static base::LazyInstance<scoped_refptr<ThreadSafeSender> >
      g_thread_safe_sender = LAZY_INSTANCE_INITIALIZER;
++static base::LazyInstance<scoped_refptr<base::MessageLoopProxy> >
++    g_thread_safe_message_loop = LAZY_INSTANCE_INITIALIZER;
  
-+static GpuChildThread* g_instance;
-+
  bool GpuProcessLogMessageHandler(int severity,
                                   const char* file, int line,
                                   size_t message_start,
@@ -134,18 +139,12 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string header = str.substr(0, message_start);
    std::string message = str.substr(message_start);
  
-   g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -47,41 +49,54 @@ GpuChildThread::GpuChildThread(GpuWatchd
-     : dead_on_arrival_(dead_on_arrival),
-       gpu_info_(gpu_info),
-       deferred_messages_(deferred_messages),
+@@ -50,38 +54,53 @@ GpuChildThread::GpuChildThread(GpuWatchd
        in_browser_process_(false) {
    watchdog_thread_ = watchdog_thread;
  #if defined(OS_WIN)
    target_services_ = NULL;
  #endif
-+  DCHECK(!g_instance);
-+  g_instance = this;
    g_thread_safe_sender.Get() = thread_safe_sender();
  }
  
@@ -171,19 +170,23 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    if (!gfx::GLSurface::InitializeOneOff())
      VLOG(1) << "gfx::GLSurface::InitializeOneOff failed";
  #endif
-+  DCHECK(!g_instance);
-+  g_instance = this;
++  g_lazy_tls.Pointer()->Set(this);
    g_thread_safe_sender.Get() = thread_safe_sender();
++  g_thread_safe_message_loop.Get() = message_loop()->message_loop_proxy();
  }
  
  GpuChildThread::~GpuChildThread() {
-+  DCHECK_EQ(g_instance, this);
-+  g_instance = NULL;
++  g_lazy_tls.Pointer()->Set(NULL);
 +}
 +
 +// static
 +GpuChildThread* GpuChildThread::instance() {
-+  return g_instance;
++  return g_lazy_tls.Pointer()->Get();
++}
++
++// static
++scoped_refptr<base::MessageLoopProxy> GpuChildThread::message_loop_proxy() {
++  return g_thread_safe_message_loop.Get();
  }
  
  void GpuChildThread::Shutdown() {
@@ -192,7 +195,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -147,17 +162,18 @@ void GpuChildThread::OnInitialize() {
+@@ -147,17 +166,18 @@ void GpuChildThread::OnInitialize() {
  
    // Defer creation of the render thread. This is to prevent it from handling
    // IPC messages before the sandbox has been enabled and all other necessary
@@ -215,7 +218,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 --- a/content/gpu/gpu_child_thread.h
 +++ b/content/gpu/gpu_child_thread.h
-@@ -17,16 +17,20 @@
+@@ -17,16 +17,24 @@
  #include "content/child/child_thread.h"
  #include "content/common/gpu/gpu_channel.h"
  #include "content/common/gpu/gpu_channel_manager.h"
@@ -224,6 +227,10 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
  #include "gpu/config/gpu_info.h"
  #include "ui/gfx/native_widget_types.h"
  
++namespace base {
++class MessageLoopProxy;
++}
++
 +namespace gfx {
 +class GLShareGroup;
 +}
@@ -236,7 +243,7 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
  class GpuWatchdogThread;
  
  // The main thread of the GPU child process. There will only ever be one of
-@@ -38,25 +42,30 @@ class GpuChildThread : public ChildThrea
+@@ -38,25 +46,31 @@ class GpuChildThread : public ChildThrea
    typedef std::queue<IPC::Message*> DeferredMessages;
  
    explicit GpuChildThread(GpuWatchdogThread* gpu_watchdog_thread,
@@ -252,6 +259,7 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
    virtual ~GpuChildThread();
  
 +  static GpuChildThread* instance();
++  static scoped_refptr<base::MessageLoopProxy> message_loop_proxy();
 +
    virtual void Shutdown() OVERRIDE;
  
@@ -268,7 +276,7 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
    // Message handlers.
    void OnInitialize();
    void OnCollectGraphicsInfo();
-@@ -89,14 +98,16 @@ class GpuChildThread : public ChildThrea
+@@ -89,14 +103,16 @@ class GpuChildThread : public ChildThrea
    gpu::GPUInfo gpu_info_;
  
    // Error messages collected in gpu_main() before the thread is created.
@@ -376,14 +384,14 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -310,9 +310,13 @@ bool ContentBrowserClient::IsPluginAllow
-   return false;
- }
- 
- net::CookieStore* ContentBrowserClient::OverrideCookieStoreForRenderProcess(
-     int render_process_id) {
+@@ -313,9 +313,13 @@ net::CookieStore* ContentBrowserClient::
+ #if defined(VIDEO_HOLE)
+ ExternalVideoSurfaceContainer*
+ ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
+     WebContents* web_contents) {
    return NULL;
  }
+ #endif
  
 +gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
 +  return NULL;
@@ -411,15 +419,15 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -640,13 +641,15 @@ class CONTENT_EXPORT ContentBrowserClien
-   // Returns true if dev channel APIs are available for plugins.
-   virtual bool IsPluginAllowedToUseDevChannelAPIs();
- 
-   // Returns a special cookie store to use for a given render process, or NULL
-   // if the default cookie store should be used
-   // This is called on the IO thread.
-   virtual net::CookieStore* OverrideCookieStoreForRenderProcess(
+@@ -642,13 +643,15 @@ class CONTENT_EXPORT ContentBrowserClien
        int render_process_id_);
+ 
+ #if defined(VIDEO_HOLE)
+   // Allows an embedder to provide its own ExternalVideoSurfaceContainer
+   // implementation.  Return NULL to disable external surface video.
+   virtual ExternalVideoSurfaceContainer*
+   OverrideCreateExternalVideoSurfaceContainer(WebContents* web_contents);
+ #endif
 +
 +  virtual gfx::GLShareGroup* GetGLShareGroup();
  };

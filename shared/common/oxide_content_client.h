@@ -43,6 +43,8 @@ class ContentClient : public content::ContentClient {
   ContentClient();
 
  private:
+  void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) FINAL;
+
   std::string GetUserAgent() const FINAL;
 
   base::string16 GetLocalizedString(int message_id) const FINAL;

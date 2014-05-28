@@ -155,8 +155,14 @@ void ScriptMessageManager::OxideLazyGetterInner(
     return;
   }
 
-  info.This()->Delete(property);
-  info.This()->Set(property, exports);
+  v8::Handle<v8::Value> val = info.This();
+  if (val->IsObject()) {
+    v8::Handle<v8::Object> object = v8::Handle<v8::Object>::Cast(val);
+    object->Delete(property);
+    object->Set(property, exports);
+  } else {
+    NOTREACHED();
+  }
   info.GetReturnValue().Set(exports);
 }
 

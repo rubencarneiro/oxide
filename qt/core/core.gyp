@@ -19,7 +19,7 @@
     {
       'target_name': '<(oxide_core_name)',
       'type': 'shared_library',
-      'shared_library_version': '<(oxide_core_so_version)',
+      'product_extension': 'so.<(oxide_core_so_version)',
       'dependencies': [
         'OxideQtCore_private',
         'OxideQtCore_public',
@@ -32,6 +32,7 @@
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',
         'system.gyp:Qt5Gui-private',
+        'system.gyp:Qt5Positioning',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -54,19 +55,20 @@
         '<(DEPTH)'
       ],
       'sources': [
-        '<(INTERMEDIATE_DIR)/oxide_qt_web_popup_menu_qquick.moc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_location_provider.cc',
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_content_main_delegate.cc',
         'app/oxide_qt_content_main_delegate.h',
+        'browser/native_web_keyboard_event_oxide.cc',
         'browser/oxide_default_screen_info.cc',
-        'browser/oxide_qt_backing_store.cc',
-        'browser/oxide_qt_backing_store.h',
         'browser/oxide_qt_content_browser_client.cc',
         'browser/oxide_qt_content_browser_client.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
         'browser/oxide_qt_javascript_dialog.cc',
         'browser/oxide_qt_javascript_dialog.h',
+        'browser/oxide_qt_location_provider.cc',
+        'browser/oxide_qt_location_provider.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
         'browser/oxide_qt_render_widget_host_view.cc',
@@ -88,6 +90,13 @@
         'gl/oxide_qt_shared_gl_context.h',
         'glue/private/oxide_qt_web_context_adapter_p.cc',
       ],
+      'actions': [
+        {
+          'action_name': 'moc_oxide_qt_location_provider.cc',
+          'moc_input': 'browser/oxide_qt_location_provider_p.h',
+          'includes': [ 'moc.gypi' ]
+        },
+      ]
     },
     {
       'target_name': 'OxideQtCore_public',
@@ -116,6 +125,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         'api/oxideqloadevent.cc',
@@ -129,6 +139,9 @@
         'api/oxideqnewviewrequest.cc',
         'api/oxideqnewviewrequest.h',
         'api/oxideqnewviewrequest_p.h',
+        'api/oxideqpermissionrequest.cc',
+        'api/oxideqpermissionrequest.h',
+        'api/oxideqpermissionrequest_p.h',
         'api/oxideqstoragepermissionrequest.cc',
         'api/oxideqstoragepermissionrequest.h',
         'api/oxideqstoragepermissionrequest_p.h',
@@ -142,7 +155,6 @@
         'glue/oxide_qt_javascript_dialog_delegate.h',
         'glue/oxide_qt_render_widget_host_view_delegate.cc',
         'glue/oxide_qt_render_widget_host_view_delegate.h',
-        'glue/oxide_qt_render_widget_host_view_delegate_p.h',
         'glue/oxide_qt_render_widget_host_view_delegate_factory.h',
         'glue/oxide_qt_script_message_adapter.cc',
         'glue/oxide_qt_script_message_adapter.h',
@@ -185,6 +197,11 @@
         {
           'action_name': 'moc_oxideqnewviewrequest.cc',
           'moc_input': 'api/oxideqnewviewrequest.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
+          'action_name': 'moc_oxideqpermissionrequest.cc',
+          'moc_input': 'api/oxideqpermissionrequest.h',
           'includes': [ 'moc.gypi' ],
         },
         {

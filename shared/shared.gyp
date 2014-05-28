@@ -28,10 +28,10 @@
           'variables': {
             'grit_grd_file': 'oxide_resources.grd'
           },
-          'includes': [ '../chromium/src/build/grit_action.gypi' ]
+          'includes': [ '../third_party/chromium/src/build/grit_action.gypi' ]
         }
       ],
-      'includes': [ '../chromium/src/build/grit_target.gypi' ],
+      'includes': [ '../third_party/chromium/src/build/grit_target.gypi' ],
     },
     {
       'target_name': 'oxide_packed_resources',
@@ -231,6 +231,8 @@
         'browser/oxide_file_picker.h',
         'browser/oxide_form_factor.h',
         'browser/oxide_form_factor_linux.cc',
+        'browser/oxide_geolocation_permission_context.cc',
+        'browser/oxide_geolocation_permission_context.h',
         'browser/oxide_gpu_utils.cc',
         'browser/oxide_gpu_utils.h',
         'browser/oxide_http_user_agent_settings.cc',
@@ -247,6 +249,8 @@
         'browser/oxide_network_delegate.h',
         'browser/oxide_off_the_record_browser_context_impl.cc',
         'browser/oxide_off_the_record_browser_context_impl.h',
+        'browser/oxide_permission_request.cc',
+        'browser/oxide_permission_request.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
         'browser/oxide_render_widget_host_view_factory.cc',
@@ -293,6 +297,8 @@
         'common/oxide_messages.h',
         'common/oxide_net_resource_provider.cc',
         'common/oxide_net_resource_provider.h',
+        'common/oxide_paths.cc',
+        'common/oxide_paths.h',
         'common/oxide_script_message.cc',
         'common/oxide_script_message.h',
         'common/oxide_script_message_handler.cc',
@@ -340,7 +346,6 @@
         'renderer/oxide_user_script_slave.cc',
         'renderer/oxide_user_script_slave.h',
         'renderer/oxide_v8_scoped_persistent.h',
-        'renderer/oxide_v8_unsafe_persistent.h',
         'sandbox_ipc/oxide_sandbox_ipc_process.cc',
         'sandbox_ipc/oxide_sandbox_ipc_process.h',
         '<(DEPTH)/extensions/common/constants.cc',
@@ -351,6 +356,21 @@
         '<(DEPTH)/extensions/common/url_pattern.h',
         '<(DEPTH)/extensions/common/url_pattern_set.cc',
         '<(DEPTH)/extensions/common/url_pattern_set.h'
+      ],
+      'conditions': [
+        ['enable_plugins==1', {
+          'sources': [
+            'browser/oxide_pepper_host_factory_browser.cc',
+            'browser/oxide_pepper_host_factory_browser.h',
+            'browser/oxide_pepper_talk_host.cc',
+            'browser/oxide_pepper_talk_host.h',
+          ],
+          'dependencies': [
+            '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_host',
+            '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_proxy',
+            '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_shared',
+          ],
+        }],
       ],
       'actions': [
         {

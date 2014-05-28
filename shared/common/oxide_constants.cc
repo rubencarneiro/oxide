@@ -17,17 +17,14 @@
 
 #include "oxide_constants.h"
 
-namespace oxide {
+namespace switches {
 
-const base::FilePath::CharType kCacheDirname[] = FILE_PATH_LITERAL("Cache");
-const base::FilePath::CharType kCookiesFilename[] =
-    FILE_PATH_LITERAL("cookies.sqlite");
-
-const char kDataScheme[] = "data";
-const char kFileScheme[] = "file";
-const char kFtpScheme[] = "ftp";
-
-const char kSandboxIPCProcess[] = "sandbox-ipc";
 const char kSandboxExe[] = "sandbox-exe";
+const char kEnableGoogleTalkPlugin[] = "enable-google-talk-plugin";
+const char kDisableForceCompositingMode[] = "disable-force-compositing-mode";
+const char kFormFactor[] = "form-factor";
+const char kFormFactorDesktop[] = "desktop";
+const char kFormFactorTablet[] = "tablet";
+const char kFormFactorPhone[] = "phone";
 
-} // namespace oxide
+} // namespace switches

@@ -31,7 +31,7 @@
 class GURL;
 
 namespace blink {
-class WebFrame;
+class WebLocalFrame;
 }
 
 namespace oxide {
@@ -49,12 +49,12 @@ class UserScriptSlave FINAL : public content::RenderProcessObserver {
 
   void OnRenderProcessShutdown() FINAL;
 
-  void InjectScripts(blink::WebFrame* frame,
+  void InjectScripts(blink::WebLocalFrame* frame,
                      UserScript::RunLocation location);
 
  private:
   static int GetIsolatedWorldID(const GURL& url,
-                                blink::WebFrame* frame);
+                                blink::WebLocalFrame* frame);
   void OnUpdateUserScripts(base::SharedMemoryHandle handle);
 
   Vector user_scripts_;

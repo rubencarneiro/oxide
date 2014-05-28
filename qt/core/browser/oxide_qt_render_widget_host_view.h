@@ -45,7 +45,6 @@ QT_USE_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class BackingStore;
 class RenderWidgetHostViewDelegate;
 
 class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
@@ -58,11 +57,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   static void GetWebScreenInfoFromQScreen(QScreen* screen, blink::WebScreenInfo* result);
 
-  gfx::Rect GetViewBounds() const FINAL;
-  gfx::Size GetPhysicalBackingSize() const FINAL;
-
-  void SetSize(const gfx::Size& size) FINAL;
-
   float GetDeviceScaleFactor() const;
 
   void HandleFocusEvent(QFocusEvent* event);
@@ -73,16 +67,33 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void HandleTouchEvent(QTouchEvent* event);
   void HandleGeometryChanged();
 
-  void DidUpdate(bool skipped);
-
-  const QPixmap* GetBackingStore();
-
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
+
+  // content::RenderWidgetHostViewBase
+  gfx::Size GetPhysicalBackingSize() const FINAL;
+
+  // content::RenderWidgetHostView
+  void SetSize(const gfx::Size& size) FINAL;
+  gfx::Rect GetViewBounds() const FINAL;
 
  private:
   static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
 
+  // content::RenderWidgetHostViewBase
+  void FocusedNodeChanged(bool is_editable_node) FINAL;
+
   void Blur() FINAL;
+
+  void TextInputTypeChanged(ui::TextInputType type,
+                            ui::TextInputMode mode,
+                            bool can_compose_inline) FINAL;
+  void ImeCancelComposition() FINAL;
+
+  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
+
+  gfx::Rect GetBoundsInRootWindow() FINAL;
+
+  // content::RenderWidgetHostView
   void Focus() FINAL;
   bool HasFocus() const FINAL;
 
@@ -90,24 +101,12 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void Hide() FINAL;
   bool IsShowing() FINAL;
 
-  void UpdateCursor(const content::WebCursor& cursor) FINAL;
+  // RenderWidgetHostView
+  void SwapSoftwareFrame() FINAL;
+  void SwapAcceleratedFrame() FINAL;
 
-  content::BackingStore* AllocBackingStore(const gfx::Size& size) FINAL;
+  void OnUpdateCursor(const content::WebCursor& cursor) FINAL;
 
-  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
-
-  gfx::Rect GetBoundsInRootWindow() FINAL;
-
-  void TextInputTypeChanged(ui::TextInputType type,
-                            ui::TextInputMode mode,
-                            bool can_compose_inline) FINAL;
-  void ImeCancelComposition() FINAL;
-  void FocusedNodeChanged(bool is_editable_node) FINAL;
-
-  void Paint(const gfx::Rect& rect) FINAL;
-  void BuffersSwapped() FINAL;
-
-  BackingStore* backing_store_;
   scoped_ptr<RenderWidgetHostViewDelegate> delegate_;
 
   ui::TextInputType input_type_;

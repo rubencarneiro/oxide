@@ -20,15 +20,11 @@
 
 #include <QQuickItem>
 #include <QCursor>
+#include <QImage>
 #include <QRect>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
-
-QT_BEGIN_NAMESPACE
-class QPixmap;
-QT_END_NAMESPACE
-
 
 namespace oxide {
 
@@ -66,7 +62,6 @@ class RenderViewItem Q_DECL_FINAL :
 
   void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
 
-  void SchedulePaintForRectPix(const QRect& rect) Q_DECL_FINAL;
   void ScheduleUpdate() Q_DECL_FINAL;
 
   void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
@@ -95,19 +90,17 @@ class RenderViewItem Q_DECL_FINAL :
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
  private:
+  friend class UpdatePaintNodeContext;
+
   void geometryChanged(const QRectF& new_geometry,
                        const QRectF& old_geometry) Q_DECL_FINAL;
+  void DidUpdatePaintNode(oxide::qt::CompositorFrameType type);
 
-  const QPixmap* backing_store_;
-#if defined(ENABLE_COMPOSITING)
-  oxide::qt::TextureHandle* texture_handle_;
-#endif
-  QRect dirty_rect_;
+  bool received_new_compositor_frame_;
+  oxide::qt::CompositorFrameType last_composited_frame_type_;
 
-#if defined(ENABLE_COMPOSITING)
-  bool is_compositing_enabled_;
-  bool is_compositing_enabled_state_changed_;
-#endif
+  QImage software_frame_data_;
+  oxide::qt::AcceleratedFrameTextureHandle accelerated_frame_data_;
 
   Q_DISABLE_COPY(RenderViewItem);
 };

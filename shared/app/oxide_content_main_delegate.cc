@@ -39,8 +39,10 @@
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_form_factor.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_paths.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 #include "shared/sandbox_ipc/oxide_sandbox_ipc_process.h"
@@ -56,6 +58,27 @@ struct MainFunction {
   const char* name;
   int (*function)(const content::MainFunctionParams&);
 };
+
+bool IsEnvironmentOptionEnabled(const char* option) {
+  std::string name("OXIDE_");
+  name += option;
+
+  const char* val = getenv(name.c_str());
+  if (!val) {
+    return false;
+  }
+
+  std::string v(val);
+
+  return !v.empty() && v == "1";
+}
+
+const char* GetEnvironmentOption(const char* option) {
+  std::string name("OXIDE_");
+  name += option;
+
+  return getenv(name.c_str());
+}
 
 }
 
@@ -77,6 +100,8 @@ ContentMainDelegate::~ContentMainDelegate() {}
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(CreateContentClient());
 
+  RegisterPathProvider();
+
   CommandLine* command_line = CommandLine::ForCurrentProcess();
   std::string process_type =
       command_line->GetSwitchValueASCII(switches::kProcessType);
@@ -85,7 +110,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // We need to override FILE_EXE in the browser process to the path of the
     // renderer, as various bits of Chrome use this to find other resources
     base::FilePath subprocess_exe;
-    const char* subprocess_path = getenv("OXIDE_SUBPROCESS_PATH");
+    const char* subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
     if (subprocess_path) {
       // Make sure that we have a properly formed absolute path
       // there are some load issues if not.
@@ -119,10 +144,10 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
-
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
 
-    int flags = BrowserProcessMain::instance()->flags();
+    // Stop-gap measure until we support the delegated renderer
+    command_line->AppendSwitch(cc::switches::kCompositeToMailbox);
 
     // We need both of this here to test compositing support. It's also needed
     // to work around a mesa race - see https://launchpad.net/bugs/1267893
@@ -132,43 +157,40 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
         BrowserProcessMain::instance()->shared_gl_context();
     if (!shared_gl_context ||
         shared_gl_context->GetImplementation() != gfx::GetGLImplementation()) {
-      command_line->AppendSwitch(switches::kDisableAcceleratedCompositing);
-      command_line->AppendSwitch(switches::kDisableForceCompositingMode);
-      command_line->AppendSwitch(switches::kDisableThreadedCompositing);
-
-      if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
-        flags &= ~BrowserProcessMain::ENABLE_VIEWPORT;
-        LOG(WARNING) <<
-          "Disabling viewport mode and pinch gestures, which do not work "
-          "correctly without compositing";
-      }
+      command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
 
-    if (flags & BrowserProcessMain::ENABLE_VIEWPORT) {
+    FormFactor form_factor = GetFormFactorHint();
+    if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
       command_line->AppendSwitch(switches::kEnableViewport);
       command_line->AppendSwitch(switches::kEnableViewportMeta);
+      command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
       command_line->AppendSwitch(switches::kEnablePinch);
-      if (getenv("OXIDE_ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
+      if (IsEnvironmentOptionEnabled("ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
         command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
       }
-    }
-    if (flags & BrowserProcessMain::ENABLE_OVERLAY_SCROLLBARS) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     }
 
-    const char* renderer_cmd_prefix = getenv("OXIDE_RENDERER_CMD_PREFIX");
+    const char* renderer_cmd_prefix = GetEnvironmentOption("RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
                                       renderer_cmd_prefix);
     }
-    if (getenv("OXIDE_NO_SANDBOX")) {
+    if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
       command_line->AppendSwitch(switches::kNoSandbox);
     }
-    if (getenv("OXIDE_SINGLE_PROCESS")) {
+    if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
       LOG(WARNING) <<
           "User scripts currently don't work correctly in single process "
           "mode. See https://launchpad.net/bugs/1283291";
       command_line->AppendSwitch(switches::kSingleProcess);
+    }
+    if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
+      command_line->AppendSwitch(switches::kAllowSandboxDebugging);
+    }
+    if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
+      command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
     }
   }
 
@@ -208,7 +230,7 @@ int ContentMainDelegate::RunProcess(
   }
 
   static const MainFunction kMainFunctions[] = {
-    { kSandboxIPCProcess, SandboxIPCProcessMain }
+    { switches::kSandboxIPCProcess, SandboxIPCProcessMain }
   };
 
   for (size_t i = 0; i < arraysize(kMainFunctions); ++i) {

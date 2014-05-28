@@ -25,15 +25,19 @@
 #include "base/memory/weak_ptr.h"
 #include "content/public/renderer/render_view_observer.h"
 
+namespace blink {
+class WebFrame;
+}
+
 namespace oxide {
 
 class UserScriptScheduler FINAL : public content::RenderViewObserver {
  public:
   UserScriptScheduler(content::RenderView* render_view);
 
-  void DidFinishDocumentLoad(blink::WebFrame* frame) FINAL;
-  void DidFinishLoad(blink::WebFrame* frame) FINAL;
-  void DidCreateDocumentElement(blink::WebFrame* frame) FINAL;
+  void DidFinishDocumentLoad(blink::WebLocalFrame* frame) FINAL;
+  void DidFinishLoad(blink::WebLocalFrame* frame) FINAL;
+  void DidCreateDocumentElement(blink::WebLocalFrame* frame) FINAL;
 
   void FrameDetached(blink::WebFrame* frame) FINAL;
 
@@ -41,7 +45,7 @@ class UserScriptScheduler FINAL : public content::RenderViewObserver {
   void DoIdleInject();
 
   bool idle_posted_;
-  std::set<blink::WebFrame *> pending_idle_frames_;
+  std::set<blink::WebLocalFrame *> pending_idle_frames_;
   base::WeakPtrFactory<UserScriptScheduler> weak_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserScriptScheduler);

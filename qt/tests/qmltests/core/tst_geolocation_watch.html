@@ -1,0 +1,24 @@
+<html>
+<body>
+  <h1>geolocation</h1>
+  <div id="updates">0</div>
+  <div id="errors">0</div>
+  <script>
+    function success(position) {
+      var updates = parseInt(document.querySelector('#updates').innerHTML, 10);
+      document.querySelector('#updates').innerHTML = (updates + 1).toString();
+    }
+
+    function error(err) {
+      var errors = parseInt(document.querySelector('#errors').innerHTML, 10);
+      document.querySelector('#errors').innerHTML = (errors + 1).toString();
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(success, error);
+    } else {
+      error('NOT SUPPORTED');
+    }
+  </script>
+</body>
+</html>

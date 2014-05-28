@@ -19,32 +19,10 @@
 
 #include "base/memory/scoped_ptr.h"
 #include "content/public/app/content_main.h"
-#include "content/public/common/content_switches.h"
 
 #include "oxide_content_main_delegate.h"
 
 namespace oxide {
-
-namespace {
-
-void FilterArgs(content::ContentMainParams* params) {
-  int c = 0;
-  for (int i = 0; i < params->argc; ++i) {
-    if (params->argv[i] == switches::kEnableSoftwareCompositing) {
-      continue;
-    }
-
-    params->argv[c++] = params->argv[i];
-  }
-
-  for (int i = c; i < params->argc; ++i) {
-    params->argv[i] = NULL;
-  }
-
-  params->argc = c;
-}
-
-}
 
 int OxideMain(int argc, const char** argv) {
   scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
@@ -52,8 +30,6 @@ int OxideMain(int argc, const char** argv) {
   content::ContentMainParams params(delegate.get());
   params.argc = argc;
   params.argv = argv;
-
-  FilterArgs(&params);
 
   return content::ContentMain(params);
 }

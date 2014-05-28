@@ -21,11 +21,18 @@
       '../qt/core/core.gyp:<(oxide_core_name)',
       '../qt/renderer/renderer.gyp:<(oxide_renderer_name)',
       '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox'
-    ]
+    ],
   },
   'target_defaults': {
     'defines': [
       'OXIDE_BUILD=qt'
-    ]
-  }
+    ],
+    'target_conditions': [
+      ['_target_name=="content_browser"', {
+        'sources/': [
+          ['exclude', 'native_web_keyboard_event_aura\\.cc'],
+        ],
+      }],
+    ],
+  },
 }

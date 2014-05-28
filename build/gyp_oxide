@@ -22,7 +22,10 @@ import os
 import os.path
 import sys
 
-sys.path.insert(0, os.path.join("@CMAKE_SOURCE_DIR@", "build", "python"))
+sys.dont_write_bytecode = True
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "python"))
 from oxide_utils import CHROMIUMSRCDIR, TOPSRCDIR, CheckCall
 
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'gyp', 'pylib'))
@@ -32,11 +35,14 @@ except ImportError:
     print('Cannot find gyp module. Do you have a Chromium checkout?', file=sys.stderr)
     sys.exit(1)
 
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'build'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'generate_shim_headers'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
 
-sys.path.insert(0, os.path.join("@CMAKE_SOURCE_DIR@", "build", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 
 def additional_include_files(args=[]):
     specified_includes = set()
@@ -66,13 +72,6 @@ def additional_include_files(args=[]):
     return result
 
 def main(args):
-    output_dir = "@CHROMIUM_OUTPUT_DIR@"
-    pkg_config_path = "@CHROMIUM_PKG_CONFIG_PATH@"
-
-    assert output_dir != ""
-    if pkg_config_path != "":
-      os.environ["PKG_CONFIG_PATH"] = pkg_config_path
-
     args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
 
     args.extend(['-I' + i for i in additional_include_files(args)])
@@ -80,8 +79,7 @@ def main(args):
     args.append('--no-circular-check')
     args.extend(['--toplevel-dir', TOPSRCDIR])
     args.extend(['--depth', CHROMIUMSRCDIR])
-    args.extend(['--format', 'make'])
-    args.append('-Goutput_dir=%s' % output_dir)
+    args.extend(['--format', 'ninja'])
 
     os.chdir(TOPSRCDIR)
     sys.exit(gyp.main(args))

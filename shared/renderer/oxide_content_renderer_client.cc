@@ -17,9 +17,16 @@
 
 #include "oxide_content_renderer_client.h"
 
+#include <string>
+
+#include "base/command_line.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
+#include "content/public/renderer/render_view.h"
+#include "third_party/WebKit/public/web/WebSettings.h"
+#include "third_party/WebKit/public/web/WebView.h"
 
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_process_observer.h"
@@ -45,6 +52,17 @@ void ContentRendererClient::RenderViewCreated(
   //      notifications we're interested in to RenderView. Make this
   //      a RenderFrameObserver when it grows the features we need
   new UserScriptScheduler(render_view);
+
+  std::string form_factor =
+      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
+        switches::kFormFactor);
+  if (form_factor == switches::kFormFactorTablet ||
+      form_factor == switches::kFormFactorPhone) {
+    blink::WebSettings* settings = render_view->GetWebView()->settings();
+    settings->setUseWideViewport(true);
+    settings->setMainFrameClipsContent(false);
+    settings->setShrinksViewportContentToFit(true);
+  }
 }
 
 void ContentRendererClient::DidCreateScriptContext(
@@ -54,14 +72,6 @@ void ContentRendererClient::DidCreateScriptContext(
     int world_id) {
   ScriptMessageDispatcherRenderer::FromWebFrame(
       frame)->DidCreateScriptContext(context, world_id);
-}
-
-void ContentRendererClient::WillReleaseScriptContext(
-    blink::WebFrame* frame,
-    v8::Handle<v8::Context> context,
-    int world_id) {
-  ScriptMessageDispatcherRenderer::FromWebFrame(
-      frame)->WillReleaseScriptContext(context, world_id);
 }
 
 bool ContentRendererClient::GetUserAgentOverride(

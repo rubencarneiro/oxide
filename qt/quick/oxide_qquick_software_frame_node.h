@@ -15,41 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
-#define _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
+#ifndef _OXIDE_QT_QUICK_SOFTWARE_FRAME_NODE_H_
+#define _OXIDE_QT_QUICK_SOFTWARE_FRAME_NODE_H_
 
+#include <QScopedPointer>
 #include <QSGSimpleTextureNode>
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
+class QImage;
 class QSGTexture;
 QT_END_NAMESPACE
 
 namespace oxide {
-
-namespace qt {
-class TextureHandle;
-}
-
 namespace qquick {
 
 class RenderViewItem;
 
-class AcceleratedRenderViewNode Q_DECL_FINAL : public QSGSimpleTextureNode {
+class SoftwareFrameNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  public:
-  AcceleratedRenderViewNode(RenderViewItem* item);
-  ~AcceleratedRenderViewNode();
+  SoftwareFrameNode(RenderViewItem* item);
 
-  void updateFrontTexture(oxide::qt::TextureHandle* texture_handle);
+  void setImage(const QImage& image);
 
  private:
   RenderViewItem* item_;
 
-  QSGTexture* front_texture_;
-  QSGTexture* back_texture_;
+  QScopedPointer<QSGTexture> texture_;
 };
 
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QQUICK_ACCELERATED_RENDER_VIEW_NODE_H_
+#endif // _OXIDE_QT_QUICK_SOFTWARE_FRAME_NODE_H_
