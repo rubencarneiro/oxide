@@ -563,7 +563,7 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
 }
 
 void WebView::DidUpdateFaviconURL(
-    int32 page_id, const std::vector<content::FaviconURL>& candidates) {
+    const std::vector<content::FaviconURL>& candidates) {
   std::vector<content::FaviconURL>::const_iterator it;
   for (it = candidates.begin(); it != candidates.end(); ++it) {
     if (it->icon_type == content::FaviconURL::FAVICON) {

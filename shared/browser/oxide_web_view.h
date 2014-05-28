@@ -294,7 +294,7 @@ class WebView : public ScriptMessageTarget,
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
   void DidUpdateFaviconURL(
-      int32 page_id, const std::vector<content::FaviconURL>& candidates) FINAL;
+      const std::vector<content::FaviconURL>& candidates) FINAL;
 
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
