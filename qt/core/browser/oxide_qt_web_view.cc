@@ -333,10 +333,11 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
         "request object was not passed to the new webview. *THIS IS AN "
         "APPLICATION BUG*. Embedders must create a new webview in "
         "WebView.newViewRequested and must pass the request object to the new "
-        "WebView. If you want to block a new webview from opening, this must "
-        "be done in WebView.navigationRequested. Alternatively, if your "
-        "application doesn't support multiple webviews, just don't implement "
-        "WebView.newViewRequested.";
+        "WebView. Failure to do this may result in render process crashes or "
+        "undefined behaviour. If you want to block a new webview from opening, "
+        "this must be done in WebView.navigationRequested. Alternatively, if "
+        "your application doesn't support multiple webviews, just don't "
+        "implement WebView.newViewRequested.";
   }
   return view;
 }
