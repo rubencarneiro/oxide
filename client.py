@@ -64,7 +64,7 @@ CHROMIUM_GCLIENT_SPEC = (
           "\"src/third_party/hunspell_dictionaries\": None, "
           "\"src/third_party/WebKit/LayoutTests\": None, "
           "\"src/webkit/data/layout_tests/LayoutTests\": None, "
-          "\"src/win8\": None, "
+          "\"win8\": None, "
         "}, "
       "\"safesync_url\": \"\", "
     "} "

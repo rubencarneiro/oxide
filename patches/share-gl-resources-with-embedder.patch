@@ -52,7 +52,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
    DCHECK(router_);
    DCHECK(io_message_loop);
    DCHECK(shutdown_event);
-@@ -123,16 +125,18 @@ void GpuChannelManager::OnEstablishChann
+@@ -122,16 +124,18 @@ void GpuChannelManager::OnEstablishChann
    IPC::ChannelHandle channel_handle;
  
    gfx::GLShareGroup* share_group = NULL;
@@ -195,7 +195,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -147,17 +166,18 @@ void GpuChildThread::OnInitialize() {
+@@ -146,17 +165,18 @@ void GpuChildThread::OnInitialize() {
  
    // Defer creation of the render thread. This is to prevent it from handling
    // IPC messages before the sandbox has been enabled and all other necessary
@@ -384,7 +384,7 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -313,9 +313,13 @@ net::CookieStore* ContentBrowserClient::
+@@ -315,9 +315,13 @@ net::CookieStore* ContentBrowserClient::
  #if defined(VIDEO_HOLE)
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
@@ -419,8 +419,8 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -642,13 +643,15 @@ class CONTENT_EXPORT ContentBrowserClien
-       int render_process_id_);
+@@ -639,13 +640,15 @@ class CONTENT_EXPORT ContentBrowserClien
+       int render_process_id);
  
  #if defined(VIDEO_HOLE)
    // Allows an embedder to provide its own ExternalVideoSurfaceContainer

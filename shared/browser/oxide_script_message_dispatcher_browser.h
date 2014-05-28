@@ -34,8 +34,8 @@ class ScriptMessageDispatcherBrowser FINAL :
   ScriptMessageDispatcherBrowser(content::RenderProcessHost* render_process_host);
   ~ScriptMessageDispatcherBrowser();
 
-  bool OnMessageReceived(const IPC::Message& message,
-                         bool* message_was_ok) FINAL;
+  bool OnMessageReceived(const IPC::Message& message) FINAL;
+
  private:
   const int render_process_id_;
 

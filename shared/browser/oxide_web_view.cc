@@ -527,6 +527,8 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
 
 WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) {
+  NOTREACHED() <<
+      "Your CanCreateWindows() implementation should be returning false!";
   return NULL;
 }
 

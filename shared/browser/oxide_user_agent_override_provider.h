@@ -38,8 +38,7 @@ class UserAgentOverrideProvider FINAL : public content::BrowserMessageFilter {
   ~UserAgentOverrideProvider();
 
  private:
-  bool OnMessageReceived(const IPC::Message& message,
-                         bool* message_was_ok) FINAL;
+  bool OnMessageReceived(const IPC::Message& message) FINAL;
   void OnGetUserAgentOverride(const GURL& url,
                               std::string* user_agent,
                               bool* overridden);

@@ -19,6 +19,7 @@
 
 #include <QKeyEvent>
 #include <QString>
+#include <QtDebug>
 #include <QUrl>
 
 #include "base/strings/utf_string_conversions.h"
@@ -325,7 +326,20 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 
   adapter_->NewViewRequested(&request);
 
-  return OxideQNewViewRequestPrivate::get(&request)->view.get();
+  WebView* view = OxideQNewViewRequestPrivate::get(&request)->view.get();
+  if (!view) {
+    qCritical() <<
+        "Either a webview wasn't created in WebView.newViewRequested, or the "
+        "request object was not passed to the new webview. *THIS IS AN "
+        "APPLICATION BUG*. Embedders must create a new webview in "
+        "WebView.newViewRequested and must pass the request object to the new "
+        "WebView. Failure to do this may result in render process crashes or "
+        "undefined behaviour. If you want to block a new webview from opening, "
+        "this must be done in WebView.navigationRequested. Alternatively, if "
+        "your application doesn't support multiple webviews, just don't "
+        "implement WebView.newViewRequested.";
+  }
+  return view;
 }
 
 // static

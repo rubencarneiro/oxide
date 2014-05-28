@@ -30,16 +30,14 @@ class GeolocationPermissionContext FINAL :
   GeolocationPermissionContext();
 
   void RequestGeolocationPermission(
-      int render_process_id,
-      int render_view_id,
+      content::WebContents* contents,
       int bridge_id,
       const GURL& requesting_frame,
       bool user_gesture,
       base::Callback<void(bool)> callback) FINAL;
 
   void CancelGeolocationPermissionRequest(
-      int render_process_id,
-      int render_view_id,
+      content::WebContents* contents,
       int bridge_id,
       const GURL& requesting_frame) FINAL;
 };

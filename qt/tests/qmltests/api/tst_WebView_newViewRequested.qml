@@ -34,17 +34,6 @@ Column {
   }
 
   TestWebView {
-    id: webView2
-    width: 200
-    height: 200
-    context: context
-
-    onNewViewRequested: {
-      created = webViewFactory.createObject(column, { width: 200, height: 50 });
-    }
-  }
-
-  TestWebView {
     id: webView3
     width: 200
     height: 200
@@ -53,6 +42,7 @@ Column {
 
   SignalSpy {
     id: spy
+    target: webView1
     signalName: "newViewRequested"
   }
 
@@ -77,7 +67,6 @@ Column {
     }
 
     function test_WebView_newViewRequested1_correct() {
-      spy.target = webView1;
       webView1.url = "http://localhost:8080/tst_WebView_newViewRequested.html";
       verify(webView1.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -95,29 +84,6 @@ Column {
       compare(created.getTestApi().evaluateCode("return window.opener.document.domain;", true), "localhost");
     }
 
-    function test_WebView_newViewRequested2_incorrect() {
-      spy.target = webView2;
-      webView2.url = "http://localhost:8080/tst_WebView_newViewRequested.html";
-      verify(webView2.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-
-      var r = webView2.getTestApi().getBoundingClientRectForSelector("#button");
-      mouseClick(webView2, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
-
-      spy.wait();
-
-      compare(created.url, "about:blank", "Unexpected URL");
-      verify(created.context != webView2.context, "Unexpected context");
-      compare(created.incognito, true);
-      try {
-        verify(created.getTestApi().evaluateCode("return window.opener != null;", true));
-        fail("Should have thrown");
-      } catch(e) {
-        verify(e instanceof TestUtils.MessageError);
-        compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
-      }
-    }
-
     function test_WebView_newViewRequested3_no_handler() {
       webView3.url = "http://localhost:8080/tst_WebView_newViewRequested.html";
       verify(webView3.waitForLoadSucceeded(),
@@ -132,7 +98,6 @@ Column {
     }
 
     function test_WebView_newViewRequested4_from_navigation() {
-      spy.target = webView1;
       webView1.url = "http://localhost:8080/tst_WebView_newViewRequested2.html";
       verify(webView1.waitForLoadSucceeded(),
              "Timed out waiting for successful load");

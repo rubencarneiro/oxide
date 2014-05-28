@@ -27,13 +27,12 @@
 namespace oxide {
 
 bool UserAgentOverrideProvider::OnMessageReceived(
-    const IPC::Message& message,
-    bool* message_was_ok) {
+    const IPC::Message& message) {
   bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP_EX(UserAgentOverrideProvider, message, *message_was_ok)
+  IPC_BEGIN_MESSAGE_MAP(UserAgentOverrideProvider, message)
     IPC_MESSAGE_HANDLER(OxideHostMsg_GetUserAgentOverride, OnGetUserAgentOverride)
     IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP_EX()
+  IPC_END_MESSAGE_MAP()
 
   return handled;
 }

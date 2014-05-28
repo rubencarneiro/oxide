@@ -66,7 +66,14 @@ set(CMAKE_REQUIRED_FLAGS -fPIC)
 cmake_expand_imported_targets(
     CMAKE_REQUIRED_LIBRARIES
     LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Quick_LIBRARIES})
-check_cxx_symbol_exists(
-    QSGContext::setSharedOpenGLContext
-    QtQuick/private/qsgcontext_p.h
-    OXIDE_ENABLE_COMPOSITING)
+if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.3.0")
+  check_cxx_symbol_exists(
+      QSGContext::setSharedOpenGLContext
+      QtQuick/private/qsgcontext_p.h
+      OXIDE_ENABLE_COMPOSITING)
+else()
+  check_cxx_symbol_exists(
+      QOpenGLContextPrivate::setGlobalShareContext
+      QtGui/private/qopenglcontext_p.h
+      OXIDE_ENABLE_COMPOSITING)
+endif()

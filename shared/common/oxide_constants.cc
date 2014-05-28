@@ -19,7 +19,6 @@
 
 namespace switches {
 
-const char kSandboxExe[] = "sandbox-exe";
 const char kEnableGoogleTalkPlugin[] = "enable-google-talk-plugin";
 const char kDisableForceCompositingMode[] = "disable-force-compositing-mode";
 const char kFormFactor[] = "form-factor";
