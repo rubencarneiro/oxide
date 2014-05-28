@@ -95,21 +95,29 @@ class ScopedNewContentsHolder {
       contents_(contents), was_blocked_(NULL) {}
 
   ~ScopedNewContentsHolder() {
-    if (contents_ && was_blocked_) {
-      *was_blocked_ = true;
+    if (contents_) {
+      base::MessageLoop::current()->DeleteSoon(FROM_HERE, contents_);
+      contents_ = NULL;
+      if (was_blocked_) {
+        *was_blocked_ = true;
+      }
+    } else if (was_blocked_) {
+      *was_blocked_ = false;
     }
   }
 
   content::WebContents* Release() {
-    return contents_.release();
+    content::WebContents* c = NULL;
+    std::swap(c, contents_);
+    return c;
   }
 
   content::WebContents* contents() const {
-    return contents_.get();
+    return contents_;
   }
 
  private:
-  scoped_ptr<content::WebContents> contents_;
+  content::WebContents* contents_;
   bool* was_blocked_;
 };
 
@@ -605,6 +613,8 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
 
 WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) {
+  NOTREACHED() <<
+      "Your CanCreateWindows() implementation should be returning false!";
   return NULL;
 }
 
