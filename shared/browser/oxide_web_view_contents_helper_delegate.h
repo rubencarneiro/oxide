@@ -18,7 +18,9 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
 
+#include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/move.h"
 #include "base/strings/string16.h"
 #include "ui/base/window_open_disposition.h"
 
@@ -36,6 +38,36 @@ class Rect;
 
 namespace oxide {
 
+class ScopedNewContentsHolder {
+  MOVE_ONLY_TYPE_FOR_CPP_03(ScopedNewContentsHolder, RValue)
+
+ public:
+  ScopedNewContentsHolder()
+      : contents_(NULL) {}
+  ScopedNewContentsHolder(content::WebContents* contents)
+      : contents_(contents) {}
+  ScopedNewContentsHolder(RValue value)
+      : contents_(value.object->contents_) {
+    value.object->contents_ = NULL;
+  }
+
+  ScopedNewContentsHolder& operator=(ScopedNewContentsHolder rhs) {
+    std::swap(contents_, rhs.contents_);
+    return *this;
+  }
+
+  ~ScopedNewContentsHolder();
+
+  content::WebContents* release() {
+    content::WebContents* c = NULL;
+    std::swap(contents_, c);
+    return c;
+  }
+
+ private:
+  content::WebContents* contents_;
+};
+
 class WebViewContentsHelperDelegate {
  public:
   virtual ~WebViewContentsHelperDelegate() {}
@@ -49,7 +81,7 @@ class WebViewContentsHelperDelegate {
                                        bool user_gesture) = 0;
 
   virtual bool CreateNewViewAndAdoptWebContents(
-      scoped_ptr<content::WebContents> contents,
+      ScopedNewContentsHolder contents,
       WindowOpenDisposition disposition,
       const gfx::Rect& initial_pos) = 0;
 

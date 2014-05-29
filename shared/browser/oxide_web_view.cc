@@ -293,7 +293,7 @@ bool WebView::ShouldCreateWebContents(const GURL& target_url,
 }
 
 bool WebView::CreateNewViewAndAdoptWebContents(
-    scoped_ptr<content::WebContents> contents,
+    ScopedNewContentsHolder contents,
     WindowOpenDisposition disposition,
     const gfx::Rect& initial_pos) {
   WebView* new_view = CreateNewWebView(initial_pos, disposition);

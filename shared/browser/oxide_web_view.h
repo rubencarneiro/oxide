@@ -202,7 +202,7 @@ class WebView : public ScriptMessageTarget,
                                WindowOpenDisposition disposition,
                                bool user_gesture) FINAL;
   bool CreateNewViewAndAdoptWebContents(
-      scoped_ptr<content::WebContents> contents,
+      ScopedNewContentsHolder contents,
       WindowOpenDisposition disposition,
       const gfx::Rect& initial_pos) FINAL;
   void LoadProgressChanged(double progress) FINAL;
