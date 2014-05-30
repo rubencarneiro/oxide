@@ -54,6 +54,7 @@
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
+#include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
 
 namespace oxide {
@@ -836,6 +837,7 @@ WebPreferences* WebView::GetWebPreferences() {
 
 void WebView::SetWebPreferences(WebPreferences* prefs) {
   if (!web_contents_helper_) {
+    CHECK(!prefs || prefs->IsOwnedByEmbedder());
     initial_preferences_ = prefs;
     WebPreferencesObserver::Observe(prefs);
   } else {

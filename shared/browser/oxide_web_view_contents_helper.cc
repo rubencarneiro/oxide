@@ -327,11 +327,21 @@ WebPreferences* WebViewContentsHelper::GetWebPreferences() const {
 
 void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
   CHECK(!preferences || preferences->IsOwnedByEmbedder());
-  if (preferences == GetWebPreferences()) {
+  if (preferences == web_preferences()) {
     return;
   }
 
-  owns_web_preferences_ = false;
+  if (web_preferences() && owns_web_preferences_) {
+    WebPreferencesObserver::Observe(NULL);
+    delete web_preferences();
+  }
+
+  if (preferences) {
+    owns_web_preferences_ = false;
+  } else {
+    preferences = ContentClient::instance()->browser()->CreateWebPreferences();
+    owns_web_preferences_ = true;
+  }
 
   WebPreferencesObserver::Observe(preferences);
   WebPreferencesValueChanged();
