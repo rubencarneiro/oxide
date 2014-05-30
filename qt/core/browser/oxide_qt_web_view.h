@@ -69,6 +69,7 @@ class WebView FINAL : public oxide::WebView,
 
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
+  void OnIconChanged(const GURL& icon) FINAL;
   void OnCommandsUpdated() FINAL;
 
   void OnLoadProgressChanged(double progress) FINAL;

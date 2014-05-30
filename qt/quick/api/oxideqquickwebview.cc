@@ -148,6 +148,15 @@ void OxideQQuickWebViewPrivate::TitleChanged() {
   emit q->titleChanged();
 }
 
+void OxideQQuickWebViewPrivate::IconChanged(QUrl icon) {
+  Q_Q(OxideQQuickWebView);
+
+  if (icon != icon_) {
+    icon_ = icon;
+    emit q->iconChanged();
+  }
+}
+
 void OxideQQuickWebViewPrivate::CommandsUpdated() {
   Q_Q(OxideQQuickWebView);
 
@@ -516,6 +525,12 @@ QString OxideQQuickWebView::title() const {
   Q_D(const OxideQQuickWebView);
 
   return d->title();
+}
+
+QUrl OxideQQuickWebView::icon() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->icon_;
 }
 
 bool OxideQQuickWebView::canGoBack() const {
