@@ -57,8 +57,7 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
   void SetWebPreferences(WebPreferences* preferences);
 
  private:
-  WebViewContentsHelper(content::WebContents* contents,
-                        WebPreferences* preferences = NULL);
+  WebViewContentsHelper(content::WebContents* contents);
 
   ~WebViewContentsHelper();
 
@@ -116,8 +115,10 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
   ScopedBrowserContext context_;
   WebViewContentsHelperDelegate* delegate_;
 
-  // WebPreferences are normally owned by the embedder, but we create a
-  // WebPreferences instance that is initially owned by us
+  // WebPreferences are normally owned by the public object exposed to
+  // the embedder. However, we create an internal WebPreferences instance
+  // at construction time that is initially owned by us until it is
+  // "adopted" by the embedder
   bool owns_web_preferences_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebViewContentsHelper);

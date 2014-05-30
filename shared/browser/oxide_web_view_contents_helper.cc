@@ -46,16 +46,15 @@ const char kWebViewContentsHelperKey[] = "oxide_web_view_contents_helper_data";
 
 #define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
 
-WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
-                                             WebPreferences* preferences)
+WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
     : BrowserContextObserver(
           BrowserContext::FromContent(contents->GetBrowserContext())),
-      WebPreferencesObserver(preferences ? preferences :
+      WebPreferencesObserver(
           ContentClient::instance()->browser()->CreateWebPreferences()),
       content::WebContentsObserver(contents),
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       delegate_(NULL),
-      owns_web_preferences_(preferences ? false : true) {
+      owns_web_preferences_(true) {
   CHECK(!FromWebContents(web_contents()));
 
   web_contents()->SetDelegate(this);
@@ -104,10 +103,6 @@ void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
 void WebViewContentsHelper::WebPreferencesDestroyed() {
   CHECK(!owns_web_preferences_) <<
       "Somebody destroyed a WebPreferences owned by us!";
-  // Create a new WebPreferences immediately. We do this via
-  // ContentBrowserClient to handle the case where we don't yet have
-  // a WebView to allow us to create a full WebPreferences object with
-  // public API
   WebPreferencesObserver::Observe(
       ContentClient::instance()->browser()->CreateWebPreferences());
   owns_web_preferences_ = true;
@@ -286,15 +281,13 @@ bool WebViewContentsHelper::IsFullscreenForTabOrPending(
 // static
 void WebViewContentsHelper::Attach(content::WebContents* contents,
                                    content::WebContents* opener) {
-  WebPreferences* preferences = NULL;
+  WebViewContentsHelper* helper = new WebViewContentsHelper(contents);
   if (opener) {
     WebViewContentsHelper* opener_helper =
         WebViewContentsHelper::FromWebContents(opener);
     DCHECK(opener_helper);
-    preferences = opener_helper->GetWebPreferences();
+    helper->GetWebPreferences()->CopyFrom(opener_helper->GetWebPreferences());
   }
-
-  new WebViewContentsHelper(contents, preferences);
 }
 
 // static
