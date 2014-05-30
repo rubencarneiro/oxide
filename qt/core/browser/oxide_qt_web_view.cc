@@ -86,7 +86,7 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter) {}
 
-bool WebView::Init(const oxide::WebView::Params& params) {
+bool WebView::Init(oxide::WebView::Params* params) {
   if (!oxide::WebView::Init(params)) {
     return false;
   }

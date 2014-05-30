@@ -83,7 +83,7 @@ void WebViewAdapter::init() {
       WebContextAdapterPrivate::get(construct_props_->context)->GetContext();
   params.incognito = construct_props_->incognito;
 
-  priv->Init(params);
+  priv->Init(&params);
 }
 
 QUrl WebViewAdapter::url() const {

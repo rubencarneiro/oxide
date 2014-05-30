@@ -20,8 +20,10 @@
 
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/message_loop/message_loop.h"
 #include "base/move.h"
 #include "base/strings/string16.h"
+#include "content/public/browser/web_contents.h"
 #include "ui/base/window_open_disposition.h"
 
 class GURL;
@@ -38,35 +40,13 @@ class Rect;
 
 namespace oxide {
 
-class ScopedNewContentsHolder {
-  MOVE_ONLY_TYPE_FOR_CPP_03(ScopedNewContentsHolder, RValue)
-
- public:
-  ScopedNewContentsHolder()
-      : contents_(NULL) {}
-  ScopedNewContentsHolder(content::WebContents* contents)
-      : contents_(contents) {}
-  ScopedNewContentsHolder(RValue value)
-      : contents_(value.object->contents_) {
-    value.object->contents_ = NULL;
+struct NewContentsDeleter {
+  inline void operator()(content::WebContents* ptr) {
+    base::MessageLoop::current()->DeleteSoon(FROM_HERE, ptr);
   }
-
-  ScopedNewContentsHolder& operator=(ScopedNewContentsHolder rhs) {
-    std::swap(contents_, rhs.contents_);
-    return *this;
-  }
-
-  ~ScopedNewContentsHolder();
-
-  content::WebContents* release() {
-    content::WebContents* c = NULL;
-    std::swap(contents_, c);
-    return c;
-  }
-
- private:
-  content::WebContents* contents_;
 };
+
+typedef scoped_ptr<content::WebContents, NewContentsDeleter> ScopedNewContentsHolder;
 
 class WebViewContentsHelperDelegate {
  public:

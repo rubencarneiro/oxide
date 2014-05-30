@@ -97,6 +97,19 @@ void FillLoadURLParamsFromOpenURLParams(
   }
 }
 
+bool InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
+  RenderWidgetHostView* rwhv = static_cast<RenderWidgetHostView *>(
+      contents->GetRenderWidgetHostView());
+  if (rwhv) {
+    rwhv->Init(view);
+  }
+
+  WebView::Params params;
+  params.contents = contents.Pass();
+
+  return view->Init(&params);
+}
+
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -108,20 +121,6 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
     OnLoadFailed(validated_url, error_code,
                  base::UTF16ToUTF8(error_description));
   }
-}
-
-bool WebView::InitCreatedWebView(WebView* view,
-                                 content::WebContents* contents) {
-  RenderWidgetHostView* rwhv = static_cast<RenderWidgetHostView *>(
-      contents->GetRenderWidgetHostView());
-  if (rwhv) {
-    rwhv->Init(view);
-  }
-
-  Params params;
-  params.contents = contents;
-
-  return view->Init(params);
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -233,7 +232,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
   contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
 
-  scoped_ptr<content::WebContents> contents(
+  ScopedNewContentsHolder contents(
       content::WebContents::Create(contents_params));
   if (!contents) {
     LOG(ERROR) << "Failed to create new WebContents for navigation";
@@ -247,7 +246,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
     return NULL;
   }
 
-  if (!InitCreatedWebView(new_view, contents.release())) {
+  if (!InitCreatedWebView(new_view, contents.Pass())) {
     return NULL;
   }
 
@@ -301,7 +300,7 @@ bool WebView::CreateNewViewAndAdoptWebContents(
     return false;
   }
 
-  InitCreatedWebView(new_view, contents.release());
+  InitCreatedWebView(new_view, contents.Pass());
 
   return true;
 }
@@ -538,17 +537,29 @@ WebView::WebView()
       root_frame_(NULL),
       is_fullscreen_(false) {}
 
-bool WebView::Init(const Params& params) {
-  CHECK(!web_contents_);
+WebView::~WebView() {
+  if (root_frame_) {
+    root_frame_->Destroy();
+  }
+  initial_preferences_ = NULL;
+  web_contents_helper_ = NULL;
+}
 
-  if (params.contents) {
-    CHECK(!params.context);
-    CHECK(params.contents->GetBrowserContext());
-    CHECK(WebViewContentsHelper::FromWebContents(params.contents));
-    CHECK(!FromWebContents(params.contents));
+bool WebView::Init(Params* params) {
+  CHECK(!web_contents_) << "Cannot initialize webview more than once";
+
+  if (params->contents) {
+    CHECK(!params->context) <<
+        "Shouldn't specify a BrowserContext and WebContents at initialization";
+    CHECK(params->contents->GetBrowserContext()) <<
+        "Specified WebContents doesn't have a BrowserContext";
+    CHECK(WebViewContentsHelper::FromWebContents(params->contents.get())) <<
+        "Specified in WebContents should already have a WebViewContentsHelper";
+    CHECK(!FromWebContents(params->contents.get())) <<
+        "Specified WebContents already belongs to a WebView";
 
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
-        params.contents));
+        params->contents.release()));
 
     UpdateVisibility(IsVisible());
     UpdateSize(GetContainerSize());
@@ -557,17 +568,17 @@ bool WebView::Init(const Params& params) {
     // CanCreateWindows())
     UpdateWebPreferences();
   } else {
-    CHECK(params.context);
+    CHECK(params->context) << "Didn't specify a BrowserContext or WebContents";
 
-    BrowserContext* context = params.incognito ?
-        params.context->GetOffTheRecordContext() :
-        params.context->GetOriginalContext();
+    BrowserContext* context = params->incognito ?
+        params->context->GetOffTheRecordContext() :
+        params->context->GetOriginalContext();
 
-    content::WebContents::CreateParams params(context);
-    params.initial_size = GetContainerSize();
-    params.initially_hidden = !IsVisible();
+    content::WebContents::CreateParams content_params(context);
+    content_params.initial_size = GetContainerSize();
+    content_params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
-        content::WebContents::Create(params)));
+        content::WebContents::Create(content_params)));
     if (!web_contents_) {
       LOG(ERROR) << "Failed to create WebContents";
       return false;
@@ -596,21 +607,13 @@ bool WebView::Init(const Params& params) {
     WebPreferencesObserver::Observe(NULL);
     initial_preferences_ = NULL;
   }
-  if (!initial_url_.is_empty() && !params.contents) {
+  if (!initial_url_.is_empty() && params->context) {
     SetURL(initial_url_);
     initial_url_ = GURL();
   }
   SetIsFullscreen(is_fullscreen_);
 
   return true;
-}
-
-WebView::~WebView() {
-  if (root_frame_) {
-    root_frame_->Destroy();
-  }
-  initial_preferences_ = NULL;
-  web_contents_helper_ = NULL;
 }
 
 // static

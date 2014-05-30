@@ -21,7 +21,6 @@
 
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/message_loop/message_loop.h"
 #include "content/public/browser/page_navigator.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
@@ -46,12 +45,6 @@ const char kWebViewContentsHelperKey[] = "oxide_web_view_contents_helper_data";
 }
 
 #define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
-
-ScopedNewContentsHolder::~ScopedNewContentsHolder() {
-  if (contents_) {
-    base::MessageLoop::current()->DeleteSoon(FROM_HERE, contents_);
-  }
-}
 
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
                                              WebPreferences* preferences)

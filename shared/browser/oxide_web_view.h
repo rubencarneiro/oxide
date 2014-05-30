@@ -79,6 +79,18 @@ class WebView : public ScriptMessageTarget,
  public:
   virtual ~WebView();
 
+  struct Params {
+    Params() :
+        context(NULL),
+        incognito(false) {}
+
+    BrowserContext* context;
+    ScopedNewContentsHolder contents;
+    bool incognito;
+  };
+
+  virtual bool Init(Params* params);
+
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
 
@@ -159,28 +171,12 @@ class WebView : public ScriptMessageTarget,
   virtual bool CanCreateWindows() const;
 
  protected:
-
-  struct Params {
-    Params() :
-        context(NULL),
-        contents(NULL),
-        incognito(false) {}
-
-    BrowserContext* context;
-    content::WebContents* contents;
-    bool incognito;
-  };
-
   WebView();
-
-  virtual bool Init(const Params& params);
 
  private:
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
-  bool InitCreatedWebView(WebView* view,
-                          content::WebContents* contents);
 
   // ScriptMessageTarget
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
