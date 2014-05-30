@@ -323,11 +323,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
       WebViewContentsHelper::FromRenderViewHost(render_view_host);
 
   WebPreferences* web_prefs = contents_helper->GetWebPreferences();
-  if (web_prefs) {
-    web_prefs->ApplyToWebkitPrefs(prefs);
-  } else {
-    DLOG(ERROR) << "No WebPreferences for WebContents";
-  }
+  web_prefs->ApplyToWebkitPrefs(prefs);
 
   prefs->touch_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
@@ -343,8 +339,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     prefs->shrinks_standalone_images_to_fit = false;
   }
 
-  // FIXME: If there is no WebView now, make sure we update WebPreferences
-  //  when the WebContents is adopted
   prefs->supports_multiple_windows = false;
   WebView* view = WebView::FromRenderViewHost(render_view_host);
   if (view) {
