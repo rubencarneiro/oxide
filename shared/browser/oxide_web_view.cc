@@ -37,6 +37,7 @@
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/common/favicon_url.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
 #include "net/base/net_errors.h"
@@ -569,8 +570,20 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
   }
 }
 
+void WebView::DidUpdateFaviconURL(
+    const std::vector<content::FaviconURL>& candidates) {
+  std::vector<content::FaviconURL>::const_iterator it;
+  for (it = candidates.begin(); it != candidates.end(); ++it) {
+    if (it->icon_type == content::FaviconURL::FAVICON) {
+      OnIconChanged(it->icon_url);
+      return;
+    }
+  }
+}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
+void WebView::OnIconChanged(const GURL& icon) {}
 void WebView::OnCommandsUpdated() {}
 
 void WebView::OnLoadProgressChanged(double progress) {}

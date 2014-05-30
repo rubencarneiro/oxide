@@ -172,6 +172,10 @@ void WebView::OnTitleChanged() {
   adapter_->TitleChanged();
 }
 
+void WebView::OnIconChanged(const GURL& icon) {
+  adapter_->IconChanged(QUrl(QString::fromStdString(icon.spec())));
+}
+
 void WebView::OnCommandsUpdated() {
   adapter_->CommandsUpdated();
 }
