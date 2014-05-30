@@ -23,19 +23,15 @@
 
 OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
     OxideQWebPreferences* q)
-    : preferences_(new oxide::qt::WebPreferences(q)),
-      in_destructor_(false) {
+    : preferences_(new oxide::qt::WebPreferences(q)) {
   preferences_->SetIsOwnedByEmbedder();
 }
 
 OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
     oxide::qt::WebPreferences* prefs)
-    : preferences_(prefs),
-      in_destructor_(false) {}
+    : preferences_(prefs) {}
 
-OxideQWebPreferencesPrivate::~OxideQWebPreferencesPrivate() {
-  in_destructor_ = true;
-}
+OxideQWebPreferencesPrivate::~OxideQWebPreferencesPrivate() {}
 
 // static
 OxideQWebPreferencesPrivate* OxideQWebPreferencesPrivate::get(OxideQWebPreferences* q) {

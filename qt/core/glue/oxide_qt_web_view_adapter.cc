@@ -244,8 +244,7 @@ void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
     return;
   }
 
-  if (!OxideQWebPreferencesPrivate::get(old)->in_destructor() &&
-      old->parent() == adapterToQObject(this)) {
+  if (old->parent() == adapterToQObject(this)) {
     delete old;
   }
 }

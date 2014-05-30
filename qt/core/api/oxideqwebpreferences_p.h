@@ -39,7 +39,6 @@ class OxideQWebPreferencesPrivate Q_DECL_FINAL {
   ~OxideQWebPreferencesPrivate();
 
   oxide::qt::WebPreferences* preferences() const { return preferences_.get(); }
-  bool in_destructor() const { return in_destructor_; }
 
   static OxideQWebPreferencesPrivate* get(OxideQWebPreferences* q);
 
@@ -52,7 +51,6 @@ class OxideQWebPreferencesPrivate Q_DECL_FINAL {
   OxideQWebPreferencesPrivate(oxide::qt::WebPreferences* preferences);
 
   scoped_ptr<oxide::qt::WebPreferences> preferences_;
-  bool in_destructor_;
 };
 
 #endif // _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
