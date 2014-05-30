@@ -97,7 +97,7 @@ void FillLoadURLParamsFromOpenURLParams(
   }
 }
 
-bool InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
+void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
   RenderWidgetHostView* rwhv = static_cast<RenderWidgetHostView *>(
       contents->GetRenderWidgetHostView());
   if (rwhv) {
@@ -107,7 +107,7 @@ bool InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
   WebView::Params params;
   params.contents = contents.Pass();
 
-  return view->Init(&params);
+  view->Init(&params);
 }
 
 }
@@ -246,9 +246,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
     return NULL;
   }
 
-  if (!InitCreatedWebView(new_view, contents.Pass())) {
-    return NULL;
-  }
+  InitCreatedWebView(new_view, contents.Pass());
 
   content::NavigationController::LoadURLParams load_params(local_params.url);
   FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
@@ -545,7 +543,7 @@ WebView::~WebView() {
   web_contents_helper_ = NULL;
 }
 
-bool WebView::Init(Params* params) {
+void WebView::Init(Params* params) {
   CHECK(!web_contents_) << "Cannot initialize webview more than once";
 
   if (params->contents) {
@@ -579,10 +577,7 @@ bool WebView::Init(Params* params) {
     content_params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
         content::WebContents::Create(content_params)));
-    if (!web_contents_) {
-      LOG(ERROR) << "Failed to create WebContents";
-      return false;
-    }
+    CHECK(web_contents_.get()) << "Failed to create WebContents";
 
     WebViewContentsHelper::Attach(web_contents_.get());
   }
@@ -612,8 +607,6 @@ bool WebView::Init(Params* params) {
     initial_url_ = GURL();
   }
   SetIsFullscreen(is_fullscreen_);
-
-  return true;
 }
 
 // static

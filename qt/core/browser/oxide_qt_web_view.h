@@ -44,7 +44,7 @@ class WebView FINAL : public oxide::WebView,
 
   WebView(WebViewAdapter* adapter);
 
-  bool Init(oxide::WebView::Params* params) FINAL;
+  void Init(oxide::WebView::Params* params) FINAL;
 
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(

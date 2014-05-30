@@ -89,7 +89,7 @@ class WebView : public ScriptMessageTarget,
     bool incognito;
   };
 
-  virtual bool Init(Params* params);
+  virtual void Init(Params* params);
 
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
