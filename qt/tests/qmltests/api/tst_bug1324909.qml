@@ -49,10 +49,9 @@ Column {
       spy.wait();
       verify(created != null);
 
-      skip("This test is known to fail");
-      //compare(created.getTestApi().evaluateCode(
-      //    "return document.getElementById(\"useragent\").innerHTML;", true),
-      //    "Foo");
+      skip(created.getTestApi().evaluateCode(
+          "return document.getElementById(\"useragent\").innerHTML;", true),
+          "Foo");
     }
   }
 }
