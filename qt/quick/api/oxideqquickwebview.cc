@@ -261,8 +261,9 @@ void OxideQQuickWebViewPrivate::FrameRemoved(
 bool OxideQQuickWebViewPrivate::CanCreateWindows() const {
   Q_Q(const OxideQQuickWebView);
 
-  return q->isSignalConnected(
-      QMetaMethod::fromSignal(&OxideQQuickWebView::newViewRequested));
+  // QObject::isSignalConnected doesn't work from here (it still indicates
+  // true during the last disconnect)
+  return q->receivers(SIGNAL(newViewRequested(OxideQNewViewRequest*))) > 0;
 }
 
 void OxideQQuickWebViewPrivate::NavigationRequested(
