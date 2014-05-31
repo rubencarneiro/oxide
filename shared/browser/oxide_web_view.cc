@@ -286,6 +286,10 @@ bool WebView::ShouldCreateWebContents(const GURL& target_url,
 
   // Note that popup blocking was done on the IO thread
 
+  if (!CanCreateWindows()) {
+    return false;
+  }
+
   return ShouldHandleNavigation(target_url,
                                 user_gesture ? disposition : NEW_POPUP,
                                 user_gesture);
