@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
+#include <QMetaMethod>
 #include <QScopedPointer>
 #include <QtGlobal>
 #include <QUrl>

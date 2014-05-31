@@ -261,9 +261,9 @@ void OxideQQuickWebViewPrivate::FrameRemoved(
 bool OxideQQuickWebViewPrivate::CanCreateWindows() const {
   Q_Q(const OxideQQuickWebView);
 
-  static const QMetaMethod signal =
-      QMetaMethod::fromSignal(&OxideQQuickWebView::newViewRequested);
-  return q->isSignalConnected(signal);
+  // QObject::isSignalConnected doesn't work from here (it still indicates
+  // true during the last disconnect)
+  return q->receivers(SIGNAL(newViewRequested(OxideQNewViewRequest*))) > 0;
 }
 
 void OxideQQuickWebViewPrivate::NavigationRequested(
@@ -420,6 +420,29 @@ void OxideQQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
       qobject_cast<OxideQQuickWebViewAttached *>(
         qmlAttachedPropertiesObject<OxideQQuickWebView>(object));
   attached->setView(q);
+}
+
+void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
+  Q_D(OxideQQuickWebView);
+
+  Q_ASSERT(thread() == QThread::currentThread());
+
+  if (signal == QMetaMethod::fromSignal(
+          &OxideQQuickWebView::newViewRequested)) {
+    d->updateWebPreferences();
+  }
+}
+
+void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
+  Q_D(OxideQQuickWebView);
+
+  Q_ASSERT(thread() == QThread::currentThread());
+
+  if (signal == QMetaMethod::fromSignal(
+          &OxideQQuickWebView::newViewRequested) ||
+      !signal.isValid()) {
+    d->updateWebPreferences();
+  }
 }
 
 void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
@@ -795,8 +818,8 @@ void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
   }
 
   d->setPreferences(prefs);
-  // We don't emit a signal here, as we get OnWebPreferencesChanged(),
-  // which also happens if our WebPreferences are destroyed
+
+  emit preferencesChanged();
 }
 
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {

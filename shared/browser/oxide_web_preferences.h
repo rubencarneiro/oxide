@@ -101,6 +101,11 @@ class WebPreferences {
 
   void ApplyToWebkitPrefs(::WebPreferences* prefs);
 
+  bool IsOwnedByEmbedder() const;
+  void SetIsOwnedByEmbedder();
+
+  void CopyFrom(WebPreferences* other);
+
  private:
   friend class WebPreferencesObserver;
 
@@ -121,6 +126,8 @@ class WebPreferences {
   bool attributes_[ATTR_LAST];
 
   ObserverList<WebPreferencesObserver> observers_;
+
+  bool is_owned_by_embedder_;
 
   DISALLOW_COPY_AND_ASSIGN(WebPreferences);
 };

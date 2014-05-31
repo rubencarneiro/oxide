@@ -86,13 +86,9 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter) {}
 
-bool WebView::Init(const oxide::WebView::Params& params) {
-  if (!oxide::WebView::Init(params)) {
-    return false;
-  }
-
+void WebView::Init(oxide::WebView::Params* params) {
+  oxide::WebView::Init(params);
   adapter_->Initialized();
-  return true;
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -230,8 +226,8 @@ void WebView::OnNavigationEntryChanged(int index) {
   adapter_->NavigationEntryChanged(index);
 }
 
-void WebView::OnWebPreferencesChanged() {
-  adapter_->WebPreferencesChanged();
+void WebView::OnWebPreferencesDestroyed() {
+  adapter_->WebPreferencesDestroyed();
 }
 
 void WebView::OnRequestGeolocationPermission(

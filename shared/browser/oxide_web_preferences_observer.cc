@@ -29,8 +29,15 @@ void WebPreferencesObserver::OnWebPreferencesDestruction() {
   WebPreferencesDestroyed();
 }
 
-WebPreferencesObserver::WebPreferencesObserver() :
-    web_preferences_(NULL) {}
+WebPreferencesObserver::WebPreferencesObserver()
+    : web_preferences_(NULL) {}
+
+WebPreferencesObserver::WebPreferencesObserver(WebPreferences* preferences)
+    : web_preferences_(preferences) {
+  if (preferences) {
+    preferences->AddObserver(this);
+  }
+}
 
 void WebPreferencesObserver::Observe(WebPreferences* preferences) {
   if (web_preferences_ == preferences) {

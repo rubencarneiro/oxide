@@ -52,6 +52,10 @@ TestWebView {
           webView.getTestApi().evaluateCode(
             "return document.body.children[0].innerHTML", true));
       compare(headers["user-agent"], userAgent, "Unexpected User-Agent header");
+
+      compare(webView.getTestApi().evaluateCode(
+          "return navigator.userAgent", true),
+          userAgent);
     }
 
     function test_WebContext_userAgent1_defaults() {

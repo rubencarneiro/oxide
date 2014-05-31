@@ -44,7 +44,7 @@ class WebView FINAL : public oxide::WebView,
 
   WebView(WebViewAdapter* adapter);
 
-  bool Init(const oxide::WebView::Params& params) FINAL;
+  void Init(oxide::WebView::Params* params) FINAL;
 
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -86,7 +86,7 @@ class WebView FINAL : public oxide::WebView,
   void OnNavigationListPruned(bool from_front, int count) FINAL;
   void OnNavigationEntryChanged(int index) FINAL;
 
-  void OnWebPreferencesChanged() FINAL;
+  void OnWebPreferencesDestroyed() FINAL;
 
   void OnRequestGeolocationPermission(
       scoped_ptr<oxide::GeolocationPermissionRequest> request) FINAL;
