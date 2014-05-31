@@ -34,7 +34,7 @@ Column {
   }
 
   TestWebView {
-    id: webView3
+    id: webView2
     width: 200
     height: 200
     context: context
@@ -66,6 +66,7 @@ Column {
       navigationSpy.clear();
     }
 
+    // Test that WebView.newViewRequested is emitted when window.open() is called
     function test_WebView_newViewRequested1_correct() {
       webView1.url = "http://localhost:8080/tst_WebView_newViewRequested.html";
       verify(webView1.waitForLoadSucceeded(),
@@ -76,6 +77,7 @@ Column {
 
       spy.wait();
 
+      compare(navigationSpy.count, 1, "Should have had an onNavigationRequested");
       compare(created.url, "http://localhost:8080/empty.html", "Unexpected URL");
       compare(created.context, webView1.context, "Unexpected context");
       compare(created.incognito, webView1.incognito, "WebView.incognito should match opener");
@@ -84,19 +86,22 @@ Column {
       compare(created.getTestApi().evaluateCode("return window.opener.document.domain;", true), "localhost");
     }
 
+    // Test that a top-level navigation occurs when window.open() is called and
+    // there are no handlers for WebView.newViewRequested
     function test_WebView_newViewRequested3_no_handler() {
-      webView3.url = "http://localhost:8080/tst_WebView_newViewRequested.html";
-      verify(webView3.waitForLoadSucceeded(),
+      webView2.url = "http://localhost:8080/tst_WebView_newViewRequested.html";
+      verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      var r = webView3.getTestApi().getBoundingClientRectForSelector("#button");
-      mouseClick(webView3, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
+      var r = webView2.getTestApi().getBoundingClientRectForSelector("#button");
+      mouseClick(webView2, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
 
-      verify(webView3.waitForLoadSucceeded(),
+      verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      compare(webView3.url, "http://localhost:8080/empty.html", "Unexpected URL");
+      compare(webView2.url, "http://localhost:8080/empty.html", "Unexpected URL");
     }
 
+    // Test that WebView.newViewRequested is emitted for non CurrentTab navigations
     function test_WebView_newViewRequested4_from_navigation() {
       webView1.url = "http://localhost:8080/tst_WebView_newViewRequested2.html";
       verify(webView1.waitForLoadSucceeded(),
@@ -114,6 +119,45 @@ Column {
       compare(created.context, webView1.context, "Unexpected context");
       compare(created.incognito, webView1.incognito, "WebView.incognito should match opener");
       //verify(created.getTestApi().evaluateCode("return window.opener != null;", true));
+    }
+
+    // Test that dynamically attaching a handler for WebView.newViewRequested works
+    function test_WebView_newViewRequested5_dynamic() {
+      webView2.url = "http://localhost:8080/tst_WebView_newViewRequested3.html";
+      verify(webView2.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+
+      var r = webView2.getTestApi().getBoundingClientRectForSelector("#button");
+      mouseClick(webView2, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
+
+      verify(webView2.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+      compare(webView2.url, "http://localhost:8080/tst_WebView_newViewRequested3.html?1");
+
+      spy.target = webView2;
+      var handler = function(request) {
+        created = webViewFactory.createObject(column, { request: request, width: 200, height: 50 });
+      };
+      webView2.newViewRequested.connect(handler);
+
+      var r = webView2.getTestApi().getBoundingClientRectForSelector("#button");
+      mouseClick(webView2, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
+
+      spy.wait();
+
+      compare(spy.count, 1);
+      compare(created.url, "http://localhost:8080/tst_WebView_newViewRequested3.html?2");
+      compare(webView2.url, "http://localhost:8080/tst_WebView_newViewRequested3.html?1");
+
+      spy.target = null;
+      webView2.newViewRequested.disconnect(handler);
+
+      var r = webView2.getTestApi().getBoundingClientRectForSelector("#button");
+      mouseClick(webView2, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
+
+      verify(webView2.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+      compare(webView2.url, "http://localhost:8080/tst_WebView_newViewRequested3.html?2");
     }
   }
 }
