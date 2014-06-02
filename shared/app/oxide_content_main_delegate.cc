@@ -81,23 +81,8 @@ const char* GetEnvironmentOption(const char* option) {
 
 }
 
-ContentMainDelegate::ContentMainDelegate() {}
-
-content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClient() {
-  NOTREACHED() << "CreateContentBrowserClient() hasn't been implemented";
-  return NULL;
-}
-
-content::ContentRendererClient*
-ContentMainDelegate::CreateContentRendererClient() {
-  return g_content_renderer_client.Pointer();
-}
-
-ContentMainDelegate::~ContentMainDelegate() {}
-
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
-  content::SetContentClient(CreateContentClient());
+  content::SetContentClient(ContentClient::GetInstance());
 
   RegisterPathProvider();
 
@@ -252,5 +237,20 @@ void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
     BrowserProcessMain::instance()->ShutdownBrowserMain();
   }
 }
+
+content::ContentBrowserClient*
+ContentMainDelegate::CreateContentBrowserClient() {
+  NOTREACHED() << "CreateContentBrowserClient() hasn't been implemented";
+  return NULL;
+}
+
+content::ContentRendererClient*
+ContentMainDelegate::CreateContentRendererClient() {
+  return g_content_renderer_client.Pointer();
+}
+
+ContentMainDelegate::ContentMainDelegate() {}
+
+ContentMainDelegate::~ContentMainDelegate() {}
 
 } // namespace oxide

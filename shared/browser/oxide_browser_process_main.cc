@@ -36,7 +36,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   virtual ~BrowserProcessMainImpl();
 
   void StartInternal(scoped_refptr<SharedGLContext> shared_gl_context,
-                     scoped_ptr<ContentMainDelegate> delegate);
+                     scoped_ptr<ContentMainDelegate> delegate,
+                     intptr_t native_display);
   void ShutdownInternal();
 
   bool IsRunningInternal() {
@@ -45,6 +46,9 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 
   SharedGLContext* GetSharedGLContext() const FINAL {
     return shared_gl_context_;
+  }
+  intptr_t GetNativeDisplay() const FINAL {
+    return native_display_;
   }
 
  private:
@@ -61,6 +65,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   State state_;
 
   scoped_refptr<SharedGLContext> shared_gl_context_;
+  intptr_t native_display_;
 
   // XXX: Don't change the order of these
   scoped_ptr<ContentMainDelegate> main_delegate_;
@@ -95,7 +100,8 @@ void BrowserProcessMainImpl::ShutdownBrowserMain() {
 }
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
-    : state_(STATE_NOT_STARTED) {}
+    : state_(STATE_NOT_STARTED),
+      native_display_(0) {}
 
 BrowserProcessMainImpl::~BrowserProcessMainImpl() {
   CHECK(state_ == STATE_NOT_STARTED || state_ == STATE_SHUTDOWN) <<
@@ -104,7 +110,8 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
 
 void BrowserProcessMainImpl::StartInternal(
     scoped_refptr<SharedGLContext> shared_gl_context,
-    scoped_ptr<ContentMainDelegate> delegate) {
+    scoped_ptr<ContentMainDelegate> delegate,
+    intptr_t native_display) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
@@ -117,6 +124,7 @@ void BrowserProcessMainImpl::StartInternal(
   }
 
   shared_gl_context_ = shared_gl_context;
+  native_display_ = native_display;
   main_delegate_ = delegate.Pass();
 
   main_runner_.reset(content::ContentMainRunner::Create());
@@ -149,8 +157,11 @@ BrowserProcessMain::~BrowserProcessMain() {}
 // static
 void BrowserProcessMain::Start(
     scoped_refptr<SharedGLContext> shared_gl_context,
-    scoped_ptr<ContentMainDelegate> delegate) {
-  GetInstance()->StartInternal(shared_gl_context, delegate.Pass());
+    scoped_ptr<ContentMainDelegate> delegate,
+    intptr_t native_display) {
+  GetInstance()->StartInternal(shared_gl_context,
+                               delegate.Pass(),
+                               native_display);
 }
 
 // static

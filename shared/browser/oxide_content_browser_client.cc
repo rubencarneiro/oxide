@@ -156,9 +156,6 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
-    // Make sure we initialize the display handle on the main thread
-    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
-
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
 

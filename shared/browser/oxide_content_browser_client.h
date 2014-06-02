@@ -57,6 +57,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   ContentBrowserClient();
 
  private:
+  // content::ContentBrowserClient implementation
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) FINAL;
 
@@ -124,6 +125,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;
 
+  // Should be subclassed
   virtual bool IsTouchSupported();
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);

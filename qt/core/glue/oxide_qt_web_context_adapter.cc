@@ -22,8 +22,10 @@
 #include <vector>
 
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QObject>
 #include <QtDebug>
+#include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
@@ -178,9 +180,13 @@ void WebContextAdapter::ensureChromiumStarted() {
   if (!oxide::BrowserProcessMain::IsRunning()) {
     scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
     scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+    void* display =
+        QGuiApplication::platformNativeInterface()->nativeResourceForScreen(
+          "display", QGuiApplication::primaryScreen());
     oxide::BrowserProcessMain::Start(
         shared_gl_context,
-        delegate.PassAs<oxide::ContentMainDelegate>());
+        delegate.PassAs<oxide::ContentMainDelegate>(),
+        reinterpret_cast<intptr_t>(display));
   }
 }
 

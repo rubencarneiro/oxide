@@ -22,7 +22,7 @@
 #include "base/native_library.h"
 #include "ui/gfx/vsync_provider.h"
 
-#include "shared/common/oxide_content_client.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
 namespace oxide {
 
@@ -55,7 +55,7 @@ OzoneSurfaceFactory::InitializeHardware() {
 void OzoneSurfaceFactory::ShutdownHardware() {}
 
 intptr_t OzoneSurfaceFactory::GetNativeDisplay() {
-  return ContentClient::instance()->GetNativeDisplay();
+  return BrowserProcessMain::instance()->GetNativeDisplay();
 }
 
 gfx::AcceleratedWidget OzoneSurfaceFactory::GetAcceleratedWidget() {

@@ -30,6 +30,12 @@ class ContentMainDelegate : public content::ContentMainDelegate {
  public:
   virtual ~ContentMainDelegate();
 
+ protected:
+  // Allow access to default constructor only from derived classes
+  ContentMainDelegate();
+
+ private:
+  // content::ContentMainDelegate implementation
   bool BasicStartupComplete(int* exit_code) FINAL;
 
   void PreSandboxStartup() FINAL;
@@ -40,15 +46,8 @@ class ContentMainDelegate : public content::ContentMainDelegate {
 
   void ProcessExiting(const std::string& process_type) FINAL;
 
- protected:
-  // Allow access to default constructor only from derived classes
-  ContentMainDelegate();
-
   content::ContentBrowserClient* CreateContentBrowserClient() OVERRIDE;
   content::ContentRendererClient* CreateContentRendererClient() FINAL;
-
- private:
-  virtual ContentClient* CreateContentClient() = 0;
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };

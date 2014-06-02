@@ -17,6 +17,7 @@
 
 #include "oxide_content_client.h"
 
+#include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/common/user_agent.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -39,9 +40,7 @@
 
 namespace oxide {
 
-namespace {
-ContentClient* g_inst;
-}
+ContentClient::ContentClient() {}
 
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
@@ -89,21 +88,17 @@ base::string16 ContentClient::GetLocalizedString(int message_id) const {
   return l10n_util::GetStringUTF16(message_id);
 }
 
-ContentClient::ContentClient() {
-  DCHECK(!g_inst);
-  g_inst = this;
+// static
+ContentClient* ContentClient::GetInstance() {
+  return Singleton<ContentClient>::get();
 }
 
 // static
 ContentClient* ContentClient::instance() {
-  DCHECK(g_inst);
-  return g_inst;
+  return GetInstance();
 }
 
-ContentClient::~ContentClient() {
-  DCHECK_EQ(g_inst, this);
-  g_inst = NULL;
-}
+ContentClient::~ContentClient() {}
 
 ContentBrowserClient* ContentClient::browser() {
   return static_cast<ContentBrowserClient *>(

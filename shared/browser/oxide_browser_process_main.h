@@ -45,7 +45,8 @@ class BrowserProcessMain {
   // browser process components
   static void Start(
       scoped_refptr<oxide::SharedGLContext> shared_gl_context,
-      scoped_ptr<ContentMainDelegate> delegate);
+      scoped_ptr<ContentMainDelegate> delegate,
+      intptr_t native_display);
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton
@@ -58,6 +59,7 @@ class BrowserProcessMain {
   static BrowserProcessMain* instance();
 
   virtual SharedGLContext* GetSharedGLContext() const = 0;
+  virtual intptr_t GetNativeDisplay() const = 0;
 
  protected:
   BrowserProcessMain();
