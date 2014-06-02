@@ -46,6 +46,9 @@ IPC_MESSAGE_CONTROL1(OxideMsg_SetIsIncognitoProcess,
 IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserScripts,
                      base::SharedMemoryHandle)
 
+IPC_MESSAGE_CONTROL1(OxideMsg_SetUserAgent,
+                     std::string)
+
 IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
                     OxideMsg_SendMessage_Params)
 

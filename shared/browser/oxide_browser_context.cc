@@ -470,15 +470,6 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
   content::BrowserContext::EnsureResourceContextInitialized(this);
 }
 
-void BrowserContext::OnUserAgentChanged() {
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOriginalContext()->observers_,
-                    NotifyUserAgentStringChanged());
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOffTheRecordContext()->observers_,
-                    NotifyUserAgentStringChanged());
-}
-
 void BrowserContext::OnPopupBlockerEnabledChanged() {
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     GetOriginalContext()->observers_,

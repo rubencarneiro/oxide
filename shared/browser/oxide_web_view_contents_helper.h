@@ -21,7 +21,6 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/supports_user_data.h"
-#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 
@@ -48,9 +47,6 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
 
   void SetDelegate(WebViewContentsHelperDelegate* delegate);
 
-  void LoadURLWithParams(
-      const content::NavigationController::LoadURLParams& params);
-
   BrowserContext* GetBrowserContext() const;
 
   WebPreferences* GetWebPreferences() const;
@@ -64,7 +60,6 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
   void UpdateWebPreferences();
 
   // BrowserContextObserver implementation
-  void NotifyUserAgentStringChanged() FINAL;
   void NotifyPopupBlockerEnabledChanged() FINAL;
 
   // WebPreferencesObserver implementation

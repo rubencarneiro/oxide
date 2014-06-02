@@ -218,7 +218,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
     content::NavigationController::LoadURLParams load_params(local_params.url);
     FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
-    web_contents_helper_->LoadURLWithParams(load_params);
+    web_contents_->GetController().LoadURLWithParams(load_params);
 
     return web_contents_.get();
   }
@@ -253,8 +253,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
   content::NavigationController::LoadURLParams load_params(local_params.url);
   FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
-  WebViewContentsHelper::FromWebContents(
-      new_view->GetWebContents())->LoadURLWithParams(load_params);
+  new_view->GetWebContents()->GetController().LoadURLWithParams(load_params);
 
   return new_view->GetWebContents();
 }
@@ -662,7 +661,7 @@ void WebView::SetURL(const GURL& url) {
 
   content::NavigationController::LoadURLParams params(url);
   params.transition_type = content::PAGE_TRANSITION_TYPED;
-  web_contents_helper_->LoadURLWithParams(params);
+  web_contents_->GetController().LoadURLWithParams(params);
 }
 
 void WebView::LoadData(const std::string& encodedData,
@@ -678,7 +677,7 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
-  web_contents_helper_->LoadURLWithParams(params);
+  web_contents_->GetController().LoadURLWithParams(params);
 }
 
 std::string WebView::GetTitle() const {

@@ -203,6 +203,8 @@ void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetIsIncognitoProcess(
       host->GetBrowserContext()->IsOffTheRecord()));
+  host->Send(new OxideMsg_SetUserAgent(
+      BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
   host->AddFilter(new ScriptMessageDispatcherBrowser(host));
   host->AddFilter(new UserAgentOverrideProvider(host));
 }

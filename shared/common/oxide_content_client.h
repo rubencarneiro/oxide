@@ -37,17 +37,20 @@ class ContentClient : public content::ContentClient {
   ContentBrowserClient* browser();
   ContentRendererClient* renderer();
 
+  void SetUserAgent(const std::string& user_agent);
+
   virtual intptr_t GetNativeDisplay() = 0;
 
  protected:
   ContentClient();
 
  private:
+  // content::ContentClient implementation
   void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) FINAL;
-
   std::string GetUserAgent() const FINAL;
-
   base::string16 GetLocalizedString(int message_id) const FINAL;
+
+  std::string user_agent_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
 };

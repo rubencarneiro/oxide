@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
 #define _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
 
+#include <string>
+
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "content/public/renderer/render_process_observer.h"
@@ -32,6 +34,7 @@ class RenderProcessObserver FINAL : public content::RenderProcessObserver {
 
  private:
   void OnSetIsIncognitoProcess(bool incognito);
+  void OnSetUserAgent(const std::string& user_agent);
 
   // content::RenderProcessObserver implementation
   bool OnControlMessageReceived(const IPC::Message& message) FINAL;

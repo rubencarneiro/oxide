@@ -189,7 +189,6 @@ class BrowserContext : public content::BrowserContext,
  protected:
   BrowserContext(BrowserContextIOData* io_data);
 
-  void OnUserAgentChanged();
   void OnPopupBlockerEnabledChanged();
 
  private:

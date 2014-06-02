@@ -21,6 +21,7 @@
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_module.h"
 
+#include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_net_resource_provider.h"
 
@@ -34,11 +35,16 @@ void RenderProcessObserver::OnSetIsIncognitoProcess(bool incognito) {
   g_is_off_the_record = incognito;
 }
 
+void RenderProcessObserver::OnSetUserAgent(const std::string& user_agent) {
+  ContentClient::instance()->SetUserAgent(user_agent);
+}
+
 bool RenderProcessObserver::OnControlMessageReceived(
     const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(RenderProcessObserver, message)
     IPC_MESSAGE_HANDLER(OxideMsg_SetIsIncognitoProcess, OnSetIsIncognitoProcess)
+    IPC_MESSAGE_HANDLER(OxideMsg_SetUserAgent, OnSetUserAgent)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 

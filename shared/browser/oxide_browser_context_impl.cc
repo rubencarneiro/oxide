@@ -20,10 +20,12 @@
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/render_process_host.h"
 #include "content/public/common/user_agent.h"
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_messages.h"
 
 #include "oxide_off_the_record_browser_context_impl.h"
 
@@ -161,7 +163,15 @@ void BrowserContextImpl::SetUserAgent(const std::string& user_agent) {
         user_agent);
   default_user_agent_string_ = user_agent.empty();
 
-  OnUserAgentChanged();
+  for (content::RenderProcessHost::iterator it =
+          content::RenderProcessHost::AllHostsIterator();
+       !it.IsAtEnd(); it.Advance()) {
+    content::RenderProcessHost* host = it.GetCurrentValue();
+    if (IsSameContext(
+            BrowserContext::FromContent(host->GetBrowserContext()))) {
+      host->Send(new OxideMsg_SetUserAgent(GetUserAgent()));
+    }
+  }
 }
 
 void BrowserContextImpl::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {

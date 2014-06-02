@@ -82,8 +82,7 @@ void ContentClient::AddPepperPlugins(
 }
 
 std::string ContentClient::GetUserAgent() const {
-  return content::BuildUserAgentFromProduct(
-      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
+  return user_agent_;
 }
 
 base::string16 ContentClient::GetLocalizedString(int message_id) const {
@@ -114,6 +113,10 @@ ContentBrowserClient* ContentClient::browser() {
 ContentRendererClient* ContentClient::renderer() {
   return static_cast<ContentRendererClient *>(
       content::ContentClient::renderer());
+}
+
+void ContentClient::SetUserAgent(const std::string& user_agent) {
+  user_agent_ = user_agent;
 }
 
 } // namespace oxide
