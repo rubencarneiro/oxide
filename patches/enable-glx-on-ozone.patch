@@ -216,25 +216,25 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -365,17 +365,17 @@
-         }],
-         ['OS=="android" or OS=="ios"', {
+@@ -373,17 +373,17 @@
            'sources!': [
              'render_text.cc',
              'render_text.h',
+             'render_text_harfbuzz.cc',
+             'render_text_harfbuzz.h',
              'text_utils_skia.cc',
            ],
          }],
 -        ['use_x11==1', {
 +        ['OS == "linux"', {
            'dependencies': [
+             '../../build/linux/system.gyp:x11',
              'x/gfx_x11.gyp:gfx_x11',
            ],
          }],
          ['use_pango==1', {
            'dependencies': [
              '<(DEPTH)/build/linux/system.gyp:pangocairo',
-           ],
 diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 --- a/ui/gfx/x/x11_types.cc
 +++ b/ui/gfx/x/x11_types.cc
@@ -269,7 +269,7 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -193,17 +193,17 @@
+@@ -193,24 +193,24 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -285,9 +285,18 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'gl_context_glx.h',
              'gl_glx_api_implementation.cc',
              'gl_glx_api_implementation.h',
-             'gl_image_glx.cc',
-             'gl_image_glx.h',
+-            'gl_image_glx.cc',
+-            'gl_image_glx.h',
++            #'gl_image_glx.cc',
++            #'gl_image_glx.h',
              'gl_surface_glx.cc',
+             'gl_surface_glx.h',
+             'gl_egl_api_implementation.cc',
+             'gl_egl_api_implementation.h',
+             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.cc',
+             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.h',
+           ],
+           'all_dependent_settings': {
 diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 --- a/ui/gl/gl_bindings.h
 +++ b/ui/gl/gl_bindings.h
@@ -396,3 +405,81 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
  #endif
  
  GLImplementation GetNamedGLImplementation(const std::string& name) {
+diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
+--- a/ui/gl/gl_surface_glx.cc
++++ b/ui/gl/gl_surface_glx.cc
+@@ -385,16 +385,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
+ }
+ 
+ void* GLSurfaceGLX::GetDisplay() {
+   return g_display;
+ }
+ 
+ GLSurfaceGLX::~GLSurfaceGLX() {}
+ 
++#if 0
+ NativeViewGLSurfaceGLX::NativeViewGLSurfaceGLX(gfx::AcceleratedWidget window)
+   : parent_window_(window),
+     window_(0),
+     config_(NULL) {
+ }
+ 
+ gfx::AcceleratedWidget NativeViewGLSurfaceGLX::GetDrawableHandle() const {
+   return window_;
+@@ -572,16 +573,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+ 
+ VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
+   return vsync_provider_.get();
+ }
+ 
+ NativeViewGLSurfaceGLX::~NativeViewGLSurfaceGLX() {
+   Destroy();
+ }
++#endif
+ 
+ PbufferGLSurfaceGLX::PbufferGLSurfaceGLX(const gfx::Size& size)
+   : size_(size),
+     config_(NULL),
+     pbuffer_(0) {
+ }
+ 
+ bool PbufferGLSurfaceGLX::Initialize() {
+diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
+--- a/ui/gl/gl_surface_glx.h
++++ b/ui/gl/gl_surface_glx.h
+@@ -43,16 +43,17 @@ class GL_EXPORT GLSurfaceGLX : public GL
+ 
+  protected:
+   virtual ~GLSurfaceGLX();
+ 
+  private:
+   DISALLOW_COPY_AND_ASSIGN(GLSurfaceGLX);
+ };
+ 
++#if 0
+ // A surface used to render to a view.
+ class GL_EXPORT NativeViewGLSurfaceGLX : public GLSurfaceGLX,
+                                          public ui::PlatformEventDispatcher {
+  public:
+   explicit NativeViewGLSurfaceGLX(gfx::AcceleratedWidget window);
+ 
+   // Implement GLSurfaceGLX.
+   virtual bool Initialize() OVERRIDE;
+@@ -86,16 +87,17 @@ class GL_EXPORT NativeViewGLSurfaceGLX :
+ 
+   void* config_;
+   gfx::Size size_;
+ 
+   scoped_ptr<VSyncProvider> vsync_provider_;
+ 
+   DISALLOW_COPY_AND_ASSIGN(NativeViewGLSurfaceGLX);
+ };
++#endif
+ 
+ // A surface used to render to an offscreen pbuffer.
+ class GL_EXPORT PbufferGLSurfaceGLX : public GLSurfaceGLX {
+  public:
+   explicit PbufferGLSurfaceGLX(const gfx::Size& size);
+ 
+   // Implement GLSurfaceGLX.
+   virtual bool Initialize() OVERRIDE;

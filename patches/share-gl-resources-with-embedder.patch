@@ -69,8 +69,8 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
      mailbox_manager = mailbox_manager_.get();
    }
  
-   scoped_refptr<GpuChannel> channel = new GpuChannel(this,
-                                                      watchdog_,
+   scoped_ptr<GpuChannel> channel(new GpuChannel(
+       this, watchdog_, share_group, mailbox_manager, client_id, false));
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
@@ -384,7 +384,7 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -315,9 +315,13 @@ net::CookieStore* ContentBrowserClient::
+@@ -314,9 +314,13 @@ net::CookieStore* ContentBrowserClient::
  #if defined(VIDEO_HOLE)
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
@@ -419,7 +419,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -639,13 +640,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -638,13 +639,15 @@ class CONTENT_EXPORT ContentBrowserClien
        int render_process_id);
  
  #if defined(VIDEO_HOLE)

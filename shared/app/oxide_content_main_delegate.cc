@@ -45,7 +45,6 @@
 #include "shared/common/oxide_paths.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
-#include "shared/sandbox_ipc/oxide_sandbox_ipc_process.h"
 
 namespace oxide {
 
@@ -227,15 +226,6 @@ int ContentMainDelegate::RunProcess(
 
     return BrowserProcessMain::instance()->RunBrowserMain(
         main_function_params);
-  }
-
-  static const MainFunction kMainFunctions[] = {
-    { switches::kSandboxIPCProcess, SandboxIPCProcessMain }
-  };
-
-  for (size_t i = 0; i < arraysize(kMainFunctions); ++i) {
-    if (process_type == kMainFunctions[i].name)
-      return kMainFunctions[i].function(main_function_params);
   }
 
   return -1;

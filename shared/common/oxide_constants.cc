@@ -20,7 +20,6 @@
 namespace switches {
 
 const char kEnableGoogleTalkPlugin[] = "enable-google-talk-plugin";
-const char kDisableForceCompositingMode[] = "disable-force-compositing-mode";
 const char kFormFactor[] = "form-factor";
 const char kFormFactorDesktop[] = "desktop";
 const char kFormFactorTablet[] = "tablet";
