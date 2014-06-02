@@ -29,7 +29,7 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
 
-#include "oxide_process_observer.h"
+#include "oxide_render_process_observer.h"
 #include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
@@ -37,7 +37,7 @@
 namespace oxide {
 
 void ContentRendererClient::RenderThreadStarted() {
-  process_observer_.reset(new ProcessObserver());
+  process_observer_.reset(new RenderProcessObserver());
   user_script_slave_.reset(new UserScriptSlave());
 }
 

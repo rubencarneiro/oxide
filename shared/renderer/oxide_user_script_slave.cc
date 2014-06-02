@@ -36,7 +36,7 @@
 #include "shared/common/oxide_user_script.h"
 
 #include "oxide_isolated_world_map.h"
-#include "oxide_process_observer.h"
+#include "oxide_render_process_observer.h"
 
 namespace oxide {
 
@@ -132,7 +132,8 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
       continue;
     }
 
-    if (!script->incognito_enabled() && ProcessObserver::IsOffTheRecord()) {
+    if (!script->incognito_enabled() &&
+        oxide::RenderProcessObserver::IsOffTheRecord()) {
       continue;
     }
 

@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_RENDERER_PROCESS_OBSERVER_H_
-#define _OXIDE_SHARED_RENDERER_PROCESS_OBSERVER_H_
+#ifndef _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
+#define _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -24,22 +24,22 @@
 
 namespace oxide {
 
-class ProcessObserver FINAL : public content::RenderProcessObserver {
+class RenderProcessObserver FINAL : public content::RenderProcessObserver {
  public:
-  ProcessObserver();
-
-  bool OnControlMessageReceived(const IPC::Message& message) FINAL;
-
-  void OnRenderProcessShutdown() FINAL;
+  RenderProcessObserver();
 
   static bool IsOffTheRecord();
 
  private:
   void OnSetIsIncognitoProcess(bool incognito);
 
-  DISALLOW_COPY_AND_ASSIGN(ProcessObserver);
+  // content::RenderProcessObserver implementation
+  bool OnControlMessageReceived(const IPC::Message& message) FINAL;
+  void OnRenderProcessShutdown() FINAL;
+
+  DISALLOW_COPY_AND_ASSIGN(RenderProcessObserver);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_RENDERER_PROCESS_OBSERVER_H_
+#endif // _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
