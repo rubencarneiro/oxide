@@ -24,5 +24,6 @@ const char kFormFactor[] = "form-factor";
 const char kFormFactorDesktop[] = "desktop";
 const char kFormFactorTablet[] = "tablet";
 const char kFormFactorPhone[] = "phone";
+const char kIncognito[] = "incognito";
 
 } // namespace switches

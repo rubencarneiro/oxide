@@ -25,6 +25,7 @@ extern const char kFormFactor[];
 extern const char kFormFactorDesktop[];
 extern const char kFormFactorTablet[];
 extern const char kFormFactorPhone[];
+extern const char kIncognito[];
 
 } // namespace switches
 

@@ -201,8 +201,6 @@ content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
 
 void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
-  host->Send(new OxideMsg_SetIsIncognitoProcess(
-      host->GetBrowserContext()->IsOffTheRecord()));
   host->Send(new OxideMsg_SetUserAgent(
       BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
   host->AddFilter(new ScriptMessageDispatcherBrowser(host));
@@ -263,6 +261,12 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
         NOTREACHED();
     }
     command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
+
+    content::RenderProcessHost* host =
+        content::RenderProcessHost::FromID(child_process_id);
+    if (host->GetBrowserContext()->IsOffTheRecord()) {
+      command_line->AppendSwitch(switches::kIncognito);
+    }
   }
 }
 

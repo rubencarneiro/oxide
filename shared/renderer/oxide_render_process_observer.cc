@@ -27,14 +27,6 @@
 
 namespace oxide {
 
-namespace {
-bool g_is_off_the_record = true;
-}
-
-void RenderProcessObserver::OnSetIsIncognitoProcess(bool incognito) {
-  g_is_off_the_record = incognito;
-}
-
 void RenderProcessObserver::OnSetUserAgent(const std::string& user_agent) {
   ContentClient::instance()->SetUserAgent(user_agent);
 }
@@ -43,7 +35,6 @@ bool RenderProcessObserver::OnControlMessageReceived(
     const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(RenderProcessObserver, message)
-    IPC_MESSAGE_HANDLER(OxideMsg_SetIsIncognitoProcess, OnSetIsIncognitoProcess)
     IPC_MESSAGE_HANDLER(OxideMsg_SetUserAgent, OnSetUserAgent)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
@@ -58,11 +49,6 @@ void RenderProcessObserver::OnRenderProcessShutdown() {
 RenderProcessObserver::RenderProcessObserver() {
   net::NetModule::SetResourceProvider(NetResourceProvider);
   content::RenderThread::Get()->AddObserver(this);
-}
-
-// static
-bool RenderProcessObserver::IsOffTheRecord() {
-  return g_is_off_the_record;
 }
 
 } // namespace oxide

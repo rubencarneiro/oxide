@@ -30,10 +30,7 @@ class RenderProcessObserver FINAL : public content::RenderProcessObserver {
  public:
   RenderProcessObserver();
 
-  static bool IsOffTheRecord();
-
  private:
-  void OnSetIsIncognitoProcess(bool incognito);
   void OnSetUserAgent(const std::string& user_agent);
 
   // content::RenderProcessObserver implementation
