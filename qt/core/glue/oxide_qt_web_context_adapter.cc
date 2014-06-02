@@ -187,6 +187,7 @@ void WebContextAdapter::ensureChromiumStarted() {
         shared_gl_context,
         delegate.PassAs<oxide::ContentMainDelegate>(),
         reinterpret_cast<intptr_t>(display));
+    qAddPostRoutine(oxide::BrowserProcessMain::Shutdown);
   }
 }
 
@@ -285,12 +286,6 @@ WebContextAdapter::WebContextAdapter(
       CookiePolicyBlockThirdParty == static_cast<CookiePolicy>(
         net::StaticCookiePolicy::BLOCK_ALL_THIRD_PARTY_COOKIES),
       cookie_enums_blockall3rdparty_doesnt_match);
-
-  static bool run_once = false;
-  if (!run_once) {
-    run_once = true;
-    qAddPostRoutine(oxide::BrowserProcessMain::Shutdown);
-  }
 }
 
 } // namespace qt
