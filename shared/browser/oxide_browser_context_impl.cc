@@ -164,6 +164,10 @@ void BrowserContextImpl::SetUserAgent(const std::string& user_agent) {
   OnUserAgentChanged();
 }
 
+void BrowserContextImpl::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
+  static_cast<BrowserContextIODataImpl *>(io_data())->SetCookiePolicy(policy);
+}
+
 void BrowserContextImpl::SetIsPopupBlockerEnabled(bool enabled) {
   static_cast<BrowserContextIODataImpl *>(
       io_data())->SetIsPopupBlockerEnabled(enabled);

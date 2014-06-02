@@ -30,14 +30,18 @@ namespace qt {
 
 class WebPreferences FINAL : public oxide::WebPreferences {
  public:
-  WebPreferences(OxideQWebPreferences* api_handle);
+  WebPreferences(OxideQWebPreferences* api_handle = NULL);
+  ~WebPreferences();
 
   OxideQWebPreferences* api_handle() const { return api_handle_; }
+  void set_api_handle(OxideQWebPreferences* handle) {
+    api_handle_ = handle;
+  }
 
  private:
   OxideQWebPreferences* api_handle_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebPreferences);
+  DISALLOW_COPY_AND_ASSIGN(WebPreferences);
 };
 
 } // namespace qt

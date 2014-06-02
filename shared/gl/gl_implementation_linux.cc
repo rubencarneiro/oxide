@@ -97,7 +97,7 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
     return true;
   }
 
-  ui::OzonePlatform::Initialize();
+  ui::OzonePlatform::InitializeForGPU();
 
   switch (implementation) {
     case kGLImplementationDesktopGL: {

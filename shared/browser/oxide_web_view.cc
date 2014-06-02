@@ -21,6 +21,7 @@
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/supports_user_data.h"
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
@@ -37,7 +38,9 @@
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/common/favicon_url.h"
 #include "content/public/common/menu_item.h"
+#include "content/public/common/url_constants.h"
 #include "net/base/net_errors.h"
 #include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
@@ -48,23 +51,35 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_file_picker.h"
-#include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
+#include "oxide_web_view_contents_helper.h"
 
 namespace oxide {
 
 namespace {
 
+const char kWebViewKey[] = "oxide_web_view_data";
+
+// SupportsUserData implementations own their data. This class exists
+// because we don't want WebContents to own WebView (it's the other way
+// around)
+class WebViewUserData : public base::SupportsUserData::Data {
+ public:
+  WebViewUserData(WebView* view) : view_(view) {}
+
+  WebView* view() const { return view_; }
+
+ private:
+  WebView* view_;
+};
+
 void FillLoadURLParamsFromOpenURLParams(
     content::NavigationController::LoadURLParams* load_params,
     const content::OpenURLParams& params) {
-  load_params->override_user_agent =
-      content::NavigationController::UA_OVERRIDE_TRUE;
-
   load_params->transition_type = params.transition;
   load_params->frame_tree_node_id = params.frame_tree_node_id;
   load_params->referrer = params.referrer;
@@ -84,33 +99,18 @@ void FillLoadURLParamsFromOpenURLParams(
   }
 }
 
-class ScopedNewContentsHolder {
- public:
-  ScopedNewContentsHolder(content::WebContents* contents,
-                          bool* was_blocked) :
-      contents_(contents), was_blocked_(was_blocked) {}
-
-  ScopedNewContentsHolder(content::WebContents* contents) :
-      contents_(contents), was_blocked_(NULL) {}
-
-  ~ScopedNewContentsHolder() {
-    if (contents_ && was_blocked_) {
-      *was_blocked_ = true;
-    }
+void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
+  RenderWidgetHostView* rwhv = static_cast<RenderWidgetHostView *>(
+      contents->GetRenderWidgetHostView());
+  if (rwhv) {
+    rwhv->Init(view);
   }
 
-  content::WebContents* Release() {
-    return contents_.release();
-  }
+  WebView::Params params;
+  params.contents = contents.Pass();
 
-  content::WebContents* contents() const {
-    return contents_.get();
-  }
-
- private:
-  scoped_ptr<content::WebContents> contents_;
-  bool* was_blocked_;
-};
+  view->Init(&params);
+}
 
 }
 
@@ -125,20 +125,6 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
   }
 }
 
-bool WebView::InitCreatedWebView(WebView* view,
-                                 content::WebContents* contents) {
-  RenderWidgetHostView* rwhv = static_cast<RenderWidgetHostView *>(
-      contents->GetRenderWidgetHostView());
-  if (rwhv) {
-    rwhv->Init(view);
-  }
-
-  Params params;
-  params.contents = contents;
-
-  return view->Init(params);
-}
-
 size_t WebView::GetScriptMessageHandlerCount() const {
   return 0;
 }
@@ -147,28 +133,9 @@ ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(size_t index) const {
   return NULL;
 }
 
-void WebView::NotifyUserAgentStringChanged() {
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(context_->GetUserAgent());
-}
-
-void WebView::NotifyPopupBlockerEnabledChanged() {
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
-}
-
 void WebView::WebPreferencesDestroyed() {
-  OnWebPreferencesChanged();
-  WebPreferencesValueChanged();
-}
-
-void WebView::WebPreferencesValueChanged() {
-  if (!web_contents_) {
-    return;
-  }
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  initial_preferences_ = NULL;
+  OnWebPreferencesDestroyed();
 }
 
 void WebView::Observe(int type,
@@ -187,11 +154,7 @@ void WebView::Observe(int type,
   }
 }
 
-content::WebContents* WebView::OpenURLFromTab(
-    content::WebContents* source,
-    const content::OpenURLParams& params) {
-  DCHECK_EQ(source, web_contents_.get());
-
+content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
   if (params.disposition != CURRENT_TAB &&
       params.disposition != NEW_FOREGROUND_TAB &&
       params.disposition != NEW_BACKGROUND_TAB &&
@@ -205,7 +168,7 @@ content::WebContents* WebView::OpenURLFromTab(
        params.disposition == NEW_BACKGROUND_TAB ||
        params.disposition == NEW_WINDOW ||
        params.disposition == NEW_POPUP) &&
-      !params.user_gesture && context_->IsPopupBlockerEnabled()) {
+      !params.user_gesture && GetBrowserContext()->IsPopupBlockerEnabled()) {
     return NULL;
   }
 
@@ -255,7 +218,7 @@ content::WebContents* WebView::OpenURLFromTab(
     content::NavigationController::LoadURLParams load_params(local_params.url);
     FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
-    web_contents_->GetController().LoadURLWithParams(load_params);
+    web_contents_helper_->LoadURLWithParams(load_params);
 
     return web_contents_.get();
   }
@@ -271,34 +234,32 @@ content::WebContents* WebView::OpenURLFromTab(
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
   contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
 
-  scoped_ptr<content::WebContents> contents(
+  ScopedNewContentsHolder contents(
       content::WebContents::Create(contents_params));
   if (!contents) {
     LOG(ERROR) << "Failed to create new WebContents for navigation";
     return NULL;
   }
 
+  WebViewContentsHelper::Attach(contents.get(), web_contents_.get());
+
   WebView* new_view = CreateNewWebView(GetContainerBounds(), disposition);
   if (!new_view) {
     return NULL;
   }
 
-  if (!InitCreatedWebView(new_view, contents.release())) {
-    return NULL;
-  }
+  InitCreatedWebView(new_view, contents.Pass());
 
   content::NavigationController::LoadURLParams load_params(local_params.url);
   FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
 
-  new_view->GetWebContents()->GetController().LoadURLWithParams(load_params);
+  WebViewContentsHelper::FromWebContents(
+      new_view->GetWebContents())->LoadURLWithParams(load_params);
 
   return new_view->GetWebContents();
 }
 
-void WebView::NavigationStateChanged(const content::WebContents* source,
-                                     unsigned changed_flags) {
-  DCHECK_EQ(source, web_contents_.get());
-
+void WebView::NavigationStateChanged(unsigned changed_flags) {
   if (changed_flags & content::INVALIDATE_TYPE_URL) {
     OnURLChanged();
   }
@@ -313,18 +274,9 @@ void WebView::NavigationStateChanged(const content::WebContents* source,
   }
 }
 
-bool WebView::ShouldCreateWebContents(
-    content::WebContents* source,
-    int route_id,
-    WindowContainerType window_container_type,
-    const base::string16& frame_name,
-    const GURL& target_url,
-    const std::string& partition_id,
-    content::SessionStorageNamespace* session_storage_namespace,
-    WindowOpenDisposition disposition,
-    bool user_gesture) {
-  DCHECK_EQ(source, web_contents_.get());
-
+bool WebView::ShouldCreateWebContents(const GURL& target_url,
+                                      WindowOpenDisposition disposition,
+                                      bool user_gesture) {
   if (disposition != NEW_FOREGROUND_TAB &&
       disposition != NEW_BACKGROUND_TAB &&
       disposition != NEW_POPUP &&
@@ -334,85 +286,59 @@ bool WebView::ShouldCreateWebContents(
 
   // Note that popup blocking was done on the IO thread
 
+  if (!CanCreateWindows()) {
+    return false;
+  }
+
   return ShouldHandleNavigation(target_url,
                                 user_gesture ? disposition : NEW_POPUP,
                                 user_gesture);
 }
 
-void WebView::WebContentsCreated(content::WebContents* source,
-                                 int source_frame_id,
-                                 const base::string16& frame_name,
-                                 const GURL& target_url,
-                                 content::WebContents* new_contents) {}
-
-void WebView::AddNewContents(content::WebContents* source,
-                             content::WebContents* new_contents,
-                             WindowOpenDisposition disposition,
-                             const gfx::Rect& initial_pos,
-                             bool user_gesture,
-                             bool* was_blocked) {
-  DCHECK_EQ(source, web_contents_.get());
-  DCHECK_EQ(GetBrowserContext(),
-            BrowserContext::FromContent(new_contents->GetBrowserContext()));
-  DCHECK(disposition == NEW_FOREGROUND_TAB ||
-         disposition == NEW_BACKGROUND_TAB ||
-         disposition == NEW_POPUP ||
-         disposition == NEW_WINDOW);
-
-  ScopedNewContentsHolder holder(new_contents, was_blocked);
-  
-  WebView* new_view = CreateNewWebView(initial_pos,
-                                       user_gesture ? disposition : NEW_POPUP);
+bool WebView::CreateNewViewAndAdoptWebContents(
+    ScopedNewContentsHolder contents,
+    WindowOpenDisposition disposition,
+    const gfx::Rect& initial_pos) {
+  WebView* new_view = CreateNewWebView(initial_pos, disposition);
   if (!new_view) {
-    return;
+    return false;
   }
 
-  InitCreatedWebView(new_view, holder.Release());
+  InitCreatedWebView(new_view, contents.Pass());
+
+  return true;
 }
 
-void WebView::LoadProgressChanged(content::WebContents* source,
-                                  double progress) {
-  DCHECK_EQ(source, web_contents_.get());
-
+void WebView::LoadProgressChanged(double progress) {
   OnLoadProgressChanged(progress);
 }
 
-bool WebView::AddMessageToConsole(content::WebContents* source,
-                                  int32 level,
+void WebView::AddMessageToConsole(int32 level,
                                   const base::string16& message,
                                   int32 line_no,
                                   const base::string16& source_id) {
-  return OnAddMessageToConsole(level, message, line_no, source_id);
+  OnAddMessageToConsole(level, message, line_no, source_id);
 }
 
-content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
-  return JavaScriptDialogManager::GetInstance();
-}
-
-void WebView::RunFileChooser(content::WebContents* web_contents,
-                             const content::FileChooserParams& params) {
+bool WebView::RunFileChooser(const content::FileChooserParams& params) {
   DCHECK(!active_file_picker_);
-  content::RenderViewHost* rvh = web_contents->GetRenderViewHost();
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   FilePicker* filePicker = CreateFilePicker(rvh);
   if (!filePicker) {
-    std::vector<ui::SelectedFileInfo> empty;
-    rvh->FilesSelectedInChooser(empty, params.mode);
-    return;
+    return false;
   }
   active_file_picker_ = filePicker->AsWeakPtr();
   active_file_picker_->Run(params);
+
+  return true;
 }
 
-void WebView::ToggleFullscreenModeForTab(content::WebContents* source,
-                                         bool enter) {
-  DCHECK_EQ(source, web_contents_.get());
+void WebView::ToggleFullscreenMode(bool enter) {
   OnToggleFullscreenMode(enter);
 }
 
-bool WebView::IsFullscreenForTabOrPending(
-    const content::WebContents* source) const {
-  DCHECK_EQ(source, web_contents_.get());
-  return is_fullscreen_;
+void WebView::NotifyWebPreferencesDestroyed() {
+  OnWebPreferencesDestroyed();
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
@@ -560,8 +486,20 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
   }
 }
 
+void WebView::DidUpdateFaviconURL(
+    const std::vector<content::FaviconURL>& candidates) {
+  std::vector<content::FaviconURL>::const_iterator it;
+  for (it = candidates.begin(); it != candidates.end(); ++it) {
+    if (it->icon_type == content::FaviconURL::FAVICON) {
+      OnIconChanged(it->icon_url);
+      return;
+    }
+  }
+}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
+void WebView::OnIconChanged(const GURL& icon) {}
 void WebView::OnCommandsUpdated() {}
 
 void WebView::OnLoadProgressChanged(double progress) {}
@@ -578,7 +516,7 @@ void WebView::OnNavigationEntryCommitted() {}
 void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
-void WebView::OnWebPreferencesChanged() {}
+void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
     scoped_ptr<GeolocationPermissionRequest> request) {}
@@ -604,53 +542,71 @@ WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
 
 WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) {
+  NOTREACHED() <<
+      "Your CanCreateWindows() implementation should be returning false!";
   return NULL;
 }
 
-WebView::WebView() :
-    root_frame_(NULL),
-    is_fullscreen_(false) {}
+WebView::WebView()
+    : web_contents_helper_(NULL),
+      initial_preferences_(NULL),
+      root_frame_(NULL),
+      is_fullscreen_(false) {}
 
-bool WebView::Init(const Params& params) {
-  CHECK(!web_contents_);
+WebView::~WebView() {
+  if (root_frame_) {
+    root_frame_->Destroy();
+  }
+  initial_preferences_ = NULL;
+  web_contents_helper_ = NULL;
+}
 
-  if (params.contents) {
-    CHECK(!params.context);
-    CHECK(params.contents->GetBrowserContext());
+void WebView::Init(Params* params) {
+  CHECK(!web_contents_) << "Cannot initialize webview more than once";
 
-    context_ = BrowserContext::FromContent(params.contents->GetBrowserContext());
+  if (params->contents) {
+    CHECK(!params->context) <<
+        "Shouldn't specify a BrowserContext and WebContents at initialization";
+    CHECK(params->contents->GetBrowserContext()) <<
+        "Specified WebContents doesn't have a BrowserContext";
+    CHECK(WebViewContentsHelper::FromWebContents(params->contents.get())) <<
+        "Specified in WebContents should already have a WebViewContentsHelper";
+    CHECK(!FromWebContents(params->contents.get())) <<
+        "Specified WebContents already belongs to a WebView";
+
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
-        params.contents));
+        params->contents.release()));
 
     UpdateVisibility(IsVisible());
     UpdateSize(GetContainerSize());
+
+    // Update our preferences in case something has changed (like
+    // CanCreateWindows())
+    UpdateWebPreferences();
   } else {
-    CHECK(params.context);
+    CHECK(params->context) << "Didn't specify a BrowserContext or WebContents";
 
-    context_ = params.incognito ?
-        params.context->GetOffTheRecordContext() :
-        params.context->GetOriginalContext();
+    BrowserContext* context = params->incognito ?
+        params->context->GetOffTheRecordContext() :
+        params->context->GetOriginalContext();
 
-    content::WebContents::CreateParams params(context_);
-    params.initial_size = GetContainerSize();
-    params.initially_hidden = !IsVisible();
+    content::WebContents::CreateParams content_params(context);
+    content_params.initial_size = GetContainerSize();
+    content_params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
-        content::WebContents::Create(params)));
-    if (!web_contents_) {
-      LOG(ERROR) << "Failed to create WebContents";
-      return false;
-    }
+        content::WebContents::Create(content_params)));
+    CHECK(web_contents_.get()) << "Failed to create WebContents";
+
+    WebViewContentsHelper::Attach(web_contents_.get());
   }
 
-  BrowserContextObserver::Observe(context_);
+  web_contents_helper_ =
+      WebViewContentsHelper::FromWebContents(web_contents_.get());
+  web_contents_helper_->SetDelegate(this);
 
-  web_contents_->SetDelegate(this);
+  web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
+
   WebContentsObserver::Observe(web_contents_.get());
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(context_->GetUserAgent());
-
-  web_contents_->GetMutableRendererPrefs()->browser_handles_non_local_top_level_requests = true;
 
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                  content::NotificationService::AllBrowserContextsAndSources());
@@ -659,27 +615,27 @@ bool WebView::Init(const Params& params) {
 
   root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
-  if (!initial_url_.is_empty() && !params.contents) {
+  if (initial_preferences_) {
+    SetWebPreferences(initial_preferences_);
+    WebPreferencesObserver::Observe(NULL);
+    initial_preferences_ = NULL;
+  }
+  if (!initial_url_.is_empty() && params->context) {
     SetURL(initial_url_);
     initial_url_ = GURL();
   }
   SetIsFullscreen(is_fullscreen_);
-
-  return true;
-}
-
-WebView::~WebView() {
-  if (root_frame_) {
-    root_frame_->Destroy();
-  }
-  if (web_contents_) {
-    web_contents_->SetDelegate(NULL);
-  }
 }
 
 // static
-WebView* WebView::FromWebContents(content::WebContents* web_contents) {
-  return static_cast<WebView *>(web_contents->GetDelegate());
+WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
+  WebViewUserData* data = static_cast<WebViewUserData *>(
+      web_contents->GetUserData(kWebViewKey));
+  if (!data) {
+    return NULL;
+  }
+
+  return data->view();
 }
 
 // static
@@ -705,11 +661,24 @@ void WebView::SetURL(const GURL& url) {
   }
 
   content::NavigationController::LoadURLParams params(url);
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  params.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
   params.transition_type = content::PAGE_TRANSITION_TYPED;
-  web_contents_->GetController().LoadURLWithParams(params);
+  web_contents_helper_->LoadURLWithParams(params);
+}
+
+void WebView::LoadData(const std::string& encodedData,
+                       const std::string& mimeType,
+                       const GURL& baseUrl) {
+  std::string url("data:");
+  url.append(mimeType);
+  url.append(",");
+  url.append(encodedData);
+
+  content::NavigationController::LoadURLParams params((GURL(url)));
+  params.load_type = content::NavigationController::LOAD_TYPE_DATA;
+  params.base_url_for_data_url = baseUrl;
+  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
+  params.can_load_local_resources = true;
+  web_contents_helper_->LoadURLWithParams(params);
 }
 
 std::string WebView::GetTitle() const {
@@ -758,10 +727,11 @@ void WebView::Reload() {
 }
 
 bool WebView::IsIncognito() const {
-  if (!context_) {
+  if (!GetBrowserContext()) {
     return false;
   }
-  return context_->IsOffTheRecord();
+
+  return GetBrowserContext()->IsOffTheRecord();
 }
 
 bool WebView::IsLoading() const {
@@ -803,7 +773,7 @@ void WebView::UpdateVisibility(bool visible) {
 }
 
 BrowserContext* WebView::GetBrowserContext() const {
-  return context_;
+  return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
 content::WebContents* WebView::GetWebContents() const {
@@ -875,17 +845,21 @@ content::FrameTree* WebView::GetFrameTree() {
 }
 
 WebPreferences* WebView::GetWebPreferences() {
-  return web_preferences();
+  if (!web_contents_helper_) {
+    return initial_preferences_;
+  }
+
+  return web_contents_helper_->GetWebPreferences();
 }
 
 void WebView::SetWebPreferences(WebPreferences* prefs) {
-  if (prefs == web_preferences()) {
-    return;
+  if (!web_contents_helper_) {
+    CHECK(!prefs || prefs->IsOwnedByEmbedder());
+    initial_preferences_ = prefs;
+    WebPreferencesObserver::Observe(prefs);
+  } else {
+    web_contents_helper_->SetWebPreferences(prefs);
   }
-
-  WebPreferencesObserver::Observe(prefs);
-  OnWebPreferencesChanged();
-  WebPreferencesValueChanged();
 }
 
 gfx::Size WebView::GetContainerSize() {
@@ -930,6 +904,17 @@ void WebView::RequestGeolocationPermission(
 void WebView::CancelGeolocationPermissionRequest(
     const PermissionRequest::ID& id) {
   geolocation_permission_requests_.CancelPendingRequestWithID(id);
+}
+
+void WebView::UpdateWebPreferences() {
+  if (!web_contents_) {
+    return;
+  }
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (rvh) {
+    rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  }
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(

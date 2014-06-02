@@ -56,7 +56,7 @@ RenderSandboxHostLinux* RenderSandboxHostLinux::GetInstance() {
   return Singleton<RenderSandboxHostLinux>::get();
 }
 
-void RenderSandboxHostLinux::Init(const std::string& sandbox_path) {
+void RenderSandboxHostLinux::Init() {
   DCHECK(!initialized_);
   initialized_ = true;
 
@@ -73,9 +73,6 @@ void RenderSandboxHostLinux::Init(const std::string& sandbox_path) {
   base::CommandLine cmd_line(exe);
 
   cmd_line.AppendSwitchASCII(switches::kProcessType, switches::kSandboxIPCProcess);
-  if (!sandbox_path.empty()) {
-    cmd_line.AppendSwitchASCII(switches::kSandboxExe, sandbox_path.c_str());
-  }
 
   base::FileHandleMappingVector fds_to_map;
   fds_to_map.push_back(std::make_pair(fds[1], oxide::kSandboxIPCSocketPairFd));

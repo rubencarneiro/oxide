@@ -15,9 +15,15 @@ Column {
     property rect lastRequestPosition: Qt.rect(0,0,0,0)
     property int lastRequestDisposition: NewViewRequest.DispositionCurrentTab
 
+    Component {
+      id: webViewFactory
+      WebView {}
+    }
+
     onNewViewRequested: {
       lastRequestPosition = request.position;
       lastRequestDisposition = request.disposition;
+      webViewFactory.createObject(webView, { request: request });
     }
   }
 

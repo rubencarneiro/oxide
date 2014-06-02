@@ -29,10 +29,13 @@ TestWebView {
     lastRequestUserGesture = request.userGesture;
   }
 
-  // XXX(chrisccoulson): If we don't do this, then all future calls to
-  // onNewViewRequested fail (we get a null request object)
+  Component {
+    id: webViewFactory
+    WebView {}
+  }
+
   onNewViewRequested: {
-    var r = request;
+    webViewFactory.createObject(webView, { request: request });
   }
 
   SignalSpy {
@@ -124,11 +127,11 @@ TestWebView {
     // for renderer-initiated top-level navigations that don't come from an
     // input event
     function test_NavigationRequest2_no_user_gesture(data) {
-      webView.context.popupBlockerEnabled = false;
-
       webView.url = "http://localhost:8080/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
+
+      webView.context.popupBlockerEnabled = false;
 
       compare(spy.count, 0,
               "Shouldn't get an onNavigationRequested signal for browser-initiated navigation");
@@ -158,7 +161,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
     // renderer-initiated top-level navigations blocks the navigation and that
     // we don't get any onNewViewRequested signals.
     //
-    // XXX(chrisccoulson): This is a bit hacky, because we use a 100ms delay
+    // XXX(chrisccoulson): This is a bit hacky, because we use a 200ms delay
     // before verifying no loads started
     function test_NavigationRequest3_reject(data) {
       webView.shouldReject = true;
@@ -171,9 +174,12 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
 
       var r = webView.getTestApi().getBoundingClientRectForSelector(data.link);
       mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton, data.modifiers);
+
+      spy.wait();
+      compare(spy.count, 1);
+
       webView.waitFor(function() { return false; }, 100);
 
-      compare(spy.count, 1);
       compare(newViewSpy.count, 0, "Shouldn't have called onNewViewRequested for rejected navigation");
       compare(webView.loadsStartedCount, 0, "Shouldn't have started a load for rejected navigation");
     }

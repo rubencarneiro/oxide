@@ -6,13 +6,13 @@
 diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
 --- a/ui/gl/gl_surface_egl.cc
 +++ b/ui/gl/gl_surface_egl.cc
-@@ -265,18 +265,18 @@ bool GLSurfaceEGL::InitializeOneOff() {
-         return false;
-       }
-     }
+@@ -157,18 +157,18 @@ bool GLSurfaceEGL::InitializeOneOff() {
+                        1,
+                        &num_configs)) {
+     LOG(ERROR) << "eglChooseConfig failed with error "
+                << GetLastEGLErrorString();
+     return false;
    }
- 
- #endif
  
    g_egl_extensions = eglQueryString(g_display, EGL_EXTENSIONS);
 -  g_egl_create_context_robustness_supported =
@@ -30,7 +30,7 @@ diff --git a/ui/gl/gl_surface_egl.cc b/ui/gl/gl_surface_egl.cc
 diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
 --- a/ui/gl/gl_surface_glx.cc
 +++ b/ui/gl/gl_surface_glx.cc
-@@ -417,18 +417,18 @@ bool GLSurfaceGLX::InitializeOneOff() {
+@@ -331,18 +331,18 @@ bool GLSurfaceGLX::InitializeOneOff() {
    if (major == 1 && minor < 3) {
      LOG(ERROR) << "GLX 1.3 or later is required.";
      return false;

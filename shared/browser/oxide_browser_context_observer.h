@@ -34,6 +34,7 @@ class BrowserContextObserver {
 
  protected:
   BrowserContextObserver();
+  BrowserContextObserver(BrowserContext* context);
 
   void Observe(BrowserContext* context);
 

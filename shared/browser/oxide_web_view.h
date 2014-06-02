@@ -26,7 +26,6 @@
 #include "base/memory/linked_ptr.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
-#include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
@@ -35,10 +34,10 @@
 #include "ui/gfx/rect.h"
 
 #include "shared/browser/oxide_browser_context.h"
-#include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
+#include "shared/browser/oxide_web_view_contents_helper_delegate.h"
 #include "shared/common/oxide_message_enums.h"
 
 class GURL;
@@ -67,24 +66,40 @@ class JavaScriptDialog;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
+class WebViewContentsHelper;
 
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
 // components alive
 class WebView : public ScriptMessageTarget,
-                public BrowserContextObserver,
-                public WebPreferencesObserver,
-                public content::NotificationObserver,
-                public content::WebContentsDelegate,
-                public content::WebContentsObserver {
+                private WebPreferencesObserver,
+                private WebViewContentsHelperDelegate,
+                private content::NotificationObserver,
+                private content::WebContentsObserver {
  public:
   virtual ~WebView();
 
-  static WebView* FromWebContents(content::WebContents* web_contents);
+  struct Params {
+    Params() :
+        context(NULL),
+        incognito(false) {}
+
+    BrowserContext* context;
+    ScopedNewContentsHolder contents;
+    bool incognito;
+  };
+
+  virtual void Init(Params* params);
+
+  static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
 
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
+
+  void LoadData(const std::string& encodedData,
+                const std::string& mimeType,
+                const GURL& baseUrl);
 
   std::string GetTitle() const;
 
@@ -138,6 +153,8 @@ class WebView : public ScriptMessageTarget,
   void CancelGeolocationPermissionRequest(
       const PermissionRequest::ID& id);
 
+  void UpdateWebPreferences();
+
   virtual gfx::Rect GetContainerBounds() = 0;
   virtual bool IsVisible() const = 0;
 
@@ -158,87 +175,44 @@ class WebView : public ScriptMessageTarget,
   virtual void ViewportSizeChanged(const gfx::SizeF& size);
 
  protected:
-
-  struct Params {
-    Params() :
-        context(NULL),
-        contents(NULL),
-        incognito(false) {}
-
-    BrowserContext* context;
-    content::WebContents* contents;
-    bool incognito;
-  };
-
   WebView();
-
-  virtual bool Init(const Params& params);
-
 
  private:
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
-  bool InitCreatedWebView(WebView* view,
-                          content::WebContents* contents);
 
   // ScriptMessageTarget
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
   virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const OVERRIDE;
 
-  // BrowserContextObserver
-  void NotifyUserAgentStringChanged() FINAL;
-  void NotifyPopupBlockerEnabledChanged() FINAL;
-
   // WebPreferencesObserver
   void WebPreferencesDestroyed() FINAL;
-  void WebPreferencesValueChanged() FINAL;
 
   // content::NotificationObserver
   void Observe(int type,
                const content::NotificationSource& source,
                const content::NotificationDetails& details) FINAL;
 
-  // content::WebContentsDelegate
-  content::WebContents* OpenURLFromTab(content::WebContents* source,
-                                       const content::OpenURLParams& params) FINAL;
-  void NavigationStateChanged(const content::WebContents* source,
-                              unsigned changed_flags) FINAL;
-  bool ShouldCreateWebContents(
-      content::WebContents* source,
-      int route_id,
-      WindowContainerType window_container_type,
-      const base::string16& frame_name,
-      const GURL& target_url,
-      const std::string& partition_id,
-      content::SessionStorageNamespace* session_storage_namespace,
+  // WebViewContentsHelperDelegate
+  content::WebContents* OpenURL(const content::OpenURLParams& params) FINAL;
+  void NavigationStateChanged(unsigned flags) FINAL;
+  bool ShouldCreateWebContents(const GURL& target_url,
+                               WindowOpenDisposition disposition,
+                               bool user_gesture) FINAL;
+  bool CreateNewViewAndAdoptWebContents(
+      ScopedNewContentsHolder contents,
       WindowOpenDisposition disposition,
-      bool user_gesture) FINAL;
-  void WebContentsCreated(content::WebContents* source,
-                          int source_frame_id,
-                          const base::string16& frame_name,
-                          const GURL& target_url,
-                          content::WebContents* new_contents) FINAL;
-  void AddNewContents(content::WebContents* source,
-                      content::WebContents* new_contents,
-                      WindowOpenDisposition disposition,
-                      const gfx::Rect& initial_pos,
-                      bool user_gesture,
-                      bool* was_blocked) FINAL;
-  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
-  bool AddMessageToConsole(content::WebContents* source,
-			   int32 level,
-			   const base::string16& message,
-			   int32 line_no,
-			   const base::string16& source_id) FINAL;
-  content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
-  void RunFileChooser(content::WebContents* web_contents,
-                      const content::FileChooserParams& params) FINAL;
-  void ToggleFullscreenModeForTab(content::WebContents* source,
-                                  bool enter) FINAL;
-  bool IsFullscreenForTabOrPending(
-      const content::WebContents* source) const FINAL;
+      const gfx::Rect& initial_pos) FINAL;
+  void LoadProgressChanged(double progress) FINAL;
+  void AddMessageToConsole(int32 level,
+                           const base::string16& message,
+                           int32 line_no,
+                           const base::string16& source_id) FINAL;
+  bool RunFileChooser(const content::FileChooserParams& params) FINAL;
+  void ToggleFullscreenMode(bool enter) FINAL;
+  void NotifyWebPreferencesDestroyed() FINAL;
 
   // content::WebContentsObserver
   void RenderProcessGone(base::TerminationStatus status) FINAL;
@@ -293,8 +267,12 @@ class WebView : public ScriptMessageTarget,
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
+  void DidUpdateFaviconURL(
+      const std::vector<content::FaviconURL>& candidates) FINAL;
+
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
+  virtual void OnIconChanged(const GURL& icon);
   virtual void OnCommandsUpdated();
 
   virtual void OnLoadProgressChanged(double progress);
@@ -318,7 +296,7 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnToggleFullscreenMode(bool enter);
 
-  virtual void OnWebPreferencesChanged();
+  virtual void OnWebPreferencesDestroyed();
 
   virtual void OnRequestGeolocationPermission(
       scoped_ptr<GeolocationPermissionRequest> request);
@@ -333,13 +311,11 @@ class WebView : public ScriptMessageTarget,
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                     WindowOpenDisposition disposition);
 
-  // Please don't change the order of these. It's important that context_
-  // outlives web_contents_, otherwise web_contents_ gets left with a dangling
-  // pointer to its BrowserContext
-  ScopedBrowserContext context_;
   scoped_ptr<content::WebContentsImpl> web_contents_;
+  WebViewContentsHelper* web_contents_helper_;
 
   GURL initial_url_;
+  WebPreferences* initial_preferences_;
 
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;

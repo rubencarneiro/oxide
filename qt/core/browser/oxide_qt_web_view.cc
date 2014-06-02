@@ -21,6 +21,7 @@
 #include <QPointF>
 #include <QSizeF>
 #include <QString>
+#include <QtDebug>
 #include <QUrl>
 
 #include "base/strings/utf_string_conversions.h"
@@ -87,13 +88,9 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter) {}
 
-bool WebView::Init(const oxide::WebView::Params& params) {
-  if (!oxide::WebView::Init(params)) {
-    return false;
-  }
-
+void WebView::Init(oxide::WebView::Params* params) {
+  oxide::WebView::Init(params);
   adapter_->Initialized();
-  return true;
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -185,6 +182,10 @@ void WebView::OnTitleChanged() {
   adapter_->TitleChanged();
 }
 
+void WebView::OnIconChanged(const GURL& icon) {
+  adapter_->IconChanged(QUrl(QString::fromStdString(icon.spec())));
+}
+
 void WebView::OnCommandsUpdated() {
   adapter_->CommandsUpdated();
 }
@@ -239,8 +240,8 @@ void WebView::OnNavigationEntryChanged(int index) {
   adapter_->NavigationEntryChanged(index);
 }
 
-void WebView::OnWebPreferencesChanged() {
-  adapter_->WebPreferencesChanged();
+void WebView::OnWebPreferencesDestroyed() {
+  adapter_->WebPreferencesDestroyed();
 }
 
 void WebView::OnRequestGeolocationPermission(
@@ -339,7 +340,20 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 
   adapter_->NewViewRequested(&request);
 
-  return OxideQNewViewRequestPrivate::get(&request)->view.get();
+  WebView* view = OxideQNewViewRequestPrivate::get(&request)->view.get();
+  if (!view) {
+    qCritical() <<
+        "Either a webview wasn't created in WebView.newViewRequested, or the "
+        "request object was not passed to the new webview. *THIS IS AN "
+        "APPLICATION BUG*. Embedders must create a new webview in "
+        "WebView.newViewRequested and must pass the request object to the new "
+        "WebView. Failure to do this may result in render process crashes or "
+        "undefined behaviour. If you want to block a new webview from opening, "
+        "this must be done in WebView.navigationRequested. Alternatively, if "
+        "your application doesn't support multiple webviews, just don't "
+        "implement WebView.newViewRequested.";
+  }
+  return view;
 }
 
 // static

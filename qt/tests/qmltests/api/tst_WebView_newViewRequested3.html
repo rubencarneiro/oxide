@@ -1,0 +1,11 @@
+<html>
+<script>
+function handleClick() {
+ var param = (parseInt(document.location.search.replace(/^\?/, "")) || 0) + 1;
+ window.open("tst_WebView_newViewRequested3.html?" + param);
+}
+</script>
+<body>
+  <button id="button" onclick="handleClick();">Click me!</button>
+</body>
+</html>

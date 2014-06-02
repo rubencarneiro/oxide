@@ -10,7 +10,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
          },
        ],  # targets
      }],
-     [ 'use_x11==1', {
+     [ 'use_x11==1 or ozone_platform_ozonex==1', {
        # Hide X11 and related dependencies when use_x11=0
        'targets': [
          {
@@ -216,7 +216,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -371,17 +371,17 @@
+@@ -365,17 +365,17 @@
          }],
          ['OS=="android" or OS=="ios"', {
            'sources!': [
@@ -228,52 +228,13 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 -        ['use_x11==1', {
 +        ['OS == "linux"', {
            'dependencies': [
-             'gfx_x11',
+             'x/gfx_x11.gyp:gfx_x11',
            ],
          }],
          ['use_pango==1', {
            'dependencies': [
              '<(DEPTH)/build/linux/system.gyp:pangocairo',
            ],
-@@ -524,29 +524,37 @@
-           ],
-           'variables': {
-             'test_suite_name': 'gfx_unittests',
-           },
-           'includes': [ '../../build/apk_test.gypi' ],
-         },
-       ],
-     }],
--    ['use_x11 == 1', {
-+    ['OS == "linux"', {
-       'targets': [
-         {
-           'target_name': 'gfx_x11',
-           'type': '<(component)',
-           'dependencies': [
-             '../../base/base.gyp:base',
-             '../../build/linux/system.gyp:x11',
-             'gfx_geometry',
-           ],
-           'defines': [
-             'GFX_IMPLEMENTATION',
-           ],
-+          # Need 'target_conditions' to override filename_rules
-+          'target_conditions': [
-+            ['OS == "linux"', {
-+              'sources/': [
-+                ['include', '^x/'],
-+              ],
-+            }],
-+          ],
-           'sources': [
-             'x/x11_atom_cache.cc',
-             'x/x11_atom_cache.h',
-             'x/x11_connection.cc',
-             'x/x11_connection.h',
-             'x/x11_error_tracker.cc',
-             'x/x11_error_tracker.h',
-             'x/x11_types.cc',
 diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 --- a/ui/gfx/x/x11_types.cc
 +++ b/ui/gfx/x/x11_types.cc
@@ -349,7 +310,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -217,16 +217,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -233,16 +233,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -369,7 +330,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -280,17 +283,17 @@ struct GL_EXPORT DriverEGL {
+@@ -296,17 +299,17 @@ struct GL_EXPORT DriverEGL {
    void ClearBindings();
  
    ProcsEGL fn;
@@ -388,7 +349,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -320,16 +323,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -336,16 +339,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  

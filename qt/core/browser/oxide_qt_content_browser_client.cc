@@ -22,6 +22,7 @@
 
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
+#include "oxide_qt_web_preferences.h"
 
 namespace oxide {
 namespace qt {
@@ -32,14 +33,18 @@ base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
   return new MessagePump();
 }
 
-content::LocationProvider*
-ContentBrowserClient::OverrideSystemLocationProvider() {
-  return new LocationProvider();
+oxide::WebPreferences* ContentBrowserClient::CreateWebPreferences() {
+  return new WebPreferences();
 }
 
 bool ContentBrowserClient::IsTouchSupported() {
   // XXX: Is there a way to get notified if a touch device is added?
   return QTouchDevice::devices().size() > 0;
+}
+
+content::LocationProvider*
+ContentBrowserClient::OverrideSystemLocationProvider() {
+  return new LocationProvider();
 }
 
 } // namespace qt

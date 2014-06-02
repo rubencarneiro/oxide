@@ -37,7 +37,6 @@ import subcommand
 
 TAR_EXCLUDE_DIRS = [
   '.bzrignore',
-  '.channel',
   'third_party/chromium/src/breakpad/src/processor/testdata',
   'third_party/chromium/src/chrome/browser/resources/tracing/tests',
   'third_party/chromium/src/chrome/common/extensions/docs',
@@ -201,11 +200,6 @@ def cmd_tag(options, args):
     TagAlreadyExists
   )
   from bzrlib.workingtree import WorkingTree
-
-  with open(os.path.join(TOPSRCDIR, ".channel"), "r") as fd:
-    if fd.read().strip() == "trunk":
-      print("You shouldn't be creating releases from trunk", file=sys.stderr)
-      sys.exit(1)
 
   # XXX: Qt-specific
   v = VersionFileParser(os.path.join(TOPSRCDIR, "qt", "VERSION"))

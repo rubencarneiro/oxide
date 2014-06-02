@@ -20,7 +20,9 @@
 #include "base/bind.h"
 #include "base/callback.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
+#include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 
 #include "oxide_permission_request.h"
@@ -31,67 +33,38 @@ namespace oxide {
 GeolocationPermissionContext::GeolocationPermissionContext() {}
 
 void GeolocationPermissionContext::RequestGeolocationPermission(
-    int render_process_id,
-    int render_view_id,
+    content::WebContents* contents,
     int bridge_id,
     const GURL& requesting_frame,
     bool user_gesture,
     base::Callback<void(bool)> callback) {
-  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    content::BrowserThread::PostTask(
-        content::BrowserThread::UI,
-        FROM_HERE,
-        base::Bind(&GeolocationPermissionContext::RequestGeolocationPermission,
-                   this, render_process_id, render_view_id, bridge_id,
-                   requesting_frame, user_gesture, callback));
-    return;
-  }
-
-  content::RenderViewHost* rvh =
-      content::RenderViewHost::FromID(render_process_id, render_view_id);
-  if (!rvh) {
-    callback.Run(false);
-    return;
-  }
-
-  WebView* webview = WebView::FromRenderViewHost(rvh);
+  WebView* webview = WebView::FromWebContents(contents);
   if (!webview) {
     callback.Run(false);
     return;
   }
 
+  int render_process_id = contents->GetRenderProcessHost()->GetID();
+  int render_view_id = contents->GetRenderViewHost()->GetRoutingID();
   PermissionRequest::ID id(render_process_id, render_view_id, bridge_id);
+
   webview->RequestGeolocationPermission(id, requesting_frame.GetOrigin(),
                                         callback);
 }
 
 void GeolocationPermissionContext::CancelGeolocationPermissionRequest(
-    int render_process_id,
-    int render_view_id,
+    content::WebContents* contents,
     int bridge_id,
     const GURL& requesting_frame) {
-  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    content::BrowserThread::PostTask(
-        content::BrowserThread::UI,
-        FROM_HERE,
-        base::Bind(&GeolocationPermissionContext::CancelGeolocationPermissionRequest,
-                   this, render_process_id, render_view_id, bridge_id,
-                   requesting_frame));
-    return;
-  }
-
-  content::RenderViewHost* rvh =
-      content::RenderViewHost::FromID(render_process_id, render_view_id);
-  if (!rvh) {
-    return;
-  }
-
-  WebView* webview = WebView::FromRenderViewHost(rvh);
+  WebView* webview = WebView::FromWebContents(contents);
   if (!webview) {
     return;
   }
 
+  int render_process_id = contents->GetRenderProcessHost()->GetID();
+  int render_view_id = contents->GetRenderViewHost()->GetRoutingID();
   PermissionRequest::ID id(render_process_id, render_view_id, bridge_id);
+
   webview->CancelGeolocationPermissionRequest(id);
 }
 

@@ -443,8 +443,7 @@ content::GeolocationPermissionContext*
   return geolocation_permission_context_;
 }
 
-content::BrowserPluginGuestManagerDelegate*
-BrowserContext::GetGuestManagerDelegate() {
+content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
   return NULL;
 }
 
@@ -564,10 +563,6 @@ std::string BrowserContext::GetUserAgent() const {
 
 net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
   return io_data()->GetCookiePolicy();
-}
-
-void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
-  io_data()->SetCookiePolicy(policy);
 }
 
 content::CookieStoreConfig::SessionCookieMode

@@ -68,6 +68,7 @@ class OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
+  Q_PROPERTY(QUrl icon READ icon NOTIFY iconChanged)
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito NOTIFY incognitoChanged)
@@ -118,6 +119,8 @@ class OxideQQuickWebView : public QQuickItem {
   void setUrl(const QUrl& url);
 
   QString title() const;
+
+  QUrl icon() const;
 
   bool canGoBack() const;
   bool canGoForward() const;
@@ -178,10 +181,12 @@ class OxideQQuickWebView : public QQuickItem {
   void goForward();
   void stop();
   void reload();
+  void loadHtml(const QString& html, const QUrl& baseUrl = QUrl());
 
  Q_SIGNALS:
   void urlChanged();
   void titleChanged();
+  void iconChanged();
   void navigationHistoryChanged();
   void incognitoChanged();
   void loadingChanged(OxideQLoadEvent* loadEvent);
@@ -215,6 +220,9 @@ class OxideQQuickWebView : public QQuickItem {
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
+
+  void connectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
+  void disconnectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
 
   void geometryChanged(const QRectF& newGeometry,
                        const QRectF& oldGeometry) Q_DECL_FINAL;

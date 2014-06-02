@@ -20,15 +20,26 @@
 
 #include <QtDebug>
 
-OxideQWebPreferences::~OxideQWebPreferences() {}
+#include "qt/core/browser/oxide_qt_web_preferences.h"
 
-OxideQWebPreferences::OxideQWebPreferences(QObject* parent) :
-    QObject(parent),
-    d_ptr(new OxideQWebPreferencesPrivate(this)) {}
+OxideQWebPreferences::OxideQWebPreferences(OxideQWebPreferencesPrivate& dd,
+                                           QObject* parent)
+    : QObject(parent),
+      d_ptr(&dd) {}
+
+OxideQWebPreferences::~OxideQWebPreferences() {
+  Q_D(OxideQWebPreferences);
+
+  d->preferences()->set_api_handle(NULL);
+}
+
+OxideQWebPreferences::OxideQWebPreferences(QObject* parent)
+    : QObject(parent),
+      d_ptr(new OxideQWebPreferencesPrivate(this)) {}
 
 QString OxideQWebPreferences::standardFontFamily() const {
   Q_D(const OxideQWebPreferences);
-  return QString::fromStdString(d->preferences.StandardFontFamily());
+  return QString::fromStdString(d->preferences()->StandardFontFamily());
 }
 
 void OxideQWebPreferences::setStandardFontFamily(const QString& font) {
@@ -38,13 +49,13 @@ void OxideQWebPreferences::setStandardFontFamily(const QString& font) {
     return;
   }
 
-  d->preferences.SetStandardFontFamily(font.toStdString());
+  d->preferences()->SetStandardFontFamily(font.toStdString());
   Q_EMIT standardFontFamilyChanged();
 }
 
 QString OxideQWebPreferences::fixedFontFamily() const {
   Q_D(const OxideQWebPreferences);
-  return QString::fromStdString(d->preferences.FixedFontFamily());
+  return QString::fromStdString(d->preferences()->FixedFontFamily());
 }
 
 void OxideQWebPreferences::setFixedFontFamily(const QString& font) {
@@ -54,13 +65,13 @@ void OxideQWebPreferences::setFixedFontFamily(const QString& font) {
     return;
   }
 
-  d->preferences.SetFixedFontFamily(font.toStdString());
+  d->preferences()->SetFixedFontFamily(font.toStdString());
   Q_EMIT fixedFontFamilyChanged();
 }
 
 QString OxideQWebPreferences::serifFontFamily() const {
   Q_D(const OxideQWebPreferences);
-  return QString::fromStdString(d->preferences.SerifFontFamily());
+  return QString::fromStdString(d->preferences()->SerifFontFamily());
 }
 
 void OxideQWebPreferences::setSerifFontFamily(const QString& font) {
@@ -70,13 +81,13 @@ void OxideQWebPreferences::setSerifFontFamily(const QString& font) {
     return;
   }
 
-  d->preferences.SetSerifFontFamily(font.toStdString());
+  d->preferences()->SetSerifFontFamily(font.toStdString());
   Q_EMIT serifFontFamilyChanged();
 }
 
 QString OxideQWebPreferences::sansSerifFontFamily() const {
   Q_D(const OxideQWebPreferences);
-  return QString::fromStdString(d->preferences.SansSerifFontFamily());
+  return QString::fromStdString(d->preferences()->SansSerifFontFamily());
 }
 
 void OxideQWebPreferences::setSansSerifFontFamily(const QString& font) {
@@ -86,13 +97,13 @@ void OxideQWebPreferences::setSansSerifFontFamily(const QString& font) {
     return;
   }
 
-  d->preferences.SetSansSerifFontFamily(font.toStdString());
+  d->preferences()->SetSansSerifFontFamily(font.toStdString());
   Q_EMIT sansSerifFontFamilyChanged();
 }
 
 QString OxideQWebPreferences::defaultEncoding() const {
   Q_D(const OxideQWebPreferences);
-  return QString::fromStdString(d->preferences.default_encoding());
+  return QString::fromStdString(d->preferences()->default_encoding());
 }
 
 void OxideQWebPreferences::setDefaultEncoding(const QString& encoding) {
@@ -102,13 +113,13 @@ void OxideQWebPreferences::setDefaultEncoding(const QString& encoding) {
     return;
   }
 
-  d->preferences.SetDefaultEncoding(encoding.toStdString());
+  d->preferences()->SetDefaultEncoding(encoding.toStdString());
   Q_EMIT defaultEncodingChanged();
 }
 
 unsigned OxideQWebPreferences::defaultFontSize() const {
   Q_D(const OxideQWebPreferences);
-  return d->preferences.default_font_size();
+  return d->preferences()->default_font_size();
 }
 
 void OxideQWebPreferences::setDefaultFontSize(unsigned size) {
@@ -118,13 +129,13 @@ void OxideQWebPreferences::setDefaultFontSize(unsigned size) {
     return;
   }
 
-  d->preferences.SetDefaultFontSize(size);
+  d->preferences()->SetDefaultFontSize(size);
   Q_EMIT defaultFontSizeChanged();
 }
 
 unsigned OxideQWebPreferences::defaultFixedFontSize() const {
   Q_D(const OxideQWebPreferences);
-  return d->preferences.default_fixed_font_size();
+  return d->preferences()->default_fixed_font_size();
 }
 
 void OxideQWebPreferences::setDefaultFixedFontSize(unsigned size) {
@@ -134,13 +145,13 @@ void OxideQWebPreferences::setDefaultFixedFontSize(unsigned size) {
     return;
   }
 
-  d->preferences.SetDefaultFixedFontSize(size);
+  d->preferences()->SetDefaultFixedFontSize(size);
   Q_EMIT defaultFixedFontSizeChanged();
 }
 
 unsigned OxideQWebPreferences::minimumFontSize() const {
   Q_D(const OxideQWebPreferences);
-  return d->preferences.minimum_font_size();
+  return d->preferences()->minimum_font_size();
 }
 
 void OxideQWebPreferences::setMinimumFontSize(unsigned size) {
@@ -150,14 +161,14 @@ void OxideQWebPreferences::setMinimumFontSize(unsigned size) {
     return;
   }
 
-  d->preferences.SetMinimumFontSize(size);
+  d->preferences()->SetMinimumFontSize(size);
   Q_EMIT minimumFontSizeChanged();
 }
 
 #define BOOLEAN_PREF_IMPL(getter, setter, attr) \
   bool OxideQWebPreferences::getter() const { \
     Q_D(const OxideQWebPreferences); \
-    return d->preferences.TestAttribute( \
+    return d->preferences()->TestAttribute( \
         oxide::WebPreferences::ATTR_##attr); \
   } \
 \
@@ -166,7 +177,7 @@ void OxideQWebPreferences::setMinimumFontSize(unsigned size) {
     if (val == getter()) { \
       return; \
     } \
-    d->preferences.SetAttribute( \
+    d->preferences()->SetAttribute( \
         oxide::WebPreferences::ATTR_##attr, val); \
     Q_EMIT getter##Changed(); \
   }

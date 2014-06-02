@@ -178,6 +178,9 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void touchEnabledChanged();
 
  private:
+  Q_DECL_HIDDEN OxideQWebPreferences(OxideQWebPreferencesPrivate& dd,
+                                     QObject* parent = NULL);
+
   QScopedPointer<OxideQWebPreferencesPrivate> d_ptr;
 };
 

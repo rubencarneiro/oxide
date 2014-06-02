@@ -67,7 +67,6 @@ class BrowserContextIOData {
   scoped_refptr<BrowserContextDelegate> GetDelegate();
 
   virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
-  virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
   virtual content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const = 0;
 
   virtual bool IsPopupBlockerEnabled() const = 0;
@@ -174,7 +173,7 @@ class BrowserContext : public content::BrowserContext,
   virtual void SetUserAgent(const std::string& user_agent) = 0;
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
-  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
+  virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
 
   content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
 
@@ -250,7 +249,7 @@ class BrowserContext : public content::BrowserContext,
   content::GeolocationPermissionContext*
       GetGeolocationPermissionContext() FINAL;
 
-  content::BrowserPluginGuestManagerDelegate* GetGuestManagerDelegate() FINAL;
+  content::BrowserPluginGuestManager* GetGuestManager() FINAL;
 
   quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
 
