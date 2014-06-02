@@ -30,6 +30,7 @@
 #include "net/base/static_cookie_policy.h"
 #include "url/gurl.h"
 
+#include "qt/core/app/oxide_qt_content_main_delegate.h"
 #include "qt/core/gl/oxide_qt_shared_gl_context.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -165,7 +166,7 @@ QOpenGLContext* WebContextAdapter::sharedGLContext() {
 
 /* static */
 void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
-  CHECK(!oxide::BrowserProcessMain::Exists()) <<
+  CHECK(!oxide::BrowserProcessMain::IsRunning()) <<
       "WebContextAdapter::setSharedGLContext must be called before the "
       "browser components are started!";
 
@@ -174,9 +175,12 @@ void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
 
 /* static */
 void WebContextAdapter::ensureChromiumStarted() {
-  if (!oxide::BrowserProcessMain::Exists()) {
+  if (!oxide::BrowserProcessMain::IsRunning()) {
     scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
-    oxide::BrowserProcessMain::StartIfNotRunning(shared_gl_context);
+    scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+    oxide::BrowserProcessMain::Start(
+        shared_gl_context,
+        delegate.PassAs<oxide::ContentMainDelegate>());
   }
 }
 
@@ -279,7 +283,7 @@ WebContextAdapter::WebContextAdapter(
   static bool run_once = false;
   if (!run_once) {
     run_once = true;
-    qAddPostRoutine(oxide::BrowserProcessMain::ShutdownIfRunning);
+    qAddPostRoutine(oxide::BrowserProcessMain::Shutdown);
   }
 }
 

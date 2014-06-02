@@ -41,11 +41,10 @@ oxide::ContentClient* ContentMainDelegate::CreateContentClient() {
 
 ContentMainDelegate::ContentMainDelegate() {}
 
-} // namespace qt
-
 // static
 ContentMainDelegate* ContentMainDelegate::Create() {
-  return new qt::ContentMainDelegate();
+  return new ContentMainDelegate();
 }
 
+} // namespace qt
 } // namespace oxide

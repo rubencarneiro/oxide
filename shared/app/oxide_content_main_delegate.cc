@@ -119,7 +119,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       subprocess_exe = base::FilePath(FILE_PATH_LITERAL(OXIDE_SUBPROCESS_PATH));
       if (!subprocess_exe.IsAbsolute()) {
         Dl_info info;
-        int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
+        int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::IsRunning),
                         &info);
         DCHECK_NE(rv, 0) << "Failed to determine module path";
 
@@ -153,7 +153,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     gfx::GLSurface::InitializeOneOff();
 
     SharedGLContext* shared_gl_context =
-        BrowserProcessMain::instance()->shared_gl_context();
+        BrowserProcessMain::instance()->GetSharedGLContext();
     if (!shared_gl_context ||
         shared_gl_context->GetImplementation() != gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
@@ -233,7 +233,7 @@ int ContentMainDelegate::RunProcess(
     const std::string& process_type,
     const content::MainFunctionParams& main_function_params) {
   if (process_type.empty()) {
-    if (!BrowserProcessMain::Exists()) {
+    if (!BrowserProcessMain::IsRunning()) {
       // We arrive here if some calls the renderer with no --process-type
       LOG(ERROR) <<
           "The Oxide renderer cannot be used to run a browser process";
@@ -248,7 +248,7 @@ int ContentMainDelegate::RunProcess(
 }
 
 void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
-  if (process_type.empty() && BrowserProcessMain::Exists()) {
+  if (process_type.empty() && BrowserProcessMain::IsRunning()) {
     BrowserProcessMain::instance()->ShutdownBrowserMain();
   }
 }

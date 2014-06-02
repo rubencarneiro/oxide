@@ -15,23 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_main.h"
+#include "oxide_qt_main.h"
 
 #include "base/memory/scoped_ptr.h"
 #include "content/public/app/content_main.h"
 
-#include "oxide_content_main_delegate.h"
+#include "oxide_qt_content_main_delegate.h"
 
 namespace oxide {
+namespace qt {
 
 int OxideMain(int argc, const char** argv) {
-  scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+  ContentMainDelegate delegate;
 
-  content::ContentMainParams params(delegate.get());
+  content::ContentMainParams params(&delegate);
   params.argc = argc;
   params.argv = argv;
 
   return content::ContentMain(params);
 }
 
+} // namespace qt
 } // namespace oxide

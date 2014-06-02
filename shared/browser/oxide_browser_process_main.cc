@@ -30,126 +30,144 @@
 
 namespace oxide {
 
+class BrowserProcessMainImpl : public BrowserProcessMain {
+ public:
+  BrowserProcessMainImpl();
+  virtual ~BrowserProcessMainImpl();
+
+  void StartInternal(scoped_refptr<SharedGLContext> shared_gl_context,
+                     scoped_ptr<ContentMainDelegate> delegate);
+  void ShutdownInternal();
+
+  bool IsRunningInternal() {
+    return state_ == STATE_STARTED || state_ == STATE_SHUTTING_DOWN;
+  }
+
+  SharedGLContext* GetSharedGLContext() const FINAL {
+    return shared_gl_context_;
+  }
+
+ private:
+  int RunBrowserMain(
+      const content::MainFunctionParams& main_function_params) FINAL;
+  void ShutdownBrowserMain() FINAL;
+
+  enum State {
+    STATE_NOT_STARTED,
+    STATE_STARTED,
+    STATE_SHUTTING_DOWN,
+    STATE_SHUTDOWN
+  };
+  State state_;
+
+  scoped_refptr<SharedGLContext> shared_gl_context_;
+
+  // XXX: Don't change the order of these
+  scoped_ptr<ContentMainDelegate> main_delegate_;
+  scoped_ptr<content::ContentMainRunner> main_runner_;
+  scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
+};
+
 namespace {
-scoped_ptr<BrowserProcessMain> g_instance;
+BrowserProcessMainImpl* GetInstance() {
+  static BrowserProcessMainImpl g_instance;
+  return &g_instance;
+}
 }
 
-BrowserProcessMain::BrowserProcessMain(
-    scoped_refptr<oxide::SharedGLContext> shared_gl_context) :
-    did_shutdown_(false),
-    shared_gl_context_(shared_gl_context),
-    main_delegate_(ContentMainDelegate::Create()),
-    main_runner_(content::ContentMainRunner::Create()) {
-  CHECK(!g_instance) << "Should only have one BrowserProcessMain";
-}
-
-int BrowserProcessMain::RunBrowserMain(
+int BrowserProcessMainImpl::RunBrowserMain(
     const content::MainFunctionParams& main_function_params) {
   CHECK(!browser_main_runner_);
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
   int rv = browser_main_runner_->Initialize(main_function_params);
   if (rv != -1) {
-    LOG(ERROR) << "Failed to initialize the Oxide browser main runner";
+    LOG(ERROR) << "Failed to initialize BrowserMainRunner";
     return rv;
   }
 
   return browser_main_runner_->Run();
 }
 
-void BrowserProcessMain::ShutdownBrowserMain() {
+void BrowserProcessMainImpl::ShutdownBrowserMain() {
   CHECK(browser_main_runner_);
   browser_main_runner_->Shutdown();
 }
 
-bool BrowserProcessMain::Init() {
-  static bool initialized = false;
-  if (initialized) {
-    LOG(ERROR) <<
-        "Cannot restart the Oxide main components once they have been shut down";
-    return false;
-  }
+BrowserProcessMainImpl::BrowserProcessMainImpl()
+    : state_(STATE_NOT_STARTED) {}
 
-  initialized = true;
+BrowserProcessMainImpl::~BrowserProcessMainImpl() {
+  CHECK(state_ == STATE_NOT_STARTED || state_ == STATE_SHUTDOWN) <<
+      "BrowserProcessMain::Shutdown() should be called before process exit";
+}
 
-  if (!shared_gl_context_) {
-    DLOG(INFO) << "No shared GL context has been created. "
+void BrowserProcessMainImpl::StartInternal(
+    scoped_refptr<SharedGLContext> shared_gl_context,
+    scoped_ptr<ContentMainDelegate> delegate) {
+  CHECK_EQ(state_, STATE_NOT_STARTED) <<
+      "Browser components cannot be started more than once";
+  CHECK(delegate) << "No ContentMainDelegate provided";
+
+  state_ = STATE_STARTED;;
+
+  if (!shared_gl_context) {
+    DLOG(INFO) << "No shared GL context has been provided. "
                << "Compositing will not work";
   }
 
-  if (!main_runner_ || !main_delegate_) {
-    LOG(ERROR) << "Failed to create the Oxide main components";
-    return false;
-  }
+  shared_gl_context_ = shared_gl_context;
+  main_delegate_ = delegate.Pass();
+
+  main_runner_.reset(content::ContentMainRunner::Create());
+  CHECK(main_runner_.get()) << "Failed to create ContentMainRunner";
 
   content::ContentMainParams params(main_delegate_.get());
-  if (main_runner_->Initialize(params) != -1) {
-    LOG(ERROR) << "Failed to initialize Oxide main runner";
-    return false;
-  }
+  CHECK_EQ(main_runner_->Initialize(params), -1) <<
+      "Failed to initialize ContentMainRunner";
 
-  if (main_runner_->Run() != 0) {
-    LOG(ERROR) << "Failed to run the Oxide main runner";
-    return false;
-  }
-
-  return true;
+  CHECK_EQ(main_runner_->Run(), 0) << "Failed to run ContentMainRunner";
 }
 
-void BrowserProcessMain::Shutdown() {
-  if (did_shutdown_) {
-    return;
-  }
-
-  did_shutdown_ = true;
+void BrowserProcessMainImpl::ShutdownInternal() {
+  CHECK_EQ(state_, STATE_STARTED);
+  state_ = STATE_SHUTTING_DOWN;
 
   BrowserContext::AssertNoContextsExist();
 
   // XXX: Better off in BrowserProcessMainParts?
   MessageLoopForUI::current()->Stop();
   main_runner_->Shutdown();
+
+  state_ = STATE_SHUTDOWN;
 }
 
-BrowserProcessMain::~BrowserProcessMain() {
-  CHECK(did_shutdown_) <<
-      "BrowserProcessMain is being deleted without calling Quit()";
+BrowserProcessMain::BrowserProcessMain() {}
+
+BrowserProcessMain::~BrowserProcessMain() {}
+
+// static
+void BrowserProcessMain::Start(
+    scoped_refptr<SharedGLContext> shared_gl_context,
+    scoped_ptr<ContentMainDelegate> delegate) {
+  GetInstance()->StartInternal(shared_gl_context, delegate.Pass());
 }
 
 // static
-bool BrowserProcessMain::StartIfNotRunning(
-    scoped_refptr<oxide::SharedGLContext> shared_gl_context) {
-  if (g_instance) {
-    CHECK_EQ(g_instance->shared_gl_context(), shared_gl_context) <<
-        "BrowserProcessMain::StartIfNotRunning() called more than once with "
-        "a different shared GL context";
-    return true;
-  }
-
-  g_instance.reset(new BrowserProcessMain(shared_gl_context));
-  if (!g_instance->Init()) {
-    g_instance.reset();
-  }
-
-  return Exists();
+void BrowserProcessMain::Shutdown() {
+  GetInstance()->ShutdownInternal();
 }
 
 // static
-void BrowserProcessMain::ShutdownIfRunning() {
-  if (g_instance) {
-    g_instance->Shutdown();
-    g_instance.reset();
-  }
-}
-
-// static
-bool BrowserProcessMain::Exists() {
-  return g_instance != NULL;
+bool BrowserProcessMain::IsRunning() {
+  return GetInstance()->IsRunningInternal();
 }
 
 // static
 BrowserProcessMain* BrowserProcessMain::instance() {
-  CHECK(g_instance) << "BrowserProcessMain instance hasn't been created yet";
-  return g_instance.get();
+  CHECK(IsRunning()) <<
+      "Cannot access BrowserProcessMain singleton when not running";
+  return GetInstance();
 }
 
 } // namespace oxide

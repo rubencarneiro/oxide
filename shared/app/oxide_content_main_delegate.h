@@ -28,8 +28,6 @@ class ContentClient;
 
 class ContentMainDelegate : public content::ContentMainDelegate {
  public:
-  static ContentMainDelegate* Create();
-
   virtual ~ContentMainDelegate();
 
   bool BasicStartupComplete(int* exit_code) FINAL;

@@ -210,8 +210,6 @@
       'sources': [
         'app/oxide_content_main_delegate.cc',
         'app/oxide_content_main_delegate.h',
-        'app/oxide_main.cc',
-        'app/oxide_main.h',
         'browser/compositor_util.cc',
         'browser/oxide_access_token_store.cc',
         'browser/oxide_access_token_store.h',

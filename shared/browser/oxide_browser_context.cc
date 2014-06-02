@@ -461,7 +461,7 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_handle_(io_data) {
-  CHECK(BrowserProcessMain::Exists()) <<
+  CHECK(BrowserProcessMain::IsRunning()) <<
       "The main browser process components must be started before " <<
       "creating a context";
 

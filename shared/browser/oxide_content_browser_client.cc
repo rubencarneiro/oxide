@@ -344,7 +344,7 @@ ContentBrowserClient::OverrideSystemLocationProvider() {
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   SharedGLContext* context =
-      BrowserProcessMain::instance()->shared_gl_context();
+      BrowserProcessMain::instance()->GetSharedGLContext();
   if (!context) {
     return NULL;
   }
