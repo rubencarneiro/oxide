@@ -56,7 +56,3 @@ IPC_SYNC_MESSAGE_CONTROL1_2(OxideHostMsg_GetUserAgentOverride,
                             GURL,
                             std::string,
                             bool)
-
-IPC_MESSAGE_ROUTED2(OxideHostMsg_FrameCreated,
-                    long long /* parent */,
-                    long long /* frame */)
