@@ -171,6 +171,22 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     }
 
+    const char* form_factor_string = NULL;
+    switch (form_factor) {
+      case FORM_FACTOR_DESKTOP:
+        form_factor_string = switches::kFormFactorDesktop;
+        break;
+      case FORM_FACTOR_TABLET:
+        form_factor_string = switches::kFormFactorTablet;
+        break;
+      case FORM_FACTOR_PHONE:
+        form_factor_string = switches::kFormFactorPhone;
+        break;
+      default:
+        NOTREACHED();
+    }
+    command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
+
     const char* renderer_cmd_prefix = GetEnvironmentOption("RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,

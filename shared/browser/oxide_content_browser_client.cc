@@ -241,26 +241,11 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
       command_line->GetSwitchValueASCII(switches::kProcessType);
   if (process_type == switches::kRendererProcess) {
     static const char* const kSwitchNames[] = {
-      switches::kEnableGoogleTalkPlugin
+      switches::kEnableGoogleTalkPlugin,
+      switches::kFormFactor
     };
     command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                    kSwitchNames, arraysize(kSwitchNames));
-
-    const char* form_factor_string = NULL;
-    switch (GetFormFactorHint()) {
-      case FORM_FACTOR_DESKTOP:
-        form_factor_string = switches::kFormFactorDesktop;
-        break;
-      case FORM_FACTOR_TABLET:
-        form_factor_string = switches::kFormFactorTablet;
-        break;
-      case FORM_FACTOR_PHONE:
-        form_factor_string = switches::kFormFactorPhone;
-        break;
-      default:
-        NOTREACHED();
-    }
-    command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
 
     content::RenderProcessHost* host =
         content::RenderProcessHost::FromID(child_process_id);
