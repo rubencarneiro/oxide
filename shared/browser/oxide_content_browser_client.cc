@@ -207,10 +207,10 @@ void ContentBrowserClient::RenderProcessWillLaunch(
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
     content::BrowserContext* browser_context,
     content::ProtocolHandlerMap* protocol_handlers,
-    content::ProtocolHandlerScopedVector protocol_interceptors) {
+    content::URLRequestInterceptorScopedVector request_interceptors) {
   return BrowserContext::FromContent(
       browser_context)->CreateRequestContext(protocol_handlers,
-                                             protocol_interceptors.Pass());
+                                             request_interceptors.Pass());
 }
 
 net::URLRequestContextGetter*
@@ -219,7 +219,7 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
     const base::FilePath& partition_path,
     bool in_memory,
     content::ProtocolHandlerMap* protocol_handlers,
-    content::ProtocolHandlerScopedVector protocol_interceptors) {
+    content::URLRequestInterceptorScopedVector request_interceptors) {
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
