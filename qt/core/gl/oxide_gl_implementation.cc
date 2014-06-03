@@ -30,8 +30,7 @@ void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls) {
     impls->push_back(gfx::kGLImplementationDesktopGL);
     impls->push_back(gfx::kGLImplementationEGLGLES2);
     impls->push_back(gfx::kGLImplementationOSMesaGL);
-  } else if (platform == "ubuntu" ||
-             platform == "ubuntumirclient") {
+  } else if (platform.startsWith("ubuntu")) {
     impls->push_back(gfx::kGLImplementationEGLGLES2);
   } else {
     DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
