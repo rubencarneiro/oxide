@@ -239,8 +239,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
-  bool is_hidden_;
-
   content::RenderWidgetHostImpl* host_;
 
   gfx::GLSurfaceHandle shared_surface_handle_;

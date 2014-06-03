@@ -115,6 +115,7 @@ void BrowserProcessMainImpl::StartInternal(
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
+  CHECK_NE(native_display, 0) << "Invalid native display handle";
 
   state_ = STATE_STARTED;;
 

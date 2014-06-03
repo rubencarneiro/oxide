@@ -416,7 +416,7 @@ void RenderWidgetHostView::OnTextureResourcesAvailable(
 }
 
 bool RenderWidgetHostView::ShouldCompositeNewFrame() {
-  if (is_hidden_) {
+  if (host()->is_hidden()) {
     return false;
   }
 
@@ -521,7 +521,6 @@ void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {}
 
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     content::RenderWidgetHostViewBase(),
-    is_hidden_(false),
     host_(content::RenderWidgetHostImpl::From(host)),
     selection_cursor_position_(0),
     selection_anchor_position_(0),
@@ -535,22 +534,10 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
 }
 
 void RenderWidgetHostView::WasShown() {
-  if (!is_hidden_) {
-    return;
-  }
-
-  is_hidden_ = false;
-
   host()->WasShown();
 }
 
 void RenderWidgetHostView::WasHidden() {
-  if (is_hidden_) {
-    return;
-  }
-
-  is_hidden_ = true;
-
   host()->WasHidden();
 }
 
