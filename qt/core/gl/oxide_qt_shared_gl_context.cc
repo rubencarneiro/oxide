@@ -46,7 +46,7 @@ SharedGLContext::SharedGLContext(QOpenGLContext* context) :
     if (!handle_) {
       implementation_ = gfx::kGLImplementationNone;
     }
-  } else if (platform.startsWith("ubuntu") {
+  } else if (platform.startsWith("ubuntu")) {
     handle_ = pni->nativeResourceForContext("eglcontext", context);
     if (handle_) {
       implementation_ = gfx::kGLImplementationEGLGLES2;
