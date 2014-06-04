@@ -20,6 +20,7 @@
       ['_target_name=="content_browser"', {
         'sources/': [
           ['exclude', 'compositor_util\\.cc'],
+          ['exclude', 'power_save_blocker_ozone\\.cc'],
           ['exclude', 'render_widget_host_view_aura\\.cc'],
           ['exclude', 'touch_editable_impl_aura\\.cc'],
           ['exclude', 'web_contents_view_aura\\.cc'],
