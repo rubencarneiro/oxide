@@ -176,6 +176,7 @@
         'oxide_packed_resources',
         'oxide_extra_resources',
         '<(DEPTH)/base/base.gyp:base',
+        '<(DEPTH)/build/linux/system.gyp:dbus',
         '<(DEPTH)/build/linux/system.gyp:fontconfig',
         '<(DEPTH)/content/content.gyp:content_app_both',
         '<(DEPTH)/content/content.gyp:content_browser',
