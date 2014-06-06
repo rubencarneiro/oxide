@@ -21,6 +21,7 @@
 #include "base/logging.h"
 #include "base/native_library.h"
 #include "ui/gfx/vsync_provider.h"
+#include "ui/gl/gl_bindings.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 
@@ -45,8 +46,6 @@ base::NativeLibrary LoadLibrary(const char* filename) {
 
 } // namespace
 
-OzoneSurfaceFactory::OzoneSurfaceFactory() {}
-
 gfx::SurfaceFactoryOzone::HardwareState
 OzoneSurfaceFactory::InitializeHardware() {
   return gfx::SurfaceFactoryOzone::INITIALIZED;
@@ -59,12 +58,6 @@ intptr_t OzoneSurfaceFactory::GetNativeDisplay() {
 }
 
 gfx::AcceleratedWidget OzoneSurfaceFactory::GetAcceleratedWidget() {
-  NOTREACHED();
-  return 0;
-}
-
-gfx::AcceleratedWidget OzoneSurfaceFactory::RealizeAcceleratedWidget(
-    gfx::AcceleratedWidget w) {
   NOTREACHED();
   return 0;
 }
@@ -101,15 +94,36 @@ bool OzoneSurfaceFactory::LoadEGLGLES2Bindings(
   return true;
 }
 
-bool OzoneSurfaceFactory::AttemptToResizeAcceleratedWidget(
-    gfx::AcceleratedWidget w,
-    const gfx::Rect& bounds) {
-  return false;
+const int32* OzoneSurfaceFactory::GetEGLSurfaceProperties(
+    const int32* desired_list) {
+  // The Mir EGL backend in mesa doesn't support pbuffer surfaces,
+  // so the default attributes passed to eglChooseConfig in Chromium
+  // will result in 0 configs - see https://launchpad.net/bugs/1307709
+
+  // This detection is a bit of a hack. Not sure if there's a better way
+  // to do this?
+  char* egl_platform = getenv("EGL_PLATFORM");
+  if (!egl_platform || strcmp(egl_platform, "mir") != 0) {
+    return desired_list;
+  }
+ 
+  // We should probably filter EGL_PBUFFER_BIT out of desired_list,
+  // but for now just copy kConfigAttribs from gl_surface_egl.cc and omit
+  // EGL_PBUFFER_BIT as it's easier
+  static const EGLint kConfigAttribs[] = {
+    EGL_BUFFER_SIZE, 32,
+    EGL_ALPHA_SIZE, 8,
+    EGL_BLUE_SIZE, 8,
+    EGL_GREEN_SIZE, 8,
+    EGL_RED_SIZE, 8,
+    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+    EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+    EGL_NONE
+  };
+
+  return kConfigAttribs;
 }
 
-scoped_ptr<gfx::VSyncProvider> OzoneSurfaceFactory::CreateVSyncProvider(
-    gfx::AcceleratedWidget w) {
-  return scoped_ptr<gfx::VSyncProvider>();
-}
+OzoneSurfaceFactory::OzoneSurfaceFactory() {}
 
 } // namespace oxide
