@@ -26,8 +26,7 @@
 #include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
-#include "oxide_browser_process_main.h"
-#include "oxide_default_screen_info.h"
+#include "shared/browser/oxide_default_screen_info.h"
 
 namespace oxide {
 
@@ -40,9 +39,6 @@ bool IsUbuntuPhoneOrTablet() {
     return false;
   }
 
-  NativeDisplayType native_display =
-      BrowserProcessMain::instance()->GetNativeDisplay();
-
   typedef EGLDisplay (*f_eglGetDisplay)(NativeDisplayType);
   f_eglGetDisplay eglGetDisplay =
       reinterpret_cast<f_eglGetDisplay>(egl.GetFunctionPointer("eglGetDisplay"));
@@ -50,7 +46,7 @@ bool IsUbuntuPhoneOrTablet() {
     LOG(ERROR) << "Failed to resolve eglGetDisplay";
     return false;
   }
-  EGLDisplay display = eglGetDisplay(native_display);
+  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
   if (display == EGL_NO_DISPLAY) {
     LOG(ERROR) << "Failed to get EGL default display";
     return false;
