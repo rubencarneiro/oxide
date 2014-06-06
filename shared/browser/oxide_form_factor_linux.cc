@@ -77,16 +77,6 @@ bool IsUbuntuPhoneOrTablet() {
   }
   const char* vendor = eglQueryString(display, EGL_VENDOR);
 
-  typedef EGLBoolean (*f_eglTerminate)(EGLDisplay);
-  f_eglTerminate eglTerminate =
-      reinterpret_cast<f_eglTerminate>(egl.GetFunctionPointer("eglTerminate"));
-  if (!eglTerminate) {
-      LOG(ERROR) << "Failed to resolve eglTerminate";
-  }
-  if (!eglTerminate(display)) {
-    LOG(ERROR) << "eglTerminate failed";
-  }
-
   return LowerCaseEqualsASCII(std::string(vendor), "android");
 }
 
