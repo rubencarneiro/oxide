@@ -18,6 +18,7 @@
 #include "oxide_form_factor.h"
 
 #include <algorithm>
+#include <stdlib.h>
 
 #include "base/files/file_path.h"
 #include "base/logging.h"
@@ -33,6 +34,12 @@ namespace oxide {
 namespace {
 
 bool IsUbuntuPhoneOrTablet() {
+  if (getenv("DISPLAY")) {
+    // Running on X. Bail early because this code seems to cause other
+    // problems (see https://launchpad.net/bugs/1327319)
+    return false;
+  }
+
   base::ScopedNativeLibrary egl(
       base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
   if (!egl.is_valid()) {
