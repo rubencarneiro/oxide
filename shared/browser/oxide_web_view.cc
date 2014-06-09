@@ -340,6 +340,11 @@ void WebView::NotifyWebPreferencesDestroyed() {
   OnWebPreferencesDestroyed();
 }
 
+void WebView::HandleKeyboardEvent(
+    const content::NativeWebKeyboardEvent& event) {
+  OnUnhandledKeyboardEvent(event);
+}
+
 void WebView::RenderProcessGone(base::TerminationStatus status) {
   geolocation_permission_requests_.CancelAllPending();
 }
@@ -519,6 +524,9 @@ void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
     scoped_ptr<GeolocationPermissionRequest> request) {}
+
+void WebView::OnUnhandledKeyboardEvent(
+    const content::NativeWebKeyboardEvent& event) {}
 
 bool WebView::OnAddMessageToConsole(int32 level,
                                     const base::string16& message,
