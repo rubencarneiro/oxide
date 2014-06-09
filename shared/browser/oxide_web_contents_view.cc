@@ -119,12 +119,11 @@ content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
   WebView* view = GetWebView();
   if (view) {
     rwhv->Init(view);
-  }
-
-  if (!content::RenderWidgetHostImpl::From(render_widget_host)->is_hidden()) {
-    rwhv->Show();
-  } else {
-    rwhv->Hide();
+    // As RWHV contains the plumbing from WebView::UpdateVisibility to
+    // RenderWidgetHostImpl::Was{Shown,Hidden}, RWHI::is_hidden could be
+    // out of date. This ensures that we sync RWHI::is_hidden with the
+    // real visibility of the webview - see https://launchpad.net/bugs/1322622
+    view->UpdateVisibility(view->IsVisible());
   }
 
   return rwhv;

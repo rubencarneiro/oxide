@@ -71,7 +71,7 @@ void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
 
   GLShareGroup* group = NULL;
   oxide::SharedGLContext* context =
-      oxide::BrowserProcessMain::instance()->shared_gl_context();
+      oxide::BrowserProcessMain::instance()->GetSharedGLContext();
   if (context) {
     group = context->share_group();
   }

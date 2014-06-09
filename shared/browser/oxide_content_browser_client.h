@@ -42,6 +42,7 @@ namespace oxide {
 class GLShareGroup;
 class SharedGLContext;
 class WebFrameTree;
+class WebPreferences;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
  public:
@@ -49,11 +50,14 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   virtual base::MessagePump* CreateMessagePumpForUI() = 0;
 
+  virtual WebPreferences* CreateWebPreferences() = 0;
+
  protected:
   // Limit default constructor access to derived classes
   ContentBrowserClient();
 
  private:
+  // content::ContentBrowserClient implementation
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) FINAL;
 
@@ -62,7 +66,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   net::URLRequestContextGetter* CreateRequestContext(
       content::BrowserContext* browser_context,
       content::ProtocolHandlerMap* protocol_handlers,
-      content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
+      content::URLRequestInterceptorScopedVector request_interceptors) FINAL;
 
   net::URLRequestContextGetter*
       CreateRequestContextForStoragePartition(
@@ -70,7 +74,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
         const base::FilePath& partition_path,
         bool in_memory,
         content::ProtocolHandlerMap* protocol_handlers,
-        content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
+        content::URLRequestInterceptorScopedVector request_interceptors) FINAL;
 
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;
@@ -121,6 +125,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;
 
+  // Should be subclassed
   virtual bool IsTouchSupported();
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);

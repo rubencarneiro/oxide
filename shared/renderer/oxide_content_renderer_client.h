@@ -26,7 +26,7 @@
 
 namespace oxide {
 
-class ProcessObserver;
+class RenderProcessObserver;
 class UserScriptSlave;
 
 class ContentRendererClient FINAL : public content::ContentRendererClient {
@@ -52,7 +52,7 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
   bool GetUserAgentOverride(const GURL& url,
                             std::string* user_agent) FINAL;
 
-  scoped_ptr<ProcessObserver> process_observer_;
+  scoped_ptr<RenderProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);

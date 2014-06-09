@@ -25,6 +25,10 @@ namespace content {
 
 namespace {
 gfx::NativeEvent CopyEvent(gfx::NativeEvent event) {
+  if (!event) {
+    return NULL;
+  }
+
   return reinterpret_cast<gfx::NativeEvent>(
       new QKeyEvent(*reinterpret_cast<QKeyEvent*>(event)));
 }

@@ -20,7 +20,6 @@
 #include "base/lazy_instance.h"
 
 #include "qt/core/browser/oxide_qt_content_browser_client.h"
-#include "qt/core/common/oxide_qt_content_client.h"
 
 namespace oxide {
 namespace qt {
@@ -35,17 +34,12 @@ ContentMainDelegate::CreateContentBrowserClient() {
   return g_content_browser_client.Pointer();
 }
 
-oxide::ContentClient* ContentMainDelegate::CreateContentClient() {
-  return ContentClient::GetInstance();
-}
-
 ContentMainDelegate::ContentMainDelegate() {}
-
-} // namespace qt
 
 // static
 ContentMainDelegate* ContentMainDelegate::Create() {
-  return new qt::ContentMainDelegate();
+  return new ContentMainDelegate();
 }
 
+} // namespace qt
 } // namespace oxide

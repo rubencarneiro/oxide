@@ -28,12 +28,11 @@ class BrowserContextObserver {
 
   virtual void BrowserContextDestroyed() {}
 
-  virtual void NotifyUserAgentStringChanged() {}
-
   virtual void NotifyPopupBlockerEnabledChanged() {}
 
  protected:
   BrowserContextObserver();
+  BrowserContextObserver(BrowserContext* context);
 
   void Observe(BrowserContext* context);
 

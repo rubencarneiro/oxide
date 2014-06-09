@@ -20,7 +20,7 @@
 #include "base/bind.h"
 #include "base/callback.h"
 #include "base/files/file_path.h"
-#include "base/files/file_util_proxy.h"
+#include "base/files/file_proxy.h"
 #include "base/message_loop/message_loop_proxy.h"
 
 namespace oxide {
@@ -54,13 +54,11 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
       AsyncFileJobImpl(task_runner),
       file_path_(file_path),
       callback_(callback),
-      file_(base::kInvalidPlatformFileValue) {}
+      file_proxy_(task_runner) {}
 
   ~GetFileContentsJobImpl() {
-    if (file_ != base::kInvalidPlatformFileValue) {
-      base::FileUtilProxy::Close(
-          task_runner(), file_,
-          base::Bind(&GetFileContentsJobImpl::OnFileClosed));
+    if (file_proxy_.IsValid()) {
+      file_proxy_.Close(base::FileProxy::StatusCallback());
     }
   }
 
@@ -70,17 +68,15 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
       return;
     }
 
-    if (!base::FileUtilProxy::CreateOrOpen(
-        task_runner(), file_path_,
-        base::File::FLAG_OPEN | base::File::FLAG_READ,
-        base::Bind(&GetFileContentsJobImpl::OnFileOpened, this))) {
+    if (!file_proxy_.CreateOrOpen(
+            file_path_,
+            base::File::FLAG_OPEN | base::File::FLAG_READ,
+            base::Bind(&GetFileContentsJobImpl::OnFileOpened, this))) {
       callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
     }
   }
 
-  void OnFileOpened(base::File::Error error,
-                    base::PassPlatformFile file,
-                    bool created) {
+  void OnFileOpened(base::File::Error error) {
     if (cancelled()) {
       return;
     }
@@ -90,10 +86,8 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
       return;
     }
 
-    file_ = file.ReleaseValue();
-    if (!base::FileUtilProxy::GetFileInfoFromPlatformFile(
-        task_runner(), file_,
-        base::Bind(&GetFileContentsJobImpl::OnGotFileInfo, this))) {
+    if (!file_proxy_.GetInfo(
+            base::Bind(&GetFileContentsJobImpl::OnGotFileInfo, this))) {
       callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
     }
   }
@@ -115,9 +109,9 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
     }
 
     // XXX: info.size is int64, but Read() takes an int
-    if (!base::FileUtilProxy::Read(
-        task_runner(), file_, 0, info.size,
-        base::Bind(&GetFileContentsJobImpl::OnGotData, this))) {
+    if (!file_proxy_.Read(
+            0, info.size,
+            base::Bind(&GetFileContentsJobImpl::OnGotData, this))) {
       callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
     }
   }
@@ -141,7 +135,7 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
 
   base::FilePath file_path_;
   FileUtils::GetFileContentsCallback callback_;
-  base::PlatformFile file_;
+  base::FileProxy file_proxy_;
 };
 
 class GetFileContentsJob : public AsyncFileJob {

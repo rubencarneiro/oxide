@@ -59,6 +59,7 @@
 #include "oxide_user_agent_override_provider.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
+#include "oxide_web_view_contents_helper.h"
 
 #if defined(ENABLE_PLUGINS)
 #include "content/public/browser/browser_ppapi_host.h"
@@ -155,9 +156,6 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
-    // Make sure we initialize the display handle on the main thread
-    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
-
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
 
@@ -200,8 +198,8 @@ content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
 
 void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
-  host->Send(new OxideMsg_SetIsIncognitoProcess(
-      host->GetBrowserContext()->IsOffTheRecord()));
+  host->Send(new OxideMsg_SetUserAgent(
+      BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
   host->AddFilter(new ScriptMessageDispatcherBrowser(host));
   host->AddFilter(new UserAgentOverrideProvider(host));
 }
@@ -209,10 +207,10 @@ void ContentBrowserClient::RenderProcessWillLaunch(
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
     content::BrowserContext* browser_context,
     content::ProtocolHandlerMap* protocol_handlers,
-    content::ProtocolHandlerScopedVector protocol_interceptors) {
+    content::URLRequestInterceptorScopedVector request_interceptors) {
   return BrowserContext::FromContent(
       browser_context)->CreateRequestContext(protocol_handlers,
-                                             protocol_interceptors.Pass());
+                                             request_interceptors.Pass());
 }
 
 net::URLRequestContextGetter*
@@ -221,7 +219,7 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
     const base::FilePath& partition_path,
     bool in_memory,
     content::ProtocolHandlerMap* protocol_handlers,
-    content::ProtocolHandlerScopedVector protocol_interceptors) {
+    content::URLRequestInterceptorScopedVector request_interceptors) {
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
@@ -240,26 +238,17 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
       command_line->GetSwitchValueASCII(switches::kProcessType);
   if (process_type == switches::kRendererProcess) {
     static const char* const kSwitchNames[] = {
-      switches::kEnableGoogleTalkPlugin
+      switches::kEnableGoogleTalkPlugin,
+      switches::kFormFactor
     };
     command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                    kSwitchNames, arraysize(kSwitchNames));
 
-    const char* form_factor_string = NULL;
-    switch (GetFormFactorHint()) {
-      case FORM_FACTOR_DESKTOP:
-        form_factor_string = switches::kFormFactorDesktop;
-        break;
-      case FORM_FACTOR_TABLET:
-        form_factor_string = switches::kFormFactorTablet;
-        break;
-      case FORM_FACTOR_PHONE:
-        form_factor_string = switches::kFormFactorPhone;
-        break;
-      default:
-        NOTREACHED();
+    content::RenderProcessHost* host =
+        content::RenderProcessHost::FromID(child_process_id);
+    if (host->GetBrowserContext()->IsOffTheRecord()) {
+      command_line->AppendSwitch(switches::kIncognito);
     }
-    command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
   }
 }
 
@@ -318,28 +307,30 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
     ::WebPreferences* prefs) {
-  WebView* view = WebView::FromRenderViewHost(render_view_host);
+  WebViewContentsHelper* contents_helper =
+      WebViewContentsHelper::FromRenderViewHost(render_view_host);
 
-  WebPreferences* web_prefs = view->GetWebPreferences();
-  if (web_prefs) {
-    web_prefs->ApplyToWebkitPrefs(prefs);
-  } else {
-    DLOG(WARNING) << "No WebPreferences on WebView";
-  }
+  WebPreferences* web_prefs = contents_helper->GetWebPreferences();
+  web_prefs->ApplyToWebkitPrefs(prefs);
 
   prefs->touch_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
-      !view->GetBrowserContext()->IsPopupBlockerEnabled();
-  prefs->supports_multiple_windows = view->CanCreateWindows();
+      !contents_helper->GetBrowserContext()->IsPopupBlockerEnabled();
 
   prefs->enable_scroll_animator = true;
 
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
     prefs->shrinks_standalone_images_to_fit = false;
+  }
+
+  prefs->supports_multiple_windows = false;
+  WebView* view = WebView::FromRenderViewHost(render_view_host);
+  if (view) {
+    prefs->supports_multiple_windows = view->CanCreateWindows();
   }
 }
 
@@ -350,7 +341,7 @@ ContentBrowserClient::OverrideSystemLocationProvider() {
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   SharedGLContext* context =
-      BrowserProcessMain::instance()->shared_gl_context();
+      BrowserProcessMain::instance()->GetSharedGLContext();
   if (!context) {
     return NULL;
   }

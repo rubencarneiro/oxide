@@ -105,6 +105,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void setRequest(OxideQNewViewRequest* request);
 
+  void updateWebPreferences();
+
  protected:
   WebViewAdapter(QObject* q);
 
@@ -121,7 +123,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   };
 
   void Initialized();
-  void WebPreferencesChanged();
+  void WebPreferencesDestroyed();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
@@ -134,6 +136,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
+  virtual void IconChanged(QUrl icon) = 0;
   virtual void CommandsUpdated() = 0;
 
   virtual void LoadProgressChanged(double progress) = 0;

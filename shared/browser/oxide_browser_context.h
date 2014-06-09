@@ -82,7 +82,7 @@ class BrowserContextIOData {
 
   URLRequestContext* CreateMainRequestContext(
       content::ProtocolHandlerMap& protocol_handlers,
-      content::ProtocolHandlerScopedVector protocol_interceptors);
+      content::URLRequestInterceptorScopedVector request_interceptors);
 
   content::ResourceContext* GetResourceContext();
 
@@ -148,7 +148,7 @@ class BrowserContext : public content::BrowserContext,
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers,
-      content::ProtocolHandlerScopedVector protocol_interceptors);
+      content::URLRequestInterceptorScopedVector request_interceptors);
 
   BrowserContextDelegate* GetDelegate() const;
   void SetDelegate(BrowserContextDelegate* delegate);
@@ -189,7 +189,6 @@ class BrowserContext : public content::BrowserContext,
  protected:
   BrowserContext(BrowserContextIOData* io_data);
 
-  void OnUserAgentChanged();
   void OnPopupBlockerEnabledChanged();
 
  private:
@@ -236,13 +235,13 @@ class BrowserContext : public content::BrowserContext,
   void RequestProtectedMediaIdentifierPermission(
       int render_process_id,
       int render_view_id,
-      int bridge_id,
-      int group_id,
-      const GURL& requesting_frame,
+      const GURL& origin,
       const ProtectedMediaIdentifierPermissionCallback& callback) FINAL;
 
   void CancelProtectedMediaIdentifierPermissionRequests(
-      int group_id) FINAL;
+      int render_process_id,
+      int render_view_id,
+      const GURL& origin) FINAL;
 
   content::DownloadManagerDelegate* GetDownloadManagerDelegate() FINAL;
 

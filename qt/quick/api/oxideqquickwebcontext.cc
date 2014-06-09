@@ -27,7 +27,11 @@
 #include <QThread>
 #include <QtQuickVersion>
 #if defined(ENABLE_COMPOSITING)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 #include <QtQuick/private/qsgcontext_p.h>
+#else
+#include <QtGui/private/qopenglcontext_p.h>
+#endif
 #endif
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
@@ -298,7 +302,12 @@ void OxideQQuickWebContextPrivate::ensureChromiumStarted() {
   started = true;
 #if defined(ENABLE_COMPOSITING)
   oxide::qt::WebContextAdapter::setSharedGLContext(
-      QSGContext::sharedOpenGLContext());
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+      QSGContext::sharedOpenGLContext()
+#else
+      QOpenGLContextPrivate::globalShareContext()
+#endif
+  );
 #endif
   oxide::qt::WebContextAdapter::ensureChromiumStarted();
 }

@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
+#include <QMetaMethod>
 #include <QScopedPointer>
 #include <QtGlobal>
 #include <QUrl>
@@ -61,6 +62,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void URLChanged() Q_DECL_FINAL;
   void TitleChanged() Q_DECL_FINAL;
+  void IconChanged(QUrl icon) Q_DECL_FINAL;
   void CommandsUpdated() Q_DECL_FINAL;
 
   void LoadProgressChanged(double progress) Q_DECL_FINAL;
@@ -116,8 +118,9 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
-  int load_progress_;
   bool constructed_;
+  int load_progress_;
+  QUrl icon_;
   OxideQQuickNavigationHistory navigation_history_;
   QQmlComponent* popup_menu_;
   QQmlComponent* alert_dialog_;

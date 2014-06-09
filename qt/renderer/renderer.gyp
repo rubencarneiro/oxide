@@ -20,7 +20,8 @@
       'target_name': '<(oxide_renderer_name)',
       'type': 'executable',
       'dependencies': [
-        '../core/core.gyp:<(oxide_core_name)'
+        '../core/core.gyp:<(oxide_core_name)',
+        '../core/system.gyp:Qt5Core',
       ],
       'include_dirs': [
         '../..',

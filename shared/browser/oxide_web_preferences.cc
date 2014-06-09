@@ -47,7 +47,8 @@ WebPreferences::WebPreferences() :
     default_encoding_("ISO-8859-1"),
     default_font_size_(16),
     default_fixed_font_size_(13),
-    minimum_font_size_(0) {
+    minimum_font_size_(0),
+    is_owned_by_embedder_(false) {
   for (unsigned int i = 0; i < ATTR_LAST; ++i) {
     attributes_[i] = false;
   }
@@ -232,6 +233,36 @@ void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
 
   prefs->tabs_to_links = attributes_[ATTR_TABS_TO_LINKS];
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
+}
+
+bool WebPreferences::IsOwnedByEmbedder() const {
+  return is_owned_by_embedder_;
+}
+
+void WebPreferences::SetIsOwnedByEmbedder() {
+  CHECK(!is_owned_by_embedder_);
+  is_owned_by_embedder_ = true;
+
+  FOR_EACH_OBSERVER(WebPreferencesObserver,
+                    observers_,
+                    WebPreferencesAdopted());
+}
+
+void WebPreferences::CopyFrom(WebPreferences* other) {
+  standard_font_family_ = other->standard_font_family_;
+  fixed_font_family_ = other->fixed_font_family_;
+  serif_font_family_ = other->serif_font_family_;
+  sans_serif_font_family_ = other->sans_serif_font_family_;
+  default_encoding_ = other->default_encoding_;
+  default_font_size_ = other->default_font_size_;
+  default_fixed_font_size_ = other->default_fixed_font_size_;
+  minimum_font_size_ = other->minimum_font_size_;
+
+  for (unsigned int i = 0; i < ATTR_LAST; ++i) {
+    attributes_[i] = other->attributes_[i];
+  }
+
+  NotifyObserversOfChange();
 }
 
 } // namespace oxide

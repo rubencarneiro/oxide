@@ -17,9 +17,11 @@
 
 #include "oxide_content_client.h"
 
+#include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/common/user_agent.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "ui/base/resource/resource_bundle.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/chrome_version.h"
@@ -39,9 +41,7 @@
 
 namespace oxide {
 
-namespace {
-ContentClient* g_inst;
-}
+ContentClient::ContentClient() {}
 
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
@@ -82,29 +82,36 @@ void ContentClient::AddPepperPlugins(
 }
 
 std::string ContentClient::GetUserAgent() const {
-  return content::BuildUserAgentFromProduct(
-      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
+  return user_agent_;
 }
 
 base::string16 ContentClient::GetLocalizedString(int message_id) const {
   return l10n_util::GetStringUTF16(message_id);
 }
 
-ContentClient::ContentClient() {
-  DCHECK(!g_inst);
-  g_inst = this;
+base::StringPiece ContentClient::GetDataResource(
+    int resource_id,
+    ui::ScaleFactor scale_factor) const {
+  return ui::ResourceBundle::GetSharedInstance().GetRawDataResourceForScale(
+      resource_id, scale_factor);
+}
+
+base::RefCountedStaticMemory* ContentClient::GetDataResourceBytes(
+    int resource_id) const {
+  return ui::ResourceBundle::GetSharedInstance().LoadDataResourceBytes(resource_id);
+}
+
+// static
+ContentClient* ContentClient::GetInstance() {
+  return Singleton<ContentClient>::get();
 }
 
 // static
 ContentClient* ContentClient::instance() {
-  DCHECK(g_inst);
-  return g_inst;
+  return GetInstance();
 }
 
-ContentClient::~ContentClient() {
-  DCHECK_EQ(g_inst, this);
-  g_inst = NULL;
-}
+ContentClient::~ContentClient() {}
 
 ContentBrowserClient* ContentClient::browser() {
   return static_cast<ContentBrowserClient *>(
@@ -114,6 +121,10 @@ ContentBrowserClient* ContentClient::browser() {
 ContentRendererClient* ContentClient::renderer() {
   return static_cast<ContentRendererClient *>(
       content::ContentClient::renderer());
+}
+
+void ContentClient::SetUserAgent(const std::string& user_agent) {
+  user_agent_ = user_agent;
 }
 
 } // namespace oxide

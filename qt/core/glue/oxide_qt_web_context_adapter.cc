@@ -22,14 +22,17 @@
 #include <vector>
 
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QObject>
 #include <QtDebug>
+#include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "net/base/static_cookie_policy.h"
 #include "url/gurl.h"
 
+#include "qt/core/app/oxide_qt_content_main_delegate.h"
 #include "qt/core/gl/oxide_qt_shared_gl_context.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -165,7 +168,7 @@ QOpenGLContext* WebContextAdapter::sharedGLContext() {
 
 /* static */
 void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
-  CHECK(!oxide::BrowserProcessMain::Exists()) <<
+  CHECK(!oxide::BrowserProcessMain::IsRunning()) <<
       "WebContextAdapter::setSharedGLContext must be called before the "
       "browser components are started!";
 
@@ -174,9 +177,17 @@ void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
 
 /* static */
 void WebContextAdapter::ensureChromiumStarted() {
-  if (!oxide::BrowserProcessMain::Exists()) {
+  if (!oxide::BrowserProcessMain::IsRunning()) {
     scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
-    oxide::BrowserProcessMain::StartIfNotRunning(shared_gl_context);
+    scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+    void* display =
+        QGuiApplication::platformNativeInterface()->nativeResourceForScreen(
+          "display", QGuiApplication::primaryScreen());
+    oxide::BrowserProcessMain::Start(
+        shared_gl_context,
+        delegate.PassAs<oxide::ContentMainDelegate>(),
+        reinterpret_cast<intptr_t>(display));
+    qAddPostRoutine(oxide::BrowserProcessMain::Shutdown);
   }
 }
 
@@ -275,12 +286,6 @@ WebContextAdapter::WebContextAdapter(
       CookiePolicyBlockThirdParty == static_cast<CookiePolicy>(
         net::StaticCookiePolicy::BLOCK_ALL_THIRD_PARTY_COOKIES),
       cookie_enums_blockall3rdparty_doesnt_match);
-
-  static bool run_once = false;
-  if (!run_once) {
-    run_once = true;
-    qAddPostRoutine(oxide::BrowserProcessMain::ShutdownIfRunning);
-  }
 }
 
 } // namespace qt

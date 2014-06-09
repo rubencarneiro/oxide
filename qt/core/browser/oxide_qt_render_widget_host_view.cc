@@ -800,8 +800,7 @@ float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   }
 
   QString platform = QGuiApplication::platformName();
-  if (platform == QLatin1String("ubuntu") ||
-      platform == QLatin1String("ubuntumirclient")) {
+  if (platform.startsWith("ubuntu")) {
     QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
     bool ok;
     float scale = grid_unit_px.toFloat(&ok);
@@ -981,7 +980,7 @@ void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
   GetRenderWidgetHost()->ForwardKeyboardEvent(e);
 
   // If the event is a printable character, send a corresponding Char event
-  if (event->type() == QEvent::KeyPress && QChar(e.text[0]).isPrint()) {
+  if (event->type() == QEvent::KeyPress && e.text[0] != 0) {
     GetRenderWidgetHost()->ForwardKeyboardEvent(
         MakeNativeWebKeyboardEvent(event, true));
   }

@@ -45,7 +45,6 @@
 #include "shared/common/oxide_paths.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
-#include "shared/sandbox_ipc/oxide_sandbox_ipc_process.h"
 
 namespace oxide {
 
@@ -82,23 +81,8 @@ const char* GetEnvironmentOption(const char* option) {
 
 }
 
-ContentMainDelegate::ContentMainDelegate() {}
-
-content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClient() {
-  NOTREACHED() << "CreateContentBrowserClient() hasn't been implemented";
-  return NULL;
-}
-
-content::ContentRendererClient*
-ContentMainDelegate::CreateContentRendererClient() {
-  return g_content_renderer_client.Pointer();
-}
-
-ContentMainDelegate::~ContentMainDelegate() {}
-
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
-  content::SetContentClient(CreateContentClient());
+  content::SetContentClient(ContentClient::GetInstance());
 
   RegisterPathProvider();
 
@@ -120,7 +104,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       subprocess_exe = base::FilePath(FILE_PATH_LITERAL(OXIDE_SUBPROCESS_PATH));
       if (!subprocess_exe.IsAbsolute()) {
         Dl_info info;
-        int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::Exists),
+        int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::IsRunning),
                         &info);
         DCHECK_NE(rv, 0) << "Failed to determine module path";
 
@@ -154,7 +138,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     gfx::GLSurface::InitializeOneOff();
 
     SharedGLContext* shared_gl_context =
-        BrowserProcessMain::instance()->shared_gl_context();
+        BrowserProcessMain::instance()->GetSharedGLContext();
     if (!shared_gl_context ||
         shared_gl_context->GetImplementation() != gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
@@ -172,6 +156,22 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     }
 
+    const char* form_factor_string = NULL;
+    switch (form_factor) {
+      case FORM_FACTOR_DESKTOP:
+        form_factor_string = switches::kFormFactorDesktop;
+        break;
+      case FORM_FACTOR_TABLET:
+        form_factor_string = switches::kFormFactorTablet;
+        break;
+      case FORM_FACTOR_PHONE:
+        form_factor_string = switches::kFormFactorPhone;
+        break;
+      default:
+        NOTREACHED();
+    }
+    command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
+
     const char* renderer_cmd_prefix = GetEnvironmentOption("RENDERER_CMD_PREFIX");
     if (renderer_cmd_prefix) {
       command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
@@ -182,8 +182,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     }
     if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
       LOG(WARNING) <<
-          "User scripts currently don't work correctly in single process "
-          "mode. See https://launchpad.net/bugs/1283291";
+          "Running in single process mode. Multiple BrowserContext's will not "
+          "work correctly, see https://launchpad.net/bugs/1283291";
       command_line->AppendSwitch(switches::kSingleProcess);
     }
     if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
@@ -218,7 +218,7 @@ int ContentMainDelegate::RunProcess(
     const std::string& process_type,
     const content::MainFunctionParams& main_function_params) {
   if (process_type.empty()) {
-    if (!BrowserProcessMain::Exists()) {
+    if (!BrowserProcessMain::IsRunning()) {
       // We arrive here if some calls the renderer with no --process-type
       LOG(ERROR) <<
           "The Oxide renderer cannot be used to run a browser process";
@@ -229,22 +229,28 @@ int ContentMainDelegate::RunProcess(
         main_function_params);
   }
 
-  static const MainFunction kMainFunctions[] = {
-    { switches::kSandboxIPCProcess, SandboxIPCProcessMain }
-  };
-
-  for (size_t i = 0; i < arraysize(kMainFunctions); ++i) {
-    if (process_type == kMainFunctions[i].name)
-      return kMainFunctions[i].function(main_function_params);
-  }
-
   return -1;
 }
 
 void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
-  if (process_type.empty() && BrowserProcessMain::Exists()) {
+  if (process_type.empty() && BrowserProcessMain::IsRunning()) {
     BrowserProcessMain::instance()->ShutdownBrowserMain();
   }
 }
+
+content::ContentBrowserClient*
+ContentMainDelegate::CreateContentBrowserClient() {
+  NOTREACHED() << "CreateContentBrowserClient() hasn't been implemented";
+  return NULL;
+}
+
+content::ContentRendererClient*
+ContentMainDelegate::CreateContentRendererClient() {
+  return g_content_renderer_client.Pointer();
+}
+
+ContentMainDelegate::ContentMainDelegate() {}
+
+ContentMainDelegate::~ContentMainDelegate() {}
 
 } // namespace oxide

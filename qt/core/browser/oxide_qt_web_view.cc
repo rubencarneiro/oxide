@@ -86,13 +86,9 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter) {}
 
-bool WebView::Init(const oxide::WebView::Params& params) {
-  if (!oxide::WebView::Init(params)) {
-    return false;
-  }
-
+void WebView::Init(oxide::WebView::Params* params) {
+  oxide::WebView::Init(params);
   adapter_->Initialized();
-  return true;
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -172,6 +168,10 @@ void WebView::OnTitleChanged() {
   adapter_->TitleChanged();
 }
 
+void WebView::OnIconChanged(const GURL& icon) {
+  adapter_->IconChanged(QUrl(QString::fromStdString(icon.spec())));
+}
+
 void WebView::OnCommandsUpdated() {
   adapter_->CommandsUpdated();
 }
@@ -226,8 +226,8 @@ void WebView::OnNavigationEntryChanged(int index) {
   adapter_->NavigationEntryChanged(index);
 }
 
-void WebView::OnWebPreferencesChanged() {
-  adapter_->WebPreferencesChanged();
+void WebView::OnWebPreferencesDestroyed() {
+  adapter_->WebPreferencesDestroyed();
 }
 
 void WebView::OnRequestGeolocationPermission(
@@ -239,6 +239,25 @@ void WebView::OnRequestGeolocationPermission(
 
   // The embedder takes ownership of this
   adapter_->RequestGeolocationPermission(qreq);
+}
+
+void WebView::OnUnhandledKeyboardEvent(
+    const content::NativeWebKeyboardEvent& event) {
+  if (event.skip_in_browser) {
+    return;
+  }
+
+  if (event.type != blink::WebInputEvent::RawKeyDown &&
+      event.type != blink::WebInputEvent::KeyUp) {
+    return;
+  }
+
+  DCHECK(event.os_event);
+
+  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
+  DCHECK(!qevent->isAccepted());
+
+  adapter_->HandleKeyboardEvent(qevent);
 }
 
 bool WebView::OnAddMessageToConsole(
@@ -345,25 +364,6 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
-}
-
-void WebView::HandleKeyboardEvent(content::WebContents* source,
-                                  const content::NativeWebKeyboardEvent& event) {
-  if (event.skip_in_browser) {
-    return;
-  }
-
-  if (event.type != blink::WebInputEvent::RawKeyDown &&
-      event.type != blink::WebInputEvent::KeyUp) {
-    return;
-  }
-
-  DCHECK(event.os_event);
-
-  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
-  DCHECK(!qevent->isAccepted());
-
-  adapter_->HandleKeyboardEvent(qevent);
 }
 
 } // namespace qt

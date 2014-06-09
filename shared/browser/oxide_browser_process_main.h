@@ -37,52 +37,40 @@ class SharedGLContext;
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
 // Chrome (which is not possible in a public API)
-class BrowserProcessMain FINAL {
+class BrowserProcessMain {
  public:
-  ~BrowserProcessMain();
+  virtual ~BrowserProcessMain();
 
-  // Start the browser process components if they haven't already
-  // been started. Cannot be called after Quit()
-  static bool StartIfNotRunning(
-      scoped_refptr<oxide::SharedGLContext> shared_gl_context);
+  // Creates the BrowserProcessMain singleton and starts the
+  // browser process components
+  static void Start(
+      scoped_refptr<oxide::SharedGLContext> shared_gl_context,
+      scoped_ptr<ContentMainDelegate> delegate,
+      intptr_t native_display);
 
-  // Quit the browser process components if they are running
-  static void ShutdownIfRunning();
+  // Quit the browser process components and delete the
+  // BrowserProcessMain singleton
+  static void Shutdown();
 
-  // Returns true if BrowserProcessMain exists
-  static bool Exists();
+  // Returns true if the browser process components are running
+  static bool IsRunning();
 
   // Return the BrowserProcessMain singleton
   static BrowserProcessMain* instance();
 
-  oxide::SharedGLContext* shared_gl_context() const {
-    return shared_gl_context_.get();
-  }
+  virtual SharedGLContext* GetSharedGLContext() const = 0;
+  virtual intptr_t GetNativeDisplay() const = 0;
+
+ protected:
+  BrowserProcessMain();
 
  private:
   // For RunBrowserMain() / ShutdownBrowserMain()
   friend class oxide::ContentMainDelegate;
 
-  BrowserProcessMain(
-      scoped_refptr<oxide::SharedGLContext> shared_gl_context);
-
-  int RunBrowserMain(
-      const content::MainFunctionParams& main_function_params);
-  void ShutdownBrowserMain();
-
-  bool Init();
-  void Shutdown();
-
-  bool did_shutdown_;
-
-  scoped_refptr<oxide::SharedGLContext> shared_gl_context_;
-
-  // XXX: Don't change the order of these unless you know what you are
-  //      doing. It's important that ContentMainDelegate outlives
-  //      ContentMainRunner
-  scoped_ptr<ContentMainDelegate> main_delegate_;
-  scoped_ptr<content::ContentMainRunner> main_runner_;
-  scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
+  virtual int RunBrowserMain(
+      const content::MainFunctionParams& main_function_params) = 0;
+  virtual void ShutdownBrowserMain() = 0;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserProcessMain);
 };
