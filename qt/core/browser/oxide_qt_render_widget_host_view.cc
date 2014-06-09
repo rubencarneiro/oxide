@@ -18,7 +18,6 @@
 #include "oxide_qt_render_widget_host_view.h"
 
 #include <QByteArray>
-#include <QChar>
 #include <QCursor>
 #include <QFocusEvent>
 #include <QGuiApplication>
@@ -477,7 +476,7 @@ ui::EventType QTouchPointStateToEventType(Qt::TouchPointState state) {
 }
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
-    QKeyEvent* qevent, bool is_char) {
+    QKeyEvent* qevent) {
   content::NativeWebKeyboardEvent event;
 
   QKeyEvent* os_event = new QKeyEvent(*qevent);
@@ -492,11 +491,9 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(
   }
 
   switch (qevent->type()) {
-  case QEvent::KeyPress: {
-    event.type = is_char ?
-        blink::WebInputEvent::Char : blink::WebInputEvent::RawKeyDown;
+  case QEvent::KeyPress:
+    event.type = blink::WebInputEvent::KeyDown;
     break;
-  }
   case QEvent::KeyRelease:
     event.type = blink::WebInputEvent::KeyUp;
     break;
@@ -972,14 +969,8 @@ void RenderWidgetHostView::HandleFocusEvent(QFocusEvent* event) {
 }
 
 void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
-  content::NativeWebKeyboardEvent e(MakeNativeWebKeyboardEvent(event, false));
-  GetRenderWidgetHost()->ForwardKeyboardEvent(e);
-
-  // If the event is a printable character, send a corresponding Char event
-  if (event->type() == QEvent::KeyPress && QChar(e.text[0]).isPrint()) {
-    GetRenderWidgetHost()->ForwardKeyboardEvent(
-        MakeNativeWebKeyboardEvent(event, true));
-  }
+  GetRenderWidgetHost()->ForwardKeyboardEvent(
+      MakeNativeWebKeyboardEvent(event));
 }
 
 void RenderWidgetHostView::HandleMouseEvent(QMouseEvent* event) {
