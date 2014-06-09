@@ -817,6 +817,10 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   if (!HasFocus()) {
     return;
   }
+
+  // Work around for bug lp:1323743
+  QGuiApplication::focusWindow()->focusObjectChanged(QGuiApplication::focusWindow()->focusObject());
+
   delegate_->SetInputMethodEnabled(is_editable_node);
   if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
     QGuiApplication::inputMethod()->setVisible(is_editable_node);
