@@ -35,6 +35,7 @@
 #include <QTextCharFormat>
 #include <QTouchEvent>
 #include <QWheelEvent>
+#include <QWindow>
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
