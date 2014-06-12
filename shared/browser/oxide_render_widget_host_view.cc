@@ -35,6 +35,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
+#include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "ui/events/event.h"
 
 #include "oxide_default_screen_info.h"
@@ -496,7 +497,7 @@ void RenderWidgetHostView::ForwardGestureEventToRenderer(
     // event to stop any in-progress flings.
     blink::WebGestureEvent fling_cancel = gesture;
     fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
-    fling_cancel.sourceDevice = blink::WebGestureEvent::Touchscreen;
+    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
     host_->ForwardGestureEvent(fling_cancel);
   }
 
