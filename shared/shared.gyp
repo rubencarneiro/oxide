@@ -42,6 +42,7 @@
       'dependencies': [
         'oxide_extra_resources',
         '<(DEPTH)/content/content_resources.gyp:content_resources',
+        '<(DEPTH)/content/browser/devtools/devtools_resources.gyp:devtools_resources',
         '<(DEPTH)/net/net.gyp:net_resources',
         '<(DEPTH)/ui/resources/ui_resources.gyp:ui_resources',
         '<(DEPTH)/webkit/webkit_resources.gyp:webkit_resources',
@@ -53,6 +54,7 @@
           'variables': {
             'pak_inputs': [
               '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/webkit/devtools_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/net/net_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/oxide/oxide_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/webkit/blink_resources.pak',
@@ -226,6 +228,10 @@
         'browser/oxide_content_browser_client.cc',
         'browser/oxide_content_browser_client.h',
         'browser/oxide_default_screen_info.h',
+        'browser/oxide_devtools_http_handler_delegate.cc',
+        'browser/oxide_devtools_http_handler_delegate.h',
+        'browser/oxide_devtools_target.cc',
+        'browser/oxide_devtools_target.h',
         'browser/oxide_file_picker.cc',
         'browser/oxide_file_picker.h',
         'browser/oxide_form_factor.h',
@@ -285,6 +291,8 @@
         'browser/oxide_web_view_contents_helper.cc',
         'browser/oxide_web_view_contents_helper.h',
         'browser/oxide_web_view_contents_helper_delegate.h',
+        'browser/oxide_web_view_tracker.cc',
+        'browser/oxide_web_view_tracker.h',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',

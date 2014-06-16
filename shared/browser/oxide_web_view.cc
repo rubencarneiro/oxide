@@ -57,6 +57,7 @@
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
+#include "oxide_web_view_tracker.h"
 
 namespace oxide {
 
@@ -561,6 +562,9 @@ WebView::WebView()
       is_fullscreen_(false) {}
 
 WebView::~WebView() {
+  if (GetBrowserContext()) {
+    WebViewTracker::GetInstance()->remove(GetBrowserContext(), this);
+  }
   if (root_frame_) {
     root_frame_->Destroy();
   }
@@ -631,7 +635,12 @@ void WebView::Init(Params* params) {
     SetURL(initial_url_);
     initial_url_ = GURL();
   }
+
   SetIsFullscreen(is_fullscreen_);
+
+  if (GetBrowserContext()) {
+    WebViewTracker::GetInstance()->add(GetBrowserContext(), this);
+  }
 }
 
 // static

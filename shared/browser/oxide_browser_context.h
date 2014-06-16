@@ -121,12 +121,20 @@ class BrowserContext : public content::BrowserContext,
   struct Params {
     Params(const base::FilePath& path,
            const base::FilePath& cache_path,
-           const content::CookieStoreConfig::SessionCookieMode session_cookie_mode) :
-        path(path), cache_path(cache_path), session_cookie_mode(session_cookie_mode) {}
+           const content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
+	   bool devtools_enabled,
+	   int devtools_port) :
+        path(path),
+	cache_path(cache_path),
+        session_cookie_mode(session_cookie_mode),
+        devtools_enabled(devtools_enabled),
+        devtools_port(devtools_port) {}
 
     base::FilePath path;
     base::FilePath cache_path;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
+    bool devtools_enabled;
+    int devtools_port;
   };
 
   virtual ~BrowserContext();
@@ -179,6 +187,10 @@ class BrowserContext : public content::BrowserContext,
 
   bool IsPopupBlockerEnabled() const;
   virtual void SetIsPopupBlockerEnabled(bool enabled) = 0;
+
+  virtual bool GetDevtoolsEnabled() const;
+
+  virtual int GetDevtoolsPort() const;
 
   BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 

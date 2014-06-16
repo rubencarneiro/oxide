@@ -44,7 +44,9 @@ namespace qt {
 WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
     cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
-    popup_blocker_enabled(true) {}
+    popup_blocker_enabled(true),
+    devtools_enabled(false),
+    devtools_port(0) {}
 
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::Create(
@@ -204,7 +206,9 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
   oxide::BrowserContext::Params params(
       construct_props_->data_path,
       construct_props_->cache_path,
-      construct_props_->session_cookie_mode);
+      construct_props_->session_cookie_mode,
+      construct_props_->devtools_enabled,
+      construct_props_->devtools_port);
   context_ = oxide::BrowserContext::Create(params);
 
   if (!construct_props_->product.empty()) {

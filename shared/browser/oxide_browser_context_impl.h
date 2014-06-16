@@ -29,6 +29,7 @@
 
 namespace oxide {
 
+class DevtoolsHttpHandlerDelegate;
 class OffTheRecordBrowserContextImpl;
 
 class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
@@ -85,6 +86,9 @@ class BrowserContextImpl FINAL : public BrowserContext {
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
   void SetIsPopupBlockerEnabled(bool enabled) FINAL;
 
+  bool GetDevtoolsEnabled() const FINAL;
+  int GetDevtoolsPort() const FINAL;
+
   UserScriptMaster& UserScriptManager() FINAL;
 
  private:
@@ -96,6 +100,9 @@ class BrowserContextImpl FINAL : public BrowserContext {
   std::string product_;
   bool default_user_agent_string_;
   UserScriptMaster user_script_manager_;
+  scoped_ptr<DevtoolsHttpHandlerDelegate> devtools_http_handler_delegate_;
+  bool devtools_enabled_;
+  int devtools_port_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextImpl);
 };

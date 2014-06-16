@@ -64,6 +64,7 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   Q_PROPERTY(bool tabsToLinks READ tabsToLinks WRITE setTabsToLinks NOTIFY tabsToLinksChanged)
   Q_PROPERTY(bool caretBrowsingEnabled READ caretBrowsingEnabled WRITE setCaretBrowsingEnabled NOTIFY caretBrowsingEnabledChanged)
 
+
   Q_PROPERTY(bool touchEnabled READ touchEnabled WRITE setTouchEnabled NOTIFY touchEnabledChanged)
 
   Q_DECLARE_PRIVATE(OxideQWebPreferences)
@@ -139,6 +140,10 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void setTouchEnabled(bool enabled);
 
  Q_SIGNALS:
+
+  void devToolsEnabledChanged();
+  void devToolsServerPortChanged();
+
   void standardFontFamilyChanged();
   void fixedFontFamilyChanged();
   void serifFontFamilyChanged();
