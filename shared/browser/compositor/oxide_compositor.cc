@@ -194,12 +194,6 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   }
 }
 
-void Compositor::SetNeedsRedraw() {
-  if (layer_tree_host_) {
-    layer_tree_host_->SetNeedsRedraw();
-  }
-}
-
 void Compositor::DidSwapCompositorFrame(
     uint32 surface_id,
     scoped_ptr<CompositorFrameHandle> returned_frame) {

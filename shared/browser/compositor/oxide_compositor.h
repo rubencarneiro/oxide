@@ -54,8 +54,6 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
   void SetViewportSize(const gfx::Size& bounds);
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
 
-  void SetNeedsRedraw();
-
   void DidSwapCompositorFrame(
       uint32 surface_id,
       scoped_ptr<CompositorFrameHandle> returned_frame);
