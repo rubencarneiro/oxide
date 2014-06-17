@@ -94,6 +94,8 @@ class RenderViewItem Q_DECL_FINAL :
 
   void geometryChanged(const QRectF& new_geometry,
                        const QRectF& old_geometry) Q_DECL_FINAL;
+  void onWindowChanged(QQuickWindow* window);
+
   void DidUpdatePaintNode(oxide::qt::CompositorFrameType type);
 
   bool received_new_compositor_frame_;
