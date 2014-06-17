@@ -35,6 +35,7 @@
 #include "ui/events/gestures/gesture_recognizer.h"
 #include "ui/events/gestures/gesture_types.h"
 #include "ui/gfx/rect.h"
+#include "ui/gfx/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
 
@@ -228,6 +229,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   uint32 last_output_surface_id_;
 
   std::queue<base::Closure> ack_callbacks_;
+
+  gfx::Size last_frame_size_dip_;
 
   scoped_ptr<CompositorFrameHandle> current_compositor_frame_;
   ScopedVector<CompositorFrameHandle> pending_compositor_frames_;

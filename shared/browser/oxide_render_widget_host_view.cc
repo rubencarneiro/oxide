@@ -37,7 +37,7 @@
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "ui/events/event.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/size_conversions.h"
 #include "ui/gl/gl_implementation.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
@@ -150,11 +150,14 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
 
   gfx::Size frame_size =
       frame_data->render_pass_list.back()->output_rect.size();
+  gfx::Size frame_size_dip = gfx::ToFlooredSize(
+      gfx::ScaleSize(frame_size, 1.0f / frame->metadata.device_scale_factor));
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
   } else {
-    if (!frame_provider_ || frame_size != frame_provider_->frame_size()) {
+    if (!frame_provider_ || frame_size != frame_provider_->frame_size() ||
+        frame_size_dip != last_frame_size_dip_) {
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
                                                        frame_data.Pass());
       layer_ = cc::DelegatedRendererLayer::Create(frame_provider_);
@@ -164,11 +167,13 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     }
   }
 
+  last_frame_size_dip_ = frame_size_dip;
+
   if (layer_) {
-    layer_->SetDisplaySize(frame_size);
+    layer_->SetDisplaySize(frame_size_dip);
     layer_->SetIsDrawable(true);
     layer_->SetContentsOpaque(true);
-    layer_->SetBounds(frame_size);
+    layer_->SetBounds(frame_size_dip);
     layer_->SetNeedsDisplay();
   }
 
