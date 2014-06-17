@@ -122,6 +122,7 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
         FROM_HERE,
         base::Bind(&ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies,
                    params, cookies));
+    return;
   }
   content::RenderViewHost* rvh =
       content::RenderViewHost::FromID(
