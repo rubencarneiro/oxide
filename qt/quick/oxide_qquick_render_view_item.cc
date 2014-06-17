@@ -52,16 +52,16 @@ class UpdatePaintNodeContext {
   RenderViewItem* item_;
 };
 
-void RenderViewItem::geometryChanged(const QRectF& new_geometry,
-                                     const QRectF& old_geometry) {
-  QQuickItem::geometryChanged(new_geometry, old_geometry);
-  if (window()) {
+void RenderViewItem::onWindowChanged(QQuickWindow* window) {
+  if (window) {
     HandleGeometryChanged();
   }
 }
 
-void RenderViewItem::onWindowChanged(QQuickWindow* window) {
-  if (window) {
+void RenderViewItem::geometryChanged(const QRectF& new_geometry,
+                                     const QRectF& old_geometry) {
+  QQuickItem::geometryChanged(new_geometry, old_geometry);
+  if (window()) {
     HandleGeometryChanged();
   }
 }

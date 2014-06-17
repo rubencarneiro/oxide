@@ -89,12 +89,14 @@ class RenderViewItem Q_DECL_FINAL :
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
+ private Q_SLOTS:
+  void onWindowChanged(QQuickWindow* window);
+
  private:
   friend class UpdatePaintNodeContext;
 
   void geometryChanged(const QRectF& new_geometry,
                        const QRectF& old_geometry) Q_DECL_FINAL;
-  void onWindowChanged(QQuickWindow* window);
 
   void DidUpdatePaintNode(oxide::qt::CompositorFrameType type);
 
