@@ -182,8 +182,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     }
     if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
       LOG(WARNING) <<
-          "User scripts currently don't work correctly in single process "
-          "mode. See https://launchpad.net/bugs/1283291";
+          "Running in single process mode. Multiple BrowserContext's will not "
+          "work correctly, see https://launchpad.net/bugs/1283291";
       command_line->AppendSwitch(switches::kSingleProcess);
     }
     if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {

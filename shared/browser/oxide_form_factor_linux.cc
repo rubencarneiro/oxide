@@ -18,6 +18,7 @@
 #include "oxide_form_factor.h"
 
 #include <algorithm>
+#include <stdlib.h>
 
 #include "base/files/file_path.h"
 #include "base/logging.h"
@@ -26,18 +27,28 @@
 #include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
-#include "shared/browser/oxide_default_screen_info.h"
+#include "oxide_browser_process_main.h"
+#include "oxide_default_screen_info.h"
 
 namespace oxide {
 
 namespace {
 
 bool IsUbuntuPhoneOrTablet() {
+  if (getenv("DISPLAY")) {
+    // Running on X. Bail early because this code seems to cause other
+    // problems (see https://launchpad.net/bugs/1327319)
+    return false;
+  }
+
   base::ScopedNativeLibrary egl(
       base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
   if (!egl.is_valid()) {
     return false;
   }
+
+  NativeDisplayType native_display =
+      BrowserProcessMain::instance()->GetNativeDisplay();
 
   typedef EGLDisplay (*f_eglGetDisplay)(NativeDisplayType);
   f_eglGetDisplay eglGetDisplay =
@@ -46,7 +57,7 @@ bool IsUbuntuPhoneOrTablet() {
     LOG(ERROR) << "Failed to resolve eglGetDisplay";
     return false;
   }
-  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  EGLDisplay display = eglGetDisplay(native_display);
   if (display == EGL_NO_DISPLAY) {
     LOG(ERROR) << "Failed to get EGL default display";
     return false;
@@ -72,16 +83,6 @@ bool IsUbuntuPhoneOrTablet() {
     return false;
   }
   const char* vendor = eglQueryString(display, EGL_VENDOR);
-
-  typedef EGLBoolean (*f_eglTerminate)(EGLDisplay);
-  f_eglTerminate eglTerminate =
-      reinterpret_cast<f_eglTerminate>(egl.GetFunctionPointer("eglTerminate"));
-  if (!eglTerminate) {
-      LOG(ERROR) << "Failed to resolve eglTerminate";
-  }
-  if (!eglTerminate(display)) {
-    LOG(ERROR) << "eglTerminate failed";
-  }
 
   return LowerCaseEqualsASCII(std::string(vendor), "android");
 }

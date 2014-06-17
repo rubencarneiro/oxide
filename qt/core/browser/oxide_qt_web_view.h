@@ -91,6 +91,9 @@ class WebView FINAL : public oxide::WebView,
   void OnRequestGeolocationPermission(
       scoped_ptr<oxide::GeolocationPermissionRequest> request) FINAL;
 
+  void OnUnhandledKeyboardEvent(
+      const content::NativeWebKeyboardEvent& event) FINAL;
+
   bool OnAddMessageToConsole(int32 level,
                              const base::string16& message,
                              int32 line_no,
@@ -106,9 +109,6 @@ class WebView FINAL : public oxide::WebView,
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;
-
-  void HandleKeyboardEvent(content::WebContents* source,
-                           const content::NativeWebKeyboardEvent& event);
 
   WebViewAdapter* adapter_;
 

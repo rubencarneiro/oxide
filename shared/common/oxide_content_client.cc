@@ -21,6 +21,7 @@
 #include "base/strings/stringprintf.h"
 #include "content/public/common/user_agent.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "ui/base/resource/resource_bundle.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/chrome_version.h"
@@ -86,6 +87,18 @@ std::string ContentClient::GetUserAgent() const {
 
 base::string16 ContentClient::GetLocalizedString(int message_id) const {
   return l10n_util::GetStringUTF16(message_id);
+}
+
+base::StringPiece ContentClient::GetDataResource(
+    int resource_id,
+    ui::ScaleFactor scale_factor) const {
+  return ui::ResourceBundle::GetSharedInstance().GetRawDataResourceForScale(
+      resource_id, scale_factor);
+}
+
+base::RefCountedStaticMemory* ContentClient::GetDataResourceBytes(
+    int resource_id) const {
+  return ui::ResourceBundle::GetSharedInstance().LoadDataResourceBytes(resource_id);
 }
 
 // static

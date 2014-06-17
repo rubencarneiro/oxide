@@ -66,7 +66,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   net::URLRequestContextGetter* CreateRequestContext(
       content::BrowserContext* browser_context,
       content::ProtocolHandlerMap* protocol_handlers,
-      content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
+      content::URLRequestInterceptorScopedVector request_interceptors) FINAL;
 
   net::URLRequestContextGetter*
       CreateRequestContextForStoragePartition(
@@ -74,7 +74,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
         const base::FilePath& partition_path,
         bool in_memory,
         content::ProtocolHandlerMap* protocol_handlers,
-        content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
+        content::URLRequestInterceptorScopedVector request_interceptors) FINAL;
 
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;

@@ -82,6 +82,8 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
       content::SessionStorageNamespace* session_storage_namespace,
       WindowOpenDisposition disposition,
       bool user_gesture) FINAL;
+  void HandleKeyboardEvent(content::WebContents* source,
+                           const content::NativeWebKeyboardEvent& event) FINAL;
   void WebContentsCreated(content::WebContents* source,
                           int source_frame_id,
                           const base::string16& frame_name,

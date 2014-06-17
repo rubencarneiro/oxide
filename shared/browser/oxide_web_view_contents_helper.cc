@@ -161,6 +161,18 @@ bool WebViewContentsHelper::ShouldCreateWebContents(
                                             user_gesture);
 }
 
+void WebViewContentsHelper::HandleKeyboardEvent(
+    content::WebContents* source,
+    const content::NativeWebKeyboardEvent& event) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (!delegate_) {
+    return;
+  }
+
+  delegate_->HandleKeyboardEvent(event);
+}
+
 void WebViewContentsHelper::WebContentsCreated(
     content::WebContents* source,
     int source_frame_id,

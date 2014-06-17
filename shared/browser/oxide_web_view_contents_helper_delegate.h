@@ -77,6 +77,9 @@ class WebViewContentsHelperDelegate {
   virtual void ToggleFullscreenMode(bool enter) = 0;
 
   virtual void NotifyWebPreferencesDestroyed() = 0;
+
+  virtual void HandleKeyboardEvent(
+      const content::NativeWebKeyboardEvent& event) = 0;
 };
 
 } // namespace oxide

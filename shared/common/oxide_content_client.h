@@ -50,6 +50,10 @@ class ContentClient FINAL : public content::ContentClient {
   void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) FINAL;
   std::string GetUserAgent() const FINAL;
   base::string16 GetLocalizedString(int message_id) const FINAL;
+  base::StringPiece GetDataResource(int resource_id,
+                                    ui::ScaleFactor scale_factor) const FINAL;
+  base::RefCountedStaticMemory* GetDataResourceBytes(
+      int resource_id) const FINAL;
 
   std::string user_agent_;
 

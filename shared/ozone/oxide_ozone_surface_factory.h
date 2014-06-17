@@ -28,25 +28,19 @@ class OzoneSurfaceFactory FINAL : public gfx::SurfaceFactoryOzone {
  public:
   OzoneSurfaceFactory();
 
+ private:
   HardwareState InitializeHardware() FINAL;
   void ShutdownHardware() FINAL;
 
   intptr_t GetNativeDisplay() FINAL;
 
   gfx::AcceleratedWidget GetAcceleratedWidget() FINAL;
-  gfx::AcceleratedWidget RealizeAcceleratedWidget(
-      gfx::AcceleratedWidget w) FINAL;
 
   bool LoadEGLGLES2Bindings(
       AddGLLibraryCallback add_gl_library,
       SetGLGetProcAddressProcCallback set_gl_get_proc_address) FINAL;
 
-  bool AttemptToResizeAcceleratedWidget(
-      gfx::AcceleratedWidget w,
-      const gfx::Rect& bounds) FINAL;
-
-  scoped_ptr<gfx::VSyncProvider> CreateVSyncProvider(
-      gfx::AcceleratedWidget w) FINAL;
+  const int32* GetEGLSurfaceProperties(const int32* desired_list) FINAL;
 };
 
 } // namespace oxide
