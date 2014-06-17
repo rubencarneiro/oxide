@@ -55,7 +55,15 @@ class UpdatePaintNodeContext {
 void RenderViewItem::geometryChanged(const QRectF& new_geometry,
                                      const QRectF& old_geometry) {
   QQuickItem::geometryChanged(new_geometry, old_geometry);
-  HandleGeometryChanged();
+  if (window()) {
+    HandleGeometryChanged();
+  }
+}
+
+void RenderViewItem::onWindowChanged(QQuickWindow* window) {
+  if (window) {
+    HandleGeometryChanged();
+  }
 }
 
 void RenderViewItem::DidUpdatePaintNode(oxide::qt::CompositorFrameType type) {
@@ -77,6 +85,9 @@ RenderViewItem::RenderViewItem() :
 
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
+
+  connect(this, SIGNAL(windowChanged(QQuickWindow*)),
+          this, SLOT(onWindowChanged(QQuickWindow*)));
 }
 
 void RenderViewItem::Init(oxide::qt::WebViewAdapter* view) {
