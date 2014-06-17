@@ -877,13 +877,7 @@ bool RenderWidgetHostView::IsShowing() {
   return delegate_->IsShowing();
 }
 
-void RenderWidgetHostView::SwapSoftwareFrame() {
-  delegate_->SetCompositorFrameType(COMPOSITOR_FRAME_TYPE_SOFTWARE);
-  delegate_->ScheduleUpdate();
-}
-
-void RenderWidgetHostView::SwapAcceleratedFrame() {
-  delegate_->SetCompositorFrameType(COMPOSITOR_FRAME_TYPE_ACCELERATED);
+void RenderWidgetHostView::OnCompositorSwapFrame() {
   delegate_->ScheduleUpdate();
 }
 

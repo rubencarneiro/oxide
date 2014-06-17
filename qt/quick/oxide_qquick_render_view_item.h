@@ -20,7 +20,6 @@
 
 #include <QQuickItem>
 #include <QCursor>
-#include <QImage>
 #include <QRect>
 #include <QtGlobal>
 
@@ -98,13 +97,11 @@ class RenderViewItem Q_DECL_FINAL :
   void geometryChanged(const QRectF& new_geometry,
                        const QRectF& old_geometry) Q_DECL_FINAL;
 
-  void DidUpdatePaintNode(oxide::qt::CompositorFrameType type);
+  void DidUpdatePaintNode(oxide::qt::CompositorFrameHandle::Type type);
 
   bool received_new_compositor_frame_;
-  oxide::qt::CompositorFrameType last_composited_frame_type_;
-
-  QImage software_frame_data_;
-  oxide::qt::AcceleratedFrameTextureHandle accelerated_frame_data_;
+  oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
+  oxide::qt::CompositorFrameHandle* compositor_frame_handle_;
 
   Q_DISABLE_COPY(RenderViewItem);
 };

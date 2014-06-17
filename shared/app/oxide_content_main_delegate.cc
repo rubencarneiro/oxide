@@ -34,7 +34,6 @@
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
-#include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_surface.h"
 #include "ui/native_theme/native_theme_switches.h"
 
@@ -43,7 +42,6 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_paths.h"
-#include "shared/gl/oxide_shared_gl_context.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 namespace oxide {
@@ -130,19 +128,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     command_line->AppendSwitch(switches::kInProcessGPU);
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
 
-    // Stop-gap measure until we support the delegated renderer
-    command_line->AppendSwitch(cc::switches::kCompositeToMailbox);
-
-    // We need both of this here to test compositing support. It's also needed
-    // to work around a mesa race - see https://launchpad.net/bugs/1267893
+    // Work around a mesa race - see https://launchpad.net/bugs/1267893
     gfx::GLSurface::InitializeOneOff();
-
-    SharedGLContext* shared_gl_context =
-        BrowserProcessMain::instance()->GetSharedGLContext();
-    if (!shared_gl_context ||
-        shared_gl_context->GetImplementation() != gfx::GetGLImplementation()) {
-      command_line->AppendSwitch(switches::kDisableGpuCompositing);
-    }
 
     FormFactor form_factor = GetFormFactorHint();
     if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {

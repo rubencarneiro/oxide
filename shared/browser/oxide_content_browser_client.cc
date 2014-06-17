@@ -41,6 +41,7 @@
 #include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
 
+#include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
@@ -52,7 +53,6 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
 #include "oxide_form_factor.h"
-#include "oxide_gpu_utils.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
@@ -165,7 +165,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   void PreMainMessageLoopRun() FINAL {
-    GpuUtils::Initialize();
+    CompositorUtils::GetInstance()->Initialize();
     net::NetModule::SetResourceProvider(NetResourceProvider);
   }
 
@@ -175,7 +175,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   void PostMainMessageLoopRun() FINAL {
-    GpuUtils::instance()->Destroy();
+    CompositorUtils::GetInstance()->Destroy();
   }
 
   void PostDestroyThreads() FINAL {

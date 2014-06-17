@@ -39,7 +39,7 @@ bool IsThreadedCompositingEnabled() {
 }
 
 bool IsDelegatedRendererEnabled() {
-  return false;
+  return true;
 }
 
 bool IsImplSidePaintingEnabled() {

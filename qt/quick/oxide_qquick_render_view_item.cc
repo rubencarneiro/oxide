@@ -40,13 +40,21 @@ namespace qquick {
 class UpdatePaintNodeContext {
  public:
   UpdatePaintNodeContext(RenderViewItem* item)
-      : type(oxide::qt::COMPOSITOR_FRAME_TYPE_INVALID),
-        item_(item) {}
+      : type(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
+        item_(item) {
+    if (item_->received_new_compositor_frame_) {
+      type = item_->compositor_frame_handle_ ?
+          item_->compositor_frame_handle_->GetType() :
+          oxide::qt::CompositorFrameHandle::TYPE_INVALID;
+    } else {
+      type = item_->last_composited_frame_type_;
+    }
+  }
   virtual ~UpdatePaintNodeContext() {
     item_->DidUpdatePaintNode(type);
   }
 
-  oxide::qt::CompositorFrameType type;
+  oxide::qt::CompositorFrameHandle::Type type;
 
  private:
   RenderViewItem* item_;
@@ -66,20 +74,19 @@ void RenderViewItem::geometryChanged(const QRectF& new_geometry,
   }
 }
 
-void RenderViewItem::DidUpdatePaintNode(oxide::qt::CompositorFrameType type) {
+void RenderViewItem::DidUpdatePaintNode(oxide::qt::CompositorFrameHandle::Type type) {
   last_composited_frame_type_ = type;
   if (received_new_compositor_frame_) {
     received_new_compositor_frame_ = false;
     DidComposite();
   }
-  software_frame_data_ = QImage();
-  accelerated_frame_data_ = oxide::qt::AcceleratedFrameTextureHandle();
+  compositor_frame_handle_ = NULL;
 }
 
 RenderViewItem::RenderViewItem() :
     QQuickItem(),
     received_new_compositor_frame_(false),
-    last_composited_frame_type_(oxide::qt::COMPOSITOR_FRAME_TYPE_INVALID) {
+    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {
   setFlags(QQuickItem::ItemHasContents |
            QQuickItem::ItemClipsChildrenToShape);
 
@@ -153,6 +160,8 @@ void RenderViewItem::SetInputMethodEnabled(bool enabled) {
 
 void RenderViewItem::ScheduleUpdate() {
   received_new_compositor_frame_ = true;
+
+  oxide::qt::RenderWidgetHostViewDelegate::ScheduleUpdate();
 
   update();
   polish();
@@ -228,19 +237,7 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 }
 
 void RenderViewItem::updatePolish() {
-  if (GetCompositorFrameType() ==
-      oxide::qt::COMPOSITOR_FRAME_TYPE_SOFTWARE) {
-    software_frame_data_ = GetSoftwareFrameImage();
-  }
-#if defined(ENABLE_COMPOSITING)
-  else if (GetCompositorFrameType() ==
-           oxide::qt::COMPOSITOR_FRAME_TYPE_ACCELERATED) {
-    accelerated_frame_data_ = GetAcceleratedFrameTextureHandle();
-  }
-#else
-  Q_ASSERT(GetCompositorFrameType() !=
-           oxide::qt::COMPOSITOR_FRAME_TYPE_ACCELERATED);
-#endif
+  compositor_frame_handle_ = GetCompositorFrameHandle();
 }
 
 QSGNode* RenderViewItem::updatePaintNode(
@@ -250,56 +247,47 @@ QSGNode* RenderViewItem::updatePaintNode(
 
   UpdatePaintNodeContext context(this);
 
-  context.type = GetCompositorFrameType();
   if (context.type != last_composited_frame_type_) {
     delete oldNode;
     oldNode = NULL;
   }
 
-  if ((received_new_compositor_frame_ || !oldNode) &&
-      ((context.type == oxide::qt::COMPOSITOR_FRAME_TYPE_ACCELERATED &&
-            !accelerated_frame_data_.IsValid()) ||
-       (context.type == oxide::qt::COMPOSITOR_FRAME_TYPE_SOFTWARE &&
-            software_frame_data_.isNull()))) {
-    delete oldNode;
-    oldNode = NULL;
-    context.type = oxide::qt::COMPOSITOR_FRAME_TYPE_INVALID;
-  }
-
 #if defined(ENABLE_COMPOSITING)
-  if (context.type == oxide::qt::COMPOSITOR_FRAME_TYPE_ACCELERATED) {
+  if (context.type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
     AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
     if (!node) {
       node = new AcceleratedFrameNode(this);
     }
 
     if (received_new_compositor_frame_ || !oldNode) {
-      node->setRect(QRect(QPoint(0, 0), accelerated_frame_data_.size()));
-      node->updateTexture(accelerated_frame_data_.GetID(),
-                          accelerated_frame_data_.size());
+      oxide::qt::AcceleratedFrameData data =
+          compositor_frame_handle_->GetAcceleratedFrame();
+      node->setRect(QRect(QPoint(0, 0), data.size()));
+      node->updateTexture(data.texture_id(), data.size());
     }
 
     return node;
   }
 #else
-  Q_ASSERT(context.type != oxide::qt::COMPOSITOR_FRAME_TYPE_ACCELERATED);
+  Q_ASSERT(context.type != oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
 #endif
 
-  if (context.type == oxide::qt::COMPOSITOR_FRAME_TYPE_SOFTWARE) {
+  if (context.type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
     SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
     if (!node) {
       node = new SoftwareFrameNode(this);
     }
 
     if (received_new_compositor_frame_ || !oldNode) {
-      node->setRect(QRect(QPoint(0, 0), software_frame_data_.size()));
-      node->setImage(software_frame_data_);
+      QImage data = compositor_frame_handle_->GetSoftwareFrame();
+      node->setRect(QRect(QPoint(0, 0), data.size()));
+      node->setImage(data);
     }
 
     return node;
   }
 
-  Q_ASSERT(context.type == oxide::qt::COMPOSITOR_FRAME_TYPE_INVALID);
+  Q_ASSERT(context.type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
 
   SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
   if (!node) {
