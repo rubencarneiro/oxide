@@ -544,7 +544,7 @@ void RenderWidgetHostView::OnResize() {
     GetScreenInfo(&screen_info);
     CompositorLock lock(compositor_.get());
     compositor_->SetDeviceScaleFactor(screen_info.deviceScaleFactor);
-    compositor_->SetViewportSize(GetViewBounds().size());
+    compositor_->SetViewportSize(GetPhysicalBackingSize());
   }
 
   host()->SendScreenRects();
