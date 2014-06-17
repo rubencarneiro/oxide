@@ -122,6 +122,7 @@
         '<(DEPTH)'
       ],
       'sources': [
+        '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
@@ -129,6 +130,9 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
+        'api/oxideqdownloadrequest.cc',
+        'api/oxideqdownloadrequest.h',
+        'api/oxideqdownloadrequest_p.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
@@ -180,6 +184,11 @@
         'glue/oxide_qt_web_view_adapter.h',
       ],
       'actions': [
+        {
+          'action_name': 'moc_oxideqdownloadrequest.cc',
+          'moc_input': 'api/oxideqdownloadrequest.h',
+          'includes': [ 'moc.gypi' ]
+        },
         {
           'action_name': 'moc_oxideqloadevent.cc',
           'moc_input': 'api/oxideqloadevent.h',

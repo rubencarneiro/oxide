@@ -170,6 +170,14 @@ class WebView : public ScriptMessageTarget,
 
   virtual bool CanCreateWindows() const;
 
+  void DownloadRequested(
+      const GURL& url,
+      const std::string& mimeType,
+      const bool shouldPrompt,
+      const base::string16& suggestedFilename,
+      const std::string& cookies,
+      const std::string& referrer) FINAL;
+
  protected:
   WebView();
 
@@ -310,6 +318,14 @@ class WebView : public ScriptMessageTarget,
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                     WindowOpenDisposition disposition);
+
+  virtual void OnDownloadRequested(
+      const GURL& url,
+      const std::string& mimeType,
+      const bool shouldPrompt,
+      const base::string16& suggestedFilename,
+      const std::string& cookies,
+      const std::string& referrer);
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

@@ -43,6 +43,7 @@ class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
+class OxideQDownloadRequest;
 
 class OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
@@ -203,6 +204,7 @@ class OxideQQuickWebView : public QQuickItem {
                                 const QString& message,
                                 int lineNumber,
                                 const QString& sourceId);
+  void downloadRequested(OxideQDownloadRequest* request);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());

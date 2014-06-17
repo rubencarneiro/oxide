@@ -100,6 +100,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
 
+  void DownloadRequested(OxideQDownloadRequest* downloadRequest) Q_DECL_FINAL;
+
   void completeConstruction();
 
   static void messageHandler_append(

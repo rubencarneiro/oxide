@@ -554,6 +554,13 @@ WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
   return NULL;
 }
 
+void WebView::OnDownloadRequested(const GURL& url,
+				  const std::string& mimeType,
+				  const bool shouldPrompt,
+				  const base::string16& suggestedFilename,
+				  const std::string& cookies,
+				  const std::string& referrer) {}
+
 WebView::WebView()
     : web_contents_helper_(NULL),
       initial_preferences_(NULL),
@@ -943,6 +950,17 @@ void WebView::FrameRemoved(WebFrame* frame) {}
 
 bool WebView::CanCreateWindows() const {
   return false;
+}
+
+void WebView::DownloadRequested(
+    const GURL& url,
+    const std::string& mimeType,
+    const bool shouldPrompt,
+    const base::string16& suggestedFilename,
+    const std::string& cookies,
+    const std::string& referrer) {
+  OnDownloadRequested(url, mimeType, shouldPrompt,
+      suggestedFilename, cookies, referrer);
 }
 
 } // namespace oxide

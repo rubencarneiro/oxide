@@ -29,6 +29,7 @@
 #include "net/base/net_errors.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 
+#include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -360,6 +361,25 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
   }
   return view;
 }
+
+void WebView::OnDownloadRequested(const GURL& url,
+				  const std::string& mimeType,
+				  const bool shouldPrompt,
+				  const base::string16& suggestedFilename,
+				  const std::string& cookies,
+				  const std::string& referrer) {
+  OxideQDownloadRequest
+    downloadRequest(
+        QUrl(QString::fromStdString(url.spec())),
+	QString::fromStdString(mimeType),
+	shouldPrompt,
+        QString::fromStdString(base::UTF16ToUTF8(suggestedFilename)),
+	QString::fromStdString(cookies),
+        QString::fromStdString(referrer));
+
+  adapter_->DownloadRequested(&downloadRequest);
+}
+
 
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
