@@ -120,6 +120,8 @@ class CompositorLock FINAL {
 
  private:
   Compositor* compositor_;
+
+  DISALLOW_COPY_AND_ASSIGN(CompositorLock);
 };
 
 } // namespace oxide
