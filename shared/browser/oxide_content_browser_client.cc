@@ -26,6 +26,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "content/browser/gpu/compositor_util.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
@@ -250,9 +251,10 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
       command_line->AppendSwitch(switches::kIncognito);
     }
 
-    if (!BrowserProcessMain::instance()->GetSharedGLContext() ||
-        BrowserProcessMain::instance()->GetSharedGLContext()->GetImplementation() !=
-            gfx::GetGLImplementation()) {
+    if (content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() &&
+        (!BrowserProcessMain::instance()->GetSharedGLContext() ||
+         BrowserProcessMain::instance()->GetSharedGLContext()->GetImplementation() !=
+             gfx::GetGLImplementation())) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
   }

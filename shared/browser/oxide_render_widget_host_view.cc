@@ -27,6 +27,7 @@
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/renderer_host/ui_events_helper.h"
 #include "content/common/gpu/gpu_messages.h"
@@ -89,6 +90,10 @@ bool ShouldUseSoftwareCompositing() {
   }
 
   initialized = true;
+
+  if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
+    return true;
+  }
 
   SharedGLContext* share_context =
       BrowserProcessMain::instance()->GetSharedGLContext();

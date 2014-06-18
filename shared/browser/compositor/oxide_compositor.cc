@@ -86,20 +86,21 @@ void Compositor::ApplyScrollAndScale(const gfx::Vector2d& scroll_delta,
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
   DCHECK(CalledOnValidThread());
 
-  if (use_software_) {
-    fallback = true;
-  }
-
-  scoped_refptr<cc::ContextProvider> context_provider;
-  if (!fallback) {
-    context_provider = CompositorUtils::GetInstance()->GetContextProvider();
-    if (!context_provider) {
-      return scoped_ptr<cc::OutputSurface>();
-    }
+  // Don't use the provided fallback path, we need the browser side and
+  // renderer sides to be in sync, so this would probably result in no
+  // output anyway
+  if (fallback) {
+    return scoped_ptr<cc::OutputSurface>();
   }
 
   uint32 output_surface_id = next_output_surface_id_++;
-  if (context_provider) {
+
+  if (!use_software_) {
+    scoped_refptr<cc::ContextProvider> context_provider =
+        CompositorUtils::GetInstance()->GetContextProvider();
+    if (!context_provider) {
+      return scoped_ptr<cc::OutputSurface>();
+    }
     scoped_ptr<CompositorOutputSurfaceGL> output(
         new CompositorOutputSurfaceGL(output_surface_id,
                                       context_provider,

@@ -238,7 +238,6 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 
 void RenderViewItem::updatePolish() {
   compositor_frame_handle_ = GetCompositorFrameHandle();
-  printf("Frame type: %d\n", compositor_frame_handle_->GetType());
 }
 
 QSGNode* RenderViewItem::updatePaintNode(
