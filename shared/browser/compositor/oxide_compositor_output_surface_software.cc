@@ -35,9 +35,7 @@ CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
     uint32 surface_id,
     scoped_ptr<cc::SoftwareOutputDevice> software_device,
     scoped_refptr<CompositorThreadProxy> proxy)
-    : CompositorOutputSurface(surface_id, software_device.Pass(), proxy) {
-  capabilities_.max_frames_pending = 1;
-}
+    : CompositorOutputSurface(surface_id, software_device.Pass(), proxy) {}
 
 CompositorOutputSurfaceSoftware::~CompositorOutputSurfaceSoftware() {}
 
