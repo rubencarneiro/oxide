@@ -66,7 +66,7 @@ class CompositorOutputSurfaceGL FINAL : public CompositorOutputSurface {
   bool is_backbuffer_discarded_;
   uint32 fbo_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(CompositorOutputSurfaceGL);
+  DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurfaceGL);
 };
 
 } // namespace oxide
