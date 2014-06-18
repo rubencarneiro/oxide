@@ -15,42 +15,30 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_compositor_frame_handle.h"
+#include "oxide_compositor_output_surface_software.h"
+
+#include "base/logging.h"
+#include "cc/output/compositor_frame.h"
+#include "cc/output/output_surface_client.h"
 
 #include "oxide_compositor_thread_proxy.h"
 
 namespace oxide {
 
-GLFrameData::GLFrameData(const gpu::Mailbox& mailbox,
-                         GLuint texture_id)
-    : mailbox_(mailbox),
-      texture_id_(texture_id) {}
-
-GLFrameData::~GLFrameData() {}
-
-SoftwareFrameData::SoftwareFrameData(unsigned id,
-                                     const gfx::Rect& damage_rect,
-                                     uint8* pixels)
-    : id_(id),
-      damage_rect_(damage_rect),
-      pixels_(pixels) {}
-
-SoftwareFrameData::~SoftwareFrameData() {}
-
-CompositorFrameHandle::CompositorFrameHandle(
-    uint32 surface_id,
-    scoped_refptr<CompositorThreadProxy> proxy,
-    const gfx::Size& size,
-    float scale)
-    : surface_id_(surface_id),
-      proxy_(proxy),
-      size_in_pixels_(size),
-      device_scale_(scale) {}
-
-CompositorFrameHandle::~CompositorFrameHandle() {
-  if (proxy_ && (software_frame_data_ || gl_frame_data_)) {
-    proxy_->ReclaimResourcesForFrame(this);
-  }
+void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame* frame) {
+  DCHECK(frame->software_frame_data);
+  proxy_->SwapCompositorFrame(frame);
+  client_->DidSwapBuffers();
 }
+
+CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
+    uint32 surface_id,
+    scoped_ptr<cc::SoftwareOutputDevice> software_device,
+    scoped_refptr<CompositorThreadProxy> proxy)
+    : CompositorOutputSurface(surface_id, software_device.Pass(), proxy) {
+  capabilities_.max_frames_pending = 1;
+}
+
+CompositorOutputSurfaceSoftware::~CompositorOutputSurfaceSoftware() {}
 
 } // namespace oxide

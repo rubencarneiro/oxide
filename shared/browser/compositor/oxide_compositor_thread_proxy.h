@@ -23,6 +23,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/threading/thread_checker.h"
+#include "cc/resources/shared_bitmap.h"
 
 namespace base {
 class MessageLoopProxy;
@@ -31,6 +32,11 @@ class MessageLoopProxy;
 namespace cc {
 class CompositorFrame;
 class CompositorFrameAck;
+}
+
+namespace gfx {
+class Rect;
+class Size;
 }
 
 namespace oxide {
@@ -88,9 +94,16 @@ class CompositorThreadProxy FINAL : public CompositorThreadProxyBase {
  private:
   ~CompositorThreadProxy();
 
-  void SendSwapCompositorFrameOnOwnerThread(
-      uint32 surface_id,
-      scoped_ptr<GLFrameData> gl_frame_data);
+  void SendSwapGLFrameOnOwnerThread(uint32 surface_id,
+                                    const gfx::Size& size,
+                                    float scale,
+                                    scoped_ptr<GLFrameData> gl_frame_data);
+  void SendSwapSoftwareFrameOnOwnerThread(uint32 surface_id,
+                                          const gfx::Size& size,
+                                          float scale,
+                                          unsigned id,
+                                          const gfx::Rect& damage_rect,
+                                          const cc::SharedBitmapId& bitmap_id);
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
       uint32 surface_id,
       cc::CompositorFrameAck* ack);

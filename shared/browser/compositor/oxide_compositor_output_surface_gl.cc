@@ -153,6 +153,7 @@ void CompositorOutputSurfaceGL::ReclaimResources(
   }
 
   if (!ack.gl_frame_data) {
+    CompositorOutputSurface::ReclaimResources(surface_id, ack);
     return;
   }
 

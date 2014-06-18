@@ -118,13 +118,11 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
 class GLFrameHandle : public GLFrameData {
  public:
   GLFrameHandle(const gpu::Mailbox& mailbox,
-                const gfx::Size& size,
-                float scale,
                 GLuint texture_id,
                 int32 client_id,
                 int32 route_id,
                 gpu::gles2::TextureRef* ref)
-      : GLFrameData(mailbox, size, scale, texture_id),
+      : GLFrameData(mailbox, texture_id),
         client_id_(client_id),
         route_id_(route_id),
         ref_(ref) {}
@@ -150,16 +148,12 @@ class CompositorUtils::FetchTextureResourcesTask :
       int32 client_id,
       int32 route_id,
       const gpu::Mailbox& mailbox,
-      const gfx::Size& size,
-      float scale,
       uint32 sync_point,
       const CompositorUtils::CreateGLFrameHandleCallback& callback,
       scoped_refptr<base::TaskRunner> task_runner)
       : client_id_(client_id),
         route_id_(route_id),
         mailbox_(mailbox),
-        size_(size),
-        scale_(scale),
         sync_point_(sync_point),
         callback_(callback),
         task_runner_(task_runner) {
@@ -220,8 +214,7 @@ class CompositorUtils::FetchTextureResourcesTask :
     }
 
     scoped_ptr<GLFrameHandle> handle(
-        new GLFrameHandle(mailbox_, size_, scale_, service_id,
-                          client_id_, route_id_, ref));
+        new GLFrameHandle(mailbox_, service_id, client_id_, route_id_, ref));
     callback_.Run(handle.PassAs<GLFrameData>());
 
     callback_.Reset();
@@ -230,8 +223,6 @@ class CompositorUtils::FetchTextureResourcesTask :
   int32 client_id_;
   int32 route_id_;
   gpu::Mailbox mailbox_;
-  gfx::Size size_;
-  float scale_;
   uint32 sync_point_;
   CompositorUtils::CreateGLFrameHandleCallback callback_;
   scoped_refptr<base::TaskRunner> task_runner_;
@@ -322,13 +313,10 @@ scoped_refptr<cc::ContextProvider> CompositorUtils::GetContextProvider() {
 
 void CompositorUtils::CreateGLFrameHandle(
     const gpu::Mailbox& mailbox,
-    const gfx::Size& size,
-    float scale,
     uint32 sync_point,
     const CreateGLFrameHandleCallback& callback,
     scoped_refptr<base::TaskRunner> task_runner) {
   DCHECK(!mailbox.IsZero());
-  DCHECK(!size.IsEmpty());
 
   // Hold a strong ref to context_provider_, as the main reference
   // could be dropped on the main thread
@@ -342,7 +330,7 @@ void CompositorUtils::CreateGLFrameHandle(
       new FetchTextureResourcesTask(
         client_id_,
         context_provider->GetCommandBufferProxy()->GetRouteID(),
-        mailbox, size, scale, sync_point, callback, task_runner);
+        mailbox, sync_point, callback, task_runner);
 
   base::AutoLock lock(fetch_texture_resources_lock_);
 

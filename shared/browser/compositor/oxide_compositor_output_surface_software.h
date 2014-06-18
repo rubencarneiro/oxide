@@ -15,55 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_H_
-#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_H_
+#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_
+#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_
 
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "cc/output/output_surface.h"
+#include "base/memory/scoped_ptr.h"
 
-namespace cc {
-class CompositorFrameAck;
-class ContextProvider;
-}
+#include "shared/browser/compositor/oxide_compositor_output_surface.h"
 
 namespace oxide {
 
-class CompositorThreadProxy;
-
-class CompositorOutputSurface : public cc::OutputSurface {
+class CompositorOutputSurfaceSoftware FINAL : public CompositorOutputSurface {
  public:
-  virtual ~CompositorOutputSurface();
-
-  uint32 surface_id() const { return surface_id_; }
-
-  void DidSwapBuffers(uint32 surface_id,
-                      const cc::CompositorFrameAck& ack);
-  virtual void ReclaimResources(uint32 surface_id,
-                                const cc::CompositorFrameAck& ack);
-
- protected:
-  CompositorOutputSurface(
-      uint32 surface_id,
-      scoped_refptr<cc::ContextProvider> context_provider,
-      scoped_refptr<CompositorThreadProxy> proxy);
-  CompositorOutputSurface(
+  CompositorOutputSurfaceSoftware(
       uint32 surface_id,
       scoped_ptr<cc::SoftwareOutputDevice> software_device,
       scoped_refptr<CompositorThreadProxy> proxy);
-
-  scoped_refptr<CompositorThreadProxy> proxy_;
+  ~CompositorOutputSurfaceSoftware();
 
  private:
   // cc::OutputSurface implementation
-  bool BindToClient(cc::OutputSurfaceClient* client) FINAL;
+  void SwapBuffers(cc::CompositorFrame* frame) FINAL;
 
-  uint32 surface_id_;
-
-  DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurface);
+  DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurfaceSoftware);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_H_
+#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_

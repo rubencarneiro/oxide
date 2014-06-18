@@ -23,6 +23,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "gpu/command_buffer/common/mailbox.h"
+#include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
 
 typedef unsigned int GLuint;
@@ -34,39 +35,59 @@ class CompositorThreadProxy;
 class GLFrameData {
  public:
   GLFrameData(const gpu::Mailbox& mailbox,
-              const gfx::Size& size,
-              float scale,
               GLuint texture_id);
   virtual ~GLFrameData();
 
   const gpu::Mailbox& mailbox() const { return mailbox_; }
-  const gfx::Size& size_in_pixels() const { return size_in_pixels_; }
-  float device_scale() const { return device_scale_; }
   GLuint texture_id() const { return texture_id_; }
 
  private:
   gpu::Mailbox mailbox_;
-  gfx::Size size_in_pixels_;
-  float device_scale_;
   GLuint texture_id_;
+};
+
+class SoftwareFrameData {
+ public:
+  SoftwareFrameData(unsigned id,
+                    const gfx::Rect& damage_rect,
+                    uint8* pixels);
+  ~SoftwareFrameData();
+
+  unsigned id() const { return id_; }
+  const gfx::Rect& damage_rect() const { return damage_rect_; }
+  uint8* pixels() const { return pixels_; }
+
+ private:
+  unsigned id_;
+  gfx::Rect damage_rect_;
+  uint8* pixels_;
 };
 
 class CompositorFrameHandle FINAL {
  public:
-  CompositorFrameHandle();
+  CompositorFrameHandle(uint32 surface_id,
+                        scoped_refptr<CompositorThreadProxy> proxy,
+                        const gfx::Size& size,
+                        float scale);
   ~CompositorFrameHandle();
 
+  const gfx::Size& size_in_pixels() const { return size_in_pixels_; }
+  float device_scale() const { return device_scale_; }
+
   GLFrameData* gl_frame_data() { return gl_frame_data_.get(); }
-  // SoftwareFrameData* software_frame_data() { return software_frame_data_.get(); }
+  SoftwareFrameData* software_frame_data() { return software_frame_data_.get(); }
 
  private:
   friend class CompositorThreadProxy;
 
-  uint32 surface_id;
-  scoped_refptr<CompositorThreadProxy> proxy;
+  uint32 surface_id_;
+  scoped_refptr<CompositorThreadProxy> proxy_;
+
+  gfx::Size size_in_pixels_;
+  float device_scale_;
 
   scoped_ptr<GLFrameData> gl_frame_data_;
-  // scoped_ptr<SoftwareFrameData> software_frame_data_;
+  scoped_ptr<SoftwareFrameData> software_frame_data_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorFrameHandle);
 };

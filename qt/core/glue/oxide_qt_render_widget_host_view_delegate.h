@@ -48,16 +48,14 @@ class WebViewAdapter;
 
 class Q_DECL_EXPORT AcceleratedFrameData Q_DECL_FINAL {
  public:
-  AcceleratedFrameData(unsigned int id, const QSize& size)
-      : texture_id_(id), size_(size) {}
+  AcceleratedFrameData(unsigned int id)
+      : texture_id_(id) {}
   ~AcceleratedFrameData() {}
 
   unsigned int texture_id() const { return texture_id_; }
-  QSize size() const { return size_; }
 
  private:
   unsigned int texture_id_;
-  QSize size_;
 };
 
 class Q_DECL_EXPORT CompositorFrameHandle {
@@ -71,6 +69,7 @@ class Q_DECL_EXPORT CompositorFrameHandle {
   };
 
   virtual Type GetType() = 0;
+  virtual const QSize& GetSize() const = 0;
 
   virtual QImage GetSoftwareFrame() = 0;
   virtual AcceleratedFrameData GetAcceleratedFrame() = 0;

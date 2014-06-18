@@ -238,6 +238,7 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
 
 void RenderViewItem::updatePolish() {
   compositor_frame_handle_ = GetCompositorFrameHandle();
+  printf("Frame type: %d\n", compositor_frame_handle_->GetType());
 }
 
 QSGNode* RenderViewItem::updatePaintNode(
@@ -260,10 +261,11 @@ QSGNode* RenderViewItem::updatePaintNode(
     }
 
     if (received_new_compositor_frame_ || !oldNode) {
-      oxide::qt::AcceleratedFrameData data =
-          compositor_frame_handle_->GetAcceleratedFrame();
-      node->setRect(QRect(QPoint(0, 0), data.size()));
-      node->updateTexture(data.texture_id(), data.size());
+      QSize size = compositor_frame_handle_->GetSize();
+      node->setRect(QRect(QPoint(0, 0), size));
+      node->updateTexture(
+          compositor_frame_handle_->GetAcceleratedFrame().texture_id(),
+          size);
     }
 
     return node;
@@ -280,7 +282,7 @@ QSGNode* RenderViewItem::updatePaintNode(
 
     if (received_new_compositor_frame_ || !oldNode) {
       QImage data = compositor_frame_handle_->GetSoftwareFrame();
-      node->setRect(QRect(QPoint(0, 0), data.size()));
+      node->setRect(QRect(QPoint(0, 0), compositor_frame_handle_->GetSize()));
       node->setImage(data);
     }
 

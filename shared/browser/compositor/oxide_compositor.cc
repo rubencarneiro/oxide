@@ -27,6 +27,8 @@
 #include "oxide_compositor_client.h"
 #include "oxide_compositor_frame_handle.h"
 #include "oxide_compositor_output_surface_gl.h"
+#include "oxide_compositor_output_surface_software.h"
+#include "oxide_compositor_software_output_device.h"
 #include "oxide_compositor_thread_proxy.h"
 #include "oxide_compositor_utils.h"
 
@@ -105,8 +107,14 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
     return output.PassAs<cc::OutputSurface>();
   }
 
-  NOTREACHED() << "No software fallback yet";
-  return scoped_ptr<cc::OutputSurface>();
+  scoped_ptr<CompositorSoftwareOutputDevice> output_device(
+      new CompositorSoftwareOutputDevice());
+  scoped_ptr<CompositorOutputSurfaceSoftware> output(
+      new CompositorOutputSurfaceSoftware(
+        output_surface_id,
+        output_device.PassAs<cc::SoftwareOutputDevice>(),
+        proxy_));
+  return output.PassAs<cc::OutputSurface>();
 }
 
 void Compositor::DidInitializeOutputSurface() {}

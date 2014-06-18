@@ -40,6 +40,14 @@ CompositorOutputSurface::CompositorOutputSurface(
       proxy_(proxy),
       surface_id_(surface_id) {}
 
+CompositorOutputSurface::CompositorOutputSurface(
+    uint32 surface_id,
+    scoped_ptr<cc::SoftwareOutputDevice> software_device,
+    scoped_refptr<CompositorThreadProxy> proxy)
+    : cc::OutputSurface(software_device.Pass()),
+      proxy_(proxy),
+      surface_id_(surface_id) {}
+
 CompositorOutputSurface::~CompositorOutputSurface() {
   proxy_->SetOutputSurface(NULL);
 }

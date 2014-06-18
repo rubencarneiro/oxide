@@ -69,8 +69,6 @@ class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
 
   typedef base::Callback<void(scoped_ptr<GLFrameData>)> CreateGLFrameHandleCallback;
   void CreateGLFrameHandle(const gpu::Mailbox& mailbox,
-                           const gfx::Size& size,
-                           float scale,
                            uint32 sync_point,
                            const CreateGLFrameHandleCallback& callback,
                            scoped_refptr<base::TaskRunner> task_runner);

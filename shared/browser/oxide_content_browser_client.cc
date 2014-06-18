@@ -249,6 +249,12 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     if (host->GetBrowserContext()->IsOffTheRecord()) {
       command_line->AppendSwitch(switches::kIncognito);
     }
+
+    if (!BrowserProcessMain::instance()->GetSharedGLContext() ||
+        BrowserProcessMain::instance()->GetSharedGLContext()->GetImplementation() !=
+            gfx::GetGLImplementation()) {
+      command_line->AppendSwitch(switches::kDisableGpuCompositing);
+    }
   }
 }
 

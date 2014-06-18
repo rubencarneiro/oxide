@@ -31,35 +31,51 @@ namespace qt {
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
   CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
-      : frame_(frame) {}
+      : frame_(frame) {
+    if (frame_) {
+      size_ = QSize(frame_->size_in_pixels().width(),
+                    frame_->size_in_pixels().height());
+    }
+  }
+
   virtual ~CompositorFrameHandleImpl() {}
 
   CompositorFrameHandle::Type GetType() Q_DECL_FINAL {
+    if (!frame_) {
+      return CompositorFrameHandle::TYPE_INVALID;
+    }
     if (frame_->gl_frame_data()) {
       return CompositorFrameHandle::TYPE_ACCELERATED;
     }
-    //if (frame_->software_frame_data()) {
-    //  return CompositorFrameHandle::TYPE_SOFTWARE;
-    //}
+    if (frame_->software_frame_data()) {
+      return CompositorFrameHandle::TYPE_SOFTWARE;
+    }
 
+    NOTREACHED();
     return CompositorFrameHandle::TYPE_INVALID;
   }
 
+  const QSize& GetSize() const Q_DECL_FINAL {
+    return size_;
+  }
+
   QImage GetSoftwareFrame() Q_DECL_FINAL {
-    NOTREACHED();
-    return QImage();
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
+    return QImage(
+        static_cast<uchar *>(frame_->software_frame_data()->pixels()),
+        frame_->size_in_pixels().width(),
+        frame_->size_in_pixels().height(),
+        QImage::Format_ARGB32);
   }
 
   AcceleratedFrameData GetAcceleratedFrame() Q_DECL_FINAL {
-    DCHECK(frame_->gl_frame_data());
-    return AcceleratedFrameData(
-        frame_->gl_frame_data()->texture_id(),
-        QSize(frame_->gl_frame_data()->size_in_pixels().width(),
-              frame_->gl_frame_data()->size_in_pixels().height()));
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
+    return AcceleratedFrameData(frame_->gl_frame_data()->texture_id());
   }
 
  private:
   oxide::CompositorFrameHandle* frame_;
+  QSize size_;
 };
 
 RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate() :
