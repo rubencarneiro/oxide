@@ -1,3 +1,6 @@
+# Description: Add a ShouldDownloadUrl embedder hook to dispatch download requests.
+# Author: Alexandre Abreu <alexandre.abreu@canonical.com>
+
 diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/browser/loader/buffered_resource_handler.cc
 --- a/content/browser/loader/buffered_resource_handler.cc
 +++ b/content/browser/loader/buffered_resource_handler.cc
