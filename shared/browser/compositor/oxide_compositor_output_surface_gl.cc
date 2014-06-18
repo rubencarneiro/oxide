@@ -151,22 +151,6 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
   backing_texture_ = OutputFrameData();
 }
 
-void CompositorOutputSurfaceGL::DidSwapBuffers(
-    uint32 surface_id,
-    const cc::CompositorFrameAck& ack) {
-  if (surface_id != this->surface_id()) {
-    return;
-  }
-
-  DCHECK_EQ(ack.last_software_frame_id, 0);
-
-  if (ack.gl_frame_data) {
-    DoReclaim(ack);
-  }
-
-  CompositorOutputSurface::DidSwapBuffers(surface_id, ack);
-}
-
 void CompositorOutputSurfaceGL::ReclaimResources(
     uint32 surface_id,
     const cc::CompositorFrameAck& ack) {
@@ -174,13 +158,10 @@ void CompositorOutputSurfaceGL::ReclaimResources(
     return;
   }
 
-  DoReclaim(ack);
+  if (!ack.gl_frame_data) {
+    return;
+  }
 
-  cc::OutputSurface::ReclaimResources(&ack);
-}
-
-void CompositorOutputSurfaceGL::DoReclaim(const cc::CompositorFrameAck& ack) {
-  DCHECK(ack.gl_frame_data);
   DCHECK_EQ(ack.last_software_frame_id, 0);
   DCHECK(!ack.gl_frame_data->mailbox.IsZero());
   DCHECK(!ack.gl_frame_data->size.IsEmpty());
@@ -207,6 +188,8 @@ void CompositorOutputSurfaceGL::DoReclaim(const cc::CompositorFrameAck& ack) {
   }
 
   pending_textures_.erase(it);
+
+  CompositorOutputSurface::ReclaimResources(surface_id, ack);
 }
 
 CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(

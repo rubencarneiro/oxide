@@ -51,8 +51,18 @@ void CompositorOutputSurface::DidSwapBuffers(
     return;
   }
 
-  cc::OutputSurface::ReclaimResources(&ack);
+  ReclaimResources(surface_id, ack);
   client_->DidSwapBuffersComplete();
+}
+
+void CompositorOutputSurface::ReclaimResources(
+    uint32 surface_id,
+    const cc::CompositorFrameAck& ack) {
+  if (surface_id != this->surface_id()) {
+    return;
+  }
+
+  cc::OutputSurface::ReclaimResources(&ack);
 }
 
 } // namespace oxide
