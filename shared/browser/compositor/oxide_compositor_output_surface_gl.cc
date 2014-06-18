@@ -36,17 +36,10 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
 
-  if (!backing_texture_.texture_id) {
-    while (!returned_textures_.empty()) {
-      OutputFrameData& texture = returned_textures_.front();
-      returned_textures_.pop();
-      if (texture.size == surface_size_) {
-        backing_texture_ = texture;
-        break;
-      } else {
-        gl->DeleteTextures(1, &texture.texture_id);
-      }
-    }
+  if (!backing_texture_.texture_id && !returned_textures_.empty()) {
+    backing_texture_ = returned_textures_.front();
+    returned_textures_.pop();
+    DCHECK(backing_texture_.size == surface_size_);
   }
 
   if (!backing_texture_.texture_id) {
@@ -116,6 +109,7 @@ void CompositorOutputSurfaceGL::Reshape(const gfx::Size& size,
 void CompositorOutputSurfaceGL::BindFramebuffer() {
   EnsureBackbuffer();
   DCHECK(backing_texture_.texture_id);
+  DCHECK(backing_texture_.size == surface_size_);
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
 
@@ -181,7 +175,7 @@ void CompositorOutputSurfaceGL::ReclaimResources(
 
   it->sync_point = 0;
 
-  if (!is_backbuffer_discarded_) {
+  if (!is_backbuffer_discarded_ && it->size == surface_size_) {
     returned_textures_.push(*it);
   } else {
     context_provider_->ContextGL()->DeleteTextures(1, &it->texture_id);
