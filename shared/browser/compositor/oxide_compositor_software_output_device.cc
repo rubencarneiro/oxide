@@ -73,15 +73,20 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
     }
   }
 
-  DCHECK(!previous_damage_rects_.empty() ||
-         previous_frame_.id == 0 ||
-         previous_frame_.id == current_frame_.id);
-
   SkRegion outdated_region;
-  for (std::deque<DamageData>::iterator it = previous_damage_rects_.begin();
-       it != previous_damage_rects_.end(); ++it) {
-    outdated_region.op(gfx::RectToSkIRect(it->damage), SkRegion::kUnion_Op);
+
+  if (previous_damage_rects_.empty() &&
+      previous_frame_.id != 0 &&
+      previous_frame_.id != current_frame_.id) {
+    outdated_region.setRect(
+        gfx::RectToSkIRect(gfx::Rect(viewport_pixel_size_)));
+  } else {
+    for (std::deque<DamageData>::iterator it = previous_damage_rects_.begin();
+         it != previous_damage_rects_.end(); ++it) {
+      outdated_region.op(gfx::RectToSkIRect(it->damage), SkRegion::kUnion_Op);
+    }
   }
+
   outdated_region.op(gfx::RectToSkIRect(damage_rect),
                      SkRegion::kDifference_Op);
 
