@@ -33,6 +33,10 @@ class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
 class OxideQStoragePermissionRequest;
 
+namespace net {
+class CookieMonster;
+}
+
 namespace oxide {
 namespace qt {
 
@@ -104,6 +108,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   bool popupBlockerEnabled() const;
   void setPopupBlockerEnabled(bool enabled);
+
+  net::CookieMonster* cookieMonster() const;
 
  protected:
   WebContextAdapter(QObject* q,

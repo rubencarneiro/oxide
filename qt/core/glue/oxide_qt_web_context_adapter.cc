@@ -265,6 +265,14 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
   }
 }
 
+net::CookieMonster* WebContextAdapter::cookieMonster() const {
+  if (isInitialized()) {
+    return priv->context_->GetCookieMonster();
+  }
+
+  return NULL;
+}
+
 WebContextAdapter::WebContextAdapter(
     QObject* q,
     IOThreadDelegate* io_delegate,

@@ -47,6 +47,7 @@ qt5_wrap_cpp(MOC_EXTRA
              api/oxideqquickwebcontextdelegateworker_p_p.h)
 
 set(PLUGIN_SRCS
+    api/oxideqquickcookiemonster.cc
     api/oxideqquickglobals.cc
     api/oxideqquicknavigationhistory.cc
     api/oxideqquickscriptmessage.cc

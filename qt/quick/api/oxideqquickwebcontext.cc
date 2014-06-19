@@ -38,6 +38,7 @@
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/quick/oxide_qquick_render_view_item_factory.h"
 
+#include "oxideqquickcookiemonster_p.h"
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 #include "oxideqquickwebcontextdelegateworker_p.h"
@@ -154,7 +155,8 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
         static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
     network_request_delegate_(NULL),
     storage_access_permission_delegate_(NULL),
-    user_agent_override_delegate_(NULL) {}
+    user_agent_override_delegate_(NULL),
+    cookie_monster_(NULL) {}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
   updateUserScripts();
@@ -678,6 +680,18 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
       &d->io_thread_delegate_->user_agent_override_delegate)) {
     emit userAgentOverrideDelegateChanged();
   }
+}
+
+OxideQQuickCookieMonster*
+OxideQQuickWebContext::cookieMonster() const {
+  Q_D(const OxideQQuickWebContext);
+
+  if (!d->cookie_monster_) {
+    d->cookie_monster_ =
+      new OxideQQuickCookieMonster(d->cookieMonster(),
+                                   const_cast<OxideQQuickWebContext*>(this));
+  }
+  return d->cookie_monster_;
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

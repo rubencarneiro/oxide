@@ -28,6 +28,7 @@
 
 QT_USE_NAMESPACE
 
+class OxideQQuickCookieMonster;
 class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
@@ -47,6 +48,7 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
+  Q_PROPERTY(OxideQQuickCookieMonster* cookieMonster READ cookieMonster CONSTANT)
 
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
@@ -114,6 +116,8 @@ class OxideQQuickWebContext : public QObject,
 
   OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate() const;
   void setUserAgentOverrideDelegate(OxideQQuickWebContextDelegateWorker* delegate);
+
+  OxideQQuickCookieMonster* cookieMonster() const;
 
  Q_SIGNALS:
   void productChanged();
