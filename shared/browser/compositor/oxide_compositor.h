@@ -21,6 +21,7 @@
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/scoped_vector.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/trees/layer_tree_host_client.h"
 #include "ui/gfx/size.h"
@@ -56,7 +57,7 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
 
   void DidSwapCompositorFrame(
       uint32 surface_id,
-      scoped_ptr<CompositorFrameHandle> returned_frame);
+      ScopedVector<CompositorFrameHandle> returned_frames);
 
  private:
   friend class CompositorLock;

@@ -411,12 +411,12 @@ void RenderWidgetHostView::CompositorDidCommit() {
 void RenderWidgetHostView::CompositorSwapFrame(
     uint32 surface_id,
     scoped_ptr<CompositorFrameHandle> frame) {
-  if (surface_id != last_compositor_frame_surface_id_) {
-    pending_compositor_frames_.clear();
-    last_compositor_frame_surface_id_ = surface_id;
-  }
+  received_surface_ids_.push(surface_id);
 
-  pending_compositor_frames_.push_back(frame.release());
+  if (current_compositor_frame_) {
+    previous_compositor_frames_.push_back(current_compositor_frame_.release());
+  }
+  current_compositor_frame_ = frame.Pass();
 
   OnCompositorSwapFrame();
 }
@@ -510,7 +510,6 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
     resource_collection_(new cc::DelegatedFrameResourceCollection()),
     last_output_surface_id_(0),
-    last_compositor_frame_surface_id_(0),
     selection_cursor_position_(0),
     selection_anchor_position_(0),
     is_loading_(false),
@@ -582,27 +581,18 @@ RenderWidgetHostView::~RenderWidgetHostView() {
 }
 
 CompositorFrameHandle* RenderWidgetHostView::GetCompositorFrameHandle() {
-  if (!pending_compositor_frames_.empty()) {
-    return pending_compositor_frames_.back();
-  }
-
   return current_compositor_frame_.get();
 }
 
 void RenderWidgetHostView::DidCommitCompositorFrame() {
-  DCHECK(!pending_compositor_frames_.empty());
+  DCHECK(!received_surface_ids_.empty());
 
-  compositor_->DidSwapCompositorFrame(last_compositor_frame_surface_id_,
-                                      current_compositor_frame_.Pass());
+  while (!received_surface_ids_.empty()) {
+    uint32 surface_id = received_surface_ids_.front();
+    received_surface_ids_.pop();
 
-  current_compositor_frame_.reset(pending_compositor_frames_.back());
-  pending_compositor_frames_.get().pop_back();
-
-  while (!pending_compositor_frames_.empty()) {
-    CompositorFrameHandle* frame = pending_compositor_frames_.back();
-    pending_compositor_frames_.get().pop_back();
-    compositor_->DidSwapCompositorFrame(last_compositor_frame_surface_id_,
-                                        make_scoped_ptr(frame));
+    compositor_->DidSwapCompositorFrame(surface_id,
+                                        previous_compositor_frames_.Pass());
   }
 }
 

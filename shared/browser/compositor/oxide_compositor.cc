@@ -205,9 +205,9 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
 
 void Compositor::DidSwapCompositorFrame(
     uint32 surface_id,
-    scoped_ptr<CompositorFrameHandle> returned_frame) {
+    ScopedVector<CompositorFrameHandle> returned_frames) {
   DCHECK(CalledOnValidThread());
-  proxy_->DidSwapCompositorFrame(surface_id, returned_frame.Pass());
+  proxy_->DidSwapCompositorFrame(surface_id, returned_frames.Pass());
 }
 
 } // namespace oxide

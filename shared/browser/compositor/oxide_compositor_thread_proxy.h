@@ -22,6 +22,7 @@
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/scoped_vector.h"
 #include "base/threading/thread_checker.h"
 #include "cc/resources/shared_bitmap.h"
 
@@ -87,12 +88,17 @@ class CompositorThreadProxy FINAL : public CompositorThreadProxyBase {
   void SetOutputSurface(CompositorOutputSurface* output);
 
   void SwapCompositorFrame(cc::CompositorFrame* frame);
-  void DidSwapCompositorFrame(uint32 surface_id,
-                              scoped_ptr<CompositorFrameHandle> frame);
+  void DidSwapCompositorFrame(
+      uint32 surface_id,
+      ScopedVector<CompositorFrameHandle> returned_frames);
   void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
 
  private:
   ~CompositorThreadProxy();
+
+  void DidSwapCompositorFrame(
+      uint32 surface_id,
+      scoped_ptr<CompositorFrameHandle> frame);
 
   void SendSwapGLFrameOnOwnerThread(uint32 surface_id,
                                     const gfx::Size& size,
@@ -106,7 +112,7 @@ class CompositorThreadProxy FINAL : public CompositorThreadProxyBase {
                                           const cc::SharedBitmapId& bitmap_id);
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
       uint32 surface_id,
-      cc::CompositorFrameAck* ack);
+      ScopedVector<CompositorFrameHandle>* returned_frames);
   void SendReclaimResourcesToOutputSurfaceOnImplThread(
       uint32 surface_id,
       cc::CompositorFrameAck* ack);

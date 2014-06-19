@@ -52,14 +52,11 @@ CompositorOutputSurface::~CompositorOutputSurface() {
   proxy_->SetOutputSurface(NULL);
 }
 
-void CompositorOutputSurface::DidSwapBuffers(
-    uint32 surface_id,
-    const cc::CompositorFrameAck& ack) {
+void CompositorOutputSurface::DidSwapBuffers(uint32 surface_id) {
   if (surface_id != surface_id_) {
     return;
   }
 
-  ReclaimResources(surface_id, ack);
   client_->DidSwapBuffersComplete();
 }
 

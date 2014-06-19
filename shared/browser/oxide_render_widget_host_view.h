@@ -233,10 +233,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   gfx::Size last_frame_size_dip_;
 
   scoped_ptr<CompositorFrameHandle> current_compositor_frame_;
-  ScopedVector<CompositorFrameHandle> pending_compositor_frames_;
-
-  // The output surface ID for the last frame from the browser compositor
-  uint32 last_compositor_frame_surface_id_;
+  ScopedVector<CompositorFrameHandle> previous_compositor_frames_;
+  std::queue<uint32> received_surface_ids_;
 
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;
