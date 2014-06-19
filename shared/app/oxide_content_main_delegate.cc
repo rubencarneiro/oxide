@@ -128,8 +128,8 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     command_line->AppendSwitch(switches::kInProcessGPU);
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
 
-    // Work around a mesa race - see https://launchpad.net/bugs/1267893
-    gfx::GLSurface::InitializeOneOff();
+    // Remove this when we have a working GPU blacklist
+    command_line->AppendSwitch(switches::kDisableGpuRasterization);
 
     FormFactor form_factor = GetFormFactorHint();
     if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
@@ -179,6 +179,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
       command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
     }
+
+    // Work around a mesa race - see https://launchpad.net/bugs/1267893
+    gfx::GLSurface::InitializeOneOff();
   }
 
   return false;

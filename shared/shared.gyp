@@ -229,7 +229,6 @@
         'browser/compositor/oxide_compositor_thread_proxy.h',
         'browser/compositor/oxide_compositor_utils.cc',
         'browser/compositor/oxide_compositor_utils.h',
-        'browser/compositor_util.cc',
         'browser/oxide_access_token_store.cc',
         'browser/oxide_access_token_store.h',
         'browser/oxide_browser_context.cc',
