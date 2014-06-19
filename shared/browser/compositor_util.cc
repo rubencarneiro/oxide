@@ -43,7 +43,7 @@ bool IsDelegatedRendererEnabled() {
 }
 
 bool IsImplSidePaintingEnabled() {
-  return false;
+  return true;
 }
 
 bool IsGpuRasterizationEnabled() {
