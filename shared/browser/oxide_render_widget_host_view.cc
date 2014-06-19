@@ -227,9 +227,8 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
   }
 }
 
-void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
-                                                ui::TextInputMode mode,
-                                                bool can_compose_inline) {}
+void RenderWidgetHostView::TextInputStateChanged(
+    const ViewHostMsg_TextInputState_Params& params) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {}
 

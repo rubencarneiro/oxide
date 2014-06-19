@@ -44,6 +44,7 @@
 #include "net/base/net_errors.h"
 #include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
+#include "url/url_constants.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
@@ -683,7 +684,7 @@ void WebView::LoadData(const std::string& encodedData,
   content::NavigationController::LoadURLParams params((GURL(url)));
   params.load_type = content::NavigationController::LOAD_TYPE_DATA;
   params.base_url_for_data_url = baseUrl;
-  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
+  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
   web_contents_->GetController().LoadURLWithParams(params);
 }
@@ -898,7 +899,7 @@ void WebView::HidePopupMenu() {
 }
 
 void WebView::RequestGeolocationPermission(
-    const PermissionRequest::ID& id,
+    int id,
     const GURL& origin,
     const base::Callback<void(bool)>& callback) {
   scoped_ptr<GeolocationPermissionRequest> request(
@@ -908,8 +909,7 @@ void WebView::RequestGeolocationPermission(
   OnRequestGeolocationPermission(request.Pass());
 }
 
-void WebView::CancelGeolocationPermissionRequest(
-    const PermissionRequest::ID& id) {
+void WebView::CancelGeolocationPermissionRequest(int id) {
   geolocation_permission_requests_.CancelPendingRequestWithID(id);
 }
 

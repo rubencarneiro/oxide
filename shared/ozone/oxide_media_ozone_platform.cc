@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,33 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_GEOLOCATION_PERMISSION_CONTEXT_
-#define _OXIDE_SHARED_BROWSER_GEOLOCATION_PERMISSION_CONTEXT_
-
-#include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "content/public/browser/geolocation_permission_context.h"
+#include "media/ozone/media_ozone_platform.h"
 
 namespace oxide {
 
-class GeolocationPermissionContext FINAL :
-    public content::GeolocationPermissionContext {
+class MediaOzonePlatform : public media::MediaOzonePlatform {
  public:
-  GeolocationPermissionContext();
+  MediaOzonePlatform() {}
+  virtual ~MediaOzonePlatform() {}
 
-  void RequestGeolocationPermission(
-      content::WebContents* contents,
-      int bridge_id,
-      const GURL& requesting_frame,
-      bool user_gesture,
-      base::Callback<void(bool)> callback) FINAL;
-
-  void CancelGeolocationPermissionRequest(
-      content::WebContents* contents,
-      int bridge_id,
-      const GURL& requesting_frame) FINAL;
+  media::VideoDecodeAccelerator* CreateVideoDecodeAccelerator(
+      const base::Callback<bool(void)>& make_context_current) FINAL {
+    return NULL;
+  }
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_GEOLOCATION_PERMISSION_CONTEXT_
+namespace media {
+
+MediaOzonePlatform* CreateMediaOzonePlatformOxide() {
+  return new oxide::MediaOzonePlatform();
+}
+
+} // namespace media

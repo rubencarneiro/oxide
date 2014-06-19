@@ -218,39 +218,13 @@ class BrowserContext : public content::BrowserContext,
           const base::FilePath& partition_path,
           bool in_memory) FINAL;
 
-  void RequestMidiSysExPermission(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      const GURL& requesting_frame,
-      bool user_gesture,
-      const MidiSysExPermissionCallback& callback) FINAL;
-
-  void CancelMidiSysExPermissionRequest(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      const GURL& requesting_frame) FINAL;
-
-  void RequestProtectedMediaIdentifierPermission(
-      int render_process_id,
-      int render_view_id,
-      const GURL& origin,
-      const ProtectedMediaIdentifierPermissionCallback& callback) FINAL;
-
-  void CancelProtectedMediaIdentifierPermissionRequests(
-      int render_process_id,
-      int render_view_id,
-      const GURL& origin) FINAL;
-
   content::DownloadManagerDelegate* GetDownloadManagerDelegate() FINAL;
-
-  content::GeolocationPermissionContext*
-      GetGeolocationPermissionContext() FINAL;
 
   content::BrowserPluginGuestManager* GetGuestManager() FINAL;
 
   quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
+
+  content::PushMessagingService* GetPushMessagingService() FINAL;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
@@ -258,8 +232,6 @@ class BrowserContext : public content::BrowserContext,
   IODataHandle io_data_handle_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
-
-  scoped_refptr<GeolocationPermissionContext> geolocation_permission_context_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

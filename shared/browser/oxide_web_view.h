@@ -147,11 +147,10 @@ class WebView : public ScriptMessageTarget,
   void HidePopupMenu();
 
   void RequestGeolocationPermission(
-      const PermissionRequest::ID& id,
+      int id,
       const GURL& origin,
       const base::Callback<void(bool)>& callback);
-  void CancelGeolocationPermissionRequest(
-      const PermissionRequest::ID& id);
+  void CancelGeolocationPermissionRequest(int id);
 
   void UpdateWebPreferences();
 

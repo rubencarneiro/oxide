@@ -23,23 +23,6 @@
 
 namespace oxide {
 
-PermissionRequest::ID::ID(int render_process_id,
-                          int render_view_id,
-                          int request_id)
-    : render_process_id_(render_process_id),
-      render_view_id_(render_view_id),
-      request_id_(request_id) {}
-
-bool PermissionRequest::ID::Equals(const ID& other) {
-  return render_process_id_ == other.render_process_id_ &&
-         render_view_id_ == other.render_view_id_ &&
-         request_id_ == other.request_id_;
-}
-
-bool PermissionRequest::ID::operator==(const ID& other) {
-  return Equals(other);
-}
-
 void PermissionRequest::SetDidRespond() {
   DCHECK(!is_cancelled_);
   did_respond_ = true;
@@ -49,7 +32,7 @@ void PermissionRequest::SetDidRespond() {
 }
 
 PermissionRequest::PermissionRequest(PermissionRequestManager* manager,
-                                     const ID& id,
+                                     int id,
                                      const GURL& origin,
                                      const GURL& embedder)
     : manager_(manager->AsWeakPtr()),
@@ -90,7 +73,7 @@ void PermissionRequestManager::AddPendingPermissionRequest(
     PermissionRequest* request) {
   for (PermissionRequestVector::iterator it = pending_requests_.begin();
        it != pending_requests_.end(); ++it) {
-    DCHECK(!(*it)->id().Equals(request->id()));
+    DCHECK((*it)->id() != request->id());
   }
 
   pending_requests_.push_back(request);
@@ -141,12 +124,11 @@ void PermissionRequestManager::CancelAllPending() {
   Compact();
 }
 
-void PermissionRequestManager::CancelPendingRequestWithID(
-    const PermissionRequest::ID& id) {
+void PermissionRequestManager::CancelPendingRequestWithID(int id) {
   for (PermissionRequestVector::iterator it = pending_requests_.begin();
        it != pending_requests_.end(); ++it) {
     PermissionRequest* request = *it;
-    if (request->id().Equals(id)) {
+    if (request->id() == id) {
       request->Cancel();
       break;
     }
@@ -155,7 +137,7 @@ void PermissionRequestManager::CancelPendingRequestWithID(
 
 GeolocationPermissionRequest::GeolocationPermissionRequest(
     PermissionRequestManager* manager,
-    const PermissionRequest::ID& id,
+    int id,
     const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(bool)>& callback)

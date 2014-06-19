@@ -41,6 +41,7 @@
 #include "base/time/time.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/common/cursors/webcursor.h"
+#include "content/common/view_messages.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
 #include "third_party/WebKit/public/platform/WebColor.h"
@@ -826,13 +827,13 @@ void RenderWidgetHostView::Blur() {
   delegate_->Blur();
 }
 
-void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
-                                                ui::TextInputMode mode,
-                                                bool can_compose_inline) {
-  input_type_ = type;
+void RenderWidgetHostView::TextInputStateChanged(
+    const ViewHostMsg_TextInputState_Params& params) {
+  input_type_ = params.type;
   QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
-  if (HasFocus() && (type != ui::TEXT_INPUT_TYPE_NONE) &&
-      !QGuiApplication::inputMethod()->isVisible()) {
+  if (HasFocus() && input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
+      !QGuiApplication::inputMethod()->isVisible() &&
+      params.show_ime_if_needed) {
     delegate_->SetInputMethodEnabled(true);
     QGuiApplication::inputMethod()->show();
   }
