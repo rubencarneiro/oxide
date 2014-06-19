@@ -172,7 +172,7 @@ void CompositorOutputSurfaceGL::ReclaimResources(
     }
   }
 
-  DCHECK(it != pending_textures_.end());
+  CHECK(it != pending_textures_.end());
 
   it->sync_point = 0;
 

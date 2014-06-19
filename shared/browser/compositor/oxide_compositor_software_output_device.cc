@@ -181,7 +181,7 @@ void CompositorSoftwareOutputDevice::ReclaimSoftwareFrame(unsigned id) {
     }
   }
 
-  DCHECK(it != pending_frames_.end());
+  CHECK(it != pending_frames_.end());
 
   if (!is_backbuffer_discarded_ && it->size == viewport_pixel_size_) {
     returned_frames_.push(*it);
