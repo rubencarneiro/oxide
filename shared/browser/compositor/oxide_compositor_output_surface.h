@@ -21,6 +21,7 @@
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/threading/non_thread_safe.h"
 #include "cc/output/output_surface.h"
 
 namespace cc {
@@ -32,7 +33,8 @@ namespace oxide {
 
 class CompositorThreadProxy;
 
-class CompositorOutputSurface : public cc::OutputSurface {
+class CompositorOutputSurface : public cc::OutputSurface,
+                                public base::NonThreadSafe {
  public:
   virtual ~CompositorOutputSurface();
 

@@ -24,6 +24,7 @@
 namespace oxide {
 
 bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
+  DCHECK(CalledOnValidThread());
   if (!cc::OutputSurface::BindToClient(client)) {
     return false;
   }
@@ -38,7 +39,9 @@ CompositorOutputSurface::CompositorOutputSurface(
     scoped_refptr<CompositorThreadProxy> proxy)
     : cc::OutputSurface(context_provider),
       proxy_(proxy),
-      surface_id_(surface_id) {}
+      surface_id_(surface_id) {
+  DetachFromThread();
+}
 
 CompositorOutputSurface::CompositorOutputSurface(
     uint32 surface_id,
@@ -46,9 +49,12 @@ CompositorOutputSurface::CompositorOutputSurface(
     scoped_refptr<CompositorThreadProxy> proxy)
     : cc::OutputSurface(software_device.Pass()),
       proxy_(proxy),
-      surface_id_(surface_id) {}
+      surface_id_(surface_id) {
+  DetachFromThread();
+}
 
 void CompositorOutputSurface::SwapBuffers(cc::CompositorFrame* frame) {
+  DCHECK(CalledOnValidThread());
   proxy_->SwapCompositorFrame(frame);
   client_->DidSwapBuffers();
 }
@@ -58,11 +64,13 @@ CompositorOutputSurface::~CompositorOutputSurface() {
 }
 
 void CompositorOutputSurface::DidSwapBuffers() {
+  DCHECK(CalledOnValidThread());
   client_->DidSwapBuffersComplete();
 }
 
 void CompositorOutputSurface::ReclaimResources(
     const cc::CompositorFrameAck& ack) {
+  DCHECK(CalledOnValidThread());
   cc::OutputSurface::ReclaimResources(&ack);
 }
 

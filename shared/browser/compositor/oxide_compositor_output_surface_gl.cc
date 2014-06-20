@@ -32,6 +32,7 @@
 namespace oxide {
 
 void CompositorOutputSurfaceGL::EnsureBackbuffer() {
+  DCHECK(CalledOnValidThread());
   is_backbuffer_discarded_ = false;
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
@@ -67,6 +68,7 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
 }
 
 void CompositorOutputSurfaceGL::DiscardBackbuffer() {
+  DCHECK(CalledOnValidThread());
   if (is_backbuffer_discarded_) {
     return;
   }
@@ -107,6 +109,8 @@ void CompositorOutputSurfaceGL::Reshape(const gfx::Size& size,
 }
 
 void CompositorOutputSurfaceGL::BindFramebuffer() {
+  DCHECK(CalledOnValidThread());
+
   EnsureBackbuffer();
   DCHECK(backing_texture_.texture_id);
   DCHECK(backing_texture_.size == surface_size_);
@@ -125,6 +129,7 @@ void CompositorOutputSurfaceGL::BindFramebuffer() {
 }
 
 void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
+  DCHECK(CalledOnValidThread());
   DCHECK(frame->gl_frame_data);
   DCHECK(!backing_texture_.mailbox.IsZero());
   DCHECK(surface_size_ == backing_texture_.size);
@@ -145,6 +150,7 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
 
 void CompositorOutputSurfaceGL::ReclaimResources(
     const cc::CompositorFrameAck& ack) {
+  DCHECK(CalledOnValidThread());
   DCHECK(ack.gl_frame_data);
   DCHECK_EQ(ack.last_software_frame_id, 0);
   DCHECK(!ack.gl_frame_data->mailbox.IsZero());
