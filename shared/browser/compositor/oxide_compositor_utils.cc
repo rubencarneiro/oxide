@@ -353,8 +353,7 @@ gfx::GLSurfaceHandle CompositorUtils::GetSharedSurfaceHandle() {
   }
 
   gfx::GLSurfaceHandle handle(gfx::kNullPluginWindow, gfx::TEXTURE_TRANSPORT);
-  handle.parent_client_id =
-      content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId();
+  handle.parent_client_id = client_id_;
 
   return handle;
 }

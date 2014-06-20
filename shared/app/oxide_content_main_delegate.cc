@@ -126,10 +126,12 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 
     // This is needed so that we can share GL resources with the embedder
     command_line->AppendSwitch(switches::kInProcessGPU);
-    command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
 
     // Remove this when we have a working GPU blacklist
     command_line->AppendSwitch(switches::kDisableGpuRasterization);
+
+    command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
+    command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
 
     FormFactor form_factor = GetFormFactorHint();
     if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
