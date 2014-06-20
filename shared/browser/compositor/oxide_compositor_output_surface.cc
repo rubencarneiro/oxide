@@ -48,6 +48,11 @@ CompositorOutputSurface::CompositorOutputSurface(
       proxy_(proxy),
       surface_id_(surface_id) {}
 
+void CompositorOutputSurface::SwapBuffers(cc::CompositorFrame* frame) {
+  proxy_->SwapCompositorFrame(frame);
+  client_->DidSwapBuffers();
+}
+
 CompositorOutputSurface::~CompositorOutputSurface() {
   proxy_->SetOutputSurface(NULL);
 }

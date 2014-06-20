@@ -137,9 +137,7 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
   frame->gl_frame_data->mailbox = backing_texture_.mailbox;
   frame->gl_frame_data->sync_point = gl->InsertSyncPointCHROMIUM();
 
-  proxy_->SwapCompositorFrame(frame);
-
-  client_->DidSwapBuffers();
+  CompositorOutputSurface::SwapBuffers(frame);
 
   pending_textures_.push_back(backing_texture_);
   backing_texture_ = OutputFrameData();

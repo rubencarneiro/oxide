@@ -27,8 +27,7 @@ namespace oxide {
 
 void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame* frame) {
   DCHECK(frame->software_frame_data);
-  proxy_->SwapCompositorFrame(frame);
-  client_->DidSwapBuffers();
+  CompositorOutputSurface::SwapBuffers(frame);
 }
 
 CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
