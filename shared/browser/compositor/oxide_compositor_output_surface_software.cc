@@ -27,6 +27,9 @@ namespace oxide {
 
 void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame* frame) {
   DCHECK(frame->software_frame_data);
+  DCHECK_NE(frame->software_frame_data->id, 0);
+  DCHECK(!frame->software_frame_data->size.IsEmpty());
+  DCHECK(frame->software_frame_data->size == surface_size_);
   CompositorOutputSurface::SwapBuffers(frame);
 }
 
