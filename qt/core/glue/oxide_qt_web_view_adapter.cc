@@ -273,5 +273,20 @@ void WebViewAdapter::updateWebPreferences() {
   priv->UpdateWebPreferences();
 }
 
+QPointF WebViewAdapter::scrollOffset() const {
+  const gfx::Vector2dF& offset = priv->GetRootScrollOffset();
+  return QPointF(offset.x(), offset.y());
+}
+
+QSizeF WebViewAdapter::layerSize() const {
+  const gfx::SizeF& size = priv->GetRootLayerSize();
+  return QSizeF(size.width(), size.height());
+}
+
+QSizeF WebViewAdapter::viewportSize() const {
+  const gfx::SizeF& size = priv->GetViewportSize();
+  return QSizeF(size.width(), size.height());
+}
+
 } // namespace qt
 } // namespace oxide

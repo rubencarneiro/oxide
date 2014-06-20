@@ -136,19 +136,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
 
   content::RenderViewHost* rvh = content::RenderViewHost::From(host());
   WebView* webview = WebView::FromRenderViewHost(rvh);
-  gfx::Vector2dF root_scroll_offset = frame->metadata.root_scroll_offset;
-  gfx::SizeF root_layer_size = frame->metadata.root_layer_size;
-  gfx::SizeF viewport_size = frame->metadata.viewport_size;
-  if (root_scroll_offset != frame_metadata_.root_scroll_offset) {
-    webview->RootScrollOffsetChanged(root_scroll_offset);
-  }
-  if (root_layer_size != frame_metadata_.root_layer_size) {
-    webview->RootLayerSizeChanged(root_layer_size);
-  }
-  if (viewport_size != frame_metadata_.viewport_size) {
-    webview->ViewportSizeChanged(viewport_size);
-  }
-  frame_metadata_ = frame->metadata;
+  webview->GotNewCompositorFrameMetadata(frame->metadata);
 
   if (IsUsingSoftwareCompositing()) {
     DCHECK(!pending_accelerated_frame_ &&

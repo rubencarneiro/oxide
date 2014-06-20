@@ -252,8 +252,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   scoped_ptr<SoftwareFrameHandle> current_software_frame_;
   scoped_ptr<SoftwareFrameHandle> previous_software_frame_;
 
-  cc::CompositorFrameMetadata frame_metadata_;
-
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;
   size_t selection_anchor_position_;

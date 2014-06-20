@@ -945,8 +945,39 @@ bool WebView::CanCreateWindows() const {
   return false;
 }
 
-void WebView::RootScrollOffsetChanged(const gfx::Vector2dF& offset) {}
-void WebView::RootLayerSizeChanged(const gfx::SizeF& size) {}
-void WebView::ViewportSizeChanged(const gfx::SizeF& size) {}
+const gfx::Vector2dF& WebView::GetRootScrollOffset() const {
+  return frame_metadata_.root_scroll_offset;
+}
+
+void WebView::RootScrollOffsetChanged() {}
+
+const gfx::SizeF& WebView::GetRootLayerSize() const {
+  return frame_metadata_.root_layer_size;
+}
+
+void WebView::RootLayerSizeChanged() {}
+
+const gfx::SizeF& WebView::GetViewportSize() const {
+  return frame_metadata_.viewport_size;
+}
+
+void WebView::ViewportSizeChanged() {}
+
+void WebView::GotNewCompositorFrameMetadata(
+    const cc::CompositorFrameMetadata& metadata) {
+  gfx::Vector2dF root_scroll_offset = frame_metadata_.root_scroll_offset;
+  gfx::SizeF root_layer_size = frame_metadata_.root_layer_size;
+  gfx::SizeF viewport_size = frame_metadata_.viewport_size;
+  frame_metadata_ = metadata;
+  if (metadata.root_scroll_offset != root_scroll_offset) {
+    RootScrollOffsetChanged();
+  }
+  if (metadata.root_layer_size != root_layer_size) {
+    RootLayerSizeChanged();
+  }
+  if (metadata.viewport_size != viewport_size) {
+    ViewportSizeChanged();
+  }
+}
 
 } // namespace oxide

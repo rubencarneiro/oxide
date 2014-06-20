@@ -288,24 +288,21 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
   emit q->geolocationPermissionRequested(request);
 }
 
-void OxideQQuickWebViewPrivate::RootScrollOffsetChanged(const QPointF& offset) {
+void OxideQQuickWebViewPrivate::RootScrollOffsetChanged() {
   Q_Q(OxideQQuickWebView);
 
-  scroll_offset_ = offset;
   emit q->scrollOffsetChanged();
 }
 
-void OxideQQuickWebViewPrivate::RootLayerSizeChanged(const QSizeF& size) {
+void OxideQQuickWebViewPrivate::RootLayerSizeChanged() {
   Q_Q(OxideQQuickWebView);
 
-  layer_size_ = size;
   emit q->layerSizeChanged();
 }
 
-void OxideQQuickWebViewPrivate::ViewportSizeChanged(const QSizeF& size) {
+void OxideQQuickWebViewPrivate::ViewportSizeChanged() {
   Q_Q(OxideQQuickWebView);
 
-  viewport_size_ = size;
   emit q->viewportSizeChanged();
 }
 
@@ -678,22 +675,22 @@ void OxideQQuickWebView::removeMessageHandler(
   emit messageHandlersChanged();
 }
 
-const QPointF& OxideQQuickWebView::scrollOffset() const {
+QPointF OxideQQuickWebView::scrollOffset() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->scroll_offset_;
+  return d->scrollOffset();
 }
 
-const QSizeF& OxideQQuickWebView::layerSize() const {
+QSizeF OxideQQuickWebView::layerSize() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->layer_size_;
+  return d->layerSize();
 }
 
-const QSizeF& OxideQQuickWebView::viewportSize() const {
+QSizeF OxideQQuickWebView::viewportSize() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->viewport_size_;
+  return d->viewportSize();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {

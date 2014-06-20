@@ -141,9 +141,9 @@ class OxideQQuickWebView : public QQuickItem {
   Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
   Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
-  const QPointF& scrollOffset() const;
-  const QSizeF& layerSize() const;
-  const QSizeF& viewportSize() const;
+  QPointF scrollOffset() const;
+  QSizeF layerSize() const;
+  QSizeF viewportSize() const;
 
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);

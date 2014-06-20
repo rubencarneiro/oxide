@@ -18,8 +18,6 @@
 #include "oxide_qt_web_view.h"
 
 #include <QKeyEvent>
-#include <QPointF>
-#include <QSizeF>
 #include <QString>
 #include <QtDebug>
 #include <QUrl>
@@ -162,16 +160,16 @@ bool WebView::CanCreateWindows() const {
   return adapter_->CanCreateWindows();
 }
 
-void WebView::RootScrollOffsetChanged(const gfx::Vector2dF& offset) {
-  adapter_->RootScrollOffsetChanged(QPointF(offset.x(), offset.y()));
+void WebView::RootScrollOffsetChanged() {
+  adapter_->RootScrollOffsetChanged();
 }
 
-void WebView::RootLayerSizeChanged(const gfx::SizeF& size) {
-  adapter_->RootLayerSizeChanged(QSizeF(size.width(), size.height()));
+void WebView::RootLayerSizeChanged() {
+  adapter_->RootLayerSizeChanged();
 }
 
-void WebView::ViewportSizeChanged(const gfx::SizeF& size) {
-  adapter_->ViewportSizeChanged(QSizeF(size.width(), size.height()));
+void WebView::ViewportSizeChanged() {
+  adapter_->ViewportSizeChanged();
 }
 
 void WebView::OnURLChanged() {

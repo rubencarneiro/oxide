@@ -18,9 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
-#include <QPointF>
 #include <QScopedPointer>
-#include <QSizeF>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -99,9 +97,9 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) Q_DECL_FINAL;
 
-  void RootScrollOffsetChanged(const QPointF& offset) Q_DECL_FINAL;
-  void RootLayerSizeChanged(const QSizeF& size) Q_DECL_FINAL;
-  void ViewportSizeChanged(const QSizeF& size) Q_DECL_FINAL;
+  void RootScrollOffsetChanged() Q_DECL_FINAL;
+  void RootLayerSizeChanged() Q_DECL_FINAL;
+  void ViewportSizeChanged() Q_DECL_FINAL;
 
   void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
 
@@ -127,9 +125,6 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   int load_progress_;
   QUrl icon_;
   OxideQQuickNavigationHistory navigation_history_;
-  QPointF scroll_offset_;
-  QSizeF layer_size_;
-  QSizeF viewport_size_;
   QQmlComponent* popup_menu_;
   QQmlComponent* alert_dialog_;
   QQmlComponent* confirm_dialog_;

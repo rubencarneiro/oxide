@@ -20,8 +20,10 @@
 
 #include <QDateTime>
 #include <QList>
+#include <QPointF>
 #include <QRect>
 #include <QScopedPointer>
+#include <QSizeF>
 #include <QString>
 #include <QtGlobal>
 #include <QUrl>
@@ -31,9 +33,7 @@
 
 QT_BEGIN_NAMESPACE
 class QKeyEvent;
-class QPointF;
 class QSize;
-class QSizeF;
 QT_END_NAMESPACE
 
 class OxideQGeolocationPermissionRequest;
@@ -109,6 +109,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void updateWebPreferences();
 
+  QPointF scrollOffset() const;
+  QSizeF layerSize() const;
+  QSizeF viewportSize() const;
+
  protected:
   WebViewAdapter(QObject* q);
 
@@ -175,9 +179,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) = 0;
 
-  virtual void RootScrollOffsetChanged(const QPointF& offset) = 0;
-  virtual void RootLayerSizeChanged(const QSizeF& size) = 0;
-  virtual void ViewportSizeChanged(const QSizeF& size) = 0;
+  virtual void RootScrollOffsetChanged() = 0;
+  virtual void RootLayerSizeChanged() = 0;
+  virtual void ViewportSizeChanged() = 0;
 
   virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
 
