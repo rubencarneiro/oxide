@@ -185,7 +185,8 @@ class WebView : public ScriptMessageTarget,
   virtual void RootLayerHeightChanged();
 
   const gfx::SizeF& GetViewportSize() const;
-  virtual void ViewportSizeChanged();
+  virtual void ViewportWidthChanged();
+  virtual void ViewportHeightChanged();
 
  private:
   void DispatchLoadFailed(const GURL& validated_url,

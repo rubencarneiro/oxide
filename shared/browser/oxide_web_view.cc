@@ -963,7 +963,8 @@ const gfx::SizeF& WebView::GetViewportSize() const {
   return frame_metadata_.viewport_size;
 }
 
-void WebView::ViewportSizeChanged() {}
+void WebView::ViewportWidthChanged() {}
+void WebView::ViewportHeightChanged() {}
 
 void WebView::GotNewCompositorFrameMetadata(
     const cc::CompositorFrameMetadata& metadata) {
@@ -983,8 +984,11 @@ void WebView::GotNewCompositorFrameMetadata(
   if (metadata.root_layer_size.height() != root_layer_size.height()) {
     RootLayerHeightChanged();
   }
-  if (metadata.viewport_size != viewport_size) {
-    ViewportSizeChanged();
+  if (metadata.viewport_size.width() != viewport_size.width()) {
+    ViewportWidthChanged();
+  }
+  if (metadata.viewport_size.height() != viewport_size.height()) {
+    ViewportHeightChanged();
   }
 }
 

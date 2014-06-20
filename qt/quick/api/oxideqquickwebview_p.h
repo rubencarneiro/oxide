@@ -78,6 +78,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
 
+  Q_PROPERTY(qreal viewportWidth READ viewportWidth NOTIFY viewportWidthChanged)
+  Q_PROPERTY(qreal viewportHeight READ viewportHeight NOTIFY viewportHeightChanged)
   Q_PROPERTY(qreal contentWidth READ contentWidth NOTIFY contentWidthChanged)
   Q_PROPERTY(qreal contentHeight READ contentHeight NOTIFY contentHeightChanged)
   Q_PROPERTY(qreal contentX READ contentX NOTIFY contentXChanged)
@@ -142,6 +144,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
   Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
+  qreal viewportWidth() const;
+  qreal viewportHeight() const;
   qreal contentWidth() const;
   qreal contentHeight() const;
   qreal contentX() const;
@@ -206,6 +210,8 @@ class OxideQQuickWebView : public QQuickItem {
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
+  void viewportWidthChanged();
+  void viewportHeightChanged();
   void contentWidthChanged();
   void contentHeightChanged();
   void contentXChanged();

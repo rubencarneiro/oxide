@@ -101,7 +101,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void RootScrollOffsetYChanged() Q_DECL_FINAL;
   void RootLayerWidthChanged() Q_DECL_FINAL;
   void RootLayerHeightChanged() Q_DECL_FINAL;
-  void ViewportSizeChanged() Q_DECL_FINAL;
+  void ViewportWidthChanged() Q_DECL_FINAL;
+  void ViewportHeightChanged() Q_DECL_FINAL;
 
   void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
 

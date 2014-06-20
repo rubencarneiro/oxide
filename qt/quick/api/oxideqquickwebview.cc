@@ -312,7 +312,17 @@ void OxideQQuickWebViewPrivate::RootLayerHeightChanged() {
   emit q->contentHeightChanged();
 }
 
-void OxideQQuickWebViewPrivate::ViewportSizeChanged() {}
+void OxideQQuickWebViewPrivate::ViewportWidthChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->viewportWidthChanged();
+}
+
+void OxideQQuickWebViewPrivate::ViewportHeightChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->viewportHeightChanged();
+}
 
 void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
   Q_Q(OxideQQuickWebView);
@@ -681,6 +691,18 @@ void OxideQQuickWebView::removeMessageHandler(
   d->message_handlers().removeOne(hd);
 
   emit messageHandlersChanged();
+}
+
+qreal OxideQQuickWebView::viewportWidth() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->viewportSize().width();
+}
+
+qreal OxideQQuickWebView::viewportHeight() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->viewportSize().height();
 }
 
 qreal OxideQQuickWebView::contentWidth() const {

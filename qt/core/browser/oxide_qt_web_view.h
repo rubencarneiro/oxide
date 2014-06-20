@@ -71,7 +71,8 @@ class WebView FINAL : public oxide::WebView,
   void RootScrollOffsetYChanged() FINAL;
   void RootLayerWidthChanged() FINAL;
   void RootLayerHeightChanged() FINAL;
-  void ViewportSizeChanged() FINAL;
+  void ViewportWidthChanged() FINAL;
+  void ViewportHeightChanged() FINAL;
 
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;

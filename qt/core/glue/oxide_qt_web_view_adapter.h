@@ -183,7 +183,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void RootScrollOffsetYChanged() = 0;
   virtual void RootLayerWidthChanged() = 0;
   virtual void RootLayerHeightChanged() = 0;
-  virtual void ViewportSizeChanged() = 0;
+  virtual void ViewportWidthChanged() = 0;
+  virtual void ViewportHeightChanged() = 0;
 
   virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
 

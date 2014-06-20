@@ -176,8 +176,12 @@ void WebView::RootLayerHeightChanged() {
   adapter_->RootLayerHeightChanged();
 }
 
-void WebView::ViewportSizeChanged() {
-  adapter_->ViewportSizeChanged();
+void WebView::ViewportWidthChanged() {
+  adapter_->ViewportWidthChanged();
+}
+
+void WebView::ViewportHeightChanged() {
+  adapter_->ViewportHeightChanged();
 }
 
 void WebView::OnURLChanged() {
