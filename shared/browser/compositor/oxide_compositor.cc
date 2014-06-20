@@ -56,6 +56,7 @@ void Compositor::SendSwapCompositorFrameToClient(
 }
 
 void Compositor::LockCompositor() {
+  DCHECK(CalledOnValidThread());
   if (lock_count_++ > 0) {
     return;
   }
@@ -66,6 +67,7 @@ void Compositor::LockCompositor() {
 }
 
 void Compositor::UnlockCompositor() {
+  DCHECK(CalledOnValidThread());
   DCHECK(lock_count_ > 0);
   if (--lock_count_ > 0) {
     return;
@@ -139,7 +141,6 @@ scoped_ptr<Compositor> Compositor::Create(CompositorClient* client,
 }
 
 Compositor::~Compositor() {
-  DCHECK(CalledOnValidThread());
   CHECK_EQ(lock_count_, 0);
   proxy_->CompositorDestroyed();
 }
@@ -149,6 +150,7 @@ bool Compositor::IsActive() const {
 }
 
 void Compositor::SetVisibility(bool visible) {
+  DCHECK(CalledOnValidThread());
   if (!visible) {
     layer_tree_host_.reset();
   } else if (!layer_tree_host_) {
@@ -176,6 +178,7 @@ void Compositor::SetVisibility(bool visible) {
 }
 
 void Compositor::SetDeviceScaleFactor(float scale) {
+  DCHECK(CalledOnValidThread());
   device_scale_factor_ = scale;
 
   if (layer_tree_host_) {
@@ -184,6 +187,7 @@ void Compositor::SetDeviceScaleFactor(float scale) {
 }
 
 void Compositor::SetViewportSize(const gfx::Size& size) {
+  DCHECK(CalledOnValidThread());
   if (size == size_) {
     return;
   }
@@ -197,6 +201,7 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
 }
 
 void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(CalledOnValidThread());
   root_layer_->RemoveAllChildren();
   if (layer) {
     root_layer_->AddChild(layer);
