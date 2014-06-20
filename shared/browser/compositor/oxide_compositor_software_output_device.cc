@@ -32,6 +32,7 @@ namespace oxide {
 
 void CompositorSoftwareOutputDevice::Resize(const gfx::Size& pixel_size,
                                             float scale_factor) {
+  DCHECK(CalledOnValidThread());
   if (pixel_size == viewport_pixel_size_ && scale_factor == scale_factor_) {
     return;
   }
@@ -45,6 +46,7 @@ void CompositorSoftwareOutputDevice::Resize(const gfx::Size& pixel_size,
 
 SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
     const gfx::Rect& damage_rect) {
+  DCHECK(CalledOnValidThread());
   DCHECK(!in_paint_);
   DCHECK(!damage_rect.IsEmpty());
 
@@ -124,6 +126,7 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
 }
 
 void CompositorSoftwareOutputDevice::EndPaint(cc::SoftwareFrameData* frame_data) {
+  DCHECK(CalledOnValidThread());
   DCHECK(in_paint_);
   DCHECK(frame_data);
   DCHECK_NE(current_frame_.id, 0);
@@ -145,6 +148,7 @@ void CompositorSoftwareOutputDevice::EndPaint(cc::SoftwareFrameData* frame_data)
 }
 
 void CompositorSoftwareOutputDevice::DiscardBackbuffer() {
+  DCHECK(CalledOnValidThread());
   if (is_backbuffer_discarded_) {
     return;
   }
@@ -162,6 +166,7 @@ void CompositorSoftwareOutputDevice::DiscardBackbuffer() {
 }
 
 void CompositorSoftwareOutputDevice::EnsureBackbuffer() {
+  DCHECK(CalledOnValidThread());
   is_backbuffer_discarded_ = false;
 
   if (current_frame_.id == 0 && !returned_frames_.empty()) {
@@ -183,6 +188,7 @@ void CompositorSoftwareOutputDevice::EnsureBackbuffer() {
 }
 
 void CompositorSoftwareOutputDevice::ReclaimSoftwareFrame(unsigned id) {
+  DCHECK(CalledOnValidThread());
   if (id == 0) {
     return;
   }
@@ -217,7 +223,9 @@ unsigned CompositorSoftwareOutputDevice::GetNextId() {
 CompositorSoftwareOutputDevice::CompositorSoftwareOutputDevice()
     : next_frame_id_(1),
       in_paint_(false),
-      is_backbuffer_discarded_(false) {}
+      is_backbuffer_discarded_(false) {
+  DetachFromThread();
+}
 
 CompositorSoftwareOutputDevice::~CompositorSoftwareOutputDevice() {}
 

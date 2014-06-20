@@ -24,6 +24,7 @@
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/linked_ptr.h"
+#include "base/threading/non_thread_safe.h"
 #include "cc/output/software_output_device.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
@@ -34,7 +35,8 @@ class SharedBitmap;
 
 namespace oxide {
 
-class CompositorSoftwareOutputDevice FINAL : public cc::SoftwareOutputDevice {
+class CompositorSoftwareOutputDevice FINAL : public cc::SoftwareOutputDevice,
+                                             public base::NonThreadSafe {
  public:
   CompositorSoftwareOutputDevice();
   ~CompositorSoftwareOutputDevice();
