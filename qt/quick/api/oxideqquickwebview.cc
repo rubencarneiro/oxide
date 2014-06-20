@@ -291,20 +291,18 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
 void OxideQQuickWebViewPrivate::RootScrollOffsetChanged() {
   Q_Q(OxideQQuickWebView);
 
-  emit q->scrollOffsetChanged();
+  emit q->contentXChanged();
+  emit q->contentYChanged();
 }
 
 void OxideQQuickWebViewPrivate::RootLayerSizeChanged() {
   Q_Q(OxideQQuickWebView);
 
-  emit q->layerSizeChanged();
+  emit q->contentWidthChanged();
+  emit q->contentHeightChanged();
 }
 
-void OxideQQuickWebViewPrivate::ViewportSizeChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->viewportSizeChanged();
-}
+void OxideQQuickWebViewPrivate::ViewportSizeChanged() {}
 
 void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
   Q_Q(OxideQQuickWebView);
@@ -675,22 +673,28 @@ void OxideQQuickWebView::removeMessageHandler(
   emit messageHandlersChanged();
 }
 
-QPointF OxideQQuickWebView::scrollOffset() const {
+qreal OxideQQuickWebView::contentWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->scrollOffset();
+  return d->layerSize().width();
 }
 
-QSizeF OxideQQuickWebView::layerSize() const {
+qreal OxideQQuickWebView::contentHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->layerSize();
+  return d->layerSize().height();
 }
 
-QSizeF OxideQQuickWebView::viewportSize() const {
+qreal OxideQQuickWebView::contentX() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->viewportSize();
+  return d->scrollOffset().x();
+}
+
+qreal OxideQQuickWebView::contentY() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->scrollOffset().y();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {

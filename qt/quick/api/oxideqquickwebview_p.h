@@ -78,9 +78,10 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
 
-  Q_PROPERTY(QPointF scrollOffset READ scrollOffset NOTIFY scrollOffsetChanged)
-  Q_PROPERTY(QSizeF layerSize READ layerSize NOTIFY layerSizeChanged)
-  Q_PROPERTY(QSizeF viewportSize READ viewportSize NOTIFY viewportSizeChanged)
+  Q_PROPERTY(qreal contentWidth READ contentWidth NOTIFY contentWidthChanged)
+  Q_PROPERTY(qreal contentHeight READ contentHeight NOTIFY contentHeightChanged)
+  Q_PROPERTY(qreal contentX READ contentX NOTIFY contentXChanged)
+  Q_PROPERTY(qreal contentY READ contentY NOTIFY contentYChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
@@ -141,9 +142,10 @@ class OxideQQuickWebView : public QQuickItem {
   Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
   Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
-  QPointF scrollOffset() const;
-  QSizeF layerSize() const;
-  QSizeF viewportSize() const;
+  qreal contentWidth() const;
+  qreal contentHeight() const;
+  qreal contentX() const;
+  qreal contentY() const;
 
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
@@ -204,9 +206,10 @@ class OxideQQuickWebView : public QQuickItem {
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
-  void scrollOffsetChanged();
-  void layerSizeChanged();
-  void viewportSizeChanged();
+  void contentWidthChanged();
+  void contentHeightChanged();
+  void contentXChanged();
+  void contentYChanged();
   void fullscreenRequested(bool fullscreen);
   void navigationRequested(OxideQNavigationRequest *request);
   void newViewRequested(OxideQNewViewRequest* request);
