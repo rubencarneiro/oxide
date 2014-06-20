@@ -144,17 +144,8 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
 }
 
 void CompositorOutputSurfaceGL::ReclaimResources(
-    uint32 surface_id,
     const cc::CompositorFrameAck& ack) {
-  if (surface_id != this->surface_id()) {
-    return;
-  }
-
-  if (!ack.gl_frame_data) {
-    CompositorOutputSurface::ReclaimResources(surface_id, ack);
-    return;
-  }
-
+  DCHECK(ack.gl_frame_data);
   DCHECK_EQ(ack.last_software_frame_id, 0);
   DCHECK(!ack.gl_frame_data->mailbox.IsZero());
   DCHECK(!ack.gl_frame_data->size.IsEmpty());
@@ -182,7 +173,7 @@ void CompositorOutputSurfaceGL::ReclaimResources(
 
   pending_textures_.erase(it);
 
-  CompositorOutputSurface::ReclaimResources(surface_id, ack);
+  CompositorOutputSurface::ReclaimResources(ack);
 }
 
 CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(

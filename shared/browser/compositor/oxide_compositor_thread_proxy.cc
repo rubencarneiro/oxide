@@ -115,7 +115,9 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     return;
   }
 
-  impl().output->DidSwapBuffers(surface_id);
+  if (surface_id == impl().output->surface_id()) {
+    impl().output->DidSwapBuffers();
+  }
 
   std::vector<CompositorFrameHandle*> handles;
   returned_frames->release(&handles);
@@ -144,7 +146,9 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
       NOTREACHED();
     }
 
-    impl().output->ReclaimResources(frame->surface_id_, ack);
+    if (frame->surface_id_ == impl().output->surface_id()) {
+      impl().output->ReclaimResources(ack);
+    }
   }
 }
 
@@ -155,7 +159,11 @@ void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
     return;
   }
 
-  impl().output->ReclaimResources(surface_id, *ack);
+  if (surface_id != impl().output->surface_id()) {
+    return;
+  }
+
+  impl().output->ReclaimResources(*ack);
 }
 
 CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)

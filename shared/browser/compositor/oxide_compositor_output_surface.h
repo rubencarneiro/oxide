@@ -38,9 +38,8 @@ class CompositorOutputSurface : public cc::OutputSurface {
 
   uint32 surface_id() const { return surface_id_; }
 
-  void DidSwapBuffers(uint32 surface_id);
-  virtual void ReclaimResources(uint32 surface_id,
-                                const cc::CompositorFrameAck& ack);
+  void DidSwapBuffers();
+  virtual void ReclaimResources(const cc::CompositorFrameAck& ack);
 
  protected:
   CompositorOutputSurface(

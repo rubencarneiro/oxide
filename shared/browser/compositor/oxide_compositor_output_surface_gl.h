@@ -47,8 +47,7 @@ class CompositorOutputSurfaceGL FINAL : public CompositorOutputSurface {
   void SwapBuffers(cc::CompositorFrame* frame) FINAL;
 
   // CompositorOutputSurface implementation
-  void ReclaimResources(uint32 surface_id,
-                        const cc::CompositorFrameAck& ack) FINAL;
+  void ReclaimResources(const cc::CompositorFrameAck& ack) FINAL;
 
   struct OutputFrameData {
     OutputFrameData() : texture_id(0), sync_point(0) {}
