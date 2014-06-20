@@ -63,6 +63,7 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
 
   DCHECK(previous_frame_.id != 0 ||
          damage_rect == gfx::Rect(viewport_pixel_size_)) <<
+      "Expected the damage rect to be the whole viewport for the first frame";
 
   // See if this buffer has been used in the past
   while (!previous_damage_rects_.empty()) {
@@ -117,7 +118,6 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
     }
   }
 
-  previous_damage_rects_.push_back(DamageData(current_frame_.id, damage_rect));
   damage_rect_ = damage_rect;
 
   return canvas_.get();
@@ -138,7 +138,10 @@ void CompositorSoftwareOutputDevice::EndPaint(cc::SoftwareFrameData* frame_data)
 
   previous_frame_ = current_frame_;
   pending_frames_.push_back(current_frame_);
+  previous_damage_rects_.push_back(DamageData(current_frame_.id, damage_rect_));
+
   current_frame_ = OutputFrameData();
+  damage_rect_ = gfx::Rect();
 }
 
 void CompositorSoftwareOutputDevice::DiscardBackbuffer() {
