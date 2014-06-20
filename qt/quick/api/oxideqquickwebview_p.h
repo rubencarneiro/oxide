@@ -18,11 +18,9 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_H_
 
-#include <QPointF>
 #include <QQmlListProperty>
 #include <QQuickItem>
 #include <QScopedPointer>
-#include <QSizeF>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
