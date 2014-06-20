@@ -153,10 +153,15 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
                  AsWeakPtr(), output_surface_id);
   ack_callbacks_.push(ack_callback);
 
-  gfx::Size frame_size =
-      frame_data->render_pass_list.back()->output_rect.size();
+  float device_scale_factor = frame->metadata.device_scale_factor;
+  cc::RenderPass* root_pass = frame_data->render_pass_list.back();
+
+  gfx::Size frame_size = root_pass->output_rect.size();
   gfx::Size frame_size_dip = gfx::ToFlooredSize(
-      gfx::ScaleSize(frame_size, 1.0f / frame->metadata.device_scale_factor));
+      gfx::ScaleSize(frame_size, 1.0f / device_scale_factor));
+
+  gfx::Rect damage_rect_dip = gfx::ToEnclosingRect(
+      gfx::ScaleRect(root_pass->damage_rect, 1.0f / device_scale_factor));
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
@@ -179,7 +184,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     layer_->SetIsDrawable(true);
     layer_->SetContentsOpaque(true);
     layer_->SetBounds(frame_size_dip);
-    layer_->SetNeedsDisplay();
+    layer_->SetNeedsDisplayRect(damage_rect_dip);
   }
 
   if (!compositor_->IsActive()) {
