@@ -62,9 +62,9 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   canvas_ = skia::AdoptRef(new SkCanvas(bitmap));
 
   DCHECK(previous_frame_.id != 0 ||
-         damage_rect == gfx::Rect(viewport_pixel_size_));
-  DCHECK(!previous_damage_rects_.empty() || previous_frame_.id == 0);
+         damage_rect == gfx::Rect(viewport_pixel_size_)) <<
 
+  // See if this buffer has been used in the past
   while (!previous_damage_rects_.empty()) {
     unsigned id = previous_damage_rects_.front().id;
     previous_damage_rects_.pop_front();
@@ -78,18 +78,28 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   if (previous_damage_rects_.empty() &&
       previous_frame_.id != 0 &&
       previous_frame_.id != current_frame_.id) {
+    // If this is a new buffer, then we need to copy everything from the
+    // previous buffer. Note, this can also happen if we receive buffers
+    // back from the embedder in the wrong order, as it will get popped
+    // off previous_damage_rects_.
     outdated_region.setRect(
         gfx::RectToSkIRect(gfx::Rect(viewport_pixel_size_)));
   } else {
+    // Add together the damage rects since this buffer was last used
     for (std::deque<DamageData>::iterator it = previous_damage_rects_.begin();
          it != previous_damage_rects_.end(); ++it) {
       outdated_region.op(gfx::RectToSkIRect(it->damage), SkRegion::kUnion_Op);
     }
   }
 
+  // Don't copy pixels inside the new damage rect, as those will be painted
+  // anyway
   outdated_region.op(gfx::RectToSkIRect(damage_rect),
                      SkRegion::kDifference_Op);
 
+  // Now copy pixels in the outdated region from the previous buffer to the
+  // new buffer. This brings everything outside of the damage_rect in the new
+  // buffer up-to-date
   if (!outdated_region.isEmpty()) {
     DCHECK(previous_frame_.id != 0 && previous_frame_.id != current_frame_.id);
     DCHECK(current_frame_.size == previous_frame_.size);

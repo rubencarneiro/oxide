@@ -75,6 +75,8 @@ class CompositorSoftwareOutputDevice FINAL : public cc::SoftwareOutputDevice {
     gfx::Rect damage;
   };
 
+  // We keep track of damage rects, so that when we recycle an old buffer
+  // we can calculate the outdated region to copy from the previous buffer
   std::deque<DamageData> previous_damage_rects_;
 
   bool in_paint_;
