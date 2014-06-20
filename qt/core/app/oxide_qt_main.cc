@@ -15,33 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_
-#define _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_
+#include "oxide_qt_main.h"
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
+#include "content/public/app/content_main.h"
 
-#include "shared/common/oxide_content_client.h"
-
-template <typename Type> struct DefaultSingletonTraits;
+#include "oxide_qt_content_main_delegate.h"
 
 namespace oxide {
 namespace qt {
 
-class ContentClient FINAL : public oxide::ContentClient {
- public:
-  static ContentClient* GetInstance();
+int OxideMain(int argc, const char** argv) {
+  ContentMainDelegate delegate;
 
-  intptr_t GetNativeDisplay() FINAL;
+  content::ContentMainParams params(&delegate);
+  params.argc = argc;
+  params.argv = argv;
 
- private:
-  friend struct DefaultSingletonTraits<ContentClient>;
-  ContentClient();
-
-  DISALLOW_COPY_AND_ASSIGN(ContentClient);
-};
+  return content::ContentMain(params);
+}
 
 } // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_COMMON_CONTENT_CLIENT_H_

@@ -147,11 +147,10 @@ class WebView : public ScriptMessageTarget,
   void HidePopupMenu();
 
   void RequestGeolocationPermission(
-      const PermissionRequest::ID& id,
+      int id,
       const GURL& origin,
       const base::Callback<void(bool)>& callback);
-  void CancelGeolocationPermissionRequest(
-      const PermissionRequest::ID& id);
+  void CancelGeolocationPermissionRequest(int id);
 
   void UpdateWebPreferences();
 
@@ -213,6 +212,7 @@ class WebView : public ScriptMessageTarget,
   bool RunFileChooser(const content::FileChooserParams& params) FINAL;
   void ToggleFullscreenMode(bool enter) FINAL;
   void NotifyWebPreferencesDestroyed() FINAL;
+  void HandleKeyboardEvent(const content::NativeWebKeyboardEvent& event) FINAL;
 
   // content::WebContentsObserver
   void RenderProcessGone(base::TerminationStatus status) FINAL;
@@ -300,6 +300,9 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnRequestGeolocationPermission(
       scoped_ptr<GeolocationPermissionRequest> request);
+
+  virtual void OnUnhandledKeyboardEvent(
+      const content::NativeWebKeyboardEvent& event);
 
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,

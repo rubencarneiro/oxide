@@ -90,12 +90,6 @@ void WebViewContentsHelper::UpdateWebPreferences() {
   }
 }
 
-void WebViewContentsHelper::NotifyUserAgentStringChanged() {
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  web_contents()->SetUserAgentOverride(context_->GetUserAgent());
-}
-
 void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
   UpdateWebPreferences();
 }
@@ -165,6 +159,18 @@ bool WebViewContentsHelper::ShouldCreateWebContents(
   return delegate_->ShouldCreateWebContents(target_url,
                                             disposition,
                                             user_gesture);
+}
+
+void WebViewContentsHelper::HandleKeyboardEvent(
+    content::WebContents* source,
+    const content::NativeWebKeyboardEvent& event) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (!delegate_) {
+    return;
+  }
+
+  delegate_->HandleKeyboardEvent(event);
 }
 
 void WebViewContentsHelper::WebContentsCreated(
@@ -306,15 +312,6 @@ WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
 void WebViewContentsHelper::SetDelegate(
     WebViewContentsHelperDelegate* delegate) {
   delegate_ = delegate;
-}
-
-void WebViewContentsHelper::LoadURLWithParams(
-    const content::NavigationController::LoadURLParams& params) {
-  content::NavigationController::LoadURLParams p(params);
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  p.override_user_agent = content::NavigationController::UA_OVERRIDE_TRUE;
-  web_contents()->GetController().LoadURLWithParams(p);
 }
 
 BrowserContext* WebViewContentsHelper::GetBrowserContext() const {

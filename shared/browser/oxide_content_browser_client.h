@@ -57,6 +57,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   ContentBrowserClient();
 
  private:
+  // content::ContentBrowserClient implementation
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) FINAL;
 
@@ -65,7 +66,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   net::URLRequestContextGetter* CreateRequestContext(
       content::BrowserContext* browser_context,
       content::ProtocolHandlerMap* protocol_handlers,
-      content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
+      content::URLRequestInterceptorScopedVector request_interceptors) FINAL;
 
   net::URLRequestContextGetter*
       CreateRequestContextForStoragePartition(
@@ -73,7 +74,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
         const base::FilePath& partition_path,
         bool in_memory,
         content::ProtocolHandlerMap* protocol_handlers,
-        content::ProtocolHandlerScopedVector protocol_interceptors) FINAL;
+        content::URLRequestInterceptorScopedVector request_interceptors) FINAL;
 
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) FINAL;
@@ -95,6 +96,14 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                       int render_process_id,
                       int render_frame_id,
                       net::CookieOptions* options) FINAL;
+
+  void RequestGeolocationPermission(
+      content::WebContents* web_contents,
+      int bridge_id,
+      const GURL& requesting_frame,
+      bool user_gesture,
+      base::Callback<void(bool)> result_callback,
+      base::Closure* cancel_callback) FINAL;
 
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,
@@ -124,6 +133,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;
 
+  // Should be subclassed
   virtual bool IsTouchSupported();
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);

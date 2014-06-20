@@ -35,12 +35,14 @@
 #include <QTextCharFormat>
 #include <QTouchEvent>
 #include <QWheelEvent>
+#include <QWindow>
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/common/cursors/webcursor.h"
+#include "content/common/view_messages.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
 #include "third_party/WebKit/public/platform/WebColor.h"
@@ -800,8 +802,7 @@ float RenderWidgetHostView::GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   }
 
   QString platform = QGuiApplication::platformName();
-  if (platform == QLatin1String("ubuntu") ||
-      platform == QLatin1String("ubuntumirclient")) {
+  if (platform.startsWith("ubuntu")) {
     QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
     bool ok;
     float scale = grid_unit_px.toFloat(&ok);
@@ -817,6 +818,10 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   if (!HasFocus()) {
     return;
   }
+
+  // Work around for https://launchpad.net/bugs/1323743
+  QGuiApplication::focusWindow()->focusObjectChanged(QGuiApplication::focusWindow()->focusObject());
+
   delegate_->SetInputMethodEnabled(is_editable_node);
   if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
     QGuiApplication::inputMethod()->setVisible(is_editable_node);
@@ -827,13 +832,13 @@ void RenderWidgetHostView::Blur() {
   delegate_->Blur();
 }
 
-void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
-                                                ui::TextInputMode mode,
-                                                bool can_compose_inline) {
-  input_type_ = type;
+void RenderWidgetHostView::TextInputStateChanged(
+    const ViewHostMsg_TextInputState_Params& params) {
+  input_type_ = params.type;
   QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
-  if (HasFocus() && (type != ui::TEXT_INPUT_TYPE_NONE) &&
-      !QGuiApplication::inputMethod()->isVisible()) {
+  if (HasFocus() && input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
+      !QGuiApplication::inputMethod()->isVisible() &&
+      params.show_ime_if_needed) {
     delegate_->SetInputMethodEnabled(true);
     QGuiApplication::inputMethod()->show();
   }
@@ -977,7 +982,7 @@ void RenderWidgetHostView::HandleKeyEvent(QKeyEvent* event) {
   GetRenderWidgetHost()->ForwardKeyboardEvent(e);
 
   // If the event is a printable character, send a corresponding Char event
-  if (event->type() == QEvent::KeyPress && QChar(e.text[0]).isPrint()) {
+  if (event->type() == QEvent::KeyPress && e.text[0] != 0) {
     GetRenderWidgetHost()->ForwardKeyboardEvent(
         MakeNativeWebKeyboardEvent(event, true));
   }

@@ -156,9 +156,6 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
-    // Make sure we initialize the display handle on the main thread
-    gfx::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
-
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
 
@@ -192,6 +189,23 @@ class BrowserMainParts : public content::BrowserMainParts {
   Screen primary_screen_;
 };
 
+void CancelGeolocationPermissionRequest(int render_process_id,
+                                        int render_view_id,
+                                        int bridge_id) {
+  content::RenderViewHost* rvh = content::RenderViewHost::FromID(
+      render_process_id, render_view_id);
+  if (!rvh) {
+    return;
+  }
+
+  WebView* webview = WebView::FromRenderViewHost(rvh);
+  if (!webview) {
+    return;
+  }
+
+  webview->CancelGeolocationPermissionRequest(bridge_id);
+}
+
 } // namespace
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
@@ -201,8 +215,8 @@ content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
 
 void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
-  host->Send(new OxideMsg_SetIsIncognitoProcess(
-      host->GetBrowserContext()->IsOffTheRecord()));
+  host->Send(new OxideMsg_SetUserAgent(
+      BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
   host->AddFilter(new ScriptMessageDispatcherBrowser(host));
   host->AddFilter(new UserAgentOverrideProvider(host));
 }
@@ -210,10 +224,10 @@ void ContentBrowserClient::RenderProcessWillLaunch(
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
     content::BrowserContext* browser_context,
     content::ProtocolHandlerMap* protocol_handlers,
-    content::ProtocolHandlerScopedVector protocol_interceptors) {
+    content::URLRequestInterceptorScopedVector request_interceptors) {
   return BrowserContext::FromContent(
       browser_context)->CreateRequestContext(protocol_handlers,
-                                             protocol_interceptors.Pass());
+                                             request_interceptors.Pass());
 }
 
 net::URLRequestContextGetter*
@@ -222,7 +236,7 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
     const base::FilePath& partition_path,
     bool in_memory,
     content::ProtocolHandlerMap* protocol_handlers,
-    content::ProtocolHandlerScopedVector protocol_interceptors) {
+    content::URLRequestInterceptorScopedVector request_interceptors) {
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
@@ -241,26 +255,17 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
       command_line->GetSwitchValueASCII(switches::kProcessType);
   if (process_type == switches::kRendererProcess) {
     static const char* const kSwitchNames[] = {
-      switches::kEnableGoogleTalkPlugin
+      switches::kEnableGoogleTalkPlugin,
+      switches::kFormFactor
     };
     command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                    kSwitchNames, arraysize(kSwitchNames));
 
-    const char* form_factor_string = NULL;
-    switch (GetFormFactorHint()) {
-      case FORM_FACTOR_DESKTOP:
-        form_factor_string = switches::kFormFactorDesktop;
-        break;
-      case FORM_FACTOR_TABLET:
-        form_factor_string = switches::kFormFactorTablet;
-        break;
-      case FORM_FACTOR_PHONE:
-        form_factor_string = switches::kFormFactorPhone;
-        break;
-      default:
-        NOTREACHED();
+    content::RenderProcessHost* host =
+        content::RenderProcessHost::FromID(child_process_id);
+    if (host->GetBrowserContext()->IsOffTheRecord()) {
+      command_line->AppendSwitch(switches::kIncognito);
     }
-    command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
   }
 }
 
@@ -283,6 +288,32 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
                                           net::CookieOptions* options) {
   return BrowserContextIOData::FromResourceContext(
       context)->CanAccessCookies(url, first_party, true);
+}
+
+void ContentBrowserClient::RequestGeolocationPermission(
+    content::WebContents* web_contents,
+    int bridge_id,
+    const GURL& requesting_frame,
+    bool user_gesture,
+    base::Callback<void(bool)> result_callback,
+    base::Closure* cancel_callback) {
+  WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
+    result_callback.Run(false);
+    return;
+  }
+
+  webview->RequestGeolocationPermission(bridge_id,
+                                        requesting_frame.GetOrigin(),
+                                        result_callback);
+
+  if (cancel_callback) {
+    *cancel_callback = base::Bind(
+        CancelGeolocationPermissionRequest,
+        web_contents->GetRenderProcessHost()->GetID(),
+        web_contents->GetRenderViewHost()->GetRoutingID(),
+        bridge_id);
+  }
 }
 
 bool ContentBrowserClient::CanCreateWindow(
@@ -353,7 +384,7 @@ ContentBrowserClient::OverrideSystemLocationProvider() {
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   SharedGLContext* context =
-      BrowserProcessMain::instance()->shared_gl_context();
+      BrowserProcessMain::instance()->GetSharedGLContext();
   if (!context) {
     return NULL;
   }

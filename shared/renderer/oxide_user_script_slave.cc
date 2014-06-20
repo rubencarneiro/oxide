@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 
+#include "base/command_line.h"
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/renderer/render_thread.h"
@@ -32,11 +33,11 @@
 #include "third_party/WebKit/public/web/WebSecurityOrigin.h"
 #include "url/gurl.h"
 
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_user_script.h"
 
 #include "oxide_isolated_world_map.h"
-#include "oxide_process_observer.h"
 
 namespace oxide {
 
@@ -132,7 +133,9 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
       continue;
     }
 
-    if (!script->incognito_enabled() && ProcessObserver::IsOffTheRecord()) {
+    if (!script->incognito_enabled() &&
+        base::CommandLine::ForCurrentProcess()->HasSwitch(
+            switches::kIncognito)) {
       continue;
     }
 

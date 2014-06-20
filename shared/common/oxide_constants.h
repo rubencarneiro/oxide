@@ -18,26 +18,14 @@
 #ifndef _OXIDE_SHARED_COMMON_CONSTANTS_H_
 #define _OXIDE_SHARED_COMMON_CONSTANTS_H_
 
-#include "base/posix/global_descriptors.h"
-#include "ipc/ipc_descriptors.h"
-
-namespace oxide {
-
-const int kSandboxIPCSocketPairFd =
-    kPrimaryIPCChannel + base::GlobalDescriptors::kBaseDescriptor;
-const int kSandboxIPCLifelinePipeFd =
-    kPrimaryIPCChannel + base::GlobalDescriptors::kBaseDescriptor + 1;
-
-} // namespace oxide
-
 namespace switches {
 
 extern const char kEnableGoogleTalkPlugin[];
-extern const char kDisableForceCompositingMode[];
 extern const char kFormFactor[];
 extern const char kFormFactorDesktop[];
 extern const char kFormFactorTablet[];
 extern const char kFormFactorPhone[];
+extern const char kIncognito[];
 
 } // namespace switches
 

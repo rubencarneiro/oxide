@@ -15,31 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_client.h"
-
-#include <QGuiApplication>
-#include <QtGui/qpa/qplatformnativeinterface.h>
-
-#include "base/memory/singleton.h"
+#include "base/compiler_specific.h"
+#include "media/ozone/media_ozone_platform.h"
 
 namespace oxide {
-namespace qt {
 
-ContentClient::ContentClient() {}
+class MediaOzonePlatform : public media::MediaOzonePlatform {
+ public:
+  MediaOzonePlatform() {}
+  virtual ~MediaOzonePlatform() {}
 
-// static
-ContentClient* ContentClient::GetInstance() {
-  return Singleton<ContentClient>::get();
-}
+  media::VideoDecodeAccelerator* CreateVideoDecodeAccelerator(
+      const base::Callback<bool(void)>& make_context_current) FINAL {
+    return NULL;
+  }
+};
 
-intptr_t ContentClient::GetNativeDisplay() {
-  static void* display =
-      QGuiApplication::platformNativeInterface()->nativeResourceForScreen(
-        "display",
-        QGuiApplication::primaryScreen());
-
-  return reinterpret_cast<intptr_t>(display);
-}
-
-} // namespace qt
 } // namespace oxide
+
+namespace media {
+
+MediaOzonePlatform* CreateMediaOzonePlatformOxide() {
+  return new oxide::MediaOzonePlatform();
+}
+
+} // namespace media

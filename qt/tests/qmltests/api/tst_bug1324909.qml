@@ -33,10 +33,10 @@ Column {
 
   TestCase {
     id: test
-    name: "bugXXXXXXX"
+    name: "bug1324909"
     when: windowShown
 
-    function test_bugXXXXXXX() {
+    function test_bug1324909_1_new_window() {
       verify(webView.context.userAgent != "Foo");
       webView.context.userAgent = "Foo";
 
@@ -49,7 +49,17 @@ Column {
       spy.wait();
       verify(created != null);
 
-      skip(created.getTestApi().evaluateCode(
+      compare(created.getTestApi().evaluateCode(
+          "return document.getElementById(\"useragent\").innerHTML;", true),
+          "Foo");
+    }
+
+    function test_bug1324909_2_subframe() {
+      webView.url = "http://localhost:8080/tst_bug1324909_2.html";
+      verify(webView.waitForLoadSucceeded());
+
+      console.log(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI);
+      compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
           "return document.getElementById(\"useragent\").innerHTML;", true),
           "Foo");
     }

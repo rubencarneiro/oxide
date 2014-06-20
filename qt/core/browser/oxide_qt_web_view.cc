@@ -255,6 +255,25 @@ void WebView::OnRequestGeolocationPermission(
   adapter_->RequestGeolocationPermission(qreq);
 }
 
+void WebView::OnUnhandledKeyboardEvent(
+    const content::NativeWebKeyboardEvent& event) {
+  if (event.skip_in_browser) {
+    return;
+  }
+
+  if (event.type != blink::WebInputEvent::RawKeyDown &&
+      event.type != blink::WebInputEvent::KeyUp) {
+    return;
+  }
+
+  DCHECK(event.os_event);
+
+  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
+  DCHECK(!qevent->isAccepted());
+
+  adapter_->HandleKeyboardEvent(qevent);
+}
+
 bool WebView::OnAddMessageToConsole(
     int level,
     const base::string16& message,
@@ -359,25 +378,6 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
-}
-
-void WebView::HandleKeyboardEvent(content::WebContents* source,
-                                  const content::NativeWebKeyboardEvent& event) {
-  if (event.skip_in_browser) {
-    return;
-  }
-
-  if (event.type != blink::WebInputEvent::RawKeyDown &&
-      event.type != blink::WebInputEvent::KeyUp) {
-    return;
-  }
-
-  DCHECK(event.os_event);
-
-  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
-  DCHECK(!qevent->isAccepted());
-
-  adapter_->HandleKeyboardEvent(qevent);
 }
 
 } // namespace qt

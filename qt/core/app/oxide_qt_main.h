@@ -15,16 +15,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_APP_MAIN_H_
-#define _OXIDE_SHARED_APP_MAIN_H_
+#ifndef _OXIDE_QT_CORE_APP_MAIN_H_
+#define _OXIDE_QT_CORE_APP_MAIN_H_
 
-#include "shared/common/oxide_export.h"
+#include <QtGlobal>
 
 namespace oxide {
+namespace qt {
 
-OXIDE_EXPORT int OxideMain(int argc,
-                           const char** argv);
+Q_DECL_EXPORT int OxideMain(int argc, const char** argv);
 
+} // namespace qt
 } // namespace oxide
 
 #endif // _OXIDE_SHARED_APP_MAIN_H_

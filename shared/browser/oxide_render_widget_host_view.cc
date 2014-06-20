@@ -36,6 +36,7 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
+#include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "ui/events/event.h"
 
 #include "oxide_default_screen_info.h"
@@ -244,9 +245,8 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
   }
 }
 
-void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
-                                                ui::TextInputMode mode,
-                                                bool can_compose_inline) {}
+void RenderWidgetHostView::TextInputStateChanged(
+    const ViewHostMsg_TextInputState_Params& params) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {}
 
@@ -434,7 +434,7 @@ void RenderWidgetHostView::OnTextureResourcesAvailable(
 }
 
 bool RenderWidgetHostView::ShouldCompositeNewFrame() {
-  if (is_hidden_) {
+  if (host()->is_hidden()) {
     return false;
   }
 
@@ -514,7 +514,7 @@ void RenderWidgetHostView::ForwardGestureEventToRenderer(
     // event to stop any in-progress flings.
     blink::WebGestureEvent fling_cancel = gesture;
     fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
-    fling_cancel.sourceDevice = blink::WebGestureEvent::Touchscreen;
+    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
     host_->ForwardGestureEvent(fling_cancel);
   }
 
@@ -539,7 +539,6 @@ void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {}
 
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     content::RenderWidgetHostViewBase(),
-    is_hidden_(false),
     host_(content::RenderWidgetHostImpl::From(host)),
     selection_cursor_position_(0),
     selection_anchor_position_(0),
@@ -553,22 +552,10 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
 }
 
 void RenderWidgetHostView::WasShown() {
-  if (!is_hidden_) {
-    return;
-  }
-
-  is_hidden_ = false;
-
   host()->WasShown();
 }
 
 void RenderWidgetHostView::WasHidden() {
-  if (is_hidden_) {
-    return;
-  }
-
-  is_hidden_ = true;
-
   host()->WasHidden();
 }
 

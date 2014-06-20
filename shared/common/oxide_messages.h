@@ -40,11 +40,11 @@ IPC_STRUCT_END()
 
 #define IPC_MESSAGE_START OxideMsgStart
 
-IPC_MESSAGE_CONTROL1(OxideMsg_SetIsIncognitoProcess,
-                     bool)
-
 IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserScripts,
                      base::SharedMemoryHandle)
+
+IPC_MESSAGE_CONTROL1(OxideMsg_SetUserAgent,
+                     std::string)
 
 IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
                     OxideMsg_SendMessage_Params)
@@ -56,7 +56,3 @@ IPC_SYNC_MESSAGE_CONTROL1_2(OxideHostMsg_GetUserAgentOverride,
                             GURL,
                             std::string,
                             bool)
-
-IPC_MESSAGE_ROUTED2(OxideHostMsg_FrameCreated,
-                    long long /* parent */,
-                    long long /* frame */)

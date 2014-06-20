@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "shared/app/oxide_main.h"
+#include "qt/core/app/oxide_qt_main.h"
 
 int main(int argc, const char* argv[]) {
-  return oxide::OxideMain(argc, argv);
+  return oxide::qt::OxideMain(argc, argv);
 }

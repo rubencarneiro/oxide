@@ -46,7 +46,7 @@
 #include "net/url_request/data_protocol_handler.h"
 #include "net/url_request/file_protocol_handler.h"
 #include "net/url_request/ftp_protocol_handler.h"
-#include "net/url_request/protocol_intercept_job_factory.h"
+#include "net/url_request/url_request_intercepting_job_factory.h"
 #include "net/url_request/url_request_job_factory_impl.h"
 
 #include "shared/common/oxide_constants.h"
@@ -55,7 +55,6 @@
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_geolocation_permission_context.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
@@ -96,9 +95,9 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
   MainURLRequestContextGetter(
       BrowserContextIOData* context,
       content::ProtocolHandlerMap* protocol_handlers,
-      content::ProtocolHandlerScopedVector protocol_interceptors) :
+      content::URLRequestInterceptorScopedVector request_interceptors) :
       context_(context),
-      protocol_interceptors_(protocol_interceptors.Pass()) {
+      request_interceptors_(request_interceptors.Pass()) {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
 
@@ -108,7 +107,7 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
     if (!url_request_context_) {
       DCHECK(context_);
       url_request_context_ = context_->CreateMainRequestContext(
-          protocol_handlers_, protocol_interceptors_.Pass())->AsWeakPtr();
+          protocol_handlers_, request_interceptors_.Pass())->AsWeakPtr();
       context_ = NULL;
     }
 
@@ -118,7 +117,7 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
  private:
   BrowserContextIOData* context_;
   content::ProtocolHandlerMap protocol_handlers_;
-  content::ProtocolHandlerScopedVector protocol_interceptors_;
+  content::URLRequestInterceptorScopedVector request_interceptors_;
 
   base::WeakPtr<URLRequestContext> url_request_context_;
 };
@@ -200,7 +199,7 @@ scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     content::ProtocolHandlerMap& protocol_handlers,
-    content::ProtocolHandlerScopedVector protocol_interceptors) {
+    content::URLRequestInterceptorScopedVector request_interceptors) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
   DCHECK(!main_request_context_);
 
@@ -318,14 +317,14 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   scoped_ptr<net::URLRequestJobFactory> top_job_factory(
       job_factory.PassAs<net::URLRequestJobFactory>());
 
-  for (content::ProtocolHandlerScopedVector::reverse_iterator it =
-         protocol_interceptors.rbegin();
-       it != protocol_interceptors.rend();
+  for (content::URLRequestInterceptorScopedVector::reverse_iterator it =
+          request_interceptors.rbegin();
+       it != request_interceptors.rend();
        ++it) {
-    top_job_factory.reset(new net::ProtocolInterceptJobFactory(
+    top_job_factory.reset(new net::URLRequestInterceptingJobFactory(
         top_job_factory.Pass(), make_scoped_ptr(*it)));
   }
-  protocol_interceptors.weak_clear();
+  request_interceptors.weak_clear();
 
   storage->set_job_factory(top_job_factory.release());
 
@@ -400,47 +399,9 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
   return NULL;
 }
 
-void BrowserContext::RequestMidiSysExPermission(
-    int render_process_id,
-    int render_view_id,
-    int bridge_id,
-    const GURL& requesting_frame,
-    bool user_gesture,
-    const MidiSysExPermissionCallback& callback) {
-  callback.Run(false);
-}
-
-void BrowserContext::CancelMidiSysExPermissionRequest(
-    int render_process_id,
-    int render_view_id,
-    int bridge_id,
-    const GURL& requesting_frame) {}
-
-void BrowserContext::RequestProtectedMediaIdentifierPermission(
-    int render_process_id,
-    int render_view_id,
-    int bridge_id,
-    int group_id,
-    const GURL& requesting_frame,
-    const ProtectedMediaIdentifierPermissionCallback& callback) {
-  callback.Run(false);
-}
-
-void BrowserContext::CancelProtectedMediaIdentifierPermissionRequests(
-    int group_id) {}
-
 content::DownloadManagerDelegate*
     BrowserContext::GetDownloadManagerDelegate() {
   return NULL;
-}
-
-content::GeolocationPermissionContext*
-    BrowserContext::GetGeolocationPermissionContext() {
-  if (!geolocation_permission_context_) {
-    geolocation_permission_context_ = new GeolocationPermissionContext();
-  }
-
-  return geolocation_permission_context_;
 }
 
 content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
@@ -448,6 +409,10 @@ content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
 }
 
 quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
+  return NULL;
+}
+
+content::PushMessagingService* BrowserContext::GetPushMessagingService() {
   return NULL;
 }
 
@@ -461,22 +426,13 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_handle_(io_data) {
-  CHECK(BrowserProcessMain::Exists()) <<
+  CHECK(BrowserProcessMain::IsRunning()) <<
       "The main browser process components must be started before " <<
       "creating a context";
 
   g_all_contexts.Get().push_back(this);
 
   content::BrowserContext::EnsureResourceContextInitialized(this);
-}
-
-void BrowserContext::OnUserAgentChanged() {
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOriginalContext()->observers_,
-                    NotifyUserAgentStringChanged());
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOffTheRecordContext()->observers_,
-                    NotifyUserAgentStringChanged());
 }
 
 void BrowserContext::OnPopupBlockerEnabledChanged() {
@@ -515,14 +471,14 @@ void BrowserContext::AssertNoContextsExist() {
 
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
     content::ProtocolHandlerMap* protocol_handlers,
-    content::ProtocolHandlerScopedVector protocol_interceptors) {
+    content::URLRequestInterceptorScopedVector request_interceptors) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   DCHECK(!main_request_context_getter_);
 
   main_request_context_getter_ =
       new MainURLRequestContextGetter(io_data(),
                                       protocol_handlers,
-                                      protocol_interceptors.Pass());
+                                      request_interceptors.Pass());
 
   return main_request_context_getter_;
 }
