@@ -179,8 +179,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) = 0;
 
-  virtual void RootScrollOffsetChanged() = 0;
-  virtual void RootLayerSizeChanged() = 0;
+  virtual void RootScrollOffsetXChanged() = 0;
+  virtual void RootScrollOffsetYChanged() = 0;
+  virtual void RootLayerWidthChanged() = 0;
+  virtual void RootLayerHeightChanged() = 0;
   virtual void ViewportSizeChanged() = 0;
 
   virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;

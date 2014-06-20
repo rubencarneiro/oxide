@@ -177,10 +177,12 @@ class WebView : public ScriptMessageTarget,
   WebView();
 
   const gfx::Vector2dF& GetRootScrollOffset() const;
-  virtual void RootScrollOffsetChanged();
+  virtual void RootScrollOffsetXChanged();
+  virtual void RootScrollOffsetYChanged();
 
   const gfx::SizeF& GetRootLayerSize() const;
-  virtual void RootLayerSizeChanged();
+  virtual void RootLayerWidthChanged();
+  virtual void RootLayerHeightChanged();
 
   const gfx::SizeF& GetViewportSize() const;
   virtual void ViewportSizeChanged();

@@ -288,17 +288,27 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
   emit q->geolocationPermissionRequested(request);
 }
 
-void OxideQQuickWebViewPrivate::RootScrollOffsetChanged() {
+void OxideQQuickWebViewPrivate::RootScrollOffsetXChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->contentXChanged();
+}
+
+void OxideQQuickWebViewPrivate::RootScrollOffsetYChanged() {
+  Q_Q(OxideQQuickWebView);
+
   emit q->contentYChanged();
 }
 
-void OxideQQuickWebViewPrivate::RootLayerSizeChanged() {
+void OxideQQuickWebViewPrivate::RootLayerWidthChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->contentWidthChanged();
+}
+
+void OxideQQuickWebViewPrivate::RootLayerHeightChanged() {
+  Q_Q(OxideQQuickWebView);
+
   emit q->contentHeightChanged();
 }
 

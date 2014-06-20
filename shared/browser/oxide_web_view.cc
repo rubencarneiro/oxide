@@ -949,13 +949,15 @@ const gfx::Vector2dF& WebView::GetRootScrollOffset() const {
   return frame_metadata_.root_scroll_offset;
 }
 
-void WebView::RootScrollOffsetChanged() {}
+void WebView::RootScrollOffsetXChanged() {}
+void WebView::RootScrollOffsetYChanged() {}
 
 const gfx::SizeF& WebView::GetRootLayerSize() const {
   return frame_metadata_.root_layer_size;
 }
 
-void WebView::RootLayerSizeChanged() {}
+void WebView::RootLayerWidthChanged() {}
+void WebView::RootLayerHeightChanged() {}
 
 const gfx::SizeF& WebView::GetViewportSize() const {
   return frame_metadata_.viewport_size;
@@ -969,11 +971,17 @@ void WebView::GotNewCompositorFrameMetadata(
   gfx::SizeF root_layer_size = frame_metadata_.root_layer_size;
   gfx::SizeF viewport_size = frame_metadata_.viewport_size;
   frame_metadata_ = metadata;
-  if (metadata.root_scroll_offset != root_scroll_offset) {
-    RootScrollOffsetChanged();
+  if (metadata.root_scroll_offset.x() != root_scroll_offset.x()) {
+    RootScrollOffsetXChanged();
   }
-  if (metadata.root_layer_size != root_layer_size) {
-    RootLayerSizeChanged();
+  if (metadata.root_scroll_offset.y() != root_scroll_offset.y()) {
+    RootScrollOffsetYChanged();
+  }
+  if (metadata.root_layer_size.width() != root_layer_size.width()) {
+    RootLayerWidthChanged();
+  }
+  if (metadata.root_layer_size.height() != root_layer_size.height()) {
+    RootLayerHeightChanged();
   }
   if (metadata.viewport_size != viewport_size) {
     ViewportSizeChanged();

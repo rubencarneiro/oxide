@@ -97,8 +97,10 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) Q_DECL_FINAL;
 
-  void RootScrollOffsetChanged() Q_DECL_FINAL;
-  void RootLayerSizeChanged() Q_DECL_FINAL;
+  void RootScrollOffsetXChanged() Q_DECL_FINAL;
+  void RootScrollOffsetYChanged() Q_DECL_FINAL;
+  void RootLayerWidthChanged() Q_DECL_FINAL;
+  void RootLayerHeightChanged() Q_DECL_FINAL;
   void ViewportSizeChanged() Q_DECL_FINAL;
 
   void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;

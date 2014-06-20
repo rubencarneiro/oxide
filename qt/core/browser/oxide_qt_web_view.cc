@@ -160,12 +160,20 @@ bool WebView::CanCreateWindows() const {
   return adapter_->CanCreateWindows();
 }
 
-void WebView::RootScrollOffsetChanged() {
-  adapter_->RootScrollOffsetChanged();
+void WebView::RootScrollOffsetXChanged() {
+  adapter_->RootScrollOffsetXChanged();
 }
 
-void WebView::RootLayerSizeChanged() {
-  adapter_->RootLayerSizeChanged();
+void WebView::RootScrollOffsetYChanged() {
+  adapter_->RootScrollOffsetYChanged();
+}
+
+void WebView::RootLayerWidthChanged() {
+  adapter_->RootLayerWidthChanged();
+}
+
+void WebView::RootLayerHeightChanged() {
+  adapter_->RootLayerHeightChanged();
 }
 
 void WebView::ViewportSizeChanged() {
