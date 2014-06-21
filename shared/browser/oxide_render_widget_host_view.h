@@ -220,7 +220,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   gfx::GLSurfaceHandle shared_surface_handle_;
 
+  // XXX: Move compositor_ to WebView (https://launchpad.net/bugs/1312081)
   scoped_ptr<Compositor> compositor_;
+
   scoped_refptr<cc::DelegatedFrameResourceCollection> resource_collection_;
   scoped_refptr<cc::DelegatedFrameProvider> frame_provider_;
   scoped_refptr<cc::DelegatedRendererLayer> layer_;
