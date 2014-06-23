@@ -945,6 +945,16 @@ bool WebView::CanCreateWindows() const {
   return false;
 }
 
+float WebView::GetDeviceScaleFactor() const {
+  return frame_metadata_.device_scale_factor;
+}
+
+float WebView::GetPageScaleFactor() const {
+  return frame_metadata_.page_scale_factor;
+}
+
+void WebView::PageScaleFactorChanged() {}
+
 const gfx::Vector2dF& WebView::GetRootScrollOffset() const {
   return frame_metadata_.root_scroll_offset;
 }
@@ -969,9 +979,13 @@ void WebView::ViewportHeightChanged() {}
 void WebView::GotNewCompositorFrameMetadata(
     const cc::CompositorFrameMetadata& metadata) {
   gfx::Vector2dF root_scroll_offset = frame_metadata_.root_scroll_offset;
+  float page_scale_factor = frame_metadata_.page_scale_factor;
   gfx::SizeF root_layer_size = frame_metadata_.root_layer_size;
   gfx::SizeF viewport_size = frame_metadata_.viewport_size;
   frame_metadata_ = metadata;
+  if (metadata.page_scale_factor != page_scale_factor) {
+    PageScaleFactorChanged();
+  }
   if (metadata.root_scroll_offset.x() != root_scroll_offset.x()) {
     RootScrollOffsetXChanged();
   }

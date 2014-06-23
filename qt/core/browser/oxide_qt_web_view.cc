@@ -160,6 +160,10 @@ bool WebView::CanCreateWindows() const {
   return adapter_->CanCreateWindows();
 }
 
+void WebView::PageScaleFactorChanged() {
+  adapter_->PageScaleFactorChanged();
+}
+
 void WebView::RootScrollOffsetXChanged() {
   adapter_->RootScrollOffsetXChanged();
 }

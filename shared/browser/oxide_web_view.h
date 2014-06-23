@@ -176,6 +176,10 @@ class WebView : public ScriptMessageTarget,
  protected:
   WebView();
 
+  float GetDeviceScaleFactor() const;
+  float GetPageScaleFactor() const;
+  virtual void PageScaleFactorChanged();
+
   const gfx::Vector2dF& GetRootScrollOffset() const;
   virtual void RootScrollOffsetXChanged();
   virtual void RootScrollOffsetYChanged();

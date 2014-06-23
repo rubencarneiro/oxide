@@ -109,6 +109,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void updateWebPreferences();
 
+  float deviceScaleFactor() const;
+  float pageScaleFactor() const;
   QPointF scrollOffset() const;
   QSizeF layerSize() const;
   QSizeF viewportSize() const;
@@ -179,6 +181,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) = 0;
 
+  virtual void PageScaleFactorChanged() = 0;
   virtual void RootScrollOffsetXChanged() = 0;
   virtual void RootScrollOffsetYChanged() = 0;
   virtual void RootLayerWidthChanged() = 0;

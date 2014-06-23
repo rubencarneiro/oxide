@@ -273,6 +273,14 @@ void WebViewAdapter::updateWebPreferences() {
   priv->UpdateWebPreferences();
 }
 
+float WebViewAdapter::deviceScaleFactor() const {
+  return priv->GetDeviceScaleFactor();
+}
+
+float WebViewAdapter::pageScaleFactor() const {
+  return priv->GetPageScaleFactor();
+}
+
 QPointF WebViewAdapter::scrollOffset() const {
   const gfx::Vector2dF& offset = priv->GetRootScrollOffset();
   return QPointF(offset.x(), offset.y());
