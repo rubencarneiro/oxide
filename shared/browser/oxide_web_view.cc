@@ -19,6 +19,7 @@
 
 #include <queue>
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
@@ -57,7 +58,6 @@
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
-#include "oxide_web_view_tracker.h"
 
 namespace oxide {
 
@@ -113,6 +113,27 @@ void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
   view->Init(&params);
 }
 
+typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
+base::LazyInstance<WebViewsPerContextMap> g_web_view_per_context;
+
+}
+
+// static
+std::set<WebView*>
+WebView::GetAllWebViewsFor(BrowserContext * browser_context) {
+  std::set<WebView*> webviews;
+  if (!browser_context) {
+    return webviews;
+  }
+  WebViewsPerContextMap::iterator it;
+  for (it = g_web_view_per_context.Get().begin();
+       it != g_web_view_per_context.Get().end();
+       ++it) {
+    if (browser_context->IsSameContext(it->first)) {
+      return it->second;
+    }
+  }
+  return webviews;
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -559,11 +580,22 @@ WebView::WebView()
     : web_contents_helper_(NULL),
       initial_preferences_(NULL),
       root_frame_(NULL),
-      is_fullscreen_(false) {}
+      is_fullscreen_(false) {
+}
 
 WebView::~WebView() {
-  if (GetBrowserContext()) {
-    WebViewTracker::GetInstance()->remove(GetBrowserContext(), this);
+  {
+    BrowserContext* context =
+      GetBrowserContext();
+    WebViewsPerContextMap::iterator it =
+        g_web_view_per_context.Get().find(context);
+    if (it != g_web_view_per_context.Get().end()) {
+      std::set<WebView*> wvl = it->second;
+      if (wvl.find(this) != wvl.end()) {
+	wvl.erase(this);
+	g_web_view_per_context.Get()[context] = wvl;
+      }
+    }
   }
   if (root_frame_) {
     root_frame_->Destroy();
@@ -638,8 +670,25 @@ void WebView::Init(Params* params) {
 
   SetIsFullscreen(is_fullscreen_);
 
-  if (GetBrowserContext()) {
-    WebViewTracker::GetInstance()->add(GetBrowserContext(), this);
+  {
+    BrowserContext* context =
+      GetBrowserContext();
+    LOG(INFO) << "WebView with no valid BrowserContext";
+    if (!context) {
+      LOG(WARNING) << "WebView with no valid BrowserContext";
+    }
+    else {
+      WebViewsPerContextMap::iterator it =
+        g_web_view_per_context.Get().find(context);
+      if (it != g_web_view_per_context.Get().end()) {
+	g_web_view_per_context.Get()[context].insert(this);
+      }
+      else {
+	std::set<WebView*> wvl;
+	wvl.insert(this);
+	g_web_view_per_context.Get()[context] = wvl;
+      }
+    }
   }
 }
 

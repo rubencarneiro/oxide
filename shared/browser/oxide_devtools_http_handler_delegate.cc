@@ -26,13 +26,13 @@
 #include "content/public/common/url_constants.h"
 #include "net/socket/tcp_listen_socket.h"
 #include "net/url_request/url_request_context_getter.h"
+#include "ui/base/resource/resource_bundle.h"
 
 #include "oxide_devtools_target.h"
 #include "oxide_io_thread.h"
 #include "oxide_web_view.h"
-#include "oxide_web_view_tracker.h"
 
-#include <sstream>
+#include "grit/oxide_resources.h"
 
 using content::DevToolsTarget;
 using content::RenderViewHost;
@@ -48,41 +48,25 @@ DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate(
     : ip_(ip),
       port_(port),
       browser_context_(attached_browser_context) {
-
-  LOG(INFO) << "Starting DevTools instance "
-	    << GetLocalDevToolsJsonUrl();
-
-  devtools_http_handler_ = content::DevToolsHttpHandler::Start(
-      new net::TCPListenSocketFactory(ip, port),
-      std::string(),
-      this,
-      base::FilePath());
+    LOG(INFO) << "DevTools instance running "
+	      << GetLocalDevToolsUrl();
 }
 
 DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {
-  devtools_http_handler_->Stop();
 }
 
 std::string DevtoolsHttpHandlerDelegate::GetDiscoveryPageHTML() {
-  std::string devtools_json_url =
-    GetLocalDevToolsJsonUrl();
-  std::ostringstream oss;
-  oss << "<html><head></head><body>Please use <a href=\""
-      << devtools_json_url
-      << "\">" << devtools_json_url << "</a>."
-      << " Then use the current hostname:port and append the 'devtoolsFrontendUrl' from list."
-      << "</body></html>";
-  return oss.str();
+  return ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
+    IDR_OXIDE_DEVTOOLS_DISCOVERY_HTML_PAGE).as_string();
 }
 
 std::string
-DevtoolsHttpHandlerDelegate::GetLocalDevToolsJsonUrl() const {
+DevtoolsHttpHandlerDelegate::GetLocalDevToolsUrl() const {
   std::ostringstream oss;
   oss << "http://"
       << ip_
       << ":"
-      << port_
-      << "/json/list";
+      << port_;
   return oss.str();
 }
 
@@ -109,20 +93,20 @@ DevtoolsHttpHandlerDelegate::CreateNewTarget(const GURL& url) {
 
 void DevtoolsHttpHandlerDelegate::EnumerateTargets(TargetCallback callback) {
   TargetList targetList;
-  WebViewTracker::WebViewList wvl =
-    WebViewTracker::GetInstance()->get(browser_context_);
+  std::set<WebView*> wvl =
+    WebView::GetAllWebViewsFor(browser_context_);
   if (!wvl.empty()) {
-    WebViewTracker::WebViewList::iterator it = wvl.begin();
+    std::set<WebView*>::iterator it = wvl.begin();
     for (; it != wvl.end(); ++it) {
       DCHECK(*it) << "Invalid WebView instance (NULL)";
 
-      RenderViewHost * render_view_host =
-	(*it)->GetWebContents()->GetRenderViewHost();
-      if (render_view_host) {
+      content::WebContents * web_contents =
+	(*it)->GetWebContents();
+      if (web_contents) {
 	// The receiver of the target list is the owner of the content
 	// See content/public/browser/devtools_http_handler_delegate.h
 	targetList.push_back(
-          DevtoolsTarget::CreateForRenderViewHost(render_view_host));
+          DevtoolsTarget::CreateForWebContents(web_contents));
       }
     }
   }

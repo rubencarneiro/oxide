@@ -23,23 +23,26 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "content/public/browser/devtools_target.h"
+#include "content/public/browser/web_contents_observer.h"
 
 namespace content {
-  class DevToolsTarget;
-  class DevToolsAgentHost;
-  class RenderViewHost;
-  class WebContents;
+class DevToolsTarget;
+class DevToolsAgentHost;
+class RenderViewHost;
+class WebContents;
 }
 
 namespace oxide {
 
 class DevtoolsTarget
-    : public content::DevToolsTarget {
+    : public content::DevToolsTarget,
+      public content::WebContentsObserver
+{
  public:
 
   virtual ~DevtoolsTarget();
 
-  static DevtoolsTarget * CreateForRenderViewHost(content::RenderViewHost *);
+  static DevtoolsTarget * CreateForWebContents(content::WebContents *);
 
   // DevToolsHttpProtocolHandler::Delegate overrides.
   virtual std::string GetId() const OVERRIDE;
@@ -56,15 +59,10 @@ class DevtoolsTarget
   virtual bool Close() const OVERRIDE;
 
  private:
-
-  content::WebContents* GetWebContents();
-  const content::WebContents* GetWebContents() const;
-  bool IsValidRenderViewHost(content::RenderViewHost * rvh) const;
+  DevtoolsTarget(content::WebContents * web_contents);
 
   scoped_refptr<content::DevToolsAgentHost> agent_host_;
-  content::RenderViewHost* rvh_;
 
-  DevtoolsTarget(content::RenderViewHost * rvh);
   DISALLOW_COPY_AND_ASSIGN(DevtoolsTarget);
 };
 

@@ -35,50 +35,21 @@ using content::WebContents;
 namespace oxide {
 
 // static 
-DevtoolsTarget* DevtoolsTarget::CreateForRenderViewHost(
-    content::RenderViewHost * rvh) {
-  if (rvh) {
-    return new DevtoolsTarget(rvh);
-  }
-  return 0;
+DevtoolsTarget* DevtoolsTarget::CreateForWebContents(
+    content::WebContents * web_contents) {
+  DCHECK(web_contents);
+  return new DevtoolsTarget(web_contents);
 }
 
 DevtoolsTarget::DevtoolsTarget(
-    content::RenderViewHost * rvh) : rvh_(rvh) {
+      content::WebContents * wc)
+    : content::WebContentsObserver(wc) {
+  DCHECK(wc);
 
-  content::WebContents* web_contents = GetWebContents();
-  if (web_contents) {
-    agent_host_ =
-      DevToolsAgentHost::GetOrCreateFor(web_contents);
-  }
+  agent_host_ = DevToolsAgentHost::GetOrCreateFor(web_contents());
 }
 
 DevtoolsTarget::~DevtoolsTarget() {
-}
-
-bool DevtoolsTarget::IsValidRenderViewHost(
-    content::RenderViewHost * rvh) const {
-  if (!rvh) {
-    return NULL;
-  }
-  std::vector<content::RenderViewHost*> rvhs =
-    DevToolsAgentHost::GetValidRenderViewHosts();
-  return std::find(rvhs.begin(),
-		   rvhs.end(),
-		   rvh) != rvhs.end();
-}
-
-content::WebContents* DevtoolsTarget::GetWebContents() {
-  return IsValidRenderViewHost(rvh_) ?
-    WebContents::FromRenderViewHost(rvh_)
-    : NULL;
-}
-
-const content::WebContents*
-DevtoolsTarget::GetWebContents() const {
-  return IsValidRenderViewHost(rvh_) ?
-    WebContents::FromRenderViewHost(rvh_)
-    : NULL;
 }
 
 std::string DevtoolsTarget::GetId() const {
@@ -94,12 +65,12 @@ std::string DevtoolsTarget::GetType() const {
 }
 
 std::string DevtoolsTarget::GetTitle() const {
-  const content::WebContents* web_contents = GetWebContents();
-  if (!web_contents) {
+  const content::WebContents* wc = web_contents();
+  if (!wc) {
     return std::string();
   }
 
-  return base::UTF16ToUTF8(web_contents->GetTitle());
+  return base::UTF16ToUTF8(wc->GetTitle());
 }
 
 std::string DevtoolsTarget::GetDescription() const {
@@ -107,12 +78,12 @@ std::string DevtoolsTarget::GetDescription() const {
 }
 
 GURL DevtoolsTarget::GetURL() const {
-  const content::WebContents* web_contents = GetWebContents();
-  if (!web_contents) {
+  const content::WebContents* wc = web_contents();
+  if (!wc) {
     return GURL();
   }
 
-  return web_contents->GetVisibleURL();
+  return wc->GetVisibleURL();
 }
 
 GURL DevtoolsTarget::GetFaviconURL() const {
@@ -120,12 +91,12 @@ GURL DevtoolsTarget::GetFaviconURL() const {
 }
 
 base::TimeTicks DevtoolsTarget::GetLastActivityTime() const {
-  const content::WebContents* web_contents = GetWebContents();
-  if (!web_contents) {
+  const content::WebContents* wc = web_contents();
+  if (!wc) {
     return base::TimeTicks();
   }
 
-  return web_contents->GetLastActiveTime();
+  return wc->GetLastActiveTime();
 }
 
 bool DevtoolsTarget::IsAttached() const {
@@ -137,17 +108,12 @@ scoped_refptr<DevToolsAgentHost> DevtoolsTarget::GetAgentHost() const {
 }
 
 bool DevtoolsTarget::Activate() const {
-  if (!rvh_) {
+  content::WebContents* wc = web_contents();
+  if (!wc) {
     return false;
   }
 
-  content::WebContents* web_contents =
-    WebContents::FromRenderViewHost(rvh_);
-  if (!web_contents) {
-    return false;
-  }
-
-  web_contents->GetDelegate()->ActivateContents(web_contents);
+  wc->GetDelegate()->ActivateContents(wc);
   return true;
 }
 

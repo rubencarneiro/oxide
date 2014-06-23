@@ -62,7 +62,6 @@
 #include "oxide_off_the_record_browser_context_impl.h"
 #include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
-#include "oxide_web_view_tracker.h"
 
 namespace oxide {
 
@@ -493,8 +492,6 @@ BrowserContext::~BrowserContext() {
       break;
     }
   }
-
-  WebViewTracker::GetInstance()->remove(this);
 }
 
 // static
@@ -570,14 +567,6 @@ bool BrowserContext::IsPopupBlockerEnabled() const {
 
 content::ResourceContext* BrowserContext::GetResourceContext() {
   return io_data()->GetResourceContext();
-}
-
-bool BrowserContext::GetDevtoolsEnabled() const {
-  return false;
-}
-
-int BrowserContext::GetDevtoolsPort() const {
-  return 0;
 }
 
 } // namespace oxide

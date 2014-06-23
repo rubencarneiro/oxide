@@ -38,6 +38,10 @@
 #include "../oxide_qt_user_script_adapter.h"
 #include "../oxide_qt_user_script_adapter_p.h"
 
+namespace {
+const unsigned kDefaultDevtoolsPort = 8484;
+}
+
 namespace oxide {
 namespace qt {
 
@@ -46,7 +50,7 @@ WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
     session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
     popup_blocker_enabled(true),
     devtools_enabled(false),
-    devtools_port(0) {}
+    devtools_port(kDefaultDevtoolsPort) {}
 
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::Create(

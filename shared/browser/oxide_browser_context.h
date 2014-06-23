@@ -188,9 +188,9 @@ class BrowserContext : public content::BrowserContext,
   bool IsPopupBlockerEnabled() const;
   virtual void SetIsPopupBlockerEnabled(bool enabled) = 0;
 
-  virtual bool GetDevtoolsEnabled() const;
+  virtual bool GetDevtoolsEnabled() const = 0;
 
-  virtual int GetDevtoolsPort() const;
+  virtual int GetDevtoolsPort() const = 0;
 
   BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 

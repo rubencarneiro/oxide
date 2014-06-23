@@ -103,11 +103,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   OxideQWebPreferences* preferences();
   void setPreferences(OxideQWebPreferences* prefs);
 
-  bool enableDevtools() const;
-  void setEnableDevtools(bool enabled);
-  int devtoolsPort() const;
-  void setDevtoolsPort(int port);
-
   void setRequest(OxideQNewViewRequest* request);
 
   void updateWebPreferences();
@@ -118,16 +113,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  private:
   friend class WebView;
 
-  struct DevtoolsPreferences {
-    DevtoolsPreferences() :
-        enableDevtools(false),
-        devtoolsPort(0) {}
-
-    bool enableDevtools;
-
-    unsigned devtoolsPort;
-  };
-
   struct ConstructProperties {
     ConstructProperties() :
         incognito(false),
@@ -135,7 +120,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
     bool incognito;
     WebContextAdapter* context;
-    DevtoolsPreferences devtoolsPrefs;
   };
 
   void Initialized();

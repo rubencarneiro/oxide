@@ -25,8 +25,8 @@
 #include "content/public/browser/devtools_http_handler_delegate.h"
 
 namespace content {
-  class DevToolsTarget;
-  class DevToolsHttpHandler;
+class DevToolsTarget;
+class DevToolsHttpHandler;
 }
 
 namespace oxide {
@@ -57,7 +57,7 @@ class DevtoolsHttpHandlerDelegate
 
  private:
 
-  std::string GetLocalDevToolsJsonUrl() const;
+  std::string GetLocalDevToolsUrl() const;
 
   std::string ip_;
   unsigned port_;

@@ -20,12 +20,15 @@
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/devtools_http_handler.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/user_agent.h"
+#include "net/socket/tcp_listen_socket.h"
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
+
 
 #include "oxide_devtools_http_handler_delegate.h"
 #include "oxide_off_the_record_browser_context_impl.h"
@@ -130,10 +133,14 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params) :
   if (params.devtools_enabled &&
       params.devtools_port < 65535 &&
       params.devtools_port > 1024) {
-    devtools_http_handler_delegate_ =
-      scoped_ptr<DevtoolsHttpHandlerDelegate>(
+    std::string ip = kDevtoolsServerIp;
+    unsigned port = params.devtools_port;
+    devtools_http_handler_ = content::DevToolsHttpHandler::Start(
+        new net::TCPListenSocketFactory(ip, port),
+        std::string(),
         new DevtoolsHttpHandlerDelegate(
-          kDevtoolsServerIp, params.devtools_port, this));
+          ip, port, this),
+        base::FilePath());
   }
 }
 
@@ -143,6 +150,7 @@ BrowserContextImpl::~BrowserContextImpl() {
   CHECK(!otr_context_ || otr_context_->HasOneRef()) <<
       "Unexpected reference count for OTR BrowserContext. Did you use "
       "scoped_refptr instead of ScopedBrowserContext?";
+  devtools_http_handler_->Stop();
 }
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {

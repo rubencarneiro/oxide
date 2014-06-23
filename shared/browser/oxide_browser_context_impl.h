@@ -27,9 +27,12 @@
 #include "oxide_browser_context.h"
 #include "oxide_user_script_master.h"
 
+namespace content {
+class DevToolsHttpHandler;
+}
+
 namespace oxide {
 
-class DevtoolsHttpHandlerDelegate;
 class OffTheRecordBrowserContextImpl;
 
 class BrowserContextIODataImpl FINAL : public BrowserContextIOData {
@@ -100,7 +103,7 @@ class BrowserContextImpl FINAL : public BrowserContext {
   std::string product_;
   bool default_user_agent_string_;
   UserScriptMaster user_script_manager_;
-  scoped_ptr<DevtoolsHttpHandlerDelegate> devtools_http_handler_delegate_;
+  content::DevToolsHttpHandler* devtools_http_handler_;
   bool devtools_enabled_;
   int devtools_port_;
 
