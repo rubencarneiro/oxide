@@ -110,7 +110,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
 
 void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     uint32 surface_id,
-    ScopedVector<CompositorFrameHandle>* returned_frames) {
+    ScopedVector<CompositorFrameHandle> returned_frames) {
   if (!impl().output) {
     return;
   }
@@ -120,7 +120,7 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
   }
 
   std::vector<CompositorFrameHandle*> handles;
-  returned_frames->release(&handles);
+  returned_frames.swap(handles);
 
   while (!handles.empty()) {
     scoped_ptr<CompositorFrameHandle> frame(handles.back());
@@ -212,15 +212,11 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
 void CompositorThreadProxy::DidSwapCompositorFrame(
     uint32 surface_id,
     ScopedVector<CompositorFrameHandle> returned_frames) {
-  ScopedVector<CompositorFrameHandle>* handles =
-      new ScopedVector<CompositorFrameHandle>();
-  returned_frames.swap(*handles);
-
   impl_message_loop_->PostTask(
       FROM_HERE,
       base::Bind(
         &CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread,
-        this, surface_id, base::Owned(handles)));
+        this, surface_id, base::Passed(&returned_frames)));
 }
 
 void CompositorThreadProxy::ReclaimResourcesForFrame(

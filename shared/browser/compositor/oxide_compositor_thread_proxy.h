@@ -112,7 +112,7 @@ class CompositorThreadProxy FINAL : public CompositorThreadProxyBase {
                                           const cc::SharedBitmapId& bitmap_id);
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
       uint32 surface_id,
-      ScopedVector<CompositorFrameHandle>* returned_frames);
+      ScopedVector<CompositorFrameHandle> returned_frames);
   void SendReclaimResourcesToOutputSurfaceOnImplThread(
       uint32 surface_id,
       cc::CompositorFrameAck* ack);
