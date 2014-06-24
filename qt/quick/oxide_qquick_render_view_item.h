@@ -21,6 +21,7 @@
 #include <QQuickItem>
 #include <QCursor>
 #include <QRect>
+#include <QSharedPointer>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
@@ -101,7 +102,7 @@ class RenderViewItem Q_DECL_FINAL :
 
   bool received_new_compositor_frame_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
-  oxide::qt::CompositorFrameHandle* compositor_frame_handle_;
+  QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
 
   Q_DISABLE_COPY(RenderViewItem);
 };

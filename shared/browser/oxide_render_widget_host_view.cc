@@ -419,15 +419,14 @@ void RenderWidgetHostView::CompositorDidCommit() {
   RunAckCallbacks();
 }
 
-void RenderWidgetHostView::CompositorSwapFrame(
-    uint32 surface_id,
-    scoped_ptr<CompositorFrameHandle> frame) {
+void RenderWidgetHostView::CompositorSwapFrame(uint32 surface_id,
+                                               CompositorFrameHandle* frame) {
   received_surface_ids_.push(surface_id);
 
   if (current_compositor_frame_) {
-    previous_compositor_frames_.push_back(current_compositor_frame_.release());
+    previous_compositor_frames_.push_back(current_compositor_frame_);
   }
-  current_compositor_frame_ = frame.Pass();
+  current_compositor_frame_ = frame;
 
   OnCompositorSwapFrame();
 }
@@ -605,7 +604,7 @@ RenderWidgetHostView::~RenderWidgetHostView() {
 }
 
 CompositorFrameHandle* RenderWidgetHostView::GetCompositorFrameHandle() {
-  return current_compositor_frame_.get();
+  return current_compositor_frame_;
 }
 
 void RenderWidgetHostView::DidCommitCompositorFrame() {
@@ -616,7 +615,7 @@ void RenderWidgetHostView::DidCommitCompositorFrame() {
     received_surface_ids_.pop();
 
     compositor_->DidSwapCompositorFrame(surface_id,
-                                        previous_compositor_frames_.Pass());
+                                        previous_compositor_frames_);
   }
 }
 

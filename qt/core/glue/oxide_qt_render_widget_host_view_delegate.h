@@ -20,7 +20,7 @@
 
 #include <QImage>
 #include <QRect>
-#include <QScopedPointer>
+#include <QSharedPointer>
 #include <QSize>
 #include <Qt>
 #include <QtGlobal>
@@ -112,7 +112,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleTouchEvent(QTouchEvent* event);
   void HandleGeometryChanged();
 
-  CompositorFrameHandle* GetCompositorFrameHandle();
+  QSharedPointer<CompositorFrameHandle> GetCompositorFrameHandle();
 
   void DidComposite();
 
@@ -122,7 +122,7 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   friend class RenderWidgetHostView;
 
   RenderWidgetHostView* rwhv_;
-  QScopedPointer<CompositorFrameHandle> compositor_frame_;
+  QSharedPointer<CompositorFrameHandle> compositor_frame_;
 };
 
 } // namespace qt

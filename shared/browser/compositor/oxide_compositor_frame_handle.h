@@ -63,13 +63,13 @@ class SoftwareFrameData {
   uint8* pixels_;
 };
 
-class CompositorFrameHandle FINAL {
+class CompositorFrameHandle FINAL :
+    public base::RefCounted<CompositorFrameHandle> {
  public:
   CompositorFrameHandle(uint32 surface_id,
                         scoped_refptr<CompositorThreadProxy> proxy,
                         const gfx::Size& size,
                         float scale);
-  ~CompositorFrameHandle();
 
   const gfx::Size& size_in_pixels() const { return size_in_pixels_; }
   float device_scale() const { return device_scale_; }
@@ -79,6 +79,9 @@ class CompositorFrameHandle FINAL {
 
  private:
   friend class CompositorThreadProxy;
+  friend class base::RefCounted<CompositorFrameHandle>;
+
+  ~CompositorFrameHandle();
 
   uint32 surface_id_;
   scoped_refptr<CompositorThreadProxy> proxy_;

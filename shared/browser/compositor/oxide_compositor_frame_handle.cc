@@ -37,6 +37,12 @@ SoftwareFrameData::SoftwareFrameData(unsigned id,
 
 SoftwareFrameData::~SoftwareFrameData() {}
 
+CompositorFrameHandle::~CompositorFrameHandle() {
+  if (proxy_ && (software_frame_data_ || gl_frame_data_)) {
+    proxy_->ReclaimResourcesForFrame(this);
+  }
+}
+
 CompositorFrameHandle::CompositorFrameHandle(
     uint32 surface_id,
     scoped_refptr<CompositorThreadProxy> proxy,
@@ -46,11 +52,5 @@ CompositorFrameHandle::CompositorFrameHandle(
       proxy_(proxy),
       size_in_pixels_(size),
       device_scale_(scale) {}
-
-CompositorFrameHandle::~CompositorFrameHandle() {
-  if (proxy_ && (software_frame_data_ || gl_frame_data_)) {
-    proxy_->ReclaimResourcesForFrame(this);
-  }
-}
 
 } // namespace oxide

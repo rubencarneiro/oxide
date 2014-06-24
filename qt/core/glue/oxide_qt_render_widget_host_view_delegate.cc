@@ -20,6 +20,7 @@
 #include <QImage>
 
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "ui/gfx/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
@@ -74,7 +75,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
   }
 
  private:
-  oxide::CompositorFrameHandle* frame_;
+  scoped_refptr<oxide::CompositorFrameHandle> frame_;
   QSize size_;
 };
 
@@ -111,14 +112,14 @@ void RenderWidgetHostViewDelegate::HandleGeometryChanged() {
   rwhv_->HandleGeometryChanged();
 }
 
-CompositorFrameHandle*
+QSharedPointer<CompositorFrameHandle>
 RenderWidgetHostViewDelegate::GetCompositorFrameHandle() {
   if (!compositor_frame_) {
     compositor_frame_.reset(
         new CompositorFrameHandleImpl(rwhv_->GetCompositorFrameHandle()));
   }
 
-  return compositor_frame_.data();
+  return compositor_frame_;
 }
 
 void RenderWidgetHostViewDelegate::DidComposite() {

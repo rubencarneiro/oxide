@@ -20,6 +20,7 @@
 
 #include <QScopedPointer>
 #include <QSGSimpleTextureNode>
+#include <QSharedPointer>
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
@@ -28,6 +29,11 @@ class QSGTexture;
 QT_END_NAMESPACE
 
 namespace oxide {
+
+namespace qt {
+class CompositorFrameHandle;
+}
+
 namespace qquick {
 
 class RenderViewItem;
@@ -36,11 +42,13 @@ class SoftwareFrameNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  public:
   SoftwareFrameNode(RenderViewItem* item);
 
+  void updateNode(QSharedPointer<oxide::qt::CompositorFrameHandle> handle);
   void setImage(const QImage& image);
 
  private:
   RenderViewItem* item_;
 
+  QSharedPointer<oxide::qt::CompositorFrameHandle> handle_;
   QScopedPointer<QSGTexture> texture_;
 };
 

@@ -47,12 +47,12 @@ Compositor::Compositor(CompositorClient* client, bool software)
 
 void Compositor::SendSwapCompositorFrameToClient(
     uint32 surface_id,
-    scoped_ptr<CompositorFrameHandle> frame) {
+    CompositorFrameHandle* frame) {
   DCHECK(CalledOnValidThread());
   // XXX: What if we are hidden?
   // XXX: Should we check that surface_id matches the last created
   //  surface?
-  client_->CompositorSwapFrame(surface_id, frame.Pass());
+  client_->CompositorSwapFrame(surface_id, frame);
 }
 
 void Compositor::LockCompositor() {
@@ -208,11 +208,10 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   }
 }
 
-void Compositor::DidSwapCompositorFrame(
-    uint32 surface_id,
-    ScopedVector<CompositorFrameHandle> returned_frames) {
+void Compositor::DidSwapCompositorFrame(uint32 surface_id,
+                                        FrameHandleVector& returned_frames) {
   DCHECK(CalledOnValidThread());
-  proxy_->DidSwapCompositorFrame(surface_id, returned_frames.Pass());
+  proxy_->DidSwapCompositorFrame(surface_id, returned_frames);
 }
 
 } // namespace oxide

@@ -19,6 +19,7 @@
 #define _OXIDE_QQUICK_ACCELERATED_FRAME_NODE_H_
 
 #include <QScopedPointer>
+#include <QSharedPointer>
 #include <QSGSimpleTextureNode>
 #include <QtGlobal>
 
@@ -28,6 +29,11 @@ class QSize;
 QT_END_NAMESPACE
 
 namespace oxide {
+
+namespace qt{
+class CompositorFrameHandle;
+}
+
 namespace qquick {
 
 class RenderViewItem;
@@ -37,12 +43,12 @@ class AcceleratedFrameNode Q_DECL_FINAL : public QSGSimpleTextureNode {
   AcceleratedFrameNode(RenderViewItem* item);
   ~AcceleratedFrameNode();
 
-  void updateTexture(unsigned int texture_id,
-                     const QSize& size);
+  void updateNode(QSharedPointer<oxide::qt::CompositorFrameHandle> handle);
 
  private:
   RenderViewItem* item_;
 
+  QSharedPointer<oxide::qt::CompositorFrameHandle> handle_;
   QScopedPointer<QSGTexture> texture_;
 };
 
