@@ -122,9 +122,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void UpdateCursor(const content::WebCursor& cursor) FINAL;
   void SetIsLoading(bool is_loading) FINAL;
 
-  virtual void TextInputTypeChanged(ui::TextInputType type,
-                                    ui::TextInputMode mode,
-                                    bool can_compose_inline) OVERRIDE;
+  virtual void TextInputStateChanged(
+      const ViewHostMsg_TextInputState_Params& params) OVERRIDE;
+
   virtual void ImeCancelComposition() OVERRIDE;
 
   void RenderProcessGone(base::TerminationStatus status, int error_code) FINAL;

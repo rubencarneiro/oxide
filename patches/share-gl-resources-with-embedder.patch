@@ -52,7 +52,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
    DCHECK(router_);
    DCHECK(io_message_loop);
    DCHECK(shutdown_event);
-@@ -122,16 +124,18 @@ void GpuChannelManager::OnEstablishChann
+@@ -124,16 +126,18 @@ void GpuChannelManager::OnEstablishChann
    IPC::ChannelHandle channel_handle;
  
    gfx::GLShareGroup* share_group = NULL;
@@ -74,7 +74,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
-@@ -54,17 +54,18 @@ class SyncPointManager;
+@@ -55,17 +55,18 @@ class SyncPointManager;
  // managing the lifetimes of GPU channels and forwarding IPC requests from the
  // browser process to them based on the corresponding renderer ID.
  class GpuChannelManager : public IPC::Listener,
@@ -94,7 +94,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    // Listener overrides.
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
-@@ -90,16 +91,18 @@ class GpuChannelManager : public IPC::Li
+@@ -91,16 +92,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
      return &gpu_devtools_events_dispatcher_;
    }
@@ -331,11 +331,11 @@ diff --git a/content/gpu/in_process_gpu_thread.cc b/content/gpu/in_process_gpu_t
  }
  
  void InProcessGpuThread::CleanUp() {
+   SetThreadWasQuitProperly(true);
    delete gpu_process_;
  }
  
  base::Thread* CreateInProcessGpuThread(const std::string& channel_id) {
-   return new InProcessGpuThread(channel_id);
 diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_thread.h
 --- a/content/gpu/in_process_gpu_thread.h
 +++ b/content/gpu/in_process_gpu_thread.h
@@ -384,7 +384,7 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -314,9 +314,13 @@ net::CookieStore* ContentBrowserClient::
+@@ -342,9 +342,13 @@ const wchar_t* ContentBrowserClient::Get
  #if defined(VIDEO_HOLE)
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
@@ -401,7 +401,7 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -44,16 +44,17 @@ class DictionaryValue;
+@@ -45,16 +45,17 @@ class DictionaryValue;
  class FilePath;
  }
  
@@ -419,8 +419,8 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -638,13 +639,15 @@ class CONTENT_EXPORT ContentBrowserClien
-       int render_process_id);
+@@ -670,13 +671,15 @@ class CONTENT_EXPORT ContentBrowserClien
+ #endif
  
  #if defined(VIDEO_HOLE)
    // Allows an embedder to provide its own ExternalVideoSurfaceContainer

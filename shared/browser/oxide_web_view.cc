@@ -19,6 +19,7 @@
 
 #include <queue>
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
@@ -44,6 +45,7 @@
 #include "net/base/net_errors.h"
 #include "ui/base/window_open_disposition.h"
 #include "url/gurl.h"
+#include "url/url_constants.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
@@ -112,6 +114,27 @@ void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
   view->Init(&params);
 }
 
+typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
+base::LazyInstance<WebViewsPerContextMap> g_web_view_per_context;
+
+}
+
+// static
+std::set<WebView*>
+WebView::GetAllWebViewsFor(BrowserContext * browser_context) {
+  std::set<WebView*> webviews;
+  if (!browser_context) {
+    return webviews;
+  }
+  WebViewsPerContextMap::iterator it;
+  for (it = g_web_view_per_context.Get().begin();
+       it != g_web_view_per_context.Get().end();
+       ++it) {
+    if (browser_context->IsSameContext(it->first)) {
+      return it->second;
+    }
+  }
+  return webviews;
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -558,9 +581,25 @@ WebView::WebView()
     : web_contents_helper_(NULL),
       initial_preferences_(NULL),
       root_frame_(NULL),
-      is_fullscreen_(false) {}
+      is_fullscreen_(false) {
+}
 
 WebView::~WebView() {
+  BrowserContext* context =
+    GetBrowserContext();
+  WebViewsPerContextMap::iterator it =
+    g_web_view_per_context.Get().find(context);
+  if (it != g_web_view_per_context.Get().end()) {
+    std::set<WebView*>& wvl = it->second;
+    if (wvl.find(this) != wvl.end()) {
+      wvl.erase(this);
+      g_web_view_per_context.Get()[context] = wvl;
+    }
+    if (g_web_view_per_context.Get()[context].empty()) {
+      g_web_view_per_context.Get().erase(context);
+    }
+  }
+
   if (root_frame_) {
     root_frame_->Destroy();
   }
@@ -631,7 +670,22 @@ void WebView::Init(Params* params) {
     SetURL(initial_url_);
     initial_url_ = GURL();
   }
+
   SetIsFullscreen(is_fullscreen_);
+
+  {
+    BrowserContext* context =
+      GetBrowserContext()->GetOriginalContext();
+    WebViewsPerContextMap::iterator it =
+      g_web_view_per_context.Get().find(context);
+    if (it != g_web_view_per_context.Get().end()) {
+      g_web_view_per_context.Get()[context].insert(this);
+    } else {
+      std::set<WebView*> wvl;
+      wvl.insert(this);
+      g_web_view_per_context.Get()[context] = wvl;
+    }
+  }
 }
 
 // static
@@ -683,7 +737,7 @@ void WebView::LoadData(const std::string& encodedData,
   content::NavigationController::LoadURLParams params((GURL(url)));
   params.load_type = content::NavigationController::LOAD_TYPE_DATA;
   params.base_url_for_data_url = baseUrl;
-  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(content::kAboutBlankURL) : baseUrl;
+  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
   web_contents_->GetController().LoadURLWithParams(params);
 }
@@ -898,7 +952,7 @@ void WebView::HidePopupMenu() {
 }
 
 void WebView::RequestGeolocationPermission(
-    const PermissionRequest::ID& id,
+    int id,
     const GURL& origin,
     const base::Callback<void(bool)>& callback) {
   scoped_ptr<GeolocationPermissionRequest> request(
@@ -908,8 +962,7 @@ void WebView::RequestGeolocationPermission(
   OnRequestGeolocationPermission(request.Pass());
 }
 
-void WebView::CancelGeolocationPermissionRequest(
-    const PermissionRequest::ID& id) {
+void WebView::CancelGeolocationPermissionRequest(int id) {
   geolocation_permission_requests_.CancelPendingRequestWithID(id);
 }
 
@@ -943,6 +996,67 @@ void WebView::FrameRemoved(WebFrame* frame) {}
 
 bool WebView::CanCreateWindows() const {
   return false;
+}
+
+float WebView::GetDeviceScaleFactor() const {
+  return frame_metadata_.device_scale_factor;
+}
+
+float WebView::GetPageScaleFactor() const {
+  return frame_metadata_.page_scale_factor;
+}
+
+void WebView::PageScaleFactorChanged() {}
+
+const gfx::Vector2dF& WebView::GetRootScrollOffset() const {
+  return frame_metadata_.root_scroll_offset;
+}
+
+void WebView::RootScrollOffsetXChanged() {}
+void WebView::RootScrollOffsetYChanged() {}
+
+const gfx::SizeF& WebView::GetRootLayerSize() const {
+  return frame_metadata_.root_layer_size;
+}
+
+void WebView::RootLayerWidthChanged() {}
+void WebView::RootLayerHeightChanged() {}
+
+const gfx::SizeF& WebView::GetViewportSize() const {
+  return frame_metadata_.viewport_size;
+}
+
+void WebView::ViewportWidthChanged() {}
+void WebView::ViewportHeightChanged() {}
+
+void WebView::GotNewCompositorFrameMetadata(
+    const cc::CompositorFrameMetadata& metadata) {
+  gfx::Vector2dF root_scroll_offset = frame_metadata_.root_scroll_offset;
+  float page_scale_factor = frame_metadata_.page_scale_factor;
+  gfx::SizeF root_layer_size = frame_metadata_.root_layer_size;
+  gfx::SizeF viewport_size = frame_metadata_.viewport_size;
+  frame_metadata_ = metadata;
+  if (metadata.page_scale_factor != page_scale_factor) {
+    PageScaleFactorChanged();
+  }
+  if (metadata.root_scroll_offset.x() != root_scroll_offset.x()) {
+    RootScrollOffsetXChanged();
+  }
+  if (metadata.root_scroll_offset.y() != root_scroll_offset.y()) {
+    RootScrollOffsetYChanged();
+  }
+  if (metadata.root_layer_size.width() != root_layer_size.width()) {
+    RootLayerWidthChanged();
+  }
+  if (metadata.root_layer_size.height() != root_layer_size.height()) {
+    RootLayerHeightChanged();
+  }
+  if (metadata.viewport_size.width() != viewport_size.width()) {
+    ViewportWidthChanged();
+  }
+  if (metadata.viewport_size.height() != viewport_size.height()) {
+    ViewportHeightChanged();
+  }
 }
 
 } // namespace oxide

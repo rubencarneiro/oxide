@@ -34,6 +34,7 @@
 #include "content/common/view_messages.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
@@ -48,6 +49,7 @@
 
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
+#include "oxide_web_view.h"
 
 namespace content {
 void RenderWidgetHostViewBase::GetDefaultScreenInfo(
@@ -187,6 +189,10 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     layer_->SetNeedsDisplayRect(damage_rect_dip);
   }
 
+  content::RenderViewHost* rvh = content::RenderViewHost::From(host());
+  WebView* webview = WebView::FromRenderViewHost(rvh);
+  webview->GotNewCompositorFrameMetadata(frame->metadata);
+
   if (!compositor_->IsActive()) {
     RunAckCallbacks();
   }
@@ -228,9 +234,8 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
   }
 }
 
-void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
-                                                ui::TextInputMode mode,
-                                                bool can_compose_inline) {}
+void RenderWidgetHostView::TextInputStateChanged(
+    const ViewHostMsg_TextInputState_Params& params) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {}
 

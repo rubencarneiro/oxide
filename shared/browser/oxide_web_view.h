@@ -20,12 +20,14 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/linked_ptr.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
@@ -94,6 +96,9 @@ class WebView : public ScriptMessageTarget,
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
 
+  static std::set<WebView*> GetAllWebViewsFor(
+      BrowserContext * browser_context);
+
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
 
@@ -147,11 +152,10 @@ class WebView : public ScriptMessageTarget,
   void HidePopupMenu();
 
   void RequestGeolocationPermission(
-      const PermissionRequest::ID& id,
+      int id,
       const GURL& origin,
       const base::Callback<void(bool)>& callback);
-  void CancelGeolocationPermissionRequest(
-      const PermissionRequest::ID& id);
+  void CancelGeolocationPermissionRequest(int id);
 
   void UpdateWebPreferences();
 
@@ -170,8 +174,27 @@ class WebView : public ScriptMessageTarget,
 
   virtual bool CanCreateWindows() const;
 
+  void GotNewCompositorFrameMetadata(
+      const cc::CompositorFrameMetadata& metadata);
+
  protected:
   WebView();
+
+  float GetDeviceScaleFactor() const;
+  float GetPageScaleFactor() const;
+  virtual void PageScaleFactorChanged();
+
+  const gfx::Vector2dF& GetRootScrollOffset() const;
+  virtual void RootScrollOffsetXChanged();
+  virtual void RootScrollOffsetYChanged();
+
+  const gfx::SizeF& GetRootLayerSize() const;
+  virtual void RootLayerWidthChanged();
+  virtual void RootLayerHeightChanged();
+
+  const gfx::SizeF& GetViewportSize() const;
+  virtual void ViewportWidthChanged();
+  virtual void ViewportHeightChanged();
 
  private:
   void DispatchLoadFailed(const GURL& validated_url,
@@ -324,6 +347,8 @@ class WebView : public ScriptMessageTarget,
   base::WeakPtr<FilePicker> active_file_picker_;
 
   PermissionRequestManager geolocation_permission_requests_;
+
+  cc::CompositorFrameMetadata frame_metadata_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

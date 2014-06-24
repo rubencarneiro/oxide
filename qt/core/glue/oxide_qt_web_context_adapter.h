@@ -105,6 +105,12 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   bool popupBlockerEnabled() const;
   void setPopupBlockerEnabled(bool enabled);
 
+  bool devtoolsEnabled() const;
+  void setDevtoolsEnabled(bool enabled);
+
+  int devtoolsPort() const;
+  void setDevtoolsPort(int port);
+
  protected:
   WebContextAdapter(QObject* q,
                     IOThreadDelegate* io_delegate,
