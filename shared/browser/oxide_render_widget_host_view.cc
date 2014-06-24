@@ -48,6 +48,7 @@
 
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
+#include "oxide_renderer_frame_evictor.h"
 
 namespace content {
 void RenderWidgetHostViewBase::GetDefaultScreenInfo(
@@ -185,6 +186,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     layer_->SetContentsOpaque(true);
     layer_->SetBounds(frame_size_dip);
     layer_->SetNeedsDisplayRect(damage_rect_dip);
+  }
+
+  if (frame_is_evicted_) {
+    frame_is_evicted_ = false;
+    RendererFrameEvictor::GetInstance()->AddFrame(this, !host_->is_hidden());
   }
 
   if (!compositor_->IsActive()) {
@@ -426,6 +432,12 @@ void RenderWidgetHostView::CompositorSwapFrame(
   OnCompositorSwapFrame();
 }
 
+void RenderWidgetHostView::EvictCurrentFrame() {
+  frame_is_evicted_ = true;
+  DestroyDelegatedContent();
+  // TODO: Evict front buffer
+}
+
 void RenderWidgetHostView::DestroyDelegatedContent() {
   compositor_->SetRootLayer(scoped_refptr<cc::Layer>());
   frame_provider_ = NULL;
@@ -515,6 +527,7 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
     resource_collection_(new cc::DelegatedFrameResourceCollection()),
     last_output_surface_id_(0),
+    frame_is_evicted_(true),
     selection_cursor_position_(0),
     selection_anchor_position_(0),
     is_loading_(false),
@@ -527,11 +540,17 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
 }
 
 void RenderWidgetHostView::WasShown() {
+  if (host_->is_hidden() && !frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->LockFrame(this);
+  }
   compositor_->SetVisibility(true);
   host()->WasShown();
 }
 
 void RenderWidgetHostView::WasHidden() {
+  if (!host_->is_hidden() && !frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
+  }
   host()->WasHidden();
   RunAckCallbacks();
   compositor_->SetVisibility(false);

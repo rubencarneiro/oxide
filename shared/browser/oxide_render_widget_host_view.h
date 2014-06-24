@@ -38,6 +38,7 @@
 #include "ui/gfx/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/oxide_renderer_frame_evictor_client.h"
 
 namespace cc {
 class DelegatedFrameProvider;
@@ -63,6 +64,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
                              public ui::GestureConsumer,
                              public CompositorClient,
+                             public RendererFrameEvictorClient,
                              public cc::DelegatedFrameResourceCollectionClient,
                              public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
@@ -202,6 +204,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void CompositorSwapFrame(uint32 surface_id,
                            scoped_ptr<CompositorFrameHandle> frame) FINAL;
 
+  // RendererFrameEvictorClient implemenetation
+  void EvictCurrentFrame() FINAL;
+
   // ===================
 
   void DestroyDelegatedContent();
@@ -237,6 +242,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   scoped_ptr<CompositorFrameHandle> current_compositor_frame_;
   ScopedVector<CompositorFrameHandle> previous_compositor_frames_;
   std::queue<uint32> received_surface_ids_;
+
+  bool frame_is_evicted_;
 
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;
