@@ -263,7 +263,6 @@ QSGNode* RenderViewItem::updatePaintNode(
   }
 
   if (frame_evicted_) {
-    printf("Frame evicted (%p)\n", static_cast<void *>(this));
     delete oldNode;
     return NULL;
   }
