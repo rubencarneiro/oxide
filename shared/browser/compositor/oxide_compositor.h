@@ -45,6 +45,8 @@ class CompositorThreadProxy;
 class Compositor FINAL : public cc::LayerTreeHostClient,
                          public base::NonThreadSafe  {
  public:
+  typedef std::vector<scoped_refptr<CompositorFrameHandle> > FrameHandleVector;
+
   static scoped_ptr<Compositor> Create(CompositorClient* client, bool software);
   ~Compositor();
 
@@ -55,9 +57,8 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
   void SetViewportSize(const gfx::Size& bounds);
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
 
-  void DidSwapCompositorFrame(
-      uint32 surface_id,
-      ScopedVector<CompositorFrameHandle> returned_frames);
+  void DidSwapCompositorFrame(uint32 surface_id,
+                              FrameHandleVector& returned_frames);
 
  private:
   friend class CompositorLock;
@@ -65,9 +66,8 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
 
   Compositor(CompositorClient* client, bool software);
 
-  void SendSwapCompositorFrameToClient(
-      uint32 surface_id,
-      scoped_ptr<CompositorFrameHandle> frame);
+  void SendSwapCompositorFrameToClient(uint32 surface_id,
+                                       CompositorFrameHandle* frame);
 
   void LockCompositor();
   void UnlockCompositor();

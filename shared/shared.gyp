@@ -270,6 +270,8 @@
         'browser/oxide_permission_request.cc',
         'browser/oxide_permission_request.h',
         'browser/oxide_power_save_blocker.cc',
+        'browser/oxide_renderer_frame_evictor.cc',
+        'browser/oxide_renderer_frame_evictor.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
         'browser/oxide_render_widget_host_view_factory.cc',

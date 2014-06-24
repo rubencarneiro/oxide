@@ -30,9 +30,8 @@ class CompositorClient {
 
   virtual void CompositorDidCommit() = 0;
 
-  virtual void CompositorSwapFrame(
-      uint32 surface_id,
-      scoped_ptr<CompositorFrameHandle> frame) = 0;
+  virtual void CompositorSwapFrame(uint32 surface_id,
+                                   CompositorFrameHandle* frame) = 0;
 };
 
 } // namespace oxide

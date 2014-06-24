@@ -18,11 +18,12 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_THREAD_PROXY_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_THREAD_PROXY_H_
 
+#include <vector>
+
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/memory/scoped_vector.h"
 #include "base/threading/thread_checker.h"
 #include "cc/resources/shared_bitmap.h"
 
@@ -90,7 +91,7 @@ class CompositorThreadProxy FINAL : public CompositorThreadProxyBase {
   void SwapCompositorFrame(cc::CompositorFrame* frame);
   void DidSwapCompositorFrame(
       uint32 surface_id,
-      ScopedVector<CompositorFrameHandle> returned_frames);
+      std::vector<scoped_refptr<CompositorFrameHandle> >& returned_frames);
   void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
 
  private:
@@ -98,7 +99,7 @@ class CompositorThreadProxy FINAL : public CompositorThreadProxyBase {
 
   void DidSwapCompositorFrame(
       uint32 surface_id,
-      scoped_ptr<CompositorFrameHandle> frame);
+      scoped_refptr<CompositorFrameHandle>& frame);
 
   void SendSwapGLFrameOnOwnerThread(uint32 surface_id,
                                     const gfx::Size& size,
@@ -112,7 +113,7 @@ class CompositorThreadProxy FINAL : public CompositorThreadProxyBase {
                                           const cc::SharedBitmapId& bitmap_id);
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
       uint32 surface_id,
-      ScopedVector<CompositorFrameHandle> returned_frames);
+      std::vector<scoped_refptr<CompositorFrameHandle> > returned_frames);
   void SendReclaimResourcesToOutputSurfaceOnImplThread(
       uint32 surface_id,
       cc::CompositorFrameAck* ack);

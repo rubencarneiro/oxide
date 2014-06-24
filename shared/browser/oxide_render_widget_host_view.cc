@@ -49,6 +49,7 @@
 
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
+#include "oxide_renderer_frame_evictor.h"
 #include "oxide_web_view.h"
 
 namespace content {
@@ -188,6 +189,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     layer_->SetNeedsDisplayRect(damage_rect_dip);
   }
 
+  if (frame_is_evicted_) {
+    frame_is_evicted_ = false;
+    RendererFrameEvictor::GetInstance()->AddFrame(this, !host_->is_hidden());
+  }
+
   content::RenderViewHost* rvh = content::RenderViewHost::From(host());
   WebView* webview = WebView::FromRenderViewHost(rvh);
   webview->GotNewCompositorFrameMetadata(frame->metadata);
@@ -212,6 +218,8 @@ void RenderWidgetHostView::MovePluginWindows(
     const std::vector<content::WebPluginGeometry>& moves) {}
 
 void RenderWidgetHostView::Blur() {}
+
+void RenderWidgetHostView::OnEvictCurrentFrame() {}
 
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
   last_cursor_ = cursor;
@@ -417,17 +425,24 @@ void RenderWidgetHostView::CompositorDidCommit() {
   RunAckCallbacks();
 }
 
-void RenderWidgetHostView::CompositorSwapFrame(
-    uint32 surface_id,
-    scoped_ptr<CompositorFrameHandle> frame) {
+void RenderWidgetHostView::CompositorSwapFrame(uint32 surface_id,
+                                               CompositorFrameHandle* frame) {
   received_surface_ids_.push(surface_id);
 
   if (current_compositor_frame_) {
-    previous_compositor_frames_.push_back(current_compositor_frame_.release());
+    previous_compositor_frames_.push_back(current_compositor_frame_);
   }
-  current_compositor_frame_ = frame.Pass();
+  current_compositor_frame_ = frame;
 
   OnCompositorSwapFrame();
+}
+
+void RenderWidgetHostView::EvictCurrentFrame() {
+  frame_is_evicted_ = true;
+  DestroyDelegatedContent();
+  current_compositor_frame_ = NULL;
+
+  OnEvictCurrentFrame();
 }
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
@@ -519,6 +534,7 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
     resource_collection_(new cc::DelegatedFrameResourceCollection()),
     last_output_surface_id_(0),
+    frame_is_evicted_(true),
     selection_cursor_position_(0),
     selection_anchor_position_(0),
     is_loading_(false),
@@ -531,11 +547,17 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
 }
 
 void RenderWidgetHostView::WasShown() {
+  if (host_->is_hidden() && !frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->LockFrame(this);
+  }
   compositor_->SetVisibility(true);
   host()->WasShown();
 }
 
 void RenderWidgetHostView::WasHidden() {
+  if (!host_->is_hidden() && !frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
+  }
   host()->WasHidden();
   RunAckCallbacks();
   compositor_->SetVisibility(false);
@@ -590,7 +612,7 @@ RenderWidgetHostView::~RenderWidgetHostView() {
 }
 
 CompositorFrameHandle* RenderWidgetHostView::GetCompositorFrameHandle() {
-  return current_compositor_frame_.get();
+  return current_compositor_frame_;
 }
 
 void RenderWidgetHostView::DidCommitCompositorFrame() {
@@ -601,7 +623,7 @@ void RenderWidgetHostView::DidCommitCompositorFrame() {
     received_surface_ids_.pop();
 
     compositor_->DidSwapCompositorFrame(surface_id,
-                                        previous_compositor_frames_.Pass());
+                                        previous_compositor_frames_);
   }
 }
 
