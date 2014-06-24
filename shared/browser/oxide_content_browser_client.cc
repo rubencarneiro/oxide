@@ -34,7 +34,6 @@
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
-#include "ui/gfx/ozone/surface_factory_ozone.h"
 #include "ui/gfx/screen.h"
 #include "ui/gfx/screen_type_delegate.h"
 #include "ui/gl/gl_context.h"

@@ -116,22 +116,20 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
-@@ -17,18 +17,22 @@
- #include "gpu/config/gpu_info_collector.h"
- #include "ipc/ipc_channel_handle.h"
- #include "ipc/ipc_sync_message_filter.h"
- #include "ui/gl/gl_implementation.h"
+@@ -25,16 +25,21 @@
+ #endif
  
  namespace content {
  namespace {
  
-+static base::LazyInstance<base::ThreadLocalPointer<GpuChildThread> > g_lazy_tls =
-+    LAZY_INSTANCE_INITIALIZER;
  static base::LazyInstance<scoped_refptr<ThreadSafeSender> >
      g_thread_safe_sender = LAZY_INSTANCE_INITIALIZER;
+ 
++static base::LazyInstance<base::ThreadLocalPointer<GpuChildThread> >
++    g_lazy_tls = LAZY_INSTANCE_INITIALIZER;
 +static base::LazyInstance<scoped_refptr<base::MessageLoopProxy> >
 +    g_thread_safe_message_loop = LAZY_INSTANCE_INITIALIZER;
- 
++
  bool GpuProcessLogMessageHandler(int severity,
                                   const char* file, int line,
                                   size_t message_start,
@@ -139,7 +137,8 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string header = str.substr(0, message_start);
    std::string message = str.substr(message_start);
  
-@@ -50,38 +54,53 @@ GpuChildThread::GpuChildThread(GpuWatchd
+   g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
+@@ -55,38 +60,53 @@ GpuChildThread::GpuChildThread(GpuWatchd
        in_browser_process_(false) {
    watchdog_thread_ = watchdog_thread;
  #if defined(OS_WIN)
@@ -195,7 +194,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -146,17 +165,18 @@ void GpuChildThread::OnInitialize() {
+@@ -158,17 +178,18 @@ void GpuChildThread::OnInitialize() {
  
    // Defer creation of the render thread. This is to prevent it from handling
    // IPC messages before the sandbox has been enabled and all other necessary
@@ -207,12 +206,12 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 -                            ChildProcess::current()->GetShutDownEvent()));
 +                            ChildProcess::current()->GetShutDownEvent(),
 +                            share_group_.get()));
- }
  
- void GpuChildThread::StopWatchdog() {
-   if (watchdog_thread_.get()) {
-     watchdog_thread_->Stop();
-   }
+ #if defined(USE_OZONE)
+   ui::OzonePlatform::GetInstance()
+       ->GetGpuPlatformSupport()
+       ->OnChannelEstablished(this);
+ #endif
  }
  
 diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
@@ -384,7 +383,7 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -342,9 +342,13 @@ const wchar_t* ContentBrowserClient::Get
+@@ -344,9 +344,13 @@ const wchar_t* ContentBrowserClient::Get
  #if defined(VIDEO_HOLE)
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
@@ -419,7 +418,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -670,13 +671,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -662,13 +663,15 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)
