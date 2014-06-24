@@ -18,7 +18,6 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
-#include <QMetaMethod>
 #include <QScopedPointer>
 #include <QtGlobal>
 #include <QUrl>
@@ -97,6 +96,14 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) Q_DECL_FINAL;
+
+  void PageScaleFactorChanged() Q_DECL_FINAL;
+  void RootScrollOffsetXChanged() Q_DECL_FINAL;
+  void RootScrollOffsetYChanged() Q_DECL_FINAL;
+  void RootLayerWidthChanged() Q_DECL_FINAL;
+  void RootLayerHeightChanged() Q_DECL_FINAL;
+  void ViewportWidthChanged() Q_DECL_FINAL;
+  void ViewportHeightChanged() Q_DECL_FINAL;
 
   void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
 

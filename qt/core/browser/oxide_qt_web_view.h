@@ -67,6 +67,14 @@ class WebView FINAL : public oxide::WebView,
 
   bool CanCreateWindows() const FINAL;
 
+  void PageScaleFactorChanged() FINAL;
+  void RootScrollOffsetXChanged() FINAL;
+  void RootScrollOffsetYChanged() FINAL;
+  void RootLayerWidthChanged() FINAL;
+  void RootLayerHeightChanged() FINAL;
+  void ViewportWidthChanged() FINAL;
+  void ViewportHeightChanged() FINAL;
+
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
   void OnIconChanged(const GURL& icon) FINAL;

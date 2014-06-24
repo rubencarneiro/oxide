@@ -33,6 +33,7 @@
 #include "content/common/view_messages.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
@@ -40,6 +41,7 @@
 
 #include "oxide_default_screen_info.h"
 #include "oxide_gpu_utils.h"
+#include "oxide_web_view.h"
 
 namespace content {
 void RenderWidgetHostViewBase::GetDefaultScreenInfo(
@@ -131,6 +133,10 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
         base::Bind(&RenderWidgetHostView::SendSwapCompositorFrameAck,
                    AsWeakPtr(), output_surface_id);
   }
+
+  content::RenderViewHost* rvh = content::RenderViewHost::From(host());
+  WebView* webview = WebView::FromRenderViewHost(rvh);
+  webview->GotNewCompositorFrameMetadata(frame->metadata);
 
   if (IsUsingSoftwareCompositing()) {
     DCHECK(!pending_accelerated_frame_ &&

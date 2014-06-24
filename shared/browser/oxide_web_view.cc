@@ -998,4 +998,65 @@ bool WebView::CanCreateWindows() const {
   return false;
 }
 
+float WebView::GetDeviceScaleFactor() const {
+  return frame_metadata_.device_scale_factor;
+}
+
+float WebView::GetPageScaleFactor() const {
+  return frame_metadata_.page_scale_factor;
+}
+
+void WebView::PageScaleFactorChanged() {}
+
+const gfx::Vector2dF& WebView::GetRootScrollOffset() const {
+  return frame_metadata_.root_scroll_offset;
+}
+
+void WebView::RootScrollOffsetXChanged() {}
+void WebView::RootScrollOffsetYChanged() {}
+
+const gfx::SizeF& WebView::GetRootLayerSize() const {
+  return frame_metadata_.root_layer_size;
+}
+
+void WebView::RootLayerWidthChanged() {}
+void WebView::RootLayerHeightChanged() {}
+
+const gfx::SizeF& WebView::GetViewportSize() const {
+  return frame_metadata_.viewport_size;
+}
+
+void WebView::ViewportWidthChanged() {}
+void WebView::ViewportHeightChanged() {}
+
+void WebView::GotNewCompositorFrameMetadata(
+    const cc::CompositorFrameMetadata& metadata) {
+  gfx::Vector2dF root_scroll_offset = frame_metadata_.root_scroll_offset;
+  float page_scale_factor = frame_metadata_.page_scale_factor;
+  gfx::SizeF root_layer_size = frame_metadata_.root_layer_size;
+  gfx::SizeF viewport_size = frame_metadata_.viewport_size;
+  frame_metadata_ = metadata;
+  if (metadata.page_scale_factor != page_scale_factor) {
+    PageScaleFactorChanged();
+  }
+  if (metadata.root_scroll_offset.x() != root_scroll_offset.x()) {
+    RootScrollOffsetXChanged();
+  }
+  if (metadata.root_scroll_offset.y() != root_scroll_offset.y()) {
+    RootScrollOffsetYChanged();
+  }
+  if (metadata.root_layer_size.width() != root_layer_size.width()) {
+    RootLayerWidthChanged();
+  }
+  if (metadata.root_layer_size.height() != root_layer_size.height()) {
+    RootLayerHeightChanged();
+  }
+  if (metadata.viewport_size.width() != viewport_size.width()) {
+    ViewportWidthChanged();
+  }
+  if (metadata.viewport_size.height() != viewport_size.height()) {
+    ViewportHeightChanged();
+  }
+}
+
 } // namespace oxide
