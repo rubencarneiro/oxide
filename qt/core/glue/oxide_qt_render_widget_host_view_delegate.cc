@@ -17,29 +17,69 @@
 
 #include "oxide_qt_render_widget_host_view_delegate.h"
 
+#include <QImage>
+
+#include "base/logging.h"
 #include "ui/gfx/size.h"
 
-#include "shared/browser/oxide_gpu_utils.h"
+#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 
 namespace oxide {
 namespace qt {
 
-unsigned int AcceleratedFrameTextureHandle::GetID() {
-  if (!handle_) {
-    return 0;
+class CompositorFrameHandleImpl : public CompositorFrameHandle {
+ public:
+  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
+      : frame_(frame) {
+    if (frame_) {
+      size_ = QSize(frame_->size_in_pixels().width(),
+                    frame_->size_in_pixels().height());
+    }
   }
 
-  return handle_->GetTextureID();
-}
+  virtual ~CompositorFrameHandleImpl() {}
 
-bool AcceleratedFrameTextureHandle::IsValid() {
-  return handle_ != NULL;
-}
+  CompositorFrameHandle::Type GetType() Q_DECL_FINAL {
+    if (!frame_) {
+      return CompositorFrameHandle::TYPE_INVALID;
+    }
+    if (frame_->gl_frame_data()) {
+      return CompositorFrameHandle::TYPE_ACCELERATED;
+    }
+    if (frame_->software_frame_data()) {
+      return CompositorFrameHandle::TYPE_SOFTWARE;
+    }
+
+    NOTREACHED();
+    return CompositorFrameHandle::TYPE_INVALID;
+  }
+
+  const QSize& GetSize() const Q_DECL_FINAL {
+    return size_;
+  }
+
+  QImage GetSoftwareFrame() Q_DECL_FINAL {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
+    return QImage(
+        static_cast<uchar *>(frame_->software_frame_data()->pixels()),
+        frame_->size_in_pixels().width(),
+        frame_->size_in_pixels().height(),
+        QImage::Format_ARGB32);
+  }
+
+  AcceleratedFrameData GetAcceleratedFrame() Q_DECL_FINAL {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
+    return AcceleratedFrameData(frame_->gl_frame_data()->texture_id());
+  }
+
+ private:
+  oxide::CompositorFrameHandle* frame_;
+  QSize size_;
+};
 
 RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate() :
-    rwhv_(NULL),
-    compositor_frame_type_(COMPOSITOR_FRAME_TYPE_INVALID) {}
+    rwhv_(NULL) {}
 
 void RenderWidgetHostViewDelegate::HandleFocusEvent(QFocusEvent* event) {
   rwhv_->HandleFocusEvent(event);
@@ -71,30 +111,14 @@ void RenderWidgetHostViewDelegate::HandleGeometryChanged() {
   rwhv_->HandleGeometryChanged();
 }
 
-CompositorFrameType
-RenderWidgetHostViewDelegate::GetCompositorFrameType() const {
-  return compositor_frame_type_;
-}
+CompositorFrameHandle*
+RenderWidgetHostViewDelegate::GetCompositorFrameHandle() {
+  if (!compositor_frame_) {
+    compositor_frame_.reset(
+        new CompositorFrameHandleImpl(rwhv_->GetCompositorFrameHandle()));
+  }
 
-QImage RenderWidgetHostViewDelegate::GetSoftwareFrameImage() {
-  DCHECK_EQ(compositor_frame_type_, COMPOSITOR_FRAME_TYPE_SOFTWARE);
-  oxide::SoftwareFrameHandle* handle = rwhv_->GetCurrentSoftwareFrameHandle();
-
-  return QImage(static_cast<uchar *>(handle->GetPixels()),
-                handle->size_in_pixels().width(),
-                handle->size_in_pixels().height(),
-                QImage::Format_ARGB32);
-}
-
-AcceleratedFrameTextureHandle
-RenderWidgetHostViewDelegate::GetAcceleratedFrameTextureHandle() {
-  DCHECK_EQ(compositor_frame_type_, COMPOSITOR_FRAME_TYPE_ACCELERATED);
-  oxide::AcceleratedFrameHandle* handle = rwhv_->GetCurrentAcceleratedFrameHandle();
-
-  return AcceleratedFrameTextureHandle(
-      handle,
-      QSize(handle->size_in_pixels().width(),
-            handle->size_in_pixels().height()));
+  return compositor_frame_.data();
 }
 
 void RenderWidgetHostViewDelegate::DidComposite() {
@@ -108,11 +132,8 @@ QVariant RenderWidgetHostViewDelegate::InputMethodQuery(
 
 RenderWidgetHostViewDelegate::~RenderWidgetHostViewDelegate() {}
 
-void RenderWidgetHostViewDelegate::SetCompositorFrameType(
-    CompositorFrameType type) {
-  DCHECK(compositor_frame_type_ == COMPOSITOR_FRAME_TYPE_INVALID ||
-         compositor_frame_type_ == type);
-  compositor_frame_type_ = type;
+void RenderWidgetHostViewDelegate::ScheduleUpdate() {
+  compositor_frame_.reset();
 }
 
 } // namespace qt

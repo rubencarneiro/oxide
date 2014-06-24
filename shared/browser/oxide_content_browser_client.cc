@@ -26,6 +26,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "content/browser/gpu/compositor_util.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
@@ -41,6 +42,7 @@
 #include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
 
+#include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
@@ -52,7 +54,6 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
 #include "oxide_form_factor.h"
-#include "oxide_gpu_utils.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
 #include "oxide_script_message_dispatcher_browser.h"
@@ -165,7 +166,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   void PreMainMessageLoopRun() FINAL {
-    GpuUtils::Initialize();
+    CompositorUtils::GetInstance()->Initialize();
     net::NetModule::SetResourceProvider(NetResourceProvider);
   }
 
@@ -175,7 +176,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   void PostMainMessageLoopRun() FINAL {
-    GpuUtils::instance()->Destroy();
+    CompositorUtils::GetInstance()->Destroy();
   }
 
   void PostDestroyThreads() FINAL {
@@ -265,6 +266,13 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
         content::RenderProcessHost::FromID(child_process_id);
     if (host->GetBrowserContext()->IsOffTheRecord()) {
       command_line->AppendSwitch(switches::kIncognito);
+    }
+
+    if (content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() &&
+        (!BrowserProcessMain::instance()->GetSharedGLContext() ||
+         BrowserProcessMain::instance()->GetSharedGLContext()->GetImplementation() !=
+             gfx::GetGLImplementation())) {
+      command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
   }
 }
