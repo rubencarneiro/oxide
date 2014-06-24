@@ -881,6 +881,10 @@ void RenderWidgetHostView::OnCompositorSwapFrame() {
   delegate_->ScheduleUpdate();
 }
 
+void RenderWidgetHostView::OnEvictCurrentFrame() {
+  delegate_->EvictCurrentFrame();
+}
+
 void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {
   content::WebCursor::CursorInfo cursor_info;
 

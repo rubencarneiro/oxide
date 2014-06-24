@@ -218,6 +218,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void ForwardGestureEventToRenderer(ui::GestureEvent* event);
 
   virtual void OnCompositorSwapFrame() = 0;
+  virtual void OnEvictCurrentFrame();
 
   virtual void OnUpdateCursor(const content::WebCursor& cursor);
 

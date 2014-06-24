@@ -41,15 +41,8 @@ class UpdatePaintNodeContext {
  public:
   UpdatePaintNodeContext(RenderViewItem* item)
       : type(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
-        item_(item) {
-    if (item_->received_new_compositor_frame_) {
-      type = item_->compositor_frame_handle_ ?
-          item_->compositor_frame_handle_->GetType() :
-          oxide::qt::CompositorFrameHandle::TYPE_INVALID;
-    } else {
-      type = item_->last_composited_frame_type_;
-    }
-  }
+        item_(item) {}
+
   virtual ~UpdatePaintNodeContext() {
     item_->DidUpdatePaintNode(type);
   }
@@ -84,7 +77,7 @@ void RenderViewItem::DidUpdatePaintNode(oxide::qt::CompositorFrameHandle::Type t
 }
 
 RenderViewItem::RenderViewItem() :
-    QQuickItem(),
+    frame_evicted_(false),
     received_new_compositor_frame_(false),
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {
   setFlags(QQuickItem::ItemHasContents |
@@ -159,12 +152,20 @@ void RenderViewItem::SetInputMethodEnabled(bool enabled) {
 }
 
 void RenderViewItem::ScheduleUpdate() {
+  frame_evicted_ = false;
   received_new_compositor_frame_ = true;
-
-  oxide::qt::RenderWidgetHostViewDelegate::ScheduleUpdate();
 
   update();
   polish();
+}
+
+void RenderViewItem::EvictCurrentFrame() {
+  frame_evicted_ = true;
+  received_new_compositor_frame_ = false;
+
+  Q_ASSERT(!compositor_frame_handle_);
+
+  update();
 }
 
 void RenderViewItem::focusInEvent(QFocusEvent* event) {
@@ -247,9 +248,24 @@ QSGNode* RenderViewItem::updatePaintNode(
 
   UpdatePaintNodeContext context(this);
 
+  if (received_new_compositor_frame_) {
+    Q_ASSERT(compositor_frame_handle_);
+    Q_ASSERT(!frame_evicted_);
+    context.type = compositor_frame_handle_->GetType();
+  } else if (!frame_evicted_) {
+    Q_ASSERT(!compositor_frame_handle_);
+    context.type = last_composited_frame_type_;
+  }
+
   if (context.type != last_composited_frame_type_) {
     delete oldNode;
     oldNode = NULL;
+  }
+
+  if (frame_evicted_) {
+    printf("Frame evicted (%p)\n", static_cast<void *>(this));
+    delete oldNode;
+    return NULL;
   }
 
 #if defined(ENABLE_COMPOSITING)

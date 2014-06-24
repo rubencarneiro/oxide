@@ -99,7 +99,9 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
-  virtual void ScheduleUpdate();
+  virtual void ScheduleUpdate() = 0;
+
+  virtual void EvictCurrentFrame() = 0;
 
  protected:
   RenderWidgetHostViewDelegate();
@@ -122,7 +124,6 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   friend class RenderWidgetHostView;
 
   RenderWidgetHostView* rwhv_;
-  QSharedPointer<CompositorFrameHandle> compositor_frame_;
 };
 
 } // namespace qt

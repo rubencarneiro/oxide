@@ -114,12 +114,9 @@ void RenderWidgetHostViewDelegate::HandleGeometryChanged() {
 
 QSharedPointer<CompositorFrameHandle>
 RenderWidgetHostViewDelegate::GetCompositorFrameHandle() {
-  if (!compositor_frame_) {
-    compositor_frame_.reset(
-        new CompositorFrameHandleImpl(rwhv_->GetCompositorFrameHandle()));
-  }
-
-  return compositor_frame_;
+  QSharedPointer<CompositorFrameHandle> handle(
+      new CompositorFrameHandleImpl(rwhv_->GetCompositorFrameHandle()));
+  return handle;
 }
 
 void RenderWidgetHostViewDelegate::DidComposite() {
@@ -132,10 +129,6 @@ QVariant RenderWidgetHostViewDelegate::InputMethodQuery(
 }
 
 RenderWidgetHostViewDelegate::~RenderWidgetHostViewDelegate() {}
-
-void RenderWidgetHostViewDelegate::ScheduleUpdate() {
-  compositor_frame_.reset();
-}
 
 } // namespace qt
 } // namespace oxide

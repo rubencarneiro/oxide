@@ -214,6 +214,8 @@ void RenderWidgetHostView::MovePluginWindows(
 
 void RenderWidgetHostView::Blur() {}
 
+void RenderWidgetHostView::OnEvictCurrentFrame() {}
+
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
   last_cursor_ = cursor;
   if (!is_loading_) {
@@ -434,7 +436,9 @@ void RenderWidgetHostView::CompositorSwapFrame(uint32 surface_id,
 void RenderWidgetHostView::EvictCurrentFrame() {
   frame_is_evicted_ = true;
   DestroyDelegatedContent();
-  // TODO: Evict front buffer
+  current_compositor_frame_ = NULL;
+
+  OnEvictCurrentFrame();
 }
 
 void RenderWidgetHostView::DestroyDelegatedContent() {

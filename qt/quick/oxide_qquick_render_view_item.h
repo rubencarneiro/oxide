@@ -64,6 +64,8 @@ class RenderViewItem Q_DECL_FINAL :
 
   void ScheduleUpdate() Q_DECL_FINAL;
 
+  void EvictCurrentFrame() Q_DECL_FINAL;
+
   void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
   void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
 
@@ -101,6 +103,7 @@ class RenderViewItem Q_DECL_FINAL :
   void DidUpdatePaintNode(oxide::qt::CompositorFrameHandle::Type type);
 
   bool received_new_compositor_frame_;
+  bool frame_evicted_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
   QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
 
