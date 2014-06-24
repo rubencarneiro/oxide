@@ -39,8 +39,6 @@ RendererFrameEvictor::RendererFrameEvictor()
     max_number_of_saved_frames_ =
         std::min(5, 2 + (base::SysInfo::AmountOfPhysicalMemoryMB() / 256));
   }
-  printf("Maximum number of saved frames: %lu\n", max_number_of_saved_frames_);
-  printf("Maximum number of handles: %lu\n", max_number_of_handles_);
 }
 
 void RendererFrameEvictor::CullUnlockedFrames() {
@@ -51,7 +49,6 @@ void RendererFrameEvictor::CullUnlockedFrames() {
   content::HostSharedBitmapManager* bitmap_manager =
       content::HostSharedBitmapManager::current();
 
-  printf("Number of unlocked frames before cull: %lu\n", unlocked_frames_.size());
   while (!unlocked_frames_.empty() &&
          ((unlocked_frames_.size() + locked_frames_.size()) >
             max_number_of_saved_frames_ ||
@@ -59,7 +56,6 @@ void RendererFrameEvictor::CullUnlockedFrames() {
     unlocked_frames_.front()->EvictCurrentFrame();
     unlocked_frames_.pop_front();
   }
-  printf("Number of unlocked frames after cull: %lu\n", unlocked_frames_.size());
 }
 
 // static
