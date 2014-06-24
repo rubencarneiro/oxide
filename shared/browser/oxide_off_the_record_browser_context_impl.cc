@@ -112,4 +112,13 @@ UserScriptMaster& OffTheRecordBrowserContextImpl::UserScriptManager() {
   return original_context_->UserScriptManager();
 }
 
+bool OffTheRecordBrowserContextImpl::GetDevtoolsEnabled() const {
+  return original_context_->GetDevtoolsEnabled();
+}
+
+int OffTheRecordBrowserContextImpl::GetDevtoolsPort() const {
+  return original_context_->GetDevtoolsPort();
+}
+
+
 } // namespace oxide

@@ -680,4 +680,40 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
   }
 }
 
+bool OxideQQuickWebContext::devtoolsEnabled() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->devtoolsEnabled();
+}
+
+void OxideQQuickWebContext::setDevtoolsEnabled(bool enabled) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->devtoolsEnabled() == enabled) {
+    return;
+  }
+
+  d->setDevtoolsEnabled(enabled);
+
+  emit devtoolsEnabledChanged();
+}
+
+int OxideQQuickWebContext::devtoolsPort() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->devtoolsPort();
+}
+
+void OxideQQuickWebContext::setDevtoolsPort(int port) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->devtoolsPort() == port) {
+    return;
+  }
+
+  d->setDevtoolsPort(port);
+
+  emit devtoolsPortChanged();
+}
+
 #include "moc_oxideqquickwebcontext_p.cpp"

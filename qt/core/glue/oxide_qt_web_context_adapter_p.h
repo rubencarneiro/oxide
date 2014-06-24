@@ -69,6 +69,8 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
     net::StaticCookiePolicy::Type cookie_policy;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
     bool popup_blocker_enabled;
+    bool devtools_enabled;
+    int devtools_port;
   };
 
   static WebContextAdapterPrivate* Create(

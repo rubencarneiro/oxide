@@ -20,14 +20,24 @@
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/devtools_http_handler.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/user_agent.h"
+#include "net/socket/tcp_listen_socket.h"
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
 
+
+#include "oxide_devtools_http_handler_delegate.h"
 #include "oxide_off_the_record_browser_context_impl.h"
+
+namespace {
+
+const std::string kDevtoolsServerIp = "127.0.0.1";
+
+}
 
 namespace oxide {
 
@@ -39,7 +49,8 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     accept_langs_("en-us,en"),
     cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode_(params.session_cookie_mode),
-    popup_blocker_enabled_(true) {}
+    popup_blocker_enabled_(true) {
+}
 
 net::StaticCookiePolicy::Type BrowserContextIODataImpl::GetCookiePolicy() const {
   base::AutoLock lock(lock_);
@@ -118,6 +129,19 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params) :
     default_user_agent_string_(true),
     user_script_manager_(this) {
   SetUserAgent(std::string());
+
+  if (params.devtools_enabled &&
+      params.devtools_port < 65535 &&
+      params.devtools_port > 1024) {
+    std::string ip = kDevtoolsServerIp;
+    unsigned port = params.devtools_port;
+    devtools_http_handler_ = content::DevToolsHttpHandler::Start(
+        new net::TCPListenSocketFactory(ip, port),
+        std::string(),
+        new DevtoolsHttpHandlerDelegate(
+          ip, port, this),
+        base::FilePath());
+  }
 }
 
 BrowserContextImpl::~BrowserContextImpl() {
@@ -126,6 +150,7 @@ BrowserContextImpl::~BrowserContextImpl() {
   CHECK(!otr_context_ || otr_context_->HasOneRef()) <<
       "Unexpected reference count for OTR BrowserContext. Did you use "
       "scoped_refptr instead of ScopedBrowserContext?";
+  devtools_http_handler_->Stop();
 }
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
@@ -187,6 +212,14 @@ void BrowserContextImpl::SetIsPopupBlockerEnabled(bool enabled) {
 
 UserScriptMaster& BrowserContextImpl::UserScriptManager() {
   return user_script_manager_;
+}
+
+bool BrowserContextImpl::GetDevtoolsEnabled() const FINAL {
+  return devtools_enabled_;
+}
+
+int BrowserContextImpl::GetDevtoolsPort() const FINAL {
+  return devtools_port_;
 }
 
 } // namespace oxide

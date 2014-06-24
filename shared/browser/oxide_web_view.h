@@ -20,6 +20,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -93,6 +94,9 @@ class WebView : public ScriptMessageTarget,
 
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
+
+  static std::set<WebView*> GetAllWebViewsFor(
+      BrowserContext * browser_context);
 
   const GURL& GetURL() const;
   void SetURL(const GURL& url);

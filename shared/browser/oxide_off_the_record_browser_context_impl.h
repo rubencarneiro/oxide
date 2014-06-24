@@ -66,6 +66,9 @@ class OffTheRecordBrowserContextImpl FINAL : public BrowserContext {
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy) FINAL;
   void SetIsPopupBlockerEnabled(bool enabled) FINAL;
 
+  bool GetDevtoolsEnabled() const FINAL;
+  int GetDevtoolsPort() const FINAL;
+
   UserScriptMaster& UserScriptManager() FINAL;
 
  private:
