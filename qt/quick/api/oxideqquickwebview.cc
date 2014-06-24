@@ -288,6 +288,51 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
   emit q->geolocationPermissionRequested(request);
 }
 
+void OxideQQuickWebViewPrivate::PageScaleFactorChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->contentXChanged();
+  emit q->contentYChanged();
+  emit q->contentWidthChanged();
+  emit q->contentHeightChanged();
+}
+
+void OxideQQuickWebViewPrivate::RootScrollOffsetXChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->contentXChanged();
+}
+
+void OxideQQuickWebViewPrivate::RootScrollOffsetYChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->contentYChanged();
+}
+
+void OxideQQuickWebViewPrivate::RootLayerWidthChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->contentWidthChanged();
+}
+
+void OxideQQuickWebViewPrivate::RootLayerHeightChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->contentHeightChanged();
+}
+
+void OxideQQuickWebViewPrivate::ViewportWidthChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->viewportWidthChanged();
+}
+
+void OxideQQuickWebViewPrivate::ViewportHeightChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->viewportHeightChanged();
+}
+
 void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
   Q_Q(OxideQQuickWebView);
 
@@ -655,6 +700,48 @@ void OxideQQuickWebView::removeMessageHandler(
   d->message_handlers().removeOne(hd);
 
   emit messageHandlersChanged();
+}
+
+qreal OxideQQuickWebView::viewportWidth() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->viewportSize().width()
+      * d->deviceScaleFactor() * d->pageScaleFactor();
+}
+
+qreal OxideQQuickWebView::viewportHeight() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->viewportSize().height()
+      * d->deviceScaleFactor() * d->pageScaleFactor();
+}
+
+qreal OxideQQuickWebView::contentWidth() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->layerSize().width()
+      * d->deviceScaleFactor() * d->pageScaleFactor();
+}
+
+qreal OxideQQuickWebView::contentHeight() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->layerSize().height()
+      * d->deviceScaleFactor() * d->pageScaleFactor();
+}
+
+qreal OxideQQuickWebView::contentX() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->scrollOffset().x()
+      * d->deviceScaleFactor() * d->pageScaleFactor();
+}
+
+qreal OxideQQuickWebView::contentY() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->scrollOffset().y()
+      * d->deviceScaleFactor() * d->pageScaleFactor();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
