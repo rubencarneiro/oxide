@@ -127,19 +127,18 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params) :
     BrowserContext(new BrowserContextIODataImpl(params)),
     product_(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
     default_user_agent_string_(true),
-    user_script_manager_(this) {
+    user_script_manager_(this),
+    devtools_http_handler_(NULL),
+    devtools_enabled_(params.devtools_enabled),
+    devtools_port_(params.devtools_port) {
   SetUserAgent(std::string());
 
-  if (params.devtools_enabled &&
-      params.devtools_port < 65535 &&
-      params.devtools_port > 1024) {
+  if (devtools_enabled_ && devtools_port_ < 65535 && devtools_port_ > 1024) {
     std::string ip = kDevtoolsServerIp;
-    unsigned port = params.devtools_port;
     devtools_http_handler_ = content::DevToolsHttpHandler::Start(
-        new net::TCPListenSocketFactory(ip, port),
+        new net::TCPListenSocketFactory(ip, devtools_port_),
         std::string(),
-        new DevtoolsHttpHandlerDelegate(
-          ip, port, this),
+        new DevtoolsHttpHandlerDelegate(ip, devtools_port_, this),
         base::FilePath());
   }
 }
@@ -150,7 +149,9 @@ BrowserContextImpl::~BrowserContextImpl() {
   CHECK(!otr_context_ || otr_context_->HasOneRef()) <<
       "Unexpected reference count for OTR BrowserContext. Did you use "
       "scoped_refptr instead of ScopedBrowserContext?";
-  devtools_http_handler_->Stop();
+  if (devtools_http_handler_) {
+    devtools_http_handler_->Stop();
+  }
 }
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
