@@ -61,7 +61,6 @@ class DevtoolsHttpHandlerDelegate
 
   std::string ip_;
   unsigned port_;
-  content::DevToolsHttpHandler* devtools_http_handler_;
   BrowserContext* browser_context_;
   DISALLOW_COPY_AND_ASSIGN(DevtoolsHttpHandlerDelegate);
 };

@@ -584,19 +584,21 @@ WebView::WebView()
 }
 
 WebView::~WebView() {
-  {
-    BrowserContext* context =
-      GetBrowserContext();
-    WebViewsPerContextMap::iterator it =
-        g_web_view_per_context.Get().find(context);
-    if (it != g_web_view_per_context.Get().end()) {
-      std::set<WebView*> wvl = it->second;
-      if (wvl.find(this) != wvl.end()) {
-	wvl.erase(this);
-	g_web_view_per_context.Get()[context] = wvl;
-      }
+  BrowserContext* context =
+    GetBrowserContext();
+  WebViewsPerContextMap::iterator it =
+    g_web_view_per_context.Get().find(context);
+  if (it != g_web_view_per_context.Get().end()) {
+    std::set<WebView*>& wvl = it->second;
+    if (wvl.find(this) != wvl.end()) {
+      wvl.erase(this);
+      g_web_view_per_context.Get()[context] = wvl;
+    }
+    if (g_web_view_per_context.Get()[context].empty()) {
+      g_web_view_per_context.Get().erase(context);
     }
   }
+
   if (root_frame_) {
     root_frame_->Destroy();
   }
@@ -672,22 +674,15 @@ void WebView::Init(Params* params) {
 
   {
     BrowserContext* context =
-      GetBrowserContext();
-    LOG(INFO) << "WebView with no valid BrowserContext";
-    if (!context) {
-      LOG(WARNING) << "WebView with no valid BrowserContext";
-    }
-    else {
-      WebViewsPerContextMap::iterator it =
-        g_web_view_per_context.Get().find(context);
-      if (it != g_web_view_per_context.Get().end()) {
-	g_web_view_per_context.Get()[context].insert(this);
-      }
-      else {
-	std::set<WebView*> wvl;
-	wvl.insert(this);
-	g_web_view_per_context.Get()[context] = wvl;
-      }
+      GetBrowserContext()->GetOriginalContext();
+    WebViewsPerContextMap::iterator it =
+      g_web_view_per_context.Get().find(context);
+    if (it != g_web_view_per_context.Get().end()) {
+      g_web_view_per_context.Get()[context].insert(this);
+    } else {
+      std::set<WebView*> wvl;
+      wvl.insert(this);
+      g_web_view_per_context.Get()[context] = wvl;
     }
   }
 }
