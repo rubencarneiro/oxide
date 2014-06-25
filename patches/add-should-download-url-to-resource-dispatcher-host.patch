@@ -25,6 +25,7 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
 +    ResourceRequestInfoImpl* info = GetRequestInfo();
 +    if (!host_->delegate()->ShouldDownloadUrl(
 +            request()->url(),
++            request()->first_party_for_cookies(),
 +	    info->HasUserGesture(),
 +	    !disposition.empty() &&
 +  	      (content_disposition.parse_result_flags() & net::HttpContentDisposition::HAS_FILENAME)
@@ -35,8 +36,7 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
 +	    response_->head.mime_type,
 +	    info->GetChildID(),
 +	    info->GetRouteID(),
-+	    info->GetContext(),
-+	    GetContentClient()->browser())) {
++	    info->GetContext())) {
 +      request()->Cancel();
 +      Cancel();
 +      LOG(INFO) << "Download request for "
