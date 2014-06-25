@@ -16,8 +16,10 @@
 
 {
   'variables': {
-    'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide',
+    'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide', 
+    'protoc_out_dir': '<(SHARED_INTERMEDIATE_DIR)/protoc_out',
   },
+  'includes': [ 'chromedriver.gypi' ],
   'targets': [
     {
       'target_name': 'oxide_extra_resources',
@@ -177,6 +179,7 @@
       'dependencies': [
         'oxide_packed_resources',
         'oxide_extra_resources',
+        'oxide_chromedriver',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/build/linux/system.gyp:dbus',
         '<(DEPTH)/build/linux/system.gyp:fontconfig',
