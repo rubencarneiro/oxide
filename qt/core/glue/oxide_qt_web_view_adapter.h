@@ -36,6 +36,7 @@ class QKeyEvent;
 class QSize;
 QT_END_NAMESPACE
 
+class OxideQDownloadRequest;
 class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
@@ -190,6 +191,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void ViewportHeightChanged() = 0;
 
   virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
+
+  virtual void DownloadRequested(OxideQDownloadRequest* downloadRequest) = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

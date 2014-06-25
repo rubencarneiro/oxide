@@ -113,6 +113,13 @@ class WebView FINAL : public oxide::WebView,
                               WindowOpenDisposition disposition,
                               bool user_gesture) FINAL;
 
+  void OnDownloadRequested(const GURL& url,
+			   const std::string& mimeType,
+			   const bool shouldPrompt,
+			   const base::string16& suggestedFilename,
+			   const std::string& cookies,
+			   const std::string& referrer) FINAL;
+
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,

@@ -21,6 +21,7 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
+#include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -78,6 +79,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "OutgoingMessageRequests are created automatically by WebFrame.sendMessage");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 1, 0, "WebFrame",
         "Frames are created automatically by Oxide to represent frames in the renderer");
+    qmlRegisterUncreatableType<OxideQDownloadRequest>(uri, 1, 0, "DownloadRequest",
+        "Cannot create separate instance of DownloadRequest");
 
     qmlRegisterType<OxideQQuickScriptMessageHandler>(uri, 1, 0, "ScriptMessageHandler");
     qmlRegisterType<OxideQQuickUserScript>(uri, 1, 0, "UserScript");

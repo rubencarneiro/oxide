@@ -1,0 +1,133 @@
+# Description: Add a ShouldDownloadUrl embedder hook to dispatch download requests.
+# Author: Alexandre Abreu <alexandre.abreu@canonical.com>
+
+diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/browser/loader/buffered_resource_handler.cc
+--- a/content/browser/loader/buffered_resource_handler.cc
++++ b/content/browser/loader/buffered_resource_handler.cc
+@@ -10,6 +10,7 @@
+ #include "base/logging.h"
+ #include "base/metrics/histogram.h"
+ #include "base/strings/string_util.h"
++#include "base/strings/utf_string_conversions.h"
+ #include "content/browser/download/download_resource_handler.h"
+ #include "content/browser/download/download_stats.h"
+ #include "content/browser/loader/certificate_resource_handler.h"
+@@ -338,6 +339,36 @@
+ #endif
+   }
+ 
++  if (host_->delegate()) {
++    std::string disposition;
++    request()->GetResponseHeaderByName(
++        "content-disposition", &disposition);
++    net::HttpContentDisposition
++        content_disposition(disposition, std::string());
++    ResourceRequestInfoImpl* info = GetRequestInfo();
++    if (!host_->delegate()->ShouldDownloadUrl(
++            request()->url(),
++            request()->first_party_for_cookies(),
++	    info->HasUserGesture(),
++	    !disposition.empty() &&
++  	      (content_disposition.parse_result_flags() & net::HttpContentDisposition::HAS_FILENAME)
++  	        ? base::UTF8ToUTF16(content_disposition.filename())
++ 	        : base::string16(),
++	    false,
++	    Referrer(),
++	    response_->head.mime_type,
++	    info->GetChildID(),
++	    info->GetRouteID(),
++	    info->GetContext())) {
++      request()->Cancel();
++      Cancel();
++      LOG(INFO) << "Download request for "
++		<< request()->url().GetContent()
++		<< " got cancelled by embedder";
++      return false;
++    }
++  }
++
+   // Install download handler
+   info->set_is_download(true);
+   scoped_ptr<ResourceHandler> handler(
+diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/browser/loader/resource_dispatcher_host_impl.cc
+--- a/content/browser/loader/resource_dispatcher_host_impl.cc
++++ b/content/browser/loader/resource_dispatcher_host_impl.cc
+@@ -493,6 +493,23 @@
+                              DOWNLOAD_INTERRUPT_REASON_USER_SHUTDOWN);
+ 
+   const GURL& url = request->original_url();
++  if (delegate_) {
++    bool should_download_url = delegate_->ShouldDownloadUrl(
++      url,
++      is_content_initiated,
++      save_info->suggested_name,
++      save_info->prompt_for_save_location,
++      referrer,
++      std::string(), // mime_type
++      child_id,
++      route_id,
++      context,
++      GetContentClient()->browser());
++    if (!should_download_url) {
++      return CallbackAndReturn(started_callback,
++			       DOWNLOAD_INTERRUPT_REASON_USER_SHUTDOWN);
++    }
++  }
+ 
+   // http://crbug.com/90971
+   char url_buf[128];
+diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/content/public/browser/resource_dispatcher_host_delegate.cc
+--- a/content/public/browser/resource_dispatcher_host_delegate.cc
++++ b/content/public/browser/resource_dispatcher_host_delegate.cc
+@@ -96,6 +96,20 @@
+     net::URLRequest* url_request) {
+ }
+ 
++bool ResourceDispatcherHostDelegate::ShouldDownloadUrl(
++    const GURL& url,
++    bool is_content_initiated,
++    const base::string16& suggested_name,
++    const bool use_prompt,
++    const Referrer& referrer,
++    const std::string& mime_type,
++    int render_process_id,
++    int render_view_id,
++    ResourceContext* resource_context,
++    ContentBrowserClient* content_browser_client) {
++  return true;
++}
++
+ ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {
+ }
+ 
+diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/content/public/browser/resource_dispatcher_host_delegate.h
+--- a/content/public/browser/resource_dispatcher_host_delegate.h
++++ b/content/public/browser/resource_dispatcher_host_delegate.h
+@@ -20,6 +20,7 @@
+ }
+ 
+ namespace content {
++class ContentBrowserClient;
+ class ResourceContext;
+ class ResourceThrottle;
+ class StreamHandle;
+@@ -140,6 +141,19 @@
+   // Notification that a request has completed.
+   virtual void RequestComplete(net::URLRequest* url_request);
+ 
++  // Returns whether a given download request should be carried on.
++  virtual bool ShouldDownloadUrl(
++      const GURL& url,
++      bool is_content_initiated,
++      const base::string16& suggested_name,
++      const bool use_prompt,
++      const Referrer& referrer,
++      const std::string& mime_type,
++      int render_process_id,
++      int render_view_id,
++      ResourceContext* resource_context,
++      ContentBrowserClient* content_browser_client);
++
+  protected:
+   ResourceDispatcherHostDelegate();
+   virtual ~ResourceDispatcherHostDelegate();
