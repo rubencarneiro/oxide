@@ -1,3 +1,57 @@
+Index: src/content/browser/renderer_host/render_view_host_impl.cc
+===================================================================
+--- src/content/browser/renderer_host/render_view_host_impl.cc	(revision 275940)
++++ src/content/browser/renderer_host/render_view_host_impl.cc	(working copy)
+@@ -91,12 +91,12 @@
+ 
+ #if defined(OS_MACOSX)
+ #include "content/browser/renderer_host/popup_menu_helper_mac.h"
+-#elif defined(OS_ANDROID)
+-#include "content/browser/media/android/media_web_contents_observer.h"
+ #elif defined(OS_WIN)
+ #include "base/win/win_util.h"
+ #endif
+ 
++#include "content/browser/media/utouch/media_web_contents_observer.h"
++
+ using base::TimeDelta;
+ using blink::WebConsoleMessage;
+ using blink::WebDragOperation;
+@@ -223,9 +223,7 @@
+                    GetProcess()->GetID(), GetRoutingID()));
+   }
+ 
+-#if defined(OS_ANDROID)
+   media_web_contents_observer_.reset(new MediaWebContentsObserver(this));
+-#endif
+ 
+   unload_event_monitor_timeout_.reset(new TimeoutMonitor(base::Bind(
+       &RenderViewHostImpl::OnSwappedOut, weak_factory_.GetWeakPtr(), true)));
+Index: src/content/browser/renderer_host/render_view_host_impl.h
+===================================================================
+--- src/content/browser/renderer_host/render_view_host_impl.h	(revision 275940)
++++ src/content/browser/renderer_host/render_view_host_impl.h	(working copy)
+@@ -391,7 +391,6 @@
+   void DidCancelPopupMenu();
+ #endif
+ 
+-#if defined(OS_ANDROID)
+   MediaWebContentsObserver* media_web_contents_observer() {
+     return media_web_contents_observer_.get();
+   }
+@@ -620,11 +616,9 @@
+   // Set to true if we requested the on screen keyboard to be displayed.
+   bool virtual_keyboard_requested_;
+ 
+-#if defined(OS_ANDROID)
+-  // Manages all the android mediaplayer managers and forwards IPCs to the
++  // Manages all the mediaplayer managers and forwards IPCs to the
+   // managers.
+   scoped_ptr<MediaWebContentsObserver> media_web_contents_observer_;
+-#endif
+ 
+   // Used to swap out or shutdown this RVH when the unload event is taking too
+   // long to execute, depending on the number of active views in the
 Index: src/content/browser/media/utouch/browser_media_player_manager.cc
 ===================================================================
 --- src/content/browser/media/utouch/browser_media_player_manager.cc	(revision 0)
@@ -2536,6 +2590,16 @@ Index: src/content/renderer/render_frame_impl.cc
  using blink::WebContextMenuData;
  using blink::WebData;
  using blink::WebDataSource;
+@@ -414,8 +416,8 @@
+       handling_select_range_(false),
+       notification_provider_(NULL),
+       web_user_media_client_(NULL),
++      media_player_manager_(NULL),
+ #if defined(OS_ANDROID)
+-      media_player_manager_(NULL),
+       cdm_manager_(NULL),
+ #endif
+       geolocation_dispatcher_(NULL),
 @@ -1402,6 +1404,16 @@
  #if defined(OS_ANDROID)
    return CreateAndroidWebMediaPlayer(url, client);
@@ -2709,7 +2773,11 @@ Index: src/media/base/utouch/media_player_mediahub.cc
 ===================================================================
 --- src/media/base/utouch/media_player_mediahub.cc	(revision 0)
 +++ src/media/base/utouch/media_player_mediahub.cc	(working copy)
-@@ -0,0 +1,101 @@
+Index: src/media/base/utouch/media_player_mediahub.cc
+===================================================================
+--- src/media/base/utouch/media_player_mediahub.cc	(revision 0)
++++ src/media/base/utouch/media_player_mediahub.cc	(working copy)
+@@ -0,0 +1,105 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -2808,6 +2876,10 @@ Index: src/media/base/utouch/media_player_mediahub.cc
 +
 +GURL MediaPlayerMediaHub::GetUrl() {
 +  return url_;
++}
++
++GURL MediaPlayerMediaHub::GetCookies() {
++  return GURL();
 +}
 +
 +}  // namespace media
