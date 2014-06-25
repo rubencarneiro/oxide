@@ -22,15 +22,14 @@
 #include <QRect>
 #include <QSGTexture>
 
-#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
-
-#include "oxide_qquick_render_view_item.h"
+#include "qt/core/glue/oxide_qt_web_view_adapter.h"
+#include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
 namespace qquick {
 
-AcceleratedFrameNode::AcceleratedFrameNode(RenderViewItem* item) :
-    item_(item) {
+AcceleratedFrameNode::AcceleratedFrameNode(OxideQQuickWebView* view) :
+    view_(view) {
   setTextureCoordinatesTransform(QSGSimpleTextureNode::MirrorVertically);
 }
 
@@ -42,7 +41,7 @@ void AcceleratedFrameNode::updateNode(
 
   setRect(QRect(QPoint(0, 0), handle_->GetSize()));
 
-  texture_.reset(item_->window()->createTextureFromId(
+  texture_.reset(view_->window()->createTextureFromId(
       handle_->GetAcceleratedFrame().texture_id(),
       handle_->GetSize(),
       QQuickWindow::TextureHasAlphaChannel));

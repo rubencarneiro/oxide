@@ -18,10 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 #define _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 
-#include <QImage>
 #include <QRect>
-#include <QSharedPointer>
-#include <QSize>
 #include <Qt>
 #include <QtGlobal>
 #include <QVariant>
@@ -32,48 +29,16 @@ class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QScreen;
+class QSize;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
-
-namespace content {
-class RenderWidgetHost;
-}
 
 namespace oxide {
 namespace qt {
 
 class RenderWidgetHostView;
 class WebViewAdapter;
-
-class Q_DECL_EXPORT AcceleratedFrameData Q_DECL_FINAL {
- public:
-  AcceleratedFrameData(unsigned int id)
-      : texture_id_(id) {}
-  ~AcceleratedFrameData() {}
-
-  unsigned int texture_id() const { return texture_id_; }
-
- private:
-  unsigned int texture_id_;
-};
-
-class Q_DECL_EXPORT CompositorFrameHandle {
- public:
-  virtual ~CompositorFrameHandle() {}
-
-  enum Type {
-    TYPE_INVALID,
-    TYPE_SOFTWARE,
-    TYPE_ACCELERATED
-  };
-
-  virtual Type GetType() = 0;
-  virtual const QSize& GetSize() const = 0;
-
-  virtual QImage GetSoftwareFrame() = 0;
-  virtual AcceleratedFrameData GetAcceleratedFrame() = 0;
-};
 
 class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  public:
@@ -99,10 +64,6 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
-  virtual void ScheduleUpdate() = 0;
-
-  virtual void EvictCurrentFrame() = 0;
-
  protected:
   RenderWidgetHostViewDelegate();
 
@@ -113,10 +74,6 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleInputMethodEvent(QInputMethodEvent* event);
   void HandleTouchEvent(QTouchEvent* event);
   void HandleGeometryChanged();
-
-  QSharedPointer<CompositorFrameHandle> GetCompositorFrameHandle();
-
-  void DidComposite();
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 

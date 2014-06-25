@@ -18,6 +18,7 @@
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
+#include <QImage>
 #include <QKeyEvent>
 #include <QMetaMethod>
 #include <QPointF>
@@ -25,17 +26,22 @@
 #include <QQuickWindow>
 #include <QRect>
 #include <QRectF>
+#include <QSGNode>
 #include <QSizeF>
 #include <QSize>
 #include <QtQml>
 
 #include "qt/core/api/oxideqpermissionrequest.h"
+#if defined(ENABLE_COMPOSITING)
+#include "qt/quick/oxide_qquick_accelerated_frame_node.h"
+#endif
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_file_picker_delegate.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_render_view_item.h"
+#include "qt/quick/oxide_qquick_software_frame_node.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
 #include "oxideqquickscriptmessagehandler_p.h"
@@ -46,6 +52,22 @@
 #include "oxideqquickwebframe_p_p.h"
 
 QT_USE_NAMESPACE
+
+using oxide::qquick::AcceleratedFrameNode;
+using oxide::qquick::SoftwareFrameNode;
+
+class UpdatePaintNodeScope {
+ public:
+  UpdatePaintNodeScope(OxideQQuickWebViewPrivate* d)
+      : d_(d) {}
+
+  virtual ~UpdatePaintNodeScope() {
+    d_->didUpdatePaintNode();
+  }
+
+ private:
+  OxideQQuickWebViewPrivate* d_;
+};
 
 OxideQQuickWebViewAttached::OxideQQuickWebViewAttached(QObject* parent) :
     QObject(parent),
@@ -72,7 +94,10 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     confirm_dialog_(NULL),
     prompt_dialog_(NULL),
     before_unload_dialog_(NULL),
-    file_picker_(NULL) {}
+    file_picker_(NULL),
+    received_new_compositor_frame_(false),
+    frame_evicted_(false),
+    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
@@ -194,8 +219,18 @@ oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
   return OxideQQuickWebFramePrivate::get(frame);
 }
 
-QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
-  Q_Q(OxideQQuickWebView);
+QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
+  Q_Q(const OxideQQuickWebView);
+
+  if (!q->window()) {
+    return NULL;
+  }
+
+  return q->window()->screen();
+}
+
+QRect OxideQQuickWebViewPrivate::GetContainerBoundsPix() const {
+  Q_Q(const OxideQQuickWebView);
 
   QPointF pos(q->mapToScene(QPointF(0,0)));
   if (q->window()) {
@@ -344,6 +379,27 @@ void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
   w->sendEvent(q, event);
 }
 
+void OxideQQuickWebViewPrivate::ScheduleUpdate() {
+  Q_Q(OxideQQuickWebView);
+
+  frame_evicted_ = false;
+  received_new_compositor_frame_ = true;
+
+  q->update();
+  q->polish();
+}
+
+void OxideQQuickWebViewPrivate::EvictCurrentFrame() {
+  Q_Q(OxideQQuickWebView);
+
+  frame_evicted_ = true;
+  received_new_compositor_frame_ = false;
+
+  Q_ASSERT(!compositor_frame_handle_);
+
+  q->update();
+}
+
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
@@ -450,6 +506,14 @@ void OxideQQuickWebViewPrivate::detachContextSignals(
                       q, SLOT(contextWillBeDestroyed()));
 }
 
+void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
+  if (received_new_compositor_frame_) {
+    received_new_compositor_frame_ = false;
+    didCommitCompositorFrame();
+  }
+  compositor_frame_handle_.reset();
+}
+
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
 
 // static
@@ -497,7 +561,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
   if (d->isInitialized()) {
-    d->updateSize(newGeometry.size().toSize());
+    d->wasResized();
   }
 }
 
@@ -512,8 +576,96 @@ void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
   }
 
   if (change == QQuickItem::ItemVisibleHasChanged) {
-    d->updateVisibility(value.boolValue);
+    d->visibilityChanged();
   }
+}
+
+QSGNode* OxideQQuickWebView::updatePaintNode(
+    QSGNode* oldNode,
+    UpdatePaintNodeData * updatePaintNodeData) {
+  Q_UNUSED(updatePaintNodeData);
+  Q_D(OxideQQuickWebView);
+
+  UpdatePaintNodeScope scope(d);
+
+  oxide::qt::CompositorFrameHandle::Type type =
+      oxide::qt::CompositorFrameHandle::TYPE_INVALID;
+
+  if (d->received_new_compositor_frame_) {
+    Q_ASSERT(d->compositor_frame_handle_);
+    Q_ASSERT(!d->frame_evicted_);
+    type = d->compositor_frame_handle_->GetType();
+  } else if (!d->frame_evicted_) {
+    Q_ASSERT(!d->compositor_frame_handle_);
+    type = d->last_composited_frame_type_;
+  }
+
+  if (type != d->last_composited_frame_type_) {
+    delete oldNode;
+    oldNode = NULL;
+  }
+
+  d->last_composited_frame_type_ = type;
+
+  if (d->frame_evicted_) {
+    delete oldNode;
+    return NULL;
+  }
+
+#if defined(ENABLE_COMPOSITING)
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
+    AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
+    if (!node) {
+      node = new AcceleratedFrameNode(this);
+    }
+
+    if (d->received_new_compositor_frame_ || !oldNode) {
+      node->updateNode(d->compositor_frame_handle_);
+    }
+
+    return node;
+  }
+#else
+  Q_ASSERT(type != oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
+#endif
+
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
+    SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
+    if (!node) {
+      node = new SoftwareFrameNode(this);
+    }
+
+    if (d->received_new_compositor_frame_ || !oldNode) {
+      node->updateNode(d->compositor_frame_handle_);
+    }
+
+    return node;
+  }
+
+  Q_ASSERT(type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
+
+  SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
+  if (!node) {
+    node = new SoftwareFrameNode(this);
+  }
+
+  QRectF rect(QPointF(0, 0), QSizeF(width(), height()));
+
+  if (!oldNode || rect != node->rect()) {
+    QImage blank(qRound(rect.width()),
+                 qRound(rect.height()),
+                 QImage::Format_ARGB32);
+    blank.fill(Qt::white);
+    node->setImage(blank);
+  }
+
+  return node;
+}
+
+void OxideQQuickWebView::updatePolish() {
+  Q_D(OxideQQuickWebView);
+
+  d->compositor_frame_handle_ = d->compositorFrameHandle();
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
@@ -524,7 +676,9 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   OxideQQuickWebContextPrivate::ensureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
 
-  setFlags(QQuickItem::ItemIsFocusScope);
+  setFlags(QQuickItem::ItemClipsChildrenToShape |
+           QQuickItem::ItemHasContents |
+           QQuickItem::ItemIsFocusScope);
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {

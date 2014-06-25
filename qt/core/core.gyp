@@ -64,6 +64,8 @@
         'app/oxide_qt_content_main_delegate.h',
         'app/oxide_qt_main.cc',
         'app/oxide_qt_main.h',
+        'base/oxide_qt_screen_utils.cc',
+        'base/oxide_qt_screen_utils.h',
         'browser/native_web_keyboard_event_oxide.cc',
         'browser/oxide_default_screen_info.cc',
         'browser/oxide_qt_content_browser_client.cc',

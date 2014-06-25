@@ -26,7 +26,6 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/layers/delegated_frame_resource_collection.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
@@ -37,7 +36,6 @@
 #include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
 
-#include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_renderer_frame_evictor_client.h"
 
 namespace cc {
@@ -56,14 +54,11 @@ class TouchEvent;
 
 namespace oxide {
 
-class Compositor;
-class CompositorFrameHandle;
 class WebView;
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
                              public ui::GestureConsumer,
-                             public CompositorClient,
                              public RendererFrameEvictorClient,
                              public cc::DelegatedFrameResourceCollectionClient,
                              public base::SupportsWeakPtr<RenderWidgetHostView> {
@@ -74,12 +69,11 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   content::RenderWidgetHostImpl* host() const { return host_; }
 
-  CompositorFrameHandle* GetCompositorFrameHandle();
-  void DidCommitCompositorFrame();
+  void CompositorDidCommit();
+  void SetWebView(WebView* view);
 
   // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
-
   void SetBounds(const gfx::Rect& rect) FINAL;
 
  protected:
@@ -199,11 +193,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   // cc::DelegatedFrameResourceCollectionClient implementation
   void UnusedResourcesAreAvailable() FINAL;
 
-  // CompositorClient implementation
-  void CompositorDidCommit() FINAL;
-  void CompositorSwapFrame(uint32 surface_id,
-                           CompositorFrameHandle* frame) FINAL;
-
   // RendererFrameEvictorClient implemenetation
   void EvictCurrentFrame() FINAL;
 
@@ -213,21 +202,19 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void SendDelegatedFrameAck(uint32 surface_id);
   void SendReturnedDelegatedResources();
   void RunAckCallbacks();
+  void AttachLayer();
+  void DetachLayer();
 
   void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
   void ForwardGestureEventToRenderer(ui::GestureEvent* event);
-
-  virtual void OnCompositorSwapFrame() = 0;
-  virtual void OnEvictCurrentFrame();
 
   virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
   content::RenderWidgetHostImpl* host_;
 
-  gfx::GLSurfaceHandle shared_surface_handle_;
+  WebView* web_view_;
 
-  // XXX: Move compositor_ to WebView (https://launchpad.net/bugs/1312081)
-  scoped_ptr<Compositor> compositor_;
+  gfx::GLSurfaceHandle shared_surface_handle_;
 
   scoped_refptr<cc::DelegatedFrameResourceCollection> resource_collection_;
   scoped_refptr<cc::DelegatedFrameProvider> frame_provider_;
@@ -239,10 +226,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   std::queue<base::Closure> ack_callbacks_;
 
   gfx::Size last_frame_size_dip_;
-
-  scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
-  std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
-  std::queue<uint32> received_surface_ids_;
 
   bool frame_is_evicted_;
 

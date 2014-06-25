@@ -19,10 +19,12 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 
 #include <QDateTime>
+#include <QImage>
 #include <QList>
 #include <QPointF>
 #include <QRect>
 #include <QScopedPointer>
+#include <QSharedPointer>
 #include <QSizeF>
 #include <QString>
 #include <QtGlobal>
@@ -33,6 +35,7 @@
 
 QT_BEGIN_NAMESPACE
 class QKeyEvent;
+class QScreen;
 class QSize;
 QT_END_NAMESPACE
 
@@ -51,6 +54,35 @@ class WebContextAdapter;
 class WebFrameAdapter;
 class WebPopupMenuDelegate;
 class WebView;
+
+class Q_DECL_EXPORT AcceleratedFrameData Q_DECL_FINAL {
+ public:
+  AcceleratedFrameData(unsigned int id)
+      : texture_id_(id) {}
+  ~AcceleratedFrameData() {}
+
+  unsigned int texture_id() const { return texture_id_; }
+
+ private:
+  unsigned int texture_id_;
+};
+
+class Q_DECL_EXPORT CompositorFrameHandle {
+ public:
+  virtual ~CompositorFrameHandle() {}
+
+  enum Type {
+    TYPE_INVALID,
+    TYPE_SOFTWARE,
+    TYPE_ACCELERATED
+  };
+
+  virtual Type GetType() = 0;
+  virtual const QSize& GetSize() const = 0;
+
+  virtual QImage GetSoftwareFrame() = 0;
+  virtual AcceleratedFrameData GetAcceleratedFrame() = 0;
+};
 
 class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  public:
@@ -79,8 +111,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   WebContextAdapter* context() const;
   void setContext(WebContextAdapter* context);
 
-  void updateSize(const QSize& size);
-  void updateVisibility(bool visible);
+  void wasResized();
+  void visibilityChanged();
 
   void goBack();
   void goForward();
@@ -114,6 +146,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QPointF scrollOffset() const;
   QSizeF layerSize() const;
   QSizeF viewportSize() const;
+
+  QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
+  void didCommitCompositorFrame();
 
  protected:
   WebViewAdapter(QObject* q);
@@ -157,8 +192,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
-  virtual QRect GetContainerBounds() = 0;
-
+  virtual QScreen* GetScreen() const = 0;
+  virtual QRect GetContainerBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
 
   virtual void AddMessageToConsole(int level,
@@ -190,6 +225,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void ViewportHeightChanged() = 0;
 
   virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
+
+  virtual void ScheduleUpdate() = 0;
+  virtual void EvictCurrentFrame() = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

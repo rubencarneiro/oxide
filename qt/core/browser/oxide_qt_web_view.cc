@@ -17,7 +17,9 @@
 
 #include "oxide_qt_web_view.h"
 
+#include <QGuiApplication>
 #include <QKeyEvent>
+#include <QScreen>
 #include <QString>
 #include <QtDebug>
 #include <QUrl>
@@ -35,6 +37,7 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqpermissionrequest_p.h"
+#include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
@@ -91,18 +94,17 @@ void WebView::Init(oxide::WebView::Params* params) {
   adapter_->Initialized();
 }
 
-size_t WebView::GetScriptMessageHandlerCount() const {
-  return adapter_->message_handlers().size();
+blink::WebScreenInfo WebView::GetScreenInfo() const {
+  QScreen* screen = adapter_->GetScreen();
+  if (!screen) {
+    screen = QGuiApplication::primaryScreen();
+  }
+
+  return WebScreenInfoFromQScreen(screen);
 }
 
-oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
-    size_t index) const {
-  return &ScriptMessageHandlerAdapterPrivate::get(
-      adapter_->message_handlers().at(index))->handler;
-}
-
-gfx::Rect WebView::GetContainerBounds() {
-  QRect bounds = adapter_->GetContainerBounds();
+gfx::Rect WebView::GetContainerBoundsPix() const {
+  QRect bounds = adapter_->GetContainerBoundsPix();
   return gfx::Rect(bounds.x(),
                    bounds.y(),
                    bounds.width(),
@@ -111,10 +113,6 @@ gfx::Rect WebView::GetContainerBounds() {
 
 bool WebView::IsVisible() const {
   return adapter_->IsVisible();
-}
-
-oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
-  return new WebPopupMenu(adapter_->CreateWebPopupMenuDelegate(), rvh);
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -188,6 +186,16 @@ void WebView::ViewportHeightChanged() {
   adapter_->ViewportHeightChanged();
 }
 
+size_t WebView::GetScriptMessageHandlerCount() const {
+  return adapter_->message_handlers().size();
+}
+
+oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
+    size_t index) const {
+  return &ScriptMessageHandlerAdapterPrivate::get(
+      adapter_->message_handlers().at(index))->handler;
+}
+
 void WebView::OnURLChanged() {
   adapter_->URLChanged();
 }
@@ -254,6 +262,23 @@ void WebView::OnNavigationEntryChanged(int index) {
   adapter_->NavigationEntryChanged(index);
 }
 
+bool WebView::OnAddMessageToConsole(
+    int level,
+    const base::string16& message,
+    int line_no,
+    const base::string16& source_id) {
+  adapter_->AddMessageToConsole(
+      level,
+      QString::fromStdString(base::UTF16ToUTF8(message)),
+      line_no,
+      QString::fromStdString(base::UTF16ToUTF8(source_id)));
+  return true;
+}
+
+void WebView::OnToggleFullscreenMode(bool enter) {
+  adapter_->ToggleFullscreenMode(enter);
+}
+
 void WebView::OnWebPreferencesDestroyed() {
   adapter_->WebPreferencesDestroyed();
 }
@@ -286,23 +311,6 @@ void WebView::OnUnhandledKeyboardEvent(
   DCHECK(!qevent->isAccepted());
 
   adapter_->HandleKeyboardEvent(qevent);
-}
-
-bool WebView::OnAddMessageToConsole(
-    int level,
-    const base::string16& message,
-    int line_no,
-    const base::string16& source_id) {
-  adapter_->AddMessageToConsole(
-      level,
-      QString::fromStdString(base::UTF16ToUTF8(message)),
-      line_no,
-      QString::fromStdString(base::UTF16ToUTF8(source_id)));
-  return true;
-}
-
-void WebView::OnToggleFullscreenMode(bool enter) {
-  adapter_->ToggleFullscreenMode(enter);
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
@@ -340,6 +348,10 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
 
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
   return new WebFrame(adapter_->CreateWebFrame(), node, this);
+}
+
+oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
+  return new WebPopupMenu(adapter_->CreateWebPopupMenuDelegate(), rvh);
 }
 
 oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
@@ -387,6 +399,14 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
         "implement WebView.newViewRequested.";
   }
   return view;
+}
+
+void WebView::OnSwapCompositorFrame() {
+  adapter_->ScheduleUpdate();
+}
+
+void WebView::OnEvictCurrentFrame() {
+  adapter_->EvictCurrentFrame();
 }
 
 // static

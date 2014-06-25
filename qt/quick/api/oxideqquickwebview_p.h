@@ -235,6 +235,10 @@ class OxideQQuickWebView : public QQuickItem {
                        const QRectF& oldGeometry) Q_DECL_FINAL;
   void itemChange(QQuickItem::ItemChange change,
                   const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
+  QSGNode* updatePaintNode(
+      QSGNode* oldNode,
+      UpdatePaintNodeData * updatePaintNodeData) Q_DECL_FINAL;
+  void updatePolish() Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

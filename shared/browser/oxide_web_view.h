@@ -18,13 +18,15 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 
+#include <queue>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/linked_ptr.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/output/compositor_frame_metadata.h"
@@ -33,8 +35,10 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/rect.h"
 
+#include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
@@ -63,8 +67,11 @@ class WebContentsImpl;
 namespace oxide {
 
 class BrowserContext;
+class Compositor;
+class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
+class RenderWidgetHostView;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
@@ -74,9 +81,10 @@ class WebViewContentsHelper;
 // this. Note that this class will hold the main browser process
 // components alive
 class WebView : public ScriptMessageTarget,
+                private CompositorClient,
                 private WebPreferencesObserver,
-                private WebViewContentsHelperDelegate,
                 private content::NotificationObserver,
+                private WebViewContentsHelperDelegate,
                 private content::WebContentsObserver {
  public:
   virtual ~WebView();
@@ -123,8 +131,8 @@ class WebView : public ScriptMessageTarget,
   bool IsFullscreen() const;
   void SetIsFullscreen(bool fullscreen);
 
-  void UpdateSize(const gfx::Size& size);
-  void UpdateVisibility(bool visible);
+  void WasResized();
+  void VisibilityChanged();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -143,7 +151,9 @@ class WebView : public ScriptMessageTarget,
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
 
-  gfx::Size GetContainerSize();
+  gfx::Size GetContainerSizePix() const;
+  gfx::Rect GetContainerBoundsDip() const;
+  gfx::Size GetContainerSizeDip() const;
 
   void ShowPopupMenu(const gfx::Rect& bounds,
                      int selected_item,
@@ -159,7 +169,17 @@ class WebView : public ScriptMessageTarget,
 
   void UpdateWebPreferences();
 
-  virtual gfx::Rect GetContainerBounds() = 0;
+  Compositor* compositor() const { return compositor_.get(); }
+
+  CompositorFrameHandle* GetCompositorFrameHandle();
+  void DidCommitCompositorFrame();
+
+  void EvictCurrentFrame();
+  void GotNewCompositorFrameMetadata(
+      const cc::CompositorFrameMetadata& metadata);
+
+  virtual blink::WebScreenInfo GetScreenInfo() const = 0;
+  virtual gfx::Rect GetContainerBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
@@ -173,9 +193,6 @@ class WebView : public ScriptMessageTarget,
   virtual void FrameRemoved(WebFrame* frame);
 
   virtual bool CanCreateWindows() const;
-
-  void GotNewCompositorFrameMetadata(
-      const cc::CompositorFrameMetadata& metadata);
 
  protected:
   WebView();
@@ -197,24 +214,30 @@ class WebView : public ScriptMessageTarget,
   virtual void ViewportHeightChanged();
 
  private:
+  RenderWidgetHostView* GetRenderWidgetHostView();
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
 
-  // ScriptMessageTarget
+  // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
   virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const OVERRIDE;
 
-  // WebPreferencesObserver
+  // CompositorClient implementation
+  void CompositorDidCommit() FINAL;
+  void CompositorSwapFrame(uint32 surface_id,
+                           CompositorFrameHandle* frame) FINAL;
+
+  // WebPreferencesObserver implementation
   void WebPreferencesDestroyed() FINAL;
 
-  // content::NotificationObserver
+  // content::NotificationObserver implementation
   void Observe(int type,
                const content::NotificationSource& source,
                const content::NotificationDetails& details) FINAL;
 
-  // WebViewContentsHelperDelegate
+  // WebViewContentsHelperDelegate implementation
   content::WebContents* OpenURL(const content::OpenURLParams& params) FINAL;
   void NavigationStateChanged(unsigned flags) FINAL;
   bool ShouldCreateWebContents(const GURL& target_url,
@@ -234,7 +257,7 @@ class WebView : public ScriptMessageTarget,
   void NotifyWebPreferencesDestroyed() FINAL;
   void HandleKeyboardEvent(const content::NativeWebKeyboardEvent& event) FINAL;
 
-  // content::WebContentsObserver
+  // content::WebContentsObserver implementation
   void RenderProcessGone(base::TerminationStatus status) FINAL;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
@@ -290,6 +313,7 @@ class WebView : public ScriptMessageTarget,
   void DidUpdateFaviconURL(
       const std::vector<content::FaviconURL>& candidates) FINAL;
 
+  // Override in sub-classes
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnIconChanged(const GURL& icon);
@@ -334,8 +358,17 @@ class WebView : public ScriptMessageTarget,
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                     WindowOpenDisposition disposition);
 
+  virtual void OnSwapCompositorFrame() = 0;
+  virtual void OnEvictCurrentFrame();
+
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;
+
+  scoped_ptr<Compositor> compositor_;
+
+  scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
+  std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
+  std::queue<uint32> received_surface_ids_;
 
   GURL initial_url_;
   WebPreferences* initial_preferences_;

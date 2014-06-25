@@ -28,6 +28,8 @@ class QSGTexture;
 class QSize;
 QT_END_NAMESPACE
 
+class OxideQQuickWebView;
+
 namespace oxide {
 
 namespace qt{
@@ -36,17 +38,15 @@ class CompositorFrameHandle;
 
 namespace qquick {
 
-class RenderViewItem;
-
 class AcceleratedFrameNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  public:
-  AcceleratedFrameNode(RenderViewItem* item);
+  AcceleratedFrameNode(OxideQQuickWebView* view);
   ~AcceleratedFrameNode();
 
   void updateNode(QSharedPointer<oxide::qt::CompositorFrameHandle> handle);
 
  private:
-  RenderViewItem* item_;
+  OxideQQuickWebView* view_;
 
   QSharedPointer<oxide::qt::CompositorFrameHandle> handle_;
   QScopedPointer<QSGTexture> texture_;

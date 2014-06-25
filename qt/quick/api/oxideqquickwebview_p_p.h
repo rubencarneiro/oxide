@@ -18,7 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
-#include <QScopedPointer>
+#include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -36,6 +36,12 @@ class QQmlComponent;
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
+namespace oxide {
+namespace qt {
+class CompositorFrameHandle;
+}
+}
+
 class OxideQQuickWebViewPrivate Q_DECL_FINAL :
      public oxide::qt::WebViewAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
@@ -48,6 +54,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void addAttachedPropertyTo(QObject* object);
 
  private:
+  friend class UpdatePaintNodeScope;
+
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
@@ -74,7 +82,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
-  QRect GetContainerBounds() Q_DECL_FINAL;
+  QScreen* GetScreen() const Q_DECL_FINAL;
+  QRect GetContainerBoundsPix() const Q_DECL_FINAL;
   bool IsVisible() const Q_DECL_FINAL;
 
   void AddMessageToConsole(int level,
@@ -107,6 +116,9 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
 
+  void ScheduleUpdate() Q_DECL_FINAL;
+  void EvictCurrentFrame() Q_DECL_FINAL;
+
   void completeConstruction();
 
   static void messageHandler_append(
@@ -125,6 +137,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
+  void didUpdatePaintNode();
+
   bool constructed_;
   int load_progress_;
   QUrl icon_;
@@ -135,6 +149,11 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QQmlComponent* prompt_dialog_;
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
+
+  bool received_new_compositor_frame_;
+  bool frame_evicted_;
+  oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
+  QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

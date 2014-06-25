@@ -27,7 +27,6 @@
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/renderer_host/ui_events_helper.h"
 #include "content/common/gpu/gpu_messages.h"
@@ -43,9 +42,7 @@
 #include "ui/gl/gl_implementation.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
-#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
-#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
@@ -84,34 +81,6 @@ bool ShouldSendPinchGesture() {
   return pinch_allowed;
 }
 
-bool ShouldUseSoftwareCompositing() {
-  static bool initialized = false;
-  static bool result = true;
-
-  if (initialized) {
-    return result;
-  }
-
-  initialized = true;
-
-  if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
-    return true;
-  }
-
-  SharedGLContext* share_context =
-      BrowserProcessMain::instance()->GetSharedGLContext();
-  if (!share_context) {
-    return true;
-  }
-
-  if (share_context->GetImplementation() != gfx::GetGLImplementation()) {
-    return true;
-  }
-
-  result = false;
-  return false;
-}
-
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
@@ -134,7 +103,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  CompositorLock lock(compositor_.get());
+  Compositor* compositor = web_view_ ? web_view_->compositor() : NULL;
+  CompositorLock lock(compositor);
 
   if (output_surface_id != last_output_surface_id_) {
     resource_collection_->SetClient(NULL);
@@ -171,10 +141,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   } else {
     if (!frame_provider_ || frame_size != frame_provider_->frame_size() ||
         frame_size_dip != last_frame_size_dip_) {
+      DetachLayer();
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
                                                        frame_data.Pass());
       layer_ = cc::DelegatedRendererLayer::Create(frame_provider_);
-      compositor_->SetRootLayer(layer_);
+      AttachLayer();
     } else {
       frame_provider_->SetFrameData(frame_data.Pass());
     }
@@ -194,11 +165,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     RendererFrameEvictor::GetInstance()->AddFrame(this, !host_->is_hidden());
   }
 
-  content::RenderViewHost* rvh = content::RenderViewHost::From(host());
-  WebView* webview = WebView::FromRenderViewHost(rvh);
-  webview->GotNewCompositorFrameMetadata(frame->metadata);
+  if (web_view_) {
+    web_view_->GotNewCompositorFrameMetadata(frame->metadata);
+  }
 
-  if (!compositor_->IsActive()) {
+  if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
   }
 }
@@ -218,8 +189,6 @@ void RenderWidgetHostView::MovePluginWindows(
     const std::vector<content::WebPluginGeometry>& moves) {}
 
 void RenderWidgetHostView::Blur() {}
-
-void RenderWidgetHostView::OnEvictCurrentFrame() {}
 
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
   last_cursor_ = cursor;
@@ -421,32 +390,17 @@ void RenderWidgetHostView::UnusedResourcesAreAvailable() {
   }
 }
 
-void RenderWidgetHostView::CompositorDidCommit() {
-  RunAckCallbacks();
-}
-
-void RenderWidgetHostView::CompositorSwapFrame(uint32 surface_id,
-                                               CompositorFrameHandle* frame) {
-  received_surface_ids_.push(surface_id);
-
-  if (current_compositor_frame_) {
-    previous_compositor_frames_.push_back(current_compositor_frame_);
-  }
-  current_compositor_frame_ = frame;
-
-  OnCompositorSwapFrame();
-}
-
 void RenderWidgetHostView::EvictCurrentFrame() {
   frame_is_evicted_ = true;
   DestroyDelegatedContent();
-  current_compositor_frame_ = NULL;
 
-  OnEvictCurrentFrame();
+  if (web_view_) {
+    web_view_->EvictCurrentFrame();
+  }
 }
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
-  compositor_->SetRootLayer(scoped_refptr<cc::Layer>());
+  DetachLayer();
   frame_provider_ = NULL;
   layer_ = NULL;
 }
@@ -480,6 +434,28 @@ void RenderWidgetHostView::RunAckCallbacks() {
     ack_callbacks_.front().Run();
     ack_callbacks_.pop();
   }
+}
+
+void RenderWidgetHostView::AttachLayer() {
+  if (!web_view_) {
+    return;
+  }
+  if (!layer_) {
+    return;
+  }
+
+  web_view_->compositor()->SetRootLayer(layer_);
+}
+
+void RenderWidgetHostView::DetachLayer() {
+  if (!web_view_) {
+    return;
+  }
+  if (!layer_) {
+    return;
+  }
+
+  web_view_->compositor()->SetRootLayer(scoped_refptr<cc::Layer>());
 }
 
 void RenderWidgetHostView::ProcessGestures(
@@ -531,7 +507,7 @@ void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {}
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     content::RenderWidgetHostViewBase(),
     host_(content::RenderWidgetHostImpl::From(host)),
-    compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
+    web_view_(NULL),
     resource_collection_(new cc::DelegatedFrameResourceCollection()),
     last_output_surface_id_(0),
     frame_is_evicted_(true),
@@ -550,7 +526,6 @@ void RenderWidgetHostView::WasShown() {
   if (host_->is_hidden() && !frame_is_evicted_) {
     RendererFrameEvictor::GetInstance()->LockFrame(this);
   }
-  compositor_->SetVisibility(true);
   host()->WasShown();
 }
 
@@ -560,7 +535,6 @@ void RenderWidgetHostView::WasHidden() {
   }
   host()->WasHidden();
   RunAckCallbacks();
-  compositor_->SetVisibility(false);
 }
 
 void RenderWidgetHostView::OnFocus() {
@@ -579,14 +553,6 @@ void RenderWidgetHostView::OnBlur() {
 }
 
 void RenderWidgetHostView::OnResize() {
-  {
-    blink::WebScreenInfo screen_info;
-    GetScreenInfo(&screen_info);
-    CompositorLock lock(compositor_.get());
-    compositor_->SetDeviceScaleFactor(screen_info.deviceScaleFactor);
-    compositor_->SetViewportSize(GetPhysicalBackingSize());
-  }
-
   host()->SendScreenRects();
   GetRenderWidgetHost()->WasResized();
 }
@@ -609,22 +575,21 @@ void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {
 RenderWidgetHostView::~RenderWidgetHostView() {
   DCHECK(ack_callbacks_.empty());
   resource_collection_->SetClient(NULL);
+  SetWebView(NULL);
 }
 
-CompositorFrameHandle* RenderWidgetHostView::GetCompositorFrameHandle() {
-  return current_compositor_frame_;
+void RenderWidgetHostView::CompositorDidCommit() {
+  RunAckCallbacks();
 }
 
-void RenderWidgetHostView::DidCommitCompositorFrame() {
-  DCHECK(!received_surface_ids_.empty());
-
-  while (!received_surface_ids_.empty()) {
-    uint32 surface_id = received_surface_ids_.front();
-    received_surface_ids_.pop();
-
-    compositor_->DidSwapCompositorFrame(surface_id,
-                                        previous_compositor_frames_);
+void RenderWidgetHostView::SetWebView(WebView* view) {
+  if (view == web_view_) {
+    return;
   }
+
+  DetachLayer();
+  web_view_ = view;
+  AttachLayer();
 }
 
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {

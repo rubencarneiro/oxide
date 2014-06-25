@@ -17,9 +17,11 @@
 
 #include "oxide_qt_web_view_adapter.h"
 
+#include <QSize>
 #include <QtDebug>
 
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
 
@@ -29,12 +31,63 @@
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
+#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 
 #include "oxide_qt_web_context_adapter_p.h"
 #include "oxide_qt_web_frame_adapter.h"
 
 namespace oxide {
 namespace qt {
+
+class CompositorFrameHandleImpl : public CompositorFrameHandle {
+ public:
+  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
+      : frame_(frame) {
+    if (frame_) {
+      size_ = QSize(frame_->size_in_pixels().width(),
+                    frame_->size_in_pixels().height());
+    }
+  }
+
+  virtual ~CompositorFrameHandleImpl() {}
+
+  CompositorFrameHandle::Type GetType() Q_DECL_FINAL {
+    if (!frame_) {
+      return CompositorFrameHandle::TYPE_INVALID;
+    }
+    if (frame_->gl_frame_data()) {
+      return CompositorFrameHandle::TYPE_ACCELERATED;
+    }
+    if (frame_->software_frame_data()) {
+      return CompositorFrameHandle::TYPE_SOFTWARE;
+    }
+
+    NOTREACHED();
+    return CompositorFrameHandle::TYPE_INVALID;
+  }
+
+  const QSize& GetSize() const Q_DECL_FINAL {
+    return size_;
+  }
+
+  QImage GetSoftwareFrame() Q_DECL_FINAL {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
+    return QImage(
+        static_cast<uchar *>(frame_->software_frame_data()->pixels()),
+        frame_->size_in_pixels().width(),
+        frame_->size_in_pixels().height(),
+        QImage::Format_ARGB32);
+  }
+
+  AcceleratedFrameData GetAcceleratedFrame() Q_DECL_FINAL {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
+    return AcceleratedFrameData(frame_->gl_frame_data()->texture_id());
+  }
+
+ private:
+  scoped_refptr<oxide::CompositorFrameHandle> frame_;
+  QSize size_;
+};
 
 void WebViewAdapter::Initialized() {
   DCHECK(isInitialized());
@@ -146,12 +199,12 @@ void WebViewAdapter::setContext(WebContextAdapter* context) {
   construct_props_->context = context;
 }
 
-void WebViewAdapter::updateSize(const QSize& size) {
-  priv->UpdateSize(gfx::Size(size.width(), size.height()));
+void WebViewAdapter::wasResized() {
+  priv->WasResized();
 }
 
-void WebViewAdapter::updateVisibility(bool visible) {
-  priv->UpdateVisibility(visible);
+void WebViewAdapter::visibilityChanged() {
+  priv->VisibilityChanged();
 }
 
 void WebViewAdapter::goBack() {
@@ -294,6 +347,16 @@ QSizeF WebViewAdapter::layerSize() const {
 QSizeF WebViewAdapter::viewportSize() const {
   const gfx::SizeF& size = priv->GetViewportSize();
   return QSizeF(size.width(), size.height());
+}
+
+QSharedPointer<CompositorFrameHandle> WebViewAdapter::compositorFrameHandle() {
+  QSharedPointer<CompositorFrameHandle> handle(
+      new CompositorFrameHandleImpl(priv->GetCompositorFrameHandle()));
+  return handle;
+}
+
+void WebViewAdapter::didCommitCompositorFrame() {
+  priv->DidCommitCompositorFrame();
 }
 
 } // namespace qt

@@ -29,29 +29,8 @@
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
-#if defined(ENABLE_COMPOSITING)
-#include "oxide_qquick_accelerated_frame_node.h"
-#endif
-#include "oxide_qquick_software_frame_node.h"
-
 namespace oxide {
 namespace qquick {
-
-class UpdatePaintNodeContext {
- public:
-  UpdatePaintNodeContext(RenderViewItem* item)
-      : type(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
-        item_(item) {}
-
-  virtual ~UpdatePaintNodeContext() {
-    item_->DidUpdatePaintNode(type);
-  }
-
-  oxide::qt::CompositorFrameHandle::Type type;
-
- private:
-  RenderViewItem* item_;
-};
 
 void RenderViewItem::onWindowChanged(QQuickWindow* window) {
   if (window) {
@@ -67,22 +46,7 @@ void RenderViewItem::geometryChanged(const QRectF& new_geometry,
   }
 }
 
-void RenderViewItem::DidUpdatePaintNode(oxide::qt::CompositorFrameHandle::Type type) {
-  last_composited_frame_type_ = type;
-  if (received_new_compositor_frame_) {
-    received_new_compositor_frame_ = false;
-    DidComposite();
-  }
-  compositor_frame_handle_.reset();
-}
-
-RenderViewItem::RenderViewItem() :
-    frame_evicted_(false),
-    received_new_compositor_frame_(false),
-    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {
-  setFlags(QQuickItem::ItemHasContents |
-           QQuickItem::ItemClipsChildrenToShape);
-
+RenderViewItem::RenderViewItem() {
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
 
@@ -135,7 +99,6 @@ QRect RenderViewItem::GetViewBoundsPix() {
 
 void RenderViewItem::SetSize(const QSize& size) {
   setSize(QSizeF(size));
-  polish();
 }
 
 QScreen* RenderViewItem::GetScreen() {
@@ -149,23 +112,6 @@ QScreen* RenderViewItem::GetScreen() {
 void RenderViewItem::SetInputMethodEnabled(bool enabled) {
   setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
   QGuiApplication::inputMethod()->update(Qt::ImEnabled);
-}
-
-void RenderViewItem::ScheduleUpdate() {
-  frame_evicted_ = false;
-  received_new_compositor_frame_ = true;
-
-  update();
-  polish();
-}
-
-void RenderViewItem::EvictCurrentFrame() {
-  frame_evicted_ = true;
-  received_new_compositor_frame_ = false;
-
-  Q_ASSERT(!compositor_frame_handle_);
-
-  update();
 }
 
 void RenderViewItem::focusInEvent(QFocusEvent* event) {
@@ -235,86 +181,6 @@ void RenderViewItem::touchEvent(QTouchEvent* event) {
     forceActiveFocus();
   }
   HandleTouchEvent(event);
-}
-
-void RenderViewItem::updatePolish() {
-  compositor_frame_handle_ = GetCompositorFrameHandle();
-}
-
-QSGNode* RenderViewItem::updatePaintNode(
-    QSGNode* oldNode,
-    UpdatePaintNodeData* data) {
-  Q_UNUSED(data);
-
-  UpdatePaintNodeContext context(this);
-
-  if (received_new_compositor_frame_) {
-    Q_ASSERT(compositor_frame_handle_);
-    Q_ASSERT(!frame_evicted_);
-    context.type = compositor_frame_handle_->GetType();
-  } else if (!frame_evicted_) {
-    Q_ASSERT(!compositor_frame_handle_);
-    context.type = last_composited_frame_type_;
-  }
-
-  if (context.type != last_composited_frame_type_) {
-    delete oldNode;
-    oldNode = NULL;
-  }
-
-  if (frame_evicted_) {
-    delete oldNode;
-    return NULL;
-  }
-
-#if defined(ENABLE_COMPOSITING)
-  if (context.type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
-    AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
-    if (!node) {
-      node = new AcceleratedFrameNode(this);
-    }
-
-    if (received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(compositor_frame_handle_);
-    }
-
-    return node;
-  }
-#else
-  Q_ASSERT(context.type != oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
-#endif
-
-  if (context.type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
-    SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
-    if (!node) {
-      node = new SoftwareFrameNode(this);
-    }
-
-    if (received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(compositor_frame_handle_);
-    }
-
-    return node;
-  }
-
-  Q_ASSERT(context.type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
-
-  SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
-  if (!node) {
-    node = new SoftwareFrameNode(this);
-  }
-
-  QRectF rect(QPoint(0, 0), QSizeF(width(), height()));
-
-  if (!oldNode || rect != node->rect()) {
-    QImage blank(qRound(rect.width()),
-                 qRound(rect.height()),
-                 QImage::Format_ARGB32);
-    blank.fill(Qt::white);
-    node->setImage(blank);
-  }
-
-  return node;
 }
 
 QVariant RenderViewItem::inputMethodQuery(Qt::InputMethodQuery query) const {

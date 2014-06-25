@@ -46,14 +46,9 @@ class WebView FINAL : public oxide::WebView,
 
   void Init(oxide::WebView::Params* params) FINAL;
 
-  size_t GetScriptMessageHandlerCount() const FINAL;
-  oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
-      size_t index) const FINAL;
-
-  gfx::Rect GetContainerBounds() FINAL;
+  blink::WebScreenInfo GetScreenInfo() const FINAL;
+  gfx::Rect GetContainerBoundsPix() const FINAL;
   bool IsVisible() const FINAL;
-
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -75,6 +70,10 @@ class WebView FINAL : public oxide::WebView,
   void ViewportWidthChanged() FINAL;
   void ViewportHeightChanged() FINAL;
 
+  size_t GetScriptMessageHandlerCount() const FINAL;
+  oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const FINAL;
+
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
   void OnIconChanged(const GURL& icon) FINAL;
@@ -94,6 +93,13 @@ class WebView FINAL : public oxide::WebView,
   void OnNavigationListPruned(bool from_front, int count) FINAL;
   void OnNavigationEntryChanged(int index) FINAL;
 
+  bool OnAddMessageToConsole(int32 level,
+                             const base::string16& message,
+                             int32 line_no,
+                             const base::string16& source_id) FINAL;
+
+  void OnToggleFullscreenMode(bool enter) FINAL;
+
   void OnWebPreferencesDestroyed() FINAL;
 
   void OnRequestGeolocationPermission(
@@ -102,21 +108,18 @@ class WebView FINAL : public oxide::WebView,
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) FINAL;
 
-  bool OnAddMessageToConsole(int32 level,
-                             const base::string16& message,
-                             int32 line_no,
-                             const base::string16& source_id) FINAL;
-
-  void OnToggleFullscreenMode(bool enter) FINAL;
-
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) FINAL;
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
+  oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;
+
+  void OnSwapCompositorFrame() FINAL;
+  void OnEvictCurrentFrame() FINAL;
 
   WebViewAdapter* adapter_;
 

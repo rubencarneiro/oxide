@@ -101,9 +101,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   bool IsShowing() FINAL;
 
   // RenderWidgetHostView
-  void OnCompositorSwapFrame() FINAL;
-  void OnEvictCurrentFrame() FINAL;
-
   void OnUpdateCursor(const content::WebCursor& cursor) FINAL;
 
   scoped_ptr<RenderWidgetHostViewDelegate> delegate_;
