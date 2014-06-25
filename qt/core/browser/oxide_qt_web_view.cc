@@ -371,10 +371,10 @@ void WebView::OnDownloadRequested(const GURL& url,
   OxideQDownloadRequest
     downloadRequest(
         QUrl(QString::fromStdString(url.spec())),
-	QString::fromStdString(mimeType),
-	shouldPrompt,
+        QString::fromStdString(mimeType),
+        shouldPrompt,
         QString::fromStdString(base::UTF16ToUTF8(suggestedFilename)),
-	QString::fromStdString(cookies),
+        QString::fromStdString(cookies),
         QString::fromStdString(referrer));
 
   adapter_->DownloadRequested(&downloadRequest);

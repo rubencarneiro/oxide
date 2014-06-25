@@ -43,6 +43,7 @@ class ResourceDispatcherHostDelegate :
 
   virtual bool ShouldDownloadUrl(
       const GURL& url,
+      const GURL& first_party_url,
       bool is_content_initiated,
       const base::string16& suggested_name,
       const bool use_prompt,
@@ -50,8 +51,7 @@ class ResourceDispatcherHostDelegate :
       const std::string& mime_type,
       int render_process_id,
       int render_view_id,
-      content::ResourceContext* resource_context,
-      content::ContentBrowserClient* content_browser_client) FINAL;
+      content::ResourceContext* resource_context) FINAL;
 
  private:
 
@@ -68,6 +68,7 @@ class ResourceDispatcherHostDelegate :
 
   void DispatchDownloadRequest(
       const GURL& url,
+      const GURL& first_party_url,
       bool is_content_initiated,
       const base::string16& suggested_name,
       const bool use_prompt,
@@ -75,18 +76,14 @@ class ResourceDispatcherHostDelegate :
       const std::string& mime_type,
       int render_process_id,
       int render_view_id,
-      content::ResourceContext* resource_context,
-      content::ContentBrowserClient* content_browser_client);
+      content::ResourceContext* resource_context);
 
   static void DispatchDownloadRequestWithCookies(
       const DownloadRequestParams & params,
       const std::string& cookies);
 
-  net::CookieStore* GetCookieStoreForURL(
-      const GURL& url,
-      int render_process_id,
-      content::ResourceContext* resource_context,
-      content::ContentBrowserClient* content_browser_client);
+  net::CookieStore* GetCookieStoreForContext(
+      content::ResourceContext* resource_context);
 };
 
 } // namespace oxide

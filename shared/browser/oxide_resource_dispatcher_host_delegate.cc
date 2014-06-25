@@ -47,6 +47,7 @@
 namespace oxide {
 
 bool ResourceDispatcherHostDelegate::ShouldDownloadUrl(const GURL& url,
+      const GURL& first_party_url,
       bool is_content_initiated,
       const base::string16& suggested_name,
       const bool use_prompt,
@@ -54,11 +55,11 @@ bool ResourceDispatcherHostDelegate::ShouldDownloadUrl(const GURL& url,
       const std::string& mime_type,
       int render_process_id,
       int render_view_id,
-      content::ResourceContext* resource_context,
-      content::ContentBrowserClient* content_browser_client) {
+      content::ResourceContext* resource_context) {
 
   DispatchDownloadRequest(
       url,
+      first_party_url,
       is_content_initiated,
       suggested_name,
       use_prompt,
@@ -66,14 +67,14 @@ bool ResourceDispatcherHostDelegate::ShouldDownloadUrl(const GURL& url,
       mime_type,
       render_process_id,
       render_view_id,
-      resource_context,
-      content_browser_client);
+      resource_context);
 
   return false;
 }
 
 void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
     const GURL& url,
+    const GURL& first_party_url,
     bool is_content_initiated,
     const base::string16& suggested_name,
     const bool use_prompt,
@@ -81,8 +82,7 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
     const std::string& mime_type,
     int render_process_id,
     int render_view_id,
-    content::ResourceContext* resource_context,
-    content::ContentBrowserClient* content_browser_client) {
+    content::ResourceContext* resource_context) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
   DownloadRequestParams params;
@@ -95,22 +95,27 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
   params.render_process_id = render_process_id;
   params.render_view_id = render_view_id;
 
-  net::CookieStore* cookie_store =
-      GetCookieStoreForURL(url,
-          render_process_id,
-          resource_context,
-	  content_browser_client);
+  BrowserContextIOData* io_data =
+      BrowserContextIOData::FromResourceContext(resource_context);
 
-  if (cookie_store) {
-    // TODO: Validate CanReadRawCookies for the child_id security policy?
-    cookie_store->GetCookiesWithOptionsAsync(
-        url, net::CookieOptions(),
-	base::Bind(&ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies,
-		   params));
+  if (io_data && io_data->CanAccessCookies(url, first_party_url, false)) {
+    net::CookieStore* cookie_store =
+      GetCookieStoreForContext(resource_context);
+
+    if (cookie_store) {
+      net::CookieOptions cookie_options;
+      cookie_options.set_include_httponly();
+
+      cookie_store->GetCookiesWithOptionsAsync(
+          url, cookie_options,
+	  base::Bind(&ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies,
+	  	     params));
+      return;
+    }
   }
-  else {
-    DispatchDownloadRequestWithCookies(params, std::string());
-  }
+
+  // Fallback with default with empty cookies
+  DispatchDownloadRequestWithCookies(params, std::string());
 }
 
 void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
@@ -136,9 +141,6 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
 
   WebView* webview = WebView::FromRenderViewHost(rvh);
   if (!webview) {
-    LOG(ERROR) << "Cannot dispatch download request to invalid webview (NULL)"
-               << " for render_process_id & render_view_id:"
-	       << params.render_process_id << ", " << params.render_view_id;
     return;
   }
   webview->DownloadRequested(
@@ -150,24 +152,11 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
     params.referrer.GetContent());
 }
 
-net::CookieStore* ResourceDispatcherHostDelegate::GetCookieStoreForURL(
-    const GURL& url,
-    int render_process_id,
-    content::ResourceContext* resource_context,
-    content::ContentBrowserClient* content_browser_client) {
-  net::URLRequestContext* context =
-      content_browser_client->OverrideRequestContextForURL(
-          url, resource_context);
-  if (context)
-    return context->cookie_store();
-
-  net::CookieStore* cookie_store =
-      content_browser_client->OverrideCookieStoreForRenderProcess(
-          render_process_id);
-  if (cookie_store)
-    return cookie_store;
-
-  return resource_context->GetRequestContext()->cookie_store();
+net::CookieStore* ResourceDispatcherHostDelegate::GetCookieStoreForContext(
+    content::ResourceContext* resource_context) {
+  return resource_context && resource_context->GetRequestContext()
+      ? resource_context->GetRequestContext()->cookie_store()
+      : NULL;
 }
 
 } // namespace oxide
