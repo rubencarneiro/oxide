@@ -35,7 +35,7 @@
 
 namespace {
 
-const std::string kDevtoolsServerIp = "127.0.0.1";
+const char kDevtoolsServerIp[] = "127.0.0.1";
 
 }
 
