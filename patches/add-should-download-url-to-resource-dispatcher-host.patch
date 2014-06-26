@@ -59,6 +59,7 @@ diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/b
 +  if (delegate_) {
 +    bool should_download_url = delegate_->ShouldDownloadUrl(
 +      url,
++      request->first_party_for_cookies(),
 +      is_content_initiated,
 +      save_info->suggested_name,
 +      save_info->prompt_for_save_location,
@@ -66,8 +67,7 @@ diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/b
 +      std::string(), // mime_type
 +      child_id,
 +      route_id,
-+      context,
-+      GetContentClient()->browser());
++      context);
 +    if (!should_download_url) {
 +      return CallbackAndReturn(started_callback,
 +			       DOWNLOAD_INTERRUPT_REASON_USER_SHUTDOWN);
@@ -85,6 +85,7 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/conte
  
 +bool ResourceDispatcherHostDelegate::ShouldDownloadUrl(
 +    const GURL& url,
++    const GURL& first_party_url,
 +    bool is_content_initiated,
 +    const base::string16& suggested_name,
 +    const bool use_prompt,
@@ -92,8 +93,7 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/conte
 +    const std::string& mime_type,
 +    int render_process_id,
 +    int render_view_id,
-+    ResourceContext* resource_context,
-+    ContentBrowserClient* content_browser_client) {
++    ResourceContext* resource_context) {
 +  return true;
 +}
 +
@@ -103,14 +103,6 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/conte
 diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/content/public/browser/resource_dispatcher_host_delegate.h
 --- a/content/public/browser/resource_dispatcher_host_delegate.h
 +++ b/content/public/browser/resource_dispatcher_host_delegate.h
-@@ -20,6 +20,7 @@
- }
- 
- namespace content {
-+class ContentBrowserClient;
- class ResourceContext;
- class ResourceThrottle;
- class StreamHandle;
 @@ -140,6 +141,19 @@
    // Notification that a request has completed.
    virtual void RequestComplete(net::URLRequest* url_request);
@@ -118,6 +110,7 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/conten
 +  // Returns whether a given download request should be carried on.
 +  virtual bool ShouldDownloadUrl(
 +      const GURL& url,
++      const GURL& first_party_url,
 +      bool is_content_initiated,
 +      const base::string16& suggested_name,
 +      const bool use_prompt,
@@ -125,8 +118,7 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/conten
 +      const std::string& mime_type,
 +      int render_process_id,
 +      int render_view_id,
-+      ResourceContext* resource_context,
-+      ContentBrowserClient* content_browser_client);
++      ResourceContext* resource_context);
 +
   protected:
    ResourceDispatcherHostDelegate();
