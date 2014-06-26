@@ -17,8 +17,12 @@
 
 #include "oxide_qquick_accelerated_frame_node.h"
 
+#include <QPoint>
 #include <QQuickWindow>
+#include <QRect>
 #include <QSGTexture>
+
+#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
 
 #include "oxide_qquick_render_view_item.h"
 
@@ -32,10 +36,15 @@ AcceleratedFrameNode::AcceleratedFrameNode(RenderViewItem* item) :
 
 AcceleratedFrameNode::~AcceleratedFrameNode() {}
 
-void AcceleratedFrameNode::updateTexture(unsigned int texture_id,
-                                         const QSize& size) {
+void AcceleratedFrameNode::updateNode(
+    QSharedPointer<oxide::qt::CompositorFrameHandle> handle) {
+  handle_ = handle;
+
+  setRect(QRect(QPoint(0, 0), handle_->GetSize()));
+
   texture_.reset(item_->window()->createTextureFromId(
-      texture_id, size,
+      handle_->GetAcceleratedFrame().texture_id(),
+      handle_->GetSize(),
       QQuickWindow::TextureHasAlphaChannel));
   setTexture(texture_.data());
 }

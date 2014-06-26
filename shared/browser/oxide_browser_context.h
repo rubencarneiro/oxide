@@ -121,12 +121,20 @@ class BrowserContext : public content::BrowserContext,
   struct Params {
     Params(const base::FilePath& path,
            const base::FilePath& cache_path,
-           const content::CookieStoreConfig::SessionCookieMode session_cookie_mode) :
-        path(path), cache_path(cache_path), session_cookie_mode(session_cookie_mode) {}
+           const content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
+	   bool devtools_enabled,
+	   int devtools_port) :
+        path(path),
+	cache_path(cache_path),
+        session_cookie_mode(session_cookie_mode),
+        devtools_enabled(devtools_enabled),
+        devtools_port(devtools_port) {}
 
     base::FilePath path;
     base::FilePath cache_path;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
+    bool devtools_enabled;
+    int devtools_port;
   };
 
   virtual ~BrowserContext();
@@ -180,6 +188,10 @@ class BrowserContext : public content::BrowserContext,
   bool IsPopupBlockerEnabled() const;
   virtual void SetIsPopupBlockerEnabled(bool enabled) = 0;
 
+  virtual bool GetDevtoolsEnabled() const = 0;
+
+  virtual int GetDevtoolsPort() const = 0;
+
   BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
 
   virtual UserScriptMaster& UserScriptManager() = 0;
@@ -218,39 +230,13 @@ class BrowserContext : public content::BrowserContext,
           const base::FilePath& partition_path,
           bool in_memory) FINAL;
 
-  void RequestMidiSysExPermission(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      const GURL& requesting_frame,
-      bool user_gesture,
-      const MidiSysExPermissionCallback& callback) FINAL;
-
-  void CancelMidiSysExPermissionRequest(
-      int render_process_id,
-      int render_view_id,
-      int bridge_id,
-      const GURL& requesting_frame) FINAL;
-
-  void RequestProtectedMediaIdentifierPermission(
-      int render_process_id,
-      int render_view_id,
-      const GURL& origin,
-      const ProtectedMediaIdentifierPermissionCallback& callback) FINAL;
-
-  void CancelProtectedMediaIdentifierPermissionRequests(
-      int render_process_id,
-      int render_view_id,
-      const GURL& origin) FINAL;
-
   content::DownloadManagerDelegate* GetDownloadManagerDelegate() FINAL;
-
-  content::GeolocationPermissionContext*
-      GetGeolocationPermissionContext() FINAL;
 
   content::BrowserPluginGuestManager* GetGuestManager() FINAL;
 
   quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
+
+  content::PushMessagingService* GetPushMessagingService() FINAL;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
@@ -258,8 +244,6 @@ class BrowserContext : public content::BrowserContext,
   IODataHandle io_data_handle_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
-
-  scoped_refptr<GeolocationPermissionContext> geolocation_permission_context_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

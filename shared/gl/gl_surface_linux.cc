@@ -19,11 +19,11 @@
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
-#include "ui/gfx/ozone/surface_factory_ozone.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_surface_egl.h"
 #include "ui/gl/gl_surface_glx.h"
 #include "ui/gl/gl_surface_osmesa.h"
+#include "ui/ozone/public/surface_factory_ozone.h"
 
 namespace gfx {
 
@@ -104,7 +104,7 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
 }
 
 EGLNativeDisplayType GetPlatformDefaultEGLNativeDisplay() {
-  return SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
+  return ui::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay();
 }
 
 } // namespace gfx

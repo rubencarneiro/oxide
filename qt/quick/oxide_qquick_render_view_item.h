@@ -20,8 +20,8 @@
 
 #include <QQuickItem>
 #include <QCursor>
-#include <QImage>
 #include <QRect>
+#include <QSharedPointer>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_render_widget_host_view_delegate.h"
@@ -64,6 +64,8 @@ class RenderViewItem Q_DECL_FINAL :
 
   void ScheduleUpdate() Q_DECL_FINAL;
 
+  void EvictCurrentFrame() Q_DECL_FINAL;
+
   void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
   void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
 
@@ -89,18 +91,21 @@ class RenderViewItem Q_DECL_FINAL :
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
+ private Q_SLOTS:
+  void onWindowChanged(QQuickWindow* window);
+
  private:
   friend class UpdatePaintNodeContext;
 
   void geometryChanged(const QRectF& new_geometry,
                        const QRectF& old_geometry) Q_DECL_FINAL;
-  void DidUpdatePaintNode(oxide::qt::CompositorFrameType type);
+
+  void DidUpdatePaintNode(oxide::qt::CompositorFrameHandle::Type type);
 
   bool received_new_compositor_frame_;
-  oxide::qt::CompositorFrameType last_composited_frame_type_;
-
-  QImage software_frame_data_;
-  oxide::qt::AcceleratedFrameTextureHandle accelerated_frame_data_;
+  bool frame_evicted_;
+  oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
+  QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
 
   Q_DISABLE_COPY(RenderViewItem);
 };

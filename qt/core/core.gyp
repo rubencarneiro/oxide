@@ -28,6 +28,9 @@
     {
       'target_name': 'OxideQtCore_private',
       'type': 'static_library',
+      'defines': [
+        'QT_NO_SIGNALS_SLOTS_KEYWORDS',
+      ],
       'dependencies': [
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',
@@ -102,6 +105,9 @@
       'target_name': 'OxideQtCore_public',
       'type': 'static_library',
       'cflags_cc!': [ '-fno-rtti' ],
+      'defines': [
+        'QT_NO_SIGNALS_SLOTS_KEYWORDS',
+      ],
       'dependencies': [
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',

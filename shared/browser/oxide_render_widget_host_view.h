@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 
+#include <queue>
 #include <string>
 
 #include "base/basictypes.h"
@@ -25,21 +26,23 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
-#include "base/synchronization/lock.h"
+#include "cc/layers/delegated_frame_resource_collection.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "content/common/cursors/webcursor.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/events/gestures/gesture_recognizer.h"
 #include "ui/events/gestures/gesture_types.h"
 #include "ui/gfx/rect.h"
+#include "ui/gfx/size.h"
 
-#include "shared/browser/oxide_gpu_utils.h"
-
-typedef unsigned int GLuint;
+#include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/oxide_renderer_frame_evictor_client.h"
 
 namespace cc {
-class SharedBitmap;
+class DelegatedFrameProvider;
+class DelegatedRendererLayer;
 }
 
 namespace content {
@@ -53,40 +56,16 @@ class TouchEvent;
 
 namespace oxide {
 
-class AcceleratedFrameHandle;
-class RenderWidgetHostView;
+class Compositor;
+class CompositorFrameHandle;
 class WebView;
-
-class SoftwareFrameHandle FINAL {
- public:
-  SoftwareFrameHandle(RenderWidgetHostView* rwhv,
-                      unsigned frame_id,
-                      uint32 surface_id,
-                      scoped_ptr<cc::SharedBitmap> bitmap,
-                      const gfx::Size& size,
-                      float scale);
-  ~SoftwareFrameHandle();
-
-  void* GetPixels();
-  unsigned frame_id() const { return frame_id_; }
-  gfx::Size size_in_pixels() const { return size_in_pixels_; }
-  float device_scale_factor() const { return device_scale_factor_; }
-
-  void WasFreed();
-
- private:
-  RenderWidgetHostView* rwhv_;
-  unsigned frame_id_;
-  uint32 surface_id_;
-  scoped_ptr<cc::SharedBitmap> bitmap_;
-  gfx::Size size_in_pixels_;
-  float device_scale_factor_;
-};
 
 class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                              public ui::GestureEventHelper,
                              public ui::GestureConsumer,
-                             public AcceleratedFrameHandle::Client,
+                             public CompositorClient,
+                             public RendererFrameEvictorClient,
+                             public cc::DelegatedFrameResourceCollectionClient,
                              public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
   virtual ~RenderWidgetHostView();
@@ -95,12 +74,10 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   content::RenderWidgetHostImpl* host() const { return host_; }
 
-  SoftwareFrameHandle* GetCurrentSoftwareFrameHandle();
-  AcceleratedFrameHandle* GetCurrentAcceleratedFrameHandle();
-
+  CompositorFrameHandle* GetCompositorFrameHandle();
   void DidCommitCompositorFrame();
 
-  // content::RenderWidgetHostView
+  // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
 
   void SetBounds(const gfx::Rect& rect) FINAL;
@@ -108,10 +85,11 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
  protected:
   RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
 
-  // content::RenderWidgetHostViewBase
+  // content::RenderWidgetHostViewBase implementation
   void WasShown() FINAL;
   void WasHidden() FINAL;
 
+  // =================
   void OnFocus();
   void OnBlur();
   void OnResize();
@@ -127,9 +105,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void HandleTouchEvent(const ui::TouchEvent& event);
 
  private:
-  typedef base::Callback<void(void)> SendSwapCompositorFrameAckCallback;
-
-  // content::RenderWidgetHostViewBase
+  // content::RenderWidgetHostViewBase implementation
   virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
 
   void OnSwapCompositorFrame(uint32 output_surface_id,
@@ -148,9 +124,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void UpdateCursor(const content::WebCursor& cursor) FINAL;
   void SetIsLoading(bool is_loading) FINAL;
 
-  virtual void TextInputTypeChanged(ui::TextInputType type,
-                                    ui::TextInputMode mode,
-                                    bool can_compose_inline) OVERRIDE;
+  virtual void TextInputStateChanged(
+      const ViewHostMsg_TextInputState_Params& params) OVERRIDE;
+
   virtual void ImeCancelComposition() OVERRIDE;
 
   void RenderProcessGone(base::TerminationStatus status, int error_code) FINAL;
@@ -201,7 +177,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
       const gfx::Range& range,
       const std::vector<gfx::Rect>& character_bounds) FINAL;
 
-  // content::RenderWidgetHostView
+  // content::RenderWidgetHostView implementation
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 
   gfx::NativeView GetNativeView() const FINAL;
@@ -215,27 +191,34 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   bool LockMouse() FINAL;
   void UnlockMouse() FINAL;
 
-  // ui::GestureEventHelper
+  // ui::GestureEventHelper implementation
   bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
   void DispatchGestureEvent(ui::GestureEvent* event) FINAL;
   void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
 
-  // AcceleratedFrameHandle::Client
-  void OnTextureResourcesAvailable(AcceleratedFrameHandle* handle) FINAL;
+  // cc::DelegatedFrameResourceCollectionClient implementation
+  void UnusedResourcesAreAvailable() FINAL;
+
+  // CompositorClient implementation
+  void CompositorDidCommit() FINAL;
+  void CompositorSwapFrame(uint32 surface_id,
+                           CompositorFrameHandle* frame) FINAL;
+
+  // RendererFrameEvictorClient implemenetation
+  void EvictCurrentFrame() FINAL;
 
   // ===================
 
-  bool ShouldCompositeNewFrame();
-
-  void SendSwapCompositorFrameAck(uint32 surface_id);
-  static void SendSwapCompositorFrameAckOnMainThread(
-      SendSwapCompositorFrameAckCallback ack);
+  void DestroyDelegatedContent();
+  void SendDelegatedFrameAck(uint32 surface_id);
+  void SendReturnedDelegatedResources();
+  void RunAckCallbacks();
 
   void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
   void ForwardGestureEventToRenderer(ui::GestureEvent* event);
 
-  virtual void SwapSoftwareFrame();
-  virtual void SwapAcceleratedFrame();
+  virtual void OnCompositorSwapFrame() = 0;
+  virtual void OnEvictCurrentFrame();
 
   virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
@@ -243,14 +226,25 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   gfx::GLSurfaceHandle shared_surface_handle_;
 
-  base::Lock compositor_frame_ack_callback_lock_;
-  SendSwapCompositorFrameAckCallback compositor_frame_ack_callback_;
+  // XXX: Move compositor_ to WebView (https://launchpad.net/bugs/1312081)
+  scoped_ptr<Compositor> compositor_;
 
-  scoped_refptr<AcceleratedFrameHandle> pending_accelerated_frame_;
-  scoped_refptr<AcceleratedFrameHandle> current_accelerated_frame_;
-  scoped_refptr<AcceleratedFrameHandle> previous_accelerated_frame_;
-  scoped_ptr<SoftwareFrameHandle> current_software_frame_;
-  scoped_ptr<SoftwareFrameHandle> previous_software_frame_;
+  scoped_refptr<cc::DelegatedFrameResourceCollection> resource_collection_;
+  scoped_refptr<cc::DelegatedFrameProvider> frame_provider_;
+  scoped_refptr<cc::DelegatedRendererLayer> layer_;
+
+  // The output surface ID for the last frame from the renderer
+  uint32 last_output_surface_id_;
+
+  std::queue<base::Closure> ack_callbacks_;
+
+  gfx::Size last_frame_size_dip_;
+
+  scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
+  std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
+  std::queue<uint32> received_surface_ids_;
+
+  bool frame_is_evicted_;
 
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;

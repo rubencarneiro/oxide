@@ -15,33 +15,18 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_GEOLOCATION_PERMISSION_CONTEXT_
-#define _OXIDE_SHARED_BROWSER_GEOLOCATION_PERMISSION_CONTEXT_
-
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "content/public/browser/geolocation_permission_context.h"
+#ifndef _OXIDE_SHARED_BROWSER_RENDERER_FRAME_EVICTOR_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_RENDERER_FRAME_EVICTOR_CLIENT_H_
 
 namespace oxide {
 
-class GeolocationPermissionContext FINAL :
-    public content::GeolocationPermissionContext {
+class RendererFrameEvictorClient {
  public:
-  GeolocationPermissionContext();
+  virtual ~RendererFrameEvictorClient();
 
-  void RequestGeolocationPermission(
-      content::WebContents* contents,
-      int bridge_id,
-      const GURL& requesting_frame,
-      bool user_gesture,
-      base::Callback<void(bool)> callback) FINAL;
-
-  void CancelGeolocationPermissionRequest(
-      content::WebContents* contents,
-      int bridge_id,
-      const GURL& requesting_frame) FINAL;
+  virtual void EvictCurrentFrame() = 0;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_GEOLOCATION_PERMISSION_CONTEXT_
+#endif // _OXIDE_SHARED_BROWSER_RENDERER_FRAME_EVICTOR_CLIENT_H_

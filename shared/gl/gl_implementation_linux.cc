@@ -22,7 +22,6 @@
 #include "base/bind.h"
 #include "base/logging.h"
 #include "base/native_library.h"
-#include "ui/gfx/ozone/surface_factory_ozone.h"
 #include "ui/gl/gl_egl_api_implementation.h"
 #include "ui/gl/gl_gl_api_implementation.h"
 #include "ui/gl/gl_glx_api_implementation.h"
@@ -30,6 +29,7 @@
 #include "ui/gl/gl_osmesa_api_implementation.h"
 #include "ui/gl/gl_share_group.h"
 #include "ui/ozone/ozone_platform.h"
+#include "ui/ozone/public/surface_factory_ozone.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 
@@ -126,7 +126,7 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
     }
 
     case kGLImplementationEGLGLES2: {
-      if (!SurfaceFactoryOzone::GetInstance()->LoadEGLGLES2Bindings(
+      if (!ui::SurfaceFactoryOzone::GetInstance()->LoadEGLGLES2Bindings(
               base::Bind(&AddGLNativeLibrary),
               base::Bind(&SetGLGetProcAddressProc))) {
         return false;

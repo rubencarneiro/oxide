@@ -84,9 +84,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   void Blur() FINAL;
 
-  void TextInputTypeChanged(ui::TextInputType type,
-                            ui::TextInputMode mode,
-                            bool can_compose_inline) FINAL;
+  void TextInputStateChanged(
+      const ViewHostMsg_TextInputState_Params& params) FINAL;
   void ImeCancelComposition() FINAL;
 
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
@@ -102,8 +101,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   bool IsShowing() FINAL;
 
   // RenderWidgetHostView
-  void SwapSoftwareFrame() FINAL;
-  void SwapAcceleratedFrame() FINAL;
+  void OnCompositorSwapFrame() FINAL;
+  void OnEvictCurrentFrame() FINAL;
 
   void OnUpdateCursor(const content::WebCursor& cursor) FINAL;
 
