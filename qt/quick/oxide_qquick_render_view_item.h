@@ -44,7 +44,6 @@ class RenderViewItem Q_DECL_FINAL :
 
   void Blur() Q_DECL_FINAL;
   void Focus() Q_DECL_FINAL;
-  bool HasFocus() Q_DECL_FINAL;
 
   void Show() Q_DECL_FINAL;
   void Hide() Q_DECL_FINAL;
@@ -57,9 +56,6 @@ class RenderViewItem Q_DECL_FINAL :
   QScreen* GetScreen() Q_DECL_FINAL;
 
   void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
-
-  void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
-  void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
 
   void keyPressEvent(QKeyEvent* event) Q_DECL_FINAL;
   void keyReleaseEvent(QKeyEvent* event) Q_DECL_FINAL;

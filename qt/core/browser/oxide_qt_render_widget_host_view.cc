@@ -825,6 +825,7 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
 
 void RenderWidgetHostView::Blur() {
   delegate_->Blur();
+  oxide::RenderWidgetHostView::Blur();
 }
 
 void RenderWidgetHostView::TextInputStateChanged(
@@ -845,10 +846,7 @@ void RenderWidgetHostView::ImeCancelComposition() {
 
 void RenderWidgetHostView::Focus() {
   delegate_->Focus();
-}
-
-bool RenderWidgetHostView::HasFocus() const {
-  return delegate_->HasFocus();
+  oxide::RenderWidgetHostView::Focus();
 }
 
 void RenderWidgetHostView::Show() {
@@ -937,15 +935,12 @@ float RenderWidgetHostView::GetDeviceScaleFactor() const {
 
 void RenderWidgetHostView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus()) {
-    OnFocus();
     if ((input_type_ != ui::TEXT_INPUT_TYPE_NONE) &&
         !QGuiApplication::inputMethod()->isVisible()) {
       // the focused node hasn’t changed and it is an input field
       delegate_->SetInputMethodEnabled(true);
       QGuiApplication::inputMethod()->show();
     }
-  } else {
-    OnBlur();
   }
 }
 

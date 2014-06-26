@@ -196,8 +196,6 @@ void RenderWidgetHostView::InitAsFullscreen(
 void RenderWidgetHostView::MovePluginWindows(
     const std::vector<content::WebPluginGeometry>& moves) {}
 
-void RenderWidgetHostView::Blur() {}
-
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
   last_cursor_ = cursor;
   if (!is_loading_) {
@@ -369,8 +367,6 @@ gfx::NativeViewId RenderWidgetHostView::GetNativeViewId() const {
 gfx::NativeViewAccessible RenderWidgetHostView::GetNativeViewAccessible() {
   return NULL;
 }
-
-void RenderWidgetHostView::Focus() {}
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
   return true;
@@ -566,19 +562,12 @@ void RenderWidgetHostView::WasHidden() {
   RunAckCallbacks();
 }
 
-void RenderWidgetHostView::OnFocus() {
-  host()->GotFocus();
-  GetRenderWidgetHost()->SetActive(true);
+bool RenderWidgetHostView::HasFocus() const {
+  if (!web_view_) {
+    return false;
+  }
 
-  // XXX: Should we have a run-time check to see if this is required?
-  host()->SetInputMethodActive(true);
-}
-
-void RenderWidgetHostView::OnBlur() {
-  host()->SetInputMethodActive(false);
-
-  GetRenderWidgetHost()->SetActive(false);
-  GetRenderWidgetHost()->Blur();
+  return web_view_->HasFocus();
 }
 
 void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {
@@ -621,6 +610,13 @@ void RenderWidgetHostView::SetWebView(WebView* view) {
   }
 }
 
+void RenderWidgetHostView::Blur() {
+  host_->SetInputMethodActive(false);
+
+  host_->SetActive(false);
+  host_->Blur();
+}
+
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
   return host_;
 }
@@ -631,6 +627,14 @@ void RenderWidgetHostView::SetSize(const gfx::Size& size) {
 
 void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
   SetSize(rect.size());
+}
+
+void RenderWidgetHostView::Focus() {
+  host_->Focus();
+  host_->SetActive(true);
+
+  // XXX: Should we have a run-time check to see if this is required?
+  host_->SetInputMethodActive(true);
 }
 
 } // namespace oxide

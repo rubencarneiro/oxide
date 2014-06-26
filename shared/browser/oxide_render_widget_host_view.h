@@ -72,10 +72,14 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void CompositorDidCommit();
   void SetWebView(WebView* view);
 
+  // content::RenderWidgetHostViewBase implementation
+  virtual void Blur() OVERRIDE;
+
   // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
   virtual void SetSize(const gfx::Size& size) OVERRIDE;
   void SetBounds(const gfx::Rect& rect) FINAL;
+  virtual void Focus() OVERRIDE;
 
  protected:
   RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
@@ -84,10 +88,10 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void WasShown() FINAL;
   void WasHidden() FINAL;
 
-  // =================
-  void OnFocus();
-  void OnBlur();
+  // content::RenderWidgetHostView implementation
+  bool HasFocus() const FINAL; // TODO: Make private
 
+  // =================
   gfx::Rect caret_rect() const { return caret_rect_; }
   size_t selection_cursor_position() const {
     return selection_cursor_position_;
@@ -114,8 +118,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   void MovePluginWindows(
       const std::vector<content::WebPluginGeometry>& moves) FINAL;
-
-  virtual void Blur() OVERRIDE;
 
   void UpdateCursor(const content::WebCursor& cursor) FINAL;
   void SetIsLoading(bool is_loading) FINAL;
@@ -182,8 +184,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   gfx::NativeView GetNativeView() const FINAL;
   gfx::NativeViewId GetNativeViewId() const FINAL;
   gfx::NativeViewAccessible GetNativeViewAccessible() FINAL;
-
-  virtual void Focus() OVERRIDE;
 
   bool IsSurfaceAvailableForCopy() const FINAL;
 

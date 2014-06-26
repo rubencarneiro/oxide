@@ -49,10 +49,6 @@ void RenderViewItem::Focus() {
   setFocus(true);
 }
 
-bool RenderViewItem::HasFocus() {
-  return hasFocus();
-}
-
 void RenderViewItem::Show() {
   setVisible(true);
 }
@@ -84,16 +80,6 @@ QScreen* RenderViewItem::GetScreen() {
 void RenderViewItem::SetInputMethodEnabled(bool enabled) {
   setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
   QGuiApplication::inputMethod()->update(Qt::ImEnabled);
-}
-
-void RenderViewItem::focusInEvent(QFocusEvent* event) {
-  Q_ASSERT(event->gotFocus());
-  HandleFocusEvent(event);
-}
-
-void RenderViewItem::focusOutEvent(QFocusEvent* event) {
-  Q_ASSERT(event->lostFocus());
-  HandleFocusEvent(event);
 }
 
 void RenderViewItem::keyPressEvent(QKeyEvent* event) {

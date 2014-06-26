@@ -86,7 +86,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   // content::RenderWidgetHostView
   void Focus() FINAL;
-  bool HasFocus() const FINAL;
 
   void Show() FINAL;
   void Hide() FINAL;

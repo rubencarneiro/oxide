@@ -737,6 +737,7 @@ void WebView::Init(Params* params) {
 
     WasResized();
     VisibilityChanged();
+    FocusChanged();
 
     RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
     if (rwhv) {
@@ -961,6 +962,19 @@ void WebView::VisibilityChanged() {
     web_contents_->WasShown();
   } else {
     web_contents_->WasHidden();
+  }
+}
+
+void WebView::FocusChanged() {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  if (HasFocus()) {
+    rwhv->Focus();
+  } else {
+    rwhv->Blur();
   }
 }
 

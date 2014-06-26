@@ -115,6 +115,10 @@ bool WebView::IsVisible() const {
   return adapter_->IsVisible();
 }
 
+bool WebView::HasFocus() const {
+  return adapter_->HasFocus();
+}
+
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
     bool* did_suppress_message) {

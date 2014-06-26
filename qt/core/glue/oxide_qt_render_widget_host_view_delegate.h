@@ -23,7 +23,6 @@
 #include <QVariant>
 
 QT_BEGIN_NAMESPACE
-class QFocusEvent;
 class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
@@ -47,7 +46,6 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   virtual void Blur() = 0;
   virtual void Focus() = 0;
-  virtual bool HasFocus() = 0;
 
   virtual void Show() = 0;
   virtual void Hide() = 0;
@@ -64,7 +62,6 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
  protected:
   RenderWidgetHostViewDelegate();
 
-  void HandleFocusEvent(QFocusEvent* event);
   void HandleKeyEvent(QKeyEvent* event);
   void HandleMouseEvent(QMouseEvent* event);
   void HandleWheelEvent(QWheelEvent* event);

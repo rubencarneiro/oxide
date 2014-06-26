@@ -49,6 +49,7 @@ class WebView FINAL : public oxide::WebView,
   blink::WebScreenInfo GetScreenInfo() const FINAL;
   gfx::Rect GetContainerBoundsPix() const FINAL;
   bool IsVisible() const FINAL;
+  bool HasFocus() const FINAL;
 
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,

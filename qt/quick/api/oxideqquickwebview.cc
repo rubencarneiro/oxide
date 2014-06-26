@@ -248,6 +248,12 @@ bool OxideQQuickWebViewPrivate::IsVisible() const {
   return q->isVisible();
 }
 
+bool OxideQQuickWebViewPrivate::HasFocus() const {
+  Q_Q(const OxideQQuickWebView);
+
+  return q->hasActiveFocus();
+}
+
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
     int level,
     const QString& message,
@@ -560,6 +566,20 @@ void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
       !signal.isValid()) {
     d->updateWebPreferences();
   }
+}
+
+void OxideQQuickWebView::focusInEvent(QFocusEvent* event) {
+  Q_D(OxideQQuickWebView);
+  Q_ASSERT(event->gotFocus());
+
+  d->handleFocusEvent(event);
+}
+
+void OxideQQuickWebView::focusOutEvent(QFocusEvent* event) {
+  Q_D(OxideQQuickWebView);
+  Q_ASSERT(event->lostFocus());
+
+  d->handleFocusEvent(event);
 }
 
 void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,

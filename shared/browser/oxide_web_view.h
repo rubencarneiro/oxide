@@ -133,6 +133,7 @@ class WebView : public ScriptMessageTarget,
 
   void WasResized();
   void VisibilityChanged();
+  void FocusChanged();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -181,6 +182,7 @@ class WebView : public ScriptMessageTarget,
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
   virtual gfx::Rect GetContainerBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
+  virtual bool HasFocus() const = 0;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,

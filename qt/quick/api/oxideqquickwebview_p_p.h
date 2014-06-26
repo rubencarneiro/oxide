@@ -86,6 +86,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QScreen* GetScreen() const Q_DECL_FINAL;
   QRect GetContainerBoundsPix() const Q_DECL_FINAL;
   bool IsVisible() const Q_DECL_FINAL;
+  bool HasFocus() const Q_DECL_FINAL;
 
   void AddMessageToConsole(int level,
 			   const QString& message,

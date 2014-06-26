@@ -34,6 +34,7 @@
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
+class QFocusEvent;
 class QKeyEvent;
 class QScreen;
 class QSize;
@@ -113,6 +114,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void wasResized();
   void visibilityChanged();
+
+  void handleFocusEvent(QFocusEvent* event);
 
   void goBack();
   void goForward();
@@ -195,6 +198,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual QScreen* GetScreen() const = 0;
   virtual QRect GetContainerBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
+  virtual bool HasFocus() const = 0;
 
   virtual void AddMessageToConsole(int level,
                                    const QString& message,

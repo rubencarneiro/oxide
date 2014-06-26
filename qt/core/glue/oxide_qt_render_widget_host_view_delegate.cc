@@ -25,10 +25,6 @@ namespace qt {
 RenderWidgetHostViewDelegate::RenderWidgetHostViewDelegate() :
     rwhv_(NULL) {}
 
-void RenderWidgetHostViewDelegate::HandleFocusEvent(QFocusEvent* event) {
-  rwhv_->HandleFocusEvent(event);
-}
-
 void RenderWidgetHostViewDelegate::HandleKeyEvent(QKeyEvent* event) {
   rwhv_->HandleKeyEvent(event);
 }

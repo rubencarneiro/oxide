@@ -28,6 +28,7 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
@@ -205,6 +206,18 @@ void WebViewAdapter::wasResized() {
 
 void WebViewAdapter::visibilityChanged() {
   priv->VisibilityChanged();
+}
+
+void WebViewAdapter::handleFocusEvent(QFocusEvent* event) {
+  // XXX: Remove this
+  RenderWidgetHostView* rwhv =
+      static_cast<RenderWidgetHostView *>(
+        priv->GetWebContents()->GetRenderWidgetHostView());
+  if (rwhv) {
+    rwhv->HandleFocusEvent(event);
+  }
+
+  priv->FocusChanged();
 }
 
 void WebViewAdapter::goBack() {
