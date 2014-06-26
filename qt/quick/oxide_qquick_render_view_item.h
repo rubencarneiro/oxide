@@ -47,7 +47,6 @@ class RenderViewItem Q_DECL_FINAL :
 
   void Show() Q_DECL_FINAL;
   void Hide() Q_DECL_FINAL;
-  bool IsShowing() Q_DECL_FINAL;
 
   void UpdateCursor(const QCursor& cursor) Q_DECL_FINAL;
 

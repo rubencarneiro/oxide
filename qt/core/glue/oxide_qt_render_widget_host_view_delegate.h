@@ -49,7 +49,6 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   virtual void Show() = 0;
   virtual void Hide() = 0;
-  virtual bool IsShowing() = 0;
 
   virtual void UpdateCursor(const QCursor& cursor) = 0;
 

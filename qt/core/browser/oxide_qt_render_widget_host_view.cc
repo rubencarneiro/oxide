@@ -35,6 +35,7 @@
 #include <QTextCharFormat>
 #include <QTouchEvent>
 #include <QWheelEvent>
+#include <QWindow>
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
@@ -857,16 +858,12 @@ void RenderWidgetHostView::Focus() {
 
 void RenderWidgetHostView::Show() {
   delegate_->Show();
-  WasShown();
+  oxide::RenderWidgetHostView::Show();
 }
 
 void RenderWidgetHostView::Hide() {
   delegate_->Hide();
-  WasHidden();
-}
-
-bool RenderWidgetHostView::IsShowing() {
-  return delegate_->IsShowing();
+  oxide::RenderWidgetHostView::Hide();
 }
 
 void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {

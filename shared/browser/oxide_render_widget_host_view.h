@@ -84,12 +84,11 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
  protected:
   RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
 
-  // content::RenderWidgetHostViewBase implementation
-  void WasShown() FINAL;
-  void WasHidden() FINAL;
-
   // content::RenderWidgetHostView implementation
   bool HasFocus() const FINAL; // TODO: Make private
+
+  virtual void Show() OVERRIDE; // TODO: Make private
+  virtual void Hide() OVERRIDE; // TODO: Make private
 
   // =================
   gfx::Rect caret_rect() const { return caret_rect_; }
@@ -115,6 +114,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
                    const gfx::Rect& pos) FINAL;
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) FINAL;
+
+  void WasShown() FINAL;
+  void WasHidden() FINAL;
 
   void MovePluginWindows(
       const std::vector<content::WebPluginGeometry>& moves) FINAL;
@@ -187,6 +189,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   bool IsSurfaceAvailableForCopy() const FINAL;
 
+  bool IsShowing() FINAL;
+
   gfx::Rect GetViewBounds() const FINAL;
 
   bool LockMouse() FINAL;
@@ -246,6 +250,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
   blink::WebTouchEvent touch_event_;
 
+  bool is_showing_;
   gfx::Size last_size_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);

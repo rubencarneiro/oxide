@@ -57,10 +57,6 @@ void RenderViewItem::Hide() {
   setVisible(false);
 }
 
-bool RenderViewItem::IsShowing() {
-  return isVisible();
-}
-
 void RenderViewItem::UpdateCursor(const QCursor& cursor) {
   setCursor(cursor);
 }

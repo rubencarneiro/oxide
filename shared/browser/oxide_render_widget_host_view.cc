@@ -193,6 +193,21 @@ void RenderWidgetHostView::InitAsFullscreen(
   NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
 }
 
+void RenderWidgetHostView::WasShown() {
+  if (host_->is_hidden() && !frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->LockFrame(this);
+  }
+  host_->WasShown();
+}
+
+void RenderWidgetHostView::WasHidden() {
+  if (!host_->is_hidden() && !frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
+  }
+  host_->WasHidden();
+  RunAckCallbacks();
+}
+
 void RenderWidgetHostView::MovePluginWindows(
     const std::vector<content::WebPluginGeometry>& moves) {}
 
@@ -372,6 +387,39 @@ bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
   return true;
 }
 
+void RenderWidgetHostView::Show() {
+  if (is_showing_) {
+    return;
+  }
+  if (!web_view_) {
+    DCHECK(!is_showing_);
+    return;
+  }
+
+  is_showing_ = true;
+
+  WasShown();
+}
+
+void RenderWidgetHostView::Hide() {
+  if (!is_showing_) {
+    return;
+  }
+
+  DCHECK(web_view_);
+  is_showing_ = false;
+
+  WasHidden();
+}
+
+bool RenderWidgetHostView::IsShowing() {
+  if (!web_view_) {
+    return false;
+  }
+
+  return web_view_->IsVisible();
+}
+
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
   if (!web_view_) {
     return gfx::Rect(last_size_);
@@ -539,27 +587,13 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     selection_cursor_position_(0),
     selection_anchor_position_(0),
     is_loading_(false),
-    gesture_recognizer_(ui::GestureRecognizer::Create()) {
+    gesture_recognizer_(ui::GestureRecognizer::Create()),
+    is_showing_(false) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   resource_collection_->SetClient(this);
   gesture_recognizer_->AddGestureEventHelper(this);
   host_->SetView(this);
-}
-
-void RenderWidgetHostView::WasShown() {
-  if (host_->is_hidden() && !frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->LockFrame(this);
-  }
-  host()->WasShown();
-}
-
-void RenderWidgetHostView::WasHidden() {
-  if (!host_->is_hidden() && !frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
-  }
-  host()->WasHidden();
-  RunAckCallbacks();
 }
 
 bool RenderWidgetHostView::HasFocus() const {
@@ -607,6 +641,14 @@ void RenderWidgetHostView::SetWebView(WebView* view) {
   if (web_view_) {
     host_->SendScreenRects();
     host_->WasResized();
+
+    if (web_view_->IsVisible()) {
+      is_showing_ = true;
+      WasShown();
+    }
+  } else if (is_showing_) {
+    is_showing_ = false;
+    WasHidden();
   }
 }
 

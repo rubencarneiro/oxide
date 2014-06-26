@@ -89,7 +89,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   void Show() FINAL;
   void Hide() FINAL;
-  bool IsShowing() FINAL;
 
   // RenderWidgetHostView
   void OnUpdateCursor(const content::WebCursor& cursor) FINAL;
