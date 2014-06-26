@@ -52,8 +52,6 @@ class RenderViewItem Q_DECL_FINAL :
 
   void UpdateCursor(const QCursor& cursor) Q_DECL_FINAL;
 
-  QRect GetViewBoundsPix() Q_DECL_FINAL;
-
   void SetSize(const QSize& size) Q_DECL_FINAL;
 
   QScreen* GetScreen() Q_DECL_FINAL;
@@ -81,13 +79,7 @@ class RenderViewItem Q_DECL_FINAL :
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
- private Q_SLOTS:
-  void onWindowChanged(QQuickWindow* window);
-
  private:
-  void geometryChanged(const QRectF& new_geometry,
-                       const QRectF& old_geometry) Q_DECL_FINAL;
-
   Q_DISABLE_COPY(RenderViewItem);
 };
 

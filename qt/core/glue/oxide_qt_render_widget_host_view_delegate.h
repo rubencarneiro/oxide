@@ -18,7 +18,6 @@
 #ifndef _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 #define _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 
-#include <QRect>
 #include <Qt>
 #include <QtGlobal>
 #include <QVariant>
@@ -56,8 +55,6 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
 
   virtual void UpdateCursor(const QCursor& cursor) = 0;
 
-  virtual QRect GetViewBoundsPix() = 0;
-
   virtual void SetSize(const QSize& size) = 0;
 
   virtual QScreen* GetScreen() = 0;
@@ -73,7 +70,6 @@ class Q_DECL_EXPORT RenderWidgetHostViewDelegate {
   void HandleWheelEvent(QWheelEvent* event);
   void HandleInputMethodEvent(QInputMethodEvent* event);
   void HandleTouchEvent(QTouchEvent* event);
-  void HandleGeometryChanged();
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 

@@ -32,26 +32,9 @@
 namespace oxide {
 namespace qquick {
 
-void RenderViewItem::onWindowChanged(QQuickWindow* window) {
-  if (window) {
-    HandleGeometryChanged();
-  }
-}
-
-void RenderViewItem::geometryChanged(const QRectF& new_geometry,
-                                     const QRectF& old_geometry) {
-  QQuickItem::geometryChanged(new_geometry, old_geometry);
-  if (window()) {
-    HandleGeometryChanged();
-  }
-}
-
 RenderViewItem::RenderViewItem() {
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
-
-  connect(this, SIGNAL(windowChanged(QQuickWindow*)),
-          this, SLOT(onWindowChanged(QQuickWindow*)));
 }
 
 void RenderViewItem::Init(oxide::qt::WebViewAdapter* view) {
@@ -84,17 +67,6 @@ bool RenderViewItem::IsShowing() {
 
 void RenderViewItem::UpdateCursor(const QCursor& cursor) {
   setCursor(cursor);
-}
-
-QRect RenderViewItem::GetViewBoundsPix() {
-  if (!window()) {
-    return QRect();
-  }
-
-  QPointF pos(mapToScene(QPointF(0, 0)) + window()->position());
-
-  return QRect(qRound(pos.x()), qRound(pos.y()),
-               qRound(width()), qRound(height()));
 }
 
 void RenderViewItem::SetSize(const QSize& size) {

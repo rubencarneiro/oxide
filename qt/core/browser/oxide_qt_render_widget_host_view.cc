@@ -848,19 +848,6 @@ void RenderWidgetHostView::ImeCancelComposition() {
   QGuiApplication::inputMethod()->reset();
 }
 
-void RenderWidgetHostView::GetScreenInfo(
-    blink::WebScreenInfo* results) {
-  QScreen* screen = delegate_->GetScreen();
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
-  }
-  GetWebScreenInfoFromQScreen(screen, results);
-}
-
-gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
-  return GetViewBounds();
-}
-
 void RenderWidgetHostView::Focus() {
   delegate_->Focus();
 }
@@ -1118,10 +1105,6 @@ void RenderWidgetHostView::HandleTouchEvent(QTouchEvent* event) {
   }
 }
 
-void RenderWidgetHostView::HandleGeometryChanged() {
-  OnResize();
-}
-
 QVariant RenderWidgetHostView::InputMethodQuery(
     Qt::InputMethodQuery query) const {
   switch (query) {
@@ -1146,25 +1129,9 @@ QVariant RenderWidgetHostView::InputMethodQuery(
   return QVariant();
 }
 
-gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
-  QRect rect(delegate_->GetViewBoundsPix());
-  return gfx::Size(rect.width(), rect.height());
-}
-
 void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  delegate_->SetSize(QSize(size.width(), size.height()));
-}
-
-gfx::Rect RenderWidgetHostView::GetViewBounds() const {
-  QScreen* screen = delegate_->GetScreen();
-  if (!screen) {
-    return gfx::Rect();
-  }
-
-  QRect rect(delegate_->GetViewBoundsPix());
-  return gfx::ScaleToEnclosingRect(
-      gfx::Rect(rect.x(), rect.y(), rect.width(), rect.height()),
-                1.0f / GetDeviceScaleFactor());
+  delegate_->SetSize(QSize(size.width(), size.height() * GetDeviceScaleFactor()));
+  oxide::RenderWidgetHostView::SetSize(size);
 }
 
 } // namespace qt

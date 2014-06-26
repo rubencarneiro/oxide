@@ -83,6 +83,14 @@ bool ShouldSendPinchGesture() {
 
 }
 
+gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
+  if (!web_view_) {
+    return gfx::Size();
+  }
+
+  return web_view_->GetContainerSizePix();
+}
+
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
 
 void RenderWidgetHostView::OnSwapCompositorFrame(
@@ -296,6 +304,19 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
   return false;
 }
 
+void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
+  if (!web_view_) {
+    *result = GetDefaultWebScreenInfo();
+    return;
+  }
+
+  *result = web_view_->GetScreenInfo();
+}
+
+gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
+  return GetViewBounds();
+}
+
 gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
   if (shared_surface_handle_.is_null()) {
     shared_surface_handle_ =
@@ -353,6 +374,14 @@ void RenderWidgetHostView::Focus() {}
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
   return true;
+}
+
+gfx::Rect RenderWidgetHostView::GetViewBounds() const {
+  if (!web_view_) {
+    return gfx::Rect(last_size_);
+  }
+
+  return web_view_->GetContainerBoundsDip();
 }
 
 bool RenderWidgetHostView::LockMouse() {
@@ -552,11 +581,6 @@ void RenderWidgetHostView::OnBlur() {
   GetRenderWidgetHost()->Blur();
 }
 
-void RenderWidgetHostView::OnResize() {
-  host()->SendScreenRects();
-  GetRenderWidgetHost()->WasResized();
-}
-
 void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {
   if (host_->ShouldForwardTouchEvent()) {
     blink::WebTouchPoint* point =
@@ -590,10 +614,19 @@ void RenderWidgetHostView::SetWebView(WebView* view) {
   DetachLayer();
   web_view_ = view;
   AttachLayer();
+
+  if (web_view_) {
+    host_->SendScreenRects();
+    host_->WasResized();
+  }
 }
 
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
   return host_;
+}
+
+void RenderWidgetHostView::SetSize(const gfx::Size& size) {
+  last_size_ = size;
 }
 
 void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {

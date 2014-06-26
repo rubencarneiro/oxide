@@ -232,14 +232,14 @@ QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
 QRect OxideQQuickWebViewPrivate::GetContainerBoundsPix() const {
   Q_Q(const OxideQQuickWebView);
 
-  QPointF pos(q->mapToScene(QPointF(0,0)));
-  if (q->window()) {
-    // We could be called before being added to a scene
-    pos += q->window()->position();
+  if (!q->window()) {
+    return QRect();
   }
 
-  return QRectF(pos.x(), pos.y(),
-                q->width(), q->height()).toRect();
+  QPointF pos(q->mapToScene(QPointF(0, 0)) + q->window()->position());
+
+  return QRect(qRound(pos.x()), qRound(pos.y()),
+               qRound(q->width()), qRound(q->height()));
 }
 
 bool OxideQQuickWebViewPrivate::IsVisible() const {
@@ -514,6 +514,14 @@ void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
   compositor_frame_handle_.reset();
 }
 
+void OxideQQuickWebViewPrivate::onWindowChanged(QQuickWindow* window) {
+  if (!window) {
+    return;
+  }
+
+  wasResized();
+}
+
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
 
 // static
@@ -560,7 +568,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
-  if (d->isInitialized()) {
+  if (d->isInitialized() && window()) {
     d->wasResized();
   }
 }
@@ -679,6 +687,9 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   setFlags(QQuickItem::ItemClipsChildrenToShape |
            QQuickItem::ItemHasContents |
            QQuickItem::ItemIsFocusScope);
+
+  connect(this, SIGNAL(windowChanged(QQuickWindow*)),
+          this, SLOT(onWindowChanged(QQuickWindow*)));
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {

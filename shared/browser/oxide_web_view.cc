@@ -27,6 +27,7 @@
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
+#include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
@@ -39,6 +40,7 @@
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/render_view_host.h"
+#include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/menu_item.h"
@@ -944,6 +946,9 @@ void WebView::WasResized() {
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
     rwhv->SetSize(GetContainerSizeDip());
+    content::RenderWidgetHostImpl::From(
+        rwhv->GetRenderWidgetHost())->SendScreenRects();
+    rwhv->GetRenderWidgetHost()->WasResized();
   }
 }
 

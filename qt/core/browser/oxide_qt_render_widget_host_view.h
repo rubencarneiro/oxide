@@ -69,12 +69,8 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
-  // content::RenderWidgetHostViewBase
-  gfx::Size GetPhysicalBackingSize() const FINAL;
-
   // content::RenderWidgetHostView
   void SetSize(const gfx::Size& size) FINAL;
-  gfx::Rect GetViewBounds() const FINAL;
 
  private:
   static float GetDeviceScaleFactorFromQScreen(QScreen* screen);
@@ -87,10 +83,6 @@ class RenderWidgetHostView FINAL : public oxide::RenderWidgetHostView {
   void TextInputStateChanged(
       const ViewHostMsg_TextInputState_Params& params) FINAL;
   void ImeCancelComposition() FINAL;
-
-  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
-
-  gfx::Rect GetBoundsInRootWindow() FINAL;
 
   // content::RenderWidgetHostView
   void Focus() FINAL;

@@ -74,6 +74,7 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
+  virtual void SetSize(const gfx::Size& size) OVERRIDE;
   void SetBounds(const gfx::Rect& rect) FINAL;
 
  protected:
@@ -86,7 +87,6 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   // =================
   void OnFocus();
   void OnBlur();
-  void OnResize();
 
   gfx::Rect caret_rect() const { return caret_rect_; }
   size_t selection_cursor_position() const {
@@ -100,6 +100,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
  private:
   // content::RenderWidgetHostViewBase implementation
+  gfx::Size GetPhysicalBackingSize() const FINAL;
+
   virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
 
   void OnSwapCompositorFrame(uint32 output_surface_id,
@@ -159,6 +161,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   bool HasAcceleratedSurface(const gfx::Size& desired_size) FINAL;
 
+  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
+  gfx::Rect GetBoundsInRootWindow() FINAL;
+
   gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
 
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
@@ -181,6 +186,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   virtual void Focus() OVERRIDE;
 
   bool IsSurfaceAvailableForCopy() const FINAL;
+
+  gfx::Rect GetViewBounds() const FINAL;
 
   bool LockMouse() FINAL;
   void UnlockMouse() FINAL;
@@ -238,6 +245,8 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
   blink::WebTouchEvent touch_event_;
+
+  gfx::Size last_size_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

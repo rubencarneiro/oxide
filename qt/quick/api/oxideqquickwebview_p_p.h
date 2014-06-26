@@ -34,6 +34,7 @@ class OxideQQuickWebView;
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
 template <typename T> class QQmlListProperty;
+class QQuickWindow;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -138,6 +139,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
   void didUpdatePaintNode();
+
+  void onWindowChanged(QQuickWindow* window);
 
   bool constructed_;
   int load_progress_;

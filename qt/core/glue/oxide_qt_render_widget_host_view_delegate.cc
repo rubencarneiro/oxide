@@ -51,10 +51,6 @@ void RenderWidgetHostViewDelegate::HandleTouchEvent(
   rwhv_->HandleTouchEvent(event);
 }
 
-void RenderWidgetHostViewDelegate::HandleGeometryChanged() {
-  rwhv_->HandleGeometryChanged();
-}
-
 QVariant RenderWidgetHostViewDelegate::InputMethodQuery(
     Qt::InputMethodQuery query) const {
   return rwhv_->InputMethodQuery(query);
