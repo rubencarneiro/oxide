@@ -1125,7 +1125,9 @@ QVariant RenderWidgetHostView::InputMethodQuery(
 }
 
 void RenderWidgetHostView::SetSize(const gfx::Size& size) {
-  delegate_->SetSize(QSize(size.width(), size.height() * GetDeviceScaleFactor()));
+  if (delegate_->GetScreen()) {
+    delegate_->SetSize(QSize(size.width(), size.height() * GetDeviceScaleFactor()));
+  }
   oxide::RenderWidgetHostView::SetSize(size);
 }
 
