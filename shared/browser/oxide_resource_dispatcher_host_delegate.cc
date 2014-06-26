@@ -149,7 +149,7 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
     params.use_prompt,
     params.suggested_name,
     cookies,
-    params.referrer.GetContent());
+    params.referrer.spec());
 }
 
 net::CookieStore* ResourceDispatcherHostDelegate::GetCookieStoreForContext(
