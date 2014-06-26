@@ -12,7 +12,7 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
  #include "content/browser/download/download_resource_handler.h"
  #include "content/browser/download/download_stats.h"
  #include "content/browser/loader/certificate_resource_handler.h"
-@@ -338,6 +339,36 @@
+@@ -341,6 +342,36 @@
  #endif
    }
  
@@ -32,7 +32,7 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
 +  	        ? base::UTF8ToUTF16(content_disposition.filename())
 + 	        : base::string16(),
 +	    false,
-+	    Referrer(),
++	    Referrer(GURL(request()->referrer()), info->GetReferrerPolicy()),
 +	    response_->head.mime_type,
 +	    info->GetChildID(),
 +	    info->GetRouteID(),
