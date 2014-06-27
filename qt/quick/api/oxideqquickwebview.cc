@@ -18,9 +18,13 @@
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
+#include <QEvent>
+#include <QGuiApplication>
+#include <QHoverEvent>
 #include <QImage>
 #include <QKeyEvent>
 #include <QMetaMethod>
+#include <QMouseEvent>
 #include <QPointF>
 #include <QQmlEngine>
 #include <QQuickWindow>
@@ -29,7 +33,9 @@
 #include <QSGNode>
 #include <QSizeF>
 #include <QSize>
+#include <QTouchEvent>
 #include <QtQml>
+#include <Qt>
 
 #include "qt/core/api/oxideqpermissionrequest.h"
 #if defined(ENABLE_COMPOSITING)
@@ -40,7 +46,6 @@
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_file_picker_delegate.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
-#include "qt/quick/oxide_qquick_render_view_item.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
@@ -55,6 +60,115 @@ QT_USE_NAMESPACE
 
 using oxide::qquick::AcceleratedFrameNode;
 using oxide::qquick::SoftwareFrameNode;
+
+namespace oxide {
+namespace qquick {
+
+class WebViewInputArea : public QQuickItem {
+ public:
+  WebViewInputArea(OxideQQuickWebView* webview, OxideQQuickWebViewPrivate* d)
+      : QQuickItem(webview),
+        webview_(webview),
+        d_(d) {
+    setAcceptedMouseButtons(Qt::AllButtons);
+    setAcceptHoverEvents(true);
+  }
+
+  virtual ~WebViewInputArea() {}
+
+ private:
+  void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
+  void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
+
+  void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
+
+  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_FINAL;
+
+  void keyPressEvent(QKeyEvent* event) Q_DECL_FINAL;
+  void keyReleaseEvent(QKeyEvent* event) Q_DECL_FINAL;
+
+  void mouseDoubleClickEvent(QMouseEvent* event) Q_DECL_FINAL;
+  void mouseMoveEvent(QMouseEvent* event) Q_DECL_FINAL;
+  void mousePressEvent(QMouseEvent* event) Q_DECL_FINAL;
+  void mouseReleaseEvent(QMouseEvent* event) Q_DECL_FINAL;
+
+  void touchEvent(QTouchEvent* event) Q_DECL_FINAL;
+
+  void wheelEvent(QWheelEvent* event) Q_DECL_FINAL;
+
+  OxideQQuickWebView* webview_;
+  OxideQQuickWebViewPrivate* d_;
+};
+
+void WebViewInputArea::focusInEvent(QFocusEvent* event) {
+  d_->handleFocusEvent(event);
+}
+
+void WebViewInputArea::focusOutEvent(QFocusEvent* event) {
+  d_->handleFocusEvent(event);
+}
+
+void WebViewInputArea::hoverMoveEvent(QHoverEvent* event) {
+  // QtQuick gives us a hover event unless we have a grab (which
+  // happens implicitly on button press). As Chromium doesn't
+  // distinguish between the 2, just give it a mouse event
+  QPointF window_pos = mapToScene(event->posF());
+  QMouseEvent me(QEvent::MouseMove,
+                 event->posF(),
+                 window_pos,
+                 window_pos + window()->position(),
+                 Qt::NoButton,
+                 Qt::NoButton,
+                 event->modifiers());
+  me.accept();
+
+  d_->handleMouseEvent(&me);
+
+  event->setAccepted(me.isAccepted());
+}
+
+void WebViewInputArea::inputMethodEvent(QInputMethodEvent* event) {
+  d_->handleInputMethodEvent(event);
+}
+
+void WebViewInputArea::keyPressEvent(QKeyEvent* event) {
+  d_->handleKeyEvent(event);
+}
+
+void WebViewInputArea::keyReleaseEvent(QKeyEvent* event) {
+  d_->handleKeyEvent(event);
+}
+
+void WebViewInputArea::mouseDoubleClickEvent(QMouseEvent* event) {
+  d_->handleMouseEvent(event);
+}
+
+void WebViewInputArea::mouseMoveEvent(QMouseEvent* event) {
+  d_->handleMouseEvent(event);
+}
+
+void WebViewInputArea::mousePressEvent(QMouseEvent* event) {
+  forceActiveFocus();
+  d_->handleMouseEvent(event);
+}
+
+void WebViewInputArea::mouseReleaseEvent(QMouseEvent* event) {
+  d_->handleMouseEvent(event);
+}
+
+void WebViewInputArea::touchEvent(QTouchEvent* event) {
+  if (event->type() == QEvent::TouchBegin) {
+    forceActiveFocus();
+  }
+  d_->handleTouchEvent(event);
+}
+
+void WebViewInputArea::wheelEvent(QWheelEvent* event) {
+  d_->handleWheelEvent(event);
+}
+
+} // namespace qquick
+} // namespace oxide
 
 class UpdatePaintNodeScope {
  public:
@@ -95,6 +209,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     prompt_dialog_(NULL),
     before_unload_dialog_(NULL),
     file_picker_(NULL),
+    input_area_(NULL),
     received_new_compositor_frame_(false),
     frame_evicted_(false),
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {}
@@ -249,9 +364,7 @@ bool OxideQQuickWebViewPrivate::IsVisible() const {
 }
 
 bool OxideQQuickWebViewPrivate::HasFocus() const {
-  Q_Q(const OxideQQuickWebView);
-
-  return q->hasActiveFocus();
+  return input_area_->hasActiveFocus();
 }
 
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
@@ -305,6 +418,12 @@ bool OxideQQuickWebViewPrivate::CanCreateWindows() const {
   // QObject::isSignalConnected doesn't work from here (it still indicates
   // true during the last disconnect)
   return q->receivers(SIGNAL(newViewRequested(OxideQNewViewRequest*))) > 0;
+}
+
+void OxideQQuickWebViewPrivate::UpdateCursor(const QCursor& cursor) {
+  Q_Q(OxideQQuickWebView);
+
+  q->setCursor(cursor);
 }
 
 void OxideQQuickWebViewPrivate::NavigationRequested(
@@ -374,7 +493,8 @@ void OxideQQuickWebViewPrivate::ViewportHeightChanged() {
   emit q->viewportHeightChanged();
 }
 
-void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
+void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
+    QKeyEvent* event) {
   Q_Q(OxideQQuickWebView);
 
   QQuickWindow* w = q->window();
@@ -404,6 +524,13 @@ void OxideQQuickWebViewPrivate::EvictCurrentFrame() {
   Q_ASSERT(!compositor_frame_handle_);
 
   q->update();
+}
+
+void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
+  Q_Q(OxideQQuickWebView);
+
+  q->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
+  QGuiApplication::inputMethod()->update(Qt::ImEnabled);
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -568,28 +695,29 @@ void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
   }
 }
 
-void OxideQQuickWebView::focusInEvent(QFocusEvent* event) {
-  Q_D(OxideQQuickWebView);
-  Q_ASSERT(event->gotFocus());
-
-  d->handleFocusEvent(event);
-}
-
-void OxideQQuickWebView::focusOutEvent(QFocusEvent* event) {
-  Q_D(OxideQQuickWebView);
-  Q_ASSERT(event->lostFocus());
-
-  d->handleFocusEvent(event);
-}
-
 void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
                                          const QRectF& oldGeometry) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
+  d->input_area_->setWidth(newGeometry.width());
+  d->input_area_->setHeight(newGeometry.height());
+
   if (d->isInitialized() && window()) {
     d->wasResized();
+  }
+}
+
+QVariant OxideQQuickWebView::inputMethodQuery(
+    Qt::InputMethodQuery query) const {
+  Q_D(const OxideQQuickWebView);
+
+  switch (query) {
+    case Qt::ImEnabled:
+      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return d->inputMethodQuery(query);
   }
 }
 
@@ -704,12 +832,24 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   OxideQQuickWebContextPrivate::ensureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
 
+  Q_D(OxideQQuickWebView);
+
   setFlags(QQuickItem::ItemClipsChildrenToShape |
            QQuickItem::ItemHasContents |
            QQuickItem::ItemIsFocusScope);
 
   connect(this, SIGNAL(windowChanged(QQuickWindow*)),
           this, SLOT(onWindowChanged(QQuickWindow*)));
+
+  // We have an input area QQuickItem for receiving input events, so
+  // that we have a way of bubbling unhandled key events back to the
+  // WebView
+  d->input_area_ = new oxide::qquick::WebViewInputArea(this, d);
+  d->input_area_->setX(0.0f);
+  d->input_area_->setY(0.0f);
+  d->input_area_->setWidth(width());
+  d->input_area_->setHeight(height());
+  d->input_area_->setFocus(true);
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {

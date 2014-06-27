@@ -30,9 +30,7 @@
 #include "cc/layers/delegated_frame_resource_collection.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "content/common/cursors/webcursor.h"
-#include "third_party/WebKit/public/web/WebInputEvent.h"
-#include "ui/events/gestures/gesture_recognizer.h"
-#include "ui/events/gestures/gesture_types.h"
+#include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
 
@@ -47,50 +45,25 @@ namespace content {
 class RenderWidgetHostImpl;
 }
 
-namespace ui {
-class GestureRecognizer;
-class TouchEvent;
-}
-
 namespace oxide {
 
 class WebView;
 
-class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
-                             public ui::GestureEventHelper,
-                             public ui::GestureConsumer,
-                             public RendererFrameEvictorClient,
-                             public cc::DelegatedFrameResourceCollectionClient,
-                             public base::SupportsWeakPtr<RenderWidgetHostView> {
+class RenderWidgetHostView FINAL :
+    public content::RenderWidgetHostViewBase,
+    public RendererFrameEvictorClient,
+    public cc::DelegatedFrameResourceCollectionClient,
+    public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
-  virtual ~RenderWidgetHostView();
-
-  virtual void Init(WebView* view) = 0;
+  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
+  ~RenderWidgetHostView();
 
   content::RenderWidgetHostImpl* host() const { return host_; }
 
   void CompositorDidCommit();
   void SetWebView(WebView* view);
 
-  // content::RenderWidgetHostViewBase implementation
-  virtual void Blur() OVERRIDE;
-
-  // content::RenderWidgetHostView implementation
-  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
-  virtual void SetSize(const gfx::Size& size) OVERRIDE;
-  void SetBounds(const gfx::Rect& rect) FINAL;
-  virtual void Focus() OVERRIDE;
-
- protected:
-  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
-
-  // content::RenderWidgetHostView implementation
-  bool HasFocus() const FINAL; // TODO: Make private
-
-  virtual void Show() OVERRIDE; // TODO: Make private
-  virtual void Hide() OVERRIDE; // TODO: Make private
-
-  // =================
+  // XXX: Hide these
   gfx::Rect caret_rect() const { return caret_rect_; }
   size_t selection_cursor_position() const {
     return selection_cursor_position_;
@@ -98,14 +71,24 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   size_t selection_anchor_position() const {
     return selection_anchor_position_;
   }
+  const base::string16& selection_text() const {
+    return selection_text_;
+  }
 
-  void HandleTouchEvent(const ui::TouchEvent& event);
+  // content::RenderWidgetHostViewBase implementation
+  void Blur() FINAL;
+
+  // content::RenderWidgetHostView implementation
+  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
+  void SetSize(const gfx::Size& size) FINAL;
+  void SetBounds(const gfx::Rect& rect) FINAL;
+  void Focus() FINAL;
 
  private:
   // content::RenderWidgetHostViewBase implementation
   gfx::Size GetPhysicalBackingSize() const FINAL;
 
-  virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
+  virtual void FocusedNodeChanged(bool is_editable_node) FINAL;
 
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) FINAL;
@@ -124,10 +107,10 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void UpdateCursor(const content::WebCursor& cursor) FINAL;
   void SetIsLoading(bool is_loading) FINAL;
 
-  virtual void TextInputStateChanged(
-      const ViewHostMsg_TextInputState_Params& params) OVERRIDE;
+  void TextInputStateChanged(
+      const ViewHostMsg_TextInputState_Params& params) FINAL;
 
-  virtual void ImeCancelComposition() OVERRIDE;
+  void ImeCancelComposition() FINAL;
 
   void RenderProcessGone(base::TerminationStatus status, int error_code) FINAL;
 
@@ -187,19 +170,18 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   gfx::NativeViewId GetNativeViewId() const FINAL;
   gfx::NativeViewAccessible GetNativeViewAccessible() FINAL;
 
+  bool HasFocus() const FINAL;
+
   bool IsSurfaceAvailableForCopy() const FINAL;
 
+  void Show() FINAL;
+  void Hide() FINAL;
   bool IsShowing() FINAL;
 
   gfx::Rect GetViewBounds() const FINAL;
 
   bool LockMouse() FINAL;
   void UnlockMouse() FINAL;
-
-  // ui::GestureEventHelper implementation
-  bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
-  void DispatchGestureEvent(ui::GestureEvent* event) FINAL;
-  void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
 
   // cc::DelegatedFrameResourceCollectionClient implementation
   void UnusedResourcesAreAvailable() FINAL;
@@ -209,17 +191,14 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   // ===================
 
+  void UpdateCursorOnWebView();
+
   void DestroyDelegatedContent();
   void SendDelegatedFrameAck(uint32 surface_id);
   void SendReturnedDelegatedResources();
   void RunAckCallbacks();
   void AttachLayer();
   void DetachLayer();
-
-  void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
-  void ForwardGestureEventToRenderer(ui::GestureEvent* event);
-
-  virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
   content::RenderWidgetHostImpl* host_;
 
@@ -244,11 +223,12 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   size_t selection_cursor_position_;
   size_t selection_anchor_position_;
 
-  bool is_loading_;
-  content::WebCursor last_cursor_;
+  ui::TextInputType current_text_input_type_;
+  bool show_ime_if_needed_;
+  bool focused_node_is_editable_;
 
-  scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
-  blink::WebTouchEvent touch_event_;
+  bool is_loading_;
+  content::WebCursor current_cursor_;
 
   bool is_showing_;
   gfx::Size last_size_;

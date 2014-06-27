@@ -233,10 +233,9 @@ class OxideQQuickWebView : public QQuickItem {
   void connectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
 
-  void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
-  void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
   void geometryChanged(const QRectF& newGeometry,
                        const QRectF& oldGeometry) Q_DECL_FINAL;
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
   void itemChange(QQuickItem::ItemChange change,
                   const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
   QSGNode* updatePaintNode(

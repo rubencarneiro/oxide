@@ -28,7 +28,6 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
-#include "qt/core/browser/oxide_qt_render_widget_host_view.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
@@ -209,15 +208,31 @@ void WebViewAdapter::visibilityChanged() {
 }
 
 void WebViewAdapter::handleFocusEvent(QFocusEvent* event) {
-  // XXX: Remove this
-  RenderWidgetHostView* rwhv =
-      static_cast<RenderWidgetHostView *>(
-        priv->GetWebContents()->GetRenderWidgetHostView());
-  if (rwhv) {
-    rwhv->HandleFocusEvent(event);
-  }
+  priv->HandleFocusEvent(event);
+}
 
-  priv->FocusChanged();
+void WebViewAdapter::handleInputMethodEvent(QInputMethodEvent* event) {
+  priv->HandleInputMethodEvent(event);
+}
+
+void WebViewAdapter::handleKeyEvent(QKeyEvent* event) {
+  priv->HandleKeyEvent(event);
+}
+
+void WebViewAdapter::handleMouseEvent(QMouseEvent* event) {
+  priv->HandleMouseEvent(event);
+}
+
+void WebViewAdapter::handleTouchEvent(QTouchEvent* event) {
+  priv->HandleTouchEvent(event);
+}
+
+void WebViewAdapter::handleWheelEvent(QWheelEvent* event) {
+  priv->HandleWheelEvent(event);
+}
+
+QVariant WebViewAdapter::inputMethodQuery(Qt::InputMethodQuery query) const {
+  return priv->InputMethodQuery(query);
 }
 
 void WebViewAdapter::goBack() {
@@ -264,7 +279,8 @@ int WebViewAdapter::getNavigationEntryUniqueID(int index) const {
 }
 
 QUrl WebViewAdapter::getNavigationEntryUrl(int index) const {
-  return QUrl(QString::fromStdString(priv->GetNavigationEntryUrl(index).spec()));
+  return QUrl(QString::fromStdString(
+      priv->GetNavigationEntryUrl(index).spec()));
 }
 
 QString WebViewAdapter::getNavigationEntryTitle(int index) const {
@@ -272,7 +288,8 @@ QString WebViewAdapter::getNavigationEntryTitle(int index) const {
 }
 
 QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
-  return QDateTime::fromMSecsSinceEpoch(priv->GetNavigationEntryTimestamp(index).ToJsTime());
+  return QDateTime::fromMSecsSinceEpoch(
+      priv->GetNavigationEntryTimestamp(index).ToJsTime());
 }
 
 OxideQWebPreferences* WebViewAdapter::preferences() {

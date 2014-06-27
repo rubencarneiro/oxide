@@ -19,13 +19,24 @@
 #define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
 #include <QKeyEvent>
+#include <QtGlobal>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
+#include "ui/base/ime/text_input_type.h"
 
+#include "qt/core/base/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
+
+QT_BEGIN_NAMESPACE
+class QFocusEvent;
+class QInputMethodEvent;
+class QKeyEvent;
+class QMouseEvent;
+class QWheelEvent;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
@@ -39,11 +50,23 @@ class WebView FINAL : public oxide::WebView,
 
   WebViewAdapter* adapter() const { return adapter_; }
 
+  void HandleFocusEvent(QFocusEvent* event);
+  void HandleInputMethodEvent(QInputMethodEvent* event);
+  void HandleKeyEvent(QKeyEvent* event);
+  void HandleMouseEvent(QMouseEvent* event);
+  void HandleTouchEvent(QTouchEvent* event);
+  void HandleWheelEvent(QWheelEvent* event);
+
+  QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
+
  private:
   friend class WebViewAdapter;
 
   WebView(WebViewAdapter* adapter);
 
+  float GetDeviceScaleFactor() const;
+
+  // WebView implementation
   void Init(oxide::WebView::Params* params) FINAL;
 
   blink::WebScreenInfo GetScreenInfo() const FINAL;
@@ -56,12 +79,16 @@ class WebView FINAL : public oxide::WebView,
       bool* did_suppress_message) FINAL;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() FINAL;
 
-  oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) FINAL;
-
   void FrameAdded(oxide::WebFrame* frame) FINAL;
   void FrameRemoved(oxide::WebFrame* frame) FINAL;
 
   bool CanCreateWindows() const FINAL;
+
+  void UpdateCursor(const content::WebCursor& cursor) FINAL;
+  void TextInputStateChanged(ui::TextInputType type,
+                             bool show_ime_if_needed) FINAL;
+  void FocusedNodeChanged(bool is_editable_node) FINAL;
+  void ImeCancelComposition() FINAL;
 
   void PageScaleFactorChanged() FINAL;
   void RootScrollOffsetXChanged() FINAL;
@@ -119,10 +146,18 @@ class WebView FINAL : public oxide::WebView,
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;
 
+  oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) FINAL;
+
   void OnSwapCompositorFrame() FINAL;
   void OnEvictCurrentFrame() FINAL;
 
   WebViewAdapter* adapter_;
+
+  TouchIDMap touch_id_map_;
+
+  ui::TextInputType text_input_type_;
+  bool show_ime_if_needed_;
+  bool focused_node_is_editable_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

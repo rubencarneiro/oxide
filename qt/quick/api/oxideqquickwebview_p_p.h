@@ -34,6 +34,7 @@ class OxideQQuickWebView;
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
 template <typename T> class QQmlListProperty;
+class QQuickItem;
 class QQuickWindow;
 QT_END_NAMESPACE
 
@@ -102,6 +103,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   bool CanCreateWindows() const Q_DECL_FINAL;
 
+  void UpdateCursor(const QCursor& cursor) Q_DECL_FINAL;
+
   void NavigationRequested(OxideQNavigationRequest* request) Q_DECL_FINAL;
   void NewViewRequested(OxideQNewViewRequest* request) Q_DECL_FINAL;
 
@@ -116,10 +119,12 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void ViewportWidthChanged() Q_DECL_FINAL;
   void ViewportHeightChanged() Q_DECL_FINAL;
 
-  void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
+  void HandleUnhandledKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
 
   void ScheduleUpdate() Q_DECL_FINAL;
   void EvictCurrentFrame() Q_DECL_FINAL;
+
+  void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
 
   void completeConstruction();
 
@@ -153,6 +158,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QQmlComponent* prompt_dialog_;
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
+
+  QQuickItem* input_area_;
 
   bool received_new_compositor_frame_;
   bool frame_evicted_;

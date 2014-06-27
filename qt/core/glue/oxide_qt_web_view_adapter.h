@@ -28,16 +28,23 @@
 #include <QSizeF>
 #include <QString>
 #include <QtGlobal>
+#include <Qt>
 #include <QUrl>
+#include <QVariant>
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
+class QCursor;
 class QFocusEvent;
+class QInputMethodEvent;
 class QKeyEvent;
+class QMouseEvent;
 class QScreen;
 class QSize;
+class QTouchEvent;
+class QWheelEvent;
 QT_END_NAMESPACE
 
 class OxideQGeolocationPermissionRequest;
@@ -116,6 +123,13 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void visibilityChanged();
 
   void handleFocusEvent(QFocusEvent* event);
+  void handleInputMethodEvent(QInputMethodEvent* event);
+  void handleKeyEvent(QKeyEvent* event);
+  void handleMouseEvent(QMouseEvent* event);
+  void handleTouchEvent(QTouchEvent* event);
+  void handleWheelEvent(QWheelEvent* event);
+
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const;
 
   void goBack();
   void goForward();
@@ -214,6 +228,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual bool CanCreateWindows() const = 0;
 
+  virtual void UpdateCursor(const QCursor& cursor) = 0;
+
   virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
   virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
 
@@ -228,10 +244,12 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void ViewportWidthChanged() = 0;
   virtual void ViewportHeightChanged() = 0;
 
-  virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
+  virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
   virtual void ScheduleUpdate() = 0;
   virtual void EvictCurrentFrame() = 0;
+
+  virtual void SetInputMethodEnabled(bool enabled) = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

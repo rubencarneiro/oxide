@@ -30,6 +30,7 @@ class GURL;
 
 namespace content {
 struct FileChooserParams;
+class NativeWebKeyboardEvent;
 struct OpenURLParams;
 class WebContents;
 }
@@ -78,7 +79,7 @@ class WebViewContentsHelperDelegate {
 
   virtual void NotifyWebPreferencesDestroyed() = 0;
 
-  virtual void HandleKeyboardEvent(
+  virtual void HandleUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) = 0;
 };
 
