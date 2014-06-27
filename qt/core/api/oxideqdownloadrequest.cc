@@ -21,6 +21,10 @@
 #include "net/http/http_request_headers.h"
 #include "url/gurl.h"
 
+namespace {
+const QString kCookieListDelimiter = ";";
+}
+
 OxideQDownloadRequestPrivate::OxideQDownloadRequestPrivate(
     const QUrl& url,
     const QString& mimeType,
@@ -50,7 +54,7 @@ OxideQDownloadRequest::OxideQDownloadRequest(
 					     mimeType,
 					     shouldPrompt,
 					     suggestedFilename,
-					     cookies.split(",", QString::SkipEmptyParts),
+					     cookies.split(kCookieListDelimiter, QString::SkipEmptyParts),
 					     referrer)) {
 }
 

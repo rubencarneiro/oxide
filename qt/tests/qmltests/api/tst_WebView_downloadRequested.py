@@ -14,6 +14,7 @@ def handler(request):
   request.send_header("Cache-Control", "private")
   request.send_header("Content-Disposition", "attachment; filename=001.html")
   request.send_header("Set-Cookie", "foo=bar;Expires=%s;Domain=;Path=/" % expires.strftime("%a, %d-%b-%Y %H-%M-%S UTC"))
+  request.send_header("Set-Cookie", "bar=bazz")
   request.end_headers()
 
   request.wfile.write(html.getvalue())

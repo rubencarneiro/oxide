@@ -11,13 +11,13 @@ TestWebView {
 
   property string latestDownloadUrl: ""
   property string latestSuggestedFilename: ""
-  property string latestCookies: ""
+  property var latestCookies
   property string latestMimeType: ""
   property string latestReferrer: ""
 
   onDownloadRequested: {
     latestDownloadUrl = request.url;
-    latestCookies = request.cookies;
+    latestCookies = [].slice.call(request.cookies).join(",");
     latestMimeType = request.mimeType;
     latestSuggestedFilename = request.suggestedFilename;
     latestReferrer = request.referrer;
@@ -40,7 +40,7 @@ TestWebView {
 
       compare(spy.count, 1)
       compare(webView.latestMimeType, "text/html")
-      compare(webView.latestCookies, "foo=bar")
+      compare(webView.latestCookies, "foo=bar, bar=bazz")
       compare(webView.latestSuggestedFilename, "001.html")
     }
 
