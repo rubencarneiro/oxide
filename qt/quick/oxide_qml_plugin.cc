@@ -18,6 +18,7 @@
 #include <QLatin1String>
 #include <QtGlobal>
 #include <QtQml>
+#include <QNetworkCookie>
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
@@ -26,6 +27,7 @@
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqwebpreferences.h"
+#include "qt/quick/api/oxideqquickcookiemonster_p.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
 #include "qt/quick/api/oxideqquickscriptmessage_p.h"
@@ -58,6 +60,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
   void registerTypes(const char* uri) {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide"));
 
+    qRegisterMetaType<QNetworkCookie>("NetworkCookie");
+
     qmlRegisterSingletonType<OxideQQuickGlobals>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
 
@@ -78,6 +82,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "OutgoingMessageRequests are created automatically by WebFrame.sendMessage");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 1, 0, "WebFrame",
         "Frames are created automatically by Oxide to represent frames in the renderer");
+    qmlRegisterUncreatableType<OxideQQuickCookieMonster>(uri, 1, 0, "CookieMonster",
+        "Cannot create instances of CookieMonster");
 
     qmlRegisterType<OxideQQuickScriptMessageHandler>(uri, 1, 0, "ScriptMessageHandler");
     qmlRegisterType<OxideQQuickUserScript>(uri, 1, 0, "UserScript");
@@ -87,5 +93,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebView>(uri, 1, 0, "WebView");
   }
 };
+
+QML_DECLARE_TYPE(QNetworkCookie)
 
 #include "oxide_qml_plugin.moc"

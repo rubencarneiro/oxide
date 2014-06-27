@@ -85,3 +85,5 @@ void OxideQQuickCookieMonster::getAllCookies() {
 
   d->getAllCookies();
 }
+
+#include "moc_oxideqquickcookiemonster_p.cpp"
