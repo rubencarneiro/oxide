@@ -147,7 +147,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 
   if (web_view_) {
-    web_view_->GotNewCompositorFrameMetadata(frame->metadata);
+    web_view_->UpdateFrameMetadata(frame->metadata);
   }
 
   if (!compositor || !compositor->IsActive()) {

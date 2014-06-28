@@ -90,14 +90,6 @@ class WebView FINAL : public oxide::WebView,
   void FocusedNodeChanged(bool is_editable_node) FINAL;
   void ImeCancelComposition() FINAL;
 
-  void PageScaleFactorChanged() FINAL;
-  void RootScrollOffsetXChanged() FINAL;
-  void RootScrollOffsetYChanged() FINAL;
-  void RootLayerWidthChanged() FINAL;
-  void RootLayerHeightChanged() FINAL;
-  void ViewportWidthChanged() FINAL;
-  void ViewportHeightChanged() FINAL;
-
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const FINAL;
@@ -135,6 +127,8 @@ class WebView FINAL : public oxide::WebView,
 
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) FINAL;
+
+  void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) FINAL;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,

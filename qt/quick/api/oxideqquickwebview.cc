@@ -448,51 +448,6 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
   emit q->geolocationPermissionRequested(request);
 }
 
-void OxideQQuickWebViewPrivate::PageScaleFactorChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->contentXChanged();
-  emit q->contentYChanged();
-  emit q->contentWidthChanged();
-  emit q->contentHeightChanged();
-}
-
-void OxideQQuickWebViewPrivate::RootScrollOffsetXChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->contentXChanged();
-}
-
-void OxideQQuickWebViewPrivate::RootScrollOffsetYChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->contentYChanged();
-}
-
-void OxideQQuickWebViewPrivate::RootLayerWidthChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->contentWidthChanged();
-}
-
-void OxideQQuickWebViewPrivate::RootLayerHeightChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->contentHeightChanged();
-}
-
-void OxideQQuickWebViewPrivate::ViewportWidthChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->viewportWidthChanged();
-}
-
-void OxideQQuickWebViewPrivate::ViewportHeightChanged() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->viewportHeightChanged();
-}
-
 void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
     QKeyEvent* event) {
   Q_Q(OxideQQuickWebView);
@@ -503,6 +458,48 @@ void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
   }
 
   w->sendEvent(q, event);
+}
+
+inline oxide::qt::FrameMetadataChangeFlags operator&(
+    oxide::qt::FrameMetadataChangeFlags a,
+    oxide::qt::FrameMetadataChangeFlags b) {
+  return static_cast<oxide::qt::FrameMetadataChangeFlags>(
+      static_cast<int>(a) & static_cast<int>(b));
+}
+
+void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
+    oxide::qt::FrameMetadataChangeFlags flags) {
+  Q_Q(OxideQQuickWebView);
+
+#define IS_SET(flag) flags & flag
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
+      IS_SET(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
+    emit q->contentXChanged();
+    emit q->contentYChanged();
+    emit q->contentWidthChanged();
+    emit q->contentHeightChanged();
+    emit q->viewportWidthChanged();
+    emit q->viewportHeightChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
+    emit q->contentXChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
+    emit q->contentYChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
+    emit q->contentWidthChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
+    emit q->contentHeightChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
+    emit q->viewportWidthChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
+    emit q->viewportHeightChanged();
+  }
+#undef IS_SET
 }
 
 void OxideQQuickWebViewPrivate::ScheduleUpdate() {
@@ -1030,43 +1027,49 @@ void OxideQQuickWebView::removeMessageHandler(
 qreal OxideQQuickWebView::viewportWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->viewportSize().width()
-      * d->deviceScaleFactor() * d->pageScaleFactor();
+  return d->compositorFrameViewportSize().width()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
 }
 
 qreal OxideQQuickWebView::viewportHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->viewportSize().height()
-      * d->deviceScaleFactor() * d->pageScaleFactor();
+  return d->compositorFrameViewportSize().height()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
 }
 
 qreal OxideQQuickWebView::contentWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->layerSize().width()
-      * d->deviceScaleFactor() * d->pageScaleFactor();
+  return d->compositorFrameLayerSize().width()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
 }
 
 qreal OxideQQuickWebView::contentHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->layerSize().height()
-      * d->deviceScaleFactor() * d->pageScaleFactor();
+  return d->compositorFrameLayerSize().height()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
 }
 
 qreal OxideQQuickWebView::contentX() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->scrollOffset().x()
-      * d->deviceScaleFactor() * d->pageScaleFactor();
+  return d->compositorFrameScrollOffset().x()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
 }
 
 qreal OxideQQuickWebView::contentY() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->scrollOffset().y()
-      * d->deviceScaleFactor() * d->pageScaleFactor();
+  return d->compositorFrameScrollOffset().y()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {

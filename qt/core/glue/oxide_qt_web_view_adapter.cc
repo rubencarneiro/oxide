@@ -22,6 +22,7 @@
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "cc/output/compositor_frame_metadata.h"
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
 
@@ -356,26 +357,27 @@ void WebViewAdapter::updateWebPreferences() {
   priv->UpdateWebPreferences();
 }
 
-float WebViewAdapter::deviceScaleFactor() const {
-  return priv->GetDeviceScaleFactor();
+float WebViewAdapter::compositorFrameDeviceScaleFactor() const {
+  return priv->compositor_frame_metadata().device_scale_factor;
 }
 
-float WebViewAdapter::pageScaleFactor() const {
-  return priv->GetPageScaleFactor();
+float WebViewAdapter::compositorFramePageScaleFactor() const {
+  return priv->compositor_frame_metadata().page_scale_factor;
 }
 
-QPointF WebViewAdapter::scrollOffset() const {
-  const gfx::Vector2dF& offset = priv->GetRootScrollOffset();
+QPointF WebViewAdapter::compositorFrameScrollOffset() const {
+  const gfx::Vector2dF& offset =
+      priv->compositor_frame_metadata().root_scroll_offset;
   return QPointF(offset.x(), offset.y());
 }
 
-QSizeF WebViewAdapter::layerSize() const {
-  const gfx::SizeF& size = priv->GetRootLayerSize();
+QSizeF WebViewAdapter::compositorFrameLayerSize() const {
+  const gfx::SizeF& size = priv->compositor_frame_metadata().root_layer_size;
   return QSizeF(size.width(), size.height());
 }
 
-QSizeF WebViewAdapter::viewportSize() const {
-  const gfx::SizeF& size = priv->GetViewportSize();
+QSizeF WebViewAdapter::compositorFrameViewportSize() const {
+  const gfx::SizeF& size = priv->compositor_frame_metadata().viewport_size;
   return QSizeF(size.width(), size.height());
 }
 

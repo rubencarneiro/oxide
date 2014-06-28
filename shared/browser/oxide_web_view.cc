@@ -753,6 +753,8 @@ void WebView::OnRequestGeolocationPermission(
 void WebView::OnUnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {}
 
+void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {}
+
 bool WebView::OnAddMessageToConsole(int32 level,
                                     const base::string16& message,
                                     int32 line_no,
@@ -794,37 +796,6 @@ WebView::WebView()
       is_fullscreen_(false) {
   gesture_recognizer_->AddGestureEventHelper(this);
 }
-
-float WebView::GetDeviceScaleFactor() const {
-  return frame_metadata_.device_scale_factor;
-}
-
-float WebView::GetPageScaleFactor() const {
-  return frame_metadata_.page_scale_factor;
-}
-
-void WebView::PageScaleFactorChanged() {}
-
-const gfx::Vector2dF& WebView::GetRootScrollOffset() const {
-  return frame_metadata_.root_scroll_offset;
-}
-
-void WebView::RootScrollOffsetXChanged() {}
-void WebView::RootScrollOffsetYChanged() {}
-
-const gfx::SizeF& WebView::GetRootLayerSize() const {
-  return frame_metadata_.root_layer_size;
-}
-
-void WebView::RootLayerWidthChanged() {}
-void WebView::RootLayerHeightChanged() {}
-
-const gfx::SizeF& WebView::GetViewportSize() const {
-  return frame_metadata_.viewport_size;
-}
-
-void WebView::ViewportWidthChanged() {}
-void WebView::ViewportHeightChanged() {}
 
 WebView::~WebView() {
   BrowserContext* context = GetBrowserContext();
@@ -1367,34 +1338,12 @@ void WebView::EvictCurrentFrame() {
   OnEvictCurrentFrame();
 }
 
-void WebView::GotNewCompositorFrameMetadata(
+void WebView::UpdateFrameMetadata(
     const cc::CompositorFrameMetadata& metadata) {
-  gfx::Vector2dF root_scroll_offset = frame_metadata_.root_scroll_offset;
-  float page_scale_factor = frame_metadata_.page_scale_factor;
-  gfx::SizeF root_layer_size = frame_metadata_.root_layer_size;
-  gfx::SizeF viewport_size = frame_metadata_.viewport_size;
-  frame_metadata_ = metadata;
-  if (metadata.page_scale_factor != page_scale_factor) {
-    PageScaleFactorChanged();
-  }
-  if (metadata.root_scroll_offset.x() != root_scroll_offset.x()) {
-    RootScrollOffsetXChanged();
-  }
-  if (metadata.root_scroll_offset.y() != root_scroll_offset.y()) {
-    RootScrollOffsetYChanged();
-  }
-  if (metadata.root_layer_size.width() != root_layer_size.width()) {
-    RootLayerWidthChanged();
-  }
-  if (metadata.root_layer_size.height() != root_layer_size.height()) {
-    RootLayerHeightChanged();
-  }
-  if (metadata.viewport_size.width() != viewport_size.width()) {
-    ViewportWidthChanged();
-  }
-  if (metadata.viewport_size.height() != viewport_size.height()) {
-    ViewportHeightChanged();
-  }
+  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
+  compositor_frame_metadata_ = metadata;
+
+  OnFrameMetadataUpdated(old);
 }
 
 void WebView::ProcessAckedTouchEvent(

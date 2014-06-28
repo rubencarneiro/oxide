@@ -63,6 +63,17 @@ class WebFrameAdapter;
 class WebPopupMenuDelegate;
 class WebView;
 
+enum FrameMetadataChangeFlags {
+  FRAME_METADATA_CHANGE_DEVICE_SCALE = 1 << 0,
+  FRAME_METADATA_CHANGE_SCROLL_OFFSET_X = 1 << 1,
+  FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y = 1 << 2,
+  FRAME_METADATA_CHANGE_CONTENT_WIDTH = 1 << 3,
+  FRAME_METADATA_CHANGE_CONTENT_HEIGHT = 1 << 4,
+  FRAME_METADATA_CHANGE_VIEWPORT_WIDTH = 1 << 5,
+  FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT = 1 << 6,
+  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 7
+};
+
 class Q_DECL_EXPORT AcceleratedFrameData Q_DECL_FINAL {
  public:
   AcceleratedFrameData(unsigned int id)
@@ -158,11 +169,11 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void updateWebPreferences();
 
-  float deviceScaleFactor() const;
-  float pageScaleFactor() const;
-  QPointF scrollOffset() const;
-  QSizeF layerSize() const;
-  QSizeF viewportSize() const;
+  float compositorFrameDeviceScaleFactor() const;
+  float compositorFramePageScaleFactor() const;
+  QPointF compositorFrameScrollOffset() const;
+  QSizeF compositorFrameLayerSize() const;
+  QSizeF compositorFrameViewportSize() const;
 
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
   void didCommitCompositorFrame();
@@ -236,15 +247,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) = 0;
 
-  virtual void PageScaleFactorChanged() = 0;
-  virtual void RootScrollOffsetXChanged() = 0;
-  virtual void RootScrollOffsetYChanged() = 0;
-  virtual void RootLayerWidthChanged() = 0;
-  virtual void RootLayerHeightChanged() = 0;
-  virtual void ViewportWidthChanged() = 0;
-  virtual void ViewportHeightChanged() = 0;
-
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
+
+  virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
 
   virtual void ScheduleUpdate() = 0;
   virtual void EvictCurrentFrame() = 0;

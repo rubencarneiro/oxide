@@ -181,6 +181,10 @@ class WebView : public ScriptMessageTarget,
   gfx::Rect GetContainerBoundsDip() const;
   gfx::Size GetContainerSizeDip() const;
 
+  const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
+    return compositor_frame_metadata_;
+  }
+
   void ShowPopupMenu(const gfx::Rect& bounds,
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
@@ -213,8 +217,7 @@ class WebView : public ScriptMessageTarget,
   void DidCommitCompositorFrame();
 
   void EvictCurrentFrame();
-  void GotNewCompositorFrameMetadata(
-      const cc::CompositorFrameMetadata& metadata);
+  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata);
 
   void ProcessAckedTouchEvent(
       const content::TouchEventWithLatencyInfo& touch,
@@ -243,22 +246,6 @@ class WebView : public ScriptMessageTarget,
 
  protected:
   WebView();
-
-  float GetDeviceScaleFactor() const;
-  float GetPageScaleFactor() const;
-  virtual void PageScaleFactorChanged();
-
-  const gfx::Vector2dF& GetRootScrollOffset() const;
-  virtual void RootScrollOffsetXChanged();
-  virtual void RootScrollOffsetYChanged();
-
-  const gfx::SizeF& GetRootLayerSize() const;
-  virtual void RootLayerWidthChanged();
-  virtual void RootLayerHeightChanged();
-
-  const gfx::SizeF& GetViewportSize() const;
-  virtual void ViewportWidthChanged();
-  virtual void ViewportHeightChanged();
 
  private:
   RenderWidgetHostView* GetRenderWidgetHostView();
@@ -407,6 +394,8 @@ class WebView : public ScriptMessageTarget,
   virtual void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event);
 
+  virtual void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old);
+
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
@@ -445,7 +434,7 @@ class WebView : public ScriptMessageTarget,
 
   PermissionRequestManager geolocation_permission_requests_;
 
-  cc::CompositorFrameMetadata frame_metadata_;
+  cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
