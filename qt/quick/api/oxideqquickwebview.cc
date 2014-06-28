@@ -861,6 +861,10 @@ OxideQQuickWebView::~OxideQQuickWebView() {
     delete adapterToQObject<OxideQQuickScriptMessageHandler>(
         d->message_handlers().at(0));
   }
+
+  // Delete this now as it can get a focusOutEvent after our destructor
+  // runs, calling back in to our deleted oxide::WebView
+  delete d->input_area_;
 }
 
 void OxideQQuickWebView::componentComplete() {
