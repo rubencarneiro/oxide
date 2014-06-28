@@ -213,7 +213,7 @@ class WebView : public ScriptMessageTarget,
 
   Compositor* compositor() const { return compositor_.get(); }
 
-  CompositorFrameHandle* GetCompositorFrameHandle();
+  CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
 
   void EvictCurrentFrame();
@@ -248,9 +248,9 @@ class WebView : public ScriptMessageTarget,
   WebView();
 
  private:
-  RenderWidgetHostView* GetRenderWidgetHostView();
-  content::RenderViewHost* GetRenderViewHost();
-  content::RenderWidgetHostImpl* GetRenderWidgetHostImpl();
+  RenderWidgetHostView* GetRenderWidgetHostView() const;
+  content::RenderViewHost* GetRenderViewHost() const;
+  content::RenderWidgetHostImpl* GetRenderWidgetHostImpl() const;
 
   void ForwardGestureEventToRenderer(ui::GestureEvent* event);
   void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);

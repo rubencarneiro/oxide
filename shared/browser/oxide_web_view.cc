@@ -210,7 +210,7 @@ WebView::GetAllWebViewsFor(BrowserContext * browser_context) {
   return webviews;
 }
 
-RenderWidgetHostView* WebView::GetRenderWidgetHostView() {
+RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
   if (!web_contents_) {
     return NULL;
   }
@@ -219,7 +219,7 @@ RenderWidgetHostView* WebView::GetRenderWidgetHostView() {
       web_contents_->GetRenderWidgetHostView());
 }
 
-content::RenderViewHost* WebView::GetRenderViewHost() {
+content::RenderViewHost* WebView::GetRenderViewHost() const {
   if (!web_contents_) {
     return NULL;
   }
@@ -227,7 +227,7 @@ content::RenderViewHost* WebView::GetRenderViewHost() {
   return web_contents_->GetRenderViewHost();
 }
 
-content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() {
+content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
   if (!web_contents_) {
     return NULL;
   }
@@ -1317,7 +1317,7 @@ void WebView::ImeSetComposingText(
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
 }
 
-CompositorFrameHandle* WebView::GetCompositorFrameHandle() {
+CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {
   return current_compositor_frame_;
 }
 
