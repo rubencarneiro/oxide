@@ -68,7 +68,6 @@ class WebViewInputArea : public QQuickItem {
  public:
   WebViewInputArea(OxideQQuickWebView* webview, OxideQQuickWebViewPrivate* d)
       : QQuickItem(webview),
-        webview_(webview),
         d_(d) {
     setAcceptedMouseButtons(Qt::AllButtons);
     setAcceptHoverEvents(true);
@@ -83,6 +82,7 @@ class WebViewInputArea : public QQuickItem {
   void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
 
   void inputMethodEvent(QInputMethodEvent* event) Q_DECL_FINAL;
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
 
   void keyPressEvent(QKeyEvent* event) Q_DECL_FINAL;
   void keyReleaseEvent(QKeyEvent* event) Q_DECL_FINAL;
@@ -96,7 +96,6 @@ class WebViewInputArea : public QQuickItem {
 
   void wheelEvent(QWheelEvent* event) Q_DECL_FINAL;
 
-  OxideQQuickWebView* webview_;
   OxideQQuickWebViewPrivate* d_;
 };
 
@@ -129,6 +128,16 @@ void WebViewInputArea::hoverMoveEvent(QHoverEvent* event) {
 
 void WebViewInputArea::inputMethodEvent(QInputMethodEvent* event) {
   d_->handleInputMethodEvent(event);
+}
+
+QVariant WebViewInputArea::inputMethodQuery(
+    Qt::InputMethodQuery query) const {
+  switch (query) {
+    case Qt::ImEnabled:
+      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return d_->inputMethodQuery(query);
+  }
 }
 
 void WebViewInputArea::keyPressEvent(QKeyEvent* event) {
@@ -526,7 +535,7 @@ void OxideQQuickWebViewPrivate::EvictCurrentFrame() {
 void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
   Q_Q(OxideQQuickWebView);
 
-  q->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
+  input_area_->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
   QGuiApplication::inputMethod()->update(Qt::ImEnabled);
 }
 
@@ -703,18 +712,6 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 
   if (d->isInitialized() && window()) {
     d->wasResized();
-  }
-}
-
-QVariant OxideQQuickWebView::inputMethodQuery(
-    Qt::InputMethodQuery query) const {
-  Q_D(const OxideQQuickWebView);
-
-  switch (query) {
-    case Qt::ImEnabled:
-      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
-    default:
-      return d->inputMethodQuery(query);
   }
 }
 
