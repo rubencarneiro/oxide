@@ -15,3 +15,4 @@ expose-extra-properties-for-should-create-webcontents.patch
 disable-default-network-location-provider.patch
 use-gles-api.patch
 add-should-download-url-to-resource-dispatcher-host.patch
+mediahub-support.patch
