@@ -53,6 +53,12 @@ class ResourceDispatcherHostDelegate :
       int render_view_id,
       content::ResourceContext* resource_context) FINAL;
 
+  virtual bool HandleExternalProtocol(
+       const GURL& url,
+       int child_id,
+       int route_id,
+       bool initiated_by_user_gesture) FINAL;
+
  private:
 
   struct DownloadRequestParams {
