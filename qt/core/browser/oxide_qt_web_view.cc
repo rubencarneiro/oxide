@@ -361,12 +361,18 @@ void WebView::TextInputStateChanged(ui::TextInputType type,
   show_ime_if_needed_ = show_ime_if_needed;
 
   QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
-  if (HasFocus() &&
-      text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
-      !QGuiApplication::inputMethod()->isVisible() &&
+
+  if (!HasFocus()) {
+    return;
+  }
+
+  if (text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
       show_ime_if_needed_) {
     adapter_->SetInputMethodEnabled(true);
     QGuiApplication::inputMethod()->show();
+  } else if (!focused_node_is_editable_) {
+    adapter_->SetInputMethodEnabled(false);
+    QGuiApplication::inputMethod()->hide();
   }
 }
 
@@ -384,14 +390,16 @@ void WebView::FocusedNodeChanged(bool is_editable_node) {
         QGuiApplication::focusWindow()->focusObject());
   }
 
-  adapter_->SetInputMethodEnabled(is_editable_node);
-  if (QGuiApplication::inputMethod()->isVisible() != is_editable_node) {
-    QGuiApplication::inputMethod()->setVisible(is_editable_node);
+  if (QGuiApplication::inputMethod()->isVisible() &&
+      focused_node_is_editable_) {
+    QGuiApplication::inputMethod()->reset();
   }
 }
 
 void WebView::ImeCancelComposition() {
-  QGuiApplication::inputMethod()->reset();
+  if (QGuiApplication::inputMethod()->isVisible()) {
+    QGuiApplication::inputMethod()->reset();
+  }
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -676,7 +684,7 @@ WebView* WebView::Create(WebViewAdapter* adapter) {
 void WebView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus() &&
       text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
-      !QGuiApplication::inputMethod()->isVisible()) {
+      show_ime_if_needed_) {
     adapter_->SetInputMethodEnabled(true);
     QGuiApplication::inputMethod()->show();
   }
