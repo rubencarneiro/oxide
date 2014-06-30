@@ -539,6 +539,13 @@ void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
   QGuiApplication::inputMethod()->update(Qt::ImEnabled);
 }
 
+void OxideQQuickWebViewPrivate::DownloadRequested(
+    OxideQDownloadRequest* downloadRequest) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->downloadRequested(downloadRequest);
+}
+
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 

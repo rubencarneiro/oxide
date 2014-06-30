@@ -121,6 +121,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
 
+  void DownloadRequested(OxideQDownloadRequest* downloadRequest) Q_DECL_FINAL;
+
   void completeConstruction();
 
   static void messageHandler_append(

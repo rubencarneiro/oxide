@@ -211,6 +211,14 @@ class WebView : public ScriptMessageTarget,
       const std::vector<blink::WebCompositionUnderline>& underlines,
       const gfx::Range& selection_range);
 
+  void DownloadRequested(
+      const GURL& url,
+      const std::string& mimeType,
+      const bool shouldPrompt,
+      const base::string16& suggestedFilename,
+      const std::string& cookies,
+      const std::string& referrer) FINAL;
+
   Compositor* compositor() const { return compositor_.get(); }
 
   CompositorFrameHandle* GetCompositorFrameHandle() const;
@@ -395,6 +403,14 @@ class WebView : public ScriptMessageTarget,
       const content::NativeWebKeyboardEvent& event);
 
   virtual void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old);
+
+  virtual void OnDownloadRequested(
+      const GURL& url,
+      const std::string& mimeType,
+      const bool shouldPrompt,
+      const base::string16& suggestedFilename,
+      const std::string& cookies,
+      const std::string& referrer);
 
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,

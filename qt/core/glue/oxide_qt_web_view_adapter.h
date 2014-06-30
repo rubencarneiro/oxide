@@ -47,6 +47,7 @@ class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQDownloadRequest;
 class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
@@ -255,6 +256,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void EvictCurrentFrame() = 0;
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
+
+  virtual void DownloadRequested(OxideQDownloadRequest* downloadRequest) = 0;
 
   QScopedPointer<WebView> priv;
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

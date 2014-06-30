@@ -134,6 +134,13 @@ class WebView FINAL : public oxide::WebView,
 
   void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) FINAL;
 
+  void OnDownloadRequested(const GURL& url,
+			   const std::string& mimeType,
+			   const bool shouldPrompt,
+			   const base::string16& suggestedFilename,
+			   const std::string& cookies,
+			   const std::string& referrer) FINAL;
+
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) FINAL;

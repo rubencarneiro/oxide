@@ -745,6 +745,15 @@ void WebView::OnNavigationEntryCommitted() {}
 void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
+bool WebView::OnAddMessageToConsole(int32 level,
+                                    const base::string16& message,
+                                    int32 line_no,
+                                    const base::string16& source_id) {
+  return false;
+}
+
+void WebView::OnToggleFullscreenMode(bool enter) {}
+
 void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
@@ -755,14 +764,12 @@ void WebView::OnUnhandledKeyboardEvent(
 
 void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {}
 
-bool WebView::OnAddMessageToConsole(int32 level,
-                                    const base::string16& message,
-                                    int32 line_no,
-                                    const base::string16& source_id) {
-  return false;
-}
-
-void WebView::OnToggleFullscreenMode(bool enter) {}
+void WebView::OnDownloadRequested(const GURL& url,
+				  const std::string& mimeType,
+				  const bool shouldPrompt,
+				  const base::string16& suggestedFilename,
+				  const std::string& cookies,
+				  const std::string& referrer) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
@@ -1315,6 +1322,17 @@ void WebView::ImeSetComposingText(
                           selection_range.start(),
                           selection_range.end());
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
+}
+
+void WebView::DownloadRequested(
+    const GURL& url,
+    const std::string& mimeType,
+    const bool shouldPrompt,
+    const base::string16& suggestedFilename,
+    const std::string& cookies,
+    const std::string& referrer) {
+  OnDownloadRequested(url, mimeType, shouldPrompt,
+      suggestedFilename, cookies, referrer);
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {

@@ -44,6 +44,7 @@
 #include "ui/events/event.h"
 #include "ui/gfx/range/range.h"
 
+#include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -601,6 +602,23 @@ void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
 #undef ADD_FLAG
 
   adapter_->FrameMetadataUpdated(flags);
+}
+
+void WebView::OnDownloadRequested(const GURL& url,
+                                  const std::string& mimeType,
+                                  const bool shouldPrompt,
+                                  const base::string16& suggestedFilename,
+                                  const std::string& cookies,
+                                  const std::string& referrer) {
+  OxideQDownloadRequest downloadRequest(
+      QUrl(QString::fromStdString(url.spec())),
+      QString::fromStdString(mimeType),
+      shouldPrompt,
+      QString::fromStdString(base::UTF16ToUTF8(suggestedFilename)),
+      QString::fromStdString(cookies),
+      QString::fromStdString(referrer));
+
+  adapter_->DownloadRequested(&downloadRequest);
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,

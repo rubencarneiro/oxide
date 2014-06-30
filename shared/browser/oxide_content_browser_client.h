@@ -23,7 +23,15 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
+
+#include "base/observer_list.h"
+#include "base/synchronization/lock.h"
+#include "content/public/browser/browser_context.h"
+#include "content/public/browser/content_browser_client.h"
+#include "content/public/browser/cookie_store_factory.h"
+#include "net/base/static_cookie_policy.h"
 
 namespace base {
 class MessagePump;
@@ -31,6 +39,7 @@ class MessagePump;
 
 namespace content {
 class RenderViewHost;
+class ResourceDispatcherHostDelegate;
 }
 
 namespace gfx {
@@ -40,6 +49,7 @@ class GLContext;
 namespace oxide {
 
 class GLShareGroup;
+class ResourceDispatcherHostDelegate;
 class SharedGLContext;
 class WebFrameTree;
 class WebPreferences;
@@ -135,6 +145,10 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   // Should be subclassed
   virtual bool IsTouchSupported();
+
+  virtual void ResourceDispatcherHostCreated() FINAL;
+
+  scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
