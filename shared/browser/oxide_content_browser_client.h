@@ -26,13 +26,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
-#include "base/observer_list.h"
-#include "base/synchronization/lock.h"
-#include "content/public/browser/browser_context.h"
-#include "content/public/browser/content_browser_client.h"
-#include "content/public/browser/cookie_store_factory.h"
-#include "net/base/static_cookie_policy.h"
-
 namespace base {
 class MessagePump;
 }
@@ -131,6 +124,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                        int opener_id,
                        bool* no_javascript_access) FINAL;
 
+  void ResourceDispatcherHostCreated() FINAL;
+
   content::AccessTokenStore* CreateAccessTokenStore() FINAL;
 
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
@@ -145,8 +140,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   // Should be subclassed
   virtual bool IsTouchSupported();
-
-  virtual void ResourceDispatcherHostCreated() FINAL;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
 

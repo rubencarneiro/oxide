@@ -15,23 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_FACTORY_H_
-#define _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_FACTORY_H_
+#ifndef _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_
+#define _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_
+
+#include <QtGlobal>
+
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+
+QT_BEGIN_NAMESPACE
+class QScreen;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostViewDelegate;
+float GetDeviceScaleFactorFromQScreen(QScreen* screen);
 
-class RenderWidgetHostViewDelegateFactory {
- public:
-  RenderWidgetHostViewDelegateFactory() {}
-  virtual ~RenderWidgetHostViewDelegateFactory() {}
-
-  virtual RenderWidgetHostViewDelegate* CreateRenderWidgetHostViewDelegate() = 0;
-};
+blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen);
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_RENDER_WIDGET_HOST_VIEW_DELEGATE_FACTORY_H_
+#endif // _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_

@@ -36,7 +36,6 @@
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
-#include "qt/quick/oxide_qquick_render_view_item_factory.h"
 
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
@@ -147,8 +146,7 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     oxide::qt::WebContextAdapter(
         q,
-        new oxide::qquick::WebContextIOThreadDelegate(),
-        new oxide::qquick::RenderViewItemFactory()),
+        new oxide::qquick::WebContextIOThreadDelegate()),
     constructed_(false),
     io_thread_delegate_(
         static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),

@@ -351,6 +351,12 @@ bool ContentBrowserClient::CanCreateWindow(
       context)->IsPopupBlockerEnabled();
 }
 
+void ContentBrowserClient::ResourceDispatcherHostCreated() {
+  resource_dispatcher_host_delegate_.reset(new ResourceDispatcherHostDelegate());
+  content::ResourceDispatcherHost::Get()->SetDelegate(
+      resource_dispatcher_host_delegate_.get());
+}
+
 content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {
   return new AccessTokenStore();
 }
@@ -410,12 +416,6 @@ void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host)
 
 bool ContentBrowserClient::IsTouchSupported() {
   return false;
-}
-
-void ContentBrowserClient::ResourceDispatcherHostCreated() {
-  resource_dispatcher_host_delegate_.reset(new ResourceDispatcherHostDelegate());
-  content::ResourceDispatcherHost::Get()->SetDelegate(
-      resource_dispatcher_host_delegate_.get());
 }
 
 ContentBrowserClient::ContentBrowserClient() {}

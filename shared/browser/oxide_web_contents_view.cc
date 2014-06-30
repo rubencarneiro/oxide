@@ -22,7 +22,6 @@
 #include "content/public/browser/web_contents.h"
 
 #include "oxide_render_widget_host_view.h"
-#include "oxide_render_widget_host_view_factory.h"
 #include "oxide_web_view.h"
 
 namespace content {
@@ -62,7 +61,7 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  *out = GetWebView()->GetContainerBounds();
+  *out = GetWebView()->GetContainerBoundsDip();
 }
 
 void WebContentsView::SizeContents(const gfx::Size& size) {
@@ -108,22 +107,15 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host) {
-  RenderWidgetHostViewFactory* factory =
-      RenderWidgetHostViewFactory::FromWebContents(web_contents_);
-  RenderWidgetHostView* rwhv = factory->CreateViewForWidget(render_widget_host);
-
-  if (!rwhv) {
-    return NULL;
-  }
+  RenderWidgetHostView* rwhv = new RenderWidgetHostView(render_widget_host);
 
   WebView* view = GetWebView();
   if (view) {
-    rwhv->Init(view);
-    // As RWHV contains the plumbing from WebView::UpdateVisibility to
+    // As RWHV contains the plumbing from WebView::VisibilityChanged to
     // RenderWidgetHostImpl::Was{Shown,Hidden}, RWHI::is_hidden could be
     // out of date. This ensures that we sync RWHI::is_hidden with the
     // real visibility of the webview - see https://launchpad.net/bugs/1322622
-    view->UpdateVisibility(view->IsVisible());
+    view->VisibilityChanged();
   }
 
   return rwhv;

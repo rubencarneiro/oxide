@@ -19,15 +19,12 @@
 
 #include <QGuiApplication>
 
-#include "oxide_qt_render_widget_host_view.h"
+#include "qt/core/base/oxide_qt_screen_utils.h"
 
 namespace oxide {
 
 blink::WebScreenInfo GetDefaultWebScreenInfo() {
-  blink::WebScreenInfo result;
-  oxide::qt::RenderWidgetHostView::GetWebScreenInfoFromQScreen(
-      QGuiApplication::primaryScreen(), &result);
-  return result;
+  return qt::GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
 } // namespace oxide

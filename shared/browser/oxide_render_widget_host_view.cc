@@ -18,7 +18,6 @@
 #include "oxide_render_widget_host_view.h"
 
 #include "base/bind.h"
-#include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/scoped_vector.h"
 #include "cc/layers/delegated_frame_provider.h"
@@ -27,27 +26,18 @@
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
-#include "content/browser/renderer_host/ui_events_helper.h"
 #include "content/common/gpu/gpu_messages.h"
 #include "content/common/view_messages.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
-#include "content/public/browser/render_view_host.h"
-#include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
-#include "third_party/WebKit/public/platform/WebGestureDevice.h"
-#include "ui/events/event.h"
+#include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
-#include "ui/gl/gl_implementation.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
-#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
-#include "shared/gl/oxide_shared_gl_context.h"
 
-#include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_web_view.h"
@@ -61,60 +51,20 @@ void RenderWidgetHostViewBase::GetDefaultScreenInfo(
 
 namespace oxide {
 
-namespace {
+gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
+  if (!web_view_) {
+    return gfx::Size();
+  }
 
-void UpdateWebTouchEventAfterDispatch(blink::WebTouchEvent* event,
-                                      blink::WebTouchPoint* point) {
-  if (point->state != blink::WebTouchPoint::StateReleased &&
-      point->state != blink::WebTouchPoint::StateCancelled) {
-    return;
-  }
-  --event->touchesLength;
-  for (unsigned i = point - event->touches;
-       i < event->touchesLength;
-       ++i) {
-    event->touches[i] = event->touches[i + 1];
-  }
+  return web_view_->GetContainerSizePix();
 }
 
-bool ShouldSendPinchGesture() {
-  static bool pinch_allowed =
-      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnableViewport) ||
-      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnablePinch);
-  return pinch_allowed;
+void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
+  focused_node_is_editable_ = is_editable_node;
+  if (web_view_) {
+    web_view_->FocusedNodeChanged(is_editable_node);
+  }
 }
-
-bool ShouldUseSoftwareCompositing() {
-  static bool initialized = false;
-  static bool result = true;
-
-  if (initialized) {
-    return result;
-  }
-
-  initialized = true;
-
-  if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
-    return true;
-  }
-
-  SharedGLContext* share_context =
-      BrowserProcessMain::instance()->GetSharedGLContext();
-  if (!share_context) {
-    return true;
-  }
-
-  if (share_context->GetImplementation() != gfx::GetGLImplementation()) {
-    return true;
-  }
-
-  result = false;
-  return false;
-}
-
-}
-
-void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {}
 
 void RenderWidgetHostView::OnSwapCompositorFrame(
     uint32 output_surface_id,
@@ -134,7 +84,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  CompositorLock lock(compositor_.get());
+  Compositor* compositor = web_view_ ? web_view_->compositor() : NULL;
+  CompositorLock lock(compositor);
 
   if (output_surface_id != last_output_surface_id_) {
     resource_collection_->SetClient(NULL);
@@ -171,10 +122,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   } else {
     if (!frame_provider_ || frame_size != frame_provider_->frame_size() ||
         frame_size_dip != last_frame_size_dip_) {
+      DetachLayer();
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
                                                        frame_data.Pass());
       layer_ = cc::DelegatedRendererLayer::Create(frame_provider_);
-      compositor_->SetRootLayer(layer_);
+      AttachLayer();
     } else {
       frame_provider_->SetFrameData(frame_data.Pass());
     }
@@ -191,14 +143,14 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
 
   if (frame_is_evicted_) {
     frame_is_evicted_ = false;
-    RendererFrameEvictor::GetInstance()->AddFrame(this, !host_->is_hidden());
+    RendererFrameEvictor::GetInstance()->AddFrame(this, IsShowing());
   }
 
-  content::RenderViewHost* rvh = content::RenderViewHost::From(host());
-  WebView* webview = WebView::FromRenderViewHost(rvh);
-  webview->GotNewCompositorFrameMetadata(frame->metadata);
+  if (web_view_) {
+    web_view_->UpdateFrameMetadata(frame->metadata);
+  }
 
-  if (!compositor_->IsActive()) {
+  if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
   }
 }
@@ -214,37 +166,65 @@ void RenderWidgetHostView::InitAsFullscreen(
   NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
 }
 
+void RenderWidgetHostView::WasShown() {
+  DCHECK(web_view_);
+
+  if (!frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->LockFrame(this);
+  }
+  host_->WasShown();
+}
+
+void RenderWidgetHostView::WasHidden() {
+  if (!frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
+  }
+  host_->WasHidden();
+  RunAckCallbacks();
+}
+
 void RenderWidgetHostView::MovePluginWindows(
     const std::vector<content::WebPluginGeometry>& moves) {}
 
-void RenderWidgetHostView::Blur() {}
-
-void RenderWidgetHostView::OnEvictCurrentFrame() {}
-
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
-  last_cursor_ = cursor;
-  if (!is_loading_) {
-    OnUpdateCursor(cursor);
+  if (cursor.IsEqual(current_cursor_)) {
+    return;
   }
+
+  current_cursor_ = cursor;
+  UpdateCursorOnWebView();
 }
 
 void RenderWidgetHostView::SetIsLoading(bool is_loading) {
-  if (is_loading != is_loading_) {
-    is_loading_ = is_loading;
-    if (is_loading) {
-      content::WebCursor::CursorInfo busy_cursor_info(blink::WebCursorInfo::TypeWait);
-      content::WebCursor busy_cursor(busy_cursor_info);
-      OnUpdateCursor(busy_cursor);
-    } else {
-      OnUpdateCursor(last_cursor_);
+  if (is_loading == is_loading_) {
+    return;
+  }
+
+  is_loading_ = is_loading;
+  UpdateCursorOnWebView();
+}
+
+void RenderWidgetHostView::TextInputStateChanged(
+    const ViewHostMsg_TextInputState_Params& params) {
+  if (params.type != current_text_input_type_ ||
+      params.show_ime_if_needed != show_ime_if_needed_) {
+    current_text_input_type_ = params.type;
+    show_ime_if_needed_ = params.show_ime_if_needed;
+
+    if (web_view_) {
+      web_view_->TextInputStateChanged(current_text_input_type_,
+                                       show_ime_if_needed_);
     }
   }
 }
 
-void RenderWidgetHostView::TextInputStateChanged(
-    const ViewHostMsg_TextInputState_Params& params) {}
+void RenderWidgetHostView::ImeCancelComposition() {
+  if (!web_view_) {
+    return;
+  }
 
-void RenderWidgetHostView::ImeCancelComposition() {}
+  web_view_->ImeCancelComposition();
+}
 
 void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
                                              int error_code) {
@@ -327,6 +307,19 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
   return false;
 }
 
+void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
+  if (!web_view_) {
+    *result = GetDefaultWebScreenInfo();
+    return;
+  }
+
+  *result = web_view_->GetScreenInfo();
+}
+
+gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
+  return GetViewBounds();
+}
+
 gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
   if (shared_surface_handle_.is_null()) {
     shared_surface_handle_ =
@@ -339,22 +332,11 @@ gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
 void RenderWidgetHostView::ProcessAckedTouchEvent(
     const content::TouchEventWithLatencyInfo& touch,
     content::InputEventAckState ack_result) {
-  ScopedVector<ui::TouchEvent> events;
-  if (!content::MakeUITouchEventsFromWebTouchEvents(
-      touch, &events, content::LOCAL_COORDINATES)) {
+  if (!web_view_) {
     return;
   }
 
-  ui::EventResult result =
-      (ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED) ?
-        ui::ER_HANDLED : ui::ER_UNHANDLED;
-  for (ScopedVector<ui::TouchEvent>::iterator it = events.begin(),
-       end = events.end(); it != end; ++it)  {
-    ui::TouchEvent* event = *it;
-    scoped_ptr<ui::GestureRecognizer::Gestures> gestures(
-        gesture_recognizer_->ProcessTouchEventForGesture(*event, result, this));
-    ProcessGestures(gestures.get());
-  }
+  web_view_->ProcessAckedTouchEvent(touch, ack_result);
 }
 
 void RenderWidgetHostView::SetScrollOffsetPinning(bool is_pinned_to_left,
@@ -380,10 +362,53 @@ gfx::NativeViewAccessible RenderWidgetHostView::GetNativeViewAccessible() {
   return NULL;
 }
 
-void RenderWidgetHostView::Focus() {}
+bool RenderWidgetHostView::HasFocus() const {
+  if (!web_view_) {
+    return false;
+  }
+
+  return web_view_->HasFocus();
+}
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
   return true;
+}
+
+void RenderWidgetHostView::Show() {
+  if (is_showing_) {
+    DCHECK(web_view_);
+    return;
+  }
+  if (!web_view_) {
+    return;
+  }
+
+  is_showing_ = true;
+
+  WasShown();
+}
+
+void RenderWidgetHostView::Hide() {
+  if (!is_showing_) {
+    return;
+  }
+
+  is_showing_ = false;
+
+  WasHidden();
+}
+
+bool RenderWidgetHostView::IsShowing() {
+  DCHECK(!is_showing_ || web_view_);
+  return is_showing_;
+}
+
+gfx::Rect RenderWidgetHostView::GetViewBounds() const {
+  if (!web_view_) {
+    return gfx::Rect(last_size_);
+  }
+
+  return web_view_->GetContainerBoundsDip();
 }
 
 bool RenderWidgetHostView::LockMouse() {
@@ -392,61 +417,38 @@ bool RenderWidgetHostView::LockMouse() {
 
 void RenderWidgetHostView::UnlockMouse() {}
 
-bool RenderWidgetHostView::CanDispatchToConsumer(
-    ui::GestureConsumer* consumer) {
-  DCHECK_EQ(this, static_cast<RenderWidgetHostView *>(consumer));
-  return true;
-}
-
-void RenderWidgetHostView::DispatchGestureEvent(ui::GestureEvent* event) {
-  ForwardGestureEventToRenderer(event);
-}
-
-void RenderWidgetHostView::DispatchCancelTouchEvent(ui::TouchEvent* event) {
-  if (!host_->ShouldForwardTouchEvent()) {
-    return;
-  }
-
-  DCHECK_EQ(event->type(), ui::ET_TOUCH_CANCELLED);
-  blink::WebTouchEvent cancel_event;
-  cancel_event.type = blink::WebInputEvent::TouchCancel;
-  cancel_event.timeStampSeconds = event->time_stamp().InSecondsF();
-  host_->ForwardTouchEventWithLatencyInfo(
-      cancel_event, *event->latency());
-}
-
 void RenderWidgetHostView::UnusedResourcesAreAvailable() {
   if (ack_callbacks_.empty()) {
     SendReturnedDelegatedResources();
   }
 }
 
-void RenderWidgetHostView::CompositorDidCommit() {
-  RunAckCallbacks();
-}
-
-void RenderWidgetHostView::CompositorSwapFrame(uint32 surface_id,
-                                               CompositorFrameHandle* frame) {
-  received_surface_ids_.push(surface_id);
-
-  if (current_compositor_frame_) {
-    previous_compositor_frames_.push_back(current_compositor_frame_);
-  }
-  current_compositor_frame_ = frame;
-
-  OnCompositorSwapFrame();
-}
-
 void RenderWidgetHostView::EvictCurrentFrame() {
   frame_is_evicted_ = true;
   DestroyDelegatedContent();
-  current_compositor_frame_ = NULL;
 
-  OnEvictCurrentFrame();
+  if (web_view_) {
+    web_view_->EvictCurrentFrame();
+  }
+}
+
+void RenderWidgetHostView::UpdateCursorOnWebView() {
+  if (!web_view_) {
+    return;
+  }
+
+  if (is_loading_) {
+    content::WebCursor::CursorInfo busy_cursor_info(
+        blink::WebCursorInfo::TypeWait);
+    content::WebCursor busy_cursor(busy_cursor_info);
+    web_view_->UpdateCursor(busy_cursor);
+  } else {
+    web_view_->UpdateCursor(current_cursor_);
+  }
 }
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
-  compositor_->SetRootLayer(scoped_refptr<cc::Layer>());
+  DetachLayer();
   frame_provider_ = NULL;
   layer_ = NULL;
 }
@@ -482,157 +484,111 @@ void RenderWidgetHostView::RunAckCallbacks() {
   }
 }
 
-void RenderWidgetHostView::ProcessGestures(
-    ui::GestureRecognizer::Gestures* gestures) {
-  if (!gestures) {
+void RenderWidgetHostView::AttachLayer() {
+  if (!web_view_) {
+    return;
+  }
+  if (!layer_) {
     return;
   }
 
-  for (ui::GestureRecognizer::Gestures::iterator it = gestures->begin();
-       it != gestures->end(); ++it) {
-    ForwardGestureEventToRenderer(*it);
-  }
+  web_view_->compositor()->SetRootLayer(layer_);
 }
 
-void RenderWidgetHostView::ForwardGestureEventToRenderer(
-    ui::GestureEvent* event) {
-  if ((event->type() == ui::ET_GESTURE_PINCH_BEGIN ||
-       event->type() == ui::ET_GESTURE_PINCH_UPDATE ||
-       event->type() == ui::ET_GESTURE_PINCH_END) &&
-      !ShouldSendPinchGesture()) {
+void RenderWidgetHostView::DetachLayer() {
+  if (!web_view_) {
+    return;
+  }
+  if (!layer_) {
     return;
   }
 
-  blink::WebGestureEvent gesture(
-      content::MakeWebGestureEventFromUIEvent(*event));
-  gesture.x = event->x();
-  gesture.y = event->y();
-  gesture.globalX = event->root_location().x();
-  gesture.globalY = event->root_location().y();
-
-  if (event->type() == ui::ET_GESTURE_TAP_DOWN) {
-    // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
-    // event to stop any in-progress flings.
-    blink::WebGestureEvent fling_cancel = gesture;
-    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
-    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
-    host_->ForwardGestureEvent(fling_cancel);
-  }
-
-  if (gesture.type == blink::WebInputEvent::Undefined) {
-    return;
-  }
-
-  host_->ForwardGestureEventWithLatencyInfo(gesture, *event->latency());
+  web_view_->compositor()->SetRootLayer(scoped_refptr<cc::Layer>());
 }
-
-void RenderWidgetHostView::OnUpdateCursor(const content::WebCursor& cursor) {}
 
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     content::RenderWidgetHostViewBase(),
     host_(content::RenderWidgetHostImpl::From(host)),
-    compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
+    web_view_(NULL),
     resource_collection_(new cc::DelegatedFrameResourceCollection()),
     last_output_surface_id_(0),
     frame_is_evicted_(true),
     selection_cursor_position_(0),
     selection_anchor_position_(0),
+    current_text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
+    show_ime_if_needed_(false),
+    focused_node_is_editable_(false),
     is_loading_(false),
-    gesture_recognizer_(ui::GestureRecognizer::Create()) {
+    is_showing_(false) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   resource_collection_->SetClient(this);
-  gesture_recognizer_->AddGestureEventHelper(this);
   host_->SetView(this);
-}
-
-void RenderWidgetHostView::WasShown() {
-  if (host_->is_hidden() && !frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->LockFrame(this);
-  }
-  compositor_->SetVisibility(true);
-  host()->WasShown();
-}
-
-void RenderWidgetHostView::WasHidden() {
-  if (!host_->is_hidden() && !frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
-  }
-  host()->WasHidden();
-  RunAckCallbacks();
-  compositor_->SetVisibility(false);
-}
-
-void RenderWidgetHostView::OnFocus() {
-  host()->GotFocus();
-  GetRenderWidgetHost()->SetActive(true);
-
-  // XXX: Should we have a run-time check to see if this is required?
-  host()->SetInputMethodActive(true);
-}
-
-void RenderWidgetHostView::OnBlur() {
-  host()->SetInputMethodActive(false);
-
-  GetRenderWidgetHost()->SetActive(false);
-  GetRenderWidgetHost()->Blur();
-}
-
-void RenderWidgetHostView::OnResize() {
-  {
-    blink::WebScreenInfo screen_info;
-    GetScreenInfo(&screen_info);
-    CompositorLock lock(compositor_.get());
-    compositor_->SetDeviceScaleFactor(screen_info.deviceScaleFactor);
-    compositor_->SetViewportSize(GetPhysicalBackingSize());
-  }
-
-  host()->SendScreenRects();
-  GetRenderWidgetHost()->WasResized();
-}
-
-void RenderWidgetHostView::HandleTouchEvent(const ui::TouchEvent& event) {
-  if (host_->ShouldForwardTouchEvent()) {
-    blink::WebTouchPoint* point =
-        content::UpdateWebTouchEventFromUIEvent(event, &touch_event_);
-    if (point) {
-      host_->ForwardTouchEventWithLatencyInfo(touch_event_, ui::LatencyInfo());
-      UpdateWebTouchEventAfterDispatch(&touch_event_, point);
-    }
-  } else {
-    scoped_ptr<ui::GestureRecognizer::Gestures> gestures(
-        gesture_recognizer_->ProcessTouchEventForGesture(event, ui::ER_UNHANDLED, this));
-    ProcessGestures(gestures.get());
-  }
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
   DCHECK(ack_callbacks_.empty());
   resource_collection_->SetClient(NULL);
+  SetWebView(NULL);
 }
 
-CompositorFrameHandle* RenderWidgetHostView::GetCompositorFrameHandle() {
-  return current_compositor_frame_;
+void RenderWidgetHostView::CompositorDidCommit() {
+  RunAckCallbacks();
 }
 
-void RenderWidgetHostView::DidCommitCompositorFrame() {
-  DCHECK(!received_surface_ids_.empty());
-
-  while (!received_surface_ids_.empty()) {
-    uint32 surface_id = received_surface_ids_.front();
-    received_surface_ids_.pop();
-
-    compositor_->DidSwapCompositorFrame(surface_id,
-                                        previous_compositor_frames_);
+void RenderWidgetHostView::SetWebView(WebView* view) {
+  if (view == web_view_) {
+    return;
   }
+
+  DetachLayer();
+  web_view_ = view;
+  AttachLayer();
+
+  if (web_view_) {
+    host_->SendScreenRects();
+    host_->WasResized();
+
+    if (web_view_->IsVisible()) {
+      Show();
+    } else {
+      Hide();
+    }
+
+    UpdateCursorOnWebView();
+    web_view_->TextInputStateChanged(current_text_input_type_,
+                                     show_ime_if_needed_);
+    web_view_->FocusedNodeChanged(focused_node_is_editable_);
+  } else {
+    Hide();
+  }
+}
+
+void RenderWidgetHostView::Blur() {
+  host_->SetInputMethodActive(false);
+
+  host_->SetActive(false);
+  host_->Blur();
 }
 
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
   return host_;
 }
 
+void RenderWidgetHostView::SetSize(const gfx::Size& size) {
+  last_size_ = size;
+}
+
 void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
   SetSize(rect.size());
+}
+
+void RenderWidgetHostView::Focus() {
+  host_->Focus();
+  host_->SetActive(true);
+
+  // XXX: Should we have a run-time check to see if this is required?
+  host_->SetInputMethodActive(true);
 }
 
 } // namespace oxide

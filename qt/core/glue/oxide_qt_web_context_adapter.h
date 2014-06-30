@@ -36,7 +36,6 @@ class OxideQStoragePermissionRequest;
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostViewDelegateFactory;
 class UserScriptAdapter;
 class WebContextAdapterPrivate;
 
@@ -113,8 +112,7 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
  protected:
   WebContextAdapter(QObject* q,
-                    IOThreadDelegate* io_delegate,
-                    RenderWidgetHostViewDelegateFactory* view_factory);
+                    IOThreadDelegate* io_delegate);
 
  private:
   friend class WebContextAdapterPrivate;

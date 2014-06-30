@@ -19,17 +19,22 @@
 
 #include <queue>
 
+#include "base/command_line.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
+#include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/browser/renderer_host/ui_events_helper.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
+#include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
@@ -38,17 +43,26 @@
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/render_view_host.h"
+#include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/common/content_switches.h"
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
 #include "net/base/net_errors.h"
+#include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "ui/base/window_open_disposition.h"
+#include "ui/events/event.h"
+#include "ui/gfx/range/range.h"
+#include "ui/gl/gl_implementation.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
 #include "webkit/common/webpreferences.h"
 
+#include "shared/browser/compositor/oxide_compositor.h"
+#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
@@ -102,16 +116,75 @@ void FillLoadURLParamsFromOpenURLParams(
 }
 
 void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
-  RenderWidgetHostView* rwhv = static_cast<RenderWidgetHostView *>(
-      contents->GetRenderWidgetHostView());
-  if (rwhv) {
-    rwhv->Init(view);
-  }
-
   WebView::Params params;
   params.contents = contents.Pass();
 
   view->Init(&params);
+}
+
+void UpdateWebTouchEventAfterDispatch(blink::WebTouchEvent* event,
+                                      blink::WebTouchPoint* point) {
+  if (point->state != blink::WebTouchPoint::StateReleased &&
+      point->state != blink::WebTouchPoint::StateCancelled) {
+    return;
+  }
+  --event->touchesLength;
+  for (unsigned i = point - event->touches;
+       i < event->touchesLength;
+       ++i) {
+    event->touches[i] = event->touches[i + 1];
+  }
+}
+
+bool ShouldSendPinchGesture() {
+  static bool pinch_allowed =
+      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnableViewport) ||
+      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnablePinch);
+  return pinch_allowed;
+}
+
+bool ShouldUseSoftwareCompositing() {
+  static bool initialized = false;
+  static bool result = true;
+
+  if (initialized) {
+    return result;
+  }
+
+  initialized = true;
+
+  if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
+    return true;
+  }
+
+  SharedGLContext* share_context =
+      BrowserProcessMain::instance()->GetSharedGLContext();
+  if (!share_context) {
+    return true;
+  }
+
+  if (share_context->GetImplementation() != gfx::GetGLImplementation()) {
+    return true;
+  }
+
+  result = false;
+  return false;
+}
+
+// Qt input methods don’t generate key events, but a lot of web pages out there
+// rely on keydown and keyup events to e.g. perform search-as-you-type or
+// enable/disable a submit button based on the contents of a text input field,
+// so we send a fake pair of keydown/keyup events.
+// This mimicks what is done in GtkIMContextWrapper::HandlePreeditChanged(…)
+// and GtkIMContextWrapper::HandleCommit(…)
+// (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
+void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
+                                 blink::WebInputEvent::Type type) {
+  content::NativeWebKeyboardEvent fake_event;
+  fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
+  fake_event.skip_in_browser = true;
+  fake_event.type = type;
+  host->ForwardKeyboardEvent(fake_event);
 }
 
 typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
@@ -137,6 +210,79 @@ WebView::GetAllWebViewsFor(BrowserContext * browser_context) {
   return webviews;
 }
 
+RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
+  if (!web_contents_) {
+    return NULL;
+  }
+
+  return static_cast<RenderWidgetHostView *>(
+      web_contents_->GetRenderWidgetHostView());
+}
+
+content::RenderViewHost* WebView::GetRenderViewHost() const {
+  if (!web_contents_) {
+    return NULL;
+  }
+
+  return web_contents_->GetRenderViewHost();
+}
+
+content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
+  if (!web_contents_) {
+    return NULL;
+  }
+
+  return content::RenderWidgetHostImpl::From(
+      web_contents_->GetRenderViewHost());
+}
+
+void WebView::ForwardGestureEventToRenderer(ui::GestureEvent* event) {
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
+    return;
+  }
+
+  if ((event->type() == ui::ET_GESTURE_PINCH_BEGIN ||
+       event->type() == ui::ET_GESTURE_PINCH_UPDATE ||
+       event->type() == ui::ET_GESTURE_PINCH_END) &&
+      !ShouldSendPinchGesture()) {
+    return;
+  }
+
+  blink::WebGestureEvent gesture(
+      content::MakeWebGestureEventFromUIEvent(*event));
+  gesture.x = event->x();
+  gesture.y = event->y();
+  gesture.globalX = event->root_location().x();
+  gesture.globalY = event->root_location().y();
+
+  if (event->type() == ui::ET_GESTURE_TAP_DOWN) {
+    // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
+    // event to stop any in-progress flings.
+    blink::WebGestureEvent fling_cancel = gesture;
+    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
+    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
+    host->ForwardGestureEvent(fling_cancel);
+  }
+
+  if (gesture.type == blink::WebInputEvent::Undefined) {
+    return;
+  }
+
+  host->ForwardGestureEventWithLatencyInfo(gesture, *event->latency());
+}
+
+void WebView::ProcessGestures(ui::GestureRecognizer::Gestures* gestures) {
+  if (!gestures) {
+    return;
+  }
+
+  for (ui::GestureRecognizer::Gestures::iterator it = gestures->begin();
+       it != gestures->end(); ++it) {
+    ForwardGestureEventToRenderer(*it);
+  }
+}
+
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
                                  const base::string16& error_description) {
@@ -156,9 +302,58 @@ ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(size_t index) const {
   return NULL;
 }
 
+void WebView::CompositorDidCommit() {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  rwhv->CompositorDidCommit();
+}
+
+void WebView::CompositorSwapFrame(uint32 surface_id,
+                                  CompositorFrameHandle* frame) {
+  received_surface_ids_.push(surface_id);
+
+  if (current_compositor_frame_) {
+    previous_compositor_frames_.push_back(current_compositor_frame_);
+  }
+  current_compositor_frame_ = frame;
+
+  OnSwapCompositorFrame();
+}
+
 void WebView::WebPreferencesDestroyed() {
   initial_preferences_ = NULL;
   OnWebPreferencesDestroyed();
+}
+
+bool WebView::CanDispatchToConsumer(ui::GestureConsumer* consumer) {
+  DCHECK_EQ(this, static_cast<WebView *>(consumer));
+  return true;
+}
+
+void WebView::DispatchGestureEvent(ui::GestureEvent* event) {
+  ForwardGestureEventToRenderer(event);
+}
+
+
+void WebView::DispatchCancelTouchEvent(ui::TouchEvent* event) {
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
+    return;
+  }
+
+  if (!host->ShouldForwardTouchEvent()) {
+    return;
+  }
+
+  DCHECK_EQ(event->type(), ui::ET_TOUCH_CANCELLED);
+  blink::WebTouchEvent cancel_event;
+  cancel_event.type = blink::WebInputEvent::TouchCancel;
+  cancel_event.timeStampSeconds = event->time_stamp().InSecondsF();
+  host->ForwardTouchEventWithLatencyInfo(
+      cancel_event, *event->latency());
 }
 
 void WebView::Observe(int type,
@@ -253,7 +448,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
   content::WebContents::CreateParams contents_params(
       GetBrowserContext(),
       opener_suppressed ? NULL : web_contents_->GetSiteInstance());
-  contents_params.initial_size = GetContainerSize();
+  contents_params.initial_size = GetContainerSizeDip();
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
   contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
 
@@ -266,7 +461,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
 
   WebViewContentsHelper::Attach(contents.get(), web_contents_.get());
 
-  WebView* new_view = CreateNewWebView(GetContainerBounds(), disposition);
+  WebView* new_view = CreateNewWebView(GetContainerBoundsPix(), disposition);
   if (!new_view) {
     return NULL;
   }
@@ -363,7 +558,7 @@ void WebView::NotifyWebPreferencesDestroyed() {
   OnWebPreferencesDestroyed();
 }
 
-void WebView::HandleKeyboardEvent(
+void WebView::HandleUnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
   OnUnhandledKeyboardEvent(event);
 }
@@ -376,6 +571,13 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   while (root_frame_->ChildCount() > 0) {
     root_frame_->ChildAt(0)->Destroy();
+  }
+
+  if (old_host && old_host->GetView()) {
+    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetWebView(NULL);
+  }
+  if (new_host && new_host->GetView()) {
+    static_cast<RenderWidgetHostView *>(new_host->GetView())->SetWebView(this);
   }
 }
 
@@ -543,14 +745,6 @@ void WebView::OnNavigationEntryCommitted() {}
 void WebView::OnNavigationListPruned(bool from_front, int count) {}
 void WebView::OnNavigationEntryChanged(int index) {}
 
-void WebView::OnWebPreferencesDestroyed() {}
-
-void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<GeolocationPermissionRequest> request) {}
-
-void WebView::OnUnhandledKeyboardEvent(
-    const content::NativeWebKeyboardEvent& event) {}
-
 bool WebView::OnAddMessageToConsole(int32 level,
                                     const base::string16& message,
                                     int32 line_no,
@@ -559,6 +753,23 @@ bool WebView::OnAddMessageToConsole(int32 level,
 }
 
 void WebView::OnToggleFullscreenMode(bool enter) {}
+
+void WebView::OnWebPreferencesDestroyed() {}
+
+void WebView::OnRequestGeolocationPermission(
+    scoped_ptr<GeolocationPermissionRequest> request) {}
+
+void WebView::OnUnhandledKeyboardEvent(
+    const content::NativeWebKeyboardEvent& event) {}
+
+void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {}
+
+void WebView::OnDownloadRequested(const GURL& url,
+				  const std::string& mimeType,
+				  const bool shouldPrompt,
+				  const base::string16& suggestedFilename,
+				  const std::string& cookies,
+				  const std::string& referrer) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
@@ -577,25 +788,26 @@ WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
   return NULL;
 }
 
-void WebView::OnDownloadRequested(const GURL& url,
-				  const std::string& mimeType,
-				  const bool shouldPrompt,
-				  const base::string16& suggestedFilename,
-				  const std::string& cookies,
-				  const std::string& referrer) {}
+FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
+  return NULL;
+}
+
+void WebView::OnEvictCurrentFrame() {}
 
 WebView::WebView()
     : web_contents_helper_(NULL),
+      compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
+      gesture_recognizer_(ui::GestureRecognizer::Create()),
       initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false) {
+  gesture_recognizer_->AddGestureEventHelper(this);
 }
 
 WebView::~WebView() {
-  BrowserContext* context =
-    GetBrowserContext();
+  BrowserContext* context = GetBrowserContext();
   WebViewsPerContextMap::iterator it =
-    g_web_view_per_context.Get().find(context);
+      g_web_view_per_context.Get().find(context);
   if (it != g_web_view_per_context.Get().end()) {
     std::set<WebView*>& wvl = it->second;
     if (wvl.find(this) != wvl.end()) {
@@ -610,6 +822,12 @@ WebView::~WebView() {
   if (root_frame_) {
     root_frame_->Destroy();
   }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->SetWebView(NULL);
+  }
+
   initial_preferences_ = NULL;
   web_contents_helper_ = NULL;
 }
@@ -617,21 +835,29 @@ WebView::~WebView() {
 void WebView::Init(Params* params) {
   CHECK(!web_contents_) << "Cannot initialize webview more than once";
 
+  CompositorLock lock(compositor_.get());
+
   if (params->contents) {
     CHECK(!params->context) <<
         "Shouldn't specify a BrowserContext and WebContents at initialization";
     CHECK(params->contents->GetBrowserContext()) <<
         "Specified WebContents doesn't have a BrowserContext";
     CHECK(WebViewContentsHelper::FromWebContents(params->contents.get())) <<
-        "Specified in WebContents should already have a WebViewContentsHelper";
+        "Specified WebContents should already have a WebViewContentsHelper";
     CHECK(!FromWebContents(params->contents.get())) <<
         "Specified WebContents already belongs to a WebView";
 
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
         params->contents.release()));
 
-    UpdateVisibility(IsVisible());
-    UpdateSize(GetContainerSize());
+    WasResized();
+    VisibilityChanged();
+    FocusChanged();
+
+    RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+    if (rwhv) {
+      rwhv->SetWebView(this);
+    }
 
     // Update our preferences in case something has changed (like
     // CanCreateWindows())
@@ -644,14 +870,19 @@ void WebView::Init(Params* params) {
         params->context->GetOriginalContext();
 
     content::WebContents::CreateParams content_params(context);
-    content_params.initial_size = GetContainerSize();
+    content_params.initial_size = GetContainerSizeDip();
     content_params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
     WebViewContentsHelper::Attach(web_contents_.get());
+
+    compositor_->SetViewportSize(GetContainerSizePix());
+    compositor_->SetVisibility(IsVisible());
   }
+
+  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
 
   web_contents_helper_ =
       WebViewContentsHelper::FromWebContents(web_contents_.get());
@@ -681,10 +912,9 @@ void WebView::Init(Params* params) {
   SetIsFullscreen(is_fullscreen_);
 
   {
-    BrowserContext* context =
-      GetBrowserContext()->GetOriginalContext();
+    BrowserContext* context = GetBrowserContext()->GetOriginalContext();
     WebViewsPerContextMap::iterator it =
-      g_web_view_per_context.Get().find(context);
+        g_web_view_per_context.Get().find(context);
     if (it != g_web_view_per_context.Get().end()) {
       g_web_view_per_context.Get()[context].insert(this);
     } else {
@@ -822,21 +1052,43 @@ void WebView::SetIsFullscreen(bool fullscreen) {
   }
 }
 
-void WebView::UpdateSize(const gfx::Size& size) {
-  content::RenderWidgetHostView* rwhv =
-      web_contents_->GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
+void WebView::WasResized() {
+  {
+    CompositorLock lock(compositor_.get());
+    compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+    compositor_->SetViewportSize(GetContainerSizePix());
   }
 
-  rwhv->SetSize(size);
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->SetSize(GetContainerSizeDip());
+    GetRenderWidgetHostImpl()->SendScreenRects();
+    rwhv->GetRenderWidgetHost()->WasResized();
+  }
 }
 
-void WebView::UpdateVisibility(bool visible) {
+void WebView::VisibilityChanged() {
+  bool visible = IsVisible();
+
+  compositor_->SetVisibility(visible);
+
   if (visible) {
     web_contents_->WasShown();
   } else {
     web_contents_->WasHidden();
+  }
+}
+
+void WebView::FocusChanged() {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  if (HasFocus()) {
+    rwhv->Focus();
+  } else {
+    rwhv->Blur();
   }
 }
 
@@ -930,8 +1182,17 @@ void WebView::SetWebPreferences(WebPreferences* prefs) {
   }
 }
 
-gfx::Size WebView::GetContainerSize() {
-  return GetContainerBounds().size();
+gfx::Size WebView::GetContainerSizePix() const {
+  return GetContainerBoundsPix().size();
+}
+
+gfx::Rect WebView::GetContainerBoundsDip() const {
+  return gfx::ScaleToEnclosingRect(
+      GetContainerBoundsPix(), 1.0f / GetScreenInfo().deviceScaleFactor);
+}
+
+gfx::Size WebView::GetContainerSizeDip() const {
+  return GetContainerBoundsDip().size();
 }
 
 void WebView::ShowPopupMenu(const gfx::Rect& bounds,
@@ -984,86 +1245,83 @@ void WebView::UpdateWebPreferences() {
   }
 }
 
-JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type,
-    bool* did_suppress_message) {
-  return NULL;
-}
-
-JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  return NULL;
-}
-
-FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
-  return NULL;
-}
-
-void WebView::FrameAdded(WebFrame* frame) {}
-void WebView::FrameRemoved(WebFrame* frame) {}
-
-bool WebView::CanCreateWindows() const {
-  return false;
-}
-
-float WebView::GetDeviceScaleFactor() const {
-  return frame_metadata_.device_scale_factor;
-}
-
-float WebView::GetPageScaleFactor() const {
-  return frame_metadata_.page_scale_factor;
-}
-
-void WebView::PageScaleFactorChanged() {}
-
-const gfx::Vector2dF& WebView::GetRootScrollOffset() const {
-  return frame_metadata_.root_scroll_offset;
-}
-
-void WebView::RootScrollOffsetXChanged() {}
-void WebView::RootScrollOffsetYChanged() {}
-
-const gfx::SizeF& WebView::GetRootLayerSize() const {
-  return frame_metadata_.root_layer_size;
-}
-
-void WebView::RootLayerWidthChanged() {}
-void WebView::RootLayerHeightChanged() {}
-
-const gfx::SizeF& WebView::GetViewportSize() const {
-  return frame_metadata_.viewport_size;
-}
-
-void WebView::ViewportWidthChanged() {}
-void WebView::ViewportHeightChanged() {}
-
-void WebView::GotNewCompositorFrameMetadata(
-    const cc::CompositorFrameMetadata& metadata) {
-  gfx::Vector2dF root_scroll_offset = frame_metadata_.root_scroll_offset;
-  float page_scale_factor = frame_metadata_.page_scale_factor;
-  gfx::SizeF root_layer_size = frame_metadata_.root_layer_size;
-  gfx::SizeF viewport_size = frame_metadata_.viewport_size;
-  frame_metadata_ = metadata;
-  if (metadata.page_scale_factor != page_scale_factor) {
-    PageScaleFactorChanged();
+void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (!rvh) {
+    return;
   }
-  if (metadata.root_scroll_offset.x() != root_scroll_offset.x()) {
-    RootScrollOffsetXChanged();
+
+  rvh->ForwardKeyboardEvent(event);
+}
+
+void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (!rvh) {
+    return;
   }
-  if (metadata.root_scroll_offset.y() != root_scroll_offset.y()) {
-    RootScrollOffsetYChanged();
+
+  rvh->ForwardMouseEvent(event);
+}
+
+void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
+  blink::WebTouchPoint* point =
+      content::UpdateWebTouchEventFromUIEvent(event, &touch_event_);
+
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (host) {
+    if (host->ShouldForwardTouchEvent()) {
+      if (point) {
+        host->ForwardTouchEventWithLatencyInfo(touch_event_, ui::LatencyInfo());
+      }
+    } else {
+      scoped_ptr<ui::GestureRecognizer::Gestures> gestures(
+          gesture_recognizer_->ProcessTouchEventForGesture(event,
+                                                           ui::ER_UNHANDLED,
+                                                           this));
+      ProcessGestures(gestures.get());
+    }
   }
-  if (metadata.root_layer_size.width() != root_layer_size.width()) {
-    RootLayerWidthChanged();
+
+  if (point) {
+    UpdateWebTouchEventAfterDispatch(&touch_event_, point);
   }
-  if (metadata.root_layer_size.height() != root_layer_size.height()) {
-    RootLayerHeightChanged();
+}
+
+void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (!rvh) {
+    return;
   }
-  if (metadata.viewport_size.width() != viewport_size.width()) {
-    ViewportWidthChanged();
+
+  rvh->ForwardWheelEvent(event);
+}
+
+void WebView::ImeCommitText(const base::string16& text,
+                            const gfx::Range& replacement_range) {
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
+    return;
   }
-  if (metadata.viewport_size.height() != viewport_size.height()) {
-    ViewportHeightChanged();
+
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown); 
+  host->ImeConfirmComposition(text, replacement_range, false);
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
+}
+
+void WebView::ImeSetComposingText(
+    const base::string16& text,
+    const std::vector<blink::WebCompositionUnderline>& underlines,
+    const gfx::Range& selection_range) {
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
+    return;
   }
+
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown); 
+  host->ImeSetComposition(text, underlines,
+                          selection_range.start(),
+                          selection_range.end());
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
 }
 
 void WebView::DownloadRequested(
@@ -1076,5 +1334,81 @@ void WebView::DownloadRequested(
   OnDownloadRequested(url, mimeType, shouldPrompt,
       suggestedFilename, cookies, referrer);
 }
+
+CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {
+  return current_compositor_frame_;
+}
+
+void WebView::DidCommitCompositorFrame() {
+  DCHECK(!received_surface_ids_.empty());
+
+  while (!received_surface_ids_.empty()) {
+    uint32 surface_id = received_surface_ids_.front();
+    received_surface_ids_.pop();
+
+    compositor_->DidSwapCompositorFrame(surface_id,
+                                        previous_compositor_frames_);
+  }
+}
+
+void WebView::EvictCurrentFrame() {
+  current_compositor_frame_ = NULL;
+  OnEvictCurrentFrame();
+}
+
+void WebView::UpdateFrameMetadata(
+    const cc::CompositorFrameMetadata& metadata) {
+  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
+  compositor_frame_metadata_ = metadata;
+
+  OnFrameMetadataUpdated(old);
+}
+
+void WebView::ProcessAckedTouchEvent(
+    const content::TouchEventWithLatencyInfo& touch,
+    content::InputEventAckState ack_result) {
+  ScopedVector<ui::TouchEvent> events;
+  if (!content::MakeUITouchEventsFromWebTouchEvents(
+      touch, &events, content::LOCAL_COORDINATES)) {
+    return;
+  }
+
+  ui::EventResult result =
+      (ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED) ?
+        ui::ER_HANDLED : ui::ER_UNHANDLED;
+  for (ScopedVector<ui::TouchEvent>::iterator it = events.begin(),
+       end = events.end(); it != end; ++it)  {
+    ui::TouchEvent* event = *it;
+    scoped_ptr<ui::GestureRecognizer::Gestures> gestures(
+        gesture_recognizer_->ProcessTouchEventForGesture(*event, result, this));
+    ProcessGestures(gestures.get());
+  }
+}
+
+JavaScriptDialog* WebView::CreateJavaScriptDialog(
+    content::JavaScriptMessageType javascript_message_type,
+    bool* did_suppress_message) {
+  return NULL;
+}
+
+JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
+  return NULL;
+}
+
+void WebView::FrameAdded(WebFrame* frame) {}
+void WebView::FrameRemoved(WebFrame* frame) {}
+
+bool WebView::CanCreateWindows() const {
+  return false;
+}
+
+void WebView::UpdateCursor(const content::WebCursor& cursor) {}
+
+void WebView::TextInputStateChanged(ui::TextInputType type,
+                                    bool show_ime_if_needed) {}
+
+void WebView::FocusedNodeChanged(bool is_editable_node) {}
+
+void WebView::ImeCancelComposition() {}
 
 } // namespace oxide

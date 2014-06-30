@@ -230,6 +230,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
 
+  Q_PRIVATE_SLOT(d_func(), void onWindowChanged(QQuickWindow*));
+
   void connectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
 
@@ -237,6 +239,10 @@ class OxideQQuickWebView : public QQuickItem {
                        const QRectF& oldGeometry) Q_DECL_FINAL;
   void itemChange(QQuickItem::ItemChange change,
                   const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
+  QSGNode* updatePaintNode(
+      QSGNode* oldNode,
+      UpdatePaintNodeData * updatePaintNodeData) Q_DECL_FINAL;
+  void updatePolish() Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

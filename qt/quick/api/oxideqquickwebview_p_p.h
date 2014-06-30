@@ -18,7 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
-#include <QScopedPointer>
+#include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -34,7 +34,15 @@ class OxideQQuickWebView;
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
 template <typename T> class QQmlListProperty;
+class QQuickItem;
+class QQuickWindow;
 QT_END_NAMESPACE
+
+namespace oxide {
+namespace qt {
+class CompositorFrameHandle;
+}
+}
 
 class OxideQQuickWebViewPrivate Q_DECL_FINAL :
      public oxide::qt::WebViewAdapter {
@@ -48,6 +56,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void addAttachedPropertyTo(QObject* object);
 
  private:
+  friend class UpdatePaintNodeScope;
+
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
   oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
@@ -74,8 +84,10 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
-  QRect GetContainerBounds() Q_DECL_FINAL;
+  QScreen* GetScreen() const Q_DECL_FINAL;
+  QRect GetContainerBoundsPix() const Q_DECL_FINAL;
   bool IsVisible() const Q_DECL_FINAL;
+  bool HasFocus() const Q_DECL_FINAL;
 
   void AddMessageToConsole(int level,
 			   const QString& message,
@@ -91,21 +103,23 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   bool CanCreateWindows() const Q_DECL_FINAL;
 
+  void UpdateCursor(const QCursor& cursor) Q_DECL_FINAL;
+
   void NavigationRequested(OxideQNavigationRequest* request) Q_DECL_FINAL;
   void NewViewRequested(OxideQNewViewRequest* request) Q_DECL_FINAL;
 
   void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) Q_DECL_FINAL;
 
-  void PageScaleFactorChanged() Q_DECL_FINAL;
-  void RootScrollOffsetXChanged() Q_DECL_FINAL;
-  void RootScrollOffsetYChanged() Q_DECL_FINAL;
-  void RootLayerWidthChanged() Q_DECL_FINAL;
-  void RootLayerHeightChanged() Q_DECL_FINAL;
-  void ViewportWidthChanged() Q_DECL_FINAL;
-  void ViewportHeightChanged() Q_DECL_FINAL;
+  void HandleUnhandledKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
 
-  void HandleKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
+  void FrameMetadataUpdated(
+      oxide::qt::FrameMetadataChangeFlags flags) Q_DECL_FINAL;
+
+  void ScheduleUpdate() Q_DECL_FINAL;
+  void EvictCurrentFrame() Q_DECL_FINAL;
+
+  void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
 
   void DownloadRequested(OxideQDownloadRequest* downloadRequest) Q_DECL_FINAL;
 
@@ -127,6 +141,10 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
+  void didUpdatePaintNode();
+
+  void onWindowChanged(QQuickWindow* window);
+
   bool constructed_;
   int load_progress_;
   QUrl icon_;
@@ -137,6 +155,13 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   QQmlComponent* prompt_dialog_;
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
+
+  QQuickItem* input_area_;
+
+  bool received_new_compositor_frame_;
+  bool frame_evicted_;
+  oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
+  QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

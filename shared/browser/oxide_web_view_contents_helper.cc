@@ -170,7 +170,7 @@ void WebViewContentsHelper::HandleKeyboardEvent(
     return;
   }
 
-  delegate_->HandleKeyboardEvent(event);
+  delegate_->HandleUnhandledKeyboardEvent(event);
 }
 
 void WebViewContentsHelper::WebContentsCreated(

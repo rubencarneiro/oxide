@@ -28,6 +28,8 @@ class QImage;
 class QSGTexture;
 QT_END_NAMESPACE
 
+class OxideQQuickWebView;
+
 namespace oxide {
 
 namespace qt {
@@ -36,17 +38,15 @@ class CompositorFrameHandle;
 
 namespace qquick {
 
-class RenderViewItem;
-
 class SoftwareFrameNode Q_DECL_FINAL : public QSGSimpleTextureNode {
  public:
-  SoftwareFrameNode(RenderViewItem* item);
+  SoftwareFrameNode(OxideQQuickWebView* view);
 
   void updateNode(QSharedPointer<oxide::qt::CompositorFrameHandle> handle);
   void setImage(const QImage& image);
 
  private:
-  RenderViewItem* item_;
+  OxideQQuickWebView* view_;
 
   QSharedPointer<oxide::qt::CompositorFrameHandle> handle_;
   QScopedPointer<QSGTexture> texture_;

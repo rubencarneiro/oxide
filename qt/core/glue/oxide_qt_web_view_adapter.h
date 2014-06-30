@@ -19,21 +19,32 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 
 #include <QDateTime>
+#include <QImage>
 #include <QList>
 #include <QPointF>
 #include <QRect>
 #include <QScopedPointer>
+#include <QSharedPointer>
 #include <QSizeF>
 #include <QString>
 #include <QtGlobal>
+#include <Qt>
 #include <QUrl>
+#include <QVariant>
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
 QT_BEGIN_NAMESPACE
+class QCursor;
+class QFocusEvent;
+class QInputMethodEvent;
 class QKeyEvent;
+class QMouseEvent;
+class QScreen;
 class QSize;
+class QTouchEvent;
+class QWheelEvent;
 QT_END_NAMESPACE
 
 class OxideQDownloadRequest;
@@ -52,6 +63,46 @@ class WebContextAdapter;
 class WebFrameAdapter;
 class WebPopupMenuDelegate;
 class WebView;
+
+enum FrameMetadataChangeFlags {
+  FRAME_METADATA_CHANGE_DEVICE_SCALE = 1 << 0,
+  FRAME_METADATA_CHANGE_SCROLL_OFFSET_X = 1 << 1,
+  FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y = 1 << 2,
+  FRAME_METADATA_CHANGE_CONTENT_WIDTH = 1 << 3,
+  FRAME_METADATA_CHANGE_CONTENT_HEIGHT = 1 << 4,
+  FRAME_METADATA_CHANGE_VIEWPORT_WIDTH = 1 << 5,
+  FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT = 1 << 6,
+  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 7
+};
+
+class Q_DECL_EXPORT AcceleratedFrameData Q_DECL_FINAL {
+ public:
+  AcceleratedFrameData(unsigned int id)
+      : texture_id_(id) {}
+  ~AcceleratedFrameData() {}
+
+  unsigned int texture_id() const { return texture_id_; }
+
+ private:
+  unsigned int texture_id_;
+};
+
+class Q_DECL_EXPORT CompositorFrameHandle {
+ public:
+  virtual ~CompositorFrameHandle() {}
+
+  enum Type {
+    TYPE_INVALID,
+    TYPE_SOFTWARE,
+    TYPE_ACCELERATED
+  };
+
+  virtual Type GetType() = 0;
+  virtual const QSize& GetSize() const = 0;
+
+  virtual QImage GetSoftwareFrame() = 0;
+  virtual AcceleratedFrameData GetAcceleratedFrame() = 0;
+};
 
 class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  public:
@@ -80,8 +131,17 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   WebContextAdapter* context() const;
   void setContext(WebContextAdapter* context);
 
-  void updateSize(const QSize& size);
-  void updateVisibility(bool visible);
+  void wasResized();
+  void visibilityChanged();
+
+  void handleFocusEvent(QFocusEvent* event);
+  void handleInputMethodEvent(QInputMethodEvent* event);
+  void handleKeyEvent(QKeyEvent* event);
+  void handleMouseEvent(QMouseEvent* event);
+  void handleTouchEvent(QTouchEvent* event);
+  void handleWheelEvent(QWheelEvent* event);
+
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const;
 
   void goBack();
   void goForward();
@@ -110,11 +170,14 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void updateWebPreferences();
 
-  float deviceScaleFactor() const;
-  float pageScaleFactor() const;
-  QPointF scrollOffset() const;
-  QSizeF layerSize() const;
-  QSizeF viewportSize() const;
+  float compositorFrameDeviceScaleFactor() const;
+  float compositorFramePageScaleFactor() const;
+  QPointF compositorFrameScrollOffset() const;
+  QSizeF compositorFrameLayerSize() const;
+  QSizeF compositorFrameViewportSize() const;
+
+  QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
+  void didCommitCompositorFrame();
 
  protected:
   WebViewAdapter(QObject* q);
@@ -158,9 +221,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
-  virtual QRect GetContainerBounds() = 0;
-
+  virtual QScreen* GetScreen() const = 0;
+  virtual QRect GetContainerBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
+  virtual bool HasFocus() const = 0;
 
   virtual void AddMessageToConsole(int level,
                                    const QString& message,
@@ -176,21 +240,22 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual bool CanCreateWindows() const = 0;
 
+  virtual void UpdateCursor(const QCursor& cursor) = 0;
+
   virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
   virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
 
   virtual void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) = 0;
 
-  virtual void PageScaleFactorChanged() = 0;
-  virtual void RootScrollOffsetXChanged() = 0;
-  virtual void RootScrollOffsetYChanged() = 0;
-  virtual void RootLayerWidthChanged() = 0;
-  virtual void RootLayerHeightChanged() = 0;
-  virtual void ViewportWidthChanged() = 0;
-  virtual void ViewportHeightChanged() = 0;
+  virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
-  virtual void HandleKeyboardEvent(QKeyEvent* event) = 0;
+  virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
+
+  virtual void ScheduleUpdate() = 0;
+  virtual void EvictCurrentFrame() = 0;
+
+  virtual void SetInputMethodEnabled(bool enabled) = 0;
 
   virtual void DownloadRequested(OxideQDownloadRequest* downloadRequest) = 0;
 
