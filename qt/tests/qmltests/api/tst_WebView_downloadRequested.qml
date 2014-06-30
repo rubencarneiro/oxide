@@ -33,6 +33,10 @@ TestWebView {
     name: "WebView_downloadRequest"
     when: windowShown
 
+    function init() {
+      spy.clear();
+    }
+
     function test_WebView_downloadRequestWithContentDisposition() {
       webView.url = "http://localhost:8080/tst_WebView_downloadRequested.py"
       verify(webView.waitForLoadStopped(),
