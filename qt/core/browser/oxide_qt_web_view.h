@@ -66,6 +66,10 @@ class WebView FINAL : public oxide::WebView,
 
   float GetDeviceScaleFactor() const;
 
+  bool ShouldShowInputPanel() const;
+  bool ShouldHideInputPanel() const;
+  void SetInputPanelVisibility(bool visible);
+
   // WebView implementation
   void Init(oxide::WebView::Params* params) FINAL;
 
@@ -152,6 +156,8 @@ class WebView FINAL : public oxide::WebView,
   ui::TextInputType text_input_type_;
   bool show_ime_if_needed_;
   bool focused_node_is_editable_;
+
+  bool has_input_method_state_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

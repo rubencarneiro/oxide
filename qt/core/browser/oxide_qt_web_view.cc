@@ -238,7 +238,8 @@ WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
     text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
     show_ime_if_needed_(false),
-    focused_node_is_editable_(false) {}
+    focused_node_is_editable_(false),
+    has_input_method_state_(false) {}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
@@ -247,6 +248,38 @@ float WebView::GetDeviceScaleFactor() const {
   }
 
   return GetDeviceScaleFactorFromQScreen(screen);
+}
+
+bool WebView::ShouldShowInputPanel() const {
+  if (text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
+      show_ime_if_needed_) {
+    return true;
+  }
+
+  return false;
+}
+
+bool WebView::ShouldHideInputPanel() const {
+  if (text_input_type_ == ui::TEXT_INPUT_TYPE_NONE &&
+      !focused_node_is_editable_) {
+    return true;
+  }
+
+  return false;
+}
+
+void WebView::SetInputPanelVisibility(bool visible) {
+  adapter_->SetInputMethodEnabled(visible);
+
+  if (!visible) {
+    has_input_method_state_ = false;
+  }
+
+  if (QGuiApplication::inputMethod()->isVisible() == visible) {
+    return;
+  }
+
+  QGuiApplication::inputMethod()->setVisible(visible);
 }
 
 void WebView::Init(oxide::WebView::Params* params) {
@@ -360,28 +393,21 @@ void WebView::TextInputStateChanged(ui::TextInputType type,
   text_input_type_ = type;
   show_ime_if_needed_ = show_ime_if_needed;
 
-  QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
-
   if (!HasFocus()) {
     return;
   }
 
-  if (text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
-      show_ime_if_needed_) {
-    adapter_->SetInputMethodEnabled(true);
-    QGuiApplication::inputMethod()->show();
-  } else if (!focused_node_is_editable_) {
-    adapter_->SetInputMethodEnabled(false);
-    QGuiApplication::inputMethod()->hide();
+  QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
+
+  if (ShouldShowInputPanel()) {
+    SetInputPanelVisibility(true);
+  } else if (ShouldHideInputPanel()) {
+    SetInputPanelVisibility(false);
   }
 }
 
 void WebView::FocusedNodeChanged(bool is_editable_node) {
   focused_node_is_editable_ = is_editable_node;
-
-  if (!HasFocus()) {
-    return;
-  }
 
   // Work around for https://launchpad.net/bugs/1323743
   if (QGuiApplication::focusWindow() &&
@@ -390,14 +416,15 @@ void WebView::FocusedNodeChanged(bool is_editable_node) {
         QGuiApplication::focusWindow()->focusObject());
   }
 
-  if (QGuiApplication::inputMethod()->isVisible() &&
-      focused_node_is_editable_) {
+  if (ShouldHideInputPanel() && HasFocus()) {
+    SetInputPanelVisibility(false);
+  } else if (has_input_method_state_ && focused_node_is_editable_) {
     QGuiApplication::inputMethod()->reset();
   }
 }
 
 void WebView::ImeCancelComposition() {
-  if (QGuiApplication::inputMethod()->isVisible()) {
+  if (has_input_method_state_) {
     QGuiApplication::inputMethod()->reset();
   }
 }
@@ -682,11 +709,8 @@ WebView* WebView::Create(WebViewAdapter* adapter) {
 }
 
 void WebView::HandleFocusEvent(QFocusEvent* event) {
-  if (event->gotFocus() &&
-      text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
-      show_ime_if_needed_) {
-    adapter_->SetInputMethodEnabled(true);
-    QGuiApplication::inputMethod()->show();
+  if (event->gotFocus() && ShouldShowInputPanel()) {
+    SetInputPanelVisibility(true);
   }
 
   FocusChanged();
@@ -695,6 +719,7 @@ void WebView::HandleFocusEvent(QFocusEvent* event) {
 void WebView::HandleInputMethodEvent(QInputMethodEvent* event) {
   QString preedit = event->preeditString();
   if (preedit.isEmpty()) {
+    has_input_method_state_ = false;
     gfx::Range replacement_range = gfx::Range::InvalidRange();
     if (event->replacementLength() > 0) {
       replacement_range.set_start(event->replacementStart());
@@ -704,6 +729,7 @@ void WebView::HandleInputMethodEvent(QInputMethodEvent* event) {
     ImeCommitText(base::UTF8ToUTF16(event->commitString().toStdString()),
                   replacement_range);
   } else {
+    has_input_method_state_ = true;
     std::vector<blink::WebCompositionUnderline> underlines;
     int cursor_position = -1;
     gfx::Range selection_range = gfx::Range::InvalidRange();
