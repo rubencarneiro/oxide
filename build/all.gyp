@@ -21,6 +21,7 @@
       'type': 'none',
       'dependencies': [
         '<@(oxide_all_targets)',
+        '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox',
         '<(DEPTH)/third_party/ffmpeg/ffmpeg.gyp:ffmpegsumo',
       ]
     }
