@@ -337,10 +337,13 @@ void WebView::SelectionChanged() {
 
   QGuiApplication::inputMethod()->update(
       static_cast<Qt::InputMethodQueries>(
-        Qt::ImSurroundingText |
-        Qt::ImCurrentSelection |
-        Qt::ImTextBeforeCursor |
-        Qt::ImTextAfterCursor));
+        Qt::ImSurroundingText
+        | Qt::ImCurrentSelection
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+        | Qt::ImTextBeforeCursor
+        | Qt::ImTextAfterCursor
+#endif
+      ));
 }
 
 blink::WebScreenInfo WebView::GetScreenInfo() const {
@@ -735,11 +738,14 @@ void WebView::OnSelectionBoundsChanged() {
 
   QGuiApplication::inputMethod()->update(
       static_cast<Qt::InputMethodQueries>(
-        Qt::ImCursorRectangle |
-        Qt::ImCursorPosition |
-        Qt::ImAnchorPosition |
-        Qt::ImTextBeforeCursor |
-        Qt::ImTextAfterCursor));
+        Qt::ImCursorRectangle
+        | Qt::ImCursorPosition
+        | Qt::ImAnchorPosition
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+        | Qt::ImTextBeforeCursor
+        | Qt::ImTextAfterCursor
+#endif
+      ));
 }
 
 // static
@@ -864,6 +870,7 @@ QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {
       return QString::fromStdString(base::UTF16ToUTF8(GetSelectedText()));
     case Qt::ImAnchorPosition:
       return static_cast<int>(selection_anchor_position_ & INT_MAX);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
     case Qt::ImTextBeforeCursor: {
       std::string text = base::UTF16ToUTF8(GetSelectionText());
       return QString::fromStdString(
@@ -877,6 +884,7 @@ QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {
       return QString::fromStdString(
           text.substr(selection_cursor_position_, std::string::npos));
     }
+#endif
     default:
       break;
   }
