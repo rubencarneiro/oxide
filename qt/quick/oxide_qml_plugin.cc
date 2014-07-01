@@ -41,6 +41,10 @@
 
 QT_USE_NAMESPACE
 
+typedef QList<QNetworkCookie> CookieList;
+
+QML_DECLARE_TYPE(CookieList)
+
 namespace {
 
 QObject* GlobalSingletonFactory(QQmlEngine* engine,
@@ -60,7 +64,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
   void registerTypes(const char* uri) {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide"));
 
-    qRegisterMetaType<QNetworkCookie>("NetworkCookie");
+    qRegisterMetaType<QNetworkCookie>();
+    qRegisterMetaType<CookieList>();
 
     qmlRegisterSingletonType<OxideQQuickGlobals>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);

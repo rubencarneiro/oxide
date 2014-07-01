@@ -8,12 +8,10 @@ TestWebView {
 
   SignalSpy {
     id: cookiesSetSpy
-    target: webView.context.cookieMonster
     signalName: "cookiesSet"
   }
   SignalSpy {
     id: gotCookiesSpy
-    target: webView.context.cookieMonster
     signalName: "gotCookies"
   }
 
@@ -50,11 +48,20 @@ TestWebView {
       var cookieMonster = webView.context.cookieMonster;
       verify(cookieMonster, "CookieMonster is NULL");
 
+      cookiesSetSpy.target = cookieMonster;
+      gotCookiesSpy.target = cookieMonster;
+      cookieMonster.gotCookies.connect(_on_got_cookies);
       cookieMonster.getAllCookies();
       gotCookiesSpy.wait();
       compare(gotCookiesSpy.count, 1, "Expected gotCookies signal");
-      var cookieList = gotCookiesSpy.signalArguments[0];
+      var cookieList = OxideTestingUtils.parseCookieList(gotCookiesSpy.signalArguments[0]);
+      console.log("Spied cookie list: " + JSON.stringify(cookieList));
       compare(cookieList.length, 1);
+    }
+
+    function _on_got_cookies(cookies) {
+      var parsed = OxideTestingUtils.parseCookieList(cookies);
+      console.log("Parsed: " + JSON.stringify(parsed))
     }
   }
 }

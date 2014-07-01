@@ -17,12 +17,16 @@
 
 #include <QDir>
 #include <QLatin1String>
+#include <QList>
+#include <QNetworkCookie>
 #include <QQmlContext>
 #include <QQmlExtensionPlugin>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
 #include <QUrl>
+#include <QVariantList>
+#include <QVariantMap>
 
 class DestructionObserver : public QObject {
   Q_OBJECT
@@ -104,6 +108,20 @@ class OxideTestingUtils : public QObject {
     }
 
     return new DestructionObserver(object);
+  }
+
+  Q_INVOKABLE QVariantList parseCookieList(
+      const QList<QNetworkCookie>& cookies) {
+    QVariantList parsedCookies;
+    Q_FOREACH(const QNetworkCookie &cookie, cookies) {
+      QVariantMap c;
+      c.insert("name", cookie.name().toUtf8());
+      c.insert("value", cookie.value().toUtf8());
+      c.insert("domain", cookie.domain());
+      c.insert("path", cookie.path());
+      parsedCookies.append(c);
+    }
+    return parsedCookies;
   }
 };
 
