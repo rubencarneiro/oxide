@@ -115,8 +115,8 @@ class OxideTestingUtils : public QObject {
     QVariantList parsedCookies;
     Q_FOREACH(const QNetworkCookie &cookie, cookies) {
       QVariantMap c;
-      c.insert("name", cookie.name().toUtf8());
-      c.insert("value", cookie.value().toUtf8());
+      c.insert("name", QString::fromUtf8(cookie.name()));
+      c.insert("value", QString::fromUtf8(cookie.value()));
       c.insert("domain", cookie.domain());
       c.insert("path", cookie.path());
       parsedCookies.append(c);
