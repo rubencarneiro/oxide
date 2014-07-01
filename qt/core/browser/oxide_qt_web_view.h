@@ -24,7 +24,6 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
-#include "ui/base/ime/text_input_type.h"
 
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
@@ -73,6 +72,10 @@ class WebView FINAL : public oxide::WebView,
   // WebView implementation
   void Init(oxide::WebView::Params* params) FINAL;
 
+  void UpdateCursor(const content::WebCursor& cursor) FINAL;
+  void ImeCancelComposition() FINAL;
+  void SelectionChanged() FINAL;
+
   blink::WebScreenInfo GetScreenInfo() const FINAL;
   gfx::Rect GetContainerBoundsPix() const FINAL;
   bool IsVisible() const FINAL;
@@ -87,12 +90,6 @@ class WebView FINAL : public oxide::WebView,
   void FrameRemoved(oxide::WebFrame* frame) FINAL;
 
   bool CanCreateWindows() const FINAL;
-
-  void UpdateCursor(const content::WebCursor& cursor) FINAL;
-  void TextInputStateChanged(ui::TextInputType type,
-                             bool show_ime_if_needed) FINAL;
-  void FocusedNodeChanged(bool is_editable_node) FINAL;
-  void ImeCancelComposition() FINAL;
 
   size_t GetScriptMessageHandlerCount() const FINAL;
   oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -156,13 +153,13 @@ class WebView FINAL : public oxide::WebView,
   void OnSwapCompositorFrame() FINAL;
   void OnEvictCurrentFrame() FINAL;
 
+  void OnTextInputStateChanged() FINAL;
+  void OnFocusedNodeChanged() FINAL;
+  void OnSelectionBoundsChanged() FINAL;
+
   WebViewAdapter* adapter_;
 
   TouchIDMap touch_id_map_;
-
-  ui::TextInputType text_input_type_;
-  bool show_ime_if_needed_;
-  bool focused_node_is_editable_;
 
   bool has_input_method_state_;
 

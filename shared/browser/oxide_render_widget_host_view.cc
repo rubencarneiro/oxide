@@ -51,6 +51,16 @@ void RenderWidgetHostViewBase::GetDefaultScreenInfo(
 
 namespace oxide {
 
+void RenderWidgetHostView::SelectionChanged(const base::string16& text,
+                                            size_t offset,
+                                            const gfx::Range& range) {
+  content::RenderWidgetHostViewBase::SelectionChanged(text, offset, range);
+
+  if (web_view_) {
+    web_view_->SelectionChanged();
+  }
+}
+
 gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
   if (!web_view_) {
     return gfx::Size();
@@ -254,6 +264,12 @@ void RenderWidgetHostView::SelectionBoundsChanged(
       selection_anchor_position_ =
           selection_range_.GetMax() - selection_text_offset_;
     }
+  }
+
+  if (web_view_) {
+    web_view_->SelectionBoundsChanged(caret_rect_,
+                                      selection_cursor_position_,
+                                      selection_anchor_position_);
   }
 }
 
@@ -559,6 +575,10 @@ void RenderWidgetHostView::SetWebView(WebView* view) {
     web_view_->TextInputStateChanged(current_text_input_type_,
                                      show_ime_if_needed_);
     web_view_->FocusedNodeChanged(focused_node_is_editable_);
+    web_view_->SelectionBoundsChanged(caret_rect_,
+                                      selection_cursor_position_,
+                                      selection_anchor_position_);
+    web_view_->SelectionChanged();
   } else {
     Hide();
   }

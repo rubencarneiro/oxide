@@ -22,6 +22,7 @@
 #include "base/command_line.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
 #include "content/browser/frame_host/frame_tree.h"
@@ -794,14 +795,41 @@ FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
 
 void WebView::OnEvictCurrentFrame() {}
 
+void WebView::OnTextInputStateChanged() {}
+void WebView::OnFocusedNodeChanged() {}
+void WebView::OnSelectionBoundsChanged() {}
+
 WebView::WebView()
-    : web_contents_helper_(NULL),
+    : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
+      show_ime_if_needed_(false),
+      focused_node_is_editable_(false),
+      selection_cursor_position_(0),
+      selection_anchor_position_(0),
+      web_contents_helper_(NULL),
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_recognizer_(ui::GestureRecognizer::Create()),
       initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false) {
   gesture_recognizer_->AddGestureEventHelper(this);
+}
+
+base::string16 WebView::GetSelectedText() const {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return base::string16();
+  }
+
+  return rwhv->GetSelectedText();
+}
+
+const base::string16& WebView::GetSelectionText() const {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return base::EmptyString16();
+  }
+
+  return rwhv->selection_text();
 }
 
 WebView::~WebView() {
@@ -1385,6 +1413,46 @@ void WebView::ProcessAckedTouchEvent(
   }
 }
 
+void WebView::UpdateCursor(const content::WebCursor& cursor) {}
+
+void WebView::TextInputStateChanged(ui::TextInputType type,
+                                    bool show_ime_if_needed) {
+  if (type == text_input_type_ &&
+      show_ime_if_needed == show_ime_if_needed_) {
+    return;
+  }
+
+  text_input_type_ = type;
+  show_ime_if_needed_ = show_ime_if_needed;
+
+  OnTextInputStateChanged();
+}
+
+void WebView::FocusedNodeChanged(bool is_editable_node) {
+  focused_node_is_editable_ = is_editable_node;
+  OnFocusedNodeChanged();
+}
+
+void WebView::ImeCancelComposition() {}
+
+void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
+                                     size_t selection_cursor_position,
+                                     size_t selection_anchor_position) {
+  if (caret_rect == caret_rect_ &&
+      selection_cursor_position == selection_cursor_position_ &&
+      selection_anchor_position == selection_anchor_position_) {
+    return;
+  }
+
+  caret_rect_ = caret_rect;
+  selection_cursor_position_ = selection_cursor_position;
+  selection_anchor_position_ = selection_anchor_position;
+
+  OnSelectionBoundsChanged();
+}
+
+void WebView::SelectionChanged() {}
+
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
     bool* did_suppress_message) {
@@ -1401,14 +1469,5 @@ void WebView::FrameRemoved(WebFrame* frame) {}
 bool WebView::CanCreateWindows() const {
   return false;
 }
-
-void WebView::UpdateCursor(const content::WebCursor& cursor) {}
-
-void WebView::TextInputStateChanged(ui::TextInputType type,
-                                    bool show_ime_if_needed) {}
-
-void WebView::FocusedNodeChanged(bool is_editable_node) {}
-
-void WebView::ImeCancelComposition() {}
 
 } // namespace oxide

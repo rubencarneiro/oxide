@@ -41,7 +41,9 @@
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebColor.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
+#include "ui/base/ime/text_input_type.h"
 #include "ui/events/event.h"
+#include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/range/range.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -237,9 +239,6 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
-    text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
-    show_ime_if_needed_(false),
-    focused_node_is_editable_(false),
     has_input_method_state_(false) {}
 
 float WebView::GetDeviceScaleFactor() const {
@@ -286,6 +285,62 @@ void WebView::SetInputPanelVisibility(bool visible) {
 void WebView::Init(oxide::WebView::Params* params) {
   oxide::WebView::Init(params);
   adapter_->Initialized();
+}
+
+void WebView::UpdateCursor(const content::WebCursor& cursor) {
+  content::WebCursor::CursorInfo cursor_info;
+
+  cursor.GetCursorInfo(&cursor_info);
+  if (cursor.IsCustom()) {
+    QImage::Format format = QImage::Format_Invalid;
+    switch (cursor_info.custom_image.config()) {
+    case SkBitmap::kRGB_565_Config:
+      format = QImage::Format_RGB16;
+      break;
+    case SkBitmap::kARGB_4444_Config:
+      format = QImage::Format_ARGB4444_Premultiplied;
+      break;
+    case SkBitmap::kARGB_8888_Config:
+      format = QImage::Format_ARGB32_Premultiplied;
+      break;
+    default:
+      break;
+    }
+    if (format == QImage::Format_Invalid) {
+      return;
+    }
+    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
+                        cursor_info.custom_image.width(),
+                        cursor_info.custom_image.height(),
+                        cursor_info.custom_image.rowBytes(),
+                        format);
+
+    QPixmap cursor_pixmap;
+    if (cursor_pixmap.convertFromImage(cursor_image)) {
+      adapter_->UpdateCursor(QCursor(cursor_pixmap));
+    }
+  } else {
+    adapter_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
+  }
+}
+
+void WebView::ImeCancelComposition() {
+  if (has_input_method_state_) {
+    QGuiApplication::inputMethod()->reset();
+  }
+}
+
+void WebView::SelectionChanged() {
+  if (!HasFocus()) {
+    return;
+  }
+
+  QGuiApplication::inputMethod()->update(
+      static_cast<Qt::InputMethodQueries>(
+        Qt::ImSurroundingText |
+        Qt::ImCurrentSelection |
+        Qt::ImTextBeforeCursor |
+        Qt::ImTextAfterCursor));
 }
 
 blink::WebScreenInfo WebView::GetScreenInfo() const {
@@ -350,84 +405,6 @@ void WebView::FrameRemoved(oxide::WebFrame* frame) {
 
 bool WebView::CanCreateWindows() const {
   return adapter_->CanCreateWindows();
-}
-
-void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  content::WebCursor::CursorInfo cursor_info;
-
-  cursor.GetCursorInfo(&cursor_info);
-  if (cursor.IsCustom()) {
-    QImage::Format format = QImage::Format_Invalid;
-    switch (cursor_info.custom_image.config()) {
-    case SkBitmap::kRGB_565_Config:
-      format = QImage::Format_RGB16;
-      break;
-    case SkBitmap::kARGB_4444_Config:
-      format = QImage::Format_ARGB4444_Premultiplied;
-      break;
-    case SkBitmap::kARGB_8888_Config:
-      format = QImage::Format_ARGB32_Premultiplied;
-      break;
-    default:
-      break;
-    }
-    if (format == QImage::Format_Invalid) {
-      return;
-    }
-    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
-                        cursor_info.custom_image.width(),
-                        cursor_info.custom_image.height(),
-                        cursor_info.custom_image.rowBytes(),
-                        format);
-
-    QPixmap cursor_pixmap;
-    if (cursor_pixmap.convertFromImage(cursor_image)) {
-      adapter_->UpdateCursor(QCursor(cursor_pixmap));
-    }
-  } else {
-    adapter_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
-  }
-}
-
-void WebView::TextInputStateChanged(ui::TextInputType type,
-                                    bool show_ime_if_needed) {
-  text_input_type_ = type;
-  show_ime_if_needed_ = show_ime_if_needed;
-
-  if (!HasFocus()) {
-    return;
-  }
-
-  QGuiApplication::inputMethod()->update(Qt::ImQueryInput | Qt::ImHints);
-
-  if (ShouldShowInputPanel()) {
-    SetInputPanelVisibility(true);
-  } else if (ShouldHideInputPanel()) {
-    SetInputPanelVisibility(false);
-  }
-}
-
-void WebView::FocusedNodeChanged(bool is_editable_node) {
-  focused_node_is_editable_ = is_editable_node;
-
-  // Work around for https://launchpad.net/bugs/1323743
-  if (QGuiApplication::focusWindow() &&
-      QGuiApplication::focusWindow()->focusObject()) {
-    QGuiApplication::focusWindow()->focusObjectChanged(
-        QGuiApplication::focusWindow()->focusObject());
-  }
-
-  if (ShouldHideInputPanel() && HasFocus()) {
-    SetInputPanelVisibility(false);
-  } else if (has_input_method_state_ && focused_node_is_editable_) {
-    QGuiApplication::inputMethod()->reset();
-  }
-}
-
-void WebView::ImeCancelComposition() {
-  if (has_input_method_state_) {
-    QGuiApplication::inputMethod()->reset();
-  }
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -721,6 +698,50 @@ void WebView::OnEvictCurrentFrame() {
   adapter_->EvictCurrentFrame();
 }
 
+void WebView::OnTextInputStateChanged() {
+  if (!HasFocus()) {
+    return;
+  }
+
+  QGuiApplication::inputMethod()->update(
+      static_cast<Qt::InputMethodQueries>(Qt::ImQueryInput | Qt::ImHints));
+
+  if (ShouldShowInputPanel()) {
+    SetInputPanelVisibility(true);
+  } else if (ShouldHideInputPanel()) {
+    SetInputPanelVisibility(false);
+  }
+}
+
+void WebView::OnFocusedNodeChanged() {
+  // Work around for https://launchpad.net/bugs/1323743
+  if (QGuiApplication::focusWindow() &&
+      QGuiApplication::focusWindow()->focusObject()) {
+    QGuiApplication::focusWindow()->focusObjectChanged(
+        QGuiApplication::focusWindow()->focusObject());
+  }
+
+  if (ShouldHideInputPanel() && HasFocus()) {
+    SetInputPanelVisibility(false);
+  } else if (has_input_method_state_ && focused_node_is_editable_) {
+    QGuiApplication::inputMethod()->reset();
+  }
+}
+
+void WebView::OnSelectionBoundsChanged() {
+  if (!HasFocus()) {
+    return;
+  }
+
+  QGuiApplication::inputMethod()->update(
+      static_cast<Qt::InputMethodQueries>(
+        Qt::ImCursorRectangle |
+        Qt::ImCursorPosition |
+        Qt::ImAnchorPosition |
+        Qt::ImTextBeforeCursor |
+        Qt::ImTextAfterCursor));
+}
+
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
@@ -827,27 +848,35 @@ void WebView::HandleWheelEvent(QWheelEvent* event) {
 }
 
 QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {
-  oxide::RenderWidgetHostView* rwhv =
-      static_cast<oxide::RenderWidgetHostView *>(
-        GetWebContents()->GetRenderWidgetHostView());
-
   switch (query) {
     case Qt::ImHints:
       return QVariant(QImHintsFromInputType(text_input_type_));
     case Qt::ImCursorRectangle: {
       // XXX: Is this in the right coordinate space?
-      gfx::Rect rect = rwhv->caret_rect();
-      return QRect(rect.x(), rect.y(), rect.width(), rect.height());
+      return QRect(caret_rect_.x(), caret_rect_.y(),
+                   caret_rect_.width(), caret_rect_.height());
     }
     case Qt::ImCursorPosition:
-      return static_cast<int>(rwhv->selection_cursor_position() & INT_MAX);
+      return static_cast<int>(selection_cursor_position_ & INT_MAX);
     case Qt::ImSurroundingText:
-      return QString::fromStdString(base::UTF16ToUTF8(rwhv->selection_text()));
+      return QString::fromStdString(base::UTF16ToUTF8(GetSelectionText()));
     case Qt::ImCurrentSelection:
-      return QString::fromStdString(
-          base::UTF16ToUTF8(rwhv->GetSelectedText()));
+      return QString::fromStdString(base::UTF16ToUTF8(GetSelectedText()));
     case Qt::ImAnchorPosition:
-      return static_cast<int>(rwhv->selection_anchor_position() & INT_MAX);
+      return static_cast<int>(selection_anchor_position_ & INT_MAX);
+    case Qt::ImTextBeforeCursor: {
+      std::string text = base::UTF16ToUTF8(GetSelectionText());
+      return QString::fromStdString(
+          text.substr(0, selection_cursor_position_));
+    }
+    case Qt::ImTextAfterCursor: {
+      std::string text = base::UTF16ToUTF8(GetSelectionText());
+      if (selection_cursor_position_ > text.length()) {
+        return QString();
+      }
+      return QString::fromStdString(
+          text.substr(selection_cursor_position_, std::string::npos));
+    }
     default:
       break;
   }

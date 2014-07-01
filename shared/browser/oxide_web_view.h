@@ -224,12 +224,24 @@ class WebView : public ScriptMessageTarget,
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
 
+  // Interface with RWHV ========
   void EvictCurrentFrame();
   void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata);
 
   void ProcessAckedTouchEvent(
       const content::TouchEventWithLatencyInfo& touch,
       content::InputEventAckState ack_result);
+
+  virtual void UpdateCursor(const content::WebCursor& cursor);
+  void TextInputStateChanged(ui::TextInputType type,
+                             bool show_ime_if_needed);
+  void FocusedNodeChanged(bool is_editable_node);
+  virtual void ImeCancelComposition();
+  void SelectionBoundsChanged(const gfx::Rect& caret_rect,
+                              size_t selection_cursor_position,
+                              size_t selection_anchor_position);
+  virtual void SelectionChanged();
+  // ============================
 
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
   virtual gfx::Rect GetContainerBoundsPix() const = 0;
@@ -246,14 +258,19 @@ class WebView : public ScriptMessageTarget,
 
   virtual bool CanCreateWindows() const;
 
-  virtual void UpdateCursor(const content::WebCursor& cursor);
-  virtual void TextInputStateChanged(ui::TextInputType type,
-                                     bool show_ime_if_needed);
-  virtual void FocusedNodeChanged(bool is_editable_node);
-  virtual void ImeCancelComposition();
-
  protected:
   WebView();
+
+  base::string16 GetSelectedText() const;
+  const base::string16& GetSelectionText() const;
+
+  ui::TextInputType text_input_type_;
+  bool show_ime_if_needed_;
+  bool focused_node_is_editable_;
+
+  gfx::Rect caret_rect_;
+  size_t selection_cursor_position_;
+  size_t selection_anchor_position_;
 
  private:
   RenderWidgetHostView* GetRenderWidgetHostView() const;
@@ -426,6 +443,10 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnSwapCompositorFrame() = 0;
   virtual void OnEvictCurrentFrame();
+
+  virtual void OnTextInputStateChanged();
+  virtual void OnFocusedNodeChanged();
+  virtual void OnSelectionBoundsChanged();
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

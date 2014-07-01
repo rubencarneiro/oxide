@@ -63,14 +63,6 @@ class RenderWidgetHostView FINAL :
   void CompositorDidCommit();
   void SetWebView(WebView* view);
 
-  // XXX: Hide these
-  gfx::Rect caret_rect() const { return caret_rect_; }
-  size_t selection_cursor_position() const {
-    return selection_cursor_position_;
-  }
-  size_t selection_anchor_position() const {
-    return selection_anchor_position_;
-  }
   const base::string16& selection_text() const {
     return selection_text_;
   }
@@ -86,9 +78,13 @@ class RenderWidgetHostView FINAL :
 
  private:
   // content::RenderWidgetHostViewBase implementation
+  void SelectionChanged(const base::string16& text,
+                        size_t offset,
+                        const gfx::Range& range) FINAL;
+
   gfx::Size GetPhysicalBackingSize() const FINAL;
 
-  virtual void FocusedNodeChanged(bool is_editable_node) FINAL;
+  void FocusedNodeChanged(bool is_editable_node) FINAL;
 
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) FINAL;
