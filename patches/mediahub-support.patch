@@ -2654,6 +2654,95 @@ Index: src/content/renderer/render_frame_impl.cc
  #if defined(ENABLE_BROWSER_CDMS)
  RendererCdmManager* RenderFrameImpl::GetCdmManager() {
    if (!cdm_manager_)
+@@ -70,6 +70,7 @@
+ #include "content/renderer/media/webmediaplayer_impl.h"
+ #include "content/renderer/media/webmediaplayer_ms.h"
+ #include "content/renderer/media/webmediaplayer_params.h"
++#include "content/renderer/media/utouch/webmediaplayer_oxide.h"
+ #include "content/renderer/notification_provider.h"
+ #include "content/renderer/npapi/plugin_channel_host.h"
+ #include "content/renderer/render_process.h"
+@@ -137,6 +138,9 @@
+ #include "content/renderer/media/crypto/renderer_cdm_manager.h"
+ #endif
+ 
++#include "content/renderer/media/utouch/renderer_media_player_manager.h"
++#include "content/renderer/media/utouch/webmediaplayer_oxide.h"
++
+ using blink::WebContextMenuData;
+ using blink::WebData;
+ using blink::WebDataSource;
+@@ -399,9 +403,7 @@
+       notification_provider_(NULL),
+       web_user_media_client_(NULL),
+       midi_dispatcher_(NULL),
+-#if defined(OS_ANDROID)
+       media_player_manager_(NULL),
+-#endif
+ #if defined(ENABLE_BROWSER_CDMS)
+       cdm_manager_(NULL),
+ #endif
+@@ -1369,6 +1371,16 @@
+ #if defined(OS_ANDROID)
+   return CreateAndroidWebMediaPlayer(url, client);
+ #else
++
++  return new WebMediaPlayerOxide(
++      frame_,
++      client,
++      weak_factory_.GetWeakPtr(),
++      GetMediaPlayerManager(),
++      RenderThreadImpl::current()->GetMediaThreadMessageLoopProxy(),
++      new RenderMediaLog());
++
++#if 0
+   WebMediaPlayerParams params(
+       base::Bind(&ContentRendererClient::DeferMediaLoad,
+                  base::Unretained(GetContentClient()->renderer()),
+@@ -1377,6 +1389,8 @@
+           render_view_->routing_id_, routing_id_));
+   return new WebMediaPlayerImpl(frame, client, weak_factory_.GetWeakPtr(),
+                                 params);
++#endif
++
+ #endif  // defined(OS_ANDROID)
+ }
+ 
+@@ -2807,6 +2821,13 @@
+ blink::WebString RenderFrameImpl::userAgentOverride(blink::WebLocalFrame* frame,
+                                                     const blink::WebURL& url) {
+   DCHECK(!frame_ || frame_ == frame);
++
++  std::string embedder_override;
++  if (GetContentClient()->renderer()->GetUserAgentOverride(
++      url, &embedder_override)) {
++    return WebString::fromUTF8(embedder_override);
++  }
++
+   if (!render_view_->webview() || !render_view_->webview()->mainFrame() ||
+       render_view_->renderer_preferences_.user_agent_override.empty()) {
+     return blink::WebString();
+@@ -3541,18 +3562,15 @@
+       new RenderMediaLog());
+ }
+ 
++#endif  // defined(OS_ANDROID)
++
+ RendererMediaPlayerManager* RenderFrameImpl::GetMediaPlayerManager() {
+   if (!media_player_manager_) {
+     media_player_manager_ = new RendererMediaPlayerManager(this);
+-#if defined(VIDEO_HOLE)
+-    render_view_->RegisterVideoHoleFrame(this);
+-#endif  // defined(VIDEO_HOLE)
+   }
+   return media_player_manager_;
+ }
+ 
+-#endif  // defined(OS_ANDROID)
+-
+ #if defined(ENABLE_BROWSER_CDMS)
+ RendererCdmManager* RenderFrameImpl::GetCdmManager() {
+   if (!cdm_manager_)
 Index: src/content/renderer/render_frame_impl.h
 ===================================================================
 --- src/content/renderer/render_frame_impl.h	(revision 275940)
