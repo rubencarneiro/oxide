@@ -762,58 +762,61 @@ void WebView::HandleFocusEvent(QFocusEvent* event) {
 }
 
 void WebView::HandleInputMethodEvent(QInputMethodEvent* event) {
-  QString preedit = event->preeditString();
-  if (preedit.isEmpty()) {
-    has_input_method_state_ = false;
+  QString commit_string = event->commitString();
+
+  if (!commit_string.isEmpty()) {
     gfx::Range replacement_range = gfx::Range::InvalidRange();
     if (event->replacementLength() > 0) {
       replacement_range.set_start(event->replacementStart());
       replacement_range.set_end(event->replacementStart() +
                                 event->replacementLength());
     }
-    ImeCommitText(base::UTF8ToUTF16(event->commitString().toStdString()),
+    ImeCommitText(base::UTF8ToUTF16(commit_string.toStdString()),
                   replacement_range);
-  } else {
-    has_input_method_state_ = true;
-    std::vector<blink::WebCompositionUnderline> underlines;
-    int cursor_position = -1;
-    gfx::Range selection_range = gfx::Range::InvalidRange();
-    Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
-      switch (attribute.type) {
-      case QInputMethodEvent::Cursor:
-        if (attribute.length > 0) {
-          cursor_position = attribute.start;
-        }
-        break;
-      case QInputMethodEvent::Selection:
-        selection_range.set_start(
-            qMin(attribute.start, (attribute.start + attribute.length)));
-        selection_range.set_end(
-            qMax(attribute.start, (attribute.start + attribute.length)));
-        break;
-      case QInputMethodEvent::TextFormat: {
-        QTextCharFormat format =
-            attribute.value.value<QTextFormat>().toCharFormat();
-        blink::WebColor color = format.underlineColor().rgba();
-        int start = qMin(attribute.start, (attribute.start + attribute.length));
-        int end = qMax(attribute.start, (attribute.start + attribute.length));
-        blink::WebCompositionUnderline underline(start, end, color, false);
-        underlines.push_back(underline);
-        break;
-      }
-      default:
-        break;
-      }
-    }
-
-    if (!selection_range.IsValid()) {
-      selection_range = gfx::Range(
-          cursor_position > 0 ? cursor_position : preedit.length());
-    }
-
-    ImeSetComposingText(base::UTF8ToUTF16(preedit.toStdString()),
-                        underlines, selection_range);
   }
+
+  QString preedit_string = event->preeditString();
+
+  std::vector<blink::WebCompositionUnderline> underlines;
+  int cursor_position = -1;
+  gfx::Range selection_range = gfx::Range::InvalidRange();
+
+  Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
+    switch (attribute.type) {
+    case QInputMethodEvent::Cursor:
+      if (attribute.length > 0) {
+        cursor_position = attribute.start;
+      }
+      break;
+    case QInputMethodEvent::Selection:
+      selection_range.set_start(
+          qMin(attribute.start, (attribute.start + attribute.length)));
+      selection_range.set_end(
+          qMax(attribute.start, (attribute.start + attribute.length)));
+      break;
+    case QInputMethodEvent::TextFormat: {
+      QTextCharFormat format =
+          attribute.value.value<QTextFormat>().toCharFormat();
+      blink::WebColor color = format.underlineColor().rgba();
+      int start = qMin(attribute.start, (attribute.start + attribute.length));
+      int end = qMax(attribute.start, (attribute.start + attribute.length));
+      blink::WebCompositionUnderline underline(start, end, color, false);
+      underlines.push_back(underline);
+      break;
+    }
+    default:
+      break;
+    }
+  }
+
+  if (!selection_range.IsValid()) {
+    selection_range = gfx::Range(
+        cursor_position > 0 ? cursor_position : preedit_string.length());
+  }
+  ImeSetComposingText(base::UTF8ToUTF16(preedit_string.toStdString()),
+                      underlines, selection_range);
+
+  has_input_method_state_ = !preedit_string.isEmpty();
 }
 
 void WebView::HandleKeyEvent(QKeyEvent* event) {
