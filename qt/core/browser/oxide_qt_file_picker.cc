@@ -20,6 +20,7 @@
 #include <QFileInfo>
 #include <QString>
 #include <QStringList>
+#include <QtGlobal>
 
 #include "base/strings/utf_string_conversions.h"
 
@@ -37,14 +38,21 @@ FilePicker::FilePicker(FilePickerDelegate* delegate,
 
 void FilePicker::Run(const content::FileChooserParams& params) {
   FilePickerDelegate::Mode mode;
-  if (params.mode == content::FileChooserParams::Open) {
-    mode = FilePickerDelegate::Open;
-  } else if (params.mode == content::FileChooserParams::OpenMultiple) {
-    mode = FilePickerDelegate::OpenMultiple;
-  } else if (params.mode == content::FileChooserParams::UploadFolder) {
-    mode = FilePickerDelegate::UploadFolder;
-  } else if (params.mode == content::FileChooserParams::Save) {
-    mode = FilePickerDelegate::Save;
+  switch (params.mode) {
+    case content::FileChooserParams::Open:
+      mode = FilePickerDelegate::Open;
+      break;
+    case content::FileChooserParams::OpenMultiple:
+      mode = FilePickerDelegate::OpenMultiple;
+      break;
+    case content::FileChooserParams::UploadFolder:
+      mode = FilePickerDelegate::UploadFolder;
+      break;
+    case content::FileChooserParams::Save:
+      mode = FilePickerDelegate::Save;
+      break;
+    default:
+      Q_UNREACHABLE();
   }
   QString title = QString::fromStdString(base::UTF16ToUTF8(params.title));
   QFileInfo defaultFileName(QString::fromStdString(params.default_file_name.value()));
