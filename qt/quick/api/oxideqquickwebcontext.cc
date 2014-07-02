@@ -36,7 +36,6 @@
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
-#include "qt/quick/oxide_qquick_render_view_item_factory.h"
 
 #include "oxideqquickcookiemonster_p.h"
 #include "oxideqquickuserscript_p.h"
@@ -148,8 +147,7 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q) :
     oxide::qt::WebContextAdapter(
         q,
-        new oxide::qquick::WebContextIOThreadDelegate(),
-        new oxide::qquick::RenderViewItemFactory()),
+        new oxide::qquick::WebContextIOThreadDelegate()),
     constructed_(false),
     io_thread_delegate_(
         static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
@@ -680,6 +678,42 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
       &d->io_thread_delegate_->user_agent_override_delegate)) {
     emit userAgentOverrideDelegateChanged();
   }
+}
+
+bool OxideQQuickWebContext::devtoolsEnabled() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->devtoolsEnabled();
+}
+
+void OxideQQuickWebContext::setDevtoolsEnabled(bool enabled) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->devtoolsEnabled() == enabled) {
+    return;
+  }
+
+  d->setDevtoolsEnabled(enabled);
+
+  emit devtoolsEnabledChanged();
+}
+
+int OxideQQuickWebContext::devtoolsPort() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->devtoolsPort();
+}
+
+void OxideQQuickWebContext::setDevtoolsPort(int port) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->devtoolsPort() == port) {
+    return;
+  }
+
+  d->setDevtoolsPort(port);
+
+  emit devtoolsPortChanged();
 }
 
 OxideQQuickCookieMonster*

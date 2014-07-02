@@ -15,19 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_render_view_item_factory.h"
+#ifndef _OXIDE_QT_CORE_API_DOWNLOAD_REQUEST_P_H_
+#define _OXIDE_QT_CORE_API_DOWNLOAD_REQUEST_P_H_
 
-#include "oxide_qquick_render_view_item.h"
+#include <QtGlobal>
+#include <QString>
+#include <QStringList>
+#include <QUrl>
 
-namespace oxide {
-namespace qquick {
+class OxideQDownloadRequest;
 
-RenderViewItemFactory::RenderViewItemFactory() {}
+class OxideQDownloadRequestPrivate {
+ public:
+  OxideQDownloadRequestPrivate(
+      const QUrl& url,
+      const QString& mimeType,
+      const bool shouldPrompt,
+      const QString& suggestedFilename,
+      const QStringList& cookies,
+      const QString& referrer);
+  virtual ~OxideQDownloadRequestPrivate();
 
-oxide::qt::RenderWidgetHostViewDelegate*
-RenderViewItemFactory::CreateRenderWidgetHostViewDelegate() {
-  return new RenderViewItem();
-}
+ private:
+  friend class OxideQDownloadRequest;
 
-} // namespace qquick
-} // namespace oxide
+  QUrl url_;
+  QString mime_type_;
+  bool should_prompt_;
+  QString suggested_filename_;
+  QStringList cookies_;
+  QString referrer_;
+};
+
+#endif // _OXIDE_QT_CORE_API_DOWNLOAD_REQUEST_P_H_
+

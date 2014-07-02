@@ -18,24 +18,35 @@
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
+#include <QEvent>
+#include <QGuiApplication>
+#include <QHoverEvent>
+#include <QImage>
 #include <QKeyEvent>
 #include <QMetaMethod>
+#include <QMouseEvent>
 #include <QPointF>
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <QRect>
 #include <QRectF>
+#include <QSGNode>
 #include <QSizeF>
 #include <QSize>
+#include <QTouchEvent>
 #include <QtQml>
+#include <Qt>
 
 #include "qt/core/api/oxideqpermissionrequest.h"
+#if defined(ENABLE_COMPOSITING)
+#include "qt/quick/oxide_qquick_accelerated_frame_node.h"
+#endif
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_file_picker_delegate.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
-#include "qt/quick/oxide_qquick_render_view_item.h"
+#include "qt/quick/oxide_qquick_software_frame_node.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
 #include "oxideqquickscriptmessagehandler_p.h"
@@ -46,6 +57,140 @@
 #include "oxideqquickwebframe_p_p.h"
 
 QT_USE_NAMESPACE
+
+using oxide::qquick::AcceleratedFrameNode;
+using oxide::qquick::SoftwareFrameNode;
+
+namespace oxide {
+namespace qquick {
+
+class WebViewInputArea : public QQuickItem {
+ public:
+  WebViewInputArea(OxideQQuickWebView* webview, OxideQQuickWebViewPrivate* d)
+      : QQuickItem(webview),
+        d_(d) {
+    setAcceptedMouseButtons(Qt::AllButtons);
+    setAcceptHoverEvents(true);
+  }
+
+  virtual ~WebViewInputArea() {}
+
+ private:
+  void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
+  void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
+
+  void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
+
+  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_FINAL;
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
+
+  void keyPressEvent(QKeyEvent* event) Q_DECL_FINAL;
+  void keyReleaseEvent(QKeyEvent* event) Q_DECL_FINAL;
+
+  void mouseDoubleClickEvent(QMouseEvent* event) Q_DECL_FINAL;
+  void mouseMoveEvent(QMouseEvent* event) Q_DECL_FINAL;
+  void mousePressEvent(QMouseEvent* event) Q_DECL_FINAL;
+  void mouseReleaseEvent(QMouseEvent* event) Q_DECL_FINAL;
+
+  void touchEvent(QTouchEvent* event) Q_DECL_FINAL;
+
+  void wheelEvent(QWheelEvent* event) Q_DECL_FINAL;
+
+  OxideQQuickWebViewPrivate* d_;
+};
+
+void WebViewInputArea::focusInEvent(QFocusEvent* event) {
+  d_->handleFocusEvent(event);
+}
+
+void WebViewInputArea::focusOutEvent(QFocusEvent* event) {
+  d_->handleFocusEvent(event);
+}
+
+void WebViewInputArea::hoverMoveEvent(QHoverEvent* event) {
+  // QtQuick gives us a hover event unless we have a grab (which
+  // happens implicitly on button press). As Chromium doesn't
+  // distinguish between the 2, just give it a mouse event
+  QPointF window_pos = mapToScene(event->posF());
+  QMouseEvent me(QEvent::MouseMove,
+                 event->posF(),
+                 window_pos,
+                 window_pos + window()->position(),
+                 Qt::NoButton,
+                 Qt::NoButton,
+                 event->modifiers());
+  me.accept();
+
+  d_->handleMouseEvent(&me);
+
+  event->setAccepted(me.isAccepted());
+}
+
+void WebViewInputArea::inputMethodEvent(QInputMethodEvent* event) {
+  d_->handleInputMethodEvent(event);
+}
+
+QVariant WebViewInputArea::inputMethodQuery(
+    Qt::InputMethodQuery query) const {
+  switch (query) {
+    case Qt::ImEnabled:
+      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return d_->inputMethodQuery(query);
+  }
+}
+
+void WebViewInputArea::keyPressEvent(QKeyEvent* event) {
+  d_->handleKeyEvent(event);
+}
+
+void WebViewInputArea::keyReleaseEvent(QKeyEvent* event) {
+  d_->handleKeyEvent(event);
+}
+
+void WebViewInputArea::mouseDoubleClickEvent(QMouseEvent* event) {
+  d_->handleMouseEvent(event);
+}
+
+void WebViewInputArea::mouseMoveEvent(QMouseEvent* event) {
+  d_->handleMouseEvent(event);
+}
+
+void WebViewInputArea::mousePressEvent(QMouseEvent* event) {
+  forceActiveFocus();
+  d_->handleMouseEvent(event);
+}
+
+void WebViewInputArea::mouseReleaseEvent(QMouseEvent* event) {
+  d_->handleMouseEvent(event);
+}
+
+void WebViewInputArea::touchEvent(QTouchEvent* event) {
+  if (event->type() == QEvent::TouchBegin) {
+    forceActiveFocus();
+  }
+  d_->handleTouchEvent(event);
+}
+
+void WebViewInputArea::wheelEvent(QWheelEvent* event) {
+  d_->handleWheelEvent(event);
+}
+
+} // namespace qquick
+} // namespace oxide
+
+class UpdatePaintNodeScope {
+ public:
+  UpdatePaintNodeScope(OxideQQuickWebViewPrivate* d)
+      : d_(d) {}
+
+  virtual ~UpdatePaintNodeScope() {
+    d_->didUpdatePaintNode();
+  }
+
+ private:
+  OxideQQuickWebViewPrivate* d_;
+};
 
 OxideQQuickWebViewAttached::OxideQQuickWebViewAttached(QObject* parent) :
     QObject(parent),
@@ -72,7 +217,11 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     confirm_dialog_(NULL),
     prompt_dialog_(NULL),
     before_unload_dialog_(NULL),
-    file_picker_(NULL) {}
+    file_picker_(NULL),
+    input_area_(NULL),
+    received_new_compositor_frame_(false),
+    frame_evicted_(false),
+    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
@@ -194,23 +343,37 @@ oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
   return OxideQQuickWebFramePrivate::get(frame);
 }
 
-QRect OxideQQuickWebViewPrivate::GetContainerBounds() {
-  Q_Q(OxideQQuickWebView);
+QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
+  Q_Q(const OxideQQuickWebView);
 
-  QPointF pos(q->mapToScene(QPointF(0,0)));
-  if (q->window()) {
-    // We could be called before being added to a scene
-    pos += q->window()->position();
+  if (!q->window()) {
+    return NULL;
   }
 
-  return QRectF(pos.x(), pos.y(),
-                q->width(), q->height()).toRect();
+  return q->window()->screen();
+}
+
+QRect OxideQQuickWebViewPrivate::GetContainerBoundsPix() const {
+  Q_Q(const OxideQQuickWebView);
+
+  if (!q->window()) {
+    return QRect();
+  }
+
+  QPointF pos(q->mapToScene(QPointF(0, 0)) + q->window()->position());
+
+  return QRect(qRound(pos.x()), qRound(pos.y()),
+               qRound(q->width()), qRound(q->height()));
 }
 
 bool OxideQQuickWebViewPrivate::IsVisible() const {
   Q_Q(const OxideQQuickWebView);
 
   return q->isVisible();
+}
+
+bool OxideQQuickWebViewPrivate::HasFocus() const {
+  return input_area_->hasActiveFocus();
 }
 
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
@@ -266,6 +429,12 @@ bool OxideQQuickWebViewPrivate::CanCreateWindows() const {
   return q->receivers(SIGNAL(newViewRequested(OxideQNewViewRequest*))) > 0;
 }
 
+void OxideQQuickWebViewPrivate::UpdateCursor(const QCursor& cursor) {
+  Q_Q(OxideQQuickWebView);
+
+  q->setCursor(cursor);
+}
+
 void OxideQQuickWebViewPrivate::NavigationRequested(
     OxideQNavigationRequest* request) {
   Q_Q(OxideQQuickWebView);
@@ -288,7 +457,8 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
   emit q->geolocationPermissionRequested(request);
 }
 
-void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
+void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
+    QKeyEvent* event) {
   Q_Q(OxideQQuickWebView);
 
   QQuickWindow* w = q->window();
@@ -297,6 +467,83 @@ void OxideQQuickWebViewPrivate::HandleKeyboardEvent(QKeyEvent* event) {
   }
 
   w->sendEvent(q, event);
+}
+
+inline oxide::qt::FrameMetadataChangeFlags operator&(
+    oxide::qt::FrameMetadataChangeFlags a,
+    oxide::qt::FrameMetadataChangeFlags b) {
+  return static_cast<oxide::qt::FrameMetadataChangeFlags>(
+      static_cast<int>(a) & static_cast<int>(b));
+}
+
+void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
+    oxide::qt::FrameMetadataChangeFlags flags) {
+  Q_Q(OxideQQuickWebView);
+
+#define IS_SET(flag) flags & flag
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
+      IS_SET(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
+    emit q->contentXChanged();
+    emit q->contentYChanged();
+    emit q->contentWidthChanged();
+    emit q->contentHeightChanged();
+    emit q->viewportWidthChanged();
+    emit q->viewportHeightChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
+    emit q->contentXChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
+    emit q->contentYChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
+    emit q->contentWidthChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
+    emit q->contentHeightChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
+    emit q->viewportWidthChanged();
+  }
+  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
+    emit q->viewportHeightChanged();
+  }
+#undef IS_SET
+}
+
+void OxideQQuickWebViewPrivate::ScheduleUpdate() {
+  Q_Q(OxideQQuickWebView);
+
+  frame_evicted_ = false;
+  received_new_compositor_frame_ = true;
+
+  q->update();
+  q->polish();
+}
+
+void OxideQQuickWebViewPrivate::EvictCurrentFrame() {
+  Q_Q(OxideQQuickWebView);
+
+  frame_evicted_ = true;
+  received_new_compositor_frame_ = false;
+
+  Q_ASSERT(!compositor_frame_handle_);
+
+  q->update();
+}
+
+void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
+  Q_Q(OxideQQuickWebView);
+
+  input_area_->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
+  QGuiApplication::inputMethod()->update(Qt::ImEnabled);
+}
+
+void OxideQQuickWebViewPrivate::DownloadRequested(
+    OxideQDownloadRequest* downloadRequest) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->downloadRequested(downloadRequest);
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -405,6 +652,22 @@ void OxideQQuickWebViewPrivate::detachContextSignals(
                       q, SLOT(contextWillBeDestroyed()));
 }
 
+void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
+  if (received_new_compositor_frame_) {
+    received_new_compositor_frame_ = false;
+    didCommitCompositorFrame();
+  }
+  compositor_frame_handle_.reset();
+}
+
+void OxideQQuickWebViewPrivate::onWindowChanged(QQuickWindow* window) {
+  if (!window) {
+    return;
+  }
+
+  wasResized();
+}
+
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
 
 // static
@@ -451,8 +714,11 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
-  if (d->isInitialized()) {
-    d->updateSize(newGeometry.size().toSize());
+  d->input_area_->setWidth(newGeometry.width());
+  d->input_area_->setHeight(newGeometry.height());
+
+  if (d->isInitialized() && window()) {
+    d->wasResized();
   }
 }
 
@@ -467,8 +733,96 @@ void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
   }
 
   if (change == QQuickItem::ItemVisibleHasChanged) {
-    d->updateVisibility(value.boolValue);
+    d->visibilityChanged();
   }
+}
+
+QSGNode* OxideQQuickWebView::updatePaintNode(
+    QSGNode* oldNode,
+    UpdatePaintNodeData * updatePaintNodeData) {
+  Q_UNUSED(updatePaintNodeData);
+  Q_D(OxideQQuickWebView);
+
+  UpdatePaintNodeScope scope(d);
+
+  oxide::qt::CompositorFrameHandle::Type type =
+      oxide::qt::CompositorFrameHandle::TYPE_INVALID;
+
+  if (d->received_new_compositor_frame_) {
+    Q_ASSERT(d->compositor_frame_handle_);
+    Q_ASSERT(!d->frame_evicted_);
+    type = d->compositor_frame_handle_->GetType();
+  } else if (!d->frame_evicted_) {
+    Q_ASSERT(!d->compositor_frame_handle_);
+    type = d->last_composited_frame_type_;
+  }
+
+  if (type != d->last_composited_frame_type_) {
+    delete oldNode;
+    oldNode = NULL;
+  }
+
+  d->last_composited_frame_type_ = type;
+
+  if (d->frame_evicted_) {
+    delete oldNode;
+    return NULL;
+  }
+
+#if defined(ENABLE_COMPOSITING)
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
+    AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
+    if (!node) {
+      node = new AcceleratedFrameNode(this);
+    }
+
+    if (d->received_new_compositor_frame_ || !oldNode) {
+      node->updateNode(d->compositor_frame_handle_);
+    }
+
+    return node;
+  }
+#else
+  Q_ASSERT(type != oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
+#endif
+
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
+    SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
+    if (!node) {
+      node = new SoftwareFrameNode(this);
+    }
+
+    if (d->received_new_compositor_frame_ || !oldNode) {
+      node->updateNode(d->compositor_frame_handle_);
+    }
+
+    return node;
+  }
+
+  Q_ASSERT(type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
+
+  SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
+  if (!node) {
+    node = new SoftwareFrameNode(this);
+  }
+
+  QRectF rect(QPointF(0, 0), QSizeF(width(), height()));
+
+  if (!oldNode || rect != node->rect()) {
+    QImage blank(qRound(rect.width()),
+                 qRound(rect.height()),
+                 QImage::Format_ARGB32);
+    blank.fill(Qt::white);
+    node->setImage(blank);
+  }
+
+  return node;
+}
+
+void OxideQQuickWebView::updatePolish() {
+  Q_D(OxideQQuickWebView);
+
+  d->compositor_frame_handle_ = d->compositorFrameHandle();
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
@@ -479,7 +833,24 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   OxideQQuickWebContextPrivate::ensureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
 
-  setFlags(QQuickItem::ItemIsFocusScope);
+  Q_D(OxideQQuickWebView);
+
+  setFlags(QQuickItem::ItemClipsChildrenToShape |
+           QQuickItem::ItemHasContents |
+           QQuickItem::ItemIsFocusScope);
+
+  connect(this, SIGNAL(windowChanged(QQuickWindow*)),
+          this, SLOT(onWindowChanged(QQuickWindow*)));
+
+  // We have an input area QQuickItem for receiving input events, so
+  // that we have a way of bubbling unhandled key events back to the
+  // WebView
+  d->input_area_ = new oxide::qquick::WebViewInputArea(this, d);
+  d->input_area_->setX(0.0f);
+  d->input_area_->setY(0.0f);
+  d->input_area_->setWidth(width());
+  d->input_area_->setHeight(height());
+  d->input_area_->setFocus(true);
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {
@@ -494,6 +865,10 @@ OxideQQuickWebView::~OxideQQuickWebView() {
     delete adapterToQObject<OxideQQuickScriptMessageHandler>(
         d->message_handlers().at(0));
   }
+
+  // Delete this now as it can get a focusOutEvent after our destructor
+  // runs, calling back in to our deleted oxide::WebView
+  delete d->input_area_;
 }
 
 void OxideQQuickWebView::componentComplete() {
@@ -655,6 +1030,54 @@ void OxideQQuickWebView::removeMessageHandler(
   d->message_handlers().removeOne(hd);
 
   emit messageHandlersChanged();
+}
+
+qreal OxideQQuickWebView::viewportWidth() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->compositorFrameViewportSize().width()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
+}
+
+qreal OxideQQuickWebView::viewportHeight() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->compositorFrameViewportSize().height()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
+}
+
+qreal OxideQQuickWebView::contentWidth() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->compositorFrameLayerSize().width()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
+}
+
+qreal OxideQQuickWebView::contentHeight() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->compositorFrameLayerSize().height()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
+}
+
+qreal OxideQQuickWebView::contentX() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->compositorFrameScrollOffset().x()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
+}
+
+qreal OxideQQuickWebView::contentY() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->compositorFrameScrollOffset().y()
+      * d->compositorFrameDeviceScaleFactor()
+      * d->compositorFramePageScaleFactor();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {

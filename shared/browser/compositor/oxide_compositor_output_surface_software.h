@@ -15,37 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_FACTORY_H_
-#define _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_FACTORY_H_
+#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_
+#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_
 
-#include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/macros.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
-#include "shared/browser/oxide_render_widget_host_view_factory.h"
+#include "shared/browser/compositor/oxide_compositor_output_surface.h"
 
 namespace oxide {
-namespace qt {
 
-class RenderWidgetHostViewDelegateFactory;
-
-class RenderWidgetHostViewFactory FINAL :
-    public oxide::RenderWidgetHostViewFactory {
+class CompositorOutputSurfaceSoftware FINAL : public CompositorOutputSurface {
  public:
-  RenderWidgetHostViewFactory(oxide::BrowserContext* context,
-                              RenderWidgetHostViewDelegateFactory* delegate);
-  ~RenderWidgetHostViewFactory();
-
-  oxide::RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
+  CompositorOutputSurfaceSoftware(
+      uint32 surface_id,
+      scoped_ptr<cc::SoftwareOutputDevice> software_device,
+      scoped_refptr<CompositorThreadProxy> proxy);
+  ~CompositorOutputSurfaceSoftware();
 
  private:
-  scoped_ptr<RenderWidgetHostViewDelegateFactory> delegate_;
+  // cc::OutputSurface implementation
+  void SwapBuffers(cc::CompositorFrame* frame) FINAL;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostViewFactory);
+  DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurfaceSoftware);
 };
 
-} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_RENDER_WIDGET_HOST_VIEW_FACTORY_H_
+#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_

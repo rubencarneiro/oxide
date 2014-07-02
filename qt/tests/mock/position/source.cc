@@ -72,12 +72,9 @@ void SourceMock::stopUpdates() {
 void SourceMock::requestUpdate(int timeout) {
   Q_UNUSED(timeout);
   QString testcase;
-  QObject* focusObject = QGuiApplication::focusObject();
-  if (focusObject) {
-    QVariant property = focusObject->property("testcase");
-    if (property.isValid()) {
-      testcase = property.toString();
-    }
+  QVariant property = QGuiApplication::instance()->property("_oxide_geo_testcase");
+  if (property.isValid()) {
+    testcase = property.toString();
   }
   if (testcase == "timeout") {
     Q_EMIT updateTimeout();

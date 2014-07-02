@@ -26,14 +26,15 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "content/browser/gpu/compositor_util.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
-#include "ui/gfx/ozone/surface_factory_ozone.h"
 #include "ui/gfx/screen.h"
 #include "ui/gfx/screen_type_delegate.h"
 #include "ui/gl/gl_context.h"
@@ -41,6 +42,7 @@
 #include "ui/gl/gl_share_group.h"
 #include "webkit/common/webpreferences.h"
 
+#include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
@@ -52,9 +54,9 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
 #include "oxide_form_factor.h"
-#include "oxide_gpu_utils.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
+#include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
 #include "oxide_web_preferences.h"
@@ -165,7 +167,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   void PreMainMessageLoopRun() FINAL {
-    GpuUtils::Initialize();
+    CompositorUtils::GetInstance()->Initialize();
     net::NetModule::SetResourceProvider(NetResourceProvider);
   }
 
@@ -175,7 +177,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   void PostMainMessageLoopRun() FINAL {
-    GpuUtils::instance()->Destroy();
+    CompositorUtils::GetInstance()->Destroy();
   }
 
   void PostDestroyThreads() FINAL {
@@ -188,6 +190,23 @@ class BrowserMainParts : public content::BrowserMainParts {
   scoped_ptr<IOThread> io_thread_;
   Screen primary_screen_;
 };
+
+void CancelGeolocationPermissionRequest(int render_process_id,
+                                        int render_view_id,
+                                        int bridge_id) {
+  content::RenderViewHost* rvh = content::RenderViewHost::FromID(
+      render_process_id, render_view_id);
+  if (!rvh) {
+    return;
+  }
+
+  WebView* webview = WebView::FromRenderViewHost(rvh);
+  if (!webview) {
+    return;
+  }
+
+  webview->CancelGeolocationPermissionRequest(bridge_id);
+}
 
 } // namespace
 
@@ -249,6 +268,13 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     if (host->GetBrowserContext()->IsOffTheRecord()) {
       command_line->AppendSwitch(switches::kIncognito);
     }
+
+    if (content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() &&
+        (!BrowserProcessMain::instance()->GetSharedGLContext() ||
+         BrowserProcessMain::instance()->GetSharedGLContext()->GetImplementation() !=
+             gfx::GetGLImplementation())) {
+      command_line->AppendSwitch(switches::kDisableGpuCompositing);
+    }
   }
 }
 
@@ -271,6 +297,32 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
                                           net::CookieOptions* options) {
   return BrowserContextIOData::FromResourceContext(
       context)->CanAccessCookies(url, first_party, true);
+}
+
+void ContentBrowserClient::RequestGeolocationPermission(
+    content::WebContents* web_contents,
+    int bridge_id,
+    const GURL& requesting_frame,
+    bool user_gesture,
+    base::Callback<void(bool)> result_callback,
+    base::Closure* cancel_callback) {
+  WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
+    result_callback.Run(false);
+    return;
+  }
+
+  webview->RequestGeolocationPermission(bridge_id,
+                                        requesting_frame.GetOrigin(),
+                                        result_callback);
+
+  if (cancel_callback) {
+    *cancel_callback = base::Bind(
+        CancelGeolocationPermissionRequest,
+        web_contents->GetRenderProcessHost()->GetID(),
+        web_contents->GetRenderViewHost()->GetRoutingID(),
+        bridge_id);
+  }
 }
 
 bool ContentBrowserClient::CanCreateWindow(
@@ -297,6 +349,12 @@ bool ContentBrowserClient::CanCreateWindow(
 
   return !BrowserContextIOData::FromResourceContext(
       context)->IsPopupBlockerEnabled();
+}
+
+void ContentBrowserClient::ResourceDispatcherHostCreated() {
+  resource_dispatcher_host_delegate_.reset(new ResourceDispatcherHostDelegate());
+  content::ResourceDispatcherHost::Get()->SetDelegate(
+      resource_dispatcher_host_delegate_.get());
 }
 
 content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {

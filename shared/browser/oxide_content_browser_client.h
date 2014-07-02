@@ -23,6 +23,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
 namespace base {
@@ -31,6 +32,7 @@ class MessagePump;
 
 namespace content {
 class RenderViewHost;
+class ResourceDispatcherHostDelegate;
 }
 
 namespace gfx {
@@ -40,6 +42,7 @@ class GLContext;
 namespace oxide {
 
 class GLShareGroup;
+class ResourceDispatcherHostDelegate;
 class SharedGLContext;
 class WebFrameTree;
 class WebPreferences;
@@ -97,6 +100,14 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                       int render_frame_id,
                       net::CookieOptions* options) FINAL;
 
+  void RequestGeolocationPermission(
+      content::WebContents* web_contents,
+      int bridge_id,
+      const GURL& requesting_frame,
+      bool user_gesture,
+      base::Callback<void(bool)> result_callback,
+      base::Closure* cancel_callback) FINAL;
+
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,
                        const GURL& source_origin,
@@ -113,6 +124,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                        int opener_id,
                        bool* no_javascript_access) FINAL;
 
+  void ResourceDispatcherHostCreated() FINAL;
+
   content::AccessTokenStore* CreateAccessTokenStore() FINAL;
 
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
@@ -127,6 +140,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   // Should be subclassed
   virtual bool IsTouchSupported();
+
+  scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

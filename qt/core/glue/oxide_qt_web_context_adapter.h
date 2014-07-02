@@ -40,7 +40,6 @@ class CookieMonster;
 namespace oxide {
 namespace qt {
 
-class RenderWidgetHostViewDelegateFactory;
 class UserScriptAdapter;
 class WebContextAdapterPrivate;
 
@@ -109,12 +108,17 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   bool popupBlockerEnabled() const;
   void setPopupBlockerEnabled(bool enabled);
 
+  bool devtoolsEnabled() const;
+  void setDevtoolsEnabled(bool enabled);
+
+  int devtoolsPort() const;
+  void setDevtoolsPort(int port);
+
   net::CookieMonster* cookieMonster() const;
 
  protected:
   WebContextAdapter(QObject* q,
-                    IOThreadDelegate* io_delegate,
-                    RenderWidgetHostViewDelegateFactory* view_factory);
+                    IOThreadDelegate* io_delegate);
 
  private:
   friend class WebContextAdapterPrivate;

@@ -139,6 +139,7 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   void setTouchEnabled(bool enabled);
 
  Q_SIGNALS:
+
   void standardFontFamilyChanged();
   void fixedFontFamilyChanged();
   void serifFontFamilyChanged();

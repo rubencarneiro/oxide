@@ -20,11 +20,11 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "ui/gfx/ozone/surface_factory_ozone.h"
+#include "ui/ozone/public/surface_factory_ozone.h"
 
 namespace oxide {
 
-class OzoneSurfaceFactory FINAL : public gfx::SurfaceFactoryOzone {
+class OzoneSurfaceFactory FINAL : public ui::SurfaceFactoryOzone {
  public:
   OzoneSurfaceFactory();
 

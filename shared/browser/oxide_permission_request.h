@@ -32,26 +32,12 @@ class PermissionRequestManager;
 
 class PermissionRequest {
  public:
-
-  class ID {
-   public:
-    ID(int render_process_id, int render_view_id, int request_id);
-
-    bool Equals(const ID& other);
-    bool operator==(const ID& other);
-
-   private:
-    int render_process_id_;
-    int render_view_id_;
-    int request_id_;
-  };
-
   PermissionRequest(PermissionRequestManager* manager,
-                    const ID& id, const GURL& origin,
+                    int id, const GURL& origin,
                     const GURL& embedder);
   virtual ~PermissionRequest();
 
-  ID id() const { return id_; }
+  int id() const { return id_; }
   GURL origin() const { return origin_; }
   GURL embedder() const { return embedder_; }
 
@@ -67,7 +53,7 @@ class PermissionRequest {
 
  private:
   base::WeakPtr<PermissionRequestManager> manager_;
-  ID id_;
+  int id_;
   GURL origin_;
   GURL embedder_;
 
@@ -86,7 +72,7 @@ class PermissionRequestManager FINAL :
   ~PermissionRequestManager();
 
   void CancelAllPending();
-  void CancelPendingRequestWithID(const PermissionRequest::ID& id);
+  void CancelPendingRequestWithID(int id);
 
  private:
   friend class PermissionRequest;
@@ -106,7 +92,7 @@ class PermissionRequestManager FINAL :
 class GeolocationPermissionRequest FINAL : public PermissionRequest {
  public:
   GeolocationPermissionRequest(PermissionRequestManager* manager,
-                               const PermissionRequest::ID& id,
+                               int id,
                                const GURL& origin,
                                const GURL& embedder,
                                const base::Callback<void(bool)>& callback);

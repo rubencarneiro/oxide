@@ -56,7 +56,7 @@ WebView {
   }
 
   function waitFor(predicate, timeout) {
-    timeout = timeout || 5000000;
+    timeout = timeout || 5000;
     var end = Date.now() + timeout;
     var i = Date.now();
     while (i < end && !predicate()) {

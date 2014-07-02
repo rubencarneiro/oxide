@@ -67,8 +67,6 @@ set(PLUGIN_SRCS
     oxide_qquick_file_picker_delegate.cc
     oxide_qquick_javascript_dialog_delegate.cc
     oxide_qquick_prompt_dialog_delegate.cc
-    oxide_qquick_render_view_item.cc
-    oxide_qquick_render_view_item_factory.cc
     oxide_qquick_software_frame_node.cc
     oxide_qquick_web_popup_menu_delegate.cc
     ${MOC_EXTRA})

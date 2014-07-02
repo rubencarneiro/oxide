@@ -18,8 +18,11 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/logging.h"
-#include "ui/events/ozone/event_factory_ozone.h"
+#include "base/memory/scoped_ptr.h"
 #include "ui/ozone/ozone_platform.h"
+#include "ui/ozone/public/event_factory_ozone.h"
+#include "ui/ozone/public/gpu_platform_support.h"
+#include "ui/ozone/public/gpu_platform_support_host.h"
 
 #include "oxide_ozone_surface_factory.h"
 
@@ -27,27 +30,40 @@ namespace oxide {
 
 class OzonePlatform : public ui::OzonePlatform {
  public:
-  OzonePlatform() {}
+  OzonePlatform()
+      : gpu_platform_support_host_(ui::CreateStubGpuPlatformSupportHost()),
+        gpu_platform_support_(ui::CreateStubGpuPlatformSupport()) {}
+
   virtual ~OzonePlatform() {}
 
-  gfx::SurfaceFactoryOzone* GetSurfaceFactoryOzone() OVERRIDE {
+  ui::SurfaceFactoryOzone* GetSurfaceFactoryOzone() FINAL {
     return &surface_factory_;
   }
 
-  ui::EventFactoryOzone* GetEventFactoryOzone() OVERRIDE {
+  ui::EventFactoryOzone* GetEventFactoryOzone() FINAL {
     return &event_factory_;
   }
 
-  ui::CursorFactoryOzone* GetCursorFactoryOzone() OVERRIDE {
+  ui::CursorFactoryOzone* GetCursorFactoryOzone() FINAL {
     return NULL;
   }
 
+  ui::GpuPlatformSupport* GetGpuPlatformSupport() FINAL {
+    return gpu_platform_support_.get();
+  }
+
+  ui::GpuPlatformSupportHost* GetGpuPlatformSupportHost() FINAL {
+    return gpu_platform_support_host_.get();
+  }
+  
  private:
   void InitializeUI() OVERRIDE {}
   void InitializeGPU() OVERRIDE {}
 
   OzoneSurfaceFactory surface_factory_;
   ui::EventFactoryOzone event_factory_;
+  scoped_ptr<ui::GpuPlatformSupportHost> gpu_platform_support_host_;
+  scoped_ptr<ui::GpuPlatformSupport> gpu_platform_support_;
 };
 
 } // namespace oxide

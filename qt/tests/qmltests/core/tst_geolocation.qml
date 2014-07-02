@@ -9,8 +9,6 @@ TestWebView {
   width: 200
   height: 200
 
-  property string testcase: ""
-
   function expect_result(selector, expected) {
     var result = webView.getTestApi().evaluateCode(
         "document.querySelector(\"#" + selector + "\").innerHTML");
@@ -35,7 +33,7 @@ TestWebView {
     }
 
     function test_geolocation_get(data) {
-      webView.testcase = data.testcase;
+      OxideTestingUtils.setAppProperty("_oxide_geo_testcase", data.testcase);
       webView.url = "http://localhost:8080/tst_geolocation_get.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -43,7 +41,7 @@ TestWebView {
     }
 
     function test_geolocation_watch() {
-      webView.testcase = "";
+      OxideTestingUtils.removeAppProperty("_oxide_geo_testcase");
       webView.url = "http://localhost:8080/tst_geolocation_watch.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");

@@ -46,9 +46,9 @@ base::NativeLibrary LoadLibrary(const char* filename) {
 
 } // namespace
 
-gfx::SurfaceFactoryOzone::HardwareState
+ui::SurfaceFactoryOzone::HardwareState
 OzoneSurfaceFactory::InitializeHardware() {
-  return gfx::SurfaceFactoryOzone::INITIALIZED;
+  return ui::SurfaceFactoryOzone::INITIALIZED;
 }
 
 void OzoneSurfaceFactory::ShutdownHardware() {}

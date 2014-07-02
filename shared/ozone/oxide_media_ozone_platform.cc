@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,29 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_render_widget_host_view_factory.h"
-
-#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_factory.h"
-
-#include "oxide_qt_render_widget_host_view.h"
+#include "base/compiler_specific.h"
+#include "media/ozone/media_ozone_platform.h"
 
 namespace oxide {
-namespace qt {
 
-RenderWidgetHostViewFactory::RenderWidgetHostViewFactory(
-    oxide::BrowserContext* context,
-    RenderWidgetHostViewDelegateFactory* delegate) :
-    oxide::RenderWidgetHostViewFactory(context),
-    delegate_(delegate) {}
+class MediaOzonePlatform : public media::MediaOzonePlatform {
+ public:
+  MediaOzonePlatform() {}
+  virtual ~MediaOzonePlatform() {}
 
-RenderWidgetHostViewFactory::~RenderWidgetHostViewFactory() {}
+  media::VideoDecodeAccelerator* CreateVideoDecodeAccelerator(
+      const base::Callback<bool(void)>& make_context_current) FINAL {
+    return NULL;
+  }
+};
 
-oxide::RenderWidgetHostView* RenderWidgetHostViewFactory::CreateViewForWidget(
-    content::RenderWidgetHost* render_widget_host) {
-  return new RenderWidgetHostView(
-      render_widget_host,
-      delegate_->CreateRenderWidgetHostViewDelegate());
+} // namespace oxide
+
+namespace media {
+
+MediaOzonePlatform* CreateMediaOzonePlatformOxide() {
+  return new oxide::MediaOzonePlatform();
 }
 
-} // namespace qt
-} // namespace oxide
+} // namespace media

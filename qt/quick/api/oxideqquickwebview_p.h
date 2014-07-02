@@ -43,6 +43,7 @@ class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
+class OxideQDownloadRequest;
 
 class OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
@@ -75,6 +76,13 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
+
+  Q_PROPERTY(qreal viewportWidth READ viewportWidth NOTIFY viewportWidthChanged)
+  Q_PROPERTY(qreal viewportHeight READ viewportHeight NOTIFY viewportHeightChanged)
+  Q_PROPERTY(qreal contentWidth READ contentWidth NOTIFY contentWidthChanged)
+  Q_PROPERTY(qreal contentHeight READ contentHeight NOTIFY contentHeightChanged)
+  Q_PROPERTY(qreal contentX READ contentX NOTIFY contentXChanged)
+  Q_PROPERTY(qreal contentY READ contentY NOTIFY contentYChanged)
 
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
@@ -135,6 +143,13 @@ class OxideQQuickWebView : public QQuickItem {
   Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
   Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
 
+  qreal viewportWidth() const;
+  qreal viewportHeight() const;
+  qreal contentWidth() const;
+  qreal contentHeight() const;
+  qreal contentX() const;
+  qreal contentY() const;
+
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
@@ -194,6 +209,12 @@ class OxideQQuickWebView : public QQuickItem {
   void contextChanged();
   void preferencesChanged();
   void messageHandlersChanged();
+  void viewportWidthChanged();
+  void viewportHeightChanged();
+  void contentWidthChanged();
+  void contentHeightChanged();
+  void contentXChanged();
+  void contentYChanged();
   void fullscreenRequested(bool fullscreen);
   void navigationRequested(OxideQNavigationRequest *request);
   void newViewRequested(OxideQNewViewRequest* request);
@@ -203,10 +224,13 @@ class OxideQQuickWebView : public QQuickItem {
                                 const QString& message,
                                 int lineNumber,
                                 const QString& sourceId);
+  void downloadRequested(OxideQDownloadRequest* request);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
+
+  Q_PRIVATE_SLOT(d_func(), void onWindowChanged(QQuickWindow*));
 
   void connectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
@@ -215,6 +239,10 @@ class OxideQQuickWebView : public QQuickItem {
                        const QRectF& oldGeometry) Q_DECL_FINAL;
   void itemChange(QQuickItem::ItemChange change,
                   const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
+  QSGNode* updatePaintNode(
+      QSGNode* oldNode,
+      UpdatePaintNodeData * updatePaintNodeData) Q_DECL_FINAL;
+  void updatePolish() Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

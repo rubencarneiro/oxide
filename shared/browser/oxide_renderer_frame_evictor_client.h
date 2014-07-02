@@ -15,26 +15,18 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QQUICK_RENDER_VIEW_ITEM_FACTORY_H_
-#define _OXIDE_QQUICK_RENDER_VIEW_ITEM_FACTORY_H_
-
-#include <QtGlobal>
-
-#include "qt/core/glue/oxide_qt_render_widget_host_view_delegate_factory.h"
+#ifndef _OXIDE_SHARED_BROWSER_RENDERER_FRAME_EVICTOR_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_RENDERER_FRAME_EVICTOR_CLIENT_H_
 
 namespace oxide {
-namespace qquick {
 
-class RenderViewItemFactory Q_DECL_FINAL :
-    public oxide::qt::RenderWidgetHostViewDelegateFactory {
+class RendererFrameEvictorClient {
  public:
-  RenderViewItemFactory();
+  virtual ~RendererFrameEvictorClient();
 
-  oxide::qt::RenderWidgetHostViewDelegate*
-  CreateRenderWidgetHostViewDelegate() Q_DECL_FINAL;
+  virtual void EvictCurrentFrame() = 0;
 };
 
-} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QQUICK_RENDER_VIEW_ITEM_FACTORY_H_
+#endif // _OXIDE_SHARED_BROWSER_RENDERER_FRAME_EVICTOR_CLIENT_H_

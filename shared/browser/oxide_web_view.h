@@ -18,21 +18,35 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 
+#include <queue>
+#include <set>
 #include <string>
 #include <vector>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/linked_ptr.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "base/strings/string16.h"
+#include "cc/output/compositor_frame_metadata.h"
+#include "content/browser/renderer_host/event_with_latency_info.h"
+#include "content/common/input/input_event_ack_state.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
-#include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "third_party/WebKit/public/web/WebCompositionUnderline.h"
+#include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/base/ime/text_input_type.h"
+#include "ui/events/gestures/gesture_recognizer.h"
+#include "ui/events/gestures/gesture_types.h"
 #include "ui/gfx/rect.h"
+#include "ui/gfx/size.h"
 
+#include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
@@ -42,27 +56,45 @@
 
 class GURL;
 
-namespace gfx {
-class Size;
-}
+namespace blink {
+class WebMouseEvent;
+class WebMouseWheelEvent;
+} // namespace blink
 
 namespace content {
 
 class FrameTree;
 class FrameTreeNode;
 struct MenuItem;
+class NativeWebKeyboardEvent;
 class NotificationRegistrar;
 struct OpenURLParams;
+class RenderViewHost;
+class RenderWidgetHostImpl;
 class WebContents;
 class WebContentsImpl;
+class WebCursor;
 
 } // namespace content
+
+namespace gfx {
+class Range;
+class Size;
+}
+
+namespace ui {
+class GestureEvent;
+class TouchEvent;
+}
 
 namespace oxide {
 
 class BrowserContext;
+class Compositor;
+class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
+class RenderWidgetHostView;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
@@ -72,9 +104,12 @@ class WebViewContentsHelper;
 // this. Note that this class will hold the main browser process
 // components alive
 class WebView : public ScriptMessageTarget,
+                private CompositorClient,
                 private WebPreferencesObserver,
-                private WebViewContentsHelperDelegate,
+                private ui::GestureEventHelper,
+                private ui::GestureConsumer,
                 private content::NotificationObserver,
+                private WebViewContentsHelperDelegate,
                 private content::WebContentsObserver {
  public:
   virtual ~WebView();
@@ -93,6 +128,9 @@ class WebView : public ScriptMessageTarget,
 
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
+
+  static std::set<WebView*> GetAllWebViewsFor(
+      BrowserContext * browser_context);
 
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
@@ -118,8 +156,9 @@ class WebView : public ScriptMessageTarget,
   bool IsFullscreen() const;
   void SetIsFullscreen(bool fullscreen);
 
-  void UpdateSize(const gfx::Size& size);
-  void UpdateVisibility(bool visible);
+  void WasResized();
+  void VisibilityChanged();
+  void FocusChanged();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -138,7 +177,13 @@ class WebView : public ScriptMessageTarget,
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
 
-  gfx::Size GetContainerSize();
+  gfx::Size GetContainerSizePix() const;
+  gfx::Rect GetContainerBoundsDip() const;
+  gfx::Size GetContainerSizeDip() const;
+
+  const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
+    return compositor_frame_metadata_;
+  }
 
   void ShowPopupMenu(const gfx::Rect& bounds,
                      int selected_item,
@@ -147,23 +192,66 @@ class WebView : public ScriptMessageTarget,
   void HidePopupMenu();
 
   void RequestGeolocationPermission(
-      const PermissionRequest::ID& id,
+      int id,
       const GURL& origin,
       const base::Callback<void(bool)>& callback);
-  void CancelGeolocationPermissionRequest(
-      const PermissionRequest::ID& id);
+  void CancelGeolocationPermissionRequest(int id);
 
   void UpdateWebPreferences();
 
-  virtual gfx::Rect GetContainerBounds() = 0;
+  void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
+  void HandleMouseEvent(const blink::WebMouseEvent& event);
+  void HandleTouchEvent(const ui::TouchEvent& event);
+  void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
+
+  void ImeCommitText(const base::string16& text,
+                     const gfx::Range& replacement_range);
+  void ImeSetComposingText(
+      const base::string16& text,
+      const std::vector<blink::WebCompositionUnderline>& underlines,
+      const gfx::Range& selection_range);
+
+  void DownloadRequested(
+      const GURL& url,
+      const std::string& mimeType,
+      const bool shouldPrompt,
+      const base::string16& suggestedFilename,
+      const std::string& cookies,
+      const std::string& referrer) FINAL;
+
+  Compositor* compositor() const { return compositor_.get(); }
+
+  CompositorFrameHandle* GetCompositorFrameHandle() const;
+  void DidCommitCompositorFrame();
+
+  // Interface with RWHV ========
+  void EvictCurrentFrame();
+  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata);
+
+  void ProcessAckedTouchEvent(
+      const content::TouchEventWithLatencyInfo& touch,
+      content::InputEventAckState ack_result);
+
+  virtual void UpdateCursor(const content::WebCursor& cursor);
+  void TextInputStateChanged(ui::TextInputType type,
+                             bool show_ime_if_needed);
+  void FocusedNodeChanged(bool is_editable_node);
+  virtual void ImeCancelComposition();
+  void SelectionBoundsChanged(const gfx::Rect& caret_rect,
+                              size_t selection_cursor_position,
+                              size_t selection_anchor_position);
+  virtual void SelectionChanged();
+  // ============================
+
+  virtual blink::WebScreenInfo GetScreenInfo() const = 0;
+  virtual gfx::Rect GetContainerBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
+  virtual bool HasFocus() const = 0;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message);
   virtual JavaScriptDialog* CreateBeforeUnloadDialog();
-
-  virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
   virtual void FrameAdded(WebFrame* frame);
   virtual void FrameRemoved(WebFrame* frame);
@@ -173,25 +261,53 @@ class WebView : public ScriptMessageTarget,
  protected:
   WebView();
 
+  base::string16 GetSelectedText() const;
+  const base::string16& GetSelectionText() const;
+
+  ui::TextInputType text_input_type_;
+  bool show_ime_if_needed_;
+  bool focused_node_is_editable_;
+
+  gfx::Rect caret_rect_;
+  size_t selection_cursor_position_;
+  size_t selection_anchor_position_;
+
  private:
+  RenderWidgetHostView* GetRenderWidgetHostView() const;
+  content::RenderViewHost* GetRenderViewHost() const;
+  content::RenderWidgetHostImpl* GetRenderWidgetHostImpl() const;
+
+  void ForwardGestureEventToRenderer(ui::GestureEvent* event);
+  void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
+
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
 
-  // ScriptMessageTarget
+  // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
   virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const OVERRIDE;
 
-  // WebPreferencesObserver
+  // CompositorClient implementation
+  void CompositorDidCommit() FINAL;
+  void CompositorSwapFrame(uint32 surface_id,
+                           CompositorFrameHandle* frame) FINAL;
+
+  // WebPreferencesObserver implementation
   void WebPreferencesDestroyed() FINAL;
 
-  // content::NotificationObserver
+  // ui::GestureEventHelper implementation
+  bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
+  void DispatchGestureEvent(ui::GestureEvent* event) FINAL;
+  void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
+
+  // content::NotificationObserver implementation
   void Observe(int type,
                const content::NotificationSource& source,
                const content::NotificationDetails& details) FINAL;
 
-  // WebViewContentsHelperDelegate
+  // WebViewContentsHelperDelegate implementation
   content::WebContents* OpenURL(const content::OpenURLParams& params) FINAL;
   void NavigationStateChanged(unsigned flags) FINAL;
   bool ShouldCreateWebContents(const GURL& target_url,
@@ -209,9 +325,10 @@ class WebView : public ScriptMessageTarget,
   bool RunFileChooser(const content::FileChooserParams& params) FINAL;
   void ToggleFullscreenMode(bool enter) FINAL;
   void NotifyWebPreferencesDestroyed() FINAL;
-  void HandleKeyboardEvent(const content::NativeWebKeyboardEvent& event) FINAL;
+  void HandleUnhandledKeyboardEvent(
+      const content::NativeWebKeyboardEvent& event) FINAL;
 
-  // content::WebContentsObserver
+  // content::WebContentsObserver implementation
   void RenderProcessGone(base::TerminationStatus status) FINAL;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
@@ -267,6 +384,7 @@ class WebView : public ScriptMessageTarget,
   void DidUpdateFaviconURL(
       const std::vector<content::FaviconURL>& candidates) FINAL;
 
+  // Override in sub-classes
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnIconChanged(const GURL& icon);
@@ -301,6 +419,16 @@ class WebView : public ScriptMessageTarget,
   virtual void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event);
 
+  virtual void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old);
+
+  virtual void OnDownloadRequested(
+      const GURL& url,
+      const std::string& mimeType,
+      const bool shouldPrompt,
+      const base::string16& suggestedFilename,
+      const std::string& cookies,
+      const std::string& referrer);
+
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
@@ -311,8 +439,26 @@ class WebView : public ScriptMessageTarget,
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                     WindowOpenDisposition disposition);
 
+  virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
+
+  virtual void OnSwapCompositorFrame() = 0;
+  virtual void OnEvictCurrentFrame();
+
+  virtual void OnTextInputStateChanged();
+  virtual void OnFocusedNodeChanged();
+  virtual void OnSelectionBoundsChanged();
+
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;
+
+  scoped_ptr<Compositor> compositor_;
+
+  scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
+  std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
+  std::queue<uint32> received_surface_ids_;
+
+  scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
+  blink::WebTouchEvent touch_event_;
 
   GURL initial_url_;
   WebPreferences* initial_preferences_;
@@ -324,6 +470,8 @@ class WebView : public ScriptMessageTarget,
   base::WeakPtr<FilePicker> active_file_picker_;
 
   PermissionRequestManager geolocation_permission_requests_;
+
+  cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

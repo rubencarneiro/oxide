@@ -15,6 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QLatin1String>
 #include <QList>
@@ -25,6 +26,7 @@
 #include <QtGlobal>
 #include <QtQml>
 #include <QUrl>
+#include <QVariant>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -108,6 +110,18 @@ class OxideTestingUtils : public QObject {
     }
 
     return new DestructionObserver(object);
+  }
+
+  Q_INVOKABLE QVariant getAppProperty(const QString& property) {
+    QCoreApplication::instance()->property(property.toStdString().c_str());
+  }
+
+  Q_INVOKABLE void setAppProperty(const QString& property, const QVariant& value) {
+    QCoreApplication::instance()->setProperty(property.toStdString().c_str(), value);
+  }
+
+  Q_INVOKABLE void removeAppProperty(const QString& property) {
+    QCoreApplication::instance()->setProperty(property.toStdString().c_str(), QVariant());
   }
 
   Q_INVOKABLE QVariantList parseCookieList(

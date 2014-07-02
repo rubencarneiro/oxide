@@ -18,18 +18,37 @@
 #include "oxide_qquick_software_frame_node.h"
 
 #include <QImage>
+#include <QPoint>
 #include <QQuickWindow>
+#include <QRect>
 
-#include "oxide_qquick_render_view_item.h"
+#include "qt/core/glue/oxide_qt_web_view_adapter.h"
+#include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
 namespace qquick {
 
-SoftwareFrameNode::SoftwareFrameNode(RenderViewItem* item)
-    : item_(item) {}
+SoftwareFrameNode::SoftwareFrameNode(OxideQQuickWebView* view)
+    : view_(view) {}
+
+void SoftwareFrameNode::updateNode(
+    QSharedPointer<oxide::qt::CompositorFrameHandle> handle) {
+  handle_ = handle;
+
+  setRect(QRect(QPoint(0, 0), handle_->GetSize()));
+
+  texture_.reset(view_->window()->createTextureFromImage(
+      handle_->GetSoftwareFrame(),
+      QQuickWindow::TextureHasAlphaChannel));
+  setTexture(texture_.data());
+}
 
 void SoftwareFrameNode::setImage(const QImage& image) {
-  texture_.reset(item_->window()->createTextureFromImage(
+  handle_.reset();
+
+  setRect(QRect(QPoint(0, 0), image.size()));
+
+  texture_.reset(view_->window()->createTextureFromImage(
       image, QQuickWindow::TextureHasAlphaChannel));
   setTexture(texture_.data());
 }

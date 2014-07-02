@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 
+#include <queue>
 #include <string>
 
 #include "base/basictypes.h"
@@ -26,111 +27,64 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
-#include "base/synchronization/lock.h"
+#include "cc/layers/delegated_frame_resource_collection.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "content/common/cursors/webcursor.h"
-#include "third_party/WebKit/public/web/WebInputEvent.h"
-#include "ui/events/gestures/gesture_recognizer.h"
-#include "ui/events/gestures/gesture_types.h"
+#include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/rect.h"
+#include "ui/gfx/size.h"
 
-#include "shared/browser/oxide_gpu_utils.h"
-
-typedef unsigned int GLuint;
+#include "shared/browser/oxide_renderer_frame_evictor_client.h"
 
 namespace cc {
-class SharedBitmap;
+class DelegatedFrameProvider;
+class DelegatedRendererLayer;
 }
 
 namespace content {
 class RenderWidgetHostImpl;
 }
 
-namespace ui {
-class GestureRecognizer;
-class TouchEvent;
-}
-
 namespace oxide {
 
-class AcceleratedFrameHandle;
-class RenderWidgetHostView;
 class WebView;
 
-class SoftwareFrameHandle FINAL {
+class RenderWidgetHostView FINAL :
+    public content::RenderWidgetHostViewBase,
+    public RendererFrameEvictorClient,
+    public cc::DelegatedFrameResourceCollectionClient,
+    public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
-  SoftwareFrameHandle(RenderWidgetHostView* rwhv,
-                      unsigned frame_id,
-                      uint32 surface_id,
-                      scoped_ptr<cc::SharedBitmap> bitmap,
-                      const gfx::Size& size,
-                      float scale);
-  ~SoftwareFrameHandle();
-
-  void* GetPixels();
-  unsigned frame_id() const { return frame_id_; }
-  gfx::Size size_in_pixels() const { return size_in_pixels_; }
-  float device_scale_factor() const { return device_scale_factor_; }
-
-  void WasFreed();
-
- private:
-  RenderWidgetHostView* rwhv_;
-  unsigned frame_id_;
-  uint32 surface_id_;
-  scoped_ptr<cc::SharedBitmap> bitmap_;
-  gfx::Size size_in_pixels_;
-  float device_scale_factor_;
-};
-
-class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
-                             public ui::GestureEventHelper,
-                             public ui::GestureConsumer,
-                             public AcceleratedFrameHandle::Client,
-                             public base::SupportsWeakPtr<RenderWidgetHostView> {
- public:
-  virtual ~RenderWidgetHostView();
-
-  virtual void Init(WebView* view) = 0;
+  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
+  ~RenderWidgetHostView();
 
   content::RenderWidgetHostImpl* host() const { return host_; }
 
-  SoftwareFrameHandle* GetCurrentSoftwareFrameHandle();
-  AcceleratedFrameHandle* GetCurrentAcceleratedFrameHandle();
+  void CompositorDidCommit();
+  void SetWebView(WebView* view);
 
-  void DidCommitCompositorFrame();
+  const base::string16& selection_text() const {
+    return selection_text_;
+  }
 
-  // content::RenderWidgetHostView
+  // content::RenderWidgetHostViewBase implementation
+  void Blur() FINAL;
+
+  // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
-
+  void SetSize(const gfx::Size& size) FINAL;
   void SetBounds(const gfx::Rect& rect) FINAL;
-
- protected:
-  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
-
-  // content::RenderWidgetHostViewBase
-  void WasShown() FINAL;
-  void WasHidden() FINAL;
-
-  void OnFocus();
-  void OnBlur();
-  void OnResize();
-
-  gfx::Rect caret_rect() const { return caret_rect_; }
-  size_t selection_cursor_position() const {
-    return selection_cursor_position_;
-  }
-  size_t selection_anchor_position() const {
-    return selection_anchor_position_;
-  }
-
-  void HandleTouchEvent(const ui::TouchEvent& event);
+  void Focus() FINAL;
 
  private:
-  typedef base::Callback<void(void)> SendSwapCompositorFrameAckCallback;
+  // content::RenderWidgetHostViewBase implementation
+  void SelectionChanged(const base::string16& text,
+                        size_t offset,
+                        const gfx::Range& range) FINAL;
 
-  // content::RenderWidgetHostViewBase
-  virtual void FocusedNodeChanged(bool is_editable_node) OVERRIDE;
+  gfx::Size GetPhysicalBackingSize() const FINAL;
+
+  void FocusedNodeChanged(bool is_editable_node) FINAL;
 
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) FINAL;
@@ -140,18 +94,19 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) FINAL;
 
+  void WasShown() FINAL;
+  void WasHidden() FINAL;
+
   void MovePluginWindows(
       const std::vector<content::WebPluginGeometry>& moves) FINAL;
-
-  virtual void Blur() OVERRIDE;
 
   void UpdateCursor(const content::WebCursor& cursor) FINAL;
   void SetIsLoading(bool is_loading) FINAL;
 
-  virtual void TextInputTypeChanged(ui::TextInputType type,
-                                    ui::TextInputMode mode,
-                                    bool can_compose_inline) OVERRIDE;
-  virtual void ImeCancelComposition() OVERRIDE;
+  void TextInputStateChanged(
+      const ViewHostMsg_TextInputState_Params& params) FINAL;
+
+  void ImeCancelComposition() FINAL;
 
   void RenderProcessGone(base::TerminationStatus status, int error_code) FINAL;
 
@@ -189,6 +144,9 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
 
   bool HasAcceleratedSurface(const gfx::Size& desired_size) FINAL;
 
+  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
+  gfx::Rect GetBoundsInRootWindow() FINAL;
+
   gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
 
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
@@ -201,66 +159,75 @@ class RenderWidgetHostView : public content::RenderWidgetHostViewBase,
       const gfx::Range& range,
       const std::vector<gfx::Rect>& character_bounds) FINAL;
 
-  // content::RenderWidgetHostView
+  // content::RenderWidgetHostView implementation
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 
   gfx::NativeView GetNativeView() const FINAL;
   gfx::NativeViewId GetNativeViewId() const FINAL;
   gfx::NativeViewAccessible GetNativeViewAccessible() FINAL;
 
-  virtual void Focus() OVERRIDE;
+  bool HasFocus() const FINAL;
 
   bool IsSurfaceAvailableForCopy() const FINAL;
+
+  void Show() FINAL;
+  void Hide() FINAL;
+  bool IsShowing() FINAL;
+
+  gfx::Rect GetViewBounds() const FINAL;
 
   bool LockMouse() FINAL;
   void UnlockMouse() FINAL;
 
-  // ui::GestureEventHelper
-  bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
-  void DispatchGestureEvent(ui::GestureEvent* event) FINAL;
-  void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
+  // cc::DelegatedFrameResourceCollectionClient implementation
+  void UnusedResourcesAreAvailable() FINAL;
 
-  // AcceleratedFrameHandle::Client
-  void OnTextureResourcesAvailable(AcceleratedFrameHandle* handle) FINAL;
+  // RendererFrameEvictorClient implemenetation
+  void EvictCurrentFrame() FINAL;
 
   // ===================
 
-  bool ShouldCompositeNewFrame();
+  void UpdateCursorOnWebView();
 
-  void SendSwapCompositorFrameAck(uint32 surface_id);
-  static void SendSwapCompositorFrameAckOnMainThread(
-      SendSwapCompositorFrameAckCallback ack);
-
-  void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
-  void ForwardGestureEventToRenderer(ui::GestureEvent* event);
-
-  virtual void SwapSoftwareFrame();
-  virtual void SwapAcceleratedFrame();
-
-  virtual void OnUpdateCursor(const content::WebCursor& cursor);
+  void DestroyDelegatedContent();
+  void SendDelegatedFrameAck(uint32 surface_id);
+  void SendReturnedDelegatedResources();
+  void RunAckCallbacks();
+  void AttachLayer();
+  void DetachLayer();
 
   content::RenderWidgetHostImpl* host_;
 
+  WebView* web_view_;
+
   gfx::GLSurfaceHandle shared_surface_handle_;
 
-  base::Lock compositor_frame_ack_callback_lock_;
-  SendSwapCompositorFrameAckCallback compositor_frame_ack_callback_;
+  scoped_refptr<cc::DelegatedFrameResourceCollection> resource_collection_;
+  scoped_refptr<cc::DelegatedFrameProvider> frame_provider_;
+  scoped_refptr<cc::DelegatedRendererLayer> layer_;
 
-  scoped_refptr<AcceleratedFrameHandle> pending_accelerated_frame_;
-  scoped_refptr<AcceleratedFrameHandle> current_accelerated_frame_;
-  scoped_refptr<AcceleratedFrameHandle> previous_accelerated_frame_;
-  scoped_ptr<SoftwareFrameHandle> current_software_frame_;
-  scoped_ptr<SoftwareFrameHandle> previous_software_frame_;
+  // The output surface ID for the last frame from the renderer
+  uint32 last_output_surface_id_;
+
+  std::queue<base::Closure> ack_callbacks_;
+
+  gfx::Size last_frame_size_dip_;
+
+  bool frame_is_evicted_;
 
   gfx::Rect caret_rect_;
   size_t selection_cursor_position_;
   size_t selection_anchor_position_;
 
-  bool is_loading_;
-  content::WebCursor last_cursor_;
+  ui::TextInputType current_text_input_type_;
+  bool show_ime_if_needed_;
+  bool focused_node_is_editable_;
 
-  scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
-  blink::WebTouchEvent touch_event_;
+  bool is_loading_;
+  content::WebCursor current_cursor_;
+
+  bool is_showing_;
+  gfx::Size last_size_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

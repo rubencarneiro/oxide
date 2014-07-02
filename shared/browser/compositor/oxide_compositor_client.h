@@ -15,31 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_FACTORY_H_
-#define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_FACTORY_H_
+#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
 
-namespace content {
-class RenderWidgetHost;
-class WebContents;
-}
+#include "base/memory/scoped_ptr.h"
 
 namespace oxide {
 
-class BrowserContext;
-class RenderWidgetHostView;
+class CompositorFrameHandle;
 
-class RenderWidgetHostViewFactory {
+class CompositorClient {
  public:
-  RenderWidgetHostViewFactory(BrowserContext* context);
-  virtual ~RenderWidgetHostViewFactory();
+  virtual ~CompositorClient() {}
 
-  static RenderWidgetHostViewFactory* FromWebContents(
-      content::WebContents* contents);
+  virtual void CompositorDidCommit() = 0;
 
-  virtual RenderWidgetHostView* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) = 0;
+  virtual void CompositorSwapFrame(uint32 surface_id,
+                                   CompositorFrameHandle* frame) = 0;
 };
- 
+
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_FACTORY_H_
+#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_

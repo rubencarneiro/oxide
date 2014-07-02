@@ -81,6 +81,37 @@ void WebContextAdapter::setUserAgent(const QString& user_agent) {
   }
 }
 
+bool WebContextAdapter::devtoolsEnabled() const {
+  if (isInitialized()) {
+    return priv->context_->GetDevtoolsEnabled();
+  }
+  return priv->construct_props_->devtools_enabled;
+}
+
+void WebContextAdapter::setDevtoolsEnabled(bool enabled) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools enabled after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_enabled = enabled;
+}
+
+int WebContextAdapter::devtoolsPort() const {
+  if (isInitialized()) {
+    return priv->context_->GetDevtoolsPort();
+  }
+
+  return priv->construct_props_->devtools_port;
+}
+
+void WebContextAdapter::setDevtoolsPort(int port) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools port after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_port = port;
+}
+
 QUrl WebContextAdapter::dataPath() const {
   base::FilePath path;
   if (isInitialized()) {
@@ -275,10 +306,9 @@ net::CookieMonster* WebContextAdapter::cookieMonster() const {
 
 WebContextAdapter::WebContextAdapter(
     QObject* q,
-    IOThreadDelegate* io_delegate,
-    RenderWidgetHostViewDelegateFactory* view_factory) :
-    AdapterBase(q),
-    priv(WebContextAdapterPrivate::Create(this, io_delegate, view_factory)) {
+    IOThreadDelegate* io_delegate)
+    : AdapterBase(q),
+      priv(WebContextAdapterPrivate::Create(this, io_delegate)) {
 
   priv->AddRef();
 

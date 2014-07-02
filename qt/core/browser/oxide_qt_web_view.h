@@ -19,13 +19,23 @@
 #define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
 #include <QKeyEvent>
+#include <QtGlobal>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
 
+#include "qt/core/base/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
+
+QT_BEGIN_NAMESPACE
+class QFocusEvent;
+class QInputMethodEvent;
+class QKeyEvent;
+class QMouseEvent;
+class QWheelEvent;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
@@ -39,33 +49,51 @@ class WebView FINAL : public oxide::WebView,
 
   WebViewAdapter* adapter() const { return adapter_; }
 
+  void HandleFocusEvent(QFocusEvent* event);
+  void HandleInputMethodEvent(QInputMethodEvent* event);
+  void HandleKeyEvent(QKeyEvent* event);
+  void HandleMouseEvent(QMouseEvent* event);
+  void HandleTouchEvent(QTouchEvent* event);
+  void HandleWheelEvent(QWheelEvent* event);
+
+  QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
+
  private:
   friend class WebViewAdapter;
 
   WebView(WebViewAdapter* adapter);
 
+  float GetDeviceScaleFactor() const;
+
+  bool ShouldShowInputPanel() const;
+  bool ShouldHideInputPanel() const;
+  void SetInputPanelVisibility(bool visible);
+
+  // WebView implementation
   void Init(oxide::WebView::Params* params) FINAL;
 
-  size_t GetScriptMessageHandlerCount() const FINAL;
-  oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
-      size_t index) const FINAL;
+  void UpdateCursor(const content::WebCursor& cursor) FINAL;
+  void ImeCancelComposition() FINAL;
+  void SelectionChanged() FINAL;
 
-  gfx::Rect GetContainerBounds() FINAL;
+  blink::WebScreenInfo GetScreenInfo() const FINAL;
+  gfx::Rect GetContainerBoundsPix() const FINAL;
   bool IsVisible() const FINAL;
-
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
+  bool HasFocus() const FINAL;
 
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message) FINAL;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() FINAL;
 
-  oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) FINAL;
-
   void FrameAdded(oxide::WebFrame* frame) FINAL;
   void FrameRemoved(oxide::WebFrame* frame) FINAL;
 
   bool CanCreateWindows() const FINAL;
+
+  size_t GetScriptMessageHandlerCount() const FINAL;
+  oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const FINAL;
 
   void OnURLChanged() FINAL;
   void OnTitleChanged() FINAL;
@@ -86,6 +114,13 @@ class WebView FINAL : public oxide::WebView,
   void OnNavigationListPruned(bool from_front, int count) FINAL;
   void OnNavigationEntryChanged(int index) FINAL;
 
+  bool OnAddMessageToConsole(int32 level,
+                             const base::string16& message,
+                             int32 line_no,
+                             const base::string16& source_id) FINAL;
+
+  void OnToggleFullscreenMode(bool enter) FINAL;
+
   void OnWebPreferencesDestroyed() FINAL;
 
   void OnRequestGeolocationPermission(
@@ -94,23 +129,39 @@ class WebView FINAL : public oxide::WebView,
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) FINAL;
 
-  bool OnAddMessageToConsole(int32 level,
-                             const base::string16& message,
-                             int32 line_no,
-                             const base::string16& source_id) FINAL;
+  void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) FINAL;
 
-  void OnToggleFullscreenMode(bool enter) FINAL;
+  void OnDownloadRequested(const GURL& url,
+			   const std::string& mimeType,
+			   const bool shouldPrompt,
+			   const base::string16& suggestedFilename,
+			   const std::string& cookies,
+			   const std::string& referrer) FINAL;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) FINAL;
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
+  oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;
 
+  oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) FINAL;
+
+  void OnSwapCompositorFrame() FINAL;
+  void OnEvictCurrentFrame() FINAL;
+
+  void OnTextInputStateChanged() FINAL;
+  void OnFocusedNodeChanged() FINAL;
+  void OnSelectionBoundsChanged() FINAL;
+
   WebViewAdapter* adapter_;
+
+  TouchIDMap touch_id_map_;
+
+  bool has_input_method_state_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

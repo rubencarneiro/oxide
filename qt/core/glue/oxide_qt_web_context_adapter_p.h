@@ -41,7 +41,6 @@ namespace qt {
 
 class BrowserContextDelegate;
 struct ConstructProperties;
-class RenderWidgetHostViewDelegateFactory;
 class UserScriptAdapter;
 
 class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
@@ -69,15 +68,15 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
     net::StaticCookiePolicy::Type cookie_policy;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
     bool popup_blocker_enabled;
+    bool devtools_enabled;
+    int devtools_port;
   };
 
   static WebContextAdapterPrivate* Create(
       WebContextAdapter* adapter,
-      WebContextAdapter::IOThreadDelegate* io_delegate,
-      RenderWidgetHostViewDelegateFactory* view_factory);
+      WebContextAdapter::IOThreadDelegate* io_delegate);
   WebContextAdapterPrivate(WebContextAdapter* adapter,
-                           WebContextAdapter::IOThreadDelegate* io_delegate,
-                           RenderWidgetHostViewDelegateFactory* view_factory);
+                           WebContextAdapter::IOThreadDelegate* io_delegate);
 
   void Destroy();
   void UpdateUserScripts();
@@ -99,7 +98,6 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   WebContextAdapter* adapter_;
   scoped_ptr<WebContextAdapter::IOThreadDelegate> io_thread_delegate_;
-  scoped_ptr<RenderWidgetHostViewDelegateFactory> view_factory_;
 
   ScopedBrowserContext context_;
   scoped_ptr<ConstructProperties> construct_props_;

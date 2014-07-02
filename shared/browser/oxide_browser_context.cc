@@ -55,7 +55,6 @@
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_geolocation_permission_context.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
@@ -407,47 +406,9 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
   return NULL;
 }
 
-void BrowserContext::RequestMidiSysExPermission(
-    int render_process_id,
-    int render_view_id,
-    int bridge_id,
-    const GURL& requesting_frame,
-    bool user_gesture,
-    const MidiSysExPermissionCallback& callback) {
-  callback.Run(false);
-}
-
-void BrowserContext::CancelMidiSysExPermissionRequest(
-    int render_process_id,
-    int render_view_id,
-    int bridge_id,
-    const GURL& requesting_frame) {}
-
-void BrowserContext::RequestProtectedMediaIdentifierPermission(
-    int render_process_id,
-    int render_view_id,
-    const GURL& origin,
-    const ProtectedMediaIdentifierPermissionCallback& callback) {
-  callback.Run(false);
-}
-
-void BrowserContext::CancelProtectedMediaIdentifierPermissionRequests(
-    int render_process_id,
-    int render_view_id,
-    const GURL& origin) {}
-
 content::DownloadManagerDelegate*
     BrowserContext::GetDownloadManagerDelegate() {
   return NULL;
-}
-
-content::GeolocationPermissionContext*
-    BrowserContext::GetGeolocationPermissionContext() {
-  if (!geolocation_permission_context_) {
-    geolocation_permission_context_ = new GeolocationPermissionContext();
-  }
-
-  return geolocation_permission_context_;
 }
 
 content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
@@ -455,6 +416,10 @@ content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
 }
 
 quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
+  return NULL;
+}
+
+content::PushMessagingService* BrowserContext::GetPushMessagingService() {
   return NULL;
 }
 

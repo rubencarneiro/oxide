@@ -17,9 +17,12 @@
 
 #include "oxide_qt_web_view_adapter.h"
 
+#include <QSize>
 #include <QtDebug>
 
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
+#include "cc/output/compositor_frame_metadata.h"
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
 
@@ -29,12 +32,63 @@
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
+#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 
 #include "oxide_qt_web_context_adapter_p.h"
 #include "oxide_qt_web_frame_adapter.h"
 
 namespace oxide {
 namespace qt {
+
+class CompositorFrameHandleImpl : public CompositorFrameHandle {
+ public:
+  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
+      : frame_(frame) {
+    if (frame_) {
+      size_ = QSize(frame_->size_in_pixels().width(),
+                    frame_->size_in_pixels().height());
+    }
+  }
+
+  virtual ~CompositorFrameHandleImpl() {}
+
+  CompositorFrameHandle::Type GetType() Q_DECL_FINAL {
+    if (!frame_) {
+      return CompositorFrameHandle::TYPE_INVALID;
+    }
+    if (frame_->gl_frame_data()) {
+      return CompositorFrameHandle::TYPE_ACCELERATED;
+    }
+    if (frame_->software_frame_data()) {
+      return CompositorFrameHandle::TYPE_SOFTWARE;
+    }
+
+    NOTREACHED();
+    return CompositorFrameHandle::TYPE_INVALID;
+  }
+
+  const QSize& GetSize() const Q_DECL_FINAL {
+    return size_;
+  }
+
+  QImage GetSoftwareFrame() Q_DECL_FINAL {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
+    return QImage(
+        static_cast<uchar *>(frame_->software_frame_data()->pixels()),
+        frame_->size_in_pixels().width(),
+        frame_->size_in_pixels().height(),
+        QImage::Format_ARGB32);
+  }
+
+  AcceleratedFrameData GetAcceleratedFrame() Q_DECL_FINAL {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
+    return AcceleratedFrameData(frame_->gl_frame_data()->texture_id());
+  }
+
+ private:
+  scoped_refptr<oxide::CompositorFrameHandle> frame_;
+  QSize size_;
+};
 
 void WebViewAdapter::Initialized() {
   DCHECK(isInitialized());
@@ -146,12 +200,40 @@ void WebViewAdapter::setContext(WebContextAdapter* context) {
   construct_props_->context = context;
 }
 
-void WebViewAdapter::updateSize(const QSize& size) {
-  priv->UpdateSize(gfx::Size(size.width(), size.height()));
+void WebViewAdapter::wasResized() {
+  priv->WasResized();
 }
 
-void WebViewAdapter::updateVisibility(bool visible) {
-  priv->UpdateVisibility(visible);
+void WebViewAdapter::visibilityChanged() {
+  priv->VisibilityChanged();
+}
+
+void WebViewAdapter::handleFocusEvent(QFocusEvent* event) {
+  priv->HandleFocusEvent(event);
+}
+
+void WebViewAdapter::handleInputMethodEvent(QInputMethodEvent* event) {
+  priv->HandleInputMethodEvent(event);
+}
+
+void WebViewAdapter::handleKeyEvent(QKeyEvent* event) {
+  priv->HandleKeyEvent(event);
+}
+
+void WebViewAdapter::handleMouseEvent(QMouseEvent* event) {
+  priv->HandleMouseEvent(event);
+}
+
+void WebViewAdapter::handleTouchEvent(QTouchEvent* event) {
+  priv->HandleTouchEvent(event);
+}
+
+void WebViewAdapter::handleWheelEvent(QWheelEvent* event) {
+  priv->HandleWheelEvent(event);
+}
+
+QVariant WebViewAdapter::inputMethodQuery(Qt::InputMethodQuery query) const {
+  return priv->InputMethodQuery(query);
 }
 
 void WebViewAdapter::goBack() {
@@ -198,7 +280,8 @@ int WebViewAdapter::getNavigationEntryUniqueID(int index) const {
 }
 
 QUrl WebViewAdapter::getNavigationEntryUrl(int index) const {
-  return QUrl(QString::fromStdString(priv->GetNavigationEntryUrl(index).spec()));
+  return QUrl(QString::fromStdString(
+      priv->GetNavigationEntryUrl(index).spec()));
 }
 
 QString WebViewAdapter::getNavigationEntryTitle(int index) const {
@@ -206,7 +289,8 @@ QString WebViewAdapter::getNavigationEntryTitle(int index) const {
 }
 
 QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
-  return QDateTime::fromMSecsSinceEpoch(priv->GetNavigationEntryTimestamp(index).ToJsTime());
+  return QDateTime::fromMSecsSinceEpoch(
+      priv->GetNavigationEntryTimestamp(index).ToJsTime());
 }
 
 OxideQWebPreferences* WebViewAdapter::preferences() {
@@ -271,6 +355,40 @@ void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
 
 void WebViewAdapter::updateWebPreferences() {
   priv->UpdateWebPreferences();
+}
+
+float WebViewAdapter::compositorFrameDeviceScaleFactor() const {
+  return priv->compositor_frame_metadata().device_scale_factor;
+}
+
+float WebViewAdapter::compositorFramePageScaleFactor() const {
+  return priv->compositor_frame_metadata().page_scale_factor;
+}
+
+QPointF WebViewAdapter::compositorFrameScrollOffset() const {
+  const gfx::Vector2dF& offset =
+      priv->compositor_frame_metadata().root_scroll_offset;
+  return QPointF(offset.x(), offset.y());
+}
+
+QSizeF WebViewAdapter::compositorFrameLayerSize() const {
+  const gfx::SizeF& size = priv->compositor_frame_metadata().root_layer_size;
+  return QSizeF(size.width(), size.height());
+}
+
+QSizeF WebViewAdapter::compositorFrameViewportSize() const {
+  const gfx::SizeF& size = priv->compositor_frame_metadata().viewport_size;
+  return QSizeF(size.width(), size.height());
+}
+
+QSharedPointer<CompositorFrameHandle> WebViewAdapter::compositorFrameHandle() {
+  QSharedPointer<CompositorFrameHandle> handle(
+      new CompositorFrameHandleImpl(priv->GetCompositorFrameHandle()));
+  return handle;
+}
+
+void WebViewAdapter::didCommitCompositorFrame() {
+  priv->DidCommitCompositorFrame();
 }
 
 } // namespace qt
