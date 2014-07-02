@@ -1035,49 +1035,57 @@ void OxideQQuickWebView::removeMessageHandler(
 qreal OxideQQuickWebView::viewportWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->compositorFrameViewportSize().width()
+  return qRound64(d->compositorFrameViewportSize().width()
       * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor();
+      * d->compositorFramePageScaleFactor());
 }
 
 qreal OxideQQuickWebView::viewportHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->compositorFrameViewportSize().height()
+  return qRound64(d->compositorFrameViewportSize().height()
       * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor();
+      * d->compositorFramePageScaleFactor());
 }
 
 qreal OxideQQuickWebView::contentWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->compositorFrameLayerSize().width()
+  qreal vw = d->compositorFrameViewportSize().width();
+  return qRound64(d->compositorFrameLayerSize().width()
       * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor();
+      * d->compositorFramePageScaleFactor()
+      * vw / qRound64(vw));
 }
 
 qreal OxideQQuickWebView::contentHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->compositorFrameLayerSize().height()
+  qreal vh = d->compositorFrameViewportSize().height();
+  return qRound64(d->compositorFrameLayerSize().height()
       * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor();
+      * d->compositorFramePageScaleFactor()
+      * vh / qRound64(vh));
 }
 
 qreal OxideQQuickWebView::contentX() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->compositorFrameScrollOffset().x()
+  qreal vw = d->compositorFrameViewportSize().width();
+  return qRound64(d->compositorFrameScrollOffset().x()
       * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor();
+      * d->compositorFramePageScaleFactor()
+      * vw / qRound64(vw));
 }
 
 qreal OxideQQuickWebView::contentY() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->compositorFrameScrollOffset().y()
+  qreal vh = d->compositorFrameViewportSize().height();
+  return qRound64(d->compositorFrameScrollOffset().y()
       * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor();
+      * d->compositorFramePageScaleFactor()
+      * vh / qRound64(vh));
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
