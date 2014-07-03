@@ -21,10 +21,12 @@
 #include <vector>
 
 #include "base/command_line.h"
+#include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
+#include "base/scoped_native_library.h"
 #include "content/browser/gpu/compositor_util.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/gpu/gpu_process_host.h"
@@ -33,6 +35,7 @@
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
 #include "net/base/net_module.h"
+#include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/screen.h"
@@ -40,6 +43,7 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_share_group.h"
+#include "ui/gl/gl_surface.h"
 #include "webkit/common/webpreferences.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
@@ -77,6 +81,61 @@ namespace {
 scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
   return make_scoped_ptr(
       ContentClient::instance()->browser()->CreateMessagePumpForUI());
+}
+
+class ScopedBindGLESAPI {
+ public:
+  ScopedBindGLESAPI();
+  virtual ~ScopedBindGLESAPI();
+
+ private:
+  typedef EGLBoolean (*_eglBindAPI)(EGLenum);
+  typedef EGLenum (*_eglQueryAPI)(void);
+
+  bool has_egl_;
+  base::ScopedNativeLibrary egl_lib_;
+  EGLenum orig_api_;
+};
+
+ScopedBindGLESAPI::ScopedBindGLESAPI()
+    : has_egl_(false),
+      orig_api_(EGL_NONE) {
+  egl_lib_.Reset(base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
+  if (!egl_lib_.is_valid()) {
+    return;
+  }
+
+  _eglBindAPI eglBindAPI = reinterpret_cast<_eglBindAPI>(
+      egl_lib_.GetFunctionPointer("eglBindAPI"));
+  _eglQueryAPI eglQueryAPI = reinterpret_cast<_eglQueryAPI>(
+      egl_lib_.GetFunctionPointer("eglQueryAPI"));
+  if (!eglBindAPI || !eglQueryAPI) {
+    return;
+  }
+
+  orig_api_ = eglQueryAPI();
+  if (orig_api_ == EGL_NONE) {
+    return;
+  }
+
+  has_egl_ = true;
+
+  eglBindAPI(EGL_OPENGL_ES_API);
+}
+
+ScopedBindGLESAPI::~ScopedBindGLESAPI() {
+  if (!has_egl_) {
+    return;
+  }
+
+  DCHECK(egl_lib_.is_valid());
+  DCHECK_NE(orig_api_, EGL_NONE);
+
+  _eglBindAPI eglBindAPI = reinterpret_cast<_eglBindAPI>(
+      egl_lib_.GetFunctionPointer("eglBindAPI"));
+  DCHECK(eglBindAPI);
+
+  eglBindAPI(orig_api_);
 }
 
 class Screen : public gfx::Screen {
@@ -158,9 +217,18 @@ class BrowserMainParts : public content::BrowserMainParts {
   }
 
   int PreCreateThreads() FINAL {
+    // When using EGL, we need GLES for surfaceless contexts. Whilst the
+    // default API is GLES and this will be the selected API on the GPU
+    // thread, it is possible that the embedder has selected a different API
+    // on the main thread. Temporarily switch to GLES whilst we initialize
+    // the GL bits here
+    ScopedBindGLESAPI gles_binder;
+
+    // Work around a mesa race - see https://launchpad.net/bugs/1267893
+    gfx::GLSurface::InitializeOneOff();
+
     gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                    &primary_screen_);
-
     io_thread_.reset(new IOThread());
 
     return 0;

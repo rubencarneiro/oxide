@@ -34,7 +34,6 @@
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
-#include "ui/gl/gl_surface.h"
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
@@ -181,9 +180,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
       command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
     }
-
-    // Work around a mesa race - see https://launchpad.net/bugs/1267893
-    gfx::GLSurface::InitializeOneOff();
   }
 
   return false;
