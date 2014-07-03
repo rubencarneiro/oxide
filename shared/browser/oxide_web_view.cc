@@ -565,6 +565,29 @@ void WebView::HandleUnhandledKeyboardEvent(
   OnUnhandledKeyboardEvent(event);
 }
 
+void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
+  if (!root_frame_) {
+    return;
+  }
+
+  if (WebFrame::FromRenderFrameHost(render_frame_host)) {
+    // We get called whenever a new RFH is created for this node
+    return;
+  }
+
+  WebFrame* parent =
+      WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
+  DCHECK(parent);
+
+  content::FrameTreeNode* node = static_cast<content::RenderFrameHostImpl *>(
+      render_frame_host)->frame_tree_node();
+  DCHECK(node);
+
+  WebFrame* frame = CreateWebFrame(node);
+  DCHECK(frame);
+  frame->SetParent(parent);
+}
+
 void WebView::RenderProcessGone(base::TerminationStatus status) {
   geolocation_permission_requests_.CancelAllPending();
 }
@@ -669,31 +692,6 @@ void WebView::FrameDetached(content::RenderViewHost* rvh,
 
   WebFrame* frame = WebFrame::FromFrameTreeNode(node);
   frame->Destroy();
-}
-
-void WebView::FrameAttached(content::RenderViewHost* rvh,
-                            int64 parent_frame_routing_id,
-                            int64 frame_routing_id) {
-  if (!root_frame_) {
-    return;
-  }
-
-  content::FrameTree* tree = web_contents_->GetFrameTree();
-  int process_id = rvh->GetProcess()->GetID();
-
-  content::FrameTreeNode* parent_node =
-      tree->FindByRoutingID(parent_frame_routing_id, process_id);
-  content::FrameTreeNode* node =
-      tree->FindByRoutingID(frame_routing_id, process_id);
-
-  DCHECK(parent_node && node);
-
-  WebFrame* parent = WebFrame::FromFrameTreeNode(parent_node);
-  DCHECK(parent);
-
-  WebFrame* frame = CreateWebFrame(node);
-  DCHECK(frame);
-  frame->SetParent(parent);
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {

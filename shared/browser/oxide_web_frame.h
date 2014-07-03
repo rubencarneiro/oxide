@@ -30,6 +30,7 @@
 
 namespace content {
 class FrameTreeNode;
+class RenderFrameHost;
 }
 
 namespace oxide {
@@ -48,6 +49,7 @@ class WebFrame : public ScriptMessageTarget {
 
   static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
   static WebFrame* FromFrameTreeNodeID(int64 frame_tree_node_id);
+  static WebFrame* FromRenderFrameHost(content::RenderFrameHost* rfh);
 
   GURL GetURL() const;
 
