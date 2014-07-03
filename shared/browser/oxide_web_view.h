@@ -329,6 +329,8 @@ class WebView : public ScriptMessageTarget,
       const content::NativeWebKeyboardEvent& event) FINAL;
 
   // content::WebContentsObserver implementation
+  void RenderFrameCreated(content::RenderFrameHost* render_frame_host) FINAL;
+
   void RenderProcessGone(base::TerminationStatus status) FINAL;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
@@ -374,9 +376,6 @@ class WebView : public ScriptMessageTarget,
       const content::LoadCommittedDetails& load_details) FINAL;
 
   void FrameDetached(content::RenderViewHost* rvh,
-                     int64 frame_routing_id) FINAL;
-  void FrameAttached(content::RenderViewHost* rvh,
-                     int64 parent_frame_routing_id,
                      int64 frame_routing_id) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;

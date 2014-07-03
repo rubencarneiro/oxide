@@ -8,7 +8,6 @@ arm-icu.patch
 enable-glx-on-ozone.patch
 arm-neon.patch
 dont-use-gl-create-context-robustness.patch
-add-frame-attached-to-web-contents-observer.patch
 dont-initialize-gl-more-than-once.patch
 renderer-user-agent-override.patch
 expose-extra-properties-for-should-create-webcontents.patch
