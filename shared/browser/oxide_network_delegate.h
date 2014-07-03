@@ -46,7 +46,8 @@ class NetworkDelegate FINAL : public net::NetworkDelegate {
       net::URLRequest* request,
       const net::CompletionCallback& callback,
       const net::HttpResponseHeaders* original_response_headers,
-      scoped_refptr<net::HttpResponseHeaders>* override_response_headers) FINAL;
+      scoped_refptr<net::HttpResponseHeaders>* override_response_headers,
+      GURL* allowed_unsafe_redirect_url) FINAL;
 
   void OnBeforeRedirect(net::URLRequest* request,
                         const GURL& new_location) FINAL;

@@ -217,7 +217,7 @@ class WebView : public ScriptMessageTarget,
       const bool shouldPrompt,
       const base::string16& suggestedFilename,
       const std::string& cookies,
-      const std::string& referrer) FINAL;
+      const std::string& referrer);
 
   Compositor* compositor() const { return compositor_.get(); }
 
@@ -343,21 +343,17 @@ class WebView : public ScriptMessageTarget,
       content::RenderViewHost* render_view_host) FINAL;
 
   void DidCommitProvisionalLoadForFrame(
-      int64 frame_id,
-      const base::string16& frame_unique_name,
+      content::RenderFrameHost* render_frame_host,
       bool is_main_frame,
       const GURL& url,
-      content::PageTransition transition_type,
-      content::RenderViewHost* render_view_host) FINAL;
+      content::PageTransition transition_type) FINAL;
 
   void DidFailProvisionalLoad(
-      int64 frame_id,
-      const base::string16& frame_unique_name,
+      content::RenderFrameHost* render_frame_host,
       bool is_main_frame,
       const GURL& validated_url,
       int error_code,
-      const base::string16& error_description,
-      content::RenderViewHost* render_view_host) FINAL;
+      const base::string16& error_description) FINAL;
 
   void DidFinishLoad(int64 frame_id,
                      const GURL& validated_url,

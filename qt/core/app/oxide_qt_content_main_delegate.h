@@ -21,7 +21,6 @@
 #include "base/compiler_specific.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
-#include "shared/common/oxide_export.h"
 
 namespace oxide {
 namespace qt {
@@ -32,11 +31,8 @@ class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
 
   static ContentMainDelegate* Create();
 
- protected:
-  content::ContentBrowserClient* CreateContentBrowserClient() FINAL;
-
  private:
-  oxide::ContentClient* CreateContentClient() FINAL;
+  content::ContentBrowserClient* CreateContentBrowserClient() FINAL;
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };

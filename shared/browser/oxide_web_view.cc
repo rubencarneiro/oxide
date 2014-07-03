@@ -27,6 +27,7 @@
 #include "base/supports_user_data.h"
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
+#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
@@ -598,31 +599,24 @@ void WebView::DidStartProvisionalLoadForFrame(
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
-    int64 frame_id,
-    const base::string16& frame_unique_name,
+    content::RenderFrameHost* render_frame_host,
     bool is_main_frame,
     const GURL& url,
-    content::PageTransition transition_type,
-    content::RenderViewHost* render_view_host) {
-  content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByRoutingID(
-        frame_id, render_view_host->GetProcess()->GetID());
-  DCHECK(node);
-
-  WebFrame* frame = WebFrame::FromFrameTreeNode(node);
+    content::PageTransition transition_type) {
+  WebFrame* frame = WebFrame::FromFrameTreeNode(
+      static_cast<content::RenderFrameHostImpl *>(
+        render_frame_host)->frame_tree_node());
   if (frame) {
     frame->URLChanged();
   }
 }
 
 void WebView::DidFailProvisionalLoad(
-    int64 frame_id,
-    const base::string16& frame_unique_name,
+    content::RenderFrameHost* render_frame_host,
     bool is_main_frame,
     const GURL& validated_url,
     int error_code,
-    const base::string16& error_description,
-    content::RenderViewHost* render_view_host) {
+    const base::string16& error_description) {
   if (!is_main_frame) {
     return;
   }

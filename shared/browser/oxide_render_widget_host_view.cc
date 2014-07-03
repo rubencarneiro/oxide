@@ -295,8 +295,6 @@ bool RenderWidgetHostView::CanCopyToVideoFrame() const {
   return false;
 }
 
-void RenderWidgetHostView::OnAcceleratedCompositingStateChange() {}
-
 void RenderWidgetHostView::AcceleratedSurfaceInitialized(
     int host_id, int route_id) {}
 
@@ -354,9 +352,6 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
 
   web_view_->ProcessAckedTouchEvent(touch, ack_result);
 }
-
-void RenderWidgetHostView::SetScrollOffsetPinning(bool is_pinned_to_left,
-                                                  bool is_pinned_to_right) {}
 
 void RenderWidgetHostView::ImeCompositionRangeChanged(
     const gfx::Range& range,
