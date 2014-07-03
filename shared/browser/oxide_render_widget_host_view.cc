@@ -562,6 +562,8 @@ void RenderWidgetHostView::SetWebView(WebView* view) {
   AttachLayer();
 
   if (web_view_) {
+    DCHECK(host_) <<
+        "Shouldn't be attaching to a WebView when we're already destroyed";
     host_->SendScreenRects();
     host_->WasResized();
 
@@ -579,7 +581,7 @@ void RenderWidgetHostView::SetWebView(WebView* view) {
                                       selection_cursor_position_,
                                       selection_anchor_position_);
     web_view_->SelectionChanged();
-  } else {
+  } else if (host_) {
     Hide();
   }
 }
