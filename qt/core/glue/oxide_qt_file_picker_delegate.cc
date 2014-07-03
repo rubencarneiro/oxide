@@ -71,14 +71,21 @@ void FilePickerDelegate::Done(const QFileInfoList& files,
     }
   }
   content::FileChooserParams::Mode permissions;
-  if (mode == FilePickerDelegate::Open) {
-    permissions = content::FileChooserParams::Open;
-  } else if (mode == FilePickerDelegate::OpenMultiple) {
-    permissions = content::FileChooserParams::OpenMultiple;
-  } else if (mode == FilePickerDelegate::UploadFolder) {
-    permissions = content::FileChooserParams::UploadFolder;
-  } else if (mode == FilePickerDelegate::Save) {
-    permissions = content::FileChooserParams::Save;
+  switch (mode) {
+    case FilePickerDelegate::Open:
+      permissions = content::FileChooserParams::Open;
+      break;
+    case FilePickerDelegate::OpenMultiple:
+      permissions = content::FileChooserParams::OpenMultiple;
+      break;
+    case FilePickerDelegate::UploadFolder:
+      permissions = content::FileChooserParams::UploadFolder;
+      break;
+    case FilePickerDelegate::Save:
+      permissions = content::FileChooserParams::Save;
+      break;
+    default:
+      Q_UNREACHABLE();
   }
   file_picker_->Done(selection, permissions);
 }
