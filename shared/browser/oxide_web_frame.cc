@@ -24,6 +24,7 @@
 #include "base/logging.h"
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
+#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 
@@ -156,6 +157,12 @@ WebFrame* WebFrame::FromFrameTreeNode(content::FrameTreeNode* node) {
 WebFrame* WebFrame::FromFrameTreeNodeID(int64 frame_tree_node_id) {
   FrameMapIterator it = g_frame_map.Get().find(frame_tree_node_id);
   return it == g_frame_map.Get().end() ? NULL : it->second;
+}
+
+// static
+WebFrame* WebFrame::FromRenderFrameHost(content::RenderFrameHost* rfh) {
+  return FromFrameTreeNode(static_cast<content::RenderFrameHostImpl *>(
+      rfh)->frame_tree_node());
 }
 
 GURL WebFrame::GetURL() const {

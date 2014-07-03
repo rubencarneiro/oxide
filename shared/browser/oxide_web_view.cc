@@ -569,16 +569,18 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
     return;
   }
 
-  content::FrameTreeNode* node = static_cast<content::RenderFrameHostImpl *>(
-      render_frame_host)->frame_tree_node();
-  DCHECK(node);
-  if (WebFrame::FromFrameTreeNode(node)) {
+  if (WebFrame::FromRenderFrameHost(render_frame_host)) {
     // We get called whenever a new RFH is created for this node
     return;
   }
 
-  WebFrame* parent = WebFrame::FromFrameTreeNode(node->parent());
+  WebFrame* parent =
+      WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
   DCHECK(parent);
+
+  content::FrameTreeNode* node = static_cast<content::RenderFrameHostImpl *>(
+      render_frame_host)->frame_tree_node();
+  DCHECK(node);
 
   WebFrame* frame = CreateWebFrame(node);
   DCHECK(frame);
