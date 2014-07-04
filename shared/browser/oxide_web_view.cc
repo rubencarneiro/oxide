@@ -607,14 +607,11 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
-    int64 frame_id,
-    int64 parent_frame_id,
-    bool is_main_frame,
+    content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
     bool is_error_frame,
-    bool is_iframe_srcdoc,
-    content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
+    bool is_iframe_srcdoc) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 
@@ -623,7 +620,6 @@ void WebView::DidStartProvisionalLoadForFrame(
 
 void WebView::DidCommitProvisionalLoadForFrame(
     content::RenderFrameHost* render_frame_host,
-    bool is_main_frame,
     const GURL& url,
     content::PageTransition transition_type) {
   WebFrame* frame = WebFrame::FromFrameTreeNode(
@@ -636,11 +632,10 @@ void WebView::DidCommitProvisionalLoadForFrame(
 
 void WebView::DidFailProvisionalLoad(
     content::RenderFrameHost* render_frame_host,
-    bool is_main_frame,
     const GURL& validated_url,
     int error_code,
     const base::string16& error_description) {
-  if (!is_main_frame) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 

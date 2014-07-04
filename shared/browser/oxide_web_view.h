@@ -336,23 +336,18 @@ class WebView : public ScriptMessageTarget,
                              content::RenderViewHost* new_host) FINAL;
 
   void DidStartProvisionalLoadForFrame(
-      int64 frame_id,
-      int64 parent_frame_id,
-      bool is_main_frame,
+      content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       bool is_error_page,
-      bool is_iframe_srcdoc,
-      content::RenderViewHost* render_view_host) FINAL;
+      bool is_iframe_srcdoc) FINAL;
 
   void DidCommitProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
-      bool is_main_frame,
       const GURL& url,
       content::PageTransition transition_type) FINAL;
 
   void DidFailProvisionalLoad(
       content::RenderFrameHost* render_frame_host,
-      bool is_main_frame,
       const GURL& validated_url,
       int error_code,
       const base::string16& error_description) FINAL;
