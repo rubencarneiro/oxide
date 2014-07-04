@@ -35,16 +35,16 @@ namespace content {
 
 namespace {
 
-const char kPowerdServiceName[] = "com.canonical.powerd";
-const char kPowerdPath[] = "/com/canonical/powerd";
-const char kPowerdInterface[] = "com.canonical.powerd";
+const char kUnityScreenServiceName[] = "com.canonical.Unity.Screen";
+const char kUnityScreenPath[] = "/com/canonical/Unity/Screen";
+const char kUnityScreenInterface[] = "com.canonical.Unity.Screen";
 
 }
 
 class PowerSaveBlockerImpl::Delegate
     : public base::RefCountedThreadSafe<PowerSaveBlockerImpl::Delegate> {
  public:
-  Delegate(PowerSaveBlockerType type, const std::string& reason);
+  Delegate();
 
   void Init();
   void CleanUp();
@@ -56,20 +56,16 @@ class PowerSaveBlockerImpl::Delegate
   void ApplyBlock();
   void RemoveBlock();
 
-  PowerSaveBlockerType type_;
-  std::string reason_;
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
-  std::string cookie_;
+  int cookie_;
 
   DISALLOW_COPY_AND_ASSIGN(Delegate);
 };
 
-PowerSaveBlockerImpl::Delegate::Delegate(PowerSaveBlockerType type,
-                                         const std::string& reason) :
-    type_(type),
-    reason_(reason),
-    form_factor_(oxide::GetFormFactorHint()) {}
+PowerSaveBlockerImpl::Delegate::Delegate() :
+    form_factor_(oxide::GetFormFactorHint()),
+    cookie_(0) {}
 
 void PowerSaveBlockerImpl::Delegate::Init() {
   BrowserThread::PostTask(BrowserThread::FILE, FROM_HERE,
@@ -93,22 +89,19 @@ void PowerSaveBlockerImpl::Delegate::ApplyBlock() {
     bus_ = new dbus::Bus(options);
 
     scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
-          kPowerdServiceName,
-          dbus::ObjectPath(kPowerdPath));
+          kUnityScreenServiceName,
+          dbus::ObjectPath(kUnityScreenPath));
     scoped_ptr<dbus::MethodCall> method_call;
     method_call.reset(
-        new dbus::MethodCall(kPowerdInterface, "requestDisplayState"));
+        new dbus::MethodCall(kUnityScreenInterface, "keepDisplayOn"));
     scoped_ptr<dbus::MessageWriter> message_writer;
     message_writer.reset(new dbus::MessageWriter(method_call.get()));
-    message_writer->AppendString("[oxide] " + reason_);
-    message_writer->AppendInt32(1); // POWERD_DISPLAY_STATE_ON
-    message_writer->AppendUint32(4); // POWERD_DISPLAY_FLAG_BRIGHT
 
     scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
         method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
     if (response) {
       dbus::MessageReader message_reader(response.get());
-      if (!message_reader.PopString(&cookie_)) {
+      if (!message_reader.PopInt32(&cookie_)) {
         LOG(ERROR) << "Invalid response for screen blanking inhibition request: "
                    << response->ToString();
       }
@@ -127,18 +120,18 @@ void PowerSaveBlockerImpl::Delegate::RemoveBlock() {
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
     DCHECK(bus_.get());
 
-    if (!cookie_.empty()) {
+    if (cookie_ != 0) {
       scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
-          kPowerdServiceName,
-          dbus::ObjectPath(kPowerdPath));
+          kUnityScreenServiceName,
+          dbus::ObjectPath(kUnityScreenPath));
       scoped_ptr<dbus::MethodCall> method_call;
       method_call.reset(
-          new dbus::MethodCall(kPowerdInterface, "clearDisplayState"));
+          new dbus::MethodCall(kUnityScreenInterface, "removeDisplayOnRequest"));
       dbus::MessageWriter message_writer(method_call.get());
-      message_writer.AppendString(cookie_);
+      message_writer.AppendInt32(cookie_);
       object_proxy->CallMethodAndBlock(
           method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT);
-      cookie_.clear();
+      cookie_ = 0;
     }
 
     bus_->ShutdownAndBlock();
@@ -150,7 +143,7 @@ void PowerSaveBlockerImpl::Delegate::RemoveBlock() {
 
 PowerSaveBlockerImpl::PowerSaveBlockerImpl(PowerSaveBlockerType type,
                                            const std::string& reason)
-    : delegate_(new Delegate(type, reason)) {
+    : delegate_(new Delegate()) {
   delegate_->Init();
 }
 
