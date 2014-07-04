@@ -107,11 +107,12 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
     DCHECK(previous_frame_.id != 0 && previous_frame_.id != current_frame_.id);
     DCHECK(current_frame_.size == previous_frame_.size);
 
+    SkImageInfo info =
+        SkImageInfo::MakeN32Premul(viewport_pixel_size_.width(),
+                                   viewport_pixel_size_.height());
     SkBitmap back_bitmap;
-    back_bitmap.setConfig(SkBitmap::kARGB_8888_Config,
-                          viewport_pixel_size_.width(),
-                          viewport_pixel_size_.height());
-    back_bitmap.setPixels(previous_frame_.bitmap->pixels());
+    back_bitmap.installPixels(info, previous_frame_.bitmap->pixels(),
+                              info.minRowBytes());
 
     for (SkRegion::Iterator it(outdated_region); !it.done(); it.next()) {
       const SkIRect& src_rect = it.rect();
