@@ -674,18 +674,13 @@ void WebView::NavigationEntryCommitted(
   OnNavigationEntryCommitted();
 }
 
-void WebView::FrameDetached(content::RenderViewHost* rvh,
-                            int64 frame_routing_id) {
+void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
   if (!root_frame_) {
     return;
   }
 
-  content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByRoutingID(
-        frame_routing_id, rvh->GetProcess()->GetID());
-  DCHECK(node);
-
-  WebFrame* frame = WebFrame::FromFrameTreeNode(node);
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
+  DCHECK(frame);
   frame->Destroy();
 }
 

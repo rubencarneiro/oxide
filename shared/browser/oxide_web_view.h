@@ -366,8 +366,7 @@ class WebView : public ScriptMessageTarget,
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) FINAL;
 
-  void FrameDetached(content::RenderViewHost* rvh,
-                     int64 frame_routing_id) FINAL;
+  void FrameDetached(content::RenderFrameHost* render_frame_host) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 
