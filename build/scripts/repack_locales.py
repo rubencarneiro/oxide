@@ -138,9 +138,6 @@ def DoMain(argv):
                     help="The target OS. (e.g. mac, linux, win, etc.)")
   parser.add_option("--use-ash", action="store", dest="use_ash",
                     help="Whether to include ash strings")
-  parser.add_option("--enable-autofill-dialog", action="store",
-                    dest="enable_autofill_dialog",
-                    help="Whether to include strings for autofill dialog")
   options, locales = parser.parse_args(argv)
 
   if not locales:

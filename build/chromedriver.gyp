@@ -15,10 +15,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
-  'variables': {
-    'protoc_out_dir': '<(SHARED_INTERMEDIATE_DIR)/protoc_out',
-  },
-  'includes': [ ],
   'targets': [
     {
       'target_name': 'oxide_chromedriver_internal_deps',

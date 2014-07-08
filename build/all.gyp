@@ -15,8 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
-   'includes': [ 'chromedriver.gypi' ],
-   'targets': [
+  'targets': [
     {
       'target_name': 'All',
       'type': 'none',
@@ -27,7 +26,7 @@
       'conditions': [
         ['enable_chromedriver_build==1', {
             'dependencies': [
-              'oxide_chromedriver',
+              'chromedriver.gyp:oxide_chromedriver',
             ],
           }
         ]
