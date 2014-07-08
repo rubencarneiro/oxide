@@ -806,6 +806,7 @@ WebView::WebView()
       web_contents_helper_(NULL),
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_recognizer_(ui::GestureRecognizer::Create()),
+      initial_data_(GURL::EmptyGURL()),
       initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false) {
@@ -930,9 +931,14 @@ void WebView::Init(Params* params) {
     WebPreferencesObserver::Observe(NULL);
     initial_preferences_ = NULL;
   }
-  if (!initial_url_.is_empty() && params->context) {
-    SetURL(initial_url_);
-    initial_url_ = GURL();
+  if (params->context) {
+    if (!initial_url_.is_empty()) {
+      SetURL(initial_url_);
+      initial_url_ = GURL();
+    } else if (!initial_data_.url.is_empty()) {
+      web_contents_->GetController().LoadURLWithParams(initial_data_);
+      initial_data_.url = GURL();
+    }
   }
 
   SetIsFullscreen(is_fullscreen_);
@@ -1002,7 +1008,12 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
-  web_contents_->GetController().LoadURLWithParams(params);
+  
+  if (web_contents_) {
+    web_contents_->GetController().LoadURLWithParams(params);
+  } else {
+    initial_data_ = params;
+  }
 }
 
 std::string WebView::GetTitle() const {
