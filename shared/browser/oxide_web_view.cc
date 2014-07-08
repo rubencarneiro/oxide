@@ -987,6 +987,7 @@ void WebView::SetURL(const GURL& url) {
 
   if (!web_contents_) {
     initial_url_ = url;
+    initial_data_.url = GURL();
     return;
   }
 
@@ -1013,6 +1014,7 @@ void WebView::LoadData(const std::string& encodedData,
     web_contents_->GetController().LoadURLWithParams(params);
   } else {
     initial_data_ = params;
+    initial_url_ = GURL();
   }
 }
 
