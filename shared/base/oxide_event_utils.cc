@@ -33,7 +33,8 @@ blink::WebTouchPoint CreateWebTouchPoint(const ui::MotionEvent& event,
 
   result.id = event.GetPointerId(pointer_index);
 
-  bool is_action_index = pointer_index == event.GetActionIndex();
+  bool is_action_index =
+      pointer_index == static_cast<size_t>(event.GetActionIndex());
   switch (event.GetAction()) {
     case ui::MotionEvent::ACTION_DOWN:
       result.state = blink::WebTouchPoint::StatePressed;
