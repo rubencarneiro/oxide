@@ -39,31 +39,25 @@ namespace {
 
 const double kDefaultRadius = 25.0f;
 
-ui::GestureDetector::Config GetGestureDetectorConfig() {
+ui::GestureDetector::Config GetGestureDetectorConfig(float scale) {
   ui::GestureDetector::Config config;
-  config.longpress_timeout = base::TimeDelta::FromSeconds(1);
-  config.showpress_timeout = base::TimeDelta::FromMilliseconds(150);
-  config.double_tap_timeout = base::TimeDelta::FromMilliseconds(400);
-  config.touch_slop = 15.0f;
-  config.double_tap_slop = 20.0f;
-  config.minimum_fling_velocity = 30.0f;
-  config.maximum_fling_velocity = 17000.0f;
-  config.swipe_enabled = true;
-  config.minimum_swipe_velocity = 20.0f;
-  config.maximum_swipe_deviation_angle = 20.0f;
-  config.two_finger_tap_enabled = true;
-  config.two_finger_tap_max_separation = 300;
-  config.two_finger_tap_timeout = base::TimeDelta::FromMilliseconds(800);
+  config.longpress_timeout = base::TimeDelta::FromMilliseconds(500);
+  config.showpress_timeout = base::TimeDelta::FromMilliseconds(180);
+  config.double_tap_timeout = base::TimeDelta::FromMilliseconds(300);
+
+  config.touch_slop = 8 * scale;
+  config.double_tap_slop = 8 * scale;
+  config.minimum_fling_velocity = 50.0f * scale;
+  config.maximum_fling_velocity = 8000.0f * scale;
 
   return config;
 }
 
-ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig() {
+ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig(float scale) {
   ui::ScaleGestureDetector::Config config;
-  config.gesture_detector_config = GetGestureDetectorConfig();
-  config.min_scaling_touch_major = kDefaultRadius * 2;
-  config.min_scaling_span = 125;
-  config.min_pinch_update_span_delta = 0;
+  config.gesture_detector_config = GetGestureDetectorConfig(scale);
+  config.min_scaling_touch_major = kDefaultRadius * 2 * scale;
+  config.min_scaling_span = 170 * scale;
 
   return config;
 }
@@ -71,10 +65,13 @@ ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig() {
 ui::GestureProvider::Config GetGestureProviderConfig() {
   ui::GestureProvider::Config config;
   config.display = gfx::Screen::GetNativeScreen()->GetPrimaryDisplay();
-  config.gesture_detector_config = GetGestureDetectorConfig();
-  config.scale_gesture_detector_config = GetScaleGestureDetectorConfig();
+
+  const float scale = 1.0f / config.display.device_scale_factor();
+
+  config.gesture_detector_config = GetGestureDetectorConfig(scale);
+  config.scale_gesture_detector_config = GetScaleGestureDetectorConfig(scale);
   config.gesture_begin_end_types_enabled = false;
-  config.min_gesture_bounds_length = kDefaultRadius;
+  config.min_gesture_bounds_length = kDefaultRadius * scale;
 
   return config;
 }
