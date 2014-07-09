@@ -46,7 +46,7 @@ ui::GestureDetector::Config GetGestureDetectorConfig(float scale) {
   config.double_tap_timeout = base::TimeDelta::FromMilliseconds(300);
 
   config.touch_slop = 8 * scale;
-  config.double_tap_slop = 8 * scale;
+  config.double_tap_slop = 100 * scale;
   config.minimum_fling_velocity = 50.0f * scale;
   config.maximum_fling_velocity = 8000.0f * scale;
 
