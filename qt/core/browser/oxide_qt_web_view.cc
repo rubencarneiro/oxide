@@ -53,6 +53,7 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqpermissionrequest_p.h"
+#include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
@@ -844,7 +845,7 @@ void WebView::HandleMouseEvent(QMouseEvent* event) {
 
 void WebView::HandleTouchEvent(QTouchEvent* event) {
   ScopedVector<ui::TouchEvent> events;
-  MakeUITouchEvents(event, GetDeviceScaleFactor(), &touch_id_map_, &events);
+  MakeUITouchEvents(event, GetDeviceScaleFactor(), &events);
 
   for (size_t i = 0; i < events.size(); ++i) {
     oxide::WebView::HandleTouchEvent(*events[i]);
