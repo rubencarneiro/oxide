@@ -447,6 +447,7 @@ class WebView : public ScriptMessageTarget,
   std::queue<uint32> received_surface_ids_;
 
   scoped_ptr<GestureProvider> gesture_provider_;
+  bool in_swap_;
 
   GURL initial_url_;
   WebPreferences* initial_preferences_;

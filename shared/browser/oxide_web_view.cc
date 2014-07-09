@@ -19,6 +19,7 @@
 
 #include <queue>
 
+#include "base/auto_reset.h"
 #include "base/command_line.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
@@ -285,6 +286,10 @@ void WebView::WebPreferencesDestroyed() {
 }
 
 void WebView::OnGestureEvent(const blink::WebGestureEvent& event) {
+  if (in_swap_) {
+    return;
+  }
+
   content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
   if (!host) {
     return;
@@ -549,10 +554,15 @@ void WebView::RenderProcessGone(base::TerminationStatus status) {
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
+  DCHECK(!in_swap_);
+  base::AutoReset<bool> in_swap(&in_swap_, true);
+
   while (root_frame_->ChildCount() > 0) {
     root_frame_->ChildAt(0)->Destroy();
   }
 
+  // Fake a response for any pending touch ACK's
+  gesture_provider_->OnTouchEventAck(false);
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 
   if (old_host && old_host->GetView()) {
@@ -764,6 +774,7 @@ WebView::WebView()
       web_contents_helper_(NULL),
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_provider_(GestureProvider::Create(this)),
+      in_swap_(false),
       initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false) {
