@@ -450,6 +450,7 @@ class WebView : public ScriptMessageTarget,
   bool in_swap_;
 
   GURL initial_url_;
+  scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
   WebPreferences* initial_preferences_;
 
   content::NotificationRegistrar registrar_;

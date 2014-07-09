@@ -899,9 +899,14 @@ void WebView::Init(Params* params) {
     WebPreferencesObserver::Observe(NULL);
     initial_preferences_ = NULL;
   }
-  if (!initial_url_.is_empty() && params->context) {
-    SetURL(initial_url_);
-    initial_url_ = GURL();
+  if (params->context) {
+    if (!initial_url_.is_empty()) {
+      SetURL(initial_url_);
+      initial_url_ = GURL();
+    } else if (initial_data_) {
+      web_contents_->GetController().LoadURLWithParams(*initial_data_);
+      initial_data_.reset();
+    }
   }
 
   SetIsFullscreen(is_fullscreen_);
@@ -950,6 +955,7 @@ void WebView::SetURL(const GURL& url) {
 
   if (!web_contents_) {
     initial_url_ = url;
+    initial_data_.reset();
     return;
   }
 
@@ -971,7 +977,13 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
-  web_contents_->GetController().LoadURLWithParams(params);
+  
+  if (web_contents_) {
+    web_contents_->GetController().LoadURLWithParams(params);
+  } else {
+    initial_data_.reset(new content::NavigationController::LoadURLParams(params));
+    initial_url_ = GURL();
+  }
 }
 
 std::string WebView::GetTitle() const {
