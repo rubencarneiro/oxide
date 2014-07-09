@@ -21,6 +21,7 @@
 #include <set>
 
 #include "base/compiler_specific.h"
+#include "base/macros.h"
 
 namespace oxide {
 
@@ -28,7 +29,7 @@ static const int kInvalidId = -1;
 
 class IdAllocator FINAL {
  public:
-  IdAllocator(int max_id);
+  IdAllocator(size_t max_id);
   ~IdAllocator();
 
   int AllocateId();
@@ -41,6 +42,8 @@ class IdAllocator FINAL {
   int max_id_;
   std::set<int> used_ids_;
   std::set<int> free_ids_;
+
+  DISALLOW_COPY_AND_ASSIGN(IdAllocator);
 };
 
 } // namespace oxide
