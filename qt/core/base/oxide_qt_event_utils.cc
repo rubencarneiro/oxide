@@ -436,7 +436,6 @@ ui::EventType QTouchPointStateToEventType(Qt::TouchPointState state) {
     case Qt::TouchPointPressed:
       return ui::ET_TOUCH_PRESSED;
     case Qt::TouchPointMoved:
-    case Qt::TouchPointStationary:
       return ui::ET_TOUCH_MOVED;
     case Qt::TouchPointReleased:
       return ui::ET_TOUCH_RELEASED;
@@ -517,6 +516,10 @@ void MakeUITouchEvents(QTouchEvent* event,
 
   for (int i = 0; i < event->touchPoints().size(); ++i) {
     const QTouchEvent::TouchPoint& touch_point = event->touchPoints().at(i);
+
+    if (touch_point.state() == Qt::TouchPointStationary) {
+      continue;
+    }
 
     ui::TouchEvent* ui_event = new ui::TouchEvent(
         QTouchPointStateToEventType(touch_point.state()),
