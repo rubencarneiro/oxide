@@ -460,7 +460,7 @@ class WebView : public ScriptMessageTarget,
   blink::WebTouchEvent touch_event_;
 
   GURL initial_url_;
-  content::NavigationController::LoadURLParams initial_data_;
+  scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
   WebPreferences* initial_preferences_;
 
   content::NotificationRegistrar registrar_;

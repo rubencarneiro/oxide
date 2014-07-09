@@ -806,7 +806,6 @@ WebView::WebView()
       web_contents_helper_(NULL),
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_recognizer_(ui::GestureRecognizer::Create()),
-      initial_data_(GURL::EmptyGURL()),
       initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false) {
@@ -935,9 +934,9 @@ void WebView::Init(Params* params) {
     if (!initial_url_.is_empty()) {
       SetURL(initial_url_);
       initial_url_ = GURL();
-    } else if (!initial_data_.url.is_empty()) {
-      web_contents_->GetController().LoadURLWithParams(initial_data_);
-      initial_data_.url = GURL();
+    } else if (initial_data_) {
+      web_contents_->GetController().LoadURLWithParams(*initial_data_);
+      initial_data_.reset();
     }
   }
 
@@ -987,7 +986,7 @@ void WebView::SetURL(const GURL& url) {
 
   if (!web_contents_) {
     initial_url_ = url;
-    initial_data_.url = GURL();
+    initial_data_.reset();
     return;
   }
 
@@ -1013,7 +1012,7 @@ void WebView::LoadData(const std::string& encodedData,
   if (web_contents_) {
     web_contents_->GetController().LoadURLWithParams(params);
   } else {
-    initial_data_ = params;
+    initial_data_.reset(new content::NavigationController::LoadURLParams(params));
     initial_url_ = GURL();
   }
 }
