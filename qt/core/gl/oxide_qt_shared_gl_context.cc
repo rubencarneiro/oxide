@@ -32,6 +32,10 @@ SharedGLContext::SharedGLContext(QOpenGLContext* context) :
     handle_(NULL),
     implementation_(gfx::kGLImplementationNone) {
   QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
+  if (!pni) {
+    return;
+  }
+
   QString platform = QGuiApplication::platformName();
   if (platform == "xcb") {
     // QXcbNativeInterface creates a GLXContext if GLX is enabled, else

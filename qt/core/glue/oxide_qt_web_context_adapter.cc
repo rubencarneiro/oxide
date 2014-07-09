@@ -211,13 +211,19 @@ void WebContextAdapter::ensureChromiumStarted() {
   if (!oxide::BrowserProcessMain::IsRunning()) {
     scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
     scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
-    void* display =
-        QGuiApplication::platformNativeInterface()->nativeResourceForScreen(
-          "display", QGuiApplication::primaryScreen());
+
+    void* display = NULL;
+    QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
+    if (pni) {
+      display = pni->nativeResourceForScreen("display",
+                                             QGuiApplication::primaryScreen());
+    }
+
     oxide::BrowserProcessMain::Start(
         shared_gl_context,
         delegate.PassAs<oxide::ContentMainDelegate>(),
-        reinterpret_cast<intptr_t>(display));
+        reinterpret_cast<intptr_t>(display),
+        !!pni);
     qAddPostRoutine(oxide::BrowserProcessMain::Shutdown);
   }
 }
