@@ -63,7 +63,7 @@ ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig() {
   config.gesture_detector_config = GetGestureDetectorConfig();
   config.min_scaling_touch_major = kDefaultRadius * 2;
   config.min_scaling_span = 125;
-  config.min_pinch_update_span_delta = 5;
+  config.min_pinch_update_span_delta = 0;
 
   return config;
 }
