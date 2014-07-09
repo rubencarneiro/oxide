@@ -436,7 +436,6 @@ ui::EventType QTouchPointStateToEventType(Qt::TouchPointState state) {
     case Qt::TouchPointPressed:
       return ui::ET_TOUCH_PRESSED;
     case Qt::TouchPointMoved:
-    case Qt::TouchPointStationary:
       return ui::ET_TOUCH_MOVED;
     case Qt::TouchPointReleased:
       return ui::ET_TOUCH_RELEASED;
@@ -507,7 +506,6 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
 
 void MakeUITouchEvents(QTouchEvent* event,
                        float device_scale,
-                       TouchIDMap* map,
                        ScopedVector<ui::TouchEvent>* results) {
   // The event’s timestamp is not guaranteed to have the same origin as the
   // internal timedelta used by chromium to calculate speed and displacement
@@ -519,18 +517,8 @@ void MakeUITouchEvents(QTouchEvent* event,
   for (int i = 0; i < event->touchPoints().size(); ++i) {
     const QTouchEvent::TouchPoint& touch_point = event->touchPoints().at(i);
 
-    int touch_id;
-    TouchIDMap::iterator it = map->find(touch_point.id());
-    if (it != map->end()) {
-      touch_id = it->second;
-    } else if (touch_point.state() != Qt::TouchPointPressed) {
+    if (touch_point.state() == Qt::TouchPointStationary) {
       continue;
-    } else {
-      touch_id = 0;
-      for (TouchIDMap::iterator it = map->begin(); it != map->end(); ++it) {
-        touch_id = std::max(touch_id, it->second + 1);
-      }
-      (*map)[touch_point.id()] = touch_id;
     }
 
     ui::TouchEvent* ui_event = new ui::TouchEvent(
@@ -538,7 +526,7 @@ void MakeUITouchEvents(QTouchEvent* event,
         gfx::ScalePoint(gfx::PointF(
           touch_point.pos().x(), touch_point.pos().y()), scale),
         0,
-        touch_id,
+        touch_point.id(),
         timestamp,
         0.0f, 0.0f,
         0.0f,
@@ -548,10 +536,6 @@ void MakeUITouchEvents(QTouchEvent* event,
           touch_point.screenPos().x(), touch_point.screenPos().y()), scale));
 
     results->push_back(ui_event);
-
-    if (touch_point.state() == Qt::TouchPointReleased) {
-      map->erase(touch_point.id());
-    }
   }
 }
 

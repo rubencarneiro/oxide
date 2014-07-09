@@ -53,12 +53,14 @@ void ContentRendererClient::RenderViewCreated(
   //      a RenderFrameObserver when it grows the features we need
   new UserScriptScheduler(render_view);
 
+  blink::WebSettings* settings = render_view->GetWebView()->settings();
+  settings->setDoubleTapToZoomEnabled(true); // XXX: Make this configurable
+
   std::string form_factor =
       base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
         switches::kFormFactor);
   if (form_factor == switches::kFormFactorTablet ||
       form_factor == switches::kFormFactorPhone) {
-    blink::WebSettings* settings = render_view->GetWebView()->settings();
     settings->setUseWideViewport(true);
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);

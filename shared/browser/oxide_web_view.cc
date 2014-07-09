@@ -19,6 +19,7 @@
 
 #include <queue>
 
+#include "base/auto_reset.h"
 #include "base/command_line.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
@@ -53,14 +54,17 @@
 #include "content/public/common/url_constants.h"
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
+#include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
+#include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/range/range.h"
 #include "ui/gl/gl_implementation.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
 #include "webkit/common/webpreferences.h"
 
+#include "shared/base/oxide_event_utils.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
@@ -80,6 +84,7 @@ namespace oxide {
 
 namespace {
 
+const float kMobileViewportWidthEpsilon = 0.15f;
 const char kWebViewKey[] = "oxide_web_view_data";
 
 // SupportsUserData implementations own their data. This class exists
@@ -122,20 +127,6 @@ void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
   params.contents = contents.Pass();
 
   view->Init(&params);
-}
-
-void UpdateWebTouchEventAfterDispatch(blink::WebTouchEvent* event,
-                                      blink::WebTouchPoint* point) {
-  if (point->state != blink::WebTouchPoint::StateReleased &&
-      point->state != blink::WebTouchPoint::StateCancelled) {
-    return;
-  }
-  --event->touchesLength;
-  for (unsigned i = point - event->touches;
-       i < event->touchesLength;
-       ++i) {
-    event->touches[i] = event->touches[i + 1];
-  }
 }
 
 bool ShouldSendPinchGesture() {
@@ -189,6 +180,18 @@ void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
   host->ForwardKeyboardEvent(fake_event);
 }
 
+bool HasFixedPageScale(const cc::CompositorFrameMetadata& frame_metadata) {
+  return frame_metadata.min_page_scale_factor ==
+         frame_metadata.max_page_scale_factor;
+}
+
+bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
+  float window_width_dip =
+      frame_metadata.page_scale_factor * frame_metadata.viewport_size.width();
+  float content_width_css = frame_metadata.root_layer_size.width();
+  return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
+}
+
 typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
 base::LazyInstance<WebViewsPerContextMap> g_web_view_per_context;
 
@@ -238,53 +241,6 @@ content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
       web_contents_->GetRenderViewHost());
 }
 
-void WebView::ForwardGestureEventToRenderer(ui::GestureEvent* event) {
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host) {
-    return;
-  }
-
-  if ((event->type() == ui::ET_GESTURE_PINCH_BEGIN ||
-       event->type() == ui::ET_GESTURE_PINCH_UPDATE ||
-       event->type() == ui::ET_GESTURE_PINCH_END) &&
-      !ShouldSendPinchGesture()) {
-    return;
-  }
-
-  blink::WebGestureEvent gesture(
-      content::MakeWebGestureEventFromUIEvent(*event));
-  gesture.x = event->x();
-  gesture.y = event->y();
-  gesture.globalX = event->root_location().x();
-  gesture.globalY = event->root_location().y();
-
-  if (event->type() == ui::ET_GESTURE_TAP_DOWN) {
-    // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
-    // event to stop any in-progress flings.
-    blink::WebGestureEvent fling_cancel = gesture;
-    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
-    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
-    host->ForwardGestureEvent(fling_cancel);
-  }
-
-  if (gesture.type == blink::WebInputEvent::Undefined) {
-    return;
-  }
-
-  host->ForwardGestureEventWithLatencyInfo(gesture, *event->latency());
-}
-
-void WebView::ProcessGestures(ui::GestureRecognizer::Gestures* gestures) {
-  if (!gestures) {
-    return;
-  }
-
-  for (ui::GestureRecognizer::Gestures::iterator it = gestures->begin();
-       it != gestures->end(); ++it) {
-    ForwardGestureEventToRenderer(*it);
-  }
-}
-
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
                                  const base::string16& error_description) {
@@ -330,32 +286,37 @@ void WebView::WebPreferencesDestroyed() {
   OnWebPreferencesDestroyed();
 }
 
-bool WebView::CanDispatchToConsumer(ui::GestureConsumer* consumer) {
-  DCHECK_EQ(this, static_cast<WebView *>(consumer));
-  return true;
-}
+void WebView::OnGestureEvent(const blink::WebGestureEvent& event) {
+  if (in_swap_) {
+    return;
+  }
 
-void WebView::DispatchGestureEvent(ui::GestureEvent* event) {
-  ForwardGestureEventToRenderer(event);
-}
-
-
-void WebView::DispatchCancelTouchEvent(ui::TouchEvent* event) {
   content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
   if (!host) {
     return;
   }
 
-  if (!host->ShouldForwardTouchEvent()) {
+  if ((event.type == blink::WebInputEvent::GesturePinchBegin ||
+       event.type == blink::WebInputEvent::GesturePinchUpdate ||
+       event.type == blink::WebInputEvent::GesturePinchEnd) &&
+      !ShouldSendPinchGesture()) {
     return;
   }
 
-  DCHECK_EQ(event->type(), ui::ET_TOUCH_CANCELLED);
-  blink::WebTouchEvent cancel_event;
-  cancel_event.type = blink::WebInputEvent::TouchCancel;
-  cancel_event.timeStampSeconds = event->time_stamp().InSecondsF();
-  host->ForwardTouchEventWithLatencyInfo(
-      cancel_event, *event->latency());
+  if (event.type == blink::WebInputEvent::GestureTapDown) {
+    // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
+    // event to stop any in-progress flings.
+    blink::WebGestureEvent fling_cancel = event;
+    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
+    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
+    host->ForwardGestureEvent(fling_cancel);
+  }
+
+  if (event.type == blink::WebInputEvent::Undefined) {
+    return;
+  }
+
+  host->ForwardGestureEvent(event);
 }
 
 void WebView::Observe(int type,
@@ -594,9 +555,16 @@ void WebView::RenderProcessGone(base::TerminationStatus status) {
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
+  DCHECK(!in_swap_);
+  base::AutoReset<bool> in_swap(&in_swap_, true);
+
   while (root_frame_->ChildCount() > 0) {
     root_frame_->ChildAt(0)->Destroy();
   }
+
+  // Fake a response for any pending touch ACK's
+  gesture_provider_->OnTouchEventAck(false);
+  gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 
   if (old_host && old_host->GetView()) {
     static_cast<RenderWidgetHostView *>(old_host->GetView())->SetWebView(NULL);
@@ -789,11 +757,12 @@ WebView::WebView()
       selection_anchor_position_(0),
       web_contents_helper_(NULL),
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
-      gesture_recognizer_(ui::GestureRecognizer::Create()),
+      gesture_provider_(GestureProvider::Create(this)),
+      in_swap_(false),
       initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false) {
-  gesture_recognizer_->AddGestureEventHelper(this);
+  gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 
 base::string16 WebView::GetSelectedText() const {
@@ -914,9 +883,14 @@ void WebView::Init(Params* params) {
     WebPreferencesObserver::Observe(NULL);
     initial_preferences_ = NULL;
   }
-  if (!initial_url_.is_empty() && params->context) {
-    SetURL(initial_url_);
-    initial_url_ = GURL();
+  if (params->context) {
+    if (!initial_url_.is_empty()) {
+      SetURL(initial_url_);
+      initial_url_ = GURL();
+    } else if (initial_data_) {
+      web_contents_->GetController().LoadURLWithParams(*initial_data_);
+      initial_data_.reset();
+    }
   }
 
   SetIsFullscreen(is_fullscreen_);
@@ -965,6 +939,7 @@ void WebView::SetURL(const GURL& url) {
 
   if (!web_contents_) {
     initial_url_ = url;
+    initial_data_.reset();
     return;
   }
 
@@ -986,7 +961,13 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
-  web_contents_->GetController().LoadURLWithParams(params);
+  
+  if (web_contents_) {
+    web_contents_->GetController().LoadURLWithParams(params);
+  } else {
+    initial_data_.reset(new content::NavigationController::LoadURLParams(params));
+    initial_url_ = GURL();
+  }
 }
 
 std::string WebView::GetTitle() const {
@@ -1274,27 +1255,20 @@ void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
 }
 
 void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
-  blink::WebTouchPoint* point =
-      content::UpdateWebTouchEventFromUIEvent(event, &touch_event_);
+  if (!gesture_provider_->OnTouchEvent(event)) {
+    return;
+  }
 
   content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (host) {
-    if (host->ShouldForwardTouchEvent()) {
-      if (point) {
-        host->ForwardTouchEventWithLatencyInfo(touch_event_, ui::LatencyInfo());
-      }
-    } else {
-      scoped_ptr<ui::GestureRecognizer::Gestures> gestures(
-          gesture_recognizer_->ProcessTouchEventForGesture(event,
-                                                           ui::ER_UNHANDLED,
-                                                           this));
-      ProcessGestures(gestures.get());
-    }
+  if (!host || !host->ShouldForwardTouchEvent()) {
+    gesture_provider_->OnTouchEventAck(false);
+    return;
   }
 
-  if (point) {
-    UpdateWebTouchEventAfterDispatch(&touch_event_, point);
-  }
+  scoped_ptr<ui::MotionEvent> motion_event =
+      gesture_provider_->GetTouchState();
+  host->ForwardTouchEventWithLatencyInfo(MakeWebTouchEvent(*motion_event),
+                                         ui::LatencyInfo());
 }
 
 void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {
@@ -1368,31 +1342,19 @@ void WebView::EvictCurrentFrame() {
 
 void WebView::UpdateFrameMetadata(
     const cc::CompositorFrameMetadata& metadata) {
+  bool has_mobile_viewport = HasMobileViewport(metadata);
+  bool has_fixed_page_scale = HasFixedPageScale(metadata);
+  gesture_provider_->SetDoubleTapSupportForPageEnabled(
+      !has_fixed_page_scale && !has_mobile_viewport);
+
   cc::CompositorFrameMetadata old = compositor_frame_metadata_;
   compositor_frame_metadata_ = metadata;
 
   OnFrameMetadataUpdated(old);
 }
 
-void WebView::ProcessAckedTouchEvent(
-    const content::TouchEventWithLatencyInfo& touch,
-    content::InputEventAckState ack_result) {
-  ScopedVector<ui::TouchEvent> events;
-  if (!content::MakeUITouchEventsFromWebTouchEvents(
-      touch, &events, content::LOCAL_COORDINATES)) {
-    return;
-  }
-
-  ui::EventResult result =
-      (ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED) ?
-        ui::ER_HANDLED : ui::ER_UNHANDLED;
-  for (ScopedVector<ui::TouchEvent>::iterator it = events.begin(),
-       end = events.end(); it != end; ++it)  {
-    ui::TouchEvent* event = *it;
-    scoped_ptr<ui::GestureRecognizer::Gestures> gestures(
-        gesture_recognizer_->ProcessTouchEventForGesture(*event, result, this));
-    ProcessGestures(gestures.get());
-  }
+void WebView::ProcessAckedTouchEvent(bool consumed) {
+  gesture_provider_->OnTouchEventAck(consumed);
 }
 
 void WebView::UpdateCursor(const content::WebCursor& cursor) {}

@@ -18,8 +18,6 @@
 #ifndef _OXIDE_QT_CORE_BASE_EVENT_UTILS_H_
 #define _OXIDE_QT_CORE_BASE_EVENT_UTILS_H_
 
-#include <map>
-
 #include <QtGlobal>
 
 #include "base/memory/scoped_vector.h"
@@ -37,14 +35,11 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-typedef std::map<int, int> TouchIDMap;
-
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
                                                            bool is_char);
 
 void MakeUITouchEvents(QTouchEvent* event,
                        float device_scale,
-                       TouchIDMap* map,
                        ScopedVector<ui::TouchEvent>* results);
 
 blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event, float device_scale);

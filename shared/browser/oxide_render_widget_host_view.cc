@@ -350,7 +350,8 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
     return;
   }
 
-  web_view_->ProcessAckedTouchEvent(touch, ack_result);
+  web_view_->ProcessAckedTouchEvent(
+      ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
 }
 
 void RenderWidgetHostView::ImeCompositionRangeChanged(

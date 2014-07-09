@@ -39,15 +39,13 @@
 #include "content/public/common/javascript_message_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebCompositionUnderline.h"
-#include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/ime/text_input_type.h"
-#include "ui/events/gestures/gesture_recognizer.h"
-#include "ui/events/gestures/gesture_types.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
@@ -106,8 +104,7 @@ class WebViewContentsHelper;
 class WebView : public ScriptMessageTarget,
                 private CompositorClient,
                 private WebPreferencesObserver,
-                private ui::GestureEventHelper,
-                private ui::GestureConsumer,
+                private GestureProviderClient,
                 private content::NotificationObserver,
                 private WebViewContentsHelperDelegate,
                 private content::WebContentsObserver {
@@ -228,9 +225,7 @@ class WebView : public ScriptMessageTarget,
   void EvictCurrentFrame();
   void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata);
 
-  void ProcessAckedTouchEvent(
-      const content::TouchEventWithLatencyInfo& touch,
-      content::InputEventAckState ack_result);
+  void ProcessAckedTouchEvent(bool consumed);
 
   virtual void UpdateCursor(const content::WebCursor& cursor);
   void TextInputStateChanged(ui::TextInputType type,
@@ -277,9 +272,6 @@ class WebView : public ScriptMessageTarget,
   content::RenderViewHost* GetRenderViewHost() const;
   content::RenderWidgetHostImpl* GetRenderWidgetHostImpl() const;
 
-  void ForwardGestureEventToRenderer(ui::GestureEvent* event);
-  void ProcessGestures(ui::GestureRecognizer::Gestures* gestures);
-
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
                           const base::string16& error_description);
@@ -297,10 +289,8 @@ class WebView : public ScriptMessageTarget,
   // WebPreferencesObserver implementation
   void WebPreferencesDestroyed() FINAL;
 
-  // ui::GestureEventHelper implementation
-  bool CanDispatchToConsumer(ui::GestureConsumer* consumer) FINAL;
-  void DispatchGestureEvent(ui::GestureEvent* event) FINAL;
-  void DispatchCancelTouchEvent(ui::TouchEvent* event) FINAL;
+  // GestureProviderClient implementation
+  void OnGestureEvent(const blink::WebGestureEvent& event) FINAL;
 
   // content::NotificationObserver implementation
   void Observe(int type,
@@ -446,10 +436,11 @@ class WebView : public ScriptMessageTarget,
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
   std::queue<uint32> received_surface_ids_;
 
-  scoped_ptr<ui::GestureRecognizer> gesture_recognizer_;
-  blink::WebTouchEvent touch_event_;
+  scoped_ptr<GestureProvider> gesture_provider_;
+  bool in_swap_;
 
   GURL initial_url_;
+  scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
   WebPreferences* initial_preferences_;
 
   content::NotificationRegistrar registrar_;

@@ -25,7 +25,6 @@
 #include "base/compiler_specific.h"
 #include "base/memory/weak_ptr.h"
 
-#include "qt/core/base/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
@@ -158,8 +157,6 @@ class WebView FINAL : public oxide::WebView,
   void OnSelectionBoundsChanged() FINAL;
 
   WebViewAdapter* adapter_;
-
-  TouchIDMap touch_id_map_;
 
   bool has_input_method_state_;
 
