@@ -41,6 +41,7 @@ sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'generate_shim_headers'
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
+sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'remoting', 'tools', 'build'))
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 

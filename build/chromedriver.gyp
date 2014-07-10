@@ -17,26 +17,10 @@
 {
   'targets': [
     {
-      'target_name': 'oxide_chromedriver_internal_deps',
-      'type': 'none',
-      'hard_dependency': 1,
-      'dependencies': [
-        # Needed since there is a dependancy issue in chromium's chrome/ gyp tree
-        # and with the repack_locales.py script. The script expects the pak file
-        # from libaddressinput to exist but it is only built w/ the browser_test.gypi
-        # which we dont depend on (dont need to).
-        '<(DEPTH)/third_party/libaddressinput/libaddressinput.gyp:libaddressinput',
-      ],
-    },
-    {
       'target_name': 'oxide_chromedriver',
       'type': 'none',
       'hard_dependency': 1,
-      'variables': { 'protoc_out_dir': '<(SHARED_INTERMEDIATE_DIR)/protoc_out', },
-      'dependencies': [
-        'oxide_chromedriver_internal_deps',
-        '<(DEPTH)/chrome/chrome.gyp:chromedriver',
-      ],
+      'dependencies': [ '<(DEPTH)/chrome/chrome.gyp:chromedriver' ],
     },
   ],
 }

@@ -107,7 +107,7 @@
           'action_name': 'repack_locales',
           'variables': {
             'pak_locales': '<(locales)',
-            'repack_locales_path': '../build/scripts/repack_locales.py',
+            'repack_locales_path': '../build/scripts/oxide_repack_locales.py',
           },
           'inputs': [
             '<(repack_locales_path)',
