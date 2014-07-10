@@ -26,7 +26,7 @@
       'conditions': [
         ['enable_chromedriver_build==1', {
             'dependencies': [
-              'chromedriver.gyp:oxide_chromedriver',
+              '<(DEPTH)/chrome/chrome.gyp:chromedriver',
             ],
           }
         ]
