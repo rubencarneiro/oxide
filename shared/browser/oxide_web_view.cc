@@ -611,24 +611,20 @@ void WebView::DidFailProvisionalLoad(
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
-void WebView::DidFinishLoad(int64 frame_id,
-                            const GURL& validated_url,
-                            bool is_main_frame,
-                            content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
+void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
+                            const GURL& validated_url) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 
   OnLoadSucceeded(validated_url);
 }
 
-void WebView::DidFailLoad(int64 frame_id,
+void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
                           const GURL& validated_url,
-                          bool is_main_frame,
                           int error_code,
-                          const base::string16& error_description,
-                          content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
+                          const base::string16& error_description) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 

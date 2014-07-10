@@ -342,16 +342,12 @@ class WebView : public ScriptMessageTarget,
       int error_code,
       const base::string16& error_description) FINAL;
 
-  void DidFinishLoad(int64 frame_id,
-                     const GURL& validated_url,
-                     bool is_main_frame,
-                     content::RenderViewHost* render_view_host);
-  void DidFailLoad(int64 frame_id,
+  void DidFinishLoad(content::RenderFrameHost* render_frame_host,
+                     const GURL& validated_url) FINAL;
+  void DidFailLoad(content::RenderFrameHost* render_frame_host,
                    const GURL& validated_url,
-                   bool is_main_frame,
                    int error_code,
-                   const base::string16& error_description,
-                   content::RenderViewHost* render_view_host) FINAL;
+                   const base::string16& error_description) FINAL;
 
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) FINAL;
