@@ -31,6 +31,7 @@
     'toolkit_uses_gtk': 0,
     'ozone_platform': 'oxide',
     'ozone_auto_platforms': 0,
+    'remoting': 0,
     'external_ozone_platforms': [
       'oxide',
     ],
