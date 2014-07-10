@@ -16,7 +16,7 @@
 
 {
   'variables': {
-    'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide', 
+    'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide',
   },
   'targets': [
     {
