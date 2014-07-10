@@ -445,8 +445,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->javascript_can_open_windows_automatically =
       !contents_helper->GetBrowserContext()->IsPopupBlockerEnabled();
 
-  prefs->enable_scroll_animator = true;
-
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
     prefs->shrinks_standalone_images_to_fit = false;

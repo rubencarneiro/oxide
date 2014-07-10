@@ -17,6 +17,7 @@
 
 #include "oxide_id_allocator.h"
 
+#include <limits>
 #include <utility>
 
 #include "base/logging.h"
@@ -27,9 +28,13 @@ bool IdAllocator::IsValidId(int id) const {
   return id > kInvalidId && id <= max_id_;
 }
 
-IdAllocator::IdAllocator(int max_id)
-    : max_id_(max_id) {
-  CHECK_GT(max_id, kInvalidId);
+IdAllocator::IdAllocator(size_t max_id)
+    : max_id_(static_cast<int>(std::min(
+                  max_id,
+                  static_cast<size_t>(std::numeric_limits<int>::max())))) {
+  if (max_id_ == 0) {
+    max_id_ = std::numeric_limits<int>::max();
+  }
 }
 
 IdAllocator::~IdAllocator() {}
@@ -37,10 +42,15 @@ IdAllocator::~IdAllocator() {}
 int IdAllocator::AllocateId() {
   int id = kInvalidId;
   if (!free_ids_.empty()) {
+    // Reuse a free'd ID if we have one
     id = *free_ids_.begin();
   } else if (!used_ids_.empty()) {
+    // We have no free ID's. Find the last allocated ID
     int last_id = *used_ids_.rbegin();
+    DCHECK(IsValidId(last_id));
     if (last_id == max_id_) {
+      // The last allocated ID was our maximum. Search for an ID that
+      // has never been allocated
       int x = 0;
       for (std::set<int>::iterator it = used_ids_.begin();
            it != used_ids_.end(); ++it) {
@@ -51,15 +61,21 @@ int IdAllocator::AllocateId() {
         ++x;
       }
     } else {
+      // Use the next ID
       id = last_id + 1;
     }
   } else {
+    // Use 0 for the first ID
     id = 0;
   }
 
-  if (!MarkAsUsed(id)) {
+  if (id == kInvalidId) {
+    // There are no more ID's available
     return kInvalidId;
   }
+
+  bool res = MarkAsUsed(id);
+  DCHECK(res);
 
   return id;
 }

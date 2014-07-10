@@ -32,6 +32,8 @@ void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls) {
     impls->push_back(gfx::kGLImplementationOSMesaGL);
   } else if (platform.startsWith("ubuntu")) {
     impls->push_back(gfx::kGLImplementationEGLGLES2);
+  } else if (platform == "minimal") {
+    // None
   } else {
     DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
   }

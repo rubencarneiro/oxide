@@ -131,6 +131,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 
     command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
     command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
+    command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 
     FormFactor form_factor = GetFormFactorHint();
     if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
