@@ -111,10 +111,10 @@
           },
           'inputs': [
             '<(repack_locales_path)',
-            '<!@pymod_do_main(repack_locales -i -p <(OS) -b chromium -g <(grit_out_dir) -s <(SHARED_INTERMEDIATE_DIR) -x <(SHARED_INTERMEDIATE_DIR) <(pak_locales))'
+            '<!@pymod_do_main(oxide_repack_locales -i -p <(OS) -b chromium -g <(grit_out_dir) -s <(SHARED_INTERMEDIATE_DIR) -x <(SHARED_INTERMEDIATE_DIR) <(pak_locales))'
           ],
           'outputs': [
-            '<!@pymod_do_main(repack_locales -o -p <(OS) -g <(grit_out_dir) -s <(SHARED_INTERMEDIATE_DIR) -x <(SHARED_INTERMEDIATE_DIR) <(pak_locales))'
+            '<!@pymod_do_main(oxide_repack_locales -o -p <(OS) -g <(grit_out_dir) -s <(SHARED_INTERMEDIATE_DIR) -x <(SHARED_INTERMEDIATE_DIR) <(pak_locales))'
           ],
           'action': [
             'python',
