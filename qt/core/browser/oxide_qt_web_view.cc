@@ -568,12 +568,12 @@ void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
       compositor_frame_metadata().root_layer_size.height()) {
     ADD_FLAG(FRAME_METADATA_CHANGE_CONTENT_HEIGHT);
   }
-  if (old.viewport_size.width() !=
-      compositor_frame_metadata().viewport_size.width()) {
+  if (old.scrollable_viewport_size.width() !=
+      compositor_frame_metadata().scrollable_viewport_size.width()) {
     ADD_FLAG(FRAME_METADATA_CHANGE_VIEWPORT_WIDTH);
   }
-  if (old.viewport_size.height() !=
-      compositor_frame_metadata().viewport_size.height()) {
+  if (old.scrollable_viewport_size.height() !=
+      compositor_frame_metadata().scrollable_viewport_size.height()) {
     ADD_FLAG(FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT);
   }
   if (old.page_scale_factor !=

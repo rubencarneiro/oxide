@@ -26,9 +26,9 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/renderer_preferences.h"
+#include "content/public/common/web_preferences.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/shell_dialogs/selected_file_info.h"
-#include "webkit/common/webpreferences.h"
 
 #include "shared/common/oxide_content_client.h"
 

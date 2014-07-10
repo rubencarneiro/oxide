@@ -211,7 +211,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -187,16 +187,18 @@
+@@ -186,16 +186,18 @@
        'renderer/dom_storage/dom_storage_dispatcher.h',
        'renderer/dom_storage/dom_storage_proxy.h',
        'renderer/dom_storage/webstoragearea_impl.cc',
@@ -282,14 +282,14 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -356,20 +356,18 @@ void RenderThreadImpl::Init() {
+@@ -352,20 +352,18 @@ RenderThreadImpl::RenderThreadImpl(const
+ 
+ void RenderThreadImpl::Init() {
+   TRACE_EVENT_BEGIN_ETW("RenderThreadImpl::Init", 0, "");
+ 
    base::debug::TraceLog::GetInstance()->SetThreadSortIndex(
        base::PlatformThread::CurrentId(),
        kTraceEventRendererMainThreadSortIndex);
- 
-   v8::V8::SetCounterFunction(base::StatsTable::FindLocation);
-   v8::V8::SetCreateHistogramFunction(CreateHistogram);
-   v8::V8::SetAddHistogramSampleFunction(AddHistogramSample);
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
    // On Mac and Android, the select popups are rendered by the browser.
@@ -306,7 +306,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -1118,21 +1118,24 @@ bool RenderViewImpl::OnMessageReceived(c
+@@ -1431,21 +1431,24 @@ bool RenderViewImpl::OnMessageReceived(c
      IPC_MESSAGE_HANDLER(ViewMsg_WindowSnapshotCompleted,
                          OnWindowSnapshotCompleted)
      IPC_MESSAGE_HANDLER(ViewMsg_ForceRedraw, OnForceRedraw)
@@ -332,7 +332,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
  #endif
      // Adding a new message? Add platform independent ones first, then put the
-@@ -1473,17 +1476,17 @@ WebWidget* RenderViewImpl::createPopupMe
+@@ -1786,17 +1789,17 @@ WebWidget* RenderViewImpl::createPopupMe
          screen_metrics_emulator_.get());
    }
    return widget->webwidget();
@@ -351,7 +351,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
    // will have to close the first one before another one can be shown.
    if (external_popup_menu_)
      return NULL;
-@@ -3762,39 +3765,35 @@ void RenderViewImpl::DismissDateTimeDial
+@@ -4076,39 +4079,35 @@ void RenderViewImpl::DismissDateTimeDial
  void RenderViewImpl::OnSelectPopupMenuItem(int selected_index) {
    if (external_popup_menu_ == NULL)
      return;
@@ -415,7 +415,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
  
    // Plugin-related functions --------------------------------------------------
  
-@@ -749,24 +747,27 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -750,24 +748,27 @@ class CONTENT_EXPORT RenderViewImpl
    void OnDisownOpener();
    void OnWindowSnapshotCompleted(const int snapshot_id,
        const gfx::Size& size, const std::vector<unsigned char>& png);
@@ -444,7 +444,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
    void OnWindowFrameChanged(const gfx::Rect& window_frame,
                              const gfx::Rect& view_frame);
  #endif
-@@ -1131,20 +1132,18 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -1129,20 +1130,18 @@ class CONTENT_EXPORT RenderViewImpl
    // is passed to us upon creation.  WebKit asks for this ID upon first use and
    // uses it whenever asking the browser process to allocate new storage areas.
    int64 session_storage_namespace_id_;
@@ -468,7 +468,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
 diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
 --- a/content/renderer/render_widget.cc
 +++ b/content/renderer/render_widget.cc
-@@ -539,23 +539,21 @@ void RenderWidget::SetPopupOriginAdjustm
+@@ -546,23 +546,21 @@ gfx::Rect RenderWidget::AdjustValidation
  void RenderWidget::SetScreenMetricsEmulationParameters(
      float device_scale_factor,
      const gfx::Point& root_layer_offset,
@@ -495,7 +495,7 @@ diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.
 diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
 --- a/content/renderer/render_widget.h
 +++ b/content/renderer/render_widget.h
-@@ -325,20 +325,18 @@ class CONTENT_EXPORT RenderWidget
+@@ -324,20 +324,18 @@ class CONTENT_EXPORT RenderWidget
                bool is_fullscreen,
                ResizeAck resize_ack);
    // Used to force the size of a window when running layout tests.

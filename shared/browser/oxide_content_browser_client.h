@@ -129,7 +129,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            const GURL& url,
-                           ::WebPreferences* prefs) FINAL;
+                           content::WebPreferences* prefs) FINAL;
 
   virtual content::LocationProvider* OverrideSystemLocationProvider() OVERRIDE;
 

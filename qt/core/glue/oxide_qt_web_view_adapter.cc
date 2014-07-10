@@ -377,7 +377,8 @@ QSizeF WebViewAdapter::compositorFrameLayerSize() const {
 }
 
 QSizeF WebViewAdapter::compositorFrameViewportSize() const {
-  const gfx::SizeF& size = priv->compositor_frame_metadata().viewport_size;
+  const gfx::SizeF& size =
+      priv->compositor_frame_metadata().scrollable_viewport_size;
   return QSizeF(size.width(), size.height());
 }
 

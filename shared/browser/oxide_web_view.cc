@@ -52,6 +52,7 @@
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
+#include "content/public/common/web_preferences.h"
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
@@ -62,7 +63,6 @@
 #include "ui/gl/gl_implementation.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
-#include "webkit/common/webpreferences.h"
 
 #include "shared/base/oxide_event_utils.h"
 #include "shared/browser/compositor/oxide_compositor.h"
@@ -187,7 +187,8 @@ bool HasFixedPageScale(const cc::CompositorFrameMetadata& frame_metadata) {
 
 bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   float window_width_dip =
-      frame_metadata.page_scale_factor * frame_metadata.viewport_size.width();
+      frame_metadata.page_scale_factor *
+      frame_metadata.scrollable_viewport_size.width();
   float content_width_css = frame_metadata.root_layer_size.width();
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
