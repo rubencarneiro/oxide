@@ -55,6 +55,7 @@
 #include "qt/core/api/oxideqpermissionrequest_p.h"
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
+#include "qt/core/base/oxide_qt_skutils.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
@@ -293,20 +294,8 @@ void WebView::UpdateCursor(const content::WebCursor& cursor) {
 
   cursor.GetCursorInfo(&cursor_info);
   if (cursor.IsCustom()) {
-    QImage::Format format = QImage::Format_Invalid;
-    switch (cursor_info.custom_image.config()) {
-    case SkBitmap::kRGB_565_Config:
-      format = QImage::Format_RGB16;
-      break;
-    case SkBitmap::kARGB_4444_Config:
-      format = QImage::Format_ARGB4444_Premultiplied;
-      break;
-    case SkBitmap::kARGB_8888_Config:
-      format = QImage::Format_ARGB32_Premultiplied;
-      break;
-    default:
-      break;
-    }
+    QImage::Format format =
+        QImageFormatFromSkImageInfo(cursor_info.custom_image.info());
     if (format == QImage::Format_Invalid) {
       return;
     }

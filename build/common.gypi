@@ -16,6 +16,7 @@
 
 {
   'variables': {
+    'clang': 0,
     'print_ld_stats%': 0,
     'disable_nacl': 1,
     'linux_use_gold_binary': 0,
