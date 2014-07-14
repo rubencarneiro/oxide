@@ -30,12 +30,17 @@ class RenderProcessObserver FINAL : public content::RenderProcessObserver {
  public:
   RenderProcessObserver();
 
+  static bool InjectOxideJsExtensionsInMainWorld();
+
  private:
   void OnSetUserAgent(const std::string& user_agent);
 
   // content::RenderProcessObserver implementation
   bool OnControlMessageReceived(const IPC::Message& message) FINAL;
   void OnRenderProcessShutdown() FINAL;
+
+  void OnInjectOxideJsExtensionsInMainWorld(
+      bool inject_oxide_js_in_main_world);
 
   DISALLOW_COPY_AND_ASSIGN(RenderProcessObserver);
 };

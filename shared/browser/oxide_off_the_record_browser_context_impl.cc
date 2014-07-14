@@ -120,5 +120,16 @@ int OffTheRecordBrowserContextImpl::GetDevtoolsPort() const {
   return original_context_->GetDevtoolsPort();
 }
 
+bool
+OffTheRecordBrowserContextImpl::ShouldInjectOxideApiInMainWorld() const {
+  return original_context_->ShouldInjectOxideApiInMainWorld();
+}
+
+void
+OffTheRecordBrowserContextImpl::SetShouldInjectOxideApiInMainWorld(
+    bool inject_oxide_api_in_main_world) {
+  original_context_->SetShouldInjectOxideApiInMainWorld(
+      inject_oxide_api_in_main_world);
+}
 
 } // namespace oxide

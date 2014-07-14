@@ -151,8 +151,13 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
     }
 
     blink::WebScriptSource source(blink::WebString::fromUTF8(content));
-    int id = GetIsolatedWorldID(script->context(), frame);
-    frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
+
+    if (script->inject_in_main_world())
+      frame->executeScript(source);
+    else {
+      int id = GetIsolatedWorldID(script->context(), frame);
+      frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
+    }
   }
 }
 

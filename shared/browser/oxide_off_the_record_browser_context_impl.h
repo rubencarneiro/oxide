@@ -69,6 +69,9 @@ class OffTheRecordBrowserContextImpl FINAL : public BrowserContext {
   bool GetDevtoolsEnabled() const FINAL;
   int GetDevtoolsPort() const FINAL;
 
+  bool ShouldInjectOxideApiInMainWorld() const FINAL;
+  void SetShouldInjectOxideApiInMainWorld(bool) FINAL;
+
   UserScriptMaster& UserScriptManager() FINAL;
 
  private:

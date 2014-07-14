@@ -70,6 +70,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
     bool popup_blocker_enabled;
     bool devtools_enabled;
     int devtools_port;
+    bool inject_oxide_api_in_main_world;
   };
 
   static WebContextAdapterPrivate* Create(

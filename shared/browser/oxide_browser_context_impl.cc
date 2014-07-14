@@ -130,7 +130,8 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params) :
     user_script_manager_(this),
     devtools_http_handler_(NULL),
     devtools_enabled_(params.devtools_enabled),
-    devtools_port_(params.devtools_port) {
+    devtools_port_(params.devtools_port),
+    inject_oxide_api_in_main_world_(false) {
   SetUserAgent(std::string());
 
   if (devtools_enabled_ && devtools_port_ < 65535 && devtools_port_ > 1024) {
@@ -152,6 +153,15 @@ BrowserContextImpl::~BrowserContextImpl() {
   if (devtools_http_handler_) {
     devtools_http_handler_->Stop();
   }
+}
+
+bool BrowserContextImpl::ShouldInjectOxideApiInMainWorld() const {
+  return inject_oxide_api_in_main_world_;
+}
+
+void BrowserContextImpl::SetShouldInjectOxideApiInMainWorld(
+      bool inject_oxide_api_in_main_world) {
+  inject_oxide_api_in_main_world_ = inject_oxide_api_in_main_world;
 }
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {

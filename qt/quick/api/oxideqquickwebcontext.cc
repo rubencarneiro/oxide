@@ -386,6 +386,23 @@ void OxideQQuickWebContext::setProduct(const QString& product) {
   }
 }
 
+bool OxideQQuickWebContext::injectOxideApiInMainWorld() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->injectOxideApiInMainWorld();
+}
+
+void OxideQQuickWebContext::setInjectOxideApiInMainWorld(bool inject_oxide_api_in_main_world) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->injectOxideApiInMainWorld() == inject_oxide_api_in_main_world) {
+    return;
+  }
+
+  d->setInjectOxideApiInMainWorld(inject_oxide_api_in_main_world);
+  emit injectOxideApiInMainWorldChanged();
+}
+
 QString OxideQQuickWebContext::userAgent() const {
   Q_D(const OxideQQuickWebContext);
 

@@ -24,11 +24,14 @@
 #include "base/memory/ref_counted.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
+#include "content/public/renderer/render_view.h"
 #include "ipc/ipc_message.h"
 #include "ipc/ipc_message_macros.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
+#include "third_party/WebKit/public/web/WebView.h"
 #include "url/gurl.h"
 
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_script_message_request.h"
 
@@ -38,6 +41,7 @@
 #include "oxide_script_message_manager.h"
 #include "oxide_script_message_object_handler.h"
 #include "oxide_script_message_request_impl_renderer.h"
+
 
 namespace oxide {
 
@@ -152,11 +156,25 @@ void ScriptMessageDispatcherRenderer::ReturnError(
 }
 
 ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
-    content::RenderFrame* frame) :
+    content::RenderFrame* frame, bool inject_api_in_main_world) :
     content::RenderFrameObserver(frame) {
   std::pair<ScriptMessageDispatcherMap::iterator, bool> rv =
       g_dispatcher_map.Get().insert(std::make_pair(frame, this));
   CHECK(rv.second);
+
+  if (inject_api_in_main_world &&
+      frame->GetWebFrame() == frame->GetRenderView()->GetWebView()->mainFrame()) {
+    v8::HandleScope handle_scope(v8::Isolate::GetCurrent());
+    v8::Local<v8::Context>
+      context = frame->GetWebFrame()->mainWorldScriptContext();
+    v8::Context::Scope context_scope(context);
+
+    // Only in the main frame
+    script_message_managers_.push_back(
+        linked_ptr<ScriptMessageManager>(new ScriptMessageManager(frame,
+                                                                  context,
+                                                                  oxide::kMainWorldId)));
+  }
 }
 
 ScriptMessageDispatcherRenderer::~ScriptMessageDispatcherRenderer() {

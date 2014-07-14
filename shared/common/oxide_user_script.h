@@ -92,6 +92,13 @@ class UserScript FINAL {
     context_ = context;
   }
 
+  bool inject_in_main_world() const {
+    return inject_in_main_world_;
+  }
+  void set_inject_in_main_world(bool inject_in_main_world) {
+    inject_in_main_world_ = inject_in_main_world;
+  }
+
   bool incognito_enabled() const {
     return incognito_enabled_;
   }
@@ -145,6 +152,7 @@ class UserScript FINAL {
   bool match_all_frames_;
   bool incognito_enabled_;
   bool emulate_greasemonkey_;
+  bool inject_in_main_world_;
 
   GURL context_;
 

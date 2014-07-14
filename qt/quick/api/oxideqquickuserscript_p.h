@@ -34,6 +34,7 @@ class OxideQQuickUserScript : public QObject,
   Q_PROPERTY(bool matchAllFrames READ matchAllFrames WRITE setMatchAllFrames NOTIFY scriptPropertyChanged)
   Q_PROPERTY(bool incognitoEnabled READ incognitoEnabled WRITE setIncognitoEnabled NOTIFY scriptPropertyChanged)
   Q_PROPERTY(QUrl context READ context WRITE setContext NOTIFY scriptPropertyChanged)
+  Q_PROPERTY(bool injectInMainWorld READ injectInMainWorld WRITE setInjectInMainWorld NOTIFY scriptPropertyChanged)
 
   Q_DECLARE_PRIVATE(OxideQQuickUserScript)
   Q_DISABLE_COPY(OxideQQuickUserScript)
@@ -58,6 +59,9 @@ class OxideQQuickUserScript : public QObject,
 
   bool incognitoEnabled() const;
   void setIncognitoEnabled(bool incognito_enabled);
+
+  bool injectInMainWorld() const;
+  void setInjectInMainWorld(bool in_main_world);
 
   QUrl context() const;
   void setContext(const QUrl& context);

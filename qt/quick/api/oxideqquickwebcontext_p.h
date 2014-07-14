@@ -40,6 +40,7 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
+  Q_PROPERTY(bool __injectOxideApiInMainWorld READ injectOxideApiInMainWorld WRITE setInjectOxideApiInMainWorld NOTIFY injectOxideApiInMainWorldChanged)
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
   Q_PROPERTY(CookiePolicy cookiePolicy READ cookiePolicy WRITE setCookiePolicy NOTIFY cookiePolicyChanged)
   Q_PROPERTY(SessionCookieMode sessionCookieMode READ sessionCookieMode WRITE setSessionCookieMode NOTIFY sessionCookieModeChanged)
@@ -85,6 +86,9 @@ class OxideQQuickWebContext : public QObject,
 
   QString userAgent() const;
   void setUserAgent(const QString& user_agent);
+
+  bool injectOxideApiInMainWorld() const;
+  void setInjectOxideApiInMainWorld(bool inject_oxide_api_in_main_world);
 
   QUrl dataPath() const;
   void setDataPath(const QUrl& data_url);
@@ -138,6 +142,7 @@ class OxideQQuickWebContext : public QObject,
   void userAgentOverrideDelegateChanged();
   void devtoolsEnabledChanged();
   void devtoolsPortChanged();
+  void injectOxideApiInMainWorldChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

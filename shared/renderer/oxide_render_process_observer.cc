@@ -25,10 +25,19 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_net_resource_provider.h"
 
+namespace {
+bool g_inject_oxide_js_in_main_world = false;
+}
+
 namespace oxide {
 
 void RenderProcessObserver::OnSetUserAgent(const std::string& user_agent) {
   ContentClient::instance()->SetUserAgent(user_agent);
+}
+
+void RenderProcessObserver::OnInjectOxideJsExtensionsInMainWorld(
+      bool inject_oxide_js_in_main_world) {
+  g_inject_oxide_js_in_main_world = inject_oxide_js_in_main_world;
 }
 
 bool RenderProcessObserver::OnControlMessageReceived(
@@ -36,6 +45,8 @@ bool RenderProcessObserver::OnControlMessageReceived(
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(RenderProcessObserver, message)
     IPC_MESSAGE_HANDLER(OxideMsg_SetUserAgent, OnSetUserAgent)
+    IPC_MESSAGE_HANDLER(OxideMsg_InjectOxideJsExtensionsInMainWorld,
+			OnInjectOxideJsExtensionsInMainWorld)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 
@@ -49,6 +60,11 @@ void RenderProcessObserver::OnRenderProcessShutdown() {
 RenderProcessObserver::RenderProcessObserver() {
   net::NetModule::SetResourceProvider(NetResourceProvider);
   content::RenderThread::Get()->AddObserver(this);
+}
+
+// static
+bool RenderProcessObserver::InjectOxideJsExtensionsInMainWorld() {
+  return g_inject_oxide_js_in_main_world;
 }
 
 } // namespace oxide
