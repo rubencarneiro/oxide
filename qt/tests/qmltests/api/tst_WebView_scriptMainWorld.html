@@ -1,16 +1,18 @@
 <html>
 
 <script>
-try {
-  oxide.sendMessage("FOO", {});
-  document.getElementById("result").innerHTML = "oxide.postMessage";
-} catch(e) {
-  document.getElementById("result").className = "error";
+window.onload = function() {
+  try {
+    oxide.sendMessage("FOO", {});
+    document.getElementById("result").innerHTML = "oxide.sendMessage";
+  } catch(e) {
+    document.getElementById("result").innerHTML = "error: " + str(e);
+  }
 }
 </script>
 
 <body>
-  <h1>SCRIPT MAIN WORLD test</h1>
+  <h1>SCRIPT MAIN WORLD test 222</h1>
   <iframe src="about:blank"></iframe>
   <div id="result"></div>
 </body>
