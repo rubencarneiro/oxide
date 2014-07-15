@@ -1,3 +1,624 @@
+Index: src/content/browser/media/utouch/browser_media_player_manager.cc
+===================================================================
+--- src/content/browser/media/utouch/browser_media_player_manager.cc	(revision 0)
++++ src/content/browser/media/utouch/browser_media_player_manager.cc	(working copy)
+@@ -0,0 +1,273 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "content/browser/media/utouch/browser_media_player_manager.h"
++
++#include "base/command_line.h"
++#include "content/browser/renderer_host/render_view_host_impl.h"
++#include "content/common/media/media_player_messages_oxide.h"
++#include "content/public/browser/browser_context.h"
++#include "content/public/browser/content_browser_client.h"
++#include "content/public/browser/render_frame_host.h"
++#include "content/public/browser/render_process_host.h"
++#include "content/public/browser/render_view_host.h"
++#include "content/public/browser/storage_partition.h"
++#include "content/public/browser/web_contents.h"
++#include "content/public/browser/web_contents_delegate.h"
++#include "content/public/common/content_client.h"
++#include "content/public/common/content_switches.h"
++#include "media/base/utouch/media_player_mediahub.h"
++#include "media/base/media_switches.h"
++
++using media::MediaPlayerOxide;
++using media::MediaPlayerManager;
++
++namespace content {
++
++// Threshold on the number of media players per renderer before we start
++// attempting to release inactive media players.
++const int kMediaPlayerThreshold = 1;
++
++static BrowserMediaPlayerManager::Factory g_factory = NULL;
++
++// static
++void BrowserMediaPlayerManager::RegisterFactory(Factory factory) {
++  g_factory = factory;
++}
++
++// static
++BrowserMediaPlayerManager* BrowserMediaPlayerManager::Create(
++    RenderFrameHost* rfh) {
++  if (g_factory)
++    return g_factory(rfh);
++  return new BrowserMediaPlayerManager(rfh);
++}
++
++MediaPlayerOxide* BrowserMediaPlayerManager::CreateMediaPlayer(
++    MediaPlayerHostMsg_Initialize_Type type,
++    int player_id,
++    const GURL& url,
++    const GURL& first_party_for_cookies,
++    bool hide_url_log,
++    MediaPlayerManager* manager) {
++  switch (type) {
++    case MEDIA_PLAYER_TYPE_URL: {
++      const std::string user_agent = GetContentClient()->GetUserAgent();
++
++      media::MediaPlayerMediaHub* media_player_bridge = new media::MediaPlayerMediaHub(
++          player_id,
++          url,
++	  // TODO cookies
++          first_party_for_cookies,
++          user_agent);
++
++      BrowserMediaPlayerManager* browser_media_player_manager =
++          static_cast<BrowserMediaPlayerManager*>(manager);
++
++      browser_media_player_manager->OnMediaMetadataChanged(
++          player_id, base::TimeDelta(), 0, 0, false);
++
++      return media_player_bridge;
++    }
++
++    case MEDIA_PLAYER_TYPE_MEDIA_SOURCE: {
++      NOTIMPLEMENTED();
++      return NULL;
++    }
++  }
++
++  NOTREACHED();
++  return NULL;
++}
++
++BrowserMediaPlayerManager::BrowserMediaPlayerManager(
++    RenderFrameHost* render_frame_host)
++    : render_frame_host_(render_frame_host),
++      web_contents_(WebContents::FromRenderFrameHost(render_frame_host)),
++      weak_ptr_factory_(this) {
++}
++
++BrowserMediaPlayerManager::~BrowserMediaPlayerManager() {}
++
++void BrowserMediaPlayerManager::OnTimeUpdate(int player_id,
++                                             base::TimeDelta current_time) {
++  Send(
++      new MediaPlayerMsg_MediaTimeUpdate(RoutingID(), player_id, current_time));
++}
++
++void BrowserMediaPlayerManager::OnMediaMetadataChanged(
++    int player_id, base::TimeDelta duration, int width, int height,
++    bool success) {
++
++  Send(new MediaPlayerMsg_MediaMetadataChanged(
++      RoutingID(), player_id, duration, width, height, success));
++}
++
++void BrowserMediaPlayerManager::OnPlaybackComplete(int player_id) {
++  Send(new MediaPlayerMsg_MediaPlaybackCompleted(RoutingID(), player_id));
++}
++
++void BrowserMediaPlayerManager::OnMediaInterrupted(int player_id) {
++  // Tell WebKit that the audio should be paused, then release all resources
++  Send(new MediaPlayerMsg_MediaPlayerReleased(RoutingID(), player_id));
++  OnReleaseResources(player_id);
++}
++
++void BrowserMediaPlayerManager::OnBufferingUpdate(
++    int player_id, int percentage) {
++  Send(new MediaPlayerMsg_MediaBufferingUpdate(
++      RoutingID(), player_id, percentage));
++}
++
++void BrowserMediaPlayerManager::OnSeekRequest(
++    int player_id,
++    const base::TimeDelta& time_to_seek) {
++  Send(new MediaPlayerMsg_SeekRequest(RoutingID(), player_id, time_to_seek));
++}
++
++void BrowserMediaPlayerManager::PauseVideo() {
++  Send(new MediaPlayerMsg_PauseVideo(RoutingID()));
++}
++
++void BrowserMediaPlayerManager::OnSeekComplete(
++    int player_id,
++    const base::TimeDelta& current_time) {
++  Send(new MediaPlayerMsg_SeekCompleted(RoutingID(), player_id, current_time));
++}
++
++void BrowserMediaPlayerManager::OnError(int player_id, int error) {
++  Send(new MediaPlayerMsg_MediaError(RoutingID(), player_id, error));
++}
++
++void BrowserMediaPlayerManager::OnVideoSizeChanged(
++    int player_id, int width, int height) {
++  Send(new MediaPlayerMsg_MediaVideoSizeChanged(RoutingID(), player_id,
++      width, height));
++}
++
++MediaPlayerOxide* BrowserMediaPlayerManager::GetPlayer(int player_id) {
++  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
++      it != players_.end(); ++it) {
++    if ((*it)->player_id() == player_id)
++      return *it;
++  }
++  return NULL;
++}
++
++void BrowserMediaPlayerManager::DestroyAllMediaPlayers() {
++  players_.clear();
++}
++
++void BrowserMediaPlayerManager::OnInitialize(
++    const MediaPlayerHostMsg_Initialize_Params& media_player_params) {
++
++  RemovePlayer(media_player_params.player_id);
++
++  RenderProcessHostImpl* host = static_cast<RenderProcessHostImpl*>(
++      web_contents()->GetRenderProcessHost());
++
++  MediaPlayerOxide* player = CreateMediaPlayer(
++      media_player_params.type,
++      media_player_params.player_id,
++      media_player_params.url,
++      media_player_params.first_party_for_cookies,
++      host->GetBrowserContext()->IsOffTheRecord(),
++      this);
++
++  if (!player)
++    return;
++
++  AddPlayer(player);
++}
++
++void BrowserMediaPlayerManager::OnStart(int player_id) {
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (!player)
++    return;
++
++  player->Start();
++}
++
++void BrowserMediaPlayerManager::OnSeek(
++    int player_id,
++    const base::TimeDelta& time) {
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (player)
++    player->SeekTo(time);
++}
++
++void BrowserMediaPlayerManager::OnPause(
++    int player_id,
++    bool is_media_related_action) {
++
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (player)
++    player->Pause(is_media_related_action);
++}
++
++void BrowserMediaPlayerManager::OnSetVolume(int player_id, double volume) {
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (player)
++    player->SetVolume(volume);
++}
++
++void BrowserMediaPlayerManager::OnSetPoster(int player_id, const GURL& url) {
++  // To be overridden by subclasses.
++}
++
++void BrowserMediaPlayerManager::OnReleaseResources(int player_id) {
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (player)
++    player->Release();
++}
++
++void BrowserMediaPlayerManager::OnDestroyPlayer(int player_id) {
++  RemovePlayer(player_id);
++}
++
++void BrowserMediaPlayerManager::AddPlayer(MediaPlayerOxide* player) {
++  DCHECK(!GetPlayer(player->player_id()));
++  players_.push_back(player);
++}
++
++void BrowserMediaPlayerManager::RemovePlayer(int player_id) {
++  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
++      it != players_.end(); ++it) {
++    MediaPlayerOxide* player = *it;
++    if (player->player_id() == player_id) {
++      players_.erase(it);
++      break;
++    }
++  }
++}
++
++scoped_ptr<media::MediaPlayerOxide> BrowserMediaPlayerManager::SwapPlayer(
++      int player_id, media::MediaPlayerOxide* player) {
++  media::MediaPlayerOxide* previous_player = NULL;
++  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
++      it != players_.end(); ++it) {
++    if ((*it)->player_id() == player_id) {
++      previous_player = *it;
++      players_.weak_erase(it);
++      players_.push_back(player);
++      break;
++    }
++  }
++  return scoped_ptr<media::MediaPlayerOxide>(previous_player);
++}
++
++int BrowserMediaPlayerManager::RoutingID() {
++  return render_frame_host_->GetRoutingID();
++}
++
++bool BrowserMediaPlayerManager::Send(IPC::Message* msg) {
++  return render_frame_host_->Send(msg);
++}
++
++}  // namespace content
+Index: src/content/browser/media/utouch/browser_media_player_manager.h
+===================================================================
+--- src/content/browser/media/utouch/browser_media_player_manager.h	(revision 0)
++++ src/content/browser/media/utouch/browser_media_player_manager.h	(working copy)
+@@ -0,0 +1,119 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
++#define CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
++
++#include "base/basictypes.h"
++#include "base/callback.h"
++#include "base/memory/scoped_ptr.h"
++#include "base/memory/scoped_vector.h"
++#include "base/time/time.h"
++#include "content/common/content_export.h"
++#include "content/common/media/media_player_messages_enums_oxide.h"
++#include "ipc/ipc_message.h"
++#include "media/base/utouch/media_player_oxide.h"
++#include "media/base/utouch/media_player_manager.h"
++#include "ui/gfx/rect_f.h"
++#include "url/gurl.h"
++
++struct MediaPlayerHostMsg_Initialize_Params;
++
++namespace content {
++class RenderFrameHost;
++class WebContents;
++
++class CONTENT_EXPORT BrowserMediaPlayerManager
++    : public media::MediaPlayerManager {
++ public:
++  // Permits embedders to provide an extended version of the class.
++  typedef BrowserMediaPlayerManager* (*Factory)(RenderFrameHost*);
++  static void RegisterFactory(Factory factory);
++
++  // Returns a new instance using the registered factory if available.
++  static BrowserMediaPlayerManager* Create(RenderFrameHost* rfh);
++
++  virtual ~BrowserMediaPlayerManager();
++
++  // Called when browser player wants the renderer media element to seek.
++  // Any actual seek started by renderer will be handled by browser in OnSeek().
++  void OnSeekRequest(int player_id, const base::TimeDelta& time_to_seek);
++
++  // Pauses all video players manages by this class.
++  void PauseVideo();
++
++  // media::MediaPlayerManager overrides.
++  virtual void OnTimeUpdate(
++      int player_id, base::TimeDelta current_time) OVERRIDE;
++  virtual void OnMediaMetadataChanged(
++      int player_id,
++      base::TimeDelta duration,
++      int width,
++      int height,
++      bool success) OVERRIDE;
++  virtual void OnPlaybackComplete(int player_id) OVERRIDE;
++  virtual void OnMediaInterrupted(int player_id) OVERRIDE;
++  virtual void OnBufferingUpdate(int player_id, int percentage) OVERRIDE;
++  virtual void OnSeekComplete(
++      int player_id,
++      const base::TimeDelta& current_time) OVERRIDE;
++  virtual void OnError(int player_id, int error) OVERRIDE;
++  virtual void OnVideoSizeChanged(
++      int player_id, int width, int height) OVERRIDE;
++  virtual media::MediaPlayerOxide* GetPlayer(int player_id) OVERRIDE;
++  virtual void DestroyAllMediaPlayers() OVERRIDE;
++
++  // Message handlers.
++  virtual void OnInitialize(
++      const MediaPlayerHostMsg_Initialize_Params& media_player_params);
++  virtual void OnStart(int player_id);
++  virtual void OnSeek(int player_id, const base::TimeDelta& time);
++  virtual void OnPause(int player_id, bool is_media_related_action);
++  virtual void OnSetVolume(int player_id, double volume);
++  virtual void OnSetPoster(int player_id, const GURL& poster);
++  virtual void OnReleaseResources(int player_id);
++  virtual void OnDestroyPlayer(int player_id);
++
++ protected:
++  explicit BrowserMediaPlayerManager(RenderFrameHost* render_frame_host);
++
++  WebContents* web_contents() const { return web_contents_; }
++
++  void AddPlayer(media::MediaPlayerOxide* player);
++
++  void RemovePlayer(int player_id);
++
++  scoped_ptr<media::MediaPlayerOxide> SwapPlayer(
++      int player_id,
++      media::MediaPlayerOxide* player);
++
++  int RoutingID();
++
++  bool Send(IPC::Message* msg);
++
++ private:
++  media::MediaPlayerOxide* CreateMediaPlayer(
++      MediaPlayerHostMsg_Initialize_Type type,
++      int player_id,
++      const GURL& url,
++      const GURL& first_party_for_cookies,
++      bool hide_url_log,
++      media::MediaPlayerManager* manager);
++
++  RenderFrameHost* const render_frame_host_;
++
++  // An array of managed players.
++  ScopedVector<media::MediaPlayerOxide> players_;
++
++  WebContents* const web_contents_;
++
++  // NOTE: Weak pointers must be invalidated before all other member variables.
++  base::WeakPtrFactory<BrowserMediaPlayerManager> weak_ptr_factory_;
++
++  DISALLOW_COPY_AND_ASSIGN(BrowserMediaPlayerManager);
++};
++
++}  // namespace content
++
++#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
+Index: src/content/browser/media/utouch/media_web_contents_observer.cc
+===================================================================
+--- src/content/browser/media/utouch/media_web_contents_observer.cc	(revision 0)
++++ src/content/browser/media/utouch/media_web_contents_observer.cc	(working copy)
+@@ -0,0 +1,97 @@
++// Copyright 2014 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "content/browser/media/utouch/media_web_contents_observer.h"
++
++#include "base/memory/scoped_ptr.h"
++#include "base/stl_util.h"
++#include "content/browser/media/utouch/browser_media_player_manager.h"
++#include "content/common/media/media_player_messages_oxide.h"
++#include "content/public/browser/render_frame_host.h"
++#include "content/public/browser/web_contents.h"
++#include "ipc/ipc_message_macros.h"
++#include "media/base/utouch/media_player_oxide.h"
++
++namespace content {
++
++using media::BrowserCdm;
++using media::MediaPlayerOxide;
++
++MediaWebContentsObserver::MediaWebContentsObserver(
++    RenderViewHost* render_view_host)
++    : WebContentsObserver(WebContents::FromRenderViewHost(render_view_host)) {
++}
++
++MediaWebContentsObserver::~MediaWebContentsObserver() {
++}
++
++void MediaWebContentsObserver::RenderFrameDeleted(
++    RenderFrameHost* render_frame_host) {
++  uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
++  media_player_managers_.erase(key);
++}
++
++bool MediaWebContentsObserver::OnMessageReceived(
++    const IPC::Message& msg,
++    RenderFrameHost* render_frame_host) {
++  if (OnMediaPlayerMessageReceived(msg, render_frame_host))
++    return true;
++
++  return false;
++}
++
++bool MediaWebContentsObserver::OnMediaPlayerMessageReceived(
++    const IPC::Message& msg,
++    RenderFrameHost* render_frame_host) {
++  bool handled = true;
++  IPC_BEGIN_MESSAGE_MAP(MediaWebContentsObserver, msg)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Initialize,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnInitialize)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Start,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnStart)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Seek,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnSeek)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Pause,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnPause)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetVolume,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnSetVolume)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetPoster,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnSetPoster)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Release,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnReleaseResources)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_DestroyMediaPlayer,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnDestroyPlayer)
++      IPC_MESSAGE_UNHANDLED(handled = false)
++  IPC_END_MESSAGE_MAP()
++  return handled;
++}
++
++BrowserMediaPlayerManager* MediaWebContentsObserver::GetMediaPlayerManager(
++    RenderFrameHost* render_frame_host) {
++  uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
++  if (!media_player_managers_.contains(key)) {
++    media_player_managers_.set(
++        key,
++        make_scoped_ptr(BrowserMediaPlayerManager::Create(render_frame_host)));
++  }
++  return media_player_managers_.get(key);
++}
++
++void MediaWebContentsObserver::PauseVideo() {
++  for (MediaPlayerManagerMap::iterator iter = media_player_managers_.begin();
++      iter != media_player_managers_.end(); ++iter) {
++    BrowserMediaPlayerManager* manager = iter->second;
++    manager->PauseVideo();
++  }
++}
++
++}  // namespace content
+Index: src/content/browser/media/utouch/media_web_contents_observer.h
+===================================================================
+--- src/content/browser/media/utouch/media_web_contents_observer.h	(revision 0)
++++ src/content/browser/media/utouch/media_web_contents_observer.h	(working copy)
+@@ -0,0 +1,47 @@
++// Copyright 2014 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
++#define CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
++
++#include "base/compiler_specific.h"
++#include "base/containers/scoped_ptr_hash_map.h"
++#include "content/common/content_export.h"
++#include "content/public/browser/web_contents_observer.h"
++
++namespace content {
++
++class BrowserMediaPlayerManager;
++class RenderViewHost;
++
++class CONTENT_EXPORT MediaWebContentsObserver : public WebContentsObserver {
++ public:
++  explicit MediaWebContentsObserver(RenderViewHost* render_view_host);
++  virtual ~MediaWebContentsObserver();
++
++  virtual void RenderFrameDeleted(RenderFrameHost* render_frame_host) OVERRIDE;
++  virtual bool OnMessageReceived(const IPC::Message& message,
++                                 RenderFrameHost* render_frame_host) OVERRIDE;
++
++  bool OnMediaPlayerMessageReceived(const IPC::Message& message,
++                                    RenderFrameHost* render_frame_host);
++
++  // Gets the media player manager associated with |render_frame_host|. Creates
++  // a new one if it doesn't exist. The caller doesn't own the returned pointer.
++  BrowserMediaPlayerManager* GetMediaPlayerManager(
++      RenderFrameHost* render_frame_host);
++
++  void PauseVideo();
++
++ private:
++  typedef base::ScopedPtrHashMap<uintptr_t, BrowserMediaPlayerManager>
++      MediaPlayerManagerMap;
++  MediaPlayerManagerMap media_player_managers_;
++
++  DISALLOW_COPY_AND_ASSIGN(MediaWebContentsObserver);
++};
++
++}  // namespace content
++
++#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
+Index: src/content/browser/renderer_host/render_view_host_impl.cc
+===================================================================
+--- src/content/browser/renderer_host/render_view_host_impl.cc	(revision 279868)
++++ src/content/browser/renderer_host/render_view_host_impl.cc	(working copy)
+@@ -95,9 +95,7 @@
+ #include "base/win/win_util.h"
+ #endif
+ 
+-#if defined(ENABLE_BROWSER_CDMS)
+ #include "content/browser/media/media_web_contents_observer.h"
+-#endif
+ 
+ using base::TimeDelta;
+ using blink::WebConsoleMessage;
+@@ -225,9 +223,7 @@
+                    GetProcess()->GetID(), GetRoutingID()));
+   }
+ 
+-#if defined(ENABLE_BROWSER_CDMS)
+   media_web_contents_observer_.reset(new MediaWebContentsObserver(this));
+-#endif
+ 
+   unload_event_monitor_timeout_.reset(new TimeoutMonitor(base::Bind(
+       &RenderViewHostImpl::OnSwappedOut, weak_factory_.GetWeakPtr(), true)));
+Index: src/content/browser/renderer_host/render_view_host_impl.h
+===================================================================
+--- src/content/browser/renderer_host/render_view_host_impl.h	(revision 279868)
++++ src/content/browser/renderer_host/render_view_host_impl.h	(working copy)
+@@ -391,16 +391,12 @@
+   void DidCancelPopupMenu();
+ #endif
+ 
+-#if defined(ENABLE_BROWSER_CDMS)
+   MediaWebContentsObserver* media_web_contents_observer() {
+     return media_web_contents_observer_.get();
+   }
+-#endif
+ 
+   void DidSelectPopupMenuItems(const std::vector<int>& selected_indices);
+   void DidCancelPopupMenu();
+ 
+   int main_frame_routing_id() const {
+     return main_frame_routing_id_;
+@@ -624,10 +618,8 @@
+   // Set to true if we requested the on screen keyboard to be displayed.
+   bool virtual_keyboard_requested_;
+ 
+-#if defined(ENABLE_BROWSER_CDMS)
+   // Manages all the media player and CDM managers and forwards IPCs to them.
+   scoped_ptr<MediaWebContentsObserver> media_web_contents_observer_;
+-#endif
+ 
+   // Used to swap out or shutdown this RVH when the unload event is taking too
+   // long to execute, depending on the number of active views in the
+Index: src/content/common/content_message_generator.h
+===================================================================
+--- src/content/common/content_message_generator.h	(revision 279868)
++++ src/content/common/content_message_generator.h	(working copy)
+@@ -67,3 +67,6 @@
+ #include "content/common/gin_java_bridge_messages.h"
+ #include "content/common/media/media_player_messages_android.h"
+ #endif  // defined(OS_ANDROID)
++
++#include "content/common/media/media_player_messages_oxide.h"
++
 Index: src/content/common/media/media_player_messages_enums_oxide.h
 ===================================================================
 --- src/content/common/media/media_player_messages_enums_oxide.h	(revision 0)
@@ -162,633 +783,9 @@ Index: src/content/common/media/media_player_messages_oxide.h
 +IPC_MESSAGE_CONTROL2(MediaPlayerHostMsg_DurationChanged,
 +                     int /* demuxer_client_id */,
 +                     base::TimeDelta /* duration */)
-Index: src/content/browser/renderer_host/render_view_host_impl.cc
-===================================================================
---- src/content/browser/renderer_host/render_view_host_impl.cc	(revision 275940)
-+++ src/content/browser/renderer_host/render_view_host_impl.cc	(working copy)
-@@ -95,9 +95,7 @@
- #include "base/win/win_util.h"
- #endif
- 
--#if defined(ENABLE_BROWSER_CDMS)
- #include "content/browser/media/media_web_contents_observer.h"
--#endif
- 
- using base::TimeDelta;
- using blink::WebConsoleMessage;
-@@ -225,9 +223,7 @@
-                    GetProcess()->GetID(), GetRoutingID()));
-   }
- 
--#if defined(ENABLE_BROWSER_CDMS)
-   media_web_contents_observer_.reset(new MediaWebContentsObserver(this));
--#endif
- 
-   unload_event_monitor_timeout_.reset(new TimeoutMonitor(base::Bind(
-       &RenderViewHostImpl::OnSwappedOut, weak_factory_.GetWeakPtr(), true)));
-Index: src/content/browser/renderer_host/render_view_host_impl.h
-===================================================================
---- src/content/browser/renderer_host/render_view_host_impl.h	(revision 275940)
-+++ src/content/browser/renderer_host/render_view_host_impl.h	(working copy)
-@@ -391,14 +391,12 @@
-   void DidCancelPopupMenu();
- #endif
- 
--#if defined(ENABLE_BROWSER_CDMS)
-   MediaWebContentsObserver* media_web_contents_observer() {
-     return media_web_contents_observer_.get();
-   }
--#endif
- 
-   void DidSelectPopupMenuItems(const std::vector<int>& selected_indices);
-   void DidCancelPopupMenu();
- 
-   int main_frame_routing_id() const {
-     return main_frame_routing_id_;
-@@ -624,10 +618,8 @@
-   // Set to true if we requested the on screen keyboard to be displayed.
-   bool virtual_keyboard_requested_;
- 
--#if defined(ENABLE_BROWSER_CDMS)
-   // Manages all the media player and CDM managers and forwards IPCs to them.
-   scoped_ptr<MediaWebContentsObserver> media_web_contents_observer_;
--#endif
- 
-   // Used to swap out or shutdown this RVH when the unload event is taking too
-   // long to execute, depending on the number of active views in the
-Index: src/content/browser/media/utouch/browser_media_player_manager.cc
-===================================================================
---- src/content/browser/media/utouch/browser_media_player_manager.cc	(revision 0)
-+++ src/content/browser/media/utouch/browser_media_player_manager.cc	(working copy)
-@@ -0,0 +1,272 @@
-+// Copyright 2013 The Chromium Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style license that can be
-+// found in the LICENSE file.
-+
-+#include "content/browser/media/utouch/browser_media_player_manager.h"
-+
-+#include "base/command_line.h"
-+#include "content/browser/renderer_host/render_view_host_impl.h"
-+#include "content/common/media/media_player_messages_oxide.h"
-+#include "content/public/browser/browser_context.h"
-+#include "content/public/browser/content_browser_client.h"
-+#include "content/public/browser/render_frame_host.h"
-+#include "content/public/browser/render_process_host.h"
-+#include "content/public/browser/render_view_host.h"
-+#include "content/public/browser/storage_partition.h"
-+#include "content/public/browser/web_contents.h"
-+#include "content/public/browser/web_contents_delegate.h"
-+#include "content/public/common/content_client.h"
-+#include "content/public/common/content_switches.h"
-+#include "media/base/utouch/media_player_mediahub.h"
-+#include "media/base/media_switches.h"
-+
-+using media::MediaPlayerOxide;
-+using media::MediaPlayerManager;
-+
-+namespace content {
-+
-+// Threshold on the number of media players per renderer before we start
-+// attempting to release inactive media players.
-+const int kMediaPlayerThreshold = 1;
-+
-+static BrowserMediaPlayerManager::Factory g_factory = NULL;
-+
-+// static
-+void BrowserMediaPlayerManager::RegisterFactory(Factory factory) {
-+  g_factory = factory;
-+}
-+
-+// static
-+BrowserMediaPlayerManager* BrowserMediaPlayerManager::Create(
-+    RenderFrameHost* rfh) {
-+  if (g_factory)
-+    return g_factory(rfh);
-+  return new BrowserMediaPlayerManager(rfh);
-+}
-+
-+MediaPlayerOxide* BrowserMediaPlayerManager::CreateMediaPlayer(
-+    MediaPlayerHostMsg_Initialize_Type type,
-+    int player_id,
-+    const GURL& url,
-+    const GURL& first_party_for_cookies,
-+    bool hide_url_log,
-+    MediaPlayerManager* manager) {
-+  switch (type) {
-+    case MEDIA_PLAYER_TYPE_URL: {
-+      const std::string user_agent = GetContentClient()->GetUserAgent();
-+
-+      media::MediaPlayerMediaHub* media_player_bridge = new media::MediaPlayerMediaHub(
-+          player_id,
-+          url,
-+	  // TODO cookies
-+          first_party_for_cookies,
-+          user_agent);
-+
-+      BrowserMediaPlayerManager* browser_media_player_manager =
-+          static_cast<BrowserMediaPlayerManager*>(manager);
-+
-+      browser_media_player_manager->OnMediaMetadataChanged(
-+          player_id, base::TimeDelta(), 0, 0, false);
-+
-+      return media_player_bridge;
-+    }
-+
-+    case MEDIA_PLAYER_TYPE_MEDIA_SOURCE: {
-+      NOTIMPLEMENTED();
-+      return NULL;
-+    }
-+  }
-+
-+  NOTREACHED();
-+  return NULL;
-+}
-+
-+BrowserMediaPlayerManager::BrowserMediaPlayerManager(
-+    RenderFrameHost* render_frame_host)
-+    : render_frame_host_(render_frame_host),
-+      web_contents_(WebContents::FromRenderFrameHost(render_frame_host)),
-+      weak_ptr_factory_(this) {
-+}
-+
-+BrowserMediaPlayerManager::~BrowserMediaPlayerManager() {}
-+
-+void BrowserMediaPlayerManager::OnTimeUpdate(int player_id,
-+                                             base::TimeDelta current_time) {
-+  Send(
-+      new MediaPlayerMsg_MediaTimeUpdate(RoutingID(), player_id, current_time));
-+}
-+
-+void BrowserMediaPlayerManager::OnMediaMetadataChanged(
-+    int player_id, base::TimeDelta duration, int width, int height,
-+    bool success) {
-+
-+  Send(new MediaPlayerMsg_MediaMetadataChanged(
-+      RoutingID(), player_id, duration, width, height, success));
-+}
-+
-+void BrowserMediaPlayerManager::OnPlaybackComplete(int player_id) {
-+  Send(new MediaPlayerMsg_MediaPlaybackCompleted(RoutingID(), player_id));
-+}
-+
-+void BrowserMediaPlayerManager::OnMediaInterrupted(int player_id) {
-+  // Tell WebKit that the audio should be paused, then release all resources
-+  Send(new MediaPlayerMsg_MediaPlayerReleased(RoutingID(), player_id));
-+  OnReleaseResources(player_id);
-+}
-+
-+void BrowserMediaPlayerManager::OnBufferingUpdate(
-+    int player_id, int percentage) {
-+  Send(new MediaPlayerMsg_MediaBufferingUpdate(
-+      RoutingID(), player_id, percentage));
-+}
-+
-+void BrowserMediaPlayerManager::OnSeekRequest(
-+    int player_id,
-+    const base::TimeDelta& time_to_seek) {
-+  Send(new MediaPlayerMsg_SeekRequest(RoutingID(), player_id, time_to_seek));
-+}
-+
-+void BrowserMediaPlayerManager::PauseVideo() {
-+  Send(new MediaPlayerMsg_PauseVideo(RoutingID()));
-+}
-+
-+void BrowserMediaPlayerManager::OnSeekComplete(
-+    int player_id,
-+    const base::TimeDelta& current_time) {
-+  Send(new MediaPlayerMsg_SeekCompleted(RoutingID(), player_id, current_time));
-+}
-+
-+void BrowserMediaPlayerManager::OnError(int player_id, int error) {
-+  Send(new MediaPlayerMsg_MediaError(RoutingID(), player_id, error));
-+}
-+
-+void BrowserMediaPlayerManager::OnVideoSizeChanged(
-+    int player_id, int width, int height) {
-+  Send(new MediaPlayerMsg_MediaVideoSizeChanged(RoutingID(), player_id,
-+      width, height));
-+}
-+
-+MediaPlayerOxide* BrowserMediaPlayerManager::GetPlayer(int player_id) {
-+  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
-+      it != players_.end(); ++it) {
-+    if ((*it)->player_id() == player_id)
-+      return *it;
-+  }
-+  return NULL;
-+}
-+
-+void BrowserMediaPlayerManager::DestroyAllMediaPlayers() {
-+  players_.clear();
-+}
-+
-+void BrowserMediaPlayerManager::OnInitialize(
-+    MediaPlayerHostMsg_Initialize_Type type,
-+    int player_id,
-+    const GURL& url,
-+    const GURL& first_party_for_cookies) {
-+
-+  RemovePlayer(player_id);
-+
-+  RenderProcessHostImpl* host = static_cast<RenderProcessHostImpl*>(
-+      web_contents()->GetRenderProcessHost());
-+
-+  MediaPlayerOxide* player = CreateMediaPlayer(
-+      type, player_id, url, first_party_for_cookies,
-+      host->GetBrowserContext()->IsOffTheRecord(), this);
-+
-+  if (!player)
-+    return;
-+
-+  AddPlayer(player);
-+}
-+
-+void BrowserMediaPlayerManager::OnStart(int player_id) {
-+  MediaPlayerOxide* player = GetPlayer(player_id);
-+
-+  if (!player)
-+    return;
-+
-+  player->Start();
-+}
-+
-+void BrowserMediaPlayerManager::OnSeek(
-+    int player_id,
-+    const base::TimeDelta& time) {
-+  MediaPlayerOxide* player = GetPlayer(player_id);
-+
-+  if (player)
-+    player->SeekTo(time);
-+}
-+
-+void BrowserMediaPlayerManager::OnPause(
-+    int player_id,
-+    bool is_media_related_action) {
-+
-+  MediaPlayerOxide* player = GetPlayer(player_id);
-+
-+  if (player)
-+    player->Pause(is_media_related_action);
-+}
-+
-+void BrowserMediaPlayerManager::OnSetVolume(int player_id, double volume) {
-+  MediaPlayerOxide* player = GetPlayer(player_id);
-+
-+  if (player)
-+    player->SetVolume(volume);
-+}
-+
-+void BrowserMediaPlayerManager::OnSetPoster(int player_id, const GURL& url) {
-+  // To be overridden by subclasses.
-+}
-+
-+void BrowserMediaPlayerManager::OnReleaseResources(int player_id) {
-+  MediaPlayerOxide* player = GetPlayer(player_id);
-+
-+  if (player)
-+    player->Release();
-+}
-+
-+void BrowserMediaPlayerManager::OnDestroyPlayer(int player_id) {
-+  RemovePlayer(player_id);
-+}
-+
-+void BrowserMediaPlayerManager::AddPlayer(MediaPlayerOxide* player) {
-+  DCHECK(!GetPlayer(player->player_id()));
-+  players_.push_back(player);
-+}
-+
-+void BrowserMediaPlayerManager::RemovePlayer(int player_id) {
-+  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
-+      it != players_.end(); ++it) {
-+    MediaPlayerOxide* player = *it;
-+    if (player->player_id() == player_id) {
-+      players_.erase(it);
-+      break;
-+    }
-+  }
-+}
-+
-+scoped_ptr<media::MediaPlayerOxide> BrowserMediaPlayerManager::SwapPlayer(
-+      int player_id, media::MediaPlayerOxide* player) {
-+  media::MediaPlayerOxide* previous_player = NULL;
-+  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
-+      it != players_.end(); ++it) {
-+    if ((*it)->player_id() == player_id) {
-+      previous_player = *it;
-+      players_.weak_erase(it);
-+      players_.push_back(player);
-+      break;
-+    }
-+  }
-+  return scoped_ptr<media::MediaPlayerOxide>(previous_player);
-+}
-+
-+int BrowserMediaPlayerManager::RoutingID() {
-+  return render_frame_host_->GetRoutingID();
-+}
-+
-+bool BrowserMediaPlayerManager::Send(IPC::Message* msg) {
-+  return render_frame_host_->Send(msg);
-+}
-+
-+}  // namespace content
-Index: src/content/browser/media/utouch/browser_media_player_manager.h
-===================================================================
---- src/content/browser/media/utouch/browser_media_player_manager.h	(revision 0)
-+++ src/content/browser/media/utouch/browser_media_player_manager.h	(working copy)
-@@ -0,0 +1,120 @@
-+// Copyright 2013 The Chromium Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style license that can be
-+// found in the LICENSE file.
-+
-+#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
-+#define CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
-+
-+#include "base/basictypes.h"
-+#include "base/callback.h"
-+#include "base/memory/scoped_ptr.h"
-+#include "base/memory/scoped_vector.h"
-+#include "base/time/time.h"
-+#include "content/common/content_export.h"
-+#include "content/common/media/media_player_messages_enums_oxide.h"
-+#include "ipc/ipc_message.h"
-+#include "media/base/utouch/media_player_oxide.h"
-+#include "media/base/utouch/media_player_manager.h"
-+#include "ui/gfx/rect_f.h"
-+#include "url/gurl.h"
-+
-+namespace content {
-+class RenderFrameHost;
-+class WebContents;
-+
-+class CONTENT_EXPORT BrowserMediaPlayerManager
-+    : public media::MediaPlayerManager {
-+ public:
-+  // Permits embedders to provide an extended version of the class.
-+  typedef BrowserMediaPlayerManager* (*Factory)(RenderFrameHost*);
-+  static void RegisterFactory(Factory factory);
-+
-+  // Returns a new instance using the registered factory if available.
-+  static BrowserMediaPlayerManager* Create(RenderFrameHost* rfh);
-+
-+  virtual ~BrowserMediaPlayerManager();
-+
-+  // Called when browser player wants the renderer media element to seek.
-+  // Any actual seek started by renderer will be handled by browser in OnSeek().
-+  void OnSeekRequest(int player_id, const base::TimeDelta& time_to_seek);
-+
-+  // Pauses all video players manages by this class.
-+  void PauseVideo();
-+
-+  // media::MediaPlayerManager overrides.
-+  virtual void OnTimeUpdate(
-+      int player_id, base::TimeDelta current_time) OVERRIDE;
-+  virtual void OnMediaMetadataChanged(
-+      int player_id,
-+      base::TimeDelta duration,
-+      int width,
-+      int height,
-+      bool success) OVERRIDE;
-+  virtual void OnPlaybackComplete(int player_id) OVERRIDE;
-+  virtual void OnMediaInterrupted(int player_id) OVERRIDE;
-+  virtual void OnBufferingUpdate(int player_id, int percentage) OVERRIDE;
-+  virtual void OnSeekComplete(
-+      int player_id,
-+      const base::TimeDelta& current_time) OVERRIDE;
-+  virtual void OnError(int player_id, int error) OVERRIDE;
-+  virtual void OnVideoSizeChanged(
-+      int player_id, int width, int height) OVERRIDE;
-+  virtual media::MediaPlayerOxide* GetPlayer(int player_id) OVERRIDE;
-+  virtual void DestroyAllMediaPlayers() OVERRIDE;
-+
-+  // Message handlers.
-+  virtual void OnInitialize(
-+      MediaPlayerHostMsg_Initialize_Type type,
-+      int player_id,
-+      const GURL& url,
-+      const GURL& first_party_for_cookies);
-+  virtual void OnStart(int player_id);
-+  virtual void OnSeek(int player_id, const base::TimeDelta& time);
-+  virtual void OnPause(int player_id, bool is_media_related_action);
-+  virtual void OnSetVolume(int player_id, double volume);
-+  virtual void OnSetPoster(int player_id, const GURL& poster);
-+  virtual void OnReleaseResources(int player_id);
-+  virtual void OnDestroyPlayer(int player_id);
-+
-+ protected:
-+  explicit BrowserMediaPlayerManager(RenderFrameHost* render_frame_host);
-+
-+  WebContents* web_contents() const { return web_contents_; }
-+
-+  void AddPlayer(media::MediaPlayerOxide* player);
-+
-+  void RemovePlayer(int player_id);
-+
-+  scoped_ptr<media::MediaPlayerOxide> SwapPlayer(
-+      int player_id,
-+      media::MediaPlayerOxide* player);
-+
-+  int RoutingID();
-+
-+  bool Send(IPC::Message* msg);
-+
-+ private:
-+  media::MediaPlayerOxide* CreateMediaPlayer(
-+      MediaPlayerHostMsg_Initialize_Type type,
-+      int player_id,
-+      const GURL& url,
-+      const GURL& first_party_for_cookies,
-+      bool hide_url_log,
-+      media::MediaPlayerManager* manager);
-+
-+  RenderFrameHost* const render_frame_host_;
-+
-+  // An array of managed players.
-+  ScopedVector<media::MediaPlayerOxide> players_;
-+
-+  WebContents* const web_contents_;
-+
-+  // NOTE: Weak pointers must be invalidated before all other member variables.
-+  base::WeakPtrFactory<BrowserMediaPlayerManager> weak_ptr_factory_;
-+
-+  DISALLOW_COPY_AND_ASSIGN(BrowserMediaPlayerManager);
-+};
-+
-+}  // namespace content
-+
-+#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
-Index: src/content/browser/media/utouch/media_web_contents_observer.cc
-===================================================================
---- src/content/browser/media/utouch/media_web_contents_observer.cc	(revision 0)
-+++ src/content/browser/media/utouch/media_web_contents_observer.cc	(working copy)
-@@ -0,0 +1,100 @@
-+// Copyright 2014 The Chromium Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style license that can be
-+// found in the LICENSE file.
-+
-+#include "content/browser/media/utouch/media_web_contents_observer.h"
-+
-+#include "base/memory/scoped_ptr.h"
-+#include "base/stl_util.h"
-+#include "content/browser/media/utouch/browser_media_player_manager.h"
-+#include "content/common/media/media_player_messages_oxide.h"
-+#include "content/public/browser/render_frame_host.h"
-+#include "content/public/browser/web_contents.h"
-+#include "ipc/ipc_message_macros.h"
-+#include "media/base/utouch/media_player_oxide.h"
-+
-+namespace content {
-+
-+using media::BrowserCdm;
-+using media::MediaPlayerOxide;
-+
-+MediaWebContentsObserver::MediaWebContentsObserver(
-+    RenderViewHost* render_view_host)
-+    : WebContentsObserver(WebContents::FromRenderViewHost(render_view_host)) {
-+}
-+
-+MediaWebContentsObserver::~MediaWebContentsObserver() {
-+}
-+
-+void MediaWebContentsObserver::RenderFrameDeleted(
-+    RenderFrameHost* render_frame_host) {
-+  uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
-+  media_player_managers_.erase(key);
-+}
-+
-+bool MediaWebContentsObserver::OnMessageReceived(
-+    const IPC::Message& msg,
-+    RenderFrameHost* render_frame_host) {
-+  if (OnMediaPlayerMessageReceived(msg, render_frame_host))
-+    return true;
-+
-+  return false;
-+}
-+
-+bool MediaWebContentsObserver::OnMediaPlayerMessageReceived(
-+    const IPC::Message& msg,
-+    RenderFrameHost* render_frame_host) {
-+  bool handled = true;
-+  IPC_BEGIN_MESSAGE_MAP(MediaWebContentsObserver, msg)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Initialize,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::OnInitialize)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Start,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::OnStart)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Seek,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::OnSeek)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Pause,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::OnPause)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetVolume,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::OnSetVolume)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetPoster,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::OnSetPoster)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Release,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::OnReleaseResources)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_DestroyMediaPlayer,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::OnDestroyPlayer)
-+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_DestroyAllMediaPlayers,
-+                        GetMediaPlayerManager(render_frame_host),
-+                        BrowserMediaPlayerManager::DestroyAllMediaPlayers)
-+      IPC_MESSAGE_UNHANDLED(handled = false)
-+  IPC_END_MESSAGE_MAP()
-+  return handled;
-+}
-+
-+BrowserMediaPlayerManager* MediaWebContentsObserver::GetMediaPlayerManager(
-+    RenderFrameHost* render_frame_host) {
-+  uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
-+  if (!media_player_managers_.contains(key)) {
-+    media_player_managers_.set(
-+        key,
-+        make_scoped_ptr(BrowserMediaPlayerManager::Create(render_frame_host)));
-+  }
-+  return media_player_managers_.get(key);
-+}
-+
-+void MediaWebContentsObserver::PauseVideo() {
-+  for (MediaPlayerManagerMap::iterator iter = media_player_managers_.begin();
-+      iter != media_player_managers_.end(); ++iter) {
-+    BrowserMediaPlayerManager* manager = iter->second;
-+    manager->PauseVideo();
-+  }
-+}
-+
-+}  // namespace content
-Index: src/content/browser/media/utouch/media_web_contents_observer.h
-===================================================================
---- src/content/browser/media/utouch/media_web_contents_observer.h	(revision 0)
-+++ src/content/browser/media/utouch/media_web_contents_observer.h	(working copy)
-@@ -0,0 +1,47 @@
-+// Copyright 2014 The Chromium Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style license that can be
-+// found in the LICENSE file.
-+
-+#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
-+#define CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
-+
-+#include "base/compiler_specific.h"
-+#include "base/containers/scoped_ptr_hash_map.h"
-+#include "content/common/content_export.h"
-+#include "content/public/browser/web_contents_observer.h"
-+
-+namespace content {
-+
-+class BrowserMediaPlayerManager;
-+class RenderViewHost;
-+
-+class CONTENT_EXPORT MediaWebContentsObserver : public WebContentsObserver {
-+ public:
-+  explicit MediaWebContentsObserver(RenderViewHost* render_view_host);
-+  virtual ~MediaWebContentsObserver();
-+
-+  virtual void RenderFrameDeleted(RenderFrameHost* render_frame_host) OVERRIDE;
-+  virtual bool OnMessageReceived(const IPC::Message& message,
-+                                 RenderFrameHost* render_frame_host) OVERRIDE;
-+
-+  bool OnMediaPlayerMessageReceived(const IPC::Message& message,
-+                                    RenderFrameHost* render_frame_host);
-+
-+  // Gets the media player manager associated with |render_frame_host|. Creates
-+  // a new one if it doesn't exist. The caller doesn't own the returned pointer.
-+  BrowserMediaPlayerManager* GetMediaPlayerManager(
-+      RenderFrameHost* render_frame_host);
-+
-+  void PauseVideo();
-+
-+ private:
-+  typedef base::ScopedPtrHashMap<uintptr_t, BrowserMediaPlayerManager>
-+      MediaPlayerManagerMap;
-+  MediaPlayerManagerMap media_player_managers_;
-+
-+  DISALLOW_COPY_AND_ASSIGN(MediaWebContentsObserver);
-+};
-+
-+}  // namespace content
-+
-+#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
-Index: src/content/common/content_message_generator.h
-===================================================================
---- src/content/common/content_message_generator.h	(revision 275940)
-+++ src/content/common/content_message_generator.h	(working copy)
-@@ -66,3 +66,6 @@
- #include "content/common/gin_java_bridge_messages.h"
- #include "content/common/media/media_player_messages_android.h"
- #endif  // defined(OS_ANDROID)
-+
-+#include "content/common/media/media_player_messages_oxide.h"
-+
 Index: src/content/content_browser.gypi
 ===================================================================
---- src/content/content_browser.gypi	(revision 275940)
+--- src/content/content_browser.gypi	(revision 279868)
 +++ src/content/content_browser.gypi	(working copy)
 @@ -785,6 +785,10 @@
        'browser/media/midi_dispatcher_host.h',
@@ -803,9 +800,9 @@ Index: src/content/content_browser.gypi
        'browser/media/webrtc_identity_store_backend.cc',
 Index: src/content/content_common.gypi
 ===================================================================
---- src/content/content_common.gypi	(revision 275940)
+--- src/content/content_common.gypi	(revision 279868)
 +++ src/content/content_common.gypi	(working copy)
-@@ -351,6 +351,8 @@
+@@ -356,6 +356,8 @@
        'common/media/media_param_traits.h',
        'common/media/media_player_messages_android.h',
        'common/media/media_player_messages_enums_android.h',
@@ -816,9 +813,9 @@ Index: src/content/content_common.gypi
        'common/media/media_stream_options.h',
 Index: src/content/content_renderer.gypi
 ===================================================================
---- src/content/content_renderer.gypi	(revision 275940)
+--- src/content/content_renderer.gypi	(revision 279868)
 +++ src/content/content_renderer.gypi	(working copy)
-@@ -286,6 +288,12 @@
+@@ -328,6 +330,12 @@
        'renderer/media/renderer_webmidiaccessor_impl.h',
        'renderer/media/texttrack_impl.cc',
        'renderer/media/texttrack_impl.h',
@@ -1167,7 +1164,7 @@ Index: src/content/renderer/media/utouch/renderer_media_player_manager.cc
 ===================================================================
 --- src/content/renderer/media/utouch/renderer_media_player_manager.cc	(revision 0)
 +++ src/content/renderer/media/utouch/renderer_media_player_manager.cc	(working copy)
-@@ -0,0 +1,213 @@
+@@ -0,0 +1,218 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -1195,8 +1192,6 @@ Index: src/content/renderer/media/utouch/renderer_media_player_manager.cc
 +    WebMediaPlayerOxide* player = player_it->second;
 +    player->Detach();
 +  }
-+
-+  Send(new MediaPlayerHostMsg_DestroyAllMediaPlayers(routing_id()));
 +}
 +
 +bool RendererMediaPlayerManager::OnMessageReceived(const IPC::Message& msg) {
@@ -1229,8 +1224,15 @@ Index: src/content/renderer/media/utouch/renderer_media_player_manager.cc
 +    int player_id,
 +    const GURL& url,
 +    const GURL& first_party_for_cookies) {
++
++  MediaPlayerHostMsg_Initialize_Params params;
++  params.type = type;
++  params.player_id = player_id;
++  params.url = url;
++  params.first_party_for_cookies = first_party_for_cookies;
++
 +  Send(new MediaPlayerHostMsg_Initialize(
-+      routing_id(), type, player_id, url, first_party_for_cookies));
++      routing_id(), params));
 +}
 +
 +void RendererMediaPlayerManager::Start(int player_id) {
@@ -1544,7 +1546,7 @@ Index: src/content/renderer/media/utouch/webmediaplayer_oxide.cc
 +#include "third_party/skia/include/core/SkPaint.h"
 +#include "third_party/skia/include/core/SkTypeface.h"
 +#include "ui/gfx/image/image.h"
-+#include "webkit/renderer/compositor_bindings/web_layer_impl.h"
++// #include "webkit/renderer/compositor_bindings/web_layer_impl.h"
 +
 +static const uint32 kGLTextureExternalOES = 0x8D65;
 +
@@ -2395,7 +2397,7 @@ Index: src/content/renderer/media/utouch/webmediaplayer_oxide.h
 ===================================================================
 --- src/content/renderer/media/utouch/webmediaplayer_oxide.h	(revision 0)
 +++ src/content/renderer/media/utouch/webmediaplayer_oxide.h	(working copy)
-@@ -0,0 +1,329 @@
+@@ -0,0 +1,323 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -2442,10 +2444,6 @@ Index: src/content/renderer/media/utouch/webmediaplayer_oxide.h
 +
 +namespace media {
 +class MediaLog;
-+}
-+
-+namespace webkit {
-+class WebLayerImpl;
 +}
 +
 +namespace content {
@@ -2688,8 +2686,6 @@ Index: src/content/renderer/media/utouch/webmediaplayer_oxide.h
 +  bool has_media_metadata_;
 +  bool has_media_info_;
 +
-+  scoped_ptr<webkit::WebLayerImpl> video_weblayer_;
-+
 +  // Internal pending playback state.
 +  // Store a playback request that cannot be started immediately.
 +  bool pending_playback_;
@@ -2727,7 +2723,7 @@ Index: src/content/renderer/media/utouch/webmediaplayer_oxide.h
 +#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_WEBMEDIAPLAYER_OXIDE_H_
 Index: src/content/renderer/render_frame_impl.cc
 ===================================================================
---- src/content/renderer/render_frame_impl.cc	(revision 275940)
+--- src/content/renderer/render_frame_impl.cc	(revision 279868)
 +++ src/content/renderer/render_frame_impl.cc	(working copy)
 @@ -70,6 +70,7 @@
  #include "content/renderer/media/webmediaplayer_impl.h"
@@ -2783,109 +2779,6 @@ Index: src/content/renderer/render_frame_impl.cc
  #endif  // defined(OS_ANDROID)
  }
  
-@@ -2807,6 +2821,13 @@
- blink::WebString RenderFrameImpl::userAgentOverride(blink::WebLocalFrame* frame,
-                                                     const blink::WebURL& url) {
-   DCHECK(!frame_ || frame_ == frame);
-+
-+  std::string embedder_override;
-+  if (GetContentClient()->renderer()->GetUserAgentOverride(
-+      url, &embedder_override)) {
-+    return WebString::fromUTF8(embedder_override);
-+  }
-+
-   if (!render_view_->webview() || !render_view_->webview()->mainFrame() ||
-       render_view_->renderer_preferences_.user_agent_override.empty()) {
-     return blink::WebString();
-@@ -3541,18 +3562,15 @@
-       new RenderMediaLog());
- }
- 
-+#endif  // defined(OS_ANDROID)
-+
- RendererMediaPlayerManager* RenderFrameImpl::GetMediaPlayerManager() {
-   if (!media_player_manager_) {
-     media_player_manager_ = new RendererMediaPlayerManager(this);
--#if defined(VIDEO_HOLE)
--    render_view_->RegisterVideoHoleFrame(this);
--#endif  // defined(VIDEO_HOLE)
-   }
-   return media_player_manager_;
- }
- 
--#endif  // defined(OS_ANDROID)
--
- #if defined(ENABLE_BROWSER_CDMS)
- RendererCdmManager* RenderFrameImpl::GetCdmManager() {
-   if (!cdm_manager_)
-@@ -70,6 +70,7 @@
- #include "content/renderer/media/webmediaplayer_impl.h"
- #include "content/renderer/media/webmediaplayer_ms.h"
- #include "content/renderer/media/webmediaplayer_params.h"
-+#include "content/renderer/media/utouch/webmediaplayer_oxide.h"
- #include "content/renderer/notification_provider.h"
- #include "content/renderer/npapi/plugin_channel_host.h"
- #include "content/renderer/render_process.h"
-@@ -137,6 +138,9 @@
- #include "content/renderer/media/crypto/renderer_cdm_manager.h"
- #endif
- 
-+#include "content/renderer/media/utouch/renderer_media_player_manager.h"
-+#include "content/renderer/media/utouch/webmediaplayer_oxide.h"
-+
- using blink::WebContextMenuData;
- using blink::WebData;
- using blink::WebDataSource;
-@@ -399,9 +403,7 @@
-       notification_provider_(NULL),
-       web_user_media_client_(NULL),
-       midi_dispatcher_(NULL),
--#if defined(OS_ANDROID)
-       media_player_manager_(NULL),
--#endif
- #if defined(ENABLE_BROWSER_CDMS)
-       cdm_manager_(NULL),
- #endif
-@@ -1369,6 +1371,16 @@
- #if defined(OS_ANDROID)
-   return CreateAndroidWebMediaPlayer(url, client);
- #else
-+
-+  return new WebMediaPlayerOxide(
-+      frame_,
-+      client,
-+      weak_factory_.GetWeakPtr(),
-+      GetMediaPlayerManager(),
-+      RenderThreadImpl::current()->GetMediaThreadMessageLoopProxy(),
-+      new RenderMediaLog());
-+
-+#if 0
-   WebMediaPlayerParams params(
-       base::Bind(&ContentRendererClient::DeferMediaLoad,
-                  base::Unretained(GetContentClient()->renderer()),
-@@ -1377,6 +1389,8 @@
-           render_view_->routing_id_, routing_id_));
-   return new WebMediaPlayerImpl(frame, client, weak_factory_.GetWeakPtr(),
-                                 params);
-+#endif
-+
- #endif  // defined(OS_ANDROID)
- }
- 
-@@ -2807,6 +2821,13 @@
- blink::WebString RenderFrameImpl::userAgentOverride(blink::WebLocalFrame* frame,
-                                                     const blink::WebURL& url) {
-   DCHECK(!frame_ || frame_ == frame);
-+
-+  std::string embedder_override;
-+  if (GetContentClient()->renderer()->GetUserAgentOverride(
-+      url, &embedder_override)) {
-+    return WebString::fromUTF8(embedder_override);
-+  }
-+
-   if (!render_view_->webview() || !render_view_->webview()->mainFrame() ||
-       render_view_->renderer_preferences_.user_agent_override.empty()) {
-     return blink::WebString();
 @@ -3541,18 +3562,15 @@
        new RenderMediaLog());
  }
@@ -2909,7 +2802,7 @@ Index: src/content/renderer/render_frame_impl.cc
    if (!cdm_manager_)
 Index: src/content/renderer/render_frame_impl.h
 ===================================================================
---- src/content/renderer/render_frame_impl.h	(revision 275940)
+--- src/content/renderer/render_frame_impl.h	(revision 279868)
 +++ src/content/renderer/render_frame_impl.h	(working copy)
 @@ -534,12 +534,12 @@
    // Returns the URL being loaded by the |frame_|'s request.
@@ -3009,10 +2902,6 @@ Index: src/media/base/utouch/media_player_manager.h
 +}  // namespace media
 +
 +#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MANAGER_H_
-Index: src/media/base/utouch/media_player_mediahub.cc
-===================================================================
---- src/media/base/utouch/media_player_mediahub.cc	(revision 0)
-+++ src/media/base/utouch/media_player_mediahub.cc	(working copy)
 Index: src/media/base/utouch/media_player_mediahub.cc
 ===================================================================
 --- src/media/base/utouch/media_player_mediahub.cc	(revision 0)
@@ -3335,180 +3224,16 @@ Index: src/media/base/utouch/media_player_oxide.h
 +#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_OXIDE_H_
 Index: src/media/media.gyp
 ===================================================================
---- src/media/media.gyp	(revision 275940)
+--- src/media/media.gyp	(revision 279868)
 +++ src/media/media.gyp	(working copy)
 @@ -339,6 +339,10 @@
          'base/user_input_monitor_linux.cc',
          'base/user_input_monitor_mac.cc',
          'base/user_input_monitor_win.cc',
-+	'base/utouch/media_player_mediahub.cc',
-+	'base/utouch/media_player_mediahub.h',
-+	'base/utouch/media_player_oxide.cc',
-+	'base/utouch/media_player_oxide.h',
++        'base/utouch/media_player_mediahub.cc',
++        'base/utouch/media_player_mediahub.h',
++        'base/utouch/media_player_oxide.cc',
++        'base/utouch/media_player_oxide.h',
          'base/video_decoder.cc',
          'base/video_decoder.h',
          'base/video_decoder_config.cc',
-Index: src/content/common/media/media_player_messages_oxide.h
-===================================================================
---- src/content/common/media/media_player_messages_oxide.h	(revision 0)
-+++ src/content/common/media/media_player_messages_oxide.h	(working copy)
-@@ -0,0 +1,144 @@
-+// IPC messages for android media player.
-+// Multiply-included message file, hence no include guard.
-+
-+#include "base/basictypes.h"
-+#include "base/time/time.h"
-+#include "content/common/content_export.h"
-+#include "content/common/media/media_player_messages_enums_oxide.h"
-+#include "ipc/ipc_message_macros.h"
-+#include "media/base/utouch/media_player_oxide.h"
-+#include "ui/gfx/rect_f.h"
-+#include "url/gurl.h"
-+
-+#undef IPC_MESSAGE_EXPORT
-+#define IPC_MESSAGE_EXPORT CONTENT_EXPORT
-+#define IPC_MESSAGE_START MediaPlayerMsgStart
-+
-+IPC_ENUM_TRAITS(MediaPlayerHostMsg_Initialize_Type)
-+
-+// Parameters to describe a media player
-+IPC_STRUCT_BEGIN(MediaPlayerHostMsg_Initialize_Params)
-+  IPC_STRUCT_MEMBER(MediaPlayerHostMsg_Initialize_Type, type)
-+  IPC_STRUCT_MEMBER(int, player_id)
-+  IPC_STRUCT_MEMBER(GURL, url)
-+  IPC_STRUCT_MEMBER(GURL, first_party_for_cookies)
-+  IPC_STRUCT_MEMBER(GURL, frame_url)
-+IPC_STRUCT_END()
-+
-+// Media buffering has updated.
-+IPC_MESSAGE_ROUTED2(MediaPlayerMsg_MediaBufferingUpdate,
-+                    int /* player_id */,
-+                    int /* percent */)
-+
-+// A media playback error has occurred.
-+IPC_MESSAGE_ROUTED2(MediaPlayerMsg_MediaError,
-+                    int /* player_id */,
-+                    int /* error */)
-+
-+// Playback is completed.
-+IPC_MESSAGE_ROUTED1(MediaPlayerMsg_MediaPlaybackCompleted,
-+                    int /* player_id */)
-+
-+// Media metadata has changed.
-+IPC_MESSAGE_ROUTED5(MediaPlayerMsg_MediaMetadataChanged,
-+                    int /* player_id */,
-+                    base::TimeDelta /* duration */,
-+                    int /* width */,
-+                    int /* height */,
-+                    bool /* success */)
-+
-+// Requests renderer player to ask its client (blink HTMLMediaElement) to seek.
-+IPC_MESSAGE_ROUTED2(MediaPlayerMsg_SeekRequest,
-+                    int /* player_id */,
-+                    base::TimeDelta /* time_to_seek_to */)
-+
-+// Media seek is completed.
-+IPC_MESSAGE_ROUTED2(MediaPlayerMsg_SeekCompleted,
-+                    int /* player_id */,
-+                    base::TimeDelta /* current_time */)
-+
-+// Video size has changed.
-+IPC_MESSAGE_ROUTED3(MediaPlayerMsg_MediaVideoSizeChanged,
-+                    int /* player_id */,
-+                    int /* width */,
-+                    int /* height */)
-+
-+// The current play time has updated.
-+IPC_MESSAGE_ROUTED2(MediaPlayerMsg_MediaTimeUpdate,
-+                    int /* player_id */,
-+                    base::TimeDelta /* current_time */)
-+
-+// The player has been released.
-+IPC_MESSAGE_ROUTED1(MediaPlayerMsg_MediaPlayerReleased,
-+                    int /* player_id */)
-+
-+// The player has entered fullscreen mode.
-+IPC_MESSAGE_ROUTED1(MediaPlayerMsg_DidEnterFullscreen,
-+                    int /* player_id */)
-+
-+// The player exited fullscreen.
-+IPC_MESSAGE_ROUTED1(MediaPlayerMsg_DidExitFullscreen,
-+                    int /* player_id */)
-+
-+// The player started playing.
-+IPC_MESSAGE_ROUTED1(MediaPlayerMsg_DidMediaPlayerPlay,
-+                    int /* player_id */)
-+
-+// The player was paused.
-+IPC_MESSAGE_ROUTED1(MediaPlayerMsg_DidMediaPlayerPause,
-+                    int /* player_id */)
-+
-+// Instructs the video element to enter fullscreen.
-+IPC_MESSAGE_ROUTED1(MediaPlayerMsg_RequestFullscreen,
-+                    int /*player_id */)
-+
-+// Pauses all video playback.
-+IPC_MESSAGE_ROUTED0(MediaPlayerMsg_PauseVideo)
-+
-+// Messages for controlling the media playback in browser process ----------
-+
-+// Destroy the media player object.
-+IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_DestroyMediaPlayer,
-+                    int /* player_id */)
-+
-+// Initialize a media player object.
-+IPC_MESSAGE_ROUTED1(
-+    MediaPlayerHostMsg_Initialize,
-+    MediaPlayerHostMsg_Initialize_Params);
-+
-+// Pause the player.
-+IPC_MESSAGE_ROUTED2(MediaPlayerHostMsg_Pause,
-+                    int /* player_id */,
-+                    bool /* is_media_related_action */)
-+
-+// Release player resources, but keep the object for future usage.
-+IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_Release, int /* player_id */)
-+
-+// Perform a seek.
-+IPC_MESSAGE_ROUTED2(MediaPlayerHostMsg_Seek,
-+                    int /* player_id */,
-+                    base::TimeDelta /* time */)
-+
-+// Start the player for playback.
-+IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_Start, int /* player_id */)
-+
-+// Set the volume.
-+IPC_MESSAGE_ROUTED2(MediaPlayerHostMsg_SetVolume,
-+                    int /* player_id */,
-+                    double /* volume */)
-+
-+// Set the poster image.
-+IPC_MESSAGE_ROUTED2(MediaPlayerHostMsg_SetPoster,
-+                    int /* player_id */,
-+                    GURL /* poster url */)
-+
-+// Requests the player to enter fullscreen.
-+IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_EnterFullscreen, int /* player_id */)
-+
-+// Requests the player to exit fullscreen.
-+IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_ExitFullscreen, int /* player_id */)
-+
-+// Inform the media source player of changed media duration from demuxer.
-+IPC_MESSAGE_CONTROL2(MediaPlayerHostMsg_DurationChanged,
-+                     int /* demuxer_client_id */,
-+                     base::TimeDelta /* duration */)
-Index: src/content/common/media/media_player_messages_enums_android_oxide.h
-===================================================================
---- src/content/common/media/media_player_messages_enums_android_oxide.h	(revision 0)
-+++ src/content/common/media/media_player_messages_enums_android_oxide.h	(working copy)
-@@ -0,0 +1,10 @@
-+#ifndef CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
-+#define CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
-+
-+// Dictates which type of media playback is being initialized.
-+enum MediaPlayerHostMsg_Initialize_Type {
-+  MEDIA_PLAYER_TYPE_URL,
-+  MEDIA_PLAYER_TYPE_MEDIA_SOURCE,
-+};
-+
-+#endif  // CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
