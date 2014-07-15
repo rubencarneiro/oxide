@@ -100,9 +100,9 @@ Column {
 
     function test_oxide_api_in_main_scope_when_flag_set() {
       var context =  webContext.createObject(null, {__injectOxideApiInMainWorld: true});
-      webView = testWebViewComponent.createObject(root, { context: context });
-      webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
-      verify(webView.waitForLoadSucceeded(),
+      root.webView = testWebViewComponent.createObject(root, { context: context });
+      root.webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
+      verify(root.webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
       var testApi = root.webView.getTestApi();
