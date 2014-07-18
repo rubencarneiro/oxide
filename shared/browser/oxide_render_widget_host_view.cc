@@ -279,7 +279,7 @@ void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,
     const base::Callback<void(bool, const SkBitmap&)>& callback,
-    const SkBitmap::Config config) {
+    const SkColorType color_type) {
   callback.Run(false, SkBitmap());
 }
 
@@ -294,8 +294,6 @@ void RenderWidgetHostView::CopyFromCompositingSurfaceToVideoFrame(
 bool RenderWidgetHostView::CanCopyToVideoFrame() const {
   return false;
 }
-
-void RenderWidgetHostView::OnAcceleratedCompositingStateChange() {}
 
 void RenderWidgetHostView::AcceleratedSurfaceInitialized(
     int host_id, int route_id) {}
@@ -355,9 +353,6 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
   web_view_->ProcessAckedTouchEvent(
       ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
 }
-
-void RenderWidgetHostView::SetScrollOffsetPinning(bool is_pinned_to_left,
-                                                  bool is_pinned_to_right) {}
 
 void RenderWidgetHostView::ImeCompositionRangeChanged(
     const gfx::Range& range,

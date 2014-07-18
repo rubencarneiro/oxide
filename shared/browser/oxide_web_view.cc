@@ -28,6 +28,7 @@
 #include "base/supports_user_data.h"
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
+#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
@@ -51,6 +52,7 @@
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
+#include "content/public/common/web_preferences.h"
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
@@ -61,7 +63,6 @@
 #include "ui/gl/gl_implementation.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
-#include "webkit/common/webpreferences.h"
 
 #include "shared/base/oxide_event_utils.h"
 #include "shared/browser/compositor/oxide_compositor.h"
@@ -186,7 +187,8 @@ bool HasFixedPageScale(const cc::CompositorFrameMetadata& frame_metadata) {
 
 bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   float window_width_dip =
-      frame_metadata.page_scale_factor * frame_metadata.viewport_size.width();
+      frame_metadata.page_scale_factor *
+      frame_metadata.scrollable_viewport_size.width();
   float content_width_css = frame_metadata.root_layer_size.width();
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
@@ -574,14 +576,11 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
-    int64 frame_id,
-    int64 parent_frame_id,
-    bool is_main_frame,
+    content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
     bool is_error_frame,
-    bool is_iframe_srcdoc,
-    content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
+    bool is_iframe_srcdoc) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 
@@ -589,56 +588,43 @@ void WebView::DidStartProvisionalLoadForFrame(
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
-    int64 frame_id,
-    const base::string16& frame_unique_name,
-    bool is_main_frame,
+    content::RenderFrameHost* render_frame_host,
     const GURL& url,
-    content::PageTransition transition_type,
-    content::RenderViewHost* render_view_host) {
-  content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByRoutingID(
-        frame_id, render_view_host->GetProcess()->GetID());
-  DCHECK(node);
-
-  WebFrame* frame = WebFrame::FromFrameTreeNode(node);
+    content::PageTransition transition_type) {
+  WebFrame* frame = WebFrame::FromFrameTreeNode(
+      static_cast<content::RenderFrameHostImpl *>(
+        render_frame_host)->frame_tree_node());
   if (frame) {
     frame->URLChanged();
   }
 }
 
 void WebView::DidFailProvisionalLoad(
-    int64 frame_id,
-    const base::string16& frame_unique_name,
-    bool is_main_frame,
+    content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
     int error_code,
-    const base::string16& error_description,
-    content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
+    const base::string16& error_description) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
-void WebView::DidFinishLoad(int64 frame_id,
-                            const GURL& validated_url,
-                            bool is_main_frame,
-                            content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
+void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
+                            const GURL& validated_url) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 
   OnLoadSucceeded(validated_url);
 }
 
-void WebView::DidFailLoad(int64 frame_id,
+void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
                           const GURL& validated_url,
-                          bool is_main_frame,
                           int error_code,
-                          const base::string16& error_description,
-                          content::RenderViewHost* render_view_host) {
-  if (!is_main_frame) {
+                          const base::string16& error_description) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 
@@ -653,18 +639,13 @@ void WebView::NavigationEntryCommitted(
   OnNavigationEntryCommitted();
 }
 
-void WebView::FrameDetached(content::RenderViewHost* rvh,
-                            int64 frame_routing_id) {
+void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
   if (!root_frame_) {
     return;
   }
 
-  content::FrameTreeNode* node =
-      web_contents_->GetFrameTree()->FindByRoutingID(
-        frame_routing_id, rvh->GetProcess()->GetID());
-  DCHECK(node);
-
-  WebFrame* frame = WebFrame::FromFrameTreeNode(node);
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
+  DCHECK(frame);
   frame->Destroy();
 }
 

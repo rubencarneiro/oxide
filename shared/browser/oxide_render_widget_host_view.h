@@ -123,7 +123,7 @@ class RenderWidgetHostView FINAL :
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
       const base::Callback<void(bool, const SkBitmap&)>& callback,
-      const SkBitmap::Config config) FINAL;
+      const SkColorType color_type) FINAL;
 
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
@@ -131,7 +131,6 @@ class RenderWidgetHostView FINAL :
       const base::Callback<void(bool)>& callback) FINAL;
   bool CanCopyToVideoFrame() const FINAL;
 
-  void OnAcceleratedCompositingStateChange() FINAL;
   void AcceleratedSurfaceInitialized(int host_id, int route_id) FINAL;
   void AcceleratedSurfaceBuffersSwapped(
       const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
@@ -151,9 +150,6 @@ class RenderWidgetHostView FINAL :
 
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) FINAL;
-
-  void SetScrollOffsetPinning(bool is_pinned_to_left,
-                              bool is_pinned_to_right) FINAL;
 
   void ImeCompositionRangeChanged(
       const gfx::Range& range,

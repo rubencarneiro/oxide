@@ -7,13 +7,13 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -177,9 +177,15 @@ bool ContentRendererClient::ShouldEnable
+@@ -187,9 +187,15 @@ bool ContentRendererClient::IsPluginAllo
+     const GURL& url) {
+   return false;
  }
  
- blink::WebWorkerPermissionClientProxy*
- ContentRendererClient::CreateWorkerPermissionClientProxy(
-     RenderFrame* render_frame, blink::WebFrame* frame) {
-   return NULL;
+ bool ContentRendererClient::IsPluginAllowedToUseDevChannelAPIs() {
+   return false;
  }
  
 +bool ContentRendererClient::GetUserAgentOverride(
@@ -26,15 +26,15 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -256,13 +256,16 @@ class CONTENT_EXPORT ContentRendererClie
-   // this renderer process. Currently, we apply the policy only to a renderer
-   // process running on a normal page from the web.
-   virtual bool ShouldEnableSiteIsolationPolicy() const;
+@@ -262,13 +262,16 @@ class CONTENT_EXPORT ContentRendererClie
+   // Returns true if the page at |url| can use Pepper Compositor APIs.
+   virtual bool IsPluginAllowedToUseCompositorAPI(const GURL& url);
  
-   // Creates a permission client proxy for in-renderer worker.
-   virtual blink::WebWorkerPermissionClientProxy*
-       CreateWorkerPermissionClientProxy(RenderFrame* render_frame,
-                                         blink::WebFrame* frame);
+   // Returns true if the page at |url| can use Pepper VideoDecoder APIs.
+   virtual bool IsPluginAllowedToUseVideoDecodeAPI(const GURL& url);
+ 
+   // Returns true if dev channel APIs are available for plugins.
+   virtual bool IsPluginAllowedToUseDevChannelAPIs();
 +
 +  virtual bool GetUserAgentOverride(const GURL& url,
 +                                    std::string* user_agent);
@@ -46,7 +46,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2753,16 +2753,23 @@ bool RenderFrameImpl::willCheckAndDispat
+@@ -2820,16 +2820,23 @@ bool RenderFrameImpl::willCheckAndDispat
  
    Send(new ViewHostMsg_RouteMessageEvent(render_view_->routing_id_, params));
    return true;

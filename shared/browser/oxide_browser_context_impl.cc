@@ -215,11 +215,11 @@ UserScriptMaster& BrowserContextImpl::UserScriptManager() {
   return user_script_manager_;
 }
 
-bool BrowserContextImpl::GetDevtoolsEnabled() const FINAL {
+bool BrowserContextImpl::GetDevtoolsEnabled() const {
   return devtools_enabled_;
 }
 
-int BrowserContextImpl::GetDevtoolsPort() const FINAL {
+int BrowserContextImpl::GetDevtoolsPort() const {
   return devtools_port_;
 }
 

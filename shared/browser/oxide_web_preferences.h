@@ -25,7 +25,9 @@
 #include "base/observer_list.h"
 #include "base/strings/string16.h"
 
+namespace content {
 class WebPreferences;
+}
 
 namespace oxide {
 
@@ -99,7 +101,7 @@ class WebPreferences {
   bool TestAttribute(Attr attr) const;
   void SetAttribute(Attr attr, bool val);
 
-  void ApplyToWebkitPrefs(::WebPreferences* prefs);
+  void ApplyToWebkitPrefs(content::WebPreferences* prefs);
 
   bool IsOwnedByEmbedder() const;
   void SetIsOwnedByEmbedder();

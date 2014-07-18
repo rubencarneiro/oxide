@@ -5,7 +5,7 @@
 diff --git a/base/threading/thread.cc b/base/threading/thread.cc
 --- a/base/threading/thread.cc
 +++ b/base/threading/thread.cc
-@@ -173,17 +173,17 @@ void Thread::Run(MessageLoop* message_lo
+@@ -175,17 +175,17 @@ void Thread::Run(MessageLoop* message_lo
  }
  
  void Thread::SetThreadWasQuitProperly(bool flag) {
@@ -52,7 +52,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
    DCHECK(router_);
    DCHECK(io_message_loop);
    DCHECK(shutdown_event);
-@@ -124,16 +126,18 @@ void GpuChannelManager::OnEstablishChann
+@@ -126,16 +128,18 @@ void GpuChannelManager::OnEstablishChann
    IPC::ChannelHandle channel_handle;
  
    gfx::GLShareGroup* share_group = NULL;
@@ -69,8 +69,8 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
      mailbox_manager = mailbox_manager_.get();
    }
  
-   scoped_ptr<GpuChannel> channel(new GpuChannel(
-       this, watchdog_, share_group, mailbox_manager, client_id, false));
+   scoped_ptr<GpuChannel> channel(new GpuChannel(this,
+                                                 watchdog_,
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
@@ -418,7 +418,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -662,13 +663,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -644,13 +645,15 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)

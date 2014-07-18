@@ -19,7 +19,7 @@
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
-#include "webkit/common/webpreferences.h"
+#include "content/public/common/web_preferences.h"
 
 #include "oxide_web_preferences_observer.h"
 
@@ -185,14 +185,14 @@ void WebPreferences::SetAttribute(Attr attr, bool val) {
   NotifyObserversOfChange();
 }
 
-void WebPreferences::ApplyToWebkitPrefs(::WebPreferences* prefs) {
-  prefs->standard_font_family_map[webkit_glue::kCommonScript] =
+void WebPreferences::ApplyToWebkitPrefs(content::WebPreferences* prefs) {
+  prefs->standard_font_family_map[content::kCommonScript] =
       standard_font_family_;
-  prefs->fixed_font_family_map[webkit_glue::kCommonScript] =
+  prefs->fixed_font_family_map[content::kCommonScript] =
       fixed_font_family_;
-  prefs->serif_font_family_map[webkit_glue::kCommonScript] =
+  prefs->serif_font_family_map[content::kCommonScript] =
       serif_font_family_;
-  prefs->sans_serif_font_family_map[webkit_glue::kCommonScript] =
+  prefs->sans_serif_font_family_map[content::kCommonScript] =
       sans_serif_font_family_;
 
   prefs->default_encoding = default_encoding_;

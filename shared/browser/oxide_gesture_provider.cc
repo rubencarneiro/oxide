@@ -144,6 +144,8 @@ class MotionEvent : public ui::MotionEvent {
                        size_t historical_index) const FINAL;
   float GetHistoricalY(size_t pointer_index,
                        size_t historical_index) const FINAL;
+  ToolType GetToolType(size_t pointer_index) const FINAL;
+  int GetButtonState() const FINAL;
 
   scoped_ptr<ui::MotionEvent> Cancel() const FINAL;
 
@@ -357,6 +359,17 @@ float MotionEvent::GetHistoricalY(size_t pointer_index,
                                   size_t historical_index) const {
   NOTREACHED();
   return 0.0f;
+}
+
+ui::MotionEvent::ToolType MotionEvent::GetToolType(
+    size_t pointer_index) const {
+  NOTREACHED();
+  return TOOL_TYPE_UNKNOWN;
+}
+
+int MotionEvent::GetButtonState() const {
+  NOTREACHED();
+  return 0;
 }
 
 scoped_ptr<ui::MotionEvent> MotionEvent::Cancel() const {

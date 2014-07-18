@@ -28,7 +28,7 @@
 #include "ui/gl/gl_implementation_osmesa.h"
 #include "ui/gl/gl_osmesa_api_implementation.h"
 #include "ui/gl/gl_share_group.h"
-#include "ui/ozone/ozone_platform.h"
+#include "ui/ozone/public/ozone_platform.h"
 #include "ui/ozone/public/surface_factory_ozone.h"
 
 #include "shared/browser/oxide_browser_process_main.h"

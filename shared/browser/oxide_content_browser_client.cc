@@ -34,6 +34,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
+#include "content/public/common/web_preferences.h"
 #include "net/base/net_module.h"
 #include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
@@ -44,7 +45,6 @@
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_share_group.h"
 #include "ui/gl/gl_surface.h"
-#include "webkit/common/webpreferences.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_constants.h"
@@ -431,7 +431,7 @@ content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {
 void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     const GURL& url,
-    ::WebPreferences* prefs) {
+    content::WebPreferences* prefs) {
   WebViewContentsHelper* contents_helper =
       WebViewContentsHelper::FromRenderViewHost(render_view_host);
 

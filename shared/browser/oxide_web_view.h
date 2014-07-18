@@ -214,7 +214,7 @@ class WebView : public ScriptMessageTarget,
       const bool shouldPrompt,
       const base::string16& suggestedFilename,
       const std::string& cookies,
-      const std::string& referrer) FINAL;
+      const std::string& referrer);
 
   Compositor* compositor() const { return compositor_.get(); }
 
@@ -326,47 +326,33 @@ class WebView : public ScriptMessageTarget,
                              content::RenderViewHost* new_host) FINAL;
 
   void DidStartProvisionalLoadForFrame(
-      int64 frame_id,
-      int64 parent_frame_id,
-      bool is_main_frame,
+      content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       bool is_error_page,
-      bool is_iframe_srcdoc,
-      content::RenderViewHost* render_view_host) FINAL;
+      bool is_iframe_srcdoc) FINAL;
 
   void DidCommitProvisionalLoadForFrame(
-      int64 frame_id,
-      const base::string16& frame_unique_name,
-      bool is_main_frame,
+      content::RenderFrameHost* render_frame_host,
       const GURL& url,
-      content::PageTransition transition_type,
-      content::RenderViewHost* render_view_host) FINAL;
+      content::PageTransition transition_type) FINAL;
 
   void DidFailProvisionalLoad(
-      int64 frame_id,
-      const base::string16& frame_unique_name,
-      bool is_main_frame,
+      content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       int error_code,
-      const base::string16& error_description,
-      content::RenderViewHost* render_view_host) FINAL;
+      const base::string16& error_description) FINAL;
 
-  void DidFinishLoad(int64 frame_id,
-                     const GURL& validated_url,
-                     bool is_main_frame,
-                     content::RenderViewHost* render_view_host);
-  void DidFailLoad(int64 frame_id,
+  void DidFinishLoad(content::RenderFrameHost* render_frame_host,
+                     const GURL& validated_url) FINAL;
+  void DidFailLoad(content::RenderFrameHost* render_frame_host,
                    const GURL& validated_url,
-                   bool is_main_frame,
                    int error_code,
-                   const base::string16& error_description,
-                   content::RenderViewHost* render_view_host) FINAL;
+                   const base::string16& error_description) FINAL;
 
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) FINAL;
 
-  void FrameDetached(content::RenderViewHost* rvh,
-                     int64 frame_routing_id) FINAL;
+  void FrameDetached(content::RenderFrameHost* render_frame_host) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
 

@@ -68,6 +68,8 @@
         'base/oxide_qt_event_utils.h',
         'base/oxide_qt_screen_utils.cc',
         'base/oxide_qt_screen_utils.h',
+        'base/oxide_qt_skutils.cc',
+        'base/oxide_qt_skutils.h',
         'browser/native_web_keyboard_event_oxide.cc',
         'browser/oxide_default_screen_info.cc',
         'browser/oxide_qt_content_browser_client.cc',
