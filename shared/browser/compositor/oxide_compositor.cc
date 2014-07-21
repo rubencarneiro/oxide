@@ -162,7 +162,8 @@ void Compositor::SetVisibility(bool visible) {
 
     layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
         this, content::HostSharedBitmapManager::current(), settings,
-        CompositorUtils::GetInstance()->GetMessageLoopProxy());
+        base::MessageLoopProxy::current(),
+        CompositorUtils::GetInstance()->GetTaskRunner());
 
     layer_tree_host_->SetRootLayer(root_layer_);
     layer_tree_host_->SetVisible(true);
