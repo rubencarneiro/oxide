@@ -73,7 +73,7 @@
           'action_name': 'repack_oxide_100_percent',
           'variables': {
             'pak_inputs': [
-              '<(SHARED_INTERMEDIATE_DIR)/ui/ui_resources/ui_resources_100_percent.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_resources_100_percent.pak',
             ]
           },
@@ -90,7 +90,7 @@
           'action_name': 'repack_oxide_200_percent',
           'variables': {
             'pak_inputs': [
-              '<(SHARED_INTERMEDIATE_DIR)/ui/ui_resources/ui_resources_200_percent.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_200_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_resources_200_percent.pak',
             ]
           },
