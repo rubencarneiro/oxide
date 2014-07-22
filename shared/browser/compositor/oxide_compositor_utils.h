@@ -29,7 +29,7 @@
 #include "ui/gfx/native_widget_types.h"
 
 namespace base {
-class MessageLoopProxy;
+class SingleThreadTaskRunner;
 class TaskRunner;
 class Thread;
 }
@@ -63,7 +63,7 @@ class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
   void Initialize();
   void Destroy();
 
-  scoped_refptr<base::MessageLoopProxy> GetMessageLoopProxy();
+  scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
 
   scoped_refptr<cc::ContextProvider> GetContextProvider();
 
@@ -90,7 +90,7 @@ class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
   int32 client_id_;
 
   scoped_ptr<base::Thread> compositor_thread_;
-  scoped_refptr<base::MessageLoopProxy> message_loop_proxy_;
+  scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
   scoped_refptr<content::ContextProviderCommandBuffer> context_provider_;
 
   base::Lock fetch_texture_resources_lock_;

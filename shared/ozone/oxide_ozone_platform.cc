@@ -23,6 +23,7 @@
 #include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/gpu_platform_support_host.h"
 #include "ui/ozone/public/ozone_platform.h"
+#include "ui/platform_window/platform_window.h"
 
 #include "oxide_ozone_surface_factory.h"
 
@@ -55,7 +56,13 @@ class OzonePlatform : public ui::OzonePlatform {
   ui::GpuPlatformSupportHost* GetGpuPlatformSupportHost() FINAL {
     return gpu_platform_support_host_.get();
   }
-  
+
+  scoped_ptr<ui::PlatformWindow> CreatePlatformWindow(
+      ui::PlatformWindowDelegate* delegate,
+      const gfx::Rect& bounds) FINAL {
+    return scoped_ptr<ui::PlatformWindow>();
+  }
+
  private:
   void InitializeUI() OVERRIDE {}
   void InitializeGPU() OVERRIDE {}

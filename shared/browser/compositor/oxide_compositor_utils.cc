@@ -22,6 +22,7 @@
 #include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop_proxy.h"
+#include "base/single_thread_task_runner.h"
 #include "base/threading/thread.h"
 #include "base/threading/thread_restrictions.h"
 #include "cc/output/context_provider.h"
@@ -280,7 +281,7 @@ void CompositorUtils::Initialize() {
   compositor_thread_.reset(new base::Thread("Oxide_CompositorThread"));
   compositor_thread_->Start();
 
-  message_loop_proxy_ = compositor_thread_->message_loop_proxy();
+  task_runner_ = compositor_thread_->message_loop_proxy();
 
   context_provider_ = content::ContextProviderCommandBuffer::Create(
       CreateOffscreenContext3D(), "OxideCompositor");
@@ -288,7 +289,7 @@ void CompositorUtils::Initialize() {
   client_id_ =
       content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId();
 
-  message_loop_proxy_->PostTask(
+  task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&InitializeOnCompositorThread, context_provider_));
 
@@ -303,8 +304,8 @@ void CompositorUtils::Destroy() {
   context_provider_ = NULL;
 }
 
-scoped_refptr<base::MessageLoopProxy> CompositorUtils::GetMessageLoopProxy() {
-  return message_loop_proxy_;
+scoped_refptr<base::SingleThreadTaskRunner> CompositorUtils::GetTaskRunner() {
+  return task_runner_;
 }
 
 scoped_refptr<cc::ContextProvider> CompositorUtils::GetContextProvider() {

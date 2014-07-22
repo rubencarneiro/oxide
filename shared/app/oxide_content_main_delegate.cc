@@ -129,7 +129,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     // Remove this when we have a working GPU blacklist
     command_line->AppendSwitch(switches::kDisableGpuRasterization);
 
-    command_line->AppendSwitch(switches::kEnableGestureTapHighlight);
     command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
     command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 

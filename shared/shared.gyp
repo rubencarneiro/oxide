@@ -337,7 +337,6 @@
         'common/oxide_user_script.cc',
         'common/oxide_user_script.h',
         'gl/gl_context_linux.cc',
-        'gl/gl_image_linux.cc',
         'gl/gl_implementation_linux.cc',
         'gl/gl_surface_linux.cc',
         'gl/oxide_gl_implementation.h',

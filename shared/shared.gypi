@@ -28,7 +28,6 @@
       ['_target_name=="gl"', {
         'sources/': [
           ['exclude', 'gl_context_ozone\\.cc'],
-          ['exclude', 'gl_image_ozone\\.cc'],
           ['exclude', 'gl_implementation_ozone\\.cc'],
           ['exclude', 'gl_surface_ozone\\.cc'],
         ],
