@@ -1,0 +1,3490 @@
+Index: src/content/browser/media/utouch/browser_media_player_manager.cc
+===================================================================
+--- src/content/browser/media/utouch/browser_media_player_manager.cc	(revision 0)
++++ src/content/browser/media/utouch/browser_media_player_manager.cc	(working copy)
+@@ -0,0 +1,264 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "content/browser/media/utouch/browser_media_player_manager.h"
++
++#include "base/command_line.h"
++#include "content/browser/renderer_host/render_view_host_impl.h"
++#include "content/common/media/media_player_messages_oxide.h"
++#include "content/public/browser/browser_context.h"
++#include "content/public/browser/content_browser_client.h"
++#include "content/public/browser/render_frame_host.h"
++#include "content/public/browser/render_process_host.h"
++#include "content/public/browser/render_view_host.h"
++#include "content/public/browser/storage_partition.h"
++#include "content/public/browser/web_contents.h"
++#include "content/public/browser/web_contents_delegate.h"
++#include "content/public/common/content_client.h"
++#include "content/public/common/content_switches.h"
++#include "media/base/utouch/media_player_mediahub.h"
++#include "media/base/media_switches.h"
++
++using media::MediaPlayerOxide;
++using media::MediaPlayerManager;
++
++namespace content {
++
++// Threshold on the number of media players per renderer before we start
++// attempting to release inactive media players.
++const int kMediaPlayerThreshold = 1;
++
++static BrowserMediaPlayerManager::Factory g_factory = NULL;
++
++// static
++void BrowserMediaPlayerManager::RegisterFactory(Factory factory) {
++  g_factory = factory;
++}
++
++// static
++BrowserMediaPlayerManager* BrowserMediaPlayerManager::Create(
++    RenderFrameHost* rfh) {
++  if (g_factory)
++    return g_factory(rfh);
++  return new BrowserMediaPlayerManager(rfh);
++}
++
++MediaPlayerOxide* BrowserMediaPlayerManager::CreateMediaPlayer(
++    const MediaPlayerHostMsg_Initialize_Params& params,
++    MediaPlayerManager* manager) {
++  switch (type) {
++    case MEDIA_PLAYER_TYPE_URL: {
++      const std::string user_agent = GetContentClient()->GetUserAgent();
++
++      media::MediaPlayerMediaHub* media_player_bridge =
++	  new media::MediaPlayerMediaHub(
++              params.player_id,
++              params.url,
++              params.first_party_for_cookies,
++              user_agent);
++      BrowserMediaPlayerManager* browser_media_player_manager =
++          static_cast<BrowserMediaPlayerManager*>(manager);
++
++      browser_media_player_manager->OnMediaMetadataChanged(
++          params.player_id, base::TimeDelta(), 0, 0, false);
++
++      return media_player_bridge;
++    }
++
++    case MEDIA_PLAYER_TYPE_MEDIA_SOURCE: {
++      NOTIMPLEMENTED();
++      return NULL;
++    }
++  }
++
++  NOTREACHED();
++  return NULL;
++}
++
++BrowserMediaPlayerManager::BrowserMediaPlayerManager(
++    RenderFrameHost* render_frame_host)
++    : render_frame_host_(render_frame_host),
++      web_contents_(WebContents::FromRenderFrameHost(render_frame_host)),
++      weak_ptr_factory_(this) {
++}
++
++BrowserMediaPlayerManager::~BrowserMediaPlayerManager() {}
++
++void BrowserMediaPlayerManager::OnTimeUpdate(int player_id,
++                                             base::TimeDelta current_time) {
++  Send(
++      new MediaPlayerMsg_MediaTimeUpdate(RoutingID(), player_id, current_time));
++}
++
++void BrowserMediaPlayerManager::OnMediaMetadataChanged(
++    int player_id, base::TimeDelta duration, int width, int height,
++    bool success) {
++
++  Send(new MediaPlayerMsg_MediaMetadataChanged(
++      RoutingID(), player_id, duration, width, height, success));
++}
++
++void BrowserMediaPlayerManager::OnPlaybackComplete(int player_id) {
++  Send(new MediaPlayerMsg_MediaPlaybackCompleted(RoutingID(), player_id));
++}
++
++void BrowserMediaPlayerManager::OnMediaInterrupted(int player_id) {
++  // Tell WebKit that the audio should be paused, then release all resources
++  Send(new MediaPlayerMsg_MediaPlayerReleased(RoutingID(), player_id));
++  OnReleaseResources(player_id);
++}
++
++void BrowserMediaPlayerManager::OnBufferingUpdate(
++    int player_id, int percentage) {
++  Send(new MediaPlayerMsg_MediaBufferingUpdate(
++      RoutingID(), player_id, percentage));
++}
++
++void BrowserMediaPlayerManager::OnSeekRequest(
++    int player_id,
++    const base::TimeDelta& time_to_seek) {
++  Send(new MediaPlayerMsg_SeekRequest(RoutingID(), player_id, time_to_seek));
++}
++
++void BrowserMediaPlayerManager::PauseVideo() {
++  Send(new MediaPlayerMsg_PauseVideo(RoutingID()));
++}
++
++void BrowserMediaPlayerManager::OnSeekComplete(
++    int player_id,
++    const base::TimeDelta& current_time) {
++  Send(new MediaPlayerMsg_SeekCompleted(RoutingID(), player_id, current_time));
++}
++
++void BrowserMediaPlayerManager::OnError(int player_id, int error) {
++  Send(new MediaPlayerMsg_MediaError(RoutingID(), player_id, error));
++}
++
++void BrowserMediaPlayerManager::OnVideoSizeChanged(
++    int player_id, int width, int height) {
++  Send(new MediaPlayerMsg_MediaVideoSizeChanged(RoutingID(), player_id,
++      width, height));
++}
++
++MediaPlayerOxide* BrowserMediaPlayerManager::GetPlayer(int player_id) {
++  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
++      it != players_.end(); ++it) {
++    if ((*it)->player_id() == player_id)
++      return *it;
++  }
++  return NULL;
++}
++
++void BrowserMediaPlayerManager::DestroyAllMediaPlayers() {
++  players_.clear();
++}
++
++void BrowserMediaPlayerManager::OnInitialize(
++    const MediaPlayerHostMsg_Initialize_Params& media_player_params) {
++
++  RemovePlayer(media_player_params.player_id);
++
++  RenderProcessHostImpl* host = static_cast<RenderProcessHostImpl*>(
++      web_contents()->GetRenderProcessHost());
++
++  MediaPlayerOxide* player = CreateMediaPlayer(
++      media_player_params,
++      this);
++
++  if (!player)
++    return;
++
++  AddPlayer(player);
++}
++
++void BrowserMediaPlayerManager::OnStart(int player_id) {
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (!player)
++    return;
++
++  player->Start();
++}
++
++void BrowserMediaPlayerManager::OnSeek(
++    int player_id,
++    const base::TimeDelta& time) {
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (player)
++    player->SeekTo(time);
++}
++
++void BrowserMediaPlayerManager::OnPause(
++    int player_id,
++    bool is_media_related_action) {
++
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (player)
++    player->Pause(is_media_related_action);
++}
++
++void BrowserMediaPlayerManager::OnSetVolume(int player_id, double volume) {
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (player)
++    player->SetVolume(volume);
++}
++
++void BrowserMediaPlayerManager::OnSetPoster(int player_id, const GURL& url) {
++  // To be overridden by subclasses.
++}
++
++void BrowserMediaPlayerManager::OnReleaseResources(int player_id) {
++  MediaPlayerOxide* player = GetPlayer(player_id);
++
++  if (player)
++    player->Release();
++}
++
++void BrowserMediaPlayerManager::OnDestroyPlayer(int player_id) {
++  RemovePlayer(player_id);
++}
++
++void BrowserMediaPlayerManager::AddPlayer(MediaPlayerOxide* player) {
++  DCHECK(!GetPlayer(player->player_id()));
++  players_.push_back(player);
++}
++
++void BrowserMediaPlayerManager::RemovePlayer(int player_id) {
++  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
++      it != players_.end(); ++it) {
++    MediaPlayerOxide* player = *it;
++    if (player->player_id() == player_id) {
++      players_.erase(it);
++      break;
++    }
++  }
++}
++
++scoped_ptr<media::MediaPlayerOxide> BrowserMediaPlayerManager::SwapPlayer(
++      int player_id, media::MediaPlayerOxide* player) {
++  media::MediaPlayerOxide* previous_player = NULL;
++  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
++      it != players_.end(); ++it) {
++    if ((*it)->player_id() == player_id) {
++      previous_player = *it;
++      players_.weak_erase(it);
++      players_.push_back(player);
++      break;
++    }
++  }
++  return scoped_ptr<media::MediaPlayerOxide>(previous_player);
++}
++
++int BrowserMediaPlayerManager::RoutingID() {
++  return render_frame_host_->GetRoutingID();
++}
++
++bool BrowserMediaPlayerManager::Send(IPC::Message* msg) {
++  return render_frame_host_->Send(msg);
++}
++
++}  // namespace content
+Index: src/content/browser/media/utouch/browser_media_player_manager.h
+===================================================================
+--- src/content/browser/media/utouch/browser_media_player_manager.h	(revision 0)
++++ src/content/browser/media/utouch/browser_media_player_manager.h	(working copy)
+@@ -0,0 +1,115 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
++#define CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
++
++#include "base/basictypes.h"
++#include "base/callback.h"
++#include "base/memory/scoped_ptr.h"
++#include "base/memory/scoped_vector.h"
++#include "base/time/time.h"
++#include "content/common/content_export.h"
++#include "content/common/media/media_player_messages_enums_oxide.h"
++#include "ipc/ipc_message.h"
++#include "media/base/utouch/media_player_oxide.h"
++#include "media/base/utouch/media_player_manager.h"
++#include "ui/gfx/rect_f.h"
++#include "url/gurl.h"
++
++struct MediaPlayerHostMsg_Initialize_Params;
++
++namespace content {
++class RenderFrameHost;
++class WebContents;
++
++class CONTENT_EXPORT BrowserMediaPlayerManager
++    : public media::MediaPlayerManager {
++ public:
++  // Permits embedders to provide an extended version of the class.
++  typedef BrowserMediaPlayerManager* (*Factory)(RenderFrameHost*);
++  static void RegisterFactory(Factory factory);
++
++  // Returns a new instance using the registered factory if available.
++  static BrowserMediaPlayerManager* Create(RenderFrameHost* rfh);
++
++  virtual ~BrowserMediaPlayerManager();
++
++  // Called when browser player wants the renderer media element to seek.
++  // Any actual seek started by renderer will be handled by browser in OnSeek().
++  void OnSeekRequest(int player_id, const base::TimeDelta& time_to_seek);
++
++  // Pauses all video players manages by this class.
++  void PauseVideo();
++
++  // media::MediaPlayerManager overrides.
++  virtual void OnTimeUpdate(
++      int player_id, base::TimeDelta current_time) OVERRIDE;
++  virtual void OnMediaMetadataChanged(
++      int player_id,
++      base::TimeDelta duration,
++      int width,
++      int height,
++      bool success) OVERRIDE;
++  virtual void OnPlaybackComplete(int player_id) OVERRIDE;
++  virtual void OnMediaInterrupted(int player_id) OVERRIDE;
++  virtual void OnBufferingUpdate(int player_id, int percentage) OVERRIDE;
++  virtual void OnSeekComplete(
++      int player_id,
++      const base::TimeDelta& current_time) OVERRIDE;
++  virtual void OnError(int player_id, int error) OVERRIDE;
++  virtual void OnVideoSizeChanged(
++      int player_id, int width, int height) OVERRIDE;
++  virtual media::MediaPlayerOxide* GetPlayer(int player_id) OVERRIDE;
++  virtual void DestroyAllMediaPlayers() OVERRIDE;
++
++  // Message handlers.
++  virtual void OnInitialize(
++      const MediaPlayerHostMsg_Initialize_Params& media_player_params);
++  virtual void OnStart(int player_id);
++  virtual void OnSeek(int player_id, const base::TimeDelta& time);
++  virtual void OnPause(int player_id, bool is_media_related_action);
++  virtual void OnSetVolume(int player_id, double volume);
++  virtual void OnSetPoster(int player_id, const GURL& poster);
++  virtual void OnReleaseResources(int player_id);
++  virtual void OnDestroyPlayer(int player_id);
++
++ protected:
++  explicit BrowserMediaPlayerManager(RenderFrameHost* render_frame_host);
++
++  WebContents* web_contents() const { return web_contents_; }
++
++  void AddPlayer(media::MediaPlayerOxide* player);
++
++  void RemovePlayer(int player_id);
++
++  scoped_ptr<media::MediaPlayerOxide> SwapPlayer(
++      int player_id,
++      media::MediaPlayerOxide* player);
++
++  int RoutingID();
++
++  bool Send(IPC::Message* msg);
++
++ private:
++  media::MediaPlayerOxide* CreateMediaPlayer(
++      const MediaPlayerHostMsg_Initialize_Params& params,
++      media::MediaPlayerManager* manager);
++
++  RenderFrameHost* const render_frame_host_;
++
++  // An array of managed players.
++  ScopedVector<media::MediaPlayerOxide> players_;
++
++  WebContents* const web_contents_;
++
++  // NOTE: Weak pointers must be invalidated before all other member variables.
++  base::WeakPtrFactory<BrowserMediaPlayerManager> weak_ptr_factory_;
++
++  DISALLOW_COPY_AND_ASSIGN(BrowserMediaPlayerManager);
++};
++
++}  // namespace content
++
++#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
+Index: src/content/browser/media/utouch/media_web_contents_observer.cc
+===================================================================
+--- src/content/browser/media/utouch/media_web_contents_observer.cc	(revision 0)
++++ src/content/browser/media/utouch/media_web_contents_observer.cc	(working copy)
+@@ -0,0 +1,93 @@
++#include "content/browser/media/utouch/media_web_contents_observer.h"
++
++#include "base/memory/scoped_ptr.h"
++#include "base/stl_util.h"
++#include "content/browser/media/utouch/browser_media_player_manager.h"
++#include "content/common/media/media_player_messages_oxide.h"
++#include "content/public/browser/render_frame_host.h"
++#include "content/public/browser/web_contents.h"
++#include "ipc/ipc_message_macros.h"
++#include "media/base/utouch/media_player_oxide.h"
++
++namespace content {
++
++using media::BrowserCdm;
++using media::MediaPlayerOxide;
++
++MediaWebContentsObserver::MediaWebContentsObserver(
++    RenderViewHost* render_view_host)
++    : WebContentsObserver(WebContents::FromRenderViewHost(render_view_host)) {
++}
++
++MediaWebContentsObserver::~MediaWebContentsObserver() {
++}
++
++void MediaWebContentsObserver::RenderFrameDeleted(
++    RenderFrameHost* render_frame_host) {
++  uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
++  media_player_managers_.erase(key);
++}
++
++bool MediaWebContentsObserver::OnMessageReceived(
++    const IPC::Message& msg,
++    RenderFrameHost* render_frame_host) {
++  if (OnMediaPlayerMessageReceived(msg, render_frame_host))
++    return true;
++
++  return false;
++}
++
++bool MediaWebContentsObserver::OnMediaPlayerMessageReceived(
++    const IPC::Message& msg,
++    RenderFrameHost* render_frame_host) {
++  bool handled = true;
++  IPC_BEGIN_MESSAGE_MAP(MediaWebContentsObserver, msg)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Initialize,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnInitialize)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Start,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnStart)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Seek,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnSeek)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Pause,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnPause)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetVolume,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnSetVolume)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetPoster,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnSetPoster)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Release,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnReleaseResources)
++    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_DestroyMediaPlayer,
++                        GetMediaPlayerManager(render_frame_host),
++                        BrowserMediaPlayerManager::OnDestroyPlayer)
++      IPC_MESSAGE_UNHANDLED(handled = false)
++  IPC_END_MESSAGE_MAP()
++  return handled;
++}
++
++BrowserMediaPlayerManager* MediaWebContentsObserver::GetMediaPlayerManager(
++    RenderFrameHost* render_frame_host) {
++  uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
++  if (!media_player_managers_.contains(key)) {
++    media_player_managers_.set(
++        key,
++        make_scoped_ptr(BrowserMediaPlayerManager::Create(render_frame_host)));
++  }
++  return media_player_managers_.get(key);
++}
++
++void MediaWebContentsObserver::PauseVideo() {
++  for (MediaPlayerManagerMap::iterator iter = media_player_managers_.begin();
++      iter != media_player_managers_.end(); ++iter) {
++    BrowserMediaPlayerManager* manager = iter->second;
++    manager->PauseVideo();
++  }
++}
++
++}  // namespace content
+Index: src/content/browser/media/utouch/media_web_contents_observer.h
+===================================================================
+--- src/content/browser/media/utouch/media_web_contents_observer.h	(revision 0)
++++ src/content/browser/media/utouch/media_web_contents_observer.h	(working copy)
+@@ -0,0 +1,43 @@
++#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
++#define CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
++
++#include "base/compiler_specific.h"
++#include "base/containers/scoped_ptr_hash_map.h"
++#include "content/common/content_export.h"
++#include "content/public/browser/web_contents_observer.h"
++
++namespace content {
++
++class BrowserMediaPlayerManager;
++class RenderViewHost;
++
++class CONTENT_EXPORT MediaWebContentsObserver : public WebContentsObserver {
++ public:
++  explicit MediaWebContentsObserver(RenderViewHost* render_view_host);
++  virtual ~MediaWebContentsObserver();
++
++  virtual void RenderFrameDeleted(RenderFrameHost* render_frame_host) OVERRIDE;
++  virtual bool OnMessageReceived(const IPC::Message& message,
++                                 RenderFrameHost* render_frame_host) OVERRIDE;
++
++  bool OnMediaPlayerMessageReceived(const IPC::Message& message,
++                                    RenderFrameHost* render_frame_host);
++
++  // Gets the media player manager associated with |render_frame_host|. Creates
++  // a new one if it doesn't exist. The caller doesn't own the returned pointer.
++  BrowserMediaPlayerManager* GetMediaPlayerManager(
++      RenderFrameHost* render_frame_host);
++
++  void PauseVideo();
++
++ private:
++  typedef base::ScopedPtrHashMap<uintptr_t, BrowserMediaPlayerManager>
++      MediaPlayerManagerMap;
++  MediaPlayerManagerMap media_player_managers_;
++
++  DISALLOW_COPY_AND_ASSIGN(MediaWebContentsObserver);
++};
++
++}  // namespace content
++
++#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
+Index: src/content/browser/renderer_host/render_view_host_impl.cc
+===================================================================
+--- src/content/browser/renderer_host/render_view_host_impl.cc	(revision 279868)
++++ src/content/browser/renderer_host/render_view_host_impl.cc	(working copy)
+@@ -95,9 +95,7 @@
+ #include "base/win/win_util.h"
+ #endif
+ 
+-#if defined(ENABLE_BROWSER_CDMS)
+ #include "content/browser/media/media_web_contents_observer.h"
+-#endif
+ 
+ using base::TimeDelta;
+ using blink::WebConsoleMessage;
+@@ -225,9 +223,7 @@
+                    GetProcess()->GetID(), GetRoutingID()));
+   }
+ 
+-#if defined(ENABLE_BROWSER_CDMS)
+   media_web_contents_observer_.reset(new MediaWebContentsObserver(this));
+-#endif
+ 
+   unload_event_monitor_timeout_.reset(new TimeoutMonitor(base::Bind(
+       &RenderViewHostImpl::OnSwappedOut, weak_factory_.GetWeakPtr(), true)));
+Index: src/content/common/content_message_generator.h
+===================================================================
+--- src/content/common/content_message_generator.h	(revision 279868)
++++ src/content/common/content_message_generator.h	(working copy)
+@@ -67,3 +67,6 @@
+ #include "content/common/gin_java_bridge_messages.h"
+ #include "content/common/media/media_player_messages_android.h"
+ #endif  // defined(OS_ANDROID)
++
++#include "content/common/media/media_player_messages_oxide.h"
++
+Index: src/content/common/media/media_player_messages_enums_oxide.h
+===================================================================
+--- src/content/common/media/media_player_messages_enums_oxide.h	(revision 0)
++++ src/content/common/media/media_player_messages_enums_oxide.h	(working copy)
+@@ -0,0 +1,10 @@
++#ifndef CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
++#define CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
++
++// Dictates which type of media playback is being initialized.
++enum MediaPlayerHostMsg_Initialize_Type {
++  MEDIA_PLAYER_TYPE_URL,
++  MEDIA_PLAYER_TYPE_MEDIA_SOURCE,
++};
++
++#endif  // CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
+Index: src/content/common/media/media_player_messages_oxide.h
+===================================================================
+--- src/content/common/media/media_player_messages_oxide.h	(revision 0)
++++ src/content/common/media/media_player_messages_oxide.h	(working copy)
+@@ -0,0 +1,144 @@
++// IPC messages for android media player.
++// Multiply-included message file, hence no include guard.
++
++#include "base/basictypes.h"
++#include "base/time/time.h"
++#include "content/common/content_export.h"
++#include "content/common/media/media_player_messages_enums_oxide.h"
++#include "ipc/ipc_message_macros.h"
++#include "media/base/utouch/media_player_oxide.h"
++#include "ui/gfx/rect_f.h"
++#include "url/gurl.h"
++
++#undef IPC_MESSAGE_EXPORT
++#define IPC_MESSAGE_EXPORT CONTENT_EXPORT
++#define IPC_MESSAGE_START MediaPlayerMsgStart
++
++IPC_ENUM_TRAITS(MediaPlayerHostMsg_Initialize_Type)
++
++// Parameters to describe a media player
++IPC_STRUCT_BEGIN(MediaPlayerHostMsg_Initialize_Params)
++  IPC_STRUCT_MEMBER(MediaPlayerHostMsg_Initialize_Type, type)
++  IPC_STRUCT_MEMBER(int, player_id)
++  IPC_STRUCT_MEMBER(GURL, url)
++  IPC_STRUCT_MEMBER(GURL, first_party_for_cookies)
++  IPC_STRUCT_MEMBER(GURL, frame_url)
++IPC_STRUCT_END()
++
++// Media buffering has updated.
++IPC_MESSAGE_ROUTED2(MediaPlayerMsg_MediaBufferingUpdate,
++                    int /* player_id */,
++                    int /* percent */)
++
++// A media playback error has occurred.
++IPC_MESSAGE_ROUTED2(MediaPlayerMsg_MediaError,
++                    int /* player_id */,
++                    int /* error */)
++
++// Playback is completed.
++IPC_MESSAGE_ROUTED1(MediaPlayerMsg_MediaPlaybackCompleted,
++                    int /* player_id */)
++
++// Media metadata has changed.
++IPC_MESSAGE_ROUTED5(MediaPlayerMsg_MediaMetadataChanged,
++                    int /* player_id */,
++                    base::TimeDelta /* duration */,
++                    int /* width */,
++                    int /* height */,
++                    bool /* success */)
++
++// Requests renderer player to ask its client (blink HTMLMediaElement) to seek.
++IPC_MESSAGE_ROUTED2(MediaPlayerMsg_SeekRequest,
++                    int /* player_id */,
++                    base::TimeDelta /* time_to_seek_to */)
++
++// Media seek is completed.
++IPC_MESSAGE_ROUTED2(MediaPlayerMsg_SeekCompleted,
++                    int /* player_id */,
++                    base::TimeDelta /* current_time */)
++
++// Video size has changed.
++IPC_MESSAGE_ROUTED3(MediaPlayerMsg_MediaVideoSizeChanged,
++                    int /* player_id */,
++                    int /* width */,
++                    int /* height */)
++
++// The current play time has updated.
++IPC_MESSAGE_ROUTED2(MediaPlayerMsg_MediaTimeUpdate,
++                    int /* player_id */,
++                    base::TimeDelta /* current_time */)
++
++// The player has been released.
++IPC_MESSAGE_ROUTED1(MediaPlayerMsg_MediaPlayerReleased,
++                    int /* player_id */)
++
++// The player has entered fullscreen mode.
++IPC_MESSAGE_ROUTED1(MediaPlayerMsg_DidEnterFullscreen,
++                    int /* player_id */)
++
++// The player exited fullscreen.
++IPC_MESSAGE_ROUTED1(MediaPlayerMsg_DidExitFullscreen,
++                    int /* player_id */)
++
++// The player started playing.
++IPC_MESSAGE_ROUTED1(MediaPlayerMsg_DidMediaPlayerPlay,
++                    int /* player_id */)
++
++// The player was paused.
++IPC_MESSAGE_ROUTED1(MediaPlayerMsg_DidMediaPlayerPause,
++                    int /* player_id */)
++
++// Instructs the video element to enter fullscreen.
++IPC_MESSAGE_ROUTED1(MediaPlayerMsg_RequestFullscreen,
++                    int /*player_id */)
++
++// Pauses all video playback.
++IPC_MESSAGE_ROUTED0(MediaPlayerMsg_PauseVideo)
++
++// Messages for controlling the media playback in browser process ----------
++
++// Destroy the media player object.
++IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_DestroyMediaPlayer,
++                    int /* player_id */)
++
++// Initialize a media player object.
++IPC_MESSAGE_ROUTED1(
++    MediaPlayerHostMsg_Initialize,
++    MediaPlayerHostMsg_Initialize_Params);
++
++// Pause the player.
++IPC_MESSAGE_ROUTED2(MediaPlayerHostMsg_Pause,
++                    int /* player_id */,
++                    bool /* is_media_related_action */)
++
++// Release player resources, but keep the object for future usage.
++IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_Release, int /* player_id */)
++
++// Perform a seek.
++IPC_MESSAGE_ROUTED2(MediaPlayerHostMsg_Seek,
++                    int /* player_id */,
++                    base::TimeDelta /* time */)
++
++// Start the player for playback.
++IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_Start, int /* player_id */)
++
++// Set the volume.
++IPC_MESSAGE_ROUTED2(MediaPlayerHostMsg_SetVolume,
++                    int /* player_id */,
++                    double /* volume */)
++
++// Set the poster image.
++IPC_MESSAGE_ROUTED2(MediaPlayerHostMsg_SetPoster,
++                    int /* player_id */,
++                    GURL /* poster url */)
++
++// Requests the player to enter fullscreen.
++IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_EnterFullscreen, int /* player_id */)
++
++// Requests the player to exit fullscreen.
++IPC_MESSAGE_ROUTED1(MediaPlayerHostMsg_ExitFullscreen, int /* player_id */)
++
++// Inform the media source player of changed media duration from demuxer.
++IPC_MESSAGE_CONTROL2(MediaPlayerHostMsg_DurationChanged,
++                     int /* demuxer_client_id */,
++                     base::TimeDelta /* duration */)
+Index: src/content/content_browser.gypi
+===================================================================
+--- src/content/content_browser.gypi	(revision 279868)
++++ src/content/content_browser.gypi	(working copy)
+@@ -785,6 +785,10 @@
+       'browser/media/midi_dispatcher_host.h',
+       'browser/media/midi_host.cc',
+       'browser/media/midi_host.h',
++      'browser/media/utouch/browser_media_player_manager.cc',
++      'browser/media/utouch/browser_media_player_manager.h',
++      'browser/media/utouch/media_web_contents_observer.cc',
++      'browser/media/utouch/media_web_contents_observer.h',
+       'browser/media/webrtc_identity_store.cc',
+       'browser/media/webrtc_identity_store.h',
+       'browser/media/webrtc_identity_store_backend.cc',
+Index: src/content/content_common.gypi
+===================================================================
+--- src/content/content_common.gypi	(revision 279868)
++++ src/content/content_common.gypi	(working copy)
+@@ -356,6 +356,8 @@
+       'common/media/media_param_traits.h',
+       'common/media/media_player_messages_android.h',
+       'common/media/media_player_messages_enums_android.h',
++      'common/media/media_player_messages_oxide.h',
++      'common/media/media_player_messages_enums_oxide.h',
+       'common/media/media_stream_messages.h',
+       'common/media/media_stream_options.cc',
+       'common/media/media_stream_options.h',
+Index: src/content/content_renderer.gypi
+===================================================================
+--- src/content/content_renderer.gypi	(revision 279868)
++++ src/content/content_renderer.gypi	(working copy)
+@@ -328,6 +330,12 @@
+       'renderer/media/renderer_webmidiaccessor_impl.h',
+       'renderer/media/texttrack_impl.cc',
+       'renderer/media/texttrack_impl.h',
++      'renderer/media/utouch/media_info_loader.cc',
++      'renderer/media/utouch/media_info_loader.h',
++      'renderer/media/utouch/renderer_media_player_manager.cc',
++      'renderer/media/utouch/renderer_media_player_manager.h',
++      'renderer/media/utouch/webmediaplayer_oxide.cc',
++      'renderer/media/utouch/webmediaplayer_oxide.h',
+       'renderer/media/video_capture_impl.cc',
+       'renderer/media/video_capture_impl.h',
+       'renderer/media/video_capture_impl_manager.cc',
+Index: src/content/renderer/media/utouch/media_info_loader.cc
+===================================================================
+--- src/content/renderer/media/utouch/media_info_loader.cc	(revision 0)
++++ src/content/renderer/media/utouch/media_info_loader.cc	(working copy)
+@@ -0,0 +1,193 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "content/renderer/media/utouch/media_info_loader.h"
++
++#include "base/bits.h"
++#include "base/callback_helpers.h"
++#include "base/metrics/histogram.h"
++#include "third_party/WebKit/public/platform/WebURLError.h"
++#include "third_party/WebKit/public/platform/WebURLLoader.h"
++#include "third_party/WebKit/public/platform/WebURLResponse.h"
++#include "third_party/WebKit/public/web/WebFrame.h"
++
++using blink::WebFrame;
++using blink::WebURLError;
++using blink::WebURLLoader;
++using blink::WebURLLoaderOptions;
++using blink::WebURLRequest;
++using blink::WebURLResponse;
++
++namespace content {
++
++static const int kHttpOK = 200;
++
++MediaInfoLoader::MediaInfoLoader(
++    const GURL& url,
++    blink::WebMediaPlayer::CORSMode cors_mode,
++    const ReadyCB& ready_cb)
++    : loader_failed_(false),
++      url_(url),
++      cors_mode_(cors_mode),
++      single_origin_(true),
++      ready_cb_(ready_cb) {}
++
++MediaInfoLoader::~MediaInfoLoader() {}
++
++void MediaInfoLoader::Start(blink::WebFrame* frame) {
++  // Make sure we have not started.
++  DCHECK(!ready_cb_.is_null());
++  CHECK(frame);
++
++  start_time_ = base::TimeTicks::Now();
++
++  // Prepare the request.
++  WebURLRequest request(url_);
++  request.setTargetType(WebURLRequest::TargetIsMedia);
++  frame->setReferrerForRequest(request, blink::WebURL());
++
++  scoped_ptr<WebURLLoader> loader;
++  if (test_loader_) {
++    loader = test_loader_.Pass();
++  } else {
++    WebURLLoaderOptions options;
++    if (cors_mode_ == blink::WebMediaPlayer::CORSModeUnspecified) {
++      options.allowCredentials = true;
++      options.crossOriginRequestPolicy =
++          WebURLLoaderOptions::CrossOriginRequestPolicyAllow;
++    } else {
++      options.exposeAllResponseHeaders = true;
++      // The author header set is empty, no preflight should go ahead.
++      options.preflightPolicy = WebURLLoaderOptions::PreventPreflight;
++      options.crossOriginRequestPolicy =
++          WebURLLoaderOptions::CrossOriginRequestPolicyUseAccessControl;
++      if (cors_mode_ == blink::WebMediaPlayer::CORSModeUseCredentials)
++        options.allowCredentials = true;
++    }
++    loader.reset(frame->createAssociatedURLLoader(options));
++  }
++
++  // Start the resource loading.
++  loader->loadAsynchronously(request, this);
++  active_loader_.reset(new ActiveLoader(loader.Pass()));
++}
++
++/////////////////////////////////////////////////////////////////////////////
++// blink::WebURLLoaderClient implementation.
++void MediaInfoLoader::willSendRequest(
++    WebURLLoader* loader,
++    WebURLRequest& newRequest,
++    const WebURLResponse& redirectResponse) {
++  // The load may have been stopped and |ready_cb| is destroyed.
++  // In this case we shouldn't do anything.
++  if (ready_cb_.is_null()) {
++    // Set the url in the request to an invalid value (empty url).
++    newRequest.setURL(blink::WebURL());
++    return;
++  }
++
++  // Only allow |single_origin_| if we haven't seen a different origin yet.
++  if (single_origin_)
++    single_origin_ = url_.GetOrigin() == GURL(newRequest.url()).GetOrigin();
++
++  url_ = newRequest.url();
++}
++
++void MediaInfoLoader::didSendData(
++    WebURLLoader* loader,
++    unsigned long long bytes_sent,
++    unsigned long long total_bytes_to_be_sent) {
++  NOTIMPLEMENTED();
++}
++
++void MediaInfoLoader::didReceiveResponse(
++    WebURLLoader* loader,
++    const WebURLResponse& response) {
++  DVLOG(1) << "didReceiveResponse: HTTP/"
++           << (response.httpVersion() == WebURLResponse::HTTP_0_9 ? "0.9" :
++               response.httpVersion() == WebURLResponse::HTTP_1_0 ? "1.0" :
++               response.httpVersion() == WebURLResponse::HTTP_1_1 ? "1.1" :
++               "Unknown")
++           << " " << response.httpStatusCode();
++  DCHECK(active_loader_.get());
++  if (!url_.SchemeIs("http") && !url_.SchemeIs("https")) {
++      DidBecomeReady(kOk);
++      return;
++  }
++  if (response.httpStatusCode() == kHttpOK) {
++    DidBecomeReady(kOk);
++    return;
++  }
++  loader_failed_ = true;
++  DidBecomeReady(kFailed);
++}
++
++void MediaInfoLoader::didReceiveData(
++    WebURLLoader* loader,
++    const char* data,
++    int data_length,
++    int encoded_data_length) {
++  // Ignored.
++}
++
++void MediaInfoLoader::didDownloadData(
++    blink::WebURLLoader* loader,
++    int dataLength,
++    int encodedDataLength) {
++  NOTIMPLEMENTED();
++}
++
++void MediaInfoLoader::didReceiveCachedMetadata(
++    WebURLLoader* loader,
++    const char* data,
++    int data_length) {
++  NOTIMPLEMENTED();
++}
++
++void MediaInfoLoader::didFinishLoading(
++    WebURLLoader* loader,
++    double finishTime,
++    int64_t total_encoded_data_length) {
++  DCHECK(active_loader_.get());
++  DidBecomeReady(kOk);
++}
++
++void MediaInfoLoader::didFail(
++    WebURLLoader* loader,
++    const WebURLError& error) {
++  DVLOG(1) << "didFail: reason=" << error.reason
++           << ", isCancellation=" << error.isCancellation
++           << ", domain=" << error.domain.utf8().data()
++           << ", localizedDescription="
++           << error.localizedDescription.utf8().data();
++  DCHECK(active_loader_.get());
++  loader_failed_ = true;
++  DidBecomeReady(kFailed);
++}
++
++bool MediaInfoLoader::HasSingleOrigin() const {
++  DCHECK(ready_cb_.is_null())
++      << "Must become ready before calling HasSingleOrigin()";
++  return single_origin_;
++}
++
++bool MediaInfoLoader::DidPassCORSAccessCheck() const {
++  DCHECK(ready_cb_.is_null())
++      << "Must become ready before calling DidPassCORSAccessCheck()";
++  return !loader_failed_ &&
++      cors_mode_ != blink::WebMediaPlayer::CORSModeUnspecified;
++}
++
++/////////////////////////////////////////////////////////////////////////////
++// Helper methods.
++
++void MediaInfoLoader::DidBecomeReady(Status status) {
++  UMA_HISTOGRAM_TIMES("Media.InfoLoadDelay",
++                      base::TimeTicks::Now() - start_time_);
++  active_loader_.reset();
++  if (!ready_cb_.is_null())
++    base::ResetAndReturn(&ready_cb_).Run(status);
++}
++
++}  // namespace content
+Index: src/content/renderer/media/utouch/media_info_loader.h
+===================================================================
+--- src/content/renderer/media/utouch/media_info_loader.h	(revision 0)
++++ src/content/renderer/media/utouch/media_info_loader.h	(working copy)
+@@ -0,0 +1,129 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef CONTENT_RENDERER_MEDIA_UTOUCH_MEDIA_INFO_LOADER_H_
++#define CONTENT_RENDERER_MEDIA_UTOUCH_MEDIA_INFO_LOADER_H_
++
++#include <string>
++
++#include "base/callback.h"
++#include "base/memory/scoped_ptr.h"
++#include "base/time/time.h"
++#include "content/common/content_export.h"
++#include "content/renderer/media/active_loader.h"
++#include "third_party/WebKit/public/platform/WebMediaPlayer.h"
++#include "third_party/WebKit/public/platform/WebURLLoaderClient.h"
++#include "url/gurl.h"
++
++namespace blink {
++class WebFrame;
++class WebURLLoader;
++class WebURLRequest;
++}
++
++namespace content {
++
++// This class provides additional information about a media URL. Currently it
++// can be used to determine if a media URL has a single security origin and
++// whether the URL passes a CORS access check.
++class CONTENT_EXPORT MediaInfoLoader : private blink::WebURLLoaderClient {
++ public:
++  // Status codes for start operations on MediaInfoLoader.
++  enum Status {
++    // The operation failed, which may have been due to:
++    //   - Page navigation
++    //   - Server replied 4xx/5xx
++    //   - The response was invalid
++    //   - Connection was terminated
++    //
++    // At this point you should delete the loader.
++    kFailed,
++
++    // Everything went as planned.
++    kOk,
++  };
++
++  // Start loading information about the given media URL.
++  // |url| - URL for the media resource to be loaded.
++  // |cors_mode| - HTML media element's crossorigin attribute.
++  // |ready_cb| - Called when media info has finished or failed loading.
++  typedef base::Callback<void(Status)> ReadyCB;
++  MediaInfoLoader(
++      const GURL& url,
++      blink::WebMediaPlayer::CORSMode cors_mode,
++      const ReadyCB& ready_cb);
++  virtual ~MediaInfoLoader();
++
++  // Start loading media info.
++  void Start(blink::WebFrame* frame);
++
++  // Returns true if the media resource has a single origin, false otherwise.
++  // Only valid to call after the loader becomes ready.
++  bool HasSingleOrigin() const;
++
++  // Returns true if the media resource passed a CORS access control check.
++  // Only valid to call after the loader becomes ready.
++  bool DidPassCORSAccessCheck() const;
++
++  void set_single_origin(bool single_origin) {
++    single_origin_ = single_origin;
++  }
++
++ private:
++  friend class MediaInfoLoaderTest;
++
++  // blink::WebURLLoaderClient implementation.
++  virtual void willSendRequest(
++      blink::WebURLLoader* loader,
++      blink::WebURLRequest& newRequest,
++      const blink::WebURLResponse& redirectResponse);
++  virtual void didSendData(
++      blink::WebURLLoader* loader,
++      unsigned long long bytesSent,
++      unsigned long long totalBytesToBeSent);
++  virtual void didReceiveResponse(
++      blink::WebURLLoader* loader,
++      const blink::WebURLResponse& response);
++  virtual void didDownloadData(
++      blink::WebURLLoader* loader,
++      int data_length,
++      int encodedDataLength);
++  virtual void didReceiveData(
++      blink::WebURLLoader* loader,
++      const char* data,
++      int data_length,
++      int encoded_data_length);
++  virtual void didReceiveCachedMetadata(
++      blink::WebURLLoader* loader,
++      const char* data, int dataLength);
++  virtual void didFinishLoading(
++      blink::WebURLLoader* loader,
++      double finishTime,
++      int64_t total_encoded_data_length);
++  virtual void didFail(
++      blink::WebURLLoader* loader,
++      const blink::WebURLError&);
++
++  void DidBecomeReady(Status status);
++
++  // Injected WebURLLoader instance for testing purposes.
++  scoped_ptr<blink::WebURLLoader> test_loader_;
++
++  // Keeps track of an active WebURLLoader and associated state.
++  scoped_ptr<ActiveLoader> active_loader_;
++
++  bool loader_failed_;
++  GURL url_;
++  blink::WebMediaPlayer::CORSMode cors_mode_;
++  bool single_origin_;
++
++  ReadyCB ready_cb_;
++  base::TimeTicks start_time_;
++
++  DISALLOW_COPY_AND_ASSIGN(MediaInfoLoader);
++};
++
++}  // namespace content
++
++#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_MEDIA_INFO_LOADER_H_
+Index: src/content/renderer/media/utouch/renderer_media_player_manager.cc
+===================================================================
+--- src/content/renderer/media/utouch/renderer_media_player_manager.cc	(revision 0)
++++ src/content/renderer/media/utouch/renderer_media_player_manager.cc	(working copy)
+@@ -0,0 +1,218 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "content/renderer/media/utouch/renderer_media_player_manager.h"
++
++#include "content/common/media/media_player_messages_oxide.h"
++#include "content/public/common/renderer_preferences.h"
++#include "content/renderer/media/utouch/webmediaplayer_oxide.h"
++#include "content/renderer/render_view_impl.h"
++#include "ui/gfx/rect_f.h"
++
++namespace content {
++
++RendererMediaPlayerManager::RendererMediaPlayerManager(
++    RenderFrame* render_frame)
++    : RenderFrameObserver(render_frame),
++      next_media_player_id_(0) {
++}
++
++RendererMediaPlayerManager::~RendererMediaPlayerManager() {
++  std::map<int, WebMediaPlayerOxide*>::iterator player_it;
++  for (player_it = media_players_.begin();
++      player_it != media_players_.end(); ++player_it) {
++    WebMediaPlayerOxide* player = player_it->second;
++    player->Detach();
++  }
++}
++
++bool RendererMediaPlayerManager::OnMessageReceived(const IPC::Message& msg) {
++  bool handled = true;
++  IPC_BEGIN_MESSAGE_MAP(RendererMediaPlayerManager, msg)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaMetadataChanged,
++                        OnMediaMetadataChanged)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaPlaybackCompleted,
++                        OnMediaPlaybackCompleted)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaBufferingUpdate,
++                        OnMediaBufferingUpdate)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_SeekRequest, OnSeekRequest)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_SeekCompleted, OnSeekCompleted)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaError, OnMediaError)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaVideoSizeChanged,
++                        OnVideoSizeChanged)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaTimeUpdate, OnTimeUpdate)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaPlayerReleased,
++                        OnMediaPlayerReleased)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_DidMediaPlayerPlay, OnPlayerPlay)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_DidMediaPlayerPause, OnPlayerPause)
++    IPC_MESSAGE_HANDLER(MediaPlayerMsg_PauseVideo, OnPauseVideo)
++  IPC_MESSAGE_UNHANDLED(handled = false)
++  IPC_END_MESSAGE_MAP()
++  return handled;
++}
++
++void RendererMediaPlayerManager::Initialize(
++    MediaPlayerHostMsg_Initialize_Type type,
++    int player_id,
++    const GURL& url,
++    const GURL& first_party_for_cookies) {
++
++  MediaPlayerHostMsg_Initialize_Params params;
++  params.type = type;
++  params.player_id = player_id;
++  params.url = url;
++  params.first_party_for_cookies = first_party_for_cookies;
++
++  Send(new MediaPlayerHostMsg_Initialize(
++      routing_id(), params));
++}
++
++void RendererMediaPlayerManager::Start(int player_id) {
++  Send(new MediaPlayerHostMsg_Start(routing_id(), player_id));
++}
++
++void RendererMediaPlayerManager::Pause(
++    int player_id,
++    bool is_media_related_action) {
++  Send(new MediaPlayerHostMsg_Pause(
++      routing_id(), player_id, is_media_related_action));
++}
++
++void RendererMediaPlayerManager::Seek(
++    int player_id,
++    const base::TimeDelta& time) {
++  Send(new MediaPlayerHostMsg_Seek(routing_id(), player_id, time));
++}
++
++void RendererMediaPlayerManager::SetVolume(int player_id, double volume) {
++  Send(new MediaPlayerHostMsg_SetVolume(routing_id(), player_id, volume));
++}
++
++void RendererMediaPlayerManager::SetPoster(int player_id, const GURL& poster) {
++  Send(new MediaPlayerHostMsg_SetPoster(routing_id(), player_id, poster));
++}
++
++void RendererMediaPlayerManager::ReleaseResources(int player_id) {
++  Send(new MediaPlayerHostMsg_Release(routing_id(), player_id));
++}
++
++void RendererMediaPlayerManager::DestroyPlayer(int player_id) {
++  Send(new MediaPlayerHostMsg_DestroyMediaPlayer(routing_id(), player_id));
++}
++
++void RendererMediaPlayerManager::OnMediaMetadataChanged(
++    int player_id,
++    base::TimeDelta duration,
++    int width,
++    int height,
++    bool success) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnMediaMetadataChanged(duration, width, height, success);
++}
++
++void RendererMediaPlayerManager::OnMediaPlaybackCompleted(int player_id) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnPlaybackComplete();
++}
++
++void RendererMediaPlayerManager::OnMediaBufferingUpdate(int player_id,
++                                                        int percent) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnBufferingUpdate(percent);
++}
++
++void RendererMediaPlayerManager::OnSeekRequest(
++    int player_id,
++    const base::TimeDelta& time_to_seek) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnSeekRequest(time_to_seek);
++}
++
++void RendererMediaPlayerManager::OnSeekCompleted(
++    int player_id,
++    const base::TimeDelta& current_time) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnSeekComplete(current_time);
++}
++
++void RendererMediaPlayerManager::OnMediaError(int player_id, int error) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnMediaError(error);
++}
++
++void RendererMediaPlayerManager::OnVideoSizeChanged(int player_id,
++                                                    int width,
++                                                    int height) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnVideoSizeChanged(width, height);
++}
++
++void RendererMediaPlayerManager::OnTimeUpdate(int player_id,
++                                              base::TimeDelta current_time) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnTimeUpdate(current_time);
++}
++
++void RendererMediaPlayerManager::OnMediaPlayerReleased(int player_id) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnPlayerReleased();
++}
++
++void RendererMediaPlayerManager::OnPlayerPlay(int player_id) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnMediaPlayerPlay();
++}
++
++void RendererMediaPlayerManager::OnPlayerPause(int player_id) {
++  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
++  if (player)
++    player->OnMediaPlayerPause();
++}
++
++void RendererMediaPlayerManager::OnPauseVideo() {
++  ReleaseVideoResources();
++}
++
++int RendererMediaPlayerManager::RegisterMediaPlayer(
++    WebMediaPlayerOxide* player) {
++  media_players_[next_media_player_id_] = player;
++  return next_media_player_id_++;
++}
++
++void RendererMediaPlayerManager::UnregisterMediaPlayer(int player_id) {
++  media_players_.erase(player_id);
++}
++
++void RendererMediaPlayerManager::ReleaseVideoResources() {
++  std::map<int, WebMediaPlayerOxide*>::iterator player_it;
++  for (player_it = media_players_.begin(); player_it != media_players_.end();
++       ++player_it) {
++    WebMediaPlayerOxide* player = player_it->second;
++
++    // Do not release if an audio track is still playing
++    if (player && (player->paused() || player->hasVideo()))
++      player->ReleaseMediaResources();
++  }
++}
++
++WebMediaPlayerOxide* RendererMediaPlayerManager::GetMediaPlayer(
++    int player_id) {
++  std::map<int, WebMediaPlayerOxide*>::iterator iter =
++      media_players_.find(player_id);
++  if (iter != media_players_.end())
++    return iter->second;
++  return NULL;
++}
++
++}  // namespace content
+Index: src/content/renderer/media/utouch/renderer_media_player_manager.h
+===================================================================
+--- src/content/renderer/media/utouch/renderer_media_player_manager.h	(revision 0)
++++ src/content/renderer/media/utouch/renderer_media_player_manager.h	(working copy)
+@@ -0,0 +1,103 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef CONTENT_RENDERER_MEDIA_UTOUCH_RENDERER_MEDIA_PLAYER_MANAGER_H_
++#define CONTENT_RENDERER_MEDIA_UTOUCH_RENDERER_MEDIA_PLAYER_MANAGER_H_
++
++#include <map>
++#include <string>
++
++#include "base/basictypes.h"
++#include "base/time/time.h"
++#include "content/common/media/media_player_messages_enums_oxide.h"
++#include "content/public/renderer/render_frame_observer.h"
++#include "media/base/utouch/media_player_oxide.h"
++#include "url/gurl.h"
++
++namespace blink {
++class WebFrame;
++}
++
++namespace gfx {
++class RectF;
++}
++
++namespace content {
++
++class WebMediaPlayerOxide;
++
++class RendererMediaPlayerManager : public RenderFrameObserver {
++ public:
++  explicit RendererMediaPlayerManager(RenderFrame* render_frame);
++  virtual ~RendererMediaPlayerManager();
++
++  virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
++
++  void Initialize(MediaPlayerHostMsg_Initialize_Type type,
++                  int player_id,
++                  const GURL& url,
++                  const GURL& first_party_for_cookies);
++
++  void Start(int player_id);
++
++  // Pauses the player.
++  // is_media_related_action should be true if this pause is coming from an
++  // an action that explicitly pauses the video (user pressing pause, JS, etc.)
++  // Otherwise it should be false if Pause is being called due to other reasons
++  // (cleanup, freeing resources, etc.)
++  void Pause(int player_id, bool is_media_related_action);
++
++  // Performs seek on the player.
++  void Seek(int player_id, const base::TimeDelta& time);
++
++  // Sets the player volume.
++  void SetVolume(int player_id, double volume);
++
++  // Sets the poster image.
++  void SetPoster(int player_id, const GURL& poster);
++
++  // Releases resources for the player.
++  void ReleaseResources(int player_id);
++
++  // Destroys the player in the browser process
++  void DestroyPlayer(int player_id);
++
++  // Registers and unregisters a WebMediaPlayerOxide object.
++  int RegisterMediaPlayer(WebMediaPlayerOxide* player);
++  void UnregisterMediaPlayer(int player_id);
++
++  // Gets the pointer to WebMediaPlayerOxide given the |player_id|.
++  WebMediaPlayerOxide* GetMediaPlayer(int player_id);
++
++ private:
++  // Message handlers.
++  void OnMediaMetadataChanged(int player_id,
++                              base::TimeDelta duration,
++                              int width,
++                              int height,
++                              bool success);
++  void OnMediaPlaybackCompleted(int player_id);
++  void OnMediaBufferingUpdate(int player_id, int percent);
++  void OnSeekRequest(int player_id, const base::TimeDelta& time_to_seek);
++  void OnSeekCompleted(int player_id, const base::TimeDelta& current_time);
++  void OnMediaError(int player_id, int error);
++  void OnVideoSizeChanged(int player_id, int width, int height);
++  void OnTimeUpdate(int player_id, base::TimeDelta current_time);
++  void OnMediaPlayerReleased(int player_id);
++  void OnPlayerPlay(int player_id);
++  void OnPlayerPause(int player_id);
++  void OnPauseVideo();
++
++  void ReleaseVideoResources();
++
++  std::map<int, WebMediaPlayerOxide*> media_players_;
++
++  int next_media_player_id_;
++
++  DISALLOW_COPY_AND_ASSIGN(RendererMediaPlayerManager);
++};
++
++}  // namespace content
++
++#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_RENDERER_MEDIA_PLAYER_MANAGER_H_
+Index: src/content/renderer/media/utouch/webmediaplayer_oxide.cc
+===================================================================
+--- src/content/renderer/media/utouch/webmediaplayer_oxide.cc	(revision 0)
++++ src/content/renderer/media/utouch/webmediaplayer_oxide.cc	(working copy)
+@@ -0,0 +1,897 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "content/renderer/media/utouch/webmediaplayer_oxide.h"
++
++#include <limits>
++
++#include "base/bind.h"
++#include "base/callback_helpers.h"
++#include "base/command_line.h"
++#include "base/files/file_path.h"
++#include "base/logging.h"
++#include "base/message_loop/message_loop.h"
++#include "base/metrics/histogram.h"
++#include "base/strings/string_number_conversions.h"
++#include "base/strings/utf_string_conversions.h"
++#include "cc/layers/video_layer.h"
++#include "content/public/common/content_client.h"
++#include "content/public/common/content_switches.h"
++#include "content/public/renderer/render_frame.h"
++#include "content/renderer/media/crypto/key_systems.h"
++#include "content/renderer/media/webcontentdecryptionmodule_impl.h"
++#include "content/renderer/media/webmediaplayer_delegate.h"
++#include "content/renderer/media/webmediaplayer_util.h"
++#include "content/renderer/media/utouch/renderer_media_player_manager.h"
++#include "content/renderer/render_frame_impl.h"
++#include "content/renderer/render_thread_impl.h"
++#include "gpu/GLES2/gl2extchromium.h"
++#include "gpu/command_buffer/client/gles2_interface.h"
++#include "gpu/command_buffer/common/mailbox_holder.h"
++#include "media/base/utouch/media_player_oxide.h"
++#include "media/base/bind_to_current_loop.h"
++#include "media/base/media_keys.h"
++#include "media/base/media_switches.h"
++#include "media/base/video_frame.h"
++#include "net/base/mime_util.h"
++#include "third_party/WebKit/public/platform/WebMediaPlayerClient.h"
++#include "third_party/WebKit/public/platform/WebString.h"
++#include "third_party/WebKit/public/platform/WebURL.h"
++#include "third_party/WebKit/public/web/WebDocument.h"
++#include "third_party/WebKit/public/web/WebFrame.h"
++#include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
++#include "third_party/WebKit/public/web/WebSecurityOrigin.h"
++#include "third_party/WebKit/public/web/WebView.h"
++#include "third_party/skia/include/core/SkBitmap.h"
++#include "third_party/skia/include/core/SkCanvas.h"
++#include "third_party/skia/include/core/SkPaint.h"
++#include "third_party/skia/include/core/SkTypeface.h"
++#include "ui/gfx/image/image.h"
++// #include "webkit/renderer/compositor_bindings/web_layer_impl.h"
++
++static const uint32 kGLTextureExternalOES = 0x8D65;
++
++using blink::WebMediaPlayer;
++using blink::WebSize;
++using blink::WebString;
++using blink::WebTimeRanges;
++using blink::WebURL;
++using media::MediaPlayerOxide;
++using media::VideoFrame;
++
++namespace {
++
++// Prefix for histograms related to Encrypted Media Extensions.
++const char* kMediaEme = "Media.EME.";
++
++}  // namespace
++
++namespace content {
++
++WebMediaPlayerOxide::WebMediaPlayerOxide(
++    blink::WebFrame* frame,
++    blink::WebMediaPlayerClient* client,
++    base::WeakPtr<WebMediaPlayerDelegate> delegate,
++    RendererMediaPlayerManager* player_manager,
++    const scoped_refptr<base::MessageLoopProxy>& media_loop,
++    media::MediaLog* media_log)
++    : RenderFrameObserver(RenderFrame::FromWebFrame(frame)),
++      frame_(frame),
++      client_(client),
++      delegate_(delegate),
++      buffered_(static_cast<size_t>(1)),
++      media_loop_(media_loop),
++      ignore_metadata_duration_change_(false),
++      pending_seek_(false),
++      seeking_(false),
++      did_loading_progress_(false),
++      player_manager_(player_manager),
++      network_state_(WebMediaPlayer::NetworkStateEmpty),
++      ready_state_(WebMediaPlayer::ReadyStateHaveNothing),
++      is_playing_(false),
++      playing_started_(false),
++      has_size_info_(false),
++      has_media_metadata_(false),
++      has_media_info_(false),
++      pending_playback_(false),
++      player_type_(MEDIA_PLAYER_TYPE_URL),
++      current_time_(0),
++      is_remote_(false),
++      media_log_(media_log),
++      weak_factory_(this) {
++  DCHECK(player_manager_);
++  DCHECK(main_thread_checker_.CalledOnValidThread());
++
++  player_id_ = player_manager_->RegisterMediaPlayer(this);
++}
++
++WebMediaPlayerOxide::~WebMediaPlayerOxide() {
++  client_->setWebLayer(NULL);
++
++  if (player_manager_) {
++    player_manager_->DestroyPlayer(player_id_);
++    player_manager_->UnregisterMediaPlayer(player_id_);
++  }
++
++  if (player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE && delegate_)
++    delegate_->PlayerGone(this);
++}
++
++void WebMediaPlayerOxide::load(LoadType load_type,
++                               const blink::WebURL& url,
++                               CORSMode cors_mode) {
++  switch (load_type) {
++    case LoadTypeURL:
++      player_type_ = MEDIA_PLAYER_TYPE_URL;
++      break;
++
++    case LoadTypeMediaSource:
++      CHECK(false) << "WebMediaPlayerOxide doesn't support MediaSource on "
++                      "this platform";
++      return;
++
++    case LoadTypeMediaStream:
++      CHECK(false) << "WebMediaPlayerOxide doesn't support MediaStream on "
++                      "this platform";
++      return;
++  }
++
++  has_media_metadata_ = false;
++  has_media_info_ = false;
++
++  info_loader_.reset(
++      new MediaInfoLoader(
++          url,
++          cors_mode,
++          base::Bind(&WebMediaPlayerOxide::DidLoadMediaInfo,
++                     weak_factory_.GetWeakPtr())));
++
++  // The url might be redirected when android media player
++  // requests the stream. As a result, we cannot guarantee there is only
++  // a single origin. Remove the following line when b/12573548 is fixed.
++  // Check http://crbug.com/334204.
++
++  info_loader_->set_single_origin(false);
++  info_loader_->Start(frame_);
++
++  url_ = url;
++
++  if (player_manager_) {
++    GURL first_party_url = frame_->document().firstPartyForCookies();
++    player_manager_->Initialize(
++        player_type_, player_id_, url, first_party_url);
++  }
++
++  UpdateNetworkState(WebMediaPlayer::NetworkStateLoading);
++  UpdateReadyState(WebMediaPlayer::ReadyStateHaveNothing);
++}
++
++void WebMediaPlayerOxide::DidLoadMediaInfo(MediaInfoLoader::Status status) {
++  if (status == MediaInfoLoader::kFailed) {
++    info_loader_.reset();
++    UpdateNetworkState(WebMediaPlayer::NetworkStateNetworkError);
++    return;
++  }
++
++  has_media_info_ = true;
++  if (has_media_metadata_ &&
++      ready_state_ != WebMediaPlayer::ReadyStateHaveEnoughData) {
++    UpdateReadyState(WebMediaPlayer::ReadyStateHaveMetadata);
++    UpdateReadyState(WebMediaPlayer::ReadyStateHaveEnoughData);
++  }
++  // Android doesn't start fetching resources until an implementation-defined
++  // event (e.g. playback request) occurs. Sets the network state to IDLE
++  // if play is not requested yet.
++  if (!playing_started_)
++    UpdateNetworkState(WebMediaPlayer::NetworkStateIdle);
++}
++
++void WebMediaPlayerOxide::play() {
++  if (paused())
++    player_manager_->Start(player_id_);
++
++  UpdatePlayingState(true);
++  UpdateNetworkState(WebMediaPlayer::NetworkStateLoading);
++
++  playing_started_ = true;
++}
++
++void WebMediaPlayerOxide::pause() {
++  Pause(true);
++}
++
++void WebMediaPlayerOxide::seek(double seconds) {
++  NOTIMPLEMENTED();
++}
++
++bool WebMediaPlayerOxide::supportsSave() const {
++  return false;
++}
++
++void WebMediaPlayerOxide::setRate(double rate) {
++  NOTIMPLEMENTED();
++}
++
++void WebMediaPlayerOxide::setVolume(double volume) {
++  player_manager_->SetVolume(player_id_, volume);
++}
++
++bool WebMediaPlayerOxide::hasVideo() const {
++  if (has_size_info_)
++    return !natural_size_.isEmpty();
++
++  // We don't know whether the current media content has video unless
++  // the player is prepared. If the player is not prepared, we fall back
++  // to the mime-type. There may be no mime-type on a redirect URL.
++  // In that case, we conservatively assume it contains video so that
++  // enterfullscreen call will not fail.
++
++  if (!url_.has_path())
++    return false;
++
++  std::string mime;
++  if (!net::GetMimeTypeFromFile(base::FilePath(url_.path()), &mime))
++    return true;
++
++  return mime.find("audio/") == std::string::npos;
++}
++
++void WebMediaPlayerOxide::setPoster(const blink::WebURL& poster) {
++  //  player_manager_->SetPoster(player_id_, poster);
++}
++
++bool WebMediaPlayerOxide::hasAudio() const {
++  if (!url_.has_path())
++    return false;
++
++  std::string mime;
++  if (!net::GetMimeTypeFromFile(base::FilePath(url_.path()), &mime))
++    return true;
++
++  if (mime.find("audio/") != std::string::npos ||
++      mime.find("video/") != std::string::npos ||
++      mime.find("application/ogg") != std::string::npos) {
++    return true;
++  }
++
++  return false;
++}
++
++bool WebMediaPlayerOxide::paused() const {
++  return !is_playing_;
++}
++
++bool WebMediaPlayerOxide::seeking() const {
++  return seeking_;
++}
++
++double WebMediaPlayerOxide::duration() const {
++  // HTML5 spec requires duration to be NaN if readyState is HAVE_NOTHING
++  if (ready_state_ == WebMediaPlayer::ReadyStateHaveNothing)
++    return std::numeric_limits<double>::quiet_NaN();
++
++  if (duration_ == media::kInfiniteDuration())
++    return std::numeric_limits<double>::infinity();
++
++  return duration_.InSecondsF();
++}
++
++double WebMediaPlayerOxide::timelineOffset() const {
++  base::Time timeline_offset;
++
++  if (timeline_offset.is_null())
++    return std::numeric_limits<double>::quiet_NaN();
++
++  return timeline_offset.ToJsTime();
++}
++
++double WebMediaPlayerOxide::currentTime() const {
++  // If the player is processing a seek, return the seek time.
++  // Blink may still query us if updatePlaybackState() occurs while seeking.
++  if (seeking()) {
++    return pending_seek_ ?
++        pending_seek_time_.InSecondsF() : seek_time_.InSecondsF();
++  }
++
++  return current_time_;
++}
++
++WebSize WebMediaPlayerOxide::naturalSize() const {
++  return natural_size_;
++}
++
++WebMediaPlayer::NetworkState WebMediaPlayerOxide::networkState() const {
++  return network_state_;
++}
++
++WebMediaPlayer::ReadyState WebMediaPlayerOxide::readyState() const {
++  return ready_state_;
++}
++
++WebTimeRanges WebMediaPlayerOxide::buffered() const {
++  return buffered_;
++}
++
++double WebMediaPlayerOxide::maxTimeSeekable() const {
++  // If we haven't even gotten to ReadyStateHaveMetadata yet then just
++  // return 0 so that the seekable range is empty.
++  if (ready_state_ < WebMediaPlayer::ReadyStateHaveMetadata)
++    return 0.0;
++
++  return duration();
++}
++
++bool WebMediaPlayerOxide::didLoadingProgress() {
++  bool ret = did_loading_progress_;
++  did_loading_progress_ = false;
++  return ret;
++}
++
++void WebMediaPlayerOxide::paint(blink::WebCanvas* canvas,
++                                  const blink::WebRect& rect,
++                                  unsigned char alpha) {
++  NOTIMPLEMENTED();
++}
++
++bool WebMediaPlayerOxide::copyVideoTextureToPlatformTexture(
++    blink::WebGraphicsContext3D* web_graphics_context,
++    unsigned int texture,
++    unsigned int level,
++    unsigned int internal_format,
++    unsigned int type,
++    bool premultiply_alpha,
++    bool flip_y) {
++  NOTIMPLEMENTED();
++  return false;
++}
++
++bool WebMediaPlayerOxide::hasSingleSecurityOrigin() const {
++  if (info_loader_)
++    return info_loader_->HasSingleOrigin();
++
++  // The info loader may have failed.
++  if (player_type_ == MEDIA_PLAYER_TYPE_URL)
++    return false;
++
++  return true;
++}
++
++bool WebMediaPlayerOxide::didPassCORSAccessCheck() const {
++  if (info_loader_)
++    return info_loader_->DidPassCORSAccessCheck();
++
++  return false;
++}
++
++double WebMediaPlayerOxide::mediaTimeForTimeValue(double timeValue) const {
++  return ConvertSecondsToTimestamp(timeValue).InSecondsF();
++}
++
++unsigned WebMediaPlayerOxide::decodedFrameCount() const {
++  NOTIMPLEMENTED();
++
++  return 0;
++}
++
++unsigned WebMediaPlayerOxide::droppedFrameCount() const {
++  NOTIMPLEMENTED();
++
++  return 0;
++}
++
++unsigned WebMediaPlayerOxide::audioDecodedByteCount() const {
++  NOTIMPLEMENTED();
++
++  return 0;
++}
++
++unsigned WebMediaPlayerOxide::videoDecodedByteCount() const {
++  NOTIMPLEMENTED();
++
++  return 0;
++}
++
++void WebMediaPlayerOxide::OnMediaMetadataChanged(
++    const base::TimeDelta& duration, int width, int height, bool success) {
++  bool need_to_signal_duration_changed = false;
++
++  if (url_.SchemeIs("file"))
++    UpdateNetworkState(WebMediaPlayer::NetworkStateLoaded);
++
++  // Update duration, if necessary, prior to ready state updates that may
++  // cause duration() query.
++  if (!ignore_metadata_duration_change_ && duration_ != duration) {
++    duration_ = duration;
++
++    // Client readyState transition from HAVE_NOTHING to HAVE_METADATA
++    // already triggers a durationchanged event. If this is a different
++    // transition, remember to signal durationchanged.
++    // Do not ever signal durationchanged on metadata change in MSE case
++    // because OnDurationChanged() handles this.
++    if (ready_state_ > WebMediaPlayer::ReadyStateHaveNothing &&
++        player_type_ != MEDIA_PLAYER_TYPE_MEDIA_SOURCE) {
++      need_to_signal_duration_changed = true;
++    }
++  }
++
++  has_media_metadata_ = true;
++  if (has_media_info_ &&
++      ready_state_ != WebMediaPlayer::ReadyStateHaveEnoughData) {
++    UpdateReadyState(WebMediaPlayer::ReadyStateHaveMetadata);
++    UpdateReadyState(WebMediaPlayer::ReadyStateHaveEnoughData);
++  }
++
++  // TODO(wolenetz): Should we just abort early and set network state to an
++  // error if success == false? See http://crbug.com/248399
++  if (success)
++    OnVideoSizeChanged(width, height);
++
++  if (need_to_signal_duration_changed)
++    client_->durationChanged();
++}
++
++void WebMediaPlayerOxide::OnPlaybackComplete() {
++  // When playback is about to finish, android media player often stops
++  // at a time which is smaller than the duration. This makes webkit never
++  // know that the playback has finished. To solve this, we set the
++  // current time to media duration when OnPlaybackComplete() get called.
++  OnTimeUpdate(duration_);
++  client_->timeChanged();
++
++  // if the loop attribute is set, timeChanged() will update the current time
++  // to 0. It will perform a seek to 0. As the requests to the renderer
++  // process are sequential, the OnSeekComplete() will only occur
++  // once OnPlaybackComplete() is done. As the playback can only be executed
++  // upon completion of OnSeekComplete(), the request needs to be saved.
++  is_playing_ = false;
++  if (seeking_ && seek_time_ == base::TimeDelta())
++    pending_playback_ = true;
++}
++
++void WebMediaPlayerOxide::OnBufferingUpdate(int percentage) {
++  buffered_[0].end = duration() * percentage / 100;
++  did_loading_progress_ = true;
++}
++
++void WebMediaPlayerOxide::OnSeekRequest(const base::TimeDelta& time_to_seek) {
++  DCHECK(main_thread_checker_.CalledOnValidThread());
++  client_->requestSeek(time_to_seek.InSecondsF());
++}
++
++void WebMediaPlayerOxide::OnSeekComplete(
++    const base::TimeDelta& current_time) {
++  DCHECK(main_thread_checker_.CalledOnValidThread());
++  seeking_ = false;
++  if (pending_seek_) {
++    pending_seek_ = false;
++    seek(pending_seek_time_.InSecondsF());
++    return;
++  }
++
++  OnTimeUpdate(current_time);
++
++  UpdateReadyState(WebMediaPlayer::ReadyStateHaveEnoughData);
++
++  client_->timeChanged();
++
++  if (pending_playback_) {
++    play();
++    pending_playback_ = false;
++  }
++}
++
++void WebMediaPlayerOxide::OnMediaError(int error_type) {
++  client_->repaint();
++}
++
++void WebMediaPlayerOxide::OnVideoSizeChanged(int width, int height) {
++  has_size_info_ = true;
++  if (natural_size_.width == width && natural_size_.height == height)
++    return;
++
++  natural_size_.width = width;
++  natural_size_.height = height;
++
++  // TODO(qinmin): This is a hack. We need the media element to stop showing the
++  // poster image by forcing it to call setDisplayMode(video). Should move the
++  // logic into HTMLMediaElement.cpp.
++  client_->timeChanged();
++}
++
++void WebMediaPlayerOxide::OnTimeUpdate(const base::TimeDelta& current_time) {
++  DCHECK(main_thread_checker_.CalledOnValidThread());
++  current_time_ = current_time.InSecondsF();
++}
++
++void WebMediaPlayerOxide::OnDidEnterFullscreen() {
++  NOTIMPLEMENTED();
++}
++
++void WebMediaPlayerOxide::OnDidExitFullscreen() {
++  NOTIMPLEMENTED();
++}
++
++void WebMediaPlayerOxide::OnMediaPlayerPlay() {
++  UpdatePlayingState(true);
++  client_->playbackStateChanged();
++}
++
++void WebMediaPlayerOxide::OnMediaPlayerPause() {
++  UpdatePlayingState(false);
++  client_->playbackStateChanged();
++}
++
++void WebMediaPlayerOxide::OnRequestFullscreen() {
++  NOTIMPLEMENTED();
++}
++
++void WebMediaPlayerOxide::OnDurationChanged(const base::TimeDelta& duration) {
++  DCHECK(main_thread_checker_.CalledOnValidThread());
++  // Only MSE |player_type_| registers this callback.
++  DCHECK_EQ(player_type_, MEDIA_PLAYER_TYPE_MEDIA_SOURCE);
++
++  // Cache the new duration value and trust it over any subsequent duration
++  // values received in OnMediaMetadataChanged().
++  duration_ = duration;
++  ignore_metadata_duration_change_ = true;
++
++  // Notify MediaPlayerClient that duration has changed, if > HAVE_NOTHING.
++  if (ready_state_ > WebMediaPlayer::ReadyStateHaveNothing)
++    client_->durationChanged();
++}
++
++void WebMediaPlayerOxide::UpdateNetworkState(
++    WebMediaPlayer::NetworkState state) {
++  DCHECK(main_thread_checker_.CalledOnValidThread());
++  if (ready_state_ == WebMediaPlayer::ReadyStateHaveNothing &&
++      (state == WebMediaPlayer::NetworkStateNetworkError ||
++       state == WebMediaPlayer::NetworkStateDecodeError)) {
++    // Any error that occurs before reaching ReadyStateHaveMetadata should
++    // be considered a format error.
++    network_state_ = WebMediaPlayer::NetworkStateFormatError;
++  } else {
++    network_state_ = state;
++  }
++  client_->networkStateChanged();
++}
++
++void WebMediaPlayerOxide::UpdateReadyState(
++    WebMediaPlayer::ReadyState state) {
++  ready_state_ = state;
++  client_->readyStateChanged();
++}
++
++void WebMediaPlayerOxide::OnPlayerReleased() {
++  if (is_playing_)
++    OnMediaPlayerPause();
++}
++
++void WebMediaPlayerOxide::ReleaseMediaResources() {
++  switch (network_state_) {
++    // Pause the media player and inform WebKit if the player is in a good
++    // shape.
++    case WebMediaPlayer::NetworkStateIdle:
++    case WebMediaPlayer::NetworkStateLoading:
++    case WebMediaPlayer::NetworkStateLoaded:
++      Pause(false);
++      client_->playbackStateChanged();
++      break;
++    // If a WebMediaPlayer instance has entered into one of these states,
++    // the internal network state in HTMLMediaElement could be set to empty.
++    // And calling playbackStateChanged() could get this object deleted.
++    case WebMediaPlayer::NetworkStateEmpty:
++    case WebMediaPlayer::NetworkStateFormatError:
++    case WebMediaPlayer::NetworkStateNetworkError:
++    case WebMediaPlayer::NetworkStateDecodeError:
++      break;
++  }
++  player_manager_->ReleaseResources(player_id_);
++  OnPlayerReleased();
++}
++
++void WebMediaPlayerOxide::OnDestruct() {
++  if (player_manager_)
++    player_manager_->UnregisterMediaPlayer(player_id_);
++  Detach();
++}
++
++void WebMediaPlayerOxide::Detach() {
++  is_remote_ = false;
++  player_manager_ = NULL;
++}
++
++void WebMediaPlayerOxide::Pause(bool is_media_related_action) {
++  if (player_manager_)
++    player_manager_->Pause(player_id_, is_media_related_action);
++  UpdatePlayingState(false);
++}
++
++void WebMediaPlayerOxide::UpdatePlayingState(bool is_playing) {
++  is_playing_ = is_playing;
++  if (!delegate_)
++    return;
++  if (is_playing)
++    delegate_->DidPlay(this);
++  else
++    delegate_->DidPause(this);
++}
++
++// The following EME related code is copied from WebMediaPlayerImpl.
++// TODO(xhwang): Remove duplicate code between WebMediaPlayerOxide and
++// WebMediaPlayerImpl.
++
++// Convert a WebString to ASCII, falling back on an empty string in the case
++// of a non-ASCII string.
++static std::string ToASCIIOrEmpty(const blink::WebString& string) {
++  return base::IsStringASCII(string) ? base::UTF16ToASCII(string)
++                                     : std::string();
++}
++
++// Helper functions to report media EME related stats to UMA. They follow the
++// convention of more commonly used macros UMA_HISTOGRAM_ENUMERATION and
++// UMA_HISTOGRAM_COUNTS. The reason that we cannot use those macros directly is
++// that UMA_* macros require the names to be constant throughout the process'
++// lifetime.
++
++static void EmeUMAHistogramEnumeration(const std::string& key_system,
++                                       const std::string& method,
++                                       int sample,
++                                       int boundary_value) {
++  base::LinearHistogram::FactoryGet(
++      kMediaEme + KeySystemNameForUMA(key_system) + "." + method,
++      1, boundary_value, boundary_value + 1,
++      base::Histogram::kUmaTargetedHistogramFlag)->Add(sample);
++}
++
++static void EmeUMAHistogramCounts(const std::string& key_system,
++                                  const std::string& method,
++                                  int sample) {
++  // Use the same parameters as UMA_HISTOGRAM_COUNTS.
++  base::Histogram::FactoryGet(
++      kMediaEme + KeySystemNameForUMA(key_system) + "." + method,
++      1, 1000000, 50, base::Histogram::kUmaTargetedHistogramFlag)->Add(sample);
++}
++
++// Helper enum for reporting generateKeyRequest/addKey histograms.
++enum MediaKeyException {
++  kUnknownResultId,
++  kSuccess,
++  kKeySystemNotSupported,
++  kInvalidPlayerState,
++  kMaxMediaKeyException
++};
++
++static MediaKeyException MediaKeyExceptionForUMA(
++    WebMediaPlayer::MediaKeyException e) {
++  switch (e) {
++    case WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported:
++      return kKeySystemNotSupported;
++    case WebMediaPlayer::MediaKeyExceptionInvalidPlayerState:
++      return kInvalidPlayerState;
++    case WebMediaPlayer::MediaKeyExceptionNoError:
++      return kSuccess;
++    default:
++      return kUnknownResultId;
++  }
++}
++
++// Helper for converting |key_system| name and exception |e| to a pair of enum
++// values from above, for reporting to UMA.
++static void ReportMediaKeyExceptionToUMA(const std::string& method,
++                                         const std::string& key_system,
++                                         WebMediaPlayer::MediaKeyException e) {
++  MediaKeyException result_id = MediaKeyExceptionForUMA(e);
++  DCHECK_NE(result_id, kUnknownResultId) << e;
++  EmeUMAHistogramEnumeration(
++      key_system, method, result_id, kMaxMediaKeyException);
++}
++
++bool WebMediaPlayerOxide::IsKeySystemSupported(
++    const std::string& key_system) {
++  // TODO
++  return player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE &&
++         IsConcreteSupportedKeySystem(key_system);
++}
++
++WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::generateKeyRequest(
++    const WebString& key_system,
++    const unsigned char* init_data,
++    unsigned init_data_length) {
++  DVLOG(1) << "generateKeyRequest: " << base::string16(key_system) << ": "
++           << std::string(reinterpret_cast<const char*>(init_data),
++                          static_cast<size_t>(init_data_length));
++
++  std::string ascii_key_system =
++      GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
++
++  WebMediaPlayer::MediaKeyException e =
++      GenerateKeyRequestInternal(ascii_key_system, init_data, init_data_length);
++  ReportMediaKeyExceptionToUMA("generateKeyRequest", ascii_key_system, e);
++  return e;
++}
++
++// Guess the type of |init_data|. This is only used to handle some corner cases
++// so we keep it as simple as possible without breaking major use cases.
++static std::string GuessInitDataType(const unsigned char* init_data,
++                                     unsigned init_data_length) {
++  // Most WebM files use KeyId of 16 bytes. MP4 init data are always >16 bytes.
++  if (init_data_length == 16)
++    return "video/webm";
++
++  return "video/mp4";
++}
++
++// TODO(xhwang): Report an error when there is encrypted stream but EME is
++// not enabled. Currently the player just doesn't start and waits for
++// ever.
++WebMediaPlayer::MediaKeyException
++WebMediaPlayerOxide::GenerateKeyRequestInternal(
++    const std::string& key_system,
++    const unsigned char* init_data,
++    unsigned init_data_length) {
++  NOTIMPLEMENTED();
++  return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
++}
++
++WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::addKey(
++    const WebString& key_system,
++    const unsigned char* key,
++    unsigned key_length,
++    const unsigned char* init_data,
++    unsigned init_data_length,
++    const WebString& session_id) {
++  DVLOG(1) << "addKey: " << base::string16(key_system) << ": "
++           << std::string(reinterpret_cast<const char*>(key),
++                          static_cast<size_t>(key_length)) << ", "
++           << std::string(reinterpret_cast<const char*>(init_data),
++                          static_cast<size_t>(init_data_length)) << " ["
++           << base::string16(session_id) << "]";
++
++  std::string ascii_key_system =
++      GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
++  std::string ascii_session_id = ToASCIIOrEmpty(session_id);
++
++  WebMediaPlayer::MediaKeyException e = AddKeyInternal(ascii_key_system,
++                                                       key,
++                                                       key_length,
++                                                       init_data,
++                                                       init_data_length,
++                                                       ascii_session_id);
++  ReportMediaKeyExceptionToUMA("addKey", ascii_key_system, e);
++  return e;
++}
++
++WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::AddKeyInternal(
++    const std::string& key_system,
++    const unsigned char* key,
++    unsigned key_length,
++    const unsigned char* init_data,
++    unsigned init_data_length,
++    const std::string& session_id) {
++  DCHECK(key);
++  DCHECK_GT(key_length, 0u);
++
++  if (!IsKeySystemSupported(key_system))
++    return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
++
++  if (current_key_system_.empty() || key_system != current_key_system_)
++    return WebMediaPlayer::MediaKeyExceptionInvalidPlayerState;
++
++  return WebMediaPlayer::MediaKeyExceptionNoError;
++}
++
++WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::cancelKeyRequest(
++    const WebString& key_system,
++    const WebString& session_id) {
++  DVLOG(1) << "cancelKeyRequest: " << base::string16(key_system) << ": "
++           << " [" << base::string16(session_id) << "]";
++
++  std::string ascii_key_system =
++      GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
++  std::string ascii_session_id = ToASCIIOrEmpty(session_id);
++
++  WebMediaPlayer::MediaKeyException e =
++      CancelKeyRequestInternal(ascii_key_system, ascii_session_id);
++  ReportMediaKeyExceptionToUMA("cancelKeyRequest", ascii_key_system, e);
++  return e;
++}
++
++WebMediaPlayer::MediaKeyException
++WebMediaPlayerOxide::CancelKeyRequestInternal(const std::string& key_system,
++                                                const std::string& session_id) {
++  if (!IsKeySystemSupported(key_system))
++    return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
++
++  if (current_key_system_.empty() || key_system != current_key_system_)
++    return WebMediaPlayer::MediaKeyExceptionInvalidPlayerState;
++
++  return WebMediaPlayer::MediaKeyExceptionNoError;
++}
++
++void WebMediaPlayerOxide::setContentDecryptionModule(
++    blink::WebContentDecryptionModule* cdm) {
++  NOTIMPLEMENTED();
++}
++
++void WebMediaPlayerOxide::OnKeyAdded(const std::string& session_id) {
++  EmeUMAHistogramCounts(current_key_system_, "KeyAdded", 1);
++
++  client_->keyAdded(
++      WebString::fromUTF8(GetPrefixedKeySystemName(current_key_system_)),
++      WebString::fromUTF8(session_id));
++}
++
++void WebMediaPlayerOxide::OnKeyError(const std::string& session_id,
++                                       media::MediaKeys::KeyError error_code,
++                                       uint32 system_code) {
++  EmeUMAHistogramEnumeration(current_key_system_, "KeyError",
++                             error_code, media::MediaKeys::kMaxKeyError);
++
++  unsigned short short_system_code = 0;
++  if (system_code > std::numeric_limits<unsigned short>::max()) {
++    LOG(WARNING) << "system_code exceeds unsigned short limit.";
++    short_system_code = std::numeric_limits<unsigned short>::max();
++  } else {
++    short_system_code = static_cast<unsigned short>(system_code);
++  }
++
++  client_->keyError(
++      WebString::fromUTF8(GetPrefixedKeySystemName(current_key_system_)),
++      WebString::fromUTF8(session_id),
++      static_cast<blink::WebMediaPlayerClient::MediaKeyErrorCode>(error_code),
++      short_system_code);
++}
++
++void WebMediaPlayerOxide::OnKeyMessage(const std::string& session_id,
++                                         const std::vector<uint8>& message,
++                                         const GURL& destination_url) {
++  DCHECK(destination_url.is_empty() || destination_url.is_valid());
++
++  client_->keyMessage(
++      WebString::fromUTF8(GetPrefixedKeySystemName(current_key_system_)),
++      WebString::fromUTF8(session_id),
++      message.empty() ? NULL : &message[0],
++      message.size(),
++      destination_url);
++}
++
++void WebMediaPlayerOxide::OnMediaSourceOpened(
++    blink::WebMediaSource* web_media_source) {
++  client_->mediaSourceOpened(web_media_source);
++}
++
++void WebMediaPlayerOxide::OnNeedKey(const std::string& type,
++                                      const std::vector<uint8>& init_data) {
++  DCHECK(main_thread_checker_.CalledOnValidThread());
++
++  // Do not fire NeedKey event if encrypted media is not enabled.
++  if (!blink::WebRuntimeFeatures::isPrefixedEncryptedMediaEnabled() &&
++      !blink::WebRuntimeFeatures::isEncryptedMediaEnabled()) {
++    return;
++  }
++
++  UMA_HISTOGRAM_COUNTS(kMediaEme + std::string("NeedKey"), 1);
++
++  DCHECK(init_data_type_.empty() || type.empty() || type == init_data_type_);
++  if (init_data_type_.empty())
++    init_data_type_ = type;
++
++  const uint8* init_data_ptr = init_data.empty() ? NULL : &init_data[0];
++  client_->keyNeeded(
++      WebString::fromUTF8(type), init_data_ptr, init_data.size());
++}
++
++void WebMediaPlayerOxide::enterFullscreen() {
++  NOTIMPLEMENTED();
++}
++
++void WebMediaPlayerOxide::exitFullscreen() {
++  NOTIMPLEMENTED();
++}
++
++bool WebMediaPlayerOxide::canEnterFullscreen() const {
++  return false;
++}
++
++}  // namespace content
+Index: src/content/renderer/media/utouch/webmediaplayer_oxide.h
+===================================================================
+--- src/content/renderer/media/utouch/webmediaplayer_oxide.h	(revision 0)
++++ src/content/renderer/media/utouch/webmediaplayer_oxide.h	(working copy)
+@@ -0,0 +1,323 @@
++// Copyright 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef CONTENT_RENDERER_MEDIA_UTOUCH_WEBMEDIAPLAYER_OXIDE_H_
++#define CONTENT_RENDERER_MEDIA_UTOUCH_WEBMEDIAPLAYER_OXIDE_H_
++
++#include <string>
++#include <vector>
++
++#include "base/basictypes.h"
++#include "base/memory/ref_counted.h"
++#include "base/memory/scoped_ptr.h"
++#include "base/memory/weak_ptr.h"
++#include "base/time/time.h"
++#include "base/threading/thread_checker.h"
++#include "content/common/media/media_player_messages_enums_oxide.h"
++#include "content/public/renderer/render_frame_observer.h"
++#include "content/renderer/media/crypto/proxy_decryptor.h"
++#include "content/renderer/media/utouch/media_info_loader.h"
++#include "gpu/command_buffer/common/mailbox.h"
++#include "media/base/utouch/media_player_oxide.h"
++#include "media/base/demuxer_stream.h"
++#include "media/base/media_keys.h"
++#include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
++#include "third_party/WebKit/public/platform/WebMediaPlayer.h"
++#include "third_party/WebKit/public/platform/WebSize.h"
++#include "third_party/WebKit/public/platform/WebURL.h"
++#include "ui/gfx/rect_f.h"
++
++namespace base {
++class MessageLoopProxy;
++}
++
++namespace blink {
++class WebContentDecryptionModule;
++class WebFrame;
++class WebURL;
++}
++
++namespace gpu {
++struct MailboxHolder;
++}
++
++namespace media {
++class MediaLog;
++}
++
++namespace content {
++class RendererMediaPlayerManager;
++class WebContentDecryptionModuleImpl;
++class WebMediaPlayerDelegate;
++
++class WebMediaPlayerOxide : public blink::WebMediaPlayer,
++                            public RenderFrameObserver {
++ public:
++  WebMediaPlayerOxide(blink::WebFrame* frame,
++                        blink::WebMediaPlayerClient* client,
++                        base::WeakPtr<WebMediaPlayerDelegate> delegate,
++                        RendererMediaPlayerManager* player_manager,
++                        const scoped_refptr<base::MessageLoopProxy>& media_loop,
++                        media::MediaLog* media_log);
++  virtual ~WebMediaPlayerOxide();
++
++  // blink::WebMediaPlayer implementation.
++  virtual void enterFullscreen();
++  virtual void exitFullscreen();
++  virtual bool canEnterFullscreen() const;
++
++  // Resource loading.
++  virtual void load(LoadType load_type,
++                    const blink::WebURL& url,
++                    CORSMode cors_mode);
++
++  // Playback controls.
++  virtual void play();
++  virtual void pause();
++  virtual void seek(double seconds);
++  virtual bool supportsSave() const;
++  virtual void setRate(double rate);
++  virtual void setVolume(double volume);
++  virtual blink::WebTimeRanges buffered() const;
++  virtual double maxTimeSeekable() const;
++
++  // Poster image, as defined in the <video> element.
++  virtual void setPoster(const blink::WebURL& poster) OVERRIDE;
++
++  // Methods for painting.
++  virtual void paint(blink::WebCanvas* canvas,
++                     const blink::WebRect& rect,
++                     unsigned char alpha);
++
++  virtual bool copyVideoTextureToPlatformTexture(
++      blink::WebGraphicsContext3D* web_graphics_context,
++      unsigned int texture,
++      unsigned int level,
++      unsigned int internal_format,
++      unsigned int type,
++      bool premultiply_alpha,
++      bool flip_y);
++
++  // True if the loaded media has a playable video/audio track.
++  virtual bool hasVideo() const;
++  virtual bool hasAudio() const;
++
++  // Dimensions of the video.
++  virtual blink::WebSize naturalSize() const;
++
++  // Getters of playback state.
++  virtual bool paused() const;
++  virtual bool seeking() const;
++  virtual double duration() const;
++  virtual double timelineOffset() const;
++  virtual double currentTime() const;
++
++  virtual bool didLoadingProgress();
++
++  // Internal states of loading and network.
++  virtual blink::WebMediaPlayer::NetworkState networkState() const;
++  virtual blink::WebMediaPlayer::ReadyState readyState() const;
++
++  virtual bool hasSingleSecurityOrigin() const;
++  virtual bool didPassCORSAccessCheck() const;
++
++  virtual double mediaTimeForTimeValue(double timeValue) const;
++
++  // Provide statistics.
++  virtual unsigned decodedFrameCount() const;
++  virtual unsigned droppedFrameCount() const;
++  virtual unsigned audioDecodedByteCount() const;
++  virtual unsigned videoDecodedByteCount() const;
++
++  // Media player callback handlers.
++  void OnMediaMetadataChanged(const base::TimeDelta& duration, int width,
++                              int height, bool success);
++  void OnPlaybackComplete();
++  void OnBufferingUpdate(int percentage);
++  void OnSeekRequest(const base::TimeDelta& time_to_seek);
++  void OnSeekComplete(const base::TimeDelta& current_time);
++  void OnMediaError(int error_type);
++  void OnVideoSizeChanged(int width, int height);
++  void OnDurationChanged(const base::TimeDelta& duration);
++
++  // Called to update the current time.
++  void OnTimeUpdate(const base::TimeDelta& current_time);
++
++  // Functions called when media player status changes.
++  void OnDidEnterFullscreen();
++  void OnDidExitFullscreen();
++  void OnMediaPlayerPlay();
++  void OnMediaPlayerPause();
++  void OnRequestFullscreen();
++
++  // Called when the player is released.
++  virtual void OnPlayerReleased();
++
++  // This function is called by the RendererMediaPlayerManager to pause the
++  // video and release the media player and surface texture when we switch tabs.
++  // However, the actual GlTexture is not released to keep the video screenshot.
++  virtual void ReleaseMediaResources();
++
++  // RenderFrameObserver implementation.
++  virtual void OnDestruct() OVERRIDE;
++
++  // Detach the player from its manager.
++  void Detach();
++
++  virtual MediaKeyException generateKeyRequest(
++      const blink::WebString& key_system,
++      const unsigned char* init_data,
++      unsigned init_data_length);
++  virtual MediaKeyException addKey(
++      const blink::WebString& key_system,
++      const unsigned char* key,
++      unsigned key_length,
++      const unsigned char* init_data,
++      unsigned init_data_length,
++      const blink::WebString& session_id);
++  virtual MediaKeyException cancelKeyRequest(
++      const blink::WebString& key_system,
++      const blink::WebString& session_id);
++  virtual void setContentDecryptionModule(
++      blink::WebContentDecryptionModule* cdm);
++
++  void OnKeyAdded(const std::string& session_id);
++  void OnKeyError(const std::string& session_id,
++                  media::MediaKeys::KeyError error_code,
++                  uint32 system_code);
++  void OnKeyMessage(const std::string& session_id,
++                    const std::vector<uint8>& message,
++                    const GURL& destination_url);
++
++  void OnMediaSourceOpened(blink::WebMediaSource* web_media_source);
++
++  void OnNeedKey(const std::string& type,
++                 const std::vector<uint8>& init_data);
++
++ protected:
++  // Helper method to update the playing state.
++  void UpdatePlayingState(bool is_playing_);
++
++  // Helper methods for posting task for setting states and update WebKit.
++  void UpdateNetworkState(blink::WebMediaPlayer::NetworkState state);
++  void UpdateReadyState(blink::WebMediaPlayer::ReadyState state);
++
++ private:
++  void Pause(bool is_media_related_action);
++  void DidLoadMediaInfo(MediaInfoLoader::Status status);
++  bool IsKeySystemSupported(const std::string& key_system);
++
++  // Actually do the work for generateKeyRequest/addKey so they can easily
++  // report results to UMA.
++  MediaKeyException GenerateKeyRequestInternal(const std::string& key_system,
++                                               const unsigned char* init_data,
++                                               unsigned init_data_length);
++  MediaKeyException AddKeyInternal(const std::string& key_system,
++                                   const unsigned char* key,
++                                   unsigned key_length,
++                                   const unsigned char* init_data,
++                                   unsigned init_data_length,
++                                   const std::string& session_id);
++  MediaKeyException CancelKeyRequestInternal(const std::string& key_system,
++                                             const std::string& session_id);
++
++  blink::WebFrame* const frame_;
++
++  blink::WebMediaPlayerClient* const client_;
++
++  base::WeakPtr<WebMediaPlayerDelegate> delegate_;
++
++  // Save the list of buffered time ranges.
++  blink::WebTimeRanges buffered_;
++
++  // Size of the video.
++  blink::WebSize natural_size_;
++
++  base::ThreadChecker main_thread_checker_;
++
++  // Message loop for media thread.
++  const scoped_refptr<base::MessageLoopProxy> media_loop_;
++
++  // URL of the media file to be fetched.
++  GURL url_;
++
++  // Media duration.
++  base::TimeDelta duration_;
++
++  // Flag to remember if we have a trusted duration_ value provided by
++  // MediaSourceDelegate notifying OnDurationChanged(). In this case, ignore
++  // any subsequent duration value passed to OnMediaMetadataChange().
++  bool ignore_metadata_duration_change_;
++
++  // Seek gets pending if another seek is in progress. Only last pending seek
++  // will have effect.
++  bool pending_seek_;
++  base::TimeDelta pending_seek_time_;
++
++  // Internal seek state.
++  bool seeking_;
++  base::TimeDelta seek_time_;
++
++  // Whether loading has progressed since the last call to didLoadingProgress.
++  bool did_loading_progress_;
++
++  // Manages this object and delegates player calls to the browser process.
++  // Owned by RenderFrameImpl.
++  RendererMediaPlayerManager* player_manager_;
++
++  // Player ID assigned by the |player_manager_|.
++  int player_id_;
++
++  // Current player states.
++  blink::WebMediaPlayer::NetworkState network_state_;
++  blink::WebMediaPlayer::ReadyState ready_state_;
++
++  // Whether the mediaplayer is playing.
++  bool is_playing_;
++
++  // Whether the mediaplayer has already started playing.
++  bool playing_started_;
++
++  // Whether the video size info is available.
++  bool has_size_info_;
++
++  // Whether the video metadata and info are available.
++  bool has_media_metadata_;
++  bool has_media_info_;
++
++  // Internal pending playback state.
++  // Store a playback request that cannot be started immediately.
++  bool pending_playback_;
++
++  MediaPlayerHostMsg_Initialize_Type player_type_;
++
++  // The current playing time. Because the media player is in the browser
++  // process, it will regularly update the |current_time_| by calling
++  // OnTimeUpdate().
++  double current_time_;
++
++  // Whether the browser is currently connected to a remote media player.
++  bool is_remote_;
++
++  media::MediaLog* media_log_;
++
++  scoped_ptr<MediaInfoLoader> info_loader_;
++
++  // The currently selected key system. Empty string means that no key system
++  // has been selected.
++  std::string current_key_system_;
++
++  // Temporary for EME v0.1. In the future the init data type should be passed
++  // through GenerateKeyRequest() directly from WebKit.
++  std::string init_data_type_;
++
++  // NOTE: Weak pointers must be invalidated before all other member variables.
++  base::WeakPtrFactory<WebMediaPlayerOxide> weak_factory_;
++
++  DISALLOW_COPY_AND_ASSIGN(WebMediaPlayerOxide);
++};
++
++}  // namespace content
++
++#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_WEBMEDIAPLAYER_OXIDE_H_
+Index: src/content/renderer/render_frame_impl.cc
+===================================================================
+--- src/content/renderer/render_frame_impl.cc	(revision 279868)
++++ src/content/renderer/render_frame_impl.cc	(working copy)
+@@ -70,6 +70,7 @@
+ #include "content/renderer/media/webmediaplayer_impl.h"
+ #include "content/renderer/media/webmediaplayer_ms.h"
+ #include "content/renderer/media/webmediaplayer_params.h"
++#include "content/renderer/media/utouch/webmediaplayer_oxide.h"
+ #include "content/renderer/notification_provider.h"
+ #include "content/renderer/npapi/plugin_channel_host.h"
+ #include "content/renderer/render_process.h"
+@@ -137,6 +138,9 @@
+ #include "content/renderer/media/crypto/renderer_cdm_manager.h"
+ #endif
+ 
++#include "content/renderer/media/utouch/renderer_media_player_manager.h"
++#include "content/renderer/media/utouch/webmediaplayer_oxide.h"
++
+ using blink::WebContextMenuData;
+ using blink::WebData;
+ using blink::WebDataSource;
+@@ -399,9 +403,7 @@
+       notification_provider_(NULL),
+       web_user_media_client_(NULL),
+       midi_dispatcher_(NULL),
+-#if defined(OS_ANDROID)
+       media_player_manager_(NULL),
+-#endif
+ #if defined(ENABLE_BROWSER_CDMS)
+       cdm_manager_(NULL),
+ #endif
+@@ -1369,6 +1371,16 @@
+ #if defined(OS_ANDROID)
+   return CreateAndroidWebMediaPlayer(url, client);
+ #else
++
++  return new WebMediaPlayerOxide(
++      frame_,
++      client,
++      weak_factory_.GetWeakPtr(),
++      GetMediaPlayerManager(),
++      RenderThreadImpl::current()->GetMediaThreadMessageLoopProxy(),
++      new RenderMediaLog());
++
++#if 0
+   WebMediaPlayerParams params(
+       base::Bind(&ContentRendererClient::DeferMediaLoad,
+                  base::Unretained(GetContentClient()->renderer()),
+@@ -1377,6 +1389,8 @@
+           render_view_->routing_id_, routing_id_));
+   return new WebMediaPlayerImpl(frame, client, weak_factory_.GetWeakPtr(),
+                                 params);
++#endif
++
+ #endif  // defined(OS_ANDROID)
+ }
+ 
+@@ -3564,6 +3585,9 @@
+       new RenderMediaLog());
+ }
+ 
++#endif  // defined(OS_ANDROID)
++
++
+ RendererMediaPlayerManager* RenderFrameImpl::GetMediaPlayerManager() {
+   if (!media_player_manager_)
+     media_player_manager_ = new RendererMediaPlayerManager(this);
+@@ -3570,8 +3594,6 @@
+   return media_player_manager_;
+ }
+ 
+-#endif  // defined(OS_ANDROID)
+-
+ #if defined(ENABLE_BROWSER_CDMS)
+ RendererCdmManager* RenderFrameImpl::GetCdmManager() {
+   if (!cdm_manager_)
+Index: src/content/renderer/render_frame_impl.h
+===================================================================
+--- src/content/renderer/render_frame_impl.h	(revision 279868)
++++ src/content/renderer/render_frame_impl.h	(working copy)
+@@ -534,12 +534,12 @@
+   // Returns the URL being loaded by the |frame_|'s request.
+   GURL GetLoadingUrl() const;
+ 
++  RendererMediaPlayerManager* GetMediaPlayerManager();
++
+ #if defined(OS_ANDROID)
+   blink::WebMediaPlayer* CreateAndroidWebMediaPlayer(
+       const blink::WebURL& url,
+       blink::WebMediaPlayerClient* client);
+-
+-  RendererMediaPlayerManager* GetMediaPlayerManager();
+ #endif
+ 
+ #if defined(ENABLE_BROWSER_CDMS)
+@@ -614,12 +614,10 @@
+   // MidiClient attached to this frame; lazily initialized.
+   MidiDispatcher* midi_dispatcher_;
+ 
+-#if defined(OS_ANDROID)
+   // Manages all media players in this render frame for communicating with the
+   // real media player in the browser process. It's okay to use a raw pointer
+   // since it's a RenderFrameObserver.
+   RendererMediaPlayerManager* media_player_manager_;
+-#endif
+ 
+ #if defined(ENABLE_BROWSER_CDMS)
+   // Manage all CDMs in this render frame for communicating with the real CDM in
+Index: src/media/base/utouch/media_player_manager.h
+===================================================================
+--- src/media/base/utouch/media_player_manager.h	(revision 0)
++++ src/media/base/utouch/media_player_manager.h	(working copy)
+@@ -0,0 +1,65 @@
++// Copyright (c) 2012 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MANAGER_H_
++#define MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MANAGER_H_
++
++#include "base/basictypes.h"
++#include "base/time/time.h"
++#include "media/base/media_export.h"
++
++namespace media {
++
++class MediaPlayerOxide;
++class MediaResourceGetter;
++
++// This class is responsible for managing active MediaPlayerAndroid objects.
++class MEDIA_EXPORT MediaPlayerManager {
++ public:
++  virtual ~MediaPlayerManager() {}
++
++  // Called when time update messages need to be sent. Args: player ID,
++  // current time.
++  virtual void OnTimeUpdate(int player_id, base::TimeDelta current_time) = 0;
++
++  // Called when media metadata changed. Args: player ID, duration of the
++  // media, width, height, whether the metadata is successfully extracted.
++  virtual void OnMediaMetadataChanged(
++      int player_id,
++      base::TimeDelta duration,
++      int width,
++      int height,
++      bool success) = 0;
++
++  // Called when playback completed. Args: player ID.
++  virtual void OnPlaybackComplete(int player_id) = 0;
++
++  // Called when media download was interrupted. Args: player ID.
++  virtual void OnMediaInterrupted(int player_id) = 0;
++
++  // Called when buffering has changed. Args: player ID, percentage
++  // of the media.
++  virtual void OnBufferingUpdate(int player_id, int percentage) = 0;
++
++  // Called when seek completed. Args: player ID, current time.
++  virtual void OnSeekComplete(
++      int player_id,
++      const base::TimeDelta& current_time) = 0;
++
++  // Called when error happens. Args: player ID, error type.
++  virtual void OnError(int player_id, int error) = 0;
++
++  // Called when video size has changed. Args: player ID, width, height.
++  virtual void OnVideoSizeChanged(int player_id, int width, int height) = 0;
++
++  // Returns the player with the specified id.
++  virtual MediaPlayerOxide* GetPlayer(int player_id) = 0;
++
++  // Release all the players managed by this object.
++  virtual void DestroyAllMediaPlayers() = 0;
++};
++
++}  // namespace media
++
++#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MANAGER_H_
+Index: src/media/base/utouch/media_player_mediahub.cc
+===================================================================
+--- src/media/base/utouch/media_player_mediahub.cc	(revision 0)
++++ src/media/base/utouch/media_player_mediahub.cc	(working copy)
+@@ -0,0 +1,108 @@
++// Copyright (c) 2012 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "media/base/utouch/media_player_mediahub.h"
++
++#include "base/basictypes.h"
++#include "base/logging.h"
++#include "base/strings/string_util.h"
++
++namespace media {
++
++MediaPlayerOxide* MediaPlayerMediaHub::Create(int player_id,
++    const GURL& url,
++    const GURL& cookies,
++    const std::string& user_agent) {
++  return new MediaPlayerMediaHub(player_id, url, cookies, user_agent);
++}
++
++MediaPlayerMediaHub::MediaPlayerMediaHub(
++    int player_id,
++    const GURL& url,
++    const GURL& cookies,
++    const std::string& user_agent)
++    : MediaPlayerOxide(player_id),
++      prepared_(false),
++      pending_play_(false),
++      url_(url),
++      user_agent_(user_agent),
++      width_(0),
++      height_(0),
++      media_hub_client_(0) {
++  media_hub_client_ = mediahub_create_player(player_id);
++}
++
++MediaPlayerMediaHub::~MediaPlayerMediaHub() {
++  mediahub_release(media_hub_client_);
++}
++
++void MediaPlayerMediaHub::SetDuration(base::TimeDelta duration) {
++}
++
++void MediaPlayerMediaHub::Start() {
++  mediahub_play(media_hub_client_);
++}
++
++void MediaPlayerMediaHub::Pause(bool is_media_related_action) {
++  mediahub_pause(media_hub_client_);
++}
++
++bool MediaPlayerMediaHub::IsPlaying() {
++  return mediahub_is_playing(media_hub_client_);
++}
++
++int MediaPlayerMediaHub::GetVideoWidth() {
++  return 0;
++}
++
++int MediaPlayerMediaHub::GetVideoHeight() {
++  return 0;
++}
++
++void MediaPlayerMediaHub::SeekTo(base::TimeDelta timestamp) {
++  //  _media_hub_client->seek_to();
++}
++
++base::TimeDelta MediaPlayerMediaHub::GetCurrentTime() {
++  return base::TimeDelta();
++}
++
++base::TimeDelta MediaPlayerMediaHub::GetDuration() {
++  return base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_));
++}
++
++void MediaPlayerMediaHub::Release() {
++  mediahub_release(media_hub_client_);
++}
++
++void MediaPlayerMediaHub::SetVolume(double volume) {
++  // TODO validate scale
++  mediahub_set_volume(media_hub_client_, volume);
++}
++
++bool MediaPlayerMediaHub::CanPause() {
++  return mediahub_can_pause(media_hub_client_) != 0;
++}
++
++bool MediaPlayerMediaHub::CanSeekForward() {
++  return mediahub_can_seek_forward(media_hub_client_) != 0;
++}
++
++bool MediaPlayerMediaHub::CanSeekBackward() {
++  return mediahub_can_seek_backward(media_hub_client_) != 0;
++}
++
++bool MediaPlayerMediaHub::IsPlayerReady() {
++  return mediahub_is_player_ready(media_hub_client_) != 0;
++}
++
++GURL MediaPlayerMediaHub::GetUrl() {
++  return url_;
++}
++
++GURL MediaPlayerMediaHub::GetCookies() {
++  return GURL();
++}
++
++}  // namespace media
+Index: src/media/base/utouch/media_player_mediahub.h
+===================================================================
+--- src/media/base/utouch/media_player_mediahub.h	(revision 0)
++++ src/media/base/utouch/media_player_mediahub.h	(working copy)
+@@ -0,0 +1,94 @@
++// Copyright (c) 2012 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MEDIAHUB_H_
++#define MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MEDIAHUB_H_
++
++#include <map>
++#include <string>
++
++#include "base/callback.h"
++#include "base/memory/scoped_ptr.h"
++#include "base/memory/weak_ptr.h"
++#include "base/time/time.h"
++#include "media/base/utouch/media_player_oxide.h"
++#include "media/mediahub/player.h"
++#include "url/gurl.h"
++
++namespace core {
++namespace ubuntu {
++namespace media {
++class Player;
++}
++}
++}
++
++namespace media {
++
++class MediaPlayerManager;
++
++class MEDIA_EXPORT MediaPlayerMediaHub : public MediaPlayerOxide {
++ public:
++  MediaPlayerMediaHub(int player_id,
++                      const GURL& url,
++                      const GURL& cookies,
++                      const std::string& user_agent);
++  virtual ~MediaPlayerMediaHub();
++
++  static MediaPlayerOxide* Create(int player_id,
++      const GURL& url,
++      const GURL& cookies,
++      const std::string& user_agent);
++
++  // MediaPlayerOxide implementation.
++  virtual void Start() OVERRIDE;
++  virtual void Pause(bool is_media_related_action) OVERRIDE;
++  virtual void SeekTo(base::TimeDelta timestamp) OVERRIDE;
++  virtual void Release() OVERRIDE;
++  virtual void SetVolume(double volume) OVERRIDE;
++  virtual int GetVideoWidth() OVERRIDE;
++  virtual int GetVideoHeight() OVERRIDE;
++  virtual base::TimeDelta GetCurrentTime() OVERRIDE;
++  virtual base::TimeDelta GetDuration() OVERRIDE;
++  virtual bool IsPlaying() OVERRIDE;
++  virtual bool CanPause() OVERRIDE;
++  virtual bool CanSeekForward() OVERRIDE;
++  virtual bool CanSeekBackward() OVERRIDE;
++  virtual bool IsPlayerReady() OVERRIDE;
++  virtual GURL GetUrl() OVERRIDE;
++  virtual GURL GetCookies() OVERRIDE;
++
++ protected:
++  void SetDuration(base::TimeDelta time);
++
++ private:
++  // Whether the player is prepared for playback.
++  bool prepared_;
++
++  // Pending play event while player is preparing.
++  bool pending_play_;
++
++  // Pending seek time while player is preparing.
++  base::TimeDelta pending_seek_;
++
++  // Url for playback.
++  GURL url_;
++
++  // User agent string to be used for media player.
++  const std::string user_agent_;
++
++  int width_;
++  int height_;
++
++  // Cookies for |url_|.
++  std::string cookies_;
++
++  MediaHubClientHandle media_hub_client_;
++
++  DISALLOW_COPY_AND_ASSIGN(MediaPlayerMediaHub);
++};
++
++}  // namespace media
++
++#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MEDIAHUB_H_
+Index: src/media/base/utouch/media_player_oxide.cc
+===================================================================
+--- src/media/base/utouch/media_player_oxide.cc	(revision 0)
++++ src/media/base/utouch/media_player_oxide.cc	(working copy)
+@@ -0,0 +1,26 @@
++// Copyright (c) 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#include "media/base/utouch/media_player_oxide.h"
++
++#include "base/logging.h"
++
++namespace media {
++
++MediaPlayerOxide::MediaPlayerOxide(
++    int player_id)
++  :  player_id_(player_id) {
++}
++
++MediaPlayerOxide::~MediaPlayerOxide() {}
++
++GURL MediaPlayerOxide::GetUrl() {
++  return GURL();
++}
++
++GURL MediaPlayerOxide::GetFirstPartyForCookies() {
++  return GURL();
++}
++
++}  // namespace media
+Index: src/media/base/utouch/media_player_oxide.h
+===================================================================
+--- src/media/base/utouch/media_player_oxide.h	(revision 0)
++++ src/media/base/utouch/media_player_oxide.h	(working copy)
+@@ -0,0 +1,76 @@
++// Copyright (c) 2013 The Chromium Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#ifndef MEDIA_BASE_UTOUCH_MEDIA_PLAYER_OXIDE_H_
++#define MEDIA_BASE_UTOUCH_MEDIA_PLAYER_OXIDE_H_
++
++#include <string>
++
++#include "base/callback.h"
++#include "base/time/time.h"
++#include "media/base/media_export.h"
++#include "url/gurl.h"
++
++namespace media {
++
++class BrowserCdm;
++class MediaPlayerManager;
++
++class MEDIA_EXPORT MediaPlayerOxide {
++ public:
++  virtual ~MediaPlayerOxide();
++
++  // Error types for MediaErrorCB.
++  enum MediaErrorType {
++    MEDIA_ERROR_FORMAT,
++    MEDIA_ERROR_DECODE,
++    MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK,
++    MEDIA_ERROR_INVALID_CODE,
++  };
++
++  // Start playing the media.
++  virtual void Start() = 0;
++
++  // Pause the media.
++  virtual void Pause(bool is_media_related_action) = 0;
++
++  // Seek to a particular position, based on renderer signaling actual seek
++  // with MediaPlayerHostMsg_Seek. If eventual success, OnSeekComplete() will be
++  // called.
++  virtual void SeekTo(base::TimeDelta timestamp) = 0;
++
++  // Release the player resources.
++  virtual void Release() = 0;
++
++  // Set the player volume.
++  virtual void SetVolume(double volume) = 0;
++
++  // Get the media information from the player.
++  virtual int GetVideoWidth() = 0;
++  virtual int GetVideoHeight() = 0;
++  virtual base::TimeDelta GetDuration() = 0;
++  virtual base::TimeDelta GetCurrentTime() = 0;
++  virtual bool IsPlaying() = 0;
++  virtual bool IsPlayerReady() = 0;
++  virtual bool CanPause() = 0;
++  virtual bool CanSeekForward() = 0;
++  virtual bool CanSeekBackward() = 0;
++  virtual GURL GetUrl();
++  virtual GURL GetFirstPartyForCookies();
++
++  int player_id() { return player_id_; }
++
++ protected:
++  MediaPlayerOxide(int player_id);
++
++ private:
++  // Player ID assigned to this player.
++  int player_id_;
++
++  DISALLOW_COPY_AND_ASSIGN(MediaPlayerOxide);
++};
++
++}  // namespace media
++
++#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_OXIDE_H_
+Index: src/media/media.gyp
+===================================================================
+--- src/media/media.gyp	(revision 279868)
++++ src/media/media.gyp	(working copy)
+@@ -63,6 +63,8 @@
+         '../ui/gfx/gfx.gyp:gfx_geometry',
+         '../url/url.gyp:url_lib',
+         'shared_memory_support',
++        './mediahub/mediahub.gyp:mediahub_lib',
++
+       ],
+       'defines': [
+         'MEDIA_IMPLEMENTATION',
+@@ -339,6 +341,10 @@
+         'base/user_input_monitor_linux.cc',
+         'base/user_input_monitor_mac.cc',
+         'base/user_input_monitor_win.cc',
++	'base/utouch/media_player_mediahub.cc',
++	'base/utouch/media_player_mediahub.h',
++	'base/utouch/media_player_oxide.cc',
++	'base/utouch/media_player_oxide.h',
+         'base/video_decoder.cc',
+         'base/video_decoder.h',
+         'base/video_decoder_config.cc',
+Index: src/media/mediahub/mediahub.gyp
+===================================================================
+--- src/media/mediahub/mediahub.gyp	(revision 0)
++++ src/media/mediahub/mediahub.gyp	(working copy)
+@@ -0,0 +1,30 @@
++# Copyright (c) 2012 The Chromium Authors. All rights reserved.
++# Use of this source code is governed by a BSD-style license that can be
++# found in the LICENSE file.
++
++{
++  'variables': {
++    'chromium_code': 1,
++  },
++  'targets': [
++    {
++      'target_name': 'mediahub_lib',
++      'type': 'static_library',
++      'hard_dependency': 1,
++      'cflags_cc+': [ '-std=c++11', '-fexceptions' ],
++      'link_settings': {
++        'libraries': [
++          '-lmedia-hub-client',
++          '-lmedia',
++        ],
++      },
++      'include_dirs': [
++        '..',
++      ],
++      'sources': [
++        'player.cc',
++        'player.h',
++      ],
++    },
++  ],
++}
+Index: src/media/mediahub/player.cc
+===================================================================
+--- src/media/mediahub/player.cc	(revision 0)
++++ src/media/mediahub/player.cc	(working copy)
+@@ -0,0 +1,130 @@
++#include "player.h"
++
++#include <map>
++
++#include <core/media/service.h>
++#include <core/media/player.h>
++
++using namespace core::ubuntu::media;
++
++namespace {
++
++// TODO thread access? wrap into a ThreadSafe class?
++std::map<int, std::shared_ptr<Player> > g_mediahub_players;
++
++}
++
++MediaHubClientHandle
++mediahub_create_player(int player_id)
++{
++  if (player_id < 0)
++    return MediaHubClientHandle();
++
++  if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
++    return MediaHubClientHandle();
++
++  std::shared_ptr<Player> player =
++      Service::Client::instance()->create_session(
++          Player::Client::default_configuration());
++
++  g_mediahub_players[player_id] = player;
++
++  // TODO review
++  return MediaHubClientHandle(player.get());
++}
++
++void
++mediahub_play(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    player->play();
++}
++
++void
++mediahub_pause(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    player->pause();
++}
++
++unsigned long long
++mediahub_get_duration(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->duration().get();
++  return 0;
++}
++
++void
++mediahub_release(MediaHubClientHandle handle)
++{
++  auto it = g_mediahub_players.begin();
++  for (;
++       it != g_mediahub_players.end();
++       it++)
++    {
++      if (it->second.get() == handle)
++	break;
++    }
++  if (it != g_mediahub_players.end())
++    {
++      g_mediahub_players.erase(it);
++    }
++}
++
++int
++mediahub_is_playing(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->playback_state().get() != Player::playing;
++  return 0;
++}
++
++int
++mediahub_can_seek_forward(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->can_seek().get();
++  return 0;
++}
++
++int
++mediahub_can_seek_backward(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->can_seek().get();
++  return 0;
++}
++
++int
++mediahub_can_pause(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->can_pause().get();
++  return 0;
++}
++
++int
++mediahub_is_player_ready(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->playback_state().get() != Player::null;
++  return 0;
++}
++
++void
++mediahub_set_volume(MediaHubClientHandle handle, double volume)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    player->volume().set(volume);
++}
++
+Index: src/media/mediahub/player.h
+===================================================================
+--- src/media/mediahub/player.h	(revision 0)
++++ src/media/mediahub/player.h	(working copy)
+@@ -0,0 +1,86 @@
++#ifndef MEDIA_MEDIAHUB_PLAYER_H
++#define MEDIA_MEDIAHUB_PLAYER_H
++
++typedef void*
++MediaHubClientHandle;
++
++typedef int
++MediaHubPlayerId;
++
++#if defined(__cplusplus)
++extern "C" {
++#endif
++
++/**
++ * Creates a media hub player instance
++ */
++MediaHubClientHandle
++mediahub_create_player(int player_id);
++
++/**
++ * 
++ */
++void
++mediahub_play(MediaHubClientHandle);
++
++/**
++ * 
++ */
++void
++mediahub_pause(MediaHubClientHandle);
++
++/**
++ * 
++ */
++unsigned long long
++mediahub_get_duration(MediaHubClientHandle);
++
++/**
++ * 
++ */
++void
++mediahub_release(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_is_playing(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_can_seek_forward(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_can_seek_backward(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_can_pause(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_is_player_ready(MediaHubClientHandle);
++
++/**
++ * 
++ */
++void
++mediahub_set_volume(MediaHubClientHandle, double volume);
++
++
++#if defined(__cplusplus)
++}
++#endif
++
++#endif // MEDIA_MEDIAHUB_PLAYER_H
++
+Index: src/content/browser/renderer_host/render_view_host_impl.h
+===================================================================
+--- src/content/browser/renderer_host/render_view_host_impl.h	(revision 284576)
++++ src/content/browser/renderer_host/render_view_host_impl.h	(working copy)
+@@ -390,14 +390,12 @@
+   void DidCancelPopupMenu();
+ #endif
+ 
+-#if defined(ENABLE_BROWSER_CDMS)
+   MediaWebContentsObserver* media_web_contents_observer() {
+     return media_web_contents_observer_.get();
+   }
+-#endif
+ 
+   void DidSelectPopupMenuItems(const std::vector<int>& selected_indices);
+   void DidCancelPopupMenu();
+ 
+   int main_frame_routing_id() const {
+     return main_frame_routing_id_;
+@@ -623,10 +617,8 @@
+   // Set to true if we requested the on screen keyboard to be displayed.
+   bool virtual_keyboard_requested_;
+ 
+-#if defined(ENABLE_BROWSER_CDMS)
+   // Manages all the media player and CDM managers and forwards IPCs to them.
+   scoped_ptr<MediaWebContentsObserver> media_web_contents_observer_;
+-#endif
+ 
+   // Used to swap out or shutdown this RVH when the unload event is taking too
+   // long to execute, depending on the number of active views in the
