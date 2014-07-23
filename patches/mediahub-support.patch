@@ -52,7 +52,7 @@ Index: src/content/browser/media/utouch/browser_media_player_manager.cc
 +MediaPlayerOxide* BrowserMediaPlayerManager::CreateMediaPlayer(
 +    const MediaPlayerHostMsg_Initialize_Params& params,
 +    MediaPlayerManager* manager) {
-+  switch (type) {
++  switch (params.type) {
 +    case MEDIA_PLAYER_TYPE_URL: {
 +      const std::string user_agent = GetContentClient()->GetUserAgent();
 +
@@ -2957,7 +2957,7 @@ Index: src/media/base/utouch/media_player_mediahub.cc
 +  return url_;
 +}
 +
-+GURL MediaPlayerMediaHub::GetCookies() {
++GURL MediaPlayerMediaHub::GetFirstPartyForCookies() {
 +  return GURL();
 +}
 +
@@ -3026,7 +3026,7 @@ Index: src/media/base/utouch/media_player_mediahub.h
 +  virtual bool CanSeekBackward() OVERRIDE;
 +  virtual bool IsPlayerReady() OVERRIDE;
 +  virtual GURL GetUrl() OVERRIDE;
-+  virtual GURL GetCookies() OVERRIDE;
++  virtual GURL GetFirstPartyForCookies() OVERRIDE;
 +
 + protected:
 +  void SetDuration(base::TimeDelta time);
@@ -3319,7 +3319,7 @@ Index: src/media/mediahub/player.cc
 +{
 +  Player* player = static_cast<Player*>(handle);
 +  if (player)
-+    return player->playback_state().get() != Player::playing;
++    return player->playback_status().get() != Player::playing;
 +  return 0;
 +}
 +
@@ -3355,7 +3355,7 @@ Index: src/media/mediahub/player.cc
 +{
 +  Player* player = static_cast<Player*>(handle);
 +  if (player)
-+    return player->playback_state().get() != Player::null;
++    return player->playback_status().get() != Player::null;
 +  return 0;
 +}
 +
