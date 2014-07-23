@@ -2,7 +2,7 @@ Index: src/content/browser/media/utouch/browser_media_player_manager.cc
 ===================================================================
 --- src/content/browser/media/utouch/browser_media_player_manager.cc	(revision 0)
 +++ src/content/browser/media/utouch/browser_media_player_manager.cc	(working copy)
-@@ -0,0 +1,273 @@
+@@ -0,0 +1,264 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -50,28 +50,23 @@ Index: src/content/browser/media/utouch/browser_media_player_manager.cc
 +}
 +
 +MediaPlayerOxide* BrowserMediaPlayerManager::CreateMediaPlayer(
-+    MediaPlayerHostMsg_Initialize_Type type,
-+    int player_id,
-+    const GURL& url,
-+    const GURL& first_party_for_cookies,
-+    bool hide_url_log,
++    const MediaPlayerHostMsg_Initialize_Params& params,
 +    MediaPlayerManager* manager) {
 +  switch (type) {
 +    case MEDIA_PLAYER_TYPE_URL: {
 +      const std::string user_agent = GetContentClient()->GetUserAgent();
 +
-+      media::MediaPlayerMediaHub* media_player_bridge = new media::MediaPlayerMediaHub(
-+          player_id,
-+          url,
-+	  // TODO cookies
-+          first_party_for_cookies,
-+          user_agent);
-+
++      media::MediaPlayerMediaHub* media_player_bridge =
++	  new media::MediaPlayerMediaHub(
++              params.player_id,
++              params.url,
++              params.first_party_for_cookies,
++              user_agent);
 +      BrowserMediaPlayerManager* browser_media_player_manager =
 +          static_cast<BrowserMediaPlayerManager*>(manager);
 +
 +      browser_media_player_manager->OnMediaMetadataChanged(
-+          player_id, base::TimeDelta(), 0, 0, false);
++          params.player_id, base::TimeDelta(), 0, 0, false);
 +
 +      return media_player_bridge;
 +    }
@@ -173,11 +168,7 @@ Index: src/content/browser/media/utouch/browser_media_player_manager.cc
 +      web_contents()->GetRenderProcessHost());
 +
 +  MediaPlayerOxide* player = CreateMediaPlayer(
-+      media_player_params.type,
-+      media_player_params.player_id,
-+      media_player_params.url,
-+      media_player_params.first_party_for_cookies,
-+      host->GetBrowserContext()->IsOffTheRecord(),
++      media_player_params,
 +      this);
 +
 +  if (!player)
@@ -280,7 +271,7 @@ Index: src/content/browser/media/utouch/browser_media_player_manager.h
 ===================================================================
 --- src/content/browser/media/utouch/browser_media_player_manager.h	(revision 0)
 +++ src/content/browser/media/utouch/browser_media_player_manager.h	(working copy)
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,115 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -377,11 +368,7 @@ Index: src/content/browser/media/utouch/browser_media_player_manager.h
 +
 + private:
 +  media::MediaPlayerOxide* CreateMediaPlayer(
-+      MediaPlayerHostMsg_Initialize_Type type,
-+      int player_id,
-+      const GURL& url,
-+      const GURL& first_party_for_cookies,
-+      bool hide_url_log,
++      const MediaPlayerHostMsg_Initialize_Params& params,
 +      media::MediaPlayerManager* manager);
 +
 +  RenderFrameHost* const render_frame_host_;
@@ -404,11 +391,7 @@ Index: src/content/browser/media/utouch/media_web_contents_observer.cc
 ===================================================================
 --- src/content/browser/media/utouch/media_web_contents_observer.cc	(revision 0)
 +++ src/content/browser/media/utouch/media_web_contents_observer.cc	(working copy)
-@@ -0,0 +1,97 @@
-+// Copyright 2014 The Chromium Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style license that can be
-+// found in the LICENSE file.
-+
+@@ -0,0 +1,93 @@
 +#include "content/browser/media/utouch/media_web_contents_observer.h"
 +
 +#include "base/memory/scoped_ptr.h"
@@ -506,11 +489,7 @@ Index: src/content/browser/media/utouch/media_web_contents_observer.h
 ===================================================================
 --- src/content/browser/media/utouch/media_web_contents_observer.h	(revision 0)
 +++ src/content/browser/media/utouch/media_web_contents_observer.h	(working copy)
-@@ -0,0 +1,47 @@
-+// Copyright 2014 The Chromium Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style license that can be
-+// found in the LICENSE file.
-+
+@@ -0,0 +1,43 @@
 +#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
 +#define CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
 +
@@ -582,7 +561,7 @@ Index: src/content/browser/renderer_host/render_view_host_impl.h
 ===================================================================
 --- src/content/browser/renderer_host/render_view_host_impl.h	(revision 279868)
 +++ src/content/browser/renderer_host/render_view_host_impl.h	(working copy)
-@@ -391,16 +391,12 @@
+@@ -391,16 +391,14 @@
    void DidCancelPopupMenu();
  #endif
  
@@ -2906,7 +2885,7 @@ Index: src/media/base/utouch/media_player_mediahub.cc
 ===================================================================
 --- src/media/base/utouch/media_player_mediahub.cc	(revision 0)
 +++ src/media/base/utouch/media_player_mediahub.cc	(working copy)
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,108 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -2938,28 +2917,27 @@ Index: src/media/base/utouch/media_player_mediahub.cc
 +      user_agent_(user_agent),
 +      width_(0),
 +      height_(0),
-+      can_pause_(true),
-+      can_seek_forward_(true),
-+      can_seek_backward_(true),
-+      volume_(-1.0) {
++      media_hub_client_(0) {
++  media_hub_client_ = mediahub_create_player(player_id);
 +}
 +
 +MediaPlayerMediaHub::~MediaPlayerMediaHub() {
-+  Release();
++  mediahub_release(media_hub_client_);
 +}
 +
 +void MediaPlayerMediaHub::SetDuration(base::TimeDelta duration) {
-+  duration_ = duration;
 +}
 +
 +void MediaPlayerMediaHub::Start() {
++  mediahub_play(media_hub_client_);
 +}
 +
 +void MediaPlayerMediaHub::Pause(bool is_media_related_action) {
++  mediahub_pause(media_hub_client_);
 +}
 +
 +bool MediaPlayerMediaHub::IsPlaying() {
-+  return false;
++  return mediahub_is_playing(media_hub_client_);
 +}
 +
 +int MediaPlayerMediaHub::GetVideoWidth() {
@@ -2971,6 +2949,7 @@ Index: src/media/base/utouch/media_player_mediahub.cc
 +}
 +
 +void MediaPlayerMediaHub::SeekTo(base::TimeDelta timestamp) {
++  //  _media_hub_client->seek_to();
 +}
 +
 +base::TimeDelta MediaPlayerMediaHub::GetCurrentTime() {
@@ -2978,29 +2957,32 @@ Index: src/media/base/utouch/media_player_mediahub.cc
 +}
 +
 +base::TimeDelta MediaPlayerMediaHub::GetDuration() {
-+  return base::TimeDelta();
++  return base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_));
 +}
 +
 +void MediaPlayerMediaHub::Release() {
++  mediahub_release(media_hub_client_);
 +}
 +
 +void MediaPlayerMediaHub::SetVolume(double volume) {
++  // TODO validate scale
++  mediahub_set_volume(media_hub_client_, volume);
 +}
 +
 +bool MediaPlayerMediaHub::CanPause() {
-+  return can_pause_;
++  return mediahub_can_pause(media_hub_client_) != 0;
 +}
 +
 +bool MediaPlayerMediaHub::CanSeekForward() {
-+  return can_seek_forward_;
++  return mediahub_can_seek_forward(media_hub_client_) != 0;
 +}
 +
 +bool MediaPlayerMediaHub::CanSeekBackward() {
-+  return can_seek_backward_;
++  return mediahub_can_seek_backward(media_hub_client_) != 0;
 +}
 +
 +bool MediaPlayerMediaHub::IsPlayerReady() {
-+  return prepared_;
++  return mediahub_is_player_ready(media_hub_client_) != 0;
 +}
 +
 +GURL MediaPlayerMediaHub::GetUrl() {
@@ -3016,7 +2998,7 @@ Index: src/media/base/utouch/media_player_mediahub.h
 ===================================================================
 --- src/media/base/utouch/media_player_mediahub.h	(revision 0)
 +++ src/media/base/utouch/media_player_mediahub.h	(working copy)
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,94 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -3032,7 +3014,16 @@ Index: src/media/base/utouch/media_player_mediahub.h
 +#include "base/memory/weak_ptr.h"
 +#include "base/time/time.h"
 +#include "media/base/utouch/media_player_oxide.h"
++#include "media/mediahub/player.h"
 +#include "url/gurl.h"
++
++namespace core {
++namespace ubuntu {
++namespace media {
++class Player;
++}
++}
++}
 +
 +namespace media {
 +
@@ -3088,21 +3079,13 @@ Index: src/media/base/utouch/media_player_mediahub.h
 +  // User agent string to be used for media player.
 +  const std::string user_agent_;
 +
-+  // Stats about the media.
-+  base::TimeDelta duration_;
 +  int width_;
 +  int height_;
-+
-+  // Meta data about actions can be taken.
-+  bool can_pause_;
-+  bool can_seek_forward_;
-+  bool can_seek_backward_;
 +
 +  // Cookies for |url_|.
 +  std::string cookies_;
 +
-+  // Volume of playback.
-+  double volume_;
++  MediaHubClientHandle media_hub_client_;
 +
 +  DISALLOW_COPY_AND_ASSIGN(MediaPlayerMediaHub);
 +};
@@ -3226,14 +3209,284 @@ Index: src/media/media.gyp
 ===================================================================
 --- src/media/media.gyp	(revision 279868)
 +++ src/media/media.gyp	(working copy)
-@@ -339,6 +339,10 @@
+@@ -63,6 +63,8 @@
+         '../ui/gfx/gfx.gyp:gfx_geometry',
+         '../url/url.gyp:url_lib',
+         'shared_memory_support',
++        './mediahub/mediahub.gyp:mediahub_lib',
++
+       ],
+       'defines': [
+         'MEDIA_IMPLEMENTATION',
+@@ -339,6 +341,10 @@
          'base/user_input_monitor_linux.cc',
          'base/user_input_monitor_mac.cc',
          'base/user_input_monitor_win.cc',
-+        'base/utouch/media_player_mediahub.cc',
-+        'base/utouch/media_player_mediahub.h',
-+        'base/utouch/media_player_oxide.cc',
-+        'base/utouch/media_player_oxide.h',
++	'base/utouch/media_player_mediahub.cc',
++	'base/utouch/media_player_mediahub.h',
++	'base/utouch/media_player_oxide.cc',
++	'base/utouch/media_player_oxide.h',
          'base/video_decoder.cc',
          'base/video_decoder.h',
          'base/video_decoder_config.cc',
+Index: src/media/mediahub/mediahub.gyp
+===================================================================
+--- src/media/mediahub/mediahub.gyp	(revision 0)
++++ src/media/mediahub/mediahub.gyp	(working copy)
+@@ -0,0 +1,30 @@
++# Copyright (c) 2012 The Chromium Authors. All rights reserved.
++# Use of this source code is governed by a BSD-style license that can be
++# found in the LICENSE file.
++
++{
++  'variables': {
++    'chromium_code': 1,
++  },
++  'targets': [
++    {
++      'target_name': 'mediahub_lib',
++      'type': 'static_library',
++      'hard_dependency': 1,
++      'cflags_cc+': [ '-std=c++11', '-fexceptions' ],
++      'link_settings': {
++        'libraries': [
++          '-lmedia-hub-client',
++          '-lmedia',
++        ],
++      },
++      'include_dirs': [
++        '..',
++      ],
++      'sources': [
++        'player.cc',
++        'player.h',
++      ],
++    },
++  ],
++}
+Index: src/media/mediahub/player.cc
+===================================================================
+--- src/media/mediahub/player.cc	(revision 0)
++++ src/media/mediahub/player.cc	(working copy)
+@@ -0,0 +1,130 @@
++#include "player.h"
++
++#include <map>
++
++#include <core/media/service.h>
++#include <core/media/player.h>
++
++using namespace core::ubuntu::media;
++
++namespace {
++
++// TODO thread access? wrap into a ThreadSafe class?
++std::map<int, std::shared_ptr<Player> > g_mediahub_players;
++
++}
++
++MediaHubClientHandle
++mediahub_create_player(int player_id)
++{
++  if (player_id < 0)
++    return MediaHubClientHandle();
++
++  if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
++    return MediaHubClientHandle();
++
++  std::shared_ptr<Player> player =
++      Service::Client::instance()->create_session(
++          Player::Client::default_configuration());
++
++  g_mediahub_players[player_id] = player;
++
++  // TODO review
++  return MediaHubClientHandle(player.get());
++}
++
++void
++mediahub_play(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    player->play();
++}
++
++void
++mediahub_pause(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    player->pause();
++}
++
++unsigned long long
++mediahub_get_duration(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->duration().get();
++  return 0;
++}
++
++void
++mediahub_release(MediaHubClientHandle handle)
++{
++  auto it = g_mediahub_players.begin();
++  for (;
++       it != g_mediahub_players.end();
++       it++)
++    {
++      if (it->second.get() == handle)
++	break;
++    }
++  if (it != g_mediahub_players.end())
++    {
++      g_mediahub_players.erase(it);
++    }
++}
++
++int
++mediahub_is_playing(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->playback_state().get() != Player::playing;
++  return 0;
++}
++
++int
++mediahub_can_seek_forward(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->can_seek().get();
++  return 0;
++}
++
++int
++mediahub_can_seek_backward(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->can_seek().get();
++  return 0;
++}
++
++int
++mediahub_can_pause(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->can_pause().get();
++  return 0;
++}
++
++int
++mediahub_is_player_ready(MediaHubClientHandle handle)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    return player->playback_state().get() != Player::null;
++  return 0;
++}
++
++void
++mediahub_set_volume(MediaHubClientHandle handle, double volume)
++{
++  Player* player = static_cast<Player*>(handle);
++  if (player)
++    player->volume().set(volume);
++}
++
+Index: src/media/mediahub/player.h
+===================================================================
+--- src/media/mediahub/player.h	(revision 0)
++++ src/media/mediahub/player.h	(working copy)
+@@ -0,0 +1,86 @@
++#ifndef MEDIA_MEDIAHUB_PLAYER_H
++#define MEDIA_MEDIAHUB_PLAYER_H
++
++typedef void*
++MediaHubClientHandle;
++
++typedef int
++MediaHubPlayerId;
++
++#if defined(__cplusplus)
++extern "C" {
++#endif
++
++/**
++ * Creates a media hub player instance
++ */
++MediaHubClientHandle
++mediahub_create_player(int player_id);
++
++/**
++ * 
++ */
++void
++mediahub_play(MediaHubClientHandle);
++
++/**
++ * 
++ */
++void
++mediahub_pause(MediaHubClientHandle);
++
++/**
++ * 
++ */
++unsigned long long
++mediahub_get_duration(MediaHubClientHandle);
++
++/**
++ * 
++ */
++void
++mediahub_release(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_is_playing(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_can_seek_forward(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_can_seek_backward(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_can_pause(MediaHubClientHandle);
++
++/**
++ * 
++ */
++int
++mediahub_is_player_ready(MediaHubClientHandle);
++
++/**
++ * 
++ */
++void
++mediahub_set_volume(MediaHubClientHandle, double volume);
++
++
++#if defined(__cplusplus)
++}
++#endif
++
++#endif // MEDIA_MEDIAHUB_PLAYER_H
++
