@@ -209,6 +209,9 @@ void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
 /* static */
 void WebContextAdapter::ensureChromiumStarted() {
   if (!oxide::BrowserProcessMain::IsRunning()) {
+    CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
+        "Your application doesn't have a QGuiApplication. Oxide will not "
+        "function without one";
     scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
     scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
 
