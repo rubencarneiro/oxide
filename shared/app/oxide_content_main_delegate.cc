@@ -167,6 +167,13 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     }
     if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
       command_line->AppendSwitch(switches::kNoSandbox);
+    } else {
+      if (IsEnvironmentOptionEnabled("DISABLE_SETUID_SANDBOX")) {
+        command_line->AppendSwitch(switches::kDisableSetuidSandbox);
+      }
+      if (IsEnvironmentOptionEnabled("DISABLE_SECCOMP_FILTER_SANDBOX")) {
+        command_line->AppendSwitch(switches::kDisableSeccompFilterSandbox);
+      }
     }
     if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
       LOG(WARNING) <<
