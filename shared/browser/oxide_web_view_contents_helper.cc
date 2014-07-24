@@ -85,9 +85,11 @@ WebViewContentsHelper::~WebViewContentsHelper() {
 
 void WebViewContentsHelper::UpdateWebPreferences() {
   content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
-  if (rvh) {
-    rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  if (!rvh) {
+    return;
   }
+
+  rvh->OnWebkitPreferencesChanged();
 }
 
 void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {

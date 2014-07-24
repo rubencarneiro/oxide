@@ -1228,9 +1228,11 @@ void WebView::UpdateWebPreferences() {
   }
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (rvh) {
-    rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  if (!rvh) {
+    return;
   }
+
+  rvh->OnWebkitPreferencesChanged();
 }
 
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
