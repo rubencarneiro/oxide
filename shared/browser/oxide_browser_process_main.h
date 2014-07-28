@@ -23,12 +23,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
-namespace content {
-class BrowserMainRunner;
-class ContentMainRunner;
-class MainFunctionParams;
-}
-
 namespace oxide {
 
 class ContentMainDelegate;
@@ -43,11 +37,7 @@ class BrowserProcessMain {
 
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  static void Start(
-      scoped_refptr<oxide::SharedGLContext> shared_gl_context,
-      scoped_ptr<ContentMainDelegate> delegate,
-      intptr_t native_display,
-      bool display_handle_valid);
+  static void Start(scoped_ptr<ContentMainDelegate> delegate);
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton
@@ -66,13 +56,6 @@ class BrowserProcessMain {
   BrowserProcessMain();
 
  private:
-  // For RunBrowserMain() / ShutdownBrowserMain()
-  friend class oxide::ContentMainDelegate;
-
-  virtual int RunBrowserMain(
-      const content::MainFunctionParams& main_function_params) = 0;
-  virtual void ShutdownBrowserMain() = 0;
-
   DISALLOW_COPY_AND_ASSIGN(BrowserProcessMain);
 };
 
