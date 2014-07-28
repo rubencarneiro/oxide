@@ -36,14 +36,12 @@ namespace qt {
 
 class SharedGLContext FINAL : public oxide::SharedGLContext {
  public:
-  static scoped_refptr<SharedGLContext> Create();
+  SharedGLContext(QOpenGLContext* context);
 
   void* GetHandle() FINAL { return handle_; }
   gfx::GLImplementation GetImplementation() FINAL { return implementation_; }
 
  private:
-  SharedGLContext(QOpenGLContext* context);
-
   void* handle_;
   gfx::GLImplementation implementation_;
 };

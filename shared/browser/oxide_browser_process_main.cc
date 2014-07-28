@@ -94,10 +94,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void StartInternal(scoped_refptr<SharedGLContext> shared_gl_context,
-                     scoped_ptr<ContentMainDelegate> delegate,
-                     intptr_t native_display,
-                     bool display_handle_valid);
+  void StartInternal(scoped_ptr<ContentMainDelegate> delegate);
   void ShutdownInternal();
 
   bool IsRunningInternal() {
@@ -279,25 +276,22 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
 }
 
 void BrowserProcessMainImpl::StartInternal(
-    scoped_refptr<SharedGLContext> shared_gl_context,
-    scoped_ptr<ContentMainDelegate> delegate,
-    intptr_t native_display,
-    bool display_handle_valid) {
+    scoped_ptr<ContentMainDelegate> delegate) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
 
   state_ = STATE_STARTED;;
 
-  if (!shared_gl_context) {
+  main_delegate_ = delegate.Pass();
+
+  shared_gl_context_ = main_delegate_->GetSharedGLContext();
+  native_display_is_valid_ = main_delegate_->GetNativeDisplay(&native_display_);
+
+  if (!shared_gl_context_) {
     DLOG(INFO) << "No shared GL context has been provided. "
                << "Compositing will not work";
   }
-
-  shared_gl_context_ = shared_gl_context;
-  native_display_ = native_display;
-  native_display_is_valid_ = display_handle_valid;
-  main_delegate_ = delegate.Pass();
 
   base::GlobalDescriptors::GetInstance()->Set(
       kPrimaryIPCChannel,
@@ -373,14 +367,8 @@ BrowserProcessMain::~BrowserProcessMain() {}
 
 // static
 void BrowserProcessMain::Start(
-    scoped_refptr<SharedGLContext> shared_gl_context,
-    scoped_ptr<ContentMainDelegate> delegate,
-    intptr_t native_display,
-    bool display_handle_valid) {
-  GetInstance()->StartInternal(shared_gl_context,
-                               delegate.Pass(),
-                               native_display,
-                               display_handle_valid);
+    scoped_ptr<ContentMainDelegate> delegate) {
+  GetInstance()->StartInternal(delegate.Pass());
 }
 
 // static

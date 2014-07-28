@@ -23,8 +23,6 @@
 
 #include "base/logging.h"
 
-#include "qt/core/glue/oxide_qt_web_context_adapter.h"
-
 namespace oxide {
 namespace qt {
 
@@ -58,22 +56,6 @@ SharedGLContext::SharedGLContext(QOpenGLContext* context) :
   } else {
     DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
   }
-}
-
-// static
-scoped_refptr<SharedGLContext> SharedGLContext::Create() {
-  QOpenGLContext* qcontext = WebContextAdapter::sharedGLContext();
-  if (!qcontext) {
-    return NULL;
-  }
-
-  scoped_refptr<SharedGLContext> context(new SharedGLContext(qcontext));
-  if (!context->GetHandle()) {
-    DLOG(WARNING) << "Could not determine native handle for shared GL context";
-    return NULL;
-  }
-
-  return context;
 }
 
 } // namespace qt

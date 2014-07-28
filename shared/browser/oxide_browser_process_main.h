@@ -37,11 +37,7 @@ class BrowserProcessMain {
 
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  static void Start(
-      scoped_refptr<oxide::SharedGLContext> shared_gl_context,
-      scoped_ptr<ContentMainDelegate> delegate,
-      intptr_t native_display,
-      bool display_handle_valid);
+  static void Start(scoped_ptr<ContentMainDelegate> delegate);
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton

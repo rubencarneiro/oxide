@@ -25,10 +25,14 @@
 namespace oxide {
 
 class ContentClient;
+class SharedGLContext;
 
 class ContentMainDelegate : public content::ContentMainDelegate {
  public:
   virtual ~ContentMainDelegate();
+
+  virtual SharedGLContext* GetSharedGLContext() const;
+  virtual bool GetNativeDisplay(intptr_t* handle) const;
 
   // content::ContentMainDelegate implementation
   bool BasicStartupComplete(int* exit_code) FINAL;
@@ -41,7 +45,7 @@ class ContentMainDelegate : public content::ContentMainDelegate {
 
   void ProcessExiting(const std::string& process_type) FINAL;
 
-  content::ContentBrowserClient* CreateContentBrowserClient() OVERRIDE;
+  virtual content::ContentBrowserClient* CreateContentBrowserClient() OVERRIDE;
   content::ContentRendererClient* CreateContentRendererClient() FINAL;
 
  protected:

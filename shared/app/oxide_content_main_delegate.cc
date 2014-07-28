@@ -46,6 +46,14 @@ ContentMainDelegate::ContentMainDelegate() {}
 
 ContentMainDelegate::~ContentMainDelegate() {}
 
+SharedGLContext* ContentMainDelegate::GetSharedGLContext() const {
+  return NULL;
+}
+
+bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
+  return false;
+}
+
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
   RegisterPathProvider();
