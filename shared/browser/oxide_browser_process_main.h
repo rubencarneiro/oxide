@@ -23,12 +23,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
-namespace content {
-class BrowserMainRunner;
-class ContentMainRunner;
-class MainFunctionParams;
-}
-
 namespace oxide {
 
 class ContentMainDelegate;
@@ -66,13 +60,6 @@ class BrowserProcessMain {
   BrowserProcessMain();
 
  private:
-  // For RunBrowserMain() / ShutdownBrowserMain()
-  friend class oxide::ContentMainDelegate;
-
-  virtual int RunBrowserMain(
-      const content::MainFunctionParams& main_function_params) = 0;
-  virtual void ShutdownBrowserMain() = 0;
-
   DISALLOW_COPY_AND_ASSIGN(BrowserProcessMain);
 };
 
