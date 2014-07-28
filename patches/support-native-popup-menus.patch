@@ -5,7 +5,7 @@
 diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc
 +++ b/content/browser/renderer_host/render_view_host_impl.cc
-@@ -965,20 +965,18 @@ bool RenderViewHostImpl::OnMessageReceiv
+@@ -961,20 +961,18 @@ bool RenderViewHostImpl::OnMessageReceiv
      IPC_MESSAGE_HANDLER(ViewHostMsg_RouteMessageEvent, OnRouteMessageEvent)
      IPC_MESSAGE_HANDLER(DragHostMsg_StartDragging, OnStartDragging)
      IPC_MESSAGE_HANDLER(DragHostMsg_UpdateDragCursor, OnUpdateDragCursor)
@@ -19,14 +19,14 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
      IPC_MESSAGE_HANDLER(ViewHostMsg_HidePopup, OnHidePopup)
 -#endif
      IPC_MESSAGE_HANDLER(ViewHostMsg_RunFileChooser, OnRunFileChooser)
-     IPC_MESSAGE_HANDLER(AccessibilityHostMsg_Events, OnAccessibilityEvents)
-     IPC_MESSAGE_HANDLER(AccessibilityHostMsg_LocationChanges,
-                         OnAccessibilityLocationChanges)
      IPC_MESSAGE_HANDLER(ViewHostMsg_FocusedNodeTouched, OnFocusedNodeTouched)
      // Have the super handle all other messages.
      IPC_MESSAGE_UNHANDLED(
          handled = RenderWidgetHostImpl::OnMessageReceived(msg))
-@@ -1374,28 +1372,26 @@ void RenderViewHostImpl::ForwardKeyboard
+   IPC_END_MESSAGE_MAP()
+ 
+   return handled;
+@@ -1367,28 +1365,26 @@ void RenderViewHostImpl::ForwardKeyboard
    if (ignore_input_events()) {
      if (key_event.type == WebInputEvent::RawKeyDown)
        delegate_->OnIgnoredUIEvent();
@@ -55,7 +55,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
  
  void RenderViewHostImpl::DidCancelPopupMenu() {
    Send(new ViewMsg_SelectPopupMenuItem(GetRoutingID(), -1));
-@@ -1595,17 +1591,16 @@ void RenderViewHostImpl::OnFocusedNodeTo
+@@ -1522,17 +1518,16 @@ void RenderViewHostImpl::OnFocusedNodeTo
      virtual_keyboard_requested_ = base::win::DisplayVirtualKeyboard();
    } else {
      virtual_keyboard_requested_ = false;
@@ -73,7 +73,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
                          params.item_height,
                          params.item_font_size,
                          params.selected_item,
-@@ -1615,17 +1610,16 @@ void RenderViewHostImpl::OnShowPopup(
+@@ -1542,17 +1537,16 @@ void RenderViewHostImpl::OnShowPopup(
    }
  }
  
@@ -94,7 +94,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.cc b/content/br
 diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/browser/renderer_host/render_view_host_impl.h
 --- a/content/browser/renderer_host/render_view_host_impl.h
 +++ b/content/browser/renderer_host/render_view_host_impl.h
-@@ -392,20 +392,18 @@ class CONTENT_EXPORT RenderViewHostImpl
+@@ -389,20 +389,18 @@ class CONTENT_EXPORT RenderViewHostImpl
  #endif
  
  #if defined(ENABLE_BROWSER_CDMS)
@@ -115,11 +115,11 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
    // Set the opener to null in the renderer process.
    void DisownOpener();
  
-@@ -516,20 +514,18 @@ class CONTENT_EXPORT RenderViewHostImpl
-   void OnAccessibilityEvents(
-       const std::vector<AccessibilityHostMsg_EventParams>& params);
-   void OnAccessibilityLocationChanges(
-       const std::vector<AccessibilityHostMsg_LocationChangeParams>& params);
+@@ -485,20 +483,18 @@ class CONTENT_EXPORT RenderViewHostImpl
+   void OnFocusedNodeChanged(bool is_editable_node);
+   void OnUpdateInspectorSetting(const std::string& key,
+                                 const std::string& value);
+   void OnClosePageACK();
    void OnDidZoomURL(double zoom_level, const GURL& url);
    void OnRunFileChooser(const FileChooserParams& params);
    void OnFocusedNodeTouched(bool editable);
@@ -139,7 +139,7 @@ diff --git a/content/browser/renderer_host/render_view_host_impl.h b/content/bro
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -911,22 +911,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
+@@ -903,22 +903,24 @@ IPC_MESSAGE_CONTROL1(ViewMsg_SetWebKitSh
  // they came in, so the renderer can tell if it needs to send updated rects.
  // Otherwise just pass -1 to always receive the list of rects.
  //
@@ -164,7 +164,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
                      bool /* animate */)
  
  IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNeeded)
-@@ -938,18 +940,19 @@ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
+@@ -930,18 +932,19 @@ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
  // Sent by the browser when an IME update that requires acknowledgement has been
  // processed on the browser side.
  IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
@@ -185,7 +185,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
  IPC_MESSAGE_ROUTED2(ViewMsg_WindowFrameChanged,
                      gfx::Rect /* window frame */,
                      gfx::Rect /* content view frame */)
-@@ -1081,22 +1084,20 @@ IPC_MESSAGE_ROUTED0(ViewHostMsg_Close)
+@@ -1073,22 +1076,20 @@ IPC_MESSAGE_ROUTED0(ViewHostMsg_Close)
  IPC_MESSAGE_ROUTED0(ViewHostMsg_UpdateScreenRects_ACK)
  
  // Sent by the renderer process to request that the browser move the view.
@@ -211,7 +211,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -187,16 +187,18 @@
+@@ -186,16 +186,18 @@
        'renderer/dom_storage/webstoragearea_impl.cc',
        'renderer/dom_storage/webstoragearea_impl.h',
        'renderer/dom_storage/webstoragenamespace_impl.cc',
@@ -282,7 +282,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -376,20 +376,18 @@ RenderThreadImpl::RenderThreadImpl(const
+@@ -374,20 +374,18 @@ RenderThreadImpl::RenderThreadImpl(const
  
  void RenderThreadImpl::Init() {
    TRACE_EVENT_BEGIN_ETW("RenderThreadImpl::Init", 0, "");
@@ -306,7 +306,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -1415,21 +1415,24 @@ bool RenderViewImpl::OnMessageReceived(c
+@@ -1407,21 +1407,24 @@ bool RenderViewImpl::OnMessageReceived(c
      IPC_MESSAGE_HANDLER(ViewMsg_WindowSnapshotCompleted,
                          OnWindowSnapshotCompleted)
      IPC_MESSAGE_HANDLER(ViewMsg_ForceRedraw, OnForceRedraw)
@@ -332,7 +332,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
      IPC_MESSAGE_HANDLER(ViewMsg_WindowFrameChanged, OnWindowFrameChanged)
  #endif
      // Adding a new message? Add platform independent ones first, then put the
-@@ -1770,17 +1773,17 @@ WebWidget* RenderViewImpl::createPopupMe
+@@ -1761,17 +1764,17 @@ WebWidget* RenderViewImpl::createPopupMe
          screen_metrics_emulator_.get());
    }
    return widget->webwidget();
@@ -351,7 +351,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
    // will have to close the first one before another one can be shown.
    if (external_popup_menu_)
      return NULL;
-@@ -4079,39 +4082,35 @@ void RenderViewImpl::DismissDateTimeDial
+@@ -4053,39 +4056,35 @@ void RenderViewImpl::DismissDateTimeDial
  void RenderViewImpl::OnSelectPopupMenuItem(int selected_index) {
    if (external_popup_menu_ == NULL)
      return;
@@ -395,7 +395,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
 diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_impl.h
 --- a/content/renderer/render_view_impl.h
 +++ b/content/renderer/render_view_impl.h
-@@ -252,19 +252,17 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -242,19 +242,17 @@ class CONTENT_EXPORT RenderViewImpl
    // Returns true if the chooser was successfully scheduled. False means we
    // didn't schedule anything.
    bool ScheduleFileChooser(const FileChooserParams& params,
@@ -415,7 +415,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
  
    // Plugin-related functions --------------------------------------------------
  
-@@ -742,24 +740,27 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -730,24 +728,27 @@ class CONTENT_EXPORT RenderViewImpl
    void OnDisownOpener();
    void OnWindowSnapshotCompleted(const int snapshot_id,
        const gfx::Size& size, const std::vector<unsigned char>& png);
@@ -444,7 +444,7 @@ diff --git a/content/renderer/render_view_impl.h b/content/renderer/render_view_
    void OnWindowFrameChanged(const gfx::Rect& window_frame,
                              const gfx::Rect& view_frame);
  #endif
-@@ -1118,20 +1119,18 @@ class CONTENT_EXPORT RenderViewImpl
+@@ -1099,20 +1100,18 @@ class CONTENT_EXPORT RenderViewImpl
    // is passed to us upon creation.  WebKit asks for this ID upon first use and
    // uses it whenever asking the browser process to allocate new storage areas.
    int64 session_storage_namespace_id_;
