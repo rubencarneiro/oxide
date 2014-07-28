@@ -42,6 +42,10 @@ base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
 }
 
+ContentMainDelegate::ContentMainDelegate() {}
+
+ContentMainDelegate::~ContentMainDelegate() {}
+
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
   RegisterPathProvider();
@@ -92,9 +96,5 @@ content::ContentRendererClient*
 ContentMainDelegate::CreateContentRendererClient() {
   return g_content_renderer_client.Pointer();
 }
-
-ContentMainDelegate::ContentMainDelegate() {}
-
-ContentMainDelegate::~ContentMainDelegate() {}
 
 } // namespace oxide

@@ -24,19 +24,11 @@
 
 namespace oxide {
 
-class BrowserProcessMainImpl; // XXX: Temporary
 class ContentClient;
 
 class ContentMainDelegate : public content::ContentMainDelegate {
  public:
   virtual ~ContentMainDelegate();
-
- protected:
-  // Allow access to default constructor only from derived classes
-  ContentMainDelegate();
-
- private:
-  friend class BrowserProcessMainImpl; // XXX: Temporary
 
   // content::ContentMainDelegate implementation
   bool BasicStartupComplete(int* exit_code) FINAL;
@@ -52,6 +44,11 @@ class ContentMainDelegate : public content::ContentMainDelegate {
   content::ContentBrowserClient* CreateContentBrowserClient() OVERRIDE;
   content::ContentRendererClient* CreateContentRendererClient() FINAL;
 
+ protected:
+  // Allow access to default constructor only from derived classes
+  ContentMainDelegate();
+
+ private:
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };
 
