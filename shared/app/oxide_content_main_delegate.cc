@@ -38,15 +38,8 @@
 namespace oxide {
 
 namespace {
-
 base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
-
-struct MainFunction {
-  const char* name;
-  int (*function)(const content::MainFunctionParams&);
-};
-
 }
 
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
