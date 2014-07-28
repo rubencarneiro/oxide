@@ -17,16 +17,63 @@
 
 #include "oxide_browser_process_main.h"
 
+#include "base/at_exit.h"
+#include "base/command_line.h"
+#include "base/i18n/icu_util.h"
+#include "base/lazy_instance.h"
 #include "base/logging.h"
-#include "content/public/app/content_main.h"
-#include "content/public/app/content_main_runner.h"
+#include "base/posix/global_descriptors.h"
+#include "base/strings/string_util.h"
+#include "content/app/mojo/mojo_init.h"
+#include "content/browser/gpu/gpu_process_host.h"
+#include "content/browser/renderer_host/render_process_host_impl.h"
+#include "content/browser/utility_process_host_impl.h"
+#include "content/common/url_schemes.h"
+#include "content/gpu/in_process_gpu_thread.h"
 #include "content/public/browser/browser_main_runner.h"
+#include "content/public/common/content_paths.h"
+#include "content/public/common/content_switches.h"
+#include "content/public/common/main_function_params.h"
+#include "content/public/utility/content_utility_client.h"
+#include "content/renderer/in_process_renderer_thread.h"
+#include "content/utility/in_process_utility_thread.h"
+#if defined(USE_NSS)
+#include "crypto/nss_util.h"
+#endif
+#include "ipc/ipc_descriptors.h"
+#include "ui/base/ui_base_paths.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
+#include "shared/common/oxide_content_client.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_message_pump.h"
+
+namespace content {
+
+namespace {
+base::LazyInstance<content::ContentUtilityClient>
+    g_content_utility_client = LAZY_INSTANCE_INITIALIZER;
+}
+
+// This is a bit of a hack. We're content::ContentClientInitializer so that
+// we can be a friend of ContentClient. This works because the
+// ContentClientInitializer impl in ContentMainRunner only has local visibility
+class ContentClientInitializer {
+ public:
+  static void Set(ContentMainDelegate* delegate, bool single_process) {
+    ContentClient* content_client = oxide::ContentClient::GetInstance();
+    content_client->browser_ = delegate->CreateContentBrowserClient();
+
+    if (single_process) {
+      content_client->renderer_ = delegate->CreateContentRendererClient();
+      content_client->utility_ = &g_content_utility_client.Get();
+    }
+  }
+};
+
+} // namespace content
 
 namespace oxide {
 
@@ -72,7 +119,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 
   // XXX: Don't change the order of these
   scoped_ptr<ContentMainDelegate> main_delegate_;
-  scoped_ptr<content::ContentMainRunner> main_runner_;
+  scoped_ptr<base::AtExitManager> exit_manager_;
   scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
 };
 
@@ -133,14 +180,46 @@ void BrowserProcessMainImpl::StartInternal(
   native_display_is_valid_ = display_handle_valid;
   main_delegate_ = delegate.Pass();
 
-  main_runner_.reset(content::ContentMainRunner::Create());
-  CHECK(main_runner_.get()) << "Failed to create ContentMainRunner";
+  base::GlobalDescriptors::GetInstance()->Set(
+      kPrimaryIPCChannel,
+      kPrimaryIPCChannel + base::GlobalDescriptors::kBaseDescriptor);
 
-  content::ContentMainParams params(main_delegate_.get());
-  CHECK_EQ(main_runner_->Initialize(params), -1) <<
-      "Failed to initialize ContentMainRunner";
+  exit_manager_.reset(new base::AtExitManager());
+  base::CommandLine::Init(0, NULL);
 
-  CHECK_EQ(main_runner_->Run(), 0) << "Failed to run ContentMainRunner";
+  int exit_code;
+  CHECK(!main_delegate_->BasicStartupComplete(&exit_code));
+
+  content::InitializeMojo();
+
+  content::ContentClientInitializer::Set(
+      main_delegate_.get(),
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kSingleProcess));
+
+#if defined(USE_NSS)
+  crypto::EarlySetupForNSSInit();
+#endif
+
+  ui::RegisterPathProvider();
+  content::RegisterPathProvider();
+  content::RegisterContentSchemes(true);
+
+  CHECK(base::i18n::InitializeICU());
+
+  main_delegate_->PreSandboxStartup();
+  main_delegate_->SandboxInitialized(base::EmptyString());
+
+  content::UtilityProcessHostImpl::RegisterUtilityMainThreadFactory(
+      content::CreateInProcessUtilityThread);
+  content::RenderProcessHostImpl::RegisterRendererMainThreadFactory(
+      content::CreateInProcessRendererThread);
+  content::GpuProcessHost::RegisterGpuMainThreadFactory(
+      content::CreateInProcessGpuThread);
+
+  content::MainFunctionParams main_params(
+      *base::CommandLine::ForCurrentProcess());
+  CHECK_EQ(main_delegate_->RunProcess(base::EmptyString(), main_params), 0);
 }
 
 void BrowserProcessMainImpl::ShutdownInternal() {
@@ -151,7 +230,9 @@ void BrowserProcessMainImpl::ShutdownInternal() {
 
   // XXX: Better off in BrowserProcessMainParts?
   MessageLoopForUI::current()->Stop();
-  main_runner_->Shutdown();
+  main_delegate_->ProcessExiting(base::EmptyString());
+
+  exit_manager_.reset();
 
   state_ = STATE_SHUTDOWN;
 }

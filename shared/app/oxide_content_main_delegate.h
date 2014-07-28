@@ -24,6 +24,7 @@
 
 namespace oxide {
 
+class BrowserProcessMainImpl; // XXX: Temporary
 class ContentClient;
 
 class ContentMainDelegate : public content::ContentMainDelegate {
@@ -35,6 +36,8 @@ class ContentMainDelegate : public content::ContentMainDelegate {
   ContentMainDelegate();
 
  private:
+  friend class BrowserProcessMainImpl; // XXX: Temporary
+
   // content::ContentMainDelegate implementation
   bool BasicStartupComplete(int* exit_code) FINAL;
 
