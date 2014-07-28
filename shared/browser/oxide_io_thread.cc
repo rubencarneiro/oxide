@@ -95,8 +95,7 @@ void IOThread::Globals::Init() {
   net::HttpNetworkSession::Params session_params;
   session_params.host_resolver = context->host_resolver();
   session_params.cert_verifier = context->cert_verifier();
-  session_params.server_bound_cert_service =
-      context->server_bound_cert_service();
+  session_params.channel_id_service = context->channel_id_service();
   session_params.transport_security_state =
       context->transport_security_state();
   session_params.proxy_service = context->proxy_service();
