@@ -211,13 +211,13 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -186,16 +186,18 @@
+@@ -184,16 +184,18 @@
+       'renderer/dom_storage/dom_storage_dispatcher.h',
+       'renderer/dom_storage/dom_storage_proxy.h',
        'renderer/dom_storage/webstoragearea_impl.cc',
        'renderer/dom_storage/webstoragearea_impl.h',
        'renderer/dom_storage/webstoragenamespace_impl.cc',
        'renderer/dom_storage/webstoragenamespace_impl.h',
-       'renderer/dom_utils.cc',
-       'renderer/dom_utils.h',
        'renderer/drop_data_builder.cc',
        'renderer/drop_data_builder.h',
 +      'renderer/external_popup_menu.cc',
