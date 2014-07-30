@@ -46,20 +46,8 @@ base::NativeLibrary LoadLibrary(const char* filename) {
 
 } // namespace
 
-ui::SurfaceFactoryOzone::HardwareState
-OzoneSurfaceFactory::InitializeHardware() {
-  return ui::SurfaceFactoryOzone::INITIALIZED;
-}
-
-void OzoneSurfaceFactory::ShutdownHardware() {}
-
 intptr_t OzoneSurfaceFactory::GetNativeDisplay() {
   return BrowserProcessMain::instance()->GetNativeDisplay();
-}
-
-gfx::AcceleratedWidget OzoneSurfaceFactory::GetAcceleratedWidget() {
-  NOTREACHED();
-  return 0;
 }
 
 bool OzoneSurfaceFactory::LoadEGLGLES2Bindings(

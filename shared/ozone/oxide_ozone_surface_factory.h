@@ -29,12 +29,7 @@ class OzoneSurfaceFactory FINAL : public ui::SurfaceFactoryOzone {
   OzoneSurfaceFactory();
 
  private:
-  HardwareState InitializeHardware() FINAL;
-  void ShutdownHardware() FINAL;
-
   intptr_t GetNativeDisplay() FINAL;
-
-  gfx::AcceleratedWidget GetAcceleratedWidget() FINAL;
 
   bool LoadEGLGLES2Bindings(
       AddGLLibraryCallback add_gl_library,

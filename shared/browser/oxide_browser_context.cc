@@ -40,9 +40,9 @@
 #include "net/http/http_server_properties_impl.h"
 #include "net/http/transport_security_persister.h"
 #include "net/http/transport_security_state.h"
-#include "net/ssl/default_server_bound_cert_store.h"
-#include "net/ssl/server_bound_cert_service.h"
-#include "net/ssl/server_bound_cert_store.h"
+#include "net/ssl/channel_id_service.h"
+#include "net/ssl/channel_id_store.h"
+#include "net/ssl/default_channel_id_store.h"
 #include "net/url_request/data_protocol_handler.h"
 #include "net/url_request/file_protocol_handler.h"
 #include "net/url_request/ftp_protocol_handler.h"
@@ -235,10 +235,10 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   context->set_http_user_agent_settings(http_user_agent_settings_.get());
 
   // TODO: We want persistent storage here (for non-incognito), but 
-  //       SQLiteServerBoundCertStore is part of chrome
-  storage->set_server_bound_cert_service(
-      new net::ServerBoundCertService(
-          new net::DefaultServerBoundCertStore(NULL),
+  //       SQLiteChannelIDStore is part of chrome
+  storage->set_channel_id_service(
+      new net::ChannelIDService(
+          new net::DefaultChannelIDStore(NULL),
           base::WorkerPool::GetTaskRunner(true)));
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
@@ -270,8 +270,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   net::HttpNetworkSession::Params session_params;
   session_params.host_resolver = context->host_resolver();
   session_params.cert_verifier = context->cert_verifier();
-  session_params.server_bound_cert_service =
-      context->server_bound_cert_service();
+  session_params.channel_id_service = context->channel_id_service();
   session_params.transport_security_state =
       context->transport_security_state();
   session_params.proxy_service = context->proxy_service();

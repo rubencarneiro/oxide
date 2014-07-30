@@ -190,7 +190,6 @@
         '<(DEPTH)/content/content.gyp:content_plugin',
         '<(DEPTH)/content/content.gyp:content_renderer',
         '<(DEPTH)/content/content.gyp:content_utility',
-        '<(DEPTH)/content/content.gyp:content_worker',
         '<(DEPTH)/gpu/gpu.gyp:command_buffer_common',
         '<(DEPTH)/gpu/gpu.gyp:gpu_config',
         '<(DEPTH)/net/net.gyp:net',
