@@ -359,7 +359,6 @@ void BrowserProcessMainImpl::Shutdown() {
 
   BrowserContext::AssertNoContextsExist();
 
-  // XXX: Better off in BrowserProcessMainParts?
   MessageLoopForUI::current()->Stop();
 
   browser_main_runner_->Shutdown();
