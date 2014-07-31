@@ -151,7 +151,7 @@ bool ShouldUseSoftwareCompositing() {
   }
 
   SharedGLContext* share_context =
-      BrowserProcessMain::instance()->GetSharedGLContext();
+      BrowserProcessMain::GetInstance()->GetSharedGLContext();
   if (!share_context) {
     return true;
   }

@@ -48,7 +48,7 @@ bool IsUbuntuPhoneOrTablet() {
   }
 
   NativeDisplayType native_display =
-      BrowserProcessMain::instance()->GetNativeDisplay();
+      BrowserProcessMain::GetInstance()->GetNativeDisplay();
 
   typedef EGLDisplay (*f_eglGetDisplay)(NativeDisplayType);
   f_eglGetDisplay eglGetDisplay =

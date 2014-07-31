@@ -197,24 +197,30 @@ QOpenGLContext* WebContextAdapter::sharedGLContext() {
 
 /* static */
 void WebContextAdapter::setSharedGLContext(QOpenGLContext* context) {
-  CHECK(!oxide::BrowserProcessMain::IsRunning()) <<
+  CHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning()) <<
       "WebContextAdapter::setSharedGLContext must be called before the "
       "browser components are started!";
 
   g_shared_gl_context = context;
 }
 
+namespace {
+void ShutdownChromium() {
+  oxide::BrowserProcessMain::GetInstance()->Shutdown();
+}
+}
+
 /* static */
 void WebContextAdapter::ensureChromiumStarted() {
-  if (!oxide::BrowserProcessMain::IsRunning()) {
+  if (!oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
     CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
         "Your application doesn't have a QGuiApplication. Oxide will not "
         "function without one";
     scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
 
-    oxide::BrowserProcessMain::Start(
+    oxide::BrowserProcessMain::GetInstance()->Start(
         delegate.PassAs<oxide::ContentMainDelegate>());
-    qAddPostRoutine(oxide::BrowserProcessMain::Shutdown);
+    qAddPostRoutine(ShutdownChromium);
   }
 }
 
