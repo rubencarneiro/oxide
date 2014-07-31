@@ -189,7 +189,9 @@ base::FilePath GetSubprocessPath() {
 }
 
 void InitializeCommandLine(const base::FilePath& subprocess_path) {
-  base::CommandLine::Init(0, NULL);
+  CHECK(base::CommandLine::Init(0, NULL)) <<
+      "CommandLine already exists. Did you call BrowserProcessMain::Start "
+      "in a child process?";
 
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
 
@@ -281,9 +283,9 @@ void BrowserProcessMainImpl::Start(
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
 
-  state_ = STATE_STARTED;;
-
   main_delegate_ = delegate.Pass();
+
+  state_ = STATE_STARTED;
 
   shared_gl_context_ = main_delegate_->GetSharedGLContext();
   native_display_is_valid_ = main_delegate_->GetNativeDisplay(&native_display_);
@@ -325,7 +327,7 @@ void BrowserProcessMainImpl::Start(
   content::RegisterPathProvider();
   content::RegisterContentSchemes(true);
 
-  CHECK(base::i18n::InitializeICU());
+  CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
 
   main_delegate_->PreSandboxStartup();
   main_delegate_->SandboxInitialized(base::EmptyString());
@@ -338,12 +340,14 @@ void BrowserProcessMainImpl::Start(
       content::CreateInProcessGpuThread);
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
-  CHECK(browser_main_runner_.get());
+  CHECK(browser_main_runner_.get()) << "Failed to create BrowserMainRunner";
 
   content::MainFunctionParams main_params(
       *base::CommandLine::ForCurrentProcess());
-  CHECK_EQ(browser_main_runner_->Initialize(main_params), -1);
-  CHECK_EQ(browser_main_runner_->Run(), 0);
+  CHECK_EQ(browser_main_runner_->Initialize(main_params), -1) <<
+      "Failed to initialize BrowserMainRunner";
+  CHECK_EQ(browser_main_runner_->Run(), 0) <<
+      "Failed to run BrowserMainRunner";
 }
 
 void BrowserProcessMainImpl::Shutdown() {
