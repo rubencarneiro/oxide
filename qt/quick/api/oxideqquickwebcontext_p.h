@@ -28,7 +28,7 @@
 
 QT_USE_NAMESPACE
 
-class OxideQQuickCookieMonster;
+class OxideQQuickCookieManager;
 class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
@@ -50,7 +50,7 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
   Q_PROPERTY(bool devtoolsEnabled READ devtoolsEnabled WRITE setDevtoolsEnabled NOTIFY devtoolsEnabledChanged)
   Q_PROPERTY(int devtoolsPort READ devtoolsPort WRITE setDevtoolsPort NOTIFY devtoolsPortChanged)
-  Q_PROPERTY(OxideQQuickCookieMonster* cookieMonster READ cookieMonster CONSTANT)
+  Q_PROPERTY(OxideQQuickCookieManager* cookieManager READ cookieManager CONSTANT)
 
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
@@ -125,7 +125,7 @@ class OxideQQuickWebContext : public QObject,
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
-  OxideQQuickCookieMonster* cookieMonster() const;
+  OxideQQuickCookieManager* cookieManager() const;
 
  Q_SIGNALS:
   void productChanged();

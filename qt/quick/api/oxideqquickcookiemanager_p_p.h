@@ -15,30 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_COOKIE_MONSTER_ADAPTER_P_H_
-#define _OXIDE_QT_CORE_GLUE_COOKIE_MONSTER_ADAPTER_P_H_
+#ifndef _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_
+#define _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_
 
-#include "net/cookies/cookie_monster.h"
+#include <QObject>
+#include <QtGlobal>
 
-namespace oxide {
-namespace qt {
+#include "qt/quick/api/oxideqquickcookiemanager_p.h"
 
-class CookieMonsterAdapter;
+class OxideQQuickCookieManagerPrivate Q_DECL_FINAL :
+    public QObject {
+  Q_OBJECT
+  Q_DECLARE_PUBLIC(OxideQQuickCookieManager)
 
-class CookieMonsterAdapterPrivate FINAL {
  public:
-  CookieMonsterAdapterPrivate(CookieMonsterAdapter* adapter,
-                              net::CookieMonster* cookieMonster);
+  ~OxideQQuickCookieManagerPrivate();
 
-  static CookieMonsterAdapterPrivate* get(CookieMonsterAdapter* adapter);
+  void setCookies(const QList<QNetworkCookie>& cookie, QObject* callback);
+  void getAllCookies(QObject* callback);
 
-  void GotCookiesCallback(const net::CookieList& cookies);
+ private:
+  OxideQQuickCookieManagerPrivate(OxideQQuickCookieManager* q,
+                                  OxideQQuickWebContext* webContext);
 
-  CookieMonsterAdapter* a;
-  net::CookieMonster* cookie_monster_;
+  OxideQQuickWebContext* web_context_;
+
+  OxideQQuickCookieManager* q_ptr;
+  Q_DISABLE_COPY(OxideQQuickCookieManagerPrivate);
 };
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_COOKIE_MONSTER_ADAPTER_P_H_
+#endif // _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_

@@ -42,13 +42,13 @@ else()
 endif()
 
 qt5_wrap_cpp(MOC_EXTRA
-             api/oxideqquickcookiemonster_p_p.h
+             api/oxideqquickcookiemanager_p_p.h
              api/oxideqquickuserscript_p_p.h
              api/oxideqquickwebcontext_p_p.h
              api/oxideqquickwebcontextdelegateworker_p_p.h)
 
 set(PLUGIN_SRCS
-    api/oxideqquickcookiemonster.cc
+    api/oxideqquickcookiemanager.cc
     api/oxideqquickglobals.cc
     api/oxideqquicknavigationhistory.cc
     api/oxideqquickscriptmessage.cc

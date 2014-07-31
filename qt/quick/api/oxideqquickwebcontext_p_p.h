@@ -89,7 +89,7 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   OxideQQuickWebContextDelegateWorker* network_request_delegate_;
   OxideQQuickWebContextDelegateWorker* storage_access_permission_delegate_;
   OxideQQuickWebContextDelegateWorker* user_agent_override_delegate_;
-  mutable OxideQQuickCookieMonster* cookie_monster_;
+  mutable OxideQQuickCookieManager* cookie_manager_;
 
   Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };

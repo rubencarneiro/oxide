@@ -6,6 +6,8 @@ import com.canonical.Oxide.Testing 1.0
 TestWebView {
   id: webView
 
+  property var latestCookieList
+
   SignalSpy {
     id: cookiesSetSpy
     signalName: "cookiesSet"
@@ -17,7 +19,7 @@ TestWebView {
 
   TestCase {
     id: test
-    name: "WebContext_cookieMonster"
+    name: "WebContext_cookieManager"
     when: windowShown
 
     function init() {
@@ -34,6 +36,7 @@ TestWebView {
              "Timed out waiting for successful load");
 
       webView.context.cookiePolicy = restore;
+      latestCookieList = null
     }
 
     function _set_cookies(webView) {
@@ -42,26 +45,25 @@ TestWebView {
              "Timed out waiting for successful load");
     }
 
-    function test_WebContext_cookieMonster_getAll() {
+    function test_WebContext_cookieManager_getAll() {
       _set_cookies(webView);
 
-      var cookieMonster = webView.context.cookieMonster;
-      verify(cookieMonster, "CookieMonster is NULL");
+      var cookieManager = webView.context.cookieManager;
+      verify(cookieManager, "CookieManager is NULL");
 
-      cookiesSetSpy.target = cookieMonster;
-      gotCookiesSpy.target = cookieMonster;
-      cookieMonster.gotCookies.connect(_on_got_cookies);
-      cookieMonster.getAllCookies();
+      cookiesSetSpy.target = cookieManager;
+      gotCookiesSpy.target = cookieManager;
+      cookieManager.gotCookies.connect(_on_got_cookies);
+      cookieManager.getAllCookies();
       gotCookiesSpy.wait();
       compare(gotCookiesSpy.count, 1, "Expected gotCookies signal");
-      var cookieList = OxideTestingUtils.parseCookieList(gotCookiesSpy.signalArguments[0]);
-      console.log("Spied cookie list: " + JSON.stringify(cookieList));
-      compare(cookieList.length, 1);
+      compare(latestCookieList.length, 1);
     }
 
     function _on_got_cookies(cookies) {
       var parsed = OxideTestingUtils.parseCookieList(cookies);
       console.log("Parsed: " + JSON.stringify(parsed))
+      latestCookieList = parsed
     }
   }
 }

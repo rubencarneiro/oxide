@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_COOKIE_MONSTER_P_H_
-#define _OXIDE_QT_QUICK_API_COOKIE_MONSTER_P_H_
+#ifndef _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_H_
+#define _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_H_
 
 #include <QList>
 #include <QObject>
@@ -26,35 +26,33 @@ QT_BEGIN_NAMESPACE
 class QNetworkCookie;
 QT_END_NAMESPACE
 
-namespace net {
-class CookieMonster;
-}
+class OxideQQuickWebContext;
 
 QT_USE_NAMESPACE
 
-class OxideQQuickCookieMonsterPrivate;
+class OxideQQuickCookieManagerPrivate;
 
-class OxideQQuickCookieMonster : public QObject {
+class OxideQQuickCookieManager : public QObject {
   Q_OBJECT
 
-  Q_DECLARE_PRIVATE(OxideQQuickCookieMonster)
-  Q_DISABLE_COPY(OxideQQuickCookieMonster)
+  Q_DECLARE_PRIVATE(OxideQQuickCookieManager)
+  Q_DISABLE_COPY(OxideQQuickCookieManager)
 
  public:
 
-  OxideQQuickCookieMonster(net::CookieMonster* cookieMonster,
+  OxideQQuickCookieManager(OxideQQuickWebContext* webContext,
                            QObject* parent = NULL);
-  virtual ~OxideQQuickCookieMonster();
+  virtual ~OxideQQuickCookieManager();
 
   Q_INVOKABLE void setCookies(const QList<QNetworkCookie>& cookies);
   Q_INVOKABLE void getAllCookies();
 
- Q_SIGNALS:
+Q_SIGNALS:
   void cookiesSet(bool success);
   void gotCookies(const QList<QNetworkCookie>& cookies);
 
  private:
-  QScopedPointer<OxideQQuickCookieMonsterPrivate> d_ptr;
+  QScopedPointer<OxideQQuickCookieManagerPrivate> d_ptr;
 };
 
-#endif // _OXIDE_QT_QUICK_API_COOKIE_MONSTER_P_H_
+#endif // _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_H_

@@ -28,7 +28,7 @@
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqwebpreferences.h"
-#include "qt/quick/api/oxideqquickcookiemonster_p.h"
+#include "qt/quick/api/oxideqquickcookiemanager_p.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
 #include "qt/quick/api/oxideqquickscriptmessage_p.h"
@@ -90,8 +90,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "Frames are created automatically by Oxide to represent frames in the renderer");
     qmlRegisterUncreatableType<OxideQDownloadRequest>(uri, 1, 0, "DownloadRequest",
         "Cannot create separate instance of DownloadRequest");
-    qmlRegisterUncreatableType<OxideQQuickCookieMonster>(uri, 1, 0, "CookieMonster",
-        "Cannot create instances of CookieMonster");
+    qmlRegisterUncreatableType<OxideQQuickCookieManager>(uri, 1, 0, "CookieManager",
+        "Cannot create instances of CookieManager");
 
     qmlRegisterType<OxideQQuickScriptMessageHandler>(uri, 1, 0, "ScriptMessageHandler");
     qmlRegisterType<OxideQQuickUserScript>(uri, 1, 0, "UserScript");

@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
 
 #include <QList>
+#include <QJsonObject>
 #include <string>
 
 #include "base/basictypes.h"
@@ -32,6 +33,11 @@
 
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
+
+namespace net {
+class CookieMonster;
+class CanonicalCookie;
+}
 
 namespace oxide {
 
@@ -53,6 +59,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   WebContextAdapter* adapter() const { return adapter_; }
   oxide::BrowserContext* GetContext();
+  net::CookieMonster* GetCookieMonster();
 
  private:
   friend class WebContextAdapter;
@@ -80,6 +87,19 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   void Destroy();
   void UpdateUserScripts();
+
+  void doSetCookies(WebContextAdapter::SetCookiesRequest* request);
+  void doSetCookie(WebContextAdapter::SetCookiesRequest* request);
+  void OnCookieSet(WebContextAdapter::SetCookiesRequest* request, bool success);
+  void callWithStatus(QObject * callback, bool status);
+
+  void doGetAllCookies(QObject* callback);
+  void callWithCookies(QObject * callback,
+      const QList<QNetworkCookie>& cookies);
+  void GotCookiesCallback(QObject* callback,
+      const net::CookieList& cookies);
+
+  QJsonObject jsonFromNetworkCookie(const net::CanonicalCookie& cookie);
 
   // oxide::BrowserContextDelegate
   int OnBeforeURLRequest(net::URLRequest* request,

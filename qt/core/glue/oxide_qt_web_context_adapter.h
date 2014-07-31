@@ -27,15 +27,12 @@
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
 class QOpenGLContext;
+class QNetworkCookie;
 QT_END_NAMESPACE
 
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
 class OxideQStoragePermissionRequest;
-
-namespace net {
-class CookieMonster;
-}
 
 namespace oxide {
 namespace qt {
@@ -114,7 +111,28 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
-  net::CookieMonster* cookieMonster() const;
+  class SetCookiesRequest {
+  public:
+    SetCookiesRequest(const QList<QNetworkCookie>& cookies,
+		      QObject* callback);
+
+    bool status() const;
+    bool isComplete() const;
+    void updateStatus(bool status);
+    QObject* callback() const;
+
+    // Called on IO thread
+    bool next(QNetworkCookie* next);
+
+  private:
+
+    QList<QNetworkCookie> cookies_;
+    QObject* callback_;
+    bool status_;
+  };
+
+  void doSetCookies(SetCookiesRequest* request);
+  void doGetAllCookies(QObject* callback);
 
  protected:
   WebContextAdapter(QObject* q,

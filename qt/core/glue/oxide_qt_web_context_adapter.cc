@@ -22,14 +22,19 @@
 #include <vector>
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QGuiApplication>
 #include <QObject>
 #include <QtDebug>
 #include <QtGui/qpa/qplatformnativeinterface.h>
+#include <QObject>
+#include <QNetworkCookie>
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "content/public/browser/browser_thread.h"
 #include "net/base/static_cookie_policy.h"
+#include "net/cookies/cookie_monster.h"
 #include "url/gurl.h"
 
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
@@ -42,6 +47,38 @@ namespace qt {
 
 namespace {
 QOpenGLContext* g_shared_gl_context;
+}
+
+WebContextAdapter::SetCookiesRequest::SetCookiesRequest(
+    const QList<QNetworkCookie>& cookies,
+    QObject* callback) :
+        cookies_(cookies),
+        callback_(callback) {}
+
+bool WebContextAdapter::SetCookiesRequest::status() const {
+  return status_;
+}
+
+bool WebContextAdapter::SetCookiesRequest::isComplete() const {
+  return cookies_.empty();
+}
+
+QObject* WebContextAdapter::SetCookiesRequest::callback() const {
+  return callback_;
+}
+
+void WebContextAdapter::SetCookiesRequest::updateStatus(bool status) {
+  status_ = status_ && status;
+}
+
+bool WebContextAdapter::SetCookiesRequest::next(QNetworkCookie* next) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+  if (!next || isComplete()) {
+    return false;
+  }
+  *next = *cookies_.begin();
+  cookies_.pop_front();
+  return true;
 }
 
 WebContextAdapter::~WebContextAdapter() {
@@ -296,12 +333,14 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
   }
 }
 
-net::CookieMonster* WebContextAdapter::cookieMonster() const {
-  if (isInitialized()) {
-    return priv->context_->GetCookieMonster();
-  }
+void WebContextAdapter::doSetCookies(
+      WebContextAdapter::SetCookiesRequest* request) {
+  priv->doSetCookies(request);
+}
 
-  return NULL;
+void WebContextAdapter::doGetAllCookies(
+    QObject* callback) {
+  priv->doGetAllCookies(callback);
 }
 
 WebContextAdapter::WebContextAdapter(

@@ -37,7 +37,7 @@
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 
-#include "oxideqquickcookiemonster_p.h"
+#include "oxideqquickcookiemanager_p.h"
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 #include "oxideqquickwebcontextdelegateworker_p.h"
@@ -154,7 +154,7 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     network_request_delegate_(NULL),
     storage_access_permission_delegate_(NULL),
     user_agent_override_delegate_(NULL),
-    cookie_monster_(NULL) {}
+    cookie_manager_(NULL) {}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
   updateUserScripts();
@@ -716,16 +716,17 @@ void OxideQQuickWebContext::setDevtoolsPort(int port) {
   emit devtoolsPortChanged();
 }
 
-OxideQQuickCookieMonster*
-OxideQQuickWebContext::cookieMonster() const {
+OxideQQuickCookieManager*
+OxideQQuickWebContext::cookieManager() const {
   Q_D(const OxideQQuickWebContext);
 
-  if (!d->cookie_monster_) {
-    d->cookie_monster_ =
-      new OxideQQuickCookieMonster(d->cookieMonster(),
-                                   const_cast<OxideQQuickWebContext*>(this));
+  if (!d->cookie_manager_) {
+    OxideQQuickWebContext* web_context =
+        const_cast<OxideQQuickWebContext*>(this);
+    d->cookie_manager_ =
+        new OxideQQuickCookieManager(web_context, web_context);
   }
-  return d->cookie_monster_;
+  return d->cookie_manager_;
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"
