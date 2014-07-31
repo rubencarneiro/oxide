@@ -19,7 +19,6 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
 
 #include <QList>
-#include <QJsonObject>
 #include <string>
 
 #include "base/basictypes.h"
