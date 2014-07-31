@@ -351,14 +351,19 @@ void BrowserProcessMainImpl::Start(
 }
 
 void BrowserProcessMainImpl::Shutdown() {
-  CHECK_EQ(state_, STATE_STARTED);
+  if (state_ != STATE_STARTED) {
+    CHECK_NE(state_, STATE_SHUTTING_DOWN);
+    return;
+  }
   state_ = STATE_SHUTTING_DOWN;
 
   BrowserContext::AssertNoContextsExist();
 
   // XXX: Better off in BrowserProcessMainParts?
   MessageLoopForUI::current()->Stop();
+
   browser_main_runner_->Shutdown();
+  browser_main_runner_.reset();
 
   exit_manager_.reset();
 
