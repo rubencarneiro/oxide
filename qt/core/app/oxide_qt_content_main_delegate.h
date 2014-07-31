@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_APP_CONTENT_MAIN_DELEGATE_H_
 
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
 
@@ -27,12 +28,21 @@ namespace qt {
 
 class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
  public:
-  ContentMainDelegate();
+  ContentMainDelegate(bool is_browser = false);
+  ~ContentMainDelegate();
 
   static ContentMainDelegate* Create();
 
  private:
+  // oxide::ContentMainDelegate implementation
+  oxide::SharedGLContext* GetSharedGLContext() const FINAL;
+  bool GetNativeDisplay(intptr_t* handle) const FINAL;
+
+  // content::ContentMainDelegate implementation
   content::ContentBrowserClient* CreateContentBrowserClient() FINAL;
+
+  bool is_browser_;
+  scoped_refptr<SharedGLContext> shared_gl_context_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };

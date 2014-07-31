@@ -25,7 +25,6 @@
 #include <QGuiApplication>
 #include <QObject>
 #include <QtDebug>
-#include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
@@ -33,7 +32,6 @@
 #include "url/gurl.h"
 
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
-#include "qt/core/gl/oxide_qt_shared_gl_context.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
@@ -212,21 +210,10 @@ void WebContextAdapter::ensureChromiumStarted() {
     CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
         "Your application doesn't have a QGuiApplication. Oxide will not "
         "function without one";
-    scoped_refptr<SharedGLContext> shared_gl_context(SharedGLContext::Create());
     scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
 
-    void* display = NULL;
-    QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
-    if (pni) {
-      display = pni->nativeResourceForScreen("display",
-                                             QGuiApplication::primaryScreen());
-    }
-
     oxide::BrowserProcessMain::Start(
-        shared_gl_context,
-        delegate.PassAs<oxide::ContentMainDelegate>(),
-        reinterpret_cast<intptr_t>(display),
-        !!pni);
+        delegate.PassAs<oxide::ContentMainDelegate>());
     qAddPostRoutine(oxide::BrowserProcessMain::Shutdown);
   }
 }
