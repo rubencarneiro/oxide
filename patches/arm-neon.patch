@@ -1,4 +1,15 @@
-# Description: Fix build on non-Android ARM Linux builds without NEON
+# Description: Fix build on non-Android ARM Linux builds without NEON.
+#  - The common.gypi change allows us to disable NEON runtime detection with
+#    (arm_neon==0 and arm_neon_optional==0) builds
+#  - The sinc_resampler.cc changes add support for a mode where there is no
+#    NEON support
+#  - The isacfix.gypi changes fix the isac_neon target to not assume that
+#    arm_version==7 means there is NEON support. This prevents a problem where
+#    various lookup tables are defined twice (causing a link failure) with
+#    (arm_neon==0 and arm_neon_optional==0 and arm_version==7) builds - once
+#    in transform_neon.S (which shouldn't be built) and also in
+#    transform_tables.c - with the latter being ifdef'd in correctly only when
+#    both WEBRTC_ARCH_ARM_NEON and WEBRTC_DETECT_ARM_NEON aren't defined
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/common.gypi
@@ -61,3 +72,44 @@ diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third
  #endif
  
  SincResampler::SincResampler(double io_sample_rate_ratio,
+diff --git a/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi b/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
+--- a/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
++++ b/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
+@@ -71,17 +71,17 @@
+         'structs.h',
+       ],
+       'conditions': [
+         ['OS!="win"', {
+           'defines': [
+             'WEBRTC_LINUX',
+           ],
+         }],
+-        ['(target_arch=="arm" and arm_version==7) or target_arch=="armv7"', {
++        ['((target_arch=="arm" and arm_version==7) or target_arch=="armv7") and (arm_neon==1 or arm_neon_optional==1)', {
+           'dependencies': [ 'isac_neon', ],
+           'sources': [
+             'lattice_armv7.S',
+             'pitch_filter_armv6.S',
+           ],
+           'sources!': [
+             'lattice_c.c',
+             'pitch_filter_c.c',
+@@ -114,17 +114,17 @@
+               ],
+             }],
+           ],
+         }],
+       ],
+     },
+   ],
+   'conditions': [
+-    ['(target_arch=="arm" and arm_version==7) or target_arch=="armv7"', {
++    ['((target_arch=="arm" and arm_version==7) or target_arch=="armv7") and (arm_neon==1 or arm_neon_optional==1)', {
+       'targets': [
+         {
+           'target_name': 'isac_neon',
+           'type': 'static_library',
+           'includes': ['../../../../../../build/arm_neon.gypi',],
+           'dependencies': [
+             '<(webrtc_root)/common_audio/common_audio.gyp:common_audio',
+           ],
