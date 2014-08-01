@@ -94,10 +94,10 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void StartInternal(scoped_ptr<ContentMainDelegate> delegate);
-  void ShutdownInternal();
+  void Start(scoped_ptr<ContentMainDelegate> delegate) FINAL;
+  void Shutdown() FINAL;
 
-  bool IsRunningInternal() {
+  bool IsRunning() const FINAL {
     return state_ == STATE_STARTED || state_ == STATE_SHUTTING_DOWN;
   }
 
@@ -131,7 +131,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 
 namespace {
 
-BrowserProcessMainImpl* GetInstance() {
+BrowserProcessMainImpl* GetBrowserProcessMainInstance() {
   static BrowserProcessMainImpl g_instance;
   return &g_instance;
 }
@@ -172,7 +172,7 @@ base::FilePath GetSubprocessPath() {
   }
 
   Dl_info info;
-  int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::IsRunning),
+  int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::GetInstance),
                   &info);
   DCHECK_NE(rv, 0) << "Failed to determine module path";
 
@@ -189,7 +189,9 @@ base::FilePath GetSubprocessPath() {
 }
 
 void InitializeCommandLine(const base::FilePath& subprocess_path) {
-  base::CommandLine::Init(0, NULL);
+  CHECK(base::CommandLine::Init(0, NULL)) <<
+      "CommandLine already exists. Did you call BrowserProcessMain::Start "
+      "in a child process?";
 
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
 
@@ -275,15 +277,15 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::StartInternal(
+void BrowserProcessMainImpl::Start(
     scoped_ptr<ContentMainDelegate> delegate) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
 
-  state_ = STATE_STARTED;;
-
   main_delegate_ = delegate.Pass();
+
+  state_ = STATE_STARTED;
 
   shared_gl_context_ = main_delegate_->GetSharedGLContext();
   native_display_is_valid_ = main_delegate_->GetNativeDisplay(&native_display_);
@@ -325,7 +327,7 @@ void BrowserProcessMainImpl::StartInternal(
   content::RegisterPathProvider();
   content::RegisterContentSchemes(true);
 
-  CHECK(base::i18n::InitializeICU());
+  CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
 
   main_delegate_->PreSandboxStartup();
   main_delegate_->SandboxInitialized(base::EmptyString());
@@ -338,25 +340,37 @@ void BrowserProcessMainImpl::StartInternal(
       content::CreateInProcessGpuThread);
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
-  CHECK(browser_main_runner_.get());
+  CHECK(browser_main_runner_.get()) << "Failed to create BrowserMainRunner";
 
   content::MainFunctionParams main_params(
       *base::CommandLine::ForCurrentProcess());
-  CHECK_EQ(browser_main_runner_->Initialize(main_params), -1);
-  CHECK_EQ(browser_main_runner_->Run(), 0);
+  CHECK_EQ(browser_main_runner_->Initialize(main_params), -1) <<
+      "Failed to initialize BrowserMainRunner";
+  CHECK_EQ(browser_main_runner_->Run(), 0) <<
+      "Failed to run BrowserMainRunner";
 }
 
-void BrowserProcessMainImpl::ShutdownInternal() {
-  CHECK_EQ(state_, STATE_STARTED);
+void BrowserProcessMainImpl::Shutdown() {
+  if (state_ != STATE_STARTED) {
+    CHECK_NE(state_, STATE_SHUTTING_DOWN);
+    return;
+  }
   state_ = STATE_SHUTTING_DOWN;
 
   BrowserContext::AssertNoContextsExist();
 
-  // XXX: Better off in BrowserProcessMainParts?
   MessageLoopForUI::current()->Stop();
+
   browser_main_runner_->Shutdown();
+  browser_main_runner_.reset();
 
   exit_manager_.reset();
+
+  shared_gl_context_ = NULL;
+  native_display_is_valid_ = false;
+  native_display_ = 0;
+
+  main_delegate_.reset();
 
   state_ = STATE_SHUTDOWN;
 }
@@ -366,26 +380,8 @@ BrowserProcessMain::BrowserProcessMain() {}
 BrowserProcessMain::~BrowserProcessMain() {}
 
 // static
-void BrowserProcessMain::Start(
-    scoped_ptr<ContentMainDelegate> delegate) {
-  GetInstance()->StartInternal(delegate.Pass());
-}
-
-// static
-void BrowserProcessMain::Shutdown() {
-  GetInstance()->ShutdownInternal();
-}
-
-// static
-bool BrowserProcessMain::IsRunning() {
-  return GetInstance()->IsRunningInternal();
-}
-
-// static
-BrowserProcessMain* BrowserProcessMain::instance() {
-  CHECK(IsRunning()) <<
-      "Cannot access BrowserProcessMain singleton when not running";
-  return GetInstance();
+BrowserProcessMain* BrowserProcessMain::GetInstance() {
+  return GetBrowserProcessMainInstance();
 }
 
 } // namespace oxide

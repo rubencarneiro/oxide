@@ -89,7 +89,7 @@ void WebViewContentsHelper::UpdateWebPreferences() {
     return;
   }
 
-  rvh->OnWebkitPreferencesChanged();
+  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
 }
 
 void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {

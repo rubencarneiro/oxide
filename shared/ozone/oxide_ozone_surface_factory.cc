@@ -47,7 +47,7 @@ base::NativeLibrary LoadLibrary(const char* filename) {
 } // namespace
 
 intptr_t OzoneSurfaceFactory::GetNativeDisplay() {
-  return BrowserProcessMain::instance()->GetNativeDisplay();
+  return BrowserProcessMain::GetInstance()->GetNativeDisplay();
 }
 
 bool OzoneSurfaceFactory::LoadEGLGLES2Bindings(

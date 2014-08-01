@@ -338,8 +338,8 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     }
 
     if (content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() &&
-        (!BrowserProcessMain::instance()->GetSharedGLContext() ||
-         BrowserProcessMain::instance()->GetSharedGLContext()->GetImplementation() !=
+        (!BrowserProcessMain::GetInstance()->GetSharedGLContext() ||
+         BrowserProcessMain::GetInstance()->GetSharedGLContext()->GetImplementation() !=
              gfx::GetGLImplementation())) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
@@ -464,7 +464,7 @@ ContentBrowserClient::OverrideSystemLocationProvider() {
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
   SharedGLContext* context =
-      BrowserProcessMain::instance()->GetSharedGLContext();
+      BrowserProcessMain::GetInstance()->GetSharedGLContext();
   if (!context) {
     return NULL;
   }

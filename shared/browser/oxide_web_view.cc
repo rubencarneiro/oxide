@@ -151,7 +151,7 @@ bool ShouldUseSoftwareCompositing() {
   }
 
   SharedGLContext* share_context =
-      BrowserProcessMain::instance()->GetSharedGLContext();
+      BrowserProcessMain::GetInstance()->GetSharedGLContext();
   if (!share_context) {
     return true;
   }
@@ -1232,7 +1232,7 @@ void WebView::UpdateWebPreferences() {
     return;
   }
 
-  rvh->OnWebkitPreferencesChanged();
+  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
 }
 
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {

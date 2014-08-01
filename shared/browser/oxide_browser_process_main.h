@@ -35,19 +35,19 @@ class BrowserProcessMain {
  public:
   virtual ~BrowserProcessMain();
 
+  // Return the BrowserProcessMain singleton
+  static BrowserProcessMain* GetInstance();
+
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  static void Start(scoped_ptr<ContentMainDelegate> delegate);
+  virtual void Start(scoped_ptr<ContentMainDelegate> delegate) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton
-  static void Shutdown();
+  virtual void Shutdown() = 0;
 
   // Returns true if the browser process components are running
-  static bool IsRunning();
-
-  // Return the BrowserProcessMain singleton
-  static BrowserProcessMain* instance();
+  virtual bool IsRunning() const = 0;
 
   virtual SharedGLContext* GetSharedGLContext() const = 0;
   virtual intptr_t GetNativeDisplay() const = 0;
