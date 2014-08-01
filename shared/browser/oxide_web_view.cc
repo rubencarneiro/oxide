@@ -1232,7 +1232,7 @@ void WebView::UpdateWebPreferences() {
     return;
   }
 
-  rvh->OnWebkitPreferencesChanged();
+  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
 }
 
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
