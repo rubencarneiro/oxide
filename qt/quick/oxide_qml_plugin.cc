@@ -18,6 +18,7 @@
 #include <QLatin1String>
 #include <QtGlobal>
 #include <QtQml>
+#include <QNetworkCookie>
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
@@ -27,6 +28,7 @@
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqwebpreferences.h"
+#include "qt/quick/api/oxideqquickcookiemanager_p.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
 #include "qt/quick/api/oxideqquickscriptmessage_p.h"
@@ -39,6 +41,10 @@
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
 QT_USE_NAMESPACE
+
+typedef QList<QNetworkCookie> CookieList;
+
+QML_DECLARE_TYPE(CookieList)
 
 namespace {
 
@@ -58,6 +64,9 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
  public:
   void registerTypes(const char* uri) {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide"));
+
+    qRegisterMetaType<QNetworkCookie>();
+    qRegisterMetaType<CookieList>();
 
     qmlRegisterSingletonType<OxideQQuickGlobals>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
@@ -81,6 +90,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "Frames are created automatically by Oxide to represent frames in the renderer");
     qmlRegisterUncreatableType<OxideQDownloadRequest>(uri, 1, 0, "DownloadRequest",
         "Cannot create separate instance of DownloadRequest");
+    qmlRegisterUncreatableType<OxideQQuickCookieManager>(uri, 1, 0, "CookieManager",
+        "Cannot create instances of CookieManager");
 
     qmlRegisterType<OxideQQuickScriptMessageHandler>(uri, 1, 0, "ScriptMessageHandler");
     qmlRegisterType<OxideQQuickUserScript>(uri, 1, 0, "UserScript");
@@ -90,5 +101,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebView>(uri, 1, 0, "WebView");
   }
 };
+
+QML_DECLARE_TYPE(QNetworkCookie)
 
 #include "oxide_qml_plugin.moc"

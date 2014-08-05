@@ -19,10 +19,16 @@
 
 #include <QString>
 #include <QUrl>
+#include <QObject>
+#include <QNetworkCookie>
+#include <QDateTime>
+#include <QDebug>
+#include <QMetaMethod>
 
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
 #include "net/base/net_errors.h"
+#include "net/cookies/cookie_monster.h"
 #include "net/url_request/url_request.h"
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
@@ -193,6 +199,172 @@ WebContextAdapterPrivate* WebContextAdapterPrivate::get(
 WebContextAdapterPrivate* WebContextAdapterPrivate::FromBrowserContext(
     oxide::BrowserContext* context) {
   return static_cast<WebContextAdapterPrivate *>(context->GetDelegate());
+}
+
+net::CookieMonster* WebContextAdapterPrivate::GetCookieMonster() {
+  if (!context_) {
+    return NULL;
+  }
+  return context_->GetCookieMonster();
+}
+
+void WebContextAdapterPrivate::callWithStatus(
+    QObject * callback, bool status) {
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&WebContextAdapterPrivate::callWithStatus,
+                   base::Unretained(this), callback, status));
+    return;
+  }
+
+  if (callback != NULL && callback->metaObject()) {
+    QByteArray normalizedSignature =
+      QMetaObject::normalizedSignature("cookiesSet(bool)");
+    int idx = callback->metaObject()->indexOfSignal(normalizedSignature);
+    if (idx != -1) {
+      QMetaMethod method = callback->metaObject()->method(idx);
+      method.invoke(callback,
+		    Qt::DirectConnection,
+		    Q_ARG(bool, status));
+    }
+  }
+}
+
+void WebContextAdapterPrivate::OnCookieSet(
+      WebContextAdapter::SetCookiesRequest* request, bool success) {
+  if (!request) {
+    return;
+  }
+
+  request->updateStatus(success);
+
+  if (request->isComplete()) {
+    callWithStatus(request->callback(), request->status());
+    delete request;
+    return;
+  }
+
+  doSetCookie(request);
+}
+
+void WebContextAdapterPrivate::doSetCookies(
+      WebContextAdapter::SetCookiesRequest* request) {
+  if (!request) {
+    return;
+  }
+
+  net::CookieMonster* cookie_monster = GetCookieMonster();
+  if (!cookie_monster) {
+    callWithStatus(request->callback(), false);
+    return;
+  }
+
+  if (!content::BrowserThread::CurrentlyOn(
+        content::BrowserThread::IO)) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::IO,
+        FROM_HERE,
+        base::Bind(&WebContextAdapterPrivate::doSetCookies,
+                   base::Unretained(this), request));
+    return;
+  }
+
+  doSetCookie(request);
+}
+
+void WebContextAdapterPrivate::doSetCookie(
+      WebContextAdapter::SetCookiesRequest* request) {
+  QNetworkCookie cookie = QNetworkCookie(QByteArray(), QByteArray());
+  if (!request->next(&cookie)) {
+    callWithStatus(request->callback(), request->status());
+    return;
+  }
+
+  net::CookieMonster* cookie_monster = GetCookieMonster();
+  cookie_monster->SetCookieWithDetailsAsync(GURL(),
+    std::string(cookie.name().constData()),
+    std::string(cookie.value().constData()),
+    std::string(cookie.domain().toUtf8().constData()),
+    std::string(cookie.path().toUtf8().constData()),
+    base::Time::FromJsTime(cookie.expirationDate().toMSecsSinceEpoch()),
+    cookie.isSecure(),
+    cookie.isHttpOnly(),
+    net::COOKIE_PRIORITY_DEFAULT,
+    base::Bind(&WebContextAdapterPrivate::OnCookieSet,
+        base::Unretained(this),
+        request));
+}
+
+void WebContextAdapterPrivate::callWithCookies(
+    QObject * callback, const QList<QNetworkCookie>& cookies) {
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&WebContextAdapterPrivate::callWithCookies,
+                   base::Unretained(this), callback, cookies));
+    return;
+  }
+  if (callback != NULL) {
+    QByteArray normalizedSignature =
+      QMetaObject::normalizedSignature("gotCookies(const QList<QNetworkCookie>&)");
+    int idx = callback->metaObject()->indexOfSignal(normalizedSignature);
+    if (idx != -1) {
+      QMetaMethod method = callback->metaObject()->method(idx);
+      method.invoke(callback,
+		    Qt::DirectConnection,
+		    Q_ARG(QList<QNetworkCookie>, cookies));
+    }
+  }
+}
+
+void WebContextAdapterPrivate::GotCookiesCallback(
+    QObject* callback,
+    const net::CookieList& cookies) {
+
+  QList<QNetworkCookie> qcookies;
+  for (net::CookieList::const_iterator iter = cookies.begin();
+       iter != cookies.end(); ++iter) {
+    QNetworkCookie cookie;
+
+    cookie.setName(iter->Name().c_str());
+    cookie.setValue(iter->Value().c_str());
+    cookie.setDomain(iter->Domain().c_str());
+    cookie.setPath(iter->Path().c_str());
+    cookie.setExpirationDate(QDateTime::fromMSecsSinceEpoch(
+        iter->ExpiryDate().ToJsTime()));
+    cookie.setSecure(iter->IsSecure());
+    cookie.setHttpOnly(iter->IsHttpOnly());
+
+    qcookies.append(cookie);
+  }
+
+  callWithCookies(callback, qcookies);
+}
+
+void WebContextAdapterPrivate::doGetAllCookies(
+    QObject* callback) {
+  net::CookieMonster* cookie_monster = GetCookieMonster();
+  if (!cookie_monster) {
+    callWithCookies(callback, QList<QNetworkCookie>());
+    return;
+  }
+
+  if (!content::BrowserThread::CurrentlyOn(
+        content::BrowserThread::IO)) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::IO,
+        FROM_HERE,
+        base::Bind(&WebContextAdapterPrivate::doGetAllCookies,
+                   base::Unretained(this), callback));
+    return;
+  }
+
+  cookie_monster->GetAllCookiesAsync(
+    base::Bind(&WebContextAdapterPrivate::GotCookiesCallback,
+               base::Unretained(this), callback));
 }
 
 oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {

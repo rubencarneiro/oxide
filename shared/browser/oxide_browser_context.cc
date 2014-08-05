@@ -335,6 +335,13 @@ content::ResourceContext* BrowserContextIOData::GetResourceContext() {
   return resource_context_.get();
 }
 
+net::CookieMonster* BrowserContextIOData::GetCookieMonster() const {
+  URLRequestContext* context = main_request_context_.get();
+  net::CookieStore* cookie_store = context->cookie_store();
+
+  return cookie_store ? cookie_store->GetCookieMonster() : NULL;
+}
+
 bool BrowserContextIOData::CanAccessCookies(const GURL& url,
                                             const GURL& first_party_url,
                                             bool write) {
@@ -531,6 +538,10 @@ bool BrowserContext::IsPopupBlockerEnabled() const {
 
 content::ResourceContext* BrowserContext::GetResourceContext() {
   return io_data()->GetResourceContext();
+}
+
+net::CookieMonster* BrowserContext::GetCookieMonster() {
+  return io_data()->GetCookieMonster();
 }
 
 } // namespace oxide

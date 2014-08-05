@@ -38,6 +38,7 @@ class ResourceContext;
 
 namespace net {
 
+class CookieMonster;
 class FtpNetworkLayer;
 class HttpServerProperties;
 class HttpUserAgentSettings;
@@ -85,6 +86,8 @@ class BrowserContextIOData {
       content::URLRequestInterceptorScopedVector request_interceptors);
 
   content::ResourceContext* GetResourceContext();
+
+  net::CookieMonster* GetCookieMonster() const;
 
   bool CanAccessCookies(const GURL& url,
                         const GURL& first_party_url,
@@ -197,6 +200,8 @@ class BrowserContext : public content::BrowserContext,
   virtual UserScriptMaster& UserScriptManager() = 0;
 
   content::ResourceContext* GetResourceContext() FINAL;
+
+  net::CookieMonster* GetCookieMonster();
 
  protected:
   BrowserContext(BrowserContextIOData* io_data);
