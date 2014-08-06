@@ -150,7 +150,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 -GpuChildThread::GpuChildThread(const std::string& channel_id)
 +GpuChildThread::GpuChildThread(const std::string& channel_id,
 +                               gfx::GLShareGroup* share_group)
-     : ChildThread(channel_id),
+     : ChildThread(Options(channel_id, false)),
        dead_on_arrival_(false),
 -      in_browser_process_(true) {
 +      in_browser_process_(true),
@@ -400,7 +400,7 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -44,16 +44,17 @@ class DictionaryValue;
+@@ -45,16 +45,17 @@ class DictionaryValue;
  class FilePath;
  }
  
