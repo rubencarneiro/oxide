@@ -33,6 +33,7 @@ QT_END_NAMESPACE
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
 class OxideQStoragePermissionRequest;
+class OxideQQuickNetworkCookies;
 
 namespace oxide {
 namespace qt {
@@ -111,28 +112,10 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
-  class SetCookiesRequest {
-  public:
-    SetCookiesRequest(const QList<QNetworkCookie>& cookies,
-		      QObject* callback);
-
-    bool status() const;
-    bool isComplete() const;
-    void updateStatus(bool status);
-    QObject* callback() const;
-
-    // Called on IO thread
-    bool next(QNetworkCookie* next);
-
-  private:
-
-    QList<QNetworkCookie> cookies_;
-    QObject* callback_;
-    bool status_;
-  };
-
-  void doSetCookies(SetCookiesRequest* request);
-  void doGetAllCookies(QObject* callback);
+  void doSetCookies(OxideQQuickNetworkCookies* cookies,
+		    QObject* callback,
+		    int requestId);
+  void doGetAllCookies(QObject* callback, int requestId);
 
  protected:
   WebContextAdapter(QObject* q,

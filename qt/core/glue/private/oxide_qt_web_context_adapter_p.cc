@@ -33,6 +33,7 @@
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
+#include "qt/core/api/oxideqnetworkcookies.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 #include "shared/browser/oxide_browser_context.h"
@@ -61,6 +62,46 @@ WebContextAdapterPrivate* WebContextAdapterPrivate::Create(
     WebContextAdapter* adapter,
     WebContextAdapter::IOThreadDelegate* io_delegate) {
   return new WebContextAdapterPrivate(adapter, io_delegate);
+}
+
+WebContextAdapterPrivate::SetCookiesRequest::SetCookiesRequest(
+    const QList<QNetworkCookie>& cookies,
+    QObject* callback,
+    int id) :
+        cookies_(cookies),
+        callback_(callback),
+        status_(false),
+        id_(id) {
+}
+
+bool WebContextAdapterPrivate::SetCookiesRequest::status() const {
+  return status_;
+}
+
+int WebContextAdapterPrivate::SetCookiesRequest::id() const {
+  return id_;
+}
+
+bool WebContextAdapterPrivate::SetCookiesRequest::isComplete() const {
+  return cookies_.empty();
+}
+
+QObject* WebContextAdapterPrivate::SetCookiesRequest::callback() const {
+  return callback_;
+}
+
+void WebContextAdapterPrivate::SetCookiesRequest::updateStatus(bool status) {
+  status_ = status_ && status;
+}
+
+bool WebContextAdapterPrivate::SetCookiesRequest::next(QNetworkCookie* next) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+  if (!next || isComplete()) {
+    return false;
+  }
+  *next = *cookies_.begin();
+  cookies_.pop_front();
+  return true;
 }
 
 WebContextAdapterPrivate::WebContextAdapterPrivate(
@@ -209,39 +250,42 @@ net::CookieMonster* WebContextAdapterPrivate::GetCookieMonster() {
 }
 
 void WebContextAdapterPrivate::callWithStatus(
-    QObject * callback, bool status) {
+      QObject * callback, int requestId, bool status) {
   if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
     content::BrowserThread::PostTask(
         content::BrowserThread::UI,
         FROM_HERE,
         base::Bind(&WebContextAdapterPrivate::callWithStatus,
-                   base::Unretained(this), callback, status));
+                   this, callback, requestId, status));
     return;
   }
 
   if (callback != NULL && callback->metaObject()) {
     QByteArray normalizedSignature =
-      QMetaObject::normalizedSignature("cookiesSet(bool)");
+      QMetaObject::normalizedSignature("cookiesSet(bool, int)");
     int idx = callback->metaObject()->indexOfSignal(normalizedSignature);
     if (idx != -1) {
       QMetaMethod method = callback->metaObject()->method(idx);
       method.invoke(callback,
-		    Qt::DirectConnection,
-		    Q_ARG(bool, status));
+                    Qt::DirectConnection,
+                    Q_ARG(bool, status),
+                    Q_ARG(int, requestId));
     }
   }
 }
 
 void WebContextAdapterPrivate::OnCookieSet(
-      WebContextAdapter::SetCookiesRequest* request, bool success) {
+      SetCookiesRequest* request, bool success) {
   if (!request) {
     return;
   }
 
+  qDebug() << "succes: " << success;
+
   request->updateStatus(success);
 
   if (request->isComplete()) {
-    callWithStatus(request->callback(), request->status());
+    callWithStatus(request->callback(), request->id(), request->status());
     delete request;
     return;
   }
@@ -250,24 +294,17 @@ void WebContextAdapterPrivate::OnCookieSet(
 }
 
 void WebContextAdapterPrivate::doSetCookies(
-      WebContextAdapter::SetCookiesRequest* request) {
-  if (!request) {
+      OxideQQuickNetworkCookies* cookies, QObject* callback, int requestId) {
+  if (!cookies) {
     return;
   }
+
+  SetCookiesRequest* request =
+    new SetCookiesRequest(cookies->toNetworkCookies(), callback, requestId);
 
   net::CookieMonster* cookie_monster = GetCookieMonster();
   if (!cookie_monster) {
-    callWithStatus(request->callback(), false);
-    return;
-  }
-
-  if (!content::BrowserThread::CurrentlyOn(
-        content::BrowserThread::IO)) {
-    content::BrowserThread::PostTask(
-        content::BrowserThread::IO,
-        FROM_HERE,
-        base::Bind(&WebContextAdapterPrivate::doSetCookies,
-                   base::Unretained(this), request));
+    callWithStatus(request->callback(), request->id(), false);
     return;
   }
 
@@ -275,10 +312,12 @@ void WebContextAdapterPrivate::doSetCookies(
 }
 
 void WebContextAdapterPrivate::doSetCookie(
-      WebContextAdapter::SetCookiesRequest* request) {
+      SetCookiesRequest* request) {
   QNetworkCookie cookie = QNetworkCookie(QByteArray(), QByteArray());
   if (!request->next(&cookie)) {
-    callWithStatus(request->callback(), request->status());
+    callWithStatus(request->callback(),
+        request->id(),
+        request->status());
     return;
   }
 
@@ -293,35 +332,37 @@ void WebContextAdapterPrivate::doSetCookie(
     cookie.isHttpOnly(),
     net::COOKIE_PRIORITY_DEFAULT,
     base::Bind(&WebContextAdapterPrivate::OnCookieSet,
-        base::Unretained(this),
-        request));
+        this, request));
 }
 
 void WebContextAdapterPrivate::callWithCookies(
-    QObject * callback, const QList<QNetworkCookie>& cookies) {
+      QObject * callback, int requestId, const QList<QNetworkCookie>& cookies) {
   if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
     content::BrowserThread::PostTask(
         content::BrowserThread::UI,
         FROM_HERE,
         base::Bind(&WebContextAdapterPrivate::callWithCookies,
-                   base::Unretained(this), callback, cookies));
+                   this, callback, requestId, cookies));
     return;
   }
   if (callback != NULL) {
     QByteArray normalizedSignature =
-      QMetaObject::normalizedSignature("gotCookies(const QList<QNetworkCookie>&)");
+      QMetaObject::normalizedSignature("gotCookies(OxideQQuickNetworkCookies*, int)");
     int idx = callback->metaObject()->indexOfSignal(normalizedSignature);
     if (idx != -1) {
+      OxideQQuickNetworkCookies networkCookies(cookies);
       QMetaMethod method = callback->metaObject()->method(idx);
       method.invoke(callback,
-		    Qt::DirectConnection,
-		    Q_ARG(QList<QNetworkCookie>, cookies));
+                    Qt::DirectConnection,
+                    Q_ARG(OxideQQuickNetworkCookies*, &networkCookies),
+                    Q_ARG(bool, requestId));
     }
   }
 }
 
 void WebContextAdapterPrivate::GotCookiesCallback(
     QObject* callback,
+    int requestId,
     const net::CookieList& cookies) {
 
   QList<QNetworkCookie> qcookies;
@@ -341,14 +382,14 @@ void WebContextAdapterPrivate::GotCookiesCallback(
     qcookies.append(cookie);
   }
 
-  callWithCookies(callback, qcookies);
+  callWithCookies(callback, requestId, qcookies);
 }
 
 void WebContextAdapterPrivate::doGetAllCookies(
-    QObject* callback) {
+      QObject* callback, int requestId) {
   net::CookieMonster* cookie_monster = GetCookieMonster();
   if (!cookie_monster) {
-    callWithCookies(callback, QList<QNetworkCookie>());
+    callWithCookies(callback, -1, QList<QNetworkCookie>());
     return;
   }
 
@@ -358,13 +399,13 @@ void WebContextAdapterPrivate::doGetAllCookies(
         content::BrowserThread::IO,
         FROM_HERE,
         base::Bind(&WebContextAdapterPrivate::doGetAllCookies,
-                   base::Unretained(this), callback));
+                   this, callback, requestId));
     return;
   }
 
   cookie_monster->GetAllCookiesAsync(
     base::Bind(&WebContextAdapterPrivate::GotCookiesCallback,
-               base::Unretained(this), callback));
+               this, callback, requestId));
 }
 
 oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {

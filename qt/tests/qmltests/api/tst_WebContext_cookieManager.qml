@@ -54,16 +54,37 @@ TestWebView {
       cookiesSetSpy.target = cookieManager;
       gotCookiesSpy.target = cookieManager;
       cookieManager.gotCookies.connect(_on_got_cookies);
-      cookieManager.getAllCookies();
+      var id = cookieManager.getAllCookies();
+      verify(id >= 0, "Invalid cookie request id");
       gotCookiesSpy.wait();
       compare(gotCookiesSpy.count, 1, "Expected gotCookies signal");
       compare(latestCookieList.length, 1);
     }
 
-    function _on_got_cookies(cookies) {
-      var parsed = OxideTestingUtils.parseCookieList(cookies);
-      console.log("Parsed: " + JSON.stringify(parsed))
-      latestCookieList = parsed
+    function _on_got_cookies(networkCookies) {
+      console.log("Parsed: " + JSON.stringify(networkCookies.rawHttpCookies))
+      latestCookieList = networkCookies.rawHttpCookies
+    }
+
+    function test_WebContext_cookieManager_setCookies() {
+      var cookieManager = webView.context.cookieManager;
+      verify(cookieManager, "CookieManager is NULL");
+
+      cookiesSetSpy.target = cookieManager;
+      gotCookiesSpy.target = cookieManager;
+
+      var id = cookieManager.setCookies(
+        [{"name": "blabla", "value": "ddu", "domain": "me.com", "path": "/"}]);
+      verify(id >= 0, "Invalid cookie request id");
+      cookiesSetSpy.wait();
+      compare(cookiesSetSpy.count, 1, "Expected cookiesSet signal");
+      compare(cookiesSetSpy.signalArguments[0][1], id)
+      compare(cookiesSetSpy.signalArguments[0][0], true)
+
+      var id = cookieManager.getAllCookies();
+      verify(id >= 0, "Invalid cookie request id");
+      gotCookiesSpy.wait();
+      compare(gotCookiesSpy.count, 1, "Expected gotCookies signal");
     }
   }
 }

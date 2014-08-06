@@ -25,6 +25,7 @@
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
+#include "qt/core/api/oxideqnetworkcookies.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqwebpreferences.h"
@@ -99,6 +100,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebContextDelegateWorker>(uri, 1, 0, "WebContextDelegateWorker");
     qmlRegisterType<OxideQWebPreferences>(uri, 1, 0, "WebPreferences");
     qmlRegisterType<OxideQQuickWebView>(uri, 1, 0, "WebView");
+    qmlRegisterType<OxideQQuickNetworkCookies>(uri, 1, 0, "NetworkCookies");
   }
 };
 
