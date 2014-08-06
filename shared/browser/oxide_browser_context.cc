@@ -415,6 +415,10 @@ content::PushMessagingService* BrowserContext::GetPushMessagingService() {
   return NULL;
 }
 
+content::SSLHostStateDelegate* BrowserContext::GetSSLHostStateDelegate() {
+  return NULL;
+}
+
 void BrowserContext::AddObserver(BrowserContextObserver* observer) {
   observers_.AddObserver(observer);
 }

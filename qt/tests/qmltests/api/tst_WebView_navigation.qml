@@ -167,7 +167,7 @@ TestWebView {
       webView.loadingChanged.connect(doStop);
       webView.clearLoadEventCounters();
 
-      var url = "http://localhost:8080/tst_WebView_navigation1.html";
+      var url = "http://localhost:8080/tst_WebView_navigation5.py";
 
       webView.url = url;
       verify(webView.waitForLoadStopped(),

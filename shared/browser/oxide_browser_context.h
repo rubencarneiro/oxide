@@ -233,10 +233,9 @@ class BrowserContext : public content::BrowserContext,
   content::DownloadManagerDelegate* GetDownloadManagerDelegate() FINAL;
 
   content::BrowserPluginGuestManager* GetGuestManager() FINAL;
-
   quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
-
   content::PushMessagingService* GetPushMessagingService() FINAL;
+  content::SSLHostStateDelegate* GetSSLHostStateDelegate() FINAL;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
