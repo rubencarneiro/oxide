@@ -18,6 +18,7 @@
 #include "oxide_browser_process_main.h"
 
 #include <dlfcn.h>
+#include <signal.h>
 #include <string>
 #include <vector>
 
@@ -157,6 +158,26 @@ const char* GetEnvironmentOption(const char* option) {
   return getenv(name.c_str());
 }
 
+void SetupAndVerifySignalHandlers() {
+  // Ignoring SIGCHLD will break base::GetTerminationStatus. CHECK that the
+  // application hasn't done this
+  struct sigaction sigact;
+  CHECK(sigaction(SIGCHLD, NULL, &sigact) == 0);
+  CHECK(sigact.sa_handler != SIG_IGN) << "SIGCHLD should not be ignored";
+  CHECK((sigact.sa_flags & SA_NOCLDWAIT) == 0) <<
+      "SA_NOCLDWAIT should not be set";
+
+  // We don't want SIGPIPE to terminate the process so set the SIGPIPE action
+  // to SIG_IGN if it is currently SIG_DFL, else leave it as the application
+  // set it - if the application has set a handler that terminates the process,
+  // then tough luck
+  CHECK(sigaction(SIGPIPE, NULL, &sigact) == 0);
+  if (sigact.sa_handler == SIG_DFL) {
+    sigact.sa_handler = SIG_IGN;
+    CHECK(sigaction(SIGPIPE, &sigact, NULL) == 0);
+  }
+}
+
 base::FilePath GetSubprocessPath() {
   const char* subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
   if (subprocess_path) {
@@ -294,6 +315,8 @@ void BrowserProcessMainImpl::Start(
     DLOG(INFO) << "No shared GL context has been provided. "
                << "Compositing will not work";
   }
+
+  SetupAndVerifySignalHandlers();
 
   base::GlobalDescriptors::GetInstance()->Set(
       kPrimaryIPCChannel,
