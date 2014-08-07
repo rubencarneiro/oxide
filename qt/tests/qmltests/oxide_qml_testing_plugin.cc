@@ -18,8 +18,6 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QLatin1String>
-#include <QList>
-#include <QNetworkCookie>
 #include <QQmlContext>
 #include <QQmlExtensionPlugin>
 #include <QString>
@@ -27,8 +25,6 @@
 #include <QtQml>
 #include <QUrl>
 #include <QVariant>
-#include <QVariantList>
-#include <QVariantMap>
 
 class DestructionObserver : public QObject {
   Q_OBJECT
@@ -122,20 +118,6 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE void removeAppProperty(const QString& property) {
     QCoreApplication::instance()->setProperty(property.toStdString().c_str(), QVariant());
-  }
-
-  Q_INVOKABLE QVariantList parseCookieList(
-      const QList<QNetworkCookie>& cookies) {
-    QVariantList parsedCookies;
-    Q_FOREACH(const QNetworkCookie &cookie, cookies) {
-      QVariantMap c;
-      c.insert("name", QString::fromUtf8(cookie.name()));
-      c.insert("value", QString::fromUtf8(cookie.value()));
-      c.insert("domain", cookie.domain());
-      c.insert("path", cookie.path());
-      parsedCookies.append(c);
-    }
-    return parsedCookies;
   }
 };
 
