@@ -110,6 +110,22 @@ void WebContextAdapter::setDevtoolsPort(int port) {
   priv->construct_props_->devtools_port = port;
 }
 
+QString WebContextAdapter::devtoolsBindIp() const {
+  if (isInitialized()) {
+    return QString::fromStdString(priv->context_->GetDevtoolsBindIp());
+  }
+
+  return QString::fromStdString(priv->construct_props_->devtools_ip);
+}
+
+void WebContextAdapter::setDevtoolsBindIp(const QString& bindIp) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools bound ip after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_ip = bindIp.toStdString();
+}
+
 QUrl WebContextAdapter::dataPath() const {
   base::FilePath path;
   if (isInitialized()) {

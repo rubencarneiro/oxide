@@ -207,7 +207,8 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
       construct_props_->cache_path,
       construct_props_->session_cookie_mode,
       construct_props_->devtools_enabled,
-      construct_props_->devtools_port);
+      construct_props_->devtools_port,
+      construct_props_->devtools_ip);
   context_ = oxide::BrowserContext::Create(params);
 
   if (!construct_props_->product.empty()) {

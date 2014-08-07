@@ -714,4 +714,22 @@ void OxideQQuickWebContext::setDevtoolsPort(int port) {
   emit devtoolsPortChanged();
 }
 
+QString OxideQQuickWebContext::devtoolsBindIp() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->devtoolsBindIp();
+}
+
+void OxideQQuickWebContext::setDevtoolsBindIp(const QString& bindIp) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->devtoolsBindIp() == bindIp) {
+    return;
+  }
+
+  d->setDevtoolsBindIp(bindIp);
+
+  emit devtoolsBindIpChanged();
+}
+
 #include "moc_oxideqquickwebcontext_p.cpp"
