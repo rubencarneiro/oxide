@@ -135,6 +135,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcookies.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
@@ -149,6 +150,9 @@
         'api/oxideqnetworkcallbackevents.cc',
         'api/oxideqnetworkcallbackevents.h',
         'api/oxideqnetworkcallbackevents_p.h',
+        'api/oxideqnetworkcookies.cc',
+        'api/oxideqnetworkcookies.h',
+        'api/oxideqnetworkcookies_p.h',
         'api/oxideqnavigationrequest.cc',
         'api/oxideqnavigationrequest.h',
         'api/oxideqnewviewrequest.cc',
@@ -204,6 +208,11 @@
         {
           'action_name': 'moc_oxideqnetworkcallbackevents.cc',
           'moc_input': 'api/oxideqnetworkcallbackevents.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
+          'action_name': 'moc_oxideqnetworkcookies.cc',
+          'moc_input': 'api/oxideqnetworkcookies.h',
           'includes': [ 'moc.gypi' ],
         },
         {

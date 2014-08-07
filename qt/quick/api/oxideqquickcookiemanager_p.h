@@ -21,15 +21,13 @@
 #include <QList>
 #include <QObject>
 #include <QtGlobal>
-
-QT_BEGIN_NAMESPACE
-class QNetworkCookie;
-QT_END_NAMESPACE
+#include <QVariant>
 
 class OxideQQuickWebContext;
 
 QT_USE_NAMESPACE
 
+class OxideQQuickNetworkCookies;
 class OxideQQuickCookieManagerPrivate;
 
 class OxideQQuickCookieManager : public QObject {
@@ -38,20 +36,19 @@ class OxideQQuickCookieManager : public QObject {
   Q_DECLARE_PRIVATE(OxideQQuickCookieManager)
   Q_DISABLE_COPY(OxideQQuickCookieManager)
 
- public:
-
+public:
   OxideQQuickCookieManager(OxideQQuickWebContext* webContext,
                            QObject* parent = NULL);
   virtual ~OxideQQuickCookieManager();
 
-  Q_INVOKABLE void setCookies(const QList<QNetworkCookie>& cookies);
-  Q_INVOKABLE void getAllCookies();
+  Q_INVOKABLE int setCookies(const QString& url, const QVariant& cookies);
+  Q_INVOKABLE int getAllCookies();
 
 Q_SIGNALS:
-  void cookiesSet(bool success);
-  void gotCookies(const QList<QNetworkCookie>& cookies);
+  void cookiesSet(int requestId, bool success);
+  void gotCookies(int requestId, OxideQQuickNetworkCookies* cookies);
 
- private:
+private:
   QScopedPointer<OxideQQuickCookieManagerPrivate> d_ptr;
 };
 

@@ -33,6 +33,7 @@ QT_END_NAMESPACE
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
 class OxideQStoragePermissionRequest;
+class OxideQQuickNetworkCookies;
 
 namespace oxide {
 namespace qt {
@@ -111,28 +112,10 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
-  class SetCookiesRequest {
-  public:
-    SetCookiesRequest(const QList<QNetworkCookie>& cookies,
-		      QObject* callback);
-
-    bool status() const;
-    bool isComplete() const;
-    void updateStatus(bool status);
-    QObject* callback() const;
-
-    // Called on IO thread
-    bool next(QNetworkCookie* next);
-
-  private:
-
-    QList<QNetworkCookie> cookies_;
-    QObject* callback_;
-    bool status_;
-  };
-
-  void doSetCookies(SetCookiesRequest* request);
-  void doGetAllCookies(QObject* callback);
+  void doSetCookies(const QString& url,
+                    OxideQQuickNetworkCookies* cookies,
+		    int requestId);
+  void doGetAllCookies(int requestId);
 
  protected:
   WebContextAdapter(QObject* q,
@@ -140,6 +123,9 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
  private:
   friend class WebContextAdapterPrivate;
+
+  virtual void CookiesSet(int requestId, bool status);
+  virtual void CookiesRetrieved(int requestId, OxideQQuickNetworkCookies* cookies);
 
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually

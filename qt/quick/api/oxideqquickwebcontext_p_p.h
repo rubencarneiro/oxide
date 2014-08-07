@@ -82,6 +82,11 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       OxideQQuickWebContextDelegateWorker** ui_slot,
       oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot);
 
+  virtual void CookiesSet(int requestId, bool status);
+  virtual void CookiesRetrieved(
+      int requestId,
+      OxideQQuickNetworkCookies* cookies);
+
   bool constructed_;
 
   oxide::qquick::WebContextIOThreadDelegate* io_thread_delegate_;

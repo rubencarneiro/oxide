@@ -15,37 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_
-#define _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_
+#ifndef _OXIDE_QT_CORE_API_NETWORK_COOKIES_P_H_
+#define _OXIDE_QT_CORE_API_NETWORK_COOKIES_P_H_
 
-#include <QObject>
+#include <QString>
 #include <QtGlobal>
-#include <QList>
+#include <QUrl>
 #include <QNetworkCookie>
+#include <QVariant>
+#include <QStringList>
 
-#include "qt/quick/api/oxideqquickcookiemanager_p.h"
-
-class OxideQQuickNetworkCookies;
-
-class OxideQQuickCookieManagerPrivate Q_DECL_FINAL :
-    public QObject {
-  Q_OBJECT
-  Q_DECLARE_PUBLIC(OxideQQuickCookieManager)
-
+class OxideQQuickNetworkCookiesPrivate {
  public:
-  ~OxideQQuickCookieManagerPrivate();
+  OxideQQuickNetworkCookiesPrivate(
+      const QList<QNetworkCookie>& cookies);
 
-  int setCookies(const QString& url, OxideQQuickNetworkCookies* cookie);
-  int getAllCookies();
+  QVariant cookies() const;
+  void setCookies(const QVariant& cookies);
+
+  QStringList rawHttpCookies() const;
+  void setRawHttpCookies(const QStringList& rawHttpCookies);
+
+  QList<QNetworkCookie> toNetworkCookies() const;
 
  private:
-  OxideQQuickCookieManagerPrivate(OxideQQuickCookieManager* q,
-                                  OxideQQuickWebContext* webContext);
 
-  OxideQQuickWebContext* web_context_;
-
-  OxideQQuickCookieManager* q_ptr;
-  Q_DISABLE_COPY(OxideQQuickCookieManagerPrivate);
+  QList<QNetworkCookie> cookies_;
 };
 
-#endif // _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_
+#endif // _OXIDE_QT_CORE_API_NETWORK_COOKIES_P_H_

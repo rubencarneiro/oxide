@@ -49,38 +49,6 @@ namespace {
 QOpenGLContext* g_shared_gl_context;
 }
 
-WebContextAdapter::SetCookiesRequest::SetCookiesRequest(
-    const QList<QNetworkCookie>& cookies,
-    QObject* callback) :
-        cookies_(cookies),
-        callback_(callback) {}
-
-bool WebContextAdapter::SetCookiesRequest::status() const {
-  return status_;
-}
-
-bool WebContextAdapter::SetCookiesRequest::isComplete() const {
-  return cookies_.empty();
-}
-
-QObject* WebContextAdapter::SetCookiesRequest::callback() const {
-  return callback_;
-}
-
-void WebContextAdapter::SetCookiesRequest::updateStatus(bool status) {
-  status_ = status_ && status;
-}
-
-bool WebContextAdapter::SetCookiesRequest::next(QNetworkCookie* next) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-  if (!next || isComplete()) {
-    return false;
-  }
-  *next = *cookies_.begin();
-  cookies_.pop_front();
-  return true;
-}
-
 WebContextAdapter::~WebContextAdapter() {
   priv->Destroy();
   priv->Release();
@@ -338,13 +306,21 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
 }
 
 void WebContextAdapter::doSetCookies(
-      WebContextAdapter::SetCookiesRequest* request) {
-  priv->doSetCookies(request);
+      const QString& url,
+      OxideQQuickNetworkCookies* cookies,
+      int requestId) {
+  priv->doSetCookies(url, cookies, requestId);
 }
 
-void WebContextAdapter::doGetAllCookies(
-    QObject* callback) {
-  priv->doGetAllCookies(callback);
+void WebContextAdapter::doGetAllCookies(int requestId) {
+  priv->doGetAllCookies(requestId);
+}
+
+void WebContextAdapter::CookiesSet(int requestId, bool status) {
+}
+
+void WebContextAdapter::CookiesRetrieved(
+      int requestId, OxideQQuickNetworkCookies* cookies) {
 }
 
 WebContextAdapter::WebContextAdapter(
