@@ -34,8 +34,7 @@
 #include "shared/browser/oxide_browser_context_delegate.h"
 
 namespace net {
-class CookieMonster;
-class CanonicalCookie;
+class CookieStore;
 }
 
 class OxideQQuickNetworkCookies;
@@ -60,7 +59,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   WebContextAdapter* adapter() const { return adapter_; }
   oxide::BrowserContext* GetContext();
-  net::CookieMonster* GetCookieMonster();
+  scoped_refptr<net::CookieStore> GetCookieStore();
 
  private:
   friend class WebContextAdapter;
@@ -91,15 +90,15 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   class SetCookiesRequest {
   public:
-    SetCookiesRequest(const QList<QNetworkCookie>& cookies,
-		      QObject* callback,
+    SetCookiesRequest(const QString& url,
+                      const QList<QNetworkCookie>& cookies,
                       int id);
 
     bool status() const;
     bool isComplete() const;
     void updateStatus(bool status);
-    QObject* callback() const;
     int id() const;
+    QString url() const;
 
     // Called on IO thread
     bool next(QNetworkCookie* next);
@@ -107,27 +106,23 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   private:
 
     QList<QNetworkCookie> cookies_;
-    QObject* callback_;
     bool status_;
     int id_;
+    QString url_;
   };
 
-  void doSetCookies(OxideQQuickNetworkCookies* cookies,
-		    QObject* callback,
+  void doSetCookies(const QString& url,
+                    OxideQQuickNetworkCookies* cookies,
 		    int requestId);
   void doSetCookie(SetCookiesRequest* request);
   void OnCookieSet(SetCookiesRequest* request, bool success);
-  void callWithStatus(QObject * callback, int requestId, bool status);
+  void callWithStatus(int requestId, bool status);
 
-  void doGetAllCookies(QObject* callback, int requestId);
-  void callWithCookies(QObject * callback,
-      int requestId,
+  void doGetAllCookies(int requestId);
+  void callWithCookies(int requestId,
       const QList<QNetworkCookie>& cookies);
-  void GotCookiesCallback(QObject* callback,
-      int requestId,
+  void GotCookiesCallback(int requestId,
       const net::CookieList& cookies);
-
-  QJsonObject jsonFromNetworkCookie(const net::CanonicalCookie& cookie);
 
   // oxide::BrowserContextDelegate
   int OnBeforeURLRequest(net::URLRequest* request,

@@ -35,8 +35,8 @@ class OxideQQuickCookieManagerPrivate Q_DECL_FINAL :
  public:
   ~OxideQQuickCookieManagerPrivate();
 
-  int setCookies(OxideQQuickNetworkCookies* cookie, QObject* callback);
-  int getAllCookies(QObject* callback);
+  int setCookies(const QString& url, OxideQQuickNetworkCookies* cookie);
+  int getAllCookies();
 
  private:
   OxideQQuickCookieManagerPrivate(OxideQQuickCookieManager* q,

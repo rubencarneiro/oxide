@@ -228,6 +228,17 @@ void OxideQQuickWebContextPrivate::userScript_clear(
   }
 }
 
+void OxideQQuickWebContextPrivate::CookiesSet(int requestId, bool status) {
+  Q_Q(OxideQQuickWebContext);
+  emit q->cookieManager()->cookiesSet(requestId, status);
+}
+void OxideQQuickWebContextPrivate::CookiesRetrieved(
+      int requestId,
+      OxideQQuickNetworkCookies* cookies) {
+  Q_Q(OxideQQuickWebContext);
+  emit q->cookieManager()->gotCookies(requestId, cookies);
+}
+
 bool OxideQQuickWebContextPrivate::attachDelegateWorker(
     OxideQQuickWebContextDelegateWorker* worker,
     OxideQQuickWebContextDelegateWorker** ui_slot,

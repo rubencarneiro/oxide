@@ -302,13 +302,21 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
 }
 
 void WebContextAdapter::doSetCookies(
-      OxideQQuickNetworkCookies* cookies, QObject* callback, int requestId) {
-  priv->doSetCookies(cookies, callback, requestId);
+      const QString& url,
+      OxideQQuickNetworkCookies* cookies,
+      int requestId) {
+  priv->doSetCookies(url, cookies, requestId);
 }
 
-void WebContextAdapter::doGetAllCookies(
-      QObject* callback, int requestId) {
-  priv->doGetAllCookies(callback, requestId);
+void WebContextAdapter::doGetAllCookies(int requestId) {
+  priv->doGetAllCookies(requestId);
+}
+
+void WebContextAdapter::CookiesSet(int requestId, bool status) {
+}
+
+void WebContextAdapter::CookiesRetrieved(
+      int requestId, OxideQQuickNetworkCookies* cookies) {
 }
 
 WebContextAdapter::WebContextAdapter(

@@ -112,10 +112,10 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
-  void doSetCookies(OxideQQuickNetworkCookies* cookies,
-		    QObject* callback,
+  void doSetCookies(const QString& url,
+                    OxideQQuickNetworkCookies* cookies,
 		    int requestId);
-  void doGetAllCookies(QObject* callback, int requestId);
+  void doGetAllCookies(int requestId);
 
  protected:
   WebContextAdapter(QObject* q,
@@ -123,6 +123,9 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
  private:
   friend class WebContextAdapterPrivate;
+
+  virtual void CookiesSet(int requestId, bool status);
+  virtual void CookiesRetrieved(int requestId, OxideQQuickNetworkCookies* cookies);
 
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually

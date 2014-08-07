@@ -43,24 +43,24 @@ OxideQQuickCookieManagerPrivate::OxideQQuickCookieManagerPrivate(
         web_context_(webContext){}
 
 int OxideQQuickCookieManagerPrivate::setCookies(
-    OxideQQuickNetworkCookies* cookies, QObject* callback) {
+    const QString& url, OxideQQuickNetworkCookies* cookies) {
   int requestId = getNextRequestId();
 
   OxideQQuickWebContextPrivate* adapter =
       OxideQQuickWebContextPrivate::get(web_context_);
   if (adapter) {
-    adapter->doSetCookies(cookies, callback, requestId);
+    adapter->doSetCookies(url, cookies, requestId);
   }
   return requestId;
 }
 
-int OxideQQuickCookieManagerPrivate::getAllCookies(QObject* callback) {
+int OxideQQuickCookieManagerPrivate::getAllCookies() {
   int requestId = getNextRequestId();
 
   OxideQQuickWebContextPrivate* adapter =
       OxideQQuickWebContextPrivate::get(web_context_);
   if (adapter) {
-    adapter->doGetAllCookies(callback, requestId);
+    adapter->doGetAllCookies(requestId);
   }
   return requestId;
 }
@@ -76,18 +76,18 @@ OxideQQuickCookieManager::OxideQQuickCookieManager(
 OxideQQuickCookieManager::~OxideQQuickCookieManager() {}
 
 int OxideQQuickCookieManager::setCookies(
-    const QVariant& cookies) {
+    const QString& url, const QVariant& cookies) {
   Q_D(OxideQQuickCookieManager);
 
   QScopedPointer<OxideQQuickNetworkCookies> networkCookies(
       OxideQQuickNetworkCookies::fromVariant(cookies));
-  return d->setCookies(networkCookies.data(), this);
+  return d->setCookies(url, networkCookies.data());
 }
 
 int OxideQQuickCookieManager::getAllCookies() {
   Q_D(OxideQQuickCookieManager);
 
-  return d->getAllCookies(this);
+  return d->getAllCookies();
 }
 
 #include "moc_oxideqquickcookiemanager_p.cpp"

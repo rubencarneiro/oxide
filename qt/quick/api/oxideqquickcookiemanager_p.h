@@ -41,12 +41,12 @@ public:
                            QObject* parent = NULL);
   virtual ~OxideQQuickCookieManager();
 
-  Q_INVOKABLE int setCookies(const QVariant& cookies);
+  Q_INVOKABLE int setCookies(const QString& url, const QVariant& cookies);
   Q_INVOKABLE int getAllCookies();
 
 Q_SIGNALS:
-  void cookiesSet(bool success, int requestId);
-  void gotCookies(OxideQQuickNetworkCookies* cookies, int requestId);
+  void cookiesSet(int requestId, bool success);
+  void gotCookies(int requestId, OxideQQuickNetworkCookies* cookies);
 
 private:
   QScopedPointer<OxideQQuickCookieManagerPrivate> d_ptr;
