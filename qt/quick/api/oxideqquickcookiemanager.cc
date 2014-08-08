@@ -19,10 +19,11 @@
 #include "oxideqquickcookiemanager_p_p.h"
 
 #include <climits>
+#include <QList>
 #include <QNetworkCookie>
 #include <QtDebug>
 
-#include "qt/core/api/oxideqnetworkcookies.h"
+#include "oxideqquicknetworkcookies_p.h"
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
 #include "oxideqquickwebcontext_p_p.h"
@@ -43,7 +44,7 @@ OxideQQuickCookieManagerPrivate::OxideQQuickCookieManagerPrivate(
         web_context_(webContext){}
 
 int OxideQQuickCookieManagerPrivate::setCookies(
-    const QString& url, OxideQQuickNetworkCookies* cookies) {
+    const QString& url, const QList<QNetworkCookie>& cookies) {
   int requestId = getNextRequestId();
 
   OxideQQuickWebContextPrivate* adapter =
@@ -76,12 +77,13 @@ OxideQQuickCookieManager::OxideQQuickCookieManager(
 OxideQQuickCookieManager::~OxideQQuickCookieManager() {}
 
 int OxideQQuickCookieManager::setCookies(
-    const QString& url, const QVariant& cookies) {
+    const QString& url, OxideQQuickNetworkCookies* cookies) {
   Q_D(OxideQQuickCookieManager);
 
-  QScopedPointer<OxideQQuickNetworkCookies> networkCookies(
-      OxideQQuickNetworkCookies::fromVariant(cookies));
-  return d->setCookies(url, networkCookies.data());
+  if (!cookies)
+    return -1;
+
+  return d->setCookies(url, cookies->toNetworkCookies());
 }
 
 int OxideQQuickCookieManager::getAllCookies() {

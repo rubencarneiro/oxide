@@ -39,6 +39,7 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
+#include "third_party/skia/include/core/SkColor.h"
 #include "third_party/WebKit/public/platform/WebColor.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "ui/base/ime/text_input_type.h"
@@ -790,7 +791,8 @@ void WebView::HandleInputMethodEvent(QInputMethodEvent* event) {
       blink::WebColor color = format.underlineColor().rgba();
       int start = qMin(attribute.start, (attribute.start + attribute.length));
       int end = qMax(attribute.start, (attribute.start + attribute.length));
-      blink::WebCompositionUnderline underline(start, end, color, false);
+      blink::WebCompositionUnderline underline(
+          start, end, color, false, SK_ColorTRANSPARENT);
       underlines.push_back(underline);
       break;
     }

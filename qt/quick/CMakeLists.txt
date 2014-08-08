@@ -43,6 +43,7 @@ endif()
 
 qt5_wrap_cpp(MOC_EXTRA
              api/oxideqquickcookiemanager_p_p.h
+             api/oxideqquicknetworkcookies_p_p.h
              api/oxideqquickuserscript_p_p.h
              api/oxideqquickwebcontext_p_p.h
              api/oxideqquickwebcontextdelegateworker_p_p.h)
@@ -51,6 +52,7 @@ set(PLUGIN_SRCS
     api/oxideqquickcookiemanager.cc
     api/oxideqquickglobals.cc
     api/oxideqquicknavigationhistory.cc
+    api/oxideqquicknetworkcookies.cc
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc
     api/oxideqquickscriptmessagerequest.cc

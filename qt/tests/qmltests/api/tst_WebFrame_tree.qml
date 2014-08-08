@@ -100,8 +100,8 @@ TestWebView {
       ];
 
       verify_events([
-        { type: "removed", frame: frames1[1] },
         { type: "removed", frame: frames1[0] },
+        { type: "removed", frame: frames1[1] },
         { type: "added", frame: frames2[0] },
         { type: "added", frame: frames2[1] },
         { type: "added", frame: frames2[2] },
@@ -119,10 +119,10 @@ TestWebView {
       ];
 
       verify_events([
-        { type: "removed", frame: frames2[1] },
-        { type: "removed", frame: frames2[3] },
         { type: "removed", frame: frames2[2] },
+        { type: "removed", frame: frames2[3] },
         { type: "removed", frame: frames2[0] },
+        { type: "removed", frame: frames2[1] },
         { type: "added", frame: frames1[0] },
         { type: "added", frame: frames1[1] }
       ]);

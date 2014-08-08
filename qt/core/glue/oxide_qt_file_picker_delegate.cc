@@ -66,7 +66,7 @@ void FilePickerDelegate::Done(const QFileInfoList& files,
     }
   } else {
     Q_FOREACH (const QFileInfo& file, files) {
-      base::FilePath path(file.filePath().toStdString());
+      base::FilePath path(file.absoluteFilePath().toStdString());
       selection.push_back(ui::SelectedFileInfo(path, path));
     }
   }

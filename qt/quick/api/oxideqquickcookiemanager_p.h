@@ -41,7 +41,7 @@ public:
                            QObject* parent = NULL);
   virtual ~OxideQQuickCookieManager();
 
-  Q_INVOKABLE int setCookies(const QString& url, const QVariant& cookies);
+  Q_INVOKABLE int setCookies(const QString& url, OxideQQuickNetworkCookies* cookies);
   Q_INVOKABLE int getAllCookies();
 
 Q_SIGNALS:

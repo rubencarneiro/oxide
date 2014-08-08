@@ -87,7 +87,9 @@ bool FilePickerContext::directory() const {
 void FilePickerContext::accept(const QVariant& files) const {
   QFileInfoList info;
   Q_FOREACH(const QString& file, files.toStringList()) {
-    info.append(QFileInfo(file));
+    if (QFileInfo::exists(file)) {
+      info.append(QFileInfo(file));
+    }
   }
   if ((info.size() > 1) && !allowMultipleFiles()) {
     qWarning() << "This file picker does not allow selecting multiple files";

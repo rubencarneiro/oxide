@@ -56,8 +56,7 @@ class ResourceDispatcherHostDelegate :
   virtual bool HandleExternalProtocol(
        const GURL& url,
        int child_id,
-       int route_id,
-       bool initiated_by_user_gesture) FINAL;
+       int route_id) FINAL;
 
  private:
 
