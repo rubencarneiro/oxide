@@ -38,6 +38,7 @@
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 
 #include "oxideqquickcookiemanager_p.h"
+#include "oxideqquicknetworkcookies_p.h"
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 #include "oxideqquickwebcontextdelegateworker_p.h"
@@ -234,9 +235,10 @@ void OxideQQuickWebContextPrivate::CookiesSet(int requestId, bool status) {
 }
 void OxideQQuickWebContextPrivate::CookiesRetrieved(
       int requestId,
-      OxideQQuickNetworkCookies* cookies) {
+      const QList<QNetworkCookie>& cookies) {
   Q_Q(OxideQQuickWebContext);
-  emit q->cookieManager()->gotCookies(requestId, cookies);
+  OxideQQuickNetworkCookies ncookies(cookies);
+  emit q->cookieManager()->gotCookies(requestId, &ncookies);
 }
 
 bool OxideQQuickWebContextPrivate::attachDelegateWorker(

@@ -33,7 +33,6 @@
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
-#include "qt/core/api/oxideqnetworkcookies.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 #include "shared/browser/oxide_browser_context.h"
@@ -276,14 +275,10 @@ void WebContextAdapterPrivate::OnCookieSet(
 
 void WebContextAdapterPrivate::doSetCookies(
       const QString& url,
-      OxideQQuickNetworkCookies* cookies,
+      const QList<QNetworkCookie>& cookies,
       int requestId) {
-  if (!cookies) {
-    return;
-  }
-
   SetCookiesRequest* request =
-    new SetCookiesRequest(url, cookies->toNetworkCookies(), requestId);
+    new SetCookiesRequest(url, cookies, requestId);
   doSetCookie(request);
 }
 
@@ -296,6 +291,11 @@ void WebContextAdapterPrivate::doSetCookie(
   }
 
   scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
+  if (!cookie_store) {
+    callWithStatus(-1, false);
+    return;
+  }
+
   cookie_store->GetCookieMonster()->SetCookieWithDetailsAsync(
     GURL(request->url().toStdString()),
     std::string(cookie.name().constData()),
@@ -315,8 +315,7 @@ void WebContextAdapterPrivate::callWithCookies(
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
 
   if (adapter()) {
-    OxideQQuickNetworkCookies networkCookies(cookies);
-    adapter()->CookiesRetrieved(requestId, &networkCookies);
+    adapter()->CookiesRetrieved(requestId, cookies);
   }
 }
 
@@ -345,6 +344,10 @@ void WebContextAdapterPrivate::GotCookiesCallback(
 
 void WebContextAdapterPrivate::doGetAllCookies(int requestId) {
   scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
+  if (!cookie_store) {
+    callWithCookies(-1, QList<QNetworkCookie>());
+    return;
+  }
   cookie_store->GetCookieMonster()->GetAllCookiesAsync(
     base::Bind(&WebContextAdapterPrivate::GotCookiesCallback,
                this, requestId));

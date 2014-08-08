@@ -17,6 +17,10 @@ TestWebView {
     signalName: "gotCookies"
   }
 
+  NetworkCookies {
+    id: networkcookies
+  }
+
   TestCase {
     id: test
     name: "WebContext_cookieManager"
@@ -52,10 +56,10 @@ TestWebView {
       cookiesSetSpy.target = cookieManager;
       gotCookiesSpy.target = cookieManager;
 
-      var set_id = cookieManager.setCookies("http://",
-        [{"name": "blabla",
+      networkcookies.cookies = [{"name": "blabla",
 	  "value": "ddu",
-	  "expirationdate": Date.now() + 1000*1000}]);
+	  "expirationdate": Date.now() + 1000*1000}];
+      var set_id = cookieManager.setCookies("http://", networkcookies);
 
       verify(set_id >= 0, "Invalid cookie request id");
       cookiesSetSpy.wait();

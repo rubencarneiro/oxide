@@ -85,7 +85,7 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   virtual void CookiesSet(int requestId, bool status);
   virtual void CookiesRetrieved(
       int requestId,
-      OxideQQuickNetworkCookies* cookies);
+      const QList<QNetworkCookie>& cookies);
 
   bool constructed_;
 

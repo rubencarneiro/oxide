@@ -201,6 +201,8 @@ base::FilePath BrowserContextIOData::GetCookiePath() const {
 }
 
 void BrowserContextIOData::Init() {
+  if (cookie_store_)
+    return;
   cookie_store_ = content::CreateCookieStore(
       content::CookieStoreConfig(GetCookiePath(),
           GetSessionCookieMode(),
@@ -258,10 +260,10 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
-  storage->set_cookie_store(content::CreateCookieStore(
-      content::CookieStoreConfig(GetCookiePath(),
-                                 GetSessionCookieMode(),
-                                 NULL, NULL)));
+  if (!cookie_store_) {
+    Init();
+  }
+  storage->set_cookie_store(cookie_store_);
 
   context->set_transport_security_state(transport_security_state_.get());
 
@@ -448,6 +450,9 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
   g_all_contexts.Get().push_back(this);
 
   content::BrowserContext::EnsureResourceContextInitialized(this);
+
+  // Make sure that the cookie store is properly created
+  io_data->Init();
 }
 
 void BrowserContext::OnPopupBlockerEnabledChanged() {
@@ -476,9 +481,7 @@ BrowserContext::~BrowserContext() {
 
 // static
 BrowserContext* BrowserContext::Create(const Params& params) {
-  BrowserContext* context = new BrowserContextImpl(params);
-  context->io_data()->Init();
-  return context;
+  return new BrowserContextImpl(params);
 }
 
 // static

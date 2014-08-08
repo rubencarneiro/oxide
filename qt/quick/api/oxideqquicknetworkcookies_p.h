@@ -50,7 +50,7 @@ class Q_DECL_EXPORT OxideQQuickNetworkCookies : public QObject {
   QStringList rawHttpCookies() const;
   void setRawHttpCookies(const QStringList& rawHttpCookies);
 
-  QList<QNetworkCookie> toNetworkCookies() const;
+  Q_INVOKABLE QList<QNetworkCookie> toNetworkCookies() const;
 
  Q_SIGNALS:
   void cookiesChanged();

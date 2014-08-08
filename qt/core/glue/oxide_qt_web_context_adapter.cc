@@ -26,8 +26,6 @@
 #include <QGuiApplication>
 #include <QObject>
 #include <QtDebug>
-#include <QtGui/qpa/qplatformnativeinterface.h>
-#include <QObject>
 #include <QNetworkCookie>
 
 #include "base/logging.h"
@@ -303,7 +301,7 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
 
 void WebContextAdapter::doSetCookies(
       const QString& url,
-      OxideQQuickNetworkCookies* cookies,
+      const QList<QNetworkCookie>& cookies,
       int requestId) {
   priv->doSetCookies(url, cookies, requestId);
 }
@@ -316,7 +314,7 @@ void WebContextAdapter::CookiesSet(int requestId, bool status) {
 }
 
 void WebContextAdapter::CookiesRetrieved(
-      int requestId, OxideQQuickNetworkCookies* cookies) {
+      int requestId, const QList<QNetworkCookie>& cookies) {
 }
 
 WebContextAdapter::WebContextAdapter(

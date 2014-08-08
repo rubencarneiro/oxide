@@ -112,7 +112,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   };
 
   void doSetCookies(const QString& url,
-                    OxideQQuickNetworkCookies* cookies,
+                    const QList<QNetworkCookie>& cookies,
 		    int requestId);
   void doSetCookie(SetCookiesRequest* request);
   void OnCookieSet(SetCookiesRequest* request, bool success);
