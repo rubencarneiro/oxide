@@ -23,12 +23,52 @@
 #include <QNetworkCookie>
 #include <QtDebug>
 
-#include "oxideqquicknetworkcookies_p.h"
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
 
 #include "oxideqquickwebcontext_p_p.h"
 
 namespace {
+QList<QNetworkCookie> networkCookiesFromVariantList(const QVariant& cookies) {
+  if (!cookies.canConvert(QMetaType::QVariantList)) {
+    return QList<QNetworkCookie>();
+  }
+  QList<QNetworkCookie> networkCookies;
+  QList<QVariant> cl = cookies.toList();
+  Q_FOREACH(QVariant cookie, cl) {
+    if (!cookie.canConvert(QVariant::Map)) {
+      continue;
+    }
+    QNetworkCookie nc;
+    QVariantMap vm = cookie.toMap();
+    
+    if (!vm.contains("name") || !vm.contains("value")) {
+      continue;
+    }
+    
+    nc.setName(vm.value("name").toByteArray());
+    nc.setValue(vm.value("value").toByteArray());
+    nc.setDomain(vm.value("domain").toString());
+    nc.setPath(vm.value("path").toString());
+    if (vm.contains("httponly") &&
+	vm.value("httponly").canConvert(QVariant::Bool)) {
+      nc.setHttpOnly(vm.value("httponly").toBool());
+    }
+    if (vm.contains("issecure") &&
+	vm.value("issecure").canConvert(QVariant::Bool)) {
+      nc.setSecure(vm.value("issecure").toBool());
+    }
+    if (vm.contains("expirationdate") &&
+	vm.value("expirationdate").canConvert(QVariant::LongLong)) {
+      bool ok = false;
+      qlonglong date = vm.value("expirationdate").toLongLong(&ok);
+      if (ok)
+	nc.setExpirationDate(QDateTime::fromMSecsSinceEpoch(date));
+    }
+    networkCookies.append(nc);
+  }
+  return networkCookies;
+}
+
 int getNextRequestId()
 {
   static int id = 0;
@@ -77,13 +117,17 @@ OxideQQuickCookieManager::OxideQQuickCookieManager(
 OxideQQuickCookieManager::~OxideQQuickCookieManager() {}
 
 int OxideQQuickCookieManager::setCookies(
-    const QString& url, OxideQQuickNetworkCookies* cookies) {
+    const QString& url, const QVariant& cookies) {
   Q_D(OxideQQuickCookieManager);
 
-  if (!cookies)
-    return -1;
+  return d->setCookies(url, networkCookiesFromVariantList(cookies));
+}
 
-  return d->setCookies(url, cookies->toNetworkCookies());
+int OxideQQuickCookieManager::setNetworkCookies(
+      const QString& url, const QList<QNetworkCookie>& cookies) {
+  Q_D(OxideQQuickCookieManager);
+
+  return d->setCookies(url, cookies);
 }
 
 int OxideQQuickCookieManager::getAllCookies() {

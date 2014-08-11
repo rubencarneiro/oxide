@@ -313,11 +313,14 @@ void WebContextAdapter::doGetAllCookies(int requestId) {
   priv->doGetAllCookies(requestId);
 }
 
-void WebContextAdapter::CookiesSet(int requestId, bool status) {
+void WebContextAdapter::CookiesSet(int requestId,
+      WebContextAdapter::RequestStatus status) {
 }
 
 void WebContextAdapter::CookiesRetrieved(
-      int requestId, const QList<QNetworkCookie>& cookies) {
+      int requestId,
+      const QList<QNetworkCookie>& cookies,
+      WebContextAdapter::RequestStatus status) {
 }
 
 WebContextAdapter::WebContextAdapter(

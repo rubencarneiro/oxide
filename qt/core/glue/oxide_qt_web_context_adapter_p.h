@@ -37,8 +37,6 @@ namespace net {
 class CookieStore;
 }
 
-class OxideQQuickNetworkCookies;
-
 namespace oxide {
 
 class BrowserContext;
@@ -94,7 +92,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
                       const QList<QNetworkCookie>& cookies,
                       int id);
 
-    bool status() const;
+    WebContextAdapter::RequestStatus status() const;
     bool isComplete() const;
     void updateStatus(bool status);
     int id() const;
@@ -106,7 +104,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   private:
 
     QList<QNetworkCookie> cookies_;
-    bool status_;
+    WebContextAdapter::RequestStatus status_;
     int id_;
     QString url_;
   };
@@ -116,11 +114,12 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 		    int requestId);
   void doSetCookie(SetCookiesRequest* request);
   void OnCookieSet(SetCookiesRequest* request, bool success);
-  void callWithStatus(int requestId, bool status);
+  void callWithStatus(int requestId, WebContextAdapter::RequestStatus status);
 
   void doGetAllCookies(int requestId);
   void callWithCookies(int requestId,
-      const QList<QNetworkCookie>& cookies);
+                       const QList<QNetworkCookie>& cookies,
+                       WebContextAdapter::RequestStatus status);
   void GotCookiesCallback(int requestId,
       const net::CookieList& cookies);
 

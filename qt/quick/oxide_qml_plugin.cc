@@ -31,7 +31,6 @@
 #include "qt/quick/api/oxideqquickcookiemanager_p.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
-#include "qt/quick/api/oxideqquicknetworkcookies_p.h"
 #include "qt/quick/api/oxideqquickscriptmessage_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagehandler_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagerequest_p.h"
@@ -100,7 +99,6 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebContextDelegateWorker>(uri, 1, 0, "WebContextDelegateWorker");
     qmlRegisterType<OxideQWebPreferences>(uri, 1, 0, "WebPreferences");
     qmlRegisterType<OxideQQuickWebView>(uri, 1, 0, "WebView");
-    qmlRegisterType<OxideQQuickNetworkCookies>(uri, 1, 0, "NetworkCookies");
   }
 };
 

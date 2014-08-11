@@ -68,12 +68,13 @@ WebContextAdapterPrivate::SetCookiesRequest::SetCookiesRequest(
     const QList<QNetworkCookie>& cookies,
     int id) :
         cookies_(cookies),
-        status_(true),
+        status_(WebContextAdapter::RequestStatusOK),
         id_(id),
 	url_(url) {
 }
 
-bool WebContextAdapterPrivate::SetCookiesRequest::status() const {
+WebContextAdapter::RequestStatus
+WebContextAdapterPrivate::SetCookiesRequest::status() const {
   return status_;
 }
 
@@ -90,7 +91,11 @@ bool WebContextAdapterPrivate::SetCookiesRequest::isComplete() const {
 }
 
 void WebContextAdapterPrivate::SetCookiesRequest::updateStatus(bool status) {
-  status_ = status_ && status;
+  if (status_ == WebContextAdapter::RequestStatusOK && !status) {
+    status_ = WebContextAdapter::RequestStatusError;
+  }
+  // Leave the status as is otherwise (Error will stay, InternalFailure
+  // will take over)
 }
 
 bool WebContextAdapterPrivate::SetCookiesRequest::next(QNetworkCookie* next) {
@@ -249,7 +254,7 @@ scoped_refptr<net::CookieStore> WebContextAdapterPrivate::GetCookieStore() {
 }
 
 void WebContextAdapterPrivate::callWithStatus(
-      int requestId, bool status) {
+      int requestId, WebContextAdapter::RequestStatus status) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
   if (adapter()) {
     adapter()->CookiesSet(requestId, status);
@@ -292,7 +297,8 @@ void WebContextAdapterPrivate::doSetCookie(
 
   scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
   if (!cookie_store) {
-    callWithStatus(-1, false);
+    callWithStatus(request->id(),
+        WebContextAdapter::RequestStatusInternalFailure);
     return;
   }
 
@@ -311,11 +317,13 @@ void WebContextAdapterPrivate::doSetCookie(
 }
 
 void WebContextAdapterPrivate::callWithCookies(
-      int requestId, const QList<QNetworkCookie>& cookies) {
+      int requestId,
+      const QList<QNetworkCookie>& cookies,
+      WebContextAdapter::RequestStatus status) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
 
   if (adapter()) {
-    adapter()->CookiesRetrieved(requestId, cookies);
+    adapter()->CookiesRetrieved(requestId, cookies, status);
   }
 }
 
@@ -339,13 +347,15 @@ void WebContextAdapterPrivate::GotCookiesCallback(
     qcookies.append(cookie);
   }
 
-  callWithCookies(requestId, qcookies);
+  callWithCookies(requestId, qcookies, WebContextAdapter::RequestStatusOK);
 }
 
 void WebContextAdapterPrivate::doGetAllCookies(int requestId) {
   scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
   if (!cookie_store) {
-    callWithCookies(-1, QList<QNetworkCookie>());
+    callWithCookies(requestId,
+        QList<QNetworkCookie>(),
+        WebContextAdapter::RequestStatusInternalFailure);
     return;
   }
   cookie_store->GetCookieMonster()->GetAllCookiesAsync(

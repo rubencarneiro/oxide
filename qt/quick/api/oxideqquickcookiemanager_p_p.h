@@ -25,8 +25,6 @@
 
 #include "qt/quick/api/oxideqquickcookiemanager_p.h"
 
-class OxideQQuickNetworkCookies;
-
 class OxideQQuickCookieManagerPrivate Q_DECL_FINAL :
     public QObject {
   Q_OBJECT

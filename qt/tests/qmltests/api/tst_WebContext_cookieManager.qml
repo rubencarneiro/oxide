@@ -17,10 +17,6 @@ TestWebView {
     signalName: "gotCookies"
   }
 
-  NetworkCookies {
-    id: networkcookies
-  }
-
   TestCase {
     id: test
     name: "WebContext_cookieManager"
@@ -56,16 +52,15 @@ TestWebView {
       cookiesSetSpy.target = cookieManager;
       gotCookiesSpy.target = cookieManager;
 
-      networkcookies.cookies = [{"name": "blabla",
+      var set_id = cookieManager.setCookies("http://", [{"name": "blabla",
 	  "value": "ddu",
-	  "expirationdate": Date.now() + 1000*1000}];
-      var set_id = cookieManager.setCookies("http://", networkcookies);
+	  "expirationdate": Date.now() + 1000*1000}]);
 
       verify(set_id >= 0, "Invalid cookie request id");
       cookiesSetSpy.wait();
       compare(cookiesSetSpy.count, 1, "Expected cookiesSet signal");
       compare(cookiesSetSpy.signalArguments[0][0], set_id)
-      compare(cookiesSetSpy.signalArguments[0][1], true)
+      compare(cookiesSetSpy.signalArguments[0][1], CookieManager.RequestStatusOK)
 
       var get_id = cookieManager.getAllCookies();
       verify(get_id >= 0, "Invalid cookie request id");
@@ -90,9 +85,10 @@ TestWebView {
       compare(latestCookieList.length, 1);
     }
 
-    function _on_got_cookies(requestId, networkCookies) {
-      console.log("Parsed: " + JSON.stringify(networkCookies.rawHttpCookies))
-      latestCookieList = [].concat(networkCookies.rawHttpCookies)
+    function _on_got_cookies(requestId, cookies, status) {
+      verify(status == CookieManager.RequestStatusOK, "Got Error/Failure cookie status");
+      console.log("Parsed: " + JSON.stringify(cookies) + ", " + status)
+      latestCookieList = [].concat(cookies)
     }
   }
 }
