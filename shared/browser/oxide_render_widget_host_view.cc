@@ -182,7 +182,7 @@ void RenderWidgetHostView::WasShown() {
   if (!frame_is_evicted_) {
     RendererFrameEvictor::GetInstance()->LockFrame(this);
   }
-  host_->WasShown();
+  host_->WasShown(ui::LatencyInfo());
 }
 
 void RenderWidgetHostView::WasHidden() {

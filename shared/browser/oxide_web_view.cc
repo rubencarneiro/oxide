@@ -440,7 +440,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
   return new_view->GetWebContents();
 }
 
-void WebView::NavigationStateChanged(unsigned changed_flags) {
+void WebView::NavigationStateChanged(content::InvalidateTypes changed_flags) {
   if (changed_flags & content::INVALIDATE_TYPE_URL) {
     OnURLChanged();
   }
@@ -449,7 +449,7 @@ void WebView::NavigationStateChanged(unsigned changed_flags) {
     OnTitleChanged();
   }
 
-  if (changed_flags & (content::INVALIDATE_TYPE_URL |
+  if (changed_flags & (content::INVALIDATE_TYPE_PAGE_ACTIONS |
                        content::INVALIDATE_TYPE_LOAD)) {
     OnCommandsUpdated();
   }
@@ -1232,7 +1232,7 @@ void WebView::UpdateWebPreferences() {
     return;
   }
 
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  rvh->OnWebkitPreferencesChanged();
 }
 
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {

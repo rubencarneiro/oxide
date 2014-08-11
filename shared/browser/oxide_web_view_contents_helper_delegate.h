@@ -23,6 +23,7 @@
 #include "base/message_loop/message_loop.h"
 #include "base/move.h"
 #include "base/strings/string16.h"
+#include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/web_contents.h"
 #include "ui/base/window_open_disposition.h"
 
@@ -55,7 +56,7 @@ class WebViewContentsHelperDelegate {
 
   virtual content::WebContents* OpenURL(const content::OpenURLParams& params) = 0;
 
-  virtual void NavigationStateChanged(unsigned flags) = 0;
+  virtual void NavigationStateChanged(content::InvalidateTypes flags) = 0;
 
   virtual bool ShouldCreateWebContents(const GURL& target_url,
                                        WindowOpenDisposition disposition,

@@ -89,7 +89,7 @@ void WebViewContentsHelper::UpdateWebPreferences() {
     return;
   }
 
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  rvh->OnWebkitPreferencesChanged();
 }
 
 void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
@@ -132,7 +132,7 @@ content::WebContents* WebViewContentsHelper::OpenURLFromTab(
 
 void WebViewContentsHelper::NavigationStateChanged(
     const content::WebContents* source,
-    unsigned changed_flags) {
+    content::InvalidateTypes changed_flags) {
   DCHECK_VALID_SOURCE_CONTENTS
 
   if (!delegate_) {

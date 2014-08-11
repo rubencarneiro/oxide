@@ -61,9 +61,9 @@ def calc_inputs(locale):
   """Determine the files that need processing for the given locale."""
   inputs = []
 
-  #e.g. '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_strings_da.pak'
-  inputs.append(os.path.join(SHARE_INT_DIR, 'webkit',
-                'webkit_strings_%s.pak' % locale))
+  #e.g. '<(SHARED_INTERMEDIATE_DIR)/content/app/strings/content_strings_da.pak'
+  inputs.append(os.path.join(SHARE_INT_DIR, 'content', 'app', 'strings',
+                'content_strings_%s.pak' % locale))
 
   # Add any extra input files.
   for extra_file in EXTRA_INPUT_FILES:

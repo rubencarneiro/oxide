@@ -299,7 +299,7 @@ class WebView : public ScriptMessageTarget,
 
   // WebViewContentsHelperDelegate implementation
   content::WebContents* OpenURL(const content::OpenURLParams& params) FINAL;
-  void NavigationStateChanged(unsigned flags) FINAL;
+  void NavigationStateChanged(content::InvalidateTypes flags) FINAL;
   bool ShouldCreateWebContents(const GURL& target_url,
                                WindowOpenDisposition disposition,
                                bool user_gesture) FINAL;
