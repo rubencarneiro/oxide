@@ -34,6 +34,13 @@ const base::FilePath::CharType kGoogleTalkPluginFilename[] =
 const base::FilePath::CharType kO1DPluginFilename[] =
     FILE_PATH_LITERAL("libppo1d.so");
 
+const base::FilePath::CharType* kPepperFlashPluginDirs[] = {
+  FILE_PATH_LITERAL("/usr/lib/pepperflashplugin-nonfree")
+};
+const base::FilePath::CharType kPepperFlashPluginFilename[] =
+  FILE_PATH_LITERAL("libpepflashplayer.so");
+
+
 bool PathProvider(int key, base::FilePath* result) {
   switch (key) {
     case DIR_GTALK_PLUGIN: {
@@ -63,6 +70,26 @@ bool PathProvider(int key, base::FilePath* result) {
         return false;
       }
       *result = path.Append(kO1DPluginFilename);
+      return true;
+    }
+
+    case DIR_PEPPER_FLASH_PLUGIN: {
+      for (size_t i = 0; i < arraysize(kPepperFlashPluginDirs); ++i) {
+        base::FilePath path(kPepperFlashPluginDirs[i]);
+        if (base::PathExists(path.Append(kPepperFlashPluginFilename))) {
+          *result = path;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    case FILE_PEPPER_FLASH_PLUGIN: {
+      base::FilePath path;
+      if (!PathService::Get(DIR_PEPPER_FLASH_PLUGIN, &path)) {
+        return false;
+      }
+      *result = path.Append(kPepperFlashPluginFilename);
       return true;
     }
 

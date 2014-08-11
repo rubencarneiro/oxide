@@ -33,6 +33,8 @@
 #include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
+#include "oxide_pepper_render_frame_observer.h"
+
 
 namespace oxide {
 
@@ -44,6 +46,8 @@ void ContentRendererClient::RenderThreadStarted() {
 void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
+
+  new PepperRenderFrameObserver(render_frame);
 }
 
 void ContentRendererClient::RenderViewCreated(

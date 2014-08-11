@@ -26,6 +26,7 @@
 #include "ppapi/shared_impl/ppapi_permissions.h"
 
 #include "oxide_pepper_talk_host.h"
+#include "oxide_pepper_flash_browser_host.h"
 
 namespace oxide {
 
@@ -66,6 +67,17 @@ PepperHostFactoryBrowser::CreateResourceHost(
   //  PpapiHostMsg_Flash_Create
   //  PpapiHostMsg_FlashClipboard_Create
   //  PpapiHostMsg_FlashDRM_Create
+
+  if (host_->GetPpapiHost()->permissions().HasPermission(
+          ppapi::PERMISSION_FLASH)) {
+      switch (message.type()) {
+        case PpapiHostMsg_Flash_Create::ID:
+          return scoped_ptr<ppapi::host::ResourceHost>(
+            new PepperFlashBrowserHost(host_, instance, params.pp_resource()));
+        default:
+          ;
+      }
+  }
 
   return scoped_ptr<ppapi::host::ResourceHost>();
 }

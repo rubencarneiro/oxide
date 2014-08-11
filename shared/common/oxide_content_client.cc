@@ -17,6 +17,7 @@
 
 #include "oxide_content_client.h"
 
+#include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/common/user_agent.h"
@@ -33,6 +34,7 @@
 #include "base/path_service.h"
 #include "content/public/common/pepper_plugin_info.h"
 #include "content/public/common/webplugininfo.h"
+#include "content/public/common/content_constants.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
 
 #include "shared/common/oxide_constants.h"
@@ -77,6 +79,28 @@ void ContentClient::AddPepperPlugins(
     gtalk.mime_types.push_back(gtalk_mime_type);
 
     plugins->push_back(gtalk);
+  }
+
+  // Pepper Flash
+  if (PathService::Get(FILE_PEPPER_FLASH_PLUGIN, &path)) {
+    content::PepperPluginInfo pf;
+
+    pf.path = path;
+    pf.is_out_of_process = true;
+    pf.name = content::kFlashPluginName;
+    pf.permissions = ppapi::PERMISSION_DEV |
+                        ppapi::PERMISSION_PRIVATE |
+                        ppapi::PERMISSION_BYPASS_USER_GESTURE |
+                        ppapi::PERMISSION_FLASH;
+
+    pf.description = "Shockwave Flash Pepper Plugin (under Oxide)";
+    pf.mime_types.push_back(content::WebPluginMimeType(content::kFlashPluginSwfMimeType,
+                                           content::kFlashPluginSwfExtension,
+                                           content::kFlashPluginSwfDescription));
+    pf.mime_types.push_back(content::WebPluginMimeType(content::kFlashPluginSplMimeType,
+                                           content::kFlashPluginSplExtension,
+                                           content::kFlashPluginSplDescription));
+    plugins->push_back(pf);
   }
 #endif
 }

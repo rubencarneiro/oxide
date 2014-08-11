@@ -455,6 +455,8 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   if (view) {
     prefs->supports_multiple_windows = view->CanCreateWindows();
   }
+
+  prefs->flash_3d_enabled = false;
 }
 
 content::LocationProvider*
