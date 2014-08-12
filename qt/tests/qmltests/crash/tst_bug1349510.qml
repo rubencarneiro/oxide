@@ -22,36 +22,12 @@ TestWebView {
     name: "bug1349510"
     when: windowShown
 
-    function _test_1_init() {
+    function _append_fragment() {
       webView.getTestApi().evaluateCode("
 var url = window.location + \"#\";
 var i = 0;
 while (i++ < 100000) {
   url = url + \"AAAAAAAAAAAAAAAAAAAAAAAAA\";
-}
-window.location = url;", false);
-    }
-
-    function _test_2_init() {
-      webView.getTestApi().evaluateCode("window.location = window.location + \"?foo=bar\";", false);
-    }
-
-    function _test_3_init() {
-      webView.getTestApi().evaluateCode("
-var url = window.location + \"?foo=bar#\";
-var i = 0;
-while (i++ < 100000) {
-  url = url + \"AAAAAAAAAAAAAAAAAAAAAAAAA\";
-}
-window.location = url;", false);
-    }
-
-    function _test_4_init() {
-      webView.getTestApi().evaluateCode("
-var url = window.location + \"?\";
-var i = 0;
-while (i++ < 100000) {
-  url = url + \"foo=bar&foo=bar&foo=bar&\";
 }
 window.location = url;", false);
     }
@@ -63,30 +39,32 @@ window.location = url;", false);
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      webView.url = "http://localhost:8080/empty.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
     }
 
     function test_bug1349510_data() {
       return [
-        { prep: null, url: "http://localhost:8080/empty.html" },
-        { prep: _test_1_init, url: "http://localhost:8080/empty.html" },
-        { prep: _test_2_init, url: "http://localhost:8080/empty.html?foo=bar" }
-// FIXME: Disabled because they trigger a renderer abort when sending FrameHostMsg_OpenURL
-//        { prep: _test_3_init, url: "http://localhost:8080/empty.html?foo=bar" },
-//        { prep: _test_4_init, url: "http://localhost:8080/empty.html" }
+        { prep: null, loadUrl: "http://localhost:8080/empty.html" },
+        { prep: _append_fragment, loadUrl: "http://localhost:8080/empty.html" },
+        { prep: null, loadUrl: "http://localhost:8080/empty.html?foo=bar" },
+        { prep: _append_fragment, loadUrl: "http://localhost:8080/empty.html?foo=bar" },
+        { prep: null, loadUrl: "http://localhost:8080/empty.html#AAAAAAAAAAA", overrideUrl: "http://localhost:8080/empty.html" },
+        { prep: null, loadUrl: "http://foo:password@localhost:8080/empty.html#AAAAAAA", overrideUrl: "http://localhost:8080/empty.html" }
       ];
     }
 
     function test_bug1349510(data) {
+      webView.url = data.loadUrl;
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+
       if (data.prep) {
         data.prep();
       }
 
       compare(webView.getTestApi().evaluateCode("navigator.userAgent", false),
               "Foo");
-      compare(webView.lastOverrideUrl, data.url);
+      var overrideUrl = data.overrideUrl || data.loadUrl;
+      compare(webView.lastOverrideUrl, overrideUrl);
     }
   }
 }
