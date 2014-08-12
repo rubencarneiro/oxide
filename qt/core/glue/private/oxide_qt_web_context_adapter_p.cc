@@ -19,10 +19,16 @@
 
 #include <QString>
 #include <QUrl>
+#include <QObject>
+#include <QNetworkCookie>
+#include <QDateTime>
+#include <QDebug>
+#include <QMetaMethod>
 
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
 #include "net/base/net_errors.h"
+#include "net/cookies/cookie_monster.h"
 #include "net/url_request/url_request.h"
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
@@ -55,6 +61,51 @@ WebContextAdapterPrivate* WebContextAdapterPrivate::Create(
     WebContextAdapter* adapter,
     WebContextAdapter::IOThreadDelegate* io_delegate) {
   return new WebContextAdapterPrivate(adapter, io_delegate);
+}
+
+WebContextAdapterPrivate::SetCookiesRequest::SetCookiesRequest(
+    const QString& url,
+    const QList<QNetworkCookie>& cookies,
+    int id) :
+        cookies_(cookies),
+        status_(WebContextAdapter::RequestStatusOK),
+        id_(id),
+	url_(url) {
+}
+
+WebContextAdapter::RequestStatus
+WebContextAdapterPrivate::SetCookiesRequest::status() const {
+  return status_;
+}
+
+int WebContextAdapterPrivate::SetCookiesRequest::id() const {
+  return id_;
+}
+
+QString WebContextAdapterPrivate::SetCookiesRequest::url() const {
+  return url_;
+}
+
+bool WebContextAdapterPrivate::SetCookiesRequest::isComplete() const {
+  return cookies_.empty();
+}
+
+void WebContextAdapterPrivate::SetCookiesRequest::updateStatus(bool status) {
+  if (status_ == WebContextAdapter::RequestStatusOK && !status) {
+    status_ = WebContextAdapter::RequestStatusError;
+  }
+  // Leave the status as is otherwise (Error will stay, InternalFailure
+  // will take over)
+}
+
+bool WebContextAdapterPrivate::SetCookiesRequest::next(QNetworkCookie* next) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+  if (!next || isComplete()) {
+    return false;
+  }
+  *next = *cookies_.begin();
+  cookies_.pop_front();
+  return true;
 }
 
 WebContextAdapterPrivate::WebContextAdapterPrivate(
@@ -193,6 +244,125 @@ WebContextAdapterPrivate* WebContextAdapterPrivate::get(
 WebContextAdapterPrivate* WebContextAdapterPrivate::FromBrowserContext(
     oxide::BrowserContext* context) {
   return static_cast<WebContextAdapterPrivate *>(context->GetDelegate());
+}
+
+scoped_refptr<net::CookieStore> WebContextAdapterPrivate::GetCookieStore() {
+  if (!context_) {
+    return NULL;
+  }
+  return context_->GetCookieStore();
+}
+
+void WebContextAdapterPrivate::callWithStatus(
+      int requestId, WebContextAdapter::RequestStatus status) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  if (adapter()) {
+    adapter()->CookiesSet(requestId, status);
+  }
+}
+
+void WebContextAdapterPrivate::OnCookieSet(
+      SetCookiesRequest* request, bool success) {
+  if (!request) {
+    return;
+  }
+
+  request->updateStatus(success);
+
+  if (request->isComplete()) {
+    callWithStatus(request->id(), request->status());
+    delete request;
+    return;
+  }
+
+  doSetCookie(request);
+}
+
+void WebContextAdapterPrivate::doSetCookies(
+      const QString& url,
+      const QList<QNetworkCookie>& cookies,
+      int requestId) {
+  SetCookiesRequest* request =
+    new SetCookiesRequest(url, cookies, requestId);
+  doSetCookie(request);
+}
+
+void WebContextAdapterPrivate::doSetCookie(
+      SetCookiesRequest* request) {
+  QNetworkCookie cookie = QNetworkCookie(QByteArray(), QByteArray());
+  if (!request->next(&cookie)) {
+    callWithStatus(request->id(), request->status());
+    return;
+  }
+
+  scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
+  if (!cookie_store) {
+    callWithStatus(request->id(),
+        WebContextAdapter::RequestStatusInternalFailure);
+    return;
+  }
+
+  cookie_store->GetCookieMonster()->SetCookieWithDetailsAsync(
+    GURL(request->url().toStdString()),
+    std::string(cookie.name().constData()),
+    std::string(cookie.value().constData()),
+    std::string(cookie.domain().toUtf8().constData()),
+    std::string(cookie.path().toUtf8().constData()),
+    base::Time::FromJsTime(cookie.expirationDate().toMSecsSinceEpoch()),
+    cookie.isSecure(),
+    cookie.isHttpOnly(),
+    net::COOKIE_PRIORITY_DEFAULT,
+    base::Bind(&WebContextAdapterPrivate::OnCookieSet,
+        this, request));
+}
+
+void WebContextAdapterPrivate::callWithCookies(
+      int requestId,
+      const QList<QNetworkCookie>& cookies,
+      WebContextAdapter::RequestStatus status) {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
+  if (adapter()) {
+    adapter()->CookiesRetrieved(requestId, cookies, status);
+  }
+}
+
+void WebContextAdapterPrivate::GotCookiesCallback(
+      int requestId,
+      const net::CookieList& cookies) {
+  QList<QNetworkCookie> qcookies;
+  for (net::CookieList::const_iterator iter = cookies.begin();
+       iter != cookies.end(); ++iter) {
+    QNetworkCookie cookie;
+
+    qDebug() << "iter->Name().c_str(): " << iter->Name().c_str();
+
+    cookie.setName(iter->Name().c_str());
+    cookie.setValue(iter->Value().c_str());
+    cookie.setDomain(iter->Domain().c_str());
+    cookie.setPath(iter->Path().c_str());
+    cookie.setExpirationDate(QDateTime::fromMSecsSinceEpoch(
+        iter->ExpiryDate().ToJsTime()));
+    cookie.setSecure(iter->IsSecure());
+    cookie.setHttpOnly(iter->IsHttpOnly());
+
+    qcookies.append(cookie);
+  }
+
+  callWithCookies(requestId, qcookies, WebContextAdapter::RequestStatusOK);
+}
+
+void WebContextAdapterPrivate::doGetAllCookies(int requestId) {
+  scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
+  if (!cookie_store) {
+    callWithCookies(requestId,
+        QList<QNetworkCookie>(),
+        WebContextAdapter::RequestStatusInternalFailure);
+    return;
+  }
+  cookie_store->GetCookieMonster()->GetAllCookiesAsync(
+    base::Bind(&WebContextAdapterPrivate::GotCookiesCallback,
+               this, requestId));
 }
 
 oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {

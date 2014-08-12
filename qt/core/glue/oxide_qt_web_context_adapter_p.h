@@ -33,6 +33,10 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 
+namespace net {
+class CookieStore;
+}
+
 namespace oxide {
 
 class BrowserContext;
@@ -53,6 +57,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   WebContextAdapter* adapter() const { return adapter_; }
   oxide::BrowserContext* GetContext();
+  scoped_refptr<net::CookieStore> GetCookieStore();
 
  private:
   friend class WebContextAdapter;
@@ -80,6 +85,43 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   void Destroy();
   void UpdateUserScripts();
+
+  class SetCookiesRequest {
+  public:
+    SetCookiesRequest(const QString& url,
+                      const QList<QNetworkCookie>& cookies,
+                      int id);
+
+    WebContextAdapter::RequestStatus status() const;
+    bool isComplete() const;
+    void updateStatus(bool status);
+    int id() const;
+    QString url() const;
+
+    // Called on IO thread
+    bool next(QNetworkCookie* next);
+
+  private:
+
+    QList<QNetworkCookie> cookies_;
+    WebContextAdapter::RequestStatus status_;
+    int id_;
+    QString url_;
+  };
+
+  void doSetCookies(const QString& url,
+                    const QList<QNetworkCookie>& cookies,
+		    int requestId);
+  void doSetCookie(SetCookiesRequest* request);
+  void OnCookieSet(SetCookiesRequest* request, bool success);
+  void callWithStatus(int requestId, WebContextAdapter::RequestStatus status);
+
+  void doGetAllCookies(int requestId);
+  void callWithCookies(int requestId,
+                       const QList<QNetworkCookie>& cookies,
+                       WebContextAdapter::RequestStatus status);
+  void GotCookiesCallback(int requestId,
+      const net::CookieList& cookies);
 
   // oxide::BrowserContextDelegate
   int OnBeforeURLRequest(net::URLRequest* request,

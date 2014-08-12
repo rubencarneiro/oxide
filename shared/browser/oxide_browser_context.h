@@ -38,6 +38,7 @@ class ResourceContext;
 
 namespace net {
 
+class CookieMonster;
 class FtpNetworkLayer;
 class HttpServerProperties;
 class HttpUserAgentSettings;
@@ -64,6 +65,8 @@ class BrowserContextIOData {
   static BrowserContextIOData* FromResourceContext(
       content::ResourceContext* context);
 
+  void Init();
+
   scoped_refptr<BrowserContextDelegate> GetDelegate();
 
   virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
@@ -86,6 +89,8 @@ class BrowserContextIOData {
 
   content::ResourceContext* GetResourceContext();
 
+  scoped_refptr<net::CookieStore> GetCookieStore() const;
+
   bool CanAccessCookies(const GURL& url,
                         const GURL& first_party_url,
                         bool write);
@@ -97,6 +102,7 @@ class BrowserContextIOData {
   friend class BrowserContext;
 
   void SetDelegate(BrowserContextDelegate* delegate);
+  base::FilePath GetCookiePath() const;
 
   base::Lock delegate_lock_;
   scoped_refptr<BrowserContextDelegate> delegate_;
@@ -112,6 +118,7 @@ class BrowserContextIOData {
 
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
+  scoped_refptr<net::CookieStore> cookie_store_;
 };
 
 class BrowserContext : public content::BrowserContext,
@@ -197,6 +204,8 @@ class BrowserContext : public content::BrowserContext,
   virtual UserScriptMaster& UserScriptManager() = 0;
 
   content::ResourceContext* GetResourceContext() FINAL;
+
+  scoped_refptr<net::CookieStore> GetCookieStore();
 
  protected:
   BrowserContext(BrowserContextIOData* io_data);
