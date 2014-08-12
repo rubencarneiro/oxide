@@ -50,6 +50,7 @@ class OxideQQuickWebContext : public QObject,
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
   Q_PROPERTY(bool devtoolsEnabled READ devtoolsEnabled WRITE setDevtoolsEnabled NOTIFY devtoolsEnabledChanged)
   Q_PROPERTY(int devtoolsPort READ devtoolsPort WRITE setDevtoolsPort NOTIFY devtoolsPortChanged)
+  Q_PROPERTY(QString devtoolsIp READ devtoolsBindIp WRITE setDevtoolsBindIp NOTIFY devtoolsBindIpChanged)
   Q_PROPERTY(OxideQQuickCookieManager* cookieManager READ cookieManager CONSTANT)
 
   Q_ENUMS(CookiePolicy)
@@ -127,6 +128,9 @@ class OxideQQuickWebContext : public QObject,
 
   OxideQQuickCookieManager* cookieManager() const;
 
+  QString devtoolsBindIp() const;
+  void setDevtoolsBindIp(const QString& bindIp);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -142,6 +146,7 @@ class OxideQQuickWebContext : public QObject,
   void userAgentOverrideDelegateChanged();
   void devtoolsEnabledChanged();
   void devtoolsPortChanged();
+  void devtoolsBindIpChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

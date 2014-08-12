@@ -68,6 +68,7 @@ class OffTheRecordBrowserContextImpl FINAL : public BrowserContext {
 
   bool GetDevtoolsEnabled() const FINAL;
   int GetDevtoolsPort() const FINAL;
+  std::string GetDevtoolsBindIp() const FINAL;
 
   UserScriptMaster& UserScriptManager() FINAL;
 

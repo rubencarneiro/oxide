@@ -23,6 +23,7 @@
 #include "content/public/browser/devtools_http_handler.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/user_agent.h"
+#include "net/base/net_util.h"
 #include "net/socket/tcp_listen_socket.h"
 
 #include "shared/common/chrome_version.h"
@@ -35,7 +36,7 @@
 
 namespace {
 
-const char kDevtoolsServerIp[] = "127.0.0.1";
+const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
 
 }
 
@@ -130,11 +131,16 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params) :
     user_script_manager_(this),
     devtools_http_handler_(NULL),
     devtools_enabled_(params.devtools_enabled),
-    devtools_port_(params.devtools_port) {
+    devtools_port_(params.devtools_port),
+    devtools_ip_(params.devtools_ip) {
   SetUserAgent(std::string());
 
   if (devtools_enabled_ && devtools_port_ < 65535 && devtools_port_ > 1024) {
-    std::string ip = kDevtoolsServerIp;
+    net::IPAddressNumber ipnumber;
+    std::string ip = net::ParseIPLiteralToNumber(devtools_ip_, &ipnumber) ?
+        devtools_ip_
+        : kDevtoolsDefaultServerIp;
+
     devtools_http_handler_ = content::DevToolsHttpHandler::Start(
         new net::TCPListenSocketFactory(ip, devtools_port_),
         std::string(),
@@ -221,6 +227,10 @@ bool BrowserContextImpl::GetDevtoolsEnabled() const {
 
 int BrowserContextImpl::GetDevtoolsPort() const {
   return devtools_port_;
+}
+
+std::string BrowserContextImpl::GetDevtoolsBindIp() const {
+  return devtools_ip_;
 }
 
 } // namespace oxide

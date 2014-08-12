@@ -116,6 +116,9 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 		    int requestId);
   void doGetAllCookies(int requestId);
 
+  QString devtoolsBindIp() const;
+  void setDevtoolsBindIp(const QString& bindIp);
+
  protected:
   WebContextAdapter(QObject* q,
                     IOThreadDelegate* io_delegate);

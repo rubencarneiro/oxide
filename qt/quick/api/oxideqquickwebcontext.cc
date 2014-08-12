@@ -758,7 +758,26 @@ OxideQQuickWebContext::cookieManager() const {
     d->cookie_manager_ =
         new OxideQQuickCookieManager(web_context, web_context);
   }
+
   return d->cookie_manager_;
+}
+
+QString OxideQQuickWebContext::devtoolsBindIp() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->devtoolsBindIp();
+}
+
+void OxideQQuickWebContext::setDevtoolsBindIp(const QString& bindIp) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->devtoolsBindIp() == bindIp) {
+    return;
+  }
+
+  d->setDevtoolsBindIp(bindIp);
+
+  emit devtoolsBindIpChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"
