@@ -335,6 +335,8 @@ void WebContextAdapterPrivate::GotCookiesCallback(
        iter != cookies.end(); ++iter) {
     QNetworkCookie cookie;
 
+    qDebug() << "iter->Name().c_str(): " << iter->Name().c_str();
+
     cookie.setName(iter->Name().c_str());
     cookie.setValue(iter->Value().c_str());
     cookie.setDomain(iter->Domain().c_str());

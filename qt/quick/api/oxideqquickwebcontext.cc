@@ -243,8 +243,8 @@ void OxideQQuickWebContextPrivate::CookiesRetrieved(
   QList<QVariant> cookieMapList;
   Q_FOREACH(QNetworkCookie cookie, cookies) {
     QVariantMap cm;
-    cm.insert("name", QVariant(cookie.name()));
-    cm.insert("value", QVariant(cookie.value()));
+    cm.insert("name", QVariant(QString(cookie.name())));
+    cm.insert("value", QVariant(QString(cookie.value())));
     cm.insert("domain", QVariant(cookie.domain()));
     cm.insert("path", QVariant(cookie.path()));
     cm.insert("httponly", QVariant(cookie.isHttpOnly()));

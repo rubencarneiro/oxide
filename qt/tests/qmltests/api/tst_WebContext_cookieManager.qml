@@ -37,6 +37,9 @@ TestWebView {
 
       webView.context.cookiePolicy = restore;
       latestCookieList = null
+
+      cookiesSetSpy.clear();
+      gotCookiesSpy.clear();
     }
 
     function _set_cookies(webView) {
@@ -82,7 +85,7 @@ TestWebView {
       gotCookiesSpy.wait();
 
       compare(gotCookiesSpy.count, 1, "Expected gotCookies signal");
-      compare(latestCookieList.length, 1);
+      verify(latestCookieList.length >= 1, "Invalid cookie list");
     }
 
     function _on_got_cookies(requestId, cookies, status) {
