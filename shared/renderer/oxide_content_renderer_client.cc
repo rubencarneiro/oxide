@@ -20,6 +20,7 @@
 #include <string>
 
 #include "base/command_line.h"
+#include "content/public/common/url_utils.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
@@ -80,8 +81,39 @@ bool ContentRendererClient::GetUserAgentOverride(
     const GURL& url,
     std::string* user_agent) {
   bool overridden = false;
+
+  GURL u = url;
+
+  // Strip username / password / fragment identifier if they exist
+  if (u.has_password() || u.has_username() || u.has_ref()) {
+    GURL::Replacements rep;
+    rep.ClearUsername();
+    rep.ClearPassword();
+    rep.ClearRef();
+    u = u.ReplaceComponents(rep);
+  }
+
+  // Strip query if we are above the max number of chars
+  if (u.spec().size() > content::GetMaxURLChars() &&
+      u.has_query()) {
+    GURL::Replacements rep;
+    rep.ClearQuery();
+    u = u.ReplaceComponents(rep);
+  }
+
+  // If we are still over, just send the origin
+  if (u.spec().size() > content::GetMaxURLChars()) {
+    u = u.GetOrigin();
+  }
+
+  // Not sure we should ever hit this, but in any case - there
+  // isn't much more we can do now
+  if (u.spec().size() > content::GetMaxURLChars()) {
+    return false;
+  }
+
   content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
-      url, user_agent, &overridden));
+      u, user_agent, &overridden));
 
   return overridden;
 }
