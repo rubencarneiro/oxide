@@ -41,13 +41,13 @@
       },
       'dependencies': [
         'oxide_extra_resources',
+        '<(DEPTH)/content/app/strings/content_strings.gyp:content_strings',
         '<(DEPTH)/content/content_resources.gyp:content_resources',
         '<(DEPTH)/content/browser/devtools/devtools_resources.gyp:devtools_resources',
         '<(DEPTH)/net/net.gyp:net_resources',
         '<(DEPTH)/third_party/WebKit/public/blink_resources.gyp:blink_resources',
         '<(DEPTH)/ui/resources/ui_resources.gyp:ui_resources',
         '<(DEPTH)/webkit/webkit_resources.gyp:webkit_resources',
-        '<(DEPTH)/webkit/webkit_resources.gyp:webkit_strings',
       ],
       'actions': [
         {

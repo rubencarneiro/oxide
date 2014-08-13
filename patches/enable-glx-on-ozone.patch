@@ -126,7 +126,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -1019,16 +949,86 @@
+@@ -1024,16 +954,86 @@
                  ],
                },
              }],
@@ -156,7 +156,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 +        }, {
 +          'direct_dependent_settings': {
 +            'cflags': [
-+              '<!@(pkg-config --cflags x11)',
++             '<!@(pkg-config --cflags x11)',
 +            ],
 +          },
 +          'link_settings': {
@@ -209,14 +209,14 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
        'type': 'none',
        'conditions': [
          # libudev is not available on *BSD
-         ['_toolset=="target" and os_bsd!=1', {
+         ['_toolset=="target" and os_bsd!=1 and use_udev==1', {
            'direct_dependent_settings': {
              'cflags': [
                '<!@(<(pkg-config) --cflags libudev)'
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -374,17 +374,17 @@
+@@ -381,17 +381,17 @@
            'sources!': [
              'render_text.cc',
              'render_text.h',
@@ -269,7 +269,7 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -191,24 +191,24 @@
+@@ -196,24 +196,24 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -319,7 +319,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -233,16 +233,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -241,16 +241,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -339,7 +339,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -296,17 +299,17 @@ struct GL_EXPORT DriverEGL {
+@@ -304,17 +307,17 @@ struct GL_EXPORT DriverEGL {
    void ClearBindings();
  
    ProcsEGL fn;
@@ -358,7 +358,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -336,16 +339,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -344,16 +347,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  

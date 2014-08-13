@@ -71,7 +71,7 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
   content::WebContents* OpenURLFromTab(content::WebContents* source,
                                        const content::OpenURLParams& params) FINAL;
   void NavigationStateChanged(const content::WebContents* source,
-                              unsigned changed_flags) FINAL;
+                              content::InvalidateTypes changed_flags) FINAL;
   bool ShouldCreateWebContents(
       content::WebContents* source,
       int route_id,
