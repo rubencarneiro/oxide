@@ -156,4 +156,14 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building the GYP \"all\" target")
 
+file(GLOB_RECURSE I18N_SRC_FILES
+     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+     qt/**.cc shared/**.cc)
+list(SORT I18N_SRC_FILES)
+
+# for dh_translations to extract the domain
+# (regarding syntax consistency, see http://pad.lv/1181187)
+set (GETTEXT_PACKAGE "oxide")
+add_subdirectory(po)
+
 add_subdirectory(${OXIDE_BUILD})

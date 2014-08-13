@@ -17,6 +17,8 @@
 
 #include "oxide_browser_context_impl.h"
 
+#include <libintl.h>
+
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/browser_thread.h"
@@ -46,8 +48,7 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     const BrowserContext::Params& params) :
     path_(params.path),
     cache_path_(params.cache_path),
-    // FIXME: Get from translations
-    accept_langs_("en-us,en"),
+    accept_langs_(dgettext("oxide", "en-us,en")),
     cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode_(params.session_cookie_mode),
     popup_blocker_enabled_(true) {
