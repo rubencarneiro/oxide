@@ -22,13 +22,17 @@
 #include <vector>
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QGuiApplication>
 #include <QObject>
 #include <QtDebug>
+#include <QNetworkCookie>
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "content/public/browser/browser_thread.h"
 #include "net/base/static_cookie_policy.h"
+#include "net/cookies/cookie_monster.h"
 #include "url/gurl.h"
 
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
@@ -108,6 +112,22 @@ void WebContextAdapter::setDevtoolsPort(int port) {
     return;
   }
   priv->construct_props_->devtools_port = port;
+}
+
+QString WebContextAdapter::devtoolsBindIp() const {
+  if (isInitialized()) {
+    return QString::fromStdString(priv->context_->GetDevtoolsBindIp());
+  }
+
+  return QString::fromStdString(priv->construct_props_->devtools_ip);
+}
+
+void WebContextAdapter::setDevtoolsBindIp(const QString& bindIp) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools bound ip after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_ip = bindIp.toStdString();
 }
 
 QUrl WebContextAdapter::dataPath() const {
@@ -296,6 +316,27 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
   } else {
     priv->construct_props_->popup_blocker_enabled = enabled;
   }
+}
+
+void WebContextAdapter::doSetCookies(
+      const QString& url,
+      const QList<QNetworkCookie>& cookies,
+      int requestId) {
+  priv->doSetCookies(url, cookies, requestId);
+}
+
+void WebContextAdapter::doGetAllCookies(int requestId) {
+  priv->doGetAllCookies(requestId);
+}
+
+void WebContextAdapter::CookiesSet(int requestId,
+      WebContextAdapter::RequestStatus status) {
+}
+
+void WebContextAdapter::CookiesRetrieved(
+      int requestId,
+      const QList<QNetworkCookie>& cookies,
+      WebContextAdapter::RequestStatus status) {
 }
 
 WebContextAdapter::WebContextAdapter(

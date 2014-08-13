@@ -63,6 +63,23 @@
       },
     },
     {
+      'target_name': 'Qt5Network',
+      'type': 'none',
+      'direct_dependent_settings': {
+        'cflags_cc': [
+          '<!@(<(pkg_config) --cflags Qt5Network)'
+        ]
+      },
+      'link_settings': {
+        'ldflags': [
+          '<!@(<(pkg_config) --libs-only-L --libs-only-other Qt5Network)',
+        ],
+        'libraries': [
+          '<!@(<(pkg_config) --libs-only-l Qt5Network)',
+        ],
+      },
+    },
+    {
       'target_name': 'Qt5Positioning',
       'type': 'none',
       'direct_dependent_settings': {

@@ -27,6 +27,7 @@
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
 class QOpenGLContext;
+class QNetworkCookie;
 QT_END_NAMESPACE
 
 class OxideQBeforeSendHeadersEvent;
@@ -110,12 +111,32 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
+  void doSetCookies(const QString& url,
+                    const QList<QNetworkCookie>& cookies,
+		    int requestId);
+  void doGetAllCookies(int requestId);
+
+  QString devtoolsBindIp() const;
+  void setDevtoolsBindIp(const QString& bindIp);
+
  protected:
   WebContextAdapter(QObject* q,
                     IOThreadDelegate* io_delegate);
 
+  // Should properly map to what's in qt/quick/api/oxideqquickmanager_p.h
+  enum RequestStatus {
+    RequestStatusOK,
+    RequestStatusError,
+    RequestStatusInternalFailure,
+  };
+
  private:
   friend class WebContextAdapterPrivate;
+
+  virtual void CookiesSet(int requestId, RequestStatus status);
+  virtual void CookiesRetrieved(int requestId,
+      const QList<QNetworkCookie>& cookies,
+      RequestStatus status);
 
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually

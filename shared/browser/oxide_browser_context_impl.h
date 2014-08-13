@@ -91,6 +91,7 @@ class BrowserContextImpl FINAL : public BrowserContext {
 
   bool GetDevtoolsEnabled() const FINAL;
   int GetDevtoolsPort() const FINAL;
+  std::string GetDevtoolsBindIp() const FINAL;
 
   UserScriptMaster& UserScriptManager() FINAL;
 
@@ -106,6 +107,7 @@ class BrowserContextImpl FINAL : public BrowserContext {
   content::DevToolsHttpHandler* devtools_http_handler_;
   bool devtools_enabled_;
   int devtools_port_;
+  std::string devtools_ip_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextImpl);
 };

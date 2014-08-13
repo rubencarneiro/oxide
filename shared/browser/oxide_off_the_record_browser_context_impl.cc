@@ -120,5 +120,8 @@ int OffTheRecordBrowserContextImpl::GetDevtoolsPort() const {
   return original_context_->GetDevtoolsPort();
 }
 
+std::string OffTheRecordBrowserContextImpl::GetDevtoolsBindIp() const {
+  return original_context_->GetDevtoolsBindIp();
+}
 
 } // namespace oxide
