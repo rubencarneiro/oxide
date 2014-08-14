@@ -39,6 +39,8 @@
 namespace {
 
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
+const char * const kAcceptLanguageMessageId = "AcceptLanguage";
+const char * const kDefaultAcceptLanguage = "en-us,en";
 
 }
 
@@ -48,10 +50,12 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     const BrowserContext::Params& params) :
     path_(params.path),
     cache_path_(params.cache_path),
-    accept_langs_(dgettext("oxide", "en-us,en")),
     cookie_policy_(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode_(params.session_cookie_mode),
     popup_blocker_enabled_(true) {
+  accept_langs_ = dgettext("oxide", kAcceptLanguageMessageId);
+  if (accept_langs_ == kAcceptLanguageMessageId)
+    accept_langs_ = kDefaultAcceptLanguage;
 }
 
 net::StaticCookiePolicy::Type BrowserContextIODataImpl::GetCookiePolicy() const {
