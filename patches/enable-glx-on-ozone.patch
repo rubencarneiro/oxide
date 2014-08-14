@@ -5,7 +5,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -106,52 +106,16 @@
+@@ -110,52 +110,16 @@
            ],
          },
        ],  # targets
@@ -58,7 +58,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -159,33 +123,16 @@
+@@ -163,33 +127,16 @@
                '<!@(<(pkg-config) --libs-only-L --libs-only-other xcursor)',
              ],
              'libraries': [
@@ -92,7 +92,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -193,33 +140,16 @@
+@@ -197,33 +144,16 @@
                '<!@(<(pkg-config) --libs-only-L --libs-only-other xdamage)',
              ],
              'libraries': [
@@ -126,7 +126,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -1024,16 +954,86 @@
+@@ -1028,16 +958,86 @@
                  ],
                },
              }],
@@ -209,7 +209,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
        'type': 'none',
        'conditions': [
          # libudev is not available on *BSD
-         ['_toolset=="target" and os_bsd!=1 and use_udev==1', {
+         ['_toolset=="target" and os_bsd!=1', {
            'direct_dependent_settings': {
              'cflags': [
                '<!@(<(pkg-config) --cflags libudev)'
