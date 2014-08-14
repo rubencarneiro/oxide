@@ -11,7 +11,7 @@ add_custom_target(${POT_FILE}
                   COMMAND ${GETTEXT_XGETTEXT_EXECUTABLE} -o ${POT_FILE}
                           -D ${CMAKE_SOURCE_DIR}
                           --from-code=UTF-8
-                          --c++ --qt
+                          --c++ --qt --keyword=dgettext:2
                           --package-name=oxide
                           --copyright-holder='Canonical Ltd.'
                           ${I18N_SRC_FILES})
