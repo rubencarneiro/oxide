@@ -17,6 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: shared/browser/oxide_browser_context_impl.cc:56
+#: shared/browser/oxide_browser_context.cc:204
 msgid "AcceptLanguage"
 msgstr "sw,en-GB,en,*"
