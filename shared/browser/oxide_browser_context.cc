@@ -113,7 +113,7 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
   }
 
   net::URLRequestContext* GetURLRequestContext() FINAL {
-    DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+    DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
     if (!url_request_context_) {
       DCHECK(context_);
@@ -300,7 +300,7 @@ BrowserContextIOData::BrowserContextIOData() :
 }
 
 BrowserContextIOData::~BrowserContextIOData() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 }
 
 // static
@@ -354,7 +354,7 @@ std::string BrowserContextIOData::GetUserAgent() const {
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     content::ProtocolHandlerMap& protocol_handlers,
     content::URLRequestInterceptorScopedVector request_interceptors) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
   DCHECK(!main_request_context_);
 
   IOThread::Globals* io_thread_globals = IOThread::instance()->globals();
