@@ -54,8 +54,9 @@ BrowserContextIODataImpl::BrowserContextIODataImpl(
     popup_blocker_enabled_(true) {
 
   accept_langs_ = dgettext("oxide", "AcceptLanguage");
-  if (accept_langs_ == "AcceptLanguage")
+  if (accept_langs_ == "AcceptLanguage") {
     accept_langs_ = kDefaultAcceptLanguage;
+  }
 }
 
 net::StaticCookiePolicy::Type BrowserContextIODataImpl::GetCookiePolicy() const {
