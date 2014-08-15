@@ -27,6 +27,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "base/synchronization/lock.h"
+#include "base/threading/non_thread_safe.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
 #include "content/public/browser/cookie_store_factory.h"
@@ -51,7 +52,10 @@ class TransportSecurityState;
 namespace oxide {
 
 class BrowserContextDelegate;
+class BrowserContextImpl;
 class BrowserContextObserver;
+class BrowserContextSharedData;
+class BrowserContextSharedIOData;
 class GeolocationPermissionContext;
 class ResourceContext;
 class URLRequestContext;
@@ -65,21 +69,18 @@ class BrowserContextIOData {
   static BrowserContextIOData* FromResourceContext(
       content::ResourceContext* context);
 
-  void Init();
-
   scoped_refptr<BrowserContextDelegate> GetDelegate();
 
-  virtual net::StaticCookiePolicy::Type GetCookiePolicy() const = 0;
+  net::StaticCookiePolicy::Type GetCookiePolicy() const;
   virtual content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const = 0;
 
-  virtual bool IsPopupBlockerEnabled() const = 0;
+  bool IsPopupBlockerEnabled() const;
 
-  virtual base::FilePath GetPath() const = 0;
-  virtual base::FilePath GetCachePath() const = 0;
+  base::FilePath GetPath() const;
+  base::FilePath GetCachePath() const;
 
-  virtual std::string GetAcceptLangs() const = 0;
-
-  virtual std::string GetUserAgent() const = 0;
+  std::string GetAcceptLangs() const;
+  std::string GetUserAgent() const;
 
   virtual bool IsOffTheRecord() const = 0;
 
@@ -89,23 +90,22 @@ class BrowserContextIOData {
 
   content::ResourceContext* GetResourceContext();
 
-  scoped_refptr<net::CookieStore> GetCookieStore() const;
-
   bool CanAccessCookies(const GURL& url,
                         const GURL& first_party_url,
                         bool write);
 
  protected:
+  friend class BrowserContextImpl; // For GetSharedData()
+
   BrowserContextIOData();
 
+  virtual BrowserContextSharedIOData& GetSharedData() = 0;
+  virtual const BrowserContextSharedIOData& GetSharedData() const = 0;
+
  private:
-  friend class BrowserContext;
+  friend class BrowserContext; // For Init(), GetSharedData() and various members
 
-  void SetDelegate(BrowserContextDelegate* delegate);
-  base::FilePath GetCookiePath() const;
-
-  base::Lock delegate_lock_;
-  scoped_refptr<BrowserContextDelegate> delegate_;
+  void Init();
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
@@ -122,22 +122,22 @@ class BrowserContextIOData {
 };
 
 class BrowserContext : public content::BrowserContext,
-                       public base::RefCounted<BrowserContext> {
+                       public base::NonThreadSafe {
  public:
 
   struct Params {
     Params(const base::FilePath& path,
            const base::FilePath& cache_path,
            const content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
-	   bool devtools_enabled,
-	   int devtools_port,
-	   const std::string& devtools_ip) :
-        path(path),
-	cache_path(cache_path),
-        session_cookie_mode(session_cookie_mode),
-        devtools_enabled(devtools_enabled),
-        devtools_port(devtools_port),
-        devtools_ip(devtools_ip) {}
+           bool devtools_enabled,
+           int devtools_port,
+           const std::string& devtools_ip)
+        : path(path),
+          cache_path(cache_path),
+          session_cookie_mode(session_cookie_mode),
+          devtools_enabled(devtools_enabled),
+          devtools_port(devtools_port),
+          devtools_ip(devtools_ip) {}
 
     base::FilePath path;
     base::FilePath cache_path;
@@ -147,22 +147,20 @@ class BrowserContext : public content::BrowserContext,
     std::string devtools_ip;
   };
 
-  virtual ~BrowserContext();
-
   static BrowserContext* FromContent(
       content::BrowserContext* context) {
     return static_cast<BrowserContext *>(context);
   }
 
-  // Create a new browser context. The caller owns this context, and
-  // is responsible for destroying it when it is finished with it.
-  // The caller must ensure that it outlives any other consumers (ie,
-  // WebView's), and must ensure that it is destroyed before all
-  // references to the BrowserProcessMain have been released
-  static BrowserContext* Create(const Params& params);
+  static scoped_refptr<BrowserContext> Create(const Params& params);
 
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();
+
+  // We don't use base::RefCounted here because BrowserContext always
+  // comes in pairs, and we want a shared reference count between each half
+  void AddRef() const;
+  void Release() const;
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers,
@@ -182,29 +180,27 @@ class BrowserContext : public content::BrowserContext,
   base::FilePath GetCachePath() const;
 
   std::string GetAcceptLangs() const;
-  virtual void SetAcceptLangs(const std::string& langs) = 0;
+  void SetAcceptLangs(const std::string& langs);
 
-  virtual std::string GetProduct() const = 0;
-  virtual void SetProduct(const std::string& product) = 0;
+  std::string GetProduct() const;
+  void SetProduct(const std::string& product);
 
-  virtual std::string GetUserAgent() const;
-  virtual void SetUserAgent(const std::string& user_agent) = 0;
+  std::string GetUserAgent() const;
+  void SetUserAgent(const std::string& user_agent);
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
-  virtual void SetCookiePolicy(net::StaticCookiePolicy::Type policy) = 0;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
   content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
 
   bool IsPopupBlockerEnabled() const;
-  virtual void SetIsPopupBlockerEnabled(bool enabled) = 0;
+  void SetIsPopupBlockerEnabled(bool enabled);
 
-  virtual bool GetDevtoolsEnabled() const = 0;
-  virtual int GetDevtoolsPort() const = 0;
-  virtual std::string GetDevtoolsBindIp() const = 0;
+  bool GetDevtoolsEnabled() const;
+  int GetDevtoolsPort() const;
+  std::string GetDevtoolsBindIp() const;
 
-  BrowserContextIOData* io_data() const { return io_data_handle_.io_data(); }
-
-  virtual UserScriptMaster& UserScriptManager() = 0;
+  UserScriptMaster& UserScriptManager();
 
   content::ResourceContext* GetResourceContext() FINAL;
 
@@ -212,22 +208,15 @@ class BrowserContext : public content::BrowserContext,
 
  protected:
   BrowserContext(BrowserContextIOData* io_data);
+  virtual ~BrowserContext();
 
-  void OnPopupBlockerEnabledChanged();
+  BrowserContextIOData* io_data() const { return io_data_; }
+
+  virtual BrowserContextSharedData& GetSharedData() = 0;
+  virtual const BrowserContextSharedData& GetSharedData() const = 0;
 
  private:
-  friend class BrowserContextObserver;
-
-  class IODataHandle {
-   public:
-    IODataHandle(BrowserContextIOData* data) : io_data_(data) {}
-    ~IODataHandle();
-
-    BrowserContextIOData* io_data() const { return io_data_; }
-
-   private:
-    BrowserContextIOData* io_data_;
-  };
+  friend class BrowserContextObserver; // for {Add,Remove}Observer
 
   net::URLRequestContextGetter* GetRequestContext() FINAL;
   net::URLRequestContextGetter* GetRequestContextForRenderProcess(
@@ -252,68 +241,13 @@ class BrowserContext : public content::BrowserContext,
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
 
-  IODataHandle io_data_handle_;
+  static void Delete(const BrowserContext* context);
+
+  BrowserContextIOData* io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
-};
-
-class ScopedBrowserContext FINAL {
- public:
-  ScopedBrowserContext() :
-      context_(NULL),
-      ref_context_(NULL) {}
-  ScopedBrowserContext(BrowserContext* context) :
-      context_(context),
-      ref_context_(context ? context->GetOriginalContext() : NULL) {
-    if (ref_context_) {
-      ref_context_->AddRef();
-    }
-  }
-  ScopedBrowserContext(const ScopedBrowserContext& other) :
-      context_(other.context_),
-      ref_context_(other.ref_context_) {
-    if (ref_context_) {
-      ref_context_->AddRef();
-    }
-  }
-
-  ~ScopedBrowserContext() {
-    if (ref_context_) {
-      ref_context_->Release();
-    }
-  }
-
-  BrowserContext* get() const { return context_; }
-  operator BrowserContext*() const { return context_; }
-  BrowserContext* operator->() const {
-    assert(context_);
-    return context_;
-  }
-
-  ScopedBrowserContext& operator=(BrowserContext* context) {
-    BrowserContext* ref_context = context ? context->GetOriginalContext() : NULL;
-    if (ref_context) {
-      ref_context->AddRef();
-    }
-    BrowserContext* old = ref_context_;
-    context_ = context;
-    ref_context_ = ref_context;
-    if (old) {
-      old->Release();
-    }
-    return *this;
-  }
-
-  ScopedBrowserContext& operator=(const ScopedBrowserContext& other) {
-    *this = other.get();
-    return *this;
-  }
-
- private:
-  BrowserContext* context_;
-  BrowserContext* ref_context_;
 };
 
 } // namespace oxide

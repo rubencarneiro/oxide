@@ -32,6 +32,7 @@
 
 #include "shared/common/oxide_content_client.h"
 
+#include "oxide_browser_context.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_web_preferences.h"
