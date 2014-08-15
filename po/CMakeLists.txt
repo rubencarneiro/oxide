@@ -24,4 +24,3 @@ foreach(PO_FILE ${PO_FILES})
             DESTINATION ${INSTALL_DIR}
             RENAME ${DOMAIN}.mo)
 endforeach(PO_FILE)
-
