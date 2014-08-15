@@ -62,7 +62,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
-  ui::ResourceBundle::InitSharedInstanceLocaleOnly(std::string(), NULL);
+  ui::ResourceBundle::InitSharedInstanceWithLocale(
+      std::string(), NULL,
+      ui::ResourceBundle::DO_NOT_LOAD_COMMON_RESOURCES);
 
   base::FilePath dir_exe;
   PathService::Get(base::DIR_EXE, &dir_exe);
