@@ -20,16 +20,17 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "base/supports_user_data.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 
-#include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 
 namespace oxide {
 
+class BrowserContext;
 class WebPreferences;
 class WebViewContentsHelperDelegate;
 
@@ -109,7 +110,7 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
   bool IsFullscreenForTabOrPending(
       const content::WebContents* source) const FINAL;
 
-  ScopedBrowserContext context_;
+  scoped_refptr<BrowserContext> context_;
   WebViewContentsHelperDelegate* delegate_;
 
   // WebPreferences are normally owned by the public object exposed to

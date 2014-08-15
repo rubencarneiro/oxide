@@ -24,15 +24,20 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/memory/weak_ptr.h"
+#include "base/strings/stringprintf.h"
 #include "base/supports_user_data.h"
+#include "base/synchronization/lock.h"
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/cookie_crypto_delegate.h"
+#include "content/public/browser/devtools_http_handler.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
+#include "content/public/common/user_agent.h"
 #include "net/base/net_errors.h"
+#include "net/base/net_util.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/ftp/ftp_network_layer.h"
 #include "net/http/http_cache.h"
@@ -40,6 +45,7 @@
 #include "net/http/http_server_properties_impl.h"
 #include "net/http/transport_security_persister.h"
 #include "net/http/transport_security_state.h"
+#include "net/socket/tcp_listen_socket.h"
 #include "net/ssl/channel_id_service.h"
 #include "net/ssl/channel_id_store.h"
 #include "net/ssl/default_channel_id_store.h"
@@ -49,18 +55,21 @@
 #include "net/url_request/url_request_intercepting_job_factory.h"
 #include "net/url_request/url_request_job_factory_impl.h"
 
+#include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
+#include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_messages.h"
 
-#include "oxide_browser_context_impl.h"
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_devtools_http_handler_delegate.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
-#include "oxide_off_the_record_browser_context_impl.h"
 #include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
+#include "oxide_user_script_master.h"
 
 namespace oxide {
 
@@ -78,13 +87,15 @@ const char kFtpScheme[] = "ftp";
 
 const char kBrowserContextKey[] = "oxide_browser_context_data";
 
-class ContextData : public base::SupportsUserData::Data {
- public:
-  ContextData(BrowserContextIOData* context) :
-      context_(context) {}
-  virtual ~ContextData() {}
+const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
 
-  BrowserContextIOData* context() const { return context_; }
+class ResourceContextData : public base::SupportsUserData::Data {
+ public:
+  ResourceContextData(BrowserContextIOData* context) :
+      context_(context) {}
+  virtual ~ResourceContextData() {}
+
+  BrowserContextIOData* get() const { return context_; }
 
  private:
   BrowserContextIOData* context_;
@@ -154,6 +165,56 @@ class ResourceContext FINAL : public content::ResourceContext {
   DISALLOW_COPY_AND_ASSIGN(ResourceContext);
 };
 
+struct BrowserContextSharedData {
+  BrowserContextSharedData(BrowserContext* context,
+                           const BrowserContext::Params& params)
+      : ref_count(0),
+        in_dtor(false),
+        product(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
+        user_agent_string_is_default(true),
+        user_script_master(context),
+        devtools_http_handler(NULL),
+        devtools_enabled(params.devtools_enabled),
+        devtools_port(params.devtools_port),
+        devtools_ip(params.devtools_ip) {}
+
+  mutable int ref_count;
+  mutable bool in_dtor;
+
+  std::string product;
+  bool user_agent_string_is_default;
+  UserScriptMaster user_script_master;
+
+  content::DevToolsHttpHandler* devtools_http_handler;
+  bool devtools_enabled;
+  int devtools_port;
+  std::string devtools_ip;
+};
+
+struct BrowserContextSharedIOData {
+  BrowserContextSharedIOData(const BrowserContext::Params& params)
+      : path(params.path),
+        cache_path(params.cache_path),
+        accept_langs("en-us,en"),
+        cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+        session_cookie_mode(params.session_cookie_mode),
+        popup_blocker_enabled(true) {}
+
+  mutable base::Lock lock;
+
+  base::FilePath path;
+  base::FilePath cache_path;
+
+  std::string user_agent_string;
+  std::string accept_langs;
+
+  net::StaticCookiePolicy::Type cookie_policy;
+  content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
+  bool popup_blocker_enabled;
+
+  scoped_refptr<BrowserContextDelegate> delegate;
+};
+
 // static
 void BrowserContextDelegateTraits::Destruct(const BrowserContextDelegate* x) {
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
@@ -169,16 +230,73 @@ void BrowserContextDelegateTraits::Destruct(const BrowserContextDelegate* x) {
   }
 }
 
-void BrowserContextIOData::SetDelegate(BrowserContextDelegate* delegate) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+class BrowserContextIODataImpl : public BrowserContextIOData {
+ public:
+  BrowserContextIODataImpl(const BrowserContext::Params& params)
+      : data_(params) {}
 
-  base::AutoLock lock(delegate_lock_);
-  delegate_ = delegate;
+  BrowserContextSharedIOData& GetSharedData() FINAL {
+    return data_;
+  }
+  const BrowserContextSharedIOData& GetSharedData() const FINAL {
+    return data_;
+  }
+
+ private:
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const FINAL {
+    return GetPath().empty() ?
+        content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES :
+        data_.session_cookie_mode;
+  }
+ 
+  bool IsOffTheRecord() const FINAL {
+    return false;
+  }
+
+  BrowserContextSharedIOData data_;
+};
+
+class OTRBrowserContextIODataImpl : public BrowserContextIOData {
+ public:
+  OTRBrowserContextIODataImpl(BrowserContextIODataImpl* original)
+      : original_io_data_(original) {}
+
+ private:
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const FINAL {
+    return content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES;
+  }
+
+  bool IsOffTheRecord() const FINAL {
+    return true;
+  }
+
+  BrowserContextSharedIOData& GetSharedData() FINAL {
+    return original_io_data_->GetSharedData();
+  }
+  const BrowserContextSharedIOData& GetSharedData() const FINAL {
+    return original_io_data_->GetSharedData();
+  }
+
+  BrowserContextIODataImpl* original_io_data_;
+};
+
+void BrowserContextIOData::Init() {
+  DCHECK(!cookie_store_);
+
+  base::FilePath cookie_path;
+  if (!IsOffTheRecord() && !GetPath().empty()) {
+    cookie_path = GetPath().Append(kCookiesFilename);
+  }
+  cookie_store_ = content::CreateCookieStore(
+      content::CookieStoreConfig(cookie_path,
+                                 GetSessionCookieMode(),
+                                 NULL, NULL));
 }
 
 BrowserContextIOData::BrowserContextIOData() :
     resource_context_(new ResourceContext()) {
-  resource_context_->SetUserData(kBrowserContextKey, new ContextData(this));
+  resource_context_->SetUserData(kBrowserContextKey,
+                                 new ResourceContextData(this));
 }
 
 BrowserContextIOData::~BrowserContextIOData() {
@@ -188,30 +306,49 @@ BrowserContextIOData::~BrowserContextIOData() {
 // static
 BrowserContextIOData* BrowserContextIOData::FromResourceContext(
     content::ResourceContext* resource_context) {
-  return static_cast<ContextData *>(
-      resource_context->GetUserData(kBrowserContextKey))->context();
-}
-
-base::FilePath BrowserContextIOData::GetCookiePath() const {
-  base::FilePath cookie_path;
-  if (!IsOffTheRecord() && !GetPath().empty()) {
-    cookie_path = GetPath().Append(kCookiesFilename);
-  }
-  return cookie_path;
-}
-
-void BrowserContextIOData::Init() {
-  if (cookie_store_)
-    return;
-  cookie_store_ = content::CreateCookieStore(
-      content::CookieStoreConfig(GetCookiePath(),
-          GetSessionCookieMode(),
-	  NULL, NULL));
+  return static_cast<ResourceContextData *>(
+      resource_context->GetUserData(kBrowserContextKey))->get();
 }
 
 scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
-  base::AutoLock lock(delegate_lock_);
-  return delegate_;
+  BrowserContextSharedIOData& data = GetSharedData();
+  base::AutoLock lock(data.lock);
+  return data.delegate;
+}
+
+net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
+  const BrowserContextSharedIOData& data = GetSharedData();
+  base::AutoLock lock(data.lock);
+  return data.cookie_policy;
+}
+
+bool BrowserContextIOData::IsPopupBlockerEnabled() const {
+  return GetSharedData().popup_blocker_enabled;
+}
+
+base::FilePath BrowserContextIOData::GetPath() const {
+  return GetSharedData().path;
+}
+
+base::FilePath BrowserContextIOData::GetCachePath() const {
+  const BrowserContextSharedIOData& data = GetSharedData();
+  if (data.cache_path.empty()) {
+    return GetPath();
+  }
+
+  return data.cache_path;
+}
+
+std::string BrowserContextIOData::GetAcceptLangs() const {
+  const BrowserContextSharedIOData& data = GetSharedData();
+  base::AutoLock lock(data.lock);
+  return data.accept_langs;
+}
+
+std::string BrowserContextIOData::GetUserAgent() const {
+  const BrowserContextSharedIOData& data = GetSharedData();
+  base::AutoLock lock(data.lock);
+  return data.user_agent_string;
 }
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
@@ -260,9 +397,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
-  if (!cookie_store_) {
-    Init();
-  }
+  DCHECK(cookie_store_);
   storage->set_cookie_store(cookie_store_);
 
   context->set_transport_security_state(transport_security_state_.get());
@@ -348,10 +483,6 @@ content::ResourceContext* BrowserContextIOData::GetResourceContext() {
   return resource_context_.get();
 }
 
-scoped_refptr<net::CookieStore> BrowserContextIOData::GetCookieStore() const {
-  return cookie_store_;
-}
-
 bool BrowserContextIOData::CanAccessCookies(const GURL& url,
                                             const GURL& first_party_url,
                                             bool write) {
@@ -373,12 +504,106 @@ bool BrowserContextIOData::CanAccessCookies(const GURL& url,
   return policy.CanGetCookies(url, first_party_url) == net::OK;
 }
 
-BrowserContext::IODataHandle::~IODataHandle() {
-  // Schedule this to be destroyed on the IO thread
-  content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
-                                     FROM_HERE, io_data_);
-  io_data_ = NULL;
+class BrowserContextImpl;
+
+class OTRBrowserContextImpl : public BrowserContext {
+ public:
+  OTRBrowserContextImpl(BrowserContextImpl* original,
+                        BrowserContextIODataImpl* original_io_data);
+
+ private:
+  friend class BrowserContextImpl; // For the destructor
+
+  virtual ~OTRBrowserContextImpl() {}
+
+  BrowserContext* GetOffTheRecordContext() FINAL {
+    return this;
+  }
+  BrowserContext* GetOriginalContext() FINAL;
+
+  BrowserContextSharedData& GetSharedData() FINAL;
+  const BrowserContextSharedData& GetSharedData() const FINAL;
+
+  BrowserContextImpl* original_context_;
+};
+
+class BrowserContextImpl : public BrowserContext {
+ public:
+  BrowserContextImpl(const BrowserContext::Params& params)
+      : BrowserContext(new BrowserContextIODataImpl(params)),
+        data_(this, params),
+        otr_context_(NULL) {
+    io_data()->GetSharedData().user_agent_string =
+        content::BuildUserAgentFromProduct(data_.product);
+
+    if (data_.devtools_enabled &&
+        data_.devtools_port < 65535 &&
+        data_.devtools_port > 1024) {
+      net::IPAddressNumber ipnumber;
+      std::string ip =
+          net::ParseIPLiteralToNumber(data_.devtools_ip, &ipnumber) ?
+            data_.devtools_ip : kDevtoolsDefaultServerIp;
+
+      data_.devtools_http_handler = content::DevToolsHttpHandler::Start(
+          new net::TCPListenSocketFactory(ip, data_.devtools_port),
+          std::string(),
+          new DevtoolsHttpHandlerDelegate(ip, data_.devtools_port, this),
+          base::FilePath());
+    }
+  }
+
+  BrowserContextSharedData& GetSharedData() FINAL {
+    return data_;
+  }
+  const BrowserContextSharedData& GetSharedData() const FINAL {
+    return data_;
+  }
+
+ private:
+  virtual ~BrowserContextImpl() {
+    if (otr_context_) {
+      delete otr_context_;
+      otr_context_ = NULL;
+    }
+  }
+
+  BrowserContext* GetOffTheRecordContext() FINAL {
+    if (!otr_context_) {
+      otr_context_ =
+          new OTRBrowserContextImpl(
+            this,
+            static_cast<BrowserContextIODataImpl *>(io_data()));
+    }
+
+    return otr_context_;
+  }
+
+  BrowserContext* GetOriginalContext() FINAL {
+    return this;
+  }
+
+  BrowserContextSharedData data_;
+  OTRBrowserContextImpl* otr_context_;
+};
+
+BrowserContextSharedData& OTRBrowserContextImpl::GetSharedData() {
+  return original_context_->GetSharedData();
 }
+
+const BrowserContextSharedData&
+OTRBrowserContextImpl::GetSharedData() const {
+  return original_context_->GetSharedData();
+}
+
+BrowserContext* OTRBrowserContextImpl::GetOriginalContext() {
+  return original_context_;
+}
+
+OTRBrowserContextImpl::OTRBrowserContextImpl(
+    BrowserContextImpl* original,
+    BrowserContextIODataImpl* original_io_data)
+    : BrowserContext(new OTRBrowserContextIODataImpl(original_io_data)),
+      original_context_(original) {}
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
   return GetStoragePartition(this, NULL)->GetURLRequestContext();
@@ -444,27 +669,23 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
+// static
+void BrowserContext::Delete(const BrowserContext* context) {
+  delete const_cast<BrowserContext *>(context)->GetOriginalContext();
+}
+
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
-    io_data_handle_(io_data) {
+    io_data_(io_data) {
   CHECK(BrowserProcessMain::GetInstance()->IsRunning()) <<
       "The main browser process components must be started before " <<
       "creating a context";
 
   g_all_contexts.Get().push_back(this);
 
-  content::BrowserContext::EnsureResourceContextInitialized(this);
-
   // Make sure that the cookie store is properly created
   io_data->Init();
-}
 
-void BrowserContext::OnPopupBlockerEnabledChanged() {
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOriginalContext()->observers_,
-                    NotifyPopupBlockerEnabledChanged());
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOffTheRecordContext()->observers_,
-                    NotifyPopupBlockerEnabledChanged());
+  content::BrowserContext::EnsureResourceContextInitialized(this);
 }
 
 BrowserContext::~BrowserContext() {
@@ -480,18 +701,37 @@ BrowserContext::~BrowserContext() {
       break;
     }
   }
+
+  // Schedule io_data_ to be destroyed on the IO thread
+  content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
+                                     FROM_HERE, io_data_);
+  io_data_ = NULL;
 }
 
 // static
 BrowserContext* BrowserContext::Create(const Params& params) {
-  BrowserContext* context = new BrowserContextImpl(params);
-  context->io_data()->Init();
-  return context;
+  return new BrowserContextImpl(params);
 }
 
 // static
 void BrowserContext::AssertNoContextsExist() {
   CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
+}
+
+void BrowserContext::AddRef() const {
+  const BrowserContextSharedData& data = GetSharedData();
+  DCHECK(!data.in_dtor);
+  data.ref_count++;
+}
+
+void BrowserContext::Release() const {
+  const BrowserContextSharedData& data = GetSharedData();
+  DCHECK(!data.in_dtor);
+  DCHECK(data.ref_count > 0);
+  if (--data.ref_count == 0) {
+    data.in_dtor = true;
+    Delete(this);
+  }
 }
 
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
@@ -513,8 +753,9 @@ BrowserContextDelegate* BrowserContext::GetDelegate() const {
 }
 
 void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {
-  GetOriginalContext()->io_data()->SetDelegate(delegate);
-  GetOffTheRecordContext()->io_data()->SetDelegate(delegate);
+  BrowserContextSharedIOData& data = io_data()->GetSharedData();
+  base::AutoLock lock(data.lock);
+  data.delegate = delegate;
 }
 
 bool BrowserContext::IsOffTheRecord() const {
@@ -538,12 +779,58 @@ std::string BrowserContext::GetAcceptLangs() const {
   return io_data()->GetAcceptLangs();
 }
 
+void BrowserContext::SetAcceptLangs(const std::string& langs) {
+  BrowserContextSharedIOData& data = io_data()->GetSharedData();
+  base::AutoLock lock(data.lock);
+  data.accept_langs = langs;
+}
+
+std::string BrowserContext::GetProduct() const {
+  return GetSharedData().product;
+}
+
+void BrowserContext::SetProduct(const std::string& product) {
+  BrowserContextSharedData& data = GetSharedData();
+  data.product = product.empty() ?
+      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING) : product;
+  if (data.user_agent_string_is_default) {
+    SetUserAgent(std::string());
+  }
+}
+
 std::string BrowserContext::GetUserAgent() const {
   return io_data()->GetUserAgent();
 }
 
+void BrowserContext::SetUserAgent(const std::string& user_agent) {
+  {
+    BrowserContextSharedIOData& data = io_data()->GetSharedData();
+    base::AutoLock lock(data.lock);
+    data.user_agent_string = user_agent.empty() ?
+        content::BuildUserAgentFromProduct(GetSharedData().product) :
+        user_agent;
+    GetSharedData().user_agent_string_is_default = user_agent.empty();
+  }
+
+  for (content::RenderProcessHost::iterator it =
+          content::RenderProcessHost::AllHostsIterator();
+       !it.IsAtEnd(); it.Advance()) {
+    content::RenderProcessHost* host = it.GetCurrentValue();
+    if (IsSameContext(
+            BrowserContext::FromContent(host->GetBrowserContext()))) {
+      host->Send(new OxideMsg_SetUserAgent(GetUserAgent()));
+    }
+  }
+}
+
 net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
   return io_data()->GetCookiePolicy();
+}
+
+void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
+  BrowserContextSharedIOData& data = io_data()->GetSharedData();
+  base::AutoLock lock(data.lock);
+  data.cookie_policy = policy;
 }
 
 content::CookieStoreConfig::SessionCookieMode
@@ -555,12 +842,39 @@ bool BrowserContext::IsPopupBlockerEnabled() const {
   return io_data()->IsPopupBlockerEnabled();
 }
 
+void BrowserContext::SetIsPopupBlockerEnabled(bool enabled) {
+  io_data()->GetSharedData().popup_blocker_enabled = enabled;
+
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyPopupBlockerEnabledChanged());
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOffTheRecordContext()->observers_,
+                    NotifyPopupBlockerEnabledChanged());
+}
+
+bool BrowserContext::GetDevtoolsEnabled() const {
+  return GetSharedData().devtools_enabled;
+}
+
+int BrowserContext::GetDevtoolsPort() const {
+  return GetSharedData().devtools_port;
+}
+
+std::string BrowserContext::GetDevtoolsBindIp() const {
+  return GetSharedData().devtools_ip;
+}
+
+UserScriptMaster& BrowserContext::UserScriptManager() {
+  return GetSharedData().user_script_master;
+}
+
 content::ResourceContext* BrowserContext::GetResourceContext() {
   return io_data()->GetResourceContext();
 }
 
 scoped_refptr<net::CookieStore> BrowserContext::GetCookieStore() {
-  return io_data()->GetCookieStore();
+  return io_data()->cookie_store_;
 }
 
 } // namespace oxide

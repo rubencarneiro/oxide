@@ -26,11 +26,10 @@ class GURL;
 
 namespace content {
 class RenderProcessHost;
+class ResourceContext;
 }
 
 namespace oxide {
-
-class BrowserContextIOData;
 
 class UserAgentOverrideProvider FINAL : public content::BrowserMessageFilter {
  public:
@@ -43,7 +42,7 @@ class UserAgentOverrideProvider FINAL : public content::BrowserMessageFilter {
                               std::string* user_agent,
                               bool* overridden);
 
-  BrowserContextIOData* context_;
+  content::ResourceContext* context_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserAgentOverrideProvider);
 };
