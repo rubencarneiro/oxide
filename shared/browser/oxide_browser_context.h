@@ -27,6 +27,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "base/synchronization/lock.h"
+#include "base/threading/non_thread_safe.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
 #include "content/public/browser/cookie_store_factory.h"
@@ -120,7 +121,8 @@ class BrowserContextIOData {
   scoped_refptr<net::CookieStore> cookie_store_;
 };
 
-class BrowserContext : public content::BrowserContext {
+class BrowserContext : public content::BrowserContext,
+                       public base::NonThreadSafe {
  public:
 
   struct Params {
@@ -150,12 +152,7 @@ class BrowserContext : public content::BrowserContext {
     return static_cast<BrowserContext *>(context);
   }
 
-  // Create a new browser context. The caller owns this context, and
-  // is responsible for destroying it when it is finished with it.
-  // The caller must ensure that it outlives any other consumers (ie,
-  // WebView's), and must ensure that it is destroyed before all
-  // references to the BrowserProcessMain have been released
-  static BrowserContext* Create(const Params& params);
+  static scoped_refptr<BrowserContext> Create(const Params& params);
 
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();

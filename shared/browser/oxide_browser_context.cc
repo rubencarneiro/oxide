@@ -529,28 +529,7 @@ class OTRBrowserContextImpl : public BrowserContext {
 
 class BrowserContextImpl : public BrowserContext {
  public:
-  BrowserContextImpl(const BrowserContext::Params& params)
-      : BrowserContext(new BrowserContextIODataImpl(params)),
-        data_(this, params),
-        otr_context_(NULL) {
-    io_data()->GetSharedData().user_agent_string =
-        content::BuildUserAgentFromProduct(data_.product);
-
-    if (data_.devtools_enabled &&
-        data_.devtools_port < 65535 &&
-        data_.devtools_port > 1024) {
-      net::IPAddressNumber ipnumber;
-      std::string ip =
-          net::ParseIPLiteralToNumber(data_.devtools_ip, &ipnumber) ?
-            data_.devtools_ip : kDevtoolsDefaultServerIp;
-
-      data_.devtools_http_handler = content::DevToolsHttpHandler::Start(
-          new net::TCPListenSocketFactory(ip, data_.devtools_port),
-          std::string(),
-          new DevtoolsHttpHandlerDelegate(ip, data_.devtools_port, this),
-          base::FilePath());
-    }
-  }
+  BrowserContextImpl(const BrowserContext::Params& params);
 
   BrowserContextSharedData& GetSharedData() FINAL {
     return data_;
@@ -605,12 +584,38 @@ OTRBrowserContextImpl::OTRBrowserContextImpl(
     : BrowserContext(new OTRBrowserContextIODataImpl(original_io_data)),
       original_context_(original) {}
 
+BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
+    : BrowserContext(new BrowserContextIODataImpl(params)),
+      data_(this, params),
+      otr_context_(NULL) {
+  io_data()->GetSharedData().user_agent_string =
+      content::BuildUserAgentFromProduct(data_.product);
+
+  if (data_.devtools_enabled &&
+      data_.devtools_port < 65535 &&
+      data_.devtools_port > 1024) {
+    net::IPAddressNumber ipnumber;
+    std::string ip =
+        net::ParseIPLiteralToNumber(data_.devtools_ip, &ipnumber) ?
+          data_.devtools_ip : kDevtoolsDefaultServerIp;
+
+    data_.devtools_http_handler = content::DevToolsHttpHandler::Start(
+        new net::TCPListenSocketFactory(ip, data_.devtools_port),
+        std::string(),
+        new DevtoolsHttpHandlerDelegate(ip, data_.devtools_port, this),
+        base::FilePath());
+  }
+}
+
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
+  DCHECK(CalledOnValidThread());
   return GetStoragePartition(this, NULL)->GetURLRequestContext();
 }
 
 net::URLRequestContextGetter*
 BrowserContext::GetRequestContextForRenderProcess(int renderer_child_id) {
+  DCHECK(CalledOnValidThread());
+
   content::RenderProcessHost* host =
       content::RenderProcessHost::FromID(renderer_child_id);
 
@@ -618,11 +623,14 @@ BrowserContext::GetRequestContextForRenderProcess(int renderer_child_id) {
 }
 
 net::URLRequestContextGetter* BrowserContext::GetMediaRequestContext() {
+  DCHECK(CalledOnValidThread());
   return GetRequestContext();
 }
 
 net::URLRequestContextGetter*
 BrowserContext::GetMediaRequestContextForRenderProcess(int renderer_child_id) {
+  DCHECK(CalledOnValidThread());
+
   content::RenderProcessHost* host =
       content::RenderProcessHost::FromID(renderer_child_id);
 
@@ -662,10 +670,12 @@ content::SSLHostStateDelegate* BrowserContext::GetSSLHostStateDelegate() {
 }
 
 void BrowserContext::AddObserver(BrowserContextObserver* observer) {
+  DCHECK(CalledOnValidThread());
   observers_.AddObserver(observer);
 }
 
 void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
+  DCHECK(CalledOnValidThread());
   observers_.RemoveObserver(observer);
 }
 
@@ -676,6 +686,7 @@ void BrowserContext::Delete(const BrowserContext* context) {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
+  DCHECK(CalledOnValidThread());
   CHECK(BrowserProcessMain::GetInstance()->IsRunning()) <<
       "The main browser process components must be started before " <<
       "creating a context";
@@ -689,6 +700,8 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
 }
 
 BrowserContext::~BrowserContext() {
+  DCHECK(CalledOnValidThread());
+
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     observers_,
                     OnBrowserContextDestruction());
@@ -709,8 +722,9 @@ BrowserContext::~BrowserContext() {
 }
 
 // static
-BrowserContext* BrowserContext::Create(const Params& params) {
-  return new BrowserContextImpl(params);
+scoped_refptr<BrowserContext> BrowserContext::Create(const Params& params) {
+  scoped_refptr<BrowserContext> context = new BrowserContextImpl(params);
+  return context;
 }
 
 // static
@@ -719,12 +733,16 @@ void BrowserContext::AssertNoContextsExist() {
 }
 
 void BrowserContext::AddRef() const {
+  DCHECK(CalledOnValidThread());
+
   const BrowserContextSharedData& data = GetSharedData();
   DCHECK(!data.in_dtor);
   data.ref_count++;
 }
 
 void BrowserContext::Release() const {
+  DCHECK(CalledOnValidThread());
+
   const BrowserContextSharedData& data = GetSharedData();
   DCHECK(!data.in_dtor);
   DCHECK(data.ref_count > 0);
@@ -737,7 +755,7 @@ void BrowserContext::Release() const {
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
     content::ProtocolHandlerMap* protocol_handlers,
     content::URLRequestInterceptorScopedVector request_interceptors) {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  DCHECK(CalledOnValidThread());
   DCHECK(!main_request_context_getter_);
 
   main_request_context_getter_ =
@@ -749,47 +767,60 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
 }
 
 BrowserContextDelegate* BrowserContext::GetDelegate() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->GetDelegate();
 }
 
 void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {
+  DCHECK(CalledOnValidThread());
+
   BrowserContextSharedIOData& data = io_data()->GetSharedData();
   base::AutoLock lock(data.lock);
   data.delegate = delegate;
 }
 
 bool BrowserContext::IsOffTheRecord() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->IsOffTheRecord();
 }
 
 bool BrowserContext::IsSameContext(BrowserContext* other) const {
+  DCHECK(CalledOnValidThread());
   return other->GetOriginalContext() == this ||
          other->GetOffTheRecordContext() == this;
 }
 
 base::FilePath BrowserContext::GetPath() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->GetPath();
 }
 
 base::FilePath BrowserContext::GetCachePath() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->GetCachePath();
 }
 
 std::string BrowserContext::GetAcceptLangs() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->GetAcceptLangs();
 }
 
 void BrowserContext::SetAcceptLangs(const std::string& langs) {
+  DCHECK(CalledOnValidThread());
+
   BrowserContextSharedIOData& data = io_data()->GetSharedData();
   base::AutoLock lock(data.lock);
   data.accept_langs = langs;
 }
 
 std::string BrowserContext::GetProduct() const {
+  DCHECK(CalledOnValidThread());
   return GetSharedData().product;
 }
 
 void BrowserContext::SetProduct(const std::string& product) {
+  DCHECK(CalledOnValidThread());
+
   BrowserContextSharedData& data = GetSharedData();
   data.product = product.empty() ?
       base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING) : product;
@@ -799,10 +830,13 @@ void BrowserContext::SetProduct(const std::string& product) {
 }
 
 std::string BrowserContext::GetUserAgent() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->GetUserAgent();
 }
 
 void BrowserContext::SetUserAgent(const std::string& user_agent) {
+  DCHECK(CalledOnValidThread());
+
   {
     BrowserContextSharedIOData& data = io_data()->GetSharedData();
     base::AutoLock lock(data.lock);
@@ -824,10 +858,13 @@ void BrowserContext::SetUserAgent(const std::string& user_agent) {
 }
 
 net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->GetCookiePolicy();
 }
 
 void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
+  DCHECK(CalledOnValidThread());
+
   BrowserContextSharedIOData& data = io_data()->GetSharedData();
   base::AutoLock lock(data.lock);
   data.cookie_policy = policy;
@@ -835,14 +872,18 @@ void BrowserContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
 
 content::CookieStoreConfig::SessionCookieMode
 BrowserContext::GetSessionCookieMode() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->GetSessionCookieMode();
 }
 
 bool BrowserContext::IsPopupBlockerEnabled() const {
+  DCHECK(CalledOnValidThread());
   return io_data()->IsPopupBlockerEnabled();
 }
 
 void BrowserContext::SetIsPopupBlockerEnabled(bool enabled) {
+  DCHECK(CalledOnValidThread());
+
   io_data()->GetSharedData().popup_blocker_enabled = enabled;
 
   FOR_EACH_OBSERVER(BrowserContextObserver,
@@ -854,26 +895,32 @@ void BrowserContext::SetIsPopupBlockerEnabled(bool enabled) {
 }
 
 bool BrowserContext::GetDevtoolsEnabled() const {
+  DCHECK(CalledOnValidThread());
   return GetSharedData().devtools_enabled;
 }
 
 int BrowserContext::GetDevtoolsPort() const {
+  DCHECK(CalledOnValidThread());
   return GetSharedData().devtools_port;
 }
 
 std::string BrowserContext::GetDevtoolsBindIp() const {
+  DCHECK(CalledOnValidThread());
   return GetSharedData().devtools_ip;
 }
 
 UserScriptMaster& BrowserContext::UserScriptManager() {
+  DCHECK(CalledOnValidThread());
   return GetSharedData().user_script_master;
 }
 
 content::ResourceContext* BrowserContext::GetResourceContext() {
+  DCHECK(CalledOnValidThread());
   return io_data()->GetResourceContext();
 }
 
 scoped_refptr<net::CookieStore> BrowserContext::GetCookieStore() {
+  DCHECK(CalledOnValidThread());
   return io_data()->cookie_store_;
 }
 
