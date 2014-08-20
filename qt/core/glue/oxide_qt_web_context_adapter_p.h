@@ -19,6 +19,8 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
 
 #include <QList>
+#include <QSharedPointer>
+#include <QWeakPointer>
 #include <string>
 
 #include "base/basictypes.h"
@@ -26,6 +28,7 @@
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/synchronization/lock.h"
 #include "content/public/browser/cookie_store_factory.h"
 #include "net/base/static_cookie_policy.h"
 #include "net/cookies/canonical_cookie.h"
@@ -44,7 +47,6 @@ class BrowserContext;
 
 namespace qt {
 
-class BrowserContextDelegate;
 struct ConstructProperties;
 class UserScriptAdapter;
 
@@ -56,7 +58,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   static WebContextAdapterPrivate* FromBrowserContext(
       oxide::BrowserContext* context);
 
-  WebContextAdapter* adapter() const { return adapter_; }
+  WebContextAdapter* GetAdapter() const;
   oxide::BrowserContext* GetContext();
   scoped_refptr<net::CookieStore> GetCookieStore();
 
@@ -79,13 +81,14 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
     std::string devtools_ip;
   };
 
-  static WebContextAdapterPrivate* Create(
-      WebContextAdapter* adapter,
-      WebContextAdapter::IOThreadDelegate* io_delegate);
-  WebContextAdapterPrivate(WebContextAdapter* adapter,
-                           WebContextAdapter::IOThreadDelegate* io_delegate);
+  static WebContextAdapterPrivate* Create(WebContextAdapter* adapter);
+  WebContextAdapterPrivate(WebContextAdapter* adapter);
 
+  void Init(const QWeakPointer<WebContextAdapter::IODelegate>& io_delegate);
   void Destroy();
+
+  QSharedPointer<WebContextAdapter::IODelegate> GetIODelegate() const;
+
   void UpdateUserScripts();
 
   class SetCookiesRequest {
@@ -141,7 +144,9 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
                             std::string* user_agent) FINAL;
 
   WebContextAdapter* adapter_;
-  scoped_ptr<WebContextAdapter::IOThreadDelegate> io_thread_delegate_;
+
+  mutable base::Lock io_delegate_lock_;
+  QWeakPointer<WebContextAdapter::IODelegate> io_delegate_;
 
   scoped_refptr<BrowserContext> context_;
   scoped_ptr<ConstructProperties> construct_props_;
