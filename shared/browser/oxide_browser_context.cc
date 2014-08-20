@@ -18,6 +18,7 @@
 #include "oxide_browser_context.h"
 
 #include <algorithm>
+#include <libintl.h>
 #include <vector>
 
 #include "base/files/file_path.h"
@@ -87,6 +88,7 @@ const char kFtpScheme[] = "ftp";
 
 const char kBrowserContextKey[] = "oxide_browser_context_data";
 
+const char kDefaultAcceptLanguage[] = "en-us,en";
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
 
 class ResourceContextData : public base::SupportsUserData::Data {
@@ -195,10 +197,15 @@ struct BrowserContextSharedIOData {
   BrowserContextSharedIOData(const BrowserContext::Params& params)
       : path(params.path),
         cache_path(params.cache_path),
-        accept_langs("en-us,en"),
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
-        popup_blocker_enabled(true) {}
+        popup_blocker_enabled(true) {
+
+   accept_langs = dgettext("oxide", "AcceptLanguage");
+   if (accept_langs == "AcceptLanguage") {
+     accept_langs = kDefaultAcceptLanguage;
+   }
+  }
 
   mutable base::Lock lock;
 

@@ -21,10 +21,10 @@ include(OxideCommon)
 include(OxideQtCommon)
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlscene.sh.in
-    ${CMAKE_CURRENT_BINARY_DIR}/run_qmlscene.sh
+    ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlapp.sh.in
+    ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
     IMMEDIATE @ONLY)
-file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlscene.sh
+file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
      DESTINATION ${CMAKE_BINARY_DIR}/out
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE 
          GROUP_READ GROUP_EXECUTE
@@ -93,12 +93,12 @@ list(APPEND PACKAGE_PROGRAMS ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox)
 list(APPEND PACKAGE_LOCALES ${CHROMIUM_PRODUCT_DIR}/locales)
 
 add_custom_target(
-    stage-run-qmlscene
+    stage-run-qmlapp
     COMMAND ${CMAKE_COMMAND}
-      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/run_qmlscene.sh.in
-      -DOUTPUT=${OXIDE_STAGE_DIR}/run_qmlscene.sh
+      -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/run_qmlapp.sh.in
+      -DOUTPUT=${OXIDE_STAGE_DIR}/run_qmlapp.sh
       -DRENDERER=${OXIDE_RENDERER_NAME}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/stage-run-qmlscene.cmake)
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/stage-run-qmlapp.cmake)
 add_custom_target(
     package
     COMMAND ${CMAKE_COMMAND}
@@ -107,7 +107,7 @@ add_custom_target(
       -DSTAGE_DIR=${OXIDE_STAGE_DIR}
       -DOUTPUT_DIR=${CMAKE_BINARY_DIR}/out
       -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/package.cmake
-    DEPENDS stage-quick stage-run-qmlscene
+    DEPENDS stage-quick stage-run-qmlapp
     COMMENT "Creating compressed archive")
 if(NOT DEFINED ENABLE_OXIDEQMLSCENE OR ENABLE_OXIDEQMLSCENE EQUAL 1)
   add_dependencies(package stage-oxideqmlscene)

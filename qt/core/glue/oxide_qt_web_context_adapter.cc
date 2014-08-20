@@ -24,9 +24,9 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QGuiApplication>
+#include <QNetworkCookie>
 #include <QObject>
 #include <QtDebug>
-#include <QNetworkCookie>
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
@@ -49,6 +49,10 @@ QOpenGLContext* g_shared_gl_context;
 WebContextAdapter::~WebContextAdapter() {
   priv->Destroy();
   priv->Release();
+}
+
+void WebContextAdapter::init(const QWeakPointer<IODelegate>& io_delegate) {
+  priv->Init(io_delegate);
 }
 
 QString WebContextAdapter::product() const {
@@ -244,11 +248,6 @@ void WebContextAdapter::ensureChromiumStarted() {
   }
 }
 
-WebContextAdapter::IOThreadDelegate*
-WebContextAdapter::getIOThreadDelegate() const {
-  return priv->io_thread_delegate_.get();
-}
-
 WebContextAdapter::CookiePolicy WebContextAdapter::cookiePolicy() const {
   if (isInitialized()) {
     return static_cast<CookiePolicy>(priv->context_->GetCookiePolicy());
@@ -321,29 +320,17 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
 void WebContextAdapter::doSetCookies(
       const QString& url,
       const QList<QNetworkCookie>& cookies,
-      int requestId) {
-  priv->doSetCookies(url, cookies, requestId);
+      int request_id) {
+  priv->doSetCookies(url, cookies, request_id);
 }
 
-void WebContextAdapter::doGetAllCookies(int requestId) {
-  priv->doGetAllCookies(requestId);
+void WebContextAdapter::doGetAllCookies(int request_id) {
+  priv->doGetAllCookies(request_id);
 }
 
-void WebContextAdapter::CookiesSet(int requestId,
-      WebContextAdapter::RequestStatus status) {
-}
-
-void WebContextAdapter::CookiesRetrieved(
-      int requestId,
-      const QList<QNetworkCookie>& cookies,
-      WebContextAdapter::RequestStatus status) {
-}
-
-WebContextAdapter::WebContextAdapter(
-    QObject* q,
-    IOThreadDelegate* io_delegate)
+WebContextAdapter::WebContextAdapter(QObject* q)
     : AdapterBase(q),
-      priv(WebContextAdapterPrivate::Create(this, io_delegate)) {
+      priv(WebContextAdapterPrivate::Create(this)) {
 
   priv->AddRef();
 
