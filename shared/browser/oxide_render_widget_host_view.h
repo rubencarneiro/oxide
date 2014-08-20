@@ -117,8 +117,6 @@ class RenderWidgetHostView FINAL :
   void SelectionBoundsChanged(
       const ViewHostMsg_SelectionBounds_Params& params) FINAL;
 
-  void ScrollOffsetChanged() FINAL;
-
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,

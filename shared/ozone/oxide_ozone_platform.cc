@@ -19,7 +19,6 @@
 #include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
-#include "ui/ozone/public/event_factory_ozone.h"
 #include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/gpu_platform_support_host.h"
 #include "ui/ozone/public/ozone_platform.h"
@@ -39,10 +38,6 @@ class OzonePlatform : public ui::OzonePlatform {
 
   ui::SurfaceFactoryOzone* GetSurfaceFactoryOzone() FINAL {
     return &surface_factory_;
-  }
-
-  ui::EventFactoryOzone* GetEventFactoryOzone() FINAL {
-    return &event_factory_;
   }
 
   ui::CursorFactoryOzone* GetCursorFactoryOzone() FINAL {
@@ -68,7 +63,6 @@ class OzonePlatform : public ui::OzonePlatform {
   void InitializeGPU() OVERRIDE {}
 
   OzoneSurfaceFactory surface_factory_;
-  ui::EventFactoryOzone event_factory_;
   scoped_ptr<ui::GpuPlatformSupportHost> gpu_platform_support_host_;
   scoped_ptr<ui::GpuPlatformSupport> gpu_platform_support_;
 };
