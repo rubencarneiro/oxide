@@ -26,6 +26,7 @@
 #include <QtDebug>
 #include <QThread>
 #include <QtQuickVersion>
+#include <QWeakPointer>
 #if defined(ENABLE_COMPOSITING)
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 #include <QtQuick/private/qsgcontext_p.h>
@@ -60,101 +61,110 @@ void DestroyDefaultContext() {
 namespace oxide {
 namespace qquick {
 
-class WebContextIOThreadDelegate :
-    public oxide::qt::WebContextAdapter::IOThreadDelegate {
+using namespace webcontextdelegateworker;
+
+class WebContextIODelegate : public oxide::qt::WebContextAdapter::IODelegate {
  public:
-  WebContextIOThreadDelegate() :
-      network_request_delegate(NULL),
-      storage_access_permission_delegate(NULL),
-      user_agent_override_delegate(NULL) {}
-  virtual ~WebContextIOThreadDelegate() {}
+  WebContextIODelegate() {}
+  virtual ~WebContextIODelegate() {}
 
-  virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) {
-    QMutexLocker locker(&lock);
-    if (!network_request_delegate) {
-      delete event;
-      return;
-    }
-
-    // FIXME(chrisccoulson): Should move |event| to the helper thread,
-    //  where it will be consumed
-
-    emit network_request_delegate->callEntryPointInWorker("onBeforeURLRequest",
-                                                          event);
-  }
-
-  virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) {
-    QMutexLocker locker(&lock);
-    if (!network_request_delegate) {
-      delete event;
-      return;
-    }
-
-    // FIXME(chrisccoulson): Should move |event| to the helper thread,
-    //  where it will be consumed
-
-    emit network_request_delegate->callEntryPointInWorker("onBeforeSendHeaders",
-                                                          event);
-  }
-
-  virtual void HandleStoragePermissionRequest(
-      OxideQStoragePermissionRequest* req) {
-    QMutexLocker locker(&lock);
-    if (!storage_access_permission_delegate) {
-      delete req;
-      return;
-    }
-
-    // FIXME(chrisccoulson): Should move |req| to the helper thread,
-    //  where it will be consumed
-
-    emit storage_access_permission_delegate->callEntryPointInWorker(
-        "onStoragePermissionRequest", req);
-  }
-
-  virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) {
-    bool did_override = false;
-
-    QMutexLocker locker(&lock);
-    if (!user_agent_override_delegate) {
-      return did_override;
-    }
-
-    OxideQUserAgentOverrideRequest* req = new OxideQUserAgentOverrideRequest(url);
-
-    OxideQUserAgentOverrideRequestPrivate* p =
-        OxideQUserAgentOverrideRequestPrivate::get(req);
-    p->did_override = &did_override;
-    p->user_agent = user_agent;
-
-    emit user_agent_override_delegate->callEntryPointInWorker(
-        "onGetUserAgentOverride", req);
-
-    return did_override;
-  }
+  void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) Q_DECL_FINAL;
+  void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) Q_DECL_FINAL;
+  void HandleStoragePermissionRequest(
+      OxideQStoragePermissionRequest* req) Q_DECL_FINAL;
+  bool GetUserAgentOverride(const QUrl& url, QString* user_agent) Q_DECL_FINAL;
 
   QMutex lock;
 
-  WebContextDelegateWorkerIOThreadController* network_request_delegate;
-  WebContextDelegateWorkerIOThreadController* storage_access_permission_delegate;
-  WebContextDelegateWorkerIOThreadController* user_agent_override_delegate;
+  QWeakPointer<IOThreadController> network_request_delegate;
+  QWeakPointer<IOThreadController> storage_access_permission_delegate;
+  QWeakPointer<IOThreadController> user_agent_override_delegate;
 };
+
+void WebContextIODelegate::OnBeforeURLRequest(
+    OxideQBeforeURLRequestEvent* event) {
+  QSharedPointer<IOThreadController> delegate;
+  {
+    QMutexLocker locker(&lock);
+    delegate = network_request_delegate.toStrongRef();
+  }
+  if (!delegate) {
+    delete event;
+    return;
+  }
+
+  emit delegate->callEntryPointInWorker("onBeforeURLRequest", event);
+}
+
+void WebContextIODelegate::OnBeforeSendHeaders(
+    OxideQBeforeSendHeadersEvent* event) {
+  QSharedPointer<IOThreadController> delegate;
+  {
+    QMutexLocker locker(&lock);
+    delegate = network_request_delegate.toStrongRef();
+  }
+  if (!delegate) {
+    delete event;
+    return;
+  }
+
+  emit delegate->callEntryPointInWorker("onBeforeSendHeaders", event);
+}
+
+void WebContextIODelegate::HandleStoragePermissionRequest(
+    OxideQStoragePermissionRequest* req) {
+  QSharedPointer<IOThreadController> delegate;
+  {
+    QMutexLocker locker(&lock);
+    delegate = storage_access_permission_delegate.toStrongRef();
+  }
+  if (!delegate) {
+    delete req;
+    return;
+  }
+
+  emit delegate->callEntryPointInWorker("onStoragePermissionRequest", req);
+}
+
+bool WebContextIODelegate::GetUserAgentOverride(const QUrl& url,
+                                                QString* user_agent) {
+  QSharedPointer<IOThreadController> delegate;
+  {
+    QMutexLocker locker(&lock);
+    delegate = user_agent_override_delegate.toStrongRef();
+  }
+  if (!delegate) {
+    return false;
+  }
+
+  bool did_override = false;
+
+  OxideQUserAgentOverrideRequest* req = new OxideQUserAgentOverrideRequest(url);
+
+  OxideQUserAgentOverrideRequestPrivate* p =
+      OxideQUserAgentOverrideRequestPrivate::get(req);
+  p->did_override = &did_override;
+  p->user_agent = user_agent;
+
+  emit delegate->callEntryPointInWorker("onGetUserAgentOverride", req);
+
+  return did_override;
+}
 
 } // namespace qquick
 } // namespace oxide
 
+using namespace oxide::qquick;
+
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
-    OxideQQuickWebContext* q) :
-    oxide::qt::WebContextAdapter(
-        q,
-        new oxide::qquick::WebContextIOThreadDelegate()),
-    constructed_(false),
-    io_thread_delegate_(
-        static_cast<oxide::qquick::WebContextIOThreadDelegate *>(getIOThreadDelegate())),
-    network_request_delegate_(NULL),
-    storage_access_permission_delegate_(NULL),
-    user_agent_override_delegate_(NULL),
-    cookie_manager_(NULL) {}
+    OxideQQuickWebContext* q)
+    : oxide::qt::WebContextAdapter(q),
+      constructed_(false),
+      io_(new oxide::qquick::WebContextIODelegate()),
+      network_request_delegate_(NULL),
+      storage_access_permission_delegate_(NULL),
+      user_agent_override_delegate_(NULL),
+      cookie_manager_(NULL) {}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
   updateUserScripts();
@@ -228,6 +238,49 @@ void OxideQQuickWebContextPrivate::userScript_clear(
   }
 }
 
+bool OxideQQuickWebContextPrivate::prepareToAttachDelegateWorker(
+    OxideQQuickWebContextDelegateWorker* delegate) {
+  Q_Q(OxideQQuickWebContext);
+
+  OxideQQuickWebContext* parent =
+      qobject_cast<OxideQQuickWebContext *>(delegate->parent());
+  if (parent && parent != q) {
+    qWarning() << "Can't add WebContextDelegateWorker to more than one WebContext";
+    return false;
+  }
+
+  delegate->setParent(q);
+
+  OxideQQuickWebContextDelegateWorkerPrivate* p =
+      OxideQQuickWebContextDelegateWorkerPrivate::get(delegate);
+  p->incAttachedCount();
+
+  Q_ASSERT(p->io_thread_controller().data());
+
+  return true;
+}
+
+void OxideQQuickWebContextPrivate::detachedDelegateWorker(
+    OxideQQuickWebContextDelegateWorker* delegate) {
+  Q_Q(OxideQQuickWebContext);
+
+  if (!delegate) {
+    return;
+  }
+
+  OxideQQuickWebContextDelegateWorkerPrivate* p =
+      OxideQQuickWebContextDelegateWorkerPrivate::get(delegate);
+  if (!p->decAttachedCount()) {
+    return;
+  }
+
+  // The delegate is not attached to any more slots on this context.
+  // If it's not already being deleted and we own it, delete it now
+  if (!p->in_destruction() && delegate->parent() == q) {
+    delete delegate;
+  }
+}
+
 void OxideQQuickWebContextPrivate::CookiesSet(int requestId,
       WebContextAdapter::RequestStatus status) {
   Q_Q(OxideQQuickWebContext);
@@ -258,49 +311,6 @@ void OxideQQuickWebContextPrivate::CookiesRetrieved(
       requestId,
       QVariant(cookieMapList),
       static_cast<OxideQQuickCookieManager::RequestStatus>(status));
-}
-
-bool OxideQQuickWebContextPrivate::attachDelegateWorker(
-    OxideQQuickWebContextDelegateWorker* worker,
-    OxideQQuickWebContextDelegateWorker** ui_slot,
-    oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot) {
-  Q_Q(OxideQQuickWebContext);
-
-  if (*ui_slot == worker) {
-    return false;
-  }
-
-  oxide::qquick::WebContextDelegateWorkerIOThreadController* controller = NULL;
-
-  if (worker) {
-    OxideQQuickWebContext* parent =
-        qobject_cast<OxideQQuickWebContext *>(worker->parent());
-    if (parent && parent != q) {
-      qWarning() << "Can't add WebContextDelegateWorker to more than one WebContext";
-      return false;
-    }
-
-    worker->setParent(q);
-    controller = OxideQQuickWebContextDelegateWorkerPrivate::get(
-        worker)->io_thread_controller.data();
-  }
-
-  OxideQQuickWebContextDelegateWorker* old_worker = *ui_slot;
-  *ui_slot = worker;
-
-  {
-    QMutexLocker lock(&io_thread_delegate_->lock);
-    *io_slot = controller;
-  }
-
-  if (old_worker &&
-      old_worker != q->networkRequestDelegate() &&
-      old_worker != q->storageAccessPermissionDelegate() &&
-      old_worker != q->userAgentOverrideDelegate()) {
-    old_worker->setParent(NULL);
-  }
-
-  return true;
 }
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
@@ -347,6 +357,12 @@ void OxideQQuickWebContextPrivate::ensureChromiumStarted() {
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickWebContextPrivate(this)) {
+  Q_D(OxideQQuickWebContext);
+
+  QSharedPointer<oxide::qt::WebContextAdapter::IODelegate> io =
+      qSharedPointerCast<oxide::qt::WebContextAdapter::IODelegate>(d->io_);
+  d->init(io.toWeakRef());
+
   OxideQQuickWebContextPrivate::ensureChromiumStarted();
 }
 
@@ -666,12 +682,30 @@ void OxideQQuickWebContext::setNetworkRequestDelegate(
     OxideQQuickWebContextDelegateWorker* delegate) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->attachDelegateWorker(
-      delegate,
-      &d->network_request_delegate_,
-      &d->io_thread_delegate_->network_request_delegate)) {
-    emit networkRequestDelegateChanged();
+  if (d->network_request_delegate_ == delegate) {
+    return;
   }
+
+  if (delegate && !d->prepareToAttachDelegateWorker(delegate)) {
+    return;
+  }
+
+  QSharedPointer<webcontextdelegateworker::IOThreadController> io_delegate;
+  if (delegate) {
+    io_delegate = OxideQQuickWebContextDelegateWorkerPrivate::get(
+        delegate)->io_thread_controller();
+  }
+
+  OxideQQuickWebContextDelegateWorker* old = d->network_request_delegate_;
+  d->network_request_delegate_ = delegate;
+  {
+    QMutexLocker lock(&d->io_->lock);
+    d->io_->network_request_delegate = io_delegate.toWeakRef();
+  }
+
+  d->detachedDelegateWorker(old);
+
+  emit networkRequestDelegateChanged();
 }
 
 OxideQQuickWebContextDelegateWorker*
@@ -685,12 +719,30 @@ void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
     OxideQQuickWebContextDelegateWorker* delegate) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->attachDelegateWorker(
-      delegate,
-      &d->storage_access_permission_delegate_,
-      &d->io_thread_delegate_->storage_access_permission_delegate)) {
-    emit storageAccessPermissionDelegateChanged();
+  if (d->storage_access_permission_delegate_ == delegate) {
+    return;
   }
+
+  if (delegate && !d->prepareToAttachDelegateWorker(delegate)) {
+    return;
+  }
+
+  QSharedPointer<webcontextdelegateworker::IOThreadController> io_delegate;
+  if (delegate) {
+    io_delegate = OxideQQuickWebContextDelegateWorkerPrivate::get(
+        delegate)->io_thread_controller();
+  }
+
+  OxideQQuickWebContextDelegateWorker* old = d->storage_access_permission_delegate_;
+  d->storage_access_permission_delegate_ = delegate;
+  {
+    QMutexLocker lock(&d->io_->lock);
+    d->io_->storage_access_permission_delegate = io_delegate.toWeakRef();
+  }
+
+  d->detachedDelegateWorker(old);
+
+  emit storageAccessPermissionDelegateChanged();
 }
 
 OxideQQuickWebContextDelegateWorker*
@@ -704,12 +756,30 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
     OxideQQuickWebContextDelegateWorker* delegate) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->attachDelegateWorker(
-      delegate,
-      &d->user_agent_override_delegate_,
-      &d->io_thread_delegate_->user_agent_override_delegate)) {
-    emit userAgentOverrideDelegateChanged();
+  if (d->user_agent_override_delegate_ == delegate) {
+    return;
   }
+
+  if (delegate && !d->prepareToAttachDelegateWorker(delegate)) {
+    return;
+  }
+
+  QSharedPointer<webcontextdelegateworker::IOThreadController> io_delegate;
+  if (delegate) {
+    io_delegate = OxideQQuickWebContextDelegateWorkerPrivate::get(
+        delegate)->io_thread_controller();
+  }
+
+  OxideQQuickWebContextDelegateWorker* old = d->user_agent_override_delegate_;
+  d->user_agent_override_delegate_ = delegate;
+  {
+    QMutexLocker lock(&d->io_->lock);
+    d->io_->user_agent_override_delegate = io_delegate.toWeakRef();
+  }
+
+  d->detachedDelegateWorker(old);
+
+  emit userAgentOverrideDelegateChanged();
 }
 
 bool OxideQQuickWebContext::devtoolsEnabled() const {
