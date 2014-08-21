@@ -214,6 +214,7 @@
       'sources': [
         'app/oxide_content_main_delegate.cc',
         'app/oxide_content_main_delegate.h',
+        'base/oxide_enum_flags.h',
         'base/oxide_event_utils.cc',
         'base/oxide_event_utils.h',
         'base/oxide_id_allocator.cc',

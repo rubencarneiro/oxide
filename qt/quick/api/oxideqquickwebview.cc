@@ -19,6 +19,7 @@
 #include "oxideqquickwebview_p_p.h"
 
 #include <QEvent>
+#include <QFlags>
 #include <QGuiApplication>
 #include <QHoverEvent>
 #include <QImage>
@@ -469,20 +470,14 @@ void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
   w->sendEvent(q, event);
 }
 
-inline oxide::qt::FrameMetadataChangeFlags operator&(
-    oxide::qt::FrameMetadataChangeFlags a,
-    oxide::qt::FrameMetadataChangeFlags b) {
-  return static_cast<oxide::qt::FrameMetadataChangeFlags>(
-      static_cast<int>(a) & static_cast<int>(b));
-}
-
 void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
     oxide::qt::FrameMetadataChangeFlags flags) {
   Q_Q(OxideQQuickWebView);
 
-#define IS_SET(flag) flags & flag
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
-      IS_SET(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
+  QFlags<oxide::qt::FrameMetadataChangeFlags> f(flags);
+
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
+      f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
     emit q->contentXChanged();
     emit q->contentYChanged();
     emit q->contentWidthChanged();
@@ -490,25 +485,24 @@ void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
     emit q->viewportWidthChanged();
     emit q->viewportHeightChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
     emit q->contentXChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
     emit q->contentYChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
     emit q->contentWidthChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
     emit q->contentHeightChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
     emit q->viewportWidthChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
     emit q->viewportHeightChanged();
   }
-#undef IS_SET
 }
 
 void OxideQQuickWebViewPrivate::ScheduleUpdate() {
