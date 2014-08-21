@@ -65,6 +65,8 @@ class WebPopupMenuDelegate;
 class WebView;
 
 enum FrameMetadataChangeFlags {
+  FRAME_METADATA_CHANGE_NONE = 0,
+
   FRAME_METADATA_CHANGE_DEVICE_SCALE = 1 << 0,
   FRAME_METADATA_CHANGE_SCROLL_OFFSET_X = 1 << 1,
   FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y = 1 << 2,

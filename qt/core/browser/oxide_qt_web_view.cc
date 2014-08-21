@@ -60,6 +60,7 @@
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
+#include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/oxide_render_widget_host_view.h"
 
 #include "oxide_qt_file_picker.h"
@@ -528,49 +529,43 @@ void WebView::OnUnhandledKeyboardEvent(
   adapter_->HandleUnhandledKeyboardEvent(qevent);
 }
 
-inline FrameMetadataChangeFlags operator|(FrameMetadataChangeFlags a,
-                                          FrameMetadataChangeFlags b) {
-  return static_cast<FrameMetadataChangeFlags>(
-      static_cast<int>(a) | static_cast<int>(b));
-}
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
-  FrameMetadataChangeFlags flags = static_cast<FrameMetadataChangeFlags>(0);
+  FrameMetadataChangeFlags flags = FRAME_METADATA_CHANGE_NONE;
 
-#define ADD_FLAG(flag) flags = flags | flag
   if (old.device_scale_factor !=
       compositor_frame_metadata().device_scale_factor) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_DEVICE_SCALE);
+    flags |= FRAME_METADATA_CHANGE_DEVICE_SCALE;
   }
   if (old.root_scroll_offset.x() !=
       compositor_frame_metadata().root_scroll_offset.x()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_SCROLL_OFFSET_X);
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_X;
   }
   if (old.root_scroll_offset.y() !=
       compositor_frame_metadata().root_scroll_offset.y()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y);
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y;
   }
   if (old.root_layer_size.width() !=
       compositor_frame_metadata().root_layer_size.width()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_CONTENT_WIDTH);
+    flags |= FRAME_METADATA_CHANGE_CONTENT_WIDTH;
   }
   if (old.root_layer_size.height() !=
       compositor_frame_metadata().root_layer_size.height()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_CONTENT_HEIGHT);
+    flags |= FRAME_METADATA_CHANGE_CONTENT_HEIGHT;
   }
   if (old.scrollable_viewport_size.width() !=
       compositor_frame_metadata().scrollable_viewport_size.width()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_VIEWPORT_WIDTH);
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT_WIDTH;
   }
   if (old.scrollable_viewport_size.height() !=
       compositor_frame_metadata().scrollable_viewport_size.height()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT);
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT;
   }
   if (old.page_scale_factor !=
       compositor_frame_metadata().page_scale_factor) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_PAGE_SCALE);
+    flags |= FRAME_METADATA_CHANGE_PAGE_SCALE;
   }
-#undef ADD_FLAG
 
   adapter_->FrameMetadataUpdated(flags);
 }
