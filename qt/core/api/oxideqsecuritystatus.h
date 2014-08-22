@@ -77,7 +77,6 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   };
   Q_DECLARE_FLAGS(CertErrorStatus, CertErrorStatusFlags)
 
-  Q_DECL_HIDDEN OxideQSecurityStatus(QObject* parent = NULL);
   ~OxideQSecurityStatus();
 
   SecurityLevel securityLevel() const;
@@ -92,6 +91,8 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   void certErrorStatusChanged();
 
  private:
+  OxideQSecurityStatus(QObject* parent = NULL);
+
   QScopedPointer<OxideQSecurityStatusPrivate> d_ptr;
 };
 

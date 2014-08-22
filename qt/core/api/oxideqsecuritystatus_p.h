@@ -20,6 +20,10 @@
 
 #include <QtGlobal>
 
+QT_BEGIN_NAMESPACE
+class QObject;
+QT_END_NAMESPACE
+
 namespace oxide {
 class SecurityStatus;
 namespace qt {
@@ -35,9 +39,10 @@ class OxideQSecurityStatusPrivate Q_DECL_FINAL {
  public:
   ~OxideQSecurityStatusPrivate();
 
+  static OxideQSecurityStatus* Create(oxide::qt::WebView* view,
+                                      QObject* parent = NULL);
   static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
 
-  void Init(oxide::qt::WebView* view);
   void Update(const oxide::SecurityStatus& old);
 
  private:

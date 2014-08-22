@@ -31,27 +31,26 @@ OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
 OxideQSecurityStatusPrivate::~OxideQSecurityStatusPrivate() {}
 
 // static
+OxideQSecurityStatus* OxideQSecurityStatusPrivate::Create(
+    oxide::qt::WebView* view,
+    QObject* parent) {
+  DCHECK(view);
+
+  OxideQSecurityStatus* rv = new OxideQSecurityStatus(parent);
+  get(rv)->web_view_ = view;
+
+  return rv;
+}
+
+// static
 OxideQSecurityStatusPrivate* OxideQSecurityStatusPrivate::get(
     OxideQSecurityStatus* q) {
   return q->d_func();
 }
 
-void OxideQSecurityStatusPrivate::Init(oxide::qt::WebView* view) {
-  Q_Q(OxideQSecurityStatus);
-
-  DCHECK(!web_view_);
-  web_view_ = view;
-
-  Q_EMIT q->securityLevelChanged();
-  Q_EMIT q->securityStyleChanged();
-  Q_EMIT q->contentStatusChanged();
-  Q_EMIT q->certErrorStatusChanged();
-}
-
 void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
   Q_Q(OxideQSecurityStatus);
 
-  DCHECK(web_view_);
   const oxide::SecurityStatus& status = web_view_->security_status();
 
   if (old.security_level() != status.security_level()) {
@@ -166,10 +165,6 @@ OxideQSecurityStatus::SecurityLevel
 OxideQSecurityStatus::securityLevel() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (!d->web_view_) {
-    return SecurityLevelNone;
-  }
-
   return static_cast<SecurityLevel>(
       d->web_view_->security_status().security_level());
 }
@@ -177,10 +172,6 @@ OxideQSecurityStatus::securityLevel() const {
 OxideQSecurityStatus::SecurityStyle
 OxideQSecurityStatus::securityStyle() const {
   Q_D(const OxideQSecurityStatus);
-
-  if (!d->web_view_) {
-    return SecurityStyleUnknown;
-  }
 
   return static_cast<SecurityStyle>(
       d->web_view_->security_status().security_style());
@@ -190,10 +181,6 @@ OxideQSecurityStatus::ContentStatus
 OxideQSecurityStatus::contentStatus() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (!d->web_view_) {
-    return ContentStatusNormal;
-  }
-
   return static_cast<ContentStatus>(
       d->web_view_->security_status().content_status());
 }
@@ -201,10 +188,6 @@ OxideQSecurityStatus::contentStatus() const {
 OxideQSecurityStatus::CertErrorStatus
 OxideQSecurityStatus::certErrorStatus() const {
   Q_D(const OxideQSecurityStatus);
-
-  if (!d->web_view_) {
-    return CertErrorStatusOk;
-  }
 
   return static_cast<CertErrorStatus>(
       d->web_view_->security_status().cert_error_status());

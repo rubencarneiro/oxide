@@ -23,9 +23,9 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 
-#include "qt/core/api/oxideqsecuritystatus.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
@@ -37,6 +37,8 @@ class QMouseEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQSecurityStatus;
+
 namespace oxide {
 namespace qt {
 
@@ -46,10 +48,11 @@ class WebView FINAL : public oxide::WebView,
                       public base::SupportsWeakPtr<WebView> {
  public:
   static WebView* Create(WebViewAdapter* adapter);
+  ~WebView();
 
   WebViewAdapter* adapter() const { return adapter_; }
 
-  OxideQSecurityStatus* qsecurity_status() { return &qsecurity_status_; }
+  OxideQSecurityStatus* qsecurity_status() { return qsecurity_status_.get(); }
 
   void HandleFocusEvent(QFocusEvent* event);
   void HandleInputMethodEvent(QInputMethodEvent* event);
@@ -165,7 +168,7 @@ class WebView FINAL : public oxide::WebView,
 
   bool has_input_method_state_;
 
-  OxideQSecurityStatus qsecurity_status_;
+  scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

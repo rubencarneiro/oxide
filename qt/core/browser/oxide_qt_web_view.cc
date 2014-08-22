@@ -54,6 +54,7 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqpermissionrequest_p.h"
+#include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
@@ -245,9 +246,9 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
     has_input_method_state_(false),
-    qsecurity_status_(adapterToQObject(adapter_)) {
-  OxideQSecurityStatusPrivate::get(&qsecurity_status_)->Init(this);
-}
+    qsecurity_status_(
+        OxideQSecurityStatusPrivate::Create(this,
+                                            adapterToQObject(adapter_))) {}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
@@ -739,13 +740,15 @@ void WebView::OnSelectionBoundsChanged() {
 }
 
 void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {
-  OxideQSecurityStatusPrivate::get(&qsecurity_status_)->Update(old);
+  OxideQSecurityStatusPrivate::get(qsecurity_status_.get())->Update(old);
 }
 
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
 }
+
+WebView::~WebView() {}
 
 void WebView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus() && ShouldShowInputPanel()) {
