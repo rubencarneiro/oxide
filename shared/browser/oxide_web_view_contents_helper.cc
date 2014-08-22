@@ -332,8 +332,9 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
   }
 
   if (web_preferences() && owns_web_preferences_) {
+    WebPreferences* old = web_preferences();
     WebPreferencesObserver::Observe(NULL);
-    delete web_preferences();
+    delete old;
   }
 
   if (preferences) {
