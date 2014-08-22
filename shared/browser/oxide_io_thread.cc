@@ -18,6 +18,7 @@
 #include "oxide_io_thread.h"
 
 #include "base/logging.h"
+#include "base/threading/worker_pool.h"
 #include "content/public/browser/browser_thread.h"
 #include "net/base/net_log.h"
 #include "net/cert/cert_verifier.h"
@@ -29,10 +30,17 @@
 #include "net/http/http_network_session.h"
 #include "net/http/http_server_properties_impl.h"
 #include "net/http/transport_security_state.h"
+#if defined(USE_NSS)
+#include "net/ocsp/nss_ocsp.h"
+#endif
 #include "net/proxy/proxy_service.h"
-#include "net/ssl/ssl_config_service_defaults.h"
+#include "net/ssl/channel_id_service.h"
+#include "net/ssl/channel_id_store.h"
+#include "net/ssl/default_channel_id_store.h"
+#include "net/url_request/url_request_job_factory_impl.h"
 #include "net/url_request/url_request_throttler_manager.h"
 
+#include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
 
 namespace oxide {
@@ -54,60 +62,11 @@ class SystemURLRequestContextGetter FINAL : public URLRequestContextGetter {
 }
 
 IOThread::Globals::Globals() {
-  host_resolver_ =
-      net::HostResolver::CreateDefaultResolver(IOThread::instance()->net_log());
-  cert_verifier_.reset(net::CertVerifier::CreateDefault());
-  http_auth_handler_factory_.reset(
-      net::HttpAuthHandlerFactory::CreateDefault(host_resolver_.get()));
-
-  net::ProxyConfigService* proxy_config_service =
-      net::ProxyService::CreateSystemProxyConfigService(
-          content::BrowserThread::GetMessageLoopProxyForThread(
-              content::BrowserThread::IO),
-          content::BrowserThread::UnsafeGetMessageLoopForThread(
-              content::BrowserThread::FILE));
-
-  proxy_service_.reset(
-      net::ProxyService::CreateUsingSystemProxyResolver(
-        proxy_config_service, 4, IOThread::instance()->net_log()));
-
-  throttler_manager_.reset(new net::URLRequestThrottlerManager());
+  DCHECK(CalledOnValidThread());
 }
 
 IOThread::Globals::~Globals() {
   DCHECK(CalledOnValidThread());
-}
-
-void IOThread::Globals::Init() {
-  DCHECK(CalledOnValidThread());
-
-  system_request_context_.reset(new URLRequestContext());
-  URLRequestContext* context = system_request_context_.get();
-  net::URLRequestContextStorage* storage = context->storage();
-
-  storage->set_ssl_config_service(new net::SSLConfigServiceDefaults());
-  storage->set_http_server_properties(
-      scoped_ptr<net::HttpServerProperties>(
-        new net::HttpServerPropertiesImpl()));
-  storage->set_cookie_store(new net::CookieMonster(NULL, NULL));
-  storage->set_transport_security_state(new net::TransportSecurityState());
-
-  net::HttpNetworkSession::Params session_params;
-  session_params.host_resolver = context->host_resolver();
-  session_params.cert_verifier = context->cert_verifier();
-  session_params.channel_id_service = context->channel_id_service();
-  session_params.transport_security_state =
-      context->transport_security_state();
-  session_params.proxy_service = context->proxy_service();
-  session_params.ssl_config_service = context->ssl_config_service();
-  session_params.http_auth_handler_factory =
-      context->http_auth_handler_factory();
-  session_params.network_delegate = context->network_delegate();
-  session_params.http_server_properties = context->http_server_properties();
-  session_params.net_log = context->net_log();
-
-  storage->set_http_transaction_factory(
-      new net::HttpNetworkLayer(new net::HttpNetworkSession(session_params)));
 }
 
 net::HostResolver* IOThread::Globals::host_resolver() const {
@@ -147,19 +106,113 @@ URLRequestContext* IOThread::Globals::system_request_context() const {
   return system_request_context_.get();
 }
 
-void IOThread::Init() {
-  DCHECK(!globals_);
-  globals_ = new Globals();
+void IOThread::InitSystemRequestContext() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  if (system_request_context_getter_) {
+    return;
+  }
+
+  system_request_context_getter_ = new SystemURLRequestContextGetter();
+
+  content::BrowserThread::PostTask(
+      content::BrowserThread::IO,
+      FROM_HERE,
+      base::Bind(&IOThread::InitSystemRequestContextOnIOThread,
+                 base::Unretained(this)));
 }
 
+void IOThread::InitSystemRequestContextOnIOThread() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
+  globals()->system_request_context_.reset(new URLRequestContext());
+  URLRequestContext* context = globals()->system_request_context_.get();
+  net::URLRequestContextStorage* storage = context->storage();
+
+#if defined(USE_NSS)
+  net::SetURLRequestContextForNSSHttpIO(context);
+#endif
+
+  storage->set_ssl_config_service(new SSLConfigService());
+  storage->set_channel_id_service(
+      new net::ChannelIDService(
+          new net::DefaultChannelIDStore(NULL),
+          base::WorkerPool::GetTaskRunner(true)));
+  storage->set_http_server_properties(
+      scoped_ptr<net::HttpServerProperties>(
+        new net::HttpServerPropertiesImpl()));
+  storage->set_cookie_store(new net::CookieMonster(NULL, NULL));
+  storage->set_transport_security_state(new net::TransportSecurityState());
+
+  net::HttpNetworkSession::Params session_params;
+  session_params.host_resolver = context->host_resolver();
+  session_params.cert_verifier = context->cert_verifier();
+  session_params.channel_id_service = context->channel_id_service();
+  session_params.transport_security_state =
+      context->transport_security_state();
+  session_params.proxy_service = context->proxy_service();
+  session_params.ssl_config_service = context->ssl_config_service();
+  session_params.http_auth_handler_factory =
+      context->http_auth_handler_factory();
+  session_params.network_delegate = context->network_delegate();
+  session_params.http_server_properties = context->http_server_properties();
+  session_params.net_log = context->net_log();
+
+  storage->set_http_transaction_factory(
+      new net::HttpNetworkLayer(new net::HttpNetworkSession(session_params)));
+
+  storage->set_job_factory(new net::URLRequestJobFactoryImpl());
+}
+
+void IOThread::Init() {}
+
 void IOThread::InitAsync() {
-  DCHECK(globals_);
-  globals_->Init();
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
+#if defined(USE_NSS)
+  net::SetMessageLoopForNSSHttpIO();
+#endif
+
+  DCHECK(!globals_);
+  globals_ = new Globals();
+
+  globals()->host_resolver_ =
+      net::HostResolver::CreateDefaultResolver(
+        IOThread::instance()->net_log());
+  globals()->cert_verifier_.reset(net::CertVerifier::CreateDefault());
+  globals()->http_auth_handler_factory_.reset(
+      net::HttpAuthHandlerFactory::CreateDefault(
+        globals()->host_resolver_.get()));
+
+  net::ProxyConfigService* proxy_config_service =
+      net::ProxyService::CreateSystemProxyConfigService(
+          content::BrowserThread::GetMessageLoopProxyForThread(
+              content::BrowserThread::IO),
+          content::BrowserThread::UnsafeGetMessageLoopForThread(
+              content::BrowserThread::FILE));
+
+  globals()->proxy_service_.reset(
+      net::ProxyService::CreateUsingSystemProxyResolver(
+        proxy_config_service, 4, IOThread::instance()->net_log()));
+
+  globals()->throttler_manager_.reset(new net::URLRequestThrottlerManager());
+
+  content::BrowserThread::PostTask(
+      content::BrowserThread::UI,
+      FROM_HERE,
+      base::Bind(&IOThread::InitSystemRequestContext,
+                 base::Unretained(this)));
 }
 
 void IOThread::CleanUp() {
-  DCHECK(globals_);
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
+#if defined(USE_NSS)
+  net::ShutdownNSSHttpIO();
+  net::SetURLRequestContextForNSSHttpIO(NULL);
+#endif
+
+  DCHECK(globals_);
   delete globals_;
   globals_ = NULL;
 
@@ -174,8 +227,7 @@ IOThread* IOThread::instance() {
 
 IOThread::IOThread() :
     net_log_(new net::NetLog()),
-    globals_(NULL),
-    system_request_context_getter_(new SystemURLRequestContextGetter()) {
+    globals_(NULL) {
   CHECK(!g_instance) << "Can't create more than one IOThread instance";
   DCHECK(!content::BrowserThread::IsThreadInitialized(content::BrowserThread::IO)) <<
       "IOThread cannot be created after the IO thread has started";
@@ -202,7 +254,10 @@ IOThread::Globals* IOThread::globals() const {
 }
 
 net::URLRequestContextGetter* IOThread::GetSystemURLRequestContext() {
-  return system_request_context_getter_;
+  if (!system_request_context_getter_) {
+    InitSystemRequestContext();
+  }
+  return system_request_context_getter_.get();
 }
 
 } // namespace oxide
