@@ -1253,6 +1253,12 @@ OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
   return &d->navigation_history_;
 }
 
+OxideQSecurityStatus* OxideQQuickWebView::securityStatus() {
+  Q_D(OxideQQuickWebView);
+
+  return d->securityStatus();
+}
+
 // This exists purely to remove a moc warning. We don't store this request
 // anywhere, it's only a transient object and I can't think of any possible
 // reason why anybody would want to read it back

@@ -286,6 +286,8 @@
         'browser/oxide_script_message_request_impl_browser.cc',
         'browser/oxide_script_message_request_impl_browser.h',
         'browser/oxide_script_message_target.h',
+        'browser/oxide_security_status.cc',
+        'browser/oxide_security_status.h',
         'browser/oxide_ssl_config_service.cc',
         'browser/oxide_ssl_config_service.h',
         'browser/oxide_url_request_context.cc',

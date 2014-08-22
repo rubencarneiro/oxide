@@ -455,6 +455,21 @@ void WebView::NavigationStateChanged(content::InvalidateTypes changed_flags) {
   }
 }
 
+void WebView::SSLStateChanged() {
+  DCHECK(web_contents_);
+
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetVisibleEntry();
+  if (!entry) {
+    return;
+  }
+
+  SecurityStatus old_status = security_status_;
+  security_status_.Update(entry->GetSSL());
+
+  OnSecurityStatusChanged(old_status);
+}
+
 bool WebView::ShouldCreateWebContents(const GURL& target_url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture) {
@@ -745,6 +760,8 @@ void WebView::OnEvictCurrentFrame() {}
 void WebView::OnTextInputStateChanged() {}
 void WebView::OnFocusedNodeChanged() {}
 void WebView::OnSelectionBoundsChanged() {}
+
+void WebView::OnSecurityStatusChanged(const SecurityStatus& old) {}
 
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),

@@ -52,6 +52,7 @@ class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
+class OxideQSecurityStatus;
 class OxideQWebPreferences;
 
 namespace oxide {
@@ -181,6 +182,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
   void didCommitCompositorFrame();
 
+  OxideQSecurityStatus* securityStatus();
+
  protected:
   WebViewAdapter(QObject* q);
 
@@ -262,7 +265,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void DownloadRequested(OxideQDownloadRequest* downloadRequest) = 0;
 
   QScopedPointer<WebView> priv;
+
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
+
   QScopedPointer<ConstructProperties> construct_props_;
   bool created_with_new_view_request_;
 };

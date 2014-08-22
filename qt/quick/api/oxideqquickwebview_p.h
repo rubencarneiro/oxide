@@ -44,6 +44,7 @@ class OxideQQuickWebFrame;
 class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
 class OxideQDownloadRequest;
+class OxideQSecurityStatus;
 
 class OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
@@ -97,6 +98,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
+  Q_PROPERTY(OxideQSecurityStatus* securityStatus READ securityStatus CONSTANT)
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
@@ -175,6 +177,7 @@ class OxideQQuickWebView : public QQuickItem {
   void setPreferences(OxideQWebPreferences* prefs);
 
   OxideQQuickNavigationHistory* navigationHistory();
+  OxideQSecurityStatus* securityStatus();
 
   OxideQNewViewRequest* request() const;
   void setRequest(OxideQNewViewRequest* request);

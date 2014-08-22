@@ -54,6 +54,7 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqpermissionrequest_p.h"
+#include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
@@ -243,7 +244,10 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
-    has_input_method_state_(false) {}
+    has_input_method_state_(false),
+    qsecurity_status_(adapterToQObject(adapter_)) {
+  OxideQSecurityStatusPrivate::get(&qsecurity_status_)->Init(this);
+}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
@@ -732,6 +736,10 @@ void WebView::OnSelectionBoundsChanged() {
         | Qt::ImTextAfterCursor
 #endif
       ));
+}
+
+void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {
+  OxideQSecurityStatusPrivate::get(&qsecurity_status_)->Update(old);
 }
 
 // static

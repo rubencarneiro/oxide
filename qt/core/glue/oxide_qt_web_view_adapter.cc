@@ -392,5 +392,9 @@ void WebViewAdapter::didCommitCompositorFrame() {
   priv->DidCommitCompositorFrame();
 }
 
+OxideQSecurityStatus* WebViewAdapter::securityStatus() {
+  return priv->qsecurity_status();
+}
+
 } // namespace qt
 } // namespace oxide

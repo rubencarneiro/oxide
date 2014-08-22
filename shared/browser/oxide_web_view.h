@@ -48,6 +48,7 @@
 #include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
+#include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/browser/oxide_web_view_contents_helper_delegate.h"
 #include "shared/common/oxide_message_enums.h"
@@ -182,6 +183,8 @@ class WebView : public ScriptMessageTarget,
     return compositor_frame_metadata_;
   }
 
+  const SecurityStatus& security_status() const { return security_status_; }
+
   void ShowPopupMenu(const gfx::Rect& bounds,
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
@@ -300,6 +303,7 @@ class WebView : public ScriptMessageTarget,
   // WebViewContentsHelperDelegate implementation
   content::WebContents* OpenURL(const content::OpenURLParams& params) FINAL;
   void NavigationStateChanged(content::InvalidateTypes flags) FINAL;
+  void SSLStateChanged() FINAL;
   bool ShouldCreateWebContents(const GURL& target_url,
                                WindowOpenDisposition disposition,
                                bool user_gesture) FINAL;
@@ -423,6 +427,8 @@ class WebView : public ScriptMessageTarget,
   virtual void OnFocusedNodeChanged();
   virtual void OnSelectionBoundsChanged();
 
+  virtual void OnSecurityStatusChanged(const SecurityStatus& old);
+
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;
 
@@ -448,6 +454,8 @@ class WebView : public ScriptMessageTarget,
   PermissionRequestManager geolocation_permission_requests_;
 
   cc::CompositorFrameMetadata compositor_frame_metadata_;
+
+  SecurityStatus security_status_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

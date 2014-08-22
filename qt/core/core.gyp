@@ -138,6 +138,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqsecuritystatus.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         'api/oxideqdownloadrequest.cc',
@@ -157,6 +158,9 @@
         'api/oxideqpermissionrequest.cc',
         'api/oxideqpermissionrequest.h',
         'api/oxideqpermissionrequest_p.h',
+        'api/oxideqsecuritystatus.cc',
+        'api/oxideqsecuritystatus.h',
+        'api/oxideqsecuritystatus_p.h',
         'api/oxideqstoragepermissionrequest.cc',
         'api/oxideqstoragepermissionrequest.h',
         'api/oxideqstoragepermissionrequest_p.h',
@@ -219,6 +223,11 @@
         {
           'action_name': 'moc_oxideqpermissionrequest.cc',
           'moc_input': 'api/oxideqpermissionrequest.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
+          'action_name': 'moc_oxideqsecuritystatus.cc',
+          'moc_input': 'api/oxideqsecuritystatus.h',
           'includes': [ 'moc.gypi' ],
         },
         {
