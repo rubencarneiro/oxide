@@ -58,9 +58,8 @@ WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
 
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::Create(
-    WebContextAdapter* adapter,
-    WebContextAdapter::IOThreadDelegate* io_delegate) {
-  return new WebContextAdapterPrivate(adapter, io_delegate);
+    WebContextAdapter* adapter) {
+  return new WebContextAdapterPrivate(adapter);
 }
 
 WebContextAdapterPrivate::SetCookiesRequest::SetCookiesRequest(
@@ -109,17 +108,31 @@ bool WebContextAdapterPrivate::SetCookiesRequest::next(QNetworkCookie* next) {
 }
 
 WebContextAdapterPrivate::WebContextAdapterPrivate(
-    WebContextAdapter* adapter,
-    WebContextAdapter::IOThreadDelegate* io_delegate)
+    WebContextAdapter* adapter)
     : adapter_(adapter),
-      io_thread_delegate_(io_delegate),
       construct_props_(new ConstructProperties()) {}
+
+void WebContextAdapterPrivate::Init(
+    const QWeakPointer<WebContextAdapter::IODelegate>& io_delegate) {
+  base::AutoLock lock(io_delegate_lock_);
+  io_delegate_ = io_delegate;
+}
 
 void WebContextAdapterPrivate::Destroy() {
   if (context_) {
     context_->SetDelegate(NULL);
   }
   adapter_ = NULL;
+
+  base::AutoLock lock(io_delegate_lock_);
+  io_delegate_.clear();
+}
+
+QSharedPointer<WebContextAdapter::IODelegate>
+WebContextAdapterPrivate::GetIODelegate() const {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+  base::AutoLock lock(io_delegate_lock_);
+  return io_delegate_.toStrongRef();
 }
 
 void WebContextAdapterPrivate::UpdateUserScripts() {
@@ -147,7 +160,8 @@ int WebContextAdapterPrivate::OnBeforeURLRequest(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
     GURL* new_url) {
-  if (!io_thread_delegate_) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
     return net::OK;
   }
 
@@ -163,7 +177,7 @@ int WebContextAdapterPrivate::OnBeforeURLRequest(
   eventp->request_cancelled = &cancelled;
   eventp->new_url = new_url;
 
-  io_thread_delegate_->OnBeforeURLRequest(event);
+  io_delegate->OnBeforeURLRequest(event);
 
   return cancelled ? net::ERR_ABORTED : net::OK;
 }
@@ -172,7 +186,8 @@ int WebContextAdapterPrivate::OnBeforeSendHeaders(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
     net::HttpRequestHeaders* headers) {
-  if (!io_thread_delegate_) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
     return net::OK;
   }
 
@@ -188,7 +203,7 @@ int WebContextAdapterPrivate::OnBeforeSendHeaders(
   eventp->request_cancelled = &cancelled;
   eventp->headers = headers;
 
-  io_thread_delegate_->OnBeforeSendHeaders(event);
+  io_delegate->OnBeforeSendHeaders(event);
 
   return cancelled ? net::ERR_ABORTED : net::OK;
 }
@@ -200,7 +215,8 @@ oxide::StoragePermission WebContextAdapterPrivate::CanAccessStorage(
     oxide::StorageType type) {
   oxide::StoragePermission result = oxide::STORAGE_PERMISSION_UNDEFINED;
 
-  if (!io_thread_delegate_) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
     return result;
   }
 
@@ -213,19 +229,20 @@ oxide::StoragePermission WebContextAdapterPrivate::CanAccessStorage(
 
   OxideQStoragePermissionRequestPrivate::get(req)->permission = &result;
 
-  io_thread_delegate_->HandleStoragePermissionRequest(req);
+  io_delegate->HandleStoragePermissionRequest(req);
 
   return result;
 }
 
 bool WebContextAdapterPrivate::GetUserAgentOverride(const GURL& url,
                                                     std::string* user_agent) {
-  if (!io_thread_delegate_) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
     return false;
   }
 
   QString new_user_agent;
-  bool overridden = io_thread_delegate_->GetUserAgentOverride(
+  bool overridden = io_delegate->GetUserAgentOverride(
       QUrl(QString::fromStdString(url.spec())), &new_user_agent);
 
   *user_agent = new_user_agent.toStdString();
@@ -256,8 +273,8 @@ scoped_refptr<net::CookieStore> WebContextAdapterPrivate::GetCookieStore() {
 void WebContextAdapterPrivate::callWithStatus(
       int requestId, WebContextAdapter::RequestStatus status) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
-  if (adapter()) {
-    adapter()->CookiesSet(requestId, status);
+  if (GetAdapter()) {
+    GetAdapter()->CookiesSet(requestId, status);
   }
 }
 
@@ -322,8 +339,8 @@ void WebContextAdapterPrivate::callWithCookies(
       WebContextAdapter::RequestStatus status) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
 
-  if (adapter()) {
-    adapter()->CookiesRetrieved(requestId, cookies, status);
+  if (GetAdapter()) {
+    GetAdapter()->CookiesRetrieved(requestId, cookies, status);
   }
 }
 
@@ -363,6 +380,11 @@ void WebContextAdapterPrivate::doGetAllCookies(int requestId) {
   cookie_store->GetCookieMonster()->GetAllCookiesAsync(
     base::Bind(&WebContextAdapterPrivate::GotCookiesCallback,
                this, requestId));
+}
+
+WebContextAdapter* WebContextAdapterPrivate::GetAdapter() const {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  return adapter_;
 }
 
 oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {

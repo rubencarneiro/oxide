@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 
+#include <QWeakPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QUrl>
@@ -56,9 +57,9 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
     SessionCookieModeRestored
   };
 
-  class IOThreadDelegate {
+  class IODelegate {
    public:
-    virtual ~IOThreadDelegate() {}
+    virtual ~IODelegate() {}
 
     virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) = 0;
 
@@ -68,6 +69,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
     virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) = 0;
   };
+
+  void init(const QWeakPointer<IODelegate>& io_delegate);
 
   QString product() const;
   void setProduct(const QString& product);
@@ -94,8 +97,6 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   static void ensureChromiumStarted();
 
-  IOThreadDelegate* getIOThreadDelegate() const;
-
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
@@ -113,15 +114,14 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   void doSetCookies(const QString& url,
                     const QList<QNetworkCookie>& cookies,
-		    int requestId);
-  void doGetAllCookies(int requestId);
+                    int request_id);
+  void doGetAllCookies(int request_id);
 
   QString devtoolsBindIp() const;
   void setDevtoolsBindIp(const QString& bindIp);
 
  protected:
-  WebContextAdapter(QObject* q,
-                    IOThreadDelegate* io_delegate);
+  WebContextAdapter(QObject* q);
 
   // Should properly map to what's in qt/quick/api/oxideqquickmanager_p.h
   enum RequestStatus {
@@ -133,10 +133,10 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  private:
   friend class WebContextAdapterPrivate;
 
-  virtual void CookiesSet(int requestId, RequestStatus status);
-  virtual void CookiesRetrieved(int requestId,
-      const QList<QNetworkCookie>& cookies,
-      RequestStatus status);
+  virtual void CookiesSet(int requestId, RequestStatus status) = 0;
+  virtual void CookiesRetrieved(int request_id,
+                                const QList<QNetworkCookie>& cookies,
+                                RequestStatus status) = 0;
 
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually

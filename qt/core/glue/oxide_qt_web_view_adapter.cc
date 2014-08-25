@@ -192,7 +192,7 @@ WebContextAdapter* WebViewAdapter::context() const {
     return NULL;
   }
 
-  return context->adapter();
+  return context->GetAdapter();
 }
 
 void WebViewAdapter::setContext(WebContextAdapter* context) {

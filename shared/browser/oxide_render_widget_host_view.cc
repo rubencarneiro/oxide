@@ -273,8 +273,6 @@ void RenderWidgetHostView::SelectionBoundsChanged(
   }
 }
 
-void RenderWidgetHostView::ScrollOffsetChanged() {}
-
 void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,

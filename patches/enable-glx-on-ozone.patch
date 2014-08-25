@@ -5,7 +5,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -106,52 +106,16 @@
+@@ -110,52 +110,16 @@
            ],
          },
        ],  # targets
@@ -58,7 +58,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -159,33 +123,16 @@
+@@ -163,33 +127,16 @@
                '<!@(<(pkg-config) --libs-only-L --libs-only-other xcursor)',
              ],
              'libraries': [
@@ -92,7 +92,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -193,33 +140,16 @@
+@@ -197,33 +144,16 @@
                '<!@(<(pkg-config) --libs-only-L --libs-only-other xdamage)',
              ],
              'libraries': [
@@ -126,7 +126,8 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -1024,16 +954,86 @@
+@@ -1052,10 +982,80 @@
+                   '-Wno-header-guard',
                  ],
                },
              }],
@@ -134,7 +135,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
          }],
        ],
      },
-     {
++    {
 +      'target_name': 'x11',
 +      'type': 'none',
 +      'toolsets': ['host', 'target'],
@@ -204,15 +205,8 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 +        ],
 +      },
 +    },
-+    {
-       'target_name': 'udev',
-       'type': 'none',
-       'conditions': [
-         # libudev is not available on *BSD
-         ['_toolset=="target" and os_bsd!=1 and use_udev==1', {
-           'direct_dependent_settings': {
-             'cflags': [
-               '<!@(<(pkg-config) --cflags libudev)'
+   ],
+ }
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
@@ -269,7 +263,7 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -196,24 +196,24 @@
+@@ -195,24 +195,24 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -408,7 +402,7 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
 --- a/ui/gl/gl_surface_glx.cc
 +++ b/ui/gl/gl_surface_glx.cc
-@@ -385,16 +385,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
+@@ -384,16 +384,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
  }
  
  void* GLSurfaceGLX::GetDisplay() {
@@ -426,7 +420,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
  gfx::AcceleratedWidget NativeViewGLSurfaceGLX::GetDrawableHandle() const {
    return window_;
-@@ -572,16 +573,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+@@ -571,16 +572,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();

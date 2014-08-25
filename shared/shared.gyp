@@ -47,7 +47,7 @@
         '<(DEPTH)/net/net.gyp:net_resources',
         '<(DEPTH)/third_party/WebKit/public/blink_resources.gyp:blink_resources',
         '<(DEPTH)/ui/resources/ui_resources.gyp:ui_resources',
-        '<(DEPTH)/webkit/webkit_resources.gyp:webkit_resources',
+        '<(DEPTH)/webkit/glue/resources/webkit_resources.gyp:webkit_resources',
       ],
       'actions': [
         {
@@ -240,8 +240,6 @@
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_delegate.h',
-        'browser/oxide_browser_context_impl.cc',
-        'browser/oxide_browser_context_impl.h',
         'browser/oxide_browser_context_observer.cc',
         'browser/oxide_browser_context_observer.h',
         'browser/oxide_browser_process_main.cc',
@@ -271,8 +269,6 @@
         'browser/oxide_message_pump.h',
         'browser/oxide_network_delegate.cc',
         'browser/oxide_network_delegate.h',
-        'browser/oxide_off_the_record_browser_context_impl.cc',
-        'browser/oxide_off_the_record_browser_context_impl.h',
         'browser/oxide_permission_request.cc',
         'browser/oxide_permission_request.h',
         'browser/oxide_power_save_blocker.cc',

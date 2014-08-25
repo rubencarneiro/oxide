@@ -449,7 +449,7 @@ void WebView::NavigationStateChanged(content::InvalidateTypes changed_flags) {
     OnTitleChanged();
   }
 
-  if (changed_flags & (content::INVALIDATE_TYPE_PAGE_ACTIONS |
+  if (changed_flags & (content::INVALIDATE_TYPE_URL |
                        content::INVALIDATE_TYPE_LOAD)) {
     OnCommandsUpdated();
   }
