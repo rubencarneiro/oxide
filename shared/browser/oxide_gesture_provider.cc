@@ -55,7 +55,6 @@ ui::GestureDetector::Config GetGestureDetectorConfig(float scale) {
 
 ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig(float scale) {
   ui::ScaleGestureDetector::Config config;
-  config.gesture_detector_config = GetGestureDetectorConfig(scale);
   config.min_scaling_touch_major = kDefaultRadius * 2 * scale;
   config.min_scaling_span = 170 * scale;
 
