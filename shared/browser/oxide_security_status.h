@@ -60,12 +60,14 @@ class SecurityStatus FINAL {
     return content_status_;
   }
   CertErrorStatus cert_error_status() const { return cert_error_status_; }
+  int cert_id() const { return cert_id_; }
 
  private:
   SecurityLevel security_level_;
   content::SecurityStyle security_style_;
   content::SSLStatus::ContentStatusFlags content_status_;
   CertErrorStatus cert_error_status_;
+  int cert_id_;
 };
 
 } // namespace oxide

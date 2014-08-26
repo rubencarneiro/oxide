@@ -19,7 +19,12 @@
 #include "oxideqsecuritystatus_p.h"
 
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
+#include "content/public/browser/cert_store.h"
+#include "net/cert/x509_certificate.h"
 
+#include "qt/core/api/oxideqsslcertificate.h"
+#include "qt/core/api/oxideqsslcertificate_p.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 #include "shared/browser/oxide_security_status.h"
 
@@ -64,6 +69,10 @@ void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
   }
   if (old.cert_error_status() != status.cert_error_status()) {
     Q_EMIT q->certErrorStatusChanged();
+  }
+  if (old.cert_id() != status.cert_id()) {
+    cert_.reset();
+    Q_EMIT q->certificateChanged();
   }
 }
 
@@ -191,4 +200,26 @@ OxideQSecurityStatus::certErrorStatus() const {
 
   return static_cast<CertErrorStatus>(
       d->web_view_->security_status().cert_error_status());
+}
+
+OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
+  Q_D(const OxideQSecurityStatus);
+
+  if (d->cert_) {
+    return d->cert_.get();
+  }
+
+  int cert_id = d->web_view_->security_status().cert_id();
+  if (cert_id == 0) {
+    return NULL;
+  }
+
+  scoped_refptr<net::X509Certificate> cert;
+  if (!content::CertStore::GetInstance()->RetrieveCert(cert_id, &cert)) {
+    return NULL;
+  }
+
+  d->cert_.reset(OxideQSslCertificatePrivate::Create(cert.get()));
+
+  return d->cert_.get();
 }

@@ -15,46 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_SECURITY_STATUS_P_H_
-#define _OXIDE_QT_CORE_API_SECURITY_STATUS_P_H_
+#ifndef _OXIDE_QT_CORE_API_SSL_CERTIFICATE_P_H_
+#define _OXIDE_QT_CORE_API_SSL_CERTIFICATE_P_H_
 
 #include <QtGlobal>
 
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
-QT_BEGIN_NAMESPACE
-class QObject;
-QT_END_NAMESPACE
-
-namespace oxide {
-class SecurityStatus;
-namespace qt {
-class WebView;
-}
-}
-
-class OxideQSecurityStatus;
 class OxideQSslCertificate;
 
-class OxideQSecurityStatusPrivate Q_DECL_FINAL {
-  Q_DECLARE_PUBLIC(OxideQSecurityStatus)
+namespace net {
+class X509Certificate;
+}
 
+class OxideQSslCertificatePrivate Q_DECL_FINAL {
  public:
-  ~OxideQSecurityStatusPrivate();
+  ~OxideQSslCertificatePrivate();
 
-  static OxideQSecurityStatus* Create(oxide::qt::WebView* view,
-                                      QObject* parent = NULL);
-  static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
-
-  void Update(const oxide::SecurityStatus& old);
+  static OxideQSslCertificate* Create(
+      const scoped_refptr<net::X509Certificate>& cert);
+  static OxideQSslCertificatePrivate* get(OxideQSslCertificate* q);
 
  private:
-  OxideQSecurityStatusPrivate(OxideQSecurityStatus* q);
+  friend class OxideQSslCertificate;
 
-  OxideQSecurityStatus* q_ptr;
-  oxide::qt::WebView* web_view_;
+  OxideQSslCertificatePrivate();
 
-  mutable scoped_ptr<OxideQSslCertificate> cert_;
+  scoped_refptr<net::X509Certificate> x509_cert_;
+  mutable scoped_ptr<OxideQSslCertificate> issuer_;
 };
 
-#endif // _OXIDE_QT_CORE_API_SECURITY_STATUS_P_H_
+#endif // _OXIDE_QT_CORE_API_SSL_CERTIFICATE_P_H_

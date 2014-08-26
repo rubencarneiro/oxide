@@ -149,6 +149,8 @@ void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
       ssl_status.content_status);
 
   cert_error_status_ = CalculateCertErrorStatus(ssl_status.cert_status);
+
+  cert_id_ = ssl_status.cert_id;
 }
 
 } // namespace oxide

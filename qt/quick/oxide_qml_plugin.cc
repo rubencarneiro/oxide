@@ -28,6 +28,7 @@
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
+#include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickcookiemanager_p.h"
 #include "qt/quick/api/oxideqquickglobals_p.h"
@@ -93,6 +94,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "ScriptMessageRequest is returned from WebFrame.sendMessage");
     qmlRegisterUncreatableType<OxideQSecurityStatus>(uri, 1, 0, "SecurityStatus",
         "SecurityStatus is accessed via WebView.securityStatus");
+    qmlRegisterUncreatableType<OxideQSslCertificate>(uri, 1, 0, "SslCertificate",
+        "SslCertificate is accessed via SecurityStatus.certificate");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 1, 0, "WebFrame",
         "WebFrame is accessed via WebView.rootFrame, WebFrame.childFrames and WebFrame.parentFrame");
 

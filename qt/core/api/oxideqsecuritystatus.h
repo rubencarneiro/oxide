@@ -23,6 +23,7 @@
 #include <QtGlobal>
 
 class OxideQSecurityStatusPrivate;
+class OxideQSslCertificate;
 
 class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_OBJECT
@@ -31,6 +32,8 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_PROPERTY(SecurityStyle securityStyle READ securityStyle NOTIFY securityStyleChanged)
   Q_PROPERTY(ContentStatus contentStatus READ contentStatus NOTIFY contentStatusChanged)
   Q_PROPERTY(CertErrorStatus certErrorStatus READ certErrorStatus NOTIFY certErrorStatusChanged)
+
+  Q_PROPERTY(OxideQSslCertificate* certificate READ certificate NOTIFY certificateChanged)
 
   Q_ENUMS(SecurityLevel)
   Q_ENUMS(SecurityStyle)
@@ -84,11 +87,14 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   ContentStatus contentStatus() const;
   CertErrorStatus certErrorStatus() const;
 
+  OxideQSslCertificate* certificate() const;
+
  Q_SIGNALS:
   void securityLevelChanged();
   void securityStyleChanged();
   void contentStatusChanged();
   void certErrorStatusChanged();
+  void certificateChanged();
 
  private:
   OxideQSecurityStatus(QObject* parent = NULL);
