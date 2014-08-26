@@ -29,7 +29,7 @@ namespace oxide {
 namespace {
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(content::SSLStatus::ContentStatusFlags)
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(SecurityStatus::CertErrorStatus)
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(SecurityStatus::CertStatus)
 
 inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
     const content::SSLStatus& ssl_status) {
@@ -75,41 +75,41 @@ inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
   return SecurityStatus::SECURITY_LEVEL_SECURE;
 }
 
-inline SecurityStatus::CertErrorStatus CalculateCertErrorStatus(
+inline SecurityStatus::CertStatus CalculateCertStatus(
     net::CertStatus cert_status) {
-  SecurityStatus::CertErrorStatus rv = SecurityStatus::CERT_ERROR_STATUS_OK;
+  SecurityStatus::CertStatus rv = SecurityStatus::CERT_STATUS_OK;
 
   // Handle flags that have a direct mapping to CertErrorStatus first
   if (cert_status & net::CERT_STATUS_COMMON_NAME_INVALID) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_BAD_IDENTITY;
+    rv |= SecurityStatus::CERT_STATUS_BAD_IDENTITY;
     cert_status &= ~net::CERT_STATUS_COMMON_NAME_INVALID;
   }
   if (cert_status & net::CERT_STATUS_DATE_INVALID) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_DATE_INVALID;
+    rv |= SecurityStatus::CERT_STATUS_DATE_INVALID;
     cert_status &= ~net::CERT_STATUS_DATE_INVALID;
   }
   if (cert_status & net::CERT_STATUS_AUTHORITY_INVALID) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_AUTHORITY_INVALID;
+    rv |= SecurityStatus::CERT_STATUS_AUTHORITY_INVALID;
     cert_status &= ~net::CERT_STATUS_AUTHORITY_INVALID;
   }
   if (cert_status & net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_REVOCATION_CHECK_FAILED;
+    rv |= SecurityStatus::CERT_STATUS_REVOCATION_CHECK_FAILED;
     cert_status &= ~net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
   }
   if (cert_status & net::CERT_STATUS_REVOKED) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_REVOKED;
+    rv |= SecurityStatus::CERT_STATUS_REVOKED;
     cert_status &= ~net::CERT_STATUS_REVOKED;
   }
   if (cert_status & net::CERT_STATUS_INVALID) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_INVALID;
+    rv |= SecurityStatus::CERT_STATUS_INVALID;
     cert_status &= ~net::CERT_STATUS_INVALID;
   }
   if (cert_status & net::CERT_STATUS_WEAK_SIGNATURE_ALGORITHM) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_INSECURE;
+    rv |= SecurityStatus::CERT_STATUS_INSECURE;
     cert_status &= ~net::CERT_STATUS_WEAK_SIGNATURE_ALGORITHM;
   }
   if (cert_status & net::CERT_STATUS_WEAK_KEY) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_INSECURE;
+    rv |= SecurityStatus::CERT_STATUS_INSECURE;
     cert_status &= ~net::CERT_STATUS_WEAK_KEY;
   }
 
@@ -117,7 +117,7 @@ inline SecurityStatus::CertErrorStatus CalculateCertErrorStatus(
   // set the generic flag if any non-minor error bits are set
   if (net::IsCertStatusError(cert_status) &&
       !net::IsCertStatusMinorError(cert_status)) {
-    rv |= SecurityStatus::CERT_ERROR_STATUS_GENERIC;
+    rv |= SecurityStatus::CERT_STATUS_GENERIC;
   }
 
   return rv;
@@ -128,12 +128,12 @@ inline SecurityStatus::CertErrorStatus CalculateCertErrorStatus(
 SecurityStatus::SecurityStatus()
     : security_level_(SECURITY_LEVEL_NONE),
       content_status_(content::SSLStatus::NORMAL_CONTENT),
-      cert_error_status_(CERT_ERROR_STATUS_OK) {}
+      cert_status_(CERT_STATUS_OK) {}
 
 SecurityStatus::SecurityStatus(const content::SSLStatus& ssl_status)
     : security_level_(SECURITY_LEVEL_NONE),
       content_status_(content::SSLStatus::NORMAL_CONTENT),
-      cert_error_status_(CERT_ERROR_STATUS_OK) {
+      cert_status_(CERT_STATUS_OK) {
   Update(ssl_status);
 }
 
@@ -145,7 +145,7 @@ void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
   content_status_ = static_cast<content::SSLStatus::ContentStatusFlags>(
       ssl_status.content_status);
 
-  cert_error_status_ = CalculateCertErrorStatus(ssl_status.cert_status);
+  cert_status_ = CalculateCertStatus(ssl_status.cert_status);
 
   cert_id_ = ssl_status.cert_id;
 }

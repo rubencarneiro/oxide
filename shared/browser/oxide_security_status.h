@@ -39,16 +39,16 @@ class SecurityStatus FINAL {
     SECURITY_LEVEL_ERROR
   };
 
-  enum CertErrorStatus {
-    CERT_ERROR_STATUS_OK = 0,
-    CERT_ERROR_STATUS_BAD_IDENTITY = 1 << 0,
-    CERT_ERROR_STATUS_DATE_INVALID = 1 << 1,
-    CERT_ERROR_STATUS_AUTHORITY_INVALID = 1 << 2,
-    CERT_ERROR_STATUS_REVOCATION_CHECK_FAILED = 1 << 3,
-    CERT_ERROR_STATUS_REVOKED = 1 << 4,
-    CERT_ERROR_STATUS_INVALID = 1 << 5,
-    CERT_ERROR_STATUS_INSECURE = 1 << 6,
-    CERT_ERROR_STATUS_GENERIC = 1 << 7
+  enum CertStatus {
+    CERT_STATUS_OK = 0,
+    CERT_STATUS_BAD_IDENTITY = 1 << 0,
+    CERT_STATUS_DATE_INVALID = 1 << 1,
+    CERT_STATUS_AUTHORITY_INVALID = 1 << 2,
+    CERT_STATUS_REVOCATION_CHECK_FAILED = 1 << 3,
+    CERT_STATUS_REVOKED = 1 << 4,
+    CERT_STATUS_INVALID = 1 << 5,
+    CERT_STATUS_INSECURE = 1 << 6,
+    CERT_STATUS_GENERIC = 1 << 7
   };
 
   void Update(const content::SSLStatus& ssl_status);
@@ -57,13 +57,13 @@ class SecurityStatus FINAL {
   content::SSLStatus::ContentStatusFlags content_status() const {
     return content_status_;
   }
-  CertErrorStatus cert_error_status() const { return cert_error_status_; }
+  CertStatus cert_status() const { return cert_status_; }
   int cert_id() const { return cert_id_; }
 
  private:
   SecurityLevel security_level_;
   content::SSLStatus::ContentStatusFlags content_status_;
-  CertErrorStatus cert_error_status_;
+  CertStatus cert_status_;
   int cert_id_;
 };
 

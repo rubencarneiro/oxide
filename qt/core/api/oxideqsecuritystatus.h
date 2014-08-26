@@ -30,13 +30,13 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
 
   Q_PROPERTY(SecurityLevel securityLevel READ securityLevel NOTIFY securityLevelChanged)
   Q_PROPERTY(ContentStatus contentStatus READ contentStatus NOTIFY contentStatusChanged)
-  Q_PROPERTY(CertErrorStatus certErrorStatus READ certErrorStatus NOTIFY certErrorStatusChanged)
+  Q_PROPERTY(CertStatus certStatus READ certStatus NOTIFY certStatusChanged)
 
   Q_PROPERTY(OxideQSslCertificate* certificate READ certificate NOTIFY certificateChanged)
 
   Q_ENUMS(SecurityLevel)
   Q_FLAGS(ContentStatus)
-  Q_FLAGS(CertErrorStatus)
+  Q_FLAGS(CertStatus)
  
   Q_DECLARE_PRIVATE(OxideQSecurityStatus)
   Q_DISABLE_COPY(OxideQSecurityStatus)
@@ -58,31 +58,31 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   };
   Q_DECLARE_FLAGS(ContentStatus, ContentStatusFlags)
 
-  enum CertErrorStatusFlags {
-    CertErrorStatusOk = 0,
-    CertErrorStatusBadIdentity = 1 << 0,
-    CertErrorStatusDateInvalid = 1 << 1,
-    CertErrorStatusAuthorityInvalid = 1 << 2,
-    CertErrorStatusRevocationCheckFailed = 1 << 3,
-    CertErrorStatusRevoked = 1 << 4,
-    CertErrorStatusInvalid = 1 << 5,
-    CertErrorStatusInsecure = 1 << 6,
-    CertErrorStatusGeneric = 1 << 7
+  enum CertStatusFlags {
+    CertStatusOk = 0,
+    CertStatusBadIdentity = 1 << 0,
+    CertStatusDateInvalid = 1 << 1,
+    CertStatusAuthorityInvalid = 1 << 2,
+    CertStatusRevocationCheckFailed = 1 << 3,
+    CertStatusRevoked = 1 << 4,
+    CertStatusInvalid = 1 << 5,
+    CertStatusInsecure = 1 << 6,
+    CertStatusGeneric = 1 << 7
   };
-  Q_DECLARE_FLAGS(CertErrorStatus, CertErrorStatusFlags)
+  Q_DECLARE_FLAGS(CertStatus, CertStatusFlags)
 
   ~OxideQSecurityStatus();
 
   SecurityLevel securityLevel() const;
   ContentStatus contentStatus() const;
-  CertErrorStatus certErrorStatus() const;
+  CertStatus certStatus() const;
 
   OxideQSslCertificate* certificate() const;
 
  Q_SIGNALS:
   void securityLevelChanged();
   void contentStatusChanged();
-  void certErrorStatusChanged();
+  void certStatusChanged();
   void certificateChanged();
 
  private:
