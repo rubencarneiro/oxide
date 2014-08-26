@@ -119,6 +119,10 @@ OxideQSecurityStatus::OxideQSecurityStatus(QObject* parent)
       static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_BAD_IDENTITY),
       cert_status_enums_bad_identity_doesnt_match);
   COMPILE_ASSERT(
+      CertStatusExpired ==
+      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_EXPIRED),
+      cert_status_enums_expired_doesnt_match);
+  COMPILE_ASSERT(
       CertStatusDateInvalid ==
       static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_DATE_INVALID),
       cert_status_enums_date_invalid_doesnt_match);
@@ -143,9 +147,9 @@ OxideQSecurityStatus::OxideQSecurityStatus(QObject* parent)
       static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_INSECURE),
       cert_status_enums_insecure_doesnt_match);
   COMPILE_ASSERT(
-      CertStatusGeneric ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_GENERIC),
-      cert_status_enums_generic_doesnt_match);
+      CertStatusGenericError ==
+      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_GENERIC_ERROR),
+      cert_status_enums_generic_error_doesnt_match);
 }
 
 OxideQSecurityStatus::~OxideQSecurityStatus() {}

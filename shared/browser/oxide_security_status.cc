@@ -21,6 +21,7 @@
 #include "content/public/browser/cert_store.h"
 #include "content/public/common/security_style.h"
 #include "net/cert/cert_status_flags.h"
+#include "net/cert/x509_certificate.h"
 
 #include "shared/base/oxide_enum_flags.h"
 
@@ -76,7 +77,11 @@ inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
 }
 
 inline SecurityStatus::CertStatus CalculateCertStatus(
-    net::CertStatus cert_status) {
+    const content::SSLStatus& ssl_status) {
+  net::CertStatus cert_status = ssl_status.cert_status;
+  scoped_refptr<net::X509Certificate> cert;
+  content::CertStore::GetInstance()->RetrieveCert(ssl_status.cert_id, &cert);
+
   SecurityStatus::CertStatus rv = SecurityStatus::CERT_STATUS_OK;
 
   // Handle flags that have a direct mapping to CertErrorStatus first
@@ -85,7 +90,14 @@ inline SecurityStatus::CertStatus CalculateCertStatus(
     cert_status &= ~net::CERT_STATUS_COMMON_NAME_INVALID;
   }
   if (cert_status & net::CERT_STATUS_DATE_INVALID) {
-    rv |= SecurityStatus::CERT_STATUS_DATE_INVALID;
+    if (cert && cert->HasExpired()) {
+      rv |= SecurityStatus::CERT_STATUS_EXPIRED;
+    } else {
+      // The date could be in the future or issuer certificates could
+      // have expired. In the latter case, perhaps make this
+      // CERT_STATUS_EXPIRED too?
+      rv |= SecurityStatus::CERT_STATUS_DATE_INVALID;
+    }
     cert_status &= ~net::CERT_STATUS_DATE_INVALID;
   }
   if (cert_status & net::CERT_STATUS_AUTHORITY_INVALID) {
@@ -117,7 +129,7 @@ inline SecurityStatus::CertStatus CalculateCertStatus(
   // set the generic flag if any non-minor error bits are set
   if (net::IsCertStatusError(cert_status) &&
       !net::IsCertStatusMinorError(cert_status)) {
-    rv |= SecurityStatus::CERT_STATUS_GENERIC;
+    rv |= SecurityStatus::CERT_STATUS_GENERIC_ERROR;
   }
 
   return rv;
@@ -145,7 +157,7 @@ void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
   content_status_ = static_cast<content::SSLStatus::ContentStatusFlags>(
       ssl_status.content_status);
 
-  cert_status_ = CalculateCertStatus(ssl_status.cert_status);
+  cert_status_ = CalculateCertStatus(ssl_status);
 
   cert_id_ = ssl_status.cert_id;
 }

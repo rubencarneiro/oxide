@@ -61,13 +61,14 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   enum CertStatusFlags {
     CertStatusOk = 0,
     CertStatusBadIdentity = 1 << 0,
-    CertStatusDateInvalid = 1 << 1,
-    CertStatusAuthorityInvalid = 1 << 2,
-    CertStatusRevocationCheckFailed = 1 << 3,
-    CertStatusRevoked = 1 << 4,
-    CertStatusInvalid = 1 << 5,
-    CertStatusInsecure = 1 << 6,
-    CertStatusGeneric = 1 << 7
+    CertStatusExpired = 1 << 1,
+    CertStatusDateInvalid = 1 << 2,
+    CertStatusAuthorityInvalid = 1 << 3,
+    CertStatusRevocationCheckFailed = 1 << 4,
+    CertStatusRevoked = 1 << 5,
+    CertStatusInvalid = 1 << 6,
+    CertStatusInsecure = 1 << 7,
+    CertStatusGenericError = 1 << 8
   };
   Q_DECLARE_FLAGS(CertStatus, CertStatusFlags)
 
