@@ -67,7 +67,7 @@ void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
   if (old.cert_status() != status.cert_status()) {
     Q_EMIT q->certStatusChanged();
   }
-  if (old.cert_id() != status.cert_id()) {
+  if (old.cert() != status.cert()) {
     cert_.reset();
     Q_EMIT q->certificateChanged();
   }
@@ -185,13 +185,9 @@ OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
     return d->cert_.get();
   }
 
-  int cert_id = d->web_view_->security_status().cert_id();
-  if (cert_id == 0) {
-    return NULL;
-  }
-
-  scoped_refptr<net::X509Certificate> cert;
-  if (!content::CertStore::GetInstance()->RetrieveCert(cert_id, &cert)) {
+  scoped_refptr<net::X509Certificate> cert =
+      d->web_view_->security_status().cert();
+  if (!cert) {
     return NULL;
   }
 

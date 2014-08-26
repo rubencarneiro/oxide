@@ -19,7 +19,12 @@
 #define _OXIDE_SHARED_BROWSER_SECURITY_STATUS_H_
 
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "content/public/common/ssl_status.h"
+
+namespace net {
+class X509Certificate;
+}
 
 namespace oxide {
 
@@ -59,13 +64,13 @@ class SecurityStatus FINAL {
     return content_status_;
   }
   CertStatus cert_status() const { return cert_status_; }
-  int cert_id() const { return cert_id_; }
+  scoped_refptr<net::X509Certificate> cert() const;
 
  private:
   SecurityLevel security_level_;
   content::SSLStatus::ContentStatusFlags content_status_;
   CertStatus cert_status_;
-  int cert_id_;
+  scoped_refptr<net::X509Certificate> cert_;
 };
 
 } // namespace oxide

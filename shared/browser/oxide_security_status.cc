@@ -33,7 +33,8 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(content::SSLStatus::ContentStatusFlags)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(SecurityStatus::CertStatus)
 
 inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
-    const content::SSLStatus& ssl_status) {
+    const content::SSLStatus& ssl_status,
+    net::X509Certificate* cert) {
   if (ssl_status.security_style == content::SECURITY_STYLE_UNKNOWN ||
       ssl_status.security_style == content::SECURITY_STYLE_UNAUTHENTICATED) {
     return SecurityStatus::SECURITY_LEVEL_NONE;
@@ -67,9 +68,7 @@ inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
     return SecurityStatus::SECURITY_LEVEL_WARNING;
   }
 
-  if ((ssl_status.cert_status & net::CERT_STATUS_IS_EV) &&
-      content::CertStore::GetInstance()->RetrieveCert(ssl_status.cert_id,
-                                                      NULL)) {
+  if ((ssl_status.cert_status & net::CERT_STATUS_IS_EV) && cert) {
     return SecurityStatus::SECURITY_LEVEL_SECURE_EV;
   }
 
@@ -77,11 +76,8 @@ inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
 }
 
 inline SecurityStatus::CertStatus CalculateCertStatus(
-    const content::SSLStatus& ssl_status) {
-  net::CertStatus cert_status = ssl_status.cert_status;
-  scoped_refptr<net::X509Certificate> cert;
-  content::CertStore::GetInstance()->RetrieveCert(ssl_status.cert_id, &cert);
-
+    net::CertStatus cert_status,
+    net::X509Certificate* cert) {
   SecurityStatus::CertStatus rv = SecurityStatus::CERT_STATUS_OK;
 
   // Handle flags that have a direct mapping to CertErrorStatus first
@@ -152,14 +148,17 @@ SecurityStatus::SecurityStatus(const content::SSLStatus& ssl_status)
 SecurityStatus::~SecurityStatus() {}
 
 void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
-  security_level_ = CalculateSecurityLevel(ssl_status);
+  content::CertStore::GetInstance()->RetrieveCert(ssl_status.cert_id,
+                                                  &cert_);
 
+  security_level_ = CalculateSecurityLevel(ssl_status, cert_.get());
   content_status_ = static_cast<content::SSLStatus::ContentStatusFlags>(
       ssl_status.content_status);
+  cert_status_ = CalculateCertStatus(ssl_status.cert_status, cert_.get());
+}
 
-  cert_status_ = CalculateCertStatus(ssl_status);
-
-  cert_id_ = ssl_status.cert_id;
+scoped_refptr<net::X509Certificate> SecurityStatus::cert() const {
+  return cert_;
 }
 
 } // namespace oxide
