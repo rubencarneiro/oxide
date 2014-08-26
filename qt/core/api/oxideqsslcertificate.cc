@@ -70,8 +70,9 @@ OxideQSslCertificatePrivate::~OxideQSslCertificatePrivate() {}
 
 // static
 OxideQSslCertificate* OxideQSslCertificatePrivate::Create(
-    const scoped_refptr<net::X509Certificate>& cert) {
-  OxideQSslCertificate* rv = new OxideQSslCertificate();
+    const scoped_refptr<net::X509Certificate>& cert,
+    QObject* parent) {
+  OxideQSslCertificate* rv = new OxideQSslCertificate(parent);
   get(rv)->x509_cert_ = cert;
   return rv;
 }
@@ -173,6 +174,12 @@ OxideQSslCertificate* OxideQSslCertificate::issuer() const {
   d->issuer_.reset(OxideQSslCertificatePrivate::Create(cert));
 
   return d->issuer_.get();
+}
+
+OxideQSslCertificate* OxideQSslCertificate::copy() const {
+  Q_D(const OxideQSslCertificate);
+
+  return OxideQSslCertificatePrivate::Create(d->x509_cert_);
 }
 
 QString OxideQSslCertificate::toPem() const {

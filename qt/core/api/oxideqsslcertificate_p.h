@@ -34,7 +34,8 @@ class OxideQSslCertificatePrivate Q_DECL_FINAL {
   ~OxideQSslCertificatePrivate();
 
   static OxideQSslCertificate* Create(
-      const scoped_refptr<net::X509Certificate>& cert);
+      const scoped_refptr<net::X509Certificate>& cert,
+      QObject* parent = NULL);
   static OxideQSslCertificatePrivate* get(OxideQSslCertificate* q);
 
  private:

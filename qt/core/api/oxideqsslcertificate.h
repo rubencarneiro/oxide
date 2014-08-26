@@ -75,6 +75,7 @@ class Q_DECL_EXPORT OxideQSslCertificate Q_DECL_FINAL : public QObject {
   bool isExpired() const;
 
   OxideQSslCertificate* issuer() const;
+  Q_INVOKABLE OxideQSslCertificate* copy() const;
 
   Q_INVOKABLE QString toPem() const;
 

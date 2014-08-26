@@ -247,8 +247,7 @@ WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
     has_input_method_state_(false),
     qsecurity_status_(
-        OxideQSecurityStatusPrivate::Create(this,
-                                            adapterToQObject(adapter_))) {}
+        OxideQSecurityStatusPrivate::Create(this)) {}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
