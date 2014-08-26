@@ -29,14 +29,12 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(SecurityLevel securityLevel READ securityLevel NOTIFY securityLevelChanged)
-  Q_PROPERTY(SecurityStyle securityStyle READ securityStyle NOTIFY securityStyleChanged)
   Q_PROPERTY(ContentStatus contentStatus READ contentStatus NOTIFY contentStatusChanged)
   Q_PROPERTY(CertErrorStatus certErrorStatus READ certErrorStatus NOTIFY certErrorStatusChanged)
 
   Q_PROPERTY(OxideQSslCertificate* certificate READ certificate NOTIFY certificateChanged)
 
   Q_ENUMS(SecurityLevel)
-  Q_ENUMS(SecurityStyle)
   Q_FLAGS(ContentStatus)
   Q_FLAGS(CertErrorStatus)
  
@@ -51,13 +49,6 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
     SecurityLevelSecureEV,
     SecurityLevelWarning,
     SecurityLevelError
-  };
-
-  enum SecurityStyle {
-    SecurityStyleUnknown,
-    SecurityStyleUnauthenticated,
-    SecurityStyleAuthenticationBroken,
-    SecurityStyleAuthenticated
   };
 
   enum ContentStatusFlags {
@@ -83,7 +74,6 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   ~OxideQSecurityStatus();
 
   SecurityLevel securityLevel() const;
-  SecurityStyle securityStyle() const;
   ContentStatus contentStatus() const;
   CertErrorStatus certErrorStatus() const;
 
@@ -91,7 +81,6 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
 
  Q_SIGNALS:
   void securityLevelChanged();
-  void securityStyleChanged();
   void contentStatusChanged();
   void certErrorStatusChanged();
   void certificateChanged();

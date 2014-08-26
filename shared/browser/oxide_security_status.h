@@ -19,7 +19,6 @@
 #define _OXIDE_SHARED_BROWSER_SECURITY_STATUS_H_
 
 #include "base/compiler_specific.h"
-#include "content/public/common/security_style.h"
 #include "content/public/common/ssl_status.h"
 
 namespace oxide {
@@ -55,7 +54,6 @@ class SecurityStatus FINAL {
   void Update(const content::SSLStatus& ssl_status);
 
   SecurityLevel security_level() const { return security_level_; }
-  content::SecurityStyle security_style() const { return security_style_; }
   content::SSLStatus::ContentStatusFlags content_status() const {
     return content_status_;
   }
@@ -64,7 +62,6 @@ class SecurityStatus FINAL {
 
  private:
   SecurityLevel security_level_;
-  content::SecurityStyle security_style_;
   content::SSLStatus::ContentStatusFlags content_status_;
   CertErrorStatus cert_error_status_;
   int cert_id_;

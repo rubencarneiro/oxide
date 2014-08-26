@@ -61,9 +61,6 @@ void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
   if (old.security_level() != status.security_level()) {
     Q_EMIT q->securityLevelChanged();
   }
-  if (old.security_style() != status.security_style()) {
-    Q_EMIT q->securityStyleChanged();
-  }
   if (old.content_status() != status.content_status()) {
     Q_EMIT q->contentStatusChanged();
   }
@@ -99,23 +96,6 @@ OxideQSecurityStatus::OxideQSecurityStatus(QObject* parent)
       SecurityLevelError ==
       static_cast<SecurityLevel>(oxide::SecurityStatus::SECURITY_LEVEL_ERROR),
       security_level_enums_error_doesnt_match);
-
-  COMPILE_ASSERT(
-      SecurityStyleUnknown ==
-      static_cast<SecurityStyle>(content::SECURITY_STYLE_UNKNOWN),
-      security_style_enums_unknown_doesnt_match);
-  COMPILE_ASSERT(
-      SecurityStyleUnauthenticated ==
-      static_cast<SecurityStyle>(content::SECURITY_STYLE_UNAUTHENTICATED),
-      security_style_enums_unauthenticated_doesnt_match);
-  COMPILE_ASSERT(
-      SecurityStyleAuthenticationBroken ==
-      static_cast<SecurityStyle>(content::SECURITY_STYLE_AUTHENTICATION_BROKEN),
-      security_style_enums_authentication_broken_doesnt_match);
-  COMPILE_ASSERT(
-      SecurityStyleAuthenticated ==
-      static_cast<SecurityStyle>(content::SECURITY_STYLE_AUTHENTICATED),
-      security_style_enums_authenticated_doesnt_match);
 
   COMPILE_ASSERT(
       ContentStatusNormal ==
@@ -176,14 +156,6 @@ OxideQSecurityStatus::securityLevel() const {
 
   return static_cast<SecurityLevel>(
       d->web_view_->security_status().security_level());
-}
-
-OxideQSecurityStatus::SecurityStyle
-OxideQSecurityStatus::securityStyle() const {
-  Q_D(const OxideQSecurityStatus);
-
-  return static_cast<SecurityStyle>(
-      d->web_view_->security_status().security_style());
 }
 
 OxideQSecurityStatus::ContentStatus

@@ -19,6 +19,7 @@
 
 #include "base/logging.h"
 #include "content/public/browser/cert_store.h"
+#include "content/public/common/security_style.h"
 #include "net/cert/cert_status_flags.h"
 
 #include "shared/base/oxide_enum_flags.h"
@@ -28,7 +29,6 @@ namespace oxide {
 namespace {
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(content::SSLStatus::ContentStatusFlags)
-//OXIDE_MAKE_ENUM_BITWISE_OPERATORS(net::CertStatus)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(SecurityStatus::CertErrorStatus)
 
 inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
@@ -127,13 +127,11 @@ inline SecurityStatus::CertErrorStatus CalculateCertErrorStatus(
 
 SecurityStatus::SecurityStatus()
     : security_level_(SECURITY_LEVEL_NONE),
-      security_style_(content::SECURITY_STYLE_UNKNOWN),
       content_status_(content::SSLStatus::NORMAL_CONTENT),
       cert_error_status_(CERT_ERROR_STATUS_OK) {}
 
 SecurityStatus::SecurityStatus(const content::SSLStatus& ssl_status)
     : security_level_(SECURITY_LEVEL_NONE),
-      security_style_(content::SECURITY_STYLE_UNKNOWN),
       content_status_(content::SSLStatus::NORMAL_CONTENT),
       cert_error_status_(CERT_ERROR_STATUS_OK) {
   Update(ssl_status);
@@ -144,7 +142,6 @@ SecurityStatus::~SecurityStatus() {}
 void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
   security_level_ = CalculateSecurityLevel(ssl_status);
 
-  security_style_ = ssl_status.security_style;
   content_status_ = static_cast<content::SSLStatus::ContentStatusFlags>(
       ssl_status.content_status);
 
