@@ -454,8 +454,37 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
     OxideQGeolocationPermissionRequest* request) {
   Q_Q(OxideQQuickWebView);
 
-  QQmlEngine::setObjectOwnership(request, QQmlEngine::JavaScriptOwnership);
-  emit q->geolocationPermissionRequested(request);
+  // Unlike other signals where the object ownership remains with the
+  // callsite that triggers the signal, we want to transfer ownership of
+  // GeolocationPermissionRequest to any signal handlers so that the
+  // request can be completed asynchronously.
+  //
+  // Setting JavaScriptOwnership on the request, dispatching the signal and
+  // hoping the QmlEngine will delete it isn't enough though, because it will
+  // leak if there are no handlers. It's also unclear whether C++ slots should
+  // delete it.
+  //
+  // Handlers could be C++ slots in addition to the QmlEngine and so we need
+  // a way to safely share the object between slots - should a C++ slot
+  // delete the object? What if the QmlEngine deletes it?
+  //
+  // We can't use QSharedPointer with Qml, so instead we wrap the request
+  // in a QJSValue and dispatch that. This means that the request only has a
+  // single owner (the QmlEngine), which won't delete it until all QJSValue's
+  // have gone out of scope
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete request;
+    return;
+  }
+
+  QJSValue val = engine->newQObject(request);
+  if (!val.isQObject()) {
+    delete request;
+    return;
+  }
+
+  emit q->geolocationPermissionRequested(val);
 }
 
 void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
