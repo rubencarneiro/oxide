@@ -221,8 +221,7 @@ class OxideQQuickWebView : public QQuickItem {
   void fullscreenRequested(bool fullscreen);
   void navigationRequested(OxideQNavigationRequest *request);
   void newViewRequested(OxideQNewViewRequest* request);
-  void geolocationPermissionRequested(
-      OxideQGeolocationPermissionRequest* request);
+  void geolocationPermissionRequested(const QJSValue& request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,
                                 const QString& message,
                                 int lineNumber,
