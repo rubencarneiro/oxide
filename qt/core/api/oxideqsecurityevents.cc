@@ -51,6 +51,11 @@ void OxideQCertificateErrorPrivate::respond(bool accept) {
     return;
   }
 
+  if (accept && !overridable_) {
+    qWarning() << "Cannot allow a non-overridable certificate error";
+    accept = false;
+  }
+
   callback_.Run(accept);
   callback_.Reset();
 }
