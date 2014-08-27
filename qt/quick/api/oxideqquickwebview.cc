@@ -456,7 +456,7 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
   Q_Q(OxideQQuickWebView);
 
   // Unlike other signals where the object ownership remains with the
-  // callsite that triggers the signal, we want to transfer ownership of
+  // callsite that initiates the signal, we want to transfer ownership of
   // GeolocationPermissionRequest to any signal handlers so that the
   // request can be completed asynchronously.
   //
@@ -469,10 +469,15 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
   // a way to safely share the object between slots - should a C++ slot
   // delete the object? What if the QmlEngine deletes it?
   //
-  // We can't use QSharedPointer with Qml, so instead we wrap the request
-  // in a QJSValue and dispatch that. This means that the request only has a
-  // single owner (the QmlEngine), which won't delete it until all QJSValue's
-  // have gone out of scope
+  // In a C++ world, we could wrap it in a QSharedPointer or dispatch a
+  // copyable type that manages shareable data underneath. We can't use
+  // QSharedPointer with Qml though, because the engine will delete any object
+  // without a parent when it goes out of scope, regardless of any shared
+  // references, and QObject parents are incompatible with QSharedPointer.
+  // Instead we transfer ownership to the QmlEngine now and dispatch a QJSValue.
+  // This means that the request only has a single owner (the QmlEngine), which
+  // won't delete it until all QJSValue's have gone out of scope
+
   QQmlEngine* engine = qmlEngine(q);
   if (!engine) {
     delete request;
