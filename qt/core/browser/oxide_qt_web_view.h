@@ -142,7 +142,7 @@ class WebView FINAL : public oxide::WebView,
                               bool user_gesture) FINAL;
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
+  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) FINAL;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;

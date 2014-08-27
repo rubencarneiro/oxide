@@ -725,7 +725,7 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
-WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
+WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
   return NULL;
 }
 
@@ -1183,16 +1183,17 @@ gfx::Size WebView::GetContainerSizeDip() const {
   return GetContainerBoundsDip().size();
 }
 
-void WebView::ShowPopupMenu(const gfx::Rect& bounds,
+void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                            const gfx::Rect& bounds,
                             int selected_item,
                             const std::vector<content::MenuItem>& items,
                             bool allow_multiple_selection) {
   DCHECK(!active_popup_menu_ || active_popup_menu_->WasHidden());
 
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  WebPopupMenu* menu = CreatePopupMenu(rvh);
+  WebPopupMenu* menu = CreatePopupMenu(render_frame_host);
   if (!menu) {
-    static_cast<content::RenderViewHostImpl *>(rvh)->DidCancelPopupMenu();
+    static_cast<content::RenderFrameHostImpl *>(
+        render_frame_host)->DidCancelPopupMenu();
     return;
   }
 

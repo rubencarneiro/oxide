@@ -32,7 +32,7 @@ class WebPopupMenuDelegate;
 class WebPopupMenu FINAL : public oxide::WebPopupMenu {
  public:
   WebPopupMenu(WebPopupMenuDelegate* delegate,
-               content::RenderViewHost* rvh);
+               content::RenderFrameHost* rfh);
 
  private:
   void Show(const gfx::Rect& bounds,

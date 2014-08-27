@@ -35,8 +35,8 @@ namespace oxide {
 namespace qt {
 
 WebPopupMenu::WebPopupMenu(WebPopupMenuDelegate* delegate,
-                           content::RenderViewHost* rvh) :
-    oxide::WebPopupMenu(rvh),
+                           content::RenderFrameHost* rfh) :
+    oxide::WebPopupMenu(rfh),
     delegate_(delegate) {
   delegate_->menu_ = this;
 }
