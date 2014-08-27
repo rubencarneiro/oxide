@@ -231,6 +231,14 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
   }
 }
 
+void OnAllowCertificateError(const base::Callback<void(bool)>& callback,
+                             bool overridable,
+                             bool allow) {
+  // Make this fatal - the API layer shouldn't allow this
+  CHECK(!allow || overridable) << "Cannot allow a non-overridable error!";
+  callback.Run(allow);
+}
+
 typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
 base::LazyInstance<WebViewsPerContextMap> g_web_view_per_context;
 
@@ -1317,7 +1325,9 @@ void WebView::AllowCertificateError(
                           ToCertError(cert_error, ssl_info.cert.get()),
                           ssl_info.cert, request_url,
                           resource_type, overridable,
-                          strict_enforcement, callback)) {
+                          strict_enforcement,
+                          base::Bind(OnAllowCertificateError,
+                                     callback, overridable))) {
     *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
   }
 }
