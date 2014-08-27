@@ -39,6 +39,7 @@
 #include <Qt>
 
 #include "qt/core/api/oxideqpermissionrequest.h"
+#include "qt/core/api/oxideqsecurityevents.h"
 #if defined(ENABLE_COMPOSITING)
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
 #endif
@@ -478,13 +479,17 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
     return;
   }
 
-  QJSValue val = engine->newQObject(request);
-  if (!val.isQObject()) {
-    delete request;
-    return;
+  {
+    QJSValue val = engine->newQObject(request);
+    if (!val.isQObject()) {
+      delete request;
+      return;
+    }
+
+    emit q->geolocationPermissionRequested(val);
   }
 
-  emit q->geolocationPermissionRequested(val);
+  engine->collectGarbage();
 }
 
 void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
@@ -567,6 +572,30 @@ void OxideQQuickWebViewPrivate::DownloadRequested(
   Q_Q(OxideQQuickWebView);
 
   emit q->downloadRequested(downloadRequest);
+}
+
+void OxideQQuickWebViewPrivate::CertificateError(
+    OxideQCertificateError* cert_error) {
+  Q_Q(OxideQQuickWebView);
+
+  // See the comment in RequestGeolocationPermission
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete cert_error;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(cert_error);
+    if (!val.isQObject()) {
+      delete cert_error;
+      return;
+    }
+
+    emit q->certificateError(val);
+  }
+
+  engine->collectGarbage();
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {

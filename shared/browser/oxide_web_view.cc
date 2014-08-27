@@ -54,6 +54,7 @@
 #include "content/public/common/url_constants.h"
 #include "content/public/common/web_preferences.h"
 #include "net/base/net_errors.h"
+#include "net/ssl/ssl_info.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
@@ -191,6 +192,43 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
       frame_metadata.scrollable_viewport_size.width();
   float content_width_css = frame_metadata.root_layer_size.width();
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
+}
+
+CertError ToCertError(int error, net::X509Certificate* cert) {
+  if (!net::IsCertificateError(error)) {
+    return CERT_OK;
+  }
+
+  if (error == net::ERR_CERT_NO_REVOCATION_MECHANISM ||
+      error == net::ERR_CERT_UNABLE_TO_CHECK_REVOCATION) {
+    // These aren't treated as hard errors
+    return CERT_OK;
+  }
+
+  switch (error) {
+    case net::ERR_CERT_COMMON_NAME_INVALID:
+      return CERT_ERROR_BAD_IDENTITY;
+    case net::ERR_CERT_DATE_INVALID: {
+      if (cert && cert->HasExpired()) {
+        return CERT_ERROR_EXPIRED;
+      }
+      return CERT_ERROR_DATE_INVALID;
+    }
+    case net::ERR_CERT_AUTHORITY_INVALID:
+      return CERT_ERROR_AUTHORITY_INVALID;
+    case net::ERR_CERT_CONTAINS_ERRORS:
+    case net::ERR_CERT_INVALID:
+      return CERT_ERROR_INVALID;
+    case net::ERR_CERT_REVOKED:
+      return CERT_ERROR_REVOKED;
+    case net::ERR_CERT_WEAK_SIGNATURE_ALGORITHM:
+    case net::ERR_CERT_WEAK_KEY:
+      return CERT_ERROR_INSECURE;
+    //case net::ERR_CERT_NON_UNIQUE_NAME:
+    //case net::ERR_CERT_NAME_CONSTRAINT_VIOLATION:
+    default:
+      return CERT_ERROR_GENERIC;
+  }
 }
 
 typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
@@ -762,6 +800,17 @@ void WebView::OnFocusedNodeChanged() {}
 void WebView::OnSelectionBoundsChanged() {}
 
 void WebView::OnSecurityStatusChanged(const SecurityStatus& old) {}
+bool WebView::OnCertificateError(
+    bool is_main_frame,
+    CertError cert_error,
+    const scoped_refptr<net::X509Certificate>& cert,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool overridable,
+    bool strict_enforcement,
+    const base::Callback<void(bool)>& callback) {
+  return false;
+}
 
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
@@ -937,6 +986,11 @@ WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
 // static
 WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
   return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+}
+
+// static
+WebView* WebView::FromRenderFrameHost(content::RenderFrameHost* rfh) {
+  return FromWebContents(content::WebContents::FromRenderFrameHost(rfh));
 }
 
 const GURL& WebView::GetURL() const {
@@ -1237,6 +1291,35 @@ void WebView::RequestGeolocationPermission(
 
 void WebView::CancelGeolocationPermissionRequest(int id) {
   geolocation_permission_requests_.CancelPendingRequestWithID(id);
+}
+
+void WebView::AllowCertificateError(
+    content::RenderFrameHost* rfh,
+    int cert_error,
+    const net::SSLInfo& ssl_info,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool overridable,
+    bool strict_enforcement,
+    const base::Callback<void(bool)>& callback,
+    content::CertificateRequestResultType* result) {
+  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
+  if (!frame) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
+    return;
+  }
+
+  DCHECK_EQ(frame->view(), this);
+  CHECK(!overridable || !strict_enforcement) <<
+      "overridable and strict_enforcement are expected to be mutually exclusive";
+
+  if (!OnCertificateError(!frame->parent(),
+                          ToCertError(cert_error, ssl_info.cert.get()),
+                          ssl_info.cert, request_url,
+                          resource_type, overridable,
+                          strict_enforcement, callback)) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
+  }
 }
 
 void WebView::UpdateWebPreferences() {

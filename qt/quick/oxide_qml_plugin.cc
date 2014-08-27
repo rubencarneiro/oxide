@@ -27,6 +27,7 @@
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
+#include "qt/core/api/oxideqsecurityevents.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqwebpreferences.h"
@@ -73,6 +74,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterSingletonType<OxideQQuickGlobals>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
 
+    qmlRegisterUncreatableType<OxideQCertificateError>(uri, 1, 0, "CertificateError",
+        "CertificateError is delivered by WebView.certificateError");
     qmlRegisterUncreatableType<OxideQQuickCookieManager>(uri, 1, 0, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
     qmlRegisterUncreatableType<OxideQDownloadRequest>(uri, 1, 0, "DownloadRequest",

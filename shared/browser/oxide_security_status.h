@@ -22,6 +22,8 @@
 #include "base/memory/ref_counted.h"
 #include "content/public/common/ssl_status.h"
 
+#include "shared/browser/oxide_security_types.h"
+
 namespace net {
 class X509Certificate;
 }
@@ -35,27 +37,6 @@ class SecurityStatus FINAL {
   SecurityStatus(const content::SSLStatus& ssl_status);
 
   ~SecurityStatus();
-
-  enum SecurityLevel {
-    SECURITY_LEVEL_NONE,
-    SECURITY_LEVEL_SECURE,
-    SECURITY_LEVEL_SECURE_EV,
-    SECURITY_LEVEL_WARNING,
-    SECURITY_LEVEL_ERROR
-  };
-
-  enum CertStatus {
-    CERT_STATUS_OK = 0,
-    CERT_STATUS_BAD_IDENTITY = 1 << 0,
-    CERT_STATUS_EXPIRED = 1 << 1,
-    CERT_STATUS_DATE_INVALID = 1 << 2,
-    CERT_STATUS_AUTHORITY_INVALID = 1 << 3,
-    CERT_STATUS_REVOCATION_CHECK_FAILED = 1 << 4,
-    CERT_STATUS_REVOKED = 1 << 5,
-    CERT_STATUS_INVALID = 1 << 6,
-    CERT_STATUS_INSECURE = 1 << 7,
-    CERT_STATUS_GENERIC_ERROR = 1 << 8
-  };
 
   void Update(const content::SSLStatus& ssl_status);
 

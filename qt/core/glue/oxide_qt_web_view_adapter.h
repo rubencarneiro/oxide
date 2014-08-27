@@ -47,6 +47,7 @@ class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQCertificateError;
 class OxideQDownloadRequest;
 class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
@@ -263,6 +264,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
   virtual void DownloadRequested(OxideQDownloadRequest* downloadRequest) = 0;
+
+  virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
 
   QScopedPointer<WebView> priv;
 

@@ -64,7 +64,9 @@ static QDateTime ToQDateTime(const base::Time& time) {
   return QDateTime::fromMSecsSinceEpoch(ms);
 }
 
-OxideQSslCertificatePrivate::OxideQSslCertificatePrivate() {}
+OxideQSslCertificatePrivate::OxideQSslCertificatePrivate(
+    const scoped_refptr<net::X509Certificate>& cert)
+    : x509_cert_(cert) {}
 
 OxideQSslCertificatePrivate::~OxideQSslCertificatePrivate() {}
 
@@ -72,20 +74,15 @@ OxideQSslCertificatePrivate::~OxideQSslCertificatePrivate() {}
 OxideQSslCertificate* OxideQSslCertificatePrivate::Create(
     const scoped_refptr<net::X509Certificate>& cert,
     QObject* parent) {
-  OxideQSslCertificate* rv = new OxideQSslCertificate(parent);
-  get(rv)->x509_cert_ = cert;
-  return rv;
+  return new OxideQSslCertificate(
+      *new OxideQSslCertificatePrivate(cert),
+      parent);
 }
 
-// static
-OxideQSslCertificatePrivate* OxideQSslCertificatePrivate::get(
-    OxideQSslCertificate* q) {
-  return q->d_func();
-}
-
-OxideQSslCertificate::OxideQSslCertificate(QObject* parent)
+OxideQSslCertificate::OxideQSslCertificate(OxideQSslCertificatePrivate& dd,
+                                           QObject* parent)
     : QObject(parent),
-      d_ptr(new OxideQSslCertificatePrivate()) {}
+      d_ptr(&dd) {}
 
 OxideQSslCertificate::~OxideQSslCertificate() {}
 

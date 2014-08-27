@@ -49,7 +49,7 @@ class OxideQSecurityStatusPrivate Q_DECL_FINAL {
   void Update(const oxide::SecurityStatus& old);
 
  private:
-  OxideQSecurityStatusPrivate(OxideQSecurityStatus* q);
+  OxideQSecurityStatusPrivate(oxide::qt::WebView* view);
 
   OxideQSecurityStatus* q_ptr;
   oxide::qt::WebView* web_view_;

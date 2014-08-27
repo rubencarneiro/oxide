@@ -30,19 +30,19 @@ namespace oxide {
 namespace {
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(content::SSLStatus::ContentStatusFlags)
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(SecurityStatus::CertStatus)
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(CertStatus)
 
-inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
+inline SecurityLevel CalculateSecurityLevel(
     const content::SSLStatus& ssl_status,
     net::X509Certificate* cert) {
   if (ssl_status.security_style == content::SECURITY_STYLE_UNKNOWN ||
       ssl_status.security_style == content::SECURITY_STYLE_UNAUTHENTICATED) {
-    return SecurityStatus::SECURITY_LEVEL_NONE;
+    return SECURITY_LEVEL_NONE;
   }
 
   if (ssl_status.security_style ==
       content::SECURITY_STYLE_AUTHENTICATION_BROKEN) {
-    return SecurityStatus::SECURITY_LEVEL_ERROR;
+    return SECURITY_LEVEL_ERROR;
   }
 
   DCHECK_EQ(ssl_status.security_style, content::SECURITY_STYLE_AUTHENTICATED);
@@ -53,7 +53,7 @@ inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
 
   if (ssl_status.content_status &
       content::SSLStatus::DISPLAYED_INSECURE_CONTENT) {
-    return SecurityStatus::SECURITY_LEVEL_WARNING;
+    return SECURITY_LEVEL_WARNING;
   }
 
   DCHECK_EQ(
@@ -65,59 +65,58 @@ inline SecurityStatus::SecurityLevel CalculateSecurityLevel(
     CHECK(net::IsCertStatusMinorError(ssl_status.cert_status)) <<
         "Invalid SSLStatus - Non-minor cert status error and "
         "SECURITY_STYLE_AUTHENTICATED are meant to be mutually exclusive!";
-    return SecurityStatus::SECURITY_LEVEL_WARNING;
+    return SECURITY_LEVEL_WARNING;
   }
 
   if ((ssl_status.cert_status & net::CERT_STATUS_IS_EV) && cert) {
-    return SecurityStatus::SECURITY_LEVEL_SECURE_EV;
+    return SECURITY_LEVEL_SECURE_EV;
   }
 
-  return SecurityStatus::SECURITY_LEVEL_SECURE;
+  return SECURITY_LEVEL_SECURE;
 }
 
-inline SecurityStatus::CertStatus CalculateCertStatus(
-    net::CertStatus cert_status,
-    net::X509Certificate* cert) {
-  SecurityStatus::CertStatus rv = SecurityStatus::CERT_STATUS_OK;
+inline CertStatus CalculateCertStatus(net::CertStatus cert_status,
+                                      net::X509Certificate* cert) {
+  CertStatus rv = CERT_STATUS_OK;
 
   // Handle flags that have a direct mapping to CertErrorStatus first
   if (cert_status & net::CERT_STATUS_COMMON_NAME_INVALID) {
-    rv |= SecurityStatus::CERT_STATUS_BAD_IDENTITY;
+    rv |= CERT_STATUS_BAD_IDENTITY;
     cert_status &= ~net::CERT_STATUS_COMMON_NAME_INVALID;
   }
   if (cert_status & net::CERT_STATUS_DATE_INVALID) {
     if (cert && cert->HasExpired()) {
-      rv |= SecurityStatus::CERT_STATUS_EXPIRED;
+      rv |= CERT_STATUS_EXPIRED;
     } else {
       // The date could be in the future or issuer certificates could
       // have expired. In the latter case, perhaps make this
       // CERT_STATUS_EXPIRED too?
-      rv |= SecurityStatus::CERT_STATUS_DATE_INVALID;
+      rv |= CERT_STATUS_DATE_INVALID;
     }
     cert_status &= ~net::CERT_STATUS_DATE_INVALID;
   }
   if (cert_status & net::CERT_STATUS_AUTHORITY_INVALID) {
-    rv |= SecurityStatus::CERT_STATUS_AUTHORITY_INVALID;
+    rv |= CERT_STATUS_AUTHORITY_INVALID;
     cert_status &= ~net::CERT_STATUS_AUTHORITY_INVALID;
   }
   if (cert_status & net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION) {
-    rv |= SecurityStatus::CERT_STATUS_REVOCATION_CHECK_FAILED;
+    rv |= CERT_STATUS_REVOCATION_CHECK_FAILED;
     cert_status &= ~net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
   }
   if (cert_status & net::CERT_STATUS_REVOKED) {
-    rv |= SecurityStatus::CERT_STATUS_REVOKED;
+    rv |= CERT_STATUS_REVOKED;
     cert_status &= ~net::CERT_STATUS_REVOKED;
   }
   if (cert_status & net::CERT_STATUS_INVALID) {
-    rv |= SecurityStatus::CERT_STATUS_INVALID;
+    rv |= CERT_STATUS_INVALID;
     cert_status &= ~net::CERT_STATUS_INVALID;
   }
   if (cert_status & net::CERT_STATUS_WEAK_SIGNATURE_ALGORITHM) {
-    rv |= SecurityStatus::CERT_STATUS_INSECURE;
+    rv |= CERT_STATUS_INSECURE;
     cert_status &= ~net::CERT_STATUS_WEAK_SIGNATURE_ALGORITHM;
   }
   if (cert_status & net::CERT_STATUS_WEAK_KEY) {
-    rv |= SecurityStatus::CERT_STATUS_INSECURE;
+    rv |= CERT_STATUS_INSECURE;
     cert_status &= ~net::CERT_STATUS_WEAK_KEY;
   }
 
@@ -125,7 +124,7 @@ inline SecurityStatus::CertStatus CalculateCertStatus(
   // set the generic flag if any non-minor error bits are set
   if (net::IsCertStatusError(cert_status) &&
       !net::IsCertStatusMinorError(cert_status)) {
-    rv |= SecurityStatus::CERT_STATUS_GENERIC_ERROR;
+    rv |= CERT_STATUS_GENERIC_ERROR;
   }
 
   return rv;

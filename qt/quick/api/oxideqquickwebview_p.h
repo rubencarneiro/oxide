@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+class OxideQCertificateError;
 class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
@@ -219,7 +220,7 @@ class OxideQQuickWebView : public QQuickItem {
   void contentXChanged();
   void contentYChanged();
   void fullscreenRequested(bool fullscreen);
-  void navigationRequested(OxideQNavigationRequest *request);
+  void navigationRequested(OxideQNavigationRequest* request);
   void newViewRequested(OxideQNewViewRequest* request);
   void geolocationPermissionRequested(const QJSValue& request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,
@@ -227,6 +228,7 @@ class OxideQQuickWebView : public QQuickItem {
                                 int lineNumber,
                                 const QString& sourceId);
   void downloadRequested(OxideQDownloadRequest* request);
+  void certificateError(const QJSValue& error);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());

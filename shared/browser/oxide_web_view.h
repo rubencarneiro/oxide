@@ -33,10 +33,12 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/common/input/input_event_ack_state.h"
+#include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
+#include "content/public/common/resource_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "ui/base/ime/text_input_type.h"
@@ -49,6 +51,7 @@
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
+#include "shared/browser/oxide_security_types.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/browser/oxide_web_view_contents_helper_delegate.h"
 #include "shared/common/oxide_message_enums.h"
@@ -68,6 +71,7 @@ struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
 struct OpenURLParams;
+class RenderFrameHost;
 class RenderViewHost;
 class RenderWidgetHostImpl;
 class WebContents;
@@ -79,6 +83,10 @@ class WebCursor;
 namespace gfx {
 class Range;
 class Size;
+}
+
+namespace net {
+class SSLInfo;
 }
 
 namespace ui {
@@ -126,6 +134,7 @@ class WebView : public ScriptMessageTarget,
 
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
+  static WebView* FromRenderFrameHost(content::RenderFrameHost* rfh);
 
   static std::set<WebView*> GetAllWebViewsFor(
       BrowserContext * browser_context);
@@ -197,6 +206,16 @@ class WebView : public ScriptMessageTarget,
       const base::Callback<void(bool)>& callback);
   void CancelGeolocationPermissionRequest(int id);
 
+  void AllowCertificateError(content::RenderFrameHost* rfh,
+                             int cert_error,
+                             const net::SSLInfo& ssl_info,
+                             const GURL& request_url,
+                             content::ResourceType resource_type,
+                             bool overridable,
+                             bool strict_enforcement,
+                             const base::Callback<void(bool)>& callback,
+                             content::CertificateRequestResultType* result);
+                             
   void UpdateWebPreferences();
 
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
@@ -428,6 +447,15 @@ class WebView : public ScriptMessageTarget,
   virtual void OnSelectionBoundsChanged();
 
   virtual void OnSecurityStatusChanged(const SecurityStatus& old);
+  virtual bool OnCertificateError(
+      bool is_main_frame,
+      CertError cert_error,
+      const scoped_refptr<net::X509Certificate>& cert,
+      const GURL& request_url,
+      content::ResourceType resource_type,
+      bool overridable,
+      bool strict_enforcement,
+      const base::Callback<void(bool)>& callback);
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

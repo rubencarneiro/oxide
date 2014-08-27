@@ -23,15 +23,17 @@
 #include "content/public/browser/cert_store.h"
 #include "net/cert/x509_certificate.h"
 
-#include "qt/core/api/oxideqsslcertificate.h"
-#include "qt/core/api/oxideqsslcertificate_p.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 #include "shared/browser/oxide_security_status.h"
+#include "shared/browser/oxide_security_types.h"
+
+#include "oxideqsslcertificate.h"
+#include "oxideqsslcertificate_p.h"
 
 OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
-    OxideQSecurityStatus* q)
-    : q_ptr(q),
-      web_view_(NULL) {}
+    oxide::qt::WebView* view)
+    : q_ptr(NULL),
+      web_view_(view) {}
 
 OxideQSecurityStatusPrivate::~OxideQSecurityStatusPrivate() {}
 
@@ -41,10 +43,9 @@ OxideQSecurityStatus* OxideQSecurityStatusPrivate::Create(
     QObject* parent) {
   DCHECK(view);
 
-  OxideQSecurityStatus* rv = new OxideQSecurityStatus(parent);
-  get(rv)->web_view_ = view;
-
-  return rv;
+  return new OxideQSecurityStatus(
+      *new OxideQSecurityStatusPrivate(view),
+      parent);
 }
 
 // static
@@ -73,82 +74,82 @@ void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
   }
 }
 
-OxideQSecurityStatus::OxideQSecurityStatus(QObject* parent)
+OxideQSecurityStatus::OxideQSecurityStatus(OxideQSecurityStatusPrivate& dd,
+                                           QObject* parent)
     : QObject(parent),
-      d_ptr(new OxideQSecurityStatusPrivate(this)) {
+      d_ptr(&dd) {
+  Q_D(OxideQSecurityStatus);
+  d->q_ptr = this;
+
   COMPILE_ASSERT(
       SecurityLevelNone ==
-      static_cast<SecurityLevel>(oxide::SecurityStatus::SECURITY_LEVEL_NONE),
+        static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_NONE),
       security_level_enums_none_doesnt_match);
   COMPILE_ASSERT(
       SecurityLevelSecure ==
-      static_cast<SecurityLevel>(oxide::SecurityStatus::SECURITY_LEVEL_SECURE),
+        static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_SECURE),
       security_level_enums_secure_doesnt_match);
   COMPILE_ASSERT(
       SecurityLevelSecureEV ==
-      static_cast<SecurityLevel>(oxide::SecurityStatus::SECURITY_LEVEL_SECURE_EV),
+        static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_SECURE_EV),
       security_level_enums_secure_ev_doesnt_match);
   COMPILE_ASSERT(
       SecurityLevelWarning ==
-      static_cast<SecurityLevel>(oxide::SecurityStatus::SECURITY_LEVEL_WARNING),
+        static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_WARNING),
       security_level_enums_warning_doesnt_match);
   COMPILE_ASSERT(
       SecurityLevelError ==
-      static_cast<SecurityLevel>(oxide::SecurityStatus::SECURITY_LEVEL_ERROR),
+        static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_ERROR),
       security_level_enums_error_doesnt_match);
 
   COMPILE_ASSERT(
       ContentStatusNormal ==
-      static_cast<ContentStatus>(content::SSLStatus::NORMAL_CONTENT),
+        static_cast<ContentStatus>(content::SSLStatus::NORMAL_CONTENT),
       content_status_enums_normal_doesnt_match);
   COMPILE_ASSERT(
       ContentStatusDisplayedInsecure ==
-      static_cast<ContentStatus>(content::SSLStatus::DISPLAYED_INSECURE_CONTENT),
+        static_cast<ContentStatus>(content::SSLStatus::DISPLAYED_INSECURE_CONTENT),
       content_status_enums_displayed_insecure_doesnt_match);
   COMPILE_ASSERT(
       ContentStatusRanInsecure ==
-      static_cast<ContentStatus>(content::SSLStatus::RAN_INSECURE_CONTENT),
+        static_cast<ContentStatus>(content::SSLStatus::RAN_INSECURE_CONTENT),
       content_status_enums_ran_insecure_doesnt_match);
 
   COMPILE_ASSERT(
-      CertStatusOk ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_OK),
+      CertStatusOk == static_cast<CertStatus>(oxide::CERT_STATUS_OK),
       cert_status_enums_ok_doesnt_match);
   COMPILE_ASSERT(
       CertStatusBadIdentity ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_BAD_IDENTITY),
+        static_cast<CertStatus>(oxide::CERT_STATUS_BAD_IDENTITY),
       cert_status_enums_bad_identity_doesnt_match);
   COMPILE_ASSERT(
-      CertStatusExpired ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_EXPIRED),
+      CertStatusExpired == static_cast<CertStatus>(oxide::CERT_STATUS_EXPIRED),
       cert_status_enums_expired_doesnt_match);
   COMPILE_ASSERT(
       CertStatusDateInvalid ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_DATE_INVALID),
+        static_cast<CertStatus>(oxide::CERT_STATUS_DATE_INVALID),
       cert_status_enums_date_invalid_doesnt_match);
   COMPILE_ASSERT(
       CertStatusAuthorityInvalid ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_AUTHORITY_INVALID),
+        static_cast<CertStatus>(oxide::CERT_STATUS_AUTHORITY_INVALID),
       cert_status_enums_authority_invalid_doesnt_match);
   COMPILE_ASSERT(
       CertStatusRevocationCheckFailed ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_REVOCATION_CHECK_FAILED),
+        static_cast<CertStatus>(oxide::CERT_STATUS_REVOCATION_CHECK_FAILED),
       cert_status_enums_revocation_check_failed_doesnt_match);
   COMPILE_ASSERT(
-      CertStatusRevoked ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_REVOKED),
+      CertStatusRevoked == static_cast<CertStatus>(oxide::CERT_STATUS_REVOKED),
       cert_status_enums_revoked_doesnt_match);
   COMPILE_ASSERT(
-      CertStatusInvalid ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_INVALID),
+      CertStatusInvalid == static_cast<CertStatus>(oxide::CERT_STATUS_INVALID),
       cert_status_enums_invalid_doesnt_match);
   COMPILE_ASSERT(
       CertStatusInsecure ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_INSECURE),
+        static_cast<CertStatus>(oxide::CERT_STATUS_INSECURE),
       cert_status_enums_insecure_doesnt_match);
   COMPILE_ASSERT(
       CertStatusGenericError ==
-      static_cast<CertStatus>(oxide::SecurityStatus::CERT_STATUS_GENERIC_ERROR),
+        static_cast<CertStatus>(oxide::CERT_STATUS_GENERIC_ERROR),
       cert_status_enums_generic_error_doesnt_match);
 }
 

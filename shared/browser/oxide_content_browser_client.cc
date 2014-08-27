@@ -31,6 +31,8 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/browser_main_parts.h"
+#include "content/public/browser/certificate_request_result_type.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
@@ -365,6 +367,39 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
                                           net::CookieOptions* options) {
   return BrowserContextIOData::FromResourceContext(
       context)->CanAccessCookies(url, first_party, true);
+}
+
+void ContentBrowserClient::AllowCertificateError(
+    int render_process_id,
+    int render_frame_id,
+    int cert_error,
+    const net::SSLInfo& ssl_info,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool overridable,
+    bool strict_enforcement,
+    bool expired_previous_decision,
+    const base::Callback<void(bool)>& callback,
+    content::CertificateRequestResultType* result) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(
+      render_process_id, render_frame_id);
+  if (!rfh) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
+    return;
+  }
+
+  WebView* webview = WebView::FromRenderFrameHost(rfh);
+  if (!webview) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
+    return;
+  }
+
+  webview->AllowCertificateError(rfh, cert_error, ssl_info, request_url,
+                                 resource_type, overridable,
+                                 strict_enforcement, callback,
+                                 result);
 }
 
 void ContentBrowserClient::RequestGeolocationPermission(

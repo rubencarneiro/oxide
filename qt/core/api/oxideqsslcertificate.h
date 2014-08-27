@@ -80,7 +80,8 @@ class Q_DECL_EXPORT OxideQSslCertificate Q_DECL_FINAL : public QObject {
   Q_INVOKABLE QString toPem() const;
 
  private:
-  OxideQSslCertificate(QObject* parent = NULL);
+  OxideQSslCertificate(OxideQSslCertificatePrivate& dd,
+                       QObject* parent = NULL);
 
   QScopedPointer<OxideQSslCertificatePrivate> d_ptr;
 };

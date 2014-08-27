@@ -163,6 +163,14 @@ class WebView FINAL : public oxide::WebView,
   void OnSelectionBoundsChanged() FINAL;
 
   void OnSecurityStatusChanged(const oxide::SecurityStatus& old) FINAL;
+  bool OnCertificateError(bool is_main_frame,
+                          oxide::CertError cert_error,
+                          const scoped_refptr<net::X509Certificate>& cert,
+                          const GURL& request_url,
+                          content::ResourceType resource_type,
+                          bool overridable,
+                          bool strict_enforcement,
+                          const base::Callback<void(bool)>& callback) FINAL;
 
   WebViewAdapter* adapter_;
 
