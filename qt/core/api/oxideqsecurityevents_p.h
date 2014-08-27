@@ -39,7 +39,7 @@ class OxideQCertificateErrorPrivate Q_DECL_FINAL {
       bool overridable,
       bool strict_enforcement,
       scoped_ptr<OxideQSslCertificate> certificate,
-      OxideQCertificateError::CertError cert_error,
+      OxideQCertificateError::Error cert_error,
       const base::Callback<void(bool)>& callback,
       QObject* parent = NULL);
 
@@ -53,7 +53,7 @@ class OxideQCertificateErrorPrivate Q_DECL_FINAL {
       bool overridable,
       bool strict_enforcement,
       scoped_ptr<OxideQSslCertificate> certificate,
-      OxideQCertificateError::CertError cert_error,
+      OxideQCertificateError::Error cert_error,
       const base::Callback<void(bool)>& callback);
 
   void respond(bool accept);
@@ -64,7 +64,7 @@ class OxideQCertificateErrorPrivate Q_DECL_FINAL {
   bool overridable_;
   bool strict_enforcement_;
   scoped_ptr<OxideQSslCertificate> certificate_;
-  OxideQCertificateError::CertError cert_error_;
+  OxideQCertificateError::Error cert_error_;
   base::Callback<void(bool)> callback_;
 };
 

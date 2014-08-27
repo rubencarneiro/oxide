@@ -34,7 +34,7 @@ OxideQCertificateErrorPrivate::OxideQCertificateErrorPrivate(
     bool overridable,
     bool strict_enforcement,
     scoped_ptr<OxideQSslCertificate> certificate,
-    OxideQCertificateError::CertError cert_error,
+    OxideQCertificateError::Error cert_error,
     const base::Callback<void(bool)>& callback)
     : url_(url),
       is_main_frame_(is_main_frame),
@@ -70,7 +70,7 @@ OxideQCertificateError* OxideQCertificateErrorPrivate::Create(
     bool overridable,
     bool strict_enforcement,
     scoped_ptr<OxideQSslCertificate> certificate,
-    OxideQCertificateError::CertError cert_error,
+    OxideQCertificateError::Error cert_error,
     const base::Callback<void(bool)>& callback,
     QObject* parent) {
   DCHECK(!callback.is_null());
@@ -93,35 +93,33 @@ OxideQCertificateError::OxideQCertificateError(
     : QObject(parent),
       d_ptr(&dd) {
   COMPILE_ASSERT(
-      CertOK == static_cast<CertError>(oxide::CERT_OK),
-      cert_error_enums_ok_doesnt_match);
+      OK == static_cast<Error>(oxide::CERT_OK),
+      error_enums_ok_doesnt_match);
   COMPILE_ASSERT(
-      CertErrorBadIdentity ==
-        static_cast<CertError>(oxide::CERT_ERROR_BAD_IDENTITY),
-      cert_error_enums_bad_identity_doesnt_match);
+      ErrorBadIdentity == static_cast<Error>(oxide::CERT_ERROR_BAD_IDENTITY),
+      error_enums_bad_identity_doesnt_match);
   COMPILE_ASSERT(
-      CertErrorExpired == static_cast<CertError>(oxide::CERT_ERROR_EXPIRED),
-      cert_error_enums_expired_doesnt_match);
+      ErrorExpired == static_cast<Error>(oxide::CERT_ERROR_EXPIRED),
+      error_enums_expired_doesnt_match);
   COMPILE_ASSERT(
-      CertErrorDateInvalid ==
-        static_cast<CertError>(oxide::CERT_ERROR_DATE_INVALID),
-      cert_error_enums_date_invalid_doesnt_match);
+      ErrorDateInvalid == static_cast<Error>(oxide::CERT_ERROR_DATE_INVALID),
+      error_enums_date_invalid_doesnt_match);
   COMPILE_ASSERT(
-      CertErrorAuthorityInvalid ==
-        static_cast<CertError>(oxide::CERT_ERROR_AUTHORITY_INVALID),
-      cert_error_enums_authority_invalid_doesnt_match);
+      ErrorAuthorityInvalid ==
+        static_cast<Error>(oxide::CERT_ERROR_AUTHORITY_INVALID),
+      error_enums_authority_invalid_doesnt_match);
   COMPILE_ASSERT(
-      CertErrorRevoked == static_cast<CertError>(oxide::CERT_ERROR_REVOKED),
-      cert_error_enums_revoked_doesnt_match);
+      ErrorRevoked == static_cast<Error>(oxide::CERT_ERROR_REVOKED),
+      error_enums_revoked_doesnt_match);
   COMPILE_ASSERT(
-      CertErrorInvalid == static_cast<CertError>(oxide::CERT_ERROR_INVALID),
-      cert_error_enums_invalid_doesnt_match);
+      ErrorInvalid == static_cast<Error>(oxide::CERT_ERROR_INVALID),
+      error_enums_invalid_doesnt_match);
   COMPILE_ASSERT(
-      CertErrorInsecure == static_cast<CertError>(oxide::CERT_ERROR_INSECURE),
-      cert_error_enums_insecure_doesnt_match);
+      ErrorInsecure == static_cast<Error>(oxide::CERT_ERROR_INSECURE),
+      error_enums_insecure_doesnt_match);
   COMPILE_ASSERT(
-      CertErrorGeneric == static_cast<CertError>(oxide::CERT_ERROR_GENERIC),
-      cert_error_enums_generic_doesnt_match);
+      ErrorGeneric == static_cast<Error>(oxide::CERT_ERROR_GENERIC),
+      error_enums_generic_doesnt_match);
 }
 
 OxideQCertificateError::~OxideQCertificateError() {
@@ -168,7 +166,7 @@ OxideQSslCertificate* OxideQCertificateError::certificate() const {
   return d->certificate_.get();
 }
 
-OxideQCertificateError::CertError OxideQCertificateError::certError() const {
+OxideQCertificateError::Error OxideQCertificateError::certError() const {
   Q_D(const OxideQCertificateError);
 
   return d->cert_error_;

@@ -771,7 +771,7 @@ bool WebView::OnCertificateError(bool is_main_frame,
         overridable,
         strict_enforcement,
         q_cert.Pass(),
-        static_cast<OxideQCertificateError::CertError>(cert_error),
+        static_cast<OxideQCertificateError::Error>(cert_error),
         callback));
 
   // Embedder takes ownership of error

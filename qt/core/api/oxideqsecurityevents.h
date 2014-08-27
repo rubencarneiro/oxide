@@ -36,24 +36,24 @@ class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
   Q_PROPERTY(bool strictEnforcement READ strictEnforcement CONSTANT)
 
   Q_PROPERTY(OxideQSslCertificate* certificate READ certificate CONSTANT)
-  Q_PROPERTY(CertError certError READ certError CONSTANT)
+  Q_PROPERTY(Error certError READ certError CONSTANT)
 
-  Q_ENUMS(CertError)
+  Q_ENUMS(Error)
 
   Q_DECLARE_PRIVATE(OxideQCertificateError)
   Q_DISABLE_COPY(OxideQCertificateError)
 
  public:
-  enum CertError {
-    CertOK,
-    CertErrorBadIdentity,
-    CertErrorExpired,
-    CertErrorDateInvalid,
-    CertErrorAuthorityInvalid,
-    CertErrorRevoked,
-    CertErrorInvalid,
-    CertErrorInsecure,
-    CertErrorGeneric
+  enum Error {
+    OK,
+    ErrorBadIdentity,
+    ErrorExpired,
+    ErrorDateInvalid,
+    ErrorAuthorityInvalid,
+    ErrorRevoked,
+    ErrorInvalid,
+    ErrorInsecure,
+    ErrorGeneric
   };
 
   ~OxideQCertificateError();
@@ -67,7 +67,7 @@ class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
   bool strictEnforcement() const;
 
   OxideQSslCertificate* certificate() const;
-  CertError certError() const;
+  Error certError() const;
 
   Q_INVOKABLE void allow();
   Q_INVOKABLE void deny();
