@@ -217,7 +217,7 @@ def SyncChromium(config):
   with open(os.path.join(chromium_dir, ".gclient"), "w") as f:
     f.write(GetChromiumGclientSpec(config.cachedir))
 
-  refs = [ "refs/tags/*" ]
+  refs = [ "refs/tags/*", "refs/branch-heads/*" ]
 
   if not IsGitRepo(CHROMIUMSRCDIR):
     InitGitRepo(CHROMIUM_GIT_URL, CHROMIUMSRCDIR, config.cachedir, refs)
@@ -230,7 +230,7 @@ def SyncChromium(config):
                 GetDesiredChromiumVersion(), config.cachedir)
 
   CheckCall([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
-             "sync", "-D"], chromium_dir)
+             "sync", "-D", "--with_branch_heads"], chromium_dir)
 
   with open(os.path.join(CHROMIUMSRCDIR, ".hgignore"), "w") as f:
     f.write("~$\n")
