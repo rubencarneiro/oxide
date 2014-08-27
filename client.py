@@ -35,7 +35,7 @@ from oxide_utils import CheckCall, CheckOutput, GetChecksum, GetFileChecksum, CH
 from patch_utils import SyncablePatchSet, SyncError
 
 DEPOT_TOOLS_GIT_URL = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
-DEPOT_TOOLS_GIT_REV = "b682b3e514dc65f7ffca03a75c3c90581cfb34de"
+DEPOT_TOOLS_GIT_REV = "8f93f79bcee79072a70cf9c8c392ad140f0cecf1"
 DEPOT_TOOLS_PATH = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
 DEPOT_TOOLS_OLD_PATH = os.path.join(TOPSRCDIR, "chromium", "depot_tools")
 
@@ -44,7 +44,7 @@ CHROMIUM_GCLIENT_SPEC = (
   "solutions = ["
     "{ \"name\": \"src\", "
       "\"url\": \"%s\", "
-      "\"deps_file\": \".DEPS.git\", "
+      "\"deps_file\": \"DEPS\", "
       "\"managed\": False, "
       "\"custom_deps\": "
         "{ \"build\": None, "
