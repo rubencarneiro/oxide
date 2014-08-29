@@ -26,10 +26,10 @@
 namespace oxide {
 
 // static
-void PermissionRequestManager::CancelPendingRequest(
+void PermissionRequestManager::CancelPendingRequestFromSource(
     const base::WeakPtr<PermissionRequest>& request) {
   if (request) {
-    request->Cancel();
+    request->Cancel(true);
   }
 }
 
@@ -70,21 +70,37 @@ PermissionRequestManager::~PermissionRequestManager() {
 
 scoped_ptr<SimplePermissionRequest>
 PermissionRequestManager::CreateGeolocationPermissionRequest(
-    const GURL& origin,
-    const GURL& embedder,
     const base::Callback<void(bool)>& callback,
     base::Closure* cancel_callback) {
   scoped_ptr<SimplePermissionRequest> rv(
-      new SimplePermissionRequest(origin, embedder, callback));
-  AddPendingRequest(PERMISSION_REQUEST_TYPE_GEOLOCATION,
-                              rv.get());
+      new SimplePermissionRequest(callback));
+  AddPendingRequest(PERMISSION_REQUEST_TYPE_GEOLOCATION, rv.get());
 
   if (cancel_callback) {
-    *cancel_callback = base::Bind(CancelPendingRequest,
+    *cancel_callback = base::Bind(CancelPendingRequestFromSource,
                                   rv->AsWeakPtr());
   }
 
   return rv.Pass();
+}
+
+scoped_ptr<SimplePermissionRequest>
+PermissionRequestManager::CreateCertErrorOverrideRequest(
+    const base::Callback<void(bool)>& callback) {
+  scoped_ptr<SimplePermissionRequest> rv(
+      new SimplePermissionRequest(callback));
+  AddPendingRequest(PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE, rv.get());
+
+  return rv.Pass();
+}
+
+void PermissionRequestManager::AbortPendingRequest(
+    PermissionRequest* request) {
+  if (!request) {
+    return;
+  }
+
+  request->Cancel(true);
 }
 
 void PermissionRequestManager::CancelAllPendingRequests() {
@@ -108,7 +124,7 @@ void PermissionRequestManager::CancelAllPendingRequestsForType(
          it != requests.end(); ++it) {
       PermissionRequest* request = *it;
       if (request) {
-        request->Cancel();
+        request->Cancel(false);
       }
     }
   }
@@ -119,14 +135,11 @@ void PermissionRequestManager::CancelAllPendingRequestsForType(
       requests.end());
 }
 
-PermissionRequest::PermissionRequest(const GURL& origin,
-                                     const GURL& embedder)
+PermissionRequest::PermissionRequest()
     : type_(PERMISSION_REQUEST_TYPE_START),
-      origin_(origin),
-      embedder_(embedder),
       is_cancelled_(false) {}
 
-void PermissionRequest::Cancel() {
+void PermissionRequest::Cancel(bool from_source) {
   if (is_cancelled_) {
     // Can be called multiple times from PermissionRequestManager
     return;
@@ -149,18 +162,18 @@ void PermissionRequest::SetCancelCallback(const base::Closure& callback) {
 }
 
 SimplePermissionRequest::SimplePermissionRequest(
-    const GURL& origin,
-    const GURL& embedder,
     const base::Callback<void(bool)>& callback)
-    : PermissionRequest(origin, embedder),
-      callback_(callback) {}
+    : callback_(callback) {}
 
-void SimplePermissionRequest::Cancel() {
+void SimplePermissionRequest::Cancel(bool from_source) {
   if (callback_.is_null()) {
     return;
   }
+  if (!from_source && !callback_.is_null()) {
+    Deny();
+  }
   callback_.Reset();
-  PermissionRequest::Cancel();
+  PermissionRequest::Cancel(from_source);
 }
 
 SimplePermissionRequest::~SimplePermissionRequest() {

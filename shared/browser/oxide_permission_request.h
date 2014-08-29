@@ -33,6 +33,7 @@ enum PermissionRequestType {
   PERMISSION_REQUEST_TYPE_START = 0,
 
   PERMISSION_REQUEST_TYPE_GEOLOCATION = PERMISSION_REQUEST_TYPE_START,
+  PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE,
 
   PERMISSION_REQUEST_TYPE_MAX
 };
@@ -47,11 +48,13 @@ class PermissionRequestManager FINAL :
   ~PermissionRequestManager();
 
   scoped_ptr<SimplePermissionRequest> CreateGeolocationPermissionRequest(
-      const GURL& origin,
-      const GURL& embedder,
       const base::Callback<void(bool)>& callback,
       base::Closure* cancel_callback);
 
+  scoped_ptr<SimplePermissionRequest> CreateCertErrorOverrideRequest(
+      const base::Callback<void(bool)>& callback);
+
+  void AbortPendingRequest(PermissionRequest* request);
   void CancelAllPendingRequests();
   void CancelAllPendingRequestsForType(PermissionRequestType type);
 
@@ -59,7 +62,7 @@ class PermissionRequestManager FINAL :
   friend class PermissionRequest;
   typedef std::vector<PermissionRequest *> PermissionRequestVector;
 
-  static void CancelPendingRequest(
+  static void CancelPendingRequestFromSource(
       const base::WeakPtr<PermissionRequest>& request);
 
   void AddPendingRequest(PermissionRequestType type,
@@ -76,27 +79,21 @@ class PermissionRequest : public base::SupportsWeakPtr<PermissionRequest> {
  public:
   virtual ~PermissionRequest();
 
-  GURL origin() const { return origin_; }
-  GURL embedder() const { return embedder_; }
-
   // Sets a callback to run if the request is cancelled by Oxide
   void SetCancelCallback(const base::Closure& cancel_callback);
 
  protected:
-  PermissionRequest(const GURL& origin,
-                    const GURL& embedder);
+  PermissionRequest();
 
   // Called by Oxide to cancel this request. Will notify the callback
   // registered with SetCancelCallback
-  virtual void Cancel();
+  virtual void Cancel(bool from_source);
 
  private:
   friend class PermissionRequestManager;
 
   PermissionRequestType type_;
   base::WeakPtr<PermissionRequestManager> manager_;
-  GURL origin_;
-  GURL embedder_;
 
   bool is_cancelled_;
   base::Closure cancel_callback_;
@@ -114,13 +111,11 @@ class SimplePermissionRequest FINAL : public PermissionRequest {
  private:
   friend class PermissionRequestManager;
 
-  SimplePermissionRequest(const GURL& origin,
-                          const GURL& embedder,
-                          const base::Callback<void(bool)>& callback);
+  SimplePermissionRequest(const base::Callback<void(bool)>& callback);
 
   // Called by Oxide to cancel this request. Once called, the API layer
   // must not call Allow() or Deny()
-  void Cancel() FINAL;
+  void Cancel(bool from_source) FINAL;
 
   base::Callback<void(bool)> callback_;
 

@@ -15,14 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqsecurityevents.h"
-#include "oxideqsecurityevents_p.h"
+#include "oxideqcertificateerror.h"
+#include "oxideqcertificateerror_p.h"
 
 #include <QtDebug>
 
+#include "base/bind.h"
 #include "base/logging.h"
 #include "base/macros.h"
 
+#include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_security_types.h"
 
 #include "oxideqsslcertificate.h"
@@ -31,33 +33,51 @@ OxideQCertificateErrorPrivate::OxideQCertificateErrorPrivate(
     const QUrl& url,
     bool is_main_frame,
     bool is_subresource,
-    bool overridable,
     bool strict_enforcement,
     scoped_ptr<OxideQSslCertificate> certificate,
     OxideQCertificateError::Error cert_error,
-    const base::Callback<void(bool)>& callback)
+    scoped_ptr<oxide::SimplePermissionRequest> request)
     : url_(url),
       is_main_frame_(is_main_frame),
       is_subresource_(is_subresource),
-      overridable_(overridable),
       strict_enforcement_(strict_enforcement),
       certificate_(certificate.Pass()),
       cert_error_(cert_error),
-      callback_(callback) {}
+      request_(request.Pass()),
+      did_respond_(false),
+      is_cancelled_(false) {}
+
+void OxideQCertificateErrorPrivate::OnCancel() {
+  Q_Q(OxideQCertificateError);
+
+  DCHECK(!is_cancelled_ && !did_respond_);
+  is_cancelled_ = true;
+
+  Q_EMIT q->cancelled();
+}
 
 void OxideQCertificateErrorPrivate::respond(bool accept) {
-  if (callback_.is_null()) {
+  if (!request_) {
+    qWarning() << "Cannot respond to a non-overridable request";
+    return;
+  }
+
+  if (did_respond_) {
     qWarning() << "Cannot respond to a CertificateError more than once";
     return;
   }
 
-  if (accept && !overridable_) {
-    qWarning() << "Cannot allow a non-overridable certificate error";
-    accept = false;
+  if (is_cancelled_) {
+    qWarning() << "Cannot respond to a CertificateError that has been cancelled";
+    return;
   }
 
-  callback_.Run(accept);
-  callback_.Reset();
+  did_respond_ = true;
+  if (accept) {
+    request_->Allow();
+  } else {
+    request_->Deny();
+  }
 }
 
 OxideQCertificateErrorPrivate::~OxideQCertificateErrorPrivate() {}
@@ -67,23 +87,20 @@ OxideQCertificateError* OxideQCertificateErrorPrivate::Create(
     const QUrl& url,
     bool is_main_frame,
     bool is_subresource,
-    bool overridable,
     bool strict_enforcement,
     scoped_ptr<OxideQSslCertificate> certificate,
     OxideQCertificateError::Error cert_error,
-    const base::Callback<void(bool)>& callback,
+    scoped_ptr<oxide::SimplePermissionRequest> request,
     QObject* parent) {
-  DCHECK(!callback.is_null());
   return new OxideQCertificateError(
       *new OxideQCertificateErrorPrivate(
         url,
         is_main_frame,
         is_subresource,
-        overridable,
         strict_enforcement,
         certificate.Pass(),
         cert_error,
-        callback),
+        request.Pass()),
       parent);
 }
 
@@ -92,6 +109,13 @@ OxideQCertificateError::OxideQCertificateError(
     QObject* parent)
     : QObject(parent),
       d_ptr(&dd) {
+  Q_D(OxideQCertificateError);
+
+  d->q_ptr = this;
+  d->request_->SetCancelCallback(
+      base::Bind(&OxideQCertificateErrorPrivate::OnCancel,
+                 base::Unretained(d)));
+  
   COMPILE_ASSERT(
       OK == static_cast<Error>(oxide::CERT_OK),
       error_enums_ok_doesnt_match);
@@ -122,18 +146,18 @@ OxideQCertificateError::OxideQCertificateError(
       error_enums_generic_doesnt_match);
 }
 
-OxideQCertificateError::~OxideQCertificateError() {
-  Q_D(OxideQCertificateError);
-
-  if (!d->callback_.is_null()) {
-    d->callback_.Run(false);
-  }
-}
+OxideQCertificateError::~OxideQCertificateError() {}
 
 QUrl OxideQCertificateError::url() const {
   Q_D(const OxideQCertificateError);
 
   return d->url_;
+}
+
+bool OxideQCertificateError::isCancelled() const {
+  Q_D(const OxideQCertificateError);
+
+  return d->is_cancelled_;
 }
 
 bool OxideQCertificateError::isMainFrame() const {
@@ -151,7 +175,7 @@ bool OxideQCertificateError::isSubresource() const {
 bool OxideQCertificateError::overridable() const {
   Q_D(const OxideQCertificateError);
 
-  return d->overridable_;
+  return !!d->request_;
 }
 
 bool OxideQCertificateError::strictEnforcement() const {

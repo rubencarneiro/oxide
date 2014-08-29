@@ -231,14 +231,6 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
   }
 }
 
-void OnAllowCertificateError(const base::Callback<void(bool)>& callback,
-                             bool overridable,
-                             bool allow) {
-  // Make this fatal - the API layer shouldn't allow this
-  CHECK(!allow || overridable) << "Cannot allow a non-overridable error!";
-  callback.Run(allow);
-}
-
 typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
 base::LazyInstance<WebViewsPerContextMap> g_web_view_per_context;
 
@@ -766,6 +758,8 @@ void WebView::OnToggleFullscreenMode(bool enter) {}
 void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
+    const GURL& origin,
+    const GURL& embedder,
     scoped_ptr<SimplePermissionRequest> request) {}
 
 void WebView::OnUnhandledKeyboardEvent(
@@ -814,9 +808,9 @@ bool WebView::OnCertificateError(
     const scoped_refptr<net::X509Certificate>& cert,
     const GURL& request_url,
     content::ResourceType resource_type,
-    bool overridable,
     bool strict_enforcement,
-    const base::Callback<void(bool)>& callback) {
+    scoped_ptr<SimplePermissionRequest> request) {
+  permission_request_manager_.AbortPendingRequest(request.get());
   return false;
 }
 
@@ -1292,9 +1286,12 @@ void WebView::RequestGeolocationPermission(
     base::Closure* cancel_callback) {
   scoped_ptr<SimplePermissionRequest> request(
       permission_request_manager_.CreateGeolocationPermissionRequest(
-        origin, web_contents_->GetLastCommittedURL().GetOrigin(),
-        callback, cancel_callback));
-  OnRequestGeolocationPermission(request.Pass());
+        callback,
+        cancel_callback));
+  OnRequestGeolocationPermission(
+      origin,
+      web_contents_->GetLastCommittedURL().GetOrigin(),
+      request.Pass());
 }
 
 void WebView::AllowCertificateError(
@@ -1317,13 +1314,21 @@ void WebView::AllowCertificateError(
   CHECK(!overridable || !strict_enforcement) <<
       "overridable and strict_enforcement are expected to be mutually exclusive";
 
+  scoped_ptr<SimplePermissionRequest> request;
+  if (overridable) {
+    request =
+        permission_request_manager_.CreateCertErrorOverrideRequest(callback);
+  } else {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
+  }
+
   if (!OnCertificateError(!frame->parent(),
                           ToCertError(cert_error, ssl_info.cert.get()),
-                          ssl_info.cert, request_url,
-                          resource_type, overridable,
+                          ssl_info.cert,
+                          request_url,
+                          resource_type,
                           strict_enforcement,
-                          base::Bind(OnAllowCertificateError,
-                                     callback, overridable))) {
+                          request.Pass())) {
     *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
   }
 }

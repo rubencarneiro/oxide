@@ -38,8 +38,8 @@
 #include <QtQml>
 #include <Qt>
 
+#include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
-#include "qt/core/api/oxideqsecurityevents.h"
 #if defined(ENABLE_COMPOSITING)
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
 #endif

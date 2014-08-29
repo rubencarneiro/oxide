@@ -411,6 +411,8 @@ class WebView : public ScriptMessageTarget,
   virtual void OnWebPreferencesDestroyed();
 
   virtual void OnRequestGeolocationPermission(
+      const GURL& origin,
+      const GURL& embedder,
       scoped_ptr<SimplePermissionRequest> request);
 
   virtual void OnUnhandledKeyboardEvent(
@@ -452,9 +454,8 @@ class WebView : public ScriptMessageTarget,
       const scoped_refptr<net::X509Certificate>& cert,
       const GURL& request_url,
       content::ResourceType resource_type,
-      bool overridable,
       bool strict_enforcement,
-      const base::Callback<void(bool)>& callback);
+      scoped_ptr<SimplePermissionRequest> request);
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

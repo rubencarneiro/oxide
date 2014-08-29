@@ -22,12 +22,12 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
+#include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
-#include "qt/core/api/oxideqsecurityevents.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqwebpreferences.h"

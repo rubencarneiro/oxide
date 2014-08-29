@@ -54,8 +54,8 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqpermissionrequest_p.h"
-#include "qt/core/api/oxideqsecurityevents.h"
-#include "qt/core/api/oxideqsecurityevents_p.h"
+#include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqsslcertificate.h"
@@ -508,9 +508,14 @@ void WebView::OnWebPreferencesDestroyed() {
 }
 
 void WebView::OnRequestGeolocationPermission(
+    const GURL& origin,
+    const GURL& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   scoped_ptr<OxideQGeolocationPermissionRequest> req(
-      OxideQGeolocationPermissionRequestPrivate::Create(request.Pass()));
+      OxideQGeolocationPermissionRequestPrivate::Create(
+        QUrl(QString::fromStdString(origin.spec())),
+        QUrl(QString::fromStdString(embedder.spec())),
+        request.Pass()));
 
   // The embedder takes ownership of this
   adapter_->RequestGeolocationPermission(req.release());
@@ -744,14 +749,14 @@ void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {
   OxideQSecurityStatusPrivate::get(qsecurity_status_.get())->Update(old);
 }
 
-bool WebView::OnCertificateError(bool is_main_frame,
-                                 oxide::CertError cert_error,
-                                 const scoped_refptr<net::X509Certificate>& cert,
-                                 const GURL& request_url,
-                                 content::ResourceType resource_type,
-                                 bool overridable,
-                                 bool strict_enforcement,
-                                 const base::Callback<void(bool)>& callback) {
+bool WebView::OnCertificateError(
+    bool is_main_frame,
+    oxide::CertError cert_error,
+    const scoped_refptr<net::X509Certificate>& cert,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool strict_enforcement,
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
   scoped_ptr<OxideQSslCertificate> q_cert;
   if (cert) {
     q_cert.reset(OxideQSslCertificatePrivate::Create(cert));
@@ -766,11 +771,10 @@ bool WebView::OnCertificateError(bool is_main_frame,
         QUrl(QString::fromStdString(request_url.spec())),
         is_main_frame,
         is_subresource,
-        overridable,
         strict_enforcement,
         q_cert.Pass(),
         static_cast<OxideQCertificateError::Error>(cert_error),
-        callback));
+        request.Pass()));
 
   // Embedder takes ownership of error
   adapter_->CertificateError(error.release());
