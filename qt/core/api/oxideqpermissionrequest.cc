@@ -39,24 +39,24 @@ void OxideQPermissionRequestPrivate::OnCancelled() {
 }
 
 OxideQPermissionRequestPrivate::OxideQPermissionRequestPrivate(
-    const QUrl& origin,
+    const QUrl& url,
     const QUrl& embedder,
     scoped_ptr<oxide::PermissionRequest> request)
     : q_ptr(NULL),
       request_(request.Pass()),
       is_cancelled_(false),
-      origin_(origin),
+      url_(url),
       embedder_(embedder) {
 }
 
 OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
 
 OxideQSimplePermissionRequestPrivate::OxideQSimplePermissionRequestPrivate(
-    const QUrl& origin,
+    const QUrl& url,
     const QUrl& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request)
     : OxideQPermissionRequestPrivate(
-        origin,
+        url,
         embedder,
         request.PassAs<oxide::PermissionRequest>()),
       did_respond_(false) {}
@@ -84,37 +84,37 @@ OxideQSimplePermissionRequestPrivate::~OxideQSimplePermissionRequestPrivate() {}
 
 // static
 OxideQSimplePermissionRequest* OxideQSimplePermissionRequestPrivate::Create(
-    const QUrl& origin,
+    const QUrl& url,
     const QUrl& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   DCHECK(request);
 
   return new OxideQSimplePermissionRequest(
       *new OxideQSimplePermissionRequestPrivate(
-        origin,
+        url,
         embedder,
         request.Pass()));
 }
 
 OxideQGeolocationPermissionRequestPrivate::OxideQGeolocationPermissionRequestPrivate(
-    const QUrl& origin,
+    const QUrl& url,
     const QUrl& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQSimplePermissionRequestPrivate(origin, embedder, request.Pass()) {}
+    : OxideQSimplePermissionRequestPrivate(url, embedder, request.Pass()) {}
 
 OxideQGeolocationPermissionRequestPrivate::~OxideQGeolocationPermissionRequestPrivate() {}
 
 // static
 OxideQGeolocationPermissionRequest*
 OxideQGeolocationPermissionRequestPrivate::Create(
-    const QUrl& origin,
+    const QUrl& url,
     const QUrl& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   DCHECK(request);
 
   return new OxideQGeolocationPermissionRequest(
       *new OxideQGeolocationPermissionRequestPrivate(
-        origin,
+        url,
         embedder,
         request.Pass()));
 }
@@ -132,10 +132,10 @@ OxideQPermissionRequest::OxideQPermissionRequest(
 
 OxideQPermissionRequest::~OxideQPermissionRequest() {}
 
-QUrl OxideQPermissionRequest::origin() const {
+QUrl OxideQPermissionRequest::url() const {
   Q_D(const OxideQPermissionRequest);
 
-  return d->origin_;
+  return d->url_;
 }
 
 QUrl OxideQPermissionRequest::embedder() const {
@@ -183,6 +183,10 @@ OxideQGeolocationPermissionRequest::OxideQGeolocationPermissionRequest(
     : OxideQSimplePermissionRequest(dd) {}
 
 OxideQGeolocationPermissionRequest::~OxideQGeolocationPermissionRequest() {}
+
+QUrl OxideQGeolocationPermissionRequest::origin() const {
+  return url();
+}
 
 void OxideQGeolocationPermissionRequest::accept() {
   allow();
