@@ -201,10 +201,9 @@ class WebView : public ScriptMessageTarget,
   void HidePopupMenu();
 
   void RequestGeolocationPermission(
-      int id,
       const GURL& origin,
-      const base::Callback<void(bool)>& callback);
-  void CancelGeolocationPermissionRequest(int id);
+      const base::Callback<void(bool)>& callback,
+      base::Closure* cancel_callback);
 
   void AllowCertificateError(content::RenderFrameHost* rfh,
                              int cert_error,
@@ -412,7 +411,7 @@ class WebView : public ScriptMessageTarget,
   virtual void OnWebPreferencesDestroyed();
 
   virtual void OnRequestGeolocationPermission(
-      scoped_ptr<GeolocationPermissionRequest> request);
+      scoped_ptr<SimplePermissionRequest> request);
 
   virtual void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event);
@@ -479,7 +478,7 @@ class WebView : public ScriptMessageTarget,
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 
-  PermissionRequestManager geolocation_permission_requests_;
+  PermissionRequestManager permission_request_manager_;
 
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 

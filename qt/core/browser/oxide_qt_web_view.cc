@@ -508,14 +508,12 @@ void WebView::OnWebPreferencesDestroyed() {
 }
 
 void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<oxide::GeolocationPermissionRequest> request) {
-  OxideQGeolocationPermissionRequest* qreq =
-      new OxideQGeolocationPermissionRequest();
-  OxideQPermissionRequestPrivate::get(qreq)->Init(
-      request.PassAs<oxide::PermissionRequest>());
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQGeolocationPermissionRequest> req(
+      OxideQGeolocationPermissionRequestPrivate::Create(request.Pass()));
 
   // The embedder takes ownership of this
-  adapter_->RequestGeolocationPermission(qreq);
+  adapter_->RequestGeolocationPermission(req.release());
 }
 
 void WebView::OnUnhandledKeyboardEvent(

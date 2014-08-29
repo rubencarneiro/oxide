@@ -129,7 +129,7 @@ class WebView FINAL : public oxide::WebView,
   void OnWebPreferencesDestroyed() FINAL;
 
   void OnRequestGeolocationPermission(
-      scoped_ptr<oxide::GeolocationPermissionRequest> request) FINAL;
+      scoped_ptr<oxide::SimplePermissionRequest> request) FINAL;
 
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) FINAL;

@@ -25,6 +25,7 @@
 
 class OxideQGeolocationPermissionRequestPrivate;
 class OxideQPermissionRequestPrivate;
+class OxideQSimplePermissionRequestPrivate;
 
 class Q_DECL_EXPORT OxideQPermissionRequest : public QObject {
   Q_OBJECT
@@ -48,25 +49,47 @@ class Q_DECL_EXPORT OxideQPermissionRequest : public QObject {
   void cancelled();
 
  protected:
-  Q_DECL_HIDDEN OxideQPermissionRequest(OxideQPermissionRequestPrivate& dd);
+  OxideQPermissionRequest(OxideQPermissionRequestPrivate& dd);
 
   QScopedPointer<OxideQPermissionRequestPrivate> d_ptr;
 };
 
-class Q_DECL_EXPORT OxideQGeolocationPermissionRequest :
+class Q_DECL_EXPORT OxideQSimplePermissionRequest :
     public OxideQPermissionRequest {
+  Q_OBJECT
+
+  Q_DECLARE_PRIVATE(OxideQSimplePermissionRequest)
+  Q_DISABLE_COPY(OxideQSimplePermissionRequest)
+
+ public:
+  virtual ~OxideQSimplePermissionRequest();
+
+ public Q_SLOTS:
+  void allow();
+  void deny();
+
+ protected:
+  OxideQSimplePermissionRequest(OxideQSimplePermissionRequestPrivate& dd);
+};
+
+class Q_DECL_EXPORT OxideQGeolocationPermissionRequest Q_DECL_FINAL :
+    public OxideQSimplePermissionRequest {
   Q_OBJECT
 
   Q_DECLARE_PRIVATE(OxideQGeolocationPermissionRequest)
   Q_DISABLE_COPY(OxideQGeolocationPermissionRequest)
 
  public:
-  Q_DECL_HIDDEN OxideQGeolocationPermissionRequest();
   ~OxideQGeolocationPermissionRequest();
 
  public Q_SLOTS:
+  // Legacy alternative to allow(). With hindsight, allow/deny always made
+  // more sense
   void accept();
-  void deny();
+
+ private:
+  OxideQGeolocationPermissionRequest(
+      OxideQGeolocationPermissionRequestPrivate& dd);
 };
 
 #endif // OXIDE_Q_PERMISSION_REQUEST

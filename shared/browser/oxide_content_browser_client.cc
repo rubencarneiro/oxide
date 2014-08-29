@@ -261,23 +261,6 @@ class BrowserMainParts : public content::BrowserMainParts {
   Screen primary_screen_;
 };
 
-void CancelGeolocationPermissionRequest(int render_process_id,
-                                        int render_view_id,
-                                        int bridge_id) {
-  content::RenderViewHost* rvh = content::RenderViewHost::FromID(
-      render_process_id, render_view_id);
-  if (!rvh) {
-    return;
-  }
-
-  WebView* webview = WebView::FromRenderViewHost(rvh);
-  if (!webview) {
-    return;
-  }
-
-  webview->CancelGeolocationPermissionRequest(bridge_id);
-}
-
 } // namespace
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
@@ -415,17 +398,9 @@ void ContentBrowserClient::RequestGeolocationPermission(
     return;
   }
 
-  webview->RequestGeolocationPermission(bridge_id,
-                                        requesting_frame.GetOrigin(),
-                                        result_callback);
-
-  if (cancel_callback) {
-    *cancel_callback = base::Bind(
-        CancelGeolocationPermissionRequest,
-        web_contents->GetRenderProcessHost()->GetID(),
-        web_contents->GetRenderViewHost()->GetRoutingID(),
-        bridge_id);
-  }
+  webview->RequestGeolocationPermission(requesting_frame.GetOrigin(),
+                                        result_callback,
+                                        cancel_callback);
 }
 
 bool ContentBrowserClient::CanCreateWindow(

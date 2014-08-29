@@ -612,7 +612,7 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
-  geolocation_permission_requests_.CancelAllPending();
+  permission_request_manager_.CancelAllPendingRequests();
 }
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -695,7 +695,7 @@ void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
 void WebView::NavigationEntryCommitted(
     const content::LoadCommittedDetails& load_details) {
   if (load_details.is_navigation_to_different_page()) {
-    geolocation_permission_requests_.CancelAllPending();
+    permission_request_manager_.CancelAllPendingRequests();
   }
   OnNavigationEntryCommitted();
 }
@@ -766,7 +766,7 @@ void WebView::OnToggleFullscreenMode(bool enter) {}
 void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<GeolocationPermissionRequest> request) {}
+    scoped_ptr<SimplePermissionRequest> request) {}
 
 void WebView::OnUnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {}
@@ -1287,18 +1287,14 @@ void WebView::HidePopupMenu() {
 }
 
 void WebView::RequestGeolocationPermission(
-    int id,
     const GURL& origin,
-    const base::Callback<void(bool)>& callback) {
-  scoped_ptr<GeolocationPermissionRequest> request(
-      new GeolocationPermissionRequest(
-        &geolocation_permission_requests_, id, origin,
-        web_contents_->GetLastCommittedURL().GetOrigin(), callback));
+    const base::Callback<void(bool)>& callback,
+    base::Closure* cancel_callback) {
+  scoped_ptr<SimplePermissionRequest> request(
+      permission_request_manager_.CreateGeolocationPermissionRequest(
+        origin, web_contents_->GetLastCommittedURL().GetOrigin(),
+        callback, cancel_callback));
   OnRequestGeolocationPermission(request.Pass());
-}
-
-void WebView::CancelGeolocationPermissionRequest(int id) {
-  geolocation_permission_requests_.CancelPendingRequestWithID(id);
 }
 
 void WebView::AllowCertificateError(
