@@ -69,6 +69,7 @@
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
 #include "oxide_ssl_config_service.h"
+#include "oxide_ssl_host_state_delegate.h"
 #include "oxide_url_request_context.h"
 #include "oxide_user_script_master.h"
 
@@ -673,7 +674,11 @@ content::PushMessagingService* BrowserContext::GetPushMessagingService() {
 }
 
 content::SSLHostStateDelegate* BrowserContext::GetSSLHostStateDelegate() {
-  return NULL;
+  if (!ssl_host_state_delegate_) {
+    ssl_host_state_delegate_.reset(new SSLHostStateDelegate());
+  }
+
+  return ssl_host_state_delegate_.get();
 }
 
 void BrowserContext::AddObserver(BrowserContextObserver* observer) {

@@ -34,6 +34,8 @@ enum PermissionRequestType {
 
   PERMISSION_REQUEST_TYPE_GEOLOCATION = PERMISSION_REQUEST_TYPE_START,
   PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE,
+  PERMISSION_REQUEST_TYPE_DISPLAY_INSECURE_CONTENT,
+  PERMISSION_REQUEST_TYPE_RUN_INSECURE_CONTENT,
 
   PERMISSION_REQUEST_TYPE_MAX
 };
@@ -47,16 +49,17 @@ class PermissionRequestManager FINAL :
   PermissionRequestManager();
   ~PermissionRequestManager();
 
-  scoped_ptr<SimplePermissionRequest> CreateGeolocationPermissionRequest(
+  scoped_ptr<SimplePermissionRequest> CreateSimplePermissionRequest(
+      PermissionRequestType type,
       const base::Callback<void(bool)>& callback,
       base::Closure* cancel_callback);
 
-  scoped_ptr<SimplePermissionRequest> CreateCertErrorOverrideRequest(
-      const base::Callback<void(bool)>& callback);
+  bool HasAnyPendingRequests();
+  bool HasPendingRequestsForType(PermissionRequestType type);
 
   void AbortPendingRequest(PermissionRequest* request);
   void CancelAllPendingRequests();
-  void CancelAllPendingRequestsForType(PermissionRequestType type);
+  void CancelPendingRequestsForType(PermissionRequestType type);
 
  private:
   friend class PermissionRequest;
@@ -92,6 +95,8 @@ class PermissionRequest : public base::SupportsWeakPtr<PermissionRequest> {
  private:
   friend class PermissionRequestManager;
 
+  virtual bool CanRespond() const = 0;
+
   PermissionRequestType type_;
   base::WeakPtr<PermissionRequestManager> manager_;
 
@@ -116,6 +121,8 @@ class SimplePermissionRequest FINAL : public PermissionRequest {
   // Called by Oxide to cancel this request. Once called, the API layer
   // must not call Allow() or Deny()
   void Cancel(bool from_source) FINAL;
+
+  bool CanRespond() const FINAL;
 
   base::Callback<void(bool)> callback_;
 

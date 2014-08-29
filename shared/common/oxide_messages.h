@@ -52,6 +52,15 @@ IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
 IPC_MESSAGE_ROUTED1(OxideMsg_SendMessage,
                     OxideMsg_SendMessage_Params)
 
+IPC_MESSAGE_ROUTED1(OxideMsg_SetAllowDisplayingInsecureContent,
+                    bool)
+IPC_MESSAGE_ROUTED1(OxideMsg_SetAllowRunningInsecureContent,
+                    bool)
+IPC_MESSAGE_ROUTED0(OxideMsg_ReloadFrame)
+
+IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockDisplayingInsecureContent)
+IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockRunningInsecureContent)
+
 IPC_SYNC_MESSAGE_CONTROL1_2(OxideHostMsg_GetUserAgentOverride,
                             GURL,
                             std::string,

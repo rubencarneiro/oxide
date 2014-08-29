@@ -35,7 +35,6 @@ void PermissionRequestManager::CancelPendingRequestFromSource(
 
 void PermissionRequestManager::AddPendingRequest(PermissionRequestType type,
                                                  PermissionRequest* request) {
-  DCHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
   PermissionRequestVector& requests = pending_requests_[type];
 
   DCHECK(std::find(requests.begin(), requests.end(), request) == requests.end());
@@ -65,16 +64,19 @@ PermissionRequestManager::PermissionRequestManager()
     : in_dispatch_(false) {}
 
 PermissionRequestManager::~PermissionRequestManager() {
-  CancelAllPendingRequests();
+  CHECK(!HasAnyPendingRequests());
 }
 
 scoped_ptr<SimplePermissionRequest>
-PermissionRequestManager::CreateGeolocationPermissionRequest(
+PermissionRequestManager::CreateSimplePermissionRequest(
+    PermissionRequestType type,
     const base::Callback<void(bool)>& callback,
     base::Closure* cancel_callback) {
+  CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
+
   scoped_ptr<SimplePermissionRequest> rv(
       new SimplePermissionRequest(callback));
-  AddPendingRequest(PERMISSION_REQUEST_TYPE_GEOLOCATION, rv.get());
+  AddPendingRequest(type, rv.get());
 
   if (cancel_callback) {
     *cancel_callback = base::Bind(CancelPendingRequestFromSource,
@@ -84,14 +86,32 @@ PermissionRequestManager::CreateGeolocationPermissionRequest(
   return rv.Pass();
 }
 
-scoped_ptr<SimplePermissionRequest>
-PermissionRequestManager::CreateCertErrorOverrideRequest(
-    const base::Callback<void(bool)>& callback) {
-  scoped_ptr<SimplePermissionRequest> rv(
-      new SimplePermissionRequest(callback));
-  AddPendingRequest(PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE, rv.get());
+bool PermissionRequestManager::HasAnyPendingRequests() {
+  for (int i = PERMISSION_REQUEST_TYPE_START;
+       i < PERMISSION_REQUEST_TYPE_MAX; ++i) {
+    if (HasPendingRequestsForType(static_cast<PermissionRequestType>(i))) {
+      return true;
+    }
+  }
 
-  return rv.Pass();
+  return false;
+}
+
+bool PermissionRequestManager::HasPendingRequestsForType(
+    PermissionRequestType type) {
+  CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
+
+  PermissionRequestVector& requests = pending_requests_[type];
+
+  for (PermissionRequestVector::iterator it = requests.begin();
+       it != requests.end(); ++it) {
+    PermissionRequest* req = *it;
+    if (!req->is_cancelled_ && req->CanRespond()) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void PermissionRequestManager::AbortPendingRequest(
@@ -106,11 +126,11 @@ void PermissionRequestManager::AbortPendingRequest(
 void PermissionRequestManager::CancelAllPendingRequests() {
   for (int i = PERMISSION_REQUEST_TYPE_START;
        i < PERMISSION_REQUEST_TYPE_MAX; ++i) {
-    CancelAllPendingRequestsForType(static_cast<PermissionRequestType>(i));
+    CancelPendingRequestsForType(static_cast<PermissionRequestType>(i));
   }
 }
 
-void PermissionRequestManager::CancelAllPendingRequestsForType(
+void PermissionRequestManager::CancelPendingRequestsForType(
     PermissionRequestType type) {
   CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
   DCHECK(!in_dispatch_);
@@ -174,6 +194,10 @@ void SimplePermissionRequest::Cancel(bool from_source) {
   }
   callback_.Reset();
   PermissionRequest::Cancel(from_source);
+}
+
+bool SimplePermissionRequest::CanRespond() const {
+  return !callback_.is_null();
 }
 
 SimplePermissionRequest::~SimplePermissionRequest() {

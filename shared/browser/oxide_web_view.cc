@@ -53,6 +53,7 @@
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
 #include "content/public/common/web_preferences.h"
+#include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
@@ -69,6 +70,7 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_messages.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_process_main.h"
@@ -289,6 +291,77 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
     OnLoadFailed(validated_url, error_code,
                  base::UTF16ToUTF8(error_description));
   }
+}
+
+void WebView::OnDidBlockDisplayingInsecureContent() {
+  // Only have 1 pending notification at a time for this view. The response
+  // will set the state on all current frames
+  if (permission_request_manager_.HasPendingRequestsForType(
+        PERMISSION_REQUEST_TYPE_DISPLAY_INSECURE_CONTENT)) {
+    return;
+  }
+
+  // We cancel this (thus clearing the callback) before we are deleted,
+  // so Unretained() is ok here
+  scoped_ptr<SimplePermissionRequest> request(
+      permission_request_manager_.CreateSimplePermissionRequest(
+        PERMISSION_REQUEST_TYPE_DISPLAY_INSECURE_CONTENT,
+        base::Bind(&WebView::OnDisplayInsecureContentRequestResponse,
+                   base::Unretained(this)),
+        NULL));
+
+  OnRequestToDisplayInsecureContent(
+      web_contents_->GetLastCommittedURL(),
+      request.Pass());
+}
+
+void WebView::OnDidBlockRunningInsecureContent() {
+  // Only have 1 pending notification at a time for this view. The response
+  // will set the state on all current frames
+  if (permission_request_manager_.HasPendingRequestsForType(
+        PERMISSION_REQUEST_TYPE_RUN_INSECURE_CONTENT)) {
+    return;
+  }
+
+  // We cancel this (thus clearing the callback) before we are deleted,
+  // so Unretained() is ok here
+  scoped_ptr<SimplePermissionRequest> request(
+      permission_request_manager_.CreateSimplePermissionRequest(
+        PERMISSION_REQUEST_TYPE_RUN_INSECURE_CONTENT,
+        base::Bind(&WebView::OnRunInsecureContentRequestResponse,
+                   base::Unretained(this)),
+        NULL));
+
+  OnRequestToRunInsecureContent(
+      web_contents_->GetLastCommittedURL(),
+      request.Pass());
+}
+
+void WebView::OnDisplayInsecureContentRequestResponse(bool allow) {
+  if (!allow) {
+    return;
+  }
+
+  web_contents_->SendToAllFrames(
+      new OxideMsg_SetAllowDisplayingInsecureContent(MSG_ROUTING_NONE, true));
+  web_contents_->GetMainFrame()->Send(
+      new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
+}
+
+void WebView::OnRunInsecureContentRequestResponse(bool allow) {
+  if (!allow) {
+    return;
+  }
+
+  // Running implies displaying, so cancel any pending requests to display
+  // insecure content
+  permission_request_manager_.CancelPendingRequestsForType(
+      PERMISSION_REQUEST_TYPE_DISPLAY_INSECURE_CONTENT);
+
+  web_contents_->SendToAllFrames(
+      new OxideMsg_SetAllowRunningInsecureContent(MSG_ROUTING_NONE, true));
+  web_contents_->GetMainFrame()->Send(
+      new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -727,6 +800,20 @@ void WebView::DidUpdateFaviconURL(
   }
 }
 
+bool WebView::OnMessageReceived(const IPC::Message& msg,
+                                content::RenderFrameHost* render_frame_host) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(WebView, msg)
+    IPC_MESSAGE_HANDLER(OxideHostMsg_DidBlockDisplayingInsecureContent,
+                        OnDidBlockDisplayingInsecureContent)
+    IPC_MESSAGE_HANDLER(OxideHostMsg_DidBlockRunningInsecureContent,
+                        OnDidBlockRunningInsecureContent)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnIconChanged(const GURL& icon) {}
@@ -814,6 +901,13 @@ bool WebView::OnCertificateError(
   return false;
 }
 
+void WebView::OnRequestToRunInsecureContent(
+    const GURL& embedder,
+    scoped_ptr<SimplePermissionRequest> request) {}
+void WebView::OnRequestToDisplayInsecureContent(
+    const GURL& embedder,
+    scoped_ptr<SimplePermissionRequest> request) {}
+
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
       show_ime_if_needed_(false),
@@ -849,6 +943,8 @@ const base::string16& WebView::GetSelectionText() const {
 }
 
 WebView::~WebView() {
+  permission_request_manager_.CancelAllPendingRequests();
+
   BrowserContext* context = GetBrowserContext();
   WebViewsPerContextMap::iterator it =
       g_web_view_per_context.Get().find(context);
@@ -1285,7 +1381,8 @@ void WebView::RequestGeolocationPermission(
     const base::Callback<void(bool)>& callback,
     base::Closure* cancel_callback) {
   scoped_ptr<SimplePermissionRequest> request(
-      permission_request_manager_.CreateGeolocationPermissionRequest(
+      permission_request_manager_.CreateSimplePermissionRequest(
+        PERMISSION_REQUEST_TYPE_GEOLOCATION,
         callback,
         cancel_callback));
   OnRequestGeolocationPermission(
@@ -1317,7 +1414,9 @@ void WebView::AllowCertificateError(
   scoped_ptr<SimplePermissionRequest> request;
   if (overridable) {
     request =
-        permission_request_manager_.CreateCertErrorOverrideRequest(callback);
+        permission_request_manager_.CreateSimplePermissionRequest(
+          PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE,
+          callback, NULL);
   } else {
     *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
   }

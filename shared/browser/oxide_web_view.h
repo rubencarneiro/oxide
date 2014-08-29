@@ -297,6 +297,12 @@ class WebView : public ScriptMessageTarget,
                           int error_code,
                           const base::string16& error_description);
 
+  void OnDidBlockDisplayingInsecureContent();
+  void OnDidBlockRunningInsecureContent();
+
+  void OnDisplayInsecureContentRequestResponse(bool allow);
+  void OnRunInsecureContentRequestResponse(bool allow);
+
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
   virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -381,6 +387,9 @@ class WebView : public ScriptMessageTarget,
   void DidUpdateFaviconURL(
       const std::vector<content::FaviconURL>& candidates) FINAL;
 
+  bool OnMessageReceived(const IPC::Message& msg,
+                         content::RenderFrameHost* render_frame_host) FINAL;
+
   // Override in sub-classes
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
@@ -455,6 +464,12 @@ class WebView : public ScriptMessageTarget,
       const GURL& request_url,
       content::ResourceType resource_type,
       bool strict_enforcement,
+      scoped_ptr<SimplePermissionRequest> request);
+  virtual void OnRequestToRunInsecureContent(
+      const GURL& embedder,
+      scoped_ptr<SimplePermissionRequest> request);
+  virtual void OnRequestToDisplayInsecureContent(
+      const GURL& embedder,
       scoped_ptr<SimplePermissionRequest> request);
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
