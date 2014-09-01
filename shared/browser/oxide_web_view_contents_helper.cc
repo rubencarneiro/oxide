@@ -143,6 +143,17 @@ void WebViewContentsHelper::NavigationStateChanged(
   delegate_->NavigationStateChanged(changed_flags);
 }
 
+void WebViewContentsHelper::VisibleSSLStateChanged(
+    const content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (!delegate_) {
+    return;
+  }
+
+  delegate_->SSLStateChanged();
+}
+
 bool WebViewContentsHelper::ShouldCreateWebContents(
     content::WebContents* source,
     int route_id,

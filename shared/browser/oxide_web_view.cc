@@ -53,7 +53,9 @@
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
 #include "content/public/common/web_preferences.h"
+#include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
+#include "net/ssl/ssl_info.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
@@ -64,10 +66,12 @@
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
+#include "shared/base/oxide_enum_flags.h"
 #include "shared/base/oxide_event_utils.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_messages.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_browser_process_main.h"
@@ -193,6 +197,45 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
 
+CertError ToCertError(int error, net::X509Certificate* cert) {
+  if (!net::IsCertificateError(error)) {
+    return CERT_OK;
+  }
+
+  if (error == net::ERR_CERT_NO_REVOCATION_MECHANISM ||
+      error == net::ERR_CERT_UNABLE_TO_CHECK_REVOCATION) {
+    // These aren't treated as hard errors
+    return CERT_OK;
+  }
+
+  switch (error) {
+    case net::ERR_CERT_COMMON_NAME_INVALID:
+      return CERT_ERROR_BAD_IDENTITY;
+    case net::ERR_CERT_DATE_INVALID: {
+      if (cert && cert->HasExpired()) {
+        return CERT_ERROR_EXPIRED;
+      }
+      return CERT_ERROR_DATE_INVALID;
+    }
+    case net::ERR_CERT_AUTHORITY_INVALID:
+      return CERT_ERROR_AUTHORITY_INVALID;
+    case net::ERR_CERT_CONTAINS_ERRORS:
+    case net::ERR_CERT_INVALID:
+      return CERT_ERROR_INVALID;
+    case net::ERR_CERT_REVOKED:
+      return CERT_ERROR_REVOKED;
+    case net::ERR_CERT_WEAK_SIGNATURE_ALGORITHM:
+    case net::ERR_CERT_WEAK_KEY:
+      return CERT_ERROR_INSECURE;
+    //case net::ERR_CERT_NON_UNIQUE_NAME:
+    //case net::ERR_CERT_NAME_CONSTRAINT_VIOLATION:
+    default:
+      return CERT_ERROR_GENERIC;
+  }
+}
+
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
+
 typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
 base::LazyInstance<WebViewsPerContextMap> g_web_view_per_context;
 
@@ -251,6 +294,26 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
     OnLoadFailed(validated_url, error_code,
                  base::UTF16ToUTF8(error_description));
   }
+}
+
+void WebView::OnDidBlockDisplayingInsecureContent() {
+  if (blocked_content_ & CONTENT_TYPE_MIXED_DISPLAY) {
+    return;
+  }
+
+  blocked_content_ |= CONTENT_TYPE_MIXED_DISPLAY;
+
+  OnContentBlocked();
+}
+
+void WebView::OnDidBlockRunningInsecureContent() {
+  if (blocked_content_ & CONTENT_TYPE_MIXED_SCRIPT) {
+    return;
+  }
+
+  blocked_content_ |= CONTENT_TYPE_MIXED_SCRIPT;
+
+  OnContentBlocked();
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -455,6 +518,21 @@ void WebView::NavigationStateChanged(content::InvalidateTypes changed_flags) {
   }
 }
 
+void WebView::SSLStateChanged() {
+  DCHECK(web_contents_);
+
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetVisibleEntry();
+  if (!entry) {
+    return;
+  }
+
+  SecurityStatus old_status = security_status_;
+  security_status_.Update(entry->GetSSL());
+
+  OnSecurityStatusChanged(old_status);
+}
+
 bool WebView::ShouldCreateWebContents(const GURL& target_url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture) {
@@ -551,7 +629,7 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
-  geolocation_permission_requests_.CancelAllPending();
+  permission_request_manager_.CancelAllPendingRequests();
 }
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -611,6 +689,17 @@ void WebView::DidFailProvisionalLoad(
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
+void WebView::DidNavigateMainFrame(
+    const content::LoadCommittedDetails& details,
+    const content::FrameNavigateParams& params) {
+  if (details.is_navigation_to_different_page()) {
+    permission_request_manager_.CancelAllPendingRequests();
+
+    blocked_content_ = CONTENT_TYPE_NONE;
+    OnContentBlocked();
+  }
+}
+
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
                             const GURL& validated_url) {
   if (render_frame_host->GetParent()) {
@@ -633,9 +722,6 @@ void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
 
 void WebView::NavigationEntryCommitted(
     const content::LoadCommittedDetails& load_details) {
-  if (load_details.is_navigation_to_different_page()) {
-    geolocation_permission_requests_.CancelAllPending();
-  }
   OnNavigationEntryCommitted();
 }
 
@@ -674,6 +760,20 @@ void WebView::DidUpdateFaviconURL(
   }
 }
 
+bool WebView::OnMessageReceived(const IPC::Message& msg,
+                                content::RenderFrameHost* render_frame_host) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(WebView, msg)
+    IPC_MESSAGE_HANDLER(OxideHostMsg_DidBlockDisplayingInsecureContent,
+                        OnDidBlockDisplayingInsecureContent)
+    IPC_MESSAGE_HANDLER(OxideHostMsg_DidBlockRunningInsecureContent,
+                        OnDidBlockRunningInsecureContent)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnIconChanged(const GURL& icon) {}
@@ -705,7 +805,9 @@ void WebView::OnToggleFullscreenMode(bool enter) {}
 void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<GeolocationPermissionRequest> request) {}
+    const GURL& origin,
+    const GURL& embedder,
+    scoped_ptr<SimplePermissionRequest> request) {}
 
 void WebView::OnUnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {}
@@ -746,6 +848,20 @@ void WebView::OnTextInputStateChanged() {}
 void WebView::OnFocusedNodeChanged() {}
 void WebView::OnSelectionBoundsChanged() {}
 
+void WebView::OnSecurityStatusChanged(const SecurityStatus& old) {}
+bool WebView::OnCertificateError(
+    bool is_main_frame,
+    CertError cert_error,
+    const scoped_refptr<net::X509Certificate>& cert,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool strict_enforcement,
+    scoped_ptr<SimplePermissionRequest> request) {
+  permission_request_manager_.AbortPendingRequest(request.get());
+  return false;
+}
+void WebView::OnContentBlocked() {}
+
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
       show_ime_if_needed_(false),
@@ -758,7 +874,8 @@ WebView::WebView()
       in_swap_(false),
       initial_preferences_(NULL),
       root_frame_(NULL),
-      is_fullscreen_(false) {
+      is_fullscreen_(false),
+      blocked_content_(CONTENT_TYPE_NONE) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 
@@ -781,6 +898,8 @@ const base::string16& WebView::GetSelectionText() const {
 }
 
 WebView::~WebView() {
+  permission_request_manager_.CancelAllPendingRequests();
+
   BrowserContext* context = GetBrowserContext();
   WebViewsPerContextMap::iterator it =
       g_web_view_per_context.Get().find(context);
@@ -920,6 +1039,11 @@ WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
 // static
 WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
   return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+}
+
+// static
+WebView* WebView::FromRenderFrameHost(content::RenderFrameHost* rfh) {
+  return FromWebContents(content::WebContents::FromRenderFrameHost(rfh));
 }
 
 const GURL& WebView::GetURL() const {
@@ -1183,6 +1307,47 @@ gfx::Size WebView::GetContainerSizeDip() const {
   return GetContainerBoundsDip().size();
 }
 
+void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
+  if (!web_contents_) {
+    return;
+  }
+
+  if (!(blocked_content_ & CONTENT_TYPE_MIXED_DISPLAY) && allow) {
+    return;
+  }
+
+  if (allow) {
+    blocked_content_ &= ~CONTENT_TYPE_MIXED_DISPLAY;
+    OnContentBlocked();
+  }
+
+  web_contents_->SendToAllFrames(
+      new OxideMsg_SetAllowDisplayingInsecureContent(MSG_ROUTING_NONE, allow));
+  web_contents_->GetMainFrame()->Send(
+      new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
+}
+
+void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
+  if (!web_contents_) {
+    return;
+  }
+
+  if (!(blocked_content_ & CONTENT_TYPE_MIXED_SCRIPT) && allow) {
+    return;
+  }
+
+  if (allow) {
+    blocked_content_ &= ~CONTENT_TYPE_MIXED_DISPLAY;
+    blocked_content_ &= ~CONTENT_TYPE_MIXED_SCRIPT;
+    OnContentBlocked();
+  }
+
+  web_contents_->SendToAllFrames(
+      new OxideMsg_SetAllowRunningInsecureContent(MSG_ROUTING_NONE, allow));
+  web_contents_->GetMainFrame()->Send(
+      new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
+}
+
 void WebView::ShowPopupMenu(const gfx::Rect& bounds,
                             int selected_item,
                             const std::vector<content::MenuItem>& items,
@@ -1208,18 +1373,59 @@ void WebView::HidePopupMenu() {
 }
 
 void WebView::RequestGeolocationPermission(
-    int id,
     const GURL& origin,
-    const base::Callback<void(bool)>& callback) {
-  scoped_ptr<GeolocationPermissionRequest> request(
-      new GeolocationPermissionRequest(
-        &geolocation_permission_requests_, id, origin,
-        web_contents_->GetLastCommittedURL().GetOrigin(), callback));
-  OnRequestGeolocationPermission(request.Pass());
+    const base::Callback<void(bool)>& callback,
+    base::Closure* cancel_callback) {
+  scoped_ptr<SimplePermissionRequest> request(
+      permission_request_manager_.CreateSimplePermissionRequest(
+        PERMISSION_REQUEST_TYPE_GEOLOCATION,
+        callback,
+        cancel_callback));
+  OnRequestGeolocationPermission(
+      origin,
+      web_contents_->GetLastCommittedURL().GetOrigin(),
+      request.Pass());
 }
 
-void WebView::CancelGeolocationPermissionRequest(int id) {
-  geolocation_permission_requests_.CancelPendingRequestWithID(id);
+void WebView::AllowCertificateError(
+    content::RenderFrameHost* rfh,
+    int cert_error,
+    const net::SSLInfo& ssl_info,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool overridable,
+    bool strict_enforcement,
+    const base::Callback<void(bool)>& callback,
+    content::CertificateRequestResultType* result) {
+  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
+  if (!frame) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
+    return;
+  }
+
+  DCHECK_EQ(frame->view(), this);
+  CHECK(!overridable || !strict_enforcement) <<
+      "overridable and strict_enforcement are expected to be mutually exclusive";
+
+  scoped_ptr<SimplePermissionRequest> request;
+  if (overridable) {
+    request =
+        permission_request_manager_.CreateSimplePermissionRequest(
+          PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE,
+          callback, NULL);
+  } else {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
+  }
+
+  if (!OnCertificateError(!frame->parent(),
+                          ToCertError(cert_error, ssl_info.cert.get()),
+                          ssl_info.cert,
+                          request_url,
+                          resource_type,
+                          strict_enforcement,
+                          request.Pass())) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
+  }
 }
 
 void WebView::UpdateWebPreferences() {

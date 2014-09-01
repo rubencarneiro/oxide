@@ -73,6 +73,7 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
                                        const content::OpenURLParams& params) FINAL;
   void NavigationStateChanged(const content::WebContents* source,
                               content::InvalidateTypes changed_flags) FINAL;
+  void VisibleSSLStateChanged(const content::WebContents* source) FINAL;
   bool ShouldCreateWebContents(
       content::WebContents* source,
       int route_id,

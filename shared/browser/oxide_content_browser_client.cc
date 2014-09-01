@@ -31,6 +31,8 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/browser_main_parts.h"
+#include "content/public/browser/certificate_request_result_type.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
@@ -259,23 +261,6 @@ class BrowserMainParts : public content::BrowserMainParts {
   Screen primary_screen_;
 };
 
-void CancelGeolocationPermissionRequest(int render_process_id,
-                                        int render_view_id,
-                                        int bridge_id) {
-  content::RenderViewHost* rvh = content::RenderViewHost::FromID(
-      render_process_id, render_view_id);
-  if (!rvh) {
-    return;
-  }
-
-  WebView* webview = WebView::FromRenderViewHost(rvh);
-  if (!webview) {
-    return;
-  }
-
-  webview->CancelGeolocationPermissionRequest(bridge_id);
-}
-
 } // namespace
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
@@ -367,6 +352,39 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
       context)->CanAccessCookies(url, first_party, true);
 }
 
+void ContentBrowserClient::AllowCertificateError(
+    int render_process_id,
+    int render_frame_id,
+    int cert_error,
+    const net::SSLInfo& ssl_info,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool overridable,
+    bool strict_enforcement,
+    bool expired_previous_decision,
+    const base::Callback<void(bool)>& callback,
+    content::CertificateRequestResultType* result) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(
+      render_process_id, render_frame_id);
+  if (!rfh) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
+    return;
+  }
+
+  WebView* webview = WebView::FromRenderFrameHost(rfh);
+  if (!webview) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
+    return;
+  }
+
+  webview->AllowCertificateError(rfh, cert_error, ssl_info, request_url,
+                                 resource_type, overridable,
+                                 strict_enforcement, callback,
+                                 result);
+}
+
 void ContentBrowserClient::RequestGeolocationPermission(
     content::WebContents* web_contents,
     int bridge_id,
@@ -380,17 +398,9 @@ void ContentBrowserClient::RequestGeolocationPermission(
     return;
   }
 
-  webview->RequestGeolocationPermission(bridge_id,
-                                        requesting_frame.GetOrigin(),
-                                        result_callback);
-
-  if (cancel_callback) {
-    *cancel_callback = base::Bind(
-        CancelGeolocationPermissionRequest,
-        web_contents->GetRenderProcessHost()->GetID(),
-        web_contents->GetRenderViewHost()->GetRoutingID(),
-        bridge_id);
-  }
+  webview->RequestGeolocationPermission(requesting_frame.GetOrigin(),
+                                        result_callback,
+                                        cancel_callback);
 }
 
 bool ContentBrowserClient::CanCreateWindow(

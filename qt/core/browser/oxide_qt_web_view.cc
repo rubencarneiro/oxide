@@ -54,6 +54,12 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqpermissionrequest_p.h"
+#include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqcertificateerror_p.h"
+#include "qt/core/api/oxideqsecuritystatus.h"
+#include "qt/core/api/oxideqsecuritystatus_p.h"
+#include "qt/core/api/oxideqsslcertificate.h"
+#include "qt/core/api/oxideqsslcertificate_p.h"
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
@@ -243,7 +249,9 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
-    has_input_method_state_(false) {}
+    has_input_method_state_(false),
+    qsecurity_status_(
+        OxideQSecurityStatusPrivate::Create(this)) {}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
@@ -500,14 +508,17 @@ void WebView::OnWebPreferencesDestroyed() {
 }
 
 void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<oxide::GeolocationPermissionRequest> request) {
-  OxideQGeolocationPermissionRequest* qreq =
-      new OxideQGeolocationPermissionRequest();
-  OxideQPermissionRequestPrivate::get(qreq)->Init(
-      request.PassAs<oxide::PermissionRequest>());
+    const GURL& origin,
+    const GURL& embedder,
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQGeolocationPermissionRequest> req(
+      OxideQGeolocationPermissionRequestPrivate::Create(
+        QUrl(QString::fromStdString(origin.spec())),
+        QUrl(QString::fromStdString(embedder.spec())),
+        request.Pass()));
 
   // The embedder takes ownership of this
-  adapter_->RequestGeolocationPermission(qreq);
+  adapter_->RequestGeolocationPermission(req.release());
 }
 
 void WebView::OnUnhandledKeyboardEvent(
@@ -734,10 +745,53 @@ void WebView::OnSelectionBoundsChanged() {
       ));
 }
 
+void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {
+  OxideQSecurityStatusPrivate::get(qsecurity_status_.get())->Update(old);
+}
+
+bool WebView::OnCertificateError(
+    bool is_main_frame,
+    oxide::CertError cert_error,
+    const scoped_refptr<net::X509Certificate>& cert,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool strict_enforcement,
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQSslCertificate> q_cert;
+  if (cert) {
+    q_cert.reset(OxideQSslCertificatePrivate::Create(cert));
+  }
+
+  bool is_subresource =
+      !((is_main_frame && resource_type == content::RESOURCE_TYPE_MAIN_FRAME) ||
+        (!is_main_frame && resource_type == content::RESOURCE_TYPE_SUB_FRAME));
+
+  scoped_ptr<OxideQCertificateError> error(
+      OxideQCertificateErrorPrivate::Create(
+        QUrl(QString::fromStdString(request_url.spec())),
+        is_main_frame,
+        is_subresource,
+        strict_enforcement,
+        q_cert.Pass(),
+        static_cast<OxideQCertificateError::Error>(cert_error),
+        request.Pass()));
+
+  // Embedder takes ownership of error
+  adapter_->CertificateError(error.release());
+
+  return true;
+}
+
+void WebView::OnContentBlocked() {
+  adapter_->ContentBlocked();
+}
+
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
 }
+
+WebView::~WebView() {}
 
 void WebView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus() && ShouldShowInputPanel()) {

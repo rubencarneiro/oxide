@@ -21,6 +21,7 @@
 #include <QtDebug>
 
 #include "base/logging.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "ui/gfx/size.h"
@@ -33,6 +34,7 @@
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/oxide_content_types.h"
 
 #include "oxide_qt_web_context_adapter_p.h"
 #include "oxide_qt_web_frame_adapter.h"
@@ -390,6 +392,49 @@ QSharedPointer<CompositorFrameHandle> WebViewAdapter::compositorFrameHandle() {
 
 void WebViewAdapter::didCommitCompositorFrame() {
   priv->DidCommitCompositorFrame();
+}
+
+void WebViewAdapter::setCanTemporarilyDisplayInsecureContent(bool allow) {
+  if (!(priv->blocked_content() & oxide::CONTENT_TYPE_MIXED_DISPLAY) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily display insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  priv->SetCanTemporarilyDisplayInsecureContent(allow);
+}
+
+void WebViewAdapter::setCanTemporarilyRunInsecureContent(bool allow) {
+  if (!(priv->blocked_content() & oxide::CONTENT_TYPE_MIXED_SCRIPT) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily run insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  priv->SetCanTemporarilyRunInsecureContent(allow);
+}
+
+OxideQSecurityStatus* WebViewAdapter::securityStatus() {
+  return priv->qsecurity_status();
+}
+
+ContentTypeFlags WebViewAdapter::blockedContent() const {
+  COMPILE_ASSERT(
+      CONTENT_TYPE_NONE ==
+        static_cast<ContentTypeFlags>(oxide::CONTENT_TYPE_NONE),
+      content_type_flags_none_doesnt_match);
+  COMPILE_ASSERT(
+      CONTENT_TYPE_MIXED_DISPLAY ==
+        static_cast<ContentTypeFlags>(oxide::CONTENT_TYPE_MIXED_DISPLAY),
+      content_type_flags_mixed_display_doesnt_match);
+  COMPILE_ASSERT(
+      CONTENT_TYPE_MIXED_SCRIPT ==
+        static_cast<ContentTypeFlags>(oxide::CONTENT_TYPE_MIXED_SCRIPT),
+      content_type_flags_mixed_script_doesnt_match);
+
+  return static_cast<ContentTypeFlags>(priv->blocked_content());
 }
 
 } // namespace qt

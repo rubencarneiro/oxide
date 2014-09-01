@@ -58,6 +58,8 @@ class WebViewContentsHelperDelegate {
 
   virtual void NavigationStateChanged(content::InvalidateTypes flags) = 0;
 
+  virtual void SSLStateChanged() = 0;
+
   virtual bool ShouldCreateWebContents(const GURL& target_url,
                                        WindowOpenDisposition disposition,
                                        bool user_gesture) = 0;

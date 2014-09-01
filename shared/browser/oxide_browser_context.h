@@ -58,6 +58,7 @@ class BrowserContextSharedData;
 class BrowserContextSharedIOData;
 class GeolocationPermissionContext;
 class ResourceContext;
+class SSLHostStateDelegate;
 class URLRequestContext;
 class URLRequestContextGetter;
 class UserScriptMaster;
@@ -246,6 +247,8 @@ class BrowserContext : public content::BrowserContext,
   BrowserContextIOData* io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
+
+  scoped_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };
