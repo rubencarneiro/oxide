@@ -394,6 +394,28 @@ void WebViewAdapter::didCommitCompositorFrame() {
   priv->DidCommitCompositorFrame();
 }
 
+void WebViewAdapter::setCanTemporarilyDisplayInsecureContent(bool allow) {
+  if (!(priv->blocked_content() & oxide::CONTENT_TYPE_MIXED_DISPLAY) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily display insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  priv->SetCanTemporarilyDisplayInsecureContent(allow);
+}
+
+void WebViewAdapter::setCanTemporarilyRunInsecureContent(bool allow) {
+  if (!(priv->blocked_content() & oxide::CONTENT_TYPE_MIXED_SCRIPT) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily run insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  priv->SetCanTemporarilyRunInsecureContent(allow);
+}
+
 OxideQSecurityStatus* WebViewAdapter::securityStatus() {
   return priv->qsecurity_status();
 }

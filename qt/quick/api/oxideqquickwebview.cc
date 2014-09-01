@@ -1393,4 +1393,16 @@ void OxideQQuickWebView::loadHtml(const QString& html, const QUrl& baseUrl) {
   d->loadHtml(html, baseUrl);
 }
 
+void OxideQQuickWebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
+  Q_D(OxideQQuickWebView);
+
+  d->setCanTemporarilyDisplayInsecureContent(allow);
+}
+
+void OxideQQuickWebView::setCanTemporarilyRunInsecureContent(bool allow) {
+  Q_D(OxideQQuickWebView);
+
+  d->setCanTemporarilyRunInsecureContent(allow);
+}
+
 #include "moc_oxideqquickwebview_p.cpp"

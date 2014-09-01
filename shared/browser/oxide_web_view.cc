@@ -1307,6 +1307,47 @@ gfx::Size WebView::GetContainerSizeDip() const {
   return GetContainerBoundsDip().size();
 }
 
+void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
+  if (!web_contents_) {
+    return;
+  }
+
+  if (!(blocked_content_ & CONTENT_TYPE_MIXED_DISPLAY) && allow) {
+    return;
+  }
+
+  if (allow) {
+    blocked_content_ &= ~CONTENT_TYPE_MIXED_DISPLAY;
+    OnContentBlocked();
+  }
+
+  web_contents_->SendToAllFrames(
+      new OxideMsg_SetAllowDisplayingInsecureContent(MSG_ROUTING_NONE, allow));
+  web_contents_->GetMainFrame()->Send(
+      new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
+}
+
+void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
+  if (!web_contents_) {
+    return;
+  }
+
+  if (!(blocked_content_ & CONTENT_TYPE_MIXED_SCRIPT) && allow) {
+    return;
+  }
+
+  if (allow) {
+    blocked_content_ &= ~CONTENT_TYPE_MIXED_DISPLAY;
+    blocked_content_ &= ~CONTENT_TYPE_MIXED_SCRIPT;
+    OnContentBlocked();
+  }
+
+  web_contents_->SendToAllFrames(
+      new OxideMsg_SetAllowRunningInsecureContent(MSG_ROUTING_NONE, allow));
+  web_contents_->GetMainFrame()->Send(
+      new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
+}
+
 void WebView::ShowPopupMenu(const gfx::Rect& bounds,
                             int selected_item,
                             const std::vector<content::MenuItem>& items,

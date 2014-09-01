@@ -197,6 +197,9 @@ class WebView : public ScriptMessageTarget,
 
   ContentType blocked_content() const { return blocked_content_; }
 
+  void SetCanTemporarilyDisplayInsecureContent(bool allow);
+  void SetCanTemporarilyRunInsecureContent(bool allow);
+
   void ShowPopupMenu(const gfx::Rect& bounds,
                      int selected_item,
                      const std::vector<content::MenuItem>& items,

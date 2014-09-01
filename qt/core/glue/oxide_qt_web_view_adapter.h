@@ -189,6 +189,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
   void didCommitCompositorFrame();
 
+  void setCanTemporarilyDisplayInsecureContent(bool allow);
+  void setCanTemporarilyRunInsecureContent(bool allow);
+
   OxideQSecurityStatus* securityStatus();
 
   ContentTypeFlags blockedContent() const;

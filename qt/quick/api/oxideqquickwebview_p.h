@@ -206,6 +206,9 @@ class OxideQQuickWebView : public QQuickItem {
   void reload();
   void loadHtml(const QString& html, const QUrl& baseUrl = QUrl());
 
+  void setCanTemporarilyDisplayInsecureContent(bool allow);
+  void setCanTemporarilyRunInsecureContent(bool allow);
+
  Q_SIGNALS:
   void urlChanged();
   void titleChanged();
