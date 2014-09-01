@@ -44,6 +44,17 @@ namespace qt {
 
 namespace {
 QOpenGLContext* g_shared_gl_context;
+
+int GetNextCookieRequestId() {
+  static int id = 0;
+  if (id == std::numeric_limits<int>::max()) {
+    int i = id;
+    id = 0;
+    return i;
+  }
+  return id++;
+}
+
 }
 
 WebContextAdapter::~WebContextAdapter() {
@@ -317,15 +328,43 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
   }
 }
 
-void WebContextAdapter::doSetCookies(
-      const QString& url,
-      const QList<QNetworkCookie>& cookies,
-      int request_id) {
-  priv->doSetCookies(url, cookies, request_id);
+int WebContextAdapter::setCookies(
+    const QUrl& url,
+    const QList<QNetworkCookie>& cookies) {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  if (cookies.size() == 0) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->SetCookies(request_id, url, cookies);
+  return request_id;
 }
 
-void WebContextAdapter::doGetAllCookies(int request_id) {
-  priv->doGetAllCookies(request_id);
+int WebContextAdapter::getCookies(const QUrl& url) {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->GetCookies(request_id, url);
+  return request_id;
+}
+
+int WebContextAdapter::getAllCookies() {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->GetAllCookies(request_id);
+  return request_id;
 }
 
 WebContextAdapter::WebContextAdapter(QObject* q)

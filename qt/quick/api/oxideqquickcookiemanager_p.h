@@ -20,15 +20,16 @@
 
 #include <QList>
 #include <QObject>
-#include <QtGlobal>
 #include <QNetworkCookie>
+#include <QtGlobal>
 #include <QVariant>
 
-class OxideQQuickWebContext;
-
-QT_USE_NAMESPACE
+QT_BEGIN_NAMESPACE
+class QUrl;
+QT_END_NAMESPACE
 
 class OxideQQuickCookieManagerPrivate;
+class OxideQQuickWebContext;
 
 class OxideQQuickCookieManager : public QObject {
   Q_OBJECT
@@ -42,22 +43,20 @@ public:
 
   enum RequestStatus {
     RequestStatusOK,
-    RequestStatusError,
-    RequestStatusInternalFailure,
+    RequestStatusError
   };
 
   OxideQQuickCookieManager(OxideQQuickWebContext* webContext,
                            QObject* parent = NULL);
   virtual ~OxideQQuickCookieManager();
 
-  Q_INVOKABLE int setCookies(const QString& url, const QVariant& cookies);
-  Q_INVOKABLE int setNetworkCookies(const QString& url,
-      const QList<QNetworkCookie>& cookies);
+  Q_INVOKABLE int setCookies(const QUrl& url, const QVariant& cookies);
+  Q_INVOKABLE int getCookies(const QUrl& url);
   Q_INVOKABLE int getAllCookies();
 
 Q_SIGNALS:
   void cookiesSet(int requestId, RequestStatus status);
-  void gotCookies(int requestId, const QVariant& cookies, RequestStatus status);
+  void gotCookies(int requestId, const QVariant& cookies);
 
 private:
   QScopedPointer<OxideQQuickCookieManagerPrivate> d_ptr;

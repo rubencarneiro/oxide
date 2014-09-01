@@ -16,7 +16,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqquickcookiemanager_p.h"
-#include "oxideqquickcookiemanager_p_p.h"
 
 #include <climits>
 #include <QList>
@@ -28,11 +27,12 @@
 #include "oxideqquickwebcontext_p_p.h"
 
 namespace {
+
 QList<QNetworkCookie> networkCookiesFromVariantList(const QVariant& cookies) {
   if (!cookies.canConvert(QMetaType::QVariantList)) {
     return QList<QNetworkCookie>();
   }
-  QList<QNetworkCookie> networkCookies;
+  QList<QNetworkCookie> network_cookies;
   QList<QVariant> cl = cookies.toList();
   Q_FOREACH(QVariant cookie, cl) {
     if (!cookie.canConvert(QVariant::Map)) {
@@ -41,99 +41,71 @@ QList<QNetworkCookie> networkCookiesFromVariantList(const QVariant& cookies) {
     QNetworkCookie nc;
     QVariantMap vm = cookie.toMap();
     
-    if (!vm.contains("name") || !vm.contains("value")) {
-      continue;
-    }
-    
     nc.setName(vm.value("name").toByteArray());
     nc.setValue(vm.value("value").toByteArray());
     nc.setDomain(vm.value("domain").toString());
     nc.setPath(vm.value("path").toString());
+
     if (vm.contains("httponly") &&
-	vm.value("httponly").canConvert(QVariant::Bool)) {
+        vm.value("httponly").canConvert(QVariant::Bool)) {
       nc.setHttpOnly(vm.value("httponly").toBool());
     }
     if (vm.contains("issecure") &&
-	vm.value("issecure").canConvert(QVariant::Bool)) {
+        vm.value("issecure").canConvert(QVariant::Bool)) {
       nc.setSecure(vm.value("issecure").toBool());
     }
     if (vm.contains("expirationdate") &&
-	vm.value("expirationdate").canConvert(QVariant::LongLong)) {
-      bool ok = false;
-      qlonglong date = vm.value("expirationdate").toLongLong(&ok);
-      if (ok)
-	nc.setExpirationDate(QDateTime::fromMSecsSinceEpoch(date));
+        vm.value("expirationdate").type() == QVariant::DateTime) {
+      nc.setExpirationDate(vm.value("expirationdate").toDateTime());
     }
-    networkCookies.append(nc);
+    network_cookies.append(nc);
   }
-  return networkCookies;
+  return network_cookies;
 }
 
-int getNextRequestId()
-{
-  static int id = 0;
-  id = id++ % INT_MAX;
-  return id;
-}
 }
 
-OxideQQuickCookieManagerPrivate::OxideQQuickCookieManagerPrivate(
-    OxideQQuickCookieManager* q,
-    OxideQQuickWebContext* webContext) :
-        q_ptr(q),
-        web_context_(webContext){}
+class OxideQQuickCookieManagerPrivate {
+ public:
+  ~OxideQQuickCookieManagerPrivate() {}
 
-int OxideQQuickCookieManagerPrivate::setCookies(
-    const QString& url, const QList<QNetworkCookie>& cookies) {
-  int requestId = getNextRequestId();
+ private:
+  friend class OxideQQuickCookieManager;
 
-  OxideQQuickWebContextPrivate* adapter =
-      OxideQQuickWebContextPrivate::get(web_context_);
-  if (adapter) {
-    adapter->doSetCookies(url, cookies, requestId);
-  }
-  return requestId;
-}
+  OxideQQuickCookieManagerPrivate(OxideQQuickWebContext* web_context)
+      : web_context_(web_context) {}
 
-int OxideQQuickCookieManagerPrivate::getAllCookies() {
-  int requestId = getNextRequestId();
+  OxideQQuickWebContext* web_context_;
 
-  OxideQQuickWebContextPrivate* adapter =
-      OxideQQuickWebContextPrivate::get(web_context_);
-  if (adapter) {
-    adapter->doGetAllCookies(requestId);
-  }
-  return requestId;
-}
-
-OxideQQuickCookieManagerPrivate::~OxideQQuickCookieManagerPrivate() {}
+  Q_DISABLE_COPY(OxideQQuickCookieManagerPrivate);
+};
 
 OxideQQuickCookieManager::OxideQQuickCookieManager(
     OxideQQuickWebContext* webContext,
     QObject* parent) :
     QObject(parent),
-    d_ptr(new OxideQQuickCookieManagerPrivate(this, webContext)) {}
+    d_ptr(new OxideQQuickCookieManagerPrivate(webContext)) {}
 
 OxideQQuickCookieManager::~OxideQQuickCookieManager() {}
 
-int OxideQQuickCookieManager::setCookies(
-    const QString& url, const QVariant& cookies) {
+int OxideQQuickCookieManager::setCookies(const QUrl& url,
+                                         const QVariant& cookies) {
   Q_D(OxideQQuickCookieManager);
 
-  return d->setCookies(url, networkCookiesFromVariantList(cookies));
+  return OxideQQuickWebContextPrivate::get(d->web_context_)->setCookies(
+      url, networkCookiesFromVariantList(cookies));
 }
 
-int OxideQQuickCookieManager::setNetworkCookies(
-      const QString& url, const QList<QNetworkCookie>& cookies) {
+int OxideQQuickCookieManager::getCookies(const QUrl& url) {
   Q_D(OxideQQuickCookieManager);
 
-  return d->setCookies(url, cookies);
+  return OxideQQuickWebContextPrivate::get(d->web_context_)->getCookies(url);
 }
 
 int OxideQQuickCookieManager::getAllCookies() {
   Q_D(OxideQQuickCookieManager);
 
-  return d->getAllCookies();
+  return OxideQQuickWebContextPrivate::get(d->web_context_)->getAllCookies();
 }
 
 #include "moc_oxideqquickcookiemanager_p.cpp"

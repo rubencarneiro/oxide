@@ -281,19 +281,22 @@ void OxideQQuickWebContextPrivate::detachedDelegateWorker(
   }
 }
 
-void OxideQQuickWebContextPrivate::CookiesSet(int requestId,
-      WebContextAdapter::RequestStatus status) {
-  Q_Q(OxideQQuickWebContext);
-  emit q->cookieManager()->cookiesSet(requestId,
-      static_cast<OxideQQuickCookieManager::RequestStatus>(status));
-}
-void OxideQQuickWebContextPrivate::CookiesRetrieved(
-      int requestId,
-      const QList<QNetworkCookie>& cookies,
-      WebContextAdapter::RequestStatus status) {
+void OxideQQuickWebContextPrivate::CookiesSet(
+    int request_id,
+    WebContextAdapter::RequestStatus status) {
   Q_Q(OxideQQuickWebContext);
 
-  QList<QVariant> cookieMapList;
+  emit q->cookieManager()->cookiesSet(
+      request_id,
+      static_cast<OxideQQuickCookieManager::RequestStatus>(status));
+}
+
+void OxideQQuickWebContextPrivate::CookiesRetrieved(
+      int request_id,
+      const QList<QNetworkCookie>& cookies) {
+  Q_Q(OxideQQuickWebContext);
+
+  QList<QVariant> cookie_map_list;
   Q_FOREACH(QNetworkCookie cookie, cookies) {
     QVariantMap cm;
     cm.insert("name", QVariant(QString(cookie.name())));
@@ -303,14 +306,16 @@ void OxideQQuickWebContextPrivate::CookiesRetrieved(
     cm.insert("httponly", QVariant(cookie.isHttpOnly()));
     cm.insert("issecure", QVariant(cookie.isSecure()));
     cm.insert("issessioncookie", QVariant(cookie.isSessionCookie()));
-    cm.insert("expirationdate", QVariant(cookie.expirationDate()));
-    cookieMapList.append(cm);
+    if (cookie.expirationDate().isValid()) {
+      cm.insert("expirationdate", QVariant(cookie.expirationDate()));
+    } else {
+      cm.insert("expirationdate", QVariant());
+    }
+    cookie_map_list.append(cm);
   }
 
-  emit q->cookieManager()->gotCookies(
-      requestId,
-      QVariant(cookieMapList),
-      static_cast<OxideQQuickCookieManager::RequestStatus>(status));
+  emit q->cookieManager()->gotCookies(request_id,
+                                      QVariant(cookie_map_list));
 }
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
