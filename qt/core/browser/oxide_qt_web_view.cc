@@ -782,6 +782,10 @@ bool WebView::OnCertificateError(
   return true;
 }
 
+void WebView::OnContentBlocked() {
+  adapter_->ContentBlocked();
+}
+
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);

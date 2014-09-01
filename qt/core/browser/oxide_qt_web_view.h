@@ -173,6 +173,7 @@ class WebView FINAL : public oxide::WebView,
       content::ResourceType resource_type,
       bool strict_enforcement,
       scoped_ptr<oxide::SimplePermissionRequest> request) FINAL;
+  void OnContentBlocked() FINAL;
 
   WebViewAdapter* adapter_;
 

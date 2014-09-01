@@ -47,6 +47,7 @@
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
@@ -194,6 +195,8 @@ class WebView : public ScriptMessageTarget,
 
   const SecurityStatus& security_status() const { return security_status_; }
 
+  ContentType blocked_content() const { return blocked_content_; }
+
   void ShowPopupMenu(const gfx::Rect& bounds,
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
@@ -300,9 +303,6 @@ class WebView : public ScriptMessageTarget,
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
 
-  void OnDisplayInsecureContentRequestResponse(bool allow);
-  void OnRunInsecureContentRequestResponse(bool allow);
-
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
   virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -369,6 +369,10 @@ class WebView : public ScriptMessageTarget,
       const GURL& validated_url,
       int error_code,
       const base::string16& error_description) FINAL;
+
+  void DidNavigateMainFrame(
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) FINAL;
 
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
                      const GURL& validated_url) FINAL;
@@ -465,12 +469,7 @@ class WebView : public ScriptMessageTarget,
       content::ResourceType resource_type,
       bool strict_enforcement,
       scoped_ptr<SimplePermissionRequest> request);
-  virtual void OnRequestToRunInsecureContent(
-      const GURL& embedder,
-      scoped_ptr<SimplePermissionRequest> request);
-  virtual void OnRequestToDisplayInsecureContent(
-      const GURL& embedder,
-      scoped_ptr<SimplePermissionRequest> request);
+  virtual void OnContentBlocked();
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;
@@ -495,6 +494,8 @@ class WebView : public ScriptMessageTarget,
   base::WeakPtr<FilePicker> active_file_picker_;
 
   PermissionRequestManager permission_request_manager_;
+
+  ContentType blocked_content_;
 
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 

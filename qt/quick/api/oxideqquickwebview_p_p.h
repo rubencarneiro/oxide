@@ -124,6 +124,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void DownloadRequested(OxideQDownloadRequest* downloadRequest) Q_DECL_FINAL;
 
   void CertificateError(OxideQCertificateError* cert_error) Q_DECL_FINAL;
+  void ContentBlocked() Q_DECL_FINAL;
 
   void completeConstruction();
 

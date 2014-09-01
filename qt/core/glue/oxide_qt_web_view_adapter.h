@@ -79,6 +79,12 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 7
 };
 
+enum ContentTypeFlags {
+  CONTENT_TYPE_NONE = 0,
+  CONTENT_TYPE_MIXED_DISPLAY = 1 << 0,
+  CONTENT_TYPE_MIXED_SCRIPT = 1 << 1
+};
+
 class Q_DECL_EXPORT AcceleratedFrameData Q_DECL_FINAL {
  public:
   AcceleratedFrameData(unsigned int id)
@@ -185,6 +191,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   OxideQSecurityStatus* securityStatus();
 
+  ContentTypeFlags blockedContent() const;
+
  protected:
   WebViewAdapter(QObject* q);
 
@@ -266,6 +274,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void DownloadRequested(OxideQDownloadRequest* downloadRequest) = 0;
 
   virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
+  virtual void ContentBlocked() = 0;
 
   QScopedPointer<WebView> priv;
 

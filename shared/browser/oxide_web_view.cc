@@ -66,6 +66,7 @@
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
+#include "shared/base/oxide_enum_flags.h"
 #include "shared/base/oxide_event_utils.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
@@ -233,6 +234,8 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
   }
 }
 
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
+
 typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
 base::LazyInstance<WebViewsPerContextMap> g_web_view_per_context;
 
@@ -294,74 +297,23 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
 }
 
 void WebView::OnDidBlockDisplayingInsecureContent() {
-  // Only have 1 pending notification at a time for this view. The response
-  // will set the state on all current frames
-  if (permission_request_manager_.HasPendingRequestsForType(
-        PERMISSION_REQUEST_TYPE_DISPLAY_INSECURE_CONTENT)) {
+  if (blocked_content_ & CONTENT_TYPE_MIXED_DISPLAY) {
     return;
   }
 
-  // We cancel this (thus clearing the callback) before we are deleted,
-  // so Unretained() is ok here
-  scoped_ptr<SimplePermissionRequest> request(
-      permission_request_manager_.CreateSimplePermissionRequest(
-        PERMISSION_REQUEST_TYPE_DISPLAY_INSECURE_CONTENT,
-        base::Bind(&WebView::OnDisplayInsecureContentRequestResponse,
-                   base::Unretained(this)),
-        NULL));
+  blocked_content_ |= CONTENT_TYPE_MIXED_DISPLAY;
 
-  OnRequestToDisplayInsecureContent(
-      web_contents_->GetLastCommittedURL(),
-      request.Pass());
+  OnContentBlocked();
 }
 
 void WebView::OnDidBlockRunningInsecureContent() {
-  // Only have 1 pending notification at a time for this view. The response
-  // will set the state on all current frames
-  if (permission_request_manager_.HasPendingRequestsForType(
-        PERMISSION_REQUEST_TYPE_RUN_INSECURE_CONTENT)) {
+  if (blocked_content_ & CONTENT_TYPE_MIXED_SCRIPT) {
     return;
   }
 
-  // We cancel this (thus clearing the callback) before we are deleted,
-  // so Unretained() is ok here
-  scoped_ptr<SimplePermissionRequest> request(
-      permission_request_manager_.CreateSimplePermissionRequest(
-        PERMISSION_REQUEST_TYPE_RUN_INSECURE_CONTENT,
-        base::Bind(&WebView::OnRunInsecureContentRequestResponse,
-                   base::Unretained(this)),
-        NULL));
+  blocked_content_ |= CONTENT_TYPE_MIXED_SCRIPT;
 
-  OnRequestToRunInsecureContent(
-      web_contents_->GetLastCommittedURL(),
-      request.Pass());
-}
-
-void WebView::OnDisplayInsecureContentRequestResponse(bool allow) {
-  if (!allow) {
-    return;
-  }
-
-  web_contents_->SendToAllFrames(
-      new OxideMsg_SetAllowDisplayingInsecureContent(MSG_ROUTING_NONE, true));
-  web_contents_->GetMainFrame()->Send(
-      new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
-}
-
-void WebView::OnRunInsecureContentRequestResponse(bool allow) {
-  if (!allow) {
-    return;
-  }
-
-  // Running implies displaying, so cancel any pending requests to display
-  // insecure content
-  permission_request_manager_.CancelPendingRequestsForType(
-      PERMISSION_REQUEST_TYPE_DISPLAY_INSECURE_CONTENT);
-
-  web_contents_->SendToAllFrames(
-      new OxideMsg_SetAllowRunningInsecureContent(MSG_ROUTING_NONE, true));
-  web_contents_->GetMainFrame()->Send(
-      new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
+  OnContentBlocked();
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -737,6 +689,17 @@ void WebView::DidFailProvisionalLoad(
   DispatchLoadFailed(validated_url, error_code, error_description);
 }
 
+void WebView::DidNavigateMainFrame(
+    const content::LoadCommittedDetails& details,
+    const content::FrameNavigateParams& params) {
+  if (details.is_navigation_to_different_page()) {
+    permission_request_manager_.CancelAllPendingRequests();
+
+    blocked_content_ = CONTENT_TYPE_NONE;
+    OnContentBlocked();
+  }
+}
+
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
                             const GURL& validated_url) {
   if (render_frame_host->GetParent()) {
@@ -759,9 +722,6 @@ void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
 
 void WebView::NavigationEntryCommitted(
     const content::LoadCommittedDetails& load_details) {
-  if (load_details.is_navigation_to_different_page()) {
-    permission_request_manager_.CancelAllPendingRequests();
-  }
   OnNavigationEntryCommitted();
 }
 
@@ -900,13 +860,7 @@ bool WebView::OnCertificateError(
   permission_request_manager_.AbortPendingRequest(request.get());
   return false;
 }
-
-void WebView::OnRequestToRunInsecureContent(
-    const GURL& embedder,
-    scoped_ptr<SimplePermissionRequest> request) {}
-void WebView::OnRequestToDisplayInsecureContent(
-    const GURL& embedder,
-    scoped_ptr<SimplePermissionRequest> request) {}
+void WebView::OnContentBlocked() {}
 
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
@@ -920,7 +874,8 @@ WebView::WebView()
       in_swap_(false),
       initial_preferences_(NULL),
       root_frame_(NULL),
-      is_fullscreen_(false) {
+      is_fullscreen_(false),
+      blocked_content_(CONTENT_TYPE_NONE) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 

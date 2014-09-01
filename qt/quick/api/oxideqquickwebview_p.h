@@ -65,6 +65,7 @@ class OxideQQuickWebViewAttached : public QObject {
 class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
 
+  Q_FLAGS(ContentType)
   Q_ENUMS(LogMessageSeverityLevel);
 
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
@@ -101,6 +102,8 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
   Q_PROPERTY(OxideQSecurityStatus* securityStatus READ securityStatus CONSTANT)
 
+  Q_PROPERTY(ContentType blockedContent READ blockedContent NOTIFY blockedContentChanged)
+
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
@@ -117,6 +120,15 @@ class OxideQQuickWebView : public QQuickItem {
     LogSeverityErrorReport,
     LogSeverityFatal
   };
+
+  // This will be expanded to include other types
+  // (eg, storage, geo, media, popups etc etc...)
+  enum ContentTypeFlags {
+    ContentTypeNone = 0,
+    ContentTypeMixedDisplay = 1 << 0,
+    ContentTypeMixedScript = 1 << 1
+  };
+  Q_DECLARE_FLAGS(ContentType, ContentTypeFlags)
 
   void componentComplete();
 
@@ -180,6 +192,8 @@ class OxideQQuickWebView : public QQuickItem {
   OxideQQuickNavigationHistory* navigationHistory();
   OxideQSecurityStatus* securityStatus();
 
+  ContentType blockedContent() const;
+
   OxideQNewViewRequest* request() const;
   void setRequest(OxideQNewViewRequest* request);
 
@@ -229,6 +243,7 @@ class OxideQQuickWebView : public QQuickItem {
                                 const QString& sourceId);
   void downloadRequested(OxideQDownloadRequest* request);
   void certificateError(const QJSValue& error);
+  void blockedContentChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
