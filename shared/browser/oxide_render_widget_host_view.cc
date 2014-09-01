@@ -360,6 +360,11 @@ void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {
   NOTREACHED() << "InitAsChild() isn't used. Please use Init() instead";
 }
 
+gfx::Vector2dF RenderWidgetHostView::GetLastScrollOffset() const {
+  NOTREACHED();
+  return gfx::Vector2dF();
+}
+
 gfx::NativeView RenderWidgetHostView::GetNativeView() const {
   return NULL;
 }
