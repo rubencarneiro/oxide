@@ -163,7 +163,7 @@ list(SORT I18N_SRC_FILES)
 
 # for dh_translations to extract the domain
 # (regarding syntax consistency, see http://pad.lv/1181187)
-set (GETTEXT_PACKAGE "oxide")
+set(GETTEXT_PACKAGE "oxide-${OXIDE_BUILD}")
 add_subdirectory(po)
 
 add_subdirectory(${OXIDE_BUILD})
