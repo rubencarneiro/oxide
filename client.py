@@ -44,7 +44,7 @@ CHROMIUM_GCLIENT_SPEC = (
   "solutions = ["
     "{ \"name\": \"src\", "
       "\"url\": \"%s\", "
-      "\"deps_file\": \".DEPS.git\", "
+      "\"deps_file\": \"DEPS\", "
       "\"managed\": False, "
       "\"custom_deps\": "
         "{ \"build\": None, "

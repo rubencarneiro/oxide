@@ -46,7 +46,7 @@
 #include "net/http/http_server_properties_impl.h"
 #include "net/http/transport_security_persister.h"
 #include "net/http/transport_security_state.h"
-#include "net/socket/tcp_listen_socket.h"
+#include "net/socket/tcp_server_socket.h"
 #include "net/ssl/channel_id_service.h"
 #include "net/ssl/channel_id_store.h"
 #include "net/ssl/default_channel_id_store.h"
@@ -91,6 +91,23 @@ const char kBrowserContextKey[] = "oxide_browser_context_data";
 
 const char kDefaultAcceptLanguage[] = "en-us,en";
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
+
+class TCPServerSocketFactory :
+    public content::DevToolsHttpHandler::ServerSocketFactory {
+ public:
+  TCPServerSocketFactory(const std::string& address, int port, int backlog)
+      : content::DevToolsHttpHandler::ServerSocketFactory(
+            address, port, backlog) {}
+
+ private:
+  scoped_ptr<net::ServerSocket> Create() const FINAL {
+    return make_scoped_ptr(
+        new net::TCPServerSocket(NULL, net::NetLog::Source()))
+          .PassAs<net::ServerSocket>();
+  }
+
+  DISALLOW_COPY_AND_ASSIGN(TCPServerSocketFactory);
+};
 
 class ResourceContextData : public base::SupportsUserData::Data {
  public:
@@ -602,15 +619,17 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
   if (data_.devtools_enabled &&
       data_.devtools_port < 65535 &&
       data_.devtools_port > 1024) {
-    net::IPAddressNumber ipnumber;
+    net::IPAddressNumber unused;
     std::string ip =
-        net::ParseIPLiteralToNumber(data_.devtools_ip, &ipnumber) ?
+        net::ParseIPLiteralToNumber(data_.devtools_ip, &unused) ?
           data_.devtools_ip : kDevtoolsDefaultServerIp;
 
+    scoped_ptr<content::DevToolsHttpHandler::ServerSocketFactory> factory(
+        new TCPServerSocketFactory(ip, data_.devtools_port, 1));
     data_.devtools_http_handler = content::DevToolsHttpHandler::Start(
-        new net::TCPListenSocketFactory(ip, data_.devtools_port),
+        factory.Pass(),
         std::string(),
-        new DevtoolsHttpHandlerDelegate(ip, data_.devtools_port, this),
+        new DevtoolsHttpHandlerDelegate(this),
         base::FilePath());
   }
 }
@@ -665,7 +684,7 @@ content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
   return NULL;
 }
 
-quota::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
+storage::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
   return NULL;
 }
 

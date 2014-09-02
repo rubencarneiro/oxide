@@ -90,7 +90,8 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
     }
 
     case kGLImplementationOSMesaGL: {
-      scoped_refptr<GLSurface> surface(new GLSurfaceOSMesa(1, size));
+      scoped_refptr<GLSurface> surface(
+          new GLSurfaceOSMesa(gfx::OSMesaSurfaceFormatBGRA, size));
       if (!surface->Initialize()) {
         return NULL;
       }

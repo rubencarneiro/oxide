@@ -74,8 +74,8 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
 
   // cc::LayerTreeHostClient implementation
   void WillBeginMainFrame(int frame_id) FINAL;
+  void BeginMainFrame(const cc::BeginFrameArgs& args) FINAL;
   void DidBeginMainFrame() FINAL;
-  void Animate(base::TimeTicks frame_begin_time) FINAL;
   void Layout() FINAL;
   void ApplyScrollAndScale(const gfx::Vector2d& scroll_delta,
                            float page_scale) FINAL;

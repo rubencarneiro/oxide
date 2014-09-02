@@ -27,7 +27,8 @@
 #include "content/public/common/menu_item.h"
 
 namespace content {
-class RenderViewHostImpl;
+class RenderFrameHost;
+class RenderFrameHostImpl;
 }
 
 namespace gfx {
@@ -53,15 +54,15 @@ class WebPopupMenu : public content::WebContentsObserver,
   bool WasHidden() const;
 
  protected:
-  WebPopupMenu(content::RenderViewHost* rvh);
+  WebPopupMenu(content::RenderFrameHost* rfh);
 
  private:
-  void RenderViewDeleted(content::RenderViewHost* rvh) FINAL;
+  void RenderFrameDeleted(content::RenderFrameHost* rfh) FINAL;
 
   virtual void OnHide() = 0;
 
   bool popup_was_hidden_;
-  content::RenderViewHostImpl* render_view_host_;
+  content::RenderFrameHostImpl* render_frame_host_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
 };

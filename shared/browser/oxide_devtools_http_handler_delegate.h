@@ -36,11 +36,7 @@ class BrowserContext;
 class DevtoolsHttpHandlerDelegate
     : public content::DevToolsHttpHandlerDelegate {
  public:
-
-  DevtoolsHttpHandlerDelegate(
-      const std::string& ip,
-      unsigned port,
-      BrowserContext* attached_browser_context);
+  DevtoolsHttpHandlerDelegate(BrowserContext* attached_browser_context);
   virtual ~DevtoolsHttpHandlerDelegate();
 
   // DevToolsHttpProtocolHandler::Delegate overrides.
@@ -56,12 +52,8 @@ class DevtoolsHttpHandlerDelegate
       std::string* name) OVERRIDE;
 
  private:
-
-  std::string GetLocalDevToolsUrl() const;
-
-  std::string ip_;
-  unsigned port_;
   BrowserContext* browser_context_;
+
   DISALLOW_COPY_AND_ASSIGN(DevtoolsHttpHandlerDelegate);
 };
 

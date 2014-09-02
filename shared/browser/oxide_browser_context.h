@@ -235,7 +235,7 @@ class BrowserContext : public content::BrowserContext,
   content::DownloadManagerDelegate* GetDownloadManagerDelegate() FINAL;
 
   content::BrowserPluginGuestManager* GetGuestManager() FINAL;
-  quota::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
+  storage::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
   content::PushMessagingService* GetPushMessagingService() FINAL;
   content::SSLHostStateDelegate* GetSSLHostStateDelegate() FINAL;
 

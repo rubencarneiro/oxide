@@ -27,7 +27,6 @@
 #include "ui/events/gesture_detection/filtered_gesture_provider.h"
 #include "ui/events/gesture_detection/gesture_provider.h"
 #include "ui/events/gesture_detection/motion_event.h"
-#include "ui/events/gestures/gesture_sequence.h"
 #include "ui/gfx/screen.h"
 
 #include "shared/base/oxide_event_utils.h"
@@ -55,7 +54,6 @@ ui::GestureDetector::Config GetGestureDetectorConfig(float scale) {
 
 ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig(float scale) {
   ui::ScaleGestureDetector::Config config;
-  config.gesture_detector_config = GetGestureDetectorConfig(scale);
   config.min_scaling_touch_major = kDefaultRadius * 2 * scale;
   config.min_scaling_span = 170 * scale;
 
@@ -91,7 +89,7 @@ class MotionEvent : public ui::MotionEvent {
   scoped_ptr<ui::MotionEvent> Clone() const FINAL;
 
  private:
-  static const size_t kMaxTouchPoints = ui::GestureSequence::kMaxGesturePoints;
+  static const size_t kMaxTouchPoints = ui::MotionEvent::MAX_TOUCH_POINT_COUNT;
 
   struct TouchPoint {
     TouchPoint();

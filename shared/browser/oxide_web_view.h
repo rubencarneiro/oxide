@@ -200,7 +200,8 @@ class WebView : public ScriptMessageTarget,
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
-  void ShowPopupMenu(const gfx::Rect& bounds,
+  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                     const gfx::Rect& bounds,
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
                      bool allow_multiple_selection);
@@ -449,7 +450,7 @@ class WebView : public ScriptMessageTarget,
                                       bool user_gesture);
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
+  virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                     WindowOpenDisposition disposition);

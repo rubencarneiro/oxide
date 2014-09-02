@@ -79,8 +79,8 @@ void Compositor::UnlockCompositor() {
 }
 
 void Compositor::WillBeginMainFrame(int frame_id) {}
+void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
 void Compositor::DidBeginMainFrame() {}
-void Compositor::Animate(base::TimeTicks frame_begin_time) {}
 void Compositor::Layout() {}
 void Compositor::ApplyScrollAndScale(const gfx::Vector2d& scroll_delta,
                                      float page_scale) {}

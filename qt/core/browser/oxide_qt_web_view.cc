@@ -635,8 +635,8 @@ oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
   return new WebFrame(adapter_->CreateWebFrame(), node, this);
 }
 
-oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
-  return new WebPopupMenu(adapter_->CreateWebPopupMenuDelegate(), rvh);
+oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
+  return new WebPopupMenu(adapter_->CreateWebPopupMenuDelegate(), rfh);
 }
 
 oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
