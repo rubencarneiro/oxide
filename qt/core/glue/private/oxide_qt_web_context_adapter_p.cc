@@ -52,12 +52,12 @@ namespace qt {
 
 class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
  public:
-  SetCookiesContext(int id, int remaining)
-      : id(id), remaining(remaining), failed(false) {}
+  SetCookiesContext(int id)
+      : id(id), remaining(0) {}
 
   int id;
   int remaining;
-  bool failed;
+  QList<QNetworkCookie> failed;
 };
 
 WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
@@ -240,16 +240,22 @@ void WebContextAdapterPrivate::SetCookies(
   base::AutoReset<bool> f(&handling_cookie_request_, true);
 
   scoped_refptr<net::CookieStore> cookie_store = context_->GetCookieStore();
-  scoped_refptr<SetCookiesContext> ctxt =
-      new SetCookiesContext(request_id, cookies.size());
+  scoped_refptr<SetCookiesContext> ctxt = new SetCookiesContext(request_id);
 
   for (int i = 0; i < cookies.size(); ++i) {
     const QNetworkCookie& cookie = cookies.at(i);
+
+    if (cookie.name().isEmpty()) {
+      ctxt->failed.push_back(cookie);
+      continue;
+    }
 
     base::Time expiry;
     if (cookie.expirationDate().isValid()) {
       expiry = base::Time::FromJsTime(cookie.expirationDate().toMSecsSinceEpoch());
     }
+
+    ctxt->remaining++;
 
     cookie_store->GetCookieMonster()->SetCookieWithDetailsAsync(
         GURL(url.toString().toStdString()),
@@ -262,33 +268,44 @@ void WebContextAdapterPrivate::SetCookies(
         cookie.isHttpOnly(),
         net::COOKIE_PRIORITY_DEFAULT,
         base::Bind(&WebContextAdapterPrivate::CookieSetCallback,
+                   this, ctxt, cookie));
+  }
+
+  if (ctxt->remaining == 0) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE,
+        base::Bind(&WebContextAdapterPrivate::DeliverCookiesSet,
                    this, ctxt));
   }
 }
 
 void WebContextAdapterPrivate::CookieSetCallback(
     const scoped_refptr<SetCookiesContext>& ctxt,
+    const QNetworkCookie& cookie,
     bool success) {
   DCHECK_GT(ctxt->remaining, 0);
 
-  if (handling_cookie_request_ && ctxt->remaining == 1) {
-    base::MessageLoop::current()->PostTask(
-        FROM_HERE,
-        base::Bind(&WebContextAdapterPrivate::CookieSetCallback,
-                   this, ctxt, success));
+  if (!success) {
+    ctxt->failed.push_back(cookie);
+  }
+
+  if (--ctxt->remaining > 0 || handling_cookie_request_) {
     return;
   }
 
-  ctxt->failed = ctxt->failed || !success;
+  DeliverCookiesSet(ctxt);
+}
+
+void WebContextAdapterPrivate::DeliverCookiesSet(
+    const scoped_refptr<SetCookiesContext>& ctxt) {
+  DCHECK_EQ(ctxt->remaining, 0);
 
   WebContextAdapter* adapter = GetAdapter();
-  if (--ctxt->remaining == 0 && adapter) {
-    adapter->CookiesSet(
-        ctxt->id,
-        ctxt->failed ?
-          WebContextAdapter::RequestStatusError :
-          WebContextAdapter::RequestStatusOK);
+  if (!adapter) {
+    return;
   }
+
+  adapter->CookiesSet(ctxt->id, ctxt->failed);
 }
 
 void WebContextAdapterPrivate::GetCookies(int request_id,

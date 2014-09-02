@@ -96,6 +96,15 @@ int OxideQQuickCookieManager::setCookies(const QUrl& url,
       url, networkCookiesFromVariantList(cookies));
 }
 
+int OxideQQuickCookieManager::setNetworkCookies(
+    const QUrl& url,
+    const QList<QNetworkCookie>& cookies) {
+  Q_D(OxideQQuickCookieManager);
+
+  return OxideQQuickWebContextPrivate::get(d->web_context_)->setCookies(
+      url, cookies);
+}
+
 int OxideQQuickCookieManager::getCookies(const QUrl& url) {
   Q_D(OxideQQuickCookieManager);
 

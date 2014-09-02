@@ -40,23 +40,19 @@ class OxideQQuickCookieManager : public QObject {
   Q_DISABLE_COPY(OxideQQuickCookieManager)
 
 public:
-
-  enum RequestStatus {
-    RequestStatusOK,
-    RequestStatusError
-  };
-
   OxideQQuickCookieManager(OxideQQuickWebContext* webContext,
                            QObject* parent = NULL);
   virtual ~OxideQQuickCookieManager();
 
   Q_INVOKABLE int setCookies(const QUrl& url, const QVariant& cookies);
+  Q_INVOKABLE int setNetworkCookies(const QUrl& url,
+                                    const QList<QNetworkCookie>& cookies);
   Q_INVOKABLE int getCookies(const QUrl& url);
   Q_INVOKABLE int getAllCookies();
 
 Q_SIGNALS:
-  void cookiesSet(int requestId, RequestStatus status);
-  void gotCookies(int requestId, const QVariant& cookies);
+  void setCookiesResponse(int requestId, const QVariant& failedCookies);
+  void getCookiesResponse(int requestId, const QVariant& cookies);
 
 private:
   QScopedPointer<OxideQQuickCookieManagerPrivate> d_ptr;

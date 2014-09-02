@@ -123,16 +123,11 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  protected:
   WebContextAdapter(QObject* q);
 
-  // Should properly map to what's in qt/quick/api/oxideqquickmanager_p.h
-  enum RequestStatus {
-    RequestStatusOK,
-    RequestStatusError,
-  };
-
  private:
   friend class WebContextAdapterPrivate;
 
-  virtual void CookiesSet(int request_id, RequestStatus status) = 0;
+  virtual void CookiesSet(int request_id,
+                          const QList<QNetworkCookie>& failed_cookies) = 0;
   virtual void CookiesRetrieved(int request_id,
                                 const QList<QNetworkCookie>& cookies) = 0;
 

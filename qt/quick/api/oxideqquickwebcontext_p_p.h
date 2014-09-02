@@ -83,7 +83,8 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   bool prepareToAttachDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
   void detachedDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
 
-  void CookiesSet(int request_id, RequestStatus status) Q_DECL_FINAL;
+  void CookiesSet(int request_id,
+                  const QList<QNetworkCookie>& failed_cookies) Q_DECL_FINAL;
   void CookiesRetrieved(int request_id,
                         const QList<QNetworkCookie>& cookies) Q_DECL_FINAL;
 

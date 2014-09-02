@@ -95,7 +95,9 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
                   const QUrl& url,
                   const QList<QNetworkCookie>& cookies);
   void CookieSetCallback(const scoped_refptr<SetCookiesContext>& context,
+                         const QNetworkCookie& cookie,
                          bool success);
+  void DeliverCookiesSet(const scoped_refptr<SetCookiesContext>& ctxt);
 
   void GetCookies(int request_id, const QUrl& url);
   void GetAllCookies(int request_id);

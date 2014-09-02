@@ -56,6 +56,29 @@ void DestroyDefaultContext() {
   delete context;
 }
 
+QVariant networkCookiesToVariant(const QList<QNetworkCookie>& cookies) {
+  QList<QVariant> list;
+  Q_FOREACH(QNetworkCookie cookie, cookies) {
+    QVariantMap c;
+    c.insert("name", QVariant(QString(cookie.name())));
+    c.insert("value", QVariant(QString(cookie.value())));
+    c.insert("domain", QVariant(cookie.domain()));
+    c.insert("path", QVariant(cookie.path()));
+    c.insert("httponly", QVariant(cookie.isHttpOnly()));
+    c.insert("issecure", QVariant(cookie.isSecure()));
+    c.insert("issessioncookie", QVariant(cookie.isSessionCookie()));
+    if (cookie.expirationDate().isValid()) {
+      c.insert("expirationdate", QVariant(cookie.expirationDate()));
+    } else {
+      c.insert("expirationdate", QVariant());
+    }
+
+    list.append(c);
+  }
+
+  return QVariant(list);
+}
+
 }
 
 namespace oxide {
@@ -283,12 +306,12 @@ void OxideQQuickWebContextPrivate::detachedDelegateWorker(
 
 void OxideQQuickWebContextPrivate::CookiesSet(
     int request_id,
-    WebContextAdapter::RequestStatus status) {
+    const QList<QNetworkCookie>& failed_cookies) {
   Q_Q(OxideQQuickWebContext);
 
-  emit q->cookieManager()->cookiesSet(
+  emit q->cookieManager()->setCookiesResponse(
       request_id,
-      static_cast<OxideQQuickCookieManager::RequestStatus>(status));
+      networkCookiesToVariant(failed_cookies));
 }
 
 void OxideQQuickWebContextPrivate::CookiesRetrieved(
@@ -296,26 +319,9 @@ void OxideQQuickWebContextPrivate::CookiesRetrieved(
       const QList<QNetworkCookie>& cookies) {
   Q_Q(OxideQQuickWebContext);
 
-  QList<QVariant> cookie_map_list;
-  Q_FOREACH(QNetworkCookie cookie, cookies) {
-    QVariantMap cm;
-    cm.insert("name", QVariant(QString(cookie.name())));
-    cm.insert("value", QVariant(QString(cookie.value())));
-    cm.insert("domain", QVariant(cookie.domain()));
-    cm.insert("path", QVariant(cookie.path()));
-    cm.insert("httponly", QVariant(cookie.isHttpOnly()));
-    cm.insert("issecure", QVariant(cookie.isSecure()));
-    cm.insert("issessioncookie", QVariant(cookie.isSessionCookie()));
-    if (cookie.expirationDate().isValid()) {
-      cm.insert("expirationdate", QVariant(cookie.expirationDate()));
-    } else {
-      cm.insert("expirationdate", QVariant());
-    }
-    cookie_map_list.append(cm);
-  }
-
-  emit q->cookieManager()->gotCookies(request_id,
-                                      QVariant(cookie_map_list));
+  emit q->cookieManager()->getCookiesResponse(
+      request_id,
+      networkCookiesToVariant(cookies));
 }
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}

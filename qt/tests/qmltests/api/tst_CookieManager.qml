@@ -58,7 +58,7 @@ TestWebView {
       verify(cookieManager, "CookieManager is NULL");
 
       // Save the total number of cookies at the start
-      spy.signalName = "gotCookies";
+      spy.signalName = "getCookiesResponse";
       var id = cookieManager.getAllCookies();
       _verify_id(id);
       spy.wait();
@@ -70,7 +70,7 @@ TestWebView {
       // First we set some cookies - we set 1 httponly, 2 with different paths,
       // and 1 session cookie
 
-      spy.signalName = "cookiesSet";
+      spy.signalName = "setCookiesResponse";
 
       var exp = new Date(Date.now() + 1000*1000);
       id = cookieManager.setCookies(
@@ -93,12 +93,12 @@ TestWebView {
       spy.wait();
       compare(spy.count, 2, "Expected cookiesSet signal");
       compare(spy.signalArguments[0][0], id);
-      compare(spy.signalArguments[0][1], CookieManager.RequestStatusOK);
+      compare(spy.signalArguments[0][1].length, 0);
 
       // Then we verify the cookies we get back from getCookies() with a
       // specific URL, which should omit one of the cookies we set
 
-      spy.signalName = "gotCookies";
+      spy.signalName = "getCookiesResponse";
 
       id = cookieManager.getCookies("http://localhost:8080/empty.html");
       _verify_id(id);
@@ -138,12 +138,13 @@ TestWebView {
 
     function test_CookieManager2_errors_data() {
       return [
-        {"url": "http://www.google.com/", "cookie": {"name": "foo", "value": "bar", "domain": ".mail.google.com"}}
+        {"url": "http://www.google.com/", "cookie": {"name": "foo", "value": "bar", "domain": ".mail.google.com"}}, // Domain mismatch
+        {"url": "http://localhost:8080/", "cookie": {"name": "", "value": "foo"}} // No name
       ];
     }
 
     function test_CookieManager2_errors(data) {
-      spy.signalName = "cookiesSet";
+      spy.signalName = "setCookiesResponse";
 
       var id = webView.context.cookieManager.setCookies(
           data.url, [data.cookie]);
@@ -151,7 +152,9 @@ TestWebView {
 
       spy.wait();
       compare(spy.signalArguments[0][0], id);
-      compare(spy.signalArguments[0][1], CookieManager.RequestStatusError);
+      compare(spy.signalArguments[0][1].length, 1);
+      compare(spy.signalArguments[0][1][0].name, data.cookie.name);
+      compare(spy.signalArguments[0][1][0].value, data.cookie.value);
     }
   }
 }
