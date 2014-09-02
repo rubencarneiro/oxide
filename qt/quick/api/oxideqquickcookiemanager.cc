@@ -54,9 +54,21 @@ QList<QNetworkCookie> networkCookiesFromVariantList(const QVariant& cookies) {
         vm.value("issecure").canConvert(QVariant::Bool)) {
       nc.setSecure(vm.value("issecure").toBool());
     }
-    if (vm.contains("expirationdate") &&
-        vm.value("expirationdate").type() == QVariant::DateTime) {
-      nc.setExpirationDate(vm.value("expirationdate").toDateTime());
+    if (vm.contains("expirationdate")) {
+      QDateTime datetime;
+      if (vm.value("expirationdate").canConvert(QVariant::DateTime)) {
+        datetime = vm.value("expirationdate").toDateTime();
+      }
+      // ISO8601 strings will convert to QDateTime - however, it would be nice
+      // to also be able to convert from RFC1123 based datetime strings
+      if (!datetime.isValid() &&
+          vm.value("expirationdate").canConvert(QVariant::LongLong)) {
+        datetime = QDateTime::fromMSecsSinceEpoch(
+            vm.value("expirationdate").toLongLong());
+      }
+      if (datetime.isValid()) {
+        nc.setExpirationDate(datetime);
+      }
     }
     network_cookies.append(nc);
   }
