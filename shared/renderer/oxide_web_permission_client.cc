@@ -38,9 +38,13 @@ void WebPermissionClient::DidCommitProvisionalLoad(bool is_new_navigation) {
   content::DocumentState* ds =
       content::DocumentState::FromDataSource(frame->dataSource());
   content::NavigationState* ns = ds->navigation_state();
-  if (!ns->was_within_same_page()) {
+  if (!ns->was_within_same_page() &&
+      ds->load_type() != content::DocumentState::LINK_LOAD_RELOAD) {
     did_block_displaying_insecure_content_ = false;
     did_block_running_insecure_content_ = false;
+
+    can_display_insecure_content_ = false;
+    can_run_insecure_content_ = false;
   }
 }
 
