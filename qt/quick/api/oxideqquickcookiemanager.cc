@@ -129,4 +129,10 @@ int OxideQQuickCookieManager::getAllCookies() {
   return OxideQQuickWebContextPrivate::get(d->web_context_)->getAllCookies();
 }
 
+int OxideQQuickCookieManager::deleteAllCookies() {
+  Q_D(OxideQQuickCookieManager);
+
+  return OxideQQuickWebContextPrivate::get(d->web_context_)->deleteAllCookies();
+}
+
 #include "moc_oxideqquickcookiemanager_p.cpp"

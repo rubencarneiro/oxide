@@ -104,6 +104,9 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   void GotCookiesCallback(int request_id,
                           const net::CookieList& cookies);
 
+  void DeleteAllCookies(int request_id);
+  void DeletedCookiesCallback(int request_id, int num_deleted);
+
   // oxide::BrowserContextDelegate
   int OnBeforeURLRequest(net::URLRequest* request,
                          const net::CompletionCallback& callback,

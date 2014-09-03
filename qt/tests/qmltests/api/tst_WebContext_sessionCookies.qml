@@ -24,14 +24,7 @@ TestCase {
   }
 
   function _clear(webView) {
-    var restore = webView.context.cookiePolicy;
-    webView.context.cookiePolicy = WebContext.CookiePolicyAllowAll;
-
-    webView.url = "http://localhost:8080/clear-test-cookies-hack.py"
-    verify(webView.waitForLoadSucceeded(),
-           "Timed out waiting for successful load");
-
-    webView.context.cookiePolicy = restore;
+    webView.context.deleteAllCookies();
   }
 
   function _set_cookies(webView) {

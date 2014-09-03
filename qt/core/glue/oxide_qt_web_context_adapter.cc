@@ -367,6 +367,17 @@ int WebContextAdapter::getAllCookies() {
   return request_id;
 }
 
+int WebContextAdapter::deleteAllCookies() {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->DeleteAllCookies(request_id);
+  return request_id;
+}
+
 WebContextAdapter::WebContextAdapter(QObject* q)
     : AdapterBase(q),
       priv(WebContextAdapterPrivate::Create(this)) {

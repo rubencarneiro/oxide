@@ -307,9 +307,7 @@ void OxideQQuickWebContextPrivate::detachedDelegateWorker(
 void OxideQQuickWebContextPrivate::CookiesSet(
     int request_id,
     const QList<QNetworkCookie>& failed_cookies) {
-  Q_Q(OxideQQuickWebContext);
-
-  emit q->cookieManager()->setCookiesResponse(
+  emit cookie_manager_->setCookiesResponse(
       request_id,
       networkCookiesToVariant(failed_cookies));
 }
@@ -317,11 +315,14 @@ void OxideQQuickWebContextPrivate::CookiesSet(
 void OxideQQuickWebContextPrivate::CookiesRetrieved(
       int request_id,
       const QList<QNetworkCookie>& cookies) {
-  Q_Q(OxideQQuickWebContext);
-
-  emit q->cookieManager()->getCookiesResponse(
+  emit cookie_manager_->getCookiesResponse(
       request_id,
       networkCookiesToVariant(cookies));
+}
+
+void OxideQQuickWebContextPrivate::CookiesDeleted(
+    int request_id, int num_deleted) {
+  emit cookie_manager_->deleteCookiesResponse(request_id, num_deleted);
 }
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}

@@ -50,9 +50,12 @@ public:
   Q_INVOKABLE int getCookies(const QUrl& url);
   Q_INVOKABLE int getAllCookies();
 
+  Q_INVOKABLE int deleteAllCookies();
+
 Q_SIGNALS:
   void setCookiesResponse(int requestId, const QVariant& failedCookies);
   void getCookiesResponse(int requestId, const QVariant& cookies);
+  void deleteCookiesResponse(int requestId, int numDeleted);
 
 private:
   QScopedPointer<OxideQQuickCookieManagerPrivate> d_ptr;

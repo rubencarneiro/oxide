@@ -369,6 +369,26 @@ void WebContextAdapterPrivate::GotCookiesCallback(
   adapter->CookiesRetrieved(request_id, qcookies);
 }
 
+void WebContextAdapterPrivate::DeleteAllCookies(int request_id) {
+  DCHECK_GT(request_id, -1);
+
+  base::AutoReset<bool> f(&handling_cookie_request_, true);
+
+  context_->GetCookieStore()->GetCookieMonster()->DeleteAllAsync(
+      base::Bind(&WebContextAdapterPrivate::DeletedCookiesCallback,
+                 this, request_id));
+}
+
+void WebContextAdapterPrivate::DeletedCookiesCallback(int request_id,
+                                                      int num_deleted) {
+  WebContextAdapter* adapter = GetAdapter();
+  if (!adapter) {
+    return;
+  }
+
+  adapter->CookiesDeleted(request_id, num_deleted);
+}
+
 WebContextAdapter* WebContextAdapterPrivate::GetAdapter() const {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   return adapter_;

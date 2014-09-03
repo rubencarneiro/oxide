@@ -16,24 +16,17 @@ TestWebView {
     name: "CookieManager"
     when: windowShown
 
-    property var expected_id: -1
+    property var last_id: -1
 
     function init() {
-      webView.url = "http://localhost:8080/clear-test-cookies-hack.py"
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-
+      webView.context.deleteAllCookies();
       spy.clear();
       spy.signalName = "";
     }
 
     function _verify_id(id) {
-      if (expected_id == -1) {
-        verify(id > -1, "Invalid ID");
-      } else {
-        compare(id, expected_id, "Invalid ID");
-      }
-      expected_id = id + 1; 
+      verify(id > last_id);
+      last_id = id;
     }
 
     function _verify_cookies(cookies, data) {
