@@ -18,6 +18,7 @@
 #include <QGuiApplication>
 #include <QLatin1String>
 #include <QString>
+#include <QStringList>
 #include <QtGlobal>
 #include <QtQuickTest/quicktest.h>
 #include <QtQuickVersion>
@@ -44,12 +45,16 @@ int main(int argc, char** argv) {
   filtered_argv[0] = argv[0];
 
   QString name;
+  QStringList library_paths;
 
   int index = 1;
   while (index < argc) {
     char* arg = argv[index];
     if (QLatin1String(arg) == QLatin1String("-name") && (index + 1) < argc) {
       name = stripQuotes(QString::fromLatin1(argv[index + 1]));
+      index += 2;
+    } else if (QLatin1String(arg) == QLatin1String("--add-library-path") && (index + 1) < argc) {
+      library_paths.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
     } else {
       filtered_argv[filtered_argc] = arg;
@@ -61,6 +66,10 @@ int main(int argc, char** argv) {
   filtered_argv[filtered_argc] = NULL;
 
   QGuiApplication app(filtered_argc, filtered_argv);
+
+  for (int i = 0; i < library_paths.size(); ++i) {
+    app.addLibraryPath(library_paths[i]);
+  }
 
 #if defined(ENABLE_COMPOSITING)
   QOpenGLContext context;

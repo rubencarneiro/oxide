@@ -74,23 +74,24 @@ function(add_qml_test)
   if(NOT _ARGS_SERVER_DIR)
     set(_ARGS_SERVER_DIR ${_ARGS_TEST_DIR})
   endif()
-  set(_USE_DATA_DIR)
-  if(_ARGS_USE_DATA_DIR)
-    set(_USE_DATA_DIR -DUSE_DATA_DIR=1)
-  endif()
 
   get_target_property(QMLTEST_BINARY ${QML_TEST} LOCATION)
 
-  add_test(
-      NAME ${_ARGS_NAME}
-      COMMAND ${CMAKE_COMMAND}
-        -DOXIDE_SUBPROCESS_PATH=${CHROMIUM_PRODUCT_DIR}/${OXIDE_RENDERER_NAME}
-        -DCHROMIUM_LIB_DIR=${CHROMIUM_LIB_DIR} -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
-        -DSERVER_DIR=${_ARGS_SERVER_DIR} -DQMLTEST_BINARY=${QMLTEST_BINARY}
-        -DIMPORT_DIR=${OXIDE_QMLPLUGIN_OUTPUT_DIR} -DTEST_DIR=${_ARGS_TEST_DIR}
-        -DTEST_NAME=${_ARGS_NAME} ${_USE_DATA_DIR} -DPYTHON=${PYTHON}
-        -DQT_PLUGIN_PATH=${CMAKE_CURRENT_BINARY_DIR}/mock
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/qmltests/run-qmltests.cmake)
+  set(TEST_COMMAND
+      ${CMAKE_BINARY_DIR}/out/run_qmlapp.sh
+      ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
+      -s ${_ARGS_SERVER_DIR} -p 8080)
+  if(_ARGS_USE_DATA_DIR)
+    list(APPEND TEST_COMMAND -t)
+  endif()
+  list(APPEND TEST_COMMAND
+       --
+       ${QMLTEST_BINARY}
+       -name ${_ARGS_NAME}
+       -input ${_ARGS_TEST_DIR}
+       --add-library-path ${CMAKE_CURRENT_BINARY_DIR}/mock)
+
+  add_test(NAME ${_ARGS_NAME} COMMAND ${TEST_COMMAND})
 endfunction()
 
 add_qml_test(NAME qml-api-test-noprofile TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/qmltests/api)
