@@ -1,0 +1,36 @@
+# Description: Don't initialize NSS with a user DB - we don't have an API
+#  for modifying yet in Oxide and having a shared DB is incompatible with
+#  application confinement
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/crypto/nss_util.cc b/crypto/nss_util.cc
+--- a/crypto/nss_util.cc
++++ b/crypto/nss_util.cc
+@@ -100,24 +100,27 @@ base::FilePath GetDefaultConfigDirectory
+ #endif  // !defined(IS_CHROMEOS)
+ 
+ // On non-Chrome OS platforms, return the default config directory. On Chrome OS
+ // test images, return a read-only directory with fake root CA certs (which are
+ // used by the local Google Accounts server mock we use when testing our login
+ // code). On Chrome OS non-test images (where the read-only directory doesn't
+ // exist), return an empty path.
+ base::FilePath GetInitialConfigDirectory() {
++  return base::FilePath();
++#if 0
+ #if defined(OS_CHROMEOS)
+   base::FilePath database_dir = base::FilePath(kReadOnlyCertDB);
+   if (!base::PathExists(database_dir))
+     database_dir.clear();
+   return database_dir;
+ #else
+   return GetDefaultConfigDirectory();
+ #endif  // defined(OS_CHROMEOS)
++#endif
+ }
+ 
+ // This callback for NSS forwards all requests to a caller-specified
+ // CryptoModuleBlockingPasswordDelegate object.
+ char* PKCS11PasswordFunc(PK11SlotInfo* slot, PRBool retry, void* arg) {
+   crypto::CryptoModuleBlockingPasswordDelegate* delegate =
+       reinterpret_cast<crypto::CryptoModuleBlockingPasswordDelegate*>(arg);
+   if (delegate) {
