@@ -187,6 +187,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
       command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
     }
+    if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
+      command_line->AppendSwitch(switches::kEnableMediaHubAudio);
+    }
   }
 
   return false;
