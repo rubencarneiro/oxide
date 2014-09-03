@@ -383,14 +383,14 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -345,9 +345,13 @@ const wchar_t* ContentBrowserClient::Get
- #if defined(VIDEO_HOLE)
- ExternalVideoSurfaceContainer*
- ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
-     WebContents* web_contents) {
-   return NULL;
+@@ -347,9 +347,13 @@ ContentBrowserClient::OverrideCreateExte
+ 
+ bool ContentBrowserClient::CheckMediaAccessPermission(
+     BrowserContext* browser_context,
+     const GURL& security_origin,
+     MediaStreamType type) {
+   return false;
  }
- #endif
  
 +gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
 +  return NULL;
@@ -400,7 +400,7 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -45,16 +45,17 @@ class DictionaryValue;
+@@ -46,16 +46,17 @@ class DictionaryValue;
  class FilePath;
  }
  
@@ -418,15 +418,15 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -650,13 +651,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -640,13 +641,15 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
- #if defined(VIDEO_HOLE)
-   // Allows an embedder to provide its own ExternalVideoSurfaceContainer
-   // implementation.  Return NULL to disable external surface video.
-   virtual ExternalVideoSurfaceContainer*
-   OverrideCreateExternalVideoSurfaceContainer(WebContents* web_contents);
- #endif
+ // Checks if |security_origin| has permission to access the microphone or
+ // camera. Note that this does not query the user. |type| must be
+ // MEDIA_DEVICE_AUDIO_CAPTURE or MEDIA_DEVICE_VIDEO_CAPTURE.
+ virtual bool CheckMediaAccessPermission(BrowserContext* browser_context,
+                                         const GURL& security_origin,
+                                         MediaStreamType type);
 +
 +  virtual gfx::GLShareGroup* GetGLShareGroup();
  };
