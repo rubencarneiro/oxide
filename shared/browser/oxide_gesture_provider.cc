@@ -100,7 +100,6 @@ class MotionEvent : public ui::MotionEvent {
     float y;
     float raw_x;
     float raw_y;
-    float touch_major;
     float pressure;
     bool active;
   };
@@ -130,6 +129,8 @@ class MotionEvent : public ui::MotionEvent {
   float GetRawX(size_t pointer_index) const FINAL;
   float GetRawY(size_t pointer_index) const FINAL;
   float GetTouchMajor(size_t pointer_index) const FINAL;
+  float GetTouchMinor(size_t pointer_index) const FINAL;
+  float GetOrientation(size_t pointer_index) const FINAL;
   float GetPressure(size_t pointer_index) const FINAL;
   base::TimeTicks GetEventTime() const FINAL;
 
@@ -163,7 +164,7 @@ class MotionEvent : public ui::MotionEvent {
 
 MotionEvent::TouchPoint::TouchPoint()
     : platform_id(0), id(0), x(0), y(0), raw_x(0), raw_y(0),
-      touch_major(0), pressure(0), active(true) {}
+      pressure(0), active(true) {}
 
 MotionEvent::MotionEvent(
     size_t pointer_count,
@@ -319,7 +320,17 @@ float MotionEvent::GetRawY(size_t pointer_index) const {
 
 float MotionEvent::GetTouchMajor(size_t pointer_index) const {
   DCHECK_LE(pointer_index, pointer_count_);
-  return touch_points_[pointer_index].touch_major * 2;
+  return kDefaultRadius * 2;
+}
+
+float MotionEvent::GetTouchMinor(size_t pointer_index) const {
+  DCHECK_LE(pointer_index, pointer_count_);
+  return kDefaultRadius * 2;
+}
+
+float MotionEvent::GetOrientation(size_t pointer_index) const {
+  DCHECK_LE(pointer_index, pointer_count_);
+  return 0;
 }
 
 float MotionEvent::GetPressure(size_t pointer_index) const {
@@ -389,10 +400,9 @@ MotionEvent::TouchPoint MotionEvent::CreateTouchPointFromEvent(
   result.raw_y = event.root_location_f().y();
   result.pressure = event.force();
 
-  result.touch_major = std::max(event.radius_x(), event.radius_y());
-  if (result.touch_major == 0.0f) {
-    result.touch_major = kDefaultRadius;
-  }
+  DCHECK_EQ(event.radius_x(), 0);
+  DCHECK_EQ(event.radius_y(), 0);
+  DCHECK_EQ(event.rotation_angle(), 0);
 
   result.active = event.type() == ui::ET_TOUCH_PRESSED ||
                   event.type() == ui::ET_TOUCH_MOVED;

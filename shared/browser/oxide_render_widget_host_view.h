@@ -156,6 +156,8 @@ class RenderWidgetHostView FINAL :
   // content::RenderWidgetHostView implementation
   void InitAsChild(gfx::NativeView parent_view) FINAL;
 
+  gfx::Vector2dF GetLastScrollOffset() const FINAL;
+
   gfx::NativeView GetNativeView() const FINAL;
   gfx::NativeViewId GetNativeViewId() const FINAL;
   gfx::NativeViewAccessible GetNativeViewAccessible() FINAL;

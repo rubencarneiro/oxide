@@ -169,14 +169,6 @@ class ResourceContext FINAL : public content::ResourceContext {
     return request_context_;
   }
 
-  bool AllowMicAccess(const GURL& origin) FINAL {
-    return false;
-  }
-
-  bool AllowCameraAccess(const GURL& origin) FINAL {
-    return false;
-  }
-
  private:
   friend class BrowserContextIOData;
 
