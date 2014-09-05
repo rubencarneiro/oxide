@@ -23,7 +23,6 @@ from optparse import OptionParser
 import os
 import os.path
 import posixpath
-from select import select
 import shutil
 import SimpleHTTPServer
 from subprocess import Popen
@@ -32,6 +31,12 @@ import tempfile
 import thread
 import traceback
 import urllib
+
+sys.dont_write_bytecode = True
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "build", "python"))
+from eventloop import EventLoop
 
 class PythonHandlerSandboxGlobal(dict):
   def __init__(self):
@@ -110,24 +115,25 @@ class PythonHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.wfile.close()
 
 class TestProcess(object):
-  def __init__(self, runner, args):
-    self._runner = runner
-    self._rfd = -1
+  def __init__(self, args):
+    self.returncode = None
 
-    (self._rfd, wfd) = os.pipe()
-    thread.start_new_thread(self._run_child, (args, wfd))
+    self._args = args
+    (self._rfd, self._wfd) = os.pipe()
 
-  def _run_child(self, args, wfd):
-    w = os.fdopen(wfd, "w")
-    p = Popen(args)
+    thread.start_new_thread(self._run_child, ())
+
+  def _run_child(self):
+    w = os.fdopen(self._wfd, "w")
+    p = Popen(self._args)
 
     w.write(str(p.wait()))
 
-  def handle_event(self):
+  def handle_event(self, event_loop):
     self.returncode = int(os.fdopen(self._rfd, "r").read())
     self._rfd = -1
-    self._runner.remove_source(self)
-    self._runner.quit()
+    self._wfd = -1
+    event_loop.quit()
 
   def fileno(self):
     return self._rfd
@@ -184,10 +190,10 @@ class TestHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     words = filter(None, words)
     path = self.server.path
     for word in words:
-        drive, word = os.path.splitdrive(word)
-        head, word = os.path.split(word)
-        if word in (os.curdir, os.pardir): continue
-        path = os.path.join(path, word)
+      drive, word = os.path.splitdrive(word)
+      head, word = os.path.split(word)
+      if word in (os.curdir, os.pardir): continue
+      path = os.path.join(path, word)
     return path
 
 class TestHTTPServer(BaseHTTPServer.HTTPServer):
@@ -211,10 +217,11 @@ class Options(OptionParser):
 
 class Runner(object):
   def __init__(self, options):
-    self._should_shutdown = False
-    self._rlist = []
-    self._p = None
+    self._event_loop = EventLoop()
+
     self._temp_datadir = None
+    self._http_server = None
+    self._p = None
 
     (opts, args) = options.parse_args()
 
@@ -226,38 +233,18 @@ class Runner(object):
     http_port = opts.port if opts.port is not None else 8080
 
     if http_path is not None:
-      server = TestHTTPServer(("", http_port), TestHTTPRequestHandler, http_path)
-      self.add_source(server)
+      self._http_server = TestHTTPServer(("", http_port), TestHTTPRequestHandler, http_path)
+      self._event_loop.add_reader(self._http_server, self._http_server.handle_event)
 
     if len(args) > 0:
-      self._p = TestProcess(self, args)
-      self.add_source(self._p)
-
-  def add_source(self, source):
-    if not hasattr(source, "handle_event"):
-      raise Exception("Invalid source")
-
-    self._rlist.append(source)
-
-  def remove_source(self, source):
-    if not source in self._rlist:
-      raise Exception("Source doesn't exist")
-
-    self._rlist.remove(source)
+      self._p = TestProcess(args)
+      self._event_loop.add_reader(self._p, self._p.handle_event, self._event_loop)
 
   def run(self):
-    while not self._should_shutdown:
-      (r, w, x) = select(self._rlist, [], [])
-      for i in r:
-        i.handle_event()
-
-    if self._temp_datadir is not None:
-      shutil.rmtree(self._temp_datadir)
-
-    return self._p.returncode if self._p is not None else 0
-
-  def quit(self):
-    self._should_shutdown = True
+    self._event_loop.run()
+    self._event_loop.close()
+    assert self._p.returncode != None
+    return self._p.returncode
 
 def main():
   parser = Options()
