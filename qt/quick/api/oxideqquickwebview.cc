@@ -451,6 +451,23 @@ void OxideQQuickWebViewPrivate::NewViewRequested(
   emit q->newViewRequested(request);
 }
 
+void OxideQQuickWebViewPrivate::UrlRedirected(
+      const QUrl& url,
+      const QUrl& original_url,
+      const QString& referrer,
+      const QString& method,
+      bool isMainFrame,
+      int http_response_code) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->urlRedirected(url,
+      original_url,
+      referrer,
+      method,
+      isMainFrame,
+      http_response_code);
+}
+
 void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
     OxideQGeolocationPermissionRequest* request) {
   Q_Q(OxideQQuickWebView);

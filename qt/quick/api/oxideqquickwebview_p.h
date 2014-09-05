@@ -247,6 +247,12 @@ class OxideQQuickWebView : public QQuickItem {
   void downloadRequested(OxideQDownloadRequest* request);
   void certificateError(const QJSValue& error);
   void blockedContentChanged();
+  void urlRedirected(const QUrl& url,
+                     const QUrl& original_url,
+                     const QString& referrer,
+                     const QString& method,
+                     bool isMainFrame,
+                     int http_response_code);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());

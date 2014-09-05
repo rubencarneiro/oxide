@@ -108,6 +108,13 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void NavigationRequested(OxideQNavigationRequest* request) Q_DECL_FINAL;
   void NewViewRequested(OxideQNewViewRequest* request) Q_DECL_FINAL;
 
+  void UrlRedirected(const QUrl& url,
+      const QUrl& original_url,
+      const QString& referrer,
+      const QString& method,
+      bool isMainFrame,
+      int http_response_code);
+
   void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) Q_DECL_FINAL;
 
