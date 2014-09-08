@@ -80,7 +80,7 @@ function(add_qml_test)
       -s ${_ARGS_SERVER_DIR} -p 8080 --
       ${QMLTEST_BINARY} -name ${_ARGS_NAME}
       -input ${_ARGS_TEST_DIR}
-      -add-library-path ${CMAKE_CURRENT_BINARY_DIR}/../mock)
+      -add-library-path ${OXIDE_QTPLUGIN_OUTPUT_DIR})
   if(_ARGS_USE_DATA_DIR)
     list(APPEND TEST_COMMAND -use-datadir-for-context)
   endif()
