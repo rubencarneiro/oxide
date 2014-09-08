@@ -32,7 +32,7 @@
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickcookiemanager_p.h"
-#include "qt/quick/api/oxideqquickglobals_p.h"
+#include "qt/quick/api/oxideqquickglobal_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
 #include "qt/quick/api/oxideqquickscriptmessage_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagehandler_p.h"
@@ -56,7 +56,7 @@ QObject* GlobalSingletonFactory(QQmlEngine* engine,
   Q_UNUSED(engine);
   Q_UNUSED(script_engine);
 
-  return OxideQQuickGlobals::instance();
+  return OxideQQuickGlobal::instance();
 }
 
 }
@@ -71,7 +71,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qRegisterMetaType<QNetworkCookie>();
     qRegisterMetaType<CookieList>();
 
-    qmlRegisterSingletonType<OxideQQuickGlobals>(
+    qmlRegisterSingletonType<OxideQQuickGlobal>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
 
     qmlRegisterUncreatableType<OxideQCertificateError>(uri, 1, 0, "CertificateError",

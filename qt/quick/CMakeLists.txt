@@ -46,7 +46,7 @@ qt5_wrap_cpp(MOC_EXTRA
 
 set(PLUGIN_SRCS
     api/oxideqquickcookiemanager.cc
-    api/oxideqquickglobals.cc
+    api/oxideqquickglobal.cc
     api/oxideqquicknavigationhistory.cc
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc

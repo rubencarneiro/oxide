@@ -15,32 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_GLOBALS_P_H_
-#define _OXIDE_QT_QUICK_API_GLOBALS_P_H_
+#ifndef _OXIDE_QT_QUICK_API_GLOBAL_P_H_
+#define _OXIDE_QT_QUICK_API_GLOBAL_P_H_
 
 #include <QObject>
 #include <QScopedPointer>
 #include <QtGlobal>
 
-class OxideQQuickGlobalsPrivate;
+class OxideQQuickGlobalPrivate;
 class OxideQQuickWebContext;
 
-class OxideQQuickGlobals : public QObject {
+class OxideQQuickGlobal : public QObject {
   Q_OBJECT
 
-  Q_DECLARE_PRIVATE(OxideQQuickGlobals)
-  Q_DISABLE_COPY(OxideQQuickGlobals)
+  Q_DECLARE_PRIVATE(OxideQQuickGlobal)
+  Q_DISABLE_COPY(OxideQQuickGlobal)
 
  public:
-  static OxideQQuickGlobals* instance();
-  virtual ~OxideQQuickGlobals();
+  static OxideQQuickGlobal* instance();
+  virtual ~OxideQQuickGlobal();
 
   Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
 
  private:
-  OxideQQuickGlobals();
+  OxideQQuickGlobal();
 
-  QScopedPointer<OxideQQuickGlobalsPrivate> d_ptr;
+  QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
 };
 
-#endif // _OXIDE_QT_QUICK_API_GLOBALS_P_H_
+#endif // _OXIDE_QT_QUICK_API_GLOBAL_P_H_

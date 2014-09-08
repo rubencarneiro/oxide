@@ -15,30 +15,30 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqquickglobals_p.h"
+#include "oxideqquickglobal_p.h"
 
 #include <QCoreApplication>
 
 #include "oxideqquickwebcontext_p.h"
 
 namespace {
-class OxideQQuickGlobals* g_instance;
+class OxideQQuickGlobal* g_instance;
 }
 
-class OxideQQuickGlobalsPrivate {
+class OxideQQuickGlobalPrivate {
  public:
-  ~OxideQQuickGlobalsPrivate() {}
-  OxideQQuickGlobalsPrivate() {}
+  ~OxideQQuickGlobalPrivate() {}
+  OxideQQuickGlobalPrivate() {}
 };
 
-OxideQQuickGlobals::OxideQQuickGlobals() :
+OxideQQuickGlobal::OxideQQuickGlobal() :
     QObject(QCoreApplication::instance()),
-    d_ptr(new OxideQQuickGlobalsPrivate()) {}
+    d_ptr(new OxideQQuickGlobalPrivate()) {}
 
 // static
-OxideQQuickGlobals* OxideQQuickGlobals::instance() {
+OxideQQuickGlobal* OxideQQuickGlobal::instance() {
   if (!g_instance) {
-    g_instance = new OxideQQuickGlobals();
+    g_instance = new OxideQQuickGlobal();
   }
 
   Q_ASSERT(g_instance);
@@ -46,11 +46,11 @@ OxideQQuickGlobals* OxideQQuickGlobals::instance() {
   return g_instance;
 }
 
-OxideQQuickGlobals::~OxideQQuickGlobals() {
+OxideQQuickGlobal::~OxideQQuickGlobal() {
   Q_ASSERT(this == g_instance);
   g_instance = NULL;
 }
 
-OxideQQuickWebContext* OxideQQuickGlobals::defaultWebContext() {
+OxideQQuickWebContext* OxideQQuickGlobal::defaultWebContext() {
   return OxideQQuickWebContext::defaultContext(true);
 }
