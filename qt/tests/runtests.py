@@ -37,6 +37,7 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "build", "python"))
 from eventloop import EventLoop
+from oxide_utils import ScopedTmpdir
 
 class PythonHandlerSandboxGlobal(dict):
   def __init__(self):
@@ -212,43 +213,38 @@ class Options(OptionParser):
                     help="Run a HTTP server from the specified directory")
     self.add_option("-p", "--server-port", action="store", type="int", dest="port",
                     help="Specify a port for the HTTP server", default=8080)
-    self.add_option("-t", "--temp-datadir", action="store_true", dest="temp_datadir",
-                    help="Create a temporary data directory for oxide")
 
 class Runner(object):
-  def __init__(self, options):
+  def __init__(self):
     self._event_loop = EventLoop()
 
-    self._temp_datadir = None
     self._http_server = None
     self._p = None
 
-    (opts, args) = options.parse_args()
+  def run(self, options):
+    with ScopedTmpdir(prefix="tmp-oxide-runtests") as tmpdir:
+      os.environ["OXIDE_RUNTESTS_TMPDIR"] = tmpdir
 
-    if (opts.temp_datadir):
-      self._temp_datadir = tempfile.mkdtemp()
-      os.environ["OXIDE_TESTING_DATA_PATH"] = self._temp_datadir
+      (opts, args) = options.parse_args()
+      http_path = os.path.abspath(opts.server) if opts.server is not None else None
+      http_port = opts.port if opts.port is not None else 8080
 
-    http_path = os.path.abspath(opts.server) if opts.server is not None else None
-    http_port = opts.port if opts.port is not None else 8080
+      if http_path is not None:
+        self._http_server = TestHTTPServer(("", http_port), TestHTTPRequestHandler, http_path)
+        self._event_loop.add_reader(self._http_server, self._http_server.handle_event)
 
-    if http_path is not None:
-      self._http_server = TestHTTPServer(("", http_port), TestHTTPRequestHandler, http_path)
-      self._event_loop.add_reader(self._http_server, self._http_server.handle_event)
+      if len(args) > 0:
+        self._p = TestProcess(args)
+        self._event_loop.add_reader(self._p, self._p.handle_event, self._event_loop)
 
-    if len(args) > 0:
-      self._p = TestProcess(args)
-      self._event_loop.add_reader(self._p, self._p.handle_event, self._event_loop)
-
-  def run(self):
-    self._event_loop.run()
-    self._event_loop.close()
-    assert self._p.returncode != None
-    return self._p.returncode
+      self._event_loop.run()
+      self._event_loop.close()
+      assert self._p.returncode != None
+      return self._p.returncode
 
 def main():
   parser = Options()
-  return Runner(parser).run()
+  return Runner().run(parser)
     
 if __name__ == "__main__":
   sys.exit(main())

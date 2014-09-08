@@ -45,18 +45,19 @@ set(QML_TEST qmltest)
 set(QML_TEST_SRCS main.cc)
 
 add_executable(${QML_TEST} ${QML_TEST_SRCS})
-qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest)
+qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest Test)
 target_include_directories(
     ${QML_TEST} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
+    ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
+    ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
 if(OXIDE_ENABLE_COMPOSITING)
   target_compile_definitions(${QML_TEST} PRIVATE -DENABLE_COMPOSITING)
 endif()
 set_target_properties(
     ${QML_TEST} PROPERTIES
-    SKIP_BUILD_RPATH TRUE
+    SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
     RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
 
 function(add_qml_test)
@@ -74,18 +75,15 @@ function(add_qml_test)
   get_target_property(QMLTEST_BINARY ${QML_TEST} LOCATION)
 
   set(TEST_COMMAND
-      ${CMAKE_BINARY_DIR}/out/run_qmlapp.sh
+      ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
-      -s ${_ARGS_SERVER_DIR} -p 8080)
+      -s ${_ARGS_SERVER_DIR} -p 8080 --
+      ${QMLTEST_BINARY} -name ${_ARGS_NAME}
+      -input ${_ARGS_TEST_DIR}
+      -add-library-path ${CMAKE_CURRENT_BINARY_DIR}/../mock)
   if(_ARGS_USE_DATA_DIR)
-    list(APPEND TEST_COMMAND -t)
+    list(APPEND TEST_COMMAND -use-datadir-for-context)
   endif()
-  list(APPEND TEST_COMMAND
-       --
-       ${QMLTEST_BINARY}
-       -name ${_ARGS_NAME}
-       -input ${_ARGS_TEST_DIR}
-       --add-library-path ${CMAKE_CURRENT_BINARY_DIR}/mock)
 
   add_test(NAME ${_ARGS_NAME} COMMAND ${TEST_COMMAND})
 endfunction()

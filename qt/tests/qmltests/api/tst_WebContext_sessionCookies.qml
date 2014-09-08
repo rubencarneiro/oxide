@@ -45,7 +45,7 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_ephemeral() {
-    if (OxideTestingUtils.DATA_PATH == "") {
+    if (!QMLTEST_USE_CONTEXT_DATADIR) {
       skip("Can't run session cookie tests withour a permanent storage");
     }
 
@@ -61,7 +61,7 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_persistent() {
-    if (OxideTestingUtils.DATA_PATH == "") {
+    if (!QMLTEST_USE_CONTEXT_DATADIR) {
       skip("Can't run session cookie tests withour a permanent storage");
     }
 
@@ -85,7 +85,7 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_restored() {
-    if (OxideTestingUtils.DATA_PATH == "") {
+    if (!QMLTEST_USE_CONTEXT_DATADIR) {
       skip("Can't run session cookie tests withour a permanent storage");
     }
       
