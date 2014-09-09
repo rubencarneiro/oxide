@@ -29,6 +29,7 @@ class HttpRequestHeaders;
 }
 
 class OxideQNetworkCallbackEvent;
+class OxideQBeforeRedirectEvent;
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
 
@@ -77,6 +78,30 @@ class OxideQBeforeSendHeadersEventPrivate Q_DECL_FINAL :
   friend class OxideQBeforeSendHeadersEvent;
 
   OxideQBeforeSendHeadersEventPrivate(const QUrl& url, const QString& method);
+};
+
+class OxideQBeforeRedirectEventPrivate Q_DECL_FINAL :
+    public OxideQNetworkCallbackEventPrivate {
+ public:
+  ~OxideQBeforeRedirectEventPrivate();
+
+  static OxideQBeforeRedirectEventPrivate* get(OxideQBeforeRedirectEvent* q);
+
+ private:
+  friend class OxideQBeforeRedirectEvent;
+
+  OxideQBeforeRedirectEventPrivate(
+      const QUrl& url,
+      const QString& method,
+      const QUrl& newUrl,
+      const QString& referrer,
+      bool isMainFrame,
+      int httpResponseCode);
+
+  QUrl new_url_;
+  QString referrer_;
+  bool is_main_frame_;
+  int http_response_code_;
 };
 
 #endif // _OXIDE_QT_CORE_API_NETWORK_CALLBACK_EVENTS_P_H_

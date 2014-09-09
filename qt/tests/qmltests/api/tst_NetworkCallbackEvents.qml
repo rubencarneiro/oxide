@@ -103,5 +103,24 @@ TestWebView {
       compare(headers["user-agent"], data["User-Agent"]);
       compare(headers["foo"], data["Foo"]);
     }
+
+    function test_NetworkCallbackEvents2_BeforeRedirect(data) {
+      webView.workerMessageType = "onBeforeRedirect";
+
+      webView.url = data.url;
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for a successful load");
+
+      compare(webView.workerMessages.length, 1, "Unexpected number of worker messages");
+      compare(webView.workerMessages[0].url, data.url);
+      compare(webView.workerMessages[0].method, "GET");
+      compare(webView.workerMessages[0].requestCancelled, false);
+
+      var headers = JSON.parse(webView.getTestApi().evaluateCode(
+          "return document.body.children[0].innerHTML", true));
+
+      compare(headers["user-agent"], data["User-Agent"]);
+      compare(headers["foo"], data["Foo"]);
+    }
   }
 }

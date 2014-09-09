@@ -55,6 +55,27 @@ OxideQBeforeSendHeadersEventPrivate* OxideQBeforeSendHeadersEventPrivate::get(
   return q->d_func();
 }
 
+OxideQBeforeRedirectEventPrivate::OxideQBeforeRedirectEventPrivate(
+    const QUrl& url,
+    const QString& method,
+    const QUrl& newUrl,
+    const QString& referrer,
+    bool isMainFrame,
+    int httpResponseCode) :
+    OxideQNetworkCallbackEventPrivate(url, method),
+    new_url_(newUrl),
+    referrer_(referrer),
+    is_main_frame_(isMainFrame),
+    http_response_code_(httpResponseCode) {}
+
+OxideQBeforeRedirectEventPrivate::~OxideQBeforeRedirectEventPrivate() {}
+
+// static
+OxideQBeforeRedirectEventPrivate* OxideQBeforeRedirectEventPrivate::get(
+    OxideQBeforeRedirectEvent* q) {
+  return q->d_func();
+}
+
 OxideQNetworkCallbackEvent::OxideQNetworkCallbackEvent(
     OxideQNetworkCallbackEventPrivate& dd) :
     d_ptr(&dd) {}
@@ -193,3 +214,41 @@ void OxideQBeforeSendHeadersEvent::removeHeader(const QString& header) {
 
   d->headers->RemoveHeader(header.toStdString());
 }
+
+OxideQBeforeRedirectEvent::OxideQBeforeRedirectEvent(
+    const QUrl& url,
+    const QString& method,
+    const QUrl& newUrl,
+    const QString& referrer,
+    bool isMainFrame,
+    int httpResponseCode) :
+    OxideQNetworkCallbackEvent(
+       *new OxideQBeforeRedirectEventPrivate(
+           url, method, newUrl, referrer, isMainFrame, httpResponseCode)) {}
+
+OxideQBeforeRedirectEvent::~OxideQBeforeRedirectEvent() {}
+
+QUrl OxideQBeforeRedirectEvent::newUrl() const {
+  Q_D(const OxideQBeforeRedirectEvent);
+
+  return d->new_url_;
+}
+
+bool OxideQBeforeRedirectEvent::isMainFrame() const {
+  Q_D(const OxideQBeforeRedirectEvent);
+
+  return d->is_main_frame_;
+}
+
+QString OxideQBeforeRedirectEvent::referrer() const {
+  Q_D(const OxideQBeforeRedirectEvent);
+
+  return d->referrer_;
+}
+
+int OxideQBeforeRedirectEvent::httpResponseCode() const {
+  Q_D(const OxideQBeforeRedirectEvent);
+
+  return d->http_response_code_;
+}
+

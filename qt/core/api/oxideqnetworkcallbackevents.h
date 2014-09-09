@@ -24,6 +24,7 @@
 #include <QtGlobal>
 #include <QUrl>
 
+class OxideQBeforeRedirectEventPrivate;
 class OxideQBeforeSendHeadersEventPrivate;
 class OxideQBeforeURLRequestEventPrivate;
 class OxideQNetworkCallbackEventPrivate;
@@ -88,6 +89,33 @@ class Q_DECL_EXPORT OxideQBeforeSendHeadersEvent : public OxideQNetworkCallbackE
 
   Q_INVOKABLE void clearHeaders();
   Q_INVOKABLE void removeHeader(const QString& header);
+};
+
+class Q_DECL_EXPORT OxideQBeforeRedirectEvent : public OxideQNetworkCallbackEvent {
+  Q_OBJECT
+
+  Q_PROPERTY(QUrl newUrl READ newUrl)
+  Q_PROPERTY(QString referrer READ referrer)
+  Q_PROPERTY(int httpResponseCode READ httpResponseCode)
+  Q_PROPERTY(bool isMainFrame READ isMainFrame)
+
+  Q_DECLARE_PRIVATE(OxideQBeforeRedirectEvent)
+  Q_DISABLE_COPY(OxideQBeforeRedirectEvent)
+
+ public:
+  Q_DECL_HIDDEN OxideQBeforeRedirectEvent(
+      const QUrl& url,
+      const QString& method,
+      const QUrl& newUrl,
+      const QString& referrer,
+      bool isMainFrame,
+      int httpResponseCode);
+  virtual ~OxideQBeforeRedirectEvent();
+
+  QUrl newUrl() const;
+  bool isMainFrame() const;
+  QString referrer() const;
+  int httpResponseCode() const;
 };
 
 #endif // OXIDE_Q_NETWORK_CALLBACK_EVENTS

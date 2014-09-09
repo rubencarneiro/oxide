@@ -28,3 +28,10 @@ exports.onBeforeSendHeaders = function(event) {
     event.setHeader("Foo", "Bar");
   }
 }
+
+exports.onBeforeRedirect = function(event) {
+  oxide.sendMessage({ event: "onBeforeRedirect",
+                      url: event.url, method: event.method,
+                      requestCancelled: event.requestCancelled });
+
+}

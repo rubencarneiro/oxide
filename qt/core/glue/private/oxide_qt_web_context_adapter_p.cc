@@ -28,8 +28,11 @@
 #include "base/auto_reset.h"
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/resource_request_info.h"
+#include "content/public/common/resource_type.h"
 #include "net/base/net_errors.h"
 #include "net/cookies/cookie_monster.h"
+#include "net/http/http_response_headers.h"
 #include "net/url_request/url_request.h"
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
@@ -147,6 +150,40 @@ int WebContextAdapterPrivate::OnBeforeURLRequest(
   io_delegate->OnBeforeURLRequest(event);
 
   return cancelled ? net::ERR_ABORTED : net::OK;
+}
+
+void WebContextAdapterPrivate::OnBeforeRedirect(
+      net::URLRequest* request,
+      const GURL& new_location) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
+    return;
+  }
+
+  bool cancelled = false;
+
+  const content::ResourceRequestInfo* info =
+      content::ResourceRequestInfo::ForRequest(request);
+
+  OxideQBeforeRedirectEvent* event =
+      new OxideQBeforeRedirectEvent(
+        QUrl(QString::fromStdString(request->url().spec())),
+        QString::fromStdString(request->method()),
+        QUrl(QString::fromStdString(new_location.spec())),
+        QString::fromStdString(request->referrer()),
+        info->GetResourceType() == content::RESOURCE_TYPE_MAIN_FRAME,
+        request->response_info().headers.get() ?
+          request->response_info().headers.get()->response_code() : -1);
+
+  OxideQBeforeRedirectEventPrivate* eventp =
+      OxideQBeforeRedirectEventPrivate::get(event);
+  eventp->request_cancelled = &cancelled;
+
+  io_delegate->OnBeforeRedirect(event);
+
+  if (cancelled) {
+    request->Cancel();
+  }
 }
 
 int WebContextAdapterPrivate::OnBeforeSendHeaders(
