@@ -3,13 +3,6 @@
 #  application confinement
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
-diff --git a/base/message_loop/.message_loop.cc.swp b/base/message_loop/.message_loop.cc.swp
-deleted file mode 100644
-index 03e966af39a86bb44e55f29e0afbfa518a4566b4..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-GIT binary patch
-literal 0
-Hc$@<O00001
-
 diff --git a/crypto/nss_util.cc b/crypto/nss_util.cc
 --- a/crypto/nss_util.cc
 +++ b/crypto/nss_util.cc
