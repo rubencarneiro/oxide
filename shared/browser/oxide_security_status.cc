@@ -147,6 +147,7 @@ SecurityStatus::SecurityStatus(const content::SSLStatus& ssl_status)
 SecurityStatus::~SecurityStatus() {}
 
 void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
+  cert_ = NULL;
   content::CertStore::GetInstance()->RetrieveCert(ssl_status.cert_id,
                                                   &cert_);
 

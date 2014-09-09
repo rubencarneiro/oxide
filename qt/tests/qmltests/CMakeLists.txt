@@ -46,8 +46,10 @@ set(QML_TEST_SRCS main.cc)
 
 add_executable(${QML_TEST} ${QML_TEST_SRCS})
 qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest Test)
+target_link_libraries(${QML_TEST} OxideQtCore)
 target_include_directories(
     ${QML_TEST} PRIVATE
+    ${CMAKE_SOURCE_DIR}
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
@@ -61,7 +63,7 @@ set_target_properties(
     RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
 
 function(add_qml_test)
-  cmake_parse_arguments(_ARGS "USE_DATA_DIR" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
+  cmake_parse_arguments(_ARGS "USE_DATA_DIR;SSL_TESTS" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
   if(NOT _ARGS_NAME)
     message(FATAL_ERROR "You must specify NAME when calling add_qml_test")
   endif()
@@ -77,12 +79,25 @@ function(add_qml_test)
   set(TEST_COMMAND
       ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
-      -s ${_ARGS_SERVER_DIR} -p 8080 --
-      ${QMLTEST_BINARY} -name ${_ARGS_NAME}
-      -input ${_ARGS_TEST_DIR}
-      -add-library-path ${OXIDE_QTPLUGIN_OUTPUT_DIR})
+      --server-dir ${_ARGS_SERVER_DIR} --server-config 8080)
+
+  if(_ARGS_SSL_TESTS)
+    list(APPEND TEST_COMMAND
+         --server-config "4443:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTest"
+         --server-config "4444:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestExpired"
+         --server-config "4445:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestSelfSigned"
+         --server-config "4446:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestBadIdentity")
+  endif()
+
+  list(APPEND TEST_COMMAND --
+       ${QMLTEST_BINARY} -name ${_ARGS_NAME}
+       -input ${_ARGS_TEST_DIR}
+       -add-library-path ${OXIDE_QTPLUGIN_OUTPUT_DIR})
   if(_ARGS_USE_DATA_DIR)
     list(APPEND TEST_COMMAND -use-datadir-for-context)
+  endif()
+  if (_ARGS_SSL_TESTS)
+    list(APPEND TEST_COMMAND -nss-db-path ${CMAKE_SOURCE_DIR}/qt/tests/ssldata/nss)
   endif()
 
   add_test(NAME ${_ARGS_NAME} COMMAND ${TEST_COMMAND})
@@ -92,3 +107,4 @@ add_qml_test(NAME qml-api-test-noprofile TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ap
 add_qml_test(NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api USE_DATA_DIR)
 add_qml_test(NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
 add_qml_test(NAME qml-crash-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
+add_qml_test(NAME qml-sslapi-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ssl-api SSL_TESTS)

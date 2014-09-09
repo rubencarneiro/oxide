@@ -43,6 +43,8 @@
 #endif
 #endif
 
+#include "qt/core/api/oxideqglobal.h"
+
 // We don't use quick_test_main() here for running the qmltest binary as we want to
 // be able to have a per-test datadir. However, some of quick_test_main() is
 // duplicated here because we still use other bits of the QtQuickTest module
@@ -187,6 +189,14 @@ int main(int argc, char** argv) {
     } else if (QLatin1String(arg) == QLatin1String("-use-datadir-for-context")) {
       use_data_dir = true;
       index += 1;
+    } else if (QLatin1String(arg) == QLatin1String("-nss-db-path") && (index + 1) < argc) {
+      if (!oxideGetNSSDbPath().isEmpty()) {
+        qFatal("Can only specify -nss-db-path once");
+      }
+      if (!oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])))) {
+        qFatal("Failed to set NSS DB path");
+      }
+      index += 2;
     } else if (index != outargc) {
       argv[outargc++] = argv[index++];
     } else {

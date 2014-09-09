@@ -3,34 +3,67 @@
 #  application confinement
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
+diff --git a/base/message_loop/.message_loop.cc.swp b/base/message_loop/.message_loop.cc.swp
+deleted file mode 100644
+index 03e966af39a86bb44e55f29e0afbfa518a4566b4..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+GIT binary patch
+literal 0
+Hc$@<O00001
+
 diff --git a/crypto/nss_util.cc b/crypto/nss_util.cc
 --- a/crypto/nss_util.cc
 +++ b/crypto/nss_util.cc
-@@ -100,24 +100,27 @@ base::FilePath GetDefaultConfigDirectory
- #endif  // !defined(IS_CHROMEOS)
- 
- // On non-Chrome OS platforms, return the default config directory. On Chrome OS
- // test images, return a read-only directory with fake root CA certs (which are
- // used by the local Google Accounts server mock we use when testing our login
- // code). On Chrome OS non-test images (where the read-only directory doesn't
- // exist), return an empty path.
- base::FilePath GetInitialConfigDirectory() {
-+  return base::FilePath();
-+#if 0
- #if defined(OS_CHROMEOS)
-   base::FilePath database_dir = base::FilePath(kReadOnlyCertDB);
-   if (!base::PathExists(database_dir))
-     database_dir.clear();
-   return database_dir;
- #else
-   return GetDefaultConfigDirectory();
- #endif  // defined(OS_CHROMEOS)
-+#endif
+@@ -79,22 +79,20 @@ std::string GetNSSErrorMessage() {
+   }
+   return result;
  }
  
- // This callback for NSS forwards all requests to a caller-specified
- // CryptoModuleBlockingPasswordDelegate object.
- char* PKCS11PasswordFunc(PK11SlotInfo* slot, PRBool retry, void* arg) {
-   crypto::CryptoModuleBlockingPasswordDelegate* delegate =
-       reinterpret_cast<crypto::CryptoModuleBlockingPasswordDelegate*>(arg);
-   if (delegate) {
+ #if defined(USE_NSS)
+ #if !defined(OS_CHROMEOS)
+ base::FilePath GetDefaultConfigDirectory() {
+   base::FilePath dir;
+-  PathService::Get(base::DIR_HOME, &dir);
++  PathService::Get(DIR_NSSDB, &dir);
+   if (dir.empty()) {
+-    LOG(ERROR) << "Failed to get home directory.";
+-    return dir;
++    return base::FilePath();
+   }
+-  dir = dir.AppendASCII(".pki").AppendASCII("nssdb");
+   if (!base::CreateDirectory(dir)) {
+     LOG(ERROR) << "Failed to create " << dir.value() << " directory.";
+     dir.clear();
+   }
+   DVLOG(2) << "DefaultConfigDirectory: " << dir.value();
+   return dir;
+ }
+ #endif  // !defined(IS_CHROMEOS)
+diff --git a/crypto/nss_util.h b/crypto/nss_util.h
+--- a/crypto/nss_util.h
++++ b/crypto/nss_util.h
+@@ -18,16 +18,25 @@ class Time;
+ }  // namespace base
+ 
+ // This file specifically doesn't depend on any NSS or NSPR headers because it
+ // is included by various (non-crypto) parts of chrome to call the
+ // initialization functions.
+ namespace crypto {
+ 
+ #if defined(USE_NSS)
++
++enum {
++  PATH_START = 20000,
++
++  DIR_NSSDB,
++
++  PATH_END
++};
++
+ // EarlySetupForNSSInit performs lightweight setup which must occur before the
+ // process goes multithreaded. This does not initialise NSS. For test, see
+ // EnsureNSSInit.
+ CRYPTO_EXPORT void EarlySetupForNSSInit();
+ #endif
+ 
+ // Initialize NRPR if it isn't already initialized.  This function is
+ // thread-safe, and NSPR will only ever be initialized once.

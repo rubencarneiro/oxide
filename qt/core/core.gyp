@@ -149,6 +149,8 @@
         'api/oxideqdownloadrequest.cc',
         'api/oxideqdownloadrequest.h',
         'api/oxideqdownloadrequest_p.h',
+        'api/oxideqglobal.cc',
+        'api/oxideqglobal.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',

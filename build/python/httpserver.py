@@ -24,6 +24,7 @@ import os.path
 import posixpath
 import shutil
 import SimpleHTTPServer
+import ssl
 import traceback
 import urllib
 
@@ -162,9 +163,12 @@ class TestHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     return path
 
 class TestHTTPServer(BaseHTTPServer.HTTPServer):
-  def __init__(self, address, handler_class, path):
-    BaseHTTPServer.HTTPServer.__init__(self, address, handler_class)
+  def __init__(self, port, path, cert = None):
+    BaseHTTPServer.HTTPServer.__init__(self, ("", int(port)), TestHTTPRequestHandler)
     self.path = path
+
+    if cert:
+      self.socket = ssl.wrap_socket(self.socket, keyfile=cert + ".key", certfile=cert + ".pem", server_side=True)
 
   def handle_event(self):
     self._handle_request_noblock()

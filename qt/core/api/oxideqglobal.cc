@@ -15,23 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_PATHS_H_
-#define _OXIDE_SHARED_COMMON_PATHS_H_
+#include "oxideqglobal.h"
 
-namespace oxide {
+#include <QGlobalStatic>
+#include <QtDebug>
 
-enum {
-  PATH_START = 1000, // Same as Chrome
+#include "qt/core/glue/oxide_qt_web_context_adapter_p.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
-  DIR_GTALK_PLUGIN,
-  FILE_GTALK_PLUGIN,
-  FILE_O1D_PLUGIN,
+Q_GLOBAL_STATIC(QString, g_nss_db_path)
 
-  PATH_END
-};
+QString oxideGetNSSDbPath() {
+  return *g_nss_db_path;
+}
 
-void RegisterPathProvider();
+bool oxideSetNSSDbPath(const QString& path) {
+#if defined(USE_NSS)
+  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
+    qWarning() << "Cannot set the NSS DB directory once Oxide is running";
+    return false;
+  }
 
-} // namespace oxide
-
-#endif // _OXIDE_SHARED_COMMON_PATHS_H_
+  *g_nss_db_path = path;
+  return true;
+#else
+  qWarning() << "NSS not supported on this build";
+  return false;
+#endif
+}

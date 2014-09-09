@@ -343,6 +343,10 @@ void BrowserProcessMainImpl::Start(
         switches::kSingleProcess));
 
 #if defined(USE_NSS)
+  if (!main_delegate_->GetNSSDbPath().empty()) {
+    // Used for testing
+    PathService::Override(crypto::DIR_NSSDB, main_delegate_->GetNSSDbPath());
+  }
   crypto::EarlySetupForNSSInit();
 #endif
 

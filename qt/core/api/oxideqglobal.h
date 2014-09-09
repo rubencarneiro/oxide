@@ -15,23 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_PATHS_H_
-#define _OXIDE_SHARED_COMMON_PATHS_H_
+#ifndef OXIDE_Q_GLOBAL
+#define OXIDE_Q_GLOBAL
 
-namespace oxide {
+#include <QString>
+#include <QtGlobal>
 
-enum {
-  PATH_START = 1000, // Same as Chrome
+Q_DECL_EXPORT QString oxideGetNSSDbPath();
+Q_DECL_EXPORT bool oxideSetNSSDbPath(const QString& path);
 
-  DIR_GTALK_PLUGIN,
-  FILE_GTALK_PLUGIN,
-  FILE_O1D_PLUGIN,
-
-  PATH_END
-};
-
-void RegisterPathProvider();
-
-} // namespace oxide
-
-#endif // _OXIDE_SHARED_COMMON_PATHS_H_
+#endif // OXIDE_Q_GLOBAL

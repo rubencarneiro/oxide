@@ -60,16 +60,15 @@ class Options(OptionParser):
   def __init__(self):
     OptionParser.__init__(self)
 
-    self.add_option("-s", "--server", action="store", type="string", dest="server",
-                    help="Run a HTTP server from the specified directory")
-    self.add_option("-p", "--server-port", action="store", type="int", dest="port",
-                    help="Specify a port for the HTTP server", default=8080)
+    self.add_option("--server-dir", dest="server_dir",
+                    help="Run a HTTP server from the specified directory", default=os.getcwd())
+    self.add_option("--server-config", action="append", dest="server_configs",
+                    help="Specify a HTTP server config (port:certfile)", default=[])
 
 class Runner(object):
   def __init__(self):
     self._event_loop = EventLoop()
 
-    self._http_server = None
     self._p = None
 
   def run(self, options):
@@ -77,12 +76,11 @@ class Runner(object):
       os.environ["OXIDE_RUNTESTS_TMPDIR"] = tmpdir
 
       (opts, args) = options.parse_args()
-      http_path = os.path.abspath(opts.server) if opts.server is not None else None
-      http_port = opts.port if opts.port is not None else 8080
 
-      if http_path is not None:
-        self._http_server = TestHTTPServer(("", http_port), TestHTTPRequestHandler, http_path)
-        self._event_loop.add_reader(self._http_server, self._http_server.handle_event)
+      for c in opts.server_configs:
+        config = c.split(":")
+        server = TestHTTPServer(config[0], opts.server_dir, config[1] if len(config) > 1 else None)
+        self._event_loop.add_reader(server, server.handle_event)
 
       if len(args) > 0:
         self._p = TestProcess(args)

@@ -23,6 +23,7 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QGuiApplication>
 #include <QNetworkCookie>
 #include <QObject>
@@ -35,6 +36,7 @@
 #include "net/cookies/cookie_monster.h"
 #include "url/gurl.h"
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -251,7 +253,15 @@ void WebContextAdapter::ensureChromiumStarted() {
     CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
         "Your application doesn't have a QGuiApplication. Oxide will not "
         "function without one";
-    scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+
+    QString nss_db_path(oxideGetNSSDbPath());
+    if (!nss_db_path.isEmpty()) {
+      nss_db_path = QDir(nss_db_path).absolutePath();
+    }
+
+    scoped_ptr<ContentMainDelegate> delegate(
+        ContentMainDelegate::CreateForBrowser(
+          base::FilePath(nss_db_path.toStdString())));
 
     oxide::BrowserProcessMain::GetInstance()->Start(
         delegate.PassAs<oxide::ContentMainDelegate>());
