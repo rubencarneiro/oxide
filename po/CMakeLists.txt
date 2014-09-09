@@ -1,6 +1,7 @@
 project(oxide-translations)
 
 include(FindGettext)
+include(GNUInstallDirs)
 find_program(GETTEXT_XGETTEXT_EXECUTABLE xgettext)
 
 set(DOMAIN ${GETTEXT_PACKAGE})

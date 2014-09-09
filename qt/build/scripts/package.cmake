@@ -16,7 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-foreach(v STAGE_DIR OUTPUT_DIR)
+foreach(v STAGE_DIR OUTPUT_DIR LOCALES RUN_QMLAPP_IN RENDERER_PATH)
   if(NOT DEFINED ${v})
     message(FATAL_ERROR "${v} must be defined")
   endif()
@@ -38,6 +38,17 @@ foreach(f ${LOCALE_FILES})
   file(INSTALL ${f} DESTINATION ${STAGE_DIR}/locales
        FILE_PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ)
 endforeach()
+
+set(CHROMIUM_LIB_DIR "$(dirname $(readlink -f $0))")
+set(CHROMIUM_PRODUCT_DIR "$(dirname $(readlink -f $0))")
+set(OXIDE_RENDERER_NAME ${RENDERER_PATH})
+set(OXIDE_QMLPLUGIN_OUTPUT_DIR "$(dirname $(readlink -f $0))")
+
+configure_file(${RUN_QMLAPP_IN} ${STAGE_DIR}/.tmp/run_qmlapp.sh IMMEDIATE @ONLY)
+file(INSTALL ${STAGE_DIR}/.tmp/run_qmlapp.sh DESTINATION ${STAGE_DIR}
+     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+                 GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${STAGE_DIR}/.tmp)
 
 get_filename_component(WORKING_DIRECTORY ${STAGE_DIR} PATH)
 get_filename_component(STAGE_DIR_NAME ${STAGE_DIR} NAME)

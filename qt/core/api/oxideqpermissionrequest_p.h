@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_API_PERMISSION_REQUEST_P_H_
 
 #include <QtGlobal>
+#include <QUrl>
 
 #include "base/memory/scoped_ptr.h"
 
@@ -26,6 +27,7 @@
 
 namespace oxide {
 class PermissionRequest;
+class SimplePermissionRequest;
 }
 
 class OxideQPermissionRequest;
@@ -36,18 +38,62 @@ class OxideQPermissionRequestPrivate {
  public:
   virtual ~OxideQPermissionRequestPrivate();
 
-  static OxideQPermissionRequestPrivate* get(OxideQPermissionRequest* q);
-
-  void Init(scoped_ptr<oxide::PermissionRequest> request);
-
  protected:
-  OxideQPermissionRequestPrivate(OxideQPermissionRequest* q);
+  OxideQPermissionRequestPrivate(const QUrl& url,
+                                 const QUrl& embedder,
+                                 scoped_ptr<oxide::PermissionRequest> request);
 
   OxideQPermissionRequest* q_ptr;
   scoped_ptr<oxide::PermissionRequest> request_;
+  bool is_cancelled_;
 
  private:
   void OnCancelled();
+
+  QUrl url_;
+  QUrl embedder_;
+};
+
+class OxideQSimplePermissionRequestPrivate :
+    public OxideQPermissionRequestPrivate {
+ public:
+  virtual ~OxideQSimplePermissionRequestPrivate();
+
+  static OxideQSimplePermissionRequest* Create(
+      const QUrl& url,
+      const QUrl& embedder,
+      scoped_ptr<oxide::SimplePermissionRequest> request);
+
+ protected:
+  OxideQSimplePermissionRequestPrivate(
+      const QUrl& url,
+      const QUrl& embedder,
+      scoped_ptr<oxide::SimplePermissionRequest> request);
+
+ private:
+  friend class OxideQSimplePermissionRequest;
+
+  bool canRespond() const;
+  oxide::SimplePermissionRequest* request() const;
+
+  bool did_respond_;
+};
+
+class OxideQGeolocationPermissionRequestPrivate Q_DECL_FINAL :
+    public OxideQSimplePermissionRequestPrivate {
+ public:
+  ~OxideQGeolocationPermissionRequestPrivate();
+
+  static OxideQGeolocationPermissionRequest* Create(
+      const QUrl& url,
+      const QUrl& embedder,
+      scoped_ptr<oxide::SimplePermissionRequest> request);
+
+ private:
+  OxideQGeolocationPermissionRequestPrivate(
+      const QUrl& url,
+      const QUrl& embedder,
+      scoped_ptr<oxide::SimplePermissionRequest> request);
 };
 
 #endif // _OXIDE_QT_CORE_API_PERMISSION_REQUEST_P_H_

@@ -19,6 +19,10 @@
 
 namespace oxide {
 
+SSLConfigService::SSLConfigService() {
+  config_.rev_checking_enabled = true;
+}
+
 void SSLConfigService::GetSSLConfig(net::SSLConfig* config) {
   *config = config_;
 }

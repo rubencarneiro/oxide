@@ -24,6 +24,7 @@ import os.path
 import re
 import shutil
 from subprocess import Popen, CalledProcessError, PIPE
+import tempfile
 
 TOPSRCDIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
 CHROMIUMSRCDIR = os.path.join(TOPSRCDIR, "third_party", "chromium", "src")
@@ -122,3 +123,15 @@ def CheckOutput(args, cwd=None):
   r = p.wait()
   if r is not 0: raise CalledProcessError(r, args)
   return p.stdout.read()
+
+class ScopedTmpdir:
+  def __init__(self, *args, **kwargs):
+    self._args = args
+    self._kwargs = kwargs
+
+  def __enter__(self):
+    self._tmpdir = tempfile.mkdtemp(*self._args, **self._kwargs)
+    return self._tmpdir
+
+  def __exit__(self, type, value, traceback):
+    shutil.rmtree(self._tmpdir)

@@ -19,6 +19,7 @@
 #include "oxideqquickwebview_p_p.h"
 
 #include <QEvent>
+#include <QFlags>
 #include <QGuiApplication>
 #include <QHoverEvent>
 #include <QImage>
@@ -37,6 +38,7 @@
 #include <QtQml>
 #include <Qt>
 
+#include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #if defined(ENABLE_COMPOSITING)
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
@@ -453,8 +455,46 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
     OxideQGeolocationPermissionRequest* request) {
   Q_Q(OxideQQuickWebView);
 
-  QQmlEngine::setObjectOwnership(request, QQmlEngine::JavaScriptOwnership);
-  emit q->geolocationPermissionRequested(request);
+  // Unlike other signals where the object ownership remains with the
+  // callsite that initiates the signal, we want to transfer ownership of
+  // GeolocationPermissionRequest to any signal handlers so that the
+  // request can be completed asynchronously.
+  //
+  // Setting JavaScriptOwnership on the request, dispatching the signal and
+  // hoping the QmlEngine will delete it isn't enough though, because it will
+  // leak if there are no handlers. It's also unclear whether C++ slots should
+  // delete it.
+  //
+  // Handlers could be C++ slots in addition to the QmlEngine and so we need
+  // a way to safely share the object between slots - should a C++ slot
+  // delete the object? What if the QmlEngine deletes it?
+  //
+  // In a C++ world, we could wrap it in a QSharedPointer or dispatch a
+  // copyable type that manages shareable data underneath. We can't use
+  // QSharedPointer with Qml though, because the engine will delete any object
+  // without a parent when it goes out of scope, regardless of any shared
+  // references, and QObject parents are incompatible with QSharedPointer.
+  // Instead we transfer ownership to the QmlEngine now and dispatch a QJSValue.
+  // This means that the request only has a single owner (the QmlEngine), which
+  // won't delete it until all QJSValue's have gone out of scope
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete request;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(request);
+    if (!val.isQObject()) {
+      delete request;
+      return;
+    }
+
+    emit q->geolocationPermissionRequested(val);
+  }
+
+  engine->collectGarbage();
 }
 
 void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
@@ -469,20 +509,14 @@ void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
   w->sendEvent(q, event);
 }
 
-inline oxide::qt::FrameMetadataChangeFlags operator&(
-    oxide::qt::FrameMetadataChangeFlags a,
-    oxide::qt::FrameMetadataChangeFlags b) {
-  return static_cast<oxide::qt::FrameMetadataChangeFlags>(
-      static_cast<int>(a) & static_cast<int>(b));
-}
-
 void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
     oxide::qt::FrameMetadataChangeFlags flags) {
   Q_Q(OxideQQuickWebView);
 
-#define IS_SET(flag) flags & flag
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
-      IS_SET(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
+  QFlags<oxide::qt::FrameMetadataChangeFlags> f(flags);
+
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
+      f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
     emit q->contentXChanged();
     emit q->contentYChanged();
     emit q->contentWidthChanged();
@@ -490,25 +524,24 @@ void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
     emit q->viewportWidthChanged();
     emit q->viewportHeightChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
     emit q->contentXChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
     emit q->contentYChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
     emit q->contentWidthChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
     emit q->contentHeightChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
     emit q->viewportWidthChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
     emit q->viewportHeightChanged();
   }
-#undef IS_SET
 }
 
 void OxideQQuickWebViewPrivate::ScheduleUpdate() {
@@ -544,6 +577,36 @@ void OxideQQuickWebViewPrivate::DownloadRequested(
   Q_Q(OxideQQuickWebView);
 
   emit q->downloadRequested(downloadRequest);
+}
+
+void OxideQQuickWebViewPrivate::CertificateError(
+    OxideQCertificateError* cert_error) {
+  Q_Q(OxideQQuickWebView);
+
+  // See the comment in RequestGeolocationPermission
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete cert_error;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(cert_error);
+    if (!val.isQObject()) {
+      delete cert_error;
+      return;
+    }
+
+    emit q->certificateError(val);
+  }
+
+  engine->collectGarbage();
+}
+
+void OxideQQuickWebViewPrivate::ContentBlocked() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->blockedContentChanged();
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -1259,6 +1322,28 @@ OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
   return &d->navigation_history_;
 }
 
+OxideQSecurityStatus* OxideQQuickWebView::securityStatus() {
+  Q_D(OxideQQuickWebView);
+
+  return d->securityStatus();
+}
+
+OxideQQuickWebView::ContentType OxideQQuickWebView::blockedContent() const {
+  Q_D(const OxideQQuickWebView);
+
+  Q_STATIC_ASSERT(
+      ContentTypeNone ==
+        static_cast<ContentTypeFlags>(oxide::qt::CONTENT_TYPE_NONE));
+  Q_STATIC_ASSERT(
+      ContentTypeMixedDisplay ==
+        static_cast<ContentTypeFlags>(oxide::qt::CONTENT_TYPE_MIXED_DISPLAY));
+  Q_STATIC_ASSERT(
+      ContentTypeMixedScript ==
+        static_cast<ContentTypeFlags>(oxide::qt::CONTENT_TYPE_MIXED_SCRIPT));
+
+  return static_cast<ContentType>(d->blockedContent());
+}
+
 // This exists purely to remove a moc warning. We don't store this request
 // anywhere, it's only a transient object and I can't think of any possible
 // reason why anybody would want to read it back
@@ -1306,6 +1391,18 @@ void OxideQQuickWebView::loadHtml(const QString& html, const QUrl& baseUrl) {
   Q_D(OxideQQuickWebView);
 
   d->loadHtml(html, baseUrl);
+}
+
+void OxideQQuickWebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
+  Q_D(OxideQQuickWebView);
+
+  d->setCanTemporarilyDisplayInsecureContent(allow);
+}
+
+void OxideQQuickWebView::setCanTemporarilyRunInsecureContent(bool allow) {
+  Q_D(OxideQQuickWebView);
+
+  d->setCanTemporarilyRunInsecureContent(allow);
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

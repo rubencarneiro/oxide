@@ -22,10 +22,10 @@ set(PLUGIN_SRCS
     source.cc
     plugin.cc)
 
-set(CMAKE_AUTOMOC ON)
-
-add_definitions(-DQT_PLUGIN)
-
 add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
-
 qt5_use_modules(${PLUGIN} Core Gui Positioning)
+target_compile_definitions(${PLUGIN} PRIVATE -DQT_PLUGIN)
+set_target_properties(
+    ${PLUGIN} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QTPLUGIN_OUTPUT_DIR}/position
+    AUTOMOC TRUE)

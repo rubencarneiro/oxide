@@ -16,8 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(OxideQtCommon)
-
 set(PLUGIN qmloxideplugin)
 set(PLUGIN_MODULE_NAME com/canonical/Oxide)
 
@@ -42,14 +40,13 @@ else()
 endif()
 
 qt5_wrap_cpp(MOC_EXTRA
-             api/oxideqquickcookiemanager_p_p.h
              api/oxideqquickuserscript_p_p.h
              api/oxideqquickwebcontext_p_p.h
              api/oxideqquickwebcontextdelegateworker_p_p.h)
 
 set(PLUGIN_SRCS
     api/oxideqquickcookiemanager.cc
-    api/oxideqquickglobals.cc
+    api/oxideqquickglobal.cc
     api/oxideqquicknavigationhistory.cc
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc
@@ -92,21 +89,16 @@ set_target_properties(
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME})
 
-add_custom_command(
-    TARGET ${PLUGIN} POST_BUILD
+add_custom_target(
+    copy_${PLUGIN}_qmldir ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ${CMAKE_CURRENT_SOURCE_DIR}/qmldir
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}
-    COMMENT "Copying qmldir to output directory")
+      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 
 install(FILES ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir
         DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
 install(TARGETS ${PLUGIN} DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
 
 get_target_property(_PLUGIN_LOCATION ${PLUGIN} LOCATION)
-get_filename_component(_PLUGIN_NAME ${_PLUGIN_LOCATION} NAME)
-add_custom_target(stage-quick
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_PLUGIN_LOCATION}
-      ${OXIDE_STAGE_DIR}/${PLUGIN_MODULE_NAME}/${_PLUGIN_NAME}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir
-      ${OXIDE_STAGE_DIR}/${PLUGIN_MODULE_NAME}/qmldir)
+oxide_add_package_files(${_PLUGIN_LOCATION}
+                        ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir)

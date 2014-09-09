@@ -34,6 +34,7 @@
 #include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
+#include "oxide_web_permission_client.h"
 
 namespace oxide {
 
@@ -45,6 +46,7 @@ void ContentRendererClient::RenderThreadStarted() {
 void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
+  new WebPermissionClient(render_frame);
 }
 
 void ContentRendererClient::RenderViewCreated(

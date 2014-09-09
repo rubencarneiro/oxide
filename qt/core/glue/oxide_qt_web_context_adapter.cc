@@ -23,6 +23,7 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QGuiApplication>
 #include <QNetworkCookie>
 #include <QObject>
@@ -35,6 +36,7 @@
 #include "net/cookies/cookie_monster.h"
 #include "url/gurl.h"
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -44,6 +46,17 @@ namespace qt {
 
 namespace {
 QOpenGLContext* g_shared_gl_context;
+
+int GetNextCookieRequestId() {
+  static int id = 0;
+  if (id == std::numeric_limits<int>::max()) {
+    int i = id;
+    id = 0;
+    return i;
+  }
+  return id++;
+}
+
 }
 
 WebContextAdapter::~WebContextAdapter() {
@@ -240,7 +253,15 @@ void WebContextAdapter::ensureChromiumStarted() {
     CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
         "Your application doesn't have a QGuiApplication. Oxide will not "
         "function without one";
-    scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+
+    QString nss_db_path(oxideGetNSSDbPath());
+    if (!nss_db_path.isEmpty()) {
+      nss_db_path = QDir(nss_db_path).absolutePath();
+    }
+
+    scoped_ptr<ContentMainDelegate> delegate(
+        ContentMainDelegate::CreateForBrowser(
+          base::FilePath(nss_db_path.toStdString())));
 
     oxide::BrowserProcessMain::GetInstance()->Start(
         delegate.PassAs<oxide::ContentMainDelegate>());
@@ -317,15 +338,54 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
   }
 }
 
-void WebContextAdapter::doSetCookies(
-      const QString& url,
-      const QList<QNetworkCookie>& cookies,
-      int request_id) {
-  priv->doSetCookies(url, cookies, request_id);
+int WebContextAdapter::setCookies(
+    const QUrl& url,
+    const QList<QNetworkCookie>& cookies) {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  if (cookies.size() == 0) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->SetCookies(request_id, url, cookies);
+  return request_id;
 }
 
-void WebContextAdapter::doGetAllCookies(int request_id) {
-  priv->doGetAllCookies(request_id);
+int WebContextAdapter::getCookies(const QUrl& url) {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->GetCookies(request_id, url);
+  return request_id;
+}
+
+int WebContextAdapter::getAllCookies() {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->GetAllCookies(request_id);
+  return request_id;
+}
+
+int WebContextAdapter::deleteAllCookies() {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->DeleteAllCookies(request_id);
+  return request_id;
 }
 
 WebContextAdapter::WebContextAdapter(QObject* q)

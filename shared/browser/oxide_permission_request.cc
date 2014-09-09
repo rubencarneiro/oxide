@@ -19,147 +19,213 @@
 
 #include <algorithm>
 
+#include "base/auto_reset.h"
+#include "base/bind.h"
 #include "base/logging.h"
 
 namespace oxide {
 
-void PermissionRequest::SetDidRespond() {
-  DCHECK(!is_cancelled_);
-  did_respond_ = true;
-  if (manager_) {
-    manager_->RemovePendingPermissionRequest(this);
+// static
+void PermissionRequestManager::CancelPendingRequestFromSource(
+    const base::WeakPtr<PermissionRequest>& request) {
+  if (request) {
+    request->Cancel(true);
   }
 }
 
-PermissionRequest::PermissionRequest(PermissionRequestManager* manager,
-                                     int id,
-                                     const GURL& origin,
-                                     const GURL& embedder)
-    : manager_(manager->AsWeakPtr()),
-      id_(id),
-      origin_(origin),
-      embedder_(embedder),
-      is_cancelled_(false),
-      did_respond_(false) {
-  manager_->AddPendingPermissionRequest(this);
+void PermissionRequestManager::AddPendingRequest(PermissionRequestType type,
+                                                 PermissionRequest* request) {
+  PermissionRequestVector& requests = pending_requests_[type];
+
+  DCHECK(std::find(requests.begin(), requests.end(), request) == requests.end());
+
+  request->type_ = type;
+  request->manager_ = AsWeakPtr();
+  requests.push_back(request);
 }
 
-PermissionRequest::~PermissionRequest() {
-  // We remove ourself from PermissionRequestManager when setting either
-  // of these, so assert that this has happened to prevent a dangling
-  // pointer
-  CHECK(is_cancelled_ || did_respond_);
-}
-
-void PermissionRequest::Cancel() {
-  DCHECK(!did_respond_ && !is_cancelled_);
-  is_cancelled_ = true;
-  if (manager_) {
-    manager_->RemovePendingPermissionRequest(this);
-  }
-  if (!cancel_callback_.is_null()) {
-    cancel_callback_.Run();
-  }
-}
-
-void PermissionRequest::SetCancelCallback(const base::Closure& callback) {
-  cancel_callback_ = callback;
-  if (is_cancelled_) {
-    cancel_callback_.Run();
-  }
-}
-
-void PermissionRequestManager::AddPendingPermissionRequest(
+void PermissionRequestManager::RemovePendingRequest(
     PermissionRequest* request) {
-  for (PermissionRequestVector::iterator it = pending_requests_.begin();
-       it != pending_requests_.end(); ++it) {
-    DCHECK((*it)->id() != request->id());
-  }
+  DCHECK_LT(request->type_, PERMISSION_REQUEST_TYPE_MAX);
 
-  pending_requests_.push_back(request);
-}
+  PermissionRequestVector& requests = pending_requests_[request->type_];
 
-void PermissionRequestManager::RemovePendingPermissionRequest(
-    PermissionRequest* request) {
   PermissionRequestVector::iterator it =
-      std::find(pending_requests_.begin(), pending_requests_.end(), request);
-  if (it != pending_requests_.end()) {
-    if (in_dispatch_) {
-      *it = NULL;
-    } else {
-      pending_requests_.erase(it);
-    }
+      std::find(requests.begin(), requests.end(), request);
+  CHECK(it != requests.end());
+  if (in_dispatch_) {
+    *it = NULL;
+  } else {
+    requests.erase(it);
   }
-}
-
-void PermissionRequestManager::Compact() {
-  DCHECK(!in_dispatch_);
-  pending_requests_.erase(
-      std::remove(pending_requests_.begin(),
-                  pending_requests_.end(),
-                  static_cast<PermissionRequest *>(NULL)),
-      pending_requests_.end());
 }
 
 PermissionRequestManager::PermissionRequestManager()
     : in_dispatch_(false) {}
 
 PermissionRequestManager::~PermissionRequestManager() {
-  CancelAllPending();
+  CHECK(!HasAnyPendingRequests());
 }
 
-void PermissionRequestManager::CancelAllPending() {
+scoped_ptr<SimplePermissionRequest>
+PermissionRequestManager::CreateSimplePermissionRequest(
+    PermissionRequestType type,
+    const base::Callback<void(bool)>& callback,
+    base::Closure* cancel_callback) {
+  CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
+
+  scoped_ptr<SimplePermissionRequest> rv(
+      new SimplePermissionRequest(callback));
+  AddPendingRequest(type, rv.get());
+
+  if (cancel_callback) {
+    *cancel_callback = base::Bind(CancelPendingRequestFromSource,
+                                  rv->AsWeakPtr());
+  }
+
+  return rv.Pass();
+}
+
+bool PermissionRequestManager::HasAnyPendingRequests() {
+  for (int i = PERMISSION_REQUEST_TYPE_START;
+       i < PERMISSION_REQUEST_TYPE_MAX; ++i) {
+    if (HasPendingRequestsForType(static_cast<PermissionRequestType>(i))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool PermissionRequestManager::HasPendingRequestsForType(
+    PermissionRequestType type) {
+  CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
+
+  PermissionRequestVector& requests = pending_requests_[type];
+
+  for (PermissionRequestVector::iterator it = requests.begin();
+       it != requests.end(); ++it) {
+    PermissionRequest* req = *it;
+    if (!req->is_cancelled_ && req->CanRespond()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void PermissionRequestManager::AbortPendingRequest(
+    PermissionRequest* request) {
+  if (!request) {
+    return;
+  }
+
+  request->Cancel(true);
+}
+
+void PermissionRequestManager::CancelAllPendingRequests() {
+  for (int i = PERMISSION_REQUEST_TYPE_START;
+       i < PERMISSION_REQUEST_TYPE_MAX; ++i) {
+    CancelPendingRequestsForType(static_cast<PermissionRequestType>(i));
+  }
+}
+
+void PermissionRequestManager::CancelPendingRequestsForType(
+    PermissionRequestType type) {
+  CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
   DCHECK(!in_dispatch_);
-  in_dispatch_ = true;
 
-  for (PermissionRequestVector::iterator it = pending_requests_.begin();
-       it != pending_requests_.end(); ++it) {
-    PermissionRequest* request = *it;
-    if (request) {
-      request->Cancel();
+  PermissionRequestVector& requests = pending_requests_[type];
+
+  {
+    base::AutoReset<bool> d(&in_dispatch_, true);
+
+    for (PermissionRequestVector::iterator it = requests.begin();
+         it != requests.end(); ++it) {
+      PermissionRequest* request = *it;
+      if (request) {
+        request->Cancel(false);
+      }
     }
   }
 
-  in_dispatch_ = false;
-  Compact();
+  requests.erase(
+      std::remove(requests.begin(), requests.end(),
+                  static_cast<PermissionRequest *>(NULL)),
+      requests.end());
 }
 
-void PermissionRequestManager::CancelPendingRequestWithID(int id) {
-  for (PermissionRequestVector::iterator it = pending_requests_.begin();
-       it != pending_requests_.end(); ++it) {
-    PermissionRequest* request = *it;
-    if (request->id() == id) {
-      request->Cancel();
-      break;
-    }
+PermissionRequest::PermissionRequest()
+    : type_(PERMISSION_REQUEST_TYPE_START),
+      is_cancelled_(false) {}
+
+void PermissionRequest::Cancel(bool from_source) {
+  if (is_cancelled_) {
+    // Can be called multiple times from PermissionRequestManager
+    return;
+  }
+  is_cancelled_ = true;
+  if (!cancel_callback_.is_null()) {
+    cancel_callback_.Run();
   }
 }
 
-GeolocationPermissionRequest::GeolocationPermissionRequest(
-    PermissionRequestManager* manager,
-    int id,
-    const GURL& origin,
-    const GURL& embedder,
+PermissionRequest::~PermissionRequest() {
+  if (manager_) {
+    manager_->RemovePendingRequest(this);
+  }
+}
+
+void PermissionRequest::SetCancelCallback(const base::Closure& callback) {
+  DCHECK(!is_cancelled_);
+  cancel_callback_ = callback;
+}
+
+SimplePermissionRequest::SimplePermissionRequest(
     const base::Callback<void(bool)>& callback)
-    : PermissionRequest(manager, id, origin, embedder),
-      callback_(callback) {}
+    : callback_(callback) {}
 
-GeolocationPermissionRequest::~GeolocationPermissionRequest() {
-  if (!did_respond()) {
+void SimplePermissionRequest::Cancel(bool from_source) {
+  if (callback_.is_null()) {
+    return;
+  }
+  if (!from_source && !callback_.is_null()) {
+    Deny();
+  }
+  callback_.Reset();
+  PermissionRequest::Cancel(from_source);
+}
+
+bool SimplePermissionRequest::CanRespond() const {
+  return !callback_.is_null();
+}
+
+SimplePermissionRequest::~SimplePermissionRequest() {
+  if (!callback_.is_null()) {
     Deny();
   }
 }
 
-void GeolocationPermissionRequest::Accept() {
-  DCHECK(!did_respond() && !is_cancelled());
-  SetDidRespond();
+void SimplePermissionRequest::Allow() {
+  if (callback_.is_null()) {
+    LOG(ERROR) << "Cannot Allow() a request that has been cancelled or "
+                  "responded to already";
+    return;
+  }
+
   callback_.Run(true);
+  callback_.Reset();
 }
 
-void GeolocationPermissionRequest::Deny() {
-  DCHECK(!did_respond() && !is_cancelled());
-  SetDidRespond();
+void SimplePermissionRequest::Deny() {
+  if (callback_.is_null()) {
+    LOG(ERROR) << "Cannot Deny() a request that has been cancelled or "
+                  "responded to already";
+    return;
+  }
+
   callback_.Run(false);
+  callback_.Reset();
 }
 
 } // namespace oxide

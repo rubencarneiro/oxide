@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_GLOBALS_P_H_
-#define _OXIDE_QT_QUICK_API_GLOBALS_P_H_
+#ifndef _OXIDE_SHARED_BROWSER_CONTENT_TYPES_H_
+#define _OXIDE_SHARED_BROWSER_CONTENT_TYPES_H_
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QtGlobal>
+namespace oxide {
 
-class OxideQQuickGlobalsPrivate;
-class OxideQQuickWebContext;
-
-class OxideQQuickGlobals : public QObject {
-  Q_OBJECT
-
-  Q_DECLARE_PRIVATE(OxideQQuickGlobals)
-  Q_DISABLE_COPY(OxideQQuickGlobals)
-
- public:
-  static OxideQQuickGlobals* instance();
-  virtual ~OxideQQuickGlobals();
-
-  Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
-
- private:
-  OxideQQuickGlobals();
-
-  QScopedPointer<OxideQQuickGlobalsPrivate> d_ptr;
+enum ContentType {
+  CONTENT_TYPE_NONE = 0,
+  CONTENT_TYPE_MIXED_DISPLAY = 1 << 0,
+  CONTENT_TYPE_MIXED_SCRIPT = 1 << 1
 };
 
-#endif // _OXIDE_QT_QUICK_API_GLOBALS_P_H_
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_CONTENT_TYPES_H_

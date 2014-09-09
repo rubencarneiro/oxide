@@ -56,6 +56,29 @@ void DestroyDefaultContext() {
   delete context;
 }
 
+QVariant networkCookiesToVariant(const QList<QNetworkCookie>& cookies) {
+  QList<QVariant> list;
+  Q_FOREACH(QNetworkCookie cookie, cookies) {
+    QVariantMap c;
+    c.insert("name", QVariant(QString(cookie.name())));
+    c.insert("value", QVariant(QString(cookie.value())));
+    c.insert("domain", QVariant(cookie.domain()));
+    c.insert("path", QVariant(cookie.path()));
+    c.insert("httponly", QVariant(cookie.isHttpOnly()));
+    c.insert("issecure", QVariant(cookie.isSecure()));
+    c.insert("issessioncookie", QVariant(cookie.isSessionCookie()));
+    if (cookie.expirationDate().isValid()) {
+      c.insert("expirationdate", QVariant(cookie.expirationDate()));
+    } else {
+      c.insert("expirationdate", QVariant());
+    }
+
+    list.append(c);
+  }
+
+  return QVariant(list);
+}
+
 }
 
 namespace oxide {
@@ -281,36 +304,25 @@ void OxideQQuickWebContextPrivate::detachedDelegateWorker(
   }
 }
 
-void OxideQQuickWebContextPrivate::CookiesSet(int requestId,
-      WebContextAdapter::RequestStatus status) {
-  Q_Q(OxideQQuickWebContext);
-  emit q->cookieManager()->cookiesSet(requestId,
-      static_cast<OxideQQuickCookieManager::RequestStatus>(status));
+void OxideQQuickWebContextPrivate::CookiesSet(
+    int request_id,
+    const QList<QNetworkCookie>& failed_cookies) {
+  emit cookie_manager_->setCookiesResponse(
+      request_id,
+      networkCookiesToVariant(failed_cookies));
 }
+
 void OxideQQuickWebContextPrivate::CookiesRetrieved(
-      int requestId,
-      const QList<QNetworkCookie>& cookies,
-      WebContextAdapter::RequestStatus status) {
-  Q_Q(OxideQQuickWebContext);
+      int request_id,
+      const QList<QNetworkCookie>& cookies) {
+  emit cookie_manager_->getCookiesResponse(
+      request_id,
+      networkCookiesToVariant(cookies));
+}
 
-  QList<QVariant> cookieMapList;
-  Q_FOREACH(QNetworkCookie cookie, cookies) {
-    QVariantMap cm;
-    cm.insert("name", QVariant(QString(cookie.name())));
-    cm.insert("value", QVariant(QString(cookie.value())));
-    cm.insert("domain", QVariant(cookie.domain()));
-    cm.insert("path", QVariant(cookie.path()));
-    cm.insert("httponly", QVariant(cookie.isHttpOnly()));
-    cm.insert("issecure", QVariant(cookie.isSecure()));
-    cm.insert("issessioncookie", QVariant(cookie.isSessionCookie()));
-    cm.insert("expirationdate", QVariant(cookie.expirationDate()));
-    cookieMapList.append(cm);
-  }
-
-  emit q->cookieManager()->gotCookies(
-      requestId,
-      QVariant(cookieMapList),
-      static_cast<OxideQQuickCookieManager::RequestStatus>(status));
+void OxideQQuickWebContextPrivate::CookiesDeleted(
+    int request_id, int num_deleted) {
+  emit cookie_manager_->deleteCookiesResponse(request_id, num_deleted);
 }
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}

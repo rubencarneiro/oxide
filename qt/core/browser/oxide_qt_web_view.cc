@@ -54,12 +54,19 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqpermissionrequest_p.h"
+#include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqcertificateerror_p.h"
+#include "qt/core/api/oxideqsecuritystatus.h"
+#include "qt/core/api/oxideqsecuritystatus_p.h"
+#include "qt/core/api/oxideqsslcertificate.h"
+#include "qt/core/api/oxideqsslcertificate_p.h"
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
+#include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/oxide_render_widget_host_view.h"
 
 #include "oxide_qt_file_picker.h"
@@ -242,7 +249,9 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
-    has_input_method_state_(false) {}
+    has_input_method_state_(false),
+    qsecurity_status_(
+        OxideQSecurityStatusPrivate::Create(this)) {}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
@@ -499,14 +508,17 @@ void WebView::OnWebPreferencesDestroyed() {
 }
 
 void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<oxide::GeolocationPermissionRequest> request) {
-  OxideQGeolocationPermissionRequest* qreq =
-      new OxideQGeolocationPermissionRequest();
-  OxideQPermissionRequestPrivate::get(qreq)->Init(
-      request.PassAs<oxide::PermissionRequest>());
+    const GURL& origin,
+    const GURL& embedder,
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQGeolocationPermissionRequest> req(
+      OxideQGeolocationPermissionRequestPrivate::Create(
+        QUrl(QString::fromStdString(origin.spec())),
+        QUrl(QString::fromStdString(embedder.spec())),
+        request.Pass()));
 
   // The embedder takes ownership of this
-  adapter_->RequestGeolocationPermission(qreq);
+  adapter_->RequestGeolocationPermission(req.release());
 }
 
 void WebView::OnUnhandledKeyboardEvent(
@@ -528,49 +540,43 @@ void WebView::OnUnhandledKeyboardEvent(
   adapter_->HandleUnhandledKeyboardEvent(qevent);
 }
 
-inline FrameMetadataChangeFlags operator|(FrameMetadataChangeFlags a,
-                                          FrameMetadataChangeFlags b) {
-  return static_cast<FrameMetadataChangeFlags>(
-      static_cast<int>(a) | static_cast<int>(b));
-}
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
-  FrameMetadataChangeFlags flags = static_cast<FrameMetadataChangeFlags>(0);
+  FrameMetadataChangeFlags flags = FRAME_METADATA_CHANGE_NONE;
 
-#define ADD_FLAG(flag) flags = flags | flag
   if (old.device_scale_factor !=
       compositor_frame_metadata().device_scale_factor) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_DEVICE_SCALE);
+    flags |= FRAME_METADATA_CHANGE_DEVICE_SCALE;
   }
   if (old.root_scroll_offset.x() !=
       compositor_frame_metadata().root_scroll_offset.x()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_SCROLL_OFFSET_X);
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_X;
   }
   if (old.root_scroll_offset.y() !=
       compositor_frame_metadata().root_scroll_offset.y()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y);
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y;
   }
   if (old.root_layer_size.width() !=
       compositor_frame_metadata().root_layer_size.width()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_CONTENT_WIDTH);
+    flags |= FRAME_METADATA_CHANGE_CONTENT_WIDTH;
   }
   if (old.root_layer_size.height() !=
       compositor_frame_metadata().root_layer_size.height()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_CONTENT_HEIGHT);
+    flags |= FRAME_METADATA_CHANGE_CONTENT_HEIGHT;
   }
   if (old.scrollable_viewport_size.width() !=
       compositor_frame_metadata().scrollable_viewport_size.width()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_VIEWPORT_WIDTH);
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT_WIDTH;
   }
   if (old.scrollable_viewport_size.height() !=
       compositor_frame_metadata().scrollable_viewport_size.height()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT);
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT;
   }
   if (old.page_scale_factor !=
       compositor_frame_metadata().page_scale_factor) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_PAGE_SCALE);
+    flags |= FRAME_METADATA_CHANGE_PAGE_SCALE;
   }
-#undef ADD_FLAG
 
   adapter_->FrameMetadataUpdated(flags);
 }
@@ -739,10 +745,53 @@ void WebView::OnSelectionBoundsChanged() {
       ));
 }
 
+void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {
+  OxideQSecurityStatusPrivate::get(qsecurity_status_.get())->Update(old);
+}
+
+bool WebView::OnCertificateError(
+    bool is_main_frame,
+    oxide::CertError cert_error,
+    const scoped_refptr<net::X509Certificate>& cert,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool strict_enforcement,
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQSslCertificate> q_cert;
+  if (cert.get()) {
+    q_cert.reset(OxideQSslCertificatePrivate::Create(cert));
+  }
+
+  bool is_subresource =
+      !((is_main_frame && resource_type == content::RESOURCE_TYPE_MAIN_FRAME) ||
+        (!is_main_frame && resource_type == content::RESOURCE_TYPE_SUB_FRAME));
+
+  scoped_ptr<OxideQCertificateError> error(
+      OxideQCertificateErrorPrivate::Create(
+        QUrl(QString::fromStdString(request_url.spec())),
+        is_main_frame,
+        is_subresource,
+        strict_enforcement,
+        q_cert.Pass(),
+        static_cast<OxideQCertificateError::Error>(cert_error),
+        request.Pass()));
+
+  // Embedder takes ownership of error
+  adapter_->CertificateError(error.release());
+
+  return true;
+}
+
+void WebView::OnContentBlocked() {
+  adapter_->ContentBlocked();
+}
+
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
 }
+
+WebView::~WebView() {}
 
 void WebView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus() && ShouldShowInputPanel()) {

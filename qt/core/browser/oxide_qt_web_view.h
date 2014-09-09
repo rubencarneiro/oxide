@@ -23,6 +23,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 
 #include "shared/browser/oxide_javascript_dialog_manager.h"
@@ -36,6 +37,8 @@ class QMouseEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQSecurityStatus;
+
 namespace oxide {
 namespace qt {
 
@@ -45,8 +48,11 @@ class WebView FINAL : public oxide::WebView,
                       public base::SupportsWeakPtr<WebView> {
  public:
   static WebView* Create(WebViewAdapter* adapter);
+  ~WebView();
 
   WebViewAdapter* adapter() const { return adapter_; }
+
+  OxideQSecurityStatus* qsecurity_status() { return qsecurity_status_.get(); }
 
   void HandleFocusEvent(QFocusEvent* event);
   void HandleInputMethodEvent(QInputMethodEvent* event);
@@ -123,7 +129,9 @@ class WebView FINAL : public oxide::WebView,
   void OnWebPreferencesDestroyed() FINAL;
 
   void OnRequestGeolocationPermission(
-      scoped_ptr<oxide::GeolocationPermissionRequest> request) FINAL;
+      const GURL& origin,
+      const GURL& embedder,
+      scoped_ptr<oxide::SimplePermissionRequest> request) FINAL;
 
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) FINAL;
@@ -156,9 +164,22 @@ class WebView FINAL : public oxide::WebView,
   void OnFocusedNodeChanged() FINAL;
   void OnSelectionBoundsChanged() FINAL;
 
+  void OnSecurityStatusChanged(const oxide::SecurityStatus& old) FINAL;
+  bool OnCertificateError(
+      bool is_main_frame,
+      oxide::CertError cert_error,
+      const scoped_refptr<net::X509Certificate>& cert,
+      const GURL& request_url,
+      content::ResourceType resource_type,
+      bool strict_enforcement,
+      scoped_ptr<oxide::SimplePermissionRequest> request) FINAL;
+  void OnContentBlocked() FINAL;
+
   WebViewAdapter* adapter_;
 
   bool has_input_method_state_;
+
+  scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

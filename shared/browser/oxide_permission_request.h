@@ -23,47 +23,23 @@
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "url/gurl.h"
 
 namespace oxide {
 
-class PermissionRequestManager;
+enum PermissionRequestType {
+  PERMISSION_REQUEST_TYPE_START = 0,
 
-class PermissionRequest {
- public:
-  PermissionRequest(PermissionRequestManager* manager,
-                    int id, const GURL& origin,
-                    const GURL& embedder);
-  virtual ~PermissionRequest();
+  PERMISSION_REQUEST_TYPE_GEOLOCATION = PERMISSION_REQUEST_TYPE_START,
+  PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE,
 
-  int id() const { return id_; }
-  GURL origin() const { return origin_; }
-  GURL embedder() const { return embedder_; }
-
-  void Cancel();
-  bool is_cancelled() const { return is_cancelled_; }
-
-  void SetCancelCallback(const base::Closure& cancel_callback);
-
-  bool did_respond() const { return did_respond_; }
-
- protected:
-  void SetDidRespond();
-
- private:
-  base::WeakPtr<PermissionRequestManager> manager_;
-  int id_;
-  GURL origin_;
-  GURL embedder_;
-
-  base::Closure cancel_callback_;
-  bool is_cancelled_;
-
-  bool did_respond_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(PermissionRequest);
+  PERMISSION_REQUEST_TYPE_MAX
 };
+
+class PermissionRequest;
+class SimplePermissionRequest;
 
 class PermissionRequestManager FINAL :
     public base::SupportsWeakPtr<PermissionRequestManager> {
@@ -71,40 +47,84 @@ class PermissionRequestManager FINAL :
   PermissionRequestManager();
   ~PermissionRequestManager();
 
-  void CancelAllPending();
-  void CancelPendingRequestWithID(int id);
+  scoped_ptr<SimplePermissionRequest> CreateSimplePermissionRequest(
+      PermissionRequestType type,
+      const base::Callback<void(bool)>& callback,
+      base::Closure* cancel_callback);
+
+  bool HasAnyPendingRequests();
+  bool HasPendingRequestsForType(PermissionRequestType type);
+
+  void AbortPendingRequest(PermissionRequest* request);
+  void CancelAllPendingRequests();
+  void CancelPendingRequestsForType(PermissionRequestType type);
 
  private:
   friend class PermissionRequest;
   typedef std::vector<PermissionRequest *> PermissionRequestVector;
 
-  void AddPendingPermissionRequest(PermissionRequest* request);
-  void RemovePendingPermissionRequest(PermissionRequest* request);
+  static void CancelPendingRequestFromSource(
+      const base::WeakPtr<PermissionRequest>& request);
 
-  void Compact();
+  void AddPendingRequest(PermissionRequestType type,
+                         PermissionRequest* request);
+  void RemovePendingRequest(PermissionRequest* request);
 
   bool in_dispatch_;
-  PermissionRequestVector pending_requests_;
+  PermissionRequestVector pending_requests_[PERMISSION_REQUEST_TYPE_MAX];
 
   DISALLOW_COPY_AND_ASSIGN(PermissionRequestManager);
 };
 
-class GeolocationPermissionRequest FINAL : public PermissionRequest {
+class PermissionRequest : public base::SupportsWeakPtr<PermissionRequest> {
  public:
-  GeolocationPermissionRequest(PermissionRequestManager* manager,
-                               int id,
-                               const GURL& origin,
-                               const GURL& embedder,
-                               const base::Callback<void(bool)>& callback);
-  ~GeolocationPermissionRequest();
+  virtual ~PermissionRequest();
 
-  void Accept();
+  // Sets a callback to run if the request is cancelled by Oxide
+  void SetCancelCallback(const base::Closure& cancel_callback);
+
+ protected:
+  PermissionRequest();
+
+  // Called by Oxide to cancel this request. Will notify the callback
+  // registered with SetCancelCallback
+  virtual void Cancel(bool from_source);
+
+ private:
+  friend class PermissionRequestManager;
+
+  virtual bool CanRespond() const = 0;
+
+  PermissionRequestType type_;
+  base::WeakPtr<PermissionRequestManager> manager_;
+
+  bool is_cancelled_;
+  base::Closure cancel_callback_;
+
+  DISALLOW_COPY_AND_ASSIGN(PermissionRequest);
+};
+
+class SimplePermissionRequest FINAL : public PermissionRequest {
+ public:
+  ~SimplePermissionRequest();
+
+  void Allow();
   void Deny();
 
  private:
+  friend class PermissionRequestManager;
+
+  SimplePermissionRequest(const base::Callback<void(bool)>& callback);
+
+  // Called by Oxide to cancel this request. Once called, the API layer
+  // must not call Allow() or Deny()
+  void Cancel(bool from_source) FINAL;
+
+  bool CanRespond() const FINAL;
+
   base::Callback<void(bool)> callback_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(GeolocationPermissionRequest);
+  DISALLOW_COPY_AND_ASSIGN(SimplePermissionRequest);
 };
 
 } // namespace oxide

@@ -1,0 +1,20 @@
+<html>
+<body>
+  <button id="button">Click me!</button>
+</body>
+<script>
+var showPosition = function(position) {
+  var e = new CustomEvent("oxidegeolocationresult", { bubbles: true, detail: { status: 0 } });
+  document.documentElement.dispatchEvent(e);
+};
+
+var handleError = function(error) {
+  var e = new CustomEvent("oxidegeolocationresult", { bubbles: true, detail: { status: error.code } });
+  document.documentElement.dispatchEvent(e);
+};
+
+document.getElementById("button").addEventListener("click", function() {
+  navigator.geolocation.getCurrentPosition(showPosition, handleError);
+});
+</script>
+</html>

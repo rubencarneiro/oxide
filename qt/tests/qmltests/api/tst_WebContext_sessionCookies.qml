@@ -24,14 +24,7 @@ TestCase {
   }
 
   function _clear(webView) {
-    var restore = webView.context.cookiePolicy;
-    webView.context.cookiePolicy = WebContext.CookiePolicyAllowAll;
-
-    webView.url = "http://localhost:8080/clear-test-cookies-hack.py"
-    verify(webView.waitForLoadSucceeded(),
-           "Timed out waiting for successful load");
-
-    webView.context.cookiePolicy = restore;
+    webView.context.deleteAllCookies();
   }
 
   function _set_cookies(webView) {
@@ -52,7 +45,7 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_ephemeral() {
-    if (OxideTestingUtils.DATA_PATH == "") {
+    if (!QMLTEST_USE_CONTEXT_DATADIR) {
       skip("Can't run session cookie tests withour a permanent storage");
     }
 
@@ -68,7 +61,7 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_persistent() {
-    if (OxideTestingUtils.DATA_PATH == "") {
+    if (!QMLTEST_USE_CONTEXT_DATADIR) {
       skip("Can't run session cookie tests withour a permanent storage");
     }
 
@@ -92,7 +85,7 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_restored() {
-    if (OxideTestingUtils.DATA_PATH == "") {
+    if (!QMLTEST_USE_CONTEXT_DATADIR) {
       skip("Can't run session cookie tests withour a permanent storage");
     }
       

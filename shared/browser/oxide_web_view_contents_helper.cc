@@ -143,6 +143,17 @@ void WebViewContentsHelper::NavigationStateChanged(
   delegate_->NavigationStateChanged(changed_flags);
 }
 
+void WebViewContentsHelper::VisibleSSLStateChanged(
+    const content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (!delegate_) {
+    return;
+  }
+
+  delegate_->SSLStateChanged();
+}
+
 bool WebViewContentsHelper::ShouldCreateWebContents(
     content::WebContents* source,
     int route_id,
@@ -332,8 +343,9 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
   }
 
   if (web_preferences() && owns_web_preferences_) {
+    WebPreferences* old = web_preferences();
     WebPreferencesObserver::Observe(NULL);
-    delete web_preferences();
+    delete old;
   }
 
   if (preferences) {

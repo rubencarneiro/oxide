@@ -22,14 +22,17 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
+#include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
+#include "qt/core/api/oxideqsecuritystatus.h"
+#include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickcookiemanager_p.h"
-#include "qt/quick/api/oxideqquickglobals_p.h"
+#include "qt/quick/api/oxideqquickglobal_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
 #include "qt/quick/api/oxideqquickscriptmessage_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagehandler_p.h"
@@ -53,7 +56,7 @@ QObject* GlobalSingletonFactory(QQmlEngine* engine,
   Q_UNUSED(engine);
   Q_UNUSED(script_engine);
 
-  return OxideQQuickGlobals::instance();
+  return OxideQQuickGlobal::instance();
 }
 
 }
@@ -68,30 +71,36 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qRegisterMetaType<QNetworkCookie>();
     qRegisterMetaType<CookieList>();
 
-    qmlRegisterSingletonType<OxideQQuickGlobals>(
+    qmlRegisterSingletonType<OxideQQuickGlobal>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
 
+    qmlRegisterUncreatableType<OxideQCertificateError>(uri, 1, 0, "CertificateError",
+        "CertificateError is delivered by WebView.certificateError");
+    qmlRegisterUncreatableType<OxideQQuickCookieManager>(uri, 1, 0, "CookieManager",
+        "CookieManager is accessed via WebContext.cookieManager");
+    qmlRegisterUncreatableType<OxideQDownloadRequest>(uri, 1, 0, "DownloadRequest",
+        "DownloadRequest is delivered by WebView.downloadRequested");
     qmlRegisterUncreatableType<OxideQGeolocationPermissionRequest>(uri, 1, 0,
         "GeolocationPermissionRequest",
-        "GeolocationPermissionRequest is created by Oxide");
+        "GeolocationPermissionRequest is delivered by WebView.geolocationPermissionRequested");
     qmlRegisterUncreatableType<OxideQLoadEvent>(uri, 1, 0, "LoadEvent",
-        "LoadEvent' are created automatically by Oxide");
+        "LoadEvent is delivered by WebView.loadingChanged");
     qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 1, 0, "NavigationHistory",
-        "Each WebView has a NavigationHistory automatically instantiated by Oxide");
+        "NavigationHistory is accessed via WebView.navigationHistory");
     qmlRegisterUncreatableType<OxideQNavigationRequest>(uri, 1, 0, "NavigationRequest",
-        "Cannot create separate instance of NavigationRequest");
+        "NavigationRequest is delivered by WebView.navigationRequested");
     qmlRegisterUncreatableType<OxideQNewViewRequest>(uri, 1, 0, "NewViewRequest",
-        "NewViewRequest is created by Oxide");
+        "NewViewRequest is delivered by WebView.newViewRequested");
     qmlRegisterUncreatableType<OxideQQuickScriptMessage>(uri, 1, 0, "ScriptMessage",
-        "ScriptMessages are created automatically by Oxide");
+        "ScriptMessage is delivered by ScriptMessageHandler.callback");
     qmlRegisterUncreatableType<OxideQQuickScriptMessageRequest>(uri, 1, 0, "ScriptMessageRequest",
-        "OutgoingMessageRequests are created automatically by WebFrame.sendMessage");
+        "ScriptMessageRequest is returned from WebFrame.sendMessage");
+    qmlRegisterUncreatableType<OxideQSecurityStatus>(uri, 1, 0, "SecurityStatus",
+        "SecurityStatus is accessed via WebView.securityStatus");
+    qmlRegisterUncreatableType<OxideQSslCertificate>(uri, 1, 0, "SslCertificate",
+        "SslCertificate is accessed via SecurityStatus.certificate");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 1, 0, "WebFrame",
-        "Frames are created automatically by Oxide to represent frames in the renderer");
-    qmlRegisterUncreatableType<OxideQDownloadRequest>(uri, 1, 0, "DownloadRequest",
-        "Cannot create separate instance of DownloadRequest");
-    qmlRegisterUncreatableType<OxideQQuickCookieManager>(uri, 1, 0, "CookieManager",
-        "Cannot create instances of CookieManager");
+        "WebFrame is accessed via WebView.rootFrame, WebFrame.childFrames and WebFrame.parentFrame");
 
     qmlRegisterType<OxideQQuickScriptMessageHandler>(uri, 1, 0, "ScriptMessageHandler");
     qmlRegisterType<OxideQQuickUserScript>(uri, 1, 0, "UserScript");

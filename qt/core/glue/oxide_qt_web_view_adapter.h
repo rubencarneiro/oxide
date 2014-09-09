@@ -47,11 +47,13 @@ class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQCertificateError;
 class OxideQDownloadRequest;
 class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
+class OxideQSecurityStatus;
 class OxideQWebPreferences;
 
 namespace oxide {
@@ -65,6 +67,8 @@ class WebPopupMenuDelegate;
 class WebView;
 
 enum FrameMetadataChangeFlags {
+  FRAME_METADATA_CHANGE_NONE = 0,
+
   FRAME_METADATA_CHANGE_DEVICE_SCALE = 1 << 0,
   FRAME_METADATA_CHANGE_SCROLL_OFFSET_X = 1 << 1,
   FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y = 1 << 2,
@@ -73,6 +77,12 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_VIEWPORT_WIDTH = 1 << 5,
   FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT = 1 << 6,
   FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 7
+};
+
+enum ContentTypeFlags {
+  CONTENT_TYPE_NONE = 0,
+  CONTENT_TYPE_MIXED_DISPLAY = 1 << 0,
+  CONTENT_TYPE_MIXED_SCRIPT = 1 << 1
 };
 
 class Q_DECL_EXPORT AcceleratedFrameData Q_DECL_FINAL {
@@ -179,6 +189,13 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
   void didCommitCompositorFrame();
 
+  void setCanTemporarilyDisplayInsecureContent(bool allow);
+  void setCanTemporarilyRunInsecureContent(bool allow);
+
+  OxideQSecurityStatus* securityStatus();
+
+  ContentTypeFlags blockedContent() const;
+
  protected:
   WebViewAdapter(QObject* q);
 
@@ -259,8 +276,13 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void DownloadRequested(OxideQDownloadRequest* downloadRequest) = 0;
 
+  virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
+  virtual void ContentBlocked() = 0;
+
   QScopedPointer<WebView> priv;
+
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
+
   QScopedPointer<ConstructProperties> construct_props_;
   bool created_with_new_view_request_;
 };

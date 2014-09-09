@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,35 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_
-#define _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_
+#ifndef _OXIDE_QT_QUICK_API_GLOBAL_P_H_
+#define _OXIDE_QT_QUICK_API_GLOBAL_P_H_
 
 #include <QObject>
+#include <QScopedPointer>
 #include <QtGlobal>
-#include <QList>
-#include <QNetworkCookie>
 
-#include "qt/quick/api/oxideqquickcookiemanager_p.h"
+class OxideQQuickGlobalPrivate;
+class OxideQQuickWebContext;
 
-class OxideQQuickCookieManagerPrivate Q_DECL_FINAL :
-    public QObject {
+class OxideQQuickGlobal : public QObject {
   Q_OBJECT
-  Q_DECLARE_PUBLIC(OxideQQuickCookieManager)
+
+  Q_DECLARE_PRIVATE(OxideQQuickGlobal)
+  Q_DISABLE_COPY(OxideQQuickGlobal)
 
  public:
-  ~OxideQQuickCookieManagerPrivate();
+  static OxideQQuickGlobal* instance();
+  virtual ~OxideQQuickGlobal();
 
-  int setCookies(const QString& url, const QList<QNetworkCookie>& cookie);
-  int getAllCookies();
+  Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
 
  private:
-  OxideQQuickCookieManagerPrivate(OxideQQuickCookieManager* q,
-                                  OxideQQuickWebContext* webContext);
+  OxideQQuickGlobal();
 
-  OxideQQuickWebContext* web_context_;
-
-  OxideQQuickCookieManager* q_ptr;
-  Q_DISABLE_COPY(OxideQQuickCookieManagerPrivate);
+  QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
 };
 
-#endif // _OXIDE_QT_QUICK_API_COOKIE_MANAGER_P_P_H_
+#endif // _OXIDE_QT_QUICK_API_GLOBAL_P_H_
