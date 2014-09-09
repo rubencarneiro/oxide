@@ -77,7 +77,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusOk,
           securityLevelSignals: 0, contentStatusSignals: 0,
-          certStatusSignals: 0, certificate: false
+          certStatusSignals: 0, certificateSignals: 0,
+          certificate: false
         },
         {
           url: "https://localhost:4443/empty.html",
@@ -85,7 +86,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusOk,
           securityLevelSignals: 1, contentStatusSignals: 0,
-          certStatusSignals: 0, certificate: true
+          certStatusSignals: 0, certificateSignals: 1,
+          certificate: true
         },
         {
           url: "https://localhost:4444/empty.html",
@@ -93,7 +95,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusExpired,
           securityLevelSignals: 1, contentStatusSignals: 0,
-          certStatusSignals: 1, certificate: true
+          certStatusSignals: 1, certificateSignals: 1,
+          certificate: true
         },
         {
           url: "https://localhost:4445/empty.html",
@@ -101,7 +104,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusAuthorityInvalid,
           securityLevelSignals: 1, contentStatusSignals: 0,
-          certStatusSignals: 1, certificate: true
+          certStatusSignals: 1, certificateSignals: 1,
+          certificate: true
         },
         {
           url: "https://localhost:4446/empty.html",
@@ -109,7 +113,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusBadIdentity,
           securityLevelSignals: 1, contentStatusSignals: 0,
-          certStatusSignals: 1, certificate: true
+          certStatusSignals: 1, certificateSignals: 1,
+          certificate: true
         },
         {
           url: "https://localhost:4443/tst_SecurityStatus_display_broken_subresource.html",
@@ -117,7 +122,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusRanInsecure,
           certStatus: SecurityStatus.CertStatusOk,
           securityLevelSignals: 2, contentStatusSignals: 1,
-          certStatusSignals: 0, certificate: true
+          certStatusSignals: 0, certificateSignals: 1,
+          certificate: true
         },
         {
           url: "https://localhost:4443/tst_SecurityStatus_run_broken_subresource.html",
@@ -125,7 +131,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusRanInsecure,
           certStatus: SecurityStatus.CertStatusOk,
           securityLevelSignals: 2, contentStatusSignals: 1,
-          certStatusSignals: 0, certificate: true
+          certStatusSignals: 0, certificateSignals: 1,
+          certificate: true
         },
         {
           url: "https://localhost:4443/tst_SecurityStatus_display_insecure_content.html",
@@ -133,7 +140,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusDisplayedInsecure,
           certStatus: SecurityStatus.CertStatusOk,
           securityLevelSignals: 2, contentStatusSignals: 1,
-          certStatusSignals: 0, certificate: true
+          certStatusSignals: 0, certificateSignals: 1,
+          certificate: true
         },
         {
           url: "https://localhost:4443/tst_SecurityStatus_run_insecure_content.html",
@@ -141,7 +149,8 @@ Item {
           contentStatus: SecurityStatus.ContentStatusRanInsecure | SecurityStatus.ContentStatusDisplayedInsecure,
           certStatus: SecurityStatus.CertStatusOk,
           securityLevelSignals: 2, contentStatusSignals: 2,
-          certStatusSignals: 0, certificate: true
+          certStatusSignals: 0, certificateSignals: 1,
+          certificate: true
         }
       ];
     }
@@ -163,6 +172,20 @@ Item {
       compare(contentStatusSpy.count, data.contentStatusSignals);
       compare(certStatusSpy.count, data.certStatusSignals);
       compare(!!webView.securityStatus.certificate, data.certificate);
+
+      var certificate = webView.securityStatus.certificate;
+      var obs = OxideTestingUtils.createDestructionObserver(certificate);
+
+      webView.url = "http://localhost:8080/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
+      compare(webView.securityStatus.securityLevel, SecurityStatus.SecurityLevelNone);
+      compare(webView.securityStatus.contentStatus, SecurityStatus.ContentStatusNormal);
+      compare(webView.securityStatus.certStatus, SecurityStatus.CertStatusOk);
+      verify(!webView.securityStatus.certificate);
+      if (data.certificate) {
+        verify(obs.destroyed);
+      }
 
       webView.destroy();
     }
