@@ -100,7 +100,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
   if (!use_software_) {
     scoped_refptr<cc::ContextProvider> context_provider =
         CompositorUtils::GetInstance()->GetContextProvider();
-    if (!context_provider) {
+    if (!context_provider.get()) {
       return scoped_ptr<cc::OutputSurface>();
     }
     scoped_ptr<CompositorOutputSurfaceGL> output(
@@ -204,7 +204,7 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
 void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   DCHECK(CalledOnValidThread());
   root_layer_->RemoveAllChildren();
-  if (layer) {
+  if (layer.get()) {
     root_layer_->AddChild(layer);
   }
 }

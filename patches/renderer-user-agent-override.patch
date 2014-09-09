@@ -7,13 +7,13 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -187,9 +187,15 @@ bool ContentRendererClient::IsPluginAllo
-     const GURL& url) {
-   return false;
+@@ -191,9 +191,15 @@ bool ContentRendererClient::IsPluginAllo
  }
  
- bool ContentRendererClient::IsPluginAllowedToUseDevChannelAPIs() {
-   return false;
+ BrowserPluginDelegate* ContentRendererClient::CreateBrowserPluginDelegate(
+     RenderFrame* render_frame,
+     const std::string& mime_type) {
+   return NULL;
  }
  
 +bool ContentRendererClient::GetUserAgentOverride(
@@ -26,7 +26,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -262,13 +262,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -268,13 +268,16 @@ class CONTENT_EXPORT ContentRendererClie
    // Returns true if the page at |url| can use Pepper Compositor APIs.
    virtual bool IsPluginAllowedToUseCompositorAPI(const GURL& url);
  
@@ -46,7 +46,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2820,16 +2820,23 @@ bool RenderFrameImpl::willCheckAndDispat
+@@ -3108,16 +3108,23 @@ bool RenderFrameImpl::willCheckAndDispat
  
    Send(new ViewHostMsg_RouteMessageEvent(render_view_->routing_id_, params));
    return true;

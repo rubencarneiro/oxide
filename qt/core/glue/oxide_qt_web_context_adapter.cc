@@ -211,7 +211,7 @@ void WebContextAdapter::updateUserScripts() {
 }
 
 bool WebContextAdapter::isInitialized() const {
-  return priv->context_ != NULL;
+  return priv->context_.get() != NULL;
 }
 
 /* static */

@@ -81,7 +81,7 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
     return;
   }
 
-  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame);
+  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
 }
 
 void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
@@ -106,7 +106,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
     return;
   }
 
-  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame);
+  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
 }
 
 void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
@@ -127,7 +127,7 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     scoped_refptr<CompositorFrameHandle> frame(frames.back());
     frames.pop_back();
 
-    if (!frame) {
+    if (!frame.get()) {
       continue;
     }
 

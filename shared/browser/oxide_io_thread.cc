@@ -64,7 +64,7 @@ IOThread::Globals::Globals() {
       net::ProxyService::CreateSystemProxyConfigService(
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::IO),
-          content::BrowserThread::UnsafeGetMessageLoopForThread(
+          content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::FILE));
 
   proxy_service_.reset(
@@ -202,7 +202,7 @@ IOThread::Globals* IOThread::globals() const {
 }
 
 net::URLRequestContextGetter* IOThread::GetSystemURLRequestContext() {
-  return system_request_context_getter_;
+  return system_request_context_getter_.get();
 }
 
 } // namespace oxide

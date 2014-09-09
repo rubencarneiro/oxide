@@ -119,7 +119,7 @@ void WebContextAdapterPrivate::Init(
 }
 
 void WebContextAdapterPrivate::Destroy() {
-  if (context_) {
+  if (context_.get()) {
     context_->SetDelegate(NULL);
   }
   adapter_ = NULL;
@@ -136,7 +136,7 @@ WebContextAdapterPrivate::GetIODelegate() const {
 }
 
 void WebContextAdapterPrivate::UpdateUserScripts() {
-  if (!context_) {
+  if (!context_.get()) {
     return;
   }
 
@@ -264,7 +264,7 @@ WebContextAdapterPrivate* WebContextAdapterPrivate::FromBrowserContext(
 }
 
 scoped_refptr<net::CookieStore> WebContextAdapterPrivate::GetCookieStore() {
-  if (!context_) {
+  if (!context_.get()) {
     return NULL;
   }
   return context_->GetCookieStore();
@@ -313,7 +313,7 @@ void WebContextAdapterPrivate::doSetCookie(
   }
 
   scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
-  if (!cookie_store) {
+  if (!cookie_store.get()) {
     callWithStatus(request->id(),
         WebContextAdapter::RequestStatusInternalFailure);
     return;
@@ -371,7 +371,7 @@ void WebContextAdapterPrivate::GotCookiesCallback(
 
 void WebContextAdapterPrivate::doGetAllCookies(int requestId) {
   scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
-  if (!cookie_store) {
+  if (!cookie_store.get()) {
     callWithCookies(requestId,
         QList<QNetworkCookie>(),
         WebContextAdapter::RequestStatusInternalFailure);
@@ -388,8 +388,8 @@ WebContextAdapter* WebContextAdapterPrivate::GetAdapter() const {
 }
 
 oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
-  if (context_) {
-    return context_;
+  if (context_.get()) {
+    return context_.get();
   }
 
   DCHECK(construct_props_);
@@ -421,7 +421,7 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
 
   UpdateUserScripts();
 
-  return context_;
+  return context_.get();
 }
 
 } // namespace qt
