@@ -104,6 +104,14 @@ TestWebView {
       compare(headers["foo"], data["Foo"]);
     }
 
+    function test_NetworkCallbackEvents2_BeforeRedirect_data() {
+      return [
+        { url: "http://localhost:8080/redirect.py?redirect", "httpResponseCode": 307, "newUrl": "http://localhost:8080/empty.html", "cancelled": false, "isMainFrame": true },
+        { url: "http://localhost:8080/redirect.py?cancel", "httpResponseCode": 307, "newUrl": "http://localhost:8080/empty.html", "cancelled": true, "isMainFrame": true },
+        { url: "http://localhost:8080/tst_NetworkCallbackEvents_Redirect.html", "httpResponseCode": 307, "newUrl": "http://localhost:8080/empty.html", "cancelled": false, "isMainFrame": false },
+      ];
+    }
+
     function test_NetworkCallbackEvents2_BeforeRedirect(data) {
       webView.workerMessageType = "onBeforeRedirect";
 
@@ -112,15 +120,11 @@ TestWebView {
              "Timed out waiting for a successful load");
 
       compare(webView.workerMessages.length, 1, "Unexpected number of worker messages");
-      compare(webView.workerMessages[0].url, data.url);
       compare(webView.workerMessages[0].method, "GET");
-      compare(webView.workerMessages[0].requestCancelled, false);
-
-      var headers = JSON.parse(webView.getTestApi().evaluateCode(
-          "return document.body.children[0].innerHTML", true));
-
-      compare(headers["user-agent"], data["User-Agent"]);
-      compare(headers["foo"], data["Foo"]);
+      compare(webView.workerMessages[0].newUrl, data.newUrl);
+      compare(webView.workerMessages[0].isMainFrame, data.isMainFrame);
+      compare(webView.workerMessages[0].httpResponseCode, data.httpResponseCode);
+      compare(webView.workerMessages[0].requestCancelled, data.cancelled);
     }
   }
 }
