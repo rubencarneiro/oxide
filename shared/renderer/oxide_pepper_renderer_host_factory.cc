@@ -46,8 +46,6 @@ scoped_ptr<ppapi::host::ResourceHost> PepperRendererHostFactory::CreateResourceH
     const IPC::Message& message) {
   DCHECK_EQ(host_->GetPpapiHost(), host);
 
-  LOG(INFO) << __PRETTY_FUNCTION__;
-
   if (!host_->IsValidInstance(instance)) {
     return scoped_ptr<ppapi::host::ResourceHost>();
   }
@@ -56,30 +54,26 @@ scoped_ptr<ppapi::host::ResourceHost> PepperRendererHostFactory::CreateResourceH
         ppapi::PERMISSION_FLASH)) {
     switch (message.type()) {
       case PpapiHostMsg_Flash_Create::ID: {
-  LOG(INFO) << __PRETTY_FUNCTION__ << " oxide constructing PepperFlashRendererHost";
         return scoped_ptr<ppapi::host::ResourceHost>(
             new PepperFlashRendererHost(host_, instance, params.pp_resource()));
       }
 //      case PpapiHostMsg_FlashFullscreen_Create::ID: {
- //       return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashFullscreenHost(
+//       return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashFullscreenHost(
 //            host_, instance, params.pp_resource()));
 //      }
-      case PpapiHostMsg_FlashMenu_Create::ID: {
-  LOG(INFO) << __PRETTY_FUNCTION__ << " oxide constructing PepperFlashMenuHost";
-        ppapi::proxy::SerializedFlashMenu serialized_menu;
-        if (ppapi::UnpackMessage<PpapiHostMsg_FlashMenu_Create>(
-                message, &serialized_menu)) {
-          return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashMenuHost(
-              host_, instance, params.pp_resource(), serialized_menu));
-        }
-        break;
-      }
+//      case PpapiHostMsg_FlashMenu_Create::ID: {
+//        ppapi::proxy::SerializedFlashMenu serialized_menu;
+//        if (ppapi::UnpackMessage<PpapiHostMsg_FlashMenu_Create>(
+//                message, &serialized_menu)) {
+//          return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashMenuHost(
+//              host_, instance, params.pp_resource(), serialized_menu));
+//        }
+//        break;
+//      }
       default:
         ;
     }
   }
-
-  LOG(INFO) << __PRETTY_FUNCTION__ << "returning (fall through)";
 
   return scoped_ptr<ppapi::host::ResourceHost>();
 }
