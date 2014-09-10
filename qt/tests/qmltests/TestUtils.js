@@ -28,7 +28,7 @@ function TestApiHost(webview, frame) {
 }
 
 TestApiHost.prototype = {
-  waitForResult: function(req, timeout) {
+  waitForResult: function(req, timeout, gcDuringWait) {
     var result;
     var error;
 
@@ -42,7 +42,7 @@ TestApiHost.prototype = {
     };
 
     this._webview.waitFor(function() { return error !== undefined; },
-                          timeout);
+                          timeout, gcDuringWait);
 
     if (error > 0) {
       throw new MessageError(error, result);
@@ -76,11 +76,12 @@ TestApiHost.prototype = {
                                 { selector: selector }));
   },
 
-  sendMessageToSelf: function(id, args) {
+  sendMessageToSelf: function(id, args, gcDuringWait) {
     var r = this.waitForResult(
         this._frame.sendMessage("oxide://testutils/",
                                 "SEND-MESSAGE-TO-SELF",
-                                { id: id, args: args } ));
+                                { id: id, args: args } ),
+        null, gcDuringWait);
     if (r.error > 0) {
       throw new MessageError(r.error, r.response);
     } else {

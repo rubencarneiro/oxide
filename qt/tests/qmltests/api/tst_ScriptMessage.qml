@@ -44,7 +44,6 @@ TestWebView {
 
     function init() {
       webView.lastMessageFrameSource = null;
-      webView.gcDuringWait = false;
       webView.url = "http://localhost:8080/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -76,8 +75,7 @@ TestWebView {
 
     function test_ScriptMessage3_no_response() {
       try {
-        webView.gcDuringWait = true;
-        webView.getTestApi().sendMessageToSelf("TEST-NO-RESPONSE", {});
+        webView.getTestApi().sendMessageToSelf("TEST-NO-RESPONSE", {}, true);
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");
