@@ -6,6 +6,9 @@ import com.canonical.Oxide.Testing 1.0
 TestWebView {
   id: webView
 
+  width: 200
+  height: 200
+
   onCertificateError: {
     error.allow();
   }
