@@ -103,24 +103,26 @@ Item {
           certStatusSignals: [1,2], certificateSignals: [1,2],
           certificate: "89c5760286e897ad32b9dd500d70755e1e026588"
         },
-        {
-          url: "https://localhost:4443/tst_SecurityStatus_display_broken_subresource.html",
-          securityLevel: SecurityStatus.SecurityLevelError,
-          contentStatus: SecurityStatus.ContentStatusRanInsecure,
-          certStatus: SecurityStatus.CertStatusOk,
-          securityLevelSignals: [2,3], contentStatusSignals: [1,2],
-          certStatusSignals: [0,0], certificateSignals: [1,2],
-          certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
-        },
-        {
-          url: "https://localhost:4443/tst_SecurityStatus_run_broken_subresource.html",
-          securityLevel: SecurityStatus.SecurityLevelError,
-          contentStatus: SecurityStatus.ContentStatusRanInsecure,
-          certStatus: SecurityStatus.CertStatusOk,
-          securityLevelSignals: [2,3], contentStatusSignals: [1,2],
-          certStatusSignals: [0,0], certificateSignals: [1,2],
-          certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
-        },
+        // Disabled for now because these errors are currently non-overriable
+        // See https://launchpad.net/bugs/1368385
+        //{
+        //  url: "https://localhost:4443/tst_SecurityStatus_display_broken_subresource.html",
+        //  securityLevel: SecurityStatus.SecurityLevelError,
+        //  contentStatus: SecurityStatus.ContentStatusRanInsecure,
+        //  certStatus: SecurityStatus.CertStatusOk,
+        //  securityLevelSignals: [2,3], contentStatusSignals: [1,2],
+        //  certStatusSignals: [0,0], certificateSignals: [1,2],
+        //  certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
+        //},
+        //{
+        //  url: "https://localhost:4443/tst_SecurityStatus_run_broken_subresource.html",
+        //  securityLevel: SecurityStatus.SecurityLevelError,
+        //  contentStatus: SecurityStatus.ContentStatusRanInsecure,
+        //  certStatus: SecurityStatus.CertStatusOk,
+        //  securityLevelSignals: [2,3], contentStatusSignals: [1,2],
+        //  certStatusSignals: [0,0], certificateSignals: [1,2],
+        //  certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
+        //},
         {
           url: "https://localhost:4443/tst_SecurityStatus_display_insecure_content.html",
           securityLevel: SecurityStatus.SecurityLevelWarning,

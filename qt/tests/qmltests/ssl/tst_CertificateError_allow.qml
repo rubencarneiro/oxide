@@ -29,18 +29,16 @@ TestWebView {
     }
 
     function _verify_1() {
-      try {
-        compare(webView.getTestApi().documentURI, "https://localhost:4444/tst_CertificateError_broken_iframe.html");
-      } catch(e) {
-        verify(false);
-      }
+      compare(webView.getTestApi().documentURI, "https://localhost:4444/tst_CertificateError_broken_iframe.html");
     }
 
     function _verify_2() {
+      // This verifies that either there is no document or it is an error page
       try {
-        compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI, "https://localhost:4445/empty.html");
+        compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI,
+                "data:text/html,chromewebdata");
       } catch(e) {
-        verify(false);
+        compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
       }
     }
 
@@ -49,7 +47,7 @@ TestWebView {
 var elem = document.getElementById(\"foo\");
 var style = window.getComputedStyle(elem);
 return style.getPropertyValue(\"color\");", true);
-      compare(colour, "rgb(0, 128, 0)");
+      compare(colour, "rgb(0, 0, 0)");
     }
 
     function _verify_4() {
@@ -57,27 +55,26 @@ return style.getPropertyValue(\"color\");", true);
 var elem = document.getElementById(\"foo\");
 var style = window.getComputedStyle(elem);
 return style.getPropertyValue(\"color\");", true);
-      compare(colour, "rgb(0, 128, 0)");
+      compare(colour, "rgb(0, 0, 0)");
     }
 
     function test_CertificateError_allow1_data() {
       return [
         {
           loadUrl: "https://localhost:4444/tst_CertificateError_broken_iframe.html",
-          mainframe: true, verifyFunc: _verify_1
+          mainframe: true, overridable: true, verifyFunc: _verify_1
         },
         {
           loadUrl: "https://localhost:4443/tst_CertificateError_broken_iframe.html",
-          mainframe: false, errorCount: 1, verifyFunc: _verify_2
+          mainframe: false, overridable: false, errorCount: 1, verifyFunc: _verify_2
         },
         {
           loadUrl: "https://localhost:4443/tst_CertificateError_broken_subresource.html",
-          mainframe: false, errorCount: 1, verifyFunc: _verify_3
+          mainframe: false, overridable: false, errorCount: 1, verifyFunc: _verify_3
         },
         {
-          // FIXME: This one generates no errors because the CSS file gets loaded from cache
           loadUrl: "https://localhost:4443/tst_CertificateError_broken_subresource_in_iframe.html",
-          mainframe: false, errorCount: 0, verifyFunc: _verify_4
+          mainframe: false, overridable: false, errorCount: 1, verifyFunc: _verify_4
         }
       ];
     }

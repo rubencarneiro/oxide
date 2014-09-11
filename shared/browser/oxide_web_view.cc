@@ -1409,7 +1409,12 @@ void WebView::AllowCertificateError(
       "overridable and strict_enforcement are expected to be mutually exclusive";
 
   scoped_ptr<SimplePermissionRequest> request;
-  if (overridable) {
+  // We can't safely allow the embedder to override errors for subresources or
+  // subframes because they don't always result in the API indicating a
+  // degraded security level. Mark these non-overridable for now and just
+  // deny them outright
+  // See https://launchpad.net/bugs/1368385
+  if (overridable && resource_type == content::RESOURCE_TYPE_MAIN_FRAME) {
     request =
         permission_request_manager_.CreateSimplePermissionRequest(
           PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE,

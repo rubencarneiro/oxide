@@ -33,18 +33,19 @@ TestWebView {
     }
 
     function _verify_1() {
+      // This verifies that either there is no document or it is an error page
       try {
-        webView.getTestApi().documentURI;
-        verify(false);
+        comare(webView.getTestApi().documentURI, "data:text/html,chromewebdata");
       } catch(e) {
         compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
       }
     }
 
     function _verify_2() {
+      // This verifies that either there is no document or it is an error page
       try {
-        webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI;
-        verify(false);
+        compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI,
+                "data:text/html,chromewebdata");
       } catch(e) {
         compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
       }
@@ -80,7 +81,7 @@ return style.getPropertyValue(\"color\");", true);
         {
           loadUrl: "https://localhost:4443/tst_CertificateError_broken_iframe.html",
           url: "https://localhost:4445/empty.html",
-          mainframe: false, subresource: false, overridable: true,
+          mainframe: false, subresource: false, overridable: false,
           strictEnforcement: false, error: CertificateError.ErrorAuthorityInvalid,
           certificate: "f0357f544e27adaa51211663a28cc8d64b057e63",
           verifyFunc: _verify_2
@@ -88,7 +89,7 @@ return style.getPropertyValue(\"color\");", true);
         {
           loadUrl: "https://localhost:4443/tst_CertificateError_broken_subresource.html",
           url: "https://localhost:4446/tst_CertificateError_broken_subresource.css",
-          mainframe: true, subresource: true, overridable: true,
+          mainframe: true, subresource: true, overridable: false,
           strictEnforcement: false, error: CertificateError.ErrorBadIdentity,
           certificate: "89c5760286e897ad32b9dd500d70755e1e026588",
           verifyFunc: _verify_3
@@ -96,7 +97,7 @@ return style.getPropertyValue(\"color\");", true);
         {
           loadUrl: "https://localhost:4443/tst_CertificateError_broken_subresource_in_iframe.html",
           url: "https://localhost:4446/tst_CertificateError_broken_subresource.css",
-          mainframe: false, subresource: true, overridable: true,
+          mainframe: false, subresource: true, overridable: false,
           strictEnforcement: false, error: CertificateError.ErrorBadIdentity,
           certificate: "89c5760286e897ad32b9dd500d70755e1e026588",
           verifyFunc: _verify_4
@@ -125,8 +126,12 @@ return style.getPropertyValue(\"color\");", true);
         compare(webView.loadsStoppedCount, 1);
         compare(webView.loadsSucceededCount, 0);
       } else {
-        // This is a bit of a hack, but we don't have another event we can fire off
-        wait(100);
+        verify(webView.waitForLoadSucceeded());
+        if (!data.mainframe) {
+          // This is a bit of a hack, but we don't have another event we can
+          // fire off for subframe loads
+          wait(100);
+        }
       }
 
       compare(webView.securityStatus.securityLevel,
