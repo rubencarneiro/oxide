@@ -42,7 +42,7 @@ TestWebView {
     function verifyUserAgent(re) {
       var userAgent = webView.context.userAgent;
 
-      webView.url = "http://localhost:8080/get-headers.py"
+      webView.url = "http://testsuite/get-headers.py"
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

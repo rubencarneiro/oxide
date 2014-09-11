@@ -38,7 +38,7 @@ return style.getPropertyValue(\"color\");", true) == "rgb(0, 128, 0)";
 
     function test_WebView_mixedContentOverrides1_display() {
       // Load a URL with mixed content
-      webView.url = "https://localhost:4443/tst_WebView_mixedContentOverrides.html";
+      webView.url = "https://testsuite/tst_WebView_mixedContentOverrides.html";
       verify(webView.waitForLoadSucceeded());
 
       // Verify WebView.blockedContent indicates both were blocked
@@ -90,7 +90,7 @@ return style.getPropertyValue(\"color\");", true) == "rgb(0, 128, 0)";
       verify(!_did_run_mixed_content());
 
       // Navigate to another URL and then go back
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
       compare(webView.blockedContent, WebView.ContentTypeNone);
       webView.goBack();
@@ -108,7 +108,7 @@ return style.getPropertyValue(\"color\");", true) == "rgb(0, 128, 0)";
 
     function test_WebView_mixedContentOverrides2_run() {
       // Load a URL with mixed content
-      webView.url = "https://localhost:4443/tst_WebView_mixedContentOverrides.html";
+      webView.url = "https://testsuite/tst_WebView_mixedContentOverrides.html";
       verify(webView.waitForLoadSucceeded());
 
       // Verify WebView.blockedContent indicates both were blocked
@@ -158,7 +158,7 @@ return style.getPropertyValue(\"color\");", true) == "rgb(0, 128, 0)";
       verify(_did_run_mixed_content());
 
       // Navigate to another URL and then go back
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
       compare(webView.blockedContent, WebView.ContentTypeNone);
       webView.goBack();
@@ -175,7 +175,7 @@ return style.getPropertyValue(\"color\");", true) == "rgb(0, 128, 0)";
     }
 
     function test_WebView_mixedContentOverrides3_no_content_blocked() {
-      webView.url = "http://localhost:8080/tst_WebView_mixedContentOverrides.html";
+      webView.url = "http://testsuite/tst_WebView_mixedContentOverrides.html";
       verify(webView.waitForLoadSucceeded());
 
       webView.clearLoadEventCounters();

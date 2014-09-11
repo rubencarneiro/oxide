@@ -26,7 +26,7 @@ TestWebView {
     when: windowShown
 
     function test_bug1361868_1() {
-      webView.url = "http://localhost:8080/tst_bug1361868.html";
+      webView.url = "http://testsuite/tst_bug1361868.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

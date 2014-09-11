@@ -100,53 +100,6 @@ void WebContextAdapter::setUserAgent(const QString& user_agent) {
   }
 }
 
-bool WebContextAdapter::devtoolsEnabled() const {
-  if (isInitialized()) {
-    return priv->context_->GetDevtoolsEnabled();
-  }
-  return priv->construct_props_->devtools_enabled;
-}
-
-void WebContextAdapter::setDevtoolsEnabled(bool enabled) {
-  if (isInitialized()) {
-    qWarning() << "Cannot change the devtools enabled after inititialization";
-    return;
-  }
-  priv->construct_props_->devtools_enabled = enabled;
-}
-
-int WebContextAdapter::devtoolsPort() const {
-  if (isInitialized()) {
-    return priv->context_->GetDevtoolsPort();
-  }
-
-  return priv->construct_props_->devtools_port;
-}
-
-void WebContextAdapter::setDevtoolsPort(int port) {
-  if (isInitialized()) {
-    qWarning() << "Cannot change the devtools port after inititialization";
-    return;
-  }
-  priv->construct_props_->devtools_port = port;
-}
-
-QString WebContextAdapter::devtoolsBindIp() const {
-  if (isInitialized()) {
-    return QString::fromStdString(priv->context_->GetDevtoolsBindIp());
-  }
-
-  return QString::fromStdString(priv->construct_props_->devtools_ip);
-}
-
-void WebContextAdapter::setDevtoolsBindIp(const QString& bindIp) {
-  if (isInitialized()) {
-    qWarning() << "Cannot change the devtools bound ip after inititialization";
-    return;
-  }
-  priv->construct_props_->devtools_ip = bindIp.toStdString();
-}
-
 QUrl WebContextAdapter::dataPath() const {
   base::FilePath path;
   if (isInitialized()) {
@@ -338,6 +291,53 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
   }
 }
 
+bool WebContextAdapter::devtoolsEnabled() const {
+  if (isInitialized()) {
+    return priv->context_->GetDevtoolsEnabled();
+  }
+  return priv->construct_props_->devtools_enabled;
+}
+
+void WebContextAdapter::setDevtoolsEnabled(bool enabled) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools enabled after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_enabled = enabled;
+}
+
+int WebContextAdapter::devtoolsPort() const {
+  if (isInitialized()) {
+    return priv->context_->GetDevtoolsPort();
+  }
+
+  return priv->construct_props_->devtools_port;
+}
+
+void WebContextAdapter::setDevtoolsPort(int port) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools port after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_port = port;
+}
+
+QString WebContextAdapter::devtoolsBindIp() const {
+  if (isInitialized()) {
+    return QString::fromStdString(priv->context_->GetDevtoolsBindIp());
+  }
+
+  return QString::fromStdString(priv->construct_props_->devtools_ip);
+}
+
+void WebContextAdapter::setDevtoolsBindIp(const QString& bindIp) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools bound ip after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_ip = bindIp.toStdString();
+}
+
 int WebContextAdapter::setCookies(
     const QUrl& url,
     const QList<QNetworkCookie>& cookies) {
@@ -386,6 +386,35 @@ int WebContextAdapter::deleteAllCookies() {
 
   priv->DeleteAllCookies(request_id);
   return request_id;
+}
+
+QStringList WebContextAdapter::hostMappingRules() const {
+  const std::vector<std::string>* list = NULL;
+  if (!isInitialized()) {
+    list = &priv->construct_props_->host_mapping_rules;
+  } else {
+    list = &priv->context_->GetHostMappingRules();
+  }
+
+  QStringList rules;
+  for (std::vector<std::string>::const_iterator it = list->cbegin();
+       it != list->cend(); ++it) {
+    rules.append(QString::fromStdString(*it));
+  }
+
+  return rules;
+}
+
+void WebContextAdapter::setHostMappingRules(const QStringList& rules) {
+  DCHECK(!isInitialized());
+
+  std::vector<std::string> list;
+  for (QStringList::const_iterator it = rules.cbegin();
+       it != rules.cend(); ++it) {
+    list.push_back((*it).toStdString());
+  }
+
+  priv->construct_props_->host_mapping_rules = list;
 }
 
 WebContextAdapter::WebContextAdapter(QObject* q)

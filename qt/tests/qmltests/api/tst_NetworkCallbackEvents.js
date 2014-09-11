@@ -4,9 +4,9 @@ exports.onBeforeURLRequest = function(event) {
                       requestCancelled: event.requestCancelled,
                       redirectUrl: event.redirectUrl });
 
-  if (event.url == "http://localhost:8080/tst_NetworkCallbackEvents2.html") {
-    event.redirectUrl = "http://localhost:8080/empty.html";
-  } else if (event.url == "http://localhost:8080/tst_NetworkCallbackEvents3.html") {
+  if (event.url == "http://testsuite/tst_NetworkCallbackEvents2.html") {
+    event.redirectUrl = "http://testsuite/empty.html";
+  } else if (event.url == "http://testsuite/tst_NetworkCallbackEvents3.html") {
     event.cancelRequest();
   }
 };
@@ -20,11 +20,11 @@ exports.onBeforeSendHeaders = function(event) {
                       hasFoo: event.hasHeader("Foo"),
                       Foo: event.getHeader("Foo") });
 
-  if (event.url == "http://localhost:8080/get-headers.py?override-ua") {
+  if (event.url == "http://testsuite/get-headers.py?override-ua") {
     event.setHeader("User-Agent", "Bleurgh");
-  } else if (event.url == "http://localhost:8080/get-headers.py?clear-ua") {
+  } else if (event.url == "http://testsuite/get-headers.py?clear-ua") {
     event.clearHeader("User-Agent");
-  } else if (event.url == "http://localhost:8080/get-headers.py?add-foo") {
+  } else if (event.url == "http://testsuite/get-headers.py?add-foo") {
     event.setHeader("Foo", "Bar");
   }
 }

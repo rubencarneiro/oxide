@@ -59,7 +59,7 @@ Item {
       // XXX: How do we test that EV works?
       return [
         {
-          url: "http://localhost:8080/empty.html",
+          url: "http://testsuite/empty.html",
           securityLevel: SecurityStatus.SecurityLevelNone,
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusOk,
@@ -68,7 +68,7 @@ Item {
           certificate: null
         },
         {
-          url: "https://localhost:4443/empty.html",
+          url: "https://testsuite/empty.html",
           securityLevel: SecurityStatus.SecurityLevelSecure,
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusOk,
@@ -77,7 +77,7 @@ Item {
           certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         },
         {
-          url: "https://localhost:4444/empty.html",
+          url: "https://expired.testsuite/empty.html",
           securityLevel: SecurityStatus.SecurityLevelError,
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusExpired,
@@ -86,7 +86,7 @@ Item {
           certificate: "df17c8da033e2d5ed64d1f187fdf419e1fc68e47"
         },
         {
-          url: "https://localhost:4445/empty.html",
+          url: "https://selfsigned.testsuite/empty.html",
           securityLevel: SecurityStatus.SecurityLevelError,
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusAuthorityInvalid,
@@ -95,7 +95,7 @@ Item {
           certificate: "f0357f544e27adaa51211663a28cc8d64b057e63"
         },
         {
-          url: "https://localhost:4446/empty.html",
+          url: "https://badidentity.testsuite/empty.html",
           securityLevel: SecurityStatus.SecurityLevelError,
           contentStatus: SecurityStatus.ContentStatusNormal,
           certStatus: SecurityStatus.CertStatusBadIdentity,
@@ -106,7 +106,7 @@ Item {
         // Disabled for now because these errors are currently non-overriable
         // See https://launchpad.net/bugs/1368385
         //{
-        //  url: "https://localhost:4443/tst_SecurityStatus_display_broken_subresource.html",
+        //  url: "https://testsuite/tst_SecurityStatus_display_broken_subresource.html",
         //  securityLevel: SecurityStatus.SecurityLevelError,
         //  contentStatus: SecurityStatus.ContentStatusRanInsecure,
         //  certStatus: SecurityStatus.CertStatusOk,
@@ -115,7 +115,7 @@ Item {
         //  certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         //},
         //{
-        //  url: "https://localhost:4443/tst_SecurityStatus_run_broken_subresource.html",
+        //  url: "https://testsuite/tst_SecurityStatus_run_broken_subresource.html",
         //  securityLevel: SecurityStatus.SecurityLevelError,
         //  contentStatus: SecurityStatus.ContentStatusRanInsecure,
         //  certStatus: SecurityStatus.CertStatusOk,
@@ -124,7 +124,7 @@ Item {
         //  certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         //},
         {
-          url: "https://localhost:4443/tst_SecurityStatus_display_insecure_content.html",
+          url: "https://testsuite/tst_SecurityStatus_display_insecure_content.html",
           securityLevel: SecurityStatus.SecurityLevelWarning,
           contentStatus: SecurityStatus.ContentStatusDisplayedInsecure,
           certStatus: SecurityStatus.CertStatusOk,
@@ -133,7 +133,7 @@ Item {
           certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         },
         {
-          url: "https://localhost:4443/tst_SecurityStatus_run_insecure_content.html",
+          url: "https://testsuite/tst_SecurityStatus_run_insecure_content.html",
           securityLevel: SecurityStatus.SecurityLevelError,
           contentStatus: SecurityStatus.ContentStatusRanInsecure | SecurityStatus.ContentStatusDisplayedInsecure,
           certStatus: SecurityStatus.CertStatusOk,
@@ -185,7 +185,7 @@ Item {
       var obs = OxideTestingUtils.createDestructionObserver(certificate);
 
       // Go back to a http URL
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
 
       // Verify the API status is appropriate for a non-HTTPS URL

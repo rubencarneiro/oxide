@@ -20,6 +20,7 @@
 
 #include <QWeakPointer>
 #include <QString>
+#include <QStringList>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -112,14 +113,17 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
+  QString devtoolsBindIp() const;
+  void setDevtoolsBindIp(const QString& bindIp);
+
   int setCookies(const QUrl& url,
                  const QList<QNetworkCookie>& cookies);
   int getCookies(const QUrl& url);
   int getAllCookies();
   int deleteAllCookies();
 
-  QString devtoolsBindIp() const;
-  void setDevtoolsBindIp(const QString& bindIp);
+  QStringList hostMappingRules() const;
+  void setHostMappingRules(const QStringList& rules);
 
  protected:
   WebContextAdapter(QObject* q);

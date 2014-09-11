@@ -71,32 +71,32 @@ return style.getPropertyValue(\"color\");", true);
       // FIXME: Test overridable and strictEnforcement properties
       return [
         {
-          loadUrl: "https://localhost:4444/tst_CertificateError_broken_iframe.html",
-          url: "https://localhost:4444/tst_CertificateError_broken_iframe.html",
+          loadUrl: "https://expired.testsuite/tst_CertificateError_broken_iframe.html",
+          url: "https://expired.testsuite/tst_CertificateError_broken_iframe.html",
           mainframe: true, subresource: false, overridable: true,
           strictEnforcement: false, error: CertificateError.ErrorExpired,
           certificate: "df17c8da033e2d5ed64d1f187fdf419e1fc68e47",
           verifyFunc: _verify_1
         },
         {
-          loadUrl: "https://localhost:4443/tst_CertificateError_broken_iframe.html",
-          url: "https://localhost:4445/empty.html",
+          loadUrl: "https://testsuite/tst_CertificateError_broken_iframe.html",
+          url: "https://selfsigned.testsuite/empty.html",
           mainframe: false, subresource: false, overridable: false,
           strictEnforcement: false, error: CertificateError.ErrorAuthorityInvalid,
           certificate: "f0357f544e27adaa51211663a28cc8d64b057e63",
           verifyFunc: _verify_2
         },
         {
-          loadUrl: "https://localhost:4443/tst_CertificateError_broken_subresource.html",
-          url: "https://localhost:4446/tst_CertificateError_broken_subresource.css",
+          loadUrl: "https://testsuite/tst_CertificateError_broken_subresource.html",
+          url: "https://badidentity.testsuite/tst_CertificateError_broken_subresource.css",
           mainframe: true, subresource: true, overridable: false,
           strictEnforcement: false, error: CertificateError.ErrorBadIdentity,
           certificate: "89c5760286e897ad32b9dd500d70755e1e026588",
           verifyFunc: _verify_3
         },
         {
-          loadUrl: "https://localhost:4443/tst_CertificateError_broken_subresource_in_iframe.html",
-          url: "https://localhost:4446/tst_CertificateError_broken_subresource.css",
+          loadUrl: "https://testsuite/tst_CertificateError_broken_subresource_in_iframe.html",
+          url: "https://badidentity.testsuite/tst_CertificateError_broken_subresource.css",
           mainframe: false, subresource: true, overridable: false,
           strictEnforcement: false, error: CertificateError.ErrorBadIdentity,
           certificate: "89c5760286e897ad32b9dd500d70755e1e026588",

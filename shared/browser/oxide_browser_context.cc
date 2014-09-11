@@ -37,6 +37,7 @@
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/common/user_agent.h"
+#include "net/base/host_mapping_rules.h"
 #include "net/base/net_errors.h"
 #include "net/base/net_util.h"
 #include "net/cookies/cookie_monster.h"
@@ -209,7 +210,8 @@ struct BrowserContextSharedIOData {
         cache_path(params.cache_path),
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
-        popup_blocker_enabled(true) {
+        popup_blocker_enabled(true),
+        host_mapping_rules(params.host_mapping_rules) {
 
    accept_langs = dgettext("oxide", "AcceptLanguage");
    if (accept_langs == "AcceptLanguage") {
@@ -228,6 +230,8 @@ struct BrowserContextSharedIOData {
   net::StaticCookiePolicy::Type cookie_policy;
   content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
   bool popup_blocker_enabled;
+
+  std::vector<std::string> host_mapping_rules;
 
   scoped_refptr<BrowserContextDelegate> delegate;
 };
@@ -397,6 +401,15 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           content::BrowserThread::FILE),
         IsOffTheRecord()));
 
+  host_mapping_rules_.reset(new net::HostMappingRules());
+  const std::vector<std::string>& host_mapping_rules =
+      GetSharedData().host_mapping_rules;
+  for (std::vector<std::string>::const_iterator it =
+           host_mapping_rules.begin();
+       it != host_mapping_rules.end(); ++it) {
+    host_mapping_rules_->AddRuleFromString(*it);
+  }
+
   main_request_context_.reset(new URLRequestContext());
   URLRequestContext* context = main_request_context_.get();
   net::URLRequestContextStorage* storage = context->storage();
@@ -446,6 +459,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.http_server_properties =
       context->http_server_properties();
   session_params.net_log = context->net_log();
+  session_params.host_mapping_rules = host_mapping_rules_.get();
 
   storage->set_http_transaction_factory(
       new net::HttpCache(session_params, cache_backend));
@@ -930,6 +944,11 @@ int BrowserContext::GetDevtoolsPort() const {
 std::string BrowserContext::GetDevtoolsBindIp() const {
   DCHECK(CalledOnValidThread());
   return GetSharedData().devtools_ip;
+}
+
+const std::vector<std::string>& BrowserContext::GetHostMappingRules() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetSharedData().host_mapping_rules;
 }
 
 UserScriptMaster& BrowserContext::UserScriptManager() {

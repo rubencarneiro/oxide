@@ -15,7 +15,7 @@ TestWebView {
 
     // Verify that the default response is "deny" when there are no handlers
     function test_CertificateError_no_response1() {
-      webView.url = "https://localhost:4444/tst_CertificateError_broken_iframe.html";
+      webView.url = "https://expired.testsuite/tst_CertificateError_broken_iframe.html";
       verify(webView.waitForLoadStopped(null, true));
 
       try {

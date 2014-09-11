@@ -25,10 +25,10 @@ TestWebView {
     }
 
     readonly property var initData: [
-      { url: "http://localhost:8080/tst_WebView_navigation1.html", index: 0 },
-      { url: "http://localhost:8080/tst_WebView_navigation2.html", index: 1 },
-      { url: "http://localhost:8080/tst_WebView_navigation3.html", index: 2 },
-      { url: "http://localhost:8080/tst_WebView_navigation1.html", index: 3 }
+      { url: "http://testsuite/tst_WebView_navigation1.html", index: 0 },
+      { url: "http://testsuite/tst_WebView_navigation2.html", index: 1 },
+      { url: "http://testsuite/tst_WebView_navigation3.html", index: 2 },
+      { url: "http://testsuite/tst_WebView_navigation1.html", index: 3 }
     ]
 
     function test_WebView_navigation1_init_data() {
@@ -117,7 +117,7 @@ TestWebView {
       verify(webView.canGoForward, "Should be able to go forward");
 
       spy.clear();
-      var url = "http://localhost:8080/tst_WebView_navigation4.html";
+      var url = "http://testsuite/tst_WebView_navigation4.html";
 
       webView.url = url;
       verify(webView.waitForLoadSucceeded(),
@@ -167,7 +167,7 @@ TestWebView {
       webView.loadingChanged.connect(doStop);
       webView.clearLoadEventCounters();
 
-      var url = "http://localhost:8080/tst_WebView_navigation5.py";
+      var url = "http://testsuite/tst_WebView_navigation5.py";
 
       webView.url = url;
       verify(webView.waitForLoadStopped(),

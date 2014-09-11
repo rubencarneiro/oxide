@@ -29,7 +29,7 @@ TestWebView {
     }
 
     function _verify_1() {
-      compare(webView.getTestApi().documentURI, "https://localhost:4444/tst_CertificateError_broken_iframe.html");
+      compare(webView.getTestApi().documentURI, "https://expired.testsuite/tst_CertificateError_broken_iframe.html");
     }
 
     function _verify_2() {
@@ -61,19 +61,19 @@ return style.getPropertyValue(\"color\");", true);
     function test_CertificateError_allow1_data() {
       return [
         {
-          loadUrl: "https://localhost:4444/tst_CertificateError_broken_iframe.html",
+          loadUrl: "https://expired.testsuite/tst_CertificateError_broken_iframe.html",
           mainframe: true, overridable: true, verifyFunc: _verify_1
         },
         {
-          loadUrl: "https://localhost:4443/tst_CertificateError_broken_iframe.html",
+          loadUrl: "https://testsuite/tst_CertificateError_broken_iframe.html",
           mainframe: false, overridable: false, errorCount: 1, verifyFunc: _verify_2
         },
         {
-          loadUrl: "https://localhost:4443/tst_CertificateError_broken_subresource.html",
+          loadUrl: "https://testsuite/tst_CertificateError_broken_subresource.html",
           mainframe: false, overridable: false, errorCount: 1, verifyFunc: _verify_3
         },
         {
-          loadUrl: "https://localhost:4443/tst_CertificateError_broken_subresource_in_iframe.html",
+          loadUrl: "https://testsuite/tst_CertificateError_broken_subresource_in_iframe.html",
           mainframe: false, overridable: false, errorCount: 1, verifyFunc: _verify_4
         }
       ];

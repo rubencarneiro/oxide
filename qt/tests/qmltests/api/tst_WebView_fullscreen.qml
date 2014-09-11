@@ -36,7 +36,7 @@ TestWebView {
     when: windowShown
 
     function test_WebView_fullscreen1() {
-      webView.url = "http://localhost:8080/tst_WebView_fullscreen.html"
+      webView.url = "http://testsuite/tst_WebView_fullscreen.html"
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

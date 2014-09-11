@@ -43,11 +43,11 @@ Column {
         return;
       }
 
-      webView1.url = "http://localhost:8080/tst_WebView_incognito.py"
+      webView1.url = "http://testsuite/tst_WebView_incognito.py"
       verify(webView1.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      webView1.url = "http://localhost:8080/get-cookies.py"
+      webView1.url = "http://testsuite/get-cookies.py"
       verify(webView1.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -57,7 +57,7 @@ Column {
           "return document.body.children[0].innerHTML", true));
       compare(cookies["foo"], "bar", "Cookie was not set correctly");
 
-      webView2.url = "http://localhost:8080/get-cookies.py"
+      webView2.url = "http://testsuite/get-cookies.py"
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -67,7 +67,7 @@ Column {
 
       // Just to be sure, make sure we can access the original cookie from a third
       // (non-incognito) webview
-      webView3.url = "http://localhost:8080/get-cookies.py"
+      webView3.url = "http://testsuite/get-cookies.py"
       verify(webView3.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

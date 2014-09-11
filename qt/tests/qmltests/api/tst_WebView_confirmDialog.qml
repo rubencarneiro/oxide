@@ -58,7 +58,7 @@ TestWebView {
 
     function test_noDialogComponent() {
       webView.confirmDialog = null;
-      webView.url = "http://localhost:8080/tst_WebView_confirmDialog.html";
+      webView.url = "http://testsuite/tst_WebView_confirmDialog.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       compareResultValue("NOK");
@@ -73,7 +73,7 @@ TestWebView {
 
     function test_customDialogComponent(data) {
       webView.confirmDialog = customDialogComponent;
-      webView.url = "http://localhost:8080/tst_WebView_confirmDialog.html";
+      webView.url = "http://testsuite/tst_WebView_confirmDialog.html";
       verify(webView.waitFor(webView.dialogShown), "Confirm dialog not shown");
       var dialog = webView.currentDialog;
       compare(dialog.width, webView.width);

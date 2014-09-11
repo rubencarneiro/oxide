@@ -77,7 +77,7 @@ return style.getPropertyValue(\"color\");", true) == "rgb(255, 0, 0)";
       webView.preferences.canRunInsecureContent = data.run;
       compare(runSpy.count, data.runCount);
 
-      webView.url = "https://localhost:4443/tst_WebPreferences_mixedContent.html";
+      webView.url = "https://testsuite/tst_WebPreferences_mixedContent.html";
       verify(webView.waitForLoadSucceeded());
 
       compare(_can_display(), data.display);

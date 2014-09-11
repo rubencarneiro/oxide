@@ -23,7 +23,7 @@ TestWebView {
       compare(webView.title, "",
               "The title should be empty before we load anything");
 
-      webView.url = "http://localhost:8080/tst_WebView_title.html";
+      webView.url = "http://testsuite/tst_WebView_title.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 

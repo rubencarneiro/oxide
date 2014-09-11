@@ -62,7 +62,7 @@ TestWebView {
     }
 
     function test_GeolocationPermissionRequest1(data) {
-      webView.url = "http://localhost:8080/tst_GeolocationPermissionRequest.html";
+      webView.url = "http://testsuite/tst_GeolocationPermissionRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -76,8 +76,8 @@ TestWebView {
 
       verify(webView.waitFor(function() { return !!webView.lastGeolocationRequest; }),
              "Timed out waiting for geolocation request");
-      compare(webView.lastGeolocationRequest.origin, "http://localhost:8080/");
-      compare(webView.lastGeolocationRequest.embedder, "http://localhost:8080/");
+      compare(webView.lastGeolocationRequest.origin, "http://testsuite/");
+      compare(webView.lastGeolocationRequest.embedder, "http://testsuite/");
       compare(webView.lastGeolocationRequest.isCancelled, false);
 
       data.function();
@@ -88,7 +88,7 @@ TestWebView {
     }
 
     function test_GeolocationPermissionRequest2_cancel() {
-      webView.url = "http://localhost:8080/tst_GeolocationPermissionRequest.html";
+      webView.url = "http://testsuite/tst_GeolocationPermissionRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -101,7 +101,7 @@ TestWebView {
       spy.target = webView.lastGeolocationRequest;
 
       webView.getTestApi().evaluateCode(
-          "window.location = \"http://localhost:8080/empty.html\";", false);
+          "window.location = \"http://testsuite/empty.html\";", false);
 
       spy.wait();
       compare(spy.count, 1) << "Pending request should have been cancelled";
