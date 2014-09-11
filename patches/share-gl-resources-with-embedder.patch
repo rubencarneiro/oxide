@@ -27,17 +27,17 @@ diff --git a/base/threading/thread.cc b/base/threading/thread.cc
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -29,21 +29,23 @@ GpuChannelManager::GpuMemoryBufferOperat
- }
+@@ -74,21 +74,23 @@ class GpuChannelManagerMessageFilter : p
+ };
  
- GpuChannelManager::GpuMemoryBufferOperation::~GpuMemoryBufferOperation() {
- }
+ }  // namespace
  
  GpuChannelManager::GpuChannelManager(MessageRouter* router,
                                       GpuWatchdog* watchdog,
                                       base::MessageLoopProxy* io_message_loop,
--                                     base::WaitableEvent* shutdown_event)
-+                                     base::WaitableEvent* shutdown_event,
+                                      base::WaitableEvent* shutdown_event,
+-                                     IPC::SyncChannel* channel)
++                                     IPC::SyncChannel* channel,
 +                                     gfx::GLShareGroup* share_group)
      : weak_factory_(this),
        io_message_loop_(io_message_loop),
@@ -49,10 +49,10 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
            GpuMemoryManager::kDefaultMaxSurfacesWithFrontbufferSoftLimit),
        watchdog_(watchdog),
        sync_point_manager_(new SyncPointManager),
-       gpu_memory_buffer_factory_(GpuMemoryBufferFactory::Create()) {
-   DCHECK(router_);
-   DCHECK(io_message_loop);
-@@ -126,16 +128,18 @@ void GpuChannelManager::OnEstablishChann
+       gpu_memory_buffer_factory_(GpuMemoryBufferFactory::Create()),
+       channel_(channel),
+       filter_(new GpuChannelManagerMessageFilter(
+@@ -173,16 +175,18 @@ void GpuChannelManager::OnEstablishChann
    IPC::ChannelHandle channel_handle;
  
    gfx::GLShareGroup* share_group = NULL;
@@ -74,8 +74,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
-@@ -56,17 +56,18 @@ class SyncPointManager;
- // managing the lifetimes of GPU channels and forwarding IPC requests from the
+@@ -59,17 +59,18 @@ class SyncPointManager;
  // browser process to them based on the corresponding renderer ID.
  class GpuChannelManager : public IPC::Listener,
                            public IPC::Sender {
@@ -83,8 +82,9 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    GpuChannelManager(MessageRouter* router,
                      GpuWatchdog* watchdog,
                      base::MessageLoopProxy* io_message_loop,
--                    base::WaitableEvent* shutdown_event);
-+                    base::WaitableEvent* shutdown_event,
+                     base::WaitableEvent* shutdown_event,
+-                    IPC::SyncChannel* channel);
++                    IPC::SyncChannel* channel,
 +                    gfx::GLShareGroup* share_group);
    virtual ~GpuChannelManager();
  
@@ -94,7 +94,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    // Listener overrides.
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
-@@ -92,16 +93,18 @@ class GpuChannelManager : public IPC::Li
+@@ -95,16 +96,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
      return &gpu_devtools_events_dispatcher_;
    }
@@ -112,7 +112,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    }
  
   private:
-   struct GpuMemoryBufferOperation {
+   typedef base::ScopedPtrHashMap<int, GpuChannel> GpuChannelMap;
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
@@ -194,8 +194,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -158,17 +178,18 @@ void GpuChildThread::OnInitialize() {
- 
+@@ -159,17 +179,18 @@ void GpuChildThread::OnInitialize() {
    // Defer creation of the render thread. This is to prevent it from handling
    // IPC messages before the sandbox has been enabled and all other necessary
    // initialization has succeeded.
@@ -203,8 +202,9 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
        new GpuChannelManager(GetRouter(),
                              watchdog_thread_.get(),
                              ChildProcess::current()->io_message_loop_proxy(),
--                            ChildProcess::current()->GetShutDownEvent()));
-+                            ChildProcess::current()->GetShutDownEvent(),
+                             ChildProcess::current()->GetShutDownEvent(),
+-                            channel()));
++                            channel(),
 +                            share_group_.get()));
  
  #if defined(USE_OZONE)
