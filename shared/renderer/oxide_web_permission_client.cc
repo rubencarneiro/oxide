@@ -30,6 +30,9 @@
 namespace oxide {
 
 void WebPermissionClient::DidCommitProvisionalLoad(bool is_new_navigation) {
+  did_block_displaying_insecure_content_ = false;
+  did_block_running_insecure_content_ = false;
+
   blink::WebFrame* frame = render_frame()->GetWebFrame();
   if (frame->parent()) {
     return;
@@ -40,9 +43,6 @@ void WebPermissionClient::DidCommitProvisionalLoad(bool is_new_navigation) {
   content::NavigationState* ns = ds->navigation_state();
   if (!ns->was_within_same_page() &&
       ds->load_type() != content::DocumentState::LINK_LOAD_RELOAD) {
-    did_block_displaying_insecure_content_ = false;
-    did_block_running_insecure_content_ = false;
-
     can_display_insecure_content_ = false;
     can_run_insecure_content_ = false;
   }
