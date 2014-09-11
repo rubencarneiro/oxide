@@ -123,6 +123,24 @@ Item {
         //  certStatusSignals: [0,0], certificateSignals: [1,2],
         //  certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         //},
+        //{
+        //  url: "https://testsuite/tst_SecurityStatus_display_broken_subresource_in_iframe.html",
+        //  securityLevel: SecurityStatus.SecurityLevelError,
+        //  contentStatus: SecurityStatus.ContentStatusRanInsecure,
+        //  certStatus: SecurityStatus.CertStatusOk,
+        //  securityLevelSignals: [2,3], contentStatusSignals: [1,2],
+        //  certStatusSignals: [0,0], certificateSignals: [1,2],
+        //  certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
+        //},
+        //{
+        //  url: "https://testsuite/tst_SecurityStatus_run_broken_subresource_in_iframe.html",
+        //  securityLevel: SecurityStatus.SecurityLevelError,
+        //  contentStatus: SecurityStatus.ContentStatusRanInsecure,
+        //  certStatus: SecurityStatus.CertStatusOk,
+        //  securityLevelSignals: [2,3], contentStatusSignals: [1,2],
+        //  certStatusSignals: [0,0], certificateSignals: [1,2],
+        //  certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
+        //},
         {
           url: "https://testsuite/tst_SecurityStatus_display_insecure_content.html",
           securityLevel: SecurityStatus.SecurityLevelWarning,
@@ -134,6 +152,24 @@ Item {
         },
         {
           url: "https://testsuite/tst_SecurityStatus_run_insecure_content.html",
+          securityLevel: SecurityStatus.SecurityLevelError,
+          contentStatus: SecurityStatus.ContentStatusRanInsecure | SecurityStatus.ContentStatusDisplayedInsecure,
+          certStatus: SecurityStatus.CertStatusOk,
+          securityLevelSignals: [2,3], contentStatusSignals: [2,3],
+          certStatusSignals: [0,0], certificateSignals: [1,2],
+          certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
+        },
+        {
+          url: "https://testsuite/tst_SecurityStatus_display_insecure_content_in_iframe.html",
+          securityLevel: SecurityStatus.SecurityLevelWarning,
+          contentStatus: SecurityStatus.ContentStatusDisplayedInsecure,
+          certStatus: SecurityStatus.CertStatusOk,
+          securityLevelSignals: [2,3], contentStatusSignals: [1,2],
+          certStatusSignals: [0,0], certificateSignals: [1,2],
+          certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
+        },
+        {
+          url: "https://testsuite/tst_SecurityStatus_run_insecure_content_in_iframe.html",
           securityLevel: SecurityStatus.SecurityLevelError,
           contentStatus: SecurityStatus.ContentStatusRanInsecure | SecurityStatus.ContentStatusDisplayedInsecure,
           certStatus: SecurityStatus.CertStatusOk,
