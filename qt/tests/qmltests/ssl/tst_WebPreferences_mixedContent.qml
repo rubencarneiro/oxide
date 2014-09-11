@@ -18,6 +18,11 @@ TestWebView {
     target: webView.preferences
     signalName: "canRunInsecureContentChanged"
   }
+  SignalSpy {
+    id: blockedSpy
+    target: webView
+    signalName: "blockedContentChanged"
+  }
 
   TestCase {
     id: test
@@ -25,12 +30,18 @@ TestWebView {
     when: windowShown
 
     function init() {
+      webView.url = "about:blank";
+      verify(webView.waitForLoadSucceeded());
+      compare(webView.blockedContent, WebView.ContentTypeNone);
+
       displaySpy.clear();
       runSpy.clear();
+      blockedSpy.clear();
     }
 
     function _can_display() {
-      return webView.getTestApi().evaluateCode("return document.getElementsByTagName(\"img\")[0].width;", true) == 150;
+      return webView.getTestApi().evaluateCode("
+return document.getElementsByTagName(\"img\")[0].width;", true) == 150;
     }
 
     function _can_run_script() {
@@ -46,10 +57,10 @@ return style.getPropertyValue(\"color\");", true) == "rgb(255, 0, 0)";
 
     function test_WebPreferences_mixedContent1_data() {
       return [
-        { display: true, run: false, displayCount: 0, runCount: 0 },
-        { display: false, run: false, displayCount: 1, runCount: 0 },
-        { display: false, run: true, displayCount: 0, runCount: 1 },
-        { display: true, run: true, displayCount: 1, runCount: 0 }
+        { display: true, run: false, displayCount: 0, runCount: 0, blockedCount: 2 },
+        { display: false, run: false, displayCount: 1, runCount: 0, blockedCount: 3 },
+        { display: false, run: true, displayCount: 0, runCount: 1, blockedCount: 2 },
+        { display: true, run: true, displayCount: 1, runCount: 0, blockedCount: 1 }
       ];
     }
 
@@ -72,6 +83,10 @@ return style.getPropertyValue(\"color\");", true) == "rgb(255, 0, 0)";
       compare(_can_display(), data.display);
       compare(_can_run_script(), data.run);
       compare(_can_run_css(), data.run);
+
+      compare(!(webView.blockedContent & WebView.ContentTypeMixedDisplay), data.display);
+      compare(!(webView.blockedContent & WebView.ContentTypeMixedScript), data.run);
+      compare(blockedSpy.count, data.blockedCount);
     }
   }
 }
