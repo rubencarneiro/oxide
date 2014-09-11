@@ -112,9 +112,12 @@ OxideQCertificateError::OxideQCertificateError(
   Q_D(OxideQCertificateError);
 
   d->q_ptr = this;
-  d->request_->SetCancelCallback(
-      base::Bind(&OxideQCertificateErrorPrivate::OnCancel,
-                 base::Unretained(d)));
+
+  if (d->request_) {
+    d->request_->SetCancelCallback(
+        base::Bind(&OxideQCertificateErrorPrivate::OnCancel,
+                   base::Unretained(d)));
+  }
   
   COMPILE_ASSERT(
       OK == static_cast<Error>(oxide::CERT_OK),
