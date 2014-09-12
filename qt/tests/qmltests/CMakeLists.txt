@@ -16,8 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(CMakeParseArguments)
-
 set(QML_PLUGIN qmloxidetestingplugin)
 set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
 
@@ -31,14 +29,14 @@ target_include_directories(
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
+    LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 
 foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebContext.qml TestWebView.qml)
   add_custom_target(
       copy_${QML_PLUGIN}_${f} ALL
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_CURRENT_SOURCE_DIR}/${f}
-        ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
+        ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 endforeach()
 
 set(QML_TEST qmltest)
@@ -60,7 +58,7 @@ endif()
 set_target_properties(
     ${QML_TEST} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
-    RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
+    RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR})
 
 function(add_qml_test)
   cmake_parse_arguments(_ARGS "USE_DATA_DIR;SSL_TESTS" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
@@ -77,7 +75,7 @@ function(add_qml_test)
   get_target_property(QMLTEST_BINARY ${QML_TEST} LOCATION)
 
   set(TEST_COMMAND
-      ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
+      ${BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
       --server-dir ${_ARGS_SERVER_DIR} --server-config 8080)
 
@@ -92,7 +90,7 @@ function(add_qml_test)
   list(APPEND TEST_COMMAND --
        ${QMLTEST_BINARY} -name ${_ARGS_NAME}
        -input ${_ARGS_TEST_DIR}
-       -add-library-path ${OXIDE_QTPLUGIN_OUTPUT_DIR})
+       -add-library-path ${QTPLUGIN_OUTPUT_DIR})
   if(_ARGS_USE_DATA_DIR)
     list(APPEND TEST_COMMAND -use-datadir-for-context)
   endif()

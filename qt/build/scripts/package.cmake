@@ -16,33 +16,48 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-foreach(v STAGE_DIR OUTPUT_DIR LOCALES RUN_QMLAPP_IN RENDERER_PATH)
+cmake_policy(VERSION 2.6.0)
+
+foreach(v STAGE_DIR OUTPUT_DIR FILES PROGRAMS DIRECTORIES RUN_QMLAPP_IN RENDERER_PATH)
   if(NOT DEFINED ${v})
     message(FATAL_ERROR "${v} must be defined")
   endif()
 endforeach()
 
 foreach(f ${FILES})
-  file(INSTALL ${f} DESTINATION ${STAGE_DIR}
+  string(REPLACE ":" ";" ARGS ${f})
+  list(GET ARGS 0 DIR)
+  list(GET ARGS 1 FILENAME)
+  file(INSTALL ${FILENAME} DESTINATION ${STAGE_DIR}/${DIR}
        FILE_PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ)
 endforeach()
+
 foreach(f ${PROGRAMS})
-  file(INSTALL ${f} DESTINATION ${STAGE_DIR}
+  string(REPLACE ":" ";" ARGS ${f})
+  list(GET ARGS 0 DIR)
+  list(GET ARGS 1 FILENAME)
+  file(INSTALL ${FILENAME} DESTINATION ${STAGE_DIR}/${DIR}
        FILE_PERMISSIONS
          OWNER_EXECUTE OWNER_WRITE OWNER_READ
          GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
 endforeach()
 
-file(GLOB LOCALE_FILES "${LOCALES}/*.pak")
-foreach(f ${LOCALE_FILES})
-  file(INSTALL ${f} DESTINATION ${STAGE_DIR}/locales
-       FILE_PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ)
+foreach(d ${DIRECTORIES})
+  string(REPLACE ":" ";" ARGS ${d})
+  list(GET ARGS 0 OUTDIR)
+  list(GET ARGS 1 DIR)
+  file(GLOB FILES "${DIR}/*")
+  get_filename_component(DIRNAME ${DIR} NAME)
+  foreach(f ${FILES})
+    file(INSTALL ${f} DESTINATION ${STAGE_DIR}/${OUTDIR}/${DIRNAME}
+         FILE_PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ)
+  endforeach()
 endforeach()
 
 set(CHROMIUM_LIB_DIR "$(dirname $(readlink -f $0))")
 set(CHROMIUM_PRODUCT_DIR "$(dirname $(readlink -f $0))")
 set(OXIDE_RENDERER_NAME ${RENDERER_PATH})
-set(OXIDE_QMLPLUGIN_OUTPUT_DIR "$(dirname $(readlink -f $0))")
+set(QMLPLUGIN_OUTPUT_DIR "$(dirname $(readlink -f $0))")
 
 configure_file(${RUN_QMLAPP_IN} ${STAGE_DIR}/.tmp/run_qmlapp.sh IMMEDIATE @ONLY)
 file(INSTALL ${STAGE_DIR}/.tmp/run_qmlapp.sh DESTINATION ${STAGE_DIR}
