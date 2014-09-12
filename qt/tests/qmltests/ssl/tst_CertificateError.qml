@@ -17,13 +17,16 @@ TestWebView {
   property var certError: null
 
   onCertificateError: {
-    test.verify(!certError);
+    if (certError) {
+      error.allow();
+      return;
+    }
     certError = error;
   }
 
   TestCase {
     id: test
-    name: "CertificateError_denials"
+    name: "CertificateError"
     when: windowShown
 
     function init() {
@@ -32,42 +35,42 @@ TestWebView {
       webView.clearLoadEventCounters();
     }
 
-    function _verify_1() {
-      // This verifies that either there is no document or it is an error page
-      try {
-        comare(webView.getTestApi().documentURI, "data:text/html,chromewebdata");
-      } catch(e) {
-        compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
+    function test_CertificateError1_denials_data() {
+      function _verify_1() {
+        // This verifies that either there is no document or it is an error page
+        try {
+          comare(webView.getTestApi().documentURI, "data:text/html,chromewebdata");
+        } catch(e) {
+          compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
+        }
       }
-    }
 
-    function _verify_2() {
-      // This verifies that either there is no document or it is an error page
-      try {
-        compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI,
-                "data:text/html,chromewebdata");
-      } catch(e) {
-        compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
+      function _verify_2() {
+        // This verifies that either there is no document or it is an error page
+        try {
+          compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI,
+                  "data:text/html,chromewebdata");
+        } catch(e) {
+          compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
+        }
       }
-    }
 
-    function _verify_3() {
-      var colour = webView.getTestApi().evaluateCode("
+      function _verify_3() {
+        var colour = webView.getTestApi().evaluateCode("
 var elem = document.getElementById(\"foo\");
 var style = window.getComputedStyle(elem);
 return style.getPropertyValue(\"color\");", true);
-      compare(colour, "rgb(0, 0, 0)");
-    }
+        compare(colour, "rgb(0, 0, 0)");
+      }
 
-    function _verify_4() {
-      var colour = webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode("
+      function _verify_4() {
+        var colour = webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode("
 var elem = document.getElementById(\"foo\");
 var style = window.getComputedStyle(elem);
 return style.getPropertyValue(\"color\");", true);
-      compare(colour, "rgb(0, 0, 0)");
-    }
+        compare(colour, "rgb(0, 0, 0)");
+      }
 
-    function test_CertificateError_denials1_data() {
       // FIXME: Test overridable and strictEnforcement properties
       return [
         {
@@ -105,7 +108,7 @@ return style.getPropertyValue(\"color\");", true);
       ];
     }
 
-    function test_CertificateError_denials1(data) {
+    function test_CertificateError1_denials(data) {
       webView.url = data.loadUrl;
       spy.wait();
 
@@ -139,6 +142,77 @@ return style.getPropertyValue(\"color\");", true);
                   SecurityStatus.SecurityLevelNone : SecurityStatus.SecurityLevelSecure);
       compare(webView.securityStatus.contentStatus, SecurityStatus.ContentStatusNormal);
       compare(webView.securityStatus.certStatus, SecurityStatus.CertStatusOk);
+
+      data.verifyFunc();
+    }
+
+    function test_CertificateError2_allow_data() {
+      function _verify_1() {
+        compare(webView.getTestApi().documentURI, "https://expired.testsuite/tst_CertificateError_broken_iframe.html");
+      }
+
+      function _verify_2() {
+        // This verifies that either there is no document or it is an error page
+        try {
+          compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI,
+                  "data:text/html,chromewebdata");
+        } catch(e) {
+          compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
+        }
+      }
+
+      function _verify_3() {
+        var colour = webView.getTestApi().evaluateCode("
+var elem = document.getElementById(\"foo\");
+var style = window.getComputedStyle(elem);
+return style.getPropertyValue(\"color\");", true);
+        compare(colour, "rgb(0, 0, 0)");
+      }
+
+      function _verify_4() {
+        var colour = webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode("
+var elem = document.getElementById(\"foo\");
+var style = window.getComputedStyle(elem);
+return style.getPropertyValue(\"color\");", true);
+        compare(colour, "rgb(0, 0, 0)");
+      }
+
+      return [
+        {
+          loadUrl: "https://expired.testsuite/tst_CertificateError_broken_iframe.html",
+          mainframe: true, overridable: true, verifyFunc: _verify_1
+        },
+        {
+          loadUrl: "https://testsuite/tst_CertificateError_broken_iframe.html",
+          mainframe: false, overridable: false, verifyFunc: _verify_2
+        },
+        {
+          loadUrl: "https://testsuite/tst_CertificateError_broken_subresource.html",
+          mainframe: false, overridable: false, verifyFunc: _verify_3
+        },
+        {
+          loadUrl: "https://testsuite/tst_CertificateError_broken_subresource_in_iframe.html",
+          mainframe: false, overridable: false, verifyFunc: _verify_4
+        }
+      ];
+    }
+
+    function test_CertificateError2_allow(data) {
+      webView.url = data.loadUrl;
+      spy.wait();
+
+      certError.allow();
+
+      verify(webView.waitForLoadSucceeded());
+
+      if (data.mainframe) {
+        compare(webView.loadsFailedCount, 0);
+        compare(webView.loadsStoppedCount, 0);
+        compare(webView.loadsSucceededCount, 1);
+      } else {
+        // This is a bit of a hack, but we don't have another event we can fire off
+        wait(100);
+      }
 
       data.verifyFunc();
     }
