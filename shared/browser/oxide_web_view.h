@@ -185,9 +185,7 @@ class WebView : public ScriptMessageTarget,
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
 
-  gfx::Size GetContainerSizePix() const;
-  gfx::Rect GetContainerBoundsDip() const;
-  gfx::Size GetContainerSizeDip() const;
+  gfx::Size GetViewSizeDip() const;
 
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
@@ -267,7 +265,7 @@ class WebView : public ScriptMessageTarget,
   // ============================
 
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
-  virtual gfx::Rect GetContainerBoundsPix() const = 0;
+  virtual gfx::Size GetViewSizePix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
 
