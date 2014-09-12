@@ -14,6 +14,11 @@ TestWebView {
     signalName: "certificateError"
   }
 
+  SignalSpy {
+    id: cancelSpy
+    signalName: "cancelled"
+  }
+
   property var certError: null
 
   onCertificateError: {
@@ -31,6 +36,7 @@ TestWebView {
 
     function init() {
       spy.clear();
+      cancelSpy.clear();
       certError = null;
       webView.clearLoadEventCounters();
     }
@@ -215,6 +221,21 @@ return style.getPropertyValue(\"color\");", true);
       }
 
       data.verifyFunc();
+    }
+
+    function test_CertificateError3_cancellation() {
+      webView.url = "https://expired.testsuite/tst_CertificateError_broken_iframe.html";
+      spy.wait();
+
+      cancelSpy.target = certError;
+
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
+      verify(certError.isCancelled);
+      compare(cancelSpy.count, 1);
+
+      cancelSpy.target = null;
     }
   }
 }
