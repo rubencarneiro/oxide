@@ -27,7 +27,7 @@ diff --git a/base/threading/thread.cc b/base/threading/thread.cc
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -74,21 +74,23 @@ class GpuChannelManagerMessageFilter : p
+@@ -74,20 +74,22 @@ class GpuChannelManagerMessageFilter : p
  };
  
  }  // namespace
@@ -39,8 +39,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 -                                     IPC::SyncChannel* channel)
 +                                     IPC::SyncChannel* channel,
 +                                     gfx::GLShareGroup* share_group)
-     : weak_factory_(this),
-       io_message_loop_(io_message_loop),
+     : io_message_loop_(io_message_loop),
        shutdown_event_(shutdown_event),
        router_(router),
 +      share_group_(share_group),
@@ -94,7 +93,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    // Listener overrides.
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
-@@ -95,16 +96,18 @@ class GpuChannelManager : public IPC::Li
+@@ -93,16 +94,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
      return &gpu_devtools_events_dispatcher_;
    }

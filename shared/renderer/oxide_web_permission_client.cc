@@ -23,7 +23,7 @@
 #include "content/public/renderer/render_view.h"
 #include "ipc/ipc_message.h"
 #include "ipc/ipc_message_macros.h"
-#include "third_party/WebKit/public/web/WebFrame.h"
+#include "third_party/WebKit/public/web/WebLocalFrame.h"
 
 #include "shared/common/oxide_messages.h"
 
