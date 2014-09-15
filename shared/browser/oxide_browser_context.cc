@@ -213,7 +213,7 @@ struct BrowserContextSharedIOData {
         popup_blocker_enabled(true),
         host_mapping_rules(params.host_mapping_rules) {
 
-   accept_langs = dgettext("oxide", "AcceptLanguage");
+   accept_langs = dgettext(OXIDE_GETTEXT_DOMAIN, "AcceptLanguage");
    if (accept_langs == "AcceptLanguage") {
      accept_langs = kDefaultAcceptLanguage;
    }

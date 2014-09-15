@@ -65,6 +65,10 @@ if(ENABLE_TESTS)
   enable_testing()
 endif()
 
+# for dh_translations to extract the domain
+# (regarding syntax consistency, see http://pad.lv/1181187)
+set(GETTEXT_PACKAGE "oxide-${OXIDE_BUILD}")
+
 # Import the configuration for this build
 include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 
@@ -129,6 +133,7 @@ if(DEFINED ENABLE_CHROMEDRIVER AND ENABLE_CHROMEDRIVER EQUAL 1)
 else()
   list(APPEND _GYP_COMMAND -Denable_chromedriver_build=0)
 endif()
+list(APPEND GYP_COMMAND -Doxide_gettext_domain=${GETTEXT_PACKAGE})
 
 if(CMAKE_CROSSCOMPILING)
   if(NOT CHROMIUM_C_HOST_COMPILER OR NOT CHROMIUM_CXX_HOST_COMPILER OR NOT CHROMIUM_HOST_AR)
@@ -176,9 +181,6 @@ file(GLOB_RECURSE I18N_SRC_FILES
      ${OXIDE_BUILD}/**.cc shared/**.cc)
 list(SORT I18N_SRC_FILES)
 
-# for dh_translations to extract the domain
-# (regarding syntax consistency, see http://pad.lv/1181187)
-set(GETTEXT_PACKAGE "oxide-${OXIDE_BUILD}")
 add_subdirectory(po)
 
 add_subdirectory(${OXIDE_BUILD})
