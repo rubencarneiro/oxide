@@ -6,6 +6,9 @@ import com.canonical.Oxide.Testing 1.0
 TestWebView {
   id: webView
 
+  width: 200
+  height: 200
+
   onCertificateError: {
     error.allow();
   }
@@ -64,10 +67,10 @@ TestWebView {
 
     function test_SslCertificate1_data() {
       return [
-        { url: "https://localhost:4443/empty.html", cert: 1 },
-        { url: "https://localhost:4444/empty.html", cert: 2 },
-        { url: "https://localhost:4445/empty.html", cert: 3 },
-        { url: "https://localhost:4446/empty.html", cert: 4 }
+        { url: "https://testsuite/empty.html", cert: 1 },
+        { url: "https://expired.testsuite/empty.html", cert: 2 },
+        { url: "https://selfsigned.testsuite/empty.html", cert: 3 },
+        { url: "https://badidentity.testsuite/empty.html", cert: 4 }
       ];
     }
 

@@ -830,20 +830,6 @@ void OxideQQuickWebContext::setDevtoolsPort(int port) {
   emit devtoolsPortChanged();
 }
 
-OxideQQuickCookieManager*
-OxideQQuickWebContext::cookieManager() const {
-  Q_D(const OxideQQuickWebContext);
-
-  if (!d->cookie_manager_) {
-    OxideQQuickWebContext* web_context =
-        const_cast<OxideQQuickWebContext*>(this);
-    d->cookie_manager_ =
-        new OxideQQuickCookieManager(web_context, web_context);
-  }
-
-  return d->cookie_manager_;
-}
-
 QString OxideQQuickWebContext::devtoolsBindIp() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -860,6 +846,43 @@ void OxideQQuickWebContext::setDevtoolsBindIp(const QString& bindIp) {
   d->setDevtoolsBindIp(bindIp);
 
   emit devtoolsBindIpChanged();
+}
+
+OxideQQuickCookieManager*
+OxideQQuickWebContext::cookieManager() const {
+  Q_D(const OxideQQuickWebContext);
+
+  if (!d->cookie_manager_) {
+    OxideQQuickWebContext* web_context =
+        const_cast<OxideQQuickWebContext*>(this);
+    d->cookie_manager_ =
+        new OxideQQuickCookieManager(web_context, web_context);
+  }
+
+  return d->cookie_manager_;
+}
+
+QStringList OxideQQuickWebContext::hostMappingRules() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->hostMappingRules();
+}
+
+void OxideQQuickWebContext::setHostMappingRules(const QStringList& rules) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->isInitialized()) {
+    qWarning() << "Cannot set WebContext.hostMapRules once the context is in use";
+    return; 
+  }
+
+  if (rules == d->hostMappingRules()) {
+    return;
+  }
+
+  d->setHostMappingRules(rules);
+
+  emit hostMappingRulesChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

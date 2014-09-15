@@ -20,7 +20,7 @@ TestWebView {
     when: windowShown
 
     function init() {
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
     }

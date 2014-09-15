@@ -26,14 +26,14 @@ TestWebView {
     function _test_can_set_first_party() {
       _clear();
 
-      webView.url = "http://localhost:8080/tst_WebContext_cookiePolicy.py";
+      webView.url = "http://testsuite/tst_WebContext_cookiePolicy.py";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
       var restore = webView.context.cookiePolicy;
       webView.context.cookiePolicy = WebContext.CookiePolicyAllowAll;
 
-      webView.url = "http://localhost:8080/get-cookies.py";
+      webView.url = "http://testsuite/get-cookies.py";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -51,13 +51,13 @@ TestWebView {
       var restore = webView.context.cookiePolicy;
       webView.context.cookiePolicy = WebContext.CookiePolicyAllowAll;
 
-      webView.url = "http://localhost:8080/tst_WebContext_cookiePolicy.py";
+      webView.url = "http://testsuite/tst_WebContext_cookiePolicy.py";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
       webView.context.cookiePolicy = restore;
 
-      webView.url = "http://localhost:8080/get-cookies.py";
+      webView.url = "http://testsuite/get-cookies.py";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -77,7 +77,7 @@ TestWebView {
       var restore = webView.context.cookiePolicy;
       webView.context.cookiePolicy = WebContext.CookiePolicyAllowAll;
 
-      webView.url = "http://localhost:8080/get-cookies.py";
+      webView.url = "http://testsuite/get-cookies.py";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -95,7 +95,7 @@ TestWebView {
       var restore = webView.context.cookiePolicy;
       webView.context.cookiePolicy = WebContext.CookiePolicyAllowAll;
 
-      webView.url = "http://localhost:8080/tst_WebContext_cookiePolicy.py";
+      webView.url = "http://testsuite/tst_WebContext_cookiePolicy.py";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

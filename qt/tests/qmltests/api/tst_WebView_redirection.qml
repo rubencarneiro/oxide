@@ -23,9 +23,9 @@ TestWebView {
       function onLoadingChanged(loadEvent) {
         var url;
         if (loadEvent.type === LoadEvent.TypeStarted) {
-          url = "http://localhost:8080/tst_WebView_redirection.py";
+          url = "http://testsuite/tst_WebView_redirection.py";
         } else if (loadEvent.type === LoadEvent.TypeSucceeded) {
-          url = "http://localhost:8080/empty.html";
+          url = "http://testsuite/empty.html";
         } else {
           fail("Unexpected load event");
         }
@@ -34,7 +34,7 @@ TestWebView {
       }
       webView.loadingChanged.connect(onLoadingChanged);
       compare(spy.count, 0);
-      webView.url = "http://localhost:8080/tst_WebView_redirection.py";
+      webView.url = "http://testsuite/tst_WebView_redirection.py";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
       compare(spy.count, 2);

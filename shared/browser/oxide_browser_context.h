@@ -41,6 +41,7 @@ namespace net {
 
 class CookieMonster;
 class FtpNetworkLayer;
+class HostMappingRules;
 class HttpServerProperties;
 class HttpUserAgentSettings;
 class SSLConfigService;
@@ -120,6 +121,8 @@ class BrowserContextIOData {
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
   scoped_refptr<net::CookieStore> cookie_store_;
+
+  scoped_ptr<net::HostMappingRules> host_mapping_rules_;
 };
 
 class BrowserContext : public content::BrowserContext,
@@ -129,7 +132,7 @@ class BrowserContext : public content::BrowserContext,
   struct Params {
     Params(const base::FilePath& path,
            const base::FilePath& cache_path,
-           const content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
+           content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
            bool devtools_enabled,
            int devtools_port,
            const std::string& devtools_ip)
@@ -146,6 +149,7 @@ class BrowserContext : public content::BrowserContext,
     bool devtools_enabled;
     int devtools_port;
     std::string devtools_ip;
+    std::vector<std::string> host_mapping_rules;
   };
 
   static BrowserContext* FromContent(
@@ -200,6 +204,8 @@ class BrowserContext : public content::BrowserContext,
   bool GetDevtoolsEnabled() const;
   int GetDevtoolsPort() const;
   std::string GetDevtoolsBindIp() const;
+
+  const std::vector<std::string>& GetHostMappingRules() const;
 
   UserScriptMaster& UserScriptManager();
 

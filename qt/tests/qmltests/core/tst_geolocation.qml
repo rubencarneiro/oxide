@@ -34,7 +34,7 @@ TestWebView {
 
     function test_geolocation_get(data) {
       OxideTestingUtils.setAppProperty("_oxide_geo_testcase", data.testcase);
-      webView.url = "http://localhost:8080/tst_geolocation_get.html";
+      webView.url = "http://testsuite/tst_geolocation_get.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       verify(webView.waitFor(function() { return expect_result("location", data.result); }));
@@ -42,7 +42,7 @@ TestWebView {
 
     function test_geolocation_watch() {
       OxideTestingUtils.removeAppProperty("_oxide_geo_testcase");
-      webView.url = "http://localhost:8080/tst_geolocation_watch.html";
+      webView.url = "http://testsuite/tst_geolocation_watch.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       verify(webView.waitFor(function() { return expect_result("updates", "5"); }, 15000));

@@ -18,14 +18,14 @@ TestWebView {
     when: windowShown
 
     function test_UserAgentOverrideRequest() {
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
       compare(webView.getTestApi().evaluateCode("return navigator.userAgent", true),
               "Oxide Test", "Unexpected default user agent string");
 
-      webView.url = "http://localhost:8080/empty.html?override";
+      webView.url = "http://testsuite/empty.html?override";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

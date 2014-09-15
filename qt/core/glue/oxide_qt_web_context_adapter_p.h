@@ -22,6 +22,7 @@
 #include <QSharedPointer>
 #include <QWeakPointer>
 #include <string>
+#include <vector>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
@@ -79,6 +80,7 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
     bool devtools_enabled;
     int devtools_port;
     std::string devtools_ip;
+    std::vector<std::string> host_mapping_rules;
   };
 
   static WebContextAdapterPrivate* Create(WebContextAdapter* adapter);

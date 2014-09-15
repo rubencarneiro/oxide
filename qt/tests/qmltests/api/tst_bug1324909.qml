@@ -40,7 +40,7 @@ Column {
       verify(webView.context.userAgent != "Foo");
       webView.context.userAgent = "Foo";
 
-      webView.url = "http://localhost:8080/tst_bug1324909_1.html";
+      webView.url = "http://testsuite/tst_bug1324909_1.html";
       verify(webView.waitForLoadSucceeded());
 
       var r = webView.getTestApi().getBoundingClientRectForSelector("#button");
@@ -55,7 +55,7 @@ Column {
     }
 
     function test_bug1324909_2_subframe() {
-      webView.url = "http://localhost:8080/tst_bug1324909_2.html";
+      webView.url = "http://testsuite/tst_bug1324909_2.html";
       verify(webView.waitForLoadSucceeded());
 
       console.log(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI);

@@ -73,7 +73,7 @@ TestWebView {
     }
 
     function test_WebFrame_tree1_navigation() {
-      webView.url = "http://localhost:8080/tst_WebFrame_tree1.html";
+      webView.url = "http://testsuite/tst_WebFrame_tree1.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -88,7 +88,7 @@ TestWebView {
       ]);
       verify_tree();
 
-      webView.url = "http://localhost:8080/tst_WebFrame_tree2.html";
+      webView.url = "http://testsuite/tst_WebFrame_tree2.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -130,7 +130,7 @@ TestWebView {
     }
 
     function test_WebFrame_tree2_crossRVHNavigation() {
-      webView.url = "http://localhost:8080/tst_WebFrame_tree2.html";
+      webView.url = "http://testsuite/tst_WebFrame_tree2.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

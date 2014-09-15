@@ -16,9 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(PLUGIN qmloxideplugin)
-set(PLUGIN_MODULE_NAME com/canonical/Oxide)
-
 # CMake doesn't seem to provide a way to get at QT_INSTALL_QML
 if(NOT CMAKE_CROSSCOMPILING)
   find_program(QMAKE_EXECUTABLE qmake)
@@ -44,7 +41,7 @@ qt5_wrap_cpp(MOC_EXTRA
              api/oxideqquickwebcontext_p_p.h
              api/oxideqquickwebcontextdelegateworker_p_p.h)
 
-set(PLUGIN_SRCS
+set(OXIDE_QMLPLUGIN_SRCS
     api/oxideqquickcookiemanager.cc
     api/oxideqquickglobal.cc
     api/oxideqquicknavigationhistory.cc
@@ -69,36 +66,32 @@ set(PLUGIN_SRCS
     ${MOC_EXTRA})
 
 if(OXIDE_ENABLE_COMPOSITING)
-  list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_frame_node.cc)
+  list(APPEND OXIDE_QMLPLUGIN_SRCS oxide_qquick_accelerated_frame_node.cc)
 endif()
 
-add_library(${PLUGIN} MODULE ${PLUGIN_SRCS})
-qt5_use_modules(${PLUGIN} Core Gui Qml Quick)
+add_library(${OXIDE_QMLPLUGIN} MODULE ${OXIDE_QMLPLUGIN_SRCS})
+qt5_use_modules(${OXIDE_QMLPLUGIN} Core Gui Qml Quick)
 if(OXIDE_ENABLE_COMPOSITING)
-  target_compile_definitions(${PLUGIN} PRIVATE -DENABLE_COMPOSITING)
+  target_compile_definitions(${OXIDE_QMLPLUGIN} PRIVATE -DENABLE_COMPOSITING)
 endif()
 target_include_directories(
-    ${PLUGIN} PRIVATE
+    ${OXIDE_QMLPLUGIN} PRIVATE
     ${CMAKE_SOURCE_DIR}
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-target_link_libraries(${PLUGIN} OxideQtCore)
+target_link_libraries(${OXIDE_QMLPLUGIN} ${OXIDE_CORELIB_NAME})
 set_target_properties(
-    ${PLUGIN} PROPERTIES
+    ${OXIDE_QMLPLUGIN} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME})
+    LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME})
 
 add_custom_target(
-    copy_${PLUGIN}_qmldir ALL
+    copy_${OXIDE_QMLPLUGIN}_qmldir ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ${CMAKE_CURRENT_SOURCE_DIR}/qmldir
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
+      ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME})
 
-install(FILES ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir
-        DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
-install(TARGETS ${PLUGIN} DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
-
-get_target_property(_PLUGIN_LOCATION ${PLUGIN} LOCATION)
-oxide_add_package_files(${_PLUGIN_LOCATION}
-                        ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir)
+install(FILES ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir
+        DESTINATION ${QT_INSTALL_QML}/${OXIDE_QMLPLUGIN_MODULE_NAME})
+install(TARGETS ${OXIDE_QMLPLUGIN} DESTINATION ${QT_INSTALL_QML}/${OXIDE_QMLPLUGIN_MODULE_NAME})

@@ -35,7 +35,7 @@ TestWebView {
 
     function test_WebView_loadUrl1_data() {
       return [
-        { url: "http://localhost:8080/empty.html", fail: false },
+        { url: "http://testsuite/empty.html", fail: false },
         { url: Qt.resolvedUrl("./empty.html"), fail: false },
         { url: "about:blank", fail: false },
         { url: "foo://bar.com", fail: true, documentURI: "data:text/html,chromewebdata" }
@@ -73,7 +73,7 @@ TestWebView {
     }
 
     function test_WebView_loadUrl2_ignoreInvalid(data) {
-      var url = "http://localhost:8080/empty.html";
+      var url = "http://testsuite/empty.html";
 
       webView.url = url;
       verify(webView.waitForLoadSucceeded(),

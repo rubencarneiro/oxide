@@ -67,7 +67,7 @@ TestWebView {
 
       var exp = new Date(Date.now() + 1000*1000);
       id = cookieManager.setCookies(
-          "http://localhost:8080", [
+          "http://testsuite", [
           {"name": "blabla",
            "value": "ddu",
            "httponly": true,
@@ -93,7 +93,7 @@ TestWebView {
 
       spy.signalName = "getCookiesResponse";
 
-      id = cookieManager.getCookies("http://localhost:8080/empty.html");
+      id = cookieManager.getCookies("http://testsuite/empty.html");
       _verify_id(id);
 
       spy.wait();
@@ -103,14 +103,14 @@ TestWebView {
       var cookies = spy.signalArguments[0][1];
       compare(cookies.length, 3);
       _verify_cookies(cookies, [
-        {"name": "foo", "value": "bar", "httponly": false, "expirationdate": exp, "domain": "localhost", "path": "/empty.html", "issecure": false},
-        {"name": "blabla", "value": "ddu", "httponly": true, "expirationdate": exp, "domain": "localhost", "path": "/", "issecure": false},
-        {"name": "foofoo", "value": "bla", "httponly": false, "expirationdate": undefined, "domain": "localhost", "path": "/", "issecure": false}]);
+        {"name": "foo", "value": "bar", "httponly": false, "expirationdate": exp, "domain": "testsuite", "path": "/empty.html", "issecure": false},
+        {"name": "blabla", "value": "ddu", "httponly": true, "expirationdate": exp, "domain": "testsuite", "path": "/", "issecure": false},
+        {"name": "foofoo", "value": "bla", "httponly": false, "expirationdate": undefined, "domain": "testsuite", "path": "/", "issecure": false}]);
 
       // Now we verify document.cookie to ensure that the httponly cookie is
       // omitted
 
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -132,7 +132,7 @@ TestWebView {
     function test_CookieManager2_errors_data() {
       return [
         {"url": "http://www.google.com/", "cookie": {"name": "foo", "value": "bar", "domain": ".mail.google.com"}}, // Domain mismatch
-        {"url": "http://localhost:8080/", "cookie": {"name": "", "value": "foo"}} // No name
+        {"url": "http://testsuite/", "cookie": {"name": "", "value": "foo"}} // No name
       ];
     }
 

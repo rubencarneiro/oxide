@@ -61,7 +61,7 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  *out = GetWebView()->GetContainerBoundsDip();
+  *out = gfx::Rect(GetWebView()->GetViewSizeDip());
 }
 
 void WebContentsView::SizeContents(const gfx::Size& size) {

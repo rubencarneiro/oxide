@@ -355,12 +355,9 @@ blink::WebScreenInfo WebView::GetScreenInfo() const {
   return GetWebScreenInfoFromQScreen(screen);
 }
 
-gfx::Rect WebView::GetContainerBoundsPix() const {
-  QRect bounds = adapter_->GetContainerBoundsPix();
-  return gfx::Rect(bounds.x(),
-                   bounds.y(),
-                   bounds.width(),
-                   bounds.height());
+gfx::Size WebView::GetViewSizePix() const {
+  QSize size = adapter_->GetViewSizePix();
+  return gfx::Size(size.width(), size.height());
 }
 
 bool WebView::IsVisible() const {

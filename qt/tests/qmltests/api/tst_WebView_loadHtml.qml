@@ -21,7 +21,7 @@ TestWebView {
         { baseUrl: "file:/", url: "file:///" },
         { baseUrl: "file:", url: "file:///" },
         { baseUrl: "file", url: "about:blank" },
-        { baseUrl: "http://localhost:8080/", url: "http://localhost:8080/" }
+        { baseUrl: "http://testsuite/", url: "http://testsuite/" }
       ];
     }
 

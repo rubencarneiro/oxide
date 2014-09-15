@@ -43,12 +43,12 @@ window.location = url;", false);
 
     function test_bug1349510_data() {
       return [
-        { prep: null, loadUrl: "http://localhost:8080/empty.html" },
-        { prep: _append_fragment, loadUrl: "http://localhost:8080/empty.html" },
-        { prep: null, loadUrl: "http://localhost:8080/empty.html?foo=bar" },
-        { prep: _append_fragment, loadUrl: "http://localhost:8080/empty.html?foo=bar" },
-        { prep: null, loadUrl: "http://localhost:8080/empty.html#AAAAAAAAAAA", overrideUrl: "http://localhost:8080/empty.html" },
-        { prep: null, loadUrl: "http://foo:password@localhost:8080/empty.html#AAAAAAA", overrideUrl: "http://localhost:8080/empty.html" }
+        { prep: null, loadUrl: "http://testsuite/empty.html" },
+        { prep: _append_fragment, loadUrl: "http://testsuite/empty.html" },
+        { prep: null, loadUrl: "http://testsuite/empty.html?foo=bar" },
+        { prep: _append_fragment, loadUrl: "http://testsuite/empty.html?foo=bar" },
+        { prep: null, loadUrl: "http://testsuite/empty.html#AAAAAAAAAAA", overrideUrl: "http://testsuite/empty.html" },
+        { prep: null, loadUrl: "http://foo:password@testsuite/empty.html#AAAAAAA", overrideUrl: "http://testsuite/empty.html" }
       ];
     }
 

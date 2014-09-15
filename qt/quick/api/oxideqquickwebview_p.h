@@ -252,8 +252,6 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
 
-  Q_PRIVATE_SLOT(d_func(), void onWindowChanged(QQuickWindow*));
-
   void connectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
 

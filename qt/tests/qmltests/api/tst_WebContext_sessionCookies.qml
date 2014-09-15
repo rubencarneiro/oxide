@@ -28,13 +28,13 @@ TestCase {
   }
 
   function _set_cookies(webView) {
-    webView.url = "http://localhost:8080/tst_WebContext_sessionCookies.py";
+    webView.url = "http://testsuite/tst_WebContext_sessionCookies.py";
     verify(webView.waitForLoadSucceeded(),
            "Timed out waiting for successful load");
   }
 
   function _test_can_get_session_cookies(webView) {
-    webView.url = "http://localhost:8080/get-cookies.py";
+    webView.url = "http://testsuite/get-cookies.py";
     verify(webView.waitForLoadSucceeded(),
            "Timed out waiting for successful load");
 

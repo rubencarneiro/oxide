@@ -408,6 +408,8 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
       construct_props_->devtools_enabled,
       construct_props_->devtools_port,
       construct_props_->devtools_ip);
+  params.host_mapping_rules = construct_props_->host_mapping_rules;
+
   context_ = oxide::BrowserContext::Create(params);
 
   if (!construct_props_->product.empty()) {
