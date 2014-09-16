@@ -109,6 +109,7 @@ class MotionEvent : public ui::MotionEvent {
               const TouchPoint (&touch_points)[kMaxTouchPoints],
               Action action,
               int action_index,
+              int flags,
               const base::TimeTicks& last_event_time);
 
   size_t GetIndexFromPlatformId(int id) const;
@@ -145,6 +146,7 @@ class MotionEvent : public ui::MotionEvent {
                        size_t historical_index) const FINAL;
   ToolType GetToolType(size_t pointer_index) const FINAL;
   int GetButtonState() const FINAL;
+  int GetFlags() const FINAL;
 
   scoped_ptr<ui::MotionEvent> Cancel() const FINAL;
 
@@ -159,6 +161,8 @@ class MotionEvent : public ui::MotionEvent {
   Action action_;
   int action_index_;
 
+  int flags_;
+
   base::TimeTicks last_event_time_;
 };
 
@@ -172,12 +176,14 @@ MotionEvent::MotionEvent(
     const TouchPoint (&touch_points)[kMaxTouchPoints],
     Action action,
     int action_index,
+    int flags,
     const base::TimeTicks& last_event_time)
     : pointer_count_(pointer_count),
       active_touch_point_count_(active_touch_point_count),
       id_allocator_(kMaxTouchPoints - 1),
       action_(action),
       action_index_(action_index),
+      flags_(flags),
       last_event_time_(last_event_time) {
   for (size_t i = 0; i < pointer_count_; ++i) {
     touch_points_[i] = touch_points[i];
@@ -381,10 +387,14 @@ int MotionEvent::GetButtonState() const {
   return 0;
 }
 
+int MotionEvent::GetFlags() const {
+  return flags_;
+}
+
 scoped_ptr<ui::MotionEvent> MotionEvent::Cancel() const {
   return make_scoped_ptr(
       new MotionEvent(pointer_count_, active_touch_point_count_,
-                      touch_points_, ACTION_CANCEL, -1,
+                      touch_points_, ACTION_CANCEL, -1, flags_,
                       last_event_time_)).PassAs<ui::MotionEvent>();
 }
 
@@ -414,7 +424,8 @@ MotionEvent::MotionEvent()
     : pointer_count_(0),
       active_touch_point_count_(0),
       id_allocator_(kMaxTouchPoints - 1),
-      action_index_(-1) {}
+      action_index_(-1),
+      flags_(0) {}
 
 MotionEvent::~MotionEvent() {}
 
@@ -443,6 +454,7 @@ void MotionEvent::OnTouchEvent(const ui::TouchEvent& event) {
   }
 
   UpdateAction(event);
+  flags_ = event.flags();
   last_event_time_ = event.time_stamp() + base::TimeTicks();
 }
 
@@ -470,7 +482,7 @@ void MotionEvent::RemoveInactiveTouchPoints() {
 scoped_ptr<ui::MotionEvent> MotionEvent::Clone() const {
   return make_scoped_ptr(
       new MotionEvent(pointer_count_, active_touch_point_count_,
-                      touch_points_, action_, action_index_,
+                      touch_points_, action_, action_index_, flags_,
                       last_event_time_)).PassAs<ui::MotionEvent>();
 }
 

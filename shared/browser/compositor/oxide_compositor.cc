@@ -82,8 +82,9 @@ void Compositor::WillBeginMainFrame(int frame_id) {}
 void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
 void Compositor::DidBeginMainFrame() {}
 void Compositor::Layout() {}
-void Compositor::ApplyScrollAndScale(const gfx::Vector2d& scroll_delta,
-                                     float page_scale) {}
+void Compositor::ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
+                                     float page_scale,
+                                     float top_controls_delta) {}
 
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
   DCHECK(CalledOnValidThread());
@@ -100,7 +101,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
   if (!use_software_) {
     scoped_refptr<cc::ContextProvider> context_provider =
         CompositorUtils::GetInstance()->GetContextProvider();
-    if (!context_provider) {
+    if (!context_provider.get()) {
       return scoped_ptr<cc::OutputSurface>();
     }
     scoped_ptr<CompositorOutputSurfaceGL> output(
@@ -204,7 +205,7 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
 void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   DCHECK(CalledOnValidThread());
   root_layer_->RemoveAllChildren();
-  if (layer) {
+  if (layer.get()) {
     root_layer_->AddChild(layer);
   }
 }

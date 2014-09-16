@@ -109,7 +109,7 @@ URLRequestContext* IOThread::Globals::system_request_context() const {
 void IOThread::InitSystemRequestContext() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
-  if (system_request_context_getter_) {
+  if (system_request_context_getter_.get()) {
     return;
   }
 
@@ -188,7 +188,7 @@ void IOThread::InitAsync() {
       net::ProxyService::CreateSystemProxyConfigService(
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::IO),
-          content::BrowserThread::UnsafeGetMessageLoopForThread(
+          content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::FILE));
 
   globals()->proxy_service_.reset(
@@ -254,7 +254,7 @@ IOThread::Globals* IOThread::globals() const {
 }
 
 net::URLRequestContextGetter* IOThread::GetSystemURLRequestContext() {
-  if (!system_request_context_getter_) {
+  if (!system_request_context_getter_.get()) {
     InitSystemRequestContext();
   }
   return system_request_context_getter_.get();

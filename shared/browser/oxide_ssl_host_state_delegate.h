@@ -32,17 +32,14 @@ class SSLHostStateDelegate FINAL : public content::SSLHostStateDelegate {
   SSLHostStateDelegate();
   ~SSLHostStateDelegate();
 
-  void DenyCert(const std::string& host,
-                net::X509Certificate* cert,
-                net::CertStatus error) FINAL;
   void AllowCert(const std::string&,
-                 net::X509Certificate* cert,
+                 const net::X509Certificate& cert,
                  net::CertStatus error) FINAL;
   void Clear() FINAL;
 
-  net::CertPolicy::Judgment QueryPolicy(
+  CertJudgment QueryPolicy(
       const std::string& host,
-      net::X509Certificate* cert,
+      const net::X509Certificate& cert,
       net::CertStatus error,
       bool* expired_previous_decision) FINAL;
 

@@ -758,7 +758,7 @@ bool WebView::OnCertificateError(
     bool strict_enforcement,
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   scoped_ptr<OxideQSslCertificate> q_cert;
-  if (cert) {
+  if (cert.get()) {
     q_cert.reset(OxideQSslCertificatePrivate::Create(cert));
   }
 

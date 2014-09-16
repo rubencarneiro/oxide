@@ -337,7 +337,7 @@ void WebView::CompositorSwapFrame(uint32 surface_id,
                                   CompositorFrameHandle* frame) {
   received_surface_ids_.push(surface_id);
 
-  if (current_compositor_frame_) {
+  if (current_compositor_frame_.get()) {
     previous_compositor_frames_.push_back(current_compositor_frame_);
   }
   current_compositor_frame_ = frame;
@@ -1544,7 +1544,7 @@ void WebView::DownloadRequested(
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {
-  return current_compositor_frame_;
+  return current_compositor_frame_.get();
 }
 
 void WebView::DidCommitCompositorFrame() {

@@ -86,7 +86,7 @@ void WebContextAdapterPrivate::Init(
 }
 
 void WebContextAdapterPrivate::Destroy() {
-  if (context_) {
+  if (context_.get()) {
     context_->SetDelegate(NULL);
   }
   adapter_ = NULL;
@@ -103,7 +103,7 @@ WebContextAdapterPrivate::GetIODelegate() const {
 }
 
 void WebContextAdapterPrivate::UpdateUserScripts() {
-  if (!context_) {
+  if (!context_.get()) {
     return;
   }
 
@@ -395,8 +395,8 @@ WebContextAdapter* WebContextAdapterPrivate::GetAdapter() const {
 }
 
 oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
-  if (context_) {
-    return context_;
+  if (context_.get()) {
+    return context_.get();
   }
 
   DCHECK(construct_props_);
@@ -430,7 +430,7 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
 
   UpdateUserScripts();
 
-  return context_;
+  return context_.get();
 }
 
 } // namespace qt

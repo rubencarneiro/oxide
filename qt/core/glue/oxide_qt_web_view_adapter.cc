@@ -46,7 +46,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
   CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
       : frame_(frame) {
-    if (frame_) {
+    if (frame_.get()) {
       size_ = QSize(frame_->size_in_pixels().width(),
                     frame_->size_in_pixels().height());
     }
@@ -55,7 +55,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
   virtual ~CompositorFrameHandleImpl() {}
 
   CompositorFrameHandle::Type GetType() Q_DECL_FINAL {
-    if (!frame_) {
+    if (!frame_.get()) {
       return CompositorFrameHandle::TYPE_INVALID;
     }
     if (frame_->gl_frame_data()) {

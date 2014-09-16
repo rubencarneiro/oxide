@@ -53,7 +53,7 @@ DevtoolsTarget::~DevtoolsTarget() {
 }
 
 std::string DevtoolsTarget::GetId() const {
-  return agent_host_ ? agent_host_->GetId() : std::string();
+  return agent_host_.get() ? agent_host_->GetId() : std::string();
 }
 
 std::string DevtoolsTarget::GetParentId() const {

@@ -113,7 +113,7 @@ void ScriptMessageDispatcherRenderer::OnReceiveMessage(
     ScriptMessageHandlerRenderer* handler =
         mm->GetHandlerForMsgID(message->msg_id());
     if (handler) {
-      handler->handler().OnReceiveMessage(message);
+      handler->handler().OnReceiveMessage(message.get());
     } else {
       message->Error(ScriptMessageRequest::ERROR_NO_HANDLER,
                      "Could not find a handler for message");

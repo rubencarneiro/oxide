@@ -103,7 +103,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   }
 
   SharedGLContext* GetSharedGLContext() const FINAL {
-    return shared_gl_context_;
+    return shared_gl_context_.get();
   }
   intptr_t GetNativeDisplay() const FINAL {
     CHECK(native_display_is_valid_);
@@ -311,7 +311,7 @@ void BrowserProcessMainImpl::Start(
   shared_gl_context_ = main_delegate_->GetSharedGLContext();
   native_display_is_valid_ = main_delegate_->GetNativeDisplay(&native_display_);
 
-  if (!shared_gl_context_) {
+  if (!shared_gl_context_.get()) {
     DLOG(INFO) << "No shared GL context has been provided. "
                << "Compositing will not work";
   }
