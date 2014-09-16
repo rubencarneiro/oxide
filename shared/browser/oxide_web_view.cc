@@ -475,7 +475,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
   content::WebContents::CreateParams contents_params(
       GetBrowserContext(),
       opener_suppressed ? NULL : web_contents_->GetSiteInstance());
-  contents_params.initial_size = GetViewSizeDip();
+  contents_params.initial_size = GetContainerSizeDip();
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
   contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
 
@@ -488,8 +488,7 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
 
   WebViewContentsHelper::Attach(contents.get(), web_contents_.get());
 
-  WebView* new_view = CreateNewWebView(gfx::Rect(GetViewSizePix()),
-                                       disposition);
+  WebView* new_view = CreateNewWebView(GetContainerBoundsPix(), disposition);
   if (!new_view) {
     return NULL;
   }
@@ -966,7 +965,7 @@ void WebView::Init(Params* params) {
         params->context->GetOriginalContext();
 
     content::WebContents::CreateParams content_params(context);
-    content_params.initial_size = GetViewSizeDip();
+    content_params.initial_size = GetContainerSizeDip();
     content_params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
         content::WebContents::Create(content_params)));
@@ -974,7 +973,7 @@ void WebView::Init(Params* params) {
 
     WebViewContentsHelper::Attach(web_contents_.get());
 
-    compositor_->SetViewportSize(GetViewSizePix());
+    compositor_->SetViewportSize(GetContainerSizePix());
     compositor_->SetVisibility(IsVisible());
   }
 
@@ -1169,12 +1168,12 @@ void WebView::WasResized() {
   {
     CompositorLock lock(compositor_.get());
     compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
-    compositor_->SetViewportSize(GetViewSizePix());
+    compositor_->SetViewportSize(GetContainerSizePix());
   }
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetSize(GetViewSizeDip());
+    rwhv->SetSize(GetContainerSizeDip());
     GetRenderWidgetHostImpl()->SendScreenRects();
     rwhv->GetRenderWidgetHost()->WasResized();
   }
@@ -1295,14 +1294,17 @@ void WebView::SetWebPreferences(WebPreferences* prefs) {
   }
 }
 
-gfx::Size WebView::GetViewSizeDip() const {
-  float scale = 1.0f / GetScreenInfo().deviceScaleFactor;
-  gfx::Size size(GetViewSizePix());
+gfx::Size WebView::GetContainerSizePix() const {
+  return GetContainerBoundsPix().size();
+}
 
-  int width = std::lround(size.width() * scale);
-  int height = std::lround(size.height() * scale);
+gfx::Rect WebView::GetContainerBoundsDip() const {
+  return gfx::ScaleToEnclosingRect(
+      GetContainerBoundsPix(), 1.0f / GetScreenInfo().deviceScaleFactor);
+}
 
-  return gfx::Size(width, height);
+gfx::Size WebView::GetContainerSizeDip() const {
+  return GetContainerBoundsDip().size();
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {

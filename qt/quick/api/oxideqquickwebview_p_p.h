@@ -85,7 +85,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
   QScreen* GetScreen() const Q_DECL_FINAL;
-  QSize GetViewSizePix() const Q_DECL_FINAL;
+  QRect GetContainerBoundsPix() const Q_DECL_FINAL;
   bool IsVisible() const Q_DECL_FINAL;
   bool HasFocus() const Q_DECL_FINAL;
 
@@ -145,6 +145,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
   void didUpdatePaintNode();
+
+  void onWindowChanged(QQuickWindow* window);
 
   bool constructed_;
   int load_progress_;

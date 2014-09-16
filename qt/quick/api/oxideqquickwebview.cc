@@ -355,10 +355,17 @@ QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
   return q->window()->screen();
 }
 
-QSize OxideQQuickWebViewPrivate::GetViewSizePix() const {
+QRect OxideQQuickWebViewPrivate::GetContainerBoundsPix() const {
   Q_Q(const OxideQQuickWebView);
 
-  return QSize(qRound(q->width()), qRound(q->height()));
+  if (!q->window()) {
+    return QRect();
+  }
+
+  QPointF pos(q->mapToScene(QPointF(0, 0)) + q->window()->position());
+
+  return QRect(qRound(pos.x()), qRound(pos.y()),
+               qRound(q->width()), qRound(q->height()));
 }
 
 bool OxideQQuickWebViewPrivate::IsVisible() const {
@@ -716,6 +723,14 @@ void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
   compositor_frame_handle_.reset();
 }
 
+void OxideQQuickWebViewPrivate::onWindowChanged(QQuickWindow* window) {
+  if (!window) {
+    return;
+  }
+
+  wasResized();
+}
+
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
 
 // static
@@ -765,7 +780,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
   d->input_area_->setWidth(newGeometry.width());
   d->input_area_->setHeight(newGeometry.height());
 
-  if (d->isInitialized()) {
+  if (d->isInitialized() && window()) {
     d->wasResized();
   }
 }
@@ -886,6 +901,9 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   setFlags(QQuickItem::ItemClipsChildrenToShape |
            QQuickItem::ItemHasContents |
            QQuickItem::ItemIsFocusScope);
+
+  connect(this, SIGNAL(windowChanged(QQuickWindow*)),
+          this, SLOT(onWindowChanged(QQuickWindow*)));
 
   // We have an input area QQuickItem for receiving input events, so
   // that we have a way of bubbling unhandled key events back to the
