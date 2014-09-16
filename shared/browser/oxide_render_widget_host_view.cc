@@ -66,7 +66,7 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
     return gfx::Size();
   }
 
-  return web_view_->GetContainerSizePix();
+  return web_view_->GetViewSizePix();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -121,8 +121,9 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   cc::RenderPass* root_pass = frame_data->render_pass_list.back();
 
   gfx::Size frame_size = root_pass->output_rect.size();
-  gfx::Size frame_size_dip = gfx::ToFlooredSize(
-      gfx::ScaleSize(frame_size, 1.0f / device_scale_factor));
+  gfx::Size frame_size_dip = gfx::Size(
+      std::lround(frame_size.width() / device_scale_factor),
+      std::lround(frame_size.height() / device_scale_factor));
 
   gfx::Rect damage_rect_dip = gfx::ToEnclosingRect(
       gfx::ScaleRect(root_pass->damage_rect, 1.0f / device_scale_factor));
@@ -423,7 +424,7 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
     return gfx::Rect(last_size_);
   }
 
-  return web_view_->GetContainerBoundsDip();
+  return web_view_->GetViewBoundsDip();
 }
 
 bool RenderWidgetHostView::LockMouse() {

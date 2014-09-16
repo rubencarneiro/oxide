@@ -239,7 +239,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
   virtual QScreen* GetScreen() const = 0;
-  virtual QRect GetContainerBoundsPix() const = 0;
+  virtual QRect GetViewBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
 

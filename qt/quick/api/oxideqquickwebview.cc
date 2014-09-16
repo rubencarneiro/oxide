@@ -355,7 +355,7 @@ QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
   return q->window()->screen();
 }
 
-QRect OxideQQuickWebViewPrivate::GetContainerBoundsPix() const {
+QRect OxideQQuickWebViewPrivate::GetViewBoundsPix() const {
   Q_Q(const OxideQQuickWebView);
 
   if (!q->window()) {

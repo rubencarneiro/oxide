@@ -82,7 +82,7 @@ class WebView FINAL : public oxide::WebView,
   void SelectionChanged() FINAL;
 
   blink::WebScreenInfo GetScreenInfo() const FINAL;
-  gfx::Rect GetContainerBoundsPix() const FINAL;
+  gfx::Rect GetViewBoundsPix() const FINAL;
   bool IsVisible() const FINAL;
   bool HasFocus() const FINAL;
 
