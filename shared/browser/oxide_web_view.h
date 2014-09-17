@@ -512,6 +512,16 @@ class WebView : public ScriptMessageTarget,
 
   SecurityStatus security_status_;
 
+  // Usually we would scroll the focused editable node in to view after any
+  // resize if the input method is onscreen. However, this interacts badly
+  // with the browser header bar, which resizes the view when its visibility
+  // changes. To work around this, we don't scroll the focused node into
+  // view on a resize if it has already been scrolled once and the input
+  // method hasn't been hidden. This is reset if the input method goes
+  // offscreen or the focused node changes
+  // See https://bugs.launchpad.net/oxide/+bug/1301681/comments/3
+  bool did_scroll_focused_editable_node_into_view_;
+
   base::Timer auto_scroll_timer_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

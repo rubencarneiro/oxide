@@ -322,6 +322,10 @@ void WebView::OnDidBlockRunningInsecureContent() {
 }
 
 bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
+  if (did_scroll_focused_editable_node_into_view_) {
+    return false;
+  }
+
   if (!HasFocus()) {
     return false;
   }
@@ -365,6 +369,8 @@ void WebView::ScrollFocusedEditableNodeIntoView() {
   if (!host) {
     return;
   }
+
+  did_scroll_focused_editable_node_into_view_ = true;
 
   host->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
@@ -929,6 +935,7 @@ WebView::WebView()
       root_frame_(NULL),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
+      did_scroll_focused_editable_node_into_view_(false),
       auto_scroll_timer_(false, false) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
@@ -1265,6 +1272,10 @@ void WebView::FocusChanged() {
 }
 
 void WebView::InputPanelVisibilityChanged() {
+  if (!IsInputPanelVisible()) {
+    did_scroll_focused_editable_node_into_view_ = false;
+  }
+
   MaybeResetAutoScrollTimer();
 }
 
@@ -1664,6 +1675,7 @@ void WebView::FocusedNodeChanged(bool is_editable_node) {
   focused_node_is_editable_ = is_editable_node;
   OnFocusedNodeChanged();
 
+  did_scroll_focused_editable_node_into_view_ = false;
   MaybeResetAutoScrollTimer();
 }
 
