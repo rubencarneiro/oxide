@@ -30,6 +30,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
+#include "base/timer/timer.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/common/input/input_event_ack_state.h"
@@ -167,6 +168,7 @@ class WebView : public ScriptMessageTarget,
   void WasResized();
   void VisibilityChanged();
   void FocusChanged();
+  void InputPanelVisibilityChanged();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -270,6 +272,7 @@ class WebView : public ScriptMessageTarget,
   virtual gfx::Rect GetViewBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
+  virtual bool IsInputPanelVisible() const;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -306,6 +309,10 @@ class WebView : public ScriptMessageTarget,
 
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
+
+  bool ShouldScrollFocusedEditableNodeIntoView();
+  void MaybeResetAutoScrollTimer();
+  void ScrollFocusedEditableNodeIntoView();
 
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
@@ -504,6 +511,8 @@ class WebView : public ScriptMessageTarget,
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
+
+  base::Timer auto_scroll_timer_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
