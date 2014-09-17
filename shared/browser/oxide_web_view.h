@@ -518,10 +518,13 @@ class WebView : public ScriptMessageTarget,
   // changes. To work around this, we don't scroll the focused node into
   // view on a resize if it has already been scrolled once and the input
   // method hasn't been hidden. This is reset if the input method goes
-  // offscreen or the focused node changes
+  // offscreen or the focused node changes. To do this, we add a delay to
+  // ensure that we only do the scroll once any transitions are finished
   // See https://bugs.launchpad.net/oxide/+bug/1301681/comments/3
+  //
+  // We should be able to get rid of this once we have a solution for
+  // https://launchpad.net/bugs/1370366
   bool did_scroll_focused_editable_node_into_view_;
-
   base::Timer auto_scroll_timer_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

@@ -90,8 +90,9 @@ namespace {
 
 // The time between the last resize, focus, view visibility or
 // input panel visibility event before we scroll the currently focused
-// editable node into view
-const int64 kAutoScrollFocusedEditableNodeIntoViewDelayMs = 100;
+// editable node into view. We want to wait until any transitions
+// are finished because we will only do the scroll once
+const int64 kAutoScrollFocusedEditableNodeIntoViewDelayMs = 50;
 
 const float kMobileViewportWidthEpsilon = 0.15f;
 const char kWebViewKey[] = "oxide_web_view_data";
