@@ -30,6 +30,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
+#include "base/timer/timer.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/common/input/input_event_ack_state.h"
@@ -167,6 +168,7 @@ class WebView : public ScriptMessageTarget,
   void WasResized();
   void VisibilityChanged();
   void FocusChanged();
+  void InputPanelVisibilityChanged();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -270,6 +272,7 @@ class WebView : public ScriptMessageTarget,
   virtual gfx::Rect GetViewBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
+  virtual bool IsInputPanelVisible() const;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -306,6 +309,10 @@ class WebView : public ScriptMessageTarget,
 
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
+
+  bool ShouldScrollFocusedEditableNodeIntoView();
+  void MaybeResetAutoScrollTimer();
+  void ScrollFocusedEditableNodeIntoView();
 
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
@@ -504,6 +511,21 @@ class WebView : public ScriptMessageTarget,
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
+
+  // Usually we would scroll the focused editable node in to view after any
+  // resize if the input method is onscreen. However, this interacts badly
+  // with the browser header bar, which resizes the view when its visibility
+  // changes. To work around this, we don't scroll the focused node into
+  // view on a resize if it has already been scrolled once and the input
+  // method hasn't been hidden. This is reset if the input method goes
+  // offscreen or the focused node changes. To do this, we add a delay to
+  // ensure that we only do the scroll once any transitions are finished
+  // See https://bugs.launchpad.net/oxide/+bug/1301681/comments/3
+  //
+  // We should be able to get rid of this once we have a solution for
+  // https://launchpad.net/bugs/1370366
+  bool did_scroll_focused_editable_node_into_view_;
+  base::Timer auto_scroll_timer_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
