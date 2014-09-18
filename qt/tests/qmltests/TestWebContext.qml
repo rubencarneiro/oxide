@@ -17,6 +17,8 @@ WebContext {
   hostMappingRules: [
     "MAP testsuite:80 localhost:8080",
     "MAP *.testsuite:80 localhost:8080",
+    "MAP testsuite.com:80 localhost:8080",
+    "MAP *.testsuite.com:80 localhost:8080",
     "MAP expired.testsuite:443 localhost:4444",
     "MAP selfsigned.testsuite:443 localhost:4445",
     "MAP badidentity.testsuite:443 localhost:4446",
