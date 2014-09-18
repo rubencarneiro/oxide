@@ -223,7 +223,8 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     input_area_(NULL),
     received_new_compositor_frame_(false),
     frame_evicted_(false),
-    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {}
+    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
+    using_old_load_event_signal_(false) {}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
@@ -314,6 +315,12 @@ void OxideQQuickWebViewPrivate::CommandsUpdated() {
   emit q->navigationHistoryChanged();
 }
 
+void OxideQQuickWebViewPrivate::LoadingChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->loadingStateChanged();
+}
+
 void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   Q_Q(OxideQQuickWebView);
 
@@ -324,7 +331,10 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
 void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   Q_Q(OxideQQuickWebView);
 
-  emit q->loadingChanged(event);
+  emit q->loadEvent(event);
+  if (using_old_load_event_signal_) {
+    emit q->loadingChanged(event);
+  }
 }
 
 void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
@@ -753,10 +763,18 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
 
   Q_ASSERT(thread() == QThread::currentThread());
 
-  if (signal == QMetaMethod::fromSignal(
-          &OxideQQuickWebView::newViewRequested)) {
+#define VIEW_SIGNAL(sig) QMetaMethod::fromSignal(&OxideQQuickWebView::sig)
+  if (signal == VIEW_SIGNAL(newViewRequested)) {
     d->updateWebPreferences();
+  } else if (signal == VIEW_SIGNAL(loadingChanged) &&
+             !d->using_old_load_event_signal_) {
+    d->using_old_load_event_signal_ = true;
+    qWarning() << "WebView.loadingChanged is deprecated. If you are interested "
+                  "in load events, please use WebView.loadEvent. The "
+                  "notification for WebView.loading is now "
+                  "WebView.loadingStateChanged";
   }
+#undef VIEW_SIGNAL
 }
 
 void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {

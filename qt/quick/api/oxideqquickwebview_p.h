@@ -74,7 +74,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito NOTIFY incognitoChanged)
-  Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+  Q_PROPERTY(bool loading READ loading NOTIFY loadingStateChanged)
   Q_PROPERTY(bool fullscreen READ fullscreen WRITE setFullscreen NOTIFY fullscreenChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
@@ -215,7 +215,8 @@ class OxideQQuickWebView : public QQuickItem {
   void iconChanged();
   void navigationHistoryChanged();
   void incognitoChanged();
-  void loadingChanged(OxideQLoadEvent* loadEvent);
+  void loadingStateChanged();
+  void loadEvent(OxideQLoadEvent* event);
   void fullscreenChanged();
   void loadProgressChanged();
   void rootFrameChanged();
@@ -247,6 +248,9 @@ class OxideQQuickWebView : public QQuickItem {
   void downloadRequested(OxideQDownloadRequest* request);
   void certificateError(const QJSValue& error);
   void blockedContentChanged();
+
+  // Deprecated since 1.3
+  void loadingChanged(OxideQLoadEvent* loadEvent);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());

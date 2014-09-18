@@ -228,6 +228,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void IconChanged(QUrl icon) = 0;
   virtual void CommandsUpdated() = 0;
 
+  virtual void LoadingChanged() = 0;
   virtual void LoadProgressChanged(double progress) = 0;
 
   virtual void LoadEvent(OxideQLoadEvent* event) = 0;

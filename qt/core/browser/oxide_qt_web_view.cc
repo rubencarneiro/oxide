@@ -472,6 +472,10 @@ void WebView::OnCommandsUpdated() {
   adapter_->CommandsUpdated();
 }
 
+void WebView::OnLoadingChanged() {
+  adapter_->LoadingChanged();
+}
+
 void WebView::OnLoadProgressChanged(double progress) {
   adapter_->LoadProgressChanged(progress);
 }

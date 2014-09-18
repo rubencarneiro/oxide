@@ -785,6 +785,14 @@ void WebView::NavigationEntryCommitted(
   OnNavigationEntryCommitted();
 }
 
+void WebView::DidStartLoading(content::RenderViewHost* render_view_host) {
+  OnLoadingChanged();
+}
+
+void WebView::DidStopLoading(content::RenderViewHost* render_view_host) {
+  OnLoadingChanged();
+}
+
 void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
   if (!root_frame_) {
     return;
@@ -839,6 +847,7 @@ void WebView::OnTitleChanged() {}
 void WebView::OnIconChanged(const GURL& icon) {}
 void WebView::OnCommandsUpdated() {}
 
+void WebView::OnLoadingChanged() {}
 void WebView::OnLoadProgressChanged(double progress) {}
 
 void WebView::OnLoadStarted(const GURL& validated_url,

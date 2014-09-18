@@ -395,6 +395,9 @@ class WebView : public ScriptMessageTarget,
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) FINAL;
 
+  void DidStartLoading(content::RenderViewHost* render_view_host) FINAL;
+  void DidStopLoading(content::RenderViewHost* render_view_host) FINAL;
+
   void FrameDetached(content::RenderFrameHost* render_frame_host) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
@@ -411,6 +414,7 @@ class WebView : public ScriptMessageTarget,
   virtual void OnIconChanged(const GURL& icon);
   virtual void OnCommandsUpdated();
 
+  virtual void OnLoadingChanged();
   virtual void OnLoadProgressChanged(double progress);
 
   virtual void OnLoadStarted(const GURL& validated_url,
