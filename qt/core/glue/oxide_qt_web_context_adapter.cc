@@ -112,24 +112,6 @@ void WebContextAdapter::setDevtoolsPort(int port) {
   priv->construct_props_->devtools_port = port;
 }
 
-bool WebContextAdapter::injectOxideApiInMainWorld() const {
-  if (isInitialized()) {
-    return priv->context_->ShouldInjectOxideApiInMainWorld();
-  }
-
-  return priv->construct_props_->inject_oxide_api_in_main_world;
-}
-
-void WebContextAdapter::setInjectOxideApiInMainWorld(
-      bool inject_oxide_api_in_main_world) {
-  if (isInitialized()) {
-    qWarning() << "Cannot change the api injection parameter after inititialization";
-    return;
-  }
-  priv->construct_props_->inject_oxide_api_in_main_world =
-    inject_oxide_api_in_main_world;
-}
-
 QUrl WebContextAdapter::dataPath() const {
   base::FilePath path;
   if (isInitialized()) {

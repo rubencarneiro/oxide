@@ -40,11 +40,12 @@ class ScriptMessageManager;
 
 class ScriptMessageDispatcherRenderer FINAL : public content::RenderFrameObserver {
  public:
-  ScriptMessageDispatcherRenderer(content::RenderFrame* frame,
-				  bool inject_api_in_main_world = false);
+  ScriptMessageDispatcherRenderer(content::RenderFrame* frame);
   ~ScriptMessageDispatcherRenderer();
 
   static ScriptMessageDispatcherRenderer* FromWebFrame(blink::WebFrame* frame);
+
+  linked_ptr<ScriptMessageManager> ScriptMessageManagerForWorldId(int world_id);
 
   void DidCreateScriptContext(v8::Handle<v8::Context> context,
                               int world_id);

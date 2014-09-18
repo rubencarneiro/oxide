@@ -39,9 +39,6 @@ class Q_DECL_EXPORT UserScriptAdapter : public AdapterBase {
   bool emulateGreasemonkey() const;
   void setEmulateGreasemonkey(bool emulate);
 
-  bool privateInjectedInMainWorld() const;
-  void setPrivateInjectedInMainWorld(bool in_main_world);
-
   bool matchAllFrames() const;
   void setMatchAllFrames(bool match);
 

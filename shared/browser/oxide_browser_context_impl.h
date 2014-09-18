@@ -92,9 +92,6 @@ class BrowserContextImpl FINAL : public BrowserContext {
   bool GetDevtoolsEnabled() const FINAL;
   int GetDevtoolsPort() const FINAL;
 
-  bool ShouldInjectOxideApiInMainWorld() const FINAL;
-  void SetShouldInjectOxideApiInMainWorld(bool) FINAL;
-
   UserScriptMaster& UserScriptManager() FINAL;
 
  private:
@@ -109,7 +106,6 @@ class BrowserContextImpl FINAL : public BrowserContext {
   content::DevToolsHttpHandler* devtools_http_handler_;
   bool devtools_enabled_;
   int devtools_port_;
-  bool inject_oxide_api_in_main_world_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextImpl);
 };

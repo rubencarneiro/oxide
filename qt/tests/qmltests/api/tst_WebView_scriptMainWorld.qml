@@ -77,46 +77,11 @@ Column {
       return res;
     }
 
-    function test_can_inject_in_main_world_with_no_oxide_api() {
-      var context = webContext.createObject(null, {__injectOxideApiInMainWorld: false});
-      var script = userScript.createObject(null, {
-        context: "oxide-private://main-world-private",
-        injectInMainWorld: true,
-        url: "tst_WebView_scriptMainWorld_user_script.js"});
-
-      root.webView = testWebViewComponent.createObject(root, { context: context });
-      root.webView.context.addUserScript(script);
-
-      root.webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
-      verify(root.webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-
-      var testApi = root.webView.getTestApi();
-      var res = root.webView.waitFor(function () { return resultUpdated(testApi); })
-
-      compare(res, "Main world content script DID NOT found oxide.sendMessage",
-              "Unexpected result message");
-    }
-
-    function test_oxide_api_in_main_scope_when_flag_set() {
-      var context =  webContext.createObject(null, {__injectOxideApiInMainWorld: true});
-      root.webView = testWebViewComponent.createObject(root, { context: context });
-      root.webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
-      verify(root.webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-
-      var testApi = root.webView.getTestApi();
-      var res = root.webView.waitFor(function () { return resultUpdated(testApi); })
-
-      compare(res, "oxide.sendMessage",
-              "Unexpected result message");
-    }
-
     function test_can_inject_in_main_world_with_oxide_api() {
-      var context =  webContext.createObject(null, {__injectOxideApiInMainWorld: true});
+      var context =  webContext.createObject(null, {});
       var script = userScript.createObject(null, {
         context: "oxide-private://main-world-private",
-        injectInMainWorld: true,
+        emulateGreasemonkey: true,
         url: "tst_WebView_scriptMainWorld_user_script.js"});
 
       webView = testWebViewComponent.createObject(root, { context: context });
@@ -134,10 +99,10 @@ Column {
     }
 
     function test_receive_message_from_main_world_userscript() {
-      var context = webContext.createObject(null, {__injectOxideApiInMainWorld: true});
+      var context = webContext.createObject(null, {});
       var script = userScript.createObject(null, {
         context: "oxide-private://main-world-private",
-        injectInMainWorld: true,
+        emulateGreasemonkey: true,
         url: "tst_WebView_scriptMainWorld_user_script.js"});
 
       webView = testWebViewComponent.createObject(root, { context: context });

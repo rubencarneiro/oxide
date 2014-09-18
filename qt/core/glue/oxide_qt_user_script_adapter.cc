@@ -108,14 +108,6 @@ void UserScriptAdapter::setEmulateGreasemonkey(bool emulate) {
   priv->user_script.set_emulate_greasemonkey(emulate);
 }
 
-bool UserScriptAdapter::privateInjectedInMainWorld() const {
-  return priv->user_script.inject_in_main_world();
-}
-
-void UserScriptAdapter::setPrivateInjectedInMainWorld(bool in_main_world) {
-  priv->user_script.set_inject_in_main_world(in_main_world);
-}
-
 bool UserScriptAdapter::matchAllFrames() const {
   return priv->user_script.match_all_frames();
 }

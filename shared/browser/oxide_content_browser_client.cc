@@ -287,9 +287,6 @@ void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetUserAgent(
       BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
-  // TODO: might be good to limit this to non 'off the record' browser clients
-  host->Send(new OxideMsg_InjectOxideJsExtensionsInMainWorld(
-      BrowserContext::FromContent(host->GetBrowserContext())->ShouldInjectOxideApiInMainWorld()));
   host->AddFilter(new ScriptMessageDispatcherBrowser(host));
   host->AddFilter(new UserAgentOverrideProvider(host));
 }

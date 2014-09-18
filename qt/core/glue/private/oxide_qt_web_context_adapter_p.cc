@@ -48,8 +48,7 @@ WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
     session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
     popup_blocker_enabled(true),
     devtools_enabled(false),
-    devtools_port(kDefaultDevtoolsPort),
-    inject_oxide_api_in_main_world(false) {}
+    devtools_port(kDefaultDevtoolsPort) {}
 
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::Create(
@@ -222,9 +221,6 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
   }
   context_->SetCookiePolicy(construct_props_->cookie_policy);
   context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
-
-  context_->SetShouldInjectOxideApiInMainWorld(
-      construct_props_->inject_oxide_api_in_main_world);
 
   context_->SetDelegate(this);
 

@@ -54,10 +54,6 @@ base::LazyInstance<ScriptMessageDispatcherMap> g_dispatcher_map =
 void ScriptMessageDispatcherRenderer::WillReleaseScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
-  if (world_id < 1) {
-    return;
-  }
-
   v8::HandleScope handle_scope(context->GetIsolate());
 
   for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
@@ -156,14 +152,13 @@ void ScriptMessageDispatcherRenderer::ReturnError(
 }
 
 ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
-    content::RenderFrame* frame, bool inject_api_in_main_world) :
+    content::RenderFrame* frame) :
     content::RenderFrameObserver(frame) {
   std::pair<ScriptMessageDispatcherMap::iterator, bool> rv =
       g_dispatcher_map.Get().insert(std::make_pair(frame, this));
   CHECK(rv.second);
 
-  if (inject_api_in_main_world &&
-      frame->GetWebFrame() == frame->GetRenderView()->GetWebView()->mainFrame()) {
+  if (frame->GetWebFrame() == frame->GetRenderView()->GetWebView()->mainFrame()) {
     v8::HandleScope handle_scope(v8::Isolate::GetCurrent());
     v8::Local<v8::Context>
       context = frame->GetWebFrame()->mainWorldScriptContext();
@@ -173,8 +168,21 @@ ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
     script_message_managers_.push_back(
         linked_ptr<ScriptMessageManager>(new ScriptMessageManager(frame,
                                                                   context,
-                                                                  oxide::kMainWorldId)));
+                                                                  kMainWorldId)));
   }
+}
+
+linked_ptr<ScriptMessageManager>
+ScriptMessageDispatcherRenderer::ScriptMessageManagerForWorldId(int world_id) {
+  linked_ptr<ScriptMessageManager> message_manager;
+  for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
+       it != script_message_managers_.end();
+       ++it) {
+    if ((*it)->frame() == render_frame() && (*it)->world_id() == world_id) {
+      message_manager = *it;
+    }
+  }
+  return message_manager;
 }
 
 ScriptMessageDispatcherRenderer::~ScriptMessageDispatcherRenderer() {
@@ -200,9 +208,10 @@ ScriptMessageDispatcherRenderer* ScriptMessageDispatcherRenderer::FromWebFrame(
 void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
-  if (world_id < 1) {
+
+  // Already created for the main world
+  if (world_id < 1)
     return;
-  }
 
   script_message_managers_.push_back(
       linked_ptr<ScriptMessageManager>(new ScriptMessageManager(render_frame(),

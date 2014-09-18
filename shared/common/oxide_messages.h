@@ -40,9 +40,6 @@ IPC_STRUCT_END()
 
 #define IPC_MESSAGE_START OxideMsgStart
 
-IPC_MESSAGE_CONTROL1(OxideMsg_InjectOxideJsExtensionsInMainWorld,
-                     bool)
-
 IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserScripts,
                      base::SharedMemoryHandle)
 

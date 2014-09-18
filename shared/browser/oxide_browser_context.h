@@ -171,9 +171,6 @@ class BrowserContext : public content::BrowserContext,
   base::FilePath GetPath() const FINAL;
   base::FilePath GetCachePath() const;
 
-  virtual bool ShouldInjectOxideApiInMainWorld() const = 0;
-  virtual void SetShouldInjectOxideApiInMainWorld(bool) = 0;
-
   std::string GetAcceptLangs() const;
   virtual void SetAcceptLangs(const std::string& langs) = 0;
 
