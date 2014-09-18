@@ -23,6 +23,7 @@ TestWebView {
       return;
     }
 
+    console.log("Event type: " + event.type + ", url: " + event.url);
     test.verify(expectedLoadEvents.length > 0);
     var expected = expectedLoadEvents[0];
 
@@ -57,8 +58,9 @@ TestWebView {
     function test_WebView_loading1_browser_initiated() {
       var url = "http://testsuite/empty.html";
       expectedLoadEvents = [
-          { type: LoadEvent.TypeStarted, url: url, loading: true },
-          { type: LoadEvent.TypeSucceeded, url: url, loading: false }
+        { type: LoadEvent.TypeStarted, url: url, loading: true },
+        { type: LoadEvent.TypeCommitted, url: url, loading: true },
+        { type: LoadEvent.TypeSucceeded, url: url, loading: false }
       ];
 
       webView.url = url;
@@ -82,8 +84,10 @@ TestWebView {
       var new_url = "http://foo.testsuite/empty.html";
       expectedLoadEvents = [
         { type: LoadEvent.TypeStarted, url: initial_url, loading: true },
+        { type: LoadEvent.TypeCommitted, url: initial_url, loading: true },
         { type: LoadEvent.TypeSucceeded, url: initial_url, loading: false },
-        { type: LoadEvent.TypeStarted, url: new_url, loading: true },
+        { type: LoadEvent.TypeStarted, url: new_url, loading: true }, 
+        { type: LoadEvent.TypeCommitted, url: new_url, loading: true },
         { type: LoadEvent.TypeSucceeded, url: new_url, loading: false }
       ];
 
@@ -140,6 +144,7 @@ TestWebView {
         { type: LoadEvent.TypeStarted, url: url, loading: true },
         { type: LoadEvent.TypeFailed, url: url, loading: true },
         { type: LoadEvent.TypeStarted, url: "data:text/html,chromewebdata", loading: true },
+        { type: LoadEvent.TypeCommitted, url: url, loading: true },
         { type: LoadEvent.TypeSucceeded, url: "data:text/html,chromewebdata", loading: false },
       ];
 
@@ -161,6 +166,7 @@ TestWebView {
       var url = "http://testsuite/tst_WebView_loading_redirect.py";
       expectedLoadEvents = [
         { type: LoadEvent.TypeStarted, url: url, loading: true },
+        { type: LoadEvent.TypeCommitted, url: "http://testsuite/empty.html", loading: true },
         { type: LoadEvent.TypeSucceeded, url: "http://testsuite/empty.html", loading: false }
       ];
 

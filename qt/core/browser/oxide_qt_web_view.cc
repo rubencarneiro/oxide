@@ -488,6 +488,13 @@ void WebView::OnLoadStarted(const GURL& validated_url,
   adapter_->LoadEvent(&event);
 }
 
+void WebView::OnLoadCommitted(const GURL& url) {
+  OxideQLoadEvent event(
+      QUrl(QString::fromStdString(url.spec())),
+      OxideQLoadEvent::TypeCommitted);
+  adapter_->LoadEvent(&event);
+}
+
 void WebView::OnLoadStopped(const GURL& validated_url) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),

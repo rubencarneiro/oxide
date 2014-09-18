@@ -39,6 +39,7 @@
 #include <Qt>
 
 #include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #if defined(ENABLE_COMPOSITING)
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
@@ -332,9 +333,14 @@ void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   Q_Q(OxideQQuickWebView);
 
   emit q->loadEvent(event);
-  if (using_old_load_event_signal_) {
-    emit q->loadingChanged(event);
+
+  // The deprecated signal doesn't get TypeCommitted
+  if (!using_old_load_event_signal_ ||
+      event->type() == OxideQLoadEvent::TypeCommitted) {
+    return;
   }
+
+  emit q->loadingChanged(event);
 }
 
 void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {

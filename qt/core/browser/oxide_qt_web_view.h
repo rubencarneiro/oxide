@@ -113,6 +113,7 @@ class WebView FINAL : public oxide::WebView,
 
   void OnLoadStarted(const GURL& validated_url,
                      bool is_error_frame) FINAL;
+  void OnLoadCommitted(const GURL& url) FINAL;
   void OnLoadStopped(const GURL& validated_url) FINAL;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,

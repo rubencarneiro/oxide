@@ -419,6 +419,7 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnLoadStarted(const GURL& validated_url,
                              bool is_error_frame);
+  virtual void OnLoadCommitted(const GURL& url);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,

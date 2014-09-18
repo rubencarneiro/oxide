@@ -729,12 +729,12 @@ void WebView::DidCommitProvisionalLoadForFrame(
     content::RenderFrameHost* render_frame_host,
     const GURL& url,
     content::PageTransition transition_type) {
-  WebFrame* frame = WebFrame::FromFrameTreeNode(
-      static_cast<content::RenderFrameHostImpl *>(
-        render_frame_host)->frame_tree_node());
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (frame) {
     frame->URLChanged();
   }
+
+  OnLoadCommitted(url);
 }
 
 void WebView::DidFailProvisionalLoad(
@@ -852,6 +852,7 @@ void WebView::OnLoadProgressChanged(double progress) {}
 
 void WebView::OnLoadStarted(const GURL& validated_url,
                             bool is_error_frame) {}
+void WebView::OnLoadCommitted(const GURL& url) {}
 void WebView::OnLoadStopped(const GURL& validated_url) {}
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
