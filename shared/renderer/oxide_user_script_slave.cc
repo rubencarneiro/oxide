@@ -221,12 +221,14 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
 
     blink::WebScriptSource source(blink::WebString::fromUTF8(content));
 
-    if (script->emulate_greasemonkey())
+    if (script->emulate_greasemonkey() &&
+        script->should_be_injected_in_main_world()) {
       InjectGreaseMonkeyScript(frame, source);
-    else {
-      int id = GetIsolatedWorldID(script->context(), frame);
-      frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
+      continue;
     }
+
+    int id = GetIsolatedWorldID(script->context(), frame);
+    frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
   }
 }
 
