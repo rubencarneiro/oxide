@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 from __future__ import print_function
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoOptionError
 from optparse import OptionParser
 import os
 import os.path
@@ -274,8 +274,8 @@ class Options(OptionParser):
 
 class Config(ConfigParser):
   def __init__(self, opts):
-    ConfigParser.__init__(self, defaults={"cachedir": opts.cache_dir},
-                          allow_no_value=True)
+    ConfigParser.__init__(self, allow_no_value=True)
+
     filename = os.path.join(TOPSRCDIR, ".client.cfg")
     try:
       with open(filename, "r") as f:
@@ -283,18 +283,22 @@ class Config(ConfigParser):
     except IOError as e:
       if e.errno != 2:
         raise
-    if opts.cache_dir:
-      if opts.cache_dir != os.path.abspath(self.get("DEFAULT", "cachedir")):
-        print("Ignoring value passed to --cache-dir, as it doesn't match the "
-              "value passed when the checkout was created", file=sys.stderr)
-      else:
+      if opts.cache_dir:
         self.set("DEFAULT", "cachedir", opts.cache_dir)
+
+    if opts.cache_dir and opts.cache_dir != self.cachedir:
+      print("Ignoring value passed to --cache-dir, as it doesn't match the "
+            "value passed when the checkout was created", file=sys.stderr)
+
     with open(filename, "w") as f:
       self.write(f)
 
   @property
   def cachedir(self):
-    return self.get("DEFAULT", "cachedir")
+    try:
+      return self.get("DEFAULT", "cachedir")
+    except NoOptionError:
+      return None
 
 def main():
   o = Options()
