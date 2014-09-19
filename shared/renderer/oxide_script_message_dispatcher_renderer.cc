@@ -27,6 +27,7 @@
 #include "content/public/renderer/render_view.h"
 #include "ipc/ipc_message.h"
 #include "ipc/ipc_message_macros.h"
+#include "third_party/WebKit/public/web/WebLocalFrame.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebView.h"
 #include "url/gurl.h"
@@ -158,7 +159,7 @@ ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
       g_dispatcher_map.Get().insert(std::make_pair(frame, this));
   CHECK(rv.second);
 
-  if (frame->GetWebFrame() == frame->GetRenderView()->GetWebView()->mainFrame()) {
+  if (!frame->GetWebFrame()->parent()) {
     v8::HandleScope handle_scope(v8::Isolate::GetCurrent());
     v8::Local<v8::Context>
       context = frame->GetWebFrame()->mainWorldScriptContext();
