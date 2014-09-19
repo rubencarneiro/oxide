@@ -56,6 +56,8 @@ class ScriptMessageManager FINAL :
 
   GURL GetContextURL() const;
 
+  int world_id() const { return world_id_; }
+
   content::RenderFrame* frame() const { return frame_; }
 
   v8::Isolate* isolate() const { return isolate_; }
@@ -69,6 +71,8 @@ class ScriptMessageManager FINAL :
   }
 
   ScriptMessageHandlerRenderer* GetHandlerForMsgID(const std::string& msg_id);
+
+  v8::Handle<v8::Object> GetOxideApiObject(v8::Isolate* isolate);
 
  private:
   friend class ScriptMessageRequestImplRenderer;

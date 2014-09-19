@@ -1,0 +1,20 @@
+<html>
+
+<script>
+window.onload = function() {
+  try {
+    oxide.sendMessage("FOO", {});
+    document.getElementById("result").innerHTML = "oxide.sendMessage";
+  } catch(e) {
+    document.getElementById("result").innerHTML = "error: " + e.toString();
+  }
+}
+</script>
+
+<body>
+  <h1>SCRIPT MAIN WORLD test</h1>
+  <iframe src="about:blank"></iframe>
+  <div id="result"></div>
+</body>
+</html>
+

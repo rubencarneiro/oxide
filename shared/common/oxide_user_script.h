@@ -113,6 +113,13 @@ class UserScript FINAL {
     contents_ = content;
   }
 
+  bool should_be_injected_in_main_world() const {
+    return should_be_injected_in_main_world_;
+  }
+  void set_should_be_injected_in_main_world(bool in_main_world) {
+    should_be_injected_in_main_world_ = in_main_world;
+  }
+
   void Pickle(::Pickle* pickle) const;
   void Unpickle(const ::Pickle& pickle, PickleIterator* iter);
 
@@ -145,6 +152,7 @@ class UserScript FINAL {
   bool match_all_frames_;
   bool incognito_enabled_;
   bool emulate_greasemonkey_;
+  bool should_be_injected_in_main_world_;
 
   GURL context_;
 

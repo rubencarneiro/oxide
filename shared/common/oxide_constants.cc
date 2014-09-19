@@ -27,3 +27,7 @@ const char kFormFactorPhone[] = "phone";
 const char kIncognito[] = "incognito";
 
 } // namespace switches
+
+namespace oxide {
+const int kMainWorldId = 0;
+} // namespace oxide
