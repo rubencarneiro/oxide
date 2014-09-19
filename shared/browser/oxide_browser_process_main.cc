@@ -52,6 +52,7 @@
 #endif
 #include "ipc/ipc_descriptors.h"
 #include "ui/base/ui_base_paths.h"
+#include "ui/base/ui_base_switches.h"
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
@@ -239,6 +240,9 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
       command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
     }
     command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
+
+    // Remove this when we implement a selection API (see bug #1324292)
+    command_line->AppendSwitch(switches::kDisableTouchEditing);
   }
 
   const char* form_factor_string = NULL;

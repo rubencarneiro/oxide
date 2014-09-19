@@ -425,7 +425,7 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
     return gfx::Rect(last_size_);
   }
 
-  return gfx::Rect(web_view_->GetViewSizeDip());
+  return web_view_->GetViewBoundsDip();
 }
 
 bool RenderWidgetHostView::LockMouse() {

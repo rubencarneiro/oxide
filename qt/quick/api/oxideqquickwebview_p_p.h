@@ -74,6 +74,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   void IconChanged(QUrl icon) Q_DECL_FINAL;
   void CommandsUpdated() Q_DECL_FINAL;
 
+  void LoadingChanged() Q_DECL_FINAL;
   void LoadProgressChanged(double progress) Q_DECL_FINAL;
 
   void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
@@ -85,7 +86,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
 
   QScreen* GetScreen() const Q_DECL_FINAL;
-  QSize GetViewSizePix() const Q_DECL_FINAL;
+  QRect GetViewBoundsPix() const Q_DECL_FINAL;
   bool IsVisible() const Q_DECL_FINAL;
   bool HasFocus() const Q_DECL_FINAL;
 
@@ -146,6 +147,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void didUpdatePaintNode();
 
+  void onWindowChanged(QQuickWindow* window);
+
   bool constructed_;
   int load_progress_;
   QUrl icon_;
@@ -163,6 +166,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   bool frame_evicted_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
   QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
+
+  bool using_old_load_event_signal_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

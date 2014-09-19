@@ -247,11 +247,38 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 }
 
+class InputMethodListener : public QObject {
+  Q_OBJECT
+
+ public:
+  InputMethodListener(WebView* webview)
+      : webview_(webview) {}
+  virtual ~InputMethodListener() {}
+
+ public Q_SLOTS:
+  void inputPanelVisibilityChanged();
+
+ private:
+  WebView* webview_;
+};
+
+void InputMethodListener::inputPanelVisibilityChanged() {
+  webview_->InputPanelVisibilityChanged();
+}
+
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
     has_input_method_state_(false),
+    input_method_listener_(new InputMethodListener(this)),
     qsecurity_status_(
-        OxideQSecurityStatusPrivate::Create(this)) {}
+        OxideQSecurityStatusPrivate::Create(this)) {
+  QInputMethod* im = QGuiApplication::inputMethod();
+  if (im) {
+    QObject::connect(im, SIGNAL(visibleChanged()),
+                     input_method_listener_.get(),
+                     SLOT(inputPanelVisibilityChanged()));
+  }
+}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
@@ -355,9 +382,12 @@ blink::WebScreenInfo WebView::GetScreenInfo() const {
   return GetWebScreenInfoFromQScreen(screen);
 }
 
-gfx::Size WebView::GetViewSizePix() const {
-  QSize size = adapter_->GetViewSizePix();
-  return gfx::Size(size.width(), size.height());
+gfx::Rect WebView::GetViewBoundsPix() const {
+  QRect bounds = adapter_->GetViewBoundsPix();
+  return gfx::Rect(bounds.x(),
+                   bounds.y(),
+                   bounds.width(),
+                   bounds.height());
 }
 
 bool WebView::IsVisible() const {
@@ -366,6 +396,15 @@ bool WebView::IsVisible() const {
 
 bool WebView::HasFocus() const {
   return adapter_->HasFocus();
+}
+
+bool WebView::IsInputPanelVisible() const {
+  QInputMethod* im = QGuiApplication::inputMethod();
+  if (!im) {
+    return false;
+  }
+
+  return im->isVisible();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -433,6 +472,10 @@ void WebView::OnCommandsUpdated() {
   adapter_->CommandsUpdated();
 }
 
+void WebView::OnLoadingChanged() {
+  adapter_->LoadingChanged();
+}
+
 void WebView::OnLoadProgressChanged(double progress) {
   adapter_->LoadProgressChanged(progress);
 }
@@ -442,6 +485,13 @@ void WebView::OnLoadStarted(const GURL& validated_url,
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       OxideQLoadEvent::TypeStarted);
+  adapter_->LoadEvent(&event);
+}
+
+void WebView::OnLoadCommitted(const GURL& url) {
+  OxideQLoadEvent event(
+      QUrl(QString::fromStdString(url.spec())),
+      OxideQLoadEvent::TypeCommitted);
   adapter_->LoadEvent(&event);
 }
 
@@ -788,7 +838,14 @@ WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
 }
 
-WebView::~WebView() {}
+WebView::~WebView() {
+  QInputMethod* im = QGuiApplication::inputMethod();
+  if (im) {
+    QObject::disconnect(im, SIGNAL(visibleChanged()),
+                        input_method_listener_.get(),
+                        SLOT(inputPanelVisibilityChanged()));
+  }
+}
 
 void WebView::HandleFocusEvent(QFocusEvent* event) {
   if (event->gotFocus() && ShouldShowInputPanel()) {
@@ -935,3 +992,5 @@ QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {
 
 } // namespace qt
 } // namespace oxide
+
+#include "oxide_qt_web_view.moc"

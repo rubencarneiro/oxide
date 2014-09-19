@@ -42,6 +42,7 @@ class OxideQSecurityStatus;
 namespace oxide {
 namespace qt {
 
+class InputMethodListener;
 class WebViewAdapter;
 
 class WebView FINAL : public oxide::WebView,
@@ -64,6 +65,7 @@ class WebView FINAL : public oxide::WebView,
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
  private:
+  friend class InputMethodListener;
   friend class WebViewAdapter;
 
   WebView(WebViewAdapter* adapter);
@@ -82,9 +84,10 @@ class WebView FINAL : public oxide::WebView,
   void SelectionChanged() FINAL;
 
   blink::WebScreenInfo GetScreenInfo() const FINAL;
-  gfx::Size GetViewSizePix() const FINAL;
+  gfx::Rect GetViewBoundsPix() const FINAL;
   bool IsVisible() const FINAL;
   bool HasFocus() const FINAL;
+  bool IsInputPanelVisible() const FINAL;
 
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -105,10 +108,12 @@ class WebView FINAL : public oxide::WebView,
   void OnIconChanged(const GURL& icon) FINAL;
   void OnCommandsUpdated() FINAL;
 
+  void OnLoadingChanged() FINAL;
   void OnLoadProgressChanged(double progress) FINAL;
 
   void OnLoadStarted(const GURL& validated_url,
                      bool is_error_frame) FINAL;
+  void OnLoadCommitted(const GURL& url) FINAL;
   void OnLoadStopped(const GURL& validated_url) FINAL;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,
@@ -179,6 +184,7 @@ class WebView FINAL : public oxide::WebView,
 
   bool has_input_method_state_;
 
+  scoped_ptr<InputMethodListener> input_method_listener_;
   scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);

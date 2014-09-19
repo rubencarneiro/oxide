@@ -46,7 +46,8 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
     TypeStarted,
     TypeStopped,
     TypeSucceeded,
-    TypeFailed
+    TypeFailed,
+    TypeCommitted
   };
 
   enum ErrorDomain {

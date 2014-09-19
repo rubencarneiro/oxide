@@ -9,7 +9,7 @@ TestWebView {
   height: 200
 
   property int inconsistentState: 0
-  onLoadingChanged: {
+  onLoadingStateChanged: {
     if (!loading && (loadProgress < 100)) {
       inconsistentState++
     }
