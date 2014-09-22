@@ -126,25 +126,18 @@ void UserScriptSlave::InjectGreaseMonkeyScript(
       "(function(oxide) {\n"
   ));
 
-  v8::Local<v8::String> script_start(v8::String::NewFromUtf8(
-      isolate,
-      kUserScriptHead
-  ));
   v8::Local<v8::String> src(
       v8::String::NewFromUtf8(
           isolate,
 	  script_source.code.utf8().c_str()));
   DCHECK(!src.IsEmpty() && src->Length() > 0);
 
-  v8::Local<v8::String> script_tail(v8::String::NewFromUtf8(
-      isolate,
-      kUserScriptTail
-  ));
+  v8::Local<v8::String> wrapped_script_tail(
+      v8::String::NewFromUtf8(isolate, "\n})"));
 
   v8::Local<v8::String> wrapped_src(
       v8::String::Concat(wrapped_script_head,
-	  v8::String::Concat(script_start,
-	     v8::String::Concat(v8::String::Concat(src, script_tail), v8::String::NewFromUtf8(isolate, "\n})")))));
+          v8::String::Concat(src, wrapped_script_tail)));
 
   v8::Local<v8::Script> script(
       v8::Script::Compile(wrapped_src));
