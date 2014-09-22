@@ -1017,18 +1017,24 @@ void WebView::Init(Params* params) {
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
         params->contents.release()));
 
-    WasResized();
-    VisibilityChanged();
-    FocusChanged();
-
     RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
     if (rwhv) {
       rwhv->SetWebView(this);
     }
 
-    // Update our preferences in case something has changed (like
-    // CanCreateWindows())
+    // Sync WebContents with the state of the WebView
+    WasResized();
+    VisibilityChanged();
+    FocusChanged();
+    InputPanelVisibilityChanged();
     UpdateWebPreferences();
+
+    // Update SSL Status
+    content::NavigationEntry* entry =
+        web_contents_->GetController().GetVisibleEntry();
+    if (entry) {
+      security_status_.Update(entry->GetSSL());
+    }
   } else {
     CHECK(params->context) << "Didn't specify a BrowserContext or WebContents";
 
