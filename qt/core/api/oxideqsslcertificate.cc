@@ -60,7 +60,7 @@ static QStringList GetPrincipalValue(const net::CertPrincipal& principal,
 }
 
 static QDateTime ToQDateTime(const base::Time& time) {
-  int64_t ms = (time - base::Time()).InMilliseconds();
+  int64_t ms = (time - base::Time::UnixEpoch()).InMilliseconds();
   return QDateTime::fromMSecsSinceEpoch(ms);
 }
 

@@ -20,31 +20,31 @@ TestWebView {
 
     property var cert_data: [
       { id: 1, parent: 5,
-        serial: "00863486245ae549b6", startDate: 13054686690000, expiryDate: 21694600290000,
+        serial: "00863486245ae549b6", startDate: 1410213090000, expiryDate: 10050126690000,
         fingerprint: "b354a8e3d1359447ec719e7a03b42cef379a4cc1", expired: false,
         subject: {O: "Oxide", CN: "localhost", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"},
         issuer: {O: "Canonical Ltd", CN: "Oxide Root CA", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"}
       },
       { id: 2, parent: null,
-        serial: "00efc9a8e1a7a14969", startDate: 13023211916000, expiryDate: 13023298316000,
+        serial: "00efc9a8e1a7a14969", startDate: 1378738316000, expiryDate: 1378824716000,
         fingerprint: "df17c8da033e2d5ed64d1f187fdf419e1fc68e47", expired: true,
         subject: {O: "Oxide", CN: "localhost", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"},
         issuer: {O: "Canonical Ltd", CN: "Oxide Root CA", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"}
       },
       { id: 3, parent: null,
-        serial: "00d8b91a89244cc2bd", startDate: 13054749416000, expiryDate: 21694663016000,
+        serial: "00d8b91a89244cc2bd", startDate: 1410275816000, expiryDate: 10050189416000,
         fingerprint: "f0357f544e27adaa51211663a28cc8d64b057e63", expired: false,
         subject: {O: "Oxide", CN: "localhost", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"},
         issuer: {O: "Oxide", CN: "localhost", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"}
       },
       { id: 4, parent: null,
-        serial: "00b3ebd987ee2d02cc", startDate: 13054749837000, expiryDate: 21694663437000,
+        serial: "00b3ebd987ee2d02cc", startDate: 1410276237000, expiryDate: 10050189837000,
         fingerprint: "89c5760286e897ad32b9dd500d70755e1e026588", expired: false,
         subject: {O: "Oxide", CN: "foo.bar", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"},
         issuer: {O: "Canonical Ltd", CN: "Oxide Root CA", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"}
       },
       { id: 5, parent: null,
-        serial: "00b2e64281f82a21c0", startDate: 13054686336000, expiryDate: 21694599936000,
+        serial: "00b2e64281f82a21c0", startDate: 1410212736000, expiryDate: 10050126336000,
         fingerprint: "f8ad76468322c78acbeb0845b3cdbe07138f32c4", expired: false,
         subject: {O: "Canonical Ltd", CN: "Oxide Root CA", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"},
         issuer: {O: "Canonical Ltd", CN: "Oxide Root CA", L: "Solihull", OU: undefined, C: "UK", ST: "West Midlands"}
