@@ -22,9 +22,9 @@
 #include <QImage>
 #include <QList>
 #include <QPointF>
+#include <QRect>
 #include <QScopedPointer>
 #include <QSharedPointer>
-#include <QSize>
 #include <QSizeF>
 #include <QString>
 #include <QtGlobal>
@@ -228,6 +228,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void IconChanged(QUrl icon) = 0;
   virtual void CommandsUpdated() = 0;
 
+  virtual void LoadingChanged() = 0;
   virtual void LoadProgressChanged(double progress) = 0;
 
   virtual void LoadEvent(OxideQLoadEvent* event) = 0;
@@ -239,7 +240,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual WebFrameAdapter* CreateWebFrame() = 0;
 
   virtual QScreen* GetScreen() const = 0;
-  virtual QSize GetViewSizePix() const = 0;
+  virtual QRect GetViewBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
 

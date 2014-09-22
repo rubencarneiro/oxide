@@ -56,6 +56,7 @@
       },
       'include_dirs': [
         '../..',
+        '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
       ],
       'sources': [
@@ -100,6 +101,11 @@
         {
           'action_name': 'moc_oxide_qt_location_provider.cc',
           'moc_input': 'browser/oxide_qt_location_provider_p.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_qt_web_view.moc',
+          'moc_input': 'browser/oxide_qt_web_view.cc',
           'includes': [ 'moc.gypi' ]
         },
       ]

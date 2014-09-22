@@ -84,23 +84,21 @@ WebView {
 
   context: TestWebContext {}
 
-  Item {
-    Component.onCompleted: {
-      webView.loadingChanged.connect(onLoadingChanged);
+  onLoadEvent: {
+    if (event.type == LoadEvent.TypeStarted) {
+      webView.qtest_loadsStartedCount++;
+    } else if (event.type == LoadEvent.TypeSucceeded) {
+      webView.qtest_loadsSucceededCount++;
+    } else if (event.type == LoadEvent.TypeStopped) {
+      webView.qtest_loadsStoppedCount++;
+    } else if (event.type == LoadEvent.TypeFailed) {
+      webView.qtest_loadsFailedCount++;
     }
 
-    function onLoadingChanged(loadEvent) {
-      if (loadEvent.type == LoadEvent.TypeStarted) {
-        webView.qtest_loadsStartedCount++;
-      } else if (loadEvent.type == LoadEvent.TypeSucceeded) {
-        webView.qtest_loadsSucceededCount++;
-      } else if (loadEvent.type == LoadEvent.TypeStopped) {
-        webView.qtest_loadsStoppedCount++;
-      } else if (loadEvent.type == LoadEvent.TypeFailed) {
-        webView.qtest_loadsFailedCount++;
-      }
-    }
+    on_load_event(event);
   }
+
+  function on_load_event(event) {}
 
   TestResult { id: qtest_testResult }
 }

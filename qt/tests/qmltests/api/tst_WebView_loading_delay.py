@@ -2,7 +2,7 @@ from cStringIO import StringIO
 import time
 
 def handler(request):
-  time.sleep(0.2)
+  time.sleep(0.5)
 
   html = StringIO()
   html.write("<html></html>")

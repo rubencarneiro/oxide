@@ -39,6 +39,7 @@
 #include <Qt>
 
 #include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #if defined(ENABLE_COMPOSITING)
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
@@ -223,7 +224,8 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     input_area_(NULL),
     received_new_compositor_frame_(false),
     frame_evicted_(false),
-    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {}
+    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
+    using_old_load_event_signal_(false) {}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
@@ -314,6 +316,12 @@ void OxideQQuickWebViewPrivate::CommandsUpdated() {
   emit q->navigationHistoryChanged();
 }
 
+void OxideQQuickWebViewPrivate::LoadingChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->loadingStateChanged();
+}
+
 void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   Q_Q(OxideQQuickWebView);
 
@@ -323,6 +331,14 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
 
 void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   Q_Q(OxideQQuickWebView);
+
+  emit q->loadEvent(event);
+
+  // The deprecated signal doesn't get TypeCommitted
+  if (!using_old_load_event_signal_ ||
+      event->type() == OxideQLoadEvent::TypeCommitted) {
+    return;
+  }
 
   emit q->loadingChanged(event);
 }
@@ -355,10 +371,17 @@ QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
   return q->window()->screen();
 }
 
-QSize OxideQQuickWebViewPrivate::GetViewSizePix() const {
+QRect OxideQQuickWebViewPrivate::GetViewBoundsPix() const {
   Q_Q(const OxideQQuickWebView);
 
-  return QSize(qRound(q->width()), qRound(q->height()));
+  if (!q->window()) {
+    return QRect();
+  }
+
+  QPointF pos(q->mapToScene(QPointF(0, 0)) + q->window()->position());
+
+  return QRect(qRound(pos.x()), qRound(pos.y()),
+               qRound(q->width()), qRound(q->height()));
 }
 
 bool OxideQQuickWebViewPrivate::IsVisible() const {
@@ -716,6 +739,14 @@ void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
   compositor_frame_handle_.reset();
 }
 
+void OxideQQuickWebViewPrivate::onWindowChanged(QQuickWindow* window) {
+  if (!window) {
+    return;
+  }
+
+  wasResized();
+}
+
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
 
 // static
@@ -738,10 +769,18 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
 
   Q_ASSERT(thread() == QThread::currentThread());
 
-  if (signal == QMetaMethod::fromSignal(
-          &OxideQQuickWebView::newViewRequested)) {
+#define VIEW_SIGNAL(sig) QMetaMethod::fromSignal(&OxideQQuickWebView::sig)
+  if (signal == VIEW_SIGNAL(newViewRequested)) {
     d->updateWebPreferences();
+  } else if (signal == VIEW_SIGNAL(loadingChanged) &&
+             !d->using_old_load_event_signal_) {
+    d->using_old_load_event_signal_ = true;
+    qWarning() << "WebView.loadingChanged is deprecated. If you are interested "
+                  "in load events, please use WebView.loadEvent. The "
+                  "notification for WebView.loading is now "
+                  "WebView.loadingStateChanged";
   }
+#undef VIEW_SIGNAL
 }
 
 void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
@@ -765,7 +804,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
   d->input_area_->setWidth(newGeometry.width());
   d->input_area_->setHeight(newGeometry.height());
 
-  if (d->isInitialized()) {
+  if (d->isInitialized() && window()) {
     d->wasResized();
   }
 }
@@ -887,6 +926,9 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
            QQuickItem::ItemHasContents |
            QQuickItem::ItemIsFocusScope);
 
+  connect(this, SIGNAL(windowChanged(QQuickWindow*)),
+          this, SLOT(onWindowChanged(QQuickWindow*)));
+
   // We have an input area QQuickItem for receiving input events, so
   // that we have a way of bubbling unhandled key events back to the
   // WebView
@@ -939,7 +981,13 @@ QUrl OxideQQuickWebView::url() const {
 void OxideQQuickWebView::setUrl(const QUrl& url) {
   Q_D(OxideQQuickWebView);
 
+  QUrl old_url = d->url();
+
   d->setUrl(url);
+
+  if (d->url() != old_url) {
+    emit urlChanged();
+  }
 }
 
 QString OxideQQuickWebView::title() const {

@@ -55,7 +55,7 @@ ContentMainDelegate::ContentMainDelegate(const base::FilePath& nss_db_path)
 }
 
 oxide::SharedGLContext* ContentMainDelegate::GetSharedGLContext() const {
-  return shared_gl_context_;
+  return shared_gl_context_.get();
 }
 
 bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {

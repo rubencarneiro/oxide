@@ -103,14 +103,14 @@ class MessageReceiver {
 
       while (target) {
         DCHECK_EQ(target->view(), view);
-        if (TryDispatchMessageToTarget(target, message)) {
+        if (TryDispatchMessageToTarget(target, message.get())) {
           break;
         }
 
         target = target->parent();
       }
 
-      if (!target && !TryDispatchMessageToTarget(view, message)) {
+      if (!target && !TryDispatchMessageToTarget(view, message.get())) {
         message->Error(ScriptMessageRequest::ERROR_NO_HANDLER,
                        "Could not find a handler for message");
       }

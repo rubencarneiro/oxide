@@ -131,7 +131,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
   } else {
-    if (!frame_provider_ || frame_size != frame_provider_->frame_size() ||
+    if (!frame_provider_.get() ||
+        frame_size != frame_provider_->frame_size() ||
         frame_size_dip != last_frame_size_dip_) {
       DetachLayer();
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
@@ -145,7 +146,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
 
   last_frame_size_dip_ = frame_size_dip;
 
-  if (layer_) {
+  if (layer_.get()) {
     layer_->SetIsDrawable(true);
     layer_->SetContentsOpaque(true);
     layer_->SetBounds(frame_size_dip);
@@ -424,7 +425,7 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
     return gfx::Rect(last_size_);
   }
 
-  return gfx::Rect(web_view_->GetViewSizeDip());
+  return web_view_->GetViewBoundsDip();
 }
 
 bool RenderWidgetHostView::LockMouse() {
@@ -504,18 +505,18 @@ void RenderWidgetHostView::AttachLayer() {
   if (!web_view_) {
     return;
   }
-  if (!layer_) {
+  if (!layer_.get()) {
     return;
   }
 
-  web_view_->compositor()->SetRootLayer(layer_);
+  web_view_->compositor()->SetRootLayer(layer_.get());
 }
 
 void RenderWidgetHostView::DetachLayer() {
   if (!web_view_) {
     return;
   }
-  if (!layer_) {
+  if (!layer_.get()) {
     return;
   }
 

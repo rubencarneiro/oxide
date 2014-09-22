@@ -149,5 +149,24 @@ TestWebView {
       compare(spy.signalArguments[0][1][0].name, data.cookie.name);
       compare(spy.signalArguments[0][1][0].value, data.cookie.value);
     }
+
+    function test_CookieManager3_domain_cookie() {
+      spy.signalName = "setCookiesResponse";
+
+      var id = webView.context.cookieManager.setCookies(
+          "http://foo.testsuite.com/",
+          [{"name": "foo", "value": "bar", "domain": ".testsuite.com"}]);
+      _verify_id(id);
+
+      spy.wait();
+      compare(spy.signalArguments[0][0], id);
+      compare(spy.signalArguments[0][1].length, 0);
+
+      webView.url = "http://foo.testsuite.com/empty.html";
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+
+      compare(webView.getTestApi().evaluateCode("return document.cookie;", true), "foo=bar");
+    }
   }
 }

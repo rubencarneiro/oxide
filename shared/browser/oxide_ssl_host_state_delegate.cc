@@ -23,22 +23,18 @@ SSLHostStateDelegate::SSLHostStateDelegate() {}
 
 SSLHostStateDelegate::~SSLHostStateDelegate() {}
 
-void SSLHostStateDelegate::DenyCert(const std::string& host,
-                                    net::X509Certificate* cert,
-                                    net::CertStatus error) {}
-
 void SSLHostStateDelegate::AllowCert(const std::string& host,
-                                     net::X509Certificate* cert,
+                                     const net::X509Certificate& cert,
                                      net::CertStatus error) {}
 
 void SSLHostStateDelegate::Clear() {}
 
-net::CertPolicy::Judgment SSLHostStateDelegate::QueryPolicy(
+content::SSLHostStateDelegate::CertJudgment SSLHostStateDelegate::QueryPolicy(
     const std::string& host,
-    net::X509Certificate* cert,
+    const net::X509Certificate& cert,
     net::CertStatus error,
     bool* expired_previous_decision) {
-  return net::CertPolicy::UNKNOWN;
+  return DENIED;
 }
 
 void SSLHostStateDelegate::HostRanInsecureContent(const std::string& host,

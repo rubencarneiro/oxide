@@ -213,7 +213,7 @@ struct BrowserContextSharedIOData {
         popup_blocker_enabled(true),
         host_mapping_rules(params.host_mapping_rules) {
 
-   accept_langs = dgettext("oxide", "AcceptLanguage");
+   accept_langs = dgettext(OXIDE_GETTEXT_DOMAIN, "AcceptLanguage");
    if (accept_langs == "AcceptLanguage") {
      accept_langs = kDefaultAcceptLanguage;
    }
@@ -302,7 +302,7 @@ class OTRBrowserContextIODataImpl : public BrowserContextIOData {
 };
 
 void BrowserContextIOData::Init() {
-  DCHECK(!cookie_store_);
+  DCHECK(!cookie_store_.get());
 
   base::FilePath cookie_path;
   if (!IsOffTheRecord() && !GetPath().empty()) {
@@ -427,8 +427,8 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
-  DCHECK(cookie_store_);
-  storage->set_cookie_store(cookie_store_);
+  DCHECK(cookie_store_.get());
+  storage->set_cookie_store(cookie_store_.get());
 
   context->set_transport_security_state(transport_security_state_.get());
 
@@ -518,7 +518,7 @@ bool BrowserContextIOData::CanAccessCookies(const GURL& url,
                                             const GURL& first_party_url,
                                             bool write) {
   scoped_refptr<BrowserContextDelegate> delegate(GetDelegate());
-  if (delegate) {
+  if (delegate.get()) {
     StoragePermission res =
         delegate->CanAccessStorage(url, first_party_url, write,
                                    STORAGE_TYPE_COOKIES);
@@ -793,19 +793,19 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
     content::ProtocolHandlerMap* protocol_handlers,
     content::URLRequestInterceptorScopedVector request_interceptors) {
   DCHECK(CalledOnValidThread());
-  DCHECK(!main_request_context_getter_);
+  DCHECK(!main_request_context_getter_.get());
 
   main_request_context_getter_ =
       new MainURLRequestContextGetter(io_data(),
                                       protocol_handlers,
                                       request_interceptors.Pass());
 
-  return main_request_context_getter_;
+  return main_request_context_getter_.get();
 }
 
 BrowserContextDelegate* BrowserContext::GetDelegate() const {
   DCHECK(CalledOnValidThread());
-  return io_data()->GetDelegate();
+  return io_data()->GetDelegate().get();
 }
 
 void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {

@@ -329,7 +329,7 @@ void WebViewContentsHelper::SetDelegate(
 }
 
 BrowserContext* WebViewContentsHelper::GetBrowserContext() const {
-  return context_;
+  return context_.get();
 }
 
 WebPreferences* WebViewContentsHelper::GetWebPreferences() const {

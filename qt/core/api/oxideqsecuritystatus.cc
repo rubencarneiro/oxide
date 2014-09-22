@@ -188,7 +188,7 @@ OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
 
   scoped_refptr<net::X509Certificate> cert =
       d->web_view_->security_status().cert();
-  if (!cert) {
+  if (!cert.get()) {
     return NULL;
   }
 
