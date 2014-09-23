@@ -19,6 +19,7 @@
 #include "oxide_qt_location_provider_p.h"
 
 #include <cfloat>
+#include <math.h>
 
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
@@ -43,16 +44,27 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
   position.altitude = coord.altitude();
   if (info.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
     position.accuracy = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
+    if (isnan(position.accuracy)) {
+      // shield ourselves against invalid data
+      position.accuracy = DBL_MAX;
+    }
   } else {
     // accuracy is mandatory
     position.accuracy = DBL_MAX;
   }
   if (info.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
-    position.altitude_accuracy =
-        info.attribute(QGeoPositionInfo::VerticalAccuracy);
+    qreal accuracy = info.attribute(QGeoPositionInfo::VerticalAccuracy);
+    if (!isnan(accuracy)) {
+      // shield ourselves against invalid data
+      position.altitude_accuracy = accuracy;
+    }
   }
   if (info.hasAttribute(QGeoPositionInfo::GroundSpeed)) {
-    position.speed = info.attribute(QGeoPositionInfo::GroundSpeed);
+    qreal speed = info.attribute(QGeoPositionInfo::GroundSpeed);
+    if (!isnan(speed)) {
+      // shield ourselves against invalid data
+      position.speed = speed;
+    }
   }
   position.timestamp =
       base::Time::FromJsTime(info.timestamp().toMSecsSinceEpoch());
