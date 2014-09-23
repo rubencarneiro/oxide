@@ -158,19 +158,6 @@ ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
   std::pair<ScriptMessageDispatcherMap::iterator, bool> rv =
       g_dispatcher_map.Get().insert(std::make_pair(frame, this));
   CHECK(rv.second);
-
-  if (!frame->GetWebFrame()->parent()) {
-    v8::HandleScope handle_scope(v8::Isolate::GetCurrent());
-    v8::Local<v8::Context>
-      context = frame->GetWebFrame()->mainWorldScriptContext();
-    v8::Context::Scope context_scope(context);
-
-    // Only in the main frame
-    script_message_managers_.push_back(
-        linked_ptr<ScriptMessageManager>(new ScriptMessageManager(frame,
-                                                                  context,
-                                                                  kMainWorldId)));
-  }
 }
 
 linked_ptr<ScriptMessageManager>
@@ -210,8 +197,7 @@ void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
 
-  // Already created for the main world
-  if (world_id < 1)
+  if (world_id == kMainWorldId && render_frame()->GetWebFrame()->parent())
     return;
 
   script_message_managers_.push_back(

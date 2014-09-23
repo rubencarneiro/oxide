@@ -115,11 +115,15 @@ void UserScriptSlave::InjectGreaseMonkeyScript(
 
   ScriptMessageDispatcherRenderer * dispatcher_renderer =
       ScriptMessageDispatcherRenderer::FromWebFrame(frame);
+  DCHECK(dispatcher_renderer != NULL);
+
   linked_ptr<ScriptMessageManager> message_manager =
       dispatcher_renderer->ScriptMessageManagerForWorldId(kMainWorldId);
+  DCHECK(message_manager != NULL);
 
   v8::Isolate* isolate = message_manager->isolate();
   v8::HandleScope handle_scope(isolate);
+  v8::Context::Scope context_scope(message_manager->GetV8Context());
 
   v8::Local<v8::String> wrapped_script_head(v8::String::NewFromUtf8(
       isolate,
