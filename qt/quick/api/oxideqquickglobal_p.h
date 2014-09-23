@@ -25,7 +25,7 @@
 class OxideQQuickGlobalPrivate;
 class OxideQQuickWebContext;
 
-class OxideQQuickGlobal : public QObject {
+class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   Q_OBJECT
 
   Q_DECLARE_PRIVATE(OxideQQuickGlobal)

@@ -34,8 +34,8 @@ class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
 
-class OxideQQuickWebContext : public QObject,
-                              public QQmlParserStatus {
+class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
+                                            public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)

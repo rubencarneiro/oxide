@@ -28,11 +28,13 @@ set(OXIDE_CORELIB ${OXIDE_CORELIB_DEV}.${OXIDE_CORELIB_SO_VERSION})
 set(QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 set(QTPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/plugins)
 set(BIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/bin)
+set(LIB_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/lib)
 set(OXIDE_STAGE_DIR ${CMAKE_BINARY_DIR}/out/oxide)
 
 set(OXIDE_QMLRUNNER oxideqmlscene)
 set(OXIDE_QMLPLUGIN qmloxideplugin)
 set(OXIDE_QMLPLUGIN_MODULE_NAME com/canonical/Oxide)
+set(OXIDE_QUICKLIB OxideQtQuick)
 
 if(CMAKE_CROSSCOMPILING)
   # Dummy targets - not used anywhere, but this stops Qt5CoreConfigExtras.cmake
@@ -129,6 +131,7 @@ install(DIRECTORY ${CHROMIUM_PRODUCT_DIR}/locales
 
 list(APPEND PACKAGE_LOCALES ${CHROMIUM_PRODUCT_DIR}/locales)
 
+add_subdirectory(qmlplugin)
 add_subdirectory(quick)
 if(NOT DEFINED ENABLE_OXIDEQMLSCENE OR ENABLE_OXIDEQMLSCENE EQUAL 1)
   add_subdirectory(qmlrunner)
@@ -171,6 +174,9 @@ endif()
 get_target_property(_LOCATION ${OXIDE_QMLPLUGIN} LOCATION)
 oxide_add_package_files(OUTDIR ${OXIDE_QMLPLUGIN_MODULE_NAME}
                         FILES ${_LOCATION} ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir)
+
+get_target_property(_LOCATION ${OXIDE_QUICKLIB} LOCATION)
+oxide_add_package_files(FILES ${_LOCATION})
 
 add_custom_target(
     package
