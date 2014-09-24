@@ -98,7 +98,7 @@ void ScriptMessageManager::OxideLazyGetter(
 
 v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
       v8::Isolate* isolate) {
-  v8::HandleScope handle_scope(isolate);
+  v8::EscapableHandleScope handle_scope(isolate);
 
   base::StringPiece raw_src(
       ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
@@ -155,7 +155,7 @@ v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
     return v8::Handle<v8::Object>();
   }
 
-  return exports;
+  return handle_scope.Escape(exports);
 }
 
 void ScriptMessageManager::OxideLazyGetterInner(
