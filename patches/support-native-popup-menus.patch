@@ -162,7 +162,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
 diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/content/browser/renderer_host/render_view_host_delegate_view.h
 --- a/content/browser/renderer_host/render_view_host_delegate_view.h
 +++ b/content/browser/renderer_host/render_view_host_delegate_view.h
-@@ -54,32 +54,30 @@ class CONTENT_EXPORT RenderViewHostDeleg
+@@ -60,32 +60,30 @@ class CONTENT_EXPORT RenderViewHostDeleg
    // Notification that view for this delegate got the focus.
    virtual void GotFocus() {}
  
@@ -188,13 +188,13 @@ diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/co
    virtual void HidePopupMenu() {};
 -#endif
  
-  protected:
-   virtual ~RenderViewHostDelegateView() {}
- };
- 
- }  // namespace content
- 
- #endif  // CONTENT_BROWSER_RENDERER_HOST_RENDER_VIEW_HOST_DELEGATE_VIEW_H_
+ #if defined(TOOLKIT_VIEWS)
+   // Shows a Link Disambiguation Popup. |target_rect| is the area the user
+   // touched that resulted in ambiguity, in DIPs in the host's coordinate
+   // system, |zoomed_bitmap| is an enlarged image of that |target_rect|, and
+   // |callback| is for forwarding on to the original scale web content.
+   virtual void ShowDisambiguationPopup(
+       const gfx::Rect& target_rect,
 diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 --- a/content/common/frame_messages.h
 +++ b/content/common/frame_messages.h
@@ -304,7 +304,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -146,16 +146,18 @@
+@@ -144,16 +144,18 @@
        'renderer/dom_storage/webstoragearea_impl.cc',
        'renderer/dom_storage/webstoragearea_impl.h',
        'renderer/dom_storage/webstoragenamespace_impl.cc',
@@ -564,7 +564,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
 --- a/content/renderer/render_widget.cc
 +++ b/content/renderer/render_widget.cc
-@@ -563,23 +563,21 @@ gfx::Rect RenderWidget::AdjustValidation
+@@ -564,23 +564,21 @@ gfx::Rect RenderWidget::AdjustValidation
  void RenderWidget::SetScreenMetricsEmulationParameters(
      float device_scale_factor,
      const gfx::Point& root_layer_offset,

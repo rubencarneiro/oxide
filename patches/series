@@ -14,3 +14,4 @@ expose-extra-properties-for-should-create-webcontents.patch
 disable-default-network-location-provider.patch
 add-should-download-url-to-resource-dispatcher-host.patch
 load-nss-without-user-db.patch
+unbreak-no-toolkit-views-builds.patch
