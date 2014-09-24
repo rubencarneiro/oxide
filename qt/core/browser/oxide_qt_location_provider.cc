@@ -42,6 +42,10 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
   position.latitude = coord.latitude();
   position.longitude = coord.longitude();
   position.altitude = coord.altitude();
+  if (qIsNan(position.altitude)) {
+    // shield ourselves against invalid data
+    position.altitude = 0;
+  }
   if (info.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
     position.accuracy = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
     if (qIsNaN(position.accuracy)) {
