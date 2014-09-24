@@ -21,6 +21,7 @@
 #include <QGeoCoordinate>
 #include <QGuiApplication>
 #include <QtGlobal>
+#include <QtNumeric>
 
 namespace {
 
@@ -83,6 +84,8 @@ void SourceMock::requestUpdate(int timeout) {
   } else if (testcase == "error-unavailable") {
     Q_EMIT QGeoPositionInfoSource::error(
         QGeoPositionInfoSource::UnknownSourceError);
+  } else if (testcase == "invaliddata") {
+    QTimer::singleShot((int) rand(1., 1000.), this, SLOT(sendInvalidUpdate()));
   } else {
     QTimer::singleShot((int) rand(1., 1000.), this, SLOT(sendUpdate()));
   }
@@ -90,5 +93,11 @@ void SourceMock::requestUpdate(int timeout) {
 
 void SourceMock::sendUpdate() {
   QGeoPositionInfo update = randomPosition();
+  Q_EMIT positionUpdated(update);
+}
+
+void SourceMock::sendInvalidUpdate() {
+  QGeoPositionInfo update = randomPosition();
+  update.setAttribute(QGeoPositionInfo::HorizontalAccuracy, qQNaN());
   Q_EMIT positionUpdated(update);
 }
