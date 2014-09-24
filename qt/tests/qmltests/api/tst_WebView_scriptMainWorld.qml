@@ -16,6 +16,11 @@ TestWebView {
     UserScript {}
   }
 
+  Component {
+    id: scriptMessageHandler
+    ScriptMessageHandler {}
+  }
+
   TestCase {
     name: "WebView_scriptMainWorld"
     when: windowShown
@@ -55,34 +60,34 @@ TestWebView {
       compare(res, "Main world content script found oxide.sendMessage",
               "Unexpected result message");
     }
-  }
 
-  function test_WebView_receiveMessageFromMainWorldUserscript() {
-    webView.addedScript = userScript.createObject(null, {
-      context: "oxide-private://main-world-private",
-      emulateGreasemonkey: true,
-      url: "tst_WebView_scriptMainWorld_user_script.js"});
+    function test_WebView_receiveMessageFromMainWorldUserscript() {
+      webView.addedScript = userScript.createObject(null, {
+        context: "oxide-private://main-world-private",
+        emulateGreasemonkey: true,
+        url: "tst_WebView_scriptMainWorld_user_script.js"});
 
-    var received = null;
-    var frame = webView.rootFrame;
-    var handler = scriptMessageHandler.createObject(null, {
-      msgId: "from-user-script",
-      contexts: ["oxide-private://main-world-private"],
-      callback: function(msg, frame) {
-        received = msg.args;
-      }
-    });
+      var received = null;
+      var frame = webView.rootFrame;
+      var handler = scriptMessageHandler.createObject(null, {
+        msgId: "from-user-script",
+        contexts: ["oxide-private://main-world-private"],
+        callback: function(msg, frame) {
+          received = msg.args;
+        }
+      });
 
-    frame.addMessageHandler(handler);
+      frame.addMessageHandler(handler);
 
-    webView.context.addUserScript(webView.addedScript);
-    webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
+      webView.context.addUserScript(webView.addedScript);
+      webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
 
-    verify(webView.waitForLoadSucceeded(),
-           "Timed out waiting for successful load");
+     verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
 
-    verify(received != null, "Did not receive message from the main frame's userscript");
-    compare(received.data, "mydata" , "Did not receive message from the main frame's userscript");
+      verify(received != null, "Did not receive message from the main frame's userscript");
+      compare(received.data, "mydata" , "Did not receive message from the main frame's userscript");
+    }
   }
 }
 

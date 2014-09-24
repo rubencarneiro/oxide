@@ -220,6 +220,10 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
 
     if (script->emulate_greasemonkey() &&
         script->should_be_injected_in_main_world()) {
+      if (frame->parent()) {
+	continue;
+      }
+
       InjectGreaseMonkeyScript(frame, source);
       continue;
     }
