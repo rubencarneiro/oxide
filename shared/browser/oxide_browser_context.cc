@@ -635,7 +635,7 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
     data_.devtools_http_handler = content::DevToolsHttpHandler::Start(
         factory.Pass(),
         std::string(),
-        new DevtoolsHttpHandlerDelegate(this),
+        new DevtoolsHttpHandlerDelegate(),
         base::FilePath());
   }
 }

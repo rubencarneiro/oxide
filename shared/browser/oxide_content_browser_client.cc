@@ -59,6 +59,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_default_screen_info.h"
+#include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
@@ -470,6 +471,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 content::LocationProvider*
 ContentBrowserClient::OverrideSystemLocationProvider() {
   return NULL;
+}
+
+content::DevToolsManagerDelegate*
+ContentBrowserClient::GetDevToolsManagerDelegate() {
+    return new DevToolsManagerDelegate();
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {

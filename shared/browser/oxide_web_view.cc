@@ -242,27 +242,39 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
-typedef std::map<BrowserContext*, std::set<WebView*> > WebViewsPerContextMap;
-base::LazyInstance<WebViewsPerContextMap> g_web_view_per_context;
+base::LazyInstance<std::vector<WebView*> > g_all_web_views;
 
 }
 
-// static
-std::set<WebView*>
-WebView::GetAllWebViewsFor(BrowserContext * browser_context) {
-  std::set<WebView*> webviews;
-  if (!browser_context) {
-    return webviews;
+WebViewIterator::WebViewIterator(const std::vector<WebView*>& views) {
+  for (std::vector<WebView*>::const_iterator it = views.begin();
+       it != views.end(); ++it) {
+    views_.push_back((*it)->AsWeakPtr());
   }
-  WebViewsPerContextMap::iterator it;
-  for (it = g_web_view_per_context.Get().begin();
-       it != g_web_view_per_context.Get().end();
-       ++it) {
-    if (browser_context->IsSameContext(it->first)) {
-      return it->second;
+  current_ = views_.begin();
+}
+
+WebViewIterator::~WebViewIterator() {}
+
+bool WebViewIterator::HasMore() const {
+  return current_ != views_.end();
+}
+
+WebView* WebViewIterator::GetNext() {
+  while (current_ != views_.end()) {
+    base::WeakPtr<WebView>& view = *current_;
+    current_++;
+    if (view.get()) {
+      return view.get();
     }
   }
-  return webviews;
+
+  return NULL;
+}
+
+// static
+WebViewIterator WebView::GetAllWebViews() {
+  return WebViewIterator(g_all_web_views.Get());
 }
 
 RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
@@ -972,19 +984,11 @@ const base::string16& WebView::GetSelectionText() const {
 WebView::~WebView() {
   permission_request_manager_.CancelAllPendingRequests();
 
-  BrowserContext* context = GetBrowserContext();
-  WebViewsPerContextMap::iterator it =
-      g_web_view_per_context.Get().find(context);
-  if (it != g_web_view_per_context.Get().end()) {
-    std::set<WebView*>& wvl = it->second;
-    if (wvl.find(this) != wvl.end()) {
-      wvl.erase(this);
-      g_web_view_per_context.Get()[context] = wvl;
-    }
-    if (g_web_view_per_context.Get()[context].empty()) {
-      g_web_view_per_context.Get().erase(context);
-    }
-  }
+  g_all_web_views.Get().erase(
+      std::remove(g_all_web_views.Get().begin(),
+                  g_all_web_views.Get().end(),
+                  this),
+      g_all_web_views.Get().end());
 
   if (root_frame_) {
     root_frame_->Destroy();
@@ -1083,18 +1087,11 @@ void WebView::Init(Params* params) {
 
   SetIsFullscreen(is_fullscreen_);
 
-  {
-    BrowserContext* context = GetBrowserContext()->GetOriginalContext();
-    WebViewsPerContextMap::iterator it =
-        g_web_view_per_context.Get().find(context);
-    if (it != g_web_view_per_context.Get().end()) {
-      g_web_view_per_context.Get()[context].insert(this);
-    } else {
-      std::set<WebView*> wvl;
-      wvl.insert(this);
-      g_web_view_per_context.Get()[context] = wvl;
-    }
-  }
+  DCHECK(std::find(g_all_web_views.Get().begin(),
+                   g_all_web_views.Get().end(),
+                   this) ==
+         g_all_web_views.Get().end());
+  g_all_web_views.Get().push_back(this);
 }
 
 // static

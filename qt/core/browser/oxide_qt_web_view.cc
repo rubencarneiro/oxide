@@ -717,7 +717,7 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 
   adapter_->NewViewRequested(&request);
 
-  WebView* view = OxideQNewViewRequestPrivate::get(&request)->view.get();
+  oxide::WebView* view = OxideQNewViewRequestPrivate::get(&request)->view.get();
   if (!view) {
     qCritical() <<
         "Either a webview wasn't created in WebView.newViewRequested, or the "
