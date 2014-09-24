@@ -80,8 +80,6 @@ void PowerSaveBlockerImpl::Delegate::CleanUp() {
 void PowerSaveBlockerImpl::Delegate::ApplyBlock() {
   DCHECK(BrowserThread::CurrentlyOn(BrowserThread::FILE));
 
-  DLOG(INFO) << "PowerSaveBlockerImpl::Delegate::ApplyBlock: oops";
-
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
     DCHECK(!bus_.get());
