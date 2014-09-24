@@ -18,7 +18,7 @@
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_location_provider_p.h"
 
-#include <cfloat>
+#include <limits>
 
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
@@ -50,11 +50,11 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
     position.accuracy = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
     if (qIsNaN(position.accuracy)) {
       // shield ourselves against invalid data
-      position.accuracy = DBL_MAX;
+      position.accuracy = std::numeric_limits<double>::max();
     }
   } else {
     // accuracy is mandatory
-    position.accuracy = DBL_MAX;
+    position.accuracy = std::numeric_limits<double>::max();
   }
   if (info.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
     qreal accuracy = info.attribute(QGeoPositionInfo::VerticalAccuracy);
