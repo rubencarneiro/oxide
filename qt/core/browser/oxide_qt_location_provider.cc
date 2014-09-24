@@ -19,11 +19,11 @@
 #include "oxide_qt_location_provider_p.h"
 
 #include <cfloat>
-#include <math.h>
 
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
 #include <QMetaObject>
+#include <QtGlobal>
 #include <QThread>
 
 #include "base/bind.h"
@@ -44,7 +44,7 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
   position.altitude = coord.altitude();
   if (info.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
     position.accuracy = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
-    if (isnan(position.accuracy)) {
+    if (qIsNaN(position.accuracy)) {
       // shield ourselves against invalid data
       position.accuracy = DBL_MAX;
     }
@@ -54,14 +54,14 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
   }
   if (info.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
     qreal accuracy = info.attribute(QGeoPositionInfo::VerticalAccuracy);
-    if (!isnan(accuracy)) {
+    if (!qIsNaN(accuracy)) {
       // shield ourselves against invalid data
       position.altitude_accuracy = accuracy;
     }
   }
   if (info.hasAttribute(QGeoPositionInfo::GroundSpeed)) {
     qreal speed = info.attribute(QGeoPositionInfo::GroundSpeed);
-    if (!isnan(speed)) {
+    if (!qIsNaN(speed)) {
       // shield ourselves against invalid data
       position.speed = speed;
     }
