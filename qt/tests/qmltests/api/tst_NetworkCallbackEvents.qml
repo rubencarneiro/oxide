@@ -106,9 +106,9 @@ TestWebView {
 
     function test_NetworkCallbackEvents2_BeforeRedirect_data() {
       return [
-        { url: "http://localhost:8080/redirect.py?redirect", "httpResponseCode": 307, "newUrl": "http://localhost:8080/empty.html", "cancelled": false, "isMainFrame": true },
-        { url: "http://localhost:8080/redirect.py?cancel", "httpResponseCode": 307, "newUrl": "http://localhost:8080/empty.html", "cancelled": true, "isMainFrame": true },
-        { url: "http://localhost:8080/tst_NetworkCallbackEvents_Redirect.html", "httpResponseCode": 307, "newUrl": "http://localhost:8080/empty.html", "cancelled": false, "isMainFrame": false },
+        { url: "http://testsuite/redirect.py?redirect", "newUrl": "http://testsuite/empty.html", "cancelled": false, "isMainFrame": true },
+        { url: "http://testsuite/redirect.py?cancel", "newUrl": "http://testsuite/empty.html", "cancelled": true, "isMainFrame": true },
+        { url: "http://testsuite/tst_NetworkCallbackEvents_Redirect.html", "newUrl": "http://testsuite/empty.html", "cancelled": false, "isMainFrame": false },
       ];
     }
 
@@ -123,7 +123,6 @@ TestWebView {
       compare(webView.workerMessages[0].method, "GET");
       compare(webView.workerMessages[0].newUrl, data.newUrl);
       compare(webView.workerMessages[0].isMainFrame, data.isMainFrame);
-      compare(webView.workerMessages[0].httpResponseCode, data.httpResponseCode);
       compare(webView.workerMessages[0].requestCancelled, data.cancelled);
     }
   }

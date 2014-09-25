@@ -33,6 +33,8 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_PROPERTY(ErrorDomain errorDomain READ errorDomain CONSTANT)
   Q_PROPERTY(QString errorString READ errorString CONSTANT)
   Q_PROPERTY(int errorCode READ errorCode CONSTANT)
+  Q_PROPERTY(QUrl redirectedUrl READ redirectedUrl CONSTANT)
+  Q_PROPERTY(bool isMainFrame READ isMainFrame CONSTANT)
 
   Q_ENUMS(Type)
   Q_ENUMS(ErrorDomain)
@@ -46,7 +48,8 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
     TypeStarted,
     TypeStopped,
     TypeSucceeded,
-    TypeFailed
+    TypeFailed,
+    TypeRedirected
   };
 
   enum ErrorDomain {
@@ -64,7 +67,9 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
                                 Type type,
                                 ErrorDomain error_domain = ErrorDomainNone,
                                 const QString& error_string = QString(),
-                                int error_code = 0);
+                                int error_code = 0,
+                                const QUrl& redirection_url = QUrl(),
+                                bool is_main_frame = false);
   virtual ~OxideQLoadEvent();
 
   QUrl url() const;
@@ -72,6 +77,8 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   ErrorDomain errorDomain() const;
   QString errorString() const;
   int errorCode() const;
+  QUrl redirectedUrl() const;
+  bool isMainFrame() const;
 
  private:
   QScopedPointer<OxideQLoadEventPrivate> d_ptr;

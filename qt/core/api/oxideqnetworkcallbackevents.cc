@@ -22,16 +22,24 @@
 #include "url/gurl.h"
 
 OxideQNetworkCallbackEventPrivate::OxideQNetworkCallbackEventPrivate(
-    const QUrl& url, const QString& method) :
+    const QUrl& url,
+    const QString& method,
+    const QString& referrer,
+    bool isMainFrame) :
     request_cancelled(NULL),
     url_(url),
-    method_(method) {}
+    method_(method),
+    referrer_(referrer),
+    is_main_frame_(isMainFrame) {}
 
 OxideQNetworkCallbackEventPrivate::~OxideQNetworkCallbackEventPrivate() {}
 
 OxideQBeforeURLRequestEventPrivate::OxideQBeforeURLRequestEventPrivate(
-    const QUrl& url, const QString& method) :
-    OxideQNetworkCallbackEventPrivate(url, method),
+    const QUrl& url,
+    const QString& method,
+    const QString& referrer,
+    bool isMainFrame) :
+    OxideQNetworkCallbackEventPrivate(url, method, referrer, isMainFrame),
     new_url(NULL) {}
 
 OxideQBeforeURLRequestEventPrivate::~OxideQBeforeURLRequestEventPrivate() {}
@@ -43,8 +51,11 @@ OxideQBeforeURLRequestEventPrivate* OxideQBeforeURLRequestEventPrivate::get(
 }
 
 OxideQBeforeSendHeadersEventPrivate::OxideQBeforeSendHeadersEventPrivate(
-    const QUrl& url, const QString& method) :
-    OxideQNetworkCallbackEventPrivate(url, method),
+    const QUrl& url,
+    const QString& method,
+    const QString& referrer,
+    bool isMainFrame) :
+    OxideQNetworkCallbackEventPrivate(url, method, referrer, isMainFrame),
     headers(NULL) {}
 
 OxideQBeforeSendHeadersEventPrivate::~OxideQBeforeSendHeadersEventPrivate() {}
@@ -58,15 +69,11 @@ OxideQBeforeSendHeadersEventPrivate* OxideQBeforeSendHeadersEventPrivate::get(
 OxideQBeforeRedirectEventPrivate::OxideQBeforeRedirectEventPrivate(
     const QUrl& url,
     const QString& method,
-    const QUrl& newUrl,
     const QString& referrer,
     bool isMainFrame,
-    int httpResponseCode) :
-    OxideQNetworkCallbackEventPrivate(url, method),
-    new_url_(newUrl),
-    referrer_(referrer),
-    is_main_frame_(isMainFrame),
-    http_response_code_(httpResponseCode) {}
+    const QUrl& newUrl) :
+    OxideQNetworkCallbackEventPrivate(url, method, referrer, isMainFrame),
+    new_url_(newUrl) {}
 
 OxideQBeforeRedirectEventPrivate::~OxideQBeforeRedirectEventPrivate() {}
 
@@ -94,6 +101,18 @@ QString OxideQNetworkCallbackEvent::method() const {
   return d->method_;
 }
 
+bool OxideQNetworkCallbackEvent::isMainFrame() const {
+  Q_D(const OxideQNetworkCallbackEvent);
+
+  return d->is_main_frame_;
+}
+
+QString OxideQNetworkCallbackEvent::referrer() const {
+  Q_D(const OxideQNetworkCallbackEvent);
+
+  return d->referrer_;
+}
+
 bool OxideQNetworkCallbackEvent::requestCancelled() const {
   Q_D(const OxideQNetworkCallbackEvent);
 
@@ -116,9 +135,12 @@ void OxideQNetworkCallbackEvent::cancelRequest() {
 
 OxideQBeforeURLRequestEvent::OxideQBeforeURLRequestEvent(
     const QUrl& url,
-    const QString& method) :
+    const QString& method,
+    const QString& referrer,
+    bool isMainFrame) :
     OxideQNetworkCallbackEvent(
-      *new OxideQBeforeURLRequestEventPrivate(url, method)) {}
+        *new OxideQBeforeURLRequestEventPrivate(
+            url, method, referrer, isMainFrame)) {}
 
 OxideQBeforeURLRequestEvent::~OxideQBeforeURLRequestEvent() {}
 
@@ -144,9 +166,12 @@ void OxideQBeforeURLRequestEvent::setRedirectUrl(const QUrl& url) {
 
 OxideQBeforeSendHeadersEvent::OxideQBeforeSendHeadersEvent(
     const QUrl& url,
-    const QString& method) :
+    const QString& method,
+    const QString& referrer,
+    bool isMainFrame) :
     OxideQNetworkCallbackEvent(
-      *new OxideQBeforeSendHeadersEventPrivate(url, method)) {}
+	*new OxideQBeforeSendHeadersEventPrivate(
+            url, method, referrer, isMainFrame)) {}
 
 OxideQBeforeSendHeadersEvent::~OxideQBeforeSendHeadersEvent() {}
 
@@ -218,13 +243,12 @@ void OxideQBeforeSendHeadersEvent::removeHeader(const QString& header) {
 OxideQBeforeRedirectEvent::OxideQBeforeRedirectEvent(
     const QUrl& url,
     const QString& method,
-    const QUrl& newUrl,
     const QString& referrer,
     bool isMainFrame,
-    int httpResponseCode) :
+    const QUrl& newUrl) :
     OxideQNetworkCallbackEvent(
        *new OxideQBeforeRedirectEventPrivate(
-           url, method, newUrl, referrer, isMainFrame, httpResponseCode)) {}
+           url, method, referrer, isMainFrame, newUrl)) {}
 
 OxideQBeforeRedirectEvent::~OxideQBeforeRedirectEvent() {}
 
@@ -232,23 +256,5 @@ QUrl OxideQBeforeRedirectEvent::newUrl() const {
   Q_D(const OxideQBeforeRedirectEvent);
 
   return d->new_url_;
-}
-
-bool OxideQBeforeRedirectEvent::isMainFrame() const {
-  Q_D(const OxideQBeforeRedirectEvent);
-
-  return d->is_main_frame_;
-}
-
-QString OxideQBeforeRedirectEvent::referrer() const {
-  Q_D(const OxideQBeforeRedirectEvent);
-
-  return d->referrer_;
-}
-
-int OxideQBeforeRedirectEvent::httpResponseCode() const {
-  Q_D(const OxideQBeforeRedirectEvent);
-
-  return d->http_response_code_;
 }
 

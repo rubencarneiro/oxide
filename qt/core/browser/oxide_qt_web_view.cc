@@ -637,14 +637,16 @@ void WebView::OnUrlRedirection(const GURL& url,
                                const std::string& method,
                                bool isMainFrame,
                                int http_response_code) {
-
-  adapter_->UrlRedirected(
-      QUrl(QString::fromStdString(url.spec())),
+  OxideQLoadEvent event(
       QUrl(QString::fromStdString(original_url.spec())),
-      QString::fromStdString(referrer),
-      QString::fromStdString(method),
-      isMainFrame,
-      http_response_code);
+      OxideQLoadEvent::TypeStopped,
+      OxideQLoadEvent::ErrorDomain(),
+      QString(),
+      int(),
+      QUrl(QString::fromStdString(url.spec())),
+      isMainFrame);
+
+  adapter_->LoadEvent(&event);
 }
 
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {

@@ -137,10 +137,15 @@ int WebContextAdapterPrivate::OnBeforeURLRequest(
 
   bool cancelled = false;
 
+  const content::ResourceRequestInfo* info =
+      content::ResourceRequestInfo::ForRequest(request);
+
   OxideQBeforeURLRequestEvent* event =
       new OxideQBeforeURLRequestEvent(
         QUrl(QString::fromStdString(request->url().spec())),
-        QString::fromStdString(request->method()));
+        QString::fromStdString(request->method()),
+	QString::fromStdString(request->referrer()),
+	info->GetResourceType() == content::RESOURCE_TYPE_MAIN_FRAME);
 
   OxideQBeforeURLRequestEventPrivate* eventp =
       OxideQBeforeURLRequestEventPrivate::get(event);
@@ -169,11 +174,9 @@ void WebContextAdapterPrivate::OnBeforeRedirect(
       new OxideQBeforeRedirectEvent(
         QUrl(QString::fromStdString(request->url().spec())),
         QString::fromStdString(request->method()),
-        QUrl(QString::fromStdString(new_location.spec())),
         QString::fromStdString(request->referrer()),
         info->GetResourceType() == content::RESOURCE_TYPE_MAIN_FRAME,
-        request->response_info().headers.get() ?
-          request->response_info().headers.get()->response_code() : -1);
+        QUrl(QString::fromStdString(new_location.spec())));
 
   OxideQBeforeRedirectEventPrivate* eventp =
       OxideQBeforeRedirectEventPrivate::get(event);
@@ -197,10 +200,15 @@ int WebContextAdapterPrivate::OnBeforeSendHeaders(
 
   bool cancelled = false;
 
+  const content::ResourceRequestInfo* info =
+      content::ResourceRequestInfo::ForRequest(request);
+
   OxideQBeforeSendHeadersEvent* event =
       new OxideQBeforeSendHeadersEvent(
         QUrl(QString::fromStdString(request->url().spec())),
-        QString::fromStdString(request->method()));
+        QString::fromStdString(request->method()),
+	QString::fromStdString(request->referrer()),
+	info->GetResourceType() == content::RESOURCE_TYPE_MAIN_FRAME);
 
   OxideQBeforeSendHeadersEventPrivate* eventp =
       OxideQBeforeSendHeadersEventPrivate::get(event);

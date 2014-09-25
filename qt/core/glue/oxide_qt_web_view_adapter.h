@@ -279,13 +279,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
   virtual void ContentBlocked() = 0;
 
-  virtual void UrlRedirected(const QUrl& url,
-                             const QUrl& original_url,
-                             const QString& referrer,
-                             const QString& method,
-                             bool isMainFrame,
-                             int http_response_code) = 0;
-
   QScopedPointer<WebView> priv;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;

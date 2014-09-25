@@ -41,13 +41,17 @@ class OxideQNetworkCallbackEventPrivate {
 
  protected:
   OxideQNetworkCallbackEventPrivate(const QUrl& url,
-                                    const QString& method);
+                                    const QString& method,
+                                    const QString& referrer,
+                                    bool isMainFrame);
 
  private:
   friend class OxideQNetworkCallbackEvent;
 
   QUrl url_;
   QString method_;
+  QString referrer_;
+  bool is_main_frame_;
 };
 
 class OxideQBeforeURLRequestEventPrivate Q_DECL_FINAL :
@@ -62,7 +66,10 @@ class OxideQBeforeURLRequestEventPrivate Q_DECL_FINAL :
  private:
   friend class OxideQBeforeURLRequestEvent;
 
-  OxideQBeforeURLRequestEventPrivate(const QUrl& url, const QString& method);
+  OxideQBeforeURLRequestEventPrivate(const QUrl& url,
+                                     const QString& method,
+                                     const QString& referrer,
+                                     bool isMainFrame);
 };
 
 class OxideQBeforeSendHeadersEventPrivate Q_DECL_FINAL :
@@ -77,7 +84,10 @@ class OxideQBeforeSendHeadersEventPrivate Q_DECL_FINAL :
  private:
   friend class OxideQBeforeSendHeadersEvent;
 
-  OxideQBeforeSendHeadersEventPrivate(const QUrl& url, const QString& method);
+  OxideQBeforeSendHeadersEventPrivate(const QUrl& url,
+                                      const QString& method,
+                                      const QString& referrer,
+                                      bool isMainFrame);
 };
 
 class OxideQBeforeRedirectEventPrivate Q_DECL_FINAL :
@@ -93,15 +103,11 @@ class OxideQBeforeRedirectEventPrivate Q_DECL_FINAL :
   OxideQBeforeRedirectEventPrivate(
       const QUrl& url,
       const QString& method,
-      const QUrl& newUrl,
       const QString& referrer,
       bool isMainFrame,
-      int httpResponseCode);
+      const QUrl& newUrl);
 
   QUrl new_url_;
-  QString referrer_;
-  bool is_main_frame_;
-  int http_response_code_;
 };
 
 #endif // _OXIDE_QT_CORE_API_NETWORK_CALLBACK_EVENTS_P_H_

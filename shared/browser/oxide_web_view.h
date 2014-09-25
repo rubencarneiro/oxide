@@ -485,7 +485,7 @@ class WebView : public ScriptMessageTarget,
 
   virtual void DidGetRedirectForResourceRequest(
       content::RenderViewHost* render_view_host,
-      const content::ResourceRedirectDetails& details);
+      const content::ResourceRedirectDetails& details) FINAL;
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

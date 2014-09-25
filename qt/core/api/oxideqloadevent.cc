@@ -24,24 +24,32 @@ class OxideQLoadEventPrivate {
                          OxideQLoadEvent::Type type,
                          OxideQLoadEvent::ErrorDomain error_domain,
                          const QString& error_string,
-                         int error_code) :
+                         int error_code,
+                         const QUrl& redirection_url,
+                         bool is_main_frame) :
       url(url), type(type), error_domain(error_domain),
-      error_string(error_string), error_code(error_code) {}
+      error_string(error_string), error_code(error_code),
+      redirection_url(redirection_url), is_main_frame(is_main_frame) {}
 
   QUrl url;
   OxideQLoadEvent::Type type;
   OxideQLoadEvent::ErrorDomain error_domain;
   QString error_string;
   int error_code;
+  QUrl redirection_url;
+  bool is_main_frame;
 };
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  Type type,
                                  ErrorDomain error_domain,
                                  const QString& error_string,
-                                 int error_code) :
-    d_ptr(new OxideQLoadEventPrivate(
-        url, type, error_domain, error_string, error_code)) {}
+                                 int error_code,
+                                 const QUrl& redirection_url,
+                                 bool is_main_frame) :
+     d_ptr(new OxideQLoadEventPrivate(
+         url, type, error_domain, error_string,
+         error_code, redirection_url, is_main_frame)) {}
 
 OxideQLoadEvent::~OxideQLoadEvent() {}
 
@@ -73,4 +81,16 @@ int OxideQLoadEvent::errorCode() const {
   Q_D(const OxideQLoadEvent);
 
   return d->error_code;
+}
+
+QUrl OxideQLoadEvent::redirectedUrl() const {
+  Q_D(const OxideQLoadEvent);
+
+  return d->redirection_url;
+}
+
+bool OxideQLoadEvent::isMainFrame() const {
+  Q_D(const OxideQLoadEvent);
+
+  return d->is_main_frame;
 }
