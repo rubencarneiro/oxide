@@ -26,10 +26,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
-namespace base {
-class MessagePump;
-}
-
 namespace content {
 class RenderViewHost;
 class ResourceDispatcherHostDelegate;
@@ -51,8 +47,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
  public:
   virtual ~ContentBrowserClient();
 
-  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
-
   virtual WebPreferences* CreateWebPreferences() = 0;
 
  protected:
@@ -61,8 +55,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
  private:
   // content::ContentBrowserClient implementation
-  content::BrowserMainParts* CreateBrowserMainParts(
-      const content::MainFunctionParams& parameters) FINAL;
+  virtual content::BrowserMainParts* CreateBrowserMainParts(
+      const content::MainFunctionParams& parameters) OVERRIDE;
 
   void RenderProcessWillLaunch(content::RenderProcessHost* host) FINAL;
 
@@ -143,8 +137,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            const GURL& url,
                            content::WebPreferences* prefs) FINAL;
-
-  virtual content::LocationProvider* OverrideSystemLocationProvider() OVERRIDE;
 
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
