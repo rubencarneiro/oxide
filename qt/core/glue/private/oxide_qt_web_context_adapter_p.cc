@@ -19,10 +19,17 @@
 
 #include <QString>
 #include <QUrl>
+#include <QObject>
+#include <QNetworkCookie>
+#include <QDateTime>
+#include <QDebug>
+#include <QMetaMethod>
 
+#include "base/auto_reset.h"
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
 #include "net/base/net_errors.h"
+#include "net/cookies/cookie_monster.h"
 #include "net/url_request/url_request.h"
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
@@ -43,6 +50,16 @@ const unsigned kDefaultDevtoolsPort = 8484;
 namespace oxide {
 namespace qt {
 
+class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
+ public:
+  SetCookiesContext(int id)
+      : id(id), remaining(0) {}
+
+  int id;
+  int remaining;
+  QList<QNetworkCookie> failed;
+};
+
 WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
     cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
@@ -52,27 +69,41 @@ WebContextAdapterPrivate::ConstructProperties::ConstructProperties() :
 
 // static
 WebContextAdapterPrivate* WebContextAdapterPrivate::Create(
-    WebContextAdapter* adapter,
-    WebContextAdapter::IOThreadDelegate* io_delegate) {
-  return new WebContextAdapterPrivate(adapter, io_delegate);
+    WebContextAdapter* adapter) {
+  return new WebContextAdapterPrivate(adapter);
 }
 
 WebContextAdapterPrivate::WebContextAdapterPrivate(
-    WebContextAdapter* adapter,
-    WebContextAdapter::IOThreadDelegate* io_delegate)
+    WebContextAdapter* adapter)
     : adapter_(adapter),
-      io_thread_delegate_(io_delegate),
-      construct_props_(new ConstructProperties()) {}
+      construct_props_(new ConstructProperties()),
+      handling_cookie_request_(false) {}
+
+void WebContextAdapterPrivate::Init(
+    const QWeakPointer<WebContextAdapter::IODelegate>& io_delegate) {
+  base::AutoLock lock(io_delegate_lock_);
+  io_delegate_ = io_delegate;
+}
 
 void WebContextAdapterPrivate::Destroy() {
-  if (context_) {
+  if (context_.get()) {
     context_->SetDelegate(NULL);
   }
   adapter_ = NULL;
+
+  base::AutoLock lock(io_delegate_lock_);
+  io_delegate_.clear();
+}
+
+QSharedPointer<WebContextAdapter::IODelegate>
+WebContextAdapterPrivate::GetIODelegate() const {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+  base::AutoLock lock(io_delegate_lock_);
+  return io_delegate_.toStrongRef();
 }
 
 void WebContextAdapterPrivate::UpdateUserScripts() {
-  if (!context_) {
+  if (!context_.get()) {
     return;
   }
 
@@ -96,7 +127,8 @@ int WebContextAdapterPrivate::OnBeforeURLRequest(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
     GURL* new_url) {
-  if (!io_thread_delegate_) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
     return net::OK;
   }
 
@@ -112,7 +144,7 @@ int WebContextAdapterPrivate::OnBeforeURLRequest(
   eventp->request_cancelled = &cancelled;
   eventp->new_url = new_url;
 
-  io_thread_delegate_->OnBeforeURLRequest(event);
+  io_delegate->OnBeforeURLRequest(event);
 
   return cancelled ? net::ERR_ABORTED : net::OK;
 }
@@ -121,7 +153,8 @@ int WebContextAdapterPrivate::OnBeforeSendHeaders(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
     net::HttpRequestHeaders* headers) {
-  if (!io_thread_delegate_) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
     return net::OK;
   }
 
@@ -137,7 +170,7 @@ int WebContextAdapterPrivate::OnBeforeSendHeaders(
   eventp->request_cancelled = &cancelled;
   eventp->headers = headers;
 
-  io_thread_delegate_->OnBeforeSendHeaders(event);
+  io_delegate->OnBeforeSendHeaders(event);
 
   return cancelled ? net::ERR_ABORTED : net::OK;
 }
@@ -149,7 +182,8 @@ oxide::StoragePermission WebContextAdapterPrivate::CanAccessStorage(
     oxide::StorageType type) {
   oxide::StoragePermission result = oxide::STORAGE_PERMISSION_UNDEFINED;
 
-  if (!io_thread_delegate_) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
     return result;
   }
 
@@ -162,19 +196,20 @@ oxide::StoragePermission WebContextAdapterPrivate::CanAccessStorage(
 
   OxideQStoragePermissionRequestPrivate::get(req)->permission = &result;
 
-  io_thread_delegate_->HandleStoragePermissionRequest(req);
+  io_delegate->HandleStoragePermissionRequest(req);
 
   return result;
 }
 
 bool WebContextAdapterPrivate::GetUserAgentOverride(const GURL& url,
                                                     std::string* user_agent) {
-  if (!io_thread_delegate_) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
     return false;
   }
 
   QString new_user_agent;
-  bool overridden = io_thread_delegate_->GetUserAgentOverride(
+  bool overridden = io_delegate->GetUserAgentOverride(
       QUrl(QString::fromStdString(url.spec())), &new_user_agent);
 
   *user_agent = new_user_agent.toStdString();
@@ -195,9 +230,173 @@ WebContextAdapterPrivate* WebContextAdapterPrivate::FromBrowserContext(
   return static_cast<WebContextAdapterPrivate *>(context->GetDelegate());
 }
 
+void WebContextAdapterPrivate::SetCookies(
+    int request_id,
+    const QUrl& url,
+    const QList<QNetworkCookie>& cookies) {
+  DCHECK_GT(request_id, -1);
+  DCHECK_GT(cookies.size(), 0);
+
+  base::AutoReset<bool> f(&handling_cookie_request_, true);
+
+  scoped_refptr<net::CookieStore> cookie_store = context_->GetCookieStore();
+  scoped_refptr<SetCookiesContext> ctxt = new SetCookiesContext(request_id);
+
+  for (int i = 0; i < cookies.size(); ++i) {
+    const QNetworkCookie& cookie = cookies.at(i);
+
+    if (cookie.name().isEmpty()) {
+      ctxt->failed.push_back(cookie);
+      continue;
+    }
+
+    base::Time expiry;
+    if (cookie.expirationDate().isValid()) {
+      expiry = base::Time::FromJsTime(cookie.expirationDate().toMSecsSinceEpoch());
+    }
+
+    ctxt->remaining++;
+
+    cookie_store->GetCookieMonster()->SetCookieWithDetailsAsync(
+        GURL(url.toString().toStdString()),
+        std::string(cookie.name().constData()),
+        std::string(cookie.value().constData()),
+        std::string(cookie.domain().toUtf8().constData()),
+        std::string(cookie.path().toUtf8().constData()),
+        expiry,
+        cookie.isSecure(),
+        cookie.isHttpOnly(),
+        net::COOKIE_PRIORITY_DEFAULT,
+        base::Bind(&WebContextAdapterPrivate::CookieSetCallback,
+                   this, ctxt, cookie));
+  }
+
+  if (ctxt->remaining == 0) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE,
+        base::Bind(&WebContextAdapterPrivate::DeliverCookiesSet,
+                   this, ctxt));
+  }
+}
+
+void WebContextAdapterPrivate::CookieSetCallback(
+    const scoped_refptr<SetCookiesContext>& ctxt,
+    const QNetworkCookie& cookie,
+    bool success) {
+  DCHECK_GT(ctxt->remaining, 0);
+
+  if (!success) {
+    ctxt->failed.push_back(cookie);
+  }
+
+  if (--ctxt->remaining > 0 || handling_cookie_request_) {
+    return;
+  }
+
+  DeliverCookiesSet(ctxt);
+}
+
+void WebContextAdapterPrivate::DeliverCookiesSet(
+    const scoped_refptr<SetCookiesContext>& ctxt) {
+  DCHECK_EQ(ctxt->remaining, 0);
+
+  WebContextAdapter* adapter = GetAdapter();
+  if (!adapter) {
+    return;
+  }
+
+  adapter->CookiesSet(ctxt->id, ctxt->failed);
+}
+
+void WebContextAdapterPrivate::GetCookies(int request_id,
+                                          const QUrl& url) {
+  DCHECK_GT(request_id, -1);
+
+  base::AutoReset<bool> f(&handling_cookie_request_, true);
+
+  scoped_refptr<net::CookieStore> store = context_->GetCookieStore();
+  store->GetCookieMonster()->GetAllCookiesForURLAsync(
+      GURL(url.toString().toStdString()),
+      base::Bind(&WebContextAdapterPrivate::GotCookiesCallback,
+                 this, request_id));
+}
+
+void WebContextAdapterPrivate::GetAllCookies(int request_id) {
+  DCHECK_GT(request_id, -1);
+
+  base::AutoReset<bool> f(&handling_cookie_request_, true);
+
+  context_->GetCookieStore()->GetCookieMonster()->GetAllCookiesAsync(
+      base::Bind(&WebContextAdapterPrivate::GotCookiesCallback,
+                 this, request_id));
+}
+
+void WebContextAdapterPrivate::GotCookiesCallback(
+    int request_id,
+    const net::CookieList& cookies) {
+  WebContextAdapter* adapter = GetAdapter();
+  if (!adapter) {
+    return;
+  }
+
+  if (handling_cookie_request_) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE,
+        base::Bind(&WebContextAdapterPrivate::GotCookiesCallback,
+                   this, request_id, cookies));
+    return;
+  }
+
+  QList<QNetworkCookie> qcookies;
+  for (net::CookieList::const_iterator iter = cookies.begin();
+       iter != cookies.end(); ++iter) {
+    QNetworkCookie cookie;
+
+    cookie.setName(iter->Name().c_str());
+    cookie.setValue(iter->Value().c_str());
+    cookie.setDomain(iter->Domain().c_str());
+    cookie.setPath(iter->Path().c_str());
+    if (!iter->ExpiryDate().is_null()) {
+      cookie.setExpirationDate(QDateTime::fromMSecsSinceEpoch(
+          iter->ExpiryDate().ToJsTime()));
+    }
+    cookie.setSecure(iter->IsSecure());
+    cookie.setHttpOnly(iter->IsHttpOnly());
+
+    qcookies.append(cookie);
+  }
+
+  adapter->CookiesRetrieved(request_id, qcookies);
+}
+
+void WebContextAdapterPrivate::DeleteAllCookies(int request_id) {
+  DCHECK_GT(request_id, -1);
+
+  base::AutoReset<bool> f(&handling_cookie_request_, true);
+
+  context_->GetCookieStore()->GetCookieMonster()->DeleteAllAsync(
+      base::Bind(&WebContextAdapterPrivate::DeletedCookiesCallback,
+                 this, request_id));
+}
+
+void WebContextAdapterPrivate::DeletedCookiesCallback(int request_id,
+                                                      int num_deleted) {
+  WebContextAdapter* adapter = GetAdapter();
+  if (!adapter) {
+    return;
+  }
+
+  adapter->CookiesDeleted(request_id, num_deleted);
+}
+
+WebContextAdapter* WebContextAdapterPrivate::GetAdapter() const {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  return adapter_;
+}
+
 oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
-  if (context_) {
-    return context_;
+  if (context_.get()) {
+    return context_.get();
   }
 
   DCHECK(construct_props_);
@@ -207,7 +406,10 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
       construct_props_->cache_path,
       construct_props_->session_cookie_mode,
       construct_props_->devtools_enabled,
-      construct_props_->devtools_port);
+      construct_props_->devtools_port,
+      construct_props_->devtools_ip);
+  params.host_mapping_rules = construct_props_->host_mapping_rules;
+
   context_ = oxide::BrowserContext::Create(params);
 
   if (!construct_props_->product.empty()) {
@@ -228,7 +430,7 @@ oxide::BrowserContext* WebContextAdapterPrivate::GetContext() {
 
   UpdateUserScripts();
 
-  return context_;
+  return context_.get();
 }
 
 } // namespace qt

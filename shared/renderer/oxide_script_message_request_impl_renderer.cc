@@ -19,7 +19,7 @@
 
 #include "base/logging.h"
 #include "content/public/renderer/render_frame.h"
-#include "third_party/WebKit/public/web/WebFrame.h"
+#include "third_party/WebKit/public/web/WebLocalFrame.h"
 #include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 
 #include "shared/common/oxide_messages.h"

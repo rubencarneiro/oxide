@@ -70,7 +70,7 @@ Column {
     function test_WebView_newViewRequested1_correct() {
       navigationSpy.target = webView1;
 
-      webView1.url = "http://localhost:8080/tst_WebView_newViewRequested.html";
+      webView1.url = "http://testsuite/tst_WebView_newViewRequested.html";
       verify(webView1.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -80,12 +80,12 @@ Column {
       spy.wait();
 
       compare(navigationSpy.count, 1, "Should have had an onNavigationRequested");
-      compare(created.url, "http://localhost:8080/empty.html", "Unexpected URL");
+      compare(created.url, "http://testsuite/empty.html", "Unexpected URL");
       compare(created.context, webView1.context, "Unexpected context");
       compare(created.incognito, webView1.incognito, "WebView.incognito should match opener");
 
       webView1.waitFor(function() { return created.loading == false; });
-      compare(created.getTestApi().evaluateCode("return window.opener.document.domain;", true), "localhost");
+      compare(created.getTestApi().evaluateCode("return window.opener.document.domain;", true), "testsuite");
     }
 
     // Test that a top-level navigation occurs when window.open() is called and
@@ -93,7 +93,7 @@ Column {
     function test_WebView_newViewRequested3_no_handler() {
       navigationSpy.target = webView2;
 
-      webView2.url = "http://localhost:8080/tst_WebView_newViewRequested.html";
+      webView2.url = "http://testsuite/tst_WebView_newViewRequested.html";
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -104,7 +104,7 @@ Column {
              "Timed out waiting for successful load");
       // See https://launchpad.net/bugs/1302740
       skip(navigationSpy.count, 1, "Should have had an onNavigationRequested");
-      compare(webView2.url, "http://localhost:8080/empty.html", "Unexpected URL");
+      compare(webView2.url, "http://testsuite/empty.html", "Unexpected URL");
     }
 
     // Test that WebView.newViewRequested is emitted for non CurrentTab navigations
@@ -112,7 +112,7 @@ Column {
     function test_WebView_newViewRequested4_from_navigation() {
       navigationSpy.target = webView1;
 
-      webView1.url = "http://localhost:8080/tst_WebView_newViewRequested2.html";
+      webView1.url = "http://testsuite/tst_WebView_newViewRequested2.html";
       verify(webView1.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -124,7 +124,7 @@ Column {
       spy.wait();
 
       compare(navigationSpy.count, 1, "Should have had an onNavigationRequested");
-      compare(created.url, "http://localhost:8080/empty.html", "Unexpected URL");
+      compare(created.url, "http://testsuite/empty.html", "Unexpected URL");
       compare(created.context, webView1.context, "Unexpected context");
       compare(created.incognito, webView1.incognito, "WebView.incognito should match opener");
 
@@ -137,7 +137,7 @@ Column {
     function test_WebView_newViewRequested5_no_handler_from_navigation() {
       navigationSpy.target = webView2;
 
-      webView2.url = "http://localhost:8080/tst_WebView_newViewRequested2.html";
+      webView2.url = "http://testsuite/tst_WebView_newViewRequested2.html";
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -147,12 +147,12 @@ Column {
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       compare(navigationSpy.count, 1, "Should have had an onNavigationRequested");
-      compare(webView2.url, "http://localhost:8080/empty.html", "Unexpected URL");
+      compare(webView2.url, "http://testsuite/empty.html", "Unexpected URL");
     }
 
     // Test that dynamically attaching a handler for WebView.newViewRequested works
     function test_WebView_newViewRequested6_dynamic() {
-      webView2.url = "http://localhost:8080/tst_WebView_newViewRequested3.html";
+      webView2.url = "http://testsuite/tst_WebView_newViewRequested3.html";
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -161,7 +161,7 @@ Column {
 
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      compare(webView2.url, "http://localhost:8080/tst_WebView_newViewRequested3.html?1");
+      compare(webView2.url, "http://testsuite/tst_WebView_newViewRequested3.html?1");
 
       spy.target = webView2;
       var handler = function(request) {
@@ -175,8 +175,8 @@ Column {
       spy.wait();
 
       compare(spy.count, 1);
-      compare(created.url, "http://localhost:8080/tst_WebView_newViewRequested3.html?2");
-      compare(webView2.url, "http://localhost:8080/tst_WebView_newViewRequested3.html?1");
+      compare(created.url, "http://testsuite/tst_WebView_newViewRequested3.html?2");
+      compare(webView2.url, "http://testsuite/tst_WebView_newViewRequested3.html?1");
 
       spy.target = null;
       webView2.newViewRequested.disconnect(handler);
@@ -186,7 +186,7 @@ Column {
 
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      compare(webView2.url, "http://localhost:8080/tst_WebView_newViewRequested3.html?2");
+      compare(webView2.url, "http://testsuite/tst_WebView_newViewRequested3.html?2");
     }
   }
 }

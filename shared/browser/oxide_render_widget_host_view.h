@@ -117,8 +117,6 @@ class RenderWidgetHostView FINAL :
   void SelectionBoundsChanged(
       const ViewHostMsg_SelectionBounds_Params& params) FINAL;
 
-  void ScrollOffsetChanged() FINAL;
-
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
@@ -157,6 +155,8 @@ class RenderWidgetHostView FINAL :
 
   // content::RenderWidgetHostView implementation
   void InitAsChild(gfx::NativeView parent_view) FINAL;
+
+  gfx::Vector2dF GetLastScrollOffset() const FINAL;
 
   gfx::NativeView GetNativeView() const FINAL;
   gfx::NativeViewId GetNativeViewId() const FINAL;

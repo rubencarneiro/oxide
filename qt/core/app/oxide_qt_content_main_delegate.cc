@@ -21,6 +21,7 @@
 #include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "base/lazy_instance.h"
+#include "base/logging.h"
 
 #include "qt/core/browser/oxide_qt_content_browser_client.h"
 #include "qt/core/gl/oxide_qt_shared_gl_context.h"
@@ -34,8 +35,27 @@ base::LazyInstance<ContentBrowserClient> g_content_browser_client =
     LAZY_INSTANCE_INITIALIZER;
 }
 
+ContentMainDelegate::ContentMainDelegate(const base::FilePath& nss_db_path)
+    : is_browser_(true)
+#if defined(USE_NSS)
+      , nss_db_path_(nss_db_path) {
+#else
+{
+  DCHECK(nss_db_path.empty());
+#endif
+  QOpenGLContext* qcontext = WebContextAdapter::sharedGLContext();
+  if (qcontext) {
+    scoped_refptr<SharedGLContext> context(new SharedGLContext(qcontext));
+    if (context->GetHandle()) {
+      shared_gl_context_ = context;
+    } else {
+      DLOG(WARNING) << "Could not determine native handle for shared GL context";
+    }
+  }
+}
+
 oxide::SharedGLContext* ContentMainDelegate::GetSharedGLContext() const {
-  return shared_gl_context_;
+  return shared_gl_context_.get();
 }
 
 bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
@@ -55,31 +75,27 @@ bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
   return true;
 }
 
+#if defined(USE_NSS)
+base::FilePath ContentMainDelegate::GetNSSDbPath() const {
+  DCHECK(is_browser_);
+  return nss_db_path_;
+}
+#endif
+
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
   return g_content_browser_client.Pointer();
 }
 
-ContentMainDelegate::ContentMainDelegate(bool is_browser)
-    : is_browser_(is_browser) {
-  if (is_browser) {
-    QOpenGLContext* qcontext = WebContextAdapter::sharedGLContext();
-    if (qcontext) {
-      scoped_refptr<SharedGLContext> context(new SharedGLContext(qcontext));
-      if (context->GetHandle()) {
-        shared_gl_context_ = context;
-      } else {
-        DLOG(WARNING) << "Could not determine native handle for shared GL context";
-      }
-    }
-  }
-}
+ContentMainDelegate::ContentMainDelegate()
+    : is_browser_(false) {}
 
 ContentMainDelegate::~ContentMainDelegate() {}
 
 // static
-ContentMainDelegate* ContentMainDelegate::Create() {
-  return new ContentMainDelegate(true);
+ContentMainDelegate* ContentMainDelegate::CreateForBrowser(
+    const base::FilePath& nss_db_path) {
+  return new ContentMainDelegate(nss_db_path);
 }
 
 } // namespace qt

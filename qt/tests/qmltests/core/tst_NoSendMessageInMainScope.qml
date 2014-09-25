@@ -15,7 +15,7 @@ TestWebView {
     when: windowShown
 
     function test_NoSendMessageInMainScope() {
-      webView.url = "http://localhost:8080/tst_NoSendMessageInMainScope.html";
+      webView.url = "http://testsuite/tst_NoSendMessageInMainScope.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

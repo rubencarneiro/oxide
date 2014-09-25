@@ -45,14 +45,14 @@ TestWebView {
 
     function test_noDialogComponent() {
       webView.alertDialog = null;
-      webView.url = "http://localhost:8080/tst_WebView_alertDialog.html";
+      webView.url = "http://testsuite/tst_WebView_alertDialog.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
     }
 
     function test_customDialogComponent() {
       webView.alertDialog = customDialogComponent;
-      webView.url = "http://localhost:8080/tst_WebView_alertDialog.html";
+      webView.url = "http://testsuite/tst_WebView_alertDialog.html";
       verify(webView.waitFor(webView.dialogShown), "Alert dialog not shown");
       var dialog = webView.currentDialog;
       compare(dialog.width, webView.width);

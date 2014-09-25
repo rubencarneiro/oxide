@@ -36,6 +36,7 @@
         'system.gyp:Qt5Gui',
         'system.gyp:Qt5Gui-private',
         'system.gyp:Qt5Positioning',
+        'system.gyp:Qt5Network',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -55,6 +56,7 @@
       },
       'include_dirs': [
         '../..',
+        '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
       ],
       'sources': [
@@ -101,6 +103,11 @@
           'moc_input': 'browser/oxide_qt_location_provider_p.h',
           'includes': [ 'moc.gypi' ]
         },
+        {
+          'action_name': 'oxide_qt_web_view.moc',
+          'moc_input': 'browser/oxide_qt_web_view.cc',
+          'includes': [ 'moc.gypi' ]
+        },
       ]
     },
     {
@@ -114,6 +121,7 @@
         'system.gyp:Qt5Core',
         'system.gyp:Qt5Gui',
         'system.gyp:Qt5Gui-private',
+        'system.gyp:Qt5Network',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/net/net.gyp:net',
@@ -130,17 +138,25 @@
         '<(DEPTH)'
       ],
       'sources': [
+        '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqsecuritystatus.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqsslcertificate.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
+        'api/oxideqcertificateerror.cc',
+        'api/oxideqcertificateerror.h',
+        'api/oxideqcertificateerror_p.h',
         'api/oxideqdownloadrequest.cc',
         'api/oxideqdownloadrequest.h',
         'api/oxideqdownloadrequest_p.h',
+        'api/oxideqglobal.cc',
+        'api/oxideqglobal.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
@@ -155,6 +171,12 @@
         'api/oxideqpermissionrequest.cc',
         'api/oxideqpermissionrequest.h',
         'api/oxideqpermissionrequest_p.h',
+        'api/oxideqsecuritystatus.cc',
+        'api/oxideqsecuritystatus.h',
+        'api/oxideqsecuritystatus_p.h',
+        'api/oxideqsslcertificate.cc',
+        'api/oxideqsslcertificate.h',
+        'api/oxideqsslcertificate_p.h',
         'api/oxideqstoragepermissionrequest.cc',
         'api/oxideqstoragepermissionrequest.h',
         'api/oxideqstoragepermissionrequest_p.h',
@@ -190,6 +212,11 @@
       ],
       'actions': [
         {
+          'action_name': 'moc_oxideqcertificateerror.cc',
+          'moc_input': 'api/oxideqcertificateerror.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
           'action_name': 'moc_oxideqdownloadrequest.cc',
           'moc_input': 'api/oxideqdownloadrequest.h',
           'includes': [ 'moc.gypi' ]
@@ -217,6 +244,16 @@
         {
           'action_name': 'moc_oxideqpermissionrequest.cc',
           'moc_input': 'api/oxideqpermissionrequest.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
+          'action_name': 'moc_oxideqsecuritystatus.cc',
+          'moc_input': 'api/oxideqsecuritystatus.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
+          'action_name': 'moc_oxideqsslcertificate.cc',
+          'moc_input': 'api/oxideqsslcertificate.h',
           'includes': [ 'moc.gypi' ],
         },
         {

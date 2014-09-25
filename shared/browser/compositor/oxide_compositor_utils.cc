@@ -95,7 +95,7 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
       content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
   scoped_refptr<content::GpuChannelHost> gpu_channel_host(
       content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
-  if (!gpu_channel_host) {
+  if (!gpu_channel_host.get()) {
     return scoped_ptr<WGC3DCBI>();
   }
 
@@ -158,7 +158,7 @@ class CompositorUtils::FetchTextureResourcesTask :
         sync_point_(sync_point),
         callback_(callback),
         task_runner_(task_runner) {
-    DCHECK(task_runner_);
+    DCHECK(task_runner_.get());
     DCHECK(!callback_.is_null());
   }
 
@@ -323,7 +323,7 @@ void CompositorUtils::CreateGLFrameHandle(
   // could be dropped on the main thread
   scoped_refptr<content::ContextProviderCommandBuffer>
       context_provider = context_provider_;
-  DCHECK(context_provider);
+  DCHECK(context_provider.get());
 
   // XXX: Should we assert that we're on the compositor thread?
   //  That is the only thread context_provider_ should be used on
@@ -349,7 +349,7 @@ void CompositorUtils::CreateGLFrameHandle(
 }
 
 gfx::GLSurfaceHandle CompositorUtils::GetSharedSurfaceHandle() {
-  if (!context_provider_) {
+  if (!context_provider_.get()) {
     return gfx::GLSurfaceHandle();
   }
 

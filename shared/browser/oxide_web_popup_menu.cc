@@ -18,30 +18,30 @@
 #include "oxide_web_popup_menu.h"
 
 #include "base/logging.h"
-#include "content/browser/renderer_host/render_view_host_impl.h"
-#include "content/public/browser/render_view_host.h"
+#include "content/browser/frame_host/render_frame_host_impl.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
 
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
 
-void WebPopupMenu::RenderViewDeleted(content::RenderViewHost* rvh) {
-  if (rvh != render_view_host_) {
+void WebPopupMenu::RenderFrameDeleted(content::RenderFrameHost* rfh) {
+  if (rfh != render_frame_host_) {
     return;
   }
-  render_view_host_ = NULL;
+  render_frame_host_ = NULL;
   Hide();
 }
 
-WebPopupMenu::WebPopupMenu(content::RenderViewHost* rvh) :
-    content::WebContentsObserver(content::WebContents::FromRenderViewHost(rvh)),
+WebPopupMenu::WebPopupMenu(content::RenderFrameHost* rfh) :
+    content::WebContentsObserver(content::WebContents::FromRenderFrameHost(rfh)),
     popup_was_hidden_(false),
-    render_view_host_(static_cast<content::RenderViewHostImpl *>(rvh)) {}
+    render_frame_host_(static_cast<content::RenderFrameHostImpl *>(rfh)) {}
 
 WebPopupMenu::~WebPopupMenu() {
   if (!popup_was_hidden_) {
-    render_view_host_->DidCancelPopupMenu();
+    render_frame_host_->DidCancelPopupMenu();
   }
 }
 
@@ -55,13 +55,13 @@ void WebPopupMenu::Hide() {
 
 void WebPopupMenu::SelectItems(const std::vector<int>& selected_indices) {
   DCHECK(!popup_was_hidden_);
-  render_view_host_->DidSelectPopupMenuItems(selected_indices);
+  render_frame_host_->DidSelectPopupMenuItems(selected_indices);
   Hide();
 }
 
 void WebPopupMenu::Cancel() {
   DCHECK(!popup_was_hidden_);
-  render_view_host_->DidCancelPopupMenu();
+  render_frame_host_->DidCancelPopupMenu();
   Hide();
 }
 

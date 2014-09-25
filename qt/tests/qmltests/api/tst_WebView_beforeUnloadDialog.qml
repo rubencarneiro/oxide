@@ -57,9 +57,9 @@ TestWebView {
 
     function test_noDialogComponent() {
       webView.beforeUnloadDialog = null;
-      webView.url = "http://localhost:8080/tst_WebView_beforeUnloadDialog.html";
+      webView.url = "http://testsuite/tst_WebView_beforeUnloadDialog.html";
       tryCompare(webView, "url",
-                 "http://localhost:8080/tst_WebView_beforeUnloadDialog2.html");
+                 "http://testsuite/tst_WebView_beforeUnloadDialog2.html");
     }
 
     function test_customDialogComponent_data() {
@@ -71,7 +71,7 @@ TestWebView {
 
     function test_customDialogComponent(data) {
       webView.beforeUnloadDialog = customDialogComponent;
-      webView.url = "http://localhost:8080/tst_WebView_beforeUnloadDialog.html";
+      webView.url = "http://testsuite/tst_WebView_beforeUnloadDialog.html";
       verify(webView.waitFor(webView.dialogShown),
              "Before unload dialog not shown");
       var dialog = webView.currentDialog;
@@ -83,7 +83,7 @@ TestWebView {
              "Before unload dialog not dismissed");
       if (data.leave) {
         tryCompare(webView, "url",
-                   "http://localhost:8080/tst_WebView_beforeUnloadDialog2.html");
+                   "http://testsuite/tst_WebView_beforeUnloadDialog2.html");
       } else {
         verify(webView.waitFor(webView.checkContents));
       }

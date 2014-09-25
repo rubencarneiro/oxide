@@ -30,13 +30,16 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
+#include "base/timer/timer.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/common/input/input_event_ack_state.h"
+#include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
+#include "content/public/common/resource_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "ui/base/ime/text_input_type.h"
@@ -45,9 +48,12 @@
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_script_message_target.h"
+#include "shared/browser/oxide_security_status.h"
+#include "shared/browser/oxide_security_types.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/browser/oxide_web_view_contents_helper_delegate.h"
 #include "shared/common/oxide_message_enums.h"
@@ -67,6 +73,7 @@ struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
 struct OpenURLParams;
+class RenderFrameHost;
 class RenderViewHost;
 class RenderWidgetHostImpl;
 class WebContents;
@@ -78,6 +85,10 @@ class WebCursor;
 namespace gfx {
 class Range;
 class Size;
+}
+
+namespace net {
+class SSLInfo;
 }
 
 namespace ui {
@@ -125,6 +136,7 @@ class WebView : public ScriptMessageTarget,
 
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
+  static WebView* FromRenderFrameHost(content::RenderFrameHost* rfh);
 
   static std::set<WebView*> GetAllWebViewsFor(
       BrowserContext * browser_context);
@@ -156,6 +168,7 @@ class WebView : public ScriptMessageTarget,
   void WasResized();
   void VisibilityChanged();
   void FocusChanged();
+  void InputPanelVisibilityChanged();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -174,26 +187,43 @@ class WebView : public ScriptMessageTarget,
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
 
-  gfx::Size GetContainerSizePix() const;
-  gfx::Rect GetContainerBoundsDip() const;
-  gfx::Size GetContainerSizeDip() const;
+  gfx::Size GetViewSizePix() const;
+  gfx::Rect GetViewBoundsDip() const;
+  gfx::Size GetViewSizeDip() const;
 
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
   }
 
-  void ShowPopupMenu(const gfx::Rect& bounds,
+  const SecurityStatus& security_status() const { return security_status_; }
+
+  ContentType blocked_content() const { return blocked_content_; }
+
+  void SetCanTemporarilyDisplayInsecureContent(bool allow);
+  void SetCanTemporarilyRunInsecureContent(bool allow);
+
+  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                     const gfx::Rect& bounds,
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
                      bool allow_multiple_selection);
   void HidePopupMenu();
 
   void RequestGeolocationPermission(
-      int id,
       const GURL& origin,
-      const base::Callback<void(bool)>& callback);
-  void CancelGeolocationPermissionRequest(int id);
+      const base::Callback<void(bool)>& callback,
+      base::Closure* cancel_callback);
 
+  void AllowCertificateError(content::RenderFrameHost* rfh,
+                             int cert_error,
+                             const net::SSLInfo& ssl_info,
+                             const GURL& request_url,
+                             content::ResourceType resource_type,
+                             bool overridable,
+                             bool strict_enforcement,
+                             const base::Callback<void(bool)>& callback,
+                             content::CertificateRequestResultType* result);
+                             
   void UpdateWebPreferences();
 
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
@@ -239,9 +269,10 @@ class WebView : public ScriptMessageTarget,
   // ============================
 
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
-  virtual gfx::Rect GetContainerBoundsPix() const = 0;
+  virtual gfx::Rect GetViewBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
+  virtual bool IsInputPanelVisible() const;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -276,6 +307,13 @@ class WebView : public ScriptMessageTarget,
                           int error_code,
                           const base::string16& error_description);
 
+  void OnDidBlockDisplayingInsecureContent();
+  void OnDidBlockRunningInsecureContent();
+
+  bool ShouldScrollFocusedEditableNodeIntoView();
+  void MaybeResetAutoScrollTimer();
+  void ScrollFocusedEditableNodeIntoView();
+
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
   virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -299,7 +337,8 @@ class WebView : public ScriptMessageTarget,
 
   // WebViewContentsHelperDelegate implementation
   content::WebContents* OpenURL(const content::OpenURLParams& params) FINAL;
-  void NavigationStateChanged(unsigned flags) FINAL;
+  void NavigationStateChanged(content::InvalidateTypes flags) FINAL;
+  void SSLStateChanged() FINAL;
   bool ShouldCreateWebContents(const GURL& target_url,
                                WindowOpenDisposition disposition,
                                bool user_gesture) FINAL;
@@ -334,13 +373,17 @@ class WebView : public ScriptMessageTarget,
   void DidCommitProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& url,
-      content::PageTransition transition_type) FINAL;
+      ui::PageTransition transition_type) FINAL;
 
   void DidFailProvisionalLoad(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       int error_code,
       const base::string16& error_description) FINAL;
+
+  void DidNavigateMainFrame(
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) FINAL;
 
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
                      const GURL& validated_url) FINAL;
@@ -352,6 +395,9 @@ class WebView : public ScriptMessageTarget,
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) FINAL;
 
+  void DidStartLoading(content::RenderViewHost* render_view_host) FINAL;
+  void DidStopLoading(content::RenderViewHost* render_view_host) FINAL;
+
   void FrameDetached(content::RenderFrameHost* render_frame_host) FINAL;
 
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
@@ -359,16 +405,21 @@ class WebView : public ScriptMessageTarget,
   void DidUpdateFaviconURL(
       const std::vector<content::FaviconURL>& candidates) FINAL;
 
+  bool OnMessageReceived(const IPC::Message& msg,
+                         content::RenderFrameHost* render_frame_host) FINAL;
+
   // Override in sub-classes
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnIconChanged(const GURL& icon);
   virtual void OnCommandsUpdated();
 
+  virtual void OnLoadingChanged();
   virtual void OnLoadProgressChanged(double progress);
 
   virtual void OnLoadStarted(const GURL& validated_url,
                              bool is_error_frame);
+  virtual void OnLoadCommitted(const GURL& url);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,
@@ -389,7 +440,9 @@ class WebView : public ScriptMessageTarget,
   virtual void OnWebPreferencesDestroyed();
 
   virtual void OnRequestGeolocationPermission(
-      scoped_ptr<GeolocationPermissionRequest> request);
+      const GURL& origin,
+      const GURL& embedder,
+      scoped_ptr<SimplePermissionRequest> request);
 
   virtual void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event);
@@ -409,7 +462,7 @@ class WebView : public ScriptMessageTarget,
                                       bool user_gesture);
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh);
+  virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                     WindowOpenDisposition disposition);
@@ -422,6 +475,17 @@ class WebView : public ScriptMessageTarget,
   virtual void OnTextInputStateChanged();
   virtual void OnFocusedNodeChanged();
   virtual void OnSelectionBoundsChanged();
+
+  virtual void OnSecurityStatusChanged(const SecurityStatus& old);
+  virtual bool OnCertificateError(
+      bool is_main_frame,
+      CertError cert_error,
+      const scoped_refptr<net::X509Certificate>& cert,
+      const GURL& request_url,
+      content::ResourceType resource_type,
+      bool strict_enforcement,
+      scoped_ptr<SimplePermissionRequest> request);
+  virtual void OnContentBlocked();
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;
@@ -445,9 +509,28 @@ class WebView : public ScriptMessageTarget,
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 
-  PermissionRequestManager geolocation_permission_requests_;
+  PermissionRequestManager permission_request_manager_;
+
+  ContentType blocked_content_;
 
   cc::CompositorFrameMetadata compositor_frame_metadata_;
+
+  SecurityStatus security_status_;
+
+  // Usually we would scroll the focused editable node in to view after any
+  // resize if the input method is onscreen. However, this interacts badly
+  // with the browser header bar, which resizes the view when its visibility
+  // changes. To work around this, we don't scroll the focused node into
+  // view on a resize if it has already been scrolled once and the input
+  // method hasn't been hidden. This is reset if the input method goes
+  // offscreen or the focused node changes. To do this, we add a delay to
+  // ensure that we only do the scroll once any transitions are finished
+  // See https://bugs.launchpad.net/oxide/+bug/1301681/comments/3
+  //
+  // We should be able to get rid of this once we have a solution for
+  // https://launchpad.net/bugs/1370366
+  bool did_scroll_focused_editable_node_into_view_;
+  base::Timer auto_scroll_timer_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

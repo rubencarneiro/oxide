@@ -18,7 +18,7 @@ TestWebView {
     property var errorsReceived: []
 
     function test_bug1234555() {
-      webView.url = "http://localhost:8080/tst_bug1234555.html";
+      webView.url = "http://testsuite/tst_bug1234555.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

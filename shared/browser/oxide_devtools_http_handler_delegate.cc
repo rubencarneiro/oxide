@@ -42,32 +42,14 @@ using content::WebContents;
 namespace oxide {
 
 DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate(
-      const std::string& ip,
-      unsigned port,
-      BrowserContext * attached_browser_context)
-    : ip_(ip),
-      port_(port),
-      browser_context_(attached_browser_context) {
-    LOG(INFO) << "DevTools instance running "
-	      << GetLocalDevToolsUrl();
-}
+    BrowserContext * attached_browser_context)
+    : browser_context_(attached_browser_context) {}
 
-DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {
-}
+DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {}
 
 std::string DevtoolsHttpHandlerDelegate::GetDiscoveryPageHTML() {
   return ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
     IDR_OXIDE_DEVTOOLS_DISCOVERY_HTML_PAGE).as_string();
-}
-
-std::string
-DevtoolsHttpHandlerDelegate::GetLocalDevToolsUrl() const {
-  std::ostringstream oss;
-  oss << "http://"
-      << ip_
-      << ":"
-      << port_;
-  return oss.str();
 }
 
 bool DevtoolsHttpHandlerDelegate::BundlesFrontendResources() {

@@ -66,7 +66,7 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
     return gfx::Size();
   }
 
-  return web_view_->GetContainerSizePix();
+  return web_view_->GetViewSizePix();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -121,8 +121,9 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   cc::RenderPass* root_pass = frame_data->render_pass_list.back();
 
   gfx::Size frame_size = root_pass->output_rect.size();
-  gfx::Size frame_size_dip = gfx::ToFlooredSize(
-      gfx::ScaleSize(frame_size, 1.0f / device_scale_factor));
+  gfx::Size frame_size_dip = gfx::Size(
+      std::lround(frame_size.width() / device_scale_factor),
+      std::lround(frame_size.height() / device_scale_factor));
 
   gfx::Rect damage_rect_dip = gfx::ToEnclosingRect(
       gfx::ScaleRect(root_pass->damage_rect, 1.0f / device_scale_factor));
@@ -130,7 +131,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
   } else {
-    if (!frame_provider_ || frame_size != frame_provider_->frame_size() ||
+    if (!frame_provider_.get() ||
+        frame_size != frame_provider_->frame_size() ||
         frame_size_dip != last_frame_size_dip_) {
       DetachLayer();
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
@@ -144,7 +146,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
 
   last_frame_size_dip_ = frame_size_dip;
 
-  if (layer_) {
+  if (layer_.get()) {
     layer_->SetIsDrawable(true);
     layer_->SetContentsOpaque(true);
     layer_->SetBounds(frame_size_dip);
@@ -182,7 +184,7 @@ void RenderWidgetHostView::WasShown() {
   if (!frame_is_evicted_) {
     RendererFrameEvictor::GetInstance()->LockFrame(this);
   }
-  host_->WasShown();
+  host_->WasShown(ui::LatencyInfo());
 }
 
 void RenderWidgetHostView::WasHidden() {
@@ -273,8 +275,6 @@ void RenderWidgetHostView::SelectionBoundsChanged(
   }
 }
 
-void RenderWidgetHostView::ScrollOffsetChanged() {}
-
 void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,
@@ -362,6 +362,11 @@ void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {
   NOTREACHED() << "InitAsChild() isn't used. Please use Init() instead";
 }
 
+gfx::Vector2dF RenderWidgetHostView::GetLastScrollOffset() const {
+  NOTREACHED();
+  return gfx::Vector2dF();
+}
+
 gfx::NativeView RenderWidgetHostView::GetNativeView() const {
   return NULL;
 }
@@ -420,7 +425,7 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
     return gfx::Rect(last_size_);
   }
 
-  return web_view_->GetContainerBoundsDip();
+  return web_view_->GetViewBoundsDip();
 }
 
 bool RenderWidgetHostView::LockMouse() {
@@ -500,18 +505,18 @@ void RenderWidgetHostView::AttachLayer() {
   if (!web_view_) {
     return;
   }
-  if (!layer_) {
+  if (!layer_.get()) {
     return;
   }
 
-  web_view_->compositor()->SetRootLayer(layer_);
+  web_view_->compositor()->SetRootLayer(layer_.get());
 }
 
 void RenderWidgetHostView::DetachLayer() {
   if (!web_view_) {
     return;
   }
-  if (!layer_) {
+  if (!layer_.get()) {
     return;
   }
 

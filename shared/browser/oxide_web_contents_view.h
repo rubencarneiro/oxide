@@ -73,7 +73,8 @@ class WebContentsView FINAL : public content::WebContentsView,
   void SetOverscrollControllerEnabled(bool enabled) FINAL;
 
   // content::RenderViewHostDelegateView
-  void ShowPopupMenu(const gfx::Rect& bounds,
+  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                     const gfx::Rect& bounds,
                      int item_height,
                      double item_font_size,
                      int selected_item,

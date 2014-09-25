@@ -41,13 +41,13 @@
       },
       'dependencies': [
         'oxide_extra_resources',
-        '<(DEPTH)/content/content_resources.gyp:content_resources',
+        '<(DEPTH)/content/app/resources/content_resources.gyp:content_resources',
+        '<(DEPTH)/content/app/strings/content_strings.gyp:content_strings',
+        '<(DEPTH)/content/content.gyp:content_resources',
         '<(DEPTH)/content/browser/devtools/devtools_resources.gyp:devtools_resources',
         '<(DEPTH)/net/net.gyp:net_resources',
         '<(DEPTH)/third_party/WebKit/public/blink_resources.gyp:blink_resources',
         '<(DEPTH)/ui/resources/ui_resources.gyp:ui_resources',
-        '<(DEPTH)/webkit/webkit_resources.gyp:webkit_resources',
-        '<(DEPTH)/webkit/webkit_resources.gyp:webkit_strings',
       ],
       'actions': [
         {
@@ -74,8 +74,8 @@
           'action_name': 'repack_oxide_100_percent',
           'variables': {
             'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_100_percent.pak',
-              '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_resources_100_percent.pak',
             ]
           },
           'inputs': [
@@ -91,8 +91,8 @@
           'action_name': 'repack_oxide_200_percent',
           'variables': {
             'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_200_percent.pak',
-              '<(SHARED_INTERMEDIATE_DIR)/webkit/webkit_resources_200_percent.pak',
             ]
           },
           'inputs': [
@@ -173,7 +173,8 @@
         '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',
       ],
       'defines': [
-        'OXIDE_SUBPROCESS_PATH=\"<(oxide_subprocess_path)\"'
+        'OXIDE_SUBPROCESS_PATH=\"<(oxide_subprocess_path)\"',
+        'OXIDE_GETTEXT_DOMAIN=\"<(oxide_gettext_domain)\"'
       ],
       'dependencies': [
         'oxide_packed_resources',
@@ -214,6 +215,7 @@
       'sources': [
         'app/oxide_content_main_delegate.cc',
         'app/oxide_content_main_delegate.h',
+        'base/oxide_enum_flags.h',
         'base/oxide_event_utils.cc',
         'base/oxide_event_utils.h',
         'base/oxide_id_allocator.cc',
@@ -240,14 +242,13 @@
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_delegate.h',
-        'browser/oxide_browser_context_impl.cc',
-        'browser/oxide_browser_context_impl.h',
         'browser/oxide_browser_context_observer.cc',
         'browser/oxide_browser_context_observer.h',
         'browser/oxide_browser_process_main.cc',
         'browser/oxide_browser_process_main.h',
         'browser/oxide_content_browser_client.cc',
         'browser/oxide_content_browser_client.h',
+        'browser/oxide_content_types.h',
         'browser/oxide_default_screen_info.h',
         'browser/oxide_devtools_http_handler_delegate.cc',
         'browser/oxide_devtools_http_handler_delegate.h',
@@ -271,8 +272,6 @@
         'browser/oxide_message_pump.h',
         'browser/oxide_network_delegate.cc',
         'browser/oxide_network_delegate.h',
-        'browser/oxide_off_the_record_browser_context_impl.cc',
-        'browser/oxide_off_the_record_browser_context_impl.h',
         'browser/oxide_permission_request.cc',
         'browser/oxide_permission_request.h',
         'browser/oxide_power_save_blocker.cc',
@@ -289,8 +288,12 @@
         'browser/oxide_script_message_request_impl_browser.cc',
         'browser/oxide_script_message_request_impl_browser.h',
         'browser/oxide_script_message_target.h',
+        'browser/oxide_security_status.cc',
+        'browser/oxide_security_status.h',
         'browser/oxide_ssl_config_service.cc',
         'browser/oxide_ssl_config_service.h',
+        'browser/oxide_ssl_host_state_delegate.cc',
+        'browser/oxide_ssl_host_state_delegate.h',
         'browser/oxide_url_request_context.cc',
         'browser/oxide_url_request_context.h',
         'browser/oxide_user_agent_override_provider.cc',
@@ -375,6 +378,8 @@
         'renderer/oxide_user_script_slave.cc',
         'renderer/oxide_user_script_slave.h',
         'renderer/oxide_v8_scoped_persistent.h',
+        'renderer/oxide_web_permission_client.cc',
+        'renderer/oxide_web_permission_client.h',
         '<(DEPTH)/extensions/common/constants.cc',
         '<(DEPTH)/extensions/common/constants.h',
         '<(DEPTH)/extensions/common/error_utils.cc',

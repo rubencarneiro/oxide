@@ -61,7 +61,7 @@ class LocationProvider FINAL : public content::LocationProviderBase {
 
  private:
   bool running_;
-  base::MessageLoopProxy* proxy_;
+  scoped_refptr<base::MessageLoopProxy> proxy_;
   bool is_permission_granted_;
   LocationSource* source_;
   QThread* worker_thread_;

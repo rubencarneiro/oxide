@@ -57,7 +57,7 @@ TestWebView {
       compare(currentIndex, -1,
               "Cannot set the current index when the history is empty");
 
-      var url1 = "http://localhost:8080/tst_WebView_navigation1.html";
+      var url1 = "http://testsuite/tst_WebView_navigation1.html";
       var title1 = "Navigation test 1";
       loadUrl(url1);
       compareAttributes(1, 0, url1, title1,
@@ -67,7 +67,7 @@ TestWebView {
       compare(currentIndex, 0,
               "Cannot set the current index to an invalid value");
 
-      var url2 = "http://localhost:8080/tst_WebView_navigation2.html";
+      var url2 = "http://testsuite/tst_WebView_navigation2.html";
       var title2 = "Navigation test 2";
       loadUrl(url2);
       compareAttributes(2, 1, url2, title2,
@@ -92,7 +92,7 @@ TestWebView {
       compareAttributes(2, 0, url1, title1,
                         "No new entries / current is the first one");
 
-      var url3 = "http://localhost:8080/tst_WebView_navigation3.html";
+      var url3 = "http://testsuite/tst_WebView_navigation3.html";
       var title3 = "Navigation test 3";
       loadUrl(url3);
       compareAttributes(2, 1, url3, title3, "Two entries / last one updated");
@@ -106,7 +106,7 @@ TestWebView {
       compareAttributes(3, 0, url1, title1,
                         "No new entries / current is the first one");
 
-      var url4 = "http://localhost:8080/tst_WebView_navigation4.html";
+      var url4 = "http://testsuite/tst_WebView_navigation4.html";
       var title4 = "Navigation test 4";
       loadUrl(url4);
       compareAttributes(2, 1, url4, title4,

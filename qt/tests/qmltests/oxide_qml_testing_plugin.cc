@@ -16,14 +16,12 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <QCoreApplication>
-#include <QDir>
 #include <QLatin1String>
 #include <QQmlContext>
 #include <QQmlExtensionPlugin>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
-#include <QUrl>
 #include <QVariant>
 
 class DestructionObserver : public QObject {
@@ -60,29 +58,9 @@ class DestructionObserver : public QObject {
 
 class OxideTestingUtils : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QUrl DATA_PATH READ dataPath CONSTANT)
 
  public:
   OxideTestingUtils() {}
-
-  QUrl dataPath() const {
-    static QUrl url;
-    static bool initialized = false;
-
-    if (initialized) {
-      return url;
-    }
-
-    initialized = true;
-
-    QString path(QString(qgetenv("OXIDE_TESTING_DATA_PATH")));
-    if (!path.isEmpty()) {
-      QDir dir(path);
-      url = QUrl::fromLocalFile(dir.absolutePath());
-    }
-
-    return url;
-  }
 
   Q_INVOKABLE QObject* qObjectParent(QObject* object) {
     if (!object) {

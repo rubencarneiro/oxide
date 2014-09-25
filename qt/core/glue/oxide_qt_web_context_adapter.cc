@@ -22,15 +22,21 @@
 #include <vector>
 
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QDir>
 #include <QGuiApplication>
+#include <QNetworkCookie>
 #include <QObject>
 #include <QtDebug>
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "content/public/browser/browser_thread.h"
 #include "net/base/static_cookie_policy.h"
+#include "net/cookies/cookie_monster.h"
 #include "url/gurl.h"
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -40,11 +46,26 @@ namespace qt {
 
 namespace {
 QOpenGLContext* g_shared_gl_context;
+
+int GetNextCookieRequestId() {
+  static int id = 0;
+  if (id == std::numeric_limits<int>::max()) {
+    int i = id;
+    id = 0;
+    return i;
+  }
+  return id++;
+}
+
 }
 
 WebContextAdapter::~WebContextAdapter() {
   priv->Destroy();
   priv->Release();
+}
+
+void WebContextAdapter::init(const QWeakPointer<IODelegate>& io_delegate) {
+  priv->Init(io_delegate);
 }
 
 QString WebContextAdapter::product() const {
@@ -77,37 +98,6 @@ void WebContextAdapter::setUserAgent(const QString& user_agent) {
   } else {
     priv->construct_props_->user_agent = user_agent.toStdString();
   }
-}
-
-bool WebContextAdapter::devtoolsEnabled() const {
-  if (isInitialized()) {
-    return priv->context_->GetDevtoolsEnabled();
-  }
-  return priv->construct_props_->devtools_enabled;
-}
-
-void WebContextAdapter::setDevtoolsEnabled(bool enabled) {
-  if (isInitialized()) {
-    qWarning() << "Cannot change the devtools enabled after inititialization";
-    return;
-  }
-  priv->construct_props_->devtools_enabled = enabled;
-}
-
-int WebContextAdapter::devtoolsPort() const {
-  if (isInitialized()) {
-    return priv->context_->GetDevtoolsPort();
-  }
-
-  return priv->construct_props_->devtools_port;
-}
-
-void WebContextAdapter::setDevtoolsPort(int port) {
-  if (isInitialized()) {
-    qWarning() << "Cannot change the devtools port after inititialization";
-    return;
-  }
-  priv->construct_props_->devtools_port = port;
 }
 
 QUrl WebContextAdapter::dataPath() const {
@@ -187,7 +177,7 @@ void WebContextAdapter::updateUserScripts() {
 }
 
 bool WebContextAdapter::isInitialized() const {
-  return priv->context_ != NULL;
+  return priv->context_.get() != NULL;
 }
 
 /* static */
@@ -216,17 +206,20 @@ void WebContextAdapter::ensureChromiumStarted() {
     CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
         "Your application doesn't have a QGuiApplication. Oxide will not "
         "function without one";
-    scoped_ptr<ContentMainDelegate> delegate(ContentMainDelegate::Create());
+
+    QString nss_db_path(oxideGetNSSDbPath());
+    if (!nss_db_path.isEmpty()) {
+      nss_db_path = QDir(nss_db_path).absolutePath();
+    }
+
+    scoped_ptr<ContentMainDelegate> delegate(
+        ContentMainDelegate::CreateForBrowser(
+          base::FilePath(nss_db_path.toStdString())));
 
     oxide::BrowserProcessMain::GetInstance()->Start(
         delegate.PassAs<oxide::ContentMainDelegate>());
     qAddPostRoutine(ShutdownChromium);
   }
-}
-
-WebContextAdapter::IOThreadDelegate*
-WebContextAdapter::getIOThreadDelegate() const {
-  return priv->io_thread_delegate_.get();
 }
 
 WebContextAdapter::CookiePolicy WebContextAdapter::cookiePolicy() const {
@@ -298,11 +291,135 @@ void WebContextAdapter::setPopupBlockerEnabled(bool enabled) {
   }
 }
 
-WebContextAdapter::WebContextAdapter(
-    QObject* q,
-    IOThreadDelegate* io_delegate)
+bool WebContextAdapter::devtoolsEnabled() const {
+  if (isInitialized()) {
+    return priv->context_->GetDevtoolsEnabled();
+  }
+  return priv->construct_props_->devtools_enabled;
+}
+
+void WebContextAdapter::setDevtoolsEnabled(bool enabled) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools enabled after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_enabled = enabled;
+}
+
+int WebContextAdapter::devtoolsPort() const {
+  if (isInitialized()) {
+    return priv->context_->GetDevtoolsPort();
+  }
+
+  return priv->construct_props_->devtools_port;
+}
+
+void WebContextAdapter::setDevtoolsPort(int port) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools port after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_port = port;
+}
+
+QString WebContextAdapter::devtoolsBindIp() const {
+  if (isInitialized()) {
+    return QString::fromStdString(priv->context_->GetDevtoolsBindIp());
+  }
+
+  return QString::fromStdString(priv->construct_props_->devtools_ip);
+}
+
+void WebContextAdapter::setDevtoolsBindIp(const QString& bindIp) {
+  if (isInitialized()) {
+    qWarning() << "Cannot change the devtools bound ip after inititialization";
+    return;
+  }
+  priv->construct_props_->devtools_ip = bindIp.toStdString();
+}
+
+int WebContextAdapter::setCookies(
+    const QUrl& url,
+    const QList<QNetworkCookie>& cookies) {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  if (cookies.size() == 0) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->SetCookies(request_id, url, cookies);
+  return request_id;
+}
+
+int WebContextAdapter::getCookies(const QUrl& url) {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->GetCookies(request_id, url);
+  return request_id;
+}
+
+int WebContextAdapter::getAllCookies() {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->GetAllCookies(request_id);
+  return request_id;
+}
+
+int WebContextAdapter::deleteAllCookies() {
+  if (!isInitialized()) {
+    return -1;
+  }
+
+  int request_id = GetNextCookieRequestId();
+
+  priv->DeleteAllCookies(request_id);
+  return request_id;
+}
+
+QStringList WebContextAdapter::hostMappingRules() const {
+  const std::vector<std::string>* list = NULL;
+  if (!isInitialized()) {
+    list = &priv->construct_props_->host_mapping_rules;
+  } else {
+    list = &priv->context_->GetHostMappingRules();
+  }
+
+  QStringList rules;
+  for (std::vector<std::string>::const_iterator it = list->cbegin();
+       it != list->cend(); ++it) {
+    rules.append(QString::fromStdString(*it));
+  }
+
+  return rules;
+}
+
+void WebContextAdapter::setHostMappingRules(const QStringList& rules) {
+  DCHECK(!isInitialized());
+
+  std::vector<std::string> list;
+  for (QStringList::const_iterator it = rules.cbegin();
+       it != rules.cend(); ++it) {
+    list.push_back((*it).toStdString());
+  }
+
+  priv->construct_props_->host_mapping_rules = list;
+}
+
+WebContextAdapter::WebContextAdapter(QObject* q)
     : AdapterBase(q),
-      priv(WebContextAdapterPrivate::Create(this, io_delegate)) {
+      priv(WebContextAdapterPrivate::Create(this)) {
 
   priv->AddRef();
 

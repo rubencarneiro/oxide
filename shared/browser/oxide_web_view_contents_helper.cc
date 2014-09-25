@@ -32,6 +32,7 @@
 
 #include "shared/common/oxide_content_client.h"
 
+#include "oxide_browser_context.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_web_preferences.h"
@@ -89,7 +90,7 @@ void WebViewContentsHelper::UpdateWebPreferences() {
     return;
   }
 
-  rvh->UpdateWebkitPreferences(rvh->GetWebkitPreferences());
+  rvh->OnWebkitPreferencesChanged();
 }
 
 void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
@@ -132,7 +133,7 @@ content::WebContents* WebViewContentsHelper::OpenURLFromTab(
 
 void WebViewContentsHelper::NavigationStateChanged(
     const content::WebContents* source,
-    unsigned changed_flags) {
+    content::InvalidateTypes changed_flags) {
   DCHECK_VALID_SOURCE_CONTENTS
 
   if (!delegate_) {
@@ -140,6 +141,17 @@ void WebViewContentsHelper::NavigationStateChanged(
   }
 
   delegate_->NavigationStateChanged(changed_flags);
+}
+
+void WebViewContentsHelper::VisibleSSLStateChanged(
+    const content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (!delegate_) {
+    return;
+  }
+
+  delegate_->SSLStateChanged();
 }
 
 bool WebViewContentsHelper::ShouldCreateWebContents(
@@ -317,7 +329,7 @@ void WebViewContentsHelper::SetDelegate(
 }
 
 BrowserContext* WebViewContentsHelper::GetBrowserContext() const {
-  return context_;
+  return context_.get();
 }
 
 WebPreferences* WebViewContentsHelper::GetWebPreferences() const {
@@ -331,8 +343,9 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
   }
 
   if (web_preferences() && owns_web_preferences_) {
+    WebPreferences* old = web_preferences();
     WebPreferencesObserver::Observe(NULL);
-    delete web_preferences();
+    delete old;
   }
 
   if (preferences) {

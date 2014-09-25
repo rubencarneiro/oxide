@@ -15,8 +15,8 @@ TestWebView {
     function test_WebView_icon_data() {
       return [
         { url: "", icon: "" },
-        { url: "http://localhost:8080/empty.html", icon: "http://localhost:8080/favicon.ico" },
-        { url: "http://localhost:8080/tst_WebView_icon.html", icon: "http://localhost:8080/icon.ico" }
+        { url: "http://testsuite/empty.html", icon: "http://testsuite/favicon.ico" },
+        { url: "http://testsuite/tst_WebView_icon.html", icon: "http://testsuite/icon.ico" }
       ];
     }
 

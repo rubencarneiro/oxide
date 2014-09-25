@@ -5,7 +5,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -106,52 +106,16 @@
+@@ -110,52 +110,16 @@
            ],
          },
        ],  # targets
@@ -58,7 +58,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -159,33 +123,16 @@
+@@ -163,33 +127,16 @@
                '<!@(<(pkg-config) --libs-only-L --libs-only-other xcursor)',
              ],
              'libraries': [
@@ -92,7 +92,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -193,33 +140,16 @@
+@@ -197,33 +144,16 @@
                '<!@(<(pkg-config) --libs-only-L --libs-only-other xdamage)',
              ],
              'libraries': [
@@ -126,7 +126,8 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -1019,16 +949,86 @@
+@@ -1052,10 +982,80 @@
+                   '-Wno-header-guard',
                  ],
                },
              }],
@@ -134,7 +135,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
          }],
        ],
      },
-     {
++    {
 +      'target_name': 'x11',
 +      'type': 'none',
 +      'toolsets': ['host', 'target'],
@@ -156,7 +157,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 +        }, {
 +          'direct_dependent_settings': {
 +            'cflags': [
-+              '<!@(pkg-config --cflags x11)',
++             '<!@(pkg-config --cflags x11)',
 +            ],
 +          },
 +          'link_settings': {
@@ -204,19 +205,12 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 +        ],
 +      },
 +    },
-+    {
-       'target_name': 'udev',
-       'type': 'none',
-       'conditions': [
-         # libudev is not available on *BSD
-         ['_toolset=="target" and os_bsd!=1', {
-           'direct_dependent_settings': {
-             'cflags': [
-               '<!@(<(pkg-config) --cflags libudev)'
+   ],
+ }
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -374,17 +374,17 @@
+@@ -381,17 +381,17 @@
            'sources!': [
              'render_text.cc',
              'render_text.h',
@@ -269,7 +263,7 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -191,24 +191,24 @@
+@@ -195,24 +195,24 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -319,7 +313,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -233,16 +233,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -241,16 +241,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -339,7 +333,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -296,17 +299,17 @@ struct GL_EXPORT DriverEGL {
+@@ -304,17 +307,17 @@ struct GL_EXPORT DriverEGL {
    void ClearBindings();
  
    ProcsEGL fn;
@@ -358,7 +352,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -336,16 +339,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -344,16 +347,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -408,7 +402,7 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
 --- a/ui/gl/gl_surface_glx.cc
 +++ b/ui/gl/gl_surface_glx.cc
-@@ -385,16 +385,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
+@@ -384,16 +384,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
  }
  
  void* GLSurfaceGLX::GetDisplay() {
@@ -426,7 +420,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
  gfx::AcceleratedWidget NativeViewGLSurfaceGLX::GetDrawableHandle() const {
    return window_;
-@@ -572,16 +573,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+@@ -571,16 +572,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();

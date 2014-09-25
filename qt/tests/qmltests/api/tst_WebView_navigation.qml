@@ -25,10 +25,10 @@ TestWebView {
     }
 
     readonly property var initData: [
-      { url: "http://localhost:8080/tst_WebView_navigation1.html", index: 0 },
-      { url: "http://localhost:8080/tst_WebView_navigation2.html", index: 1 },
-      { url: "http://localhost:8080/tst_WebView_navigation3.html", index: 2 },
-      { url: "http://localhost:8080/tst_WebView_navigation1.html", index: 3 }
+      { url: "http://testsuite/tst_WebView_navigation1.html", index: 0 },
+      { url: "http://testsuite/tst_WebView_navigation2.html", index: 1 },
+      { url: "http://testsuite/tst_WebView_navigation3.html", index: 2 },
+      { url: "http://testsuite/tst_WebView_navigation1.html", index: 3 }
     ]
 
     function test_WebView_navigation1_init_data() {
@@ -117,7 +117,7 @@ TestWebView {
       verify(webView.canGoForward, "Should be able to go forward");
 
       spy.clear();
-      var url = "http://localhost:8080/tst_WebView_navigation4.html";
+      var url = "http://testsuite/tst_WebView_navigation4.html";
 
       webView.url = url;
       verify(webView.waitForLoadSucceeded(),
@@ -145,40 +145,6 @@ TestWebView {
 
       // Shouldn't crash
       webView.goForward();
-    }
-
-    function test_WebView_navigation5_stop() {
-      while (webView.canGoBack) {
-        webView.goBack();
-        verify(webView.waitForLoadSucceeded());
-      }
-
-      webView.url = "about:blank";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-      compare(webView.loadsStoppedCount, 0,
-              "There should be no stopped loads yet");
-
-      var doStop = function(ev) {
-        if (ev.type == LoadEvent.TypeStarted) {
-          webView.stop();
-        }
-      };
-      webView.loadingChanged.connect(doStop);
-      webView.clearLoadEventCounters();
-
-      var url = "http://localhost:8080/tst_WebView_navigation1.html";
-
-      webView.url = url;
-      verify(webView.waitForLoadStopped(),
-             "Timed out waiting for load stopped");
-      webView.loadingChanged.disconnect(doStop);
-
-      compare(webView.loadsSucceededCount, 0,
-              "There should be no successful loads");
-      compare(webView.loadsFailedCount, 0,
-              "There should be no failed loads");
-      compare(webView.url, "about:blank", "Incorrect WebView.url");
     }
   }
 }

@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QScopedPointer>
+#include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -28,35 +29,59 @@ class OxideQBeforeURLRequestEvent;
 class OxideQStoragePermissionRequest;
 class OxideQQuickWebContextDelegateWorker;
 
+QT_BEGIN_NAMESPACE
+class QVariant;
+QT_END_NAMESPACE
+
 namespace oxide {
 namespace qquick {
+namespace webcontextdelegateworker {
 
-class WebContextDelegateWorkerHelperThreadController;
-class WebContextDelegateWorkerUIThreadController;
+class HelperThreadController;
 
-class WebContextDelegateWorkerIOThreadController : public QObject {
+class IOThreadController Q_DECL_FINAL : public QObject {
   Q_OBJECT
 
  public:
-  WebContextDelegateWorkerIOThreadController();
-  virtual ~WebContextDelegateWorkerIOThreadController();
+  IOThreadController(
+      const QSharedPointer<HelperThreadController>& helper_thread_controller);
+  virtual ~IOThreadController();
 
  Q_SIGNALS:
   void callEntryPointInWorker(const QString& entry, QObject* data);
+
+ private:
+  QSharedPointer<HelperThreadController> ht_controller_;
 };
 
 }
 }
+}
 
-class OxideQQuickWebContextDelegateWorkerPrivate Q_DECL_FINAL {
+class OxideQQuickWebContextDelegateWorkerPrivate Q_DECL_FINAL :
+    public QObject {
+  Q_OBJECT
+
  public:
   ~OxideQQuickWebContextDelegateWorkerPrivate();
 
   static OxideQQuickWebContextDelegateWorkerPrivate* get(
       OxideQQuickWebContextDelegateWorker* q);
 
-  QScopedPointer<oxide::qquick::WebContextDelegateWorkerIOThreadController>
-      io_thread_controller;
+  QSharedPointer<oxide::qquick::webcontextdelegateworker::IOThreadController>
+      io_thread_controller() const { return io_thread_controller_; }
+
+  void incAttachedCount() { attached_count_++; }
+  bool decAttachedCount() {
+    Q_ASSERT(attached_count_ > 0);
+    return --attached_count_ == 0;
+  }
+
+  bool in_destruction() const { return in_destruction_; }
+
+ Q_SIGNALS:
+  void runScript(const QUrl& source);
+  void sendMessage(const QVariant& message);
 
  private:
   friend class OxideQQuickWebContextDelegateWorker;
@@ -66,10 +91,13 @@ class OxideQQuickWebContextDelegateWorkerPrivate Q_DECL_FINAL {
   bool constructed_;
   QUrl source_;
 
-  oxide::qquick::WebContextDelegateWorkerHelperThreadController*
+  unsigned attached_count_;
+  bool in_destruction_;
+
+  QSharedPointer<oxide::qquick::webcontextdelegateworker::HelperThreadController>
       helper_thread_controller_;
-  QScopedPointer<oxide::qquick::WebContextDelegateWorkerUIThreadController>
-      ui_thread_controller_;
+  QSharedPointer<oxide::qquick::webcontextdelegateworker::IOThreadController>
+      io_thread_controller_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_CONTEXT_DELEGATE_WORKER_P_P_H_

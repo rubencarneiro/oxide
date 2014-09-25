@@ -65,8 +65,6 @@ class IOThread FINAL : public content::BrowserThreadDelegate {
     Globals();
     ~Globals();
 
-    void Init();
-
     // host_resolver_ needs to outlive http_auth_handler_factory_
     scoped_ptr<net::HostResolver> host_resolver_;
     scoped_ptr<net::CertVerifier> cert_verifier_;
@@ -90,6 +88,9 @@ class IOThread FINAL : public content::BrowserThreadDelegate {
   net::URLRequestContextGetter* GetSystemURLRequestContext();
 
  private:
+  void InitSystemRequestContext();
+  void InitSystemRequestContextOnIOThread();
+
   // Called on the IO thread
   void Init() FINAL;
   void InitAsync() FINAL;

@@ -13,3 +13,6 @@ renderer-user-agent-override.patch
 expose-extra-properties-for-should-create-webcontents.patch
 disable-default-network-location-provider.patch
 add-should-download-url-to-resource-dispatcher-host.patch
+load-nss-without-user-db.patch
+accelerated-2d-support.patch
+store-cache-stats-at-startup.patch

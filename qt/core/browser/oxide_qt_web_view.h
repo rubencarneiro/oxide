@@ -23,6 +23,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 
 #include "shared/browser/oxide_javascript_dialog_manager.h"
@@ -36,17 +37,23 @@ class QMouseEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQSecurityStatus;
+
 namespace oxide {
 namespace qt {
 
+class InputMethodListener;
 class WebViewAdapter;
 
 class WebView FINAL : public oxide::WebView,
                       public base::SupportsWeakPtr<WebView> {
  public:
   static WebView* Create(WebViewAdapter* adapter);
+  ~WebView();
 
   WebViewAdapter* adapter() const { return adapter_; }
+
+  OxideQSecurityStatus* qsecurity_status() { return qsecurity_status_.get(); }
 
   void HandleFocusEvent(QFocusEvent* event);
   void HandleInputMethodEvent(QInputMethodEvent* event);
@@ -58,6 +65,7 @@ class WebView FINAL : public oxide::WebView,
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
  private:
+  friend class InputMethodListener;
   friend class WebViewAdapter;
 
   WebView(WebViewAdapter* adapter);
@@ -76,9 +84,10 @@ class WebView FINAL : public oxide::WebView,
   void SelectionChanged() FINAL;
 
   blink::WebScreenInfo GetScreenInfo() const FINAL;
-  gfx::Rect GetContainerBoundsPix() const FINAL;
+  gfx::Rect GetViewBoundsPix() const FINAL;
   bool IsVisible() const FINAL;
   bool HasFocus() const FINAL;
+  bool IsInputPanelVisible() const FINAL;
 
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -99,10 +108,12 @@ class WebView FINAL : public oxide::WebView,
   void OnIconChanged(const GURL& icon) FINAL;
   void OnCommandsUpdated() FINAL;
 
+  void OnLoadingChanged() FINAL;
   void OnLoadProgressChanged(double progress) FINAL;
 
   void OnLoadStarted(const GURL& validated_url,
                      bool is_error_frame) FINAL;
+  void OnLoadCommitted(const GURL& url) FINAL;
   void OnLoadStopped(const GURL& validated_url) FINAL;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,
@@ -123,7 +134,9 @@ class WebView FINAL : public oxide::WebView,
   void OnWebPreferencesDestroyed() FINAL;
 
   void OnRequestGeolocationPermission(
-      scoped_ptr<oxide::GeolocationPermissionRequest> request) FINAL;
+      const GURL& origin,
+      const GURL& embedder,
+      scoped_ptr<oxide::SimplePermissionRequest> request) FINAL;
 
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) FINAL;
@@ -142,7 +155,7 @@ class WebView FINAL : public oxide::WebView,
                               bool user_gesture) FINAL;
 
   oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) FINAL;
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderViewHost* rvh) FINAL;
+  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) FINAL;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) FINAL;
@@ -156,9 +169,23 @@ class WebView FINAL : public oxide::WebView,
   void OnFocusedNodeChanged() FINAL;
   void OnSelectionBoundsChanged() FINAL;
 
+  void OnSecurityStatusChanged(const oxide::SecurityStatus& old) FINAL;
+  bool OnCertificateError(
+      bool is_main_frame,
+      oxide::CertError cert_error,
+      const scoped_refptr<net::X509Certificate>& cert,
+      const GURL& request_url,
+      content::ResourceType resource_type,
+      bool strict_enforcement,
+      scoped_ptr<oxide::SimplePermissionRequest> request) FINAL;
+  void OnContentBlocked() FINAL;
+
   WebViewAdapter* adapter_;
 
   bool has_input_method_state_;
+
+  scoped_ptr<InputMethodListener> input_method_listener_;
+  scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

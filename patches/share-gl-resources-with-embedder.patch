@@ -27,20 +27,19 @@ diff --git a/base/threading/thread.cc b/base/threading/thread.cc
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -29,21 +29,23 @@ GpuChannelManager::GpuMemoryBufferOperat
- }
+@@ -74,20 +74,22 @@ class GpuChannelManagerMessageFilter : p
+ };
  
- GpuChannelManager::GpuMemoryBufferOperation::~GpuMemoryBufferOperation() {
- }
+ }  // namespace
  
  GpuChannelManager::GpuChannelManager(MessageRouter* router,
                                       GpuWatchdog* watchdog,
                                       base::MessageLoopProxy* io_message_loop,
--                                     base::WaitableEvent* shutdown_event)
-+                                     base::WaitableEvent* shutdown_event,
+                                      base::WaitableEvent* shutdown_event,
+-                                     IPC::SyncChannel* channel)
++                                     IPC::SyncChannel* channel,
 +                                     gfx::GLShareGroup* share_group)
-     : weak_factory_(this),
-       io_message_loop_(io_message_loop),
+     : io_message_loop_(io_message_loop),
        shutdown_event_(shutdown_event),
        router_(router),
 +      share_group_(share_group),
@@ -49,10 +48,10 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
            GpuMemoryManager::kDefaultMaxSurfacesWithFrontbufferSoftLimit),
        watchdog_(watchdog),
        sync_point_manager_(new SyncPointManager),
-       gpu_memory_buffer_factory_(GpuMemoryBufferFactory::Create()) {
-   DCHECK(router_);
-   DCHECK(io_message_loop);
-@@ -126,16 +128,18 @@ void GpuChannelManager::OnEstablishChann
+       gpu_memory_buffer_factory_(GpuMemoryBufferFactory::Create()),
+       channel_(channel),
+       filter_(new GpuChannelManagerMessageFilter(
+@@ -173,16 +175,18 @@ void GpuChannelManager::OnEstablishChann
    IPC::ChannelHandle channel_handle;
  
    gfx::GLShareGroup* share_group = NULL;
@@ -74,8 +73,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
-@@ -56,17 +56,18 @@ class SyncPointManager;
- // managing the lifetimes of GPU channels and forwarding IPC requests from the
+@@ -59,17 +59,18 @@ class SyncPointManager;
  // browser process to them based on the corresponding renderer ID.
  class GpuChannelManager : public IPC::Listener,
                            public IPC::Sender {
@@ -83,8 +81,9 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    GpuChannelManager(MessageRouter* router,
                      GpuWatchdog* watchdog,
                      base::MessageLoopProxy* io_message_loop,
--                    base::WaitableEvent* shutdown_event);
-+                    base::WaitableEvent* shutdown_event,
+                     base::WaitableEvent* shutdown_event,
+-                    IPC::SyncChannel* channel);
++                    IPC::SyncChannel* channel,
 +                    gfx::GLShareGroup* share_group);
    virtual ~GpuChannelManager();
  
@@ -94,7 +93,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    // Listener overrides.
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
-@@ -92,16 +93,18 @@ class GpuChannelManager : public IPC::Li
+@@ -93,16 +94,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
      return &gpu_devtools_events_dispatcher_;
    }
@@ -112,7 +111,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    }
  
   private:
-   struct GpuMemoryBufferOperation {
+   typedef base::ScopedPtrHashMap<int, GpuChannel> GpuChannelMap;
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
@@ -150,7 +149,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 -GpuChildThread::GpuChildThread(const std::string& channel_id)
 +GpuChildThread::GpuChildThread(const std::string& channel_id,
 +                               gfx::GLShareGroup* share_group)
-     : ChildThread(channel_id),
+     : ChildThread(Options(channel_id, false)),
        dead_on_arrival_(false),
 -      in_browser_process_(true) {
 +      in_browser_process_(true),
@@ -194,8 +193,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -158,17 +178,18 @@ void GpuChildThread::OnInitialize() {
- 
+@@ -159,17 +179,18 @@ void GpuChildThread::OnInitialize() {
    // Defer creation of the render thread. This is to prevent it from handling
    // IPC messages before the sandbox has been enabled and all other necessary
    // initialization has succeeded.
@@ -203,8 +201,9 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
        new GpuChannelManager(GetRouter(),
                              watchdog_thread_.get(),
                              ChildProcess::current()->io_message_loop_proxy(),
--                            ChildProcess::current()->GetShutDownEvent()));
-+                            ChildProcess::current()->GetShutDownEvent(),
+                             ChildProcess::current()->GetShutDownEvent(),
+-                            channel()));
++                            channel(),
 +                            share_group_.get()));
  
  #if defined(USE_OZONE)
@@ -383,14 +382,14 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -345,9 +345,13 @@ const wchar_t* ContentBrowserClient::Get
- #if defined(VIDEO_HOLE)
- ExternalVideoSurfaceContainer*
- ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
-     WebContents* web_contents) {
-   return NULL;
+@@ -347,9 +347,13 @@ ContentBrowserClient::OverrideCreateExte
+ 
+ bool ContentBrowserClient::CheckMediaAccessPermission(
+     BrowserContext* browser_context,
+     const GURL& security_origin,
+     MediaStreamType type) {
+   return false;
  }
- #endif
  
 +gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
 +  return NULL;
@@ -400,7 +399,7 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -44,16 +44,17 @@ class DictionaryValue;
+@@ -46,16 +46,17 @@ class DictionaryValue;
  class FilePath;
  }
  
@@ -418,15 +417,15 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class HttpNetworkSession;
  class NetLog;
-@@ -650,13 +651,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -640,13 +641,15 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
- #if defined(VIDEO_HOLE)
-   // Allows an embedder to provide its own ExternalVideoSurfaceContainer
-   // implementation.  Return NULL to disable external surface video.
-   virtual ExternalVideoSurfaceContainer*
-   OverrideCreateExternalVideoSurfaceContainer(WebContents* web_contents);
- #endif
+ // Checks if |security_origin| has permission to access the microphone or
+ // camera. Note that this does not query the user. |type| must be
+ // MEDIA_DEVICE_AUDIO_CAPTURE or MEDIA_DEVICE_VIDEO_CAPTURE.
+ virtual bool CheckMediaAccessPermission(BrowserContext* browser_context,
+                                         const GURL& security_origin,
+                                         MediaStreamType type);
 +
 +  virtual gfx::GLShareGroup* GetGLShareGroup();
  };

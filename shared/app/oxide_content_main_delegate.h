@@ -20,6 +20,7 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/files/file_path.h"
 #include "content/public/app/content_main_delegate.h"
 
 namespace oxide {
@@ -33,6 +34,9 @@ class ContentMainDelegate : public content::ContentMainDelegate {
 
   virtual SharedGLContext* GetSharedGLContext() const;
   virtual bool GetNativeDisplay(intptr_t* handle) const;
+#if defined(USE_NSS)
+  virtual base::FilePath GetNSSDbPath() const;
+#endif
 
   // content::ContentMainDelegate implementation
   bool BasicStartupComplete(int* exit_code) FINAL;

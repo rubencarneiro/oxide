@@ -9,7 +9,7 @@ TestWebView {
   height: 200
 
   property int inconsistentState: 0
-  onLoadingChanged: {
+  onLoadingStateChanged: {
     if (!loading && (loadProgress < 100)) {
       inconsistentState++
     }
@@ -29,7 +29,7 @@ TestWebView {
       compare(webView.loadProgress, 0,
               "WebView.loadProgress should initially be 0%");
 
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 

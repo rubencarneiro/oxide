@@ -60,7 +60,7 @@ TestWebView {
     function init() {
       webView.currentPopupMenu = null;
 
-      webView.url = "http://localhost:8080/tst_WebView_popupMenu_single.html";
+      webView.url = "http://testsuite/tst_WebView_popupMenu_single.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

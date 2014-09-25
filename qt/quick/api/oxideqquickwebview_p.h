@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+class OxideQCertificateError;
 class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
@@ -44,6 +45,7 @@ class OxideQQuickWebFrame;
 class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
 class OxideQDownloadRequest;
+class OxideQSecurityStatus;
 
 class OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
@@ -63,6 +65,7 @@ class OxideQQuickWebViewAttached : public QObject {
 class OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
 
+  Q_FLAGS(ContentType)
   Q_ENUMS(LogMessageSeverityLevel);
 
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
@@ -71,7 +74,7 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY navigationHistoryChanged)
   Q_PROPERTY(bool incognito READ incognito WRITE setIncognito NOTIFY incognitoChanged)
-  Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+  Q_PROPERTY(bool loading READ loading NOTIFY loadingStateChanged)
   Q_PROPERTY(bool fullscreen READ fullscreen WRITE setFullscreen NOTIFY fullscreenChanged)
   Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged)
   Q_PROPERTY(OxideQQuickWebFrame* rootFrame READ rootFrame NOTIFY rootFrameChanged)
@@ -97,6 +100,9 @@ class OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQWebPreferences* preferences READ preferences WRITE setPreferences NOTIFY preferencesChanged)
 
   Q_PROPERTY(OxideQQuickNavigationHistory* navigationHistory READ navigationHistory CONSTANT)
+  Q_PROPERTY(OxideQSecurityStatus* securityStatus READ securityStatus CONSTANT)
+
+  Q_PROPERTY(ContentType blockedContent READ blockedContent NOTIFY blockedContentChanged)
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
@@ -114,6 +120,15 @@ class OxideQQuickWebView : public QQuickItem {
     LogSeverityErrorReport,
     LogSeverityFatal
   };
+
+  // This will be expanded to include other types
+  // (eg, storage, geo, media, popups etc etc...)
+  enum ContentTypeFlags {
+    ContentTypeNone = 0,
+    ContentTypeMixedDisplay = 1 << 0,
+    ContentTypeMixedScript = 1 << 1
+  };
+  Q_DECLARE_FLAGS(ContentType, ContentTypeFlags)
 
   void componentComplete();
 
@@ -175,6 +190,9 @@ class OxideQQuickWebView : public QQuickItem {
   void setPreferences(OxideQWebPreferences* prefs);
 
   OxideQQuickNavigationHistory* navigationHistory();
+  OxideQSecurityStatus* securityStatus();
+
+  ContentType blockedContent() const;
 
   OxideQNewViewRequest* request() const;
   void setRequest(OxideQNewViewRequest* request);
@@ -188,13 +206,17 @@ class OxideQQuickWebView : public QQuickItem {
   void reload();
   void loadHtml(const QString& html, const QUrl& baseUrl = QUrl());
 
+  void setCanTemporarilyDisplayInsecureContent(bool allow);
+  void setCanTemporarilyRunInsecureContent(bool allow);
+
  Q_SIGNALS:
   void urlChanged();
   void titleChanged();
   void iconChanged();
   void navigationHistoryChanged();
   void incognitoChanged();
-  void loadingChanged(OxideQLoadEvent* loadEvent);
+  void loadingStateChanged();
+  void loadEvent(OxideQLoadEvent* event);
   void fullscreenChanged();
   void loadProgressChanged();
   void rootFrameChanged();
@@ -216,15 +238,19 @@ class OxideQQuickWebView : public QQuickItem {
   void contentXChanged();
   void contentYChanged();
   void fullscreenRequested(bool fullscreen);
-  void navigationRequested(OxideQNavigationRequest *request);
+  void navigationRequested(OxideQNavigationRequest* request);
   void newViewRequested(OxideQNewViewRequest* request);
-  void geolocationPermissionRequested(
-      OxideQGeolocationPermissionRequest* request);
+  void geolocationPermissionRequested(const QJSValue& request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,
                                 const QString& message,
                                 int lineNumber,
                                 const QString& sourceId);
   void downloadRequested(OxideQDownloadRequest* request);
+  void certificateError(const QJSValue& error);
+  void blockedContentChanged();
+
+  // Deprecated since 1.3
+  void loadingChanged(OxideQLoadEvent* loadEvent);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
