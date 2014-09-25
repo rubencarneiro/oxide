@@ -728,7 +728,7 @@ void WebView::DidStartProvisionalLoadForFrame(
 void WebView::DidCommitProvisionalLoadForFrame(
     content::RenderFrameHost* render_frame_host,
     const GURL& url,
-    content::PageTransition transition_type) {
+    ui::PageTransition transition_type) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (frame) {
     frame->URLChanged();
@@ -1143,7 +1143,7 @@ void WebView::SetURL(const GURL& url) {
   }
 
   content::NavigationController::LoadURLParams params(url);
-  params.transition_type = content::PAGE_TRANSITION_TYPED;
+  params.transition_type = ui::PAGE_TRANSITION_TYPED;
   web_contents_->GetController().LoadURLWithParams(params);
 }
 

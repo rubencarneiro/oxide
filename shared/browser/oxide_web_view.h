@@ -373,7 +373,7 @@ class WebView : public ScriptMessageTarget,
   void DidCommitProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& url,
-      content::PageTransition transition_type) FINAL;
+      ui::PageTransition transition_type) FINAL;
 
   void DidFailProvisionalLoad(
       content::RenderFrameHost* render_frame_host,

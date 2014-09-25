@@ -18,7 +18,7 @@
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_location_provider_p.h"
 
-#include <cfloat>
+#include <limits>
 
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
@@ -26,6 +26,7 @@
 #include <QThread>
 
 #include "base/bind.h"
+#include "base/float_util.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop_proxy.h"
@@ -41,18 +42,33 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
   position.latitude = coord.latitude();
   position.longitude = coord.longitude();
   position.altitude = coord.altitude();
+  if (base::IsNaN(position.altitude)) {
+    // shield ourselves against invalid data
+    position.altitude = 0;
+  }
   if (info.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
     position.accuracy = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
+    if (base::IsNaN(position.accuracy)) {
+      // shield ourselves against invalid data
+      position.accuracy = std::numeric_limits<double>::max();
+    }
   } else {
     // accuracy is mandatory
-    position.accuracy = DBL_MAX;
+    position.accuracy = std::numeric_limits<double>::max();
   }
   if (info.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
-    position.altitude_accuracy =
-        info.attribute(QGeoPositionInfo::VerticalAccuracy);
+    qreal accuracy = info.attribute(QGeoPositionInfo::VerticalAccuracy);
+    if (!base::IsNaN(accuracy)) {
+      // shield ourselves against invalid data
+      position.altitude_accuracy = accuracy;
+    }
   }
   if (info.hasAttribute(QGeoPositionInfo::GroundSpeed)) {
-    position.speed = info.attribute(QGeoPositionInfo::GroundSpeed);
+    qreal speed = info.attribute(QGeoPositionInfo::GroundSpeed);
+    if (!base::IsNaN(speed)) {
+      // shield ourselves against invalid data
+      position.speed = speed;
+    }
   }
   position.timestamp =
       base::Time::FromJsTime(info.timestamp().toMSecsSinceEpoch());
