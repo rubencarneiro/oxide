@@ -33,9 +33,7 @@
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
 
-#include "oxide_content_browser_client.h"
 #include "oxide_default_screen_info.h"
-#include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
 
 namespace oxide {
@@ -167,8 +165,14 @@ class Screen : public gfx::Screen {
 
 } // namespace
 
+BrowserMainParts::Delegate::~Delegate() {}
+
+IOThread::Delegate* BrowserMainParts::Delegate::GetIOThreadDelegate() {
+  return NULL;
+}
+
 void BrowserMainParts::PreEarlyInitialization() {
-  MessagePumpFactory* factory = GetMessagePumpFactory();
+  Delegate::MessagePumpFactory* factory = delegate_->GetMessagePumpFactory();
   CHECK(factory);
   base::MessageLoop::InitMessagePumpForUIFactory(factory);
 
@@ -190,7 +194,7 @@ int BrowserMainParts::PreCreateThreads() {
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                  primary_screen_.get());
 
-  io_thread_.reset(new IOThread());
+  io_thread_.reset(new IOThread(delegate_->GetIOThreadDelegate()));
 
   return 0;
 }
@@ -214,7 +218,10 @@ void BrowserMainParts::PostDestroyThreads() {
   io_thread_.reset();
 }
 
-BrowserMainParts::BrowserMainParts() {}
+BrowserMainParts::BrowserMainParts(Delegate* delegate)
+    : delegate_(delegate) {
+  DCHECK(delegate);
+}
 
 BrowserMainParts::~BrowserMainParts() {}
 

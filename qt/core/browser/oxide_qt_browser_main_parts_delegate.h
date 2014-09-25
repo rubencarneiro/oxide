@@ -15,31 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_browser_main_parts.h"
+#ifndef _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
+#define _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
 
-#include "base/memory/scoped_ptr.h"
+#include "base/compiler_specific.h"
+#include "base/macros.h"
 
-#include "oxide_qt_message_pump.h"
+#include "shared/browser/oxide_browser_main_parts.h"
 
 namespace oxide {
 namespace qt {
 
-namespace {
+class BrowserMainPartsDelegate FINAL
+    : public oxide::BrowserMainParts::Delegate {
+ public:
+  BrowserMainPartsDelegate();
+  ~BrowserMainPartsDelegate();
 
-scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
-  return make_scoped_ptr(new MessagePump()).PassAs<base::MessagePump>();
-}
+ private:
+  // oxide::BrowserMainParts::Delegate implementation
+  MessagePumpFactory* GetMessagePumpFactory() FINAL;
 
-}
-
-oxide::BrowserMainParts::MessagePumpFactory*
-BrowserMainParts::GetMessagePumpFactory() {
-  return CreateMessagePumpForUI;
-}
-
-BrowserMainParts::BrowserMainParts() {}
-
-BrowserMainParts::~BrowserMainParts() {}
+  DISALLOW_COPY_AND_ASSIGN(BrowserMainPartsDelegate);
+};
 
 } // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_

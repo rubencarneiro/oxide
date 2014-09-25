@@ -20,7 +20,7 @@
 #include <QList>
 #include <QTouchDevice>
 
-#include "oxide_qt_browser_main_parts.h"
+#include "oxide_qt_browser_main_parts_delegate.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_web_preferences.h"
 
@@ -38,9 +38,9 @@ bool ContentBrowserClient::IsTouchSupported() {
   return QTouchDevice::devices().size() > 0;
 }
 
-content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
-    const content::MainFunctionParams& parameters) {
-  return new BrowserMainParts();
+oxide::BrowserMainParts::Delegate*
+ContentBrowserClient::CreateBrowserMainPartsDelegate() {
+  return new BrowserMainPartsDelegate();
 }
 
 content::LocationProvider*

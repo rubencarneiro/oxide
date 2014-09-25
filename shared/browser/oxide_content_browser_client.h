@@ -26,6 +26,8 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
+#include "shared/browser/oxide_browser_main_parts.h"
+
 namespace content {
 class RenderViewHost;
 class ResourceDispatcherHostDelegate;
@@ -55,8 +57,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
  private:
   // content::ContentBrowserClient implementation
-  virtual content::BrowserMainParts* CreateBrowserMainParts(
-      const content::MainFunctionParams& parameters) OVERRIDE;
+  content::BrowserMainParts* CreateBrowserMainParts(
+      const content::MainFunctionParams& parameters) FINAL;
 
   void RenderProcessWillLaunch(content::RenderProcessHost* host) FINAL;
 
@@ -144,6 +146,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   // Should be subclassed
   virtual bool IsTouchSupported();
+
+  virtual BrowserMainParts::Delegate* CreateBrowserMainPartsDelegate() = 0;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
 

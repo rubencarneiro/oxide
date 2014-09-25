@@ -64,9 +64,7 @@ namespace oxide {
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
-  CHECK(false) <<
-      "CreateBrowserMainParts needs to be implemented in a subclass";
-  return NULL;
+  return new BrowserMainParts(CreateBrowserMainPartsDelegate());
 }
 
 void ContentBrowserClient::RenderProcessWillLaunch(
