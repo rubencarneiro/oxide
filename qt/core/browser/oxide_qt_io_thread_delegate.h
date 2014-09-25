@@ -15,36 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_browser_main_parts_delegate.h"
+#ifndef _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
+#define _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
 
-#include "base/memory/scoped_ptr.h"
+#include "base/compiler_specific.h"
+#include "base/macros.h"
 
-#include "oxide_qt_io_thread_delegate.h"
-#include "oxide_qt_message_pump.h"
+#include "shared/browser/oxide_io_thread.h"
 
 namespace oxide {
 namespace qt {
 
-namespace {
+class IOThreadDelegate FINAL : public oxide::IOThread::Delegate {
+ public:
+  IOThreadDelegate();
+  ~IOThreadDelegate();
 
-scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
-  return make_scoped_ptr(new MessagePump()).PassAs<base::MessagePump>();
-}
+ private:
+  // oxide::IOThread::Delegate implementation
+  void Init() FINAL;
+  void CleanUp() FINAL;
 
-}
-
-oxide::IOThread::Delegate* BrowserMainPartsDelegate::GetIOThreadDelegate() {
-  return new IOThreadDelegate();
-}
-
-oxide::BrowserMainParts::Delegate::MessagePumpFactory*
-BrowserMainPartsDelegate::GetMessagePumpFactory() {
-  return CreateMessagePumpForUI;
-}
-
-BrowserMainPartsDelegate::BrowserMainPartsDelegate() {}
-
-BrowserMainPartsDelegate::~BrowserMainPartsDelegate() {}
+  DISALLOW_COPY_AND_ASSIGN(IOThreadDelegate);
+};
 
 } // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_

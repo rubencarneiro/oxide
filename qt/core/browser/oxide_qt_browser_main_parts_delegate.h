@@ -34,6 +34,7 @@ class BrowserMainPartsDelegate FINAL
 
  private:
   // oxide::BrowserMainParts::Delegate implementation
+  oxide::IOThread::Delegate* GetIOThreadDelegate() FINAL;
   MessagePumpFactory* GetMessagePumpFactory() FINAL;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserMainPartsDelegate);

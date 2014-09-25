@@ -80,6 +80,8 @@
         'browser/oxide_qt_content_browser_client.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
+        'browser/oxide_qt_io_thread_delegate.cc',
+        'browser/oxide_qt_io_thread_delegate.h',
         'browser/oxide_qt_javascript_dialog.cc',
         'browser/oxide_qt_javascript_dialog.h',
         'browser/oxide_qt_location_provider.cc',
