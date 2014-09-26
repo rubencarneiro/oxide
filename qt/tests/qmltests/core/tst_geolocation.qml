@@ -26,6 +26,7 @@ TestWebView {
     function test_geolocation_get_data() {
       return [
         { testcase: "", result: "OK" },
+        { testcase: "invaliddata", result: "OK" },
         { testcase: "timeout", result: "TIMEOUT" },
         { testcase: "error-permission", result: "PERMISSION DENIED" },
         { testcase: "error-unavailable", result: "POSITION UNAVAILABLE" }

@@ -981,7 +981,13 @@ QUrl OxideQQuickWebView::url() const {
 void OxideQQuickWebView::setUrl(const QUrl& url) {
   Q_D(OxideQQuickWebView);
 
+  QUrl old_url = d->url();
+
   d->setUrl(url);
+
+  if (d->url() != old_url) {
+    emit urlChanged();
+  }
 }
 
 QString OxideQQuickWebView::title() const {

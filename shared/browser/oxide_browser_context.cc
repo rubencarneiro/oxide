@@ -570,23 +570,9 @@ class BrowserContextImpl : public BrowserContext {
   }
 
  private:
-  virtual ~BrowserContextImpl() {
-    if (otr_context_) {
-      delete otr_context_;
-      otr_context_ = NULL;
-    }
-  }
+  virtual ~BrowserContextImpl();
 
-  BrowserContext* GetOffTheRecordContext() FINAL {
-    if (!otr_context_) {
-      otr_context_ =
-          new OTRBrowserContextImpl(
-            this,
-            static_cast<BrowserContextIODataImpl *>(io_data()));
-    }
-
-    return otr_context_;
-  }
+  BrowserContext* GetOffTheRecordContext() FINAL;
 
   BrowserContext* GetOriginalContext() FINAL {
     return this;
@@ -614,6 +600,28 @@ OTRBrowserContextImpl::OTRBrowserContextImpl(
     BrowserContextIODataImpl* original_io_data)
     : BrowserContext(new OTRBrowserContextIODataImpl(original_io_data)),
       original_context_(original) {}
+
+BrowserContextImpl::~BrowserContextImpl() {
+  if (otr_context_) {
+    delete otr_context_;
+    otr_context_ = NULL;
+  }
+
+  if (data_.devtools_http_handler) {
+    data_.devtools_http_handler->Stop();
+    data_.devtools_http_handler = NULL;
+  }
+}
+
+BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
+  if (!otr_context_) {
+    otr_context_ = new OTRBrowserContextImpl(
+        this,
+        static_cast<BrowserContextIODataImpl *>(io_data()));
+  }
+
+  return otr_context_;
+}
 
 BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
     : BrowserContext(new BrowserContextIODataImpl(params)),

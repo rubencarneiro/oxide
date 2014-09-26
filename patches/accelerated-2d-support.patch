@@ -1,0 +1,32 @@
+# HG changeset patch
+# Parent d66c811595af958e020dee79321a05261b4abf35
+
+diff -r d66c811595af gpu/config/gpu_info_collector_linux.cc
+--- a/gpu/config/gpu_info_collector_linux.cc	Sat Sep 20 00:25:11 2014 +1000
++++ b/gpu/config/gpu_info_collector_linux.cc	Sat Sep 20 12:02:17 2014 +1000
+@@ -189,6 +189,8 @@
+ CollectInfoResult CollectBasicGraphicsInfo(GPUInfo* gpu_info) {
+   DCHECK(gpu_info);
+ 
++  CollectGraphicsInfoGL(gpu_info);
++
+   CollectInfoResult result = CollectPCIVideoCardInfo(gpu_info);
+ 
+   std::string driver_version;
+diff -r d66c811595af gpu/config/software_rendering_list_json.cc
+--- a/gpu/config/software_rendering_list_json.cc	Sat Sep 20 00:25:11 2014 +1000
++++ b/gpu/config/software_rendering_list_json.cc	Sat Sep 20 12:02:17 2014 +1000
+@@ -245,6 +245,13 @@
+       "os": {
+         "type": "linux"
+       },
++      "exceptions": [
++        {
++          "gl_ws_vendor": "Android",
++          "gl_vendor": "Qualcomm",
++          "gl_renderer": "Adreno (TM) 320"
++        }
++      ],
+       "features": [
+         "accelerated_2d_canvas"
+       ]

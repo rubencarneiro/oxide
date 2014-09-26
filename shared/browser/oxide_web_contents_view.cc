@@ -116,6 +116,9 @@ content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
     // out of date. This ensures that we sync RWHI::is_hidden with the
     // real visibility of the webview - see https://launchpad.net/bugs/1322622
     view->VisibilityChanged();
+
+    // Also sync focus state
+    view->FocusChanged();
   }
 
   return rwhv;
