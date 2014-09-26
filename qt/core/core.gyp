@@ -60,7 +60,6 @@
         '<(DEPTH)'
       ],
       'sources': [
-        '<(INTERMEDIATE_DIR)/moc_oxide_qt_location_provider.cc',
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_content_main_delegate.cc',
         'app/oxide_qt_content_main_delegate.h',
@@ -76,6 +75,8 @@
         'browser/oxide_default_screen_info.cc',
         'browser/oxide_qt_browser_main_parts_delegate.cc',
         'browser/oxide_qt_browser_main_parts_delegate.h',
+        'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
+        'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
         'browser/oxide_qt_content_browser_client.cc',
         'browser/oxide_qt_content_browser_client.h',
         'browser/oxide_qt_file_picker.cc',
@@ -103,8 +104,8 @@
       ],
       'actions': [
         {
-          'action_name': 'moc_oxide_qt_location_provider.cc',
-          'moc_input': 'browser/oxide_qt_location_provider_p.h',
+          'action_name': 'oxide_qt_location_provider.moc',
+          'moc_input': 'browser/oxide_qt_location_provider.cc',
           'includes': [ 'moc.gypi' ]
         },
         {

@@ -17,20 +17,37 @@
 
 #include "oxide_qt_io_thread_delegate.h"
 
+#include <QPointer>
+#include <QThread>
+
+#include "base/lazy_instance.h"
+#include "base/message_loop/message_loop_proxy.h"
+
+#include "oxide_qt_browser_thread_q_event_dispatcher.h"
+
 namespace oxide {
 namespace qt {
 
+namespace {
+base::LazyInstance<QPointer<QThread> > g_io_thread;
+}
+
 void IOThreadDelegate::Init() {
-
+  QThread* thread = QThread::currentThread();
+  thread->setEventDispatcher(
+      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+  g_io_thread.Get() = thread;
 }
 
-void IOThreadDelegate::CleanUp() {
-
-}
+void IOThreadDelegate::CleanUp() {}
 
 IOThreadDelegate::IOThreadDelegate() {}
 
 IOThreadDelegate::~IOThreadDelegate() {}
+
+QThread* GetIOQThread() {
+  return g_io_thread.Get();
+}
 
 } // namespace qt
 } // namespace oxide

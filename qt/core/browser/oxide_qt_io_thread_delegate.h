@@ -18,10 +18,16 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
 #define _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
 
+#include <QtGlobal>
+
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 
 #include "shared/browser/oxide_io_thread.h"
+
+QT_BEGIN_NAMESPACE
+class QThread;
+QT_END_NAMESPACE;
 
 namespace oxide {
 namespace qt {
@@ -38,6 +44,8 @@ class IOThreadDelegate FINAL : public oxide::IOThread::Delegate {
 
   DISALLOW_COPY_AND_ASSIGN(IOThreadDelegate);
 };
+
+QThread* GetIOQThread();
 
 } // namespace qt
 } // namespace oxide

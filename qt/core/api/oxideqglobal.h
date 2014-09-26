@@ -21,7 +21,13 @@
 #include <QString>
 #include <QtGlobal>
 
+QT_BEGIN_NAMESPACE
+class QThread;
+QT_END_NAMESPACE
+
 Q_DECL_EXPORT QString oxideGetNSSDbPath();
 Q_DECL_EXPORT bool oxideSetNSSDbPath(const QString& path);
+
+QThread* oxideGetIOThread();
 
 #endif // OXIDE_Q_GLOBAL
