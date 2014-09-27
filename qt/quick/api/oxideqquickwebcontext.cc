@@ -116,7 +116,7 @@ void WebContextIODelegate::OnBeforeURLRequest(
     return;
   }
 
-  emit delegate->callEntryPointInWorker("onBeforeURLRequest", event);
+  delegate->CallEntryPointInWorker("onBeforeURLRequest", event);
 }
 
 void WebContextIODelegate::OnBeforeSendHeaders(
@@ -131,7 +131,7 @@ void WebContextIODelegate::OnBeforeSendHeaders(
     return;
   }
 
-  emit delegate->callEntryPointInWorker("onBeforeSendHeaders", event);
+  delegate->CallEntryPointInWorker("onBeforeSendHeaders", event);
 }
 
 void WebContextIODelegate::HandleStoragePermissionRequest(
@@ -146,7 +146,7 @@ void WebContextIODelegate::HandleStoragePermissionRequest(
     return;
   }
 
-  emit delegate->callEntryPointInWorker("onStoragePermissionRequest", req);
+  delegate->CallEntryPointInWorker("onStoragePermissionRequest", req);
 }
 
 bool WebContextIODelegate::GetUserAgentOverride(const QUrl& url,
@@ -169,7 +169,7 @@ bool WebContextIODelegate::GetUserAgentOverride(const QUrl& url,
   p->did_override = &did_override;
   p->user_agent = user_agent;
 
-  emit delegate->callEntryPointInWorker("onGetUserAgentOverride", req);
+  delegate->CallEntryPointInWorker("onGetUserAgentOverride", req);
 
   return did_override;
 }
