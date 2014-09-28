@@ -22,8 +22,11 @@
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
 #include <QGeoPositionInfoSource>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QScopedPointer>
 #include <QThread>
+#include <QWaitCondition>
 
 #include "base/bind.h"
 #include "base/float_util.h"
@@ -78,15 +81,18 @@ static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
   return position;
 }
 
+// LocationSourceProxy lives on the geolocation thread, and acts as a
+// bridge between LocationProvider and the QGeoPositionInfoSource that
+// lives on the IO thread. The reason we use the IO thread is because
+// the geolocation thread doesn't have an IO message loop, so we can't use
+// it for watching file descriptors with QSocketNotifier
 class LocationSourceProxy
     : public QObject,
       public base::RefCountedThreadSafe<LocationSourceProxy> {
   Q_OBJECT
 
  public:
-  LocationSourceProxy(LocationProvider* provider);
-
-  bool HasSource() const;
+  static scoped_refptr<LocationSourceProxy> Create(LocationProvider* provider);
 
   void StartUpdates() const;
   void StopUpdates() const;
@@ -99,7 +105,10 @@ class LocationSourceProxy
  private:
   friend class base::RefCountedThreadSafe<LocationSourceProxy>;
 
+  LocationSourceProxy(LocationProvider* provider);
   virtual ~LocationSourceProxy();
+
+  bool Initialize();
 
   bool IsCurrentlyOnGeolocationThread() const;
 
@@ -117,7 +126,8 @@ class LocationSourceProxy
   // Should be accessed only on the IO thread
   QScopedPointer<QGeoPositionInfoSource, QScopedPointerDeleteLater> source_;
 
-  bool initialized_on_io_thread_;
+  QMutex initialization_lock_;
+  QWaitCondition initialization_waiter_;
 
   DISALLOW_COPY_AND_ASSIGN(LocationSourceProxy);
 };
@@ -154,11 +164,32 @@ void LocationSourceProxy::error(QGeoPositionInfoSource::Error error) {
   SendNotifyPositionUpdated(position);
 }
 
+LocationSourceProxy::LocationSourceProxy(LocationProvider* provider)
+    : geolocation_thread_id_(base::PlatformThread::CurrentId()),
+      geolocation_thread_task_runner_(base::MessageLoopProxy::current()),
+      provider_(provider->AsWeakPtr()) {
+  qRegisterMetaType<QGeoPositionInfo>();
+  qRegisterMetaType<QGeoPositionInfoSource::Error>();
+}
+
 LocationSourceProxy::~LocationSourceProxy() {
   disconnect(source_.data(), SIGNAL(positionUpdated(const QGeoPositionInfo&)),
              this, SLOT(positionUpdated(const QGeoPositionInfo&)));
   disconnect(source_.data(), SIGNAL(error(QGeoPositionInfoSource::Error)),
               this, SLOT(error(QGeoPositionInfoSource::Error)));
+}
+
+bool LocationSourceProxy::Initialize() {
+  QMutexLocker lock(&initialization_lock_);
+
+  content::BrowserThread::PostTask(
+      content::BrowserThread::IO,
+      FROM_HERE,
+      base::Bind(&LocationSourceProxy::InitializeOnIOThread, this));
+
+  initialization_waiter_.wait(&initialization_lock_);
+
+  return source_ != NULL;
 }
 
 bool LocationSourceProxy::IsCurrentlyOnGeolocationThread() const {
@@ -173,9 +204,13 @@ bool LocationSourceProxy::IsCurrentlyOnIOThread() {
 void LocationSourceProxy::InitializeOnIOThread() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-  initialized_on_io_thread_ = true;
-
   source_.reset(QGeoPositionInfoSource::createDefaultSource(NULL));
+
+  {
+    QMutexLocker lock(&initialization_lock_);
+    initialization_waiter_.wakeAll();
+  }
+
   if (source_) {
     connect(source_.data(), SIGNAL(positionUpdated(const QGeoPositionInfo&)),
             this, SLOT(positionUpdated(const QGeoPositionInfo&)));
@@ -195,22 +230,19 @@ void LocationSourceProxy::SendNotifyPositionUpdated(
   provider_->NotifyPositionUpdated(position);
 }
 
-LocationSourceProxy::LocationSourceProxy(LocationProvider* provider)
-    : geolocation_thread_id_(base::PlatformThread::CurrentId()),
-      geolocation_thread_task_runner_(base::MessageLoopProxy::current()),
-      provider_(provider->AsWeakPtr()),
-      initialized_on_io_thread_(false) {
-  qRegisterMetaType<QGeoPositionInfo>();
-  qRegisterMetaType<QGeoPositionInfoSource::Error>();
+// static
+scoped_refptr<LocationSourceProxy> LocationSourceProxy::Create(
+    LocationProvider* provider) {
+  // We have a separate initialize function because we need to have a
+  // reference on this thread before posting the initialize task to the
+  // IO thread, else the IO thread can drop its temporary reference
+  // before we reference it - resulting in us returning an invalid pointer
+  scoped_refptr<LocationSourceProxy> proxy(new LocationSourceProxy(provider));
+  if (!proxy->Initialize()) {
+    return scoped_refptr<LocationSourceProxy>();
+  }
 
-  content::BrowserThread::PostTask(
-      content::BrowserThread::IO,
-      FROM_HERE,
-      base::Bind(&LocationSourceProxy::InitializeOnIOThread, this));
-}
-
-bool LocationSourceProxy::HasSource() const {
-  return true;
+  return proxy;
 }
 
 void LocationSourceProxy::StartUpdates() const {
@@ -221,8 +253,6 @@ void LocationSourceProxy::StartUpdates() const {
         base::Bind(&LocationSourceProxy::StartUpdates, this));
     return;
   }
-
-  DCHECK(initialized_on_io_thread_);
 
   if (source_) {
     source_->startUpdates();
@@ -238,8 +268,6 @@ void LocationSourceProxy::StopUpdates() const {
     return;
   }
 
-  DCHECK(initialized_on_io_thread_);
-
   if (source_) {
     source_->stopUpdates();
   }
@@ -253,8 +281,6 @@ void LocationSourceProxy::RequestUpdate() const {
         base::Bind(&LocationSourceProxy::RequestUpdate, this));
     return;
   }
-
-  DCHECK(initialized_on_io_thread_);
 
   if (source_) {
     source_->requestUpdate();
@@ -270,10 +296,10 @@ bool LocationProvider::StartProvider(bool high_accuracy) {
   }
 
   if (!source_.get()) {
-    source_ = new LocationSourceProxy(this);
+    source_ = LocationSourceProxy::Create(this);
   }
 
-  if (!source_->HasSource()) {
+  if (!source_.get()) {
     return false;
   }
 
@@ -308,7 +334,7 @@ void LocationProvider::GetPosition(content::Geoposition* position) {
 void LocationProvider::RequestRefresh() {
   DCHECK(CalledOnValidThread());
 
-  if (is_permission_granted_) {
+  if (is_permission_granted_ && running_) {
     source_->RequestUpdate();
   }
 }
