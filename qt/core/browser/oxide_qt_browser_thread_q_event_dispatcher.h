@@ -48,7 +48,7 @@ class BrowserThreadQEventDispatcher FINAL : public QAbstractEventDispatcher {
   ~BrowserThreadQEventDispatcher();
 
  private:
-  void AssertCalledOnValidThread() const;
+  bool CalledOnValidThread() const;
 
   struct TimerData;
   struct TimerInstance;

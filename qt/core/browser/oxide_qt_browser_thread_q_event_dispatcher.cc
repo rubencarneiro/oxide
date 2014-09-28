@@ -68,17 +68,25 @@ BrowserThreadQEventDispatcher::TimerData::~TimerData() {}
 BrowserThreadQEventDispatcher::SocketNotifierData::SocketNotifierData() {}
 BrowserThreadQEventDispatcher::SocketNotifierData::~SocketNotifierData() {}
 
-void BrowserThreadQEventDispatcher::AssertCalledOnValidThread() const {
-  CHECK_EQ(thread(), QThread::currentThread()) <<
-      "BrowserThreadQEventDispatcher accessed from the wrong thread!";
-  CHECK(task_runner_->RunsTasksOnCurrentThread())
+bool BrowserThreadQEventDispatcher::CalledOnValidThread() const {
+  if (thread() != QThread::currentThread()) {
+    LOG(ERROR)
+        << "BrowserThreadQEventDispatcher accessed from the wrong thread!";
+    return false;
+  }
+  if (!task_runner_->RunsTasksOnCurrentThread()) {
+    LOG(ERROR)
       << "BrowserThreadQEventDispatcher accessed from a thread other than "
       << "the one it runs tasks on. This check should only fail if the "
       << "event dispatcher is owned by the wrong thread";
+    return false;
+  }
+
+  return true;
 }
 
 void BrowserThreadQEventDispatcher::RunPostedTasks() {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   {
     base::AutoLock lock(lock_);
@@ -90,7 +98,7 @@ void BrowserThreadQEventDispatcher::RunPostedTasks() {
 
 void BrowserThreadQEventDispatcher::OnTimerExpired(
     TimerInstance* timer_instance) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   std::set<int> ids = timer_instance->ids;
 
@@ -121,7 +129,7 @@ void BrowserThreadQEventDispatcher::OnTimerExpired(
 }
 
 void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   DCHECK(timer_infos_.find(timer_id) != timer_infos_.end());
 
@@ -226,7 +234,7 @@ void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
 
 bool BrowserThreadQEventDispatcher::processEvents(
     QEventLoop::ProcessEventsFlags flags) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
   CHECK((flags & QEventLoop::EventLoopExec) == 0) <<
       "Using QEventLoop is not supported on threads created by Chromium!";
   CHECK((flags & QEventLoop::WaitForMoreEvents) == 0)
@@ -246,7 +254,7 @@ bool BrowserThreadQEventDispatcher::hasPendingEvents() {
 
 void BrowserThreadQEventDispatcher::registerSocketNotifier(
     QSocketNotifier *notifier) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   if (thread() != notifier->thread()) {
     qWarning() << "BrowserThreadQEventDispatcher: Notifier object belongs "
@@ -306,7 +314,7 @@ void BrowserThreadQEventDispatcher::registerSocketNotifier(
 
 void BrowserThreadQEventDispatcher::unregisterSocketNotifier(
     QSocketNotifier *notifier) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   if (!notifier) {
     return;
@@ -323,7 +331,7 @@ void BrowserThreadQEventDispatcher::registerTimer(int timer_id,
                                                   int interval,
                                                   Qt::TimerType timer_type,
                                                   QObject *object) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   if (timer_id < 1 || interval < 0 || !object) {
     qWarning() << "BrowserThreadQEventDispatcher: Invalid timer parameters";
@@ -353,7 +361,7 @@ void BrowserThreadQEventDispatcher::registerTimer(int timer_id,
 }
 
 bool BrowserThreadQEventDispatcher::unregisterTimer(int timer_id) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   if (timer_id < 1) {
     return false;
@@ -381,7 +389,7 @@ bool BrowserThreadQEventDispatcher::unregisterTimer(int timer_id) {
 }
 
 bool BrowserThreadQEventDispatcher::unregisterTimers(QObject *object) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   if (!object || timer_infos_.empty()) {
     return false;
@@ -405,7 +413,7 @@ bool BrowserThreadQEventDispatcher::unregisterTimers(QObject *object) {
 QList<QAbstractEventDispatcher::TimerInfo>
 BrowserThreadQEventDispatcher::registeredTimers(
     QObject *object) const {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   if (!object) {
     return QList<TimerInfo>();
@@ -424,7 +432,7 @@ BrowserThreadQEventDispatcher::registeredTimers(
 }
 
 int BrowserThreadQEventDispatcher::remainingTime(int timer_id) {
-  AssertCalledOnValidThread();
+  CHECK(CalledOnValidThread());
 
   if (timer_id < 1) {
     qWarning() << "BrowserThreadQEventDispatcher: Invalid timer id";
