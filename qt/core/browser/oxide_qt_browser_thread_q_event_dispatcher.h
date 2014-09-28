@@ -54,7 +54,7 @@ class BrowserThreadQEventDispatcher FINAL : public QAbstractEventDispatcher {
   struct TimerInstance;
 
   void RunPostedTasks();
-  void OnTimerExpired(const linked_ptr<TimerInstance>& timer_instance);
+  void OnTimerExpired(TimerInstance* timer_instance);
 
   void ScheduleTimer(int timer_id);
 
@@ -99,7 +99,7 @@ class BrowserThreadQEventDispatcher FINAL : public QAbstractEventDispatcher {
     int interval;
     Qt::TimerType type;
     QObject* object;
-    linked_ptr<TimerInstance> instance;
+    TimerInstance* instance;
   };
 
   std::map<int, TimerData> timer_infos_;

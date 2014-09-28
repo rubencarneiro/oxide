@@ -62,7 +62,7 @@ BrowserThreadQEventDispatcher::TimerInstance::TimerInstance() {}
 BrowserThreadQEventDispatcher::TimerInstance::~TimerInstance() {}
 
 BrowserThreadQEventDispatcher::TimerData::TimerData()
-    : interval(0), type(Qt::PreciseTimer), object(NULL) {}
+    : interval(0), type(Qt::PreciseTimer), object(NULL), instance(NULL) {}
 BrowserThreadQEventDispatcher::TimerData::~TimerData() {}
 
 BrowserThreadQEventDispatcher::SocketNotifierData::SocketNotifierData() {}
@@ -89,10 +89,25 @@ void BrowserThreadQEventDispatcher::RunPostedTasks() {
 }
 
 void BrowserThreadQEventDispatcher::OnTimerExpired(
-    const linked_ptr<TimerInstance>& timer_instance) {
+    TimerInstance* timer_instance) {
   AssertCalledOnValidThread();
 
   std::set<int> ids = timer_instance->ids;
+
+  {
+    std::list<linked_ptr<TimerInstance> >::iterator it =
+        std::find(timers_.begin(), timers_.end(), timer_instance);
+    linked_ptr<TimerInstance> inst = *it;
+    timers_.erase(it);
+
+    for (std::set<int>::iterator it = ids.begin(); it != ids.end(); ++it) {
+      int id = *it;
+
+      timer_infos_[id].instance = NULL;
+      ScheduleTimer(id);
+    }
+  }
+
   for (std::set<int>::iterator it = ids.begin(); it != ids.end(); ++it) {
     int id = *it;
     if (timer_infos_.find(id) == timer_infos_.end()) {
@@ -103,23 +118,6 @@ void BrowserThreadQEventDispatcher::OnTimerExpired(
     QTimerEvent ev(id);
     QCoreApplication::sendEvent(timer_infos_[id].object, &ev);
   }
-
-  std::list<linked_ptr<TimerInstance> >::iterator inst =
-      std::find(timers_.begin(), timers_.end(), timer_instance);
-  if (inst != timers_.end()) {
-    timers_.erase(inst);
-  }
-
-  for (std::set<int>::iterator it = ids.begin(); it != ids.end(); ++it) {
-    int id = *it;
-    if (timer_infos_.find(id) == timer_infos_.end()) {
-      continue;
-    }
-
-    timer_infos_[id].instance.reset();
-
-    ScheduleTimer(id);
-  }
 }
 
 void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
@@ -128,7 +126,7 @@ void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
   DCHECK(timer_infos_.find(timer_id) != timer_infos_.end());
 
   TimerData& info = timer_infos_[timer_id];
-  DCHECK(!info.instance.get());
+  DCHECK(!info.instance);
 
   int interval = info.interval;
   Qt::TimerType type = info.type;
@@ -210,7 +208,7 @@ void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
         base::TimeDelta::FromMilliseconds(interval),
         base::Bind(&BrowserThreadQEventDispatcher::OnTimerExpired,
                    base::Unretained(this),
-                   timer_instance));
+                   base::Unretained(timer_instance.get())));
 
     std::list<linked_ptr<TimerInstance> >::iterator it = timers_.begin();
     while (it != timers_.end() &&
@@ -223,7 +221,7 @@ void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
   }
 
   timer_instance->ids.insert(timer_id);
-  info.instance = timer_instance;
+  info.instance = timer_instance.get();
 }
 
 bool BrowserThreadQEventDispatcher::processEvents(
@@ -365,20 +363,19 @@ bool BrowserThreadQEventDispatcher::unregisterTimer(int timer_id) {
     return false;
   }
 
-  linked_ptr<TimerInstance> timer_instance = timer_infos_[timer_id].instance;
-  DCHECK(timer_instance.get());
+  TimerInstance* timer_instance = timer_infos_[timer_id].instance;
+  DCHECK(timer_instance);
 
+  timer_infos_.erase(timer_id);
   timer_instance->ids.erase(timer_id);
 
   if (timer_instance->ids.size() == 0) {
     std::list<linked_ptr<TimerInstance> >::iterator it =
         std::find(timers_.begin(), timers_.end(), timer_instance);
-    DCHECK(it != timers_.end());
-
-    timers_.erase(it);
+    if (it != timers_.end()) {
+      timers_.erase(it);
+    }
   }
-
-  timer_infos_.erase(timer_id);
 
   return true;
 }
@@ -440,8 +437,8 @@ int BrowserThreadQEventDispatcher::remainingTime(int timer_id) {
     return -1;
   }
 
-  linked_ptr<TimerInstance> timer_instance = timer_infos_[timer_id].instance;
-  DCHECK(timer_instance.get());
+  TimerInstance* timer_instance = timer_infos_[timer_id].instance;
+  DCHECK(timer_instance);
 
   base::TimeDelta remaining =
       timer_instance->timer->desired_run_time() - base::TimeTicks::Now();
