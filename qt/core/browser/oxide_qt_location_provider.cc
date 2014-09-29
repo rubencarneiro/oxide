@@ -180,6 +180,8 @@ LocationSourceProxy::~LocationSourceProxy() {
 }
 
 bool LocationSourceProxy::Initialize() {
+  DCHECK(IsCurrentlyOnGeolocationThread());
+
   QMutexLocker lock(&initialization_lock_);
 
   content::BrowserThread::PostTask(
@@ -254,6 +256,8 @@ void LocationSourceProxy::StartUpdates() const {
     return;
   }
 
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
   if (source_) {
     source_->startUpdates();
   }
@@ -268,6 +272,8 @@ void LocationSourceProxy::StopUpdates() const {
     return;
   }
 
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
   if (source_) {
     source_->stopUpdates();
   }
@@ -281,6 +287,8 @@ void LocationSourceProxy::RequestUpdate() const {
         base::Bind(&LocationSourceProxy::RequestUpdate, this));
     return;
   }
+
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
   if (source_) {
     source_->requestUpdate();
