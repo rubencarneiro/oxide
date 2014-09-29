@@ -31,7 +31,7 @@ QT_END_NAMESPACE
 class OxideQQuickCookieManagerPrivate;
 class OxideQQuickWebContext;
 
-class OxideQQuickCookieManager : public QObject {
+class Q_DECL_EXPORT OxideQQuickCookieManager : public QObject {
   Q_OBJECT
 
   Q_ENUMS(RequestStatus)

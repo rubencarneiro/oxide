@@ -62,7 +62,7 @@ class OxideQQuickWebViewAttached : public QObject {
   OxideQQuickWebView* view_;
 };
 
-class OxideQQuickWebView : public QQuickItem {
+class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
 
   Q_FLAGS(ContentType)
