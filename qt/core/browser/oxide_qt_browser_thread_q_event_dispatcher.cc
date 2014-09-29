@@ -153,7 +153,7 @@ void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
       break;
     case Qt::VeryCoarseTimer:
       // VeryCoarseTimer interval is rounded to the nearest second
-      accuracy = base::TimeDelta::FromSeconds(1);
+      accuracy = base::TimeDelta::FromMilliseconds(500);
       interval = 1000 * ((interval + 500)/ 1000);
       break;
     default:
@@ -185,10 +185,6 @@ void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
       if (run_time > expected) {
         difference = run_time - expected;
       } else {
-        if (type == Qt::VeryCoarseTimer) {
-          // For VeryCoarseTimer, only allow +1s
-          continue;
-        }
         difference = expected - run_time;
       }
 
