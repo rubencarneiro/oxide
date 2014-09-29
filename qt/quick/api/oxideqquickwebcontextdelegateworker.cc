@@ -30,72 +30,35 @@
 #include <QThread>
 #include <QVariant>
 
+#include "qt/core/api/oxideqglobal.h"
+
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 
-// WebContextDelegateWorker runs a script on a dedicated worker thread. It
-// can exchange messages with the UI thread, and provide entry points
-// for handling events from Chromium's IO thread. For handling events from
-// Chromium, we post an event to the helper thread and block the IO thread
-// until this is completed. We do this because we require the worker to be
-// on a thread with a Qt event loop, so that signals / slots work
+// WebContextDelegateWorker runs a script on Chromium's IO thread. It can
+// exchange messages with the UI thread, and provides entry points for
+// handling events from Chromium (on its IO thread).
 
 // There are several classes involved to make WebContextDelegateWorker function:
 // - OxideQQuickWebContextDelegateWorkerPrivate:
 //    This is the private impl for OxideQQuickWebContextDelegateWorker and lives
-//    on the UI thread. It has strong references to IOThreadController and
-//    HelperThreadController and delivers signals to HelperThreadController
-//    for starting the worker and sending messages
-//
-// - HelperThreadController:
-//    This object lives on the helper thread, and is responsible for
-//    evaluating the script and receiving events from the other threads via
-//    several slots. It is shared between IOThreadController and
-//    OxideQQuickWebContextDelegateWorkerPrivateother for the purpose of
-//    keeping the script alive as long as either the IO thread or UI thread
-//    entry points remain accessible
+//    on the UI thread. It has a strong reference to IOThreadController and
+//    calls methods on it asynchronously for starting the worker and sending
+//    messages
 //
 // - IOThreadController:
-//    This lives on the UI thread and OxideQQuickWebContextDelegateWorkerPrivate
-//    has an owning reference to it, but is accessed from Chromium's IO thread.
-//    It has a strong reference to HelperThreadController, which it delivers
-//    blocking signals to for processing events from Chromium. Accesses to
-//    this object must always be via a QSharedPointer
+//    This object lives on Chromium's IO thread and is responsible for
+//    evaluating the script, receiving events from Chromium and handling
+//    asynchronous calls from the UI thread. OxideQQuickWebContextDelegateWorkerPrivate
+//    has an owning reference to it. Because the owning reference lives on the
+//    UI thread, accesses to it on the IO thread must be done via QSharedPointer
 
 namespace oxide {
 namespace qquick {
 namespace webcontextdelegateworker {
 
-class HelperThread : public QThread {
- public:
-  HelperThread(QObject* parent)
-      : QThread(parent) {}
-
-  virtual ~HelperThread() {
-    Q_ASSERT(s_instance == this);
-    s_instance = NULL;
-
-    quit();
-    wait();
-  }
-
-  static HelperThread* instance() {
-    if (!s_instance) {
-      s_instance = new HelperThread(QGuiApplication::instance());
-      // XXX(chrisccoulson): Should we set a priority here? Remember, this will
-      //  be blocking the IO thread
-      s_instance->setObjectName("Oxide_WebContextDelegateWorkerHelperThread");
-      s_instance->start();
-    }
-
-    return s_instance;
-  }
-
- private:
-  static HelperThread* s_instance;
-};
-
-HelperThread* HelperThread::s_instance;
+IOThreadController::IOThreadController() {}
+IOThreadController::~IOThreadController() {}
 
 class Api : public QObject {
   Q_OBJECT
@@ -103,7 +66,7 @@ class Api : public QObject {
   Q_PROPERTY(QJSValue onMessage READ onMessage WRITE setOnMessage)
 
  public:
-  Api(HelperThreadController* controller);
+  Api(IOThreadControllerImpl* controller);
   virtual ~Api() {}
 
   QJSValue onMessage() const {
@@ -116,55 +79,39 @@ class Api : public QObject {
   Q_INVOKABLE void sendMessage(const QVariant& message);
 
  private:
-  HelperThreadController* controller_;
+  IOThreadControllerImpl* controller_;
   QJSValue on_message_handler_;
 };
 
-class HelperThreadController : public QObject {
+class IOThreadControllerImpl : public IOThreadController {
   Q_OBJECT
 
  public:
-  HelperThreadController()
+  IOThreadControllerImpl()
       : running_(false),
         api_(this) {}
-  virtual ~HelperThreadController() {
+  virtual ~IOThreadControllerImpl() {
     Q_ASSERT(thread() == QThread::currentThread());
   }
+
+  Q_INVOKABLE void runScript(const QUrl& url);
+  Q_INVOKABLE void receiveMessage(const QVariant& message);
 
  Q_SIGNALS:
   void sendMessage(const QVariant& message);
   void error(const QString& error);
 
- public Q_SLOTS:
-  void runScript(const QUrl& url);
-  void receiveMessage(const QVariant& message);
-
-  void callEntryPointInWorker(const QString& entry, QObject* data);
-
  private:
+  // IOThreadController implementation
+  void CallEntryPointInWorker(const QString& entry, QObject* data) Q_DECL_FINAL;
+
   bool running_;
   Api api_;
   QScopedPointer<QJSEngine> engine_;
   QJSValue exports_;
 };
 
-IOThreadController::IOThreadController(
-    const QSharedPointer<HelperThreadController>& ht_controller)
-    : ht_controller_(ht_controller) {
-  connect(this, SIGNAL(callEntryPointInWorker(const QString&, QObject*)),
-          ht_controller_.data(),
-          SLOT(callEntryPointInWorker(const QString&, QObject*)),
-          Qt::BlockingQueuedConnection);
-}
-
-IOThreadController::~IOThreadController() {
-  Q_ASSERT(thread() == QThread::currentThread());
-  disconnect(this, SIGNAL(callEntryPointInWorker(const QString&, QObject*)),
-             ht_controller_.data(),
-             SLOT(callEntryPointInWorker(const QString&, QObject*)));
-}
-
-Api::Api(HelperThreadController* controller)
+Api::Api(IOThreadControllerImpl* controller)
     : QObject(controller),
       controller_(controller) {}
    
@@ -178,7 +125,27 @@ void Api::sendMessage(const QVariant& message) {
   Q_EMIT controller_->sendMessage(message);
 }
 
-void HelperThreadController::runScript(const QUrl& source) {
+void IOThreadControllerImpl::CallEntryPointInWorker(
+    const QString& entry, QObject* data) {
+  Q_ASSERT(thread() == QThread::currentThread());
+  if (!running_) {
+    return;
+  }
+
+  QJSValue func = exports_.property(entry);
+  if (!func.isCallable()) {
+    return;
+  }
+
+  QJSValueList argv;
+  argv.append(engine_->newQObject(data));
+
+  func.call(argv);
+
+  delete data;
+}
+
+void IOThreadControllerImpl::runScript(const QUrl& source) {
   Q_ASSERT(thread() == QThread::currentThread());
   Q_ASSERT(!running_);
 
@@ -218,7 +185,7 @@ void HelperThreadController::runScript(const QUrl& source) {
   running_ = true;
 }
 
-void HelperThreadController::receiveMessage(
+void IOThreadControllerImpl::receiveMessage(
     const QVariant& message) {
   Q_ASSERT(thread() == QThread::currentThread());
   if (!running_) {
@@ -236,26 +203,6 @@ void HelperThreadController::receiveMessage(
   func.call(argv);
 }
 
-void HelperThreadController::callEntryPointInWorker(
-    const QString& entry, QObject* data) {
-  Q_ASSERT(thread() == QThread::currentThread());
-  if (!running_) {
-    return;
-  }
-
-  QJSValue func = exports_.property(entry);
-  if (!func.isCallable()) {
-    return;
-  }
-
-  QJSValueList argv;
-  argv.append(engine_->newQObject(data));
-
-  func.call(argv);
-
-  delete data;
-}
-
 } // namespace webcontextdelegateworker
 } // namespace qquick
 } // namespace oxide
@@ -266,9 +213,7 @@ OxideQQuickWebContextDelegateWorkerPrivate::OxideQQuickWebContextDelegateWorkerP
     constructed_(false),
     attached_count_(0),
     in_destruction_(false),
-    helper_thread_controller_(new HelperThreadController(), &QObject::deleteLater),
-    io_thread_controller_(new IOThreadController(helper_thread_controller_),
-                          &QObject::deleteLater) {}
+    io_thread_controller_(new IOThreadControllerImpl(), &QObject::deleteLater) {}
 
 OxideQQuickWebContextDelegateWorkerPrivate::~OxideQQuickWebContextDelegateWorkerPrivate() {}
 
@@ -278,21 +223,20 @@ OxideQQuickWebContextDelegateWorkerPrivate::get(OxideQQuickWebContextDelegateWor
   return q->d_func();
 }
 
+QSharedPointer<oxide::qquick::webcontextdelegateworker::IOThreadController>
+OxideQQuickWebContextDelegateWorkerPrivate::io_thread_controller() const {
+  return io_thread_controller_;
+}
+
 OxideQQuickWebContextDelegateWorker::OxideQQuickWebContextDelegateWorker() :
     d_ptr(new OxideQQuickWebContextDelegateWorkerPrivate()) {
   Q_D(OxideQQuickWebContextDelegateWorker);
 
-  d->helper_thread_controller_->moveToThread(HelperThread::instance());
+  d->io_thread_controller_->moveToThread(oxideGetIOThread());
 
-  connect(d, SIGNAL(runScript(const QUrl&)),
-          d->helper_thread_controller_.data(), SLOT(runScript(const QUrl&)));
-  connect(d, SIGNAL(sendMessage(const QVariant&)),
-          d->helper_thread_controller_.data(),
-          SLOT(receiveMessage(const QVariant&)));
-
-  connect(d->helper_thread_controller_.data(), SIGNAL(error(const QString&)),
+  connect(d->io_thread_controller_.data(), SIGNAL(error(const QString&)),
           this, SIGNAL(error(const QString&)));
-  connect(d->helper_thread_controller_.data(),
+  connect(d->io_thread_controller_.data(),
           SIGNAL(sendMessage(const QVariant&)),
           this, SIGNAL(message(const QVariant&)));
 }
@@ -310,17 +254,10 @@ OxideQQuickWebContextDelegateWorker::~OxideQQuickWebContextDelegateWorker() {
 
   Q_ASSERT(d->attached_count_ == 0);
 
-  disconnect(d, SIGNAL(runScript(const QUrl&)),
-             d->helper_thread_controller_.data(),
-             SLOT(runScript(const QUrl&)));
-  disconnect(d, SIGNAL(sendMessage(const QVariant&)),
-             d->helper_thread_controller_.data(),
-             SLOT(receiveMessage(const QVariant&)));
-
-  disconnect(d->helper_thread_controller_.data(),
+  disconnect(d->io_thread_controller_.data(),
              SIGNAL(error(const QString&)),
              this, SIGNAL(error(const QString&)));
-  disconnect(d->helper_thread_controller_.data(),
+  disconnect(d->io_thread_controller_.data(),
              SIGNAL(sendMessage(const QVariant&)),
              this, SIGNAL(message(const QVariant&)));
 }
@@ -338,7 +275,9 @@ void OxideQQuickWebContextDelegateWorker::componentComplete() {
     return;
   }
 
-  Q_EMIT d->runScript(d->source_);
+  QMetaObject::invokeMethod(d->io_thread_controller_.data(),
+                            "runScript",
+                            Q_ARG(QUrl, d->source_));
 }
 
 QUrl OxideQQuickWebContextDelegateWorker::source() const {
@@ -368,7 +307,9 @@ void OxideQQuickWebContextDelegateWorker::sendMessage(const QVariant& message) {
     return;
   }
 
-  Q_EMIT d->sendMessage(message);
+  QMetaObject::invokeMethod(d->io_thread_controller_.data(),
+                            "receiveMessage",
+                            Q_ARG(QVariant, message));
 }
 
 #include "oxideqquickwebcontextdelegateworker.moc"

@@ -18,20 +18,18 @@
 #include "oxide_qt_content_browser_client.h"
 
 #include <QList>
+#include <QThread>
 #include <QTouchDevice>
 
+#include "oxide_qt_browser_main_parts_delegate.h"
+#include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_location_provider.h"
-#include "oxide_qt_message_pump.h"
 #include "oxide_qt_web_preferences.h"
 
 namespace oxide {
 namespace qt {
 
 ContentBrowserClient::ContentBrowserClient() {}
-
-base::MessagePump* ContentBrowserClient::CreateMessagePumpForUI() {
-  return new MessagePump();
-}
 
 oxide::WebPreferences* ContentBrowserClient::CreateWebPreferences() {
   return new WebPreferences();
@@ -42,8 +40,21 @@ bool ContentBrowserClient::IsTouchSupported() {
   return QTouchDevice::devices().size() > 0;
 }
 
+oxide::BrowserMainParts::Delegate*
+ContentBrowserClient::CreateBrowserMainPartsDelegate() {
+  return new BrowserMainPartsDelegate();
+}
+
 content::LocationProvider*
 ContentBrowserClient::OverrideSystemLocationProvider() {
+  // Give the geolocation thread a Qt event dispatcher, so that we can use
+  // Queued signals / slots between it and the IO thread
+  QThread* thread = QThread::currentThread();
+  if (!thread->eventDispatcher()) {
+    thread->setEventDispatcher(
+      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+  }
+
   return new LocationProvider();
 }
 

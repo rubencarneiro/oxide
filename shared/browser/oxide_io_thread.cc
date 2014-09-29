@@ -164,7 +164,13 @@ void IOThread::InitSystemRequestContextOnIOThread() {
   storage->set_job_factory(new net::URLRequestJobFactoryImpl());
 }
 
-void IOThread::Init() {}
+void IOThread::Init() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
+  if (delegate_) {
+    delegate_->Init();
+  }
+}
 
 void IOThread::InitAsync() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
@@ -202,6 +208,10 @@ void IOThread::InitAsync() {
       FROM_HERE,
       base::Bind(&IOThread::InitSystemRequestContext,
                  base::Unretained(this)));
+
+  if (delegate_) {
+    delegate_->InitAsync();
+  }
 }
 
 void IOThread::CleanUp() {
@@ -217,6 +227,10 @@ void IOThread::CleanUp() {
   globals_ = NULL;
 
   system_request_context_getter_ = NULL;
+
+  if (delegate_) {
+    delegate_->CleanUp();
+  }
 }
 
 // static
@@ -225,9 +239,10 @@ IOThread* IOThread::instance() {
   return g_instance;
 }
 
-IOThread::IOThread() :
-    net_log_(new net::NetLog()),
-    globals_(NULL) {
+IOThread::IOThread(Delegate* delegate)
+    : delegate_(delegate),
+      net_log_(new net::NetLog()),
+      globals_(NULL) {
   CHECK(!g_instance) << "Can't create more than one IOThread instance";
   DCHECK(!content::BrowserThread::IsThreadInitialized(content::BrowserThread::IO)) <<
       "IOThread cannot be created after the IO thread has started";
