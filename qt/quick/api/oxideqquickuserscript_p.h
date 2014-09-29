@@ -26,8 +26,8 @@
 
 class OxideQQuickUserScriptPrivate;
 
-class OxideQQuickUserScript : public QObject,
-                              public QQmlParserStatus {
+class Q_DECL_EXPORT OxideQQuickUserScript : public QObject,
+                                            public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY scriptPropertyChanged)
   Q_PROPERTY(bool emulateGreasemonkey READ emulateGreasemonkey WRITE setEmulateGreasemonkey NOTIFY scriptPropertyChanged)

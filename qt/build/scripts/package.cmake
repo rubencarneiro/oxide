@@ -55,6 +55,7 @@ foreach(d ${DIRECTORIES})
 endforeach()
 
 set(CHROMIUM_LIB_DIR "$(dirname $(readlink -f $0))")
+set(LIB_OUTPUT_DIR "$(dirname $(readlink -f $0))")
 set(CHROMIUM_PRODUCT_DIR "$(dirname $(readlink -f $0))")
 set(OXIDE_RENDERER_NAME ${RENDERER_PATH})
 set(QMLPLUGIN_OUTPUT_DIR "$(dirname $(readlink -f $0))")

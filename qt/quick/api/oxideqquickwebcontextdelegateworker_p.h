@@ -31,8 +31,9 @@ QT_END_NAMESPACE
 
 class OxideQQuickWebContextDelegateWorkerPrivate;
 
-class OxideQQuickWebContextDelegateWorker : public QObject,
-                                            public QQmlParserStatus {
+class Q_DECL_EXPORT OxideQQuickWebContextDelegateWorker :
+    public QObject,
+    public QQmlParserStatus {
   Q_OBJECT
 
   Q_PROPERTY(QUrl source READ source WRITE setSource)
