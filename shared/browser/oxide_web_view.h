@@ -19,7 +19,6 @@
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 
 #include <queue>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -107,12 +106,31 @@ class RenderWidgetHostView;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
+class WebView;
 class WebViewContentsHelper;
+
+class WebViewIterator FINAL {
+ public:
+  ~WebViewIterator();
+
+  bool HasMore() const;
+  WebView* GetNext();
+
+ private:
+  friend class WebView;
+
+  WebViewIterator(const std::vector<WebView*>& views);
+
+  typedef std::vector<base::WeakPtr<WebView> > Vector;
+  Vector views_;
+  Vector::iterator current_;
+};
 
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
 // components alive
-class WebView : public ScriptMessageTarget,
+class WebView : public base::SupportsWeakPtr<WebView>,
+                public ScriptMessageTarget,
                 private CompositorClient,
                 private WebPreferencesObserver,
                 private GestureProviderClient,
@@ -138,8 +156,7 @@ class WebView : public ScriptMessageTarget,
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
   static WebView* FromRenderFrameHost(content::RenderFrameHost* rfh);
 
-  static std::set<WebView*> GetAllWebViewsFor(
-      BrowserContext * browser_context);
+  static WebViewIterator GetAllWebViews();
 
   const GURL& GetURL() const;
   void SetURL(const GURL& url);

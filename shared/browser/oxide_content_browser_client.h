@@ -146,6 +146,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   virtual content::LocationProvider* OverrideSystemLocationProvider() OVERRIDE;
 
+  content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() FINAL;
+
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;

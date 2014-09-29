@@ -343,6 +343,10 @@ gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
   return shared_surface_handle_;
 }
 
+void RenderWidgetHostView::ShowDisambiguationPopup(
+    const gfx::Rect& rect_pixels,
+    const SkBitmap& zoomed_bitmap) {}
+
 void RenderWidgetHostView::ProcessAckedTouchEvent(
     const content::TouchEventWithLatencyInfo& touch,
     content::InputEventAckState ack_result) {

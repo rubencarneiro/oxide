@@ -24,7 +24,6 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
 
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
@@ -45,8 +44,7 @@ namespace qt {
 class InputMethodListener;
 class WebViewAdapter;
 
-class WebView FINAL : public oxide::WebView,
-                      public base::SupportsWeakPtr<WebView> {
+class WebView FINAL : public oxide::WebView {
  public:
   static WebView* Create(WebViewAdapter* adapter);
   ~WebView();

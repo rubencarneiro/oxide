@@ -26,9 +26,7 @@
 #include "qt/core/api/oxideqnewviewrequest.h"
 
 namespace oxide {
-namespace qt {
 class WebView;
-}
 }
 
 class OxideQNewViewRequestPrivate Q_DECL_FINAL {
@@ -37,7 +35,7 @@ class OxideQNewViewRequestPrivate Q_DECL_FINAL {
 
   static OxideQNewViewRequestPrivate* get(OxideQNewViewRequest* q);
 
-  base::WeakPtr<oxide::qt::WebView> view;
+  base::WeakPtr<oxide::WebView> view;
 
  private:
   friend class OxideQNewViewRequest;

@@ -78,14 +78,6 @@ void Compositor::UnlockCompositor() {
   }
 }
 
-void Compositor::WillBeginMainFrame(int frame_id) {}
-void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
-void Compositor::DidBeginMainFrame() {}
-void Compositor::Layout() {}
-void Compositor::ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
-                                     float page_scale,
-                                     float top_controls_delta) {}
-
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
   DCHECK(CalledOnValidThread());
 
@@ -119,6 +111,18 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
         output_device.PassAs<cc::SoftwareOutputDevice>(),
         proxy_));
   return output.PassAs<cc::OutputSurface>();
+}
+
+void Compositor::WillBeginMainFrame(int frame_id) {}
+void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
+void Compositor::DidBeginMainFrame() {}
+void Compositor::Layout() {}
+void Compositor::ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
+                                     float page_scale,
+                                     float top_controls_delta) {}
+
+void Compositor::RequestNewOutputSurface(bool fallback) {
+  layer_tree_host_->SetOutputSurface(CreateOutputSurface(fallback));
 }
 
 void Compositor::DidInitializeOutputSurface() {}

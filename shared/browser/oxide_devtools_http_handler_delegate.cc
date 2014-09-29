@@ -17,33 +17,13 @@
 
 #include "oxide_devtools_http_handler_delegate.h"
 
-#include "base/logging.h"
-#include "base/path_service.h"
-#include "base/strings/string_number_conversions.h"
-#include "content/public/browser/web_contents.h"
-#include "content/public/browser/devtools_target.h"
-#include "content/public/browser/devtools_http_handler.h"
-#include "content/public/common/url_constants.h"
-#include "net/socket/tcp_listen_socket.h"
-#include "net/url_request/url_request_context_getter.h"
 #include "ui/base/resource/resource_bundle.h"
-
-#include "oxide_devtools_target.h"
-#include "oxide_io_thread.h"
-#include "oxide_web_view.h"
 
 #include "grit/oxide_resources.h"
 
-using content::DevToolsTarget;
-using content::RenderViewHost;
-using content::WebContents;
-
-
 namespace oxide {
 
-DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate(
-    BrowserContext * attached_browser_context)
-    : browser_context_(attached_browser_context) {}
+DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() {}
 
 DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {}
 
@@ -60,39 +40,6 @@ bool DevtoolsHttpHandlerDelegate::BundlesFrontendResources() {
 base::FilePath DevtoolsHttpHandlerDelegate::GetDebugFrontendDir() {
   // We dont host the devtools resources & ui (see above).
   return base::FilePath();
-}
-
-std::string DevtoolsHttpHandlerDelegate::GetPageThumbnailData(
-    const GURL& url) {
-  return std::string();
-}
-
-scoped_ptr<DevToolsTarget>
-DevtoolsHttpHandlerDelegate::CreateNewTarget(const GURL& url) {
-  // Not supported
-  return scoped_ptr<DevToolsTarget>();
-}
-
-void DevtoolsHttpHandlerDelegate::EnumerateTargets(TargetCallback callback) {
-  TargetList targetList;
-  std::set<WebView*> wvl =
-    WebView::GetAllWebViewsFor(browser_context_);
-  if (!wvl.empty()) {
-    std::set<WebView*>::iterator it = wvl.begin();
-    for (; it != wvl.end(); ++it) {
-      DCHECK(*it) << "Invalid WebView instance (NULL)";
-
-      content::WebContents * web_contents =
-	(*it)->GetWebContents();
-      if (web_contents) {
-	// The receiver of the target list is the owner of the content
-	// See content/public/browser/devtools_http_handler_delegate.h
-	targetList.push_back(
-          DevtoolsTarget::CreateForWebContents(web_contents));
-      }
-    }
-  }
-  callback.Run(targetList);
 }
 
 scoped_ptr<net::StreamListenSocket>
