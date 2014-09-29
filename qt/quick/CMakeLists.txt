@@ -55,7 +55,6 @@ if(OXIDE_ENABLE_COMPOSITING)
 endif()
 target_include_directories(
     ${OXIDE_QUICKLIB} PRIVATE
-    ${CMAKE_SOURCE_DIR}
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})

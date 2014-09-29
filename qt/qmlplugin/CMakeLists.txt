@@ -40,10 +40,7 @@ set(OXIDE_QMLPLUGIN_SRCS oxide_qml_plugin.cc)
 
 add_library(${OXIDE_QMLPLUGIN} MODULE ${OXIDE_QMLPLUGIN_SRCS})
 
-qt5_use_modules(${OXIDE_QMLPLUGIN} Core Qml)
-target_include_directories(
-    ${OXIDE_QMLPLUGIN} PRIVATE
-    ${CMAKE_SOURCE_DIR})
+qt5_use_modules(${OXIDE_QMLPLUGIN} Core Qml Quick)
 target_link_libraries(
     ${OXIDE_QMLPLUGIN}
     ${OXIDE_CORELIB_NAME}
