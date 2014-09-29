@@ -176,7 +176,9 @@ oxide_add_package_files(OUTDIR ${OXIDE_QMLPLUGIN_MODULE_NAME}
                         FILES ${_LOCATION} ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir)
 
 get_target_property(_LOCATION ${OXIDE_QUICKLIB} LOCATION)
-oxide_add_package_files(FILES ${_LOCATION})
+# This is a bit broken - the last call returns the path without the
+# SOVERSION. Bleh
+oxide_add_package_files(FILES ${_LOCATION}.${OXIDE_CORELIB_SO_VERSION})
 
 add_custom_target(
     package
