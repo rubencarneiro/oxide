@@ -60,6 +60,7 @@ endforeach()
 
 # Required for out-of-tree builds
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
+include_directories(${CMAKE_SOURCE_DIR})
 
 if(ENABLE_TESTS)
   enable_testing()
