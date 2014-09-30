@@ -80,9 +80,9 @@ TestWebView {
       frame.addMessageHandler(handler);
 
       webView.context.addUserScript(webView.addedScript);
-      webView.url = "http://localhost:8080/tst_WebView_scriptMainWorld.html";
+      webView.url = "http://testsuite/tst_WebView_scriptMainWorld.html";
 
-     verify(webView.waitForLoadSucceeded(),
+      verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
       verify(received != null, "Did not receive message from the main frame's userscript");
