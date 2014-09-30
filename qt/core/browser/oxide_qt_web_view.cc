@@ -686,7 +686,7 @@ void WebView::OnUrlRedirection(const GURL& url,
                                int http_response_code) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(url.spec())),
-      OxideQLoadEvent::TypeStopped,
+      OxideQLoadEvent::TypeRedirected,
       OxideQLoadEvent::ErrorDomain(),
       QString(),
       int(),
