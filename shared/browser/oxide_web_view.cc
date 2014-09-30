@@ -47,6 +47,7 @@
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/render_widget_host.h"
+#include "content/public/browser/resource_request_details.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/favicon_url.h"
@@ -891,6 +892,13 @@ void WebView::OnDownloadRequested(const GURL& url,
 				  const std::string& cookies,
 				  const std::string& referrer) {}
 
+void WebView::OnUrlRedirection(const GURL& url,
+                               const GURL& original_url,
+                               const std::string& referrer,
+                               const std::string& method,
+                               bool isMainFrame,
+                               int http_response_code) {}
+
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
                                      bool user_gesture) {
@@ -1686,6 +1694,17 @@ void WebView::TextInputStateChanged(ui::TextInputType type,
   show_ime_if_needed_ = show_ime_if_needed;
 
   OnTextInputStateChanged();
+}
+
+void WebView::DidGetRedirectForResourceRequest(
+      content::RenderViewHost* render_view_host,
+      const content::ResourceRedirectDetails& details) {
+  OnUrlRedirection(details.new_url,
+      details.original_url,
+      details.referrer,
+      details.method,
+      details.resource_type == content::RESOURCE_TYPE_MAIN_FRAME,
+      details.http_response_code);
 }
 
 void WebView::FocusedNodeChanged(bool is_editable_node) {

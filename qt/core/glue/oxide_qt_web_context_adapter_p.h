@@ -123,6 +123,9 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
       oxide::StorageType type) FINAL;
   bool GetUserAgentOverride(const GURL& url,
                             std::string* user_agent) FINAL;
+  void OnBeforeRedirect(
+      net::URLRequest* request,
+      const GURL& new_location) FINAL;
 
   WebContextAdapter* adapter_;
 

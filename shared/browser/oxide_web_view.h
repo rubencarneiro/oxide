@@ -461,6 +461,14 @@ class WebView : public ScriptMessageTarget,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
+  virtual void OnUrlRedirection(
+      const GURL& url,
+      const GURL& original_url,
+      const std::string& referrer,
+      const std::string& method,
+      bool isMainFrame,
+      int http_response_code);
+
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
@@ -486,6 +494,10 @@ class WebView : public ScriptMessageTarget,
       bool strict_enforcement,
       scoped_ptr<SimplePermissionRequest> request);
   virtual void OnContentBlocked();
+
+  virtual void DidGetRedirectForResourceRequest(
+      content::RenderViewHost* render_view_host,
+      const content::ResourceRedirectDetails& details) FINAL;
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

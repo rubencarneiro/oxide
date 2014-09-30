@@ -97,6 +97,10 @@ class BrowserContextDelegate :
     return false;
   }
 
+  // Called on the IO thread
+  virtual void OnBeforeRedirect(net::URLRequest* request,
+                                const GURL& new_location) {}
+
  protected:
   friend class BrowserContextDelegateTraits;
   friend class base::DeleteHelper<BrowserContextDelegate>;
