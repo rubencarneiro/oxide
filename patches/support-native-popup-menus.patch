@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -377,20 +377,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -396,20 +396,18 @@ bool RenderFrameHostImpl::OnMessageRecei
                          OnShowDesktopNotification)
      IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_Cancel,
                          OnCancelDesktopNotification)
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
  }
-@@ -1115,17 +1113,16 @@ void RenderFrameHostImpl::OnAccessibilit
+@@ -1147,17 +1145,16 @@ void RenderFrameHostImpl::OnAccessibilit
        }
        if (browser_accessibility_manager_)
          browser_accessibility_manager_->OnLocationChanges(params);
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1138,17 +1135,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1170,17 +1167,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -55,14 +55,14 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  }
 -#endif
  
- void RenderFrameHostImpl::SetPendingShutdown(const base::Closure& on_swap_out) {
-   render_view_host_->SetPendingShutdown(on_swap_out);
- }
- 
- bool RenderFrameHostImpl::CanCommitURL(const GURL& url) {
-   // TODO(creis): We should also check for WebUI pages here.  Also, when the
-   // out-of-process iframes implementation is ready, we should check for
-@@ -1402,29 +1398,28 @@ RenderFrameHostImpl::GetParentNativeView
+ void RenderFrameHostImpl::SetState(RenderFrameHostImplState rfh_state) {
+   // We update the number of RenderFrameHosts in a SiteInstance when the swapped
+   // out status of a RenderFrameHost gets flipped to/from active.
+   if (!IsRFHStateActive(rfh_state_) && IsRFHStateActive(rfh_state))
+     GetSiteInstance()->increment_active_frame_count();
+   else if (IsRFHStateActive(rfh_state_) && !IsRFHStateActive(rfh_state))
+     GetSiteInstance()->decrement_active_frame_count();
+@@ -1458,29 +1454,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -96,7 +96,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
 diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/browser/frame_host/render_frame_host_impl.h
 --- a/content/browser/frame_host/render_frame_host_impl.h
 +++ b/content/browser/frame_host/render_frame_host_impl.h
-@@ -28,19 +28,17 @@
+@@ -29,19 +29,17 @@
  
  class GURL;
  struct AccessibilityHostMsg_EventParams;
@@ -116,7 +116,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
  
  namespace content {
  
-@@ -296,20 +294,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -334,20 +332,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
  #if defined(OS_WIN)
    void SetParentNativeViewAccessible(
        gfx::NativeViewAccessible accessible_parent);
@@ -138,7 +138,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
    // should be the abstraction needed here, but we need RenderViewHost to pass
    // into WebContentsObserver::FrameDetached for now.
    RenderFrameHostImpl(RenderViewHostImpl* render_view_host,
-@@ -377,20 +374,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -415,20 +412,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
    void OnUpdateEncoding(const std::string& encoding);
    void OnBeginNavigation(
        const FrameHostMsg_BeginNavigation_Params& params);
@@ -152,13 +152,13 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
    void OnHidePopup();
 -#endif
  
+   // Updates the state of this RenderFrameHost and clears any waiting state
+   // that is no longer relevant.
+   void SetState(RenderFrameHostImplState rfh_state);
+ 
    // Returns whether the given URL is allowed to commit in the current process.
    // This is a more conservative check than RenderProcessHost::FilterURL, since
    // it will be used to kill processes that commit unauthorized URLs.
-   bool CanCommitURL(const GURL& url);
- 
-   void PlatformNotificationPermissionRequestDone(
-       int request_id, blink::WebNotificationPermission permission);
 diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/content/browser/renderer_host/render_view_host_delegate_view.h
 --- a/content/browser/renderer_host/render_view_host_delegate_view.h
 +++ b/content/browser/renderer_host/render_view_host_delegate_view.h
@@ -280,7 +280,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -897,18 +897,19 @@ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
+@@ -911,18 +911,19 @@ IPC_MESSAGE_ROUTED1(ViewMsg_BeginFrame,
  // Sent by the browser when an IME update that requires acknowledgement has been
  // processed on the browser side.
  IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1337,31 +1334,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1328,31 +1325,29 @@ void RenderFrameImpl::OnDisownOpener() {
    // disowning the opener on subframes, we will need to move WebContentsImpl's
    // opener_ to FrameTreeNode.
    CHECK(!frame_->parent());
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -1682,17 +1677,17 @@ RenderFrameImpl::createWorkerPermissionC
+@@ -1673,17 +1668,17 @@ RenderFrameImpl::createWorkerPermissionC
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerPermissionClientProxy(
        this, frame);
@@ -494,7 +494,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
    // RenderFrame implementation:
-@@ -536,20 +534,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -534,20 +532,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnExtendSelectionAndDelete(int before, int after);
    void OnReload(bool ignore_cache);
    void OnTextSurroundingSelectionRequest(size_t max_length);
@@ -516,7 +516,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    virtual blink::WebNavigationPolicy DecidePolicyForNavigation(
        RenderFrame* render_frame,
        const NavigationPolicyInfo& info);
-@@ -744,20 +741,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -742,20 +739,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    // The current accessibility mode.
    AccessibilityMode accessibility_mode_;
@@ -540,7 +540,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -405,20 +405,18 @@ RenderThreadImpl::RenderThreadImpl(const
+@@ -410,20 +410,18 @@ RenderThreadImpl::RenderThreadImpl(
  
  void RenderThreadImpl::Init() {
    TRACE_EVENT_BEGIN_ETW("RenderThreadImpl::Init", 0, "");

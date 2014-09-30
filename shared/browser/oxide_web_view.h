@@ -228,8 +228,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   void RequestGeolocationPermission(
       const GURL& origin,
-      const base::Callback<void(bool)>& callback,
-      base::Closure* cancel_callback);
+      const base::Callback<void(bool)>& callback);
 
   void AllowCertificateError(content::RenderFrameHost* rfh,
                              int cert_error,

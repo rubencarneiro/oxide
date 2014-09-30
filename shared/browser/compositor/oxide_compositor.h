@@ -79,6 +79,10 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
   void BeginMainFrame(const cc::BeginFrameArgs& args) FINAL;
   void DidBeginMainFrame() FINAL;
   void Layout() FINAL;
+  void ApplyViewportDeltas(const gfx::Vector2d& inner_delta,
+                           const gfx::Vector2d& outer_delta,
+                           float page_scale,
+                           float top_controls_delta) FINAL;
   void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
                            float page_scale,
                            float top_controls_delta) FINAL;
