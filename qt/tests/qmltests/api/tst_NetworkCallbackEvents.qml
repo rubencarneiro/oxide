@@ -106,22 +106,35 @@ TestWebView {
 
     function test_NetworkCallbackEvents2_BeforeRedirect_data() {
       return [
-        { url: "http://testsuite/redirect.py?redirect", "newUrl": "http://testsuite/empty.html", "cancelled": false, "isMainFrame": true },
-        { url: "http://testsuite/redirect.py?cancel", "newUrl": "http://testsuite/empty.html", "cancelled": true, "isMainFrame": true },
-        { url: "http://testsuite/tst_NetworkCallbackEvents_Redirect.html", "newUrl": "http://testsuite/empty.html", "cancelled": false, "isMainFrame": false },
+        { url: "http://testsuite/empty.html",
+          cancelled: false,
+          isMainFrame: true,
+          redirectionChainPreviousUrlEntry: "http://testsuite/redirect.py?redirect",
+          sourceUrl: "http://testsuite/redirect.py?redirect" },
+        { url: "http://testsuite/empty.html",
+          cancelled: true,
+          isMainFrame: true,
+          redirectionChainPreviousUrlEntry: "http://testsuite/redirect.py?cancel",
+          sourceUrl: "http://testsuite/redirect.py?cancel" },
+        { url: "http://testsuite/empty.html",
+          cancelled: false,
+          isMainFrame: false,
+          redirectionChainPreviousUrlEntry: "http://testsuite/redirect.py?redirect",
+          sourceUrl: "http://testsuite/tst_NetworkCallbackEvents_Redirect.html" },
       ];
     }
 
     function test_NetworkCallbackEvents2_BeforeRedirect(data) {
       webView.workerMessageType = "onBeforeRedirect";
 
-      webView.url = data.url;
+      webView.url = data.sourceUrl;
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 
       compare(webView.workerMessages.length, 1, "Unexpected number of worker messages");
       compare(webView.workerMessages[0].method, "GET");
-      compare(webView.workerMessages[0].newUrl, data.newUrl);
+      compare(webView.workerMessages[0].url, data.url);
+      compare(webView.workerMessages[0].redirectionChainPreviousUrlEntry, data.redirectionChainPreviousUrlEntry);
       compare(webView.workerMessages[0].isMainFrame, data.isMainFrame);
       compare(webView.workerMessages[0].requestCancelled, data.cancelled);
     }

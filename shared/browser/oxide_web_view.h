@@ -461,7 +461,7 @@ class WebView : public ScriptMessageTarget,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
-  virtual void OnUrlRedirection(
+  virtual void OnUrlRedirected(
       const GURL& url,
       const GURL& original_url,
       const std::string& referrer,

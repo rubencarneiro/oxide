@@ -30,14 +30,13 @@ exports.onBeforeSendHeaders = function(event) {
 }
 
 exports.onBeforeRedirect = function(event) {
-  if (event.url == "http://localhost:8080/redirect.py?cancel") {
+  if (event.redirectionChainPreviousUrlEntry == "http://testsuite/redirect.py?cancel") {
     event.cancelRequest();
   }
 
   oxide.sendMessage({ event: "onBeforeRedirect",
                       url: event.url, method: event.method,
                       requestCancelled: event.requestCancelled,
-                      newUrl: event.newUrl,
-                      isMainFrame: event.isMainFrame,
-                      httpResponseCode: event.httpResponseCode });
+                      redirectionChainPreviousUrlEntry: event.redirectionChainPreviousUrlEntry,
+                      isMainFrame: event.isMainFrame });
 }

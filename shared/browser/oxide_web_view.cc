@@ -892,12 +892,12 @@ void WebView::OnDownloadRequested(const GURL& url,
 				  const std::string& cookies,
 				  const std::string& referrer) {}
 
-void WebView::OnUrlRedirection(const GURL& url,
-                               const GURL& original_url,
-                               const std::string& referrer,
-                               const std::string& method,
-                               bool isMainFrame,
-                               int http_response_code) {}
+void WebView::OnUrlRedirected(const GURL& url,
+                              const GURL& original_url,
+                              const std::string& referrer,
+                              const std::string& method,
+                              bool isMainFrame,
+                              int http_response_code) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
@@ -1699,7 +1699,7 @@ void WebView::TextInputStateChanged(ui::TextInputType type,
 void WebView::DidGetRedirectForResourceRequest(
       content::RenderViewHost* render_view_host,
       const content::ResourceRedirectDetails& details) {
-  OnUrlRedirection(details.new_url,
+  OnUrlRedirected(details.new_url,
       details.original_url,
       details.referrer,
       details.method,
