@@ -353,7 +353,7 @@ gfx::GLSurfaceHandle CompositorUtils::GetSharedSurfaceHandle() {
     return gfx::GLSurfaceHandle();
   }
 
-  gfx::GLSurfaceHandle handle(gfx::kNullPluginWindow, gfx::TEXTURE_TRANSPORT);
+  gfx::GLSurfaceHandle handle(gfx::kNullPluginWindow, gfx::NULL_TRANSPORT);
   handle.parent_client_id = client_id_;
 
   return handle;

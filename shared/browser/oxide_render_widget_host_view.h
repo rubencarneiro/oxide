@@ -129,16 +129,6 @@ class RenderWidgetHostView FINAL :
       const base::Callback<void(bool)>& callback) FINAL;
   bool CanCopyToVideoFrame() const FINAL;
 
-  void AcceleratedSurfaceInitialized(int host_id, int route_id) FINAL;
-  void AcceleratedSurfaceBuffersSwapped(
-      const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
-      int gpu_host_id) FINAL;
-  void AcceleratedSurfacePostSubBuffer(
-      const GpuHostMsg_AcceleratedSurfacePostSubBuffer_Params& params_in_pixel,
-      int gpu_host_id) FINAL;
-  void AcceleratedSurfaceSuspend() FINAL;
-  void AcceleratedSurfaceRelease() FINAL;
-
   bool HasAcceleratedSurface(const gfx::Size& desired_size) FINAL;
 
   void GetScreenInfo(blink::WebScreenInfo* results) FINAL;

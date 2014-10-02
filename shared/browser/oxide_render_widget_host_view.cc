@@ -295,27 +295,6 @@ bool RenderWidgetHostView::CanCopyToVideoFrame() const {
   return false;
 }
 
-void RenderWidgetHostView::AcceleratedSurfaceInitialized(
-    int host_id, int route_id) {}
-
-void RenderWidgetHostView::AcceleratedSurfaceBuffersSwapped(
-    const GpuHostMsg_AcceleratedSurfaceBuffersSwapped_Params& params_in_pixel,
-    int gpu_host_id) {
-  DLOG(ERROR) << "Old compositor mode is not supported";
-  host_->GetProcess()->ReceivedBadMessage();
-}
-
-void RenderWidgetHostView::AcceleratedSurfacePostSubBuffer(
-      const GpuHostMsg_AcceleratedSurfacePostSubBuffer_Params& params_in_pixel,
-      int gpu_host_id) {
-  DLOG(ERROR) << "Old compositor mode is not supported";
-  host_->GetProcess()->ReceivedBadMessage();
-}
-
-void RenderWidgetHostView::AcceleratedSurfaceSuspend() {}
-
-void RenderWidgetHostView::AcceleratedSurfaceRelease() {}
-
 bool RenderWidgetHostView::HasAcceleratedSurface(
     const gfx::Size& desired_size) {
   return false;
