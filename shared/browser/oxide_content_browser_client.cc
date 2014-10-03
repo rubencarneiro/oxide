@@ -45,6 +45,7 @@
 #include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
@@ -264,6 +265,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   if (view) {
     prefs->supports_multiple_windows = view->CanCreateWindows();
   }
+}
+
+content::DevToolsManagerDelegate*
+ContentBrowserClient::GetDevToolsManagerDelegate() {
+    return new DevToolsManagerDelegate();
 }
 
 gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {

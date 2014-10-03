@@ -146,6 +146,9 @@ class RenderWidgetHostView FINAL :
 
   gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
 
+  void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
+                               const SkBitmap& zoomed_bitmap) FINAL;
+
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) FINAL;
 

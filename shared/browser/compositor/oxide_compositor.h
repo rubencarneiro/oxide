@@ -72,6 +72,8 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
   void LockCompositor();
   void UnlockCompositor();
 
+  scoped_ptr<cc::OutputSurface> CreateOutputSurface(bool fallback);
+
   // cc::LayerTreeHostClient implementation
   void WillBeginMainFrame(int frame_id) FINAL;
   void BeginMainFrame(const cc::BeginFrameArgs& args) FINAL;
@@ -80,7 +82,7 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
   void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
                            float page_scale,
                            float top_controls_delta) FINAL;
-  scoped_ptr<cc::OutputSurface> CreateOutputSurface(bool fallback) FINAL;
+  void RequestNewOutputSurface(bool fallback) FINAL;
   void DidInitializeOutputSurface() FINAL;
   void WillCommit() FINAL;
   void DidCommit() FINAL;

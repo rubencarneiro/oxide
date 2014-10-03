@@ -140,6 +140,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                            const GURL& url,
                            content::WebPreferences* prefs) FINAL;
 
+  content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() FINAL;
+
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
 
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;
