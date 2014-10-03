@@ -190,6 +190,15 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
     if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
       command_line->AppendSwitch(switches::kEnableMediaHubAudio);
     }
+    const char* mediahub_fixed_session_domains = GetEnvironmentOption("MEDIA_HUB_FIXED_SESSION_DOMAINS");
+    if (mediahub_fixed_session_domains != 0) {
+      command_line->AppendSwitchASCII(switches::kMediaHubFixedSessionDomains,
+                                      mediahub_fixed_session_domains);
+
+      if (!IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
+        command_line->AppendSwitch(switches::kEnableMediaHubAudio);
+      }
+    }
   }
 
   return false;
