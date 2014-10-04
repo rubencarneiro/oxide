@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -395,20 +395,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -396,20 +396,18 @@ bool RenderFrameHostImpl::OnMessageRecei
                          OnShowDesktopNotification)
      IPC_MESSAGE_HANDLER(DesktopNotificationHostMsg_Cancel,
                          OnCancelDesktopNotification)
@@ -20,13 +20,13 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
 -#endif
    IPC_END_MESSAGE_MAP()
  
+   // No further actions here, since we may have been deleted.
    return handled;
  }
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
- }
-@@ -1146,17 +1144,16 @@ void RenderFrameHostImpl::OnAccessibilit
+@@ -1150,17 +1148,16 @@ void RenderFrameHostImpl::OnAccessibilit
        }
        if (browser_accessibility_manager_)
          browser_accessibility_manager_->OnLocationChanges(params);
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1169,17 +1166,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1173,17 +1170,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -56,13 +56,13 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
 -#endif
  
  void RenderFrameHostImpl::SetState(RenderFrameHostImplState rfh_state) {
+   // Only main frames should be swapped out and retained inside a proxy host.
+   if (rfh_state == STATE_SWAPPED_OUT)
+     CHECK(!GetParent());
+ 
    // We update the number of RenderFrameHosts in a SiteInstance when the swapped
    // out status of a RenderFrameHost gets flipped to/from active.
-   if (!IsRFHStateActive(rfh_state_) && IsRFHStateActive(rfh_state))
-     GetSiteInstance()->increment_active_frame_count();
-   else if (IsRFHStateActive(rfh_state_) && !IsRFHStateActive(rfh_state))
-     GetSiteInstance()->decrement_active_frame_count();
-@@ -1475,29 +1471,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -1478,29 +1474,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -116,7 +116,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
  
  namespace content {
  
-@@ -342,20 +340,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -335,20 +333,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
  #if defined(OS_WIN)
    void SetParentNativeViewAccessible(
        gfx::NativeViewAccessible accessible_parent);
@@ -138,7 +138,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommitNavigationParams& commit_params);
  
   protected:
-@@ -429,20 +426,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -422,20 +419,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
    void OnUpdateEncoding(const std::string& encoding);
    void OnBeginNavigation(const FrameHostMsg_BeginNavigation_Params& params,
                           const CommonNavigationParams& common_params);
@@ -304,7 +304,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -146,16 +146,18 @@
+@@ -143,16 +143,18 @@
        'renderer/dom_storage/webstoragearea_impl.cc',
        'renderer/dom_storage/webstoragearea_impl.h',
        'renderer/dom_storage/webstoragenamespace_impl.cc',
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1343,31 +1340,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1346,31 +1343,29 @@ void RenderFrameImpl::OnDisownOpener() {
    // disowning the opener on subframes, we will need to move WebContentsImpl's
    // opener_ to FrameTreeNode.
    CHECK(!frame_->parent());
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -1688,17 +1683,17 @@ RenderFrameImpl::createWorkerPermissionC
+@@ -1681,17 +1676,17 @@ RenderFrameImpl::createWorkerPermissionC
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerPermissionClientProxy(
        this, frame);
@@ -494,7 +494,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
  
    // RenderFrame implementation:
-@@ -539,20 +537,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -540,20 +538,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnExtendSelectionAndDelete(int before, int after);
    void OnReload(bool ignore_cache);
    void OnTextSurroundingSelectionRequest(size_t max_length);
@@ -516,7 +516,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    void OnCommitNavigation(const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const CommitNavigationParams& commit_params);
-@@ -752,20 +749,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -745,20 +742,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    // The current accessibility mode.
    AccessibilityMode accessibility_mode_;
