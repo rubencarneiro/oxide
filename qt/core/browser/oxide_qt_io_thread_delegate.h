@@ -15,19 +15,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_GLOBAL
-#define OXIDE_Q_GLOBAL
+#ifndef _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
+#define _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
 
-#include <QString>
 #include <QtGlobal>
+
+#include "base/compiler_specific.h"
+#include "base/macros.h"
+
+#include "shared/browser/oxide_io_thread.h"
 
 QT_BEGIN_NAMESPACE
 class QThread;
-QT_END_NAMESPACE
+QT_END_NAMESPACE;
 
-Q_DECL_EXPORT QString oxideGetNSSDbPath();
-Q_DECL_EXPORT bool oxideSetNSSDbPath(const QString& path);
+namespace oxide {
+namespace qt {
 
-Q_DECL_EXPORT QThread* oxideGetIOThread();
+class IOThreadDelegate FINAL : public oxide::IOThread::Delegate {
+ public:
+  IOThreadDelegate();
+  ~IOThreadDelegate();
 
-#endif // OXIDE_Q_GLOBAL
+ private:
+  // oxide::IOThread::Delegate implementation
+  void Init() FINAL;
+  void CleanUp() FINAL;
+
+  DISALLOW_COPY_AND_ASSIGN(IOThreadDelegate);
+};
+
+QThread* GetIOQThread();
+
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_

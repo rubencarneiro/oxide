@@ -15,44 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_P_H_
-#define _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_P_H_
+#include "oxide_qt_browser_main_parts_delegate.h"
 
-#include <QGeoPositionInfoSource>
-#include <QObject>
-#include <QtGlobal>
+#include "base/memory/scoped_ptr.h"
 
-QT_BEGIN_NAMESPACE
-class QGeoPositionInfo;
-QT_END_NAMESPACE
+#include "oxide_qt_io_thread_delegate.h"
+#include "oxide_qt_message_pump.h"
 
 namespace oxide {
 namespace qt {
 
-class LocationProvider;
+namespace {
 
-class LocationSource Q_DECL_FINAL : public QObject {
-  Q_OBJECT
+scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
+  return make_scoped_ptr(new MessagePump()).PassAs<base::MessagePump>();
+}
 
- public:
-  LocationSource(LocationProvider* provider);
+}
 
- public Q_SLOTS:
-  void initOnWorkerThread();
-  void startUpdates() const;
-  void stopUpdates() const;
-  void requestUpdate() const;
+oxide::IOThread::Delegate* BrowserMainPartsDelegate::GetIOThreadDelegate() {
+  return new IOThreadDelegate();
+}
 
- private Q_SLOTS:
-  void positionUpdated(const QGeoPositionInfo& info);
-  void error(QGeoPositionInfoSource::Error error);
+oxide::BrowserMainParts::Delegate::MessagePumpFactory*
+BrowserMainPartsDelegate::GetMessagePumpFactory() {
+  return CreateMessagePumpForUI;
+}
 
- private:
-  LocationProvider* provider_;
-  QGeoPositionInfoSource* source_;
-};
+BrowserMainPartsDelegate::BrowserMainPartsDelegate() {}
+
+BrowserMainPartsDelegate::~BrowserMainPartsDelegate() {}
 
 } // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_P_H_

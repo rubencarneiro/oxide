@@ -15,19 +15,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_GLOBAL
-#define OXIDE_Q_GLOBAL
+#include "oxide_qt_io_thread_delegate.h"
 
-#include <QString>
-#include <QtGlobal>
+#include <QPointer>
+#include <QThread>
 
-QT_BEGIN_NAMESPACE
-class QThread;
-QT_END_NAMESPACE
+#include "base/lazy_instance.h"
+#include "base/message_loop/message_loop_proxy.h"
 
-Q_DECL_EXPORT QString oxideGetNSSDbPath();
-Q_DECL_EXPORT bool oxideSetNSSDbPath(const QString& path);
+#include "oxide_qt_browser_thread_q_event_dispatcher.h"
 
-Q_DECL_EXPORT QThread* oxideGetIOThread();
+namespace oxide {
+namespace qt {
 
-#endif // OXIDE_Q_GLOBAL
+namespace {
+base::LazyInstance<QPointer<QThread> > g_io_thread;
+}
+
+void IOThreadDelegate::Init() {
+  QThread* thread = QThread::currentThread();
+  thread->setEventDispatcher(
+      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+  g_io_thread.Get() = thread;
+}
+
+void IOThreadDelegate::CleanUp() {}
+
+IOThreadDelegate::IOThreadDelegate() {}
+
+IOThreadDelegate::~IOThreadDelegate() {}
+
+QThread* GetIOQThread() {
+  return g_io_thread.Get();
+}
+
+} // namespace qt
+} // namespace oxide

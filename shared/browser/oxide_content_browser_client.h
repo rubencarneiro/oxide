@@ -26,9 +26,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
-namespace base {
-class MessagePump;
-}
+#include "shared/browser/oxide_browser_main_parts.h"
 
 namespace content {
 class RenderViewHost;
@@ -50,8 +48,6 @@ class WebPreferences;
 class ContentBrowserClient : public content::ContentBrowserClient {
  public:
   virtual ~ContentBrowserClient();
-
-  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
 
   virtual WebPreferences* CreateWebPreferences() = 0;
 
@@ -144,8 +140,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                            const GURL& url,
                            content::WebPreferences* prefs) FINAL;
 
-  virtual content::LocationProvider* OverrideSystemLocationProvider() OVERRIDE;
-
   content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() FINAL;
 
   gfx::GLShareGroup* GetGLShareGroup() FINAL;
@@ -154,6 +148,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   // Should be subclassed
   virtual bool IsTouchSupported();
+
+  virtual BrowserMainParts::Delegate* CreateBrowserMainPartsDelegate() = 0;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
 

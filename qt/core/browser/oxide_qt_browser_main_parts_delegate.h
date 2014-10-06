@@ -15,19 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_GLOBAL
-#define OXIDE_Q_GLOBAL
+#ifndef _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
+#define _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
 
-#include <QString>
-#include <QtGlobal>
+#include "base/compiler_specific.h"
+#include "base/macros.h"
 
-QT_BEGIN_NAMESPACE
-class QThread;
-QT_END_NAMESPACE
+#include "shared/browser/oxide_browser_main_parts.h"
 
-Q_DECL_EXPORT QString oxideGetNSSDbPath();
-Q_DECL_EXPORT bool oxideSetNSSDbPath(const QString& path);
+namespace oxide {
+namespace qt {
 
-Q_DECL_EXPORT QThread* oxideGetIOThread();
+class BrowserMainPartsDelegate FINAL
+    : public oxide::BrowserMainParts::Delegate {
+ public:
+  BrowserMainPartsDelegate();
+  ~BrowserMainPartsDelegate();
 
-#endif // OXIDE_Q_GLOBAL
+ private:
+  // oxide::BrowserMainParts::Delegate implementation
+  oxide::IOThread::Delegate* GetIOThreadDelegate() FINAL;
+  MessagePumpFactory* GetMessagePumpFactory() FINAL;
+
+  DISALLOW_COPY_AND_ASSIGN(BrowserMainPartsDelegate);
+};
+
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
