@@ -151,7 +151,6 @@ void UserScriptMaster::ParseMetadata(UserScript* script) {
   static const base::StringPiece kMatchDeclaration("// @match");
   static const base::StringPiece kExcludeMatchDeclaration("// @exclude_match");
   static const base::StringPiece kRunAtDeclaration("// @run-at");
-  static const base::StringPiece kInMainWorldDeclaration("// @inject_in_main_world");
   static const base::StringPiece kRunAtDocumentStartValue("document-start");
   static const base::StringPiece kRunAtDocumentEndValue("document-end");
   static const base::StringPiece kRunAtDocumentIdleValue("document-idle");
@@ -197,8 +196,6 @@ void UserScriptMaster::ParseMetadata(UserScript* script) {
         } else if (value == kRunAtDocumentIdleValue) {
           script->set_run_location(UserScript::DOCUMENT_IDLE);
         }
-      } else if(line.starts_with(kInMainWorldDeclaration)) {
-	script->set_should_be_injected_in_main_world(true);
       }
     }
 

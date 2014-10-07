@@ -195,7 +195,7 @@ ScriptMessageDispatcherRenderer* ScriptMessageDispatcherRenderer::FromWebFrame(
 void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
-  if (world_id == kMainWorldId && render_frame()->GetWebFrame()->parent()) {
+  if (world_id == kMainWorldId) {
     return;
   }
 

@@ -58,7 +58,7 @@ class UserScriptSlave FINAL : public content::RenderProcessObserver {
                                 blink::WebLocalFrame* frame);
   void OnUpdateUserScripts(base::SharedMemoryHandle handle);
 
-  void InjectGreaseMonkeyScript(
+  void InjectGreaseMonkeyScriptInMainWorld(
       blink::WebLocalFrame* frame,
       const blink::WebScriptSource& script_source);
 

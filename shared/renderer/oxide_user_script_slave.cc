@@ -109,7 +109,7 @@ void UserScriptSlave::OnRenderProcessShutdown() {
   content::RenderThread::Get()->RemoveObserver(this);
 }
 
-void UserScriptSlave::InjectGreaseMonkeyScript(
+void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
       blink::WebLocalFrame* frame,
       const blink::WebScriptSource& script_source) {
 
@@ -149,7 +149,8 @@ void UserScriptSlave::InjectGreaseMonkeyScript(
   v8::TryCatch try_catch;
   v8::Local<v8::Function> function(script->Run().As<v8::Function>());
   if (try_catch.HasCaught()) {
-    LOG(ERROR) << "Caught exception when running script";
+    LOG(ERROR) << "Caught exception when running script: "
+               << *v8::String::Utf8Value(try_catch.Message()->Get());
     return;
   }
 
@@ -166,7 +167,8 @@ void UserScriptSlave::InjectGreaseMonkeyScript(
         argv);
   }
   if (try_catch.HasCaught()) {
-    LOG(ERROR) << "Caught exception when running script function";
+    LOG(ERROR) << "Caught exception when calling script: "
+               << *v8::String::Utf8Value(try_catch.Message()->Get());
     return;
   }
 }
@@ -218,13 +220,13 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
 
     blink::WebScriptSource source(blink::WebString::fromUTF8(content));
 
-    if (script->emulate_greasemonkey() &&
-        script->should_be_injected_in_main_world()) {
-      if (frame->parent()) {
-	continue;
+    if (script->context() == GURL(kMainWorldContextUrl)) {
+      if (script->emulate_greasemonkey()) {
+        InjectGreaseMonkeyScriptInMainWorld(frame, source);
       }
-
-      InjectGreaseMonkeyScript(frame, source);
+      else {
+        frame->executeScript(source);
+      }
       continue;
     }
 

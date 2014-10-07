@@ -28,8 +28,6 @@ namespace oxide {
 
 namespace {
 
-const GURL g_oxide_main_world_private_url("oxide-private://main-world-private");
-
 int g_next_isolated_world_id = 1;
 
 typedef std::map<GURL, int> WorldIDMap;
@@ -43,7 +41,7 @@ base::LazyInstance<WorldIDMap> g_isolated_world_map =
 int IsolatedWorldMap::IDFromURL(const GURL& url) {
   CHECK(url.is_valid());
 
-  if (url == g_oxide_main_world_private_url)
+  if (url == GURL(kMainWorldContextUrl))
     return kMainWorldId;
 
   WorldIDMapIterator it = g_isolated_world_map.Get().find(url);
@@ -60,8 +58,7 @@ int IsolatedWorldMap::IDFromURL(const GURL& url) {
 // static
 GURL IsolatedWorldMap::URLFromID(int id) {
   if (id == kMainWorldId)
-    // TODO put as a constant
-    return g_oxide_main_world_private_url;
+    return GURL(kMainWorldContextUrl);
 
   for (WorldIDMapIterator it = g_isolated_world_map.Get().begin();
        it != g_isolated_world_map.Get().end(); ++it) {

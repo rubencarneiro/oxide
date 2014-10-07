@@ -30,4 +30,5 @@ const char kIncognito[] = "incognito";
 
 namespace oxide {
 const int kMainWorldId = 0;
+const char kMainWorldContextUrl[] = "oxide://main-world";
 } // namespace oxide

@@ -45,7 +45,7 @@ TestWebView {
 
     function test_WebView_canInjectInMainWorldWithOxideApi() {
       webView.addedScript = userScript.createObject(null, {
-        context: "oxide-private://main-world-private",
+        context: "oxide://main-world",
         emulateGreasemonkey: true,
         url: "tst_WebView_scriptMainWorld_user_script.js"});
       webView.context.addUserScript(webView.addedScript);
@@ -61,9 +61,27 @@ TestWebView {
               "Unexpected result message");
     }
 
+    function test_WebView_verifyRegularGreasemonkeyScriptDoesNotHaveAccessToOxideApi() {
+      webView.addedScript = userScript.createObject(null, {
+        context: "oxide://myworld",
+        emulateGreasemonkey: true,
+        url: "tst_WebView_scriptMainWorld_user_script.js"});
+      webView.context.addUserScript(webView.addedScript);
+
+      webView.url = "http://testsuite/tst_WebView_scriptMainWorld.html";
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
+
+      var testApi = webView.getTestApi();
+      var res = webView.waitFor(function () { return resultUpdated(testApi); })
+
+      compare(res, "Main world content script DID NOT found oxide.sendMessage",
+              "Unexpected result message");
+    }
+
     function test_WebView_receiveMessageFromMainWorldUserscript() {
       webView.addedScript = userScript.createObject(null, {
-        context: "oxide-private://main-world-private",
+        context: "oxide://main-world",
         emulateGreasemonkey: true,
         url: "tst_WebView_scriptMainWorld_user_script.js"});
 
