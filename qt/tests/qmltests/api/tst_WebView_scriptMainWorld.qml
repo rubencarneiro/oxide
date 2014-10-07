@@ -61,10 +61,9 @@ TestWebView {
               "Unexpected result message");
     }
 
-    function test_WebView_verifyRegularGreasemonkeyScriptDoesNotHaveAccessToOxideApi() {
+    function test_WebView_verifyRegularMainWorldScriptDoesNotHaveAccessToOxideApi() {
       webView.addedScript = userScript.createObject(null, {
-        context: "oxide://myworld",
-        emulateGreasemonkey: true,
+        context: "oxide://main-world",
         url: "tst_WebView_scriptMainWorld_user_script.js"});
       webView.context.addUserScript(webView.addedScript);
 
@@ -89,7 +88,7 @@ TestWebView {
       var frame = webView.rootFrame;
       var handler = scriptMessageHandler.createObject(null, {
         msgId: "from-user-script",
-        contexts: ["oxide-private://main-world-private"],
+        contexts: ["oxide://main-world"],
         callback: function(msg, frame) {
           received = msg.args;
         }

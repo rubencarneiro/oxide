@@ -120,6 +120,12 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
   linked_ptr<ScriptMessageManager> message_manager =
       dispatcher_renderer->ScriptMessageManagerForWorldId(kMainWorldId);
   DCHECK(message_manager != NULL);
+  if (!message_manager.get()) {
+    LOG(ERROR) << "Could not get a proper message manager for frame: "
+               << frame
+	       << " while trying to inject script in main world";
+    return;
+  }
 
   v8::Isolate* isolate = message_manager->isolate();
   v8::HandleScope handle_scope(isolate);
@@ -223,8 +229,7 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
     if (script->context() == GURL(kMainWorldContextUrl)) {
       if (script->emulate_greasemonkey()) {
         InjectGreaseMonkeyScriptInMainWorld(frame, source);
-      }
-      else {
+      } else {
         frame->executeScript(source);
       }
       continue;
