@@ -31,7 +31,7 @@ class OxideQQuickScriptMessageRequest;
 class OxideQQuickWebFramePrivate;
 class OxideQQuickWebViewPrivate;
 
-class OxideQQuickWebFrame : public QObject {
+class Q_DECL_EXPORT OxideQQuickWebFrame : public QObject {
   Q_OBJECT
   Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
   Q_PROPERTY(OxideQQuickWebFrame* parentFrame READ parentFrame)

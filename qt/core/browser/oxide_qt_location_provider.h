@@ -18,31 +18,30 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 #define _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 
-#include <QtGlobal>
-
 #include "base/compiler_specific.h"
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
+#include "base/memory/weak_ptr.h"
+#include "base/threading/non_thread_safe.h"
 #include "content/browser/geolocation/location_provider_base.h"
 #include "content/public/common/geoposition.h"
-
-QT_BEGIN_NAMESPACE
-class QThread;
-QT_END_NAMESPACE
-
-namespace base {
-class MessageLoopProxy;
-}
 
 namespace oxide {
 namespace qt {
 
-class LocationSource;
+class LocationSourceProxy;
 
-class LocationProvider FINAL : public content::LocationProviderBase {
+class LocationProvider FINAL : public content::LocationProviderBase,
+                               public base::NonThreadSafe,
+                               public base::SupportsWeakPtr<LocationProvider> {
  public:
   LocationProvider();
   ~LocationProvider();
 
+ private:
+  friend class LocationSourceProxy;
+
+  // content::LocationProvider implementation
   bool StartProvider(bool high_accuracy) FINAL;
   void StopProvider() FINAL;
 
@@ -52,22 +51,12 @@ class LocationProvider FINAL : public content::LocationProviderBase {
 
   void OnPermissionGranted() FINAL;
 
- protected:
-  friend class LocationSource;
+  void NotifyPositionUpdated(const content::Geoposition& position);
 
-  void cachePosition(const content::Geoposition& position);
-  void notifyCallbackOnGeolocationThread(const content::Geoposition& position);
-  void doNotifyCallback(const content::Geoposition& position);
-
- private:
   bool running_;
-  scoped_refptr<base::MessageLoopProxy> proxy_;
   bool is_permission_granted_;
-  LocationSource* source_;
-  QThread* worker_thread_;
+  scoped_refptr<LocationSourceProxy> source_;
   content::Geoposition position_;
-
-  void invokeOnWorkerThread(const char* method) const;
 
   DISALLOW_COPY_AND_ASSIGN(LocationProvider);
 };

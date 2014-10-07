@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_GLOBAL_P_H_
-#define _OXIDE_QT_QUICK_API_GLOBAL_P_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
+#define _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QtGlobal>
+#include "base/compiler_specific.h"
+#include "base/macros.h"
 
-class OxideQQuickGlobalPrivate;
-class OxideQQuickWebContext;
+#include "shared/browser/oxide_browser_main_parts.h"
 
-class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
-  Q_OBJECT
+namespace oxide {
+namespace qt {
 
-  Q_DECLARE_PRIVATE(OxideQQuickGlobal)
-  Q_DISABLE_COPY(OxideQQuickGlobal)
-
+class BrowserMainPartsDelegate FINAL
+    : public oxide::BrowserMainParts::Delegate {
  public:
-  static OxideQQuickGlobal* instance();
-  virtual ~OxideQQuickGlobal();
-
-  Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
+  BrowserMainPartsDelegate();
+  ~BrowserMainPartsDelegate();
 
  private:
-  OxideQQuickGlobal();
+  // oxide::BrowserMainParts::Delegate implementation
+  oxide::IOThread::Delegate* GetIOThreadDelegate() FINAL;
+  MessagePumpFactory* GetMessagePumpFactory() FINAL;
 
-  QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
+  DISALLOW_COPY_AND_ASSIGN(BrowserMainPartsDelegate);
 };
 
-#endif // _OXIDE_QT_QUICK_API_GLOBAL_P_H_
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_

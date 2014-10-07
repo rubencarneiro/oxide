@@ -23,9 +23,6 @@ set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
 qt5_use_modules(${QML_PLUGIN} Core Qml)
-target_include_directories(
-    ${QML_PLUGIN} PRIVATE
-    ${CMAKE_SOURCE_DIR})
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
@@ -47,7 +44,6 @@ qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest Test)
 target_link_libraries(${QML_TEST} OxideQtCore)
 target_include_directories(
     ${QML_TEST} PRIVATE
-    ${CMAKE_SOURCE_DIR}
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS}

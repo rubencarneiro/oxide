@@ -26,7 +26,7 @@
 
 class OxideQQuickScriptMessageRequestPrivate;
 
-class OxideQQuickScriptMessageRequest : public QObject {
+class Q_DECL_EXPORT OxideQQuickScriptMessageRequest : public QObject {
   Q_OBJECT
   Q_PROPERTY(QJSValue onreply READ replyCallback WRITE setReplyCallback NOTIFY replyCallbackChanged)
   Q_PROPERTY(QJSValue onerror READ errorCallback WRITE setErrorCallback NOTIFY errorCallbackChanged)

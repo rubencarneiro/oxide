@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_GLOBAL_P_H_
-#define _OXIDE_QT_QUICK_API_GLOBAL_P_H_
+#include "oxide_qt_io_thread_delegate.h"
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QtGlobal>
+#include <QPointer>
+#include <QThread>
 
-class OxideQQuickGlobalPrivate;
-class OxideQQuickWebContext;
+#include "base/lazy_instance.h"
+#include "base/message_loop/message_loop_proxy.h"
 
-class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
-  Q_OBJECT
+#include "oxide_qt_browser_thread_q_event_dispatcher.h"
 
-  Q_DECLARE_PRIVATE(OxideQQuickGlobal)
-  Q_DISABLE_COPY(OxideQQuickGlobal)
+namespace oxide {
+namespace qt {
 
- public:
-  static OxideQQuickGlobal* instance();
-  virtual ~OxideQQuickGlobal();
+namespace {
+base::LazyInstance<QPointer<QThread> > g_io_thread;
+}
 
-  Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
+void IOThreadDelegate::Init() {
+  QThread* thread = QThread::currentThread();
+  thread->setEventDispatcher(
+      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+  g_io_thread.Get() = thread;
+}
 
- private:
-  OxideQQuickGlobal();
+void IOThreadDelegate::CleanUp() {}
 
-  QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
-};
+IOThreadDelegate::IOThreadDelegate() {}
 
-#endif // _OXIDE_QT_QUICK_API_GLOBAL_P_H_
+IOThreadDelegate::~IOThreadDelegate() {}
+
+QThread* GetIOQThread() {
+  return g_io_thread.Get();
+}
+
+} // namespace qt
+} // namespace oxide

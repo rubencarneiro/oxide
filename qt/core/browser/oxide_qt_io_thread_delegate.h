@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_GLOBAL_P_H_
-#define _OXIDE_QT_QUICK_API_GLOBAL_P_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
+#define _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
 
-#include <QObject>
-#include <QScopedPointer>
 #include <QtGlobal>
 
-class OxideQQuickGlobalPrivate;
-class OxideQQuickWebContext;
+#include "base/compiler_specific.h"
+#include "base/macros.h"
 
-class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
-  Q_OBJECT
+#include "shared/browser/oxide_io_thread.h"
 
-  Q_DECLARE_PRIVATE(OxideQQuickGlobal)
-  Q_DISABLE_COPY(OxideQQuickGlobal)
+QT_BEGIN_NAMESPACE
+class QThread;
+QT_END_NAMESPACE;
 
+namespace oxide {
+namespace qt {
+
+class IOThreadDelegate FINAL : public oxide::IOThread::Delegate {
  public:
-  static OxideQQuickGlobal* instance();
-  virtual ~OxideQQuickGlobal();
-
-  Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
+  IOThreadDelegate();
+  ~IOThreadDelegate();
 
  private:
-  OxideQQuickGlobal();
+  // oxide::IOThread::Delegate implementation
+  void Init() FINAL;
+  void CleanUp() FINAL;
 
-  QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
+  DISALLOW_COPY_AND_ASSIGN(IOThreadDelegate);
 };
 
-#endif // _OXIDE_QT_QUICK_API_GLOBAL_P_H_
+QThread* GetIOQThread();
+
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_

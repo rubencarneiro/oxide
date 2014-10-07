@@ -31,7 +31,7 @@ class WebViewAdapter;
 class OxideQQuickNavigationHistoryPrivate;
 class OxideQQuickWebView;
 
-class OxideQQuickNavigationHistory : public QAbstractListModel {
+class Q_DECL_EXPORT OxideQQuickNavigationHistory : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
 

@@ -45,7 +45,7 @@ TestWebView {
       function _verify_1() {
         // This verifies that either there is no document or it is an error page
         try {
-          comare(webView.getTestApi().documentURI, "data:text/html,chromewebdata");
+          compare(webView.getTestApi().documentURI, "data:text/html,chromewebdata");
         } catch(e) {
           compare(e.error, ScriptMessageRequest.ErrorDestinationNotFound);
         }
