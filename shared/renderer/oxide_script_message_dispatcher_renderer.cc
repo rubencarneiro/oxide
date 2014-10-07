@@ -195,10 +195,6 @@ ScriptMessageDispatcherRenderer* ScriptMessageDispatcherRenderer::FromWebFrame(
 void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
-  if (world_id == kMainWorldId) {
-    return;
-  }
-
   script_message_managers_.push_back(
       linked_ptr<ScriptMessageManager>(new ScriptMessageManager(render_frame(),
                                                                 context,
