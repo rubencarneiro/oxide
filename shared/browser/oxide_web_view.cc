@@ -1692,6 +1692,10 @@ void WebView::TextInputStateChanged(ui::TextInputType type,
 void WebView::DidGetRedirectForResourceRequest(
       content::RenderViewHost* render_view_host,
       const content::ResourceRedirectDetails& details) {
+  if (details.resource_type != content::RESOURCE_TYPE_MAIN_FRAME) {
+    return;
+  }
+
   OnLoadRedirected(details.new_url, details.original_url);
 }
 
