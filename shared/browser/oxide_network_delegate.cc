@@ -69,7 +69,14 @@ int NetworkDelegate::OnHeadersReceived(
 }
 
 void NetworkDelegate::OnBeforeRedirect(net::URLRequest* request,
-                                       const GURL& new_location) {}
+                                       const GURL& new_location) {
+  scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
+  if (!delegate.get()) {
+    return;
+  }
+
+  delegate->OnBeforeRedirect(request, new_location);
+}
 
 void NetworkDelegate::OnResponseStarted(net::URLRequest* request) {}
 

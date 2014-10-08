@@ -32,6 +32,7 @@ class QOpenGLContext;
 class QNetworkCookie;
 QT_END_NAMESPACE
 
+class OxideQBeforeRedirectEvent;
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
 class OxideQStoragePermissionRequest;
@@ -65,6 +66,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
     virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) = 0;
 
     virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) = 0;
+
+    virtual void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) = 0;
 
     virtual void HandleStoragePermissionRequest(OxideQStoragePermissionRequest* req) = 0;
 

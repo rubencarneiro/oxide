@@ -92,6 +92,7 @@ class WebContextIODelegate : public oxide::qt::WebContextAdapter::IODelegate {
   virtual ~WebContextIODelegate() {}
 
   void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) Q_DECL_FINAL;
+  void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) Q_DECL_FINAL;
   void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) Q_DECL_FINAL;
   void HandleStoragePermissionRequest(
       OxideQStoragePermissionRequest* req) Q_DECL_FINAL;
@@ -132,6 +133,21 @@ void WebContextIODelegate::OnBeforeSendHeaders(
   }
 
   delegate->CallEntryPointInWorker("onBeforeSendHeaders", event);
+}
+
+void WebContextIODelegate::OnBeforeRedirect(
+    OxideQBeforeRedirectEvent* event) {
+  QSharedPointer<IOThreadController> delegate;
+  {
+    QMutexLocker locker(&lock);
+    delegate = network_request_delegate.toStrongRef();
+  }
+  if (!delegate) {
+    delete event;
+    return;
+  }
+
+  emit delegate->callEntryPointInWorker("onBeforeRedirect", event);
 }
 
 void WebContextIODelegate::HandleStoragePermissionRequest(

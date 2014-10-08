@@ -28,3 +28,15 @@ exports.onBeforeSendHeaders = function(event) {
     event.setHeader("Foo", "Bar");
   }
 }
+
+exports.onBeforeRedirect = function(event) {
+  if (event.redirectionChainPreviousUrlEntry == "http://testsuite/redirect.py?cancel") {
+    event.cancelRequest();
+  }
+
+  oxide.sendMessage({ event: "onBeforeRedirect",
+                      url: event.url, method: event.method,
+                      requestCancelled: event.requestCancelled,
+                      redirectionChainPreviousUrlEntry: event.redirectionChainPreviousUrlEntry,
+                      isMainFrame: event.isMainFrame });
+}
