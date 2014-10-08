@@ -491,7 +491,7 @@ void RenderWidgetHostView::SendReturnedDelegatedResources() {
 
   DCHECK(!ack.resources.empty());
 
-  content::RenderWidgetHostImpl::SendSwapCompositorFrameAck(
+  content::RenderWidgetHostImpl::SendReclaimCompositorResources(
       host_->GetRoutingID(),
       last_output_surface_id_,
       host_->GetProcess()->GetID(),
