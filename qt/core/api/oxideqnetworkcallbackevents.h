@@ -102,7 +102,7 @@ class Q_DECL_EXPORT OxideQBeforeSendHeadersEvent : public OxideQNetworkCallbackE
 class Q_DECL_EXPORT OxideQBeforeRedirectEvent : public OxideQNetworkCallbackEvent {
   Q_OBJECT
 
-  Q_PROPERTY(QUrl redirectionChainPreviousUrlEntry READ redirectionChainPreviousUrlEntry)
+  Q_PROPERTY(QUrl originalUrl READ originalUrl)
 
   Q_DECLARE_PRIVATE(OxideQBeforeRedirectEvent)
   Q_DISABLE_COPY(OxideQBeforeRedirectEvent)
@@ -113,10 +113,10 @@ class Q_DECL_EXPORT OxideQBeforeRedirectEvent : public OxideQNetworkCallbackEven
       const QString& method,
       const QString& referrer,
       bool isMainFrame,
-      const QUrl& redirectionChainPreviousUrlEntry);
+      const QUrl& originalUrl);
   virtual ~OxideQBeforeRedirectEvent();
 
-  QUrl redirectionChainPreviousUrlEntry() const;
+  QUrl originalUrl() const;
 };
 
 #endif // OXIDE_Q_NETWORK_CALLBACK_EVENTS

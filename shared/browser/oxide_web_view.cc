@@ -904,12 +904,8 @@ void WebView::OnDownloadRequested(const GURL& url,
 				  const std::string& cookies,
 				  const std::string& referrer) {}
 
-void WebView::OnUrlRedirected(const GURL& url,
-                              const GURL& original_url,
-                              const std::string& referrer,
-                              const std::string& method,
-                              bool isMainFrame,
-                              int http_response_code) {}
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
@@ -1696,12 +1692,7 @@ void WebView::TextInputStateChanged(ui::TextInputType type,
 void WebView::DidGetRedirectForResourceRequest(
       content::RenderViewHost* render_view_host,
       const content::ResourceRedirectDetails& details) {
-  OnUrlRedirected(details.new_url,
-      details.original_url,
-      details.referrer,
-      details.method,
-      details.resource_type == content::RESOURCE_TYPE_MAIN_FRAME,
-      details.http_response_code);
+  OnLoadRedirected(details.new_url, details.original_url);
 }
 
 void WebView::FocusedNodeChanged(bool is_editable_node) {

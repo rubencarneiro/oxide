@@ -71,9 +71,9 @@ OxideQBeforeRedirectEventPrivate::OxideQBeforeRedirectEventPrivate(
     const QString& method,
     const QString& referrer,
     bool isMainFrame,
-    const QUrl& redirectionChainPreviousUrlEntry) :
+    const QUrl& originalUrl) :
     OxideQNetworkCallbackEventPrivate(url, method, referrer, isMainFrame),
-    previous_url_(redirectionChainPreviousUrlEntry) {}
+    original_url_(originalUrl) {}
 
 OxideQBeforeRedirectEventPrivate::~OxideQBeforeRedirectEventPrivate() {}
 
@@ -245,17 +245,17 @@ OxideQBeforeRedirectEvent::OxideQBeforeRedirectEvent(
     const QString& method,
     const QString& referrer,
     bool isMainFrame,
-    const QUrl& redirectionChainPreviousUrlEntry) :
+    const QUrl& originalUrl) :
     OxideQNetworkCallbackEvent(
        *new OxideQBeforeRedirectEventPrivate(
            url, method, referrer,
-           isMainFrame, redirectionChainPreviousUrlEntry)) {}
+           isMainFrame, originalUrl)) {}
 
 OxideQBeforeRedirectEvent::~OxideQBeforeRedirectEvent() {}
 
-QUrl OxideQBeforeRedirectEvent::redirectionChainPreviousUrlEntry() const {
+QUrl OxideQBeforeRedirectEvent::originalUrl() const {
   Q_D(const OxideQBeforeRedirectEvent);
 
-  return d->previous_url_;
+  return d->original_url_;
 }
 

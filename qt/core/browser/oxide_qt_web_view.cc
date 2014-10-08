@@ -678,12 +678,8 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-void WebView::OnUrlRedirected(const GURL& url,
-                              const GURL& original_url,
-                              const std::string& referrer,
-                              const std::string& method,
-                              bool isMainFrame,
-                              int http_response_code) {
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {
   OxideQLoadEvent event(
      QUrl(QString::fromStdString(url.spec())),
      OxideQLoadEvent::TypeRedirected,

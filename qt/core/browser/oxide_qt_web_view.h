@@ -148,12 +148,8 @@ class WebView FINAL : public oxide::WebView {
 			   const std::string& cookies,
 			   const std::string& referrer) FINAL;
 
-  void OnUrlRedirected(const GURL& url,
-                       const GURL& original_url,
-                       const std::string& referrer,
-                       const std::string& method,
-                       bool isMainFrame,
-                       int http_response_code) FINAL;
+  void OnLoadRedirected(const GURL& url,
+                        const GURL& original_url) FINAL;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,

@@ -105,9 +105,9 @@ class OxideQBeforeRedirectEventPrivate Q_DECL_FINAL :
       const QString& method,
       const QString& referrer,
       bool isMainFrame,
-      const QUrl& redirectionChainPreviousUrlEntry);
+      const QUrl& originalUrl);
 
-  QUrl previous_url_;
+  QUrl original_url_;
 };
 
 #endif // _OXIDE_QT_CORE_API_NETWORK_CALLBACK_EVENTS_P_H_

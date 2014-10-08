@@ -147,7 +147,7 @@ void WebContextIODelegate::OnBeforeRedirect(
     return;
   }
 
-  emit delegate->callEntryPointInWorker("onBeforeRedirect", event);
+  emit delegate->CallEntryPointInWorker("onBeforeRedirect", event);
 }
 
 void WebContextIODelegate::HandleStoragePermissionRequest(

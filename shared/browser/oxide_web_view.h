@@ -478,13 +478,9 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
-  virtual void OnUrlRedirected(
+  virtual void OnLoadRedirected(
       const GURL& url,
-      const GURL& original_url,
-      const std::string& referrer,
-      const std::string& method,
-      bool isMainFrame,
-      int http_response_code);
+      const GURL& original_url);
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);

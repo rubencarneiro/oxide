@@ -144,7 +144,7 @@ int WebContextAdapterPrivate::OnBeforeURLRequest(
       new OxideQBeforeURLRequestEvent(
         QUrl(QString::fromStdString(request->url().spec())),
         QString::fromStdString(request->method()),
-	QString::fromStdString(request->referrer()),
+        QString::fromStdString(request->referrer()),
         info->IsMainFrame());
 
   OxideQBeforeURLRequestEventPrivate* eventp =
@@ -176,7 +176,7 @@ void WebContextAdapterPrivate::OnBeforeRedirect(
         QString::fromStdString(request->method()),
         QString::fromStdString(request->referrer()),
         info->IsMainFrame(),
-        QUrl(QString::fromStdString(request->url().spec())));
+        QUrl(QString::fromStdString(request->original_url().spec())));
 
   OxideQBeforeRedirectEventPrivate* eventp =
       OxideQBeforeRedirectEventPrivate::get(event);
@@ -207,8 +207,8 @@ int WebContextAdapterPrivate::OnBeforeSendHeaders(
       new OxideQBeforeSendHeadersEvent(
         QUrl(QString::fromStdString(request->url().spec())),
         QString::fromStdString(request->method()),
-	QString::fromStdString(request->referrer()),
-	info->IsMainFrame());
+        QString::fromStdString(request->referrer()),
+        info->IsMainFrame());
 
   OxideQBeforeSendHeadersEventPrivate* eventp =
       OxideQBeforeSendHeadersEventPrivate::get(event);
