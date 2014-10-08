@@ -22,7 +22,15 @@
 #include "cc/output/context_provider.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
+#include "content/browser/gpu/browser_gpu_channel_host_factory.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
+#include "content/common/gpu/client/context_provider_command_buffer.h"
+#include "content/common/gpu/client/gpu_channel_host.h"
+#include "content/common/gpu/client/webgraphicscontext3d_command_buffer_impl.h"
+#include "content/common/gpu/gpu_process_launch_causes.h"
 #include "content/common/host_shared_bitmap_manager.h"
+#include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
+#include "url/gurl.h"
 
 #include "oxide_compositor_client.h"
 #include "oxide_compositor_frame_handle.h"
@@ -33,6 +41,38 @@
 #include "oxide_compositor_utils.h"
 
 namespace oxide {
+
+namespace {
+
+typedef content::WebGraphicsContext3DCommandBufferImpl WGC3DCBI;
+
+scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
+  if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
+    return scoped_ptr<WGC3DCBI>();
+  }
+
+  content::CauseForGpuLaunch cause =
+      content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
+  scoped_refptr<content::GpuChannelHost> gpu_channel_host(
+      content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
+  if (!gpu_channel_host.get()) {
+    return scoped_ptr<WGC3DCBI>();
+  }
+
+  blink::WebGraphicsContext3D::Attributes attrs;
+  attrs.shareResources = true;
+  attrs.depth = false;
+  attrs.stencil = false;
+  attrs.antialias = false;
+  attrs.noAutomaticFlushes = true;
+
+  return make_scoped_ptr(new WGC3DCBI(
+      0, GURL(), gpu_channel_host.get(), attrs, false,
+      content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
+      NULL));
+}
+
+} // namespace
 
 Compositor::Compositor(CompositorClient* client, bool software)
     : client_(client),
@@ -92,7 +132,8 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
 
   if (!use_software_) {
     scoped_refptr<cc::ContextProvider> context_provider =
-        CompositorUtils::GetInstance()->GetContextProvider();
+        content::ContextProviderCommandBuffer::Create(
+          CreateOffscreenContext3D(), "OxideWebViewCompositor");
     if (!context_provider.get()) {
       return scoped_ptr<cc::OutputSurface>();
     }
