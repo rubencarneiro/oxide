@@ -26,8 +26,10 @@ TestWebView {
     when: windowShown
 
     function init() {
-      if (addedScript)
+      if (webView.addedScript) {
         webView.context.removeUserScript(addedScript)
+        webView.addedScript = null
+      }
     }
 
     function resultUpdated(testapi) {
