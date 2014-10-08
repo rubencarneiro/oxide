@@ -61,9 +61,7 @@ class SystemURLRequestContextGetter FINAL : public URLRequestContextGetter {
 
 }
 
-IOThread::Globals::Globals() {
-  DCHECK(CalledOnValidThread());
-}
+IOThread::Globals::Globals() {}
 
 IOThread::Globals::~Globals() {
   DCHECK(CalledOnValidThread());

@@ -373,9 +373,7 @@ void LocationProvider::NotifyPositionUpdated(
 
 LocationProvider::LocationProvider() :
     running_(false),
-    is_permission_granted_(false) {
-  DCHECK(CalledOnValidThread());
-}
+    is_permission_granted_(false) {}
 
 LocationProvider::~LocationProvider() {
   DCHECK(CalledOnValidThread());

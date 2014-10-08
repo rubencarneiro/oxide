@@ -731,7 +731,6 @@ void BrowserContext::Delete(const BrowserContext* context) {
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
-  DCHECK(CalledOnValidThread());
   CHECK(BrowserProcessMain::GetInstance()->IsRunning()) <<
       "The main browser process components must be started before " <<
       "creating a context";
