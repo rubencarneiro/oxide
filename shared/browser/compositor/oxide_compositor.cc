@@ -216,7 +216,6 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
 
 void Compositor::DidSwapCompositorFrame(uint32 surface_id,
                                         FrameHandleVector& returned_frames) {
-  DCHECK(CalledOnValidThread());
   proxy_->DidSwapCompositorFrame(surface_id, returned_frames);
 }
 
