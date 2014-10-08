@@ -478,6 +478,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
+  virtual void OnLoadRedirected(
+      const GURL& url,
+      const GURL& original_url);
+
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
@@ -503,6 +507,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       bool strict_enforcement,
       scoped_ptr<SimplePermissionRequest> request);
   virtual void OnContentBlocked();
+
+  virtual void DidGetRedirectForResourceRequest(
+      content::RenderViewHost* render_view_host,
+      const content::ResourceRedirectDetails& details) FINAL;
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

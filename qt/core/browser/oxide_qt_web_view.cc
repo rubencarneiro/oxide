@@ -678,6 +678,19 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {
+  OxideQLoadEvent event(
+     QUrl(QString::fromStdString(url.spec())),
+     OxideQLoadEvent::TypeRedirected,
+     OxideQLoadEvent::ErrorDomain(),
+     QString(),
+     int(),
+     QUrl(QString::fromStdString(original_url.spec())));
+
+  adapter_->LoadEvent(&event);
+}
+
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
   return new WebFrame(adapter_->CreateWebFrame(), node, this);
 }

@@ -159,6 +159,7 @@ TestWebView {
       var url = "http://testsuite/tst_WebView_loading_redirect.py";
       expectedLoadEvents = [
         { type: LoadEvent.TypeStarted, url: url, loading: true },
+        { type: LoadEvent.TypeRedirected, url: "http://testsuite/empty.html", loading: true },
         { type: LoadEvent.TypeSucceeded, url: "http://testsuite/empty.html", loading: false }
       ];
 

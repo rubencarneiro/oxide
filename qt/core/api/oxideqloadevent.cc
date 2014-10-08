@@ -24,24 +24,29 @@ class OxideQLoadEventPrivate {
                          OxideQLoadEvent::Type type,
                          OxideQLoadEvent::ErrorDomain error_domain,
                          const QString& error_string,
-                         int error_code) :
+                         int error_code,
+                         const QUrl& original_url) :
       url(url), type(type), error_domain(error_domain),
-      error_string(error_string), error_code(error_code) {}
+      error_string(error_string), error_code(error_code),
+      original_url(original_url) {}
 
   QUrl url;
   OxideQLoadEvent::Type type;
   OxideQLoadEvent::ErrorDomain error_domain;
   QString error_string;
   int error_code;
+  QUrl original_url;
 };
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  Type type,
                                  ErrorDomain error_domain,
                                  const QString& error_string,
-                                 int error_code) :
-    d_ptr(new OxideQLoadEventPrivate(
-        url, type, error_domain, error_string, error_code)) {}
+                                 int error_code,
+                                 const QUrl& original_url) :
+     d_ptr(new OxideQLoadEventPrivate(
+         url, type, error_domain, error_string,
+         error_code, original_url)) {}
 
 OxideQLoadEvent::~OxideQLoadEvent() {}
 
@@ -73,4 +78,10 @@ int OxideQLoadEvent::errorCode() const {
   Q_D(const OxideQLoadEvent);
 
   return d->error_code;
+}
+
+QUrl OxideQLoadEvent::originalUrl() const {
+  Q_D(const OxideQLoadEvent);
+
+  return d->original_url;
 }
