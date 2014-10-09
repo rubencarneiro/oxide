@@ -49,8 +49,7 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
                               int extension_group,
                               int world_id) FINAL;
 
-  bool GetUserAgentOverride(const GURL& url,
-                            std::string* user_agent) FINAL;
+  std::string GetUserAgentOverrideForURL(const GURL& url) FINAL;
 
   scoped_ptr<RenderProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;

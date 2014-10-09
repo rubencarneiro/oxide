@@ -1481,13 +1481,12 @@ void WebView::HidePopupMenu() {
 
 void WebView::RequestGeolocationPermission(
     const GURL& origin,
-    const base::Callback<void(bool)>& callback,
-    base::Closure* cancel_callback) {
+    const base::Callback<void(bool)>& callback) {
   scoped_ptr<SimplePermissionRequest> request(
       permission_request_manager_.CreateSimplePermissionRequest(
         PERMISSION_REQUEST_TYPE_GEOLOCATION,
         callback,
-        cancel_callback));
+        NULL));
   OnRequestGeolocationPermission(
       origin,
       web_contents_->GetLastCommittedURL().GetOrigin(),

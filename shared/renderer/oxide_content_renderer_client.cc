@@ -79,11 +79,8 @@ void ContentRendererClient::DidCreateScriptContext(
       frame)->DidCreateScriptContext(context, world_id);
 }
 
-bool ContentRendererClient::GetUserAgentOverride(
-    const GURL& url,
-    std::string* user_agent) {
-  bool overridden = false;
-
+std::string ContentRendererClient::GetUserAgentOverrideForURL(
+    const GURL& url) {
   GURL u = url;
 
   // Strip username / password / fragment identifier if they exist
@@ -111,13 +108,19 @@ bool ContentRendererClient::GetUserAgentOverride(
   // Not sure we should ever hit this, but in any case - there
   // isn't much more we can do now
   if (u.spec().size() > content::GetMaxURLChars()) {
-    return false;
+    return std::string();
   }
 
-  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
-      u, user_agent, &overridden));
+  bool overridden = false;
+  std::string user_agent;
 
-  return overridden;
+  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
+      u, &user_agent, &overridden));
+  if (!overridden) {
+    return std::string();
+  }
+
+  return user_agent;
 }
 
 ContentRendererClient::ContentRendererClient() {}

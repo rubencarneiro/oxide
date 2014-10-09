@@ -190,8 +190,7 @@ void ContentBrowserClient::RequestGeolocationPermission(
     int bridge_id,
     const GURL& requesting_frame,
     bool user_gesture,
-    base::Callback<void(bool)> result_callback,
-    base::Closure* cancel_callback) {
+    const base::Callback<void(bool)>& result_callback) {
   WebView* webview = WebView::FromWebContents(web_contents);
   if (!webview) {
     result_callback.Run(false);
@@ -199,8 +198,7 @@ void ContentBrowserClient::RequestGeolocationPermission(
   }
 
   webview->RequestGeolocationPermission(requesting_frame.GetOrigin(),
-                                        result_callback,
-                                        cancel_callback);
+                                        result_callback);
 }
 
 bool ContentBrowserClient::CanCreateWindow(

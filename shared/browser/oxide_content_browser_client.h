@@ -114,8 +114,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
       int bridge_id,
       const GURL& requesting_frame,
       bool user_gesture,
-      base::Callback<void(bool)> result_callback,
-      base::Closure* cancel_callback) FINAL;
+      const base::Callback<void(bool)>& result_callback) FINAL;
 
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,

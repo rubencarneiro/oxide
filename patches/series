@@ -9,7 +9,6 @@ enable-glx-on-ozone.patch
 arm-neon.patch
 dont-use-gl-create-context-robustness.patch
 dont-initialize-gl-more-than-once.patch
-renderer-user-agent-override.patch
 expose-extra-properties-for-should-create-webcontents.patch
 disable-default-network-location-provider.patch
 add-should-download-url-to-resource-dispatcher-host.patch
