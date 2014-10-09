@@ -54,6 +54,13 @@ namespace oxide {
 void RenderWidgetHostView::SelectionChanged(const base::string16& text,
                                             size_t offset,
                                             const gfx::Range& range) {
+  if ((range.GetMin() - offset) > text.length()) {
+    // XXX: invalid selection range (see https://launchpad.net/bugs/1375900).
+    // This happens just after committing a word entered with an input method
+    // in a contenteditable element, but I have no idea why.
+    return;
+  }
+
   content::RenderWidgetHostViewBase::SelectionChanged(text, offset, range);
 
   if (web_view_) {
