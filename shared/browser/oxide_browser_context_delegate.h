@@ -31,12 +31,14 @@ template <typename Type> class DeleteHelper;
 namespace net {
 class HttpRequestHeaders;
 class HttpResponseHeaders;
+class NetworkDelegate;
 class URLRequest;
 }
 
 namespace oxide {
 
 class BrowserContextDelegate;
+class URLRequestDelegatedJob;
 
 struct BrowserContextDelegateTraits {
   static void Destruct(const BrowserContextDelegate* x);
@@ -84,6 +86,10 @@ class BrowserContextDelegate :
   }
 
   // Called on the IO thread
+  virtual void OnBeforeRedirect(net::URLRequest* request,
+                                const GURL& new_location) {}
+
+  // Called on the IO thread
   virtual StoragePermission CanAccessStorage(const GURL& url,
                                              const GURL& first_party_url,
                                              bool write,
@@ -97,9 +103,15 @@ class BrowserContextDelegate :
     return false;
   }
 
-  // Called on the IO thread
-  virtual void OnBeforeRedirect(net::URLRequest* request,
-                                const GURL& new_location) {}
+  virtual bool IsCustomProtocolHandlerRegistered(
+      const std::string& scheme) const {
+    return false;
+  }
+  virtual URLRequestDelegatedJob* CreateCustomURLRequestJob(
+      net::URLRequest* request,
+      net::NetworkDelegate* network_delegate) {
+    return NULL;
+  }
 
  protected:
   friend class BrowserContextDelegateTraits;

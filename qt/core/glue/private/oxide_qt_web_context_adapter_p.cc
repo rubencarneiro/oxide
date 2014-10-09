@@ -39,6 +39,7 @@
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/core/api/oxideqstoragepermissionrequest_p.h"
+#include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_user_script_master.h"
@@ -157,6 +158,37 @@ int WebContextAdapterPrivate::OnBeforeURLRequest(
   return cancelled ? net::ERR_ABORTED : net::OK;
 }
 
+int WebContextAdapterPrivate::OnBeforeSendHeaders(
+    net::URLRequest* request,
+    const net::CompletionCallback& callback,
+    net::HttpRequestHeaders* headers) {
+  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
+  if (!io_delegate) {
+    return net::OK;
+  }
+
+  bool cancelled = false;
+
+  const content::ResourceRequestInfo* info =
+      content::ResourceRequestInfo::ForRequest(request);
+
+  OxideQBeforeSendHeadersEvent* event =
+      new OxideQBeforeSendHeadersEvent(
+        QUrl(QString::fromStdString(request->url().spec())),
+        QString::fromStdString(request->method()),
+        QString::fromStdString(request->referrer()),
+        info->IsMainFrame());
+
+  OxideQBeforeSendHeadersEventPrivate* eventp =
+      OxideQBeforeSendHeadersEventPrivate::get(event);
+  eventp->request_cancelled = &cancelled;
+  eventp->headers = headers;
+
+  io_delegate->OnBeforeSendHeaders(event);
+
+  return cancelled ? net::ERR_ABORTED : net::OK;
+}
+
 void WebContextAdapterPrivate::OnBeforeRedirect(
       net::URLRequest* request,
       const GURL& new_location) {
@@ -187,37 +219,6 @@ void WebContextAdapterPrivate::OnBeforeRedirect(
   if (cancelled) {
     request->Cancel();
   }
-}
-
-int WebContextAdapterPrivate::OnBeforeSendHeaders(
-    net::URLRequest* request,
-    const net::CompletionCallback& callback,
-    net::HttpRequestHeaders* headers) {
-  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
-  if (!io_delegate) {
-    return net::OK;
-  }
-
-  bool cancelled = false;
-
-  const content::ResourceRequestInfo* info =
-      content::ResourceRequestInfo::ForRequest(request);
-
-  OxideQBeforeSendHeadersEvent* event =
-      new OxideQBeforeSendHeadersEvent(
-        QUrl(QString::fromStdString(request->url().spec())),
-        QString::fromStdString(request->method()),
-        QString::fromStdString(request->referrer()),
-        info->IsMainFrame());
-
-  OxideQBeforeSendHeadersEventPrivate* eventp =
-      OxideQBeforeSendHeadersEventPrivate::get(event);
-  eventp->request_cancelled = &cancelled;
-  eventp->headers = headers;
-
-  io_delegate->OnBeforeSendHeaders(event);
-
-  return cancelled ? net::ERR_ABORTED : net::OK;
 }
 
 oxide::StoragePermission WebContextAdapterPrivate::CanAccessStorage(
@@ -259,6 +260,19 @@ bool WebContextAdapterPrivate::GetUserAgentOverride(const GURL& url,
 
   *user_agent = new_user_agent.toStdString();
   return overridden;
+}
+
+bool WebContextAdapterPrivate::IsCustomProtocolHandlerRegistered(
+    const std::string& scheme) const {
+  base::AutoLock lock(url_schemes_lock_);
+  return allowed_extra_url_schemes_.find(scheme) != allowed_extra_url_schemes_.end();
+}
+
+oxide::URLRequestDelegatedJob*
+WebContextAdapterPrivate::CreateCustomURLRequestJob(
+    net::URLRequest* request,
+    net::NetworkDelegate* network_delegate) {
+  return new URLRequestDelegatedJob(this, request, network_delegate);
 }
 
 WebContextAdapterPrivate::~WebContextAdapterPrivate() {}
@@ -432,6 +446,12 @@ void WebContextAdapterPrivate::DeletedCookiesCallback(int request_id,
   }
 
   adapter->CookiesDeleted(request_id, num_deleted);
+}
+
+void WebContextAdapterPrivate::SetAllowedExtraURLSchemes(
+    const std::set<std::string>& schemes) {
+  base::AutoLock lock(url_schemes_lock_);
+  allowed_extra_url_schemes_ = schemes;
 }
 
 WebContextAdapter* WebContextAdapterPrivate::GetAdapter() const {

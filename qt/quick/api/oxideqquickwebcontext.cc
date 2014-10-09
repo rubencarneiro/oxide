@@ -320,6 +320,18 @@ void OxideQQuickWebContextPrivate::detachedDelegateWorker(
   }
 }
 
+QNetworkAccessManager*
+OxideQQuickWebContextPrivate::GetCustomNetworkAccessManager() {
+  Q_Q(OxideQQuickWebContext);
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    return NULL;
+  }
+
+  return engine->networkAccessManager();
+}
+
 void OxideQQuickWebContextPrivate::CookiesSet(
     int request_id,
     const QList<QNetworkCookie>& failed_cookies) {
@@ -899,6 +911,21 @@ void OxideQQuickWebContext::setHostMappingRules(const QStringList& rules) {
   d->setHostMappingRules(rules);
 
   emit hostMappingRulesChanged();
+}
+
+QStringList OxideQQuickWebContext::allowedExtraUrlSchemes() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->allowedExtraUrlSchemes();
+}
+
+void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
+    const QStringList& schemes) {
+  Q_D(OxideQQuickWebContext);
+
+  d->setAllowedExtraUrlSchemes(schemes);
+
+  emit allowedExtraUrlSchemesChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

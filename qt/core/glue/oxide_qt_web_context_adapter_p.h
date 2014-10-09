@@ -21,6 +21,7 @@
 #include <QList>
 #include <QSharedPointer>
 #include <QWeakPointer>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -109,6 +110,8 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   void DeleteAllCookies(int request_id);
   void DeletedCookiesCallback(int request_id, int num_deleted);
 
+  void SetAllowedExtraURLSchemes(const std::set<std::string>& schemes);
+
   // oxide::BrowserContextDelegate
   int OnBeforeURLRequest(net::URLRequest* request,
                          const net::CompletionCallback& callback,
@@ -116,6 +119,8 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
                           net::HttpRequestHeaders* headers) FINAL;
+  void OnBeforeRedirect(net::URLRequest* request,
+                        const GURL& new_location) FINAL;
   oxide::StoragePermission CanAccessStorage(
       const GURL& url,
       const GURL& first_party_url,
@@ -123,9 +128,11 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
       oxide::StorageType type) FINAL;
   bool GetUserAgentOverride(const GURL& url,
                             std::string* user_agent) FINAL;
-  void OnBeforeRedirect(
+  bool IsCustomProtocolHandlerRegistered(
+      const std::string& scheme) const FINAL;
+  oxide::URLRequestDelegatedJob* CreateCustomURLRequestJob(
       net::URLRequest* request,
-      const GURL& new_location) FINAL;
+      net::NetworkDelegate* network_delegate) FINAL;
 
   WebContextAdapter* adapter_;
 
@@ -138,6 +145,9 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
   bool handling_cookie_request_;
 
   QList<UserScriptAdapter *> user_scripts_;
+
+  mutable base::Lock url_schemes_lock_;
+  std::set<std::string> allowed_extra_url_schemes_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextAdapterPrivate);
 };
