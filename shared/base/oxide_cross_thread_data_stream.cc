@@ -157,7 +157,7 @@ char* CrossThreadDataStream::AllocateSpaceForWriting(int requested_size,
 
   DCHECK_GT(buffer_reserved_start_, -1);
   DCHECK_GT(buffer_reserved_end_, -1);
-  DCHECK_LT(buffer_reserved_end_, buffer_size_);
+  DCHECK_LE(buffer_reserved_end_, buffer_size_);
   DCHECK_LT(buffer_reserved_start_, buffer_reserved_end_);
 
   return buffer_ + buffer_reserved_start_;

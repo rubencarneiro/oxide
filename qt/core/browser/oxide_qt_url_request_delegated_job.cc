@@ -130,9 +130,6 @@ class URLRequestDelegatedJobProxy
   void DoNotifyStartError(const net::URLRequestStatus& status);
   void DoNotifyDidReceiveResponse(size_t size,
                                   const std::string& mime_type);
-  void DoNotifyDestroyed();
-  void DoNotifyError(QNetworkReply::NetworkError code);
-  void DoNotifySslErrors(const QList<QSslError>& errors);
 
   scoped_refptr<WebContextAdapterPrivate> context_;
   base::WeakPtr<URLRequestDelegatedJob> job_;
@@ -145,11 +142,13 @@ class URLRequestDelegatedJobProxy
 };
 
 void URLRequestDelegatedJobProxy::OnDestroyed() {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::IO,
-      FROM_HERE,
-      base::Bind(&URLRequestDelegatedJobProxy::DoNotifyDestroyed,
-                 this));
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
+  if (!job_) {
+    return;
+  }
+
+  job_->OnDestroyed();
 }
 
 void URLRequestDelegatedJobProxy::OnDataAvailable() {
@@ -186,23 +185,28 @@ void URLRequestDelegatedJobProxy::OnDataAvailable() {
 }
 
 void URLRequestDelegatedJobProxy::OnError(QNetworkReply::NetworkError code) {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::IO,
-      FROM_HERE,
-      base::Bind(&URLRequestDelegatedJobProxy::DoNotifyError,
-                 this, code));
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
+  if (!job_) {
+    return;
+  }
+
+  job_->OnError(code);
 }
 
 void URLRequestDelegatedJobProxy::OnFinished() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   stream_->Write(reply_);
 }
 
 void URLRequestDelegatedJobProxy::OnSslErrors(const QList<QSslError>& errors) {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::IO,
-      FROM_HERE,
-      base::Bind(&URLRequestDelegatedJobProxy::DoNotifySslErrors,
-                 this, errors));
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
+  if (!job_) {
+    return;
+  }
+
+  job_->OnSslErrors(errors);
 }
 
 URLRequestDelegatedJobProxy::~URLRequestDelegatedJobProxy() {
@@ -261,10 +265,12 @@ void URLRequestDelegatedJobProxy::DoStart(const std::string& method,
   }
 
   connect(reply_, SIGNAL(destroyed()), SLOT(OnDestroyed()));
-  connect(reply_, SIGNAL(readyRead()), SLOT(OnDataAvailable()));
+  connect(reply_, SIGNAL(readyRead()), SLOT(OnDataAvailable()),
+          Qt::DirectConnection);
   connect(reply_, SIGNAL(error(QNetworkReply::NetworkError)),
           SLOT(OnError(QNetworkReply::NetworkError)));
-  connect(reply_, SIGNAL(finished()), SLOT(OnFinished()));
+  connect(reply_, SIGNAL(finished()), SLOT(OnFinished()),
+          Qt::DirectConnection);
   connect(reply_, SIGNAL(sslErrors(const QList<QSslError>&)),
           SLOT(OnSslErrors(const QList<QSslError>&)));
 }
@@ -298,38 +304,6 @@ void URLRequestDelegatedJobProxy::DoNotifyDidReceiveResponse(
   }
 
   job_->OnDidReceiveResponse(size, mime_type);
-}
-
-void URLRequestDelegatedJobProxy::DoNotifyDestroyed() {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-
-  if (!job_) {
-    return;
-  }
-
-  job_->OnDestroyed();
-}
-
-void URLRequestDelegatedJobProxy::DoNotifyError(
-    QNetworkReply::NetworkError code) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-
-  if (!job_) {
-    return;
-  }
-
-  job_->OnError(code);
-}
-
-void URLRequestDelegatedJobProxy::DoNotifySslErrors(
-    const QList<QSslError>& errors) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-
-  if (!job_) {
-    return;
-  }
-
-  job_->OnSslErrors(errors);
 }
 
 URLRequestDelegatedJobProxy::URLRequestDelegatedJobProxy(
