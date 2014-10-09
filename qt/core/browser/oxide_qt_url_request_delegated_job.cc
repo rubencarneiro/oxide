@@ -368,7 +368,7 @@ void URLRequestDelegatedJob::OnDidReceiveResponse(
     size_t size,
     const std::string& mime_type) {
   set_expected_content_size(size);
-  mime_type_ = mime_type;
+  set_mime_type(mime_type);
   NotifyHeadersComplete();
 }
 
@@ -467,10 +467,10 @@ void URLRequestDelegatedJob::OnStart() {
   }
 
   QNetworkRequest req;
-  req.setPriority(CalculateQNetworkRequestPriority(priority_));
+  req.setPriority(CalculateQNetworkRequestPriority(priority()));
   req.setUrl(QUrl(QString::fromStdString(request()->url().spec())));
 
-  net::HttpRequestHeaders::Iterator iter(extra_request_headers_);
+  net::HttpRequestHeaders::Iterator iter(extra_request_headers());
   while (iter.GetNext()) {
     req.setRawHeader(iter.name().c_str(), iter.value().c_str());
   }

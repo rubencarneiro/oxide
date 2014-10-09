@@ -28,11 +28,7 @@ void URLRequestDelegatedJob::SetExtraRequestHeaders(
 }
 
 void URLRequestDelegatedJob::SetPriority(net::RequestPriority priority) {
-  if (priority == priority_) {
-    return;
-  }
   priority_ = priority;
-  OnPriorityChanged();
 }
 
 void URLRequestDelegatedJob::Start() {
@@ -51,8 +47,6 @@ bool URLRequestDelegatedJob::GetMimeType(std::string* mime_type) const {
   *mime_type = mime_type_;
   return true;
 }
-
-void URLRequestDelegatedJob::OnPriorityChanged() {}
 
 URLRequestDelegatedJob::URLRequestDelegatedJob(
     net::URLRequest* request,

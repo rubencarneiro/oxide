@@ -35,12 +35,13 @@ class URLRequestDelegatedJob : public net::URLRequestJob {
   URLRequestDelegatedJob(net::URLRequest* request,
                          net::NetworkDelegate* delegate);
 
-  bool started_;
+  const net::HttpRequestHeaders& extra_request_headers() const {
+    return extra_request_headers_;
+  }
 
-  net::HttpRequestHeaders extra_request_headers_;
-  net::RequestPriority priority_;
+  net::RequestPriority priority() const { return priority_; }
 
-  std::string mime_type_;
+  void set_mime_type(const std::string& mime_type) { mime_type_ = mime_type; }
 
  private:
   // net::URLRequestJob implementation
@@ -51,8 +52,14 @@ class URLRequestDelegatedJob : public net::URLRequestJob {
 
   bool GetMimeType(std::string* mime_type) const FINAL;
 
-  virtual void OnPriorityChanged();
   virtual void OnStart() = 0;
+
+  bool started_;
+
+  net::HttpRequestHeaders extra_request_headers_;
+  net::RequestPriority priority_;
+
+  std::string mime_type_;
 };
 
 } // namespace oxide
