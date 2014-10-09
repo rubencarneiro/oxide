@@ -29,4 +29,9 @@ extern const char kIncognito[];
 
 } // namespace switches
 
+namespace oxide {
+extern const int kMainWorldId;
+extern const char kMainWorldContextUrl[];
+}
+
 #endif // _OXIDE_SHARED_COMMON_CONSTANTS_H_

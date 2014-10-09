@@ -45,6 +45,8 @@ class ScriptMessageDispatcherRenderer FINAL : public content::RenderFrameObserve
 
   static ScriptMessageDispatcherRenderer* FromWebFrame(blink::WebFrame* frame);
 
+  linked_ptr<ScriptMessageManager> ScriptMessageManagerForWorldId(int world_id);
+
   void DidCreateScriptContext(v8::Handle<v8::Context> context,
                               int world_id);
 

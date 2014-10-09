@@ -29,15 +29,19 @@
 #include "third_party/WebKit/public/platform/WebURLRequest.h"
 #include "third_party/WebKit/public/web/WebDataSource.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
+#include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 #include "third_party/WebKit/public/web/WebScriptSource.h"
 #include "third_party/WebKit/public/web/WebSecurityOrigin.h"
 #include "url/gurl.h"
+#include "v8/include/v8.h"
 
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_user_script.h"
 
 #include "oxide_isolated_world_map.h"
+#include "oxide_script_message_dispatcher_renderer.h"
+#include "oxide_script_message_manager.h"
 
 namespace oxide {
 
@@ -105,6 +109,76 @@ void UserScriptSlave::OnRenderProcessShutdown() {
   content::RenderThread::Get()->RemoveObserver(this);
 }
 
+void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
+      blink::WebLocalFrame* frame,
+      const blink::WebScriptSource& script_source) {
+
+  ScriptMessageDispatcherRenderer * dispatcher_renderer =
+      ScriptMessageDispatcherRenderer::FromWebFrame(frame);
+  DCHECK(dispatcher_renderer != NULL);
+
+  linked_ptr<ScriptMessageManager> message_manager =
+      dispatcher_renderer->ScriptMessageManagerForWorldId(kMainWorldId);
+  DCHECK(message_manager != NULL);
+  if (!message_manager.get()) {
+    LOG(ERROR) << "Could not get a proper message manager for frame: "
+               << frame
+	       << " while trying to inject script in main world";
+    return;
+  }
+
+  v8::Isolate* isolate = message_manager->isolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Context::Scope context_scope(message_manager->GetV8Context());
+
+  v8::Local<v8::String> wrapped_script_head(v8::String::NewFromUtf8(
+      isolate,
+      "(function(oxide) {\n"
+  ));
+
+  v8::Local<v8::String> src(
+      v8::String::NewFromUtf8(
+          isolate,
+	  script_source.code.utf8().c_str()));
+  DCHECK(!src.IsEmpty() && src->Length() > 0);
+
+  v8::Local<v8::String> wrapped_script_tail(
+      v8::String::NewFromUtf8(isolate, "\n})"));
+
+  v8::Local<v8::String> wrapped_src(
+      v8::String::Concat(wrapped_script_head,
+          v8::String::Concat(src, wrapped_script_tail)));
+
+  v8::Local<v8::Script> script(
+      v8::Script::Compile(wrapped_src));
+
+  v8::TryCatch try_catch;
+  v8::Local<v8::Function> function(script->Run().As<v8::Function>());
+  if (try_catch.HasCaught()) {
+    LOG(ERROR) << "Caught exception when running script: "
+               << *v8::String::Utf8Value(try_catch.Message()->Get());
+    return;
+  }
+
+  v8::Handle<v8::Value> argv[] = {
+      message_manager->GetOxideApiObject(message_manager->isolate())
+  };
+
+  {
+    blink::WebScopedMicrotaskSuppression mts;
+    frame->callFunctionEvenIfScriptDisabled(
+        function,
+        message_manager->GetV8Context()->Global(),
+        arraysize(argv),
+        argv);
+  }
+  if (try_catch.HasCaught()) {
+    LOG(ERROR) << "Caught exception when calling script: "
+               << *v8::String::Utf8Value(try_catch.Message()->Get());
+    return;
+  }
+}
+
 void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
                                     UserScript::RunLocation location) {
   blink::WebDataSource* data_source = frame->provisionalDataSource() ?
@@ -151,6 +225,16 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
     }
 
     blink::WebScriptSource source(blink::WebString::fromUTF8(content));
+
+    if (script->context() == GURL(kMainWorldContextUrl)) {
+      if (script->emulate_greasemonkey()) {
+        InjectGreaseMonkeyScriptInMainWorld(frame, source);
+      } else {
+        frame->executeScript(source);
+      }
+      continue;
+    }
+
     int id = GetIsolatedWorldID(script->context(), frame);
     frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
   }
