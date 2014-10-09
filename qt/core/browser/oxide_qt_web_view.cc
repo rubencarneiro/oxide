@@ -314,10 +314,10 @@ void WebView::SetInputPanelVisibility(bool visible) {
     has_input_method_state_ = false;
   }
 
-  if (QGuiApplication::inputMethod()->isVisible() == visible) {
-    return;
-  }
-
+  // Do not check whether the input method is currently visible here, to avoid
+  // a possible race condition: if hide() and show() are called very quickly
+  // in a row, when show() is called the hide() request might not have
+  // completed yet, and isVisible() could return true.
   QGuiApplication::inputMethod()->setVisible(visible);
 }
 
