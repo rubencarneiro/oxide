@@ -334,9 +334,10 @@ void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
 
   emit q->loadEvent(event);
 
-  // The deprecated signal doesn't get TypeCommitted
+  // The deprecated signal doesn't get TypeCommitted or TypeRedirected
   if (!using_old_load_event_signal_ ||
-      event->type() == OxideQLoadEvent::TypeCommitted) {
+      event->type() == OxideQLoadEvent::TypeCommitted ||
+      event->type() == OxideQLoadEvent::TypeRedirected) {
     return;
   }
 
