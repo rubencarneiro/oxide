@@ -91,7 +91,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
    void RemoveChannel(int client_id);
  
    // Listener overrides.
-   virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
+   virtual bool OnMessageReceived(const IPC::Message& msg) override;
  
 @@ -93,16 +94,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
