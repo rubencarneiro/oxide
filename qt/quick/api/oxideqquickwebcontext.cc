@@ -908,6 +908,8 @@ void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
   Q_D(OxideQQuickWebContext);
 
   d->setAllowedExtraUrlSchemes(schemes);
+
+  emit allowedExtraUrlSchemesChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"
