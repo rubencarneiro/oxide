@@ -72,6 +72,7 @@
 #include "oxide_ssl_config_service.h"
 #include "oxide_ssl_host_state_delegate.h"
 #include "oxide_url_request_context.h"
+#include "oxide_url_request_delegated_job_factory.h"
 #include "oxide_user_script_master.h"
 
 namespace oxide {
@@ -493,7 +494,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   DCHECK(set_protocol);
 
   scoped_ptr<net::URLRequestJobFactory> top_job_factory(
-      job_factory.PassAs<net::URLRequestJobFactory>());
+      new URLRequestDelegatedJobFactory(
+        job_factory.PassAs<net::URLRequestJobFactory>(),
+        this));
 
   for (content::URLRequestInterceptorScopedVector::reverse_iterator it =
           request_interceptors.rbegin();

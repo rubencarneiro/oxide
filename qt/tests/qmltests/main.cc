@@ -17,12 +17,16 @@
 
 #include <QDir>
 #include <QDirIterator>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QLatin1String>
 #include <QList>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlError>
+#include <QQmlNetworkAccessManagerFactory>
 #include <QQuickView>
 #include <QString>
 #include <QStringList>
@@ -44,6 +48,59 @@
 #endif
 
 #include "qt/core/api/oxideqglobal.h"
+
+class TestNetworkAccessManager : public QNetworkAccessManager {
+ public:
+  TestNetworkAccessManager(const QDir& test_dir, QObject* parent)
+      : QNetworkAccessManager(parent),
+        test_dir_(test_dir) {}
+  virtual ~TestNetworkAccessManager() {}
+
+  QNetworkReply* createRequest(QNetworkAccessManager::Operation op,
+                               const QNetworkRequest& req,
+                               QIODevice* outgoing_data) Q_DECL_FINAL;
+
+ private:
+  QDir test_dir_;
+};
+
+QNetworkReply* TestNetworkAccessManager::createRequest(
+    QNetworkAccessManager::Operation op,
+    const QNetworkRequest& req,
+    QIODevice* outgoing_data) {
+  if (req.url().scheme() == QLatin1String("test")) {
+    if (!req.url().host().isEmpty()) {
+      return NULL;
+    }
+
+    QUrl redirect;
+    redirect.setScheme(QLatin1String("file"));
+
+    QFileInfo fi(test_dir_, req.url().path().mid(1));
+    redirect.setPath(fi.filePath());
+
+    QNetworkRequest r(req);
+    r.setUrl(redirect);
+
+    return QNetworkAccessManager::createRequest(op, r, outgoing_data);
+  }
+
+  return QNetworkAccessManager::createRequest(op, req, outgoing_data);
+}
+
+class TestNetworkAccessManagerFactory : public QQmlNetworkAccessManagerFactory {
+ public:
+  TestNetworkAccessManagerFactory(const QDir& test_dir)
+      : test_dir_(test_dir) {}
+  virtual ~TestNetworkAccessManagerFactory() {}
+
+  QNetworkAccessManager* create(QObject* parent) Q_DECL_FINAL {
+    return new TestNetworkAccessManager(test_dir_, parent);
+  }
+
+ private:
+  QDir test_dir_;
+};
 
 // We don't use quick_test_main() here for running the qmltest binary as we want to
 // be able to have a per-test datadir. However, some of quick_test_main() is
@@ -236,15 +293,18 @@ int main(int argc, char** argv) {
     data_dir = QDir::currentPath();
   }
 
+  QDir test_dir;
   QStringList files;
 
   QFileInfo test_path_info(test_path);
   if (test_path_info.isFile()) {
+    test_dir = test_path_info.dir();
     if (!test_path.endsWith(".qml")) {
       qFatal("Test file '%s' does not end with '.qml'", qPrintable(test_path));
     }
     files.append(test_path);
   } else if (test_path_info.isDir()) {
+    test_dir.cd(test_path);
     Q_ASSERT(test_path_info.isDir());
     const QStringList filters(QStringLiteral("tst_*.qml"));
     QDirIterator iter(test_path, filters, QDir::Files,
@@ -266,7 +326,12 @@ int main(int argc, char** argv) {
       "Qt.test.qtestroot", 1, 0, "QTestRootObject", GetTestRootObject);
 
   QEventLoop event_loop;
-  QQuickView view;
+
+  TestNetworkAccessManagerFactory nam_factory(test_dir);
+  QQmlEngine engine;
+  engine.setNetworkAccessManagerFactory(&nam_factory);
+
+  QQuickView view(&engine, NULL);
   view.setFlags(Qt::Window | Qt::WindowSystemMenuHint |
                 Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint |
                 Qt::WindowCloseButtonHint);

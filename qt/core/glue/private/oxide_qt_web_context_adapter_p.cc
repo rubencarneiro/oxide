@@ -36,6 +36,7 @@
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/core/api/oxideqstoragepermissionrequest_p.h"
+#include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_user_script_master.h"
@@ -216,6 +217,19 @@ bool WebContextAdapterPrivate::GetUserAgentOverride(const GURL& url,
   return overridden;
 }
 
+bool WebContextAdapterPrivate::IsCustomProtocolHandlerRegistered(
+    const std::string& scheme) const {
+  base::AutoLock lock(url_schemes_lock_);
+  return allowed_extra_url_schemes_.find(scheme) != allowed_extra_url_schemes_.end();
+}
+
+oxide::URLRequestDelegatedJob*
+WebContextAdapterPrivate::CreateCustomURLRequestJob(
+    net::URLRequest* request,
+    net::NetworkDelegate* network_delegate) {
+  return new URLRequestDelegatedJob(this, request, network_delegate);
+}
+
 WebContextAdapterPrivate::~WebContextAdapterPrivate() {}
 
 // static
@@ -387,6 +401,12 @@ void WebContextAdapterPrivate::DeletedCookiesCallback(int request_id,
   }
 
   adapter->CookiesDeleted(request_id, num_deleted);
+}
+
+void WebContextAdapterPrivate::SetAllowedExtraURLSchemes(
+    const std::set<std::string>& schemes) {
+  base::AutoLock lock(url_schemes_lock_);
+  allowed_extra_url_schemes_ = schemes;
 }
 
 WebContextAdapter* WebContextAdapterPrivate::GetAdapter() const {

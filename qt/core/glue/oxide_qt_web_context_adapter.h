@@ -28,6 +28,7 @@
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
+class QNetworkAccessManager;
 class QOpenGLContext;
 class QNetworkCookie;
 QT_END_NAMESPACE
@@ -125,6 +126,11 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   QStringList hostMappingRules() const;
   void setHostMappingRules(const QStringList& rules);
 
+  QStringList allowedExtraUrlSchemes() const;
+  void setAllowedExtraUrlSchemes(const QStringList& schemes);
+
+  virtual QNetworkAccessManager* GetCustomNetworkAccessManager();
+
  protected:
   WebContextAdapter(QObject* q);
 
@@ -140,6 +146,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually
   WebContextAdapterPrivate* priv;
+
+  QStringList allowed_extra_url_schemes_;
 };
 
 } // namespace qt

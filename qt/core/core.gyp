@@ -89,6 +89,8 @@
         'browser/oxide_qt_location_provider.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
+        'browser/oxide_qt_url_request_delegated_job.cc',
+        'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_web_frame.cc',
         'browser/oxide_qt_web_frame.h',
         'browser/oxide_qt_web_popup_menu.cc',
@@ -106,6 +108,11 @@
         {
           'action_name': 'oxide_qt_location_provider.moc',
           'moc_input': 'browser/oxide_qt_location_provider.cc',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_qt_url_request_delegated_job.moc',
+          'moc_input': 'browser/oxide_qt_url_request_delegated_job.cc',
           'includes': [ 'moc.gypi' ]
         },
         {

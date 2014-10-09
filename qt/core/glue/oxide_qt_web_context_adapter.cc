@@ -417,6 +417,25 @@ void WebContextAdapter::setHostMappingRules(const QStringList& rules) {
   priv->construct_props_->host_mapping_rules = list;
 }
 
+QStringList WebContextAdapter::allowedExtraUrlSchemes() const {
+  return allowed_extra_url_schemes_;
+}
+
+void WebContextAdapter::setAllowedExtraUrlSchemes(const QStringList& schemes) {
+  allowed_extra_url_schemes_ = schemes;
+
+  std::set<std::string> set;
+  for (int i = 0; i < schemes.size(); ++i) {
+    set.insert(schemes.at(i).toStdString());
+  }
+
+  priv->SetAllowedExtraURLSchemes(set);
+}
+
+QNetworkAccessManager* WebContextAdapter::GetCustomNetworkAccessManager() {
+  return NULL;
+}
+
 WebContextAdapter::WebContextAdapter(QObject* q)
     : AdapterBase(q),
       priv(WebContextAdapterPrivate::Create(this)) {

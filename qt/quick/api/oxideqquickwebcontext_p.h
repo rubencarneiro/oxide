@@ -27,8 +27,6 @@
 #include <QtQml>
 #include <QUrl>
 
-QT_USE_NAMESPACE
-
 class OxideQQuickCookieManager;
 class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickUserScript;
@@ -63,6 +61,8 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   Q_PROPERTY(OxideQQuickCookieManager* cookieManager READ cookieManager CONSTANT)
 
   Q_PROPERTY(QStringList hostMappingRules READ hostMappingRules WRITE setHostMappingRules NOTIFY hostMappingRulesChanged)
+
+  Q_PROPERTY(QStringList allowedExtraUrlSchemes READ allowedExtraUrlSchemes WRITE setAllowedExtraUrlSchemes NOTIFY allowedExtraUrlSchemesChanged)
 
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
@@ -145,6 +145,9 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   QStringList hostMappingRules() const;
   void setHostMappingRules(const QStringList& rules);
 
+  QStringList allowedExtraUrlSchemes() const;
+  void setAllowedExtraUrlSchemes(const QStringList& schemes);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -162,6 +165,7 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   void devtoolsPortChanged();
   void devtoolsBindIpChanged();
   void hostMappingRulesChanged();
+  void allowedExtraUrlSchemesChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());
