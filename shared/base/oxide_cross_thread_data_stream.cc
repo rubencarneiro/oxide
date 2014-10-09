@@ -224,7 +224,7 @@ char* CrossThreadDataStream::PeekReadData(int* returned_size) {
   if (buffer_end_ > buffer_start_) {
     *returned_size = buffer_end_ - buffer_start_;
   } else {
-    *returned_size = buffer_end_ - buffer_size_;
+    *returned_size = buffer_size_ - buffer_end_;
   }
 
   return buffer_ + buffer_start_;

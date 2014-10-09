@@ -59,7 +59,7 @@ QNetworkRequest::Priority CalculateQNetworkRequestPriority(
 }
 
 int CalculateNetworkError(QNetworkReply::NetworkError code) {
-  // TODO: Actually calculate error
+  // TODO: Actually calculate an appropriate error
   return net::ERR_FAILED;
 }
 
@@ -395,7 +395,9 @@ void URLRequestDelegatedJob::OnSslErrors(const QList<QSslError>& errors) {
     return;
   }
 
-  // TODO: Use NotifySSLCertificateError here
+  // TODO: Use NotifySSLCertificateError here, although this doesn't matter
+  //  too much. As we're not able to allow this error asynchronously with
+  //  Qt, all errors are fatal. Therefore, the effect is the same anyway
   NotifyDone(net::URLRequestStatus(net::URLRequestStatus::FAILED,
                                    net::ERR_FAILED));
 }
