@@ -24,11 +24,11 @@
 #include "content/public/browser/page_navigator.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/renderer_preferences.h"
 #include "content/public/common/web_preferences.h"
 #include "ui/base/window_open_disposition.h"
-#include "ui/shell_dialogs/selected_file_info.h"
 
 #include "shared/common/oxide_content_client.h"
 
@@ -269,7 +269,7 @@ void WebViewContentsHelper::RunFileChooser(
   DCHECK_VALID_SOURCE_CONTENTS
 
   if (!delegate_ || !delegate_->RunFileChooser(params)) {
-    std::vector<ui::SelectedFileInfo> empty;
+    std::vector<content::FileChooserFileInfo> empty;
     source->GetRenderViewHost()->FilesSelectedInChooser(empty, params.mode);
   }
 }
