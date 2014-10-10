@@ -49,15 +49,14 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
 
   web_contents_->SetUserData(kWebViewContentsHelperKey, this);
 
-  // This must come before SetUserAgentOverride, as we rely on that to
-  // to sync this to the renderer, if it already exists
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
   renderer_prefs->browser_handles_non_local_top_level_requests = true;
 
-  // See https://launchpad.net/bugs/1279900 and the comment in
-  // HttpUserAgentSettings::GetUserAgent()
-  web_contents_->SetUserAgentOverride(context_->GetUserAgent());
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (rvh) {
+    rvh->SyncRendererPrefs();
+  }
 }
 
 WebViewContentsHelper::~WebViewContentsHelper() {
