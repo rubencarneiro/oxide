@@ -16,7 +16,7 @@ diff -r d66c811595af gpu/config/gpu_info_collector_linux.cc
 diff -r d66c811595af gpu/config/software_rendering_list_json.cc
 --- a/gpu/config/software_rendering_list_json.cc	Sat Sep 20 00:25:11 2014 +1000
 +++ b/gpu/config/software_rendering_list_json.cc	Sat Sep 20 12:02:17 2014 +1000
-@@ -245,6 +245,13 @@
+@@ -245,6 +245,12 @@
        "os": {
          "type": "linux"
        },
