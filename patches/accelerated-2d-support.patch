@@ -22,9 +22,8 @@ diff -r d66c811595af gpu/config/software_rendering_list_json.cc
        },
 +      "exceptions": [
 +        {
-+          "gl_ws_vendor": "Android",
 +          "gl_vendor": "Qualcomm",
-+          "gl_renderer": "Adreno (TM) 320"
++          "gl_renderer": "Adreno.*320"
 +        }
 +      ],
        "features": [
