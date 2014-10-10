@@ -78,6 +78,7 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/gl/oxide_shared_gl_context.h"
 
+#include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_file_picker.h"
@@ -486,6 +487,85 @@ void WebView::NotifyWebPreferencesDestroyed() {
   OnWebPreferencesDestroyed();
 }
 
+void WebView::EvictCurrentFrame() {
+  current_compositor_frame_ = NULL;
+  OnEvictCurrentFrame();
+}
+
+void WebView::UpdateFrameMetadata(
+    const cc::CompositorFrameMetadata& metadata) {
+  bool has_mobile_viewport = HasMobileViewport(metadata);
+  bool has_fixed_page_scale = HasFixedPageScale(metadata);
+  gesture_provider_->SetDoubleTapSupportForPageEnabled(
+      !has_fixed_page_scale && !has_mobile_viewport);
+
+  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
+  compositor_frame_metadata_ = metadata;
+
+  OnFrameMetadataUpdated(old);
+}
+
+void WebView::ProcessAckedTouchEvent(bool consumed) {
+  gesture_provider_->OnTouchEventAck(consumed);
+}
+
+void WebView::UpdateCursor(const content::WebCursor& cursor) {
+  OnUpdateCursor(cursor);
+}
+
+void WebView::TextInputStateChanged(ui::TextInputType type,
+                                    bool show_ime_if_needed) {
+  if (type == text_input_type_ &&
+      show_ime_if_needed == show_ime_if_needed_) {
+    return;
+  }
+
+  text_input_type_ = type;
+  show_ime_if_needed_ = show_ime_if_needed;
+
+  OnTextInputStateChanged();
+}
+
+void WebView::FocusedNodeChanged(bool is_editable_node) {
+  focused_node_is_editable_ = is_editable_node;
+  OnFocusedNodeChanged();
+
+  did_scroll_focused_editable_node_into_view_ = false;
+  MaybeResetAutoScrollTimer();
+}
+
+void WebView::ImeCancelComposition() {
+  OnImeCancelComposition();
+}
+
+void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
+                                     size_t selection_cursor_position,
+                                     size_t selection_anchor_position) {
+  if (caret_rect == caret_rect_ &&
+      selection_cursor_position == selection_cursor_position_ &&
+      selection_anchor_position == selection_anchor_position_) {
+    return;
+  }
+
+  caret_rect_ = caret_rect;
+  selection_cursor_position_ = selection_cursor_position;
+  selection_anchor_position_ = selection_anchor_position;
+
+  OnSelectionBoundsChanged();
+}
+
+void WebView::SelectionChanged() {
+  OnSelectionChanged();
+}
+
+WebView* WebView::GetWebView() {
+  return this;
+}
+
+Compositor* WebView::GetCompositor() const {
+  return compositor_.get();
+}
+
 content::WebContents* WebView::OpenURLFromTab(
     content::WebContents* source,
     const content::OpenURLParams& params) {
@@ -803,10 +883,10 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 
   if (old_host && old_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetWebView(NULL);
+    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(NULL);
   }
   if (new_host && new_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(new_host->GetView())->SetWebView(this);
+    static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
   }
 }
 
@@ -1027,6 +1107,10 @@ void WebView::OnEvictCurrentFrame() {}
 void WebView::OnTextInputStateChanged() {}
 void WebView::OnFocusedNodeChanged() {}
 void WebView::OnSelectionBoundsChanged() {}
+void WebView::OnImeCancelComposition() {}
+void WebView::OnSelectionChanged() {}
+
+void WebView::OnUpdateCursor(const content::WebCursor& cursor) {}
 
 void WebView::OnSecurityStatusChanged(const SecurityStatus& old) {}
 bool WebView::OnCertificateError(
@@ -1094,7 +1178,7 @@ WebView::~WebView() {
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetWebView(NULL);
+    rwhv->SetDelegate(NULL);
   }
 
   initial_preferences_ = NULL;
@@ -1121,7 +1205,7 @@ void WebView::Init(Params* params) {
 
     RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
     if (rwhv) {
-      rwhv->SetWebView(this);
+      rwhv->SetDelegate(this);
     }
 
     // Sync WebContents with the state of the WebView
@@ -1745,71 +1829,6 @@ void WebView::DidCommitCompositorFrame() {
                                         previous_compositor_frames_);
   }
 }
-
-void WebView::EvictCurrentFrame() {
-  current_compositor_frame_ = NULL;
-  OnEvictCurrentFrame();
-}
-
-void WebView::UpdateFrameMetadata(
-    const cc::CompositorFrameMetadata& metadata) {
-  bool has_mobile_viewport = HasMobileViewport(metadata);
-  bool has_fixed_page_scale = HasFixedPageScale(metadata);
-  gesture_provider_->SetDoubleTapSupportForPageEnabled(
-      !has_fixed_page_scale && !has_mobile_viewport);
-
-  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
-  compositor_frame_metadata_ = metadata;
-
-  OnFrameMetadataUpdated(old);
-}
-
-void WebView::ProcessAckedTouchEvent(bool consumed) {
-  gesture_provider_->OnTouchEventAck(consumed);
-}
-
-void WebView::UpdateCursor(const content::WebCursor& cursor) {}
-
-void WebView::TextInputStateChanged(ui::TextInputType type,
-                                    bool show_ime_if_needed) {
-  if (type == text_input_type_ &&
-      show_ime_if_needed == show_ime_if_needed_) {
-    return;
-  }
-
-  text_input_type_ = type;
-  show_ime_if_needed_ = show_ime_if_needed;
-
-  OnTextInputStateChanged();
-}
-
-void WebView::FocusedNodeChanged(bool is_editable_node) {
-  focused_node_is_editable_ = is_editable_node;
-  OnFocusedNodeChanged();
-
-  did_scroll_focused_editable_node_into_view_ = false;
-  MaybeResetAutoScrollTimer();
-}
-
-void WebView::ImeCancelComposition() {}
-
-void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
-                                     size_t selection_cursor_position,
-                                     size_t selection_anchor_position) {
-  if (caret_rect == caret_rect_ &&
-      selection_cursor_position == selection_cursor_position_ &&
-      selection_anchor_position == selection_anchor_position_) {
-    return;
-  }
-
-  caret_rect_ = caret_rect;
-  selection_cursor_position_ = selection_cursor_position;
-  selection_anchor_position_ = selection_anchor_position;
-
-  OnSelectionBoundsChanged();
-}
-
-void WebView::SelectionChanged() {}
 
 bool WebView::IsInputPanelVisible() const {
   return false;

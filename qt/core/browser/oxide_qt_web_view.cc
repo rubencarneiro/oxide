@@ -326,53 +326,6 @@ void WebView::Init(oxide::WebView::Params* params) {
   adapter_->Initialized();
 }
 
-void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  content::WebCursor::CursorInfo cursor_info;
-
-  cursor.GetCursorInfo(&cursor_info);
-  if (cursor.IsCustom()) {
-    QImage::Format format =
-        QImageFormatFromSkImageInfo(cursor_info.custom_image.info());
-    if (format == QImage::Format_Invalid) {
-      return;
-    }
-    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
-                        cursor_info.custom_image.width(),
-                        cursor_info.custom_image.height(),
-                        cursor_info.custom_image.rowBytes(),
-                        format);
-
-    QPixmap cursor_pixmap;
-    if (cursor_pixmap.convertFromImage(cursor_image)) {
-      adapter_->UpdateCursor(QCursor(cursor_pixmap));
-    }
-  } else {
-    adapter_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
-  }
-}
-
-void WebView::ImeCancelComposition() {
-  if (has_input_method_state_) {
-    QGuiApplication::inputMethod()->reset();
-  }
-}
-
-void WebView::SelectionChanged() {
-  if (!HasFocus()) {
-    return;
-  }
-
-  QGuiApplication::inputMethod()->update(
-      static_cast<Qt::InputMethodQueries>(
-        Qt::ImSurroundingText
-        | Qt::ImCurrentSelection
-#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
-        | Qt::ImTextBeforeCursor
-        | Qt::ImTextAfterCursor
-#endif
-      ));
-}
-
 blink::WebScreenInfo WebView::GetScreenInfo() const {
   QScreen* screen = adapter_->GetScreen();
   if (!screen) {
@@ -803,6 +756,53 @@ void WebView::OnSelectionBoundsChanged() {
         | Qt::ImTextAfterCursor
 #endif
       ));
+}
+
+void WebView::OnImeCancelComposition() {
+  if (has_input_method_state_) {
+    QGuiApplication::inputMethod()->reset();
+  }
+}
+
+void WebView::OnSelectionChanged() {
+  if (!HasFocus()) {
+    return;
+  }
+
+  QGuiApplication::inputMethod()->update(
+      static_cast<Qt::InputMethodQueries>(
+        Qt::ImSurroundingText
+        | Qt::ImCurrentSelection
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+        | Qt::ImTextBeforeCursor
+        | Qt::ImTextAfterCursor
+#endif
+      ));
+}
+
+void WebView::OnUpdateCursor(const content::WebCursor& cursor) {
+  content::WebCursor::CursorInfo cursor_info;
+
+  cursor.GetCursorInfo(&cursor_info);
+  if (cursor.IsCustom()) {
+    QImage::Format format =
+        QImageFormatFromSkImageInfo(cursor_info.custom_image.info());
+    if (format == QImage::Format_Invalid) {
+      return;
+    }
+    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
+                        cursor_info.custom_image.width(),
+                        cursor_info.custom_image.height(),
+                        cursor_info.custom_image.rowBytes(),
+                        format);
+
+    QPixmap cursor_pixmap;
+    if (cursor_pixmap.convertFromImage(cursor_image)) {
+      adapter_->UpdateCursor(QCursor(cursor_pixmap));
+    }
+  } else {
+    adapter_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
+  }
 }
 
 void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {

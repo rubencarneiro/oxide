@@ -77,10 +77,6 @@ class WebView FINAL : public oxide::WebView {
   // WebView implementation
   void Init(oxide::WebView::Params* params) FINAL;
 
-  void UpdateCursor(const content::WebCursor& cursor) FINAL;
-  void ImeCancelComposition() FINAL;
-  void SelectionChanged() FINAL;
-
   blink::WebScreenInfo GetScreenInfo() const FINAL;
   gfx::Rect GetViewBoundsPix() const FINAL;
   bool IsVisible() const FINAL;
@@ -169,6 +165,10 @@ class WebView FINAL : public oxide::WebView {
   void OnTextInputStateChanged() FINAL;
   void OnFocusedNodeChanged() FINAL;
   void OnSelectionBoundsChanged() FINAL;
+  void OnImeCancelComposition() FINAL;
+  void OnSelectionChanged() FINAL;
+
+  void OnUpdateCursor(const content::WebCursor& cursor) FINAL;
 
   void OnSecurityStatusChanged(const oxide::SecurityStatus& old) FINAL;
   bool OnCertificateError(

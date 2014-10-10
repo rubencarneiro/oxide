@@ -22,9 +22,8 @@
 #include <string>
 #include <vector>
 
-#include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/memory/linked_ptr.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
@@ -47,10 +46,10 @@
 #include "ui/gfx/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
-#include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
+#include "shared/browser/oxide_render_widget_host_view_delegate.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
@@ -143,6 +142,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                 private GestureProviderClient,
                 private content::NotificationObserver,
                 private WebViewContentsHelperDelegate,
+                private RenderWidgetHostViewDelegate,
                 private content::WebContentsDelegate,
                 private content::WebContentsObserver {
  public:
@@ -270,26 +270,9 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       const std::string& cookies,
       const std::string& referrer);
 
-  Compositor* compositor() const { return compositor_.get(); }
-
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
 
-  // Interface with RWHV ========
-  void EvictCurrentFrame();
-  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata);
-
-  void ProcessAckedTouchEvent(bool consumed);
-
-  virtual void UpdateCursor(const content::WebCursor& cursor);
-  void TextInputStateChanged(ui::TextInputType type,
-                             bool show_ime_if_needed);
-  void FocusedNodeChanged(bool is_editable_node);
-  virtual void ImeCancelComposition();
-  void SelectionBoundsChanged(const gfx::Rect& caret_rect,
-                              size_t selection_cursor_position,
-                              size_t selection_anchor_position);
-  virtual void SelectionChanged();
   // ============================
 
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
@@ -362,6 +345,22 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   // WebViewContentsHelperDelegate implementation
   void NotifyWebPreferencesDestroyed() FINAL;
 
+  // RenderWidgetHostViewDelegate implementation
+  void EvictCurrentFrame() FINAL;
+  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata) FINAL;
+  void ProcessAckedTouchEvent(bool consumed) FINAL;
+  void UpdateCursor(const content::WebCursor& cursor) FINAL;
+  void TextInputStateChanged(ui::TextInputType type,
+                             bool show_ime_if_needed) FINAL;
+  void FocusedNodeChanged(bool is_editable_node) FINAL;
+  void ImeCancelComposition() FINAL;
+  void SelectionBoundsChanged(const gfx::Rect& caret_rect,
+                              size_t selection_cursor_position,
+                              size_t selection_anchor_position) FINAL;
+  void SelectionChanged() FINAL;
+  WebView* GetWebView() FINAL;
+  Compositor* GetCompositor() const FINAL;
+
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
                                        const content::OpenURLParams& params) FINAL;
@@ -407,56 +406,43 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   // content::WebContentsObserver implementation
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) FINAL;
-
   void RenderProcessGone(base::TerminationStatus status) FINAL;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) FINAL;
-
   void DidStartProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       bool is_error_page,
       bool is_iframe_srcdoc) FINAL;
-
   void DidCommitProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& url,
       ui::PageTransition transition_type) FINAL;
-
   void DidFailProvisionalLoad(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       int error_code,
       const base::string16& error_description) FINAL;
-
   void DidNavigateMainFrame(
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) FINAL;
-
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
                      const GURL& validated_url) FINAL;
   void DidFailLoad(content::RenderFrameHost* render_frame_host,
                    const GURL& validated_url,
                    int error_code,
                    const base::string16& error_description) FINAL;
-
   void DidGetRedirectForResourceRequest(
       content::RenderViewHost* render_view_host,
       const content::ResourceRedirectDetails& details) FINAL;
-
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) FINAL;
-
   void DidStartLoading(content::RenderViewHost* render_view_host) FINAL;
   void DidStopLoading(content::RenderViewHost* render_view_host) FINAL;
-
   void FrameDetached(content::RenderFrameHost* render_frame_host) FINAL;
-
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
-
   void DidUpdateFaviconURL(
       const std::vector<content::FaviconURL>& candidates) FINAL;
-
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) FINAL;
 
@@ -531,6 +517,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnTextInputStateChanged();
   virtual void OnFocusedNodeChanged();
   virtual void OnSelectionBoundsChanged();
+  virtual void OnImeCancelComposition();
+  virtual void OnSelectionChanged();
+
+  virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
   virtual void OnSecurityStatusChanged(const SecurityStatus& old);
   virtual bool OnCertificateError(

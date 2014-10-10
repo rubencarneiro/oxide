@@ -285,6 +285,7 @@
         'browser/oxide_renderer_frame_evictor.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
+        'browser/oxide_render_widget_host_view_delegate.h',
         'browser/oxide_resource_dispatcher_host_delegate.cc',
         'browser/oxide_resource_dispatcher_host_delegate.h',
         'browser/oxide_script_message_dispatcher_browser.cc',

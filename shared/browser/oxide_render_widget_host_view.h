@@ -47,6 +47,7 @@ class RenderWidgetHostImpl;
 
 namespace oxide {
 
+class RenderWidgetHostViewDelegate;
 class WebView;
 
 class RenderWidgetHostView FINAL :
@@ -61,7 +62,7 @@ class RenderWidgetHostView FINAL :
   content::RenderWidgetHostImpl* host() const { return host_; }
 
   void CompositorDidCommit();
-  void SetWebView(WebView* view);
+  void SetDelegate(RenderWidgetHostViewDelegate* delegate);
 
   const base::string16& selection_text() const {
     return selection_text_;
@@ -187,7 +188,7 @@ class RenderWidgetHostView FINAL :
 
   content::RenderWidgetHostImpl* host_;
 
-  WebView* web_view_;
+  RenderWidgetHostViewDelegate* delegate_;
 
   gfx::GLSurfaceHandle shared_surface_handle_;
 
