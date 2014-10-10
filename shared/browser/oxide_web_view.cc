@@ -45,12 +45,14 @@
 #include "content/public/browser/notification_service.h"
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
+#include "content/public/browser/page_navigator.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/resource_request_details.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/favicon_url.h"
+#include "content/public/common/file_chooser_params.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
 #include "content/public/common/web_preferences.h"
@@ -64,6 +66,7 @@
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/range/range.h"
 #include "ui/gl/gl_implementation.h"
+#include "ui/shell_dialogs/selected_file_info.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
@@ -78,12 +81,15 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_file_picker.h"
+#include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
+
+#define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
 
 namespace oxide {
 
@@ -245,6 +251,10 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
 base::LazyInstance<std::vector<WebView*> > g_all_web_views;
 
+}
+
+void NewContentsDeleter::operator()(content::WebContents* ptr) {
+  base::MessageLoop::current()->DeleteSoon(FROM_HERE, ptr);
 }
 
 WebViewIterator::WebViewIterator(const std::vector<WebView*>& views) {
@@ -472,7 +482,15 @@ void WebView::Observe(int type,
   }
 }
 
-content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
+void WebView::NotifyWebPreferencesDestroyed() {
+  OnWebPreferencesDestroyed();
+}
+
+content::WebContents* WebView::OpenURLFromTab(
+    content::WebContents* source,
+    const content::OpenURLParams& params) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
   if (params.disposition != CURRENT_TAB &&
       params.disposition != NEW_FOREGROUND_TAB &&
       params.disposition != NEW_BACKGROUND_TAB &&
@@ -576,7 +594,10 @@ content::WebContents* WebView::OpenURL(const content::OpenURLParams& params) {
   return new_view->GetWebContents();
 }
 
-void WebView::NavigationStateChanged(content::InvalidateTypes changed_flags) {
+void WebView::NavigationStateChanged(const content::WebContents* source,
+                                     content::InvalidateTypes changed_flags) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
   if (changed_flags & content::INVALIDATE_TYPE_URL) {
     OnURLChanged();
   }
@@ -591,8 +612,8 @@ void WebView::NavigationStateChanged(content::InvalidateTypes changed_flags) {
   }
 }
 
-void WebView::SSLStateChanged() {
-  DCHECK(web_contents_);
+void WebView::VisibleSSLStateChanged(const content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
 
   content::NavigationEntry* entry =
       web_contents_->GetController().GetVisibleEntry();
@@ -606,9 +627,18 @@ void WebView::SSLStateChanged() {
   OnSecurityStatusChanged(old_status);
 }
 
-bool WebView::ShouldCreateWebContents(const GURL& target_url,
-                                      WindowOpenDisposition disposition,
-                                      bool user_gesture) {
+bool WebView::ShouldCreateWebContents(
+    content::WebContents* source,
+    int route_id,
+    WindowContainerType window_container_type,
+    const base::string16& frame_name,
+    const GURL& target_url,
+    const std::string& partition_id,
+    content::SessionStorageNamespace* session_storage_namespace,
+    WindowOpenDisposition disposition,
+    bool user_gesture) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
   if (disposition != NEW_FOREGROUND_TAB &&
       disposition != NEW_BACKGROUND_TAB &&
       disposition != NEW_POPUP &&
@@ -627,55 +657,109 @@ bool WebView::ShouldCreateWebContents(const GURL& target_url,
                                 user_gesture);
 }
 
-bool WebView::CreateNewViewAndAdoptWebContents(
-    ScopedNewContentsHolder contents,
-    WindowOpenDisposition disposition,
-    const gfx::Rect& initial_pos) {
-  WebView* new_view = CreateNewWebView(initial_pos, disposition);
+void WebView::HandleKeyboardEvent(
+    content::WebContents* source,
+    const content::NativeWebKeyboardEvent& event) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  OnUnhandledKeyboardEvent(event);
+}
+
+void WebView::WebContentsCreated(content::WebContents* source,
+                                 int source_frame_id,
+                                 const base::string16& frame_name,
+                                 const GURL& target_url,
+                                 content::WebContents* new_contents) {
+  DCHECK_VALID_SOURCE_CONTENTS
+  DCHECK(!WebView::FromWebContents(new_contents));
+
+  WebViewContentsHelper::Attach(new_contents, web_contents());
+}
+
+void WebView::AddNewContents(content::WebContents* source,
+                             content::WebContents* new_contents,
+                             WindowOpenDisposition disposition,
+                             const gfx::Rect& initial_pos,
+                             bool user_gesture,
+                             bool* was_blocked) {
+  DCHECK_VALID_SOURCE_CONTENTS
+  DCHECK(disposition == NEW_FOREGROUND_TAB ||
+         disposition == NEW_BACKGROUND_TAB ||
+         disposition == NEW_POPUP ||
+         disposition == NEW_WINDOW) << "Invalid disposition";
+  DCHECK_EQ(GetBrowserContext(),
+            BrowserContext::FromContent(new_contents->GetBrowserContext()));
+
+  if (was_blocked) {
+    *was_blocked = true;
+  }
+
+  ScopedNewContentsHolder contents(new_contents);
+
+  WebView* new_view = CreateNewWebView(initial_pos,
+                                       user_gesture ? disposition : NEW_POPUP);
   if (!new_view) {
-    return false;
+    return;
   }
 
   InitCreatedWebView(new_view, contents.Pass());
 
-  return true;
+  if (was_blocked) {
+    *was_blocked = false;
+  }
 }
 
-void WebView::LoadProgressChanged(double progress) {
+void WebView::LoadProgressChanged(content::WebContents* source,
+                                  double progress) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  // XXX: Is there a way to update this when we adopt a WebContents?
   OnLoadProgressChanged(progress);
 }
 
-void WebView::AddMessageToConsole(int32 level,
+bool WebView::AddMessageToConsole(content::WebContents* source,
+                                  int32 level,
                                   const base::string16& message,
                                   int32 line_no,
                                   const base::string16& source_id) {
-  OnAddMessageToConsole(level, message, line_no, source_id);
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  return OnAddMessageToConsole(level, message, line_no, source_id);
 }
 
-bool WebView::RunFileChooser(const content::FileChooserParams& params) {
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+  return JavaScriptDialogManager::GetInstance();
+}
+
+void WebView::RunFileChooser(content::WebContents* source,
+                             const content::FileChooserParams& params) {
+  DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!active_file_picker_);
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  FilePicker* filePicker = CreateFilePicker(rvh);
-  if (!filePicker) {
-    return false;
-  }
-  active_file_picker_ = filePicker->AsWeakPtr();
-  active_file_picker_->Run(params);
 
-  return true;
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  FilePicker* file_picker = CreateFilePicker(rvh);
+  if (!file_picker) {
+    std::vector<ui::SelectedFileInfo> empty;
+    rvh->FilesSelectedInChooser(empty, params.mode);
+    return;
+  }
+
+  active_file_picker_ = file_picker->AsWeakPtr();
+  active_file_picker_->Run(params);
 }
 
-void WebView::ToggleFullscreenMode(bool enter) {
+void WebView::ToggleFullscreenModeForTab(content::WebContents* source,
+                                         bool enter) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
   OnToggleFullscreenMode(enter);
 }
 
-void WebView::NotifyWebPreferencesDestroyed() {
-  OnWebPreferencesDestroyed();
-}
+bool WebView::IsFullscreenForTabOrPending(
+    const content::WebContents* source) const {
+  DCHECK_VALID_SOURCE_CONTENTS
 
-void WebView::HandleUnhandledKeyboardEvent(
-    const content::NativeWebKeyboardEvent& event) {
-  OnUnhandledKeyboardEvent(event);
+  return IsFullscreen();
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
@@ -791,6 +875,16 @@ void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
   }
 
   DispatchLoadFailed(validated_url, error_code, error_description);
+}
+
+void WebView::DidGetRedirectForResourceRequest(
+      content::RenderViewHost* render_view_host,
+      const content::ResourceRedirectDetails& details) {
+  if (details.resource_type != content::RESOURCE_TYPE_MAIN_FRAME) {
+    return;
+  }
+
+  OnLoadRedirected(details.new_url, details.original_url);
 }
 
 void WebView::NavigationEntryCommitted(
@@ -1069,6 +1163,7 @@ void WebView::Init(Params* params) {
       WebViewContentsHelper::FromWebContents(web_contents_.get());
   web_contents_helper_->SetDelegate(this);
 
+  web_contents_->SetDelegate(this);
   web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
 
   WebContentsObserver::Observe(web_contents_.get());
@@ -1686,16 +1781,6 @@ void WebView::TextInputStateChanged(ui::TextInputType type,
   show_ime_if_needed_ = show_ime_if_needed;
 
   OnTextInputStateChanged();
-}
-
-void WebView::DidGetRedirectForResourceRequest(
-      content::RenderViewHost* render_view_host,
-      const content::ResourceRedirectDetails& details) {
-  if (details.resource_type != content::RESOURCE_TYPE_MAIN_FRAME) {
-    return;
-  }
-
-  OnLoadRedirected(details.new_url, details.original_url);
 }
 
 void WebView::FocusedNodeChanged(bool is_editable_node) {

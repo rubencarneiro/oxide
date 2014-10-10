@@ -36,6 +36,7 @@
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
+#include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
 #include "content/public/common/resource_type.h"
@@ -109,6 +110,12 @@ class WebPreferences;
 class WebView;
 class WebViewContentsHelper;
 
+struct NewContentsDeleter {
+  void operator()(content::WebContents* ptr);
+};
+
+typedef scoped_ptr<content::WebContents, NewContentsDeleter> ScopedNewContentsHolder;
+
 class WebViewIterator FINAL {
  public:
   ~WebViewIterator();
@@ -136,6 +143,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                 private GestureProviderClient,
                 private content::NotificationObserver,
                 private WebViewContentsHelperDelegate,
+                private content::WebContentsDelegate,
                 private content::WebContentsObserver {
  public:
   virtual ~WebView();
@@ -352,26 +360,50 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                const content::NotificationDetails& details) FINAL;
 
   // WebViewContentsHelperDelegate implementation
-  content::WebContents* OpenURL(const content::OpenURLParams& params) FINAL;
-  void NavigationStateChanged(content::InvalidateTypes flags) FINAL;
-  void SSLStateChanged() FINAL;
-  bool ShouldCreateWebContents(const GURL& target_url,
-                               WindowOpenDisposition disposition,
-                               bool user_gesture) FINAL;
-  bool CreateNewViewAndAdoptWebContents(
-      ScopedNewContentsHolder contents,
-      WindowOpenDisposition disposition,
-      const gfx::Rect& initial_pos) FINAL;
-  void LoadProgressChanged(double progress) FINAL;
-  void AddMessageToConsole(int32 level,
-                           const base::string16& message,
-                           int32 line_no,
-                           const base::string16& source_id) FINAL;
-  bool RunFileChooser(const content::FileChooserParams& params) FINAL;
-  void ToggleFullscreenMode(bool enter) FINAL;
   void NotifyWebPreferencesDestroyed() FINAL;
-  void HandleUnhandledKeyboardEvent(
-      const content::NativeWebKeyboardEvent& event) FINAL;
+
+  // content::WebContentsDelegate implementation
+  content::WebContents* OpenURLFromTab(content::WebContents* source,
+                                       const content::OpenURLParams& params) FINAL;
+  void NavigationStateChanged(const content::WebContents* source,
+                              content::InvalidateTypes changed_flags) FINAL;
+  void VisibleSSLStateChanged(const content::WebContents* source) FINAL;
+  bool ShouldCreateWebContents(
+      content::WebContents* source,
+      int route_id,
+      WindowContainerType window_container_type,
+      const base::string16& frame_name,
+      const GURL& target_url,
+      const std::string& partition_id,
+      content::SessionStorageNamespace* session_storage_namespace,
+      WindowOpenDisposition disposition,
+      bool user_gesture) FINAL;
+  void HandleKeyboardEvent(content::WebContents* source,
+                           const content::NativeWebKeyboardEvent& event) FINAL;
+  void WebContentsCreated(content::WebContents* source,
+                          int source_frame_id,
+                          const base::string16& frame_name,
+                          const GURL& target_url,
+                          content::WebContents* new_contents) FINAL;
+  void AddNewContents(content::WebContents* source,
+                      content::WebContents* new_contents,
+                      WindowOpenDisposition disposition,
+                      const gfx::Rect& initial_pos,
+                      bool user_gesture,
+                      bool* was_blocked) FINAL;
+  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+  bool AddMessageToConsole(content::WebContents* source,
+               int32 level,
+               const base::string16& message,
+               int32 line_no,
+               const base::string16& source_id) FINAL;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
+  void RunFileChooser(content::WebContents* web_contents,
+                      const content::FileChooserParams& params) FINAL;
+  void ToggleFullscreenModeForTab(content::WebContents* source,
+                                  bool enter) FINAL;
+  bool IsFullscreenForTabOrPending(
+      const content::WebContents* source) const FINAL;
 
   // content::WebContentsObserver implementation
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) FINAL;
@@ -407,6 +439,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                    const GURL& validated_url,
                    int error_code,
                    const base::string16& error_description) FINAL;
+
+  void DidGetRedirectForResourceRequest(
+      content::RenderViewHost* render_view_host,
+      const content::ResourceRedirectDetails& details) FINAL;
 
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) FINAL;
@@ -506,10 +542,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       bool strict_enforcement,
       scoped_ptr<SimplePermissionRequest> request);
   virtual void OnContentBlocked();
-
-  virtual void DidGetRedirectForResourceRequest(
-      content::RenderViewHost* render_view_host,
-      const content::ResourceRedirectDetails& details) FINAL;
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

@@ -18,72 +18,14 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
 
-#include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/message_loop/message_loop.h"
-#include "base/move.h"
-#include "base/strings/string16.h"
-#include "content/public/browser/invalidate_type.h"
-#include "content/public/browser/web_contents.h"
-#include "ui/base/window_open_disposition.h"
-
-class GURL;
-
-namespace content {
-struct FileChooserParams;
-class NativeWebKeyboardEvent;
-struct OpenURLParams;
-class WebContents;
-}
-
-namespace gfx {
-class Rect;
-}
-
 namespace oxide {
 
-struct NewContentsDeleter {
-  inline void operator()(content::WebContents* ptr) {
-    base::MessageLoop::current()->DeleteSoon(FROM_HERE, ptr);
-  }
-};
-
-typedef scoped_ptr<content::WebContents, NewContentsDeleter> ScopedNewContentsHolder;
 
 class WebViewContentsHelperDelegate {
  public:
   virtual ~WebViewContentsHelperDelegate() {}
 
-  virtual content::WebContents* OpenURL(const content::OpenURLParams& params) = 0;
-
-  virtual void NavigationStateChanged(content::InvalidateTypes flags) = 0;
-
-  virtual void SSLStateChanged() = 0;
-
-  virtual bool ShouldCreateWebContents(const GURL& target_url,
-                                       WindowOpenDisposition disposition,
-                                       bool user_gesture) = 0;
-
-  virtual bool CreateNewViewAndAdoptWebContents(
-      ScopedNewContentsHolder contents,
-      WindowOpenDisposition disposition,
-      const gfx::Rect& initial_pos) = 0;
-
-  virtual void LoadProgressChanged(double progress) = 0;
-
-  virtual void AddMessageToConsole(int32 level,
-                                   const base::string16& message,
-                                   int32 line_no,
-                                   const base::string16& source_id) = 0;
-
-  virtual bool RunFileChooser(const content::FileChooserParams& params) = 0;
-
-  virtual void ToggleFullscreenMode(bool enter) = 0;
-
   virtual void NotifyWebPreferencesDestroyed() = 0;
-
-  virtual void HandleUnhandledKeyboardEvent(
-      const content::NativeWebKeyboardEvent& event) = 0;
 };
 
 } // namespace oxide
