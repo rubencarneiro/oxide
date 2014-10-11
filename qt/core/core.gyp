@@ -91,6 +91,8 @@
         'browser/oxide_qt_message_pump.h',
         'browser/oxide_qt_url_request_delegated_job.cc',
         'browser/oxide_qt_url_request_delegated_job.h',
+        'browser/oxide_qt_web_context.cc',
+        'browser/oxide_qt_web_context.h',
         'browser/oxide_qt_web_frame.cc',
         'browser/oxide_qt_web_frame.h',
         'browser/oxide_qt_web_popup_menu.cc',
@@ -102,7 +104,6 @@
         'gl/oxide_gl_implementation.cc',
         'gl/oxide_qt_shared_gl_context.cc',
         'gl/oxide_qt_shared_gl_context.h',
-        'glue/private/oxide_qt_web_context_adapter_p.cc',
       ],
       'actions': [
         {
@@ -198,6 +199,8 @@
         'glue/oxide_qt_adapter_base.h',
         'glue/oxide_qt_file_picker_delegate.cc',
         'glue/oxide_qt_file_picker_delegate.h',
+        'glue/oxide_qt_init.cc',
+        'glue/oxide_qt_init.h',
         'glue/oxide_qt_javascript_dialog_delegate.cc',
         'glue/oxide_qt_javascript_dialog_delegate.h',
         'glue/oxide_qt_script_message_adapter.cc',
@@ -214,7 +217,6 @@
         'glue/oxide_qt_user_script_adapter_p.h',
         'glue/oxide_qt_web_context_adapter.cc',
         'glue/oxide_qt_web_context_adapter.h',
-        'glue/oxide_qt_web_context_adapter_p.h',
         'glue/oxide_qt_web_frame_adapter.cc',
         'glue/oxide_qt_web_frame_adapter.h',
         'glue/oxide_qt_web_popup_menu_delegate.cc',

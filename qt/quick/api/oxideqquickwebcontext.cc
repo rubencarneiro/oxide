@@ -27,16 +27,10 @@
 #include <QThread>
 #include <QtQuickVersion>
 #include <QWeakPointer>
-#if defined(ENABLE_COMPOSITING)
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-#include <QtQuick/private/qsgcontext_p.h>
-#else
-#include <QtGui/private/qopenglcontext_p.h>
-#endif
-#endif
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
+#include "qt/quick/oxide_qquick_init.h"
 
 #include "oxideqquickcookiemanager_p.h"
 #include "oxideqquickuserscript_p.h"
@@ -375,25 +369,6 @@ OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
   return context->d_func();
 }
 
-// static
-void OxideQQuickWebContextPrivate::ensureChromiumStarted() {
-  static bool started = false;
-  if (started) {
-    return;
-  }
-  started = true;
-#if defined(ENABLE_COMPOSITING)
-  oxide::qt::WebContextAdapter::setSharedGLContext(
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-      QSGContext::sharedOpenGLContext()
-#else
-      QOpenGLContextPrivate::globalShareContext()
-#endif
-  );
-#endif
-  oxide::qt::WebContextAdapter::ensureChromiumStarted();
-}
-
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickWebContextPrivate(this)) {
@@ -403,7 +378,7 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
       qSharedPointerCast<oxide::qt::WebContextAdapter::IODelegate>(d->io_);
   d->init(io.toWeakRef());
 
-  OxideQQuickWebContextPrivate::ensureChromiumStarted();
+  oxide::qquick::EnsureChromiumStarted();
 }
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {

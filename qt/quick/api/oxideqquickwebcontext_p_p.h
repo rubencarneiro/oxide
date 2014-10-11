@@ -58,8 +58,6 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
-  static void ensureChromiumStarted();
-
  Q_SIGNALS:
   void constructed();
   void willBeDestroyed();

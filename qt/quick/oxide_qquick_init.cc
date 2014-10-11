@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,35 +15,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqglobal.h"
+#include "oxide_qquick_init.h"
 
-#include <QGlobalStatic>
-#include <QtDebug>
-
-#include "qt/core/browser/oxide_qt_io_thread_delegate.h"
-#include "shared/browser/oxide_browser_process_main.h"
-
-Q_GLOBAL_STATIC(QString, g_nss_db_path)
-
-QString oxideGetNSSDbPath() {
-  return *g_nss_db_path;
-}
-
-bool oxideSetNSSDbPath(const QString& path) {
-#if defined(USE_NSS)
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
-    qWarning() << "Cannot set the NSS DB directory once Oxide is running";
-    return false;
-  }
-
-  *g_nss_db_path = path;
-  return true;
+#include <QtGlobal>
+#if defined(ENABLE_COMPOSITING)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#include <QtQuick/private/qsgcontext_p.h>
 #else
-  qWarning() << "NSS not supported on this build";
-  return false;
+#include <QtGui/private/qopenglcontext_p.h>
 #endif
+#endif
+
+#include "qt/core/glue/oxide_qt_init.h"
+
+namespace oxide {
+namespace qquick {
+
+void EnsureChromiumStarted() {
+  static bool started = false;
+  if (started) {
+    return;
+  }
+  started = true;
+#if defined(ENABLE_COMPOSITING)
+  oxide::qt::SetSharedGLContext(
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+      QSGContext::sharedOpenGLContext()
+#else
+      QOpenGLContextPrivate::globalShareContext()
+#endif
+  );
+#endif
+  oxide::qt::EnsureChromiumStarted();
 }
 
-QThread* oxideGetIOThread() {
-  return oxide::qt::GetIOQThread();
-}
+} // namespace qquick
+} // namespace oxide

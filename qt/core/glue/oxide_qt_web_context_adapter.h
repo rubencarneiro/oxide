@@ -42,7 +42,7 @@ namespace oxide {
 namespace qt {
 
 class UserScriptAdapter;
-class WebContextAdapterPrivate;
+class WebContext;
 
 class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  public:
@@ -75,6 +75,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
     virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) = 0;
   };
 
+  static WebContextAdapter* FromWebContext(WebContext* context);
+
   void init(const QWeakPointer<IODelegate>& io_delegate);
 
   QString product() const;
@@ -97,11 +99,6 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   bool isInitialized() const;
 
-  static QOpenGLContext* sharedGLContext();
-  static void setSharedGLContext(QOpenGLContext* context);
-
-  static void ensureChromiumStarted();
-
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
@@ -118,7 +115,7 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   void setDevtoolsPort(int port);
 
   QString devtoolsBindIp() const;
-  void setDevtoolsBindIp(const QString& bindIp);
+  void setDevtoolsBindIp(const QString& ip);
 
   int setCookies(const QUrl& url,
                  const QList<QNetworkCookie>& cookies);
@@ -132,13 +129,11 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   QStringList allowedExtraUrlSchemes() const;
   void setAllowedExtraUrlSchemes(const QStringList& schemes);
 
-  virtual QNetworkAccessManager* GetCustomNetworkAccessManager();
-
  protected:
   WebContextAdapter(QObject* q);
 
  private:
-  friend class WebContextAdapterPrivate;
+  friend class WebContext;
 
   virtual void CookiesSet(int request_id,
                           const QList<QNetworkCookie>& failed_cookies) = 0;
@@ -146,9 +141,11 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
                                 const QList<QNetworkCookie>& cookies) = 0;
   virtual void CookiesDeleted(int request_id, int num_deleted) = 0;
 
+  virtual QNetworkAccessManager* GetCustomNetworkAccessManager();
+
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually
-  WebContextAdapterPrivate* priv;
+  WebContext* context_;
 
   QStringList allowed_extra_url_schemes_;
 };

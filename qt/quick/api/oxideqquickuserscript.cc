@@ -18,6 +18,8 @@
 #include "oxideqquickuserscript_p.h"
 #include "oxideqquickuserscript_p_p.h"
 
+#include "qt/quick/oxide_qquick_init.h"
+
 #include "oxideqquickwebcontext_p_p.h"
 
 void OxideQQuickUserScriptPrivate::OnScriptLoadFailed() {
@@ -47,7 +49,7 @@ OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickUserScriptPrivate(this)) {
   // Script loading uses Chromium's file thread
-  OxideQQuickWebContextPrivate::ensureChromiumStarted();
+  oxide::qquick::EnsureChromiumStarted();
 }
 
 OxideQQuickUserScript::~OxideQQuickUserScript() {

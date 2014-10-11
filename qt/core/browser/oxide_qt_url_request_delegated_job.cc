@@ -34,8 +34,7 @@
 #include "net/url_request/url_request_status.h"
 #include "url/gurl.h"
 
-#include "qt/core/glue/oxide_qt_web_context_adapter.h"
-#include "qt/core/glue/oxide_qt_web_context_adapter_p.h"
+#include "qt/core/browser/oxide_qt_web_context.h"
 #include "shared/base/oxide_cross_thread_data_stream.h"
 
 namespace oxide {
@@ -101,7 +100,7 @@ class URLRequestDelegatedJobProxy
   Q_OBJECT
 
  public:
-  URLRequestDelegatedJobProxy(WebContextAdapterPrivate* context,
+  URLRequestDelegatedJobProxy(WebContext* context,
                               URLRequestDelegatedJob* job,
                               CrossThreadDataStream* stream);
 
@@ -131,7 +130,7 @@ class URLRequestDelegatedJobProxy
   void DoNotifyDidReceiveResponse(size_t size,
                                   const std::string& mime_type);
 
-  scoped_refptr<WebContextAdapterPrivate> context_;
+  scoped_refptr<WebContext> context_;
   base::WeakPtr<URLRequestDelegatedJob> job_;
 
   scoped_refptr<CrossThreadDataStream> stream_;
@@ -247,8 +246,7 @@ void URLRequestDelegatedJobProxy::DoStart(const std::string& method,
       base::Bind(&URLRequestDelegatedJobProxy::OnDidRead,
                  base::Unretained(this)));
 
-  QNetworkAccessManager* qnam =
-      context_->GetAdapter()->GetCustomNetworkAccessManager();
+  QNetworkAccessManager* qnam = context_->GetCustomNetworkAccessManager();
   if (!qnam) {
     NotifyStartError(net::URLRequestStatus(net::URLRequestStatus::FAILED,
                                            net::ERR_FAILED));
@@ -307,7 +305,7 @@ void URLRequestDelegatedJobProxy::DoNotifyDidReceiveResponse(
 }
 
 URLRequestDelegatedJobProxy::URLRequestDelegatedJobProxy(
-    WebContextAdapterPrivate* context,
+    WebContext* context,
     URLRequestDelegatedJob* job,
     CrossThreadDataStream* stream)
     : context_(context),
@@ -453,7 +451,7 @@ void URLRequestDelegatedJob::OnStart() {
 }
 
 URLRequestDelegatedJob::URLRequestDelegatedJob(
-    WebContextAdapterPrivate* context,
+    WebContext* context,
     net::URLRequest* request,
     net::NetworkDelegate* network_delegate)
     : oxide::URLRequestDelegatedJob(request, network_delegate),

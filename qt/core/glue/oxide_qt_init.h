@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,35 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqglobal.h"
+#ifndef _OXIDE_QT_CORE_GLUE_INIT_H_
+#define _OXIDE_QT_CORE_GLUE_INIT_H_
 
-#include <QGlobalStatic>
-#include <QtDebug>
+#include <QtGlobal>
 
-#include "qt/core/browser/oxide_qt_io_thread_delegate.h"
-#include "shared/browser/oxide_browser_process_main.h"
+QT_BEGIN_NAMESPACE
+class QOpenGLContext;
+QT_END_NAMESPACE
 
-Q_GLOBAL_STATIC(QString, g_nss_db_path)
+namespace oxide {
+namespace qt {
 
-QString oxideGetNSSDbPath() {
-  return *g_nss_db_path;
-}
+Q_DECL_EXPORT QOpenGLContext* GetSharedGLContext();
+Q_DECL_EXPORT void SetSharedGLContext(QOpenGLContext* context);
 
-bool oxideSetNSSDbPath(const QString& path) {
-#if defined(USE_NSS)
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
-    qWarning() << "Cannot set the NSS DB directory once Oxide is running";
-    return false;
-  }
+Q_DECL_EXPORT void EnsureChromiumStarted();
 
-  *g_nss_db_path = path;
-  return true;
-#else
-  qWarning() << "NSS not supported on this build";
-  return false;
-#endif
-}
+} // namespace qt
+} // namespace oxide
 
-QThread* oxideGetIOThread() {
-  return oxide::qt::GetIOQThread();
-}
+#endif // _OXIDE_QT_CORE_GLUE_INIT_H_

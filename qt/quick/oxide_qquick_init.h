@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,35 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqglobal.h"
+#ifndef _OXIDE_QT_QUICK_INIT_H_
+#define _OXIDE_QT_QUICK_INIT_H_
 
-#include <QGlobalStatic>
-#include <QtDebug>
+namespace oxide {
+namespace qquick {
 
-#include "qt/core/browser/oxide_qt_io_thread_delegate.h"
-#include "shared/browser/oxide_browser_process_main.h"
+void EnsureChromiumStarted();
 
-Q_GLOBAL_STATIC(QString, g_nss_db_path)
+} // namespace qquick
+} // namespace oxide
 
-QString oxideGetNSSDbPath() {
-  return *g_nss_db_path;
-}
-
-bool oxideSetNSSDbPath(const QString& path) {
-#if defined(USE_NSS)
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
-    qWarning() << "Cannot set the NSS DB directory once Oxide is running";
-    return false;
-  }
-
-  *g_nss_db_path = path;
-  return true;
-#else
-  qWarning() << "NSS not supported on this build";
-  return false;
-#endif
-}
-
-QThread* oxideGetIOThread() {
-  return oxide::qt::GetIOQThread();
-}
+#endif // _OXIDE_QT_QUICK_INIT_H_

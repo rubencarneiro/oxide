@@ -30,13 +30,14 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/browser/oxide_qt_web_context.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_content_types.h"
 
-#include "oxide_qt_web_context_adapter_p.h"
+#include "oxide_qt_web_context_adapter.h"
 #include "oxide_qt_web_frame_adapter.h"
 
 namespace oxide {
@@ -119,7 +120,7 @@ void WebViewAdapter::init() {
 
   oxide::WebView::Params params;
   params.context =
-      WebContextAdapterPrivate::get(construct_props_->context)->GetContext();
+      WebContext::FromAdapter(construct_props_->context)->GetContext();
   params.incognito = construct_props_->incognito;
 
   priv->Init(&params);
@@ -188,13 +189,13 @@ WebContextAdapter* WebViewAdapter::context() const {
     return construct_props_->context;
   }
 
-  WebContextAdapterPrivate* context =
-      WebContextAdapterPrivate::FromBrowserContext(priv->GetBrowserContext());
+  WebContext* context =
+      WebContext::FromBrowserContext(priv->GetBrowserContext());
   if (!context) {
     return NULL;
   }
 
-  return context->GetAdapter();
+  return WebContextAdapter::FromWebContext(context);
 }
 
 void WebViewAdapter::setContext(WebContextAdapter* context) {

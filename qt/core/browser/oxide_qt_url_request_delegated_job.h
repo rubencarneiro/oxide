@@ -38,13 +38,13 @@ namespace qt {
 
 class CrossThreadDataStream;
 class URLRequestDelegatedJobProxy;
-class WebContextAdapterPrivate;
+class WebContext;
 
 class URLRequestDelegatedJob FINAL
     : public oxide::URLRequestDelegatedJob,
       public base::SupportsWeakPtr<URLRequestDelegatedJob> {
  public:
-  URLRequestDelegatedJob(WebContextAdapterPrivate* context,
+  URLRequestDelegatedJob(WebContext* context,
                          net::URLRequest* request,
                          net::NetworkDelegate* network_delegate);
   ~URLRequestDelegatedJob();

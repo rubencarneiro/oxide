@@ -48,6 +48,7 @@
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_file_picker_delegate.h"
+#include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
@@ -918,7 +919,7 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   // WebView instantiates NotificationRegistrar, which starts
   // NotificationService, which uses LazyInstance. Start Chromium now
   // else we'll crash
-  OxideQQuickWebContextPrivate::ensureChromiumStarted();
+  oxide::qquick::EnsureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
 
   Q_D(OxideQQuickWebView);

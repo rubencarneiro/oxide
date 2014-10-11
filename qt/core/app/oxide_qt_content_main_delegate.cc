@@ -25,7 +25,7 @@
 
 #include "qt/core/browser/oxide_qt_content_browser_client.h"
 #include "qt/core/gl/oxide_qt_shared_gl_context.h"
-#include "qt/core/glue/oxide_qt_web_context_adapter.h"
+#include "qt/core/glue/oxide_qt_init.h"
 
 namespace oxide {
 namespace qt {
@@ -43,7 +43,7 @@ ContentMainDelegate::ContentMainDelegate(const base::FilePath& nss_db_path)
 {
   DCHECK(nss_db_path.empty());
 #endif
-  QOpenGLContext* qcontext = WebContextAdapter::sharedGLContext();
+  QOpenGLContext* qcontext = oxide::qt::GetSharedGLContext();
   if (qcontext) {
     scoped_refptr<SharedGLContext> context(new SharedGLContext(qcontext));
     if (context->GetHandle()) {
