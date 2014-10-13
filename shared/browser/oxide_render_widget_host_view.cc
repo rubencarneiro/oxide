@@ -61,6 +61,7 @@ void RenderWidgetHostView::SelectionChanged(const base::string16& text,
     // separately. If the word that just got committed is at the beginning of a
     // new line, the selection range includes the trailing newline character(s)
     // whereas the selection text truncates them.
+    // This looks very similar to https://crbug.com/101435.
     return;
   }
 
