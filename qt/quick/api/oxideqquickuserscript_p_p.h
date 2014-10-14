@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QtGlobal>
+#include <QUrl>
 
 #include "qt/core/glue/oxide_qt_user_script_adapter.h"
 
@@ -44,6 +45,8 @@ class OxideQQuickUserScriptPrivate Q_DECL_FINAL :
   void OnScriptLoaded() Q_DECL_FINAL;
 
   bool constructed_;
+
+  QUrl url_;
 
   Q_DISABLE_COPY(OxideQQuickUserScriptPrivate);
 };

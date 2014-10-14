@@ -15,13 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_USER_SCRIPT_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_USER_SCRIPT_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_USER_SCRIPT_H_
+#define _OXIDE_QT_CORE_BROWSER_USER_SCRIPT_H_
+
+#include <string>
 
 #include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/weak_ptr.h"
+#include "base/macros.h"
 #include "base/files/file.h"
+#include "url/gurl.h"
 
 #include "shared/common/oxide_user_script.h"
 
@@ -33,7 +35,7 @@ namespace qt {
 
 class UserScriptAdapter;
 
-class UserScriptAdapterPrivate FINAL {
+class UserScript FINAL {
  public:
   enum State {
     Constructing,
@@ -42,29 +44,47 @@ class UserScriptAdapterPrivate FINAL {
     FailedLoad
   };
 
-  UserScriptAdapterPrivate(UserScriptAdapter* adapter);
+  ~UserScript();
 
-  bool Load();
+  static UserScript* FromAdapter(UserScriptAdapter* adapter);
 
-  static UserScriptAdapterPrivate* get(UserScriptAdapter* adapter);
+  const oxide::UserScript* impl() const { return &impl_; }
+  State state() const { return state_; }
 
-  State state;
-  oxide::UserScript user_script;
+  bool GetEmulateGreasemonkey() const;
+  void SetEmulateGreasemonkey(bool emulate);
+
+  bool GetMatchAllFrames() const;
+  void SetMatchAllFrames(bool match);
+
+  bool GetIncognitoEnabled() const;
+  void SetIncognitoEnabled(bool enabled);
+
+  GURL GetContext() const;
+  void SetContext(const GURL& context);
 
  private:
   friend class UserScriptAdapter;
 
+  UserScript(UserScriptAdapter* adapter);
+
+  void Init(const base::FilePath& path);
   void OnGotFileContents(base::File::Error error,
                          const char* data,
                          int bytes_read);
 
-  UserScriptAdapter* a;
+  UserScriptAdapter* adapter_;
+
+  State state_;
+
+  oxide::UserScript impl_;
+
   scoped_ptr<AsyncFileJob> load_job_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UserScriptAdapterPrivate);
+  DISALLOW_COPY_AND_ASSIGN(UserScript);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_USER_SCRIPT_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_BROWSER_USER_SCRIPT_H_

@@ -64,13 +64,13 @@ void OxideQQuickUserScript::componentComplete() {
   Q_D(OxideQQuickUserScript);
 
   d->constructed_ = true;
-  d->init();
+  d->init(d->url_);
 }
 
 QUrl OxideQQuickUserScript::url() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->url();
+  return d->url_;
 }
 
 void OxideQQuickUserScript::setUrl(const QUrl& url) {
@@ -81,11 +81,11 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
     return;
   }
 
-  if (url == d->url()) {
+  if (url == d->url_) {
     return;
   }
 
-  d->setUrl(url);
+  d->url_ = url;
   emit scriptPropertyChanged();
 }
 

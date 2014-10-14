@@ -21,22 +21,24 @@
 
 #include "base/logging.h"
 
+#include "qt/core/browser/oxide_qt_script_message_handler.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
-#include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
+
+#include "oxide_qt_script_message_request.h"
 
 namespace oxide {
 namespace qt {
 
 WebFrame::~WebFrame() {}
 
-oxide::ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
+const oxide::ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
     size_t index) const {
-  ScriptMessageHandlerAdapter* handler = adapter_->message_handlers().at(index);
-  return &ScriptMessageHandlerAdapterPrivate::get(handler)->handler;
+  return ScriptMessageHandler::FromAdapter(
+      adapter_->message_handlers_.at(index))->handler();
 }
 
 size_t WebFrame::GetScriptMessageHandlerCount() const {
-  return adapter_->message_handlers().size();
+  return adapter_->message_handlers_.size();
 }
 
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
@@ -49,17 +51,31 @@ void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
   child_api->setParent(NULL);
 }
 
+void WebFrame::URLChanged() {
+  adapter_->URLChanged();
+}
+
 WebFrame::WebFrame(WebFrameAdapter* adapter,
                    content::FrameTreeNode* node,
                    oxide::WebView* view) :
     oxide::WebFrame(node, view),
     api_handle_(adapterToQObject(adapter)),
     adapter_(adapter) {
-  adapter->owner_ = this;
+  adapter->frame_ = this;
 }
 
-void WebFrame::URLChanged() {
-  adapter_->URLChanged();
+bool WebFrame::SendMessage(const GURL& context,
+                           const std::string& msg_id,
+                           const std::string& args,
+                           ScriptMessageRequest* req) {
+  oxide::ScriptMessageRequestImplBrowser* smr =
+      oxide::WebFrame::SendMessage(context, msg_id, args);
+  if (!smr) {
+    return false;
+  }
+
+  req->SetRequest(smr);
+  return true;
 }
 
 } // namespace qt

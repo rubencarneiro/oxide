@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 
+#include <QList>
 #include <QWeakPointer>
 #include <QString>
 #include <QStringList>
@@ -126,7 +127,6 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   QStringList hostMappingRules() const;
   void setHostMappingRules(const QStringList& rules);
 
-  QStringList allowedExtraUrlSchemes() const;
   void setAllowedExtraUrlSchemes(const QStringList& schemes);
 
  protected:
@@ -147,7 +147,7 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   // it manually
   WebContext* context_;
 
-  QStringList allowed_extra_url_schemes_;
+  QList<UserScriptAdapter*> user_scripts_;
 };
 
 } // namespace qt

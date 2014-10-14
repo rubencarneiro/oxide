@@ -25,7 +25,7 @@ class ScriptMessageHandler;
 class ScriptMessageTarget {
  public:
   virtual size_t GetScriptMessageHandlerCount() const = 0;
-  virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
+  virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const = 0;
 };
 

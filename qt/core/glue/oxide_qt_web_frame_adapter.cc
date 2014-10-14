@@ -23,21 +23,29 @@
 
 #include "url/gurl.h"
 
+#include "qt/core/browser/oxide_qt_script_message_request.h"
 #include "qt/core/browser/oxide_qt_web_frame.h"
-
-#include "oxide_qt_script_message_request_adapter_p.h"
 
 namespace oxide {
 namespace qt {
 
 WebFrameAdapter::WebFrameAdapter(QObject* q) :
     AdapterBase(q),
-    owner_(NULL) {}
+    frame_(NULL) {}
 
 WebFrameAdapter::~WebFrameAdapter() {}
 
+// static
+WebFrameAdapter* WebFrameAdapter::FromWebFrame(WebFrame* frame) {
+  if (!frame) {
+    return NULL;
+  }
+
+  return frame->adapter_;
+}
+
 QUrl WebFrameAdapter::url() const {
-  return QUrl(QString::fromStdString(owner_->GetURL().spec()));
+  return QUrl(QString::fromStdString(frame_->GetURL().spec()));
 }
 
 bool WebFrameAdapter::sendMessage(const QUrl& context,
@@ -46,17 +54,10 @@ bool WebFrameAdapter::sendMessage(const QUrl& context,
                                   ScriptMessageRequestAdapter* req) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
-  oxide::ScriptMessageRequestImplBrowser* smrib =
-      owner_->SendMessage(GURL(context.toString().toStdString()),
-                          msg_id.toStdString(),
-                          QString(jsondoc.toJson()).toStdString());
-  if (!smrib) {
-    return false;
-  }
-
-  ScriptMessageRequestAdapterPrivate::get(req)->SetRequest(smrib);
-
-  return true;
+  return frame_->SendMessage(GURL(context.toString().toStdString()),
+                             msg_id.toStdString(),
+                             QString(jsondoc.toJson()).toStdString(),
+                             ScriptMessageRequest::FromAdapter(req));
 }
 
 void WebFrameAdapter::sendMessageNoReply(const QUrl& context,
@@ -64,10 +65,14 @@ void WebFrameAdapter::sendMessageNoReply(const QUrl& context,
                                          const QVariant& args) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
-  owner_->SendMessageNoReply(
+  frame_->SendMessageNoReply(
       GURL(context.toString().toStdString()),
       msg_id.toStdString(),
       QString(jsondoc.toJson()).toStdString());
+}
+
+QList<ScriptMessageHandlerAdapter *>& WebFrameAdapter::messageHandlers() {
+  return message_handlers_;
 }
 
 } // namespace qt

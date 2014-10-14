@@ -34,9 +34,7 @@ class WebPreferences FINAL : public oxide::WebPreferences {
   ~WebPreferences();
 
   OxideQWebPreferences* api_handle() const { return api_handle_; }
-  void set_api_handle(OxideQWebPreferences* handle) {
-    api_handle_ = handle;
-  }
+  void SetApiHandle(OxideQWebPreferences* handle);
 
  private:
   OxideQWebPreferences* api_handle_;

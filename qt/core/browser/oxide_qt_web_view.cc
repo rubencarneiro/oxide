@@ -63,7 +63,6 @@
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
-#include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 #include "shared/base/oxide_enum_flags.h"
@@ -71,6 +70,8 @@
 
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_javascript_dialog.h"
+#include "oxide_qt_script_message_handler.h"
+#include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
 
@@ -280,6 +281,10 @@ WebView::WebView(WebViewAdapter* adapter) :
   }
 }
 
+WebContext* WebView::GetContext() const {
+  return WebContext::FromBrowserContext(GetBrowserContext());
+}
+
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
   if (!screen) {
@@ -388,11 +393,13 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
 }
 
 void WebView::FrameAdded(oxide::WebFrame* frame) {
-  adapter_->FrameAdded(static_cast<WebFrame *>(frame)->adapter());
+  adapter_->FrameAdded(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
 }
 
 void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  adapter_->FrameRemoved(static_cast<WebFrame *>(frame)->adapter());
+  adapter_->FrameRemoved(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
 }
 
 bool WebView::CanCreateWindows() const {
@@ -400,13 +407,13 @@ bool WebView::CanCreateWindows() const {
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
-  return adapter_->message_handlers().size();
+  return adapter_->message_handlers_.size();
 }
 
-oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
+const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
-  return &ScriptMessageHandlerAdapterPrivate::get(
-      adapter_->message_handlers().at(index))->handler;
+  return ScriptMessageHandler::FromAdapter(
+      adapter_->message_handlers_.at(index))->handler();
 }
 
 void WebView::OnURLChanged() {
@@ -1001,6 +1008,28 @@ QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {
   }
 
   return QVariant();
+}
+
+void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
+  if (!(blocked_content() & oxide::CONTENT_TYPE_MIXED_DISPLAY) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily display insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  oxide::WebView::SetCanTemporarilyDisplayInsecureContent(allow);
+}
+
+void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
+  if (!(blocked_content() & oxide::CONTENT_TYPE_MIXED_SCRIPT) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily run insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  oxide::WebView::SetCanTemporarilyRunInsecureContent(allow);
 }
 
 } // namespace qt

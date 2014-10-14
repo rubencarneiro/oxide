@@ -15,12 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_
-#define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_H_
+#define _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_H_
+
+#include <string>
 
 #include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "url/gurl.h"
 
 namespace oxide {
 
@@ -30,23 +33,36 @@ class ScriptMessageImplBrowser;
 namespace qt {
 
 class ScriptMessageAdapter;
+class WebFrame;
 
-class ScriptMessageAdapterPrivate FINAL {
+class ScriptMessage FINAL {
  public:
-  ScriptMessageAdapterPrivate(ScriptMessageAdapter* adapter);
-
-  oxide::ScriptMessageImplBrowser* incoming() const { return incoming_.get(); }
+  ~ScriptMessage();
 
   void Initialize(oxide::ScriptMessage* message);
 
-  static ScriptMessageAdapterPrivate* get(ScriptMessageAdapter* adapter);
+  static ScriptMessage* FromAdapter(ScriptMessageAdapter* adapter);
+
+  WebFrame* GetFrame() const;
+  std::string GetMsgId() const;
+  GURL GetContext() const;
+  std::string GetArgs() const;
+
+  void Reply(const std::string& args);
+  void Error(const std::string& msg);
 
  private:
-  ScriptMessageAdapter* a;
-  scoped_refptr<oxide::ScriptMessageImplBrowser> incoming_;
+  friend class ScriptMessageAdapter;
+
+  ScriptMessage(ScriptMessageAdapter* adapter);
+
+  ScriptMessageAdapter* adapter_;
+  scoped_refptr<oxide::ScriptMessageImplBrowser> impl_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessage);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_
+#endif // _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_H_

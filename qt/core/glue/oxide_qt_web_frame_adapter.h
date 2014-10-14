@@ -40,6 +40,8 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
  public:
   ~WebFrameAdapter();
 
+  static WebFrameAdapter* FromWebFrame(WebFrame* frame);
+
   QUrl url() const;
 
   bool sendMessage(const QUrl& context,
@@ -50,18 +52,17 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
                           const QString& msg_id,
                           const QVariant& args);
 
-  QList<ScriptMessageHandlerAdapter *>& message_handlers() {
-    return message_handlers_;
-  }
-
-  virtual void URLChanged() = 0;
+  QList<ScriptMessageHandlerAdapter *>& messageHandlers();
 
  protected:
   WebFrameAdapter(QObject* q);
 
  private:
   friend class WebFrame;
-  WebFrame* owner_;
+
+  virtual void URLChanged() = 0;
+
+  WebFrame* frame_;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };

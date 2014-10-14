@@ -323,7 +323,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
-  virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
+  virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const OVERRIDE;
 
   // CompositorClient implementation

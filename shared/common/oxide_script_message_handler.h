@@ -54,7 +54,7 @@ class ScriptMessageHandler FINAL {
 
   void SetCallback(const HandlerCallback& callback);
 
-  void OnReceiveMessage(ScriptMessage* message);
+  void OnReceiveMessage(ScriptMessage* message) const;
 
  private:
   std::string msg_id_;

@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QSharedPointer>
+#include <QStringList>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
@@ -98,6 +99,8 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   OxideQQuickWebContextDelegateWorker* user_agent_override_delegate_;
 
   mutable OxideQQuickCookieManager* cookie_manager_;
+
+  QStringList allowed_extra_url_schemes_;
 
   Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };

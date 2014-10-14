@@ -15,16 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_REQUEST_H_
+#define _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_REQUEST_H_
 
 #include <string>
 
 #include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
-#include "shared/browser/oxide_script_message_request_impl_browser.h"
+#include "shared/common/oxide_script_message_request.h"
 
 namespace oxide {
 
@@ -34,11 +34,11 @@ namespace qt {
 
 class ScriptMessageRequestAdapter;
 
-class ScriptMessageRequestAdapterPrivate FINAL {
+class ScriptMessageRequest FINAL {
  public:
-  ScriptMessageRequestAdapterPrivate(ScriptMessageRequestAdapter* adapter);
+  ~ScriptMessageRequest();
 
-  static ScriptMessageRequestAdapterPrivate* get(
+  static ScriptMessageRequest* FromAdapter(
       ScriptMessageRequestAdapter* adapter);
 
   void SetRequest(oxide::ScriptMessageRequestImplBrowser* req);
@@ -46,17 +46,19 @@ class ScriptMessageRequestAdapterPrivate FINAL {
  private:
   friend class ScriptMessageRequestAdapter;
 
+  ScriptMessageRequest(ScriptMessageRequestAdapter* adapter);
+
   void ReceiveReplyCallback(const std::string& args);
   void ReceiveErrorCallback(oxide::ScriptMessageRequest::Error error,
                             const std::string& msg);
 
-  ScriptMessageRequestAdapter* a;
+  ScriptMessageRequestAdapter* adapter_;
   scoped_ptr<oxide::ScriptMessageRequestImplBrowser> request_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageRequestAdapterPrivate);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageRequest);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_REQUEST_H_

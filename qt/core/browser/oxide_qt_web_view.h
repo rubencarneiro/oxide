@@ -42,14 +42,13 @@ namespace oxide {
 namespace qt {
 
 class InputMethodListener;
+class WebContext;
 class WebViewAdapter;
 
 class WebView FINAL : public oxide::WebView {
  public:
   static WebView* Create(WebViewAdapter* adapter);
   ~WebView();
-
-  WebViewAdapter* adapter() const { return adapter_; }
 
   OxideQSecurityStatus* qsecurity_status() { return qsecurity_status_.get(); }
 
@@ -62,11 +61,16 @@ class WebView FINAL : public oxide::WebView {
 
   QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
 
+  void SetCanTemporarilyDisplayInsecureContent(bool allow);
+  void SetCanTemporarilyRunInsecureContent(bool allow);
+
  private:
   friend class InputMethodListener;
   friend class WebViewAdapter;
 
   WebView(WebViewAdapter* adapter);
+
+  WebContext* GetContext() const;
 
   float GetDeviceScaleFactor() const;
 
@@ -94,7 +98,7 @@ class WebView FINAL : public oxide::WebView {
   bool CanCreateWindows() const FINAL;
 
   size_t GetScriptMessageHandlerCount() const FINAL;
-  oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
+  const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const FINAL;
 
   void OnURLChanged() FINAL;

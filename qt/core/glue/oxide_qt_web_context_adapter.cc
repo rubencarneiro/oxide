@@ -20,7 +20,9 @@
 #include <string>
 
 #include <QNetworkCookie>
+#include <QtDebug>
 
+#include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/cookie_store_factory.h"
 #include "net/base/static_cookie_policy.h"
@@ -41,6 +43,10 @@ WebContextAdapter::~WebContextAdapter() {
 
 // static
 WebContextAdapter* WebContextAdapter::FromWebContext(WebContext* context) {
+  if (!context) {
+    return NULL;
+  }
+
   return context->GetAdapter();
 }
 
@@ -49,47 +55,67 @@ void WebContextAdapter::init(const QWeakPointer<IODelegate>& io_delegate) {
 }
 
 QString WebContextAdapter::product() const {
-  return context_->GetProduct();
+  return QString::fromStdString(context_->GetProduct());
 }
 
 void WebContextAdapter::setProduct(const QString& product) {
-  context_->SetProduct(product);
+  context_->SetProduct(product.toStdString());
 }
 
 QString WebContextAdapter::userAgent() const {
-  return context_->GetUserAgent();
+  return QString::fromStdString(context_->GetUserAgent());
 }
 
 void WebContextAdapter::setUserAgent(const QString& user_agent) {
-  context_->SetUserAgent(user_agent);
+  context_->SetUserAgent(user_agent.toStdString());
 }
 
 QUrl WebContextAdapter::dataPath() const {
-  return context_->GetDataPath();
+  base::FilePath path = context_->GetDataPath();
+  if (path.empty()) {
+    return QUrl();
+  }
+
+  return QUrl::fromLocalFile(QString::fromStdString(path.value()));
 }
 
 void WebContextAdapter::setDataPath(const QUrl& url) {
-  context_->SetDataPath(url);
+  if (!url.isLocalFile() && !url.isEmpty()) {
+    qWarning() << "dataPath only supports local files";
+    return;
+  }
+
+  context_->SetDataPath(base::FilePath(url.toLocalFile().toStdString()));
 }
 
 QUrl WebContextAdapter::cachePath() const {
-  return context_->GetCachePath();
+  base::FilePath path = context_->GetCachePath();
+  if (path.empty()) {
+    return QUrl();
+  }
+
+  return QUrl::fromLocalFile(QString::fromStdString(path.value()));
 }
 
 void WebContextAdapter::setCachePath(const QUrl& url) {
-  context_->SetCachePath(url);
+  if (!url.isLocalFile() && !url.isEmpty()) {
+    qWarning() << "cachePath only supports local files";
+    return;
+  }
+
+  context_->SetCachePath(base::FilePath(url.toLocalFile().toStdString()));
 }
 
 QString WebContextAdapter::acceptLangs() const {
-  return context_->GetAcceptLangs();
+  return QString::fromStdString(context_->GetAcceptLangs());
 }
 
 void WebContextAdapter::setAcceptLangs(const QString& langs) {
-  context_->SetAcceptLangs(langs);
+  context_->SetAcceptLangs(langs.toStdString());
 }
 
 QList<UserScriptAdapter *>& WebContextAdapter::userScripts() {
-  return context_->user_scripts_;
+  return user_scripts_;
 }
 
 void WebContextAdapter::updateUserScripts() {
@@ -144,11 +170,11 @@ void WebContextAdapter::setDevtoolsPort(int port) {
 }
 
 QString WebContextAdapter::devtoolsBindIp() const {
-  return context_->GetDevtoolsBindIp();
+  return QString::fromStdString(context_->GetDevtoolsBindIp());
 }
 
 void WebContextAdapter::setDevtoolsBindIp(const QString& ip) {
-  context_->SetDevtoolsBindIp(ip);
+  context_->SetDevtoolsBindIp(ip.toStdString());
 }
 
 int WebContextAdapter::setCookies(const QUrl& url,
@@ -169,20 +195,28 @@ int WebContextAdapter::deleteAllCookies() {
 }
 
 QStringList WebContextAdapter::hostMappingRules() const {
-  return context_->GetHostMappingRules();
+  std::vector<std::string> v = context_->GetHostMappingRules();
+
+  QStringList rules;
+  for (std::vector<std::string>::const_iterator it = v.cbegin();
+       it != v.cend(); ++it) {
+    rules.append(QString::fromStdString(*it));
+  }
+
+  return rules;
 }
 
 void WebContextAdapter::setHostMappingRules(const QStringList& rules) {
-  context_->SetHostMappingRules(rules);
-}
+  std::vector<std::string> v;
+  for (QStringList::const_iterator it = rules.cbegin();
+       it != rules.cend(); ++it) {
+    v.push_back((*it).toStdString());
+  }
 
-QStringList WebContextAdapter::allowedExtraUrlSchemes() const {
-  return allowed_extra_url_schemes_;
+  context_->SetHostMappingRules(v);
 }
 
 void WebContextAdapter::setAllowedExtraUrlSchemes(const QStringList& schemes) {
-  allowed_extra_url_schemes_ = schemes;
-
   std::set<std::string> set;
   for (int i = 0; i < schemes.size(); ++i) {
     set.insert(schemes.at(i).toStdString());

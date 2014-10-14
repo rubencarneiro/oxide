@@ -891,13 +891,14 @@ void OxideQQuickWebContext::setHostMappingRules(const QStringList& rules) {
 QStringList OxideQQuickWebContext::allowedExtraUrlSchemes() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->allowedExtraUrlSchemes();
+  return d->allowed_extra_url_schemes_;
 }
 
 void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
     const QStringList& schemes) {
   Q_D(OxideQQuickWebContext);
 
+  d->allowed_extra_url_schemes_ = schemes;
   d->setAllowedExtraUrlSchemes(schemes);
 
   emit allowedExtraUrlSchemesChanged();

@@ -99,7 +99,7 @@ class WebFrame : public ScriptMessageTarget {
 
   // ScriptMessageTarget
   virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
-  virtual ScriptMessageHandler* GetScriptMessageHandlerAt(
+  virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const OVERRIDE;
 
   void AddChild(WebFrame* frame);

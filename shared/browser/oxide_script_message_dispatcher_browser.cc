@@ -134,7 +134,8 @@ class MessageReceiver {
   bool TryDispatchMessageToTarget(
       ScriptMessageTarget* target, ScriptMessageImplBrowser* message) {
     for (size_t i = 0; i < target->GetScriptMessageHandlerCount(); ++i) {
-      ScriptMessageHandler* handler = target->GetScriptMessageHandlerAt(i);
+      const ScriptMessageHandler* handler =
+          target->GetScriptMessageHandlerAt(i);
 
       if (!handler->IsValid()) {
         continue;

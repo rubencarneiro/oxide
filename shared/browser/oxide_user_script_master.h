@@ -44,7 +44,7 @@ class UserScriptMaster FINAL : public content::NotificationObserver {
   UserScriptMaster(BrowserContext* context);
   ~UserScriptMaster();
 
-  void SerializeUserScriptsAndSendUpdates(std::vector<UserScript *>& scripts);
+  void SerializeUserScriptsAndSendUpdates(std::vector<const UserScript *>& scripts);
 
   void Observe(int type,
                const content::NotificationSource& source,

@@ -20,8 +20,6 @@
 
 #include <QList>
 #include <QSharedPointer>
-#include <QString>
-#include <QStringList>
 #include <QtGlobal>
 #include <QUrl>
 #include <QWeakPointer>
@@ -74,20 +72,20 @@ class WebContext FINAL : public oxide::BrowserContextDelegate {
 
   bool IsInitialized() const;
 
-  QString GetProduct() const;
-  void SetProduct(const QString& product);
+  std::string GetProduct() const;
+  void SetProduct(const std::string& product);
 
-  QString GetUserAgent() const;
-  void SetUserAgent(const QString& user_agent);
+  std::string GetUserAgent() const;
+  void SetUserAgent(const std::string& user_agent);
 
-  QUrl GetDataPath() const;
-  void SetDataPath(const QUrl& url);
+  base::FilePath GetDataPath() const;
+  void SetDataPath(const base::FilePath& path);
 
-  QUrl GetCachePath() const;
-  void SetCachePath(const QUrl& url);
+  base::FilePath GetCachePath() const;
+  void SetCachePath(const base::FilePath& path);
 
-  QString GetAcceptLangs() const;
-  void SetAcceptLangs(const QString& langs);
+  std::string GetAcceptLangs() const;
+  void SetAcceptLangs(const std::string& langs);
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
@@ -103,11 +101,11 @@ class WebContext FINAL : public oxide::BrowserContextDelegate {
   void SetDevtoolsEnabled(bool enabled);
   int GetDevtoolsPort() const;
   void SetDevtoolsPort(int port);
-  QString GetDevtoolsBindIp() const;
-  void SetDevtoolsBindIp(const QString& ip);
+  std::string GetDevtoolsBindIp() const;
+  void SetDevtoolsBindIp(const std::string& ip);
 
-  QStringList GetHostMappingRules() const;
-  void SetHostMappingRules(const QStringList& rules);
+  std::vector<std::string> GetHostMappingRules() const;
+  void SetHostMappingRules(const std::vector<std::string>& rules);
 
  private:
   friend class WebContextAdapter;

@@ -404,7 +404,8 @@ size_t WebView::GetScriptMessageHandlerCount() const {
   return 0;
 }
 
-ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(size_t index) const {
+const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
+    size_t index) const {
   return NULL;
 }
 

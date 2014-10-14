@@ -15,13 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_HANDLER_H_
+#define _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_HANDLER_H_
 
 #include <string>
 
 #include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 
 #include "shared/common/oxide_script_message_handler.h"
 
@@ -33,27 +33,39 @@ namespace qt {
 
 class ScriptMessageHandlerAdapter;
 
-class ScriptMessageHandlerAdapterPrivate FINAL {
+class ScriptMessageHandler FINAL {
  public:
-  ScriptMessageHandlerAdapterPrivate(ScriptMessageHandlerAdapter* adapter);
+  ~ScriptMessageHandler();
 
-  static ScriptMessageHandlerAdapterPrivate* get(
+  static ScriptMessageHandler* FromAdapter(
       ScriptMessageHandlerAdapter* adapter);
 
-  oxide::ScriptMessageHandler handler;
+  const oxide::ScriptMessageHandler* handler() const { return &handler_; }
+
+  void AttachHandler();
+  void DetachHandler();
+
+  std::string GetMsgId() const;
+  void SetMsgId(const std::string& msg_id);
+
+  const std::vector<GURL>& GetContexts() const;
+  void SetContexts(const std::vector<GURL>& contexts);
 
  private:
   friend class ScriptMessageHandlerAdapter;
 
+  ScriptMessageHandler(ScriptMessageHandlerAdapter* adapter);
+
   bool ReceiveMessageCallback(oxide::ScriptMessage* message,
                               std::string* error_desc);
 
-  ScriptMessageHandlerAdapter* a;
+  ScriptMessageHandlerAdapter* adapter_;
+  oxide::ScriptMessageHandler handler_;
 
-  DISALLOW_COPY_AND_ASSIGN(ScriptMessageHandlerAdapterPrivate);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageHandler);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_HANDLER_H_

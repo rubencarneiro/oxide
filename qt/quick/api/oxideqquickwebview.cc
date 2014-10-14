@@ -421,7 +421,7 @@ void OxideQQuickWebViewPrivate::ToggleFullscreenMode(bool enter) {
   emit q->fullscreenRequested(enter);
 }
 
-void OxideQQuickWebViewPrivate::OnWebPreferencesChanged() {
+void OxideQQuickWebViewPrivate::WebPreferencesDestroyed() {
   Q_Q(OxideQQuickWebView);
 
   emit q->preferencesChanged();
@@ -658,7 +658,7 @@ int OxideQQuickWebViewPrivate::messageHandler_count(
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
-  return p->message_handlers().size();
+  return p->messageHandlers().size();
 }
 
 // static
@@ -668,12 +668,12 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
-  if (index >= p->message_handlers().size()) {
+  if (index >= p->messageHandlers().size()) {
     return NULL;
   }
 
   return adapterToQObject<OxideQQuickScriptMessageHandler>(
-      p->message_handlers().at(index));
+      p->messageHandlers().at(index));
 }
 
 // static
@@ -683,10 +683,10 @@ void OxideQQuickWebViewPrivate::messageHandler_clear(
       static_cast<OxideQQuickWebView *>(prop->object);
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(web_view);
 
-  while (p->message_handlers().size() > 0) {
+  while (p->messageHandlers().size() > 0) {
     web_view->removeMessageHandler(
         adapterToQObject<OxideQQuickScriptMessageHandler>(
-          p->message_handlers().at(0)));
+          p->messageHandlers().at(0)));
   }
 }
 
@@ -950,9 +950,9 @@ OxideQQuickWebView::~OxideQQuickWebView() {
 
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
-  while (d->message_handlers().size() > 0) {
+  while (d->messageHandlers().size() > 0) {
     delete adapterToQObject<OxideQQuickScriptMessageHandler>(
-        d->message_handlers().at(0));
+        d->messageHandlers().at(0));
   }
 
   // Delete this now as it can get a focusOutEvent after our destructor
@@ -1095,12 +1095,12 @@ void OxideQQuickWebView::addMessageHandler(
     return;
   }
 
-  if (d->message_handlers().contains(hd)) {
-    d->message_handlers().removeOne(hd);
+  if (d->messageHandlers().contains(hd)) {
+    d->messageHandlers().removeOne(hd);
   }
 
   handler->setParent(this);
-  d->message_handlers().append(hd);
+  d->messageHandlers().append(hd);
 
   emit messageHandlersChanged();
 }
@@ -1117,12 +1117,12 @@ void OxideQQuickWebView::removeMessageHandler(
   OxideQQuickScriptMessageHandlerPrivate* hd =
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->message_handlers().contains(hd)) {
+  if (!d->messageHandlers().contains(hd)) {
     return;
   }
 
   handler->setParent(NULL);
-  d->message_handlers().removeOne(hd);
+  d->messageHandlers().removeOne(hd);
 
   emit messageHandlersChanged();
 }

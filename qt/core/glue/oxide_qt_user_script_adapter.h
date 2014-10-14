@@ -27,14 +27,11 @@
 namespace oxide {
 namespace qt {
 
-class UserScriptAdapterPrivate;
+class UserScript;
 
 class Q_DECL_EXPORT UserScriptAdapter : public AdapterBase {
  public:
   virtual ~UserScriptAdapter();
-
-  QUrl url() const;
-  void setUrl(const QUrl& url);
 
   bool emulateGreasemonkey() const;
   void setEmulateGreasemonkey(bool emulate);
@@ -48,18 +45,18 @@ class Q_DECL_EXPORT UserScriptAdapter : public AdapterBase {
   QUrl context() const;
   void setContext(const QUrl& context);
 
-  void init();
+  void init(const QUrl& url);
 
  protected:
   UserScriptAdapter(QObject* q);
 
  private:
-  friend class UserScriptAdapterPrivate;
+  friend class UserScript;
 
   virtual void OnScriptLoadFailed() = 0;
   virtual void OnScriptLoaded() = 0;
 
-  QScopedPointer<UserScriptAdapterPrivate> priv;
+  QScopedPointer<UserScript> script_;
 };
 
 } // namespace qt

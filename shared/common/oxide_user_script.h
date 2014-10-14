@@ -44,13 +44,6 @@ class UserScript FINAL {
     RUN_LOCATION_LAST
   };
 
-  GURL url() const {
-    return url_;
-  }
-  void set_url(const GURL& url) {
-    url_ = url;
-  }
-
   const std::vector<std::string>& exclude_globs() const {
     return exclude_globs_;
   }

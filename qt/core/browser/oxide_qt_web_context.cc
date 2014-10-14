@@ -43,8 +43,7 @@
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 #include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
-#include "qt/core/glue/oxide_qt_user_script_adapter.h"
-#include "qt/core/glue/oxide_qt_user_script_adapter_p.h"
+#include "qt/core/browser/oxide_qt_user_script.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_user_script_master.h"
@@ -128,16 +127,15 @@ void WebContext::UpdateUserScripts() {
     return;
   }
 
-  std::vector<oxide::UserScript *> scripts;
+  std::vector<const oxide::UserScript *> scripts;
 
-  for (int i = 0; i < user_scripts_.size(); ++i) {
-    UserScriptAdapterPrivate* script =
-        UserScriptAdapterPrivate::get(user_scripts_.at(i));
-    if (script->state == UserScriptAdapterPrivate::Loading ||
-        script->state == UserScriptAdapterPrivate::Constructing) {
+  for (int i = 0; i < adapter_->user_scripts_.size(); ++i) {
+    UserScript* script = UserScript::FromAdapter(adapter_->user_scripts_.at(i));
+    if (script->state() == UserScript::Loading ||
+        script->state() == UserScript::Constructing) {
       return;
-    } else if (script->state == UserScriptAdapterPrivate::Loaded) {
-      scripts.push_back(&script->user_script);
+    } else if (script->state() == UserScript::Loaded) {
+      scripts.push_back(script->impl());
     }
   }
 
@@ -532,103 +530,77 @@ bool WebContext::IsInitialized() const {
   return context_.get() != NULL;
 }
 
-QString WebContext::GetProduct() const {
+std::string WebContext::GetProduct() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetProduct());
+    return context_->GetProduct();
   }
 
-  return QString::fromStdString(construct_props_->product);
+  return construct_props_->product;
 }
 
-void WebContext::SetProduct(const QString& product) {
+void WebContext::SetProduct(const std::string& product) {
   if (IsInitialized()) {
-    context_->SetProduct(product.toStdString());
+    context_->SetProduct(product);
   } else {
-    construct_props_->product = product.toStdString();
+    construct_props_->product = product;
   }
 }
 
-QString WebContext::GetUserAgent() const {
+std::string WebContext::GetUserAgent() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetUserAgent());
+    return context_->GetUserAgent();
   }
 
-  return QString::fromStdString(construct_props_->user_agent);
+  return construct_props_->user_agent;
 }
 
-void WebContext::SetUserAgent(const QString& user_agent) {
+void WebContext::SetUserAgent(const std::string& user_agent) {
   if (IsInitialized()) {
-    context_->SetUserAgent(user_agent.toStdString());
+    context_->SetUserAgent(user_agent);
   } else {
-    construct_props_->user_agent = user_agent.toStdString();
+    construct_props_->user_agent = user_agent;
   }
 }
 
-QUrl WebContext::GetDataPath() const {
-  base::FilePath path;
+base::FilePath WebContext::GetDataPath() const {
   if (IsInitialized()) {
-    path = context_->GetPath();
-  } else {
-    path = construct_props_->data_path;
+    return context_->GetPath();
   }
 
-  if (path.empty()) {
-    return QUrl();
-  }
-
-  return QUrl::fromLocalFile(QString::fromStdString(path.value()));
+  return construct_props_->data_path;
 }
 
-void WebContext::SetDataPath(const QUrl& url) {
-  if (!url.isLocalFile() && !url.isEmpty()) {
-    qWarning() << "dataPath only supports local files";
-    return;
-  }
-
+void WebContext::SetDataPath(const base::FilePath& path) {
   DCHECK(!IsInitialized());
-  construct_props_->data_path =
-      base::FilePath(url.toLocalFile().toStdString());
+  construct_props_->data_path = path;
 }
 
-QUrl WebContext::GetCachePath() const {
-  base::FilePath path;
+base::FilePath WebContext::GetCachePath() const {
   if (IsInitialized()) {
-    path = context_->GetCachePath();
-  } else {
-    path = construct_props_->cache_path;
+    return context_->GetCachePath();
   }
 
-  if (path.empty()) {
-    return QUrl();
-  }
-
-  return QUrl::fromLocalFile(QString::fromStdString(path.value()));
+  return construct_props_->cache_path;
 }
 
-void WebContext::SetCachePath(const QUrl& url) {
-  if (!url.isLocalFile() && !url.isEmpty()) {
-    qWarning() << "cachePath only supports local files";
-    return;
-  }
-
+void WebContext::SetCachePath(const base::FilePath& path) {
   DCHECK(!IsInitialized());
-  construct_props_->cache_path =
-      base::FilePath(url.toLocalFile().toStdString());
+  construct_props_->cache_path = path;
 }
 
-QString WebContext::GetAcceptLangs() const {
+std::string WebContext::GetAcceptLangs() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetAcceptLangs());
+    return context_->GetAcceptLangs();
   }
 
-  return QString::fromStdString(construct_props_->accept_langs);
+  return construct_props_->accept_langs;
 }
 
-void WebContext::SetAcceptLangs(const QString& langs) {
+void WebContext::SetAcceptLangs(const std::string& langs) {
   if (IsInitialized()) {
-    context_->SetAcceptLangs(langs.toStdString());
+    context_->SetAcceptLangs(langs);
   } else {
-    construct_props_->accept_langs = langs.toStdString();
+    construct_props_->accept_langs = langs;
   }
 }
 
@@ -713,50 +685,34 @@ void WebContext::SetDevtoolsPort(int port) {
   construct_props_->devtools_port = port;
 }
 
-QString WebContext::GetDevtoolsBindIp() const {
+std::string WebContext::GetDevtoolsBindIp() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetDevtoolsBindIp());
+    return context_->GetDevtoolsBindIp();
   }
 
-  return QString::fromStdString(construct_props_->devtools_ip);
+  return construct_props_->devtools_ip;
 }
 
-void WebContext::SetDevtoolsBindIp(const QString& ip) {
+void WebContext::SetDevtoolsBindIp(const std::string& ip) {
   if (IsInitialized()) {
     qWarning() << "Cannot change the devtools bound ip after inititialization";
     return;
   }
 
-  construct_props_->devtools_ip = ip.toStdString();
+  construct_props_->devtools_ip = ip;
 }
 
-QStringList WebContext::GetHostMappingRules() const {
-  const std::vector<std::string>* list = NULL;
+std::vector<std::string> WebContext::GetHostMappingRules() const {
   if (!IsInitialized()) {
-    list = &construct_props_->host_mapping_rules;
-  } else {
-    list = &context_->GetHostMappingRules();
+    return construct_props_->host_mapping_rules;
   }
 
-  QStringList rules;
-  for (std::vector<std::string>::const_iterator it = list->cbegin();
-       it != list->cend(); ++it) {
-    rules.append(QString::fromStdString(*it));
-  }
-
-  return rules;
+  return context_->GetHostMappingRules();
 }
 
-void WebContext::SetHostMappingRules(const QStringList& rules) {
+void WebContext::SetHostMappingRules(const std::vector<std::string>& rules) {
   DCHECK(!IsInitialized());
-
-  std::vector<std::string> list;
-  for (QStringList::const_iterator it = rules.cbegin();
-       it != rules.cend(); ++it) {
-    list.push_back((*it).toStdString());
-  }
-
-  construct_props_->host_mapping_rules = list;
+  construct_props_->host_mapping_rules = rules;
 }
 
 } // namespace qt

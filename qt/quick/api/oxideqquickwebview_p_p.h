@@ -97,7 +97,7 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   void ToggleFullscreenMode(bool enter) Q_DECL_FINAL;
 
-  void OnWebPreferencesChanged() Q_DECL_FINAL;
+  void WebPreferencesDestroyed() Q_DECL_FINAL;
 
   void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
   void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
