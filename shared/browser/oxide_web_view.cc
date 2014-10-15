@@ -52,6 +52,7 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/favicon_url.h"
+#include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
@@ -820,7 +821,7 @@ void WebView::RunFileChooser(content::WebContents* source,
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   FilePicker* file_picker = CreateFilePicker(rvh);
   if (!file_picker) {
-    std::vector<ui::SelectedFileInfo> empty;
+    std::vector<content::FileChooserFileInfo> empty;
     rvh->FilesSelectedInChooser(empty, params.mode);
     return;
   }

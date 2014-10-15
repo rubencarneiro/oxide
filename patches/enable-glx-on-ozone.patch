@@ -126,7 +126,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
              ],
            },
            'link_settings': {
-@@ -1052,10 +982,80 @@
+@@ -1071,10 +1001,80 @@
                    '-Wno-header-guard',
                  ],
                },
@@ -210,7 +210,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -381,17 +381,17 @@
+@@ -394,17 +394,17 @@
            'sources!': [
              'render_text.cc',
              'render_text.h',
@@ -263,7 +263,7 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -195,24 +195,24 @@
+@@ -194,24 +194,24 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -313,7 +313,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -241,16 +241,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -262,16 +262,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -333,7 +333,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -304,17 +307,17 @@ struct GL_EXPORT DriverEGL {
+@@ -325,17 +328,17 @@ struct GL_EXPORT DriverEGL {
    void ClearBindings();
  
    ProcsEGL fn;
@@ -352,7 +352,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -344,16 +347,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -365,16 +368,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -402,7 +402,7 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
 --- a/ui/gl/gl_surface_glx.cc
 +++ b/ui/gl/gl_surface_glx.cc
-@@ -384,16 +384,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
+@@ -409,16 +409,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
  }
  
  void* GLSurfaceGLX::GetDisplay() {
@@ -420,7 +420,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
  gfx::AcceleratedWidget NativeViewGLSurfaceGLX::GetDrawableHandle() const {
    return window_;
-@@ -571,16 +572,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+@@ -596,16 +597,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();
@@ -458,7 +458,7 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
    explicit NativeViewGLSurfaceGLX(gfx::AcceleratedWidget window);
  
    // Implement GLSurfaceGLX.
-   virtual bool Initialize() OVERRIDE;
+   virtual bool Initialize() override;
 @@ -86,16 +87,17 @@ class GL_EXPORT NativeViewGLSurfaceGLX :
  
    void* config_;
@@ -476,4 +476,4 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
    explicit PbufferGLSurfaceGLX(const gfx::Size& size);
  
    // Implement GLSurfaceGLX.
-   virtual bool Initialize() OVERRIDE;
+   virtual bool Initialize() override;

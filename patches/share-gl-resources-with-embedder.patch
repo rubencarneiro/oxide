@@ -382,7 +382,7 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -354,9 +354,13 @@ ContentBrowserClient::OverrideCreateExte
+@@ -362,9 +362,13 @@ ContentBrowserClient::OverrideCreateExte
  
  bool ContentBrowserClient::CheckMediaAccessPermission(
      BrowserContext* browser_context,
@@ -415,9 +415,9 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  namespace net {
  class CookieOptions;
  class CookieStore;
- class HttpNetworkSession;
  class NetLog;
-@@ -644,13 +645,15 @@ class CONTENT_EXPORT ContentBrowserClien
+ class SSLCertRequestInfo;
+@@ -642,13 +643,15 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  // Checks if |security_origin| has permission to access the microphone or
