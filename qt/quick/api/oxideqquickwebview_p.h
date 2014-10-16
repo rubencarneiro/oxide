@@ -106,6 +106,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
+  Q_PROPERTY(QString state READ state WRITE setState)
+
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
@@ -196,6 +198,10 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   OxideQNewViewRequest* request() const;
   void setRequest(OxideQNewViewRequest* request);
+
+  QString state() const;
+  void setState(const QString& state);
+  Q_INVOKABLE QString currentState() const;
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 

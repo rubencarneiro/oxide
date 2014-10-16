@@ -183,6 +183,7 @@
         '<(DEPTH)/build/linux/system.gyp:dbus',
         '<(DEPTH)/build/linux/system.gyp:fontconfig',
         '<(DEPTH)/cc/cc.gyp:cc',
+        '<(DEPTH)/components/components.gyp:sessions',
         '<(DEPTH)/content/content.gyp:content_app_both',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_child',

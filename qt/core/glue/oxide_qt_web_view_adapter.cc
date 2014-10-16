@@ -17,12 +17,15 @@
 
 #include "oxide_qt_web_view_adapter.h"
 
+#include <limits>
+
 #include <QSize>
 #include <QtDebug>
 
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/pickle.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
@@ -105,7 +108,8 @@ WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
     view_(WebView::Create(this)),
     construct_props_(new ConstructProperties()),
-    created_with_new_view_request_(false) {}
+    created_with_new_view_request_(false),
+    created_with_initial_state_(false) {}
 
 WebViewAdapter::~WebViewAdapter() {}
 
@@ -344,6 +348,59 @@ void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
 
   rd->view = view_->AsWeakPtr();
   created_with_new_view_request_ = true;
+}
+
+void WebViewAdapter::setState(const QByteArray& state) {
+  if (isInitialized()) {
+    qWarning() << "Cannot assign initial state to an already constructed WebView";
+    return;
+  }
+
+  if (created_with_initial_state_) {
+    return;
+  }
+
+  std::vector<sessions::SerializedNavigationEntry> entries;
+  Pickle pickle(state.data(), state.size());
+  PickleIterator i(pickle);
+  int count;
+  if (!i.ReadLength(&count)) {
+    qWarning() << "Failed to read initial state: invalid data";
+    return;
+  }
+  entries.resize(count);
+  for (int j = 0; j < count; ++j) {
+    sessions::SerializedNavigationEntry entry;
+    if (!entry.ReadFromPickle(&i)) {
+      qWarning() << "Failed to read initial state: invalid data";
+      return;
+    }
+    entries[j] = entry;
+  }
+  int index;
+  if (!i.ReadInt(&index)) {
+    qWarning() << "Failed to read initial state: invalid data";
+    return;
+  }
+  view_->SetState(entries, index);
+
+  created_with_initial_state_ = true;
+}
+
+QByteArray WebViewAdapter::currentState() const {
+  std::vector<sessions::SerializedNavigationEntry> entries = view_->GetState();
+  if (entries.size() == 0) {
+    return QByteArray();
+  }
+  Pickle pickle;
+  pickle.WriteInt(entries.size());
+  std::vector<sessions::SerializedNavigationEntry>::const_iterator i;
+  static const size_t max_state_size = std::numeric_limits<uint16>::max() - 1024;
+  for (i = entries.begin(); i != entries.end(); ++i) {
+    i->WriteToPickle(max_state_size, &pickle);
+  }
+  pickle.WriteInt(view_->GetNavigationCurrentEntryIndex());
+  return QByteArray(static_cast<const char*>(pickle.data()), pickle.size());
 }
 
 void WebViewAdapter::updateWebPreferences() {

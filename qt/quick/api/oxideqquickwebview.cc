@@ -18,6 +18,7 @@
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
+#include <QByteArray>
 #include <QEvent>
 #include <QFlags>
 #include <QGuiApplication>
@@ -1387,6 +1388,28 @@ void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
   Q_D(OxideQQuickWebView);
 
   d->setRequest(request);
+}
+
+// This exists purely to remove a moc warning. We don't store this initial state
+// anywhere, it's only a transient blob and I can't think of any possible
+// reason why anybody would want to read it back
+QString OxideQQuickWebView::state() const {
+  return QString();
+}
+
+void OxideQQuickWebView::setState(const QString& state) {
+  Q_D(OxideQQuickWebView);
+
+  // state is expected to be a base64-encoded string
+  d->setState(QByteArray::fromBase64(state.toLocal8Bit()));
+}
+
+QString OxideQQuickWebView::currentState() const {
+  Q_D(const OxideQQuickWebView);
+
+  // Encode the current state in base64 so it can be safely passed around
+  // as a string (QML doesn’t know of byte arrays)
+  return QString::fromLocal8Bit(d->currentState().toBase64());
 }
 
 // static

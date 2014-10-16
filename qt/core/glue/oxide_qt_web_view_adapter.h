@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 
+#include <QByteArray>
 #include <QDateTime>
 #include <QImage>
 #include <QList>
@@ -176,6 +177,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void setRequest(OxideQNewViewRequest* request);
 
+  void setState(const QByteArray& state);
+  QByteArray currentState() const;
+
   void updateWebPreferences();
 
   float compositorFrameDeviceScaleFactor() const;
@@ -283,6 +287,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   QScopedPointer<ConstructProperties> construct_props_;
   bool created_with_new_view_request_;
+  bool created_with_initial_state_;
 };
 
 } // namespace qt

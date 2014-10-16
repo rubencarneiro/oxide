@@ -1137,6 +1137,7 @@ WebView::WebView()
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_provider_(GestureProvider::Create(this)),
       in_swap_(false),
+      initial_index_(0),
       initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false),
@@ -1236,6 +1237,17 @@ void WebView::Init(Params* params) {
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
+    if (!initial_state_.empty()) {
+      std::vector<content::NavigationEntry*> entries =
+          sessions::SerializedNavigationEntry::ToNavigationEntries(
+              initial_state_, context);
+      web_contents_->GetController().Restore(
+          initial_index_,
+          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
+          &entries);
+      initial_state_.clear();
+    }
+
     WebViewContentsHelper::Attach(web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
@@ -1274,6 +1286,8 @@ void WebView::Init(Params* params) {
       initial_data_.reset();
     }
   }
+
+  web_contents_->GetController().LoadIfNecessary();
 
   SetIsFullscreen(is_fullscreen_);
 
@@ -1326,6 +1340,34 @@ void WebView::SetURL(const GURL& url) {
   content::NavigationController::LoadURLParams params(url);
   params.transition_type = ui::PAGE_TRANSITION_TYPED;
   web_contents_->GetController().LoadURLWithParams(params);
+}
+
+std::vector<sessions::SerializedNavigationEntry> WebView::GetState() const {
+  std::vector<sessions::SerializedNavigationEntry> entries;
+  if (!web_contents_) {
+    return entries;
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  const int pending_index = controller.GetPendingEntryIndex();
+  int entry_count = controller.GetEntryCount();
+  if (entry_count == 0 && pending_index == 0) {
+    entry_count++;
+  }
+  entries.resize(entry_count);
+  for (int i = 0; i < entry_count; ++i) {
+    content::NavigationEntry* entry = (i == pending_index) ?
+        controller.GetPendingEntry() : controller.GetEntryAtIndex(i);
+    entries[i] =
+        sessions::SerializedNavigationEntry::FromNavigationEntry(i, *entry);
+  }
+  return entries;
+}
+
+void WebView::SetState(std::vector<sessions::SerializedNavigationEntry> state,
+                       int index) {
+  DCHECK(!web_contents_);
+  initial_state_ = state;
+  initial_index_ = index;
 }
 
 void WebView::LoadData(const std::string& encodedData,
