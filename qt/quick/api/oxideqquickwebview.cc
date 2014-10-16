@@ -80,25 +80,25 @@ class WebViewInputArea : public QQuickItem {
   virtual ~WebViewInputArea() {}
 
  private:
-  void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
-  void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
+  void focusInEvent(QFocusEvent* event) final;
+  void focusOutEvent(QFocusEvent* event) final;
 
-  void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
+  void hoverMoveEvent(QHoverEvent* event) final;
 
-  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_FINAL;
-  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
+  void inputMethodEvent(QInputMethodEvent* event) final;
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const final;
 
-  void keyPressEvent(QKeyEvent* event) Q_DECL_FINAL;
-  void keyReleaseEvent(QKeyEvent* event) Q_DECL_FINAL;
+  void keyPressEvent(QKeyEvent* event) final;
+  void keyReleaseEvent(QKeyEvent* event) final;
 
-  void mouseDoubleClickEvent(QMouseEvent* event) Q_DECL_FINAL;
-  void mouseMoveEvent(QMouseEvent* event) Q_DECL_FINAL;
-  void mousePressEvent(QMouseEvent* event) Q_DECL_FINAL;
-  void mouseReleaseEvent(QMouseEvent* event) Q_DECL_FINAL;
+  void mouseDoubleClickEvent(QMouseEvent* event) final;
+  void mouseMoveEvent(QMouseEvent* event) final;
+  void mousePressEvent(QMouseEvent* event) final;
+  void mouseReleaseEvent(QMouseEvent* event) final;
 
-  void touchEvent(QTouchEvent* event) Q_DECL_FINAL;
+  void touchEvent(QTouchEvent* event) final;
 
-  void wheelEvent(QWheelEvent* event) Q_DECL_FINAL;
+  void wheelEvent(QWheelEvent* event) final;
 
   OxideQQuickWebViewPrivate* d_;
 };

@@ -32,15 +32,14 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qquick {
 
-class WebPopupMenuDelegate Q_DECL_FINAL :
-    public oxide::qt::WebPopupMenuDelegate {
+class WebPopupMenuDelegate final : public oxide::qt::WebPopupMenuDelegate {
  public:
   WebPopupMenuDelegate(OxideQQuickWebView* webview);
 
   void Show(const QRect& bounds,
             QList<oxide::qt::MenuItem>& items,
-            bool allow_multiple_selection) Q_DECL_FINAL;
-  void Hide() Q_DECL_FINAL;
+            bool allow_multiple_selection) final;
+  void Hide() final;
 
  private:
   OxideQQuickWebView* web_view_;

@@ -25,7 +25,7 @@ namespace qquick {
 
 class PromptDialogContext;
 
-class PromptDialogDelegate Q_DECL_FINAL : public JavaScriptDialogDelegate {
+class PromptDialogDelegate final : public JavaScriptDialogDelegate {
  public:
   PromptDialogDelegate(OxideQQuickWebView* webview);
 

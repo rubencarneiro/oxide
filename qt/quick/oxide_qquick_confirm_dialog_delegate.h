@@ -25,7 +25,7 @@ namespace qquick {
 
 class ConfirmDialogContext;
 
-class ConfirmDialogDelegate Q_DECL_FINAL : public JavaScriptDialogDelegate {
+class ConfirmDialogDelegate final : public JavaScriptDialogDelegate {
  public:
   ConfirmDialogDelegate(OxideQQuickWebView* webview);
 

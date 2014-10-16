@@ -85,12 +85,12 @@ class WebContextIODelegate : public oxide::qt::WebContextAdapter::IODelegate {
   WebContextIODelegate() {}
   virtual ~WebContextIODelegate() {}
 
-  void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) Q_DECL_FINAL;
-  void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) Q_DECL_FINAL;
-  void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) Q_DECL_FINAL;
+  void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) final;
+  void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) final;
+  void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) final;
   void HandleStoragePermissionRequest(
-      OxideQStoragePermissionRequest* req) Q_DECL_FINAL;
-  bool GetUserAgentOverride(const QUrl& url, QString* user_agent) Q_DECL_FINAL;
+      OxideQStoragePermissionRequest* req) final;
+  bool GetUserAgentOverride(const QUrl& url, QString* user_agent) final;
 
   QMutex lock;
 

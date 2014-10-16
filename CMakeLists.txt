@@ -26,6 +26,8 @@ endif()
 cmake_minimum_required(VERSION 2.8.11)
 project(OXIDE)
 
+include(CheckCXXCompilerFlag)
+
 if(NOT DEFINED OXIDE_BUILD)
   set(OXIDE_BUILD qt CACHE INTERNAL "")
 endif()
@@ -157,6 +159,12 @@ else()
   set(ENV{CXX} ${CMAKE_CXX_COMPILER})
   set(ENV{AR} ${CMAKE_AR})
 endif()
+
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_HAS_CXX11)
+if(NOT COMPILER_HAS_CXX11)
+  message(FATAL_ERROR "Oxide requires a compiler that supports -std=c++11")
+endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 message(STATUS "Running gyp")
 execute_process(COMMAND ${_GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

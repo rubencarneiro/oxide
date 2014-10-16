@@ -85,7 +85,7 @@ enum ContentTypeFlags {
   CONTENT_TYPE_MIXED_SCRIPT = 1 << 1
 };
 
-class Q_DECL_EXPORT AcceleratedFrameData Q_DECL_FINAL {
+class Q_DECL_EXPORT AcceleratedFrameData final {
  public:
   AcceleratedFrameData(unsigned int id)
       : texture_id_(id) {}
