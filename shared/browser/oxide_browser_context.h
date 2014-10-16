@@ -177,11 +177,11 @@ class BrowserContext : public content::BrowserContext,
   virtual BrowserContext* GetOffTheRecordContext() = 0;
   virtual BrowserContext* GetOriginalContext() = 0;
 
-  bool IsOffTheRecord() const FINAL;
+  bool IsOffTheRecord() const final;
 
   bool IsSameContext(BrowserContext* other) const;
 
-  base::FilePath GetPath() const FINAL;
+  base::FilePath GetPath() const final;
   base::FilePath GetCachePath() const;
 
   std::string GetAcceptLangs() const;
@@ -209,7 +209,7 @@ class BrowserContext : public content::BrowserContext,
 
   UserScriptMaster& UserScriptManager();
 
-  content::ResourceContext* GetResourceContext() FINAL;
+  content::ResourceContext* GetResourceContext() final;
 
   scoped_refptr<net::CookieStore> GetCookieStore();
 
@@ -225,25 +225,25 @@ class BrowserContext : public content::BrowserContext,
  private:
   friend class BrowserContextObserver; // for {Add,Remove}Observer
 
-  net::URLRequestContextGetter* GetRequestContext() FINAL;
+  net::URLRequestContextGetter* GetRequestContext() final;
   net::URLRequestContextGetter* GetRequestContextForRenderProcess(
-      int renderer_child_id) FINAL;
+      int renderer_child_id) final;
 
-  net::URLRequestContextGetter* GetMediaRequestContext() FINAL;
+  net::URLRequestContextGetter* GetMediaRequestContext() final;
   net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
-      int renderer_child_id) FINAL;
+      int renderer_child_id) final;
 
   net::URLRequestContextGetter*
       GetMediaRequestContextForStoragePartition(
           const base::FilePath& partition_path,
-          bool in_memory) FINAL;
+          bool in_memory) final;
 
-  content::DownloadManagerDelegate* GetDownloadManagerDelegate() FINAL;
+  content::DownloadManagerDelegate* GetDownloadManagerDelegate() final;
 
-  content::BrowserPluginGuestManager* GetGuestManager() FINAL;
-  storage::SpecialStoragePolicy* GetSpecialStoragePolicy() FINAL;
-  content::PushMessagingService* GetPushMessagingService() FINAL;
-  content::SSLHostStateDelegate* GetSSLHostStateDelegate() FINAL;
+  content::BrowserPluginGuestManager* GetGuestManager() final;
+  storage::SpecialStoragePolicy* GetSpecialStoragePolicy() final;
+  content::PushMessagingService* GetPushMessagingService() final;
+  content::SSLHostStateDelegate* GetSSLHostStateDelegate() final;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);

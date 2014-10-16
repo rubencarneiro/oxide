@@ -27,7 +27,7 @@
 namespace oxide {
 namespace qt {
 
-class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
+class ContentMainDelegate final : public oxide::ContentMainDelegate {
  public:
   ContentMainDelegate();
   ~ContentMainDelegate();
@@ -39,14 +39,14 @@ class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
   ContentMainDelegate(const base::FilePath& nss_db_path);
 
   // oxide::ContentMainDelegate implementation
-  oxide::SharedGLContext* GetSharedGLContext() const FINAL;
-  bool GetNativeDisplay(intptr_t* handle) const FINAL;
+  oxide::SharedGLContext* GetSharedGLContext() const final;
+  bool GetNativeDisplay(intptr_t* handle) const final;
 #if defined(USE_NSS)
-  base::FilePath GetNSSDbPath() const FINAL;
+  base::FilePath GetNSSDbPath() const final;
 #endif
 
   // content::ContentMainDelegate implementation
-  content::ContentBrowserClient* CreateContentBrowserClient() FINAL;
+  content::ContentBrowserClient* CreateContentBrowserClient() final;
 
   bool is_browser_;
   scoped_refptr<SharedGLContext> shared_gl_context_;

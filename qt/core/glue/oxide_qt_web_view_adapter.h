@@ -159,9 +159,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void reload();
   void loadHtml(const QString& html, const QUrl& baseUrl);
 
-  QList<ScriptMessageHandlerAdapter *>& message_handlers() {
-    return message_handlers_;
-  }
+  QList<ScriptMessageHandlerAdapter *>& messageHandlers();
 
   bool isInitialized();
 
@@ -212,7 +210,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   };
 
   void Initialized();
-  void WebPreferencesDestroyed();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
@@ -251,7 +248,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void ToggleFullscreenMode(bool enter) = 0;
 
-  virtual void OnWebPreferencesChanged() = 0;
+  virtual void WebPreferencesDestroyed() = 0;
 
   virtual void FrameAdded(WebFrameAdapter* frame) = 0;
   virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
@@ -280,7 +277,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
   virtual void ContentBlocked() = 0;
 
-  QScopedPointer<WebView> priv;
+  QScopedPointer<WebView> view_;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
 

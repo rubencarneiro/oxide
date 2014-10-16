@@ -38,18 +38,18 @@ class DevToolsTarget
   virtual ~DevToolsTarget();
 
   // content::DevToolsTarget overrides.
-  std::string GetId() const FINAL;
-  std::string GetParentId() const FINAL;
-  std::string GetType() const FINAL;
-  std::string GetTitle() const FINAL;
-  std::string GetDescription() const FINAL;
-  GURL GetURL() const FINAL;
-  GURL GetFaviconURL() const FINAL;
-  base::TimeTicks GetLastActivityTime() const FINAL;
-  bool IsAttached() const FINAL;
-  scoped_refptr<content::DevToolsAgentHost> GetAgentHost() const FINAL;
-  bool Activate() const FINAL;
-  bool Close() const FINAL;
+  std::string GetId() const final;
+  std::string GetParentId() const final;
+  std::string GetType() const final;
+  std::string GetTitle() const final;
+  std::string GetDescription() const final;
+  GURL GetURL() const final;
+  GURL GetFaviconURL() const final;
+  base::TimeTicks GetLastActivityTime() const final;
+  bool IsAttached() const final;
+  scoped_refptr<content::DevToolsAgentHost> GetAgentHost() const final;
+  bool Activate() const final;
+  bool Close() const final;
 
  private:
   scoped_refptr<content::DevToolsAgentHost> agent_host_;

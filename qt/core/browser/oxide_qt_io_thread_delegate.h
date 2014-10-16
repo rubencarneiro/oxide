@@ -32,15 +32,15 @@ QT_END_NAMESPACE;
 namespace oxide {
 namespace qt {
 
-class IOThreadDelegate FINAL : public oxide::IOThread::Delegate {
+class IOThreadDelegate final : public oxide::IOThread::Delegate {
  public:
   IOThreadDelegate();
   ~IOThreadDelegate();
 
  private:
   // oxide::IOThread::Delegate implementation
-  void Init() FINAL;
-  void CleanUp() FINAL;
+  void Init() final;
+  void CleanUp() final;
 
   DISALLOW_COPY_AND_ASSIGN(IOThreadDelegate);
 };

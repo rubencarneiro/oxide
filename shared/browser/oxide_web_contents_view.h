@@ -32,7 +32,7 @@ namespace oxide {
 
 class WebView;
 
-class WebContentsView FINAL : public content::WebContentsView,
+class WebContentsView final : public content::WebContentsView,
                               public content::RenderViewHostDelegateView {
  public:
   ~WebContentsView();
@@ -41,36 +41,36 @@ class WebContentsView FINAL : public content::WebContentsView,
   WebView* GetWebView() const;
 
   // content::WebContentsView
-  gfx::NativeView GetNativeView() const FINAL;
-  gfx::NativeView GetContentNativeView() const FINAL;
-  gfx::NativeWindow GetTopLevelNativeWindow() const FINAL;
+  gfx::NativeView GetNativeView() const final;
+  gfx::NativeView GetContentNativeView() const final;
+  gfx::NativeWindow GetTopLevelNativeWindow() const final;
 
-  void GetContainerBounds(gfx::Rect* out) const FINAL;
+  void GetContainerBounds(gfx::Rect* out) const final;
 
-  void SizeContents(const gfx::Size& size) FINAL;
+  void SizeContents(const gfx::Size& size) final;
 
-  void Focus() FINAL;
-  void SetInitialFocus() FINAL;
-  void StoreFocus() FINAL;
-  void RestoreFocus() FINAL;
+  void Focus() final;
+  void SetInitialFocus() final;
+  void StoreFocus() final;
+  void RestoreFocus() final;
 
-  content::DropData* GetDropData() const FINAL;
+  content::DropData* GetDropData() const final;
 
-  gfx::Rect GetViewBounds() const FINAL;
+  gfx::Rect GetViewBounds() const final;
 
   void CreateView(const gfx::Size& initial_size,
-                  gfx::NativeView context) FINAL;
+                  gfx::NativeView context) final;
   content::RenderWidgetHostViewBase* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
+      content::RenderWidgetHost* render_widget_host) final;
   content::RenderWidgetHostViewBase* CreateViewForPopupWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
+      content::RenderWidgetHost* render_widget_host) final;
 
-  void SetPageTitle(const base::string16& title) FINAL;
+  void SetPageTitle(const base::string16& title) final;
 
-  void RenderViewCreated(content::RenderViewHost* host) FINAL;
-  void RenderViewSwappedIn(content::RenderViewHost* host) FINAL;
+  void RenderViewCreated(content::RenderViewHost* host) final;
+  void RenderViewSwappedIn(content::RenderViewHost* host) final;
 
-  void SetOverscrollControllerEnabled(bool enabled) FINAL;
+  void SetOverscrollControllerEnabled(bool enabled) final;
 
   // content::RenderViewHostDelegateView
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
@@ -80,8 +80,8 @@ class WebContentsView FINAL : public content::WebContentsView,
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
                      bool right_aligned,
-                     bool allow_multiple_selection) FINAL;
-  void HidePopupMenu() FINAL;
+                     bool allow_multiple_selection) final;
+  void HidePopupMenu() final;
 
  private:
   content::WebContents* web_contents_;

@@ -30,7 +30,7 @@
 
 namespace oxide {
 
-class CompositorOutputSurfaceGL FINAL : public CompositorOutputSurface {
+class CompositorOutputSurfaceGL final : public CompositorOutputSurface {
  public:
   CompositorOutputSurfaceGL(
       uint32 surface_id,
@@ -40,14 +40,14 @@ class CompositorOutputSurfaceGL FINAL : public CompositorOutputSurface {
 
  private:
   // cc::OutputSurface implementation
-  void EnsureBackbuffer() FINAL;
-  void DiscardBackbuffer() FINAL;
-  void Reshape(const gfx::Size& size, float scale_factor) FINAL;
-  void BindFramebuffer() FINAL;
-  void SwapBuffers(cc::CompositorFrame* frame) FINAL;
+  void EnsureBackbuffer() final;
+  void DiscardBackbuffer() final;
+  void Reshape(const gfx::Size& size, float scale_factor) final;
+  void BindFramebuffer() final;
+  void SwapBuffers(cc::CompositorFrame* frame) final;
 
   // CompositorOutputSurface implementation
-  void ReclaimResources(const cc::CompositorFrameAck& ack) FINAL;
+  void ReclaimResources(const cc::CompositorFrameAck& ack) final;
 
   struct OutputFrameData {
     OutputFrameData() : texture_id(0), sync_point(0) {}

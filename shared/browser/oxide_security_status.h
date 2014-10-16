@@ -30,7 +30,7 @@ class X509Certificate;
 
 namespace oxide {
 
-class SecurityStatus FINAL {
+class SecurityStatus final {
  public:
 
   SecurityStatus();

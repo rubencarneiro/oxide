@@ -37,35 +37,35 @@ class OzonePlatform : public ui::OzonePlatform {
 
   virtual ~OzonePlatform() {}
 
-  ui::SurfaceFactoryOzone* GetSurfaceFactoryOzone() FINAL {
+  ui::SurfaceFactoryOzone* GetSurfaceFactoryOzone() final {
     return &surface_factory_;
   }
 
-  ui::CursorFactoryOzone* GetCursorFactoryOzone() FINAL {
+  ui::CursorFactoryOzone* GetCursorFactoryOzone() final {
     return NULL;
   }
 
-  ui::GpuPlatformSupport* GetGpuPlatformSupport() FINAL {
+  ui::GpuPlatformSupport* GetGpuPlatformSupport() final {
     return gpu_platform_support_.get();
   }
 
-  ui::GpuPlatformSupportHost* GetGpuPlatformSupportHost() FINAL {
+  ui::GpuPlatformSupportHost* GetGpuPlatformSupportHost() final {
     return gpu_platform_support_host_.get();
   }
 
   scoped_ptr<ui::PlatformWindow> CreatePlatformWindow(
       ui::PlatformWindowDelegate* delegate,
-      const gfx::Rect& bounds) FINAL {
+      const gfx::Rect& bounds) final {
     return scoped_ptr<ui::PlatformWindow>();
   }
 
-  scoped_ptr<ui::NativeDisplayDelegate> CreateNativeDisplayDelegate() FINAL {
+  scoped_ptr<ui::NativeDisplayDelegate> CreateNativeDisplayDelegate() final {
     return scoped_ptr<ui::NativeDisplayDelegate>();
   }
 
  private:
-  void InitializeUI() OVERRIDE {}
-  void InitializeGPU() OVERRIDE {}
+  void InitializeUI() override {}
+  void InitializeGPU() override {}
 
   OzoneSurfaceFactory surface_factory_;
   scoped_ptr<ui::GpuPlatformSupportHost> gpu_platform_support_host_;

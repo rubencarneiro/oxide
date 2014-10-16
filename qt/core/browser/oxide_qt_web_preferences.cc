@@ -27,6 +27,10 @@ namespace qt {
 
 WebPreferences::WebPreferences(OxideQWebPreferences* api_handle) :
     api_handle_(api_handle) {
+  if (api_handle_) {
+    SetIsOwnedByEmbedder();
+  }
+
   QFont font;
 
   font.setStyleHint(QFont::Serif);
@@ -40,8 +44,17 @@ WebPreferences::WebPreferences(OxideQWebPreferences* api_handle) :
   SetFixedFontFamily(font.defaultFamily().toStdString());
 }
 
-WebPreferences::~WebPreferences() {
-  CHECK(!api_handle_);
+WebPreferences::~WebPreferences() {}
+
+void WebPreferences::SetApiHandle(OxideQWebPreferences* handle) {
+  DCHECK(!api_handle_ || handle);
+
+  if (!handle) {
+    return;
+  }
+
+  api_handle_ = handle;
+  SetIsOwnedByEmbedder();
 }
 
 } // namespace qt

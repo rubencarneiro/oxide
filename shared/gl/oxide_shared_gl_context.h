@@ -32,12 +32,12 @@ class SharedGLContext : public gfx::GLContext {
   virtual gfx::GLImplementation GetImplementation() = 0;
 
   bool Initialize(gfx::GLSurface* compatible_surface,
-                  gfx::GpuPreference gpu_preference) FINAL;
-  void Destroy() FINAL;
-  bool MakeCurrent(gfx::GLSurface* surface) FINAL;
-  void ReleaseCurrent(gfx::GLSurface* surface) FINAL;
-  bool IsCurrent(gfx::GLSurface* surface) FINAL;
-  void SetSwapInterval(int interval) FINAL;
+                  gfx::GpuPreference gpu_preference) final;
+  void Destroy() final;
+  bool MakeCurrent(gfx::GLSurface* surface) final;
+  void ReleaseCurrent(gfx::GLSurface* surface) final;
+  bool IsCurrent(gfx::GLSurface* surface) final;
+  void SetSwapInterval(int interval) final;
 };
 
 } // namespace oxide

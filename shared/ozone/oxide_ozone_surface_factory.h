@@ -24,18 +24,18 @@
 
 namespace oxide {
 
-class OzoneSurfaceFactory FINAL : public ui::SurfaceFactoryOzone {
+class OzoneSurfaceFactory final : public ui::SurfaceFactoryOzone {
  public:
   OzoneSurfaceFactory();
 
  private:
-  intptr_t GetNativeDisplay() FINAL;
+  intptr_t GetNativeDisplay() final;
 
   bool LoadEGLGLES2Bindings(
       AddGLLibraryCallback add_gl_library,
-      SetGLGetProcAddressProcCallback set_gl_get_proc_address) FINAL;
+      SetGLGetProcAddressProcCallback set_gl_get_proc_address) final;
 
-  const int32* GetEGLSurfaceProperties(const int32* desired_list) FINAL;
+  const int32* GetEGLSurfaceProperties(const int32* desired_list) final;
 };
 
 } // namespace oxide

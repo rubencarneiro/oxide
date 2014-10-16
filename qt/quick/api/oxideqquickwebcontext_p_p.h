@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QSharedPointer>
+#include <QStringList>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
@@ -58,8 +59,6 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
-  static void ensureChromiumStarted();
-
  Q_SIGNALS:
   void constructed();
   void willBeDestroyed();
@@ -83,6 +82,8 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   bool prepareToAttachDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
   void detachedDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
 
+  QNetworkAccessManager* GetCustomNetworkAccessManager() Q_DECL_FINAL;
+
   void CookiesSet(int request_id,
                   const QList<QNetworkCookie>& failed_cookies) Q_DECL_FINAL;
   void CookiesRetrieved(int request_id,
@@ -98,6 +99,8 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   OxideQQuickWebContextDelegateWorker* user_agent_override_delegate_;
 
   mutable OxideQQuickCookieManager* cookie_manager_;
+
+  QStringList allowed_extra_url_schemes_;
 
   Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };

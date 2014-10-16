@@ -15,12 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
-#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_P_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_H_
+#define _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_H_
 
 #include <QList>
 #include <QSharedPointer>
+#include <QtGlobal>
+#include <QUrl>
 #include <QWeakPointer>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -38,6 +41,10 @@
 
 #include "shared/browser/oxide_browser_context_delegate.h"
 
+QT_BEGIN_NAMESPACE
+class QNetworkAccessManager;
+QT_END_NAMESPACE
+
 namespace net {
 class CookieStore;
 }
@@ -52,16 +59,53 @@ struct ConstructProperties;
 class SetCookiesContext;
 class UserScriptAdapter;
 
-class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
+class WebContext final : public oxide::BrowserContextDelegate {
  public:
-  ~WebContextAdapterPrivate();
+  ~WebContext();
 
-  static WebContextAdapterPrivate* get(WebContextAdapter* adapter);
-  static WebContextAdapterPrivate* FromBrowserContext(
-      oxide::BrowserContext* context);
+  static WebContext* FromAdapter(WebContextAdapter* adapter);
+  static WebContext* FromBrowserContext(oxide::BrowserContext* context);
 
-  WebContextAdapter* GetAdapter() const;
   oxide::BrowserContext* GetContext();
+
+  QNetworkAccessManager* GetCustomNetworkAccessManager();
+
+  bool IsInitialized() const;
+
+  std::string GetProduct() const;
+  void SetProduct(const std::string& product);
+
+  std::string GetUserAgent() const;
+  void SetUserAgent(const std::string& user_agent);
+
+  base::FilePath GetDataPath() const;
+  void SetDataPath(const base::FilePath& path);
+
+  base::FilePath GetCachePath() const;
+  void SetCachePath(const base::FilePath& path);
+
+  std::string GetAcceptLangs() const;
+  void SetAcceptLangs(const std::string& langs);
+
+  net::StaticCookiePolicy::Type GetCookiePolicy() const;
+  void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
+
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
+  void SetSessionCookieMode(
+      content::CookieStoreConfig::SessionCookieMode mode);
+
+  bool GetPopupBlockerEnabled() const;
+  void SetPopupBlockerEnabled(bool enabled);
+
+  bool GetDevtoolsEnabled() const;
+  void SetDevtoolsEnabled(bool enabled);
+  int GetDevtoolsPort() const;
+  void SetDevtoolsPort(int port);
+  std::string GetDevtoolsBindIp() const;
+  void SetDevtoolsBindIp(const std::string& ip);
+
+  std::vector<std::string> GetHostMappingRules() const;
+  void SetHostMappingRules(const std::vector<std::string>& rules);
 
  private:
   friend class WebContextAdapter;
@@ -83,46 +127,55 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
     std::vector<std::string> host_mapping_rules;
   };
 
-  static WebContextAdapterPrivate* Create(WebContextAdapter* adapter);
-  WebContextAdapterPrivate(WebContextAdapter* adapter);
+  static WebContext* Create(WebContextAdapter* adapter);
+  WebContext(WebContextAdapter* adapter);
 
   void Init(const QWeakPointer<WebContextAdapter::IODelegate>& io_delegate);
   void Destroy();
 
+  WebContextAdapter* GetAdapter() const;
   QSharedPointer<WebContextAdapter::IODelegate> GetIODelegate() const;
 
   void UpdateUserScripts();
 
-  void SetCookies(int request_id,
-                  const QUrl& url,
-                  const QList<QNetworkCookie>& cookies);
+  int SetCookies(const QUrl& url,
+                 const QList<QNetworkCookie>& cookies);
   void CookieSetCallback(const scoped_refptr<SetCookiesContext>& context,
                          const QNetworkCookie& cookie,
                          bool success);
   void DeliverCookiesSet(const scoped_refptr<SetCookiesContext>& ctxt);
 
-  void GetCookies(int request_id, const QUrl& url);
-  void GetAllCookies(int request_id);
+  int GetCookies(const QUrl& url);
+  int GetAllCookies();
   void GotCookiesCallback(int request_id,
                           const net::CookieList& cookies);
 
-  void DeleteAllCookies(int request_id);
+  int DeleteAllCookies();
   void DeletedCookiesCallback(int request_id, int num_deleted);
+
+  void SetAllowedExtraURLSchemes(const std::set<std::string>& schemes);
 
   // oxide::BrowserContextDelegate
   int OnBeforeURLRequest(net::URLRequest* request,
                          const net::CompletionCallback& callback,
-                         GURL* new_url) FINAL;
+                         GURL* new_url) final;
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
-                          net::HttpRequestHeaders* headers) FINAL;
+                          net::HttpRequestHeaders* headers) final;
+  void OnBeforeRedirect(net::URLRequest* request,
+                        const GURL& new_location) final;
   oxide::StoragePermission CanAccessStorage(
       const GURL& url,
       const GURL& first_party_url,
       bool write,
-      oxide::StorageType type) FINAL;
+      oxide::StorageType type) final;
   bool GetUserAgentOverride(const GURL& url,
-                            std::string* user_agent) FINAL;
+                            std::string* user_agent) final;
+  bool IsCustomProtocolHandlerRegistered(
+      const std::string& scheme) const final;
+  oxide::URLRequestDelegatedJob* CreateCustomURLRequestJob(
+      net::URLRequest* request,
+      net::NetworkDelegate* network_delegate) final;
 
   WebContextAdapter* adapter_;
 
@@ -136,7 +189,10 @@ class WebContextAdapterPrivate FINAL : public oxide::BrowserContextDelegate {
 
   QList<UserScriptAdapter *> user_scripts_;
 
-  DISALLOW_COPY_AND_ASSIGN(WebContextAdapterPrivate);
+  mutable base::Lock url_schemes_lock_;
+  std::set<std::string> allowed_extra_url_schemes_;
+
+  DISALLOW_COPY_AND_ASSIGN(WebContext);
 };
 
 } // namespace qt

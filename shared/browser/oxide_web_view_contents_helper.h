@@ -18,15 +18,18 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_H_
 
-#include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/supports_user_data.h"
-#include "content/public/browser/web_contents_delegate.h"
-#include "content/public/browser/web_contents_observer.h"
 
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
+
+namespace content {
+class RenderViewHost;
+class WebContents;
+}
 
 namespace oxide {
 
@@ -34,11 +37,9 @@ class BrowserContext;
 class WebPreferences;
 class WebViewContentsHelperDelegate;
 
-class WebViewContentsHelper FINAL : private BrowserContextObserver,
+class WebViewContentsHelper final : private BrowserContextObserver,
                                     private WebPreferencesObserver,
-                                    private base::SupportsUserData::Data,
-                                    private content::WebContentsDelegate,
-                                    private content::WebContentsObserver {
+                                    private base::SupportsUserData::Data {
  public:
   static void Attach(content::WebContents* contents,
                      content::WebContents* opener = NULL);
@@ -61,57 +62,15 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
   void UpdateWebPreferences();
 
   // BrowserContextObserver implementation
-  void NotifyPopupBlockerEnabledChanged() FINAL;
+  void NotifyPopupBlockerEnabledChanged() final;
 
   // WebPreferencesObserver implementation
-  void WebPreferencesDestroyed() FINAL;
-  void WebPreferencesValueChanged() FINAL;
-  void WebPreferencesAdopted() FINAL;
-
-  // content::WebContentsDelegate implementation
-  content::WebContents* OpenURLFromTab(content::WebContents* source,
-                                       const content::OpenURLParams& params) FINAL;
-  void NavigationStateChanged(const content::WebContents* source,
-                              content::InvalidateTypes changed_flags) FINAL;
-  void VisibleSSLStateChanged(const content::WebContents* source) FINAL;
-  bool ShouldCreateWebContents(
-      content::WebContents* source,
-      int route_id,
-      WindowContainerType window_container_type,
-      const base::string16& frame_name,
-      const GURL& target_url,
-      const std::string& partition_id,
-      content::SessionStorageNamespace* session_storage_namespace,
-      WindowOpenDisposition disposition,
-      bool user_gesture) FINAL;
-  void HandleKeyboardEvent(content::WebContents* source,
-                           const content::NativeWebKeyboardEvent& event) FINAL;
-  void WebContentsCreated(content::WebContents* source,
-                          int source_frame_id,
-                          const base::string16& frame_name,
-                          const GURL& target_url,
-                          content::WebContents* new_contents) FINAL;
-  void AddNewContents(content::WebContents* source,
-                      content::WebContents* new_contents,
-                      WindowOpenDisposition disposition,
-                      const gfx::Rect& initial_pos,
-                      bool user_gesture,
-                      bool* was_blocked) FINAL;
-  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
-  bool AddMessageToConsole(content::WebContents* source,
-               int32 level,
-               const base::string16& message,
-               int32 line_no,
-               const base::string16& source_id) FINAL;
-  content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
-  void RunFileChooser(content::WebContents* web_contents,
-                      const content::FileChooserParams& params) FINAL;
-  void ToggleFullscreenModeForTab(content::WebContents* source,
-                                  bool enter) FINAL;
-  bool IsFullscreenForTabOrPending(
-      const content::WebContents* source) const FINAL;
+  void WebPreferencesDestroyed() final;
+  void WebPreferencesValueChanged() final;
+  void WebPreferencesAdopted() final;
 
   scoped_refptr<BrowserContext> context_;
+  content::WebContents* web_contents_;
   WebViewContentsHelperDelegate* delegate_;
 
   // WebPreferences are normally owned by the public object exposed to

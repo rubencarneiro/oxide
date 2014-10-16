@@ -29,6 +29,8 @@
 #include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 #include "ui/base/resource/resource_bundle.h"
 
+#include "shared/common/oxide_constants.h"
+
 #include "oxide_isolated_world_map.h"
 #include "oxide_script_message_handler_renderer.h"
 #include "oxide_script_message_request_impl_renderer.h"
@@ -94,11 +96,9 @@ void ScriptMessageManager::OxideLazyGetter(
       mm->Value())->OxideLazyGetterInner(property, info);
 }
 
-void ScriptMessageManager::OxideLazyGetterInner(
-    v8::Local<v8::String> property,
-    const v8::PropertyCallbackInfo<v8::Value>& info) {
-  v8::Isolate* isolate = info.GetIsolate();
-  v8::HandleScope handle_scope(isolate);
+v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
+      v8::Isolate* isolate) {
+  v8::EscapableHandleScope handle_scope(isolate);
 
   base::StringPiece raw_src(
       ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
@@ -121,7 +121,7 @@ void ScriptMessageManager::OxideLazyGetterInner(
   v8::Local<v8::Function> function(script->Run().As<v8::Function>());
   if (try_catch.HasCaught()) {
     LOG(ERROR) << "Caught exception when running script";
-    return;
+    return v8::Handle<v8::Object>();
   }
 
   v8::Local<v8::External> local_data(closure_data_.NewHandle(isolate));
@@ -152,8 +152,19 @@ void ScriptMessageManager::OxideLazyGetterInner(
   }
   if (try_catch.HasCaught()) {
     LOG(ERROR) << "Caught exception when running script function";
-    return;
+    return v8::Handle<v8::Object>();
   }
+
+  return handle_scope.Escape(exports);
+}
+
+void ScriptMessageManager::OxideLazyGetterInner(
+    v8::Local<v8::String> property,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  v8::Isolate* isolate = info.GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  v8::Handle<v8::Object> exports(GetOxideApiObject(isolate));
 
   v8::Handle<v8::Value> val = info.This();
   if (val->IsObject()) {
@@ -347,10 +358,12 @@ ScriptMessageManager::ScriptMessageManager(content::RenderFrame* frame,
   closure_data_.reset(isolate(), v8::External::New(isolate(), this));
   v8::Local<v8::External> local_data(closure_data_.NewHandle(isolate()));
 
-  v8::Local<v8::Object> global(context->Global());
-  global->SetAccessor(v8::String::NewFromUtf8(isolate(), "oxide"),
-                      OxideLazyGetter, NULL,
-                      local_data);
+  if (world_id_ != kMainWorldId) {
+    v8::Local<v8::Object> global(context->Global());
+    global->SetAccessor(v8::String::NewFromUtf8(isolate(), "oxide"),
+                        OxideLazyGetter, NULL,
+                        local_data);
+  }
 }
 
 ScriptMessageManager::~ScriptMessageManager() {}

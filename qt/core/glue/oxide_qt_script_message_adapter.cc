@@ -16,65 +16,53 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_script_message_adapter.h"
-#include "oxide_qt_script_message_adapter_p.h"
 
 #include <QByteArray>
 #include <QJsonDocument>
 #include <QString>
 
-#include "qt/core/browser/oxide_qt_web_frame.h"
-#include "shared/browser/oxide_script_message_impl_browser.h"
+#include "qt/core/browser/oxide_qt_script_message.h"
+
+#include "oxide_qt_web_frame_adapter.h"
 
 namespace oxide {
 namespace qt {
 
-ScriptMessageAdapterPrivate::ScriptMessageAdapterPrivate(
-    ScriptMessageAdapter* adapter) :
-    a(adapter),
-    incoming_(NULL) {}
-
-void ScriptMessageAdapterPrivate::Initialize(oxide::ScriptMessage* message) {
-  DCHECK(!incoming());
-  incoming_ = static_cast<oxide::ScriptMessageImplBrowser *>(message);
-
-  QJsonDocument jsondoc(QJsonDocument::fromJson(
-      QByteArray(message->args().data(), message->args().length())));
-  a->args_ = jsondoc.toVariant();
-}
-
-// static
-ScriptMessageAdapterPrivate* ScriptMessageAdapterPrivate::get(
-    ScriptMessageAdapter* adapter) {
-  return adapter->priv.data();
-}
-
-ScriptMessageAdapter::ScriptMessageAdapter(QObject* q) :
-    AdapterBase(q),
-    priv(new ScriptMessageAdapterPrivate(this)) {}
+ScriptMessageAdapter::ScriptMessageAdapter(QObject* q)
+    : AdapterBase(q),
+      message_(new ScriptMessage(this)) {}
 
 ScriptMessageAdapter::~ScriptMessageAdapter() {}
 
 WebFrameAdapter* ScriptMessageAdapter::frame() const {
-  return static_cast<WebFrame *>(priv->incoming()->source_frame())->adapter();
+  return WebFrameAdapter::FromWebFrame(message_->GetFrame());
 }
 
 QString ScriptMessageAdapter::msgId() const {
-  return QString::fromStdString(priv->incoming()->msg_id());
+  return QString::fromStdString(message_->GetMsgId());
 }
 
 QUrl ScriptMessageAdapter::context() const {
-  return QUrl(QString::fromStdString(priv->incoming()->context().spec()));
+  return QUrl(QString::fromStdString(message_->GetContext().spec()));
+}
+
+QVariant ScriptMessageAdapter::args() const {
+  if (!args_.isValid()) {
+    QJsonDocument jsondoc(QJsonDocument::fromJson(
+        QByteArray(message_->GetArgs().data(), message_->GetArgs().length())));
+    args_ = jsondoc.toVariant();
+  }
+
+  return args_;
 }
 
 void ScriptMessageAdapter::reply(const QVariant& args) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
-  priv->incoming()->Reply(QString(jsondoc.toJson()).toStdString());
+  message_->Reply(QString(jsondoc.toJson()).toStdString());
 }
 
 void ScriptMessageAdapter::error(const QString& msg) {
-  priv->incoming()->Error(
-      oxide::ScriptMessageRequest::ERROR_HANDLER_REPORTED_ERROR,
-      msg.toStdString());
+  message_->Error(msg.toStdString());
 }
 
 } // namespace qt

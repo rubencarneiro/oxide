@@ -63,7 +63,6 @@
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
-#include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
 #include "shared/base/oxide_enum_flags.h"
@@ -71,6 +70,8 @@
 
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_javascript_dialog.h"
+#include "oxide_qt_script_message_handler.h"
+#include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
 
@@ -280,6 +281,10 @@ WebView::WebView(WebViewAdapter* adapter) :
   }
 }
 
+WebContext* WebView::GetContext() const {
+  return WebContext::FromBrowserContext(GetBrowserContext());
+}
+
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
   if (!screen) {
@@ -314,63 +319,16 @@ void WebView::SetInputPanelVisibility(bool visible) {
     has_input_method_state_ = false;
   }
 
-  if (QGuiApplication::inputMethod()->isVisible() == visible) {
-    return;
-  }
-
+  // Do not check whether the input method is currently visible here, to avoid
+  // a possible race condition: if hide() and show() are called very quickly
+  // in a row, when show() is called the hide() request might not have
+  // completed yet, and isVisible() could return true.
   QGuiApplication::inputMethod()->setVisible(visible);
 }
 
 void WebView::Init(oxide::WebView::Params* params) {
   oxide::WebView::Init(params);
   adapter_->Initialized();
-}
-
-void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  content::WebCursor::CursorInfo cursor_info;
-
-  cursor.GetCursorInfo(&cursor_info);
-  if (cursor.IsCustom()) {
-    QImage::Format format =
-        QImageFormatFromSkImageInfo(cursor_info.custom_image.info());
-    if (format == QImage::Format_Invalid) {
-      return;
-    }
-    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
-                        cursor_info.custom_image.width(),
-                        cursor_info.custom_image.height(),
-                        cursor_info.custom_image.rowBytes(),
-                        format);
-
-    QPixmap cursor_pixmap;
-    if (cursor_pixmap.convertFromImage(cursor_image)) {
-      adapter_->UpdateCursor(QCursor(cursor_pixmap));
-    }
-  } else {
-    adapter_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
-  }
-}
-
-void WebView::ImeCancelComposition() {
-  if (has_input_method_state_) {
-    QGuiApplication::inputMethod()->reset();
-  }
-}
-
-void WebView::SelectionChanged() {
-  if (!HasFocus()) {
-    return;
-  }
-
-  QGuiApplication::inputMethod()->update(
-      static_cast<Qt::InputMethodQueries>(
-        Qt::ImSurroundingText
-        | Qt::ImCurrentSelection
-#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
-        | Qt::ImTextBeforeCursor
-        | Qt::ImTextAfterCursor
-#endif
-      ));
 }
 
 blink::WebScreenInfo WebView::GetScreenInfo() const {
@@ -435,11 +393,13 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
 }
 
 void WebView::FrameAdded(oxide::WebFrame* frame) {
-  adapter_->FrameAdded(static_cast<WebFrame *>(frame)->adapter());
+  adapter_->FrameAdded(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
 }
 
 void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  adapter_->FrameRemoved(static_cast<WebFrame *>(frame)->adapter());
+  adapter_->FrameRemoved(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
 }
 
 bool WebView::CanCreateWindows() const {
@@ -447,13 +407,13 @@ bool WebView::CanCreateWindows() const {
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
-  return adapter_->message_handlers().size();
+  return adapter_->message_handlers_.size();
 }
 
-oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
+const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
-  return &ScriptMessageHandlerAdapterPrivate::get(
-      adapter_->message_handlers().at(index))->handler;
+  return ScriptMessageHandler::FromAdapter(
+      adapter_->message_handlers_.at(index))->handler();
 }
 
 void WebView::OnURLChanged() {
@@ -678,6 +638,19 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {
+  OxideQLoadEvent event(
+     QUrl(QString::fromStdString(url.spec())),
+     OxideQLoadEvent::TypeRedirected,
+     OxideQLoadEvent::ErrorDomain(),
+     QString(),
+     int(),
+     QUrl(QString::fromStdString(original_url.spec())));
+
+  adapter_->LoadEvent(&event);
+}
+
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
   return new WebFrame(adapter_->CreateWebFrame(), node, this);
 }
@@ -790,6 +763,53 @@ void WebView::OnSelectionBoundsChanged() {
         | Qt::ImTextAfterCursor
 #endif
       ));
+}
+
+void WebView::OnImeCancelComposition() {
+  if (has_input_method_state_) {
+    QGuiApplication::inputMethod()->reset();
+  }
+}
+
+void WebView::OnSelectionChanged() {
+  if (!HasFocus()) {
+    return;
+  }
+
+  QGuiApplication::inputMethod()->update(
+      static_cast<Qt::InputMethodQueries>(
+        Qt::ImSurroundingText
+        | Qt::ImCurrentSelection
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+        | Qt::ImTextBeforeCursor
+        | Qt::ImTextAfterCursor
+#endif
+      ));
+}
+
+void WebView::OnUpdateCursor(const content::WebCursor& cursor) {
+  content::WebCursor::CursorInfo cursor_info;
+
+  cursor.GetCursorInfo(&cursor_info);
+  if (cursor.IsCustom()) {
+    QImage::Format format =
+        QImageFormatFromSkImageInfo(cursor_info.custom_image.info());
+    if (format == QImage::Format_Invalid) {
+      return;
+    }
+    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
+                        cursor_info.custom_image.width(),
+                        cursor_info.custom_image.height(),
+                        cursor_info.custom_image.rowBytes(),
+                        format);
+
+    QPixmap cursor_pixmap;
+    if (cursor_pixmap.convertFromImage(cursor_image)) {
+      adapter_->UpdateCursor(QCursor(cursor_pixmap));
+    }
+  } else {
+    adapter_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
+  }
 }
 
 void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {
@@ -988,6 +1008,28 @@ QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {
   }
 
   return QVariant();
+}
+
+void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
+  if (!(blocked_content() & oxide::CONTENT_TYPE_MIXED_DISPLAY) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily display insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  oxide::WebView::SetCanTemporarilyDisplayInsecureContent(allow);
+}
+
+void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
+  if (!(blocked_content() & oxide::CONTENT_TYPE_MIXED_SCRIPT) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily run insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  oxide::WebView::SetCanTemporarilyRunInsecureContent(allow);
 }
 
 } // namespace qt

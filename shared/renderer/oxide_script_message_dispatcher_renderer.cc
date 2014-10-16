@@ -24,11 +24,15 @@
 #include "base/memory/ref_counted.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
+#include "content/public/renderer/render_view.h"
 #include "ipc/ipc_message.h"
 #include "ipc/ipc_message_macros.h"
+#include "third_party/WebKit/public/web/WebLocalFrame.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
+#include "third_party/WebKit/public/web/WebView.h"
 #include "url/gurl.h"
 
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_script_message_request.h"
 
@@ -50,10 +54,6 @@ base::LazyInstance<ScriptMessageDispatcherMap> g_dispatcher_map =
 void ScriptMessageDispatcherRenderer::WillReleaseScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
-  if (world_id < 1) {
-    return;
-  }
-
   v8::HandleScope handle_scope(context->GetIsolate());
 
   for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
@@ -159,6 +159,19 @@ ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
   CHECK(rv.second);
 }
 
+linked_ptr<ScriptMessageManager>
+ScriptMessageDispatcherRenderer::ScriptMessageManagerForWorldId(int world_id) {
+  linked_ptr<ScriptMessageManager> message_manager;
+  for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
+       it != script_message_managers_.end();
+       ++it) {
+    if ((*it)->frame() == render_frame() && (*it)->world_id() == world_id) {
+      message_manager = *it;
+    }
+  }
+  return message_manager;
+}
+
 ScriptMessageDispatcherRenderer::~ScriptMessageDispatcherRenderer() {
   // RenderFrameObserver has already cleared it's pointer to our RenderFrame
   for (ScriptMessageDispatcherMap::iterator it = g_dispatcher_map.Get().begin();
@@ -182,10 +195,6 @@ ScriptMessageDispatcherRenderer* ScriptMessageDispatcherRenderer::FromWebFrame(
 void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
-  if (world_id < 1) {
-    return;
-  }
-
   script_message_managers_.push_back(
       linked_ptr<ScriptMessageManager>(new ScriptMessageManager(render_frame(),
                                                                 context,

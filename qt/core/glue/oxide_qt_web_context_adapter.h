@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 
+#include <QList>
 #include <QWeakPointer>
 #include <QString>
 #include <QStringList>
@@ -28,10 +29,12 @@
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
+class QNetworkAccessManager;
 class QOpenGLContext;
 class QNetworkCookie;
 QT_END_NAMESPACE
 
+class OxideQBeforeRedirectEvent;
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
 class OxideQStoragePermissionRequest;
@@ -40,7 +43,7 @@ namespace oxide {
 namespace qt {
 
 class UserScriptAdapter;
-class WebContextAdapterPrivate;
+class WebContext;
 
 class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  public:
@@ -66,10 +69,14 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
     virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) = 0;
 
+    virtual void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) = 0;
+
     virtual void HandleStoragePermissionRequest(OxideQStoragePermissionRequest* req) = 0;
 
     virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) = 0;
   };
+
+  static WebContextAdapter* FromWebContext(WebContext* context);
 
   void init(const QWeakPointer<IODelegate>& io_delegate);
 
@@ -93,11 +100,6 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   bool isInitialized() const;
 
-  static QOpenGLContext* sharedGLContext();
-  static void setSharedGLContext(QOpenGLContext* context);
-
-  static void ensureChromiumStarted();
-
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
@@ -114,7 +116,7 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   void setDevtoolsPort(int port);
 
   QString devtoolsBindIp() const;
-  void setDevtoolsBindIp(const QString& bindIp);
+  void setDevtoolsBindIp(const QString& ip);
 
   int setCookies(const QUrl& url,
                  const QList<QNetworkCookie>& cookies);
@@ -125,11 +127,13 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   QStringList hostMappingRules() const;
   void setHostMappingRules(const QStringList& rules);
 
+  void setAllowedExtraUrlSchemes(const QStringList& schemes);
+
  protected:
   WebContextAdapter(QObject* q);
 
  private:
-  friend class WebContextAdapterPrivate;
+  friend class WebContext;
 
   virtual void CookiesSet(int request_id,
                           const QList<QNetworkCookie>& failed_cookies) = 0;
@@ -137,9 +141,13 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
                                 const QList<QNetworkCookie>& cookies) = 0;
   virtual void CookiesDeleted(int request_id, int num_deleted) = 0;
 
+  virtual QNetworkAccessManager* GetCustomNetworkAccessManager();
+
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually
-  WebContextAdapterPrivate* priv;
+  WebContext* context_;
+
+  QList<UserScriptAdapter*> user_scripts_;
 };
 
 } // namespace qt

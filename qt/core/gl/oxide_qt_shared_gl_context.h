@@ -34,12 +34,12 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class SharedGLContext FINAL : public oxide::SharedGLContext {
+class SharedGLContext final : public oxide::SharedGLContext {
  public:
   SharedGLContext(QOpenGLContext* context);
 
-  void* GetHandle() FINAL { return handle_; }
-  gfx::GLImplementation GetImplementation() FINAL { return implementation_; }
+  void* GetHandle() final { return handle_; }
+  gfx::GLImplementation GetImplementation() final { return implementation_; }
 
  private:
   void* handle_;

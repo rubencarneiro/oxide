@@ -24,11 +24,11 @@
 
 namespace oxide {
 
-class SSLConfigService FINAL : public net::SSLConfigService {
+class SSLConfigService final : public net::SSLConfigService {
  public:
   SSLConfigService();
 
-  void GetSSLConfig(net::SSLConfig* config) FINAL;
+  void GetSSLConfig(net::SSLConfig* config) final;
 
  private:
   net::SSLConfig config_;

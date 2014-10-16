@@ -26,7 +26,7 @@
 namespace oxide {
 namespace qt {
 
-class BrowserMainPartsDelegate FINAL
+class BrowserMainPartsDelegate final
     : public oxide::BrowserMainParts::Delegate {
  public:
   BrowserMainPartsDelegate();
@@ -34,8 +34,8 @@ class BrowserMainPartsDelegate FINAL
 
  private:
   // oxide::BrowserMainParts::Delegate implementation
-  oxide::IOThread::Delegate* GetIOThreadDelegate() FINAL;
-  MessagePumpFactory* GetMessagePumpFactory() FINAL;
+  oxide::IOThread::Delegate* GetIOThreadDelegate() final;
+  MessagePumpFactory* GetMessagePumpFactory() final;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserMainPartsDelegate);
 };

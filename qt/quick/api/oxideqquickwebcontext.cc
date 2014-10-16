@@ -27,16 +27,10 @@
 #include <QThread>
 #include <QtQuickVersion>
 #include <QWeakPointer>
-#if defined(ENABLE_COMPOSITING)
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-#include <QtQuick/private/qsgcontext_p.h>
-#else
-#include <QtGui/private/qopenglcontext_p.h>
-#endif
-#endif
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
+#include "qt/quick/oxide_qquick_init.h"
 
 #include "oxideqquickcookiemanager_p.h"
 #include "oxideqquickuserscript_p.h"
@@ -92,6 +86,7 @@ class WebContextIODelegate : public oxide::qt::WebContextAdapter::IODelegate {
   virtual ~WebContextIODelegate() {}
 
   void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) Q_DECL_FINAL;
+  void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) Q_DECL_FINAL;
   void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) Q_DECL_FINAL;
   void HandleStoragePermissionRequest(
       OxideQStoragePermissionRequest* req) Q_DECL_FINAL;
@@ -132,6 +127,21 @@ void WebContextIODelegate::OnBeforeSendHeaders(
   }
 
   delegate->CallEntryPointInWorker("onBeforeSendHeaders", event);
+}
+
+void WebContextIODelegate::OnBeforeRedirect(
+    OxideQBeforeRedirectEvent* event) {
+  QSharedPointer<IOThreadController> delegate;
+  {
+    QMutexLocker locker(&lock);
+    delegate = network_request_delegate.toStrongRef();
+  }
+  if (!delegate) {
+    delete event;
+    return;
+  }
+
+  emit delegate->CallEntryPointInWorker("onBeforeRedirect", event);
 }
 
 void WebContextIODelegate::HandleStoragePermissionRequest(
@@ -304,6 +314,18 @@ void OxideQQuickWebContextPrivate::detachedDelegateWorker(
   }
 }
 
+QNetworkAccessManager*
+OxideQQuickWebContextPrivate::GetCustomNetworkAccessManager() {
+  Q_Q(OxideQQuickWebContext);
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    return NULL;
+  }
+
+  return engine->networkAccessManager();
+}
+
 void OxideQQuickWebContextPrivate::CookiesSet(
     int request_id,
     const QList<QNetworkCookie>& failed_cookies) {
@@ -347,25 +369,6 @@ OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
   return context->d_func();
 }
 
-// static
-void OxideQQuickWebContextPrivate::ensureChromiumStarted() {
-  static bool started = false;
-  if (started) {
-    return;
-  }
-  started = true;
-#if defined(ENABLE_COMPOSITING)
-  oxide::qt::WebContextAdapter::setSharedGLContext(
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-      QSGContext::sharedOpenGLContext()
-#else
-      QOpenGLContextPrivate::globalShareContext()
-#endif
-  );
-#endif
-  oxide::qt::WebContextAdapter::ensureChromiumStarted();
-}
-
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickWebContextPrivate(this)) {
@@ -375,7 +378,7 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
       qSharedPointerCast<oxide::qt::WebContextAdapter::IODelegate>(d->io_);
   d->init(io.toWeakRef());
 
-  OxideQQuickWebContextPrivate::ensureChromiumStarted();
+  oxide::qquick::EnsureChromiumStarted();
 }
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {
@@ -883,6 +886,22 @@ void OxideQQuickWebContext::setHostMappingRules(const QStringList& rules) {
   d->setHostMappingRules(rules);
 
   emit hostMappingRulesChanged();
+}
+
+QStringList OxideQQuickWebContext::allowedExtraUrlSchemes() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->allowed_extra_url_schemes_;
+}
+
+void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
+    const QStringList& schemes) {
+  Q_D(OxideQQuickWebContext);
+
+  d->allowed_extra_url_schemes_ = schemes;
+  d->setAllowedExtraUrlSchemes(schemes);
+
+  emit allowedExtraUrlSchemesChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

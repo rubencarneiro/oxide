@@ -52,7 +52,7 @@ namespace oxide {
 
 class GLFrameData;
 
-class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
+class CompositorUtils final : public base::MessageLoop::TaskObserver {
  public:
   static CompositorUtils* GetInstance();
 
@@ -79,8 +79,8 @@ class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
   void InitializeOnGpuThread();
 
   // base::MessageLoop::TaskObserver implementation
-  void WillProcessTask(const base::PendingTask& pending_task) FINAL;
-  void DidProcessTask(const base::PendingTask& pending_task) FINAL;
+  void WillProcessTask(const base::PendingTask& pending_task) final;
+  void DidProcessTask(const base::PendingTask& pending_task) final;
 
   int32 client_id_;
 

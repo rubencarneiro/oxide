@@ -33,7 +33,7 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class ScriptMessageAdapterPrivate;
+class ScriptMessage;
 class WebFrameAdapter;
 
 class Q_DECL_EXPORT ScriptMessageAdapter : public AdapterBase {
@@ -43,19 +43,18 @@ class Q_DECL_EXPORT ScriptMessageAdapter : public AdapterBase {
   WebFrameAdapter* frame() const;
   QString msgId() const;
   QUrl context() const;
+  QVariant args() const;
   void reply(const QVariant& args);
   void error(const QString& msg);
-
-  QVariant args() const { return args_; }
 
  protected:
   ScriptMessageAdapter(QObject* q);
 
  private:
-  friend class ScriptMessageAdapterPrivate;
+  friend class ScriptMessage;
 
-  QVariant args_;
-  QScopedPointer<ScriptMessageAdapterPrivate> priv;
+  mutable QVariant args_;
+  QScopedPointer<ScriptMessage> message_;
 };
 
 } // namespace qt

@@ -21,7 +21,6 @@
 #include <QtDebug>
 
 #include "qt/core/browser/oxide_qt_io_thread_delegate.h"
-#include "qt/core/glue/oxide_qt_web_context_adapter_p.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
 Q_GLOBAL_STATIC(QString, g_nss_db_path)

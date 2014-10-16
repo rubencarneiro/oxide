@@ -103,5 +103,40 @@ TestWebView {
       compare(headers["user-agent"], data["User-Agent"]);
       compare(headers["foo"], data["Foo"]);
     }
+
+    function test_NetworkCallbackEvents2_BeforeRedirect_data() {
+      return [
+        { url: "http://testsuite/empty.html",
+          cancelled: false,
+          isMainFrame: true,
+          originalUrl: "http://testsuite/redirect.py?redirect",
+          sourceUrl: "http://testsuite/redirect.py?redirect" },
+        { url: "http://testsuite/empty.html",
+          cancelled: false,
+          isMainFrame: false,
+          originalUrl: "http://testsuite/redirect.py?redirect",
+          sourceUrl: "http://testsuite/tst_NetworkCallbackEvents_Redirect.html" },
+        { url: "http://testsuite/empty.html",
+          cancelled: true,
+          isMainFrame: true,
+          originalUrl: "http://testsuite/redirect.py?cancel",
+          sourceUrl: "http://testsuite/redirect.py?cancel" },
+      ];
+    }
+
+    function test_NetworkCallbackEvents2_BeforeRedirect(data) {
+      webView.workerMessageType = "onBeforeRedirect";
+
+      webView.url = data.sourceUrl;
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for a successful load");
+
+      compare(webView.workerMessages.length, 1, "Unexpected number of worker messages");
+      compare(webView.workerMessages[0].method, "GET");
+      compare(webView.workerMessages[0].url, data.url);
+      compare(webView.workerMessages[0].originalUrl, data.originalUrl);
+      compare(webView.workerMessages[0].isMainFrame, data.isMainFrame);
+      compare(webView.workerMessages[0].requestCancelled, data.cancelled);
+    }
   }
 }

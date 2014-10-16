@@ -26,7 +26,7 @@ class MediaOzonePlatform : public media::MediaOzonePlatform {
   virtual ~MediaOzonePlatform() {}
 
   media::VideoDecodeAccelerator* CreateVideoDecodeAccelerator(
-      const base::Callback<bool(void)>& make_context_current) FINAL {
+      const base::Callback<bool(void)>& make_context_current) final {
     return NULL;
   }
 };

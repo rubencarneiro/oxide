@@ -86,7 +86,7 @@ class MotionEvent : public ui::MotionEvent {
   void RemoveInactiveTouchPoints();
 
   // ui::MotionEvent implementation
-  scoped_ptr<ui::MotionEvent> Clone() const FINAL;
+  scoped_ptr<ui::MotionEvent> Clone() const final;
 
  private:
   static const size_t kMaxTouchPoints = ui::MotionEvent::MAX_TOUCH_POINT_COUNT;
@@ -120,35 +120,35 @@ class MotionEvent : public ui::MotionEvent {
   void UpdateAction(const ui::TouchEvent& event);
 
   // ui::MotionEvent implementation
-  int GetId() const FINAL;
-  Action GetAction() const FINAL;
-  int GetActionIndex() const FINAL;
-  size_t GetPointerCount() const FINAL;
-  int GetPointerId(size_t pointer_index) const FINAL;
-  float GetX(size_t pointer_index) const FINAL;
-  float GetY(size_t pointer_index) const FINAL;
-  float GetRawX(size_t pointer_index) const FINAL;
-  float GetRawY(size_t pointer_index) const FINAL;
-  float GetTouchMajor(size_t pointer_index) const FINAL;
-  float GetTouchMinor(size_t pointer_index) const FINAL;
-  float GetOrientation(size_t pointer_index) const FINAL;
-  float GetPressure(size_t pointer_index) const FINAL;
-  base::TimeTicks GetEventTime() const FINAL;
+  int GetId() const final;
+  Action GetAction() const final;
+  int GetActionIndex() const final;
+  size_t GetPointerCount() const final;
+  int GetPointerId(size_t pointer_index) const final;
+  float GetX(size_t pointer_index) const final;
+  float GetY(size_t pointer_index) const final;
+  float GetRawX(size_t pointer_index) const final;
+  float GetRawY(size_t pointer_index) const final;
+  float GetTouchMajor(size_t pointer_index) const final;
+  float GetTouchMinor(size_t pointer_index) const final;
+  float GetOrientation(size_t pointer_index) const final;
+  float GetPressure(size_t pointer_index) const final;
+  base::TimeTicks GetEventTime() const final;
 
-  size_t GetHistorySize() const FINAL;
+  size_t GetHistorySize() const final;
   base::TimeTicks GetHistoricalEventTime(
-      size_t historical_index) const FINAL;
+      size_t historical_index) const final;
   float GetHistoricalTouchMajor(size_t pointer_index,
-                                size_t historical_index) const FINAL;
+                                size_t historical_index) const final;
   float GetHistoricalX(size_t pointer_index,
-                       size_t historical_index) const FINAL;
+                       size_t historical_index) const final;
   float GetHistoricalY(size_t pointer_index,
-                       size_t historical_index) const FINAL;
-  ToolType GetToolType(size_t pointer_index) const FINAL;
-  int GetButtonState() const FINAL;
-  int GetFlags() const FINAL;
+                       size_t historical_index) const final;
+  ToolType GetToolType(size_t pointer_index) const final;
+  int GetButtonState() const final;
+  int GetFlags() const final;
 
-  scoped_ptr<ui::MotionEvent> Cancel() const FINAL;
+  scoped_ptr<ui::MotionEvent> Cancel() const final;
 
   static TouchPoint CreateTouchPointFromEvent(const ui::TouchEvent& event);
 
@@ -494,15 +494,15 @@ class GestureProviderImpl : public GestureProvider,
 
  private:
   // GestureProvider implementation
-  bool OnTouchEvent(const ui::TouchEvent& event) FINAL;
-  void OnTouchEventAck(bool consumed) FINAL;
+  bool OnTouchEvent(const ui::TouchEvent& event) final;
+  void OnTouchEventAck(bool consumed) final;
 
-  scoped_ptr<ui::MotionEvent> GetTouchState() const FINAL;
+  scoped_ptr<ui::MotionEvent> GetTouchState() const final;
 
-  void SetDoubleTapSupportForPageEnabled(bool enabled) FINAL;
+  void SetDoubleTapSupportForPageEnabled(bool enabled) final;
 
   // ui::GestureProviderClient implementation
-  void OnGestureEvent(const ui::GestureEventData& gesture) FINAL;
+  void OnGestureEvent(const ui::GestureEventData& gesture) final;
 
   // Need the oxide identifier here, else this becomes
   // "ui::GestureProviderClient"

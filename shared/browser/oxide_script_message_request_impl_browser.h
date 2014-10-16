@@ -33,7 +33,7 @@ namespace oxide {
 
 class WebFrame;
 
-class ScriptMessageRequestImplBrowser FINAL : public ScriptMessageRequest {
+class ScriptMessageRequestImplBrowser final : public ScriptMessageRequest {
  public:
   typedef base::Callback<void(const std::string&)> ReplyCallback;
   typedef base::Callback<void(ScriptMessageRequest::Error, const std::string&)> ErrorCallback;
@@ -50,10 +50,10 @@ class ScriptMessageRequestImplBrowser FINAL : public ScriptMessageRequest {
   void SetErrorCallback(const ErrorCallback& callback);
 
  private:
-  bool DoSendMessage(const OxideMsg_SendMessage_Params& params) FINAL;
+  bool DoSendMessage(const OxideMsg_SendMessage_Params& params) final;
 
-  void OnReply(const std::string& args) FINAL;
-  void OnError(Error error, const std::string& msg) FINAL;
+  void OnReply(const std::string& args) final;
+  void OnError(Error error, const std::string& msg) final;
 
   base::WeakPtr<WebFrame> frame_;
   ReplyCallback reply_callback_;

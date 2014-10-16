@@ -15,38 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_
-#define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_
+#ifndef _OXIDE_QT_CORE_GLUE_INIT_H_
+#define _OXIDE_QT_CORE_GLUE_INIT_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/ref_counted.h"
+#include <QtGlobal>
+
+QT_BEGIN_NAMESPACE
+class QOpenGLContext;
+QT_END_NAMESPACE
 
 namespace oxide {
-
-class ScriptMessage;
-class ScriptMessageImplBrowser;
-
 namespace qt {
 
-class ScriptMessageAdapter;
+Q_DECL_EXPORT QOpenGLContext* GetSharedGLContext();
+Q_DECL_EXPORT void SetSharedGLContext(QOpenGLContext* context);
 
-class ScriptMessageAdapterPrivate FINAL {
- public:
-  ScriptMessageAdapterPrivate(ScriptMessageAdapter* adapter);
-
-  oxide::ScriptMessageImplBrowser* incoming() const { return incoming_.get(); }
-
-  void Initialize(oxide::ScriptMessage* message);
-
-  static ScriptMessageAdapterPrivate* get(ScriptMessageAdapter* adapter);
-
- private:
-  ScriptMessageAdapter* a;
-  scoped_refptr<oxide::ScriptMessageImplBrowser> incoming_;
-};
+Q_DECL_EXPORT void EnsureChromiumStarted();
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_ADAPTER_P_H_
+#endif // _OXIDE_QT_CORE_GLUE_INIT_H_

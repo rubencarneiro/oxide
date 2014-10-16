@@ -15,45 +15,54 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_H_
+#define _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_H_
 
 #include <string>
 
 #include "base/basictypes.h"
-#include "base/compiler_specific.h"
-
-#include "shared/common/oxide_script_message_handler.h"
+#include "base/macros.h"
+#include "base/memory/ref_counted.h"
+#include "url/gurl.h"
 
 namespace oxide {
 
 class ScriptMessage;
+class ScriptMessageImplBrowser;
 
 namespace qt {
 
-class ScriptMessageHandlerAdapter;
+class ScriptMessageAdapter;
+class WebFrame;
 
-class ScriptMessageHandlerAdapterPrivate FINAL {
+class ScriptMessage final {
  public:
-  ScriptMessageHandlerAdapterPrivate(ScriptMessageHandlerAdapter* adapter);
+  ~ScriptMessage();
 
-  static ScriptMessageHandlerAdapterPrivate* get(
-      ScriptMessageHandlerAdapter* adapter);
+  void Initialize(oxide::ScriptMessage* message);
 
-  oxide::ScriptMessageHandler handler;
+  static ScriptMessage* FromAdapter(ScriptMessageAdapter* adapter);
+
+  WebFrame* GetFrame() const;
+  std::string GetMsgId() const;
+  GURL GetContext() const;
+  std::string GetArgs() const;
+
+  void Reply(const std::string& args);
+  void Error(const std::string& msg);
 
  private:
-  friend class ScriptMessageHandlerAdapter;
+  friend class ScriptMessageAdapter;
 
-  bool ReceiveMessageCallback(oxide::ScriptMessage* message,
-                              std::string* error_desc);
+  ScriptMessage(ScriptMessageAdapter* adapter);
 
-  ScriptMessageHandlerAdapter* a;
+  ScriptMessageAdapter* adapter_;
+  scoped_refptr<oxide::ScriptMessageImplBrowser> impl_;
 
-  DISALLOW_COPY_AND_ASSIGN(ScriptMessageHandlerAdapterPrivate);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessage);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_PRIVATE_SCRIPT_MESSAGE_HANDLER_ADAPTER_H_
+#endif // _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_H_

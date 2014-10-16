@@ -49,11 +49,11 @@ namespace {
 
 IOThread* g_instance;
 
-class SystemURLRequestContextGetter FINAL : public URLRequestContextGetter {
+class SystemURLRequestContextGetter final : public URLRequestContextGetter {
  public:
   SystemURLRequestContextGetter() {}
 
-  net::URLRequestContext* GetURLRequestContext() FINAL {
+  net::URLRequestContext* GetURLRequestContext() final {
     DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
     return IOThread::instance()->globals()->system_request_context();
   }
