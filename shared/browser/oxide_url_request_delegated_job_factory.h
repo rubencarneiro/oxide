@@ -29,7 +29,7 @@ namespace oxide {
 
 class BrowserContextIOData;
 
-class URLRequestDelegatedJobFactory FINAL : public net::URLRequestJobFactory {
+class URLRequestDelegatedJobFactory final : public net::URLRequestJobFactory {
  public:
   URLRequestDelegatedJobFactory(
       scoped_ptr<net::URLRequestJobFactory> job_factory,
@@ -43,10 +43,10 @@ class URLRequestDelegatedJobFactory FINAL : public net::URLRequestJobFactory {
   net::URLRequestJob* MaybeCreateJobWithProtocolHandler(
       const std::string& scheme,
       net::URLRequest* request,
-      net::NetworkDelegate* network_delegate) const FINAL;
-  bool IsHandledProtocol(const std::string& scheme) const FINAL;
-  bool IsHandledURL(const GURL& url) const FINAL;
-  bool IsSafeRedirectTarget(const GURL& location) const FINAL;
+      net::NetworkDelegate* network_delegate) const final;
+  bool IsHandledProtocol(const std::string& scheme) const final;
+  bool IsHandledURL(const GURL& url) const final;
+  bool IsSafeRedirectTarget(const GURL& location) const final;
 
   scoped_ptr<net::URLRequestJobFactory> job_factory_;
   BrowserContextIOData* context_;

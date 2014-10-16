@@ -27,7 +27,7 @@ namespace oxide {
 
 static const int kInvalidId = -1;
 
-class IdAllocator FINAL {
+class IdAllocator final {
  public:
   IdAllocator(size_t max_id);
   ~IdAllocator();

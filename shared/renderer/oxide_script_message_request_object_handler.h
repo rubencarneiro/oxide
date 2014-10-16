@@ -30,7 +30,7 @@ namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageRequestObjectHandler FINAL :
+class ScriptMessageRequestObjectHandler final :
     public ObjectBackedNativeHandler {
  public:
   ScriptMessageRequestObjectHandler(ScriptMessageManager* mm);

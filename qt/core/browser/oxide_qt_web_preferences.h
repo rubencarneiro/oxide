@@ -28,7 +28,7 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
-class WebPreferences FINAL : public oxide::WebPreferences {
+class WebPreferences final : public oxide::WebPreferences {
  public:
   WebPreferences(OxideQWebPreferences* api_handle = NULL);
   ~WebPreferences();

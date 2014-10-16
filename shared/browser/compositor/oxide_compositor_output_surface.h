@@ -56,11 +56,11 @@ class CompositorOutputSurface : public cc::OutputSurface,
   scoped_refptr<CompositorThreadProxy> proxy_;
 
   // cc::OutputSurface implementation
-  void SwapBuffers(cc::CompositorFrame* frame) OVERRIDE;
+  void SwapBuffers(cc::CompositorFrame* frame) override;
 
  private:
   // cc::OutputSurface implementation
-  bool BindToClient(cc::OutputSurfaceClient* client) FINAL;
+  bool BindToClient(cc::OutputSurfaceClient* client) final;
 
   uint32 surface_id_;
 

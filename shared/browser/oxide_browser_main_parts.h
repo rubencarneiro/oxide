@@ -35,7 +35,7 @@ class Screen;
 
 namespace oxide {
 
-class BrowserMainParts FINAL : public content::BrowserMainParts {
+class BrowserMainParts final : public content::BrowserMainParts {
  public:
 
   class Delegate {
@@ -53,12 +53,12 @@ class BrowserMainParts FINAL : public content::BrowserMainParts {
 
  private:
   // content::BrowserMainParts implementation
-  virtual void PreEarlyInitialization() FINAL;
-  virtual int PreCreateThreads() FINAL;
-  virtual void PreMainMessageLoopRun() FINAL;
-  virtual bool MainMessageLoopRun(int* result_code) FINAL;
-  virtual void PostMainMessageLoopRun() FINAL;
-  virtual void PostDestroyThreads() FINAL;
+  virtual void PreEarlyInitialization() final;
+  virtual int PreCreateThreads() final;
+  virtual void PreMainMessageLoopRun() final;
+  virtual bool MainMessageLoopRun(int* result_code) final;
+  virtual void PostMainMessageLoopRun() final;
+  virtual void PostDestroyThreads() final;
 
   scoped_ptr<Delegate> delegate_;
 

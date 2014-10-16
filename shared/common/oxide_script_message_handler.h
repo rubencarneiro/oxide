@@ -30,7 +30,7 @@ namespace oxide {
 
 class ScriptMessage;
 
-class ScriptMessageHandler FINAL {
+class ScriptMessageHandler final {
  public:
   typedef base::Callback<bool(ScriptMessage*, std::string*)> HandlerCallback;
 

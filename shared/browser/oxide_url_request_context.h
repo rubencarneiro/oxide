@@ -36,7 +36,7 @@ namespace oxide {
 
 class BrowserContextIOData;
 
-class URLRequestContext FINAL : public net::URLRequestContext,
+class URLRequestContext final : public net::URLRequestContext,
                                 public base::SupportsWeakPtr<URLRequestContext> {
  public:
   URLRequestContext();
@@ -58,7 +58,7 @@ class URLRequestContextGetter : public net::URLRequestContextGetter {
   URLRequestContextGetter();
 
  private:
-  scoped_refptr<base::SingleThreadTaskRunner> GetNetworkTaskRunner() const FINAL;
+  scoped_refptr<base::SingleThreadTaskRunner> GetNetworkTaskRunner() const final;
 
   scoped_refptr<base::SingleThreadTaskRunner> network_task_runner_;
 

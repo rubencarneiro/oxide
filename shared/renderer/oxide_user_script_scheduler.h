@@ -31,15 +31,15 @@ class WebFrame;
 
 namespace oxide {
 
-class UserScriptScheduler FINAL : public content::RenderViewObserver {
+class UserScriptScheduler final : public content::RenderViewObserver {
  public:
   UserScriptScheduler(content::RenderView* render_view);
 
-  void DidFinishDocumentLoad(blink::WebLocalFrame* frame) FINAL;
-  void DidFinishLoad(blink::WebLocalFrame* frame) FINAL;
-  void DidCreateDocumentElement(blink::WebLocalFrame* frame) FINAL;
+  void DidFinishDocumentLoad(blink::WebLocalFrame* frame) final;
+  void DidFinishLoad(blink::WebLocalFrame* frame) final;
+  void DidCreateDocumentElement(blink::WebLocalFrame* frame) final;
 
-  void FrameDetached(blink::WebFrame* frame) FINAL;
+  void FrameDetached(blink::WebFrame* frame) final;
 
  private:
   void DoIdleInject();

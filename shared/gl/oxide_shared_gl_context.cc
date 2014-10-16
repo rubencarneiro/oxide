@@ -25,12 +25,12 @@ namespace oxide {
 
 namespace {
 
-class GLShareGroup FINAL : public gfx::GLShareGroup {
+class GLShareGroup final : public gfx::GLShareGroup {
  public:
   GLShareGroup(SharedGLContext* context) :
       context_(context) {}
 
-  gfx::GLContext* GetContext() FINAL { return context_; }
+  gfx::GLContext* GetContext() final { return context_; }
   void ClearContext() { context_ = NULL; }
 
  private:

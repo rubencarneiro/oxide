@@ -99,52 +99,52 @@ class Screen : public gfx::Screen {
  public:
   Screen() {}
 
-  bool IsDIPEnabled() FINAL {
+  bool IsDIPEnabled() final {
     NOTIMPLEMENTED();
     return true;
   }
 
-  gfx::Point GetCursorScreenPoint() FINAL {
+  gfx::Point GetCursorScreenPoint() final {
     NOTIMPLEMENTED();
     return gfx::Point();
   }
 
-  gfx::NativeWindow GetWindowUnderCursor() FINAL {
+  gfx::NativeWindow GetWindowUnderCursor() final {
     NOTIMPLEMENTED();
     return NULL;
   }
 
-  gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) FINAL {
+  gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) final {
     NOTIMPLEMENTED();
     return NULL;
   }
 
-  int GetNumDisplays() const FINAL {
+  int GetNumDisplays() const final {
     NOTIMPLEMENTED();
     return 1;
   }
 
-  std::vector<gfx::Display> GetAllDisplays() const FINAL {
+  std::vector<gfx::Display> GetAllDisplays() const final {
     NOTIMPLEMENTED();
     return std::vector<gfx::Display>();
   }
 
-  gfx::Display GetDisplayNearestWindow(gfx::NativeView view) const FINAL {
+  gfx::Display GetDisplayNearestWindow(gfx::NativeView view) const final {
     NOTIMPLEMENTED();
     return gfx::Display();
   }
 
-  gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const FINAL {
+  gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const final {
     NOTIMPLEMENTED();
     return gfx::Display();
   }
 
-  gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const FINAL {
+  gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const final {
     NOTIMPLEMENTED();
     return gfx::Display();
   }
 
-  gfx::Display GetPrimaryDisplay() const FINAL {
+  gfx::Display GetPrimaryDisplay() const final {
     blink::WebScreenInfo info(GetDefaultWebScreenInfo());
 
     gfx::Display display;
@@ -155,10 +155,10 @@ class Screen : public gfx::Screen {
     return display;
   }
 
-  void AddObserver(gfx::DisplayObserver* observer) FINAL {
+  void AddObserver(gfx::DisplayObserver* observer) final {
     NOTIMPLEMENTED();
   }
-  void RemoveObserver(gfx::DisplayObserver* observer) FINAL {
+  void RemoveObserver(gfx::DisplayObserver* observer) final {
     NOTIMPLEMENTED();
   }
 };

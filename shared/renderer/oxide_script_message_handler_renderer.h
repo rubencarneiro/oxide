@@ -33,7 +33,7 @@ namespace oxide {
 class ScriptMessage;
 class ScriptMessageManager;
 
-class ScriptMessageHandlerRenderer FINAL {
+class ScriptMessageHandlerRenderer final {
  public:
   ScriptMessageHandlerRenderer(ScriptMessageManager* mm,
                                const std::string& msg_id,

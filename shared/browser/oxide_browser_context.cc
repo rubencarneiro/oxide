@@ -102,7 +102,7 @@ class TCPServerSocketFactory :
             address, port, backlog) {}
 
  private:
-  scoped_ptr<net::ServerSocket> Create() const FINAL {
+  scoped_ptr<net::ServerSocket> Create() const final {
     return make_scoped_ptr(
         new net::TCPServerSocket(NULL, net::NetLog::Source()))
           .PassAs<net::ServerSocket>();
@@ -123,7 +123,7 @@ class ResourceContextData : public base::SupportsUserData::Data {
   BrowserContextIOData* context_;
 };
 
-class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
+class MainURLRequestContextGetter final : public URLRequestContextGetter {
  public:
   MainURLRequestContextGetter(
       BrowserContextIOData* context,
@@ -134,7 +134,7 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
 
-  net::URLRequestContext* GetURLRequestContext() FINAL {
+  net::URLRequestContext* GetURLRequestContext() final {
     DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
     if (!url_request_context_) {
@@ -157,16 +157,16 @@ class MainURLRequestContextGetter FINAL : public URLRequestContextGetter {
 
 } // namespace
 
-class ResourceContext FINAL : public content::ResourceContext {
+class ResourceContext final : public content::ResourceContext {
  public:
   ResourceContext() :
       request_context_(NULL) {}
 
-  net::HostResolver* GetHostResolver() FINAL {
+  net::HostResolver* GetHostResolver() final {
     return IOThread::instance()->globals()->host_resolver();
   }
 
-  net::URLRequestContext* GetRequestContext() FINAL {
+  net::URLRequestContext* GetRequestContext() final {
     CHECK(request_context_);
     return request_context_;
   }
@@ -257,21 +257,21 @@ class BrowserContextIODataImpl : public BrowserContextIOData {
   BrowserContextIODataImpl(const BrowserContext::Params& params)
       : data_(params) {}
 
-  BrowserContextSharedIOData& GetSharedData() FINAL {
+  BrowserContextSharedIOData& GetSharedData() final {
     return data_;
   }
-  const BrowserContextSharedIOData& GetSharedData() const FINAL {
+  const BrowserContextSharedIOData& GetSharedData() const final {
     return data_;
   }
 
  private:
-  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const FINAL {
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const final {
     return GetPath().empty() ?
         content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES :
         data_.session_cookie_mode;
   }
  
-  bool IsOffTheRecord() const FINAL {
+  bool IsOffTheRecord() const final {
     return false;
   }
 
@@ -284,18 +284,18 @@ class OTRBrowserContextIODataImpl : public BrowserContextIOData {
       : original_io_data_(original) {}
 
  private:
-  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const FINAL {
+  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const final {
     return content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES;
   }
 
-  bool IsOffTheRecord() const FINAL {
+  bool IsOffTheRecord() const final {
     return true;
   }
 
-  BrowserContextSharedIOData& GetSharedData() FINAL {
+  BrowserContextSharedIOData& GetSharedData() final {
     return original_io_data_->GetSharedData();
   }
-  const BrowserContextSharedIOData& GetSharedData() const FINAL {
+  const BrowserContextSharedIOData& GetSharedData() const final {
     return original_io_data_->GetSharedData();
   }
 
@@ -550,13 +550,13 @@ class OTRBrowserContextImpl : public BrowserContext {
 
   virtual ~OTRBrowserContextImpl() {}
 
-  BrowserContext* GetOffTheRecordContext() FINAL {
+  BrowserContext* GetOffTheRecordContext() final {
     return this;
   }
-  BrowserContext* GetOriginalContext() FINAL;
+  BrowserContext* GetOriginalContext() final;
 
-  BrowserContextSharedData& GetSharedData() FINAL;
-  const BrowserContextSharedData& GetSharedData() const FINAL;
+  BrowserContextSharedData& GetSharedData() final;
+  const BrowserContextSharedData& GetSharedData() const final;
 
   BrowserContextImpl* original_context_;
 };
@@ -565,19 +565,19 @@ class BrowserContextImpl : public BrowserContext {
  public:
   BrowserContextImpl(const BrowserContext::Params& params);
 
-  BrowserContextSharedData& GetSharedData() FINAL {
+  BrowserContextSharedData& GetSharedData() final {
     return data_;
   }
-  const BrowserContextSharedData& GetSharedData() const FINAL {
+  const BrowserContextSharedData& GetSharedData() const final {
     return data_;
   }
 
  private:
   virtual ~BrowserContextImpl();
 
-  BrowserContext* GetOffTheRecordContext() FINAL;
+  BrowserContext* GetOffTheRecordContext() final;
 
-  BrowserContext* GetOriginalContext() FINAL {
+  BrowserContext* GetOriginalContext() final {
     return this;
   }
 

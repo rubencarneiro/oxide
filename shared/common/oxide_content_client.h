@@ -31,7 +31,7 @@ namespace oxide {
 class ContentBrowserClient;
 class ContentRendererClient;
 
-class ContentClient FINAL : public content::ContentClient {
+class ContentClient final : public content::ContentClient {
  public:
   static ContentClient* GetInstance();
   static ContentClient* instance();
@@ -47,13 +47,13 @@ class ContentClient FINAL : public content::ContentClient {
   ContentClient();
 
   // content::ContentClient implementation
-  void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) FINAL;
-  std::string GetUserAgent() const FINAL;
-  base::string16 GetLocalizedString(int message_id) const FINAL;
+  void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) final;
+  std::string GetUserAgent() const final;
+  base::string16 GetLocalizedString(int message_id) const final;
   base::StringPiece GetDataResource(int resource_id,
-                                    ui::ScaleFactor scale_factor) const FINAL;
+                                    ui::ScaleFactor scale_factor) const final;
   base::RefCountedStaticMemory* GetDataResourceBytes(
-      int resource_id) const FINAL;
+      int resource_id) const final;
 
   std::string user_agent_;
 

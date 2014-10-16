@@ -26,13 +26,13 @@ namespace oxide {
 
 class BrowserContextIOData;
 
-class HttpUserAgentSettings FINAL : public net::HttpUserAgentSettings {
+class HttpUserAgentSettings final : public net::HttpUserAgentSettings {
  public:
   HttpUserAgentSettings(BrowserContextIOData* context);
 
-  std::string GetAcceptLanguage() const FINAL;
+  std::string GetAcceptLanguage() const final;
 
-  std::string GetUserAgent() const FINAL;
+  std::string GetUserAgent() const final;
 
  private:
   BrowserContextIOData* context_;

@@ -42,7 +42,7 @@ class AsyncFileJob {
   scoped_refptr<AsyncFileJobImpl> impl_;
 };
 
-class FileUtils FINAL {
+class FileUtils final {
  public:
   typedef base::Callback<void(base::File::Error,
                               const char*,

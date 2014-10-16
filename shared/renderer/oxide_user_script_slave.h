@@ -39,16 +39,16 @@ namespace oxide {
 
 class UserScript;
 
-class UserScriptSlave FINAL : public content::RenderProcessObserver {
+class UserScriptSlave final : public content::RenderProcessObserver {
  public:
   typedef std::vector<linked_ptr<UserScript> > Vector;
 
   UserScriptSlave();
   ~UserScriptSlave();
 
-  bool OnControlMessageReceived(const IPC::Message& message) FINAL;
+  bool OnControlMessageReceived(const IPC::Message& message) final;
 
-  void OnRenderProcessShutdown() FINAL;
+  void OnRenderProcessShutdown() final;
 
   void InjectScripts(blink::WebLocalFrame* frame,
                      UserScript::RunLocation location);

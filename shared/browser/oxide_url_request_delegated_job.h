@@ -45,12 +45,12 @@ class URLRequestDelegatedJob : public net::URLRequestJob {
 
  private:
   // net::URLRequestJob implementation
-  void SetExtraRequestHeaders(const net::HttpRequestHeaders& headers) FINAL;
-  void SetPriority(net::RequestPriority priority) FINAL;
+  void SetExtraRequestHeaders(const net::HttpRequestHeaders& headers) final;
+  void SetPriority(net::RequestPriority priority) final;
 
-  void Start() FINAL;
+  void Start() final;
 
-  bool GetMimeType(std::string* mime_type) const FINAL;
+  bool GetMimeType(std::string* mime_type) const final;
 
   virtual void OnStart() = 0;
 

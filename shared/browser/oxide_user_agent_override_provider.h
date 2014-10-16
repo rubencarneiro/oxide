@@ -31,13 +31,13 @@ class ResourceContext;
 
 namespace oxide {
 
-class UserAgentOverrideProvider FINAL : public content::BrowserMessageFilter {
+class UserAgentOverrideProvider final : public content::BrowserMessageFilter {
  public:
   UserAgentOverrideProvider(content::RenderProcessHost* render_process_host);
   ~UserAgentOverrideProvider();
 
  private:
-  bool OnMessageReceived(const IPC::Message& message) FINAL;
+  bool OnMessageReceived(const IPC::Message& message) final;
   void OnGetUserAgentOverride(const GURL& url,
                               std::string* user_agent,
                               bool* overridden);

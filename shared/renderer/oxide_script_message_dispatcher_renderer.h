@@ -38,7 +38,7 @@ namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageDispatcherRenderer FINAL : public content::RenderFrameObserver {
+class ScriptMessageDispatcherRenderer final : public content::RenderFrameObserver {
  public:
   ScriptMessageDispatcherRenderer(content::RenderFrame* frame);
   ~ScriptMessageDispatcherRenderer();
@@ -54,8 +54,8 @@ class ScriptMessageDispatcherRenderer FINAL : public content::RenderFrameObserve
   typedef std::vector<linked_ptr<ScriptMessageManager> > ScriptMessageManagerVector;
 
   void WillReleaseScriptContext(v8::Handle<v8::Context> context,
-                                int world_id) FINAL;
-  bool OnMessageReceived(const IPC::Message& message) FINAL;
+                                int world_id) final;
+  bool OnMessageReceived(const IPC::Message& message) final;
 
   void OnReceiveMessage(const OxideMsg_SendMessage_Params& params);
 

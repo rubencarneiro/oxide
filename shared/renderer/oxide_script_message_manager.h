@@ -42,7 +42,7 @@ namespace oxide {
 class ScriptMessageHandlerRenderer;
 class ScriptMessageRequestImplRenderer;
 
-class ScriptMessageManager FINAL :
+class ScriptMessageManager final :
     public base::SupportsWeakPtr<ScriptMessageManager> {
  public:
   typedef std::vector<ScriptMessageRequestImplRenderer *> ScriptMessageRequestVector;

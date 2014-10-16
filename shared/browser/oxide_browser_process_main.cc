@@ -96,17 +96,17 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(scoped_ptr<ContentMainDelegate> delegate) FINAL;
-  void Shutdown() FINAL;
+  void Start(scoped_ptr<ContentMainDelegate> delegate) final;
+  void Shutdown() final;
 
-  bool IsRunning() const FINAL {
+  bool IsRunning() const final {
     return state_ == STATE_STARTED || state_ == STATE_SHUTTING_DOWN;
   }
 
-  SharedGLContext* GetSharedGLContext() const FINAL {
+  SharedGLContext* GetSharedGLContext() const final {
     return shared_gl_context_.get();
   }
-  intptr_t GetNativeDisplay() const FINAL {
+  intptr_t GetNativeDisplay() const final {
     CHECK(native_display_is_valid_);
     return native_display_;
   }

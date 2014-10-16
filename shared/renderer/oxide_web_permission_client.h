@@ -31,7 +31,7 @@ class RenderFrame;
 
 namespace oxide {
 
-class WebPermissionClient FINAL :
+class WebPermissionClient final :
     public content::RenderFrameObserver,
     public content::RenderFrameObserverTracker<WebPermissionClient>,
     public blink::WebPermissionClient {
@@ -41,16 +41,16 @@ class WebPermissionClient FINAL :
 
  private:
   // content::RenderFrameObserver implementation
-  void DidCommitProvisionalLoad(bool is_new_navigation) FINAL;
-  bool OnMessageReceived(const IPC::Message& message) FINAL;
+  void DidCommitProvisionalLoad(bool is_new_navigation) final;
+  bool OnMessageReceived(const IPC::Message& message) final;
 
   // blink::WebPermissionClient implementation
   bool allowDisplayingInsecureContent(bool enabled_per_settings,
                                       const blink::WebSecurityOrigin& origin,
-                                      const blink::WebURL& url) FINAL;
+                                      const blink::WebURL& url) final;
   bool allowRunningInsecureContent(bool enabled_per_settings,
                                    const blink::WebSecurityOrigin& origin,
-                                   const blink::WebURL& url) FINAL;
+                                   const blink::WebURL& url) final;
 
   void OnSetAllowDisplayingInsecureContent(bool allow);
   void OnSetAllowRunningInsecureContent(bool allow);

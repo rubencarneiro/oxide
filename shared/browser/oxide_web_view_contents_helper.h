@@ -37,7 +37,7 @@ class BrowserContext;
 class WebPreferences;
 class WebViewContentsHelperDelegate;
 
-class WebViewContentsHelper FINAL : private BrowserContextObserver,
+class WebViewContentsHelper final : private BrowserContextObserver,
                                     private WebPreferencesObserver,
                                     private base::SupportsUserData::Data {
  public:
@@ -62,12 +62,12 @@ class WebViewContentsHelper FINAL : private BrowserContextObserver,
   void UpdateWebPreferences();
 
   // BrowserContextObserver implementation
-  void NotifyPopupBlockerEnabledChanged() FINAL;
+  void NotifyPopupBlockerEnabledChanged() final;
 
   // WebPreferencesObserver implementation
-  void WebPreferencesDestroyed() FINAL;
-  void WebPreferencesValueChanged() FINAL;
-  void WebPreferencesAdopted() FINAL;
+  void WebPreferencesDestroyed() final;
+  void WebPreferencesValueChanged() final;
+  void WebPreferencesAdopted() final;
 
   scoped_refptr<BrowserContext> context_;
   content::WebContents* web_contents_;

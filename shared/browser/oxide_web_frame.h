@@ -98,9 +98,9 @@ class WebFrame : public ScriptMessageTarget {
   typedef std::vector<WebFrame *> ChildVector;
 
   // ScriptMessageTarget
-  virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
+  virtual size_t GetScriptMessageHandlerCount() const override;
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
-      size_t index) const OVERRIDE;
+      size_t index) const override;
 
   void AddChild(WebFrame* frame);
   void RemoveChild(WebFrame* frame);

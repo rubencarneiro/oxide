@@ -41,7 +41,7 @@ enum PermissionRequestType {
 class PermissionRequest;
 class SimplePermissionRequest;
 
-class PermissionRequestManager FINAL :
+class PermissionRequestManager final :
     public base::SupportsWeakPtr<PermissionRequestManager> {
  public:
   PermissionRequestManager();
@@ -104,7 +104,7 @@ class PermissionRequest : public base::SupportsWeakPtr<PermissionRequest> {
   DISALLOW_COPY_AND_ASSIGN(PermissionRequest);
 };
 
-class SimplePermissionRequest FINAL : public PermissionRequest {
+class SimplePermissionRequest final : public PermissionRequest {
  public:
   ~SimplePermissionRequest();
 
@@ -118,9 +118,9 @@ class SimplePermissionRequest FINAL : public PermissionRequest {
 
   // Called by Oxide to cancel this request. Once called, the API layer
   // must not call Allow() or Deny()
-  void Cancel(bool from_source) FINAL;
+  void Cancel(bool from_source) final;
 
-  bool CanRespond() const FINAL;
+  bool CanRespond() const final;
 
   base::Callback<void(bool)> callback_;
 

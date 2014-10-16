@@ -59,7 +59,7 @@ struct ConstructProperties;
 class SetCookiesContext;
 class UserScriptAdapter;
 
-class WebContext FINAL : public oxide::BrowserContextDelegate {
+class WebContext final : public oxide::BrowserContextDelegate {
  public:
   ~WebContext();
 
@@ -158,24 +158,24 @@ class WebContext FINAL : public oxide::BrowserContextDelegate {
   // oxide::BrowserContextDelegate
   int OnBeforeURLRequest(net::URLRequest* request,
                          const net::CompletionCallback& callback,
-                         GURL* new_url) FINAL;
+                         GURL* new_url) final;
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
-                          net::HttpRequestHeaders* headers) FINAL;
+                          net::HttpRequestHeaders* headers) final;
   void OnBeforeRedirect(net::URLRequest* request,
-                        const GURL& new_location) FINAL;
+                        const GURL& new_location) final;
   oxide::StoragePermission CanAccessStorage(
       const GURL& url,
       const GURL& first_party_url,
       bool write,
-      oxide::StorageType type) FINAL;
+      oxide::StorageType type) final;
   bool GetUserAgentOverride(const GURL& url,
-                            std::string* user_agent) FINAL;
+                            std::string* user_agent) final;
   bool IsCustomProtocolHandlerRegistered(
-      const std::string& scheme) const FINAL;
+      const std::string& scheme) const final;
   oxide::URLRequestDelegatedJob* CreateCustomURLRequestJob(
       net::URLRequest* request,
-      net::NetworkDelegate* network_delegate) FINAL;
+      net::NetworkDelegate* network_delegate) final;
 
   WebContextAdapter* adapter_;
 

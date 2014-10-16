@@ -57,7 +57,7 @@ class WebPopupMenu : public content::WebContentsObserver,
   WebPopupMenu(content::RenderFrameHost* rfh);
 
  private:
-  void RenderFrameDeleted(content::RenderFrameHost* rfh) FINAL;
+  void RenderFrameDeleted(content::RenderFrameHost* rfh) final;
 
   virtual void OnHide() = 0;
 

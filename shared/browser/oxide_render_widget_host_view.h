@@ -50,7 +50,7 @@ namespace oxide {
 class RenderWidgetHostViewDelegate;
 class WebView;
 
-class RenderWidgetHostView FINAL :
+class RenderWidgetHostView final :
     public content::RenderWidgetHostViewBase,
     public RendererFrameEvictorClient,
     public cc::DelegatedFrameResourceCollectionClient,
@@ -69,111 +69,111 @@ class RenderWidgetHostView FINAL :
   }
 
   // content::RenderWidgetHostViewBase implementation
-  void Blur() FINAL;
+  void Blur() final;
 
   // content::RenderWidgetHostView implementation
-  content::RenderWidgetHost* GetRenderWidgetHost() const FINAL;
-  void SetSize(const gfx::Size& size) FINAL;
-  void SetBounds(const gfx::Rect& rect) FINAL;
-  void Focus() FINAL;
+  content::RenderWidgetHost* GetRenderWidgetHost() const final;
+  void SetSize(const gfx::Size& size) final;
+  void SetBounds(const gfx::Rect& rect) final;
+  void Focus() final;
 
  private:
   // content::RenderWidgetHostViewBase implementation
   void SelectionChanged(const base::string16& text,
                         size_t offset,
-                        const gfx::Range& range) FINAL;
+                        const gfx::Range& range) final;
 
-  gfx::Size GetPhysicalBackingSize() const FINAL;
+  gfx::Size GetPhysicalBackingSize() const final;
 
-  void FocusedNodeChanged(bool is_editable_node) FINAL;
+  void FocusedNodeChanged(bool is_editable_node) final;
 
   void OnSwapCompositorFrame(uint32 output_surface_id,
-                             scoped_ptr<cc::CompositorFrame> frame) FINAL;
+                             scoped_ptr<cc::CompositorFrame> frame) final;
 
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
-                   const gfx::Rect& pos) FINAL;
+                   const gfx::Rect& pos) final;
   void InitAsFullscreen(
-      content::RenderWidgetHostView* reference_host_view) FINAL;
+      content::RenderWidgetHostView* reference_host_view) final;
 
-  void WasShown() FINAL;
-  void WasHidden() FINAL;
+  void WasShown() final;
+  void WasHidden() final;
 
   void MovePluginWindows(
-      const std::vector<content::WebPluginGeometry>& moves) FINAL;
+      const std::vector<content::WebPluginGeometry>& moves) final;
 
-  void UpdateCursor(const content::WebCursor& cursor) FINAL;
-  void SetIsLoading(bool is_loading) FINAL;
+  void UpdateCursor(const content::WebCursor& cursor) final;
+  void SetIsLoading(bool is_loading) final;
 
   void TextInputStateChanged(
-      const ViewHostMsg_TextInputState_Params& params) FINAL;
+      const ViewHostMsg_TextInputState_Params& params) final;
 
-  void ImeCancelComposition() FINAL;
+  void ImeCancelComposition() final;
 
-  void RenderProcessGone(base::TerminationStatus status, int error_code) FINAL;
+  void RenderProcessGone(base::TerminationStatus status, int error_code) final;
 
-  void Destroy() FINAL;
+  void Destroy() final;
 
-  void SetTooltipText(const base::string16& tooltip_text) FINAL;
+  void SetTooltipText(const base::string16& tooltip_text) final;
 
   void SelectionBoundsChanged(
-      const ViewHostMsg_SelectionBounds_Params& params) FINAL;
+      const ViewHostMsg_SelectionBounds_Params& params) final;
 
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
       const base::Callback<void(bool, const SkBitmap&)>& callback,
-      const SkColorType color_type) FINAL;
+      const SkColorType color_type) final;
 
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
       const scoped_refptr<media::VideoFrame>& target,
-      const base::Callback<void(bool)>& callback) FINAL;
-  bool CanCopyToVideoFrame() const FINAL;
+      const base::Callback<void(bool)>& callback) final;
+  bool CanCopyToVideoFrame() const final;
 
-  bool HasAcceleratedSurface(const gfx::Size& desired_size) FINAL;
+  bool HasAcceleratedSurface(const gfx::Size& desired_size) final;
 
-  void GetScreenInfo(blink::WebScreenInfo* results) FINAL;
-  gfx::Rect GetBoundsInRootWindow() FINAL;
+  void GetScreenInfo(blink::WebScreenInfo* results) final;
+  gfx::Rect GetBoundsInRootWindow() final;
 
-  gfx::GLSurfaceHandle GetCompositingSurface() FINAL;
+  gfx::GLSurfaceHandle GetCompositingSurface() final;
 
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
-                               const SkBitmap& zoomed_bitmap) FINAL;
+                               const SkBitmap& zoomed_bitmap) final;
 
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
-                              content::InputEventAckState ack_result) FINAL;
+                              content::InputEventAckState ack_result) final;
 
   void ImeCompositionRangeChanged(
       const gfx::Range& range,
-      const std::vector<gfx::Rect>& character_bounds) FINAL;
+      const std::vector<gfx::Rect>& character_bounds) final;
 
   // content::RenderWidgetHostView implementation
-  void InitAsChild(gfx::NativeView parent_view) FINAL;
+  void InitAsChild(gfx::NativeView parent_view) final;
 
-  gfx::Vector2dF GetLastScrollOffset() const FINAL;
+  gfx::Vector2dF GetLastScrollOffset() const final;
 
-  gfx::NativeView GetNativeView() const FINAL;
-  gfx::NativeViewId GetNativeViewId() const FINAL;
-  gfx::NativeViewAccessible GetNativeViewAccessible() FINAL;
+  gfx::NativeView GetNativeView() const final;
+  gfx::NativeViewId GetNativeViewId() const final;
+  gfx::NativeViewAccessible GetNativeViewAccessible() final;
 
-  bool HasFocus() const FINAL;
+  bool HasFocus() const final;
 
-  bool IsSurfaceAvailableForCopy() const FINAL;
+  bool IsSurfaceAvailableForCopy() const final;
 
-  void Show() FINAL;
-  void Hide() FINAL;
-  bool IsShowing() FINAL;
+  void Show() final;
+  void Hide() final;
+  bool IsShowing() final;
 
-  gfx::Rect GetViewBounds() const FINAL;
+  gfx::Rect GetViewBounds() const final;
 
-  bool LockMouse() FINAL;
-  void UnlockMouse() FINAL;
+  bool LockMouse() final;
+  void UnlockMouse() final;
 
   // cc::DelegatedFrameResourceCollectionClient implementation
-  void UnusedResourcesAreAvailable() FINAL;
+  void UnusedResourcesAreAvailable() final;
 
   // RendererFrameEvictorClient implemenetation
-  void EvictCurrentFrame() FINAL;
+  void EvictCurrentFrame() final;
 
   // ===================
 

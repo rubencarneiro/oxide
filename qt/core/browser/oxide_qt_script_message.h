@@ -35,7 +35,7 @@ namespace qt {
 class ScriptMessageAdapter;
 class WebFrame;
 
-class ScriptMessage FINAL {
+class ScriptMessage final {
  public:
   ~ScriptMessage();
 

@@ -24,22 +24,22 @@
 
 namespace oxide {
 
-class DevToolsManagerDelegate FINAL : public content::DevToolsManagerDelegate {
+class DevToolsManagerDelegate final : public content::DevToolsManagerDelegate {
  public:
   DevToolsManagerDelegate();
 
   void Inspect(content::BrowserContext* browser_context,
-               content::DevToolsAgentHost* agent_host) FINAL;
+               content::DevToolsAgentHost* agent_host) final;
   void DevToolsAgentStateChanged(content::DevToolsAgentHost* agent_host,
-                                 bool attached) FINAL;
+                                 bool attached) final;
   base::DictionaryValue* HandleCommand(
       content::DevToolsAgentHost* agent_host,
-      base::DictionaryValue* command) FINAL;
-  scoped_ptr<content::DevToolsTarget> CreateNewTarget(const GURL& url) FINAL;
+      base::DictionaryValue* command) final;
+  scoped_ptr<content::DevToolsTarget> CreateNewTarget(const GURL& url) final;
 
-  void EnumerateTargets(TargetCallback callback) FINAL;
+  void EnumerateTargets(TargetCallback callback) final;
 
-  std::string GetPageThumbnailData(const GURL& url) FINAL;
+  std::string GetPageThumbnailData(const GURL& url) final;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DevToolsManagerDelegate);

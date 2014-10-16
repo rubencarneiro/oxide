@@ -41,7 +41,7 @@ class Timer;
 namespace oxide {
 namespace qt {
 
-class BrowserThreadQEventDispatcher FINAL : public QAbstractEventDispatcher {
+class BrowserThreadQEventDispatcher final : public QAbstractEventDispatcher {
  public:
   BrowserThreadQEventDispatcher(
       const scoped_refptr<base::SingleThreadTaskRunner>& task_runner);
@@ -59,25 +59,25 @@ class BrowserThreadQEventDispatcher FINAL : public QAbstractEventDispatcher {
   void ScheduleTimer(int timer_id);
 
   // QAbstractEventDispatcher implementation
-  bool processEvents(QEventLoop::ProcessEventsFlags flags) FINAL;
-  bool hasPendingEvents() FINAL;
+  bool processEvents(QEventLoop::ProcessEventsFlags flags) final;
+  bool hasPendingEvents() final;
 
-  void registerSocketNotifier(QSocketNotifier *notifier) FINAL;
-  void unregisterSocketNotifier(QSocketNotifier *notifier) FINAL;
+  void registerSocketNotifier(QSocketNotifier *notifier) final;
+  void unregisterSocketNotifier(QSocketNotifier *notifier) final;
 
   void registerTimer(int timer_id,
                      int interval,
                      Qt::TimerType timer_type,
-                     QObject *object) FINAL;
-  bool unregisterTimer(int timer_id) FINAL;
-  bool unregisterTimers(QObject *object) FINAL;
-  QList<TimerInfo> registeredTimers(QObject *object) const FINAL;
+                     QObject *object) final;
+  bool unregisterTimer(int timer_id) final;
+  bool unregisterTimers(QObject *object) final;
+  QList<TimerInfo> registeredTimers(QObject *object) const final;
 
-  int remainingTime(int timer_id) FINAL;
+  int remainingTime(int timer_id) final;
 
-  void wakeUp() FINAL;
-  void interrupt() FINAL;
-  void flush() FINAL;
+  void wakeUp() final;
+  void interrupt() final;
+  void flush() final;
 
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 
@@ -111,8 +111,8 @@ class BrowserThreadQEventDispatcher FINAL : public QAbstractEventDispatcher {
     ~IOWatcher();
 
    private:
-    void OnFileCanReadWithoutBlocking(int fd) FINAL;
-    void OnFileCanWriteWithoutBlocking(int fd) FINAL;
+    void OnFileCanReadWithoutBlocking(int fd) final;
+    void OnFileCanWriteWithoutBlocking(int fd) final;
 
     QSocketNotifier* notifier_;
   };

@@ -32,7 +32,7 @@ class URLPattern;
 
 namespace oxide {
 
-class UserScript FINAL {
+class UserScript final {
  public:
 
   UserScript();
