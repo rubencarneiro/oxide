@@ -55,6 +55,17 @@ namespace oxide {
 void RenderWidgetHostView::SelectionChanged(const base::string16& text,
                                             size_t offset,
                                             const gfx::Range& range) {
+  if ((range.GetMin() - offset) > text.length()) {
+    // Got an invalid selection (see https://launchpad.net/bugs/1375900).
+    // The issue lies in content::RenderFrameImpl::SyncSelectionIfRequired(…)
+    // where the selection text and the corresponding range are computed
+    // separately. If the word that just got committed is at the beginning of a
+    // new line, the selection range includes the trailing newline character(s)
+    // whereas the selection text truncates them.
+    // This looks very similar to https://crbug.com/101435.
+    return;
+  }
+
   content::RenderWidgetHostViewBase::SelectionChanged(text, offset, range);
 
   if (delegate_) {
