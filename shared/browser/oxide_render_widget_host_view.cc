@@ -228,19 +228,9 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
   UpdateCursorOnWebView();
 }
 
-void RenderWidgetHostView::TextInputStateChanged(
-    const ViewHostMsg_TextInputState_Params& params) {
-  if (params.type != current_text_input_type_ ||
-      params.show_ime_if_needed != show_ime_if_needed_) {
-    current_text_input_type_ = params.type;
-    show_ime_if_needed_ = params.show_ime_if_needed;
-
-    if (delegate_) {
-      delegate_->TextInputStateChanged(current_text_input_type_,
-                                       show_ime_if_needed_);
-    }
-  }
-}
+void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
+                                                ui::TextInputMode mode,
+                                                bool can_compose_inline) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {
   if (!delegate_) {
@@ -441,6 +431,30 @@ void RenderWidgetHostView::EvictCurrentFrame() {
 
   if (delegate_) {
     delegate_->EvictCurrentFrame();
+  }
+}
+
+bool RenderWidgetHostView::OnMessageReceived(const IPC::Message& msg) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(RenderWidgetHostView, msg)
+    IPC_MESSAGE_HANDLER(ViewHostMsg_TextInputStateChanged,
+                        OnTextInputStateChanged)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+  return handled;
+}
+
+void RenderWidgetHostView::OnTextInputStateChanged(
+    const ViewHostMsg_TextInputState_Params& params) {
+  if (params.type != current_text_input_type_ ||
+      params.show_ime_if_needed != show_ime_if_needed_) {
+    current_text_input_type_ = params.type;
+    show_ime_if_needed_ = params.show_ime_if_needed;
+
+    if (delegate_) {
+      delegate_->TextInputStateChanged(current_text_input_type_,
+                                       show_ime_if_needed_);
+    }
   }
 }
 
