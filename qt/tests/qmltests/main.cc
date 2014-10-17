@@ -58,7 +58,7 @@ class TestNetworkAccessManager : public QNetworkAccessManager {
 
   QNetworkReply* createRequest(QNetworkAccessManager::Operation op,
                                const QNetworkRequest& req,
-                               QIODevice* outgoing_data) Q_DECL_FINAL;
+                               QIODevice* outgoing_data) final;
 
  private:
   QDir test_dir_;
@@ -94,7 +94,7 @@ class TestNetworkAccessManagerFactory : public QQmlNetworkAccessManagerFactory {
       : test_dir_(test_dir) {}
   virtual ~TestNetworkAccessManagerFactory() {}
 
-  QNetworkAccessManager* create(QObject* parent) Q_DECL_FINAL {
+  QNetworkAccessManager* create(QObject* parent) final {
     return new TestNetworkAccessManager(test_dir_, parent);
   }
 

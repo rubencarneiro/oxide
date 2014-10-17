@@ -30,14 +30,13 @@ QT_BEGIN_NAMESPACE
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
-class OxideQQuickWebFramePrivate Q_DECL_FINAL :
-    public oxide::qt::WebFrameAdapter {
+class OxideQQuickWebFramePrivate final : public oxide::qt::WebFrameAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebFrame)
 
  public:
   OxideQQuickWebFramePrivate(OxideQQuickWebFrame* q);
 
-  void URLChanged() Q_DECL_FINAL;
+  void URLChanged() final;
 
   QList<OxideQQuickWebFrame *>& children() {
     return children_;

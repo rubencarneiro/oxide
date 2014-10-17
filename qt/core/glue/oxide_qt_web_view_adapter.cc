@@ -55,7 +55,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
   virtual ~CompositorFrameHandleImpl() {}
 
-  CompositorFrameHandle::Type GetType() Q_DECL_FINAL {
+  CompositorFrameHandle::Type GetType() final {
     if (!frame_.get()) {
       return CompositorFrameHandle::TYPE_INVALID;
     }
@@ -70,11 +70,11 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     return CompositorFrameHandle::TYPE_INVALID;
   }
 
-  const QSize& GetSize() const Q_DECL_FINAL {
+  const QSize& GetSize() const final {
     return size_;
   }
 
-  QImage GetSoftwareFrame() Q_DECL_FINAL {
+  QImage GetSoftwareFrame() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
     return QImage(
         static_cast<uchar *>(frame_->software_frame_data()->pixels()),
@@ -83,7 +83,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
         QImage::Format_ARGB32);
   }
 
-  AcceleratedFrameData GetAcceleratedFrame() Q_DECL_FINAL {
+  AcceleratedFrameData GetAcceleratedFrame() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
     return AcceleratedFrameData(frame_->gl_frame_data()->texture_id());
   }

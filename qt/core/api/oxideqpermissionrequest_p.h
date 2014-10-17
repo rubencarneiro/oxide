@@ -54,8 +54,8 @@ class OxideQPermissionRequestPrivate {
   QUrl embedder_;
 };
 
-class OxideQSimplePermissionRequestPrivate :
-    public OxideQPermissionRequestPrivate {
+class OxideQSimplePermissionRequestPrivate
+    : public OxideQPermissionRequestPrivate {
  public:
   virtual ~OxideQSimplePermissionRequestPrivate();
 
@@ -79,8 +79,8 @@ class OxideQSimplePermissionRequestPrivate :
   bool did_respond_;
 };
 
-class OxideQGeolocationPermissionRequestPrivate Q_DECL_FINAL :
-    public OxideQSimplePermissionRequestPrivate {
+class OxideQGeolocationPermissionRequestPrivate final
+    : public OxideQSimplePermissionRequestPrivate {
  public:
   ~OxideQGeolocationPermissionRequestPrivate();
 

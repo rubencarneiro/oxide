@@ -29,7 +29,7 @@ namespace oxide {
 class WebView;
 }
 
-class OxideQNewViewRequestPrivate Q_DECL_FINAL {
+class OxideQNewViewRequestPrivate final {
  public:
   ~OxideQNewViewRequestPrivate();
 

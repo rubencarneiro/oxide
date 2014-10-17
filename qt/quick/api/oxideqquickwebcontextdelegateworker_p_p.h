@@ -49,7 +49,7 @@ class IOThreadController : public QObject {
 }
 }
 
-class OxideQQuickWebContextDelegateWorkerPrivate Q_DECL_FINAL {
+class OxideQQuickWebContextDelegateWorkerPrivate final {
  public:
   ~OxideQQuickWebContextDelegateWorkerPrivate();
 

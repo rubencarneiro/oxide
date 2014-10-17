@@ -54,8 +54,8 @@ class OxideQNetworkCallbackEventPrivate {
   bool is_main_frame_;
 };
 
-class OxideQBeforeURLRequestEventPrivate Q_DECL_FINAL :
-    public OxideQNetworkCallbackEventPrivate {
+class OxideQBeforeURLRequestEventPrivate final
+    : public OxideQNetworkCallbackEventPrivate {
  public:
   ~OxideQBeforeURLRequestEventPrivate();
 
@@ -72,8 +72,8 @@ class OxideQBeforeURLRequestEventPrivate Q_DECL_FINAL :
                                      bool isMainFrame);
 };
 
-class OxideQBeforeSendHeadersEventPrivate Q_DECL_FINAL :
-    public OxideQNetworkCallbackEventPrivate {
+class OxideQBeforeSendHeadersEventPrivate final
+    : public OxideQNetworkCallbackEventPrivate {
  public:
   ~OxideQBeforeSendHeadersEventPrivate();
 
@@ -90,8 +90,8 @@ class OxideQBeforeSendHeadersEventPrivate Q_DECL_FINAL :
                                       bool isMainFrame);
 };
 
-class OxideQBeforeRedirectEventPrivate Q_DECL_FINAL :
-    public OxideQNetworkCallbackEventPrivate {
+class OxideQBeforeRedirectEventPrivate final
+    : public OxideQNetworkCallbackEventPrivate {
  public:
   ~OxideQBeforeRedirectEventPrivate();
 

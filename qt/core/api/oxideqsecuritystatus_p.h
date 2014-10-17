@@ -36,7 +36,7 @@ class WebView;
 class OxideQSecurityStatus;
 class OxideQSslCertificate;
 
-class OxideQSecurityStatusPrivate Q_DECL_FINAL {
+class OxideQSecurityStatusPrivate final {
   Q_DECLARE_PUBLIC(OxideQSecurityStatus)
 
  public:

@@ -38,7 +38,7 @@ class CompositorFrameHandle;
 
 namespace qquick {
 
-class SoftwareFrameNode Q_DECL_FINAL : public QSGSimpleTextureNode {
+class SoftwareFrameNode final : public QSGSimpleTextureNode {
  public:
   SoftwareFrameNode(OxideQQuickWebView* view);
 

@@ -18,14 +18,12 @@
 #ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
 #define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
 
-#include <QtGlobal>
-
 #include "qt/core/glue/oxide_qt_script_message_adapter.h"
 
 class OxideQQuickScriptMessage;
 
-class OxideQQuickScriptMessagePrivate Q_DECL_FINAL :
-    public oxide::qt::ScriptMessageAdapter {
+class OxideQQuickScriptMessagePrivate final
+    : public oxide::qt::ScriptMessageAdapter {
  public:
   OxideQQuickScriptMessagePrivate(OxideQQuickScriptMessage* q);
 

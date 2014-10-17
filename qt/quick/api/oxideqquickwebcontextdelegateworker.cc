@@ -103,7 +103,7 @@ class IOThreadControllerImpl : public IOThreadController {
 
  private:
   // IOThreadController implementation
-  void CallEntryPointInWorker(const QString& entry, QObject* data) Q_DECL_FINAL;
+  void CallEntryPointInWorker(const QString& entry, QObject* data) final;
 
   bool running_;
   Api api_;
