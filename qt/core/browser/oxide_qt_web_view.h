@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
 #include <QKeyEvent>
+#include <QObject>
 #include <QtGlobal>
 
 #include "base/basictypes.h"
@@ -41,11 +42,13 @@ class OxideQSecurityStatus;
 namespace oxide {
 namespace qt {
 
-class InputMethodListener;
 class WebContext;
 class WebViewAdapter;
 
-class WebView final : public oxide::WebView {
+class WebView final : public QObject,
+                      public oxide::WebView {
+  Q_OBJECT
+
  public:
   static WebView* Create(WebViewAdapter* adapter);
   ~WebView();
@@ -64,13 +67,15 @@ class WebView final : public oxide::WebView {
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
+  WebContext* GetContext() const;
+
+ private Q_SLOTS:
+  void OnInputPanelVisibilityChanged();
+
  private:
-  friend class InputMethodListener;
   friend class WebViewAdapter;
 
   WebView(WebViewAdapter* adapter);
-
-  WebContext* GetContext() const;
 
   float GetDeviceScaleFactor() const;
 
@@ -189,7 +194,6 @@ class WebView final : public oxide::WebView {
 
   bool has_input_method_state_;
 
-  scoped_ptr<InputMethodListener> input_method_listener_;
   scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
