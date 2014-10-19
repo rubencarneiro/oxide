@@ -243,7 +243,7 @@ void MotionEvent::UpdateTouchPoint(
   DCHECK(was_active || !touch_points_[index].active);
 
   if (!touch_points_[index].active && was_active) {
-    DCHECK_GT(active_touch_point_count_, 0);
+    DCHECK_GT(active_touch_point_count_, 0U);
     active_touch_point_count_--;
   }
 }
@@ -291,7 +291,7 @@ int MotionEvent::GetActionIndex() const {
   DCHECK(action_ == ACTION_POINTER_DOWN ||
          action_ == ACTION_POINTER_UP);
   DCHECK_GE(action_index_, 0);
-  DCHECK_LT(action_index_, pointer_count_);
+  DCHECK_LT(action_index_, static_cast<int>(pointer_count_));
   return action_index_;
 }
 
