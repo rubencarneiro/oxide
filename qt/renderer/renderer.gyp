@@ -21,7 +21,7 @@
       'type': 'executable',
       'dependencies': [
         '../core/core.gyp:<(oxide_core_name)',
-        '../core/system.gyp:Qt5Core',
+        '../build/system.gyp:Qt5Core',
       ],
       'include_dirs': [
         '../..',
