@@ -1015,5 +1015,3 @@ WebContext* WebView::GetContext() const {
 
 } // namespace qt
 } // namespace oxide
-
-#include "oxide_qt_web_view.moc"

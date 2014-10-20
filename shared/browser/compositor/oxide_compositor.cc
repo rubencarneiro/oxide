@@ -192,7 +192,7 @@ scoped_ptr<Compositor> Compositor::Create(CompositorClient* client,
 }
 
 Compositor::~Compositor() {
-  CHECK_EQ(lock_count_, 0);
+  CHECK_EQ(lock_count_, 0U);
   proxy_->CompositorDestroyed();
 }
 

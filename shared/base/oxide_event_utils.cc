@@ -202,7 +202,7 @@ blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event) {
   result.touchesLength = std::min(
       event.GetPointerCount(),
       static_cast<size_t>(blink::WebTouchEvent::touchesLengthCap));
-  DCHECK_GT(result.touchesLength, 0);
+  DCHECK_GT(result.touchesLength, 0U);
 
   for (size_t i = 0; i < result.touchesLength; ++i) {
     result.touches[i] = CreateWebTouchPoint(event, i);
