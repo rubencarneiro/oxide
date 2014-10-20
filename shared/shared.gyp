@@ -281,6 +281,7 @@
         'browser/oxide_permission_request.cc',
         'browser/oxide_permission_request.h',
         'browser/oxide_power_save_blocker.cc',
+        'browser/oxide_power_save_blocker.h',
         'browser/oxide_renderer_frame_evictor.cc',
         'browser/oxide_renderer_frame_evictor.h',
         'browser/oxide_render_widget_host_view.cc',

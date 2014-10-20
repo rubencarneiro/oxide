@@ -1,0 +1,60 @@
+# HG changeset patch
+# Parent 2d92ebbf7d8a38f39238b3fa625f8b1c88d2a722
+# User oxide
+
+diff --git a/content/content_browser.gypi b/content/content_browser.gypi
+--- a/content/content_browser.gypi
++++ b/content/content_browser.gypi
+@@ -33,16 +33,17 @@
+     # headers resolve correctly.
+     '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
+     # The public render_widget_host.h needs to re-export skia defines.
+     '../skia/skia.gyp:skia',
+   ],
+   'include_dirs': [
+     '..',
+     '<(INTERMEDIATE_DIR)',
++    '<(DEPTH)/../../..',
+   ],
+   'variables': {
+     'public_browser_sources': [
+       'public/browser/access_token_store.h',
+       'public/browser/android/compositor.h',
+       'public/browser/android/compositor_client.h',
+       'public/browser/android/content_view_core.h',
+       'public/browser/android/content_view_layer_renderer.h',
+@@ -919,25 +920,27 @@
+       'browser/power_monitor_message_broadcaster.cc',
+       'browser/power_monitor_message_broadcaster.h',
+       'browser/power_profiler/power_data_provider.h',
+       'browser/power_profiler/power_event.cc',
+       'browser/power_profiler/power_event.h',
+       'browser/power_profiler/power_profiler_observer.h',
+       'browser/power_profiler/power_profiler_service.cc',
+       'browser/power_profiler/power_profiler_service.h',
+-      'browser/power_save_blocker_android.cc',
+-      'browser/power_save_blocker_android.h',
+-      'browser/power_save_blocker_chromeos.cc',
++      #'browser/power_save_blocker_android.cc',
++      #'browser/power_save_blocker_android.h',
++      #'browser/power_save_blocker_chromeos.cc',
+       'browser/power_save_blocker_impl.cc',
+       'browser/power_save_blocker_impl.h',
+-      'browser/power_save_blocker_mac.cc',
+-      'browser/power_save_blocker_ozone.cc',
+-      'browser/power_save_blocker_win.cc',
+-      'browser/power_save_blocker_x11.cc',
++      #'browser/power_save_blocker_mac.cc',
++      #'browser/power_save_blocker_ozone.cc',
++      #'browser/power_save_blocker_win.cc',
++      #'browser/power_save_blocker_x11.cc',
++      '<(DEPTH)/../../../shared/port/content_browser/power_save_blocker_oxide.cc',
++      '<(DEPTH)/../../../shared/port/content_browser/power_save_blocker_oxide.h',
+       'browser/profiler_controller_impl.cc',
+       'browser/profiler_controller_impl.h',
+       'browser/profiler_message_filter.cc',
+       'browser/profiler_message_filter.h',
+       'browser/push_messaging_message_filter.cc',
+       'browser/push_messaging_message_filter.h',
+       'browser/push_messaging_router.cc',
+       'browser/push_messaging_router.h',
