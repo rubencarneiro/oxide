@@ -32,11 +32,9 @@
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
-#include "shared/port/content_browser/power_save_blocker_oxide.h"
 
 #include "oxide_default_screen_info.h"
 #include "oxide_message_pump.h"
-#include "oxide_power_save_blocker.h"
 
 namespace oxide {
 
@@ -197,8 +195,6 @@ int BrowserMainParts::PreCreateThreads() {
                                  primary_screen_.get());
 
   io_thread_.reset(new IOThread(delegate_->GetIOThreadDelegate()));
-
-  content::SetPowerSaveBlockerDelegateFactory(CreatePowerSaveBlocker);
 
   return 0;
 }

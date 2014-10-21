@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "shared/port/content_browser/power_save_blocker_oxide.h"
+#include "power_save_blocker_oxide.h"
 
 #include "base/logging.h"
 #include "content/browser/power_save_blocker_impl.h"
@@ -23,18 +23,17 @@
 namespace content {
 
 namespace {
-PowerSaveBlockerDelegateFactory* g_factory;
+PowerSaveBlockerOxideDelegateFactory* g_factory;
 }
 
-void SetPowerSaveBlockerDelegateFactory(
-    PowerSaveBlockerDelegateFactory* factory) {
+void SetPowerSaveBlockerOxideDelegateFactory(
+    PowerSaveBlockerOxideDelegateFactory* factory) {
   g_factory = factory;
 }
 
 class PowerSaveBlockerImpl::Delegate
     : public base::RefCounted<PowerSaveBlockerImpl::Delegate> {
  public:
-  Delegate() {}
   ~Delegate() {}
 };
 

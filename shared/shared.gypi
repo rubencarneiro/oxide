@@ -21,7 +21,6 @@
         'sources/': [
           ['exclude', 'render_widget_host_view_aura\\.cc'],
           ['exclude', 'touch_editable_impl_aura\\.cc'],
-          ['exclude', 'web_contents_view_aura\\.cc'],
         ],
       }],
       ['_target_name=="gl"', {

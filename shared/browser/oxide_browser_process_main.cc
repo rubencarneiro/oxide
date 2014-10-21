@@ -59,10 +59,14 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/gl/oxide_shared_gl_context.h"
+#include "shared/port/content_browser/power_save_blocker_oxide.h"
+#include "shared/port/content_browser/web_contents_view_oxide.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
+#include "oxide_power_save_blocker.h"
+#include "oxide_web_contents_view.h"
 
 namespace content {
 
@@ -369,6 +373,9 @@ void BrowserProcessMainImpl::Start(
       content::CreateInProcessRendererThread);
   content::GpuProcessHost::RegisterGpuMainThreadFactory(
       content::CreateInProcessGpuThread);
+
+  content::SetWebContentsViewOxideFactory(WebContentsView::Create);
+  content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
   CHECK(browser_main_runner_.get()) << "Failed to create BrowserMainRunner";

@@ -1,5 +1,6 @@
 port/native_web_keyboard_event.patch
 port/power_save_blocker.patch
+port/web_contents_view.patch
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
 support-native-popup-menus.patch

@@ -35,12 +35,12 @@ class PowerSaveBlockerOxideDelegate
   virtual ~PowerSaveBlockerOxideDelegate() {}
 };
 
-typedef content::PowerSaveBlockerOxideDelegate*
-(PowerSaveBlockerDelegateFactory)(PowerSaveBlocker::PowerSaveBlockerType,
-                                  const std::string&);
+typedef PowerSaveBlockerOxideDelegate*
+(PowerSaveBlockerOxideDelegateFactory)(PowerSaveBlocker::PowerSaveBlockerType,
+                                       const std::string&);
 
-CONTENT_EXPORT void SetPowerSaveBlockerDelegateFactory(
-    PowerSaveBlockerDelegateFactory* factory);
+CONTENT_EXPORT void SetPowerSaveBlockerOxideDelegateFactory(
+    PowerSaveBlockerOxideDelegateFactory* factory);
 
 } // namespace content
 
