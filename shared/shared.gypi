@@ -17,12 +17,6 @@
 {
   'target_defaults': {
     'target_conditions': [
-      ['_target_name=="content_browser"', {
-        'sources/': [
-          ['exclude', 'render_widget_host_view_aura\\.cc'],
-          ['exclude', 'touch_editable_impl_aura\\.cc'],
-        ],
-      }],
       ['_target_name=="gl"', {
         'sources/': [
           ['exclude', 'gl_context_ozone\\.cc'],
