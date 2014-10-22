@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,31 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
-#define _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
+#ifndef _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
+#define _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
 
-#include "ui/gl/gl_context.h"
+#include "ui/gl/gl_export.h"
 #include "ui/gl/gl_implementation.h"
 
-namespace oxide {
+namespace gfx {
 
-class SharedGLContext : public gfx::GLContext {
- public:
-  SharedGLContext();
-  virtual ~SharedGLContext();
+GL_EXPORT void InitializePreferredGLImplementation(
+    GLImplementation implementation);
+GL_EXPORT void InitializeAllowedGLImplementations(
+    const std::vector<GLImplementation>& implementations);
 
-  void* GetHandle() = 0;
-  virtual gfx::GLImplementation GetImplementation() = 0;
+} // namespace gfx
 
-  bool Initialize(gfx::GLSurface* compatible_surface,
-                  gfx::GpuPreference gpu_preference) final;
-  void Destroy() final;
-  bool MakeCurrent(gfx::GLSurface* surface) final;
-  void ReleaseCurrent(gfx::GLSurface* surface) final;
-  bool IsCurrent(gfx::GLSurface* surface) final;
-  void SetSwapInterval(int interval) final;
-};
-
-} // namespace oxide
-
-#endif // _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
+#endif // _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_

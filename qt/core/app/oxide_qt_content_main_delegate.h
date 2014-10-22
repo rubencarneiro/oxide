@@ -44,6 +44,7 @@ class ContentMainDelegate final : public oxide::ContentMainDelegate {
 #if defined(USE_NSS)
   base::FilePath GetNSSDbPath() const final;
 #endif
+  bool IsPlatformX11() const final;
 
   // content::ContentMainDelegate implementation
   content::ContentBrowserClient* CreateContentBrowserClient() final;

@@ -60,6 +60,10 @@ base::FilePath ContentMainDelegate::GetNSSDbPath() const {
 }
 #endif
 
+bool ContentMainDelegate::IsPlatformX11() const {
+  return false;
+}
+
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
   RegisterPathProvider();

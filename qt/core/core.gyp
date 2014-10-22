@@ -95,6 +95,8 @@
         'browser/oxide_qt_script_message_handler.h',
         'browser/oxide_qt_script_message_request.cc',
         'browser/oxide_qt_script_message_request.h',
+        'browser/oxide_qt_shared_gl_context.cc',
+        'browser/oxide_qt_shared_gl_context.h',
         'browser/oxide_qt_url_request_delegated_job.cc',
         'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_user_script.cc',
@@ -109,9 +111,6 @@
         'browser/oxide_qt_web_preferences.h',
         'browser/oxide_qt_web_view.cc',
         'browser/oxide_qt_web_view.h',
-        'gl/oxide_gl_implementation.cc',
-        'gl/oxide_qt_shared_gl_context.cc',
-        'gl/oxide_qt_shared_gl_context.h',
       ],
       'actions': [
         {

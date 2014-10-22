@@ -37,6 +37,7 @@ class ContentMainDelegate : public content::ContentMainDelegate {
 #if defined(USE_NSS)
   virtual base::FilePath GetNSSDbPath() const;
 #endif
+  virtual bool IsPlatformX11() const;
 
   // content::ContentMainDelegate implementation
   bool BasicStartupComplete(int* exit_code) final;

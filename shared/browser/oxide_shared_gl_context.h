@@ -15,28 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "shared/gl/oxide_gl_implementation.h"
+#ifndef _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
+#define _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
 
-#include <QGuiApplication>
-#include <QString>
-
-#include "base/logging.h"
+#include "ui/gl/gl_context.h"
+#include "ui/gl/gl_implementation.h"
 
 namespace oxide {
 
-void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls) {
-  QString platform = QGuiApplication::platformName();
-  if (platform == "xcb") {
-    impls->push_back(gfx::kGLImplementationDesktopGL);
-    impls->push_back(gfx::kGLImplementationEGLGLES2);
-    impls->push_back(gfx::kGLImplementationOSMesaGL);
-  } else if (platform.startsWith("ubuntu")) {
-    impls->push_back(gfx::kGLImplementationEGLGLES2);
-  } else if (platform == "minimal") {
-    // None
-  } else {
-    DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
-  }
-}
+class SharedGLContext : public gfx::GLContext {
+ public:
+  SharedGLContext();
+  virtual ~SharedGLContext();
 
-}
+  void* GetHandle() = 0;
+  virtual gfx::GLImplementation GetImplementation() = 0;
+
+  bool Initialize(gfx::GLSurface* compatible_surface,
+                  gfx::GpuPreference gpu_preference) final;
+  void Destroy() final;
+  bool MakeCurrent(gfx::GLSurface* surface) final;
+  void ReleaseCurrent(gfx::GLSurface* surface) final;
+  bool IsCurrent(gfx::GLSurface* surface) final;
+  void SetSwapInterval(int interval) final;
+};
+
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_

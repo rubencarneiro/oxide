@@ -2,6 +2,7 @@ port/native_web_keyboard_event.patch
 port/power_save_blocker.patch
 port/web_contents_view.patch
 port/render_widget_host_view.patch
+port/gl_implementation.patch
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
 support-native-popup-menus.patch
@@ -9,7 +10,6 @@ add-oxide-messages.patch
 add-oxide-resources.patch
 share-gl-resources-with-embedder.patch
 arm-icu.patch
-enable-glx-on-ozone.patch
 arm-neon.patch
 dont-use-gl-create-context-robustness.patch
 dont-initialize-gl-more-than-once.patch
