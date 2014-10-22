@@ -193,7 +193,6 @@
         '<(DEPTH)/content/content.gyp:content_renderer',
         '<(DEPTH)/content/content.gyp:content_utility',
         '<(DEPTH)/gpu/gpu.gyp:command_buffer_common',
-        '<(DEPTH)/gpu/gpu.gyp:gpu_config',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
