@@ -36,17 +36,10 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 
-#include "oxide_default_screen_info.h"
+#include "oxide_browser_process_main.h"
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_delegate.h"
 #include "oxide_web_view.h"
-
-namespace content {
-void RenderWidgetHostViewBase::GetDefaultScreenInfo(
-    blink::WebScreenInfo* results) {
-  *results = oxide::GetDefaultWebScreenInfo();
-}
-}
 
 namespace oxide {
 
@@ -315,7 +308,7 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
 
 void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
   if (!delegate_) {
-    *result = GetDefaultWebScreenInfo();
+    *result = BrowserProcessMain::GetInstance()->GetDefaultScreenInfo();
     return;
   }
 

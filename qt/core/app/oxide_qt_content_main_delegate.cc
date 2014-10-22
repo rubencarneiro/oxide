@@ -23,6 +23,7 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 
+#include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/browser/oxide_qt_content_browser_client.h"
 #include "qt/core/browser/oxide_qt_shared_gl_context.h"
 #include "qt/core/glue/oxide_qt_init.h"
@@ -73,6 +74,10 @@ bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
                                    QGuiApplication::primaryScreen()));
 
   return true;
+}
+
+blink::WebScreenInfo ContentMainDelegate::GetDefaultScreenInfo() const {
+  return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
 #if defined(USE_NSS)

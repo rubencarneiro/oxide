@@ -72,7 +72,6 @@
         'base/oxide_qt_screen_utils.h',
         'base/oxide_qt_skutils.cc',
         'base/oxide_qt_skutils.h',
-        'browser/oxide_default_screen_info.cc',
         'browser/oxide_qt_browser_main_parts_delegate.cc',
         'browser/oxide_qt_browser_main_parts_delegate.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',

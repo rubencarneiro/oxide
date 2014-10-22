@@ -20,6 +20,7 @@
 
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "content/common/content_export.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/ime/text_input_type.h"
 
 namespace gfx {
@@ -46,6 +47,10 @@ class CONTENT_EXPORT RenderWidgetHostViewOxide
                                         const gfx::Rect& focus_rect,
                                         bool is_anchor_first) = 0;
 };
+
+typedef blink::WebScreenInfo (DefaultScreenInfoGetter)();
+CONTENT_EXPORT void SetDefaultScreenInfoGetterOxide(
+    DefaultScreenInfoGetter* getter);
 
 } // namespace content
 

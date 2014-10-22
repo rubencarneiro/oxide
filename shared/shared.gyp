@@ -253,7 +253,6 @@
         'browser/oxide_content_browser_client.cc',
         'browser/oxide_content_browser_client.h',
         'browser/oxide_content_types.h',
-        'browser/oxide_default_screen_info.h',
         'browser/oxide_devtools_manager_delegate.cc',
         'browser/oxide_devtools_manager_delegate.h',
         'browser/oxide_devtools_http_handler_delegate.cc',

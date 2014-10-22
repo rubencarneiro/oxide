@@ -17,9 +17,20 @@
 
 #include "render_widget_host_view_oxide.h"
 
+#include "base/logging.h"
 #include "content/common/view_messages.h"
 
 namespace content {
+
+namespace {
+DefaultScreenInfoGetter* g_default_screen_info_getter;
+}
+
+void RenderWidgetHostViewBase::GetDefaultScreenInfo(
+    blink::WebScreenInfo* results) {
+  DCHECK(g_default_screen_info_getter);
+  *results = g_default_screen_info_getter();
+}
 
 void RenderWidgetHostViewOxide::TextInputStateChanged(
     const ViewHostMsg_TextInputState_Params& params) {
@@ -34,5 +45,9 @@ void RenderWidgetHostViewOxide::SelectionBoundsChanged(
 }
 
 RenderWidgetHostViewOxide::~RenderWidgetHostViewOxide() {}
+
+void SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter* getter) {
+  g_default_screen_info_getter = getter;
+}
 
 } // namespace content

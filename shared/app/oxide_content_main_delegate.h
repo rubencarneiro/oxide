@@ -22,6 +22,7 @@
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
 #include "content/public/app/content_main_delegate.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 namespace oxide {
 
@@ -34,6 +35,7 @@ class ContentMainDelegate : public content::ContentMainDelegate {
 
   virtual SharedGLContext* GetSharedGLContext() const;
   virtual bool GetNativeDisplay(intptr_t* handle) const;
+  virtual blink::WebScreenInfo GetDefaultScreenInfo() const;
 #if defined(USE_NSS)
   virtual base::FilePath GetNSSDbPath() const;
 #endif

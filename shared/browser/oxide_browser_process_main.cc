@@ -60,6 +60,7 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/port/content_browser/power_save_blocker_oxide.h"
+#include "shared/port/content_browser/render_widget_host_view_oxide.h"
 #include "shared/port/content_browser/web_contents_view_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
@@ -117,6 +118,9 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
     CHECK(native_display_is_valid_);
     return native_display_;
   }
+  blink::WebScreenInfo GetDefaultScreenInfo() const final {
+    return main_delegate_->GetDefaultScreenInfo();
+  }
 
  private:
 
@@ -143,6 +147,10 @@ namespace {
 BrowserProcessMainImpl* GetBrowserProcessMainInstance() {
   static BrowserProcessMainImpl g_instance;
   return &g_instance;
+}
+
+blink::WebScreenInfo DefaultScreenInfoGetter() {
+  return BrowserProcessMain::GetInstance()->GetDefaultScreenInfo();
 }
 
 bool IsEnvironmentOptionEnabled(const char* option) {
@@ -335,23 +343,6 @@ void BrowserProcessMainImpl::Start(
 
   exit_manager_.reset(new base::AtExitManager());
 
-  if (native_display_is_valid_) {
-    gfx::InitializeOxideNativeDisplay(native_display_);
-
-    std::vector<gfx::GLImplementation> allowed_gl_impls;
-    if (main_delegate_->IsPlatformX11()) {
-      allowed_gl_impls.push_back(gfx::kGLImplementationDesktopGL);
-    }
-    allowed_gl_impls.push_back(gfx::kGLImplementationEGLGLES2);
-    allowed_gl_impls.push_back(gfx::kGLImplementationOSMesaGL);
-    gfx::InitializeAllowedGLImplementations(allowed_gl_impls);
-
-    if (shared_gl_context_.get()) {
-      gfx::InitializePreferredGLImplementation(
-          shared_gl_context_->GetImplementation());
-    }
-  }
-
   base::FilePath subprocess_exe = GetSubprocessPath();
   InitializeCommandLine(subprocess_exe);
 
@@ -394,8 +385,26 @@ void BrowserProcessMainImpl::Start(
   content::GpuProcessHost::RegisterGpuMainThreadFactory(
       content::CreateInProcessGpuThread);
 
+  content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
+
+  if (native_display_is_valid_) {
+    gfx::InitializeOxideNativeDisplay(native_display_);
+
+    std::vector<gfx::GLImplementation> allowed_gl_impls;
+    if (main_delegate_->IsPlatformX11()) {
+      allowed_gl_impls.push_back(gfx::kGLImplementationDesktopGL);
+    }
+    allowed_gl_impls.push_back(gfx::kGLImplementationEGLGLES2);
+    allowed_gl_impls.push_back(gfx::kGLImplementationOSMesaGL);
+    gfx::InitializeAllowedGLImplementations(allowed_gl_impls);
+
+    if (shared_gl_context_.get()) {
+      gfx::InitializePreferredGLImplementation(
+          shared_gl_context_->GetImplementation());
+    }
+  }
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
   CHECK(browser_main_runner_.get()) << "Failed to create BrowserMainRunner";
