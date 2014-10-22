@@ -19,7 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
 #include "base/macros.h"
-#include "shared/port/content_browser/web_contents_view_oxide.h"
+#include "shared/port/content/browser/web_contents_view_oxide.h"
 
 namespace content {
 class WebContents;

@@ -39,7 +39,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
    'conditions': [
 +    ['oxide_build=="qt"', {
 +      'sources': [
-+        '<(DEPTH)/../../../qt/core/port/content_browser/native_web_keyboard_event_oxide_qt.cc',
++        '<(DEPTH)/../../../qt/core/port/content/browser/native_web_keyboard_event_oxide_qt.cc',
 +      ],
 +      'dependencies': [
 +        '<(DEPTH)/../../../qt/build/system.gyp:Qt5Core',

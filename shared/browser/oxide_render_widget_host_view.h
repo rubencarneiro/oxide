@@ -34,7 +34,7 @@
 #include "ui/gfx/size.h"
 
 #include "shared/browser/oxide_renderer_frame_evictor_client.h"
-#include "shared/port/content_browser/render_widget_host_view_oxide.h"
+#include "shared/port/content/browser/render_widget_host_view_oxide.h"
 
 namespace cc {
 class DelegatedFrameProvider;

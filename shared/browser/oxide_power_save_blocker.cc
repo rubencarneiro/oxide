@@ -29,7 +29,7 @@
 #include "dbus/object_path.h"
 #include "dbus/object_proxy.h"
 
-#include "shared/port/content_browser/power_save_blocker_oxide.h"
+#include "shared/port/content/browser/power_save_blocker_oxide.h"
 
 #include "oxide_form_factor.h"
 

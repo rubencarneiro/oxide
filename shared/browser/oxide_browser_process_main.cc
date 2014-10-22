@@ -59,9 +59,9 @@
 #include "shared/app/oxide_content_main_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
-#include "shared/port/content_browser/power_save_blocker_oxide.h"
-#include "shared/port/content_browser/render_widget_host_view_oxide.h"
-#include "shared/port/content_browser/web_contents_view_oxide.h"
+#include "shared/port/content/browser/power_save_blocker_oxide.h"
+#include "shared/port/content/browser/render_widget_host_view_oxide.h"
+#include "shared/port/content/browser/web_contents_view_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
 
