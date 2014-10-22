@@ -106,7 +106,8 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
                                  gfx::NativeView context) {}
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
-    content::RenderWidgetHost* render_widget_host) {
+    content::RenderWidgetHost* render_widget_host,
+    bool is_guest_view_hack) {
   RenderWidgetHostView* rwhv = new RenderWidgetHostView(render_widget_host);
 
   WebView* view = GetWebView();
