@@ -154,6 +154,11 @@ int WebContext::OnBeforeURLRequest(net::URLRequest* request,
 
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
+  if (!info) {
+    // Requests created outside of the ResourceDispatcher won't have
+    // a ResourceRequestInfo
+    return net::OK;
+  }
 
   OxideQBeforeURLRequestEvent* event =
       new OxideQBeforeURLRequestEvent(
@@ -184,6 +189,11 @@ int WebContext::OnBeforeSendHeaders(net::URLRequest* request,
 
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
+  if (!info) {
+    // Requests created outside of the ResourceDispatcher won't have
+    // a ResourceRequestInfo
+    return net::OK;
+  }
 
   OxideQBeforeSendHeadersEvent* event =
       new OxideQBeforeSendHeadersEvent(
@@ -213,6 +223,11 @@ void WebContext::OnBeforeRedirect(net::URLRequest* request,
 
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
+  if (!info) {
+    // Requests created outside of the ResourceDispatcher won't have
+    // a ResourceRequestInfo
+    return;
+  }
 
   OxideQBeforeRedirectEvent* event =
       new OxideQBeforeRedirectEvent(
