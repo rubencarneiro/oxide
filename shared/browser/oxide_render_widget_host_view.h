@@ -36,6 +36,8 @@
 
 #include "shared/browser/oxide_renderer_frame_evictor_client.h"
 
+struct ViewHostMsg_TextInputState_Params;
+
 namespace cc {
 class DelegatedFrameProvider;
 class DelegatedRendererLayer;
@@ -104,8 +106,9 @@ class RenderWidgetHostView final :
   void UpdateCursor(const content::WebCursor& cursor) final;
   void SetIsLoading(bool is_loading) final;
 
-  void TextInputStateChanged(
-      const ViewHostMsg_TextInputState_Params& params) final;
+  void TextInputTypeChanged(ui::TextInputType type,
+                            ui::TextInputMode mode,
+                            bool can_compose_inline) final;
 
   void ImeCancelComposition() final;
 
@@ -175,7 +178,13 @@ class RenderWidgetHostView final :
   // RendererFrameEvictorClient implemenetation
   void EvictCurrentFrame() final;
 
+  // IPC::Listener implementation
+  bool OnMessageReceived(const IPC::Message& msg) final;
+
   // ===================
+
+  void OnTextInputStateChanged(
+      const ViewHostMsg_TextInputState_Params& params);
 
   void UpdateCursorOnWebView();
 
