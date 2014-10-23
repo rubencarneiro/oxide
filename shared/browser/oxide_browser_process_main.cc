@@ -63,6 +63,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
+#include "oxide_platform_integration.h"
 
 namespace content {
 
@@ -96,7 +97,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(scoped_ptr<ContentMainDelegate> delegate) final;
+  void Start(scoped_ptr<ContentMainDelegate> delegate,
+             PlatformIntegration* platform) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -302,13 +304,14 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::Start(
-    scoped_ptr<ContentMainDelegate> delegate) {
+void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
+                                   PlatformIntegration* platform) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
 
   main_delegate_ = delegate.Pass();
+  PlatformIntegration::instance = platform;
 
   state_ = STATE_STARTED;
 
@@ -400,6 +403,9 @@ void BrowserProcessMainImpl::Shutdown() {
   shared_gl_context_ = NULL;
   native_display_is_valid_ = false;
   native_display_ = 0;
+
+  delete PlatformIntegration::instance;
+  PlatformIntegration::instance = NULL;
 
   main_delegate_.reset();
 

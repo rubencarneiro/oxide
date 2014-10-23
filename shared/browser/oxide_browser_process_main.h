@@ -26,6 +26,7 @@
 namespace oxide {
 
 class ContentMainDelegate;
+class PlatformIntegration;
 class SharedGLContext;
 
 // This class basically encapsulates the process-wide bits that would
@@ -40,7 +41,8 @@ class BrowserProcessMain {
 
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  virtual void Start(scoped_ptr<ContentMainDelegate> delegate) = 0;
+  virtual void Start(scoped_ptr<ContentMainDelegate> delegate,
+                     PlatformIntegration* platform) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton

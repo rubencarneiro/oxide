@@ -25,6 +25,7 @@
 
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
+#include "qt/core/browser/oxide_qt_platform_integration.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
 namespace oxide {
@@ -70,7 +71,8 @@ void EnsureChromiumStarted() {
       ContentMainDelegate::CreateForBrowser(
         base::FilePath(nss_db_path.toStdString())));
   oxide::BrowserProcessMain::GetInstance()->Start(
-      delegate.PassAs<oxide::ContentMainDelegate>());
+      delegate.PassAs<oxide::ContentMainDelegate>(),
+      new PlatformIntegration());
 
   qAddPostRoutine(ShutdownChromium);
 }
