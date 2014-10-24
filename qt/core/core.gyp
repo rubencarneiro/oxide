@@ -24,6 +24,13 @@
         'OxideQtCore_private',
         'OxideQtCore_public',
       ],
+      'conditions': [
+        ['component=="shared_library"', {
+          'ldflags': [
+            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'OxideQtCore_private',
