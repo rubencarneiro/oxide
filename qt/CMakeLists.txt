@@ -88,8 +88,6 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
 add_custom_target(
     gyp ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB} ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_DEV}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ${CHROMIUM_PRODUCT_DIR}/chrome_sandbox ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox
     DEPENDS gyp_all)
 
@@ -99,11 +97,10 @@ add_library(${OXIDE_CORELIB_NAME} SHARED IMPORTED)
 add_dependencies(${OXIDE_CORELIB_NAME} gyp)
 set_target_properties(
     ${OXIDE_CORELIB_NAME} PROPERTIES
-    IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_DEV})
+    IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB})
 
 set(OXIDE_INSTALL_LIB_FILES
-    ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB}
-    ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB_DEV})
+    ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB})
 set(OXIDE_INSTALL_LIBEXEC_FILES
     ${CHROMIUM_PRODUCT_DIR}/oxide.pak
     ${CHROMIUM_PRODUCT_DIR}/oxide_100_percent.pak
@@ -118,6 +115,15 @@ endif()
 
 install(FILES ${OXIDE_INSTALL_LIB_FILES}
         DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${OXIDE_CORELIB} ${OXIDE_CORELIB_DEV}
+        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})")
+if(ENABLE_COMPONENT_BUILD)
+  install(DIRECTORY ${CHROMIUM_LIB_DIR}
+          DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
+          FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+endif()
 install(FILES ${OXIDE_INSTALL_LIBEXEC_FILES}
         DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
 install(PROGRAMS ${OXIDE_INSTALL_LIBEXEC_PROGRAMS}
@@ -162,7 +168,7 @@ function(oxide_add_package_files)
   endif()
 endfunction()
 
-oxide_add_package_files(FILES ${CHROMIUM_LIB_DIR}/${OXIDE_CORELIB} ${OXIDE_INSTALL_LIBEXEC_FILES})
+oxide_add_package_files(FILES ${OXIDE_INSTALL_LIB_FILES} ${OXIDE_INSTALL_LIBEXEC_FILES})
 oxide_add_package_files(PROGRAMS ${OXIDE_INSTALL_LIBEXEC_PROGRAMS} ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox)
 oxide_add_package_files(DIRECTORY ${CHROMIUM_PRODUCT_DIR}/locales)
 
@@ -179,6 +185,10 @@ get_target_property(_LOCATION ${OXIDE_QUICKLIB} LOCATION)
 # This is a bit broken - the last call returns the path without the
 # SOVERSION. Bleh
 oxide_add_package_files(FILES ${_LOCATION}.${OXIDE_CORELIB_SO_VERSION})
+
+if(ENABLE_COMPONENT_BUILD)
+  oxide_add_package_files(DIRECTORY ${CHROMIUM_LIB_DIR})
+endif()
 
 add_custom_target(
     package
