@@ -45,6 +45,13 @@ if(ENABLE_COMPONENT_BUILD)
   link_directories(${CHROMIUM_LIB_DIR})
 endif()
 
+set(GOLD_DIR ${CMAKE_BINARY_DIR}/gold)
+
+# Use gold everywhere
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -B ${GOLD_DIR}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -B ${GOLD_DIR}")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -B ${GOLD_DIR}")
+
 if(NOT DEFINED PYTHON)
   find_program(PYTHON python)
   if(PYTHON STREQUAL "PYTHON-NOTFOUND")
@@ -85,23 +92,14 @@ include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 # but as this is distro specific, we do something that is currently
 # supportable across distributions. This creates a directory with a symlink
 # to the gold linker, and we pass -B to the compiler
-execute_process(
-    COMMAND ${CMAKE_C_COMPILER} -print-prog-name=ld
-    RESULT_VARIABLE _RESULT
-    OUTPUT_VARIABLE _LINKER_PATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to get linker path from compiler")
-endif()
 set(_SETUP_GOLD_COMMAND
     ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
-    --output ${CMAKE_BINARY_DIR}/gold --ld ${_LINKER_PATH})
-get_filename_component(_LINKER_NAME ${_LINKER_PATH} NAME)
+    --output ${GOLD_DIR})
 add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
+    OUTPUT ${GOLD_DIR}/ld
     COMMAND ${_SETUP_GOLD_COMMAND})
 add_custom_target(gold ALL
-                  DEPENDS ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
+                  DEPENDS ${GOLD_DIR}/ld
                   COMMENT "Creating a symlink for the gold linker")
 
 # Build the gyp command
