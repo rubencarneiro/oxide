@@ -19,3 +19,4 @@ add-should-download-url-to-resource-dispatcher-host.patch
 load-nss-without-user-db.patch
 accelerated-2d-support.patch
 store-cache-stats-at-startup.patch
+export-content-switches.patch
