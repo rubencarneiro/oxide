@@ -25,11 +25,16 @@
 
 using content::DevToolsAgentHost;
 
+namespace oxide {
+
 namespace {
+
 const char kTargetTypePage[] = "page";
+const char kTargetTypeIframe[] = "iframe";
+const char kTargetTypeOther[] = "other";
+
 }
 
-namespace oxide {
 
 DevToolsTarget::DevToolsTarget(content::WebContents* contents)
     : content::WebContentsObserver(contents),
@@ -44,11 +49,58 @@ std::string DevToolsTarget::GetId() const {
 }
 
 std::string DevToolsTarget::GetParentId() const {
-  return std::string();
+  const content::WebContents* wc = web_contents();
+  if (!wc) {
+    return std::string();
+  }
+
+  const content::RenderViewHost* rvh =
+      wc->GetRenderViewHost();
+  if (!rvh) {
+    return std::string();
+  }
+
+  std::string id;
+  // In case we have a OOP iframe currently
+  // corresponding to this webcontents (for --site-per-process)
+  // we have a parent whose id is different than the current
+  // agent host id.
+  content::RenderFrameHost* render_frame_host =
+      rvh->GetMainFrame();
+  if (render_frame_host && render_frame_host->GetParent()) {
+    RenderViewHost* parent_rvh =
+        render_frame_host->GetParent()->GetRenderViewHost();
+    id = DevToolsAgentHost::GetOrCreateFor(parent_rvh)->GetId();
+  }
+  return id;
 }
 
 std::string DevToolsTarget::GetType() const {
-  return std::string(kTargetTypePage);
+  std::string type = kTargetTypeOther;
+
+  const content::WebContents* wc = web_contents();
+  if (!wc) {
+    return type;
+  }
+
+  const content::RenderViewHost* rvh =
+      wc->GetRenderViewHost();
+  if (!rvh) {
+    return type;
+  }
+
+  // In case we have a OOP iframe currently
+  // corresponding to this webcontents (for --site-per-process)
+  content::RenderFrameHost* render_frame_host =
+      rvh->GetMainFrame();
+  if (render_frame_host &&
+      render_frame_host->IsCrossProcessSubframe()) {
+    type = kTargetTypeIframe;
+  } else {
+    type = kTargetTypePage;
+  }
+
+  return type;
 }
 
 std::string DevToolsTarget::GetTitle() const {
@@ -70,7 +122,7 @@ GURL DevToolsTarget::GetURL() const {
     return GURL();
   }
 
-  return wc->GetVisibleURL();
+  return wc->GetLastCommittedURL();
 }
 
 GURL DevToolsTarget::GetFaviconURL() const {
