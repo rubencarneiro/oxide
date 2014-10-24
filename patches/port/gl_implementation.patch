@@ -1,5 +1,5 @@
 # HG changeset patch
-# Parent f696213cfcb95af9da8a78d6e54841221ca70903
+# Parent 8efcfe65fa65333c2e432c66f33b84d5bbe9f275
 # User oxide
 
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
@@ -27,25 +27,25 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -178,16 +178,18 @@
-         'font_render_params_android.cc',
-         'font_render_params_linux.cc',
-         'font_render_params_mac.cc',
-         'font_render_params_win.cc',
-         'frame_time.h',
-         'gfx_export.h',
-         'gfx_paths.cc',
-         'gfx_paths.h',
+@@ -307,16 +307,18 @@
+         'win/dpi.h',
+         'win/hwnd_util.cc',
+         'win/hwnd_util.h',
+         'win/scoped_set_map_mode.h',
+         'win/singleton_hwnd.cc',
+         'win/singleton_hwnd.h',
+         'win/window_impl.cc',
+         'win/window_impl.h',
 +        '<(DEPTH)/../../../shared/port/gfx/gfx_utils_oxide.cc',
 +        '<(DEPTH)/../../../shared/port/gfx/gfx_utils_oxide.h',
-         'gpu_memory_buffer.cc',
-         'gpu_memory_buffer.h',
-         'image/canvas_image_source.cc',
-         'image/canvas_image_source.h',
-         'image/image.cc',
-         'image/image.h',
-         'image/image_family.cc',
-         'image/image_family.h',
+       ],
+       'includes': [
+         '../../build/android/increase_size_for_speed.gypi',
+       ],
+       'conditions': [
+         ['OS=="ios"', {
+           'dependencies': [
+             '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
 @@ -394,17 +396,17 @@
            'sources!': [
              'render_text.cc',
@@ -139,7 +139,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
        },
        'export_dependent_settings': [
          '<(DEPTH)/third_party/mesa/mesa.gyp:mesa_headers',
-@@ -50,26 +51,27 @@
+@@ -50,26 +51,26 @@
          'android/surface_texture_listener.cc',
          'android/surface_texture_listener.h',
          'gl_bindings.h',
@@ -154,7 +154,6 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 +        #'gl_context_ozone.cc',
          'gl_context_osmesa.cc',
          'gl_context_osmesa.h',
-+        '<(DEPTH)/../../../shared/port/gl/gl_context_oxide_linux.cc',
          'gl_context_stub.cc',
          'gl_context_stub.h',
          'gl_context_stub_with_extensions.cc',
@@ -171,7 +170,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_fence_nv.cc',
          'gl_fence_nv.h',
          'gl_gl_api_implementation.cc',
-@@ -81,37 +83,41 @@
+@@ -81,53 +82,58 @@
          'gl_image_ref_counted_memory.h',
          'gl_image_shared_memory.cc',
          'gl_image_shared_memory.h',
@@ -188,9 +187,6 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 +        #'gl_implementation_mac.cc',
 +        #'gl_implementation_win.cc',
 +        #'gl_implementation_x11.cc',
-+        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.cc',
-+        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.h',
-+        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide.h',
          'gl_osmesa_api_implementation.cc',
          'gl_osmesa_api_implementation.h',
          'gl_share_group.cc',
@@ -211,7 +207,6 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_surface_osmesa.cc',
          'gl_surface_osmesa.h',
 -        'gl_surface_ozone.cc',
-+        '<(DEPTH)/../../../shared/port/gl/gl_surface_oxide_linux.cc',
 +        #'gl_surface_ozone.cc',
          'gl_switches.cc',
          'gl_switches.h',
@@ -221,6 +216,27 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gpu_switching_manager.h',
          'scoped_binders.cc',
          'scoped_binders.h',
+         'scoped_make_current.cc',
+         'scoped_make_current.h',
+         'sync_control_vsync_provider.cc',
+         'sync_control_vsync_provider.h',
+         '<(gl_binding_output_dir)/gl_bindings_autogen_gl.cc',
+         '<(gl_binding_output_dir)/gl_bindings_autogen_gl.h',
+         '<(gl_binding_output_dir)/gl_bindings_autogen_osmesa.cc',
+         '<(gl_binding_output_dir)/gl_bindings_autogen_osmesa.h',
++        '<(DEPTH)/../../../shared/port/gl/gl_context_oxide_linux.cc',
++        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.cc',
++        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.h',
++        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide.h',
++        '<(DEPTH)/../../../shared/port/gl/gl_surface_oxide_linux.cc',
+       ],
+       # hard_dependency is necessary for this target because it has actions
+       # that generate header files included by dependent targets. The header
+       # files must be generated before the dependents are compiled. The usual
+       # semantics are to allow the two targets to build concurrently.
+       'hard_dependency': 1,
+       'actions': [
+         {
 @@ -192,24 +198,24 @@
          ],
          }],
