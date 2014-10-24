@@ -40,6 +40,11 @@
             '<(DEPTH)/base/base.gyp:base',
           ],
         }],
+        ['component=="shared_library"', {
+          'dependencies': [
+            '<(DEPTH)/content/content.gyp:content_common',
+          ],
+        }],
       ],
     }
   ]
