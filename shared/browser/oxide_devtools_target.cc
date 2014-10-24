@@ -25,6 +25,10 @@
 
 using content::DevToolsAgentHost;
 
+namespace {
+const char kTargetTypePage[] = "page";
+}
+
 namespace oxide {
 
 DevToolsTarget::DevToolsTarget(content::WebContents* contents)
@@ -44,7 +48,7 @@ std::string DevToolsTarget::GetParentId() const {
 }
 
 std::string DevToolsTarget::GetType() const {
-  return std::string();
+  return std::string(kTargetTypePage);
 }
 
 std::string DevToolsTarget::GetTitle() const {
