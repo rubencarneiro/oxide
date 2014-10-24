@@ -74,7 +74,7 @@ gpu::gles2::TextureRef* CreateTextureRef(unsigned target,
 
   content::GpuCommandBufferStub* command_buffer =
       LookupCommandBuffer(client_id, route_id);
-  if (command_buffer) {
+  if (!command_buffer) {
     return NULL;
   }
 
