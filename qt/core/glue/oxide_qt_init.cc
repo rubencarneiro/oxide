@@ -69,8 +69,7 @@ void EnsureChromiumStarted() {
   scoped_ptr<ContentMainDelegate> delegate(
       ContentMainDelegate::CreateForBrowser(
         base::FilePath(nss_db_path.toStdString())));
-  oxide::BrowserProcessMain::GetInstance()->Start(
-      delegate.PassAs<oxide::ContentMainDelegate>());
+  oxide::BrowserProcessMain::GetInstance()->Start(delegate.Pass());
 
   qAddPostRoutine(ShutdownChromium);
 }

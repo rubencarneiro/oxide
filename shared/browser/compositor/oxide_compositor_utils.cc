@@ -199,7 +199,7 @@ class CompositorUtils::FetchTextureResourcesTask :
                           route_id_,
                           ref,
                           context_provider_));
-    callback_.Run(handle.PassAs<GLFrameData>());
+    callback_.Run(handle.Pass());
 
     callback_.Reset();
     context_provider_ = NULL;

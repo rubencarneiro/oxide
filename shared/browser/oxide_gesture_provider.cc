@@ -395,7 +395,7 @@ scoped_ptr<ui::MotionEvent> MotionEvent::Cancel() const {
   return make_scoped_ptr(
       new MotionEvent(pointer_count_, active_touch_point_count_,
                       touch_points_, ACTION_CANCEL, -1, flags_,
-                      last_event_time_)).PassAs<ui::MotionEvent>();
+                      last_event_time_)).Pass();
 }
 
 // static
@@ -483,7 +483,7 @@ scoped_ptr<ui::MotionEvent> MotionEvent::Clone() const {
   return make_scoped_ptr(
       new MotionEvent(pointer_count_, active_touch_point_count_,
                       touch_points_, action_, action_index_, flags_,
-                      last_event_time_)).PassAs<ui::MotionEvent>();
+                      last_event_time_)).Pass();
 }
 
 class GestureProviderImpl : public GestureProvider,
@@ -571,8 +571,7 @@ GestureProviderClient::~GestureProviderClient() {}
 scoped_ptr<GestureProvider> GestureProvider::Create(
     GestureProviderClient* client) {
   DCHECK(client) << "A GestureProviderClient must be provided";
-  return make_scoped_ptr(
-      new GestureProviderImpl(client)).PassAs<GestureProvider>();
+  return make_scoped_ptr(new GestureProviderImpl(client)).Pass();
 }
 
 GestureProvider::~GestureProvider() {}

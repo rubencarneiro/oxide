@@ -85,13 +85,13 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
 -                    IPC::SyncChannel* channel);
 +                    IPC::SyncChannel* channel,
 +                    gfx::GLShareGroup* share_group);
-   virtual ~GpuChannelManager();
+   ~GpuChannelManager() override;
  
    // Remove the channel for a particular renderer.
    void RemoveChannel(int client_id);
  
    // Listener overrides.
-   virtual bool OnMessageReceived(const IPC::Message& msg) override;
+   bool OnMessageReceived(const IPC::Message& msg) override;
  
 @@ -93,16 +94,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
@@ -254,12 +254,12 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 +  explicit GpuChildThread(const std::string& channel_id,
 +                          gfx::GLShareGroup* share_group);
  
-   virtual ~GpuChildThread();
+   ~GpuChildThread() override;
  
 +  static GpuChildThread* instance();
 +  static scoped_refptr<base::MessageLoopProxy> message_loop_proxy();
 +
-   virtual void Shutdown() override;
+   void Shutdown() override;
  
    void Init(const base::Time& process_start_time);
    void StopWatchdog();
@@ -267,8 +267,8 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 +  GpuChannelManager* gpu_channel_manager() { return gpu_channel_manager_.get(); }
 +
    // ChildThread overrides.
-   virtual bool Send(IPC::Message* msg) override;
-   virtual bool OnControlMessageReceived(const IPC::Message& msg) override;
+   bool Send(IPC::Message* msg) override;
+   bool OnControlMessageReceived(const IPC::Message& msg) override;
  
   private:
    // Message handlers.
@@ -363,8 +363,8 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
   public:
 @@ -22,16 +27,17 @@ class InProcessGpuThread : public base::
   protected:
-   virtual void Init() override;
-   virtual void CleanUp() override;
+   void Init() override;
+   void CleanUp() override;
  
   private:
    std::string channel_id_;
@@ -382,7 +382,7 @@ diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_th
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -362,9 +362,13 @@ ContentBrowserClient::OverrideCreateExte
+@@ -369,9 +369,13 @@ ContentBrowserClient::OverrideCreateExte
  
  bool ContentBrowserClient::CheckMediaAccessPermission(
      BrowserContext* browser_context,
@@ -417,7 +417,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  class CookieStore;
  class NetLog;
  class SSLCertRequestInfo;
-@@ -642,13 +643,15 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -649,13 +650,15 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  // Checks if |security_origin| has permission to access the microphone or

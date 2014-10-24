@@ -104,8 +104,7 @@ class TCPServerSocketFactory :
  private:
   scoped_ptr<net::ServerSocket> Create() const final {
     return make_scoped_ptr(
-        new net::TCPServerSocket(NULL, net::NetLog::Source()))
-          .PassAs<net::ServerSocket>();
+        new net::TCPServerSocket(NULL, net::NetLog::Source())).Pass();
   }
 
   DISALLOW_COPY_AND_ASSIGN(TCPServerSocketFactory);
@@ -494,9 +493,8 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   DCHECK(set_protocol);
 
   scoped_ptr<net::URLRequestJobFactory> top_job_factory(
-      new URLRequestDelegatedJobFactory(
-        job_factory.PassAs<net::URLRequestJobFactory>(),
-        this));
+      new URLRequestDelegatedJobFactory(job_factory.Pass(),
+                                        this));
 
   for (content::URLRequestInterceptorScopedVector::reverse_iterator it =
           request_interceptors.rbegin();

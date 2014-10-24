@@ -28,7 +28,7 @@ namespace qt {
 namespace {
 
 scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
-  return make_scoped_ptr(new MessagePump()).PassAs<base::MessagePump>();
+  return make_scoped_ptr(new MessagePump()).Pass();
 }
 
 }
