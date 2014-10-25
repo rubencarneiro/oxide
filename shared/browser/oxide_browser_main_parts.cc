@@ -101,11 +101,6 @@ class Screen : public gfx::Screen {
  public:
   Screen() {}
 
-  bool IsDIPEnabled() final {
-    NOTIMPLEMENTED();
-    return true;
-  }
-
   gfx::Point GetCursorScreenPoint() final {
     NOTIMPLEMENTED();
     return gfx::Point();

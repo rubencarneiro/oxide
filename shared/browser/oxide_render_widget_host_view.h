@@ -108,7 +108,8 @@ class RenderWidgetHostView final :
 
   void TextInputTypeChanged(ui::TextInputType type,
                             ui::TextInputMode mode,
-                            bool can_compose_inline) final;
+                            bool can_compose_inline,
+                            int flags) final;
 
   void ImeCancelComposition() final;
 
