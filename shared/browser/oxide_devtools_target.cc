@@ -20,6 +20,8 @@
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/devtools_agent_host.h"
+#include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_delegate.h"
 
@@ -66,11 +68,12 @@ std::string DevToolsTarget::GetParentId() const {
   // we have a parent whose id is different than the current
   // agent host id.
   content::RenderFrameHost* render_frame_host =
-      rvh->GetMainFrame();
+      const_cast<content::RenderViewHost*>(rvh)->GetMainFrame();
   if (render_frame_host && render_frame_host->GetParent()) {
-    RenderViewHost* parent_rvh =
+    content::RenderViewHost* parent_rvh =
         render_frame_host->GetParent()->GetRenderViewHost();
-    id = DevToolsAgentHost::GetOrCreateFor(parent_rvh)->GetId();
+    id = DevToolsAgentHost::GetOrCreateFor(
+        content::WebContents::FromRenderViewHost(parent_rvh))->GetId();
   }
   return id;
 }
@@ -92,7 +95,7 @@ std::string DevToolsTarget::GetType() const {
   // In case we have a OOP iframe currently
   // corresponding to this webcontents (for --site-per-process)
   content::RenderFrameHost* render_frame_host =
-      rvh->GetMainFrame();
+      const_cast<content::RenderViewHost*>(rvh)->GetMainFrame();
   if (render_frame_host &&
       render_frame_host->IsCrossProcessSubframe()) {
     type = kTargetTypeIframe;
