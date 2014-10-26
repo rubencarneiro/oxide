@@ -24,6 +24,7 @@
 
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
+#include "base/strings/string_util.h"
 #include "content/public/browser/cookie_store_factory.h"
 #include "net/base/static_cookie_policy.h"
 
@@ -219,7 +220,7 @@ void WebContextAdapter::setHostMappingRules(const QStringList& rules) {
 void WebContextAdapter::setAllowedExtraUrlSchemes(const QStringList& schemes) {
   std::set<std::string> set;
   for (int i = 0; i < schemes.size(); ++i) {
-    set.insert(schemes.at(i).toStdString());
+    set.insert(base::StringToLowerASCII(schemes.at(i).toStdString()));
   }
 
   context_->SetAllowedExtraURLSchemes(set);
