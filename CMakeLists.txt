@@ -92,14 +92,25 @@ include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 # but as this is distro specific, we do something that is currently
 # supportable across distributions. This creates a directory with a symlink
 # to the gold linker, and we pass -B to the compiler
+# The call to "gcc -print-prog-name=ld" is needed so that we get a path
+# to the correct linker in cross-builds
+execute_process(
+    COMMAND ${CMAKE_C_COMPILER} -print-prog-name=ld
+    RESULT_VARIABLE _RESULT
+    OUTPUT_VARIABLE _LINKER_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT _RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to get linker path from compiler")
+endif()
 set(_SETUP_GOLD_COMMAND
     ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
-    --output ${GOLD_DIR})
+    --output ${GOLD_DIR} --ld ${_LINKER_PATH})
+get_filename_component(_LINKER_NAME ${_LINKER_PATH} NAME)
 add_custom_command(
-    OUTPUT ${GOLD_DIR}/ld
+    OUTPUT ${GOLD_DIR}/${_LINKER_NAME}
     COMMAND ${_SETUP_GOLD_COMMAND})
 add_custom_target(gold ALL
-                  DEPENDS ${GOLD_DIR}/ld
+                  DEPENDS ${GOLD_DIR}/${_LINKER_NAME}
                   COMMENT "Creating a symlink for the gold linker")
 
 # Build the gyp command
