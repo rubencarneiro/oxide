@@ -15,25 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BASE_EVENT_UTILS_H_
-#define _OXIDE_SHARED_BASE_EVENT_UTILS_H_
+#ifndef _OXIDE_SHARED_BROWSER_POWER_SAVE_BLOCKER_H_
+#define _OXIDE_SHARED_BROWSER_POWER_SAVE_BLOCKER_H_
 
-#include "third_party/WebKit/public/web/WebInputEvent.h"
+#include <string>
 
-namespace ui {
-class GestureEventData;
-class MotionEvent;
+#include "content/public/browser/power_save_blocker.h"
+
+namespace content {
+class PowerSaveBlockerOxideDelegate;
 }
 
 namespace oxide {
 
-blink::WebGestureEvent MakeWebGestureEvent(const ui::GestureEventData& gesture);
-
-blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event);
-
-int WindowsKeyCodeWithoutLocation(int code);
-int LocationModifiersFromWindowsKeyCode(int code);
+content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
+    content::PowerSaveBlocker::PowerSaveBlockerType type,
+    const std::string& reason);
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BASE_EVENT_UTILS_H_
+#endif // _OXIDE_SHARED_BROWSER_POWER_SAVE_BLOCKER_H_

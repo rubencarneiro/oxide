@@ -31,6 +31,8 @@
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/geometry/point_f.h"
 
+#include "shared/base/oxide_event_utils.h"
+
 namespace oxide {
 namespace qt {
 
@@ -452,7 +454,7 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
 
   QKeyEvent* os_event = new QKeyEvent(*event);
   os_event->setAccepted(false);
-  result.os_event = reinterpret_cast<gfx::NativeEvent>(os_event);
+  result.os_event = os_event;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
   result.modifiers = QInputEventStateToWebEventModifiers(event);
@@ -479,11 +481,9 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
   }
 
   int windowsKeyCode = QKeyEventKeyCodeToWebEventKeyCode(event);
-  result.windowsKeyCode =
-      blink::WebKeyboardEvent::windowsKeyCodeWithoutLocation(windowsKeyCode);
+  result.windowsKeyCode = oxide::WindowsKeyCodeWithoutLocation(windowsKeyCode);
   result.modifiers |=
-      blink::WebKeyboardEvent::locationModifiersFromWindowsKeyCode(
-        windowsKeyCode);
+      oxide::LocationModifiersFromWindowsKeyCode(windowsKeyCode);
   result.nativeKeyCode = event->nativeVirtualKey();
   result.setKeyIdentifierFromWindowsKeyCode();
 

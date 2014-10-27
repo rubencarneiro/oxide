@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,16 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "shared/browser/oxide_default_screen_info.h"
+#ifndef _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
+#define _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
 
-#include <QGuiApplication>
+#include "ui/gl/gl_export.h"
+#include "ui/gl/gl_implementation.h"
 
-#include "qt/core/base/oxide_qt_screen_utils.h"
+namespace gfx {
 
-namespace oxide {
+GL_EXPORT void InitializePreferredGLImplementation(
+    GLImplementation implementation);
+GL_EXPORT void InitializeAllowedGLImplementations(
+    const std::vector<GLImplementation>& implementations);
 
-blink::WebScreenInfo GetDefaultWebScreenInfo() {
-  return qt::GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
-}
+} // namespace gfx
 
-} // namespace oxide
+#endif // _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_

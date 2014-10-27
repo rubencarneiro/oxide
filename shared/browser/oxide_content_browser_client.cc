@@ -40,7 +40,6 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
@@ -49,6 +48,7 @@
 #include "oxide_form_factor.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
+#include "oxide_shared_gl_context.h"
 #include "oxide_user_agent_override_provider.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
