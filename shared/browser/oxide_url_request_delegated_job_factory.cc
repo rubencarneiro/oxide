@@ -166,6 +166,8 @@ bool URLRequestDelegatedJobFactory::CanDelegateProtocol(
   static bool initialized = false;
   static base::hash_set<std::string> blacklisted_protocols;
 
+  std::string lscheme(base::StringToLowerASCII(scheme));
+
   if (!initialized) {
     initialized = true;
     for (size_t i = 0; i < arraysize(kBlacklistedProtocols); ++i) {
@@ -173,7 +175,7 @@ bool URLRequestDelegatedJobFactory::CanDelegateProtocol(
     }
   }
 
-  return blacklisted_protocols.find(scheme) == blacklisted_protocols.end();
+  return blacklisted_protocols.find(lscheme) == blacklisted_protocols.end();
 }
 
 } // namespace oxide

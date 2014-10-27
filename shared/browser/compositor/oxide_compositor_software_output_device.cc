@@ -53,7 +53,7 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   in_paint_ = true;
 
   EnsureBackbuffer();
-  DCHECK_NE(current_frame_.id, 0);
+  DCHECK_NE(current_frame_.id, 0U);
 
   // Create a canvas
   SkImageInfo info = SkImageInfo::MakeN32Premul(viewport_pixel_size_.width(),
@@ -130,7 +130,7 @@ void CompositorSoftwareOutputDevice::EndPaint(cc::SoftwareFrameData* frame_data)
   DCHECK(CalledOnValidThread());
   DCHECK(in_paint_);
   DCHECK(frame_data);
-  DCHECK_NE(current_frame_.id, 0);
+  DCHECK_NE(current_frame_.id, 0U);
   DCHECK(current_frame_.size == viewport_pixel_size_);
 
   in_paint_ = false;

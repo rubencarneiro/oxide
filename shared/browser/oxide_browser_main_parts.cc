@@ -21,6 +21,8 @@
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "base/scoped_native_library.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
+#include "gpu/config/gpu_info_collector.h"
 #include "net/base/net_module.h"
 #include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
@@ -196,6 +198,21 @@ int BrowserMainParts::PreCreateThreads() {
                                  primary_screen_.get());
 
   io_thread_.reset(new IOThread(delegate_->GetIOThreadDelegate()));
+
+  gpu::GPUInfo gpu_info;
+  gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
+  switch (rv) {
+    case gpu::kCollectInfoFatalFailure:
+      LOG(ERROR) << "gpu::CollectContextGraphicsInfo failed";
+      break;
+    case gpu::kCollectInfoNone:
+      NOTREACHED();
+      break;
+    default:
+      break;
+  }
+
+  content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
 
   return 0;
 }

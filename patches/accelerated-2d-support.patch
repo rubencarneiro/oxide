@@ -1,22 +1,15 @@
 # HG changeset patch
-# Parent d66c811595af958e020dee79321a05261b4abf35
+# Parent 326246896e5ea324a46d2d6360e6f9bcc6fc587e
 
-diff -r d66c811595af gpu/config/gpu_info_collector_linux.cc
---- a/gpu/config/gpu_info_collector_linux.cc	Sat Sep 20 00:25:11 2014 +1000
-+++ b/gpu/config/gpu_info_collector_linux.cc	Sat Sep 20 12:02:17 2014 +1000
-@@ -189,6 +189,8 @@
- CollectInfoResult CollectBasicGraphicsInfo(GPUInfo* gpu_info) {
-   DCHECK(gpu_info);
- 
-+  CollectGraphicsInfoGL(gpu_info);
-+
-   CollectInfoResult result = CollectPCIVideoCardInfo(gpu_info);
- 
-   std::string driver_version;
-diff -r d66c811595af gpu/config/software_rendering_list_json.cc
---- a/gpu/config/software_rendering_list_json.cc	Sat Sep 20 00:25:11 2014 +1000
-+++ b/gpu/config/software_rendering_list_json.cc	Sat Sep 20 12:02:17 2014 +1000
-@@ -245,6 +245,12 @@
+diff --git a/gpu/config/software_rendering_list_json.cc b/gpu/config/software_rendering_list_json.cc
+--- a/gpu/config/software_rendering_list_json.cc
++++ b/gpu/config/software_rendering_list_json.cc
+@@ -240,16 +240,22 @@ const char kSoftwareRenderingListJson[] 
+       ]
+     },
+     {
+       "id": 24,
+       "description": "Accelerated 2d canvas is unstable in Linux at the moment",
        "os": {
          "type": "linux"
        },
@@ -29,3 +22,8 @@ diff -r d66c811595af gpu/config/software_rendering_list_json.cc
        "features": [
          "accelerated_2d_canvas"
        ]
+     },
+     {
+       "id": 27,
+       "description": "ATI/AMD cards with older drivers in Linux are crash-prone",
+       "cr_bugs": [95934, 94973, 136240, 357314],
