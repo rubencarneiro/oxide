@@ -18,5 +18,5 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: shared/browser/oxide_browser_context.cc:204
-msgid "en-us,en"
+msgid "AcceptLanguage"
 msgstr "pt-BR,pt,en,*"
