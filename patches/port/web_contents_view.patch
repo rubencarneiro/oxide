@@ -1,6 +1,6 @@
-# HG changeset patch
-# Parent bd544ec9cf6881d90d14133844833d2769d1ebd5
-# User oxide
+# Description: Compile in the bits to allow Oxide to provide its own
+#  WebContentsView implementation
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi

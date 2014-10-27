@@ -1,6 +1,7 @@
-# HG changeset patch
-# Parent 29ad464f7711c1ab081a34b9204f6bc6c4ad87e8
-# User oxide
+# Description: Build our own GL implementation that gives us greater
+#  control over the allowed and preferred implementation. Also build
+#  the GLX implementation, and allow Oxide to provide a display handle
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp

@@ -1,6 +1,6 @@
-# HG changeset patch
-# Parent 7b72f909898668e83f7f03ad7433620b274c7ab3
-# User oxide
+# Description: Build our own NativeWebKeyboardEvent implementation that
+#  wraps a QKeyEvent
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi

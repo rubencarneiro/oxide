@@ -1,6 +1,6 @@
-# HG changeset patch
-# Parent 269eaec42e0c518978f5fc1827a918a447439fe8
-# User oxide
+# Description: Compile in our shim to allow Oxide to use non-exported
+#  GPU related APIs from content
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/content_common.gypi b/content/content_common.gypi
 --- a/content/content_common.gypi

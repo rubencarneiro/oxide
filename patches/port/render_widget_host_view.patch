@@ -1,6 +1,7 @@
-# HG changeset patch
-# Parent cba6642c14b2ac4eea5273fae4375176a0467bf2
-# User oxide
+# Description: Compile our own intermediate RWHV implementation that sits
+#  in content between RWHVBase and Oxide, to work around some non-exported
+#  API's
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
