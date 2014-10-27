@@ -1,216 +1,52 @@
-# Description: Ozone builds of Chromium only support EGL, so add back support
-#  for GLX, which is needed to share GL resources with Qt on X11
-# Author: Chris Coulson <chris.coulson@canonical.com>
+# HG changeset patch
+# Parent 29ad464f7711c1ab081a34b9204f6bc6c4ad87e8
+# User oxide
 
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -110,52 +110,16 @@
+@@ -106,17 +106,17 @@
+                   '<!@(<(pkg-config) --libs-only-l gtk+-unix-print-2.0)',
+                 ],
+               },
+             }],
            ],
          },
        ],  # targets
      }],
-     [ 'use_x11==1 or ozone_platform_ozonex==1', {
+-    [ 'use_x11==1 or ozone_platform_ozonex==1', {
++    [ 'OS == "linux"', {
        # Hide X11 and related dependencies when use_x11=0
        'targets': [
          {
--          'target_name': 'x11',
--          'type': 'none',
--          'toolsets': ['host', 'target'],
--          'conditions': [
--            ['_toolset=="target"', {
--              'direct_dependent_settings': {
--                'cflags': [
--                  '<!@(<(pkg-config) --cflags x11)',
--                ],
--              },
--              'link_settings': {
--                'ldflags': [
--                  '<!@(<(pkg-config) --libs-only-L --libs-only-other x11 xi)',
--                ],
--                'libraries': [
--                  '<!@(<(pkg-config) --libs-only-l x11 xi)',
--                ],
--              },
--            }, {
--              'direct_dependent_settings': {
--                'cflags': [
--                  '<!@(pkg-config --cflags x11)',
--                ],
--              },
--              'link_settings': {
--                'ldflags': [
--                  '<!@(pkg-config --libs-only-L --libs-only-other x11 xi)',
--                ],
--                'libraries': [
--                  '<!@(pkg-config --libs-only-l x11 xi)',
--                ],
--              },
--            }],
--          ],
--        },
--        {
-           'target_name': 'xcursor',
+           'target_name': 'x11',
            'type': 'none',
-           'direct_dependent_settings': {
-             'cflags': [
-               '<!@(<(pkg-config) --cflags xcursor)',
-             ],
-           },
-           'link_settings': {
-@@ -163,33 +127,16 @@
-               '<!@(<(pkg-config) --libs-only-L --libs-only-other xcursor)',
-             ],
-             'libraries': [
-               '<!@(<(pkg-config) --libs-only-l xcursor)',
-             ],
-           },
-         },
-         {
--          'target_name': 'xcomposite',
--          'type': 'none',
--          'direct_dependent_settings': {
--            'cflags': [
--              '<!@(<(pkg-config) --cflags xcomposite)',
--            ],
--          },
--          'link_settings': {
--            'ldflags': [
--              '<!@(<(pkg-config) --libs-only-L --libs-only-other xcomposite)',
--            ],
--            'libraries': [
--              '<!@(<(pkg-config) --libs-only-l xcomposite)',
--            ],
--          },
--        },
--        {
-           'target_name': 'xdamage',
-           'type': 'none',
-           'direct_dependent_settings': {
-             'cflags': [
-               '<!@(<(pkg-config) --cflags xdamage)',
-             ],
-           },
-           'link_settings': {
-@@ -197,33 +144,16 @@
-               '<!@(<(pkg-config) --libs-only-L --libs-only-other xdamage)',
-             ],
-             'libraries': [
-               '<!@(<(pkg-config) --libs-only-l xdamage)',
-             ],
-           },
-         },
-         {
--          'target_name': 'xext',
--          'type': 'none',
--          'direct_dependent_settings': {
--            'cflags': [
--              '<!@(<(pkg-config) --cflags xext)',
--            ],
--          },
--          'link_settings': {
--            'ldflags': [
--              '<!@(<(pkg-config) --libs-only-L --libs-only-other xext)',
--            ],
--            'libraries': [
--              '<!@(<(pkg-config) --libs-only-l xext)',
--            ],
--          },
--        },
--        {
-           'target_name': 'xfixes',
-           'type': 'none',
-           'direct_dependent_settings': {
-             'cflags': [
-               '<!@(<(pkg-config) --cflags xfixes)',
-             ],
-           },
-           'link_settings': {
-@@ -1071,10 +1001,80 @@
-                   '-Wno-header-guard',
-                 ],
-               },
-             }],
-           ]
-         }],
-       ],
-     },
-+    {
-+      'target_name': 'x11',
-+      'type': 'none',
-+      'toolsets': ['host', 'target'],
-+      'conditions': [
-+        ['_toolset=="target"', {
-+          'direct_dependent_settings': {
-+            'cflags': [
-+              '<!@(<(pkg-config) --cflags x11)',
-+            ],
-+          },
-+          'link_settings': {
-+            'ldflags': [
-+              '<!@(<(pkg-config) --libs-only-L --libs-only-other x11 xi)',
-+            ],
-+            'libraries': [
-+              '<!@(<(pkg-config) --libs-only-l x11 xi)',
-+            ],
-+          },
-+        }, {
-+          'direct_dependent_settings': {
-+            'cflags': [
-+             '<!@(pkg-config --cflags x11)',
-+            ],
-+          },
-+          'link_settings': {
-+            'ldflags': [
-+              '<!@(pkg-config --libs-only-L --libs-only-other x11 xi)',
-+            ],
-+            'libraries': [
-+              '<!@(pkg-config --libs-only-l x11 xi)',
-+            ],
-+          },
-+        }],
-+      ],
-+    },
-+    {
-+      'target_name': 'xcomposite',
-+      'type': 'none',
-+      'direct_dependent_settings': {
-+        'cflags': [
-+          '<!@(<(pkg-config) --cflags xcomposite)',
-+        ],
-+      },
-+      'link_settings': {
-+        'ldflags': [
-+          '<!@(<(pkg-config) --libs-only-L --libs-only-other xcomposite)',
-+        ],
-+        'libraries': [
-+          '<!@(<(pkg-config) --libs-only-l xcomposite)',
-+        ],
-+      },
-+    },
-+    {
-+      'target_name': 'xext',
-+      'type': 'none',
-+      'direct_dependent_settings': {
-+        'cflags': [
-+          '<!@(<(pkg-config) --cflags xext)',
-+        ],
-+      },
-+      'link_settings': {
-+        'ldflags': [
-+          '<!@(<(pkg-config) --libs-only-L --libs-only-other xext)',
-+        ],
-+        'libraries': [
-+          '<!@(<(pkg-config) --libs-only-l xext)',
-+        ],
-+      },
-+    },
-   ],
- }
+           'toolsets': ['host', 'target'],
+           'conditions': [
+             ['_toolset=="target"', {
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -392,17 +392,17 @@
+@@ -305,16 +305,18 @@
+         'win/dpi.h',
+         'win/hwnd_util.cc',
+         'win/hwnd_util.h',
+         'win/scoped_set_map_mode.h',
+         'win/singleton_hwnd.cc',
+         'win/singleton_hwnd.h',
+         'win/window_impl.cc',
+         'win/window_impl.h',
++        '<(DEPTH)/../../../shared/port/gfx/gfx_utils_oxide.cc',
++        '<(DEPTH)/../../../shared/port/gfx/gfx_utils_oxide.h',
+       ],
+       'includes': [
+         '../../build/android/increase_size_for_speed.gypi',
+       ],
+       'conditions': [
+         ['OS=="ios"', {
+           'dependencies': [
+             '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
+@@ -392,17 +394,17 @@
            'sources!': [
              'render_text.cc',
              'render_text.h',
@@ -229,11 +65,33 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['use_pango==1', {
            'dependencies': [
              '<(DEPTH)/build/linux/system.gyp:pangocairo',
+diff --git a/ui/gfx/x/gfx_x11.gyp b/ui/gfx/x/gfx_x11.gyp
+--- a/ui/gfx/x/gfx_x11.gyp
++++ b/ui/gfx/x/gfx_x11.gyp
+@@ -17,16 +17,19 @@
+       'type': '<(component)',
+       'dependencies': [
+         '../../../base/base.gyp:base',
+         '../../../build/linux/system.gyp:x11',
+       ],
+       'defines': [
+         'GFX_IMPLEMENTATION',
+       ],
++      'include_dirs': [
++        '<(DEPTH)/../../..',
++      ],
+       'sources': [
+         'x11_atom_cache.cc',
+         'x11_atom_cache.h',
+         'x11_connection.cc',
+         'x11_connection.h',
+         'x11_error_tracker.cc',
+         'x11_error_tracker.h',
+         'x11_switches.cc',
 diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 --- a/ui/gfx/x/x11_types.cc
 +++ b/ui/gfx/x/x11_types.cc
-@@ -4,24 +4,23 @@
- 
+@@ -5,23 +5,22 @@
  #include "ui/gfx/x/x11_types.h"
  
  #include <X11/Xlib.h>
@@ -241,8 +99,9 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
  #include "base/command_line.h"
  #include "base/message_loop/message_loop.h"
  #include "ui/gfx/x/x11_switches.h"
-+#include "ui/ozone/public/surface_factory_ozone.h"
  
++#include "shared/port/gfx/gfx_utils_oxide.h"
++
  namespace gfx {
  
  XDisplay* GetXDisplay() {
@@ -250,8 +109,7 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 -  if (!display)
 -    display = OpenNewXDisplay();
 -  return display;
-+  return reinterpret_cast<Display *>(
-+      ui::SurfaceFactoryOzone::GetInstance()->GetNativeDisplay());
++  return reinterpret_cast<XDisplay*>(GetOxideNativeDisplay());
  }
  
  XDisplay* OpenNewXDisplay() {
@@ -263,7 +121,123 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -198,24 +198,24 @@
+@@ -26,16 +26,17 @@
+       },
+       'defines': [
+         'GL_IMPLEMENTATION',
+       ],
+       'include_dirs': [
+         '<(DEPTH)/third_party/swiftshader/include',
+         '<(DEPTH)/third_party/khronos',
+         '<(gl_binding_output_dir)',
++        '<(DEPTH)/../../..',
+       ],
+       'direct_dependent_settings': {
+         'include_dirs': [
+           '<(gl_binding_output_dir)',
+         ],
+       },
+       'export_dependent_settings': [
+         '<(DEPTH)/third_party/mesa/mesa.gyp:mesa_headers',
+@@ -50,26 +51,26 @@
+         'android/surface_texture_listener.cc',
+         'android/surface_texture_listener.h',
+         'gl_bindings.h',
+         'gl_bindings_skia_in_process.cc',
+         'gl_bindings_skia_in_process.h',
+         'gl_context.cc',
+         'gl_context.h',
+         'gl_context_android.cc',
+-        'gl_context_mac.mm',
+-        'gl_context_ozone.cc',
++        #'gl_context_mac.mm',
++        #'gl_context_ozone.cc',
+         'gl_context_osmesa.cc',
+         'gl_context_osmesa.h',
+         'gl_context_stub.cc',
+         'gl_context_stub.h',
+         'gl_context_stub_with_extensions.cc',
+         'gl_context_stub_with_extensions.h',
+-        'gl_context_win.cc',
+-        'gl_context_x11.cc',
++        #'gl_context_win.cc',
++        #'gl_context_x11.cc',
+         'gl_export.h',
+         'gl_fence.cc',
+         'gl_fence.h',
+         'gl_fence_arb.cc',
+         'gl_fence_arb.h',
+         'gl_fence_nv.cc',
+         'gl_fence_nv.h',
+         'gl_gl_api_implementation.cc',
+@@ -81,53 +82,58 @@
+         'gl_image_ref_counted_memory.h',
+         'gl_image_shared_memory.cc',
+         'gl_image_shared_memory.h',
+         'gl_image_stub.cc',
+         'gl_image_stub.h',
+         'gl_implementation.cc',
+         'gl_implementation.h',
+         'gl_implementation_android.cc',
+-        'gl_implementation_ozone.cc',
+-        'gl_implementation_mac.cc',
+-        'gl_implementation_win.cc',
+-        'gl_implementation_x11.cc',
++        #'gl_implementation_ozone.cc',
++        #'gl_implementation_mac.cc',
++        #'gl_implementation_win.cc',
++        #'gl_implementation_x11.cc',
+         'gl_osmesa_api_implementation.cc',
+         'gl_osmesa_api_implementation.h',
+         'gl_share_group.cc',
+         'gl_share_group.h',
+         'gl_state_restorer.cc',
+         'gl_state_restorer.h',
+         'gl_surface.cc',
+         'gl_surface.h',
+         'gl_surface_android.cc',
+-        'gl_surface_mac.cc',
++        #'gl_surface_mac.cc',
+         'gl_surface_stub.cc',
+         'gl_surface_stub.h',
+-        'gl_surface_win.cc',
+-        'gl_surface_x11.cc',
++        #'gl_surface_win.cc',
++        #'gl_surface_x11.cc',
+         'gl_surface_osmesa.cc',
+         'gl_surface_osmesa.h',
+-        'gl_surface_ozone.cc',
++        #'gl_surface_ozone.cc',
+         'gl_switches.cc',
+         'gl_switches.h',
+         'gl_version_info.cc',
+         'gl_version_info.h',
+         'gpu_switching_manager.cc',
+         'gpu_switching_manager.h',
+         'scoped_binders.cc',
+         'scoped_binders.h',
+         'scoped_make_current.cc',
+         'scoped_make_current.h',
+         'sync_control_vsync_provider.cc',
+         'sync_control_vsync_provider.h',
+         '<(gl_binding_output_dir)/gl_bindings_autogen_gl.cc',
+         '<(gl_binding_output_dir)/gl_bindings_autogen_gl.h',
+         '<(gl_binding_output_dir)/gl_bindings_autogen_osmesa.cc',
+         '<(gl_binding_output_dir)/gl_bindings_autogen_osmesa.h',
++        '<(DEPTH)/../../../shared/port/gl/gl_context_oxide_linux.cc',
++        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.cc',
++        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.h',
++        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide.h',
++        '<(DEPTH)/../../../shared/port/gl/gl_surface_oxide_linux.cc',
+       ],
+       # hard_dependency is necessary for this target because it has actions
+       # that generate header files included by dependent targets. The header
+       # files must be generated before the dependents are compiled. The usual
+       # semantics are to allow the two targets to build concurrently.
+       'hard_dependency': 1,
+       'actions': [
+         {
+@@ -198,24 +204,24 @@
            ],
          }],
          ['OS=="linux"', {

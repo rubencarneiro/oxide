@@ -15,16 +15,38 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_GL_GL_IMPLEMENTATION_H_
-#define _OXIDE_SHARED_GL_GL_IMPLEMENTATION_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_SHARED_GL_CONTEXT_H_
+#define _OXIDE_QT_CORE_BROWSER_SHARED_GL_CONTEXT_H_
 
-#include <vector>
+#include <QtGlobal>
+
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "ui/gl/gl_implementation.h"
 
+#include "shared/browser/oxide_shared_gl_context.h"
+
+QT_BEGIN_NAMESPACE
+class QOpenGLContext;
+QT_END_NAMESPACE
+
 namespace oxide {
+namespace qt {
 
-void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls);
+class SharedGLContext final : public oxide::SharedGLContext {
+ public:
+  SharedGLContext(QOpenGLContext* context);
 
-}
+  void* GetHandle() final { return handle_; }
+  gfx::GLImplementation GetImplementation() final { return implementation_; }
 
-#endif // _OXIDE_SHARED_GL_GL_IMPLEMENTATION_H_
+ private:
+  void* handle_;
+  gfx::GLImplementation implementation_;
+};
+
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_BROWSER_SHARED_GL_CONTEXT_H_

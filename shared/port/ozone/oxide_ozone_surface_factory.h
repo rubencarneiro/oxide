@@ -15,31 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
-#define _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
+#ifndef _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
+#define _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
 
-#include "ui/gl/gl_context.h"
-#include "ui/gl/gl_implementation.h"
+#include "ui/ozone/public/surface_factory_ozone.h"
 
 namespace oxide {
 
-class SharedGLContext : public gfx::GLContext {
+class OzoneSurfaceFactory final : public ui::SurfaceFactoryOzone {
  public:
-  SharedGLContext();
-  virtual ~SharedGLContext();
+  OzoneSurfaceFactory();
 
-  void* GetHandle() = 0;
-  virtual gfx::GLImplementation GetImplementation() = 0;
+ private:
+  bool LoadEGLGLES2Bindings(
+      AddGLLibraryCallback add_gl_library,
+      SetGLGetProcAddressProcCallback set_gl_get_proc_address) final;
 
-  bool Initialize(gfx::GLSurface* compatible_surface,
-                  gfx::GpuPreference gpu_preference) final;
-  void Destroy() final;
-  bool MakeCurrent(gfx::GLSurface* surface) final;
-  void ReleaseCurrent(gfx::GLSurface* surface) final;
-  bool IsCurrent(gfx::GLSurface* surface) final;
-  void SetSwapInterval(int interval) final;
+  const int32* GetEGLSurfaceProperties(const int32* desired_list) final;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_SHARED_GL_CONTEXT_H_
+#endif // _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_

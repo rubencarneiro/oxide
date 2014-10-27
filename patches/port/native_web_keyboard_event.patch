@@ -1,0 +1,109 @@
+# HG changeset patch
+# Parent 7b72f909898668e83f7f03ad7433620b274c7ab3
+# User oxide
+
+diff --git a/content/content_browser.gypi b/content/content_browser.gypi
+--- a/content/content_browser.gypi
++++ b/content/content_browser.gypi
+@@ -1066,19 +1066,19 @@
+       'browser/renderer_host/media/video_capture_controller_event_handler.h',
+       'browser/renderer_host/media/video_capture_host.cc',
+       'browser/renderer_host/media/video_capture_host.h',
+       'browser/renderer_host/media/video_capture_manager.cc',
+       'browser/renderer_host/media/video_capture_manager.h',
+       'browser/renderer_host/memory_benchmark_message_filter.cc',
+       'browser/renderer_host/memory_benchmark_message_filter.h',
+       'browser/renderer_host/native_web_keyboard_event.cc',
+-      'browser/renderer_host/native_web_keyboard_event_android.cc',
+-      'browser/renderer_host/native_web_keyboard_event_aura.cc',
+-      'browser/renderer_host/native_web_keyboard_event_mac.mm',
++      #'browser/renderer_host/native_web_keyboard_event_android.cc',
++      #'browser/renderer_host/native_web_keyboard_event_aura.cc',
++      #'browser/renderer_host/native_web_keyboard_event_mac.mm',
+       'browser/renderer_host/overscroll_configuration.cc',
+       'browser/renderer_host/overscroll_controller.cc',
+       'browser/renderer_host/overscroll_controller.h',
+       'browser/renderer_host/overscroll_controller_delegate.h',
+       'browser/renderer_host/render_message_filter.cc',
+       'browser/renderer_host/render_message_filter.h',
+       'browser/renderer_host/render_process_host_impl.cc',
+       'browser/renderer_host/render_process_host_impl.h',
+@@ -1573,16 +1573,28 @@
+       'public/browser/plugin_service.h',
+     ],
+   },
+   'sources': [
+     '<@(public_browser_sources)',
+     '<@(private_browser_sources)',
+   ],
+   'conditions': [
++    ['oxide_build=="qt"', {
++      'sources': [
++        '<(DEPTH)/../../../qt/core/port/content/browser/native_web_keyboard_event_oxide_qt.cc',
++      ],
++      'dependencies': [
++        '<(DEPTH)/../../../qt/build/system.gyp:Qt5Core',
++        '<(DEPTH)/../../../qt/build/system.gyp:Qt5Gui',
++      ],
++      'export_dependent_settings': [
++        '<(DEPTH)/../../../qt/build/system.gyp:Qt5Core',
++      ],
++    }],
+     ['toolkit_views==1', {
+       'dependencies': [
+         '../ui/events/events.gyp:events',
+       ],
+     }],
+     ['OS == "win"', {
+       'dependencies': [
+         '../third_party/power_gadget/power_gadget.gyp:power_gadget',
+diff --git a/content/public/browser/native_web_keyboard_event.h b/content/public/browser/native_web_keyboard_event.h
+--- a/content/public/browser/native_web_keyboard_event.h
++++ b/content/public/browser/native_web_keyboard_event.h
+@@ -8,16 +8,24 @@
+ #include "base/basictypes.h"
+ #include "base/compiler_specific.h"
+ #include "build/build_config.h"
+ #include "content/common/content_export.h"
+ #include "third_party/WebKit/public/web/WebInputEvent.h"
+ #include "ui/events/event_constants.h"
+ #include "ui/gfx/native_widget_types.h"
+ 
++#if defined(OXIDE_BUILD_QT)
++#include <QtGlobal>
++
++QT_BEGIN_NAMESPACE
++class QKeyEvent;
++QT_END_NAMESPACE
++#endif
++
+ namespace content {
+ 
+ // Owns a platform specific event; used to pass own and pass event through
+ // platform independent code.
+ struct CONTENT_EXPORT NativeWebKeyboardEvent :
+   NON_EXPORTED_BASE(public blink::WebKeyboardEvent) {
+   NativeWebKeyboardEvent();
+ 
+@@ -53,17 +61,21 @@ struct CONTENT_EXPORT NativeWebKeyboardE
+                          bool is_system_key);
+ #endif
+ 
+   NativeWebKeyboardEvent(const NativeWebKeyboardEvent& event);
+   ~NativeWebKeyboardEvent();
+ 
+   NativeWebKeyboardEvent& operator=(const NativeWebKeyboardEvent& event);
+ 
++#if defined(OXIDE_BUILD_QT)
++  QKeyEvent* os_event;
++#else
+   gfx::NativeEvent os_event;
++#endif
+ 
+   // True if the browser should ignore this event if it's not handled by the
+   // renderer. This happens for RawKeyDown events that are created while IME is
+   // active and is necessary to prevent backspace from doing "history back" if
+   // it is hit in ime mode.
+   // Currently, it's only used by Linux and Mac ports.
+   bool skip_in_browser;
+ 

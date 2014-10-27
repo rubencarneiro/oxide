@@ -19,9 +19,11 @@
 
 #include "base/logging.h"
 #include "base/time/time.h"
+#include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "third_party/WebKit/public/web/WebTouchPoint.h"
 #include "ui/events/gesture_detection/gesture_event_data.h"
 #include "ui/events/gesture_detection/motion_event.h"
+#include "ui/events/keycodes/keyboard_codes.h"
 
 namespace oxide {
 
@@ -209,6 +211,37 @@ blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event) {
   }
 
   return result;
+}
+
+int WindowsKeyCodeWithoutLocation(int code) {
+  switch (code) {
+    case ui::VKEY_LSHIFT:
+    case ui::VKEY_RSHIFT:
+      return ui::VKEY_SHIFT;
+    case ui::VKEY_LCONTROL:
+    case ui::VKEY_RCONTROL:
+      return ui::VKEY_CONTROL;
+    case ui::VKEY_LMENU:
+    case ui::VKEY_RMENU:
+      return ui::VKEY_MENU;
+    default:
+      return code;
+  }
+}
+
+int LocationModifiersFromWindowsKeyCode(int code) {
+  switch (code) {
+    case ui::VKEY_LSHIFT:
+    case ui::VKEY_LCONTROL:
+    case ui::VKEY_LMENU:
+      return blink::WebInputEvent::IsLeft;
+    case ui::VKEY_RSHIFT:
+    case ui::VKEY_RCONTROL:
+    case ui::VKEY_RMENU:
+      return blink::WebInputEvent::IsRight;
+    default:
+      return 0;
+  }
 }
 
 } // namespace oxide
