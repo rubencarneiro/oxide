@@ -25,59 +25,55 @@
 #include "ui/ozone/public/ozone_platform.h"
 #include "ui/platform_window/platform_window.h"
 
-#include "oxide_ozone_surface_factory.h"
-
-namespace oxide {
-
-class OzonePlatform : public ui::OzonePlatform {
- public:
-  OzonePlatform()
-      : gpu_platform_support_host_(ui::CreateStubGpuPlatformSupportHost()),
-        gpu_platform_support_(ui::CreateStubGpuPlatformSupport()) {}
-
-  virtual ~OzonePlatform() {}
-
-  ui::SurfaceFactoryOzone* GetSurfaceFactoryOzone() final {
-    return &surface_factory_;
-  }
-
-  ui::CursorFactoryOzone* GetCursorFactoryOzone() final {
-    return NULL;
-  }
-
-  ui::GpuPlatformSupport* GetGpuPlatformSupport() final {
-    return gpu_platform_support_.get();
-  }
-
-  ui::GpuPlatformSupportHost* GetGpuPlatformSupportHost() final {
-    return gpu_platform_support_host_.get();
-  }
-
-  scoped_ptr<ui::PlatformWindow> CreatePlatformWindow(
-      ui::PlatformWindowDelegate* delegate,
-      const gfx::Rect& bounds) final {
-    return scoped_ptr<ui::PlatformWindow>();
-  }
-
-  scoped_ptr<ui::NativeDisplayDelegate> CreateNativeDisplayDelegate() final {
-    return scoped_ptr<ui::NativeDisplayDelegate>();
-  }
-
- private:
-  void InitializeUI() override {}
-  void InitializeGPU() override {}
-
-  OzoneSurfaceFactory surface_factory_;
-  scoped_ptr<ui::GpuPlatformSupportHost> gpu_platform_support_host_;
-  scoped_ptr<ui::GpuPlatformSupport> gpu_platform_support_;
-};
-
-} // namespace oxide
+#include "surface_factory_ozone_oxide.h"
 
 namespace ui {
 
+class OzonePlatformOxide : public OzonePlatform {
+ public:
+  OzonePlatformOxide()
+      : gpu_platform_support_host_(CreateStubGpuPlatformSupportHost()),
+        gpu_platform_support_(CreateStubGpuPlatformSupport()) {}
+
+  virtual ~OzonePlatformOxide() {}
+
+  SurfaceFactoryOzone* GetSurfaceFactoryOzone() final {
+    return &surface_factory_;
+  }
+
+  CursorFactoryOzone* GetCursorFactoryOzone() final {
+    return NULL;
+  }
+
+  GpuPlatformSupport* GetGpuPlatformSupport() final {
+    return gpu_platform_support_.get();
+  }
+
+  GpuPlatformSupportHost* GetGpuPlatformSupportHost() final {
+    return gpu_platform_support_host_.get();
+  }
+
+  scoped_ptr<PlatformWindow> CreatePlatformWindow(
+      PlatformWindowDelegate* delegate,
+      const gfx::Rect& bounds) final {
+    return scoped_ptr<PlatformWindow>();
+  }
+
+  scoped_ptr<NativeDisplayDelegate> CreateNativeDisplayDelegate() final {
+    return scoped_ptr<NativeDisplayDelegate>();
+  }
+
+ private:
+  void InitializeUI() final {}
+  void InitializeGPU() final {}
+
+  SurfaceFactoryOzoneOxide surface_factory_;
+  scoped_ptr<GpuPlatformSupportHost> gpu_platform_support_host_;
+  scoped_ptr<GpuPlatformSupport> gpu_platform_support_;
+};
+
 OzonePlatform* CreateOzonePlatformOxide() {
-  return new oxide::OzonePlatform();
+  return new OzonePlatformOxide();
 }
 
 } // namespace ui

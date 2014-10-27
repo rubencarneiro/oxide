@@ -15,19 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_ozone_surface_factory.h"
+#include "surface_factory_ozone_oxide.h"
 
-#include "ui/gl/gl_bindings.h"
+#include "EGL/egl.h"
 
-namespace oxide {
+namespace ui {
 
-bool OzoneSurfaceFactory::LoadEGLGLES2Bindings(
+bool SurfaceFactoryOzoneOxide::LoadEGLGLES2Bindings(
     AddGLLibraryCallback add_gl_library,
     SetGLGetProcAddressProcCallback set_gl_get_proc_address) {
   return false;
 }
 
-const int32* OzoneSurfaceFactory::GetEGLSurfaceProperties(
+const int32* SurfaceFactoryOzoneOxide::GetEGLSurfaceProperties(
     const int32* desired_list) {
   // The Mir EGL backend in mesa doesn't support pbuffer surfaces,
   // so the default attributes passed to eglChooseConfig in Chromium
@@ -57,6 +57,6 @@ const int32* OzoneSurfaceFactory::GetEGLSurfaceProperties(
   return kConfigAttribs;
 }
 
-OzoneSurfaceFactory::OzoneSurfaceFactory() {}
+SurfaceFactoryOzoneOxide::SurfaceFactoryOzoneOxide() {}
 
-} // namespace oxide
+} // namespace ui

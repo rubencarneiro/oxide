@@ -15,16 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
-#define _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
+#ifndef _OXIDE_SHARED_PORT_OZONE_SURFACE_FACTORY_OXIDE_H_
+#define _OXIDE_SHARED_PORT_OZONE_SURFACE_FACTORY_OXIDE_H_
 
 #include "ui/ozone/public/surface_factory_ozone.h"
 
-namespace oxide {
+namespace ui {
 
-class OzoneSurfaceFactory final : public ui::SurfaceFactoryOzone {
+class SurfaceFactoryOzoneOxide final : public SurfaceFactoryOzone {
  public:
-  OzoneSurfaceFactory();
+  SurfaceFactoryOzoneOxide();
 
  private:
   bool LoadEGLGLES2Bindings(
@@ -34,6 +34,6 @@ class OzoneSurfaceFactory final : public ui::SurfaceFactoryOzone {
   const int32* GetEGLSurfaceProperties(const int32* desired_list) final;
 };
 
-} // namespace oxide
+} // namespace ui
 
-#endif // _OXIDE_SHARED_OZONE_SURFACE_FACTORY_H_
+#endif // _OXIDE_SHARED_PORT_OZONE_SURFACE_FACTORY_OXIDE_H_
