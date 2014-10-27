@@ -169,7 +169,7 @@ class CompositorUtils::FetchTextureResourcesTask :
       gpu::gles2::ContextGroup* group =
           command_buffer->decoder()->GetContextGroup();
       gpu::gles2::Texture* texture =
-          group->mailbox_manager()->ConsumeTexture(GL_TEXTURE_2D, mailbox_);
+          group->mailbox_manager()->ConsumeTexture(mailbox_);
       if (texture) {
         ref = new gpu::gles2::TextureRef(group->texture_manager(),
                                          client_id_,

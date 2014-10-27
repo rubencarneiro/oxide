@@ -85,9 +85,6 @@ class MotionEvent : public ui::MotionEvent {
   void OnTouchEvent(const ui::TouchEvent& event);
   void RemoveInactiveTouchPoints();
 
-  // ui::MotionEvent implementation
-  scoped_ptr<ui::MotionEvent> Clone() const final;
-
  private:
   static const size_t kMaxTouchPoints = ui::MotionEvent::MAX_TOUCH_POINT_COUNT;
 
@@ -147,8 +144,6 @@ class MotionEvent : public ui::MotionEvent {
   ToolType GetToolType(size_t pointer_index) const final;
   int GetButtonState() const final;
   int GetFlags() const final;
-
-  scoped_ptr<ui::MotionEvent> Cancel() const final;
 
   static TouchPoint CreateTouchPointFromEvent(const ui::TouchEvent& event);
 
@@ -391,13 +386,6 @@ int MotionEvent::GetFlags() const {
   return flags_;
 }
 
-scoped_ptr<ui::MotionEvent> MotionEvent::Cancel() const {
-  return make_scoped_ptr(
-      new MotionEvent(pointer_count_, active_touch_point_count_,
-                      touch_points_, ACTION_CANCEL, -1, flags_,
-                      last_event_time_)).Pass();
-}
-
 // static
 MotionEvent::TouchPoint MotionEvent::CreateTouchPointFromEvent(
     const ui::TouchEvent& event) {
@@ -477,13 +465,6 @@ void MotionEvent::RemoveInactiveTouchPoints() {
   }
 
   DCHECK_EQ(pointer_count_, active_touch_point_count_);
-}
-
-scoped_ptr<ui::MotionEvent> MotionEvent::Clone() const {
-  return make_scoped_ptr(
-      new MotionEvent(pointer_count_, active_touch_point_count_,
-                      touch_points_, action_, action_index_, flags_,
-                      last_event_time_)).Pass();
 }
 
 class GestureProviderImpl : public GestureProvider,
