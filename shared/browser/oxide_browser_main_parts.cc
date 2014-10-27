@@ -22,9 +22,9 @@
 #include "base/message_loop/message_loop.h"
 #include "base/scoped_native_library.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
+#include "EGL/egl.h"
 #include "gpu/config/gpu_info_collector.h"
 #include "net/base/net_module.h"
-#include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/screen.h"
@@ -88,7 +88,7 @@ ScopedBindGLESAPI::~ScopedBindGLESAPI() {
   }
 
   DCHECK(egl_lib_.is_valid());
-  DCHECK_NE(orig_api_, EGL_NONE);
+  DCHECK_NE(orig_api_, static_cast<EGLenum>(EGL_NONE));
 
   _eglBindAPI eglBindAPI = reinterpret_cast<_eglBindAPI>(
       egl_lib_.GetFunctionPointer("eglBindAPI"));

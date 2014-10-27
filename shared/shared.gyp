@@ -195,6 +195,7 @@
         '<(DEPTH)/gpu/gpu.gyp:command_buffer_common',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
+        '<(DEPTH)/third_party/khronos/khronos.gyp:khronos_headers',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
         # Not used directly. Should content_browser have this in export_dependent_settings?
         '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',
