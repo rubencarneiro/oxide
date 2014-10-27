@@ -22,6 +22,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/strings/string_util.h"
 #include "net/url_request/url_request_error_job.h"
+#include "net/url_request/url_request_job_manager.h"
 #include "url/gurl.h"
 
 #include "oxide_browser_context.h"
@@ -46,23 +47,6 @@ const char kBlacklistedProtocols[][16] = {
   "wss"
 };
 
-const char kBuiltInSchemes[][6] = {
-  "http",
-  "https",
-  "ws",
-  "wss"
-};
-
-bool IsBuiltInScheme(const std::string& scheme) {
-  for (size_t i = 0; i < arraysize(kBuiltInSchemes); ++i) {
-    if (LowerCaseEqualsASCII(scheme, kBuiltInSchemes[i])) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 }
 
 net::URLRequestJob*
@@ -77,7 +61,7 @@ URLRequestDelegatedJobFactory::MaybeCreateJobWithProtocolHandler(
     return job;
   }
 
-  if (IsBuiltInScheme(scheme)) {
+  if (net::URLRequestJobManager::GetInstance()->SupportsScheme(scheme)) {
     return NULL;
   }
 

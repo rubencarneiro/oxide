@@ -15,14 +15,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "gl_implementation_oxide.h"
 #include "ui/gl/gl_implementation.h"
 
 #include <vector>
 
 #include "base/bind.h"
-#include "base/files/file_path.h"
-#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/native_library.h"
 #include "ui/gl/gl_egl_api_implementation.h"
@@ -32,14 +29,16 @@
 #include "ui/gl/gl_osmesa_api_implementation.h"
 #include "ui/gl/gl_share_group.h"
 #include "ui/ozone/public/ozone_platform.h"
+#include "ui/ozone/public/surface_factory_ozone.h"
+
+#include "shared/browser/oxide_browser_process_main.h"
+
+#include "oxide_gl_implementation.h"
+#include "oxide_shared_gl_context.h"
 
 namespace gfx {
 
 namespace {
-
-GLImplementation g_preferred_impl = kGLImplementationNone;
-base::LazyInstance<std::vector<GLImplementation> > g_allowed_impls =
-    LAZY_INSTANCE_INITIALIZER;
 
 void GL_BINDING_CALL MarshalClearDepthToClearDepthf(GLclampd depth) {
   glClearDepthf(static_cast<GLclampf>(depth));
@@ -50,61 +49,45 @@ void GL_BINDING_CALL MarshalDepthRangeToDepthRangef(GLclampd z_near,
   glDepthRangef(static_cast<GLclampf>(z_near), static_cast<GLclampf>(z_far));
 }
 
-bool IsSupportedGLImplementation(GLImplementation implementation) {
-  switch (implementation) {
-    case kGLImplementationDesktopGL:
-    case kGLImplementationEGLGLES2:
-    case kGLImplementationOSMesaGL:
-      return true;
-    default:
-      return false;
-  }
-}
-
 } // namespace
 
-void InitializePreferredGLImplementation(GLImplementation implementation) {
-  DCHECK_EQ(GetGLImplementation(), kGLImplementationNone);
-  DCHECK(IsSupportedGLImplementation(implementation));
-  g_preferred_impl = implementation;
-}
-
-void InitializeAllowedGLImplementations(
-    const std::vector<GLImplementation>& implementations) {
-  DCHECK_EQ(GetGLImplementation(), kGLImplementationNone);
-#ifndef NDEBUG
-  for (std::vector<GLImplementation>::const_iterator it =
-           implementations.cbegin();
-       it != implementations.cend(); ++it) {
-    DCHECK(IsSupportedGLImplementation(*it));
-  }
-#endif
-  g_allowed_impls.Get() = implementations;
-}
-
 void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
-  if (g_allowed_impls.Get().size() == 0) {
+  std::vector<GLImplementation> supported;
+  supported.push_back(kGLImplementationDesktopGL);
+  supported.push_back(kGLImplementationEGLGLES2);
+  supported.push_back(kGLImplementationOSMesaGL);
+
+  oxide::GetAllowedGLImplementations(impls);
+
+  if (impls->size() == 0) {
     impls->push_back(kGLImplementationOSMesaGL);
   } else {
-    *impls = g_allowed_impls.Get();
+    for (std::vector<GLImplementation>::iterator it = impls->begin();
+         it != impls->end(); ++it) {
+      DCHECK(std::find(supported.begin(), supported.end(), *it) !=
+             supported.end());
+    }
   }
 
-  if (g_preferred_impl == kGLImplementationNone) {
-    return;
+  GLShareGroup* group = NULL;
+  oxide::SharedGLContext* context =
+      oxide::BrowserProcessMain::GetInstance()->GetSharedGLContext();
+  if (context) {
+    group = context->share_group();
   }
-
-  DCHECK(std::find(impls->begin(), impls->end(), g_preferred_impl) !=
-         impls->end());
-  if (impls->front() == g_preferred_impl) {
-    return;
-  }
-
-  impls->insert(impls->begin(), g_preferred_impl);
-  for (std::vector<GLImplementation>::iterator it = impls->begin() + 1;
-       it != impls->end(); ++it) {
-    if (*it == g_preferred_impl) {
-      impls->erase(it);
-      break;
+  if (group) {
+    GLImplementation preferred = context->GetImplementation();
+    DCHECK(std::find(impls->begin(), impls->end(), preferred) !=
+           impls->end());
+    if (impls->front() != preferred) {
+      impls->insert(impls->begin(), preferred);
+      for (std::vector<GLImplementation>::iterator it = impls->begin() + 1;
+           it != impls->end(); ++it) {
+        if (*it == preferred) {
+          impls->erase(it);
+          break;
+        }
+      }
     }
   }
 }
@@ -118,16 +101,15 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
 
   switch (implementation) {
     case kGLImplementationDesktopGL: {
-      base::NativeLibrary library =
-          base::LoadNativeLibrary(base::FilePath("libGL.so.1"), NULL);
+      base::NativeLibrary library = LoadLibraryAndPrintError("libGL.so.1");
       if (!library) {
         return false;
       }
 
       GLGetProcAddressProc get_proc_address =
           reinterpret_cast<GLGetProcAddressProc>(
-            base::GetFunctionPointerFromNativeLibrary(library,
-                                                      "glXGetProcAddress"));
+            base::GetFunctionPointerFromNativeLibrary(
+              library, "glXGetProcAddress"));
       if (!get_proc_address) {
         LOG(ERROR) << "glxGetProcAddress not found.";
         base::UnloadNativeLibrary(library);
@@ -144,33 +126,12 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
     }
 
     case kGLImplementationEGLGLES2: {
-      base::NativeLibrary gles_library =
-          base::LoadNativeLibrary(base::FilePath("libGLESv2.so.2"), NULL);
-      if (!gles_library) {
+      if (!ui::SurfaceFactoryOzone::GetInstance()->LoadEGLGLES2Bindings(
+              base::Bind(&AddGLNativeLibrary),
+              base::Bind(&SetGLGetProcAddressProc))) {
         return false;
       }
 
-      base::NativeLibrary egl_library =
-          base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL);
-      if (!egl_library) {
-        base::UnloadNativeLibrary(gles_library);
-        return false;
-      }
-
-      GLGetProcAddressProc get_proc_address =
-          reinterpret_cast<GLGetProcAddressProc>(
-            base::GetFunctionPointerFromNativeLibrary(egl_library,
-                                                      "eglGetProcAddress"));
-      if (!get_proc_address) {
-        LOG(ERROR) << "eglGetProcAddress not found.";
-        base::UnloadNativeLibrary(egl_library);
-        base::UnloadNativeLibrary(gles_library);
-        return false;
-      }
-
-      SetGLGetProcAddressProc(get_proc_address);
-      AddGLNativeLibrary(egl_library);
-      AddGLNativeLibrary(gles_library);
       SetGLImplementation(kGLImplementationEGLGLES2);
 
       InitializeStaticGLBindingsGL();

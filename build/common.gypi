@@ -32,7 +32,12 @@
     'use_ozone': 1,
     'toolkit_views': 0,
     'toolkit_uses_gtk': 0,
+    'ozone_platform': 'oxide',
+    'ozone_auto_platforms': 0,
     'remoting': 0,
+    'external_ozone_platforms': [
+      'oxide',
+    ],
     'enable_printing': 0,
     'variables': {
       'conditions': [

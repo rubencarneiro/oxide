@@ -24,18 +24,25 @@
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_view.h"
 
+namespace content {
+
+WebContentsView* CreateWebContentsView(
+    WebContentsImpl* web_contents,
+    WebContentsViewDelegate* delegate,
+    RenderViewHostDelegateView** render_view_host_delegate_view) {
+  oxide::WebContentsView* rv = new oxide::WebContentsView(web_contents);
+  *render_view_host_delegate_view = rv;
+  return rv;
+}
+
+} // namespace content
+
 namespace oxide {
 
 WebContentsView::WebContentsView(content::WebContents* web_contents) :
     web_contents_(web_contents) {}
 
 WebContentsView::~WebContentsView() {}
-
-// static
-content::WebContentsViewOxide* WebContentsView::Create(
-    content::WebContents* web_contents) {
-  return new WebContentsView(web_contents);
-}
 
 WebView* WebContentsView::GetWebView() const {
   return WebView::FromWebContents(web_contents_);

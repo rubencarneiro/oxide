@@ -41,11 +41,9 @@ class ContentMainDelegate final : public oxide::ContentMainDelegate {
   // oxide::ContentMainDelegate implementation
   oxide::SharedGLContext* GetSharedGLContext() const final;
   bool GetNativeDisplay(intptr_t* handle) const final;
-  blink::WebScreenInfo GetDefaultScreenInfo() const final;
 #if defined(USE_NSS)
   base::FilePath GetNSSDbPath() const final;
 #endif
-  bool IsPlatformX11() const final;
 
   // content::ContentMainDelegate implementation
   content::ContentBrowserClient* CreateContentBrowserClient() final;

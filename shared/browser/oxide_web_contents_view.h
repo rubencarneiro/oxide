@@ -18,8 +18,11 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
-#include "base/macros.h"
-#include "shared/port/content/browser/web_contents_view_oxide.h"
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "base/memory/weak_ptr.h"
+#include "content/browser/renderer_host/render_view_host_delegate_view.h"
+#include "content/browser/web_contents/web_contents_view.h"
 
 namespace content {
 class WebContents;
@@ -29,11 +32,11 @@ namespace oxide {
 
 class WebView;
 
-class WebContentsView final : public content::WebContentsViewOxide {
+class WebContentsView final : public content::WebContentsView,
+                              public content::RenderViewHostDelegateView {
  public:
   ~WebContentsView();
-  static content::WebContentsViewOxide* Create(
-      content::WebContents* web_contents);
+  WebContentsView(content::WebContents* web_contents);
 
   WebView* GetWebView() const;
 
@@ -81,8 +84,6 @@ class WebContentsView final : public content::WebContentsViewOxide {
   void HidePopupMenu() final;
 
  private:
-  WebContentsView(content::WebContents* web_contents);
-
   content::WebContents* web_contents_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);

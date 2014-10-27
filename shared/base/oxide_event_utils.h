@@ -31,9 +31,6 @@ blink::WebGestureEvent MakeWebGestureEvent(const ui::GestureEventData& gesture);
 
 blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event);
 
-int WindowsKeyCodeWithoutLocation(int code);
-int LocationModifiersFromWindowsKeyCode(int code);
-
 } // namespace oxide
 
 #endif // _OXIDE_SHARED_BASE_EVENT_UTILS_H_

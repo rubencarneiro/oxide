@@ -15,32 +15,23 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 {
-  'targets': [
-    {
-      'target_name': '<(oxide_renderer_name)',
-      'type': 'executable',
-      'dependencies': [
-        '../core/core.gyp:<(oxide_core_name)',
-        '../core/system.gyp:Qt5Core',
-      ],
-      'include_dirs': [
-        '../..',
-      ],
-      'sources': [
-        'main.cc'
-      ],
-      'variables': {
-        'chromium_code': 1
-      },
-      'conditions': [
-        ['enable_tcmalloc==1', {
-          'defines': ['ENABLE_TCMALLOC'],
-          'dependencies': [
-            '<(DEPTH)/base/allocator/allocator.gyp:allocator',
-            '<(DEPTH)/base/base.gyp:base',
-          ],
-        }],
-      ],
-    }
-  ]
+  'target_defaults': {
+    'target_conditions': [
+      ['_target_name=="content_browser"', {
+        'sources/': [
+          ['exclude', 'power_save_blocker_ozone\\.cc'],
+          ['exclude', 'render_widget_host_view_aura\\.cc'],
+          ['exclude', 'touch_editable_impl_aura\\.cc'],
+          ['exclude', 'web_contents_view_aura\\.cc'],
+        ],
+      }],
+      ['_target_name=="gl"', {
+        'sources/': [
+          ['exclude', 'gl_context_ozone\\.cc'],
+          ['exclude', 'gl_implementation_ozone\\.cc'],
+          ['exclude', 'gl_surface_ozone\\.cc'],
+        ],
+      }],
+    ]
+  }
 }

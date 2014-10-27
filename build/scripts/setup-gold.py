@@ -44,13 +44,21 @@ def which(file):
 def main(argv):
   parser = OptionParser()
   parser.add_option("--output", dest="output", help="Output directory")
+  parser.add_option("--ld", dest="ld", help="Linker path")
 
   (options, args) = parser.parse_args(argv)
 
   output_dir = options.output
-  assert output_dir != None
+  ld = options.ld
 
-  if os.access(os.path.join(output_dir, "ld"),
+  if not output_dir:
+    output_dir = os.getcwd()
+  if not ld:
+    ld = "ld"
+
+  ld_basename = os.path.basename(ld)
+
+  if os.access(os.path.join(output_dir, ld_basename),
                os.F_OK | os.X_OK):
     return
 
@@ -61,7 +69,7 @@ def main(argv):
 
   gold = None
 
-  for f in [ "ld", "ld.gold" ]:
+  for f in [ ld, "%s.gold" % ld ]:
     l = which(f)
     if not l:
       continue
@@ -73,7 +81,7 @@ def main(argv):
     print("Cannot find a gold linker", file=sys.stderr)
     sys.exit(1)
 
-  os.symlink(gold, os.path.join(output_dir, "ld"))
+  os.symlink(gold, os.path.join(output_dir, ld_basename))
 
 if __name__ == "__main__":
   main(sys.argv[1:])

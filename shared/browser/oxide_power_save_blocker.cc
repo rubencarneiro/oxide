@@ -18,7 +18,7 @@
 // Largely inspired by the X11 implementation in
 // content/browser/power_save_blocker_x11.cc
 
-#include "oxide_power_save_blocker.h"
+#include "content/browser/power_save_blocker_impl.h"
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
@@ -29,11 +29,9 @@
 #include "dbus/object_path.h"
 #include "dbus/object_proxy.h"
 
-#include "shared/port/content/browser/power_save_blocker_oxide.h"
-
 #include "oxide_form_factor.h"
 
-namespace oxide {
+namespace content {
 
 namespace {
 
@@ -43,15 +41,17 @@ const char kUnityScreenInterface[] = "com.canonical.Unity.Screen";
 
 }
 
-class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate {
+class PowerSaveBlockerImpl::Delegate
+    : public base::RefCountedThreadSafe<PowerSaveBlockerImpl::Delegate> {
  public:
-  PowerSaveBlocker();
+  Delegate();
+
+  void Init();
+  void CleanUp();
 
  private:
-  virtual ~PowerSaveBlocker() {}
-
-  void Init() final;
-  void CleanUp() final;
+  friend class base::RefCountedThreadSafe<Delegate>;
+  ~Delegate() {}
 
   void ApplyBlock();
   void RemoveBlock();
@@ -59,24 +59,26 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate {
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
   int cookie_;
+
+  DISALLOW_COPY_AND_ASSIGN(Delegate);
 };
 
-void PowerSaveBlocker::Init() {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::FILE,
-      FROM_HERE,
-      base::Bind(&PowerSaveBlocker::ApplyBlock, this));
+PowerSaveBlockerImpl::Delegate::Delegate() :
+    form_factor_(oxide::GetFormFactorHint()),
+    cookie_(0) {}
+
+void PowerSaveBlockerImpl::Delegate::Init() {
+  BrowserThread::PostTask(BrowserThread::FILE, FROM_HERE,
+                          base::Bind(&Delegate::ApplyBlock, this));
 }
 
-void PowerSaveBlocker::CleanUp() {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::FILE,
-      FROM_HERE,
-      base::Bind(&PowerSaveBlocker::RemoveBlock, this));
+void PowerSaveBlockerImpl::Delegate::CleanUp() {
+  BrowserThread::PostTask(BrowserThread::FILE, FROM_HERE,
+                          base::Bind(&Delegate::RemoveBlock, this));
 }
 
-void PowerSaveBlocker::ApplyBlock() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::FILE));
+void PowerSaveBlockerImpl::Delegate::ApplyBlock() {
+  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::FILE));
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
@@ -111,8 +113,8 @@ void PowerSaveBlocker::ApplyBlock() {
   }
 }
 
-void PowerSaveBlocker::RemoveBlock() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::FILE));
+void PowerSaveBlockerImpl::Delegate::RemoveBlock() {
+  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::FILE));
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
@@ -139,14 +141,14 @@ void PowerSaveBlocker::RemoveBlock() {
   }
 }
 
-PowerSaveBlocker::PowerSaveBlocker()
-    : form_factor_(oxide::GetFormFactorHint()),
-      cookie_(0) {}
-
-content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
-    content::PowerSaveBlocker::PowerSaveBlockerType type,
-    const std::string& reason) {
-  return new PowerSaveBlocker();
+PowerSaveBlockerImpl::PowerSaveBlockerImpl(PowerSaveBlockerType type,
+                                           const std::string& reason)
+    : delegate_(new Delegate()) {
+  delegate_->Init();
 }
 
-} // namespace oxide
+PowerSaveBlockerImpl::~PowerSaveBlockerImpl() {
+  delegate_->CleanUp();
+}
+
+}

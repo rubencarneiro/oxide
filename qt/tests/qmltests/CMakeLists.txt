@@ -25,7 +25,7 @@ add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
 qt5_use_modules(${QML_PLUGIN} Core Qml)
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
-    AUTOMOC TRUE
+    SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 
 foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebContext.qml TestWebView.qml)
@@ -41,7 +41,7 @@ set(QML_TEST_SRCS main.cc)
 
 add_executable(${QML_TEST} ${QML_TEST_SRCS})
 qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest Test)
-target_link_libraries(${QML_TEST} ${OXIDE_CORELIB_NAME})
+target_link_libraries(${QML_TEST} OxideQtCore)
 target_include_directories(
     ${QML_TEST} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
@@ -53,8 +53,8 @@ if(OXIDE_ENABLE_COMPOSITING)
 endif()
 set_target_properties(
     ${QML_TEST} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR}
-    AUTOMOC TRUE)
+    SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
+    RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR})
 
 function(add_qml_test)
   cmake_parse_arguments(_ARGS "USE_DATA_DIR;SSL_TESTS" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})

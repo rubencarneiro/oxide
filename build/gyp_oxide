@@ -64,6 +64,9 @@ def additional_include_files(args=[]):
     # Always include common.gypi from Chromium
     AddInclude(os.path.join(CHROMIUMSRCDIR, 'build', 'common.gypi'))
 
+    # Always include share.gypi
+    AddInclude(os.path.join(TOPSRCDIR, 'shared', 'shared.gypi'))
+
     # Optionally add supplemental .gypi files if present.
     supplements = glob.glob(os.path.join(CHROMIUMSRCDIR, '*', 'supplement.gypi'))
     for supplement in supplements:
