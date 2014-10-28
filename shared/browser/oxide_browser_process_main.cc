@@ -68,6 +68,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
+#include "oxide_platform_integration.h"
 #include "oxide_power_save_blocker.h"
 #include "oxide_shared_gl_context.h"
 #include "oxide_web_contents_view.h"
@@ -104,7 +105,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(scoped_ptr<ContentMainDelegate> delegate) final;
+  void Start(scoped_ptr<ContentMainDelegate> delegate,
+             scoped_ptr<PlatformIntegration> platform) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -135,6 +137,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   scoped_refptr<SharedGLContext> shared_gl_context_;
   intptr_t native_display_;
   bool native_display_is_valid_;
+
+  scoped_ptr<PlatformIntegration> platform_integration_;
 
   // XXX: Don't change the order of these
   scoped_ptr<ContentMainDelegate> main_delegate_;
@@ -317,13 +321,14 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::Start(
-    scoped_ptr<ContentMainDelegate> delegate) {
+void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
+                                   scoped_ptr<PlatformIntegration> platform) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
 
   main_delegate_ = delegate.Pass();
+  platform_integration_ = platform.Pass();
 
   state_ = STATE_STARTED;
 
@@ -437,6 +442,7 @@ void BrowserProcessMainImpl::Shutdown() {
   native_display_is_valid_ = false;
   native_display_ = 0;
 
+  platform_integration_.reset();
   main_delegate_.reset();
 
   state_ = STATE_SHUTDOWN;

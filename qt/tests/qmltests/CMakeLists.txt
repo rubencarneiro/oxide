@@ -22,7 +22,7 @@ set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
 set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
-qt5_use_modules(${QML_PLUGIN} Core Qml)
+qt5_use_modules(${QML_PLUGIN} Core Gui Qml)
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     AUTOMOC TRUE
