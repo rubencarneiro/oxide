@@ -20,6 +20,7 @@ TestWebView {
 
     function init() {
       OxideTestingUtils.setUrlHandler("customscheme", true);
+      urlHandledSpy.clear();
     }
 
     function cleanup() {
@@ -29,7 +30,6 @@ TestWebView {
     function test_UnhandledURLSchemes_handled_by_system() {
       webView.url = "http://testsuite/tst_UnhandledURLSchemes1.html";
       verify(webView.waitForLoadSucceeded());
-      urlHandledSpy.clear();
 
       for (var i = 1; i <= 5; ++i) {
         mouseClick(webView, webView.width / 2, webView.height / 2);
@@ -43,7 +43,6 @@ TestWebView {
     function test_UnhandledURLSchemes_not_handled_by_system() {
       webView.url = "http://testsuite/tst_UnhandledURLSchemes2.html";
       verify(webView.waitForLoadSucceeded());
-      urlHandledSpy.clear();
 
       OxideTestingUtils.setUrlHandler("customscheme", true);
       mouseClick(webView, webView.width / 2, webView.height / 2);
