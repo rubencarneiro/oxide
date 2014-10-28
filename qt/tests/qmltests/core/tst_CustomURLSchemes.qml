@@ -14,11 +14,11 @@ TestWebView {
     name: "CustomURLSchemes"
     when: windowShown
 
-    function init() {
+    function initTestCase() {
       OxideTestingUtils.setUrlHandler("test", false);
     }
 
-    function cleanup() {
+    function cleanupTestCase() {
       OxideTestingUtils.unsetUrlHandler("test");
     }
 

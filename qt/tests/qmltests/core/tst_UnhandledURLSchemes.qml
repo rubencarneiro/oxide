@@ -18,12 +18,15 @@ TestWebView {
     name: "UnhandledURLSchemes"
     when: windowShown
 
-    function init() {
+    function initTestCase() {
       OxideTestingUtils.setUrlHandler("customscheme", true);
+    }
+
+    function init() {
       urlHandledSpy.clear();
     }
 
-    function cleanup() {
+    function cleanupTestCase() {
       OxideTestingUtils.unsetUrlHandler("customscheme");
     }
 
@@ -44,7 +47,6 @@ TestWebView {
       webView.url = "http://testsuite/tst_UnhandledURLSchemes2.html";
       verify(webView.waitForLoadSucceeded());
 
-      OxideTestingUtils.setUrlHandler("customscheme", true);
       mouseClick(webView, webView.width / 2, webView.height / 2);
       webView.waitForLoadStopped();
       compare(urlHandledSpy.count, 0);
