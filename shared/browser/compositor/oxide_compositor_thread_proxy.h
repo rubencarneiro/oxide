@@ -81,7 +81,7 @@ class CompositorThreadProxyBase :
   DISALLOW_COPY_AND_ASSIGN(CompositorThreadProxyBase);
 };
 
-class CompositorThreadProxy FINAL : public CompositorThreadProxyBase {
+class CompositorThreadProxy final : public CompositorThreadProxyBase {
  public:
   CompositorThreadProxy(Compositor* compositor);
 

@@ -36,20 +36,20 @@ QT_USE_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class MessagePump FINAL : public QObject,
+class MessagePump final : public QObject,
                           public oxide::MessagePump {
  public:
   MessagePump();
 
-  void Run(Delegate* delegate) FINAL;
+  void Run(Delegate* delegate) final;
 
-  void Quit() FINAL;
+  void Quit() final;
 
-  void ScheduleWork() FINAL;
+  void ScheduleWork() final;
 
-  void ScheduleDelayedWork(const base::TimeTicks& delayed_work_time) FINAL;
+  void ScheduleDelayedWork(const base::TimeTicks& delayed_work_time) final;
 
-  void Start(Delegate* delegate) FINAL;
+  void Start(Delegate* delegate) final;
 
  private:
   struct RunState {
@@ -63,8 +63,8 @@ class MessagePump FINAL : public QObject,
     bool should_quit;
   };
 
-  void timerEvent(QTimerEvent* event) FINAL;
-  void customEvent(QEvent* event) FINAL;
+  void timerEvent(QTimerEvent* event) final;
+  void customEvent(QEvent* event) final;
 
   base::TimeTicks delayed_work_time_;
   int delayed_work_timer_id_;

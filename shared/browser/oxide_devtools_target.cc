@@ -20,51 +20,34 @@
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/devtools_agent_host.h"
-#include "content/public/browser/devtools_target.h"
-#include "content/public/browser/devtools_http_handler.h"
-#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_delegate.h"
-#include "content/public/common/url_constants.h"
 
 using content::DevToolsAgentHost;
-using content::DevToolsTarget;
-using content::RenderViewHost;
-using content::WebContents;
 
 namespace oxide {
 
-// static 
-DevtoolsTarget* DevtoolsTarget::CreateForWebContents(
-    content::WebContents * web_contents) {
-  DCHECK(web_contents);
-  return new DevtoolsTarget(web_contents);
+DevToolsTarget::DevToolsTarget(content::WebContents* contents)
+    : content::WebContentsObserver(contents),
+      agent_host_(DevToolsAgentHost::GetOrCreateFor(contents)) {
+  DCHECK(contents);
 }
 
-DevtoolsTarget::DevtoolsTarget(
-      content::WebContents * wc)
-    : content::WebContentsObserver(wc) {
-  DCHECK(wc);
+DevToolsTarget::~DevToolsTarget() {}
 
-  agent_host_ = DevToolsAgentHost::GetOrCreateFor(web_contents());
+std::string DevToolsTarget::GetId() const {
+  return agent_host_.get() ? agent_host_->GetId() : std::string();
 }
 
-DevtoolsTarget::~DevtoolsTarget() {
-}
-
-std::string DevtoolsTarget::GetId() const {
-  return agent_host_ ? agent_host_->GetId() : std::string();
-}
-
-std::string DevtoolsTarget::GetParentId() const {
+std::string DevToolsTarget::GetParentId() const {
   return std::string();
 }
 
-std::string DevtoolsTarget::GetType() const {
+std::string DevToolsTarget::GetType() const {
   return std::string();
 }
 
-std::string DevtoolsTarget::GetTitle() const {
+std::string DevToolsTarget::GetTitle() const {
   const content::WebContents* wc = web_contents();
   if (!wc) {
     return std::string();
@@ -73,11 +56,11 @@ std::string DevtoolsTarget::GetTitle() const {
   return base::UTF16ToUTF8(wc->GetTitle());
 }
 
-std::string DevtoolsTarget::GetDescription() const {
+std::string DevToolsTarget::GetDescription() const {
   return std::string();
 }
 
-GURL DevtoolsTarget::GetURL() const {
+GURL DevToolsTarget::GetURL() const {
   const content::WebContents* wc = web_contents();
   if (!wc) {
     return GURL();
@@ -86,11 +69,11 @@ GURL DevtoolsTarget::GetURL() const {
   return wc->GetVisibleURL();
 }
 
-GURL DevtoolsTarget::GetFaviconURL() const {
+GURL DevToolsTarget::GetFaviconURL() const {
   return GURL();
 }
 
-base::TimeTicks DevtoolsTarget::GetLastActivityTime() const {
+base::TimeTicks DevToolsTarget::GetLastActivityTime() const {
   const content::WebContents* wc = web_contents();
   if (!wc) {
     return base::TimeTicks();
@@ -99,15 +82,15 @@ base::TimeTicks DevtoolsTarget::GetLastActivityTime() const {
   return wc->GetLastActiveTime();
 }
 
-bool DevtoolsTarget::IsAttached() const {
+bool DevToolsTarget::IsAttached() const {
   return agent_host_->IsAttached();
 }
 
-scoped_refptr<DevToolsAgentHost> DevtoolsTarget::GetAgentHost() const {
+scoped_refptr<DevToolsAgentHost> DevToolsTarget::GetAgentHost() const {
   return agent_host_;
 }
 
-bool DevtoolsTarget::Activate() const {
+bool DevToolsTarget::Activate() const {
   content::WebContents* wc = web_contents();
   if (!wc) {
     return false;
@@ -117,7 +100,7 @@ bool DevtoolsTarget::Activate() const {
   return true;
 }
 
-bool DevtoolsTarget::Close() const {
+bool DevToolsTarget::Close() const {
   NOTIMPLEMENTED();
   return false;
 }

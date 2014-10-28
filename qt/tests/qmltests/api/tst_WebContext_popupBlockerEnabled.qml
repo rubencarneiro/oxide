@@ -35,7 +35,7 @@ Column {
     function test_WebContext_popupBlockerEnabled2_disabled() {
       webView.context.popupBlockerEnabled = false;
 
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -47,7 +47,7 @@ Column {
     function test_WebContext_popupBlockerEnabled3_enabled() {
       webView.context.popupBlockerEnabled = true;
 
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

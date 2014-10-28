@@ -26,9 +26,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
-namespace base {
-class MessagePump;
-}
+#include "shared/browser/oxide_browser_main_parts.h"
 
 namespace content {
 class RenderViewHost;
@@ -51,8 +49,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
  public:
   virtual ~ContentBrowserClient();
 
-  virtual base::MessagePump* CreateMessagePumpForUI() = 0;
-
   virtual WebPreferences* CreateWebPreferences() = 0;
 
  protected:
@@ -62,14 +58,14 @@ class ContentBrowserClient : public content::ContentBrowserClient {
  private:
   // content::ContentBrowserClient implementation
   content::BrowserMainParts* CreateBrowserMainParts(
-      const content::MainFunctionParams& parameters) FINAL;
+      const content::MainFunctionParams& parameters) final;
 
-  void RenderProcessWillLaunch(content::RenderProcessHost* host) FINAL;
+  void RenderProcessWillLaunch(content::RenderProcessHost* host) final;
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::BrowserContext* browser_context,
       content::ProtocolHandlerMap* protocol_handlers,
-      content::URLRequestInterceptorScopedVector request_interceptors) FINAL;
+      content::URLRequestInterceptorScopedVector request_interceptors) final;
 
   net::URLRequestContextGetter*
       CreateRequestContextForStoragePartition(
@@ -77,20 +73,20 @@ class ContentBrowserClient : public content::ContentBrowserClient {
         const base::FilePath& partition_path,
         bool in_memory,
         content::ProtocolHandlerMap* protocol_handlers,
-        content::URLRequestInterceptorScopedVector request_interceptors) FINAL;
+        content::URLRequestInterceptorScopedVector request_interceptors) final;
 
   std::string GetAcceptLangs(
-      content::BrowserContext* browser_context) FINAL;
+      content::BrowserContext* browser_context) final;
 
   void AppendExtraCommandLineSwitches(base::CommandLine* command_line,
-                                      int child_process_id) FINAL;
+                                      int child_process_id) final;
 
   bool AllowGetCookie(const GURL& url,
                       const GURL& first_party,
                       const net::CookieList& cookie_list,
                       content::ResourceContext* context,
                       int render_process_id,
-                      int render_frame_id) FINAL;
+                      int render_frame_id) final;
 
   bool AllowSetCookie(const GURL& url,
                       const GURL& first_party,
@@ -98,15 +94,27 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                       content::ResourceContext* context,
                       int render_process_id,
                       int render_frame_id,
-                      net::CookieOptions* options) FINAL;
+                      net::CookieOptions* options) final;
+
+  void AllowCertificateError(
+      int render_process_id,
+      int render_frame_id,
+      int cert_error,
+      const net::SSLInfo& ssl_info,
+      const GURL& request_url,
+      content::ResourceType resource_type,
+      bool overridable,
+      bool strict_enforcement,
+      bool expired_previous_decision,
+      const base::Callback<void(bool)>& callback,
+      content::CertificateRequestResultType* result) final;
 
   void RequestGeolocationPermission(
       content::WebContents* web_contents,
       int bridge_id,
       const GURL& requesting_frame,
       bool user_gesture,
-      base::Callback<void(bool)> result_callback,
-      base::Closure* cancel_callback) FINAL;
+      const base::Callback<void(bool)>& result_callback) final;
 
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,
@@ -121,24 +129,26 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                        content::ResourceContext* context,
                        int render_process_id,
                        int opener_id,
-                       bool* no_javascript_access) FINAL;
+                       bool* no_javascript_access) final;
 
-  void ResourceDispatcherHostCreated() FINAL;
+  void ResourceDispatcherHostCreated() final;
 
-  content::AccessTokenStore* CreateAccessTokenStore() FINAL;
+  content::AccessTokenStore* CreateAccessTokenStore() final;
 
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            const GURL& url,
-                           content::WebPreferences* prefs) FINAL;
+                           content::WebPreferences* prefs) final;
 
-  virtual content::LocationProvider* OverrideSystemLocationProvider() OVERRIDE;
+  content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() final;
 
-  gfx::GLShareGroup* GetGLShareGroup() FINAL;
+  gfx::GLShareGroup* GetGLShareGroup() final;
 
-  void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) FINAL;
+  void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
 
   // Should be subclassed
   virtual bool IsTouchSupported();
+
+  virtual BrowserMainParts::Delegate* CreateBrowserMainPartsDelegate() = 0;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
 

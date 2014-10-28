@@ -24,14 +24,13 @@
 
 namespace oxide {
 
-class SSLConfigService FINAL : public net::SSLConfigService {
+class SSLConfigService final : public net::SSLConfigService {
  public:
-  SSLConfigService() {}
+  SSLConfigService();
 
-  void GetSSLConfig(net::SSLConfig* config) FINAL;
+  void GetSSLConfig(net::SSLConfig* config) final;
 
  private:
-  // TODO: Allow this to be configured by the embedder
   net::SSLConfig config_;
 
   DISALLOW_COPY_AND_ASSIGN(SSLConfigService);

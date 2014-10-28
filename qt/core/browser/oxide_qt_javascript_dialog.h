@@ -32,13 +32,13 @@ namespace qt {
 
 class JavaScriptDialogDelegate;
 
-class JavaScriptDialog FINAL : public oxide::JavaScriptDialog {
+class JavaScriptDialog final : public oxide::JavaScriptDialog {
  public:
   JavaScriptDialog(JavaScriptDialogDelegate* delegate,
                    bool* did_suppress_message);
 
-  void Run() FINAL;
-  void Handle(bool accept, const base::string16* prompt_override) FINAL;
+  void Run() final;
+  void Handle(bool accept, const base::string16* prompt_override) final;
 
   QUrl originUrl() const;
   QString acceptLang() const;

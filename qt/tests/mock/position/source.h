@@ -41,6 +41,7 @@ class SourceMock : public QGeoPositionInfoSource
 
  private Q_SLOTS:
   void sendUpdate();
+  void sendInvalidUpdate();
 
  private:
   QTimer timer_;

@@ -16,38 +16,14 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(OxideQtCommon)
-
-set(PLUGIN qmloxideplugin)
-set(PLUGIN_MODULE_NAME com/canonical/Oxide)
-
-# CMake doesn't seem to provide a way to get at QT_INSTALL_QML
-if(NOT CMAKE_CROSSCOMPILING)
-  find_program(QMAKE_EXECUTABLE qmake)
-  if(QMAKE_EXECUTABLE STREQUAL "QMAKE_EXECUTABLE-NOTFOUND")
-    message(FATAL_ERROR "qmake not found")
-  endif()
-  execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_INSTALL_QML
-                  RESULT_VARIABLE _RESULT
-                  OUTPUT_VARIABLE QT_INSTALL_QML
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(NOT _RESULT EQUAL 0)
-    message(FATAL_ERROR "Failed to determine QT_INSTALL_QML from qmake")
-  endif()
-else()
-  # qmake isn't multi-arch aware as it installs arch-specific mkspec files
-  # in to /usr/share, so we can't use it here (we'd need a qmake binary
-  # for the host arch using data for the target arch)
-  set(QT_INSTALL_QML "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/qt5/qml")
-endif()
-
 qt5_wrap_cpp(MOC_EXTRA
              api/oxideqquickuserscript_p_p.h
              api/oxideqquickwebcontext_p_p.h
              api/oxideqquickwebcontextdelegateworker_p_p.h)
 
-set(PLUGIN_SRCS
-    api/oxideqquickglobals.cc
+set(OXIDE_QUICKLIB_SRCS
+    api/oxideqquickcookiemanager.cc
+    api/oxideqquickglobal.cc
     api/oxideqquicknavigationhistory.cc
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc
@@ -58,11 +34,11 @@ set(PLUGIN_SRCS
     api/oxideqquickwebframe.cc
     api/oxideqquickwebview.cc
     api/oxidequseragentoverriderequest.cc
-    oxide_qml_plugin.cc
     oxide_qquick_alert_dialog_delegate.cc
     oxide_qquick_before_unload_dialog_delegate.cc
     oxide_qquick_confirm_dialog_delegate.cc
     oxide_qquick_file_picker_delegate.cc
+    oxide_qquick_init.cc
     oxide_qquick_javascript_dialog_delegate.cc
     oxide_qquick_prompt_dialog_delegate.cc
     oxide_qquick_software_frame_node.cc
@@ -70,41 +46,24 @@ set(PLUGIN_SRCS
     ${MOC_EXTRA})
 
 if(OXIDE_ENABLE_COMPOSITING)
-  list(APPEND PLUGIN_SRCS oxide_qquick_accelerated_frame_node.cc)
+  list(APPEND OXIDE_QUICKLIB_SRCS oxide_qquick_accelerated_frame_node.cc)
 endif()
 
-add_library(${PLUGIN} MODULE ${PLUGIN_SRCS})
-qt5_use_modules(${PLUGIN} Core Gui Qml Quick)
+add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
+qt5_use_modules(${OXIDE_QUICKLIB} Core Gui Qml Quick)
 if(OXIDE_ENABLE_COMPOSITING)
-  target_compile_definitions(${PLUGIN} PRIVATE -DENABLE_COMPOSITING)
+  target_compile_definitions(${OXIDE_QUICKLIB} PRIVATE -DENABLE_COMPOSITING)
 endif()
 target_include_directories(
-    ${PLUGIN} PRIVATE
-    ${CMAKE_SOURCE_DIR}
+    ${OXIDE_QUICKLIB} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-target_link_libraries(${PLUGIN} OxideQtCore)
+target_link_libraries(${OXIDE_QUICKLIB} ${OXIDE_CORELIB_NAME})
 set_target_properties(
-    ${PLUGIN} PROPERTIES
-    SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME})
+    ${OXIDE_QUICKLIB} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${LIB_OUTPUT_DIR}
+    AUTOMOC TRUE
+    SOVERSION ${OXIDE_CORELIB_SO_VERSION})
 
-add_custom_command(
-    TARGET ${PLUGIN} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${CMAKE_CURRENT_SOURCE_DIR}/qmldir
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}
-    COMMENT "Copying qmldir to output directory")
-
-install(FILES ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir
-        DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
-install(TARGETS ${PLUGIN} DESTINATION ${QT_INSTALL_QML}/${PLUGIN_MODULE_NAME})
-
-get_target_property(_PLUGIN_LOCATION ${PLUGIN} LOCATION)
-get_filename_component(_PLUGIN_NAME ${_PLUGIN_LOCATION} NAME)
-add_custom_target(stage-quick
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_PLUGIN_LOCATION}
-      ${OXIDE_STAGE_DIR}/${PLUGIN_MODULE_NAME}/${_PLUGIN_NAME}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${PLUGIN_MODULE_NAME}/qmldir
-      ${OXIDE_STAGE_DIR}/${PLUGIN_MODULE_NAME}/qmldir)
+install(TARGETS ${OXIDE_QUICKLIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -35,11 +35,7 @@ class Thread;
 }
 
 namespace cc {
-class ContextProvider;
-}
-
-namespace content {
-class ContextProviderCommandBuffer;
+class OutputSurface;
 }
 
 namespace gfx {
@@ -56,7 +52,7 @@ namespace oxide {
 
 class GLFrameData;
 
-class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
+class CompositorUtils final : public base::MessageLoop::TaskObserver {
  public:
   static CompositorUtils* GetInstance();
 
@@ -65,10 +61,9 @@ class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
 
   scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
 
-  scoped_refptr<cc::ContextProvider> GetContextProvider();
-
   typedef base::Callback<void(scoped_ptr<GLFrameData>)> CreateGLFrameHandleCallback;
-  void CreateGLFrameHandle(const gpu::Mailbox& mailbox,
+  void CreateGLFrameHandle(cc::OutputSurface* output_surface,
+                           const gpu::Mailbox& mailbox,
                            uint32 sync_point,
                            const CreateGLFrameHandleCallback& callback,
                            scoped_refptr<base::TaskRunner> task_runner);
@@ -84,14 +79,13 @@ class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
   void InitializeOnGpuThread();
 
   // base::MessageLoop::TaskObserver implementation
-  void WillProcessTask(const base::PendingTask& pending_task) FINAL;
-  void DidProcessTask(const base::PendingTask& pending_task) FINAL;
+  void WillProcessTask(const base::PendingTask& pending_task) final;
+  void DidProcessTask(const base::PendingTask& pending_task) final;
 
   int32 client_id_;
 
   scoped_ptr<base::Thread> compositor_thread_;
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
-  scoped_refptr<content::ContextProviderCommandBuffer> context_provider_;
 
   base::Lock fetch_texture_resources_lock_;
   bool fetch_texture_resources_pending_;
@@ -99,6 +93,8 @@ class CompositorUtils FINAL : public base::MessageLoop::TaskObserver {
 
   class FetchTextureResourcesTask;
   std::queue<scoped_refptr<FetchTextureResourcesTask> > fetch_texture_resources_queue_;
+
+  bool can_use_gpu_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorUtils);
 };

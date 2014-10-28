@@ -20,35 +20,46 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/files/file_path.h"
 #include "content/public/app/content_main_delegate.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 namespace oxide {
 
 class ContentClient;
+class SharedGLContext;
 
 class ContentMainDelegate : public content::ContentMainDelegate {
  public:
   virtual ~ContentMainDelegate();
+
+  virtual SharedGLContext* GetSharedGLContext() const;
+  virtual bool GetNativeDisplay(intptr_t* handle) const;
+  virtual blink::WebScreenInfo GetDefaultScreenInfo() const;
+#if defined(USE_NSS)
+  virtual base::FilePath GetNSSDbPath() const;
+#endif
+  virtual bool IsPlatformX11() const;
+
+  // content::ContentMainDelegate implementation
+  bool BasicStartupComplete(int* exit_code) final;
+
+  void PreSandboxStartup() final;
+
+  int RunProcess(
+      const std::string& process_type,
+      const content::MainFunctionParams& main_function_params) final;
+
+  void ProcessExiting(const std::string& process_type) final;
+
+  virtual content::ContentBrowserClient* CreateContentBrowserClient() override;
+  content::ContentRendererClient* CreateContentRendererClient() final;
 
  protected:
   // Allow access to default constructor only from derived classes
   ContentMainDelegate();
 
  private:
-  // content::ContentMainDelegate implementation
-  bool BasicStartupComplete(int* exit_code) FINAL;
-
-  void PreSandboxStartup() FINAL;
-
-  int RunProcess(
-      const std::string& process_type,
-      const content::MainFunctionParams& main_function_params) FINAL;
-
-  void ProcessExiting(const std::string& process_type) FINAL;
-
-  content::ContentBrowserClient* CreateContentBrowserClient() OVERRIDE;
-  content::ContentRendererClient* CreateContentRendererClient() FINAL;
-
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };
 

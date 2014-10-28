@@ -28,13 +28,13 @@ class RenderProcessHost;
 
 namespace oxide {
 
-class ScriptMessageDispatcherBrowser FINAL :
+class ScriptMessageDispatcherBrowser final :
     public content::BrowserMessageFilter {
  public:
   ScriptMessageDispatcherBrowser(content::RenderProcessHost* render_process_host);
   ~ScriptMessageDispatcherBrowser();
 
-  bool OnMessageReceived(const IPC::Message& message) FINAL;
+  bool OnMessageReceived(const IPC::Message& message) final;
 
  private:
   const int render_process_id_;

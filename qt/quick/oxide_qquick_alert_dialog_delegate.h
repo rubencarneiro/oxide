@@ -25,7 +25,7 @@ namespace qquick {
 
 class AlertDialogContext;
 
-class AlertDialogDelegate Q_DECL_FINAL : public JavaScriptDialogDelegate {
+class AlertDialogDelegate final : public JavaScriptDialogDelegate {
  public:
   AlertDialogDelegate(OxideQQuickWebView* webview);
 

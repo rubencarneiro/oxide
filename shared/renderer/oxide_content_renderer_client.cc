@@ -20,6 +20,7 @@
 #include <string>
 
 #include "base/command_line.h"
+#include "content/public/common/url_utils.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
@@ -33,6 +34,7 @@
 #include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
+#include "oxide_web_permission_client.h"
 
 namespace oxide {
 
@@ -44,6 +46,7 @@ void ContentRendererClient::RenderThreadStarted() {
 void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
+  new WebPermissionClient(render_frame);
 }
 
 void ContentRendererClient::RenderViewCreated(
@@ -76,14 +79,48 @@ void ContentRendererClient::DidCreateScriptContext(
       frame)->DidCreateScriptContext(context, world_id);
 }
 
-bool ContentRendererClient::GetUserAgentOverride(
-    const GURL& url,
-    std::string* user_agent) {
-  bool overridden = false;
-  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
-      url, user_agent, &overridden));
+std::string ContentRendererClient::GetUserAgentOverrideForURL(
+    const GURL& url) {
+  GURL u = url;
 
-  return overridden;
+  // Strip username / password / fragment identifier if they exist
+  if (u.has_password() || u.has_username() || u.has_ref()) {
+    GURL::Replacements rep;
+    rep.ClearUsername();
+    rep.ClearPassword();
+    rep.ClearRef();
+    u = u.ReplaceComponents(rep);
+  }
+
+  // Strip query if we are above the max number of chars
+  if (u.spec().size() > content::GetMaxURLChars() &&
+      u.has_query()) {
+    GURL::Replacements rep;
+    rep.ClearQuery();
+    u = u.ReplaceComponents(rep);
+  }
+
+  // If we are still over, just send the origin
+  if (u.spec().size() > content::GetMaxURLChars()) {
+    u = u.GetOrigin();
+  }
+
+  // Not sure we should ever hit this, but in any case - there
+  // isn't much more we can do now
+  if (u.spec().size() > content::GetMaxURLChars()) {
+    return std::string();
+  }
+
+  bool overridden = false;
+  std::string user_agent;
+
+  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
+      u, &user_agent, &overridden));
+  if (!overridden) {
+    return std::string();
+  }
+
+  return user_agent;
 }
 
 ContentRendererClient::ContentRendererClient() {}

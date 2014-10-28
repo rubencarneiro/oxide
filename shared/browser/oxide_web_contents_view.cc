@@ -24,25 +24,18 @@
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_view.h"
 
-namespace content {
-
-WebContentsView* CreateWebContentsView(
-    WebContentsImpl* web_contents,
-    WebContentsViewDelegate* delegate,
-    RenderViewHostDelegateView** render_view_host_delegate_view) {
-  oxide::WebContentsView* rv = new oxide::WebContentsView(web_contents);
-  *render_view_host_delegate_view = rv;
-  return rv;
-}
-
-} // namespace content
-
 namespace oxide {
 
 WebContentsView::WebContentsView(content::WebContents* web_contents) :
     web_contents_(web_contents) {}
 
 WebContentsView::~WebContentsView() {}
+
+// static
+content::WebContentsViewOxide* WebContentsView::Create(
+    content::WebContents* web_contents) {
+  return new WebContentsView(web_contents);
+}
 
 WebView* WebContentsView::GetWebView() const {
   return WebView::FromWebContents(web_contents_);
@@ -61,7 +54,7 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  *out = GetWebView()->GetContainerBoundsDip();
+  *out = GetWebView()->GetViewBoundsDip();
 }
 
 void WebContentsView::SizeContents(const gfx::Size& size) {
@@ -116,6 +109,9 @@ content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
     // out of date. This ensures that we sync RWHI::is_hidden with the
     // real visibility of the webview - see https://launchpad.net/bugs/1322622
     view->VisibilityChanged();
+
+    // Also sync focus state
+    view->FocusChanged();
   }
 
   return rwhv;
@@ -135,6 +131,7 @@ void WebContentsView::RenderViewSwappedIn(content::RenderViewHost* host) {}
 void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 
 void WebContentsView::ShowPopupMenu(
+    content::RenderFrameHost* render_frame_host,
     const gfx::Rect& bounds,
     int item_height,
     double item_font_size,
@@ -142,7 +139,8 @@ void WebContentsView::ShowPopupMenu(
     const std::vector<content::MenuItem>& items,
     bool right_aligned,
     bool allow_multiple_selection) {
-  GetWebView()->ShowPopupMenu(bounds, selected_item, items,
+  GetWebView()->ShowPopupMenu(render_frame_host,
+                              bounds, selected_item, items,
                               allow_multiple_selection);
 }
 

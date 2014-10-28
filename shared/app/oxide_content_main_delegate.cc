@@ -17,28 +17,20 @@
 
 #include "oxide_content_main_delegate.h"
 
-#include <dlfcn.h>
 #include <string>
-#include <vector>
 
 #include "base/base_paths.h"
 #include "base/command_line.h"
-#include "base/file_util.h"
 #include "base/files/file_path.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/path_service.h"
-#include "cc/base/switches.h"
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
-#include "ui/native_theme/native_theme_switches.h"
 
-#include "shared/browser/oxide_browser_process_main.h"
-#include "shared/browser/oxide_form_factor.h"
-#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_paths.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
@@ -46,41 +38,38 @@
 namespace oxide {
 
 namespace {
-
 base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
-
-struct MainFunction {
-  const char* name;
-  int (*function)(const content::MainFunctionParams&);
-};
-
-bool IsEnvironmentOptionEnabled(const char* option) {
-  std::string name("OXIDE_");
-  name += option;
-
-  const char* val = getenv(name.c_str());
-  if (!val) {
-    return false;
-  }
-
-  std::string v(val);
-
-  return !v.empty() && v == "1";
 }
 
-const char* GetEnvironmentOption(const char* option) {
-  std::string name("OXIDE_");
-  name += option;
+ContentMainDelegate::ContentMainDelegate() {}
 
-  return getenv(name.c_str());
+ContentMainDelegate::~ContentMainDelegate() {}
+
+SharedGLContext* ContentMainDelegate::GetSharedGLContext() const {
+  return NULL;
 }
 
+bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
+  return false;
+}
+
+blink::WebScreenInfo ContentMainDelegate::GetDefaultScreenInfo() const {
+  return blink::WebScreenInfo();
+}
+
+#if defined(USE_NSS)
+base::FilePath ContentMainDelegate::GetNSSDbPath() const {
+  return base::FilePath();
+}
+#endif
+
+bool ContentMainDelegate::IsPlatformX11() const {
+  return false;
 }
 
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
-
   RegisterPathProvider();
 
   CommandLine* command_line = CommandLine::ForCurrentProcess();
@@ -205,7 +194,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
-  ui::ResourceBundle::InitSharedInstanceLocaleOnly(std::string(), NULL);
+  ui::ResourceBundle::InitSharedInstanceWithLocale(
+      std::string(), NULL,
+      ui::ResourceBundle::DO_NOT_LOAD_COMMON_RESOURCES);
 
   base::FilePath dir_exe;
   PathService::Get(base::DIR_EXE, &dir_exe);
@@ -225,24 +216,16 @@ int ContentMainDelegate::RunProcess(
     const std::string& process_type,
     const content::MainFunctionParams& main_function_params) {
   if (process_type.empty()) {
-    if (!BrowserProcessMain::IsRunning()) {
-      // We arrive here if some calls the renderer with no --process-type
-      LOG(ERROR) <<
-          "The Oxide renderer cannot be used to run a browser process";
-      return 1;
-    }
-
-    return BrowserProcessMain::instance()->RunBrowserMain(
-        main_function_params);
+    // We arrive here if some calls the renderer with no --process-type
+    LOG(ERROR) << "The Oxide renderer cannot be used to run a browser process";
+    return 1;
   }
 
   return -1;
 }
 
 void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
-  if (process_type.empty() && BrowserProcessMain::IsRunning()) {
-    BrowserProcessMain::instance()->ShutdownBrowserMain();
-  }
+  DCHECK(!process_type.empty());
 }
 
 content::ContentBrowserClient*
@@ -255,9 +238,5 @@ content::ContentRendererClient*
 ContentMainDelegate::CreateContentRendererClient() {
   return g_content_renderer_client.Pointer();
 }
-
-ContentMainDelegate::ContentMainDelegate() {}
-
-ContentMainDelegate::~ContentMainDelegate() {}
 
 } // namespace oxide

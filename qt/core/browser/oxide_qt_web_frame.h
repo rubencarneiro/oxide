@@ -18,11 +18,11 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_FRAME_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_FRAME_H_
 
-#include <QScopedPointer>
 #include <QtGlobal>
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/oxide_web_frame.h"
 
@@ -33,30 +33,37 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
+class ScriptMessageRequest;
 class WebFrameAdapter;
 
-class WebFrame FINAL : public oxide::WebFrame {
+class WebFrame final : public oxide::WebFrame {
  public:
   WebFrame(WebFrameAdapter* adapter,
            content::FrameTreeNode* node,
            oxide::WebView* view);
 
-  WebFrameAdapter* adapter() const { return adapter_; }
-  QObject* api_handle() const { return api_handle_.data(); }
-
-  void URLChanged() FINAL;
+  bool SendMessage(const GURL& context,
+                   const std::string& msg_id,
+                   const std::string& args,
+                   ScriptMessageRequest* req);
 
  private:
+  friend class WebFrameAdapter;
+
   ~WebFrame();
 
-  size_t GetScriptMessageHandlerCount() const FINAL;
-  oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
-      size_t index) const FINAL;
+  QObject* api_handle() const { return api_handle_.get(); }
 
-  void OnChildAdded(oxide::WebFrame* child) FINAL;
-  void OnChildRemoved(oxide::WebFrame* child) FINAL;
+  size_t GetScriptMessageHandlerCount() const final;
+  const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
+      size_t index) const final;
 
-  QScopedPointer<QObject> api_handle_;
+  void OnChildAdded(oxide::WebFrame* child) final;
+  void OnChildRemoved(oxide::WebFrame* child) final;
+
+  void URLChanged() final;
+
+  scoped_ptr<QObject> api_handle_;
   WebFrameAdapter* adapter_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);

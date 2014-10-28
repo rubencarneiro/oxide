@@ -19,6 +19,7 @@
 #include "oxideqquickwebview_p_p.h"
 
 #include <QEvent>
+#include <QFlags>
 #include <QGuiApplication>
 #include <QHoverEvent>
 #include <QImage>
@@ -37,6 +38,8 @@
 #include <QtQml>
 #include <Qt>
 
+#include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #if defined(ENABLE_COMPOSITING)
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
@@ -45,6 +48,7 @@
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_file_picker_delegate.h"
+#include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
@@ -76,25 +80,25 @@ class WebViewInputArea : public QQuickItem {
   virtual ~WebViewInputArea() {}
 
  private:
-  void focusInEvent(QFocusEvent* event) Q_DECL_FINAL;
-  void focusOutEvent(QFocusEvent* event) Q_DECL_FINAL;
+  void focusInEvent(QFocusEvent* event) final;
+  void focusOutEvent(QFocusEvent* event) final;
 
-  void hoverMoveEvent(QHoverEvent* event) Q_DECL_FINAL;
+  void hoverMoveEvent(QHoverEvent* event) final;
 
-  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_FINAL;
-  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_FINAL;
+  void inputMethodEvent(QInputMethodEvent* event) final;
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const final;
 
-  void keyPressEvent(QKeyEvent* event) Q_DECL_FINAL;
-  void keyReleaseEvent(QKeyEvent* event) Q_DECL_FINAL;
+  void keyPressEvent(QKeyEvent* event) final;
+  void keyReleaseEvent(QKeyEvent* event) final;
 
-  void mouseDoubleClickEvent(QMouseEvent* event) Q_DECL_FINAL;
-  void mouseMoveEvent(QMouseEvent* event) Q_DECL_FINAL;
-  void mousePressEvent(QMouseEvent* event) Q_DECL_FINAL;
-  void mouseReleaseEvent(QMouseEvent* event) Q_DECL_FINAL;
+  void mouseDoubleClickEvent(QMouseEvent* event) final;
+  void mouseMoveEvent(QMouseEvent* event) final;
+  void mousePressEvent(QMouseEvent* event) final;
+  void mouseReleaseEvent(QMouseEvent* event) final;
 
-  void touchEvent(QTouchEvent* event) Q_DECL_FINAL;
+  void touchEvent(QTouchEvent* event) final;
 
-  void wheelEvent(QWheelEvent* event) Q_DECL_FINAL;
+  void wheelEvent(QWheelEvent* event) final;
 
   OxideQQuickWebViewPrivate* d_;
 };
@@ -221,7 +225,8 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     input_area_(NULL),
     received_new_compositor_frame_(false),
     frame_evicted_(false),
-    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID) {}
+    last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
+    using_old_load_event_signal_(false) {}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
@@ -312,6 +317,12 @@ void OxideQQuickWebViewPrivate::CommandsUpdated() {
   emit q->navigationHistoryChanged();
 }
 
+void OxideQQuickWebViewPrivate::LoadingChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->loadingStateChanged();
+}
+
 void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   Q_Q(OxideQQuickWebView);
 
@@ -321,6 +332,15 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
 
 void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
   Q_Q(OxideQQuickWebView);
+
+  emit q->loadEvent(event);
+
+  // The deprecated signal doesn't get TypeCommitted or TypeRedirected
+  if (!using_old_load_event_signal_ ||
+      event->type() == OxideQLoadEvent::TypeCommitted ||
+      event->type() == OxideQLoadEvent::TypeRedirected) {
+    return;
+  }
 
   emit q->loadingChanged(event);
 }
@@ -353,7 +373,7 @@ QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
   return q->window()->screen();
 }
 
-QRect OxideQQuickWebViewPrivate::GetContainerBoundsPix() const {
+QRect OxideQQuickWebViewPrivate::GetViewBoundsPix() const {
   Q_Q(const OxideQQuickWebView);
 
   if (!q->window()) {
@@ -401,7 +421,7 @@ void OxideQQuickWebViewPrivate::ToggleFullscreenMode(bool enter) {
   emit q->fullscreenRequested(enter);
 }
 
-void OxideQQuickWebViewPrivate::OnWebPreferencesChanged() {
+void OxideQQuickWebViewPrivate::WebPreferencesDestroyed() {
   Q_Q(OxideQQuickWebView);
 
   emit q->preferencesChanged();
@@ -453,8 +473,46 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
     OxideQGeolocationPermissionRequest* request) {
   Q_Q(OxideQQuickWebView);
 
-  QQmlEngine::setObjectOwnership(request, QQmlEngine::JavaScriptOwnership);
-  emit q->geolocationPermissionRequested(request);
+  // Unlike other signals where the object ownership remains with the
+  // callsite that initiates the signal, we want to transfer ownership of
+  // GeolocationPermissionRequest to any signal handlers so that the
+  // request can be completed asynchronously.
+  //
+  // Setting JavaScriptOwnership on the request, dispatching the signal and
+  // hoping the QmlEngine will delete it isn't enough though, because it will
+  // leak if there are no handlers. It's also unclear whether C++ slots should
+  // delete it.
+  //
+  // Handlers could be C++ slots in addition to the QmlEngine and so we need
+  // a way to safely share the object between slots - should a C++ slot
+  // delete the object? What if the QmlEngine deletes it?
+  //
+  // In a C++ world, we could wrap it in a QSharedPointer or dispatch a
+  // copyable type that manages shareable data underneath. We can't use
+  // QSharedPointer with Qml though, because the engine will delete any object
+  // without a parent when it goes out of scope, regardless of any shared
+  // references, and QObject parents are incompatible with QSharedPointer.
+  // Instead we transfer ownership to the QmlEngine now and dispatch a QJSValue.
+  // This means that the request only has a single owner (the QmlEngine), which
+  // won't delete it until all QJSValue's have gone out of scope
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete request;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(request);
+    if (!val.isQObject()) {
+      delete request;
+      return;
+    }
+
+    emit q->geolocationPermissionRequested(val);
+  }
+
+  engine->collectGarbage();
 }
 
 void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
@@ -469,20 +527,14 @@ void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
   w->sendEvent(q, event);
 }
 
-inline oxide::qt::FrameMetadataChangeFlags operator&(
-    oxide::qt::FrameMetadataChangeFlags a,
-    oxide::qt::FrameMetadataChangeFlags b) {
-  return static_cast<oxide::qt::FrameMetadataChangeFlags>(
-      static_cast<int>(a) & static_cast<int>(b));
-}
-
 void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
     oxide::qt::FrameMetadataChangeFlags flags) {
   Q_Q(OxideQQuickWebView);
 
-#define IS_SET(flag) flags & flag
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
-      IS_SET(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
+  QFlags<oxide::qt::FrameMetadataChangeFlags> f(flags);
+
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
+      f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
     emit q->contentXChanged();
     emit q->contentYChanged();
     emit q->contentWidthChanged();
@@ -490,25 +542,24 @@ void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
     emit q->viewportWidthChanged();
     emit q->viewportHeightChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
     emit q->contentXChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
     emit q->contentYChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
     emit q->contentWidthChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
     emit q->contentHeightChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
     emit q->viewportWidthChanged();
   }
-  if (IS_SET(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
     emit q->viewportHeightChanged();
   }
-#undef IS_SET
 }
 
 void OxideQQuickWebViewPrivate::ScheduleUpdate() {
@@ -546,6 +597,36 @@ void OxideQQuickWebViewPrivate::DownloadRequested(
   emit q->downloadRequested(downloadRequest);
 }
 
+void OxideQQuickWebViewPrivate::CertificateError(
+    OxideQCertificateError* cert_error) {
+  Q_Q(OxideQQuickWebView);
+
+  // See the comment in RequestGeolocationPermission
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete cert_error;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(cert_error);
+    if (!val.isQObject()) {
+      delete cert_error;
+      return;
+    }
+
+    emit q->certificateError(val);
+  }
+
+  engine->collectGarbage();
+}
+
+void OxideQQuickWebViewPrivate::ContentBlocked() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->blockedContentChanged();
+}
+
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
@@ -577,7 +658,7 @@ int OxideQQuickWebViewPrivate::messageHandler_count(
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
-  return p->message_handlers().size();
+  return p->messageHandlers().size();
 }
 
 // static
@@ -587,12 +668,12 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
         static_cast<OxideQQuickWebView *>(prop->object));
 
-  if (index >= p->message_handlers().size()) {
+  if (index >= p->messageHandlers().size()) {
     return NULL;
   }
 
   return adapterToQObject<OxideQQuickScriptMessageHandler>(
-      p->message_handlers().at(index));
+      p->messageHandlers().at(index));
 }
 
 // static
@@ -602,10 +683,10 @@ void OxideQQuickWebViewPrivate::messageHandler_clear(
       static_cast<OxideQQuickWebView *>(prop->object);
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(web_view);
 
-  while (p->message_handlers().size() > 0) {
+  while (p->messageHandlers().size() > 0) {
     web_view->removeMessageHandler(
         adapterToQObject<OxideQQuickScriptMessageHandler>(
-          p->message_handlers().at(0)));
+          p->messageHandlers().at(0)));
   }
 }
 
@@ -690,10 +771,18 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
 
   Q_ASSERT(thread() == QThread::currentThread());
 
-  if (signal == QMetaMethod::fromSignal(
-          &OxideQQuickWebView::newViewRequested)) {
+#define VIEW_SIGNAL(sig) QMetaMethod::fromSignal(&OxideQQuickWebView::sig)
+  if (signal == VIEW_SIGNAL(newViewRequested)) {
     d->updateWebPreferences();
+  } else if (signal == VIEW_SIGNAL(loadingChanged) &&
+             !d->using_old_load_event_signal_) {
+    d->using_old_load_event_signal_ = true;
+    qWarning() << "WebView.loadingChanged is deprecated. If you are interested "
+                  "in load events, please use WebView.loadEvent. The "
+                  "notification for WebView.loading is now "
+                  "WebView.loadingStateChanged";
   }
+#undef VIEW_SIGNAL
 }
 
 void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
@@ -830,7 +919,7 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
   // WebView instantiates NotificationRegistrar, which starts
   // NotificationService, which uses LazyInstance. Start Chromium now
   // else we'll crash
-  OxideQQuickWebContextPrivate::ensureChromiumStarted();
+  oxide::qquick::EnsureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebViewPrivate(this));
 
   Q_D(OxideQQuickWebView);
@@ -861,9 +950,9 @@ OxideQQuickWebView::~OxideQQuickWebView() {
 
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
-  while (d->message_handlers().size() > 0) {
+  while (d->messageHandlers().size() > 0) {
     delete adapterToQObject<OxideQQuickScriptMessageHandler>(
-        d->message_handlers().at(0));
+        d->messageHandlers().at(0));
   }
 
   // Delete this now as it can get a focusOutEvent after our destructor
@@ -894,7 +983,13 @@ QUrl OxideQQuickWebView::url() const {
 void OxideQQuickWebView::setUrl(const QUrl& url) {
   Q_D(OxideQQuickWebView);
 
+  QUrl old_url = d->url();
+
   d->setUrl(url);
+
+  if (d->url() != old_url) {
+    emit urlChanged();
+  }
 }
 
 QString OxideQQuickWebView::title() const {
@@ -1000,12 +1095,12 @@ void OxideQQuickWebView::addMessageHandler(
     return;
   }
 
-  if (d->message_handlers().contains(hd)) {
-    d->message_handlers().removeOne(hd);
+  if (d->messageHandlers().contains(hd)) {
+    d->messageHandlers().removeOne(hd);
   }
 
   handler->setParent(this);
-  d->message_handlers().append(hd);
+  d->messageHandlers().append(hd);
 
   emit messageHandlersChanged();
 }
@@ -1022,12 +1117,12 @@ void OxideQQuickWebView::removeMessageHandler(
   OxideQQuickScriptMessageHandlerPrivate* hd =
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->message_handlers().contains(hd)) {
+  if (!d->messageHandlers().contains(hd)) {
     return;
   }
 
   handler->setParent(NULL);
-  d->message_handlers().removeOne(hd);
+  d->messageHandlers().removeOne(hd);
 
   emit messageHandlersChanged();
 }
@@ -1259,6 +1354,28 @@ OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
   return &d->navigation_history_;
 }
 
+OxideQSecurityStatus* OxideQQuickWebView::securityStatus() {
+  Q_D(OxideQQuickWebView);
+
+  return d->securityStatus();
+}
+
+OxideQQuickWebView::ContentType OxideQQuickWebView::blockedContent() const {
+  Q_D(const OxideQQuickWebView);
+
+  Q_STATIC_ASSERT(
+      ContentTypeNone ==
+        static_cast<ContentTypeFlags>(oxide::qt::CONTENT_TYPE_NONE));
+  Q_STATIC_ASSERT(
+      ContentTypeMixedDisplay ==
+        static_cast<ContentTypeFlags>(oxide::qt::CONTENT_TYPE_MIXED_DISPLAY));
+  Q_STATIC_ASSERT(
+      ContentTypeMixedScript ==
+        static_cast<ContentTypeFlags>(oxide::qt::CONTENT_TYPE_MIXED_SCRIPT));
+
+  return static_cast<ContentType>(d->blockedContent());
+}
+
 // This exists purely to remove a moc warning. We don't store this request
 // anywhere, it's only a transient object and I can't think of any possible
 // reason why anybody would want to read it back
@@ -1306,6 +1423,18 @@ void OxideQQuickWebView::loadHtml(const QString& html, const QUrl& baseUrl) {
   Q_D(OxideQQuickWebView);
 
   d->loadHtml(html, baseUrl);
+}
+
+void OxideQQuickWebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
+  Q_D(OxideQQuickWebView);
+
+  d->setCanTemporarilyDisplayInsecureContent(allow);
+}
+
+void OxideQQuickWebView::setCanTemporarilyRunInsecureContent(bool allow) {
+  Q_D(OxideQQuickWebView);
+
+  d->setCanTemporarilyRunInsecureContent(allow);
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

@@ -18,11 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/weak_ptr.h"
-#include "content/browser/renderer_host/render_view_host_delegate_view.h"
-#include "content/browser/web_contents/web_contents_view.h"
+#include "base/macros.h"
+#include "shared/port/content/browser/web_contents_view_oxide.h"
 
 namespace content {
 class WebContents;
@@ -32,57 +29,60 @@ namespace oxide {
 
 class WebView;
 
-class WebContentsView FINAL : public content::WebContentsView,
-                              public content::RenderViewHostDelegateView {
+class WebContentsView final : public content::WebContentsViewOxide {
  public:
   ~WebContentsView();
-  WebContentsView(content::WebContents* web_contents);
+  static content::WebContentsViewOxide* Create(
+      content::WebContents* web_contents);
 
   WebView* GetWebView() const;
 
   // content::WebContentsView
-  gfx::NativeView GetNativeView() const FINAL;
-  gfx::NativeView GetContentNativeView() const FINAL;
-  gfx::NativeWindow GetTopLevelNativeWindow() const FINAL;
+  gfx::NativeView GetNativeView() const final;
+  gfx::NativeView GetContentNativeView() const final;
+  gfx::NativeWindow GetTopLevelNativeWindow() const final;
 
-  void GetContainerBounds(gfx::Rect* out) const FINAL;
+  void GetContainerBounds(gfx::Rect* out) const final;
 
-  void SizeContents(const gfx::Size& size) FINAL;
+  void SizeContents(const gfx::Size& size) final;
 
-  void Focus() FINAL;
-  void SetInitialFocus() FINAL;
-  void StoreFocus() FINAL;
-  void RestoreFocus() FINAL;
+  void Focus() final;
+  void SetInitialFocus() final;
+  void StoreFocus() final;
+  void RestoreFocus() final;
 
-  content::DropData* GetDropData() const FINAL;
+  content::DropData* GetDropData() const final;
 
-  gfx::Rect GetViewBounds() const FINAL;
+  gfx::Rect GetViewBounds() const final;
 
   void CreateView(const gfx::Size& initial_size,
-                  gfx::NativeView context) FINAL;
+                  gfx::NativeView context) final;
   content::RenderWidgetHostViewBase* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
+      content::RenderWidgetHost* render_widget_host) final;
   content::RenderWidgetHostViewBase* CreateViewForPopupWidget(
-      content::RenderWidgetHost* render_widget_host) FINAL;
+      content::RenderWidgetHost* render_widget_host) final;
 
-  void SetPageTitle(const base::string16& title) FINAL;
+  void SetPageTitle(const base::string16& title) final;
 
-  void RenderViewCreated(content::RenderViewHost* host) FINAL;
-  void RenderViewSwappedIn(content::RenderViewHost* host) FINAL;
+  void RenderViewCreated(content::RenderViewHost* host) final;
+  void RenderViewSwappedIn(content::RenderViewHost* host) final;
 
-  void SetOverscrollControllerEnabled(bool enabled) FINAL;
+  void SetOverscrollControllerEnabled(bool enabled) final;
 
   // content::RenderViewHostDelegateView
-  void ShowPopupMenu(const gfx::Rect& bounds,
+  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                     const gfx::Rect& bounds,
                      int item_height,
                      double item_font_size,
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
                      bool right_aligned,
-                     bool allow_multiple_selection) FINAL;
-  void HidePopupMenu() FINAL;
+                     bool allow_multiple_selection) final;
+  void HidePopupMenu() final;
 
  private:
+  WebContentsView(content::WebContents* web_contents);
+
   content::WebContents* web_contents_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);

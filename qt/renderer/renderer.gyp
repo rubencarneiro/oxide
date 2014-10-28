@@ -21,7 +21,7 @@
       'type': 'executable',
       'dependencies': [
         '../core/core.gyp:<(oxide_core_name)',
-        '../core/system.gyp:Qt5Core',
+        '../build/system.gyp:Qt5Core',
       ],
       'include_dirs': [
         '../..',
@@ -31,7 +31,21 @@
       ],
       'variables': {
         'chromium_code': 1
-      }
+      },
+      'conditions': [
+        ['enable_tcmalloc==1', {
+          'defines': ['ENABLE_TCMALLOC'],
+          'dependencies': [
+            '<(DEPTH)/base/allocator/allocator.gyp:allocator',
+            '<(DEPTH)/base/base.gyp:base',
+          ],
+        }],
+        ['component=="shared_library"', {
+          'dependencies': [
+            '<(DEPTH)/content/content.gyp:content_common',
+          ],
+        }],
+      ],
     }
   ]
 }

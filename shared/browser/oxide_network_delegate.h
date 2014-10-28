@@ -26,63 +26,63 @@ namespace oxide {
 
 class BrowserContextIOData;
 
-class NetworkDelegate FINAL : public net::NetworkDelegate {
+class NetworkDelegate final : public net::NetworkDelegate {
  public:
   NetworkDelegate(BrowserContextIOData* context);
 
  private:
   int OnBeforeURLRequest(net::URLRequest* request,
                          const net::CompletionCallback& callback,
-                         GURL* new_url) FINAL;
+                         GURL* new_url) final;
 
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
-                          net::HttpRequestHeaders* headers) FINAL;
+                          net::HttpRequestHeaders* headers) final;
 
   void OnSendHeaders(net::URLRequest* request,
-                     const net::HttpRequestHeaders& headers) FINAL;
+                     const net::HttpRequestHeaders& headers) final;
 
   int OnHeadersReceived(
       net::URLRequest* request,
       const net::CompletionCallback& callback,
       const net::HttpResponseHeaders* original_response_headers,
       scoped_refptr<net::HttpResponseHeaders>* override_response_headers,
-      GURL* allowed_unsafe_redirect_url) FINAL;
+      GURL* allowed_unsafe_redirect_url) final;
 
   void OnBeforeRedirect(net::URLRequest* request,
-                        const GURL& new_location) FINAL;
+                        const GURL& new_location) final;
 
-  void OnResponseStarted(net::URLRequest* request) FINAL;
+  void OnResponseStarted(net::URLRequest* request) final;
 
-  void OnRawBytesRead(const net::URLRequest& request, int bytes_read) FINAL;
+  void OnRawBytesRead(const net::URLRequest& request, int bytes_read) final;
 
-  void OnCompleted(net::URLRequest* request, bool started) FINAL;
+  void OnCompleted(net::URLRequest* request, bool started) final;
 
-  void OnURLRequestDestroyed(net::URLRequest* request) FINAL;
+  void OnURLRequestDestroyed(net::URLRequest* request) final;
 
-  void OnPACScriptError(int line_number, const base::string16& error) FINAL;
+  void OnPACScriptError(int line_number, const base::string16& error) final;
 
   AuthRequiredResponse OnAuthRequired(
       net::URLRequest* request,
       const net::AuthChallengeInfo& auth_info,
       const AuthCallback& callback,
-      net::AuthCredentials* credentials) FINAL;
+      net::AuthCredentials* credentials) final;
 
   bool OnCanGetCookies(const net::URLRequest& request,
-                       const net::CookieList& cookie_list) FINAL;
+                       const net::CookieList& cookie_list) final;
 
   bool OnCanSetCookie(const net::URLRequest& request,
                       const std::string& cookie_line,
-                      net::CookieOptions* options) FINAL;
+                      net::CookieOptions* options) final;
 
   bool OnCanAccessFile(const net::URLRequest& request,
-                       const base::FilePath& path) const FINAL;
+                       const base::FilePath& path) const final;
 
-  bool OnCanThrottleRequest(const net::URLRequest& request) const FINAL;
+  bool OnCanThrottleRequest(const net::URLRequest& request) const final;
 
   int OnBeforeSocketStreamConnect(
       net::SocketStream* socket,
-      const net::CompletionCallback& callback) FINAL;
+      const net::CompletionCallback& callback) final;
 
   BrowserContextIOData* context_;
 

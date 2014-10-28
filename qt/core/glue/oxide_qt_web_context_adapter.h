@@ -18,7 +18,10 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_ADAPTER_H_
 
+#include <QList>
+#include <QWeakPointer>
 #include <QString>
+#include <QStringList>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -26,9 +29,12 @@
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
+class QNetworkAccessManager;
 class QOpenGLContext;
+class QNetworkCookie;
 QT_END_NAMESPACE
 
+class OxideQBeforeRedirectEvent;
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
 class OxideQStoragePermissionRequest;
@@ -37,7 +43,7 @@ namespace oxide {
 namespace qt {
 
 class UserScriptAdapter;
-class WebContextAdapterPrivate;
+class WebContext;
 
 class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  public:
@@ -55,18 +61,24 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
     SessionCookieModeRestored
   };
 
-  class IOThreadDelegate {
+  class IODelegate {
    public:
-    virtual ~IOThreadDelegate() {}
+    virtual ~IODelegate() {}
 
     virtual void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) = 0;
 
     virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) = 0;
 
+    virtual void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) = 0;
+
     virtual void HandleStoragePermissionRequest(OxideQStoragePermissionRequest* req) = 0;
 
     virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) = 0;
   };
+
+  static WebContextAdapter* FromWebContext(WebContext* context);
+
+  void init(const QWeakPointer<IODelegate>& io_delegate);
 
   QString product() const;
   void setProduct(const QString& product);
@@ -88,13 +100,6 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   bool isInitialized() const;
 
-  static QOpenGLContext* sharedGLContext();
-  static void setSharedGLContext(QOpenGLContext* context);
-
-  static void ensureChromiumStarted();
-
-  IOThreadDelegate* getIOThreadDelegate() const;
-
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);
 
@@ -110,16 +115,39 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
+  QString devtoolsBindIp() const;
+  void setDevtoolsBindIp(const QString& ip);
+
+  int setCookies(const QUrl& url,
+                 const QList<QNetworkCookie>& cookies);
+  int getCookies(const QUrl& url);
+  int getAllCookies();
+  int deleteAllCookies();
+
+  QStringList hostMappingRules() const;
+  void setHostMappingRules(const QStringList& rules);
+
+  void setAllowedExtraUrlSchemes(const QStringList& schemes);
+
  protected:
-  WebContextAdapter(QObject* q,
-                    IOThreadDelegate* io_delegate);
+  WebContextAdapter(QObject* q);
 
  private:
-  friend class WebContextAdapterPrivate;
+  friend class WebContext;
+
+  virtual void CookiesSet(int request_id,
+                          const QList<QNetworkCookie>& failed_cookies) = 0;
+  virtual void CookiesRetrieved(int request_id,
+                                const QList<QNetworkCookie>& cookies) = 0;
+  virtual void CookiesDeleted(int request_id, int num_deleted) = 0;
+
+  virtual QNetworkAccessManager* GetCustomNetworkAccessManager();
 
   // This is a strong-ref. We can't use scoped_refptr here, so we manage
   // it manually
-  WebContextAdapterPrivate* priv;
+  WebContext* context_;
+
+  QList<UserScriptAdapter*> user_scripts_;
 };
 
 } // namespace qt

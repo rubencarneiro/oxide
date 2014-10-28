@@ -16,116 +16,51 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_user_script_adapter.h"
-#include "oxide_qt_user_script_adapter_p.h"
 
 #include <QDebug>
 #include <string>
 
-#include "base/bind.h"
-#include "base/callback.h"
 #include "base/files/file_path.h"
-#include "base/logging.h"
-#include "content/public/browser/browser_thread.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_browser_process_main.h"
-#include "shared/browser/oxide_user_script_master.h"
-#include "shared/common/oxide_file_utils.h"
+#include "qt/core/browser/oxide_qt_user_script.h"
 #include "shared/common/oxide_user_script.h"
 
 namespace oxide {
 namespace qt {
 
-UserScriptAdapterPrivate::UserScriptAdapterPrivate(
-    UserScriptAdapter* adapter) :
-    state(Constructing),
-    a(adapter) {}
-
-bool UserScriptAdapterPrivate::Load() {
-  load_job_.reset(oxide::FileUtils::GetFileContents(
-      content::BrowserThread::GetMessageLoopProxyForThread(
-        content::BrowserThread::FILE).get(),
-      base::FilePath(user_script.url().path()),
-      base::Bind(&UserScriptAdapterPrivate::OnGotFileContents,
-                 base::Unretained(this))));
-  return load_job_ ? true : false;
-}
-
-void UserScriptAdapterPrivate::OnGotFileContents(base::File::Error error,
-                                                 const char* data,
-                                                 int bytes_read) {
-  DCHECK_EQ(state, Loading);
-
-  if (error != base::File::FILE_OK) {
-    state = FailedLoad;
-    a->OnScriptLoadFailed();
-    return;
-  }
-
-  std::string str(data, bytes_read);
-  user_script.set_content(str);
-  oxide::UserScriptMaster::ParseMetadata(&user_script);
-  state = Loaded;
-
-  a->OnScriptLoaded();
-}
-
-// static
-UserScriptAdapterPrivate* UserScriptAdapterPrivate::get(
-    UserScriptAdapter* adapter) {
-  return adapter->priv.data();
-}
-
 UserScriptAdapter::UserScriptAdapter(QObject* q) :
     AdapterBase(q),
-    priv(new UserScriptAdapterPrivate(this)) {}
+    script_(new UserScript(this)) {}
 
 UserScriptAdapter::~UserScriptAdapter() {}
 
-QUrl UserScriptAdapter::url() const {
-  return QUrl(QString::fromStdString(priv->user_script.url().spec()));
-}
-
-void UserScriptAdapter::setUrl(const QUrl& url) {
-  if (!url.isLocalFile()) {
-    qWarning() << "UserScript url must be set to a local file";
-    return;
-  }
-
-  if (!url.isValid()) {
-    qWarning() << "UserScript url must be set to a valid URL";
-    return;
-  }
-
-  priv->user_script.set_url(GURL(url.toString().toStdString()));
-}
-
 bool UserScriptAdapter::emulateGreasemonkey() const {
-  return priv->user_script.emulate_greasemonkey();
+  return script_->GetEmulateGreasemonkey();
 }
 
 void UserScriptAdapter::setEmulateGreasemonkey(bool emulate) {
-  priv->user_script.set_emulate_greasemonkey(emulate);
+  script_->SetEmulateGreasemonkey(emulate);
 }
 
 bool UserScriptAdapter::matchAllFrames() const {
-  return priv->user_script.match_all_frames();
+  return script_->GetMatchAllFrames();
 }
 
 void UserScriptAdapter::setMatchAllFrames(bool match) {
-  priv->user_script.set_match_all_frames(match);
+  script_->SetMatchAllFrames(match);
 }
 
 bool UserScriptAdapter::incognitoEnabled() const {
-  return priv->user_script.incognito_enabled();
+  return script_->GetIncognitoEnabled();
 }
 
 void UserScriptAdapter::setIncognitoEnabled(bool enabled) {
-  priv->user_script.set_incognito_enabled(enabled);
+  script_->SetIncognitoEnabled(enabled);
 }
 
 QUrl UserScriptAdapter::context() const {
-  return QUrl(QString::fromStdString(priv->user_script.context().spec()));
+  return QUrl(QString::fromStdString(script_->GetContext().spec()));
 }
 
 void UserScriptAdapter::setContext(const QUrl& context) {
@@ -134,23 +69,23 @@ void UserScriptAdapter::setContext(const QUrl& context) {
     return;
   }
 
-  priv->user_script.set_context(GURL(context.toString().toStdString()));
+  script_->SetContext(GURL(context.toString().toStdString()));
 }
 
-void UserScriptAdapter::init() {
-  DCHECK_EQ(priv->state, UserScriptAdapterPrivate::Constructing);
-
-  priv->state = UserScriptAdapterPrivate::Loading;
-
-  if (priv->user_script.url().scheme() != "file") {
+void UserScriptAdapter::init(const QUrl& url) {
+  if (!url.isValid()) {
+    qWarning() << "UserScript url must be set to a valid URL";
     OnScriptLoadFailed();
     return;
   }
 
-  if (!priv->Load()) {
-    priv->state = UserScriptAdapterPrivate::FailedLoad;
+  if (!url.isLocalFile()) {
+    qWarning() << "UserScript url must be set to a local file";
     OnScriptLoadFailed();
+    return;
   }
+
+  script_->Init(base::FilePath(url.toLocalFile().toStdString()));
 }
 
 } // namespace qt

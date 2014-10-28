@@ -51,13 +51,12 @@ class ResourceDispatcherHostDelegate :
       const std::string& mime_type,
       int render_process_id,
       int render_view_id,
-      content::ResourceContext* resource_context) FINAL;
+      content::ResourceContext* resource_context) final;
 
   virtual bool HandleExternalProtocol(
        const GURL& url,
        int child_id,
-       int route_id,
-       bool initiated_by_user_gesture) FINAL;
+       int route_id) final;
 
  private:
 

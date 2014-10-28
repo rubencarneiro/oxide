@@ -18,52 +18,43 @@
 #ifndef _OXIDE_SHARED_BROWSER_DEVTOOLS_TARGET_H_
 #define _OXIDE_SHARED_BROWSER_DEVTOOLS_TARGET_H_
 
-#include <string>
-
 #include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "content/public/browser/devtools_target.h"
 #include "content/public/browser/web_contents_observer.h"
 
 namespace content {
-class DevToolsTarget;
 class DevToolsAgentHost;
-class RenderViewHost;
 class WebContents;
 }
 
 namespace oxide {
 
-class DevtoolsTarget
+class DevToolsTarget
     : public content::DevToolsTarget,
-      public content::WebContentsObserver
-{
+      public content::WebContentsObserver {
  public:
+  DevToolsTarget(content::WebContents* contents);
+  virtual ~DevToolsTarget();
 
-  virtual ~DevtoolsTarget();
-
-  static DevtoolsTarget * CreateForWebContents(content::WebContents *);
-
-  // DevToolsHttpProtocolHandler::Delegate overrides.
-  virtual std::string GetId() const OVERRIDE;
-  virtual std::string GetParentId() const OVERRIDE;
-  virtual std::string GetType() const OVERRIDE;
-  virtual std::string GetTitle() const OVERRIDE;
-  virtual std::string GetDescription() const OVERRIDE;
-  virtual GURL GetURL() const OVERRIDE;
-  virtual GURL GetFaviconURL() const OVERRIDE;
-  virtual base::TimeTicks GetLastActivityTime() const OVERRIDE;
-  virtual bool IsAttached() const OVERRIDE;
-  virtual scoped_refptr<content::DevToolsAgentHost> GetAgentHost() const OVERRIDE;
-  virtual bool Activate() const OVERRIDE;
-  virtual bool Close() const OVERRIDE;
+  // content::DevToolsTarget overrides.
+  std::string GetId() const final;
+  std::string GetParentId() const final;
+  std::string GetType() const final;
+  std::string GetTitle() const final;
+  std::string GetDescription() const final;
+  GURL GetURL() const final;
+  GURL GetFaviconURL() const final;
+  base::TimeTicks GetLastActivityTime() const final;
+  bool IsAttached() const final;
+  scoped_refptr<content::DevToolsAgentHost> GetAgentHost() const final;
+  bool Activate() const final;
+  bool Close() const final;
 
  private:
-  DevtoolsTarget(content::WebContents * web_contents);
-
   scoped_refptr<content::DevToolsAgentHost> agent_host_;
 
-  DISALLOW_COPY_AND_ASSIGN(DevtoolsTarget);
+  DISALLOW_COPY_AND_ASSIGN(DevToolsTarget);
 };
 
 }

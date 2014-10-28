@@ -73,23 +73,23 @@ TestWebView {
 
     function test_NavigationRequest1_from_user_gestures_data() {
       return [
-        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionCurrentTab, current: true },
-        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: true },
-        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: true },
-        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: true },
-        { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
-        { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: false },
-        { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
-        { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
-        { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
-        { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: false },
-        { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
-        { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        { link: "#link1", url: "http://testsuite/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionCurrentTab, current: true },
+        { link: "#link1", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: true },
+        { link: "#link1", url: "http://testsuite/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: true },
+        { link: "#link1", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: true },
+        { link: "#button1", url: "http://testsuite/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        { link: "#button1", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: false },
+        { link: "#button1", url: "http://testsuite/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
+        { link: "#button1", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        { link: "#link2", url: "http://testsuite/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        { link: "#link2", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewWindow, current: false },
+        { link: "#link2", url: "http://testsuite/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
+        { link: "#link2", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
         // XXX(chrisccoulson): These 2 disabled due to https://launchpad.net/bugs/1302743
-        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewPopup, current: false },
-        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewPopup, current: false },
-        { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
-        { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
+        // { link: "#button2", url: "http://testsuite/empty.html", modifiers: Qt.NoModifier, disposition: NavigationRequest.DispositionNewPopup, current: false },
+        // { link: "#button2", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier, disposition: NavigationRequest.DispositionNewPopup, current: false },
+        { link: "#button2", url: "http://testsuite/empty.html", modifiers: Qt.ControlModifier, disposition: NavigationRequest.DispositionNewBackgroundTab, current: false },
+        { link: "#button2", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier, disposition: NavigationRequest.DispositionNewForegroundTab, current: false },
       ];
     }
 
@@ -97,7 +97,7 @@ TestWebView {
     // top-level navigations (also verifies that we don't get one for browser-
     // initiated navigations)
     function test_NavigationRequest1_from_user_gestures(data) {
-      webView.url = "http://localhost:8080/tst_NavigationRequest.html";
+      webView.url = "http://testsuite/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -127,7 +127,7 @@ TestWebView {
     // for renderer-initiated top-level navigations that don't come from an
     // input event
     function test_NavigationRequest2_no_user_gesture(data) {
-      webView.url = "http://localhost:8080/tst_NavigationRequest.html";
+      webView.url = "http://testsuite/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -148,7 +148,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       }
 
       compare(spy.count, 1, "Should have had an onNavigationRequested signal")
-      compare(webView.lastRequestUrl, "http://localhost:8080/empty.html");
+      compare(webView.lastRequestUrl, "http://testsuite/empty.html");
       compare(webView.lastRequestDisposition, data.current ? NavigationRequest.DispositionCurrentTab : NavigationRequest.DispositionNewPopup );
       compare(webView.lastRequestUserGesture, false);
     }
@@ -166,7 +166,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
     function test_NavigationRequest3_reject(data) {
       webView.shouldReject = true;
 
-      webView.url = "http://localhost:8080/tst_NavigationRequest.html";
+      webView.url = "http://testsuite/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -195,7 +195,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
     // content::RenderFrameImpl::loadURLExternally(), which is called from
     // WebCore::DocumentLoader::shouldContinueForNavigationPolicy()
     function test_NavigationRequest4_subframe(data) {
-      webView.url = "http://localhost:8080/tst_NavigationRequest2.html";
+      webView.url = "http://testsuite/tst_NavigationRequest2.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

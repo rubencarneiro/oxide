@@ -34,7 +34,7 @@ void ScriptMessageHandler::SetCallback(const HandlerCallback& callback) {
   callback_ = callback;
 }
 
-void ScriptMessageHandler::OnReceiveMessage(ScriptMessage* message) {
+void ScriptMessageHandler::OnReceiveMessage(ScriptMessage* message) const {
   DCHECK_EQ(message->msg_id(), msg_id());
   DCHECK(!callback_.is_null());
 

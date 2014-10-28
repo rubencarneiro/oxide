@@ -31,7 +31,7 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class ScriptMessageRequestAdapterPrivate;
+class ScriptMessageRequest;
 
 class Q_DECL_EXPORT ScriptMessageRequestAdapter : public AdapterBase {
  public:
@@ -41,12 +41,12 @@ class Q_DECL_EXPORT ScriptMessageRequestAdapter : public AdapterBase {
   ScriptMessageRequestAdapter(QObject* q);
 
  private:
-  friend class ScriptMessageRequestAdapterPrivate;
+  friend class ScriptMessageRequest;
 
   virtual void OnReceiveReply(const QVariant& args) = 0;
   virtual void OnReceiveError(int error, const QString& msg) = 0;
 
-  QScopedPointer<ScriptMessageRequestAdapterPrivate> priv;
+  QScopedPointer<ScriptMessageRequest> request_;
 };
 
 } // namespace qt

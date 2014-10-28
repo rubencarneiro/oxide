@@ -28,7 +28,7 @@ class BrowserPpapiHost;
 
 namespace oxide {
 
-class PepperHostFactoryBrowser FINAL : public ppapi::host::HostFactory {
+class PepperHostFactoryBrowser final : public ppapi::host::HostFactory {
  public:
   PepperHostFactoryBrowser(content::BrowserPpapiHost* host);
   ~PepperHostFactoryBrowser();
@@ -37,7 +37,7 @@ class PepperHostFactoryBrowser FINAL : public ppapi::host::HostFactory {
       ppapi::host::PpapiHost* host,
       const ppapi::proxy::ResourceMessageCallParams& params,
       PP_Instance instance,
-      const IPC::Message& message) FINAL;
+      const IPC::Message& message) final;
 
  private:
   content::BrowserPpapiHost* host_;

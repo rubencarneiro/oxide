@@ -18,56 +18,45 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 #define _OXIDE_QT_CORE_BROWSER_LOCATION_PROVIDER_H_
 
-#include <QtGlobal>
-
 #include "base/compiler_specific.h"
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
+#include "base/memory/weak_ptr.h"
+#include "base/threading/non_thread_safe.h"
 #include "content/browser/geolocation/location_provider_base.h"
 #include "content/public/common/geoposition.h"
-
-QT_BEGIN_NAMESPACE
-class QThread;
-QT_END_NAMESPACE
-
-namespace base {
-class MessageLoopProxy;
-}
 
 namespace oxide {
 namespace qt {
 
-class LocationSource;
+class LocationSourceProxy;
 
-class LocationProvider FINAL : public content::LocationProviderBase {
+class LocationProvider final : public content::LocationProviderBase,
+                               public base::NonThreadSafe,
+                               public base::SupportsWeakPtr<LocationProvider> {
  public:
   LocationProvider();
   ~LocationProvider();
 
-  bool StartProvider(bool high_accuracy) FINAL;
-  void StopProvider() FINAL;
-
-  void GetPosition(content::Geoposition* position) FINAL;
-
-  void RequestRefresh() FINAL;
-
-  void OnPermissionGranted() FINAL;
-
- protected:
-  friend class LocationSource;
-
-  void cachePosition(const content::Geoposition& position);
-  void notifyCallbackOnGeolocationThread(const content::Geoposition& position);
-  void doNotifyCallback(const content::Geoposition& position);
-
  private:
-  bool running_;
-  base::MessageLoopProxy* proxy_;
-  bool is_permission_granted_;
-  LocationSource* source_;
-  QThread* worker_thread_;
-  content::Geoposition position_;
+  friend class LocationSourceProxy;
 
-  void invokeOnWorkerThread(const char* method) const;
+  // content::LocationProvider implementation
+  bool StartProvider(bool high_accuracy) final;
+  void StopProvider() final;
+
+  void GetPosition(content::Geoposition* position) final;
+
+  void RequestRefresh() final;
+
+  void OnPermissionGranted() final;
+
+  void NotifyPositionUpdated(const content::Geoposition& position);
+
+  bool running_;
+  bool is_permission_granted_;
+  scoped_refptr<LocationSourceProxy> source_;
+  content::Geoposition position_;
 
   DISALLOW_COPY_AND_ASSIGN(LocationProvider);
 };

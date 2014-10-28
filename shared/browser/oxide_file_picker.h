@@ -22,8 +22,8 @@
 
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/web_contents_observer.h"
+#include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
-#include "ui/shell_dialogs/selected_file_info.h"
 
 namespace content {
 class RenderViewHost;
@@ -37,7 +37,7 @@ class FilePicker : public content::WebContentsObserver,
   virtual ~FilePicker();
 
   virtual void Run(const content::FileChooserParams& params) = 0;
-  void Done(const std::vector<ui::SelectedFileInfo>& files,
+  void Done(const std::vector<content::FileChooserFileInfo>& files,
             content::FileChooserParams::Mode permissions);
 
  protected:
@@ -46,7 +46,7 @@ class FilePicker : public content::WebContentsObserver,
  private:
   virtual void OnHide() = 0;
 
-  void RenderViewDeleted(content::RenderViewHost* rvh) FINAL;
+  void RenderViewDeleted(content::RenderViewHost* rvh) final;
 
   content::RenderViewHost* render_view_host_;
 };

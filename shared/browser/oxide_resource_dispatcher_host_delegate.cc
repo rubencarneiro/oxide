@@ -38,6 +38,7 @@
 #include "shared/common/oxide_script_message_handler.h"
 #include "shared/common/oxide_script_message_request.h"
 
+#include "oxide_browser_context.h"
 #include "oxide_script_message_impl_browser.h"
 #include "oxide_script_message_request_impl_browser.h"
 #include "oxide_script_message_target.h"
@@ -49,8 +50,7 @@ namespace oxide {
 bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
     const GURL& url,
     int child_id,
-    int route_id,
-    bool initiated_by_user_gesture) {
+    int route_id) {
   return false;
 }
 

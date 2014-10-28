@@ -24,6 +24,7 @@
 #include <QtGlobal>
 #include <QUrl>
 
+class OxideQBeforeRedirectEventPrivate;
 class OxideQBeforeSendHeadersEventPrivate;
 class OxideQBeforeURLRequestEventPrivate;
 class OxideQNetworkCallbackEventPrivate;
@@ -34,6 +35,8 @@ class Q_DECL_EXPORT OxideQNetworkCallbackEvent : public QObject {
   Q_PROPERTY(QUrl url READ url CONSTANT)
   Q_PROPERTY(QString method READ method CONSTANT)
   Q_PROPERTY(bool requestCancelled READ requestCancelled)
+  Q_PROPERTY(QString referrer READ referrer)
+  Q_PROPERTY(bool isMainFrame READ isMainFrame)
 
   Q_DECLARE_PRIVATE(OxideQNetworkCallbackEvent)
   Q_DISABLE_COPY(OxideQNetworkCallbackEvent)
@@ -43,6 +46,8 @@ class Q_DECL_EXPORT OxideQNetworkCallbackEvent : public QObject {
 
   QUrl url() const;
   QString method() const;
+  QString referrer() const;
+  bool isMainFrame() const;
   bool requestCancelled() const;
   Q_INVOKABLE void cancelRequest();
 
@@ -62,7 +67,9 @@ class Q_DECL_EXPORT OxideQBeforeURLRequestEvent : public OxideQNetworkCallbackEv
 
  public:
   Q_DECL_HIDDEN OxideQBeforeURLRequestEvent(const QUrl& url,
-                                            const QString& method);
+                                            const QString& method,
+					    const QString& referrer,
+					    bool isMainFrame);
   virtual ~OxideQBeforeURLRequestEvent();
 
   QUrl redirectUrl() const;
@@ -77,7 +84,9 @@ class Q_DECL_EXPORT OxideQBeforeSendHeadersEvent : public OxideQNetworkCallbackE
 
  public:
   Q_DECL_HIDDEN OxideQBeforeSendHeadersEvent(const QUrl& url,
-                                             const QString& method);
+                                             const QString& method,
+					     const QString& referrer,
+					     bool isMainFrame);
   virtual ~OxideQBeforeSendHeadersEvent();
 
   Q_INVOKABLE bool hasHeader(const QString& header) const;
@@ -88,6 +97,26 @@ class Q_DECL_EXPORT OxideQBeforeSendHeadersEvent : public OxideQNetworkCallbackE
 
   Q_INVOKABLE void clearHeaders();
   Q_INVOKABLE void removeHeader(const QString& header);
+};
+
+class Q_DECL_EXPORT OxideQBeforeRedirectEvent : public OxideQNetworkCallbackEvent {
+  Q_OBJECT
+
+  Q_PROPERTY(QUrl originalUrl READ originalUrl)
+
+  Q_DECLARE_PRIVATE(OxideQBeforeRedirectEvent)
+  Q_DISABLE_COPY(OxideQBeforeRedirectEvent)
+
+ public:
+  Q_DECL_HIDDEN OxideQBeforeRedirectEvent(
+      const QUrl& url,
+      const QString& method,
+      const QString& referrer,
+      bool isMainFrame,
+      const QUrl& originalUrl);
+  virtual ~OxideQBeforeRedirectEvent();
+
+  QUrl originalUrl() const;
 };
 
 #endif // OXIDE_Q_NETWORK_CALLBACK_EVENTS

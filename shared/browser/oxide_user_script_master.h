@@ -39,16 +39,16 @@ namespace oxide {
 class BrowserContext;
 class UserScript;
 
-class UserScriptMaster FINAL : public content::NotificationObserver {
+class UserScriptMaster final : public content::NotificationObserver {
  public:
   UserScriptMaster(BrowserContext* context);
   ~UserScriptMaster();
 
-  void SerializeUserScriptsAndSendUpdates(std::vector<UserScript *>& scripts);
+  void SerializeUserScriptsAndSendUpdates(std::vector<const UserScript *>& scripts);
 
   void Observe(int type,
                const content::NotificationSource& source,
-               const content::NotificationDetails& details) FINAL;
+               const content::NotificationDetails& details) final;
 
   static void ParseMetadata(UserScript* script);
 

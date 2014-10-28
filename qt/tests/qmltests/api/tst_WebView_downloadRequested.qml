@@ -38,7 +38,7 @@ TestWebView {
     }
 
     function test_WebView_downloadRequestWithContentDisposition() {
-      webView.url = "http://localhost:8080/tst_WebView_downloadRequested.py"
+      webView.url = "http://testsuite/tst_WebView_downloadRequested.py"
       verify(webView.waitForLoadStopped(),
              "Timed out waiting for a successful load");
 
@@ -49,7 +49,7 @@ TestWebView {
     }
 
     function test_WebView_downloadRequestUnhandledMimeType() {
-      webView.url = "http://localhost:8080/tst_WebView_downloadRequestedUnhandledMimeType.py"
+      webView.url = "http://testsuite/tst_WebView_downloadRequestedUnhandledMimeType.py"
       verify(webView.waitForLoadStopped(),
              "Timed out waiting for a successful load");
 

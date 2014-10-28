@@ -65,7 +65,7 @@ TestWebView {
 
     function test_noFilePickerComponent() {
       webView.filePicker = null;
-      webView.url = "http://localhost:8080/tst_WebView_filePicker_single.html";
+      webView.url = "http://testsuite/tst_WebView_filePicker_single.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       webView.filenames = [];
@@ -88,7 +88,7 @@ TestWebView {
 
     function test_customFilePickerComponent(data) {
       webView.filePicker = filePickerComponent;
-      webView.url = "http://localhost:8080/" + data.page;
+      webView.url = "http://testsuite/" + data.page;
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       mouseClick(webView, webView.width / 2, webView.height / 2);

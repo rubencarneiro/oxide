@@ -35,7 +35,7 @@ class SharedBitmap;
 
 namespace oxide {
 
-class CompositorSoftwareOutputDevice FINAL : public cc::SoftwareOutputDevice,
+class CompositorSoftwareOutputDevice final : public cc::SoftwareOutputDevice,
                                              public base::NonThreadSafe {
  public:
   CompositorSoftwareOutputDevice();
@@ -43,12 +43,12 @@ class CompositorSoftwareOutputDevice FINAL : public cc::SoftwareOutputDevice,
 
  private:
   // cc::SoftwareOutputDevice implementation
-  void Resize(const gfx::Size& pixel_size, float scale_factor) FINAL;
-  SkCanvas* BeginPaint(const gfx::Rect& damage_rect) FINAL;
-  void EndPaint(cc::SoftwareFrameData* frame_data) FINAL;
-  void DiscardBackbuffer() FINAL;
-  void EnsureBackbuffer() FINAL;
-  void ReclaimSoftwareFrame(unsigned id) FINAL;
+  void Resize(const gfx::Size& pixel_size, float scale_factor) final;
+  SkCanvas* BeginPaint(const gfx::Rect& damage_rect) final;
+  void EndPaint(cc::SoftwareFrameData* frame_data) final;
+  void DiscardBackbuffer() final;
+  void EnsureBackbuffer() final;
+  void ReclaimSoftwareFrame(unsigned id) final;
 
   // =========
   unsigned GetNextId();

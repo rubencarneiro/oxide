@@ -19,6 +19,8 @@
 #define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 
 #include <QObject>
+#include <QSharedPointer>
+#include <QStringList>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_web_context_adapter.h"
@@ -35,14 +37,16 @@ QT_END_NAMESPACE
 
 namespace oxide {
 namespace qquick {
-class WebContextDelegateWorkerIOThreadController;
-class WebContextIOThreadDelegate;
+namespace webcontextdelegateworker {
+class IOThreadController;
+}
+class WebContextIODelegate;
 }
 }
 
-class OxideQQuickWebContextPrivate Q_DECL_FINAL :
-    public QObject,
-    public oxide::qt::WebContextAdapter {
+class OxideQQuickWebContextPrivate final
+    : public QObject,
+      public oxide::qt::WebContextAdapter {
   Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
@@ -54,8 +58,6 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   void delegateWorkerDestroyed(OxideQQuickWebContextDelegateWorker* worker);
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
-
-  static void ensureChromiumStarted();
 
  Q_SIGNALS:
   void constructed();
@@ -77,18 +79,28 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
       int index);
   static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
 
-  bool attachDelegateWorker(
-      OxideQQuickWebContextDelegateWorker* worker,
-      OxideQQuickWebContextDelegateWorker** ui_slot,
-      oxide::qquick::WebContextDelegateWorkerIOThreadController** io_slot);
+  bool prepareToAttachDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
+  void detachedDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
+
+  QNetworkAccessManager* GetCustomNetworkAccessManager() final;
+
+  void CookiesSet(int request_id,
+                  const QList<QNetworkCookie>& failed_cookies) final;
+  void CookiesRetrieved(int request_id,
+                        const QList<QNetworkCookie>& cookies) final;
+  void CookiesDeleted(int request_id, int num_deleted) final;
 
   bool constructed_;
 
-  oxide::qquick::WebContextIOThreadDelegate* io_thread_delegate_;
+  QSharedPointer<oxide::qquick::WebContextIODelegate> io_;
 
   OxideQQuickWebContextDelegateWorker* network_request_delegate_;
   OxideQQuickWebContextDelegateWorker* storage_access_permission_delegate_;
   OxideQQuickWebContextDelegateWorker* user_agent_override_delegate_;
+
+  mutable OxideQQuickCookieManager* cookie_manager_;
+
+  QStringList allowed_extra_url_schemes_;
 
   Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };

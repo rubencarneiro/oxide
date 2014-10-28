@@ -22,12 +22,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-
-namespace content {
-class BrowserMainRunner;
-class ContentMainRunner;
-class MainFunctionParams;
-}
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 namespace oxide {
 
@@ -41,38 +36,28 @@ class BrowserProcessMain {
  public:
   virtual ~BrowserProcessMain();
 
+  // Return the BrowserProcessMain singleton
+  static BrowserProcessMain* GetInstance();
+
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  static void Start(
-      scoped_refptr<oxide::SharedGLContext> shared_gl_context,
-      scoped_ptr<ContentMainDelegate> delegate,
-      intptr_t native_display,
-      bool display_handle_valid);
+  virtual void Start(scoped_ptr<ContentMainDelegate> delegate) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton
-  static void Shutdown();
+  virtual void Shutdown() = 0;
 
   // Returns true if the browser process components are running
-  static bool IsRunning();
-
-  // Return the BrowserProcessMain singleton
-  static BrowserProcessMain* instance();
+  virtual bool IsRunning() const = 0;
 
   virtual SharedGLContext* GetSharedGLContext() const = 0;
   virtual intptr_t GetNativeDisplay() const = 0;
+  virtual blink::WebScreenInfo GetDefaultScreenInfo() const = 0;
 
  protected:
   BrowserProcessMain();
 
  private:
-  // For RunBrowserMain() / ShutdownBrowserMain()
-  friend class oxide::ContentMainDelegate;
-
-  virtual int RunBrowserMain(
-      const content::MainFunctionParams& main_function_params) = 0;
-  virtual void ShutdownBrowserMain() = 0;
-
   DISALLOW_COPY_AND_ASSIGN(BrowserProcessMain);
 };
 

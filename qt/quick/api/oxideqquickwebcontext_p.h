@@ -22,33 +22,47 @@
 #include <QQmlListProperty>
 #include <QQmlParserStatus>
 #include <QString>
+#include <QStringList>
 #include <QtGlobal>
 #include <QtQml>
 #include <QUrl>
 
-QT_USE_NAMESPACE
-
+class OxideQQuickCookieManager;
 class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickUserScript;
 class OxideQQuickWebContextPrivate;
 
-class OxideQQuickWebContext : public QObject,
-                              public QQmlParserStatus {
+class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
+                                            public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
   Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
+
   Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
   Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
+
   Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
+
   Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
+
   Q_PROPERTY(CookiePolicy cookiePolicy READ cookiePolicy WRITE setCookiePolicy NOTIFY cookiePolicyChanged)
   Q_PROPERTY(SessionCookieMode sessionCookieMode READ sessionCookieMode WRITE setSessionCookieMode NOTIFY sessionCookieModeChanged)
+
   Q_PROPERTY(bool popupBlockerEnabled READ popupBlockerEnabled WRITE setPopupBlockerEnabled NOTIFY popupBlockerEnabledChanged)
+
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
   Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
+
   Q_PROPERTY(bool devtoolsEnabled READ devtoolsEnabled WRITE setDevtoolsEnabled NOTIFY devtoolsEnabledChanged)
   Q_PROPERTY(int devtoolsPort READ devtoolsPort WRITE setDevtoolsPort NOTIFY devtoolsPortChanged)
+  Q_PROPERTY(QString devtoolsIp READ devtoolsBindIp WRITE setDevtoolsBindIp NOTIFY devtoolsBindIpChanged)
+
+  Q_PROPERTY(OxideQQuickCookieManager* cookieManager READ cookieManager CONSTANT)
+
+  Q_PROPERTY(QStringList hostMappingRules READ hostMappingRules WRITE setHostMappingRules NOTIFY hostMappingRulesChanged)
+
+  Q_PROPERTY(QStringList allowedExtraUrlSchemes READ allowedExtraUrlSchemes WRITE setAllowedExtraUrlSchemes NOTIFY allowedExtraUrlSchemesChanged)
 
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
@@ -123,6 +137,17 @@ class OxideQQuickWebContext : public QObject,
   int devtoolsPort() const;
   void setDevtoolsPort(int port);
 
+  QString devtoolsBindIp() const;
+  void setDevtoolsBindIp(const QString& bindIp);
+
+  OxideQQuickCookieManager* cookieManager() const;
+
+  QStringList hostMappingRules() const;
+  void setHostMappingRules(const QStringList& rules);
+
+  QStringList allowedExtraUrlSchemes() const;
+  void setAllowedExtraUrlSchemes(const QStringList& schemes);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -138,6 +163,9 @@ class OxideQQuickWebContext : public QObject,
   void userAgentOverrideDelegateChanged();
   void devtoolsEnabledChanged();
   void devtoolsPortChanged();
+  void devtoolsBindIpChanged();
+  void hostMappingRulesChanged();
+  void allowedExtraUrlSchemesChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

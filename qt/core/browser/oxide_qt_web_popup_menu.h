@@ -29,17 +29,17 @@ namespace qt {
 
 class WebPopupMenuDelegate;
 
-class WebPopupMenu FINAL : public oxide::WebPopupMenu {
+class WebPopupMenu final : public oxide::WebPopupMenu {
  public:
   WebPopupMenu(WebPopupMenuDelegate* delegate,
-               content::RenderViewHost* rvh);
+               content::RenderFrameHost* rfh);
 
  private:
   void Show(const gfx::Rect& bounds,
             const std::vector<content::MenuItem>& items,
             int selected_item,
-            bool allow_multiple_selection) FINAL;
-  void OnHide() FINAL;
+            bool allow_multiple_selection) final;
+  void OnHide() final;
 
   scoped_ptr<WebPopupMenuDelegate> delegate_;
 

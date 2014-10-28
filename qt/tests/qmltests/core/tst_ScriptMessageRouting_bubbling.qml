@@ -30,7 +30,7 @@ TestWebView {
     when: windowShown
 
     function init() {
-      webView.url = "http://localhost:8080/tst_ScriptMessageRouting_bubbling.html";
+      webView.url = "http://testsuite/tst_ScriptMessageRouting_bubbling.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
     }

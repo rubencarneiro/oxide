@@ -152,7 +152,7 @@ void CompositorOutputSurfaceGL::ReclaimResources(
     const cc::CompositorFrameAck& ack) {
   DCHECK(CalledOnValidThread());
   DCHECK(ack.gl_frame_data);
-  DCHECK_EQ(ack.last_software_frame_id, 0);
+  DCHECK_EQ(ack.last_software_frame_id, 0U);
   DCHECK(!ack.gl_frame_data->mailbox.IsZero());
   DCHECK(!ack.gl_frame_data->size.IsEmpty());
 

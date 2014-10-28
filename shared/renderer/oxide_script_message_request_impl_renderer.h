@@ -33,7 +33,7 @@ namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageRequestImplRenderer FINAL :
+class ScriptMessageRequestImplRenderer final :
     public base::RefCounted<ScriptMessageRequestImplRenderer>,
     public ScriptMessageRequest,
     public ScriptReferencedObject<ScriptMessageRequestImplRenderer> {
@@ -57,10 +57,10 @@ class ScriptMessageRequestImplRenderer FINAL :
   friend class base::RefCounted<ScriptMessageRequestImplRenderer>;
   ~ScriptMessageRequestImplRenderer();
 
-  bool DoSendMessage(const OxideMsg_SendMessage_Params& params) FINAL;
+  bool DoSendMessage(const OxideMsg_SendMessage_Params& params) final;
 
-  void OnReply(const std::string& args) FINAL;
-  void OnError(Error error, const std::string& msg) FINAL;
+  void OnReply(const std::string& args) final;
+  void OnError(Error error, const std::string& msg) final;
 
   void DispatchResponse(v8::Handle<v8::Function> function,
                         int argc,

@@ -25,7 +25,7 @@
 
 class OxideQQuickScriptMessageHandler;
 
-class OxideQQuickScriptMessageHandlerPrivate Q_DECL_FINAL :
+class OxideQQuickScriptMessageHandlerPrivate final :
     public oxide::qt::ScriptMessageHandlerAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickScriptMessageHandler)
 
@@ -39,8 +39,8 @@ class OxideQQuickScriptMessageHandlerPrivate Q_DECL_FINAL :
 
  private:
   bool OnReceiveMessage(oxide::qt::ScriptMessageAdapter* message,
-                        QString& error) Q_DECL_FINAL;
-  oxide::qt::ScriptMessageAdapter* CreateScriptMessage() Q_DECL_FINAL;
+                        QString& error) final;
+  oxide::qt::ScriptMessageAdapter* CreateScriptMessage() final;
 
   QJSValue callback_;
 

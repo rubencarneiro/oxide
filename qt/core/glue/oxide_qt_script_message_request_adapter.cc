@@ -16,61 +16,15 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_script_message_request_adapter.h"
-#include "oxide_qt_script_message_request_adapter_p.h"
 
-#include <QByteArray>
-#include <QJsonDocument>
-#include <QString>
-#include <QVariant>
-
-#include "base/bind.h"
+#include "qt/core/browser/oxide_qt_script_message_request.h"
 
 namespace oxide {
 namespace qt {
 
-ScriptMessageRequestAdapterPrivate::ScriptMessageRequestAdapterPrivate(
-    ScriptMessageRequestAdapter* adapter) :
-    a(adapter) {}
-
-void ScriptMessageRequestAdapterPrivate::ReceiveReplyCallback(
-    const std::string& args) {
-  QJsonDocument jsondoc(QJsonDocument::fromJson(
-      QByteArray(args.data(), args.length())));
-
-  a->OnReceiveReply(jsondoc.toVariant());
-}
-
-void ScriptMessageRequestAdapterPrivate::ReceiveErrorCallback(
-    oxide::ScriptMessageRequest::Error error,
-    const std::string& msg) {
-  a->OnReceiveError(error, QString::fromStdString(msg));
-}
-
-// static
-ScriptMessageRequestAdapterPrivate* ScriptMessageRequestAdapterPrivate::get(
-    ScriptMessageRequestAdapter* adapter) {
-  return adapter->priv.data();
-}
-
-void ScriptMessageRequestAdapterPrivate::SetRequest(
-    oxide::ScriptMessageRequestImplBrowser* req) {
-  DCHECK(!request_ && req);
-  request_.reset(req);
-
-  request_->SetReplyCallback(
-      base::Bind(
-        &ScriptMessageRequestAdapterPrivate::ReceiveReplyCallback,
-        base::Unretained(this)));
-  request_->SetErrorCallback(
-      base::Bind(
-        &ScriptMessageRequestAdapterPrivate::ReceiveErrorCallback,
-        base::Unretained(this)));
-}
-
-ScriptMessageRequestAdapter::ScriptMessageRequestAdapter(
-    QObject* q) :
-    AdapterBase(q),
-    priv(new ScriptMessageRequestAdapterPrivate(this)) {}
+ScriptMessageRequestAdapter::ScriptMessageRequestAdapter(QObject* q)
+    : AdapterBase(q),
+      request_(new ScriptMessageRequest(this)) {}
 
 ScriptMessageRequestAdapter::~ScriptMessageRequestAdapter() {}
 

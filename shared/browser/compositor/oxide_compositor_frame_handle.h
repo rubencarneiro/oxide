@@ -63,7 +63,7 @@ class SoftwareFrameData {
   uint8* pixels_;
 };
 
-class CompositorFrameHandle FINAL :
+class CompositorFrameHandle final :
     public base::RefCounted<CompositorFrameHandle> {
  public:
   CompositorFrameHandle(uint32 surface_id,

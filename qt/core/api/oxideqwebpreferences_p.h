@@ -34,7 +34,7 @@ class WebPreferences;
 }
 }
 
-class OxideQWebPreferencesPrivate Q_DECL_FINAL {
+class OxideQWebPreferencesPrivate final {
  public:
   ~OxideQWebPreferencesPrivate();
 
