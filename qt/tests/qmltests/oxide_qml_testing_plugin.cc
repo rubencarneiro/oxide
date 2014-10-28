@@ -16,6 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <QCoreApplication>
+#include <QDesktopServices>
 #include <QLatin1String>
 #include <QQmlContext>
 #include <QQmlExtensionPlugin>
@@ -97,6 +98,25 @@ class OxideTestingUtils : public QObject {
   Q_INVOKABLE void removeAppProperty(const QString& property) {
     QCoreApplication::instance()->setProperty(property.toStdString().c_str(), QVariant());
   }
+
+  Q_INVOKABLE void setUrlHandler(const QString& scheme, bool doHandle) {
+    if (doHandle) {
+      QDesktopServices::setUrlHandler(scheme, this, "urlHandled");
+    } else {
+      // Register an inexistent handler for the scheme, to ensure that
+      // QDesktopServices::openUrl(…) returns false (its current implementation
+      // ignores the return value of the custom handler method, so returning
+      // false from a valid handler wouldn’t help).
+      QDesktopServices::setUrlHandler(scheme, this, "doNotHandleUrl");
+    }
+  }
+
+  Q_INVOKABLE void unsetUrlHandler(const QString& scheme) {
+    QDesktopServices::unsetUrlHandler(scheme);
+  }
+
+ Q_SIGNALS:
+  void urlHandled(const QUrl& url);
 };
 
 QObject* UtilsFactory(QQmlEngine* engine, QJSEngine* script_engine) {

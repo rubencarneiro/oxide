@@ -15,7 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include <QDesktopServices>
 #include <QDir>
 #include <QDirIterator>
 #include <QFileInfo>
@@ -116,14 +115,7 @@ class QTestRootObject : public QObject
  public:
   QTestRootObject(QObject* parent = 0)
       : QObject(parent),
-        has_quit_(false), window_shown_(false), has_test_case_(false) {
-    QDesktopServices::setUrlHandler("customscheme", this, "urlHandled");
-    // Register an inexistent handler for the "test" scheme, to ensure that
-    // QDesktopServices::openUrl(…) returns false (its current implementation
-    // ignores the return value of the custom handler method, so returning
-    // false from a valid handler wouldn’t help).
-    QDesktopServices::setUrlHandler("test", this, "doNotHandleUrl");
-  }
+        has_quit_(false), window_shown_(false), has_test_case_(false) {}
 
   static QTestRootObject* instance() {
     static QPointer<QTestRootObject> object = new QTestRootObject();
@@ -143,7 +135,6 @@ class QTestRootObject : public QObject
  Q_SIGNALS:
   void windowShownChanged();
   void hasTestCaseChanged();
-  void urlHandled(const QUrl& url);
 
  private Q_SLOTS:
   void quit() { has_quit_ = true; }
