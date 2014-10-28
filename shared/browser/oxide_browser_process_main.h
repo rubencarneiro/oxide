@@ -43,7 +43,7 @@ class BrowserProcessMain {
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
   virtual void Start(scoped_ptr<ContentMainDelegate> delegate,
-                     PlatformIntegration* platform) = 0;
+                     scoped_ptr<PlatformIntegration> platform) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton

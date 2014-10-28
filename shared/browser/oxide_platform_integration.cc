@@ -17,21 +17,35 @@
 
 #include "oxide_platform_integration.h"
 
+#include "base/logging.h"
+
 namespace oxide {
 
-PlatformIntegration* PlatformIntegration::instance = NULL;
+namespace {
 
-PlatformIntegration::PlatformIntegration() {}
+PlatformIntegration* g_instance;
+
+}
+
+PlatformIntegration::PlatformIntegration() {
+  CHECK(!g_instance)
+      << "Can't create more than one PlatformIntegration instance";
+  g_instance = this;
+}
 
 // static
 PlatformIntegration* PlatformIntegration::GetInstance() {
-  return instance;
+  DCHECK(g_instance);
+  return g_instance;
 }
 
 bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
   return false;
 }
 
-PlatformIntegration::~PlatformIntegration() {}
+PlatformIntegration::~PlatformIntegration() {
+  DCHECK_EQ(g_instance, this);
+  g_instance = NULL;
+}
 
 } // namespace oxide

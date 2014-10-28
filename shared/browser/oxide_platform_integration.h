@@ -36,9 +36,6 @@ class PlatformIntegration {
   PlatformIntegration();
 
  private:
-  friend class BrowserProcessMainImpl;
-  static PlatformIntegration* instance;
-
   DISALLOW_COPY_AND_ASSIGN(PlatformIntegration);
 };
 

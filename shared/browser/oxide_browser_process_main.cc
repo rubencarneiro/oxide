@@ -106,7 +106,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   virtual ~BrowserProcessMainImpl();
 
   void Start(scoped_ptr<ContentMainDelegate> delegate,
-             PlatformIntegration* platform) final;
+             scoped_ptr<PlatformIntegration> platform) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -137,6 +137,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   scoped_refptr<SharedGLContext> shared_gl_context_;
   intptr_t native_display_;
   bool native_display_is_valid_;
+
+  scoped_ptr<PlatformIntegration> platform_integration_;
 
   // XXX: Don't change the order of these
   scoped_ptr<ContentMainDelegate> main_delegate_;
@@ -320,13 +322,13 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
 }
 
 void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
-                                   PlatformIntegration* platform) {
+                                   scoped_ptr<PlatformIntegration> platform) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
 
   main_delegate_ = delegate.Pass();
-  PlatformIntegration::instance = platform;
+  platform_integration_ = platform.Pass();
 
   state_ = STATE_STARTED;
 
@@ -440,9 +442,7 @@ void BrowserProcessMainImpl::Shutdown() {
   native_display_is_valid_ = false;
   native_display_ = 0;
 
-  delete PlatformIntegration::instance;
-  PlatformIntegration::instance = NULL;
-
+  platform_integration_.reset();
   main_delegate_.reset();
 
   state_ = STATE_SHUTDOWN;
