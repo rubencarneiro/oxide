@@ -1,7 +1,7 @@
 diff -r 1ef1238dac0f content/browser/media/utouch/browser_media_player_manager.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/browser/media/utouch/browser_media_player_manager.cc	Wed Oct 08 17:51:47 2014 +1000
-@@ -0,0 +1,436 @@
++++ b/content/browser/media/utouch/browser_media_player_manager.cc	Tue Oct 28 16:28:41 2014 +1000
+@@ -0,0 +1,446 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -297,6 +297,16 @@ diff -r 1ef1238dac0f content/browser/media/utouch/browser_media_player_manager.c
 +  players_.clear();
 +}
 +
++void BrowserMediaPlayerManager::OnPlayerPlay(int player_id) {
++  Send(new MediaPlayerMsg_DidMediaPlayerPlay(RoutingID(), player_id));
++}
++
++void BrowserMediaPlayerManager::OnPlayerPause(int player_id) {
++  Send(new MediaPlayerMsg_DidMediaPlayerPause(RoutingID(), player_id));
++}
++
++
++
 +void BrowserMediaPlayerManager::OnInitialize(
 +    const MediaPlayerHostMsg_Initialize_Params& media_player_params) {
 +
@@ -440,8 +450,8 @@ diff -r 1ef1238dac0f content/browser/media/utouch/browser_media_player_manager.c
 +}  // namespace content
 diff -r 1ef1238dac0f content/browser/media/utouch/browser_media_player_manager.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/browser/media/utouch/browser_media_player_manager.h	Wed Oct 08 17:51:47 2014 +1000
-@@ -0,0 +1,125 @@
++++ b/content/browser/media/utouch/browser_media_player_manager.h	Tue Oct 28 16:28:41 2014 +1000
+@@ -0,0 +1,129 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -509,6 +519,10 @@ diff -r 1ef1238dac0f content/browser/media/utouch/browser_media_player_manager.h
 +  virtual media::MediaPlayerOxide* GetPlayer(int player_id) OVERRIDE;
 +  virtual void DestroyAllMediaPlayers() OVERRIDE;
 +
++  // +extra
++  void OnPlayerPlay(int player_id);
++  void OnPlayerPause(int player_id);
++
 +  // Message handlers.
 +  virtual void OnInitialize(
 +      const MediaPlayerHostMsg_Initialize_Params& media_player_params);
@@ -569,7 +583,7 @@ diff -r 1ef1238dac0f content/browser/media/utouch/browser_media_player_manager.h
 +#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
 diff -r 1ef1238dac0f content/browser/media/utouch/media_web_contents_observer.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/browser/media/utouch/media_web_contents_observer.cc	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/browser/media/utouch/media_web_contents_observer.cc	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,93 @@
 +#include "content/browser/media/utouch/media_web_contents_observer.h"
 +
@@ -666,7 +680,7 @@ diff -r 1ef1238dac0f content/browser/media/utouch/media_web_contents_observer.cc
 +}  // namespace content
 diff -r 1ef1238dac0f content/browser/media/utouch/media_web_contents_observer.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/browser/media/utouch/media_web_contents_observer.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/browser/media/utouch/media_web_contents_observer.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,43 @@
 +#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
 +#define CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
@@ -713,7 +727,7 @@ diff -r 1ef1238dac0f content/browser/media/utouch/media_web_contents_observer.h
 +#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
 diff -r 1ef1238dac0f content/browser/renderer_host/render_process_host_impl.cc
 --- a/content/browser/renderer_host/render_process_host_impl.cc	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/browser/renderer_host/render_process_host_impl.cc	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/browser/renderer_host/render_process_host_impl.cc	Tue Oct 28 16:28:41 2014 +1000
 @@ -1252,6 +1252,8 @@
  #if defined(OS_CHROMEOS)
      switches::kEnableVaapiAcceleratedVideoEncode,
@@ -725,7 +739,7 @@ diff -r 1ef1238dac0f content/browser/renderer_host/render_process_host_impl.cc
                                   arraysize(kSwitchNames));
 diff -r 1ef1238dac0f content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/browser/renderer_host/render_view_host_impl.cc	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/browser/renderer_host/render_view_host_impl.cc	Tue Oct 28 16:28:41 2014 +1000
 @@ -93,9 +93,7 @@
  #include "base/win/win_util.h"
  #endif
@@ -748,7 +762,7 @@ diff -r 1ef1238dac0f content/browser/renderer_host/render_view_host_impl.cc
        &RenderViewHostImpl::OnSwappedOut, weak_factory_.GetWeakPtr(), true)));
 diff -r 1ef1238dac0f content/browser/renderer_host/render_view_host_impl.h
 --- a/content/browser/renderer_host/render_view_host_impl.h	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/browser/renderer_host/render_view_host_impl.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/browser/renderer_host/render_view_host_impl.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -390,11 +390,9 @@
    void DidCancelPopupMenu();
  #endif
@@ -774,7 +788,7 @@ diff -r 1ef1238dac0f content/browser/renderer_host/render_view_host_impl.h
    // long to execute, depending on the number of active views in the
 diff -r 1ef1238dac0f content/common/content_message_generator.h
 --- a/content/common/content_message_generator.h	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/common/content_message_generator.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/common/content_message_generator.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -67,3 +67,6 @@
  #include "content/common/gin_java_bridge_messages.h"
  #include "content/common/media/media_player_messages_android.h"
@@ -784,7 +798,7 @@ diff -r 1ef1238dac0f content/common/content_message_generator.h
 +
 diff -r 1ef1238dac0f content/common/media/media_player_messages_enums_oxide.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/common/media/media_player_messages_enums_oxide.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/common/media/media_player_messages_enums_oxide.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,10 @@
 +#ifndef CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
 +#define CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
@@ -798,7 +812,7 @@ diff -r 1ef1238dac0f content/common/media/media_player_messages_enums_oxide.h
 +#endif  // CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
 diff -r 1ef1238dac0f content/common/media/media_player_messages_oxide.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/common/media/media_player_messages_oxide.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/common/media/media_player_messages_oxide.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,144 @@
 +// IPC messages for android media player.
 +// Multiply-included message file, hence no include guard.
@@ -946,7 +960,7 @@ diff -r 1ef1238dac0f content/common/media/media_player_messages_oxide.h
 +                     base::TimeDelta /* duration */)
 diff -r 1ef1238dac0f content/content_browser.gypi
 --- a/content/content_browser.gypi	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/content_browser.gypi	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/content_browser.gypi	Tue Oct 28 16:28:41 2014 +1000
 @@ -839,6 +839,10 @@
        'browser/media/midi_dispatcher_host.h',
        'browser/media/midi_host.cc',
@@ -960,7 +974,7 @@ diff -r 1ef1238dac0f content/content_browser.gypi
        'browser/media/webrtc_identity_store_backend.cc',
 diff -r 1ef1238dac0f content/content_common.gypi
 --- a/content/content_common.gypi	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/content_common.gypi	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/content_common.gypi	Tue Oct 28 16:28:41 2014 +1000
 @@ -382,6 +382,8 @@
        'common/media/media_param_traits.h',
        'common/media/media_player_messages_android.h',
@@ -972,7 +986,7 @@ diff -r 1ef1238dac0f content/content_common.gypi
        'common/media/media_stream_options.h',
 diff -r 1ef1238dac0f content/content_renderer.gypi
 --- a/content/content_renderer.gypi	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/content_renderer.gypi	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/content_renderer.gypi	Tue Oct 28 16:28:41 2014 +1000
 @@ -328,6 +328,12 @@
        'renderer/media/renderer_webmidiaccessor_impl.h',
        'renderer/media/texttrack_impl.cc',
@@ -988,7 +1002,7 @@ diff -r 1ef1238dac0f content/content_renderer.gypi
        'renderer/media/video_capture_impl_manager.cc',
 diff -r 1ef1238dac0f content/public/common/content_switches.cc
 --- a/content/public/common/content_switches.cc	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/public/common/content_switches.cc	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/public/common/content_switches.cc	Tue Oct 28 16:28:41 2014 +1000
 @@ -396,6 +396,12 @@
  // builds.
  const char kEnableLogging[]                 = "enable-logging";
@@ -1004,7 +1018,7 @@ diff -r 1ef1238dac0f content/public/common/content_switches.cc
  
 diff -r 1ef1238dac0f content/public/common/content_switches.h
 --- a/content/public/common/content_switches.h	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/public/common/content_switches.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/public/common/content_switches.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -116,6 +116,9 @@
  CONTENT_EXPORT extern const char kEnableInbandTextTracks[];
  CONTENT_EXPORT extern const char kEnableLCDText[];
@@ -1017,7 +1031,7 @@ diff -r 1ef1238dac0f content/public/common/content_switches.h
  CONTENT_EXPORT extern const char kEnableOverlayFullscreenVideo[];
 diff -r 1ef1238dac0f content/renderer/media/utouch/media_info_loader.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/media_info_loader.cc	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/renderer/media/utouch/media_info_loader.cc	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,193 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -1214,7 +1228,7 @@ diff -r 1ef1238dac0f content/renderer/media/utouch/media_info_loader.cc
 +}  // namespace content
 diff -r 1ef1238dac0f content/renderer/media/utouch/media_info_loader.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/media_info_loader.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/renderer/media/utouch/media_info_loader.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,129 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -1347,7 +1361,7 @@ diff -r 1ef1238dac0f content/renderer/media/utouch/media_info_loader.h
 +#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_MEDIA_INFO_LOADER_H_
 diff -r 1ef1238dac0f content/renderer/media/utouch/renderer_media_player_manager.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/renderer_media_player_manager.cc	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/renderer/media/utouch/renderer_media_player_manager.cc	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,218 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -1569,7 +1583,7 @@ diff -r 1ef1238dac0f content/renderer/media/utouch/renderer_media_player_manager
 +}  // namespace content
 diff -r 1ef1238dac0f content/renderer/media/utouch/renderer_media_player_manager.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/renderer_media_player_manager.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/renderer/media/utouch/renderer_media_player_manager.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,103 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -1676,8 +1690,8 @@ diff -r 1ef1238dac0f content/renderer/media/utouch/renderer_media_player_manager
 +#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_RENDERER_MEDIA_PLAYER_MANAGER_H_
 diff -r 1ef1238dac0f content/renderer/media/utouch/webmediaplayer_oxide.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/webmediaplayer_oxide.cc	Wed Oct 08 17:51:47 2014 +1000
-@@ -0,0 +1,897 @@
++++ b/content/renderer/media/utouch/webmediaplayer_oxide.cc	Tue Oct 28 16:28:41 2014 +1000
+@@ -0,0 +1,900 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -1948,20 +1962,22 @@ diff -r 1ef1238dac0f content/renderer/media/utouch/webmediaplayer_oxide.cc
 +
 +double WebMediaPlayerOxide::duration() const {
 +  // HTML5 spec requires duration to be NaN if readyState is HAVE_NOTHING
-+  if (ready_state_ == WebMediaPlayer::ReadyStateHaveNothing)
++  if (ready_state_ == WebMediaPlayer::ReadyStateHaveNothing) {
 +    return std::numeric_limits<double>::quiet_NaN();
-+
-+  if (duration_ == media::kInfiniteDuration())
++  }
++  if (duration_ == media::kInfiniteDuration()) {
 +    return std::numeric_limits<double>::infinity();
-+
++  }
 +  return duration_.InSecondsF();
 +}
 +
 +double WebMediaPlayerOxide::timelineOffset() const {
 +  base::Time timeline_offset;
 +
-+  if (timeline_offset.is_null())
++  if (timeline_offset.is_null()) {
++
 +    return std::numeric_limits<double>::quiet_NaN();
++  }
 +
 +  return timeline_offset.ToJsTime();
 +}
@@ -2193,6 +2209,7 @@ diff -r 1ef1238dac0f content/renderer/media/utouch/webmediaplayer_oxide.cc
 +}
 +
 +void WebMediaPlayerOxide::OnMediaPlayerPlay() {
++  UpdateNetworkState(WebMediaPlayer::NetworkStateLoaded);
 +  UpdatePlayingState(true);
 +  client_->playbackStateChanged();
 +}
@@ -2577,7 +2594,7 @@ diff -r 1ef1238dac0f content/renderer/media/utouch/webmediaplayer_oxide.cc
 +}  // namespace content
 diff -r 1ef1238dac0f content/renderer/media/utouch/webmediaplayer_oxide.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/webmediaplayer_oxide.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/renderer/media/utouch/webmediaplayer_oxide.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,323 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -2904,7 +2921,7 @@ diff -r 1ef1238dac0f content/renderer/media/utouch/webmediaplayer_oxide.h
 +#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_WEBMEDIAPLAYER_OXIDE_H_
 diff -r 1ef1238dac0f content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/renderer/render_frame_impl.cc	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/renderer/render_frame_impl.cc	Tue Oct 28 16:28:41 2014 +1000
 @@ -9,6 +9,7 @@
  
  #include "base/auto_reset.h"
@@ -2941,7 +2958,7 @@ diff -r 1ef1238dac0f content/renderer/render_frame_impl.cc
  #if defined(ENABLE_BROWSER_CDMS)
        cdm_manager_(NULL),
  #endif
-@@ -1409,14 +1412,27 @@
+@@ -1409,14 +1412,29 @@
  #if defined(OS_ANDROID)
    return CreateAndroidWebMediaPlayer(url, client);
  #else
@@ -2955,7 +2972,9 @@ diff -r 1ef1238dac0f content/renderer/render_frame_impl.cc
 -                                params);
 +
 +  const CommandLine& command_line = *CommandLine::ForCurrentProcess();
-+	if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
++//	if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
++  if (1) {
++    LOG(INFO) << "Using Oxide media player";
 +		return new WebMediaPlayerOxide(
 +				frame_,
 +				client,
@@ -2977,7 +2996,7 @@ diff -r 1ef1238dac0f content/renderer/render_frame_impl.cc
  #endif  // defined(OS_ANDROID)
  }
  
-@@ -3571,14 +3587,15 @@
+@@ -3571,14 +3589,15 @@
        new RenderMediaLog());
  }
  
@@ -2997,7 +3016,7 @@ diff -r 1ef1238dac0f content/renderer/render_frame_impl.cc
    if (!cdm_manager_)
 diff -r 1ef1238dac0f content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h	Thu Aug 21 16:13:55 2014 +1000
-+++ b/content/renderer/render_frame_impl.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/content/renderer/render_frame_impl.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -551,12 +551,12 @@
    // Returns the URL being loaded by the |frame_|'s request.
    GURL GetLoadingUrl() const;
@@ -3028,7 +3047,7 @@ diff -r 1ef1238dac0f content/renderer/render_frame_impl.h
    // Manage all CDMs in this render frame for communicating with the real CDM in
 diff -r 1ef1238dac0f media/base/utouch/media_player_manager.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_manager.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/media/base/utouch/media_player_manager.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,65 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -3097,8 +3116,8 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_manager.h
 +#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MANAGER_H_
 diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_mediahub.cc	Wed Oct 08 17:51:47 2014 +1000
-@@ -0,0 +1,167 @@
++++ b/media/base/utouch/media_player_mediahub.cc	Tue Oct 28 16:28:41 2014 +1000
+@@ -0,0 +1,219 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -3139,6 +3158,7 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.cc
 +      manager_(manager),
 +      width_(0),
 +      height_(0),
++      duration_(0),
 +      media_hub_client_(0),
 +      weak_factory_(this) {
 +
@@ -3157,14 +3177,15 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.cc
 +  }
 +
 +  if (use_fixed_session_) {
-+    media_hub_client_ = mediahub_create_fixed_player(player_id, first_party_for_cookies_.host());
-+    mediahub_set_player_lifetime(media_hub_client_, Lifetime::resumable);
++    media_hub_client_ = mediahub_create_fixed_player(player_id, first_party_for_cookies_.host(), this);
++//    mediahub_set_player_lifetime(media_hub_client_, Lifetime::resumable); // This should be the default in media-hub
 +  } else {
-+    media_hub_client_ = mediahub_create_player(player_id);
++    media_hub_client_ = mediahub_create_player(player_id, this);
 +  }
 +}
 +
 +MediaPlayerMediaHub::~MediaPlayerMediaHub() {
++  timer_.Stop();
 +  mediahub_release(media_hub_client_);
 +}
 +
@@ -3186,6 +3207,10 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.cc
 +
 +void MediaPlayerMediaHub::Start() {
 +  if (prepared_) {
++    timer_.Start(FROM_HERE,
++                 base::TimeDelta::FromMilliseconds(1000),
++                 this,
++                 &MediaPlayerMediaHub::CheckStatus);
 +    mediahub_play(media_hub_client_);
 +  } else {
 +    pending_play_ = true;
@@ -3193,6 +3218,7 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.cc
 +}
 +
 +void MediaPlayerMediaHub::Pause(bool is_media_related_action) {
++  timer_.Stop();
 +  mediahub_pause(media_hub_client_);
 +}
 +
@@ -3253,6 +3279,40 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.cc
 +  return first_party_for_cookies_;
 +}
 +
++void MediaPlayerMediaHub::seeked_to(int64_t pos) {
++}
++
++void MediaPlayerMediaHub::end_of_stream() {
++  manager_->OnPlaybackComplete(player_id());
++}
++
++void MediaPlayerMediaHub::playback_status_changed(MediaHubDelegate::Status status, int64_t duration) {
++  LOG(INFO) << __PRETTY_FUNCTION__;
++  switch (status) {
++  case null:
++  case ready:
++    manager_->OnMediaMetadataChanged(player_id(),
++                                      base::TimeDelta::FromMilliseconds(duration),
++                                      0, 0, true);
++    break;
++  case playing:
++    manager_->OnMediaMetadataChanged(player_id(),
++                                      base::TimeDelta::FromMilliseconds(duration),
++                                      0, 0, true);
++    manager_->OnPlayerPlay(player_id());
++    break;
++  case paused:
++    manager_->OnMediaMetadataChanged(player_id(),
++                                      base::TimeDelta::FromMilliseconds(duration),
++                                      0, 0, true);
++    manager_->OnPlayerPause(player_id());
++    break;
++  case stopped:
++    break;
++  }
++}
++
++
 +void MediaPlayerMediaHub::OnCookiesRetrieved(const std::string& cookies) {
 +  prepared_ = true;
 +  cookies_ = cookies;
@@ -3265,11 +3325,22 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.cc
 +  }
 +}
 +
++void MediaPlayerMediaHub::CheckStatus() {
++  unsigned long long duration = mediahub_get_duration(media_hub_client_);
++
++  if (duration != duration_) {
++    manager_->OnMediaMetadataChanged(player_id(),
++                                      base::TimeDelta::FromMilliseconds(duration),
++                                      0, 0, true);
++    duration_ = duration;
++  }
++}
++
 +}  // namespace media
 diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_mediahub.h	Wed Oct 08 17:51:47 2014 +1000
-@@ -0,0 +1,109 @@
++++ b/media/base/utouch/media_player_mediahub.h	Tue Oct 28 16:28:41 2014 +1000
+@@ -0,0 +1,119 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -3284,6 +3355,7 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.h
 +#include "base/memory/scoped_ptr.h"
 +#include "base/memory/weak_ptr.h"
 +#include "base/time/time.h"
++#include "base/timer/timer.h"
 +#include "media/base/utouch/media_player_oxide.h"
 +#include "media/mediahub/player.h"
 +#include "url/gurl.h"
@@ -3303,7 +3375,8 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.h
 +namespace media {
 +
 +
-+class MEDIA_EXPORT MediaPlayerMediaHub : public MediaPlayerOxide {
++class MEDIA_EXPORT MediaPlayerMediaHub : public MediaPlayerOxide,
++  public MediaHubDelegate {
 + public:
 +  MediaPlayerMediaHub(int player_id,
 +                      const GURL& url,
@@ -3338,12 +3411,17 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.h
 +  virtual GURL GetUrl() OVERRIDE;
 +  virtual GURL GetFirstPartyForCookies() OVERRIDE;
 +
++  // MediaHubDelegate
++  void seeked_to(int64_t pos);
++  void end_of_stream();
++  void playback_status_changed(MediaHubDelegate::Status status, int64_t duration);
++
 + protected:
 +  void SetDuration(base::TimeDelta time);
 +
 + private:
 +  void OnCookiesRetrieved(const std::string& cookies);
-+
++  void CheckStatus();
 +
 +  // Whether the player is prepared for playback.
 +  bool prepared_;
@@ -3365,6 +3443,7 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.h
 +
 +  int width_;
 +  int height_;
++  unsigned long long duration_;
 +
 +  // Cookies for |url_|.
 +  std::string cookies_;
@@ -3372,6 +3451,8 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.h
 +  MediaHubClientHandle media_hub_client_;
 +
 +  base::WeakPtrFactory<MediaPlayerMediaHub> weak_factory_;
++
++  base::RepeatingTimer<MediaPlayerMediaHub> timer_;
 +
 +  DISALLOW_COPY_AND_ASSIGN(MediaPlayerMediaHub);
 +};
@@ -3381,7 +3462,7 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_mediahub.h
 +#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MEDIAHUB_H_
 diff -r 1ef1238dac0f media/base/utouch/media_player_oxide.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_oxide.cc	Wed Oct 08 17:51:47 2014 +1000
++++ b/media/base/utouch/media_player_oxide.cc	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,26 @@
 +// Copyright (c) 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -3411,7 +3492,7 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_oxide.cc
 +}  // namespace media
 diff -r 1ef1238dac0f media/base/utouch/media_player_oxide.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_oxide.h	Wed Oct 08 17:51:47 2014 +1000
++++ b/media/base/utouch/media_player_oxide.h	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,76 @@
 +// Copyright (c) 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -3491,7 +3572,7 @@ diff -r 1ef1238dac0f media/base/utouch/media_player_oxide.h
 +#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_OXIDE_H_
 diff -r 1ef1238dac0f media/media.gyp
 --- a/media/media.gyp	Thu Aug 21 16:13:55 2014 +1000
-+++ b/media/media.gyp	Wed Oct 08 17:51:47 2014 +1000
++++ b/media/media.gyp	Tue Oct 28 16:28:41 2014 +1000
 @@ -63,6 +63,8 @@
          '../ui/gfx/gfx.gyp:gfx_geometry',
          '../url/url.gyp:url_lib',
@@ -3514,7 +3595,7 @@ diff -r 1ef1238dac0f media/media.gyp
          'base/video_decoder_config.cc',
 diff -r 1ef1238dac0f media/mediahub/mediahub.gyp
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/mediahub/mediahub.gyp	Wed Oct 08 17:51:47 2014 +1000
++++ b/media/mediahub/mediahub.gyp	Tue Oct 28 16:28:41 2014 +1000
 @@ -0,0 +1,29 @@
 +# Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +# Use of this source code is governed by a BSD-style license that can be
@@ -3547,77 +3628,120 @@ diff -r 1ef1238dac0f media/mediahub/mediahub.gyp
 +}
 diff -r 1ef1238dac0f media/mediahub/player.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/mediahub/player.cc	Wed Oct 08 17:51:47 2014 +1000
-@@ -0,0 +1,205 @@
++++ b/media/mediahub/player.cc	Tue Oct 28 16:28:41 2014 +1000
+@@ -0,0 +1,312 @@
 +#include "player.h"
 +
 +#include <map>
-+
++#include <ostream>
 +#include <core/media/service.h>
 +#include <core/media/player.h>
 +
 +using namespace core::ubuntu::media;
 +
 +namespace {
-+
 +// TODO thread access? wrap into a ThreadSafe class?
 +std::map<int, std::shared_ptr<Player> > g_mediahub_players;
 +
++void setup_delegate(MediaHubDelegate *delegate, std::shared_ptr<Player>& player)
++{
++  player->seeked_to().connect([delegate](int64_t pos) {
++        delegate->seeked_to(pos);
++      });
++
++  player->end_of_stream().connect([delegate]() {
++        delegate->end_of_stream();
++      });
++
++  player->playback_status_changed().connect([player, delegate](Player::PlaybackStatus status) {
++        delegate->playback_status_changed(
++                    MediaHubDelegate::Status(status),
++                    player->duration().get()
++                  );
++      });
++}
++}
++
++
++MediaHubClientHandle
++mediahub_create_player(int player_id, MediaHubDelegate *delegate)
++{
++  try {
++    if (player_id < 0)
++      return MediaHubClientHandle();
++
++    if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
++      return MediaHubClientHandle();
++
++    std::shared_ptr<Player> player =
++        Service::Client::instance()->create_session(
++            Player::Client::default_configuration());
++
++    g_mediahub_players[player_id] = player;
++
++    if (delegate != 0)
++      setup_delegate(delegate, player);
++
++    // TODO review
++    return MediaHubClientHandle(player.get());
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
++  return MediaHubClientHandle();
 +}
 +
 +MediaHubClientHandle
-+mediahub_create_player(int player_id)
++mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubDelegate *delegate)
 +{
-+  if (player_id < 0)
-+    return MediaHubClientHandle();
++  try {
++    if (player_id < 0)
++      return MediaHubClientHandle();
 +
-+  if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
-+    return MediaHubClientHandle();
++    if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
++      return MediaHubClientHandle();
 +
-+  std::shared_ptr<Player> player =
-+      Service::Client::instance()->create_session(
-+          Player::Client::default_configuration());
++    std::shared_ptr<Player> player =
++        Service::Client::instance()->create_fixed_session(domain,
++            Player::Client::default_configuration());
 +
-+  g_mediahub_players[player_id] = player;
++    g_mediahub_players[player_id] = player;
 +
-+  // TODO review
-+  return MediaHubClientHandle(player.get());
-+}
++    if (delegate != 0) {
++      setup_delegate(delegate, player);
 +
-+MediaHubClientHandle
-+mediahub_create_fixed_player(int player_id, const std::string& domain)
-+{
-+  if (player_id < 0)
-+    return MediaHubClientHandle();
++      delegate->playback_status_changed(
++                    MediaHubDelegate::Status(player->playback_status().get()),
++                    player->duration().get()
++                  );
++    }
 +
-+  if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
-+    return MediaHubClientHandle();
-+
-+  std::shared_ptr<Player> player =
-+      Service::Client::instance()->create_fixed_session(domain,
-+          Player::Client::default_configuration());
-+
-+  g_mediahub_players[player_id] = player;
-+
-+  return MediaHubClientHandle(player.get());
++    return MediaHubClientHandle(player.get());
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
++  return MediaHubClientHandle();
 +}
 +
 +MediaHubClientHandle
 +mediahub_resume_player(int player_id, int player_key)
 +{
-+  if (player_id < 0)
-+    return MediaHubClientHandle();
++  try {
++    if (player_id < 0)
++      return MediaHubClientHandle();
 +
-+  if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
-+    return MediaHubClientHandle();
++    if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
++      return MediaHubClientHandle();
 +
-+  std::shared_ptr<Player> player =
-+      Service::Client::instance()->resume_session(player_key);
++    std::shared_ptr<Player> player =
++        Service::Client::instance()->resume_session(player_key);
 +
-+  g_mediahub_players[player_id] = player;
++    g_mediahub_players[player_id] = player;
 +
-+  // TODO review
-+  return MediaHubClientHandle(player.get());
++    return MediaHubClientHandle(player.get());
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
++  return MediaHubClientHandle();
 +}
 +
 +bool
@@ -3626,18 +3750,24 @@ diff -r 1ef1238dac0f media/mediahub/player.cc
 +                  const std::string& cookies,
 +                  const std::string& user_agent)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player != 0) {
-+    core::ubuntu::media::Player::HeadersType headers;
-+    if (!cookies.empty()) {
-+      headers["Cookie"] = cookies;
-+    }
-+    if (!user_agent.empty()) {
-+      headers["User-Agent"] = user_agent;
-+    }
-+    return player->open_uri(uri, headers);
-+  }
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player != 0) {
++      if (player->playback_status().get() == Player::playing);
++        player->stop();
 +
++      core::ubuntu::media::Player::HeadersType headers;
++      if (!cookies.empty()) {
++        headers["Cookie"] = cookies;
++      }
++      if (!user_agent.empty()) {
++        headers["User-Agent"] = user_agent;
++      }
++      return player->open_uri(uri, headers);
++    }
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +  return false;
 +}
 +
@@ -3645,119 +3775,177 @@ diff -r 1ef1238dac0f media/mediahub/player.cc
 +void
 +mediahub_play(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    player->play();
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player) {
++      player->play();
++    }
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +}
 +
 +void
 +mediahub_pause(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    player->pause();
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      player->pause();
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +}
 +
 +void
 +mediahub_stop(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    player->stop();
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      player->stop();
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +}
 +
 +unsigned long long
 +mediahub_get_duration(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    return player->duration().get();
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      return player->duration().get();
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
++  return 0;
++}
++
++unsigned long long
++mediahub_get_position(MediaHubClientHandle handle)
++{
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      return player->position().get();
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +  return 0;
 +}
 +
 +void
 +mediahub_release(MediaHubClientHandle handle)
 +{
-+  auto it = g_mediahub_players.begin();
-+  for (;
-+       it != g_mediahub_players.end();
-+       it++)
-+    {
++  try {
++    auto it = g_mediahub_players.begin();
++    for (; it != g_mediahub_players.end(); it++) {
 +      if (it->second.get() == handle)
-+	break;
++        break;
 +    }
-+  if (it != g_mediahub_players.end())
-+    {
++    if (it != g_mediahub_players.end()) {
 +      g_mediahub_players.erase(it);
 +    }
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +}
 +
 +int
 +mediahub_is_playing(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    return player->playback_status().get() != Player::playing;
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      return player->playback_status().get() != Player::playing;
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +  return 0;
 +}
 +
 +int
 +mediahub_can_seek_forward(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    return player->can_seek().get();
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      return player->can_seek().get();
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +  return 0;
 +}
 +
 +int
 +mediahub_can_seek_backward(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    return player->can_seek().get();
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      return player->can_seek().get();
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +  return 0;
 +}
 +
 +int
 +mediahub_can_pause(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    return player->can_pause().get();
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      return player->can_pause().get();
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +  return 0;
 +}
 +
 +int
 +mediahub_is_player_ready(MediaHubClientHandle handle)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    return player->playback_status().get() != Player::null;
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      return player->playback_status().get() != Player::null;
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +  return 0;
 +}
 +
 +void
 +mediahub_set_volume(MediaHubClientHandle handle, double volume)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    player->volume().set(volume);
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      player->volume().set(volume);
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +}
 +
 +void
 +mediahub_set_player_lifetime(MediaHubClientHandle handle, Lifetime lifetime)
 +{
-+  Player* player = static_cast<Player*>(handle);
-+  if (player)
-+    player->lifetime().set(Player::Lifetime(lifetime));
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      player->lifetime().set(Player::Lifetime(lifetime));
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
 +}
 +
 +
 diff -r 1ef1238dac0f media/mediahub/player.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/mediahub/player.h	Wed Oct 08 17:51:47 2014 +1000
-@@ -0,0 +1,122 @@
++++ b/media/mediahub/player.h	Tue Oct 28 16:28:41 2014 +1000
+@@ -0,0 +1,137 @@
 +#ifndef MEDIA_MEDIAHUB_PLAYER_H
 +#define MEDIA_MEDIAHUB_PLAYER_H
 +
@@ -3768,6 +3956,15 @@ diff -r 1ef1238dac0f media/mediahub/player.h
 +
 +typedef int
 +MediaHubPlayerId;
++
++class MediaHubDelegate {
++public:
++  enum Status { null, ready, playing, paused, stopped };
++
++  virtual void seeked_to(int64_t pos) = 0;
++  virtual void end_of_stream() = 0;
++  virtual void playback_status_changed(Status status, int64_t duration) = 0;
++};
 +
 +#if defined(__cplusplus)
 +extern "C" {
@@ -3780,13 +3977,13 @@ diff -r 1ef1238dac0f media/mediahub/player.h
 + * Creates a media hub player instance
 + */
 +MediaHubClientHandle
-+mediahub_create_player(int player_id);
++mediahub_create_player(int player_id, MediaHubDelegate* delegate = 0);
 +
 +/**
 + * Create a media hub for use with this domain
 + */
 +MediaHubClientHandle
-+mediahub_create_fixed_player(int player_id, const std::string& domain);
++mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubDelegate* delegate = 0);
 +
 +/**
 + * Resume previously created player session
@@ -3825,6 +4022,12 @@ diff -r 1ef1238dac0f media/mediahub/player.h
 + */
 +unsigned long long
 +mediahub_get_duration(MediaHubClientHandle);
++
++/**
++ * 
++ */
++unsigned long long
++mediahub_get_position(MediaHubClientHandle);
 +
 +/**
 + * 
