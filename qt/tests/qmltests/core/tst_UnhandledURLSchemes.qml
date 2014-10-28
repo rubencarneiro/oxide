@@ -10,12 +10,6 @@ TestWebView {
   height: 200
 
   SignalSpy {
-    id: loadSpy
-    target: webView
-    signalName: "loadEvent"
-  }
-
-  SignalSpy {
     id: urlHandledSpy
     target: TestRoot.QTestRootObject
     signalName: "urlHandled"
@@ -32,6 +26,7 @@ TestWebView {
 
       for (var i = 1; i <= 5; ++i) {
         mouseClick(webView, webView.width / 2, webView.height / 2);
+        webView.waitForLoadStopped();
         urlHandledSpy.wait();
         compare(urlHandledSpy.signalArguments[i - 1][0].toString(),
                 "customscheme:test" + i);
@@ -44,8 +39,7 @@ TestWebView {
       urlHandledSpy.clear();
 
       mouseClick(webView, webView.width / 2, webView.height / 2);
-      loadSpy.wait(); // load started
-      loadSpy.wait(); // load stopped
+      webView.waitForLoadStopped();
       compare(urlHandledSpy.count, 0);
     }
   }
