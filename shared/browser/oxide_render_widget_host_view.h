@@ -28,13 +28,13 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/layers/delegated_frame_resource_collection.h"
-#include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "content/common/cursors/webcursor.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
 
 #include "shared/browser/oxide_renderer_frame_evictor_client.h"
+#include "shared/port/content/browser/render_widget_host_view_oxide.h"
 
 namespace cc {
 class DelegatedFrameProvider;
@@ -51,7 +51,7 @@ class RenderWidgetHostViewDelegate;
 class WebView;
 
 class RenderWidgetHostView final :
-    public content::RenderWidgetHostViewBase,
+    public content::RenderWidgetHostViewOxide,
     public RendererFrameEvictorClient,
     public cc::DelegatedFrameResourceCollectionClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
@@ -78,94 +78,72 @@ class RenderWidgetHostView final :
   void Focus() final;
 
  private:
+  // content::RenderWidgetHostViewOxide implementation
+  void OnTextInputStateChanged(ui::TextInputType type,
+                               bool show_ime_if_needed) final;
+  void OnSelectionBoundsChanged(const gfx::Rect& anchor_rect,
+                                const gfx::Rect& focus_rect,
+                                bool is_anchor_first) final;
+
   // content::RenderWidgetHostViewBase implementation
   void SelectionChanged(const base::string16& text,
                         size_t offset,
                         const gfx::Range& range) final;
-
   gfx::Size GetPhysicalBackingSize() const final;
-
   void FocusedNodeChanged(bool is_editable_node) final;
-
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;
-
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) final;
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) final;
-
   void WasShown() final;
   void WasHidden() final;
-
   void MovePluginWindows(
       const std::vector<content::WebPluginGeometry>& moves) final;
-
   void UpdateCursor(const content::WebCursor& cursor) final;
   void SetIsLoading(bool is_loading) final;
-
-  void TextInputStateChanged(
-      const ViewHostMsg_TextInputState_Params& params) final;
-
+  void TextInputTypeChanged(ui::TextInputType type,
+                            ui::TextInputMode mode,
+                            bool can_compose_inline) final;
   void ImeCancelComposition() final;
-
   void RenderProcessGone(base::TerminationStatus status, int error_code) final;
-
   void Destroy() final;
-
   void SetTooltipText(const base::string16& tooltip_text) final;
-
-  void SelectionBoundsChanged(
-      const ViewHostMsg_SelectionBounds_Params& params) final;
-
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
       const base::Callback<void(bool, const SkBitmap&)>& callback,
       const SkColorType color_type) final;
-
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
       const scoped_refptr<media::VideoFrame>& target,
       const base::Callback<void(bool)>& callback) final;
   bool CanCopyToVideoFrame() const final;
-
   bool HasAcceleratedSurface(const gfx::Size& desired_size) final;
-
   void GetScreenInfo(blink::WebScreenInfo* results) final;
   gfx::Rect GetBoundsInRootWindow() final;
-
   gfx::GLSurfaceHandle GetCompositingSurface() final;
-
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
                                const SkBitmap& zoomed_bitmap) final;
-
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) final;
-
   void ImeCompositionRangeChanged(
       const gfx::Range& range,
       const std::vector<gfx::Rect>& character_bounds) final;
 
   // content::RenderWidgetHostView implementation
   void InitAsChild(gfx::NativeView parent_view) final;
-
   gfx::Vector2dF GetLastScrollOffset() const final;
-
   gfx::NativeView GetNativeView() const final;
   gfx::NativeViewId GetNativeViewId() const final;
   gfx::NativeViewAccessible GetNativeViewAccessible() final;
-
   bool HasFocus() const final;
-
   bool IsSurfaceAvailableForCopy() const final;
-
   void Show() final;
   void Hide() final;
   bool IsShowing() final;
-
   gfx::Rect GetViewBounds() const final;
-
   bool LockMouse() final;
   void UnlockMouse() final;
 

@@ -22,6 +22,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 namespace oxide {
 
@@ -53,6 +54,7 @@ class BrowserProcessMain {
 
   virtual SharedGLContext* GetSharedGLContext() const = 0;
   virtual intptr_t GetNativeDisplay() const = 0;
+  virtual blink::WebScreenInfo GetDefaultScreenInfo() const = 0;
 
  protected:
   BrowserProcessMain();

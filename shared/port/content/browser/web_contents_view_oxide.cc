@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,28 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "shared/gl/oxide_gl_implementation.h"
-
-#include <QGuiApplication>
-#include <QString>
+#include "web_contents_view_oxide.h"
 
 #include "base/logging.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 
-namespace oxide {
+namespace content {
 
-void GetAllowedGLImplementations(std::vector<gfx::GLImplementation>* impls) {
-  QString platform = QGuiApplication::platformName();
-  if (platform == "xcb") {
-    impls->push_back(gfx::kGLImplementationDesktopGL);
-    impls->push_back(gfx::kGLImplementationEGLGLES2);
-    impls->push_back(gfx::kGLImplementationOSMesaGL);
-  } else if (platform.startsWith("ubuntu")) {
-    impls->push_back(gfx::kGLImplementationEGLGLES2);
-  } else if (platform == "minimal") {
-    // None
-  } else {
-    DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
-  }
+namespace {
+WebContentsViewOxideFactory* g_factory;
 }
 
+void SetWebContentsViewOxideFactory(WebContentsViewOxideFactory* factory) {
+  g_factory = factory;
 }
+
+WebContentsView* CreateWebContentsView(
+    WebContentsImpl* web_contents,
+    WebContentsViewDelegate* delegate,
+    RenderViewHostDelegateView** render_view_host_delegate_view) {
+  DCHECK(g_factory);
+
+  WebContentsViewOxide* rv = g_factory(web_contents);
+  DCHECK(rv);
+
+  *render_view_host_delegate_view = rv;
+  return rv;
+}
+
+} // namespace content

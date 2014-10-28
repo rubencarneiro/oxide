@@ -15,38 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_
-#define _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_
+#ifndef _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
+#define _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
 
-#include <QtGlobal>
-
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/ref_counted.h"
+#include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 
-#include "shared/gl/oxide_shared_gl_context.h"
-
-QT_BEGIN_NAMESPACE
-class QOpenGLContext;
-QT_END_NAMESPACE
-
 namespace oxide {
-namespace qt {
 
-class SharedGLContext final : public oxide::SharedGLContext {
+class SharedGLContext : public gfx::GLContext {
  public:
-  SharedGLContext(QOpenGLContext* context);
+  SharedGLContext();
+  virtual ~SharedGLContext();
 
-  void* GetHandle() final { return handle_; }
-  gfx::GLImplementation GetImplementation() final { return implementation_; }
+  void* GetHandle() = 0;
+  virtual gfx::GLImplementation GetImplementation() = 0;
 
- private:
-  void* handle_;
-  gfx::GLImplementation implementation_;
+  bool Initialize(gfx::GLSurface* compatible_surface,
+                  gfx::GpuPreference gpu_preference) final;
+  void Destroy() final;
+  bool MakeCurrent(gfx::GLSurface* surface) final;
+  void ReleaseCurrent(gfx::GLSurface* surface) final;
+  bool IsCurrent(gfx::GLSurface* surface) final;
+  void SetSwapInterval(int interval) final;
 };
 
-} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_
+#endif // _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_

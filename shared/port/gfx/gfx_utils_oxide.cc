@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,15 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_DEFAULT_SCREEN_INFO_H_
-#define _OXIDE_SHARED_BROWSER_DEFAULT_SCREEN_INFO_H_
+#include "gfx_utils_oxide.h"
 
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "base/logging.h"
 
-namespace oxide {
+namespace gfx {
 
-blink::WebScreenInfo GetDefaultWebScreenInfo();
-
+namespace {
+intptr_t g_display;
 }
 
-#endif // _OXIDE_SHARED_BROWSER_DEFAULT_SCREEN_INFO_H_
+intptr_t GetOxideNativeDisplay() {
+  return g_display;
+}
+
+void InitializeOxideNativeDisplay(intptr_t display) {
+  static bool initialized = false;
+  DCHECK(!initialized);
+  initialized = true;
+  g_display = display;
+}
+
+} // namespace gfx
