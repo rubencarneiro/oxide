@@ -90,7 +90,7 @@ void ScriptMessageDispatcherRenderer::OnReceiveMessage(
   if (!mm.get()) {
     if (!is_reply) {
       ReturnError(ScriptMessageRequest::ERROR_INVALID_DESTINATION,
-                  "Could not find a script context to deliver the message too",
+                  "Could not find a script context to deliver the message to",
                   params);
     }
     return;
