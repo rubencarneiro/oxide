@@ -95,6 +95,8 @@
         'browser/oxide_qt_location_provider.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
+        'browser/oxide_qt_platform_integration.cc',
+        'browser/oxide_qt_platform_integration.h',
         'browser/oxide_qt_script_message.cc',
         'browser/oxide_qt_script_message.h',
         'browser/oxide_qt_script_message_handler.cc',

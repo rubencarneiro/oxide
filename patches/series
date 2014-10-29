@@ -3,14 +3,13 @@ port/power_save_blocker.patch
 port/web_contents_view.patch
 port/render_widget_host_view.patch
 port/gl_implementation.patch
-port/gpu_thread_shim.patch
 port/media_ozone.patch
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
 support-native-popup-menus.patch
 add-oxide-messages.patch
 add-oxide-resources.patch
-share-gl-resources-with-embedder.patch
+gpu-thread-shim.patch
 arm-icu.patch
 arm-neon.patch
 dont-use-gl-create-context-robustness.patch

@@ -279,6 +279,8 @@
         'browser/oxide_network_delegate.h',
         'browser/oxide_permission_request.cc',
         'browser/oxide_permission_request.h',
+        'browser/oxide_platform_integration.cc',
+        'browser/oxide_platform_integration.h',
         'browser/oxide_power_save_blocker.cc',
         'browser/oxide_power_save_blocker.h',
         'browser/oxide_renderer_frame_evictor.cc',

@@ -22,6 +22,14 @@ TestWebView {
     name: "WebFrame_url"
     when: windowShown
 
+    function initTestCase() {
+      OxideTestingUtils.setUrlHandler("foo", false);
+    }
+
+    function cleanupTestCase() {
+      OxideTestingUtils.unsetUrlHandler("foo");
+    }
+
     function test_WebFrame_url1() {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
