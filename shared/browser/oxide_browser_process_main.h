@@ -54,6 +54,9 @@ class BrowserProcessMain {
   virtual intptr_t GetNativeDisplay() const = 0;
   virtual blink::WebScreenInfo GetDefaultScreenInfo() const = 0;
 
+  virtual void IncrementPendingUnloadsCount() = 0;
+  virtual void DecrementPendingUnloadsCount() = 0;
+
  protected:
   BrowserProcessMain();
 

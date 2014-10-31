@@ -18,6 +18,7 @@
 #include "oxide_web_view_contents_helper.h"
 
 #include "base/logging.h"
+#include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/renderer_preferences.h"
@@ -25,6 +26,7 @@
 #include "shared/common/oxide_content_client.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
@@ -103,6 +105,16 @@ void WebViewContentsHelper::WebPreferencesAdopted() {
   owns_web_preferences_ = false;
 }
 
+void WebViewContentsHelper::CloseContents(content::WebContents* source) {
+  DCHECK_EQ(source, web_contents_);
+  DCHECK(web_contents_holder_during_close_);
+
+  web_contents_holder_during_close_.reset();
+  // |this| has been deleted
+
+  BrowserProcessMain::GetInstance()->DecrementPendingUnloadsCount();
+}
+
 // static
 void WebViewContentsHelper::Attach(content::WebContents* contents,
                                    content::WebContents* opener) {
@@ -162,6 +174,28 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
 
   WebPreferencesObserver::Observe(preferences);
   WebPreferencesValueChanged();
+}
+
+void WebViewContentsHelper::TakeWebContentsOwnershipAndClosePage(
+    scoped_ptr<content::WebContents> web_contents) {
+  DCHECK_EQ(web_contents.get(), web_contents_);
+  DCHECK(!web_contents_holder_during_close_);
+
+  web_contents_holder_during_close_ = web_contents.Pass();
+
+  content::RenderViewHostImpl* rvh =
+      static_cast<content::RenderViewHostImpl*>(
+        web_contents_->GetRenderViewHost());
+  if (!rvh || rvh->SuddenTerminationAllowed()) {
+    web_contents_holder_during_close_.reset();
+    // |this| has been deleted
+    return;
+  }
+
+  BrowserProcessMain::GetInstance()->IncrementPendingUnloadsCount();
+
+  web_contents_->SetDelegate(this);
+  rvh->ClosePage();
 }
 
 } // namespace oxide

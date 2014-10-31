@@ -414,5 +414,9 @@ ContentTypeFlags WebViewAdapter::blockedContent() const {
   return static_cast<ContentTypeFlags>(view_->blocked_content());
 }
 
+void WebViewAdapter::prepareToClose() {
+  view_->PrepareToClose();
+}
+
 } // namespace qt
 } // namespace oxide

@@ -126,6 +126,9 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   void CertificateError(OxideQCertificateError* cert_error) final;
   void ContentBlocked() final;
 
+  void PrepareToCloseResponse(bool proceed) final;
+  void CloseRequested() final;
+
   void completeConstruction();
 
   static void messageHandler_append(
