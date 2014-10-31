@@ -1206,8 +1206,13 @@ WebView::~WebView() {
   web_contents_->RemoveUserData(kWebViewKey);
   web_contents_helper_->SetDelegate(NULL);
 
-  web_contents_helper_->TakeWebContentsOwnershipAndClosePage(
-      web_contents_.Pass());
+  content::RenderViewHostImpl* rvh =
+      static_cast<content::RenderViewHostImpl*>(
+        web_contents_->GetRenderViewHost());
+  if (rvh && !rvh->SuddenTerminationAllowed()) {
+    web_contents_helper_->TakeWebContentsOwnershipAndClosePage(
+        web_contents_.Pass());
+  }
 }
 
 void WebView::Init(Params* params) {

@@ -18,7 +18,6 @@
 #include "oxide_web_view_contents_helper.h"
 
 #include "base/logging.h"
-#include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/renderer_preferences.h"
@@ -183,19 +182,10 @@ void WebViewContentsHelper::TakeWebContentsOwnershipAndClosePage(
 
   web_contents_holder_during_close_ = web_contents.Pass();
 
-  content::RenderViewHostImpl* rvh =
-      static_cast<content::RenderViewHostImpl*>(
-        web_contents_->GetRenderViewHost());
-  if (!rvh || rvh->SuddenTerminationAllowed()) {
-    web_contents_holder_during_close_.reset();
-    // |this| has been deleted
-    return;
-  }
-
   BrowserProcessMain::GetInstance()->IncrementPendingUnloadsCount();
 
   web_contents_->SetDelegate(this);
-  rvh->ClosePage();
+  web_contents_->GetRenderViewHost()->ClosePage();
 }
 
 } // namespace oxide
