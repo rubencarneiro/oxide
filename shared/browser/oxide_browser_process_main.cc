@@ -30,8 +30,10 @@
 #include "base/i18n/icu_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/message_loop/message_loop.h"
 #include "base/path_service.h"
 #include "base/posix/global_descriptors.h"
+#include "base/run_loop.h"
 #include "base/strings/string_util.h"
 #include "cc/base/switches.h"
 #include "content/app/mojo/mojo_init.h"
@@ -124,6 +126,17 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
     return main_delegate_->GetDefaultScreenInfo();
   }
 
+  void IncrementPendingUnloadsCount() final {
+    DCHECK_EQ(state_, STATE_STARTED);
+    pending_unloads_count_++;
+  }
+  void DecrementPendingUnloadsCount() final {
+    DCHECK_GT(pending_unloads_count_, 0U);
+    if (--pending_unloads_count_ == 0 && state_ == STATE_SHUTTING_DOWN) {
+      shutdown_loop_quit_closure_.Run();
+    }
+  }
+
  private:
 
   enum State {
@@ -144,6 +157,9 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   scoped_ptr<ContentMainDelegate> main_delegate_;
   scoped_ptr<base::AtExitManager> exit_manager_;
   scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
+
+  size_t pending_unloads_count_;
+  base::Closure shutdown_loop_quit_closure_;
 };
 
 namespace {
@@ -314,7 +330,8 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
       native_display_(0),
-      native_display_is_valid_(false) {}
+      native_display_is_valid_(false),
+      pending_unloads_count_(0) {}
 
 BrowserProcessMainImpl::~BrowserProcessMainImpl() {
   CHECK(state_ == STATE_NOT_STARTED || state_ == STATE_SHUTDOWN) <<
@@ -428,6 +445,17 @@ void BrowserProcessMainImpl::Shutdown() {
     return;
   }
   state_ = STATE_SHUTTING_DOWN;
+
+  if (pending_unloads_count_ > 0) {
+    // Wait for any pending unload handlers to finish
+    base::MessageLoop::ScopedNestableTaskAllower nestable_task_allower(
+        base::MessageLoop::current());
+
+    base::RunLoop run_loop;
+    shutdown_loop_quit_closure_ = run_loop.QuitClosure();
+
+    run_loop.Run();
+  }
 
   BrowserContext::AssertNoContextsExist();
 

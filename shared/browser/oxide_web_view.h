@@ -227,6 +227,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
+  void PrepareToClose();
+
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int selected_item,
@@ -391,11 +393,15 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                       bool user_gesture,
                       bool* was_blocked) final;
   void LoadProgressChanged(content::WebContents* source, double progress) final;
+  void CloseContents(content::WebContents* source) final;
   bool AddMessageToConsole(content::WebContents* source,
                int32 level,
                const base::string16& message,
                int32 line_no,
                const base::string16& source_id) final;
+  void BeforeUnloadFired(content::WebContents* source,
+                         bool proceed,
+                         bool* proceed_to_fire_unload) final;
   content::JavaScriptDialogManager* GetJavaScriptDialogManager() final;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) final;
@@ -532,6 +538,9 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       bool strict_enforcement,
       scoped_ptr<SimplePermissionRequest> request);
   virtual void OnContentBlocked();
+
+  virtual void OnPrepareToCloseResponse(bool proceed);
+  virtual void OnCloseRequested();
 
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;

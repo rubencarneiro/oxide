@@ -194,6 +194,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   ContentTypeFlags blockedContent() const;
 
+  void prepareToClose();
+
  protected:
   WebViewAdapter(QObject* q);
 
@@ -276,6 +278,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
   virtual void ContentBlocked() = 0;
+
+  virtual void PrepareToCloseResponse(bool proceed) = 0;
+  virtual void CloseRequested() = 0;
 
   QScopedPointer<WebView> view_;
 

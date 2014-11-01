@@ -209,6 +209,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void setCanTemporarilyDisplayInsecureContent(bool allow);
   void setCanTemporarilyRunInsecureContent(bool allow);
 
+  void prepareToClose();
+
  Q_SIGNALS:
   void urlChanged();
   void titleChanged();
@@ -248,6 +250,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void downloadRequested(OxideQDownloadRequest* request);
   void certificateError(const QJSValue& error);
   void blockedContentChanged();
+  void prepareToCloseResponse(bool proceed);
+  void closeRequested();
 
   // Deprecated since 1.3
   void loadingChanged(OxideQLoadEvent* loadEvent);
