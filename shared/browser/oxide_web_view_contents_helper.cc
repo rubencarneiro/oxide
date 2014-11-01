@@ -108,7 +108,8 @@ void WebViewContentsHelper::CloseContents(content::WebContents* source) {
   DCHECK_EQ(source, web_contents_);
   DCHECK(web_contents_holder_during_close_);
 
-  web_contents_holder_during_close_.reset();
+  scoped_ptr<content::WebContents> holder = web_contents_holder_during_close_.Pass();
+  holder.reset();
   // |this| has been deleted
 
   BrowserProcessMain::GetInstance()->DecrementPendingUnloadsCount();
