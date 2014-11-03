@@ -76,21 +76,28 @@ void EnsureChromiumStarted() {
 
   scoped_ptr<PlatformIntegration> platform_integration(new PlatformIntegration());
 
-  oxide::SupportedGLImplFlags supported_gl = oxide::SUPPORTED_GL_IMPL_NONE;
-  QString platform = QGuiApplication::platformName();
-  if (platform == QLatin1String("xcb")) {
-    supported_gl |= oxide::SUPPORTED_GL_IMPL_DESKTOP_GL;
-    supported_gl |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
-  } else if (platform.startsWith("ubuntu")) {
-    supported_gl |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
+  oxide::SupportedGLImplFlags supported_gl_impls =
+      oxide::SUPPORTED_GL_IMPL_NONE;
+  if (QGuiApplication::platformNativeInterface()) {
+    QString platform = QGuiApplication::platformName();
+    if (platform == QLatin1String("xcb")) {
+      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_DESKTOP_GL;
+      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
+    } else if (platform.startsWith("ubuntu")) {
+      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
+    } else {
+      LOG(WARNING) << "Unrecognized Qt platform: " << qPrintable(platform);
+    }
   } else {
-    LOG(WARNING) << "Unrecognized Qt platform: " << qPrintable(platform);
+    LOG(WARNING)
+        << "Unable to determine native display handle on Qt platform: "
+        << qPrintable(QGuiApplication::platformName());
   }
 
   oxide::BrowserProcessMain::GetInstance()->Start(
       delegate.PassAs<oxide::ContentMainDelegate>(),
       platform_integration.PassAs<oxide::PlatformIntegration>(),
-      supported_gl);
+      supported_gl_impls);
 
   qAddPostRoutine(ShutdownChromium);
 }
