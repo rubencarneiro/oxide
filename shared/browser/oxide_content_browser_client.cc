@@ -185,7 +185,8 @@ void ContentBrowserClient::AllowCertificateError(
                                  result);
 }
 
-void ContentBrowserClient::RequestGeolocationPermission(
+void ContentBrowserClient::RequestPermission(
+    content::PermissionType permission,
     content::WebContents* web_contents,
     int bridge_id,
     const GURL& requesting_frame,
@@ -193,6 +194,12 @@ void ContentBrowserClient::RequestGeolocationPermission(
     const base::Callback<void(bool)>& result_callback) {
   WebView* webview = WebView::FromWebContents(web_contents);
   if (!webview) {
+    result_callback.Run(false);
+    return;
+  }
+
+  if (permission != content::PERMISSION_GEOLOCATION) {
+    // TODO: Other types
     result_callback.Run(false);
     return;
   }

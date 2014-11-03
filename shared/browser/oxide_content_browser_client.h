@@ -109,7 +109,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
       const base::Callback<void(bool)>& callback,
       content::CertificateRequestResultType* result) final;
 
-  void RequestGeolocationPermission(
+  void RequestPermission(
+      content::PermissionType permission,
       content::WebContents* web_contents,
       int bridge_id,
       const GURL& requesting_frame,
