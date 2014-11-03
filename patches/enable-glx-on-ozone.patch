@@ -210,7 +210,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -392,17 +392,17 @@
+@@ -388,17 +388,17 @@
            'sources!': [
              'render_text.cc',
              'render_text.h',
@@ -263,7 +263,7 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -198,24 +198,24 @@
+@@ -199,24 +199,24 @@
            ],
          }],
          ['OS=="linux"', {
@@ -313,7 +313,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -260,16 +260,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -296,16 +296,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -333,7 +333,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -323,17 +326,17 @@ struct GL_EXPORT DriverEGL {
+@@ -359,17 +362,17 @@ struct GL_EXPORT DriverEGL {
    void ClearBindings();
  
    ProcsEGL fn;
@@ -352,7 +352,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -363,16 +366,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -399,16 +402,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -444,7 +444,7 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
 @@ -43,16 +43,17 @@ class GL_EXPORT GLSurfaceGLX : public GL
  
   protected:
-   virtual ~GLSurfaceGLX();
+   ~GLSurfaceGLX() override;
  
   private:
    DISALLOW_COPY_AND_ASSIGN(GLSurfaceGLX);
@@ -458,7 +458,7 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
    explicit NativeViewGLSurfaceGLX(gfx::AcceleratedWidget window);
  
    // Implement GLSurfaceGLX.
-   virtual bool Initialize() override;
+   bool Initialize() override;
 @@ -86,16 +87,17 @@ class GL_EXPORT NativeViewGLSurfaceGLX :
  
    void* config_;
@@ -476,4 +476,4 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
    explicit PbufferGLSurfaceGLX(const gfx::Size& size);
  
    // Implement GLSurfaceGLX.
-   virtual bool Initialize() override;
+   bool Initialize() override;
