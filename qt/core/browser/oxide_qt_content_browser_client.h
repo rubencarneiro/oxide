@@ -37,7 +37,6 @@ class ContentBrowserClient final : public oxide::ContentBrowserClient {
 
   // oxide::ContentBrowserClient implementation
   oxide::WebPreferences* CreateWebPreferences() final;
-  bool IsTouchSupported() final;
   oxide::BrowserMainParts::Delegate* CreateBrowserMainPartsDelegate() final;
 
   // content::ContentBrowserClient implementation

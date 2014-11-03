@@ -32,6 +32,8 @@ class PlatformIntegration {
 
   virtual bool LaunchURLExternally(const GURL& url);
 
+  virtual bool IsTouchSupported();
+
  protected:
   PlatformIntegration();
 

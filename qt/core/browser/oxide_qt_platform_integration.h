@@ -27,7 +27,9 @@ class PlatformIntegration final : public oxide::PlatformIntegration {
  public:
   PlatformIntegration();
 
+ private:
   bool LaunchURLExternally(const GURL& url) final;
+  bool IsTouchSupported() final;
 };
 
 } // namespace qt

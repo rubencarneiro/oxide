@@ -19,6 +19,7 @@
 
 #include <QDesktopServices>
 #include <QString>
+#include <QTouchDevice>
 #include <QUrl>
 
 #include "url/gurl.h"
@@ -30,6 +31,11 @@ PlatformIntegration::PlatformIntegration() {}
 
 bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
   return QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));
+}
+
+bool PlatformIntegration::IsTouchSupported() {
+  // XXX: Is there a way to get notified if a touch device is added?
+  return QTouchDevice::devices().size() > 0;
 }
 
 } // namespace qt

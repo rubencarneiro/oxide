@@ -33,6 +33,11 @@ PlatformIntegration::PlatformIntegration() {
   g_instance = this;
 }
 
+PlatformIntegration::~PlatformIntegration() {
+  DCHECK_EQ(g_instance, this);
+  g_instance = NULL;
+}
+
 // static
 PlatformIntegration* PlatformIntegration::GetInstance() {
   DCHECK(g_instance);
@@ -43,9 +48,8 @@ bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
   return false;
 }
 
-PlatformIntegration::~PlatformIntegration() {
-  DCHECK_EQ(g_instance, this);
-  g_instance = NULL;
+bool PlatformIntegration::IsTouchSupported() {
+  return false;
 }
 
 } // namespace oxide
