@@ -108,7 +108,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   virtual ~BrowserProcessMainImpl();
 
   void Start(scoped_ptr<ContentMainDelegate> delegate,
-             scoped_ptr<PlatformIntegration> platform) final;
+             scoped_ptr<PlatformIntegration> platform,
+             SupportedGLImplFlags supported_gl_flags) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -117,13 +118,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 
   SharedGLContext* GetSharedGLContext() const final {
     return shared_gl_context_.get();
-  }
-  intptr_t GetNativeDisplay() const final {
-    CHECK(native_display_is_valid_);
-    return native_display_;
-  }
-  blink::WebScreenInfo GetDefaultScreenInfo() const final {
-    return main_delegate_->GetDefaultScreenInfo();
   }
 
   void IncrementPendingUnloadsCount() final {
@@ -148,8 +142,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   State state_;
 
   scoped_refptr<SharedGLContext> shared_gl_context_;
-  intptr_t native_display_;
-  bool native_display_is_valid_;
 
   scoped_ptr<PlatformIntegration> platform_integration_;
 
@@ -170,7 +162,7 @@ BrowserProcessMainImpl* GetBrowserProcessMainInstance() {
 }
 
 blink::WebScreenInfo DefaultScreenInfoGetter() {
-  return BrowserProcessMain::GetInstance()->GetDefaultScreenInfo();
+  return PlatformIntegration::GetInstance()->GetDefaultScreenInfo();
 }
 
 bool IsEnvironmentOptionEnabled(const char* option) {
@@ -329,8 +321,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
-      native_display_(0),
-      native_display_is_valid_(false),
       pending_unloads_count_(0) {}
 
 BrowserProcessMainImpl::~BrowserProcessMainImpl() {
@@ -339,10 +329,12 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
 }
 
 void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
-                                   scoped_ptr<PlatformIntegration> platform) {
+                                   scoped_ptr<PlatformIntegration> platform,
+                                   SupportedGLImplFlags supported_gl_impls) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
+  CHECK(platform) << "No PlatformIntegration provided";
 
   main_delegate_ = delegate.Pass();
   platform_integration_ = platform.Pass();
@@ -350,7 +342,6 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
   state_ = STATE_STARTED;
 
   shared_gl_context_ = main_delegate_->GetSharedGLContext();
-  native_display_is_valid_ = main_delegate_->GetNativeDisplay(&native_display_);
 
   if (!shared_gl_context_.get()) {
     DLOG(INFO) << "No shared GL context has been provided. "
@@ -411,21 +402,21 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
 
-  if (native_display_is_valid_) {
-    gfx::InitializeOxideNativeDisplay(native_display_);
+  gfx::InitializeOxideNativeDisplay(platform_integration_->GetNativeDisplay());
 
-    std::vector<gfx::GLImplementation> allowed_gl_impls;
-    if (main_delegate_->IsPlatformX11()) {
-      allowed_gl_impls.push_back(gfx::kGLImplementationDesktopGL);
-    }
+  std::vector<gfx::GLImplementation> allowed_gl_impls;
+  if (supported_gl_impls & SUPPORTED_GL_IMPL_DESKTOP_GL) {
+    allowed_gl_impls.push_back(gfx::kGLImplementationDesktopGL);
+  }
+  if (supported_gl_impls & SUPPORTED_GL_IMPL_EGL_GLES2) {
     allowed_gl_impls.push_back(gfx::kGLImplementationEGLGLES2);
-    allowed_gl_impls.push_back(gfx::kGLImplementationOSMesaGL);
-    gfx::InitializeAllowedGLImplementations(allowed_gl_impls);
+  }
+  allowed_gl_impls.push_back(gfx::kGLImplementationOSMesaGL);
+  gfx::InitializeAllowedGLImplementations(allowed_gl_impls);
 
-    if (shared_gl_context_.get()) {
-      gfx::InitializePreferredGLImplementation(
-          shared_gl_context_->GetImplementation());
-    }
+  if (shared_gl_context_.get()) {
+    gfx::InitializePreferredGLImplementation(
+        shared_gl_context_->GetImplementation());
   }
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
@@ -467,8 +458,6 @@ void BrowserProcessMainImpl::Shutdown() {
   exit_manager_.reset();
 
   shared_gl_context_ = NULL;
-  native_display_is_valid_ = false;
-  native_display_ = 0;
 
   platform_integration_.reset();
   main_delegate_.reset();

@@ -34,8 +34,6 @@ class ContentMainDelegate : public content::ContentMainDelegate {
   virtual ~ContentMainDelegate();
 
   virtual SharedGLContext* GetSharedGLContext() const;
-  virtual bool GetNativeDisplay(intptr_t* handle) const;
-  virtual blink::WebScreenInfo GetDefaultScreenInfo() const;
 #if defined(USE_NSS)
   virtual base::FilePath GetNSSDbPath() const;
 #endif

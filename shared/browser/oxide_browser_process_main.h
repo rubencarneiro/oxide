@@ -22,13 +22,18 @@
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 namespace oxide {
 
 class ContentMainDelegate;
 class PlatformIntegration;
 class SharedGLContext;
+
+enum SupportedGLImplFlags {
+  SUPPORTED_GL_IMPL_NONE = 0,
+  SUPPORTED_GL_IMPL_DESKTOP_GL = 1 << 0,
+  SUPPORTED_GL_IMPL_EGL_GLES2 = 1 << 1
+};
 
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
@@ -43,7 +48,8 @@ class BrowserProcessMain {
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
   virtual void Start(scoped_ptr<ContentMainDelegate> delegate,
-                     scoped_ptr<PlatformIntegration> platform) = 0;
+                     scoped_ptr<PlatformIntegration> platform,
+                     SupportedGLImplFlags supported_gl_flags) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton
@@ -53,8 +59,6 @@ class BrowserProcessMain {
   virtual bool IsRunning() const = 0;
 
   virtual SharedGLContext* GetSharedGLContext() const = 0;
-  virtual intptr_t GetNativeDisplay() const = 0;
-  virtual blink::WebScreenInfo GetDefaultScreenInfo() const = 0;
 
   virtual void IncrementPendingUnloadsCount() = 0;
   virtual void DecrementPendingUnloadsCount() = 0;

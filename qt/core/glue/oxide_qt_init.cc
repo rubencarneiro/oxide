@@ -26,12 +26,15 @@
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
 #include "qt/core/browser/oxide_qt_platform_integration.h"
+#include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
 namespace oxide {
 namespace qt {
 
 namespace {
+
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(oxide::SupportedGLImplFlags)
 
 QOpenGLContext* g_shared_gl_context;
 
@@ -70,10 +73,24 @@ void EnsureChromiumStarted() {
   scoped_ptr<ContentMainDelegate> delegate(
       ContentMainDelegate::CreateForBrowser(
         base::FilePath(nss_db_path.toStdString())));
-  scoped_ptr<PlatformIntegration> platform(new PlatformIntegration());
+
+  scoped_ptr<PlatformIntegration> platform_integration(new PlatformIntegration());
+
+  oxide::SupportedGLImplFlags supported_gl = oxide::SUPPORTED_GL_IMPL_NONE;
+  QString platform = QGuiApplication::platformName();
+  if (platform == QLatin1String("xcb")) {
+    supported_gl |= oxide::SUPPORTED_GL_IMPL_DESKTOP_GL;
+    supported_gl |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
+  } else if (platform.startsWith("ubuntu")) {
+    supported_gl |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
+  } else {
+    LOG(WARNING) << "Unrecognized Qt platform: " << qPrintable(platform);
+  }
+
   oxide::BrowserProcessMain::GetInstance()->Start(
       delegate.PassAs<oxide::ContentMainDelegate>(),
-      platform.PassAs<oxide::PlatformIntegration>());
+      platform_integration.PassAs<oxide::PlatformIntegration>(),
+      supported_gl);
 
   qAddPostRoutine(ShutdownChromium);
 }

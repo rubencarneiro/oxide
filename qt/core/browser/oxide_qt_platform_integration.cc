@@ -18,11 +18,15 @@
 #include "oxide_qt_platform_integration.h"
 
 #include <QDesktopServices>
+#include <QGuiApplication>
 #include <QString>
 #include <QTouchDevice>
 #include <QUrl>
+#include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "url/gurl.h"
+
+#include "qt/core/base/oxide_qt_screen_utils.h"
 
 namespace oxide {
 namespace qt {
@@ -36,6 +40,21 @@ bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
 bool PlatformIntegration::IsTouchSupported() {
   // XXX: Is there a way to get notified if a touch device is added?
   return QTouchDevice::devices().size() > 0;
+}
+
+intptr_t PlatformIntegration::GetNativeDisplay() {
+  QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
+  if (!pni) {
+    return 0;
+  }
+
+  return reinterpret_cast<intptr_t>(
+      pni->nativeResourceForScreen("display",
+                                   QGuiApplication::primaryScreen()));
+}
+
+blink::WebScreenInfo PlatformIntegration::GetDefaultScreenInfo() {
+  return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
 } // namespace qt

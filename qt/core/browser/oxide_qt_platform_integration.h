@@ -30,6 +30,8 @@ class PlatformIntegration final : public oxide::PlatformIntegration {
  private:
   bool LaunchURLExternally(const GURL& url) final;
   bool IsTouchSupported() final;
+  intptr_t GetNativeDisplay() final;
+  blink::WebScreenInfo GetDefaultScreenInfo() final;
 };
 
 } // namespace qt

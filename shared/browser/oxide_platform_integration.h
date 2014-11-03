@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 
 #include "base/macros.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 class GURL;
 
@@ -33,6 +34,10 @@ class PlatformIntegration {
   virtual bool LaunchURLExternally(const GURL& url);
 
   virtual bool IsTouchSupported();
+
+  virtual intptr_t GetNativeDisplay() = 0;
+
+  virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
 
  protected:
   PlatformIntegration();

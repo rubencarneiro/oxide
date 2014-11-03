@@ -59,27 +59,6 @@ oxide::SharedGLContext* ContentMainDelegate::GetSharedGLContext() const {
   return shared_gl_context_.get();
 }
 
-bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
-  if (!is_browser_) {
-    return false;
-  }
-
-  QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
-  if (!pni) {
-    return false;
-  }
-
-  *handle = reinterpret_cast<intptr_t>(
-      pni->nativeResourceForScreen("display",
-                                   QGuiApplication::primaryScreen()));
-
-  return true;
-}
-
-blink::WebScreenInfo ContentMainDelegate::GetDefaultScreenInfo() const {
-  return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
-}
-
 #if defined(USE_NSS)
 base::FilePath ContentMainDelegate::GetNSSDbPath() const {
   DCHECK(is_browser_);
