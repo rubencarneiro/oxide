@@ -113,7 +113,7 @@ class WebViewUserData : public base::SupportsUserData::Data {
  public:
   WebViewUserData(WebView* view) : view_(view) {}
 
-  WebView* view() const { return view_; }
+  WebView* get() const { return view_; }
 
  private:
   WebView* view_;
@@ -799,6 +799,12 @@ void WebView::LoadProgressChanged(content::WebContents* source,
   OnLoadProgressChanged(progress);
 }
 
+void WebView::CloseContents(content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  OnCloseRequested();
+}
+
 bool WebView::AddMessageToConsole(content::WebContents* source,
                                   int32 level,
                                   const base::string16& message,
@@ -807,6 +813,17 @@ bool WebView::AddMessageToConsole(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
 
   return OnAddMessageToConsole(level, message, line_no, source_id);
+}
+
+void WebView::BeforeUnloadFired(content::WebContents* source,
+                                bool proceed,
+                                bool* proceed_to_fire_unload) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  // We take care of the unload handler on deletion
+  *proceed_to_fire_unload = false;
+
+  OnPrepareToCloseResponse(proceed);
 }
 
 content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
@@ -1128,6 +1145,9 @@ bool WebView::OnCertificateError(
 }
 void WebView::OnContentBlocked() {}
 
+void WebView::OnPrepareToCloseResponse(bool proceed) {}
+void WebView::OnCloseRequested() {}
+
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
       show_ime_if_needed_(false),
@@ -1183,8 +1203,16 @@ WebView::~WebView() {
     rwhv->SetDelegate(NULL);
   }
 
-  initial_preferences_ = NULL;
-  web_contents_helper_ = NULL;
+  web_contents_->RemoveUserData(kWebViewKey);
+  web_contents_helper_->SetDelegate(NULL);
+
+  content::RenderViewHostImpl* rvh =
+      static_cast<content::RenderViewHostImpl*>(
+        web_contents_->GetRenderViewHost());
+  if (rvh && !rvh->SuddenTerminationAllowed()) {
+    web_contents_helper_->TakeWebContentsOwnershipAndClosePage(
+        web_contents_.Pass());
+  }
 }
 
 void WebView::Init(Params* params) {
@@ -1293,7 +1321,7 @@ WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
     return NULL;
   }
 
-  return data->view();
+  return data->get();
 }
 
 // static
@@ -1633,6 +1661,28 @@ void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
       new OxideMsg_SetAllowRunningInsecureContent(MSG_ROUTING_NONE, allow));
   web_contents_->GetMainFrame()->Send(
       new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
+}
+
+void WebView::PrepareToClose() {
+  base::Closure no_before_unload_handler_response_task =
+      base::Bind(&WebView::OnPrepareToCloseResponse,
+                 AsWeakPtr(), true);
+
+  if (!web_contents_) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, no_before_unload_handler_response_task);
+    return;
+  }
+
+  if (!web_contents_->NeedToFireBeforeUnload()) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, no_before_unload_handler_response_task);
+    return;
+  }
+
+  // This is ok to call multiple times - RFHI tracks whether a response
+  // is pending and won't dispatch another event if it is
+  web_contents_->DispatchBeforeUnload(false);
 }
 
 void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,

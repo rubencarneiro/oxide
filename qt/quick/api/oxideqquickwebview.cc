@@ -627,6 +627,18 @@ void OxideQQuickWebViewPrivate::ContentBlocked() {
   emit q->blockedContentChanged();
 }
 
+void OxideQQuickWebViewPrivate::PrepareToCloseResponse(bool proceed) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->prepareToCloseResponse(proceed);
+}
+
+void OxideQQuickWebViewPrivate::CloseRequested() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->closeRequested();
+}
+
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
@@ -1435,6 +1447,12 @@ void OxideQQuickWebView::setCanTemporarilyRunInsecureContent(bool allow) {
   Q_D(OxideQQuickWebView);
 
   d->setCanTemporarilyRunInsecureContent(allow);
+}
+
+void OxideQQuickWebView::prepareToClose() {
+  Q_D(OxideQQuickWebView);
+
+  d->prepareToClose();
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

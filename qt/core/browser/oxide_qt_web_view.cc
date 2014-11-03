@@ -832,6 +832,14 @@ void WebView::OnContentBlocked() {
   adapter_->ContentBlocked();
 }
 
+void WebView::OnPrepareToCloseResponse(bool proceed) {
+  adapter_->PrepareToCloseResponse(proceed);
+}
+
+void WebView::OnCloseRequested() {
+  adapter_->CloseRequested();
+}
+
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
