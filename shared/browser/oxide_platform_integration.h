@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 class GURL;
@@ -26,6 +27,7 @@ class GURL;
 namespace oxide {
 
 class GLContextAdopted;
+class MessagePump;
 
 class PlatformIntegration {
  public:
@@ -42,6 +44,8 @@ class PlatformIntegration {
   virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
 
   virtual GLContextAdopted* GetGLShareContext();
+
+  virtual scoped_ptr<MessagePump> CreateUIMessagePump() = 0;
 
  protected:
   PlatformIntegration();

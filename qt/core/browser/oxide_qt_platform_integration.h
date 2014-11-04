@@ -38,6 +38,7 @@ class PlatformIntegration final : public oxide::PlatformIntegration {
   intptr_t GetNativeDisplay() final;
   blink::WebScreenInfo GetDefaultScreenInfo() final;
   oxide::GLContextAdopted* GetGLShareContext() final;
+  scoped_ptr<oxide::MessagePump> CreateUIMessagePump() final;
 
   scoped_refptr<GLContextAdopted> gl_share_context_;
 };

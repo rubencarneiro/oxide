@@ -26,7 +26,6 @@
 
 namespace base {
 class MessageLoop;
-class MessagePump;
 }
 
 namespace gfx {
@@ -42,10 +41,7 @@ class BrowserMainParts final : public content::BrowserMainParts {
    public:
     virtual ~Delegate();
 
-    typedef scoped_ptr<base::MessagePump> (MessagePumpFactory)();
-
     virtual IOThread::Delegate* GetIOThreadDelegate();
-    virtual MessagePumpFactory* GetMessagePumpFactory() = 0;
   };
 
   BrowserMainParts(Delegate* delegate);

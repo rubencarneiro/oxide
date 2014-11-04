@@ -30,6 +30,8 @@
 #include "qt/core/gl/oxide_qt_gl_context_adopted.h"
 #include "qt/core/glue/oxide_qt_init.h"
 
+#include "oxide_qt_message_pump.h"
+
 namespace oxide {
 namespace qt {
 
@@ -64,6 +66,10 @@ blink::WebScreenInfo PlatformIntegration::GetDefaultScreenInfo() {
 
 oxide::GLContextAdopted* PlatformIntegration::GetGLShareContext() {
   return gl_share_context_.get();
+}
+
+scoped_ptr<oxide::MessagePump> PlatformIntegration::CreateUIMessagePump() {
+  return make_scoped_ptr(new MessagePump()).PassAs<oxide::MessagePump>();
 }
 
 } // namespace qt

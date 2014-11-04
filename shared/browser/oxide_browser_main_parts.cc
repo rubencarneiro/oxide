@@ -57,6 +57,11 @@ blink::WebScreenInfo DefaultScreenInfoGetter() {
   return PlatformIntegration::GetInstance()->GetDefaultScreenInfo();
 }
 
+scoped_ptr<base::MessagePump> CreateUIMessagePump() {
+  return PlatformIntegration::GetInstance()
+      ->CreateUIMessagePump().PassAs<base::MessagePump>();
+}
+
 class ScopedBindGLESAPI {
  public:
   ScopedBindGLESAPI();
@@ -197,11 +202,9 @@ void BrowserMainParts::PreEarlyInitialization() {
   gfx::InitializeOxideNativeDisplay(
       PlatformIntegration::GetInstance()->GetNativeDisplay());
 
-  Delegate::MessagePumpFactory* factory = delegate_->GetMessagePumpFactory();
-  CHECK(factory);
-  base::MessageLoop::InitMessagePumpForUIFactory(factory);
-
+  base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
   main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
+  base::MessageLoop::InitMessagePumpForUIFactory(NULL);
 }
 
 int BrowserMainParts::PreCreateThreads() {
