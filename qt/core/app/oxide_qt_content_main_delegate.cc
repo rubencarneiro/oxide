@@ -17,8 +17,6 @@
 
 #include "oxide_qt_content_main_delegate.h"
 
-#include <QGuiApplication>
-
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 
@@ -48,10 +46,6 @@ base::FilePath ContentMainDelegate::GetNSSDbPath() const {
   return nss_db_path_;
 }
 #endif
-
-bool ContentMainDelegate::IsPlatformX11() const {
-  return QGuiApplication::platformName() == QLatin1String("xcb");
-}
 
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
