@@ -386,8 +386,6 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
 
   Q_ASSERT(this != g_default_context);
 
-  emit d->willBeDestroyed();
-
   for (int i = 0; i < d->userScripts().size(); ++i) {
     d->detachUserScriptSignals(
         adapterToQObject<OxideQQuickUserScript>(d->userScripts().at(i)));

@@ -61,7 +61,6 @@ class OxideQQuickWebContextPrivate final
 
  Q_SIGNALS:
   void constructed();
-  void willBeDestroyed();
 
  private:
   OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
