@@ -77,18 +77,9 @@ class IOThread final : public content::BrowserThreadDelegate {
     DISALLOW_COPY_AND_ASSIGN(Globals);
   };
 
-  class Delegate {
-   public:
-    virtual ~Delegate() {}
-
-    virtual void Init() {}
-    virtual void InitAsync() {}
-    virtual void CleanUp() {}
-  };
-
   static IOThread* instance();
 
-  IOThread(Delegate* delegate);
+  IOThread();
   ~IOThread();
 
   net::NetLog* net_log() const;
@@ -104,8 +95,6 @@ class IOThread final : public content::BrowserThreadDelegate {
   void Init() final;
   void InitAsync() final;
   void CleanUp() final;
-
-  scoped_ptr<Delegate> delegate_;
 
   scoped_ptr<net::NetLog> net_log_;
   Globals* globals_;

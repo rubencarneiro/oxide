@@ -20,7 +20,13 @@
 
 #include "base/memory/ref_counted.h"
 
+#include <QtGlobal>
+
 #include "shared/browser/oxide_platform_integration.h"
+
+QT_BEGIN_NAMESPACE
+class QThread;
+QT_END_NAMESPACE;
 
 namespace oxide {
 namespace qt {
@@ -39,9 +45,12 @@ class PlatformIntegration final : public oxide::PlatformIntegration {
   blink::WebScreenInfo GetDefaultScreenInfo() final;
   oxide::GLContextAdopted* GetGLShareContext() final;
   scoped_ptr<oxide::MessagePump> CreateUIMessagePump() final;
+  void BrowserThreadInit(content::BrowserThread::ID id) final;
 
   scoped_refptr<GLContextAdopted> gl_share_context_;
 };
+
+QThread* GetIOQThread();
 
 } // namespace qt
 } // namespace oxide

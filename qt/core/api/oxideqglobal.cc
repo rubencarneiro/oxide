@@ -20,7 +20,7 @@
 #include <QGlobalStatic>
 #include <QtDebug>
 
-#include "qt/core/browser/oxide_qt_io_thread_delegate.h"
+#include "qt/core/browser/oxide_qt_platform_integration.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
 Q_GLOBAL_STATIC(QString, g_nss_db_path)

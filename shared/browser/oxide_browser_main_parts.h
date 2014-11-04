@@ -22,8 +22,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/browser_main_parts.h"
 
-#include "shared/browser/oxide_io_thread.h"
-
 namespace base {
 class MessageLoop;
 }
@@ -34,17 +32,11 @@ class Screen;
 
 namespace oxide {
 
+class IOThread;
+
 class BrowserMainParts final : public content::BrowserMainParts {
  public:
-
-  class Delegate {
-   public:
-    virtual ~Delegate();
-
-    virtual IOThread::Delegate* GetIOThreadDelegate();
-  };
-
-  BrowserMainParts(Delegate* delegate);
+  BrowserMainParts();
   ~BrowserMainParts();
 
  private:
@@ -55,8 +47,6 @@ class BrowserMainParts final : public content::BrowserMainParts {
   virtual bool MainMessageLoopRun(int* result_code) final;
   virtual void PostMainMessageLoopRun() final;
   virtual void PostDestroyThreads() final;
-
-  scoped_ptr<Delegate> delegate_;
 
   scoped_ptr<base::MessageLoop> main_message_loop_;
   scoped_ptr<IOThread> io_thread_;

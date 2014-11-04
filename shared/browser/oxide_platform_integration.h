@@ -20,6 +20,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "content/public/browser/browser_thread.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 class GURL;
@@ -33,8 +34,11 @@ class PlatformIntegration {
  public:
   virtual ~PlatformIntegration();
 
+  // Can be called on any thread. Destruction of this class
+  // must only happen once all Chromium threads have been shut down
   static PlatformIntegration* GetInstance();
 
+  // Called on the IO thread
   virtual bool LaunchURLExternally(const GURL& url);
 
   virtual bool IsTouchSupported();
@@ -46,6 +50,10 @@ class PlatformIntegration {
   virtual GLContextAdopted* GetGLShareContext();
 
   virtual scoped_ptr<MessagePump> CreateUIMessagePump() = 0;
+
+  // Called on the specified browser thread
+  virtual void BrowserThreadInit(content::BrowserThread::ID id);
+  virtual void BrowserThreadCleanUp(content::BrowserThread::ID id);
 
  protected:
   PlatformIntegration();

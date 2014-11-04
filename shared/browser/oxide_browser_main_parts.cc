@@ -44,6 +44,7 @@
 #include "shared/port/gl/gl_implementation_oxide.h"
 
 #include "oxide_browser_process_main.h"
+#include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
 #include "oxide_platform_integration.h"
 #include "oxide_power_save_blocker.h"
@@ -188,12 +189,6 @@ class Screen : public gfx::Screen {
 
 } // namespace
 
-BrowserMainParts::Delegate::~Delegate() {}
-
-IOThread::Delegate* BrowserMainParts::Delegate::GetIOThreadDelegate() {
-  return NULL;
-}
-
 void BrowserMainParts::PreEarlyInitialization() {
   content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
@@ -240,7 +235,7 @@ int BrowserMainParts::PreCreateThreads() {
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                  primary_screen_.get());
 
-  io_thread_.reset(new IOThread(delegate_->GetIOThreadDelegate()));
+  io_thread_.reset(new IOThread());
 
   gpu::GPUInfo gpu_info;
   gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
@@ -280,10 +275,7 @@ void BrowserMainParts::PostDestroyThreads() {
   content::oxide_gpu_shim::SetGLShareGroup(NULL);
 }
 
-BrowserMainParts::BrowserMainParts(Delegate* delegate)
-    : delegate_(delegate) {
-  DCHECK(delegate);
-}
+BrowserMainParts::BrowserMainParts() {}
 
 BrowserMainParts::~BrowserMainParts() {}
 

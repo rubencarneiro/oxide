@@ -19,21 +19,30 @@
 
 #include <QDesktopServices>
 #include <QGuiApplication>
+#include <QPointer>
 #include <QString>
+#include <QThread>
 #include <QTouchDevice>
 #include <QUrl>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 
+#include "base/lazy_instance.h"
+#include "base/message_loop/message_loop_proxy.h"
 #include "url/gurl.h"
 
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/gl/oxide_qt_gl_context_adopted.h"
 #include "qt/core/glue/oxide_qt_init.h"
 
+#include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_message_pump.h"
 
 namespace oxide {
 namespace qt {
+
+namespace {
+base::LazyInstance<QPointer<QThread> > g_io_thread;
+}
 
 PlatformIntegration::PlatformIntegration()
     : gl_share_context_(GLContextAdopted::Create(GetSharedGLContext())) {}
@@ -70,6 +79,21 @@ oxide::GLContextAdopted* PlatformIntegration::GetGLShareContext() {
 
 scoped_ptr<oxide::MessagePump> PlatformIntegration::CreateUIMessagePump() {
   return make_scoped_ptr(new MessagePump()).PassAs<oxide::MessagePump>();
+}
+
+void PlatformIntegration::BrowserThreadInit(content::BrowserThread::ID id) {
+  if (id != content::BrowserThread::IO) {
+    return;
+  }
+
+  QThread* thread = QThread::currentThread();
+  thread->setEventDispatcher(
+      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+  g_io_thread.Get() = thread;
+}
+
+QThread* GetIOQThread() {
+  return g_io_thread.Get();
 }
 
 } // namespace qt

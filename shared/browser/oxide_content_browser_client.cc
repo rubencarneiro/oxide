@@ -44,6 +44,7 @@
 
 #include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
+#include "oxide_browser_main_parts.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
@@ -66,7 +67,7 @@ namespace oxide {
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
-  return new BrowserMainParts(CreateBrowserMainPartsDelegate());
+  return new BrowserMainParts();
 }
 
 void ContentBrowserClient::RenderProcessWillLaunch(
