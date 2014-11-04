@@ -77,14 +77,15 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
+#include "shared/gl/oxide_gl_context_adopted.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
+#include "oxide_platform_integration.h"
 #include "oxide_render_widget_host_view.h"
-#include "oxide_shared_gl_context.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
@@ -169,13 +170,13 @@ bool ShouldUseSoftwareCompositing() {
     return true;
   }
 
-  SharedGLContext* share_context =
-      BrowserProcessMain::GetInstance()->GetSharedGLContext();
-  if (!share_context) {
+  GLContextAdopted* gl_share_context =
+      PlatformIntegration::GetInstance()->GetGLShareContext();
+  if (!gl_share_context) {
     return true;
   }
 
-  if (share_context->GetImplementation() != gfx::GetGLImplementation()) {
+  if (gl_share_context->GetImplementation() != gfx::GetGLImplementation()) {
     return true;
   }
 

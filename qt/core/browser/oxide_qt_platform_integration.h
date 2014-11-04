@@ -18,20 +18,28 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include "base/memory/ref_counted.h"
+
 #include "shared/browser/oxide_platform_integration.h"
 
 namespace oxide {
 namespace qt {
 
+class GLContext;
+
 class PlatformIntegration final : public oxide::PlatformIntegration {
  public:
   PlatformIntegration();
+  ~PlatformIntegration();
 
  private:
   bool LaunchURLExternally(const GURL& url) final;
   bool IsTouchSupported() final;
   intptr_t GetNativeDisplay() final;
   blink::WebScreenInfo GetDefaultScreenInfo() final;
+  oxide::GLContextAdopted* GetGLShareContext() final;
+
+  scoped_refptr<GLContextAdopted> gl_share_context_;
 };
 
 } // namespace qt

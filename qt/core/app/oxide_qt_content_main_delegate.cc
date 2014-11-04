@@ -18,15 +18,11 @@
 #include "oxide_qt_content_main_delegate.h"
 
 #include <QGuiApplication>
-#include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 
-#include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/browser/oxide_qt_content_browser_client.h"
-#include "qt/core/browser/oxide_qt_shared_gl_context.h"
-#include "qt/core/glue/oxide_qt_init.h"
 
 namespace oxide {
 namespace qt {
@@ -44,19 +40,6 @@ ContentMainDelegate::ContentMainDelegate(const base::FilePath& nss_db_path)
 {
   DCHECK(nss_db_path.empty());
 #endif
-  QOpenGLContext* qcontext = oxide::qt::GetSharedGLContext();
-  if (qcontext) {
-    scoped_refptr<SharedGLContext> context(new SharedGLContext(qcontext));
-    if (context->GetHandle()) {
-      shared_gl_context_ = context;
-    } else {
-      DLOG(WARNING) << "Could not determine native handle for shared GL context";
-    }
-  }
-}
-
-oxide::SharedGLContext* ContentMainDelegate::GetSharedGLContext() const {
-  return shared_gl_context_.get();
 }
 
 #if defined(USE_NSS)

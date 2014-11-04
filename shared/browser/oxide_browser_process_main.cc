@@ -30,6 +30,7 @@
 #include "base/i18n/icu_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "base/message_loop/message_loop.h"
 #include "base/path_service.h"
 #include "base/posix/global_descriptors.h"
@@ -61,19 +62,12 @@
 #include "shared/app/oxide_content_main_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
-#include "shared/port/content/browser/power_save_blocker_oxide.h"
-#include "shared/port/content/browser/render_widget_host_view_oxide.h"
-#include "shared/port/content/browser/web_contents_view_oxide.h"
-#include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
 #include "oxide_platform_integration.h"
-#include "oxide_power_save_blocker.h"
-#include "oxide_shared_gl_context.h"
-#include "oxide_web_contents_view.h"
 
 namespace content {
 
@@ -116,10 +110,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
     return state_ == STATE_STARTED || state_ == STATE_SHUTTING_DOWN;
   }
 
-  SharedGLContext* GetSharedGLContext() const final {
-    return shared_gl_context_.get();
-  }
-
   void IncrementPendingUnloadsCount() final {
     DCHECK_EQ(state_, STATE_STARTED);
     pending_unloads_count_++;
@@ -141,8 +131,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   };
   State state_;
 
-  scoped_refptr<SharedGLContext> shared_gl_context_;
-
   scoped_ptr<PlatformIntegration> platform_integration_;
 
   // XXX: Don't change the order of these
@@ -159,10 +147,6 @@ namespace {
 BrowserProcessMainImpl* GetBrowserProcessMainInstance() {
   static BrowserProcessMainImpl g_instance;
   return &g_instance;
-}
-
-blink::WebScreenInfo DefaultScreenInfoGetter() {
-  return PlatformIntegration::GetInstance()->GetDefaultScreenInfo();
 }
 
 bool IsEnvironmentOptionEnabled(const char* option) {
@@ -341,13 +325,6 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
 
   state_ = STATE_STARTED;
 
-  shared_gl_context_ = main_delegate_->GetSharedGLContext();
-
-  if (!shared_gl_context_.get()) {
-    DLOG(INFO) << "No shared GL context has been provided. "
-               << "Compositing will not work";
-  }
-
   SetupAndVerifySignalHandlers();
 
   base::GlobalDescriptors::GetInstance()->Set(
@@ -398,12 +375,6 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
   content::GpuProcessHost::RegisterGpuMainThreadFactory(
       content::CreateInProcessGpuThread);
 
-  content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
-  content::SetWebContentsViewOxideFactory(WebContentsView::Create);
-  content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
-
-  gfx::InitializeOxideNativeDisplay(platform_integration_->GetNativeDisplay());
-
   std::vector<gfx::GLImplementation> allowed_gl_impls;
   if (supported_gl_impls & SUPPORTED_GL_IMPL_DESKTOP_GL) {
     allowed_gl_impls.push_back(gfx::kGLImplementationDesktopGL);
@@ -413,11 +384,6 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
   }
   allowed_gl_impls.push_back(gfx::kGLImplementationOSMesaGL);
   gfx::InitializeAllowedGLImplementations(allowed_gl_impls);
-
-  if (shared_gl_context_.get()) {
-    gfx::InitializePreferredGLImplementation(
-        shared_gl_context_->GetImplementation());
-  }
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
   CHECK(browser_main_runner_.get()) << "Failed to create BrowserMainRunner";
@@ -456,8 +422,6 @@ void BrowserProcessMainImpl::Shutdown() {
   browser_main_runner_.reset();
 
   exit_manager_.reset();
-
-  shared_gl_context_ = NULL;
 
   platform_integration_.reset();
   main_delegate_.reset();

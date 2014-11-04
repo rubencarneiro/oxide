@@ -33,15 +33,9 @@ class RenderViewHost;
 class ResourceDispatcherHostDelegate;
 }
 
-namespace gfx {
-class GLContext;
-}
-
 namespace oxide {
 
-class GLShareGroup;
 class ResourceDispatcherHostDelegate;
-class SharedGLContext;
 class WebFrameTree;
 class WebPreferences;
 
@@ -140,8 +134,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
                            content::WebPreferences* prefs) final;
 
   content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() final;
-
-  gfx::GLShareGroup* GetGLShareGroup() final;
 
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
 

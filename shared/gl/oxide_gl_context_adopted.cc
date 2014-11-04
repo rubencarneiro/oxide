@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,41 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
-#define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
+#include "oxide_gl_context_adopted.h"
 
-#include "base/macros.h"
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
-
-class GURL;
+#include "base/logging.h"
 
 namespace oxide {
 
-class GLContextAdopted;
+GLContextAdopted::GLContextAdopted(gfx::GLShareGroup* share_group)
+    : gfx::GLContext(share_group) {}
 
-class PlatformIntegration {
- public:
-  virtual ~PlatformIntegration();
+GLContextAdopted::~GLContextAdopted() {}
 
-  static PlatformIntegration* GetInstance();
+bool GLContextAdopted::Initialize(gfx::GLSurface* compatible_surface,
+                                  gfx::GpuPreference gpu_preference) {
+  return true;
+}
 
-  virtual bool LaunchURLExternally(const GURL& url);
+void GLContextAdopted::Destroy() {}
 
-  virtual bool IsTouchSupported();
+bool GLContextAdopted::MakeCurrent(gfx::GLSurface* surface) {
+  NOTREACHED();
+  return false;
+}
 
-  virtual intptr_t GetNativeDisplay() = 0;
+void GLContextAdopted::ReleaseCurrent(gfx::GLSurface* surface) {}
 
-  virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
+bool GLContextAdopted::IsCurrent(gfx::GLSurface* surface) {
+  return false;
+}
 
-  virtual GLContextAdopted* GetGLShareContext();
-
- protected:
-  PlatformIntegration();
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(PlatformIntegration);
-};
+void GLContextAdopted::SetSwapInterval(int interval) {}
 
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_

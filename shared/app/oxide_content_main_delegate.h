@@ -33,7 +33,6 @@ class ContentMainDelegate : public content::ContentMainDelegate {
  public:
   virtual ~ContentMainDelegate();
 
-  virtual SharedGLContext* GetSharedGLContext() const;
 #if defined(USE_NSS)
   virtual base::FilePath GetNSSDbPath() const;
 #endif

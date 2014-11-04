@@ -18,16 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_BROWSER_PROCESS_MAIN_H_
 #define _OXIDE_SHARED_BROWSER_BROWSER_PROCESS_MAIN_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/ref_counted.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
 namespace oxide {
 
 class ContentMainDelegate;
 class PlatformIntegration;
-class SharedGLContext;
 
 enum SupportedGLImplFlags {
   SUPPORTED_GL_IMPL_NONE = 0,
@@ -57,8 +54,6 @@ class BrowserProcessMain {
 
   // Returns true if the browser process components are running
   virtual bool IsRunning() const = 0;
-
-  virtual SharedGLContext* GetSharedGLContext() const = 0;
 
   virtual void IncrementPendingUnloadsCount() = 0;
   virtual void DecrementPendingUnloadsCount() = 0;

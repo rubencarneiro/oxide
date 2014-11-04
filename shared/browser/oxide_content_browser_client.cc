@@ -40,6 +40,7 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
+#include "shared/gl/oxide_gl_context_adopted.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
@@ -49,7 +50,6 @@
 #include "oxide_platform_integration.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
-#include "oxide_shared_gl_context.h"
 #include "oxide_user_agent_override_provider.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
@@ -123,10 +123,11 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
       command_line->AppendSwitch(switches::kIncognito);
     }
 
-    if (content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() &&
-        (!BrowserProcessMain::GetInstance()->GetSharedGLContext() ||
-         BrowserProcessMain::GetInstance()->GetSharedGLContext()->GetImplementation() !=
-             gfx::GetGLImplementation())) {
+    GLContextAdopted* gl_share_context =
+        PlatformIntegration::GetInstance()->GetGLShareContext();
+    if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() ||
+        !gl_share_context ||
+        gl_share_context->GetImplementation() != gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
   }
@@ -270,16 +271,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 content::DevToolsManagerDelegate*
 ContentBrowserClient::GetDevToolsManagerDelegate() {
     return new DevToolsManagerDelegate();
-}
-
-gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
-  SharedGLContext* context =
-      BrowserProcessMain::GetInstance()->GetSharedGLContext();
-  if (!context) {
-    return NULL;
-  }
-
-  return context->share_group();
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {

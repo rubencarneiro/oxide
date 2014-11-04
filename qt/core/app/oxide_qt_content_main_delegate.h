@@ -20,7 +20,6 @@
 
 #include "base/compiler_specific.h"
 #include "base/files/file_path.h"
-#include "base/memory/ref_counted.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
 
@@ -39,7 +38,6 @@ class ContentMainDelegate final : public oxide::ContentMainDelegate {
   ContentMainDelegate(const base::FilePath& nss_db_path);
 
   // oxide::ContentMainDelegate implementation
-  oxide::SharedGLContext* GetSharedGLContext() const final;
 #if defined(USE_NSS)
   base::FilePath GetNSSDbPath() const final;
 #endif
@@ -49,7 +47,6 @@ class ContentMainDelegate final : public oxide::ContentMainDelegate {
   content::ContentBrowserClient* CreateContentBrowserClient() final;
 
   bool is_browser_;
-  scoped_refptr<SharedGLContext> shared_gl_context_;
 #if defined(USE_NSS)
   base::FilePath nss_db_path_;
 #endif

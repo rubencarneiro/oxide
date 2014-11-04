@@ -29,19 +29,33 @@
 #include "ui/gfx/display.h"
 #include "ui/gfx/screen.h"
 #include "ui/gfx/screen_type_delegate.h"
+#include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
+#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/port/content/browser/power_save_blocker_oxide.h"
+#include "shared/port/content/browser/render_widget_host_view_oxide.h"
+#include "shared/port/content/browser/web_contents_view_oxide.h"
+#include "shared/port/content/common/gpu_thread_shim_oxide.h"
+#include "shared/port/gfx/gfx_utils_oxide.h"
+#include "shared/port/gl/gl_implementation_oxide.h"
 
 #include "oxide_browser_process_main.h"
 #include "oxide_message_pump.h"
 #include "oxide_platform_integration.h"
+#include "oxide_power_save_blocker.h"
+#include "oxide_web_contents_view.h"
 
 namespace oxide {
 
 namespace {
+
+blink::WebScreenInfo DefaultScreenInfoGetter() {
+  return PlatformIntegration::GetInstance()->GetDefaultScreenInfo();
+}
 
 class ScopedBindGLESAPI {
  public:
@@ -176,6 +190,13 @@ IOThread::Delegate* BrowserMainParts::Delegate::GetIOThreadDelegate() {
 }
 
 void BrowserMainParts::PreEarlyInitialization() {
+  content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
+  content::SetWebContentsViewOxideFactory(WebContentsView::Create);
+  content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
+
+  gfx::InitializeOxideNativeDisplay(
+      PlatformIntegration::GetInstance()->GetNativeDisplay());
+
   Delegate::MessagePumpFactory* factory = delegate_->GetMessagePumpFactory();
   CHECK(factory);
   base::MessageLoop::InitMessagePumpForUIFactory(factory);
@@ -191,8 +212,26 @@ int BrowserMainParts::PreCreateThreads() {
   // the GL bits here
   ScopedBindGLESAPI gles_binder;
 
-  // Work around a mesa race - see https://launchpad.net/bugs/1267893
+  GLContextAdopted* gl_share_context =
+      PlatformIntegration::GetInstance()->GetGLShareContext();
+  if (gl_share_context) {
+    gfx::InitializePreferredGLImplementation(
+        gl_share_context->GetImplementation());
+  }
+
+  // Do this here rather than on the GPU thread to work around a mesa race -
+  // see https://launchpad.net/bugs/1267893.
+  // Also, it allows us to check if the GL share context platform matches
+  // the selected Chromium GL platform before spinning up the GPU thread
   gfx::GLSurface::InitializeOneOff();
+
+  if (gl_share_context &&
+      gl_share_context->GetImplementation() == gfx::GetGLImplementation()) {
+    content::oxide_gpu_shim::SetGLShareGroup(gl_share_context->share_group());
+  } else {
+    DLOG(INFO) << "No valid shared GL context has been provided. "
+               << "Compositing will not work";
+  }
 
   primary_screen_.reset(new Screen());
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
@@ -235,6 +274,7 @@ void BrowserMainParts::PostMainMessageLoopRun() {
 void BrowserMainParts::PostDestroyThreads() {
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
   io_thread_.reset();
+  content::oxide_gpu_shim::SetGLShareGroup(NULL);
 }
 
 BrowserMainParts::BrowserMainParts(Delegate* delegate)

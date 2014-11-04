@@ -27,11 +27,16 @@
 #include "url/gurl.h"
 
 #include "qt/core/base/oxide_qt_screen_utils.h"
+#include "qt/core/gl/oxide_qt_gl_context_adopted.h"
+#include "qt/core/glue/oxide_qt_init.h"
 
 namespace oxide {
 namespace qt {
 
-PlatformIntegration::PlatformIntegration() {}
+PlatformIntegration::PlatformIntegration()
+    : gl_share_context_(GLContextAdopted::Create(GetSharedGLContext())) {}
+
+PlatformIntegration::~PlatformIntegration() {}
 
 bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
   return QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));
@@ -55,6 +60,10 @@ intptr_t PlatformIntegration::GetNativeDisplay() {
 
 blink::WebScreenInfo PlatformIntegration::GetDefaultScreenInfo() {
   return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
+}
+
+oxide::GLContextAdopted* PlatformIntegration::GetGLShareContext() {
+  return gl_share_context_.get();
 }
 
 } // namespace qt

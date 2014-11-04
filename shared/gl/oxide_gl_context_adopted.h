@@ -15,21 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
-#define _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
+#ifndef _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
+#define _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
 
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 
+namespace gfx {
+class GLShareGroup;
+}
+
 namespace oxide {
 
-class SharedGLContext : public gfx::GLContext {
+class GLContextAdopted : public gfx::GLContext {
  public:
-  SharedGLContext();
-  virtual ~SharedGLContext();
+  virtual ~GLContextAdopted();
 
-  void* GetHandle() = 0;
-  virtual gfx::GLImplementation GetImplementation() = 0;
+  virtual gfx::GLImplementation GetImplementation() const = 0;
 
   bool Initialize(gfx::GLSurface* compatible_surface,
                   gfx::GpuPreference gpu_preference) final;
@@ -38,8 +40,11 @@ class SharedGLContext : public gfx::GLContext {
   void ReleaseCurrent(gfx::GLSurface* surface) final;
   bool IsCurrent(gfx::GLSurface* surface) final;
   void SetSwapInterval(int interval) final;
+
+ protected:
+  GLContextAdopted(gfx::GLShareGroup* share_group);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
+#endif // _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_

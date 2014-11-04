@@ -52,4 +52,8 @@ bool PlatformIntegration::IsTouchSupported() {
   return false;
 }
 
+GLContextAdopted* PlatformIntegration::GetGLShareContext() {
+  return NULL;
+}
+
 } // namespace oxide

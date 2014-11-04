@@ -46,10 +46,6 @@ ContentMainDelegate::ContentMainDelegate() {}
 
 ContentMainDelegate::~ContentMainDelegate() {}
 
-SharedGLContext* ContentMainDelegate::GetSharedGLContext() const {
-  return NULL;
-}
-
 #if defined(USE_NSS)
 base::FilePath ContentMainDelegate::GetNSSDbPath() const {
   return base::FilePath();

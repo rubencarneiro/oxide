@@ -28,6 +28,10 @@ namespace base {
 class SingleThreadTaskRunner;
 }
 
+namespace gfx {
+class GLShareGroup;
+}
+
 namespace gpu {
 class Mailbox;
 namespace gles2 {
@@ -39,7 +43,7 @@ namespace content {
 
 class ContextProviderCommandBuffer;
 
-namespace gpu_shim {
+namespace oxide_gpu_shim {
 
 CONTENT_EXPORT bool IsCurrentlyOnGpuThread();
 
@@ -62,7 +66,10 @@ CONTENT_EXPORT void AddSyncPointCallback(uint32_t sync_point,
 CONTENT_EXPORT int32_t GetContextProviderRouteID(
     content::ContextProviderCommandBuffer* provider);
 
-} // gpu_shim
+CONTENT_EXPORT gfx::GLShareGroup* GetGLShareGroup();
+CONTENT_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
+
+} // oxide_gpu_shim
 } // content
 
 #endif // _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_THREAD_SHIM_H_
