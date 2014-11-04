@@ -1,6 +1,6 @@
 diff -r b521f239eb9f content/browser/media/utouch/browser_media_player_manager.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/browser/media/utouch/browser_media_player_manager.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/browser/media/utouch/browser_media_player_manager.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,446 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -450,7 +450,7 @@ diff -r b521f239eb9f content/browser/media/utouch/browser_media_player_manager.c
 +}  // namespace content
 diff -r b521f239eb9f content/browser/media/utouch/browser_media_player_manager.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/browser/media/utouch/browser_media_player_manager.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/browser/media/utouch/browser_media_player_manager.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,129 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -583,7 +583,7 @@ diff -r b521f239eb9f content/browser/media/utouch/browser_media_player_manager.h
 +#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_BROWSER_MEDIA_PLAYER_MANAGER_H_
 diff -r b521f239eb9f content/browser/media/utouch/media_web_contents_observer.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/browser/media/utouch/media_web_contents_observer.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/browser/media/utouch/media_web_contents_observer.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,93 @@
 +#include "content/browser/media/utouch/media_web_contents_observer.h"
 +
@@ -680,7 +680,7 @@ diff -r b521f239eb9f content/browser/media/utouch/media_web_contents_observer.cc
 +}  // namespace content
 diff -r b521f239eb9f content/browser/media/utouch/media_web_contents_observer.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/browser/media/utouch/media_web_contents_observer.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/browser/media/utouch/media_web_contents_observer.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,43 @@
 +#ifndef CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
 +#define CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
@@ -727,7 +727,7 @@ diff -r b521f239eb9f content/browser/media/utouch/media_web_contents_observer.h
 +#endif  // CONTENT_BROWSER_MEDIA_UTOUCH_MEDIA_WEB_CONTENTS_OBSERVER_H_
 diff -r b521f239eb9f content/browser/renderer_host/render_process_host_impl.cc
 --- a/content/browser/renderer_host/render_process_host_impl.cc	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/browser/renderer_host/render_process_host_impl.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/browser/renderer_host/render_process_host_impl.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -1243,6 +1243,8 @@
  #if defined(OS_CHROMEOS)
      switches::kDisableVaapiAcceleratedVideoEncode,
@@ -739,20 +739,32 @@ diff -r b521f239eb9f content/browser/renderer_host/render_process_host_impl.cc
                                   arraysize(kSwitchNames));
 diff -r b521f239eb9f content/browser/renderer_host/render_view_host_impl.cc
 --- a/content/browser/renderer_host/render_view_host_impl.cc	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/browser/renderer_host/render_view_host_impl.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/browser/renderer_host/render_view_host_impl.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -88,9 +88,7 @@
  #include "base/win/win_util.h"
  #endif
  
 -#if defined(ENABLE_BROWSER_CDMS)
- #include "content/browser/media/media_web_contents_observer.h"
+-#include "content/browser/media/media_web_contents_observer.h"
 -#endif
++#include "content/browser/media/utouch/media_web_contents_observer.h"
  
  using base::TimeDelta;
  using blink::WebConsoleMessage;
+@@ -215,9 +213,8 @@
+                    !is_hidden(),
+                    has_active_audio));
+   }
+-#if defined(ENABLE_BROWSER_CDMS)
++
+   media_web_contents_observer_.reset(new MediaWebContentsObserver(this));
+-#endif
+ }
+ 
+ RenderViewHostImpl::~RenderViewHostImpl() {
 diff -r b521f239eb9f content/browser/renderer_host/render_view_host_impl.h
 --- a/content/browser/renderer_host/render_view_host_impl.h	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/browser/renderer_host/render_view_host_impl.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/browser/renderer_host/render_view_host_impl.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -293,11 +293,9 @@
    // Creates a full screen RenderWidget.
    void CreateNewFullscreenWidget(int route_id);
@@ -778,7 +790,7 @@ diff -r b521f239eb9f content/browser/renderer_host/render_view_host_impl.h
    bool is_focused_element_editable_;
 diff -r b521f239eb9f content/common/content_message_generator.h
 --- a/content/common/content_message_generator.h	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/common/content_message_generator.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/common/content_message_generator.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -73,3 +73,6 @@
  #include "content/common/gin_java_bridge_messages.h"
  #include "content/common/media/media_player_messages_android.h"
@@ -788,7 +800,7 @@ diff -r b521f239eb9f content/common/content_message_generator.h
 +
 diff -r b521f239eb9f content/common/media/media_player_messages_enums_oxide.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/common/media/media_player_messages_enums_oxide.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/common/media/media_player_messages_enums_oxide.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,10 @@
 +#ifndef CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
 +#define CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
@@ -802,7 +814,7 @@ diff -r b521f239eb9f content/common/media/media_player_messages_enums_oxide.h
 +#endif  // CONTENT_COMMON_MEDIA_MEDIA_PLAYER_MESSAGES_ENUMS_OXIDE_H_
 diff -r b521f239eb9f content/common/media/media_player_messages_oxide.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/common/media/media_player_messages_oxide.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/common/media/media_player_messages_oxide.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,144 @@
 +// IPC messages for android media player.
 +// Multiply-included message file, hence no include guard.
@@ -950,7 +962,7 @@ diff -r b521f239eb9f content/common/media/media_player_messages_oxide.h
 +                     base::TimeDelta /* duration */)
 diff -r b521f239eb9f content/content_browser.gypi
 --- a/content/content_browser.gypi	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/content_browser.gypi	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/content_browser.gypi	Tue Nov 04 17:16:46 2014 +1000
 @@ -897,6 +897,10 @@
        'browser/media/midi_dispatcher_host.h',
        'browser/media/midi_host.cc',
@@ -964,7 +976,7 @@ diff -r b521f239eb9f content/content_browser.gypi
        'browser/media/webrtc_identity_store_backend.cc',
 diff -r b521f239eb9f content/content_common.gypi
 --- a/content/content_common.gypi	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/content_common.gypi	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/content_common.gypi	Tue Nov 04 17:16:46 2014 +1000
 @@ -392,6 +392,8 @@
        'common/media/media_param_traits.h',
        'common/media/media_player_messages_android.h',
@@ -976,7 +988,7 @@ diff -r b521f239eb9f content/content_common.gypi
        'common/media/media_stream_options.h',
 diff -r b521f239eb9f content/content_renderer.gypi
 --- a/content/content_renderer.gypi	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/content_renderer.gypi	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/content_renderer.gypi	Tue Nov 04 17:16:46 2014 +1000
 @@ -238,6 +238,12 @@
        'renderer/media/android/stream_texture_factory_synchronous_impl.h',
        'renderer/media/android/webmediaplayer_android.cc',
@@ -992,7 +1004,7 @@ diff -r b521f239eb9f content/content_renderer.gypi
        'renderer/media/audio_device_factory.cc',
 diff -r b521f239eb9f content/public/common/content_switches.cc
 --- a/content/public/common/content_switches.cc	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/public/common/content_switches.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/public/common/content_switches.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -375,6 +375,12 @@
  // builds.
  const char kEnableLogging[]                 = "enable-logging";
@@ -1008,7 +1020,7 @@ diff -r b521f239eb9f content/public/common/content_switches.cc
  
 diff -r b521f239eb9f content/public/common/content_switches.h
 --- a/content/public/common/content_switches.h	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/public/common/content_switches.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/public/common/content_switches.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -113,6 +113,9 @@
  CONTENT_EXPORT extern const char kEnableImplSidePainting[];
  CONTENT_EXPORT extern const char kEnableLCDText[];
@@ -1021,7 +1033,7 @@ diff -r b521f239eb9f content/public/common/content_switches.h
  CONTENT_EXPORT extern const char kEnableOneCopy[];
 diff -r b521f239eb9f content/renderer/media/utouch/media_info_loader.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/media_info_loader.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/renderer/media/utouch/media_info_loader.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,194 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -1219,7 +1231,7 @@ diff -r b521f239eb9f content/renderer/media/utouch/media_info_loader.cc
 +}  // namespace content
 diff -r b521f239eb9f content/renderer/media/utouch/media_info_loader.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/media_info_loader.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/renderer/media/utouch/media_info_loader.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,129 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -1352,7 +1364,7 @@ diff -r b521f239eb9f content/renderer/media/utouch/media_info_loader.h
 +#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_MEDIA_INFO_LOADER_H_
 diff -r b521f239eb9f content/renderer/media/utouch/renderer_media_player_manager.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/renderer_media_player_manager.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/renderer/media/utouch/renderer_media_player_manager.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,218 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -1574,7 +1586,7 @@ diff -r b521f239eb9f content/renderer/media/utouch/renderer_media_player_manager
 +}  // namespace content
 diff -r b521f239eb9f content/renderer/media/utouch/renderer_media_player_manager.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/renderer_media_player_manager.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/renderer/media/utouch/renderer_media_player_manager.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,103 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -1681,7 +1693,7 @@ diff -r b521f239eb9f content/renderer/media/utouch/renderer_media_player_manager
 +#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_RENDERER_MEDIA_PLAYER_MANAGER_H_
 diff -r b521f239eb9f content/renderer/media/utouch/webmediaplayer_oxide.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/webmediaplayer_oxide.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/renderer/media/utouch/webmediaplayer_oxide.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,908 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -2593,7 +2605,7 @@ diff -r b521f239eb9f content/renderer/media/utouch/webmediaplayer_oxide.cc
 +}  // namespace content
 diff -r b521f239eb9f content/renderer/media/utouch/webmediaplayer_oxide.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/content/renderer/media/utouch/webmediaplayer_oxide.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/renderer/media/utouch/webmediaplayer_oxide.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,326 @@
 +// Copyright 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -2923,7 +2935,7 @@ diff -r b521f239eb9f content/renderer/media/utouch/webmediaplayer_oxide.h
 +#endif  // CONTENT_RENDERER_MEDIA_UTOUCH_WEBMEDIAPLAYER_OXIDE_H_
 diff -r b521f239eb9f content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/renderer/render_frame_impl.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/renderer/render_frame_impl.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -9,6 +9,7 @@
  
  #include "base/auto_reset.h"
@@ -2960,7 +2972,7 @@ diff -r b521f239eb9f content/renderer/render_frame_impl.cc
  #if defined(ENABLE_BROWSER_CDMS)
        cdm_manager_(NULL),
  #endif
-@@ -1671,6 +1674,18 @@
+@@ -1671,6 +1674,17 @@
  #if defined(OS_ANDROID)
    return CreateAndroidWebMediaPlayer(url, client, initial_cdm);
  #else
@@ -2972,14 +2984,13 @@ diff -r b521f239eb9f content/renderer/render_frame_impl.cc
 +				client,
 +				weak_factory_.GetWeakPtr(),
 +				GetMediaPlayerManager(),
-+//				RenderThreadImpl::current()->GetMediaThreadMessageLoopProxy(),
 +				new RenderMediaLog());
 +  }
 +
    RenderThreadImpl* render_thread = RenderThreadImpl::current();
    media::WebMediaPlayerParams params(
        base::Bind(&ContentRendererClient::DeferMediaLoad,
-@@ -1689,6 +1704,7 @@
+@@ -1689,6 +1703,7 @@
                                         client,
                                         weak_factory_.GetWeakPtr(),
                                         params);
@@ -2987,7 +2998,7 @@ diff -r b521f239eb9f content/renderer/render_frame_impl.cc
  #endif  // defined(OS_ANDROID)
  }
  
-@@ -4058,14 +4074,15 @@
+@@ -4058,14 +4073,15 @@
        new RenderMediaLog());
  }
  
@@ -3007,7 +3018,7 @@ diff -r b521f239eb9f content/renderer/render_frame_impl.cc
    if (!cdm_manager_)
 diff -r b521f239eb9f content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h	Wed Oct 29 16:19:10 2014 +1000
-+++ b/content/renderer/render_frame_impl.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/content/renderer/render_frame_impl.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -639,13 +639,13 @@
    // Returns the URL being loaded by the |frame_|'s request.
    GURL GetLoadingUrl() const;
@@ -3039,7 +3050,7 @@ diff -r b521f239eb9f content/renderer/render_frame_impl.h
    // Manage all CDMs in this render frame for communicating with the real CDM in
 diff -r b521f239eb9f media/base/utouch/media_player_manager.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_manager.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/media/base/utouch/media_player_manager.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,65 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -3108,8 +3119,8 @@ diff -r b521f239eb9f media/base/utouch/media_player_manager.h
 +#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MANAGER_H_
 diff -r b521f239eb9f media/base/utouch/media_player_mediahub.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_mediahub.cc	Wed Oct 29 16:54:47 2014 +1000
-@@ -0,0 +1,219 @@
++++ b/media/base/utouch/media_player_mediahub.cc	Tue Nov 04 17:16:46 2014 +1000
+@@ -0,0 +1,216 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -3170,7 +3181,6 @@ diff -r b521f239eb9f media/base/utouch/media_player_mediahub.cc
 +
 +  if (use_fixed_session_) {
 +    media_hub_client_ = mediahub_create_fixed_player(player_id, first_party_for_cookies_.host(), this);
-+//    mediahub_set_player_lifetime(media_hub_client_, Lifetime::resumable); // This should be the default in media-hub
 +  } else {
 +    media_hub_client_ = mediahub_create_player(player_id, this);
 +  }
@@ -3227,11 +3237,11 @@ diff -r b521f239eb9f media/base/utouch/media_player_mediahub.cc
 +}
 +
 +void MediaPlayerMediaHub::SeekTo(base::TimeDelta timestamp) {
-+  //  _media_hub_client->seek_to();
++  mediahub_seek_to(media_hub_client_, timestamp.InMicroseconds());
 +}
 +
 +base::TimeDelta MediaPlayerMediaHub::GetCurrentTime() {
-+  return base::TimeDelta();
++  return base::TimeDelta::FromMilliseconds(mediahub_get_position(media_hub_client_));
 +}
 +
 +base::TimeDelta MediaPlayerMediaHub::GetDuration() {
@@ -3243,7 +3253,6 @@ diff -r b521f239eb9f media/base/utouch/media_player_mediahub.cc
 +}
 +
 +void MediaPlayerMediaHub::SetVolume(double volume) {
-+  // TODO validate scale
 +  mediahub_set_volume(media_hub_client_, volume);
 +}
 +
@@ -3279,7 +3288,6 @@ diff -r b521f239eb9f media/base/utouch/media_player_mediahub.cc
 +}
 +
 +void MediaPlayerMediaHub::playback_status_changed(MediaHubDelegate::Status status, int64_t duration) {
-+  LOG(INFO) << __PRETTY_FUNCTION__;
 +  switch (status) {
 +  case null:
 +  case ready:
@@ -3331,7 +3339,7 @@ diff -r b521f239eb9f media/base/utouch/media_player_mediahub.cc
 +}  // namespace media
 diff -r b521f239eb9f media/base/utouch/media_player_mediahub.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_mediahub.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/media/base/utouch/media_player_mediahub.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,119 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -3454,7 +3462,7 @@ diff -r b521f239eb9f media/base/utouch/media_player_mediahub.h
 +#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_MEDIAHUB_H_
 diff -r b521f239eb9f media/base/utouch/media_player_oxide.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_oxide.cc	Wed Oct 29 16:54:47 2014 +1000
++++ b/media/base/utouch/media_player_oxide.cc	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,26 @@
 +// Copyright (c) 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -3484,7 +3492,7 @@ diff -r b521f239eb9f media/base/utouch/media_player_oxide.cc
 +}  // namespace media
 diff -r b521f239eb9f media/base/utouch/media_player_oxide.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/base/utouch/media_player_oxide.h	Wed Oct 29 16:54:47 2014 +1000
++++ b/media/base/utouch/media_player_oxide.h	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,76 @@
 +// Copyright (c) 2013 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
@@ -3564,7 +3572,7 @@ diff -r b521f239eb9f media/base/utouch/media_player_oxide.h
 +#endif  // MEDIA_BASE_UTOUCH_MEDIA_PLAYER_OXIDE_H_
 diff -r b521f239eb9f media/media.gyp
 --- a/media/media.gyp	Wed Oct 29 16:19:10 2014 +1000
-+++ b/media/media.gyp	Wed Oct 29 16:54:47 2014 +1000
++++ b/media/media.gyp	Tue Nov 04 17:16:46 2014 +1000
 @@ -64,6 +64,8 @@
          '../ui/gfx/gfx.gyp:gfx_geometry',
          '../url/url.gyp:url_lib',
@@ -3587,7 +3595,7 @@ diff -r b521f239eb9f media/media.gyp
          'base/video_decoder_config.cc',
 diff -r b521f239eb9f media/mediahub/mediahub.gyp
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/mediahub/mediahub.gyp	Wed Oct 29 16:54:47 2014 +1000
++++ b/media/mediahub/mediahub.gyp	Tue Nov 04 17:16:46 2014 +1000
 @@ -0,0 +1,30 @@
 +# Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +# Use of this source code is governed by a BSD-style license that can be
@@ -3621,8 +3629,8 @@ diff -r b521f239eb9f media/mediahub/mediahub.gyp
 +}
 diff -r b521f239eb9f media/mediahub/player.cc
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/mediahub/player.cc	Wed Oct 29 16:54:47 2014 +1000
-@@ -0,0 +1,312 @@
++++ b/media/mediahub/player.cc	Tue Nov 04 17:16:46 2014 +1000
+@@ -0,0 +1,324 @@
 +#include "player.h"
 +
 +#include <map>
@@ -3884,6 +3892,18 @@ diff -r b521f239eb9f media/mediahub/player.cc
 +  return 0;
 +}
 +
++void
++mediahub_seek_to(MediaHubClientHandle handle, int64_t offset)
++{
++  try {
++    Player* player = static_cast<Player*>(handle);
++    if (player)
++      return player->seek_to(std::chrono::microseconds(offset));
++  } catch (std::runtime_error& error) {
++    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
++  }
++}
++
 +int
 +mediahub_can_pause(MediaHubClientHandle handle)
 +{
@@ -3937,8 +3957,8 @@ diff -r b521f239eb9f media/mediahub/player.cc
 +
 diff -r b521f239eb9f media/mediahub/player.h
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/media/mediahub/player.h	Wed Oct 29 16:54:47 2014 +1000
-@@ -0,0 +1,137 @@
++++ b/media/mediahub/player.h	Tue Nov 04 17:16:46 2014 +1000
+@@ -0,0 +1,143 @@
 +#ifndef MEDIA_MEDIAHUB_PLAYER_H
 +#define MEDIA_MEDIAHUB_PLAYER_H
 +
@@ -4045,6 +4065,12 @@ diff -r b521f239eb9f media/mediahub/player.h
 + */
 +int
 +mediahub_can_seek_backward(MediaHubClientHandle);
++
++/**
++ * 
++ */
++void
++mediahub_seek_to(MediaHubClientHandle handle, int64_t offset);
 +
 +/**
 + * 
