@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,38 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_
-#define _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_
+#ifndef _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
+#define _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
 
-#include <QtGlobal>
-
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/ref_counted.h"
+#include "ui/gl/gl_export.h"
 #include "ui/gl/gl_implementation.h"
 
-#include "shared/gl/oxide_shared_gl_context.h"
+namespace gfx {
 
-QT_BEGIN_NAMESPACE
-class QOpenGLContext;
-QT_END_NAMESPACE
+GL_EXPORT void InitializePreferredGLImplementation(
+    GLImplementation implementation);
+GL_EXPORT void InitializeAllowedGLImplementations(
+    const std::vector<GLImplementation>& implementations);
 
-namespace oxide {
-namespace qt {
+} // namespace gfx
 
-class SharedGLContext final : public oxide::SharedGLContext {
- public:
-  SharedGLContext(QOpenGLContext* context);
-
-  void* GetHandle() final { return handle_; }
-  gfx::GLImplementation GetImplementation() final { return implementation_; }
-
- private:
-  void* handle_;
-  gfx::GLImplementation implementation_;
-};
-
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GL_SHARED_GL_CONTEXT_H_
+#endif // _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_

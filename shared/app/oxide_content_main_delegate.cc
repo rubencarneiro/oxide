@@ -54,11 +54,19 @@ bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
   return false;
 }
 
+blink::WebScreenInfo ContentMainDelegate::GetDefaultScreenInfo() const {
+  return blink::WebScreenInfo();
+}
+
 #if defined(USE_NSS)
 base::FilePath ContentMainDelegate::GetNSSDbPath() const {
   return base::FilePath();
 }
 #endif
+
+bool ContentMainDelegate::IsPlatformX11() const {
+  return false;
+}
 
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());

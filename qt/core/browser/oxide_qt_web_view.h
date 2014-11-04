@@ -190,6 +190,9 @@ class WebView final : public QObject,
       scoped_ptr<oxide::SimplePermissionRequest> request) final;
   void OnContentBlocked() final;
 
+  void OnPrepareToCloseResponse(bool proceed) final;
+  void OnCloseRequested() final;
+
   WebViewAdapter* adapter_;
 
   bool has_input_method_state_;

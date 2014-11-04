@@ -67,8 +67,8 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   attrs.antialias = false;
   attrs.noAutomaticFlushes = true;
 
-  return make_scoped_ptr(new WGC3DCBI(
-      0, GURL(), gpu_channel_host.get(), attrs, false,
+  return make_scoped_ptr(WGC3DCBI::CreateOffscreenContext(
+      gpu_channel_host.get(), attrs, false, GURL(),
       content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
       NULL));
 }

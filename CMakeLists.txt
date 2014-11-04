@@ -41,6 +41,17 @@ set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/chromium)
 set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
 set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib)
 
+if(ENABLE_COMPONENT_BUILD)
+  link_directories(${CHROMIUM_LIB_DIR})
+endif()
+
+set(GOLD_DIR ${CMAKE_BINARY_DIR}/gold)
+
+# Use gold everywhere
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -B ${GOLD_DIR}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -B ${GOLD_DIR}")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -B ${GOLD_DIR}")
+
 if(NOT DEFINED PYTHON)
   find_program(PYTHON python)
   if(PYTHON STREQUAL "PYTHON-NOTFOUND")
@@ -62,6 +73,8 @@ endforeach()
 
 # Required for out-of-tree builds
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
+# We have a script for loading apps from the tree
+set(CMAKE_SKIP_BUILD_RPATH TRUE)
 include_directories(${CMAKE_SOURCE_DIR})
 
 if(ENABLE_TESTS)
@@ -79,6 +92,8 @@ include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
 # but as this is distro specific, we do something that is currently
 # supportable across distributions. This creates a directory with a symlink
 # to the gold linker, and we pass -B to the compiler
+# The call to "gcc -print-prog-name=ld" is needed so that we get a path
+# to the correct linker in cross-builds
 execute_process(
     COMMAND ${CMAKE_C_COMPILER} -print-prog-name=ld
     RESULT_VARIABLE _RESULT
@@ -89,13 +104,13 @@ if(NOT _RESULT EQUAL 0)
 endif()
 set(_SETUP_GOLD_COMMAND
     ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
-    --output ${CMAKE_BINARY_DIR}/gold --ld ${_LINKER_PATH})
+    --output ${GOLD_DIR} --ld ${_LINKER_PATH})
 get_filename_component(_LINKER_NAME ${_LINKER_PATH} NAME)
 add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
+    OUTPUT ${GOLD_DIR}/${_LINKER_NAME}
     COMMAND ${_SETUP_GOLD_COMMAND})
 add_custom_target(gold ALL
-                  DEPENDS ${CMAKE_BINARY_DIR}/gold/${_LINKER_NAME}
+                  DEPENDS ${GOLD_DIR}/${_LINKER_NAME}
                   COMMENT "Creating a symlink for the gold linker")
 
 # Build the gyp command
@@ -131,7 +146,7 @@ if(DEFINED ENABLE_PLUGINS AND ENABLE_PLUGINS EQUAL 0)
 else()
   list(APPEND _GYP_COMMAND -Denable_plugins=1)
 endif()
-if(DEFINED ENABLE_CHROMEDRIVER AND ENABLE_CHROMEDRIVER EQUAL 1)
+if(ENABLE_CHROMEDRIVER)
   list(APPEND _GYP_COMMAND -Denable_chromedriver_build=1)
 else()
   list(APPEND _GYP_COMMAND -Denable_chromedriver_build=0)
@@ -140,6 +155,9 @@ if(DEFINED ENABLE_TCMALLOC AND ENABLE_TCMALLOC EQUAL 0)
   list(APPEND _GYP_COMMAND -Denable_tcmalloc=0)
 else()
   list(APPEND _GYP_COMMAND -Denable_tcmalloc=1)
+endif()
+if(ENABLE_COMPONENT_BUILD)
+  list(APPEND _GYP_COMMAND -Dcomponent=shared_library)
 endif()
 list(APPEND _GYP_COMMAND -Doxide_gettext_domain=${GETTEXT_PACKAGE})
 

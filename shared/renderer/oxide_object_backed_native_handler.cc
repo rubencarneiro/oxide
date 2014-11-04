@@ -116,21 +116,18 @@ void ObjectBackedNativeHandler::RouteFunction(
   v8::HandleScope handle_scope(manager_->isolate());
   v8::Context::Scope context_scope(manager_->GetV8Context());
 
-  v8::Persistent<v8::Object> data(
-      manager_->isolate(), v8::Object::New(manager_->isolate()));
-  v8::Local<v8::Object> local_data(
-      v8::Local<v8::Object>::New(manager_->isolate(), data));
-  local_data->Set(
+  v8::Local<v8::Object> data(v8::Object::New(manager_->isolate()));
+  data->Set(
       v8::String::NewFromUtf8(manager_->isolate(), kHandlerFunction),
       v8::External::New(manager_->isolate(),
                         new HandlerFunction(handler_function)));
   v8::Handle<v8::FunctionTemplate> function_template(
       v8::FunctionTemplate::New(manager_->isolate(),
-                                FunctionRouter, local_data));
+                                FunctionRouter, data));
   object_template_.NewHandle(manager_->isolate())->Set(
       manager_->isolate(), name.c_str(), function_template);
 
-  router_data_.Append(local_data);
+  router_data_.Append(data);
 }
 
 void ObjectBackedNativeHandler::RouteAccessor(
@@ -141,28 +138,25 @@ void ObjectBackedNativeHandler::RouteAccessor(
   v8::HandleScope handle_scope(manager_->isolate());
   v8::Context::Scope context_scope(manager_->GetV8Context());
 
-  v8::Persistent<v8::Object> data(
-      manager_->isolate(), v8::Object::New(manager_->isolate()));
-  v8::Local<v8::Object> local_data(
-      v8::Local<v8::Object>::New(manager_->isolate(), data));
+  v8::Local<v8::Object> data(v8::Object::New(manager_->isolate()));
   if (!getter.is_null()) {
-    local_data->Set(
+    data->Set(
         v8::String::NewFromUtf8(manager_->isolate(), kHandlerGetter),
         v8::External::New(manager_->isolate(), new HandlerGetter(getter)));
   }
   if (!setter.is_null()) {
-    local_data->Set(
+    data->Set(
         v8::String::NewFromUtf8(manager_->isolate(), kHandlerSetter),
         v8::External::New(manager_->isolate(), new HandlerSetter(setter)));
   }
-  local_data->Set(
+  data->Set(
       v8::String::NewFromUtf8(manager_->isolate(), kPropertyName),
       v8::String::NewFromUtf8(manager_->isolate(), name.c_str()));
   object_template_.NewHandle(manager_->isolate())->SetAccessor(
       v8::String::NewFromUtf8(manager_->isolate(), name.c_str()),
-      GetterRouter, SetterRouter, local_data, v8::DEFAULT, attr);
+      GetterRouter, SetterRouter, data, v8::DEFAULT, attr);
 
-  router_data_.Append(local_data);
+  router_data_.Append(data);
 }
 
 ObjectBackedNativeHandler::ObjectBackedNativeHandler(

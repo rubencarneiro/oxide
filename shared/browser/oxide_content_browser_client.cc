@@ -40,15 +40,16 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gl/oxide_shared_gl_context.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
+#include "oxide_platform_integration.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
+#include "oxide_shared_gl_context.h"
 #include "oxide_user_agent_override_provider.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
@@ -255,7 +256,8 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   prefs->touch_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
-  prefs->device_supports_touch = IsTouchSupported();
+  prefs->device_supports_touch =
+      PlatformIntegration::GetInstance()->IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
       !contents_helper->GetBrowserContext()->IsPopupBlockerEnabled();
@@ -292,10 +294,6 @@ void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host)
   host->GetPpapiHost()->AddHostFactoryFilter(
       scoped_ptr<ppapi::host::HostFactory>(new PepperHostFactoryBrowser(host)));
 #endif
-}
-
-bool ContentBrowserClient::IsTouchSupported() {
-  return false;
 }
 
 ContentBrowserClient::ContentBrowserClient() {}

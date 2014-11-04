@@ -146,9 +146,6 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
 
-  // Should be subclassed
-  virtual bool IsTouchSupported();
-
   virtual BrowserMainParts::Delegate* CreateBrowserMainPartsDelegate() = 0;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;

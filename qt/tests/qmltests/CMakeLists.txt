@@ -22,10 +22,10 @@ set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
 set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
-qt5_use_modules(${QML_PLUGIN} Core Qml)
+qt5_use_modules(${QML_PLUGIN} Core Gui Qml)
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
-    SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
+    AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 
 foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebContext.qml TestWebView.qml)
@@ -41,7 +41,7 @@ set(QML_TEST_SRCS main.cc)
 
 add_executable(${QML_TEST} ${QML_TEST_SRCS})
 qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest Test)
-target_link_libraries(${QML_TEST} OxideQtCore)
+target_link_libraries(${QML_TEST} ${OXIDE_CORELIB_NAME})
 target_include_directories(
     ${QML_TEST} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
@@ -53,8 +53,8 @@ if(OXIDE_ENABLE_COMPOSITING)
 endif()
 set_target_properties(
     ${QML_TEST} PROPERTIES
-    SKIP_BUILD_RPATH TRUE AUTOMOC TRUE
-    RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR})
+    RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR}
+    AUTOMOC TRUE)
 
 function(add_qml_test)
   cmake_parse_arguments(_ARGS "USE_DATA_DIR;SSL_TESTS" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
@@ -99,6 +99,6 @@ endfunction()
 
 add_qml_test(NAME qml-api-test-noprofile TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
 add_qml_test(NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api USE_DATA_DIR)
-add_qml_test(NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
+add_qml_test(NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core USE_DATA_DIR)
 add_qml_test(NAME qml-crash-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
 add_qml_test(NAME qml-ssl-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ssl SSL_TESTS)

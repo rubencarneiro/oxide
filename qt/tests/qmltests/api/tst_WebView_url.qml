@@ -20,6 +20,14 @@ TestWebView {
     name: "WebView_url"
     when: windowShown
 
+    function initTestCase() {
+      OxideTestingUtils.setUrlHandler("foo", false);
+    }
+
+    function cleanupTestCase() {
+      OxideTestingUtils.unsetUrlHandler("foo");
+    }
+
     function init() {
       webView.clearLoadEventCounters();
       spy.clear();

@@ -20,8 +20,8 @@
 #include "base/containers/hash_tables.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "base/strings/string_util.h"
 #include "net/url_request/url_request_error_job.h"
-#include "net/url_request/url_request_job_manager.h"
 #include "url/gurl.h"
 
 #include "oxide_browser_context.h"
@@ -46,6 +46,23 @@ const char kBlacklistedProtocols[][16] = {
   "wss"
 };
 
+const char kBuiltInSchemes[][6] = {
+  "http",
+  "https",
+  "ws",
+  "wss"
+};
+
+bool IsBuiltInScheme(const std::string& scheme) {
+  for (size_t i = 0; i < arraysize(kBuiltInSchemes); ++i) {
+    if (LowerCaseEqualsASCII(scheme, kBuiltInSchemes[i])) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 }
 
 net::URLRequestJob*
@@ -60,7 +77,7 @@ URLRequestDelegatedJobFactory::MaybeCreateJobWithProtocolHandler(
     return job;
   }
 
-  if (net::URLRequestJobManager::GetInstance()->SupportsScheme(scheme)) {
+  if (IsBuiltInScheme(scheme)) {
     return NULL;
   }
 
@@ -149,6 +166,8 @@ bool URLRequestDelegatedJobFactory::CanDelegateProtocol(
   static bool initialized = false;
   static base::hash_set<std::string> blacklisted_protocols;
 
+  std::string lscheme(base::StringToLowerASCII(scheme));
+
   if (!initialized) {
     initialized = true;
     for (size_t i = 0; i < arraysize(kBlacklistedProtocols); ++i) {
@@ -156,7 +175,7 @@ bool URLRequestDelegatedJobFactory::CanDelegateProtocol(
     }
   }
 
-  return blacklisted_protocols.find(scheme) == blacklisted_protocols.end();
+  return blacklisted_protocols.find(lscheme) == blacklisted_protocols.end();
 }
 
 } // namespace oxide

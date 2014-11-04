@@ -28,7 +28,6 @@
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 #include "oxide_browser_process_main.h"
-#include "oxide_default_screen_info.h"
 
 namespace oxide {
 
@@ -123,7 +122,8 @@ FormFactor GetFormFactorHint() {
     // stack. If we detect these, assume we are a phone or tablet. The screen
     // size check here is basically the same as Chrome for Android, where
     // a minimum DIP width of less than 600 is a phone
-    blink::WebScreenInfo screen(GetDefaultWebScreenInfo());
+    blink::WebScreenInfo screen(
+        BrowserProcessMain::GetInstance()->GetDefaultScreenInfo());
     if (std::min(screen.rect.width / screen.deviceScaleFactor,
                  screen.rect.height / screen.deviceScaleFactor) >= 600) {
       form_factor = FORM_FACTOR_TABLET;

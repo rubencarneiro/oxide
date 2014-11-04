@@ -15,15 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_DEFAULT_SCREEN_INFO_H_
-#define _OXIDE_SHARED_BROWSER_DEFAULT_SCREEN_INFO_H_
+#ifndef _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
+#define _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_
 
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/gl/gl_context.h"
+#include "ui/gl/gl_implementation.h"
 
 namespace oxide {
 
-blink::WebScreenInfo GetDefaultWebScreenInfo();
+class SharedGLContext : public gfx::GLContext {
+ public:
+  SharedGLContext();
+  virtual ~SharedGLContext();
 
-}
+  void* GetHandle() = 0;
+  virtual gfx::GLImplementation GetImplementation() = 0;
 
-#endif // _OXIDE_SHARED_BROWSER_DEFAULT_SCREEN_INFO_H_
+  bool Initialize(gfx::GLSurface* compatible_surface,
+                  gfx::GpuPreference gpu_preference) final;
+  void Destroy() final;
+  bool MakeCurrent(gfx::GLSurface* surface) final;
+  void ReleaseCurrent(gfx::GLSurface* surface) final;
+  bool IsCurrent(gfx::GLSurface* surface) final;
+  void SetSwapInterval(int interval) final;
+};
+
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_SHARED_GL_CONTEXT_H_

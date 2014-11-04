@@ -19,7 +19,6 @@
 
 #include <QList>
 #include <QThread>
-#include <QTouchDevice>
 
 #include "oxide_qt_browser_main_parts_delegate.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
@@ -33,11 +32,6 @@ ContentBrowserClient::ContentBrowserClient() {}
 
 oxide::WebPreferences* ContentBrowserClient::CreateWebPreferences() {
   return new WebPreferences();
-}
-
-bool ContentBrowserClient::IsTouchSupported() {
-  // XXX: Is there a way to get notified if a touch device is added?
-  return QTouchDevice::devices().size() > 0;
 }
 
 oxide::BrowserMainParts::Delegate*
