@@ -21,6 +21,12 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
+#if defined(USE_NSS)
+namespace base {
+class FilePath;
+}
+#endif
+
 namespace oxide {
 
 class ContentMainDelegate;
@@ -46,6 +52,9 @@ class BrowserProcessMain {
   // browser process components
   virtual void Start(scoped_ptr<ContentMainDelegate> delegate,
                      scoped_ptr<PlatformIntegration> platform,
+#if defined(USE_NSS)
+                     const base::FilePath& nss_db_path,
+#endif
                      SupportedGLImplFlags supported_gl_flags) = 0;
 
   // Quit the browser process components and delete the

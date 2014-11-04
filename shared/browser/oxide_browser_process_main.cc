@@ -103,6 +103,9 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 
   void Start(scoped_ptr<ContentMainDelegate> delegate,
              scoped_ptr<PlatformIntegration> platform,
+#if defined(USE_NSS)
+             const base::FilePath& nss_db_path,
+#endif
              SupportedGLImplFlags supported_gl_flags) final;
   void Shutdown() final;
 
@@ -314,6 +317,9 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
 
 void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
                                    scoped_ptr<PlatformIntegration> platform,
+#if defined(USE_NSS)
+                                   const base::FilePath& nss_db_path,
+#endif
                                    SupportedGLImplFlags supported_gl_impls) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
@@ -352,9 +358,9 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
         switches::kSingleProcess));
 
 #if defined(USE_NSS)
-  if (!main_delegate_->GetNSSDbPath().empty()) {
+  if (!nss_db_path.empty()) {
     // Used for testing
-    PathService::Override(crypto::DIR_NSSDB, main_delegate_->GetNSSDbPath());
+    PathService::Override(crypto::DIR_NSSDB, nss_db_path);
   }
   crypto::EarlySetupForNSSInit();
 #endif

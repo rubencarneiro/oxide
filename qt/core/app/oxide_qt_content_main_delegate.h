@@ -18,8 +18,7 @@
 #ifndef _OXIDE_QT_CORE_APP_CONTENT_MAIN_DELEGATE_H_
 #define _OXIDE_QT_CORE_APP_CONTENT_MAIN_DELEGATE_H_
 
-#include "base/compiler_specific.h"
-#include "base/files/file_path.h"
+#include "base/macros.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
 
@@ -31,24 +30,9 @@ class ContentMainDelegate final : public oxide::ContentMainDelegate {
   ContentMainDelegate();
   ~ContentMainDelegate();
 
-  static ContentMainDelegate* CreateForBrowser(
-      const base::FilePath& nss_db_path = base::FilePath());
-
  private:
-  ContentMainDelegate(const base::FilePath& nss_db_path);
-
-  // oxide::ContentMainDelegate implementation
-#if defined(USE_NSS)
-  base::FilePath GetNSSDbPath() const final;
-#endif
-
   // content::ContentMainDelegate implementation
   content::ContentBrowserClient* CreateContentBrowserClient() final;
-
-  bool is_browser_;
-#if defined(USE_NSS)
-  base::FilePath nss_db_path_;
-#endif
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };

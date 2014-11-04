@@ -18,7 +18,6 @@
 #include "oxide_qt_content_main_delegate.h"
 
 #include "base/lazy_instance.h"
-#include "base/logging.h"
 
 #include "qt/core/browser/oxide_qt_content_browser_client.h"
 
@@ -30,38 +29,14 @@ base::LazyInstance<ContentBrowserClient> g_content_browser_client =
     LAZY_INSTANCE_INITIALIZER;
 }
 
-ContentMainDelegate::ContentMainDelegate(const base::FilePath& nss_db_path)
-    : is_browser_(true)
-#if defined(USE_NSS)
-      , nss_db_path_(nss_db_path) {
-#else
-{
-  DCHECK(nss_db_path.empty());
-#endif
-}
-
-#if defined(USE_NSS)
-base::FilePath ContentMainDelegate::GetNSSDbPath() const {
-  DCHECK(is_browser_);
-  return nss_db_path_;
-}
-#endif
-
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
   return g_content_browser_client.Pointer();
 }
 
-ContentMainDelegate::ContentMainDelegate()
-    : is_browser_(false) {}
+ContentMainDelegate::ContentMainDelegate() {}
 
 ContentMainDelegate::~ContentMainDelegate() {}
-
-// static
-ContentMainDelegate* ContentMainDelegate::CreateForBrowser(
-    const base::FilePath& nss_db_path) {
-  return new ContentMainDelegate(nss_db_path);
-}
 
 } // namespace qt
 } // namespace oxide

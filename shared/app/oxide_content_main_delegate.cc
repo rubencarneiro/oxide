@@ -46,12 +46,6 @@ ContentMainDelegate::ContentMainDelegate() {}
 
 ContentMainDelegate::~ContentMainDelegate() {}
 
-#if defined(USE_NSS)
-base::FilePath ContentMainDelegate::GetNSSDbPath() const {
-  return base::FilePath();
-}
-#endif
-
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
   RegisterPathProvider();

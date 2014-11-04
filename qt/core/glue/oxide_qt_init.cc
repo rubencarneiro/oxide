@@ -21,6 +21,7 @@
 #include <QDir>
 #include <QGuiApplication>
 
+#include "base/files/file_path.h"
 #include "base/logging.h"
 
 #include "qt/core/api/oxideqglobal.h"
@@ -70,10 +71,7 @@ void EnsureChromiumStarted() {
     nss_db_path = QDir(nss_db_path).absolutePath();
   }
 
-  scoped_ptr<ContentMainDelegate> delegate(
-      ContentMainDelegate::CreateForBrowser(
-        base::FilePath(nss_db_path.toStdString())));
-
+  scoped_ptr<ContentMainDelegate> delegate(new ContentMainDelegate());
   scoped_ptr<PlatformIntegration> platform_integration(new PlatformIntegration());
 
   oxide::SupportedGLImplFlags supported_gl_impls =
@@ -97,6 +95,9 @@ void EnsureChromiumStarted() {
   oxide::BrowserProcessMain::GetInstance()->Start(
       delegate.PassAs<oxide::ContentMainDelegate>(),
       platform_integration.PassAs<oxide::PlatformIntegration>(),
+#if defined(USE_NSS)
+      base::FilePath(nss_db_path.toStdString()),
+#endif
       supported_gl_impls);
 
   qAddPostRoutine(ShutdownChromium);
