@@ -708,7 +708,7 @@ void OxideQQuickWebViewPrivate::contextConstructed() {
   }
 }
 
-void OxideQQuickWebViewPrivate::contextWillBeDestroyed() {
+void OxideQQuickWebViewPrivate::contextDestroyed() {
   Q_Q(OxideQQuickWebView);
 
   // XXX: Our underlying BrowserContext lives on, so we're left in a
@@ -725,8 +725,8 @@ void OxideQQuickWebViewPrivate::attachContextSignals(
     return;
   }
 
-  QObject::connect(context, SIGNAL(willBeDestroyed()),
-                   q, SLOT(contextWillBeDestroyed()));
+  QObject::connect(context, SIGNAL(destroyed()),
+                   q, SLOT(contextDestroyed()));
   QObject::connect(context, SIGNAL(constructed()),
                    q, SLOT(contextConstructed()));
 }
@@ -741,8 +741,8 @@ void OxideQQuickWebViewPrivate::detachContextSignals(
 
   QObject::disconnect(context, SIGNAL(constructed()),
                       q, SLOT(contextConstructed()));
-  QObject::disconnect(context, SIGNAL(willBeDestroyed()),
-                      q, SLOT(contextWillBeDestroyed()));
+  QObject::disconnect(context, SIGNAL(destroyed()),
+                      q, SLOT(contextDestroyed()));
 }
 
 void OxideQQuickWebViewPrivate::didUpdatePaintNode() {

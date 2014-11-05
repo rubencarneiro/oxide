@@ -21,17 +21,21 @@
 #include <QDir>
 #include <QGuiApplication>
 
+#include "base/files/file_path.h"
 #include "base/logging.h"
 
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/app/oxide_qt_content_main_delegate.h"
 #include "qt/core/browser/oxide_qt_platform_integration.h"
+#include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
 namespace oxide {
 namespace qt {
 
 namespace {
+
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(oxide::SupportedGLImplFlags)
 
 QOpenGLContext* g_shared_gl_context;
 
@@ -67,12 +71,34 @@ void EnsureChromiumStarted() {
     nss_db_path = QDir(nss_db_path).absolutePath();
   }
 
-  scoped_ptr<ContentMainDelegate> delegate(
-      ContentMainDelegate::CreateForBrowser(
-        base::FilePath(nss_db_path.toStdString())));
-  scoped_ptr<PlatformIntegration> platform(new PlatformIntegration());
-  oxide::BrowserProcessMain::GetInstance()->Start(delegate.Pass(),
-                                                  platform.Pass());
+  scoped_ptr<ContentMainDelegate> delegate(new ContentMainDelegate());
+  scoped_ptr<PlatformIntegration> platform_integration(new PlatformIntegration());
+
+  oxide::SupportedGLImplFlags supported_gl_impls =
+      oxide::SUPPORTED_GL_IMPL_NONE;
+  if (QGuiApplication::platformNativeInterface()) {
+    QString platform = QGuiApplication::platformName();
+    if (platform == QLatin1String("xcb")) {
+      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_DESKTOP_GL;
+      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
+    } else if (platform.startsWith("ubuntu")) {
+      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
+    } else {
+      LOG(WARNING) << "Unrecognized Qt platform: " << qPrintable(platform);
+    }
+  } else {
+    LOG(WARNING)
+        << "Unable to determine native display handle on Qt platform: "
+        << qPrintable(QGuiApplication::platformName());
+  }
+
+  oxide::BrowserProcessMain::GetInstance()->Start(
+      delegate.Pass(),
+      platform_integration.Pass(),
+#if defined(USE_NSS)
+      base::FilePath(nss_db_path.toStdString()),
+#endif
+      supported_gl_impls);
 
   qAddPostRoutine(ShutdownChromium);
 }

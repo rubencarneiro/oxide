@@ -143,7 +143,7 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
   void contextConstructed();
-  void contextWillBeDestroyed();
+  void contextDestroyed();
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 

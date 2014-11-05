@@ -52,4 +52,13 @@ bool PlatformIntegration::IsTouchSupported() {
   return false;
 }
 
+GLContextAdopted* PlatformIntegration::GetGLShareContext() {
+  return NULL;
+}
+
+void PlatformIntegration::BrowserThreadInit(content::BrowserThread::ID id) {}
+
+void PlatformIntegration::BrowserThreadCleanUp(
+    content::BrowserThread::ID id) {}
+
 } // namespace oxide

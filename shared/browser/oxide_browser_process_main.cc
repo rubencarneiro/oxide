@@ -30,6 +30,7 @@
 #include "base/i18n/icu_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "base/message_loop/message_loop.h"
 #include "base/path_service.h"
 #include "base/posix/global_descriptors.h"
@@ -61,19 +62,12 @@
 #include "shared/app/oxide_content_main_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
-#include "shared/port/content/browser/power_save_blocker_oxide.h"
-#include "shared/port/content/browser/render_widget_host_view_oxide.h"
-#include "shared/port/content/browser/web_contents_view_oxide.h"
-#include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
 #include "oxide_platform_integration.h"
-#include "oxide_power_save_blocker.h"
-#include "oxide_shared_gl_context.h"
-#include "oxide_web_contents_view.h"
 
 namespace content {
 
@@ -108,22 +102,15 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   virtual ~BrowserProcessMainImpl();
 
   void Start(scoped_ptr<ContentMainDelegate> delegate,
-             scoped_ptr<PlatformIntegration> platform) final;
+             scoped_ptr<PlatformIntegration> platform,
+#if defined(USE_NSS)
+             const base::FilePath& nss_db_path,
+#endif
+             SupportedGLImplFlags supported_gl_flags) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
     return state_ == STATE_STARTED || state_ == STATE_SHUTTING_DOWN;
-  }
-
-  SharedGLContext* GetSharedGLContext() const final {
-    return shared_gl_context_.get();
-  }
-  intptr_t GetNativeDisplay() const final {
-    CHECK(native_display_is_valid_);
-    return native_display_;
-  }
-  blink::WebScreenInfo GetDefaultScreenInfo() const final {
-    return main_delegate_->GetDefaultScreenInfo();
   }
 
   void IncrementPendingUnloadsCount() final {
@@ -147,10 +134,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   };
   State state_;
 
-  scoped_refptr<SharedGLContext> shared_gl_context_;
-  intptr_t native_display_;
-  bool native_display_is_valid_;
-
   scoped_ptr<PlatformIntegration> platform_integration_;
 
   // XXX: Don't change the order of these
@@ -167,10 +150,6 @@ namespace {
 BrowserProcessMainImpl* GetBrowserProcessMainInstance() {
   static BrowserProcessMainImpl g_instance;
   return &g_instance;
-}
-
-blink::WebScreenInfo DefaultScreenInfoGetter() {
-  return BrowserProcessMain::GetInstance()->GetDefaultScreenInfo();
 }
 
 bool IsEnvironmentOptionEnabled(const char* option) {
@@ -329,8 +308,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
-      native_display_(0),
-      native_display_is_valid_(false),
       pending_unloads_count_(0) {}
 
 BrowserProcessMainImpl::~BrowserProcessMainImpl() {
@@ -339,23 +316,20 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
 }
 
 void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
-                                   scoped_ptr<PlatformIntegration> platform) {
+                                   scoped_ptr<PlatformIntegration> platform,
+#if defined(USE_NSS)
+                                   const base::FilePath& nss_db_path,
+#endif
+                                   SupportedGLImplFlags supported_gl_impls) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No ContentMainDelegate provided";
+  CHECK(platform) << "No PlatformIntegration provided";
 
   main_delegate_ = delegate.Pass();
   platform_integration_ = platform.Pass();
 
   state_ = STATE_STARTED;
-
-  shared_gl_context_ = main_delegate_->GetSharedGLContext();
-  native_display_is_valid_ = main_delegate_->GetNativeDisplay(&native_display_);
-
-  if (!shared_gl_context_.get()) {
-    DLOG(INFO) << "No shared GL context has been provided. "
-               << "Compositing will not work";
-  }
 
   SetupAndVerifySignalHandlers();
 
@@ -384,9 +358,9 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
         switches::kSingleProcess));
 
 #if defined(USE_NSS)
-  if (!main_delegate_->GetNSSDbPath().empty()) {
+  if (!nss_db_path.empty()) {
     // Used for testing
-    PathService::Override(crypto::DIR_NSSDB, main_delegate_->GetNSSDbPath());
+    PathService::Override(crypto::DIR_NSSDB, nss_db_path);
   }
   crypto::EarlySetupForNSSInit();
 #endif
@@ -407,26 +381,15 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
   content::GpuProcessHost::RegisterGpuMainThreadFactory(
       content::CreateInProcessGpuThread);
 
-  content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
-  content::SetWebContentsViewOxideFactory(WebContentsView::Create);
-  content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
-
-  if (native_display_is_valid_) {
-    gfx::InitializeOxideNativeDisplay(native_display_);
-
-    std::vector<gfx::GLImplementation> allowed_gl_impls;
-    if (main_delegate_->IsPlatformX11()) {
-      allowed_gl_impls.push_back(gfx::kGLImplementationDesktopGL);
-    }
-    allowed_gl_impls.push_back(gfx::kGLImplementationEGLGLES2);
-    allowed_gl_impls.push_back(gfx::kGLImplementationOSMesaGL);
-    gfx::InitializeAllowedGLImplementations(allowed_gl_impls);
-
-    if (shared_gl_context_.get()) {
-      gfx::InitializePreferredGLImplementation(
-          shared_gl_context_->GetImplementation());
-    }
+  std::vector<gfx::GLImplementation> allowed_gl_impls;
+  if (supported_gl_impls & SUPPORTED_GL_IMPL_DESKTOP_GL) {
+    allowed_gl_impls.push_back(gfx::kGLImplementationDesktopGL);
   }
+  if (supported_gl_impls & SUPPORTED_GL_IMPL_EGL_GLES2) {
+    allowed_gl_impls.push_back(gfx::kGLImplementationEGLGLES2);
+  }
+  allowed_gl_impls.push_back(gfx::kGLImplementationOSMesaGL);
+  gfx::InitializeAllowedGLImplementations(allowed_gl_impls);
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
   CHECK(browser_main_runner_.get()) << "Failed to create BrowserMainRunner";
@@ -465,10 +428,6 @@ void BrowserProcessMainImpl::Shutdown() {
   browser_main_runner_.reset();
 
   exit_manager_.reset();
-
-  shared_gl_context_ = NULL;
-  native_display_is_valid_ = false;
-  native_display_ = 0;
 
   platform_integration_.reset();
   main_delegate_.reset();

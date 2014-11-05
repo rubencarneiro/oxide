@@ -17,6 +17,10 @@ TestCase {
     WebContext {}
   }
 
+  SignalSpy {
+    id: spy
+  }
+
   // Ensure that WebView.context does not return anything when it is using
   // the default WebContext
   function test_WebView_context1_default() {
@@ -59,7 +63,11 @@ TestCase {
     var v = webViewFactory.createObject(null, { context: c });
     compare(v.context, c);
 
+    spy.target = v;
+    spy.signalName = "contextChanged";
+
     OxideTestingUtils.destroyQObjectNow(c);
     verify(!v.context);
+    compare(spy.count, 1);
   }
 }

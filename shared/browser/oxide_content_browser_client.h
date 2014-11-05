@@ -26,22 +26,14 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
-#include "shared/browser/oxide_browser_main_parts.h"
-
 namespace content {
 class RenderViewHost;
 class ResourceDispatcherHostDelegate;
 }
 
-namespace gfx {
-class GLContext;
-}
-
 namespace oxide {
 
-class GLShareGroup;
 class ResourceDispatcherHostDelegate;
-class SharedGLContext;
 class WebFrameTree;
 class WebPreferences;
 
@@ -142,11 +134,7 @@ class ContentBrowserClient : public content::ContentBrowserClient {
 
   content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() final;
 
-  gfx::GLShareGroup* GetGLShareGroup() final;
-
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
-
-  virtual BrowserMainParts::Delegate* CreateBrowserMainPartsDelegate() = 0;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
 

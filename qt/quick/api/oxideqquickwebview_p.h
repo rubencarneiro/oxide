@@ -258,7 +258,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
-  Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
+  Q_PRIVATE_SLOT(d_func(), void contextDestroyed());
 
   Q_PRIVATE_SLOT(d_func(), void onWindowChanged(QQuickWindow*));
 

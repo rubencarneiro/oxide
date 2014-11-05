@@ -20,7 +20,6 @@
 #include <QList>
 #include <QThread>
 
-#include "oxide_qt_browser_main_parts_delegate.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_web_preferences.h"
@@ -32,11 +31,6 @@ ContentBrowserClient::ContentBrowserClient() {}
 
 oxide::WebPreferences* ContentBrowserClient::CreateWebPreferences() {
   return new WebPreferences();
-}
-
-oxide::BrowserMainParts::Delegate*
-ContentBrowserClient::CreateBrowserMainPartsDelegate() {
-  return new BrowserMainPartsDelegate();
 }
 
 content::LocationProvider*

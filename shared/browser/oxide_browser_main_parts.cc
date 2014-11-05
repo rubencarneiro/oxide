@@ -29,18 +29,38 @@
 #include "ui/gfx/display.h"
 #include "ui/gfx/screen.h"
 #include "ui/gfx/screen_type_delegate.h"
+#include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
+#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/port/content/browser/power_save_blocker_oxide.h"
+#include "shared/port/content/browser/render_widget_host_view_oxide.h"
+#include "shared/port/content/browser/web_contents_view_oxide.h"
+#include "shared/port/content/common/gpu_thread_shim_oxide.h"
+#include "shared/port/gfx/gfx_utils_oxide.h"
+#include "shared/port/gl/gl_implementation_oxide.h"
 
 #include "oxide_browser_process_main.h"
+#include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
+#include "oxide_platform_integration.h"
+#include "oxide_power_save_blocker.h"
+#include "oxide_web_contents_view.h"
 
 namespace oxide {
 
 namespace {
+
+blink::WebScreenInfo DefaultScreenInfoGetter() {
+  return PlatformIntegration::GetInstance()->GetDefaultScreenInfo();
+}
+
+scoped_ptr<base::MessagePump> CreateUIMessagePump() {
+  return PlatformIntegration::GetInstance()->CreateUIMessagePump();
+}
 
 class ScopedBindGLESAPI {
  public:
@@ -143,7 +163,7 @@ class Screen : public gfx::Screen {
 
   gfx::Display GetPrimaryDisplay() const final {
     blink::WebScreenInfo info(
-        BrowserProcessMain::GetInstance()->GetDefaultScreenInfo());
+        PlatformIntegration::GetInstance()->GetDefaultScreenInfo());
 
     gfx::Display display;
     display.set_bounds(info.rect);
@@ -163,18 +183,17 @@ class Screen : public gfx::Screen {
 
 } // namespace
 
-BrowserMainParts::Delegate::~Delegate() {}
-
-IOThread::Delegate* BrowserMainParts::Delegate::GetIOThreadDelegate() {
-  return NULL;
-}
-
 void BrowserMainParts::PreEarlyInitialization() {
-  Delegate::MessagePumpFactory* factory = delegate_->GetMessagePumpFactory();
-  CHECK(factory);
-  base::MessageLoop::InitMessagePumpForUIFactory(factory);
+  content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
+  content::SetWebContentsViewOxideFactory(WebContentsView::Create);
+  content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
 
+  gfx::InitializeOxideNativeDisplay(
+      PlatformIntegration::GetInstance()->GetNativeDisplay());
+
+  base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
   main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
+  base::MessageLoop::InitMessagePumpForUIFactory(NULL);
 }
 
 int BrowserMainParts::PreCreateThreads() {
@@ -185,14 +204,32 @@ int BrowserMainParts::PreCreateThreads() {
   // the GL bits here
   ScopedBindGLESAPI gles_binder;
 
-  // Work around a mesa race - see https://launchpad.net/bugs/1267893
+  GLContextAdopted* gl_share_context =
+      PlatformIntegration::GetInstance()->GetGLShareContext();
+  if (gl_share_context) {
+    gfx::InitializePreferredGLImplementation(
+        gl_share_context->GetImplementation());
+  }
+
+  // Do this here rather than on the GPU thread to work around a mesa race -
+  // see https://launchpad.net/bugs/1267893.
+  // Also, it allows us to check if the GL share context platform matches
+  // the selected Chromium GL platform before spinning up the GPU thread
   gfx::GLSurface::InitializeOneOff();
+
+  if (gl_share_context &&
+      gl_share_context->GetImplementation() == gfx::GetGLImplementation()) {
+    content::oxide_gpu_shim::SetGLShareGroup(gl_share_context->share_group());
+  } else {
+    DLOG(INFO) << "No valid shared GL context has been provided. "
+               << "Compositing will not work";
+  }
 
   primary_screen_.reset(new Screen());
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                  primary_screen_.get());
 
-  io_thread_.reset(new IOThread(delegate_->GetIOThreadDelegate()));
+  io_thread_.reset(new IOThread());
 
   gpu::GPUInfo gpu_info;
   gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
@@ -229,12 +266,10 @@ void BrowserMainParts::PostMainMessageLoopRun() {
 void BrowserMainParts::PostDestroyThreads() {
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
   io_thread_.reset();
+  content::oxide_gpu_shim::SetGLShareGroup(NULL);
 }
 
-BrowserMainParts::BrowserMainParts(Delegate* delegate)
-    : delegate_(delegate) {
-  DCHECK(delegate);
-}
+BrowserMainParts::BrowserMainParts() {}
 
 BrowserMainParts::~BrowserMainParts() {}
 

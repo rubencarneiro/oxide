@@ -15,17 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_SHARED_GL_CONTEXT_H_
-#define _OXIDE_QT_CORE_BROWSER_SHARED_GL_CONTEXT_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_GL_CONTEXT_ADOPTED_H_
+#define _OXIDE_QT_CORE_BROWSER_GL_CONTEXT_ADOPTED_H_
 
 #include <QtGlobal>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/ref_counted.h"
+#include "base/macros.h"
 #include "ui/gl/gl_implementation.h"
 
-#include "shared/browser/oxide_shared_gl_context.h"
+#include "shared/gl/oxide_gl_context_adopted.h"
 
 QT_BEGIN_NAMESPACE
 class QOpenGLContext;
@@ -34,19 +32,30 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class SharedGLContext final : public oxide::SharedGLContext {
+class GLContextAdopted final : public oxide::GLContextAdopted {
  public:
-  SharedGLContext(QOpenGLContext* context);
+  static scoped_refptr<GLContextAdopted> Create(
+      QOpenGLContext* context,
+      gfx::GLShareGroup* share_group = NULL);
 
-  void* GetHandle() final { return handle_; }
-  gfx::GLImplementation GetImplementation() final { return implementation_; }
+  // gfx::GLContext implementation
+  void* GetHandle() final;
+
+  // oxide::GLContextAdopted implementation
+  gfx::GLImplementation GetImplementation() const final;
 
  private:
+  GLContextAdopted(void* handle,
+                   gfx::GLImplementation implementation,
+                   gfx::GLShareGroup* share_group);
+
   void* handle_;
   gfx::GLImplementation implementation_;
+
+  DISALLOW_COPY_AND_ASSIGN(GLContextAdopted);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_SHARED_GL_CONTEXT_H_
+#endif // _OXIDE_QT_CORE_BROWSER_GL_CONTEXT_ADOPTED_H_

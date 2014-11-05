@@ -33,9 +33,11 @@
 #include "gpu/command_buffer/service/texture_manager.h"
 
 namespace content {
-namespace gpu_shim {
+namespace oxide_gpu_shim {
 
 namespace {
+
+gfx::GLShareGroup* g_gl_share_group;
 
 content::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
                                                    int32_t route_id) {
@@ -128,5 +130,13 @@ int32_t GetContextProviderRouteID(
   return provider->GetCommandBufferProxy()->GetRouteID();
 }
 
-} // namespace gpu_shim
+gfx::GLShareGroup* GetGLShareGroup() {
+  return g_gl_share_group;
+}
+
+void SetGLShareGroup(gfx::GLShareGroup* share_group) {
+  g_gl_share_group = share_group;
+}
+
+} // namespace oxide_gpu_shim
 } // namespace content

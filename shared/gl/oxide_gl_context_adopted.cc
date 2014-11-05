@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,36 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_browser_main_parts_delegate.h"
+#include "oxide_gl_context_adopted.h"
 
-#include "base/memory/scoped_ptr.h"
-
-#include "oxide_qt_io_thread_delegate.h"
-#include "oxide_qt_message_pump.h"
+#include "base/logging.h"
 
 namespace oxide {
-namespace qt {
 
-namespace {
+GLContextAdopted::GLContextAdopted(gfx::GLShareGroup* share_group)
+    : gfx::GLContext(share_group) {}
 
-scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
-  return make_scoped_ptr(new MessagePump()).Pass();
+GLContextAdopted::~GLContextAdopted() {}
+
+bool GLContextAdopted::Initialize(gfx::GLSurface* compatible_surface,
+                                  gfx::GpuPreference gpu_preference) {
+  return true;
 }
 
+void GLContextAdopted::Destroy() {}
+
+bool GLContextAdopted::MakeCurrent(gfx::GLSurface* surface) {
+  NOTREACHED();
+  return false;
 }
 
-oxide::IOThread::Delegate* BrowserMainPartsDelegate::GetIOThreadDelegate() {
-  return new IOThreadDelegate();
+void GLContextAdopted::ReleaseCurrent(gfx::GLSurface* surface) {}
+
+bool GLContextAdopted::IsCurrent(gfx::GLSurface* surface) {
+  return false;
 }
 
-oxide::BrowserMainParts::Delegate::MessagePumpFactory*
-BrowserMainPartsDelegate::GetMessagePumpFactory() {
-  return CreateMessagePumpForUI;
-}
+void GLContextAdopted::SetSwapInterval(int interval) {}
 
-BrowserMainPartsDelegate::BrowserMainPartsDelegate() {}
-
-BrowserMainPartsDelegate::~BrowserMainPartsDelegate() {}
-
-} // namespace qt
 } // namespace oxide
