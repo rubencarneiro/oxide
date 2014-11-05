@@ -16,33 +16,20 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(GNUInstallDirs)
-include(OxideQtCommon)
+set(OXIDE_QMLRUNNER_SRCS main.cc)
 
-set(QMLRUNNER oxideqmlscene)
-
-set(QMLRUNNER_SRCS main.cc)
-
-add_executable(${QMLRUNNER} ${QMLRUNNER_SRCS})
-qt5_use_modules(${QMLRUNNER} Core Gui Qml Quick)
-target_include_directories(${QMLRUNNER} PRIVATE ${Qt5Core_PRIVATE_INCLUDE_DIRS})
+add_executable(${OXIDE_QMLRUNNER} ${OXIDE_QMLRUNNER_SRCS})
+qt5_use_modules(${OXIDE_QMLRUNNER} Core Gui Qml Quick)
+target_include_directories(${OXIDE_QMLRUNNER} PRIVATE ${Qt5Core_PRIVATE_INCLUDE_DIRS})
 if(OXIDE_ENABLE_COMPOSITING)
-  target_compile_definitions(${QMLRUNNER} PRIVATE -DENABLE_COMPOSITING)
+  target_compile_definitions(${OXIDE_QMLRUNNER} PRIVATE -DENABLE_COMPOSITING)
   target_include_directories(
-      ${QMLRUNNER} PRIVATE
+      ${OXIDE_QMLRUNNER} PRIVATE
       ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
       ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
 endif()
 set_target_properties(
-    ${QMLRUNNER} PROPERTIES
-    SKIP_BUILD_RPATH TRUE
-    RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
+    ${OXIDE_QMLRUNNER} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR})
 
-get_target_property(_QMLRUNNER_LOCATION ${QMLRUNNER} LOCATION)
-
-install(PROGRAMS ${_QMLRUNNER_LOCATION} DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-get_filename_component(_QMLRUNNER_NAME ${_QMLRUNNER_LOCATION} NAME)
-add_custom_target(stage-oxideqmlscene
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${_QMLRUNNER_LOCATION} ${OXIDE_STAGE_DIR}/${_QMLRUNNER_NAME})
+install(TARGETS ${OXIDE_QMLRUNNER} DESTINATION ${CMAKE_INSTALL_BINDIR})

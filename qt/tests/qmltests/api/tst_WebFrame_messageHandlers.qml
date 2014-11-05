@@ -79,7 +79,7 @@ TestWebView {
     }
 
     function test_WebFrame_messageHandlers3_add_already_owned() {
-      webView.url = "http://localhost:8080/tst_WebFrame_messageHandlers.html";
+      webView.url = "http://testsuite/tst_WebFrame_messageHandlers.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

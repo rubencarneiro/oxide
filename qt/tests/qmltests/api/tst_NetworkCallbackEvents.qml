@@ -34,7 +34,7 @@ TestWebView {
     function test_NetworkCallbackEvents1_BeforeURLRequest() {
       webView.workerMessageType = "beforeURLRequest";
 
-      webView.url = "http://localhost:8080/tst_NetworkCallbackEvents1.html";
+      webView.url = "http://testsuite/tst_NetworkCallbackEvents1.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 
@@ -44,7 +44,7 @@ TestWebView {
       compare(webView.getTestApi().documentURI, webView.url,
               "Invalid documentURI for main frame");
       compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI,
-              "http://localhost:8080/empty.html", "Invalid documentURI for child frame");
+              "http://testsuite/empty.html", "Invalid documentURI for child frame");
 
       try {
         webView.getTestApiForFrame(webView.rootFrame.childFrames[1]).documentURI;
@@ -57,10 +57,10 @@ TestWebView {
       compare(webView.workerMessages.length, 4, "Unexpected number of worker messages");
 
       var data = [
-        { url: "http://localhost:8080/tst_NetworkCallbackEvents1.html", method: "GET", requestCancelled: false, redirectUrl: "" },
-        { url: "http://localhost:8080/tst_NetworkCallbackEvents2.html", method: "GET", requestCancelled: false, redirectUrl: "" },
-        { url: "http://localhost:8080/tst_NetworkCallbackEvents3.html", method: "GET", requestCancelled: false, redirectUrl: "" },
-        { url: "http://localhost:8080/empty.html", method: "GET", requestCancelled: false, redirectUrl: "" },
+        { url: "http://testsuite/tst_NetworkCallbackEvents1.html", method: "GET", requestCancelled: false, redirectUrl: "" },
+        { url: "http://testsuite/tst_NetworkCallbackEvents2.html", method: "GET", requestCancelled: false, redirectUrl: "" },
+        { url: "http://testsuite/tst_NetworkCallbackEvents3.html", method: "GET", requestCancelled: false, redirectUrl: "" },
+        { url: "http://testsuite/empty.html", method: "GET", requestCancelled: false, redirectUrl: "" },
       ];
 
       for (var i = 0; i < data.length; ++i) {
@@ -73,11 +73,11 @@ TestWebView {
 
     function test_NetworkCallbackEvents2_BeforeSendHeaders_data() {
       return [
-        { url: "http://localhost:8080/get-headers.py", "User-Agent": "Oxide Test", "Foo": undefined },
-        { url: "http://localhost:8080/get-headers.py?override-ua", "User-Agent": "Bleurgh", "Foo": undefined },
+        { url: "http://testsuite/get-headers.py", "User-Agent": "Oxide Test", "Foo": undefined },
+        { url: "http://testsuite/get-headers.py?override-ua", "User-Agent": "Bleurgh", "Foo": undefined },
         // XXX: Clearing the User-Agent doesn't work - it seems to get added back later
-        // { url: "http://localhost:8080/get-headers.py?clear-ua", "User-Agent": undefined, "Foo": undefined },
-        { url: "http://localhost:8080/get-headers.py?add-foo", "User-Agent": "Oxide Test", "Foo": "Bar" }
+        // { url: "http://testsuite/get-headers.py?clear-ua", "User-Agent": undefined, "Foo": undefined },
+        { url: "http://testsuite/get-headers.py?add-foo", "User-Agent": "Oxide Test", "Foo": "Bar" }
       ];
     }
 
@@ -102,6 +102,41 @@ TestWebView {
 
       compare(headers["user-agent"], data["User-Agent"]);
       compare(headers["foo"], data["Foo"]);
+    }
+
+    function test_NetworkCallbackEvents2_BeforeRedirect_data() {
+      return [
+        { url: "http://testsuite/empty.html",
+          cancelled: false,
+          isMainFrame: true,
+          originalUrl: "http://testsuite/redirect.py?redirect",
+          sourceUrl: "http://testsuite/redirect.py?redirect" },
+        { url: "http://testsuite/empty.html",
+          cancelled: false,
+          isMainFrame: false,
+          originalUrl: "http://testsuite/redirect.py?redirect",
+          sourceUrl: "http://testsuite/tst_NetworkCallbackEvents_Redirect.html" },
+        { url: "http://testsuite/empty.html",
+          cancelled: true,
+          isMainFrame: true,
+          originalUrl: "http://testsuite/redirect.py?cancel",
+          sourceUrl: "http://testsuite/redirect.py?cancel" },
+      ];
+    }
+
+    function test_NetworkCallbackEvents2_BeforeRedirect(data) {
+      webView.workerMessageType = "onBeforeRedirect";
+
+      webView.url = data.sourceUrl;
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for a successful load");
+
+      compare(webView.workerMessages.length, 1, "Unexpected number of worker messages");
+      compare(webView.workerMessages[0].method, "GET");
+      compare(webView.workerMessages[0].url, data.url);
+      compare(webView.workerMessages[0].originalUrl, data.originalUrl);
+      compare(webView.workerMessages[0].isMainFrame, data.isMainFrame);
+      compare(webView.workerMessages[0].requestCancelled, data.cancelled);
     }
   }
 }

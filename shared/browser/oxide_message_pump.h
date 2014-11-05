@@ -38,8 +38,8 @@ class MessagePump : public base::MessagePump,
   virtual void Start(Delegate* delegate) = 0;
   void Stop();
 
-  void WillProcessTask(const base::PendingTask& pending_task) FINAL;
-  void DidProcessTask(const base::PendingTask& pending_task) FINAL;
+  void WillProcessTask(const base::PendingTask& pending_task) final;
+  void DidProcessTask(const base::PendingTask& pending_task) final;
 
  protected:
   void SetupRunLoop();
@@ -51,7 +51,7 @@ class MessagePump : public base::MessagePump,
   DISALLOW_COPY_AND_ASSIGN(MessagePump);
 };
 
-class MessageLoopForUI FINAL : public base::MessageLoop {
+class MessageLoopForUI final : public base::MessageLoop {
  public:
   static MessageLoopForUI* current() {
     MessageLoop* loop = base::MessageLoop::current();

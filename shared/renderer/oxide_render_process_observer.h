@@ -26,7 +26,7 @@
 
 namespace oxide {
 
-class RenderProcessObserver FINAL : public content::RenderProcessObserver {
+class RenderProcessObserver final : public content::RenderProcessObserver {
  public:
   RenderProcessObserver();
 
@@ -34,8 +34,8 @@ class RenderProcessObserver FINAL : public content::RenderProcessObserver {
   void OnSetUserAgent(const std::string& user_agent);
 
   // content::RenderProcessObserver implementation
-  bool OnControlMessageReceived(const IPC::Message& message) FINAL;
-  void OnRenderProcessShutdown() FINAL;
+  bool OnControlMessageReceived(const IPC::Message& message) final;
+  void OnRenderProcessShutdown() final;
 
   DISALLOW_COPY_AND_ASSIGN(RenderProcessObserver);
 };

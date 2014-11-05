@@ -32,7 +32,7 @@ namespace oxide {
 namespace qt {
 
 class ScriptMessageAdapter;
-class ScriptMessageHandlerAdapterPrivate;
+class ScriptMessageHandler;
 
 class Q_DECL_EXPORT ScriptMessageHandlerAdapter : public AdapterBase {
  public:
@@ -51,13 +51,13 @@ class Q_DECL_EXPORT ScriptMessageHandlerAdapter : public AdapterBase {
   ScriptMessageHandlerAdapter(QObject* q);
 
  private:
-  friend class ScriptMessageHandlerAdapterPrivate;
+  friend class ScriptMessageHandler;
 
   virtual bool OnReceiveMessage(ScriptMessageAdapter* message,
                                 QString& error) = 0;
   virtual ScriptMessageAdapter* CreateScriptMessage() = 0;
 
-  QScopedPointer<ScriptMessageHandlerAdapterPrivate> priv;
+  QScopedPointer<ScriptMessageHandler> handler_;
 };
 
 } // namespace qt

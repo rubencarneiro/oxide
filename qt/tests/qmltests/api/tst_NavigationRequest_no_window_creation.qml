@@ -44,24 +44,24 @@ TestWebView {
 
     function test_NavigationRequest_no_window_creation1_data() {
       return [
-        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier },
-        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier },
-        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier },
-        { link: "#link1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier },
+        { link: "#link1", url: "http://testsuite/empty.html", modifiers: Qt.NoModifier },
+        { link: "#link1", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier },
+        { link: "#link1", url: "http://testsuite/empty.html", modifiers: Qt.ControlModifier },
+        { link: "#link1", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier | Qt.ControlModifier },
 
         // XXX(chrisccoulson): These are disabled due to https://launchpad.net/bugs/1302740
-        // { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier },
-        // { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier },
-        // { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier },
-        // { link: "#button1", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier },
-        // { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier },
-        // { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifier },
-        // { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier },
-        // { link: "#link2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier },
-        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.NoModifier },
-        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftModifiere },
-        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ControlModifier },
-        // { link: "#button2", url: "http://localhost:8080/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier },
+        // { link: "#button1", url: "http://testsuite/empty.html", modifiers: Qt.NoModifier },
+        // { link: "#button1", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier },
+        // { link: "#button1", url: "http://testsuite/empty.html", modifiers: Qt.ControlModifier },
+        // { link: "#button1", url: "http://testsuite/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier },
+        // { link: "#link2", url: "http://testsuite/empty.html", modifiers: Qt.NoModifier },
+        // { link: "#link2", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifier },
+        // { link: "#link2", url: "http://testsuite/empty.html", modifiers: Qt.ControlModifier },
+        // { link: "#link2", url: "http://testsuite/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier },
+        // { link: "#button2", url: "http://testsuite/empty.html", modifiers: Qt.NoModifier },
+        // { link: "#button2", url: "http://testsuite/empty.html", modifiers: Qt.ShiftModifiere },
+        // { link: "#button2", url: "http://testsuite/empty.html", modifiers: Qt.ControlModifier },
+        // { link: "#button2", url: "http://testsuite/empty.html", modifiers: Qt.ShiftMofifier | Qt.ControlModifier },
       ];
     }
 
@@ -69,7 +69,7 @@ TestWebView {
     // top-level navigations (also verifies that we don't get one for browser-
     // initiated navigations)
     function test_NavigationRequest_no_window_creation1(data) {
-      webView.url = "http://localhost:8080/tst_NavigationRequest.html";
+      webView.url = "http://testsuite/tst_NavigationRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -93,7 +93,7 @@ TestWebView {
 
     // XXX(chrisccoulson): Disabled due to https://launchpad.net/bugs/1302740
     function _test_NavigationRequest_no_window_creation2_subframe(data) {
-      webView.url = "http://localhost:8080/tst_NavigationRequest2.html";
+      webView.url = "http://testsuite/tst_NavigationRequest2.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

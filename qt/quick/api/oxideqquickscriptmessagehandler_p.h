@@ -30,8 +30,8 @@
 
 class OxideQQuickScriptMessageHandlerPrivate;
 
-class OxideQQuickScriptMessageHandler : public QObject,
-                                        public QQmlParserStatus {
+class Q_DECL_EXPORT OxideQQuickScriptMessageHandler : public QObject,
+                                                      public QQmlParserStatus {
   Q_OBJECT
   Q_PROPERTY(QString msgId READ msgId WRITE setMsgId NOTIFY msgIdChanged)
   Q_PROPERTY(QList<QUrl> contexts READ contexts WRITE setContexts NOTIFY contextsChanged)

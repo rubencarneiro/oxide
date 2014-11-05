@@ -12,8 +12,6 @@ WebView {
   readonly property alias loadsFailedCount: webView.qtest_loadsFailedCount
   readonly property alias loadsStoppedCount: webView.qtest_loadsStoppedCount
 
-  property bool gcDuringWait: false
-
   function clearLoadEventCounters() {
     qtest_loadsStartedCount = 0;
     qtest_loadsSucceededCount = 0;
@@ -48,14 +46,21 @@ WebView {
         timeout);
   }
 
-  function waitForLoadStopped(timeout) {
+  function waitForLoadStopped(timeout, gcDuringWait) {
     var expected = ++qtest_expectedLoadsStoppedCount;
     return waitFor(
         function() { return expected == qtest_loadsStoppedCount; },
+        timeout, gcDuringWait);
+  }
+
+  function waitForLoadFailed(timeout) {
+    var expected = ++qtest_expectedLoadsFailedCount;
+    return waitFor(
+        function() { return expected == qtest_loadsFailedCount; },
         timeout);
   }
 
-  function waitFor(predicate, timeout) {
+  function waitFor(predicate, timeout, gcDuringWait) {
     timeout = timeout || 5000;
     var end = Date.now() + timeout;
     var i = Date.now();
@@ -79,23 +84,21 @@ WebView {
 
   context: TestWebContext {}
 
-  Item {
-    Component.onCompleted: {
-      webView.loadingChanged.connect(onLoadingChanged);
+  onLoadEvent: {
+    if (event.type == LoadEvent.TypeStarted) {
+      webView.qtest_loadsStartedCount++;
+    } else if (event.type == LoadEvent.TypeSucceeded) {
+      webView.qtest_loadsSucceededCount++;
+    } else if (event.type == LoadEvent.TypeStopped) {
+      webView.qtest_loadsStoppedCount++;
+    } else if (event.type == LoadEvent.TypeFailed) {
+      webView.qtest_loadsFailedCount++;
     }
 
-    function onLoadingChanged(loadEvent) {
-      if (loadEvent.type == LoadEvent.TypeStarted) {
-        webView.qtest_loadsStartedCount++;
-      } else if (loadEvent.type == LoadEvent.TypeSucceeded) {
-        webView.qtest_loadsSucceededCount++;
-      } else if (loadEvent.type == LoadEvent.TypeStopped) {
-        webView.qtest_loadsStoppedCount++;
-      } else if (loadEvent.type == LoadEvent.TypeFailed) {
-        webView.qtest_loadsFailedCount++;
-      }
-    }
+    on_load_event(event);
   }
+
+  function on_load_event(event) {}
 
   TestResult { id: qtest_testResult }
 }

@@ -27,7 +27,7 @@ QT_END_NAMESPACE
 
 class OxideQUserAgentOverrideRequest;
 
-class OxideQUserAgentOverrideRequestPrivate Q_DECL_FINAL {
+class OxideQUserAgentOverrideRequestPrivate final {
  public:
   ~OxideQUserAgentOverrideRequestPrivate();
 

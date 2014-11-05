@@ -19,13 +19,10 @@
 #include "../oxideqwebpreferences.h"
 
 #include "qt/core/browser/oxide_qt_web_preferences.h"
-#include "qt/core/glue/oxide_qt_web_view_adapter.h"
 
 OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
     OxideQWebPreferences* q)
-    : preferences_(new oxide::qt::WebPreferences(q)) {
-  preferences_->SetIsOwnedByEmbedder();
-}
+    : preferences_(new oxide::qt::WebPreferences(q)) {}
 
 OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
     oxide::qt::WebPreferences* prefs)
@@ -44,8 +41,7 @@ OxideQWebPreferences* OxideQWebPreferencesPrivate::Adopt(
     QObject* parent) {
   OxideQWebPreferencesPrivate* d = new OxideQWebPreferencesPrivate(preferences);
   OxideQWebPreferences* q = new OxideQWebPreferences(*d, parent);
-  preferences->set_api_handle(q);
-  preferences->SetIsOwnedByEmbedder();
+  preferences->SetApiHandle(q);
 
   return q;
 }

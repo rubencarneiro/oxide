@@ -44,8 +44,7 @@ class CompositorFrameHandle;
 }
 }
 
-class OxideQQuickWebViewPrivate Q_DECL_FINAL :
-     public oxide::qt::WebViewAdapter {
+class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
@@ -60,68 +59,75 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
 
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
-  oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() Q_DECL_FINAL;
+  oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() final;
   oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
-      oxide::qt::JavaScriptDialogDelegate::Type type) Q_DECL_FINAL;
-  oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() Q_DECL_FINAL;
-  oxide::qt::FilePickerDelegate* CreateFilePickerDelegate() Q_DECL_FINAL;
+      oxide::qt::JavaScriptDialogDelegate::Type type) final;
+  oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() final;
+  oxide::qt::FilePickerDelegate* CreateFilePickerDelegate() final;
 
   void OnInitialized(bool orig_incognito,
-                     oxide::qt::WebContextAdapter* orig_context) Q_DECL_FINAL;
+                     oxide::qt::WebContextAdapter* orig_context) final;
 
-  void URLChanged() Q_DECL_FINAL;
-  void TitleChanged() Q_DECL_FINAL;
-  void IconChanged(QUrl icon) Q_DECL_FINAL;
-  void CommandsUpdated() Q_DECL_FINAL;
+  void URLChanged() final;
+  void TitleChanged() final;
+  void IconChanged(QUrl icon) final;
+  void CommandsUpdated() final;
 
-  void LoadProgressChanged(double progress) Q_DECL_FINAL;
+  void LoadingChanged() final;
+  void LoadProgressChanged(double progress) final;
 
-  void LoadEvent(OxideQLoadEvent* event) Q_DECL_FINAL;
+  void LoadEvent(OxideQLoadEvent* event) final;
   
-  void NavigationEntryCommitted() Q_DECL_FINAL;
-  void NavigationListPruned(bool from_front, int count) Q_DECL_FINAL;
-  void NavigationEntryChanged(int index) Q_DECL_FINAL;
+  void NavigationEntryCommitted() final;
+  void NavigationListPruned(bool from_front, int count) final;
+  void NavigationEntryChanged(int index) final;
 
-  oxide::qt::WebFrameAdapter* CreateWebFrame() Q_DECL_FINAL;
+  oxide::qt::WebFrameAdapter* CreateWebFrame() final;
 
-  QScreen* GetScreen() const Q_DECL_FINAL;
-  QRect GetContainerBoundsPix() const Q_DECL_FINAL;
-  bool IsVisible() const Q_DECL_FINAL;
-  bool HasFocus() const Q_DECL_FINAL;
+  QScreen* GetScreen() const final;
+  QRect GetViewBoundsPix() const final;
+  bool IsVisible() const final;
+  bool HasFocus() const final;
 
   void AddMessageToConsole(int level,
 			   const QString& message,
 			   int line_no,
-			   const QString& source_id) Q_DECL_FINAL;
+			   const QString& source_id) final;
 
-  void ToggleFullscreenMode(bool enter) Q_DECL_FINAL;
+  void ToggleFullscreenMode(bool enter) final;
 
-  void OnWebPreferencesChanged() Q_DECL_FINAL;
+  void WebPreferencesDestroyed() final;
 
-  void FrameAdded(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
-  void FrameRemoved(oxide::qt::WebFrameAdapter* frame) Q_DECL_FINAL;
+  void FrameAdded(oxide::qt::WebFrameAdapter* frame) final;
+  void FrameRemoved(oxide::qt::WebFrameAdapter* frame) final;
 
-  bool CanCreateWindows() const Q_DECL_FINAL;
+  bool CanCreateWindows() const final;
 
-  void UpdateCursor(const QCursor& cursor) Q_DECL_FINAL;
+  void UpdateCursor(const QCursor& cursor) final;
 
-  void NavigationRequested(OxideQNavigationRequest* request) Q_DECL_FINAL;
-  void NewViewRequested(OxideQNewViewRequest* request) Q_DECL_FINAL;
+  void NavigationRequested(OxideQNavigationRequest* request) final;
+  void NewViewRequested(OxideQNewViewRequest* request) final;
 
   void RequestGeolocationPermission(
-      OxideQGeolocationPermissionRequest* request) Q_DECL_FINAL;
+      OxideQGeolocationPermissionRequest* request) final;
 
-  void HandleUnhandledKeyboardEvent(QKeyEvent *event) Q_DECL_FINAL;
+  void HandleUnhandledKeyboardEvent(QKeyEvent *event) final;
 
   void FrameMetadataUpdated(
-      oxide::qt::FrameMetadataChangeFlags flags) Q_DECL_FINAL;
+      oxide::qt::FrameMetadataChangeFlags flags) final;
 
-  void ScheduleUpdate() Q_DECL_FINAL;
-  void EvictCurrentFrame() Q_DECL_FINAL;
+  void ScheduleUpdate() final;
+  void EvictCurrentFrame() final;
 
-  void SetInputMethodEnabled(bool enabled) Q_DECL_FINAL;
+  void SetInputMethodEnabled(bool enabled) final;
 
-  void DownloadRequested(OxideQDownloadRequest* downloadRequest) Q_DECL_FINAL;
+  void DownloadRequested(OxideQDownloadRequest* downloadRequest) final;
+
+  void CertificateError(OxideQCertificateError* cert_error) final;
+  void ContentBlocked() final;
+
+  void PrepareToCloseResponse(bool proceed) final;
+  void CloseRequested() final;
 
   void completeConstruction();
 
@@ -162,6 +168,8 @@ class OxideQQuickWebViewPrivate Q_DECL_FINAL :
   bool frame_evicted_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
   QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
+
+  bool using_old_load_event_signal_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

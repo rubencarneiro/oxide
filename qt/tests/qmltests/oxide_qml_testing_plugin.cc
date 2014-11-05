@@ -16,14 +16,13 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <QCoreApplication>
-#include <QDir>
+#include <QDesktopServices>
 #include <QLatin1String>
 #include <QQmlContext>
 #include <QQmlExtensionPlugin>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
-#include <QUrl>
 #include <QVariant>
 
 class DestructionObserver : public QObject {
@@ -60,29 +59,9 @@ class DestructionObserver : public QObject {
 
 class OxideTestingUtils : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QUrl DATA_PATH READ dataPath CONSTANT)
 
  public:
   OxideTestingUtils() {}
-
-  QUrl dataPath() const {
-    static QUrl url;
-    static bool initialized = false;
-
-    if (initialized) {
-      return url;
-    }
-
-    initialized = true;
-
-    QString path(QString(qgetenv("OXIDE_TESTING_DATA_PATH")));
-    if (!path.isEmpty()) {
-      QDir dir(path);
-      url = QUrl::fromLocalFile(dir.absolutePath());
-    }
-
-    return url;
-  }
 
   Q_INVOKABLE QObject* qObjectParent(QObject* object) {
     if (!object) {
@@ -119,6 +98,25 @@ class OxideTestingUtils : public QObject {
   Q_INVOKABLE void removeAppProperty(const QString& property) {
     QCoreApplication::instance()->setProperty(property.toStdString().c_str(), QVariant());
   }
+
+  Q_INVOKABLE void setUrlHandler(const QString& scheme, bool doHandle) {
+    if (doHandle) {
+      QDesktopServices::setUrlHandler(scheme, this, "urlHandled");
+    } else {
+      // Register an inexistent handler for the scheme, to ensure that
+      // QDesktopServices::openUrl(…) returns false (its current implementation
+      // ignores the return value of the custom handler method, so returning
+      // false from a valid handler wouldn’t help).
+      QDesktopServices::setUrlHandler(scheme, this, "doNotHandleUrl");
+    }
+  }
+
+  Q_INVOKABLE void unsetUrlHandler(const QString& scheme) {
+    QDesktopServices::unsetUrlHandler(scheme);
+  }
+
+ Q_SIGNALS:
+  void urlHandled(const QUrl& url);
 };
 
 QObject* UtilsFactory(QQmlEngine* engine, QJSEngine* script_engine) {

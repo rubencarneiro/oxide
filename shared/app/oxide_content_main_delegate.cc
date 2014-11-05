@@ -54,6 +54,20 @@ bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
   return false;
 }
 
+blink::WebScreenInfo ContentMainDelegate::GetDefaultScreenInfo() const {
+  return blink::WebScreenInfo();
+}
+
+#if defined(USE_NSS)
+base::FilePath ContentMainDelegate::GetNSSDbPath() const {
+  return base::FilePath();
+}
+#endif
+
+bool ContentMainDelegate::IsPlatformX11() const {
+  return false;
+}
+
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(ContentClient::GetInstance());
   RegisterPathProvider();
@@ -62,7 +76,9 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
-  ui::ResourceBundle::InitSharedInstanceLocaleOnly(std::string(), NULL);
+  ui::ResourceBundle::InitSharedInstanceWithLocale(
+      std::string(), NULL,
+      ui::ResourceBundle::DO_NOT_LOAD_COMMON_RESOURCES);
 
   base::FilePath dir_exe;
   PathService::Get(base::DIR_EXE, &dir_exe);

@@ -30,9 +30,9 @@ TestCase {
       { prop: "dataPath", signal: "dataPathChanged", val: "file:///foo", dataPath: "" },
       { prop: "cachePath", signal: "cachePathChanged", val: "file:///foo", dataPath: "" }
     ];
-    if (OxideTestingUtils.DATA_PATH != "") {
+    if (QMLTEST_USE_CONTEXT_DATADIR) {
       r.push(
-        { prop: "sessionCookieMode", signal: "sessionCookieModeChanged", val: WebContext.SessionCookieModeRestored, dataPath: OxideTestingUtils.DATA_PATH }
+        { prop: "sessionCookieMode", signal: "sessionCookieModeChanged", val: WebContext.SessionCookieModeRestored, dataPath: QMLTEST_DATADIR }
       );
     }
 

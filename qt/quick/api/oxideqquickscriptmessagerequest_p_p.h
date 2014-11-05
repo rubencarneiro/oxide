@@ -25,8 +25,8 @@
 
 class OxideQQuickScriptMessageRequest;
 
-class OxideQQuickScriptMessageRequestPrivate Q_DECL_FINAL :
-    public oxide::qt::ScriptMessageRequestAdapter {
+class OxideQQuickScriptMessageRequestPrivate final
+    : public oxide::qt::ScriptMessageRequestAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickScriptMessageRequest)
 
  public:
@@ -40,8 +40,8 @@ class OxideQQuickScriptMessageRequestPrivate Q_DECL_FINAL :
   QJSValue error_callback;
 
  private:
-  void OnReceiveReply(const QVariant& args) Q_DECL_FINAL;
-  void OnReceiveError(int error, const QString& msg) Q_DECL_FINAL;
+  void OnReceiveReply(const QVariant& args) final;
+  void OnReceiveError(int error, const QString& msg) final;
 };
 
 #endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_

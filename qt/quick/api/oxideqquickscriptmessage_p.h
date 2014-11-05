@@ -32,7 +32,7 @@ QT_END_NAMESPACE
 class OxideQQuickScriptMessagePrivate;
 class OxideQQuickWebFrame;
 
-class OxideQQuickScriptMessage : public QObject {
+class Q_DECL_EXPORT OxideQQuickScriptMessage : public QObject {
   Q_OBJECT
   Q_PROPERTY(OxideQQuickWebFrame* frame READ frame CONSTANT)
   Q_PROPERTY(QUrl context READ context CONSTANT)

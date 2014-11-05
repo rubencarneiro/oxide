@@ -45,10 +45,10 @@ class PopupListModel : public QAbstractListModel {
   PopupListModel(QList<oxide::qt::MenuItem>& items,
                  bool allow_multiple_selection);
 
-  int rowCount(const QModelIndex& parent = QModelIndex()) const Q_DECL_FINAL;
+  int rowCount(const QModelIndex& parent = QModelIndex()) const final;
   QVariant data(const QModelIndex& index,
-                int role = Qt::DisplayRole) const Q_DECL_FINAL;
-  QHash<int, QByteArray> roleNames() const Q_DECL_FINAL { return roles_; };
+                int role = Qt::DisplayRole) const final;
+  QHash<int, QByteArray> roleNames() const final { return roles_; };
 
   Q_INVOKABLE void select(int index);
 

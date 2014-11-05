@@ -29,7 +29,7 @@ namespace oxide {
 class RenderProcessObserver;
 class UserScriptSlave;
 
-class ContentRendererClient FINAL : public content::ContentRendererClient {
+class ContentRendererClient final : public content::ContentRendererClient {
  public:
   ContentRendererClient();
   ~ContentRendererClient();
@@ -39,18 +39,17 @@ class ContentRendererClient FINAL : public content::ContentRendererClient {
   }
 
  private:
-  void RenderThreadStarted() FINAL;
+  void RenderThreadStarted() final;
 
-  void RenderFrameCreated(content::RenderFrame* render_frame) FINAL;
-  void RenderViewCreated(content::RenderView* render_view) FINAL;
+  void RenderFrameCreated(content::RenderFrame* render_frame) final;
+  void RenderViewCreated(content::RenderView* render_view) final;
 
   void DidCreateScriptContext(blink::WebFrame* frame,
                               v8::Handle<v8::Context> context,
                               int extension_group,
-                              int world_id) FINAL;
+                              int world_id) final;
 
-  bool GetUserAgentOverride(const GURL& url,
-                            std::string* user_agent) FINAL;
+  std::string GetUserAgentOverrideForURL(const GURL& url) final;
 
   scoped_ptr<RenderProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;

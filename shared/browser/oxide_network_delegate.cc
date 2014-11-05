@@ -31,7 +31,7 @@ int NetworkDelegate::OnBeforeURLRequest(
     const net::CompletionCallback& callback,
     GURL* new_url) {
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
-  if (!delegate) {
+  if (!delegate.get()) {
     return net::OK;
   }
 
@@ -43,7 +43,7 @@ int NetworkDelegate::OnBeforeSendHeaders(
     const net::CompletionCallback& callback,
     net::HttpRequestHeaders* headers) {
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
-  if (!delegate) {
+  if (!delegate.get()) {
     return net::OK;
   }
 
@@ -60,7 +60,7 @@ int NetworkDelegate::OnHeadersReceived(
     scoped_refptr<net::HttpResponseHeaders>* override_response_headers,
     GURL* allowed_unsafe_redirect_url) {
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
-  if (!delegate) {
+  if (!delegate.get()) {
     return net::OK;
   }
 
@@ -69,7 +69,14 @@ int NetworkDelegate::OnHeadersReceived(
 }
 
 void NetworkDelegate::OnBeforeRedirect(net::URLRequest* request,
-                                       const GURL& new_location) {}
+                                       const GURL& new_location) {
+  scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
+  if (!delegate.get()) {
+    return;
+  }
+
+  delegate->OnBeforeRedirect(request, new_location);
+}
 
 void NetworkDelegate::OnResponseStarted(net::URLRequest* request) {}
 

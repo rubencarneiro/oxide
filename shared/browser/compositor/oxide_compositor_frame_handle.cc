@@ -38,7 +38,7 @@ SoftwareFrameData::SoftwareFrameData(unsigned id,
 SoftwareFrameData::~SoftwareFrameData() {}
 
 CompositorFrameHandle::~CompositorFrameHandle() {
-  if (proxy_ && (software_frame_data_ || gl_frame_data_)) {
+  if (proxy_.get() && (software_frame_data_ || gl_frame_data_)) {
     proxy_->ReclaimResourcesForFrame(this);
   }
 }

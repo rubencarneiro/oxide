@@ -29,7 +29,7 @@ class BrowserPpapiHost;
 
 namespace oxide {
 
-class PepperTalkHost FINAL : public ppapi::host::ResourceHost {
+class PepperTalkHost final : public ppapi::host::ResourceHost {
  public:
   PepperTalkHost(content::BrowserPpapiHost* host,
                  PP_Instance instance,
@@ -39,7 +39,7 @@ class PepperTalkHost FINAL : public ppapi::host::ResourceHost {
  private:
   int32_t OnResourceMessageReceived(
       const IPC::Message& msg,
-      ppapi::host::HostMessageContext* context) FINAL;
+      ppapi::host::HostMessageContext* context) final;
 
   int32_t OnRequestPermission(
       ppapi::host::HostMessageContext* context,

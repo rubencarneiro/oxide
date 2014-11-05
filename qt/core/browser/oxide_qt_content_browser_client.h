@@ -30,20 +30,18 @@ template <typename Type> struct DefaultLazyInstanceTraits;
 namespace oxide {
 namespace qt {
 
-class ContentBrowserClient FINAL : public oxide::ContentBrowserClient {
+class ContentBrowserClient final : public oxide::ContentBrowserClient {
   // Limit default constructor access to the lazy instance initializer
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
   ContentBrowserClient();
 
   // oxide::ContentBrowserClient implementation
-  base::MessagePump* CreateMessagePumpForUI() FINAL;
-
-  oxide::WebPreferences* CreateWebPreferences() FINAL;
-
-  bool IsTouchSupported() FINAL;
+  oxide::WebPreferences* CreateWebPreferences() final;
+  bool IsTouchSupported() final;
+  oxide::BrowserMainParts::Delegate* CreateBrowserMainPartsDelegate() final;
 
   // content::ContentBrowserClient implementation
-  content::LocationProvider* OverrideSystemLocationProvider() FINAL;
+  content::LocationProvider* OverrideSystemLocationProvider() final;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

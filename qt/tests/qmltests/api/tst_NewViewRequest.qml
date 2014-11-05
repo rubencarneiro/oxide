@@ -72,7 +72,7 @@ Column {
     }
 
     function test_NewViewRequest1_from_user_gesture(data) {
-      webView.url = "http://localhost:8080/tst_NewViewRequest.html";
+      webView.url = "http://testsuite/tst_NewViewRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -113,7 +113,7 @@ Column {
         return;
       }
 
-      webView.url = "http://localhost:8080/tst_NewViewRequest.html";
+      webView.url = "http://testsuite/tst_NewViewRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 

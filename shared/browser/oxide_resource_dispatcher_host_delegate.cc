@@ -38,6 +38,8 @@
 #include "shared/common/oxide_script_message_handler.h"
 #include "shared/common/oxide_script_message_request.h"
 
+#include "oxide_browser_context.h"
+#include "oxide_platform_integration.h"
 #include "oxide_script_message_impl_browser.h"
 #include "oxide_script_message_request_impl_browser.h"
 #include "oxide_script_message_target.h"
@@ -50,7 +52,7 @@ bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
     const GURL& url,
     int child_id,
     int route_id) {
-  return false;
+  return PlatformIntegration::GetInstance()->LaunchURLExternally(url);
 }
 
 bool ResourceDispatcherHostDelegate::ShouldDownloadUrl(const GURL& url,

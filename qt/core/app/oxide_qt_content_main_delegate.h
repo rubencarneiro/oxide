@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_APP_CONTENT_MAIN_DELEGATE_H_
 
 #include "base/compiler_specific.h"
+#include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
@@ -26,23 +27,34 @@
 namespace oxide {
 namespace qt {
 
-class ContentMainDelegate FINAL : public oxide::ContentMainDelegate {
+class ContentMainDelegate final : public oxide::ContentMainDelegate {
  public:
-  ContentMainDelegate(bool is_browser = false);
+  ContentMainDelegate();
   ~ContentMainDelegate();
 
-  static ContentMainDelegate* Create();
+  static ContentMainDelegate* CreateForBrowser(
+      const base::FilePath& nss_db_path = base::FilePath());
 
  private:
+  ContentMainDelegate(const base::FilePath& nss_db_path);
+
   // oxide::ContentMainDelegate implementation
-  oxide::SharedGLContext* GetSharedGLContext() const FINAL;
-  bool GetNativeDisplay(intptr_t* handle) const FINAL;
+  oxide::SharedGLContext* GetSharedGLContext() const final;
+  bool GetNativeDisplay(intptr_t* handle) const final;
+  blink::WebScreenInfo GetDefaultScreenInfo() const final;
+#if defined(USE_NSS)
+  base::FilePath GetNSSDbPath() const final;
+#endif
+  bool IsPlatformX11() const final;
 
   // content::ContentMainDelegate implementation
-  content::ContentBrowserClient* CreateContentBrowserClient() FINAL;
+  content::ContentBrowserClient* CreateContentBrowserClient() final;
 
   bool is_browser_;
   scoped_refptr<SharedGLContext> shared_gl_context_;
+#if defined(USE_NSS)
+  base::FilePath nss_db_path_;
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };

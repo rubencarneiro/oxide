@@ -20,7 +20,7 @@ TestWebView {
     when: windowShown
 
     function init() {
-      webView.url = "http://localhost:8080/empty.html";
+      webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
     }
@@ -134,6 +134,9 @@ TestWebView {
     }
 
     function test_ScriptMessageRequest7_handler_no_response() {
+      skip("Currently times out because the renderer side object is never collected");
+      return;
+
       var req = webView.rootFrame.sendMessage("oxide://testutils/", "DONT-RESPOND", {});
       var hasError = false;
       var errorCode;

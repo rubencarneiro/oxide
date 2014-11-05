@@ -17,7 +17,7 @@
 
 #include "oxideqnavigationrequest.h"
 
-class OxideQNavigationRequestPrivate Q_DECL_FINAL {
+class OxideQNavigationRequestPrivate {
  public:
   ~OxideQNavigationRequestPrivate() {}
 

@@ -42,7 +42,7 @@ namespace oxide {
 class ScriptMessageHandlerRenderer;
 class ScriptMessageRequestImplRenderer;
 
-class ScriptMessageManager FINAL :
+class ScriptMessageManager final :
     public base::SupportsWeakPtr<ScriptMessageManager> {
  public:
   typedef std::vector<ScriptMessageRequestImplRenderer *> ScriptMessageRequestVector;
@@ -55,6 +55,8 @@ class ScriptMessageManager FINAL :
   v8::Handle<v8::Context> GetV8Context() const;
 
   GURL GetContextURL() const;
+
+  int world_id() const { return world_id_; }
 
   content::RenderFrame* frame() const { return frame_; }
 
@@ -69,6 +71,8 @@ class ScriptMessageManager FINAL :
   }
 
   ScriptMessageHandlerRenderer* GetHandlerForMsgID(const std::string& msg_id);
+
+  v8::Handle<v8::Object> GetOxideApiObject(v8::Isolate* isolate);
 
  private:
   friend class ScriptMessageRequestImplRenderer;

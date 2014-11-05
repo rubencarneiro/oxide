@@ -18,50 +18,27 @@
 #ifndef _OXIDE_SHARED_BROWSER_DEVTOOLS_HTTP_HANDLER_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_DEVTOOLS_HTTP_HANDLER_DELEGATE_H_
 
-#include <string>
-
-#include "base/basictypes.h"
 #include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "content/public/browser/devtools_http_handler_delegate.h"
 
-namespace content {
-class DevToolsTarget;
-class DevToolsHttpHandler;
-}
-
 namespace oxide {
-
-class BrowserContext;
 
 class DevtoolsHttpHandlerDelegate
     : public content::DevToolsHttpHandlerDelegate {
  public:
-
-  DevtoolsHttpHandlerDelegate(
-      const std::string& ip,
-      unsigned port,
-      BrowserContext* attached_browser_context);
+  DevtoolsHttpHandlerDelegate();
   virtual ~DevtoolsHttpHandlerDelegate();
 
-  // DevToolsHttpProtocolHandler::Delegate overrides.
-  virtual std::string GetDiscoveryPageHTML() OVERRIDE;
-  virtual bool BundlesFrontendResources() OVERRIDE;
-  virtual base::FilePath GetDebugFrontendDir() OVERRIDE;
-  virtual std::string GetPageThumbnailData(const GURL& url) OVERRIDE;
-  virtual scoped_ptr<content::DevToolsTarget> CreateNewTarget(
-      const GURL& url) OVERRIDE;
-  virtual void EnumerateTargets(TargetCallback callback) OVERRIDE;
-  virtual scoped_ptr<net::StreamListenSocket> CreateSocketForTethering(
+  // DevToolsHttpHandlerDelegate overrides.
+  std::string GetDiscoveryPageHTML() final;
+  bool BundlesFrontendResources() final;
+  base::FilePath GetDebugFrontendDir() final;
+  scoped_ptr<net::StreamListenSocket> CreateSocketForTethering(
       net::StreamListenSocket::Delegate* delegate,
-      std::string* name) OVERRIDE;
+      std::string* name) final;
 
  private:
-
-  std::string GetLocalDevToolsUrl() const;
-
-  std::string ip_;
-  unsigned port_;
-  BrowserContext* browser_context_;
   DISALLOW_COPY_AND_ASSIGN(DevtoolsHttpHandlerDelegate);
 };
 

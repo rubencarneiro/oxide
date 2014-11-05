@@ -43,7 +43,8 @@ size_t WebFrame::GetScriptMessageHandlerCount() const {
   return 0;
 }
 
-ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(size_t index) const {
+const ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
+    size_t index) const {
   return NULL;
 }
 

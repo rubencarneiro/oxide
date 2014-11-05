@@ -37,7 +37,7 @@
 namespace oxide {
 
 CompositorThreadProxyBase::CompositorThreadProxyBase() {
-  DCHECK(owner_thread_checker_.CalledOnValidThread());
+  impl_thread_checker_.DetachFromThread();
 }
 
 CompositorThreadProxyBase::~CompositorThreadProxyBase() {}
@@ -81,7 +81,7 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
     return;
   }
 
-  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame);
+  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
 }
 
 void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
@@ -106,7 +106,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
     return;
   }
 
-  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame);
+  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
 }
 
 void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
@@ -127,7 +127,7 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     scoped_refptr<CompositorFrameHandle> frame(frames.back());
     frames.pop_back();
 
-    if (!frame) {
+    if (!frame.get()) {
       continue;
     }
 
@@ -187,6 +187,7 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
     cc::GLFrameData* gl_frame_data = frame->gl_frame_data.get();
 
     CompositorUtils::GetInstance()->CreateGLFrameHandle(
+        impl().output,
         gl_frame_data->mailbox,
         gl_frame_data->sync_point,
         base::Bind(

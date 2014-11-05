@@ -54,16 +54,24 @@
 #include "qt/core/api/oxideqnewviewrequest_p.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #include "qt/core/api/oxideqpermissionrequest_p.h"
+#include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqcertificateerror_p.h"
+#include "qt/core/api/oxideqsecuritystatus.h"
+#include "qt/core/api/oxideqsecuritystatus_p.h"
+#include "qt/core/api/oxideqsslcertificate.h"
+#include "qt/core/api/oxideqsslcertificate_p.h"
 #include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
-#include "qt/core/glue/oxide_qt_script_message_handler_adapter_p.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
+#include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/oxide_render_widget_host_view.h"
 
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_javascript_dialog.h"
+#include "oxide_qt_script_message_handler.h"
+#include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
 
@@ -240,9 +248,21 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 }
 
+void WebView::OnInputPanelVisibilityChanged() {
+  InputPanelVisibilityChanged();
+}
+
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
-    has_input_method_state_(false) {}
+    has_input_method_state_(false),
+    qsecurity_status_(
+        OxideQSecurityStatusPrivate::Create(this)) {
+  QInputMethod* im = QGuiApplication::inputMethod();
+  if (im) {
+    connect(im, SIGNAL(visibleChanged()),
+            SLOT(OnInputPanelVisibilityChanged()));
+  }
+}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = adapter_->GetScreen();
@@ -278,63 +298,16 @@ void WebView::SetInputPanelVisibility(bool visible) {
     has_input_method_state_ = false;
   }
 
-  if (QGuiApplication::inputMethod()->isVisible() == visible) {
-    return;
-  }
-
+  // Do not check whether the input method is currently visible here, to avoid
+  // a possible race condition: if hide() and show() are called very quickly
+  // in a row, when show() is called the hide() request might not have
+  // completed yet, and isVisible() could return true.
   QGuiApplication::inputMethod()->setVisible(visible);
 }
 
 void WebView::Init(oxide::WebView::Params* params) {
   oxide::WebView::Init(params);
   adapter_->Initialized();
-}
-
-void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  content::WebCursor::CursorInfo cursor_info;
-
-  cursor.GetCursorInfo(&cursor_info);
-  if (cursor.IsCustom()) {
-    QImage::Format format =
-        QImageFormatFromSkImageInfo(cursor_info.custom_image.info());
-    if (format == QImage::Format_Invalid) {
-      return;
-    }
-    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
-                        cursor_info.custom_image.width(),
-                        cursor_info.custom_image.height(),
-                        cursor_info.custom_image.rowBytes(),
-                        format);
-
-    QPixmap cursor_pixmap;
-    if (cursor_pixmap.convertFromImage(cursor_image)) {
-      adapter_->UpdateCursor(QCursor(cursor_pixmap));
-    }
-  } else {
-    adapter_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
-  }
-}
-
-void WebView::ImeCancelComposition() {
-  if (has_input_method_state_) {
-    QGuiApplication::inputMethod()->reset();
-  }
-}
-
-void WebView::SelectionChanged() {
-  if (!HasFocus()) {
-    return;
-  }
-
-  QGuiApplication::inputMethod()->update(
-      static_cast<Qt::InputMethodQueries>(
-        Qt::ImSurroundingText
-        | Qt::ImCurrentSelection
-#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
-        | Qt::ImTextBeforeCursor
-        | Qt::ImTextAfterCursor
-#endif
-      ));
 }
 
 blink::WebScreenInfo WebView::GetScreenInfo() const {
@@ -346,8 +319,8 @@ blink::WebScreenInfo WebView::GetScreenInfo() const {
   return GetWebScreenInfoFromQScreen(screen);
 }
 
-gfx::Rect WebView::GetContainerBoundsPix() const {
-  QRect bounds = adapter_->GetContainerBoundsPix();
+gfx::Rect WebView::GetViewBoundsPix() const {
+  QRect bounds = adapter_->GetViewBoundsPix();
   return gfx::Rect(bounds.x(),
                    bounds.y(),
                    bounds.width(),
@@ -360,6 +333,15 @@ bool WebView::IsVisible() const {
 
 bool WebView::HasFocus() const {
   return adapter_->HasFocus();
+}
+
+bool WebView::IsInputPanelVisible() const {
+  QInputMethod* im = QGuiApplication::inputMethod();
+  if (!im) {
+    return false;
+  }
+
+  return im->isVisible();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -390,11 +372,13 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
 }
 
 void WebView::FrameAdded(oxide::WebFrame* frame) {
-  adapter_->FrameAdded(static_cast<WebFrame *>(frame)->adapter());
+  adapter_->FrameAdded(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
 }
 
 void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  adapter_->FrameRemoved(static_cast<WebFrame *>(frame)->adapter());
+  adapter_->FrameRemoved(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
 }
 
 bool WebView::CanCreateWindows() const {
@@ -402,13 +386,13 @@ bool WebView::CanCreateWindows() const {
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
-  return adapter_->message_handlers().size();
+  return adapter_->message_handlers_.size();
 }
 
-oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
+const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
-  return &ScriptMessageHandlerAdapterPrivate::get(
-      adapter_->message_handlers().at(index))->handler;
+  return ScriptMessageHandler::FromAdapter(
+      adapter_->message_handlers_.at(index))->handler();
 }
 
 void WebView::OnURLChanged() {
@@ -427,6 +411,10 @@ void WebView::OnCommandsUpdated() {
   adapter_->CommandsUpdated();
 }
 
+void WebView::OnLoadingChanged() {
+  adapter_->LoadingChanged();
+}
+
 void WebView::OnLoadProgressChanged(double progress) {
   adapter_->LoadProgressChanged(progress);
 }
@@ -436,6 +424,13 @@ void WebView::OnLoadStarted(const GURL& validated_url,
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       OxideQLoadEvent::TypeStarted);
+  adapter_->LoadEvent(&event);
+}
+
+void WebView::OnLoadCommitted(const GURL& url) {
+  OxideQLoadEvent event(
+      QUrl(QString::fromStdString(url.spec())),
+      OxideQLoadEvent::TypeCommitted);
   adapter_->LoadEvent(&event);
 }
 
@@ -499,14 +494,17 @@ void WebView::OnWebPreferencesDestroyed() {
 }
 
 void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<oxide::GeolocationPermissionRequest> request) {
-  OxideQGeolocationPermissionRequest* qreq =
-      new OxideQGeolocationPermissionRequest();
-  OxideQPermissionRequestPrivate::get(qreq)->Init(
-      request.PassAs<oxide::PermissionRequest>());
+    const GURL& origin,
+    const GURL& embedder,
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQGeolocationPermissionRequest> req(
+      OxideQGeolocationPermissionRequestPrivate::Create(
+        QUrl(QString::fromStdString(origin.spec())),
+        QUrl(QString::fromStdString(embedder.spec())),
+        request.Pass()));
 
   // The embedder takes ownership of this
-  adapter_->RequestGeolocationPermission(qreq);
+  adapter_->RequestGeolocationPermission(req.release());
 }
 
 void WebView::OnUnhandledKeyboardEvent(
@@ -528,49 +526,43 @@ void WebView::OnUnhandledKeyboardEvent(
   adapter_->HandleUnhandledKeyboardEvent(qevent);
 }
 
-inline FrameMetadataChangeFlags operator|(FrameMetadataChangeFlags a,
-                                          FrameMetadataChangeFlags b) {
-  return static_cast<FrameMetadataChangeFlags>(
-      static_cast<int>(a) | static_cast<int>(b));
-}
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
-  FrameMetadataChangeFlags flags = static_cast<FrameMetadataChangeFlags>(0);
+  FrameMetadataChangeFlags flags = FRAME_METADATA_CHANGE_NONE;
 
-#define ADD_FLAG(flag) flags = flags | flag
   if (old.device_scale_factor !=
       compositor_frame_metadata().device_scale_factor) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_DEVICE_SCALE);
+    flags |= FRAME_METADATA_CHANGE_DEVICE_SCALE;
   }
   if (old.root_scroll_offset.x() !=
       compositor_frame_metadata().root_scroll_offset.x()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_SCROLL_OFFSET_X);
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_X;
   }
   if (old.root_scroll_offset.y() !=
       compositor_frame_metadata().root_scroll_offset.y()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y);
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y;
   }
   if (old.root_layer_size.width() !=
       compositor_frame_metadata().root_layer_size.width()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_CONTENT_WIDTH);
+    flags |= FRAME_METADATA_CHANGE_CONTENT_WIDTH;
   }
   if (old.root_layer_size.height() !=
       compositor_frame_metadata().root_layer_size.height()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_CONTENT_HEIGHT);
+    flags |= FRAME_METADATA_CHANGE_CONTENT_HEIGHT;
   }
   if (old.scrollable_viewport_size.width() !=
       compositor_frame_metadata().scrollable_viewport_size.width()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_VIEWPORT_WIDTH);
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT_WIDTH;
   }
   if (old.scrollable_viewport_size.height() !=
       compositor_frame_metadata().scrollable_viewport_size.height()) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT);
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT;
   }
   if (old.page_scale_factor !=
       compositor_frame_metadata().page_scale_factor) {
-    ADD_FLAG(FRAME_METADATA_CHANGE_PAGE_SCALE);
+    flags |= FRAME_METADATA_CHANGE_PAGE_SCALE;
   }
-#undef ADD_FLAG
 
   adapter_->FrameMetadataUpdated(flags);
 }
@@ -625,12 +617,25 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {
+  OxideQLoadEvent event(
+     QUrl(QString::fromStdString(url.spec())),
+     OxideQLoadEvent::TypeRedirected,
+     OxideQLoadEvent::ErrorDomain(),
+     QString(),
+     int(),
+     QUrl(QString::fromStdString(original_url.spec())));
+
+  adapter_->LoadEvent(&event);
+}
+
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
   return new WebFrame(adapter_->CreateWebFrame(), node, this);
 }
 
-oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderViewHost* rvh) {
-  return new WebPopupMenu(adapter_->CreateWebPopupMenuDelegate(), rvh);
+oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
+  return new WebPopupMenu(adapter_->CreateWebPopupMenuDelegate(), rfh);
 }
 
 oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
@@ -664,7 +669,7 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 
   adapter_->NewViewRequested(&request);
 
-  WebView* view = OxideQNewViewRequestPrivate::get(&request)->view.get();
+  oxide::WebView* view = OxideQNewViewRequestPrivate::get(&request)->view.get();
   if (!view) {
     qCritical() <<
         "Either a webview wasn't created in WebView.newViewRequested, or the "
@@ -739,9 +744,112 @@ void WebView::OnSelectionBoundsChanged() {
       ));
 }
 
+void WebView::OnImeCancelComposition() {
+  if (has_input_method_state_) {
+    QGuiApplication::inputMethod()->reset();
+  }
+}
+
+void WebView::OnSelectionChanged() {
+  if (!HasFocus()) {
+    return;
+  }
+
+  QGuiApplication::inputMethod()->update(
+      static_cast<Qt::InputMethodQueries>(
+        Qt::ImSurroundingText
+        | Qt::ImCurrentSelection
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+        | Qt::ImTextBeforeCursor
+        | Qt::ImTextAfterCursor
+#endif
+      ));
+}
+
+void WebView::OnUpdateCursor(const content::WebCursor& cursor) {
+  content::WebCursor::CursorInfo cursor_info;
+
+  cursor.GetCursorInfo(&cursor_info);
+  if (cursor.IsCustom()) {
+    QImage::Format format =
+        QImageFormatFromSkImageInfo(cursor_info.custom_image.info());
+    if (format == QImage::Format_Invalid) {
+      return;
+    }
+    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
+                        cursor_info.custom_image.width(),
+                        cursor_info.custom_image.height(),
+                        cursor_info.custom_image.rowBytes(),
+                        format);
+
+    QPixmap cursor_pixmap;
+    if (cursor_pixmap.convertFromImage(cursor_image)) {
+      adapter_->UpdateCursor(QCursor(cursor_pixmap));
+    }
+  } else {
+    adapter_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
+  }
+}
+
+void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {
+  OxideQSecurityStatusPrivate::get(qsecurity_status_.get())->Update(old);
+}
+
+bool WebView::OnCertificateError(
+    bool is_main_frame,
+    oxide::CertError cert_error,
+    const scoped_refptr<net::X509Certificate>& cert,
+    const GURL& request_url,
+    content::ResourceType resource_type,
+    bool strict_enforcement,
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQSslCertificate> q_cert;
+  if (cert.get()) {
+    q_cert.reset(OxideQSslCertificatePrivate::Create(cert));
+  }
+
+  bool is_subresource =
+      !((is_main_frame && resource_type == content::RESOURCE_TYPE_MAIN_FRAME) ||
+        (!is_main_frame && resource_type == content::RESOURCE_TYPE_SUB_FRAME));
+
+  scoped_ptr<OxideQCertificateError> error(
+      OxideQCertificateErrorPrivate::Create(
+        QUrl(QString::fromStdString(request_url.spec())),
+        is_main_frame,
+        is_subresource,
+        strict_enforcement,
+        q_cert.Pass(),
+        static_cast<OxideQCertificateError::Error>(cert_error),
+        request.Pass()));
+
+  // Embedder takes ownership of error
+  adapter_->CertificateError(error.release());
+
+  return true;
+}
+
+void WebView::OnContentBlocked() {
+  adapter_->ContentBlocked();
+}
+
+void WebView::OnPrepareToCloseResponse(bool proceed) {
+  adapter_->PrepareToCloseResponse(proceed);
+}
+
+void WebView::OnCloseRequested() {
+  adapter_->CloseRequested();
+}
+
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
+}
+
+WebView::~WebView() {
+  QInputMethod* im = QGuiApplication::inputMethod();
+  if (im) {
+    im->disconnect(this);
+  }
 }
 
 void WebView::HandleFocusEvent(QFocusEvent* event) {
@@ -885,6 +993,32 @@ QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {
   }
 
   return QVariant();
+}
+
+void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
+  if (!(blocked_content() & oxide::CONTENT_TYPE_MIXED_DISPLAY) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily display insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  oxide::WebView::SetCanTemporarilyDisplayInsecureContent(allow);
+}
+
+void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
+  if (!(blocked_content() & oxide::CONTENT_TYPE_MIXED_SCRIPT) &&
+      allow) {
+    qWarning() << "Can only set webview to temporarily run insecure "
+                  "content when the content has been blocked";
+    return;
+  }
+
+  oxide::WebView::SetCanTemporarilyRunInsecureContent(allow);
+}
+
+WebContext* WebView::GetContext() const {
+  return WebContext::FromBrowserContext(GetBrowserContext());
 }
 
 } // namespace qt

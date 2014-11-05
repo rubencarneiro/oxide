@@ -40,8 +40,9 @@ bool UserAgentOverrideProvider::OnMessageReceived(
 void UserAgentOverrideProvider::OnGetUserAgentOverride(const GURL& url,
                                                        std::string* user_agent,
                                                        bool* overridden) {
-  scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
-  if (!delegate) {
+  scoped_refptr<BrowserContextDelegate> delegate(
+      BrowserContextIOData::FromResourceContext(context_)->GetDelegate());
+  if (!delegate.get()) {
     *overridden = false;
     return;
   }
@@ -52,8 +53,7 @@ void UserAgentOverrideProvider::OnGetUserAgentOverride(const GURL& url,
 UserAgentOverrideProvider::UserAgentOverrideProvider(
     content::RenderProcessHost* render_process_host) :
     content::BrowserMessageFilter(OxideMsgStart),
-    context_(BrowserContext::FromContent(
-      render_process_host->GetBrowserContext())->io_data()) {}
+    context_(render_process_host->GetBrowserContext()->GetResourceContext()) {}
 
 UserAgentOverrideProvider::~UserAgentOverrideProvider() {}
 

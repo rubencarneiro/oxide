@@ -32,7 +32,7 @@ namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageImplRenderer FINAL :
+class ScriptMessageImplRenderer final :
     public ScriptMessage,
     public ScriptReferencedObject<ScriptMessageImplRenderer> {
  public:
@@ -45,7 +45,7 @@ class ScriptMessageImplRenderer FINAL :
 
  private:
   ~ScriptMessageImplRenderer();
-  void DoSendResponse(const OxideMsg_SendMessage_Params& params) FINAL;
+  void DoSendResponse(const OxideMsg_SendMessage_Params& params) final;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageImplRenderer);
 };

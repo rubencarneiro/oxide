@@ -33,7 +33,7 @@ TestWebView {
     }
 
     function test_WebView_flickableLikeAPI() {
-      webView.url = "http://localhost:8080/tst_WebView_flickableLikeAPI.html";
+      webView.url = "http://testsuite/tst_WebView_flickableLikeAPI.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
       compare(get("document.body.clientWidth"), webView.viewportWidth);

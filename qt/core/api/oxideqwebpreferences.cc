@@ -27,11 +27,7 @@ OxideQWebPreferences::OxideQWebPreferences(OxideQWebPreferencesPrivate& dd,
     : QObject(parent),
       d_ptr(&dd) {}
 
-OxideQWebPreferences::~OxideQWebPreferences() {
-  Q_D(OxideQWebPreferences);
-
-  d->preferences()->set_api_handle(NULL);
-}
+OxideQWebPreferences::~OxideQWebPreferences() {}
 
 OxideQWebPreferences::OxideQWebPreferences(QObject* parent)
     : QObject(parent),

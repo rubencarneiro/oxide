@@ -20,9 +20,9 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
  #include "content/browser/loader/resource_dispatcher_host_impl.h"
  #include "content/browser/loader/resource_request_info_impl.h"
  #include "content/browser/loader/stream_resource_handler.h"
- #include "content/browser/plugin_service_impl.h"
  #include "content/public/browser/content_browser_client.h"
-@@ -336,16 +337,46 @@ bool BufferedResourceHandler::SelectNext
+ #include "content/public/browser/download_item.h"
+@@ -339,16 +340,46 @@ bool BufferedResourceHandler::SelectNext
        *defer = true;
        return true;
      }
@@ -68,11 +68,11 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
            request(),
            true,  // is_content_initiated
            must_download,
-           content::DownloadItem::kInvalidId,
+           DownloadItem::kInvalidId,
 diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/browser/loader/resource_dispatcher_host_impl.cc
 --- a/content/browser/loader/resource_dispatcher_host_impl.cc
 +++ b/content/browser/loader/resource_dispatcher_host_impl.cc
-@@ -498,16 +498,33 @@ DownloadInterruptReason ResourceDispatch
+@@ -511,16 +511,33 @@ DownloadInterruptReason ResourceDispatch
      scoped_ptr<DownloadSaveInfo> save_info,
      uint32 download_id,
      const DownloadStartedCallback& started_callback) {
@@ -109,7 +109,7 @@ diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/b
 diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/content/public/browser/resource_dispatcher_host_delegate.cc
 --- a/content/public/browser/resource_dispatcher_host_delegate.cc
 +++ b/content/public/browser/resource_dispatcher_host_delegate.cc
-@@ -84,15 +84,29 @@ void ResourceDispatcherHostDelegate::OnR
+@@ -80,15 +80,29 @@ void ResourceDispatcherHostDelegate::OnR
      ResourceContext* resource_context,
      ResourceResponse* response) {
  }
@@ -160,7 +160,7 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/conten
  
  namespace IPC {
  class Sender;
-@@ -116,16 +117,29 @@ class CONTENT_EXPORT ResourceDispatcherH
+@@ -112,16 +113,29 @@ class CONTENT_EXPORT ResourceDispatcherH
    virtual void OnRequestRedirected(const GURL& redirect_url,
                                     net::URLRequest* request,
                                     ResourceContext* resource_context,

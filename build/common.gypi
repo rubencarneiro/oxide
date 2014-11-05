@@ -17,7 +17,9 @@
 {
   'variables': {
     'clang': 0,
+    'host_clang': 0,
     'print_ld_stats%': 0,
+    'enable_tcmalloc%': 0,
     'disable_nacl': 1,
     'linux_use_gold_binary': 0,
     'linux_use_gold_flags': 0,
@@ -30,12 +32,7 @@
     'use_ozone': 1,
     'toolkit_views': 0,
     'toolkit_uses_gtk': 0,
-    'ozone_platform': 'oxide',
-    'ozone_auto_platforms': 0,
     'remoting': 0,
-    'external_ozone_platforms': [
-      'oxide',
-    ],
     'enable_printing': 0,
     'variables': {
       'conditions': [
