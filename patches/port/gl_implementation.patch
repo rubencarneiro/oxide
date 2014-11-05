@@ -239,7 +239,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
        'hard_dependency': 1,
        'actions': [
          {
-@@ -199,24 +205,24 @@
+@@ -199,17 +205,17 @@
            ],
          }],
          ['OS=="linux"', {
@@ -255,18 +255,9 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'gl_context_glx.h',
              'gl_glx_api_implementation.cc',
              'gl_glx_api_implementation.h',
--            'gl_image_glx.cc',
--            'gl_image_glx.h',
-+            #'gl_image_glx.cc',
-+            #'gl_image_glx.h',
              'gl_surface_glx.cc',
              'gl_surface_glx.h',
              'gl_egl_api_implementation.cc',
-             'gl_egl_api_implementation.h',
-             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.cc',
-             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.h',
-           ],
-           'all_dependent_settings': {
 diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 --- a/ui/gl/gl_bindings.h
 +++ b/ui/gl/gl_bindings.h

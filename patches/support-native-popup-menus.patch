@@ -260,7 +260,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -759,16 +755,12 @@ IPC_MESSAGE_CONTROL1(FrameHostMsg_AddNav
+@@ -772,16 +768,12 @@ IPC_MESSAGE_CONTROL1(FrameHostMsg_AddNav
  IPC_MESSAGE_ROUTED2(FrameHostMsg_BeginNavigation,
                      FrameHostMsg_BeginNavigation_Params,
                      content::CommonNavigationParams)
@@ -375,7 +375,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -853,23 +853,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -872,23 +872,21 @@ bool RenderFrameImpl::Send(IPC::Message*
      // messages, so don't use the proxy.
      if (render_frame_proxy_ && message->routing_id() == routing_id_)
        return render_frame_proxy_->Send(message);
@@ -399,7 +399,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    // document-less RenderFrame is replaced by a RenderFrameProxy but kept
    // around and is still able to receive messages.
    if (!frame_->document().isNull())
-@@ -921,19 +919,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -940,19 +938,18 @@ bool RenderFrameImpl::OnMessageReceived(
                          OnTextSurroundingSelectionRequest)
      IPC_MESSAGE_HANDLER(FrameMsg_AddStyleSheetByURL,
                          OnAddStyleSheetByURL)
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1394,31 +1391,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1413,31 +1410,29 @@ void RenderFrameImpl::OnDisownOpener() {
    // disowning the opener on subframes, we will need to move WebContentsImpl's
    // opener_ to FrameTreeNode.
    CHECK(!frame_->parent());
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -1760,17 +1755,17 @@ RenderFrameImpl::createWorkerPermissionC
+@@ -1779,17 +1774,17 @@ RenderFrameImpl::createWorkerPermissionC
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerPermissionClientProxy(
        this, frame);
@@ -474,9 +474,9 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h
 +++ b/content/renderer/render_frame_impl.h
-@@ -243,19 +243,17 @@ class CONTENT_EXPORT RenderFrameImpl
-                                const gfx::Range& replacement_range,
-                                bool keep_selection);
+@@ -246,19 +246,17 @@ class CONTENT_EXPORT RenderFrameImpl
+ 
+   PluginPowerSaverHelper* plugin_power_saver_helper();
  #endif  // defined(ENABLE_PLUGINS)
  
    // May return NULL in some cases, especially if userMediaClient() returns
@@ -494,7 +494,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -556,20 +554,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -559,20 +557,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnExtendSelectionAndDelete(int before, int after);
    void OnReload(bool ignore_cache);
    void OnTextSurroundingSelectionRequest(size_t max_length);
@@ -516,7 +516,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    void OnRequestNavigation(const CommonNavigationParams& common_params,
                             const RequestNavigationParams& request_params);
    void OnCommitNavigation(const ResourceResponseHead& response,
-@@ -782,20 +779,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -787,20 +784,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    // The current accessibility mode.
    AccessibilityMode accessibility_mode_;
