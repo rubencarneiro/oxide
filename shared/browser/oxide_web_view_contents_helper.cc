@@ -64,8 +64,9 @@ WebViewContentsHelper::~WebViewContentsHelper() {
   if (owns_web_preferences_) {
     // Disconnect the observer to prevent it from calling back in to us
     // via a vfunc, which it shouldn't do now we're in our destructor
+    WebPreferences* prefs = web_preferences();
     WebPreferencesObserver::Observe(NULL);
-    delete web_preferences();
+    delete prefs;
   }
 }
 
