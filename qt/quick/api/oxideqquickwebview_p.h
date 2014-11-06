@@ -217,8 +217,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void iconChanged();
   void navigationHistoryChanged();
   void incognitoChanged();
-  void loadingStateChanged();
-  void loadEvent(OxideQLoadEvent* event);
+  Q_REVISION(1) void loadingStateChanged();
+  Q_REVISION(1) void loadEvent(OxideQLoadEvent* event);
   void fullscreenChanged();
   void loadProgressChanged();
   void rootFrameChanged();

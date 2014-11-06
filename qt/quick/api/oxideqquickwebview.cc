@@ -786,13 +786,8 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
 #define VIEW_SIGNAL(sig) QMetaMethod::fromSignal(&OxideQQuickWebView::sig)
   if (signal == VIEW_SIGNAL(newViewRequested)) {
     d->updateWebPreferences();
-  } else if (signal == VIEW_SIGNAL(loadingChanged) &&
-             !d->using_old_load_event_signal_) {
+  } else if (signal == VIEW_SIGNAL(loadingChanged)) {
     d->using_old_load_event_signal_ = true;
-    qWarning() << "WebView.loadingChanged is deprecated. If you are interested "
-                  "in load events, please use WebView.loadEvent. The "
-                  "notification for WebView.loading is now "
-                  "WebView.loadingStateChanged";
   }
 #undef VIEW_SIGNAL
 }
@@ -926,8 +921,8 @@ void OxideQQuickWebView::updatePolish() {
   d->compositor_frame_handle_ = d->compositorFrameHandle();
 }
 
-OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent) :
-    QQuickItem(parent) {
+OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
+    : QQuickItem(parent) {
   // WebView instantiates NotificationRegistrar, which starts
   // NotificationService, which uses LazyInstance. Start Chromium now
   // else we'll crash
