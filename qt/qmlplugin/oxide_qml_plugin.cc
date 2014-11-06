@@ -113,6 +113,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "CookieManager is accessed via WebContext.cookieManager");
     qmlRegisterType<OxideQQuickWebContext, 1>(uri, 1, 3, "WebContext");
     qmlRegisterType<OxideQQuickWebView, 1>(uri, 1, 3, "WebView");
+
+    qmlRegisterType<OxideQQuickWebView, 2>(uri, 1, 4, "WebView");
   }
 };
 
