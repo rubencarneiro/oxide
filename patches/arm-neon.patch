@@ -15,7 +15,7 @@
 diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/common.gypi
 --- a/third_party/webrtc/build/common.gypi
 +++ b/third_party/webrtc/build/common.gypi
-@@ -234,17 +234,21 @@
+@@ -263,17 +263,21 @@
          ],
          'conditions': [
            ['arm_version==7', {
@@ -35,7 +35,7 @@ diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/com
            }],
          ],
        }],
-       ['target_arch=="mipsel"', {
+       ['target_arch=="mipsel" and mips_arch_variant!="r6"', {
          'defines': [
            'MIPS32_LE',
 diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
@@ -94,7 +94,7 @@ diff --git a/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isac
            'sources!': [
              'lattice_c.c',
              'pitch_filter_c.c',
-@@ -114,17 +114,17 @@
+@@ -115,17 +115,17 @@
                ],
              }],
            ],
