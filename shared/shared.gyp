@@ -327,7 +327,6 @@
         'browser/oxide_web_view.h',
         'browser/oxide_web_view_contents_helper.cc',
         'browser/oxide_web_view_contents_helper.h',
-        'browser/oxide_web_view_contents_helper_delegate.h',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',

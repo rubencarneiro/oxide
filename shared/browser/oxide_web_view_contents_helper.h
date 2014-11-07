@@ -37,32 +37,29 @@ namespace oxide {
 
 class BrowserContext;
 class WebPreferences;
-class WebViewContentsHelperDelegate;
 
 class WebViewContentsHelper final : private BrowserContextObserver,
                                     private WebPreferencesObserver,
                                     private base::SupportsUserData::Data,
                                     private content::WebContentsDelegate {
  public:
-  static void Attach(content::WebContents* contents,
-                     content::WebContents* opener = NULL);
+  WebViewContentsHelper(content::WebContents* contents,
+                        WebViewContentsHelper* opener = NULL);
 
   static WebViewContentsHelper* FromWebContents(content::WebContents* contents);
   static WebViewContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
-
-  void SetDelegate(WebViewContentsHelperDelegate* delegate);
 
   BrowserContext* GetBrowserContext() const;
 
   WebPreferences* GetWebPreferences() const;
   void SetWebPreferences(WebPreferences* preferences);
 
+  void WebContentsAdopted();
+
   void TakeWebContentsOwnershipAndClosePage(
       scoped_ptr<content::WebContents> web_contents);
 
  private:
-  WebViewContentsHelper(content::WebContents* contents);
-
   ~WebViewContentsHelper();
 
   void UpdateWebPreferences();
@@ -71,21 +68,14 @@ class WebViewContentsHelper final : private BrowserContextObserver,
   void NotifyPopupBlockerEnabledChanged() final;
 
   // WebPreferencesObserver implementation
-  void WebPreferencesDestroyed() final;
   void WebPreferencesValueChanged() final;
-  void WebPreferencesAdopted() final;
 
   // content::WebContentsDelegate implementation
   void CloseContents(content::WebContents* source) final;
 
   scoped_refptr<BrowserContext> context_;
   content::WebContents* web_contents_;
-  WebViewContentsHelperDelegate* delegate_;
 
-  // WebPreferences are normally owned by the public object exposed to
-  // the embedder. However, we create an internal WebPreferences instance
-  // at construction time that is initially owned by us until it is
-  // "adopted" by the embedder
   bool owns_web_preferences_;
 
   // When deleting the WebView, we take ownership of the WebContents

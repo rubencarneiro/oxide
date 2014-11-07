@@ -20,17 +20,14 @@
 #include <QFont>
 #include <QString>
 
-#include "base/logging.h"
+#include "qt/core/api/oxideqwebpreferences.h"
+#include "qt/core/api/oxideqwebpreferences_p.h"
 
 namespace oxide {
 namespace qt {
 
 WebPreferences::WebPreferences(OxideQWebPreferences* api_handle) :
     api_handle_(api_handle) {
-  if (api_handle_) {
-    SetIsOwnedByEmbedder();
-  }
-
   QFont font;
 
   font.setStyleHint(QFont::Serif);
@@ -46,15 +43,16 @@ WebPreferences::WebPreferences(OxideQWebPreferences* api_handle) :
 
 WebPreferences::~WebPreferences() {}
 
-void WebPreferences::SetApiHandle(OxideQWebPreferences* handle) {
-  DCHECK(!api_handle_ || handle);
+void WebPreferences::Destroy() {
+  delete api_handle_;
+  // |this| has been deleted
+}
 
-  if (!handle) {
-    return;
-  }
-
-  api_handle_ = handle;
-  SetIsOwnedByEmbedder();
+oxide::WebPreferences* WebPreferences::Clone() const {
+  OxideQWebPreferences* p = new OxideQWebPreferences();
+  WebPreferences* rv = OxideQWebPreferencesPrivate::get(p)->preferences();
+  rv->CopyFrom(this);
+  return rv;
 }
 
 } // namespace qt

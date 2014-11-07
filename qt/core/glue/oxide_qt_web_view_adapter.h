@@ -211,7 +211,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
     WebContextAdapter* context;
   };
 
+  void EnsurePreferences();
+
   void Initialized();
+  void WebPreferencesDestroyed();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
@@ -250,7 +253,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void ToggleFullscreenMode(bool enter) = 0;
 
-  virtual void WebPreferencesDestroyed() = 0;
+  virtual void OnWebPreferencesReplaced() = 0;
 
   virtual void FrameAdded(WebFrameAdapter* frame) = 0;
   virtual void FrameRemoved(WebFrameAdapter* frame) = 0;

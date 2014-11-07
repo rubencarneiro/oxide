@@ -30,8 +30,6 @@ class WebPreferencesObserver {
 
   virtual void WebPreferencesValueChanged() {}
 
-  virtual void WebPreferencesAdopted() {}
-
  protected:
   WebPreferencesObserver();
   WebPreferencesObserver(WebPreferences* preferences);

@@ -35,13 +35,10 @@ namespace oxide {
 
 class ResourceDispatcherHostDelegate;
 class WebFrameTree;
-class WebPreferences;
 
 class ContentBrowserClient : public content::ContentBrowserClient {
  public:
   virtual ~ContentBrowserClient();
-
-  virtual WebPreferences* CreateWebPreferences() = 0;
 
  protected:
   // Limit default constructor access to derived classes

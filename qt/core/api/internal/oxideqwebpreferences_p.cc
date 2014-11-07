@@ -22,26 +22,11 @@
 
 OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
     OxideQWebPreferences* q)
-    : preferences_(new oxide::qt::WebPreferences(q)) {}
-
-OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
-    oxide::qt::WebPreferences* prefs)
-    : preferences_(prefs) {}
+    : preferences_(q) {}
 
 OxideQWebPreferencesPrivate::~OxideQWebPreferencesPrivate() {}
 
 // static
 OxideQWebPreferencesPrivate* OxideQWebPreferencesPrivate::get(OxideQWebPreferences* q) {
   return q->d_func();
-}
-
-// static
-OxideQWebPreferences* OxideQWebPreferencesPrivate::Adopt(
-    oxide::qt::WebPreferences* preferences,
-    QObject* parent) {
-  OxideQWebPreferencesPrivate* d = new OxideQWebPreferencesPrivate(preferences);
-  OxideQWebPreferences* q = new OxideQWebPreferences(*d, parent);
-  preferences->SetApiHandle(q);
-
-  return q;
 }

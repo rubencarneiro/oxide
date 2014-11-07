@@ -247,6 +247,10 @@ void ContentBrowserClient::OverrideWebkitPrefs(
       WebViewContentsHelper::FromRenderViewHost(render_view_host);
 
   WebPreferences* web_prefs = contents_helper->GetWebPreferences();
+  if (!web_prefs) {
+    web_prefs = WebPreferences::GetFallback();
+  }
+
   web_prefs->ApplyToWebkitPrefs(prefs);
 
   prefs->touch_enabled = true;
@@ -271,7 +275,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
 content::DevToolsManagerDelegate*
 ContentBrowserClient::GetDevToolsManagerDelegate() {
-    return new DevToolsManagerDelegate();
+  return new DevToolsManagerDelegate();
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {

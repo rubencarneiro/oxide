@@ -22,16 +22,11 @@
 
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_location_provider.h"
-#include "oxide_qt_web_preferences.h"
 
 namespace oxide {
 namespace qt {
 
 ContentBrowserClient::ContentBrowserClient() {}
-
-oxide::WebPreferences* ContentBrowserClient::CreateWebPreferences() {
-  return new WebPreferences();
-}
 
 content::LocationProvider*
 ContentBrowserClient::OverrideSystemLocationProvider() {

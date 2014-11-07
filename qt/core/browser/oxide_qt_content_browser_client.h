@@ -35,9 +35,6 @@ class ContentBrowserClient final : public oxide::ContentBrowserClient {
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
   ContentBrowserClient();
 
-  // oxide::ContentBrowserClient implementation
-  oxide::WebPreferences* CreateWebPreferences() final;
-
   // content::ContentBrowserClient implementation
   content::LocationProvider* OverrideSystemLocationProvider() final;
 

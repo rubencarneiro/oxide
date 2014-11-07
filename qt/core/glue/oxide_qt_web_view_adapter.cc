@@ -93,12 +93,38 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
   QSize size_;
 };
 
+void WebViewAdapter::EnsurePreferences() {
+  if (view_->GetWebPreferences()) {
+    return;
+  }
+
+  OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(p)->preferences());
+}
+
 void WebViewAdapter::Initialized() {
   DCHECK(isInitialized());
+
+  OxideQWebPreferences* p =
+      static_cast<WebPreferences*>(view_->GetWebPreferences())->api_handle();
+  if (!p->parent()) {
+    // This will happen for a WebView created by newViewRequested, as
+    // we clone the openers preferences before the WebView is created
+    p->setParent(adapterToQObject(this));
+  }
 
   OnInitialized(construct_props_->incognito,
                 construct_props_->context);
   construct_props_.reset();
+}
+
+void WebViewAdapter::WebPreferencesDestroyed() {
+  OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(p)->preferences());
+
+  OnWebPreferencesReplaced();
 }
 
 WebViewAdapter::WebViewAdapter(QObject* q) :
@@ -113,6 +139,8 @@ void WebViewAdapter::init() {
   if (created_with_new_view_request_ || isInitialized()) {
     return;
   }
+
+  EnsurePreferences();
 
   oxide::WebView::Params params;
   params.context =
@@ -287,17 +315,9 @@ QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
 }
 
 OxideQWebPreferences* WebViewAdapter::preferences() {
-  WebPreferences* prefs =
-      static_cast<WebPreferences *>(view_->GetWebPreferences());
-  if (!prefs) {
-    OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
-    prefs = OxideQWebPreferencesPrivate::get(p)->preferences();
-    view_->SetWebPreferences(prefs);
-  } else if (!prefs->api_handle()) {
-    OxideQWebPreferencesPrivate::Adopt(prefs, adapterToQObject(this));
-  }
-
-  return prefs->api_handle();
+  EnsurePreferences();
+  return static_cast<WebPreferences*>(
+      view_->GetWebPreferences())->api_handle();
 }
 
 void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
@@ -306,16 +326,14 @@ void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
       static_cast<WebPreferences *>(view_->GetWebPreferences())) {
     old = o->api_handle();
   }
- 
-  if (prefs && !prefs->parent()) { 
+
+  if (!prefs) {
+    prefs = new OxideQWebPreferences(adapterToQObject(this));
+  } else if (!prefs->parent()) {
     prefs->setParent(adapterToQObject(this));
   }
-
-  WebPreferences* p = NULL;
-  if (prefs) {
-    p = OxideQWebPreferencesPrivate::get(prefs)->preferences();
-  }
-  view_->SetWebPreferences(p);
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(prefs)->preferences());
 
   if (!old) {
     return;
