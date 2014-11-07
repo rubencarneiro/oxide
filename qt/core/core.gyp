@@ -69,8 +69,6 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
         'api/internal/oxideqwebpreferences_p.cc',
-        'app/oxide_qt_content_main_delegate.cc',
-        'app/oxide_qt_content_main_delegate.h',
         'app/oxide_qt_main.cc',
         'app/oxide_qt_main.h',
         'base/oxide_qt_event_utils.cc',
@@ -81,8 +79,6 @@
         'base/oxide_qt_skutils.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
-        'browser/oxide_qt_content_browser_client.cc',
-        'browser/oxide_qt_content_browser_client.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
         'browser/oxide_qt_javascript_dialog.cc',

@@ -31,6 +31,8 @@
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
 
+#include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_paths.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
@@ -38,7 +40,9 @@
 namespace oxide {
 
 namespace {
-base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
+base::LazyInstance<ContentRendererClient> g_content_browser_client =
+    LAZY_INSTANCE_INITIALIZER;
+base::LazyInstance<ContentRendererClient> g_content_renderer_client =
     LAZY_INSTANCE_INITIALIZER;
 }
 
@@ -90,8 +94,8 @@ void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
 
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
-  NOTREACHED() << "CreateContentBrowserClient() hasn't been implemented";
-  return NULL;
+  CHECK(BrowserProcessMain::GetInstance()->IsRunning());
+  return g_content_browser_client.Pointer();
 }
 
 content::ContentRendererClient*

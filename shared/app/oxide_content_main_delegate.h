@@ -40,8 +40,8 @@ class ContentMainDelegate : public content::ContentMainDelegate {
 
   void ProcessExiting(const std::string& process_type) final;
 
-  virtual content::ContentBrowserClient* CreateContentBrowserClient() override;
-  virtual content::ContentRendererClient* CreateContentRendererClient() override;
+  content::ContentBrowserClient* CreateContentBrowserClient() final;
+  content::ContentRendererClient* CreateContentRendererClient() final;
 
  protected:
   // Allow access to default constructor only from derived classes

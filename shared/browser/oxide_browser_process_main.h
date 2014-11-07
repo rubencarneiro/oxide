@@ -29,7 +29,6 @@ class FilePath;
 
 namespace oxide {
 
-class ContentMainDelegate;
 class PlatformIntegration;
 
 enum SupportedGLImplFlags {
@@ -50,8 +49,7 @@ class BrowserProcessMain {
 
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  virtual void Start(scoped_ptr<ContentMainDelegate> delegate,
-                     scoped_ptr<PlatformIntegration> platform,
+  virtual void Start(scoped_ptr<PlatformIntegration> platform,
 #if defined(USE_NSS)
                      const base::FilePath& nss_db_path,
 #endif

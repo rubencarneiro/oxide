@@ -20,13 +20,13 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/app/content_main.h"
 
-#include "oxide_qt_content_main_delegate.h"
+#include "shared/app/oxide_content_main_delegate.h"
 
 namespace oxide {
 namespace qt {
 
 int OxideMain(int argc, const char** argv) {
-  ContentMainDelegate delegate;
+  oxide::ContentMainDelegate delegate;
 
   content::ContentMainParams params(&delegate);
   params.argc = argc;

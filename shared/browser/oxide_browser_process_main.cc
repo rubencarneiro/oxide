@@ -101,8 +101,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(scoped_ptr<ContentMainDelegate> delegate,
-             scoped_ptr<PlatformIntegration> platform,
+  void Start(scoped_ptr<PlatformIntegration> platform,
 #if defined(USE_NSS)
              const base::FilePath& nss_db_path,
 #endif
@@ -315,8 +314,7 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
-                                   scoped_ptr<PlatformIntegration> platform,
+void BrowserProcessMainImpl::Start(scoped_ptr<PlatformIntegration> platform,
 #if defined(USE_NSS)
                                    const base::FilePath& nss_db_path,
 #endif
@@ -326,7 +324,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
   CHECK(delegate) << "No ContentMainDelegate provided";
   CHECK(platform) << "No PlatformIntegration provided";
 
-  main_delegate_ = delegate.Pass();
+  main_delegate_.reset(new ContentMainDelegate());
   platform_integration_ = platform.Pass();
 
   state_ = STATE_STARTED;
