@@ -61,4 +61,8 @@ void PlatformIntegration::BrowserThreadInit(content::BrowserThread::ID id) {}
 void PlatformIntegration::BrowserThreadCleanUp(
     content::BrowserThread::ID id) {}
 
+content::LocationProvider* PlatformIntegration::CreateLocationProvider() {
+  return NULL;
+}
+
 } // namespace oxide

@@ -273,6 +273,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   }
 }
 
+content::LocationProvider*
+ContentBrowserClient::OverrideSystemLocationProvider() {
+  return PlatformIntegration::GetInstance()->CreateLocationProvider();
+}
+
 content::DevToolsManagerDelegate*
 ContentBrowserClient::GetDevToolsManagerDelegate() {
   return new DevToolsManagerDelegate();

@@ -46,6 +46,7 @@ class PlatformIntegration final : public oxide::PlatformIntegration {
   oxide::GLContextAdopted* GetGLShareContext() final;
   scoped_ptr<oxide::MessagePump> CreateUIMessagePump() final;
   void BrowserThreadInit(content::BrowserThread::ID id) final;
+  content::LocationProvider* CreateLocationProvider() final;
 
   scoped_refptr<GLContextAdopted> gl_share_context_;
 };

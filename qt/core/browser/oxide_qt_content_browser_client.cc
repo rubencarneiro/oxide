@@ -17,29 +17,10 @@
 
 #include "oxide_qt_content_browser_client.h"
 
-#include <QList>
-#include <QThread>
-
-#include "oxide_qt_browser_thread_q_event_dispatcher.h"
-#include "oxide_qt_location_provider.h"
-
 namespace oxide {
 namespace qt {
 
 ContentBrowserClient::ContentBrowserClient() {}
-
-content::LocationProvider*
-ContentBrowserClient::OverrideSystemLocationProvider() {
-  // Give the geolocation thread a Qt event dispatcher, so that we can use
-  // Queued signals / slots between it and the IO thread
-  QThread* thread = QThread::currentThread();
-  if (!thread->eventDispatcher()) {
-    thread->setEventDispatcher(
-      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
-  }
-
-  return new LocationProvider();
-}
 
 } // namespace qt
 } // namespace oxide

@@ -25,6 +25,10 @@
 
 class GURL;
 
+namespace content {
+class LocationProvider;
+}
+
 namespace oxide {
 
 class GLContextAdopted;
@@ -54,6 +58,9 @@ class PlatformIntegration {
   // Called on the specified browser thread
   virtual void BrowserThreadInit(content::BrowserThread::ID id);
   virtual void BrowserThreadCleanUp(content::BrowserThread::ID id);
+
+  // Called on the geolocation thread
+  virtual content::LocationProvider* CreateLocationProvider();
 
  protected:
   PlatformIntegration();

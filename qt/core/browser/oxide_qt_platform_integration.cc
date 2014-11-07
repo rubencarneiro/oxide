@@ -35,6 +35,7 @@
 #include "qt/core/glue/oxide_qt_init.h"
 
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
+#include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
 
 namespace oxide {
@@ -90,6 +91,18 @@ void PlatformIntegration::BrowserThreadInit(content::BrowserThread::ID id) {
   thread->setEventDispatcher(
       new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
   g_io_thread.Get() = thread;
+}
+
+content::LocationProvider* PlatformIntegration::CreateLocationProvider() {
+  // Give the geolocation thread a Qt event dispatcher, so that we can use
+  // Queued signals / slots between it and the IO thread
+  QThread* thread = QThread::currentThread();
+  if (!thread->eventDispatcher()) {
+    thread->setEventDispatcher(
+      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+  }
+
+  return new LocationProvider();
 }
 
 QThread* GetIOQThread() {

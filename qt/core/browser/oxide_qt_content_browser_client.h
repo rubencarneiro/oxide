@@ -35,9 +35,6 @@ class ContentBrowserClient final : public oxide::ContentBrowserClient {
   friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
   ContentBrowserClient();
 
-  // content::ContentBrowserClient implementation
-  content::LocationProvider* OverrideSystemLocationProvider() final;
-
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };
 
