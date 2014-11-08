@@ -37,6 +37,11 @@ enum SupportedGLImplFlags {
   SUPPORTED_GL_IMPL_EGL_GLES2 = 1 << 1
 };
 
+enum ProcessModel {
+  PROCESS_MODEL_DEFAULT,
+  PROCESS_MODEL_SINGLE_PROCESS
+};
+
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
 // Chrome (which is not possible in a public API)
@@ -53,7 +58,8 @@ class BrowserProcessMain {
 #if defined(USE_NSS)
                      const base::FilePath& nss_db_path,
 #endif
-                     SupportedGLImplFlags supported_gl_flags) = 0;
+                     SupportedGLImplFlags supported_gl_flags,
+                     ProcessModel process_model) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton

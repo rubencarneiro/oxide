@@ -99,7 +99,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 #if defined(USE_NSS)
              const base::FilePath& nss_db_path,
 #endif
-             SupportedGLImplFlags supported_gl_flags) final;
+             SupportedGLImplFlags supported_gl_flags,
+             ProcessModel process_model) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -216,7 +217,8 @@ base::FilePath GetSubprocessPath() {
   return subprocess_exe;
 }
 
-void InitializeCommandLine(const base::FilePath& subprocess_path) {
+void InitializeCommandLine(const base::FilePath& subprocess_path,
+                           ProcessModel process_model) {
   CHECK(base::CommandLine::Init(0, NULL)) <<
       "CommandLine already exists. Did you call BrowserProcessMain::Start "
       "in a child process?";
@@ -282,10 +284,8 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
       command_line->AppendSwitch(switches::kDisableSeccompFilterSandbox);
     }
   }
-  if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
-    LOG(WARNING) <<
-        "Running in single process mode. Multiple BrowserContext's will not "
-        "work correctly, see https://launchpad.net/bugs/1283291";
+  if (process_model == PROCESS_MODEL_SINGLE_PROCESS ||
+      IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
     command_line->AppendSwitch(switches::kSingleProcess);
   }
   if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
@@ -311,7 +311,8 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 #if defined(USE_NSS)
                                    const base::FilePath& nss_db_path,
 #endif
-                                   SupportedGLImplFlags supported_gl_impls) {
+                                   SupportedGLImplFlags supported_gl_impls,
+                                   ProcessModel process_model) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(delegate) << "No PlatformDelegate provided";
@@ -330,7 +331,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   exit_manager_.reset(new base::AtExitManager());
 
   base::FilePath subprocess_exe = GetSubprocessPath();
-  InitializeCommandLine(subprocess_exe);
+  InitializeCommandLine(subprocess_exe, process_model);
 
   // We need to override FILE_EXE in the browser process to the path of the
   // renderer, as various bits of Chrome use this to find other resources

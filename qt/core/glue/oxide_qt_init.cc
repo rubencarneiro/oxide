@@ -90,12 +90,27 @@ void EnsureChromiumStarted() {
         << qPrintable(QGuiApplication::platformName());
   }
 
+  oxide::ProcessModel process_model;
+
+  switch (oxideGetProcessModel()) {
+    case OxideProcessModelMultiProcess:
+      process_model = oxide::PROCESS_MODEL_DEFAULT;
+      break;
+    case OxideProcessModelSingleProcess:
+      process_model = oxide::PROCESS_MODEL_SINGLE_PROCESS;
+      break;
+    default:
+      NOTREACHED();
+      process_model = oxide::PROCESS_MODEL_DEFAULT;
+  }
+  
   oxide::BrowserProcessMain::GetInstance()->Start(
       delegate.Pass(),
 #if defined(USE_NSS)
       base::FilePath(nss_db_path.toStdString()),
 #endif
-      supported_gl_impls);
+      supported_gl_impls,
+      process_model);
 
   qAddPostRoutine(ShutdownChromium);
 }
