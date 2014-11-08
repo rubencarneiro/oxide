@@ -58,7 +58,7 @@ OxideQSimplePermissionRequestPrivate::OxideQSimplePermissionRequestPrivate(
     : OxideQPermissionRequestPrivate(
         url,
         embedder,
-        request.PassAs<oxide::PermissionRequest>()),
+        request.Pass()),
       did_respond_(false) {}
 
 bool OxideQSimplePermissionRequestPrivate::canRespond() const {

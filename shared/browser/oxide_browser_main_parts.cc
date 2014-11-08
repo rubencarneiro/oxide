@@ -59,8 +59,7 @@ blink::WebScreenInfo DefaultScreenInfoGetter() {
 }
 
 scoped_ptr<base::MessagePump> CreateUIMessagePump() {
-  return BrowserPlatformIntegration::GetInstance()
-      ->CreateUIMessagePump().PassAs<base::MessagePump>();
+  return BrowserPlatformIntegration::GetInstance()->CreateUIMessagePump();
 }
 
 class ScopedBindGLESAPI {
@@ -121,11 +120,6 @@ ScopedBindGLESAPI::~ScopedBindGLESAPI() {
 class Screen : public gfx::Screen {
  public:
   Screen() {}
-
-  bool IsDIPEnabled() final {
-    NOTIMPLEMENTED();
-    return true;
-  }
 
   gfx::Point GetCursorScreenPoint() final {
     NOTIMPLEMENTED();

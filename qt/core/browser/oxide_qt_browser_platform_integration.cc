@@ -80,7 +80,7 @@ oxide::GLContextAdopted* BrowserPlatformIntegration::GetGLShareContext() {
 
 scoped_ptr<oxide::MessagePump>
 BrowserPlatformIntegration::CreateUIMessagePump() {
-  return make_scoped_ptr(new MessagePump()).PassAs<oxide::MessagePump>();
+  return make_scoped_ptr(new MessagePump());
 }
 
 void BrowserPlatformIntegration::BrowserThreadInit(

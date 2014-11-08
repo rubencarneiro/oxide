@@ -8,7 +8,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 +++ b/content/common/gpu/gpu_channel_manager.cc
 @@ -16,16 +16,18 @@
  #include "gpu/command_buffer/service/gpu_switches.h"
- #include "gpu/command_buffer/service/mailbox_manager.h"
+ #include "gpu/command_buffer/service/mailbox_manager_impl.h"
  #include "gpu/command_buffer/service/memory_program_cache.h"
  #include "gpu/command_buffer/service/shader_translator_cache.h"
  #include "ipc/message_filter.h"
@@ -36,11 +36,11 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
      if (!share_group_.get()) {
 -      share_group_ = new gfx::GLShareGroup;
 +      share_group_ = oxide_gpu_shim::GetGLShareGroup();
-+      if (!share_group_) {
++      if (!share_group_.get()) {
 +        share_group_ = new gfx::GLShareGroup;
 +      }
        DCHECK(!mailbox_manager_.get());
-       mailbox_manager_ = new gpu::gles2::MailboxManager;
+       mailbox_manager_ = new gpu::gles2::MailboxManagerImpl;
      }
      share_group = share_group_.get();
      mailbox_manager = mailbox_manager_.get();
@@ -90,7 +90,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
      # headers resolve correctly.
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
    ],
-@@ -502,16 +503,18 @@
+@@ -500,16 +501,18 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',
@@ -112,7 +112,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
-@@ -25,16 +25,21 @@
+@@ -26,16 +26,21 @@
  #endif
  
  namespace content {
@@ -134,7 +134,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -73,20 +78,33 @@ GpuChildThread::GpuChildThread(const std
+@@ -74,20 +79,33 @@ GpuChildThread::GpuChildThread(const std
  #if !defined(OS_ANDROID)
    // For single process and in-process GPU mode, we need to load and
    // initialize the GL implementation and locate the GL entry points here.
@@ -199,12 +199,12 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
    // For single-process mode.
    explicit GpuChildThread(const std::string& channel_id);
  
-   virtual ~GpuChildThread();
+   ~GpuChildThread() override;
  
 +  static GpuChildThread* instance();
 +  static scoped_refptr<base::MessageLoopProxy> message_loop_proxy();
 +
-   virtual void Shutdown() override;
+   void Shutdown() override;
  
    void Init(const base::Time& process_start_time);
    void StopWatchdog();
@@ -212,8 +212,8 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 +  GpuChannelManager* gpu_channel_manager() { return gpu_channel_manager_.get(); }
 +
    // ChildThread overrides.
-   virtual bool Send(IPC::Message* msg) override;
-   virtual bool OnControlMessageReceived(const IPC::Message& msg) override;
+   bool Send(IPC::Message* msg) override;
+   bool OnControlMessageReceived(const IPC::Message& msg) override;
  
   private:
    // Message handlers.

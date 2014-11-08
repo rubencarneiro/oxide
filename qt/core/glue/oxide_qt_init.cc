@@ -91,7 +91,7 @@ void EnsureChromiumStarted() {
   }
 
   oxide::BrowserProcessMain::GetInstance()->Start(
-      delegate.PassAs<oxide::PlatformDelegate>(),
+      delegate.Pass(),
 #if defined(USE_NSS)
       base::FilePath(nss_db_path.toStdString()),
 #endif
