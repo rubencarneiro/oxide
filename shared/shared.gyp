@@ -352,6 +352,8 @@
         'common/oxide_script_message_handler.h',
         'common/oxide_script_message_request.cc',
         'common/oxide_script_message_request.h',
+        'common/oxide_user_agent.cc',
+        'common/oxide_user_agent.h',
         'common/oxide_user_script.cc',
         'common/oxide_user_script.h',
         'gl/oxide_gl_context_adopted.cc',

@@ -23,25 +23,22 @@
 #include "base/macros.h"
 #include "content/public/common/content_client.h"
 
-namespace oxide {
+namespace content {
+class ContentClientInitializer;
+}
 
-class ContentBrowserClient;
-class ContentRendererClient;
+namespace oxide {
 
 class ContentClient final : public content::ContentClient {
  public:
-  static ContentClient* GetInstance();
-  static ContentClient* instance();
-
   ContentClient();
   ~ContentClient();
 
-  ContentBrowserClient* browser();
-  ContentRendererClient* renderer();
-
-  void SetUserAgent(const std::string& user_agent);
-
  private:
+  friend class content::ContentClientInitializer; // For GetInstance
+
+  static ContentClient* GetInstance();
+
   // content::ContentClient implementation
   void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) final;
   std::string GetUserAgent() const final;
@@ -50,8 +47,6 @@ class ContentClient final : public content::ContentClient {
                                     ui::ScaleFactor scale_factor) const final;
   base::RefCountedStaticMemory* GetDataResourceBytes(
       int resource_id) const final;
-
-  std::string user_agent_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
 };
