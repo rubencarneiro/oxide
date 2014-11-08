@@ -24,6 +24,10 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/renderer/content_renderer_client.h"
 
+namespace base {
+template <typename Type> struct DefaultLazyInstanceTraits;
+}
+
 namespace oxide {
 
 class RenderProcessObserver;
@@ -31,24 +35,22 @@ class UserScriptSlave;
 
 class ContentRendererClient final : public content::ContentRendererClient {
  public:
+  // XXX(chrisccoulson): Try not to add anything here
+
+ private:
+  friend struct base::DefaultLazyInstanceTraits<ContentRendererClient>;
+
   ContentRendererClient();
   ~ContentRendererClient();
 
-  UserScriptSlave* user_script_slave() const {
-    return user_script_slave_.get();
-  }
-
- private:
+  // content::ContentRendererClient implementation
   void RenderThreadStarted() final;
-
   void RenderFrameCreated(content::RenderFrame* render_frame) final;
   void RenderViewCreated(content::RenderView* render_view) final;
-
   void DidCreateScriptContext(blink::WebFrame* frame,
                               v8::Handle<v8::Context> context,
                               int extension_group,
                               int world_id) final;
-
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
 
   scoped_ptr<RenderProcessObserver> process_observer_;

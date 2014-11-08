@@ -38,6 +38,10 @@
 
 namespace oxide {
 
+ContentRendererClient::ContentRendererClient() {}
+
+ContentRendererClient::~ContentRendererClient() {}
+
 void ContentRendererClient::RenderThreadStarted() {
   process_observer_.reset(new RenderProcessObserver());
   user_script_slave_.reset(new UserScriptSlave());
@@ -122,9 +126,5 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
 
   return user_agent;
 }
-
-ContentRendererClient::ContentRendererClient() {}
-
-ContentRendererClient::~ContentRendererClient() {}
 
 } // namespace oxide

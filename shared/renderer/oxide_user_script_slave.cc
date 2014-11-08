@@ -21,6 +21,7 @@
 #include <string>
 
 #include "base/command_line.h"
+#include "base/logging.h"
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/renderer/render_thread.h"
@@ -46,9 +47,13 @@
 namespace oxide {
 
 namespace {
+
+UserScriptSlave* g_instance;
+
 const char kIsolatedWorldCSP[] = "script-src 'self'";
 const char kUserScriptHead[] = "(function (unsafeWindow) {\n";
 const char kUserScriptTail[] = "\n})(window);";
+
 }
 
 // static
@@ -89,11 +94,27 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
   }
 }
 
+// static
+UserScriptSlave* UserScriptSlave::GetInstance() {
+  DCHECK(g_instance);
+  return g_instance;
+}
+
 UserScriptSlave::UserScriptSlave() {
+  DCHECK(!g_instance);
+  g_instance = this;
+
   content::RenderThread::Get()->AddObserver(this);
 }
 
-UserScriptSlave::~UserScriptSlave() {}
+UserScriptSlave::~UserScriptSlave() {
+  DCHECK_EQ(g_instance, this);
+  g_instance = NULL;
+
+  if (content::RenderThread::Get()) {
+    content::RenderThread::Get()->RemoveObserver(this);
+  }
+}
 
 bool UserScriptSlave::OnControlMessageReceived(const IPC::Message& message) {
   bool handled = true;

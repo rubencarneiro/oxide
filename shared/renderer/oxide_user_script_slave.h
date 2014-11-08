@@ -20,8 +20,7 @@
 
 #include <vector>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/linked_ptr.h"
 #include "base/memory/shared_memory.h"
 #include "content/public/renderer/render_process_observer.h"
@@ -42,6 +41,8 @@ class UserScript;
 class UserScriptSlave final : public content::RenderProcessObserver {
  public:
   typedef std::vector<linked_ptr<UserScript> > Vector;
+
+  static UserScriptSlave* GetInstance();
 
   UserScriptSlave();
   ~UserScriptSlave();
