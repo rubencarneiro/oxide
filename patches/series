@@ -21,3 +21,4 @@ load-nss-without-user-db.patch
 accelerated-2d-support.patch
 store-cache-stats-at-startup.patch
 export-content-switches.patch
+fix-non-x11-build.patch
