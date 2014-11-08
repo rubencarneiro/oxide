@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,24 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_main.h"
+#include "oxide_main.h"
 
-#include "shared/app/oxide_main.h"
+#include "content/public/app/content_main.h"
 
-#include "oxide_qt_platform_delegate.h"
+#include "oxide_content_main_delegate.h"
 
 namespace oxide {
-namespace qt {
 
-int OxideMain(int argc, const char** argv) {
-  PlatformDelegate delegate;
+int OxideMain(const OxideMainParams& params) {
+  ContentMainDelegate main_delegate(params.delegate);
 
-  oxide::OxideMainParams params(&delegate);
-  params.argc = argc;
-  params.argv = argv;
+  content::ContentMainParams content_params(&main_delegate);
+  content_params.argc = params.argc;
+  content_params.argv = params.argv;
 
-  return oxide::OxideMain(params);
+  return content::ContentMain(content_params);
 }
 
-} // namespace qt
 } // namespace oxide

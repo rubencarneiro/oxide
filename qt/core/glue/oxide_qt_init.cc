@@ -25,7 +25,7 @@
 #include "base/logging.h"
 
 #include "qt/core/api/oxideqglobal.h"
-#include "qt/core/browser/oxide_qt_platform_integration.h"
+#include "qt/core/app/oxide_qt_platform_delegate.h"
 #include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
@@ -70,8 +70,7 @@ void EnsureChromiumStarted() {
     nss_db_path = QDir(nss_db_path).absolutePath();
   }
 
-  scoped_ptr<PlatformIntegration> platform_integration(
-      new PlatformIntegration());
+  scoped_ptr<PlatformDelegate> delegate(new PlatformDelegate());
 
   oxide::SupportedGLImplFlags supported_gl_impls =
       oxide::SUPPORTED_GL_IMPL_NONE;
@@ -92,7 +91,7 @@ void EnsureChromiumStarted() {
   }
 
   oxide::BrowserProcessMain::GetInstance()->Start(
-      platform_integration.PassAs<oxide::PlatformIntegration>(),
+      delegate.PassAs<oxide::PlatformDelegate>(),
 #if defined(USE_NSS)
       base::FilePath(nss_db_path.toStdString()),
 #endif

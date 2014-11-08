@@ -17,6 +17,7 @@
 
 #include "oxide_content_client.h"
 
+#include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/common/user_agent.h"
@@ -41,7 +42,9 @@
 
 namespace oxide {
 
-ContentClient::ContentClient() {}
+namespace {
+ContentClient* g_instance;
+}
 
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
@@ -103,7 +106,8 @@ base::RefCountedStaticMemory* ContentClient::GetDataResourceBytes(
 
 // static
 ContentClient* ContentClient::GetInstance() {
-  return Singleton<ContentClient>::get();
+  DCHECK(g_instance);
+  return g_instance;
 }
 
 // static
@@ -111,7 +115,15 @@ ContentClient* ContentClient::instance() {
   return GetInstance();
 }
 
-ContentClient::~ContentClient() {}
+ContentClient::ContentClient() {
+  DCHECK(!g_instance);
+  g_instance = this;
+}
+
+ContentClient::~ContentClient() {
+  DCHECK_EQ(g_instance, this);
+  g_instance = NULL;
+}
 
 ContentBrowserClient* ContentClient::browser() {
   return static_cast<ContentBrowserClient *>(

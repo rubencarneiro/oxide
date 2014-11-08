@@ -20,11 +20,8 @@
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "content/public/common/content_client.h"
-
-template <typename Type> struct DefaultSingletonTraits;
 
 namespace oxide {
 
@@ -35,7 +32,9 @@ class ContentClient final : public content::ContentClient {
  public:
   static ContentClient* GetInstance();
   static ContentClient* instance();
-  virtual ~ContentClient();
+
+  ContentClient();
+  ~ContentClient();
 
   ContentBrowserClient* browser();
   ContentRendererClient* renderer();
@@ -43,9 +42,6 @@ class ContentClient final : public content::ContentClient {
   void SetUserAgent(const std::string& user_agent);
 
  private:
-  friend struct DefaultSingletonTraits<ContentClient>;
-  ContentClient();
-
   // content::ContentClient implementation
   void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) final;
   std::string GetUserAgent() const final;

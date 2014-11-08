@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,24 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_main.h"
+#ifndef _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
+#define _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
 
-#include "shared/app/oxide_main.h"
+#include "base/macros.h"
 
-#include "oxide_qt_platform_delegate.h"
+#include "shared/app/oxide_platform_delegate.h"
 
 namespace oxide {
 namespace qt {
 
-int OxideMain(int argc, const char** argv) {
-  PlatformDelegate delegate;
+class PlatformDelegate final : public oxide::PlatformDelegate {
+ public:
+  PlatformDelegate();
+  ~PlatformDelegate();
 
-  oxide::OxideMainParams params(&delegate);
-  params.argc = argc;
-  params.argv = argv;
+ private:
+  oxide::BrowserPlatformIntegration* CreateBrowserIntegration() final;
 
-  return oxide::OxideMain(params);
-}
+  DISALLOW_COPY_AND_ASSIGN(PlatformDelegate);
+};
 
 } // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_

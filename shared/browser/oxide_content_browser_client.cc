@@ -45,10 +45,10 @@
 #include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
+#include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
-#include "oxide_platform_integration.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
@@ -64,6 +64,10 @@
 #endif
 
 namespace oxide {
+
+ContentBrowserClient::ContentBrowserClient() {}
+
+ContentBrowserClient::~ContentBrowserClient() {}
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
@@ -125,7 +129,7 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     }
 
     GLContextAdopted* gl_share_context =
-        PlatformIntegration::GetInstance()->GetGLShareContext();
+        platform_integration_->GetGLShareContext();
     if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() ||
         !gl_share_context ||
         gl_share_context->GetImplementation() != gfx::GetGLImplementation()) {
@@ -255,8 +259,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   prefs->touch_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
-  prefs->device_supports_touch =
-      PlatformIntegration::GetInstance()->IsTouchSupported();
+  prefs->device_supports_touch = platform_integration_->IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
       !contents_helper->GetBrowserContext()->IsPopupBlockerEnabled();
@@ -275,7 +278,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
 content::LocationProvider*
 ContentBrowserClient::OverrideSystemLocationProvider() {
-  return PlatformIntegration::GetInstance()->CreateLocationProvider();
+  return platform_integration_->CreateLocationProvider();
 }
 
 content::DevToolsManagerDelegate*
@@ -290,8 +293,10 @@ void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host)
 #endif
 }
 
-ContentBrowserClient::ContentBrowserClient() {}
-
-ContentBrowserClient::~ContentBrowserClient() {}
+void ContentBrowserClient::SetPlatformIntegration(
+    BrowserPlatformIntegration* integration) {
+  CHECK(integration && !platform_integration_);
+  platform_integration_.reset(integration);
+}
 
 } // namespace oxide

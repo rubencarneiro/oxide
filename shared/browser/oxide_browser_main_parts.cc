@@ -43,10 +43,10 @@
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
 
+#include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
-#include "oxide_platform_integration.h"
 #include "oxide_power_save_blocker.h"
 #include "oxide_web_contents_view.h"
 
@@ -55,11 +55,11 @@ namespace oxide {
 namespace {
 
 blink::WebScreenInfo DefaultScreenInfoGetter() {
-  return PlatformIntegration::GetInstance()->GetDefaultScreenInfo();
+  return BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
 }
 
 scoped_ptr<base::MessagePump> CreateUIMessagePump() {
-  return PlatformIntegration::GetInstance()
+  return BrowserPlatformIntegration::GetInstance()
       ->CreateUIMessagePump().PassAs<base::MessagePump>();
 }
 
@@ -169,7 +169,7 @@ class Screen : public gfx::Screen {
 
   gfx::Display GetPrimaryDisplay() const final {
     blink::WebScreenInfo info(
-        PlatformIntegration::GetInstance()->GetDefaultScreenInfo());
+        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo());
 
     gfx::Display display;
     display.set_bounds(info.rect);
@@ -195,7 +195,7 @@ void BrowserMainParts::PreEarlyInitialization() {
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
 
   gfx::InitializeOxideNativeDisplay(
-      PlatformIntegration::GetInstance()->GetNativeDisplay());
+      BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());
 
   base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
   main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
@@ -211,7 +211,7 @@ int BrowserMainParts::PreCreateThreads() {
   ScopedBindGLESAPI gles_binder;
 
   GLContextAdopted* gl_share_context =
-      PlatformIntegration::GetInstance()->GetGLShareContext();
+      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
   if (gl_share_context) {
     gfx::InitializePreferredGLImplementation(
         gl_share_context->GetImplementation());

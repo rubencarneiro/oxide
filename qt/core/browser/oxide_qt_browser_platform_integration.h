@@ -18,11 +18,12 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 
 #include <QtGlobal>
 
-#include "shared/browser/oxide_platform_integration.h"
+#include "shared/browser/oxide_browser_platform_integration.h"
 
 QT_BEGIN_NAMESPACE
 class QThread;
@@ -33,10 +34,11 @@ namespace qt {
 
 class GLContext;
 
-class PlatformIntegration final : public oxide::PlatformIntegration {
+class BrowserPlatformIntegration final
+    : public oxide::BrowserPlatformIntegration {
  public:
-  PlatformIntegration();
-  ~PlatformIntegration();
+  BrowserPlatformIntegration();
+  ~BrowserPlatformIntegration();
 
  private:
   bool LaunchURLExternally(const GURL& url) final;
@@ -49,6 +51,8 @@ class PlatformIntegration final : public oxide::PlatformIntegration {
   content::LocationProvider* CreateLocationProvider() final;
 
   scoped_refptr<GLContextAdopted> gl_share_context_;
+
+  DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };
 
 QThread* GetIOQThread();

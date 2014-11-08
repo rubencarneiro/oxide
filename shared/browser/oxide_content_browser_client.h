@@ -20,11 +20,14 @@
 
 #include <vector>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
+
+namespace base {
+template <typename Type> struct DefaultLazyInstanceTraits;
+}
 
 namespace content {
 class RenderViewHost;
@@ -33,18 +36,24 @@ class ResourceDispatcherHostDelegate;
 
 namespace oxide {
 
+class BrowserPlatformIntegration;
+class ContentMainDelegate;
 class ResourceDispatcherHostDelegate;
 class WebFrameTree;
 
-class ContentBrowserClient : public content::ContentBrowserClient {
+class ContentBrowserClient final : public content::ContentBrowserClient {
  public:
-  virtual ~ContentBrowserClient();
-
- protected:
-  // Limit default constructor access to derived classes
-  ContentBrowserClient();
+  // XXX(chrisccoulson): Try not to add anything here
 
  private:
+  friend class ContentMainDelegate; // For SetPlatformIntegration
+  friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
+
+  ContentBrowserClient();
+  ~ContentBrowserClient();
+
+  void SetPlatformIntegration(BrowserPlatformIntegration* integration);
+
   // content::ContentBrowserClient implementation
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) final;
@@ -117,6 +126,8 @@ class ContentBrowserClient : public content::ContentBrowserClient {
   content::LocationProvider* OverrideSystemLocationProvider() final;
   content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() final;
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
+
+  scoped_ptr<BrowserPlatformIntegration> platform_integration_;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
 

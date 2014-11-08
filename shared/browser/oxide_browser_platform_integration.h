@@ -34,13 +34,13 @@ namespace oxide {
 class GLContextAdopted;
 class MessagePump;
 
-class PlatformIntegration {
+class BrowserPlatformIntegration {
  public:
-  virtual ~PlatformIntegration();
+  virtual ~BrowserPlatformIntegration();
 
   // Can be called on any thread. Destruction of this class
   // must only happen once all Chromium threads have been shut down
-  static PlatformIntegration* GetInstance();
+  static BrowserPlatformIntegration* GetInstance();
 
   // Called on the IO thread
   virtual bool LaunchURLExternally(const GURL& url);
@@ -63,10 +63,10 @@ class PlatformIntegration {
   virtual content::LocationProvider* CreateLocationProvider();
 
  protected:
-  PlatformIntegration();
+  BrowserPlatformIntegration();
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(PlatformIntegration);
+  DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };
 
 } // namespace oxide

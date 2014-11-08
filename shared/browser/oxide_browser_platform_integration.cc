@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_platform_integration.h"
+#include "oxide_browser_platform_integration.h"
 
 #include "base/logging.h"
 
@@ -23,45 +23,47 @@ namespace oxide {
 
 namespace {
 
-PlatformIntegration* g_instance;
+BrowserPlatformIntegration* g_instance;
 
 }
 
-PlatformIntegration::PlatformIntegration() {
+BrowserPlatformIntegration::BrowserPlatformIntegration() {
   CHECK(!g_instance)
-      << "Can't create more than one PlatformIntegration instance";
+      << "Can't create more than one BrowserPlatformIntegration instance";
   g_instance = this;
 }
 
-PlatformIntegration::~PlatformIntegration() {
+BrowserPlatformIntegration::~BrowserPlatformIntegration() {
   DCHECK_EQ(g_instance, this);
   g_instance = NULL;
 }
 
 // static
-PlatformIntegration* PlatformIntegration::GetInstance() {
+BrowserPlatformIntegration* BrowserPlatformIntegration::GetInstance() {
   DCHECK(g_instance);
   return g_instance;
 }
 
-bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
+bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
   return false;
 }
 
-bool PlatformIntegration::IsTouchSupported() {
+bool BrowserPlatformIntegration::IsTouchSupported() {
   return false;
 }
 
-GLContextAdopted* PlatformIntegration::GetGLShareContext() {
+GLContextAdopted* BrowserPlatformIntegration::GetGLShareContext() {
   return NULL;
 }
 
-void PlatformIntegration::BrowserThreadInit(content::BrowserThread::ID id) {}
-
-void PlatformIntegration::BrowserThreadCleanUp(
+void BrowserPlatformIntegration::BrowserThreadInit(
     content::BrowserThread::ID id) {}
 
-content::LocationProvider* PlatformIntegration::CreateLocationProvider() {
+void BrowserPlatformIntegration::BrowserThreadCleanUp(
+    content::BrowserThread::ID id) {}
+
+content::LocationProvider*
+BrowserPlatformIntegration::CreateLocationProvider() {
   return NULL;
 }
 

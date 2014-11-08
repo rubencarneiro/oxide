@@ -47,7 +47,6 @@
 #include "content/public/common/content_paths.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/main_function_params.h"
-#include "content/public/utility/content_utility_client.h"
 #include "content/renderer/in_process_renderer_thread.h"
 #include "content/utility/in_process_utility_thread.h"
 #if defined(USE_NSS)
@@ -60,6 +59,7 @@
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
+#include "shared/app/oxide_platform_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
@@ -67,14 +67,8 @@
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
-#include "oxide_platform_integration.h"
 
 namespace content {
-
-namespace {
-base::LazyInstance<content::ContentUtilityClient>
-    g_content_utility_client = LAZY_INSTANCE_INITIALIZER;
-}
 
 // This is a bit of a hack. We're content::ContentClientInitializer so that
 // we can be a friend of ContentClient. This works because the
@@ -87,7 +81,7 @@ class ContentClientInitializer {
 
     if (single_process) {
       content_client->renderer_ = delegate->CreateContentRendererClient();
-      content_client->utility_ = &g_content_utility_client.Get();
+      content_client->utility_ = delegate->CreateContentUtilityClient();
     }
   }
 };
@@ -101,7 +95,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(scoped_ptr<PlatformIntegration> platform,
+  void Start(scoped_ptr<PlatformDelegate> delegate,
 #if defined(USE_NSS)
              const base::FilePath& nss_db_path,
 #endif
@@ -133,9 +127,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   };
   State state_;
 
-  scoped_ptr<PlatformIntegration> platform_integration_;
-
   // XXX: Don't change the order of these
+  scoped_ptr<PlatformDelegate> platform_delegate_;
   scoped_ptr<ContentMainDelegate> main_delegate_;
   scoped_ptr<base::AtExitManager> exit_manager_;
   scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
@@ -314,18 +307,17 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::Start(scoped_ptr<PlatformIntegration> platform,
+void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 #if defined(USE_NSS)
                                    const base::FilePath& nss_db_path,
 #endif
                                    SupportedGLImplFlags supported_gl_impls) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
-  CHECK(delegate) << "No ContentMainDelegate provided";
-  CHECK(platform) << "No PlatformIntegration provided";
+  CHECK(delegate) << "No PlatformDelegate provided";
 
-  main_delegate_.reset(new ContentMainDelegate());
-  platform_integration_ = platform.Pass();
+  platform_delegate_ = delegate.Pass();
+  main_delegate_.reset(new ContentMainDelegate(platform_delegate_.get()));
 
   state_ = STATE_STARTED;
 
@@ -427,8 +419,8 @@ void BrowserProcessMainImpl::Shutdown() {
 
   exit_manager_.reset();
 
-  platform_integration_.reset();
   main_delegate_.reset();
+  platform_delegate_.reset();
 
   state_ = STATE_SHUTDOWN;
 }
