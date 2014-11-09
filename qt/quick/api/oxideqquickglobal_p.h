@@ -40,7 +40,12 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
 
   enum ProcessModel {
     ProcessModelMultiProcess,
-    ProcessModelSingleProcess
+    ProcessModelSingleProcess,
+
+    ProcessModelProcessPerSiteInstance,
+    ProcessModelProcessPerView,
+    ProcessModelProcessPerSite,
+    ProcessModelSitePerProcess
   };
 
   static OxideQQuickGlobal* instance();

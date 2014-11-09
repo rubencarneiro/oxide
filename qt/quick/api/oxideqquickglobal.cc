@@ -42,6 +42,18 @@ OxideQQuickGlobal::OxideQQuickGlobal() :
   Q_STATIC_ASSERT(
       ProcessModelSingleProcess ==
         static_cast<ProcessModel>(OxideProcessModelSingleProcess));
+  Q_STATIC_ASSERT(
+      ProcessModelProcessPerSiteInstance ==
+        static_cast<ProcessModel>(OxideProcessModelProcessPerSiteInstance));
+  Q_STATIC_ASSERT(
+      ProcessModelProcessPerView ==
+        static_cast<ProcessModel>(OxideProcessModelProcessPerView));
+  Q_STATIC_ASSERT(
+      ProcessModelProcessPerSite ==
+        static_cast<ProcessModel>(OxideProcessModelProcessPerSite));
+  Q_STATIC_ASSERT(
+      ProcessModelSitePerProcess ==
+        static_cast<ProcessModel>(OxideProcessModelSitePerProcess));
 }
 
 // static
@@ -82,7 +94,9 @@ int OxideQQuickGlobal::maxRendererProcessCount() const {
 
 void OxideQQuickGlobal::setMaxRendererProcessCount(int count) {
   if (count < 0) {
-    qWarning() << "Invalid maxRendererProcessCount value";
+    qWarning()
+        << "Invalid maxRendererProcessCount "
+        << "(must be > 0. Set to 0 to use the default maximum)";
     return;
   }
 
