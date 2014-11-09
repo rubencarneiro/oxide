@@ -90,27 +90,39 @@ void EnsureChromiumStarted() {
         << qPrintable(QGuiApplication::platformName());
   }
 
-  oxide::ProcessModel process_model;
+  COMPILE_ASSERT(
+      OxideProcessModelMultiProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_MULTI_PROCESS),
+      process_model_enums_multi_process_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelSingleProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SINGLE_PROCESS),
+      process_model_enums_single_process_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerSiteInstance ==
+        static_cast<OxideProcessModel>(
+          oxide::PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE),
+      process_model_enums_process_per_site_instance_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerView ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_VIEW),
+      process_model_enums_process_per_view_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerSite ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_SITE),
+      process_model_enums_process_per_site_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelSitePerProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SITE_PER_PROCESS),
+      process_model_enums_site_per_process_doesnt_match);
 
-  switch (oxideGetProcessModel()) {
-    case OxideProcessModelMultiProcess:
-      process_model = oxide::PROCESS_MODEL_DEFAULT;
-      break;
-    case OxideProcessModelSingleProcess:
-      process_model = oxide::PROCESS_MODEL_SINGLE_PROCESS;
-      break;
-    default:
-      NOTREACHED();
-      process_model = oxide::PROCESS_MODEL_DEFAULT;
-  }
-  
   oxide::BrowserProcessMain::GetInstance()->Start(
       delegate.Pass(),
 #if defined(USE_NSS)
       base::FilePath(nss_db_path.toStdString()),
 #endif
       supported_gl_impls,
-      process_model);
+      static_cast<oxide::ProcessModel>(oxideGetProcessModel()));
 
   qAddPostRoutine(ShutdownChromium);
 }

@@ -145,23 +145,18 @@ BrowserProcessMainImpl* GetBrowserProcessMainInstance() {
   return &g_instance;
 }
 
-bool IsEnvironmentOptionEnabled(const char* option) {
+bool IsEnvironmentOptionEnabled(base::StringPiece option) {
   std::string name("OXIDE_");
-  name += option;
+  name += option.data();
 
-  const char* val = getenv(name.c_str());
-  if (!val) {
-    return false;
-  }
+  base::StringPiece val(getenv(name.c_str()));
 
-  std::string v(val);
-
-  return !v.empty() && v == "1";
+  return !val.empty() && val == "1";
 }
 
-const char* GetEnvironmentOption(const char* option) {
+base::StringPiece GetEnvironmentOption(base::StringPiece option) {
   std::string name("OXIDE_");
-  name += option;
+  name += option.data();
 
   return getenv(name.c_str());
 }
@@ -187,11 +182,11 @@ void SetupAndVerifySignalHandlers() {
 }
 
 base::FilePath GetSubprocessPath() {
-  const char* subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
-  if (subprocess_path) {
+  base::StringPiece subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
+  if (!subprocess_path.empty()) {
     // Make sure that we have a properly formed absolute path
     // there are some load issues if not.
-    return base::MakeAbsoluteFilePath(base::FilePath(subprocess_path));
+    return base::MakeAbsoluteFilePath(base::FilePath(subprocess_path.data()));
   }
 
   base::FilePath subprocess_exe =
@@ -269,10 +264,11 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   }
   command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
 
-  const char* renderer_cmd_prefix = GetEnvironmentOption("RENDERER_CMD_PREFIX");
-  if (renderer_cmd_prefix) {
+  base::StringPiece renderer_cmd_prefix =
+      GetEnvironmentOption("RENDERER_CMD_PREFIX");
+  if (!renderer_cmd_prefix.empty()) {
     command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
-                                    renderer_cmd_prefix);
+                                    renderer_cmd_prefix.data());
   }
   if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
     command_line->AppendSwitch(switches::kNoSandbox);
@@ -284,15 +280,65 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
       command_line->AppendSwitch(switches::kDisableSeccompFilterSandbox);
     }
   }
-  if (process_model == PROCESS_MODEL_SINGLE_PROCESS ||
-      IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
+
+  if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {
     command_line->AppendSwitch(switches::kSingleProcess);
+  } else if (process_model == PROCESS_MODEL_PROCESS_PER_VIEW) {
+    command_line->AppendSwitch(switches::kProcessPerTab);
+  } else if (process_model == PROCESS_MODEL_PROCESS_PER_SITE) {
+    command_line->AppendSwitch(switches::kProcessPerSite);
+  } else if (process_model == PROCESS_MODEL_SITE_PER_PROCESS) {
+    command_line->AppendSwitch(switches::kSitePerProcess);
+  } else {
+    DCHECK(process_model == PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE ||
+           process_model == PROCESS_MODEL_MULTI_PROCESS);
   }
+
   if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
     command_line->AppendSwitch(switches::kAllowSandboxDebugging);
   }
   if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
     command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
+  }
+}
+
+void GetProcessModelOverrideFromEnvironment(ProcessModel* rv) {
+  if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
+    *rv = PROCESS_MODEL_SINGLE_PROCESS;
+    return;
+  }
+
+  base::StringPiece env = GetEnvironmentOption("PROCESS_MODEL");
+  if (env.empty()) {
+    return;
+  }
+
+  if (env == "multi-process") {
+    *rv = PROCESS_MODEL_MULTI_PROCESS;
+  } else if (env == "single-process") {
+    *rv = PROCESS_MODEL_SINGLE_PROCESS;
+  } else if (env == "process-per-site-instance") {
+    *rv = PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE;
+  } else if (env == "process-per-view") {
+    *rv = PROCESS_MODEL_PROCESS_PER_VIEW;
+  } else if (env == "process-per-site") {
+    *rv = PROCESS_MODEL_PROCESS_PER_SITE;
+  } else if (env == "site-per-process") {
+    *rv = PROCESS_MODEL_SITE_PER_PROCESS;
+  } else {
+    LOG(WARNING) << "Invalid process mode: " << env.data();
+  }
+}
+
+bool IsUnsupportedProcessModel(ProcessModel process_model) {
+  switch (process_model) {
+    case PROCESS_MODEL_SINGLE_PROCESS:
+    case PROCESS_MODEL_PROCESS_PER_VIEW:
+    case PROCESS_MODEL_PROCESS_PER_SITE:
+    case PROCESS_MODEL_SITE_PER_PROCESS:
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -330,7 +376,15 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 
   exit_manager_.reset(new base::AtExitManager());
 
+  GetProcessModelOverrideFromEnvironment(&process_model);
+  if (IsUnsupportedProcessModel(process_model)) {
+    LOG(WARNING) <<
+        "Using an unsupported process model. This may affect stability and "
+        "security. Use at your own risk!";
+  }
+
   base::FilePath subprocess_exe = GetSubprocessPath();
+
   InitializeCommandLine(subprocess_exe, process_model);
 
   // We need to override FILE_EXE in the browser process to the path of the
