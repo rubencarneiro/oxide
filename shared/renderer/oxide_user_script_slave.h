@@ -43,13 +43,14 @@ class UserScriptSlave final : public content::RenderProcessObserver {
   static UserScriptSlave* GetInstance();
 
   UserScriptSlave();
-  ~UserScriptSlave();
 
   void InjectScripts(blink::WebLocalFrame* frame,
                      UserScript::RunLocation location);
 
  private:
   typedef std::vector<linked_ptr<UserScript> > Vector;
+
+  ~UserScriptSlave();
 
   static int GetIsolatedWorldID(const GURL& url,
                                 blink::WebLocalFrame* frame);

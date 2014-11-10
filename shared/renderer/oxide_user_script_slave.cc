@@ -56,6 +56,12 @@ const char kUserScriptTail[] = "\n})(window);";
 
 }
 
+UserScriptSlave::~UserScriptSlave() {
+  CHECK(render_process_shutting_down_);
+  DCHECK_EQ(g_instance, this);
+  g_instance = NULL;
+}
+
 // static
 int UserScriptSlave::GetIsolatedWorldID(const GURL& url,
                                         blink::WebLocalFrame* frame) {
@@ -188,17 +194,10 @@ UserScriptSlave* UserScriptSlave::GetInstance() {
 
 UserScriptSlave::UserScriptSlave()
     : render_process_shutting_down_(false) {
-  DCHECK(!g_instance);
+  CHECK(!g_instance);
   g_instance = this;
 
   content::RenderThread::Get()->AddObserver(this);
-}
-
-UserScriptSlave::~UserScriptSlave() {
-  CHECK(render_process_shutting_down_) <<
-      "UserScriptSlave should not be deleted by consumers";
-  DCHECK_EQ(g_instance, this);
-  g_instance = NULL;
 }
 
 void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
