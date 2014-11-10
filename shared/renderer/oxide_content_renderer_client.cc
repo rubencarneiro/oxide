@@ -43,8 +43,8 @@ ContentRendererClient::ContentRendererClient() {}
 ContentRendererClient::~ContentRendererClient() {}
 
 void ContentRendererClient::RenderThreadStarted() {
-  process_observer_.reset(new RenderProcessObserver());
-  user_script_slave_.reset(new UserScriptSlave());
+  new RenderProcessObserver();
+  new UserScriptSlave();
 }
 
 void ContentRendererClient::RenderFrameCreated(

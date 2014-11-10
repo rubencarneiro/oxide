@@ -44,6 +44,7 @@ bool RenderProcessObserver::OnControlMessageReceived(
 
 void RenderProcessObserver::OnRenderProcessShutdown() {
   content::RenderThread::Get()->RemoveObserver(this);
+  delete this;
 }
 
 RenderProcessObserver::RenderProcessObserver() {

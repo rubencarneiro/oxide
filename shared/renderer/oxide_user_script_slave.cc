@@ -94,42 +94,6 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
   }
 }
 
-// static
-UserScriptSlave* UserScriptSlave::GetInstance() {
-  DCHECK(g_instance);
-  return g_instance;
-}
-
-UserScriptSlave::UserScriptSlave() {
-  DCHECK(!g_instance);
-  g_instance = this;
-
-  content::RenderThread::Get()->AddObserver(this);
-}
-
-UserScriptSlave::~UserScriptSlave() {
-  DCHECK_EQ(g_instance, this);
-  g_instance = NULL;
-
-  if (content::RenderThread::Get()) {
-    content::RenderThread::Get()->RemoveObserver(this);
-  }
-}
-
-bool UserScriptSlave::OnControlMessageReceived(const IPC::Message& message) {
-  bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(UserScriptSlave, message)
-    IPC_MESSAGE_HANDLER(OxideMsg_UpdateUserScripts, OnUpdateUserScripts)
-    IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP()
-
-  return handled;
-}
-
-void UserScriptSlave::OnRenderProcessShutdown() {
-  content::RenderThread::Get()->RemoveObserver(this);
-}
-
 void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
       blink::WebLocalFrame* frame,
       const blink::WebScriptSource& script_source) {
@@ -200,6 +164,43 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
   }
 }
 
+bool UserScriptSlave::OnControlMessageReceived(const IPC::Message& message) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(UserScriptSlave, message)
+    IPC_MESSAGE_HANDLER(OxideMsg_UpdateUserScripts, OnUpdateUserScripts)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
+
+void UserScriptSlave::OnRenderProcessShutdown() {
+  content::RenderThread::Get()->RemoveObserver(this);
+  render_process_shutting_down_ = true;
+  delete this;
+}
+
+// static
+UserScriptSlave* UserScriptSlave::GetInstance() {
+  DCHECK(g_instance);
+  return g_instance;
+}
+
+UserScriptSlave::UserScriptSlave()
+    : render_process_shutting_down_(false) {
+  DCHECK(!g_instance);
+  g_instance = this;
+
+  content::RenderThread::Get()->AddObserver(this);
+}
+
+UserScriptSlave::~UserScriptSlave() {
+  CHECK(render_process_shutting_down_) <<
+      "UserScriptSlave should not be deleted by consumers";
+  DCHECK_EQ(g_instance, this);
+  g_instance = NULL;
+}
+
 void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
                                     UserScript::RunLocation location) {
   blink::WebDataSource* data_source = frame->provisionalDataSource() ?
@@ -260,6 +261,5 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
     frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
   }
 }
-
 
 } // namespace oxide

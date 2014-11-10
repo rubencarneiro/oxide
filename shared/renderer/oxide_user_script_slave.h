@@ -40,21 +40,17 @@ class UserScript;
 
 class UserScriptSlave final : public content::RenderProcessObserver {
  public:
-  typedef std::vector<linked_ptr<UserScript> > Vector;
-
   static UserScriptSlave* GetInstance();
 
   UserScriptSlave();
   ~UserScriptSlave();
 
-  bool OnControlMessageReceived(const IPC::Message& message) final;
-
-  void OnRenderProcessShutdown() final;
-
   void InjectScripts(blink::WebLocalFrame* frame,
                      UserScript::RunLocation location);
 
  private:
+  typedef std::vector<linked_ptr<UserScript> > Vector;
+
   static int GetIsolatedWorldID(const GURL& url,
                                 blink::WebLocalFrame* frame);
   void OnUpdateUserScripts(base::SharedMemoryHandle handle);
@@ -62,6 +58,12 @@ class UserScriptSlave final : public content::RenderProcessObserver {
   void InjectGreaseMonkeyScriptInMainWorld(
       blink::WebLocalFrame* frame,
       const blink::WebScriptSource& script_source);
+
+  // content::RenderProcessObserver implementation
+  bool OnControlMessageReceived(const IPC::Message& message) final;
+  void OnRenderProcessShutdown() final;
+
+  bool render_process_shutting_down_;
 
   Vector user_scripts_;
 

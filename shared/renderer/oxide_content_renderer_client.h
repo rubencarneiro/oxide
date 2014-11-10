@@ -18,10 +18,7 @@
 #ifndef _OXIDE_SHARED_RENDERER_CONTENT_RENDERER_CLIENT_H_
 #define _OXIDE_SHARED_RENDERER_CONTENT_RENDERER_CLIENT_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/linked_ptr.h"
-#include "base/memory/scoped_ptr.h"
+#include "base/macros.h"
 #include "content/public/renderer/content_renderer_client.h"
 
 namespace base {
@@ -29,9 +26,6 @@ template <typename Type> struct DefaultLazyInstanceTraits;
 }
 
 namespace oxide {
-
-class RenderProcessObserver;
-class UserScriptSlave;
 
 class ContentRendererClient final : public content::ContentRendererClient {
  public:
@@ -52,9 +46,6 @@ class ContentRendererClient final : public content::ContentRendererClient {
                               int extension_group,
                               int world_id) final;
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
-
-  scoped_ptr<RenderProcessObserver> process_observer_;
-  scoped_ptr<UserScriptSlave> user_script_slave_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };
