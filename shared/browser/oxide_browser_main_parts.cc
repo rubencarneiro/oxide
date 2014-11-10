@@ -43,6 +43,7 @@
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
 
+#include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_io_thread.h"
@@ -264,6 +265,11 @@ void BrowserMainParts::PostMainMessageLoopRun() {
 }
 
 void BrowserMainParts::PostDestroyThreads() {
+  if (BrowserProcessMain::GetInstance()->GetProcessModel() ==
+      PROCESS_MODEL_SINGLE_PROCESS) {
+    BrowserContext::AssertNoContextsExist();
+  }
+
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
   io_thread_.reset();
   content::oxide_gpu_shim::SetGLShareGroup(NULL);

@@ -30,6 +30,7 @@
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_process_host_observer.h"
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
@@ -65,6 +66,35 @@
 
 namespace oxide {
 
+namespace {
+
+class SingleProcessBrowserContextHolder
+    : public content::RenderProcessHostObserver {
+ public:
+  SingleProcessBrowserContextHolder(content::RenderProcessHost* host)
+      : host_(host),
+        context_(BrowserContext::FromContent(host->GetBrowserContext())) {
+    host_->AddObserver(this);
+  }
+
+ private:
+  ~SingleProcessBrowserContextHolder() {}
+
+  // content::RenderProcessHostObserver implementation
+  void RenderProcessHostDestroyed(content::RenderProcessHost* host) final {
+    DCHECK_EQ(host, host_);
+    host_->RemoveObserver(this);
+    delete this;
+  }
+
+  content::RenderProcessHost* host_;
+  scoped_refptr<BrowserContext> context_;
+
+  DISALLOW_COPY_AND_ASSIGN(SingleProcessBrowserContextHolder);
+};
+
+}
+
 ContentBrowserClient::ContentBrowserClient() {}
 
 ContentBrowserClient::~ContentBrowserClient() {}
@@ -76,6 +106,13 @@ content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
 
 void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
+  if (BrowserProcessMain::GetInstance()->GetProcessModel() ==
+      PROCESS_MODEL_SINGLE_PROCESS) {
+    // In single process mode, the one RPH lasts the lifetime of this process,
+    // so don't allow it to be deleted
+    new SingleProcessBrowserContextHolder(host);
+  }
+
   host->Send(new OxideMsg_SetUserAgent(
       BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
   host->AddFilter(new ScriptMessageDispatcherBrowser(host));

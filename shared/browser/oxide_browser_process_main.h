@@ -75,6 +75,8 @@ class BrowserProcessMain {
   virtual void IncrementPendingUnloadsCount() = 0;
   virtual void DecrementPendingUnloadsCount() = 0;
 
+  virtual ProcessModel GetProcessModel() const = 0;
+
  protected:
   BrowserProcessMain();
 

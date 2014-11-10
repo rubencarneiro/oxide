@@ -118,6 +118,11 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
     }
   }
 
+  ProcessModel GetProcessModel() const final {
+    DCHECK_NE(state_, STATE_NOT_STARTED);
+    return process_model_;
+  }
+
  private:
 
   enum State {
@@ -127,6 +132,8 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
     STATE_SHUTDOWN
   };
   State state_;
+
+  ProcessModel process_model_;
 
   // XXX: Don't change the order of these
   scoped_ptr<PlatformDelegate> platform_delegate_;
@@ -346,6 +353,7 @@ bool IsUnsupportedProcessModel(ProcessModel process_model) {
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
+      process_model_(PROCESS_MODEL_MULTI_PROCESS),
       pending_unloads_count_(0) {}
 
 BrowserProcessMainImpl::~BrowserProcessMainImpl() {
@@ -366,6 +374,14 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   platform_delegate_ = delegate.Pass();
   main_delegate_.reset(new ContentMainDelegate(platform_delegate_.get()));
 
+  GetProcessModelOverrideFromEnvironment(&process_model);
+  if (IsUnsupportedProcessModel(process_model)) {
+    LOG(WARNING) <<
+        "Using an unsupported process model. This may affect stability and "
+        "security. Use at your own risk!";
+  }
+  process_model_ = process_model;
+
   state_ = STATE_STARTED;
 
   SetupAndVerifySignalHandlers();
@@ -376,16 +392,8 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 
   exit_manager_.reset(new base::AtExitManager());
 
-  GetProcessModelOverrideFromEnvironment(&process_model);
-  if (IsUnsupportedProcessModel(process_model)) {
-    LOG(WARNING) <<
-        "Using an unsupported process model. This may affect stability and "
-        "security. Use at your own risk!";
-  }
-
   base::FilePath subprocess_exe = GetSubprocessPath();
-
-  InitializeCommandLine(subprocess_exe, process_model);
+  InitializeCommandLine(subprocess_exe, process_model_);
 
   // We need to override FILE_EXE in the browser process to the path of the
   // renderer, as various bits of Chrome use this to find other resources
@@ -465,7 +473,11 @@ void BrowserProcessMainImpl::Shutdown() {
     run_loop.Run();
   }
 
-  BrowserContext::AssertNoContextsExist();
+  if (process_model_ != PROCESS_MODEL_SINGLE_PROCESS) {
+    // In single process mode, we do this check after destroying
+    // threads, as we hold the single BrowserContext alive until then
+    BrowserContext::AssertNoContextsExist();
+  }
 
   MessageLoopForUI::current()->Stop();
 
