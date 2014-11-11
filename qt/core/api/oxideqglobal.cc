@@ -20,10 +20,14 @@
 #include <QGlobalStatic>
 #include <QtDebug>
 
-#include "qt/core/browser/oxide_qt_platform_integration.h"
+#include "content/public/browser/render_process_host.h"
+
+#include "qt/core/browser/oxide_qt_browser_platform_integration.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
 Q_GLOBAL_STATIC(QString, g_nss_db_path)
+
+static OxideProcessModel g_process_model = OxideProcessModelMultiProcess;
 
 QString oxideGetNSSDbPath() {
   return *g_nss_db_path;
@@ -46,4 +50,41 @@ bool oxideSetNSSDbPath(const QString& path) {
 
 QThread* oxideGetIOThread() {
   return oxide::qt::GetIOQThread();
+}
+
+OxideProcessModel oxideGetProcessModel() {
+  return g_process_model;
+}
+
+void oxideSetProcessModel(OxideProcessModel model) {
+  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
+    qWarning() << "Cannot set the process model once Oxide is running";
+    return;
+  }
+
+  static bool did_warn = false;
+  if (!did_warn) {
+    did_warn = true;
+    qWarning()
+        << "Changing the Oxide process model is currently experimental "
+        << "and untested, and might break your application in unexpected "
+        << "ways. This interface is only exposed for development purposes "
+        << "at the moment, although it will eventually be suitable for "
+        << "public use";
+  }
+
+  g_process_model = model;
+}
+
+size_t oxideGetMaxRendererProcessCount() {
+  return content::RenderProcessHost::GetMaxRendererProcessCount();
+}
+
+void oxideSetMaxRendererProcessCount(size_t count) {
+  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
+    qWarning() << "Cannot set the renderer process count once Oxide is running";
+    return;
+  }
+
+  content::RenderProcessHost::SetMaxRendererProcessCount(count);
 }

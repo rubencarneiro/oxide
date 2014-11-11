@@ -421,7 +421,7 @@ void OxideQQuickWebViewPrivate::ToggleFullscreenMode(bool enter) {
   emit q->fullscreenRequested(enter);
 }
 
-void OxideQQuickWebViewPrivate::WebPreferencesDestroyed() {
+void OxideQQuickWebViewPrivate::OnWebPreferencesReplaced() {
   Q_Q(OxideQQuickWebView);
 
   emit q->preferencesChanged();

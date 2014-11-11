@@ -68,8 +68,7 @@ void AddGpuThreadTaskObserver(base::MessageLoop::TaskObserver* obs) {
   content::GpuChildThread::instance()->message_loop()->AddTaskObserver(obs);
 }
 
-gpu::gles2::TextureRef* CreateTextureRef(unsigned target,
-                                         int32_t client_id,
+gpu::gles2::TextureRef* CreateTextureRef(int32_t client_id,
                                          int32_t route_id,
                                          const gpu::Mailbox& mailbox) {
   DCHECK(IsCurrentlyOnGpuThread());
@@ -83,7 +82,7 @@ gpu::gles2::TextureRef* CreateTextureRef(unsigned target,
   gpu::gles2::ContextGroup* group =
       command_buffer->decoder()->GetContextGroup();
   gpu::gles2::Texture* texture =
-      group->mailbox_manager()->ConsumeTexture(GL_TEXTURE_2D, mailbox);
+      group->mailbox_manager()->ConsumeTexture(mailbox);
   if (!texture) {
     return NULL;
   }

@@ -20,7 +20,7 @@
 
 #include <QtGlobal>
 
-#include "base/memory/scoped_ptr.h"
+#include "qt/core/browser/oxide_qt_web_preferences.h"
 
 class OxideQWebPreferences;
 
@@ -28,29 +28,19 @@ QT_BEGIN_NAMESPACE
 class QObject;
 QT_END_NAMESPACE
 
-namespace oxide {
-namespace qt {
-class WebPreferences;
-}
-}
-
 class OxideQWebPreferencesPrivate final {
  public:
   ~OxideQWebPreferencesPrivate();
 
-  oxide::qt::WebPreferences* preferences() const { return preferences_.get(); }
+  oxide::qt::WebPreferences* preferences() { return &preferences_; }
 
   static OxideQWebPreferencesPrivate* get(OxideQWebPreferences* q);
-
-  static OxideQWebPreferences* Adopt(oxide::qt::WebPreferences* preferences,
-                                     QObject* parent = NULL);
 
  private:
   friend class OxideQWebPreferences;
   OxideQWebPreferencesPrivate(OxideQWebPreferences* q);
-  OxideQWebPreferencesPrivate(oxide::qt::WebPreferences* preferences);
 
-  scoped_ptr<oxide::qt::WebPreferences> preferences_;
+  oxide::qt::WebPreferences preferences_;
 };
 
 #endif // _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_

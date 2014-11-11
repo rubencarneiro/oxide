@@ -142,7 +142,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
         new CompositorOutputSurfaceGL(output_surface_id,
                                       context_provider,
                                       proxy_));
-    return output.PassAs<cc::OutputSurface>();
+    return output.Pass();
   }
 
   scoped_ptr<CompositorSoftwareOutputDevice> output_device(
@@ -150,9 +150,9 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
   scoped_ptr<CompositorOutputSurfaceSoftware> output(
       new CompositorOutputSurfaceSoftware(
         output_surface_id,
-        output_device.PassAs<cc::SoftwareOutputDevice>(),
+        output_device.Pass(),
         proxy_));
-  return output.PassAs<cc::OutputSurface>();
+  return output.Pass();
 }
 
 void Compositor::WillBeginMainFrame(int frame_id) {}

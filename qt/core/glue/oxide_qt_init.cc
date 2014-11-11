@@ -25,8 +25,7 @@
 #include "base/logging.h"
 
 #include "qt/core/api/oxideqglobal.h"
-#include "qt/core/app/oxide_qt_content_main_delegate.h"
-#include "qt/core/browser/oxide_qt_platform_integration.h"
+#include "qt/core/app/oxide_qt_platform_delegate.h"
 #include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
@@ -71,8 +70,7 @@ void EnsureChromiumStarted() {
     nss_db_path = QDir(nss_db_path).absolutePath();
   }
 
-  scoped_ptr<ContentMainDelegate> delegate(new ContentMainDelegate());
-  scoped_ptr<PlatformIntegration> platform_integration(new PlatformIntegration());
+  scoped_ptr<PlatformDelegate> delegate(new PlatformDelegate());
 
   oxide::SupportedGLImplFlags supported_gl_impls =
       oxide::SUPPORTED_GL_IMPL_NONE;
@@ -92,13 +90,39 @@ void EnsureChromiumStarted() {
         << qPrintable(QGuiApplication::platformName());
   }
 
+  COMPILE_ASSERT(
+      OxideProcessModelMultiProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_MULTI_PROCESS),
+      process_model_enums_multi_process_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelSingleProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SINGLE_PROCESS),
+      process_model_enums_single_process_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerSiteInstance ==
+        static_cast<OxideProcessModel>(
+          oxide::PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE),
+      process_model_enums_process_per_site_instance_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerView ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_VIEW),
+      process_model_enums_process_per_view_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerSite ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_SITE),
+      process_model_enums_process_per_site_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelSitePerProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SITE_PER_PROCESS),
+      process_model_enums_site_per_process_doesnt_match);
+
   oxide::BrowserProcessMain::GetInstance()->Start(
-      delegate.PassAs<oxide::ContentMainDelegate>(),
-      platform_integration.PassAs<oxide::PlatformIntegration>(),
+      delegate.Pass(),
 #if defined(USE_NSS)
       base::FilePath(nss_db_path.toStdString()),
 #endif
-      supported_gl_impls);
+      supported_gl_impls,
+      static_cast<oxide::ProcessModel>(oxideGetProcessModel()));
 
   qAddPostRoutine(ShutdownChromium);
 }

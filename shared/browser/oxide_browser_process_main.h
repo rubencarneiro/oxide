@@ -29,13 +29,21 @@ class FilePath;
 
 namespace oxide {
 
-class ContentMainDelegate;
-class PlatformIntegration;
+class PlatformDelegate;
 
 enum SupportedGLImplFlags {
   SUPPORTED_GL_IMPL_NONE = 0,
   SUPPORTED_GL_IMPL_DESKTOP_GL = 1 << 0,
   SUPPORTED_GL_IMPL_EGL_GLES2 = 1 << 1
+};
+
+enum ProcessModel {
+  PROCESS_MODEL_MULTI_PROCESS,
+  PROCESS_MODEL_SINGLE_PROCESS,
+  PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE,
+  PROCESS_MODEL_PROCESS_PER_VIEW,
+  PROCESS_MODEL_PROCESS_PER_SITE,
+  PROCESS_MODEL_SITE_PER_PROCESS
 };
 
 // This class basically encapsulates the process-wide bits that would
@@ -50,12 +58,12 @@ class BrowserProcessMain {
 
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  virtual void Start(scoped_ptr<ContentMainDelegate> delegate,
-                     scoped_ptr<PlatformIntegration> platform,
+  virtual void Start(scoped_ptr<PlatformDelegate> delegate,
 #if defined(USE_NSS)
                      const base::FilePath& nss_db_path,
 #endif
-                     SupportedGLImplFlags supported_gl_flags) = 0;
+                     SupportedGLImplFlags supported_gl_flags,
+                     ProcessModel process_model) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton
@@ -66,6 +74,8 @@ class BrowserProcessMain {
 
   virtual void IncrementPendingUnloadsCount() = 0;
   virtual void DecrementPendingUnloadsCount() = 0;
+
+  virtual ProcessModel GetProcessModel() const = 0;
 
  protected:
   BrowserProcessMain();

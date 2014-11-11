@@ -51,7 +51,6 @@ CONTENT_EXPORT scoped_refptr<base::SingleThreadTaskRunner> GetGpuThreadTaskRunne
 CONTENT_EXPORT void AddGpuThreadTaskObserver(base::MessageLoop::TaskObserver* obs);
 
 CONTENT_EXPORT gpu::gles2::TextureRef* CreateTextureRef(
-    unsigned target,
     int32_t client_id,
     int32_t route_id,
     const gpu::Mailbox& mailbox);

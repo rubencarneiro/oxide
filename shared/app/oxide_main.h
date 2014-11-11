@@ -15,19 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
-#define _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
+#ifndef _OXIDE_SHARED_APP_MAIN_H_
+#define _OXIDE_SHARED_APP_MAIN_H_
+
+#include "base/basictypes.h"
 
 namespace oxide {
 
+class PlatformDelegate;
 
-class WebViewContentsHelperDelegate {
- public:
-  virtual ~WebViewContentsHelperDelegate() {}
+struct OxideMainParams {
+  OxideMainParams(PlatformDelegate* delegate)
+      : delegate(delegate),
+        argc(0),
+        argv(NULL) {}
 
-  virtual void NotifyWebPreferencesDestroyed() = 0;
+  PlatformDelegate* delegate;
+
+  int argc;
+  const char** argv;
 };
+
+int OxideMain(const OxideMainParams& params);
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
+#endif // _OXIDE_SHARED_APP_MAIN_H_

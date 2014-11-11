@@ -15,50 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_platform_integration.h"
+#include "oxide_user_agent.h"
 
-#include "base/logging.h"
+#include "base/lazy_instance.h"
 
 namespace oxide {
 
 namespace {
-
-PlatformIntegration* g_instance;
-
+base::LazyInstance<std::string> g_user_agent = LAZY_INSTANCE_INITIALIZER;
 }
 
-PlatformIntegration::PlatformIntegration() {
-  CHECK(!g_instance)
-      << "Can't create more than one PlatformIntegration instance";
-  g_instance = this;
+std::string GetUserAgent() {
+  return g_user_agent.Get();
 }
 
-PlatformIntegration::~PlatformIntegration() {
-  DCHECK_EQ(g_instance, this);
-  g_instance = NULL;
+void SetUserAgent(const std::string& user_agent) {
+  g_user_agent.Get() = user_agent;
 }
-
-// static
-PlatformIntegration* PlatformIntegration::GetInstance() {
-  DCHECK(g_instance);
-  return g_instance;
-}
-
-bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
-  return false;
-}
-
-bool PlatformIntegration::IsTouchSupported() {
-  return false;
-}
-
-GLContextAdopted* PlatformIntegration::GetGLShareContext() {
-  return NULL;
-}
-
-void PlatformIntegration::BrowserThreadInit(content::BrowserThread::ID id) {}
-
-void PlatformIntegration::BrowserThreadCleanUp(
-    content::BrowserThread::ID id) {}
 
 } // namespace oxide

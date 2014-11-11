@@ -17,22 +17,21 @@
 
 #include "oxide_qt_main.h"
 
-#include "base/memory/scoped_ptr.h"
-#include "content/public/app/content_main.h"
+#include "shared/app/oxide_main.h"
 
-#include "oxide_qt_content_main_delegate.h"
+#include "oxide_qt_platform_delegate.h"
 
 namespace oxide {
 namespace qt {
 
 int OxideMain(int argc, const char** argv) {
-  ContentMainDelegate delegate;
+  PlatformDelegate delegate;
 
-  content::ContentMainParams params(&delegate);
+  oxide::OxideMainParams params(&delegate);
   params.argc = argc;
   params.argv = argv;
 
-  return content::ContentMain(params);
+  return oxide::OxideMain(params);
 }
 
 } // namespace qt

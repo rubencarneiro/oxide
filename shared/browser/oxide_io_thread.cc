@@ -40,7 +40,7 @@
 #include "net/url_request/url_request_job_factory_impl.h"
 #include "net/url_request/url_request_throttler_manager.h"
 
-#include "oxide_platform_integration.h"
+#include "oxide_browser_platform_integration.h"
 #include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
 
@@ -166,7 +166,7 @@ void IOThread::InitSystemRequestContextOnIOThread() {
 void IOThread::Init() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-  PlatformIntegration::GetInstance()->BrowserThreadInit(
+  BrowserPlatformIntegration::GetInstance()->BrowserThreadInit(
       content::BrowserThread::IO);
 }
 
@@ -222,7 +222,7 @@ void IOThread::CleanUp() {
 
   system_request_context_getter_ = NULL;
 
-  PlatformIntegration::GetInstance()->BrowserThreadCleanUp(
+  BrowserPlatformIntegration::GetInstance()->BrowserThreadCleanUp(
       content::BrowserThread::IO);
 }
 

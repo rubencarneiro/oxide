@@ -128,8 +128,7 @@ class CompositorUtils::FetchTextureResourcesTask :
   void OnSyncPointRetired() {
     GLuint service_id = 0;
     gpu::gles2::TextureRef* ref =
-        content::oxide_gpu_shim::CreateTextureRef(GL_TEXTURE_2D,
-                                                  client_id_,
+        content::oxide_gpu_shim::CreateTextureRef(client_id_,
                                                   route_id_,
                                                   mailbox_);
     if (ref) {
@@ -156,7 +155,7 @@ class CompositorUtils::FetchTextureResourcesTask :
                           route_id_,
                           ref,
                           context_provider_));
-    callback_.Run(handle.PassAs<GLFrameData>());
+    callback_.Run(handle.Pass());
 
     callback_.Reset();
     context_provider_ = NULL;

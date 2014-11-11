@@ -105,7 +105,8 @@ class RenderWidgetHostView final :
   void SetIsLoading(bool is_loading) final;
   void TextInputTypeChanged(ui::TextInputType type,
                             ui::TextInputMode mode,
-                            bool can_compose_inline) final;
+                            bool can_compose_inline,
+                            int flags) final;
   void ImeCancelComposition() final;
   void RenderProcessGone(base::TerminationStatus status, int error_code) final;
   void Destroy() final;
