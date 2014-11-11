@@ -43,7 +43,9 @@ enum ProcessModel {
   PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE,
   PROCESS_MODEL_PROCESS_PER_VIEW,
   PROCESS_MODEL_PROCESS_PER_SITE,
-  PROCESS_MODEL_SITE_PER_PROCESS
+  PROCESS_MODEL_SITE_PER_PROCESS,
+
+  PROCESS_MODEL_UNDEFINED = 1000
 };
 
 // This class basically encapsulates the process-wide bits that would
@@ -52,6 +54,8 @@ enum ProcessModel {
 class BrowserProcessMain {
  public:
   virtual ~BrowserProcessMain();
+
+  static ProcessModel GetProcessModelOverrideFromEnv();
 
   // Return the BrowserProcessMain singleton
   static BrowserProcessMain* GetInstance();

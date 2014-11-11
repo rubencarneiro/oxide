@@ -27,7 +27,8 @@
 
 Q_GLOBAL_STATIC(QString, g_nss_db_path)
 
-static OxideProcessModel g_process_model = OxideProcessModelMultiProcess;
+static bool g_initialized_process_model = false;
+static OxideProcessModel g_process_model;
 
 QString oxideGetNSSDbPath() {
   return *g_nss_db_path;
@@ -53,6 +54,17 @@ QThread* oxideGetIOThread() {
 }
 
 OxideProcessModel oxideGetProcessModel() {
+  if (!g_initialized_process_model) {
+    g_initialized_process_model = true;
+    oxide::ProcessModel env =
+        oxide::BrowserProcessMain::GetProcessModelOverrideFromEnv();
+    if (env == oxide::PROCESS_MODEL_UNDEFINED) {
+      g_process_model = OxideProcessModelMultiProcess;
+    } else {
+      g_process_model = static_cast<OxideProcessModel>(env);
+    }
+  }
+
   return g_process_model;
 }
 
@@ -73,6 +85,7 @@ void oxideSetProcessModel(OxideProcessModel model) {
         << "public use";
   }
 
+  g_initialized_process_model = true;
   g_process_model = model;
 }
 

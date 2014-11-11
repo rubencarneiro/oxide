@@ -315,34 +315,6 @@ void AddFormFactorSpecificCommandLineArguments() {
   command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
 }
 
-void GetProcessModelOverrideFromEnvironment(ProcessModel* rv) {
-  if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
-    *rv = PROCESS_MODEL_SINGLE_PROCESS;
-    return;
-  }
-
-  base::StringPiece env = GetEnvironmentOption("PROCESS_MODEL");
-  if (env.empty()) {
-    return;
-  }
-
-  if (env == "multi-process") {
-    *rv = PROCESS_MODEL_MULTI_PROCESS;
-  } else if (env == "single-process") {
-    *rv = PROCESS_MODEL_SINGLE_PROCESS;
-  } else if (env == "process-per-site-instance") {
-    *rv = PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE;
-  } else if (env == "process-per-view") {
-    *rv = PROCESS_MODEL_PROCESS_PER_VIEW;
-  } else if (env == "process-per-site") {
-    *rv = PROCESS_MODEL_PROCESS_PER_SITE;
-  } else if (env == "site-per-process") {
-    *rv = PROCESS_MODEL_SITE_PER_PROCESS;
-  } else {
-    LOG(WARNING) << "Invalid process mode: " << env.data();
-  }
-}
-
 bool IsUnsupportedProcessModel(ProcessModel process_model) {
   switch (process_model) {
     case PROCESS_MODEL_SINGLE_PROCESS:
@@ -380,7 +352,6 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   platform_delegate_ = delegate.Pass();
   main_delegate_.reset(new ContentMainDelegate(platform_delegate_.get()));
 
-  GetProcessModelOverrideFromEnvironment(&process_model);
   if (IsUnsupportedProcessModel(process_model)) {
     LOG(WARNING) <<
         "Using an unsupported process model. This may affect stability and "
@@ -503,6 +474,43 @@ void BrowserProcessMainImpl::Shutdown() {
 BrowserProcessMain::BrowserProcessMain() {}
 
 BrowserProcessMain::~BrowserProcessMain() {}
+
+// static
+ProcessModel BrowserProcessMain::GetProcessModelOverrideFromEnv() {
+  static bool g_initialized = false;
+  static ProcessModel g_process_model = PROCESS_MODEL_UNDEFINED;
+
+  if (g_initialized) {
+    return g_process_model;
+  }
+
+  g_initialized = true;
+
+  if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
+    g_process_model = PROCESS_MODEL_SINGLE_PROCESS;
+  } else {
+    base::StringPiece env = GetEnvironmentOption("PROCESS_MODEL");
+    if (!env.empty()) {
+      if (env == "multi-process") {
+        g_process_model = PROCESS_MODEL_MULTI_PROCESS;
+      } else if (env == "single-process") {
+        g_process_model = PROCESS_MODEL_SINGLE_PROCESS;
+      } else if (env == "process-per-site-instance") {
+        g_process_model = PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE;
+      } else if (env == "process-per-view") {
+        g_process_model = PROCESS_MODEL_PROCESS_PER_VIEW;
+      } else if (env == "process-per-site") {
+        g_process_model = PROCESS_MODEL_PROCESS_PER_SITE;
+      } else if (env == "site-per-process") {
+        g_process_model = PROCESS_MODEL_SITE_PER_PROCESS;
+      } else {
+        LOG(WARNING) << "Invalid process mode: " << env.data();
+      }
+    }
+  }
+
+  return g_process_model;
+}
 
 // static
 BrowserProcessMain* BrowserProcessMain::GetInstance() {
