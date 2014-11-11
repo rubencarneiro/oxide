@@ -240,36 +240,8 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 
-  FormFactor form_factor = GetFormFactorHint();
-  if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
-    command_line->AppendSwitch(switches::kEnableViewport);
-    command_line->AppendSwitch(switches::kEnableViewportMeta);
-    command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
-    command_line->AppendSwitch(switches::kEnablePinch);
-    if (IsEnvironmentOptionEnabled("ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
-      command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
-    }
-    command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
-
-    // Remove this when we implement a selection API (see bug #1324292)
-    command_line->AppendSwitch(switches::kDisableTouchEditing);
-  }
-
-  const char* form_factor_string = NULL;
-  switch (form_factor) {
-    case FORM_FACTOR_DESKTOP:
-      form_factor_string = switches::kFormFactorDesktop;
-      break;
-    case FORM_FACTOR_TABLET:
-      form_factor_string = switches::kFormFactorTablet;
-      break;
-    case FORM_FACTOR_PHONE:
-      form_factor_string = switches::kFormFactorPhone;
-      break;
-    default:
-      NOTREACHED();
-  }
-  command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
+  // Remove this when we implement a selection API (see bug #1324292)
+  command_line->AppendSwitch(switches::kDisableTouchEditing);
 
   base::StringPiece renderer_cmd_prefix =
       GetEnvironmentOption("RENDERER_CMD_PREFIX");
@@ -307,6 +279,40 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
     command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
   }
+}
+
+void AddFormFactorSpecificCommandLineArguments() {
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+
+  FormFactor form_factor = GetFormFactorHint();
+
+  if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
+    command_line->AppendSwitch(switches::kEnableViewport);
+    command_line->AppendSwitch(switches::kEnableViewportMeta);
+    command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
+    command_line->AppendSwitch(switches::kEnablePinch);
+    if (IsEnvironmentOptionEnabled("ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
+      command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
+    }
+    command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
+
+  }
+
+  const char* form_factor_string = NULL;
+  switch (form_factor) {
+    case FORM_FACTOR_DESKTOP:
+      form_factor_string = switches::kFormFactorDesktop;
+      break;
+    case FORM_FACTOR_TABLET:
+      form_factor_string = switches::kFormFactorTablet;
+      break;
+    case FORM_FACTOR_PHONE:
+      form_factor_string = switches::kFormFactorPhone;
+      break;
+    default:
+      NOTREACHED();
+  }
+  command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
 }
 
 void GetProcessModelOverrideFromEnvironment(ProcessModel* rv) {
@@ -409,6 +415,8 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
       main_delegate_.get(),
       base::CommandLine::ForCurrentProcess()->HasSwitch(
         switches::kSingleProcess));
+
+  AddFormFactorSpecificCommandLineArguments();
 
 #if defined(USE_NSS)
   if (!nss_db_path.empty()) {
