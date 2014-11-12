@@ -45,8 +45,9 @@ namespace {
 base::LazyInstance<QPointer<QThread> > g_io_thread;
 }
 
-BrowserPlatformIntegration::BrowserPlatformIntegration()
-    : gl_share_context_(GLContextAdopted::Create(GetSharedGLContext())) {}
+BrowserPlatformIntegration::BrowserPlatformIntegration(
+    GLContextAdopted* gl_share_context)
+    : gl_share_context_(gl_share_context) {}
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
 

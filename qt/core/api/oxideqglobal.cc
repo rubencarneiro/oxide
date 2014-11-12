@@ -20,73 +20,63 @@
 #include <QGlobalStatic>
 #include <QtDebug>
 
+#include "base/files/file_path.h"
 #include "content/public/browser/render_process_host.h"
 
 #include "qt/core/browser/oxide_qt_browser_platform_integration.h"
+#include "qt/core/browser/oxide_qt_browser_startup.h"
 #include "shared/browser/oxide_browser_process_main.h"
 
-Q_GLOBAL_STATIC(QString, g_nss_db_path)
-
-static bool g_initialized_process_model = false;
-static OxideProcessModel g_process_model;
+using namespace oxide::qt;
 
 QString oxideGetNSSDbPath() {
-  return *g_nss_db_path;
+  base::FilePath path = BrowserStartup::GetInstance()->GetNSSDbPath();
+  return QString::fromStdString(path.value());
 }
 
-bool oxideSetNSSDbPath(const QString& path) {
-#if defined(USE_NSS)
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
-    qWarning() << "Cannot set the NSS DB directory once Oxide is running";
-    return false;
-  }
-
-  *g_nss_db_path = path;
-  return true;
-#else
-  qWarning() << "NSS not supported on this build";
-  return false;
-#endif
+void oxideSetNSSDbPath(const QString& path) {
+  base::FilePath p(path.toStdString());
+  BrowserStartup::GetInstance()->SetNSSDbPath(p);
 }
 
 QThread* oxideGetIOThread() {
-  return oxide::qt::GetIOQThread();
+  return GetIOQThread();
 }
 
 OxideProcessModel oxideGetProcessModel() {
-  if (!g_initialized_process_model) {
-    g_initialized_process_model = true;
-    oxide::ProcessModel env =
-        oxide::BrowserProcessMain::GetProcessModelOverrideFromEnv();
-    if (env == oxide::PROCESS_MODEL_UNDEFINED) {
-      g_process_model = OxideProcessModelMultiProcess;
-    } else {
-      g_process_model = static_cast<OxideProcessModel>(env);
-    }
-  }
+  COMPILE_ASSERT(
+      OxideProcessModelMultiProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_MULTI_PROCESS),
+      process_model_enums_multi_process_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelSingleProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SINGLE_PROCESS),
+      process_model_enums_single_process_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerSiteInstance ==
+        static_cast<OxideProcessModel>(
+          oxide::PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE),
+      process_model_enums_process_per_site_instance_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerView ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_VIEW),
+      process_model_enums_process_per_view_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelProcessPerSite ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_SITE),
+      process_model_enums_process_per_site_doesnt_match);
+  COMPILE_ASSERT(
+      OxideProcessModelSitePerProcess ==
+        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SITE_PER_PROCESS),
+      process_model_enums_site_per_process_doesnt_match);
 
-  return g_process_model;
+  oxide::ProcessModel model = BrowserStartup::GetInstance()->GetProcessModel();
+  return static_cast<OxideProcessModel>(model);
 }
 
 void oxideSetProcessModel(OxideProcessModel model) {
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
-    qWarning() << "Cannot set the process model once Oxide is running";
-    return;
-  }
-
-  static bool did_warn = false;
-  if (!did_warn) {
-    did_warn = true;
-    qWarning()
-        << "Changing the Oxide process model is currently experimental "
-        << "and untested, and might break your application in unexpected "
-        << "ways. This interface is only exposed for development purposes "
-        << "at the moment, although it will eventually be suitable for "
-        << "public use";
-  }
-
-  g_initialized_process_model = true;
-  g_process_model = model;
+  oxide::ProcessModel m = static_cast<oxide::ProcessModel>(model);
+  BrowserStartup::GetInstance()->SetProcessModel(m);
 }
 
 size_t oxideGetMaxRendererProcessCount() {

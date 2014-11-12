@@ -250,9 +250,7 @@ int main(int argc, char** argv) {
       if (!oxideGetNSSDbPath().isEmpty()) {
         qFatal("Can only specify -nss-db-path once");
       }
-      if (!oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])))) {
-        qFatal("Failed to set NSS DB path");
-      }
+      oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
     } else if (index != outargc) {
       argv[outargc++] = argv[index++];

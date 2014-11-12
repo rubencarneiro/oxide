@@ -18,10 +18,10 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include <QtGlobal>
+
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-
-#include <QtGlobal>
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 
@@ -32,12 +32,12 @@ QT_END_NAMESPACE;
 namespace oxide {
 namespace qt {
 
-class GLContext;
+class GLContextAdopted;
 
 class BrowserPlatformIntegration final
     : public oxide::BrowserPlatformIntegration {
  public:
-  BrowserPlatformIntegration();
+  BrowserPlatformIntegration(GLContextAdopted* gl_share_context);
   ~BrowserPlatformIntegration();
 
  private:

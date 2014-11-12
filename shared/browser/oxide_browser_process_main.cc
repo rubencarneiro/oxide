@@ -387,7 +387,9 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 #if defined(USE_NSS)
   if (!nss_db_path.empty()) {
     // Used for testing
-    PathService::Override(crypto::DIR_NSSDB, nss_db_path);
+    PathService::OverrideAndCreateIfNeeded(crypto::DIR_NSSDB,
+                                           nss_db_path,
+                                           false, true);
   }
   crypto::EarlySetupForNSSInit();
 #endif

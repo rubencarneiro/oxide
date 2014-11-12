@@ -81,6 +81,8 @@
         'base/oxide_qt_skutils.h',
         'browser/oxide_qt_browser_platform_integration.cc',
         'browser/oxide_qt_browser_platform_integration.h',
+        'browser/oxide_qt_browser_startup.cc',
+        'browser/oxide_qt_browser_startup.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
         'browser/oxide_qt_file_picker.cc',

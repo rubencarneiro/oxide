@@ -15,33 +15,50 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
-#define _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_STARTUP_H_
+#define _OXIDE_QT_CORE_BROWSER_STARTUP_H_
 
-#include "base/macros.h"
+#include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 
-#include "shared/app/oxide_platform_delegate.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
 namespace oxide {
 namespace qt {
 
 class GLContextAdopted;
 
-class PlatformDelegate final : public oxide::PlatformDelegate {
+class BrowserStartup final {
  public:
-  PlatformDelegate(GLContextAdopted* shared_gl_context = NULL);
-  ~PlatformDelegate();
+  static BrowserStartup* GetInstance();
+
+  // These should be private, but Q_GLOBAL_STATIC doesn't allow this
+  BrowserStartup();
+  ~BrowserStartup();
+
+  base::FilePath GetNSSDbPath() const;
+  void SetNSSDbPath(const base::FilePath& path);
+
+  oxide::ProcessModel GetProcessModel();
+  void SetProcessModel(oxide::ProcessModel model);
+
+  void SetSharedGLContext(GLContextAdopted* context);
+
+  void EnsureChromiumStarted();
 
  private:
-  oxide::BrowserPlatformIntegration* CreateBrowserIntegration() final;
+#if defined(USE_NSS)
+  base::FilePath nss_db_path_;
+#endif
+
+  oxide::ProcessModel process_model_;
 
   scoped_refptr<GLContextAdopted> shared_gl_context_;
 
-  DISALLOW_COPY_AND_ASSIGN(PlatformDelegate);
+  DISALLOW_COPY_AND_ASSIGN(BrowserStartup);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
+#endif // _OXIDE_QT_CORE_BROWSER_STARTUP_H_

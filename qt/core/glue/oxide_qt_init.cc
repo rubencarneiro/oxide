@@ -17,114 +17,19 @@
 
 #include "oxide_qt_init.h"
 
-#include <QCoreApplication>
-#include <QDir>
-#include <QGuiApplication>
-
-#include "base/files/file_path.h"
-#include "base/logging.h"
-
-#include "qt/core/api/oxideqglobal.h"
-#include "qt/core/app/oxide_qt_platform_delegate.h"
-#include "shared/base/oxide_enum_flags.h"
-#include "shared/browser/oxide_browser_process_main.h"
+#include "qt/core/browser/oxide_qt_browser_startup.h"
+#include "qt/core/gl/oxide_qt_gl_context_adopted.h"
 
 namespace oxide {
 namespace qt {
 
-namespace {
-
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(oxide::SupportedGLImplFlags)
-
-QOpenGLContext* g_shared_gl_context;
-
-void ShutdownChromium() {
-  oxide::BrowserProcessMain::GetInstance()->Shutdown();
-}
-
-}
-
-QOpenGLContext* GetSharedGLContext() {
-  return g_shared_gl_context;
-}
-
 void SetSharedGLContext(QOpenGLContext* context) {
-  CHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning()) <<
-      "SetSharedGLContext must be called before the browser components are "
-      "started!";
-
-  g_shared_gl_context = context;
+  scoped_refptr<GLContextAdopted> c(GLContextAdopted::Create(context));
+  BrowserStartup::GetInstance()->SetSharedGLContext(c.get());
 }
 
 void EnsureChromiumStarted() {
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
-    return;
-  }
-
-  CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
-      "Your application doesn't have a QGuiApplication. Oxide will not "
-      "function without one";
-
-  QString nss_db_path(oxideGetNSSDbPath());
-  if (!nss_db_path.isEmpty()) {
-    nss_db_path = QDir(nss_db_path).absolutePath();
-  }
-
-  scoped_ptr<PlatformDelegate> delegate(new PlatformDelegate());
-
-  oxide::SupportedGLImplFlags supported_gl_impls =
-      oxide::SUPPORTED_GL_IMPL_NONE;
-  if (QGuiApplication::platformNativeInterface()) {
-    QString platform = QGuiApplication::platformName();
-    if (platform == QLatin1String("xcb")) {
-      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_DESKTOP_GL;
-      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
-    } else if (platform.startsWith("ubuntu")) {
-      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
-    } else {
-      LOG(WARNING) << "Unrecognized Qt platform: " << qPrintable(platform);
-    }
-  } else {
-    LOG(WARNING)
-        << "Unable to determine native display handle on Qt platform: "
-        << qPrintable(QGuiApplication::platformName());
-  }
-
-  COMPILE_ASSERT(
-      OxideProcessModelMultiProcess ==
-        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_MULTI_PROCESS),
-      process_model_enums_multi_process_doesnt_match);
-  COMPILE_ASSERT(
-      OxideProcessModelSingleProcess ==
-        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SINGLE_PROCESS),
-      process_model_enums_single_process_doesnt_match);
-  COMPILE_ASSERT(
-      OxideProcessModelProcessPerSiteInstance ==
-        static_cast<OxideProcessModel>(
-          oxide::PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE),
-      process_model_enums_process_per_site_instance_doesnt_match);
-  COMPILE_ASSERT(
-      OxideProcessModelProcessPerView ==
-        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_VIEW),
-      process_model_enums_process_per_view_doesnt_match);
-  COMPILE_ASSERT(
-      OxideProcessModelProcessPerSite ==
-        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_SITE),
-      process_model_enums_process_per_site_doesnt_match);
-  COMPILE_ASSERT(
-      OxideProcessModelSitePerProcess ==
-        static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SITE_PER_PROCESS),
-      process_model_enums_site_per_process_doesnt_match);
-
-  oxide::BrowserProcessMain::GetInstance()->Start(
-      delegate.Pass(),
-#if defined(USE_NSS)
-      base::FilePath(nss_db_path.toStdString()),
-#endif
-      supported_gl_impls,
-      static_cast<oxide::ProcessModel>(oxideGetProcessModel()));
-
-  qAddPostRoutine(ShutdownChromium);
+  BrowserStartup::GetInstance()->EnsureChromiumStarted();
 }
 
 } // namespace qt

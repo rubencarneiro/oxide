@@ -41,7 +41,7 @@ enum Q_DECL_EXPORT OxideProcessModel {
 };
 
 Q_DECL_EXPORT QString oxideGetNSSDbPath();
-Q_DECL_EXPORT bool oxideSetNSSDbPath(const QString& path);
+Q_DECL_EXPORT void oxideSetNSSDbPath(const QString& path);
 
 Q_DECL_EXPORT QThread* oxideGetIOThread();
 
