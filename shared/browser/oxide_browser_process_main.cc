@@ -147,11 +147,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 
 namespace {
 
-BrowserProcessMainImpl* GetBrowserProcessMainInstance() {
-  static BrowserProcessMainImpl g_instance;
-  return &g_instance;
-}
-
 bool IsEnvironmentOptionEnabled(base::StringPiece option) {
   std::string name("OXIDE_");
   name += option.data();
@@ -514,7 +509,8 @@ ProcessModel BrowserProcessMain::GetProcessModelOverrideFromEnv() {
 
 // static
 BrowserProcessMain* BrowserProcessMain::GetInstance() {
-  return GetBrowserProcessMainInstance();
+  static BrowserProcessMainImpl g_instance;
+  return &g_instance;
 }
 
 } // namespace oxide
