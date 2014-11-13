@@ -556,6 +556,8 @@ class OTRBrowserContextImpl : public BrowserContext {
   BrowserContextSharedData& GetSharedData() final;
   const BrowserContextSharedData& GetSharedData() const final;
 
+  bool HasOffTheRecordContext() const final { return true; }
+
   BrowserContextImpl* original_context_;
 };
 
@@ -577,6 +579,10 @@ class BrowserContextImpl : public BrowserContext {
 
   BrowserContext* GetOriginalContext() final {
     return this;
+  }
+
+  bool HasOffTheRecordContext() const final {
+    return otr_context_ != NULL;
   }
 
   BrowserContextSharedData data_;
@@ -832,7 +838,8 @@ bool BrowserContext::IsOffTheRecord() const {
 bool BrowserContext::IsSameContext(BrowserContext* other) const {
   DCHECK(CalledOnValidThread());
   return other->GetOriginalContext() == this ||
-         other->GetOffTheRecordContext() == this;
+         (other->HasOffTheRecordContext() &&
+          other->GetOffTheRecordContext() == this);
 }
 
 base::FilePath BrowserContext::GetPath() const {
@@ -934,9 +941,11 @@ void BrowserContext::SetIsPopupBlockerEnabled(bool enabled) {
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     GetOriginalContext()->observers_,
                     NotifyPopupBlockerEnabledChanged());
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOffTheRecordContext()->observers_,
-                    NotifyPopupBlockerEnabledChanged());
+  if (HasOffTheRecordContext()) {
+    FOR_EACH_OBSERVER(BrowserContextObserver,
+                      GetOffTheRecordContext()->observers_,
+                      NotifyPopupBlockerEnabledChanged());
+  }
 }
 
 bool BrowserContext::GetDevtoolsEnabled() const {

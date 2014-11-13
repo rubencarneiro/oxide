@@ -250,6 +250,8 @@ class BrowserContext : public content::BrowserContext,
 
   static void Delete(const BrowserContext* context);
 
+  virtual bool HasOffTheRecordContext() const = 0;
+
   BrowserContextIOData* io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   ObserverList<BrowserContextObserver> observers_;
