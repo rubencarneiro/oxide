@@ -1,4 +1,4 @@
-// vim:expandtab:shiftwidth=2:tabstop=2:
+/// vim:expandtab:shiftwidth=2:tabstop=2:
 // Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "base/timer/timer.h"
+#include "base/containers/scoped_ptr_hash_map.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/common/input/input_event_ack_state.h"
@@ -108,6 +109,7 @@ class WebPopupMenu;
 class WebPreferences;
 class WebView;
 class WebViewContentsHelper;
+class BrowserMediaPlayerManager;
 
 struct NewContentsDeleter {
   void operator()(content::WebContents* ptr);
@@ -451,6 +453,9 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       const std::vector<content::FaviconURL>& candidates) final;
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) final;
+  bool OnMediaPlayerMessageReceived(const IPC::Message& msg,
+                                content::RenderFrameHost* render_frame_host);
+  BrowserMediaPlayerManager* GetMediaPlayerManager(content::RenderFrameHost* rfh);
 
   // Override in sub-classes
   virtual void OnURLChanged();
@@ -586,6 +591,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   // https://launchpad.net/bugs/1370366
   bool did_scroll_focused_editable_node_into_view_;
   base::Timer auto_scroll_timer_;
+
+  // media
+  typedef base::ScopedPtrHashMap<uintptr_t, BrowserMediaPlayerManager>
+      MediaPlayerManagerMap;
+  MediaPlayerManagerMap media_player_managers_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

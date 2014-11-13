@@ -35,6 +35,9 @@
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
 #include "oxide_web_permission_client.h"
+#include "media/oxide_renderer_media_player_manager.h"
+#include "media/oxide_webmediaplayer_oxide.h"
+
 
 namespace oxide {
 
@@ -47,6 +50,7 @@ void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
   new WebPermissionClient(render_frame);
+  media_player_manager_.reset(new RendererMediaPlayerManager(render_frame));
 }
 
 void ContentRendererClient::RenderViewCreated(
@@ -121,6 +125,25 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
   }
 
   return user_agent;
+}
+
+blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
+              blink::WebFrame* frame,
+              blink::WebMediaPlayerClient* client,
+              base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
+              media::MediaLog* media_log) {
+
+  const CommandLine& command_line = *CommandLine::ForCurrentProcess();
+  if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
+    return new WebMediaPlayerOxide(
+        frame,
+        client,
+        delegate,
+        media_player_manager_.get(),
+        media_log);
+  } else {
+    return 0;
+  }
 }
 
 ContentRendererClient::ContentRendererClient() {}

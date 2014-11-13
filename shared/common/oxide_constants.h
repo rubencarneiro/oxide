@@ -26,6 +26,8 @@ extern const char kFormFactorDesktop[];
 extern const char kFormFactorTablet[];
 extern const char kFormFactorPhone[];
 extern const char kIncognito[];
+extern const char kEnableMediaHubAudio[];
+extern const char kMediaHubFixedSessionDomains[];
 
 } // namespace switches
 

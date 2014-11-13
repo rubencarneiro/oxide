@@ -91,6 +91,8 @@
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
 
+#include "shared/browser/media/oxide_browser_media_player_manager.h"
+
 #define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
 
 namespace oxide {
@@ -1045,7 +1047,77 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 
+  if (!handled) {
+    return OnMediaPlayerMessageReceived(msg, render_frame_host);
+  }
+
+  return true;
+}
+
+bool WebView::OnMediaPlayerMessageReceived(const IPC::Message& msg,
+                                content::RenderFrameHost* render_frame_host) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(WebView, msg)
+/*
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_EnterFullscreen,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnEnterFullscreen)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_ExitFullscreen,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnExitFullscreen)
+*/
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Initialize,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnInitialize)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Start,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnStart)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Seek,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnSeek)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Pause,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnPause)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetVolume,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnSetVolume)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetPoster,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnSetPoster)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Release,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnReleaseResources)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_DestroyMediaPlayer,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnDestroyPlayer)
+/*
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_RequestRemotePlayback,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnRequestRemotePlayback)
+    IPC_MESSAGE_FORWARD(
+        MediaPlayerHostMsg_RequestRemotePlaybackControl,
+        GetMediaPlayerManager(render_frame_host),
+        BrowserMediaPlayerManager::OnRequestRemotePlaybackControl)
+*/
+#if defined(VIDEO_HOLE)
+    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_NotifyExternalSurface,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnNotifyExternalSurface)
+#endif  // defined(VIDEO_HOLE)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
   return handled;
+}
+
+BrowserMediaPlayerManager* WebView::GetMediaPlayerManager(
+    content::RenderFrameHost* render_frame_host) {
+  uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
+  if (!media_player_managers_.contains(key)) {
+    media_player_managers_.set(
+        key,
+        make_scoped_ptr(BrowserMediaPlayerManager::Create(this, render_frame_host)));
+  }
+  return media_player_managers_.get(key);
 }
 
 void WebView::OnURLChanged() {}

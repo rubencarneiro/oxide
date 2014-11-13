@@ -24,10 +24,16 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/renderer/content_renderer_client.h"
 
+namespace media {
+class WebMediaPlayerDelegate;
+class MediaLog;
+}
+
 namespace oxide {
 
 class RenderProcessObserver;
 class UserScriptSlave;
+class RendererMediaPlayerManager;
 
 class ContentRendererClient final : public content::ContentRendererClient {
  public:
@@ -51,8 +57,15 @@ class ContentRendererClient final : public content::ContentRendererClient {
 
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
 
+  blink::WebMediaPlayer* OverrideWebMediaPlayer(
+              blink::WebFrame* frame,
+              blink::WebMediaPlayerClient* client,
+              base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
+              media::MediaLog* media_log);
+
   scoped_ptr<RenderProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;
+  scoped_ptr<RendererMediaPlayerManager> media_player_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };
