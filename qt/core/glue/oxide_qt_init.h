@@ -27,7 +27,6 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-Q_DECL_EXPORT QOpenGLContext* GetSharedGLContext();
 Q_DECL_EXPORT void SetSharedGLContext(QOpenGLContext* context);
 
 Q_DECL_EXPORT void EnsureChromiumStarted();

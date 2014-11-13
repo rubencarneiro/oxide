@@ -20,31 +20,24 @@
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "content/public/common/content_client.h"
 
-template <typename Type> struct DefaultSingletonTraits;
+namespace content {
+class ContentClientInitializer;
+}
 
 namespace oxide {
 
-class ContentBrowserClient;
-class ContentRendererClient;
-
 class ContentClient final : public content::ContentClient {
  public:
-  static ContentClient* GetInstance();
-  static ContentClient* instance();
-  virtual ~ContentClient();
-
-  ContentBrowserClient* browser();
-  ContentRendererClient* renderer();
-
-  void SetUserAgent(const std::string& user_agent);
+  ContentClient();
+  ~ContentClient();
 
  private:
-  friend struct DefaultSingletonTraits<ContentClient>;
-  ContentClient();
+  friend class content::ContentClientInitializer; // For GetInstance
+
+  static ContentClient* GetInstance();
 
   // content::ContentClient implementation
   void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) final;
@@ -54,8 +47,6 @@ class ContentClient final : public content::ContentClient {
                                     ui::ScaleFactor scale_factor) const final;
   base::RefCountedStaticMemory* GetDataResourceBytes(
       int resource_id) const final;
-
-  std::string user_agent_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
 };

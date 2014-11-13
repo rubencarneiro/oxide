@@ -19,35 +19,34 @@
 #define _OXIDE_SHARED_APP_CONTENT_MAIN_DELEGATE_H_
 
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "content/public/app/content_main_delegate.h"
 
 namespace oxide {
 
 class ContentClient;
+class PlatformDelegate;
 
-class ContentMainDelegate : public content::ContentMainDelegate {
+class ContentMainDelegate final : public content::ContentMainDelegate {
  public:
-  virtual ~ContentMainDelegate();
+  ContentMainDelegate(PlatformDelegate* delegate);
+  ~ContentMainDelegate();
 
   // content::ContentMainDelegate implementation
   bool BasicStartupComplete(int* exit_code) final;
-
   void PreSandboxStartup() final;
-
   int RunProcess(
       const std::string& process_type,
       const content::MainFunctionParams& main_function_params) final;
-
   void ProcessExiting(const std::string& process_type) final;
-
-  virtual content::ContentBrowserClient* CreateContentBrowserClient() override;
-  virtual content::ContentRendererClient* CreateContentRendererClient() override;
-
- protected:
-  // Allow access to default constructor only from derived classes
-  ContentMainDelegate();
+  content::ContentBrowserClient* CreateContentBrowserClient() final;
+  content::ContentRendererClient* CreateContentRendererClient() final;
+  content::ContentUtilityClient* CreateContentUtilityClient() final;
 
  private:
+  PlatformDelegate* delegate_;
+  scoped_ptr<ContentClient> content_client_;
+
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };
 

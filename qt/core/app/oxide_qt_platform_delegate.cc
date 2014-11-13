@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,36 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_browser_client.h"
+#include "oxide_qt_platform_delegate.h"
 
-#include <QList>
-#include <QThread>
-
-#include "oxide_qt_browser_thread_q_event_dispatcher.h"
-#include "oxide_qt_location_provider.h"
-#include "oxide_qt_web_preferences.h"
+#include "qt/core/browser/oxide_qt_browser_platform_integration.h"
+#include "qt/core/gl/oxide_qt_gl_context_adopted.h"
 
 namespace oxide {
 namespace qt {
 
-ContentBrowserClient::ContentBrowserClient() {}
-
-oxide::WebPreferences* ContentBrowserClient::CreateWebPreferences() {
-  return new WebPreferences();
+oxide::BrowserPlatformIntegration*
+PlatformDelegate::CreateBrowserIntegration() {
+  return new BrowserPlatformIntegration(shared_gl_context_.get());
 }
 
-content::LocationProvider*
-ContentBrowserClient::OverrideSystemLocationProvider() {
-  // Give the geolocation thread a Qt event dispatcher, so that we can use
-  // Queued signals / slots between it and the IO thread
-  QThread* thread = QThread::currentThread();
-  if (!thread->eventDispatcher()) {
-    thread->setEventDispatcher(
-      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
-  }
+PlatformDelegate::PlatformDelegate(GLContextAdopted* shared_gl_context)
+    : shared_gl_context_(shared_gl_context) {}
 
-  return new LocationProvider();
-}
+PlatformDelegate::~PlatformDelegate() {}
 
 } // namespace qt
 } // namespace oxide

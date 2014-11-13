@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_platform_integration.h"
+#include "oxide_qt_browser_platform_integration.h"
 
 #include <QDesktopServices>
 #include <QGuiApplication>
@@ -35,6 +35,7 @@
 #include "qt/core/glue/oxide_qt_init.h"
 
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
+#include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
 
 namespace oxide {
@@ -44,21 +45,22 @@ namespace {
 base::LazyInstance<QPointer<QThread> > g_io_thread;
 }
 
-PlatformIntegration::PlatformIntegration()
-    : gl_share_context_(GLContextAdopted::Create(GetSharedGLContext())) {}
+BrowserPlatformIntegration::BrowserPlatformIntegration(
+    GLContextAdopted* gl_share_context)
+    : gl_share_context_(gl_share_context) {}
 
-PlatformIntegration::~PlatformIntegration() {}
+BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
 
-bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
+bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
   return QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));
 }
 
-bool PlatformIntegration::IsTouchSupported() {
+bool BrowserPlatformIntegration::IsTouchSupported() {
   // XXX: Is there a way to get notified if a touch device is added?
   return QTouchDevice::devices().size() > 0;
 }
 
-intptr_t PlatformIntegration::GetNativeDisplay() {
+intptr_t BrowserPlatformIntegration::GetNativeDisplay() {
   QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
   if (!pni) {
     return 0;
@@ -69,19 +71,21 @@ intptr_t PlatformIntegration::GetNativeDisplay() {
                                    QGuiApplication::primaryScreen()));
 }
 
-blink::WebScreenInfo PlatformIntegration::GetDefaultScreenInfo() {
+blink::WebScreenInfo BrowserPlatformIntegration::GetDefaultScreenInfo() {
   return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
-oxide::GLContextAdopted* PlatformIntegration::GetGLShareContext() {
+oxide::GLContextAdopted* BrowserPlatformIntegration::GetGLShareContext() {
   return gl_share_context_.get();
 }
 
-scoped_ptr<oxide::MessagePump> PlatformIntegration::CreateUIMessagePump() {
+scoped_ptr<oxide::MessagePump>
+BrowserPlatformIntegration::CreateUIMessagePump() {
   return make_scoped_ptr(new MessagePump());
 }
 
-void PlatformIntegration::BrowserThreadInit(content::BrowserThread::ID id) {
+void BrowserPlatformIntegration::BrowserThreadInit(
+    content::BrowserThread::ID id) {
   if (id != content::BrowserThread::IO) {
     return;
   }
@@ -90,6 +94,19 @@ void PlatformIntegration::BrowserThreadInit(content::BrowserThread::ID id) {
   thread->setEventDispatcher(
       new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
   g_io_thread.Get() = thread;
+}
+
+content::LocationProvider*
+BrowserPlatformIntegration::CreateLocationProvider() {
+  // Give the geolocation thread a Qt event dispatcher, so that we can use
+  // Queued signals / slots between it and the IO thread
+  QThread* thread = QThread::currentThread();
+  if (!thread->eventDispatcher()) {
+    thread->setEventDispatcher(
+      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+  }
+
+  return new LocationProvider();
 }
 
 QThread* GetIOQThread() {

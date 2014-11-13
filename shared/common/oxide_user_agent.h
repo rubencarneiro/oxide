@@ -15,19 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
-#define _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
+#ifndef _OXIDE_SHARED_COMMON_USER_AGENT_H_
+#define _OXIDE_SHARED_COMMON_USER_AGENT_H_
+
+#include <string>
 
 namespace oxide {
 
-
-class WebViewContentsHelperDelegate {
- public:
-  virtual ~WebViewContentsHelperDelegate() {}
-
-  virtual void NotifyWebPreferencesDestroyed() = 0;
-};
+std::string GetUserAgent();
+void SetUserAgent(const std::string& user_agent);
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
+#endif // _OXIDE_SHARED_COMMON_USER_AGENT_H_

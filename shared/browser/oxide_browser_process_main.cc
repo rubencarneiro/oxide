@@ -47,7 +47,6 @@
 #include "content/public/common/content_paths.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/main_function_params.h"
-#include "content/public/utility/content_utility_client.h"
 #include "content/renderer/in_process_renderer_thread.h"
 #include "content/utility/in_process_utility_thread.h"
 #if defined(USE_NSS)
@@ -60,6 +59,7 @@
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
+#include "shared/app/oxide_platform_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
@@ -67,14 +67,8 @@
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
-#include "oxide_platform_integration.h"
 
 namespace content {
-
-namespace {
-base::LazyInstance<content::ContentUtilityClient>
-    g_content_utility_client = LAZY_INSTANCE_INITIALIZER;
-}
 
 // This is a bit of a hack. We're content::ContentClientInitializer so that
 // we can be a friend of ContentClient. This works because the
@@ -87,7 +81,7 @@ class ContentClientInitializer {
 
     if (single_process) {
       content_client->renderer_ = delegate->CreateContentRendererClient();
-      content_client->utility_ = &g_content_utility_client.Get();
+      content_client->utility_ = delegate->CreateContentUtilityClient();
     }
   }
 };
@@ -101,12 +95,12 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(scoped_ptr<ContentMainDelegate> delegate,
-             scoped_ptr<PlatformIntegration> platform,
+  void Start(scoped_ptr<PlatformDelegate> delegate,
 #if defined(USE_NSS)
              const base::FilePath& nss_db_path,
 #endif
-             SupportedGLImplFlags supported_gl_flags) final;
+             SupportedGLImplFlags supported_gl_flags,
+             ProcessModel process_model) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -124,6 +118,11 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
     }
   }
 
+  ProcessModel GetProcessModel() const final {
+    DCHECK_NE(state_, STATE_NOT_STARTED);
+    return process_model_;
+  }
+
  private:
 
   enum State {
@@ -134,9 +133,10 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   };
   State state_;
 
-  scoped_ptr<PlatformIntegration> platform_integration_;
+  ProcessModel process_model_;
 
   // XXX: Don't change the order of these
+  scoped_ptr<PlatformDelegate> platform_delegate_;
   scoped_ptr<ContentMainDelegate> main_delegate_;
   scoped_ptr<base::AtExitManager> exit_manager_;
   scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
@@ -147,28 +147,18 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 
 namespace {
 
-BrowserProcessMainImpl* GetBrowserProcessMainInstance() {
-  static BrowserProcessMainImpl g_instance;
-  return &g_instance;
+bool IsEnvironmentOptionEnabled(base::StringPiece option) {
+  std::string name("OXIDE_");
+  name += option.data();
+
+  base::StringPiece val(getenv(name.c_str()));
+
+  return !val.empty() && val == "1";
 }
 
-bool IsEnvironmentOptionEnabled(const char* option) {
+base::StringPiece GetEnvironmentOption(base::StringPiece option) {
   std::string name("OXIDE_");
-  name += option;
-
-  const char* val = getenv(name.c_str());
-  if (!val) {
-    return false;
-  }
-
-  std::string v(val);
-
-  return !v.empty() && v == "1";
-}
-
-const char* GetEnvironmentOption(const char* option) {
-  std::string name("OXIDE_");
-  name += option;
+  name += option.data();
 
   return getenv(name.c_str());
 }
@@ -194,11 +184,11 @@ void SetupAndVerifySignalHandlers() {
 }
 
 base::FilePath GetSubprocessPath() {
-  const char* subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
-  if (subprocess_path) {
+  base::StringPiece subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
+  if (!subprocess_path.empty()) {
     // Make sure that we have a properly formed absolute path
     // there are some load issues if not.
-    return base::MakeAbsoluteFilePath(base::FilePath(subprocess_path));
+    return base::MakeAbsoluteFilePath(base::FilePath(subprocess_path.data()));
   }
 
   base::FilePath subprocess_exe =
@@ -224,7 +214,8 @@ base::FilePath GetSubprocessPath() {
   return subprocess_exe;
 }
 
-void InitializeCommandLine(const base::FilePath& subprocess_path) {
+void InitializeCommandLine(const base::FilePath& subprocess_path,
+                           ProcessModel process_model) {
   CHECK(base::CommandLine::Init(0, NULL)) <<
       "CommandLine already exists. Did you call BrowserProcessMain::Start "
       "in a child process?";
@@ -244,7 +235,52 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 
+  // Remove this when we implement a selection API (see bug #1324292)
+  command_line->AppendSwitch(switches::kDisableTouchEditing);
+
+  base::StringPiece renderer_cmd_prefix =
+      GetEnvironmentOption("RENDERER_CMD_PREFIX");
+  if (!renderer_cmd_prefix.empty()) {
+    command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
+                                    renderer_cmd_prefix.data());
+  }
+  if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
+    command_line->AppendSwitch(switches::kNoSandbox);
+  } else {
+    if (IsEnvironmentOptionEnabled("DISABLE_SETUID_SANDBOX")) {
+      command_line->AppendSwitch(switches::kDisableSetuidSandbox);
+    }
+    if (IsEnvironmentOptionEnabled("DISABLE_SECCOMP_FILTER_SANDBOX")) {
+      command_line->AppendSwitch(switches::kDisableSeccompFilterSandbox);
+    }
+  }
+
+  if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {
+    command_line->AppendSwitch(switches::kSingleProcess);
+  } else if (process_model == PROCESS_MODEL_PROCESS_PER_VIEW) {
+    command_line->AppendSwitch(switches::kProcessPerTab);
+  } else if (process_model == PROCESS_MODEL_PROCESS_PER_SITE) {
+    command_line->AppendSwitch(switches::kProcessPerSite);
+  } else if (process_model == PROCESS_MODEL_SITE_PER_PROCESS) {
+    command_line->AppendSwitch(switches::kSitePerProcess);
+  } else {
+    DCHECK(process_model == PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE ||
+           process_model == PROCESS_MODEL_MULTI_PROCESS);
+  }
+
+  if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
+    command_line->AppendSwitch(switches::kAllowSandboxDebugging);
+  }
+  if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
+    command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
+  }
+}
+
+void AddFormFactorSpecificCommandLineArguments() {
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+
   FormFactor form_factor = GetFormFactorHint();
+
   if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
     command_line->AppendSwitch(switches::kEnableViewport);
     command_line->AppendSwitch(switches::kEnableViewportMeta);
@@ -255,8 +291,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
     }
     command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
 
-    // Remove this when we implement a selection API (see bug #1324292)
-    command_line->AppendSwitch(switches::kDisableTouchEditing);
   }
 
   const char* form_factor_string = NULL;
@@ -274,33 +308,17 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
       NOTREACHED();
   }
   command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
+}
 
-  const char* renderer_cmd_prefix = GetEnvironmentOption("RENDERER_CMD_PREFIX");
-  if (renderer_cmd_prefix) {
-    command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
-                                    renderer_cmd_prefix);
-  }
-  if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
-    command_line->AppendSwitch(switches::kNoSandbox);
-  } else {
-    if (IsEnvironmentOptionEnabled("DISABLE_SETUID_SANDBOX")) {
-      command_line->AppendSwitch(switches::kDisableSetuidSandbox);
-    }
-    if (IsEnvironmentOptionEnabled("DISABLE_SECCOMP_FILTER_SANDBOX")) {
-      command_line->AppendSwitch(switches::kDisableSeccompFilterSandbox);
-    }
-  }
-  if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
-    LOG(WARNING) <<
-        "Running in single process mode. Multiple BrowserContext's will not "
-        "work correctly, see https://launchpad.net/bugs/1283291";
-    command_line->AppendSwitch(switches::kSingleProcess);
-  }
-  if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
-    command_line->AppendSwitch(switches::kAllowSandboxDebugging);
-  }
-  if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
-    command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
+bool IsUnsupportedProcessModel(ProcessModel process_model) {
+  switch (process_model) {
+    case PROCESS_MODEL_SINGLE_PROCESS:
+    case PROCESS_MODEL_PROCESS_PER_VIEW:
+    case PROCESS_MODEL_PROCESS_PER_SITE:
+    case PROCESS_MODEL_SITE_PER_PROCESS:
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -308,6 +326,7 @@ void InitializeCommandLine(const base::FilePath& subprocess_path) {
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
+      process_model_(PROCESS_MODEL_MULTI_PROCESS),
       pending_unloads_count_(0) {}
 
 BrowserProcessMainImpl::~BrowserProcessMainImpl() {
@@ -315,19 +334,25 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
-                                   scoped_ptr<PlatformIntegration> platform,
+void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 #if defined(USE_NSS)
                                    const base::FilePath& nss_db_path,
 #endif
-                                   SupportedGLImplFlags supported_gl_impls) {
+                                   SupportedGLImplFlags supported_gl_impls,
+                                   ProcessModel process_model) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
-  CHECK(delegate) << "No ContentMainDelegate provided";
-  CHECK(platform) << "No PlatformIntegration provided";
+  CHECK(delegate) << "No PlatformDelegate provided";
 
-  main_delegate_ = delegate.Pass();
-  platform_integration_ = platform.Pass();
+  platform_delegate_ = delegate.Pass();
+  main_delegate_.reset(new ContentMainDelegate(platform_delegate_.get()));
+
+  if (IsUnsupportedProcessModel(process_model)) {
+    LOG(WARNING) <<
+        "Using an unsupported process model. This may affect stability and "
+        "security. Use at your own risk!";
+  }
+  process_model_ = process_model;
 
   state_ = STATE_STARTED;
 
@@ -340,7 +365,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
   exit_manager_.reset(new base::AtExitManager());
 
   base::FilePath subprocess_exe = GetSubprocessPath();
-  InitializeCommandLine(subprocess_exe);
+  InitializeCommandLine(subprocess_exe, process_model_);
 
   // We need to override FILE_EXE in the browser process to the path of the
   // renderer, as various bits of Chrome use this to find other resources
@@ -357,10 +382,14 @@ void BrowserProcessMainImpl::Start(scoped_ptr<ContentMainDelegate> delegate,
       base::CommandLine::ForCurrentProcess()->HasSwitch(
         switches::kSingleProcess));
 
+  AddFormFactorSpecificCommandLineArguments();
+
 #if defined(USE_NSS)
   if (!nss_db_path.empty()) {
     // Used for testing
-    PathService::Override(crypto::DIR_NSSDB, nss_db_path);
+    PathService::OverrideAndCreateIfNeeded(crypto::DIR_NSSDB,
+                                           nss_db_path,
+                                           false, true);
   }
   crypto::EarlySetupForNSSInit();
 #endif
@@ -420,7 +449,11 @@ void BrowserProcessMainImpl::Shutdown() {
     run_loop.Run();
   }
 
-  BrowserContext::AssertNoContextsExist();
+  if (process_model_ != PROCESS_MODEL_SINGLE_PROCESS) {
+    // In single process mode, we do this check after destroying
+    // threads, as we hold the single BrowserContext alive until then
+    BrowserContext::AssertNoContextsExist();
+  }
 
   MessageLoopForUI::current()->Stop();
 
@@ -429,8 +462,8 @@ void BrowserProcessMainImpl::Shutdown() {
 
   exit_manager_.reset();
 
-  platform_integration_.reset();
   main_delegate_.reset();
+  platform_delegate_.reset();
 
   state_ = STATE_SHUTDOWN;
 }
@@ -440,8 +473,46 @@ BrowserProcessMain::BrowserProcessMain() {}
 BrowserProcessMain::~BrowserProcessMain() {}
 
 // static
+ProcessModel BrowserProcessMain::GetProcessModelOverrideFromEnv() {
+  static bool g_initialized = false;
+  static ProcessModel g_process_model = PROCESS_MODEL_UNDEFINED;
+
+  if (g_initialized) {
+    return g_process_model;
+  }
+
+  g_initialized = true;
+
+  if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
+    g_process_model = PROCESS_MODEL_SINGLE_PROCESS;
+  } else {
+    base::StringPiece env = GetEnvironmentOption("PROCESS_MODEL");
+    if (!env.empty()) {
+      if (env == "multi-process") {
+        g_process_model = PROCESS_MODEL_MULTI_PROCESS;
+      } else if (env == "single-process") {
+        g_process_model = PROCESS_MODEL_SINGLE_PROCESS;
+      } else if (env == "process-per-site-instance") {
+        g_process_model = PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE;
+      } else if (env == "process-per-view") {
+        g_process_model = PROCESS_MODEL_PROCESS_PER_VIEW;
+      } else if (env == "process-per-site") {
+        g_process_model = PROCESS_MODEL_PROCESS_PER_SITE;
+      } else if (env == "site-per-process") {
+        g_process_model = PROCESS_MODEL_SITE_PER_PROCESS;
+      } else {
+        LOG(WARNING) << "Invalid process mode: " << env.data();
+      }
+    }
+  }
+
+  return g_process_model;
+}
+
+// static
 BrowserProcessMain* BrowserProcessMain::GetInstance() {
-  return GetBrowserProcessMainInstance();
+  static BrowserProcessMainImpl g_instance;
+  return &g_instance;
 }
 
 } // namespace oxide

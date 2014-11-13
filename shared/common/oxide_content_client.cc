@@ -17,6 +17,7 @@
 
 #include "oxide_content_client.h"
 
+#include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/common/user_agent.h"
@@ -24,7 +25,6 @@
 #include "ui/base/resource/resource_bundle.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
-#include "shared/common/chrome_version.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 #if defined(ENABLE_PLUGINS)
@@ -39,9 +39,13 @@
 #include "shared/common/oxide_paths.h"
 #endif
 
+#include "oxide_user_agent.h"
+
 namespace oxide {
 
-ContentClient::ContentClient() {}
+namespace {
+ContentClient* g_instance;
+}
 
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
@@ -82,7 +86,7 @@ void ContentClient::AddPepperPlugins(
 }
 
 std::string ContentClient::GetUserAgent() const {
-  return user_agent_;
+  return oxide::GetUserAgent();
 }
 
 base::string16 ContentClient::GetLocalizedString(int message_id) const {
@@ -103,28 +107,18 @@ base::RefCountedStaticMemory* ContentClient::GetDataResourceBytes(
 
 // static
 ContentClient* ContentClient::GetInstance() {
-  return Singleton<ContentClient>::get();
+  DCHECK(g_instance);
+  return g_instance;
 }
 
-// static
-ContentClient* ContentClient::instance() {
-  return GetInstance();
+ContentClient::ContentClient() {
+  DCHECK(!g_instance);
+  g_instance = this;
 }
 
-ContentClient::~ContentClient() {}
-
-ContentBrowserClient* ContentClient::browser() {
-  return static_cast<ContentBrowserClient *>(
-      content::ContentClient::browser());
-}
-
-ContentRendererClient* ContentClient::renderer() {
-  return static_cast<ContentRendererClient *>(
-      content::ContentClient::renderer());
-}
-
-void ContentClient::SetUserAgent(const std::string& user_agent) {
-  user_agent_ = user_agent;
+ContentClient::~ContentClient() {
+  DCHECK_EQ(g_instance, this);
+  g_instance = NULL;
 }
 
 } // namespace oxide

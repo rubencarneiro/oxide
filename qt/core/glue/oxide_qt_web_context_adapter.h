@@ -49,6 +49,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  public:
   virtual ~WebContextAdapter();
 
+  static WebContextAdapter* defaultContext();
+
   enum CookiePolicy {
     CookiePolicyAllowAll,
     CookiePolicyBlockAll,
@@ -79,6 +81,7 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   static WebContextAdapter* FromWebContext(WebContext* context);
 
   void init(const QWeakPointer<IODelegate>& io_delegate);
+  void makeDefault();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -134,6 +137,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
  private:
   friend class WebContext;
+
+  static void DestroyDefault();
 
   virtual void CookiesSet(int request_id,
                           const QList<QNetworkCookie>& failed_cookies) = 0;

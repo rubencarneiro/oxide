@@ -118,7 +118,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  public:
   virtual ~WebViewAdapter();
 
-  void init();
+  void init(bool incognito,
+            WebContextAdapter* context,
+            OxideQNewViewRequest* new_view_request);
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -129,7 +131,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   bool canGoForward() const;
 
   bool incognito() const;
-  void setIncognito(bool incognito);
 
   bool loading() const;
 
@@ -139,7 +140,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   WebFrameAdapter* rootFrame() const;
 
   WebContextAdapter* context() const;
-  void setContext(WebContextAdapter* context);
 
   void wasResized();
   void visibilityChanged();
@@ -161,7 +161,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   QList<ScriptMessageHandlerAdapter *>& messageHandlers();
 
-  bool isInitialized();
+  bool isInitialized() const;
 
   int getNavigationEntryCount() const;
   int getNavigationCurrentEntryIndex() const;
@@ -173,8 +173,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   OxideQWebPreferences* preferences();
   void setPreferences(OxideQWebPreferences* prefs);
-
-  void setRequest(OxideQNewViewRequest* request);
 
   void updateWebPreferences();
 
@@ -202,16 +200,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  private:
   friend class WebView;
 
-  struct ConstructProperties {
-    ConstructProperties() :
-        incognito(false),
-        context(NULL) {}
-
-    bool incognito;
-    WebContextAdapter* context;
-  };
+  void EnsurePreferences();
 
   void Initialized();
+  void WebPreferencesDestroyed();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
@@ -219,8 +211,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;
   virtual FilePickerDelegate* CreateFilePickerDelegate() = 0;
 
-  virtual void OnInitialized(bool orig_incognito,
-                             WebContextAdapter* orig_context) = 0;
+  virtual void OnInitialized() = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
@@ -250,7 +241,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void ToggleFullscreenMode(bool enter) = 0;
 
-  virtual void WebPreferencesDestroyed() = 0;
+  virtual void OnWebPreferencesReplaced() = 0;
 
   virtual void FrameAdded(WebFrameAdapter* frame) = 0;
   virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
@@ -285,9 +276,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QScopedPointer<WebView> view_;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
-
-  QScopedPointer<ConstructProperties> construct_props_;
-  bool created_with_new_view_request_;
 };
 
 } // namespace qt

@@ -27,7 +27,7 @@
 #include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
-#include "oxide_platform_integration.h"
+#include "oxide_browser_platform_integration.h"
 
 namespace oxide {
 
@@ -47,7 +47,7 @@ bool IsUbuntuPhoneOrTablet() {
   }
 
   NativeDisplayType native_display =
-      PlatformIntegration::GetInstance()->GetNativeDisplay();
+      BrowserPlatformIntegration::GetInstance()->GetNativeDisplay();
 
   typedef EGLDisplay (*f_eglGetDisplay)(NativeDisplayType);
   f_eglGetDisplay eglGetDisplay =
@@ -123,7 +123,7 @@ FormFactor GetFormFactorHint() {
     // size check here is basically the same as Chrome for Android, where
     // a minimum DIP width of less than 600 is a phone
     blink::WebScreenInfo screen(
-        PlatformIntegration::GetInstance()->GetDefaultScreenInfo());
+        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo());
     if (std::min(screen.rect.width / screen.deviceScaleFactor,
                  screen.rect.height / screen.deviceScaleFactor) >= 600) {
       form_factor = FORM_FACTOR_TABLET;

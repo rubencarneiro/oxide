@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
+#include <QPointer>
+#include <QScopedPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
@@ -26,6 +28,7 @@
 
 #include "oxideqquicknavigationhistory_p.h"
 
+class OxideQNewViewRequest;
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebContextPrivate;
@@ -65,8 +68,7 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() final;
   oxide::qt::FilePickerDelegate* CreateFilePickerDelegate() final;
 
-  void OnInitialized(bool orig_incognito,
-                     oxide::qt::WebContextAdapter* orig_context) final;
+  void OnInitialized() final;
 
   void URLChanged() final;
   void TitleChanged() final;
@@ -96,7 +98,7 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
 
   void ToggleFullscreenMode(bool enter) final;
 
-  void WebPreferencesDestroyed() final;
+  void OnWebPreferencesReplaced() final;
 
   void FrameAdded(oxide::qt::WebFrameAdapter* frame) final;
   void FrameRemoved(oxide::qt::WebFrameAdapter* frame) final;
@@ -170,6 +172,17 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
 
   bool using_old_load_event_signal_;
+
+  struct ConstructProps {
+    ConstructProps()
+        : incognito(false) {}
+
+    bool incognito;
+    QPointer<OxideQQuickWebContext> context;
+    QPointer<OxideQNewViewRequest> new_view_request;
+  };
+
+  QScopedPointer<ConstructProps> construct_props_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

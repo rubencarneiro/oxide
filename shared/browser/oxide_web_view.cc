@@ -80,11 +80,11 @@
 #include "shared/gl/oxide_gl_context_adopted.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
-#include "oxide_platform_integration.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
@@ -171,7 +171,7 @@ bool ShouldUseSoftwareCompositing() {
   }
 
   GLContextAdopted* gl_share_context =
-      PlatformIntegration::GetInstance()->GetGLShareContext();
+      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
   if (!gl_share_context) {
     return true;
   }
@@ -433,7 +433,6 @@ void WebView::CompositorSwapFrame(uint32 surface_id,
 }
 
 void WebView::WebPreferencesDestroyed() {
-  initial_preferences_ = NULL;
   OnWebPreferencesDestroyed();
 }
 
@@ -484,10 +483,6 @@ void WebView::Observe(int type,
     int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
     OnNavigationEntryChanged(index);
   }
-}
-
-void WebView::NotifyWebPreferencesDestroyed() {
-  OnWebPreferencesDestroyed();
 }
 
 void WebView::EvictCurrentFrame() {
@@ -660,7 +655,7 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
-  WebViewContentsHelper::Attach(contents.get(), web_contents_.get());
+  new WebViewContentsHelper(contents.get(), web_contents_helper_);
 
   WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
@@ -756,7 +751,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  WebViewContentsHelper::Attach(new_contents, web_contents());
+  new WebViewContentsHelper(new_contents, web_contents_helper_);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -1159,7 +1154,6 @@ WebView::WebView()
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_provider_(GestureProvider::Create(this)),
       in_swap_(false),
-      initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
@@ -1205,7 +1199,6 @@ WebView::~WebView() {
   }
 
   web_contents_->RemoveUserData(kWebViewKey);
-  web_contents_helper_->SetDelegate(NULL);
 
   content::RenderViewHostImpl* rvh =
       static_cast<content::RenderViewHostImpl*>(
@@ -1266,7 +1259,7 @@ void WebView::Init(Params* params) {
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
-    WebViewContentsHelper::Attach(web_contents_.get());
+    new WebViewContentsHelper(web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());
@@ -1274,14 +1267,21 @@ void WebView::Init(Params* params) {
 
   compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
 
-  web_contents_helper_ =
-      WebViewContentsHelper::FromWebContents(web_contents_.get());
-  web_contents_helper_->SetDelegate(this);
-
+  // Attach ourself to the WebContents
   web_contents_->SetDelegate(this);
   web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
 
   WebContentsObserver::Observe(web_contents_.get());
+
+  // Set the initial WebPreferences. This has to happen after attaching
+  // ourself to the WebContents, as the pref update needs to call back in
+  // to us (via CanCreateWindows)
+  web_contents_helper_ =
+      WebViewContentsHelper::FromWebContents(web_contents_.get());
+  if (web_preferences()) {
+    web_contents_helper_->SetWebPreferences(web_preferences());
+  }
+  web_contents_helper_->WebContentsAdopted();
 
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                  content::NotificationService::AllBrowserContextsAndSources());
@@ -1290,11 +1290,6 @@ void WebView::Init(Params* params) {
 
   root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
-  if (initial_preferences_) {
-    SetWebPreferences(initial_preferences_);
-    WebPreferencesObserver::Observe(NULL);
-    initial_preferences_ = NULL;
-  }
   if (params->context) {
     if (!initial_url_.is_empty()) {
       SetURL(initial_url_);
@@ -1581,20 +1576,19 @@ content::FrameTree* WebView::GetFrameTree() {
 
 WebPreferences* WebView::GetWebPreferences() {
   if (!web_contents_helper_) {
-    return initial_preferences_;
+    return web_preferences();
   }
 
   return web_contents_helper_->GetWebPreferences();
 }
 
 void WebView::SetWebPreferences(WebPreferences* prefs) {
+  WebPreferencesObserver::Observe(prefs);
   if (!web_contents_helper_) {
-    CHECK(!prefs || prefs->IsOwnedByEmbedder());
-    initial_preferences_ = prefs;
-    WebPreferencesObserver::Observe(prefs);
-  } else {
-    web_contents_helper_->SetWebPreferences(prefs);
+    return;
   }
+
+  web_contents_helper_->SetWebPreferences(prefs);
 }
 
 gfx::Size WebView::GetViewSizePix() const {

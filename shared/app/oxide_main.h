@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,28 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_content_main_delegate.h"
+#ifndef _OXIDE_SHARED_APP_MAIN_H_
+#define _OXIDE_SHARED_APP_MAIN_H_
 
-#include "base/lazy_instance.h"
-
-#include "qt/core/browser/oxide_qt_content_browser_client.h"
+#include "base/basictypes.h"
 
 namespace oxide {
-namespace qt {
 
-namespace {
-base::LazyInstance<ContentBrowserClient> g_content_browser_client =
-    LAZY_INSTANCE_INITIALIZER;
-}
+class PlatformDelegate;
 
-content::ContentBrowserClient*
-ContentMainDelegate::CreateContentBrowserClient() {
-  return g_content_browser_client.Pointer();
-}
+struct OxideMainParams {
+  OxideMainParams(PlatformDelegate* delegate)
+      : delegate(delegate),
+        argc(0),
+        argv(NULL) {}
 
-ContentMainDelegate::ContentMainDelegate() {}
+  PlatformDelegate* delegate;
 
-ContentMainDelegate::~ContentMainDelegate() {}
+  int argc;
+  const char** argv;
+};
 
-} // namespace qt
+int OxideMain(const OxideMainParams& params);
+
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_APP_MAIN_H_

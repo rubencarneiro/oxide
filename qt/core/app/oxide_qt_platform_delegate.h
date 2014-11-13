@@ -15,44 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
-#define _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
+#ifndef _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
+#define _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
 
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 
-#include <QtGlobal>
-
-#include "shared/browser/oxide_platform_integration.h"
-
-QT_BEGIN_NAMESPACE
-class QThread;
-QT_END_NAMESPACE;
+#include "shared/app/oxide_platform_delegate.h"
 
 namespace oxide {
 namespace qt {
 
-class GLContext;
+class GLContextAdopted;
 
-class PlatformIntegration final : public oxide::PlatformIntegration {
+class PlatformDelegate final : public oxide::PlatformDelegate {
  public:
-  PlatformIntegration();
-  ~PlatformIntegration();
+  PlatformDelegate(GLContextAdopted* shared_gl_context = NULL);
+  ~PlatformDelegate();
 
  private:
-  bool LaunchURLExternally(const GURL& url) final;
-  bool IsTouchSupported() final;
-  intptr_t GetNativeDisplay() final;
-  blink::WebScreenInfo GetDefaultScreenInfo() final;
-  oxide::GLContextAdopted* GetGLShareContext() final;
-  scoped_ptr<oxide::MessagePump> CreateUIMessagePump() final;
-  void BrowserThreadInit(content::BrowserThread::ID id) final;
+  oxide::BrowserPlatformIntegration* CreateBrowserIntegration() final;
 
-  scoped_refptr<GLContextAdopted> gl_share_context_;
+  scoped_refptr<GLContextAdopted> shared_gl_context_;
+
+  DISALLOW_COPY_AND_ASSIGN(PlatformDelegate);
 };
-
-QThread* GetIOQThread();
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
+#endif // _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
