@@ -17,15 +17,9 @@
 
 #include "oxideqquickglobal_p.h"
 
-#include <QCoreApplication>
-
 #include "qt/core/api/oxideqglobal.h"
 
 #include "oxideqquickwebcontext_p.h"
-
-namespace {
-class OxideQQuickGlobal* g_instance;
-}
 
 class OxideQQuickGlobalPrivate {
  public:
@@ -34,7 +28,6 @@ class OxideQQuickGlobalPrivate {
 };
 
 OxideQQuickGlobal::OxideQQuickGlobal() :
-    QObject(QCoreApplication::instance()),
     d_ptr(new OxideQQuickGlobalPrivate()) {
   Q_STATIC_ASSERT(
       ProcessModelMultiProcess ==
@@ -56,21 +49,7 @@ OxideQQuickGlobal::OxideQQuickGlobal() :
         static_cast<ProcessModel>(OxideProcessModelSitePerProcess));
 }
 
-// static
-OxideQQuickGlobal* OxideQQuickGlobal::instance() {
-  if (!g_instance) {
-    g_instance = new OxideQQuickGlobal();
-  }
-
-  Q_ASSERT(g_instance);
-
-  return g_instance;
-}
-
-OxideQQuickGlobal::~OxideQQuickGlobal() {
-  Q_ASSERT(this == g_instance);
-  g_instance = NULL;
-}
+OxideQQuickGlobal::~OxideQQuickGlobal() {}
 
 OxideQQuickGlobal::ProcessModel OxideQQuickGlobal::processModel() const {
   return static_cast<ProcessModel>(oxideGetProcessModel());

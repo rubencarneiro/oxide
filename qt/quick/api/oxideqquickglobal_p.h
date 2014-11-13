@@ -48,7 +48,7 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
     ProcessModelSitePerProcess
   };
 
-  static OxideQQuickGlobal* instance();
+  OxideQQuickGlobal();
   virtual ~OxideQQuickGlobal();
 
   ProcessModel processModel() const;
@@ -64,8 +64,6 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   void maxRendererProcessCountChanged();
 
  private:
-  OxideQQuickGlobal();
-
   QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
 };
 
