@@ -50,7 +50,7 @@ public:
   Q_INVOKABLE int getCookies(const QUrl& url);
   Q_INVOKABLE int getAllCookies();
 
-  Q_INVOKABLE int deleteAllCookies();
+  Q_REVISION(1) Q_INVOKABLE int deleteAllCookies();
 
 Q_SIGNALS:
   void setCookiesResponse(int requestId, const QVariant& failedCookies);

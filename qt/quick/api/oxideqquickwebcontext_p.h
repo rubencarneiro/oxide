@@ -60,9 +60,9 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
 
   Q_PROPERTY(OxideQQuickCookieManager* cookieManager READ cookieManager CONSTANT)
 
-  Q_PROPERTY(QStringList hostMappingRules READ hostMappingRules WRITE setHostMappingRules NOTIFY hostMappingRulesChanged)
+  Q_PROPERTY(QStringList hostMappingRules READ hostMappingRules WRITE setHostMappingRules NOTIFY hostMappingRulesChanged REVISION 1)
 
-  Q_PROPERTY(QStringList allowedExtraUrlSchemes READ allowedExtraUrlSchemes WRITE setAllowedExtraUrlSchemes NOTIFY allowedExtraUrlSchemesChanged)
+  Q_PROPERTY(QStringList allowedExtraUrlSchemes READ allowedExtraUrlSchemes WRITE setAllowedExtraUrlSchemes NOTIFY allowedExtraUrlSchemesChanged REVISION 1)
 
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
@@ -164,8 +164,8 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   void devtoolsEnabledChanged();
   void devtoolsPortChanged();
   void devtoolsBindIpChanged();
-  void hostMappingRulesChanged();
-  void allowedExtraUrlSchemesChanged();
+  Q_REVISION(1) void hostMappingRulesChanged();
+  Q_REVISION(1) void allowedExtraUrlSchemesChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());
