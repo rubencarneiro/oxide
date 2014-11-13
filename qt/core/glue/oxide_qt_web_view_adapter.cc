@@ -36,6 +36,7 @@
 #include "qt/core/browser/oxide_qt_web_view.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_content_types.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
 #include "oxide_qt_web_context_adapter.h"
 #include "oxide_qt_web_frame_adapter.h"
@@ -160,10 +161,18 @@ void WebViewAdapter::init(bool incognito,
       "been deleted by the application. In single-process mode, there is only "
       "one WebContext, and this has to live for the life of the application";
 
+  WebContext* c = WebContext::FromAdapter(context);
+
+  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
+          oxide::PROCESS_MODEL_SINGLE_PROCESS) {
+    DCHECK(!incognito);
+    DCHECK_EQ(c, WebContext::GetDefault());
+  }
+
   EnsurePreferences();
 
   oxide::WebView::Params params;
-  params.context = WebContext::FromAdapter(context)->GetContext();
+  params.context = c->GetContext();
   params.incognito = incognito;
 
   view_->Init(&params);

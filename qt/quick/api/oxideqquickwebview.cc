@@ -1060,6 +1060,11 @@ void OxideQQuickWebView::setIncognito(bool incognito) {
     return;
   }
 
+  if (oxideGetProcessModel() == OxideProcessModelSingleProcess) {
+    qWarning() << "Incognito is unavailable in single-process mode";
+    return;
+  }
+
   if (incognito == d->construct_props_->incognito) {
     return;
   }
