@@ -42,12 +42,11 @@ base::FilePath DevtoolsHttpHandlerDelegate::GetDebugFrontendDir() {
   return base::FilePath();
 }
 
-scoped_ptr<net::StreamListenSocket>
+scoped_ptr<net::ServerSocket>
 DevtoolsHttpHandlerDelegate::CreateSocketForTethering(
-    net::StreamListenSocket::Delegate* delegate,
     std::string* name) {
   // Not supported
-  return scoped_ptr<net::StreamListenSocket>();
+  return scoped_ptr<net::ServerSocket>();
 }
 
 }
