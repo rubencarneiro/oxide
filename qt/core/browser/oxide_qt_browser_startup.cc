@@ -28,6 +28,8 @@
 #include "qt/core/gl/oxide_qt_gl_context_adopted.h"
 #include "shared/base/oxide_enum_flags.h"
 
+#include "oxide_qt_web_context.h"
+
 namespace oxide {
 namespace qt {
 
@@ -38,13 +40,15 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(oxide::SupportedGLImplFlags)
 Q_GLOBAL_STATIC(BrowserStartup, g_instance)
 
 void ShutdownChromium() {
+  WebContext::DestroyDefault();
   oxide::BrowserProcessMain::GetInstance()->Shutdown();
 }
 
 }
 
 BrowserStartup::BrowserStartup()
-    : process_model_(oxide::PROCESS_MODEL_UNDEFINED) {}
+    : process_model_is_from_env_(false),
+      process_model_(oxide::PROCESS_MODEL_UNDEFINED) {}
 
 // static
 BrowserStartup* BrowserStartup::GetInstance() {
@@ -80,6 +84,8 @@ oxide::ProcessModel BrowserStartup::GetProcessModel() {
         oxide::BrowserProcessMain::GetProcessModelOverrideFromEnv();
     if (process_model_ == oxide::PROCESS_MODEL_UNDEFINED) {
       process_model_ = oxide::PROCESS_MODEL_MULTI_PROCESS;
+    } else {
+      process_model_is_from_env_ = true;
     }
   }
 
@@ -105,12 +111,17 @@ void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
         << "public use";
   }
 
+  process_model_is_from_env_ = false;
   process_model_ = model;
 }
 
 void BrowserStartup::SetSharedGLContext(GLContextAdopted* context) {
   DCHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning());
   shared_gl_context_ = context;
+}
+
+bool BrowserStartup::DidSelectProcessModelFromEnv() const {
+  return process_model_is_from_env_;
 }
 
 void BrowserStartup::EnsureChromiumStarted() {

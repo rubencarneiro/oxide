@@ -42,14 +42,6 @@
 
 namespace {
 
-OxideQQuickWebContext* g_default_context;
-
-void DestroyDefaultContext() {
-  OxideQQuickWebContext* context = g_default_context;
-  g_default_context = NULL;
-  delete context;
-}
-
 QVariant networkCookiesToVariant(const QList<QNetworkCookie>& cookies) {
   QList<QVariant> list;
   Q_FOREACH(QNetworkCookie cookie, cookies) {
@@ -409,21 +401,25 @@ void OxideQQuickWebContext::componentComplete() {
 
 // static
 OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
-  if (g_default_context) {
-    return g_default_context;
+  OxideQQuickWebContextPrivate* p =
+      static_cast<OxideQQuickWebContextPrivate*>(
+        oxide::qt::WebContextAdapter::defaultContext());
+  if (p) {
+    return p->q_func();
   }
 
   if (!create) {
     return NULL;
   }
 
-  g_default_context = new OxideQQuickWebContext();
-  g_default_context->componentComplete();
-  qAddPostRoutine(DestroyDefaultContext);
+  OxideQQuickWebContext* c = new OxideQQuickWebContext();
+  c->componentComplete();
+  QQmlEngine::setObjectOwnership(c, QQmlEngine::CppOwnership);
 
-  QQmlEngine::setObjectOwnership(g_default_context, QQmlEngine::CppOwnership);
+  OxideQQuickWebContextPrivate::get(c)->makeDefault();
+  Q_ASSERT(oxide::qt::WebContextAdapter::defaultContext());
 
-  return g_default_context;
+  return c;
 }
 
 QString OxideQQuickWebContext::product() const {

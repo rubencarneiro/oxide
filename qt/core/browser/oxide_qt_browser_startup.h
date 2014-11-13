@@ -44,6 +44,8 @@ class BrowserStartup final {
 
   void SetSharedGLContext(GLContextAdopted* context);
 
+  bool DidSelectProcessModelFromEnv() const;
+
   void EnsureChromiumStarted();
 
  private:
@@ -51,6 +53,7 @@ class BrowserStartup final {
   base::FilePath nss_db_path_;
 #endif
 
+  bool process_model_is_from_env_;
   oxide::ProcessModel process_model_;
 
   scoped_refptr<GLContextAdopted> shared_gl_context_;

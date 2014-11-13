@@ -66,6 +66,8 @@ class WebContext final : public oxide::BrowserContextDelegate {
   static WebContext* FromAdapter(WebContextAdapter* adapter);
   static WebContext* FromBrowserContext(oxide::BrowserContext* context);
 
+  static void DestroyDefault();
+
   oxide::BrowserContext* GetContext();
 
   QNetworkAccessManager* GetCustomNetworkAccessManager();

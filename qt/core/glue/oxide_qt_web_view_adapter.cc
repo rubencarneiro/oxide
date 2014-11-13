@@ -114,9 +114,7 @@ void WebViewAdapter::Initialized() {
     p->setParent(adapterToQObject(this));
   }
 
-  OnInitialized(construct_props_->incognito,
-                construct_props_->context);
-  construct_props_.reset();
+  OnInitialized();
 }
 
 void WebViewAdapter::WebPreferencesDestroyed() {
@@ -129,23 +127,44 @@ void WebViewAdapter::WebPreferencesDestroyed() {
 
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
-    view_(WebView::Create(this)),
-    construct_props_(new ConstructProperties()),
-    created_with_new_view_request_(false) {}
+    view_(WebView::Create(this)) {}
 
 WebViewAdapter::~WebViewAdapter() {}
 
-void WebViewAdapter::init() {
-  if (created_with_new_view_request_ || isInitialized()) {
+void WebViewAdapter::init(bool incognito,
+                          WebContextAdapter* context,
+                          OxideQNewViewRequest* new_view_request) {
+  DCHECK(!isInitialized());
+
+  bool script_opened = false;
+
+  if (new_view_request) {
+    OxideQNewViewRequestPrivate* rd =
+        OxideQNewViewRequestPrivate::get(new_view_request);
+    if (rd->view) {
+      qWarning() << "Cannot assign NewViewRequest to more than one WebView";
+    } else {
+      rd->view = view_->AsWeakPtr();
+      script_opened = true;
+    }
+  }
+
+  if (script_opened) {
+    // Script opened webviews get initialized via another path
     return;
   }
+
+  CHECK(context) <<
+      "No context available for WebView. If you see this when running in "
+      "single-process mode, it is possible that the default WebContext has "
+      "been deleted by the application. In single-process mode, there is only "
+      "one WebContext, and this has to live for the life of the application";
 
   EnsurePreferences();
 
   oxide::WebView::Params params;
-  params.context =
-      WebContext::FromAdapter(construct_props_->context)->GetContext();
-  params.incognito = construct_props_->incognito;
+  params.context = WebContext::FromAdapter(context)->GetContext();
+  params.incognito = incognito;
 
   view_->Init(&params);
 }
@@ -171,20 +190,7 @@ bool WebViewAdapter::canGoForward() const {
 }
 
 bool WebViewAdapter::incognito() const {
-  if (construct_props_) {
-    return construct_props_->incognito;
-  }
-
   return view_->IsIncognito();  
-}
-
-void WebViewAdapter::setIncognito(bool incognito) {
-  if (!construct_props_) {
-    qWarning() << "Cannot change incognito mode after WebView is initialized";
-    return;
-  }
-
-  construct_props_->incognito = incognito;
 }
 
 bool WebViewAdapter::loading() const {
@@ -205,16 +211,12 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
 }
 
 WebContextAdapter* WebViewAdapter::context() const {
-  if (construct_props_) {
-    return construct_props_->context;
+  WebContext* c = view_->GetContext();
+  if (!c) {
+    return NULL;
   }
 
-  return WebContextAdapter::FromWebContext(view_->GetContext());
-}
-
-void WebViewAdapter::setContext(WebContextAdapter* context) {
-  DCHECK(construct_props_);
-  construct_props_->context = context;
+  return WebContextAdapter::FromWebContext(c);
 }
 
 void WebViewAdapter::wasResized() {
@@ -280,7 +282,7 @@ QList<ScriptMessageHandlerAdapter*>& WebViewAdapter::messageHandlers() {
   return message_handlers_;
 }
 
-bool WebViewAdapter::isInitialized() {
+bool WebViewAdapter::isInitialized() const {
   return view_->GetWebContents() != NULL;
 }
 
@@ -342,26 +344,6 @@ void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
   if (old->parent() == adapterToQObject(this)) {
     delete old;
   }
-}
-
-void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
-  if (isInitialized()) {
-    qWarning() << "Cannot assign NewViewRequest to an already constructed WebView";
-    return;
-  }
-
-  if (created_with_new_view_request_) {
-    return;
-  }
-
-  OxideQNewViewRequestPrivate* rd = OxideQNewViewRequestPrivate::get(request);
-  if (rd->view) {
-    qWarning() << "Cannot assign NewViewRequest to more than one WebView";
-    return;
-  }
-
-  rd->view = view_->AsWeakPtr();
-  created_with_new_view_request_ = true;
 }
 
 void WebViewAdapter::updateWebPreferences() {

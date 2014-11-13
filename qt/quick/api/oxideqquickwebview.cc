@@ -39,7 +39,9 @@
 #include <Qt>
 
 #include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
 #if defined(ENABLE_COMPOSITING)
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
@@ -226,7 +228,8 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     received_new_compositor_frame_(false),
     frame_evicted_(false),
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
-    using_old_load_event_signal_(false) {}
+    using_old_load_event_signal_(false),
+    construct_props_(new ConstructProps()) {}
 
 oxide::qt::WebPopupMenuDelegate*
 OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
@@ -266,10 +269,10 @@ OxideQQuickWebViewPrivate::CreateFilePickerDelegate() {
   return new oxide::qquick::FilePickerDelegate(q);
 }
 
-void OxideQQuickWebViewPrivate::OnInitialized(
-    bool orig_incognito,
-    oxide::qt::WebContextAdapter* orig_context) {
+void OxideQQuickWebViewPrivate::OnInitialized() {
   Q_Q(OxideQQuickWebView);
+
+  Q_ASSERT(d->construct_props_.data());
 
   // Make the webview the QObject parent of the new root frame,
   // to stop Qml from collecting the frame tree
@@ -279,15 +282,20 @@ void OxideQQuickWebViewPrivate::OnInitialized(
   // this is emitted
   emit q->rootFrameChanged();
 
-  if (orig_incognito != incognito()) {
+  if (construct_props_->incognito != incognito()) {
     emit q->incognitoChanged();
   }
-  if (orig_context != context()) {
-    detachContextSignals(static_cast<OxideQQuickWebContextPrivate *>(orig_context));
-    attachContextSignals(static_cast<OxideQQuickWebContextPrivate *>(context()));
-
+  if (construct_props_->context !=
+      adapterToQObject<OxideQQuickWebContext>(context())) {
+    if (construct_props_->context) {
+      detachContextSignals(
+          OxideQQuickWebContextPrivate::get(construct_props_->context));
+    }
+    attachContextSignals(static_cast<OxideQQuickWebContextPrivate*>(context()));
     emit q->contextChanged();
   }
+
+  construct_props_.reset();
 }
 
 void OxideQQuickWebViewPrivate::URLChanged() {
@@ -642,12 +650,13 @@ void OxideQQuickWebViewPrivate::CloseRequested() {
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
-  if (!context()) {
-    OxideQQuickWebContext* c = OxideQQuickWebContext::defaultContext(true);
-    setContext(OxideQQuickWebContextPrivate::get(c));
-  }
+  Q_ASSERT(construct_props_.data());
 
-  init();
+  OxideQQuickWebContext* context = construct_props_->context;
+
+  init(construct_props_->incognito,
+       context ? OxideQQuickWebContextPrivate::get(context) : NULL,
+       construct_props_->new_view_request);
 }
 
 // static
@@ -980,8 +989,18 @@ void OxideQQuickWebView::componentComplete() {
 
   QQuickItem::componentComplete();
 
-  if (!d->context() ||
-      static_cast<OxideQQuickWebContextPrivate *>(d->context())->isConstructed()) {
+  OxideQQuickWebContext* context = d->construct_props_->context;
+
+  if (!context && !d->construct_props_->new_view_request) {
+    context = OxideQQuickWebContext::defaultContext(true);
+    d->construct_props_->context = context;
+    if (context) {
+      d->attachContextSignals(OxideQQuickWebContextPrivate::get(context));
+    }
+  }
+
+  if (!context ||
+      OxideQQuickWebContextPrivate::get(context)->isConstructed()) {
     d->completeConstruction();
   }
 }
@@ -1031,17 +1050,26 @@ bool OxideQQuickWebView::canGoForward() const {
 bool OxideQQuickWebView::incognito() const {
   Q_D(const OxideQQuickWebView);
 
+  if (!d->isInitialized()) {
+    return d->construct_props_->incognito;
+  }
+
   return d->incognito();
 }
 
 void OxideQQuickWebView::setIncognito(bool incognito) {
   Q_D(OxideQQuickWebView);
 
-  if (incognito == d->incognito()) {
+  if (d->isInitialized()) {
+    qWarning() << "Cannot change incognito mode after WebView is initialized";
     return;
   }
 
-  d->setIncognito(incognito);
+  if (incognito == d->construct_props_->incognito) {
+    return;
+  }
+
+  d->construct_props_->incognito = incognito;
   emit incognitoChanged();
 }
 
@@ -1301,13 +1329,11 @@ void OxideQQuickWebView::setFilePicker(QQmlComponent* file_picker) {
 OxideQQuickWebContext* OxideQQuickWebView::context() const {
   Q_D(const OxideQQuickWebView);
 
-  OxideQQuickWebContext* c =
-      adapterToQObject<OxideQQuickWebContext>(d->context());
-  if (c == OxideQQuickWebContext::defaultContext(false)) {
-    return NULL;
+  if (!d->isInitialized()) {
+    return d->construct_props_->context;
   }
 
-  return c;
+  return adapterToQObject<OxideQQuickWebContext>(d->context()); 
 }
 
 void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
@@ -1318,26 +1344,26 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
     return;
   }
 
-  if (context == OxideQQuickWebContext::defaultContext(false)) {
+  if (oxideGetProcessModel() == OxideProcessModelSingleProcess) {
     qWarning() <<
-        "Setting WebView context to default context is unnecessary. WebView "
-        "will automatically use the default context if it is created without "
-        "one";
+        "WebView.context is read-only in single process mode. The webview "
+        "will automatically use the default WebContext";
     return;
   }
 
-  oxide::qt::WebContextAdapter* old = d->context();
-  if (context == adapterToQObject<OxideQQuickWebContext>(old)) {
+  if (context == d->construct_props_->context) {
     return;
   }
-  d->detachContextSignals(static_cast<OxideQQuickWebContextPrivate *>(old));
 
-  OxideQQuickWebContextPrivate* cd = NULL;
+  OxideQQuickWebContext* old = d->construct_props_->context;
+  if (old) {
+    d->detachContextSignals(OxideQQuickWebContextPrivate::get(old));
+  }
+
   if (context) {
-    cd = OxideQQuickWebContextPrivate::get(context);
+    d->attachContextSignals(OxideQQuickWebContextPrivate::get(context));
   }
-  d->attachContextSignals(cd);
-  d->setContext(cd);
+  d->construct_props_->context = context;
 
   emit contextChanged();
 }
@@ -1398,7 +1424,12 @@ OxideQNewViewRequest* OxideQQuickWebView::request() const {
 void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
   Q_D(OxideQQuickWebView);
 
-  d->setRequest(request);
+  if (d->isInitialized()) {
+    qWarning() << "Cannot assign NewViewRequest to an already constructed WebView";
+    return;
+  }
+
+  d->construct_props_->new_view_request = request;
 }
 
 // static
