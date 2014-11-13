@@ -97,6 +97,21 @@ URLRequestDelegatedJobFactory::MaybeCreateJobWithProtocolHandler(
                                      net::ERR_FAILED);
 }
 
+net::URLRequestJob* URLRequestDelegatedJobFactory::MaybeInterceptRedirect(
+    net::URLRequest* request,
+    net::NetworkDelegate* network_delegate,
+    const GURL& location) const {
+  return job_factory_->MaybeInterceptRedirect(request,
+                                              network_delegate,
+                                              location);
+}
+
+net::URLRequestJob* URLRequestDelegatedJobFactory::MaybeInterceptResponse(
+    net::URLRequest* request,
+    net::NetworkDelegate* network_delegate) const {
+  return job_factory_->MaybeInterceptResponse(request, network_delegate);
+}
+
 bool URLRequestDelegatedJobFactory::IsHandledProtocol(
     const std::string& scheme) const {
   if (job_factory_->IsHandledProtocol(scheme)) {

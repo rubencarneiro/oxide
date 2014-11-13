@@ -1,5 +1,5 @@
 # HG changeset patch
-# Parent 9b5239c969a39edee0a7a1e99039820b2d1c3a05
+# Parent 7edf1dc4ba02ae95f2a36cb03ff9e918e4bb7b82
 # User oxide
 
 diff --git a/content/public/common/content_switches.h b/content/public/common/content_switches.h
@@ -24,7 +24,7 @@ diff --git a/content/public/common/content_switches.h b/content/public/common/co
  CONTENT_EXPORT extern const char kBrowserCrashTest[];
  CONTENT_EXPORT extern const char kBrowserSubprocessPath[];
  extern const char kDebugPluginLoading[];
-@@ -158,17 +158,17 @@ CONTENT_EXPORT extern const char kGpuPro
+@@ -162,17 +162,17 @@ CONTENT_EXPORT extern const char kGpuPro
  CONTENT_EXPORT extern const char kGpuSandboxAllowSysVShm[];
  CONTENT_EXPORT extern const char kGpuSandboxFailuresFatal[];
  CONTENT_EXPORT extern const char kGpuSandboxStartEarly[];
@@ -43,7 +43,7 @@ diff --git a/content/public/common/content_switches.h b/content/public/common/co
  CONTENT_EXPORT extern const char kLogNetLog[];
  extern const char kLogPluginMessages[];
  extern const char kMaxUntiledLayerHeight[];
-@@ -191,17 +191,17 @@ CONTENT_EXPORT extern const char kPpapiP
+@@ -195,17 +195,17 @@ CONTENT_EXPORT extern const char kPpapiP
  extern const char kPpapiStartupDialog[];
  CONTENT_EXPORT extern const char kProcessPerSite[];
  CONTENT_EXPORT extern const char kProcessPerTab[];
@@ -57,8 +57,8 @@ diff --git a/content/public/common/content_switches.h b/content/public/common/co
  CONTENT_EXPORT extern const char kRendererProcess[];
  CONTENT_EXPORT extern const char kRendererProcessLimit[];
  CONTENT_EXPORT extern const char kRendererStartupDialog[];
+ CONTENT_EXPORT extern const char kRootLayerScrolls[];
  extern const char kSandboxIPCProcess[];
  CONTENT_EXPORT extern const char kScrollEndEffect[];
  extern const char kShowPaintRects[];
  CONTENT_EXPORT extern const char kSingleProcess[];
- CONTENT_EXPORT extern const char kSitePerProcess[];
