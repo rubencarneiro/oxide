@@ -67,6 +67,7 @@
         '<(DEPTH)'
       ],
       'sources': [
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_main.cc',
@@ -125,6 +126,11 @@
         {
           'action_name': 'oxide_qt_url_request_delegated_job.moc',
           'moc_input': 'browser/oxide_qt_url_request_delegated_job.cc',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxide_qt_browser_platform_integration.cc',
+          'moc_input': 'browser/oxide_qt_browser_platform_integration.h',
           'includes': [ 'moc.gypi' ]
         },
         {

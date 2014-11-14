@@ -253,6 +253,8 @@
         'browser/oxide_browser_main_parts.h',
         'browser/oxide_browser_platform_integration.cc',
         'browser/oxide_browser_platform_integration.h',
+        'browser/oxide_browser_platform_integration_observer.cc',
+        'browser/oxide_browser_platform_integration_observer.h',
         'browser/oxide_browser_process_main.cc',
         'browser/oxide_browser_process_main.h',
         'browser/oxide_content_browser_client.cc',

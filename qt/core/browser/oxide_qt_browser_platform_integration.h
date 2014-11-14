@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include <QObject>
 #include <QtGlobal>
 
 #include "base/macros.h"
@@ -35,10 +36,15 @@ namespace qt {
 class GLContextAdopted;
 
 class BrowserPlatformIntegration final
-    : public oxide::BrowserPlatformIntegration {
+    : public QObject, public oxide::BrowserPlatformIntegration {
+  Q_OBJECT
+
  public:
   BrowserPlatformIntegration(GLContextAdopted* gl_share_context);
   ~BrowserPlatformIntegration();
+
+ private Q_SLOTS:
+  void onApplicationStateChanged();
 
  private:
   bool LaunchURLExternally(const GURL& url) final;
@@ -49,6 +55,7 @@ class BrowserPlatformIntegration final
   scoped_ptr<oxide::MessagePump> CreateUIMessagePump() final;
   void BrowserThreadInit(content::BrowserThread::ID id) final;
   content::LocationProvider* CreateLocationProvider() final;
+  ApplicationState GetApplicationState() final;
 
   scoped_refptr<GLContextAdopted> gl_share_context_;
 
