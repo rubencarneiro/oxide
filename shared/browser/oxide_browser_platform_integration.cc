@@ -69,6 +69,11 @@ BrowserPlatformIntegration::CreateLocationProvider() {
   return NULL;
 }
 
+BrowserPlatformIntegration::ApplicationState
+BrowserPlatformIntegration::GetApplicationState() {
+  return APPLICATION_STATE_ACTIVE;
+}
+
 void BrowserPlatformIntegration::AddObserver(
     BrowserPlatformIntegrationObserver* observer) {
   observers_.AddObserver(observer);
@@ -79,11 +84,10 @@ void BrowserPlatformIntegration::RemoveObserver(
   observers_.RemoveObserver(observer);
 }
 
-void BrowserPlatformIntegration::NotifyApplicationStateChanged(
-    ApplicationState state) {
+void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
   FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
                     observers_,
-                    ApplicationStateChanged(state));
+                    ApplicationStateChanged());
 }
 
 } // namespace oxide

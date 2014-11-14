@@ -56,11 +56,7 @@ BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
 
 void BrowserPlatformIntegration::onApplicationStateChanged(
     Qt::ApplicationState state) {
-  BrowserPlatformIntegration::ApplicationState oxide_state =
-      (state == Qt::ApplicationActive) ?
-          BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE :
-          BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE;
-  NotifyApplicationStateChanged(oxide_state);
+  NotifyApplicationStateChanged();
 }
 
 bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
@@ -119,6 +115,15 @@ BrowserPlatformIntegration::CreateLocationProvider() {
   }
 
   return new LocationProvider();
+}
+
+oxide::BrowserPlatformIntegration::ApplicationState
+BrowserPlatformIntegration::GetApplicationState() {
+  if (qApp->applicationState() == Qt::ApplicationActive) {
+    return APPLICATION_STATE_ACTIVE;
+  } else {
+    return APPLICATION_STATE_INACTIVE;
+  }
 }
 
 QThread* GetIOQThread() {

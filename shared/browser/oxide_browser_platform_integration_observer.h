@@ -26,8 +26,7 @@ class BrowserPlatformIntegrationObserver {
  public:
   virtual ~BrowserPlatformIntegrationObserver();
 
-  virtual void ApplicationStateChanged(
-      BrowserPlatformIntegration::ApplicationState state) {}
+  virtual void ApplicationStateChanged() {}
 
  protected:
   BrowserPlatformIntegrationObserver();

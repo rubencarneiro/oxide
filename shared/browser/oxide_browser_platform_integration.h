@@ -69,10 +69,12 @@ class BrowserPlatformIntegration {
   // Called on the geolocation thread
   virtual content::LocationProvider* CreateLocationProvider();
 
+  virtual ApplicationState GetApplicationState();
+
  protected:
   BrowserPlatformIntegration();
 
-  void NotifyApplicationStateChanged(ApplicationState state);
+  void NotifyApplicationStateChanged();
 
  private:
   friend class BrowserPlatformIntegrationObserver;

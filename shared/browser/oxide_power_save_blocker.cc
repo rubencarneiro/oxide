@@ -59,8 +59,7 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
   void RemoveBlock();
 
   // BrowserPlatformIntegrationObserver implementation
-  void ApplicationStateChanged(
-      BrowserPlatformIntegration::ApplicationState state) final;
+  void ApplicationStateChanged() final;
 
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
@@ -68,10 +67,13 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
 };
 
 void PowerSaveBlocker::Init() {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::FILE,
-      FROM_HERE,
-      base::Bind(&PowerSaveBlocker::ApplyBlock, this));
+  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() ==
+      BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::FILE,
+        FROM_HERE,
+        base::Bind(&PowerSaveBlocker::ApplyBlock, this));
+  }
 }
 
 void PowerSaveBlocker::CleanUp() {
@@ -146,8 +148,9 @@ void PowerSaveBlocker::RemoveBlock() {
   }
 }
 
-void PowerSaveBlocker::ApplicationStateChanged(
-    BrowserPlatformIntegration::ApplicationState state) {
+void PowerSaveBlocker::ApplicationStateChanged() {
+  BrowserPlatformIntegration::ApplicationState state =
+      BrowserPlatformIntegration::GetInstance()->GetApplicationState();
   if ((state == BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE) &&
       (cookie_ != 0)) {
     CleanUp();
