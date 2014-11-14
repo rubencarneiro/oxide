@@ -20,12 +20,23 @@
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/devtools_agent_host.h"
+#include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_delegate.h"
 
 using content::DevToolsAgentHost;
 
 namespace oxide {
+
+namespace {
+
+const char kTargetTypePage[] = "page";
+const char kTargetTypeIframe[] = "iframe";
+const char kTargetTypeOther[] = "other";
+
+}
+
 
 DevToolsTarget::DevToolsTarget(content::WebContents* contents)
     : content::WebContentsObserver(contents),
@@ -44,7 +55,31 @@ std::string DevToolsTarget::GetParentId() const {
 }
 
 std::string DevToolsTarget::GetType() const {
-  return std::string();
+  std::string type = kTargetTypeOther;
+
+  const content::WebContents* wc = web_contents();
+  if (!wc) {
+    return type;
+  }
+
+  const content::RenderViewHost* rvh =
+      wc->GetRenderViewHost();
+  if (!rvh) {
+    return type;
+  }
+
+  // In case we have a OOP iframe currently
+  // corresponding to this webcontents (for --site-per-process)
+  content::RenderFrameHost* render_frame_host =
+      const_cast<content::RenderViewHost*>(rvh)->GetMainFrame();
+  if (render_frame_host &&
+      render_frame_host->IsCrossProcessSubframe()) {
+    type = kTargetTypeIframe;
+  } else {
+    type = kTargetTypePage;
+  }
+
+  return type;
 }
 
 std::string DevToolsTarget::GetTitle() const {
@@ -66,7 +101,7 @@ GURL DevToolsTarget::GetURL() const {
     return GURL();
   }
 
-  return wc->GetVisibleURL();
+  return wc->GetLastCommittedURL();
 }
 
 GURL DevToolsTarget::GetFaviconURL() const {
