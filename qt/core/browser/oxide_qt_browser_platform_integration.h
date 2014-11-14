@@ -44,7 +44,7 @@ class BrowserPlatformIntegration final
   ~BrowserPlatformIntegration();
 
  private Q_SLOTS:
-  void onApplicationStateChanged(Qt::ApplicationState state);
+  void onApplicationStateChanged();
 
  private:
   bool LaunchURLExternally(const GURL& url) final;

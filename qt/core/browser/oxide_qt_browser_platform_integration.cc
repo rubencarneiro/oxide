@@ -49,13 +49,12 @@ BrowserPlatformIntegration::BrowserPlatformIntegration(
     GLContextAdopted* gl_share_context)
     : gl_share_context_(gl_share_context) {
   QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
-                   this, SLOT(onApplicationStateChanged(Qt::ApplicationState)));
+                   this, SLOT(onApplicationStateChanged()));
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
 
-void BrowserPlatformIntegration::onApplicationStateChanged(
-    Qt::ApplicationState state) {
+void BrowserPlatformIntegration::onApplicationStateChanged() {
   NotifyApplicationStateChanged();
 }
 
