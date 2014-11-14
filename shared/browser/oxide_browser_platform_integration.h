@@ -20,6 +20,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/observer_list.h"
 #include "content/public/browser/browser_thread.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
@@ -31,12 +32,18 @@ class LocationProvider;
 
 namespace oxide {
 
+class BrowserPlatformIntegrationObserver;
 class GLContextAdopted;
 class MessagePump;
 
 class BrowserPlatformIntegration {
  public:
   virtual ~BrowserPlatformIntegration();
+
+  enum ApplicationState {
+    APPLICATION_STATE_INACTIVE,
+    APPLICATION_STATE_ACTIVE
+  };
 
   // Can be called on any thread. Destruction of this class
   // must only happen once all Chromium threads have been shut down
@@ -65,7 +72,16 @@ class BrowserPlatformIntegration {
  protected:
   BrowserPlatformIntegration();
 
+  void NotifyApplicationStateChanged(ApplicationState state);
+
  private:
+  friend class BrowserPlatformIntegrationObserver;
+
+  void AddObserver(BrowserPlatformIntegrationObserver* observer);
+  void RemoveObserver(BrowserPlatformIntegrationObserver* observer);
+
+  ObserverList<BrowserPlatformIntegrationObserver> observers_;
+
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };
 

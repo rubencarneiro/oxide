@@ -47,9 +47,22 @@ base::LazyInstance<QPointer<QThread> > g_io_thread;
 
 BrowserPlatformIntegration::BrowserPlatformIntegration(
     GLContextAdopted* gl_share_context)
-    : gl_share_context_(gl_share_context) {}
+    : QObject()
+    , gl_share_context_(gl_share_context) {
+  QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
+                   this, SLOT(onApplicationStateChanged(Qt::ApplicationState)));
+}
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
+
+void BrowserPlatformIntegration::onApplicationStateChanged(
+    Qt::ApplicationState state) {
+  BrowserPlatformIntegration::ApplicationState oxide_state =
+      (state == Qt::ApplicationActive) ?
+          BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE :
+          BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE;
+  NotifyApplicationStateChanged(oxide_state);
+}
 
 bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
   return QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));

@@ -31,6 +31,7 @@
 
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 
+#include "oxide_browser_platform_integration_observer.h"
 #include "oxide_form_factor.h"
 
 namespace oxide {
@@ -43,7 +44,8 @@ const char kUnityScreenInterface[] = "com.canonical.Unity.Screen";
 
 }
 
-class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate {
+class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
+                         public BrowserPlatformIntegrationObserver {
  public:
   PowerSaveBlocker();
 
@@ -55,6 +57,10 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate {
 
   void ApplyBlock();
   void RemoveBlock();
+
+  // BrowserPlatformIntegrationObserver implementation
+  void ApplicationStateChanged(
+      BrowserPlatformIntegration::ApplicationState state) final;
 
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
@@ -139,9 +145,22 @@ void PowerSaveBlocker::RemoveBlock() {
   }
 }
 
+void PowerSaveBlocker::ApplicationStateChanged(
+    BrowserPlatformIntegration::ApplicationState state) {
+  if ((state == BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE) &&
+      (cookie_ != 0)) {
+    CleanUp();
+  } else if ((state == BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) &&
+      (cookie_ == 0)) {
+    Init();
+  }
+}
+
 PowerSaveBlocker::PowerSaveBlocker()
     : form_factor_(oxide::GetFormFactorHint()),
-      cookie_(0) {}
+      cookie_(0) {
+  Observe(BrowserPlatformIntegration::GetInstance());
+}
 
 content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
     content::PowerSaveBlocker::PowerSaveBlockerType type,
