@@ -31,12 +31,6 @@ class BrowserPlatformIntegrationObserver {
 
  protected:
   BrowserPlatformIntegrationObserver();
-  BrowserPlatformIntegrationObserver(BrowserPlatformIntegration* platform);
-
-  void Observe(BrowserPlatformIntegration* platform);
-
- private:
-  BrowserPlatformIntegration* platform_;
 };
 
 } // namespace oxide

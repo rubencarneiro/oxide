@@ -19,34 +19,12 @@
 
 namespace oxide {
 
-BrowserPlatformIntegrationObserver::BrowserPlatformIntegrationObserver()
-    : platform_(NULL) {}
-
-BrowserPlatformIntegrationObserver::BrowserPlatformIntegrationObserver(
-    BrowserPlatformIntegration* platform) : platform_(platform) {
-  if (platform) {
-    platform->AddObserver(this);
-  }
-}
-
-void BrowserPlatformIntegrationObserver::Observe(
-    BrowserPlatformIntegration* platform) {
-  if (platform_ == platform) {
-    return;
-  }
-  if (platform_) {
-    platform_->RemoveObserver(this);
-  }
-  platform_ = platform;
-  if (platform_) {
-    platform_->AddObserver(this);
-  }
+BrowserPlatformIntegrationObserver::BrowserPlatformIntegrationObserver() {
+  BrowserPlatformIntegration::GetInstance()->AddObserver(this);
 }
 
 BrowserPlatformIntegrationObserver::~BrowserPlatformIntegrationObserver() {
-  if (platform_) {
-    platform_->RemoveObserver(this);
-  }
+  BrowserPlatformIntegration::GetInstance()->RemoveObserver(this);
 }
 
 } // namespace oxide

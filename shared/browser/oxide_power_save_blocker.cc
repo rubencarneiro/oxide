@@ -158,10 +158,8 @@ void PowerSaveBlocker::ApplicationStateChanged(
 }
 
 PowerSaveBlocker::PowerSaveBlocker()
-    : form_factor_(oxide::GetFormFactorHint()),
-      cookie_(0) {
-  Observe(BrowserPlatformIntegration::GetInstance());
-}
+    : form_factor_(oxide::GetFormFactorHint())
+    , cookie_(0) {}
 
 content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
     content::PowerSaveBlocker::PowerSaveBlockerType type,
