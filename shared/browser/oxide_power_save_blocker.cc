@@ -122,9 +122,8 @@ void PowerSaveBlocker::RemoveBlock() {
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
-    DCHECK(bus_.get());
-
     if (cookie_ != 0) {
+      DCHECK(bus_.get());
       scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
           kUnityScreenServiceName,
           dbus::ObjectPath(kUnityScreenPath));
@@ -138,8 +137,10 @@ void PowerSaveBlocker::RemoveBlock() {
       cookie_ = 0;
     }
 
-    bus_->ShutdownAndBlock();
-    bus_ = NULL;
+    if (bus_.get()) {
+      bus_->ShutdownAndBlock();
+      bus_ = NULL;
+    }
   } else {
     NOTIMPLEMENTED();
   }
