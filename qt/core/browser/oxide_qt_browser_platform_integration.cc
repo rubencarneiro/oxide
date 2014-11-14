@@ -47,8 +47,7 @@ base::LazyInstance<QPointer<QThread> > g_io_thread;
 
 BrowserPlatformIntegration::BrowserPlatformIntegration(
     GLContextAdopted* gl_share_context)
-    : QObject()
-    , gl_share_context_(gl_share_context) {
+    : gl_share_context_(gl_share_context) {
   QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
                    this, SLOT(onApplicationStateChanged(Qt::ApplicationState)));
 }
