@@ -649,6 +649,11 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
   }
 }
 
+scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
+    const base::FilePath& partition_path) {
+  return nullptr;
+}
+
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
   DCHECK(CalledOnValidThread());
   return GetStoragePartition(this, NULL)->GetURLRequestContext();
