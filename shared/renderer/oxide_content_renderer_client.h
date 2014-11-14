@@ -57,15 +57,17 @@ class ContentRendererClient final : public content::ContentRendererClient {
 
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
 
+#if defined(ENABLE_MEDIAHUB)
   blink::WebMediaPlayer* OverrideWebMediaPlayer(
               blink::WebFrame* frame,
               blink::WebMediaPlayerClient* client,
               base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
               media::MediaLog* media_log);
+  scoped_ptr<RendererMediaPlayerManager> media_player_manager_;
+#endif
 
   scoped_ptr<RenderProcessObserver> process_observer_;
   scoped_ptr<UserScriptSlave> user_script_slave_;
-  scoped_ptr<RendererMediaPlayerManager> media_player_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };

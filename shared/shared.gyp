@@ -206,7 +206,6 @@
         '<(DEPTH)/ui/native_theme/native_theme.gyp:native_theme',
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
         '<(DEPTH)/url/url.gyp:url_lib',
-        './media/mediahub.gyp:mediahub_lib',
       ],
       'include_dirs': [
         '..',
@@ -331,12 +330,6 @@
         'browser/oxide_web_view_contents_helper.cc',
         'browser/oxide_web_view_contents_helper.h',
         'browser/oxide_web_view_contents_helper_delegate.h',
-        'browser/media/oxide_browser_media_player_manager.h',
-        'browser/media/oxide_browser_media_player_manager.cc',
-        'browser/media/oxide_player_mediahub.h',
-        'browser/media/oxide_player_mediahub.cc',
-        'browser/media/oxide_media_player_oxide.h',
-        'browser/media/oxide_media_player_oxide.h',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',
@@ -392,12 +385,6 @@
         'renderer/oxide_v8_scoped_persistent.h',
         'renderer/oxide_web_permission_client.cc',
         'renderer/oxide_web_permission_client.h',
-        'renderer/media/oxide_renderer_media_player_manager.cc',
-        'renderer/media/oxide_renderer_media_player_manager.h',
-        'renderer/media/oxide_webmediaplayer_oxide.cc',
-        'renderer/media/oxide_webmediaplayer_oxide.h',
-        'renderer/media/oxide_media_info_loader.cc',
-        'renderer/media/oxide_media_info_loader.h',
         '<(DEPTH)/extensions/common/constants.cc',
         '<(DEPTH)/extensions/common/constants.h',
         '<(DEPTH)/extensions/common/error_utils.cc',
@@ -421,6 +408,28 @@
             '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_shared',
           ],
         }],
+        ['enable_mediahub==1', {
+          'defines': [
+            'ENABLE_MEDIAHUB=1'
+          ],
+          'sources': [
+            'browser/media/oxide_browser_media_player_manager.h',
+            'browser/media/oxide_browser_media_player_manager.cc',
+            'browser/media/oxide_player_mediahub.h',
+            'browser/media/oxide_player_mediahub.cc',
+            'browser/media/oxide_media_player_oxide.h',
+            'browser/media/oxide_media_player_oxide.h',
+            'renderer/media/oxide_renderer_media_player_manager.cc',
+            'renderer/media/oxide_renderer_media_player_manager.h',
+            'renderer/media/oxide_webmediaplayer_oxide.cc',
+            'renderer/media/oxide_webmediaplayer_oxide.h',
+            'renderer/media/oxide_media_info_loader.cc',
+            'renderer/media/oxide_media_info_loader.h',
+          ],
+          'dependencies': [
+            './media/mediahub.gyp:mediahub_lib',
+          ],
+        }]
       ],
       'actions': [
         {

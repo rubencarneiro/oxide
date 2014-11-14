@@ -91,7 +91,9 @@
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
 
+#if defined(ENABLE_MEDIAHUB)
 #include "shared/browser/media/oxide_browser_media_player_manager.h"
+#endif
 
 #define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
 
@@ -1047,13 +1049,18 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 
+#if defined(ENABLE_MEDIAHUB)
   if (!handled) {
     return OnMediaPlayerMessageReceived(msg, render_frame_host);
   }
 
   return true;
+#else
+  return handled;
+#endif
 }
 
+#if defined(ENABLE_MEDIAHUB)
 bool WebView::OnMediaPlayerMessageReceived(const IPC::Message& msg,
                                 content::RenderFrameHost* render_frame_host) {
   bool handled = true;
@@ -1119,6 +1126,7 @@ BrowserMediaPlayerManager* WebView::GetMediaPlayerManager(
   }
   return media_player_managers_.get(key);
 }
+#endif
 
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
