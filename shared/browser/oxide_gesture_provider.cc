@@ -36,7 +36,7 @@ namespace oxide {
 
 namespace {
 
-const double kDefaultRadius = 25.0f;
+const double kDefaultRadius = 24.0f;
 
 ui::GestureDetector::Config GetGestureDetectorConfig(float scale) {
   ui::GestureDetector::Config config;
@@ -44,18 +44,20 @@ ui::GestureDetector::Config GetGestureDetectorConfig(float scale) {
   config.showpress_timeout = base::TimeDelta::FromMilliseconds(180);
   config.double_tap_timeout = base::TimeDelta::FromMilliseconds(300);
 
-  config.touch_slop = 8 * scale;
-  config.double_tap_slop = 100 * scale;
-  config.minimum_fling_velocity = 50.0f * scale;
-  config.maximum_fling_velocity = 8000.0f * scale;
+  config.touch_slop = 8.0f;
+  config.double_tap_slop = 100.0f;
+  config.minimum_fling_velocity = 50.0f;
+  config.maximum_fling_velocity = 8000.0f;
 
   return config;
 }
 
 ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig(float scale) {
   ui::ScaleGestureDetector::Config config;
-  config.min_scaling_touch_major = kDefaultRadius * 2 * scale;
-  config.min_scaling_span = 170 * scale;
+  config.span_slop = 16.0f;
+  config.min_scaling_touch_major = kDefaultRadius * 2;
+  config.min_scaling_span = 170.0f;
+  config.min_pinch_update_span_delta = 0.0f;
 
   return config;
 }
@@ -69,7 +71,7 @@ ui::GestureProvider::Config GetGestureProviderConfig() {
   config.gesture_detector_config = GetGestureDetectorConfig(scale);
   config.scale_gesture_detector_config = GetScaleGestureDetectorConfig(scale);
   config.gesture_begin_end_types_enabled = false;
-  config.min_gesture_bounds_length = kDefaultRadius * scale;
+  config.min_gesture_bounds_length = kDefaultRadius;
 
   return config;
 }

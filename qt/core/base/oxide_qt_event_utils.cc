@@ -510,7 +510,7 @@ void MakeUITouchEvents(QTouchEvent* event,
   // The event’s timestamp is not guaranteed to have the same origin as the
   // internal timedelta used by chromium to calculate speed and displacement
   // for a fling gesture, so we can’t use it.
-  base::TimeDelta timestamp(base::TimeTicks::Now() - base::TimeTicks());
+  base::TimeDelta timestamp(base::TimeTicks::HighResNow() - base::TimeTicks());
 
   float scale = 1 / device_scale;
 
