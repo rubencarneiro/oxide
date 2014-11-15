@@ -289,10 +289,8 @@ void AddFormFactorSpecificCommandLineArguments() {
     if (IsEnvironmentOptionEnabled("ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
       command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
     }
-
     command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
 
-    command_line->AppendSwitch(switches::kLimitMaxDecodedImageBytes);
   }
 
   const char* form_factor_string = NULL;

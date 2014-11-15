@@ -23,4 +23,3 @@ store-cache-stats-at-startup.patch
 export-content-switches.patch
 fix-openmax-arm-non-neon-build.patch
 fix-non-x11-build.patch
-add-limit-max-decoded-image-bytes-switch.patch

@@ -149,17 +149,16 @@ std::string ContentBrowserClient::GetAcceptLangs(
 void ContentBrowserClient::AppendExtraCommandLineSwitches(
     base::CommandLine* command_line,
     int child_process_id) {
-  static const char* const kSwitchNames[] = {
-    switches::kEnableGoogleTalkPlugin,
-    switches::kFormFactor,
-    switches::kLimitMaxDecodedImageBytes
-  };
-  command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
-                                 kSwitchNames, arraysize(kSwitchNames));
-
   std::string process_type =
       command_line->GetSwitchValueASCII(switches::kProcessType);
   if (process_type == switches::kRendererProcess) {
+    static const char* const kSwitchNames[] = {
+      switches::kEnableGoogleTalkPlugin,
+      switches::kFormFactor
+    };
+    command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
+                                   kSwitchNames, arraysize(kSwitchNames));
+
     content::RenderProcessHost* host =
         content::RenderProcessHost::FromID(child_process_id);
     if (host->GetBrowserContext()->IsOffTheRecord()) {
