@@ -109,6 +109,10 @@ void BrowserMediaPlayerManager::OnPlayerPause(int player_id) {
   Send(new MediaPlayerMsg_DidMediaPlayerPause(RoutingID(), player_id));
 }
 
+void BrowserMediaPlayerManager::OnTimeUpdate(int player_id, const base::TimeDelta& current_time) {
+  Send(new MediaPlayerMsg_MediaTimeUpdate(RoutingID(), player_id, current_time));
+}
+
 void BrowserMediaPlayerManager::GetCookies(
       const GURL& url,
       const GURL& first_party_for_cookies,

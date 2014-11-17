@@ -418,7 +418,7 @@
             'browser/media/oxide_player_mediahub.h',
             'browser/media/oxide_player_mediahub.cc',
             'browser/media/oxide_media_player_oxide.h',
-            'browser/media/oxide_media_player_oxide.h',
+            'browser/media/oxide_media_player_oxide.cc',
             'renderer/media/oxide_renderer_media_player_manager.cc',
             'renderer/media/oxide_renderer_media_player_manager.h',
             'renderer/media/oxide_webmediaplayer_oxide.cc',

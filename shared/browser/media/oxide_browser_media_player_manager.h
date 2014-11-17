@@ -64,6 +64,7 @@ class BrowserMediaPlayerManager {
   void OnPlaybackComplete(int player_id);
   void OnPlayerPlay(int player_id);
   void OnPlayerPause(int player_id);
+  void OnTimeUpdate(int player_id, const base::TimeDelta& current_time);
 
   void GetCookies(
       const GURL& url,

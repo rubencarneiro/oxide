@@ -65,6 +65,7 @@ MediaPlayerMediaHub::MediaPlayerMediaHub(
 
 MediaPlayerMediaHub::~MediaPlayerMediaHub() {
   timer_.Stop();
+  mediahub_stop(media_hub_client_);
   mediahub_release(media_hub_client_);
 }
 
@@ -211,6 +212,8 @@ void MediaPlayerMediaHub::CheckStatus() {
                                       0, 0, true);
     duration_ = duration;
   }
+
+  manager_->OnTimeUpdate(player_id(), base::TimeDelta::FromMilliseconds(mediahub_get_position(media_hub_client_)));
 }
 
 }  // namespace media
