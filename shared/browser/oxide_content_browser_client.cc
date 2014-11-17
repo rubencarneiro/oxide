@@ -152,7 +152,9 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   static const char* const kSwitchNames[] = {
     switches::kEnableGoogleTalkPlugin,
     switches::kFormFactor,
-    switches::kLimitMaxDecodedImageBytes
+    switches::kLimitMaxDecodedImageBytes,
+    switches::kEnableMediaHubAudio,
+    switches::kMediaHubFixedSessionDomains
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kSwitchNames, arraysize(kSwitchNames));
@@ -160,15 +162,6 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   std::string process_type =
       command_line->GetSwitchValueASCII(switches::kProcessType);
   if (process_type == switches::kRendererProcess) {
-    static const char* const kSwitchNames[] = {
-      switches::kEnableGoogleTalkPlugin,
-      switches::kFormFactor,
-      switches::kEnableMediaHubAudio,
-      switches::kMediaHubFixedSessionDomains
-    };
-    command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
-                                   kSwitchNames, arraysize(kSwitchNames));
-
     content::RenderProcessHost* host =
         content::RenderProcessHost::FromID(child_process_id);
     if (host->GetBrowserContext()->IsOffTheRecord()) {

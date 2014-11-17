@@ -155,8 +155,4 @@ blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
 }
 #endif
 
-ContentRendererClient::ContentRendererClient() {}
-
-ContentRendererClient::~ContentRendererClient() {}
-
 } // namespace oxide
