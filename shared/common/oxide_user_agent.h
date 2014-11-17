@@ -15,32 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
-#define _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
+#ifndef _OXIDE_SHARED_COMMON_USER_AGENT_H_
+#define _OXIDE_SHARED_COMMON_USER_AGENT_H_
 
-#include "base/compiler_specific.h"
-#include "base/macros.h"
-
-#include "shared/browser/oxide_browser_main_parts.h"
+#include <string>
 
 namespace oxide {
-namespace qt {
 
-class BrowserMainPartsDelegate final
-    : public oxide::BrowserMainParts::Delegate {
- public:
-  BrowserMainPartsDelegate();
-  ~BrowserMainPartsDelegate();
+std::string GetUserAgent();
+void SetUserAgent(const std::string& user_agent);
 
- private:
-  // oxide::BrowserMainParts::Delegate implementation
-  oxide::IOThread::Delegate* GetIOThreadDelegate() final;
-  MessagePumpFactory* GetMessagePumpFactory() final;
-
-  DISALLOW_COPY_AND_ASSIGN(BrowserMainPartsDelegate);
-};
-
-} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_BROWSER_MAIN_PARTS_DELEGATE_H_
+#endif // _OXIDE_SHARED_COMMON_USER_AGENT_H_

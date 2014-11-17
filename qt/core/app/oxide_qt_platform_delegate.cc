@@ -15,19 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
-#define _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_
+#include "oxide_qt_platform_delegate.h"
+
+#include "qt/core/browser/oxide_qt_browser_platform_integration.h"
+#include "qt/core/gl/oxide_qt_gl_context_adopted.h"
 
 namespace oxide {
+namespace qt {
 
+oxide::BrowserPlatformIntegration*
+PlatformDelegate::CreateBrowserIntegration() {
+  return new BrowserPlatformIntegration(shared_gl_context_.get());
+}
 
-class WebViewContentsHelperDelegate {
- public:
-  virtual ~WebViewContentsHelperDelegate() {}
+PlatformDelegate::PlatformDelegate(GLContextAdopted* shared_gl_context)
+    : shared_gl_context_(shared_gl_context) {}
 
-  virtual void NotifyWebPreferencesDestroyed() = 0;
-};
+PlatformDelegate::~PlatformDelegate() {}
 
+} // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_DELEGATE_H_

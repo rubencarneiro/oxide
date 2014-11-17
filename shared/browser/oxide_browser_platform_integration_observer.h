@@ -15,36 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_browser_main_parts_delegate.h"
+#ifndef _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_OBSERVER_H_
+#define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_OBSERVER_H_
 
-#include "base/memory/scoped_ptr.h"
-
-#include "oxide_qt_io_thread_delegate.h"
-#include "oxide_qt_message_pump.h"
+#include "oxide_browser_platform_integration.h"
 
 namespace oxide {
-namespace qt {
 
-namespace {
+class BrowserPlatformIntegrationObserver {
+ public:
+  virtual ~BrowserPlatformIntegrationObserver();
 
-scoped_ptr<base::MessagePump> CreateMessagePumpForUI() {
-  return make_scoped_ptr(new MessagePump()).PassAs<base::MessagePump>();
-}
+  virtual void ApplicationStateChanged() {}
 
-}
+ protected:
+  BrowserPlatformIntegrationObserver();
+};
 
-oxide::IOThread::Delegate* BrowserMainPartsDelegate::GetIOThreadDelegate() {
-  return new IOThreadDelegate();
-}
-
-oxide::BrowserMainParts::Delegate::MessagePumpFactory*
-BrowserMainPartsDelegate::GetMessagePumpFactory() {
-  return CreateMessagePumpForUI;
-}
-
-BrowserMainPartsDelegate::BrowserMainPartsDelegate() {}
-
-BrowserMainPartsDelegate::~BrowserMainPartsDelegate() {}
-
-} // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_OBSERVER_H_

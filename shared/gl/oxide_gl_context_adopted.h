@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,30 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
-#define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
+#ifndef _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
+#define _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
 
-#include "base/macros.h"
+#include "ui/gl/gl_context.h"
+#include "ui/gl/gl_implementation.h"
 
-class GURL;
+namespace gfx {
+class GLShareGroup;
+}
 
 namespace oxide {
 
-class PlatformIntegration {
+class GLContextAdopted : public gfx::GLContext {
  public:
-  virtual ~PlatformIntegration();
+  virtual ~GLContextAdopted();
 
-  static PlatformIntegration* GetInstance();
+  virtual gfx::GLImplementation GetImplementation() const = 0;
 
-  virtual bool LaunchURLExternally(const GURL& url);
+  bool Initialize(gfx::GLSurface* compatible_surface,
+                  gfx::GpuPreference gpu_preference) final;
+  void Destroy() final;
+  bool MakeCurrent(gfx::GLSurface* surface) final;
+  void ReleaseCurrent(gfx::GLSurface* surface) final;
+  bool IsCurrent(gfx::GLSurface* surface) final;
+  void SetSwapInterval(int interval) final;
 
  protected:
-  PlatformIntegration();
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(PlatformIntegration);
+  GLContextAdopted(gfx::GLShareGroup* share_group);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
+#endif // _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_

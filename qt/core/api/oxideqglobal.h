@@ -25,9 +25,30 @@ QT_BEGIN_NAMESPACE
 class QThread;
 QT_END_NAMESPACE
 
+enum Q_DECL_EXPORT OxideProcessModel {
+  OxideProcessModelMultiProcess, // Uses the default multiprocess model
+  OxideProcessModelSingleProcess,
+
+  // Unsupported process models - these could change or go away at any
+  // time (the enums won't change, but the behaviour might), so applications
+  // shouldn't rely on these by default. They exist so that applications
+  // could, eg, expose a command-line interface to enable them in the same
+  // way that Chrome provides
+  OxideProcessModelProcessPerSiteInstance,
+  OxideProcessModelProcessPerView,
+  OxideProcessModelProcessPerSite,
+  OxideProcessModelSitePerProcess
+};
+
 Q_DECL_EXPORT QString oxideGetNSSDbPath();
-Q_DECL_EXPORT bool oxideSetNSSDbPath(const QString& path);
+Q_DECL_EXPORT void oxideSetNSSDbPath(const QString& path);
 
 Q_DECL_EXPORT QThread* oxideGetIOThread();
+
+Q_DECL_EXPORT OxideProcessModel oxideGetProcessModel();
+Q_DECL_EXPORT void oxideSetProcessModel(OxideProcessModel model);
+
+Q_DECL_EXPORT size_t oxideGetMaxRendererProcessCount();
+Q_DECL_EXPORT void oxideSetMaxRendererProcessCount(size_t count);
 
 #endif // OXIDE_Q_GLOBAL

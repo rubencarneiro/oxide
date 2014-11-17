@@ -55,7 +55,6 @@
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
-#include "shared/browser/oxide_web_view_contents_helper_delegate.h"
 #include "shared/common/oxide_message_enums.h"
 
 class GURL;
@@ -143,7 +142,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                 private WebPreferencesObserver,
                 private GestureProviderClient,
                 private content::NotificationObserver,
-                private WebViewContentsHelperDelegate,
                 private RenderWidgetHostViewDelegate,
                 private content::WebContentsDelegate,
                 private content::WebContentsObserver {
@@ -345,9 +343,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void Observe(int type,
                const content::NotificationSource& source,
                const content::NotificationDetails& details) final;
-
-  // WebViewContentsHelperDelegate implementation
-  void NotifyWebPreferencesDestroyed() final;
 
   // RenderWidgetHostViewDelegate implementation
   void EvictCurrentFrame() final;
@@ -561,7 +556,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   GURL initial_url_;
   scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
-  WebPreferences* initial_preferences_;
 
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;

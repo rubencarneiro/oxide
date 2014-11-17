@@ -33,9 +33,11 @@
 #include "gpu/command_buffer/service/texture_manager.h"
 
 namespace content {
-namespace gpu_shim {
+namespace oxide_gpu_shim {
 
 namespace {
+
+gfx::GLShareGroup* g_gl_share_group;
 
 content::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
                                                    int32_t route_id) {
@@ -66,8 +68,7 @@ void AddGpuThreadTaskObserver(base::MessageLoop::TaskObserver* obs) {
   content::GpuChildThread::instance()->message_loop()->AddTaskObserver(obs);
 }
 
-gpu::gles2::TextureRef* CreateTextureRef(unsigned target,
-                                         int32_t client_id,
+gpu::gles2::TextureRef* CreateTextureRef(int32_t client_id,
                                          int32_t route_id,
                                          const gpu::Mailbox& mailbox) {
   DCHECK(IsCurrentlyOnGpuThread());
@@ -81,7 +82,7 @@ gpu::gles2::TextureRef* CreateTextureRef(unsigned target,
   gpu::gles2::ContextGroup* group =
       command_buffer->decoder()->GetContextGroup();
   gpu::gles2::Texture* texture =
-      group->mailbox_manager()->ConsumeTexture(GL_TEXTURE_2D, mailbox);
+      group->mailbox_manager()->ConsumeTexture(mailbox);
   if (!texture) {
     return NULL;
   }
@@ -129,5 +130,13 @@ int32_t GetContextProviderRouteID(
   return provider->GetCommandBufferProxy()->GetRouteID();
 }
 
-} // namespace gpu_shim
+gfx::GLShareGroup* GetGLShareGroup() {
+  return g_gl_share_group;
+}
+
+void SetGLShareGroup(gfx::GLShareGroup* share_group) {
+  g_gl_share_group = share_group;
+}
+
+} // namespace oxide_gpu_shim
 } // namespace content

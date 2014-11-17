@@ -31,6 +31,7 @@
 
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 
+#include "oxide_browser_platform_integration_observer.h"
 #include "oxide_form_factor.h"
 
 namespace oxide {
@@ -43,7 +44,8 @@ const char kUnityScreenInterface[] = "com.canonical.Unity.Screen";
 
 }
 
-class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate {
+class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
+                         public BrowserPlatformIntegrationObserver {
  public:
   PowerSaveBlocker();
 
@@ -56,16 +58,22 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate {
   void ApplyBlock();
   void RemoveBlock();
 
+  // BrowserPlatformIntegrationObserver implementation
+  void ApplicationStateChanged() final;
+
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
   int cookie_;
 };
 
 void PowerSaveBlocker::Init() {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::FILE,
-      FROM_HERE,
-      base::Bind(&PowerSaveBlocker::ApplyBlock, this));
+  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() ==
+      BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::FILE,
+        FROM_HERE,
+        base::Bind(&PowerSaveBlocker::ApplyBlock, this));
+  }
 }
 
 void PowerSaveBlocker::CleanUp() {
@@ -116,9 +124,8 @@ void PowerSaveBlocker::RemoveBlock() {
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
-    DCHECK(bus_.get());
-
     if (cookie_ != 0) {
+      DCHECK(bus_.get());
       scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
           kUnityScreenServiceName,
           dbus::ObjectPath(kUnityScreenPath));
@@ -132,16 +139,30 @@ void PowerSaveBlocker::RemoveBlock() {
       cookie_ = 0;
     }
 
-    bus_->ShutdownAndBlock();
-    bus_ = NULL;
+    if (bus_.get()) {
+      bus_->ShutdownAndBlock();
+      bus_ = NULL;
+    }
   } else {
     NOTIMPLEMENTED();
   }
 }
 
+void PowerSaveBlocker::ApplicationStateChanged() {
+  BrowserPlatformIntegration::ApplicationState state =
+      BrowserPlatformIntegration::GetInstance()->GetApplicationState();
+  if ((state == BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE) &&
+      (cookie_ != 0)) {
+    CleanUp();
+  } else if ((state == BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) &&
+      (cookie_ == 0)) {
+    Init();
+  }
+}
+
 PowerSaveBlocker::PowerSaveBlocker()
-    : form_factor_(oxide::GetFormFactorHint()),
-      cookie_(0) {}
+    : form_factor_(oxide::GetFormFactorHint())
+    , cookie_(0) {}
 
 content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
     content::PowerSaveBlocker::PowerSaveBlockerType type,

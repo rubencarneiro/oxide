@@ -21,19 +21,19 @@
     'print_ld_stats%': 0,
     'enable_tcmalloc%': 0,
     'disable_nacl': 1,
-    'linux_use_gold_binary': 0,
-    'linux_use_gold_flags': 0,
+    'linux_use_bundled_gold': 0,
+    'linux_use_bundled_binutils': 0,
     'use_allocator': 'none',
     'sysroot': '',
     'use_aura': 1,
+    'use_cups': 0,
     'use_gconf': 0,
     'use_gnome_keyring': 0,
-    'use_mojo': 0,
     'use_ozone': 1,
     'toolkit_views': 0,
-    'toolkit_uses_gtk': 0,
     'remoting': 0,
-    'enable_printing': 0,
+    'enable_basic_printing': 0,
+    'enable_print_preview': 0,
     'variables': {
       'conditions': [
         ['target_arch=="arm"', {
@@ -58,6 +58,9 @@
     ],
   },
   'target_defaults': {
+    'cflags': [
+      '-B<(PRODUCT_DIR)/../../../gold',
+    ],
     'cflags!': [
       # Should remove this
       '-Werror',

@@ -28,18 +28,42 @@ class OxideQQuickWebContext;
 class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   Q_OBJECT
 
+  Q_PROPERTY(ProcessModel processModel READ processModel WRITE setProcessModel NOTIFY processModelChanged)
+  Q_PROPERTY(int maxRendererProcessCount READ maxRendererProcessCount WRITE setMaxRendererProcessCount NOTIFY maxRendererProcessCountChanged)
+
+  Q_ENUMS(ProcessModel)
+
   Q_DECLARE_PRIVATE(OxideQQuickGlobal)
   Q_DISABLE_COPY(OxideQQuickGlobal)
 
  public:
-  static OxideQQuickGlobal* instance();
+
+  enum ProcessModel {
+    ProcessModelMultiProcess,
+    ProcessModelSingleProcess,
+
+    ProcessModelProcessPerSiteInstance,
+    ProcessModelProcessPerView,
+    ProcessModelProcessPerSite,
+    ProcessModelSitePerProcess
+  };
+
+  OxideQQuickGlobal();
   virtual ~OxideQQuickGlobal();
+
+  ProcessModel processModel() const;
+  void setProcessModel(ProcessModel model);
+
+  int maxRendererProcessCount() const;
+  void setMaxRendererProcessCount(int count);
 
   Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
 
- private:
-  OxideQQuickGlobal();
+ Q_SIGNALS:
+  void processModelChanged();
+  void maxRendererProcessCountChanged();
 
+ private:
   QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
 };
 

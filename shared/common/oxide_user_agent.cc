@@ -15,22 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_platform_integration.h"
+#include "oxide_user_agent.h"
 
-#include <QDesktopServices>
-#include <QString>
-#include <QUrl>
-
-#include "url/gurl.h"
+#include "base/lazy_instance.h"
 
 namespace oxide {
-namespace qt {
 
-PlatformIntegration::PlatformIntegration() {}
-
-bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
-  return QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));
+namespace {
+base::LazyInstance<std::string> g_user_agent = LAZY_INSTANCE_INITIALIZER;
 }
 
-} // namespace qt
+std::string GetUserAgent() {
+  return g_user_agent.Get();
+}
+
+void SetUserAgent(const std::string& user_agent) {
+  g_user_agent.Get() = user_agent;
+}
+
 } // namespace oxide

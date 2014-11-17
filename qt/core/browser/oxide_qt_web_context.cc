@@ -498,6 +498,21 @@ void WebContext::SetAllowedExtraURLSchemes(
   allowed_extra_url_schemes_ = schemes;
 }
 
+// static
+WebContext* WebContext::GetDefault() {
+  WebContextAdapter* adapter = WebContextAdapter::GetDefault();
+  if (!adapter) {
+    return NULL;
+  }
+
+  return FromAdapter(adapter);
+}
+
+// static
+void WebContext::DestroyDefault() {
+  WebContextAdapter::DestroyDefault();
+}
+
 oxide::BrowserContext* WebContext::GetContext() {
   if (context_.get()) {
     return context_.get();

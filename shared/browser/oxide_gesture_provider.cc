@@ -36,26 +36,28 @@ namespace oxide {
 
 namespace {
 
-const double kDefaultRadius = 25.0f;
+const double kDefaultRadius = 24.0f;
 
-ui::GestureDetector::Config GetGestureDetectorConfig(float scale) {
+ui::GestureDetector::Config GetGestureDetectorConfig() {
   ui::GestureDetector::Config config;
   config.longpress_timeout = base::TimeDelta::FromMilliseconds(500);
   config.showpress_timeout = base::TimeDelta::FromMilliseconds(180);
   config.double_tap_timeout = base::TimeDelta::FromMilliseconds(300);
 
-  config.touch_slop = 8 * scale;
-  config.double_tap_slop = 100 * scale;
-  config.minimum_fling_velocity = 50.0f * scale;
-  config.maximum_fling_velocity = 8000.0f * scale;
+  config.touch_slop = 8.0f;
+  config.double_tap_slop = 100.0f;
+  config.minimum_fling_velocity = 50.0f;
+  config.maximum_fling_velocity = 10000.0f;
 
   return config;
 }
 
-ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig(float scale) {
+ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig() {
   ui::ScaleGestureDetector::Config config;
-  config.min_scaling_touch_major = kDefaultRadius * 2 * scale;
-  config.min_scaling_span = 170 * scale;
+  config.span_slop = 16.0f;
+  config.min_scaling_touch_major = kDefaultRadius * 2;
+  config.min_scaling_span = 170.0f;
+  config.min_pinch_update_span_delta = 0.0f;
 
   return config;
 }
@@ -64,12 +66,10 @@ ui::GestureProvider::Config GetGestureProviderConfig() {
   ui::GestureProvider::Config config;
   config.display = gfx::Screen::GetNativeScreen()->GetPrimaryDisplay();
 
-  const float scale = 1.0f / config.display.device_scale_factor();
-
-  config.gesture_detector_config = GetGestureDetectorConfig(scale);
-  config.scale_gesture_detector_config = GetScaleGestureDetectorConfig(scale);
+  config.gesture_detector_config = GetGestureDetectorConfig();
+  config.scale_gesture_detector_config = GetScaleGestureDetectorConfig();
   config.gesture_begin_end_types_enabled = false;
-  config.min_gesture_bounds_length = kDefaultRadius * scale;
+  config.min_gesture_bounds_length = kDefaultRadius;
 
   return config;
 }
@@ -84,9 +84,6 @@ class MotionEvent : public ui::MotionEvent {
   bool IsTouchIdActive(int id) const;
   void OnTouchEvent(const ui::TouchEvent& event);
   void RemoveInactiveTouchPoints();
-
-  // ui::MotionEvent implementation
-  scoped_ptr<ui::MotionEvent> Clone() const final;
 
  private:
   static const size_t kMaxTouchPoints = ui::MotionEvent::MAX_TOUCH_POINT_COUNT;
@@ -147,8 +144,6 @@ class MotionEvent : public ui::MotionEvent {
   ToolType GetToolType(size_t pointer_index) const final;
   int GetButtonState() const final;
   int GetFlags() const final;
-
-  scoped_ptr<ui::MotionEvent> Cancel() const final;
 
   static TouchPoint CreateTouchPointFromEvent(const ui::TouchEvent& event);
 
@@ -391,13 +386,6 @@ int MotionEvent::GetFlags() const {
   return flags_;
 }
 
-scoped_ptr<ui::MotionEvent> MotionEvent::Cancel() const {
-  return make_scoped_ptr(
-      new MotionEvent(pointer_count_, active_touch_point_count_,
-                      touch_points_, ACTION_CANCEL, -1, flags_,
-                      last_event_time_)).PassAs<ui::MotionEvent>();
-}
-
 // static
 MotionEvent::TouchPoint MotionEvent::CreateTouchPointFromEvent(
     const ui::TouchEvent& event) {
@@ -477,13 +465,6 @@ void MotionEvent::RemoveInactiveTouchPoints() {
   }
 
   DCHECK_EQ(pointer_count_, active_touch_point_count_);
-}
-
-scoped_ptr<ui::MotionEvent> MotionEvent::Clone() const {
-  return make_scoped_ptr(
-      new MotionEvent(pointer_count_, active_touch_point_count_,
-                      touch_points_, action_, action_index_, flags_,
-                      last_event_time_)).PassAs<ui::MotionEvent>();
 }
 
 class GestureProviderImpl : public GestureProvider,
@@ -571,8 +552,7 @@ GestureProviderClient::~GestureProviderClient() {}
 scoped_ptr<GestureProvider> GestureProvider::Create(
     GestureProviderClient* client) {
   DCHECK(client) << "A GestureProviderClient must be provided";
-  return make_scoped_ptr(
-      new GestureProviderImpl(client)).PassAs<GestureProvider>();
+  return make_scoped_ptr(new GestureProviderImpl(client)).Pass();
 }
 
 GestureProvider::~GestureProvider() {}

@@ -45,10 +45,6 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_ephemeral() {
-    if (!QMLTEST_USE_CONTEXT_DATADIR) {
-      skip("Can't run session cookie tests withour a permanent storage");
-    }
-
     var webView = _createWebView(WebContext.SessionCookieModeEphemeral);
     _clear(webView);
     _set_cookies(webView);
@@ -61,10 +57,6 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_persistent() {
-    if (!QMLTEST_USE_CONTEXT_DATADIR) {
-      skip("Can't run session cookie tests withour a permanent storage");
-    }
-
     var webView = _createWebView(WebContext.SessionCookieModeRestored);
     _clear(webView);
     _set_cookies(webView);
@@ -85,10 +77,6 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_restored() {
-    if (!QMLTEST_USE_CONTEXT_DATADIR) {
-      skip("Can't run session cookie tests withour a permanent storage");
-    }
-      
     var webView = _createWebView(WebContext.SessionCookieModeRestored);
     _clear(webView);
     _set_cookies(webView);

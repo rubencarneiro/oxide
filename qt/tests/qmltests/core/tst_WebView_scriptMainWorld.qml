@@ -27,7 +27,7 @@ TestWebView {
 
     function init() {
       if (webView.addedScript) {
-        webView.context.removeUserScript(addedScript)
+        webView.context.removeUserScript(webView.addedScript)
         webView.addedScript = null
       }
     }

@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 1.0
+import com.canonical.Oxide 1.3
 import com.canonical.Oxide.Testing 1.0
 
 TestWebView {
@@ -8,7 +8,10 @@ TestWebView {
   width: 200
   height: 200
 
-  context.allowedExtraUrlSchemes: [ "test", "bar" ]
+  // XXX: Work around https://launchpad.net/bugs/1389721
+  Component.onCompleted: {
+    context.allowedExtraUrlSchemes = [ "test", "bar" ];
+  }
 
   TestCase {
     name: "CustomURLSchemes"

@@ -56,7 +56,7 @@ QObject* GlobalSingletonFactory(QQmlEngine* engine,
   Q_UNUSED(engine);
   Q_UNUSED(script_engine);
 
-  return OxideQQuickGlobal::instance();
+  return new OxideQQuickGlobal();
 }
 
 }
@@ -108,6 +108,13 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebContextDelegateWorker>(uri, 1, 0, "WebContextDelegateWorker");
     qmlRegisterType<OxideQWebPreferences>(uri, 1, 0, "WebPreferences");
     qmlRegisterType<OxideQQuickWebView>(uri, 1, 0, "WebView");
+
+    qmlRegisterUncreatableType<OxideQQuickCookieManager, 1>(uri, 1, 3, "CookieManager",
+        "CookieManager is accessed via WebContext.cookieManager");
+    qmlRegisterType<OxideQQuickWebContext, 1>(uri, 1, 3, "WebContext");
+    qmlRegisterType<OxideQQuickWebView, 1>(uri, 1, 3, "WebView");
+
+    qmlRegisterType<OxideQQuickWebView, 2>(uri, 1, 4, "WebView");
   }
 };
 

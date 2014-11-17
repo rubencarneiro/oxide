@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,39 +15,47 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
-#define _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_GL_CONTEXT_ADOPTED_H_
+#define _OXIDE_QT_CORE_BROWSER_GL_CONTEXT_ADOPTED_H_
 
 #include <QtGlobal>
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
+#include "ui/gl/gl_implementation.h"
 
-#include "shared/browser/oxide_io_thread.h"
+#include "shared/gl/oxide_gl_context_adopted.h"
 
 QT_BEGIN_NAMESPACE
-class QThread;
-QT_END_NAMESPACE;
+class QOpenGLContext;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
-class IOThreadDelegate final : public oxide::IOThread::Delegate {
+class GLContextAdopted final : public oxide::GLContextAdopted {
  public:
-  IOThreadDelegate();
-  ~IOThreadDelegate();
+  static scoped_refptr<GLContextAdopted> Create(
+      QOpenGLContext* context,
+      gfx::GLShareGroup* share_group = NULL);
+
+  // gfx::GLContext implementation
+  void* GetHandle() final;
+
+  // oxide::GLContextAdopted implementation
+  gfx::GLImplementation GetImplementation() const final;
 
  private:
-  // oxide::IOThread::Delegate implementation
-  void Init() final;
-  void CleanUp() final;
+  GLContextAdopted(void* handle,
+                   gfx::GLImplementation implementation,
+                   gfx::GLShareGroup* share_group);
 
-  DISALLOW_COPY_AND_ASSIGN(IOThreadDelegate);
+  void* handle_;
+  gfx::GLImplementation implementation_;
+
+  DISALLOW_COPY_AND_ASSIGN(GLContextAdopted);
 };
-
-QThread* GetIOQThread();
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_IO_THREAD_DELEGATE_H_
+#endif // _OXIDE_QT_CORE_BROWSER_GL_CONTEXT_ADOPTED_H_

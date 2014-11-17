@@ -28,48 +28,39 @@
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
+#include "content/public/utility/content_utility_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
 
+#include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_paths.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
+#include "oxide_platform_delegate.h"
+
 namespace oxide {
 
 namespace {
-base::LazyInstance<oxide::ContentRendererClient> g_content_renderer_client =
+base::LazyInstance<ContentBrowserClient> g_content_browser_client =
+    LAZY_INSTANCE_INITIALIZER;
+base::LazyInstance<ContentRendererClient> g_content_renderer_client =
+    LAZY_INSTANCE_INITIALIZER;
+base::LazyInstance<::content::ContentUtilityClient> g_content_utility_client =
     LAZY_INSTANCE_INITIALIZER;
 }
 
-ContentMainDelegate::ContentMainDelegate() {}
+ContentMainDelegate::ContentMainDelegate(PlatformDelegate* delegate)
+    : delegate_(delegate) {
+  CHECK(delegate_);
+}
 
 ContentMainDelegate::~ContentMainDelegate() {}
 
-SharedGLContext* ContentMainDelegate::GetSharedGLContext() const {
-  return NULL;
-}
-
-bool ContentMainDelegate::GetNativeDisplay(intptr_t* handle) const {
-  return false;
-}
-
-blink::WebScreenInfo ContentMainDelegate::GetDefaultScreenInfo() const {
-  return blink::WebScreenInfo();
-}
-
-#if defined(USE_NSS)
-base::FilePath ContentMainDelegate::GetNSSDbPath() const {
-  return base::FilePath();
-}
-#endif
-
-bool ContentMainDelegate::IsPlatformX11() const {
-  return false;
-}
-
 bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
-  content::SetContentClient(ContentClient::GetInstance());
+  content_client_.reset(new ContentClient());
+  content::SetContentClient(content_client_.get());
   RegisterPathProvider();
 
   return false;
@@ -112,13 +103,25 @@ void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
 
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
-  NOTREACHED() << "CreateContentBrowserClient() hasn't been implemented";
-  return NULL;
+  CHECK(BrowserProcessMain::GetInstance()->IsRunning());
+
+  g_content_browser_client.Get().SetPlatformIntegration(
+      delegate_->CreateBrowserIntegration());
+
+  return g_content_browser_client.Pointer();
 }
 
 content::ContentRendererClient*
 ContentMainDelegate::CreateContentRendererClient() {
+  //g_content_renderer_client.Get().SetPlatformIntegration(
+  //    delegate_->CreateRendererIntegration());
+
   return g_content_renderer_client.Pointer();
+}
+
+content::ContentUtilityClient*
+ContentMainDelegate::CreateContentUtilityClient() {
+  return g_content_utility_client.Pointer();
 }
 
 } // namespace oxide

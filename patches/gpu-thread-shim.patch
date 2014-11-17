@@ -3,98 +3,54 @@
 #  a shared GL context for texture sharing
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
-diff --git a/base/threading/thread.cc b/base/threading/thread.cc
---- a/base/threading/thread.cc
-+++ b/base/threading/thread.cc
-@@ -175,17 +175,17 @@ void Thread::Run(MessageLoop* message_lo
- }
- 
- void Thread::SetThreadWasQuitProperly(bool flag) {
-   lazy_tls_bool.Pointer()->Set(flag);
- }
- 
- bool Thread::GetThreadWasQuitProperly() {
-   bool quit_properly = true;
--#ifndef NDEBUG
-+#if 0
-   quit_properly = lazy_tls_bool.Pointer()->Get();
- #endif
-   return quit_properly;
- }
- 
- void Thread::ThreadMain() {
-   {
-     // The message loop for this thread.
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -74,20 +74,22 @@ class GpuChannelManagerMessageFilter : p
- };
+@@ -16,16 +16,18 @@
+ #include "gpu/command_buffer/service/gpu_switches.h"
+ #include "gpu/command_buffer/service/mailbox_manager_impl.h"
+ #include "gpu/command_buffer/service/memory_program_cache.h"
+ #include "gpu/command_buffer/service/shader_translator_cache.h"
+ #include "ipc/message_filter.h"
+ #include "ui/gl/gl_bindings.h"
+ #include "ui/gl/gl_share_group.h"
  
- }  // namespace
++#include "shared/port/content/common/gpu_thread_shim_oxide.h"
++
+ namespace content {
  
- GpuChannelManager::GpuChannelManager(MessageRouter* router,
-                                      GpuWatchdog* watchdog,
-                                      base::MessageLoopProxy* io_message_loop,
-                                      base::WaitableEvent* shutdown_event,
--                                     IPC::SyncChannel* channel)
-+                                     IPC::SyncChannel* channel,
-+                                     gfx::GLShareGroup* share_group)
-     : io_message_loop_(io_message_loop),
-       shutdown_event_(shutdown_event),
-       router_(router),
-+      share_group_(share_group),
-       gpu_memory_manager_(
-           this,
-           GpuMemoryManager::kDefaultMaxSurfacesWithFrontbufferSoftLimit),
-       watchdog_(watchdog),
-       sync_point_manager_(new SyncPointManager),
-       gpu_memory_buffer_factory_(GpuMemoryBufferFactory::Create()),
-       channel_(channel),
-       filter_(new GpuChannelManagerMessageFilter(
-@@ -173,16 +175,18 @@ void GpuChannelManager::OnEstablishChann
+ namespace {
+ 
+ class GpuChannelManagerMessageFilter : public IPC::MessageFilter {
+  public:
+   GpuChannelManagerMessageFilter(
+       GpuMemoryBufferFactory* gpu_memory_buffer_factory)
+@@ -171,17 +173,20 @@ void GpuChannelManager::OnEstablishChann
+                                            bool share_context,
+                                            bool allow_future_sync_points) {
    IPC::ChannelHandle channel_handle;
  
    gfx::GLShareGroup* share_group = NULL;
    gpu::gles2::MailboxManager* mailbox_manager = NULL;
    if (share_context) {
      if (!share_group_.get()) {
-       share_group_ = new gfx::GLShareGroup;
+-      share_group_ = new gfx::GLShareGroup;
++      share_group_ = oxide_gpu_shim::GetGLShareGroup();
++      if (!share_group_.get()) {
++        share_group_ = new gfx::GLShareGroup;
++      }
        DCHECK(!mailbox_manager_.get());
-+    }
-+    if (!mailbox_manager_.get()) {
-       mailbox_manager_ = new gpu::gles2::MailboxManager;
+       mailbox_manager_ = new gpu::gles2::MailboxManagerImpl;
      }
      share_group = share_group_.get();
      mailbox_manager = mailbox_manager_.get();
    }
  
    scoped_ptr<GpuChannel> channel(new GpuChannel(this,
-                                                 watchdog_,
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
-@@ -59,17 +59,18 @@ class SyncPointManager;
- // browser process to them based on the corresponding renderer ID.
- class GpuChannelManager : public IPC::Listener,
-                           public IPC::Sender {
-  public:
-   GpuChannelManager(MessageRouter* router,
-                     GpuWatchdog* watchdog,
-                     base::MessageLoopProxy* io_message_loop,
-                     base::WaitableEvent* shutdown_event,
--                    IPC::SyncChannel* channel);
-+                    IPC::SyncChannel* channel,
-+                    gfx::GLShareGroup* share_group);
-   virtual ~GpuChannelManager();
- 
-   // Remove the channel for a particular renderer.
-   void RemoveChannel(int client_id);
- 
-   // Listener overrides.
-   virtual bool OnMessageReceived(const IPC::Message& msg) override;
- 
-@@ -93,16 +94,18 @@ class GpuChannelManager : public IPC::Li
+@@ -93,16 +93,18 @@ class GpuChannelManager : public IPC::Li
    GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
      return &gpu_devtools_events_dispatcher_;
    }
@@ -116,7 +72,25 @@ diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_c
 diff --git a/content/content_common.gypi b/content/content_common.gypi
 --- a/content/content_common.gypi
 +++ b/content/content_common.gypi
-@@ -502,16 +502,18 @@
+@@ -17,16 +17,17 @@
+     '../ui/gfx/gfx.gyp:gfx',
+     '../ui/gfx/gfx.gyp:gfx_geometry',
+     '../ui/gfx/ipc/gfx_ipc.gyp:gfx_ipc',
+     '../ui/shell_dialogs/shell_dialogs.gyp:shell_dialogs',
+     '../url/url.gyp:url_lib',
+   ],
+   'include_dirs': [
+     '..',
++    '<(DEPTH)/../../..',
+   ],
+   'export_dependent_settings': [
+     '../base/base.gyp:base',
+     # The public content API headers directly include Blink API headers, so we
+     # have to export the blink header settings so that relative paths in these
+     # headers resolve correctly.
+     '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
+   ],
+@@ -500,16 +501,18 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',
@@ -138,7 +112,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
-@@ -25,16 +25,21 @@
+@@ -26,16 +26,21 @@
  #endif
  
  namespace content {
@@ -160,29 +134,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -55,38 +60,53 @@ GpuChildThread::GpuChildThread(GpuWatchd
-       in_browser_process_(false) {
-   watchdog_thread_ = watchdog_thread;
- #if defined(OS_WIN)
-   target_services_ = NULL;
- #endif
-   g_thread_safe_sender.Get() = thread_safe_sender();
- }
- 
--GpuChildThread::GpuChildThread(const std::string& channel_id)
-+GpuChildThread::GpuChildThread(const std::string& channel_id,
-+                               gfx::GLShareGroup* share_group)
-     : ChildThread(Options(channel_id, false)),
-       dead_on_arrival_(false),
--      in_browser_process_(true) {
-+      in_browser_process_(true),
-+      share_group_(share_group) {
- #if defined(OS_WIN)
-   target_services_ = NULL;
- #endif
-   DCHECK(
-       CommandLine::ForCurrentProcess()->HasSwitch(switches::kSingleProcess) ||
-       CommandLine::ForCurrentProcess()->HasSwitch(switches::kInProcessGPU));
+@@ -74,20 +79,33 @@ GpuChildThread::GpuChildThread(const std
  #if !defined(OS_ANDROID)
    // For single process and in-process GPU mode, we need to load and
    // initialize the GL implementation and locate the GL entry points here.
@@ -216,30 +168,10 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  }
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
-@@ -159,17 +179,18 @@ void GpuChildThread::OnInitialize() {
-   // Defer creation of the render thread. This is to prevent it from handling
-   // IPC messages before the sandbox has been enabled and all other necessary
-   // initialization has succeeded.
-   gpu_channel_manager_.reset(
-       new GpuChannelManager(GetRouter(),
-                             watchdog_thread_.get(),
-                             ChildProcess::current()->io_message_loop_proxy(),
-                             ChildProcess::current()->GetShutDownEvent(),
--                            channel()));
-+                            channel(),
-+                            share_group_.get()));
- 
- #if defined(USE_OZONE)
-   ui::OzonePlatform::GetInstance()
-       ->GetGpuPlatformSupport()
-       ->OnChannelEstablished(this);
- #endif
- }
- 
 diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 --- a/content/gpu/gpu_child_thread.h
 +++ b/content/gpu/gpu_child_thread.h
-@@ -17,16 +17,24 @@
+@@ -17,16 +17,20 @@
  #include "content/child/child_thread.h"
  #include "content/common/gpu/gpu_channel.h"
  #include "content/common/gpu/gpu_channel_manager.h"
@@ -252,10 +184,6 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 +class MessageLoopProxy;
 +}
 +
-+namespace gfx {
-+class GLShareGroup;
-+}
-+
  namespace sandbox {
  class TargetServices;
  }
@@ -264,25 +192,19 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
  class GpuWatchdogThread;
  
  // The main thread of the GPU child process. There will only ever be one of
-@@ -38,25 +46,31 @@ class GpuChildThread : public ChildThrea
-   typedef std::queue<IPC::Message*> DeferredMessages;
- 
-   explicit GpuChildThread(GpuWatchdogThread* gpu_watchdog_thread,
-                           bool dead_on_arrival,
+@@ -42,21 +46,26 @@ class GpuChildThread : public ChildThrea
                            const gpu::GPUInfo& gpu_info,
                            const DeferredMessages& deferred_messages);
  
    // For single-process mode.
--  explicit GpuChildThread(const std::string& channel_id);
-+  explicit GpuChildThread(const std::string& channel_id,
-+                          gfx::GLShareGroup* share_group);
+   explicit GpuChildThread(const std::string& channel_id);
  
-   virtual ~GpuChildThread();
+   ~GpuChildThread() override;
  
 +  static GpuChildThread* instance();
 +  static scoped_refptr<base::MessageLoopProxy> message_loop_proxy();
 +
-   virtual void Shutdown() override;
+   void Shutdown() override;
  
    void Init(const base::Time& process_start_time);
    void StopWatchdog();
@@ -290,212 +212,10 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 +  GpuChannelManager* gpu_channel_manager() { return gpu_channel_manager_.get(); }
 +
    // ChildThread overrides.
-   virtual bool Send(IPC::Message* msg) override;
-   virtual bool OnControlMessageReceived(const IPC::Message& msg) override;
+   bool Send(IPC::Message* msg) override;
+   bool OnControlMessageReceived(const IPC::Message& msg) override;
  
   private:
    // Message handlers.
    void OnInitialize();
    void OnCollectGraphicsInfo();
-@@ -89,14 +103,16 @@ class GpuChildThread : public ChildThrea
-   gpu::GPUInfo gpu_info_;
- 
-   // Error messages collected in gpu_main() before the thread is created.
-   DeferredMessages deferred_messages_;
- 
-   // Whether the GPU thread is running in the browser process.
-   bool in_browser_process_;
- 
-+  scoped_refptr<gfx::GLShareGroup> share_group_;
-+
-   DISALLOW_COPY_AND_ASSIGN(GpuChildThread);
- };
- 
- }  // namespace content
- 
- #endif  // CONTENT_GPU_GPU_CHILD_THREAD_H_
-diff --git a/content/gpu/in_process_gpu_thread.cc b/content/gpu/in_process_gpu_thread.cc
---- a/content/gpu/in_process_gpu_thread.cc
-+++ b/content/gpu/in_process_gpu_thread.cc
-@@ -1,34 +1,37 @@
- // Copyright 2013 The Chromium Authors. All rights reserved.
- // Use of this source code is governed by a BSD-style license that can be
- // found in the LICENSE file.
- 
- #include "content/gpu/in_process_gpu_thread.h"
- 
- #include "content/gpu/gpu_child_thread.h"
- #include "content/gpu/gpu_process.h"
-+#include "content/public/browser/content_browser_client.h"
-+#include "content/public/common/content_client.h"
- 
- namespace content {
- 
- InProcessGpuThread::InProcessGpuThread(const std::string& channel_id)
-     : base::Thread("Chrome_InProcGpuThread"),
-       channel_id_(channel_id),
--      gpu_process_(NULL) {
-+      gpu_process_(NULL),
-+      share_group_(GetContentClient()->browser()->GetGLShareGroup()) {
- }
- 
- InProcessGpuThread::~InProcessGpuThread() {
-   Stop();
- }
- 
- void InProcessGpuThread::Init() {
-   gpu_process_ = new GpuProcess();
-   // The process object takes ownership of the thread object, so do not
-   // save and delete the pointer.
--  gpu_process_->set_main_thread(new GpuChildThread(channel_id_));
-+  gpu_process_->set_main_thread(new GpuChildThread(channel_id_, share_group_.get()));
- }
- 
- void InProcessGpuThread::CleanUp() {
-   SetThreadWasQuitProperly(true);
-   delete gpu_process_;
- }
- 
- base::Thread* CreateInProcessGpuThread(const std::string& channel_id) {
-diff --git a/content/gpu/in_process_gpu_thread.h b/content/gpu/in_process_gpu_thread.h
---- a/content/gpu/in_process_gpu_thread.h
-+++ b/content/gpu/in_process_gpu_thread.h
-@@ -1,18 +1,23 @@
- // Copyright 2013 The Chromium Authors. All rights reserved.
- // Use of this source code is governed by a BSD-style license that can be
- // found in the LICENSE file.
- 
- #ifndef CONTENT_GPU_IN_PROCESS_GPU_THREAD_H_
- #define CONTENT_GPU_IN_PROCESS_GPU_THREAD_H_
- 
-+#include "base/memory/ref_counted.h"
- #include "base/threading/thread.h"
- #include "content/common/content_export.h"
- 
-+namespace gfx {
-+class GLShareGroup;
-+}
-+
- namespace content {
- 
- class GpuProcess;
- 
- // This class creates a GPU thread (instead of a GPU process), when running
- // with --in-process-gpu or --single-process.
- class InProcessGpuThread : public base::Thread {
-  public:
-@@ -22,16 +27,17 @@ class InProcessGpuThread : public base::
-  protected:
-   virtual void Init() override;
-   virtual void CleanUp() override;
- 
-  private:
-   std::string channel_id_;
-   // Deleted in CleanUp() on the gpu thread, so don't use smart pointers.
-   GpuProcess* gpu_process_;
-+  scoped_refptr<gfx::GLShareGroup> share_group_;
- 
-   DISALLOW_COPY_AND_ASSIGN(InProcessGpuThread);
- };
- 
- CONTENT_EXPORT base::Thread* CreateInProcessGpuThread(
-     const std::string& channel_id);
- 
- }  // namespace content
-diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
---- a/content/public/browser/content_browser_client.cc
-+++ b/content/public/browser/content_browser_client.cc
-@@ -369,9 +369,13 @@ ContentBrowserClient::OverrideCreateExte
- 
- bool ContentBrowserClient::CheckMediaAccessPermission(
-     BrowserContext* browser_context,
-     const GURL& security_origin,
-     MediaStreamType type) {
-   return false;
- }
- 
-+gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
-+  return NULL;
-+}
-+
- }  // namespace content
-diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
---- a/content/public/browser/content_browser_client.h
-+++ b/content/public/browser/content_browser_client.h
-@@ -46,16 +46,17 @@ class DictionaryValue;
- class FilePath;
- }
- 
- namespace blink {
- struct WebWindowFeatures;
- }
- 
- namespace gfx {
-+class GLShareGroup;
- class ImageSkia;
- }
- 
- namespace net {
- class CookieOptions;
- class CookieStore;
- class NetLog;
- class SSLCertRequestInfo;
-@@ -649,13 +650,15 @@ class CONTENT_EXPORT ContentBrowserClien
- #endif
- 
- // Checks if |security_origin| has permission to access the microphone or
- // camera. Note that this does not query the user. |type| must be
- // MEDIA_DEVICE_AUDIO_CAPTURE or MEDIA_DEVICE_VIDEO_CAPTURE.
- virtual bool CheckMediaAccessPermission(BrowserContext* browser_context,
-                                         const GURL& security_origin,
-                                         MediaStreamType type);
-+
-+  virtual gfx::GLShareGroup* GetGLShareGroup();
- };
- 
- }  // namespace content
- 
- #endif  // CONTENT_PUBLIC_BROWSER_CONTENT_BROWSER_CLIENT_H_
-diff --git a/ui/gl/gl_share_group.h b/ui/gl/gl_share_group.h
---- a/ui/gl/gl_share_group.h
-+++ b/ui/gl/gl_share_group.h
-@@ -26,35 +26,36 @@ class GL_EXPORT GLShareGroup : public ba
-   void RemoveContext(GLContext* context);
- 
-   // Returns a handle to any initialized context in the share group or NULL if
-   // there are no initialized contexts in the share group.
-   void* GetHandle();
- 
-   // Returns a pointer to any initialized context in the share group
-   // or NULL if there are no initialized contexts in the share group.
--  GLContext* GetContext();
-+  virtual GLContext* GetContext();
- 
-   // Sets and returns the unique shared GL context. Used for context
-   // virtualization.
-   void SetSharedContext(GLContext* context);
-   GLContext* GetSharedContext();
- 
- #if defined(OS_MACOSX)
-   // Sets and returns the ID of the renderer that all contexts in this share
-   // group should be on.
-   void SetRendererID(int renderer_id);
-   int GetRendererID();
- #endif
- 
-- private:
-+ protected:
-   friend class base::RefCounted<GLShareGroup>;
- 
--  ~GLShareGroup();
-+  virtual ~GLShareGroup();
- 
-+ private:
-   // References to GLContext are by raw pointer to avoid a reference count
-   // cycle.
-   typedef std::set<GLContext*> ContextSet;
-   ContextSet contexts_;
- 
-   GLContext* shared_context_;
- 
- #if defined(OS_MACOSX)

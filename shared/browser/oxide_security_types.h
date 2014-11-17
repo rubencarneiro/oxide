@@ -28,7 +28,7 @@ enum SecurityLevel {
   SECURITY_LEVEL_ERROR
 };
 
-enum CertStatus {
+enum CertStatusFlags {
   CERT_STATUS_OK = 0,
   CERT_STATUS_BAD_IDENTITY = 1 << 0,
   CERT_STATUS_EXPIRED = 1 << 1,

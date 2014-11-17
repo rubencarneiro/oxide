@@ -15,37 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_platform_integration.h"
-
-#include "base/logging.h"
+#include "oxide_browser_platform_integration_observer.h"
 
 namespace oxide {
 
-namespace {
-
-PlatformIntegration* g_instance;
-
+BrowserPlatformIntegrationObserver::BrowserPlatformIntegrationObserver() {
+  BrowserPlatformIntegration::GetInstance()->AddObserver(this);
 }
 
-PlatformIntegration::PlatformIntegration() {
-  CHECK(!g_instance)
-      << "Can't create more than one PlatformIntegration instance";
-  g_instance = this;
-}
-
-// static
-PlatformIntegration* PlatformIntegration::GetInstance() {
-  DCHECK(g_instance);
-  return g_instance;
-}
-
-bool PlatformIntegration::LaunchURLExternally(const GURL& url) {
-  return false;
-}
-
-PlatformIntegration::~PlatformIntegration() {
-  DCHECK_EQ(g_instance, this);
-  g_instance = NULL;
+BrowserPlatformIntegrationObserver::~BrowserPlatformIntegrationObserver() {
+  BrowserPlatformIntegration::GetInstance()->RemoveObserver(this);
 }
 
 } // namespace oxide

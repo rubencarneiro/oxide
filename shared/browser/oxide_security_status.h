@@ -44,13 +44,13 @@ class SecurityStatus final {
   content::SSLStatus::ContentStatusFlags content_status() const {
     return content_status_;
   }
-  CertStatus cert_status() const { return cert_status_; }
+  CertStatusFlags cert_status() const { return cert_status_; }
   scoped_refptr<net::X509Certificate> cert() const;
 
  private:
   SecurityLevel security_level_;
   content::SSLStatus::ContentStatusFlags content_status_;
-  CertStatus cert_status_;
+  CertStatusFlags cert_status_;
   scoped_refptr<net::X509Certificate> cert_;
 };
 

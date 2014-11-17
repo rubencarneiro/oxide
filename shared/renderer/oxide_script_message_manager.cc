@@ -41,7 +41,7 @@ namespace oxide {
 
 namespace {
 
-class StringResource : public v8::String::ExternalAsciiStringResource {
+class StringResource : public v8::String::ExternalOneByteStringResource {
  public:
   StringResource(const base::StringPiece& string) :
       string_(string) {}

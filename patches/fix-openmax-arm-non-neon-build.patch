@@ -1,0 +1,28 @@
+# HG changeset patch
+# Parent 70f05bcff39727c8be01e811fd1b6f403a8f0899
+# User oxide
+
+diff --git a/third_party/openmax_dl/dl/sp/api/omxSP.h b/third_party/openmax_dl/dl/sp/api/omxSP.h
+--- a/third_party/openmax_dl/dl/sp/api/omxSP.h
++++ b/third_party/openmax_dl/dl/sp/api/omxSP.h
+@@ -2549,18 +2549,18 @@ extern OMXResult (*omxSP_FFTInv_CCSToR_F
+     OMX_F32* pDst,
+     const OMXFFTSpec_R_F32* pFFTSpec);
+ #elif defined(DL_ARM_NEON)
+ /* Build-time NEON selection. */
+ #define omxSP_FFTFwd_RToCCS_F32 omxSP_FFTFwd_RToCCS_F32_Sfs
+ #define omxSP_FFTInv_CCSToR_F32 omxSP_FFTInv_CCSToR_F32_Sfs
+ #else
+ /* Build-time non-NEON selection. */
+-#define omxSP_FFTFwd_RToCCS_F32 omxSP_FFTFwd_CCSToR_F32_vfp
+-#define omxSP_FFTInv_CCSToR_F32 omxSP_FFTInv_CCSToR_F32_vfp
++#define omxSP_FFTFwd_RToCCS_F32 omxSP_FFTFwd_RToCCS_F32_Sfs_vfp
++#define omxSP_FFTInv_CCSToR_F32 omxSP_FFTInv_CCSToR_F32_Sfs_vfp
+ #endif  /* defined(DL_ARM_NEON_OPTIONAL) */
+ 
+ #if defined(DL_ARM_NEON_OPTIONAL) || !defined(DL_ARM_NEON)
+ /* Non-NEON versions. */
+ OMXResult omxSP_FFTFwd_RToCCS_F32_Sfs_vfp(
+     const OMX_F32* pSrc,
+     OMX_F32* pDst,
+     const OMXFFTSpec_R_F32* pFFTSpec

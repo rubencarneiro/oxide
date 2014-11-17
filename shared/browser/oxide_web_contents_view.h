@@ -58,7 +58,8 @@ class WebContentsView final : public content::WebContentsViewOxide {
   void CreateView(const gfx::Size& initial_size,
                   gfx::NativeView context) final;
   content::RenderWidgetHostViewBase* CreateViewForWidget(
-      content::RenderWidgetHost* render_widget_host) final;
+      content::RenderWidgetHost* render_widget_host,
+      bool is_guest_view_hack) final;
   content::RenderWidgetHostViewBase* CreateViewForPopupWidget(
       content::RenderWidgetHost* render_widget_host) final;
 

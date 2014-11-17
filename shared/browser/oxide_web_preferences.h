@@ -36,7 +36,6 @@ class WebPreferencesObserver;
 class WebPreferences {
  public:
   WebPreferences();
-  virtual ~WebPreferences();
 
   enum Attr {
     ATTR_REMOTE_FONTS_ENABLED,
@@ -103,10 +102,15 @@ class WebPreferences {
 
   void ApplyToWebkitPrefs(content::WebPreferences* prefs);
 
-  bool IsOwnedByEmbedder() const;
-  void SetIsOwnedByEmbedder();
+  virtual void Destroy();
+  virtual WebPreferences* Clone() const;
 
-  void CopyFrom(WebPreferences* other);
+  static WebPreferences* GetFallback();
+
+ protected:
+  virtual ~WebPreferences();
+
+  void CopyFrom(const WebPreferences* other);
 
  private:
   friend class WebPreferencesObserver;
@@ -128,8 +132,6 @@ class WebPreferences {
   bool attributes_[ATTR_LAST];
 
   ObserverList<WebPreferencesObserver> observers_;
-
-  bool is_owned_by_embedder_;
 
   DISALLOW_COPY_AND_ASSIGN(WebPreferences);
 };

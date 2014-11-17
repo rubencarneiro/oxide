@@ -15,39 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_io_thread_delegate.h"
+#ifndef _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
+#define _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
 
-#include <QPointer>
-#include <QThread>
+#include "base/macros.h"
+#include "base/memory/ref_counted.h"
 
-#include "base/lazy_instance.h"
-#include "base/message_loop/message_loop_proxy.h"
-
-#include "oxide_qt_browser_thread_q_event_dispatcher.h"
+#include "shared/app/oxide_platform_delegate.h"
 
 namespace oxide {
 namespace qt {
 
-namespace {
-base::LazyInstance<QPointer<QThread> > g_io_thread;
-}
+class GLContextAdopted;
 
-void IOThreadDelegate::Init() {
-  QThread* thread = QThread::currentThread();
-  thread->setEventDispatcher(
-      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
-  g_io_thread.Get() = thread;
-}
+class PlatformDelegate final : public oxide::PlatformDelegate {
+ public:
+  PlatformDelegate(GLContextAdopted* shared_gl_context = NULL);
+  ~PlatformDelegate();
 
-void IOThreadDelegate::CleanUp() {}
+ private:
+  oxide::BrowserPlatformIntegration* CreateBrowserIntegration() final;
 
-IOThreadDelegate::IOThreadDelegate() {}
+  scoped_refptr<GLContextAdopted> shared_gl_context_;
 
-IOThreadDelegate::~IOThreadDelegate() {}
-
-QThread* GetIOQThread() {
-  return g_io_thread.Get();
-}
+  DISALLOW_COPY_AND_ASSIGN(PlatformDelegate);
+};
 
 } // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_

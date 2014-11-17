@@ -519,11 +519,9 @@ void WebView::OnUnhandledKeyboardEvent(
   }
 
   DCHECK(event.os_event);
+  DCHECK(!event.os_event->isAccepted());
 
-  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
-  DCHECK(!qevent->isAccepted());
-
-  adapter_->HandleUnhandledKeyboardEvent(qevent);
+  adapter_->HandleUnhandledKeyboardEvent(event.os_event);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
