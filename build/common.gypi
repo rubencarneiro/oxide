@@ -26,12 +26,14 @@
     'use_allocator': 'none',
     'sysroot': '',
     'use_aura': 1,
+    'use_cups': 0,
     'use_gconf': 0,
     'use_gnome_keyring': 0,
     'use_ozone': 1,
     'toolkit_views': 0,
     'remoting': 0,
-    'enable_printing': 0,
+    'enable_basic_printing': 0,
+    'enable_print_preview': 0,
     'variables': {
       'conditions': [
         ['target_arch=="arm"', {
