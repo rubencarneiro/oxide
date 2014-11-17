@@ -434,7 +434,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                    int error_code,
                    const base::string16& error_description) final;
   void DidGetRedirectForResourceRequest(
-      content::RenderViewHost* render_view_host,
+      content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) final;
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) final;
