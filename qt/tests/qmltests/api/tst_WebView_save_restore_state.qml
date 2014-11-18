@@ -36,7 +36,8 @@ TestCase {
     var state = webView.currentState();
     verify(state.length > 0);
 
-    var restored = webViewComponent.createObject(webView, {"state": state});
+    var restored = webViewComponent.createObject(webView,
+                                                 {"restoreState": state});
     verify(restored !== null);
     tryCompare(restored, "url", webView.url);
     verify(restored.waitForLoadSucceeded(),
@@ -61,7 +62,8 @@ TestCase {
     var state = webView.currentState();
     verify(state.length > 0);
 
-    var restored = webViewComponent.createObject(webView, {"state": state});
+    var restored = webViewComponent.createObject(webView,
+                                                 {"restoreState": state});
     verify(restored !== null);
     tryCompare(restored, "url", webView.url);
     verify(restored.waitForLoadSucceeded(),
@@ -82,7 +84,8 @@ TestCase {
     var state = webView.currentState();
     verify(state.length > 0);
 
-    var restored = webViewComponent.createObject(webView, {"state": state});
+    var restored = webViewComponent.createObject(webView,
+                                                 {"restoreState": state});
     verify(restored !== null);
     tryCompare(restored, "url", webView.url);
     verify(restored.waitForLoadSucceeded(),
@@ -111,7 +114,8 @@ TestCase {
     var state = webView.currentState();
     verify(state.length > 0);
 
-    var restored = webViewComponent.createObject(webView, {"state": state});
+    var restored = webViewComponent.createObject(webView,
+                                                 {"restoreState": state});
     verify(restored !== null);
     tryCompare(restored, "url", webView.url);
     verify(restored.waitForLoadSucceeded(),

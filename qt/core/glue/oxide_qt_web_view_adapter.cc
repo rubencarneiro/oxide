@@ -138,7 +138,7 @@ WebViewAdapter::~WebViewAdapter() {}
 void WebViewAdapter::init(bool incognito,
                           WebContextAdapter* context,
                           OxideQNewViewRequest* new_view_request,
-                          const QByteArray& state) {
+                          const QByteArray& restoreState) {
   DCHECK(!isInitialized());
 
   bool script_opened = false;
@@ -159,9 +159,9 @@ void WebViewAdapter::init(bool incognito,
     return;
   }
 
-  if (!state.isEmpty()) {
+  if (!restoreState.isEmpty()) {
     std::vector<sessions::SerializedNavigationEntry> entries;
-    Pickle pickle(state.data(), state.size());
+    Pickle pickle(restoreState.data(), restoreState.size());
     PickleIterator i(pickle);
     int count;
     if (!i.ReadLength(&count)) {

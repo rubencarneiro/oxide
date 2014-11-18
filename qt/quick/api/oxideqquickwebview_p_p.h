@@ -181,7 +181,7 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
     bool incognito;
     QPointer<OxideQQuickWebContext> context;
     QPointer<OxideQNewViewRequest> new_view_request;
-    QByteArray state;
+    QByteArray restore_state;
   };
 
   QScopedPointer<ConstructProps> construct_props_;

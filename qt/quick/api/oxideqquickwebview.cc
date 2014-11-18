@@ -658,7 +658,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   init(construct_props_->incognito,
        context ? OxideQQuickWebContextPrivate::get(context) : NULL,
        construct_props_->new_view_request,
-       construct_props_->state);
+       construct_props_->restore_state);
 }
 
 // static
@@ -1437,11 +1437,11 @@ void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
 // This exists purely to remove a moc warning. We don't store this initial state
 // anywhere, it's only a transient blob and I can't think of any possible
 // reason why anybody would want to read it back
-QString OxideQQuickWebView::state() const {
+QString OxideQQuickWebView::restoreState() const {
   return QString();
 }
 
-void OxideQQuickWebView::setState(const QString& state) {
+void OxideQQuickWebView::setRestoreState(const QString& state) {
   Q_D(OxideQQuickWebView);
 
   if (d->isInitialized()) {
@@ -1450,7 +1450,8 @@ void OxideQQuickWebView::setState(const QString& state) {
   }
 
   // state is expected to be a base64-encoded string
-  d->construct_props_->state = QByteArray::fromBase64(state.toLocal8Bit());
+  d->construct_props_->restore_state =
+      QByteArray::fromBase64(state.toLocal8Bit());
 }
 
 QString OxideQQuickWebView::currentState() const {

@@ -122,7 +122,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void init(bool incognito,
             WebContextAdapter* context,
             OxideQNewViewRequest* new_view_request,
-            const QByteArray& state);
+            const QByteArray& restoreState);
 
   QUrl url() const;
   void setUrl(const QUrl& url);
