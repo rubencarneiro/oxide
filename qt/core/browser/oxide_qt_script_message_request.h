@@ -34,7 +34,7 @@ namespace qt {
 
 class ScriptMessageRequestAdapter;
 
-class ScriptMessageRequest FINAL {
+class ScriptMessageRequest final {
  public:
   ~ScriptMessageRequest();
 

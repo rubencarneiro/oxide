@@ -31,12 +31,12 @@ class DevtoolsHttpHandlerDelegate
   virtual ~DevtoolsHttpHandlerDelegate();
 
   // DevToolsHttpHandlerDelegate overrides.
-  std::string GetDiscoveryPageHTML() FINAL;
-  bool BundlesFrontendResources() FINAL;
-  base::FilePath GetDebugFrontendDir() FINAL;
+  std::string GetDiscoveryPageHTML() final;
+  bool BundlesFrontendResources() final;
+  base::FilePath GetDebugFrontendDir() final;
   scoped_ptr<net::StreamListenSocket> CreateSocketForTethering(
       net::StreamListenSocket::Delegate* delegate,
-      std::string* name) FINAL;
+      std::string* name) final;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DevtoolsHttpHandlerDelegate);

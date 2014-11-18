@@ -30,6 +30,7 @@
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_process_host_observer.h"
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
@@ -40,10 +41,12 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gl/oxide_shared_gl_context.h"
+#include "shared/gl/oxide_gl_context_adopted.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
+#include "oxide_browser_main_parts.h"
+#include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
@@ -63,13 +66,53 @@
 
 namespace oxide {
 
+namespace {
+
+class SingleProcessBrowserContextHolder
+    : public content::RenderProcessHostObserver {
+ public:
+  SingleProcessBrowserContextHolder(content::RenderProcessHost* host)
+      : host_(host),
+        context_(BrowserContext::FromContent(host->GetBrowserContext())) {
+    host_->AddObserver(this);
+  }
+
+ private:
+  ~SingleProcessBrowserContextHolder() {}
+
+  // content::RenderProcessHostObserver implementation
+  void RenderProcessHostDestroyed(content::RenderProcessHost* host) final {
+    DCHECK_EQ(host, host_);
+    host_->RemoveObserver(this);
+    delete this;
+  }
+
+  content::RenderProcessHost* host_;
+  scoped_refptr<BrowserContext> context_;
+
+  DISALLOW_COPY_AND_ASSIGN(SingleProcessBrowserContextHolder);
+};
+
+}
+
+ContentBrowserClient::ContentBrowserClient() {}
+
+ContentBrowserClient::~ContentBrowserClient() {}
+
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
-  return new BrowserMainParts(CreateBrowserMainPartsDelegate());
+  return new BrowserMainParts();
 }
 
 void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
+  if (BrowserProcessMain::GetInstance()->GetProcessModel() ==
+      PROCESS_MODEL_SINGLE_PROCESS) {
+    // In single process mode, the one RPH lasts the lifetime of this process,
+    // so don't allow it to be deleted
+    new SingleProcessBrowserContextHolder(host);
+  }
+
   host->Send(new OxideMsg_SetUserAgent(
       BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
   host->AddFilter(new ScriptMessageDispatcherBrowser(host));
@@ -106,26 +149,28 @@ std::string ContentBrowserClient::GetAcceptLangs(
 void ContentBrowserClient::AppendExtraCommandLineSwitches(
     base::CommandLine* command_line,
     int child_process_id) {
+  static const char* const kSwitchNames[] = {
+    switches::kEnableGoogleTalkPlugin,
+    switches::kFormFactor,
+    switches::kLimitMaxDecodedImageBytes
+  };
+  command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
+                                 kSwitchNames, arraysize(kSwitchNames));
+
   std::string process_type =
       command_line->GetSwitchValueASCII(switches::kProcessType);
   if (process_type == switches::kRendererProcess) {
-    static const char* const kSwitchNames[] = {
-      switches::kEnableGoogleTalkPlugin,
-      switches::kFormFactor
-    };
-    command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
-                                   kSwitchNames, arraysize(kSwitchNames));
-
     content::RenderProcessHost* host =
         content::RenderProcessHost::FromID(child_process_id);
     if (host->GetBrowserContext()->IsOffTheRecord()) {
       command_line->AppendSwitch(switches::kIncognito);
     }
 
-    if (content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() &&
-        (!BrowserProcessMain::GetInstance()->GetSharedGLContext() ||
-         BrowserProcessMain::GetInstance()->GetSharedGLContext()->GetImplementation() !=
-             gfx::GetGLImplementation())) {
+    GLContextAdopted* gl_share_context =
+        platform_integration_->GetGLShareContext();
+    if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() ||
+        !gl_share_context ||
+        gl_share_context->GetImplementation() != gfx::GetGLImplementation()) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
   }
@@ -185,7 +230,8 @@ void ContentBrowserClient::AllowCertificateError(
                                  result);
 }
 
-void ContentBrowserClient::RequestGeolocationPermission(
+void ContentBrowserClient::RequestPermission(
+    content::PermissionType permission,
     content::WebContents* web_contents,
     int bridge_id,
     const GURL& requesting_frame,
@@ -193,6 +239,12 @@ void ContentBrowserClient::RequestGeolocationPermission(
     const base::Callback<void(bool)>& result_callback) {
   WebView* webview = WebView::FromWebContents(web_contents);
   if (!webview) {
+    result_callback.Run(false);
+    return;
+  }
+
+  if (permission != content::PERMISSION_GEOLOCATION) {
+    // TODO: Other types
     result_callback.Run(false);
     return;
   }
@@ -244,11 +296,15 @@ void ContentBrowserClient::OverrideWebkitPrefs(
       WebViewContentsHelper::FromRenderViewHost(render_view_host);
 
   WebPreferences* web_prefs = contents_helper->GetWebPreferences();
+  if (!web_prefs) {
+    web_prefs = WebPreferences::GetFallback();
+  }
+
   web_prefs->ApplyToWebkitPrefs(prefs);
 
   prefs->touch_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
-  prefs->device_supports_touch = IsTouchSupported();
+  prefs->device_supports_touch = platform_integration_->IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
       !contents_helper->GetBrowserContext()->IsPopupBlockerEnabled();
@@ -265,19 +321,14 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   }
 }
 
-content::DevToolsManagerDelegate*
-ContentBrowserClient::GetDevToolsManagerDelegate() {
-    return new DevToolsManagerDelegate();
+content::LocationProvider*
+ContentBrowserClient::OverrideSystemLocationProvider() {
+  return platform_integration_->CreateLocationProvider();
 }
 
-gfx::GLShareGroup* ContentBrowserClient::GetGLShareGroup() {
-  SharedGLContext* context =
-      BrowserProcessMain::GetInstance()->GetSharedGLContext();
-  if (!context) {
-    return NULL;
-  }
-
-  return context->share_group();
+content::DevToolsManagerDelegate*
+ContentBrowserClient::GetDevToolsManagerDelegate() {
+  return new DevToolsManagerDelegate();
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {
@@ -287,12 +338,10 @@ void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host)
 #endif
 }
 
-bool ContentBrowserClient::IsTouchSupported() {
-  return false;
+void ContentBrowserClient::SetPlatformIntegration(
+    BrowserPlatformIntegration* integration) {
+  CHECK(integration && !platform_integration_);
+  platform_integration_.reset(integration);
 }
-
-ContentBrowserClient::ContentBrowserClient() {}
-
-ContentBrowserClient::~ContentBrowserClient() {}
 
 } // namespace oxide

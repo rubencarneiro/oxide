@@ -39,6 +39,7 @@
 #include "qt/core/browser/oxide_qt_web_view.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_content_types.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
 #include "oxide_qt_web_context_adapter.h"
 #include "oxide_qt_web_frame_adapter.h"
@@ -58,7 +59,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
   virtual ~CompositorFrameHandleImpl() {}
 
-  CompositorFrameHandle::Type GetType() Q_DECL_FINAL {
+  CompositorFrameHandle::Type GetType() final {
     if (!frame_.get()) {
       return CompositorFrameHandle::TYPE_INVALID;
     }
@@ -73,11 +74,11 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     return CompositorFrameHandle::TYPE_INVALID;
   }
 
-  const QSize& GetSize() const Q_DECL_FINAL {
+  const QSize& GetSize() const final {
     return size_;
   }
 
-  QImage GetSoftwareFrame() Q_DECL_FINAL {
+  QImage GetSoftwareFrame() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
     return QImage(
         static_cast<uchar *>(frame_->software_frame_data()->pixels()),
@@ -86,7 +87,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
         QImage::Format_ARGB32);
   }
 
-  AcceleratedFrameData GetAcceleratedFrame() Q_DECL_FINAL {
+  AcceleratedFrameData GetAcceleratedFrame() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
     return AcceleratedFrameData(frame_->gl_frame_data()->texture_id());
   }
@@ -96,32 +97,113 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
   QSize size_;
 };
 
+void WebViewAdapter::EnsurePreferences() {
+  if (view_->GetWebPreferences()) {
+    return;
+  }
+
+  OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(p)->preferences());
+}
+
 void WebViewAdapter::Initialized() {
   DCHECK(isInitialized());
 
-  OnInitialized(construct_props_->incognito,
-                construct_props_->context);
-  construct_props_.reset();
+  OxideQWebPreferences* p =
+      static_cast<WebPreferences*>(view_->GetWebPreferences())->api_handle();
+  if (!p->parent()) {
+    // This will happen for a WebView created by newViewRequested, as
+    // we clone the openers preferences before the WebView is created
+    p->setParent(adapterToQObject(this));
+  }
+
+  OnInitialized();
+}
+
+void WebViewAdapter::WebPreferencesDestroyed() {
+  OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(p)->preferences());
+
+  OnWebPreferencesReplaced();
 }
 
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
-    view_(WebView::Create(this)),
-    construct_props_(new ConstructProperties()),
-    created_with_new_view_request_(false),
-    created_with_initial_state_(false) {}
+    view_(WebView::Create(this)) {}
 
 WebViewAdapter::~WebViewAdapter() {}
 
-void WebViewAdapter::init() {
-  if (created_with_new_view_request_ || isInitialized()) {
+void WebViewAdapter::init(bool incognito,
+                          WebContextAdapter* context,
+                          OxideQNewViewRequest* new_view_request,
+                          const QByteArray& state) {
+  DCHECK(!isInitialized());
+
+  bool script_opened = false;
+
+  if (new_view_request) {
+    OxideQNewViewRequestPrivate* rd =
+        OxideQNewViewRequestPrivate::get(new_view_request);
+    if (rd->view) {
+      qWarning() << "Cannot assign NewViewRequest to more than one WebView";
+    } else {
+      rd->view = view_->AsWeakPtr();
+      script_opened = true;
+    }
+  }
+
+  if (script_opened) {
+    // Script opened webviews get initialized via another path
     return;
   }
 
+  if (!state.isEmpty()) {
+    std::vector<sessions::SerializedNavigationEntry> entries;
+    Pickle pickle(state.data(), state.size());
+    PickleIterator i(pickle);
+    int count;
+    if (!i.ReadLength(&count)) {
+      qWarning() << "Failed to read initial state: invalid data";
+      return;
+    }
+    entries.resize(count);
+    for (int j = 0; j < count; ++j) {
+      sessions::SerializedNavigationEntry entry;
+      if (!entry.ReadFromPickle(&i)) {
+        qWarning() << "Failed to read initial state: invalid data";
+        return;
+      }
+      entries[j] = entry;
+    }
+    int index;
+    if (!i.ReadInt(&index)) {
+      qWarning() << "Failed to read initial state: invalid data";
+      return;
+    }
+    view_->SetState(entries, index);
+  }
+
+  CHECK(context) <<
+      "No context available for WebView. If you see this when running in "
+      "single-process mode, it is possible that the default WebContext has "
+      "been deleted by the application. In single-process mode, there is only "
+      "one WebContext, and this has to live for the life of the application";
+
+  WebContext* c = WebContext::FromAdapter(context);
+
+  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
+          oxide::PROCESS_MODEL_SINGLE_PROCESS) {
+    DCHECK(!incognito);
+    DCHECK_EQ(c, WebContext::GetDefault());
+  }
+
+  EnsurePreferences();
+
   oxide::WebView::Params params;
-  params.context =
-      WebContext::FromAdapter(construct_props_->context)->GetContext();
-  params.incognito = construct_props_->incognito;
+  params.context = c->GetContext();
+  params.incognito = incognito;
 
   view_->Init(&params);
 }
@@ -147,20 +229,7 @@ bool WebViewAdapter::canGoForward() const {
 }
 
 bool WebViewAdapter::incognito() const {
-  if (construct_props_) {
-    return construct_props_->incognito;
-  }
-
   return view_->IsIncognito();  
-}
-
-void WebViewAdapter::setIncognito(bool incognito) {
-  if (!construct_props_) {
-    qWarning() << "Cannot change incognito mode after WebView is initialized";
-    return;
-  }
-
-  construct_props_->incognito = incognito;
 }
 
 bool WebViewAdapter::loading() const {
@@ -181,16 +250,12 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
 }
 
 WebContextAdapter* WebViewAdapter::context() const {
-  if (construct_props_) {
-    return construct_props_->context;
+  WebContext* c = view_->GetContext();
+  if (!c) {
+    return NULL;
   }
 
-  return WebContextAdapter::FromWebContext(view_->GetContext());
-}
-
-void WebViewAdapter::setContext(WebContextAdapter* context) {
-  DCHECK(construct_props_);
-  construct_props_->context = context;
+  return WebContextAdapter::FromWebContext(c);
 }
 
 void WebViewAdapter::wasResized() {
@@ -256,7 +321,7 @@ QList<ScriptMessageHandlerAdapter*>& WebViewAdapter::messageHandlers() {
   return message_handlers_;
 }
 
-bool WebViewAdapter::isInitialized() {
+bool WebViewAdapter::isInitialized() const {
   return view_->GetWebContents() != NULL;
 }
 
@@ -290,103 +355,6 @@ QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
       view_->GetNavigationEntryTimestamp(index).ToJsTime());
 }
 
-OxideQWebPreferences* WebViewAdapter::preferences() {
-  WebPreferences* prefs =
-      static_cast<WebPreferences *>(view_->GetWebPreferences());
-  if (!prefs) {
-    OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
-    prefs = OxideQWebPreferencesPrivate::get(p)->preferences();
-    view_->SetWebPreferences(prefs);
-  } else if (!prefs->api_handle()) {
-    OxideQWebPreferencesPrivate::Adopt(prefs, adapterToQObject(this));
-  }
-
-  return prefs->api_handle();
-}
-
-void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
-  OxideQWebPreferences* old = NULL;
-  if (WebPreferences* o =
-      static_cast<WebPreferences *>(view_->GetWebPreferences())) {
-    old = o->api_handle();
-  }
- 
-  if (prefs && !prefs->parent()) { 
-    prefs->setParent(adapterToQObject(this));
-  }
-
-  WebPreferences* p = NULL;
-  if (prefs) {
-    p = OxideQWebPreferencesPrivate::get(prefs)->preferences();
-  }
-  view_->SetWebPreferences(p);
-
-  if (!old) {
-    return;
-  }
-
-  if (old->parent() == adapterToQObject(this)) {
-    delete old;
-  }
-}
-
-void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
-  if (isInitialized()) {
-    qWarning() << "Cannot assign NewViewRequest to an already constructed WebView";
-    return;
-  }
-
-  if (created_with_new_view_request_) {
-    return;
-  }
-
-  OxideQNewViewRequestPrivate* rd = OxideQNewViewRequestPrivate::get(request);
-  if (rd->view) {
-    qWarning() << "Cannot assign NewViewRequest to more than one WebView";
-    return;
-  }
-
-  rd->view = view_->AsWeakPtr();
-  created_with_new_view_request_ = true;
-}
-
-void WebViewAdapter::setState(const QByteArray& state) {
-  if (isInitialized()) {
-    qWarning() << "Cannot assign initial state to an already constructed WebView";
-    return;
-  }
-
-  if (created_with_initial_state_) {
-    return;
-  }
-
-  std::vector<sessions::SerializedNavigationEntry> entries;
-  Pickle pickle(state.data(), state.size());
-  PickleIterator i(pickle);
-  int count;
-  if (!i.ReadLength(&count)) {
-    qWarning() << "Failed to read initial state: invalid data";
-    return;
-  }
-  entries.resize(count);
-  for (int j = 0; j < count; ++j) {
-    sessions::SerializedNavigationEntry entry;
-    if (!entry.ReadFromPickle(&i)) {
-      qWarning() << "Failed to read initial state: invalid data";
-      return;
-    }
-    entries[j] = entry;
-  }
-  int index;
-  if (!i.ReadInt(&index)) {
-    qWarning() << "Failed to read initial state: invalid data";
-    return;
-  }
-  view_->SetState(entries, index);
-
-  created_with_initial_state_ = true;
-}
-
 QByteArray WebViewAdapter::currentState() const {
   std::vector<sessions::SerializedNavigationEntry> entries = view_->GetState();
   if (entries.size() == 0) {
@@ -401,6 +369,36 @@ QByteArray WebViewAdapter::currentState() const {
   }
   pickle.WriteInt(view_->GetNavigationCurrentEntryIndex());
   return QByteArray(static_cast<const char*>(pickle.data()), pickle.size());
+}
+
+OxideQWebPreferences* WebViewAdapter::preferences() {
+  EnsurePreferences();
+  return static_cast<WebPreferences*>(
+      view_->GetWebPreferences())->api_handle();
+}
+
+void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
+  OxideQWebPreferences* old = NULL;
+  if (WebPreferences* o =
+      static_cast<WebPreferences *>(view_->GetWebPreferences())) {
+    old = o->api_handle();
+  }
+
+  if (!prefs) {
+    prefs = new OxideQWebPreferences(adapterToQObject(this));
+  } else if (!prefs->parent()) {
+    prefs->setParent(adapterToQObject(this));
+  }
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(prefs)->preferences());
+
+  if (!old) {
+    return;
+  }
+
+  if (old->parent() == adapterToQObject(this)) {
+    delete old;
+  }
 }
 
 void WebViewAdapter::updateWebPreferences() {
@@ -469,6 +467,10 @@ ContentTypeFlags WebViewAdapter::blockedContent() const {
       content_type_flags_mixed_script_doesnt_match);
 
   return static_cast<ContentTypeFlags>(view_->blocked_content());
+}
+
+void WebViewAdapter::prepareToClose() {
+  view_->PrepareToClose();
 }
 
 } // namespace qt

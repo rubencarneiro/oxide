@@ -24,7 +24,7 @@
 
 namespace oxide {
 
-class IsolatedWorldMap FINAL {
+class IsolatedWorldMap final {
  public:
   static int IDFromURL(const GURL& url);
   static GURL URLFromID(int id);

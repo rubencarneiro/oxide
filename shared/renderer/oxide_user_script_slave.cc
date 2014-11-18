@@ -21,6 +21,7 @@
 #include <string>
 
 #include "base/command_line.h"
+#include "base/logging.h"
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/renderer/render_thread.h"
@@ -46,9 +47,19 @@
 namespace oxide {
 
 namespace {
+
+UserScriptSlave* g_instance;
+
 const char kIsolatedWorldCSP[] = "script-src 'self'";
 const char kUserScriptHead[] = "(function (unsafeWindow) {\n";
 const char kUserScriptTail[] = "\n})(window);";
+
+}
+
+UserScriptSlave::~UserScriptSlave() {
+  CHECK(render_process_shutting_down_);
+  DCHECK_EQ(g_instance, this);
+  g_instance = NULL;
 }
 
 // static
@@ -87,26 +98,6 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
 
     script->Unpickle(pickle, &iter);
   }
-}
-
-UserScriptSlave::UserScriptSlave() {
-  content::RenderThread::Get()->AddObserver(this);
-}
-
-UserScriptSlave::~UserScriptSlave() {}
-
-bool UserScriptSlave::OnControlMessageReceived(const IPC::Message& message) {
-  bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(UserScriptSlave, message)
-    IPC_MESSAGE_HANDLER(OxideMsg_UpdateUserScripts, OnUpdateUserScripts)
-    IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP()
-
-  return handled;
-}
-
-void UserScriptSlave::OnRenderProcessShutdown() {
-  content::RenderThread::Get()->RemoveObserver(this);
 }
 
 void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
@@ -179,6 +170,36 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
   }
 }
 
+bool UserScriptSlave::OnControlMessageReceived(const IPC::Message& message) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(UserScriptSlave, message)
+    IPC_MESSAGE_HANDLER(OxideMsg_UpdateUserScripts, OnUpdateUserScripts)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
+
+void UserScriptSlave::OnRenderProcessShutdown() {
+  content::RenderThread::Get()->RemoveObserver(this);
+  render_process_shutting_down_ = true;
+  delete this;
+}
+
+// static
+UserScriptSlave* UserScriptSlave::GetInstance() {
+  DCHECK(g_instance);
+  return g_instance;
+}
+
+UserScriptSlave::UserScriptSlave()
+    : render_process_shutting_down_(false) {
+  CHECK(!g_instance);
+  g_instance = this;
+
+  content::RenderThread::Get()->AddObserver(this);
+}
+
 void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
                                     UserScript::RunLocation location) {
   blink::WebDataSource* data_source = frame->provisionalDataSource() ?
@@ -239,6 +260,5 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
     frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
   }
 }
-
 
 } // namespace oxide

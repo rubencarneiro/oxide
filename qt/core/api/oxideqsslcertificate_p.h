@@ -29,7 +29,7 @@ namespace net {
 class X509Certificate;
 }
 
-class OxideQSslCertificatePrivate Q_DECL_FINAL {
+class OxideQSslCertificatePrivate final {
  public:
   ~OxideQSslCertificatePrivate();
 

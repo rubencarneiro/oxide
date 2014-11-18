@@ -22,11 +22,8 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/browser_main_parts.h"
 
-#include "shared/browser/oxide_io_thread.h"
-
 namespace base {
 class MessageLoop;
-class MessagePump;
 }
 
 namespace gfx {
@@ -35,32 +32,21 @@ class Screen;
 
 namespace oxide {
 
-class BrowserMainParts FINAL : public content::BrowserMainParts {
+class IOThread;
+
+class BrowserMainParts final : public content::BrowserMainParts {
  public:
-
-  class Delegate {
-   public:
-    virtual ~Delegate();
-
-    typedef scoped_ptr<base::MessagePump> (MessagePumpFactory)();
-
-    virtual IOThread::Delegate* GetIOThreadDelegate();
-    virtual MessagePumpFactory* GetMessagePumpFactory() = 0;
-  };
-
-  BrowserMainParts(Delegate* delegate);
+  BrowserMainParts();
   ~BrowserMainParts();
 
  private:
   // content::BrowserMainParts implementation
-  virtual void PreEarlyInitialization() FINAL;
-  virtual int PreCreateThreads() FINAL;
-  virtual void PreMainMessageLoopRun() FINAL;
-  virtual bool MainMessageLoopRun(int* result_code) FINAL;
-  virtual void PostMainMessageLoopRun() FINAL;
-  virtual void PostDestroyThreads() FINAL;
-
-  scoped_ptr<Delegate> delegate_;
+  virtual void PreEarlyInitialization() final;
+  virtual int PreCreateThreads() final;
+  virtual void PreMainMessageLoopRun() final;
+  virtual bool MainMessageLoopRun(int* result_code) final;
+  virtual void PostMainMessageLoopRun() final;
+  virtual void PostDestroyThreads() final;
 
   scoped_ptr<base::MessageLoop> main_message_loop_;
   scoped_ptr<IOThread> io_thread_;

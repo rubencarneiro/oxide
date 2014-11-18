@@ -24,6 +24,13 @@
         'OxideQtCore_private',
         'OxideQtCore_public',
       ],
+      'conditions': [
+        ['component=="shared_library"', {
+          'ldflags': [
+            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'OxideQtCore_private',
@@ -32,11 +39,11 @@
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
       ],
       'dependencies': [
-        'system.gyp:Qt5Core',
-        'system.gyp:Qt5Gui',
-        'system.gyp:Qt5Gui-private',
-        'system.gyp:Qt5Positioning',
-        'system.gyp:Qt5Network',
+        '../build/system.gyp:Qt5Core',
+        '../build/system.gyp:Qt5Gui',
+        '../build/system.gyp:Qt5Gui-private',
+        '../build/system.gyp:Qt5Positioning',
+        '../build/system.gyp:Qt5Network',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -60,29 +67,27 @@
         '<(DEPTH)'
       ],
       'sources': [
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
         'api/internal/oxideqwebpreferences_p.cc',
-        'app/oxide_qt_content_main_delegate.cc',
-        'app/oxide_qt_content_main_delegate.h',
         'app/oxide_qt_main.cc',
         'app/oxide_qt_main.h',
+        'app/oxide_qt_platform_delegate.cc',
+        'app/oxide_qt_platform_delegate.h',
         'base/oxide_qt_event_utils.cc',
         'base/oxide_qt_event_utils.h',
         'base/oxide_qt_screen_utils.cc',
         'base/oxide_qt_screen_utils.h',
         'base/oxide_qt_skutils.cc',
         'base/oxide_qt_skutils.h',
-        'browser/native_web_keyboard_event_oxide.cc',
-        'browser/oxide_default_screen_info.cc',
-        'browser/oxide_qt_browser_main_parts_delegate.cc',
-        'browser/oxide_qt_browser_main_parts_delegate.h',
+        'browser/oxide_qt_browser_platform_integration.cc',
+        'browser/oxide_qt_browser_platform_integration.h',
+        'browser/oxide_qt_browser_startup.cc',
+        'browser/oxide_qt_browser_startup.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
-        'browser/oxide_qt_content_browser_client.cc',
-        'browser/oxide_qt_content_browser_client.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
-        'browser/oxide_qt_io_thread_delegate.cc',
-        'browser/oxide_qt_io_thread_delegate.h',
         'browser/oxide_qt_javascript_dialog.cc',
         'browser/oxide_qt_javascript_dialog.h',
         'browser/oxide_qt_location_provider.cc',
@@ -109,9 +114,8 @@
         'browser/oxide_qt_web_preferences.h',
         'browser/oxide_qt_web_view.cc',
         'browser/oxide_qt_web_view.h',
-        'gl/oxide_gl_implementation.cc',
-        'gl/oxide_qt_shared_gl_context.cc',
-        'gl/oxide_qt_shared_gl_context.h',
+        'gl/oxide_qt_gl_context_adopted.cc',
+        'gl/oxide_qt_gl_context_adopted.h',
       ],
       'actions': [
         {
@@ -125,8 +129,13 @@
           'includes': [ 'moc.gypi' ]
         },
         {
-          'action_name': 'oxide_qt_web_view.moc',
-          'moc_input': 'browser/oxide_qt_web_view.cc',
+          'action_name': 'moc_oxide_qt_browser_platform_integration.cc',
+          'moc_input': 'browser/oxide_qt_browser_platform_integration.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxide_qt_web_view.cc',
+          'moc_input': 'browser/oxide_qt_web_view.h',
           'includes': [ 'moc.gypi' ]
         },
       ]
@@ -139,10 +148,10 @@
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
       ],
       'dependencies': [
-        'system.gyp:Qt5Core',
-        'system.gyp:Qt5Gui',
-        'system.gyp:Qt5Gui-private',
-        'system.gyp:Qt5Network',
+        '../build/system.gyp:Qt5Core',
+        '../build/system.gyp:Qt5Gui',
+        '../build/system.gyp:Qt5Gui-private',
+        '../build/system.gyp:Qt5Network',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/net/net.gyp:net',

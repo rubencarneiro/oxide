@@ -23,6 +23,7 @@
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
+#include "content/browser/gpu/browser_gpu_memory_buffer_manager.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
 #include "content/common/gpu/client/gpu_channel_host.h"
@@ -66,8 +67,8 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   attrs.antialias = false;
   attrs.noAutomaticFlushes = true;
 
-  return make_scoped_ptr(new WGC3DCBI(
-      0, GURL(), gpu_channel_host.get(), attrs, false,
+  return make_scoped_ptr(WGC3DCBI::CreateOffscreenContext(
+      gpu_channel_host.get(), attrs, false, GURL(),
       content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
       NULL));
 }
@@ -141,7 +142,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
         new CompositorOutputSurfaceGL(output_surface_id,
                                       context_provider,
                                       proxy_));
-    return output.PassAs<cc::OutputSurface>();
+    return output.Pass();
   }
 
   scoped_ptr<CompositorSoftwareOutputDevice> output_device(
@@ -149,9 +150,9 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
   scoped_ptr<CompositorOutputSurfaceSoftware> output(
       new CompositorOutputSurfaceSoftware(
         output_surface_id,
-        output_device.PassAs<cc::SoftwareOutputDevice>(),
+        output_device.Pass(),
         proxy_));
-  return output.PassAs<cc::OutputSurface>();
+  return output.Pass();
 }
 
 void Compositor::WillBeginMainFrame(int frame_id) {}
@@ -191,7 +192,7 @@ scoped_ptr<Compositor> Compositor::Create(CompositorClient* client,
 }
 
 Compositor::~Compositor() {
-  CHECK_EQ(lock_count_, 0);
+  CHECK_EQ(lock_count_, 0U);
   proxy_->CompositorDestroyed();
 }
 
@@ -211,7 +212,10 @@ void Compositor::SetVisibility(bool visible) {
     settings.using_synchronous_renderer_compositor = true;
 
     layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
-        this, content::HostSharedBitmapManager::current(), settings,
+        this,
+        content::HostSharedBitmapManager::current(),
+        content::BrowserGpuMemoryBufferManager::current(),
+        settings,
         base::MessageLoopProxy::current(),
         CompositorUtils::GetInstance()->GetTaskRunner());
 

@@ -39,20 +39,20 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
       const base::string16& message_text,
       const base::string16& default_prompt_text,
       const content::JavaScriptDialogManager::DialogClosedCallback& callback,
-      bool* did_suppress_message) FINAL;
+      bool* did_suppress_message) final;
 
   void RunBeforeUnloadDialog(content::WebContents* web_contents,
                              const base::string16& message_text,
                              bool is_reload,
-                             const DialogClosedCallback& callback) FINAL;
+                             const DialogClosedCallback& callback) final;
 
   bool HandleJavaScriptDialog(content::WebContents* web_contents,
                               bool accept,
-                              const base::string16* prompt_override) FINAL;
+                              const base::string16* prompt_override) final;
 
-  void CancelActiveAndPendingDialogs(content::WebContents* web_contents) FINAL;
+  void CancelActiveAndPendingDialogs(content::WebContents* web_contents) final;
 
-  void WebContentsDestroyed(content::WebContents* web_contents) FINAL;
+  void WebContentsDestroyed(content::WebContents* web_contents) final;
 
  private:
   friend class JavaScriptDialog;

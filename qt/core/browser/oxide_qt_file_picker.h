@@ -29,14 +29,14 @@ namespace qt {
 
 class FilePickerDelegate;
 
-class FilePicker FINAL : public oxide::FilePicker {
+class FilePicker final : public oxide::FilePicker {
  public:
   FilePicker(FilePickerDelegate* delegate, content::RenderViewHost* rvh);
 
-  void Run(const content::FileChooserParams& params) FINAL;
+  void Run(const content::FileChooserParams& params) final;
 
  private:
-  void OnHide() FINAL;
+  void OnHide() final;
 
   scoped_ptr<FilePickerDelegate> delegate_;
 

@@ -36,26 +36,28 @@ namespace oxide {
 
 namespace {
 
-const double kDefaultRadius = 25.0f;
+const double kDefaultRadius = 24.0f;
 
-ui::GestureDetector::Config GetGestureDetectorConfig(float scale) {
+ui::GestureDetector::Config GetGestureDetectorConfig() {
   ui::GestureDetector::Config config;
   config.longpress_timeout = base::TimeDelta::FromMilliseconds(500);
   config.showpress_timeout = base::TimeDelta::FromMilliseconds(180);
   config.double_tap_timeout = base::TimeDelta::FromMilliseconds(300);
 
-  config.touch_slop = 8 * scale;
-  config.double_tap_slop = 100 * scale;
-  config.minimum_fling_velocity = 50.0f * scale;
-  config.maximum_fling_velocity = 8000.0f * scale;
+  config.touch_slop = 8.0f;
+  config.double_tap_slop = 100.0f;
+  config.minimum_fling_velocity = 50.0f;
+  config.maximum_fling_velocity = 10000.0f;
 
   return config;
 }
 
-ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig(float scale) {
+ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig() {
   ui::ScaleGestureDetector::Config config;
-  config.min_scaling_touch_major = kDefaultRadius * 2 * scale;
-  config.min_scaling_span = 170 * scale;
+  config.span_slop = 16.0f;
+  config.min_scaling_touch_major = kDefaultRadius * 2;
+  config.min_scaling_span = 170.0f;
+  config.min_pinch_update_span_delta = 0.0f;
 
   return config;
 }
@@ -64,12 +66,10 @@ ui::GestureProvider::Config GetGestureProviderConfig() {
   ui::GestureProvider::Config config;
   config.display = gfx::Screen::GetNativeScreen()->GetPrimaryDisplay();
 
-  const float scale = 1.0f / config.display.device_scale_factor();
-
-  config.gesture_detector_config = GetGestureDetectorConfig(scale);
-  config.scale_gesture_detector_config = GetScaleGestureDetectorConfig(scale);
+  config.gesture_detector_config = GetGestureDetectorConfig();
+  config.scale_gesture_detector_config = GetScaleGestureDetectorConfig();
   config.gesture_begin_end_types_enabled = false;
-  config.min_gesture_bounds_length = kDefaultRadius * scale;
+  config.min_gesture_bounds_length = kDefaultRadius;
 
   return config;
 }
@@ -84,9 +84,6 @@ class MotionEvent : public ui::MotionEvent {
   bool IsTouchIdActive(int id) const;
   void OnTouchEvent(const ui::TouchEvent& event);
   void RemoveInactiveTouchPoints();
-
-  // ui::MotionEvent implementation
-  scoped_ptr<ui::MotionEvent> Clone() const FINAL;
 
  private:
   static const size_t kMaxTouchPoints = ui::MotionEvent::MAX_TOUCH_POINT_COUNT;
@@ -120,35 +117,33 @@ class MotionEvent : public ui::MotionEvent {
   void UpdateAction(const ui::TouchEvent& event);
 
   // ui::MotionEvent implementation
-  int GetId() const FINAL;
-  Action GetAction() const FINAL;
-  int GetActionIndex() const FINAL;
-  size_t GetPointerCount() const FINAL;
-  int GetPointerId(size_t pointer_index) const FINAL;
-  float GetX(size_t pointer_index) const FINAL;
-  float GetY(size_t pointer_index) const FINAL;
-  float GetRawX(size_t pointer_index) const FINAL;
-  float GetRawY(size_t pointer_index) const FINAL;
-  float GetTouchMajor(size_t pointer_index) const FINAL;
-  float GetTouchMinor(size_t pointer_index) const FINAL;
-  float GetOrientation(size_t pointer_index) const FINAL;
-  float GetPressure(size_t pointer_index) const FINAL;
-  base::TimeTicks GetEventTime() const FINAL;
+  int GetId() const final;
+  Action GetAction() const final;
+  int GetActionIndex() const final;
+  size_t GetPointerCount() const final;
+  int GetPointerId(size_t pointer_index) const final;
+  float GetX(size_t pointer_index) const final;
+  float GetY(size_t pointer_index) const final;
+  float GetRawX(size_t pointer_index) const final;
+  float GetRawY(size_t pointer_index) const final;
+  float GetTouchMajor(size_t pointer_index) const final;
+  float GetTouchMinor(size_t pointer_index) const final;
+  float GetOrientation(size_t pointer_index) const final;
+  float GetPressure(size_t pointer_index) const final;
+  base::TimeTicks GetEventTime() const final;
 
-  size_t GetHistorySize() const FINAL;
+  size_t GetHistorySize() const final;
   base::TimeTicks GetHistoricalEventTime(
-      size_t historical_index) const FINAL;
+      size_t historical_index) const final;
   float GetHistoricalTouchMajor(size_t pointer_index,
-                                size_t historical_index) const FINAL;
+                                size_t historical_index) const final;
   float GetHistoricalX(size_t pointer_index,
-                       size_t historical_index) const FINAL;
+                       size_t historical_index) const final;
   float GetHistoricalY(size_t pointer_index,
-                       size_t historical_index) const FINAL;
-  ToolType GetToolType(size_t pointer_index) const FINAL;
-  int GetButtonState() const FINAL;
-  int GetFlags() const FINAL;
-
-  scoped_ptr<ui::MotionEvent> Cancel() const FINAL;
+                       size_t historical_index) const final;
+  ToolType GetToolType(size_t pointer_index) const final;
+  int GetButtonState() const final;
+  int GetFlags() const final;
 
   static TouchPoint CreateTouchPointFromEvent(const ui::TouchEvent& event);
 
@@ -243,7 +238,7 @@ void MotionEvent::UpdateTouchPoint(
   DCHECK(was_active || !touch_points_[index].active);
 
   if (!touch_points_[index].active && was_active) {
-    DCHECK_GT(active_touch_point_count_, 0);
+    DCHECK_GT(active_touch_point_count_, 0U);
     active_touch_point_count_--;
   }
 }
@@ -291,7 +286,7 @@ int MotionEvent::GetActionIndex() const {
   DCHECK(action_ == ACTION_POINTER_DOWN ||
          action_ == ACTION_POINTER_UP);
   DCHECK_GE(action_index_, 0);
-  DCHECK_LT(action_index_, pointer_count_);
+  DCHECK_LT(action_index_, static_cast<int>(pointer_count_));
   return action_index_;
 }
 
@@ -391,13 +386,6 @@ int MotionEvent::GetFlags() const {
   return flags_;
 }
 
-scoped_ptr<ui::MotionEvent> MotionEvent::Cancel() const {
-  return make_scoped_ptr(
-      new MotionEvent(pointer_count_, active_touch_point_count_,
-                      touch_points_, ACTION_CANCEL, -1, flags_,
-                      last_event_time_)).PassAs<ui::MotionEvent>();
-}
-
 // static
 MotionEvent::TouchPoint MotionEvent::CreateTouchPointFromEvent(
     const ui::TouchEvent& event) {
@@ -479,13 +467,6 @@ void MotionEvent::RemoveInactiveTouchPoints() {
   DCHECK_EQ(pointer_count_, active_touch_point_count_);
 }
 
-scoped_ptr<ui::MotionEvent> MotionEvent::Clone() const {
-  return make_scoped_ptr(
-      new MotionEvent(pointer_count_, active_touch_point_count_,
-                      touch_points_, action_, action_index_, flags_,
-                      last_event_time_)).PassAs<ui::MotionEvent>();
-}
-
 class GestureProviderImpl : public GestureProvider,
                             public ui::GestureProviderClient {
  public:
@@ -494,15 +475,15 @@ class GestureProviderImpl : public GestureProvider,
 
  private:
   // GestureProvider implementation
-  bool OnTouchEvent(const ui::TouchEvent& event) FINAL;
-  void OnTouchEventAck(bool consumed) FINAL;
+  bool OnTouchEvent(const ui::TouchEvent& event) final;
+  void OnTouchEventAck(bool consumed) final;
 
-  scoped_ptr<ui::MotionEvent> GetTouchState() const FINAL;
+  scoped_ptr<ui::MotionEvent> GetTouchState() const final;
 
-  void SetDoubleTapSupportForPageEnabled(bool enabled) FINAL;
+  void SetDoubleTapSupportForPageEnabled(bool enabled) final;
 
   // ui::GestureProviderClient implementation
-  void OnGestureEvent(const ui::GestureEventData& gesture) FINAL;
+  void OnGestureEvent(const ui::GestureEventData& gesture) final;
 
   // Need the oxide identifier here, else this becomes
   // "ui::GestureProviderClient"
@@ -571,8 +552,7 @@ GestureProviderClient::~GestureProviderClient() {}
 scoped_ptr<GestureProvider> GestureProvider::Create(
     GestureProviderClient* client) {
   DCHECK(client) << "A GestureProviderClient must be provided";
-  return make_scoped_ptr(
-      new GestureProviderImpl(client)).PassAs<GestureProvider>();
+  return make_scoped_ptr(new GestureProviderImpl(client)).Pass();
 }
 
 GestureProvider::~GestureProvider() {}

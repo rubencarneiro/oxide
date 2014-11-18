@@ -154,6 +154,11 @@ int WebContext::OnBeforeURLRequest(net::URLRequest* request,
 
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
+  if (!info) {
+    // Requests created outside of the ResourceDispatcher won't have
+    // a ResourceRequestInfo
+    return net::OK;
+  }
 
   OxideQBeforeURLRequestEvent* event =
       new OxideQBeforeURLRequestEvent(
@@ -184,6 +189,11 @@ int WebContext::OnBeforeSendHeaders(net::URLRequest* request,
 
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
+  if (!info) {
+    // Requests created outside of the ResourceDispatcher won't have
+    // a ResourceRequestInfo
+    return net::OK;
+  }
 
   OxideQBeforeSendHeadersEvent* event =
       new OxideQBeforeSendHeadersEvent(
@@ -213,6 +223,11 @@ void WebContext::OnBeforeRedirect(net::URLRequest* request,
 
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
+  if (!info) {
+    // Requests created outside of the ResourceDispatcher won't have
+    // a ResourceRequestInfo
+    return;
+  }
 
   OxideQBeforeRedirectEvent* event =
       new OxideQBeforeRedirectEvent(
@@ -481,6 +496,21 @@ void WebContext::SetAllowedExtraURLSchemes(
     const std::set<std::string>& schemes) {
   base::AutoLock lock(url_schemes_lock_);
   allowed_extra_url_schemes_ = schemes;
+}
+
+// static
+WebContext* WebContext::GetDefault() {
+  WebContextAdapter* adapter = WebContextAdapter::GetDefault();
+  if (!adapter) {
+    return NULL;
+  }
+
+  return FromAdapter(adapter);
+}
+
+// static
+void WebContext::DestroyDefault() {
+  WebContextAdapter::DestroyDefault();
 }
 
 oxide::BrowserContext* WebContext::GetContext() {

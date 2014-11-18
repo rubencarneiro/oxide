@@ -28,13 +28,9 @@ TestCase {
   function test_WebContext_semi_construct_only_properties1_data() {
     var r = [
       { prop: "dataPath", signal: "dataPathChanged", val: "file:///foo", dataPath: "" },
-      { prop: "cachePath", signal: "cachePathChanged", val: "file:///foo", dataPath: "" }
+      { prop: "cachePath", signal: "cachePathChanged", val: "file:///foo", dataPath: "" },
+      { prop: "sessionCookieMode", signal: "sessionCookieModeChanged", val: WebContext.SessionCookieModeRestored, dataPath: QMLTEST_DATADIR }
     ];
-    if (QMLTEST_USE_CONTEXT_DATADIR) {
-      r.push(
-        { prop: "sessionCookieMode", signal: "sessionCookieModeChanged", val: WebContext.SessionCookieModeRestored, dataPath: QMLTEST_DATADIR }
-      );
-    }
 
     return r;
   }

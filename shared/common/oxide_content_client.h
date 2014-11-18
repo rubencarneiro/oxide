@@ -20,42 +20,33 @@
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "content/public/common/content_client.h"
 
-template <typename Type> struct DefaultSingletonTraits;
+namespace content {
+class ContentClientInitializer;
+}
 
 namespace oxide {
 
-class ContentBrowserClient;
-class ContentRendererClient;
-
-class ContentClient FINAL : public content::ContentClient {
+class ContentClient final : public content::ContentClient {
  public:
-  static ContentClient* GetInstance();
-  static ContentClient* instance();
-  virtual ~ContentClient();
-
-  ContentBrowserClient* browser();
-  ContentRendererClient* renderer();
-
-  void SetUserAgent(const std::string& user_agent);
+  ContentClient();
+  ~ContentClient();
 
  private:
-  friend struct DefaultSingletonTraits<ContentClient>;
-  ContentClient();
+  friend class content::ContentClientInitializer; // For GetInstance
+
+  static ContentClient* GetInstance();
 
   // content::ContentClient implementation
-  void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) FINAL;
-  std::string GetUserAgent() const FINAL;
-  base::string16 GetLocalizedString(int message_id) const FINAL;
+  void AddPepperPlugins(std::vector<content::PepperPluginInfo>* plugins) final;
+  std::string GetUserAgent() const final;
+  base::string16 GetLocalizedString(int message_id) const final;
   base::StringPiece GetDataResource(int resource_id,
-                                    ui::ScaleFactor scale_factor) const FINAL;
+                                    ui::ScaleFactor scale_factor) const final;
   base::RefCountedStaticMemory* GetDataResourceBytes(
-      int resource_id) const FINAL;
-
-  std::string user_agent_;
+      int resource_id) const final;
 
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
 };

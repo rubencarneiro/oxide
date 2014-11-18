@@ -58,7 +58,7 @@ class TestNetworkAccessManager : public QNetworkAccessManager {
 
   QNetworkReply* createRequest(QNetworkAccessManager::Operation op,
                                const QNetworkRequest& req,
-                               QIODevice* outgoing_data) Q_DECL_FINAL;
+                               QIODevice* outgoing_data) final;
 
  private:
   QDir test_dir_;
@@ -94,7 +94,7 @@ class TestNetworkAccessManagerFactory : public QQmlNetworkAccessManagerFactory {
       : test_dir_(test_dir) {}
   virtual ~TestNetworkAccessManagerFactory() {}
 
-  QNetworkAccessManager* create(QObject* parent) Q_DECL_FINAL {
+  QNetworkAccessManager* create(QObject* parent) final {
     return new TestNetworkAccessManager(test_dir_, parent);
   }
 
@@ -219,7 +219,6 @@ int main(int argc, char** argv) {
   QStringList library_paths;
   QString test_path;
   QByteArray name;
-  bool use_data_dir = false;
 
   int index = 1;
   int outargc = 1;
@@ -243,16 +242,11 @@ int main(int argc, char** argv) {
     } else if (QLatin1String(arg) == QLatin1String("-add-library-path") && (index + 1) < argc) {
       library_paths.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("-use-datadir-for-context")) {
-      use_data_dir = true;
-      index += 1;
     } else if (QLatin1String(arg) == QLatin1String("-nss-db-path") && (index + 1) < argc) {
       if (!oxideGetNSSDbPath().isEmpty()) {
         qFatal("Can only specify -nss-db-path once");
       }
-      if (!oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])))) {
-        qFatal("Failed to set NSS DB path");
-      }
+      oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
     } else if (index != outargc) {
       argv[outargc++] = argv[index++];
@@ -344,9 +338,6 @@ int main(int argc, char** argv) {
   for (QStringList::iterator it = imports.begin(); it != imports.end(); ++it) {
     view.engine()->addImportPath(*it);
   }
-  view.rootContext()->setContextProperty(
-      QStringLiteral("QMLTEST_USE_CONTEXT_DATADIR"),
-      use_data_dir);
 
   for (QStringList::iterator it = files.begin(); it != files.end(); ++it) {
     const QFileInfo fi(*it);

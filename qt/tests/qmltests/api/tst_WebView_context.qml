@@ -17,11 +17,15 @@ TestCase {
     WebContext {}
   }
 
+  SignalSpy {
+    id: spy
+  }
+
   // Ensure that WebView.context does not return anything when it is using
   // the default WebContext
   function test_WebView_context1_default() {
     var v = webViewFactory.createObject(null, {});
-    verify(!v.context, "Shouldn't be able to access the default context"); 
+    compare(v.context, Oxide.defaultWebContext(), "WebView should have a default context"); 
   }
 
   // Ensure that WebView.context cannot be changed after construction
@@ -30,13 +34,7 @@ TestCase {
     verify(c);
     var v = webViewFactory.createObject(null, {});
     v.context = c;
-    verify(!v.context, "Shouldn't be able to change the context after construction");
-  }
-
-  // Ensure that WebView.context cannot be set to the default context
-  function test_WebView_context3_cannot_set_default() {
-    var v = webViewFactory.createObject(null, { context: Oxide.defaultWebContext() });
-    verify(!v.context, "Shouldn't be able to set WebView.context to the default"); 
+    verify(v.context != c, "Shouldn't be able to change the context after construction");
   }
 
   // Ensure we can set a valid context
@@ -59,7 +57,11 @@ TestCase {
     var v = webViewFactory.createObject(null, { context: c });
     compare(v.context, c);
 
+    spy.target = v;
+    spy.signalName = "contextChanged";
+
     OxideTestingUtils.destroyQObjectNow(c);
     verify(!v.context);
+    compare(spy.count, 1);
   }
 }

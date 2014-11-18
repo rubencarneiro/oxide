@@ -49,10 +49,9 @@ def main(argv):
   (options, args) = parser.parse_args(argv)
 
   output_dir = options.output
-  ld = options.ld
+  assert output_dir != None
 
-  if not output_dir:
-    output_dir = os.getcwd()
+  ld = options.ld
   if not ld:
     ld = "ld"
 

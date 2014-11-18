@@ -18,7 +18,7 @@
 // Largely inspired by the X11 implementation in
 // content/browser/power_save_blocker_x11.cc
 
-#include "content/browser/power_save_blocker_impl.h"
+#include "oxide_power_save_blocker.h"
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
@@ -29,9 +29,12 @@
 #include "dbus/object_path.h"
 #include "dbus/object_proxy.h"
 
+#include "shared/port/content/browser/power_save_blocker_oxide.h"
+
+#include "oxide_browser_platform_integration_observer.h"
 #include "oxide_form_factor.h"
 
-namespace content {
+namespace oxide {
 
 namespace {
 
@@ -41,44 +44,47 @@ const char kUnityScreenInterface[] = "com.canonical.Unity.Screen";
 
 }
 
-class PowerSaveBlockerImpl::Delegate
-    : public base::RefCountedThreadSafe<PowerSaveBlockerImpl::Delegate> {
+class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
+                         public BrowserPlatformIntegrationObserver {
  public:
-  Delegate();
-
-  void Init();
-  void CleanUp();
+  PowerSaveBlocker();
 
  private:
-  friend class base::RefCountedThreadSafe<Delegate>;
-  ~Delegate() {}
+  virtual ~PowerSaveBlocker() {}
+
+  void Init() final;
+  void CleanUp() final;
 
   void ApplyBlock();
   void RemoveBlock();
 
+  // BrowserPlatformIntegrationObserver implementation
+  void ApplicationStateChanged() final;
+
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
   int cookie_;
-
-  DISALLOW_COPY_AND_ASSIGN(Delegate);
 };
 
-PowerSaveBlockerImpl::Delegate::Delegate() :
-    form_factor_(oxide::GetFormFactorHint()),
-    cookie_(0) {}
-
-void PowerSaveBlockerImpl::Delegate::Init() {
-  BrowserThread::PostTask(BrowserThread::FILE, FROM_HERE,
-                          base::Bind(&Delegate::ApplyBlock, this));
+void PowerSaveBlocker::Init() {
+  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() ==
+      BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::FILE,
+        FROM_HERE,
+        base::Bind(&PowerSaveBlocker::ApplyBlock, this));
+  }
 }
 
-void PowerSaveBlockerImpl::Delegate::CleanUp() {
-  BrowserThread::PostTask(BrowserThread::FILE, FROM_HERE,
-                          base::Bind(&Delegate::RemoveBlock, this));
+void PowerSaveBlocker::CleanUp() {
+  content::BrowserThread::PostTask(
+      content::BrowserThread::FILE,
+      FROM_HERE,
+      base::Bind(&PowerSaveBlocker::RemoveBlock, this));
 }
 
-void PowerSaveBlockerImpl::Delegate::ApplyBlock() {
-  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::FILE));
+void PowerSaveBlocker::ApplyBlock() {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::FILE));
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
@@ -113,14 +119,13 @@ void PowerSaveBlockerImpl::Delegate::ApplyBlock() {
   }
 }
 
-void PowerSaveBlockerImpl::Delegate::RemoveBlock() {
-  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::FILE));
+void PowerSaveBlocker::RemoveBlock() {
+  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::FILE));
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
-    DCHECK(bus_.get());
-
     if (cookie_ != 0) {
+      DCHECK(bus_.get());
       scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
           kUnityScreenServiceName,
           dbus::ObjectPath(kUnityScreenPath));
@@ -134,21 +139,35 @@ void PowerSaveBlockerImpl::Delegate::RemoveBlock() {
       cookie_ = 0;
     }
 
-    bus_->ShutdownAndBlock();
-    bus_ = NULL;
+    if (bus_.get()) {
+      bus_->ShutdownAndBlock();
+      bus_ = NULL;
+    }
   } else {
     NOTIMPLEMENTED();
   }
 }
 
-PowerSaveBlockerImpl::PowerSaveBlockerImpl(PowerSaveBlockerType type,
-                                           const std::string& reason)
-    : delegate_(new Delegate()) {
-  delegate_->Init();
+void PowerSaveBlocker::ApplicationStateChanged() {
+  BrowserPlatformIntegration::ApplicationState state =
+      BrowserPlatformIntegration::GetInstance()->GetApplicationState();
+  if ((state == BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE) &&
+      (cookie_ != 0)) {
+    CleanUp();
+  } else if ((state == BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) &&
+      (cookie_ == 0)) {
+    Init();
+  }
 }
 
-PowerSaveBlockerImpl::~PowerSaveBlockerImpl() {
-  delegate_->CleanUp();
+PowerSaveBlocker::PowerSaveBlocker()
+    : form_factor_(oxide::GetFormFactorHint())
+    , cookie_(0) {}
+
+content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
+    content::PowerSaveBlocker::PowerSaveBlockerType type,
+    const std::string& reason) {
+  return new PowerSaveBlocker();
 }
 
-}
+} // namespace oxide

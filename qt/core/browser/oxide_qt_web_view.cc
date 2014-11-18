@@ -248,41 +248,20 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 
 }
 
-class InputMethodListener : public QObject {
-  Q_OBJECT
-
- public:
-  InputMethodListener(WebView* webview)
-      : webview_(webview) {}
-  virtual ~InputMethodListener() {}
-
- public Q_SLOTS:
-  void inputPanelVisibilityChanged();
-
- private:
-  WebView* webview_;
-};
-
-void InputMethodListener::inputPanelVisibilityChanged() {
-  webview_->InputPanelVisibilityChanged();
+void WebView::OnInputPanelVisibilityChanged() {
+  InputPanelVisibilityChanged();
 }
 
 WebView::WebView(WebViewAdapter* adapter) :
     adapter_(adapter),
     has_input_method_state_(false),
-    input_method_listener_(new InputMethodListener(this)),
     qsecurity_status_(
         OxideQSecurityStatusPrivate::Create(this)) {
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {
-    QObject::connect(im, SIGNAL(visibleChanged()),
-                     input_method_listener_.get(),
-                     SLOT(inputPanelVisibilityChanged()));
+    connect(im, SIGNAL(visibleChanged()),
+            SLOT(OnInputPanelVisibilityChanged()));
   }
-}
-
-WebContext* WebView::GetContext() const {
-  return WebContext::FromBrowserContext(GetBrowserContext());
 }
 
 float WebView::GetDeviceScaleFactor() const {
@@ -540,11 +519,9 @@ void WebView::OnUnhandledKeyboardEvent(
   }
 
   DCHECK(event.os_event);
+  DCHECK(!event.os_event->isAccepted());
 
-  QKeyEvent* qevent = reinterpret_cast<QKeyEvent *>(event.os_event);
-  DCHECK(!qevent->isAccepted());
-
-  adapter_->HandleUnhandledKeyboardEvent(qevent);
+  adapter_->HandleUnhandledKeyboardEvent(event.os_event);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
@@ -853,6 +830,14 @@ void WebView::OnContentBlocked() {
   adapter_->ContentBlocked();
 }
 
+void WebView::OnPrepareToCloseResponse(bool proceed) {
+  adapter_->PrepareToCloseResponse(proceed);
+}
+
+void WebView::OnCloseRequested() {
+  adapter_->CloseRequested();
+}
+
 // static
 WebView* WebView::Create(WebViewAdapter* adapter) {
   return new WebView(adapter);
@@ -861,9 +846,7 @@ WebView* WebView::Create(WebViewAdapter* adapter) {
 WebView::~WebView() {
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {
-    QObject::disconnect(im, SIGNAL(visibleChanged()),
-                        input_method_listener_.get(),
-                        SLOT(inputPanelVisibilityChanged()));
+    im->disconnect(this);
   }
 }
 
@@ -1032,7 +1015,9 @@ void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
   oxide::WebView::SetCanTemporarilyRunInsecureContent(allow);
 }
 
+WebContext* WebView::GetContext() const {
+  return WebContext::FromBrowserContext(GetBrowserContext());
+}
+
 } // namespace qt
 } // namespace oxide
-
-#include "oxide_qt_web_view.moc"

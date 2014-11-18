@@ -40,7 +40,7 @@ class CrossThreadDataStream;
 class URLRequestDelegatedJobProxy;
 class WebContext;
 
-class URLRequestDelegatedJob FINAL
+class URLRequestDelegatedJob final
     : public oxide::URLRequestDelegatedJob,
       public base::SupportsWeakPtr<URLRequestDelegatedJob> {
  public:
@@ -62,12 +62,12 @@ class URLRequestDelegatedJob FINAL
   void OnDataAvailable();
 
   // net::URLRequestJob implementation
-  void Kill() FINAL;
+  void Kill() final;
 
-  bool ReadRawData(net::IOBuffer* buf, int buf_size, int* bytes_read) FINAL;
+  bool ReadRawData(net::IOBuffer* buf, int buf_size, int* bytes_read) final;
 
   // oxide::URLRequestDelegatedJob implementation
-  void OnStart() FINAL;
+  void OnStart() final;
 
   scoped_refptr<CrossThreadDataStream> stream_;
   scoped_refptr<URLRequestDelegatedJobProxy> proxy_;

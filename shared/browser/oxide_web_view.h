@@ -55,7 +55,6 @@
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
-#include "shared/browser/oxide_web_view_contents_helper_delegate.h"
 #include "shared/common/oxide_message_enums.h"
 
 class GURL;
@@ -116,7 +115,7 @@ struct NewContentsDeleter {
 
 typedef scoped_ptr<content::WebContents, NewContentsDeleter> ScopedNewContentsHolder;
 
-class WebViewIterator FINAL {
+class WebViewIterator final {
  public:
   ~WebViewIterator();
 
@@ -142,7 +141,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                 private WebPreferencesObserver,
                 private GestureProviderClient,
                 private content::NotificationObserver,
-                private WebViewContentsHelperDelegate,
                 private RenderWidgetHostViewDelegate,
                 private content::WebContentsDelegate,
                 private content::WebContentsObserver {
@@ -231,6 +229,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
+
+  void PrepareToClose();
 
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
@@ -327,51 +327,48 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void ScrollFocusedEditableNodeIntoView();
 
   // ScriptMessageTarget implementation
-  virtual size_t GetScriptMessageHandlerCount() const OVERRIDE;
+  virtual size_t GetScriptMessageHandlerCount() const override;
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
-      size_t index) const OVERRIDE;
+      size_t index) const override;
 
   // CompositorClient implementation
-  void CompositorDidCommit() FINAL;
+  void CompositorDidCommit() final;
   void CompositorSwapFrame(uint32 surface_id,
-                           CompositorFrameHandle* frame) FINAL;
+                           CompositorFrameHandle* frame) final;
 
   // WebPreferencesObserver implementation
-  void WebPreferencesDestroyed() FINAL;
+  void WebPreferencesDestroyed() final;
 
   // GestureProviderClient implementation
-  void OnGestureEvent(const blink::WebGestureEvent& event) FINAL;
+  void OnGestureEvent(const blink::WebGestureEvent& event) final;
 
   // content::NotificationObserver implementation
   void Observe(int type,
                const content::NotificationSource& source,
-               const content::NotificationDetails& details) FINAL;
-
-  // WebViewContentsHelperDelegate implementation
-  void NotifyWebPreferencesDestroyed() FINAL;
+               const content::NotificationDetails& details) final;
 
   // RenderWidgetHostViewDelegate implementation
-  void EvictCurrentFrame() FINAL;
-  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata) FINAL;
-  void ProcessAckedTouchEvent(bool consumed) FINAL;
-  void UpdateCursor(const content::WebCursor& cursor) FINAL;
+  void EvictCurrentFrame() final;
+  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata) final;
+  void ProcessAckedTouchEvent(bool consumed) final;
+  void UpdateCursor(const content::WebCursor& cursor) final;
   void TextInputStateChanged(ui::TextInputType type,
-                             bool show_ime_if_needed) FINAL;
-  void FocusedNodeChanged(bool is_editable_node) FINAL;
-  void ImeCancelComposition() FINAL;
+                             bool show_ime_if_needed) final;
+  void FocusedNodeChanged(bool is_editable_node) final;
+  void ImeCancelComposition() final;
   void SelectionBoundsChanged(const gfx::Rect& caret_rect,
                               size_t selection_cursor_position,
-                              size_t selection_anchor_position) FINAL;
-  void SelectionChanged() FINAL;
-  WebView* GetWebView() FINAL;
-  Compositor* GetCompositor() const FINAL;
+                              size_t selection_anchor_position) final;
+  void SelectionChanged() final;
+  WebView* GetWebView() final;
+  Compositor* GetCompositor() const final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
-                                       const content::OpenURLParams& params) FINAL;
+                                       const content::OpenURLParams& params) final;
   void NavigationStateChanged(const content::WebContents* source,
-                              content::InvalidateTypes changed_flags) FINAL;
-  void VisibleSSLStateChanged(const content::WebContents* source) FINAL;
+                              content::InvalidateTypes changed_flags) final;
+  void VisibleSSLStateChanged(const content::WebContents* source) final;
   bool ShouldCreateWebContents(
       content::WebContents* source,
       int route_id,
@@ -381,75 +378,79 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       const std::string& partition_id,
       content::SessionStorageNamespace* session_storage_namespace,
       WindowOpenDisposition disposition,
-      bool user_gesture) FINAL;
+      bool user_gesture) final;
   void HandleKeyboardEvent(content::WebContents* source,
-                           const content::NativeWebKeyboardEvent& event) FINAL;
+                           const content::NativeWebKeyboardEvent& event) final;
   void WebContentsCreated(content::WebContents* source,
                           int source_frame_id,
                           const base::string16& frame_name,
                           const GURL& target_url,
-                          content::WebContents* new_contents) FINAL;
+                          content::WebContents* new_contents) final;
   void AddNewContents(content::WebContents* source,
                       content::WebContents* new_contents,
                       WindowOpenDisposition disposition,
                       const gfx::Rect& initial_pos,
                       bool user_gesture,
-                      bool* was_blocked) FINAL;
-  void LoadProgressChanged(content::WebContents* source, double progress) FINAL;
+                      bool* was_blocked) final;
+  void LoadProgressChanged(content::WebContents* source, double progress) final;
+  void CloseContents(content::WebContents* source) final;
   bool AddMessageToConsole(content::WebContents* source,
                int32 level,
                const base::string16& message,
                int32 line_no,
-               const base::string16& source_id) FINAL;
-  content::JavaScriptDialogManager* GetJavaScriptDialogManager() FINAL;
+               const base::string16& source_id) final;
+  void BeforeUnloadFired(content::WebContents* source,
+                         bool proceed,
+                         bool* proceed_to_fire_unload) final;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager() final;
   void RunFileChooser(content::WebContents* web_contents,
-                      const content::FileChooserParams& params) FINAL;
+                      const content::FileChooserParams& params) final;
   void ToggleFullscreenModeForTab(content::WebContents* source,
-                                  bool enter) FINAL;
+                                  bool enter) final;
   bool IsFullscreenForTabOrPending(
-      const content::WebContents* source) const FINAL;
+      const content::WebContents* source) const final;
 
   // content::WebContentsObserver implementation
-  void RenderFrameCreated(content::RenderFrameHost* render_frame_host) FINAL;
-  void RenderProcessGone(base::TerminationStatus status) FINAL;
+  void RenderFrameCreated(content::RenderFrameHost* render_frame_host) final;
+  void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
-                             content::RenderViewHost* new_host) FINAL;
+                             content::RenderViewHost* new_host) final;
   void DidStartProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       bool is_error_page,
-      bool is_iframe_srcdoc) FINAL;
+      bool is_iframe_srcdoc) final;
   void DidCommitProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& url,
-      ui::PageTransition transition_type) FINAL;
+      ui::PageTransition transition_type) final;
   void DidFailProvisionalLoad(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       int error_code,
-      const base::string16& error_description) FINAL;
+      const base::string16& error_description) final;
   void DidNavigateMainFrame(
       const content::LoadCommittedDetails& details,
-      const content::FrameNavigateParams& params) FINAL;
+      const content::FrameNavigateParams& params) final;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
-                     const GURL& validated_url) FINAL;
+                     const GURL& validated_url) final;
   void DidFailLoad(content::RenderFrameHost* render_frame_host,
                    const GURL& validated_url,
                    int error_code,
-                   const base::string16& error_description) FINAL;
+                   const base::string16& error_description) final;
   void DidGetRedirectForResourceRequest(
       content::RenderViewHost* render_view_host,
-      const content::ResourceRedirectDetails& details) FINAL;
+      const content::ResourceRedirectDetails& details) final;
   void NavigationEntryCommitted(
-      const content::LoadCommittedDetails& load_details) FINAL;
-  void DidStartLoading(content::RenderViewHost* render_view_host) FINAL;
-  void DidStopLoading(content::RenderViewHost* render_view_host) FINAL;
-  void FrameDetached(content::RenderFrameHost* render_frame_host) FINAL;
-  void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) FINAL;
+      const content::LoadCommittedDetails& load_details) final;
+  void DidStartLoading(content::RenderViewHost* render_view_host) final;
+  void DidStopLoading(content::RenderViewHost* render_view_host) final;
+  void FrameDetached(content::RenderFrameHost* render_frame_host) final;
+  void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
   void DidUpdateFaviconURL(
-      const std::vector<content::FaviconURL>& candidates) FINAL;
+      const std::vector<content::FaviconURL>& candidates) final;
   bool OnMessageReceived(const IPC::Message& msg,
-                         content::RenderFrameHost* render_frame_host) FINAL;
+                         content::RenderFrameHost* render_frame_host) final;
 
   // Override in sub-classes
   virtual void OnURLChanged();
@@ -538,6 +539,9 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       scoped_ptr<SimplePermissionRequest> request);
   virtual void OnContentBlocked();
 
+  virtual void OnPrepareToCloseResponse(bool proceed);
+  virtual void OnCloseRequested();
+
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;
 
@@ -554,7 +558,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
   std::vector<sessions::SerializedNavigationEntry> initial_state_;
   int initial_index_;
-  WebPreferences* initial_preferences_;
 
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;

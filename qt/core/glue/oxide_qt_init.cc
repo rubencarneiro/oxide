@@ -17,62 +17,19 @@
 
 #include "oxide_qt_init.h"
 
-#include <QCoreApplication>
-#include <QDir>
-#include <QGuiApplication>
-
-#include "base/logging.h"
-
-#include "qt/core/api/oxideqglobal.h"
-#include "qt/core/app/oxide_qt_content_main_delegate.h"
-#include "shared/browser/oxide_browser_process_main.h"
+#include "qt/core/browser/oxide_qt_browser_startup.h"
+#include "qt/core/gl/oxide_qt_gl_context_adopted.h"
 
 namespace oxide {
 namespace qt {
 
-namespace {
-
-QOpenGLContext* g_shared_gl_context;
-
-void ShutdownChromium() {
-  oxide::BrowserProcessMain::GetInstance()->Shutdown();
-}
-
-}
-
-QOpenGLContext* GetSharedGLContext() {
-  return g_shared_gl_context;
-}
-
 void SetSharedGLContext(QOpenGLContext* context) {
-  CHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning()) <<
-      "SetSharedGLContext must be called before the browser components are "
-      "started!";
-
-  g_shared_gl_context = context;
+  scoped_refptr<GLContextAdopted> c(GLContextAdopted::Create(context));
+  BrowserStartup::GetInstance()->SetSharedGLContext(c.get());
 }
 
 void EnsureChromiumStarted() {
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
-    return;
-  }
-
-  CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
-      "Your application doesn't have a QGuiApplication. Oxide will not "
-      "function without one";
-
-  QString nss_db_path(oxideGetNSSDbPath());
-  if (!nss_db_path.isEmpty()) {
-    nss_db_path = QDir(nss_db_path).absolutePath();
-  }
-
-  scoped_ptr<ContentMainDelegate> delegate(
-      ContentMainDelegate::CreateForBrowser(
-        base::FilePath(nss_db_path.toStdString())));
-  oxide::BrowserProcessMain::GetInstance()->Start(
-      delegate.PassAs<oxide::ContentMainDelegate>());
-
-  qAddPostRoutine(ShutdownChromium);
+  BrowserStartup::GetInstance()->EnsureChromiumStarted();
 }
 
 } // namespace qt

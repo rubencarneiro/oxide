@@ -46,10 +46,10 @@ class URLRequestContextGetter;
 
 // This object manages the lifetime of objects that are tied to the
 // IO thread
-class IOThread FINAL : public content::BrowserThreadDelegate {
+class IOThread final : public content::BrowserThreadDelegate {
  public:
 
-  class Globals FINAL : public base::NonThreadSafe {
+  class Globals final : public base::NonThreadSafe {
    public:
     net::HostResolver* host_resolver() const;
     net::CertVerifier* cert_verifier() const;
@@ -77,18 +77,9 @@ class IOThread FINAL : public content::BrowserThreadDelegate {
     DISALLOW_COPY_AND_ASSIGN(Globals);
   };
 
-  class Delegate {
-   public:
-    virtual ~Delegate() {}
-
-    virtual void Init() {}
-    virtual void InitAsync() {}
-    virtual void CleanUp() {}
-  };
-
   static IOThread* instance();
 
-  IOThread(Delegate* delegate);
+  IOThread();
   ~IOThread();
 
   net::NetLog* net_log() const;
@@ -101,11 +92,9 @@ class IOThread FINAL : public content::BrowserThreadDelegate {
   void InitSystemRequestContextOnIOThread();
 
   // Called on the IO thread
-  void Init() FINAL;
-  void InitAsync() FINAL;
-  void CleanUp() FINAL;
-
-  scoped_ptr<Delegate> delegate_;
+  void Init() final;
+  void InitAsync() final;
+  void CleanUp() final;
 
   scoped_ptr<net::NetLog> net_log_;
   Globals* globals_;

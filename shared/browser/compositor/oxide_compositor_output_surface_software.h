@@ -27,7 +27,7 @@
 
 namespace oxide {
 
-class CompositorOutputSurfaceSoftware FINAL : public CompositorOutputSurface {
+class CompositorOutputSurfaceSoftware final : public CompositorOutputSurface {
  public:
   CompositorOutputSurfaceSoftware(
       uint32 surface_id,
@@ -37,7 +37,7 @@ class CompositorOutputSurfaceSoftware FINAL : public CompositorOutputSurface {
 
  private:
   // cc::OutputSurface implementation
-  void SwapBuffers(cc::CompositorFrame* frame) FINAL;
+  void SwapBuffers(cc::CompositorFrame* frame) final;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurfaceSoftware);
 };

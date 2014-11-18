@@ -35,7 +35,7 @@ namespace qt {
 
 class UserScriptAdapter;
 
-class UserScript FINAL {
+class UserScript final {
  public:
   enum State {
     Constructing,

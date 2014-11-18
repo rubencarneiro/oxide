@@ -30,7 +30,7 @@ namespace oxide {
 
 class RendererFrameEvictorClient;
 
-class RendererFrameEvictor FINAL {
+class RendererFrameEvictor final {
  public:
   static RendererFrameEvictor* GetInstance();
   ~RendererFrameEvictor();

@@ -19,6 +19,9 @@
 #include "base/allocator/allocator_extension.h"
 #include "third_party/tcmalloc/chromium/src/gperftools/malloc_extension.h"
 #endif
+#if defined(COMPONENT_BUILD)
+#include "content/public/common/content_client.h"
+#endif
 
 #include "qt/core/app/oxide_qt_main.h"
 
@@ -37,6 +40,12 @@ int main(int argc, const char* argv[]) {
   tc_set_new_mode(1);
 
   base::allocator::SetReleaseFreeMemoryFunction(ReleaseFreeMemoryThunk);
+#endif
+
+#if defined(COMPONENT_BUILD)
+  // Gross hack for component build
+  // see https://code.google.com/p/chromium/issues/detail?id=374712
+  content::SetContentClient(NULL);
 #endif
 
   return oxide::qt::OxideMain(argc, argv);

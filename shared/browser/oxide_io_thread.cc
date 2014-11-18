@@ -40,6 +40,7 @@
 #include "net/url_request/url_request_job_factory_impl.h"
 #include "net/url_request/url_request_throttler_manager.h"
 
+#include "oxide_browser_platform_integration.h"
 #include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
 
@@ -49,11 +50,11 @@ namespace {
 
 IOThread* g_instance;
 
-class SystemURLRequestContextGetter FINAL : public URLRequestContextGetter {
+class SystemURLRequestContextGetter final : public URLRequestContextGetter {
  public:
   SystemURLRequestContextGetter() {}
 
-  net::URLRequestContext* GetURLRequestContext() FINAL {
+  net::URLRequestContext* GetURLRequestContext() final {
     DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
     return IOThread::instance()->globals()->system_request_context();
   }
@@ -165,9 +166,8 @@ void IOThread::InitSystemRequestContextOnIOThread() {
 void IOThread::Init() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-  if (delegate_) {
-    delegate_->Init();
-  }
+  BrowserPlatformIntegration::GetInstance()->BrowserThreadInit(
+      content::BrowserThread::IO);
 }
 
 void IOThread::InitAsync() {
@@ -206,10 +206,6 @@ void IOThread::InitAsync() {
       FROM_HERE,
       base::Bind(&IOThread::InitSystemRequestContext,
                  base::Unretained(this)));
-
-  if (delegate_) {
-    delegate_->InitAsync();
-  }
 }
 
 void IOThread::CleanUp() {
@@ -226,9 +222,8 @@ void IOThread::CleanUp() {
 
   system_request_context_getter_ = NULL;
 
-  if (delegate_) {
-    delegate_->CleanUp();
-  }
+  BrowserPlatformIntegration::GetInstance()->BrowserThreadCleanUp(
+      content::BrowserThread::IO);
 }
 
 // static
@@ -237,9 +232,8 @@ IOThread* IOThread::instance() {
   return g_instance;
 }
 
-IOThread::IOThread(Delegate* delegate)
-    : delegate_(delegate),
-      net_log_(new net::NetLog()),
+IOThread::IOThread()
+    : net_log_(new net::NetLog()),
       globals_(NULL) {
   CHECK(!g_instance) << "Can't create more than one IOThread instance";
   DCHECK(!content::BrowserThread::IsThreadInitialized(content::BrowserThread::IO)) <<

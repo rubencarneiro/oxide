@@ -481,10 +481,10 @@ class SyncablePatchSet:
       dest_dir = None
       if patch.result == "use-bzr":
         source_file = os.path.join(self.src_patches.patchdir, patch.filename)
-        dest_dir = self.hg_patches.patchdir
+        dest_dir = os.path.join(self.hg_patches.patchdir, os.path.dirname(patch.filename))
       elif patch.result == "use-hg":
         source_file = os.path.join(self.hg_patches.patchdir, patch.filename)
-        dest_dir = self.src_patches.patchdir
+        dest_dir = os.path.join(self.src_patches.patchdir, os.path.dirname(patch.filename))
       else:
         assert patch.result == "resolved"
         source_file = os.path.join(self.hg_patches.patchdir, patch.filename)
@@ -493,6 +493,8 @@ class SyncablePatchSet:
           (patch.filename,
            GetFileChecksum(source_file)))
       if dest_dir:
+        if not os.path.isdir(dest_dir):
+          os.makedirs(dest_dir)
         shutil.copy2(source_file, dest_dir)
 
     checksum_content.seek(0)

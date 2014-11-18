@@ -44,9 +44,9 @@ class WebContextIODelegate;
 }
 }
 
-class OxideQQuickWebContextPrivate Q_DECL_FINAL :
-    public QObject,
-    public oxide::qt::WebContextAdapter {
+class OxideQQuickWebContextPrivate final
+    : public QObject,
+      public oxide::qt::WebContextAdapter {
   Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
@@ -61,7 +61,6 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
 
  Q_SIGNALS:
   void constructed();
-  void willBeDestroyed();
 
  private:
   OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
@@ -82,13 +81,13 @@ class OxideQQuickWebContextPrivate Q_DECL_FINAL :
   bool prepareToAttachDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
   void detachedDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
 
-  QNetworkAccessManager* GetCustomNetworkAccessManager() Q_DECL_FINAL;
+  QNetworkAccessManager* GetCustomNetworkAccessManager() final;
 
   void CookiesSet(int request_id,
-                  const QList<QNetworkCookie>& failed_cookies) Q_DECL_FINAL;
+                  const QList<QNetworkCookie>& failed_cookies) final;
   void CookiesRetrieved(int request_id,
-                        const QList<QNetworkCookie>& cookies) Q_DECL_FINAL;
-  void CookiesDeleted(int request_id, int num_deleted) Q_DECL_FINAL;
+                        const QList<QNetworkCookie>& cookies) final;
+  void CookiesDeleted(int request_id, int num_deleted) final;
 
   bool constructed_;
 

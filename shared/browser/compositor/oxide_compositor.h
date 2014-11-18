@@ -42,7 +42,7 @@ class CompositorFrameHandle;
 class CompositorLock;
 class CompositorThreadProxy;
 
-class Compositor FINAL : public cc::LayerTreeHostClient,
+class Compositor final : public cc::LayerTreeHostClient,
                          public base::NonThreadSafe  {
  public:
   typedef std::vector<scoped_refptr<CompositorFrameHandle> > FrameHandleVector;
@@ -75,23 +75,23 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
   scoped_ptr<cc::OutputSurface> CreateOutputSurface(bool fallback);
 
   // cc::LayerTreeHostClient implementation
-  void WillBeginMainFrame(int frame_id) FINAL;
-  void BeginMainFrame(const cc::BeginFrameArgs& args) FINAL;
-  void DidBeginMainFrame() FINAL;
-  void Layout() FINAL;
+  void WillBeginMainFrame(int frame_id) final;
+  void BeginMainFrame(const cc::BeginFrameArgs& args) final;
+  void DidBeginMainFrame() final;
+  void Layout() final;
   void ApplyViewportDeltas(const gfx::Vector2d& inner_delta,
                            const gfx::Vector2d& outer_delta,
                            float page_scale,
-                           float top_controls_delta) FINAL;
+                           float top_controls_delta) final;
   void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
                            float page_scale,
-                           float top_controls_delta) FINAL;
-  void RequestNewOutputSurface(bool fallback) FINAL;
-  void DidInitializeOutputSurface() FINAL;
-  void WillCommit() FINAL;
-  void DidCommit() FINAL;
-  void DidCommitAndDrawFrame() FINAL;
-  void DidCompleteSwapBuffers() FINAL;
+                           float top_controls_delta) final;
+  void RequestNewOutputSurface(bool fallback) final;
+  void DidInitializeOutputSurface() final;
+  void WillCommit() final;
+  void DidCommit() final;
+  void DidCommitAndDrawFrame() final;
+  void DidCompleteSwapBuffers() final;
 
   CompositorClient* client_;
   bool use_software_;
@@ -111,7 +111,7 @@ class Compositor FINAL : public cc::LayerTreeHostClient,
   DISALLOW_COPY_AND_ASSIGN(Compositor);
 };
 
-class CompositorLock FINAL {
+class CompositorLock final {
  public:
   CompositorLock(Compositor* compositor)
       : compositor_(compositor) {

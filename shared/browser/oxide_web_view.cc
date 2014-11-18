@@ -26,6 +26,7 @@
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
+#include "components/sessions/content/content_serialized_navigation_builder.h"
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
@@ -52,6 +53,7 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/favicon_url.h"
+#include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/url_constants.h"
@@ -76,9 +78,10 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gl/oxide_shared_gl_context.h"
+#include "shared/gl/oxide_gl_context_adopted.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_file_picker.h"
@@ -112,7 +115,7 @@ class WebViewUserData : public base::SupportsUserData::Data {
  public:
   WebViewUserData(WebView* view) : view_(view) {}
 
-  WebView* view() const { return view_; }
+  WebView* get() const { return view_; }
 
  private:
   WebView* view_;
@@ -168,13 +171,13 @@ bool ShouldUseSoftwareCompositing() {
     return true;
   }
 
-  SharedGLContext* share_context =
-      BrowserProcessMain::GetInstance()->GetSharedGLContext();
-  if (!share_context) {
+  GLContextAdopted* gl_share_context =
+      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
+  if (!gl_share_context) {
     return true;
   }
 
-  if (share_context->GetImplementation() != gfx::GetGLImplementation()) {
+  if (gl_share_context->GetImplementation() != gfx::GetGLImplementation()) {
     return true;
   }
 
@@ -431,7 +434,6 @@ void WebView::CompositorSwapFrame(uint32 surface_id,
 }
 
 void WebView::WebPreferencesDestroyed() {
-  initial_preferences_ = NULL;
   OnWebPreferencesDestroyed();
 }
 
@@ -482,10 +484,6 @@ void WebView::Observe(int type,
     int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
     OnNavigationEntryChanged(index);
   }
-}
-
-void WebView::NotifyWebPreferencesDestroyed() {
-  OnWebPreferencesDestroyed();
 }
 
 void WebView::EvictCurrentFrame() {
@@ -658,7 +656,7 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
-  WebViewContentsHelper::Attach(contents.get(), web_contents_.get());
+  new WebViewContentsHelper(contents.get(), web_contents_helper_);
 
   WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
@@ -754,7 +752,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  WebViewContentsHelper::Attach(new_contents, web_contents());
+  new WebViewContentsHelper(new_contents, web_contents_helper_);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -798,6 +796,12 @@ void WebView::LoadProgressChanged(content::WebContents* source,
   OnLoadProgressChanged(progress);
 }
 
+void WebView::CloseContents(content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  OnCloseRequested();
+}
+
 bool WebView::AddMessageToConsole(content::WebContents* source,
                                   int32 level,
                                   const base::string16& message,
@@ -806,6 +810,17 @@ bool WebView::AddMessageToConsole(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
 
   return OnAddMessageToConsole(level, message, line_no, source_id);
+}
+
+void WebView::BeforeUnloadFired(content::WebContents* source,
+                                bool proceed,
+                                bool* proceed_to_fire_unload) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  // We take care of the unload handler on deletion
+  *proceed_to_fire_unload = false;
+
+  OnPrepareToCloseResponse(proceed);
 }
 
 content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
@@ -820,7 +835,7 @@ void WebView::RunFileChooser(content::WebContents* source,
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   FilePicker* file_picker = CreateFilePicker(rvh);
   if (!file_picker) {
-    std::vector<ui::SelectedFileInfo> empty;
+    std::vector<content::FileChooserFileInfo> empty;
     rvh->FilesSelectedInChooser(empty, params.mode);
     return;
   }
@@ -1127,6 +1142,9 @@ bool WebView::OnCertificateError(
 }
 void WebView::OnContentBlocked() {}
 
+void WebView::OnPrepareToCloseResponse(bool proceed) {}
+void WebView::OnCloseRequested() {}
+
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
       show_ime_if_needed_(false),
@@ -1138,7 +1156,6 @@ WebView::WebView()
       gesture_provider_(GestureProvider::Create(this)),
       in_swap_(false),
       initial_index_(0),
-      initial_preferences_(NULL),
       root_frame_(NULL),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
@@ -1183,8 +1200,15 @@ WebView::~WebView() {
     rwhv->SetDelegate(NULL);
   }
 
-  initial_preferences_ = NULL;
-  web_contents_helper_ = NULL;
+  web_contents_->RemoveUserData(kWebViewKey);
+
+  content::RenderViewHostImpl* rvh =
+      static_cast<content::RenderViewHostImpl*>(
+        web_contents_->GetRenderViewHost());
+  if (rvh && !rvh->SuddenTerminationAllowed()) {
+    web_contents_helper_->TakeWebContentsOwnershipAndClosePage(
+        web_contents_.Pass());
+  }
 }
 
 void WebView::Init(Params* params) {
@@ -1238,17 +1262,17 @@ void WebView::Init(Params* params) {
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
     if (!initial_state_.empty()) {
-      std::vector<content::NavigationEntry*> entries =
-          sessions::SerializedNavigationEntry::ToNavigationEntries(
+      ScopedVector<content::NavigationEntry> entries =
+          sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
               initial_state_, context);
       web_contents_->GetController().Restore(
           initial_index_,
           content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
-          &entries);
+          &entries.get());
       initial_state_.clear();
     }
 
-    WebViewContentsHelper::Attach(web_contents_.get());
+    new WebViewContentsHelper(web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());
@@ -1256,14 +1280,21 @@ void WebView::Init(Params* params) {
 
   compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
 
-  web_contents_helper_ =
-      WebViewContentsHelper::FromWebContents(web_contents_.get());
-  web_contents_helper_->SetDelegate(this);
-
+  // Attach ourself to the WebContents
   web_contents_->SetDelegate(this);
   web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
 
   WebContentsObserver::Observe(web_contents_.get());
+
+  // Set the initial WebPreferences. This has to happen after attaching
+  // ourself to the WebContents, as the pref update needs to call back in
+  // to us (via CanCreateWindows)
+  web_contents_helper_ =
+      WebViewContentsHelper::FromWebContents(web_contents_.get());
+  if (web_preferences()) {
+    web_contents_helper_->SetWebPreferences(web_preferences());
+  }
+  web_contents_helper_->WebContentsAdopted();
 
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                  content::NotificationService::AllBrowserContextsAndSources());
@@ -1272,11 +1303,6 @@ void WebView::Init(Params* params) {
 
   root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
 
-  if (initial_preferences_) {
-    SetWebPreferences(initial_preferences_);
-    WebPreferencesObserver::Observe(NULL);
-    initial_preferences_ = NULL;
-  }
   if (params->context) {
     if (!initial_url_.is_empty()) {
       SetURL(initial_url_);
@@ -1306,7 +1332,7 @@ WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
     return NULL;
   }
 
-  return data->view();
+  return data->get();
 }
 
 // static
@@ -1358,7 +1384,7 @@ std::vector<sessions::SerializedNavigationEntry> WebView::GetState() const {
     content::NavigationEntry* entry = (i == pending_index) ?
         controller.GetPendingEntry() : controller.GetEntryAtIndex(i);
     entries[i] =
-        sessions::SerializedNavigationEntry::FromNavigationEntry(i, *entry);
+        sessions::ContentSerializedNavigationBuilder::FromNavigationEntry(i, *entry);
   }
   return entries;
 }
@@ -1593,20 +1619,19 @@ content::FrameTree* WebView::GetFrameTree() {
 
 WebPreferences* WebView::GetWebPreferences() {
   if (!web_contents_helper_) {
-    return initial_preferences_;
+    return web_preferences();
   }
 
   return web_contents_helper_->GetWebPreferences();
 }
 
 void WebView::SetWebPreferences(WebPreferences* prefs) {
+  WebPreferencesObserver::Observe(prefs);
   if (!web_contents_helper_) {
-    CHECK(!prefs || prefs->IsOwnedByEmbedder());
-    initial_preferences_ = prefs;
-    WebPreferencesObserver::Observe(prefs);
-  } else {
-    web_contents_helper_->SetWebPreferences(prefs);
+    return;
   }
+
+  web_contents_helper_->SetWebPreferences(prefs);
 }
 
 gfx::Size WebView::GetViewSizePix() const {
@@ -1674,6 +1699,28 @@ void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
       new OxideMsg_SetAllowRunningInsecureContent(MSG_ROUTING_NONE, allow));
   web_contents_->GetMainFrame()->Send(
       new OxideMsg_ReloadFrame(web_contents_->GetMainFrame()->GetRoutingID()));
+}
+
+void WebView::PrepareToClose() {
+  base::Closure no_before_unload_handler_response_task =
+      base::Bind(&WebView::OnPrepareToCloseResponse,
+                 AsWeakPtr(), true);
+
+  if (!web_contents_) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, no_before_unload_handler_response_task);
+    return;
+  }
+
+  if (!web_contents_->NeedToFireBeforeUnload()) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, no_before_unload_handler_response_task);
+    return;
+  }
+
+  // This is ok to call multiple times - RFHI tracks whether a response
+  // is pending and won't dispatch another event if it is
+  web_contents_->DispatchBeforeUnload(false);
 }
 
 void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,

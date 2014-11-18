@@ -1,0 +1,221 @@
+# Description: Compile in our shim to allow Oxide to use non-exported
+#  GPU related APIs from content. Also allow the application to provide
+#  a shared GL context for texture sharing
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
+--- a/content/common/gpu/gpu_channel_manager.cc
++++ b/content/common/gpu/gpu_channel_manager.cc
+@@ -16,16 +16,18 @@
+ #include "gpu/command_buffer/service/gpu_switches.h"
+ #include "gpu/command_buffer/service/mailbox_manager_impl.h"
+ #include "gpu/command_buffer/service/memory_program_cache.h"
+ #include "gpu/command_buffer/service/shader_translator_cache.h"
+ #include "ipc/message_filter.h"
+ #include "ui/gl/gl_bindings.h"
+ #include "ui/gl/gl_share_group.h"
+ 
++#include "shared/port/content/common/gpu_thread_shim_oxide.h"
++
+ namespace content {
+ 
+ namespace {
+ 
+ class GpuChannelManagerMessageFilter : public IPC::MessageFilter {
+  public:
+   GpuChannelManagerMessageFilter(
+       GpuMemoryBufferFactory* gpu_memory_buffer_factory)
+@@ -171,17 +173,20 @@ void GpuChannelManager::OnEstablishChann
+                                            bool share_context,
+                                            bool allow_future_sync_points) {
+   IPC::ChannelHandle channel_handle;
+ 
+   gfx::GLShareGroup* share_group = NULL;
+   gpu::gles2::MailboxManager* mailbox_manager = NULL;
+   if (share_context) {
+     if (!share_group_.get()) {
+-      share_group_ = new gfx::GLShareGroup;
++      share_group_ = oxide_gpu_shim::GetGLShareGroup();
++      if (!share_group_.get()) {
++        share_group_ = new gfx::GLShareGroup;
++      }
+       DCHECK(!mailbox_manager_.get());
+       mailbox_manager_ = new gpu::gles2::MailboxManagerImpl;
+     }
+     share_group = share_group_.get();
+     mailbox_manager = mailbox_manager_.get();
+   }
+ 
+   scoped_ptr<GpuChannel> channel(new GpuChannel(this,
+diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
+--- a/content/common/gpu/gpu_channel_manager.h
++++ b/content/common/gpu/gpu_channel_manager.h
+@@ -93,16 +93,18 @@ class GpuChannelManager : public IPC::Li
+   GpuEventsDispatcher* gpu_devtools_events_dispatcher() {
+     return &gpu_devtools_events_dispatcher_;
+   }
+ 
+   GpuChannel* LookupChannel(int32 client_id);
+ 
+   SyncPointManager* sync_point_manager() { return sync_point_manager_.get(); }
+ 
++  gpu::gles2::MailboxManager* mailbox_manager() { return mailbox_manager_.get(); }
++
+   gfx::GLSurface* GetDefaultOffscreenSurface();
+ 
+   GpuMemoryBufferFactory* gpu_memory_buffer_factory() {
+     return gpu_memory_buffer_factory_.get();
+   }
+ 
+  private:
+   typedef base::ScopedPtrHashMap<int, GpuChannel> GpuChannelMap;
+diff --git a/content/content_common.gypi b/content/content_common.gypi
+--- a/content/content_common.gypi
++++ b/content/content_common.gypi
+@@ -17,16 +17,17 @@
+     '../ui/gfx/gfx.gyp:gfx',
+     '../ui/gfx/gfx.gyp:gfx_geometry',
+     '../ui/gfx/ipc/gfx_ipc.gyp:gfx_ipc',
+     '../ui/shell_dialogs/shell_dialogs.gyp:shell_dialogs',
+     '../url/url.gyp:url_lib',
+   ],
+   'include_dirs': [
+     '..',
++    '<(DEPTH)/../../..',
+   ],
+   'export_dependent_settings': [
+     '../base/base.gyp:base',
+     # The public content API headers directly include Blink API headers, so we
+     # have to export the blink header settings so that relative paths in these
+     # headers resolve correctly.
+     '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
+   ],
+@@ -500,16 +501,18 @@
+       'common/view_messages.h',
+       'common/webplugin_geometry.cc',
+       'common/webplugin_geometry.h',
+       'common/websocket.cc',
+       'common/websocket.h',
+       'common/websocket_messages.h',
+       'common/worker_messages.h',
+       'common/zygote_commands_linux.h',
++      '<(DEPTH)/../../../shared/port/content/common/gpu_thread_shim_oxide.cc',
++      '<(DEPTH)/../../../shared/port/content/common/gpu_thread_shim_oxide.h',
+     ],
+   },
+   'sources': [
+     '<@(public_common_sources)',
+     '<@(private_common_sources)',
+   ],
+   'target_conditions': [
+     ['OS=="android" and <(use_seccomp_bpf)==1', {
+diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
+--- a/content/gpu/gpu_child_thread.cc
++++ b/content/gpu/gpu_child_thread.cc
+@@ -26,16 +26,21 @@
+ #endif
+ 
+ namespace content {
+ namespace {
+ 
+ static base::LazyInstance<scoped_refptr<ThreadSafeSender> >
+     g_thread_safe_sender = LAZY_INSTANCE_INITIALIZER;
+ 
++static base::LazyInstance<base::ThreadLocalPointer<GpuChildThread> >
++    g_lazy_tls = LAZY_INSTANCE_INITIALIZER;
++static base::LazyInstance<scoped_refptr<base::MessageLoopProxy> >
++    g_thread_safe_message_loop = LAZY_INSTANCE_INITIALIZER;
++
+ bool GpuProcessLogMessageHandler(int severity,
+                                  const char* file, int line,
+                                  size_t message_start,
+                                  const std::string& str) {
+   std::string header = str.substr(0, message_start);
+   std::string message = str.substr(message_start);
+ 
+   g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
+@@ -74,20 +79,33 @@ GpuChildThread::GpuChildThread(const std
+ #if !defined(OS_ANDROID)
+   // For single process and in-process GPU mode, we need to load and
+   // initialize the GL implementation and locate the GL entry points here.
+   // On Android, GLSurface::InitializeOneOff() is called from BrowserMainLoop
+   // before getting here. crbug.com/326295
+   if (!gfx::GLSurface::InitializeOneOff())
+     VLOG(1) << "gfx::GLSurface::InitializeOneOff failed";
+ #endif
++  g_lazy_tls.Pointer()->Set(this);
+   g_thread_safe_sender.Get() = thread_safe_sender();
++  g_thread_safe_message_loop.Get() = message_loop()->message_loop_proxy();
+ }
+ 
+ GpuChildThread::~GpuChildThread() {
++  g_lazy_tls.Pointer()->Set(NULL);
++}
++
++// static
++GpuChildThread* GpuChildThread::instance() {
++  return g_lazy_tls.Pointer()->Get();
++}
++
++// static
++scoped_refptr<base::MessageLoopProxy> GpuChildThread::message_loop_proxy() {
++  return g_thread_safe_message_loop.Get();
+ }
+ 
+ void GpuChildThread::Shutdown() {
+   ChildThread::Shutdown();
+   logging::SetLogMessageHandler(NULL);
+ }
+ 
+ void GpuChildThread::Init(const base::Time& process_start_time) {
+diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
+--- a/content/gpu/gpu_child_thread.h
++++ b/content/gpu/gpu_child_thread.h
+@@ -17,16 +17,20 @@
+ #include "content/child/child_thread.h"
+ #include "content/common/gpu/gpu_channel.h"
+ #include "content/common/gpu/gpu_channel_manager.h"
+ #include "content/common/gpu/gpu_config.h"
+ #include "content/common/gpu/x_util.h"
+ #include "gpu/config/gpu_info.h"
+ #include "ui/gfx/native_widget_types.h"
+ 
++namespace base {
++class MessageLoopProxy;
++}
++
+ namespace sandbox {
+ class TargetServices;
+ }
+ 
+ namespace content {
+ class GpuWatchdogThread;
+ 
+ // The main thread of the GPU child process. There will only ever be one of
+@@ -42,21 +46,26 @@ class GpuChildThread : public ChildThrea
+                           const gpu::GPUInfo& gpu_info,
+                           const DeferredMessages& deferred_messages);
+ 
+   // For single-process mode.
+   explicit GpuChildThread(const std::string& channel_id);
+ 
+   ~GpuChildThread() override;
+ 
++  static GpuChildThread* instance();
++  static scoped_refptr<base::MessageLoopProxy> message_loop_proxy();
++
+   void Shutdown() override;
+ 
+   void Init(const base::Time& process_start_time);
+   void StopWatchdog();
+ 
++  GpuChannelManager* gpu_channel_manager() { return gpu_channel_manager_.get(); }
++
+   // ChildThread overrides.
+   bool Send(IPC::Message* msg) override;
+   bool OnControlMessageReceived(const IPC::Message& msg) override;
+ 
+  private:
+   // Message handlers.
+   void OnInitialize();
+   void OnCollectGraphicsInfo();

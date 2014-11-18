@@ -31,7 +31,7 @@ class SimplePermissionRequest;
 
 class OxideQSslCertificate;
 
-class OxideQCertificateErrorPrivate Q_DECL_FINAL {
+class OxideQCertificateErrorPrivate final {
   Q_DECLARE_PUBLIC(OxideQCertificateError)
 
  public:

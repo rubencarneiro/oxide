@@ -24,7 +24,7 @@
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "qt/core/api/oxideqstoragepermissionrequest.h"
 
-class OxideQStoragePermissionRequestPrivate Q_DECL_FINAL {
+class OxideQStoragePermissionRequestPrivate final {
  public:
   ~OxideQStoragePermissionRequestPrivate();
 

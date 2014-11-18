@@ -25,8 +25,7 @@ namespace qquick {
 
 class BeforeUnloadDialogContext;
 
-class BeforeUnloadDialogDelegate Q_DECL_FINAL :
-    public JavaScriptDialogDelegate {
+class BeforeUnloadDialogDelegate final : public JavaScriptDialogDelegate {
  public:
   BeforeUnloadDialogDelegate(OxideQQuickWebView* webview);
 

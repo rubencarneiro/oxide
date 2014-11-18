@@ -32,7 +32,7 @@ namespace oxide {
 
 class WebFrame;
 
-class ScriptMessageImplBrowser FINAL : public ScriptMessage {
+class ScriptMessageImplBrowser final : public ScriptMessage {
  public:
   ScriptMessageImplBrowser(WebFrame* source_frame,
                            int serial,
@@ -45,7 +45,7 @@ class ScriptMessageImplBrowser FINAL : public ScriptMessage {
 
  private:
   ~ScriptMessageImplBrowser();
-  void DoSendResponse(const OxideMsg_SendMessage_Params& params) FINAL;
+  void DoSendResponse(const OxideMsg_SendMessage_Params& params) final;
 
   base::WeakPtr<WebFrame> source_frame_;
 

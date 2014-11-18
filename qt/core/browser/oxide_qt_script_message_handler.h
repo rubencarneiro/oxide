@@ -33,7 +33,7 @@ namespace qt {
 
 class ScriptMessageHandlerAdapter;
 
-class ScriptMessageHandler FINAL {
+class ScriptMessageHandler final {
  public:
   ~ScriptMessageHandler();
 

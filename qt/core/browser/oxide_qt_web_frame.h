@@ -36,7 +36,7 @@ namespace qt {
 class ScriptMessageRequest;
 class WebFrameAdapter;
 
-class WebFrame FINAL : public oxide::WebFrame {
+class WebFrame final : public oxide::WebFrame {
  public:
   WebFrame(WebFrameAdapter* adapter,
            content::FrameTreeNode* node,
@@ -54,14 +54,14 @@ class WebFrame FINAL : public oxide::WebFrame {
 
   QObject* api_handle() const { return api_handle_.get(); }
 
-  size_t GetScriptMessageHandlerCount() const FINAL;
+  size_t GetScriptMessageHandlerCount() const final;
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
-      size_t index) const FINAL;
+      size_t index) const final;
 
-  void OnChildAdded(oxide::WebFrame* child) FINAL;
-  void OnChildRemoved(oxide::WebFrame* child) FINAL;
+  void OnChildAdded(oxide::WebFrame* child) final;
+  void OnChildRemoved(oxide::WebFrame* child) final;
 
-  void URLChanged() FINAL;
+  void URLChanged() final;
 
   scoped_ptr<QObject> api_handle_;
   WebFrameAdapter* adapter_;

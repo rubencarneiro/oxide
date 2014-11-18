@@ -33,7 +33,7 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qquick {
 
-class FilePickerDelegate Q_DECL_FINAL : public oxide::qt::FilePickerDelegate {
+class FilePickerDelegate final : public oxide::qt::FilePickerDelegate {
  public:
   FilePickerDelegate(OxideQQuickWebView* webview);
 
