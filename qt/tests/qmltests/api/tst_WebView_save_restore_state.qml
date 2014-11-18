@@ -33,7 +33,7 @@ TestCase {
     verify(webView.waitForLoadSucceeded(),
            "Timed out waiting for successful load");
 
-    var state = webView.currentState();
+    var state = webView.currentState;
     verify(state.length > 0);
 
     var restored = webViewComponent.createObject(webView,
@@ -59,7 +59,7 @@ TestCase {
     verify(webView.waitForLoadSucceeded(),
            "Timed out waiting for successful load");
 
-    var state = webView.currentState();
+    var state = webView.currentState;
     verify(state.length > 0);
 
     var restored = webViewComponent.createObject(webView,
@@ -81,7 +81,7 @@ TestCase {
     webView.getTestApi().evaluateCode("document.body.scrollLeft = 300");
     webView.getTestApi().evaluateCode("document.body.scrollTop = 700");
 
-    var state = webView.currentState();
+    var state = webView.currentState;
     verify(state.length > 0);
 
     var restored = webViewComponent.createObject(webView,
@@ -111,7 +111,7 @@ TestCase {
         return webView.getTestApi().evaluateCode(
             "document.querySelector('#textInput').value") == "Te$t"; });
 
-    var state = webView.currentState();
+    var state = webView.currentState;
     verify(state.length > 0);
 
     var restored = webViewComponent.createObject(webView,
