@@ -21,11 +21,11 @@
 #include <QDateTime>
 #include <QImage>
 #include <QList>
-#include <QPointF>
+#include <QPoint>
 #include <QRect>
 #include <QScopedPointer>
 #include <QSharedPointer>
-#include <QSizeF>
+#include <QSize>
 #include <QString>
 #include <QtGlobal>
 #include <Qt>
@@ -70,13 +70,10 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_NONE = 0,
 
   FRAME_METADATA_CHANGE_DEVICE_SCALE = 1 << 0,
-  FRAME_METADATA_CHANGE_SCROLL_OFFSET_X = 1 << 1,
-  FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y = 1 << 2,
-  FRAME_METADATA_CHANGE_CONTENT_WIDTH = 1 << 3,
-  FRAME_METADATA_CHANGE_CONTENT_HEIGHT = 1 << 4,
-  FRAME_METADATA_CHANGE_VIEWPORT_WIDTH = 1 << 5,
-  FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT = 1 << 6,
-  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 7
+  FRAME_METADATA_CHANGE_SCROLL_OFFSET = 1 << 1,
+  FRAME_METADATA_CHANGE_CONTENT = 1 << 2,
+  FRAME_METADATA_CHANGE_VIEWPORT = 1 << 3,
+  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 4
 };
 
 enum ContentTypeFlags {
@@ -178,9 +175,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   float compositorFrameDeviceScaleFactor() const;
   float compositorFramePageScaleFactor() const;
-  QPointF compositorFrameScrollOffset() const;
-  QSizeF compositorFrameLayerSize() const;
-  QSizeF compositorFrameViewportSize() const;
+  QPoint compositorFrameScrollOffsetPix();
+  QSize compositorFrameContentSizePix();
+  QSize compositorFrameViewportSizePix();
 
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
   void didCommitCompositorFrame();
@@ -204,6 +201,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void Initialized();
   void WebPreferencesDestroyed();
+
+  void FrameMetadataUpdated(FrameMetadataChangeFlags flags);
+
+  float GetFrameMetadataScaleToPix();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
@@ -258,7 +259,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
-  virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
+  virtual void OnFrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
 
   virtual void ScheduleUpdate() = 0;
   virtual void EvictCurrentFrame() = 0;
@@ -274,6 +275,12 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void CloseRequested() = 0;
 
   QScopedPointer<WebView> view_;
+
+  FrameMetadataChangeFlags frame_metadata_dirty_flags_;
+  float frame_metadata_scale_to_pix_;
+  QPoint frame_scroll_offset_;
+  QSize frame_content_size_;
+  QSize frame_viewport_size_;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };

@@ -17,14 +17,17 @@
 
 #include "oxide_qt_web_view_adapter.h"
 
-#include <QSize>
+#include <QPointF>
+#include <QSizeF>
 #include <QtDebug>
 
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "cc/output/compositor_frame_metadata.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/size.h"
+#include "ui/gfx/geometry/size_f.h"
+#include "ui/gfx/geometry/vector2d_f.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -34,6 +37,7 @@
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
+#include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -43,6 +47,8 @@
 
 namespace oxide {
 namespace qt {
+
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
@@ -126,9 +132,44 @@ void WebViewAdapter::WebPreferencesDestroyed() {
   OnWebPreferencesReplaced();
 }
 
+void WebViewAdapter::FrameMetadataUpdated(FrameMetadataChangeFlags flags) {
+  if (flags & FRAME_METADATA_CHANGE_DEVICE_SCALE ||
+      flags & FRAME_METADATA_CHANGE_PAGE_SCALE) {
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
+    flags |= FRAME_METADATA_CHANGE_CONTENT;
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT;
+  }
+
+  if (flags & FRAME_METADATA_CHANGE_VIEWPORT) {
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
+    flags |= FRAME_METADATA_CHANGE_CONTENT;
+  }
+
+  frame_metadata_dirty_flags_ |= flags;
+
+  OnFrameMetadataUpdated(flags);
+}
+
+float WebViewAdapter::GetFrameMetadataScaleToPix() {
+  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_DEVICE_SCALE ||
+      frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_PAGE_SCALE) {
+    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_DEVICE_SCALE;
+    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_PAGE_SCALE;
+
+    const cc::CompositorFrameMetadata& metadata =
+        view_->compositor_frame_metadata();
+    frame_metadata_scale_to_pix_ =
+      metadata.device_scale_factor * metadata.page_scale_factor;
+  }
+
+  return frame_metadata_scale_to_pix_;
+}
+
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
-    view_(WebView::Create(this)) {}
+    view_(WebView::Create(this)),
+    frame_metadata_dirty_flags_(FrameMetadataChangeFlags(-1)),
+    frame_metadata_scale_to_pix_(0.0f) {}
 
 WebViewAdapter::~WebViewAdapter() {}
 
@@ -367,21 +408,58 @@ float WebViewAdapter::compositorFramePageScaleFactor() const {
   return view_->compositor_frame_metadata().page_scale_factor;
 }
 
-QPointF WebViewAdapter::compositorFrameScrollOffset() const {
-  const gfx::Vector2dF& offset =
-      view_->compositor_frame_metadata().root_scroll_offset;
-  return QPointF(offset.x(), offset.y());
+QPoint WebViewAdapter::compositorFrameScrollOffsetPix() {
+  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_SCROLL_OFFSET) {
+    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_SCROLL_OFFSET;
+
+    // See https://launchpad.net/bugs/1336730
+    const gfx::SizeF& viewport_size =
+        view_->compositor_frame_metadata().scrollable_viewport_size;
+    float x_scale = GetFrameMetadataScaleToPix() *
+                    viewport_size.width() / qRound(viewport_size.width());
+    float y_scale = GetFrameMetadataScaleToPix() *
+                    viewport_size.height() / qRound(viewport_size.height());
+
+    gfx::Vector2dF offset =
+        gfx::ScaleVector2d(view_->compositor_frame_metadata().root_scroll_offset,
+                           x_scale, y_scale);
+    frame_scroll_offset_ = QPointF(offset.x(), offset.y()).toPoint();
+  }
+
+  return frame_scroll_offset_;
 }
 
-QSizeF WebViewAdapter::compositorFrameLayerSize() const {
-  const gfx::SizeF& size = view_->compositor_frame_metadata().root_layer_size;
-  return QSizeF(size.width(), size.height());
+QSize WebViewAdapter::compositorFrameContentSizePix() {
+  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_CONTENT) {
+    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_CONTENT;
+
+    // See https://launchpad.net/bugs/1336730
+    const gfx::SizeF& viewport_size =
+        view_->compositor_frame_metadata().scrollable_viewport_size;
+    float x_scale = GetFrameMetadataScaleToPix() *
+                    viewport_size.width() / qRound(viewport_size.width());
+    float y_scale = GetFrameMetadataScaleToPix() *
+                    viewport_size.height() / qRound(viewport_size.height());
+
+    gfx::SizeF size =
+        gfx::ScaleSize(view_->compositor_frame_metadata().root_layer_size,
+                       x_scale, y_scale);
+    frame_content_size_ = QSizeF(size.width(), size.height()).toSize();
+  }
+
+  return frame_content_size_;
 }
 
-QSizeF WebViewAdapter::compositorFrameViewportSize() const {
-  const gfx::SizeF& size =
-      view_->compositor_frame_metadata().scrollable_viewport_size;
-  return QSizeF(size.width(), size.height());
+QSize WebViewAdapter::compositorFrameViewportSizePix() {
+  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_VIEWPORT) {
+    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_VIEWPORT;
+    gfx::SizeF size =
+        gfx::ScaleSize(view_->compositor_frame_metadata().scrollable_viewport_size,
+                       GetFrameMetadataScaleToPix());
+    frame_viewport_size_ = QSizeF(size.width(), size.height()).toSize();
+  }
+
+  return frame_viewport_size_;
 }
 
 QSharedPointer<CompositorFrameHandle> WebViewAdapter::compositorFrameHandle() {

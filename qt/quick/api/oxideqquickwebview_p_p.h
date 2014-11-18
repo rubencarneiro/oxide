@@ -115,7 +115,7 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
 
   void HandleUnhandledKeyboardEvent(QKeyEvent *event) final;
 
-  void FrameMetadataUpdated(
+  void OnFrameMetadataUpdated(
       oxide::qt::FrameMetadataChangeFlags flags) final;
 
   void ScheduleUpdate() final;

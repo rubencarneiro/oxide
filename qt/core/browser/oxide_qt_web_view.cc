@@ -534,28 +534,22 @@ void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
     flags |= FRAME_METADATA_CHANGE_DEVICE_SCALE;
   }
   if (old.root_scroll_offset.x() !=
-      compositor_frame_metadata().root_scroll_offset.x()) {
-    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_X;
-  }
-  if (old.root_scroll_offset.y() !=
-      compositor_frame_metadata().root_scroll_offset.y()) {
-    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y;
+          compositor_frame_metadata().root_scroll_offset.x() ||
+      old.root_scroll_offset.y() !=
+          compositor_frame_metadata().root_scroll_offset.y()) {
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
   }
   if (old.root_layer_size.width() !=
-      compositor_frame_metadata().root_layer_size.width()) {
-    flags |= FRAME_METADATA_CHANGE_CONTENT_WIDTH;
-  }
-  if (old.root_layer_size.height() !=
-      compositor_frame_metadata().root_layer_size.height()) {
-    flags |= FRAME_METADATA_CHANGE_CONTENT_HEIGHT;
+          compositor_frame_metadata().root_layer_size.width() ||
+      old.root_layer_size.height() !=
+          compositor_frame_metadata().root_layer_size.height()) {
+    flags |= FRAME_METADATA_CHANGE_CONTENT;
   }
   if (old.scrollable_viewport_size.width() !=
-      compositor_frame_metadata().scrollable_viewport_size.width()) {
-    flags |= FRAME_METADATA_CHANGE_VIEWPORT_WIDTH;
-  }
-  if (old.scrollable_viewport_size.height() !=
-      compositor_frame_metadata().scrollable_viewport_size.height()) {
-    flags |= FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT;
+          compositor_frame_metadata().scrollable_viewport_size.width() ||
+      old.scrollable_viewport_size.height() !=
+          compositor_frame_metadata().scrollable_viewport_size.height()) {
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT;
   }
   if (old.page_scale_factor !=
       compositor_frame_metadata().page_scale_factor) {

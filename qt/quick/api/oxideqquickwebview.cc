@@ -535,37 +535,22 @@ void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
   w->sendEvent(q, event);
 }
 
-void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
+void OxideQQuickWebViewPrivate::OnFrameMetadataUpdated(
     oxide::qt::FrameMetadataChangeFlags flags) {
   Q_Q(OxideQQuickWebView);
 
   QFlags<oxide::qt::FrameMetadataChangeFlags> f(flags);
 
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
-      f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET)) {
     emit q->contentXChanged();
     emit q->contentYChanged();
+  }
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT)) {
     emit q->contentWidthChanged();
     emit q->contentHeightChanged();
+  }
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT)) {
     emit q->viewportWidthChanged();
-    emit q->viewportHeightChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
-    emit q->contentXChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
-    emit q->contentYChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
-    emit q->contentWidthChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
-    emit q->contentHeightChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
-    emit q->viewportWidthChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
     emit q->viewportHeightChanged();
   }
 }
@@ -1170,57 +1155,43 @@ void OxideQQuickWebView::removeMessageHandler(
 qreal OxideQQuickWebView::viewportWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  return qRound64(d->compositorFrameViewportSize().width()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor());
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameViewportSizePix().width();
 }
 
 qreal OxideQQuickWebView::viewportHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  return qRound64(d->compositorFrameViewportSize().height()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor());
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameViewportSizePix().height();
 }
 
 qreal OxideQQuickWebView::contentWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  qreal vw = d->compositorFrameViewportSize().width();
-  return qRound64(d->compositorFrameLayerSize().width()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor()
-      * vw / qRound64(vw));
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameContentSizePix().width();
 }
 
 qreal OxideQQuickWebView::contentHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  qreal vh = d->compositorFrameViewportSize().height();
-  return qRound64(d->compositorFrameLayerSize().height()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor()
-      * vh / qRound64(vh));
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameContentSizePix().height();
 }
 
 qreal OxideQQuickWebView::contentX() const {
   Q_D(const OxideQQuickWebView);
 
-  qreal vw = d->compositorFrameViewportSize().width();
-  return qRound64(d->compositorFrameScrollOffset().x()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor()
-      * vw / qRound64(vw));
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameScrollOffsetPix().x();
 }
 
 qreal OxideQQuickWebView::contentY() const {
   Q_D(const OxideQQuickWebView);
 
-  qreal vh = d->compositorFrameViewportSize().height();
-  return qRound64(d->compositorFrameScrollOffset().y()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor()
-      * vh / qRound64(vh));
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameScrollOffsetPix().y();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
