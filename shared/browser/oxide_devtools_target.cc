@@ -55,31 +55,7 @@ std::string DevToolsTarget::GetParentId() const {
 }
 
 std::string DevToolsTarget::GetType() const {
-  std::string type = kTargetTypeOther;
-
-  const content::WebContents* wc = web_contents();
-  if (!wc) {
-    return type;
-  }
-
-  const content::RenderViewHost* rvh =
-      wc->GetRenderViewHost();
-  if (!rvh) {
-    return type;
-  }
-
-  // In case we have a OOP iframe currently
-  // corresponding to this webcontents (for --site-per-process)
-  content::RenderFrameHost* render_frame_host =
-      const_cast<content::RenderViewHost*>(rvh)->GetMainFrame();
-  if (render_frame_host &&
-      render_frame_host->IsCrossProcessSubframe()) {
-    type = kTargetTypeIframe;
-  } else {
-    type = kTargetTypePage;
-  }
-
-  return type;
+  return kTargetTypePage;
 }
 
 std::string DevToolsTarget::GetTitle() const {
