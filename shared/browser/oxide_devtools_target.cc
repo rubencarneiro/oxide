@@ -32,8 +32,6 @@ namespace oxide {
 namespace {
 
 const char kTargetTypePage[] = "page";
-const char kTargetTypeIframe[] = "iframe";
-const char kTargetTypeOther[] = "other";
 
 }
 
