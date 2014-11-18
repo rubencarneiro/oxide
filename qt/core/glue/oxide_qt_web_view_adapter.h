@@ -205,6 +205,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   friend class WebView;
 
   void EnsurePreferences();
+  void RestoreState(const QByteArray& state);
 
   void Initialized();
   void WebPreferencesDestroyed();

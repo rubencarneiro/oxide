@@ -47,6 +47,11 @@
 namespace oxide {
 namespace qt {
 
+namespace {
+static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
+static uint16_t STATE_SERIALIZER_VERSION = 1;
+}
+
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
   CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
@@ -107,6 +112,53 @@ void WebViewAdapter::EnsurePreferences() {
       OxideQWebPreferencesPrivate::get(p)->preferences());
 }
 
+void WebViewAdapter::RestoreState(const QByteArray& state) {
+#define WARN_INVALID_DATA \
+    qWarning() << "Failed to read initial state: invalid data"
+  std::vector<sessions::SerializedNavigationEntry> entries;
+  Pickle pickle(state.data(), state.size());
+  PickleIterator i(pickle);
+  std::string magic_number;
+  if (!i.ReadString(&magic_number)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  if (magic_number != STATE_SERIALIZER_MAGIC_NUMBER) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  uint16_t version;
+  if (!i.ReadUInt16(&version)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  if (version != STATE_SERIALIZER_VERSION) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  int count;
+  if (!i.ReadLength(&count)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  entries.resize(count);
+  for (int j = 0; j < count; ++j) {
+    sessions::SerializedNavigationEntry entry;
+    if (!entry.ReadFromPickle(&i)) {
+      WARN_INVALID_DATA;
+      return;
+    }
+    entries[j] = entry;
+  }
+  int index;
+  if (!i.ReadInt(&index)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  view_->SetState(entries, index);
+#undef WARN_INVALID_DATA
+}
+
 void WebViewAdapter::Initialized() {
   DCHECK(isInitialized());
 
@@ -160,29 +212,7 @@ void WebViewAdapter::init(bool incognito,
   }
 
   if (!restoreState.isEmpty()) {
-    std::vector<sessions::SerializedNavigationEntry> entries;
-    Pickle pickle(restoreState.data(), restoreState.size());
-    PickleIterator i(pickle);
-    int count;
-    if (!i.ReadLength(&count)) {
-      qWarning() << "Failed to read initial state: invalid data";
-      return;
-    }
-    entries.resize(count);
-    for (int j = 0; j < count; ++j) {
-      sessions::SerializedNavigationEntry entry;
-      if (!entry.ReadFromPickle(&i)) {
-        qWarning() << "Failed to read initial state: invalid data";
-        return;
-      }
-      entries[j] = entry;
-    }
-    int index;
-    if (!i.ReadInt(&index)) {
-      qWarning() << "Failed to read initial state: invalid data";
-      return;
-    }
-    view_->SetState(entries, index);
+    RestoreState(restoreState);
   }
 
   CHECK(context) <<
@@ -361,6 +391,8 @@ QByteArray WebViewAdapter::currentState() const {
     return QByteArray();
   }
   Pickle pickle;
+  pickle.WriteString(STATE_SERIALIZER_MAGIC_NUMBER);
+  pickle.WriteUInt16(STATE_SERIALIZER_VERSION);
   pickle.WriteInt(entries.size());
   std::vector<sessions::SerializedNavigationEntry>::const_iterator i;
   static const size_t max_state_size = std::numeric_limits<uint16>::max() - 1024;
