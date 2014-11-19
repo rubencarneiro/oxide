@@ -112,7 +112,23 @@ void WebViewAdapter::EnsurePreferences() {
       OxideQWebPreferencesPrivate::get(p)->preferences());
 }
 
-void WebViewAdapter::RestoreState(const QByteArray& state) {
+void WebViewAdapter::RestoreState(RestoreType type, const QByteArray& state) {
+  COMPILE_ASSERT(
+      RESTORE_CURRENT_SESSION == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_CURRENT_SESSION),
+      restore_type_enums_current_doesnt_match);
+  COMPILE_ASSERT(
+      RESTORE_LAST_SESSION_EXITED_CLEANLY == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+      restore_type_enums_exited_cleanly_doesnt_match);
+  COMPILE_ASSERT(
+      RESTORE_LAST_SESSION_CRASHED == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_LAST_SESSION_CRASHED),
+      restore_type_enums_crashed_doesnt_match);
+
+  content::NavigationController::RestoreType restore_type =
+      static_cast<content::NavigationController::RestoreType>(type);
+
 #define WARN_INVALID_DATA \
     qWarning() << "Failed to read initial state: invalid data"
   std::vector<sessions::SerializedNavigationEntry> entries;
@@ -155,8 +171,9 @@ void WebViewAdapter::RestoreState(const QByteArray& state) {
     WARN_INVALID_DATA;
     return;
   }
-  view_->SetState(entries, index);
 #undef WARN_INVALID_DATA
+
+  view_->SetState(restore_type, entries, index);
 }
 
 void WebViewAdapter::Initialized() {
@@ -190,7 +207,8 @@ WebViewAdapter::~WebViewAdapter() {}
 void WebViewAdapter::init(bool incognito,
                           WebContextAdapter* context,
                           OxideQNewViewRequest* new_view_request,
-                          const QByteArray& restoreState) {
+                          const QByteArray& restoreState,
+                          RestoreType restoreType) {
   DCHECK(!isInitialized());
 
   bool script_opened = false;
@@ -212,7 +230,7 @@ void WebViewAdapter::init(bool incognito,
   }
 
   if (!restoreState.isEmpty()) {
-    RestoreState(restoreState);
+    RestoreState(restoreType, restoreState);
   }
 
   CHECK(context) <<

@@ -20,6 +20,14 @@ TestCase {
     }
   }
 
+  function get_restore_types() {
+    return [
+      {restoreType: WebView.RestoreCurrentSession},
+      {restoreType: WebView.RestoreLastSessionExitedCleanly},
+      {restoreType: WebView.RestoreLastSessionCrashed}
+    ];
+  }
+
   function init() {
     webView = webViewComponent.createObject(this);
   }
@@ -28,7 +36,11 @@ TestCase {
     webView.destroy()
   }
 
-  function test_WebView_save_and_restore_current_page() {
+  function test_WebView_save_and_restore_current_page_data() {
+    return get_restore_types();
+  }
+
+  function test_WebView_save_and_restore_current_page(data) {
     webView.url = "http://testsuite/tst_WebView_navigation1.html";
     verify(webView.waitForLoadSucceeded(),
            "Timed out waiting for successful load");
@@ -36,8 +48,8 @@ TestCase {
     var state = webView.currentState;
     verify(state.length > 0);
 
-    var restored = webViewComponent.createObject(webView,
-                                                 {"restoreState": state});
+    var restored = webViewComponent.createObject(
+        webView, {"restoreType": data.restoreType, "restoreState": state});
     verify(restored !== null);
     tryCompare(restored, "url", webView.url);
     verify(restored.waitForLoadSucceeded(),
@@ -45,7 +57,11 @@ TestCase {
     restored.destroy();
   }
 
-  function test_WebView_save_and_restore_navigation_history() {
+  function test_WebView_save_and_restore_navigation_history_data() {
+    return get_restore_types();
+  }
+
+  function test_WebView_save_and_restore_navigation_history(data) {
     webView.url = "http://testsuite/tst_WebView_navigation1.html";
     verify(webView.waitForLoadSucceeded(),
            "Timed out waiting for successful load");
@@ -62,8 +78,8 @@ TestCase {
     var state = webView.currentState;
     verify(state.length > 0);
 
-    var restored = webViewComponent.createObject(webView,
-                                                 {"restoreState": state});
+    var restored = webViewComponent.createObject(
+        webView, {"restoreType": data.restoreType, "restoreState": state});
     verify(restored !== null);
     tryCompare(restored, "url", webView.url);
     verify(restored.waitForLoadSucceeded(),
@@ -74,7 +90,11 @@ TestCase {
     restored.destroy();
   }
 
-  function test_WebView_save_and_restore_scroll_offset() {
+  function test_WebView_save_and_restore_scroll_offset_data() {
+    return get_restore_types();
+  }
+
+  function test_WebView_save_and_restore_scroll_offset(data) {
     webView.url = "http://testsuite/tst_WebView_flickableLikeAPI.html";
     verify(webView.waitForLoadSucceeded(),
            "Timed out waiting for successful load");
@@ -84,8 +104,8 @@ TestCase {
     var state = webView.currentState;
     verify(state.length > 0);
 
-    var restored = webViewComponent.createObject(webView,
-                                                 {"restoreState": state});
+    var restored = webViewComponent.createObject(
+        webView, {"restoreType": data.restoreType, "restoreState": state});
     verify(restored !== null);
     tryCompare(restored, "url", webView.url);
     verify(restored.waitForLoadSucceeded(),
@@ -99,7 +119,11 @@ TestCase {
     restored.destroy();
   }
 
-  function test_WebView_save_and_restore_form_data_input() {
+  function test_WebView_save_and_restore_form_data_input_data() {
+    return get_restore_types();
+  }
+
+  function test_WebView_save_and_restore_form_data_input(data) {
     webView.url = "http://testsuite/tst_WebView_save_restore_form_data.html";
     verify(webView.waitForLoadSucceeded(),
            "Timed out waiting for successful load");
@@ -114,8 +138,8 @@ TestCase {
     var state = webView.currentState;
     verify(state.length > 0);
 
-    var restored = webViewComponent.createObject(webView,
-                                                 {"restoreState": state});
+    var restored = webViewComponent.createObject(
+        webView, {"restoreType": data.restoreType, "restoreState": state});
     verify(restored !== null);
     tryCompare(restored, "url", webView.url);
     verify(restored.waitForLoadSucceeded(),

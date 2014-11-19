@@ -1155,6 +1155,7 @@ WebView::WebView()
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_provider_(GestureProvider::Create(this)),
       in_swap_(false),
+      restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
       initial_index_(0),
       root_frame_(NULL),
       is_fullscreen_(false),
@@ -1261,15 +1262,15 @@ void WebView::Init(Params* params) {
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
-    if (!initial_state_.empty()) {
+    if (!restore_state_.empty()) {
       ScopedVector<content::NavigationEntry> entries =
           sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
-              initial_state_, context);
+              restore_state_, context);
       web_contents_->GetController().Restore(
           initial_index_,
           content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
           &entries.get());
-      initial_state_.clear();
+      restore_state_.clear();
     }
 
     new WebViewContentsHelper(web_contents_.get());
@@ -1389,10 +1390,12 @@ std::vector<sessions::SerializedNavigationEntry> WebView::GetState() const {
   return entries;
 }
 
-void WebView::SetState(std::vector<sessions::SerializedNavigationEntry> state,
+void WebView::SetState(content::NavigationController::RestoreType type,
+                       std::vector<sessions::SerializedNavigationEntry> state,
                        int index) {
   DCHECK(!web_contents_);
-  initial_state_ = state;
+  restore_type_ = type;
+  restore_state_ = state;
   initial_index_ = index;
 }
 

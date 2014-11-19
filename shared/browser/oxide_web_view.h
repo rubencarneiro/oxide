@@ -147,6 +147,13 @@ class WebView : public base::SupportsWeakPtr<WebView>,
  public:
   virtual ~WebView();
 
+  // Maps to content::NavigationController::RestoreType
+  enum RestoreType {
+    RESTORE_CURRENT_SESSION,
+    RESTORE_LAST_SESSION_EXITED_CLEANLY,
+    RESTORE_LAST_SESSION_CRASHED,
+  };
+
   struct Params {
     Params() :
         context(NULL),
@@ -169,7 +176,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void SetURL(const GURL& url);
 
   std::vector<sessions::SerializedNavigationEntry> GetState() const;
-  void SetState(std::vector<sessions::SerializedNavigationEntry> state,
+  void SetState(content::NavigationController::RestoreType type,
+                std::vector<sessions::SerializedNavigationEntry> state,
                 int index);
 
   void LoadData(const std::string& encodedData,
@@ -556,7 +564,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   GURL initial_url_;
   scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
-  std::vector<sessions::SerializedNavigationEntry> initial_state_;
+  content::NavigationController::RestoreType restore_type_;
+  std::vector<sessions::SerializedNavigationEntry> restore_state_;
   int initial_index_;
 
   content::NotificationRegistrar registrar_;

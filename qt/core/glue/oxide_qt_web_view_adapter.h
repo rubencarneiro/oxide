@@ -86,6 +86,12 @@ enum ContentTypeFlags {
   CONTENT_TYPE_MIXED_SCRIPT = 1 << 1
 };
 
+enum RestoreType {
+  RESTORE_CURRENT_SESSION,
+  RESTORE_LAST_SESSION_EXITED_CLEANLY,
+  RESTORE_LAST_SESSION_CRASHED,
+};
+
 class Q_DECL_EXPORT AcceleratedFrameData final {
  public:
   AcceleratedFrameData(unsigned int id)
@@ -122,7 +128,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void init(bool incognito,
             WebContextAdapter* context,
             OxideQNewViewRequest* new_view_request,
-            const QByteArray& restoreState);
+            const QByteArray& restoreState,
+            RestoreType restoreType);
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -205,7 +212,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   friend class WebView;
 
   void EnsurePreferences();
-  void RestoreState(const QByteArray& state);
+  void RestoreState(RestoreType type, const QByteArray& state);
 
   void Initialized();
   void WebPreferencesDestroyed();
