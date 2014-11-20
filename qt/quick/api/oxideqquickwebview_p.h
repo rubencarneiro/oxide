@@ -108,12 +108,12 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
   // Set at construction time only
-  Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState)
-  Q_PROPERTY(RestoreType restoreType READ restoreType WRITE setRestoreType)
+  Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState REVISION 2)
+  Q_PROPERTY(RestoreType restoreType READ restoreType WRITE setRestoreType REVISION 2)
   // Use to query the current state, to restore later
   // XXX: not notify-able for now, until we figure out a way
   // to do incremental updates
-  Q_PROPERTY(QString currentState READ currentState)
+  Q_PROPERTY(QString currentState READ currentState REVISION 2)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
