@@ -67,6 +67,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_FLAGS(ContentType)
   Q_ENUMS(LogMessageSeverityLevel);
+  Q_ENUMS(RestoreType);
 
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
@@ -106,6 +107,14 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
+  // Set at construction time only
+  Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState REVISION 2)
+  Q_PROPERTY(RestoreType restoreType READ restoreType WRITE setRestoreType REVISION 2)
+  // Use to query the current state, to restore later
+  // XXX: not notify-able for now, until we figure out a way
+  // to do incremental updates
+  Q_PROPERTY(QString currentState READ currentState REVISION 2)
+
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
@@ -129,6 +138,12 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     ContentTypeMixedScript = 1 << 1
   };
   Q_DECLARE_FLAGS(ContentType, ContentTypeFlags)
+
+  enum RestoreType {
+    RestoreCurrentSession,
+    RestoreLastSessionExitedCleanly,
+    RestoreLastSessionCrashed
+  };
 
   void componentComplete();
 
@@ -196,6 +211,12 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   OxideQNewViewRequest* request() const;
   void setRequest(OxideQNewViewRequest* request);
+
+  QString restoreState() const;
+  void setRestoreState(const QString& state);
+  RestoreType restoreType() const;
+  void setRestoreType(RestoreType type);
+  QString currentState() const;
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
