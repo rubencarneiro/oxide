@@ -822,7 +822,9 @@ void WebView::BeforeUnloadFired(content::WebContents* source,
   OnPrepareToCloseResponse(proceed);
 }
 
-content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
+    content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
   return JavaScriptDialogManager::GetInstance();
 }
 

@@ -397,7 +397,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void BeforeUnloadFired(content::WebContents* source,
                          bool proceed,
                          bool* proceed_to_fire_unload) final;
-  content::JavaScriptDialogManager* GetJavaScriptDialogManager() final;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager(
+      content::WebContents* source) final;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) final;
   void ToggleFullscreenModeForTab(content::WebContents* source,
