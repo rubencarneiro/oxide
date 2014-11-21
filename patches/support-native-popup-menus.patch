@@ -5,8 +5,8 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -389,20 +389,18 @@ bool RenderFrameHostImpl::OnMessageRecei
-                         OnCancelDesktopNotification)
+@@ -337,20 +337,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+                         OnRequestPlatformNotificationPermission)
      IPC_MESSAGE_HANDLER(FrameHostMsg_TextSurroundingSelectionResponse,
                          OnTextSurroundingSelectionResponse)
      IPC_MESSAGE_HANDLER(AccessibilityHostMsg_Events, OnAccessibilityEvents)
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1207,17 +1205,16 @@ void RenderFrameHostImpl::OnAccessibilit
+@@ -1130,17 +1128,16 @@ void RenderFrameHostImpl::OnAccessibilit
      if (manager) {
        manager->OnFindInPageResult(
            params.request_id, params.match_index, params.start_id,
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1230,17 +1227,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1153,17 +1150,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      // TODO(creis): Bind process ID here so that GeolocationServiceImpl
      // can perform permissions checks once site isolation is complete.
      // crbug.com/426384
-@@ -1611,29 +1607,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -1530,29 +1526,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -116,7 +116,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
  
  namespace content {
  
-@@ -350,20 +348,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -358,20 +356,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
  #if defined(OS_WIN)
    void SetParentNativeViewAccessible(
        gfx::NativeViewAccessible accessible_parent);
@@ -138,7 +138,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const CommitNavigationParams& commit_params);
  
-@@ -448,20 +445,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -457,20 +454,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
    void OnAccessibilityEvents(
        const std::vector<AccessibilityHostMsg_EventParams>& params,
        int reset_token);
@@ -304,7 +304,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -139,16 +139,18 @@
+@@ -135,16 +135,18 @@
        'renderer/dom_storage/webstoragearea_impl.cc',
        'renderer/dom_storage/webstoragearea_impl.h',
        'renderer/dom_storage/webstoragenamespace_impl.cc',
@@ -375,7 +375,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -872,23 +872,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -866,23 +866,21 @@ bool RenderFrameImpl::Send(IPC::Message*
      // messages, so don't use the proxy.
      if (render_frame_proxy_ && message->routing_id() == routing_id_)
        return render_frame_proxy_->Send(message);
@@ -399,7 +399,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    // document-less RenderFrame is replaced by a RenderFrameProxy but kept
    // around and is still able to receive messages.
    if (!frame_->document().isNull())
-@@ -946,19 +944,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -940,19 +938,18 @@ bool RenderFrameImpl::OnMessageReceived(
                          OnTextSurroundingSelectionRequest)
      IPC_MESSAGE_HANDLER(FrameMsg_AddStyleSheetByURL,
                          OnAddStyleSheetByURL)
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1428,31 +1425,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1435,31 +1432,29 @@ void RenderFrameImpl::OnDisownOpener() {
    // disowning the opener on subframes, we will need to move WebContentsImpl's
    // opener_ to FrameTreeNode.
    CHECK(!frame_->parent());
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -1811,17 +1806,17 @@ RenderFrameImpl::createWorkerPermissionC
+@@ -1825,17 +1820,17 @@ RenderFrameImpl::createWorkerPermissionC
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerPermissionClientProxy(
        this, frame);
@@ -474,7 +474,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h
 +++ b/content/renderer/render_frame_impl.h
-@@ -248,19 +248,17 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -246,19 +246,17 @@ class CONTENT_EXPORT RenderFrameImpl
  
    PluginPowerSaverHelper* plugin_power_saver_helper();
  #endif  // defined(ENABLE_PLUGINS)
@@ -494,7 +494,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -563,20 +561,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -565,20 +563,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnTextSurroundingSelectionRequest(size_t max_length);
    void OnAddStyleSheetByURL(const std::string& url);
    void OnSetupTransitionView(const std::string& markup);
@@ -516,7 +516,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    void OnRequestNavigation(const CommonNavigationParams& common_params,
                             const RequestNavigationParams& request_params);
    void OnCommitNavigation(const ResourceResponseHead& response,
-@@ -791,20 +788,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -794,20 +791,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    // The current accessibility mode.
    AccessibilityMode accessibility_mode_;

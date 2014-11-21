@@ -207,7 +207,7 @@ void Compositor::SetVisibility(bool visible) {
     layer_tree_host_.reset();
   } else if (!layer_tree_host_) {
     cc::LayerTreeSettings settings;
-    settings.allow_antialiasing = false;
+    settings.renderer_settings.allow_antialiasing = false;
     settings.use_external_begin_frame_source = false;
     settings.throttle_frame_production = false;
     settings.using_synchronous_renderer_compositor = true;
