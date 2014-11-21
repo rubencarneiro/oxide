@@ -229,9 +229,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   // This is needed so that we can share GL resources with the embedder
   command_line->AppendSwitch(switches::kInProcessGPU);
 
-  // Remove this when we have a working GPU blacklist
-  command_line->AppendSwitch(switches::kDisableGpuRasterization);
-
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 
@@ -253,6 +250,10 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     if (IsEnvironmentOptionEnabled("DISABLE_SECCOMP_FILTER_SANDBOX")) {
       command_line->AppendSwitch(switches::kDisableSeccompFilterSandbox);
     }
+  }
+
+  if (IsEnvironmentOptionEnabled("IGNORE_GPU_BLACKLIST")) {
+    command_line->AppendSwitch(switches::kIgnoreGpuBlacklist);
   }
 
   if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {
