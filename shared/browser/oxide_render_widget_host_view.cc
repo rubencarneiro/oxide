@@ -40,7 +40,6 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_delegate.h"
-#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -112,7 +111,7 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
     return gfx::Size();
   }
 
-  return delegate_->GetWebView()->GetViewSizePix();
+  return delegate_->GetViewSizePix();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -319,7 +318,7 @@ void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
     return;
   }
 
-  *result = delegate_->GetWebView()->GetScreenInfo();
+  *result = delegate_->GetScreenInfo();
 }
 
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
@@ -380,7 +379,7 @@ bool RenderWidgetHostView::HasFocus() const {
     return false;
   }
 
-  return delegate_->GetWebView()->HasFocus();
+  return delegate_->HasFocus();
 }
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
@@ -421,7 +420,7 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
     return gfx::Rect(last_size_);
   }
 
-  return delegate_->GetWebView()->GetViewBoundsDip();
+  return delegate_->GetViewBoundsDip();
 }
 
 bool RenderWidgetHostView::LockMouse() {
@@ -564,7 +563,7 @@ void RenderWidgetHostView::SetDelegate(
     host_->SendScreenRects();
     host_->WasResized();
 
-    if (delegate_->GetWebView()->IsVisible()) {
+    if (delegate_->IsVisible()) {
       Show();
     } else {
       Hide();

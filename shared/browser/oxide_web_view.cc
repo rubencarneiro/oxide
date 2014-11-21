@@ -556,10 +556,6 @@ void WebView::SelectionChanged() {
   OnSelectionChanged();
 }
 
-WebView* WebView::GetWebView() {
-  return this;
-}
-
 Compositor* WebView::GetCompositor() const {
   return compositor_.get();
 }

@@ -18,7 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/ime/text_input_type.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 namespace cc {
 class CompositorFrameMetadata;
@@ -63,9 +66,17 @@ class RenderWidgetHostViewDelegate {
 
   virtual void SelectionChanged() = 0;
 
-  virtual WebView* GetWebView() = 0;
-
   virtual Compositor* GetCompositor() const = 0;
+
+  virtual gfx::Size GetViewSizePix() const = 0;
+
+  virtual gfx::Rect GetViewBoundsDip() const = 0;
+
+  virtual blink::WebScreenInfo GetScreenInfo() const = 0;
+
+  virtual bool HasFocus() const = 0;
+
+  virtual bool IsVisible() const = 0;
 };
 
 } // namespace oxide

@@ -355,8 +355,12 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                               size_t selection_cursor_position,
                               size_t selection_anchor_position) final;
   void SelectionChanged() final;
-  WebView* GetWebView() final;
   Compositor* GetCompositor() const final;
+  //gfx::Size GetViewSizePix() const final;
+  //gfx::Rect GetViewBoundsDip() const final;
+  //blink::WebScreenInfo GetScreenInfo() const final;
+  //bool HasFocus() const final;
+  //bool IsVisible() const final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
