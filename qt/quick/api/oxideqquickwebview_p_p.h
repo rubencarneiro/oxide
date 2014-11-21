@@ -20,7 +20,6 @@
 
 #include <QPointer>
 #include <QScopedPointer>
-#include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
@@ -29,6 +28,7 @@
 #include "oxideqquicknavigationhistory_p.h"
 
 class OxideQNewViewRequest;
+class OxideQQuickLocationBarController;
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
 class OxideQQuickWebContextPrivate;
@@ -40,12 +40,6 @@ template <typename T> class QQmlListProperty;
 class QQuickItem;
 class QQuickWindow;
 QT_END_NAMESPACE
-
-namespace oxide {
-namespace qt {
-class CompositorFrameHandle;
-}
-}
 
 class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
@@ -90,6 +84,7 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   QRect GetViewBoundsPix() const final;
   bool IsVisible() const final;
   bool HasFocus() const final;
+  int GetLocationBarCurrentHeightPix() const final;
 
   void AddMessageToConsole(int level,
 			   const QString& message,
@@ -118,8 +113,8 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   void OnFrameMetadataUpdated(
       oxide::qt::FrameMetadataChangeFlags flags) final;
 
-  void ScheduleUpdate() final;
-  void EvictCurrentFrame() final;
+  void OnScheduleUpdate() final;
+  void OnEvictCurrentFrame() final;
 
   void SetInputMethodEnabled(bool enabled) final;
 
@@ -169,7 +164,6 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   bool received_new_compositor_frame_;
   bool frame_evicted_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
-  QSharedPointer<oxide::qt::CompositorFrameHandle> compositor_frame_handle_;
 
   bool using_old_load_event_signal_;
 
@@ -183,6 +177,8 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   };
 
   QScopedPointer<ConstructProps> construct_props_;
+
+  QScopedPointer<OxideQQuickLocationBarController> location_bar_controller_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

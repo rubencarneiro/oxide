@@ -33,7 +33,7 @@
 
 #include "base/memory/scoped_vector.h"
 #include "base/strings/utf_string_conversions.h"
-#include "url/gurl.h"
+#include "cc/output/compositor_frame_metadata.h"
 #include "content/common/cursors/webcursor.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
@@ -46,6 +46,7 @@
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/range/range.h"
+#include "url/gurl.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
@@ -273,6 +274,10 @@ float WebView::GetDeviceScaleFactor() const {
   return GetDeviceScaleFactorFromQScreen(screen);
 }
 
+double WebView::GetLocationBarContentOffsetDip() const {
+  return compositor_frame_metadata().location_bar_content_translation.y();
+}
+
 bool WebView::ShouldShowInputPanel() const {
   if (text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
       show_ime_if_needed_) {
@@ -342,6 +347,10 @@ bool WebView::IsInputPanelVisible() const {
   }
 
   return im->isVisible();
+}
+
+int WebView::GetLocationBarCurrentHeightPix() const {
+  return adapter_->GetLocationBarCurrentHeightPix();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -529,6 +538,15 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
   FrameMetadataChangeFlags flags = FRAME_METADATA_CHANGE_NONE;
 
+  if (old.location_bar_content_translation.y() !=
+      compositor_frame_metadata().location_bar_content_translation.y()) {
+    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
+    adapter_->ScheduleUpdate();
+  }
+  if (old.location_bar_offset.y() !=
+      compositor_frame_metadata().location_bar_offset.y()) {
+    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
+  }
   if (old.device_scale_factor !=
       compositor_frame_metadata().device_scale_factor) {
     flags |= FRAME_METADATA_CHANGE_DEVICE_SCALE;
@@ -931,12 +949,17 @@ void WebView::HandleMouseEvent(QMouseEvent* event) {
   }
 
   oxide::WebView::HandleMouseEvent(
-      MakeWebMouseEvent(event, GetDeviceScaleFactor()));
+      MakeWebMouseEvent(event,
+                        GetDeviceScaleFactor(),
+                        GetLocationBarContentOffsetDip()));
 }
 
 void WebView::HandleTouchEvent(QTouchEvent* event) {
   ScopedVector<ui::TouchEvent> events;
-  MakeUITouchEvents(event, GetDeviceScaleFactor(), &events);
+  MakeUITouchEvents(event,
+                    GetDeviceScaleFactor(),
+                    GetLocationBarContentOffsetDip(),
+                    &events);
 
   for (size_t i = 0; i < events.size(); ++i) {
     oxide::WebView::HandleTouchEvent(*events[i]);
@@ -945,7 +968,9 @@ void WebView::HandleTouchEvent(QTouchEvent* event) {
 
 void WebView::HandleWheelEvent(QWheelEvent* event) {
   oxide::WebView::HandleWheelEvent(
-      MakeWebMouseWheelEvent(event, GetDeviceScaleFactor()));
+      MakeWebMouseWheelEvent(event,
+                             GetDeviceScaleFactor(),
+                             GetLocationBarContentOffsetDip()));
 }
 
 QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {

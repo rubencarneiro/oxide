@@ -40,12 +40,17 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
 
 void MakeUITouchEvents(QTouchEvent* event,
                        float device_scale,
+                       int location_bar_content_offset_dip,
                        ScopedVector<ui::TouchEvent>* results);
 
-blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event, float device_scale);
+blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
+                                       float device_scale,
+                                       int location_bar_content_offset_dip);
 
-blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
-                                                 float device_scale);
+blink::WebMouseWheelEvent MakeWebMouseWheelEvent(
+    QWheelEvent* event,
+    float device_scale,
+    int location_bar_content_offset_dip);
 
 } // namespace qt
 } // namespace oxide

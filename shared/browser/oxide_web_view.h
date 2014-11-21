@@ -149,11 +149,13 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   struct Params {
     Params() :
         context(NULL),
-        incognito(false) {}
+        incognito(false),
+        location_bar_height(0) {}
 
     BrowserContext* context;
     ScopedNewContentsHolder contents;
     bool incognito;
+    int location_bar_height;
   };
 
   virtual void Init(Params* params);
@@ -192,6 +194,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void VisibilityChanged();
   void FocusChanged();
   void InputPanelVisibilityChanged();
+  void UpdateWebPreferences();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -222,6 +225,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   ContentType blocked_content() const { return blocked_content_; }
 
+  double GetLocationBarMaxHeightDip();
+
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
@@ -248,8 +253,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                              const base::Callback<void(bool)>& callback,
                              content::CertificateRequestResultType* result);
                              
-  void UpdateWebPreferences();
-
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
@@ -280,6 +283,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
   virtual bool IsInputPanelVisible() const;
+  virtual int GetLocationBarCurrentHeightPix() const;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -361,6 +365,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   //blink::WebScreenInfo GetScreenInfo() const final;
   //bool HasFocus() const final;
   //bool IsVisible() const final;
+  int GetLocationBarCurrentHeightDip() const final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,

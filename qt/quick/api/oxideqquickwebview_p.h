@@ -38,6 +38,7 @@ class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
 class OxideQWebPreferences;
+class OxideQQuickLocationBarController;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
@@ -105,6 +106,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(ContentType blockedContent READ blockedContent NOTIFY blockedContentChanged)
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
+
+  Q_PROPERTY(OxideQQuickLocationBarController* locationBarController READ locationBarController CONSTANT REVISION 2)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -197,6 +200,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   OxideQNewViewRequest* request() const;
   void setRequest(OxideQNewViewRequest* request);
 
+  OxideQQuickLocationBarController* locationBarController();
+
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
  public Q_SLOTS:
@@ -271,8 +276,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
                   const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
   QSGNode* updatePaintNode(
       QSGNode* oldNode,
-      UpdatePaintNodeData * updatePaintNodeData) Q_DECL_FINAL;
-  void updatePolish() Q_DECL_FINAL;
+      UpdatePaintNodeData* updatePaintNodeData) Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

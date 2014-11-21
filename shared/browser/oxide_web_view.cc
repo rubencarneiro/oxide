@@ -55,6 +55,7 @@
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/menu_item.h"
+#include "content/public/common/renderer_preferences.h"
 #include "content/public/common/url_constants.h"
 #include "content/public/common/web_preferences.h"
 #include "ipc/ipc_message_macros.h"
@@ -558,6 +559,11 @@ void WebView::SelectionChanged() {
 
 Compositor* WebView::GetCompositor() const {
   return compositor_.get();
+}
+
+int WebView::GetLocationBarCurrentHeightDip() const {
+  float scale = 1.0f / GetScreenInfo().deviceScaleFactor;
+  return std::lround(GetLocationBarCurrentHeightPix() * scale);
 }
 
 content::WebContents* WebView::OpenURLFromTab(
@@ -1255,7 +1261,9 @@ void WebView::Init(Params* params) {
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
-    new WebViewContentsHelper(web_contents_.get());
+    new WebViewContentsHelper(
+        web_contents_.get(),
+        params->location_bar_height / GetScreenInfo().deviceScaleFactor);
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());
@@ -1498,6 +1506,19 @@ void WebView::InputPanelVisibilityChanged() {
   MaybeResetAutoScrollTimer();
 }
 
+void WebView::UpdateWebPreferences() {
+  if (!web_contents_) {
+    return;
+  }
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+
+  rvh->OnWebkitPreferencesChanged();
+}
+
 BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
@@ -1611,6 +1632,20 @@ gfx::Size WebView::GetViewSizeDip() const {
   int height = std::lround(size.height() * scale);
 
   return gfx::Size(width, height);
+}
+
+double WebView::GetLocationBarMaxHeightDip() {
+  if (!web_contents_) {
+    return 0.0f;
+  }
+
+  content::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  if (!renderer_prefs->enable_top_controls_position_calculation) {
+    return 0.0f;
+  }
+
+  return renderer_prefs->top_controls_height;
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
@@ -1761,19 +1796,6 @@ void WebView::AllowCertificateError(
   }
 }
 
-void WebView::UpdateWebPreferences() {
-  if (!web_contents_) {
-    return;
-  }
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->OnWebkitPreferencesChanged();
-}
-
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (!rvh) {
@@ -1875,6 +1897,10 @@ void WebView::DidCommitCompositorFrame() {
 
 bool WebView::IsInputPanelVisible() const {
   return false;
+}
+
+int WebView::GetLocationBarCurrentHeightPix() const {
+  return 0;
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(

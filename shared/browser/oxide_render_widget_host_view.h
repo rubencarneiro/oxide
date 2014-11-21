@@ -90,6 +90,7 @@ class RenderWidgetHostView final :
                         size_t offset,
                         const gfx::Range& range) final;
   gfx::Size GetPhysicalBackingSize() const final;
+  float GetTopControlsLayoutHeight() const final;
   void FocusedNodeChanged(bool is_editable_node) final;
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;

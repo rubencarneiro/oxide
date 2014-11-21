@@ -24,6 +24,7 @@ qt5_wrap_cpp(MOC_EXTRA
 set(OXIDE_QUICKLIB_SRCS
     api/oxideqquickcookiemanager.cc
     api/oxideqquickglobal.cc
+    api/oxideqquicklocationbarcontroller.cc
     api/oxideqquicknavigationhistory.cc
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc

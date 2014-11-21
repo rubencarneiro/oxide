@@ -52,10 +52,12 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
-  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
+  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
+                            int location_bar_content_offset)
       : frame_(frame) {
     if (frame_.get()) {
-      size_ = QSize(frame_->size_in_pixels().width(),
+      rect_ = QRect(0, location_bar_content_offset,
+                    frame_->size_in_pixels().width(),
                     frame_->size_in_pixels().height());
     }
   }
@@ -77,8 +79,8 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     return CompositorFrameHandle::TYPE_INVALID;
   }
 
-  const QSize& GetSize() const final {
-    return size_;
+  const QRect& GetRect() const final {
+    return rect_;
   }
 
   QImage GetSoftwareFrame() final {
@@ -97,7 +99,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
  private:
   scoped_refptr<oxide::CompositorFrameHandle> frame_;
-  QSize size_;
+  QRect rect_;
 };
 
 void WebViewAdapter::EnsurePreferences() {
@@ -150,6 +152,16 @@ void WebViewAdapter::FrameMetadataUpdated(FrameMetadataChangeFlags flags) {
   OnFrameMetadataUpdated(flags);
 }
 
+void WebViewAdapter::ScheduleUpdate() {
+  compositor_frame_.reset();
+  OnScheduleUpdate();
+}
+
+void WebViewAdapter::EvictCurrentFrame() {
+  compositor_frame_.reset();
+  OnEvictCurrentFrame();
+}
+
 float WebViewAdapter::GetFrameMetadataScaleToPix() {
   if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_DEVICE_SCALE ||
       frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_PAGE_SCALE) {
@@ -169,13 +181,16 @@ WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
     view_(WebView::Create(this)),
     frame_metadata_dirty_flags_(FrameMetadataChangeFlags(-1)),
-    frame_metadata_scale_to_pix_(0.0f) {}
+    frame_metadata_scale_to_pix_(0.0f),
+    location_bar_offset_(0),
+    location_bar_content_offset_(0) {}
 
 WebViewAdapter::~WebViewAdapter() {}
 
 void WebViewAdapter::init(bool incognito,
                           WebContextAdapter* context,
-                          OxideQNewViewRequest* new_view_request) {
+                          OxideQNewViewRequest* new_view_request,
+                          int location_bar_height) {
   DCHECK(!isInitialized());
 
   bool script_opened = false;
@@ -215,6 +230,7 @@ void WebViewAdapter::init(bool incognito,
   oxide::WebView::Params params;
   params.context = c->GetContext();
   params.incognito = incognito;
+  params.location_bar_height = location_bar_height;
 
   view_->Init(&params);
 }
@@ -463,9 +479,17 @@ QSize WebViewAdapter::compositorFrameViewportSizePix() {
 }
 
 QSharedPointer<CompositorFrameHandle> WebViewAdapter::compositorFrameHandle() {
-  QSharedPointer<CompositorFrameHandle> handle(
-      new CompositorFrameHandleImpl(view_->GetCompositorFrameHandle()));
-  return handle;
+  if (!compositor_frame_) {
+    const cc::CompositorFrameMetadata& metadata =
+        view_->compositor_frame_metadata();
+    compositor_frame_ =
+        QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
+          view_->GetCompositorFrameHandle(),
+          metadata.device_scale_factor *
+            metadata.location_bar_content_translation.y()));
+  }
+
+  return compositor_frame_;
 }
 
 void WebViewAdapter::didCommitCompositorFrame() {
@@ -503,6 +527,37 @@ ContentTypeFlags WebViewAdapter::blockedContent() const {
 
 void WebViewAdapter::prepareToClose() {
   view_->PrepareToClose();
+}
+
+int WebViewAdapter::locationBarMaxHeight() {
+  return qRound(view_->GetLocationBarMaxHeightDip() *
+                view_->GetDeviceScaleFactor());
+}
+
+int WebViewAdapter::locationBarOffsetPix() {
+  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_CONTROLS_OFFSET) {
+    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
+    const cc::CompositorFrameMetadata& metadata =
+        view_->compositor_frame_metadata();
+    location_bar_offset_ =
+        qRound(metadata.location_bar_offset.y() *
+               metadata.device_scale_factor);
+  }
+
+  return location_bar_offset_;
+}
+
+int WebViewAdapter::locationBarContentOffsetPix() {
+  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_CONTENT_OFFSET) {
+    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_CONTENT_OFFSET;
+    const cc::CompositorFrameMetadata& metadata =
+        view_->compositor_frame_metadata();
+    location_bar_content_offset_ =
+        qRound(metadata.location_bar_content_translation.y() *
+               metadata.device_scale_factor);
+  }
+
+  return location_bar_content_offset_;
 }
 
 } // namespace qt

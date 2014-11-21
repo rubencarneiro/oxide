@@ -30,6 +30,7 @@
 #include "base/time/time.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/geometry/point_f.h"
+#include "ui/gfx/geometry/vector2d_f.h"
 
 #include "shared/base/oxide_event_utils.h"
 
@@ -506,6 +507,7 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
 
 void MakeUITouchEvents(QTouchEvent* event,
                        float device_scale,
+                       int location_bar_content_offset_dip,
                        ScopedVector<ui::TouchEvent>* results) {
   // The event’s timestamp is not guaranteed to have the same origin as the
   // internal timedelta used by chromium to calculate speed and displacement
@@ -521,10 +523,14 @@ void MakeUITouchEvents(QTouchEvent* event,
       continue;
     }
 
+    gfx::PointF location =
+        gfx::ScalePoint(gfx::PointF(touch_point.pos().x(),
+                                    touch_point.pos().y()),
+                        scale);
+
     ui::TouchEvent* ui_event = new ui::TouchEvent(
         QTouchPointStateToEventType(touch_point.state()),
-        gfx::ScalePoint(gfx::PointF(
-          touch_point.pos().x(), touch_point.pos().y()), scale),
+        location + gfx::Vector2dF(0, -location_bar_content_offset_dip),
         0,
         touch_point.id(),
         timestamp,
@@ -539,14 +545,16 @@ void MakeUITouchEvents(QTouchEvent* event,
   }
 }
 
-blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event, float device_scale) {
+blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
+                                       float device_scale,
+                                       int location_bar_content_offset_dip) {
   blink::WebMouseEvent result;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
   result.modifiers = QMouseEventStateToWebEventModifiers(event);
 
   result.x = qRound(event->x() / device_scale);
-  result.y = qRound(event->y() / device_scale);
+  result.y = qRound(event->y() / device_scale) - location_bar_content_offset_dip;
 
   result.windowX = result.x;
   result.windowY = result.y;
@@ -594,7 +602,8 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event, float device_scale) {
 }
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
-                                                 float device_scale) {
+                                                 float device_scale,
+                                                 int location_bar_content_offset_dip) {
   blink::WebMouseWheelEvent result;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
@@ -614,7 +623,7 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   result.button = blink::WebMouseEvent::ButtonNone;
 
   result.x = qRound(event->x() / device_scale);
-  result.y = qRound(event->y() / device_scale);
+  result.y = qRound(event->y() / device_scale) - location_bar_content_offset_dip;
 
   result.windowX = result.x;
   result.windowY = result.y;

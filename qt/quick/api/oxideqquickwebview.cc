@@ -55,6 +55,7 @@
 #include "qt/quick/oxide_qquick_software_frame_node.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
+#include "oxideqquicklocationbarcontroller_p.h"
 #include "oxideqquickscriptmessagehandler_p.h"
 #include "oxideqquickscriptmessagehandler_p_p.h"
 #include "oxideqquickwebcontext_p.h"
@@ -404,6 +405,14 @@ bool OxideQQuickWebViewPrivate::HasFocus() const {
   return input_area_->hasActiveFocus();
 }
 
+int OxideQQuickWebViewPrivate::GetLocationBarCurrentHeightPix() const {
+  if (!location_bar_controller_) {
+    return 0;
+  }
+
+  return qRound(location_bar_controller_->height());
+}
+
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
     int level,
     const QString& message,
@@ -553,25 +562,33 @@ void OxideQQuickWebViewPrivate::OnFrameMetadataUpdated(
     emit q->viewportWidthChanged();
     emit q->viewportHeightChanged();
   }
+
+  if (!location_bar_controller_) {
+    return;
+  }
+
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTROLS_OFFSET)) {
+    emit location_bar_controller_->offsetChanged();
+  }
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_OFFSET)) {
+    emit location_bar_controller_->contentOffsetChanged();
+  }
 }
 
-void OxideQQuickWebViewPrivate::ScheduleUpdate() {
+void OxideQQuickWebViewPrivate::OnScheduleUpdate() {
   Q_Q(OxideQQuickWebView);
 
   frame_evicted_ = false;
   received_new_compositor_frame_ = true;
 
   q->update();
-  q->polish();
 }
 
-void OxideQQuickWebViewPrivate::EvictCurrentFrame() {
+void OxideQQuickWebViewPrivate::OnEvictCurrentFrame() {
   Q_Q(OxideQQuickWebView);
 
   frame_evicted_ = true;
   received_new_compositor_frame_ = false;
-
-  Q_ASSERT(!compositor_frame_handle_);
 
   q->update();
 }
@@ -641,7 +658,9 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
   init(construct_props_->incognito,
        context ? OxideQQuickWebContextPrivate::get(context) : NULL,
-       construct_props_->new_view_request);
+       construct_props_->new_view_request,
+       location_bar_controller_ ?
+           qRound(location_bar_controller_->maxHeight()) : 0);
 }
 
 // static
@@ -744,7 +763,6 @@ void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
     received_new_compositor_frame_ = false;
     didCommitCompositorFrame();
   }
-  compositor_frame_handle_.reset();
 }
 
 void OxideQQuickWebViewPrivate::onWindowChanged(QQuickWindow* window) {
@@ -835,24 +853,18 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 
   UpdatePaintNodeScope scope(d);
 
-  oxide::qt::CompositorFrameHandle::Type type =
-      oxide::qt::CompositorFrameHandle::TYPE_INVALID;
+  QSharedPointer<oxide::qt::CompositorFrameHandle> handle =
+      d->compositorFrameHandle();
 
-  if (d->received_new_compositor_frame_) {
-    Q_ASSERT(d->compositor_frame_handle_);
-    Q_ASSERT(!d->frame_evicted_);
-    type = d->compositor_frame_handle_->GetType();
-  } else if (!d->frame_evicted_) {
-    Q_ASSERT(!d->compositor_frame_handle_);
-    type = d->last_composited_frame_type_;
-  }
+  Q_ASSERT(!d->received_new_compositor_frame_ ||
+           (d->received_new_compositor_frame_ && !d->frame_evicted_));
 
-  if (type != d->last_composited_frame_type_) {
+  if (handle->GetType() != d->last_composited_frame_type_) {
     delete oldNode;
     oldNode = NULL;
   }
 
-  d->last_composited_frame_type_ = type;
+  d->last_composited_frame_type_ = handle->GetType();
 
   if (d->frame_evicted_) {
     delete oldNode;
@@ -860,36 +872,40 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
   }
 
 #if defined(ENABLE_COMPOSITING)
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
+  if (handle->GetType() ==
+      oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
     AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
     if (!node) {
       node = new AcceleratedFrameNode(this);
     }
 
     if (d->received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(d->compositor_frame_handle_);
+      node->updateNode(handle);
     }
 
     return node;
   }
 #else
-  Q_ASSERT(type != oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
+  Q_ASSERT(handle->GetType() !=
+           oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
 #endif
 
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
+  if (handle->GetType() ==
+      oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
     SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
     if (!node) {
       node = new SoftwareFrameNode(this);
     }
 
     if (d->received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(d->compositor_frame_handle_);
+      node->updateNode(handle);
     }
 
     return node;
   }
 
-  Q_ASSERT(type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
+  Q_ASSERT(handle->GetType() ==
+           oxide::qt::CompositorFrameHandle::TYPE_INVALID);
 
   SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
   if (!node) {
@@ -907,12 +923,6 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
   }
 
   return node;
-}
-
-void OxideQQuickWebView::updatePolish() {
-  Q_D(OxideQQuickWebView);
-
-  d->compositor_frame_handle_ = d->compositorFrameHandle();
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
@@ -1401,6 +1411,17 @@ void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
   }
 
   d->construct_props_->new_view_request = request;
+}
+
+OxideQQuickLocationBarController* OxideQQuickWebView::locationBarController() {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->location_bar_controller_) {
+    d->location_bar_controller_.reset(
+        new OxideQQuickLocationBarController(this));
+  }
+
+  return d->location_bar_controller_.data();
 }
 
 // static

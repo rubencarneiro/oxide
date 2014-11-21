@@ -78,6 +78,7 @@ class WebView final : public QObject,
   WebView(WebViewAdapter* adapter);
 
   float GetDeviceScaleFactor() const;
+  double GetLocationBarContentOffsetDip() const;
 
   bool ShouldShowInputPanel() const;
   bool ShouldHideInputPanel() const;
@@ -91,6 +92,7 @@ class WebView final : public QObject,
   bool IsVisible() const final;
   bool HasFocus() const final;
   bool IsInputPanelVisible() const final;
+  int GetLocationBarCurrentHeightPix() const final;
 
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,

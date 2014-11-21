@@ -1,0 +1,267 @@
+# Description: Add top-controls settings to RendererPreferences. This allows
+#  us to control them per-webview rather than per-application
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/content/common/view_messages.h b/content/common/view_messages.h
+--- a/content/common/view_messages.h
++++ b/content/common/view_messages.h
+@@ -226,16 +226,20 @@ IPC_STRUCT_TRAITS_BEGIN(content::Rendere
+   IPC_STRUCT_TRAITS_MEMBER(default_zoom_level)
+   IPC_STRUCT_TRAITS_MEMBER(user_agent_override)
+   IPC_STRUCT_TRAITS_MEMBER(accept_languages)
+   IPC_STRUCT_TRAITS_MEMBER(report_frame_name_changes)
+   IPC_STRUCT_TRAITS_MEMBER(tap_multiple_targets_strategy)
+   IPC_STRUCT_TRAITS_MEMBER(disable_client_blocked_error_page)
+   IPC_STRUCT_TRAITS_MEMBER(plugin_fullscreen_allowed)
+   IPC_STRUCT_TRAITS_MEMBER(use_video_overlay_for_embedded_encrypted_video)
++  IPC_STRUCT_TRAITS_MEMBER(enable_top_controls_position_calculation)
++  IPC_STRUCT_TRAITS_MEMBER(top_controls_height)
++  IPC_STRUCT_TRAITS_MEMBER(top_controls_show_threshold)
++  IPC_STRUCT_TRAITS_MEMBER(top_controls_hide_threshold)
+ IPC_STRUCT_TRAITS_END()
+ 
+ IPC_STRUCT_TRAITS_BEGIN(content::CookieData)
+   IPC_STRUCT_TRAITS_MEMBER(name)
+   IPC_STRUCT_TRAITS_MEMBER(value)
+   IPC_STRUCT_TRAITS_MEMBER(domain)
+   IPC_STRUCT_TRAITS_MEMBER(path)
+   IPC_STRUCT_TRAITS_MEMBER(expires)
+diff --git a/content/public/common/renderer_preferences.cc b/content/public/common/renderer_preferences.cc
+--- a/content/public/common/renderer_preferences.cc
++++ b/content/public/common/renderer_preferences.cc
+@@ -31,14 +31,18 @@ RendererPreferences::RendererPreferences
+       use_custom_colors(true),
+       enable_referrers(true),
+       enable_do_not_track(false),
+       default_zoom_level(0),
+       report_frame_name_changes(false),
+       tap_multiple_targets_strategy(TAP_MULTIPLE_TARGETS_STRATEGY_POPUP),
+       disable_client_blocked_error_page(false),
+       plugin_fullscreen_allowed(true),
+-      use_video_overlay_for_embedded_encrypted_video(false) {
++      use_video_overlay_for_embedded_encrypted_video(false),
++      enable_top_controls_position_calculation(false),
++      top_controls_height(0.0f),
++      top_controls_show_threshold(0.5f),
++      top_controls_hide_threshold(0.5f) {
+ }
+ 
+ RendererPreferences::~RendererPreferences() { }
+ 
+ }  // namespace content
+diff --git a/content/public/common/renderer_preferences.h b/content/public/common/renderer_preferences.h
+--- a/content/public/common/renderer_preferences.h
++++ b/content/public/common/renderer_preferences.h
+@@ -121,13 +121,18 @@ struct CONTENT_EXPORT RendererPreference
+   bool disable_client_blocked_error_page;
+ 
+   // Determines whether plugins are allowed to enter fullscreen mode.
+   bool plugin_fullscreen_allowed;
+ 
+   // Whether video-overlay (hole-punching) should be used for the embedded
+   // encrypted video.  Currently only used by Android.
+   bool use_video_overlay_for_embedded_encrypted_video;
++
++  bool enable_top_controls_position_calculation;
++  double top_controls_height;
++  double top_controls_show_threshold;
++  double top_controls_hide_threshold;
+ };
+ 
+ }  // namespace content
+ 
+ #endif  // CONTENT_PUBLIC_COMMON_RENDERER_PREFERENCES_H_
+diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer/gpu/render_widget_compositor.cc
+--- a/content/renderer/gpu/render_widget_compositor.cc
++++ b/content/renderer/gpu/render_widget_compositor.cc
+@@ -230,52 +230,40 @@ scoped_ptr<RenderWidgetCompositor> Rende
+         render_thread->is_gpu_rasterization_enabled();
+     settings.can_use_lcd_text = render_thread->is_lcd_text_enabled();
+     settings.use_distance_field_text =
+         render_thread->is_distance_field_text_enabled();
+     settings.use_zero_copy = render_thread->is_zero_copy_enabled();
+     settings.use_one_copy = render_thread->is_one_copy_enabled();
+   }
+ 
++  double top_controls_height;
++  double top_controls_show_threshold;
++  double top_controls_hide_threshold;
++
+   settings.calculate_top_controls_position =
+-      cmd->HasSwitch(cc::switches::kEnableTopControlsPositionCalculation);
+-  if (cmd->HasSwitch(cc::switches::kTopControlsHeight)) {
+-    std::string controls_height_str =
+-        cmd->GetSwitchValueASCII(cc::switches::kTopControlsHeight);
+-    double controls_height;
+-    if (base::StringToDouble(controls_height_str, &controls_height) &&
+-        controls_height > 0)
+-      settings.top_controls_height = controls_height;
+-  }
++      widget->GetTopControlsSettings(&top_controls_height,
++                                     &top_controls_show_threshold,
++                                     &top_controls_hide_threshold);
++  if (top_controls_height > 0.0f)
++    settings.top_controls_height = top_controls_height;
++  if (0.0f <= top_controls_show_threshold &&
++      top_controls_show_threshold <= 1.0f)
++    settings.top_controls_show_threshold = top_controls_show_threshold;
++  if (0.0f <= top_controls_hide_threshold &&
++      top_controls_hide_threshold <= 1.0f)
++    settings.top_controls_hide_threshold = top_controls_hide_threshold;
+ 
+   if (settings.calculate_top_controls_position &&
+       settings.top_controls_height <= 0) {
+     DCHECK(false)
+         << "Top controls repositioning enabled without valid height set.";
+     settings.calculate_top_controls_position = false;
+   }
+ 
+-  if (cmd->HasSwitch(cc::switches::kTopControlsShowThreshold)) {
+-      std::string top_threshold_str =
+-          cmd->GetSwitchValueASCII(cc::switches::kTopControlsShowThreshold);
+-      double show_threshold;
+-      if (base::StringToDouble(top_threshold_str, &show_threshold) &&
+-          show_threshold >= 0.f && show_threshold <= 1.f)
+-        settings.top_controls_show_threshold = show_threshold;
+-  }
+-
+-  if (cmd->HasSwitch(cc::switches::kTopControlsHideThreshold)) {
+-      std::string top_threshold_str =
+-          cmd->GetSwitchValueASCII(cc::switches::kTopControlsHideThreshold);
+-      double hide_threshold;
+-      if (base::StringToDouble(top_threshold_str, &hide_threshold) &&
+-          hide_threshold >= 0.f && hide_threshold <= 1.f)
+-        settings.top_controls_hide_threshold = hide_threshold;
+-  }
+-
+   settings.use_pinch_virtual_viewport =
+       cmd->HasSwitch(cc::switches::kEnablePinchVirtualViewport);
+   settings.allow_antialiasing &=
+       !cmd->HasSwitch(cc::switches::kDisableCompositedAntialiasing);
+   settings.single_thread_proxy_scheduler =
+       !cmd->HasSwitch(switches::kDisableSingleThreadProxyScheduler);
+ 
+   // These flags should be mirrored by UI versions in ui/compositor/.
+diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
+--- a/content/renderer/render_view_impl.cc
++++ b/content/renderer/render_view_impl.cc
+@@ -698,16 +698,23 @@ void RenderViewImpl::Initialize(RenderVi
+ 
+   main_render_frame_.reset(RenderFrameImpl::Create(
+       this, params->main_frame_routing_id));
+   // The main frame WebLocalFrame object is closed by
+   // RenderFrameImpl::frameDetached().
+   WebLocalFrame* web_frame = WebLocalFrame::create(main_render_frame_.get());
+   main_render_frame_->SetWebFrame(web_frame);
+ 
++  const RendererPreferences& renderer_prefs = params->renderer_prefs;
++  enable_top_controls_position_calculation_ =
++      renderer_prefs.enable_top_controls_position_calculation;
++  top_controls_height_ = renderer_prefs.top_controls_height;
++  top_controls_show_threshold_ = renderer_prefs.top_controls_show_threshold;
++  top_controls_hide_threshold_ = renderer_prefs.top_controls_hide_threshold;
++
+   webwidget_ = WebView::create(this);
+   webwidget_mouse_lock_target_.reset(new WebWidgetLockTarget(webwidget_));
+ 
+   const CommandLine& command_line = *CommandLine::ForCurrentProcess();
+ 
+   if (command_line.HasSwitch(switches::kStatsCollectionController))
+     stats_collection_observer_.reset(new StatsCollectionObserver(this));
+ 
+diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
+--- a/content/renderer/render_widget.cc
++++ b/content/renderer/render_widget.cc
+@@ -417,17 +417,21 @@ RenderWidget::RenderWidget(blink::WebPop
+       text_field_is_dirty_(false),
+       outstanding_ime_acks_(0),
+       body_background_color_(SK_ColorWHITE),
+ #endif
+       popup_origin_scale_for_emulation_(0.f),
+       frame_swap_message_queue_(new FrameSwapMessageQueue()),
+       resizing_mode_selector_(new ResizingModeSelector()),
+       context_menu_source_type_(ui::MENU_SOURCE_MOUSE),
+-      has_host_context_menu_location_(false) {
++      has_host_context_menu_location_(false),
++      enable_top_controls_position_calculation_(false),
++      top_controls_height_(0.0f),
++      top_controls_show_threshold_(0.5f),
++      top_controls_hide_threshold_(0.5f) {
+   if (!swapped_out)
+     RenderProcess::current()->AddRefProcess();
+   DCHECK(RenderThread::Get());
+   device_color_profile_.push_back('0');
+ }
+ 
+ RenderWidget::~RenderWidget() {
+   DCHECK(!webwidget_) << "Leaking our WebWidget!";
+@@ -2014,16 +2018,25 @@ void RenderWidget::DidChangeBodyBackgrou
+ 
+   if (bg_color != body_background_color_) {
+     body_background_color_ = bg_color;
+     Send(new ViewHostMsg_DidChangeBodyBackgroundColor(routing_id(), bg_color));
+   }
+ }
+ #endif
+ 
++bool RenderWidget::GetTopControlsSettings(double* height,
++                                          double* show_threshold,
++                                          double* hide_threshold) {
++  *height = top_controls_height_;
++  *show_threshold = top_controls_show_threshold_;
++  *hide_threshold = top_controls_hide_threshold_;
++  return enable_top_controls_position_calculation_;
++}
++
+ bool RenderWidget::CanComposeInline() {
+   return true;
+ }
+ 
+ WebScreenInfo RenderWidget::screenInfo() {
+   return screen_info_;
+ }
+ 
+diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
+--- a/content/renderer/render_widget.h
++++ b/content/renderer/render_widget.h
+@@ -298,16 +298,20 @@ class CONTENT_EXPORT RenderWidget
+   // handle composition range and composition character bounds.
+   void UpdateCompositionInfo(bool should_update_range);
+ #endif
+ 
+ #if defined(OS_ANDROID)
+   void DidChangeBodyBackgroundColor(SkColor bg_color);
+ #endif
+ 
++  bool GetTopControlsSettings(double* height,
++                              double* show_threshold,
++                              double* hide_threshold);
++
+  protected:
+   // Friend RefCounted so that the dtor can be non-public. Using this class
+   // without ref-counting is an error.
+   friend class base::RefCounted<RenderWidget>;
+   // For unit tests.
+   friend class RenderWidgetTest;
+ 
+   enum ResizeAck {
+@@ -754,14 +758,19 @@ class CONTENT_EXPORT RenderWidget
+   // are sent to each frame in the list for events such as changing
+   // visibility state for example.
+   ObserverList<RenderFrameImpl> render_frames_;
+ 
+   ui::MenuSourceType context_menu_source_type_;
+   bool has_host_context_menu_location_;
+   gfx::Point host_context_menu_location_;
+ 
++  bool enable_top_controls_position_calculation_;
++  double top_controls_height_;
++  double top_controls_show_threshold_;
++  double top_controls_hide_threshold_;
++
+   DISALLOW_COPY_AND_ASSIGN(RenderWidget);
+ };
+ 
+ }  // namespace content
+ 
+ #endif  // CONTENT_RENDERER_RENDER_WIDGET_H_

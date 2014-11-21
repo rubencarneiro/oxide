@@ -114,6 +114,14 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
   return delegate_->GetViewSizePix();
 }
 
+float RenderWidgetHostView::GetTopControlsLayoutHeight() const {
+  if (!delegate_) {
+    return 0.0f;
+  }
+
+  return delegate_->GetLocationBarCurrentHeightDip();
+}
+
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   focused_node_is_editable_ = is_editable_node;
   if (delegate_) {
@@ -420,7 +428,9 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
     return gfx::Rect(last_size_);
   }
 
-  return delegate_->GetViewBoundsDip();
+  gfx::Rect bounds = delegate_->GetViewBoundsDip();
+  bounds.Inset(0, delegate_->GetLocationBarCurrentHeightDip(), 0, 0);
+  return bounds;
 }
 
 bool RenderWidgetHostView::LockMouse() {

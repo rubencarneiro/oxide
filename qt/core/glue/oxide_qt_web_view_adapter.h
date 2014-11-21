@@ -73,7 +73,9 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_SCROLL_OFFSET = 1 << 1,
   FRAME_METADATA_CHANGE_CONTENT = 1 << 2,
   FRAME_METADATA_CHANGE_VIEWPORT = 1 << 3,
-  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 4
+  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 4,
+  FRAME_METADATA_CHANGE_CONTROLS_OFFSET = 1 << 5,
+  FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 6
 };
 
 enum ContentTypeFlags {
@@ -105,7 +107,7 @@ class Q_DECL_EXPORT CompositorFrameHandle {
   };
 
   virtual Type GetType() = 0;
-  virtual const QSize& GetSize() const = 0;
+  virtual const QRect& GetRect() const = 0;
 
   virtual QImage GetSoftwareFrame() = 0;
   virtual AcceleratedFrameData GetAcceleratedFrame() = 0;
@@ -117,7 +119,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void init(bool incognito,
             WebContextAdapter* context,
-            OxideQNewViewRequest* new_view_request);
+            OxideQNewViewRequest* new_view_request,
+            int location_bar_height);
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -191,6 +194,10 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void prepareToClose();
 
+  int locationBarMaxHeight();
+  int locationBarOffsetPix();
+  int locationBarContentOffsetPix();
+
  protected:
   WebViewAdapter(QObject* q);
 
@@ -203,6 +210,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void WebPreferencesDestroyed();
 
   void FrameMetadataUpdated(FrameMetadataChangeFlags flags);
+  void ScheduleUpdate();
+  void EvictCurrentFrame();
 
   float GetFrameMetadataScaleToPix();
 
@@ -234,6 +243,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual QRect GetViewBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
+  virtual int GetLocationBarCurrentHeightPix() const = 0;
 
   virtual void AddMessageToConsole(int level,
                                    const QString& message,
@@ -261,8 +271,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void OnFrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
 
-  virtual void ScheduleUpdate() = 0;
-  virtual void EvictCurrentFrame() = 0;
+  virtual void OnScheduleUpdate() = 0;
+  virtual void OnEvictCurrentFrame() = 0;
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
@@ -276,11 +286,15 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   QScopedPointer<WebView> view_;
 
+  QSharedPointer<CompositorFrameHandle> compositor_frame_;
+
   FrameMetadataChangeFlags frame_metadata_dirty_flags_;
   float frame_metadata_scale_to_pix_;
   QPoint frame_scroll_offset_;
   QSize frame_content_size_;
   QSize frame_viewport_size_;
+  int location_bar_offset_;
+  int location_bar_content_offset_;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };

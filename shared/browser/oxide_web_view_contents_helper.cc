@@ -43,6 +43,21 @@ WebViewContentsHelper::~WebViewContentsHelper() {
   }
 }
 
+void WebViewContentsHelper::Init() {
+  DCHECK(!FromWebContents(web_contents_));
+
+  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
+
+  content::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  renderer_prefs->browser_handles_non_local_top_level_requests = true;
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (rvh) {
+    rvh->SyncRendererPrefs();
+  }
+}
+
 void WebViewContentsHelper::UpdateWebPreferences() {
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   if (!rvh) {
@@ -73,30 +88,43 @@ void WebViewContentsHelper::CloseContents(content::WebContents* source) {
 }
 
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
+                                             double location_bar_height)
+    : BrowserContextObserver(
+          BrowserContext::FromContent(contents->GetBrowserContext())),
+      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
+      web_contents_(contents),
+      owns_web_preferences_(false) {
+  if (location_bar_height > 0.0f) {
+    content::RendererPreferences* renderer_prefs =
+        web_contents_->GetMutableRendererPrefs();
+    renderer_prefs->enable_top_controls_position_calculation = true;
+    renderer_prefs->top_controls_height = location_bar_height;
+  }
+
+  Init();
+}
+
+WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
                                              WebViewContentsHelper* opener)
     : BrowserContextObserver(
           BrowserContext::FromContent(contents->GetBrowserContext())),
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       web_contents_(contents),
       owns_web_preferences_(false) {
-  DCHECK(!FromWebContents(web_contents_));
-
-  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
-
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->browser_handles_non_local_top_level_requests = true;
+  content::RendererPreferences* opener_prefs =
+      opener->GetWebContents()->GetMutableRendererPrefs();
 
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (rvh) {
-    rvh->SyncRendererPrefs();
-  }
+  renderer_prefs->enable_top_controls_position_calculation =
+      opener_prefs->enable_top_controls_position_calculation;
+  renderer_prefs->top_controls_height = opener_prefs->top_controls_height;
 
-  if (opener) {
-    WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());
-    owns_web_preferences_ = true;
-    UpdateWebPreferences();
-  }
+  Init();
+
+  WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());
+  owns_web_preferences_ = true;
+  UpdateWebPreferences();
 }
 
 // static
@@ -110,6 +138,10 @@ WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
 WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
     content::RenderViewHost* rvh) {
   return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+}
+
+content::WebContents* WebViewContentsHelper::GetWebContents() const {
+  return web_contents_;
 }
 
 BrowserContext* WebViewContentsHelper::GetBrowserContext() const {

@@ -77,6 +77,8 @@ class RenderWidgetHostViewDelegate {
   virtual bool HasFocus() const = 0;
 
   virtual bool IsVisible() const = 0;
+
+  virtual int GetLocationBarCurrentHeightDip() const = 0;
 };
 
 } // namespace oxide
