@@ -18,6 +18,7 @@
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
+#include <QByteArray>
 #include <QEvent>
 #include <QFlags>
 #include <QGuiApplication>
@@ -659,6 +660,8 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   init(construct_props_->incognito,
        context ? OxideQQuickWebContextPrivate::get(context) : NULL,
        construct_props_->new_view_request,
+       construct_props_->restore_state,
+       construct_props_->restore_type,
        location_bar_controller_ ?
            qRound(location_bar_controller_->maxHeight()) : 0);
 }
@@ -1411,6 +1414,64 @@ void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
   }
 
   d->construct_props_->new_view_request = request;
+}
+
+// This exists purely to remove a moc warning. We don't store this initial state
+// anywhere, it's only a transient blob and I can't think of any possible
+// reason why anybody would want to read it back
+QString OxideQQuickWebView::restoreState() const {
+  return QString();
+}
+
+void OxideQQuickWebView::setRestoreState(const QString& state) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->isInitialized()) {
+    qWarning() << "Cannot assign state to an already constructed WebView";
+    return;
+  }
+
+  // state is expected to be a base64-encoded string
+  d->construct_props_->restore_state =
+      QByteArray::fromBase64(state.toLocal8Bit());
+}
+
+// This exists purely to remove a moc warning. We don't store this restore type
+// anywhere, it's only a transient property and I can't think of any possible
+// reason why anybody would want to read it back
+OxideQQuickWebView::RestoreType OxideQQuickWebView::restoreType() const {
+  Q_D(const OxideQQuickWebView);
+
+  return RestoreLastSessionExitedCleanly;
+}
+
+void OxideQQuickWebView::setRestoreType(OxideQQuickWebView::RestoreType type) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->isInitialized()) {
+    qWarning() << "Cannot assign state to an already constructed WebView";
+    return;
+  }
+
+  Q_STATIC_ASSERT(
+      RestoreCurrentSession ==
+        static_cast<RestoreType>(oxide::qt::RESTORE_CURRENT_SESSION));
+  Q_STATIC_ASSERT(
+      RestoreLastSessionExitedCleanly ==
+        static_cast<RestoreType>(oxide::qt::RESTORE_LAST_SESSION_EXITED_CLEANLY));
+  Q_STATIC_ASSERT(
+      RestoreLastSessionCrashed ==
+        static_cast<RestoreType>(oxide::qt::RESTORE_LAST_SESSION_CRASHED));
+
+  d->construct_props_->restore_type = static_cast<oxide::qt::RestoreType>(type);
+}
+
+QString OxideQQuickWebView::currentState() const {
+  Q_D(const OxideQQuickWebView);
+
+  // Encode the current state in base64 so it can be safely passed around
+  // as a string (QML doesn’t know of byte arrays)
+  return QString::fromLocal8Bit(d->currentState().toBase64());
 }
 
 OxideQQuickLocationBarController* OxideQQuickWebView::locationBarController() {

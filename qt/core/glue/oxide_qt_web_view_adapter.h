@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 
+#include <QByteArray>
 #include <QDateTime>
 #include <QImage>
 #include <QList>
@@ -84,6 +85,12 @@ enum ContentTypeFlags {
   CONTENT_TYPE_MIXED_SCRIPT = 1 << 1
 };
 
+enum RestoreType {
+  RESTORE_CURRENT_SESSION,
+  RESTORE_LAST_SESSION_EXITED_CLEANLY,
+  RESTORE_LAST_SESSION_CRASHED,
+};
+
 class Q_DECL_EXPORT AcceleratedFrameData final {
  public:
   AcceleratedFrameData(unsigned int id)
@@ -120,6 +127,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void init(bool incognito,
             WebContextAdapter* context,
             OxideQNewViewRequest* new_view_request,
+            const QByteArray& restoreState,
+            RestoreType restoreType,
             int location_bar_height);
 
   QUrl url() const;
@@ -171,6 +180,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QString getNavigationEntryTitle(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
+  QByteArray currentState() const;
+
   OxideQWebPreferences* preferences();
   void setPreferences(OxideQWebPreferences* prefs);
 
@@ -205,6 +216,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   friend class WebView;
 
   void EnsurePreferences();
+  void RestoreState(RestoreType type, const QByteArray& state);
 
   void Initialized();
   void WebPreferencesDestroyed();
