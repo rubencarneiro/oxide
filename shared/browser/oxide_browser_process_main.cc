@@ -286,12 +286,8 @@ void AddFormFactorSpecificCommandLineArguments() {
     command_line->AppendSwitch(switches::kEnableViewportMeta);
     command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
     command_line->AppendSwitch(switches::kEnablePinch);
-    if (IsEnvironmentOptionEnabled("ENABLE_PINCH_VIRTUAL_VIEWPORT")) {
-      command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
-    }
-
+    command_line->AppendSwitch(cc::switches::kEnablePinchVirtualViewport);
     command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
-
     command_line->AppendSwitch(switches::kLimitMaxDecodedImageBytes);
   }
 
