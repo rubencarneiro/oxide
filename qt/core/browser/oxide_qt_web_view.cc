@@ -61,7 +61,6 @@
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqsslcertificate_p.h"
-#include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
@@ -956,10 +955,10 @@ void WebView::HandleMouseEvent(QMouseEvent* event) {
 
 void WebView::HandleTouchEvent(QTouchEvent* event) {
   ScopedVector<ui::TouchEvent> events;
-  MakeUITouchEvents(event,
-                    GetDeviceScaleFactor(),
-                    GetLocationBarContentOffsetDip(),
-                    &events);
+  touch_event_factory_.MakeEvents(event,
+                                  GetDeviceScaleFactor(),
+                                  GetLocationBarContentOffsetDip(),
+                                  &events);
 
   for (size_t i = 0; i < events.size(); ++i) {
     oxide::WebView::HandleTouchEvent(*events[i]);
