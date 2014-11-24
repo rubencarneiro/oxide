@@ -903,8 +903,14 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   if (old_host && old_host->GetView()) {
     static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(NULL);
   }
-  if (new_host && new_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
+  if (new_host) {
+    if (new_host->GetView()) {
+      static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
+    }
+
+    new_host->Send(
+        new OxideMsg_UpdateTopControlsState(new_host->GetRoutingID(),
+                                            location_bar_constraints_));
   }
 }
 
@@ -1163,7 +1169,8 @@ WebView::WebView()
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       did_scroll_focused_editable_node_into_view_(false),
-      auto_scroll_timer_(false, false) {
+      auto_scroll_timer_(false, false),
+      location_bar_constraints_(cc::BOTH) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 
@@ -1235,6 +1242,13 @@ void WebView::Init(Params* params) {
     RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
     if (rwhv) {
       rwhv->SetDelegate(this);
+    }
+
+    content::RenderViewHost* rvh = GetRenderViewHost();
+    if (rvh) {
+      rvh->Send(
+          new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+                                              location_bar_constraints_));
     }
 
     // Sync WebContents with the state of the WebView
@@ -1692,6 +1706,26 @@ double WebView::GetLocationBarMaxHeightDip() {
   }
 
   return renderer_prefs->top_controls_height;
+}
+
+void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
+  if (constraints == location_bar_constraints_) {
+    return;
+  }
+
+  location_bar_constraints_ = constraints;
+
+  if (!web_contents_) {
+    return;
+  }
+
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+
+  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+                                                constraints));
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {

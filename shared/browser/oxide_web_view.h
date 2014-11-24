@@ -29,6 +29,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "base/timer/timer.h"
+#include "cc/input/top_controls_state.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
@@ -239,6 +240,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   ContentType blocked_content() const { return blocked_content_; }
 
   double GetLocationBarMaxHeightDip();
+  cc::TopControlsState location_bar_constraints() const {
+    return location_bar_constraints_;
+  }
+  void SetLocationBarConstraints(cc::TopControlsState constraints);
 
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
@@ -605,6 +610,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   // https://launchpad.net/bugs/1370366
   bool did_scroll_focused_editable_node_into_view_;
   base::Timer auto_scroll_timer_;
+
+  cc::TopControlsState location_bar_constraints_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

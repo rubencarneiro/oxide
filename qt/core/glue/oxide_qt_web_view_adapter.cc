@@ -54,8 +54,25 @@ namespace qt {
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 namespace {
+
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
 static uint16_t STATE_SERIALIZER_VERSION = 1;
+
+cc::TopControlsState LocationBarModeToCcTopControlsState(
+    LocationBarMode mode) {
+  switch (mode) {
+    case LOCATION_BAR_MODE_AUTO:
+      return cc::BOTH;
+    case LOCATION_BAR_MODE_SHOWN:
+      return cc::SHOWN;
+    case LOCATION_BAR_MODE_HIDDEN:
+      return cc::HIDDEN;
+    default:
+      NOTREACHED();
+      return cc::BOTH;
+  }
+}
+
 }
 
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
@@ -654,6 +671,24 @@ int WebViewAdapter::locationBarContentOffsetPix() {
   }
 
   return location_bar_content_offset_;
+}
+
+LocationBarMode WebViewAdapter::locationBarMode() const {
+  switch (view_->location_bar_constraints()) {
+    case cc::SHOWN:
+      return LOCATION_BAR_MODE_SHOWN;
+    case cc::HIDDEN:
+      return LOCATION_BAR_MODE_HIDDEN;
+    case cc::BOTH:
+      return LOCATION_BAR_MODE_AUTO;
+    default:
+      NOTREACHED();
+      return LOCATION_BAR_MODE_AUTO;
+  }
+}
+
+void WebViewAdapter::setLocationBarMode(LocationBarMode mode) {
+  view_->SetLocationBarConstraints(LocationBarModeToCcTopControlsState(mode));
 }
 
 } // namespace qt

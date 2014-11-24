@@ -17,6 +17,8 @@
 
 #include "oxideqquicklocationbarcontroller_p.h"
 
+#include "qt/core/glue/oxide_qt_web_view_adapter.h"
+
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
@@ -71,11 +73,32 @@ void OxideQQuickLocationBarController::setMaxHeight(qreal height) {
 
 OxideQQuickLocationBarController::Mode
 OxideQQuickLocationBarController::mode() const {
-  return ModeAuto;
+  Q_D(const OxideQQuickLocationBarController);
+
+  Q_STATIC_ASSERT(
+      static_cast<int>(ModeAuto) ==
+        static_cast<int>(oxide::qt::LOCATION_BAR_MODE_AUTO));
+  Q_STATIC_ASSERT(
+      static_cast<int>(ModeShown) ==
+        static_cast<int>(oxide::qt::LOCATION_BAR_MODE_SHOWN));
+  Q_STATIC_ASSERT(
+      static_cast<int>(ModeHidden) ==
+        static_cast<int>(oxide::qt::LOCATION_BAR_MODE_HIDDEN));
+
+  return static_cast<Mode>(
+      OxideQQuickWebViewPrivate::get(d->view)->locationBarMode());
 }
 
 void OxideQQuickLocationBarController::setMode(Mode mode) {
+  Q_D(OxideQQuickLocationBarController);
 
+  if (mode == this->mode()) {
+    return;
+  }
+
+  OxideQQuickWebViewPrivate::get(d->view)->setLocationBarMode(
+      static_cast<oxide::qt::LocationBarMode>(mode));
+  Q_EMIT modeChanged();
 }
 
 qreal OxideQQuickLocationBarController::offset() const {

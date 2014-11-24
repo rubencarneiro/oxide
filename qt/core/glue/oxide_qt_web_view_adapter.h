@@ -91,6 +91,12 @@ enum RestoreType {
   RESTORE_LAST_SESSION_CRASHED,
 };
 
+enum LocationBarMode {
+  LOCATION_BAR_MODE_AUTO,
+  LOCATION_BAR_MODE_SHOWN,
+  LOCATION_BAR_MODE_HIDDEN
+};
+
 class Q_DECL_EXPORT AcceleratedFrameData final {
  public:
   AcceleratedFrameData(unsigned int id)
@@ -208,6 +214,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   int locationBarMaxHeight();
   int locationBarOffsetPix();
   int locationBarContentOffsetPix();
+  LocationBarMode locationBarMode() const;
+  void setLocationBarMode(LocationBarMode mode);
 
  protected:
   WebViewAdapter(QObject* q);
