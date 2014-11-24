@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -337,20 +337,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -329,20 +329,18 @@ bool RenderFrameHostImpl::OnMessageRecei
                          OnRequestPlatformNotificationPermission)
      IPC_MESSAGE_HANDLER(FrameHostMsg_TextSurroundingSelectionResponse,
                          OnTextSurroundingSelectionResponse)
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1130,17 +1128,16 @@ void RenderFrameHostImpl::OnAccessibilit
+@@ -1122,17 +1120,16 @@ void RenderFrameHostImpl::OnAccessibilit
      if (manager) {
        manager->OnFindInPageResult(
            params.request_id, params.match_index, params.start_id,
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1153,17 +1150,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1145,17 +1142,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      // TODO(creis): Bind process ID here so that GeolocationServiceImpl
      // can perform permissions checks once site isolation is complete.
      // crbug.com/426384
-@@ -1530,29 +1526,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -1522,29 +1518,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -375,10 +375,10 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -866,23 +866,21 @@ bool RenderFrameImpl::Send(IPC::Message*
-     // messages, so don't use the proxy.
-     if (render_frame_proxy_ && message->routing_id() == routing_id_)
-       return render_frame_proxy_->Send(message);
+@@ -860,23 +860,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+       delete message;
+       return false;
+     }
    }
  
    return RenderThread::Get()->Send(message);
@@ -399,7 +399,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    // document-less RenderFrame is replaced by a RenderFrameProxy but kept
    // around and is still able to receive messages.
    if (!frame_->document().isNull())
-@@ -940,19 +938,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -934,19 +932,18 @@ bool RenderFrameImpl::OnMessageReceived(
                          OnTextSurroundingSelectionRequest)
      IPC_MESSAGE_HANDLER(FrameMsg_AddStyleSheetByURL,
                          OnAddStyleSheetByURL)
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1435,31 +1432,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1429,31 +1426,29 @@ void RenderFrameImpl::OnDisownOpener() {
    // disowning the opener on subframes, we will need to move WebContentsImpl's
    // opener_ to FrameTreeNode.
    CHECK(!frame_->parent());
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -1825,17 +1820,17 @@ RenderFrameImpl::createWorkerPermissionC
+@@ -1819,17 +1814,17 @@ RenderFrameImpl::createWorkerPermissionC
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerPermissionClientProxy(
        this, frame);

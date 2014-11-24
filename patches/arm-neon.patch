@@ -15,7 +15,7 @@
 diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/common.gypi
 --- a/third_party/webrtc/build/common.gypi
 +++ b/third_party/webrtc/build/common.gypi
-@@ -263,17 +263,21 @@
+@@ -262,17 +262,21 @@
          ],
          'conditions': [
            ['arm_version==7', {
@@ -35,7 +35,7 @@ diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/com
            }],
          ],
        }],
-       ['target_arch=="mipsel" and mips_arch_variant!="r6"', {
+       ['target_arch=="mipsel" and mips_arch_variant!="r6" and android_webview_build==0', {
          'defines': [
            'MIPS32_LE',
 diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
