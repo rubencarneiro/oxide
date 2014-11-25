@@ -234,7 +234,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  // presented. When the frame finishes presenting, a matching
  // FrameHostMsg_CompositorFrameSwappedACK should be sent back to the
  // RenderViewHost that was produced the CompositorFrame.
-@@ -470,24 +468,22 @@ IPC_MESSAGE_ROUTED1(FrameMsg_TextSurroun
+@@ -471,24 +469,22 @@ IPC_MESSAGE_ROUTED1(FrameMsg_TextSurroun
  // Tells the renderer to insert a link to the specified stylesheet. This is
  // needed to support navigation transitions.
  IPC_MESSAGE_ROUTED1(FrameMsg_AddStyleSheetByURL, std::string)
@@ -260,7 +260,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -785,16 +781,12 @@ IPC_MESSAGE_CONTROL1(FrameHostMsg_AddNav
+@@ -786,16 +782,12 @@ IPC_MESSAGE_CONTROL1(FrameHostMsg_AddNav
  IPC_MESSAGE_ROUTED2(FrameHostMsg_BeginNavigation,
                      FrameHostMsg_BeginNavigation_Params,
                      content::CommonNavigationParams)
@@ -375,7 +375,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -860,23 +860,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -859,23 +859,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -399,7 +399,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    // document-less RenderFrame is replaced by a RenderFrameProxy but kept
    // around and is still able to receive messages.
    if (!frame_->document().isNull())
-@@ -934,19 +932,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -933,19 +931,18 @@ bool RenderFrameImpl::OnMessageReceived(
                          OnTextSurroundingSelectionRequest)
      IPC_MESSAGE_HANDLER(FrameMsg_AddStyleSheetByURL,
                          OnAddStyleSheetByURL)
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1429,31 +1426,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1427,31 +1424,29 @@ void RenderFrameImpl::OnDisownOpener() {
    // disowning the opener on subframes, we will need to move WebContentsImpl's
    // opener_ to FrameTreeNode.
    CHECK(!frame_->parent());
@@ -494,11 +494,11 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -565,20 +563,19 @@ class CONTENT_EXPORT RenderFrameImpl
-   void OnTextSurroundingSelectionRequest(size_t max_length);
+@@ -566,20 +564,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnAddStyleSheetByURL(const std::string& url);
    void OnSetupTransitionView(const std::string& markup);
-   void OnBeginExitTransition(const std::string& css_selector);
+   void OnBeginExitTransition(const std::string& css_selector,
+                              bool exit_to_native_app);
    void OnHideTransitionElements(const std::string& css_selector);
    void OnShowTransitionElements(const std::string& css_selector);
    void OnSetAccessibilityMode(AccessibilityMode new_mode);
@@ -516,7 +516,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    void OnRequestNavigation(const CommonNavigationParams& common_params,
                             const RequestNavigationParams& request_params);
    void OnCommitNavigation(const ResourceResponseHead& response,
-@@ -794,20 +791,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -795,20 +792,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    // The current accessibility mode.
    AccessibilityMode accessibility_mode_;
