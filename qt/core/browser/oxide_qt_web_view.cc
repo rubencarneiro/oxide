@@ -537,19 +537,6 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
   FrameMetadataChangeFlags flags = FRAME_METADATA_CHANGE_NONE;
 
-  if (old.location_bar_content_translation.y() !=
-      compositor_frame_metadata().location_bar_content_translation.y()) {
-    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
-    adapter_->ScheduleUpdate();
-  }
-  if (old.location_bar_offset.y() !=
-      compositor_frame_metadata().location_bar_offset.y()) {
-    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
-  }
-  if (old.device_scale_factor !=
-      compositor_frame_metadata().device_scale_factor) {
-    flags |= FRAME_METADATA_CHANGE_DEVICE_SCALE;
-  }
   if (old.root_scroll_offset.x() !=
           compositor_frame_metadata().root_scroll_offset.x() ||
       old.root_scroll_offset.y() !=
@@ -568,9 +555,23 @@ void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
           compositor_frame_metadata().scrollable_viewport_size.height()) {
     flags |= FRAME_METADATA_CHANGE_VIEWPORT;
   }
-  if (old.page_scale_factor !=
-      compositor_frame_metadata().page_scale_factor) {
-    flags |= FRAME_METADATA_CHANGE_PAGE_SCALE;
+  if (old.location_bar_offset.y() !=
+      compositor_frame_metadata().location_bar_offset.y()) {
+    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
+  }
+  if (old.location_bar_content_translation.y() !=
+      compositor_frame_metadata().location_bar_content_translation.y()) {
+    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
+  }
+  if (old.device_scale_factor !=
+          compositor_frame_metadata().device_scale_factor ||
+      old.page_scale_factor !=
+          compositor_frame_metadata().page_scale_factor) {
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
+    flags |= FRAME_METADATA_CHANGE_CONTENT;
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT;
+    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
+    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
   }
 
   adapter_->FrameMetadataUpdated(flags);

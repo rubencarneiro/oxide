@@ -44,8 +44,9 @@
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "ui/base/ime/text_input_type.h"
-#include "ui/gfx/rect.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_content_types.h"
@@ -234,11 +235,18 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
   }
+  gfx::Point GetCompositorFrameScrollOffsetPix();
+  gfx::Size GetCompositorFrameContentSizePix();
+  gfx::Size GetCompositorFrameViewportSizePix();
+
+  int GetLocationBarOffsetPix();
+  int GetLocationBarContentOffsetPix();
 
   const SecurityStatus& security_status() const { return security_status_; }
 
   ContentType blocked_content() const { return blocked_content_; }
 
+  int GetLocationBarMaxHeightPix();
   double GetLocationBarMaxHeightDip();
   cc::TopControlsState location_bar_constraints() const {
     return location_bar_constraints_;
@@ -342,6 +350,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   bool ShouldScrollFocusedEditableNodeIntoView();
   void MaybeResetAutoScrollTimer();
   void ScrollFocusedEditableNodeIntoView();
+
+  float GetFrameMetadataScaleToPix();
 
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const override;

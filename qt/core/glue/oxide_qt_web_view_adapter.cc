@@ -18,9 +18,6 @@
 #include "oxide_qt_web_view_adapter.h"
 
 #include <limits>
-#include <QPointF>
-#include <QSizeF>
-#include <QSize>
 #include <QtDebug>
 
 #include "base/logging.h"
@@ -28,9 +25,8 @@
 #include "base/memory/ref_counted.h"
 #include "base/pickle.h"
 #include "cc/output/compositor_frame_metadata.h"
+#include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/size.h"
-#include "ui/gfx/geometry/size_f.h"
-#include "ui/gfx/geometry/vector2d_f.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -223,24 +219,6 @@ void WebViewAdapter::WebPreferencesDestroyed() {
   OnWebPreferencesReplaced();
 }
 
-void WebViewAdapter::FrameMetadataUpdated(FrameMetadataChangeFlags flags) {
-  if (flags & FRAME_METADATA_CHANGE_DEVICE_SCALE ||
-      flags & FRAME_METADATA_CHANGE_PAGE_SCALE) {
-    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
-    flags |= FRAME_METADATA_CHANGE_CONTENT;
-    flags |= FRAME_METADATA_CHANGE_VIEWPORT;
-  }
-
-  if (flags & FRAME_METADATA_CHANGE_VIEWPORT) {
-    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
-    flags |= FRAME_METADATA_CHANGE_CONTENT;
-  }
-
-  frame_metadata_dirty_flags_ |= flags;
-
-  OnFrameMetadataUpdated(flags);
-}
-
 void WebViewAdapter::ScheduleUpdate() {
   compositor_frame_.reset();
   OnScheduleUpdate();
@@ -251,28 +229,9 @@ void WebViewAdapter::EvictCurrentFrame() {
   OnEvictCurrentFrame();
 }
 
-float WebViewAdapter::GetFrameMetadataScaleToPix() {
-  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_DEVICE_SCALE ||
-      frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_PAGE_SCALE) {
-    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_DEVICE_SCALE;
-    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_PAGE_SCALE;
-
-    const cc::CompositorFrameMetadata& metadata =
-        view_->compositor_frame_metadata();
-    frame_metadata_scale_to_pix_ =
-      metadata.device_scale_factor * metadata.page_scale_factor;
-  }
-
-  return frame_metadata_scale_to_pix_;
-}
-
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
-    view_(WebView::Create(this)),
-    frame_metadata_dirty_flags_(FrameMetadataChangeFlags(-1)),
-    frame_metadata_scale_to_pix_(0.0f),
-    location_bar_offset_(0),
-    location_bar_content_offset_(0) {}
+    view_(WebView::Create(this)) {}
 
 WebViewAdapter::~WebViewAdapter() {}
 
@@ -529,66 +488,19 @@ void WebViewAdapter::updateWebPreferences() {
   view_->UpdateWebPreferences();
 }
 
-float WebViewAdapter::compositorFrameDeviceScaleFactor() const {
-  return view_->compositor_frame_metadata().device_scale_factor;
-}
-
-float WebViewAdapter::compositorFramePageScaleFactor() const {
-  return view_->compositor_frame_metadata().page_scale_factor;
-}
-
 QPoint WebViewAdapter::compositorFrameScrollOffsetPix() {
-  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_SCROLL_OFFSET) {
-    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_SCROLL_OFFSET;
-
-    // See https://launchpad.net/bugs/1336730
-    const gfx::SizeF& viewport_size =
-        view_->compositor_frame_metadata().scrollable_viewport_size;
-    float x_scale = GetFrameMetadataScaleToPix() *
-                    viewport_size.width() / qRound(viewport_size.width());
-    float y_scale = GetFrameMetadataScaleToPix() *
-                    viewport_size.height() / qRound(viewport_size.height());
-
-    gfx::Vector2dF offset =
-        gfx::ScaleVector2d(view_->compositor_frame_metadata().root_scroll_offset,
-                           x_scale, y_scale);
-    frame_scroll_offset_ = QPointF(offset.x(), offset.y()).toPoint();
-  }
-
-  return frame_scroll_offset_;
+  gfx::Point offset = view_->GetCompositorFrameScrollOffsetPix();
+  return QPoint(offset.x(), offset.y());
 }
 
 QSize WebViewAdapter::compositorFrameContentSizePix() {
-  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_CONTENT) {
-    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_CONTENT;
-
-    // See https://launchpad.net/bugs/1336730
-    const gfx::SizeF& viewport_size =
-        view_->compositor_frame_metadata().scrollable_viewport_size;
-    float x_scale = GetFrameMetadataScaleToPix() *
-                    viewport_size.width() / qRound(viewport_size.width());
-    float y_scale = GetFrameMetadataScaleToPix() *
-                    viewport_size.height() / qRound(viewport_size.height());
-
-    gfx::SizeF size =
-        gfx::ScaleSize(view_->compositor_frame_metadata().root_layer_size,
-                       x_scale, y_scale);
-    frame_content_size_ = QSizeF(size.width(), size.height()).toSize();
-  }
-
-  return frame_content_size_;
+  gfx::Size size = view_->GetCompositorFrameContentSizePix();
+  return QSize(size.width(), size.height());
 }
 
 QSize WebViewAdapter::compositorFrameViewportSizePix() {
-  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_VIEWPORT) {
-    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_VIEWPORT;
-    gfx::SizeF size =
-        gfx::ScaleSize(view_->compositor_frame_metadata().scrollable_viewport_size,
-                       GetFrameMetadataScaleToPix());
-    frame_viewport_size_ = QSizeF(size.width(), size.height()).toSize();
-  }
-
-  return frame_viewport_size_;
+  gfx::Size size = view_->GetCompositorFrameViewportSizePix();
+  return QSize(size.width(), size.height());
 }
 
 QSharedPointer<CompositorFrameHandle> WebViewAdapter::compositorFrameHandle() {
@@ -643,34 +555,15 @@ void WebViewAdapter::prepareToClose() {
 }
 
 int WebViewAdapter::locationBarMaxHeight() {
-  return qRound(view_->GetLocationBarMaxHeightDip() *
-                view_->GetDeviceScaleFactor());
+  return view_->GetLocationBarMaxHeightPix();
 }
 
 int WebViewAdapter::locationBarOffsetPix() {
-  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_CONTROLS_OFFSET) {
-    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
-    const cc::CompositorFrameMetadata& metadata =
-        view_->compositor_frame_metadata();
-    location_bar_offset_ =
-        qRound(metadata.location_bar_offset.y() *
-               metadata.device_scale_factor);
-  }
-
-  return location_bar_offset_;
+  return view_->GetLocationBarOffsetPix();
 }
 
 int WebViewAdapter::locationBarContentOffsetPix() {
-  if (frame_metadata_dirty_flags_ & FRAME_METADATA_CHANGE_CONTENT_OFFSET) {
-    frame_metadata_dirty_flags_ &= ~FRAME_METADATA_CHANGE_CONTENT_OFFSET;
-    const cc::CompositorFrameMetadata& metadata =
-        view_->compositor_frame_metadata();
-    location_bar_content_offset_ =
-        qRound(metadata.location_bar_content_translation.y() *
-               metadata.device_scale_factor);
-  }
-
-  return location_bar_content_offset_;
+  return view_->GetLocationBarContentOffsetPix();
 }
 
 LocationBarMode WebViewAdapter::locationBarMode() const {

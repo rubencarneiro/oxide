@@ -404,6 +404,11 @@ void WebView::ScrollFocusedEditableNodeIntoView() {
   host->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
 
+float WebView::GetFrameMetadataScaleToPix() {
+  return compositor_frame_metadata().device_scale_factor *
+         compositor_frame_metadata().page_scale_factor;
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return 0;
 }
@@ -1692,6 +1697,60 @@ gfx::Size WebView::GetViewSizeDip() const {
   int height = std::lround(size.height() * scale);
 
   return gfx::Size(width, height);
+}
+
+gfx::Point WebView::GetCompositorFrameScrollOffsetPix() {
+  // See https://launchpad.net/bugs/1336730
+  const gfx::SizeF& viewport_size =
+      compositor_frame_metadata().scrollable_viewport_size;
+  float x_scale = GetFrameMetadataScaleToPix() *
+                  viewport_size.width() / std::round(viewport_size.width());
+  float y_scale = GetFrameMetadataScaleToPix() *
+                  viewport_size.height() / std::round(viewport_size.height());
+
+  gfx::Vector2dF offset =
+      gfx::ScaleVector2d(compositor_frame_metadata().root_scroll_offset,
+                         x_scale, y_scale);
+
+  return gfx::Point(std::round(offset.x()), std::round(offset.y()));
+}
+
+gfx::Size WebView::GetCompositorFrameContentSizePix() {
+  // See https://launchpad.net/bugs/1336730
+  const gfx::SizeF& viewport_size =
+      compositor_frame_metadata().scrollable_viewport_size;
+  float x_scale = GetFrameMetadataScaleToPix() *
+                  viewport_size.width() / std::round(viewport_size.width());
+  float y_scale = GetFrameMetadataScaleToPix() *
+                  viewport_size.height() / std::round(viewport_size.height());
+
+  gfx::SizeF size =
+      gfx::ScaleSize(compositor_frame_metadata().root_layer_size,
+                     x_scale, y_scale);
+
+  return gfx::Size(std::round(size.width()), std::round(size.height()));
+}
+
+gfx::Size WebView::GetCompositorFrameViewportSizePix() {
+  gfx::SizeF size =
+      gfx::ScaleSize(compositor_frame_metadata().scrollable_viewport_size,
+                     GetFrameMetadataScaleToPix());
+
+  return gfx::Size(std::round(size.width()), std::round(size.height()));
+}
+
+int WebView::GetLocationBarOffsetPix() {
+  return compositor_frame_metadata().location_bar_offset.y() *
+         compositor_frame_metadata().device_scale_factor;
+}
+
+int WebView::GetLocationBarContentOffsetPix() {
+  return compositor_frame_metadata().location_bar_content_translation.y() *
+         compositor_frame_metadata().device_scale_factor;
+}
+
+int WebView::GetLocationBarMaxHeightPix() {
+  return GetLocationBarMaxHeightDip() * GetScreenInfo().deviceScaleFactor;
 }
 
 double WebView::GetLocationBarMaxHeightDip() {

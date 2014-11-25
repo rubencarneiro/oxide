@@ -545,7 +545,7 @@ void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
   w->sendEvent(q, event);
 }
 
-void OxideQQuickWebViewPrivate::OnFrameMetadataUpdated(
+void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
     oxide::qt::FrameMetadataChangeFlags flags) {
   Q_Q(OxideQQuickWebView);
 

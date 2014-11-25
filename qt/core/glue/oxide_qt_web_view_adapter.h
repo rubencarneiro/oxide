@@ -70,13 +70,11 @@ class WebView;
 enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_NONE = 0,
 
-  FRAME_METADATA_CHANGE_DEVICE_SCALE = 1 << 0,
-  FRAME_METADATA_CHANGE_SCROLL_OFFSET = 1 << 1,
-  FRAME_METADATA_CHANGE_CONTENT = 1 << 2,
-  FRAME_METADATA_CHANGE_VIEWPORT = 1 << 3,
-  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 4,
-  FRAME_METADATA_CHANGE_CONTROLS_OFFSET = 1 << 5,
-  FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 6
+  FRAME_METADATA_CHANGE_SCROLL_OFFSET = 1 << 0,
+  FRAME_METADATA_CHANGE_CONTENT = 1 << 1,
+  FRAME_METADATA_CHANGE_VIEWPORT = 1 << 2,
+  FRAME_METADATA_CHANGE_CONTROLS_OFFSET = 1 << 3,
+  FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
 };
 
 enum ContentTypeFlags {
@@ -193,8 +191,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void updateWebPreferences();
 
-  float compositorFrameDeviceScaleFactor() const;
-  float compositorFramePageScaleFactor() const;
   QPoint compositorFrameScrollOffsetPix();
   QSize compositorFrameContentSizePix();
   QSize compositorFrameViewportSizePix();
@@ -229,11 +225,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   void Initialized();
   void WebPreferencesDestroyed();
 
-  void FrameMetadataUpdated(FrameMetadataChangeFlags flags);
   void ScheduleUpdate();
   void EvictCurrentFrame();
-
-  float GetFrameMetadataScaleToPix();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
@@ -289,7 +282,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
-  virtual void OnFrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
+  virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
 
   virtual void OnScheduleUpdate() = 0;
   virtual void OnEvictCurrentFrame() = 0;
@@ -307,14 +300,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QScopedPointer<WebView> view_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
-
-  FrameMetadataChangeFlags frame_metadata_dirty_flags_;
-  float frame_metadata_scale_to_pix_;
-  QPoint frame_scroll_offset_;
-  QSize frame_content_size_;
-  QSize frame_viewport_size_;
-  int location_bar_offset_;
-  int location_bar_content_offset_;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };
