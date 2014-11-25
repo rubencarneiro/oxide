@@ -376,7 +376,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   // RenderWidgetHostViewDelegate implementation
   void EvictCurrentFrame() final;
-  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata) final;
   void ProcessAckedTouchEvent(bool consumed) final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void TextInputStateChanged(ui::TextInputType type,
@@ -602,6 +601,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   ContentType blocked_content_;
 
+  cc::CompositorFrameMetadata pending_compositor_frame_metadata_;
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;

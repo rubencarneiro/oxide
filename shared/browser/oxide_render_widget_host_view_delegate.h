@@ -23,10 +23,6 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
-namespace cc {
-class CompositorFrameMetadata;
-}
-
 namespace content {
 class WebCursor;
 }
@@ -45,9 +41,6 @@ class RenderWidgetHostViewDelegate {
   virtual ~RenderWidgetHostViewDelegate() {}
 
   virtual void EvictCurrentFrame() = 0;
-
-  virtual void UpdateFrameMetadata(
-      const cc::CompositorFrameMetadata& metadata) = 0;
 
   virtual void ProcessAckedTouchEvent(bool consumed) = 0;
 

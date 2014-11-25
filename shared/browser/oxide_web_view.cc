@@ -424,6 +424,8 @@ void WebView::CompositorDidCommit() {
     return;
   }
 
+  pending_compositor_frame_metadata_ = rwhv->compositor_frame_metadata();
+
   rwhv->CompositorDidCommit();
 }
 
@@ -436,6 +438,16 @@ void WebView::CompositorSwapFrame(uint32 surface_id,
   }
   current_compositor_frame_ = frame;
 
+  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
+  compositor_frame_metadata_ = pending_compositor_frame_metadata_;
+
+  bool has_mobile_viewport = HasMobileViewport(compositor_frame_metadata_);
+  bool has_fixed_page_scale = HasFixedPageScale(compositor_frame_metadata_);
+  gesture_provider_->SetDoubleTapSupportForPageEnabled(
+      !has_fixed_page_scale && !has_mobile_viewport);
+
+  // TODO(chrisccoulson): Merge these
+  OnFrameMetadataUpdated(old);
   OnSwapCompositorFrame();
 }
 
@@ -495,19 +507,6 @@ void WebView::Observe(int type,
 void WebView::EvictCurrentFrame() {
   current_compositor_frame_ = NULL;
   OnEvictCurrentFrame();
-}
-
-void WebView::UpdateFrameMetadata(
-    const cc::CompositorFrameMetadata& metadata) {
-  bool has_mobile_viewport = HasMobileViewport(metadata);
-  bool has_fixed_page_scale = HasFixedPageScale(metadata);
-  gesture_provider_->SetDoubleTapSupportForPageEnabled(
-      !has_fixed_page_scale && !has_mobile_viewport);
-
-  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
-  compositor_frame_metadata_ = metadata;
-
-  OnFrameMetadataUpdated(old);
 }
 
 void WebView::ProcessAckedTouchEvent(bool consumed) {

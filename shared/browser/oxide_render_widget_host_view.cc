@@ -211,9 +211,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     RendererFrameEvictor::GetInstance()->AddFrame(this, IsShowing());
   }
 
-  if (delegate_) {
-    delegate_->UpdateFrameMetadata(frame->metadata);
-  }
+  compositor_frame_metadata_ = frame->metadata;
 
   if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();

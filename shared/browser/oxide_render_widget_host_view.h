@@ -28,6 +28,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/layers/delegated_frame_resource_collection.h"
+#include "cc/output/compositor_frame_metadata.h"
 #include "content/common/cursors/webcursor.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/rect.h"
@@ -66,6 +67,10 @@ class RenderWidgetHostView final :
 
   const base::string16& selection_text() const {
     return selection_text_;
+  }
+
+  const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
+    return compositor_frame_metadata_;
   }
 
   // content::RenderWidgetHostViewBase implementation
@@ -198,6 +203,8 @@ class RenderWidgetHostView final :
 
   bool is_showing_;
   gfx::Size last_size_;
+
+  cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };
