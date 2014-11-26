@@ -44,7 +44,7 @@ class UITouchEventFactory final {
 
   void MakeEvents(QTouchEvent* event,
                   float device_scale,
-                  double location_bar_content_offset_dip,
+                  float location_bar_content_offset_dip,
                   ScopedVector<ui::TouchEvent>* results);
 
  private:
@@ -58,12 +58,12 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
 
 blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
                                        float device_scale,
-                                       double location_bar_content_offset_dip);
+                                       float location_bar_content_offset_dip);
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(
     QWheelEvent* event,
     float device_scale,
-    double location_bar_content_offset_dip);
+    float location_bar_content_offset_dip);
 
 } // namespace qt
 } // namespace oxide

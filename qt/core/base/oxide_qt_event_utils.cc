@@ -456,7 +456,7 @@ UITouchEventFactory::~UITouchEventFactory() {}
 
 void UITouchEventFactory::MakeEvents(QTouchEvent* event,
                                      float device_scale,
-                                     double location_bar_content_offset_dip,
+                                     float location_bar_content_offset_dip,
                                      ScopedVector<ui::TouchEvent>* results) {
   // The event’s timestamp is not guaranteed to have the same origin as the
   // internal timedelta used by chromium to calculate speed and displacement
@@ -569,7 +569,7 @@ void MakeUITouchEvents(QTouchEvent* event,
 
 blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
                                        float device_scale,
-                                       double location_bar_content_offset_dip) {
+                                       float location_bar_content_offset_dip) {
   blink::WebMouseEvent result;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
@@ -625,7 +625,7 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
                                                  float device_scale,
-                                                 double location_bar_content_offset_dip) {
+                                                 float location_bar_content_offset_dip) {
   blink::WebMouseWheelEvent result;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);

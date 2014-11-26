@@ -241,6 +241,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   int GetLocationBarOffsetPix();
   int GetLocationBarContentOffsetPix();
+  float GetLocationBarContentOffsetDip();
 
   const SecurityStatus& security_status() const { return security_status_; }
 

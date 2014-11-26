@@ -79,7 +79,6 @@ class WebView final : public QObject,
   WebView(WebViewAdapter* adapter);
 
   float GetDeviceScaleFactor() const;
-  double GetLocationBarContentOffsetDip() const;
 
   bool ShouldShowInputPanel() const;
   bool ShouldHideInputPanel() const;

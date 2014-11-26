@@ -1744,8 +1744,12 @@ int WebView::GetLocationBarOffsetPix() {
 }
 
 int WebView::GetLocationBarContentOffsetPix() {
-  return compositor_frame_metadata().location_bar_content_translation.y() *
+  return GetLocationBarContentOffsetDip() *
          compositor_frame_metadata().device_scale_factor;
+}
+
+float WebView::GetLocationBarContentOffsetDip() {
+  return compositor_frame_metadata().location_bar_content_translation.y();
 }
 
 int WebView::GetLocationBarMaxHeightPix() {

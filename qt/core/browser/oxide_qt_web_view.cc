@@ -273,10 +273,6 @@ float WebView::GetDeviceScaleFactor() const {
   return GetDeviceScaleFactorFromQScreen(screen);
 }
 
-double WebView::GetLocationBarContentOffsetDip() const {
-  return compositor_frame_metadata().location_bar_content_translation.y();
-}
-
 bool WebView::ShouldShowInputPanel() const {
   if (text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
       show_ime_if_needed_) {
