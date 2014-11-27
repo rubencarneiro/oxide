@@ -8,18 +8,18 @@
 
 namespace oxide {
 
-MediaPlayerOxide::MediaPlayerOxide(
+MediaPlayer::MediaPlayer(
     int player_id)
   :  player_id_(player_id) {
 }
 
-MediaPlayerOxide::~MediaPlayerOxide() {}
+MediaPlayer::~MediaPlayer() {}
 
-GURL MediaPlayerOxide::GetUrl() {
+GURL MediaPlayer::GetUrl() {
   return GURL();
 }
 
-GURL MediaPlayerOxide::GetFirstPartyForCookies() {
+GURL MediaPlayer::GetFirstPartyForCookies() {
   return GURL();
 }
 

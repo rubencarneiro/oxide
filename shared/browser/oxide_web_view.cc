@@ -93,7 +93,7 @@
 #include "oxide_web_view_contents_helper.h"
 
 #if defined(ENABLE_MEDIAHUB)
-#include "shared/browser/media/oxide_browser_media_player_manager.h"
+#include "shared/browser/media/oxide_media_web_contents_observer.h"
 #endif
 
 #define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
@@ -659,7 +659,7 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
-  new WebViewContentsHelper(contents.get(), web_contents_helper_);
+  CreateHelpers(contents.get(), web_contents_helper_);
 
   WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
@@ -755,7 +755,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  new WebViewContentsHelper(new_contents, web_contents_helper_);
+  CreateHelpers(new_contents, web_contents_helper_);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -1044,85 +1044,8 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
                         OnDidBlockRunningInsecureContent)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
-
-#if defined(ENABLE_MEDIAHUB)
-  if (!handled) {
-    return OnMediaPlayerMessageReceived(msg, render_frame_host);
-  }
-
-  return true;
-#else
-  return handled;
-#endif
-}
-
-#if defined(ENABLE_MEDIAHUB)
-bool WebView::OnMediaPlayerMessageReceived(const IPC::Message& msg,
-                                content::RenderFrameHost* render_frame_host) {
-  bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(WebView, msg)
-/*
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_EnterFullscreen,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnEnterFullscreen)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_ExitFullscreen,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnExitFullscreen)
-*/
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Initialize,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnInitialize)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Start,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnStart)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Seek,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnSeek)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Pause,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnPause)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetVolume,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnSetVolume)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_SetPoster,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnSetPoster)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_Release,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnReleaseResources)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_DestroyMediaPlayer,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnDestroyPlayer)
-/*
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_RequestRemotePlayback,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnRequestRemotePlayback)
-    IPC_MESSAGE_FORWARD(
-        MediaPlayerHostMsg_RequestRemotePlaybackControl,
-        GetMediaPlayerManager(render_frame_host),
-        BrowserMediaPlayerManager::OnRequestRemotePlaybackControl)
-*/
-#if defined(VIDEO_HOLE)
-    IPC_MESSAGE_FORWARD(MediaPlayerHostMsg_NotifyExternalSurface,
-                        GetMediaPlayerManager(render_frame_host),
-                        BrowserMediaPlayerManager::OnNotifyExternalSurface)
-#endif  // defined(VIDEO_HOLE)
-    IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP()
   return handled;
 }
-
-BrowserMediaPlayerManager* WebView::GetMediaPlayerManager(
-    content::RenderFrameHost* render_frame_host) {
-  uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
-  if (!media_player_managers_.contains(key)) {
-    media_player_managers_.set(
-        key,
-        make_scoped_ptr(BrowserMediaPlayerManager::Create(this, render_frame_host)));
-  }
-  return media_player_managers_.get(key);
-}
-#endif
 
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
@@ -1223,6 +1146,14 @@ void WebView::OnContentBlocked() {}
 
 void WebView::OnPrepareToCloseResponse(bool proceed) {}
 void WebView::OnCloseRequested() {}
+
+void WebView::CreateHelpers(content::WebContents* contents, WebViewContentsHelper* opener)
+  new WebViewContentsHelper(contents, opener);
+
+#if defined(ENABLE_MEDIAHUB)
+  new MediaWebContentsObserver(contents);
+#endif
+}
 
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
@@ -1339,7 +1270,7 @@ void WebView::Init(Params* params) {
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
-    new WebViewContentsHelper(web_contents_.get());
+    CreateHelpers(web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());

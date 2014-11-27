@@ -31,75 +31,75 @@ RendererMediaPlayerManager::~RendererMediaPlayerManager() {
 bool RendererMediaPlayerManager::OnMessageReceived(const IPC::Message& msg) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(RendererMediaPlayerManager, msg)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaMetadataChanged,
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_MediaMetadataChanged,
                         OnMediaMetadataChanged)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaPlaybackCompleted,
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_MediaPlaybackCompleted,
                         OnMediaPlaybackCompleted)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaBufferingUpdate,
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_MediaBufferingUpdate,
                         OnMediaBufferingUpdate)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_SeekRequest, OnSeekRequest)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_SeekCompleted, OnSeekCompleted)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaError, OnMediaError)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaVideoSizeChanged,
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_SeekRequest, OnSeekRequest)
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_SeekCompleted, OnSeekCompleted)
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_MediaError, OnMediaError)
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_MediaVideoSizeChanged,
                         OnVideoSizeChanged)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaTimeUpdate, OnTimeUpdate)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_MediaPlayerReleased,
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_MediaTimeUpdate, OnTimeUpdate)
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_MediaPlayerReleased,
                         OnMediaPlayerReleased)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_DidMediaPlayerPlay, OnPlayerPlay)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_DidMediaPlayerPause, OnPlayerPause)
-    IPC_MESSAGE_HANDLER(MediaPlayerMsg_PauseVideo, OnPauseVideo)
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_DidMediaPlayerPlay, OnPlayerPlay)
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_DidMediaPlayerPause, OnPlayerPause)
+    IPC_MESSAGE_HANDLER(OxideMsg_MediaPlayer_PauseVideo, OnPauseVideo)
   IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
   return handled;
 }
 
 void RendererMediaPlayerManager::Initialize(
-    MediaPlayerHostMsg_Initialize_Type type,
+    OxideHostMsg_MediaPlayer_Initialize_Type type,
     int player_id,
     const GURL& url,
     const GURL& first_party_for_cookies) {
 
-  MediaPlayerHostMsg_Initialize_Params params;
+  OxideHostMsg_MediaPlayer_Initialize_Params params;
   params.type = type;
   params.player_id = player_id;
   params.url = url;
   params.first_party_for_cookies = first_party_for_cookies;
 
-  Send(new MediaPlayerHostMsg_Initialize(
+  Send(new OxideHostMsg_MediaPlayer_Initialize(
       routing_id(), params));
 }
 
 void RendererMediaPlayerManager::Start(int player_id) {
-  Send(new MediaPlayerHostMsg_Start(routing_id(), player_id));
+  Send(new OxideHostMsg_MediaPlayer_Start(routing_id(), player_id));
 }
 
 void RendererMediaPlayerManager::Pause(
     int player_id,
     bool is_media_related_action) {
-  Send(new MediaPlayerHostMsg_Pause(
+  Send(new OxideHostMsg_MediaPlayer_Pause(
       routing_id(), player_id, is_media_related_action));
 }
 
 void RendererMediaPlayerManager::Seek(
     int player_id,
     const base::TimeDelta& time) {
-  Send(new MediaPlayerHostMsg_Seek(routing_id(), player_id, time));
+  Send(new OxideHostMsg_MediaPlayer_Seek(routing_id(), player_id, time));
 }
 
 void RendererMediaPlayerManager::SetVolume(int player_id, double volume) {
-  Send(new MediaPlayerHostMsg_SetVolume(routing_id(), player_id, volume));
+  Send(new OxideHostMsg_MediaPlayer_SetVolume(routing_id(), player_id, volume));
 }
 
 void RendererMediaPlayerManager::SetPoster(int player_id, const GURL& poster) {
-  Send(new MediaPlayerHostMsg_SetPoster(routing_id(), player_id, poster));
+  Send(new OxideHostMsg_MediaPlayer_SetPoster(routing_id(), player_id, poster));
 }
 
 void RendererMediaPlayerManager::ReleaseResources(int player_id) {
-  Send(new MediaPlayerHostMsg_Release(routing_id(), player_id));
+  Send(new OxideHostMsg_MediaPlayer_Release(routing_id(), player_id));
 }
 
 void RendererMediaPlayerManager::DestroyPlayer(int player_id) {
-  Send(new MediaPlayerHostMsg_DestroyMediaPlayer(routing_id(), player_id));
+  Send(new OxideHostMsg_MediaPlayer_DestroyMediaPlayer(routing_id(), player_id));
 }
 
 void RendererMediaPlayerManager::OnMediaMetadataChanged(

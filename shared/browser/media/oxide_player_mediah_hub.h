@@ -30,7 +30,7 @@ namespace oxide {
 class BrowserMediaPlayerManager;
 
 
-class MEDIA_EXPORT MediaPlayerMediaHub : public MediaPlayerOxide,
+class MediaPlayerMediaHub : public MediaPlayer,
   public MediaHubDelegate {
  public:
   MediaPlayerMediaHub(int player_id,
@@ -40,31 +40,25 @@ class MEDIA_EXPORT MediaPlayerMediaHub : public MediaPlayerOxide,
                       oxide::BrowserMediaPlayerManager* manager);
   virtual ~MediaPlayerMediaHub();
 
-  static MediaPlayerOxide* Create(int player_id,
-      const GURL& url,
-      const GURL& first_party_for_cookies,
-      const std::string& user_agent,
-      BrowserMediaPlayerManager* manager);
-
   // MediaPlayerOxide implementation.
   void Initialize();
 
-  virtual void Start() OVERRIDE;
-  virtual void Pause(bool is_media_related_action) OVERRIDE;
-  virtual void SeekTo(base::TimeDelta timestamp) OVERRIDE;
-  virtual void Release() OVERRIDE;
-  virtual void SetVolume(double volume) OVERRIDE;
-  virtual int GetVideoWidth() OVERRIDE;
-  virtual int GetVideoHeight() OVERRIDE;
-  virtual base::TimeDelta GetCurrentTime() OVERRIDE;
-  virtual base::TimeDelta GetDuration() OVERRIDE;
-  virtual bool IsPlaying() OVERRIDE;
-  virtual bool CanPause() OVERRIDE;
-  virtual bool CanSeekForward() OVERRIDE;
-  virtual bool CanSeekBackward() OVERRIDE;
-  virtual bool IsPlayerReady() OVERRIDE;
-  virtual GURL GetUrl() OVERRIDE;
-  virtual GURL GetFirstPartyForCookies() OVERRIDE;
+  virtual void Start() override;
+  virtual void Pause(bool is_media_related_action) override;
+  virtual void SeekTo(base::TimeDelta timestamp) override;
+  virtual void Release() override;
+  virtual void SetVolume(double volume) override;
+  virtual int GetVideoWidth() override;
+  virtual int GetVideoHeight() override;
+  virtual base::TimeDelta GetCurrentTime() override;
+  virtual base::TimeDelta GetDuration() override;
+  virtual bool IsPlaying() override;
+  virtual bool CanPause() override;
+  virtual bool CanSeekForward() override;
+  virtual bool CanSeekBackward() override;
+  virtual bool IsPlayerReady() override;
+  virtual GURL GetUrl() override;
+  virtual GURL GetFirstPartyForCookies() override;
 
   // MediaHubDelegate
   void seeked_to(int64_t pos);

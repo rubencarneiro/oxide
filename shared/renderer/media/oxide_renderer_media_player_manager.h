@@ -31,9 +31,9 @@ class RendererMediaPlayerManager : public content::RenderFrameObserver {
   explicit RendererMediaPlayerManager(content::RenderFrame* render_frame);
   virtual ~RendererMediaPlayerManager();
 
-  virtual bool OnMessageReceived(const IPC::Message& msg) OVERRIDE;
+  virtual bool OnMessageReceived(const IPC::Message& msg) override;
 
-  void Initialize(MediaPlayerHostMsg_Initialize_Type type,
+  void Initialize(OxideHostMsg_MediaPlayer_Initialize_Type type,
                   int player_id,
                   const GURL& url,
                   const GURL& first_party_for_cookies);

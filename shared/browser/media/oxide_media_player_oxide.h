@@ -9,7 +9,6 @@
 
 #include "base/callback.h"
 #include "base/time/time.h"
-#include "media/base/media_export.h"
 #include "url/gurl.h"
 
 namespace oxide {
@@ -17,9 +16,9 @@ namespace oxide {
 class BrowserCdm;
 class MediaPlayerManager;
 
-class MEDIA_EXPORT MediaPlayerOxide {
+class MediaPlayer {
  public:
-  virtual ~MediaPlayerOxide();
+  virtual ~MediaPlayer();
 
   // Error types for MediaErrorCB.
   enum MediaErrorType {
@@ -36,7 +35,7 @@ class MEDIA_EXPORT MediaPlayerOxide {
   virtual void Pause(bool is_media_related_action) = 0;
 
   // Seek to a particular position, based on renderer signaling actual seek
-  // with MediaPlayerHostMsg_Seek. If eventual success, OnSeekComplete() will be
+  // with OxdeHostMsg_MediaPlayer_Seek. If eventual success, OnSeekComplete() will be
   // called.
   virtual void SeekTo(base::TimeDelta timestamp) = 0;
 
@@ -62,13 +61,13 @@ class MEDIA_EXPORT MediaPlayerOxide {
   int player_id() { return player_id_; }
 
  protected:
-  MediaPlayerOxide(int player_id);
+  MediaPlayer(int player_id);
 
  private:
   // Player ID assigned to this player.
   int player_id_;
 
-  DISALLOW_COPY_AND_ASSIGN(MediaPlayerOxide);
+  DISALLOW_COPY_AND_ASSIGN(MediaPlayer);
 };
 
 }  // namespace media

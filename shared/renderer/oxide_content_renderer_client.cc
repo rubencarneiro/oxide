@@ -141,7 +141,7 @@ blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
               base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
               media::MediaLog* media_log) {
 
-  const CommandLine& command_line = *CommandLine::ForCurrentProcess();
+  const CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
   if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
     return new WebMediaPlayerOxide(
         frame,

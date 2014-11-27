@@ -14,21 +14,13 @@
 
 namespace oxide {
 
-MediaPlayerOxide* MediaPlayerMediaHub::Create(int player_id,
-    const GURL& url,
-    const GURL& first_party_for_cookies,
-    const std::string& user_agent,
-    BrowserMediaPlayerManager* manager) {
-  return new MediaPlayerMediaHub(player_id, url, first_party_for_cookies, user_agent, manager);
-}
-
 MediaPlayerMediaHub::MediaPlayerMediaHub(
     int player_id,
     const GURL& url,
     const GURL& first_party_for_cookies,
     const std::string& user_agent,
     BrowserMediaPlayerManager* manager)
-    : MediaPlayerOxide(player_id),
+    : MediaPlayer(player_id),
       prepared_(false),
       pending_play_(false),
       use_fixed_session_(false),
@@ -42,7 +34,7 @@ MediaPlayerMediaHub::MediaPlayerMediaHub(
       media_hub_client_(0),
       weak_factory_(this) {
 
-  const CommandLine& command_line = *CommandLine::ForCurrentProcess();
+  const CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
   if (command_line.HasSwitch(switches::kMediaHubFixedSessionDomains)) {
     std::string ds = command_line.GetSwitchValueASCII(switches::kMediaHubFixedSessionDomains);
     std::vector<std::string> dl;
@@ -127,7 +119,6 @@ base::TimeDelta MediaPlayerMediaHub::GetDuration() {
 }
 
 void MediaPlayerMediaHub::Release() {
-  mediahub_release(media_hub_client_);
 }
 
 void MediaPlayerMediaHub::SetVolume(double volume) {

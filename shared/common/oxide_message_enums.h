@@ -32,7 +32,7 @@ struct OxideMsg_SendMessage_Type {
 };
 
 // Dictates which type of media playback is being initialized.
-enum MediaPlayerHostMsg_Initialize_Type {
+enum OxideHostMsg_MediaPlayer_Initialize_Type {
   MEDIA_PLAYER_TYPE_URL,
   MEDIA_PLAYER_TYPE_MEDIA_SOURCE,
 };

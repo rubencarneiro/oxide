@@ -1,4 +1,4 @@
-/// vim:expandtab:shiftwidth=2:tabstop=2:
+// vim:expandtab:shiftwidth=2:tabstop=2:
 // Copyright (C) 2013 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
@@ -542,6 +542,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnPrepareToCloseResponse(bool proceed);
   virtual void OnCloseRequested();
 
+  void CreateHelpers(content::WebContents* contents, WebViewContentsHelper* opener = NULL);
+  
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;
 
@@ -585,11 +587,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   // https://launchpad.net/bugs/1370366
   bool did_scroll_focused_editable_node_into_view_;
   base::Timer auto_scroll_timer_;
-
-  // media
-  typedef base::ScopedPtrHashMap<uintptr_t, BrowserMediaPlayerManager>
-      MediaPlayerManagerMap;
-  MediaPlayerManagerMap media_player_managers_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

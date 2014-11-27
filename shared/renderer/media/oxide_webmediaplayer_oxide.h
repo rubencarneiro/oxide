@@ -83,7 +83,7 @@ class WebMediaPlayerOxide : public blink::WebMediaPlayer,
   virtual double maxTimeSeekable() const;
 
   // Poster image, as defined in the <video> element.
-  virtual void setPoster(const blink::WebURL& poster) OVERRIDE;
+  virtual void setPoster(const blink::WebURL& poster) override;
 
   // Methods for painting.
   virtual void paint(blink::WebCanvas* canvas,
@@ -162,7 +162,7 @@ class WebMediaPlayerOxide : public blink::WebMediaPlayer,
   virtual void ReleaseMediaResources();
 
   // RenderFrameObserver implementation.
-  virtual void OnDestruct() OVERRIDE;
+  virtual void OnDestruct() override;
 
   // Detach the player from its manager.
   void Detach();
@@ -292,7 +292,7 @@ class WebMediaPlayerOxide : public blink::WebMediaPlayer,
   // Store a playback request that cannot be started immediately.
   bool pending_playback_;
 
-  MediaPlayerHostMsg_Initialize_Type player_type_;
+  OxideHostMsg_MediaPlayer_Initialize_Type player_type_;
 
   // The current playing time. Because the media player is in the browser
   // process, it will regularly update the |current_time_| by calling

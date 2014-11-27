@@ -8,7 +8,7 @@
 using namespace core::ubuntu::media;
 
 namespace {
-// TODO thread access? wrap into a ThreadSafe class?
+
 std::map<int, std::shared_ptr<Player> > g_mediahub_players;
 
 void setup_delegate(MediaHubDelegate *delegate, std::shared_ptr<Player>& player)
@@ -23,7 +23,7 @@ void setup_delegate(MediaHubDelegate *delegate, std::shared_ptr<Player>& player)
 
   player->playback_status_changed().connect([player, delegate](Player::PlaybackStatus status) {
         delegate->playback_status_changed(
-                    MediaHubDelegate::Status(status),
+                    static_cast<MediaHubDelegate::Status>(status),
                     player->duration().get()
                   );
       });
@@ -45,13 +45,12 @@ mediahub_create_player(int player_id, MediaHubDelegate *delegate)
         Service::Client::instance()->create_session(
             Player::Client::default_configuration());
 
-    g_mediahub_players[player_id] = player;
-
-    if (delegate != 0)
+    if (delegate != NULL)
       setup_delegate(delegate, player);
 
-    // TODO review
-    return MediaHubClientHandle(player.get());
+    g_mediahub_players[player_id] = player;
+
+    return MediaHubClientHandle(static_cast<void*>(player.get()));
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -83,7 +82,7 @@ mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubD
                   );
     }
 
-    return MediaHubClientHandle(player.get());
+    return MediaHubClientHandle(static_cast<void*>(player.get()));
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }

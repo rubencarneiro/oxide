@@ -10,17 +10,10 @@
 
 namespace oxide {
 
-BrowserMediaPlayerManager* BrowserMediaPlayerManager::Create(WebView* webView, content::RenderFrameHost* rfh)
-{
-  return new BrowserMediaPlayerManager(webView, rfh);
-}
-
 BrowserMediaPlayerManager::BrowserMediaPlayerManager(WebView* webView,
     content::RenderFrameHost* rfh):
     web_view_(webView)
     , render_frame_host_(rfh)
-//    , web_contents_(WebContents::FromRenderFrameHost(render_frame_host))
-//    , weak_ptr_factory_(this)
 {
 }
 
@@ -28,11 +21,11 @@ BrowserMediaPlayerManager::~BrowserMediaPlayerManager()
 {
 }
 
-void BrowserMediaPlayerManager::OnInitialize(const MediaPlayerHostMsg_Initialize_Params& media_player_params) {
+void BrowserMediaPlayerManager::OnInitialize(const OxideHostMsg_MediaPlayer_Initialize_Params& media_player_params) {
 
   RemovePlayer(media_player_params.player_id);
 
-  MediaPlayerOxide* player = CreateMediaPlayer(media_player_params);
+  MediaPlayer* player = CreateMediaPlayer(media_player_params);
 
   if (!player)
     return;
@@ -41,7 +34,7 @@ void BrowserMediaPlayerManager::OnInitialize(const MediaPlayerHostMsg_Initialize
 }
 
 void BrowserMediaPlayerManager::OnStart(int player_id) {
-  MediaPlayerOxide* player = GetPlayer(player_id);
+  MediaPlayer* player = GetPlayer(player_id);
   if (!player)
     return;
 
@@ -51,7 +44,7 @@ void BrowserMediaPlayerManager::OnStart(int player_id) {
 void BrowserMediaPlayerManager::OnSeek(
     int player_id,
     const base::TimeDelta& time) {
-  MediaPlayerOxide* player = GetPlayer(player_id);
+  MediaPlayer* player = GetPlayer(player_id);
 
   if (player)
     player->SeekTo(time);
@@ -61,14 +54,14 @@ void BrowserMediaPlayerManager::OnPause(
     int player_id,
     bool is_media_related_action) {
 
-  MediaPlayerOxide* player = GetPlayer(player_id);
+  MediaPlayer* player = GetPlayer(player_id);
 
   if (player)
     player->Pause(is_media_related_action);
 }
 
 void BrowserMediaPlayerManager::OnSetVolume(int player_id, double volume) {
-  MediaPlayerOxide* player = GetPlayer(player_id);
+  MediaPlayer* player = GetPlayer(player_id);
 
   if (player)
     player->SetVolume(volume);
@@ -79,7 +72,7 @@ void BrowserMediaPlayerManager::OnSetPoster(int player_id, const GURL& url) {
 }
 
 void BrowserMediaPlayerManager::OnReleaseResources(int player_id) {
-  MediaPlayerOxide* player = GetPlayer(player_id);
+  MediaPlayer* player = GetPlayer(player_id);
 
   if (player)
     player->Release();
@@ -90,27 +83,27 @@ void BrowserMediaPlayerManager::OnDestroyPlayer(int player_id) {
 }
 
 void BrowserMediaPlayerManager::OnMediaMetadataChanged(
-    int player_id, base::TimeDelta duration, int width, int height,
+    int player_id, base::TimeDelta duration, int width, inut height,
     bool success) {
 
-  Send(new MediaPlayerMsg_MediaMetadataChanged(
-      RoutingID(), player_id, duration, width, height, success));
+  Send(new OxideMsg_MediaPlayer_MediaMetadataChanged(
+      GetRoutingID(), player_id, duration, width, height, success));
 }
 
 void BrowserMediaPlayerManager::OnPlaybackComplete(int player_id) {
-  Send(new MediaPlayerMsg_MediaPlaybackCompleted(RoutingID(), player_id));
+  Send(new OxideMsg_MediaPlayer_MediaPlaybackCompleted(GetRoutingID(), player_id));
 }
 
 void BrowserMediaPlayerManager::OnPlayerPlay(int player_id) {
-  Send(new MediaPlayerMsg_DidMediaPlayerPlay(RoutingID(), player_id));
+  Send(new OxideMsg_MediaPlayer_DidMediaPlayerPlay(GetRoutingID(), player_id));
 }
 
 void BrowserMediaPlayerManager::OnPlayerPause(int player_id) {
-  Send(new MediaPlayerMsg_DidMediaPlayerPause(RoutingID(), player_id));
+  Send(new OxideMsg_MediaPlayer_DidMediaPlayerPause(GetRoutingID(), player_id));
 }
 
 void BrowserMediaPlayerManager::OnTimeUpdate(int player_id, const base::TimeDelta& current_time) {
-  Send(new MediaPlayerMsg_MediaTimeUpdate(RoutingID(), player_id, current_time));
+  Send(new OxideMsg_MediaPlayer_MediaTimeUpdate(GetRoutingID(), player_id, current_time));
 }
 
 void BrowserMediaPlayerManager::GetCookies(
@@ -120,22 +113,18 @@ void BrowserMediaPlayerManager::GetCookies(
 
   scoped_refptr<net::CookieStore> cookie_store = web_view_->GetBrowserContext()->GetCookieStore();
 
-  if (cookie_store.get() != 0) {
-    net::CookieOptions cookie_options;
-    cookie_options.set_include_httponly();
+  net::CookieOptions cookie_options;
+  cookie_options.set_include_httponly();
 
-    cookie_store->GetCookiesWithOptionsAsync(
-                    url,
-                    cookie_options,
-                    callback);
-    } else {
-      callback.Run("");
-    }
+  cookie_store->GetCookiesWithOptionsAsync(
+                  url,
+                  cookie_options,
+                  callback);
 }
 
 // private
-MediaPlayerOxide* BrowserMediaPlayerManager::CreateMediaPlayer(
-    const MediaPlayerHostMsg_Initialize_Params& params) {
+MediaPlayer* BrowserMediaPlayerManager::CreateMediaPlayer(
+    const OxideHostMsg_MediaPlayer_Initialize_Params& params) {
 
   switch (params.type) {
     case MEDIA_PLAYER_TYPE_URL: {
@@ -166,8 +155,8 @@ MediaPlayerOxide* BrowserMediaPlayerManager::CreateMediaPlayer(
   return NULL;
 }
 
-MediaPlayerOxide* BrowserMediaPlayerManager::GetPlayer(int player_id) {
-  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
+MediaPlayer* BrowserMediaPlayerManager::GetPlayer(int player_id) {
+  for (ScopedVector<MediaPlayer>::iterator it = players_.begin();
       it != players_.end(); ++it) {
     if ((*it)->player_id() == player_id)
       return *it;
@@ -175,15 +164,15 @@ MediaPlayerOxide* BrowserMediaPlayerManager::GetPlayer(int player_id) {
   return NULL;
 }
 
-void BrowserMediaPlayerManager::AddPlayer(MediaPlayerOxide* player) {
+void BrowserMediaPlayerManager::AddPlayer(MediaPlayer* player) {
   DCHECK(!GetPlayer(player->player_id()));
   players_.push_back(player);
 }
 
 void BrowserMediaPlayerManager::RemovePlayer(int player_id) {
-  for (ScopedVector<MediaPlayerOxide>::iterator it = players_.begin();
+  for (ScopedVector<MediaPlayer>::iterator it = players_.begin();
       it != players_.end(); ++it) {
-    MediaPlayerOxide* player = *it;
+    MediaPlayer* player = *it;
     if (player->player_id() == player_id) {
       players_.erase(it);
       break;
@@ -191,7 +180,7 @@ void BrowserMediaPlayerManager::RemovePlayer(int player_id) {
   }
 }
 
-int BrowserMediaPlayerManager::RoutingID() {
+int BrowserMediaPlayerManager::GetRoutingID() {
   return render_frame_host_->GetRoutingID();
 }
 

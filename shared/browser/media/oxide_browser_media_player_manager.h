@@ -19,7 +19,6 @@
 #define _OXIDE_BROWSER_MEDIA_PLAYER_MANAGER_H
 
 #include "base/memory/scoped_vector.h"
-#include "ipc/ipc_message.h"
 
 
 namespace base {
@@ -30,23 +29,25 @@ namespace content {
 class RenderFrameHost;
 }
 
-struct MediaPlayerHostMsg_Initialize_Params;
+namespace IPC {
+class Message;
+}
+
+struct OxideHostMsg_MediaPlayer_Initialize_Params;
 
 namespace oxide {
 
 class WebView;
-class MediaPlayerOxide;
+class MediaPlayer;
 
 class BrowserMediaPlayerManager {
  public:
   typedef base::Callback<void(const std::string&)> GetCookieCB;
 
-  static BrowserMediaPlayerManager* Create(WebView* webView, content::RenderFrameHost* rfh);
-
   BrowserMediaPlayerManager(WebView* webView, content::RenderFrameHost* rfh);
   ~BrowserMediaPlayerManager();
 
-  void OnInitialize(const MediaPlayerHostMsg_Initialize_Params& media_player_params);
+  void OnInitialize(const OxideHostMsg_MediaPlayer_Initialize_Params& media_player_params);
   void OnStart(int player_id);
   void OnSeek(int player_id, const base::TimeDelta& pos);
   void OnPause(int player_id, bool is_media_related_action);
@@ -72,21 +73,19 @@ class BrowserMediaPlayerManager {
       const GetCookieCB& callback);
 
  private:
-  MediaPlayerOxide* CreateMediaPlayer(
-      const MediaPlayerHostMsg_Initialize_Params& params);
-  MediaPlayerOxide* GetPlayer(int player_id);
-  void AddPlayer(MediaPlayerOxide *player);
+  MediaPlayer* CreateMediaPlayer(
+      const OxideHostMsg_MediaPlayer_Initialize_Params& params);
+  MediaPlayer* GetPlayer(int player_id);
+  void AddPlayer(MediaPlayer *player);
   void RemovePlayer(int player_id);
 
-  int RoutingID();
+  int GetRoutingID();
   bool Send(IPC::Message* msg);
 
   WebView* web_view_;
   content::RenderFrameHost* const render_frame_host_;
 
-  ScopedVector<MediaPlayerOxide> players_;
-
-//  base::WeakPtrFactory<BrowserMediaPlayerManager> weak_ptr_factory_;
+  ScopedVector<MediaPlayer> players_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserMediaPlayerManager);
 };
