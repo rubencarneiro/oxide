@@ -26,6 +26,7 @@
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
+#include "components/sessions/content/content_serialized_navigation_builder.h"
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
@@ -1044,6 +1045,7 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
                         OnDidBlockRunningInsecureContent)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
+
   return handled;
 }
 
@@ -1165,6 +1167,8 @@ WebView::WebView()
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_provider_(GestureProvider::Create(this)),
       in_swap_(false),
+      restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+      initial_index_(0),
       root_frame_(NULL),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
@@ -1270,6 +1274,17 @@ void WebView::Init(Params* params) {
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
+    if (!restore_state_.empty()) {
+      ScopedVector<content::NavigationEntry> entries =
+          sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
+              restore_state_, context);
+      web_contents_->GetController().Restore(
+          initial_index_,
+          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
+          &entries.get());
+      restore_state_.clear();
+    }
+
     CreateHelpers(web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
@@ -1310,6 +1325,8 @@ void WebView::Init(Params* params) {
       initial_data_.reset();
     }
   }
+
+  web_contents_->GetController().LoadIfNecessary();
 
   SetIsFullscreen(is_fullscreen_);
 
@@ -1362,6 +1379,36 @@ void WebView::SetURL(const GURL& url) {
   content::NavigationController::LoadURLParams params(url);
   params.transition_type = ui::PAGE_TRANSITION_TYPED;
   web_contents_->GetController().LoadURLWithParams(params);
+}
+
+std::vector<sessions::SerializedNavigationEntry> WebView::GetState() const {
+  std::vector<sessions::SerializedNavigationEntry> entries;
+  if (!web_contents_) {
+    return entries;
+  }
+  const content::NavigationController& controller = web_contents_->GetController();
+  const int pending_index = controller.GetPendingEntryIndex();
+  int entry_count = controller.GetEntryCount();
+  if (entry_count == 0 && pending_index == 0) {
+    entry_count++;
+  }
+  entries.resize(entry_count);
+  for (int i = 0; i < entry_count; ++i) {
+    content::NavigationEntry* entry = (i == pending_index) ?
+        controller.GetPendingEntry() : controller.GetEntryAtIndex(i);
+    entries[i] =
+        sessions::ContentSerializedNavigationBuilder::FromNavigationEntry(i, *entry);
+  }
+  return entries;
+}
+
+void WebView::SetState(content::NavigationController::RestoreType type,
+                       std::vector<sessions::SerializedNavigationEntry> state,
+                       int index) {
+  DCHECK(!web_contents_);
+  restore_type_ = type;
+  restore_state_ = state;
+  initial_index_ = index;
 }
 
 void WebView::LoadData(const std::string& encodedData,

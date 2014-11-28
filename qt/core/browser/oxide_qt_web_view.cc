@@ -700,8 +700,10 @@ void WebView::OnTextInputStateChanged() {
     return;
   }
 
-  QGuiApplication::inputMethod()->update(
-      static_cast<Qt::InputMethodQueries>(Qt::ImQueryInput | Qt::ImHints));
+  if (text_input_type_ != ui::TEXT_INPUT_TYPE_NONE) {
+    QGuiApplication::inputMethod()->update(
+        static_cast<Qt::InputMethodQueries>(Qt::ImQueryInput | Qt::ImHints));
+  }
 
   if (ShouldShowInputPanel()) {
     SetInputPanelVisibility(true);

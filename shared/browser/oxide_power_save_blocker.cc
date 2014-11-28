@@ -41,6 +41,7 @@ namespace {
 const char kUnityScreenServiceName[] = "com.canonical.Unity.Screen";
 const char kUnityScreenPath[] = "/com/canonical/Unity/Screen";
 const char kUnityScreenInterface[] = "com.canonical.Unity.Screen";
+const int kInvalidCookie = -1;
 
 }
 
@@ -124,7 +125,7 @@ void PowerSaveBlocker::RemoveBlock() {
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
-    if (cookie_ != 0) {
+    if (cookie_ != kInvalidCookie) {
       DCHECK(bus_.get());
       scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
           kUnityScreenServiceName,
@@ -136,7 +137,7 @@ void PowerSaveBlocker::RemoveBlock() {
       message_writer.AppendInt32(cookie_);
       object_proxy->CallMethodAndBlock(
           method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT);
-      cookie_ = 0;
+      cookie_ = kInvalidCookie;
     }
 
     if (bus_.get()) {
@@ -152,17 +153,17 @@ void PowerSaveBlocker::ApplicationStateChanged() {
   BrowserPlatformIntegration::ApplicationState state =
       BrowserPlatformIntegration::GetInstance()->GetApplicationState();
   if ((state == BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE) &&
-      (cookie_ != 0)) {
+      (cookie_ != kInvalidCookie)) {
     CleanUp();
   } else if ((state == BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) &&
-      (cookie_ == 0)) {
+      (cookie_ == kInvalidCookie)) {
     Init();
   }
 }
 
 PowerSaveBlocker::PowerSaveBlocker()
     : form_factor_(oxide::GetFormFactorHint())
-    , cookie_(0) {}
+    , cookie_(kInvalidCookie) {}
 
 content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
     content::PowerSaveBlocker::PowerSaveBlockerType type,
