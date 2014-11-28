@@ -27,7 +27,7 @@ namespace oxide {
 // This class provides additional information about a media URL. Currently it
 // can be used to determine if a media URL has a single security origin and
 // whether the URL passes a CORS access check.
-class CONTENT_EXPORT MediaInfoLoader : private blink::WebURLLoaderClient {
+class MediaInfoLoader : private blink::WebURLLoaderClient {
  public:
   // Status codes for start operations on MediaInfoLoader.
   enum Status {
@@ -106,9 +106,6 @@ class CONTENT_EXPORT MediaInfoLoader : private blink::WebURLLoaderClient {
       const blink::WebURLError&);
 
   void DidBecomeReady(Status status);
-
-  // Injected WebURLLoader instance for testing purposes.
-  scoped_ptr<blink::WebURLLoader> test_loader_;
 
   // Keeps track of an active WebURLLoader and associated state.
   scoped_ptr<media::ActiveLoader> active_loader_;

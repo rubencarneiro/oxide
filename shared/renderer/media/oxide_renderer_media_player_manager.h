@@ -24,7 +24,7 @@ class RectF;
 
 namespace oxide {
 
-class WebMediaPlayerOxide;
+class WebMediaPlayer;
 
 class RendererMediaPlayerManager : public content::RenderFrameObserver {
  public:
@@ -62,12 +62,12 @@ class RendererMediaPlayerManager : public content::RenderFrameObserver {
   // Destroys the player in the browser process
   void DestroyPlayer(int player_id);
 
-  // Registers and unregisters a WebMediaPlayerOxide object.
-  int RegisterMediaPlayer(WebMediaPlayerOxide* player);
+  // Registers and unregisters a WebMediaPlayer object.
+  int RegisterMediaPlayer(WebMediaPlayer* player);
   void UnregisterMediaPlayer(int player_id);
 
-  // Gets the pointer to WebMediaPlayerOxide given the |player_id|.
-  WebMediaPlayerOxide* GetMediaPlayer(int player_id);
+  // Gets the pointer to WebMediaPlayer given the |player_id|.
+  WebMediaPlayer* GetMediaPlayer(int player_id);
 
  private:
   // Message handlers.
@@ -90,7 +90,7 @@ class RendererMediaPlayerManager : public content::RenderFrameObserver {
 
   void ReleaseVideoResources();
 
-  std::map<int, WebMediaPlayerOxide*> media_players_;
+  std::map<int, WebMediaPlayer*> media_players_;
 
   int next_media_player_id_;
 

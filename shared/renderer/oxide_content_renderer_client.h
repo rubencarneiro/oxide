@@ -25,11 +25,6 @@ namespace base {
 template <typename Type> struct DefaultLazyInstanceTraits;
 }
 
-namespace media {
-class WebMediaPlayerDelegate;
-class MediaLog;
-}
-
 namespace oxide {
 
 class RendererMediaPlayerManager;

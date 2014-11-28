@@ -49,25 +49,21 @@ void MediaInfoLoader::Start(blink::WebFrame* frame) {
   frame->setReferrerForRequest(request, blink::WebURL());
 
   scoped_ptr<WebURLLoader> loader;
-  if (test_loader_) {
-    loader = test_loader_.Pass();
+  WebURLLoaderOptions options;
+  if (cors_mode_ == blink::WebMediaPlayer::CORSModeUnspecified) {
+    options.allowCredentials = true;
+    options.crossOriginRequestPolicy =
+        WebURLLoaderOptions::CrossOriginRequestPolicyAllow;
   } else {
-    WebURLLoaderOptions options;
-    if (cors_mode_ == blink::WebMediaPlayer::CORSModeUnspecified) {
+    options.exposeAllResponseHeaders = true;
+    // The author header set is empty, no preflight should go ahead.
+    options.preflightPolicy = WebURLLoaderOptions::PreventPreflight;
+    options.crossOriginRequestPolicy =
+        WebURLLoaderOptions::CrossOriginRequestPolicyUseAccessControl;
+    if (cors_mode_ == blink::WebMediaPlayer::CORSModeUseCredentials)
       options.allowCredentials = true;
-      options.crossOriginRequestPolicy =
-          WebURLLoaderOptions::CrossOriginRequestPolicyAllow;
-    } else {
-      options.exposeAllResponseHeaders = true;
-      // The author header set is empty, no preflight should go ahead.
-      options.preflightPolicy = WebURLLoaderOptions::PreventPreflight;
-      options.crossOriginRequestPolicy =
-          WebURLLoaderOptions::CrossOriginRequestPolicyUseAccessControl;
-      if (cors_mode_ == blink::WebMediaPlayer::CORSModeUseCredentials)
-        options.allowCredentials = true;
-    }
-    loader.reset(frame->createAssociatedURLLoader(options));
   }
+  loader.reset(frame->createAssociatedURLLoader(options));
 
   // Start the resource loading.
   loader->loadAsynchronously(request, this);

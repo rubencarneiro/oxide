@@ -9,7 +9,7 @@
 #include "content/renderer/render_view_impl.h"
 #include "ui/gfx/rect_f.h"
 
-#include "oxide_webmediaplayer_oxide.h"
+#include "oxide_web_media_player.h"
 
 namespace oxide {
 
@@ -20,10 +20,10 @@ RendererMediaPlayerManager::RendererMediaPlayerManager(
 }
 
 RendererMediaPlayerManager::~RendererMediaPlayerManager() {
-  std::map<int, WebMediaPlayerOxide*>::iterator player_it;
+  std::map<int, WebMediaPlayer*>::iterator player_it;
   for (player_it = media_players_.begin();
       player_it != media_players_.end(); ++player_it) {
-    WebMediaPlayerOxide* player = player_it->second;
+    WebMediaPlayer* player = player_it->second;
     player->Detach();
   }
 }
@@ -108,20 +108,20 @@ void RendererMediaPlayerManager::OnMediaMetadataChanged(
     int width,
     int height,
     bool success) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnMediaMetadataChanged(duration, width, height, success);
 }
 
 void RendererMediaPlayerManager::OnMediaPlaybackCompleted(int player_id) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnPlaybackComplete();
 }
 
 void RendererMediaPlayerManager::OnMediaBufferingUpdate(int player_id,
                                                         int percent) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnBufferingUpdate(percent);
 }
@@ -129,7 +129,7 @@ void RendererMediaPlayerManager::OnMediaBufferingUpdate(int player_id,
 void RendererMediaPlayerManager::OnSeekRequest(
     int player_id,
     const base::TimeDelta& time_to_seek) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnSeekRequest(time_to_seek);
 }
@@ -137,13 +137,13 @@ void RendererMediaPlayerManager::OnSeekRequest(
 void RendererMediaPlayerManager::OnSeekCompleted(
     int player_id,
     const base::TimeDelta& current_time) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnSeekComplete(current_time);
 }
 
 void RendererMediaPlayerManager::OnMediaError(int player_id, int error) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnMediaError(error);
 }
@@ -151,32 +151,32 @@ void RendererMediaPlayerManager::OnMediaError(int player_id, int error) {
 void RendererMediaPlayerManager::OnVideoSizeChanged(int player_id,
                                                     int width,
                                                     int height) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnVideoSizeChanged(width, height);
 }
 
 void RendererMediaPlayerManager::OnTimeUpdate(int player_id,
                                               base::TimeDelta current_time) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnTimeUpdate(current_time);
 }
 
 void RendererMediaPlayerManager::OnMediaPlayerReleased(int player_id) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnPlayerReleased();
 }
 
 void RendererMediaPlayerManager::OnPlayerPlay(int player_id) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnMediaPlayerPlay();
 }
 
 void RendererMediaPlayerManager::OnPlayerPause(int player_id) {
-  WebMediaPlayerOxide* player = GetMediaPlayer(player_id);
+  WebMediaPlayer* player = GetMediaPlayer(player_id);
   if (player)
     player->OnMediaPlayerPause();
 }
@@ -186,7 +186,7 @@ void RendererMediaPlayerManager::OnPauseVideo() {
 }
 
 int RendererMediaPlayerManager::RegisterMediaPlayer(
-    WebMediaPlayerOxide* player) {
+    WebMediaPlayer* player) {
   media_players_[next_media_player_id_] = player;
   return next_media_player_id_++;
 }
@@ -196,10 +196,10 @@ void RendererMediaPlayerManager::UnregisterMediaPlayer(int player_id) {
 }
 
 void RendererMediaPlayerManager::ReleaseVideoResources() {
-  std::map<int, WebMediaPlayerOxide*>::iterator player_it;
+  std::map<int, WebMediaPlayer*>::iterator player_it;
   for (player_it = media_players_.begin(); player_it != media_players_.end();
        ++player_it) {
-    WebMediaPlayerOxide* player = player_it->second;
+    WebMediaPlayer* player = player_it->second;
 
     // Do not release if an audio track is still playing
     if (player && (player->paused() || player->hasVideo()))
@@ -207,9 +207,9 @@ void RendererMediaPlayerManager::ReleaseVideoResources() {
   }
 }
 
-WebMediaPlayerOxide* RendererMediaPlayerManager::GetMediaPlayer(
+WebMediaPlayer* RendererMediaPlayerManager::GetMediaPlayer(
     int player_id) {
-  std::map<int, WebMediaPlayerOxide*>::iterator iter =
+  std::map<int, WebMediaPlayer*>::iterator iter =
       media_players_.find(player_id);
   if (iter != media_players_.end())
     return iter->second;

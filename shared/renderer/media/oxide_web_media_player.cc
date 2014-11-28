@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "oxide_webmediaplayer_oxide.h"
+#include "oxide_web_media_player.h"
 #include "oxide_renderer_media_player_manager.h"
 
 #include <limits>
@@ -67,7 +67,7 @@ const char* kMediaEme = "Media.EME.";
 
 namespace oxide {
 
-WebMediaPlayerOxide::WebMediaPlayerOxide(
+WebMediaPlayer::WebMediaPlayer(
     blink::WebFrame* frame,
     blink::WebMediaPlayerClient* client,
     base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
@@ -102,7 +102,7 @@ WebMediaPlayerOxide::WebMediaPlayerOxide(
   player_id_ = player_manager_->RegisterMediaPlayer(this);
 }
 
-WebMediaPlayerOxide::~WebMediaPlayerOxide() {
+WebMediaPlayer::~WebMediaPlayer() {
   client_->setWebLayer(NULL);
 
   if (player_manager_) {
@@ -114,7 +114,7 @@ WebMediaPlayerOxide::~WebMediaPlayerOxide() {
     delegate_->PlayerGone(this);
 }
 
-void WebMediaPlayerOxide::load(LoadType load_type,
+void WebMediaPlayer::load(LoadType load_type,
                                const blink::WebURL& url,
                                CORSMode cors_mode) {
   switch (load_type) {
@@ -123,12 +123,12 @@ void WebMediaPlayerOxide::load(LoadType load_type,
       break;
 
     case LoadTypeMediaSource:
-      CHECK(false) << "WebMediaPlayerOxide doesn't support MediaSource on "
+      CHECK(false) << "WebMediaPlayer doesn't support MediaSource on "
                       "this platform";
       return;
 
     case LoadTypeMediaStream:
-      CHECK(false) << "WebMediaPlayerOxide doesn't support MediaStream on "
+      CHECK(false) << "WebMediaPlayer doesn't support MediaStream on "
                       "this platform";
       return;
   }
@@ -140,7 +140,7 @@ void WebMediaPlayerOxide::load(LoadType load_type,
       new MediaInfoLoader(
           url,
           cors_mode,
-          base::Bind(&WebMediaPlayerOxide::DidLoadMediaInfo,
+          base::Bind(&WebMediaPlayer::DidLoadMediaInfo,
                      weak_factory_.GetWeakPtr())));
 
   // The url might be redirected when android media player
@@ -163,7 +163,7 @@ void WebMediaPlayerOxide::load(LoadType load_type,
   UpdateReadyState(WebMediaPlayer::ReadyStateHaveNothing);
 }
 
-void WebMediaPlayerOxide::DidLoadMediaInfo(MediaInfoLoader::Status status) {
+void WebMediaPlayer::DidLoadMediaInfo(MediaInfoLoader::Status status) {
   if (status == MediaInfoLoader::kFailed) {
     info_loader_.reset();
     UpdateNetworkState(WebMediaPlayer::NetworkStateNetworkError);
@@ -183,7 +183,7 @@ void WebMediaPlayerOxide::DidLoadMediaInfo(MediaInfoLoader::Status status) {
     UpdateNetworkState(WebMediaPlayer::NetworkStateIdle);
 }
 
-void WebMediaPlayerOxide::play() {
+void WebMediaPlayer::play() {
   if (paused())
     player_manager_->Start(player_id_);
 
@@ -193,27 +193,27 @@ void WebMediaPlayerOxide::play() {
   playing_started_ = true;
 }
 
-void WebMediaPlayerOxide::pause() {
+void WebMediaPlayer::pause() {
   Pause(true);
 }
 
-void WebMediaPlayerOxide::seek(double seconds) {
+void WebMediaPlayer::seek(double seconds) {
   NOTIMPLEMENTED();
 }
 
-bool WebMediaPlayerOxide::supportsSave() const {
+bool WebMediaPlayer::supportsSave() const {
   return false;
 }
 
-void WebMediaPlayerOxide::setRate(double rate) {
+void WebMediaPlayer::setRate(double rate) {
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayerOxide::setVolume(double volume) {
+void WebMediaPlayer::setVolume(double volume) {
   player_manager_->SetVolume(player_id_, volume);
 }
 
-bool WebMediaPlayerOxide::hasVideo() const {
+bool WebMediaPlayer::hasVideo() const {
   if (has_size_info_)
     return !natural_size_.isEmpty();
 
@@ -233,11 +233,11 @@ bool WebMediaPlayerOxide::hasVideo() const {
   return mime.find("audio/") == std::string::npos;
 }
 
-void WebMediaPlayerOxide::setPoster(const blink::WebURL& poster) {
+void WebMediaPlayer::setPoster(const blink::WebURL& poster) {
   //  player_manager_->SetPoster(player_id_, poster);
 }
 
-bool WebMediaPlayerOxide::hasAudio() const {
+bool WebMediaPlayer::hasAudio() const {
   if (!url_.has_path())
     return false;
 
@@ -254,15 +254,15 @@ bool WebMediaPlayerOxide::hasAudio() const {
   return false;
 }
 
-bool WebMediaPlayerOxide::paused() const {
+bool WebMediaPlayer::paused() const {
   return !is_playing_;
 }
 
-bool WebMediaPlayerOxide::seeking() const {
+bool WebMediaPlayer::seeking() const {
   return seeking_;
 }
 
-double WebMediaPlayerOxide::duration() const {
+double WebMediaPlayer::duration() const {
   // HTML5 spec requires duration to be NaN if readyState is HAVE_NOTHING
   if (ready_state_ == WebMediaPlayer::ReadyStateHaveNothing) {
     return std::numeric_limits<double>::quiet_NaN();
@@ -273,7 +273,7 @@ double WebMediaPlayerOxide::duration() const {
   return duration_.InSecondsF();
 }
 
-double WebMediaPlayerOxide::timelineOffset() const {
+double WebMediaPlayer::timelineOffset() const {
   base::Time timeline_offset;
 
   if (timeline_offset.is_null()) {
@@ -284,7 +284,7 @@ double WebMediaPlayerOxide::timelineOffset() const {
   return timeline_offset.ToJsTime();
 }
 
-double WebMediaPlayerOxide::currentTime() const {
+double WebMediaPlayer::currentTime() const {
   // If the player is processing a seek, return the seek time.
   // Blink may still query us if updatePlaybackState() occurs while seeking.
   if (seeking()) {
@@ -295,27 +295,27 @@ double WebMediaPlayerOxide::currentTime() const {
   return current_time_;
 }
 
-WebSize WebMediaPlayerOxide::naturalSize() const {
+WebSize WebMediaPlayer::naturalSize() const {
   return natural_size_;
 }
 
-WebMediaPlayer::NetworkState WebMediaPlayerOxide::networkState() const {
+WebMediaPlayer::NetworkState WebMediaPlayer::networkState() const {
   return network_state_;
 }
 
-WebMediaPlayer::ReadyState WebMediaPlayerOxide::readyState() const {
+WebMediaPlayer::ReadyState WebMediaPlayer::readyState() const {
   return ready_state_;
 }
 
-WebTimeRanges WebMediaPlayerOxide::buffered() const {
+WebTimeRanges WebMediaPlayer::buffered() const {
   return buffered_;
 }
 
-WebTimeRanges WebMediaPlayerOxide::seekable() const {
+WebTimeRanges WebMediaPlayer::seekable() const {
   return buffered_;
 }
 
-double WebMediaPlayerOxide::maxTimeSeekable() const {
+double WebMediaPlayer::maxTimeSeekable() const {
   // If we haven't even gotten to ReadyStateHaveMetadata yet then just
   // return 0 so that the seekable range is empty.
   if (ready_state_ < WebMediaPlayer::ReadyStateHaveMetadata)
@@ -324,19 +324,19 @@ double WebMediaPlayerOxide::maxTimeSeekable() const {
   return duration();
 }
 
-bool WebMediaPlayerOxide::didLoadingProgress() {
+bool WebMediaPlayer::didLoadingProgress() {
   bool ret = did_loading_progress_;
   did_loading_progress_ = false;
   return ret;
 }
 
-void WebMediaPlayerOxide::paint(blink::WebCanvas* canvas,
+void WebMediaPlayer::paint(blink::WebCanvas* canvas,
                                   const blink::WebRect& rect,
                                   unsigned char alpha) {
   NOTIMPLEMENTED();
 }
 
-bool WebMediaPlayerOxide::copyVideoTextureToPlatformTexture(
+bool WebMediaPlayer::copyVideoTextureToPlatformTexture(
     blink::WebGraphicsContext3D* web_graphics_context,
     unsigned int texture,
     unsigned int level,
@@ -348,7 +348,7 @@ bool WebMediaPlayerOxide::copyVideoTextureToPlatformTexture(
   return false;
 }
 
-bool WebMediaPlayerOxide::hasSingleSecurityOrigin() const {
+bool WebMediaPlayer::hasSingleSecurityOrigin() const {
   if (info_loader_)
     return info_loader_->HasSingleOrigin();
 
@@ -359,46 +359,46 @@ bool WebMediaPlayerOxide::hasSingleSecurityOrigin() const {
   return true;
 }
 
-bool WebMediaPlayerOxide::didPassCORSAccessCheck() const {
+bool WebMediaPlayer::didPassCORSAccessCheck() const {
   if (info_loader_)
     return info_loader_->DidPassCORSAccessCheck();
 
   return false;
 }
 
-double WebMediaPlayerOxide::mediaTimeForTimeValue(double timeValue) const {
+double WebMediaPlayer::mediaTimeForTimeValue(double timeValue) const {
   return media::ConvertSecondsToTimestamp(timeValue).InSecondsF();
 }
 
-unsigned WebMediaPlayerOxide::decodedFrameCount() const {
+unsigned WebMediaPlayer::decodedFrameCount() const {
   NOTIMPLEMENTED();
 
   return 0;
 }
 
-unsigned WebMediaPlayerOxide::droppedFrameCount() const {
+unsigned WebMediaPlayer::droppedFrameCount() const {
   NOTIMPLEMENTED();
 
   return 0;
 }
 
-unsigned WebMediaPlayerOxide::audioDecodedByteCount() const {
+unsigned WebMediaPlayer::audioDecodedByteCount() const {
   NOTIMPLEMENTED();
 
   return 0;
 }
 
-unsigned WebMediaPlayerOxide::videoDecodedByteCount() const {
+unsigned WebMediaPlayer::videoDecodedByteCount() const {
   NOTIMPLEMENTED();
 
   return 0;
 }
 
-void WebMediaPlayerOxide::paint(blink::WebCanvas*, const blink::WebRect&, unsigned char alpha, SkXfermode::Mode) {
+void WebMediaPlayer::paint(blink::WebCanvas*, const blink::WebRect&, unsigned char alpha, SkXfermode::Mode) {
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayerOxide::OnMediaMetadataChanged(
+void WebMediaPlayer::OnMediaMetadataChanged(
     const base::TimeDelta& duration, int width, int height, bool success) {
   bool need_to_signal_duration_changed = false;
 
@@ -437,7 +437,7 @@ void WebMediaPlayerOxide::OnMediaMetadataChanged(
     client_->durationChanged();
 }
 
-void WebMediaPlayerOxide::OnPlaybackComplete() {
+void WebMediaPlayer::OnPlaybackComplete() {
   // When playback is about to finish, android media player often stops
   // at a time which is smaller than the duration. This makes webkit never
   // know that the playback has finished. To solve this, we set the
@@ -455,17 +455,17 @@ void WebMediaPlayerOxide::OnPlaybackComplete() {
     pending_playback_ = true;
 }
 
-void WebMediaPlayerOxide::OnBufferingUpdate(int percentage) {
+void WebMediaPlayer::OnBufferingUpdate(int percentage) {
   buffered_[0].end = duration() * percentage / 100;
   did_loading_progress_ = true;
 }
 
-void WebMediaPlayerOxide::OnSeekRequest(const base::TimeDelta& time_to_seek) {
+void WebMediaPlayer::OnSeekRequest(const base::TimeDelta& time_to_seek) {
   DCHECK(main_thread_checker_.CalledOnValidThread());
   client_->requestSeek(time_to_seek.InSecondsF());
 }
 
-void WebMediaPlayerOxide::OnSeekComplete(
+void WebMediaPlayer::OnSeekComplete(
     const base::TimeDelta& current_time) {
   DCHECK(main_thread_checker_.CalledOnValidThread());
   seeking_ = false;
@@ -487,11 +487,11 @@ void WebMediaPlayerOxide::OnSeekComplete(
   }
 }
 
-void WebMediaPlayerOxide::OnMediaError(int error_type) {
+void WebMediaPlayer::OnMediaError(int error_type) {
   client_->repaint();
 }
 
-void WebMediaPlayerOxide::OnVideoSizeChanged(int width, int height) {
+void WebMediaPlayer::OnVideoSizeChanged(int width, int height) {
   has_size_info_ = true;
   if (natural_size_.width == width && natural_size_.height == height)
     return;
@@ -505,35 +505,35 @@ void WebMediaPlayerOxide::OnVideoSizeChanged(int width, int height) {
   client_->timeChanged();
 }
 
-void WebMediaPlayerOxide::OnTimeUpdate(const base::TimeDelta& current_time) {
+void WebMediaPlayer::OnTimeUpdate(const base::TimeDelta& current_time) {
   DCHECK(main_thread_checker_.CalledOnValidThread());
   current_time_ = current_time.InSecondsF();
 }
 
-void WebMediaPlayerOxide::OnDidEnterFullscreen() {
+void WebMediaPlayer::OnDidEnterFullscreen() {
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayerOxide::OnDidExitFullscreen() {
+void WebMediaPlayer::OnDidExitFullscreen() {
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayerOxide::OnMediaPlayerPlay() {
+void WebMediaPlayer::OnMediaPlayerPlay() {
   UpdateNetworkState(WebMediaPlayer::NetworkStateLoaded);
   UpdatePlayingState(true);
   client_->playbackStateChanged();
 }
 
-void WebMediaPlayerOxide::OnMediaPlayerPause() {
+void WebMediaPlayer::OnMediaPlayerPause() {
   UpdatePlayingState(false);
   client_->playbackStateChanged();
 }
 
-void WebMediaPlayerOxide::OnRequestFullscreen() {
+void WebMediaPlayer::OnRequestFullscreen() {
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayerOxide::OnDurationChanged(const base::TimeDelta& duration) {
+void WebMediaPlayer::OnDurationChanged(const base::TimeDelta& duration) {
   DCHECK(main_thread_checker_.CalledOnValidThread());
   // Only MSE |player_type_| registers this callback.
   DCHECK_EQ(player_type_, MEDIA_PLAYER_TYPE_MEDIA_SOURCE);
@@ -548,7 +548,7 @@ void WebMediaPlayerOxide::OnDurationChanged(const base::TimeDelta& duration) {
     client_->durationChanged();
 }
 
-void WebMediaPlayerOxide::UpdateNetworkState(
+void WebMediaPlayer::UpdateNetworkState(
     WebMediaPlayer::NetworkState state) {
   DCHECK(main_thread_checker_.CalledOnValidThread());
   if (ready_state_ == WebMediaPlayer::ReadyStateHaveNothing &&
@@ -563,18 +563,18 @@ void WebMediaPlayerOxide::UpdateNetworkState(
   client_->networkStateChanged();
 }
 
-void WebMediaPlayerOxide::UpdateReadyState(
+void WebMediaPlayer::UpdateReadyState(
     WebMediaPlayer::ReadyState state) {
   ready_state_ = state;
   client_->readyStateChanged();
 }
 
-void WebMediaPlayerOxide::OnPlayerReleased() {
+void WebMediaPlayer::OnPlayerReleased() {
   if (is_playing_)
     OnMediaPlayerPause();
 }
 
-void WebMediaPlayerOxide::ReleaseMediaResources() {
+void WebMediaPlayer::ReleaseMediaResources() {
   switch (network_state_) {
     // Pause the media player and inform WebKit if the player is in a good
     // shape.
@@ -597,24 +597,24 @@ void WebMediaPlayerOxide::ReleaseMediaResources() {
   OnPlayerReleased();
 }
 
-void WebMediaPlayerOxide::OnDestruct() {
+void WebMediaPlayer::OnDestruct() {
   if (player_manager_)
     player_manager_->UnregisterMediaPlayer(player_id_);
   Detach();
 }
 
-void WebMediaPlayerOxide::Detach() {
+void WebMediaPlayer::Detach() {
   is_remote_ = false;
   player_manager_ = NULL;
 }
 
-void WebMediaPlayerOxide::Pause(bool is_media_related_action) {
+void WebMediaPlayer::Pause(bool is_media_related_action) {
   if (player_manager_)
     player_manager_->Pause(player_id_, is_media_related_action);
   UpdatePlayingState(false);
 }
 
-void WebMediaPlayerOxide::UpdatePlayingState(bool is_playing) {
+void WebMediaPlayer::UpdatePlayingState(bool is_playing) {
   is_playing_ = is_playing;
   if (!delegate_)
     return;
@@ -625,7 +625,7 @@ void WebMediaPlayerOxide::UpdatePlayingState(bool is_playing) {
 }
 
 // The following EME related code is copied from WebMediaPlayerImpl.
-// TODO(xhwang): Remove duplicate code between WebMediaPlayerOxide and
+// TODO(xhwang): Remove duplicate code between WebMediaPlayer and
 // WebMediaPlayerImpl.
 
 // Convert a WebString to ASCII, falling back on an empty string in the case
@@ -694,14 +694,14 @@ static void ReportMediaKeyExceptionToUMA(const std::string& method,
       key_system, method, result_id, kMaxMediaKeyException);
 }
 
-bool WebMediaPlayerOxide::IsKeySystemSupported(
+bool WebMediaPlayer::IsKeySystemSupported(
     const std::string& key_system) {
   // TODO
   return player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE &&
          content::IsConcreteSupportedKeySystem(key_system);
 }
 
-WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::generateKeyRequest(
+WebMediaPlayer::MediaKeyException WebMediaPlayer::generateKeyRequest(
     const WebString& key_system,
     const unsigned char* init_data,
     unsigned init_data_length) {
@@ -735,7 +735,7 @@ static std::string GuessInitDataType(const unsigned char* init_data,
 // not enabled. Currently the player just doesn't start and waits for
 // ever.
 WebMediaPlayer::MediaKeyException
-WebMediaPlayerOxide::GenerateKeyRequestInternal(
+WebMediaPlayer::GenerateKeyRequestInternal(
     const std::string& key_system,
     const unsigned char* init_data,
     unsigned init_data_length) {
@@ -743,7 +743,7 @@ WebMediaPlayerOxide::GenerateKeyRequestInternal(
   return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
 }
 
-WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::addKey(
+WebMediaPlayer::MediaKeyException WebMediaPlayer::addKey(
     const WebString& key_system,
     const unsigned char* key,
     unsigned key_length,
@@ -771,7 +771,7 @@ WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::addKey(
   return e;
 }
 
-WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::AddKeyInternal(
+WebMediaPlayer::MediaKeyException WebMediaPlayer::AddKeyInternal(
     const std::string& key_system,
     const unsigned char* key,
     unsigned key_length,
@@ -790,7 +790,7 @@ WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::AddKeyInternal(
   return WebMediaPlayer::MediaKeyExceptionNoError;
 }
 
-WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::cancelKeyRequest(
+WebMediaPlayer::MediaKeyException WebMediaPlayer::cancelKeyRequest(
     const WebString& key_system,
     const WebString& session_id) {
   DVLOG(1) << "cancelKeyRequest: " << base::string16(key_system) << ": "
@@ -807,7 +807,7 @@ WebMediaPlayer::MediaKeyException WebMediaPlayerOxide::cancelKeyRequest(
 }
 
 WebMediaPlayer::MediaKeyException
-WebMediaPlayerOxide::CancelKeyRequestInternal(const std::string& key_system,
+WebMediaPlayer::CancelKeyRequestInternal(const std::string& key_system,
                                                 const std::string& session_id) {
   if (!IsKeySystemSupported(key_system))
     return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
@@ -818,12 +818,12 @@ WebMediaPlayerOxide::CancelKeyRequestInternal(const std::string& key_system,
   return WebMediaPlayer::MediaKeyExceptionNoError;
 }
 
-void WebMediaPlayerOxide::setContentDecryptionModule(
+void WebMediaPlayer::setContentDecryptionModule(
     blink::WebContentDecryptionModule* cdm) {
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayerOxide::OnKeyAdded(const std::string& session_id) {
+void WebMediaPlayer::OnKeyAdded(const std::string& session_id) {
   EmeUMAHistogramCounts(current_key_system_, "KeyAdded", 1);
 
   client_->keyAdded(
@@ -831,7 +831,7 @@ void WebMediaPlayerOxide::OnKeyAdded(const std::string& session_id) {
       WebString::fromUTF8(session_id));
 }
 
-void WebMediaPlayerOxide::OnKeyError(const std::string& session_id,
+void WebMediaPlayer::OnKeyError(const std::string& session_id,
                                        media::MediaKeys::KeyError error_code,
                                        uint32 system_code) {
   EmeUMAHistogramEnumeration(current_key_system_, "KeyError",
@@ -852,7 +852,7 @@ void WebMediaPlayerOxide::OnKeyError(const std::string& session_id,
       short_system_code);
 }
 
-void WebMediaPlayerOxide::OnKeyMessage(const std::string& session_id,
+void WebMediaPlayer::OnKeyMessage(const std::string& session_id,
                                          const std::vector<uint8>& message,
                                          const GURL& destination_url) {
   DCHECK(destination_url.is_empty() || destination_url.is_valid());
@@ -865,12 +865,12 @@ void WebMediaPlayerOxide::OnKeyMessage(const std::string& session_id,
       destination_url);
 }
 
-void WebMediaPlayerOxide::OnMediaSourceOpened(
+void WebMediaPlayer::OnMediaSourceOpened(
     blink::WebMediaSource* web_media_source) {
   client_->mediaSourceOpened(web_media_source);
 }
 
-void WebMediaPlayerOxide::OnNeedKey(const std::string& type,
+void WebMediaPlayer::OnNeedKey(const std::string& type,
                                       const std::vector<uint8>& init_data) {
   DCHECK(main_thread_checker_.CalledOnValidThread());
 
@@ -891,15 +891,15 @@ void WebMediaPlayerOxide::OnNeedKey(const std::string& type,
       WebString::fromUTF8(type), init_data_ptr, init_data.size());
 }
 
-void WebMediaPlayerOxide::enterFullscreen() {
+void WebMediaPlayer::enterFullscreen() {
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayerOxide::exitFullscreen() {
+void WebMediaPlayer::exitFullscreen() {
   NOTIMPLEMENTED();
 }
 
-bool WebMediaPlayerOxide::canEnterFullscreen() const {
+bool WebMediaPlayer::canEnterFullscreen() const {
   return false;
 }
 

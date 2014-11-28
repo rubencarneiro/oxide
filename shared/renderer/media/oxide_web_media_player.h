@@ -51,15 +51,15 @@ namespace oxide {
 class RendererMediaPlayerManager;
 class WebContentDecryptionModuleImpl;
 
-class WebMediaPlayerOxide : public blink::WebMediaPlayer,
-                            public content::RenderFrameObserver {
+class WebMediaPlayer : public blink::WebMediaPlayer,
+                       public content::RenderFrameObserver {
  public:
-  WebMediaPlayerOxide(blink::WebFrame* frame,
+  WebMediaPlayer(blink::WebFrame* frame,
                         blink::WebMediaPlayerClient* client,
                         base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
                         RendererMediaPlayerManager* player_manager,
                         media::MediaLog* media_log);
-  virtual ~WebMediaPlayerOxide();
+  virtual ~WebMediaPlayer();
 
   // blink::WebMediaPlayer implementation.
   virtual void enterFullscreen();
@@ -315,9 +315,9 @@ class WebMediaPlayerOxide : public blink::WebMediaPlayer,
   std::string init_data_type_;
 
   // NOTE: Weak pointers must be invalidated before all other member variables.
-  base::WeakPtrFactory<WebMediaPlayerOxide> weak_factory_;
+  base::WeakPtrFactory<WebMediaPlayer> weak_factory_;
 
-  DISALLOW_COPY_AND_ASSIGN(WebMediaPlayerOxide);
+  DISALLOW_COPY_AND_ASSIGN(WebMediaPlayer);
 };
 
 }  // namespace content

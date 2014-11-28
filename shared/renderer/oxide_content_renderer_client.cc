@@ -37,7 +37,7 @@
 #include "oxide_web_permission_client.h"
 #if defined(ENABLE_MEDIAHUB)
 #include "media/oxide_renderer_media_player_manager.h"
-#include "media/oxide_webmediaplayer_oxide.h"
+#include "media/oxide_web_media_player.h"
 #endif
 
 namespace oxide {
@@ -143,7 +143,7 @@ blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
 
   const CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
   if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
-    return new WebMediaPlayerOxide(
+    return new WebMediaPlayer(
         frame,
         client,
         delegate,
