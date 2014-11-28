@@ -361,7 +361,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
                                        const content::OpenURLParams& params) final;
-  void NavigationStateChanged(const content::WebContents* source,
+  void NavigationStateChanged(content::WebContents* source,
                               content::InvalidateTypes changed_flags) final;
   void VisibleSSLStateChanged(const content::WebContents* source) final;
   bool ShouldCreateWebContents(
