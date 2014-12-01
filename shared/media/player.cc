@@ -35,18 +35,21 @@ MediaHubClientHandle
 mediahub_create_player(int player_id, MediaHubDelegate *delegate)
 {
   try {
-    if (player_id < 0)
+    if (player_id < 0) {
       return MediaHubClientHandle();
+    }
 
-    if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
+    if (g_mediahub_players.find(player_id) != g_mediahub_players.end()) {
       return MediaHubClientHandle();
+    }
 
     std::shared_ptr<Player> player =
         Service::Client::instance()->create_session(
             Player::Client::default_configuration());
 
-    if (delegate != NULL)
+    if (delegate != NULL) {
       setup_delegate(delegate, player);
+    }
 
     g_mediahub_players[player_id] = player;
 
@@ -61,17 +64,17 @@ MediaHubClientHandle
 mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubDelegate *delegate)
 {
   try {
-    if (player_id < 0)
+    if (player_id < 0) {
       return MediaHubClientHandle();
+    }
 
-    if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
+    if (g_mediahub_players.find(player_id) != g_mediahub_players.end()) {
       return MediaHubClientHandle();
+    }
 
     std::shared_ptr<Player> player =
         Service::Client::instance()->create_fixed_session(domain,
             Player::Client::default_configuration());
-
-    g_mediahub_players[player_id] = player;
 
     if (delegate != 0) {
       setup_delegate(delegate, player);
@@ -81,6 +84,8 @@ mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubD
                     player->duration().get()
                   );
     }
+
+    g_mediahub_players[player_id] = player;
 
     return MediaHubClientHandle(static_cast<void*>(player.get()));
   } catch (std::runtime_error& error) {
@@ -93,18 +98,20 @@ MediaHubClientHandle
 mediahub_resume_player(int player_id, int player_key)
 {
   try {
-    if (player_id < 0)
+    if (player_id < 0) {
       return MediaHubClientHandle();
+    }
 
-    if (g_mediahub_players.find(player_id) != g_mediahub_players.end())
+    if (g_mediahub_players.find(player_id) != g_mediahub_players.end()) {
       return MediaHubClientHandle();
+    }
 
     std::shared_ptr<Player> player =
         Service::Client::instance()->resume_session(player_key);
 
     g_mediahub_players[player_id] = player;
 
-    return MediaHubClientHandle(player.get());
+    return MediaHubClientHandle(static_cast<void*>(player.get()));
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -157,8 +164,9 @@ mediahub_pause(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       player->pause();
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -169,8 +177,9 @@ mediahub_stop(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       player->stop();
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -181,8 +190,9 @@ mediahub_get_duration(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       return player->duration().get();
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -194,8 +204,9 @@ mediahub_get_position(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       return player->position().get();
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -224,8 +235,9 @@ mediahub_is_playing(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       return player->playback_status().get() != Player::playing;
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -237,8 +249,9 @@ mediahub_can_seek_forward(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       return player->can_seek().get();
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -250,8 +263,9 @@ mediahub_can_seek_backward(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       return player->can_seek().get();
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -263,8 +277,9 @@ mediahub_seek_to(MediaHubClientHandle handle, int64_t offset)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       return player->seek_to(std::chrono::microseconds(offset));
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -275,8 +290,9 @@ mediahub_can_pause(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       return player->can_pause().get();
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -288,8 +304,9 @@ mediahub_is_player_ready(MediaHubClientHandle handle)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       return player->playback_status().get() != Player::null;
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -301,8 +318,9 @@ mediahub_set_volume(MediaHubClientHandle handle, double volume)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       player->volume().set(volume);
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
@@ -313,11 +331,11 @@ mediahub_set_player_lifetime(MediaHubClientHandle handle, Lifetime lifetime)
 {
   try {
     Player* player = static_cast<Player*>(handle);
-    if (player)
+    if (player) {
       player->lifetime().set(Player::Lifetime(lifetime));
+    }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
   }
 }
-
 

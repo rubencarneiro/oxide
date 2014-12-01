@@ -1,5 +1,5 @@
 #include "oxide_media_player_oxide.h"
-#include "oxide_player_mediahub.h"
+#include "oxide_player_media_hub.h"
 #include "oxide_browser_media_player_manager.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/browser/oxide_web_view.h"
@@ -83,7 +83,7 @@ void BrowserMediaPlayerManager::OnDestroyPlayer(int player_id) {
 }
 
 void BrowserMediaPlayerManager::OnMediaMetadataChanged(
-    int player_id, base::TimeDelta duration, int width, inut height,
+    int player_id, base::TimeDelta duration, int width, int height,
     bool success) {
 
   Send(new OxideMsg_MediaPlayer_MediaMetadataChanged(
@@ -111,11 +111,16 @@ void BrowserMediaPlayerManager::GetCookies(
       const GURL& first_party_for_cookies,
       const BrowserMediaPlayerManager::GetCookieCB& callback) {
 
-  scoped_refptr<net::CookieStore> cookie_store = web_view_->GetBrowserContext()->GetCookieStore();
+  oxide::BrowserContext* browser_context = web_view_->GetBrowserContext();
+  if (browser_context->GetCookiePolicy() != net::StaticCookiePolicy::ALLOW_ALL_COOKIES) {
+    callback.Run("");
+    return;
+  }
 
+  scoped_refptr<net::CookieStore> cookie_store = browser_context->GetCookieStore();
   net::CookieOptions cookie_options;
-  cookie_options.set_include_httponly();
 
+  cookie_options.set_include_httponly();
   cookie_store->GetCookiesWithOptionsAsync(
                   url,
                   cookie_options,

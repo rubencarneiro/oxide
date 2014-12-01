@@ -1149,11 +1149,11 @@ void WebView::OnContentBlocked() {}
 void WebView::OnPrepareToCloseResponse(bool proceed) {}
 void WebView::OnCloseRequested() {}
 
-void WebView::CreateHelpers(content::WebContents* contents, WebViewContentsHelper* opener)
+void WebView::CreateHelpers(content::WebContents* contents, WebViewContentsHelper* opener) {
   new WebViewContentsHelper(contents, opener);
 
 #if defined(ENABLE_MEDIAHUB)
-  new MediaWebContentsObserver(contents);
+  new MediaWebContentsObserver(this, contents);
 #endif
 }
 

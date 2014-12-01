@@ -6,35 +6,39 @@
 #include "content/common/content_export.h"
 #include "content/public/browser/web_contents_observer.h"
 
-namespace contents {
+namespace content {
 class WebContents;
+class RenderFrameHost;
 }
 
 namespace oxide {
 
+class WebView;
 class BrowserMediaPlayerManager;
 
-class MediaWebContentsObserver : public WebContentsObserver {
+class MediaWebContentsObserver : public content::WebContentsObserver {
  public:
-  explicit MediaWebContentsObserver(content::WebContents* contents);
+  explicit MediaWebContentsObserver(WebView* webView, content::WebContents* contents);
   virtual ~MediaWebContentsObserver();
 
-  virtual void RenderFrameDeleted(RenderFrameHost* render_frame_host) override;
+  virtual void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) override;
   virtual bool OnMessageReceived(const IPC::Message& message,
-                                 RenderFrameHost* render_frame_host) override;
+                                 content::RenderFrameHost* render_frame_host) override;
 
   virtual void WebContentsDestroyed() override;
 
   // Gets the media player manager associated with |render_frame_host|. Creates
   // a new one if it doesn't exist. The caller doesn't own the returned pointer.
   BrowserMediaPlayerManager* GetMediaPlayerManager(
-      RenderFrameHost* render_frame_host);
+      content::RenderFrameHost* render_frame_host);
 
  private:
   typedef base::ScopedPtrHashMap<uintptr_t, BrowserMediaPlayerManager>
       MediaPlayerManagerMap;
   MediaPlayerManagerMap media_player_managers_;
 
+  WebView* webView_;
+  
   DISALLOW_COPY_AND_ASSIGN(MediaWebContentsObserver);
 };
 

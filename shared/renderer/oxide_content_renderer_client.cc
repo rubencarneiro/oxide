@@ -56,7 +56,7 @@ void ContentRendererClient::RenderFrameCreated(
   new ScriptMessageDispatcherRenderer(render_frame);
   new WebPermissionClient(render_frame);
 #if defined(ENABLE_MEDIAHUB)
-  media_player_manager_.reset(new RendererMediaPlayerManager(render_frame));
+  new RendererMediaPlayerManager(render_frame);
 #endif
 }
 
@@ -141,17 +141,20 @@ blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
               base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
               media::MediaLog* media_log) {
 
-  const CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
-  if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
-    return new WebMediaPlayer(
-        frame,
-        client,
-        delegate,
-        media_player_manager_.get(),
-        media_log);
-  } else {
+  RendererMediaPlayerManager* rmpm =
+        RendererMediaPlayerManager::Get(
+          content::RenderFrame::FromWebFrame(frame));
+  if (rmpm == NULL) {
+    LOG(INFO) << __PRETTY_FUNCTION__ << "returning because could not find rendermedmapalyermanager";
     return 0;
   }
+
+  const CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
+//  if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
+    return new WebMediaPlayer(frame, client, delegate, rmpm, media_log);
+//  } else {
+//    return 0;
+//  }
 }
 #endif
 

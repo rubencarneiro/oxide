@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "oxide_player_mediahub.h"
+#include "oxide_player_media_hub.h"
 #include "oxide_browser_media_player_manager.h"
 
 #include "base/basictypes.h"
@@ -150,6 +150,7 @@ GURL MediaPlayerMediaHub::GetFirstPartyForCookies() {
 }
 
 void MediaPlayerMediaHub::seeked_to(int64_t pos) {
+  manager_->OnTimeUpdate(player_id(), base::TimeDelta::FromMilliseconds(pos));
 }
 
 void MediaPlayerMediaHub::end_of_stream() {
@@ -204,7 +205,9 @@ void MediaPlayerMediaHub::CheckStatus() {
     duration_ = duration;
   }
 
-  manager_->OnTimeUpdate(player_id(), base::TimeDelta::FromMilliseconds(mediahub_get_position(media_hub_client_)));
+  manager_->OnTimeUpdate(player_id(),
+      base::TimeDelta::FromMilliseconds(
+          mediahub_get_position(media_hub_client_)));
 }
 
 }  // namespace media

@@ -15,8 +15,9 @@ namespace oxide {
 
 RendererMediaPlayerManager::RendererMediaPlayerManager(
     content::RenderFrame* render_frame)
-    : RenderFrameObserver(render_frame),
-      next_media_player_id_(0) {
+    : RenderFrameObserver(render_frame)
+    , RenderFrameObserverTracker<RendererMediaPlayerManager>(render_frame)
+    , next_media_player_id_(0) {
 }
 
 RendererMediaPlayerManager::~RendererMediaPlayerManager() {

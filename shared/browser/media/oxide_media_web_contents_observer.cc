@@ -3,17 +3,16 @@
 
 #include "base/memory/scoped_ptr.h"
 #include "base/stl_util.h"
-#include "content/browser/media/utouch/browser_media_player_manager.h"
-#include "content/common/media/media_player_messages_oxide.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
-#include "ipc/ipc_message_macros.h"
-#include "media/base/utouch/media_player_oxide.h"
+#include "shared/browser/media/oxide_browser_media_player_manager.h"
+#include "shared/common/oxide_messages.h"
 
 namespace oxide {
 
-MediaWebContentsObserver::MediaWebContentsObserver(contents::WebContents* contents)
+MediaWebContentsObserver::MediaWebContentsObserver(WebView* webView, content::WebContents* contents)
   : WebContentsObserver(contents)
+  , webView_(webView)
 {
 }
 
@@ -21,14 +20,14 @@ MediaWebContentsObserver::~MediaWebContentsObserver() {
 }
 
 void MediaWebContentsObserver::RenderFrameDeleted(
-    RenderFrameHost* render_frame_host) {
+    content::RenderFrameHost* render_frame_host) {
   uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
   media_player_managers_.erase(key);
 }
 
 bool MediaWebContentsObserver::OnMessageReceived(
     const IPC::Message& msg,
-    RenderFrameHost* render_frame_host) {
+    content::RenderFrameHost* render_frame_host) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(MediaWebContentsObserver, msg)
     IPC_MESSAGE_FORWARD(OxideHostMsg_MediaPlayer_Initialize,
@@ -60,17 +59,17 @@ bool MediaWebContentsObserver::OnMessageReceived(
   return handled;
 }
 
-void WebContentsDestroyed() {
+void MediaWebContentsObserver::WebContentsDestroyed() {
   delete this;  
 }
 
 BrowserMediaPlayerManager* MediaWebContentsObserver::GetMediaPlayerManager(
-    RenderFrameHost* render_frame_host) {
+    content::RenderFrameHost* render_frame_host) {
   uintptr_t key = reinterpret_cast<uintptr_t>(render_frame_host);
   if (!media_player_managers_.contains(key)) {
     media_player_managers_.set(
         key,
-        make_scoped_ptr(BrowserMediaPlayerManager::Create(render_frame_host)));
+        make_scoped_ptr(new BrowserMediaPlayerManager(webView_, render_frame_host)));
   }
   return media_player_managers_.get(key);
 }

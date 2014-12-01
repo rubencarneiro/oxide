@@ -11,6 +11,7 @@
 #include "base/basictypes.h"
 #include "base/time/time.h"
 #include "content/public/renderer/render_frame_observer.h"
+#include "content/public/renderer/render_frame_observer_tracker.h"
 #include "url/gurl.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -26,7 +27,9 @@ namespace oxide {
 
 class WebMediaPlayer;
 
-class RendererMediaPlayerManager : public content::RenderFrameObserver {
+class RendererMediaPlayerManager :
+  public content::RenderFrameObserver,
+  public content::RenderFrameObserverTracker<RendererMediaPlayerManager> {
  public:
   explicit RendererMediaPlayerManager(content::RenderFrame* render_frame);
   virtual ~RendererMediaPlayerManager();
