@@ -145,16 +145,15 @@ blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
         RendererMediaPlayerManager::Get(
           content::RenderFrame::FromWebFrame(frame));
   if (rmpm == NULL) {
-    LOG(INFO) << __PRETTY_FUNCTION__ << "returning because could not find rendermedmapalyermanager";
     return 0;
   }
 
   const CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
-//  if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
+  if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
     return new WebMediaPlayer(frame, client, delegate, rmpm, media_log);
-//  } else {
-//    return 0;
-//  }
+  } else {
+    return 0;
+  }
 }
 #endif
 
