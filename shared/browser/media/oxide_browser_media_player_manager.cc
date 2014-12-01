@@ -27,16 +27,18 @@ void BrowserMediaPlayerManager::OnInitialize(const OxideHostMsg_MediaPlayer_Init
 
   MediaPlayer* player = CreateMediaPlayer(media_player_params);
 
-  if (!player)
+  if (!player) {
     return;
+  }
 
   AddPlayer(player);
 }
 
 void BrowserMediaPlayerManager::OnStart(int player_id) {
   MediaPlayer* player = GetPlayer(player_id);
-  if (!player)
+  if (!player) {
     return;
+  }
 
   player->Start();
 }
@@ -46,8 +48,9 @@ void BrowserMediaPlayerManager::OnSeek(
     const base::TimeDelta& time) {
   MediaPlayer* player = GetPlayer(player_id);
 
-  if (player)
+  if (player) {
     player->SeekTo(time);
+  }
 }
 
 void BrowserMediaPlayerManager::OnPause(
@@ -56,15 +59,17 @@ void BrowserMediaPlayerManager::OnPause(
 
   MediaPlayer* player = GetPlayer(player_id);
 
-  if (player)
+  if (player) {
     player->Pause(is_media_related_action);
+  }
 }
 
 void BrowserMediaPlayerManager::OnSetVolume(int player_id, double volume) {
   MediaPlayer* player = GetPlayer(player_id);
 
-  if (player)
+  if (player) {
     player->SetVolume(volume);
+  }
 }
 
 void BrowserMediaPlayerManager::OnSetPoster(int player_id, const GURL& url) {
@@ -74,8 +79,9 @@ void BrowserMediaPlayerManager::OnSetPoster(int player_id, const GURL& url) {
 void BrowserMediaPlayerManager::OnReleaseResources(int player_id) {
   MediaPlayer* player = GetPlayer(player_id);
 
-  if (player)
+  if (player) {
     player->Release();
+  }
 }
 
 void BrowserMediaPlayerManager::OnDestroyPlayer(int player_id) {
@@ -163,8 +169,9 @@ MediaPlayer* BrowserMediaPlayerManager::CreateMediaPlayer(
 MediaPlayer* BrowserMediaPlayerManager::GetPlayer(int player_id) {
   for (ScopedVector<MediaPlayer>::iterator it = players_.begin();
       it != players_.end(); ++it) {
-    if ((*it)->player_id() == player_id)
+    if ((*it)->player_id() == player_id) {
       return *it;
+    }
   }
   return NULL;
 }
