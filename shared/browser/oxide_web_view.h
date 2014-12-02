@@ -388,11 +388,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                               size_t selection_anchor_position) final;
   void SelectionChanged() final;
   Compositor* GetCompositor() const final;
-  //gfx::Size GetViewSizePix() const final;
-  //gfx::Rect GetViewBoundsDip() const final;
-  //blink::WebScreenInfo GetScreenInfo() const final;
-  //bool HasFocus() const final;
-  //bool IsVisible() const final;
   int GetLocationBarCurrentHeightDip() const final;
 
   // content::WebContentsDelegate implementation
