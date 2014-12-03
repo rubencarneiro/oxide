@@ -19,6 +19,8 @@
 
 #include "base/logging.h"
 
+#include "oxide_browser_platform_integration_observer.h"
+
 namespace oxide {
 
 namespace {
@@ -65,6 +67,27 @@ void BrowserPlatformIntegration::BrowserThreadCleanUp(
 content::LocationProvider*
 BrowserPlatformIntegration::CreateLocationProvider() {
   return NULL;
+}
+
+BrowserPlatformIntegration::ApplicationState
+BrowserPlatformIntegration::GetApplicationState() {
+  return APPLICATION_STATE_ACTIVE;
+}
+
+void BrowserPlatformIntegration::AddObserver(
+    BrowserPlatformIntegrationObserver* observer) {
+  observers_.AddObserver(observer);
+}
+
+void BrowserPlatformIntegration::RemoveObserver(
+    BrowserPlatformIntegrationObserver* observer) {
+  observers_.RemoveObserver(observer);
+}
+
+void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
+  FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
+                    observers_,
+                    ApplicationStateChanged());
 }
 
 } // namespace oxide

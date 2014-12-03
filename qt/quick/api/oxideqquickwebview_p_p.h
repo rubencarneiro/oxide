@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
+#include <QByteArray>
 #include <QPointer>
 #include <QScopedPointer>
 #include <QSharedPointer>
@@ -175,11 +176,14 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
 
   struct ConstructProps {
     ConstructProps()
-        : incognito(false) {}
+        : incognito(false)
+        , restore_type(oxide::qt::RESTORE_LAST_SESSION_EXITED_CLEANLY) {}
 
     bool incognito;
     QPointer<OxideQQuickWebContext> context;
     QPointer<OxideQNewViewRequest> new_view_request;
+    QByteArray restore_state;
+    oxide::qt::RestoreType restore_type;
   };
 
   QScopedPointer<ConstructProps> construct_props_;

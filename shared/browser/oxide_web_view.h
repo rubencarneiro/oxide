@@ -30,6 +30,7 @@
 #include "base/strings/string16.h"
 #include "base/timer/timer.h"
 #include "cc/output/compositor_frame_metadata.h"
+#include "components/sessions/serialized_navigation_entry.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/common/input/input_event_ack_state.h"
 #include "content/public/browser/certificate_request_result_type.h"
@@ -146,6 +147,13 @@ class WebView : public base::SupportsWeakPtr<WebView>,
  public:
   virtual ~WebView();
 
+  // Maps to content::NavigationController::RestoreType
+  enum RestoreType {
+    RESTORE_CURRENT_SESSION,
+    RESTORE_LAST_SESSION_EXITED_CLEANLY,
+    RESTORE_LAST_SESSION_CRASHED,
+  };
+
   struct Params {
     Params() :
         context(NULL),
@@ -166,6 +174,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
+
+  std::vector<sessions::SerializedNavigationEntry> GetState() const;
+  void SetState(content::NavigationController::RestoreType type,
+                std::vector<sessions::SerializedNavigationEntry> state,
+                int index);
 
   void LoadData(const std::string& encodedData,
                 const std::string& mimeType,
@@ -552,6 +565,9 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   GURL initial_url_;
   scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
+  content::NavigationController::RestoreType restore_type_;
+  std::vector<sessions::SerializedNavigationEntry> restore_state_;
+  int initial_index_;
 
   content::NotificationRegistrar registrar_;
   WebFrame* root_frame_;

@@ -56,7 +56,7 @@ QObject* GlobalSingletonFactory(QQmlEngine* engine,
   Q_UNUSED(engine);
   Q_UNUSED(script_engine);
 
-  return OxideQQuickGlobal::instance();
+  return new OxideQQuickGlobal();
 }
 
 }

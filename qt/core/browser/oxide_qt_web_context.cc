@@ -499,6 +499,16 @@ void WebContext::SetAllowedExtraURLSchemes(
 }
 
 // static
+WebContext* WebContext::GetDefault() {
+  WebContextAdapter* adapter = WebContextAdapter::GetDefault();
+  if (!adapter) {
+    return NULL;
+  }
+
+  return FromAdapter(adapter);
+}
+
+// static
 void WebContext::DestroyDefault() {
   WebContextAdapter::DestroyDefault();
 }

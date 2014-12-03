@@ -44,6 +44,11 @@ WebContextAdapter* g_default;
 }
 
 // static
+WebContextAdapter* WebContextAdapter::GetDefault() {
+  return g_default;
+}
+
+// static
 void WebContextAdapter::DestroyDefault() {
   if (!g_default || g_default_is_application_owned) {
     return;

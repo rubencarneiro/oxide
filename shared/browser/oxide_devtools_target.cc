@@ -27,6 +27,13 @@ using content::DevToolsAgentHost;
 
 namespace oxide {
 
+namespace {
+
+const char kTargetTypePage[] = "page";
+
+}
+
+
 DevToolsTarget::DevToolsTarget(content::WebContents* contents)
     : content::WebContentsObserver(contents),
       agent_host_(DevToolsAgentHost::GetOrCreateFor(contents)) {
@@ -44,7 +51,7 @@ std::string DevToolsTarget::GetParentId() const {
 }
 
 std::string DevToolsTarget::GetType() const {
-  return std::string();
+  return kTargetTypePage;
 }
 
 std::string DevToolsTarget::GetTitle() const {
@@ -66,7 +73,7 @@ GURL DevToolsTarget::GetURL() const {
     return GURL();
   }
 
-  return wc->GetVisibleURL();
+  return wc->GetLastCommittedURL();
 }
 
 GURL DevToolsTarget::GetFaviconURL() const {

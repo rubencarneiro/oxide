@@ -219,7 +219,6 @@ int main(int argc, char** argv) {
   QStringList library_paths;
   QString test_path;
   QByteArray name;
-  bool use_data_dir = false;
 
   int index = 1;
   int outargc = 1;
@@ -243,9 +242,6 @@ int main(int argc, char** argv) {
     } else if (QLatin1String(arg) == QLatin1String("-add-library-path") && (index + 1) < argc) {
       library_paths.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("-use-datadir-for-context")) {
-      use_data_dir = true;
-      index += 1;
     } else if (QLatin1String(arg) == QLatin1String("-nss-db-path") && (index + 1) < argc) {
       if (!oxideGetNSSDbPath().isEmpty()) {
         qFatal("Can only specify -nss-db-path once");
@@ -342,9 +338,6 @@ int main(int argc, char** argv) {
   for (QStringList::iterator it = imports.begin(); it != imports.end(); ++it) {
     view.engine()->addImportPath(*it);
   }
-  view.rootContext()->setContextProperty(
-      QStringLiteral("QMLTEST_USE_CONTEXT_DATADIR"),
-      use_data_dir);
 
   for (QStringList::iterator it = files.begin(); it != files.end(); ++it) {
     const QFileInfo fi(*it);

@@ -17,12 +17,15 @@
 
 #include "oxide_qt_web_view_adapter.h"
 
+#include <limits>
+
 #include <QSize>
 #include <QtDebug>
 
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/pickle.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "ui/gfx/size.h"
 #include "url/gurl.h"
@@ -36,12 +39,18 @@
 #include "qt/core/browser/oxide_qt_web_view.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_content_types.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
 #include "oxide_qt_web_context_adapter.h"
 #include "oxide_qt_web_frame_adapter.h"
 
 namespace oxide {
 namespace qt {
+
+namespace {
+static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
+static uint16_t STATE_SERIALIZER_VERSION = 1;
+}
 
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
@@ -103,6 +112,70 @@ void WebViewAdapter::EnsurePreferences() {
       OxideQWebPreferencesPrivate::get(p)->preferences());
 }
 
+void WebViewAdapter::RestoreState(RestoreType type, const QByteArray& state) {
+  COMPILE_ASSERT(
+      RESTORE_CURRENT_SESSION == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_CURRENT_SESSION),
+      restore_type_enums_current_doesnt_match);
+  COMPILE_ASSERT(
+      RESTORE_LAST_SESSION_EXITED_CLEANLY == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+      restore_type_enums_exited_cleanly_doesnt_match);
+  COMPILE_ASSERT(
+      RESTORE_LAST_SESSION_CRASHED == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_LAST_SESSION_CRASHED),
+      restore_type_enums_crashed_doesnt_match);
+
+  content::NavigationController::RestoreType restore_type =
+      static_cast<content::NavigationController::RestoreType>(type);
+
+#define WARN_INVALID_DATA \
+    qWarning() << "Failed to read initial state: invalid data"
+  std::vector<sessions::SerializedNavigationEntry> entries;
+  Pickle pickle(state.data(), state.size());
+  PickleIterator i(pickle);
+  std::string magic_number;
+  if (!i.ReadString(&magic_number)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  if (magic_number != STATE_SERIALIZER_MAGIC_NUMBER) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  uint16_t version;
+  if (!i.ReadUInt16(&version)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  if (version != STATE_SERIALIZER_VERSION) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  int count;
+  if (!i.ReadLength(&count)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  entries.resize(count);
+  for (int j = 0; j < count; ++j) {
+    sessions::SerializedNavigationEntry entry;
+    if (!entry.ReadFromPickle(&i)) {
+      WARN_INVALID_DATA;
+      return;
+    }
+    entries[j] = entry;
+  }
+  int index;
+  if (!i.ReadInt(&index)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+#undef WARN_INVALID_DATA
+
+  view_->SetState(restore_type, entries, index);
+}
+
 void WebViewAdapter::Initialized() {
   DCHECK(isInitialized());
 
@@ -133,7 +206,9 @@ WebViewAdapter::~WebViewAdapter() {}
 
 void WebViewAdapter::init(bool incognito,
                           WebContextAdapter* context,
-                          OxideQNewViewRequest* new_view_request) {
+                          OxideQNewViewRequest* new_view_request,
+                          const QByteArray& restoreState,
+                          RestoreType restoreType) {
   DCHECK(!isInitialized());
 
   bool script_opened = false;
@@ -154,16 +229,28 @@ void WebViewAdapter::init(bool incognito,
     return;
   }
 
+  if (!restoreState.isEmpty()) {
+    RestoreState(restoreType, restoreState);
+  }
+
   CHECK(context) <<
       "No context available for WebView. If you see this when running in "
       "single-process mode, it is possible that the default WebContext has "
       "been deleted by the application. In single-process mode, there is only "
       "one WebContext, and this has to live for the life of the application";
 
+  WebContext* c = WebContext::FromAdapter(context);
+
+  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
+          oxide::PROCESS_MODEL_SINGLE_PROCESS) {
+    DCHECK(!incognito);
+    DCHECK_EQ(c, WebContext::GetDefault());
+  }
+
   EnsurePreferences();
 
   oxide::WebView::Params params;
-  params.context = WebContext::FromAdapter(context)->GetContext();
+  params.context = c->GetContext();
   params.incognito = incognito;
 
   view_->Init(&params);
@@ -314,6 +401,24 @@ QString WebViewAdapter::getNavigationEntryTitle(int index) const {
 QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
   return QDateTime::fromMSecsSinceEpoch(
       view_->GetNavigationEntryTimestamp(index).ToJsTime());
+}
+
+QByteArray WebViewAdapter::currentState() const {
+  std::vector<sessions::SerializedNavigationEntry> entries = view_->GetState();
+  if (entries.size() == 0) {
+    return QByteArray();
+  }
+  Pickle pickle;
+  pickle.WriteString(STATE_SERIALIZER_MAGIC_NUMBER);
+  pickle.WriteUInt16(STATE_SERIALIZER_VERSION);
+  pickle.WriteInt(entries.size());
+  std::vector<sessions::SerializedNavigationEntry>::const_iterator i;
+  static const size_t max_state_size = std::numeric_limits<uint16>::max() - 1024;
+  for (i = entries.begin(); i != entries.end(); ++i) {
+    i->WriteToPickle(max_state_size, &pickle);
+  }
+  pickle.WriteInt(view_->GetNavigationCurrentEntryIndex());
+  return QByteArray(static_cast<const char*>(pickle.data()), pickle.size());
 }
 
 OxideQWebPreferences* WebViewAdapter::preferences() {

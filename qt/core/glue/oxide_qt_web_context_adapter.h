@@ -138,6 +138,7 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  private:
   friend class WebContext;
 
+  static WebContextAdapter* GetDefault();
   static void DestroyDefault();
 
   virtual void CookiesSet(int request_id,
