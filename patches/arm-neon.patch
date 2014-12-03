@@ -25,7 +25,7 @@ diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/com
                  'defines': ['WEBRTC_ARCH_ARM_NEON',],
                }],
 -              ['arm_neon==0 and OS=="android"', {
-+              ['(arm_neon==0 and OS=="android") or arm_neon_optional==1', {
++              ['arm_neon==0 and (OS=="android" or arm_neon_optional==1)', {
                  'defines': ['WEBRTC_DETECT_ARM_NEON',],
                }],
              ],
