@@ -22,6 +22,7 @@
 #include "base/auto_reset.h"
 #include "base/bind.h"
 #include "base/logging.h"
+#include "content/public/browser/geolocation_provider.h"
 
 namespace oxide {
 
@@ -211,6 +212,11 @@ void SimplePermissionRequest::Allow() {
     LOG(ERROR) << "Cannot Allow() a request that has been cancelled or "
                   "responded to already";
     return;
+  }
+
+  if (type() == PERMISSION_REQUEST_TYPE_GEOLOCATION) {
+    content::GeolocationProvider::GetInstance()
+        ->UserDidOptIntoLocationServices();
   }
 
   callback_.Run(true);

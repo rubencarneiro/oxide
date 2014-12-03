@@ -120,7 +120,7 @@ class RenderWidgetHostView final :
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
-      const base::Callback<void(bool, const SkBitmap&)>& callback,
+      content::ReadbackRequestCallback& callback,
       const SkColorType color_type) final;
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,

@@ -74,13 +74,13 @@ diff --git a/content/public/common/renderer_preferences.h b/content/public/commo
 diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer/gpu/render_widget_compositor.cc
 --- a/content/renderer/gpu/render_widget_compositor.cc
 +++ b/content/renderer/gpu/render_widget_compositor.cc
-@@ -230,52 +230,40 @@ scoped_ptr<RenderWidgetCompositor> Rende
-         render_thread->is_gpu_rasterization_enabled();
+@@ -233,52 +233,40 @@ scoped_ptr<RenderWidgetCompositor> Rende
      settings.can_use_lcd_text = render_thread->is_lcd_text_enabled();
      settings.use_distance_field_text =
          render_thread->is_distance_field_text_enabled();
      settings.use_zero_copy = render_thread->is_zero_copy_enabled();
      settings.use_one_copy = render_thread->is_one_copy_enabled();
+     settings.use_image_external = render_thread->use_image_external();
    }
  
 +  double top_controls_height;
@@ -136,7 +136,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
 -
    settings.use_pinch_virtual_viewport =
        cmd->HasSwitch(cc::switches::kEnablePinchVirtualViewport);
-   settings.allow_antialiasing &=
+   settings.renderer_settings.allow_antialiasing &=
        !cmd->HasSwitch(cc::switches::kDisableCompositedAntialiasing);
    settings.single_thread_proxy_scheduler =
        !cmd->HasSwitch(switches::kDisableSingleThreadProxyScheduler);
@@ -145,10 +145,10 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
 diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view_impl.cc
 --- a/content/renderer/render_view_impl.cc
 +++ b/content/renderer/render_view_impl.cc
-@@ -698,16 +698,23 @@ void RenderViewImpl::Initialize(RenderVi
+@@ -699,16 +699,23 @@ void RenderViewImpl::Initialize(
  
    main_render_frame_.reset(RenderFrameImpl::Create(
-       this, params->main_frame_routing_id));
+       this, params.main_frame_routing_id));
    // The main frame WebLocalFrame object is closed by
    // RenderFrameImpl::frameDetached().
    WebLocalFrame* web_frame = WebLocalFrame::create(main_render_frame_.get());
@@ -195,7 +195,7 @@ diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.
  
  RenderWidget::~RenderWidget() {
    DCHECK(!webwidget_) << "Leaking our WebWidget!";
-@@ -2014,16 +2018,25 @@ void RenderWidget::DidChangeBodyBackgrou
+@@ -2018,16 +2022,25 @@ void RenderWidget::DidChangeBodyBackgrou
  
    if (bg_color != body_background_color_) {
      body_background_color_ = bg_color;

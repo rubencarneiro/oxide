@@ -1,11 +1,11 @@
 # HG changeset patch
-# Parent 93ddb2b66f2cf5a8ae8986160f88c765cc8e55a8
+# Parent 161d10f64f67fd0b6a922d7a20145db5374eb48d
 # User oxide
 
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -1336,17 +1336,19 @@ void WebContentsImpl::CreateNewWindow(
+@@ -1501,17 +1501,19 @@ void WebContentsImpl::CreateNewWindow(
  
    if (delegate_ &&
        !delegate_->ShouldCreateWebContents(this,
@@ -29,7 +29,7 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/browser/web_contents_delegate.cc
 --- a/content/public/browser/web_contents_delegate.cc
 +++ b/content/public/browser/web_contents_delegate.cc
-@@ -127,17 +127,19 @@ bool WebContentsDelegate::OnGoToEntryOff
+@@ -131,17 +131,19 @@ bool WebContentsDelegate::OnGoToEntryOff
  
  bool WebContentsDelegate::ShouldCreateWebContents(
      WebContents* web_contents,
@@ -45,15 +45,15 @@ diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/br
    return true;
  }
  
- JavaScriptDialogManager* WebContentsDelegate::GetJavaScriptDialogManager() {
+ JavaScriptDialogManager* WebContentsDelegate::GetJavaScriptDialogManager(
+     WebContents* source) {
    return NULL;
  }
  
- bool WebContentsDelegate::EmbedsFullscreenWidget() const {
 diff --git a/content/public/browser/web_contents_delegate.h b/content/public/browser/web_contents_delegate.h
 --- a/content/public/browser/web_contents_delegate.h
 +++ b/content/public/browser/web_contents_delegate.h
-@@ -295,17 +295,19 @@ class CONTENT_EXPORT WebContentsDelegate
+@@ -308,17 +308,19 @@ class CONTENT_EXPORT WebContentsDelegate
    // be destroyed.
    virtual bool ShouldCreateWebContents(
        WebContents* web_contents,
