@@ -80,10 +80,6 @@ class NetworkDelegate final : public net::NetworkDelegate {
 
   bool OnCanThrottleRequest(const net::URLRequest& request) const final;
 
-  int OnBeforeSocketStreamConnect(
-      net::SocketStream* socket,
-      const net::CompletionCallback& callback) final;
-
   BrowserContextIOData* context_;
 
   DISALLOW_COPY_AND_ASSIGN(NetworkDelegate);

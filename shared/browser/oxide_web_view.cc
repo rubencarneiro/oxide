@@ -673,7 +673,7 @@ content::WebContents* WebView::OpenURLFromTab(
   return new_view->GetWebContents();
 }
 
-void WebView::NavigationStateChanged(const content::WebContents* source,
+void WebView::NavigationStateChanged(content::WebContents* source,
                                      content::InvalidateTypes changed_flags) {
   DCHECK_VALID_SOURCE_CONTENTS
 

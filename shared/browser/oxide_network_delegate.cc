@@ -123,12 +123,6 @@ bool NetworkDelegate::OnCanThrottleRequest(
   return false;
 }
 
-int NetworkDelegate::OnBeforeSocketStreamConnect(
-    net::SocketStream* socket,
-    const net::CompletionCallback& callback) {
-  return net::OK;
-}
-
 NetworkDelegate::NetworkDelegate(BrowserContextIOData* context) :
     context_(context) {}
 

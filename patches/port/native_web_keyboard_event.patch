@@ -5,7 +5,7 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1066,19 +1066,19 @@
+@@ -1093,17 +1093,17 @@
        'browser/renderer_host/media/video_capture_controller_event_handler.h',
        'browser/renderer_host/media/video_capture_host.cc',
        'browser/renderer_host/media/video_capture_host.h',
@@ -13,13 +13,10 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/media/video_capture_manager.h',
        'browser/renderer_host/memory_benchmark_message_filter.cc',
        'browser/renderer_host/memory_benchmark_message_filter.h',
-       'browser/renderer_host/native_web_keyboard_event.cc',
--      'browser/renderer_host/native_web_keyboard_event_android.cc',
+       'browser/renderer_host/native_web_keyboard_event_android.cc',
 -      'browser/renderer_host/native_web_keyboard_event_aura.cc',
--      'browser/renderer_host/native_web_keyboard_event_mac.mm',
-+      #'browser/renderer_host/native_web_keyboard_event_android.cc',
 +      #'browser/renderer_host/native_web_keyboard_event_aura.cc',
-+      #'browser/renderer_host/native_web_keyboard_event_mac.mm',
+       'browser/renderer_host/native_web_keyboard_event_mac.mm',
        'browser/renderer_host/overscroll_configuration.cc',
        'browser/renderer_host/overscroll_controller.cc',
        'browser/renderer_host/overscroll_controller.h',
@@ -27,8 +24,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/render_message_filter.cc',
        'browser/renderer_host/render_message_filter.h',
        'browser/renderer_host/render_process_host_impl.cc',
-       'browser/renderer_host/render_process_host_impl.h',
-@@ -1573,16 +1573,28 @@
+@@ -1605,16 +1605,28 @@
        'public/browser/plugin_service.h',
      ],
    },
@@ -77,16 +73,16 @@ diff --git a/content/public/browser/native_web_keyboard_event.h b/content/public
 +QT_END_NAMESPACE
 +#endif
 +
+ namespace ui {
+ class KeyEvent;
+ }
+ 
  namespace content {
  
  // Owns a platform specific event; used to pass own and pass event through
  // platform independent code.
- struct CONTENT_EXPORT NativeWebKeyboardEvent :
-   NON_EXPORTED_BASE(public blink::WebKeyboardEvent) {
-   NativeWebKeyboardEvent();
- 
-@@ -53,17 +61,21 @@ struct CONTENT_EXPORT NativeWebKeyboardE
-                          bool is_system_key);
+@@ -52,17 +60,21 @@ struct CONTENT_EXPORT NativeWebKeyboardE
+ #endif
  #endif
  
    NativeWebKeyboardEvent(const NativeWebKeyboardEvent& event);
