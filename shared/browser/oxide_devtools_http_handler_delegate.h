@@ -34,8 +34,7 @@ class DevtoolsHttpHandlerDelegate
   std::string GetDiscoveryPageHTML() final;
   bool BundlesFrontendResources() final;
   base::FilePath GetDebugFrontendDir() final;
-  scoped_ptr<net::StreamListenSocket> CreateSocketForTethering(
-      net::StreamListenSocket::Delegate* delegate,
+  scoped_ptr<net::ServerSocket> CreateSocketForTethering(
       std::string* name) final;
 
  private:

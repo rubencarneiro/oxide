@@ -410,7 +410,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void BeforeUnloadFired(content::WebContents* source,
                          bool proceed,
                          bool* proceed_to_fire_unload) final;
-  content::JavaScriptDialogManager* GetJavaScriptDialogManager() final;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager(
+      content::WebContents* source) final;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) final;
   void ToggleFullscreenModeForTab(content::WebContents* source,
@@ -447,7 +448,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                    int error_code,
                    const base::string16& error_description) final;
   void DidGetRedirectForResourceRequest(
-      content::RenderViewHost* render_view_host,
+      content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) final;
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) final;

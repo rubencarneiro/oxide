@@ -20,6 +20,7 @@
 #include "base/logging.h"
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
+#include "cc/scheduler/begin_frame_source.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
@@ -207,7 +208,7 @@ void Compositor::SetVisibility(bool visible) {
   } else if (!layer_tree_host_) {
     cc::LayerTreeSettings settings;
     settings.allow_antialiasing = false;
-    settings.begin_frame_scheduling_enabled = false;
+    settings.use_external_begin_frame_source = false;
     settings.throttle_frame_production = false;
     settings.using_synchronous_renderer_compositor = true;
 
@@ -217,7 +218,8 @@ void Compositor::SetVisibility(bool visible) {
         content::BrowserGpuMemoryBufferManager::current(),
         settings,
         base::MessageLoopProxy::current(),
-        CompositorUtils::GetInstance()->GetTaskRunner());
+        CompositorUtils::GetInstance()->GetTaskRunner(),
+        scoped_ptr<cc::BeginFrameSource>());
 
     layer_tree_host_->SetRootLayer(root_layer_);
     layer_tree_host_->SetVisible(true);

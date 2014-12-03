@@ -225,6 +225,9 @@ class BrowserContext : public content::BrowserContext,
  private:
   friend class BrowserContextObserver; // for {Add,Remove}Observer
 
+  scoped_ptr<content::ZoomLevelDelegate> CreateZoomLevelDelegate(
+      const base::FilePath& partition_path) final;
+
   net::URLRequestContextGetter* GetRequestContext() final;
   net::URLRequestContextGetter* GetRequestContextForRenderProcess(
       int renderer_child_id) final;

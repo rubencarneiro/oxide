@@ -823,7 +823,9 @@ void WebView::BeforeUnloadFired(content::WebContents* source,
   OnPrepareToCloseResponse(proceed);
 }
 
-content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
+    content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
   return JavaScriptDialogManager::GetInstance();
 }
 
@@ -974,7 +976,7 @@ void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
 }
 
 void WebView::DidGetRedirectForResourceRequest(
-      content::RenderViewHost* render_view_host,
+      content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) {
   if (details.resource_type != content::RESOURCE_TYPE_MAIN_FRAME) {
     return;
