@@ -46,6 +46,10 @@ class OzonePlatformOxide : public OzonePlatform {
     return NULL;
   }
 
+  ui::InputController* GetInputController() final {
+    return NULL;
+  }
+
   GpuPlatformSupport* GetGpuPlatformSupport() final {
     return gpu_platform_support_.get();
   }
