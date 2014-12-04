@@ -116,7 +116,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   // to do incremental updates
   Q_PROPERTY(QString currentState READ currentState REVISION 2)
 
-  Q_PROPERTY(OxideQQuickLocationBarController* locationBarController READ locationBarController CONSTANT REVISION 2)
+  Q_PROPERTY(OxideQQuickLocationBarController* locationBarController READ locationBarController CONSTANT REVISION 3)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
