@@ -154,7 +154,7 @@ diff --git a/content/renderer/render_view_impl.cc b/content/renderer/render_view
    WebLocalFrame* web_frame = WebLocalFrame::create(main_render_frame_.get());
    main_render_frame_->SetWebFrame(web_frame);
  
-+  const RendererPreferences& renderer_prefs = params->renderer_prefs;
++  const RendererPreferences& renderer_prefs = params.renderer_preferences;
 +  enable_top_controls_position_calculation_ =
 +      renderer_prefs.enable_top_controls_position_calculation;
 +  top_controls_height_ = renderer_prefs.top_controls_height;
