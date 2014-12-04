@@ -1,0 +1,40 @@
+# HG changeset patch
+# Parent 1b10fa054fa194d36ed736febc6d3aa26661e46e
+
+diff -r 1b10fa054fa1 media/audio/pulse/pulse.sigs
+--- a/media/audio/pulse/pulse.sigs	Wed Dec 03 12:47:35 2014 +1000
++++ b/media/audio/pulse/pulse.sigs	Thu Dec 04 13:21:24 2014 +1000
+@@ -40,6 +40,7 @@
+ int pa_stream_get_latency(pa_stream* s, pa_usec_t* r_usec, int* negative);
+ pa_stream_state_t pa_stream_get_state(pa_stream* p);
+ pa_stream* pa_stream_new(pa_context*  c, const char*  name, const pa_sample_spec*  ss, const pa_channel_map *  map);
++pa_stream* pa_stream_new_with_proplist(pa_context*  c, const char*  name, const pa_sample_spec*  ss, const pa_channel_map *  map, pa_proplist* p);
+ size_t pa_stream_readable_size(pa_stream *p);
+ int pa_stream_peek(pa_stream* p, const void** data, size_t* nbytes);
+ void pa_stream_set_read_callback(pa_stream* p, pa_stream_request_cb_t cb, void* userdata);
+@@ -50,3 +51,6 @@
+ int pa_context_errno(pa_context *c);
+ const char* pa_strerror(int error);
+ pa_cvolume* pa_cvolume_set(pa_cvolume* a, unsigned  channels, pa_volume_t v);
++pa_proplist* pa_proplist_new();
++int pa_proplist_sets(pa_proplist* p, const char* key, const char* value);
++void pa_proplist_free(pa_proplist *p);
+diff -r 1b10fa054fa1 media/audio/pulse/pulse_util.cc
+--- a/media/audio/pulse/pulse_util.cc	Wed Dec 03 12:47:35 2014 +1000
++++ b/media/audio/pulse/pulse_util.cc	Thu Dec 04 13:21:24 2014 +1000
+@@ -259,7 +259,14 @@
+     // than the default channel map (NULL).
+     map = &source_channel_map;
+   }
+-  *stream = pa_stream_new(*context, "Playback", &sample_specifications, map);
++  pa_proplist *prop_list = pa_proplist_new();
++  if (prop_list != NULL) {
++    pa_proplist_sets(prop_list, PA_PROP_MEDIA_ROLE, "multimedia");
++    *stream = pa_stream_new_with_proplist(*context, "Playback", &sample_specifications, map, prop_list);
++    pa_proplist_free(prop_list);
++  } else {
++    *stream = pa_stream_new(*context, "Playback", &sample_specifications, map);
++  }
+   RETURN_ON_FAILURE(*stream, "failed to create PA playback stream");
+ 
+   pa_stream_set_state_callback(*stream, stream_callback, user_data);
