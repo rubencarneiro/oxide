@@ -39,9 +39,11 @@ TestWebView {
       compare(webView.rootFrame.url, webView.url,
               "url should match webview url");
 
+      webView.clearLoadEventCounters();
+
       webView.url = "foo://bar.com";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
+      verify(webView.waitForLoadCommitted(),
+             "Timed out waiting for failed load");
 
       compare(spy.count, 2, "Expected another urlChanged signal");
       compare(webView.rootFrame.url, webView.url,

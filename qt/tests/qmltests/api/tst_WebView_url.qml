@@ -38,7 +38,7 @@ TestWebView {
         { url: "http://testsuite/empty.html", count: 1 },
         { url: Qt.resolvedUrl("./empty.html"), count: 1 },
         { url: "about:blank", count: 1 },
-        { url: "foo://bar.com", count: 2, documentURI: "data:text/html,chromewebdata" },
+        { url: "foo://bar.com", count: 2, documentURI: "data:text/html,chromewebdata", type: "fail" },
         { url: "http://testsuite/tst_WebView_url_redirect.py", count: 1, finalUrl: "http://testsuite/empty.html" }
       ];
     }
@@ -52,8 +52,13 @@ TestWebView {
 
       spy.clear();
 
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
+      if (data.type == "fail") {
+        verify(webView.waitForLoadCommitted(),
+               "Timed out waiting for failed load");
+      } else {
+        verify(webView.waitForLoadSucceeded(),
+               "Timed out waiting for successful load");
+      }
 
       if (!("finalUrl" in data)) {
         data.finalUrl = data.url;
