@@ -37,7 +37,7 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
 
   Q_PROPERTY(QUrl originalUrl READ originalUrl CONSTANT)
 
-  Q_PROPERTY(bool isError READ isError CONSTANT)
+  Q_PROPERTY(bool isError READ isError CONSTANT REVISION 1)
 
   Q_ENUMS(Type)
   Q_ENUMS(ErrorDomain)
