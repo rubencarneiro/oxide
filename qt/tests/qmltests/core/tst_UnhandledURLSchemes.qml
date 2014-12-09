@@ -8,26 +8,23 @@ TestWebView {
   width: 200
   height: 200
 
+  ExternalProtocolHandler {
+    id: protocolHandler
+    scheme: "customscheme"
+  }
+
   SignalSpy {
     id: urlHandledSpy
-    target: OxideTestingUtils
-    signalName: "urlHandled"
+    target: protocolHandler
+    signalName: "openUrl"
   }
 
   TestCase {
     name: "UnhandledURLSchemes"
     when: windowShown
 
-    function initTestCase() {
-      OxideTestingUtils.setUrlHandler("customscheme", true);
-    }
-
     function init() {
       urlHandledSpy.clear();
-    }
-
-    function cleanupTestCase() {
-      OxideTestingUtils.unsetUrlHandler("customscheme");
     }
 
     function test_UnhandledURLSchemes_handled_by_system() {

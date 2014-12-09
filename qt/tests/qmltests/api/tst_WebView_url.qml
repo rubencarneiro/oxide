@@ -20,14 +20,6 @@ TestWebView {
     name: "WebView_url"
     when: windowShown
 
-    function initTestCase() {
-      OxideTestingUtils.setUrlHandler("foo", false);
-    }
-
-    function cleanupTestCase() {
-      OxideTestingUtils.unsetUrlHandler("foo");
-    }
-
     function init() {
       webView.clearLoadEventCounters();
       spy.clear();
@@ -38,8 +30,9 @@ TestWebView {
         { url: "http://testsuite/empty.html", count: 1 },
         { url: Qt.resolvedUrl("./empty.html"), count: 1 },
         { url: "about:blank", count: 1 },
-        { url: "foo://bar.com", count: 2, documentURI: "data:text/html,chromewebdata", type: "fail" },
-        { url: "http://testsuite/tst_WebView_url_redirect.py", count: 1, finalUrl: "http://testsuite/empty.html" }
+        { url: "http://invalid/", count: 2, documentURI: "data:text/html,chromewebdata", type: "fail" },
+        { url: "http://testsuite/tst_WebView_url_redirect.py", count: 1, finalUrl: "http://testsuite/empty.html" },
+        { url: "foo://bar.com", count: 1, finalUrl: "http://testsuite/empty.html", type: "stop" },
       ];
     }
 
@@ -55,6 +48,9 @@ TestWebView {
       if (data.type == "fail") {
         verify(webView.waitForLoadCommitted(),
                "Timed out waiting for failed load");
+      } else if (data.type == "stop") {
+        verify(webView.waitForLoadStopped(),
+               "Timed out waiting for cancelled load");
       } else {
         verify(webView.waitForLoadSucceeded(),
                "Timed out waiting for successful load");
