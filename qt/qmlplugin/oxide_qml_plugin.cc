@@ -111,6 +111,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterUncreatableType<OxideQQuickCookieManager, 1>(uri, 1, 3, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
+    qmlRegisterUncreatableType<OxideQLoadEvent, 1>(uri, 1, 3, "LoadEvent",
+        "LoadEvent is delivered by WebView.loadingChanged");
     qmlRegisterType<OxideQQuickWebContext, 1>(uri, 1, 3, "WebContext");
     qmlRegisterType<OxideQQuickWebView, 1>(uri, 1, 3, "WebView");
 

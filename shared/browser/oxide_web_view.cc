@@ -917,7 +917,11 @@ void WebView::DidStartProvisionalLoadForFrame(
     return;
   }
 
-  OnLoadStarted(validated_url, is_error_frame);
+  if (is_error_frame) {
+    return;
+  }
+
+  OnLoadStarted(validated_url);
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
@@ -929,7 +933,9 @@ void WebView::DidCommitProvisionalLoadForFrame(
     frame->URLChanged();
   }
 
-  OnLoadCommitted(url);
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
+  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR);
 }
 
 void WebView::DidFailProvisionalLoad(
@@ -938,6 +944,10 @@ void WebView::DidFailProvisionalLoad(
     int error_code,
     const base::string16& error_description) {
   if (render_frame_host->GetParent()) {
+    return;
+  }
+
+  if (validated_url.spec() == content::kUnreachableWebDataURL) {
     return;
   }
 
@@ -958,6 +968,10 @@ void WebView::DidNavigateMainFrame(
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
                             const GURL& validated_url) {
   if (render_frame_host->GetParent()) {
+    return;
+  }
+
+  if (validated_url.spec() == content::kUnreachableWebDataURL) {
     return;
   }
 
@@ -1055,9 +1069,11 @@ void WebView::OnCommandsUpdated() {}
 void WebView::OnLoadingChanged() {}
 void WebView::OnLoadProgressChanged(double progress) {}
 
-void WebView::OnLoadStarted(const GURL& validated_url,
-                            bool is_error_frame) {}
-void WebView::OnLoadCommitted(const GURL& url) {}
+void WebView::OnLoadStarted(const GURL& validated_url) {}
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {}
+void WebView::OnLoadCommitted(const GURL& url,
+                              bool is_error_page) {}
 void WebView::OnLoadStopped(const GURL& validated_url) {}
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
@@ -1095,9 +1111,6 @@ void WebView::OnDownloadRequested(const GURL& url,
 				  const base::string16& suggestedFilename,
 				  const std::string& cookies,
 				  const std::string& referrer) {}
-
-void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,

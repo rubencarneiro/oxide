@@ -136,9 +136,7 @@ TestWebView {
       var url = "http://moo.foo.bar.com/";
       expectedLoadEvents = [
         { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeFailed, url: url, loading: true },
-        { type: LoadEvent.TypeStarted, url: "data:text/html,chromewebdata", loading: true },
-        { type: LoadEvent.TypeSucceeded, url: "data:text/html,chromewebdata", loading: false },
+        { type: LoadEvent.TypeFailed, url: url, loading: true }
       ];
 
       webView.url = url;

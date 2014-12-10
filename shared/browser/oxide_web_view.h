@@ -470,9 +470,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnLoadingChanged();
   virtual void OnLoadProgressChanged(double progress);
 
-  virtual void OnLoadStarted(const GURL& validated_url,
-                             bool is_error_frame);
-  virtual void OnLoadCommitted(const GURL& url);
+  virtual void OnLoadStarted(const GURL& validated_url);
+  virtual void OnLoadRedirected(const GURL& url,
+                                const GURL& original_url);
+  virtual void OnLoadCommitted(const GURL& url,
+                               bool is_error_page);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,
@@ -513,10 +515,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
-
-  virtual void OnLoadRedirected(
-      const GURL& url,
-      const GURL& original_url);
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
