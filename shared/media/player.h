@@ -35,7 +35,7 @@ mediahub_create_player(int player_id, MediaHubDelegate* delegate = 0);
  * Create a media hub for use with this domain
  */
 MediaHubClientHandle
-mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubDelegate* delegate = 0);
+mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubDelegate* delegate = NULL);
 
 /**
  * Resume previously created player session

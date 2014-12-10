@@ -53,7 +53,7 @@ class MediaInfoLoader : private blink::WebURLLoaderClient {
       const GURL& url,
       blink::WebMediaPlayer::CORSMode cors_mode,
       const ReadyCB& ready_cb);
-  virtual ~MediaInfoLoader();
+  ~MediaInfoLoader();
 
   // Start loading media info.
   void Start(blink::WebFrame* frame);
@@ -74,34 +74,34 @@ class MediaInfoLoader : private blink::WebURLLoaderClient {
   friend class MediaInfoLoaderTest;
 
   // blink::WebURLLoaderClient implementation.
-  virtual void willSendRequest(
+  void willSendRequest(
       blink::WebURLLoader* loader,
       blink::WebURLRequest& newRequest,
       const blink::WebURLResponse& redirectResponse);
-  virtual void didSendData(
+  void didSendData(
       blink::WebURLLoader* loader,
       unsigned long long bytesSent,
       unsigned long long totalBytesToBeSent);
-  virtual void didReceiveResponse(
+  void didReceiveResponse(
       blink::WebURLLoader* loader,
       const blink::WebURLResponse& response);
-  virtual void didDownloadData(
+  void didDownloadData(
       blink::WebURLLoader* loader,
       int data_length,
       int encodedDataLength);
-  virtual void didReceiveData(
+  void didReceiveData(
       blink::WebURLLoader* loader,
       const char* data,
       int data_length,
       int encoded_data_length);
-  virtual void didReceiveCachedMetadata(
+  void didReceiveCachedMetadata(
       blink::WebURLLoader* loader,
       const char* data, int dataLength);
-  virtual void didFinishLoading(
+  void didFinishLoading(
       blink::WebURLLoader* loader,
       double finishTime,
       int64_t total_encoded_data_length);
-  virtual void didFail(
+  void didFail(
       blink::WebURLLoader* loader,
       const blink::WebURLError&);
 

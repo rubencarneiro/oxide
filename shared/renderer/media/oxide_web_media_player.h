@@ -59,38 +59,38 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
                         base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
                         RendererMediaPlayerManager* player_manager,
                         media::MediaLog* media_log);
-  virtual ~WebMediaPlayer();
+  ~WebMediaPlayer();
 
   // blink::WebMediaPlayer implementation.
-  virtual void enterFullscreen();
-  virtual void exitFullscreen();
-  virtual bool canEnterFullscreen() const;
+  void enterFullscreen();
+  void exitFullscreen();
+  bool canEnterFullscreen() const;
 
   // Resource loading.
-  virtual void load(LoadType load_type,
+  void load(LoadType load_type,
                     const blink::WebURL& url,
                     CORSMode cors_mode);
 
   // Playback controls.
-  virtual void play();
-  virtual void pause();
-  virtual void seek(double seconds);
-  virtual bool supportsSave() const;
-  virtual void setRate(double rate);
-  virtual void setVolume(double volume);
-  virtual blink::WebTimeRanges buffered() const;
-  virtual blink::WebTimeRanges seekable() const;
-  virtual double maxTimeSeekable() const;
+  void play();
+  void pause();
+  void seek(double seconds);
+  bool supportsSave() const;
+  void setRate(double rate);
+  void setVolume(double volume);
+  blink::WebTimeRanges buffered() const;
+  blink::WebTimeRanges seekable() const;
+  double maxTimeSeekable() const;
 
   // Poster image, as defined in the <video> element.
-  virtual void setPoster(const blink::WebURL& poster) override;
+  void setPoster(const blink::WebURL& poster) override;
 
   // Methods for painting.
-  virtual void paint(blink::WebCanvas* canvas,
+  void paint(blink::WebCanvas* canvas,
                      const blink::WebRect& rect,
                      unsigned char alpha);
 
-  virtual bool copyVideoTextureToPlatformTexture(
+  bool copyVideoTextureToPlatformTexture(
       blink::WebGraphicsContext3D* web_graphics_context,
       unsigned int texture,
       unsigned int level,
@@ -100,37 +100,37 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
       bool flip_y);
 
   // True if the loaded media has a playable video/audio track.
-  virtual bool hasVideo() const;
-  virtual bool hasAudio() const;
+  bool hasVideo() const;
+  bool hasAudio() const;
 
   // Dimensions of the video.
-  virtual blink::WebSize naturalSize() const;
+  blink::WebSize naturalSize() const;
 
   // Getters of playback state.
-  virtual bool paused() const;
-  virtual bool seeking() const;
-  virtual double duration() const;
-  virtual double timelineOffset() const;
-  virtual double currentTime() const;
+  bool paused() const;
+  bool seeking() const;
+  double duration() const;
+  double timelineOffset() const;
+  double currentTime() const;
 
-  virtual bool didLoadingProgress();
+  bool didLoadingProgress();
 
   // Internal states of loading and network.
-  virtual blink::WebMediaPlayer::NetworkState networkState() const;
-  virtual blink::WebMediaPlayer::ReadyState readyState() const;
+  blink::WebMediaPlayer::NetworkState networkState() const;
+  blink::WebMediaPlayer::ReadyState readyState() const;
 
-  virtual bool hasSingleSecurityOrigin() const;
-  virtual bool didPassCORSAccessCheck() const;
+  bool hasSingleSecurityOrigin() const;
+  bool didPassCORSAccessCheck() const;
 
-  virtual double mediaTimeForTimeValue(double timeValue) const;
+  double mediaTimeForTimeValue(double timeValue) const;
 
   // Provide statistics.
-  virtual unsigned decodedFrameCount() const;
-  virtual unsigned droppedFrameCount() const;
-  virtual unsigned audioDecodedByteCount() const;
-  virtual unsigned videoDecodedByteCount() const;
+  unsigned decodedFrameCount() const;
+  unsigned droppedFrameCount() const;
+  unsigned audioDecodedByteCount() const;
+  unsigned videoDecodedByteCount() const;
 
-  virtual void paint(blink::WebCanvas*, const blink::WebRect&, unsigned char alpha, SkXfermode::Mode);
+  void paint(blink::WebCanvas*, const blink::WebRect&, unsigned char alpha, SkXfermode::Mode);
     //
   // Media player callback handlers.
   void OnMediaMetadataChanged(const base::TimeDelta& duration, int width,
@@ -154,34 +154,34 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   void OnRequestFullscreen();
 
   // Called when the player is released.
-  virtual void OnPlayerReleased();
+  void OnPlayerReleased();
 
   // This function is called by the RendererMediaPlayerManager to pause the
   // video and release the media player and surface texture when we switch tabs.
   // However, the actual GlTexture is not released to keep the video screenshot.
-  virtual void ReleaseMediaResources();
+  void ReleaseMediaResources();
 
   // RenderFrameObserver implementation.
-  virtual void OnDestruct() override;
+  void OnDestruct() override;
 
   // Detach the player from its manager.
   void Detach();
 
-  virtual MediaKeyException generateKeyRequest(
+  MediaKeyException generateKeyRequest(
       const blink::WebString& key_system,
       const unsigned char* init_data,
       unsigned init_data_length);
-  virtual MediaKeyException addKey(
+  MediaKeyException addKey(
       const blink::WebString& key_system,
       const unsigned char* key,
       unsigned key_length,
       const unsigned char* init_data,
       unsigned init_data_length,
       const blink::WebString& session_id);
-  virtual MediaKeyException cancelKeyRequest(
+  MediaKeyException cancelKeyRequest(
       const blink::WebString& key_system,
       const blink::WebString& session_id);
-  virtual void setContentDecryptionModule(
+  void setContentDecryptionModule(
       blink::WebContentDecryptionModule* cdm);
 
   void OnKeyAdded(const std::string& session_id);

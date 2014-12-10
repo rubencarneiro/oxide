@@ -38,27 +38,27 @@ class MediaPlayerMediaHub : public MediaPlayer,
                       const GURL& first_party_for_cookies,
                       const std::string& user_agent,
                       oxide::BrowserMediaPlayerManager* manager);
-  virtual ~MediaPlayerMediaHub();
+  ~MediaPlayerMediaHub();
 
   // MediaPlayerOxide implementation.
   void Initialize();
 
-  virtual void Start() override;
-  virtual void Pause(bool is_media_related_action) override;
-  virtual void SeekTo(base::TimeDelta timestamp) override;
-  virtual void Release() override;
-  virtual void SetVolume(double volume) override;
-  virtual int GetVideoWidth() override;
-  virtual int GetVideoHeight() override;
-  virtual base::TimeDelta GetCurrentTime() override;
-  virtual base::TimeDelta GetDuration() override;
-  virtual bool IsPlaying() override;
-  virtual bool CanPause() override;
-  virtual bool CanSeekForward() override;
-  virtual bool CanSeekBackward() override;
-  virtual bool IsPlayerReady() override;
-  virtual GURL GetUrl() override;
-  virtual GURL GetFirstPartyForCookies() override;
+  void Start() override;
+  void Pause(bool is_media_related_action) override;
+  void SeekTo(base::TimeDelta timestamp) override;
+  void Release() override;
+  void SetVolume(double volume) override;
+  int GetVideoWidth() override;
+  int GetVideoHeight() override;
+  base::TimeDelta GetCurrentTime() override;
+  base::TimeDelta GetDuration() override;
+  bool IsPlaying() override;
+  bool CanPause() override;
+  bool CanSeekForward() override;
+  bool CanSeekBackward() override;
+  bool IsPlayerReady() override;
+  GURL GetUrl() override;
+  GURL GetFirstPartyForCookies() override;
 
   // MediaHubDelegate
   void seeked_to(int64_t pos);
