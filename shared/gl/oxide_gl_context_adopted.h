@@ -39,10 +39,12 @@ class GLContextAdopted : public gfx::GLContext {
   bool MakeCurrent(gfx::GLSurface* surface) final;
   void ReleaseCurrent(gfx::GLSurface* surface) final;
   bool IsCurrent(gfx::GLSurface* surface) final;
-  void SetSwapInterval(int interval) final;
 
  protected:
   GLContextAdopted(gfx::GLShareGroup* share_group);
+
+ private:
+  void OnSetSwapInterval(int interval) final;
 };
 
 } // namespace oxide

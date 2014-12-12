@@ -79,11 +79,13 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
 Compositor::Compositor(CompositorClient* client, bool software)
     : client_(client),
       use_software_(software),
+      num_failed_recreate_attempts_(0),
       device_scale_factor_(1.0f),
       root_layer_(cc::Layer::Create()),
       proxy_(new CompositorThreadProxy(this)),
       next_output_surface_id_(1),
-      lock_count_(0)  {
+      lock_count_(0),
+      weak_factory_(this) {
   DCHECK(CalledOnValidThread());
 }
 
@@ -120,15 +122,8 @@ void Compositor::UnlockCompositor() {
   }
 }
 
-scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
+scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   DCHECK(CalledOnValidThread());
-
-  // Don't use the provided fallback path, we need the browser side and
-  // renderer sides to be in sync, so this would probably result in no
-  // output anyway
-  if (fallback) {
-    return scoped_ptr<cc::OutputSurface>();
-  }
 
   uint32 output_surface_id = next_output_surface_id_++;
 
@@ -160,19 +155,40 @@ void Compositor::WillBeginMainFrame(int frame_id) {}
 void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
 void Compositor::DidBeginMainFrame() {}
 void Compositor::Layout() {}
-void Compositor::ApplyViewportDeltas(const gfx::Vector2d& inner_delta,
-                                     const gfx::Vector2d& outer_delta,
-                                     float page_scale,
-                                     float top_controls_delta) {}
+void Compositor::ApplyViewportDeltas(
+    const gfx::Vector2d& inner_delta,
+    const gfx::Vector2d& outer_delta,
+    const gfx::Vector2dF& elastic_overscroll_delta,
+    float page_scale,
+    float top_controls_delta) {}
 void Compositor::ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
                                      float page_scale,
                                      float top_controls_delta) {}
 
-void Compositor::RequestNewOutputSurface(bool fallback) {
-  layer_tree_host_->SetOutputSurface(CreateOutputSurface(fallback));
+void Compositor::RequestNewOutputSurface() {
+  scoped_ptr<cc::OutputSurface> surface(CreateOutputSurface());
+  if (!surface) {
+    DidFailToInitializeOutputSurface();
+    return;
+  }
+
+  layer_tree_host_->SetOutputSurface(surface.Pass());
 }
 
-void Compositor::DidInitializeOutputSurface() {}
+void Compositor::DidInitializeOutputSurface() {
+  num_failed_recreate_attempts_ = 0;
+}
+
+void Compositor::DidFailToInitializeOutputSurface() {
+  num_failed_recreate_attempts_++;
+
+  CHECK_LE(num_failed_recreate_attempts_, 4);
+
+  base::MessageLoop::current()->PostTask(
+      FROM_HERE, base::Bind(&Compositor::RequestNewOutputSurface,
+                            weak_factory_.GetWeakPtr()));
+}
+
 void Compositor::WillCommit() {}
 
 void Compositor::DidCommit() {

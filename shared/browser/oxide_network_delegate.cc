@@ -38,6 +38,14 @@ int NetworkDelegate::OnBeforeURLRequest(
   return delegate->OnBeforeURLRequest(request, callback, new_url);
 }
 
+void NetworkDelegate::OnResolveProxy(const GURL& url,
+                                     int load_flags,
+                                     const net::ProxyService& proxy_service,
+                                     net::ProxyInfo* result) {}
+
+void NetworkDelegate::OnProxyFallback(const net::ProxyServer& bad_proxy,
+                                      int net_error) {}
+
 int NetworkDelegate::OnBeforeSendHeaders(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
@@ -49,6 +57,11 @@ int NetworkDelegate::OnBeforeSendHeaders(
 
   return delegate->OnBeforeSendHeaders(request, callback, headers);
 }
+
+void NetworkDelegate::OnBeforeSendProxyHeaders(
+    net::URLRequest* request,
+    const net::ProxyInfo& proxy_info,
+    net::HttpRequestHeaders* headers) {}
 
 void NetworkDelegate::OnSendHeaders(net::URLRequest* request,
                                     const net::HttpRequestHeaders& headers) {}
@@ -121,6 +134,23 @@ bool NetworkDelegate::OnCanAccessFile(const net::URLRequest& request,
 bool NetworkDelegate::OnCanThrottleRequest(
     const net::URLRequest& request) const {
   return false;
+}
+
+bool NetworkDelegate::OnCanEnablePrivacyMode(
+    const GURL& url,
+    const GURL& first_party_for_cookies) const {
+  bool cookie_read_allowed =
+      context_->CanAccessCookies(url, first_party_for_cookies, false);
+  bool cookie_write_allowed =
+      context_->CanAccessCookies(url, first_party_for_cookies, true);
+  return !(cookie_read_allowed && cookie_write_allowed);
+}
+
+bool NetworkDelegate::OnCancelURLRequestWithPolicyViolatingReferrerHeader(
+    const net::URLRequest& request,
+    const GURL& target_url,
+    const GURL& referrer_url) const {
+  return true;
 }
 
 NetworkDelegate::NetworkDelegate(BrowserContextIOData* context) :

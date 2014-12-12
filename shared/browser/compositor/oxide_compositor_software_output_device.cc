@@ -55,13 +55,13 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   EnsureBackbuffer();
   DCHECK_NE(current_frame_.id, 0U);
 
-  // Create a canvas
+  // Create a surface
   SkImageInfo info = SkImageInfo::MakeN32Premul(viewport_pixel_size_.width(),
                                                 viewport_pixel_size_.height());
-  SkBitmap bitmap;
-  bitmap.installPixels(info, current_frame_.bitmap->pixels(),
-                       info.minRowBytes());
-  canvas_ = skia::AdoptRef(new SkCanvas(bitmap));
+  surface_ = skia::AdoptRef(SkSurface::NewRasterDirect(
+      info,
+      current_frame_.bitmap->memory(),
+      info.minRowBytes()));
 
   DCHECK(previous_frame_.id != 0 ||
          damage_rect == gfx::Rect(viewport_pixel_size_)) <<
@@ -117,13 +117,13 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
     for (SkRegion::Iterator it(outdated_region); !it.done(); it.next()) {
       const SkIRect& src_rect = it.rect();
       SkRect dst_rect = SkRect::Make(src_rect);
-      canvas_->drawBitmapRect(back_bitmap, &src_rect, dst_rect, NULL);
+      surface_->getCanvas()->drawBitmapRect(back_bitmap, &src_rect, dst_rect);
     }
   }
 
   damage_rect_ = damage_rect;
 
-  return canvas_.get();
+  return surface_->getCanvas();
 }
 
 void CompositorSoftwareOutputDevice::EndPaint(cc::SoftwareFrameData* frame_data) {
