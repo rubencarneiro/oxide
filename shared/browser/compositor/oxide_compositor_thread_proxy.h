@@ -48,40 +48,8 @@ class CompositorFrameHandle;
 class CompositorOutputSurface;
 class GLFrameData;
 
-class CompositorThreadProxyBase :
-    public base::RefCountedThreadSafe<CompositorThreadProxyBase> {
- protected:
-  friend class base::RefCountedThreadSafe<CompositorThreadProxyBase>;
-
-  CompositorThreadProxyBase();
-  virtual ~CompositorThreadProxyBase();
-
-  struct OwnerData {
-    OwnerData() : compositor(NULL) {}
-
-    Compositor* compositor;
-  };
-
-  struct ImplData {
-    ImplData() : output(NULL) {}
-
-    CompositorOutputSurface* output;
-  };
-
-  OwnerData& owner();
-  ImplData& impl();
-
- private:
-  base::ThreadChecker owner_thread_checker_;
-  base::ThreadChecker impl_thread_checker_;
-
-  OwnerData owner_;
-  ImplData impl_;
-
-  DISALLOW_COPY_AND_ASSIGN(CompositorThreadProxyBase);
-};
-
-class CompositorThreadProxy final : public CompositorThreadProxyBase {
+class CompositorThreadProxy final
+    : public base::RefCountedThreadSafe<CompositorThreadProxy> {
  public:
   CompositorThreadProxy(Compositor* compositor);
 
@@ -95,6 +63,8 @@ class CompositorThreadProxy final : public CompositorThreadProxyBase {
   void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
 
  private:
+  friend class base::RefCountedThreadSafe<CompositorThreadProxy>;
+
   ~CompositorThreadProxy();
 
   void DidSwapCompositorFrame(
@@ -118,8 +88,29 @@ class CompositorThreadProxy final : public CompositorThreadProxyBase {
       uint32 surface_id,
       cc::CompositorFrameAck* ack);
 
+  struct OwnerData {
+    OwnerData() : compositor(NULL) {}
+
+    Compositor* compositor;
+  };
+
+  struct ImplData {
+    ImplData() : output(NULL) {}
+
+    CompositorOutputSurface* output;
+  };
+
+  OwnerData& owner();
+  ImplData& impl();
+
   scoped_refptr<base::MessageLoopProxy> owner_message_loop_;
   scoped_refptr<base::MessageLoopProxy> impl_message_loop_;
+
+  base::ThreadChecker owner_thread_checker_;
+  base::ThreadChecker impl_thread_checker_;
+
+  OwnerData owner_unsafe_access_;
+  ImplData impl_unsafe_access_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorThreadProxy);
 };

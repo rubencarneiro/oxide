@@ -36,22 +36,6 @@
 
 namespace oxide {
 
-CompositorThreadProxyBase::CompositorThreadProxyBase() {
-  impl_thread_checker_.DetachFromThread();
-}
-
-CompositorThreadProxyBase::~CompositorThreadProxyBase() {}
-
-CompositorThreadProxyBase::OwnerData& CompositorThreadProxyBase::owner() {
-  DCHECK(owner_thread_checker_.CalledOnValidThread());
-  return owner_;
-}
-
-CompositorThreadProxyBase::ImplData& CompositorThreadProxyBase::impl() {
-  DCHECK(impl_thread_checker_.CalledOnValidThread());
-  return impl_;
-}
-
 CompositorThreadProxy::~CompositorThreadProxy() {}
 
 void CompositorThreadProxy::DidSwapCompositorFrame(
@@ -167,9 +151,19 @@ void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
   impl().output->ReclaimResources(*ack);
 }
 
+CompositorThreadProxy::OwnerData& CompositorThreadProxy::owner() {
+  DCHECK(owner_thread_checker_.CalledOnValidThread());
+  return owner_unsafe_access_;
+}
+
+CompositorThreadProxy::ImplData& CompositorThreadProxy::impl() {
+  DCHECK(impl_thread_checker_.CalledOnValidThread());
+  return impl_unsafe_access_;
+}
 CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)
     : owner_message_loop_(base::MessageLoopProxy::current()) {
   owner().compositor = compositor;
+  impl_thread_checker_.DetachFromThread();
 }
 
 void CompositorThreadProxy::CompositorDestroyed() {
