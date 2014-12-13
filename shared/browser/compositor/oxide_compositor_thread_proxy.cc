@@ -209,18 +209,7 @@ void CompositorThreadProxy::DidSwapCompositorFrame(
     uint32 surface_id,
     std::vector<scoped_refptr<CompositorFrameHandle> >& returned_frames) {
   std::vector<scoped_refptr<CompositorFrameHandle> > frames;
-  for (std::vector<scoped_refptr<CompositorFrameHandle> >::iterator it =
-          returned_frames.begin();
-       it != returned_frames.end(); ++it) {
-    if ((*it)->HasOneRef()) {
-      frames.push_back(*it);
-    }
-  }
-  if (frames.size() < returned_frames.size()) {
-    LOG(WARNING) <<
-        "Some frames passed to DidSwapCompositorFrame are still in use";
-  }
-  returned_frames.clear();
+  std::swap(frames, returned_frames);
 
   impl_message_loop_->PostTask(
       FROM_HERE,
