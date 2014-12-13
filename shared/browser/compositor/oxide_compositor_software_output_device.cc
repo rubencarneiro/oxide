@@ -53,13 +53,13 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   in_paint_ = true;
 
   EnsureBackbuffer();
-  DCHECK_NE(current_frame_.id, 0U);
+  DCHECK_NE(backing_frame_.id, 0U);
 
   // Create a canvas
   SkImageInfo info = SkImageInfo::MakeN32Premul(viewport_pixel_size_.width(),
                                                 viewport_pixel_size_.height());
   SkBitmap bitmap;
-  bitmap.installPixels(info, current_frame_.bitmap->pixels(),
+  bitmap.installPixels(info, backing_frame_.bitmap->pixels(),
                        info.minRowBytes());
   canvas_ = skia::AdoptRef(new SkCanvas(bitmap));
 
@@ -71,7 +71,7 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   while (!previous_damage_rects_.empty()) {
     unsigned id = previous_damage_rects_.front().id;
     previous_damage_rects_.pop_front();
-    if (id == current_frame_.id) {
+    if (id == backing_frame_.id) {
       break;
     }
   }
@@ -80,7 +80,7 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
 
   if (previous_damage_rects_.empty() &&
       previous_frame_.id != 0 &&
-      previous_frame_.id != current_frame_.id) {
+      previous_frame_.id != backing_frame_.id) {
     // If this is a new buffer, then we need to copy everything from the
     // previous buffer. Note, this can also happen if we receive buffers
     // back from the embedder in the wrong order, as it will get popped
@@ -104,8 +104,8 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   // new buffer. This brings everything outside of the damage_rect in the new
   // buffer up-to-date
   if (!outdated_region.isEmpty()) {
-    DCHECK(previous_frame_.id != 0 && previous_frame_.id != current_frame_.id);
-    DCHECK(current_frame_.size == previous_frame_.size);
+    DCHECK(previous_frame_.id != 0 && previous_frame_.id != backing_frame_.id);
+    DCHECK(backing_frame_.size == previous_frame_.size);
 
     SkImageInfo info =
         SkImageInfo::MakeN32Premul(viewport_pixel_size_.width(),
@@ -130,21 +130,21 @@ void CompositorSoftwareOutputDevice::EndPaint(cc::SoftwareFrameData* frame_data)
   DCHECK(CalledOnValidThread());
   DCHECK(in_paint_);
   DCHECK(frame_data);
-  DCHECK_NE(current_frame_.id, 0U);
-  DCHECK(current_frame_.size == viewport_pixel_size_);
+  DCHECK_NE(backing_frame_.id, 0U);
+  DCHECK(backing_frame_.size == viewport_pixel_size_);
 
   in_paint_ = false;
 
-  frame_data->id = current_frame_.id;
-  frame_data->size = current_frame_.size;
+  frame_data->id = backing_frame_.id;
+  frame_data->size = backing_frame_.size;
   frame_data->damage_rect = damage_rect_;
-  frame_data->bitmap_id = current_frame_.bitmap->id();
+  frame_data->bitmap_id = backing_frame_.bitmap->id();
 
-  previous_frame_ = current_frame_;
-  pending_frames_.push_back(current_frame_);
-  previous_damage_rects_.push_back(DamageData(current_frame_.id, damage_rect_));
+  previous_frame_ = backing_frame_;
+  pending_frames_.push_back(backing_frame_);
+  previous_damage_rects_.push_back(DamageData(backing_frame_.id, damage_rect_));
 
-  current_frame_ = OutputFrameData();
+  backing_frame_ = OutputFrameData();
   damage_rect_ = gfx::Rect();
 }
 
@@ -156,7 +156,7 @@ void CompositorSoftwareOutputDevice::DiscardBackbuffer() {
 
   is_backbuffer_discarded_ = true;
 
-  current_frame_ = OutputFrameData();
+  backing_frame_ = OutputFrameData();
   previous_frame_ = OutputFrameData();
 
   while (!returned_frames_.empty()) {
@@ -170,21 +170,21 @@ void CompositorSoftwareOutputDevice::EnsureBackbuffer() {
   DCHECK(CalledOnValidThread());
   is_backbuffer_discarded_ = false;
 
-  if (current_frame_.id == 0 && !returned_frames_.empty()) {
-    current_frame_ = returned_frames_.front();
+  if (backing_frame_.id == 0 && !returned_frames_.empty()) {
+    backing_frame_ = returned_frames_.front();
     returned_frames_.pop();
-    DCHECK(current_frame_.size == viewport_pixel_size_);
-    DCHECK(current_frame_.bitmap.get());
+    DCHECK(backing_frame_.size == viewport_pixel_size_);
+    DCHECK(backing_frame_.bitmap.get());
   }
 
-  if (current_frame_.id == 0) {
-    current_frame_.id = GetNextId();
+  if (backing_frame_.id == 0) {
+    backing_frame_.id = GetNextId();
     scoped_ptr<cc::SharedBitmap> shared_bitmap =
         content::HostSharedBitmapManager::current()->AllocateSharedBitmap(
           viewport_pixel_size_);
     DCHECK(shared_bitmap);
-    current_frame_.bitmap = linked_ptr<cc::SharedBitmap>(shared_bitmap.release());
-    current_frame_.size = viewport_pixel_size_;
+    backing_frame_.bitmap = linked_ptr<cc::SharedBitmap>(shared_bitmap.release());
+    backing_frame_.size = viewport_pixel_size_;
   }
 }
 

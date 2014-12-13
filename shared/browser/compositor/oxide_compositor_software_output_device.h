@@ -63,7 +63,7 @@ class CompositorSoftwareOutputDevice final : public cc::SoftwareOutputDevice,
 
   unsigned next_frame_id_;
 
-  OutputFrameData current_frame_;
+  OutputFrameData backing_frame_;
   OutputFrameData previous_frame_;
   std::deque<OutputFrameData> pending_frames_;
   std::queue<OutputFrameData> returned_frames_;
