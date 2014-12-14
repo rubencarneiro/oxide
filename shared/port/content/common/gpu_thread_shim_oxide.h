@@ -21,12 +21,7 @@
 #include <cstdint>
 
 #include "base/memory/ref_counted.h"
-#include "base/message_loop/message_loop.h"
 #include "content/common/content_export.h"
-
-namespace base {
-class SingleThreadTaskRunner;
-}
 
 namespace gfx {
 class GLShareGroup;
@@ -42,13 +37,9 @@ class TextureRef;
 namespace content {
 
 class ContextProviderCommandBuffer;
+class GpuChannelManager;
 
 namespace oxide_gpu_shim {
-
-CONTENT_EXPORT bool IsCurrentlyOnGpuThread();
-
-CONTENT_EXPORT scoped_refptr<base::SingleThreadTaskRunner> GetGpuThreadTaskRunner();
-CONTENT_EXPORT void AddGpuThreadTaskObserver(base::MessageLoop::TaskObserver* obs);
 
 CONTENT_EXPORT gpu::gles2::TextureRef* CreateTextureRef(
     int32_t client_id,
@@ -58,9 +49,7 @@ CONTENT_EXPORT void ReleaseTextureRef(int32_t client_id,
                                       int32_t route_id,
                                       gpu::gles2::TextureRef* ref);
 
-CONTENT_EXPORT bool IsSyncPointRetired(uint32_t sync_point);
-CONTENT_EXPORT void AddSyncPointCallback(uint32_t sync_point,
-                                         const base::Closure& callback);
+CONTENT_EXPORT content::GpuChannelManager* GetGpuChannelManager();
 
 CONTENT_EXPORT int32_t GetContextProviderRouteID(
     content::ContextProviderCommandBuffer* provider);

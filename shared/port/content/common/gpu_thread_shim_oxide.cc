@@ -29,7 +29,6 @@
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
 #include "gpu/command_buffer/service/mailbox_manager.h"
-#include "gpu/command_buffer/service/sync_point_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
 
 namespace content {
@@ -53,19 +52,10 @@ content::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
   return channel->LookupCommandBuffer(route_id);
 }
 
-}
-
 bool IsCurrentlyOnGpuThread() {
-  return GetGpuThreadTaskRunner()->BelongsToCurrentThread();
+  return content::GpuChildThread::GetTaskRunner()->BelongsToCurrentThread();
 }
 
-scoped_refptr<base::SingleThreadTaskRunner> GetGpuThreadTaskRunner() {
-  return content::GpuChildThread::message_loop_proxy();
-}
-
-void AddGpuThreadTaskObserver(base::MessageLoop::TaskObserver* obs) {
-  DCHECK(IsCurrentlyOnGpuThread());
-  content::GpuChildThread::instance()->message_loop()->AddTaskObserver(obs);
 }
 
 gpu::gles2::TextureRef* CreateTextureRef(int32_t client_id,
@@ -109,20 +99,8 @@ void ReleaseTextureRef(int32_t client_id,
   ref->Release();
 }
 
-bool IsSyncPointRetired(uint32_t sync_point) {
-  DCHECK(IsCurrentlyOnGpuThread());
-
-  return content::GpuChildThread::instance()->gpu_channel_manager()
-      ->sync_point_manager()
-      ->IsSyncPointRetired(sync_point);
-}
-
-void AddSyncPointCallback(uint32_t sync_point, const base::Closure& callback) {
-  DCHECK(IsCurrentlyOnGpuThread());
-
-  content::GpuChildThread::instance()->gpu_channel_manager()
-      ->sync_point_manager()
-      ->AddSyncPointCallback(sync_point, callback);
+content::GpuChannelManager* GetGpuChannelManager() {
+  return content::GpuChildThread::instance()->gpu_channel_manager();
 }
 
 int32_t GetContextProviderRouteID(
