@@ -38,14 +38,16 @@ namespace oxide {
 
 CompositorThreadProxy::~CompositorThreadProxy() {}
 
+void CompositorThreadProxy::DidSwapCompositorFrame(uint32 surface_id) {
+  std::vector<scoped_refptr<CompositorFrameHandle> > frames;
+  DidSwapCompositorFrame(surface_id, frames);
+}
+
 void CompositorThreadProxy::DidSwapCompositorFrame(
     uint32 surface_id,
     scoped_refptr<CompositorFrameHandle>& frame) {
   std::vector<scoped_refptr<CompositorFrameHandle> > frames;
   frames.push_back(frame);
-
-  frame = NULL;
-
   DidSwapCompositorFrame(surface_id, frames);
 }
 
@@ -54,7 +56,10 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
     const gfx::Size& size,
     float scale,
     scoped_ptr<GLFrameData> gl_frame_data) {
-  DCHECK(gl_frame_data);
+  if (!gl_frame_data) {
+    DidSwapCompositorFrame(surface_id);
+    return;
+  }
 
   scoped_refptr<CompositorFrameHandle> frame(
       new CompositorFrameHandle(surface_id, this, size, scale));
@@ -78,7 +83,10 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
   scoped_ptr<cc::SharedBitmap> bitmap(
       content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
         size, bitmap_id));
-  DCHECK(bitmap);
+  if (!bitmap) {
+    DidSwapCompositorFrame(surface_id);
+    return;
+  }
 
   scoped_refptr<CompositorFrameHandle> frame(
       new CompositorFrameHandle(surface_id, this, size, scale));

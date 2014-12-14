@@ -67,6 +67,7 @@ class CompositorThreadProxy final
 
   ~CompositorThreadProxy();
 
+  void DidSwapCompositorFrame(uint32 surface_id);
   void DidSwapCompositorFrame(
       uint32 surface_id,
       scoped_refptr<CompositorFrameHandle>& frame);
