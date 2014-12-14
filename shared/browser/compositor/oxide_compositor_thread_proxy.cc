@@ -145,7 +145,9 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
 
 void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
     uint32 surface_id,
-    cc::CompositorFrameAck* ack) {
+    const gfx::Size& size_in_pixels,
+    scoped_ptr<GLFrameData> gl_frame_data,
+    scoped_ptr<SoftwareFrameData> software_frame_data) {
   if (!impl().output) {
     return;
   }
@@ -154,7 +156,18 @@ void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
     return;
   }
 
-  impl().output->ReclaimResources(*ack);
+  cc::CompositorFrameAck ack;
+  if (gl_frame_data.get()) {
+    ack.gl_frame_data.reset(new cc::GLFrameData());
+    ack.gl_frame_data->mailbox = gl_frame_data->mailbox();
+    ack.gl_frame_data->size = size_in_pixels;
+  } else if (software_frame_data.get()) {
+    ack.last_software_frame_id = software_frame_data->id();
+  } else {
+    NOTREACHED();
+  }
+
+  impl().output->ReclaimResources(ack);
 }
 
 CompositorThreadProxy::OwnerData& CompositorThreadProxy::owner() {
@@ -237,24 +250,13 @@ void CompositorThreadProxy::ReclaimResourcesForFrame(
   DCHECK(frame) << "Null frame";
   DCHECK(frame->proxy_ == this) << "Frame returned to wrong compositor";
 
-  cc::CompositorFrameAck* ack = new cc::CompositorFrameAck();
-  if (frame->gl_frame_data()) {
-    scoped_ptr<GLFrameData> gl_frame_data = frame->gl_frame_data_.Pass();
-    ack->gl_frame_data.reset(new cc::GLFrameData());
-    ack->gl_frame_data->mailbox = gl_frame_data->mailbox();
-    ack->gl_frame_data->size = frame->size_in_pixels();
-  } else {
-    DCHECK(frame->software_frame_data());
-    scoped_ptr<SoftwareFrameData> software_frame_data =
-        frame->software_frame_data_.Pass();
-    ack->last_software_frame_id = software_frame_data->id();
-  }
-
   impl_message_loop_->PostTask(
       FROM_HERE,
       base::Bind(
         &CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread,
-        this, frame->surface_id_, base::Owned(ack)));
+        this, frame->surface_id_, frame->size_in_pixels(),
+        base::Passed(&frame->gl_frame_data_),
+        base::Passed(&frame->software_frame_data_)));
 }
 
 } // namespace oxide

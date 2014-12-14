@@ -47,6 +47,7 @@ class Compositor;
 class CompositorFrameHandle;
 class CompositorOutputSurface;
 class GLFrameData;
+class SoftwareFrameData;
 
 class CompositorThreadProxy final
     : public base::RefCountedThreadSafe<CompositorThreadProxy> {
@@ -88,7 +89,9 @@ class CompositorThreadProxy final
       FrameHandleVector returned_frames);
   void SendReclaimResourcesToOutputSurfaceOnImplThread(
       uint32 surface_id,
-      cc::CompositorFrameAck* ack);
+      const gfx::Size& size_in_pixels,
+      scoped_ptr<GLFrameData> gl_frame_data,
+      scoped_ptr<SoftwareFrameData> software_frame_data);
 
   struct OwnerData {
     OwnerData() : compositor(NULL) {}
