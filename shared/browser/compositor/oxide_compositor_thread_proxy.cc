@@ -38,20 +38,20 @@ namespace oxide {
 
 CompositorThreadProxy::~CompositorThreadProxy() {}
 
-void CompositorThreadProxy::DidSwapCompositorFrame(uint32 surface_id) {
-  FrameHandleVector frames;
-  DidSwapCompositorFrame(surface_id, frames);
-}
-
-void CompositorThreadProxy::DidSwapCompositorFrame(
+void CompositorThreadProxy::DidSkipSwapCompositorFrame(
     uint32 surface_id,
-    scoped_refptr<CompositorFrameHandle>& frame) {
+    scoped_refptr<CompositorFrameHandle>* frame) {
   FrameHandleVector frames;
-  frames.push_back(frame);
+  if (frame) {
+    frames.push_back(*frame);
+    *frame = NULL;
+  }
 
-  frame = NULL;
-
-  DidSwapCompositorFrame(surface_id, frames);
+  impl_message_loop_->PostTask(
+      FROM_HERE,
+      base::Bind(
+        &CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread,
+        this, surface_id, frames));
 }
 
 void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
@@ -60,7 +60,7 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
     float scale,
     scoped_ptr<GLFrameData> gl_frame_data) {
   if (!gl_frame_data) {
-    DidSwapCompositorFrame(surface_id);
+    DidSkipSwapCompositorFrame(surface_id, NULL);
     return;
   }
 
@@ -69,7 +69,7 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
   frame->gl_frame_data_ = gl_frame_data.Pass();
 
   if (!owner().compositor) {
-    DidSwapCompositorFrame(surface_id, frame);
+    DidSkipSwapCompositorFrame(surface_id, &frame);
     return;
   }
 
@@ -87,7 +87,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
       content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
         size, bitmap_id));
   if (!bitmap) {
-    DidSwapCompositorFrame(surface_id);
+    DidSkipSwapCompositorFrame(surface_id, NULL);
     return;
   }
 
@@ -97,7 +97,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
       new SoftwareFrameData(id, damage_rect, bitmap->pixels()));
 
   if (!owner().compositor) {
-    DidSwapCompositorFrame(surface_id, frame);
+    DidSkipSwapCompositorFrame(surface_id, &frame);
     return;
   }
 
@@ -115,12 +115,9 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     impl().output->DidSwapBuffers();
   }
 
-  FrameHandleVector frames;
-  frames.swap(returned_frames);
-
-  while (!frames.empty()) {
-    scoped_refptr<CompositorFrameHandle> frame(frames.back());
-    frames.pop_back();
+  while (!returned_frames.empty()) {
+    scoped_refptr<CompositorFrameHandle> frame(returned_frames.back());
+    returned_frames.pop_back();
 
     if (!frame.get()) {
       continue;
@@ -218,9 +215,9 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
 
 void CompositorThreadProxy::DidSwapCompositorFrame(
     uint32 surface_id,
-    FrameHandleVector& returned_frames) {
+    FrameHandleVector* returned_frames) {
   FrameHandleVector frames;
-  std::swap(frames, returned_frames);
+  std::swap(frames, *returned_frames);
 
   for (FrameHandleVector::iterator it = frames.begin();
        it != frames.end(); ++it) {

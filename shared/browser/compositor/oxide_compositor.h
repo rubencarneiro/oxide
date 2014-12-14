@@ -58,7 +58,7 @@ class Compositor final : public cc::LayerTreeHostClient,
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
 
   void DidSwapCompositorFrame(uint32 surface_id,
-                              FrameHandleVector& returned_frames);
+                              FrameHandleVector* returned_frames);
 
  private:
   friend class CompositorLock;

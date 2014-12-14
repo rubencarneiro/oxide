@@ -61,7 +61,7 @@ class CompositorThreadProxy final
   void SwapCompositorFrame(cc::CompositorFrame* frame);
   void DidSwapCompositorFrame(
       uint32 surface_id,
-      FrameHandleVector& returned_frames);
+      FrameHandleVector* returned_frames);
   void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
 
  private:
@@ -69,10 +69,9 @@ class CompositorThreadProxy final
 
   ~CompositorThreadProxy();
 
-  void DidSwapCompositorFrame(uint32 surface_id);
-  void DidSwapCompositorFrame(
+  void DidSkipSwapCompositorFrame(
       uint32 surface_id,
-      scoped_refptr<CompositorFrameHandle>& frame);
+      scoped_refptr<CompositorFrameHandle>* frame);
 
   void SendSwapGLFrameOnOwnerThread(uint32 surface_id,
                                     const gfx::Size& size,

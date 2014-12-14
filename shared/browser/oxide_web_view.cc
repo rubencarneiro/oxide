@@ -1934,7 +1934,7 @@ void WebView::DidCommitCompositorFrame() {
     received_surface_ids_.pop();
 
     compositor_->DidSwapCompositorFrame(surface_id,
-                                        previous_compositor_frames_);
+                                        &previous_compositor_frames_);
   }
 }
 
