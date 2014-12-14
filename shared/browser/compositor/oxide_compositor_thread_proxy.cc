@@ -48,6 +48,9 @@ void CompositorThreadProxy::DidSwapCompositorFrame(
     scoped_refptr<CompositorFrameHandle>& frame) {
   std::vector<scoped_refptr<CompositorFrameHandle> > frames;
   frames.push_back(frame);
+
+  frame = NULL;
+
   DidSwapCompositorFrame(surface_id, frames);
 }
 
@@ -218,6 +221,13 @@ void CompositorThreadProxy::DidSwapCompositorFrame(
     std::vector<scoped_refptr<CompositorFrameHandle> >& returned_frames) {
   std::vector<scoped_refptr<CompositorFrameHandle> > frames;
   std::swap(frames, returned_frames);
+
+  for (std::vector<scoped_refptr<CompositorFrameHandle> >::iterator it = frames.begin();
+       it != frames.end(); ++it) {
+    CHECK((*it)->HasOneRef()) <<
+        "Returned a frame that's still referenced from outside of the "
+        "compositor";
+  }
 
   impl_message_loop_->PostTask(
       FROM_HERE,
