@@ -5,11 +5,11 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -37,16 +37,17 @@
-     # headers resolve correctly.
+@@ -39,16 +39,17 @@
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
      # The public render_widget_host.h needs to re-export skia defines.
      '../skia/skia.gyp:skia',
+     'content_common_mojo_bindings.gyp:content_common_mojo_bindings',
    ],
    'include_dirs': [
      '..',
@@ -23,7 +23,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'public/browser/android/compositor_client.h',
        'public/browser/android/content_protocol_handler.h',
        'public/browser/android/content_view_core.h',
-@@ -953,23 +954,23 @@
+@@ -957,23 +958,23 @@
        'browser/power_profiler/power_data_provider.h',
        'browser/power_profiler/power_event.cc',
        'browser/power_profiler/power_event.h',
@@ -52,7 +52,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/profiler_message_filter.h',
        'browser/push_messaging/push_messaging_message_filter.cc',
        'browser/push_messaging/push_messaging_message_filter.h',
-@@ -1411,16 +1412,18 @@
+@@ -1415,16 +1416,18 @@
        '<(SHARED_INTERMEDIATE_DIR)/webkit/grit/devtools_resources.h',
        '<(SHARED_INTERMEDIATE_DIR)/webkit/grit/devtools_resources_map.cc',
        '<(SHARED_INTERMEDIATE_DIR)/webkit/grit/devtools_resources_map.h',

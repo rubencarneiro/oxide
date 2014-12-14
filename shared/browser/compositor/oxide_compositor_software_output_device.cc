@@ -60,7 +60,7 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
                                                 viewport_pixel_size_.height());
   surface_ = skia::AdoptRef(SkSurface::NewRasterDirect(
       info,
-      current_frame_.bitmap->memory(),
+      current_frame_.bitmap->pixels(),
       info.minRowBytes()));
 
   DCHECK(previous_frame_.id != 0 ||
