@@ -39,14 +39,14 @@ namespace oxide {
 CompositorThreadProxy::~CompositorThreadProxy() {}
 
 void CompositorThreadProxy::DidSwapCompositorFrame(uint32 surface_id) {
-  std::vector<scoped_refptr<CompositorFrameHandle> > frames;
+  FrameHandleVector frames;
   DidSwapCompositorFrame(surface_id, frames);
 }
 
 void CompositorThreadProxy::DidSwapCompositorFrame(
     uint32 surface_id,
     scoped_refptr<CompositorFrameHandle>& frame) {
-  std::vector<scoped_refptr<CompositorFrameHandle> > frames;
+  FrameHandleVector frames;
   frames.push_back(frame);
 
   frame = NULL;
@@ -106,7 +106,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
 
 void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     uint32 surface_id,
-    std::vector<scoped_refptr<CompositorFrameHandle> > returned_frames) {
+    FrameHandleVector returned_frames) {
   if (!impl().output) {
     return;
   }
@@ -115,7 +115,7 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     impl().output->DidSwapBuffers();
   }
 
-  std::vector<scoped_refptr<CompositorFrameHandle> > frames;
+  FrameHandleVector frames;
   frames.swap(returned_frames);
 
   while (!frames.empty()) {
@@ -218,11 +218,11 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
 
 void CompositorThreadProxy::DidSwapCompositorFrame(
     uint32 surface_id,
-    std::vector<scoped_refptr<CompositorFrameHandle> >& returned_frames) {
-  std::vector<scoped_refptr<CompositorFrameHandle> > frames;
+    FrameHandleVector& returned_frames) {
+  FrameHandleVector frames;
   std::swap(frames, returned_frames);
 
-  for (std::vector<scoped_refptr<CompositorFrameHandle> >::iterator it = frames.begin();
+  for (FrameHandleVector::iterator it = frames.begin();
        it != frames.end(); ++it) {
     CHECK((*it)->HasOneRef()) <<
         "Returned a frame that's still referenced from outside of the "

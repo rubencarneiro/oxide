@@ -51,6 +51,8 @@ class GLFrameData;
 class CompositorThreadProxy final
     : public base::RefCountedThreadSafe<CompositorThreadProxy> {
  public:
+  typedef std::vector<scoped_refptr<CompositorFrameHandle> > FrameHandleVector;
+
   CompositorThreadProxy(Compositor* compositor);
 
   void CompositorDestroyed();
@@ -59,7 +61,7 @@ class CompositorThreadProxy final
   void SwapCompositorFrame(cc::CompositorFrame* frame);
   void DidSwapCompositorFrame(
       uint32 surface_id,
-      std::vector<scoped_refptr<CompositorFrameHandle> >& returned_frames);
+      FrameHandleVector& returned_frames);
   void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
 
  private:
@@ -84,7 +86,7 @@ class CompositorThreadProxy final
                                           const cc::SharedBitmapId& bitmap_id);
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
       uint32 surface_id,
-      std::vector<scoped_refptr<CompositorFrameHandle> > returned_frames);
+      FrameHandleVector returned_frames);
   void SendReclaimResourcesToOutputSurfaceOnImplThread(
       uint32 surface_id,
       cc::CompositorFrameAck* ack);
