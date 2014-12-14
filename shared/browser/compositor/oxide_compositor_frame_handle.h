@@ -64,7 +64,7 @@ class SoftwareFrameData {
 };
 
 class CompositorFrameHandle final :
-    public base::RefCounted<CompositorFrameHandle> {
+    public base::RefCountedThreadSafe<CompositorFrameHandle> {
  public:
   CompositorFrameHandle(uint32 surface_id,
                         scoped_refptr<CompositorThreadProxy> proxy,
@@ -79,7 +79,7 @@ class CompositorFrameHandle final :
 
  private:
   friend class CompositorThreadProxy;
-  friend class base::RefCounted<CompositorFrameHandle>;
+  friend class base::RefCountedThreadSafe<CompositorFrameHandle>;
 
   ~CompositorFrameHandle();
 
