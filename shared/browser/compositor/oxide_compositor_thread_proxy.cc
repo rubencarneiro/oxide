@@ -123,8 +123,6 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
       continue;
     }
 
-    DCHECK(frame->proxy_ == this) << "Frame returned to wrong compositor";
-
     cc::CompositorFrameAck ack;
     if (frame->gl_frame_data()) {
       scoped_ptr<GLFrameData> gl_frame_data = frame->gl_frame_data_.Pass();
@@ -224,6 +222,7 @@ void CompositorThreadProxy::DidSwapCompositorFrame(
     CHECK((*it)->HasOneRef()) <<
         "Returned a frame that's still referenced from outside of the "
         "compositor";
+    DCHECK((*it)->proxy_ == this) << "Frame returned to wrong compositor";
   }
 
   impl_message_loop_->PostTask(
