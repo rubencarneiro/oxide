@@ -19,8 +19,13 @@
 
 #include "base/bind.h"
 #include "base/message_loop/message_loop.h"
+#include "third_party/WebKit/public/platform/WebString.h"
+#include "third_party/WebKit/public/web/WebDocument.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
+#include "ui/base/resource/resource_bundle.h"
+
+#include "grit/oxide_resources.h"
 
 #include "shared/common/oxide_user_script.h"
 
@@ -68,6 +73,13 @@ void UserScriptScheduler::DidFinishLoad(blink::WebLocalFrame* frame) {
 }
 
 void UserScriptScheduler::DidCreateDocumentElement(blink::WebLocalFrame* frame) {
+  base::StringPiece raw_css(
+      ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
+        IDR_OXIDE_UA_CSS));
+  blink::WebString css(
+      blink::WebString::fromUTF8(raw_css.data(), raw_css.length()));
+  frame->document().insertStyleSheet(css);
+
   UserScriptSlave::GetInstance()->InjectScripts(frame,
                                                 UserScript::DOCUMENT_START);
 }
