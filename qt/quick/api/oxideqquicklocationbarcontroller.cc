@@ -59,7 +59,12 @@ void OxideQQuickLocationBarController::setMaxHeight(qreal height) {
   Q_D(OxideQQuickLocationBarController);
 
   if (OxideQQuickWebViewPrivate::get(d->view)->isInitialized()) {
-    qWarning() << "LocationBar height must be set during construction";
+    qWarning() << "LocationBarController.maxheight must be set during construction";
+    return;
+  }
+
+  if (height < 0.0f) {
+    qWarning() << "LocationBarController.maxHeight cannot be negative";
     return;
   }
 
@@ -93,6 +98,10 @@ void OxideQQuickLocationBarController::setMode(Mode mode) {
   Q_D(OxideQQuickLocationBarController);
 
   if (mode == this->mode()) {
+    return;
+  }
+
+  if (maxHeight() == 0) {
     return;
   }
 
