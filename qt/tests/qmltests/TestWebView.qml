@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 1.4
+import com.canonical.Oxide 1.5
 import com.canonical.Oxide.Testing 1.0 as Testing
 import "TestUtils.js" as TestUtils
 
@@ -70,6 +70,10 @@ WebView {
       i = Date.now();
     }
     return predicate();
+  }
+
+  function wait(timeout) {
+    qtest_testResult.wait(timeout);
   }
 
   property int qtest_loadsStartedCount: 0
