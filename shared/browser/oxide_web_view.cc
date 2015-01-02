@@ -152,8 +152,10 @@ void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
 
 bool ShouldSendPinchGesture() {
   static bool pinch_allowed =
-      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnableViewport) ||
-      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnablePinch);
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kEnableViewport) ||
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kEnablePinch);
   return pinch_allowed;
 }
 

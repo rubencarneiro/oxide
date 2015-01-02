@@ -6,7 +6,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -106,17 +106,17 @@
+@@ -169,17 +169,17 @@
                    '<!@(<(pkg-config) --libs-only-l gtk+-unix-print-2.0)',
                  ],
                },
@@ -28,7 +28,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -302,16 +302,18 @@
+@@ -304,16 +304,18 @@
          'win/dpi.h',
          'win/hwnd_util.cc',
          'win/hwnd_util.h',
@@ -47,7 +47,7 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['OS=="ios"', {
            'dependencies': [
              '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
-@@ -388,17 +390,17 @@
+@@ -390,17 +392,17 @@
            'sources!': [
              'render_text.cc',
              'render_text.h',
@@ -239,7 +239,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
        'hard_dependency': 1,
        'actions': [
          {
-@@ -199,17 +205,17 @@
+@@ -199,24 +205,24 @@
            ],
          }],
          ['OS=="linux"', {
@@ -255,9 +255,18 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'gl_context_glx.h',
              'gl_glx_api_implementation.cc',
              'gl_glx_api_implementation.h',
+-            'gl_image_glx.cc',
+-            'gl_image_glx.h',
++            #'gl_image_glx.cc',
++            #'gl_image_glx.h',
              'gl_surface_glx.cc',
              'gl_surface_glx.h',
              'gl_egl_api_implementation.cc',
+             'gl_egl_api_implementation.h',
+             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.cc',
+             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.h',
+           ],
+           'all_dependent_settings': {
 diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 --- a/ui/gl/gl_bindings.h
 +++ b/ui/gl/gl_bindings.h
@@ -280,7 +289,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -296,16 +296,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -312,16 +312,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -300,7 +309,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -359,17 +362,17 @@ struct GL_EXPORT DriverEGL {
+@@ -375,17 +378,17 @@ struct GL_EXPORT DriverEGL {
    void ClearBindings();
  
    ProcsEGL fn;
@@ -319,7 +328,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -399,16 +402,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -415,16 +418,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  

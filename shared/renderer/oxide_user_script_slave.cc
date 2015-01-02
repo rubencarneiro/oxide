@@ -91,12 +91,12 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
   PickleIterator iter(pickle);
 
   uint64 num_scripts = 0;
-  CHECK(pickle.ReadUInt64(&iter, &num_scripts));
+  CHECK(iter.ReadUInt64(&num_scripts));
   for (; num_scripts > 0; --num_scripts) {
     linked_ptr<UserScript> script(new UserScript());
     user_scripts_.push_back(script);
 
-    script->Unpickle(pickle, &iter);
+    script->Unpickle(&iter);
   }
 }
 
@@ -114,7 +114,7 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
   if (!message_manager.get()) {
     LOG(ERROR) << "Could not get a proper message manager for frame: "
                << frame
-	       << " while trying to inject script in main world";
+               << " while trying to inject script in main world";
     return;
   }
 

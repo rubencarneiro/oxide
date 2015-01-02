@@ -6,15 +6,15 @@
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
-@@ -70,17 +70,17 @@ GpuChildThread::GpuChildThread(const std
-       dead_on_arrival_(false),
+@@ -72,17 +72,17 @@ GpuChildThread::GpuChildThread(const std
        in_browser_process_(true) {
  #if defined(OS_WIN)
    target_services_ = NULL;
  #endif
-   DCHECK(
-       CommandLine::ForCurrentProcess()->HasSwitch(switches::kSingleProcess) ||
-       CommandLine::ForCurrentProcess()->HasSwitch(switches::kInProcessGPU));
+   DCHECK(base::CommandLine::ForCurrentProcess()->HasSwitch(
+              switches::kSingleProcess) ||
+          base::CommandLine::ForCurrentProcess()->HasSwitch(
+              switches::kInProcessGPU));
 -#if !defined(OS_ANDROID)
 +#if 0
    // For single process and in-process GPU mode, we need to load and
