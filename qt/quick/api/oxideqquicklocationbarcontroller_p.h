@@ -27,13 +27,11 @@ class OxideQQuickWebView;
 class Q_DECL_EXPORT OxideQQuickLocationBarController : public QObject {
   Q_OBJECT
 
-  Q_PROPERTY(qreal maxHeight READ maxHeight WRITE setMaxHeight NOTIFY maxHeightChanged)
+  Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged)
   Q_PROPERTY(Mode mode READ mode WRITE setMode NOTIFY modeChanged)
 
   Q_PROPERTY(qreal offset READ offset NOTIFY offsetChanged)
   Q_PROPERTY(qreal contentOffset READ contentOffset NOTIFY contentOffsetChanged)
-
-  Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged)
 
   Q_ENUMS(Mode)
 
@@ -51,8 +49,8 @@ class Q_DECL_EXPORT OxideQQuickLocationBarController : public QObject {
   Q_DECL_HIDDEN OxideQQuickLocationBarController(OxideQQuickWebView* view);
   virtual ~OxideQQuickLocationBarController();
 
-  qreal maxHeight() const;
-  void setMaxHeight(qreal height);
+  qreal height() const;
+  void setHeight(qreal height);
 
   Mode mode() const;
   void setMode(Mode mode);
@@ -60,15 +58,11 @@ class Q_DECL_EXPORT OxideQQuickLocationBarController : public QObject {
   qreal offset() const;
   qreal contentOffset() const;
 
-  qreal height() const;
-  void setHeight(qreal height);
-
  Q_SIGNALS:
-  void maxHeightChanged();
+  void heightChanged();
   void modeChanged();
   void offsetChanged();
   void contentOffsetChanged();
-  void heightChanged();
 
  private:
   QScopedPointer<OxideQQuickLocationBarControllerPrivate> d_ptr;

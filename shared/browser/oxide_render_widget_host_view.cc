@@ -114,12 +114,16 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
   return delegate_->GetViewSizePix();
 }
 
-float RenderWidgetHostView::GetTopControlsLayoutHeight() const {
+bool RenderWidgetHostView::DoTopControlsShrinkBlinkSize() const {
+  return top_controls_shrink_blink_size_;
+}
+
+float RenderWidgetHostView::GetTopControlsHeight() const {
   if (!delegate_) {
     return 0.0f;
   }
 
-  return delegate_->GetLocationBarCurrentHeightDip();
+  return delegate_->GetLocationBarHeightDip();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -212,6 +216,14 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 
   compositor_frame_metadata_ = frame->metadata;
+
+  bool shrink =
+      compositor_frame_metadata_.location_bar_offset.y() == 0.0f &&
+      compositor_frame_metadata_.location_bar_content_translation.y() > 0.0f;
+  if (shrink != top_controls_shrink_blink_size_) {
+    top_controls_shrink_blink_size_ = shrink;
+    host_->WasResized();
+  }
 
   if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
@@ -422,12 +434,18 @@ bool RenderWidgetHostView::IsShowing() {
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
+  gfx::Rect bounds;
+
   if (!delegate_) {
-    return gfx::Rect(last_size_);
+    bounds = gfx::Rect(last_size_);
+  } else {
+    bounds = delegate_->GetViewBoundsDip();
   }
 
-  gfx::Rect bounds = delegate_->GetViewBoundsDip();
-  bounds.Inset(0, delegate_->GetLocationBarCurrentHeightDip(), 0, 0);
+  if (DoTopControlsShrinkBlinkSize()) {
+    bounds.Inset(0, GetTopControlsHeight(), 0, 0);
+  }
+
   return bounds;
 }
 
@@ -538,7 +556,8 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     show_ime_if_needed_(false),
     focused_node_is_editable_(false),
     is_loading_(false),
-    is_showing_(false) {
+    is_showing_(false),
+    top_controls_shrink_blink_size_(false) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   resource_collection_->SetClient(this);

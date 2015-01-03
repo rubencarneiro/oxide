@@ -43,8 +43,7 @@ class WebViewContentsHelper final : private BrowserContextObserver,
                                     private base::SupportsUserData::Data,
                                     private content::WebContentsDelegate {
  public:
-  WebViewContentsHelper(content::WebContents* contents,
-                        double location_bar_height);
+  WebViewContentsHelper(content::WebContents* contents);
   WebViewContentsHelper(content::WebContents* contents,
                         WebViewContentsHelper* opener);
 

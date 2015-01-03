@@ -1,11 +1,14 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
+import com.canonical.Oxide.Testing 1.0
 
 WebView {
   id: webView
   width: 200
   height: 200
+
+  context: TestWebContext {}
 
   property bool loading2: loading
 

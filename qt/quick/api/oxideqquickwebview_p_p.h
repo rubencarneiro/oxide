@@ -85,7 +85,6 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
   QRect GetViewBoundsPix() const final;
   bool IsVisible() const final;
   bool HasFocus() const final;
-  int GetLocationBarCurrentHeightPix() const final;
 
   void AddMessageToConsole(int level,
 			   const QString& message,

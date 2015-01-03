@@ -566,11 +566,6 @@ Compositor* WebView::GetCompositor() const {
   return compositor_.get();
 }
 
-int WebView::GetLocationBarCurrentHeightDip() const {
-  float scale = 1.0f / GetScreenInfo().deviceScaleFactor;
-  return std::lround(GetLocationBarCurrentHeightPix() * scale);
-}
-
 content::WebContents* WebView::OpenURLFromTab(
     content::WebContents* source,
     const content::OpenURLParams& params) {
@@ -929,7 +924,11 @@ void WebView::DidStartProvisionalLoadForFrame(
     return;
   }
 
-  OnLoadStarted(validated_url, is_error_frame);
+  if (is_error_frame) {
+    return;
+  }
+
+  OnLoadStarted(validated_url);
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
@@ -941,7 +940,9 @@ void WebView::DidCommitProvisionalLoadForFrame(
     frame->URLChanged();
   }
 
-  OnLoadCommitted(url);
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
+  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR);
 }
 
 void WebView::DidFailProvisionalLoad(
@@ -950,6 +951,10 @@ void WebView::DidFailProvisionalLoad(
     int error_code,
     const base::string16& error_description) {
   if (render_frame_host->GetParent()) {
+    return;
+  }
+
+  if (validated_url.spec() == content::kUnreachableWebDataURL) {
     return;
   }
 
@@ -970,6 +975,10 @@ void WebView::DidNavigateMainFrame(
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
                             const GURL& validated_url) {
   if (render_frame_host->GetParent()) {
+    return;
+  }
+
+  if (validated_url.spec() == content::kUnreachableWebDataURL) {
     return;
   }
 
@@ -1067,9 +1076,11 @@ void WebView::OnCommandsUpdated() {}
 void WebView::OnLoadingChanged() {}
 void WebView::OnLoadProgressChanged(double progress) {}
 
-void WebView::OnLoadStarted(const GURL& validated_url,
-                            bool is_error_frame) {}
-void WebView::OnLoadCommitted(const GURL& url) {}
+void WebView::OnLoadStarted(const GURL& validated_url) {}
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {}
+void WebView::OnLoadCommitted(const GURL& url,
+                              bool is_error_page) {}
 void WebView::OnLoadStopped(const GURL& validated_url) {}
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
@@ -1107,9 +1118,6 @@ void WebView::OnDownloadRequested(const GURL& url,
 				  const base::string16& suggestedFilename,
 				  const std::string& cookies,
 				  const std::string& referrer) {}
-
-void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
@@ -1176,6 +1184,7 @@ WebView::WebView()
       blocked_content_(CONTENT_TYPE_NONE),
       did_scroll_focused_editable_node_into_view_(false),
       auto_scroll_timer_(false, false),
+      location_bar_height_pix_(0),
       location_bar_constraints_(cc::BOTH) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
@@ -1295,9 +1304,7 @@ void WebView::Init(Params* params) {
       restore_state_.clear();
     }
 
-    new WebViewContentsHelper(
-        web_contents_.get(),
-        params->location_bar_height / GetScreenInfo().deviceScaleFactor);
+    new WebViewContentsHelper(web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());
@@ -1754,22 +1761,32 @@ float WebView::GetLocationBarContentOffsetDip() {
   return compositor_frame_metadata().location_bar_content_translation.y();
 }
 
-int WebView::GetLocationBarMaxHeightPix() {
-  return GetLocationBarMaxHeightDip() * GetScreenInfo().deviceScaleFactor;
+float WebView::GetLocationBarHeightDip() const {
+  return GetLocationBarHeightPix() / GetScreenInfo().deviceScaleFactor;
 }
 
-double WebView::GetLocationBarMaxHeightDip() {
-  if (!web_contents_) {
-    return 0.0f;
+int WebView::GetLocationBarHeightPix() const {
+  return location_bar_height_pix_;
+}
+
+void WebView::SetLocationBarHeightPix(int height) {
+  if (height < 0) {
+    LOG(WARNING) << "Cannot set a location bar height of less than zero";
+    return;
   }
 
-  content::RendererPreferences* renderer_prefs =
-      web_contents_->GetMutableRendererPrefs();
-  if (!renderer_prefs->enable_top_controls_position_calculation) {
-    return 0.0f;
+  if (height == location_bar_height_pix_) {
+    return;
   }
 
-  return renderer_prefs->top_controls_height;
+  location_bar_height_pix_ = height;
+
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
+    return;
+  }
+
+  host->WasResized();
 }
 
 void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
@@ -2035,16 +2052,12 @@ void WebView::DidCommitCompositorFrame() {
     received_surface_ids_.pop();
 
     compositor_->DidSwapCompositorFrame(surface_id,
-                                        previous_compositor_frames_);
+                                        &previous_compositor_frames_);
   }
 }
 
 bool WebView::IsInputPanelVisible() const {
   return false;
-}
-
-int WebView::GetLocationBarCurrentHeightPix() const {
-  return 0;
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(

@@ -159,13 +159,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   struct Params {
     Params() :
         context(NULL),
-        incognito(false),
-        location_bar_height(0) {}
+        incognito(false) {}
 
     BrowserContext* context;
     ScopedNewContentsHolder contents;
     bool incognito;
-    int location_bar_height;
   };
 
   virtual void Init(Params* params);
@@ -247,8 +245,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   ContentType blocked_content() const { return blocked_content_; }
 
-  int GetLocationBarMaxHeightPix();
-  double GetLocationBarMaxHeightDip();
+  float GetLocationBarHeightDip() const;
+  int GetLocationBarHeightPix() const;
+  void SetLocationBarHeightPix(int height);
+
   cc::TopControlsState location_bar_constraints() const {
     return location_bar_constraints_;
   }
@@ -310,7 +310,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
   virtual bool IsInputPanelVisible() const;
-  virtual int GetLocationBarCurrentHeightPix() const;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -388,7 +387,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                               size_t selection_anchor_position) final;
   void SelectionChanged() final;
   Compositor* GetCompositor() const final;
-  int GetLocationBarCurrentHeightDip() const final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
@@ -489,9 +487,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnLoadingChanged();
   virtual void OnLoadProgressChanged(double progress);
 
-  virtual void OnLoadStarted(const GURL& validated_url,
-                             bool is_error_frame);
-  virtual void OnLoadCommitted(const GURL& url);
+  virtual void OnLoadStarted(const GURL& validated_url);
+  virtual void OnLoadRedirected(const GURL& url,
+                                const GURL& original_url);
+  virtual void OnLoadCommitted(const GURL& url,
+                               bool is_error_page);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,
@@ -532,10 +532,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
-
-  virtual void OnLoadRedirected(
-      const GURL& url,
-      const GURL& original_url);
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
@@ -618,6 +614,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   bool did_scroll_focused_editable_node_into_view_;
   base::Timer auto_scroll_timer_;
 
+  int location_bar_height_pix_;
   cc::TopControlsState location_bar_constraints_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

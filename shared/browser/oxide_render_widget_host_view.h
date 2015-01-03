@@ -95,7 +95,8 @@ class RenderWidgetHostView final :
                         size_t offset,
                         const gfx::Range& range) final;
   gfx::Size GetPhysicalBackingSize() const final;
-  float GetTopControlsLayoutHeight() const final;
+  bool DoTopControlsShrinkBlinkSize() const final;
+  float GetTopControlsHeight() const final;
   void FocusedNodeChanged(bool is_editable_node) final;
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;
@@ -205,6 +206,8 @@ class RenderWidgetHostView final :
   gfx::Size last_size_;
 
   cc::CompositorFrameMetadata compositor_frame_metadata_;
+
+  bool top_controls_shrink_blink_size_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

@@ -92,7 +92,6 @@ class WebView final : public QObject,
   bool IsVisible() const final;
   bool HasFocus() const final;
   bool IsInputPanelVisible() const final;
-  int GetLocationBarCurrentHeightPix() const final;
 
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
@@ -116,9 +115,11 @@ class WebView final : public QObject,
   void OnLoadingChanged() final;
   void OnLoadProgressChanged(double progress) final;
 
-  void OnLoadStarted(const GURL& validated_url,
-                     bool is_error_frame) final;
-  void OnLoadCommitted(const GURL& url) final;
+  void OnLoadStarted(const GURL& validated_url) final;
+  void OnLoadRedirected(const GURL& url,
+                        const GURL& original_url) final;
+  void OnLoadCommitted(const GURL& url,
+                       bool is_error_page) final;
   void OnLoadStopped(const GURL& validated_url) final;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,
@@ -154,9 +155,6 @@ class WebView final : public QObject,
 			   const base::string16& suggestedFilename,
 			   const std::string& cookies,
 			   const std::string& referrer) final;
-
-  void OnLoadRedirected(const GURL& url,
-                        const GURL& original_url) final;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,

@@ -36,33 +36,22 @@
 
 namespace oxide {
 
-CompositorThreadProxyBase::CompositorThreadProxyBase() {
-  impl_thread_checker_.DetachFromThread();
-}
-
-CompositorThreadProxyBase::~CompositorThreadProxyBase() {}
-
-CompositorThreadProxyBase::OwnerData& CompositorThreadProxyBase::owner() {
-  DCHECK(owner_thread_checker_.CalledOnValidThread());
-  return owner_;
-}
-
-CompositorThreadProxyBase::ImplData& CompositorThreadProxyBase::impl() {
-  DCHECK(impl_thread_checker_.CalledOnValidThread());
-  return impl_;
-}
-
 CompositorThreadProxy::~CompositorThreadProxy() {}
 
-void CompositorThreadProxy::DidSwapCompositorFrame(
+void CompositorThreadProxy::DidSkipSwapCompositorFrame(
     uint32 surface_id,
-    scoped_refptr<CompositorFrameHandle>& frame) {
-  std::vector<scoped_refptr<CompositorFrameHandle> > frames;
-  frames.push_back(frame);
+    scoped_refptr<CompositorFrameHandle>* frame) {
+  FrameHandleVector frames;
+  if (frame) {
+    frames.push_back(*frame);
+    *frame = NULL;
+  }
 
-  frame = NULL;
-
-  DidSwapCompositorFrame(surface_id, frames);
+  impl_message_loop_->PostTask(
+      FROM_HERE,
+      base::Bind(
+        &CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread,
+        this, surface_id, frames));
 }
 
 void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
@@ -70,14 +59,17 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
     const gfx::Size& size,
     float scale,
     scoped_ptr<GLFrameData> gl_frame_data) {
-  DCHECK(gl_frame_data);
+  if (!gl_frame_data) {
+    DidSkipSwapCompositorFrame(surface_id, NULL);
+    return;
+  }
 
   scoped_refptr<CompositorFrameHandle> frame(
       new CompositorFrameHandle(surface_id, this, size, scale));
   frame->gl_frame_data_ = gl_frame_data.Pass();
 
   if (!owner().compositor) {
-    DidSwapCompositorFrame(surface_id, frame);
+    DidSkipSwapCompositorFrame(surface_id, &frame);
     return;
   }
 
@@ -94,7 +86,10 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
   scoped_ptr<cc::SharedBitmap> bitmap(
       content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
         size, bitmap_id));
-  DCHECK(bitmap);
+  if (!bitmap) {
+    DidSkipSwapCompositorFrame(surface_id, NULL);
+    return;
+  }
 
   scoped_refptr<CompositorFrameHandle> frame(
       new CompositorFrameHandle(surface_id, this, size, scale));
@@ -102,7 +97,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
       new SoftwareFrameData(id, damage_rect, bitmap->pixels()));
 
   if (!owner().compositor) {
-    DidSwapCompositorFrame(surface_id, frame);
+    DidSkipSwapCompositorFrame(surface_id, &frame);
     return;
   }
 
@@ -111,7 +106,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
 
 void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     uint32 surface_id,
-    std::vector<scoped_refptr<CompositorFrameHandle> > returned_frames) {
+    FrameHandleVector returned_frames) {
   if (!impl().output) {
     return;
   }
@@ -120,18 +115,13 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
     impl().output->DidSwapBuffers();
   }
 
-  std::vector<scoped_refptr<CompositorFrameHandle> > frames;
-  frames.swap(returned_frames);
-
-  while (!frames.empty()) {
-    scoped_refptr<CompositorFrameHandle> frame(frames.back());
-    frames.pop_back();
+  while (!returned_frames.empty()) {
+    scoped_refptr<CompositorFrameHandle> frame(returned_frames.back());
+    returned_frames.pop_back();
 
     if (!frame.get()) {
       continue;
     }
-
-    DCHECK(frame->proxy_ == this) << "Frame returned to wrong compositor";
 
     cc::CompositorFrameAck ack;
     if (frame->gl_frame_data()) {
@@ -155,7 +145,9 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
 
 void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
     uint32 surface_id,
-    cc::CompositorFrameAck* ack) {
+    const gfx::Size& size_in_pixels,
+    scoped_ptr<GLFrameData> gl_frame_data,
+    scoped_ptr<SoftwareFrameData> software_frame_data) {
   if (!impl().output) {
     return;
   }
@@ -164,12 +156,33 @@ void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
     return;
   }
 
-  impl().output->ReclaimResources(*ack);
+  cc::CompositorFrameAck ack;
+  if (gl_frame_data.get()) {
+    ack.gl_frame_data.reset(new cc::GLFrameData());
+    ack.gl_frame_data->mailbox = gl_frame_data->mailbox();
+    ack.gl_frame_data->size = size_in_pixels;
+  } else if (software_frame_data.get()) {
+    ack.last_software_frame_id = software_frame_data->id();
+  } else {
+    NOTREACHED();
+  }
+
+  impl().output->ReclaimResources(ack);
 }
 
+CompositorThreadProxy::OwnerData& CompositorThreadProxy::owner() {
+  DCHECK(owner_thread_checker_.CalledOnValidThread());
+  return owner_unsafe_access_;
+}
+
+CompositorThreadProxy::ImplData& CompositorThreadProxy::impl() {
+  DCHECK(impl_thread_checker_.CalledOnValidThread());
+  return impl_unsafe_access_;
+}
 CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)
     : owner_message_loop_(base::MessageLoopProxy::current()) {
   owner().compositor = compositor;
+  impl_thread_checker_.DetachFromThread();
 }
 
 void CompositorThreadProxy::CompositorDestroyed() {
@@ -213,20 +226,17 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
 
 void CompositorThreadProxy::DidSwapCompositorFrame(
     uint32 surface_id,
-    std::vector<scoped_refptr<CompositorFrameHandle> >& returned_frames) {
-  std::vector<scoped_refptr<CompositorFrameHandle> > frames;
-  for (std::vector<scoped_refptr<CompositorFrameHandle> >::iterator it =
-          returned_frames.begin();
-       it != returned_frames.end(); ++it) {
-    if ((*it)->HasOneRef()) {
-      frames.push_back(*it);
-    }
+    FrameHandleVector* returned_frames) {
+  FrameHandleVector frames;
+  std::swap(frames, *returned_frames);
+
+  for (FrameHandleVector::iterator it = frames.begin();
+       it != frames.end(); ++it) {
+    CHECK((*it)->HasOneRef()) <<
+        "Returned a frame that's still referenced from outside of the "
+        "compositor";
+    DCHECK((*it)->proxy_ == this) << "Frame returned to wrong compositor";
   }
-  if (frames.size() < returned_frames.size()) {
-    LOG(WARNING) <<
-        "Some frames passed to DidSwapCompositorFrame are still in use";
-  }
-  returned_frames.clear();
 
   impl_message_loop_->PostTask(
       FROM_HERE,
@@ -240,24 +250,13 @@ void CompositorThreadProxy::ReclaimResourcesForFrame(
   DCHECK(frame) << "Null frame";
   DCHECK(frame->proxy_ == this) << "Frame returned to wrong compositor";
 
-  cc::CompositorFrameAck* ack = new cc::CompositorFrameAck();
-  if (frame->gl_frame_data()) {
-    scoped_ptr<GLFrameData> gl_frame_data = frame->gl_frame_data_.Pass();
-    ack->gl_frame_data.reset(new cc::GLFrameData());
-    ack->gl_frame_data->mailbox = gl_frame_data->mailbox();
-    ack->gl_frame_data->size = frame->size_in_pixels();
-  } else {
-    DCHECK(frame->software_frame_data());
-    scoped_ptr<SoftwareFrameData> software_frame_data =
-        frame->software_frame_data_.Pass();
-    ack->last_software_frame_id = software_frame_data->id();
-  }
-
   impl_message_loop_->PostTask(
       FROM_HERE,
       base::Bind(
         &CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread,
-        this, frame->surface_id_, base::Owned(ack)));
+        this, frame->surface_id_, frame->size_in_pixels(),
+        base::Passed(&frame->gl_frame_data_),
+        base::Passed(&frame->software_frame_data_)));
 }
 
 } // namespace oxide

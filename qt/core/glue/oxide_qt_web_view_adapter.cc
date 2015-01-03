@@ -239,8 +239,7 @@ void WebViewAdapter::init(bool incognito,
                           WebContextAdapter* context,
                           OxideQNewViewRequest* new_view_request,
                           const QByteArray& restoreState,
-                          RestoreType restoreType,
-                          int location_bar_height) {
+                          RestoreType restoreType) {
   DCHECK(!isInitialized());
 
   bool script_opened = false;
@@ -284,7 +283,6 @@ void WebViewAdapter::init(bool incognito,
   oxide::WebView::Params params;
   params.context = c->GetContext();
   params.incognito = incognito;
-  params.location_bar_height = location_bar_height;
 
   view_->Init(&params);
 }
@@ -554,8 +552,12 @@ void WebViewAdapter::prepareToClose() {
   view_->PrepareToClose();
 }
 
-int WebViewAdapter::locationBarMaxHeight() {
-  return view_->GetLocationBarMaxHeightPix();
+int WebViewAdapter::locationBarHeight() {
+  return view_->GetLocationBarHeightPix();
+}
+
+void WebViewAdapter::setLocationBarHeight(int height) {
+  view_->SetLocationBarHeightPix(height);
 }
 
 int WebViewAdapter::locationBarOffsetPix() {

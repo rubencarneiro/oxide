@@ -29,6 +29,9 @@
 #include "cc/output/output_surface.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
+#include "content/common/gpu/gpu_channel_manager.h"
+#include "content/gpu/gpu_child_thread.h"
+#include "gpu/command_buffer/service/sync_point_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
 
 #include "shared/port/content/common/gpu_thread_shim_oxide.h"
@@ -43,6 +46,10 @@ void WakeUpGpuThread() {}
 
 void InitializeOnCompositorThread() {
   base::ThreadRestrictions::SetIOAllowed(false);
+}
+
+bool IsCurrentlyOnGpuThread() {
+  return content::GpuChildThread::GetTaskRunner()->BelongsToCurrentThread();
 }
 
 }
@@ -62,7 +69,7 @@ class GLFrameHandle : public GLFrameData {
         context_provider_(context_provider) {}
 
   virtual ~GLFrameHandle() {
-    content::oxide_gpu_shim::GetGpuThreadTaskRunner()->PostTask(
+    content::GpuChildThread::GetTaskRunner()->PostTask(
         FROM_HERE,
         base::Bind(&content::oxide_gpu_shim::ReleaseTextureRef,
                    client_id_, route_id_, base::Unretained(ref_)));
@@ -113,12 +120,14 @@ class CompositorUtils::FetchTextureResourcesTask :
   }
 
   void FetchTextureResourcesOnGpuThread() {
-    if (content::oxide_gpu_shim::IsSyncPointRetired(sync_point_)) {
+    gpu::SyncPointManager* sync_point_manager =
+        content::oxide_gpu_shim::GetGpuChannelManager()->sync_point_manager();
+    if (sync_point_manager->IsSyncPointRetired(sync_point_)) {
       OnSyncPointRetired();
       return;
     }
 
-    content::oxide_gpu_shim::AddSyncPointCallback(
+    sync_point_manager->AddSyncPointCallback(
         sync_point_,
         base::Bind(&FetchTextureResourcesTask::OnSyncPointRetired,
                    this));
@@ -179,9 +188,12 @@ CompositorUtils::CompositorUtils()
 CompositorUtils::~CompositorUtils() {}
 
 void CompositorUtils::InitializeOnGpuThread() {
+  DCHECK(IsCurrentlyOnGpuThread());
+
   base::AutoLock lock(fetch_texture_resources_lock_);
   gpu_thread_is_processing_task_ = true;
-  content::oxide_gpu_shim::AddGpuThreadTaskObserver(this);
+
+  base::MessageLoop::current()->AddTaskObserver(this);
 }
 
 void CompositorUtils::WillProcessTask(const base::PendingTask& pending_task) {
@@ -237,7 +249,7 @@ void CompositorUtils::Initialize() {
       content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
   if (gpu_channel_host.get()) {
     can_use_gpu_ = true;
-    content::oxide_gpu_shim::GetGpuThreadTaskRunner()->PostTask(
+    content::GpuChildThread::GetTaskRunner()->PostTask(
         FROM_HERE,
         base::Bind(&CompositorUtils::InitializeOnGpuThread,
                    base::Unretained(this)));
@@ -271,7 +283,7 @@ void CompositorUtils::CreateGLFrameHandle(
   if (!fetch_texture_resources_pending_) {
     fetch_texture_resources_pending_ = true;
     if (!gpu_thread_is_processing_task_ &&
-        !content::oxide_gpu_shim::GetGpuThreadTaskRunner()->PostTask(
+        !content::GpuChildThread::GetTaskRunner()->PostTask(
           FROM_HERE, base::Bind(&WakeUpGpuThread))) {
       // FIXME: Send an error asynchronously
       return;

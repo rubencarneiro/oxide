@@ -132,8 +132,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
             WebContextAdapter* context,
             OxideQNewViewRequest* new_view_request,
             const QByteArray& restoreState,
-            RestoreType restoreType,
-            int location_bar_height);
+            RestoreType restoreType);
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -207,7 +206,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void prepareToClose();
 
-  int locationBarMaxHeight();
+  int locationBarHeight();
+  void setLocationBarHeight(int height);
   int locationBarOffsetPix();
   int locationBarContentOffsetPix();
   LocationBarMode locationBarMode() const;
@@ -256,7 +256,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual QRect GetViewBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
-  virtual int GetLocationBarCurrentHeightPix() const = 0;
 
   virtual void AddMessageToConsole(int level,
                                    const QString& message,

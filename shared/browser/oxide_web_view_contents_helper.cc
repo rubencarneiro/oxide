@@ -87,20 +87,12 @@ void WebViewContentsHelper::CloseContents(content::WebContents* source) {
   BrowserProcessMain::GetInstance()->DecrementPendingUnloadsCount();
 }
 
-WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
-                                             double location_bar_height)
+WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
     : BrowserContextObserver(
           BrowserContext::FromContent(contents->GetBrowserContext())),
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       web_contents_(contents),
       owns_web_preferences_(false) {
-  if (location_bar_height > 0.0f) {
-    content::RendererPreferences* renderer_prefs =
-        web_contents_->GetMutableRendererPrefs();
-    renderer_prefs->enable_top_controls_position_calculation = true;
-    renderer_prefs->top_controls_height = location_bar_height;
-  }
-
   Init();
 }
 
@@ -111,15 +103,6 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       web_contents_(contents),
       owns_web_preferences_(false) {
-  content::RendererPreferences* renderer_prefs =
-      web_contents_->GetMutableRendererPrefs();
-  content::RendererPreferences* opener_prefs =
-      opener->GetWebContents()->GetMutableRendererPrefs();
-
-  renderer_prefs->enable_top_controls_position_calculation =
-      opener_prefs->enable_top_controls_position_calculation;
-  renderer_prefs->top_controls_height = opener_prefs->top_controls_height;
-
   Init();
 
   WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());

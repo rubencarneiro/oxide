@@ -406,14 +406,6 @@ bool OxideQQuickWebViewPrivate::HasFocus() const {
   return input_area_->hasActiveFocus();
 }
 
-int OxideQQuickWebViewPrivate::GetLocationBarCurrentHeightPix() const {
-  if (!location_bar_controller_) {
-    return 0;
-  }
-
-  return qRound(location_bar_controller_->height());
-}
-
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
     int level,
     const QString& message,
@@ -661,9 +653,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
        context ? OxideQQuickWebContextPrivate::get(context) : NULL,
        construct_props_->new_view_request,
        construct_props_->restore_state,
-       construct_props_->restore_type,
-       location_bar_controller_ ?
-           qRound(location_bar_controller_->maxHeight()) : 0);
+       construct_props_->restore_type);
 }
 
 // static

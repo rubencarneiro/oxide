@@ -344,10 +344,6 @@ bool WebView::IsInputPanelVisible() const {
   return im->isVisible();
 }
 
-int WebView::GetLocationBarCurrentHeightPix() const {
-  return adapter_->GetLocationBarCurrentHeightPix();
-}
-
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
     bool* did_suppress_message) {
@@ -423,18 +419,27 @@ void WebView::OnLoadProgressChanged(double progress) {
   adapter_->LoadProgressChanged(progress);
 }
 
-void WebView::OnLoadStarted(const GURL& validated_url,
-                            bool is_error_frame) {
+void WebView::OnLoadStarted(const GURL& validated_url) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       OxideQLoadEvent::TypeStarted);
   adapter_->LoadEvent(&event);
 }
 
-void WebView::OnLoadCommitted(const GURL& url) {
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {
+  OxideQLoadEvent event(
+     QUrl(QString::fromStdString(url.spec())),
+     QUrl(QString::fromStdString(original_url.spec())));
+  adapter_->LoadEvent(&event);
+}
+
+void WebView::OnLoadCommitted(const GURL& url,
+                              bool is_error_page) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(url.spec())),
-      OxideQLoadEvent::TypeCommitted);
+      OxideQLoadEvent::TypeCommitted,
+      is_error_page);
   adapter_->LoadEvent(&event);
 }
 
@@ -450,7 +455,6 @@ void WebView::OnLoadFailed(const GURL& validated_url,
                            const std::string& error_description) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeFailed,
       ErrorDomainFromErrorCode(error_code),
       QString::fromStdString(error_description),
       error_code);
@@ -621,19 +625,6 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   adapter_->NavigationRequested(&request);
 
   return request.action() == OxideQNavigationRequest::ActionAccept;
-}
-
-void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {
-  OxideQLoadEvent event(
-     QUrl(QString::fromStdString(url.spec())),
-     OxideQLoadEvent::TypeRedirected,
-     OxideQLoadEvent::ErrorDomain(),
-     QString(),
-     int(),
-     QUrl(QString::fromStdString(original_url.spec())));
-
-  adapter_->LoadEvent(&event);
 }
 
 oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {

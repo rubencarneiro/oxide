@@ -25,13 +25,9 @@
 class OxideQQuickLocationBarControllerPrivate {
  public:
   OxideQQuickLocationBarControllerPrivate()
-      : view(NULL),
-        max_height(0.0f),
-        height(0.0f) {}
+      : view(NULL) {}
 
   OxideQQuickWebView* view;
-  qreal max_height;
-  qreal height;
 };
 
 OxideQQuickLocationBarController::OxideQQuickLocationBarController(
@@ -44,36 +40,27 @@ OxideQQuickLocationBarController::OxideQQuickLocationBarController(
 
 OxideQQuickLocationBarController::~OxideQQuickLocationBarController() {}
 
-qreal OxideQQuickLocationBarController::maxHeight() const {
+qreal OxideQQuickLocationBarController::height() const {
   Q_D(const OxideQQuickLocationBarController);
 
   OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(d->view);
-  if (p->isInitialized()) {
-    return p->locationBarMaxHeight();
-  }
-
-  return d->max_height;
+  return p->locationBarHeight();
 }
 
-void OxideQQuickLocationBarController::setMaxHeight(qreal height) {
+void OxideQQuickLocationBarController::setHeight(qreal height) {
   Q_D(OxideQQuickLocationBarController);
 
-  if (OxideQQuickWebViewPrivate::get(d->view)->isInitialized()) {
-    qWarning() << "LocationBarController.maxheight must be set during construction";
-    return;
-  }
-
   if (height < 0.0f) {
-    qWarning() << "LocationBarController.maxHeight cannot be negative";
+    qWarning() << "LocationBarController.height cannot be negative";
     return;
   }
 
-  if (height == d->max_height) {
+  if (height == this->height()) {
     return;
   }
 
-  d->max_height = height;
-  Q_EMIT maxHeightChanged();
+  OxideQQuickWebViewPrivate::get(d->view)->setLocationBarHeight(height);
+  Q_EMIT heightChanged();
 }
 
 OxideQQuickLocationBarController::Mode
@@ -101,7 +88,7 @@ void OxideQQuickLocationBarController::setMode(Mode mode) {
     return;
   }
 
-  if (maxHeight() == 0) {
+  if (height() == 0) {
     return;
   }
 
@@ -121,27 +108,4 @@ qreal OxideQQuickLocationBarController::contentOffset() const {
 
   return OxideQQuickWebViewPrivate::get(
       d->view)->locationBarContentOffsetPix();
-}
-
-qreal OxideQQuickLocationBarController::height() const {
-  Q_D(const OxideQQuickLocationBarController);
-
-  return d->height;
-}
-
-void OxideQQuickLocationBarController::setHeight(qreal height) {
-  Q_D(OxideQQuickLocationBarController);
-
-  if (height == d->height) {
-    return;
-  }
-
-  d->height = height;
-
-  OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(d->view);
-  if (p->isInitialized() && d->view->window()) {
-    p->wasResized();
-  }
-
-  Q_EMIT heightChanged();
 }

@@ -23,15 +23,8 @@ Item {
         id: locationBar
         anchors.left: parent.left
         anchors.right: parent.right
-        height: webView.locationBarController.maxHeight + webView.locationBarController.offset
+        height: webView.locationBarController.height + webView.locationBarController.offset
         color: "black"
-      }
-
-      locationBarController.height: locationBar.height
-
-      property var newViewRequestedDelegate: null
-      onNewViewRequested: {
-        newViewRequestedDelegate(request);
       }
     }
   }
@@ -94,14 +87,14 @@ Item {
 
       var l = target.locationBarController;
 
-      var good = Math.abs(l.contentOffset - l.offset - l.maxHeight) <= 1;
+      var good = Math.abs(l.contentOffset - l.offset - l.height) <= 1;
       qtest_hadGoodUpdate |= good;
       if (qtest_hadGoodUpdate) {
         qtest_inconsistentPropertiesSeen |= !good
       }
 
-      qtest_shown = l.offset == 0 && l.maxHeight > 0;
-      qtest_hidden = l.contentOffset == 0 && l.maxHeight > 0;
+      qtest_shown = l.offset == 0 && l.height > 0;
+      qtest_hidden = l.contentOffset == 0 && l.height > 0;
       qtest_animating = l.contentOffset > 0 && l.offset < 0;
     }
 
@@ -202,8 +195,8 @@ Item {
     // Ensure that the default are as expected
     function test_LocationBarController1_defaults() {
       var webView = webViewFactory.createObject(top, {});
-      compare(webView.locationBarController.maxHeight, 0,
-              "Default maxHeight should be 0");
+      compare(webView.locationBarController.height, 0,
+              "Default height should be 0");
       compare(webView.locationBarController.mode, LocationBarController.ModeAuto,
               "Default mode should be auto");
       compare(webView.locationBarController.offset, 0,
@@ -214,29 +207,32 @@ Item {
       deleteWebView(webView);
     }
 
-    // Ensure that maxHeight cannot be changed after construction, and check
-    // that it can't be set to an invalid value
-    function test_LocationBarController2_maxHeight() {
-      spy.signalName = "maxHeightChanged";
+    // Ensure that height cannot be set to an invalid value, and verify the
+    // notify signal works correctly
+    function test_LocationBarController2_height() {
+      spy.signalName = "heightChanged";
 
       var webView = webViewFactory.createObject(top, {});
       spy.target = webView.locationBarController;
 
-      webView.locationBarController.maxHeight = "80";
+      webView.locationBarController.height = 80;
 
-      compare(webView.locationBarController.maxHeight, 0);
-      compare(spy.count, 0);
+      compare(webView.locationBarController.height, 80);
+      compare(spy.count, 1);
 
-      deleteWebView(webView);
+      webView.locationBarController.height = -80;
 
-      webView = webViewFactory.createObject(top, { "locationBarController.maxHeight": -80 });
-      compare(webView.locationBarController.maxHeight, 0);
+      compare(webView.locationBarController.height, 80);
+      compare(spy.count, 1);
 
-      deleteWebView(webView);
+      webView.locationBarController.height = 0;
+
+      compare(webView.locationBarController.height, 0);
+      compare(spy.count, 2);
     }
 
     // Ensure that changing the mode has no effect when not in use
-    function test_LocationBarController3_off() {
+    function test_LocationBarController3_mode_off() {
       var webView = webViewFactory.createObject(top, {});
       locationBarSpy.target = webView;
       spy.target = webView.locationBarController;
@@ -267,8 +263,8 @@ Item {
     }
 
     // Ensure that changing the mode does have an effect when in use
-    function test_LocationBarController4_on() {
-      var webView = webViewFactory.createObject(top, { "locationBarController.maxHeight": 60 });
+    function test_LocationBarController4_mode_on() {
+      var webView = webViewFactory.createObject(top, { "locationBarController.height": 60 });
       locationBarSpy.target = webView;
       spy.target = webView.locationBarController;
       spy.signalName = "modeChanged";
@@ -315,29 +311,6 @@ Item {
       verify(locationBarSpy.lastAnimationDuration > 150 &&
              locationBarSpy.lastAnimationDuration < 250);
 
-      deleteWebView(webView);
-    }
-
-    // Ensure that maxHeight is inherited by script opened webviews
-    function test_LocationBarController5_script_opened() {
-      var webView = webViewFactory.createObject(top, { "locationBarController.maxHeight": 60 });
-
-      var created;
-      function newViewRequestedDelegate(request) {
-        created = webViewFactory.createObject(null, { "request": request, "locationBarController.maxHeight": 100 });
-      }
-      webView.newViewRequestedDelegate = newViewRequestedDelegate;
-
-      webView.context.popupBlockerEnabled = false;
-      webView.url = "http://testsuite/empty.html";
-      verify(webView.waitForLoadSucceeded());
-
-      webView.getTestApi().evaluateCode("window.open(\"tst_LocationBarController.html\");", true);
-
-      verify(created);
-      compare(created.locationBarController.maxHeight, 60);
-
-      deleteWebView(created);
       deleteWebView(webView);
     }
   }
