@@ -33,7 +33,7 @@
 
 #include "base/memory/scoped_vector.h"
 #include "base/strings/utf_string_conversions.h"
-#include "url/gurl.h"
+#include "cc/output/compositor_frame_metadata.h"
 #include "content/common/cursors/webcursor.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
@@ -46,6 +46,7 @@
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/range/range.h"
+#include "url/gurl.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
@@ -60,7 +61,6 @@
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqsslcertificate_p.h"
-#include "qt/core/base/oxide_qt_event_utils.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
@@ -537,37 +537,41 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
   FrameMetadataChangeFlags flags = FRAME_METADATA_CHANGE_NONE;
 
-  if (old.device_scale_factor !=
-      compositor_frame_metadata().device_scale_factor) {
-    flags |= FRAME_METADATA_CHANGE_DEVICE_SCALE;
-  }
   if (old.root_scroll_offset.x() !=
-      compositor_frame_metadata().root_scroll_offset.x()) {
-    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_X;
-  }
-  if (old.root_scroll_offset.y() !=
-      compositor_frame_metadata().root_scroll_offset.y()) {
-    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y;
+          compositor_frame_metadata().root_scroll_offset.x() ||
+      old.root_scroll_offset.y() !=
+          compositor_frame_metadata().root_scroll_offset.y()) {
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
   }
   if (old.root_layer_size.width() !=
-      compositor_frame_metadata().root_layer_size.width()) {
-    flags |= FRAME_METADATA_CHANGE_CONTENT_WIDTH;
-  }
-  if (old.root_layer_size.height() !=
-      compositor_frame_metadata().root_layer_size.height()) {
-    flags |= FRAME_METADATA_CHANGE_CONTENT_HEIGHT;
+          compositor_frame_metadata().root_layer_size.width() ||
+      old.root_layer_size.height() !=
+          compositor_frame_metadata().root_layer_size.height()) {
+    flags |= FRAME_METADATA_CHANGE_CONTENT;
   }
   if (old.scrollable_viewport_size.width() !=
-      compositor_frame_metadata().scrollable_viewport_size.width()) {
-    flags |= FRAME_METADATA_CHANGE_VIEWPORT_WIDTH;
+          compositor_frame_metadata().scrollable_viewport_size.width() ||
+      old.scrollable_viewport_size.height() !=
+          compositor_frame_metadata().scrollable_viewport_size.height()) {
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT;
   }
-  if (old.scrollable_viewport_size.height() !=
-      compositor_frame_metadata().scrollable_viewport_size.height()) {
-    flags |= FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT;
+  if (old.location_bar_offset.y() !=
+      compositor_frame_metadata().location_bar_offset.y()) {
+    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
   }
-  if (old.page_scale_factor !=
-      compositor_frame_metadata().page_scale_factor) {
-    flags |= FRAME_METADATA_CHANGE_PAGE_SCALE;
+  if (old.location_bar_content_translation.y() !=
+      compositor_frame_metadata().location_bar_content_translation.y()) {
+    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
+  }
+  if (old.device_scale_factor !=
+          compositor_frame_metadata().device_scale_factor ||
+      old.page_scale_factor !=
+          compositor_frame_metadata().page_scale_factor) {
+    flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
+    flags |= FRAME_METADATA_CHANGE_CONTENT;
+    flags |= FRAME_METADATA_CHANGE_VIEWPORT;
+    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
+    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
   }
 
   adapter_->FrameMetadataUpdated(flags);
@@ -934,12 +938,17 @@ void WebView::HandleMouseEvent(QMouseEvent* event) {
   }
 
   oxide::WebView::HandleMouseEvent(
-      MakeWebMouseEvent(event, GetDeviceScaleFactor()));
+      MakeWebMouseEvent(event,
+                        GetDeviceScaleFactor(),
+                        GetLocationBarContentOffsetDip()));
 }
 
 void WebView::HandleTouchEvent(QTouchEvent* event) {
   ScopedVector<ui::TouchEvent> events;
-  MakeUITouchEvents(event, GetDeviceScaleFactor(), &events);
+  touch_event_factory_.MakeEvents(event,
+                                  GetDeviceScaleFactor(),
+                                  GetLocationBarContentOffsetDip(),
+                                  &events);
 
   for (size_t i = 0; i < events.size(); ++i) {
     oxide::WebView::HandleTouchEvent(*events[i]);
@@ -948,7 +957,9 @@ void WebView::HandleTouchEvent(QTouchEvent* event) {
 
 void WebView::HandleWheelEvent(QWheelEvent* event) {
   oxide::WebView::HandleWheelEvent(
-      MakeWebMouseWheelEvent(event, GetDeviceScaleFactor()));
+      MakeWebMouseWheelEvent(event,
+                             GetDeviceScaleFactor(),
+                             GetLocationBarContentOffsetDip()));
 }
 
 QVariant WebView::InputMethodQuery(Qt::InputMethodQuery query) const {

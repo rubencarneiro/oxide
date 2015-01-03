@@ -26,6 +26,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/base/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
@@ -197,6 +198,8 @@ class WebView final : public QObject,
   bool has_input_method_state_;
 
   scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
+
+  UITouchEventFactory touch_event_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

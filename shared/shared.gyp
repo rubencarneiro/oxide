@@ -385,6 +385,8 @@
         'renderer/oxide_script_message_request_object_handler.h',
         'renderer/oxide_script_referenced_object.cc',
         'renderer/oxide_script_referenced_object.h',
+        'renderer/oxide_top_controls_handler.cc',
+        'renderer/oxide_top_controls_handler.h',
         'renderer/oxide_user_script_scheduler.cc',
         'renderer/oxide_user_script_scheduler.h',
         'renderer/oxide_user_script_slave.cc',
