@@ -186,7 +186,6 @@ struct BrowserContextSharedData {
         product(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
         user_agent_string_is_default(true),
         user_script_master(context),
-        devtools_http_handler(NULL),
         devtools_enabled(params.devtools_enabled),
         devtools_port(params.devtools_port),
         devtools_ip(params.devtools_ip) {}
@@ -198,7 +197,7 @@ struct BrowserContextSharedData {
   bool user_agent_string_is_default;
   UserScriptMaster user_script_master;
 
-  content::DevToolsHttpHandler* devtools_http_handler;
+  scoped_ptr<content::DevToolsHttpHandler> devtools_http_handler;
   bool devtools_enabled;
   int devtools_port;
   std::string devtools_ip;
@@ -613,11 +612,6 @@ BrowserContextImpl::~BrowserContextImpl() {
     delete otr_context_;
     otr_context_ = NULL;
   }
-
-  if (data_.devtools_http_handler) {
-    data_.devtools_http_handler->Stop();
-    data_.devtools_http_handler = NULL;
-  }
 }
 
 BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
@@ -647,12 +641,17 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
 
     scoped_ptr<content::DevToolsHttpHandler::ServerSocketFactory> factory(
         new TCPServerSocketFactory(ip, data_.devtools_port, 1));
-    data_.devtools_http_handler = content::DevToolsHttpHandler::Start(
-        factory.Pass(),
-        std::string(),
-        new DevtoolsHttpHandlerDelegate(),
-        base::FilePath());
+    data_.devtools_http_handler.reset(
+        content::DevToolsHttpHandler::Start(factory.Pass(),
+                                            std::string(),
+                                            new DevtoolsHttpHandlerDelegate(),
+                                            base::FilePath()));
   }
+}
+
+scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
+    const base::FilePath& partition_path) {
+  return nullptr;
 }
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {

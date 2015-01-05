@@ -28,6 +28,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/layers/delegated_frame_resource_collection.h"
+#include "cc/output/compositor_frame_metadata.h"
 #include "content/common/cursors/webcursor.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/rect.h"
@@ -68,6 +69,10 @@ class RenderWidgetHostView final :
     return selection_text_;
   }
 
+  const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
+    return compositor_frame_metadata_;
+  }
+
   // content::RenderWidgetHostViewBase implementation
   void Blur() final;
 
@@ -90,6 +95,8 @@ class RenderWidgetHostView final :
                         size_t offset,
                         const gfx::Range& range) final;
   gfx::Size GetPhysicalBackingSize() const final;
+  bool DoTopControlsShrinkBlinkSize() const final;
+  float GetTopControlsHeight() const final;
   void FocusedNodeChanged(bool is_editable_node) final;
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;
@@ -114,7 +121,7 @@ class RenderWidgetHostView final :
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
-      const base::Callback<void(bool, const SkBitmap&)>& callback,
+      content::ReadbackRequestCallback& callback,
       const SkColorType color_type) final;
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
@@ -197,6 +204,10 @@ class RenderWidgetHostView final :
 
   bool is_showing_;
   gfx::Size last_size_;
+
+  cc::CompositorFrameMetadata compositor_frame_metadata_;
+
+  bool top_controls_shrink_blink_size_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

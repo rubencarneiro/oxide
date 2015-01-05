@@ -30,6 +30,7 @@
 #include "base/strings/string16.h"
 #include "base/timer/timer.h"
 #include "base/containers/scoped_ptr_hash_map.h"
+#include "cc/input/top_controls_state.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
@@ -44,8 +45,9 @@
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "ui/base/ime/text_input_type.h"
-#include "ui/gfx/rect.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_content_types.h"
@@ -207,6 +209,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void VisibilityChanged();
   void FocusChanged();
   void InputPanelVisibilityChanged();
+  void UpdateWebPreferences();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -232,10 +235,26 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
   }
+  gfx::Point GetCompositorFrameScrollOffsetPix();
+  gfx::Size GetCompositorFrameContentSizePix();
+  gfx::Size GetCompositorFrameViewportSizePix();
+
+  int GetLocationBarOffsetPix();
+  int GetLocationBarContentOffsetPix();
+  float GetLocationBarContentOffsetDip();
 
   const SecurityStatus& security_status() const { return security_status_; }
 
   ContentType blocked_content() const { return blocked_content_; }
+
+  float GetLocationBarHeightDip() const;
+  int GetLocationBarHeightPix() const;
+  void SetLocationBarHeightPix(int height);
+
+  cc::TopControlsState location_bar_constraints() const {
+    return location_bar_constraints_;
+  }
+  void SetLocationBarConstraints(cc::TopControlsState constraints);
 
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
@@ -263,8 +282,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                              const base::Callback<void(bool)>& callback,
                              content::CertificateRequestResultType* result);
                              
-  void UpdateWebPreferences();
-
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
@@ -336,6 +353,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void MaybeResetAutoScrollTimer();
   void ScrollFocusedEditableNodeIntoView();
 
+  float GetFrameMetadataScaleToPix();
+
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const override;
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -359,7 +378,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   // RenderWidgetHostViewDelegate implementation
   void EvictCurrentFrame() final;
-  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata) final;
   void ProcessAckedTouchEvent(bool consumed) final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void TextInputStateChanged(ui::TextInputType type,
@@ -370,13 +388,12 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                               size_t selection_cursor_position,
                               size_t selection_anchor_position) final;
   void SelectionChanged() final;
-  WebView* GetWebView() final;
   Compositor* GetCompositor() const final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
                                        const content::OpenURLParams& params) final;
-  void NavigationStateChanged(const content::WebContents* source,
+  void NavigationStateChanged(content::WebContents* source,
                               content::InvalidateTypes changed_flags) final;
   void VisibleSSLStateChanged(const content::WebContents* source) final;
   bool ShouldCreateWebContents(
@@ -412,7 +429,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void BeforeUnloadFired(content::WebContents* source,
                          bool proceed,
                          bool* proceed_to_fire_unload) final;
-  content::JavaScriptDialogManager* GetJavaScriptDialogManager() final;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager(
+      content::WebContents* source) final;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) final;
   void ToggleFullscreenModeForTab(content::WebContents* source,
@@ -449,7 +467,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                    int error_code,
                    const base::string16& error_description) final;
   void DidGetRedirectForResourceRequest(
-      content::RenderViewHost* render_view_host,
+      content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) final;
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) final;
@@ -474,9 +492,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnLoadingChanged();
   virtual void OnLoadProgressChanged(double progress);
 
-  virtual void OnLoadStarted(const GURL& validated_url,
-                             bool is_error_frame);
-  virtual void OnLoadCommitted(const GURL& url);
+  virtual void OnLoadStarted(const GURL& validated_url);
+  virtual void OnLoadRedirected(const GURL& url,
+                                const GURL& original_url);
+  virtual void OnLoadCommitted(const GURL& url,
+                               bool is_error_page);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,
@@ -517,10 +537,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
-
-  virtual void OnLoadRedirected(
-      const GURL& url,
-      const GURL& original_url);
 
   virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
@@ -585,6 +601,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   ContentType blocked_content_;
 
+  cc::CompositorFrameMetadata pending_compositor_frame_metadata_;
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
@@ -603,6 +620,9 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   // https://launchpad.net/bugs/1370366
   bool did_scroll_focused_editable_node_into_view_;
   base::Timer auto_scroll_timer_;
+
+  int location_bar_height_pix_;
+  cc::TopControlsState location_bar_constraints_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

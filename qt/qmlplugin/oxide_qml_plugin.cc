@@ -33,6 +33,7 @@
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/api/oxideqquickcookiemanager_p.h"
 #include "qt/quick/api/oxideqquickglobal_p.h"
+#include "qt/quick/api/oxideqquicklocationbarcontroller_p.h"
 #include "qt/quick/api/oxideqquicknavigationhistory_p.h"
 #include "qt/quick/api/oxideqquickscriptmessage_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagehandler_p.h"
@@ -111,10 +112,16 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterUncreatableType<OxideQQuickCookieManager, 1>(uri, 1, 3, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
+    qmlRegisterUncreatableType<OxideQLoadEvent, 1>(uri, 1, 3, "LoadEvent",
+        "LoadEvent is delivered by WebView.loadingChanged");
     qmlRegisterType<OxideQQuickWebContext, 1>(uri, 1, 3, "WebContext");
     qmlRegisterType<OxideQQuickWebView, 1>(uri, 1, 3, "WebView");
 
+    qmlRegisterUncreatableType<OxideQQuickLocationBarController>(uri, 1, 4, "LocationBarController",
+        "LocationBarController is accessed via WebView.locationBarController");
     qmlRegisterType<OxideQQuickWebView, 2>(uri, 1, 4, "WebView");
+
+    qmlRegisterType<OxideQQuickWebView, 3>(uri, 1, 5, "WebView");
   }
 };
 

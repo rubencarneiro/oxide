@@ -28,6 +28,7 @@
 
 #include "base/lazy_instance.h"
 #include "base/message_loop/message_loop_proxy.h"
+#include "content/public/browser/browser_thread.h"
 #include "url/gurl.h"
 
 #include "qt/core/base/oxide_qt_screen_utils.h"
@@ -43,6 +44,11 @@ namespace qt {
 
 namespace {
 base::LazyInstance<QPointer<QThread> > g_io_thread;
+
+void LaunchURLExternallyOnUIThread(const GURL& url) {
+  QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));
+}
+
 }
 
 BrowserPlatformIntegration::BrowserPlatformIntegration(
@@ -59,7 +65,16 @@ void BrowserPlatformIntegration::onApplicationStateChanged() {
 }
 
 bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
-  return QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&LaunchURLExternallyOnUIThread, url));
+  } else {
+    LaunchURLExternallyOnUIThread(url);
+  }
+
+  return true;
 }
 
 bool BrowserPlatformIntegration::IsTouchSupported() {

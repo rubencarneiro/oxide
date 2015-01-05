@@ -56,6 +56,7 @@
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/menu_item.h"
+#include "content/public/common/renderer_preferences.h"
 #include "content/public/common/url_constants.h"
 #include "content/public/common/web_preferences.h"
 #include "ipc/ipc_message_macros.h"
@@ -407,6 +408,11 @@ void WebView::ScrollFocusedEditableNodeIntoView() {
   host->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
 
+float WebView::GetFrameMetadataScaleToPix() {
+  return compositor_frame_metadata().device_scale_factor *
+         compositor_frame_metadata().page_scale_factor;
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return 0;
 }
@@ -422,6 +428,8 @@ void WebView::CompositorDidCommit() {
     return;
   }
 
+  pending_compositor_frame_metadata_ = rwhv->compositor_frame_metadata();
+
   rwhv->CompositorDidCommit();
 }
 
@@ -434,6 +442,16 @@ void WebView::CompositorSwapFrame(uint32 surface_id,
   }
   current_compositor_frame_ = frame;
 
+  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
+  compositor_frame_metadata_ = pending_compositor_frame_metadata_;
+
+  bool has_mobile_viewport = HasMobileViewport(compositor_frame_metadata_);
+  bool has_fixed_page_scale = HasFixedPageScale(compositor_frame_metadata_);
+  gesture_provider_->SetDoubleTapSupportForPageEnabled(
+      !has_fixed_page_scale && !has_mobile_viewport);
+
+  // TODO(chrisccoulson): Merge these
+  OnFrameMetadataUpdated(old);
   OnSwapCompositorFrame();
 }
 
@@ -495,19 +513,6 @@ void WebView::EvictCurrentFrame() {
   OnEvictCurrentFrame();
 }
 
-void WebView::UpdateFrameMetadata(
-    const cc::CompositorFrameMetadata& metadata) {
-  bool has_mobile_viewport = HasMobileViewport(metadata);
-  bool has_fixed_page_scale = HasFixedPageScale(metadata);
-  gesture_provider_->SetDoubleTapSupportForPageEnabled(
-      !has_fixed_page_scale && !has_mobile_viewport);
-
-  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
-  compositor_frame_metadata_ = metadata;
-
-  OnFrameMetadataUpdated(old);
-}
-
 void WebView::ProcessAckedTouchEvent(bool consumed) {
   gesture_provider_->OnTouchEventAck(consumed);
 }
@@ -559,10 +564,6 @@ void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
 
 void WebView::SelectionChanged() {
   OnSelectionChanged();
-}
-
-WebView* WebView::GetWebView() {
-  return this;
 }
 
 Compositor* WebView::GetCompositor() const {
@@ -677,7 +678,7 @@ content::WebContents* WebView::OpenURLFromTab(
   return new_view->GetWebContents();
 }
 
-void WebView::NavigationStateChanged(const content::WebContents* source,
+void WebView::NavigationStateChanged(content::WebContents* source,
                                      content::InvalidateTypes changed_flags) {
   DCHECK_VALID_SOURCE_CONTENTS
 
@@ -827,7 +828,9 @@ void WebView::BeforeUnloadFired(content::WebContents* source,
   OnPrepareToCloseResponse(proceed);
 }
 
-content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager() {
+content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
+    content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
   return JavaScriptDialogManager::GetInstance();
 }
 
@@ -905,8 +908,14 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   if (old_host && old_host->GetView()) {
     static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(NULL);
   }
-  if (new_host && new_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
+  if (new_host) {
+    if (new_host->GetView()) {
+      static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
+    }
+
+    new_host->Send(
+        new OxideMsg_UpdateTopControlsState(new_host->GetRoutingID(),
+                                            location_bar_constraints_));
   }
 }
 
@@ -919,7 +928,11 @@ void WebView::DidStartProvisionalLoadForFrame(
     return;
   }
 
-  OnLoadStarted(validated_url, is_error_frame);
+  if (is_error_frame) {
+    return;
+  }
+
+  OnLoadStarted(validated_url);
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
@@ -931,7 +944,9 @@ void WebView::DidCommitProvisionalLoadForFrame(
     frame->URLChanged();
   }
 
-  OnLoadCommitted(url);
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
+  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR);
 }
 
 void WebView::DidFailProvisionalLoad(
@@ -940,6 +955,10 @@ void WebView::DidFailProvisionalLoad(
     int error_code,
     const base::string16& error_description) {
   if (render_frame_host->GetParent()) {
+    return;
+  }
+
+  if (validated_url.spec() == content::kUnreachableWebDataURL) {
     return;
   }
 
@@ -963,6 +982,10 @@ void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
     return;
   }
 
+  if (validated_url.spec() == content::kUnreachableWebDataURL) {
+    return;
+  }
+
   OnLoadSucceeded(validated_url);
 }
 
@@ -978,7 +1001,7 @@ void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
 }
 
 void WebView::DidGetRedirectForResourceRequest(
-      content::RenderViewHost* render_view_host,
+      content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) {
   if (details.resource_type != content::RESOURCE_TYPE_MAIN_FRAME) {
     return;
@@ -1057,9 +1080,11 @@ void WebView::OnCommandsUpdated() {}
 void WebView::OnLoadingChanged() {}
 void WebView::OnLoadProgressChanged(double progress) {}
 
-void WebView::OnLoadStarted(const GURL& validated_url,
-                            bool is_error_frame) {}
-void WebView::OnLoadCommitted(const GURL& url) {}
+void WebView::OnLoadStarted(const GURL& validated_url) {}
+void WebView::OnLoadRedirected(const GURL& url,
+                               const GURL& original_url) {}
+void WebView::OnLoadCommitted(const GURL& url,
+                              bool is_error_page) {}
 void WebView::OnLoadStopped(const GURL& validated_url) {}
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
@@ -1097,9 +1122,6 @@ void WebView::OnDownloadRequested(const GURL& url,
 				  const base::string16& suggestedFilename,
 				  const std::string& cookies,
 				  const std::string& referrer) {}
-
-void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
@@ -1173,7 +1195,9 @@ WebView::WebView()
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       did_scroll_focused_editable_node_into_view_(false),
-      auto_scroll_timer_(false, false) {
+      auto_scroll_timer_(false, false),
+      location_bar_height_pix_(0),
+      location_bar_constraints_(cc::BOTH) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 
@@ -1245,6 +1269,13 @@ void WebView::Init(Params* params) {
     RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
     if (rwhv) {
       rwhv->SetDelegate(this);
+    }
+
+    content::RenderViewHost* rvh = GetRenderViewHost();
+    if (rvh) {
+      rvh->Send(
+          new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+                                              location_bar_constraints_));
     }
 
     // Sync WebContents with the state of the WebView
@@ -1560,6 +1591,19 @@ void WebView::InputPanelVisibilityChanged() {
   MaybeResetAutoScrollTimer();
 }
 
+void WebView::UpdateWebPreferences() {
+  if (!web_contents_) {
+    return;
+  }
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+
+  rvh->OnWebkitPreferencesChanged();
+}
+
 BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
@@ -1673,6 +1717,108 @@ gfx::Size WebView::GetViewSizeDip() const {
   int height = std::lround(size.height() * scale);
 
   return gfx::Size(width, height);
+}
+
+gfx::Point WebView::GetCompositorFrameScrollOffsetPix() {
+  // See https://launchpad.net/bugs/1336730
+  const gfx::SizeF& viewport_size =
+      compositor_frame_metadata().scrollable_viewport_size;
+  float x_scale = GetFrameMetadataScaleToPix() *
+                  viewport_size.width() / std::round(viewport_size.width());
+  float y_scale = GetFrameMetadataScaleToPix() *
+                  viewport_size.height() / std::round(viewport_size.height());
+
+  gfx::Vector2dF offset =
+      gfx::ScaleVector2d(compositor_frame_metadata().root_scroll_offset,
+                         x_scale, y_scale);
+
+  return gfx::Point(std::round(offset.x()), std::round(offset.y()));
+}
+
+gfx::Size WebView::GetCompositorFrameContentSizePix() {
+  // See https://launchpad.net/bugs/1336730
+  const gfx::SizeF& viewport_size =
+      compositor_frame_metadata().scrollable_viewport_size;
+  float x_scale = GetFrameMetadataScaleToPix() *
+                  viewport_size.width() / std::round(viewport_size.width());
+  float y_scale = GetFrameMetadataScaleToPix() *
+                  viewport_size.height() / std::round(viewport_size.height());
+
+  gfx::SizeF size =
+      gfx::ScaleSize(compositor_frame_metadata().root_layer_size,
+                     x_scale, y_scale);
+
+  return gfx::Size(std::round(size.width()), std::round(size.height()));
+}
+
+gfx::Size WebView::GetCompositorFrameViewportSizePix() {
+  gfx::SizeF size =
+      gfx::ScaleSize(compositor_frame_metadata().scrollable_viewport_size,
+                     GetFrameMetadataScaleToPix());
+
+  return gfx::Size(std::round(size.width()), std::round(size.height()));
+}
+
+int WebView::GetLocationBarOffsetPix() {
+  return compositor_frame_metadata().location_bar_offset.y() *
+         compositor_frame_metadata().device_scale_factor;
+}
+
+int WebView::GetLocationBarContentOffsetPix() {
+  return GetLocationBarContentOffsetDip() *
+         compositor_frame_metadata().device_scale_factor;
+}
+
+float WebView::GetLocationBarContentOffsetDip() {
+  return compositor_frame_metadata().location_bar_content_translation.y();
+}
+
+float WebView::GetLocationBarHeightDip() const {
+  return GetLocationBarHeightPix() / GetScreenInfo().deviceScaleFactor;
+}
+
+int WebView::GetLocationBarHeightPix() const {
+  return location_bar_height_pix_;
+}
+
+void WebView::SetLocationBarHeightPix(int height) {
+  if (height < 0) {
+    LOG(WARNING) << "Cannot set a location bar height of less than zero";
+    return;
+  }
+
+  if (height == location_bar_height_pix_) {
+    return;
+  }
+
+  location_bar_height_pix_ = height;
+
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
+    return;
+  }
+
+  host->WasResized();
+}
+
+void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
+  if (constraints == location_bar_constraints_) {
+    return;
+  }
+
+  location_bar_constraints_ = constraints;
+
+  if (!web_contents_) {
+    return;
+  }
+
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+
+  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+                                                constraints));
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
@@ -1823,19 +1969,6 @@ void WebView::AllowCertificateError(
   }
 }
 
-void WebView::UpdateWebPreferences() {
-  if (!web_contents_) {
-    return;
-  }
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->OnWebkitPreferencesChanged();
-}
-
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (!rvh) {
@@ -1931,7 +2064,7 @@ void WebView::DidCommitCompositorFrame() {
     received_surface_ids_.pop();
 
     compositor_->DidSwapCompositorFrame(surface_id,
-                                        previous_compositor_frames_);
+                                        &previous_compositor_frames_);
   }
 }
 

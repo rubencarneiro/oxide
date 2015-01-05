@@ -17,14 +17,6 @@ TestWebView {
     name: "CustomURLSchemes"
     when: windowShown
 
-    function initTestCase() {
-      OxideTestingUtils.setUrlHandler("test", false);
-    }
-
-    function cleanupTestCase() {
-      OxideTestingUtils.unsetUrlHandler("test");
-    }
-
     // This test loads the same text file twice - once using Chromium's file
     // protocol handler and once using a custom handler - and compares their
     // content. This is a fairly primitive test at the moment - eg, we don't test
@@ -54,7 +46,7 @@ TestWebView {
     function test_CustomURLSchemes3_disallowed_scheme() {
       webView.context.allowedExtraUrlSchemes = [];
       webView.url = "test:///tst_CustomURLSchemes.txt";
-      verify(webView.waitForLoadFailed());
+      verify(webView.waitForLoadStopped());
     }
   }
 }

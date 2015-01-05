@@ -15,33 +15,34 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_DEVTOOLS_HTTP_HANDLER_DELEGATE_H_
-#define _OXIDE_SHARED_BROWSER_DEVTOOLS_HTTP_HANDLER_DELEGATE_H_
+#ifndef _OXIDE_SHARED_RENDERER_TOP_CONTROLS_HANDLER_H_
+#define _OXIDE_SHARED_RENDERER_TOP_CONTROLS_HANDLER_H_
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
-#include "content/public/browser/devtools_http_handler_delegate.h"
+#include "cc/input/top_controls_state.h"
+#include "content/public/renderer/render_view_observer.h"
+
+namespace content {
+class RenderWidget;
+}
 
 namespace oxide {
 
-class DevtoolsHttpHandlerDelegate
-    : public content::DevToolsHttpHandlerDelegate {
+class TopControlsHandler final : public content::RenderViewObserver {
  public:
-  DevtoolsHttpHandlerDelegate();
-  virtual ~DevtoolsHttpHandlerDelegate();
-
-  // DevToolsHttpHandlerDelegate overrides.
-  std::string GetDiscoveryPageHTML() final;
-  bool BundlesFrontendResources() final;
-  base::FilePath GetDebugFrontendDir() final;
-  scoped_ptr<net::ServerSocket> CreateSocketForTethering(
-      std::string* name) final;
+  TopControlsHandler(content::RenderView* render_view);
+  ~TopControlsHandler();
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(DevtoolsHttpHandlerDelegate);
+  content::RenderWidget* GetRenderWidget() const;
+  void OnUpdateTopControlsState(cc::TopControlsState constraints);
+
+  // IPC::Listener implementation
+  bool OnMessageReceived(const IPC::Message& message) final;
+
+  DISALLOW_COPY_AND_ASSIGN(TopControlsHandler);
 };
 
-}
+} // namespace oxide
 
-#endif  // _OXIDE_SHARED_BROWSER_DEVTOOLS_HTTP_HANDLER_DELEGATE_H_
-
+#endif // _OXIDE_SHARED_RENDERER_TOP_CONTROLS_HANDLER_H_

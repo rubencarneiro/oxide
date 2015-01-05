@@ -22,11 +22,11 @@
 #include <QDateTime>
 #include <QImage>
 #include <QList>
-#include <QPointF>
+#include <QPoint>
 #include <QRect>
 #include <QScopedPointer>
 #include <QSharedPointer>
-#include <QSizeF>
+#include <QSize>
 #include <QString>
 #include <QtGlobal>
 #include <Qt>
@@ -70,14 +70,11 @@ class WebView;
 enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_NONE = 0,
 
-  FRAME_METADATA_CHANGE_DEVICE_SCALE = 1 << 0,
-  FRAME_METADATA_CHANGE_SCROLL_OFFSET_X = 1 << 1,
-  FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y = 1 << 2,
-  FRAME_METADATA_CHANGE_CONTENT_WIDTH = 1 << 3,
-  FRAME_METADATA_CHANGE_CONTENT_HEIGHT = 1 << 4,
-  FRAME_METADATA_CHANGE_VIEWPORT_WIDTH = 1 << 5,
-  FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT = 1 << 6,
-  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 7
+  FRAME_METADATA_CHANGE_SCROLL_OFFSET = 1 << 0,
+  FRAME_METADATA_CHANGE_CONTENT = 1 << 1,
+  FRAME_METADATA_CHANGE_VIEWPORT = 1 << 2,
+  FRAME_METADATA_CHANGE_CONTROLS_OFFSET = 1 << 3,
+  FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
 };
 
 enum ContentTypeFlags {
@@ -90,6 +87,12 @@ enum RestoreType {
   RESTORE_CURRENT_SESSION,
   RESTORE_LAST_SESSION_EXITED_CLEANLY,
   RESTORE_LAST_SESSION_CRASHED,
+};
+
+enum LocationBarMode {
+  LOCATION_BAR_MODE_AUTO,
+  LOCATION_BAR_MODE_SHOWN,
+  LOCATION_BAR_MODE_HIDDEN
 };
 
 class Q_DECL_EXPORT AcceleratedFrameData final {
@@ -115,7 +118,7 @@ class Q_DECL_EXPORT CompositorFrameHandle {
   };
 
   virtual Type GetType() = 0;
-  virtual const QSize& GetSize() const = 0;
+  virtual const QRect& GetRect() const = 0;
 
   virtual QImage GetSoftwareFrame() = 0;
   virtual AcceleratedFrameData GetAcceleratedFrame() = 0;
@@ -187,11 +190,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void updateWebPreferences();
 
-  float compositorFrameDeviceScaleFactor() const;
-  float compositorFramePageScaleFactor() const;
-  QPointF compositorFrameScrollOffset() const;
-  QSizeF compositorFrameLayerSize() const;
-  QSizeF compositorFrameViewportSize() const;
+  QPoint compositorFrameScrollOffsetPix();
+  QSize compositorFrameContentSizePix();
+  QSize compositorFrameViewportSizePix();
 
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
   void didCommitCompositorFrame();
@@ -205,6 +206,13 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void prepareToClose();
 
+  int locationBarHeight();
+  void setLocationBarHeight(int height);
+  int locationBarOffsetPix();
+  int locationBarContentOffsetPix();
+  LocationBarMode locationBarMode() const;
+  void setLocationBarMode(LocationBarMode mode);
+
  protected:
   WebViewAdapter(QObject* q);
 
@@ -216,6 +224,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void Initialized();
   void WebPreferencesDestroyed();
+
+  void ScheduleUpdate();
+  void EvictCurrentFrame();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
@@ -272,8 +283,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
 
-  virtual void ScheduleUpdate() = 0;
-  virtual void EvictCurrentFrame() = 0;
+  virtual void OnScheduleUpdate() = 0;
+  virtual void OnEvictCurrentFrame() = 0;
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
@@ -286,6 +297,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual void CloseRequested() = 0;
 
   QScopedPointer<WebView> view_;
+
+  QSharedPointer<CompositorFrameHandle> compositor_frame_;
 
   QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };

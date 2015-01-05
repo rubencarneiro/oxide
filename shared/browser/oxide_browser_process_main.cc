@@ -235,6 +235,9 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   // Remove this when we implement a selection API (see bug #1324292)
   command_line->AppendSwitch(switches::kDisableTouchEditing);
 
+  command_line->AppendSwitch(
+      cc::switches::kEnableTopControlsPositionCalculation);
+
   base::StringPiece renderer_cmd_prefix =
       GetEnvironmentOption("RENDERER_CMD_PREFIX");
   if (!renderer_cmd_prefix.empty()) {

@@ -90,6 +90,8 @@ class PermissionRequest : public base::SupportsWeakPtr<PermissionRequest> {
   // registered with SetCancelCallback
   virtual void Cancel(bool from_source);
 
+  PermissionRequestType type() const { return type_; }
+
  private:
   friend class PermissionRequestManager;
 

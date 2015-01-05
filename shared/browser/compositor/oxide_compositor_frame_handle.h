@@ -30,6 +30,7 @@ typedef unsigned int GLuint;
 
 namespace oxide {
 
+class CompositorFrameHandle;
 class CompositorThreadProxy;
 
 class GLFrameData {
@@ -63,8 +64,13 @@ class SoftwareFrameData {
   uint8* pixels_;
 };
 
+struct CompositorFrameHandleTraits {
+  static void Destruct(const CompositorFrameHandle* x);
+};
+
 class CompositorFrameHandle final :
-    public base::RefCounted<CompositorFrameHandle> {
+    public base::RefCountedThreadSafe<CompositorFrameHandle,
+                                      CompositorFrameHandleTraits> {
  public:
   CompositorFrameHandle(uint32 surface_id,
                         scoped_refptr<CompositorThreadProxy> proxy,
@@ -74,12 +80,14 @@ class CompositorFrameHandle final :
   const gfx::Size& size_in_pixels() const { return size_in_pixels_; }
   float device_scale() const { return device_scale_; }
 
-  GLFrameData* gl_frame_data() { return gl_frame_data_.get(); }
-  SoftwareFrameData* software_frame_data() { return software_frame_data_.get(); }
+  GLFrameData* gl_frame_data() const { return gl_frame_data_.get(); }
+  SoftwareFrameData* software_frame_data() const {
+    return software_frame_data_.get();
+  }
 
  private:
   friend class CompositorThreadProxy;
-  friend class base::RefCounted<CompositorFrameHandle>;
+  friend class CompositorFrameHandleTraits;
 
   ~CompositorFrameHandle();
 

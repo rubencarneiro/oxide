@@ -26,6 +26,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/base/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
@@ -114,9 +115,11 @@ class WebView final : public QObject,
   void OnLoadingChanged() final;
   void OnLoadProgressChanged(double progress) final;
 
-  void OnLoadStarted(const GURL& validated_url,
-                     bool is_error_frame) final;
-  void OnLoadCommitted(const GURL& url) final;
+  void OnLoadStarted(const GURL& validated_url) final;
+  void OnLoadRedirected(const GURL& url,
+                        const GURL& original_url) final;
+  void OnLoadCommitted(const GURL& url,
+                       bool is_error_page) final;
   void OnLoadStopped(const GURL& validated_url) final;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,
@@ -152,9 +155,6 @@ class WebView final : public QObject,
 			   const base::string16& suggestedFilename,
 			   const std::string& cookies,
 			   const std::string& referrer) final;
-
-  void OnLoadRedirected(const GURL& url,
-                        const GURL& original_url) final;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
@@ -198,6 +198,8 @@ class WebView final : public QObject,
   bool has_input_method_state_;
 
   scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
+
+  UITouchEventFactory touch_event_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

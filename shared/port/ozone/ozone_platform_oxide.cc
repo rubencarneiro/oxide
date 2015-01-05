@@ -23,6 +23,7 @@
 #include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/gpu_platform_support_host.h"
 #include "ui/ozone/public/ozone_platform.h"
+#include "ui/ozone/public/system_input_injector.h"
 #include "ui/platform_window/platform_window.h"
 
 #include "surface_factory_ozone_oxide.h"
@@ -45,12 +46,20 @@ class OzonePlatformOxide : public OzonePlatform {
     return NULL;
   }
 
+  ui::InputController* GetInputController() final {
+    return NULL;
+  }
+
   GpuPlatformSupport* GetGpuPlatformSupport() final {
     return gpu_platform_support_.get();
   }
 
   GpuPlatformSupportHost* GetGpuPlatformSupportHost() final {
     return gpu_platform_support_host_.get();
+  }
+
+  scoped_ptr<SystemInputInjector> CreateSystemInputInjector() final {
+    return scoped_ptr<SystemInputInjector>();
   }
 
   scoped_ptr<PlatformWindow> CreatePlatformWindow(

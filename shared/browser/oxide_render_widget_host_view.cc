@@ -40,7 +40,6 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_delegate.h"
-#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -112,7 +111,19 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
     return gfx::Size();
   }
 
-  return delegate_->GetWebView()->GetViewSizePix();
+  return delegate_->GetViewSizePix();
+}
+
+bool RenderWidgetHostView::DoTopControlsShrinkBlinkSize() const {
+  return top_controls_shrink_blink_size_;
+}
+
+float RenderWidgetHostView::GetTopControlsHeight() const {
+  if (!delegate_) {
+    return 0.0f;
+  }
+
+  return delegate_->GetLocationBarHeightDip();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -204,8 +215,14 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     RendererFrameEvictor::GetInstance()->AddFrame(this, IsShowing());
   }
 
-  if (delegate_) {
-    delegate_->UpdateFrameMetadata(frame->metadata);
+  compositor_frame_metadata_ = frame->metadata;
+
+  bool shrink =
+      compositor_frame_metadata_.location_bar_offset.y() == 0.0f &&
+      compositor_frame_metadata_.location_bar_content_translation.y() > 0.0f;
+  if (shrink != top_controls_shrink_blink_size_) {
+    top_controls_shrink_blink_size_ = shrink;
+    host_->WasResized();
   }
 
   if (!compositor || !compositor->IsActive()) {
@@ -290,9 +307,9 @@ void RenderWidgetHostView::SetTooltipText(const base::string16& tooltip_text) {}
 void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,
-    const base::Callback<void(bool, const SkBitmap&)>& callback,
+    content::ReadbackRequestCallback& callback,
     const SkColorType color_type) {
-  callback.Run(false, SkBitmap());
+  callback.Run(SkBitmap(), content::READBACK_NOT_SUPPORTED);
 }
 
 void RenderWidgetHostView::CopyFromCompositingSurfaceToVideoFrame(
@@ -319,7 +336,7 @@ void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
     return;
   }
 
-  *result = delegate_->GetWebView()->GetScreenInfo();
+  *result = delegate_->GetScreenInfo();
 }
 
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
@@ -380,7 +397,7 @@ bool RenderWidgetHostView::HasFocus() const {
     return false;
   }
 
-  return delegate_->GetWebView()->HasFocus();
+  return delegate_->HasFocus();
 }
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
@@ -417,11 +434,19 @@ bool RenderWidgetHostView::IsShowing() {
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
+  gfx::Rect bounds;
+
   if (!delegate_) {
-    return gfx::Rect(last_size_);
+    bounds = gfx::Rect(last_size_);
+  } else {
+    bounds = delegate_->GetViewBoundsDip();
   }
 
-  return delegate_->GetWebView()->GetViewBoundsDip();
+  if (DoTopControlsShrinkBlinkSize()) {
+    bounds.Inset(0, GetTopControlsHeight(), 0, 0);
+  }
+
+  return bounds;
 }
 
 bool RenderWidgetHostView::LockMouse() {
@@ -531,7 +556,8 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     show_ime_if_needed_(false),
     focused_node_is_editable_(false),
     is_loading_(false),
-    is_showing_(false) {
+    is_showing_(false),
+    top_controls_shrink_blink_size_(false) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   resource_collection_->SetClient(this);
@@ -564,7 +590,7 @@ void RenderWidgetHostView::SetDelegate(
     host_->SendScreenRects();
     host_->WasResized();
 
-    if (delegate_->GetWebView()->IsVisible()) {
+    if (delegate_->IsVisible()) {
       Show();
     } else {
       Hide();
