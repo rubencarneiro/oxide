@@ -43,6 +43,21 @@ WebViewContentsHelper::~WebViewContentsHelper() {
   }
 }
 
+void WebViewContentsHelper::Init() {
+  DCHECK(!FromWebContents(web_contents_));
+
+  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
+
+  content::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  renderer_prefs->browser_handles_non_local_top_level_requests = true;
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (rvh) {
+    rvh->SyncRendererPrefs();
+  }
+}
+
 void WebViewContentsHelper::UpdateWebPreferences() {
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   if (!rvh) {
@@ -72,6 +87,15 @@ void WebViewContentsHelper::CloseContents(content::WebContents* source) {
   BrowserProcessMain::GetInstance()->DecrementPendingUnloadsCount();
 }
 
+WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
+    : BrowserContextObserver(
+          BrowserContext::FromContent(contents->GetBrowserContext())),
+      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
+      web_contents_(contents),
+      owns_web_preferences_(false) {
+  Init();
+}
+
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
                                              WebViewContentsHelper* opener)
     : BrowserContextObserver(
@@ -79,24 +103,11 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       web_contents_(contents),
       owns_web_preferences_(false) {
-  DCHECK(!FromWebContents(web_contents_));
+  Init();
 
-  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
-
-  content::RendererPreferences* renderer_prefs =
-      web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->browser_handles_non_local_top_level_requests = true;
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (rvh) {
-    rvh->SyncRendererPrefs();
-  }
-
-  if (opener) {
-    WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());
-    owns_web_preferences_ = true;
-    UpdateWebPreferences();
-  }
+  WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());
+  owns_web_preferences_ = true;
+  UpdateWebPreferences();
 }
 
 // static
@@ -110,6 +121,10 @@ WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
 WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
     content::RenderViewHost* rvh) {
   return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+}
+
+content::WebContents* WebViewContentsHelper::GetWebContents() const {
+  return web_contents_;
 }
 
 BrowserContext* WebViewContentsHelper::GetBrowserContext() const {

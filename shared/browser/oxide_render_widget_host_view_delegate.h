@@ -18,11 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_DELEGATE_H_
 
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/ime/text_input_type.h"
-
-namespace cc {
-class CompositorFrameMetadata;
-}
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 namespace content {
 class WebCursor;
@@ -43,9 +42,6 @@ class RenderWidgetHostViewDelegate {
 
   virtual void EvictCurrentFrame() = 0;
 
-  virtual void UpdateFrameMetadata(
-      const cc::CompositorFrameMetadata& metadata) = 0;
-
   virtual void ProcessAckedTouchEvent(bool consumed) = 0;
 
   virtual void UpdateCursor(const content::WebCursor& cursor) = 0;
@@ -63,9 +59,19 @@ class RenderWidgetHostViewDelegate {
 
   virtual void SelectionChanged() = 0;
 
-  virtual WebView* GetWebView() = 0;
-
   virtual Compositor* GetCompositor() const = 0;
+
+  virtual gfx::Size GetViewSizePix() const = 0;
+
+  virtual gfx::Rect GetViewBoundsDip() const = 0;
+
+  virtual blink::WebScreenInfo GetScreenInfo() const = 0;
+
+  virtual bool HasFocus() const = 0;
+
+  virtual bool IsVisible() const = 0;
+
+  virtual float GetLocationBarHeightDip() const = 0;
 };
 
 } // namespace oxide

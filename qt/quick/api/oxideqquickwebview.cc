@@ -56,6 +56,7 @@
 #include "qt/quick/oxide_qquick_software_frame_node.h"
 #include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
 
+#include "oxideqquicklocationbarcontroller_p.h"
 #include "oxideqquickscriptmessagehandler_p.h"
 #include "oxideqquickscriptmessagehandler_p_p.h"
 #include "oxideqquickwebcontext_p.h"
@@ -542,52 +543,45 @@ void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
 
   QFlags<oxide::qt::FrameMetadataChangeFlags> f(flags);
 
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_DEVICE_SCALE) ||
-      f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_PAGE_SCALE)) {
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET)) {
     emit q->contentXChanged();
     emit q->contentYChanged();
+  }
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT)) {
     emit q->contentWidthChanged();
     emit q->contentHeightChanged();
+  }
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT)) {
     emit q->viewportWidthChanged();
     emit q->viewportHeightChanged();
   }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_X)) {
-    emit q->contentXChanged();
+
+  if (!location_bar_controller_) {
+    return;
   }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y)) {
-    emit q->contentYChanged();
+
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTROLS_OFFSET)) {
+    emit location_bar_controller_->offsetChanged();
   }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_WIDTH)) {
-    emit q->contentWidthChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_HEIGHT)) {
-    emit q->contentHeightChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_WIDTH)) {
-    emit q->viewportWidthChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT)) {
-    emit q->viewportHeightChanged();
+  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_OFFSET)) {
+    emit location_bar_controller_->contentOffsetChanged();
   }
 }
 
-void OxideQQuickWebViewPrivate::ScheduleUpdate() {
+void OxideQQuickWebViewPrivate::OnScheduleUpdate() {
   Q_Q(OxideQQuickWebView);
 
   frame_evicted_ = false;
   received_new_compositor_frame_ = true;
 
   q->update();
-  q->polish();
 }
 
-void OxideQQuickWebViewPrivate::EvictCurrentFrame() {
+void OxideQQuickWebViewPrivate::OnEvictCurrentFrame() {
   Q_Q(OxideQQuickWebView);
 
   frame_evicted_ = true;
   received_new_compositor_frame_ = false;
-
-  Q_ASSERT(!compositor_frame_handle_);
 
   q->update();
 }
@@ -762,7 +756,6 @@ void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
     received_new_compositor_frame_ = false;
     didCommitCompositorFrame();
   }
-  compositor_frame_handle_.reset();
 }
 
 void OxideQQuickWebViewPrivate::onWindowChanged(QQuickWindow* window) {
@@ -853,24 +846,18 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 
   UpdatePaintNodeScope scope(d);
 
-  oxide::qt::CompositorFrameHandle::Type type =
-      oxide::qt::CompositorFrameHandle::TYPE_INVALID;
+  QSharedPointer<oxide::qt::CompositorFrameHandle> handle =
+      d->compositorFrameHandle();
 
-  if (d->received_new_compositor_frame_) {
-    Q_ASSERT(d->compositor_frame_handle_);
-    Q_ASSERT(!d->frame_evicted_);
-    type = d->compositor_frame_handle_->GetType();
-  } else if (!d->frame_evicted_) {
-    Q_ASSERT(!d->compositor_frame_handle_);
-    type = d->last_composited_frame_type_;
-  }
+  Q_ASSERT(!d->received_new_compositor_frame_ ||
+           (d->received_new_compositor_frame_ && !d->frame_evicted_));
 
-  if (type != d->last_composited_frame_type_) {
+  if (handle->GetType() != d->last_composited_frame_type_) {
     delete oldNode;
     oldNode = NULL;
   }
 
-  d->last_composited_frame_type_ = type;
+  d->last_composited_frame_type_ = handle->GetType();
 
   if (d->frame_evicted_) {
     delete oldNode;
@@ -878,36 +865,40 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
   }
 
 #if defined(ENABLE_COMPOSITING)
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
+  if (handle->GetType() ==
+      oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
     AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
     if (!node) {
       node = new AcceleratedFrameNode(this);
     }
 
     if (d->received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(d->compositor_frame_handle_);
+      node->updateNode(handle);
     }
 
     return node;
   }
 #else
-  Q_ASSERT(type != oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
+  Q_ASSERT(handle->GetType() !=
+           oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
 #endif
 
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
+  if (handle->GetType() ==
+      oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
     SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
     if (!node) {
       node = new SoftwareFrameNode(this);
     }
 
     if (d->received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(d->compositor_frame_handle_);
+      node->updateNode(handle);
     }
 
     return node;
   }
 
-  Q_ASSERT(type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
+  Q_ASSERT(handle->GetType() ==
+           oxide::qt::CompositorFrameHandle::TYPE_INVALID);
 
   SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
   if (!node) {
@@ -925,12 +916,6 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
   }
 
   return node;
-}
-
-void OxideQQuickWebView::updatePolish() {
-  Q_D(OxideQQuickWebView);
-
-  d->compositor_frame_handle_ = d->compositorFrameHandle();
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
@@ -1173,57 +1158,43 @@ void OxideQQuickWebView::removeMessageHandler(
 qreal OxideQQuickWebView::viewportWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  return qRound64(d->compositorFrameViewportSize().width()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor());
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameViewportSizePix().width();
 }
 
 qreal OxideQQuickWebView::viewportHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  return qRound64(d->compositorFrameViewportSize().height()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor());
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameViewportSizePix().height();
 }
 
 qreal OxideQQuickWebView::contentWidth() const {
   Q_D(const OxideQQuickWebView);
 
-  qreal vw = d->compositorFrameViewportSize().width();
-  return qRound64(d->compositorFrameLayerSize().width()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor()
-      * vw / qRound64(vw));
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameContentSizePix().width();
 }
 
 qreal OxideQQuickWebView::contentHeight() const {
   Q_D(const OxideQQuickWebView);
 
-  qreal vh = d->compositorFrameViewportSize().height();
-  return qRound64(d->compositorFrameLayerSize().height()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor()
-      * vh / qRound64(vh));
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameContentSizePix().height();
 }
 
 qreal OxideQQuickWebView::contentX() const {
   Q_D(const OxideQQuickWebView);
 
-  qreal vw = d->compositorFrameViewportSize().width();
-  return qRound64(d->compositorFrameScrollOffset().x()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor()
-      * vw / qRound64(vw));
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameScrollOffsetPix().x();
 }
 
 qreal OxideQQuickWebView::contentY() const {
   Q_D(const OxideQQuickWebView);
 
-  qreal vh = d->compositorFrameViewportSize().height();
-  return qRound64(d->compositorFrameScrollOffset().y()
-      * d->compositorFrameDeviceScaleFactor()
-      * d->compositorFramePageScaleFactor()
-      * vh / qRound64(vh));
+  return const_cast<OxideQQuickWebViewPrivate*>(
+      d)->compositorFrameScrollOffsetPix().y();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
@@ -1491,6 +1462,17 @@ QString OxideQQuickWebView::currentState() const {
   // Encode the current state in base64 so it can be safely passed around
   // as a string (QML doesn’t know of byte arrays)
   return QString::fromLocal8Bit(d->currentState().toBase64());
+}
+
+OxideQQuickLocationBarController* OxideQQuickWebView::locationBarController() {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->location_bar_controller_) {
+    d->location_bar_controller_.reset(
+        new OxideQQuickLocationBarController(this));
+  }
+
+  return d->location_bar_controller_.data();
 }
 
 // static

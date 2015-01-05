@@ -19,14 +19,31 @@
 
 #include "base/bind.h"
 #include "base/message_loop/message_loop.h"
+#include "third_party/WebKit/public/platform/WebString.h"
+#include "third_party/WebKit/public/web/WebDocument.h"
+#include "third_party/WebKit/public/web/WebElement.h"
+#include "third_party/WebKit/public/web/WebExceptionCode.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
+#include "third_party/WebKit/public/web/WebNode.h"
+#include "ui/base/resource/resource_bundle.h"
+
+#include "grit/oxide_resources.h"
 
 #include "shared/common/oxide_user_script.h"
 
 #include "oxide_user_script_slave.h"
 
 namespace oxide {
+
+namespace {
+
+bool HasViewportMeta(blink::WebLocalFrame* frame) {
+  blink::WebExceptionCode dummy;
+  return !frame->document().querySelector("meta[name=viewport]", dummy).isNull();
+}
+
+}
 
 void UserScriptScheduler::DoIdleInject() {
   idle_posted_ = false;
@@ -48,6 +65,15 @@ UserScriptScheduler::UserScriptScheduler(content::RenderView* render_view) :
     weak_factory_(this) {}
 
 void UserScriptScheduler::DidFinishDocumentLoad(blink::WebLocalFrame* frame) {
+  if (!HasViewportMeta(frame)) {
+    base::StringPiece raw_css(
+        ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
+          IDR_OXIDE_UASTYLE_VIEWPORT_CSS));
+    blink::WebString css(
+        blink::WebString::fromUTF8(raw_css.data(), raw_css.length()));
+    frame->document().insertStyleSheet(css);
+  }
+
   UserScriptSlave::GetInstance()->InjectScripts(frame,
                                                 UserScript::DOCUMENT_END);
 }

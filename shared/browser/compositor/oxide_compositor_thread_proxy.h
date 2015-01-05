@@ -47,10 +47,13 @@ class Compositor;
 class CompositorFrameHandle;
 class CompositorOutputSurface;
 class GLFrameData;
+class SoftwareFrameData;
 
 class CompositorThreadProxy final
     : public base::RefCountedThreadSafe<CompositorThreadProxy> {
  public:
+  typedef std::vector<scoped_refptr<CompositorFrameHandle> > FrameHandleVector;
+
   CompositorThreadProxy(Compositor* compositor);
 
   void CompositorDestroyed();
@@ -59,7 +62,7 @@ class CompositorThreadProxy final
   void SwapCompositorFrame(cc::CompositorFrame* frame);
   void DidSwapCompositorFrame(
       uint32 surface_id,
-      std::vector<scoped_refptr<CompositorFrameHandle> >& returned_frames);
+      FrameHandleVector* returned_frames);
   void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
 
  private:
@@ -67,10 +70,9 @@ class CompositorThreadProxy final
 
   ~CompositorThreadProxy();
 
-  void DidSwapCompositorFrame(uint32 surface_id);
-  void DidSwapCompositorFrame(
+  void DidSkipSwapCompositorFrame(
       uint32 surface_id,
-      scoped_refptr<CompositorFrameHandle>& frame);
+      scoped_refptr<CompositorFrameHandle>* frame);
 
   void SendSwapGLFrameOnOwnerThread(uint32 surface_id,
                                     const gfx::Size& size,
@@ -84,10 +86,12 @@ class CompositorThreadProxy final
                                           const cc::SharedBitmapId& bitmap_id);
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
       uint32 surface_id,
-      std::vector<scoped_refptr<CompositorFrameHandle> > returned_frames);
+      FrameHandleVector returned_frames);
   void SendReclaimResourcesToOutputSurfaceOnImplThread(
       uint32 surface_id,
-      cc::CompositorFrameAck* ack);
+      const gfx::Size& size_in_pixels,
+      scoped_ptr<GLFrameData> gl_frame_data,
+      scoped_ptr<SoftwareFrameData> software_frame_data);
 
   struct OwnerData {
     OwnerData() : compositor(NULL) {}

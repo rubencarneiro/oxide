@@ -38,6 +38,7 @@ class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
 class OxideQWebPreferences;
+class OxideQQuickLocationBarController;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
@@ -114,6 +115,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   // XXX: not notify-able for now, until we figure out a way
   // to do incremental updates
   Q_PROPERTY(QString currentState READ currentState REVISION 2)
+
+  Q_PROPERTY(OxideQQuickLocationBarController* locationBarController READ locationBarController CONSTANT REVISION 3)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -218,6 +221,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void setRestoreType(RestoreType type);
   QString currentState() const;
 
+  OxideQQuickLocationBarController* locationBarController();
+
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
  public Q_SLOTS:
@@ -292,8 +297,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
                   const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
   QSGNode* updatePaintNode(
       QSGNode* oldNode,
-      UpdatePaintNodeData * updatePaintNodeData) Q_DECL_FINAL;
-  void updatePolish() Q_DECL_FINAL;
+      UpdatePaintNodeData* updatePaintNodeData) Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

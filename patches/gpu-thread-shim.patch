@@ -6,7 +6,7 @@
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -20,16 +20,18 @@
+@@ -21,16 +21,18 @@
  #include "ipc/message_filter.h"
  #include "ui/gl/gl_bindings.h"
  #include "ui/gl/gl_share_group.h"
@@ -25,7 +25,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
   public:
    GpuChannelManagerMessageFilter(
        GpuMemoryBufferFactory* gpu_memory_buffer_factory)
-@@ -178,17 +180,20 @@ void GpuChannelManager::OnEstablishChann
+@@ -190,17 +192,20 @@ void GpuChannelManager::OnEstablishChann
                                             bool share_context,
                                             bool allow_future_sync_points) {
    IPC::ChannelHandle channel_handle;
@@ -47,30 +47,6 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
    }
  
    scoped_ptr<GpuChannel> channel(new GpuChannel(this,
-diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
---- a/content/common/gpu/gpu_channel_manager.h
-+++ b/content/common/gpu/gpu_channel_manager.h
-@@ -96,16 +96,20 @@ class GpuChannelManager : public IPC::Li
-   }
- 
-   GpuChannel* LookupChannel(int32 client_id);
- 
-   gpu::SyncPointManager* sync_point_manager() {
-     return sync_point_manager_.get();
-   }
- 
-+  gpu::gles2::MailboxManager* mailbox_manager() {
-+    return mailbox_manager_.get();
-+  }
-+
-   gfx::GLSurface* GetDefaultOffscreenSurface();
- 
-   GpuMemoryBufferFactory* gpu_memory_buffer_factory() {
-     return gpu_memory_buffer_factory_.get();
-   }
- 
-  private:
-   typedef base::ScopedPtrHashMap<int, GpuChannel> GpuChannelMap;
 diff --git a/content/content_common.gypi b/content/content_common.gypi
 --- a/content/content_common.gypi
 +++ b/content/content_common.gypi
@@ -92,7 +68,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
      # headers resolve correctly.
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
    ],
-@@ -503,16 +504,18 @@
+@@ -499,16 +500,18 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',
@@ -125,8 +101,8 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  
 +static base::LazyInstance<base::ThreadLocalPointer<GpuChildThread> >
 +    g_lazy_tls = LAZY_INSTANCE_INITIALIZER;
-+static base::LazyInstance<scoped_refptr<base::MessageLoopProxy> >
-+    g_thread_safe_message_loop = LAZY_INSTANCE_INITIALIZER;
++static base::LazyInstance<scoped_refptr<base::SingleThreadTaskRunner> >
++    g_thread_safe_task_runner = LAZY_INSTANCE_INITIALIZER;
 +
  bool GpuProcessLogMessageHandler(int severity,
                                   const char* file, int line,
@@ -147,7 +123,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  #endif
 +  g_lazy_tls.Pointer()->Set(this);
    g_thread_safe_sender.Get() = thread_safe_sender();
-+  g_thread_safe_message_loop.Get() = message_loop()->message_loop_proxy();
++  g_thread_safe_task_runner.Get() = message_loop()->message_loop_proxy();
  }
  
  GpuChildThread::~GpuChildThread() {
@@ -160,8 +136,8 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 +}
 +
 +// static
-+scoped_refptr<base::MessageLoopProxy> GpuChildThread::message_loop_proxy() {
-+  return g_thread_safe_message_loop.Get();
++scoped_refptr<base::SingleThreadTaskRunner> GpuChildThread::GetTaskRunner() {
++  return g_thread_safe_task_runner.Get();
  }
  
  void GpuChildThread::Shutdown() {
@@ -183,7 +159,7 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
  #include "ui/gfx/native_widget_types.h"
  
 +namespace base {
-+class MessageLoopProxy;
++class SingleThreadTaskRunner;
 +}
 +
  namespace sandbox {
@@ -204,7 +180,7 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
    ~GpuChildThread() override;
  
 +  static GpuChildThread* instance();
-+  static scoped_refptr<base::MessageLoopProxy> message_loop_proxy();
++  CONTENT_EXPORT static scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
 +
    void Shutdown() override;
  
