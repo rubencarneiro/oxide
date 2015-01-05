@@ -1,7 +1,7 @@
-diff -r 355f3315053b content/public/renderer/content_renderer_client.h
---- a/content/public/renderer/content_renderer_client.h	Fri Nov 28 16:07:15 2014 +1000
-+++ b/content/public/renderer/content_renderer_client.h	Fri Nov 28 16:12:52 2014 +1000
-@@ -49,10 +49,15 @@
+diff -r 45ecdc546a90 content/public/renderer/content_renderer_client.h
+--- a/content/public/renderer/content_renderer_client.h	Mon Jan 05 12:02:26 2015 +1000
++++ b/content/public/renderer/content_renderer_client.h	Mon Jan 05 12:52:14 2015 +1000
+@@ -50,11 +50,16 @@
  class WebWorkerPermissionClientProxy;
  struct WebPluginParams;
  struct WebURLError;
@@ -11,13 +11,14 @@ diff -r 355f3315053b content/public/renderer/content_renderer_client.h
  }
  
  namespace media {
+ class Renderer;
  struct KeySystemInfo;
 +class WebMediaPlayerDelegate;
 +class MediaLog;
  }
  
  namespace content {
-@@ -288,6 +293,13 @@
+@@ -296,6 +301,13 @@
    // Returns a user agent override specific for |url|, or empty string if
    // default user agent should be used.
    virtual std::string GetUserAgentOverrideForURL(const GURL& url);
@@ -31,10 +32,10 @@ diff -r 355f3315053b content/public/renderer/content_renderer_client.h
  };
  
  }  // namespace content
-diff -r 355f3315053b content/renderer/render_frame_impl.cc
---- a/content/renderer/render_frame_impl.cc	Fri Nov 28 16:07:15 2014 +1000
-+++ b/content/renderer/render_frame_impl.cc	Fri Nov 28 16:12:52 2014 +1000
-@@ -1728,6 +1728,17 @@
+diff -r 45ecdc546a90 content/renderer/render_frame_impl.cc
+--- a/content/renderer/render_frame_impl.cc	Mon Jan 05 12:02:26 2015 +1000
++++ b/content/renderer/render_frame_impl.cc	Mon Jan 05 12:52:14 2015 +1000
+@@ -1770,6 +1770,17 @@
  #if defined(OS_ANDROID)
    return CreateAndroidWebMediaPlayer(url, client, initial_cdm);
  #else
