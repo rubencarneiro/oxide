@@ -13,7 +13,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/time/time.h"
 #include "base/timer/timer.h"
-#include "oxide_media_player_oxide.h"
+#include "oxide_media_player.h"
 #include "shared/media/player.h"
 #include "url/gurl.h"
 

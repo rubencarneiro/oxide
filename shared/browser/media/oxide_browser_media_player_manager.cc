@@ -1,4 +1,4 @@
-#include "oxide_media_player_oxide.h"
+#include "oxide_media_player.h"
 #include "oxide_player_media_hub.h"
 #include "oxide_browser_media_player_manager.h"
 #include "shared/common/oxide_content_client.h"

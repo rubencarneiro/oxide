@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "oxide_media_player_oxide.h"
+#include "oxide_media_player.h"
 
 #include "base/logging.h"
 

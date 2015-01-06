@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef _OXIDE_MEDIA_PLAYER_OXIDE_H
-#define _OXIDE_MEDIA_PLAYER_OXIDE_H
+#ifndef _OXIDE_MEDIA_PLAYER_H
+#define _OXIDE_MEDIA_PLAYER_H
 
 #include <string>
 
@@ -70,6 +70,6 @@ class MediaPlayer {
   DISALLOW_COPY_AND_ASSIGN(MediaPlayer);
 };
 
-}  // namespace media
+}  // namespace oxide
 
-#endif  // _OXIDE_MEDIA_PLAYER_OXIDE_H
+#endif  // _OXIDE_MEDIA_PLAYER_H
