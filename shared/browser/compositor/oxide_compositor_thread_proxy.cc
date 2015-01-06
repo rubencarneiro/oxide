@@ -200,7 +200,7 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
     cc::GLFrameData* gl_frame_data = frame->gl_frame_data.get();
 
     CompositorUtils::GetInstance()->CreateGLFrameHandle(
-        impl().output,
+        impl().output->context_provider(),
         gl_frame_data->mailbox,
         gl_frame_data->sync_point,
         base::Bind(

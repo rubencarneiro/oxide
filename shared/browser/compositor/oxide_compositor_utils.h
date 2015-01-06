@@ -18,85 +18,49 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_UTILS_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_UTILS_H_
 
-#include <queue>
-
-#include "base/compiler_specific.h"
+#include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/message_loop/message_loop.h"
-#include "base/synchronization/lock.h"
 #include "ui/gfx/native_widget_types.h"
 
 namespace base {
 class SingleThreadTaskRunner;
 class TaskRunner;
-class Thread;
 }
 
 namespace cc {
-class OutputSurface;
-}
-
-namespace gfx {
-class Size;
+class ContextProvider;
 }
 
 namespace gpu {
 class Mailbox;
 }
 
-template <typename T> struct DefaultSingletonTraits;
-
 namespace oxide {
 
 class GLFrameData;
 
-class CompositorUtils final : public base::MessageLoop::TaskObserver {
+class CompositorUtils {
  public:
   static CompositorUtils* GetInstance();
 
-  void Initialize();
-  void Destroy();
+  virtual void Initialize() = 0;
+  virtual void Shutdown() = 0;
 
-  scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
+  virtual scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() = 0;
 
   typedef base::Callback<void(scoped_ptr<GLFrameData>)> CreateGLFrameHandleCallback;
-  void CreateGLFrameHandle(cc::OutputSurface* output_surface,
-                           const gpu::Mailbox& mailbox,
-                           uint32 sync_point,
-                           const CreateGLFrameHandleCallback& callback,
-                           scoped_refptr<base::TaskRunner> task_runner);
+  virtual void CreateGLFrameHandle(
+      cc::ContextProvider* context_provider,
+      const gpu::Mailbox& mailbox,
+      uint32 sync_point,
+      const CreateGLFrameHandleCallback& callback,
+      scoped_refptr<base::TaskRunner> task_runner) = 0;
 
-  gfx::GLSurfaceHandle GetSharedSurfaceHandle();
+  virtual gfx::GLSurfaceHandle GetSharedSurfaceHandle() = 0;
 
- private:
-  friend struct DefaultSingletonTraits<CompositorUtils>;
-
-  CompositorUtils();
-  ~CompositorUtils();
-
-  void InitializeOnGpuThread();
-
-  // base::MessageLoop::TaskObserver implementation
-  void WillProcessTask(const base::PendingTask& pending_task) final;
-  void DidProcessTask(const base::PendingTask& pending_task) final;
-
-  int32 client_id_;
-
-  scoped_ptr<base::Thread> compositor_thread_;
-  scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
-
-  base::Lock fetch_texture_resources_lock_;
-  bool fetch_texture_resources_pending_;
-  bool gpu_thread_is_processing_task_;
-
-  class FetchTextureResourcesTask;
-  std::queue<scoped_refptr<FetchTextureResourcesTask> > fetch_texture_resources_queue_;
-
-  bool can_use_gpu_;
-
-  DISALLOW_COPY_AND_ASSIGN(CompositorUtils);
+ protected:
+  virtual ~CompositorUtils();
 };
 
 } // namespace oxide

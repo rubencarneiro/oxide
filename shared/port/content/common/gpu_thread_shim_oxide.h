@@ -20,8 +20,12 @@
 
 #include <cstdint>
 
-#include "base/memory/ref_counted.h"
+#include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "content/common/content_export.h"
+
+typedef unsigned int GLuint;
 
 namespace gfx {
 class GLShareGroup;
@@ -37,19 +41,30 @@ class TextureRef;
 namespace content {
 
 class ContextProviderCommandBuffer;
-class GpuChannelManager;
+class GpuCommandBufferStub;
 
 namespace oxide_gpu_shim {
 
-CONTENT_EXPORT gpu::gles2::TextureRef* CreateTextureRef(
+class CONTENT_EXPORT TextureRefHolder {
+ public:
+  TextureRefHolder();
+  TextureRefHolder(content::GpuCommandBufferStub* command_buffer,
+                   gpu::gles2::TextureRef* ref);
+
+  ~TextureRefHolder();
+
+  bool IsValid() const;
+  GLuint GetServiceID() const;
+
+ private:
+  base::WeakPtr<content::GpuCommandBufferStub> command_buffer_;
+  scoped_refptr<gpu::gles2::TextureRef> ref_;
+};
+
+CONTENT_EXPORT TextureRefHolder CreateTextureRef(
     int32_t client_id,
     int32_t route_id,
     const gpu::Mailbox& mailbox);
-CONTENT_EXPORT void ReleaseTextureRef(int32_t client_id,
-                                      int32_t route_id,
-                                      gpu::gles2::TextureRef* ref);
-
-CONTENT_EXPORT content::GpuChannelManager* GetGpuChannelManager();
 
 CONTENT_EXPORT int32_t GetContextProviderRouteID(
     content::ContextProviderCommandBuffer* provider);

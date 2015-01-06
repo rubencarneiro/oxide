@@ -112,7 +112,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -74,20 +79,33 @@ GpuChildThread::GpuChildThread(const std
+@@ -74,20 +79,37 @@ GpuChildThread::GpuChildThread(const std
  #if !defined(OS_ANDROID)
    // For single process and in-process GPU mode, we need to load and
    // initialize the GL implementation and locate the GL entry points here.
@@ -131,13 +131,17 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 +}
 +
 +// static
-+GpuChildThread* GpuChildThread::instance() {
-+  return g_lazy_tls.Pointer()->Get();
++scoped_refptr<base::SingleThreadTaskRunner> GpuChildThread::GetTaskRunner() {
++  return g_thread_safe_task_runner.Get();
 +}
 +
 +// static
-+scoped_refptr<base::SingleThreadTaskRunner> GpuChildThread::GetTaskRunner() {
-+  return g_thread_safe_task_runner.Get();
++GpuChannelManager* GpuChildThread::GetChannelManager() {
++  GpuChildThread* inst = g_lazy_tls.Pointer()->Get();
++  if (!inst)
++    return NULL;
++
++  return inst->gpu_channel_manager_.get();
  }
  
  void GpuChildThread::Shutdown() {
@@ -170,7 +174,7 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
  class GpuWatchdogThread;
  
  // The main thread of the GPU child process. There will only ever be one of
-@@ -42,21 +46,26 @@ class GpuChildThread : public ChildThrea
+@@ -42,16 +46,19 @@ class GpuChildThread : public ChildThrea
                            const gpu::GPUInfo& gpu_info,
                            const DeferredMessages& deferred_messages);
  
@@ -179,21 +183,14 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
  
    ~GpuChildThread() override;
  
-+  static GpuChildThread* instance();
 +  CONTENT_EXPORT static scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
++  CONTENT_EXPORT static GpuChannelManager* GetChannelManager();
 +
    void Shutdown() override;
  
    void Init(const base::Time& process_start_time);
    void StopWatchdog();
  
-+  GpuChannelManager* gpu_channel_manager() { return gpu_channel_manager_.get(); }
-+
    // ChildThread overrides.
    bool Send(IPC::Message* msg) override;
    bool OnControlMessageReceived(const IPC::Message& msg) override;
- 
-  private:
-   // Message handlers.
-   void OnInitialize();
-   void OnCollectGraphicsInfo();
