@@ -25,7 +25,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/trees/layer_tree_host_client.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/size.h"
 
 namespace cc {
 class Layer;

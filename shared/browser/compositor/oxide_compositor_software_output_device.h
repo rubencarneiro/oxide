@@ -26,8 +26,8 @@
 #include "base/memory/linked_ptr.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/output/software_output_device.h"
-#include "ui/gfx/rect.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 namespace cc {
 class SharedBitmap;

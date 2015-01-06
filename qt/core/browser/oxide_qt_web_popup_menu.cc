@@ -27,7 +27,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/common/menu_item.h"
-#include "ui/gfx/rect.h"
+#include "ui/gfx/geometry/rect.h"
 
 #include "qt/core/glue/oxide_qt_web_popup_menu_delegate.h"
 
