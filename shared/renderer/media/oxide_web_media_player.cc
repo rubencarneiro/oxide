@@ -20,8 +20,8 @@
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/render_frame.h"
-#include "content/renderer/media/crypto/key_systems.h"
-#include "content/renderer/media/webcontentdecryptionmodule_impl.h"
+#include "media/base/key_systems.h"
+#include "media/blink/webcontentdecryptionmodule_impl.h"
 #include "media/blink/webmediaplayer_delegate.h"
 #include "media/blink/webmediaplayer_util.h"
 #include "content/renderer/render_frame_impl.h"
@@ -646,7 +646,7 @@ static void EmeUMAHistogramEnumeration(const std::string& key_system,
                                        int sample,
                                        int boundary_value) {
   base::LinearHistogram::FactoryGet(
-      kMediaEme + content::KeySystemNameForUMA(key_system) + "." + method,
+      kMediaEme + media::GetKeySystemNameForUMA(key_system) + "." + method,
       1, boundary_value, boundary_value + 1,
       base::Histogram::kUmaTargetedHistogramFlag)->Add(sample);
 }
@@ -656,7 +656,7 @@ static void EmeUMAHistogramCounts(const std::string& key_system,
                                   int sample) {
   // Use the same parameters as UMA_HISTOGRAM_COUNTS.
   base::Histogram::FactoryGet(
-      kMediaEme + content::KeySystemNameForUMA(key_system) + "." + method,
+      kMediaEme + media::GetKeySystemNameForUMA(key_system) + "." + method,
       1, 1000000, 50, base::Histogram::kUmaTargetedHistogramFlag)->Add(sample);
 }
 
@@ -698,7 +698,7 @@ bool WebMediaPlayer::IsKeySystemSupported(
     const std::string& key_system) {
   // TODO
   return player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE &&
-         content::IsConcreteSupportedKeySystem(key_system);
+         media::IsConcreteSupportedKeySystem(key_system);
 }
 
 WebMediaPlayer::MediaKeyException WebMediaPlayer::generateKeyRequest(
@@ -710,7 +710,7 @@ WebMediaPlayer::MediaKeyException WebMediaPlayer::generateKeyRequest(
                           static_cast<size_t>(init_data_length));
 
   std::string ascii_key_system =
-      content::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
+      media::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
 
   WebMediaPlayer::MediaKeyException e =
       GenerateKeyRequestInternal(ascii_key_system, init_data, init_data_length);
@@ -758,7 +758,7 @@ WebMediaPlayer::MediaKeyException WebMediaPlayer::addKey(
            << base::string16(session_id) << "]";
 
   std::string ascii_key_system =
-      content::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
+      media::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
   std::string ascii_session_id = ToASCIIOrEmpty(session_id);
 
   WebMediaPlayer::MediaKeyException e = AddKeyInternal(ascii_key_system,
@@ -797,7 +797,7 @@ WebMediaPlayer::MediaKeyException WebMediaPlayer::cancelKeyRequest(
            << " [" << base::string16(session_id) << "]";
 
   std::string ascii_key_system =
-      content::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
+      media::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
   std::string ascii_session_id = ToASCIIOrEmpty(session_id);
 
   WebMediaPlayer::MediaKeyException e =
@@ -827,7 +827,7 @@ void WebMediaPlayer::OnKeyAdded(const std::string& session_id) {
   EmeUMAHistogramCounts(current_key_system_, "KeyAdded", 1);
 
   client_->keyAdded(
-      WebString::fromUTF8(content::GetPrefixedKeySystemName(current_key_system_)),
+      WebString::fromUTF8(media::GetPrefixedKeySystemName(current_key_system_)),
       WebString::fromUTF8(session_id));
 }
 
@@ -846,7 +846,7 @@ void WebMediaPlayer::OnKeyError(const std::string& session_id,
   }
 
   client_->keyError(
-      WebString::fromUTF8(content::GetPrefixedKeySystemName(current_key_system_)),
+      WebString::fromUTF8(media::GetPrefixedKeySystemName(current_key_system_)),
       WebString::fromUTF8(session_id),
       static_cast<blink::WebMediaPlayerClient::MediaKeyErrorCode>(error_code),
       short_system_code);
@@ -858,7 +858,7 @@ void WebMediaPlayer::OnKeyMessage(const std::string& session_id,
   DCHECK(destination_url.is_empty() || destination_url.is_valid());
 
   client_->keyMessage(
-      WebString::fromUTF8(content::GetPrefixedKeySystemName(current_key_system_)),
+      WebString::fromUTF8(media::GetPrefixedKeySystemName(current_key_system_)),
       WebString::fromUTF8(session_id),
       message.empty() ? NULL : &message[0],
       message.size(),
@@ -903,4 +903,4 @@ bool WebMediaPlayer::canEnterFullscreen() const {
   return false;
 }
 
-}  // namespace content
+}  // namespace oxide
