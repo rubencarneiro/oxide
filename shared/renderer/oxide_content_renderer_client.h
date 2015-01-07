@@ -27,7 +27,10 @@ template <typename Type> struct DefaultLazyInstanceTraits;
 
 namespace oxide {
 
+#if defined(ENABLE_MEDIAHUB)
 class RendererMediaPlayerManager;
+#endif
+
 
 class ContentRendererClient final : public content::ContentRendererClient {
  public:

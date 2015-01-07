@@ -36,6 +36,7 @@
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
 #include "oxide_web_permission_client.h"
+
 #if defined(ENABLE_MEDIAHUB)
 #include "media/oxide_renderer_media_player_manager.h"
 #include "media/oxide_web_media_player.h"

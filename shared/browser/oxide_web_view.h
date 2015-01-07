@@ -29,7 +29,6 @@
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "base/timer/timer.h"
-#include "base/containers/scoped_ptr_hash_map.h"
 #include "cc/input/top_controls_state.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
@@ -111,7 +110,6 @@ class WebPopupMenu;
 class WebPreferences;
 class WebView;
 class WebViewContentsHelper;
-class BrowserMediaPlayerManager;
 
 struct NewContentsDeleter {
   void operator()(content::WebContents* ptr);
@@ -479,9 +477,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       const std::vector<content::FaviconURL>& candidates) final;
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) final;
-  bool OnMediaPlayerMessageReceived(const IPC::Message& msg,
-                                content::RenderFrameHost* render_frame_host);
-  BrowserMediaPlayerManager* GetMediaPlayerManager(content::RenderFrameHost* rfh);
 
   // Override in sub-classes
   virtual void OnURLChanged();
