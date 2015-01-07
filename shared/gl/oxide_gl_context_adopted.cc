@@ -21,6 +21,8 @@
 
 namespace oxide {
 
+void GLContextAdopted::OnSetSwapInterval(int interval) {}
+
 GLContextAdopted::GLContextAdopted(gfx::GLShareGroup* share_group)
     : gfx::GLContext(share_group) {}
 
@@ -43,7 +45,5 @@ void GLContextAdopted::ReleaseCurrent(gfx::GLSurface* surface) {}
 bool GLContextAdopted::IsCurrent(gfx::GLSurface* surface) {
   return false;
 }
-
-void GLContextAdopted::SetSwapInterval(int interval) {}
 
 } // namespace oxide

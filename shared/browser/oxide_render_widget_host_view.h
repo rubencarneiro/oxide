@@ -31,8 +31,8 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/common/cursors/webcursor.h"
 #include "ui/base/ime/text_input_type.h"
-#include "ui/gfx/rect.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/oxide_renderer_frame_evictor_client.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"

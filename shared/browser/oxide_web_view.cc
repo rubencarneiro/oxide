@@ -153,8 +153,10 @@ void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
 
 bool ShouldSendPinchGesture() {
   static bool pinch_allowed =
-      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnableViewport) ||
-      CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnablePinch);
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kEnableViewport) ||
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kEnablePinch);
   return pinch_allowed;
 }
 
@@ -710,6 +712,7 @@ void WebView::VisibleSSLStateChanged(const content::WebContents* source) {
 bool WebView::ShouldCreateWebContents(
     content::WebContents* source,
     int route_id,
+    int main_frame_route_id,
     WindowContainerType window_container_type,
     const base::string16& frame_name,
     const GURL& target_url,

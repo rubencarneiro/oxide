@@ -513,16 +513,17 @@ bool GestureProviderImpl::OnTouchEvent(const ui::TouchEvent& event) {
   }
 
   touch_state_.OnTouchEvent(event);
-  bool result = filtered_gesture_provider_.OnTouchEvent(touch_state_);
-  if (!result) {
+  ui::FilteredGestureProvider::TouchHandlingResult rv =
+      filtered_gesture_provider_.OnTouchEvent(touch_state_);
+  if (!rv.succeeded) {
     touch_state_.RemoveInactiveTouchPoints();
   }
 
-  return result;
+  return rv.succeeded;
 }
 
 void GestureProviderImpl::OnTouchEventAck(bool consumed) {
-  filtered_gesture_provider_.OnTouchEventAck(consumed);
+  filtered_gesture_provider_.OnAsyncTouchEventAck(consumed);
   touch_state_.RemoveInactiveTouchPoints();
 }
 

@@ -1,15 +1,15 @@
 # HG changeset patch
-# Parent 161d10f64f67fd0b6a922d7a20145db5374eb48d
+# Parent de062ed58b67a65f1dd110836d8fcf1c857b243b
 # User oxide
 
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -1501,17 +1501,19 @@ void WebContentsImpl::CreateNewWindow(
- 
+@@ -1511,17 +1511,19 @@ void WebContentsImpl::CreateNewWindow(
    if (delegate_ &&
        !delegate_->ShouldCreateWebContents(this,
                                            route_id,
+                                           main_frame_route_id,
                                            params.window_container_type,
                                            params.frame_name,
                                            params.target_url,
@@ -29,11 +29,11 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/browser/web_contents_delegate.cc
 --- a/content/public/browser/web_contents_delegate.cc
 +++ b/content/public/browser/web_contents_delegate.cc
-@@ -131,17 +131,19 @@ bool WebContentsDelegate::OnGoToEntryOff
- 
+@@ -132,17 +132,19 @@ bool WebContentsDelegate::OnGoToEntryOff
  bool WebContentsDelegate::ShouldCreateWebContents(
      WebContents* web_contents,
      int route_id,
+     int main_frame_route_id,
      WindowContainerType window_container_type,
      const base::string16& frame_name,
      const GURL& target_url,
@@ -53,11 +53,11 @@ diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/br
 diff --git a/content/public/browser/web_contents_delegate.h b/content/public/browser/web_contents_delegate.h
 --- a/content/public/browser/web_contents_delegate.h
 +++ b/content/public/browser/web_contents_delegate.h
-@@ -308,17 +308,19 @@ class CONTENT_EXPORT WebContentsDelegate
-   // be destroyed.
+@@ -309,17 +309,19 @@ class CONTENT_EXPORT WebContentsDelegate
    virtual bool ShouldCreateWebContents(
        WebContents* web_contents,
        int route_id,
+       int main_frame_route_id,
        WindowContainerType window_container_type,
        const base::string16& frame_name,
        const GURL& target_url,

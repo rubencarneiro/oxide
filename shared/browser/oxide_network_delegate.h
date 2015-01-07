@@ -35,9 +35,20 @@ class NetworkDelegate final : public net::NetworkDelegate {
                          const net::CompletionCallback& callback,
                          GURL* new_url) final;
 
+  void OnResolveProxy(const GURL& url,
+                      int load_flags,
+                      const net::ProxyService& proxy_service,
+                      net::ProxyInfo* result) final;
+
+  void OnProxyFallback(const net::ProxyServer& bad_proxy, int net_error) final;
+
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
                           net::HttpRequestHeaders* headers) final;
+
+  void OnBeforeSendProxyHeaders(net::URLRequest* request,
+                                const net::ProxyInfo& proxy_info,
+                                net::HttpRequestHeaders* headers) final;
 
   void OnSendHeaders(net::URLRequest* request,
                      const net::HttpRequestHeaders& headers) final;
@@ -79,6 +90,15 @@ class NetworkDelegate final : public net::NetworkDelegate {
                        const base::FilePath& path) const final;
 
   bool OnCanThrottleRequest(const net::URLRequest& request) const final;
+
+  bool OnCanEnablePrivacyMode(
+      const GURL& url,
+      const GURL& first_party_for_cookies) const final;
+
+  bool OnCancelURLRequestWithPolicyViolatingReferrerHeader(
+      const net::URLRequest& request,
+      const GURL& target_url,
+      const GURL& referrer_url) const final;
 
   BrowserContextIOData* context_;
 
