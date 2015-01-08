@@ -58,7 +58,6 @@ class ContentRendererClient final : public content::ContentRendererClient {
               blink::WebMediaPlayerClient* client,
               base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
               media::MediaLog* media_log);
-  scoped_ptr<RendererMediaPlayerManager> media_player_manager_;
 #endif
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);

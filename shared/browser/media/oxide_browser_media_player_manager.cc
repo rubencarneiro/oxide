@@ -6,6 +6,7 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/common/oxide_messages.h"
 #include "content/public/browser/render_frame_host.h"
+#include "net/base/net_errors.h"
 #include "net/cookies/cookie_store.h"
 
 namespace oxide {
@@ -118,7 +119,8 @@ void BrowserMediaPlayerManager::GetCookies(
       const BrowserMediaPlayerManager::GetCookieCB& callback) {
 
   oxide::BrowserContext* browser_context = web_view_->GetBrowserContext();
-  if (browser_context->GetCookiePolicy() != net::StaticCookiePolicy::ALLOW_ALL_COOKIES) {
+  net::StaticCookiePolicy policy(browser_context->GetCookiePolicy());
+  if (policy.CanGetCookies(url, first_party_for_cookies) != net::OK) {
     callback.Run("");
     return;
   }

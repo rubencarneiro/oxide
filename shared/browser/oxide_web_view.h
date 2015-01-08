@@ -566,8 +566,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnPrepareToCloseResponse(bool proceed);
   virtual void OnCloseRequested();
 
-  void CreateHelpers(content::WebContents* contents, WebViewContentsHelper* opener = NULL);
-  
   scoped_ptr<content::WebContentsImpl> web_contents_;
   WebViewContentsHelper* web_contents_helper_;
 

@@ -256,6 +256,20 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
   }
 }
 
+void CreateHelpers(WebView* self, content::WebContents* contents, WebViewContentsHelper* opener = NULL) {
+  if (opener == NULL) {
+    new WebViewContentsHelper(contents);
+  }
+  else {
+    new WebViewContentsHelper(contents, opener);
+  }
+
+#if defined(ENABLE_MEDIAHUB)
+  new MediaWebContentsObserver(self, contents);
+#endif
+}
+
+
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
 base::LazyInstance<std::vector<WebView*> > g_all_web_views;
@@ -661,7 +675,7 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
-  CreateHelpers(contents.get(), web_contents_helper_);
+  CreateHelpers(this, contents.get(), web_contents_helper_);
 
   WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
@@ -757,7 +771,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  CreateHelpers(new_contents, web_contents_helper_);
+  CreateHelpers(this, new_contents, web_contents_helper_);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -1171,19 +1185,6 @@ void WebView::OnContentBlocked() {}
 void WebView::OnPrepareToCloseResponse(bool proceed) {}
 void WebView::OnCloseRequested() {}
 
-void WebView::CreateHelpers(content::WebContents* contents, WebViewContentsHelper* opener) {
-  if (opener == NULL) {
-    new WebViewContentsHelper(contents);
-  }
-  else {
-    new WebViewContentsHelper(contents, opener);
-  }
-
-#if defined(ENABLE_MEDIAHUB)
-  new MediaWebContentsObserver(this, contents);
-#endif
-}
-
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
       show_ime_if_needed_(false),
@@ -1321,7 +1322,7 @@ void WebView::Init(Params* params) {
       restore_state_.clear();
     }
 
-    CreateHelpers(web_contents_.get());
+    CreateHelpers(this, web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());
