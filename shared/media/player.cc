@@ -219,8 +219,9 @@ mediahub_release(MediaHubClientHandle handle)
   try {
     auto it = g_mediahub_players.begin();
     for (; it != g_mediahub_players.end(); it++) {
-      if (it->second.get() == handle)
+      if (it->second.get() == handle) {
         break;
+      }
     }
     if (it != g_mediahub_players.end()) {
       g_mediahub_players.erase(it);

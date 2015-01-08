@@ -110,76 +110,87 @@ void RendererMediaPlayerManager::OnMediaMetadataChanged(
     int height,
     bool success) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnMediaMetadataChanged(duration, width, height, success);
+  }
 }
 
 void RendererMediaPlayerManager::OnMediaPlaybackCompleted(int player_id) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnPlaybackComplete();
+  }
 }
 
 void RendererMediaPlayerManager::OnMediaBufferingUpdate(int player_id,
                                                         int percent) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnBufferingUpdate(percent);
+  }
 }
 
 void RendererMediaPlayerManager::OnSeekRequest(
     int player_id,
     const base::TimeDelta& time_to_seek) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnSeekRequest(time_to_seek);
+  }
 }
 
 void RendererMediaPlayerManager::OnSeekCompleted(
     int player_id,
     const base::TimeDelta& current_time) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnSeekComplete(current_time);
+  }
 }
 
 void RendererMediaPlayerManager::OnMediaError(int player_id, int error) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnMediaError(error);
+  }
 }
 
 void RendererMediaPlayerManager::OnVideoSizeChanged(int player_id,
                                                     int width,
                                                     int height) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnVideoSizeChanged(width, height);
+  }
 }
 
 void RendererMediaPlayerManager::OnTimeUpdate(int player_id,
                                               base::TimeDelta current_time) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnTimeUpdate(current_time);
+  }
 }
 
 void RendererMediaPlayerManager::OnMediaPlayerReleased(int player_id) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnPlayerReleased();
+  }
 }
 
 void RendererMediaPlayerManager::OnPlayerPlay(int player_id) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnMediaPlayerPlay();
+  }
 }
 
 void RendererMediaPlayerManager::OnPlayerPause(int player_id) {
   WebMediaPlayer* player = GetMediaPlayer(player_id);
-  if (player)
+  if (player) {
     player->OnMediaPlayerPause();
+  }
 }
 
 void RendererMediaPlayerManager::OnPauseVideo() {
@@ -203,8 +214,9 @@ void RendererMediaPlayerManager::ReleaseVideoResources() {
     WebMediaPlayer* player = player_it->second;
 
     // Do not release if an audio track is still playing
-    if (player && (player->paused() || player->hasVideo()))
+    if (player && (player->paused() || player->hasVideo())) {
       player->ReleaseMediaResources();
+    }
   }
 }
 
@@ -212,8 +224,9 @@ WebMediaPlayer* RendererMediaPlayerManager::GetMediaPlayer(
     int player_id) {
   std::map<int, WebMediaPlayer*>::iterator iter =
       media_players_.find(player_id);
-  if (iter != media_players_.end())
+  if (iter != media_players_.end()) {
     return iter->second;
+  }
   return NULL;
 }
 

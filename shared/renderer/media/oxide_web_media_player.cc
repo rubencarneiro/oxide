@@ -110,8 +110,9 @@ WebMediaPlayer::~WebMediaPlayer() {
     player_manager_->UnregisterMediaPlayer(player_id_);
   }
 
-  if (player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE && delegate_)
+  if (player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE && delegate_) {
     delegate_->PlayerGone(this);
+  }
 }
 
 void WebMediaPlayer::load(LoadType load_type,
@@ -179,13 +180,15 @@ void WebMediaPlayer::DidLoadMediaInfo(MediaInfoLoader::Status status) {
   // Android doesn't start fetching resources until an implementation-defined
   // event (e.g. playback request) occurs. Sets the network state to IDLE
   // if play is not requested yet.
-  if (!playing_started_)
+  if (!playing_started_) {
     UpdateNetworkState(WebMediaPlayer::NetworkStateIdle);
+  }
 }
 
 void WebMediaPlayer::play() {
-  if (paused())
+  if (paused()) {
     player_manager_->Start(player_id_);
+  }
 
   UpdatePlayingState(true);
   UpdateNetworkState(WebMediaPlayer::NetworkStateLoading);
@@ -214,21 +217,23 @@ void WebMediaPlayer::setVolume(double volume) {
 }
 
 bool WebMediaPlayer::hasVideo() const {
-  if (has_size_info_)
+  if (has_size_info_) {
     return !natural_size_.isEmpty();
-
+  }
   // We don't know whether the current media content has video unless
   // the player is prepared. If the player is not prepared, we fall back
   // to the mime-type. There may be no mime-type on a redirect URL.
   // In that case, we conservatively assume it contains video so that
   // enterfullscreen call will not fail.
 
-  if (!url_.has_path())
+  if (!url_.has_path()) {
     return false;
+  }
 
   std::string mime;
-  if (!net::GetMimeTypeFromFile(base::FilePath(url_.path()), &mime))
+  if (!net::GetMimeTypeFromFile(base::FilePath(url_.path()), &mime)) {
     return true;
+  }
 
   return mime.find("audio/") == std::string::npos;
 }
@@ -238,12 +243,14 @@ void WebMediaPlayer::setPoster(const blink::WebURL& poster) {
 }
 
 bool WebMediaPlayer::hasAudio() const {
-  if (!url_.has_path())
+  if (!url_.has_path()) {
     return false;
+  }
 
   std::string mime;
-  if (!net::GetMimeTypeFromFile(base::FilePath(url_.path()), &mime))
+  if (!net::GetMimeTypeFromFile(base::FilePath(url_.path()), &mime)) {
     return true;
+  }
 
   if (mime.find("audio/") != std::string::npos ||
       mime.find("video/") != std::string::npos ||
@@ -318,8 +325,9 @@ WebTimeRanges WebMediaPlayer::seekable() const {
 double WebMediaPlayer::maxTimeSeekable() const {
   // If we haven't even gotten to ReadyStateHaveMetadata yet then just
   // return 0 so that the seekable range is empty.
-  if (ready_state_ < WebMediaPlayer::ReadyStateHaveMetadata)
+  if (ready_state_ < WebMediaPlayer::ReadyStateHaveMetadata) {
     return 0.0;
+  }
 
   return duration();
 }
@@ -349,19 +357,22 @@ bool WebMediaPlayer::copyVideoTextureToPlatformTexture(
 }
 
 bool WebMediaPlayer::hasSingleSecurityOrigin() const {
-  if (info_loader_)
+  if (info_loader_) {
     return info_loader_->HasSingleOrigin();
+  }
 
   // The info loader may have failed.
-  if (player_type_ == MEDIA_PLAYER_TYPE_URL)
+  if (player_type_ == MEDIA_PLAYER_TYPE_URL) {
     return false;
+  }
 
   return true;
 }
 
 bool WebMediaPlayer::didPassCORSAccessCheck() const {
-  if (info_loader_)
+  if (info_loader_) {
     return info_loader_->DidPassCORSAccessCheck();
+  }
 
   return false;
 }
@@ -402,8 +413,9 @@ void WebMediaPlayer::OnMediaMetadataChanged(
     const base::TimeDelta& duration, int width, int height, bool success) {
   bool need_to_signal_duration_changed = false;
 
-  if (url_.SchemeIs("file"))
+  if (url_.SchemeIs("file")) {
     UpdateNetworkState(WebMediaPlayer::NetworkStateLoaded);
+  }
 
   // Update duration, if necessary, prior to ready state updates that may
   // cause duration() query.
@@ -430,11 +442,13 @@ void WebMediaPlayer::OnMediaMetadataChanged(
 
   // TODO(wolenetz): Should we just abort early and set network state to an
   // error if success == false? See http://crbug.com/248399
-  if (success)
+  if (success) {
     OnVideoSizeChanged(width, height);
+  }
 
-  if (need_to_signal_duration_changed)
+  if (need_to_signal_duration_changed) {
     client_->durationChanged();
+  }
 }
 
 void WebMediaPlayer::OnPlaybackComplete() {
@@ -451,8 +465,9 @@ void WebMediaPlayer::OnPlaybackComplete() {
   // once OnPlaybackComplete() is done. As the playback can only be executed
   // upon completion of OnSeekComplete(), the request needs to be saved.
   is_playing_ = false;
-  if (seeking_ && seek_time_ == base::TimeDelta())
+  if (seeking_ && seek_time_ == base::TimeDelta()) {
     pending_playback_ = true;
+  }
 }
 
 void WebMediaPlayer::OnBufferingUpdate(int percentage) {
@@ -493,8 +508,9 @@ void WebMediaPlayer::OnMediaError(int error_type) {
 
 void WebMediaPlayer::OnVideoSizeChanged(int width, int height) {
   has_size_info_ = true;
-  if (natural_size_.width == width && natural_size_.height == height)
+  if (natural_size_.width == width && natural_size_.height == height) {
     return;
+  }
 
   natural_size_.width = width;
   natural_size_.height = height;
@@ -544,8 +560,9 @@ void WebMediaPlayer::OnDurationChanged(const base::TimeDelta& duration) {
   ignore_metadata_duration_change_ = true;
 
   // Notify MediaPlayerClient that duration has changed, if > HAVE_NOTHING.
-  if (ready_state_ > WebMediaPlayer::ReadyStateHaveNothing)
+  if (ready_state_ > WebMediaPlayer::ReadyStateHaveNothing) {
     client_->durationChanged();
+  }
 }
 
 void WebMediaPlayer::UpdateNetworkState(
@@ -570,8 +587,9 @@ void WebMediaPlayer::UpdateReadyState(
 }
 
 void WebMediaPlayer::OnPlayerReleased() {
-  if (is_playing_)
+  if (is_playing_) {
     OnMediaPlayerPause();
+  }
 }
 
 void WebMediaPlayer::ReleaseMediaResources() {
@@ -598,8 +616,9 @@ void WebMediaPlayer::ReleaseMediaResources() {
 }
 
 void WebMediaPlayer::OnDestruct() {
-  if (player_manager_)
+  if (player_manager_) {
     player_manager_->UnregisterMediaPlayer(player_id_);
+  }
   Detach();
 }
 
@@ -609,19 +628,22 @@ void WebMediaPlayer::Detach() {
 }
 
 void WebMediaPlayer::Pause(bool is_media_related_action) {
-  if (player_manager_)
+  if (player_manager_) {
     player_manager_->Pause(player_id_, is_media_related_action);
+  }
   UpdatePlayingState(false);
 }
 
 void WebMediaPlayer::UpdatePlayingState(bool is_playing) {
   is_playing_ = is_playing;
-  if (!delegate_)
+  if (!delegate_) {
     return;
-  if (is_playing)
+  }
+  if (is_playing) {
     delegate_->DidPlay(this);
-  else
+  } else {
     delegate_->DidPause(this);
+  }
 }
 
 // The following EME related code is copied from WebMediaPlayerImpl.
@@ -781,12 +803,12 @@ WebMediaPlayer::MediaKeyException WebMediaPlayer::AddKeyInternal(
   DCHECK(key);
   DCHECK_GT(key_length, 0u);
 
-  if (!IsKeySystemSupported(key_system))
+  if (!IsKeySystemSupported(key_system)) {
     return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
-
-  if (current_key_system_.empty() || key_system != current_key_system_)
+  }
+  if (current_key_system_.empty() || key_system != current_key_system_) {
     return WebMediaPlayer::MediaKeyExceptionInvalidPlayerState;
-
+  }
   return WebMediaPlayer::MediaKeyExceptionNoError;
 }
 
@@ -809,12 +831,12 @@ WebMediaPlayer::MediaKeyException WebMediaPlayer::cancelKeyRequest(
 WebMediaPlayer::MediaKeyException
 WebMediaPlayer::CancelKeyRequestInternal(const std::string& key_system,
                                                 const std::string& session_id) {
-  if (!IsKeySystemSupported(key_system))
+  if (!IsKeySystemSupported(key_system)) {
     return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
-
-  if (current_key_system_.empty() || key_system != current_key_system_)
+  }
+  if (current_key_system_.empty() || key_system != current_key_system_) {
     return WebMediaPlayer::MediaKeyExceptionInvalidPlayerState;
-
+  }
   return WebMediaPlayer::MediaKeyExceptionNoError;
 }
 
@@ -883,8 +905,9 @@ void WebMediaPlayer::OnNeedKey(const std::string& type,
   UMA_HISTOGRAM_COUNTS(kMediaEme + std::string("NeedKey"), 1);
 
   DCHECK(init_data_type_.empty() || type.empty() || type == init_data_type_);
-  if (init_data_type_.empty())
+  if (init_data_type_.empty()) {
     init_data_type_ = type;
+  }
 
   const uint8* init_data_ptr = init_data.empty() ? NULL : &init_data[0];
   client_->encrypted(

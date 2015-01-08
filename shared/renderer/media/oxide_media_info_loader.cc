@@ -60,8 +60,9 @@ void MediaInfoLoader::Start(blink::WebFrame* frame) {
     options.preflightPolicy = WebURLLoaderOptions::PreventPreflight;
     options.crossOriginRequestPolicy =
         WebURLLoaderOptions::CrossOriginRequestPolicyUseAccessControl;
-    if (cors_mode_ == blink::WebMediaPlayer::CORSModeUseCredentials)
+    if (cors_mode_ == blink::WebMediaPlayer::CORSModeUseCredentials) {
       options.allowCredentials = true;
+    }
   }
   loader.reset(frame->createAssociatedURLLoader(options));
 
@@ -85,9 +86,9 @@ void MediaInfoLoader::willSendRequest(
   }
 
   // Only allow |single_origin_| if we haven't seen a different origin yet.
-  if (single_origin_)
+  if (single_origin_) {
     single_origin_ = url_.GetOrigin() == GURL(newRequest.url()).GetOrigin();
-
+  }
   url_ = newRequest.url();
 }
 
@@ -183,8 +184,9 @@ void MediaInfoLoader::DidBecomeReady(Status status) {
   UMA_HISTOGRAM_TIMES("Media.InfoLoadDelay",
                       base::TimeTicks::Now() - start_time_);
   active_loader_.reset();
-  if (!ready_cb_.is_null())
+  if (!ready_cb_.is_null()) {
     base::ResetAndReturn(&ready_cb_).Run(status);
+  }
 }
 
 }  // namespace content
