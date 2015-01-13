@@ -263,10 +263,12 @@ int main(int argc, char** argv) {
 #if defined(ENABLE_COMPOSITING)
   QOpenGLContext context;
   context.create();
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-  QSGContext::setSharedOpenGLContext(&context);
-#else
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  qt_gl_set_global_share_context(&context);
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
   QOpenGLContextPrivate::setGlobalShareContext(&context);
+#else
+  QSGContext::setSharedOpenGLContext(&context);
 #endif
 #endif
 

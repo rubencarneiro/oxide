@@ -21,6 +21,9 @@
 #include <QGlobalStatic>
 #include <QGuiApplication>
 #include <QtDebug>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+#include <QtGui/private/qopenglcontext_p.h>
+#endif
 
 #include "base/logging.h"
 
@@ -115,10 +118,12 @@ void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
   process_model_ = model;
 }
 
+#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 void BrowserStartup::SetSharedGLContext(GLContextAdopted* context) {
   DCHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning());
   shared_gl_context_ = context;
 }
+#endif
 
 bool BrowserStartup::DidSelectProcessModelFromEnv() const {
   return process_model_is_from_env_;
@@ -132,6 +137,13 @@ void BrowserStartup::EnsureChromiumStarted() {
   CHECK(qobject_cast<QGuiApplication *>(QCoreApplication::instance())) <<
       "Your application doesn't have a QGuiApplication. Oxide will not "
       "function without one";
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  shared_gl_context_ = GLContextAdopted::Create(qt_gl_global_share_context());
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+  shared_gl_context_ = GLContextAdopted::Create(
+      QOpenGLContextPrivate::globalShareContext());
+#endif
 
   scoped_ptr<PlatformDelegate> delegate(
       new PlatformDelegate(shared_gl_context_.get()));
