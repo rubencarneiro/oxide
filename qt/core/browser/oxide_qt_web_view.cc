@@ -59,8 +59,6 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
-#include "qt/core/api/oxideqsslcertificate.h"
-#include "qt/core/api/oxideqsslcertificate_p.h"
 #include "qt/core/base/oxide_qt_screen_utils.h"
 #include "qt/core/base/oxide_qt_skutils.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
@@ -794,37 +792,12 @@ void WebView::OnSecurityStatusChanged(const oxide::SecurityStatus& old) {
   OxideQSecurityStatusPrivate::get(qsecurity_status_.get())->Update(old);
 }
 
-bool WebView::OnCertificateError(
-    bool is_main_frame,
-    oxide::CertError cert_error,
-    const scoped_refptr<net::X509Certificate>& cert,
-    const GURL& request_url,
-    content::ResourceType resource_type,
-    bool strict_enforcement,
-    scoped_ptr<oxide::SimplePermissionRequest> request) {
-  scoped_ptr<OxideQSslCertificate> q_cert;
-  if (cert.get()) {
-    q_cert.reset(OxideQSslCertificatePrivate::Create(cert));
-  }
+void WebView::OnCertificateError(scoped_ptr<oxide::CertificateError> error) {
+  scoped_ptr<OxideQCertificateError> qerror(
+      OxideQCertificateErrorPrivate::Create(error.Pass()));
 
-  bool is_subresource =
-      !((is_main_frame && resource_type == content::RESOURCE_TYPE_MAIN_FRAME) ||
-        (!is_main_frame && resource_type == content::RESOURCE_TYPE_SUB_FRAME));
-
-  scoped_ptr<OxideQCertificateError> error(
-      OxideQCertificateErrorPrivate::Create(
-        QUrl(QString::fromStdString(request_url.spec())),
-        is_main_frame,
-        is_subresource,
-        strict_enforcement,
-        q_cert.Pass(),
-        static_cast<OxideQCertificateError::Error>(cert_error),
-        request.Pass()));
-
-  // Embedder takes ownership of error
-  adapter_->CertificateError(error.release());
-
-  return true;
+  // Embedder takes ownership of qerror
+  adapter_->CertificateError(qerror.release());
 }
 
 void WebView::OnContentBlocked() {

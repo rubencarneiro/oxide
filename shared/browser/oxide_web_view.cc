@@ -31,6 +31,7 @@
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
+#include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/renderer_host/ui_events_helper.h"
@@ -215,43 +216,6 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
       frame_metadata.scrollable_viewport_size.width();
   float content_width_css = frame_metadata.root_layer_size.width();
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
-}
-
-CertError ToCertError(int error, net::X509Certificate* cert) {
-  if (!net::IsCertificateError(error)) {
-    return CERT_OK;
-  }
-
-  if (error == net::ERR_CERT_NO_REVOCATION_MECHANISM ||
-      error == net::ERR_CERT_UNABLE_TO_CHECK_REVOCATION) {
-    // These aren't treated as hard errors
-    return CERT_OK;
-  }
-
-  switch (error) {
-    case net::ERR_CERT_COMMON_NAME_INVALID:
-      return CERT_ERROR_BAD_IDENTITY;
-    case net::ERR_CERT_DATE_INVALID: {
-      if (cert && cert->HasExpired()) {
-        return CERT_ERROR_EXPIRED;
-      }
-      return CERT_ERROR_DATE_INVALID;
-    }
-    case net::ERR_CERT_AUTHORITY_INVALID:
-      return CERT_ERROR_AUTHORITY_INVALID;
-    case net::ERR_CERT_CONTAINS_ERRORS:
-    case net::ERR_CERT_INVALID:
-      return CERT_ERROR_INVALID;
-    case net::ERR_CERT_REVOKED:
-      return CERT_ERROR_REVOKED;
-    case net::ERR_CERT_WEAK_SIGNATURE_ALGORITHM:
-    case net::ERR_CERT_WEAK_KEY:
-      return CERT_ERROR_INSECURE;
-    //case net::ERR_CERT_NON_UNIQUE_NAME:
-    //case net::ERR_CERT_NAME_CONSTRAINT_VIOLATION:
-    default:
-      return CERT_ERROR_GENERIC;
-  }
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
@@ -923,7 +887,8 @@ void WebView::DidStartProvisionalLoadForFrame(
     const GURL& validated_url,
     bool is_error_frame,
     bool is_iframe_srcdoc) {
-  if (render_frame_host->GetParent()) {
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
+  if (!frame) {
     return;
   }
 
@@ -931,7 +896,11 @@ void WebView::DidStartProvisionalLoadForFrame(
     return;
   }
 
-  OnLoadStarted(validated_url);
+  if (!frame->parent()) {
+    OnLoadStarted(validated_url);
+  }
+
+  certificate_error_manager_.DidStartProvisionalLoadForFrame(frame);
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
@@ -941,6 +910,10 @@ void WebView::DidCommitProvisionalLoadForFrame(
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (frame) {
     frame->URLChanged();
+  }
+
+  if (frame->parent()) {
+    return;
   }
 
   content::NavigationEntry* entry =
@@ -953,15 +926,21 @@ void WebView::DidFailProvisionalLoad(
     const GURL& validated_url,
     int error_code,
     const base::string16& error_description) {
-  if (render_frame_host->GetParent()) {
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
+  if (!frame) {
     return;
   }
 
-  if (validated_url.spec() == content::kUnreachableWebDataURL) {
+  if (!frame->parent() &&
+      validated_url.spec() != content::kUnreachableWebDataURL) {
+    DispatchLoadFailed(validated_url, error_code, error_description);
+  }
+
+  if (error_code != net::ERR_ABORTED) {
     return;
   }
 
-  DispatchLoadFailed(validated_url, error_code, error_description);
+  certificate_error_manager_.DidStopProvisionalLoadForFrame(frame);
 }
 
 void WebView::DidNavigateMainFrame(
@@ -973,6 +952,22 @@ void WebView::DidNavigateMainFrame(
     blocked_content_ = CONTENT_TYPE_NONE;
     OnContentBlocked();
   }
+}
+
+void WebView::DidNavigateAnyFrame(
+    content::RenderFrameHost* render_frame_host,
+    const content::LoadCommittedDetails& details,
+    const content::FrameNavigateParams& params) {
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
+  if (!frame) {
+    return;
+  }
+
+  if (details.is_in_page) {
+    return;
+  }
+
+  certificate_error_manager_.DidNavigateFrame(frame);
 }
 
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
@@ -1029,6 +1024,8 @@ void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
 
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   DCHECK(frame);
+
+  certificate_error_manager_.FrameDetached(frame);
   frame->Destroy();
 }
 
@@ -1154,17 +1151,7 @@ void WebView::OnSelectionChanged() {}
 void WebView::OnUpdateCursor(const content::WebCursor& cursor) {}
 
 void WebView::OnSecurityStatusChanged(const SecurityStatus& old) {}
-bool WebView::OnCertificateError(
-    bool is_main_frame,
-    CertError cert_error,
-    const scoped_refptr<net::X509Certificate>& cert,
-    const GURL& request_url,
-    content::ResourceType resource_type,
-    bool strict_enforcement,
-    scoped_ptr<SimplePermissionRequest> request) {
-  permission_request_manager_.AbortPendingRequest(request.get());
-  return false;
-}
+void WebView::OnCertificateError(scoped_ptr<CertificateError> error) {}
 void WebView::OnContentBlocked() {}
 
 void WebView::OnPrepareToCloseResponse(bool proceed) {}
@@ -1931,33 +1918,27 @@ void WebView::AllowCertificateError(
   }
 
   DCHECK_EQ(frame->view(), this);
-  CHECK(!overridable || !strict_enforcement) <<
-      "overridable and strict_enforcement are expected to be mutually exclusive";
 
-  scoped_ptr<SimplePermissionRequest> request;
   // We can't safely allow the embedder to override errors for subresources or
   // subframes because they don't always result in the API indicating a
   // degraded security level. Mark these non-overridable for now and just
   // deny them outright
   // See https://launchpad.net/bugs/1368385
-  if (overridable && resource_type == content::RESOURCE_TYPE_MAIN_FRAME) {
-    request =
-        permission_request_manager_.CreateSimplePermissionRequest(
-          PERMISSION_REQUEST_TYPE_CERT_ERROR_OVERRIDE,
-          callback, NULL);
-  } else {
+  if (!overridable || resource_type != content::RESOURCE_TYPE_MAIN_FRAME) {
+    overridable = false;
     *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
   }
 
-  if (!OnCertificateError(!frame->parent(),
-                          ToCertError(cert_error, ssl_info.cert.get()),
-                          ssl_info.cert,
-                          request_url,
-                          resource_type,
-                          strict_enforcement,
-                          request.Pass())) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
-  }
+  scoped_ptr<CertificateError> error(new CertificateError(
+      &certificate_error_manager_,
+      frame,
+      cert_error,
+      ssl_info,
+      request_url,
+      resource_type,
+      strict_enforcement,
+      overridable ? callback : base::Callback<void(bool)>()));
+  OnCertificateError(error.Pass());
 }
 
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {

@@ -40,9 +40,9 @@ gfx::GLShareGroup* g_gl_share_group;
 
 content::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
                                                    int32_t route_id) {
-  DCHECK(content::GpuChildThread::instance());
   content::GpuChannelManager* gpu_channel_manager =
-      content::GpuChildThread::instance()->gpu_channel_manager();
+      content::GpuChildThread::GetChannelManager();
+  DCHECK(gpu_channel_manager);
   content::GpuChannel* channel =
       gpu_channel_manager->LookupChannel(client_id);
   if (!channel) {
@@ -58,15 +58,47 @@ bool IsCurrentlyOnGpuThread() {
 
 }
 
-gpu::gles2::TextureRef* CreateTextureRef(int32_t client_id,
-                                         int32_t route_id,
-                                         const gpu::Mailbox& mailbox) {
+TextureRefHolder::TextureRefHolder() {}
+
+TextureRefHolder::TextureRefHolder(
+    content::GpuCommandBufferStub* command_buffer,
+    gpu::gles2::TextureRef* ref)
+    : command_buffer_(command_buffer->AsWeakPtr()),
+      ref_(ref) {
+  DCHECK(IsCurrentlyOnGpuThread());
+}
+
+TextureRefHolder::~TextureRefHolder() {
+  DCHECK(IsCurrentlyOnGpuThread());
+
+  if (IsValid()) {
+    DCHECK(command_buffer_);
+    if (ref_->HasOneRef()) {
+      command_buffer_->decoder()->MakeCurrent();
+    }
+  }
+}
+
+bool TextureRefHolder::IsValid() const {
+  DCHECK(IsCurrentlyOnGpuThread());
+  return !!ref_.get();
+}
+
+GLuint TextureRefHolder::GetServiceID() const {
+  DCHECK(IsCurrentlyOnGpuThread());
+  DCHECK(IsValid());
+  return ref_->service_id();
+}
+
+TextureRefHolder CreateTextureRef(int32_t client_id,
+                                  int32_t route_id,
+                                  const gpu::Mailbox& mailbox) {
   DCHECK(IsCurrentlyOnGpuThread());
 
   content::GpuCommandBufferStub* command_buffer =
       LookupCommandBuffer(client_id, route_id);
   if (!command_buffer) {
-    return NULL;
+    return TextureRefHolder();
   }
 
   gpu::gles2::ContextGroup* group =
@@ -74,33 +106,13 @@ gpu::gles2::TextureRef* CreateTextureRef(int32_t client_id,
   gpu::gles2::Texture* texture =
       group->mailbox_manager()->ConsumeTexture(mailbox);
   if (!texture) {
-    return NULL;
+    return TextureRefHolder();
   }
 
-  gpu::gles2::TextureRef* ref =
+  scoped_refptr<gpu::gles2::TextureRef> ref =
       new gpu::gles2::TextureRef(group->texture_manager(),
-                                 client_id,
-                                 texture);
-  ref->AddRef();
-
-  return ref;
-}
-
-void ReleaseTextureRef(int32_t client_id,
-                       int32_t route_id,
-                       gpu::gles2::TextureRef* ref) {
-  DCHECK(IsCurrentlyOnGpuThread());
-
-  if (content::GpuCommandBufferStub* command_buffer =
-          LookupCommandBuffer(client_id, route_id)) {
-    command_buffer->decoder()->MakeCurrent();
-  }
-
-  ref->Release();
-}
-
-content::GpuChannelManager* GetGpuChannelManager() {
-  return content::GpuChildThread::instance()->gpu_channel_manager();
+                                 0, texture);
+  return TextureRefHolder(command_buffer, ref.get());
 }
 
 int32_t GetContextProviderRouteID(

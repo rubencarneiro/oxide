@@ -260,5 +260,26 @@ TestWebView {
               "WebView.loading should have changed twice during the load");
       compare(expectedLoadEvents.length, 0, "Some load events are missing");
     }
+
+    function test_WebView_loading9_subframe() {
+      var url = "http://testsuite/tst_WebView_loading_subframe.html";
+      expectedLoadEvents = [
+        { type: LoadEvent.TypeStarted, url: url, loading: true },
+        { type: LoadEvent.TypeCommitted, url: url, error: false, loading: true },
+        { type: LoadEvent.TypeSucceeded, url: url, loading: false }
+      ];
+
+      webView.url = url;
+
+      verify(webView.loading);
+      compare(spy.count, 1);
+
+      spy.clear();
+      spy.wait();
+
+      verify(!webView.loading);
+      compare(spy.count, 1);
+      compare(expectedLoadEvents.length, 0);
+    }
   }
 }

@@ -261,7 +261,7 @@ bool BrowserMainParts::MainMessageLoopRun(int* result_code) {
 }
 
 void BrowserMainParts::PostMainMessageLoopRun() {
-  CompositorUtils::GetInstance()->Destroy();
+  CompositorUtils::GetInstance()->Shutdown();
 }
 
 void BrowserMainParts::PostDestroyThreads() {
