@@ -18,8 +18,12 @@
 #include "oxide_qquick_init.h"
 
 #include <QtGlobal>
-#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#if defined(ENABLE_COMPOSITING)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 #include <QtQuick/private/qsgcontext_p.h>
+#else
+#include <QtGui/private/qopenglcontext_p.h>
+#endif
 #endif
 
 #include "qt/core/glue/oxide_qt_init.h"
@@ -33,8 +37,14 @@ void EnsureChromiumStarted() {
     return;
   }
   started = true;
-#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-  oxide::qt::SetSharedGLContext(QSGContext::sharedOpenGLContext());
+#if defined(ENABLE_COMPOSITING)
+  oxide::qt::SetSharedGLContext(
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+      QSGContext::sharedOpenGLContext()
+#else
+      QOpenGLContextPrivate::globalShareContext()
+#endif
+  );
 #endif
   oxide::qt::EnsureChromiumStarted();
 }
