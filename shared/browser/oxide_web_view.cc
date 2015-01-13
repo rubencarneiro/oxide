@@ -912,6 +912,10 @@ void WebView::DidCommitProvisionalLoadForFrame(
     frame->URLChanged();
   }
 
+  if (frame->parent()) {
+    return;
+  }
+
   content::NavigationEntry* entry =
       web_contents_->GetController().GetLastCommittedEntry();
   OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR);
