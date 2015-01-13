@@ -40,6 +40,7 @@
       ],
       'dependencies': [
         '../build/system.gyp:Qt5Core',
+        '../build/system.gyp:Qt5Core-private',
         '../build/system.gyp:Qt5Gui',
         '../build/system.gyp:Qt5Gui-private',
         '../build/system.gyp:Qt5Positioning',

@@ -18,15 +18,19 @@
 #include "oxide_qt_init.h"
 
 #include "qt/core/browser/oxide_qt_browser_startup.h"
+#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 #include "qt/core/gl/oxide_qt_gl_context_adopted.h"
+#endif
 
 namespace oxide {
 namespace qt {
 
+#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 void SetSharedGLContext(QOpenGLContext* context) {
   scoped_refptr<GLContextAdopted> c(GLContextAdopted::Create(context));
   BrowserStartup::GetInstance()->SetSharedGLContext(c.get());
 }
+#endif
 
 void EnsureChromiumStarted() {
   BrowserStartup::GetInstance()->EnsureChromiumStarted();
