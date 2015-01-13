@@ -180,14 +180,7 @@ class WebView final : public QObject,
   void OnUpdateCursor(const content::WebCursor& cursor) final;
 
   void OnSecurityStatusChanged(const oxide::SecurityStatus& old) final;
-  bool OnCertificateError(
-      bool is_main_frame,
-      oxide::CertError cert_error,
-      const scoped_refptr<net::X509Certificate>& cert,
-      const GURL& request_url,
-      content::ResourceType resource_type,
-      bool strict_enforcement,
-      scoped_ptr<oxide::SimplePermissionRequest> request) final;
+  void OnCertificateError(scoped_ptr<oxide::CertificateError> error) final;
   void OnContentBlocked() final;
 
   void OnPrepareToCloseResponse(bool proceed) final;

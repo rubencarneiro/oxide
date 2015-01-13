@@ -32,8 +32,6 @@
 #include "cc/input/top_controls_state.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
-#include "content/browser/renderer_host/event_with_latency_info.h"
-#include "content/common/input/input_event_ack_state.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
@@ -49,6 +47,7 @@
 #include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
@@ -459,6 +458,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void DidNavigateMainFrame(
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) final;
+  void DidNavigateAnyFrame(
+      content::RenderFrameHost* render_frame_host,
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) final;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
                      const GURL& validated_url) final;
   void DidFailLoad(content::RenderFrameHost* render_frame_host,
@@ -554,14 +557,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
   virtual void OnSecurityStatusChanged(const SecurityStatus& old);
-  virtual bool OnCertificateError(
-      bool is_main_frame,
-      CertError cert_error,
-      const scoped_refptr<net::X509Certificate>& cert,
-      const GURL& request_url,
-      content::ResourceType resource_type,
-      bool strict_enforcement,
-      scoped_ptr<SimplePermissionRequest> request);
+  virtual void OnCertificateError(scoped_ptr<CertificateError> error);
   virtual void OnContentBlocked();
 
   virtual void OnPrepareToCloseResponse(bool proceed);
@@ -592,6 +588,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   base::WeakPtr<FilePicker> active_file_picker_;
 
   PermissionRequestManager permission_request_manager_;
+  CertificateErrorManager certificate_error_manager_;
 
   ContentType blocked_content_;
 
