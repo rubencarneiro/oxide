@@ -22,8 +22,8 @@
         '..',
       ],
       'sources': [
-        'player.cc',
-        'player.h',
+        'mediahub_player_shim.cc',
+        'mediahub_player_shim.h',
       ],
     },
   ],

@@ -1,4 +1,4 @@
-#include "player.h"
+#include "mediahub_player_shim.h"
 
 #include <map>
 #include <ostream>

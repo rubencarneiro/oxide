@@ -1,5 +1,5 @@
-#ifndef MEDIA_MEDIAHUB_PLAYER_H
-#define MEDIA_MEDIAHUB_PLAYER_H
+#ifndef MEDIA_MEDIAHUB_PLAYER_SHIM_H
+#define MEDIA_MEDIAHUB_PLAYER_SHIM_H
 
 #include <string>
 
@@ -139,5 +139,5 @@ mediahub_set_player_lifetime(MediaHubClientHandle handle, Lifetime lifetime);
 }
 #endif
 
-#endif // MEDIA_MEDIAHUB_PLAYER_H
+#endif // MEDIA_MEDIAHUB_PLAYER_SHIM_H
 
