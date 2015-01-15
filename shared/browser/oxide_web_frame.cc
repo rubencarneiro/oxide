@@ -96,25 +96,33 @@ void WebFrame::OnChildAdded(WebFrame* child) {}
 void WebFrame::OnChildRemoved(WebFrame* child) {}
 
 WebFrame::WebFrame(
-    content::FrameTreeNode* node,
     WebView* view) :
-    frame_tree_node_id_(node->frame_tree_node_id()),
+    frame_tree_node_id_(-1),
     parent_(NULL),
     view_(view),
     next_message_serial_(0),
     weak_factory_(this),
-    destroyed_(false) {
-  std::pair<FrameMapIterator, bool> rv =
-      g_frame_map.Get().insert(std::make_pair(frame_tree_node_id_,
-                                              this));
-  CHECK(rv.second);
-}
+    destroyed_(false) {}
 
 WebFrame::~WebFrame() {
   CHECK(destroyed_) << "WebFrame deleted without calling Destroy()";
 }
 
+void WebFrame::Init(content::RenderFrameHost* render_frame_host) {
+  DCHECK_EQ(frame_tree_node_id_, -1);
+
+  frame_tree_node_id_ =
+      static_cast<content::RenderFrameHostImpl*>(render_frame_host)
+        ->frame_tree_node()
+        ->frame_tree_node_id();
+  std::pair<FrameMapIterator, bool> rv =
+      g_frame_map.Get().insert(std::make_pair(frame_tree_node_id_, this));
+  CHECK(rv.second);
+}
+
 void WebFrame::Destroy() {
+  DCHECK_NE(frame_tree_node_id_, -1);
+
   while (ChildCount() > 0) {
     ChildAt(0)->Destroy();
   }
@@ -170,8 +178,12 @@ GURL WebFrame::GetURL() const {
   return const_cast<WebFrame *>(this)->GetFrameTreeNode()->current_url();
 }
 
+content::RenderFrameHost* WebFrame::GetRenderFrameHost() {
+  return GetFrameTreeNode()->current_frame_host();
+}
+
 content::FrameTreeNode* WebFrame::GetFrameTreeNode() {
-  return view_->GetFrameTree()->FindByID(frame_tree_node_id_);
+  return content::FrameTree::GloballyFindByID(frame_tree_node_id_);
 }
 
 void WebFrame::SetParent(WebFrame* parent) {

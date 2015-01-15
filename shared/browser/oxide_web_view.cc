@@ -27,8 +27,6 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
-#include "content/browser/frame_host/frame_tree.h"
-#include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
@@ -840,12 +838,9 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
       WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
   DCHECK(parent);
 
-  content::FrameTreeNode* node = static_cast<content::RenderFrameHostImpl *>(
-      render_frame_host)->frame_tree_node();
-  DCHECK(node);
-
-  WebFrame* frame = CreateWebFrame(node);
+  WebFrame* frame = CreateWebFrame();
   DCHECK(frame);
+  frame->Init(render_frame_host);
   frame->SetParent(parent);
 }
 
@@ -1321,7 +1316,8 @@ void WebView::Init(Params* params) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
+  root_frame_ = CreateWebFrame();
+  root_frame_->Init(web_contents_->GetMainFrame());
 
   if (params->context) {
     if (!initial_url_.is_empty()) {
@@ -1646,10 +1642,6 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 
 WebFrame* WebView::GetRootFrame() const {
   return root_frame_;
-}
-
-content::FrameTree* WebView::GetFrameTree() {
-  return web_contents_->GetFrameTree();
 }
 
 WebPreferences* WebView::GetWebPreferences() {

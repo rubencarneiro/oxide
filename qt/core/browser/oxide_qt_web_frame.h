@@ -39,7 +39,6 @@ class WebFrameAdapter;
 class WebFrame final : public oxide::WebFrame {
  public:
   WebFrame(WebFrameAdapter* adapter,
-           content::FrameTreeNode* node,
            oxide::WebView* view);
 
   bool SendMessage(const GURL& context,

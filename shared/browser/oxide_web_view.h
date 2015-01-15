@@ -67,8 +67,6 @@ class WebMouseWheelEvent;
 
 namespace content {
 
-class FrameTree;
-class FrameTreeNode;
 struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
@@ -220,7 +218,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-  content::FrameTree* GetFrameTree();
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
@@ -537,7 +534,7 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
-  virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
+  virtual WebFrame* CreateWebFrame() = 0;
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,

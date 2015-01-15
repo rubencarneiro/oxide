@@ -160,7 +160,7 @@ class WebView final : public QObject,
                               WindowOpenDisposition disposition,
                               bool user_gesture) final;
 
-  oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) final;
+  oxide::WebFrame* CreateWebFrame() final;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) final;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,

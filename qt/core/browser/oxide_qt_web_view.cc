@@ -625,8 +625,8 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
-  return new WebFrame(adapter_->CreateWebFrame(), node, this);
+oxide::WebFrame* WebView::CreateWebFrame() {
+  return new WebFrame(adapter_->CreateWebFrame(), this);
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {

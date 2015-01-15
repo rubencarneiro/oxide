@@ -56,11 +56,10 @@ void WebFrame::URLChanged() {
 }
 
 WebFrame::WebFrame(WebFrameAdapter* adapter,
-                   content::FrameTreeNode* node,
-                   oxide::WebView* view) :
-    oxide::WebFrame(node, view),
-    api_handle_(adapterToQObject(adapter)),
-    adapter_(adapter) {
+                   oxide::WebView* view)
+    : oxide::WebFrame(view),
+      api_handle_(adapterToQObject(adapter)),
+      adapter_(adapter) {
   adapter->frame_ = this;
 }
 

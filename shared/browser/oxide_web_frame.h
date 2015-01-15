@@ -45,6 +45,7 @@ class WebFrame : public ScriptMessageTarget {
  public:
   typedef std::vector<ScriptMessageRequestImplBrowser *> ScriptMessageRequestVector;
 
+  void Init(content::RenderFrameHost* render_frame_host);
   void Destroy();
 
   static WebFrame* FromFrameTreeNode(content::FrameTreeNode* node);
@@ -69,6 +70,8 @@ class WebFrame : public ScriptMessageTarget {
     return frame_tree_node_id_;
   }
 
+  content::RenderFrameHost* GetRenderFrameHost();
+  // Get rid of this
   content::FrameTreeNode* GetFrameTreeNode();
 
   virtual void URLChanged() = 0;
@@ -90,7 +93,7 @@ class WebFrame : public ScriptMessageTarget {
   }
 
  protected:
-  WebFrame(content::FrameTreeNode* node, WebView* view);
+  WebFrame(WebView* view);
   virtual ~WebFrame();
 
  private:
