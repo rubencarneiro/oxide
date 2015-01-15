@@ -554,18 +554,6 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
-  // Without --site-per-process, frame_tree_node_id is always -1. That's ok,
-  // because we only get called for top-level frames anyway. With
-  // --site-per-process, we might get called for subframes that are the
-  // toplevel within their renderer process, so we use the frame ID (which
-  // won't be -1) to look up its corresponding WebFrame
-  bool top_level = params.frame_tree_node_id == -1;
-  if (!top_level) {
-    WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
-    DCHECK(frame);
-    top_level = frame->parent() == NULL;
-  }
-
   WindowOpenDisposition disposition = params.disposition;
   content::OpenURLParams local_params(params);
 
@@ -579,17 +567,27 @@ content::WebContents* WebView::OpenURLFromTab(
   // in the top-level frame
   if (!CanCreateWindows() && disposition != CURRENT_TAB) {
     disposition = CURRENT_TAB;
-    if (!top_level) {
-      local_params.frame_tree_node_id = GetFrameTree()->root()->frame_tree_node_id();
-      top_level = true;
-    }
+    local_params.frame_tree_node_id = -1;
+  }
+
+  // Navigations in a new window are always in the root frame
+  if (disposition != CURRENT_TAB) {
+    local_params.frame_tree_node_id = -1;
+  }
+
+  // Determine if this is a top-level navigation
+  bool top_level = params.frame_tree_node_id == -1;
+  if (!top_level) {
+    WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
+    DCHECK(frame);
+    top_level = frame->parent() == NULL;
   }
 
   // Give the application a chance to block the navigation if it is
   // renderer initiated and it's a top-level navigation or requires a
   // new webview
   if (local_params.is_renderer_initiated &&
-      (top_level || disposition != CURRENT_TAB) &&
+      top_level &&
       !ShouldHandleNavigation(local_params.url,
                               disposition,
                               local_params.user_gesture)) {
