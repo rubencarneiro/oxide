@@ -52,6 +52,9 @@
 #if defined(USE_NSS)
 #include "crypto/nss_util.h"
 #endif
+#ifdef V8_USE_EXTERNAL_STARTUP_DATA
+#include "gin/public/isolate_holder.h"
+#endif
 #include "ipc/ipc_descriptors.h"
 #include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
@@ -401,6 +404,9 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   content::RegisterContentSchemes(true);
 
   CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
+#if defined(V8_USE_EXTERNAL_STARTUP_DATA)
+  CHECK(gin::IsolateHolder::LoadV8Snapshot());
+#endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
   main_delegate_->PreSandboxStartup();
   main_delegate_->SandboxInitialized(base::EmptyString());
