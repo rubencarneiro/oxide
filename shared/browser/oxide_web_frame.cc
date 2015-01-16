@@ -49,8 +49,8 @@ base::LazyInstance<FrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
 void WebFrame::WillDestroy() {
   DCHECK(!destroyed_);
 
-  while (ChildCount() > 0) {
-    WebFrame* child = ChildAt(0);
+  while (GetChildCount() > 0) {
+    WebFrame* child = GetChildAt(0);
     child->WillDestroy();
     delete child;
   }
@@ -165,11 +165,11 @@ void WebFrame::InitParent(WebFrame* parent) {
   parent_->AddChild(this);
 }
 
-size_t WebFrame::ChildCount() const {
+size_t WebFrame::GetChildCount() const {
   return child_frames_.size();
 }
 
-WebFrame* WebFrame::ChildAt(size_t index) const {
+WebFrame* WebFrame::GetChildAt(size_t index) const {
   if (index >= child_frames_.size()) {
     return NULL;
   }

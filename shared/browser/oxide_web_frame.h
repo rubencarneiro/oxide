@@ -89,10 +89,10 @@ class WebFrame : public ScriptMessageTarget {
   }
 
   // Return the number of immediate children of this frame
-  size_t ChildCount() const;
+  size_t GetChildCount() const;
 
   // Return the frame at |index|
-  WebFrame* ChildAt(size_t index) const;
+  WebFrame* GetChildAt(size_t index) const;
 
   // Send a message with |msg_id| and payload |args| to the isolated world
   // addressed by |context|. Returns a request object on success with which you
