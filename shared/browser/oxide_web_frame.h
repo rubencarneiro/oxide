@@ -56,8 +56,17 @@ class WebFrame : public ScriptMessageTarget {
   static WebFrame* FromRenderFrameHost(
       content::RenderFrameHost* render_frame_host);
 
+  // Correctly destroy |frame|. Once this function returns, |frame| will
+  // be invalid
+  static void Destroy(WebFrame* frame);
+
   // Return the last committed URL for this frame
   GURL GetURL() const;
+
+  // Initialize the parent of this frame to |parent|. This is not a constructor
+  // parameter because it calls in to the parents subclass, which may require
+  // the child frame to be fully constructed
+  void InitParent(WebFrame* parent);
 
   // Return the parent frame
   WebFrame* parent() const { return parent_; }
@@ -72,6 +81,11 @@ class WebFrame : public ScriptMessageTarget {
   // Return the current RenderFrameHost for this frame
   content::RenderFrameHost* render_frame_host() const {
     return render_frame_host_;
+  }
+
+  // Set the active RenderFrameHost for this WebFrame
+  void set_render_frame_host(content::RenderFrameHost* render_frame_host) {
+    render_frame_host_ = render_frame_host;
   }
 
   // Return the number of immediate children of this frame
@@ -110,27 +124,13 @@ class WebFrame : public ScriptMessageTarget {
   virtual ~WebFrame();
 
  private:
-  friend class WebView; // XXX: For InitParent and WillDestroy. Change this to
-                        // WebFrameTree when it exists (only WebFrame and
-                        // WebFrameTree will be permitted to delete or
-                        // initialize frames
   typedef std::vector<WebFrame *> ChildVector;
-
-  // Initialize the parent of this frame to |parent|. This is not a constructor
-  // parameter because it calls in to the parents subclass, which may require
-  // the child frame to be fully constructed
-  void InitParent(WebFrame* parent);
 
   // Notify this WebFrame that it's about to be deleted. This allows
   // it to destroy its children before the destructor in the derived class
   // is called, which will typically then destroy its publicly exposed
   // WebFrame
   void WillDestroy();
-
-  // Set the active RenderFrameHost for this WebFrame
-  void set_render_frame_host(content::RenderFrameHost* render_frame_host) {
-    render_frame_host_ = render_frame_host;
-  }
 
   // Add |child| to this frame, calling OnChildAdded
   void AddChild(WebFrame* child);

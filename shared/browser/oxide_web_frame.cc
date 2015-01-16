@@ -46,13 +46,6 @@ base::LazyInstance<FrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
 
 }
 
-void WebFrame::InitParent(WebFrame* parent) {
-  DCHECK(!parent_);
-  DCHECK_EQ(parent->view(), view());
-  parent_ = parent;
-  parent_->AddChild(this);
-}
-
 void WebFrame::WillDestroy() {
   DCHECK(!destroyed_);
 
@@ -155,8 +148,21 @@ WebFrame* WebFrame::FromRenderFrameHost(
         ->frame_tree_node_id());
 }
 
+// static
+void WebFrame::Destroy(WebFrame* frame) {
+  frame->WillDestroy();
+  delete frame;
+}
+
 GURL WebFrame::GetURL() const {
   return render_frame_host_->GetLastCommittedURL();
+}
+
+void WebFrame::InitParent(WebFrame* parent) {
+  DCHECK(!parent_);
+  DCHECK_EQ(parent->view(), view());
+  parent_ = parent;
+  parent_->AddChild(this);
 }
 
 size_t WebFrame::ChildCount() const {

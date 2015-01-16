@@ -226,6 +226,10 @@ void NewContentsDeleter::operator()(content::WebContents* ptr) {
   base::MessageLoop::current()->DeleteSoon(FROM_HERE, ptr);
 }
 
+void WebFrameDeleter::operator()(WebFrame* frame) {
+  WebFrame::Destroy(frame);
+}
+
 WebViewIterator::WebViewIterator(const std::vector<WebView*>& views) {
   for (std::vector<WebView*>::const_iterator it = views.begin();
        it != views.end(); ++it) {
@@ -867,8 +871,7 @@ void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
   // If we get here, then it's likely that the main frame is being swapped.
   // In this case, Chromium purges all RenderFrameHosts on the browser side
   // before we get the detached messages from Blink
-  frame->WillDestroy();
-  delete frame;
+  WebFrame::Destroy(frame);
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
@@ -1054,8 +1057,7 @@ void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
   DCHECK(frame);
 
   certificate_error_manager_.FrameDetached(frame);
-  frame->WillDestroy();
-  delete frame;
+  WebFrame::Destroy(frame);
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1198,7 +1200,6 @@ WebView::WebView()
       in_swap_(false),
       restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
       initial_index_(0),
-      root_frame_(NULL),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       did_scroll_focused_editable_node_into_view_(false),
@@ -1235,14 +1236,6 @@ WebView::~WebView() {
                   g_all_web_views.Get().end(),
                   this),
       g_all_web_views.Get().end());
-
-  // XXX: Remove this when we have WebFrameTree
-  weak_factory_.InvalidateWeakPtrs();
-  if (root_frame_) {
-    root_frame_->WillDestroy();
-    delete root_frame_;
-    root_frame_ = NULL;
-  }
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
@@ -1357,7 +1350,7 @@ void WebView::Init(Params* params) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_ = CreateWebFrame(web_contents_->GetMainFrame());
+  root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
 
   if (params->context) {
     if (!initial_url_.is_empty()) {
@@ -1681,7 +1674,7 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_;
+  return root_frame_.get();
 }
 
 WebPreferences* WebView::GetWebPreferences() {
