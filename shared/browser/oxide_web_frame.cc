@@ -15,6 +15,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+// TODO: Remove the use of FrameTreeNode / RenderFrameHostImpl if we get
+// another way to map a RenderFrameHost to an individual node in the frame tree
+// (which is what WebFrame represents)
+
 #include "oxide_web_frame.h"
 
 #include <map>
@@ -25,8 +29,8 @@
 #include "content/browser/frame_host/frame_tree.h"
 #include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
-#include "content/public/browser/render_view_host.h"
-#include "content/public/browser/web_contents.h"
+#include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/render_process_host.h"
 
 #include "oxide_script_message_request_impl_browser.h"
 #include "oxide_web_view.h"
@@ -34,9 +38,63 @@
 namespace oxide {
 
 namespace {
+
 typedef std::map<int64, WebFrame*> FrameMap;
 typedef FrameMap::iterator FrameMapIterator;
+
 base::LazyInstance<FrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
+
+}
+
+void WebFrame::WillDestroy() {
+  DCHECK(!destroyed_);
+
+  while (GetChildCount() > 0) {
+    WebFrame* child = GetChildAt(0);
+    child->WillDestroy();
+    delete child;
+  }
+
+  if (parent_) {
+    parent_->RemoveChild(this);
+  }
+
+  int64 id = static_cast<content::RenderFrameHostImpl*>(render_frame_host_)
+      ->frame_tree_node()
+      ->frame_tree_node_id();
+  size_t erased = g_frame_map.Get().erase(id);
+  DCHECK_GT(erased, 0U);
+
+  destroyed_ = true;
+
+  for (auto it = current_script_message_requests_.begin();
+       it != current_script_message_requests_.end(); ++it) {
+    ScriptMessageRequestImplBrowser* request = *it;
+    if (!request) {
+      continue;
+    }
+
+    if (!request->IsWaitingForResponse()) {
+      continue;
+    }
+
+    request->OnReceiveResponse(
+        "The frame disappeared whilst waiting for a response",
+        ScriptMessageRequest::ERROR_INVALID_DESTINATION);
+  }
+}
+
+void WebFrame::AddChild(WebFrame* child) {
+  child_frames_.push_back(child);
+  OnChildAdded(child);
+}
+
+void WebFrame::RemoveChild(WebFrame* child) {
+  ChildVector::iterator it =
+      std::find(child_frames_.begin(), child_frames_.end(), child);
+  DCHECK(it != child_frames_.end());
+  child_frames_.erase(it);
+  OnChildRemoved(child);
 }
 
 size_t WebFrame::GetScriptMessageHandlerCount() const {
@@ -48,110 +106,27 @@ const ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
   return NULL;
 }
 
-void WebFrame::AddChild(WebFrame* frame) {
-  child_frames_.push_back(frame);
-  OnChildAdded(frame);
-  view()->FrameAdded(frame);
-}
-
-void WebFrame::RemoveChild(WebFrame* frame) {
-  for (ChildVector::iterator it = child_frames_.begin();
-       it != child_frames_.end(); ++it) {
-    WebFrame* f = *it;
-
-    if (f == frame) {
-      OnChildRemoved(frame);
-      view()->FrameRemoved(frame);
-      child_frames_.erase(it);
-      return;
-    }
-  }
-}
-
-void WebFrame::AddScriptMessageRequest(ScriptMessageRequestImplBrowser* req) {
-  for (ScriptMessageRequestVector::iterator it =
-        current_script_message_requests_.begin();
-       it != current_script_message_requests_.end(); ++it) {
-    if ((*it) == req) {
-      return;
-    }
-  }
-
-  current_script_message_requests_.push_back(req);
-}
-
-void WebFrame::RemoveScriptMessageRequest(
-    ScriptMessageRequestImplBrowser* req) {
-  for (ScriptMessageRequestVector::iterator it =
-        current_script_message_requests_.begin();
-       it != current_script_message_requests_.end(); ++it) {
-    if ((*it) == req) {
-      current_script_message_requests_.erase(it);
-      return;
-    }
-  }
-}
-
 void WebFrame::OnChildAdded(WebFrame* child) {}
 void WebFrame::OnChildRemoved(WebFrame* child) {}
 
-WebFrame::WebFrame(
-    content::FrameTreeNode* node,
-    WebView* view) :
-    frame_tree_node_id_(node->frame_tree_node_id()),
-    parent_(NULL),
-    view_(view),
-    next_message_serial_(0),
-    weak_factory_(this),
-    destroyed_(false) {
-  std::pair<FrameMapIterator, bool> rv =
-      g_frame_map.Get().insert(std::make_pair(frame_tree_node_id_,
-                                              this));
-  CHECK(rv.second);
-}
-
 WebFrame::~WebFrame() {
-  CHECK(destroyed_) << "WebFrame deleted without calling Destroy()";
+  CHECK(destroyed_) << "WebFrame deleted without calling WillDestroy()";
 }
 
-void WebFrame::Destroy() {
-  while (ChildCount() > 0) {
-    ChildAt(0)->Destroy();
-  }
-
-  while (true) {
-    ScriptMessageRequestImplBrowser* request = NULL;
-    for (ScriptMessageRequestVector::iterator it =
-          current_script_message_requests_.begin();
-         it != current_script_message_requests_.end(); ++it) {
-      if ((*it)->IsWaitingForResponse()) {
-        request = *it;
-        break;
-      }
-    }
-
-    if (!request) {
-      break;
-    }
-
-    request->OnReceiveResponse(
-        "The frame disappeared whilst waiting for a response",
-        ScriptMessageRequest::ERROR_INVALID_DESTINATION);
-  }
-
-  if (parent_) {
-    parent_->RemoveChild(this);
-  }
-
-  g_frame_map.Get().erase(frame_tree_node_id_);
-
-  destroyed_ = true;
-  delete this;
-}
-
-// static
-WebFrame* WebFrame::FromFrameTreeNode(content::FrameTreeNode* node) {
-  return FromFrameTreeNodeID(node->frame_tree_node_id());
+WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
+                   WebView* view)
+    : parent_(NULL),
+      view_(view->AsWeakPtr()),
+      render_frame_host_(render_frame_host),
+      next_message_serial_(0),
+      destroyed_(false),
+      weak_factory_(this) {
+  int64 id = static_cast<content::RenderFrameHostImpl*>(render_frame_host)
+      ->frame_tree_node()
+      ->frame_tree_node_id();
+  std::pair<FrameMapIterator, bool> rv =
+      g_frame_map.Get().insert(std::make_pair(id, this));
+  DCHECK(rv.second);
 }
 
 // static
@@ -161,30 +136,40 @@ WebFrame* WebFrame::FromFrameTreeNodeID(int64 frame_tree_node_id) {
 }
 
 // static
-WebFrame* WebFrame::FromRenderFrameHost(content::RenderFrameHost* rfh) {
-  return FromFrameTreeNode(static_cast<content::RenderFrameHostImpl *>(
-      rfh)->frame_tree_node());
+WebFrame* WebFrame::FromRenderFrameHost(
+    content::RenderFrameHost* render_frame_host) {
+  if (!render_frame_host) {
+    return NULL;
+  }
+
+  return FromFrameTreeNodeID(
+      static_cast<content::RenderFrameHostImpl*>(render_frame_host)
+        ->frame_tree_node()
+        ->frame_tree_node_id());
+}
+
+// static
+void WebFrame::Destroy(WebFrame* frame) {
+  frame->WillDestroy();
+  delete frame;
 }
 
 GURL WebFrame::GetURL() const {
-  return const_cast<WebFrame *>(this)->GetFrameTreeNode()->current_url();
+  return render_frame_host_->GetLastCommittedURL();
 }
 
-content::FrameTreeNode* WebFrame::GetFrameTreeNode() {
-  return view_->GetFrameTree()->FindByID(frame_tree_node_id_);
-}
-
-void WebFrame::SetParent(WebFrame* parent) {
-  DCHECK(!parent_) << "Changing parents is not supported";
+void WebFrame::InitParent(WebFrame* parent) {
+  DCHECK(!parent_);
+  DCHECK_EQ(parent->view(), view());
   parent_ = parent;
   parent_->AddChild(this);
 }
 
-size_t WebFrame::ChildCount() const {
+size_t WebFrame::GetChildCount() const {
   return child_frames_.size();
 }
 
-WebFrame* WebFrame::ChildAt(size_t index) const {
+WebFrame* WebFrame::GetChildAt(size_t index) const {
   if (index >= child_frames_.size()) {
     return NULL;
   }
@@ -192,30 +177,57 @@ WebFrame* WebFrame::ChildAt(size_t index) const {
   return child_frames_.at(index);
 }
 
-ScriptMessageRequestImplBrowser* WebFrame::SendMessage(
+scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
     const GURL& context,
     const std::string& msg_id,
     const std::string& args) {
-  ScriptMessageRequestImplBrowser* request =
-      new ScriptMessageRequestImplBrowser(this, next_message_serial_++,
-                                          context, true, msg_id, args);
-  if (!request->SendMessage()) {
-    delete request;
-    return NULL;
+  if (destroyed_) {
+    return scoped_ptr<ScriptMessageRequestImplBrowser>();
   }
 
-  return request;
+  scoped_ptr<ScriptMessageRequestImplBrowser> request(
+      new ScriptMessageRequestImplBrowser(this,
+                                          next_message_serial_++,
+                                          context, true, msg_id, args));
+
+  if (!request->SendMessage()) {
+    return scoped_ptr<ScriptMessageRequestImplBrowser>();
+  }
+
+  current_script_message_requests_.push_back(request.get());
+
+  return request.Pass();
 }
 
 bool WebFrame::SendMessageNoReply(const GURL& context,
                                   const std::string& msg_id,
                                   const std::string& args) {
-  ScriptMessageRequestImplBrowser* request =
+  if (destroyed_) {
+    return false;
+  }
+
+  scoped_ptr<ScriptMessageRequestImplBrowser> request(
       new ScriptMessageRequestImplBrowser(this, next_message_serial_++,
-                                          context, false, msg_id, args);
-  bool res = request->SendMessage();
-  delete request;
-  return res;
+                                          context, false, msg_id, args));
+  return request->SendMessage();
 }
+
+void WebFrame::RemoveScriptMessageRequest(
+    ScriptMessageRequestImplBrowser* req) {
+  ScriptMessageRequestVector::iterator it =
+      std::find(current_script_message_requests_.begin(),
+                current_script_message_requests_.end(),
+                req);
+  DCHECK(it != current_script_message_requests_.end());
+
+  if (!destroyed_) {
+    current_script_message_requests_.erase(it);
+  } else {
+    // Don't mutate the vector if we're in the destructor
+    *it = NULL;
+  }
+}
+
+void WebFrame::DidCommitNewURL() {}
 
 } // namespace oxide

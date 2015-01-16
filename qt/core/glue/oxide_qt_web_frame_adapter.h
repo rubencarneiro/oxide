@@ -60,7 +60,7 @@ class Q_DECL_EXPORT WebFrameAdapter : public AdapterBase {
  private:
   friend class WebFrame;
 
-  virtual void URLChanged() = 0;
+  virtual void URLCommitted() = 0;
 
   WebFrame* frame_;
 

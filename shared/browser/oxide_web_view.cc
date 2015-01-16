@@ -27,8 +27,6 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
-#include "content/browser/frame_host/frame_tree.h"
-#include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
@@ -226,6 +224,10 @@ base::LazyInstance<std::vector<WebView*> > g_all_web_views;
 
 void NewContentsDeleter::operator()(content::WebContents* ptr) {
   base::MessageLoop::current()->DeleteSoon(FROM_HERE, ptr);
+}
+
+void WebFrameDeleter::operator()(WebFrame* frame) {
+  WebFrame::Destroy(frame);
 }
 
 WebViewIterator::WebViewIterator(const std::vector<WebView*>& views) {
@@ -554,18 +556,6 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
-  // Without --site-per-process, frame_tree_node_id is always -1. That's ok,
-  // because we only get called for top-level frames anyway. With
-  // --site-per-process, we might get called for subframes that are the
-  // toplevel within their renderer process, so we use the frame ID (which
-  // won't be -1) to look up its corresponding WebFrame
-  bool top_level = params.frame_tree_node_id == -1;
-  if (!top_level) {
-    WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
-    DCHECK(frame);
-    top_level = frame->parent() == NULL;
-  }
-
   WindowOpenDisposition disposition = params.disposition;
   content::OpenURLParams local_params(params);
 
@@ -579,17 +569,27 @@ content::WebContents* WebView::OpenURLFromTab(
   // in the top-level frame
   if (!CanCreateWindows() && disposition != CURRENT_TAB) {
     disposition = CURRENT_TAB;
-    if (!top_level) {
-      local_params.frame_tree_node_id = GetFrameTree()->root()->frame_tree_node_id();
-      top_level = true;
-    }
+    local_params.frame_tree_node_id = -1;
+  }
+
+  // Navigations in a new window are always in the root frame
+  if (disposition != CURRENT_TAB) {
+    local_params.frame_tree_node_id = -1;
+  }
+
+  // Determine if this is a top-level navigation
+  bool top_level = params.frame_tree_node_id == -1;
+  if (!top_level) {
+    WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
+    DCHECK(frame);
+    top_level = frame->parent() == NULL;
   }
 
   // Give the application a chance to block the navigation if it is
   // renderer initiated and it's a top-level navigation or requires a
   // new webview
   if (local_params.is_renderer_initiated &&
-      (top_level || disposition != CURRENT_TAB) &&
+      top_level &&
       !ShouldHandleNavigation(local_params.url,
                               disposition,
                               local_params.user_gesture)) {
@@ -834,7 +834,10 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   }
 
   if (WebFrame::FromRenderFrameHost(render_frame_host)) {
-    // We get called whenever a new RFH is created for this node
+    // We already have a WebFrame for this host. This could be because the new
+    // host is for the root frame, or it is a cross-process subframe
+    DCHECK(!render_frame_host->GetParent() ||
+           render_frame_host->IsCrossProcessSubframe());
     return;
   }
 
@@ -842,13 +845,33 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
       WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
   DCHECK(parent);
 
-  content::FrameTreeNode* node = static_cast<content::RenderFrameHostImpl *>(
-      render_frame_host)->frame_tree_node();
-  DCHECK(node);
-
-  WebFrame* frame = CreateWebFrame(node);
+  WebFrame* frame = CreateWebFrame(render_frame_host);
   DCHECK(frame);
-  frame->SetParent(parent);
+  frame->InitParent(parent);
+}
+
+void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
+  if (!root_frame_) {
+    return;
+  }
+
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
+  if (!frame) {
+    // This occurs if |render_frame_host| represents a frame that's being
+    // detached (so the WebFrame was deleted in FrameDetached)
+    return;
+  }
+
+  if (frame->render_frame_host() != render_frame_host) {
+    // |render_frame_host| is not the current host for this WebFrame, so
+    // we do nothing
+    return;
+  }
+
+  // If we get here, then it's likely that the main frame is being swapped.
+  // In this case, Chromium purges all RenderFrameHosts on the browser side
+  // before we get the detached messages from Blink
+  WebFrame::Destroy(frame);
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
@@ -859,10 +882,6 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   DCHECK(!in_swap_);
   base::AutoReset<bool> in_swap(&in_swap_, true);
-
-  while (root_frame_->ChildCount() > 0) {
-    root_frame_->ChildAt(0)->Destroy();
-  }
 
   // Fake a response for any pending touch ACK's
   gesture_provider_->OnTouchEventAck(false);
@@ -880,6 +899,18 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
         new OxideMsg_UpdateTopControlsState(new_host->GetRoutingID(),
                                             location_bar_constraints_));
   }
+}
+
+void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                                     content::RenderFrameHost* new_host) {
+  if (!root_frame_) {
+    return;
+  }
+
+  WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
+  DCHECK(frame);
+
+  frame->set_render_frame_host(new_host);
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -909,7 +940,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
     ui::PageTransition transition_type) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (frame) {
-    frame->URLChanged();
+    frame->DidCommitNewURL();
   }
 
   if (frame->parent()) {
@@ -1026,7 +1057,7 @@ void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
   DCHECK(frame);
 
   certificate_error_manager_.FrameDetached(frame);
-  frame->Destroy();
+  WebFrame::Destroy(frame);
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1169,13 +1200,13 @@ WebView::WebView()
       in_swap_(false),
       restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
       initial_index_(0),
-      root_frame_(NULL),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       did_scroll_focused_editable_node_into_view_(false),
       auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
-      location_bar_constraints_(cc::BOTH) {
+      location_bar_constraints_(cc::BOTH),
+      weak_factory_(this) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 
@@ -1205,10 +1236,6 @@ WebView::~WebView() {
                   g_all_web_views.Get().end(),
                   this),
       g_all_web_views.Get().end());
-
-  if (root_frame_) {
-    root_frame_->Destroy();
-  }
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
@@ -1323,7 +1350,7 @@ void WebView::Init(Params* params) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
+  root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
 
   if (params->context) {
     if (!initial_url_.is_empty()) {
@@ -1647,11 +1674,7 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_;
-}
-
-content::FrameTree* WebView::GetFrameTree() {
-  return web_contents_->GetFrameTree();
+  return root_frame_.get();
 }
 
 WebPreferences* WebView::GetWebPreferences() {
@@ -2053,9 +2076,6 @@ JavaScriptDialog* WebView::CreateJavaScriptDialog(
 JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return NULL;
 }
-
-void WebView::FrameAdded(WebFrame* frame) {}
-void WebView::FrameRemoved(WebFrame* frame) {}
 
 bool WebView::CanCreateWindows() const {
   return false;
