@@ -28,7 +28,7 @@
 #include "base/logging.h"
 
 #include "qt/core/app/oxide_qt_platform_delegate.h"
-#include "qt/core/gl/oxide_qt_gl_context_adopted.h"
+#include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_web_context.h"

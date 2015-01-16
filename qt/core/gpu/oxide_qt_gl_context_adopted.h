@@ -23,7 +23,7 @@
 #include "base/macros.h"
 #include "ui/gl/gl_implementation.h"
 
-#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_adopted.h"
 
 QT_BEGIN_NAMESPACE
 class QOpenGLContext;

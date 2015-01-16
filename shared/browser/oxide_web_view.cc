@@ -78,7 +78,7 @@
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_event_utils.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_adopted.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
