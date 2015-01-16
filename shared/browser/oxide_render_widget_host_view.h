@@ -104,8 +104,6 @@ class RenderWidgetHostView final :
                    const gfx::Rect& pos) final;
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) final;
-  void WasShown() final;
-  void WasHidden() final;
   void MovePluginWindows(
       const std::vector<content::WebPluginGeometry>& moves) final;
   void UpdateCursor(const content::WebCursor& cursor) final;

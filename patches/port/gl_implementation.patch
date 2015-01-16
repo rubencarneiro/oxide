@@ -122,36 +122,34 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -26,16 +26,17 @@
-       },
+@@ -22,16 +22,17 @@
+         '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
+       ],
        'defines': [
          'GL_IMPLEMENTATION',
        ],
        'include_dirs': [
          '<(DEPTH)/third_party/swiftshader/include',
          '<(DEPTH)/third_party/khronos',
-         '<(gl_binding_output_dir)',
 +        '<(DEPTH)/../../..',
        ],
-       'direct_dependent_settings': {
-         'include_dirs': [
-           '<(gl_binding_output_dir)',
-         ],
-       },
        'export_dependent_settings': [
          '<(DEPTH)/third_party/mesa/mesa.gyp:mesa_headers',
-@@ -50,26 +51,26 @@
-         'android/surface_texture_listener.cc',
-         'android/surface_texture_listener.h',
-         'gl_bindings.h',
+       ],
+       'sources': [
+         'android/gl_jni_registrar.cc',
+         'android/gl_jni_registrar.h',
+         'android/scoped_java_surface.cc',
+@@ -46,17 +47,17 @@
+         'gl_bindings_autogen_osmesa.cc',
+         'gl_bindings_autogen_osmesa.h',
          'gl_bindings_skia_in_process.cc',
          'gl_bindings_skia_in_process.h',
          'gl_context.cc',
          'gl_context.h',
          'gl_context_android.cc',
--        'gl_context_mac.mm',
+         'gl_context_mac.mm',
 -        'gl_context_ozone.cc',
-+        #'gl_context_mac.mm',
 +        #'gl_context_ozone.cc',
          'gl_context_osmesa.cc',
          'gl_context_osmesa.h',
@@ -159,19 +157,9 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_context_stub.h',
          'gl_context_stub_with_extensions.cc',
          'gl_context_stub_with_extensions.h',
--        'gl_context_win.cc',
--        'gl_context_x11.cc',
-+        #'gl_context_win.cc',
-+        #'gl_context_x11.cc',
-         'gl_export.h',
-         'gl_fence.cc',
-         'gl_fence.h',
-         'gl_fence_arb.cc',
-         'gl_fence_arb.h',
-         'gl_fence_nv.cc',
-         'gl_fence_nv.h',
-         'gl_gl_api_implementation.cc',
-@@ -81,37 +82,37 @@
+         'gl_context_win.cc',
+         'gl_context_x11.cc',
+@@ -79,17 +80,17 @@
          'gl_image_ref_counted_memory.h',
          'gl_image_shared_memory.cc',
          'gl_image_shared_memory.h',
@@ -181,30 +169,22 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_implementation.h',
          'gl_implementation_android.cc',
 -        'gl_implementation_ozone.cc',
--        'gl_implementation_mac.cc',
--        'gl_implementation_win.cc',
--        'gl_implementation_x11.cc',
 +        #'gl_implementation_ozone.cc',
-+        #'gl_implementation_mac.cc',
-+        #'gl_implementation_win.cc',
-+        #'gl_implementation_x11.cc',
+         'gl_implementation_mac.cc',
+         'gl_implementation_win.cc',
+         'gl_implementation_x11.cc',
          'gl_osmesa_api_implementation.cc',
          'gl_osmesa_api_implementation.h',
          'gl_share_group.cc',
          'gl_share_group.h',
          'gl_state_restorer.cc',
-         'gl_state_restorer.h',
-         'gl_surface.cc',
-         'gl_surface.h',
+@@ -99,30 +100,35 @@
          'gl_surface_android.cc',
--        'gl_surface_mac.cc',
-+        #'gl_surface_mac.cc',
+         'gl_surface_mac.cc',
          'gl_surface_stub.cc',
          'gl_surface_stub.h',
--        'gl_surface_win.cc',
--        'gl_surface_x11.cc',
-+        #'gl_surface_win.cc',
-+        #'gl_surface_x11.cc',
+         'gl_surface_win.cc',
+         'gl_surface_x11.cc',
          'gl_surface_osmesa.cc',
          'gl_surface_osmesa.h',
 -        'gl_surface_ozone.cc',
@@ -217,29 +197,25 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gpu_switching_manager.h',
          'gpu_switching_observer.h',
          'scoped_binders.cc',
-@@ -119,16 +120,21 @@
+         'scoped_binders.h',
          'scoped_make_current.cc',
          'scoped_make_current.h',
          'sync_control_vsync_provider.cc',
          'sync_control_vsync_provider.h',
-         '<(gl_binding_output_dir)/gl_bindings_autogen_gl.cc',
-         '<(gl_binding_output_dir)/gl_bindings_autogen_gl.h',
-         '<(gl_binding_output_dir)/gl_bindings_autogen_osmesa.cc',
-         '<(gl_binding_output_dir)/gl_bindings_autogen_osmesa.h',
 +        '<(DEPTH)/../../../shared/port/gl/gl_context_oxide_linux.cc',
 +        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.cc',
 +        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.h',
 +        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide.h',
 +        '<(DEPTH)/../../../shared/port/gl/gl_surface_oxide_linux.cc',
        ],
-       # hard_dependency is necessary for this target because it has actions
-       # that generate header files included by dependent targets. The header
-       # files must be generated before the dependents are compiled. The usual
-       # semantics are to allow the two targets to build concurrently.
-       'hard_dependency': 1,
-       'actions': [
-         {
-@@ -199,24 +205,24 @@
+       'conditions': [
+         ['OS in ("win", "android", "linux")', {
+           'sources': [
+             'egl_util.cc',
+             'egl_util.h',
+             'gl_bindings_autogen_egl.cc',
+             'gl_bindings_autogen_egl.h',
+@@ -148,26 +154,26 @@
            ],
          }],
          ['OS=="linux"', {
@@ -251,6 +227,8 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 -        ['use_x11 == 1', {
 +        ['OS=="linux"', {
            'sources': [
+             'gl_bindings_autogen_glx.cc',
+             'gl_bindings_autogen_glx.h',
              'gl_context_glx.cc',
              'gl_context_glx.h',
              'gl_glx_api_implementation.cc',
@@ -263,10 +241,10 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'gl_surface_glx.h',
              'gl_egl_api_implementation.cc',
              'gl_egl_api_implementation.h',
-             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.cc',
-             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.h',
            ],
            'all_dependent_settings': {
+             'defines': [
+               'GL_GLEXT_PROTOTYPES',
 diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 --- a/ui/gl/gl_bindings.h
 +++ b/ui/gl/gl_bindings.h
