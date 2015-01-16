@@ -152,7 +152,9 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   static const char* const kSwitchNames[] = {
     switches::kEnableGoogleTalkPlugin,
     switches::kFormFactor,
-    switches::kLimitMaxDecodedImageBytes
+    switches::kLimitMaxDecodedImageBytes,
+    switches::kEnableMediaHubAudio,
+    switches::kMediaHubFixedSessionDomains
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kSwitchNames, arraysize(kSwitchNames));

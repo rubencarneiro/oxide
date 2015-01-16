@@ -93,6 +93,10 @@
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
 
+#if defined(ENABLE_MEDIAHUB)
+#include "shared/browser/media/oxide_media_web_contents_observer.h"
+#endif
+
 #define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
 
 namespace oxide {
@@ -215,6 +219,22 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   float content_width_css = frame_metadata.root_layer_size.width();
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
+
+void CreateHelpers(WebView* self,
+                   content::WebContents* contents,
+                   WebViewContentsHelper* opener = NULL) {
+  if (opener == NULL) {
+    new WebViewContentsHelper(contents);
+  }
+  else {
+    new WebViewContentsHelper(contents, opener);
+  }
+
+#if defined(ENABLE_MEDIAHUB)
+  new MediaWebContentsObserver(self, contents);
+#endif
+}
+
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
@@ -623,7 +643,7 @@ content::WebContents* WebView::OpenURLFromTab(
     return NULL;
   }
 
-  new WebViewContentsHelper(contents.get(), web_contents_helper_);
+  CreateHelpers(this, contents.get(), web_contents_helper_);
 
   WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
@@ -720,7 +740,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  new WebViewContentsHelper(new_contents, web_contents_helper_);
+  CreateHelpers(this, new_contents, web_contents_helper_);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -1309,7 +1329,7 @@ void WebView::Init(Params* params) {
       restore_state_.clear();
     }
 
-    new WebViewContentsHelper(web_contents_.get());
+    CreateHelpers(this, web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());

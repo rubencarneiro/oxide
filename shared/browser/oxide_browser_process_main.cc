@@ -281,6 +281,19 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
     command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
   }
+
+  if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
+    command_line->AppendSwitch(switches::kEnableMediaHubAudio);
+  }
+  base::StringPiece mediahub_fixed_session_domains = GetEnvironmentOption("MEDIA_HUB_FIXED_SESSION_DOMAINS");
+  if (!mediahub_fixed_session_domains.empty()) {
+    command_line->AppendSwitchASCII(switches::kMediaHubFixedSessionDomains,
+                                    mediahub_fixed_session_domains.data());
+
+    if (!IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
+      command_line->AppendSwitch(switches::kEnableMediaHubAudio);
+    }
+  }
 }
 
 void AddFormFactorSpecificCommandLineArguments() {

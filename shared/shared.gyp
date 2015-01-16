@@ -419,6 +419,30 @@
             '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_shared',
           ],
         }],
+        ['enable_mediahub==1', {
+          'defines': [
+            'ENABLE_MEDIAHUB=1'
+          ],
+          'sources': [
+            'browser/media/oxide_browser_media_player_manager.cc',
+            'browser/media/oxide_browser_media_player_manager.h',
+            'browser/media/oxide_player_media_hub.cc',
+            'browser/media/oxide_player_media_hub.h',
+            'browser/media/oxide_media_player.cc',
+            'browser/media/oxide_media_player.h',
+            'browser/media/oxide_media_web_contents_observer.cc',
+            'browser/media/oxide_media_web_contents_observer.h',
+            'renderer/media/oxide_renderer_media_player_manager.cc',
+            'renderer/media/oxide_renderer_media_player_manager.h',
+            'renderer/media/oxide_web_media_player.cc',
+            'renderer/media/oxide_web_media_player.h',
+            'renderer/media/oxide_media_info_loader.cc',
+            'renderer/media/oxide_media_info_loader.h',
+          ],
+          'dependencies': [
+            './media/mediahub.gyp:mediahub_lib',
+          ],
+        }]
       ],
       'actions': [
         {
