@@ -39,7 +39,6 @@ namespace oxide {
 class BrowserPlatformIntegration;
 class ContentMainDelegate;
 class ResourceDispatcherHostDelegate;
-class WebFrameTree;
 
 class ContentBrowserClient final : public content::ContentBrowserClient {
  public:
