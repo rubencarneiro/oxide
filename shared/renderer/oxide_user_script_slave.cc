@@ -59,7 +59,7 @@ const char kUserScriptTail[] = "\n})(window);";
 UserScriptSlave::~UserScriptSlave() {
   CHECK(render_process_shutting_down_);
   DCHECK_EQ(g_instance, this);
-  g_instance = NULL;
+  g_instance = nullptr;
 }
 
 // static
@@ -101,16 +101,15 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
 }
 
 void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
-      blink::WebLocalFrame* frame,
-      const blink::WebScriptSource& script_source) {
+    blink::WebLocalFrame* frame,
+    const blink::WebScriptSource& script_source) {
 
   ScriptMessageDispatcherRenderer * dispatcher_renderer =
       ScriptMessageDispatcherRenderer::FromWebFrame(frame);
-  DCHECK(dispatcher_renderer != NULL);
+  DCHECK(dispatcher_renderer);
 
   linked_ptr<ScriptMessageManager> message_manager =
       dispatcher_renderer->ScriptMessageManagerForWorldId(kMainWorldId);
-  DCHECK(message_manager != NULL);
   if (!message_manager.get()) {
     LOG(ERROR) << "Could not get a proper message manager for frame: "
                << frame

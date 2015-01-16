@@ -47,7 +47,7 @@ mediahub_create_player(int player_id, MediaHubDelegate *delegate)
         Service::Client::instance()->create_session(
             Player::Client::default_configuration());
 
-    if (delegate != NULL) {
+    if (delegate) {
       setup_delegate(delegate, player);
     }
 
@@ -76,7 +76,7 @@ mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubD
         Service::Client::instance()->create_fixed_session(domain,
             Player::Client::default_configuration());
 
-    if (delegate != NULL) {
+    if (delegate) {
       setup_delegate(delegate, player);
 
       delegate->playback_status_changed(

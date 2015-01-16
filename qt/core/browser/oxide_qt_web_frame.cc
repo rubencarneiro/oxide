@@ -59,7 +59,7 @@ void WebFrame::OnChildAdded(oxide::WebFrame* child) {
 
 void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
   QObject* child_api = static_cast<WebFrame *>(child)->api_handle();
-  child_api->setParent(NULL);
+  child_api->setParent(nullptr);
 
   WebView* v = static_cast<WebView*>(view());
   if (v) {

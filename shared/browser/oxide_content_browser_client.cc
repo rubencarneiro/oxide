@@ -138,7 +138,7 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
-  return NULL;
+  return nullptr;
 }
 
 std::string ContentBrowserClient::GetAcceptLangs(

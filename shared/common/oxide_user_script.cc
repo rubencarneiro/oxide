@@ -145,7 +145,7 @@ void UserScript::Unpickle(PickleIterator* iter) {
   UnpickleURLPatternSet(iter, &include_pattern_set_);
   UnpickleURLPatternSet(iter, &exclude_pattern_set_);
 
-  const char* data = NULL;
+  const char* data = nullptr;
   int length = 0;
   CHECK(iter->ReadData(&data, &length));
   contents_ = std::string(data, length);

@@ -104,7 +104,7 @@ class TCPServerSocketFactory :
  private:
   scoped_ptr<net::ServerSocket> Create() const final {
     return make_scoped_ptr(
-        new net::TCPServerSocket(NULL, net::NetLog::Source())).Pass();
+        new net::TCPServerSocket(nullptr, net::NetLog::Source())).Pass();
   }
 
   DISALLOW_COPY_AND_ASSIGN(TCPServerSocketFactory);
@@ -140,7 +140,7 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
       DCHECK(context_);
       url_request_context_ = context_->CreateMainRequestContext(
           protocol_handlers_, request_interceptors_.Pass())->AsWeakPtr();
-      context_ = NULL;
+      context_ = nullptr;
     }
 
     return url_request_context_.get();
@@ -159,7 +159,7 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
 class ResourceContext final : public content::ResourceContext {
  public:
   ResourceContext() :
-      request_context_(NULL) {}
+      request_context_(nullptr) {}
 
   net::HostResolver* GetHostResolver() final {
     return IOThread::instance()->globals()->host_resolver();
@@ -310,7 +310,7 @@ void BrowserContextIOData::Init() {
   cookie_store_ = content::CreateCookieStore(
       content::CookieStoreConfig(cookie_path,
                                  GetSessionCookieMode(),
-                                 NULL, NULL));
+                                 nullptr, nullptr));
 }
 
 BrowserContextIOData::BrowserContextIOData() :
@@ -421,7 +421,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   //       SQLiteChannelIDStore is part of chrome
   storage->set_channel_id_service(
       new net::ChannelIDService(
-          new net::DefaultChannelIDStore(NULL),
+          new net::DefaultChannelIDStore(nullptr),
           base::WorkerPool::GetTaskRunner(true)));
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
@@ -431,7 +431,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   context->set_transport_security_state(transport_security_state_.get());
 
-  net::HttpCache::BackendFactory* cache_backend = NULL;
+  net::HttpCache::BackendFactory* cache_backend = nullptr;
   if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
@@ -581,7 +581,7 @@ class BrowserContextImpl : public BrowserContext {
   }
 
   bool HasOffTheRecordContext() const final {
-    return otr_context_ != NULL;
+    return otr_context_ != nullptr;
   }
 
   BrowserContextSharedData data_;
@@ -610,7 +610,7 @@ OTRBrowserContextImpl::OTRBrowserContextImpl(
 BrowserContextImpl::~BrowserContextImpl() {
   if (otr_context_) {
     delete otr_context_;
-    otr_context_ = NULL;
+    otr_context_ = nullptr;
   }
 }
 
@@ -627,7 +627,7 @@ BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
 BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
     : BrowserContext(new BrowserContextIODataImpl(params)),
       data_(this, params),
-      otr_context_(NULL) {
+      otr_context_(nullptr) {
   io_data()->GetSharedData().user_agent_string =
       content::BuildUserAgentFromProduct(data_.product);
 
@@ -656,7 +656,7 @@ scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
   DCHECK(CalledOnValidThread());
-  return GetStoragePartition(this, NULL)->GetURLRequestContext();
+  return GetStoragePartition(this, nullptr)->GetURLRequestContext();
 }
 
 net::URLRequestContextGetter*
@@ -692,24 +692,24 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
   // ContentBrowserClient::GetStoragePartitionConfigForSite(), so it's a
   // bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
-  return NULL;
+  return nullptr;
 }
 
 content::DownloadManagerDelegate*
     BrowserContext::GetDownloadManagerDelegate() {
-  return NULL;
+  return nullptr;
 }
 
 content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
-  return NULL;
+  return nullptr;
 }
 
 storage::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
-  return NULL;
+  return nullptr;
 }
 
 content::PushMessagingService* BrowserContext::GetPushMessagingService() {
-  return NULL;
+  return nullptr;
 }
 
 content::SSLHostStateDelegate* BrowserContext::GetSSLHostStateDelegate() {
@@ -768,7 +768,7 @@ BrowserContext::~BrowserContext() {
   // Schedule io_data_ to be destroyed on the IO thread
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
                                      FROM_HERE, io_data_);
-  io_data_ = NULL;
+  io_data_ = nullptr;
 }
 
 // static

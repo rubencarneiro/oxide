@@ -36,7 +36,7 @@ class GLContextAdopted final : public oxide::GLContextAdopted {
  public:
   static scoped_refptr<GLContextAdopted> Create(
       QOpenGLContext* context,
-      gfx::GLShareGroup* share_group = NULL);
+      gfx::GLShareGroup* share_group = nullptr);
 
   // gfx::GLContext implementation
   void* GetHandle() final;

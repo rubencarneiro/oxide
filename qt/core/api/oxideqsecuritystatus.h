@@ -88,7 +88,7 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
 
  private:
   OxideQSecurityStatus(OxideQSecurityStatusPrivate& dd,
-                       QObject* parent = NULL);
+                       QObject* parent = nullptr);
 
   QScopedPointer<OxideQSecurityStatusPrivate> d_ptr;
 };

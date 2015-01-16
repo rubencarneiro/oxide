@@ -28,7 +28,7 @@ struct OxideMainParams {
   OxideMainParams(PlatformDelegate* delegate)
       : delegate(delegate),
         argc(0),
-        argv(NULL) {}
+        argv(nullptr) {}
 
   PlatformDelegate* delegate;
 

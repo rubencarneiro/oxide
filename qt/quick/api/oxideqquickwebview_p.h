@@ -121,7 +121,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
-  OxideQQuickWebView(QQuickItem* parent = NULL);
+  OxideQQuickWebView(QQuickItem* parent = nullptr);
   virtual ~OxideQQuickWebView();
 
   enum LogMessageSeverityLevel {

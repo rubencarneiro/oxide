@@ -103,7 +103,7 @@ WebMediaPlayer::WebMediaPlayer(
 }
 
 WebMediaPlayer::~WebMediaPlayer() {
-  client_->setWebLayer(NULL);
+  client_->setWebLayer(nullptr);
 
   if (player_manager_) {
     player_manager_->DestroyPlayer(player_id_);
@@ -624,7 +624,7 @@ void WebMediaPlayer::OnDestruct() {
 
 void WebMediaPlayer::Detach() {
   is_remote_ = false;
-  player_manager_ = NULL;
+  player_manager_ = nullptr;
 }
 
 void WebMediaPlayer::Pause(bool is_media_related_action) {
@@ -882,7 +882,7 @@ void WebMediaPlayer::OnKeyMessage(const std::string& session_id,
   client_->keyMessage(
       WebString::fromUTF8(media::GetPrefixedKeySystemName(current_key_system_)),
       WebString::fromUTF8(session_id),
-      message.empty() ? NULL : &message[0],
+      message.empty() ? nullptr : &message[0],
       message.size(),
       destination_url);
 }
@@ -909,7 +909,7 @@ void WebMediaPlayer::OnNeedKey(const std::string& type,
     init_data_type_ = type;
   }
 
-  const uint8* init_data_ptr = init_data.empty() ? NULL : &init_data[0];
+  const uint8* init_data_ptr = init_data.empty() ? nullptr : &init_data[0];
   client_->encrypted(
       WebString::fromUTF8(type), init_data_ptr, init_data.size());
 }

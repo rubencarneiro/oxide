@@ -110,7 +110,7 @@ class BrowserContextDelegate :
   virtual URLRequestDelegatedJob* CreateCustomURLRequestJob(
       net::URLRequest* request,
       net::NetworkDelegate* network_delegate) {
-    return NULL;
+    return nullptr;
   }
 
  protected:

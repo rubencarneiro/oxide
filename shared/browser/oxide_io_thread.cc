@@ -135,12 +135,12 @@ void IOThread::InitSystemRequestContextOnIOThread() {
   storage->set_ssl_config_service(new SSLConfigService());
   storage->set_channel_id_service(
       new net::ChannelIDService(
-          new net::DefaultChannelIDStore(NULL),
+          new net::DefaultChannelIDStore(nullptr),
           base::WorkerPool::GetTaskRunner(true)));
   storage->set_http_server_properties(
       scoped_ptr<net::HttpServerProperties>(
         new net::HttpServerPropertiesImpl()));
-  storage->set_cookie_store(new net::CookieMonster(NULL, NULL));
+  storage->set_cookie_store(new net::CookieMonster(nullptr, nullptr));
   storage->set_transport_security_state(new net::TransportSecurityState());
 
   net::HttpNetworkSession::Params session_params;
@@ -213,14 +213,14 @@ void IOThread::CleanUp() {
 
 #if defined(USE_NSS)
   net::ShutdownNSSHttpIO();
-  net::SetURLRequestContextForNSSHttpIO(NULL);
+  net::SetURLRequestContextForNSSHttpIO(nullptr);
 #endif
 
   DCHECK(globals_);
   delete globals_;
-  globals_ = NULL;
+  globals_ = nullptr;
 
-  system_request_context_getter_ = NULL;
+  system_request_context_getter_ = nullptr;
 
   BrowserPlatformIntegration::GetInstance()->BrowserThreadCleanUp(
       content::BrowserThread::IO);
@@ -234,7 +234,7 @@ IOThread* IOThread::instance() {
 
 IOThread::IOThread()
     : net_log_(new net::NetLog()),
-      globals_(NULL) {
+      globals_(nullptr) {
   CHECK(!g_instance) << "Can't create more than one IOThread instance";
   DCHECK(!content::BrowserThread::IsThreadInitialized(content::BrowserThread::IO)) <<
       "IOThread cannot be created after the IO thread has started";
@@ -247,8 +247,8 @@ IOThread::~IOThread() {
   DCHECK_EQ(g_instance, this);
   DCHECK(!globals_) << "We're being deleted before Cleanup() was called";
 
-  g_instance = NULL;
-  content::BrowserThread::SetDelegate(content::BrowserThread::IO, NULL);
+  g_instance = nullptr;
+  content::BrowserThread::SetDelegate(content::BrowserThread::IO, nullptr);
 }
 
 net::NetLog* IOThread::net_log() const {

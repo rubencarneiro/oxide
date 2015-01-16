@@ -71,7 +71,7 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   return make_scoped_ptr(WGC3DCBI::CreateOffscreenContext(
       gpu_channel_host.get(), attrs, false, GURL(),
       content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
-      NULL));
+      nullptr));
 }
 
 } // namespace
@@ -214,7 +214,7 @@ Compositor::~Compositor() {
 }
 
 bool Compositor::IsActive() const {
-  return layer_tree_host_.get() != NULL;
+  return layer_tree_host_.get() != nullptr;
 }
 
 void Compositor::SetVisibility(bool visible) {

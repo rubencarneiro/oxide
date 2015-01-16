@@ -69,7 +69,7 @@ class MessageReceiver {
         content::RenderFrameHost::FromID(render_process_id_, routing_id_);
     if (!rfh) {
       if (!is_reply) {
-        ReturnError(NULL, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
+        ReturnError(nullptr, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
                     "Could not find a RenderFrameHost corresponding to the "
                     "specified routing ID");
       }
@@ -170,7 +170,7 @@ class MessageReceiver {
     params.error = type;
     params.payload = msg;
 
-    content::RenderProcessHost* process = NULL;
+    content::RenderProcessHost* process = nullptr;
     if (rfh) {
       process = rfh->GetProcess();
     }

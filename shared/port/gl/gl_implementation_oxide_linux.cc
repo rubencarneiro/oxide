@@ -119,7 +119,7 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
   switch (implementation) {
     case kGLImplementationDesktopGL: {
       base::NativeLibrary library =
-          base::LoadNativeLibrary(base::FilePath("libGL.so.1"), NULL);
+          base::LoadNativeLibrary(base::FilePath("libGL.so.1"), nullptr);
       if (!library) {
         return false;
       }
@@ -145,13 +145,13 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
 
     case kGLImplementationEGLGLES2: {
       base::NativeLibrary gles_library =
-          base::LoadNativeLibrary(base::FilePath("libGLESv2.so.2"), NULL);
+          base::LoadNativeLibrary(base::FilePath("libGLESv2.so.2"), nullptr);
       if (!gles_library) {
         return false;
       }
 
       base::NativeLibrary egl_library =
-          base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL);
+          base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), nullptr);
       if (!egl_library) {
         base::UnloadNativeLibrary(gles_library);
         return false;

@@ -38,7 +38,7 @@ const char kWebViewContentsHelperKey[] = "oxide_web_view_contents_helper_data";
 WebViewContentsHelper::~WebViewContentsHelper() {
   if (web_preferences() && owns_web_preferences_) {
     WebPreferences* prefs = web_preferences();
-    WebPreferencesObserver::Observe(NULL);
+    WebPreferencesObserver::Observe(nullptr);
     prefs->Destroy();
   }
 }
@@ -142,7 +142,7 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
 
   if (web_preferences() && owns_web_preferences_) {
     WebPreferences* old = web_preferences();
-    WebPreferencesObserver::Observe(NULL);
+    WebPreferencesObserver::Observe(nullptr);
     old->Destroy();
   }
 

@@ -25,7 +25,7 @@
 class OxideQQuickLocationBarControllerPrivate {
  public:
   OxideQQuickLocationBarControllerPrivate()
-      : view(NULL) {}
+      : view(nullptr) {}
 
   OxideQQuickWebView* view;
 };

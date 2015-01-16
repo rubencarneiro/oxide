@@ -108,7 +108,7 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE QObject* qObjectParent(QObject* object) {
     if (!object) {
-      return NULL;
+      return nullptr;
     }
 
     return object->parent();
@@ -124,7 +124,7 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE DestructionObserver* createDestructionObserver(QObject* object) {
     if (!object) {
-      return NULL;
+      return nullptr;
     }
 
     return new DestructionObserver(object);

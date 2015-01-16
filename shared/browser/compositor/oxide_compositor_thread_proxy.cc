@@ -44,7 +44,7 @@ void CompositorThreadProxy::DidSkipSwapCompositorFrame(
   FrameHandleVector frames;
   if (frame) {
     frames.push_back(*frame);
-    *frame = NULL;
+    *frame = nullptr;
   }
 
   impl_message_loop_->PostTask(
@@ -60,7 +60,7 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
     float scale,
     scoped_ptr<GLFrameData> gl_frame_data) {
   if (!gl_frame_data) {
-    DidSkipSwapCompositorFrame(surface_id, NULL);
+    DidSkipSwapCompositorFrame(surface_id, nullptr);
     return;
   }
 
@@ -87,7 +87,7 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
       content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
         size, bitmap_id));
   if (!bitmap) {
-    DidSkipSwapCompositorFrame(surface_id, NULL);
+    DidSkipSwapCompositorFrame(surface_id, nullptr);
     return;
   }
 
@@ -186,7 +186,7 @@ CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)
 }
 
 void CompositorThreadProxy::CompositorDestroyed() {
-  owner().compositor = NULL;
+  owner().compositor = nullptr;
 }
 
 void CompositorThreadProxy::SetOutputSurface(CompositorOutputSurface* output) {

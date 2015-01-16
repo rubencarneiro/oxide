@@ -387,7 +387,7 @@ void URLRequestDelegatedJob::OnDataAvailable() {
 
   SetStatus(net::URLRequestStatus());
 
-  read_buf_= NULL;
+  read_buf_= nullptr;
   read_buf_size_ = 0;
 
   NotifyReadComplete(rv);
@@ -468,7 +468,7 @@ URLRequestDelegatedJob::~URLRequestDelegatedJob() {
 
   URLRequestDelegatedJobProxy* proxy = proxy_.get();
   proxy->AddRef();
-  proxy_ = NULL;
+  proxy_ = nullptr;
   content::BrowserThread::ReleaseSoon(
       content::BrowserThread::UI, FROM_HERE, proxy);
 }

@@ -70,7 +70,7 @@ QNetworkReply* TestNetworkAccessManager::createRequest(
     QIODevice* outgoing_data) {
   if (req.url().scheme() == QLatin1String("test")) {
     if (!req.url().host().isEmpty()) {
-      return NULL;
+      return nullptr;
     }
 
     QUrl redirect;
@@ -256,7 +256,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  argv[outargc] = NULL;
+  argv[outargc] = nullptr;
 
   QGuiApplication app(outargc, argv);
 
@@ -327,7 +327,7 @@ int main(int argc, char** argv) {
   QQmlEngine engine;
   engine.setNetworkAccessManagerFactory(&nam_factory);
 
-  QQuickView view(&engine, NULL);
+  QQuickView view(&engine, nullptr);
   view.setFlags(Qt::Window | Qt::WindowSystemMenuHint |
                 Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint |
                 Qt::WindowCloseButtonHint);
@@ -393,7 +393,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  QuickTestResult::setProgramName(NULL);
+  QuickTestResult::setProgramName(nullptr);
   return QuickTestResult::exitCode();
 }
 

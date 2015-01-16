@@ -102,9 +102,9 @@ void WebContext::Init(
 
 void WebContext::Destroy() {
   if (context_.get()) {
-    context_->SetDelegate(NULL);
+    context_->SetDelegate(nullptr);
   }
-  adapter_ = NULL;
+  adapter_ = nullptr;
 
   base::AutoLock lock(io_delegate_lock_);
   io_delegate_.clear();
@@ -502,7 +502,7 @@ void WebContext::SetAllowedExtraURLSchemes(
 WebContext* WebContext::GetDefault() {
   WebContextAdapter* adapter = WebContextAdapter::GetDefault();
   if (!adapter) {
-    return NULL;
+    return nullptr;
   }
 
   return FromAdapter(adapter);
@@ -557,7 +557,7 @@ QNetworkAccessManager* WebContext::GetCustomNetworkAccessManager() {
 }
 
 bool WebContext::IsInitialized() const {
-  return context_.get() != NULL;
+  return context_.get() != nullptr;
 }
 
 std::string WebContext::GetProduct() const {

@@ -48,7 +48,7 @@ int CrossThreadDataStream::BytesAvailableLocked() const {
 CrossThreadDataStream::~CrossThreadDataStream() {
   if (buffer_) {
     free(buffer_);
-    buffer_ = NULL;
+    buffer_ = nullptr;
   }
 }
 
@@ -61,7 +61,7 @@ bool CrossThreadDataStream::CalledOnWriteThread() const {
 }
 
 bool CrossThreadDataStream::IsInitialized() const {
-  return buffer_ != NULL;
+  return buffer_ != nullptr;
 }
 
 bool CrossThreadDataStream::CanAllocateSpaceForWriting() const {
@@ -262,7 +262,7 @@ void CrossThreadDataStream::ConsumeData(int size) {
 
 CrossThreadDataStream::CrossThreadDataStream()
     : buffer_size_(0),
-      buffer_(NULL),
+      buffer_(nullptr),
       buffer_reserved_start_(-1),
       buffer_reserved_end_(-1),
       buffer_start_(-1),

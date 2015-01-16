@@ -154,7 +154,7 @@ blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
     return new WebMediaPlayer(frame, client, delegate, rmpm, media_log);
   }
 
-  return NULL;
+  return nullptr;
 }
 #endif
 

@@ -227,7 +227,7 @@ WebMediaPlayer* RendererMediaPlayerManager::GetMediaPlayer(
   if (iter != media_players_.end()) {
     return iter->second;
   }
-  return NULL;
+  return nullptr;
 }
 
 }  // namespace content

@@ -158,7 +158,7 @@ class WebView : public ScriptMessageTarget,
 
   struct Params {
     Params() :
-        context(NULL),
+        context(nullptr),
         incognito(false) {}
 
     BrowserContext* context;

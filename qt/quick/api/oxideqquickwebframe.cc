@@ -122,7 +122,7 @@ OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
 
 QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {
   return QQmlListProperty<OxideQQuickWebFrame>(
-      this, NULL,
+      this, nullptr,
       OxideQQuickWebFramePrivate::childFrame_count,
       OxideQQuickWebFramePrivate::childFrame_at);
 }
@@ -130,7 +130,7 @@ QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {
 QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebFrame::messageHandlers() {
   return QQmlListProperty<OxideQQuickScriptMessageHandler>(
-      this, NULL,
+      this, nullptr,
       OxideQQuickWebFramePrivate::messageHandler_count,
       OxideQQuickWebFramePrivate::messageHandler_at);
 }
@@ -178,7 +178,7 @@ void OxideQQuickWebFrame::removeMessageHandler(
     return;
   }
 
-  handler->setParent(NULL);
+  handler->setParent(nullptr);
   d->messageHandlers().removeOne(hd);
 
   emit messageHandlersChanged();
@@ -196,7 +196,7 @@ OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
   if (!d->sendMessage(context, msg_id, args,
                       OxideQQuickScriptMessageRequestPrivate::get(request))) {
     delete request;
-    return NULL;
+    return nullptr;
   }
 
   return request;

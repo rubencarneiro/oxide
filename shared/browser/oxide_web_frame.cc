@@ -103,7 +103,7 @@ size_t WebFrame::GetScriptMessageHandlerCount() const {
 
 const ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
     size_t index) const {
-  return NULL;
+  return nullptr;
 }
 
 void WebFrame::OnChildAdded(WebFrame* child) {}
@@ -115,7 +115,7 @@ WebFrame::~WebFrame() {
 
 WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
                    WebView* view)
-    : parent_(NULL),
+    : parent_(nullptr),
       view_(view->AsWeakPtr()),
       render_frame_host_(render_frame_host),
       next_message_serial_(0),
@@ -132,14 +132,14 @@ WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
 // static
 WebFrame* WebFrame::FromFrameTreeNodeID(int64 frame_tree_node_id) {
   FrameMapIterator it = g_frame_map.Get().find(frame_tree_node_id);
-  return it == g_frame_map.Get().end() ? NULL : it->second;
+  return it == g_frame_map.Get().end() ? nullptr : it->second;
 }
 
 // static
 WebFrame* WebFrame::FromRenderFrameHost(
     content::RenderFrameHost* render_frame_host) {
   if (!render_frame_host) {
-    return NULL;
+    return nullptr;
   }
 
   return FromFrameTreeNodeID(
@@ -171,7 +171,7 @@ size_t WebFrame::GetChildCount() const {
 
 WebFrame* WebFrame::GetChildAt(size_t index) const {
   if (index >= child_frames_.size()) {
-    return NULL;
+    return nullptr;
   }
 
   return child_frames_.at(index);
@@ -224,7 +224,7 @@ void WebFrame::RemoveScriptMessageRequest(
     current_script_message_requests_.erase(it);
   } else {
     // Don't mutate the vector if we're in the destructor
-    *it = NULL;
+    *it = nullptr;
   }
 }
 

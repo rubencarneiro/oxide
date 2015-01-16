@@ -42,7 +42,7 @@ OxideQPermissionRequestPrivate::OxideQPermissionRequestPrivate(
     const QUrl& url,
     const QUrl& embedder,
     scoped_ptr<oxide::PermissionRequest> request)
-    : q_ptr(NULL),
+    : q_ptr(nullptr),
       request_(request.Pass()),
       is_cancelled_(false),
       url_(url),

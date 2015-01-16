@@ -151,11 +151,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  Compositor* compositor = delegate_ ? delegate_->GetCompositor() : NULL;
+  Compositor* compositor = delegate_ ? delegate_->GetCompositor() : nullptr;
   CompositorLock lock(compositor);
 
   if (output_surface_id != last_output_surface_id_) {
-    resource_collection_->SetClient(NULL);
+    resource_collection_->SetClient(nullptr);
     if (resource_collection_->LoseAllResources()) {
       SendReturnedDelegatedResources();
     }
@@ -298,7 +298,7 @@ void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
 }
 
 void RenderWidgetHostView::Destroy() {
-  host_ = NULL;
+  host_ = nullptr;
   delete this;
 }
 
@@ -381,7 +381,7 @@ gfx::Vector2dF RenderWidgetHostView::GetLastScrollOffset() const {
 }
 
 gfx::NativeView RenderWidgetHostView::GetNativeView() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::NativeViewId RenderWidgetHostView::GetNativeViewId() const {
@@ -389,7 +389,7 @@ gfx::NativeViewId RenderWidgetHostView::GetNativeViewId() const {
 }
 
 gfx::NativeViewAccessible RenderWidgetHostView::GetNativeViewAccessible() {
-  return NULL;
+  return nullptr;
 }
 
 bool RenderWidgetHostView::HasFocus() const {
@@ -487,8 +487,8 @@ void RenderWidgetHostView::UpdateCursorOnWebView() {
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
-  frame_provider_ = NULL;
-  layer_ = NULL;
+  frame_provider_ = nullptr;
+  layer_ = nullptr;
 }
 
 void RenderWidgetHostView::SendDelegatedFrameAck(uint32 surface_id) {
@@ -546,7 +546,7 @@ void RenderWidgetHostView::DetachLayer() {
 
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     host_(content::RenderWidgetHostImpl::From(host)),
-    delegate_(NULL),
+    delegate_(nullptr),
     resource_collection_(new cc::DelegatedFrameResourceCollection()),
     last_output_surface_id_(0),
     frame_is_evicted_(true),
@@ -566,8 +566,8 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
 
 RenderWidgetHostView::~RenderWidgetHostView() {
   DCHECK(ack_callbacks_.empty());
-  resource_collection_->SetClient(NULL);
-  SetDelegate(NULL);
+  resource_collection_->SetClient(nullptr);
+  SetDelegate(nullptr);
 }
 
 void RenderWidgetHostView::CompositorDidCommit() {

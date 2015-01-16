@@ -222,8 +222,8 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
 
 void CreateHelpers(WebView* self,
                    content::WebContents* contents,
-                   WebViewContentsHelper* opener = NULL) {
-  if (opener == NULL) {
+                   WebViewContentsHelper* opener = nullptr) {
+  if (!opener) {
     new WebViewContentsHelper(contents);
   }
   else {
@@ -273,7 +273,7 @@ WebView* WebViewIterator::GetNext() {
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 // static
@@ -283,7 +283,7 @@ WebViewIterator WebView::GetAllWebViews() {
 
 RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
   if (!web_contents_) {
-    return NULL;
+    return nullptr;
   }
 
   return static_cast<RenderWidgetHostView *>(
@@ -292,7 +292,7 @@ RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
 
 content::RenderViewHost* WebView::GetRenderViewHost() const {
   if (!web_contents_) {
-    return NULL;
+    return nullptr;
   }
 
   return web_contents_->GetRenderViewHost();
@@ -300,7 +300,7 @@ content::RenderViewHost* WebView::GetRenderViewHost() const {
 
 content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
   if (!web_contents_) {
-    return NULL;
+    return nullptr;
   }
 
   return content::RenderWidgetHostImpl::From(
@@ -403,7 +403,7 @@ size_t WebView::GetScriptMessageHandlerCount() const {
 
 const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
-  return NULL;
+  return nullptr;
 }
 
 void WebView::CompositorDidCommit() {
@@ -493,7 +493,7 @@ void WebView::Observe(int type,
 }
 
 void WebView::EvictCurrentFrame() {
-  current_compositor_frame_ = NULL;
+  current_compositor_frame_ = nullptr;
   OnEvictCurrentFrame();
 }
 
@@ -564,7 +564,7 @@ content::WebContents* WebView::OpenURLFromTab(
       params.disposition != NEW_BACKGROUND_TAB &&
       params.disposition != NEW_POPUP &&
       params.disposition != NEW_WINDOW) {
-    return NULL;
+    return nullptr;
   }
 
   // Block popups
@@ -573,7 +573,7 @@ content::WebContents* WebView::OpenURLFromTab(
        params.disposition == NEW_WINDOW ||
        params.disposition == NEW_POPUP) &&
       !params.user_gesture && GetBrowserContext()->IsPopupBlockerEnabled()) {
-    return NULL;
+    return nullptr;
   }
 
   WindowOpenDisposition disposition = params.disposition;
@@ -602,7 +602,7 @@ content::WebContents* WebView::OpenURLFromTab(
   if (!top_level) {
     WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
     DCHECK(frame);
-    top_level = frame->parent() == NULL;
+    top_level = frame->parent() == nullptr;
   }
 
   // Give the application a chance to block the navigation if it is
@@ -613,7 +613,7 @@ content::WebContents* WebView::OpenURLFromTab(
       !ShouldHandleNavigation(local_params.url,
                               disposition,
                               local_params.user_gesture)) {
-    return NULL;
+    return nullptr;
   }
 
   if (disposition == CURRENT_TAB) {
@@ -631,23 +631,23 @@ content::WebContents* WebView::OpenURLFromTab(
 
   content::WebContents::CreateParams contents_params(
       GetBrowserContext(),
-      opener_suppressed ? NULL : web_contents_->GetSiteInstance());
+      opener_suppressed ? nullptr : web_contents_->GetSiteInstance());
   contents_params.initial_size = GetViewSizeDip();
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
-  contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
+  contents_params.opener = opener_suppressed ? nullptr : web_contents_.get();
 
   ScopedNewContentsHolder contents(
       content::WebContents::Create(contents_params));
   if (!contents) {
     LOG(ERROR) << "Failed to create new WebContents for navigation";
-    return NULL;
+    return nullptr;
   }
 
   CreateHelpers(this, contents.get(), web_contents_helper_);
 
   WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
-    return NULL;
+    return nullptr;
   }
 
   InitCreatedWebView(new_view, contents.Pass());
@@ -900,7 +900,7 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 
   if (old_host && old_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(NULL);
+    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(nullptr);
   }
   if (new_host) {
     if (new_host->GetView()) {
@@ -1165,18 +1165,18 @@ WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
-  return NULL;
+  return nullptr;
 }
 
 WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) {
   NOTREACHED() <<
       "Your CanCreateWindows() implementation should be returning false!";
-  return NULL;
+  return nullptr;
 }
 
 FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
-  return NULL;
+  return nullptr;
 }
 
 void WebView::OnEvictCurrentFrame() {}
@@ -1202,7 +1202,7 @@ WebView::WebView()
       focused_node_is_editable_(false),
       selection_cursor_position_(0),
       selection_anchor_position_(0),
-      web_contents_helper_(NULL),
+      web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_provider_(GestureProvider::Create(this)),
       in_swap_(false),
@@ -1247,7 +1247,7 @@ WebView::~WebView() {
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetDelegate(NULL);
+    rwhv->SetDelegate(nullptr);
   }
 
   web_contents_->RemoveUserData(kWebViewKey);
@@ -1387,7 +1387,7 @@ WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
   WebViewUserData* data = static_cast<WebViewUserData *>(
       web_contents->GetUserData(kWebViewKey));
   if (!data) {
-    return NULL;
+    return nullptr;
   }
 
   return data->get();
@@ -1926,7 +1926,7 @@ void WebView::RequestGeolocationPermission(
       permission_request_manager_.CreateSimplePermissionRequest(
         PERMISSION_REQUEST_TYPE_GEOLOCATION,
         callback,
-        NULL));
+        nullptr));
   OnRequestGeolocationPermission(
       origin,
       web_contents_->GetLastCommittedURL().GetOrigin(),
@@ -2079,11 +2079,11 @@ bool WebView::IsInputPanelVisible() const {
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
     bool* did_suppress_message) {
-  return NULL;
+  return nullptr;
 }
 
 JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  return NULL;
+  return nullptr;
 }
 
 bool WebView::CanCreateWindows() const {

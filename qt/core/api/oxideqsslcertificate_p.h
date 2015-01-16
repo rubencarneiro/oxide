@@ -34,7 +34,7 @@ class OxideQSslCertificatePrivate final {
   ~OxideQSslCertificatePrivate();
 
   static OxideQSslCertificate* Create(net::X509Certificate* cert,
-                                      QObject* parent = NULL);
+                                      QObject* parent = nullptr);
 
  private:
   friend class OxideQSslCertificate;

@@ -61,7 +61,7 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
                    0,
                    cc::GLDataFormat(format),
                    cc::GLDataType(format),
-                   NULL);
+                   nullptr);
     gl->GenMailboxCHROMIUM(backing_texture_.mailbox.name);
     gl->ProduceTextureCHROMIUM(GL_TEXTURE_2D, backing_texture_.mailbox.name);
   }

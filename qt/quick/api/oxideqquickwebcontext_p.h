@@ -86,7 +86,7 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
     SessionCookieModeRestored
   };
 
-  OxideQQuickWebContext(QObject* parent = NULL);
+  OxideQQuickWebContext(QObject* parent = nullptr);
   virtual ~OxideQQuickWebContext();
 
   void classBegin();

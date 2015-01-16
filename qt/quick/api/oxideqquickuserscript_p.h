@@ -41,7 +41,7 @@ class Q_DECL_EXPORT OxideQQuickUserScript : public QObject,
   Q_INTERFACES(QQmlParserStatus)
 
  public:
-  OxideQQuickUserScript(QObject* parent = NULL);
+  OxideQQuickUserScript(QObject* parent = nullptr);
   virtual ~OxideQQuickUserScript();
 
   void classBegin();

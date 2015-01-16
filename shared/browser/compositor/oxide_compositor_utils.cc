@@ -224,7 +224,7 @@ void FetchTextureResourcesTask::SendResponseOnDestinationThread(
   callback_.Run(handle.Pass());
 
   callback_.Reset();
-  context_provider_ = NULL;
+  context_provider_ = nullptr;
 }
 
 void FetchTextureResourcesTask::FetchTextureResourcesOnGpuThread() {

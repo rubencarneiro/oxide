@@ -61,7 +61,7 @@ std::vector<content::FileChooserFileInfo> Enumerate(const QDir& dir) {
 }
 
 FilePickerDelegate::FilePickerDelegate() :
-    file_picker_(NULL) {}
+    file_picker_(nullptr) {}
 
 FilePickerDelegate::~FilePickerDelegate() {}
 

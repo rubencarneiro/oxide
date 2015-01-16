@@ -32,7 +32,7 @@
 
 OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
     oxide::qt::WebView* view)
-    : q_ptr(NULL),
+    : q_ptr(nullptr),
       web_view_(view) {}
 
 OxideQSecurityStatusPrivate::~OxideQSecurityStatusPrivate() {}
@@ -195,7 +195,7 @@ OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
   scoped_refptr<net::X509Certificate> cert =
       d->web_view_->security_status().cert();
   if (!cert.get()) {
-    return NULL;
+    return nullptr;
   }
 
   d->cert_.reset(OxideQSslCertificatePrivate::Create(cert.get()));

@@ -55,7 +55,7 @@ void PermissionRequestManager::RemovePendingRequest(
       std::find(requests.begin(), requests.end(), request);
   CHECK(it != requests.end());
   if (in_dispatch_) {
-    *it = NULL;
+    *it = nullptr;
   } else {
     requests.erase(it);
   }
@@ -151,8 +151,7 @@ void PermissionRequestManager::CancelPendingRequestsForType(
   }
 
   requests.erase(
-      std::remove(requests.begin(), requests.end(),
-                  static_cast<PermissionRequest *>(NULL)),
+      std::remove(requests.begin(), requests.end(), nullptr),
       requests.end());
 }
 

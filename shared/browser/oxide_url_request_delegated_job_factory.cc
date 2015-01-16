@@ -78,14 +78,14 @@ URLRequestDelegatedJobFactory::MaybeCreateJobWithProtocolHandler(
   }
 
   if (IsBuiltInScheme(scheme)) {
-    return NULL;
+    return nullptr;
   }
 
   DCHECK(CanDelegateProtocol(scheme));
 
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
   if (!delegate.get()) {
-    return NULL;
+    return nullptr;
   }
 
   job = delegate->CreateCustomURLRequestJob(request, network_delegate);

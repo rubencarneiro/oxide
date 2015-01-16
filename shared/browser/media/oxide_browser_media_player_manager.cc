@@ -160,12 +160,12 @@ MediaPlayer* BrowserMediaPlayerManager::CreateMediaPlayer(
 
     case MEDIA_PLAYER_TYPE_MEDIA_SOURCE: {
       NOTIMPLEMENTED();
-      return NULL;
+      return nullptr;
     }
   }
 
   NOTREACHED();
-  return NULL;
+  return nullptr;
 }
 
 MediaPlayer* BrowserMediaPlayerManager::GetPlayer(int player_id) {
@@ -175,7 +175,7 @@ MediaPlayer* BrowserMediaPlayerManager::GetPlayer(int player_id) {
       return *it;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 void BrowserMediaPlayerManager::AddPlayer(MediaPlayer* player) {
