@@ -70,6 +70,9 @@ class WebView final : public QObject,
 
   WebContext* GetContext() const;
 
+  void FrameAdded(oxide::WebFrame* frame);
+  void FrameRemoved(oxide::WebFrame* frame);
+
  private Q_SLOTS:
   void OnInputPanelVisibilityChanged();
 
@@ -97,9 +100,6 @@ class WebView final : public QObject,
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message) final;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() final;
-
-  void FrameAdded(oxide::WebFrame* frame) final;
-  void FrameRemoved(oxide::WebFrame* frame) final;
 
   bool CanCreateWindows() const final;
 
@@ -160,7 +160,7 @@ class WebView final : public QObject,
                               WindowOpenDisposition disposition,
                               bool user_gesture) final;
 
-  oxide::WebFrame* CreateWebFrame() final;
+  oxide::WebFrame* CreateWebFrame(content::RenderFrameHost* rfh) final;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) final;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,

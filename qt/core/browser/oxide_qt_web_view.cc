@@ -369,16 +369,6 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return new JavaScriptDialog(delegate, &did_suppress_message);
 }
 
-void WebView::FrameAdded(oxide::WebFrame* frame) {
-  adapter_->FrameAdded(
-      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
-}
-
-void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  adapter_->FrameRemoved(
-      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
-}
-
 bool WebView::CanCreateWindows() const {
   return adapter_->CanCreateWindows();
 }
@@ -625,8 +615,8 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-oxide::WebFrame* WebView::CreateWebFrame() {
-  return new WebFrame(adapter_->CreateWebFrame(), this);
+oxide::WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
+  return new WebFrame(adapter_->CreateWebFrame(), rfh, this);
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -998,6 +988,16 @@ void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
 
 WebContext* WebView::GetContext() const {
   return WebContext::FromBrowserContext(GetBrowserContext());
+}
+
+void WebView::FrameAdded(oxide::WebFrame* frame) {
+  adapter_->FrameAdded(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
+}
+
+void WebView::FrameRemoved(oxide::WebFrame* frame) {
+  adapter_->FrameRemoved(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
 }
 
 } // namespace qt

@@ -56,9 +56,9 @@ ScriptMessageRequest* ScriptMessageRequest::FromAdapter(
 }
 
 void ScriptMessageRequest::SetRequest(
-    oxide::ScriptMessageRequestImplBrowser* req) {
+    scoped_ptr<oxide::ScriptMessageRequestImplBrowser> req) {
   DCHECK(!request_ && req);
-  request_.reset(req);
+  request_ = req.Pass();
 
   request_->SetReplyCallback(
       base::Bind(

@@ -20,8 +20,7 @@
 
 #include <QtGlobal>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/oxide_web_frame.h"
@@ -36,9 +35,10 @@ namespace qt {
 class ScriptMessageRequest;
 class WebFrameAdapter;
 
-class WebFrame final : public oxide::WebFrame {
+class WebFrame : public oxide::WebFrame {
  public:
   WebFrame(WebFrameAdapter* adapter,
+           content::RenderFrameHost* render_frame_host,
            oxide::WebView* view);
 
   bool SendMessage(const GURL& context,
@@ -49,18 +49,19 @@ class WebFrame final : public oxide::WebFrame {
  private:
   friend class WebFrameAdapter;
 
-  ~WebFrame();
+  ~WebFrame() override;
 
   QObject* api_handle() const { return api_handle_.get(); }
 
-  size_t GetScriptMessageHandlerCount() const final;
+  // oxide::ScriptMessageTarget implementation
+  size_t GetScriptMessageHandlerCount() const override;
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
-      size_t index) const final;
+      size_t index) const override;
 
-  void OnChildAdded(oxide::WebFrame* child) final;
-  void OnChildRemoved(oxide::WebFrame* child) final;
-
-  void URLChanged() final;
+  // oxide::WebFrame implementation
+  void DidCommitNewURL() override;
+  void OnChildAdded(oxide::WebFrame* child) override;
+  void OnChildRemoved(oxide::WebFrame* child) override;
 
   scoped_ptr<QObject> api_handle_;
   WebFrameAdapter* adapter_;

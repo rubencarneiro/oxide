@@ -34,7 +34,7 @@ void ScriptMessageImplBrowser::DoSendResponse(
     return;
   }
 
-  content::RenderFrameHost* rfh = source_frame()->GetRenderFrameHost();
+  content::RenderFrameHost* rfh = source_frame()->render_frame_host();
   rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 

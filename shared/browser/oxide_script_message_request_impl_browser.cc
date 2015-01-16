@@ -28,7 +28,7 @@ namespace oxide {
 bool ScriptMessageRequestImplBrowser::DoSendMessage(
     const OxideMsg_SendMessage_Params& params) {
  
-  content::RenderFrameHost* rfh = frame_->GetRenderFrameHost();
+  content::RenderFrameHost* rfh = frame_->render_frame_host();
   return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 
@@ -54,9 +54,7 @@ ScriptMessageRequestImplBrowser::ScriptMessageRequestImplBrowser(
     const std::string& msg_id,
     const std::string& args) :
     ScriptMessageRequest(serial, context, want_reply, msg_id, args),
-    frame_(frame->GetWeakPtr()) {
-  frame_->AddScriptMessageRequest(this);
-}
+    frame_(frame->GetWeakPtr()) {}
 
 ScriptMessageRequestImplBrowser::~ScriptMessageRequestImplBrowser() {
   if (frame_) {

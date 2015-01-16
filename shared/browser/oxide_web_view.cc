@@ -830,7 +830,10 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   }
 
   if (WebFrame::FromRenderFrameHost(render_frame_host)) {
-    // We get called whenever a new RFH is created for this node
+    // We already have a WebFrame for this host. This could be because the new
+    // host is for the root frame, or it is a cross-process subframe
+    DCHECK(!render_frame_host->GetParent() ||
+           render_frame_host->IsCrossProcessSubframe());
     return;
   }
 
@@ -838,10 +841,34 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
       WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
   DCHECK(parent);
 
-  WebFrame* frame = CreateWebFrame();
+  WebFrame* frame = CreateWebFrame(render_frame_host);
   DCHECK(frame);
-  frame->Init(render_frame_host);
-  frame->SetParent(parent);
+  frame->InitParent(parent);
+}
+
+void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
+  if (!root_frame_) {
+    return;
+  }
+
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
+  if (!frame) {
+    // This occurs if |render_frame_host| represents a frame that's being
+    // detached (so the WebFrame was deleted in FrameDetached)
+    return;
+  }
+
+  if (frame->render_frame_host() != render_frame_host) {
+    // |render_frame_host| is not the current host for this WebFrame, so
+    // we do nothing
+    return;
+  }
+
+  // If we get here, then it's likely that the main frame is being swapped.
+  // In this case, Chromium purges all RenderFrameHosts on the browser side
+  // before we get the detached messages from Blink
+  frame->WillDestroy();
+  delete frame;
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
@@ -852,10 +879,6 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   DCHECK(!in_swap_);
   base::AutoReset<bool> in_swap(&in_swap_, true);
-
-  while (root_frame_->ChildCount() > 0) {
-    root_frame_->ChildAt(0)->Destroy();
-  }
 
   // Fake a response for any pending touch ACK's
   gesture_provider_->OnTouchEventAck(false);
@@ -873,6 +896,18 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
         new OxideMsg_UpdateTopControlsState(new_host->GetRoutingID(),
                                             location_bar_constraints_));
   }
+}
+
+void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                                     content::RenderFrameHost* new_host) {
+  if (!root_frame_) {
+    return;
+  }
+
+  WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
+  DCHECK(frame);
+
+  frame->set_render_frame_host(new_host);
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -902,7 +937,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
     ui::PageTransition transition_type) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (frame) {
-    frame->URLChanged();
+    frame->DidCommitNewURL();
   }
 
   if (frame->parent()) {
@@ -1019,7 +1054,8 @@ void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
   DCHECK(frame);
 
   certificate_error_manager_.FrameDetached(frame);
-  frame->Destroy();
+  frame->WillDestroy();
+  delete frame;
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1168,7 +1204,8 @@ WebView::WebView()
       did_scroll_focused_editable_node_into_view_(false),
       auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
-      location_bar_constraints_(cc::BOTH) {
+      location_bar_constraints_(cc::BOTH),
+      weak_factory_(this) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 
@@ -1199,8 +1236,12 @@ WebView::~WebView() {
                   this),
       g_all_web_views.Get().end());
 
+  // XXX: Remove this when we have WebFrameTree
+  weak_factory_.InvalidateWeakPtrs();
   if (root_frame_) {
-    root_frame_->Destroy();
+    root_frame_->WillDestroy();
+    delete root_frame_;
+    root_frame_ = NULL;
   }
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
@@ -1316,8 +1357,7 @@ void WebView::Init(Params* params) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_ = CreateWebFrame();
-  root_frame_->Init(web_contents_->GetMainFrame());
+  root_frame_ = CreateWebFrame(web_contents_->GetMainFrame());
 
   if (params->context) {
     if (!initial_url_.is_empty()) {
@@ -2043,9 +2083,6 @@ JavaScriptDialog* WebView::CreateJavaScriptDialog(
 JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return NULL;
 }
-
-void WebView::FrameAdded(WebFrame* frame) {}
-void WebView::FrameRemoved(WebFrame* frame) {}
 
 bool WebView::CanCreateWindows() const {
   return false;

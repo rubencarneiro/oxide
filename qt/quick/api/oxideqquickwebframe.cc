@@ -30,15 +30,10 @@ OxideQQuickWebFramePrivate::OxideQQuickWebFramePrivate(
     OxideQQuickWebFrame* q) :
     oxide::qt::WebFrameAdapter(q) {}
 
-void OxideQQuickWebFramePrivate::URLChanged() {
+void OxideQQuickWebFramePrivate::URLCommitted() {
   Q_Q(OxideQQuickWebFrame);
 
   emit q->urlChanged();
-}
-
-OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
-    OxideQQuickWebFrame* frame) {
-  return frame->d_func();
 }
 
 // static
@@ -78,6 +73,11 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
 
   return adapterToQObject<OxideQQuickScriptMessageHandler>(
       p->messageHandlers().at(index));
+}
+
+OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
+    OxideQQuickWebFrame* frame) {
+  return frame->d_func();
 }
 
 OxideQQuickWebFrame::OxideQQuickWebFrame() :
