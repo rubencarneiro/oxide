@@ -829,10 +829,6 @@ bool WebView::IsFullscreenForTabOrPending(
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
-  if (!root_frame_) {
-    return;
-  }
-
   if (WebFrame::FromRenderFrameHost(render_frame_host)) {
     // We already have a WebFrame for this host. This could be because the new
     // host is for the root frame, or it is a cross-process subframe
@@ -851,10 +847,6 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
 }
 
 void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
-  if (!root_frame_) {
-    return;
-  }
-
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (!frame) {
     // This occurs if |render_frame_host| represents a frame that's being
@@ -903,10 +895,6 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
 
 void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
                                      content::RenderFrameHost* new_host) {
-  if (!root_frame_) {
-    return;
-  }
-
   WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
   DCHECK(frame);
 
@@ -1049,10 +1037,6 @@ void WebView::DidStopLoading(content::RenderViewHost* render_view_host) {
 }
 
 void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
-  if (!root_frame_) {
-    return;
-  }
-
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   DCHECK(frame);
 
@@ -1154,6 +1138,10 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
                                      bool user_gesture) {
   return true;
+}
+
+WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
+  return new WebFrame(rfh, this);
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -1351,6 +1339,7 @@ void WebView::Init(Params* params) {
                  content::NotificationService::AllBrowserContextsAndSources());
 
   root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
+  DCHECK(root_frame_.get());
 
   if (params->context) {
     if (!initial_url_.is_empty()) {
