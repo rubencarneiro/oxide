@@ -18,6 +18,31 @@
   'variables': {
     'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide',
   },
+  'conditions': [
+    ['enable_mediahub==1', {
+      'targets': [
+        {
+          'target_name': 'mediahub_lib',
+          'type': 'static_library',
+          'hard_dependency': 1,
+          'cflags_cc+': [ '-std=c++11', '-fexceptions' ],
+          'cflags_cc!': [ '-fno-exceptions' ],
+          'link_settings': {
+            'libraries': [
+              '-lmedia-hub-client',
+            ],
+          },
+          'include_dirs': [
+            '..',
+          ],
+          'sources': [
+            'browser/media/mediahub_player_shim.cc',
+            'browser/media/mediahub_player_shim.h',
+          ],
+        },
+      ],
+    }],
+  ],
   'targets': [
     {
       'target_name': 'oxide_extra_resources',
