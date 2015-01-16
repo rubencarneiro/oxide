@@ -72,11 +72,11 @@
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
-#include "shared/base/oxide_enum_flags.h"
-#include "shared/base/oxide_event_utils.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_enum_flags.h"
+#include "shared/common/oxide_event_utils.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/gl/oxide_gl_context_adopted.h"
 

@@ -23,7 +23,7 @@
 #include "net/cert/cert_status_flags.h"
 #include "net/cert/x509_certificate.h"
 
-#include "shared/base/oxide_enum_flags.h"
+#include "shared/common/oxide_enum_flags.h"
 
 namespace oxide {
 

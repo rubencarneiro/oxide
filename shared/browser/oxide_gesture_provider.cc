@@ -29,8 +29,8 @@
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/screen.h"
 
-#include "shared/base/oxide_event_utils.h"
-#include "shared/base/oxide_id_allocator.h"
+#include "shared/common/oxide_event_utils.h"
+#include "shared/common/oxide_id_allocator.h"
 
 namespace oxide {
 

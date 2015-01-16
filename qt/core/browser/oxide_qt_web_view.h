@@ -26,7 +26,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 
-#include "qt/core/base/oxide_qt_event_utils.h"
+#include "qt/core/common/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 

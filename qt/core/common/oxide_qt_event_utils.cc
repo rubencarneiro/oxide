@@ -32,7 +32,7 @@
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/geometry/vector2d_f.h"
 
-#include "shared/base/oxide_event_utils.h"
+#include "shared/common/oxide_event_utils.h"
 
 namespace oxide {
 namespace qt {

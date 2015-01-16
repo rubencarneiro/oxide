@@ -31,7 +31,7 @@
 #include "content/public/browser/browser_thread.h"
 #include "url/gurl.h"
 
-#include "qt/core/base/oxide_qt_screen_utils.h"
+#include "qt/core/common/oxide_qt_screen_utils.h"
 #include "qt/core/gl/oxide_qt_gl_context_adopted.h"
 #include "qt/core/glue/oxide_qt_init.h"
 

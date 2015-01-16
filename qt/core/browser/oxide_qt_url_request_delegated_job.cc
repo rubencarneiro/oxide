@@ -35,7 +35,7 @@
 #include "url/gurl.h"
 
 #include "qt/core/browser/oxide_qt_web_context.h"
-#include "shared/base/oxide_cross_thread_data_stream.h"
+#include "shared/common/oxide_cross_thread_data_stream.h"
 
 namespace oxide {
 namespace qt {
