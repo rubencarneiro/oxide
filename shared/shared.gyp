@@ -465,7 +465,7 @@
             'renderer/media/oxide_media_info_loader.h',
           ],
           'dependencies': [
-            './media/mediahub.gyp:mediahub_lib',
+            'mediahub_lib',
           ],
         }]
       ],
