@@ -431,8 +431,9 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       content::WebContents* source) final;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) final;
-  void ToggleFullscreenModeForTab(content::WebContents* source,
-                                  bool enter) final;
+  void EnterFullscreenModeForTab(content::WebContents* source,
+                                 const GURL& origin) final;
+  void ExitFullscreenModeForTab(content::WebContents* source) final;
   bool IsFullscreenForTabOrPending(
       const content::WebContents* source) const final;
 
