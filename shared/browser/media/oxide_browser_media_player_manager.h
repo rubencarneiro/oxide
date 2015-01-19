@@ -37,14 +37,13 @@ struct OxideHostMsg_MediaPlayer_Initialize_Params;
 
 namespace oxide {
 
-class WebView;
 class MediaPlayer;
 
 class BrowserMediaPlayerManager {
  public:
   typedef base::Callback<void(const std::string&)> GetCookieCB;
 
-  BrowserMediaPlayerManager(WebView* webView, content::RenderFrameHost* rfh);
+  BrowserMediaPlayerManager(content::RenderFrameHost* rfh);
   ~BrowserMediaPlayerManager();
 
   void OnInitialize(const OxideHostMsg_MediaPlayer_Initialize_Params& media_player_params);
@@ -82,7 +81,6 @@ class BrowserMediaPlayerManager {
   int GetRoutingID();
   bool Send(IPC::Message* msg);
 
-  WebView* web_view_;
   content::RenderFrameHost* const render_frame_host_;
 
   ScopedVector<MediaPlayer> players_;

@@ -220,8 +220,7 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
 
-void CreateHelpers(WebView* self,
-                   content::WebContents* contents,
+void CreateHelpers(content::WebContents* contents,
                    WebViewContentsHelper* opener = nullptr) {
   if (!opener) {
     new WebViewContentsHelper(contents);
@@ -231,7 +230,7 @@ void CreateHelpers(WebView* self,
   }
 
 #if defined(ENABLE_MEDIAHUB)
-  new MediaWebContentsObserver(self, contents);
+  new MediaWebContentsObserver(contents);
 #endif
 }
 
@@ -643,7 +642,7 @@ content::WebContents* WebView::OpenURLFromTab(
     return nullptr;
   }
 
-  CreateHelpers(this, contents.get(), web_contents_helper_);
+  CreateHelpers(contents.get(), web_contents_helper_);
 
   WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
@@ -740,7 +739,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  CreateHelpers(this, new_contents, web_contents_helper_);
+  CreateHelpers(new_contents, web_contents_helper_);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -1329,7 +1328,7 @@ void WebView::Init(Params* params) {
       restore_state_.clear();
     }
 
-    CreateHelpers(this, web_contents_.get());
+    CreateHelpers(web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());

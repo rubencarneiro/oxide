@@ -11,16 +11,11 @@
 
 namespace oxide {
 
-BrowserMediaPlayerManager::BrowserMediaPlayerManager(WebView* webView,
-    content::RenderFrameHost* rfh):
-    web_view_(webView)
-    , render_frame_host_(rfh)
-{
-}
+BrowserMediaPlayerManager::BrowserMediaPlayerManager(
+    content::RenderFrameHost* rfh)
+    : render_frame_host_(rfh) {}
 
-BrowserMediaPlayerManager::~BrowserMediaPlayerManager()
-{
-}
+BrowserMediaPlayerManager::~BrowserMediaPlayerManager() {}
 
 void BrowserMediaPlayerManager::OnInitialize(const OxideHostMsg_MediaPlayer_Initialize_Params& media_player_params) {
 
@@ -117,8 +112,13 @@ void BrowserMediaPlayerManager::GetCookies(
       const GURL& url,
       const GURL& first_party_for_cookies,
       const BrowserMediaPlayerManager::GetCookieCB& callback) {
+  WebView* web_view = WebView::FromRenderFrameHost(render_frame_host_);
+  if (!web_view) {
+    callback.Run("");
+    return;
+  }
 
-  oxide::BrowserContext* browser_context = web_view_->GetBrowserContext();
+  BrowserContext* browser_context = web_view->GetBrowserContext();
   net::StaticCookiePolicy policy(browser_context->GetCookiePolicy());
   if (policy.CanGetCookies(url, first_party_for_cookies) != net::OK) {
     callback.Run("");
@@ -138,10 +138,14 @@ void BrowserMediaPlayerManager::GetCookies(
 // private
 MediaPlayer* BrowserMediaPlayerManager::CreateMediaPlayer(
     const OxideHostMsg_MediaPlayer_Initialize_Params& params) {
+  WebView* web_view = WebView::FromRenderFrameHost(render_frame_host_);
+  if (!web_view) {
+    return nullptr;
+  }
 
   switch (params.type) {
     case MEDIA_PLAYER_TYPE_URL: {
-      const std::string user_agent = web_view_->GetBrowserContext()->GetUserAgent();
+      const std::string user_agent = web_view->GetBrowserContext()->GetUserAgent();
 
       MediaPlayerMediaHub* media_player_bridge =
         new MediaPlayerMediaHub(

@@ -13,17 +13,16 @@ class RenderFrameHost;
 
 namespace oxide {
 
-class WebView;
 class BrowserMediaPlayerManager;
 
 class MediaWebContentsObserver : public content::WebContentsObserver {
  public:
-  explicit MediaWebContentsObserver(WebView* webView, content::WebContents* contents);
+  explicit MediaWebContentsObserver(content::WebContents* contents);
   ~MediaWebContentsObserver();
 
   void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) override;
   bool OnMessageReceived(const IPC::Message& message,
-                                 content::RenderFrameHost* render_frame_host) override;
+                         content::RenderFrameHost* render_frame_host) override;
 
   void WebContentsDestroyed() override;
 
@@ -37,8 +36,6 @@ class MediaWebContentsObserver : public content::WebContentsObserver {
       MediaPlayerManagerMap;
   MediaPlayerManagerMap media_player_managers_;
 
-  WebView* webView_;
-  
   DISALLOW_COPY_AND_ASSIGN(MediaWebContentsObserver);
 };
 

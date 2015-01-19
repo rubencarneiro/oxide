@@ -10,14 +10,11 @@
 
 namespace oxide {
 
-MediaWebContentsObserver::MediaWebContentsObserver(WebView* webView, content::WebContents* contents)
-  : WebContentsObserver(contents)
-  , webView_(webView)
-{
-}
+MediaWebContentsObserver::MediaWebContentsObserver(
+    content::WebContents* contents)
+    : content::WebContentsObserver(contents) {}
 
-MediaWebContentsObserver::~MediaWebContentsObserver() {
-}
+MediaWebContentsObserver::~MediaWebContentsObserver() {}
 
 void MediaWebContentsObserver::RenderFrameDeleted(
     content::RenderFrameHost* render_frame_host) {
@@ -69,7 +66,7 @@ BrowserMediaPlayerManager* MediaWebContentsObserver::GetMediaPlayerManager(
   if (!media_player_managers_.contains(key)) {
     media_player_managers_.set(
         key,
-        make_scoped_ptr(new BrowserMediaPlayerManager(webView_, render_frame_host)));
+        make_scoped_ptr(new BrowserMediaPlayerManager(render_frame_host)));
   }
   return media_player_managers_.get(key);
 }
