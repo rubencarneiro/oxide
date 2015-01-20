@@ -149,7 +149,7 @@ blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
           content::RenderFrame::FromWebFrame(frame));
   DCHECK(rmpm);
 
-  const CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
+  const base::CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
   if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
     return new WebMediaPlayer(frame, client, delegate, rmpm, media_log);
   }

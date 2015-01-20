@@ -7,7 +7,7 @@
 #include "shared/common/oxide_messages.h"
 #include "content/public/common/renderer_preferences.h"
 #include "content/renderer/render_view_impl.h"
-#include "ui/gfx/rect_f.h"
+#include "ui/gfx/geometry/rect_f.h"
 
 #include "oxide_web_media_player.h"
 

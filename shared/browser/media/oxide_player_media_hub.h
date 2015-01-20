@@ -14,7 +14,7 @@
 #include "base/time/time.h"
 #include "base/timer/timer.h"
 #include "oxide_media_player.h"
-#include "shared/media/mediahub_player_shim.h"
+#include "shared/browser/media/mediahub_player_shim.h"
 #include "url/gurl.h"
 
 namespace core {

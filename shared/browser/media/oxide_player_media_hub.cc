@@ -34,7 +34,7 @@ MediaPlayerMediaHub::MediaPlayerMediaHub(
       media_hub_client_(0),
       weak_factory_(this) {
 
-  const CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
+  const base::CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
   if (command_line.HasSwitch(switches::kMediaHubFixedSessionDomains)) {
     std::string ds = command_line.GetSwitchValueASCII(switches::kMediaHubFixedSessionDomains);
     std::vector<std::string> dl;
