@@ -140,8 +140,6 @@ class WebView final : public QObject,
   void OnWebPreferencesDestroyed() final;
 
   void OnRequestGeolocationPermission(
-      const GURL& origin,
-      const GURL& embedder,
       scoped_ptr<oxide::SimplePermissionRequest> request) final;
 
   void OnUnhandledKeyboardEvent(

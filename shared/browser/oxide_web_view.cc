@@ -892,9 +892,7 @@ void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
   WebFrame::Destroy(frame);
 }
 
-void WebView::RenderProcessGone(base::TerminationStatus status) {
-  permission_request_manager_.CancelAllPendingRequests();
-}
+void WebView::RenderProcessGone(base::TerminationStatus status) {}
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
@@ -992,7 +990,7 @@ void WebView::DidNavigateMainFrame(
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
   if (details.is_navigation_to_different_page()) {
-    permission_request_manager_.CancelAllPendingRequests();
+    permission_request_manager_.CancelPendingRequests();
 
     blocked_content_ = CONTENT_TYPE_NONE;
     OnContentBlocked();
@@ -1144,8 +1142,6 @@ void WebView::OnToggleFullscreenMode(bool enter) {}
 void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
-    const GURL& origin,
-    const GURL& embedder,
     scoped_ptr<SimplePermissionRequest> request) {}
 
 void WebView::OnUnhandledKeyboardEvent(
@@ -1243,8 +1239,6 @@ const base::string16& WebView::GetSelectionText() const {
 }
 
 WebView::~WebView() {
-  permission_request_manager_.CancelAllPendingRequests();
-
   g_all_web_views.Get().erase(
       std::remove(g_all_web_views.Get().begin(),
                   g_all_web_views.Get().end(),
@@ -1921,14 +1915,12 @@ void WebView::RequestGeolocationPermission(
     const GURL& origin,
     const base::Callback<void(bool)>& callback) {
   scoped_ptr<SimplePermissionRequest> request(
-      permission_request_manager_.CreateSimplePermissionRequest(
-        PERMISSION_REQUEST_TYPE_GEOLOCATION,
-        callback,
-        nullptr));
-  OnRequestGeolocationPermission(
-      origin,
-      web_contents_->GetLastCommittedURL().GetOrigin(),
-      request.Pass());
+      new SimplePermissionRequest(
+        &permission_request_manager_,
+        origin,
+        web_contents_->GetLastCommittedURL().GetOrigin(),
+        callback));
+  OnRequestGeolocationPermission(request.Pass());
 }
 
 void WebView::AllowCertificateError(

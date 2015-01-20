@@ -28,6 +28,7 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/certificate_request_result_type.h"
+#include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_process_host_observer.h"
@@ -93,6 +94,14 @@ class SingleProcessBrowserContextHolder
 
   DISALLOW_COPY_AND_ASSIGN(SingleProcessBrowserContextHolder);
 };
+
+void RespondToGeolocationPermissionRequest(
+    const base::Callback<void(bool)>& callback,
+    bool result) {
+  content::GeolocationProvider::GetInstance()
+      ->UserDidOptIntoLocationServices();
+  callback.Run(result);
+}
 
 }
 
@@ -252,8 +261,11 @@ void ContentBrowserClient::RequestPermission(
     return;
   }
 
+  base::Callback<void(bool)> callback =
+      base::Bind(&RespondToGeolocationPermissionRequest,
+                 result_callback);
   webview->RequestGeolocationPermission(requesting_frame.GetOrigin(),
-                                        result_callback);
+                                        callback);
 }
 
 bool ContentBrowserClient::CanCreateWindow(

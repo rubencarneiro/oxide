@@ -509,8 +509,6 @@ class WebView : public ScriptMessageTarget,
   virtual void OnWebPreferencesDestroyed();
 
   virtual void OnRequestGeolocationPermission(
-      const GURL& origin,
-      const GURL& embedder,
       scoped_ptr<SimplePermissionRequest> request);
 
   virtual void OnUnhandledKeyboardEvent(

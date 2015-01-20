@@ -490,13 +490,9 @@ void WebView::OnWebPreferencesDestroyed() {
 }
 
 void WebView::OnRequestGeolocationPermission(
-    const GURL& origin,
-    const GURL& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   scoped_ptr<OxideQGeolocationPermissionRequest> req(
       OxideQGeolocationPermissionRequestPrivate::Create(
-        QUrl(QString::fromStdString(origin.spec())),
-        QUrl(QString::fromStdString(embedder.spec())),
         request.Pass()));
 
   // The embedder takes ownership of this

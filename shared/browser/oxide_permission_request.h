@@ -20,84 +20,89 @@
 
 #include <vector>
 
-#include "base/basictypes.h"
 #include "base/callback.h"
-#include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
+#include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "url/gurl.h"
 
 namespace oxide {
 
-enum PermissionRequestType {
-  PERMISSION_REQUEST_TYPE_START = 0,
-
-  PERMISSION_REQUEST_TYPE_GEOLOCATION = PERMISSION_REQUEST_TYPE_START,
-
-  PERMISSION_REQUEST_TYPE_MAX
-};
-
 class PermissionRequest;
 class SimplePermissionRequest;
 
-class PermissionRequestManager final :
-    public base::SupportsWeakPtr<PermissionRequestManager> {
+// This class tracks PermissionRequests
+class PermissionRequestManager {
  public:
   PermissionRequestManager();
   ~PermissionRequestManager();
 
-  scoped_ptr<SimplePermissionRequest> CreateSimplePermissionRequest(
-      PermissionRequestType type,
-      const base::Callback<void(bool)>& callback,
-      base::Closure* cancel_callback);
-
-  bool HasAnyPendingRequests();
-  bool HasPendingRequestsForType(PermissionRequestType type);
-
-  void AbortPendingRequest(PermissionRequest* request);
-  void CancelAllPendingRequests();
-  void CancelPendingRequestsForType(PermissionRequestType type);
+  // Cancel any pending permission requests
+  void CancelPendingRequests();
 
  private:
   friend class PermissionRequest;
-  typedef std::vector<PermissionRequest *> PermissionRequestVector;
+  friend class SimplePermissionRequest;
+  class IteratorGuard;
 
-  static void CancelPendingRequestFromSource(
-      const base::WeakPtr<PermissionRequest>& request);
+  // Add a PermissionRequest to this manager
+  void AddPendingRequest(PermissionRequest* request);
 
-  void AddPendingRequest(PermissionRequestType type,
-                         PermissionRequest* request);
+  // Remove |request| from this manager and invalidate its pointer to this
   void RemovePendingRequest(PermissionRequest* request);
 
-  bool in_dispatch_;
-  PermissionRequestVector pending_requests_[PERMISSION_REQUEST_TYPE_MAX];
+  // Remove empty slots from pending_requests_
+  void Compact();
+
+  // Used to indicate that pending_requests_ is being iterated over, and
+  // will prevent RemovePendingRequest from mutating it
+  bool iterating_;
+
+  typedef std::vector<PermissionRequest*> PermissionRequestVector;
+
+  // This list of PermissionRequests
+  std::vector<PermissionRequest*> pending_requests_;
+
+  base::WeakPtrFactory<PermissionRequestManager> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(PermissionRequestManager);
 };
 
-class PermissionRequest : public base::SupportsWeakPtr<PermissionRequest> {
+// Base class of all PermissionRequests - this shouldn't be used directly.
+// It contains functionality that is common to all requests (url, embedder)
+class PermissionRequest {
  public:
   virtual ~PermissionRequest();
 
-  // Sets a callback to run if the request is cancelled by Oxide
+  // The URL of the frame that generated this request
+  GURL url() const { return url_; }
+
+  // The URL of the top-level document containing the frame that generated
+  // this request
+  GURL embedder() const { return embedder_; }
+
+  // Whether the request has been cancelled by Oxide. A cancelled request can
+  // no longer be responded to
+  bool is_cancelled() const { return is_cancelled_; }
+
+  // Set a callback to be invoked when this request is cancelled
   void SetCancelCallback(const base::Closure& cancel_callback);
 
  protected:
-  PermissionRequest();
-
-  // Called by Oxide to cancel this request. Will notify the callback
-  // registered with SetCancelCallback
-  virtual void Cancel(bool from_source);
-
-  PermissionRequestType type() const { return type_; }
-
- private:
   friend class PermissionRequestManager;
 
-  virtual bool CanRespond() const = 0;
+  PermissionRequest(PermissionRequestManager* manager,
+                    const GURL& url,
+                    const GURL& embedder);
 
-  PermissionRequestType type_;
-  base::WeakPtr<PermissionRequestManager> manager_;
+  // Cancel this request and run the cancel callback. This is only called from
+  // PermissionRequestManager
+  virtual void Cancel();
+
+  PermissionRequestManager* manager_;
+
+ private:
+  GURL url_;
+  GURL embedder_;
 
   bool is_cancelled_;
   base::Closure cancel_callback_;
@@ -105,24 +110,30 @@ class PermissionRequest : public base::SupportsWeakPtr<PermissionRequest> {
   DISALLOW_COPY_AND_ASSIGN(PermissionRequest);
 };
 
-class SimplePermissionRequest final : public PermissionRequest {
+// Implementation of PermissionRequest that allows embedders to respond
+// with no parameters. Most types of request will use this class (the main
+// exception is media device access permissions, which require responses with
+// parameters). If your request requires more information to be exposed, feel
+// free to subclass from this 
+class SimplePermissionRequest : public PermissionRequest {
  public:
-  ~SimplePermissionRequest();
+  SimplePermissionRequest(PermissionRequestManager* manager,
+                          const GURL& url,
+                          const GURL& embedder,
+                          const base::Callback<void(bool)>& callback);
+  ~SimplePermissionRequest() override;
 
+  // Allow the requesting frame access to the desired resource
   void Allow();
+
+  // Deny the requesting frame access to the desired resource
   void Deny();
 
  private:
-  friend class PermissionRequestManager;
+  // PermissionRequest implementation
+  void Cancel() override;
 
-  SimplePermissionRequest(const base::Callback<void(bool)>& callback);
-
-  // Called by Oxide to cancel this request. Once called, the API layer
-  // must not call Allow() or Deny()
-  void Cancel(bool from_source) final;
-
-  bool CanRespond() const final;
-
+  // The callback provided by Chromium, which we use to respond to the request
   base::Callback<void(bool)> callback_;
 
   DISALLOW_COPY_AND_ASSIGN(SimplePermissionRequest);

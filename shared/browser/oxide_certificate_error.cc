@@ -288,9 +288,7 @@ void CertificateError::SetCancelCallback(const base::Closure& callback) {
 }
 
 void CertificateError::Allow() {
-  if (callback_.is_null()) {
-    return;
-  }
+  DCHECK(!callback_.is_null());
 
   callback_.Run(true);
   callback_.Reset();
@@ -299,9 +297,7 @@ void CertificateError::Allow() {
 }
 
 void CertificateError::Deny() {
-  if (callback_.is_null()) {
-    return;
-  }
+  DCHECK(!callback_.is_null());
 
   callback_.Run(false);
   callback_.Reset();
