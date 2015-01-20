@@ -32,6 +32,8 @@ class WebContents;
 
 namespace oxide {
 
+// Singleton class that provides a mechanism to correctly unload WebContents,
+// and block shutdown to wait for pending unloads to complete
 class WebContentsUnloader : public content::WebContentsDelegate {
  public:
   ~WebContentsUnloader();
