@@ -30,6 +30,7 @@ template <typename Type> struct DefaultLazyInstanceTraits;
 }
 
 namespace content {
+class QuotaPermissionContext;
 class RenderViewHost;
 class ResourceDispatcherHostDelegate;
 }
@@ -126,6 +127,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   content::LocationProvider* OverrideSystemLocationProvider() final;
   content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() final;
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
+  content::QuotaPermissionContext* CreateQuotaPermissionContext() final;
 
   scoped_ptr<BrowserPlatformIntegration> platform_integration_;
 

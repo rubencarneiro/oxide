@@ -50,6 +50,7 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
+#include "oxide_quota_permission_context.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
@@ -344,6 +345,10 @@ void ContentBrowserClient::SetPlatformIntegration(
     BrowserPlatformIntegration* integration) {
   CHECK(integration && !platform_integration_);
   platform_integration_.reset(integration);
+}
+
+content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionContext() {
+  return new QuotaPermissionContext();
 }
 
 } // namespace oxide
