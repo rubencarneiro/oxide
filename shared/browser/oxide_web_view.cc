@@ -148,7 +148,8 @@ void FillLoadURLParamsFromOpenURLParams(
   }
 }
 
-void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
+void InitCreatedWebView(WebView* view,
+                        scoped_ptr<content::WebContents> contents) {
   WebView::Params params;
   params.contents = contents.Pass();
 
@@ -242,10 +243,6 @@ base::LazyInstance<std::vector<WebView*> > g_all_web_views;
 
 }
 
-void NewContentsDeleter::operator()(content::WebContents* ptr) {
-  base::MessageLoop::current()->DeleteSoon(FROM_HERE, ptr);
-}
-
 void WebView::WebFrameDeleter::operator()(WebFrame* frame) {
   WebFrame::Destroy(frame);
 }
@@ -279,6 +276,11 @@ WebView* WebViewIterator::GetNext() {
 
   return nullptr;
 }
+
+WebView::Params::Params()
+    : context(nullptr),
+      incognito(false) {}
+WebView::Params::~Params() {}
 
 // static
 WebViewIterator WebView::GetAllWebViews() {
@@ -640,7 +642,7 @@ content::WebContents* WebView::OpenURLFromTab(
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
   contents_params.opener = opener_suppressed ? nullptr : web_contents_.get();
 
-  ScopedNewContentsHolder contents(
+  scoped_ptr<content::WebContents> contents(
       content::WebContents::Create(contents_params));
   if (!contents) {
     LOG(ERROR) << "Failed to create new WebContents for navigation";
@@ -765,7 +767,7 @@ void WebView::AddNewContents(content::WebContents* source,
     *was_blocked = true;
   }
 
-  ScopedNewContentsHolder contents(new_contents);
+  scoped_ptr<content::WebContents> contents(new_contents);
 
   WebView* new_view = CreateNewWebView(initial_pos,
                                        user_gesture ? disposition : NEW_POPUP);

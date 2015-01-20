@@ -108,11 +108,6 @@ class WebPreferences;
 class WebView;
 class WebViewContentsHelper;
 
-struct NewContentsDeleter {
-  void operator()(content::WebContents* ptr);
-};
-typedef scoped_ptr<content::WebContents, NewContentsDeleter> ScopedNewContentsHolder;
-
 class WebViewIterator final {
  public:
   ~WebViewIterator();
@@ -152,12 +147,11 @@ class WebView : public ScriptMessageTarget,
   };
 
   struct Params {
-    Params() :
-        context(nullptr),
-        incognito(false) {}
+    Params();
+    ~Params();
 
     BrowserContext* context;
-    ScopedNewContentsHolder contents;
+    scoped_ptr<content::WebContents> contents;
     bool incognito;
   };
 
