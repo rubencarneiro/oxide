@@ -113,11 +113,6 @@ struct NewContentsDeleter {
 };
 typedef scoped_ptr<content::WebContents, NewContentsDeleter> ScopedNewContentsHolder;
 
-struct WebFrameDeleter {
-  void operator()(WebFrame* frame);
-};
-typedef scoped_ptr<WebFrame, WebFrameDeleter> WebFrameScopedPtr;
-
 class WebViewIterator final {
  public:
   ~WebViewIterator();
@@ -568,7 +563,13 @@ class WebView : public ScriptMessageTarget,
   virtual void OnPrepareToCloseResponse(bool proceed);
   virtual void OnCloseRequested();
 
-  scoped_ptr<content::WebContentsImpl> web_contents_;
+  struct WebContentsDeleter {
+    void operator()(content::WebContents* contents);
+  };
+  typedef scoped_ptr<content::WebContents, WebContentsDeleter>
+      WebContentsScopedPtr;
+
+  WebContentsScopedPtr web_contents_;
   WebViewContentsHelper* web_contents_helper_;
 
   scoped_ptr<Compositor> compositor_;
@@ -587,7 +588,14 @@ class WebView : public ScriptMessageTarget,
   int initial_index_;
 
   content::NotificationRegistrar registrar_;
+
+  struct WebFrameDeleter {
+    void operator()(WebFrame* frame);
+  };
+  typedef scoped_ptr<WebFrame, WebFrameDeleter> WebFrameScopedPtr;
+
   WebFrameScopedPtr root_frame_;
+
   bool is_fullscreen_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;

@@ -31,10 +31,8 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
-#include "base/message_loop/message_loop.h"
 #include "base/path_service.h"
 #include "base/posix/global_descriptors.h"
-#include "base/run_loop.h"
 #include "base/strings/string_util.h"
 #include "cc/base/switches.h"
 #include "content/app/mojo/mojo_init.h"
@@ -70,6 +68,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
+#include "oxide_web_contents_unloader.h"
 
 namespace content {
 
@@ -110,17 +109,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
     return state_ == STATE_STARTED || state_ == STATE_SHUTTING_DOWN;
   }
 
-  void IncrementPendingUnloadsCount() final {
-    DCHECK_EQ(state_, STATE_STARTED);
-    pending_unloads_count_++;
-  }
-  void DecrementPendingUnloadsCount() final {
-    DCHECK_GT(pending_unloads_count_, 0U);
-    if (--pending_unloads_count_ == 0 && state_ == STATE_SHUTTING_DOWN) {
-      shutdown_loop_quit_closure_.Run();
-    }
-  }
-
   ProcessModel GetProcessModel() const final {
     DCHECK_NE(state_, STATE_NOT_STARTED);
     return process_model_;
@@ -143,9 +131,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   scoped_ptr<ContentMainDelegate> main_delegate_;
   scoped_ptr<base::AtExitManager> exit_manager_;
   scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
-
-  size_t pending_unloads_count_;
-  base::Closure shutdown_loop_quit_closure_;
 };
 
 namespace {
@@ -344,8 +329,7 @@ bool IsUnsupportedProcessModel(ProcessModel process_model) {
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
-      process_model_(PROCESS_MODEL_MULTI_PROCESS),
-      pending_unloads_count_(0) {}
+      process_model_(PROCESS_MODEL_MULTI_PROCESS) {}
 
 BrowserProcessMainImpl::~BrowserProcessMainImpl() {
   CHECK(state_ == STATE_NOT_STARTED || state_ == STATE_SHUTDOWN) <<
@@ -459,24 +443,15 @@ void BrowserProcessMainImpl::Shutdown() {
   }
   state_ = STATE_SHUTTING_DOWN;
 
-  if (pending_unloads_count_ > 0) {
-    // Wait for any pending unload handlers to finish
-    base::MessageLoop::ScopedNestableTaskAllower nestable_task_allower(
-        base::MessageLoop::current());
+  MessageLoopForUI::current()->Stop();
 
-    base::RunLoop run_loop;
-    shutdown_loop_quit_closure_ = run_loop.QuitClosure();
-
-    run_loop.Run();
-  }
+  WebContentsUnloader::GetInstance()->WaitForPendingUnloadsToFinish();
 
   if (process_model_ != PROCESS_MODEL_SINGLE_PROCESS) {
     // In single process mode, we do this check after destroying
     // threads, as we hold the single BrowserContext alive until then
     BrowserContext::AssertNoContextsExist();
   }
-
-  MessageLoopForUI::current()->Stop();
 
   browser_main_runner_->Shutdown();
   browser_main_runner_.reset();

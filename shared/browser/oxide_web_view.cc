@@ -87,6 +87,7 @@
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
+#include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
@@ -245,9 +246,13 @@ void NewContentsDeleter::operator()(content::WebContents* ptr) {
   base::MessageLoop::current()->DeleteSoon(FROM_HERE, ptr);
 }
 
-void WebFrameDeleter::operator()(WebFrame* frame) {
+void WebView::WebFrameDeleter::operator()(WebFrame* frame) {
   WebFrame::Destroy(frame);
 }
+
+void WebView::WebContentsDeleter::operator()(content::WebContents* contents) {
+  WebContentsUnloader::GetInstance()->Unload(make_scoped_ptr(contents));
+};
 
 WebViewIterator::WebViewIterator(const std::vector<WebView*>& views) {
   for (std::vector<WebView*>::const_iterator it = views.begin();
@@ -1250,14 +1255,6 @@ WebView::~WebView() {
   }
 
   web_contents_->RemoveUserData(kWebViewKey);
-
-  content::RenderViewHostImpl* rvh =
-      static_cast<content::RenderViewHostImpl*>(
-        web_contents_->GetRenderViewHost());
-  if (rvh && !rvh->SuddenTerminationAllowed()) {
-    web_contents_helper_->TakeWebContentsOwnershipAndClosePage(
-        web_contents_.Pass());
-  }
 }
 
 void WebView::Init(Params* params) {
