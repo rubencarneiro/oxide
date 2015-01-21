@@ -249,14 +249,14 @@ void ContentBrowserClient::RequestPermission(
     const GURL& requesting_frame,
     bool user_gesture,
     const base::Callback<void(bool)>& result_callback) {
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
+  if (permission != content::PERMISSION_GEOLOCATION) {
+    // TODO: Other types
     result_callback.Run(false);
     return;
   }
 
-  if (permission != content::PERMISSION_GEOLOCATION) {
-    // TODO: Other types
+  WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
     result_callback.Run(false);
     return;
   }
@@ -264,8 +264,27 @@ void ContentBrowserClient::RequestPermission(
   base::Callback<void(bool)> callback =
       base::Bind(&RespondToGeolocationPermissionRequest,
                  result_callback);
-  webview->RequestGeolocationPermission(requesting_frame.GetOrigin(),
+  webview->RequestGeolocationPermission(requesting_frame,
+                                        bridge_id,
                                         callback);
+}
+
+void ContentBrowserClient::CancelPermissionRequest(
+    content::PermissionType permission,
+    content::WebContents* web_contents,
+    int bridge_id,
+    const GURL& requesting_frame) {
+  if (permission != content::PERMISSION_GEOLOCATION) {
+    return;
+  }
+
+  WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
+    return;
+  }
+
+  webview->CancelGeolocationPermissionRequest(requesting_frame,
+                                              bridge_id);
 }
 
 bool ContentBrowserClient::CanCreateWindow(

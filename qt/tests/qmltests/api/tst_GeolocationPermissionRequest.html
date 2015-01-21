@@ -1,6 +1,5 @@
 <html>
 <body>
-  <button id="button">Click me!</button>
 </body>
 <script>
 var showPosition = function(position) {
@@ -13,8 +12,6 @@ var handleError = function(error) {
   document.documentElement.dispatchEvent(e);
 };
 
-document.getElementById("button").addEventListener("click", function() {
-  navigator.geolocation.getCurrentPosition(showPosition, handleError);
-});
+navigator.geolocation.getCurrentPosition(showPosition, handleError);
 </script>
 </html>
