@@ -232,6 +232,7 @@
         '<(DEPTH)/ui/native_theme/native_theme.gyp:native_theme',
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
         '<(DEPTH)/url/url.gyp:url_lib',
+        '../build/system.gyp:android-properties',
       ],
       'include_dirs': [
         '..',
@@ -263,6 +264,8 @@
         'browser/compositor/oxide_compositor_utils.h',
         'browser/oxide_access_token_store.cc',
         'browser/oxide_access_token_store.h',
+        'browser/oxide_android_properties.cc',
+        'browser/oxide_android_properties.h',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_delegate.h',
