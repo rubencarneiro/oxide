@@ -17,7 +17,9 @@
 
 #include "oxide_android_properties.h"
 
+#if defined(ENABLE_ANDROID_SYSPROPS)
 #include <hybris/properties/properties.h>
+#endif
 
 #include "base/logging.h"
 #include "base/memory/singleton.h"
@@ -26,6 +28,7 @@ namespace oxide {
 
 AndroidProperties::AndroidProperties()
     : available_(false) {
+#if defined(ENABLE_ANDROID_SYSPROPS)
   char value[PROP_VALUE_MAX];
 
   if (::property_get("ro.product.name", value, nullptr) <= 0) {
@@ -46,6 +49,7 @@ AndroidProperties::AndroidProperties()
 
   ::property_get("ro.product.model", value, nullptr);
   model_ = value;
+#endif
 }
 
 AndroidProperties::~AndroidProperties() {}

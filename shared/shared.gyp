@@ -232,7 +232,6 @@
         '<(DEPTH)/ui/native_theme/native_theme.gyp:native_theme',
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
         '<(DEPTH)/url/url.gyp:url_lib',
-        '../build/system.gyp:android-properties',
       ],
       'include_dirs': [
         '..',
@@ -474,7 +473,15 @@
           'dependencies': [
             'mediahub_lib',
           ],
-        }]
+        }],
+        ['target_arch=="arm"', {
+          'defines': [
+            'ENABLE_ANDROID_SYSPROPS=1',
+          ],
+          'dependencies': [
+            '../build/system.gyp:android-properties',
+          ],
+        }],
       ],
       'actions': [
         {

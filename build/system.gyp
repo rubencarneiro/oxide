@@ -18,23 +18,27 @@
   'variables': {
     'pkg_config': 'pkg-config'
   },
-  'targets': [
-    {
-      'target_name': 'android-properties',
-      'type': 'none',
-      'direct_dependent_settings': {
-        'cflags_cc': [
-          '<!@(<(pkg_config) --cflags libandroid-properties)'
-        ]
-      },
-      'link_settings': {
-        'ldflags': [
-          '<!@(<(pkg_config) --libs-only-L --libs-only-other libandroid-properties)',
-        ],
-        'libraries': [
-          '<!@(<(pkg_config) --libs-only-l libandroid-properties)',
-        ],
-      },
-    },
+  'conditions': [
+    ['target_arch=="arm"', {
+      'targets': [
+        {
+          'target_name': 'android-properties',
+          'type': 'none',
+          'direct_dependent_settings': {
+            'cflags_cc': [
+              '<!@(<(pkg_config) --cflags libandroid-properties)'
+            ]
+          },
+          'link_settings': {
+            'ldflags': [
+              '<!@(<(pkg_config) --libs-only-L --libs-only-other libandroid-properties)',
+            ],
+            'libraries': [
+              '<!@(<(pkg_config) --libs-only-l libandroid-properties)',
+            ],
+          },
+        },
+      ],
+    }],
   ],
 }
