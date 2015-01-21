@@ -34,6 +34,37 @@ diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/com
        }],
        ['target_arch=="mipsel" and mips_arch_variant!="r6" and android_webview_build==0', {
          'defines': [
+diff --git a/third_party/webrtc/common_audio/fir_filter.cc b/third_party/webrtc/common_audio/fir_filter.cc
+--- a/third_party/webrtc/common_audio/fir_filter.cc
++++ b/third_party/webrtc/common_audio/fir_filter.cc
+@@ -56,24 +56,26 @@ FIRFilter* FIRFilter::Create(const float
+   } else {
+     filter = new FIRFilterC(coefficients, coefficients_length);
+   }
+ #endif
+ #elif defined(WEBRTC_ARCH_ARM_V7)
+ #if defined(WEBRTC_ARCH_ARM_NEON)
+   filter =
+       new FIRFilterNEON(coefficients, coefficients_length, max_input_length);
+-#else
++#elif defined(WEBRTC_DETECT_ARM_NEON)
+   // ARM CPU detection required.
+   if (WebRtc_GetCPUFeaturesARM() & kCPUFeatureNEON) {
+     filter =
+         new FIRFilterNEON(coefficients, coefficients_length, max_input_length);
+   } else {
+     filter = new FIRFilterC(coefficients, coefficients_length);
+   }
++#else
++  filter = new FIRFilterC(coefficients, coefficients_length);
+ #endif
+ #else
+   filter = new FIRFilterC(coefficients, coefficients_length);
+ #endif
+ 
+   return filter;
+ }
+ 
 diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
 --- a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
 +++ b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
