@@ -19,6 +19,7 @@
 
 #include <hybris/properties/properties.h>
 
+#include "base/logging.h"
 #include "base/memory/singleton.h"
 
 namespace oxide {
@@ -59,22 +60,27 @@ bool AndroidProperties::Available() const {
 }
 
 std::string AndroidProperties::GetProduct() const {
+  DCHECK(available_);
   return product_;
 }
 
 std::string AndroidProperties::GetDevice() const {
+  DCHECK(available_);
   return device_;
 }
 
 std::string AndroidProperties::GetBoard() const {
+  DCHECK(available_);
   return board_;
 }
 
 std::string AndroidProperties::GetBrand() const {
+  DCHECK(available_);
   return brand_;
 }
 
 std::string AndroidProperties::GetModel() const {
+  DCHECK(available_);
   return model_;
 }
 
