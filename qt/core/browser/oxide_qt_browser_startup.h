@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_STARTUP_H_
 #define _OXIDE_QT_CORE_BROWSER_STARTUP_H_
 
+#include <QtGlobal>
+
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 
@@ -42,7 +44,9 @@ class BrowserStartup final {
   oxide::ProcessModel GetProcessModel();
   void SetProcessModel(oxide::ProcessModel model);
 
+#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
   void SetSharedGLContext(GLContextAdopted* context);
+#endif
 
   bool DidSelectProcessModelFromEnv() const;
 

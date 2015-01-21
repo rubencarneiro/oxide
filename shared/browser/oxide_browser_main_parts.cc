@@ -35,7 +35,7 @@
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
-#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_adopted.h"
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
@@ -80,7 +80,8 @@ class ScopedBindGLESAPI {
 ScopedBindGLESAPI::ScopedBindGLESAPI()
     : has_egl_(false),
       orig_api_(EGL_NONE) {
-  egl_lib_.Reset(base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
+  egl_lib_.Reset(
+      base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), nullptr));
   if (!egl_lib_.is_valid()) {
     return;
   }
@@ -129,12 +130,12 @@ class Screen : public gfx::Screen {
 
   gfx::NativeWindow GetWindowUnderCursor() final {
     NOTIMPLEMENTED();
-    return NULL;
+    return nullptr;
   }
 
   gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) final {
     NOTIMPLEMENTED();
-    return NULL;
+    return nullptr;
   }
 
   int GetNumDisplays() const final {
@@ -194,7 +195,7 @@ void BrowserMainParts::PreEarlyInitialization() {
 
   base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
   main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
-  base::MessageLoop::InitMessagePumpForUIFactory(NULL);
+  base::MessageLoop::InitMessagePumpForUIFactory(nullptr);
 }
 
 int BrowserMainParts::PreCreateThreads() {
@@ -270,9 +271,9 @@ void BrowserMainParts::PostDestroyThreads() {
     BrowserContext::AssertNoContextsExist();
   }
 
-  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
+  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, nullptr);
   io_thread_.reset();
-  content::oxide_gpu_shim::SetGLShareGroup(NULL);
+  content::oxide_gpu_shim::SetGLShareGroup(nullptr);
 }
 
 BrowserMainParts::BrowserMainParts() {}

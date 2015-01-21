@@ -43,7 +43,7 @@ class OxideQSecurityStatusPrivate final {
   ~OxideQSecurityStatusPrivate();
 
   static OxideQSecurityStatus* Create(oxide::qt::WebView* view,
-                                      QObject* parent = NULL);
+                                      QObject* parent = nullptr);
   static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
 
   void Update(const oxide::SecurityStatus& old);

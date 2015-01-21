@@ -37,7 +37,7 @@ void DevToolsManagerDelegate::DevToolsAgentStateChanged(
 base::DictionaryValue* DevToolsManagerDelegate::HandleCommand(
     content::DevToolsAgentHost* agent_host,
     base::DictionaryValue* command) {
-  return NULL;
+  return nullptr;
 }
 
 scoped_ptr<content::DevToolsTarget> DevToolsManagerDelegate::CreateNewTarget(

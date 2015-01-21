@@ -60,7 +60,7 @@ void CompositorOutputSurface::SwapBuffers(cc::CompositorFrame* frame) {
 }
 
 CompositorOutputSurface::~CompositorOutputSurface() {
-  proxy_->SetOutputSurface(NULL);
+  proxy_->SetOutputSurface(nullptr);
 }
 
 void CompositorOutputSurface::DidSwapBuffers() {

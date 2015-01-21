@@ -26,7 +26,7 @@ namespace oxide {
 namespace qt {
 
 WebPopupMenuDelegate::WebPopupMenuDelegate() :
-    menu_(NULL) {}
+    menu_(nullptr) {}
 
 WebPopupMenuDelegate::~WebPopupMenuDelegate() {}
 

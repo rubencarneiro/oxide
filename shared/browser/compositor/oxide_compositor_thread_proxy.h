@@ -94,13 +94,13 @@ class CompositorThreadProxy final
       scoped_ptr<SoftwareFrameData> software_frame_data);
 
   struct OwnerData {
-    OwnerData() : compositor(NULL) {}
+    OwnerData() : compositor(nullptr) {}
 
     Compositor* compositor;
   };
 
   struct ImplData {
-    ImplData() : output(NULL) {}
+    ImplData() : output(nullptr) {}
 
     CompositorOutputSurface* output;
   };

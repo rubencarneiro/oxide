@@ -202,7 +202,7 @@ class UpdatePaintNodeScope {
 
 OxideQQuickWebViewAttached::OxideQQuickWebViewAttached(QObject* parent) :
     QObject(parent),
-    view_(NULL) {}
+    view_(nullptr) {}
 
 OxideQQuickWebViewAttached::~OxideQQuickWebViewAttached() {}
 
@@ -220,13 +220,13 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     load_progress_(0),
     constructed_(false),
     navigation_history_(view),
-    popup_menu_(NULL),
-    alert_dialog_(NULL),
-    confirm_dialog_(NULL),
-    prompt_dialog_(NULL),
-    before_unload_dialog_(NULL),
-    file_picker_(NULL),
-    input_area_(NULL),
+    popup_menu_(nullptr),
+    alert_dialog_(nullptr),
+    confirm_dialog_(nullptr),
+    prompt_dialog_(nullptr),
+    before_unload_dialog_(nullptr),
+    file_picker_(nullptr),
+    input_area_(nullptr),
     received_new_compositor_frame_(false),
     frame_evicted_(false),
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
@@ -377,7 +377,7 @@ QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
   Q_Q(const OxideQQuickWebView);
 
   if (!q->window()) {
-    return NULL;
+    return nullptr;
   }
 
   return q->window()->screen();
@@ -650,7 +650,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   OxideQQuickWebContext* context = construct_props_->context;
 
   init(construct_props_->incognito,
-       context ? OxideQQuickWebContextPrivate::get(context) : NULL,
+       context ? OxideQQuickWebContextPrivate::get(context) : nullptr,
        construct_props_->new_view_request,
        construct_props_->restore_state,
        construct_props_->restore_type);
@@ -687,7 +687,7 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
         static_cast<OxideQQuickWebView *>(prop->object));
 
   if (index >= p->messageHandlers().size()) {
-    return NULL;
+    return nullptr;
   }
 
   return adapterToQObject<OxideQQuickScriptMessageHandler>(
@@ -854,14 +854,14 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 
   if (handle->GetType() != d->last_composited_frame_type_) {
     delete oldNode;
-    oldNode = NULL;
+    oldNode = nullptr;
   }
 
   d->last_composited_frame_type_ = handle->GetType();
 
   if (d->frame_evicted_) {
     delete oldNode;
-    return NULL;
+    return nullptr;
   }
 
 #if defined(ENABLE_COMPOSITING)
@@ -1099,7 +1099,7 @@ OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
 QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebView::messageHandlers() {
   return QQmlListProperty<OxideQQuickScriptMessageHandler>(
-      this, NULL,
+      this, nullptr,
       OxideQQuickWebViewPrivate::messageHandler_append,
       OxideQQuickWebViewPrivate::messageHandler_count,
       OxideQQuickWebViewPrivate::messageHandler_at,
@@ -1149,7 +1149,7 @@ void OxideQQuickWebView::removeMessageHandler(
     return;
   }
 
-  handler->setParent(NULL);
+  handler->setParent(nullptr);
   d->messageHandlers().removeOne(hd);
 
   emit messageHandlersChanged();
@@ -1392,7 +1392,7 @@ OxideQQuickWebView::ContentType OxideQQuickWebView::blockedContent() const {
 // anywhere, it's only a transient object and I can't think of any possible
 // reason why anybody would want to read it back
 OxideQNewViewRequest* OxideQQuickWebView::request() const {
-  return NULL;
+  return nullptr;
 }
 
 void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {

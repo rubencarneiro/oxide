@@ -17,7 +17,6 @@
 
 #include "oxide_script_message_request_impl_browser.h"
 
-#include "content/browser/frame_host/frame_tree_node.h"
 #include "content/public/browser/render_frame_host.h"
 
 #include "shared/common/oxide_messages.h"
@@ -29,8 +28,7 @@ namespace oxide {
 bool ScriptMessageRequestImplBrowser::DoSendMessage(
     const OxideMsg_SendMessage_Params& params) {
  
-  content::FrameTreeNode* node = frame_->GetFrameTreeNode();
-  content::RenderFrameHost* rfh = node->current_frame_host();
+  content::RenderFrameHost* rfh = frame_->render_frame_host();
   return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 
@@ -56,9 +54,7 @@ ScriptMessageRequestImplBrowser::ScriptMessageRequestImplBrowser(
     const std::string& msg_id,
     const std::string& args) :
     ScriptMessageRequest(serial, context, want_reply, msg_id, args),
-    frame_(frame->GetWeakPtr()) {
-  frame_->AddScriptMessageRequest(this);
-}
+    frame_(frame->GetWeakPtr()) {}
 
 ScriptMessageRequestImplBrowser::~ScriptMessageRequestImplBrowser() {
   if (frame_) {

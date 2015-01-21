@@ -27,8 +27,6 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
-#include "content/browser/frame_host/frame_tree.h"
-#include "content/browser/frame_host/frame_tree_node.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
@@ -74,13 +72,13 @@
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
-#include "shared/base/oxide_enum_flags.h"
-#include "shared/base/oxide_event_utils.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_enum_flags.h"
+#include "shared/common/oxide_event_utils.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_adopted.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
@@ -89,11 +87,16 @@
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
+#include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_contents_helper.h"
+
+#if defined(ENABLE_MEDIAHUB)
+#include "shared/browser/media/oxide_media_web_contents_observer.h"
+#endif
 
 #define DCHECK_VALID_SOURCE_CONTENTS DCHECK_EQ(source, web_contents());
 
@@ -145,7 +148,8 @@ void FillLoadURLParamsFromOpenURLParams(
   }
 }
 
-void InitCreatedWebView(WebView* view, ScopedNewContentsHolder contents) {
+void InitCreatedWebView(WebView* view,
+                        scoped_ptr<content::WebContents> contents) {
   WebView::Params params;
   params.contents = contents.Pass();
 
@@ -218,15 +222,34 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
 
+void CreateHelpers(content::WebContents* contents,
+                   WebViewContentsHelper* opener = nullptr) {
+  if (!opener) {
+    new WebViewContentsHelper(contents);
+  }
+  else {
+    new WebViewContentsHelper(contents, opener);
+  }
+
+#if defined(ENABLE_MEDIAHUB)
+  new MediaWebContentsObserver(contents);
+#endif
+}
+
+
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
 base::LazyInstance<std::vector<WebView*> > g_all_web_views;
 
 }
 
-void NewContentsDeleter::operator()(content::WebContents* ptr) {
-  base::MessageLoop::current()->DeleteSoon(FROM_HERE, ptr);
+void WebView::WebFrameDeleter::operator()(WebFrame* frame) {
+  WebFrame::Destroy(frame);
 }
+
+void WebView::WebContentsDeleter::operator()(content::WebContents* contents) {
+  WebContentsUnloader::GetInstance()->Unload(make_scoped_ptr(contents));
+};
 
 WebViewIterator::WebViewIterator(const std::vector<WebView*>& views) {
   for (std::vector<WebView*>::const_iterator it = views.begin();
@@ -251,8 +274,13 @@ WebView* WebViewIterator::GetNext() {
     }
   }
 
-  return NULL;
+  return nullptr;
 }
+
+WebView::Params::Params()
+    : context(nullptr),
+      incognito(false) {}
+WebView::Params::~Params() {}
 
 // static
 WebViewIterator WebView::GetAllWebViews() {
@@ -261,7 +289,7 @@ WebViewIterator WebView::GetAllWebViews() {
 
 RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
   if (!web_contents_) {
-    return NULL;
+    return nullptr;
   }
 
   return static_cast<RenderWidgetHostView *>(
@@ -270,7 +298,7 @@ RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
 
 content::RenderViewHost* WebView::GetRenderViewHost() const {
   if (!web_contents_) {
-    return NULL;
+    return nullptr;
   }
 
   return web_contents_->GetRenderViewHost();
@@ -278,7 +306,7 @@ content::RenderViewHost* WebView::GetRenderViewHost() const {
 
 content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
   if (!web_contents_) {
-    return NULL;
+    return nullptr;
   }
 
   return content::RenderWidgetHostImpl::From(
@@ -381,7 +409,7 @@ size_t WebView::GetScriptMessageHandlerCount() const {
 
 const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
-  return NULL;
+  return nullptr;
 }
 
 void WebView::CompositorDidCommit() {
@@ -471,7 +499,7 @@ void WebView::Observe(int type,
 }
 
 void WebView::EvictCurrentFrame() {
-  current_compositor_frame_ = NULL;
+  current_compositor_frame_ = nullptr;
   OnEvictCurrentFrame();
 }
 
@@ -542,7 +570,7 @@ content::WebContents* WebView::OpenURLFromTab(
       params.disposition != NEW_BACKGROUND_TAB &&
       params.disposition != NEW_POPUP &&
       params.disposition != NEW_WINDOW) {
-    return NULL;
+    return nullptr;
   }
 
   // Block popups
@@ -551,19 +579,7 @@ content::WebContents* WebView::OpenURLFromTab(
        params.disposition == NEW_WINDOW ||
        params.disposition == NEW_POPUP) &&
       !params.user_gesture && GetBrowserContext()->IsPopupBlockerEnabled()) {
-    return NULL;
-  }
-
-  // Without --site-per-process, frame_tree_node_id is always -1. That's ok,
-  // because we only get called for top-level frames anyway. With
-  // --site-per-process, we might get called for subframes that are the
-  // toplevel within their renderer process, so we use the frame ID (which
-  // won't be -1) to look up its corresponding WebFrame
-  bool top_level = params.frame_tree_node_id == -1;
-  if (!top_level) {
-    WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
-    DCHECK(frame);
-    top_level = frame->parent() == NULL;
+    return nullptr;
   }
 
   WindowOpenDisposition disposition = params.disposition;
@@ -579,21 +595,31 @@ content::WebContents* WebView::OpenURLFromTab(
   // in the top-level frame
   if (!CanCreateWindows() && disposition != CURRENT_TAB) {
     disposition = CURRENT_TAB;
-    if (!top_level) {
-      local_params.frame_tree_node_id = GetFrameTree()->root()->frame_tree_node_id();
-      top_level = true;
-    }
+    local_params.frame_tree_node_id = -1;
+  }
+
+  // Navigations in a new window are always in the root frame
+  if (disposition != CURRENT_TAB) {
+    local_params.frame_tree_node_id = -1;
+  }
+
+  // Determine if this is a top-level navigation
+  bool top_level = params.frame_tree_node_id == -1;
+  if (!top_level) {
+    WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
+    DCHECK(frame);
+    top_level = frame->parent() == nullptr;
   }
 
   // Give the application a chance to block the navigation if it is
   // renderer initiated and it's a top-level navigation or requires a
   // new webview
   if (local_params.is_renderer_initiated &&
-      (top_level || disposition != CURRENT_TAB) &&
+      top_level &&
       !ShouldHandleNavigation(local_params.url,
                               disposition,
                               local_params.user_gesture)) {
-    return NULL;
+    return nullptr;
   }
 
   if (disposition == CURRENT_TAB) {
@@ -611,23 +637,23 @@ content::WebContents* WebView::OpenURLFromTab(
 
   content::WebContents::CreateParams contents_params(
       GetBrowserContext(),
-      opener_suppressed ? NULL : web_contents_->GetSiteInstance());
+      opener_suppressed ? nullptr : web_contents_->GetSiteInstance());
   contents_params.initial_size = GetViewSizeDip();
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
-  contents_params.opener = opener_suppressed ? NULL : web_contents_.get();
+  contents_params.opener = opener_suppressed ? nullptr : web_contents_.get();
 
-  ScopedNewContentsHolder contents(
+  scoped_ptr<content::WebContents> contents(
       content::WebContents::Create(contents_params));
   if (!contents) {
     LOG(ERROR) << "Failed to create new WebContents for navigation";
-    return NULL;
+    return nullptr;
   }
 
-  new WebViewContentsHelper(contents.get(), web_contents_helper_);
+  CreateHelpers(contents.get(), web_contents_helper_);
 
   WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
-    return NULL;
+    return nullptr;
   }
 
   InitCreatedWebView(new_view, contents.Pass());
@@ -720,7 +746,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  new WebViewContentsHelper(new_contents, web_contents_helper_);
+  CreateHelpers(new_contents, web_contents_helper_);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -741,7 +767,7 @@ void WebView::AddNewContents(content::WebContents* source,
     *was_blocked = true;
   }
 
-  ScopedNewContentsHolder contents(new_contents);
+  scoped_ptr<content::WebContents> contents(new_contents);
 
   WebView* new_view = CreateNewWebView(initial_pos,
                                        user_gesture ? disposition : NEW_POPUP);
@@ -835,12 +861,11 @@ bool WebView::IsFullscreenForTabOrPending(
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
-  if (!root_frame_) {
-    return;
-  }
-
   if (WebFrame::FromRenderFrameHost(render_frame_host)) {
-    // We get called whenever a new RFH is created for this node
+    // We already have a WebFrame for this host. This could be because the new
+    // host is for the root frame, or it is a cross-process subframe
+    DCHECK(!render_frame_host->GetParent() ||
+           render_frame_host->IsCrossProcessSubframe());
     return;
   }
 
@@ -848,34 +873,44 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
       WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
   DCHECK(parent);
 
-  content::FrameTreeNode* node = static_cast<content::RenderFrameHostImpl *>(
-      render_frame_host)->frame_tree_node();
-  DCHECK(node);
-
-  WebFrame* frame = CreateWebFrame(node);
+  WebFrame* frame = CreateWebFrame(render_frame_host);
   DCHECK(frame);
-  frame->SetParent(parent);
+  frame->InitParent(parent);
 }
 
-void WebView::RenderProcessGone(base::TerminationStatus status) {
-  permission_request_manager_.CancelAllPendingRequests();
+void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
+  if (!frame) {
+    // This occurs if |render_frame_host| represents a frame that's being
+    // detached (so the WebFrame was deleted in FrameDetached)
+    return;
+  }
+
+  if (frame->render_frame_host() != render_frame_host) {
+    // |render_frame_host| is not the current host for this WebFrame, so
+    // we do nothing
+    return;
+  }
+
+  // If we get here, then it's likely that the main frame is being swapped.
+  // In this case, Chromium purges all RenderFrameHosts on the browser side
+  // before we get the detached messages from Blink
+  WebFrame::Destroy(frame);
 }
+
+void WebView::RenderProcessGone(base::TerminationStatus status) {}
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   DCHECK(!in_swap_);
   base::AutoReset<bool> in_swap(&in_swap_, true);
 
-  while (root_frame_->ChildCount() > 0) {
-    root_frame_->ChildAt(0)->Destroy();
-  }
-
   // Fake a response for any pending touch ACK's
   gesture_provider_->OnTouchEventAck(false);
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 
   if (old_host && old_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(NULL);
+    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(nullptr);
   }
   if (new_host) {
     if (new_host->GetView()) {
@@ -886,6 +921,14 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
         new OxideMsg_UpdateTopControlsState(new_host->GetRoutingID(),
                                             location_bar_constraints_));
   }
+}
+
+void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                                     content::RenderFrameHost* new_host) {
+  WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
+  DCHECK(frame);
+
+  frame->set_render_frame_host(new_host);
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -915,7 +958,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
     ui::PageTransition transition_type) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (frame) {
-    frame->URLChanged();
+    frame->DidCommitNewURL();
   }
 
   if (frame->parent()) {
@@ -953,7 +996,7 @@ void WebView::DidNavigateMainFrame(
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
   if (details.is_navigation_to_different_page()) {
-    permission_request_manager_.CancelAllPendingRequests();
+    permission_request_manager_.CancelPendingRequests();
 
     blocked_content_ = CONTENT_TYPE_NONE;
     OnContentBlocked();
@@ -1024,15 +1067,11 @@ void WebView::DidStopLoading(content::RenderViewHost* render_view_host) {
 }
 
 void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
-  if (!root_frame_) {
-    return;
-  }
-
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   DCHECK(frame);
 
   certificate_error_manager_.FrameDetached(frame);
-  frame->Destroy();
+  WebFrame::Destroy(frame);
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1109,8 +1148,6 @@ void WebView::OnToggleFullscreenMode(bool enter) {}
 void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
-    const GURL& origin,
-    const GURL& embedder,
     scoped_ptr<SimplePermissionRequest> request) {}
 
 void WebView::OnUnhandledKeyboardEvent(
@@ -1131,19 +1168,23 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
+WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
+  return new WebFrame(rfh, this);
+}
+
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
-  return NULL;
+  return nullptr;
 }
 
 WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) {
   NOTREACHED() <<
       "Your CanCreateWindows() implementation should be returning false!";
-  return NULL;
+  return nullptr;
 }
 
 FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
-  return NULL;
+  return nullptr;
 }
 
 void WebView::OnEvictCurrentFrame() {}
@@ -1169,19 +1210,19 @@ WebView::WebView()
       focused_node_is_editable_(false),
       selection_cursor_position_(0),
       selection_anchor_position_(0),
-      web_contents_helper_(NULL),
+      web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
       gesture_provider_(GestureProvider::Create(this)),
       in_swap_(false),
       restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
       initial_index_(0),
-      root_frame_(NULL),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       did_scroll_focused_editable_node_into_view_(false),
       auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
-      location_bar_constraints_(cc::BOTH) {
+      location_bar_constraints_(cc::BOTH),
+      weak_factory_(this) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 
@@ -1204,32 +1245,18 @@ const base::string16& WebView::GetSelectionText() const {
 }
 
 WebView::~WebView() {
-  permission_request_manager_.CancelAllPendingRequests();
-
   g_all_web_views.Get().erase(
       std::remove(g_all_web_views.Get().begin(),
                   g_all_web_views.Get().end(),
                   this),
       g_all_web_views.Get().end());
 
-  if (root_frame_) {
-    root_frame_->Destroy();
-  }
-
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetDelegate(NULL);
+    rwhv->SetDelegate(nullptr);
   }
 
   web_contents_->RemoveUserData(kWebViewKey);
-
-  content::RenderViewHostImpl* rvh =
-      static_cast<content::RenderViewHostImpl*>(
-        web_contents_->GetRenderViewHost());
-  if (rvh && !rvh->SuddenTerminationAllowed()) {
-    web_contents_helper_->TakeWebContentsOwnershipAndClosePage(
-        web_contents_.Pass());
-  }
 }
 
 void WebView::Init(Params* params) {
@@ -1300,7 +1327,7 @@ void WebView::Init(Params* params) {
       restore_state_.clear();
     }
 
-    new WebViewContentsHelper(web_contents_.get());
+    CreateHelpers(web_contents_.get());
 
     compositor_->SetViewportSize(GetViewSizePix());
     compositor_->SetVisibility(IsVisible());
@@ -1329,7 +1356,8 @@ void WebView::Init(Params* params) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_ = CreateWebFrame(web_contents_->GetFrameTree()->root());
+  root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
+  DCHECK(root_frame_.get());
 
   if (params->context) {
     if (!initial_url_.is_empty()) {
@@ -1357,7 +1385,7 @@ WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
   WebViewUserData* data = static_cast<WebViewUserData *>(
       web_contents->GetUserData(kWebViewKey));
   if (!data) {
-    return NULL;
+    return nullptr;
   }
 
   return data->get();
@@ -1653,11 +1681,7 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_;
-}
-
-content::FrameTree* WebView::GetFrameTree() {
-  return web_contents_->GetFrameTree();
+  return root_frame_.get();
 }
 
 WebPreferences* WebView::GetWebPreferences() {
@@ -1897,14 +1921,12 @@ void WebView::RequestGeolocationPermission(
     const GURL& origin,
     const base::Callback<void(bool)>& callback) {
   scoped_ptr<SimplePermissionRequest> request(
-      permission_request_manager_.CreateSimplePermissionRequest(
-        PERMISSION_REQUEST_TYPE_GEOLOCATION,
-        callback,
-        NULL));
-  OnRequestGeolocationPermission(
-      origin,
-      web_contents_->GetLastCommittedURL().GetOrigin(),
-      request.Pass());
+      new SimplePermissionRequest(
+        &permission_request_manager_,
+        origin,
+        web_contents_->GetLastCommittedURL().GetOrigin(),
+        callback));
+  OnRequestGeolocationPermission(request.Pass());
 }
 
 void WebView::AllowCertificateError(
@@ -2053,15 +2075,12 @@ bool WebView::IsInputPanelVisible() const {
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
     bool* did_suppress_message) {
-  return NULL;
+  return nullptr;
 }
 
 JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  return NULL;
+  return nullptr;
 }
-
-void WebView::FrameAdded(WebFrame* frame) {}
-void WebView::FrameRemoved(WebFrame* frame) {}
 
 bool WebView::CanCreateWindows() const {
   return false;

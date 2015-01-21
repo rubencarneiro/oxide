@@ -18,6 +18,31 @@
   'variables': {
     'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide',
   },
+  'conditions': [
+    ['enable_mediahub==1', {
+      'targets': [
+        {
+          'target_name': 'mediahub_lib',
+          'type': 'static_library',
+          'hard_dependency': 1,
+          'cflags_cc+': [ '-std=c++11', '-fexceptions' ],
+          'cflags_cc!': [ '-fno-exceptions' ],
+          'link_settings': {
+            'libraries': [
+              '-lmedia-hub-client',
+            ],
+          },
+          'include_dirs': [
+            '..',
+          ],
+          'sources': [
+            'browser/media/mediahub_player_shim.cc',
+            'browser/media/mediahub_player_shim.h',
+          ],
+        },
+      ],
+    }],
+  ],
   'targets': [
     {
       'target_name': 'oxide_extra_resources',
@@ -54,9 +79,9 @@
           'action_name': 'repack_oxide',
           'variables': {
             'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/blink/devtools_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak',
-              '<(SHARED_INTERMEDIATE_DIR)/webkit/devtools_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/net/net_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/oxide/oxide_resources.pak',
             ]
@@ -219,13 +244,6 @@
         'app/oxide_main.cc',
         'app/oxide_main.h',
         'app/oxide_platform_delegate.h',
-        'base/oxide_cross_thread_data_stream.cc',
-        'base/oxide_cross_thread_data_stream.h',
-        'base/oxide_enum_flags.h',
-        'base/oxide_event_utils.cc',
-        'base/oxide_event_utils.h',
-        'base/oxide_id_allocator.cc',
-        'base/oxide_id_allocator.h',
         'browser/compositor/oxide_compositor.cc',
         'browser/compositor/oxide_compositor.h',
         'browser/compositor/oxide_compositor_client.h',
@@ -291,6 +309,8 @@
         'browser/oxide_permission_request.h',
         'browser/oxide_power_save_blocker.cc',
         'browser/oxide_power_save_blocker.h',
+        'browser/oxide_quota_permission_context.cc',
+        'browser/oxide_quota_permission_context.h',
         'browser/oxide_renderer_frame_evictor.cc',
         'browser/oxide_renderer_frame_evictor.h',
         'browser/oxide_render_widget_host_view.cc',
@@ -321,6 +341,8 @@
         'browser/oxide_user_agent_override_provider.h',
         'browser/oxide_user_script_master.cc',
         'browser/oxide_user_script_master.h',
+        'browser/oxide_web_contents_unloader.cc',
+        'browser/oxide_web_contents_unloader.h',
         'browser/oxide_web_contents_view.cc',
         'browser/oxide_web_contents_view.h',
         'browser/oxide_web_frame.cc',
@@ -340,9 +362,16 @@
         'common/oxide_content_client.cc',
         'common/oxide_content_client.h',
         'common/oxide_core_export.h',
+        'common/oxide_cross_thread_data_stream.cc',
+        'common/oxide_cross_thread_data_stream.h',
+        'common/oxide_enum_flags.h',
         'common/oxide_export.h',
+        'common/oxide_event_utils.cc',
+        'common/oxide_event_utils.h',
         'common/oxide_file_utils.cc',
         'common/oxide_file_utils.h',
+        'common/oxide_id_allocator.cc',
+        'common/oxide_id_allocator.h',
         'common/oxide_message_enums.h',
         'common/oxide_message_generator.cc',
         'common/oxide_message_generator.h',
@@ -361,8 +390,8 @@
         'common/oxide_user_agent.h',
         'common/oxide_user_script.cc',
         'common/oxide_user_script.h',
-        'gl/oxide_gl_context_adopted.cc',
-        'gl/oxide_gl_context_adopted.h',
+        'gpu/oxide_gl_context_adopted.cc',
+        'gpu/oxide_gl_context_adopted.h',
         'renderer/oxide_content_renderer_client.cc',
         'renderer/oxide_content_renderer_client.h',
         'renderer/oxide_isolated_world_map.cc',
@@ -419,6 +448,30 @@
             '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_shared',
           ],
         }],
+        ['enable_mediahub==1', {
+          'defines': [
+            'ENABLE_MEDIAHUB=1'
+          ],
+          'sources': [
+            'browser/media/oxide_browser_media_player_manager.cc',
+            'browser/media/oxide_browser_media_player_manager.h',
+            'browser/media/oxide_player_media_hub.cc',
+            'browser/media/oxide_player_media_hub.h',
+            'browser/media/oxide_media_player.cc',
+            'browser/media/oxide_media_player.h',
+            'browser/media/oxide_media_web_contents_observer.cc',
+            'browser/media/oxide_media_web_contents_observer.h',
+            'renderer/media/oxide_renderer_media_player_manager.cc',
+            'renderer/media/oxide_renderer_media_player_manager.h',
+            'renderer/media/oxide_web_media_player.cc',
+            'renderer/media/oxide_web_media_player.h',
+            'renderer/media/oxide_media_info_loader.cc',
+            'renderer/media/oxide_media_info_loader.h',
+          ],
+          'dependencies': [
+            'mediahub_lib',
+          ],
+        }]
       ],
       'actions': [
         {

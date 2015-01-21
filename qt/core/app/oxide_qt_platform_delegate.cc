@@ -18,7 +18,7 @@
 #include "oxide_qt_platform_delegate.h"
 
 #include "qt/core/browser/oxide_qt_browser_platform_integration.h"
-#include "qt/core/gl/oxide_qt_gl_context_adopted.h"
+#include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
 
 namespace oxide {
 namespace qt {

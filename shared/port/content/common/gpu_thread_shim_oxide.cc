@@ -46,7 +46,7 @@ content::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
   content::GpuChannel* channel =
       gpu_channel_manager->LookupChannel(client_id);
   if (!channel) {
-    return NULL;
+    return nullptr;
   }
 
   return channel->LookupCommandBuffer(route_id);

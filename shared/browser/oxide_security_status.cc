@@ -23,7 +23,7 @@
 #include "net/cert/cert_status_flags.h"
 #include "net/cert/x509_certificate.h"
 
-#include "shared/base/oxide_enum_flags.h"
+#include "shared/common/oxide_enum_flags.h"
 
 namespace oxide {
 
@@ -147,7 +147,7 @@ SecurityStatus::SecurityStatus(const content::SSLStatus& ssl_status)
 SecurityStatus::~SecurityStatus() {}
 
 void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
-  cert_ = NULL;
+  cert_ = nullptr;
   content::CertStore::GetInstance()->RetrieveCert(ssl_status.cert_id,
                                                   &cert_);
 

@@ -30,7 +30,7 @@ class GLContextAdopted;
 
 class PlatformDelegate final : public oxide::PlatformDelegate {
  public:
-  PlatformDelegate(GLContextAdopted* shared_gl_context = NULL);
+  PlatformDelegate(GLContextAdopted* shared_gl_context = nullptr);
   ~PlatformDelegate();
 
  private:

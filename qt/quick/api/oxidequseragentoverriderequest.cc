@@ -20,8 +20,8 @@
 
 OxideQUserAgentOverrideRequestPrivate::OxideQUserAgentOverrideRequestPrivate(
     const QUrl& url) :
-    did_override(NULL),
-    user_agent(NULL),
+    did_override(nullptr),
+    user_agent(nullptr),
     url_(url) {}
 
 OxideQUserAgentOverrideRequestPrivate::~OxideQUserAgentOverrideRequestPrivate() {}

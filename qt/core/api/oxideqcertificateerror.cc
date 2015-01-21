@@ -35,7 +35,7 @@
 
 OxideQCertificateErrorPrivate::OxideQCertificateErrorPrivate(
     scoped_ptr<oxide::CertificateError> error)
-    : q_ptr(NULL),
+    : q_ptr(nullptr),
       certificate_(OxideQSslCertificatePrivate::Create(error->cert())),
       error_(error.Pass()),
       did_respond_(false) {}

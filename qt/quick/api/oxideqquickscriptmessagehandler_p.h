@@ -40,7 +40,7 @@ class Q_DECL_EXPORT OxideQQuickScriptMessageHandler : public QObject,
   Q_DECLARE_PRIVATE(OxideQQuickScriptMessageHandler)
 
  public:
-  OxideQQuickScriptMessageHandler(QObject* parent = NULL);
+  OxideQQuickScriptMessageHandler(QObject* parent = nullptr);
   virtual ~OxideQQuickScriptMessageHandler();
 
   QString msgId() const;

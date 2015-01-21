@@ -37,6 +37,11 @@
 #include "oxide_user_script_slave.h"
 #include "oxide_web_permission_client.h"
 
+#if defined(ENABLE_MEDIAHUB)
+#include "media/oxide_renderer_media_player_manager.h"
+#include "media/oxide_web_media_player.h"
+#endif
+
 namespace oxide {
 
 ContentRendererClient::ContentRendererClient() {}
@@ -52,6 +57,9 @@ void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
   new WebPermissionClient(render_frame);
+#if defined(ENABLE_MEDIAHUB)
+  new RendererMediaPlayerManager(render_frame);
+#endif
 }
 
 void ContentRendererClient::RenderViewCreated(
@@ -128,5 +136,26 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
 
   return user_agent;
 }
+
+#if defined(ENABLE_MEDIAHUB)
+blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
+              blink::WebFrame* frame,
+              blink::WebMediaPlayerClient* client,
+              base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
+              media::MediaLog* media_log) {
+
+  RendererMediaPlayerManager* rmpm =
+        RendererMediaPlayerManager::Get(
+          content::RenderFrame::FromWebFrame(frame));
+  DCHECK(rmpm);
+
+  const base::CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
+  if (command_line.HasSwitch(switches::kEnableMediaHubAudio)) {
+    return new WebMediaPlayer(frame, client, delegate, rmpm, media_log);
+  }
+
+  return nullptr;
+}
+#endif
 
 } // namespace oxide

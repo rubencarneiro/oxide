@@ -62,7 +62,10 @@ BrowserThreadQEventDispatcher::TimerInstance::TimerInstance() {}
 BrowserThreadQEventDispatcher::TimerInstance::~TimerInstance() {}
 
 BrowserThreadQEventDispatcher::TimerData::TimerData()
-    : interval(0), type(Qt::PreciseTimer), object(NULL), instance(NULL) {}
+    : interval(0),
+      type(Qt::PreciseTimer),
+      object(nullptr),
+      instance(nullptr) {}
 BrowserThreadQEventDispatcher::TimerData::~TimerData() {}
 
 BrowserThreadQEventDispatcher::SocketNotifierData::SocketNotifierData() {}
@@ -111,7 +114,7 @@ void BrowserThreadQEventDispatcher::OnTimerExpired(
     for (std::set<int>::iterator it = ids.begin(); it != ids.end(); ++it) {
       int id = *it;
 
-      timer_infos_[id].instance = NULL;
+      timer_infos_[id].instance = nullptr;
       ScheduleTimer(id);
     }
   }

@@ -38,7 +38,7 @@ class OxideQCertificateErrorPrivate final {
 
   static OxideQCertificateError* Create(
       scoped_ptr<oxide::CertificateError> error,
-      QObject* parent = NULL);
+      QObject* parent = nullptr);
 
  private:
   OxideQCertificateErrorPrivate(

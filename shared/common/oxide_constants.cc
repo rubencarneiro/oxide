@@ -25,6 +25,8 @@ const char kFormFactorDesktop[] = "desktop";
 const char kFormFactorTablet[] = "tablet";
 const char kFormFactorPhone[] = "phone";
 const char kIncognito[] = "incognito";
+const char kEnableMediaHubAudio[] = "enable-media-hub-audio";
+const char kMediaHubFixedSessionDomains[] = "media-hub-fixed-session-domains";
 
 } // namespace switches
 

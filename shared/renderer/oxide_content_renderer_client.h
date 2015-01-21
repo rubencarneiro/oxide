@@ -27,6 +27,11 @@ template <typename Type> struct DefaultLazyInstanceTraits;
 
 namespace oxide {
 
+#if defined(ENABLE_MEDIAHUB)
+class RendererMediaPlayerManager;
+#endif
+
+
 class ContentRendererClient final : public content::ContentRendererClient {
  public:
   // XXX(chrisccoulson): Try not to add anything here
@@ -46,6 +51,14 @@ class ContentRendererClient final : public content::ContentRendererClient {
                               int extension_group,
                               int world_id) final;
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
+
+#if defined(ENABLE_MEDIAHUB)
+  blink::WebMediaPlayer* OverrideWebMediaPlayer(
+              blink::WebFrame* frame,
+              blink::WebMediaPlayerClient* client,
+              base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
+              media::MediaLog* media_log);
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };

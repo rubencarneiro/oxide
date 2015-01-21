@@ -76,9 +76,6 @@ class BrowserProcessMain {
   // Returns true if the browser process components are running
   virtual bool IsRunning() const = 0;
 
-  virtual void IncrementPendingUnloadsCount() = 0;
-  virtual void DecrementPendingUnloadsCount() = 0;
-
   virtual ProcessModel GetProcessModel() const = 0;
 
  protected:

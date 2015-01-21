@@ -25,7 +25,6 @@
 #include "shared/common/oxide_content_client.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_browser_process_main.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 
@@ -38,7 +37,7 @@ const char kWebViewContentsHelperKey[] = "oxide_web_view_contents_helper_data";
 WebViewContentsHelper::~WebViewContentsHelper() {
   if (web_preferences() && owns_web_preferences_) {
     WebPreferences* prefs = web_preferences();
-    WebPreferencesObserver::Observe(NULL);
+    WebPreferencesObserver::Observe(nullptr);
     prefs->Destroy();
   }
 }
@@ -73,18 +72,6 @@ void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
 
 void WebViewContentsHelper::WebPreferencesValueChanged() {
   UpdateWebPreferences();
-}
-
-void WebViewContentsHelper::CloseContents(content::WebContents* source) {
-  DCHECK_EQ(source, web_contents_);
-  DCHECK(web_contents_holder_during_close_);
-
-  scoped_ptr<content::WebContents> holder =
-      web_contents_holder_during_close_.Pass();
-  holder.reset();
-  // |this| has been deleted
-
-  BrowserProcessMain::GetInstance()->DecrementPendingUnloadsCount();
 }
 
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
@@ -142,7 +129,7 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
 
   if (web_preferences() && owns_web_preferences_) {
     WebPreferences* old = web_preferences();
-    WebPreferencesObserver::Observe(NULL);
+    WebPreferencesObserver::Observe(nullptr);
     old->Destroy();
   }
 
@@ -154,19 +141,6 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
 
 void WebViewContentsHelper::WebContentsAdopted() {
   owns_web_preferences_ = false;
-}
-
-void WebViewContentsHelper::TakeWebContentsOwnershipAndClosePage(
-    scoped_ptr<content::WebContents> web_contents) {
-  DCHECK_EQ(web_contents.get(), web_contents_);
-  DCHECK(!web_contents_holder_during_close_);
-
-  web_contents_holder_during_close_ = web_contents.Pass();
-
-  BrowserProcessMain::GetInstance()->IncrementPendingUnloadsCount();
-
-  web_contents_->SetDelegate(this);
-  web_contents_->GetRenderViewHost()->ClosePage();
 }
 
 } // namespace oxide

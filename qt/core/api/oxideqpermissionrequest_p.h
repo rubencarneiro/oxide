@@ -39,19 +39,13 @@ class OxideQPermissionRequestPrivate {
   virtual ~OxideQPermissionRequestPrivate();
 
  protected:
-  OxideQPermissionRequestPrivate(const QUrl& url,
-                                 const QUrl& embedder,
-                                 scoped_ptr<oxide::PermissionRequest> request);
+  OxideQPermissionRequestPrivate(scoped_ptr<oxide::PermissionRequest> request);
 
   OxideQPermissionRequest* q_ptr;
   scoped_ptr<oxide::PermissionRequest> request_;
-  bool is_cancelled_;
 
  private:
   void OnCancelled();
-
-  QUrl url_;
-  QUrl embedder_;
 };
 
 class OxideQSimplePermissionRequestPrivate
@@ -60,14 +54,10 @@ class OxideQSimplePermissionRequestPrivate
   virtual ~OxideQSimplePermissionRequestPrivate();
 
   static OxideQSimplePermissionRequest* Create(
-      const QUrl& url,
-      const QUrl& embedder,
       scoped_ptr<oxide::SimplePermissionRequest> request);
 
  protected:
   OxideQSimplePermissionRequestPrivate(
-      const QUrl& url,
-      const QUrl& embedder,
       scoped_ptr<oxide::SimplePermissionRequest> request);
 
  private:
@@ -85,14 +75,10 @@ class OxideQGeolocationPermissionRequestPrivate final
   ~OxideQGeolocationPermissionRequestPrivate();
 
   static OxideQGeolocationPermissionRequest* Create(
-      const QUrl& url,
-      const QUrl& embedder,
       scoped_ptr<oxide::SimplePermissionRequest> request);
 
  private:
   OxideQGeolocationPermissionRequestPrivate(
-      const QUrl& url,
-      const QUrl& embedder,
       scoped_ptr<oxide::SimplePermissionRequest> request);
 };
 

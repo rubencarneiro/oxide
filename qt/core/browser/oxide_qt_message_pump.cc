@@ -81,7 +81,7 @@ void MessagePump::customEvent(QEvent* event) {
 
 MessagePump::MessagePump() :
     delayed_work_timer_id_(0),
-    state_(NULL) {
+    state_(nullptr) {
   if (g_chromium_event_type == QEvent::None) {
     g_chromium_event_type = QEvent::registerEventType();
   }

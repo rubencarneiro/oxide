@@ -36,10 +36,10 @@
 #include "qt/core/browser/oxide_qt_web_frame.h"
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
-#include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_web_context_adapter.h"
 #include "oxide_qt_web_frame_adapter.h"
@@ -331,7 +331,7 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
 WebContextAdapter* WebViewAdapter::context() const {
   WebContext* c = view_->GetContext();
   if (!c) {
-    return NULL;
+    return nullptr;
   }
 
   return WebContextAdapter::FromWebContext(c);
@@ -401,7 +401,7 @@ QList<ScriptMessageHandlerAdapter*>& WebViewAdapter::messageHandlers() {
 }
 
 bool WebViewAdapter::isInitialized() const {
-  return view_->GetWebContents() != NULL;
+  return view_->GetWebContents() != nullptr;
 }
 
 int WebViewAdapter::getNavigationEntryCount() const {
@@ -459,7 +459,7 @@ OxideQWebPreferences* WebViewAdapter::preferences() {
 }
 
 void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
-  OxideQWebPreferences* old = NULL;
+  OxideQWebPreferences* old = nullptr;
   if (WebPreferences* o =
       static_cast<WebPreferences *>(view_->GetWebPreferences())) {
     old = o->api_handle();

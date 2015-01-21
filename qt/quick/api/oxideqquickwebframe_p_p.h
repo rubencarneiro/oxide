@@ -30,19 +30,21 @@ QT_BEGIN_NAMESPACE
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
-class OxideQQuickWebFramePrivate final : public oxide::qt::WebFrameAdapter {
+class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameAdapter {
   Q_DECLARE_PUBLIC(OxideQQuickWebFrame)
 
  public:
+  static OxideQQuickWebFramePrivate* get(OxideQQuickWebFrame* web_frame);
+
+ private:
   OxideQQuickWebFramePrivate(OxideQQuickWebFrame* q);
 
-  void URLChanged() final;
+  // WebFrameAdapter implementation
+  void URLCommitted() override;
 
   QList<OxideQQuickWebFrame *>& children() {
     return children_;
   }
-
-  static OxideQQuickWebFramePrivate* get(OxideQQuickWebFrame* web_frame);
 
   static int childFrame_count(QQmlListProperty<OxideQQuickWebFrame>* prop);
   static OxideQQuickWebFrame* childFrame_at(
@@ -54,7 +56,6 @@ class OxideQQuickWebFramePrivate final : public oxide::qt::WebFrameAdapter {
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
       int index);
 
- private:
   // We keep this separate to QObject becase we want a way to track child frames quickly
   QList<OxideQQuickWebFrame *> children_;
 

@@ -156,7 +156,7 @@ OxideQSslCertificate* OxideQSslCertificate::issuer() const {
   const net::X509Certificate::OSCertHandles& handles =
       d->x509_cert_->GetIntermediateCertificates();
   if (handles.empty()) {
-    return NULL;
+    return nullptr;
   }
 
   net::X509Certificate::OSCertHandle handle = handles[0];

@@ -31,10 +31,8 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
-#include "base/message_loop/message_loop.h"
 #include "base/path_service.h"
 #include "base/posix/global_descriptors.h"
-#include "base/run_loop.h"
 #include "base/strings/string_util.h"
 #include "cc/base/switches.h"
 #include "content/app/mojo/mojo_init.h"
@@ -52,6 +50,9 @@
 #if defined(USE_NSS)
 #include "crypto/nss_util.h"
 #endif
+#ifdef V8_USE_EXTERNAL_STARTUP_DATA
+#include "gin/public/isolate_holder.h"
+#endif
 #include "ipc/ipc_descriptors.h"
 #include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
@@ -67,6 +68,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
+#include "oxide_web_contents_unloader.h"
 
 namespace content {
 
@@ -107,17 +109,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
     return state_ == STATE_STARTED || state_ == STATE_SHUTTING_DOWN;
   }
 
-  void IncrementPendingUnloadsCount() final {
-    DCHECK_EQ(state_, STATE_STARTED);
-    pending_unloads_count_++;
-  }
-  void DecrementPendingUnloadsCount() final {
-    DCHECK_GT(pending_unloads_count_, 0U);
-    if (--pending_unloads_count_ == 0 && state_ == STATE_SHUTTING_DOWN) {
-      shutdown_loop_quit_closure_.Run();
-    }
-  }
-
   ProcessModel GetProcessModel() const final {
     DCHECK_NE(state_, STATE_NOT_STARTED);
     return process_model_;
@@ -140,9 +131,6 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   scoped_ptr<ContentMainDelegate> main_delegate_;
   scoped_ptr<base::AtExitManager> exit_manager_;
   scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
-
-  size_t pending_unloads_count_;
-  base::Closure shutdown_loop_quit_closure_;
 };
 
 namespace {
@@ -167,7 +155,7 @@ void SetupAndVerifySignalHandlers() {
   // Ignoring SIGCHLD will break base::GetTerminationStatus. CHECK that the
   // application hasn't done this
   struct sigaction sigact;
-  CHECK(sigaction(SIGCHLD, NULL, &sigact) == 0);
+  CHECK(sigaction(SIGCHLD, nullptr, &sigact) == 0);
   CHECK(sigact.sa_handler != SIG_IGN) << "SIGCHLD should not be ignored";
   CHECK((sigact.sa_flags & SA_NOCLDWAIT) == 0) <<
       "SA_NOCLDWAIT should not be set";
@@ -176,10 +164,10 @@ void SetupAndVerifySignalHandlers() {
   // to SIG_IGN if it is currently SIG_DFL, else leave it as the application
   // set it - if the application has set a handler that terminates the process,
   // then tough luck
-  CHECK(sigaction(SIGPIPE, NULL, &sigact) == 0);
+  CHECK(sigaction(SIGPIPE, nullptr, &sigact) == 0);
   if (sigact.sa_handler == SIG_DFL) {
     sigact.sa_handler = SIG_IGN;
-    CHECK(sigaction(SIGPIPE, &sigact, NULL) == 0);
+    CHECK(sigaction(SIGPIPE, &sigact, nullptr) == 0);
   }
 }
 
@@ -216,7 +204,7 @@ base::FilePath GetSubprocessPath() {
 
 void InitializeCommandLine(const base::FilePath& subprocess_path,
                            ProcessModel process_model) {
-  CHECK(base::CommandLine::Init(0, NULL)) <<
+  CHECK(base::CommandLine::Init(0, nullptr)) <<
       "CommandLine already exists. Did you call BrowserProcessMain::Start "
       "in a child process?";
 
@@ -278,6 +266,19 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
     command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
   }
+
+  if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
+    command_line->AppendSwitch(switches::kEnableMediaHubAudio);
+  }
+  base::StringPiece mediahub_fixed_session_domains = GetEnvironmentOption("MEDIA_HUB_FIXED_SESSION_DOMAINS");
+  if (!mediahub_fixed_session_domains.empty()) {
+    command_line->AppendSwitchASCII(switches::kMediaHubFixedSessionDomains,
+                                    mediahub_fixed_session_domains.data());
+
+    if (!IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
+      command_line->AppendSwitch(switches::kEnableMediaHubAudio);
+    }
+  }
 }
 
 void AddFormFactorSpecificCommandLineArguments() {
@@ -295,7 +296,7 @@ void AddFormFactorSpecificCommandLineArguments() {
     command_line->AppendSwitch(switches::kLimitMaxDecodedImageBytes);
   }
 
-  const char* form_factor_string = NULL;
+  const char* form_factor_string = nullptr;
   switch (form_factor) {
     case FORM_FACTOR_DESKTOP:
       form_factor_string = switches::kFormFactorDesktop;
@@ -328,8 +329,7 @@ bool IsUnsupportedProcessModel(ProcessModel process_model) {
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
-      process_model_(PROCESS_MODEL_MULTI_PROCESS),
-      pending_unloads_count_(0) {}
+      process_model_(PROCESS_MODEL_MULTI_PROCESS) {}
 
 BrowserProcessMainImpl::~BrowserProcessMainImpl() {
   CHECK(state_ == STATE_NOT_STARTED || state_ == STATE_SHUTDOWN) <<
@@ -401,6 +401,9 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   content::RegisterContentSchemes(true);
 
   CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
+#if defined(V8_USE_EXTERNAL_STARTUP_DATA)
+  CHECK(gin::IsolateHolder::LoadV8Snapshot());
+#endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
   main_delegate_->PreSandboxStartup();
   main_delegate_->SandboxInitialized(base::EmptyString());
@@ -440,24 +443,15 @@ void BrowserProcessMainImpl::Shutdown() {
   }
   state_ = STATE_SHUTTING_DOWN;
 
-  if (pending_unloads_count_ > 0) {
-    // Wait for any pending unload handlers to finish
-    base::MessageLoop::ScopedNestableTaskAllower nestable_task_allower(
-        base::MessageLoop::current());
+  MessageLoopForUI::current()->Stop();
 
-    base::RunLoop run_loop;
-    shutdown_loop_quit_closure_ = run_loop.QuitClosure();
-
-    run_loop.Run();
-  }
+  WebContentsUnloader::GetInstance()->WaitForPendingUnloadsToFinish();
 
   if (process_model_ != PROCESS_MODEL_SINGLE_PROCESS) {
     // In single process mode, we do this check after destroying
     // threads, as we hold the single BrowserContext alive until then
     BrowserContext::AssertNoContextsExist();
   }
-
-  MessageLoopForUI::current()->Stop();
 
   browser_main_runner_->Shutdown();
   browser_main_runner_.reset();

@@ -37,7 +37,7 @@ BrowserPlatformIntegration::BrowserPlatformIntegration() {
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
   DCHECK_EQ(g_instance, this);
-  g_instance = NULL;
+  g_instance = nullptr;
 }
 
 // static
@@ -55,7 +55,7 @@ bool BrowserPlatformIntegration::IsTouchSupported() {
 }
 
 GLContextAdopted* BrowserPlatformIntegration::GetGLShareContext() {
-  return NULL;
+  return nullptr;
 }
 
 void BrowserPlatformIntegration::BrowserThreadInit(
@@ -66,7 +66,7 @@ void BrowserPlatformIntegration::BrowserThreadCleanUp(
 
 content::LocationProvider*
 BrowserPlatformIntegration::CreateLocationProvider() {
-  return NULL;
+  return nullptr;
 }
 
 BrowserPlatformIntegration::ApplicationState

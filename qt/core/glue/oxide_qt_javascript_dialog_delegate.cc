@@ -25,7 +25,7 @@ namespace oxide {
 namespace qt {
 
 JavaScriptDialogDelegate::JavaScriptDialogDelegate() :
-    dialog_(NULL) {}
+    dialog_(nullptr) {}
 
 JavaScriptDialogDelegate::~JavaScriptDialogDelegate() {}
 

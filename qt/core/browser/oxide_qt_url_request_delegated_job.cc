@@ -35,7 +35,7 @@
 #include "url/gurl.h"
 
 #include "qt/core/browser/oxide_qt_web_context.h"
-#include "shared/base/oxide_cross_thread_data_stream.h"
+#include "shared/common/oxide_cross_thread_data_stream.h"
 
 namespace oxide {
 namespace qt {
@@ -387,7 +387,7 @@ void URLRequestDelegatedJob::OnDataAvailable() {
 
   SetStatus(net::URLRequestStatus());
 
-  read_buf_= NULL;
+  read_buf_= nullptr;
   read_buf_size_ = 0;
 
   NotifyReadComplete(rv);
@@ -468,7 +468,7 @@ URLRequestDelegatedJob::~URLRequestDelegatedJob() {
 
   URLRequestDelegatedJobProxy* proxy = proxy_.get();
   proxy->AddRef();
-  proxy_ = NULL;
+  proxy_ = nullptr;
   content::BrowserThread::ReleaseSoon(
       content::BrowserThread::UI, FROM_HERE, proxy);
 }

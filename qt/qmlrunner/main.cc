@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
   } else {
     QQuickItem* contentItem = qobject_cast<QQuickItem *>(toplevel);
     if (contentItem) {
-      QQuickView* view = new QQuickView(&engine, NULL);
+      QQuickView* view = new QQuickView(&engine, nullptr);
       window.reset(view);
 
       QString name = contentItem->objectName();

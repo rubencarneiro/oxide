@@ -165,7 +165,7 @@ net::CookieStore* ResourceDispatcherHostDelegate::GetCookieStoreForContext(
     content::ResourceContext* resource_context) {
   return resource_context && resource_context->GetRequestContext()
       ? resource_context->GetRequestContext()->cookie_store()
-      : NULL;
+      : nullptr;
 }
 
 } // namespace oxide

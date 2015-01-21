@@ -45,7 +45,7 @@ int main(int argc, const char* argv[]) {
 #if defined(COMPONENT_BUILD)
   // Gross hack for component build
   // see https://code.google.com/p/chromium/issues/detail?id=374712
-  content::SetContentClient(NULL);
+  content::SetContentClient(nullptr);
 #endif
 
   return oxide::qt::OxideMain(argc, argv);

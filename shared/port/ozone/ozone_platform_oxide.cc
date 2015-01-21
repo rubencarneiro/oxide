@@ -43,11 +43,11 @@ class OzonePlatformOxide : public OzonePlatform {
   }
 
   CursorFactoryOzone* GetCursorFactoryOzone() final {
-    return NULL;
+    return nullptr;
   }
 
   ui::InputController* GetInputController() final {
-    return NULL;
+    return nullptr;
   }
 
   GpuPlatformSupport* GetGpuPlatformSupport() final {

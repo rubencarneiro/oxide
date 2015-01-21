@@ -37,6 +37,16 @@
       },
     },
     {
+      'target_name': 'Qt5Core-private',
+      'type': 'none',
+      'direct_dependent_settings': {
+        'cflags_cc': [
+          '-I<!(<(pkg_config) --variable includedir Qt5Core)/QtCore/<!(<(pkg_config) --modversion Qt5Core)',
+          '-I<!(<(pkg_config) --variable includedir Qt5Core)/QtCore/<!(<(pkg_config) --modversion Qt5Core)/QtCore',
+        ],
+      },
+    },
+    {
       'target_name': 'Qt5Gui',
       'type': 'none',
       'direct_dependent_settings': {
@@ -58,7 +68,8 @@
       'type': 'none',
       'direct_dependent_settings': {
         'cflags_cc': [
-          '-I<!(<(pkg_config) --variable includedir Qt5Gui)/QtGui/<!(<(pkg_config) --modversion Qt5Gui)'
+          '-I<!(<(pkg_config) --variable includedir Qt5Gui)/QtGui/<!(<(pkg_config) --modversion Qt5Gui)',
+          '-I<!(<(pkg_config) --variable includedir Qt5Gui)/QtGui/<!(<(pkg_config) --modversion Qt5Gui)/QtGui',
         ],
       },
     },

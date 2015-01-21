@@ -59,12 +59,12 @@ void WebContextAdapter::DestroyDefault() {
 }
 
 QNetworkAccessManager* WebContextAdapter::GetCustomNetworkAccessManager() {
-  return NULL;
+  return nullptr;
 }
 
 WebContextAdapter::~WebContextAdapter() {
   if (g_default == this) {
-    g_default = NULL;
+    g_default = nullptr;
   }
 
   context_->Destroy();

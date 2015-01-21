@@ -28,6 +28,7 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/certificate_request_result_type.h"
+#include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_process_host_observer.h"
@@ -41,7 +42,7 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_adopted.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
@@ -50,6 +51,7 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
+#include "oxide_quota_permission_context.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
@@ -92,6 +94,14 @@ class SingleProcessBrowserContextHolder
 
   DISALLOW_COPY_AND_ASSIGN(SingleProcessBrowserContextHolder);
 };
+
+void RespondToGeolocationPermissionRequest(
+    const base::Callback<void(bool)>& callback,
+    bool result) {
+  content::GeolocationProvider::GetInstance()
+      ->UserDidOptIntoLocationServices();
+  callback.Run(result);
+}
 
 }
 
@@ -138,7 +148,7 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
-  return NULL;
+  return nullptr;
 }
 
 std::string ContentBrowserClient::GetAcceptLangs(
@@ -152,7 +162,9 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   static const char* const kSwitchNames[] = {
     switches::kEnableGoogleTalkPlugin,
     switches::kFormFactor,
-    switches::kLimitMaxDecodedImageBytes
+    switches::kLimitMaxDecodedImageBytes,
+    switches::kEnableMediaHubAudio,
+    switches::kMediaHubFixedSessionDomains
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kSwitchNames, arraysize(kSwitchNames));
@@ -249,8 +261,11 @@ void ContentBrowserClient::RequestPermission(
     return;
   }
 
+  base::Callback<void(bool)> callback =
+      base::Bind(&RespondToGeolocationPermissionRequest,
+                 result_callback);
   webview->RequestGeolocationPermission(requesting_frame.GetOrigin(),
-                                        result_callback);
+                                        callback);
 }
 
 bool ContentBrowserClient::CanCreateWindow(
@@ -342,6 +357,10 @@ void ContentBrowserClient::SetPlatformIntegration(
     BrowserPlatformIntegration* integration) {
   CHECK(integration && !platform_integration_);
   platform_integration_.reset(integration);
+}
+
+content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionContext() {
+  return new QuotaPermissionContext();
 }
 
 } // namespace oxide

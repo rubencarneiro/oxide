@@ -110,21 +110,20 @@ void CertificateErrorManager::RemoveError(CertificateError* error) {
   auto it = std::find(errors_.begin(), errors_.end(), error);
   DCHECK(it != errors_.end());
   if (iterating_) {
-    *it = NULL;
+    *it = nullptr;
   } else {
     errors_.erase(it);
   }
 
-  error->manager_ = NULL;
-  error->frame_ = NULL;
+  error->manager_ = nullptr;
+  error->frame_ = nullptr;
 }
 
 void CertificateErrorManager::Compact() {
   DCHECK(!iterating_);
 
   errors_.erase(
-      std::remove(errors_.begin(), errors_.end(),
-                  static_cast<CertificateError*>(NULL)),
+      std::remove(errors_.begin(), errors_.end(), nullptr),
       errors_.end());
 }
 
@@ -289,9 +288,7 @@ void CertificateError::SetCancelCallback(const base::Closure& callback) {
 }
 
 void CertificateError::Allow() {
-  if (callback_.is_null()) {
-    return;
-  }
+  DCHECK(!callback_.is_null());
 
   callback_.Run(true);
   callback_.Reset();
@@ -300,9 +297,7 @@ void CertificateError::Allow() {
 }
 
 void CertificateError::Deny() {
-  if (callback_.is_null()) {
-    return;
-  }
+  DCHECK(!callback_.is_null());
 
   callback_.Run(false);
   callback_.Reset();

@@ -31,14 +31,14 @@ namespace qt {
 
 WebFrameAdapter::WebFrameAdapter(QObject* q) :
     AdapterBase(q),
-    frame_(NULL) {}
+    frame_(nullptr) {}
 
 WebFrameAdapter::~WebFrameAdapter() {}
 
 // static
 WebFrameAdapter* WebFrameAdapter::FromWebFrame(WebFrame* frame) {
   if (!frame) {
-    return NULL;
+    return nullptr;
   }
 
   return frame->adapter_;

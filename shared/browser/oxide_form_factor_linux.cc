@@ -41,7 +41,7 @@ bool IsUbuntuPhoneOrTablet() {
   }
 
   base::ScopedNativeLibrary egl(
-      base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
+      base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), nullptr));
   if (!egl.is_valid()) {
     return false;
   }
@@ -69,7 +69,7 @@ bool IsUbuntuPhoneOrTablet() {
     LOG(ERROR) << "Failed to resolve eglInitialize";
     return false;
   }
-  if (!eglInitialize(display, NULL, NULL)) {
+  if (!eglInitialize(display, nullptr, nullptr)) {
     LOG(ERROR) << "eglInitialize failed";
     return false;
   }

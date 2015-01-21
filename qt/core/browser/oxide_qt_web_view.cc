@@ -59,12 +59,12 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
-#include "qt/core/base/oxide_qt_screen_utils.h"
-#include "qt/core/base/oxide_qt_skutils.h"
+#include "qt/core/common/oxide_qt_screen_utils.h"
+#include "qt/core/common/oxide_qt_skutils.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
-#include "shared/base/oxide_enum_flags.h"
 #include "shared/browser/oxide_render_widget_host_view.h"
+#include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_javascript_dialog.h"
@@ -369,16 +369,6 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return new JavaScriptDialog(delegate, &did_suppress_message);
 }
 
-void WebView::FrameAdded(oxide::WebFrame* frame) {
-  adapter_->FrameAdded(
-      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
-}
-
-void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  adapter_->FrameRemoved(
-      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
-}
-
 bool WebView::CanCreateWindows() const {
   return adapter_->CanCreateWindows();
 }
@@ -500,13 +490,9 @@ void WebView::OnWebPreferencesDestroyed() {
 }
 
 void WebView::OnRequestGeolocationPermission(
-    const GURL& origin,
-    const GURL& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   scoped_ptr<OxideQGeolocationPermissionRequest> req(
       OxideQGeolocationPermissionRequestPrivate::Create(
-        QUrl(QString::fromStdString(origin.spec())),
-        QUrl(QString::fromStdString(embedder.spec())),
         request.Pass()));
 
   // The embedder takes ownership of this
@@ -625,8 +611,8 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-oxide::WebFrame* WebView::CreateWebFrame(content::FrameTreeNode* node) {
-  return new WebFrame(adapter_->CreateWebFrame(), node, this);
+oxide::WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
+  return new WebFrame(adapter_->CreateWebFrame(), rfh, this);
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -998,6 +984,16 @@ void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
 
 WebContext* WebView::GetContext() const {
   return WebContext::FromBrowserContext(GetBrowserContext());
+}
+
+void WebView::FrameAdded(oxide::WebFrame* frame) {
+  adapter_->FrameAdded(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
+}
+
+void WebView::FrameRemoved(oxide::WebFrame* frame) {
+  adapter_->FrameRemoved(
+      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
 }
 
 } // namespace qt

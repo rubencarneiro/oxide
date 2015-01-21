@@ -26,7 +26,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 
-#include "qt/core/base/oxide_qt_event_utils.h"
+#include "qt/core/common/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
@@ -70,6 +70,9 @@ class WebView final : public QObject,
 
   WebContext* GetContext() const;
 
+  void FrameAdded(oxide::WebFrame* frame);
+  void FrameRemoved(oxide::WebFrame* frame);
+
  private Q_SLOTS:
   void OnInputPanelVisibilityChanged();
 
@@ -97,9 +100,6 @@ class WebView final : public QObject,
       content::JavaScriptMessageType javascript_message_type,
       bool* did_suppress_message) final;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() final;
-
-  void FrameAdded(oxide::WebFrame* frame) final;
-  void FrameRemoved(oxide::WebFrame* frame) final;
 
   bool CanCreateWindows() const final;
 
@@ -140,8 +140,6 @@ class WebView final : public QObject,
   void OnWebPreferencesDestroyed() final;
 
   void OnRequestGeolocationPermission(
-      const GURL& origin,
-      const GURL& embedder,
       scoped_ptr<oxide::SimplePermissionRequest> request) final;
 
   void OnUnhandledKeyboardEvent(
@@ -160,7 +158,7 @@ class WebView final : public QObject,
                               WindowOpenDisposition disposition,
                               bool user_gesture) final;
 
-  oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) final;
+  oxide::WebFrame* CreateWebFrame(content::RenderFrameHost* rfh) final;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) final;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
