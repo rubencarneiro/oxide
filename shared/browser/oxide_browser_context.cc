@@ -436,9 +436,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   // TODO: We want persistent storage here (for non-incognito), but 
   //       SQLiteChannelIDStore is part of chrome
   storage->set_channel_id_service(
-      new net::ChannelIDService(
+      make_scoped_ptr(new net::ChannelIDService(
           new net::DefaultChannelIDStore(nullptr),
-          base::WorkerPool::GetTaskRunner(true)));
+          base::WorkerPool::GetTaskRunner(true))));
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
