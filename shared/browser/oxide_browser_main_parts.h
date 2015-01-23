@@ -30,6 +30,10 @@ namespace gfx {
 class Screen;
 }
 
+namespace gpu {
+class GpuInfoCollectorOxideLinux;
+}
+
 namespace oxide {
 
 class IOThread;
@@ -48,6 +52,7 @@ class BrowserMainParts final : public content::BrowserMainParts {
   virtual void PostMainMessageLoopRun() final;
   virtual void PostDestroyThreads() final;
 
+  scoped_ptr<gpu::GpuInfoCollectorOxideLinux> gpu_info_collector_;
   scoped_ptr<base::MessageLoop> main_message_loop_;
   scoped_ptr<IOThread> io_thread_;
   scoped_ptr<gfx::Screen> primary_screen_;

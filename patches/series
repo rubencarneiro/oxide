@@ -4,6 +4,7 @@ port/web_contents_view.patch
 port/render_widget_host_view.patch
 port/gl_implementation.patch
 port/media_ozone.patch
+port/gpu_info_collector.patch
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
 support-native-popup-menus.patch
@@ -18,7 +19,6 @@ expose-extra-properties-for-should-create-webcontents.patch
 disable-default-network-location-provider.patch
 add-should-download-url-to-resource-dispatcher-host.patch
 load-nss-without-user-db.patch
-accelerated-2d-support.patch
 store-cache-stats-at-startup.patch
 export-content-switches.patch
 fix-openmax-arm-non-neon-build.patch
@@ -26,3 +26,5 @@ fix-non-x11-build.patch
 add-limit-max-decoded-image-bytes-switch.patch
 customize-gesture-fling-curve.patch
 mediahub-support.patch
+allow-os-override-for-gpu-manager.patch
+enable-gpu-rasterization-on-krillin.patch

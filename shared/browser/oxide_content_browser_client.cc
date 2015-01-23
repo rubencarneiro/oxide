@@ -45,6 +45,7 @@
 #include "shared/gpu/oxide_gl_context_adopted.h"
 
 #include "oxide_access_token_store.h"
+#include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
@@ -207,6 +208,10 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
                                           net::CookieOptions* options) {
   return BrowserContextIOData::FromResourceContext(
       context)->CanAccessCookies(url, first_party, true);
+}
+
+content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionContext() {
+  return new QuotaPermissionContext();
 }
 
 void ContentBrowserClient::AllowCertificateError(
@@ -378,8 +383,16 @@ void ContentBrowserClient::SetPlatformIntegration(
   platform_integration_.reset(integration);
 }
 
-content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionContext() {
-  return new QuotaPermissionContext();
+gpu::GpuControlList::OsType
+ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
+    std::string* os_version) {
+  if (!AndroidProperties::GetInstance()->Available()) {
+    // Use the platform defaults in this case
+    return gpu::GpuControlList::kOsAny;
+  }
+
+  *os_version = AndroidProperties::GetInstance()->GetOSVersion();
+  return gpu::GpuControlList::kOsAndroid;
 }
 
 } // namespace oxide

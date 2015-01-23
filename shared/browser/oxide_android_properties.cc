@@ -18,13 +18,43 @@
 #include "oxide_android_properties.h"
 
 #if defined(ENABLE_ANDROID_SYSPROPS)
+#include <cstdio>
 #include <hybris/properties/properties.h>
+#include "base/strings/stringprintf.h"
 #endif
 
 #include "base/logging.h"
 #include "base/memory/singleton.h"
 
 namespace oxide {
+
+namespace {
+
+#if defined(ENABLE_ANDROID_SYSPROPS)
+std::string ParseOSVersion(const char* os_version_str) {
+  int32 major, minor, bugfix;
+
+  if (!os_version_str[0]) {
+    return std::string();
+  }
+
+  int num_read = sscanf(os_version_str, "%d.%d.%d", &major, &minor, &bugfix);
+  if (num_read <= 0) {
+    return std::string();
+  }
+
+  if (num_read < 2) {
+    minor = 0;
+  }
+  if (num_read < 3) {
+    bugfix = 0;
+  }
+
+  return base::StringPrintf("%d.%d.%d", major, minor, bugfix);
+}
+#endif
+
+}
 
 AndroidProperties::AndroidProperties()
     : available_(false) {
@@ -49,6 +79,9 @@ AndroidProperties::AndroidProperties()
 
   ::property_get("ro.product.model", value, nullptr);
   model_ = value;
+
+  ::property_get("ro.build.version.release", value, nullptr);
+  os_version_ = ParseOSVersion(value);
 #endif
 }
 
@@ -86,6 +119,11 @@ std::string AndroidProperties::GetBrand() const {
 std::string AndroidProperties::GetModel() const {
   DCHECK(available_);
   return model_;
+}
+
+std::string AndroidProperties::GetOSVersion() const {
+  DCHECK(available_);
+  return os_version_;
 }
 
 } // namespace oxide

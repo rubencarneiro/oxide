@@ -57,6 +57,9 @@ class AndroidProperties {
   // Return ro.product.model
   std::string GetModel() const;
 
+  // Returns the parsed value of ro.build.version.release
+  std::string GetOSVersion() const;
+
  private:
   friend struct DefaultSingletonTraits<AndroidProperties>;
 
@@ -69,6 +72,7 @@ class AndroidProperties {
   std::string board_;
   std::string brand_;
   std::string model_;
+  std::string os_version_;
 
   DISALLOW_COPY_AND_ASSIGN(AndroidProperties);
 };
