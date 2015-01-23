@@ -50,9 +50,7 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 
-#if defined(USE_LIBPCI)
 #include "library_loaders/libpci.h"
-#endif
 
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 
@@ -220,7 +218,6 @@ std::string CollectDriverVersionNVidia() {
   return std::string();
 }
 
-#if defined(USE_LIBPCI)
 // This checks if a system supports PCI bus.
 // We check the existence of /sys/bus/pci or /sys/bug/pci_express.
 bool IsPciSupported() {
@@ -228,7 +225,6 @@ bool IsPciSupported() {
   const base::FilePath pcie_path("/sys/bus/pci_express/");
   return (base::PathExists(pci_path) || base::PathExists(pcie_path));
 }
-#endif  // defined(USE_LIBPCI)
 
 const uint32 kVendorIDIntel = 0x8086;
 const uint32 kVendorIDNVidia = 0x10de;
@@ -236,10 +232,6 @@ const uint32 kVendorIDAMD = 0x1002;
 
 gpu::CollectInfoResult CollectPCIVideoCardInfo(gpu::GPUInfo* gpu_info) {
   DCHECK(gpu_info);
-
-#if !defined(USE_LIBPCI)
-  return gpu::kCollectInfoNonFatalFailure;
-#else
 
   if (!IsPciSupported()) {
     VLOG(1) << "PCI bus scanning is not supported";
@@ -318,7 +310,6 @@ gpu::CollectInfoResult CollectPCIVideoCardInfo(gpu::GPUInfo* gpu_info) {
   }
 
   return gpu::kCollectInfoSuccess;
-#endif
 }
 
 gpu::CollectInfoResult CollectContextGraphicsInfoLinux(
