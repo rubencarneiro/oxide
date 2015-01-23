@@ -27,4 +27,3 @@ add-limit-max-decoded-image-bytes-switch.patch
 customize-gesture-fling-curve.patch
 mediahub-support.patch
 allow-os-override-for-gpu-manager.patch
-enable-gpu-rasterization-on-krillin.patch
