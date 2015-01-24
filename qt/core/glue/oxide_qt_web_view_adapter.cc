@@ -341,6 +341,10 @@ void WebViewAdapter::wasResized() {
   view_->WasResized();
 }
 
+void WebViewAdapter::screenUpdated() {
+  view_->ScreenUpdated();
+}
+
 void WebViewAdapter::visibilityChanged() {
   view_->VisibilityChanged();
 }

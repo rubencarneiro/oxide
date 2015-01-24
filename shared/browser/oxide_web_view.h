@@ -197,6 +197,7 @@ class WebView : public ScriptMessageTarget,
   void SetIsFullscreen(bool fullscreen);
 
   void WasResized();
+  void ScreenUpdated();
   void VisibilityChanged();
   void FocusChanged();
   void InputPanelVisibilityChanged();

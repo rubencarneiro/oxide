@@ -1285,6 +1285,7 @@ void WebView::Init(Params* params) {
 
     // Sync WebContents with the state of the WebView
     WasResized();
+    ScreenUpdated();
     VisibilityChanged();
     FocusChanged();
     InputPanelVisibilityChanged();
@@ -1558,6 +1559,15 @@ void WebView::WasResized() {
   }
 
   MaybeResetAutoScrollTimer();
+}
+
+void WebView::ScreenUpdated() {
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
+    return;
+  }
+
+  host->NotifyScreenInfoChanged();
 }
 
 void WebView::VisibilityChanged() {
