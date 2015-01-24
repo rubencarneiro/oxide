@@ -48,28 +48,6 @@ blink::WebScreenOrientationType GetOrientationTypeFromScreenOrientation(
   }
 }
 
-uint16_t GetOrientationAngleFromScreenOrientation(
-    Qt::ScreenOrientation primary,
-    Qt::ScreenOrientation orientation) {
-  DCHECK(primary == Qt::PortraitOrientation ||
-         primary == Qt::LandscapeOrientation);
-  bool portrait = primary == Qt::PortraitOrientation;
-
-  switch (orientation) {
-    case Qt::PortraitOrientation:
-      return portrait ? 0 : 270;
-    case Qt::LandscapeOrientation:
-      return portrait ? 90 : 0;
-    case Qt::InvertedPortraitOrientation:
-      return portrait ? 180 : 90;
-    case Qt::InvertedLandscapeOrientation:
-      return portrait ? 270 : 180;
-    default:
-      NOTREACHED();
-      return 0;
-  }
-}
-
 }
 
 float GetDeviceScaleFactorFromQScreen(QScreen* screen) {
@@ -147,8 +125,8 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
   result.orientationType =
       GetOrientationTypeFromScreenOrientation(screen->orientation());
   result.orientationAngle =
-      GetOrientationAngleFromScreenOrientation(screen->primaryOrientation(),
-                                               screen->orientation());
+      screen->angleBetween(screen->orientation(),
+                           screen->primaryOrientation());
 
   return result;
 }
