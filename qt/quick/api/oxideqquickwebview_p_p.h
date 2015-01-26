@@ -40,6 +40,7 @@ class QQmlComponent;
 template <typename T> class QQmlListProperty;
 class QQuickItem;
 class QQuickWindow;
+class QScreen;
 QT_END_NAMESPACE
 
 class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
@@ -146,7 +147,15 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
 
   void didUpdatePaintNode();
 
-  void onWindowChanged(QQuickWindow* window);
+  void screenChanged(QScreen* screen);
+  void screenChangedHelper(QScreen* screen);
+  void windowChangedHelper(QQuickWindow* window);
+
+  void screenGeometryChanged(const QRect&);
+  void screenOrientationChanged(Qt::ScreenOrientation);
+
+  QPointer<QScreen> screen_;
+  QPointer<QQuickWindow> window_;
 
   bool constructed_;
   int load_progress_;

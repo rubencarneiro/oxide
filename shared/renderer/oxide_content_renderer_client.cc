@@ -24,6 +24,7 @@
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
+#include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
 #include "third_party/WebKit/public/web/WebSettings.h"
 #include "third_party/WebKit/public/web/WebView.h"
 
@@ -51,6 +52,10 @@ ContentRendererClient::~ContentRendererClient() {}
 void ContentRendererClient::RenderThreadStarted() {
   new RenderProcessObserver();
   new UserScriptSlave();
+
+  // Usually enabled only on Android. We want this on mobile, but
+  // should be ok everywhere
+  blink::WebRuntimeFeatures::enableOrientationEvent(true);
 }
 
 void ContentRendererClient::RenderFrameCreated(

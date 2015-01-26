@@ -42,10 +42,12 @@
 #include "shared/port/content/common/gpu_thread_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gl/gl_implementation_oxide.h"
+#include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_gpu_info_collector_linux.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
 #include "oxide_power_save_blocker.h"
@@ -193,6 +195,9 @@ void BrowserMainParts::PreEarlyInitialization() {
   gfx::InitializeOxideNativeDisplay(
       BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());
 
+  gpu_info_collector_.reset(CreateGpuInfoCollectorLinux());
+  gpu::SetGpuInfoCollectorOxideLinux(gpu_info_collector_.get());
+
   base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
   main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
   base::MessageLoop::InitMessagePumpForUIFactory(nullptr);
@@ -233,6 +238,10 @@ int BrowserMainParts::PreCreateThreads() {
 
   io_thread_.reset(new IOThread());
 
+  return 0;
+}
+
+void BrowserMainParts::PreMainMessageLoopRun() {
   gpu::GPUInfo gpu_info;
   gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
   switch (rv) {
@@ -248,10 +257,6 @@ int BrowserMainParts::PreCreateThreads() {
 
   content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
 
-  return 0;
-}
-
-void BrowserMainParts::PreMainMessageLoopRun() {
   CompositorUtils::GetInstance()->Initialize();
   net::NetModule::SetResourceProvider(NetResourceProvider);
 }
@@ -274,6 +279,7 @@ void BrowserMainParts::PostDestroyThreads() {
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, nullptr);
   io_thread_.reset();
   content::oxide_gpu_shim::SetGLShareGroup(nullptr);
+  gpu::SetGpuInfoCollectorOxideLinux(nullptr);
 }
 
 BrowserMainParts::BrowserMainParts() {}

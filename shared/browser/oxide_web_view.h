@@ -197,6 +197,7 @@ class WebView : public ScriptMessageTarget,
   void SetIsFullscreen(bool fullscreen);
 
   void WasResized();
+  void ScreenUpdated();
   void VisibilityChanged();
   void FocusChanged();
   void InputPanelVisibilityChanged();
@@ -259,8 +260,12 @@ class WebView : public ScriptMessageTarget,
   void HidePopupMenu();
 
   void RequestGeolocationPermission(
-      const GURL& origin,
+      const GURL& requesting_frame,
+      int bridge_id,
       const base::Callback<void(bool)>& callback);
+  void CancelGeolocationPermissionRequest(
+      const GURL& requesting_frame,
+      int bridge_id);
 
   void AllowCertificateError(content::RenderFrameHost* rfh,
                              int cert_error,

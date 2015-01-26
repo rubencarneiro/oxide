@@ -30,6 +30,35 @@ namespace oxide {
 class PermissionRequest;
 class SimplePermissionRequest;
 
+// Request ID based on PermissionRequestID in Chromium. It is required for
+// requests that want to participate in cancellation. The design is a bit
+// weird though, as |bridge_id| appears to be a per-frame ID from Chromium,
+// making it possible for requests from different frames with the same origin
+// to have the same ID
+class PermissionRequestID {
+ public:
+  PermissionRequestID(int render_process_id,
+                      int render_view_id,
+                      int bridge_id,
+                      const GURL& origin);
+
+  // Constructs an invalid ID
+  PermissionRequestID();
+
+  ~PermissionRequestID();
+
+  // Whether this is a valid ID
+  bool IsValid() const;
+
+  bool operator==(const PermissionRequestID& other) const;
+
+ private:
+  int render_process_id_;
+  int render_view_id_;
+  int bridge_id_;
+  GURL origin_;
+};
+
 // This class tracks PermissionRequests
 class PermissionRequestManager {
  public:
@@ -38,6 +67,9 @@ class PermissionRequestManager {
 
   // Cancel any pending permission requests
   void CancelPendingRequests();
+
+  // Cancel the pending permission request with the specified |request_id|
+  void CancelPendingRequestForID(const PermissionRequestID& request_id);
 
  private:
   friend class PermissionRequest;
@@ -91,6 +123,7 @@ class PermissionRequest {
   friend class PermissionRequestManager;
 
   PermissionRequest(PermissionRequestManager* manager,
+                    const PermissionRequestID& request_id,
                     const GURL& url,
                     const GURL& embedder);
 
@@ -101,6 +134,8 @@ class PermissionRequest {
   PermissionRequestManager* manager_;
 
  private:
+  PermissionRequestID request_id_;
+
   GURL url_;
   GURL embedder_;
 
@@ -118,6 +153,7 @@ class PermissionRequest {
 class SimplePermissionRequest : public PermissionRequest {
  public:
   SimplePermissionRequest(PermissionRequestManager* manager,
+                          const PermissionRequestID& request_id,
                           const GURL& url,
                           const GURL& embedder,
                           const base::Callback<void(bool)>& callback);

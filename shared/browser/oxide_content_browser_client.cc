@@ -45,6 +45,7 @@
 #include "shared/gpu/oxide_gl_context_adopted.h"
 
 #include "oxide_access_token_store.h"
+#include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
@@ -209,6 +210,10 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
       context)->CanAccessCookies(url, first_party, true);
 }
 
+content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionContext() {
+  return new QuotaPermissionContext();
+}
+
 void ContentBrowserClient::AllowCertificateError(
     int render_process_id,
     int render_frame_id,
@@ -249,14 +254,14 @@ void ContentBrowserClient::RequestPermission(
     const GURL& requesting_frame,
     bool user_gesture,
     const base::Callback<void(bool)>& result_callback) {
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
+  if (permission != content::PERMISSION_GEOLOCATION) {
+    // TODO: Other types
     result_callback.Run(false);
     return;
   }
 
-  if (permission != content::PERMISSION_GEOLOCATION) {
-    // TODO: Other types
+  WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
     result_callback.Run(false);
     return;
   }
@@ -264,8 +269,27 @@ void ContentBrowserClient::RequestPermission(
   base::Callback<void(bool)> callback =
       base::Bind(&RespondToGeolocationPermissionRequest,
                  result_callback);
-  webview->RequestGeolocationPermission(requesting_frame.GetOrigin(),
+  webview->RequestGeolocationPermission(requesting_frame,
+                                        bridge_id,
                                         callback);
+}
+
+void ContentBrowserClient::CancelPermissionRequest(
+    content::PermissionType permission,
+    content::WebContents* web_contents,
+    int bridge_id,
+    const GURL& requesting_frame) {
+  if (permission != content::PERMISSION_GEOLOCATION) {
+    return;
+  }
+
+  WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
+    return;
+  }
+
+  webview->CancelGeolocationPermissionRequest(requesting_frame,
+                                              bridge_id);
 }
 
 bool ContentBrowserClient::CanCreateWindow(
@@ -359,8 +383,16 @@ void ContentBrowserClient::SetPlatformIntegration(
   platform_integration_.reset(integration);
 }
 
-content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionContext() {
-  return new QuotaPermissionContext();
+gpu::GpuControlList::OsType
+ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
+    std::string* os_version) {
+  if (!AndroidProperties::GetInstance()->Available()) {
+    // Use the platform defaults in this case
+    return gpu::GpuControlList::kOsAny;
+  }
+
+  *os_version = AndroidProperties::GetInstance()->GetOSVersion();
+  return gpu::GpuControlList::kOsAndroid;
 }
 
 } // namespace oxide

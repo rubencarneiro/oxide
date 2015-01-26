@@ -286,7 +286,11 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextDestroyed());
 
-  Q_PRIVATE_SLOT(d_func(), void onWindowChanged(QQuickWindow*));
+  Q_PRIVATE_SLOT(d_func(), void screenChanged(QScreen*));
+  Q_PRIVATE_SLOT(d_func(), void windowChangedHelper(QQuickWindow*));
+
+  Q_PRIVATE_SLOT(d_func(), void screenGeometryChanged(const QRect&));
+  Q_PRIVATE_SLOT(d_func(), void screenOrientationChanged(Qt::ScreenOrientation));
 
   void connectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_FINAL;

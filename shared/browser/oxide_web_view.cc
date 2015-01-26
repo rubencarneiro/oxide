@@ -1291,6 +1291,7 @@ void WebView::Init(Params* params) {
 
     // Sync WebContents with the state of the WebView
     WasResized();
+    ScreenUpdated();
     VisibilityChanged();
     FocusChanged();
     InputPanelVisibilityChanged();
@@ -1564,6 +1565,15 @@ void WebView::WasResized() {
   }
 
   MaybeResetAutoScrollTimer();
+}
+
+void WebView::ScreenUpdated() {
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
+    return;
+  }
+
+  host->NotifyScreenInfoChanged();
 }
 
 void WebView::VisibilityChanged() {
@@ -1918,15 +1928,36 @@ void WebView::HidePopupMenu() {
 }
 
 void WebView::RequestGeolocationPermission(
-    const GURL& origin,
+    const GURL& requesting_frame,
+    int bridge_id,
     const base::Callback<void(bool)>& callback) {
+  PermissionRequestID request_id(
+      web_contents_->GetRenderProcessHost()->GetID(),
+      web_contents_->GetRenderViewHost()->GetRoutingID(),
+      bridge_id,
+      requesting_frame);
+
   scoped_ptr<SimplePermissionRequest> request(
       new SimplePermissionRequest(
         &permission_request_manager_,
-        origin,
+        request_id,
+        requesting_frame.GetOrigin(),
         web_contents_->GetLastCommittedURL().GetOrigin(),
         callback));
+
   OnRequestGeolocationPermission(request.Pass());
+}
+
+void WebView::CancelGeolocationPermissionRequest(
+    const GURL& requesting_frame,
+    int bridge_id) {
+  PermissionRequestID request_id(
+      web_contents_->GetRenderProcessHost()->GetID(),
+      web_contents_->GetRenderViewHost()->GetRoutingID(),
+      bridge_id,
+      requesting_frame);
+
+  permission_request_manager_.CancelPendingRequestForID(request_id);
 }
 
 void WebView::AllowCertificateError(

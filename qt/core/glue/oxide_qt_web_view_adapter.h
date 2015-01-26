@@ -154,6 +154,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   WebContextAdapter* context() const;
 
   void wasResized();
+  void screenUpdated();
   void visibilityChanged();
 
   void handleFocusEvent(QFocusEvent* event);

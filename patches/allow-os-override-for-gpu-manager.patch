@@ -1,0 +1,118 @@
+# Description: Allow the embedder to override the OS type and version
+#  passed to GpuControlList::MakeDecision. This allows us to spoof Android
+#  on Ubuntu phone
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/browser/gpu/gpu_data_manager_impl_private.cc
+--- a/content/browser/gpu/gpu_data_manager_impl_private.cc
++++ b/content/browser/gpu/gpu_data_manager_impl_private.cc
+@@ -14,16 +14,17 @@
+ #include "base/strings/string_number_conversions.h"
+ #include "base/strings/stringprintf.h"
+ #include "base/sys_info.h"
+ #include "base/version.h"
+ #include "cc/base/switches.h"
+ #include "content/browser/gpu/gpu_process_host.h"
+ #include "content/common/gpu/gpu_messages.h"
+ #include "content/public/browser/browser_thread.h"
++#include "content/public/browser/content_browser_client.h"
+ #include "content/public/browser/gpu_data_manager_observer.h"
+ #include "content/public/common/content_client.h"
+ #include "content/public/common/content_constants.h"
+ #include "content/public/common/content_switches.h"
+ #include "content/public/common/web_preferences.h"
+ #include "gpu/command_buffer/service/gpu_switches.h"
+ #include "gpu/config/gpu_control_list_jsons.h"
+ #include "gpu/config/gpu_driver_bug_workaround_type.h"
+@@ -540,27 +541,32 @@ void GpuDataManagerImplPrivate::Initiali
+   InitializeImpl(gpu_blacklist_string,
+                  gpu_driver_bug_list_string,
+                  gpu_info);
+ }
+ 
+ void GpuDataManagerImplPrivate::UpdateGpuInfoHelper() {
+   GetContentClient()->SetGpuInfo(gpu_info_);
+ 
++  std::string os_version;
++  gpu::GpuControlList::OsType os_type =
++      GetContentClient()->browser()->GetOsTypeOverrideForGpuDataManager(
++        &os_version);
++
+   if (gpu_blacklist_) {
+     std::set<int> features = gpu_blacklist_->MakeDecision(
+-        gpu::GpuControlList::kOsAny, std::string(), gpu_info_);
++        os_type, os_version, gpu_info_);
+     if (update_histograms_)
+       UpdateStats(gpu_info_, gpu_blacklist_.get(), features);
+ 
+     UpdateBlacklistedFeatures(features);
+   }
+   if (gpu_driver_bug_list_) {
+     gpu_driver_bugs_ = gpu_driver_bug_list_->MakeDecision(
+-        gpu::GpuControlList::kOsAny, std::string(), gpu_info_);
++        os_type, os_version, gpu_info_);
+   }
+   gpu::GpuDriverBugList::AppendWorkaroundsFromCommandLine(
+       &gpu_driver_bugs_, *base::CommandLine::ForCurrentProcess());
+ 
+   // We have to update GpuFeatureType before notify all the observers.
+   NotifyGpuInfoUpdate();
+ }
+ 
+diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
+--- a/content/public/browser/content_browser_client.cc
++++ b/content/public/browser/content_browser_client.cc
+@@ -345,9 +345,15 @@ const wchar_t* ContentBrowserClient::Get
+ #if defined(VIDEO_HOLE)
+ ExternalVideoSurfaceContainer*
+ ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
+     WebContents* web_contents) {
+   return nullptr;
+ }
+ #endif
+ 
++gpu::GpuControlList::OsType
++ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
++    std::string* os_version) {
++  return gpu::GpuControlList::kOsAny;
++}
++
+ }  // namespace content
+diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
+--- a/content/public/browser/content_browser_client.h
++++ b/content/public/browser/content_browser_client.h
+@@ -18,16 +18,17 @@
+ #include "content/public/browser/certificate_request_result_type.h"
+ #include "content/public/browser/permission_type.h"
+ #include "content/public/common/content_client.h"
+ #include "content/public/common/media_stream_request.h"
+ #include "content/public/common/permission_status.mojom.h"
+ #include "content/public/common/resource_type.h"
+ #include "content/public/common/socket_permission_request.h"
+ #include "content/public/common/window_container_type.h"
++#include "gpu/config/gpu_control_list.h"
+ #include "net/base/mime_util.h"
+ #include "net/cookies/canonical_cookie.h"
+ #include "net/url_request/url_request_interceptor.h"
+ #include "net/url_request/url_request_job_factory.h"
+ #include "storage/browser/fileapi/file_system_context.h"
+ #include "ui/base/window_open_disposition.h"
+ 
+ #if defined(OS_POSIX) && !defined(OS_MACOSX)
+@@ -609,13 +610,16 @@ class CONTENT_EXPORT ContentBrowserClien
+ #endif
+ 
+ #if defined(VIDEO_HOLE)
+   // Allows an embedder to provide its own ExternalVideoSurfaceContainer
+   // implementation.  Return nullptr to disable external surface video.
+   virtual ExternalVideoSurfaceContainer*
+   OverrideCreateExternalVideoSurfaceContainer(WebContents* web_contents);
+ #endif
++
++  virtual gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
++      std::string* os_version);
+ };
+ 
+ }  // namespace content
+ 
+ #endif  // CONTENT_PUBLIC_BROWSER_CONTENT_BROWSER_CLIENT_H_

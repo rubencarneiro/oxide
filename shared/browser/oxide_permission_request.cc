@@ -23,6 +23,33 @@
 
 namespace oxide {
 
+PermissionRequestID::PermissionRequestID(int render_process_id,
+                                         int render_view_id,
+                                         int bridge_id,
+                                         const GURL& origin)
+    : render_process_id_(render_process_id),
+      render_view_id_(render_view_id),
+      bridge_id_(bridge_id),
+      origin_(origin) {}
+
+PermissionRequestID::PermissionRequestID()
+    : render_process_id_(-1),
+      render_view_id_(-1),
+      bridge_id_(-1) {}
+
+PermissionRequestID::~PermissionRequestID() {}
+
+bool PermissionRequestID::IsValid() const {
+  return render_process_id_ > -1 && render_view_id_ > -1 && bridge_id_ > -1;
+}
+
+bool PermissionRequestID::operator==(const PermissionRequestID& other) const {
+  return render_process_id_ == other.render_process_id_ &&
+         render_view_id_ == other.render_view_id_ &&
+         bridge_id_ == other.bridge_id_ &&
+         origin_ == other.origin_;
+}
+
 class PermissionRequestManager::IteratorGuard {
  public:
   IteratorGuard(PermissionRequestManager* manager);
@@ -108,10 +135,25 @@ void PermissionRequestManager::CancelPendingRequests() {
   }
 }
 
+void PermissionRequestManager::CancelPendingRequestForID(
+    const PermissionRequestID& request_id) {
+  for (auto it = pending_requests_.begin();
+       it != pending_requests_.end(); ++it) {
+    PermissionRequest* request = *it;
+    if (request->request_id_ == request_id) {
+      RemovePendingRequest(request);
+      request->Cancel();
+      break;
+    }
+  }
+}
+
 PermissionRequest::PermissionRequest(PermissionRequestManager* manager,
+                                     const PermissionRequestID& request_id,
                                      const GURL& url,
                                      const GURL& embedder)
     : manager_(manager),
+      request_id_(request_id),
       url_(url),
       embedder_(embedder),
       is_cancelled_(false) {
@@ -152,10 +194,11 @@ void SimplePermissionRequest::Cancel() {
 
 SimplePermissionRequest::SimplePermissionRequest(
     PermissionRequestManager* manager,
+    const PermissionRequestID& request_id,
     const GURL& url,
     const GURL& embedder,
     const base::Callback<void(bool)>& callback)
-    : PermissionRequest(manager, url, embedder),
+    : PermissionRequest(manager, request_id, url, embedder),
       callback_(callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {

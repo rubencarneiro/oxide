@@ -32,6 +32,7 @@
 #include <QQuickWindow>
 #include <QRect>
 #include <QRectF>
+#include <QScreen>
 #include <QSGNode>
 #include <QSizeF>
 #include <QSize>
@@ -758,12 +759,60 @@ void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
   }
 }
 
-void OxideQQuickWebViewPrivate::onWindowChanged(QQuickWindow* window) {
-  if (!window) {
-    return;
+void OxideQQuickWebViewPrivate::screenChanged(QScreen* screen) {
+  screenChangedHelper(screen);
+  screenUpdated();
+}
+
+void OxideQQuickWebViewPrivate::screenChangedHelper(QScreen* screen) {
+  Q_Q(OxideQQuickWebView);
+
+  if (screen_) {
+    screen_->disconnect(q);
+  }
+  screen_ = screen;
+  if (screen_) {
+    screen_->setOrientationUpdateMask(
+        Qt::PortraitOrientation |
+        Qt::InvertedPortraitOrientation |
+        Qt::LandscapeOrientation |
+        Qt::InvertedLandscapeOrientation);
+    q->connect(screen_, SIGNAL(virtualGeometryChanged(const QRect&)),
+               SLOT(screenGeometryChanged(const QRect&)));
+    q->connect(screen_, SIGNAL(geometryChanged(const QRect&)),
+               SLOT(screenGeometryChanged(const QRect&)));
+    q->connect(screen_, SIGNAL(orientationChanged(Qt::ScreenOrientation)),
+               SLOT(screenOrientationChanged(Qt::ScreenOrientation)));
+    q->connect(screen_, SIGNAL(primaryOrientationChanged(Qt::ScreenOrientation)),
+               SLOT(screenOrientationChanged(Qt::ScreenOrientation)));
+  }
+}
+
+void OxideQQuickWebViewPrivate::windowChangedHelper(QQuickWindow* window) {
+  Q_Q(OxideQQuickWebView);
+
+  if (window_) {
+    window_->disconnect(q);
+  }
+  window_ = window;
+  if (window_) {
+    q->connect(window_, SIGNAL(screenChanged(QScreen*)),
+               SLOT(screenChanged(QScreen*)));
   }
 
+  screenChangedHelper(window_ ? window_->screen() : nullptr);
+
+  screenUpdated();
   wasResized();
+}
+
+void OxideQQuickWebViewPrivate::screenGeometryChanged(const QRect& rect) {
+  screenUpdated();
+}
+
+void OxideQQuickWebViewPrivate::screenOrientationChanged(
+    Qt::ScreenOrientation orientation) {
+  screenUpdated();
 }
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
@@ -933,7 +982,7 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
            QQuickItem::ItemIsFocusScope);
 
   connect(this, SIGNAL(windowChanged(QQuickWindow*)),
-          this, SLOT(onWindowChanged(QQuickWindow*)));
+          this, SLOT(windowChangedHelper(QQuickWindow*)));
 
   // We have an input area QQuickItem for receiving input events, so
   // that we have a way of bubbling unhandled key events back to the
@@ -948,6 +997,15 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
 
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
+
+  disconnect(this, SIGNAL(windowChanged(QQuickWindow*)),
+             this, SLOT(windowChangedHelper(QQuickWindow*)));
+  if (d->window_) {
+    d->window_->disconnect(this);
+  }
+  if (d->screen_) {
+    d->screen_->disconnect(this);
+  }
 
   d->detachContextSignals(
       static_cast<OxideQQuickWebContextPrivate *>(d->context()));

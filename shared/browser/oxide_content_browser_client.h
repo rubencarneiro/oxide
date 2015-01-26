@@ -86,6 +86,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
                       int render_process_id,
                       int render_frame_id,
                       net::CookieOptions* options) final;
+  content::QuotaPermissionContext* CreateQuotaPermissionContext() final;
   void AllowCertificateError(
       int render_process_id,
       int render_frame_id,
@@ -105,6 +106,10 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
       const GURL& requesting_frame,
       bool user_gesture,
       const base::Callback<void(bool)>& result_callback) final;
+  void CancelPermissionRequest(content::PermissionType permission,
+                               content::WebContents* web_contents,
+                               int bridge_id,
+                               const GURL& requesting_frame) final;
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,
                        const GURL& source_origin,
@@ -127,7 +132,8 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   content::LocationProvider* OverrideSystemLocationProvider() final;
   content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() final;
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
-  content::QuotaPermissionContext* CreateQuotaPermissionContext() final;
+  gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
+      std::string* os_version) final;
 
   scoped_ptr<BrowserPlatformIntegration> platform_integration_;
 

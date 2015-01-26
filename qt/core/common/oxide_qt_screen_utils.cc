@@ -24,9 +24,31 @@
 #include <QString>
 
 #include "third_party/WebKit/public/platform/WebRect.h"
+#include "third_party/WebKit/public/platform/WebScreenOrientationType.h"
 
 namespace oxide {
 namespace qt {
+
+namespace {
+
+blink::WebScreenOrientationType GetOrientationTypeFromScreenOrientation(
+    Qt::ScreenOrientation orientation) {
+  switch (orientation) {
+    case Qt::PortraitOrientation:
+      return blink::WebScreenOrientationPortraitPrimary;
+    case Qt::LandscapeOrientation:
+      return blink::WebScreenOrientationLandscapePrimary;
+    case Qt::InvertedPortraitOrientation:
+      return blink::WebScreenOrientationPortraitSecondary;
+    case Qt::InvertedLandscapeOrientation:
+      return blink::WebScreenOrientationLandscapeSecondary;
+    default:
+      NOTREACHED();
+      return blink::WebScreenOrientationUndefined;
+  }
+}
+
+}
 
 float GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   // For some reason, the Ubuntu QPA plugin doesn't override
@@ -82,17 +104,29 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
   result.isMonochrome = result.depth == 1;
   result.deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
 
-  QRect rect = screen->geometry();
+  QRect rect =
+      screen->mapBetween(screen->primaryOrientation(),
+                         screen->orientation(),
+                         screen->geometry());
   result.rect = blink::WebRect(rect.x(),
                                rect.y(),
                                rect.width(),
                                rect.height());
 
-  QRect availableRect = screen->availableGeometry();
+  QRect availableRect =
+      screen->mapBetween(screen->primaryOrientation(),
+                         screen->orientation(),
+                         screen->availableGeometry());
   result.availableRect = blink::WebRect(availableRect.x(),
                                         availableRect.y(),
                                         availableRect.width(),
                                         availableRect.height());
+
+  result.orientationType =
+      GetOrientationTypeFromScreenOrientation(screen->orientation());
+  result.orientationAngle =
+      screen->angleBetween(screen->orientation(),
+                           screen->primaryOrientation());
 
   return result;
 }
