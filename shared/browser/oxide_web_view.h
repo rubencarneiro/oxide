@@ -469,7 +469,7 @@ class WebView : public ScriptMessageTarget,
       const content::LoadCommittedDetails& load_details) final;
   void DidStartLoading(content::RenderViewHost* render_view_host) final;
   void DidStopLoading(content::RenderViewHost* render_view_host) final;
-  void FrameDetached(content::RenderFrameHost* render_frame_host) final;
+  void FrameDeleted(content::RenderFrameHost* render_frame_host) final;
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
   void DidUpdateFaviconURL(
       const std::vector<content::FaviconURL>& candidates) final;

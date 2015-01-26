@@ -95,6 +95,7 @@ class Compositor final : public cc::LayerTreeHostClient,
   void DidCommit() final;
   void DidCommitAndDrawFrame() final;
   void DidCompleteSwapBuffers() final;
+  void DidCompletePageScaleAnimation() final;
 
   CompositorClient* client_;
   bool use_software_;

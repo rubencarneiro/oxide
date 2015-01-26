@@ -1066,7 +1066,7 @@ void WebView::DidStopLoading(content::RenderViewHost* render_view_host) {
   OnLoadingChanged();
 }
 
-void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
+void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   DCHECK(frame);
 

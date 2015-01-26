@@ -197,6 +197,7 @@ void Compositor::DidCommit() {
 
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
+void Compositor::DidCompletePageScaleAnimation() {}
 
 // static
 scoped_ptr<Compositor> Compositor::Create(CompositorClient* client,
