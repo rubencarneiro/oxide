@@ -56,14 +56,13 @@
 #include "ipc/ipc_descriptors.h"
 #include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
-#include "ui/gl/gl_implementation.h"
+#include "ui/gl/gl_switches.h"
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/app/oxide_content_main_delegate.h"
 #include "shared/app/oxide_platform_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
-#include "shared/port/gl/gl_implementation_oxide.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
@@ -101,7 +100,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 #if defined(USE_NSS)
              const base::FilePath& nss_db_path,
 #endif
-             SupportedGLImplFlags supported_gl_flags,
+             gfx::GLImplementation gl_impl,
              ProcessModel process_model) final;
   void Shutdown() final;
 
@@ -203,7 +202,8 @@ base::FilePath GetSubprocessPath() {
 }
 
 void InitializeCommandLine(const base::FilePath& subprocess_path,
-                           ProcessModel process_model) {
+                           ProcessModel process_model,
+                           gfx::GLImplementation gl_impl) {
   CHECK(base::CommandLine::Init(0, nullptr)) <<
       "CommandLine already exists. Did you call BrowserProcessMain::Start "
       "in a child process?";
@@ -225,6 +225,18 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
 
   command_line->AppendSwitch(
       cc::switches::kEnableTopControlsPositionCalculation);
+
+  if (gl_impl == gfx::kGLImplementationNone ||
+      IsEnvironmentOptionEnabled("DISABLE_GPU")) {
+    command_line->AppendSwitch(switches::kDisableGpu);
+  } else {
+    command_line->AppendSwitchASCII(switches::kUseGL,
+                                    gfx::GetGLImplementationName(gl_impl));
+  }
+
+  if (IsEnvironmentOptionEnabled("DISABLE_GPU_COMPOSITING")) {
+    command_line->AppendSwitch(switches::kDisableGpuCompositing);
+  }
 
   base::StringPiece renderer_cmd_prefix =
       GetEnvironmentOption("RENDERER_CMD_PREFIX");
@@ -270,11 +282,11 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
     command_line->AppendSwitch(switches::kEnableMediaHubAudio);
   }
-  base::StringPiece mediahub_fixed_session_domains = GetEnvironmentOption("MEDIA_HUB_FIXED_SESSION_DOMAINS");
+  base::StringPiece mediahub_fixed_session_domains =
+      GetEnvironmentOption("MEDIA_HUB_FIXED_SESSION_DOMAINS");
   if (!mediahub_fixed_session_domains.empty()) {
     command_line->AppendSwitchASCII(switches::kMediaHubFixedSessionDomains,
                                     mediahub_fixed_session_domains.data());
-
     if (!IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
       command_line->AppendSwitch(switches::kEnableMediaHubAudio);
     }
@@ -340,7 +352,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 #if defined(USE_NSS)
                                    const base::FilePath& nss_db_path,
 #endif
-                                   SupportedGLImplFlags supported_gl_impls,
+                                   gfx::GLImplementation gl_impl,
                                    ProcessModel process_model) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
@@ -367,7 +379,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   exit_manager_.reset(new base::AtExitManager());
 
   base::FilePath subprocess_exe = GetSubprocessPath();
-  InitializeCommandLine(subprocess_exe, process_model_);
+  InitializeCommandLine(subprocess_exe, process_model_, gl_impl);
 
   // We need to override FILE_EXE in the browser process to the path of the
   // renderer, as various bits of Chrome use this to find other resources
@@ -414,16 +426,6 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
       content::CreateInProcessRendererThread);
   content::GpuProcessHost::RegisterGpuMainThreadFactory(
       content::CreateInProcessGpuThread);
-
-  std::vector<gfx::GLImplementation> allowed_gl_impls;
-  if (supported_gl_impls & SUPPORTED_GL_IMPL_DESKTOP_GL) {
-    allowed_gl_impls.push_back(gfx::kGLImplementationDesktopGL);
-  }
-  if (supported_gl_impls & SUPPORTED_GL_IMPL_EGL_GLES2) {
-    allowed_gl_impls.push_back(gfx::kGLImplementationEGLGLES2);
-  }
-  allowed_gl_impls.push_back(gfx::kGLImplementationOSMesaGL);
-  gfx::InitializeAllowedGLImplementations(allowed_gl_impls);
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
   CHECK(browser_main_runner_.get()) << "Failed to create BrowserMainRunner";

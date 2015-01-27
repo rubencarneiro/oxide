@@ -59,6 +59,8 @@ class CompositorUtils {
 
   virtual gfx::GLSurfaceHandle GetSharedSurfaceHandle() = 0;
 
+  virtual bool CanUseGpuCompositing() = 0;
+
  protected:
   virtual ~CompositorUtils();
 };

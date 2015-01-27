@@ -28,7 +28,6 @@
 #include "base/supports_user_data.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
@@ -78,10 +77,8 @@
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_event_utils.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gpu/oxide_gl_context_adopted.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_file_picker.h"
@@ -163,34 +160,6 @@ bool ShouldSendPinchGesture() {
       base::CommandLine::ForCurrentProcess()->HasSwitch(
         switches::kEnablePinch);
   return pinch_allowed;
-}
-
-bool ShouldUseSoftwareCompositing() {
-  static bool initialized = false;
-  static bool result = true;
-
-  if (initialized) {
-    return result;
-  }
-
-  initialized = true;
-
-  if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
-    return true;
-  }
-
-  GLContextAdopted* gl_share_context =
-      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
-  if (!gl_share_context) {
-    return true;
-  }
-
-  if (gl_share_context->GetImplementation() != gfx::GetGLImplementation()) {
-    return true;
-  }
-
-  result = false;
-  return false;
 }
 
 // Qt input methods don’t generate key events, but a lot of web pages out there
@@ -1205,7 +1174,7 @@ WebView::WebView()
       selection_cursor_position_(0),
       selection_anchor_position_(0),
       web_contents_helper_(nullptr),
-      compositor_(Compositor::Create(this, ShouldUseSoftwareCompositing())),
+      compositor_(Compositor::Create(this)),
       gesture_provider_(GestureProvider::Create(this)),
       in_swap_(false),
       restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),

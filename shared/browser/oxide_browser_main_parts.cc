@@ -41,7 +41,6 @@
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 #include "shared/port/content/common/gpu_thread_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
-#include "shared/port/gl/gl_implementation_oxide.h"
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 
 #include "oxide_browser_context.h"
@@ -204,32 +203,23 @@ void BrowserMainParts::PreEarlyInitialization() {
 }
 
 int BrowserMainParts::PreCreateThreads() {
-  // When using EGL, we need GLES for surfaceless contexts. Whilst the
-  // default API is GLES and this will be the selected API on the GPU
-  // thread, it is possible that the embedder has selected a different API
-  // on the main thread. Temporarily switch to GLES whilst we initialize
-  // the GL bits here
-  ScopedBindGLESAPI gles_binder;
+  {
+    // When using EGL, we need GLES for surfaceless contexts. Whilst the
+    // default API is GLES and this will be the selected API on the GPU
+    // thread, it is possible that the embedder has selected a different API
+    // on the main thread. Temporarily switch to GLES whilst we initialize
+    // the GL bits here
+    ScopedBindGLESAPI gles_binder;
 
-  GLContextAdopted* gl_share_context =
-      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
-  if (gl_share_context) {
-    gfx::InitializePreferredGLImplementation(
-        gl_share_context->GetImplementation());
+    // Do this here rather than on the GPU thread to work around a mesa race -
+    // see https://launchpad.net/bugs/1267893.
+    gfx::GLSurface::InitializeOneOff();
   }
 
-  // Do this here rather than on the GPU thread to work around a mesa race -
-  // see https://launchpad.net/bugs/1267893.
-  // Also, it allows us to check if the GL share context platform matches
-  // the selected Chromium GL platform before spinning up the GPU thread
-  gfx::GLSurface::InitializeOneOff();
-
-  if (gl_share_context &&
-      gl_share_context->GetImplementation() == gfx::GetGLImplementation()) {
-    content::oxide_gpu_shim::SetGLShareGroup(gl_share_context->share_group());
-  } else {
-    DLOG(INFO) << "No valid shared GL context has been provided. "
-               << "Compositing will not work";
+  GLContextAdopted* share_context =
+      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
+  if (share_context) {
+    content::oxide_gpu_shim::SetGLShareGroup(share_context->share_group());
   }
 
   primary_screen_.reset(new Screen());
