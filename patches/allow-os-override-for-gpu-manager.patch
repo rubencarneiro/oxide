@@ -24,10 +24,10 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #include "gpu/command_buffer/service/gpu_switches.h"
  #include "gpu/config/gpu_control_list_jsons.h"
  #include "gpu/config/gpu_driver_bug_workaround_type.h"
-@@ -540,27 +541,32 @@ void GpuDataManagerImplPrivate::Initiali
-   InitializeImpl(gpu_blacklist_string,
-                  gpu_driver_bug_list_string,
-                  gpu_info);
+@@ -545,27 +546,32 @@ void GpuDataManagerImplPrivate::Initiali
+     command_line->AppendSwitch(switches::kDisableGpuWatchdog);
+     AppendGpuCommandLine(command_line);
+   }
  }
  
  void GpuDataManagerImplPrivate::UpdateGpuInfoHelper() {
@@ -99,7 +99,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  #include "ui/base/window_open_disposition.h"
  
  #if defined(OS_POSIX) && !defined(OS_MACOSX)
-@@ -609,13 +610,16 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -616,13 +617,16 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)

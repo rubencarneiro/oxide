@@ -10,7 +10,7 @@ diff --git a/third_party/WebKit/Source/core/css/CSSDefaultStyleSheets.cpp b/thir
      m_defaultQuirksStyle = RuleSet::create();
  
      // Strict-mode rules.
-     String defaultRules = loadResourceAsASCIIString("html.css") + RenderTheme::theme().extraDefaultStyleSheet();
+     String defaultRules = loadResourceAsASCIIString("html.css") + LayoutTheme::theme().extraDefaultStyleSheet();
      m_defaultStyleSheet = parseUASheet(defaultRules);
      m_defaultStyle->addRulesFromSheet(defaultStyleSheet(), screenEval());
 -#if OS(ANDROID)
@@ -23,6 +23,6 @@ diff --git a/third_party/WebKit/Source/core/css/CSSDefaultStyleSheets.cpp b/thir
      m_defaultPrintStyle->addRulesFromSheet(defaultStyleSheet(), printEval());
  
      // Quirks-mode rules.
-     String quirksRules = loadResourceAsASCIIString("quirks.css") + RenderTheme::theme().extraQuirksStyleSheet();
+     String quirksRules = loadResourceAsASCIIString("quirks.css") + LayoutTheme::theme().extraQuirksStyleSheet();
      m_quirksStyleSheet = parseUASheet(quirksRules);
      m_defaultQuirksStyle->addRulesFromSheet(quirksStyleSheet(), screenEval());
