@@ -134,9 +134,9 @@ void IOThread::InitSystemRequestContextOnIOThread() {
 
   storage->set_ssl_config_service(new SSLConfigService());
   storage->set_channel_id_service(
-      new net::ChannelIDService(
+      make_scoped_ptr(new net::ChannelIDService(
           new net::DefaultChannelIDStore(nullptr),
-          base::WorkerPool::GetTaskRunner(true)));
+          base::WorkerPool::GetTaskRunner(true))));
   storage->set_http_server_properties(
       scoped_ptr<net::HttpServerProperties>(
         new net::HttpServerPropertiesImpl()));

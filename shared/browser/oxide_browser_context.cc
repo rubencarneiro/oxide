@@ -92,20 +92,36 @@ const char kFtpScheme[] = "ftp";
 const char kBrowserContextKey[] = "oxide_browser_context_data";
 
 const char kDefaultAcceptLanguage[] = "en-us,en";
+
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
+const int kBackLog = 1;
 
 class TCPServerSocketFactory :
     public content::DevToolsHttpHandler::ServerSocketFactory {
  public:
-  TCPServerSocketFactory(const std::string& address, int port, int backlog)
-      : content::DevToolsHttpHandler::ServerSocketFactory(
-            address, port, backlog) {}
+  TCPServerSocketFactory(const std::string& address, int port)
+      : address_(address),
+        port_(port) {}
 
  private:
-  scoped_ptr<net::ServerSocket> Create() const final {
-    return make_scoped_ptr(
-        new net::TCPServerSocket(nullptr, net::NetLog::Source())).Pass();
+  scoped_ptr<net::ServerSocket> CreateForHttpServer() override {
+    scoped_ptr<net::TCPServerSocket> socket(
+        new net::TCPServerSocket(nullptr, net::NetLog::Source()));
+    if (socket->ListenWithAddressAndPort(address_, port_, kBackLog) != net::OK) {
+      return scoped_ptr<net::ServerSocket>();
+    }
+
+    return socket.Pass();
   }
+
+  scoped_ptr<net::ServerSocket> CreateForTethering(
+      std::string* out_name) override {
+    // Not supported
+    return scoped_ptr<net::ServerSocket>();
+  }
+
+  std::string address_;
+  int port_;
 
   DISALLOW_COPY_AND_ASSIGN(TCPServerSocketFactory);
 };
@@ -420,9 +436,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   // TODO: We want persistent storage here (for non-incognito), but 
   //       SQLiteChannelIDStore is part of chrome
   storage->set_channel_id_service(
-      new net::ChannelIDService(
+      make_scoped_ptr(new net::ChannelIDService(
           new net::DefaultChannelIDStore(nullptr),
-          base::WorkerPool::GetTaskRunner(true)));
+          base::WorkerPool::GetTaskRunner(true))));
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
@@ -640,7 +656,7 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
           data_.devtools_ip : kDevtoolsDefaultServerIp;
 
     scoped_ptr<content::DevToolsHttpHandler::ServerSocketFactory> factory(
-        new TCPServerSocketFactory(ip, data_.devtools_port, 1));
+        new TCPServerSocketFactory(ip, data_.devtools_port));
     data_.devtools_http_handler.reset(
         content::DevToolsHttpHandler::Start(factory.Pass(),
                                             std::string(),

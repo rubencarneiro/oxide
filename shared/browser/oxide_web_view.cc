@@ -809,11 +809,17 @@ void WebView::RunFileChooser(content::WebContents* source,
   active_file_picker_->Run(params);
 }
 
-void WebView::ToggleFullscreenModeForTab(content::WebContents* source,
-                                         bool enter) {
+void WebView::EnterFullscreenModeForTab(content::WebContents* source,
+                                        const GURL& origin) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  OnToggleFullscreenMode(enter);
+  OnToggleFullscreenMode(true);
+}
+
+void WebView::ExitFullscreenModeForTab(content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  OnToggleFullscreenMode(false);
 }
 
 bool WebView::IsFullscreenForTabOrPending(
@@ -1029,7 +1035,7 @@ void WebView::DidStopLoading(content::RenderViewHost* render_view_host) {
   OnLoadingChanged();
 }
 
-void WebView::FrameDetached(content::RenderFrameHost* render_frame_host) {
+void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   DCHECK(frame);
 

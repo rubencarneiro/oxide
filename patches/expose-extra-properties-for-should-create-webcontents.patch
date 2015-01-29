@@ -1,11 +1,11 @@
 # HG changeset patch
-# Parent de062ed58b67a65f1dd110836d8fcf1c857b243b
+# Parent f59a088a4ec2082befac9191c7106c2994a6417f
 # User oxide
 
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -1511,17 +1511,19 @@ void WebContentsImpl::CreateNewWindow(
+@@ -1520,17 +1520,19 @@ void WebContentsImpl::CreateNewWindow(
    if (delegate_ &&
        !delegate_->ShouldCreateWebContents(this,
                                            route_id,
@@ -47,7 +47,7 @@ diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/br
  
  JavaScriptDialogManager* WebContentsDelegate::GetJavaScriptDialogManager(
      WebContents* source) {
-   return NULL;
+   return nullptr;
  }
  
 diff --git a/content/public/browser/web_contents_delegate.h b/content/public/browser/web_contents_delegate.h

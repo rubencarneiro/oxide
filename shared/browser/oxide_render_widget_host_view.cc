@@ -241,23 +241,6 @@ void RenderWidgetHostView::InitAsFullscreen(
   NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
 }
 
-void RenderWidgetHostView::WasShown() {
-  DCHECK(delegate_);
-
-  if (!frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->LockFrame(this);
-  }
-  host_->WasShown(ui::LatencyInfo());
-}
-
-void RenderWidgetHostView::WasHidden() {
-  if (!frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
-  }
-  host_->WasHidden();
-  RunAckCallbacks();
-}
-
 void RenderWidgetHostView::MovePluginWindows(
     const std::vector<content::WebPluginGeometry>& moves) {}
 
@@ -409,13 +392,18 @@ void RenderWidgetHostView::Show() {
     DCHECK(delegate_);
     return;
   }
+
   if (!delegate_) {
     return;
   }
 
   is_showing_ = true;
 
-  WasShown();
+  if (!frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->LockFrame(this);
+  }
+
+  host_->WasShown(ui::LatencyInfo());
 }
 
 void RenderWidgetHostView::Hide() {
@@ -425,7 +413,13 @@ void RenderWidgetHostView::Hide() {
 
   is_showing_ = false;
 
-  WasHidden();
+  if (!frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
+  }
+
+  host_->WasHidden();
+
+  RunAckCallbacks();
 }
 
 bool RenderWidgetHostView::IsShowing() {

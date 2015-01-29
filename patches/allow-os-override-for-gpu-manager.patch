@@ -67,7 +67,7 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
      WebContents* web_contents) {
-   return NULL;
+   return nullptr;
  }
  #endif
  
@@ -104,7 +104,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  
  #if defined(VIDEO_HOLE)
    // Allows an embedder to provide its own ExternalVideoSurfaceContainer
-   // implementation.  Return NULL to disable external surface video.
+   // implementation.  Return nullptr to disable external surface video.
    virtual ExternalVideoSurfaceContainer*
    OverrideCreateExternalVideoSurfaceContainer(WebContents* web_contents);
  #endif
