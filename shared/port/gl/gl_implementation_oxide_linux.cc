@@ -197,23 +197,11 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
 bool InitializeDynamicGLBindings(GLImplementation implementation,
                                  GLContext* context) {
   switch (implementation) {
-    case kGLImplementationDesktopGL: {
-      InitializeDynamicGLBindingsGL(context);
-      InitializeDynamicGLBindingsGLX(context);
-      break;
-    }
-
-    case kGLImplementationEGLGLES2: {
-      InitializeDynamicGLBindingsGL(context);
-      InitializeDynamicGLBindingsEGL(context);
-      break;
-    }
-
+    case kGLImplementationDesktopGL:
+    case kGLImplementationEGLGLES2:
     case kGLImplementationOSMesaGL:
       InitializeDynamicGLBindingsGL(context);
-      InitializeDynamicGLBindingsOSMESA(context);
       break;
-
     default:
       return false;
   }
