@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -331,20 +331,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -359,20 +359,18 @@ bool RenderFrameHostImpl::OnMessageRecei
      IPC_MESSAGE_HANDLER(FrameHostMsg_TextSurroundingSelectionResponse,
                          OnTextSurroundingSelectionResponse)
      IPC_MESSAGE_HANDLER(AccessibilityHostMsg_Events, OnAccessibilityEvents)
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1143,17 +1141,16 @@ void RenderFrameHostImpl::OnToggleFullsc
+@@ -1249,17 +1247,16 @@ void RenderFrameHostImpl::OnToggleFullsc
    else
      delegate_->ExitFullscreenMode();
  
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1166,17 +1163,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1272,17 +1269,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -55,14 +55,14 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  }
 -#endif
  
- void RenderFrameHostImpl::RegisterMojoServices() {
-   GeolocationServiceContext* geolocation_service_context =
-       delegate_ ? delegate_->GetGeolocationServiceContext() : NULL;
-   if (geolocation_service_context) {
-     // TODO(creis): Bind process ID here so that GeolocationServiceImpl
-     // can perform permissions checks once site isolation is complete.
-     // crbug.com/426384
-@@ -1558,29 +1554,28 @@ RenderFrameHostImpl::GetParentNativeView
+ #if defined(ENABLE_MEDIA_MOJO_RENDERER)
+ static void CreateMediaRendererService(
+     mojo::InterfaceRequest<mojo::MediaRenderer> request) {
+   media::MojoRendererService* service = new media::MojoRendererService();
+   mojo::BindToRequest(service, &request);
+ }
+ #endif
+@@ -1695,29 +1691,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -116,7 +116,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
  
  namespace content {
  
-@@ -365,20 +363,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -381,20 +379,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
  #if defined(OS_WIN)
    void SetParentNativeViewAccessible(
        gfx::NativeViewAccessible accessible_parent);
@@ -138,7 +138,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const CommitNavigationParams& commit_params);
  
-@@ -462,20 +459,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -485,20 +482,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
        const std::vector<AccessibilityHostMsg_EventParams>& params,
        int reset_token);
    void OnAccessibilityLocationChanges(
@@ -198,7 +198,7 @@ diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/co
 diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 --- a/content/common/frame_messages.h
 +++ b/content/common/frame_messages.h
-@@ -321,17 +321,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_BeginNavig
+@@ -336,17 +336,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_BeginNavig
    // Optional resource request body (may be null).
    IPC_STRUCT_MEMBER(scoped_refptr<content::ResourceRequestBody>,
                      request_body)
@@ -216,7 +216,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  
    // The height of each item in the menu.
    IPC_STRUCT_MEMBER(int, item_height)
-@@ -346,17 +345,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
+@@ -361,17 +360,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
    IPC_STRUCT_MEMBER(std::vector<content::MenuItem>, popup_items)
  
    // Whether items should be right-aligned.
@@ -234,7 +234,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  // presented. When the frame finishes presenting, a matching
  // FrameHostMsg_CompositorFrameSwappedACK should be sent back to the
  // RenderViewHost that was produced the CompositorFrame.
-@@ -508,24 +506,22 @@ IPC_MESSAGE_ROUTED1(FrameMsg_TextSurroun
+@@ -524,24 +522,22 @@ IPC_MESSAGE_ROUTED1(FrameMsg_TextSurroun
  // Tells the renderer to insert a link to the specified stylesheet. This is
  // needed to support navigation transitions.
  IPC_MESSAGE_ROUTED1(FrameMsg_AddStyleSheetByURL, std::string)
@@ -260,7 +260,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -835,16 +831,12 @@ IPC_MESSAGE_ROUTED2(FrameHostMsg_BeginNa
+@@ -851,16 +847,12 @@ IPC_MESSAGE_ROUTED2(FrameHostMsg_BeginNa
  // Sent once a paint happens after the first non empty layout. In other words
  // after the frame has painted something.
  IPC_MESSAGE_ROUTED0(FrameHostMsg_DidFirstVisuallyNonEmptyPaint)
@@ -304,7 +304,7 @@ diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -145,16 +145,18 @@
+@@ -144,16 +144,18 @@
        'renderer/dom_storage/webstoragearea_impl.cc',
        'renderer/dom_storage/webstoragearea_impl.h',
        'renderer/dom_storage/webstoragenamespace_impl.cc',
@@ -375,7 +375,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -919,23 +919,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -965,23 +965,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -399,7 +399,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    // document-less RenderFrame is replaced by a RenderFrameProxy but kept
    // around and is still able to receive messages.
    if (!frame_->document().isNull())
-@@ -996,19 +994,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -1042,19 +1040,18 @@ bool RenderFrameImpl::OnMessageReceived(
                          OnTextSurroundingSelectionRequest)
      IPC_MESSAGE_HANDLER(FrameMsg_AddStyleSheetByURL,
                          OnAddStyleSheetByURL)
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1501,31 +1498,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1549,31 +1546,29 @@ void RenderFrameImpl::OnDisownOpener() {
    // disowning the opener on subframes, we will need to move WebContentsImpl's
    // opener_ to FrameTreeNode.
    CHECK(!frame_->parent());
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -1934,17 +1929,17 @@ RenderFrameImpl::createWorkerPermissionC
+@@ -1988,17 +1983,17 @@ RenderFrameImpl::createWorkerPermissionC
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerPermissionClientProxy(
        this, frame);
@@ -474,7 +474,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h
 +++ b/content/renderer/render_frame_impl.h
-@@ -262,19 +262,17 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -272,19 +272,17 @@ class CONTENT_EXPORT RenderFrameImpl
                                 const gfx::Range& replacement_range,
                                 bool keep_selection);
  #endif  // defined(ENABLE_PLUGINS)
@@ -494,7 +494,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -611,20 +609,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -617,20 +615,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnSetupTransitionView(const std::string& markup);
    void OnBeginExitTransition(const std::string& css_selector,
                               bool exit_to_native_app);
@@ -516,7 +516,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    void OnRequestNavigation(const CommonNavigationParams& common_params,
                             const RequestNavigationParams& request_params);
    void OnCommitNavigation(const ResourceResponseHead& response,
-@@ -841,20 +838,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -857,20 +854,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    // The current accessibility mode.
    AccessibilityMode accessibility_mode_;
@@ -540,7 +540,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -444,20 +444,18 @@ RenderThreadImpl::RenderThreadImpl(
+@@ -446,20 +446,18 @@ RenderThreadImpl::RenderThreadImpl(
  
  void RenderThreadImpl::Init() {
    TRACE_EVENT_BEGIN_ETW("RenderThreadImpl::Init", 0, "");
@@ -564,7 +564,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
 --- a/content/renderer/render_widget.cc
 +++ b/content/renderer/render_widget.cc
-@@ -650,23 +650,21 @@ gfx::Rect RenderWidget::AdjustValidation
+@@ -688,23 +688,21 @@ gfx::Rect RenderWidget::AdjustValidation
  void RenderWidget::SetScreenMetricsEmulationParameters(
      float device_scale_factor,
      const gfx::Point& root_layer_offset,
@@ -591,7 +591,7 @@ diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.
 diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
 --- a/content/renderer/render_widget.h
 +++ b/content/renderer/render_widget.h
-@@ -378,20 +378,18 @@ class CONTENT_EXPORT RenderWidget
+@@ -402,20 +402,18 @@ class CONTENT_EXPORT RenderWidget
    // Used to force the size of a window when running layout tests.
    void ResizeSynchronously(
        const gfx::Rect& new_position,
