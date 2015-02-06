@@ -55,24 +55,8 @@ endif()
 
 find_package(Qt5Core)
 
-if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.3.0")
-  find_package(Qt5Gui)
-  find_package(Qt5Quick)
-  set(CMAKE_REQUIRED_INCLUDES ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS}
-      ${Qt5Quick_INCLUDE_DIRS} ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-      ${Qt5Gui_PRIVATE_INCLUDE_DIRS} ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-  set(CMAKE_REQUIRED_DEFINITIONS ${Qt5Core_DEFINITIONS} ${Qt5Gui_DEFINITIONS}
-      ${Qt5Quick_DEFINITIONS})
-  set(CMAKE_REQUIRED_FLAGS -fPIC)
-  cmake_expand_imported_targets(
-      CMAKE_REQUIRED_LIBRARIES
-      LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Quick_LIBRARIES})
-  check_cxx_symbol_exists(
-      QSGContext::setSharedOpenGLContext
-      QtQuick/private/qsgcontext_p.h
-      OXIDE_ENABLE_COMPOSITING)
-else()
-  set(OXIDE_ENABLE_COMPOSITING TRUE)
+if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.2.0")
+  message(FATAL_ERROR "A Qt version of at least 5.2.0 is required to build Oxide")
 endif()
 
 configure_file(

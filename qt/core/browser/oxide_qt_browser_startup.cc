@@ -115,7 +115,7 @@ void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
   process_model_ = model;
 }
 
-#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 void BrowserStartup::SetSharedGLContext(GLContextAdopted* context) {
   DCHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning());
   shared_gl_context_ = context;

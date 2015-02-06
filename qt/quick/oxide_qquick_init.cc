@@ -18,7 +18,7 @@
 #include "oxide_qquick_init.h"
 
 #include <QtGlobal>
-#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 #include <QtQuick/private/qsgcontext_p.h>
 #endif
 
@@ -33,7 +33,7 @@ void EnsureChromiumStarted() {
     return;
   }
   started = true;
-#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
   oxide::qt::SetSharedGLContext(QSGContext::sharedOpenGLContext());
 #endif
   oxide::qt::EnsureChromiumStarted();

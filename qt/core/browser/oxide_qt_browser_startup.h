@@ -44,7 +44,7 @@ class BrowserStartup final {
   oxide::ProcessModel GetProcessModel();
   void SetProcessModel(oxide::ProcessModel model);
 
-#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
   void SetSharedGLContext(GLContextAdopted* context);
 #endif
 

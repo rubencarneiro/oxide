@@ -35,6 +35,7 @@ set(OXIDE_QUICKLIB_SRCS
     api/oxideqquickwebframe.cc
     api/oxideqquickwebview.cc
     api/oxidequseragentoverriderequest.cc
+    oxide_qquick_accelerated_frame_node.cc
     oxide_qquick_alert_dialog_delegate.cc
     oxide_qquick_before_unload_dialog_delegate.cc
     oxide_qquick_confirm_dialog_delegate.cc
@@ -46,15 +47,8 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_web_popup_menu_delegate.cc
     ${MOC_EXTRA})
 
-if(OXIDE_ENABLE_COMPOSITING)
-  list(APPEND OXIDE_QUICKLIB_SRCS oxide_qquick_accelerated_frame_node.cc)
-endif()
-
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
 qt5_use_modules(${OXIDE_QUICKLIB} Core Gui Qml Quick)
-if(OXIDE_ENABLE_COMPOSITING)
-  target_compile_definitions(${OXIDE_QUICKLIB} PRIVATE -DENABLE_COMPOSITING)
-endif()
 target_include_directories(
     ${OXIDE_QUICKLIB} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
