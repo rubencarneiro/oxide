@@ -76,9 +76,8 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
 
 } // namespace
 
-Compositor::Compositor(CompositorClient* client, bool software)
+Compositor::Compositor(CompositorClient* client)
     : client_(client),
-      use_software_(software),
       num_failed_recreate_attempts_(0),
       device_scale_factor_(1.0f),
       root_layer_(cc::Layer::Create()),
@@ -127,7 +126,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
 
   uint32 output_surface_id = next_output_surface_id_++;
 
-  if (!use_software_) {
+  if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     scoped_refptr<cc::ContextProvider> context_provider =
         content::ContextProviderCommandBuffer::Create(
           CreateOffscreenContext3D(), "OxideWebViewCompositor");
@@ -200,13 +199,12 @@ void Compositor::DidCompleteSwapBuffers() {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
 // static
-scoped_ptr<Compositor> Compositor::Create(CompositorClient* client,
-                                          bool software) {
+scoped_ptr<Compositor> Compositor::Create(CompositorClient* client) {
   if (!client) {
     return scoped_ptr<Compositor>();
   }
 
-  return make_scoped_ptr(new Compositor(client, software));
+  return make_scoped_ptr(new Compositor(client));
 }
 
 Compositor::~Compositor() {

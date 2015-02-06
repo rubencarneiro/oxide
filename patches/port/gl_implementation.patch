@@ -28,7 +28,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -304,16 +304,18 @@
+@@ -299,16 +299,18 @@
          'win/dpi.h',
          'win/hwnd_util.cc',
          'win/hwnd_util.h',
@@ -47,7 +47,7 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['OS=="ios"', {
            'dependencies': [
              '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
-@@ -390,17 +392,17 @@
+@@ -385,17 +387,17 @@
            'sources!': [
              'render_text.cc',
              'render_text.h',
@@ -178,7 +178,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_share_group.cc',
          'gl_share_group.h',
          'gl_state_restorer.cc',
-@@ -100,30 +101,35 @@
+@@ -100,30 +101,33 @@
          'gl_surface_android.cc',
          'gl_surface_mac.cc',
          'gl_surface_stub.cc',
@@ -204,8 +204,6 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'sync_control_vsync_provider.h',
 +        '<(DEPTH)/../../../shared/port/gl/gl_context_oxide_linux.cc',
 +        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.cc',
-+        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.h',
-+        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide.h',
 +        '<(DEPTH)/../../../shared/port/gl/gl_surface_oxide_linux.cc',
        ],
        'conditions': [
@@ -215,7 +213,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'egl_util.h',
              'gl_bindings_autogen_egl.cc',
              'gl_bindings_autogen_egl.h',
-@@ -149,26 +155,26 @@
+@@ -149,26 +153,26 @@
            ],
          }],
          ['OS=="linux"', {

@@ -15,14 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "gl_implementation_oxide.h"
 #include "ui/gl/gl_implementation.h"
 
 #include <vector>
 
 #include "base/bind.h"
 #include "base/files/file_path.h"
-#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/native_library.h"
 #include "ui/gl/gl_egl_api_implementation.h"
@@ -30,16 +28,11 @@
 #include "ui/gl/gl_glx_api_implementation.h"
 #include "ui/gl/gl_implementation_osmesa.h"
 #include "ui/gl/gl_osmesa_api_implementation.h"
-#include "ui/gl/gl_share_group.h"
 #include "ui/ozone/public/ozone_platform.h"
 
 namespace gfx {
 
 namespace {
-
-GLImplementation g_preferred_impl = kGLImplementationNone;
-base::LazyInstance<std::vector<GLImplementation> > g_allowed_impls =
-    LAZY_INSTANCE_INITIALIZER;
 
 void GL_BINDING_CALL MarshalClearDepthToClearDepthf(GLclampd depth) {
   glClearDepthf(static_cast<GLclampf>(depth));
@@ -50,70 +43,16 @@ void GL_BINDING_CALL MarshalDepthRangeToDepthRangef(GLclampd z_near,
   glDepthRangef(static_cast<GLclampf>(z_near), static_cast<GLclampf>(z_far));
 }
 
-bool IsSupportedGLImplementation(GLImplementation implementation) {
-  switch (implementation) {
-    case kGLImplementationDesktopGL:
-    case kGLImplementationEGLGLES2:
-    case kGLImplementationOSMesaGL:
-      return true;
-    default:
-      return false;
-  }
-}
-
 } // namespace
 
-void InitializePreferredGLImplementation(GLImplementation implementation) {
-  DCHECK_EQ(GetGLImplementation(), kGLImplementationNone);
-  DCHECK(IsSupportedGLImplementation(implementation));
-  g_preferred_impl = implementation;
-}
-
-void InitializeAllowedGLImplementations(
-    const std::vector<GLImplementation>& implementations) {
-  DCHECK_EQ(GetGLImplementation(), kGLImplementationNone);
-#ifndef NDEBUG
-  for (std::vector<GLImplementation>::const_iterator it =
-           implementations.cbegin();
-       it != implementations.cend(); ++it) {
-    DCHECK(IsSupportedGLImplementation(*it));
-  }
-#endif
-  g_allowed_impls.Get() = implementations;
-}
-
 void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
-  if (g_allowed_impls.Get().size() == 0) {
-    impls->push_back(kGLImplementationOSMesaGL);
-  } else {
-    *impls = g_allowed_impls.Get();
-  }
-
-  if (g_preferred_impl == kGLImplementationNone) {
-    return;
-  }
-
-  DCHECK(std::find(impls->begin(), impls->end(), g_preferred_impl) !=
-         impls->end());
-  if (impls->front() == g_preferred_impl) {
-    return;
-  }
-
-  impls->insert(impls->begin(), g_preferred_impl);
-  for (std::vector<GLImplementation>::iterator it = impls->begin() + 1;
-       it != impls->end(); ++it) {
-    if (*it == g_preferred_impl) {
-      impls->erase(it);
-      break;
-    }
-  }
+  impls->push_back(kGLImplementationEGLGLES2);
+  impls->push_back(kGLImplementationDesktopGL);
+  impls->push_back(kGLImplementationOSMesaGL);
 }
 
 bool InitializeStaticGLBindings(GLImplementation implementation) {
-  if (GetGLImplementation() != kGLImplementationNone) {
-    return true;
-  }
-
+  DCHECK_EQ(kGLImplementationNone, GetGLImplementation());
   ui::OzonePlatform::InitializeForGPU();
 
   switch (implementation) {

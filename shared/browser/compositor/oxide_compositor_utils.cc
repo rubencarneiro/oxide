@@ -27,12 +27,14 @@
 #include "cc/output/context_provider.h"
 #include "cc/output/output_surface.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
 #include "content/common/gpu/gpu_channel_manager.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "gpu/command_buffer/service/sync_point_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
 
+#include "shared/browser/oxide_browser_platform_integration.h"
 #include "shared/port/content/common/gpu_thread_shim_oxide.h"
 
 #include "oxide_compositor_frame_handle.h"
@@ -134,6 +136,7 @@ class CompositorUtilsImpl : public CompositorUtils,
       const CreateGLFrameHandleCallback& callback,
       scoped_refptr<base::TaskRunner> task_runner) override;
   gfx::GLSurfaceHandle GetSharedSurfaceHandle() override;
+  bool CanUseGpuCompositing() override;
 
   bool AddTextureRef(const gpu::Mailbox& mailbox,
                      const TextureRefHolder& texture);
@@ -410,6 +413,18 @@ gfx::GLSurfaceHandle CompositorUtilsImpl::GetSharedSurfaceHandle() {
   handle.parent_client_id = client_id_;
 
   return handle;
+}
+
+bool CompositorUtilsImpl::CanUseGpuCompositing() {
+  if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
+    return false;
+  }
+
+  if (!BrowserPlatformIntegration::GetInstance()->GetGLShareContext()) {
+    return false;
+  }
+
+  return true;
 }
 
 bool CompositorUtilsImpl::AddTextureRef(const gpu::Mailbox& mailbox,

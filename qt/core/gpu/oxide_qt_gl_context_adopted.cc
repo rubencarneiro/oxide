@@ -41,12 +41,16 @@ scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
     return scoped_refptr<GLContextAdopted>();
   }
 
+  QString platform = QGuiApplication::platformName();
+
   QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
   if (!pni) {
+    LOG(WARNING)
+        << "Unable to create adopted GL context for platform: "
+        << qPrintable(platform) << " - no QPlatformNativeInterface";
     return scoped_refptr<GLContextAdopted>();
   }
 
-  QString platform = QGuiApplication::platformName();
   if (platform == "xcb") {
     // QXcbNativeInterface creates a GLXContext if GLX is enabled, else
     // it creates an EGLContext is EGL is enabled, so this should be safe
@@ -75,21 +79,22 @@ scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
                                share_group));
     }
   } else {
-    DLOG(WARNING) << "Unrecognized platform: " << qPrintable(platform);
+    LOG(WARNING)
+        << "Unable to create adopted GL context for platform: "
+        << qPrintable(platform) << " - unrecognized platform";
+    return scoped_refptr<GLContextAdopted>();
   }
 
-  LOG(ERROR) << "Failed to determine native GL context for platform: "
-             << qPrintable(platform);
+  LOG(ERROR)
+      << "Unable to create adopted GL context for platform: "
+      << qPrintable(platform) << " - unexpected result from "
+      << "QPlatformNativeInterface::nativeResourceForContext";
 
   return scoped_refptr<GLContextAdopted>();
 }
 
 void* GLContextAdopted::GetHandle() {
   return handle_;
-}
-
-gfx::GLImplementation GLContextAdopted::GetImplementation() const {
-  return implementation_;
 }
 
 } // namespace qt

@@ -38,13 +38,11 @@
 #include <QtQuickTest/private/quicktestresult_p.h>
 #include <QtQuickVersion>
 #include <QUrl>
-#if defined(ENABLE_COMPOSITING)
 #include <QOpenGLContext>
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 #include <QtQuick/private/qsgcontext_p.h>
 #else
 #include <QtGui/private/qopenglcontext_p.h>
-#endif
 #endif
 
 #include "qt/core/api/oxideqglobal.h"
@@ -260,7 +258,6 @@ int main(int argc, char** argv) {
 
   QGuiApplication app(outargc, argv);
 
-#if defined(ENABLE_COMPOSITING)
   QOpenGLContext context;
   context.create();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
@@ -269,7 +266,6 @@ int main(int argc, char** argv) {
   QOpenGLContextPrivate::setGlobalShareContext(&context);
 #else
   QSGContext::setSharedOpenGLContext(&context);
-#endif
 #endif
 
   for (int i = 0; i < library_paths.size(); ++i) {

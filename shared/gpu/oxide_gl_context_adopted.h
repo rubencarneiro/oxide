@@ -31,8 +31,6 @@ class GLContextAdopted : public gfx::GLContext {
  public:
   virtual ~GLContextAdopted();
 
-  virtual gfx::GLImplementation GetImplementation() const = 0;
-
   bool Initialize(gfx::GLSurface* compatible_surface,
                   gfx::GpuPreference gpu_preference) final;
   void Destroy() final;

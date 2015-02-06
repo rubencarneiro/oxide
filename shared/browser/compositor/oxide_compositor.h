@@ -48,7 +48,7 @@ class Compositor final : public cc::LayerTreeHostClient,
  public:
   typedef std::vector<scoped_refptr<CompositorFrameHandle> > FrameHandleVector;
 
-  static scoped_ptr<Compositor> Create(CompositorClient* client, bool software);
+  static scoped_ptr<Compositor> Create(CompositorClient* client);
   ~Compositor();
 
   bool IsActive() const;
@@ -65,7 +65,7 @@ class Compositor final : public cc::LayerTreeHostClient,
   friend class CompositorLock;
   friend class CompositorThreadProxy;
 
-  Compositor(CompositorClient* client, bool software);
+  Compositor(CompositorClient* client);
 
   void SendSwapCompositorFrameToClient(uint32 surface_id,
                                        CompositorFrameHandle* frame);
@@ -98,7 +98,6 @@ class Compositor final : public cc::LayerTreeHostClient,
   void DidCompletePageScaleAnimation() final;
 
   CompositorClient* client_;
-  bool use_software_;
 
   int num_failed_recreate_attempts_;
 

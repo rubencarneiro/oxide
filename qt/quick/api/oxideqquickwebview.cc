@@ -45,9 +45,7 @@
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
-#if defined(ENABLE_COMPOSITING)
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
-#endif
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
@@ -913,7 +911,6 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
     return nullptr;
   }
 
-#if defined(ENABLE_COMPOSITING)
   if (handle->GetType() ==
       oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
     AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
@@ -927,10 +924,6 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 
     return node;
   }
-#else
-  Q_ASSERT(handle->GetType() !=
-           oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED);
-#endif
 
   if (handle->GetType() ==
       oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {

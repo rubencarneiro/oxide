@@ -20,7 +20,7 @@
 
 #include <QtGlobal>
 
-#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 QT_BEGIN_NAMESPACE
 class QOpenGLContext;
 QT_END_NAMESPACE
@@ -29,7 +29,7 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-#if defined(ENABLE_COMPOSITING) && QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 Q_DECL_EXPORT void SetSharedGLContext(QOpenGLContext* context);
 #endif
 

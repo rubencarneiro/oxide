@@ -41,8 +41,7 @@ class GLContextAdopted final : public oxide::GLContextAdopted {
   // gfx::GLContext implementation
   void* GetHandle() final;
 
-  // oxide::GLContextAdopted implementation
-  gfx::GLImplementation GetImplementation() const final;
+  gfx::GLImplementation implementation() const { return implementation_; }
 
  private:
   GLContextAdopted(void* handle,
