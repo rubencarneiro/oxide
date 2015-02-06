@@ -125,7 +125,23 @@ list(APPEND PACKAGE_LOCALES ${CHROMIUM_PRODUCT_DIR}/locales)
 
 add_subdirectory(qmlplugin)
 add_subdirectory(quick)
-if(NOT DEFINED ENABLE_OXIDEQMLSCENE OR ENABLE_OXIDEQMLSCENE EQUAL 1)
+if(NOT DEFINED ENABLE_OXIDEQMLSCENE)
+  if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.3.0")
+    set(ENABLE_OXIDEQMLSCENE 1)
+  else()
+    set(ENABLE_OXIDEQMLSCENE 0)
+  endif()
+endif()
+if(ENABLE_OXIDEQMLSCENE EQUAL 1)
+  if(NOT ${Qt5Core_VERSION_STRING} VERSION_LESS "5.4.0")
+    message(FATAL_ERROR
+            "oxideqmlscene is not supported on Qt 5.4.0 and later - you can "
+            "use qmlscene instead")
+  elseif(NOT ${Qt5Core_VERSION_STRING} VERSION_LESS "5.3.0")
+    message(WARNING
+            "oxideqmlscene is redundant on Qt 5.3.0 and later - you can use "
+            "qmlscene instead")
+  endif()
   add_subdirectory(qmlrunner)
 endif()
 if(ENABLE_TESTS)
@@ -158,7 +174,7 @@ oxide_add_package_files(FILES ${OXIDE_INSTALL_LIB_FILES} ${OXIDE_INSTALL_LIBEXEC
 oxide_add_package_files(PROGRAMS ${OXIDE_INSTALL_LIBEXEC_PROGRAMS} ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox)
 oxide_add_package_files(DIRECTORY ${CHROMIUM_PRODUCT_DIR}/locales)
 
-if(NOT DEFINED ENABLE_OXIDEQMLSCENE OR ENABLE_OXIDEQMLSCENE EQUAL 1)
+if(ENABLE_OXIDEQMLSCENE EQUAL 1)
   get_target_property(_LOCATION ${OXIDE_QMLRUNNER} LOCATION)
   oxide_add_package_files(PROGRAMS ${_LOCATION})
 endif()
