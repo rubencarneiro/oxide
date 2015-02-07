@@ -28,7 +28,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -299,16 +299,18 @@
+@@ -303,16 +303,18 @@
          'win/dpi.h',
          'win/hwnd_util.cc',
          'win/hwnd_util.h',
@@ -47,8 +47,8 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['OS=="ios"', {
            'dependencies': [
              '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
-@@ -385,17 +387,17 @@
-           'sources!': [
+@@ -391,17 +393,17 @@
+             'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
              'render_text_harfbuzz.cc',

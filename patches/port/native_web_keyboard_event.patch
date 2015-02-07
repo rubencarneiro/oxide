@@ -5,7 +5,7 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1093,17 +1093,17 @@
+@@ -1135,17 +1135,17 @@
        'browser/renderer_host/media/video_capture_controller_event_handler.h',
        'browser/renderer_host/media/video_capture_host.cc',
        'browser/renderer_host/media/video_capture_host.h',
@@ -24,7 +24,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/render_message_filter.cc',
        'browser/renderer_host/render_message_filter.h',
        'browser/renderer_host/render_process_host_impl.cc',
-@@ -1605,16 +1605,28 @@
+@@ -1626,16 +1626,28 @@
        'public/browser/plugin_service.h',
      ],
    },
@@ -45,14 +45,14 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 +        '<(DEPTH)/../../../qt/build/system.gyp:Qt5Core',
 +      ],
 +    }],
-     ['toolkit_views==1', {
-       'dependencies': [
-         '../ui/events/events.gyp:events',
-       ],
-     }],
      ['OS == "win"', {
        'dependencies': [
          '../third_party/power_gadget/power_gadget.gyp:power_gadget',
+       ],
+       'sources': [
+         'browser/power_profiler/power_data_provider_ia_win.cc',
+         'browser/power_profiler/power_data_provider_ia_win.h',
+       ]
 diff --git a/content/public/browser/native_web_keyboard_event.h b/content/public/browser/native_web_keyboard_event.h
 --- a/content/public/browser/native_web_keyboard_event.h
 +++ b/content/public/browser/native_web_keyboard_event.h
