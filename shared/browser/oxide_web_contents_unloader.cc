@@ -66,6 +66,7 @@ void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
   contents_unloading_.push_back(contents.release());
 
   rvh->ClosePage();
+  // Note: |rvh| might be deleted at this point
 }
 
 void WebContentsUnloader::WaitForPendingUnloadsToFinish() {
