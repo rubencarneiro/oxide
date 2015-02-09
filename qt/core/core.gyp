@@ -20,21 +20,6 @@
       'target_name': '<(oxide_core_name)',
       'type': 'shared_library',
       'product_extension': 'so.<(oxide_core_so_version)',
-      'dependencies': [
-        'OxideQtCore_private',
-        'OxideQtCore_public',
-      ],
-      'conditions': [
-        ['component=="shared_library"', {
-          'ldflags': [
-            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'OxideQtCore_private',
-      'type': 'static_library',
       'defines': [
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
       ],
@@ -57,7 +42,8 @@
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/surface/surface.gyp:surface',
-        '<(DEPTH)/url/url.gyp:url_lib'
+        '<(DEPTH)/url/url.gyp:url_lib',
+        'OxideQtCore_public',
       ],
       'variables': {
         'chromium_code': 1,
@@ -139,7 +125,14 @@
           'moc_input': 'browser/oxide_qt_web_view.h',
           'includes': [ 'moc.gypi' ]
         },
-      ]
+      ],
+      'conditions': [
+        ['component=="shared_library"', {
+          'ldflags': [
+            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'OxideQtCore_public',

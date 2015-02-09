@@ -1,30 +1,11 @@
 # HG changeset patch
-# Parent b43bcb3fd3dab8ec3954be04c346a3f23817eb5c
+# Parent 6a28c407ac67c31b5c4ec76345b57913b156c210
 # User oxide
 
 diff --git a/content/public/common/content_switches.h b/content/public/common/content_switches.h
 --- a/content/public/common/content_switches.h
 +++ b/content/public/common/content_switches.h
-@@ -14,17 +14,17 @@ namespace switches {
- 
- // All switches in alphabetical order. The switches should be documented
- // alongside the definition of their values in the .cc file.
- CONTENT_EXPORT extern const char kAcceleratedCanvas2dMSAASampleCount[];
- CONTENT_EXPORT extern const char kAllowFileAccessFromFiles[];
- CONTENT_EXPORT extern const char kAllowInsecureWebSocketFromHttpsOrigin[];
- CONTENT_EXPORT extern const char kAllowLoopbackInPeerConnection[];
- CONTENT_EXPORT extern const char kAllowNoSandboxJob[];
--extern const char kAllowSandboxDebugging[];
-+CONTENT_EXPORT extern const char kAllowSandboxDebugging[];
- extern const char kAuditAllHandles[];
- extern const char kAuditHandles[];
- CONTENT_EXPORT extern const char kBlinkPlatformLogChannels[];
- CONTENT_EXPORT extern const char kBlockCrossSiteDocuments[];
- CONTENT_EXPORT extern const char kBrowserCrashTest[];
- CONTENT_EXPORT extern const char kBrowserSubprocessPath[];
- extern const char kDebugPluginLoading[];
- CONTENT_EXPORT extern const char kDefaultTileWidth[];
-@@ -154,17 +154,17 @@ CONTENT_EXPORT extern const char kGpuPro
+@@ -158,17 +158,17 @@ CONTENT_EXPORT extern const char kGpuPro
  CONTENT_EXPORT extern const char kGpuSandboxAllowSysVShm[];
  CONTENT_EXPORT extern const char kGpuSandboxFailuresFatal[];
  CONTENT_EXPORT extern const char kGpuSandboxStartEarly[];
@@ -43,7 +24,7 @@ diff --git a/content/public/common/content_switches.h b/content/public/common/co
  CONTENT_EXPORT extern const char kLogNetLog[];
  extern const char kLogPluginMessages[];
  extern const char kMaxUntiledLayerHeight[];
-@@ -187,17 +187,17 @@ CONTENT_EXPORT extern const char kPpapiP
+@@ -191,17 +191,17 @@ CONTENT_EXPORT extern const char kPpapiP
  extern const char kPpapiStartupDialog[];
  CONTENT_EXPORT extern const char kProcessPerSite[];
  CONTENT_EXPORT extern const char kProcessPerTab[];
