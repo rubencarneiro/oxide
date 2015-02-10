@@ -495,6 +495,8 @@ class GestureProviderImpl : public GestureProvider,
 };
 
 bool GestureProviderImpl::OnTouchEvent(const ui::TouchEvent& event) {
+  touch_state_.RemoveInactiveTouchPoints();
+
   switch (event.type()) {
     case ui::ET_TOUCH_PRESSED:
       if (touch_state_.IsTouchIdActive(event.touch_id())) {
@@ -515,16 +517,11 @@ bool GestureProviderImpl::OnTouchEvent(const ui::TouchEvent& event) {
   touch_state_.OnTouchEvent(event);
   ui::FilteredGestureProvider::TouchHandlingResult rv =
       filtered_gesture_provider_.OnTouchEvent(touch_state_);
-  if (!rv.succeeded) {
-    touch_state_.RemoveInactiveTouchPoints();
-  }
-
   return rv.succeeded;
 }
 
 void GestureProviderImpl::OnTouchEventAck(bool consumed) {
   filtered_gesture_provider_.OnAsyncTouchEventAck(consumed);
-  touch_state_.RemoveInactiveTouchPoints();
 }
 
 scoped_ptr<ui::MotionEvent> GestureProviderImpl::GetTouchState() const {
