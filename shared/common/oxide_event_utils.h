@@ -29,7 +29,8 @@ namespace oxide {
 
 blink::WebGestureEvent MakeWebGestureEvent(const ui::GestureEventData& gesture);
 
-blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event);
+blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
+                                       bool may_cause_scrolling);
 
 int WindowsKeyCodeWithoutLocation(int code);
 int LocationModifiersFromWindowsKeyCode(int code);

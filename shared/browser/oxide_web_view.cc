@@ -1988,7 +1988,8 @@ void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
 }
 
 void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
-  if (!gesture_provider_->OnTouchEvent(event)) {
+  auto rv = gesture_provider_->OnTouchEvent(event);
+  if (!rv.succeeded) {
     return;
   }
 
@@ -2000,8 +2001,9 @@ void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
 
   scoped_ptr<ui::MotionEvent> motion_event =
       gesture_provider_->GetTouchState();
-  host->ForwardTouchEventWithLatencyInfo(MakeWebTouchEvent(*motion_event),
-                                         ui::LatencyInfo());
+  host->ForwardTouchEventWithLatencyInfo(
+      MakeWebTouchEvent(*motion_event, rv.did_generate_scroll),
+      ui::LatencyInfo());
 }
 
 void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {

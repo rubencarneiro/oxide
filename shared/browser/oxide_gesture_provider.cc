@@ -475,7 +475,8 @@ class GestureProviderImpl : public GestureProvider,
 
  private:
   // GestureProvider implementation
-  bool OnTouchEvent(const ui::TouchEvent& event) final;
+  ui::FilteredGestureProvider::TouchHandlingResult OnTouchEvent(
+      const ui::TouchEvent& event) final;
   void OnTouchEventAck(bool consumed) final;
 
   scoped_ptr<ui::MotionEvent> GetTouchState() const final;
@@ -494,30 +495,29 @@ class GestureProviderImpl : public GestureProvider,
   DISALLOW_COPY_AND_ASSIGN(GestureProviderImpl);
 };
 
-bool GestureProviderImpl::OnTouchEvent(const ui::TouchEvent& event) {
-  touch_state_.RemoveInactiveTouchPoints();
-
+ui::FilteredGestureProvider::TouchHandlingResult
+GestureProviderImpl::OnTouchEvent(const ui::TouchEvent& event) {
   switch (event.type()) {
     case ui::ET_TOUCH_PRESSED:
       if (touch_state_.IsTouchIdActive(event.touch_id())) {
-        return false;
+        return ui::FilteredGestureProvider::TouchHandlingResult();
       }
       break;
     case ui::ET_TOUCH_MOVED:
     case ui::ET_TOUCH_RELEASED:
     case ui::ET_TOUCH_CANCELLED:
       if (!touch_state_.IsTouchIdActive(event.touch_id())) {
-        return false;
+        return ui::FilteredGestureProvider::TouchHandlingResult();
       }
       break;
     default:
       NOTREACHED();
   }
 
+  touch_state_.RemoveInactiveTouchPoints();
+
   touch_state_.OnTouchEvent(event);
-  ui::FilteredGestureProvider::TouchHandlingResult rv =
-      filtered_gesture_provider_.OnTouchEvent(touch_state_);
-  return rv.succeeded;
+  return filtered_gesture_provider_.OnTouchEvent(touch_state_);
 }
 
 void GestureProviderImpl::OnTouchEventAck(bool consumed) {
