@@ -75,7 +75,7 @@ ScriptMessageManager* ScriptMessageManager::GetMessageManagerFromArgs(
 
   v8::Handle<v8::External> mm(args.Data().As<v8::External>());
   if (mm.IsEmpty() || mm->IsUndefined()) {
-    return NULL;
+    return nullptr;
   }
 
   return static_cast<ScriptMessageManager *>(mm->Value());
@@ -361,7 +361,7 @@ ScriptMessageManager::ScriptMessageManager(content::RenderFrame* frame,
   if (world_id_ != kMainWorldId) {
     v8::Local<v8::Object> global(context->Global());
     global->SetAccessor(v8::String::NewFromUtf8(isolate(), "oxide"),
-                        OxideLazyGetter, NULL,
+                        OxideLazyGetter, nullptr,
                         local_data);
   }
 }
@@ -380,7 +380,7 @@ ScriptMessageHandlerRenderer* ScriptMessageManager::GetHandlerForMsgID(
     const std::string& msg_id) {
   ScriptMessageHandlerMap::iterator it = script_message_handler_map_.find(msg_id);
   if (it == script_message_handler_map_.end()) {
-    return NULL;
+    return nullptr;
   }
 
   return it->second.get();

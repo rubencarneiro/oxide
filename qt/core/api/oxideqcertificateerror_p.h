@@ -19,14 +19,13 @@
 #define _OXIDE_QT_CORE_API_CERTIFICATE_ERROR_P_H_
 
 #include <QtGlobal>
-#include <QUrl>
 
 #include "base/memory/scoped_ptr.h"
 
 #include "qt/core/api/oxideqcertificateerror.h"
 
 namespace oxide {
-class SimplePermissionRequest;
+class CertificateError;
 }
 
 class OxideQSslCertificate;
@@ -38,40 +37,22 @@ class OxideQCertificateErrorPrivate final {
   ~OxideQCertificateErrorPrivate();
 
   static OxideQCertificateError* Create(
-      const QUrl& url,
-      bool is_main_frame,
-      bool is_subresource,
-      bool strict_enforcement,
-      scoped_ptr<OxideQSslCertificate> certificate,
-      OxideQCertificateError::Error cert_error,
-      scoped_ptr<oxide::SimplePermissionRequest> request,
-      QObject* parent = NULL);
+      scoped_ptr<oxide::CertificateError> error,
+      QObject* parent = nullptr);
 
  private:
   OxideQCertificateErrorPrivate(
-      const QUrl& url,
-      bool is_main_frame,
-      bool is_subresource,
-      bool strict_enforcement,
-      scoped_ptr<OxideQSslCertificate> certificate,
-      OxideQCertificateError::Error cert_error,
-      scoped_ptr<oxide::SimplePermissionRequest> request);
+      scoped_ptr<oxide::CertificateError> error);
 
   void OnCancel();
   void respond(bool accept);
 
   OxideQCertificateError* q_ptr;
 
-  QUrl url_;
-  bool is_main_frame_;
-  bool is_subresource_;
-  bool strict_enforcement_;
   scoped_ptr<OxideQSslCertificate> certificate_;
-  OxideQCertificateError::Error cert_error_;
-  scoped_ptr<oxide::SimplePermissionRequest> request_;
+  scoped_ptr<oxide::CertificateError> error_;
 
   bool did_respond_;
-  bool is_cancelled_;
 };
 
 #endif // _OXIDE_QT_CORE_API_CERTIFICATE_ERROR_P_H_

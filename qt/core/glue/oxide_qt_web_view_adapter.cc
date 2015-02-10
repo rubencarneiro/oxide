@@ -18,8 +18,6 @@
 #include "oxide_qt_web_view_adapter.h"
 
 #include <limits>
-
-#include <QSize>
 #include <QtDebug>
 
 #include "base/logging.h"
@@ -27,7 +25,8 @@
 #include "base/memory/ref_counted.h"
 #include "base/pickle.h"
 #include "cc/output/compositor_frame_metadata.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/size.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -40,6 +39,7 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_web_context_adapter.h"
 #include "oxide_qt_web_frame_adapter.h"
@@ -47,17 +47,38 @@
 namespace oxide {
 namespace qt {
 
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
+
 namespace {
+
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
 static uint16_t STATE_SERIALIZER_VERSION = 1;
+
+cc::TopControlsState LocationBarModeToCcTopControlsState(
+    LocationBarMode mode) {
+  switch (mode) {
+    case LOCATION_BAR_MODE_AUTO:
+      return cc::BOTH;
+    case LOCATION_BAR_MODE_SHOWN:
+      return cc::SHOWN;
+    case LOCATION_BAR_MODE_HIDDEN:
+      return cc::HIDDEN;
+    default:
+      NOTREACHED();
+      return cc::BOTH;
+  }
+}
+
 }
 
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
-  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
+  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
+                            int location_bar_content_offset)
       : frame_(frame) {
     if (frame_.get()) {
-      size_ = QSize(frame_->size_in_pixels().width(),
+      rect_ = QRect(0, location_bar_content_offset,
+                    frame_->size_in_pixels().width(),
                     frame_->size_in_pixels().height());
     }
   }
@@ -79,8 +100,8 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     return CompositorFrameHandle::TYPE_INVALID;
   }
 
-  const QSize& GetSize() const final {
-    return size_;
+  const QRect& GetRect() const final {
+    return rect_;
   }
 
   QImage GetSoftwareFrame() final {
@@ -99,7 +120,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
  private:
   scoped_refptr<oxide::CompositorFrameHandle> frame_;
-  QSize size_;
+  QRect rect_;
 };
 
 void WebViewAdapter::EnsurePreferences() {
@@ -196,6 +217,16 @@ void WebViewAdapter::WebPreferencesDestroyed() {
       OxideQWebPreferencesPrivate::get(p)->preferences());
 
   OnWebPreferencesReplaced();
+}
+
+void WebViewAdapter::ScheduleUpdate() {
+  compositor_frame_.reset();
+  OnScheduleUpdate();
+}
+
+void WebViewAdapter::EvictCurrentFrame() {
+  compositor_frame_.reset();
+  OnEvictCurrentFrame();
 }
 
 WebViewAdapter::WebViewAdapter(QObject* q) :
@@ -300,7 +331,7 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
 WebContextAdapter* WebViewAdapter::context() const {
   WebContext* c = view_->GetContext();
   if (!c) {
-    return NULL;
+    return nullptr;
   }
 
   return WebContextAdapter::FromWebContext(c);
@@ -308,6 +339,10 @@ WebContextAdapter* WebViewAdapter::context() const {
 
 void WebViewAdapter::wasResized() {
   view_->WasResized();
+}
+
+void WebViewAdapter::screenUpdated() {
+  view_->ScreenUpdated();
 }
 
 void WebViewAdapter::visibilityChanged() {
@@ -370,7 +405,7 @@ QList<ScriptMessageHandlerAdapter*>& WebViewAdapter::messageHandlers() {
 }
 
 bool WebViewAdapter::isInitialized() const {
-  return view_->GetWebContents() != NULL;
+  return view_->GetWebContents() != nullptr;
 }
 
 int WebViewAdapter::getNavigationEntryCount() const {
@@ -428,7 +463,7 @@ OxideQWebPreferences* WebViewAdapter::preferences() {
 }
 
 void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
-  OxideQWebPreferences* old = NULL;
+  OxideQWebPreferences* old = nullptr;
   if (WebPreferences* o =
       static_cast<WebPreferences *>(view_->GetWebPreferences())) {
     old = o->api_handle();
@@ -455,35 +490,33 @@ void WebViewAdapter::updateWebPreferences() {
   view_->UpdateWebPreferences();
 }
 
-float WebViewAdapter::compositorFrameDeviceScaleFactor() const {
-  return view_->compositor_frame_metadata().device_scale_factor;
+QPoint WebViewAdapter::compositorFrameScrollOffsetPix() {
+  gfx::Point offset = view_->GetCompositorFrameScrollOffsetPix();
+  return QPoint(offset.x(), offset.y());
 }
 
-float WebViewAdapter::compositorFramePageScaleFactor() const {
-  return view_->compositor_frame_metadata().page_scale_factor;
+QSize WebViewAdapter::compositorFrameContentSizePix() {
+  gfx::Size size = view_->GetCompositorFrameContentSizePix();
+  return QSize(size.width(), size.height());
 }
 
-QPointF WebViewAdapter::compositorFrameScrollOffset() const {
-  const gfx::Vector2dF& offset =
-      view_->compositor_frame_metadata().root_scroll_offset;
-  return QPointF(offset.x(), offset.y());
-}
-
-QSizeF WebViewAdapter::compositorFrameLayerSize() const {
-  const gfx::SizeF& size = view_->compositor_frame_metadata().root_layer_size;
-  return QSizeF(size.width(), size.height());
-}
-
-QSizeF WebViewAdapter::compositorFrameViewportSize() const {
-  const gfx::SizeF& size =
-      view_->compositor_frame_metadata().scrollable_viewport_size;
-  return QSizeF(size.width(), size.height());
+QSize WebViewAdapter::compositorFrameViewportSizePix() {
+  gfx::Size size = view_->GetCompositorFrameViewportSizePix();
+  return QSize(size.width(), size.height());
 }
 
 QSharedPointer<CompositorFrameHandle> WebViewAdapter::compositorFrameHandle() {
-  QSharedPointer<CompositorFrameHandle> handle(
-      new CompositorFrameHandleImpl(view_->GetCompositorFrameHandle()));
-  return handle;
+  if (!compositor_frame_) {
+    const cc::CompositorFrameMetadata& metadata =
+        view_->compositor_frame_metadata();
+    compositor_frame_ =
+        QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
+          view_->GetCompositorFrameHandle(),
+          metadata.device_scale_factor *
+            metadata.location_bar_content_translation.y()));
+  }
+
+  return compositor_frame_;
 }
 
 void WebViewAdapter::didCommitCompositorFrame() {
@@ -521,6 +554,40 @@ ContentTypeFlags WebViewAdapter::blockedContent() const {
 
 void WebViewAdapter::prepareToClose() {
   view_->PrepareToClose();
+}
+
+int WebViewAdapter::locationBarHeight() {
+  return view_->GetLocationBarHeightPix();
+}
+
+void WebViewAdapter::setLocationBarHeight(int height) {
+  view_->SetLocationBarHeightPix(height);
+}
+
+int WebViewAdapter::locationBarOffsetPix() {
+  return view_->GetLocationBarOffsetPix();
+}
+
+int WebViewAdapter::locationBarContentOffsetPix() {
+  return view_->GetLocationBarContentOffsetPix();
+}
+
+LocationBarMode WebViewAdapter::locationBarMode() const {
+  switch (view_->location_bar_constraints()) {
+    case cc::SHOWN:
+      return LOCATION_BAR_MODE_SHOWN;
+    case cc::HIDDEN:
+      return LOCATION_BAR_MODE_HIDDEN;
+    case cc::BOTH:
+      return LOCATION_BAR_MODE_AUTO;
+    default:
+      NOTREACHED();
+      return LOCATION_BAR_MODE_AUTO;
+  }
+}
+
+void WebViewAdapter::setLocationBarMode(LocationBarMode mode) {
+  view_->SetLocationBarConstraints(LocationBarModeToCcTopControlsState(mode));
 }
 
 } // namespace qt

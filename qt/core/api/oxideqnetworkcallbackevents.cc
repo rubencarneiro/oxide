@@ -26,7 +26,7 @@ OxideQNetworkCallbackEventPrivate::OxideQNetworkCallbackEventPrivate(
     const QString& method,
     const QString& referrer,
     bool isMainFrame) :
-    request_cancelled(NULL),
+    request_cancelled(nullptr),
     url_(url),
     method_(method),
     referrer_(referrer),
@@ -40,7 +40,7 @@ OxideQBeforeURLRequestEventPrivate::OxideQBeforeURLRequestEventPrivate(
     const QString& referrer,
     bool isMainFrame) :
     OxideQNetworkCallbackEventPrivate(url, method, referrer, isMainFrame),
-    new_url(NULL) {}
+    new_url(nullptr) {}
 
 OxideQBeforeURLRequestEventPrivate::~OxideQBeforeURLRequestEventPrivate() {}
 
@@ -56,7 +56,7 @@ OxideQBeforeSendHeadersEventPrivate::OxideQBeforeSendHeadersEventPrivate(
     const QString& referrer,
     bool isMainFrame) :
     OxideQNetworkCallbackEventPrivate(url, method, referrer, isMainFrame),
-    headers(NULL) {}
+    headers(nullptr) {}
 
 OxideQBeforeSendHeadersEventPrivate::~OxideQBeforeSendHeadersEventPrivate() {}
 

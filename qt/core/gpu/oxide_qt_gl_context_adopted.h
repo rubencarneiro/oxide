@@ -23,7 +23,7 @@
 #include "base/macros.h"
 #include "ui/gl/gl_implementation.h"
 
-#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_adopted.h"
 
 QT_BEGIN_NAMESPACE
 class QOpenGLContext;
@@ -36,13 +36,12 @@ class GLContextAdopted final : public oxide::GLContextAdopted {
  public:
   static scoped_refptr<GLContextAdopted> Create(
       QOpenGLContext* context,
-      gfx::GLShareGroup* share_group = NULL);
+      gfx::GLShareGroup* share_group = nullptr);
 
   // gfx::GLContext implementation
   void* GetHandle() final;
 
-  // oxide::GLContextAdopted implementation
-  gfx::GLImplementation GetImplementation() const final;
+  gfx::GLImplementation implementation() const { return implementation_; }
 
  private:
   GLContextAdopted(void* handle,

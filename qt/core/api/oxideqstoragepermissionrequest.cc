@@ -25,7 +25,7 @@ OxideQStoragePermissionRequestPrivate::OxideQStoragePermissionRequestPrivate(
     const QUrl& first_party_url,
     bool write,
     OxideQStoragePermissionRequest::Type type) :
-    permission(NULL),
+    permission(nullptr),
     url_(url),
     first_party_url_(first_party_url),
     write_(write),

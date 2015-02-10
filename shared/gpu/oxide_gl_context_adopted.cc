@@ -15,36 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
-#define _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
+#include "oxide_gl_context_adopted.h"
 
-#include "ui/gl/gl_context.h"
-#include "ui/gl/gl_implementation.h"
-
-namespace gfx {
-class GLShareGroup;
-}
+#include "base/logging.h"
 
 namespace oxide {
 
-class GLContextAdopted : public gfx::GLContext {
- public:
-  virtual ~GLContextAdopted();
+void GLContextAdopted::OnSetSwapInterval(int interval) {}
 
-  virtual gfx::GLImplementation GetImplementation() const = 0;
+GLContextAdopted::GLContextAdopted(gfx::GLShareGroup* share_group)
+    : gfx::GLContext(share_group) {}
 
-  bool Initialize(gfx::GLSurface* compatible_surface,
-                  gfx::GpuPreference gpu_preference) final;
-  void Destroy() final;
-  bool MakeCurrent(gfx::GLSurface* surface) final;
-  void ReleaseCurrent(gfx::GLSurface* surface) final;
-  bool IsCurrent(gfx::GLSurface* surface) final;
-  void SetSwapInterval(int interval) final;
+GLContextAdopted::~GLContextAdopted() {}
 
- protected:
-  GLContextAdopted(gfx::GLShareGroup* share_group);
-};
+bool GLContextAdopted::Initialize(gfx::GLSurface* compatible_surface,
+                                  gfx::GpuPreference gpu_preference) {
+  return true;
+}
+
+void GLContextAdopted::Destroy() {}
+
+bool GLContextAdopted::MakeCurrent(gfx::GLSurface* surface) {
+  NOTREACHED();
+  return false;
+}
+
+void GLContextAdopted::ReleaseCurrent(gfx::GLSurface* surface) {}
+
+bool GLContextAdopted::IsCurrent(gfx::GLSurface* surface) {
+  return false;
+}
 
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_

@@ -25,7 +25,6 @@
 #include "content/common/gpu/gpu_channel.h"
 #include "content/common/gpu/gpu_channel_manager.h"
 #include "content/common/gpu/gpu_command_buffer_stub.h"
-#include "content/common/gpu/sync_point_manager.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
@@ -41,42 +40,65 @@ gfx::GLShareGroup* g_gl_share_group;
 
 content::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
                                                    int32_t route_id) {
-  DCHECK(content::GpuChildThread::instance());
   content::GpuChannelManager* gpu_channel_manager =
-      content::GpuChildThread::instance()->gpu_channel_manager();
+      content::GpuChildThread::GetChannelManager();
+  DCHECK(gpu_channel_manager);
   content::GpuChannel* channel =
       gpu_channel_manager->LookupChannel(client_id);
   if (!channel) {
-    return NULL;
+    return nullptr;
   }
 
   return channel->LookupCommandBuffer(route_id);
 }
 
-}
-
 bool IsCurrentlyOnGpuThread() {
-  return GetGpuThreadTaskRunner()->BelongsToCurrentThread();
+  return content::GpuChildThread::GetTaskRunner()->BelongsToCurrentThread();
 }
 
-scoped_refptr<base::SingleThreadTaskRunner> GetGpuThreadTaskRunner() {
-  return content::GpuChildThread::message_loop_proxy();
 }
 
-void AddGpuThreadTaskObserver(base::MessageLoop::TaskObserver* obs) {
+TextureRefHolder::TextureRefHolder() {}
+
+TextureRefHolder::TextureRefHolder(
+    content::GpuCommandBufferStub* command_buffer,
+    gpu::gles2::TextureRef* ref)
+    : command_buffer_(command_buffer->AsWeakPtr()),
+      ref_(ref) {
   DCHECK(IsCurrentlyOnGpuThread());
-  content::GpuChildThread::instance()->message_loop()->AddTaskObserver(obs);
 }
 
-gpu::gles2::TextureRef* CreateTextureRef(int32_t client_id,
-                                         int32_t route_id,
-                                         const gpu::Mailbox& mailbox) {
+TextureRefHolder::~TextureRefHolder() {
+  DCHECK(IsCurrentlyOnGpuThread());
+
+  if (IsValid()) {
+    DCHECK(command_buffer_);
+    if (ref_->HasOneRef()) {
+      command_buffer_->decoder()->MakeCurrent();
+    }
+  }
+}
+
+bool TextureRefHolder::IsValid() const {
+  DCHECK(IsCurrentlyOnGpuThread());
+  return !!ref_.get();
+}
+
+GLuint TextureRefHolder::GetServiceID() const {
+  DCHECK(IsCurrentlyOnGpuThread());
+  DCHECK(IsValid());
+  return ref_->service_id();
+}
+
+TextureRefHolder CreateTextureRef(int32_t client_id,
+                                  int32_t route_id,
+                                  const gpu::Mailbox& mailbox) {
   DCHECK(IsCurrentlyOnGpuThread());
 
   content::GpuCommandBufferStub* command_buffer =
       LookupCommandBuffer(client_id, route_id);
   if (!command_buffer) {
-    return NULL;
+    return TextureRefHolder();
   }
 
   gpu::gles2::ContextGroup* group =
@@ -84,45 +106,13 @@ gpu::gles2::TextureRef* CreateTextureRef(int32_t client_id,
   gpu::gles2::Texture* texture =
       group->mailbox_manager()->ConsumeTexture(mailbox);
   if (!texture) {
-    return NULL;
+    return TextureRefHolder();
   }
 
-  gpu::gles2::TextureRef* ref =
+  scoped_refptr<gpu::gles2::TextureRef> ref =
       new gpu::gles2::TextureRef(group->texture_manager(),
-                                 client_id,
-                                 texture);
-  ref->AddRef();
-
-  return ref;
-}
-
-void ReleaseTextureRef(int32_t client_id,
-                       int32_t route_id,
-                       gpu::gles2::TextureRef* ref) {
-  DCHECK(IsCurrentlyOnGpuThread());
-
-  if (content::GpuCommandBufferStub* command_buffer =
-          LookupCommandBuffer(client_id, route_id)) {
-    command_buffer->decoder()->MakeCurrent();
-  }
-
-  ref->Release();
-}
-
-bool IsSyncPointRetired(uint32_t sync_point) {
-  DCHECK(IsCurrentlyOnGpuThread());
-
-  return content::GpuChildThread::instance()->gpu_channel_manager()
-      ->sync_point_manager()
-      ->IsSyncPointRetired(sync_point);
-}
-
-void AddSyncPointCallback(uint32_t sync_point, const base::Closure& callback) {
-  DCHECK(IsCurrentlyOnGpuThread());
-
-  content::GpuChildThread::instance()->gpu_channel_manager()
-      ->sync_point_manager()
-      ->AddSyncPointCallback(sync_point, callback);
+                                 0, texture);
+  return TextureRefHolder(command_buffer, ref.get());
 }
 
 int32_t GetContextProviderRouteID(

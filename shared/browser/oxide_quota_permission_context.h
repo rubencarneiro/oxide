@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
-#define _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
+#ifndef _OXIDE_SHARED_BROWSER_QUOTA_PERMISSION_CONTEXT_H_
+#define _OXIDE_SHARED_BROWSER_QUOTA_PERMISSION_CONTEXT_H_
 
-#include "ui/gl/gl_export.h"
-#include "ui/gl/gl_implementation.h"
+#include "content/public/browser/quota_permission_context.h"
+#include "storage/common/quota/quota_types.h"
 
-namespace gfx {
+namespace oxide {
+  
+class QuotaPermissionContext final :
+    public content::QuotaPermissionContext {
+ public:
+  QuotaPermissionContext();
+  ~QuotaPermissionContext();
 
-GL_EXPORT void InitializePreferredGLImplementation(
-    GLImplementation implementation);
-GL_EXPORT void InitializeAllowedGLImplementations(
-    const std::vector<GLImplementation>& implementations);
+  void RequestQuotaPermission(
+      const content::StorageQuotaParams& params,
+      int render_process_id,
+      const content::QuotaPermissionContext::PermissionCallback& callback) final;
 
-} // namespace gfx
+ private:
 
-#endif // _OXIDE_SHARED_PORT_GL_GL_IMPLEMENTATION_OXIDE_H_
+  DISALLOW_COPY_AND_ASSIGN(QuotaPermissionContext);
+};
+
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_QUOTA_PERMISSION_CONTEXT_H_
+

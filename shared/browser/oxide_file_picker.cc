@@ -31,7 +31,7 @@ void FilePicker::RenderViewDeleted(content::RenderViewHost* rvh) {
   if (rvh != render_view_host_) {
     return;
   }
-  render_view_host_ = NULL;
+  render_view_host_ = nullptr;
   content::BrowserThread::DeleteSoon(
       content::BrowserThread::UI, FROM_HERE, this);
 }

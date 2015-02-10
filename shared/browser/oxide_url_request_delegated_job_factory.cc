@@ -21,6 +21,7 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/strings/string_util.h"
+#include "net/url_request/url_request.h"
 #include "net/url_request/url_request_error_job.h"
 #include "url/gurl.h"
 
@@ -46,23 +47,6 @@ const char kBlacklistedProtocols[][16] = {
   "wss"
 };
 
-const char kBuiltInSchemes[][6] = {
-  "http",
-  "https",
-  "ws",
-  "wss"
-};
-
-bool IsBuiltInScheme(const std::string& scheme) {
-  for (size_t i = 0; i < arraysize(kBuiltInSchemes); ++i) {
-    if (LowerCaseEqualsASCII(scheme, kBuiltInSchemes[i])) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 }
 
 net::URLRequestJob*
@@ -77,15 +61,15 @@ URLRequestDelegatedJobFactory::MaybeCreateJobWithProtocolHandler(
     return job;
   }
 
-  if (IsBuiltInScheme(scheme)) {
-    return NULL;
+  if (net::URLRequest::IsHandledProtocol(scheme)) {
+    return nullptr;
   }
 
   DCHECK(CanDelegateProtocol(scheme));
 
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
   if (!delegate.get()) {
-    return NULL;
+    return nullptr;
   }
 
   job = delegate->CreateCustomURLRequestJob(request, network_delegate);

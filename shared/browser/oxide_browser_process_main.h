@@ -20,6 +20,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "ui/gl/gl_implementation.h"
 
 #if defined(USE_NSS)
 namespace base {
@@ -30,12 +31,6 @@ class FilePath;
 namespace oxide {
 
 class PlatformDelegate;
-
-enum SupportedGLImplFlags {
-  SUPPORTED_GL_IMPL_NONE = 0,
-  SUPPORTED_GL_IMPL_DESKTOP_GL = 1 << 0,
-  SUPPORTED_GL_IMPL_EGL_GLES2 = 1 << 1
-};
 
 enum ProcessModel {
   PROCESS_MODEL_MULTI_PROCESS,
@@ -66,7 +61,7 @@ class BrowserProcessMain {
 #if defined(USE_NSS)
                      const base::FilePath& nss_db_path,
 #endif
-                     SupportedGLImplFlags supported_gl_flags,
+                     gfx::GLImplementation gl_impl,
                      ProcessModel process_model) = 0;
 
   // Quit the browser process components and delete the
@@ -75,9 +70,6 @@ class BrowserProcessMain {
 
   // Returns true if the browser process components are running
   virtual bool IsRunning() const = 0;
-
-  virtual void IncrementPendingUnloadsCount() = 0;
-  virtual void DecrementPendingUnloadsCount() = 0;
 
   virtual ProcessModel GetProcessModel() const = 0;
 

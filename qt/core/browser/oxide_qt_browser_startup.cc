@@ -21,12 +21,14 @@
 #include <QGlobalStatic>
 #include <QGuiApplication>
 #include <QtDebug>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+#include <QtGui/private/qopenglcontext_p.h>
+#endif
 
 #include "base/logging.h"
 
 #include "qt/core/app/oxide_qt_platform_delegate.h"
-#include "qt/core/gl/oxide_qt_gl_context_adopted.h"
-#include "shared/base/oxide_enum_flags.h"
+#include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
 
 #include "oxide_qt_web_context.h"
 
@@ -34,8 +36,6 @@ namespace oxide {
 namespace qt {
 
 namespace {
-
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(oxide::SupportedGLImplFlags)
 
 Q_GLOBAL_STATIC(BrowserStartup, g_instance)
 
@@ -115,10 +115,12 @@ void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
   process_model_ = model;
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 void BrowserStartup::SetSharedGLContext(GLContextAdopted* context) {
   DCHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning());
   shared_gl_context_ = context;
 }
+#endif
 
 bool BrowserStartup::DidSelectProcessModelFromEnv() const {
   return process_model_is_from_env_;
@@ -133,25 +135,37 @@ void BrowserStartup::EnsureChromiumStarted() {
       "Your application doesn't have a QGuiApplication. Oxide will not "
       "function without one";
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  shared_gl_context_ = GLContextAdopted::Create(qt_gl_global_share_context());
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+  shared_gl_context_ = GLContextAdopted::Create(
+      QOpenGLContextPrivate::globalShareContext());
+#endif
+
   scoped_ptr<PlatformDelegate> delegate(
       new PlatformDelegate(shared_gl_context_.get()));
 
-  oxide::SupportedGLImplFlags supported_gl_impls =
-      oxide::SUPPORTED_GL_IMPL_NONE;
-  if (QGuiApplication::platformNativeInterface()) {
-    QString platform = QGuiApplication::platformName();
-    if (platform == QLatin1String("xcb")) {
-      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_DESKTOP_GL;
-      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
-    } else if (platform.startsWith("ubuntu")) {
-      supported_gl_impls |= oxide::SUPPORTED_GL_IMPL_EGL_GLES2;
-    } else {
-      LOG(WARNING) << "Unrecognized Qt platform: " << qPrintable(platform);
-    }
+  gfx::GLImplementation gl_impl = gfx::kGLImplementationNone;
+
+  if (shared_gl_context_) {
+    gl_impl = shared_gl_context_->implementation();
   } else {
-    LOG(WARNING)
-        << "Unable to determine native display handle on Qt platform: "
-        << qPrintable(QGuiApplication::platformName());
+    QString platform = QGuiApplication::platformName();
+    if (QGuiApplication::platformNativeInterface()) {
+      if (platform == QLatin1String("xcb")) {
+        gl_impl = gfx::kGLImplementationDesktopGL;
+      } else if (platform.startsWith("ubuntu")) {
+        gl_impl = gfx::kGLImplementationEGLGLES2;
+      } else {
+        LOG(WARNING)
+            << "Cannot determine GL implementation to use - "
+            << "unrecognized Qt platform: " << qPrintable(platform);
+      }
+    } else {
+      LOG(WARNING)
+          << "Unable to use GL - No QPlatformNativeInterface for "
+          << "platform: " << qPrintable(platform);
+    }
   }
 
   oxide::BrowserProcessMain::GetInstance()->Start(
@@ -159,7 +173,7 @@ void BrowserStartup::EnsureChromiumStarted() {
 #if defined(USE_NSS)
       GetNSSDbPath(),
 #endif
-      supported_gl_impls,
+      gl_impl,
       GetProcessModel());
 
   qAddPostRoutine(ShutdownChromium);

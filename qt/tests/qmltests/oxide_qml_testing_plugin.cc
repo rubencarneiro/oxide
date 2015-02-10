@@ -20,10 +20,53 @@
 #include <QLatin1String>
 #include <QQmlContext>
 #include <QQmlExtensionPlugin>
+#include <QQmlParserStatus>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
 #include <QVariant>
+
+class ExternalProtocolHandler : public QObject,
+                                public QQmlParserStatus {
+  Q_OBJECT
+  Q_PROPERTY(QString scheme READ scheme WRITE setScheme NOTIFY schemeChanged)
+
+ public:
+  ExternalProtocolHandler()
+      : locked_(false) {}
+
+  virtual ~ExternalProtocolHandler() {
+    if (!scheme_.isEmpty()) {
+      QDesktopServices::unsetUrlHandler(scheme_);
+    }
+  }
+
+  void classBegin() final {}
+  void componentComplete() final {
+    locked_ = true;
+    if (!scheme_.isEmpty()) {
+      QDesktopServices::setUrlHandler(scheme_, this, "openUrl");
+    }
+  }
+
+  QString scheme() const { return scheme_; }
+  void setScheme(const QString& scheme) {
+    if (locked_) {
+      return;
+    }
+
+    scheme_ = scheme;
+    Q_EMIT schemeChanged();
+  }
+
+ Q_SIGNALS:
+  void schemeChanged();
+  void openUrl(const QUrl& url);
+
+ private:
+  bool locked_;
+  QString scheme_;
+};
 
 class DestructionObserver : public QObject {
   Q_OBJECT
@@ -65,7 +108,7 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE QObject* qObjectParent(QObject* object) {
     if (!object) {
-      return NULL;
+      return nullptr;
     }
 
     return object->parent();
@@ -81,7 +124,7 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE DestructionObserver* createDestructionObserver(QObject* object) {
     if (!object) {
-      return NULL;
+      return nullptr;
     }
 
     return new DestructionObserver(object);
@@ -98,25 +141,6 @@ class OxideTestingUtils : public QObject {
   Q_INVOKABLE void removeAppProperty(const QString& property) {
     QCoreApplication::instance()->setProperty(property.toStdString().c_str(), QVariant());
   }
-
-  Q_INVOKABLE void setUrlHandler(const QString& scheme, bool doHandle) {
-    if (doHandle) {
-      QDesktopServices::setUrlHandler(scheme, this, "urlHandled");
-    } else {
-      // Register an inexistent handler for the scheme, to ensure that
-      // QDesktopServices::openUrl(…) returns false (its current implementation
-      // ignores the return value of the custom handler method, so returning
-      // false from a valid handler wouldn’t help).
-      QDesktopServices::setUrlHandler(scheme, this, "doNotHandleUrl");
-    }
-  }
-
-  Q_INVOKABLE void unsetUrlHandler(const QString& scheme) {
-    QDesktopServices::unsetUrlHandler(scheme);
-  }
-
- Q_SIGNALS:
-  void urlHandled(const QUrl& url);
 };
 
 QObject* UtilsFactory(QQmlEngine* engine, QJSEngine* script_engine) {
@@ -139,6 +163,7 @@ class OxideQmlTestingPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<DestructionObserver>(
         uri, 1, 0, "DestructionObserver",
         "Create this with OxideTestingUtils.createDestructionObserver()");
+    qmlRegisterType<ExternalProtocolHandler>(uri, 1, 0, "ExternalProtocolHandler");
   }
 };
 

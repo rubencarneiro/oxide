@@ -24,32 +24,29 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "content/browser/gpu/compositor_util.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
-#include "content/browser/gpu/gpu_process_host.h"
 #include "content/public/browser/certificate_request_result_type.h"
+#include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_process_host_observer.h"
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
-#include "ui/gl/gl_context.h"
-#include "ui/gl/gl_implementation.h"
-#include "ui/gl/gl_share_group.h"
 
+#include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
-#include "shared/gl/oxide_gl_context_adopted.h"
 
 #include "oxide_access_token_store.h"
+#include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
+#include "oxide_quota_permission_context.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
@@ -92,6 +89,14 @@ class SingleProcessBrowserContextHolder
 
   DISALLOW_COPY_AND_ASSIGN(SingleProcessBrowserContextHolder);
 };
+
+void RespondToGeolocationPermissionRequest(
+    const base::Callback<void(bool)>& callback,
+    bool result) {
+  content::GeolocationProvider::GetInstance()
+      ->UserDidOptIntoLocationServices();
+  callback.Run(result);
+}
 
 }
 
@@ -138,7 +143,7 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
-  return NULL;
+  return nullptr;
 }
 
 std::string ContentBrowserClient::GetAcceptLangs(
@@ -149,10 +154,13 @@ std::string ContentBrowserClient::GetAcceptLangs(
 void ContentBrowserClient::AppendExtraCommandLineSwitches(
     base::CommandLine* command_line,
     int child_process_id) {
+  // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
     switches::kEnableGoogleTalkPlugin,
     switches::kFormFactor,
-    switches::kLimitMaxDecodedImageBytes
+    switches::kLimitMaxDecodedImageBytes,
+    switches::kEnableMediaHubAudio,
+    switches::kMediaHubFixedSessionDomains
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kSwitchNames, arraysize(kSwitchNames));
@@ -160,17 +168,16 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   std::string process_type =
       command_line->GetSwitchValueASCII(switches::kProcessType);
   if (process_type == switches::kRendererProcess) {
+    // For renderer processes, we should always be on the UI thread
+    DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
     content::RenderProcessHost* host =
         content::RenderProcessHost::FromID(child_process_id);
     if (host->GetBrowserContext()->IsOffTheRecord()) {
       command_line->AppendSwitch(switches::kIncognito);
     }
 
-    GLContextAdopted* gl_share_context =
-        platform_integration_->GetGLShareContext();
-    if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor() ||
-        !gl_share_context ||
-        gl_share_context->GetImplementation() != gfx::GetGLImplementation()) {
+    if (!CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
       command_line->AppendSwitch(switches::kDisableGpuCompositing);
     }
   }
@@ -195,6 +202,10 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
                                           net::CookieOptions* options) {
   return BrowserContextIOData::FromResourceContext(
       context)->CanAccessCookies(url, first_party, true);
+}
+
+content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionContext() {
+  return new QuotaPermissionContext();
 }
 
 void ContentBrowserClient::AllowCertificateError(
@@ -237,20 +248,42 @@ void ContentBrowserClient::RequestPermission(
     const GURL& requesting_frame,
     bool user_gesture,
     const base::Callback<void(bool)>& result_callback) {
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
-    result_callback.Run(false);
-    return;
-  }
-
   if (permission != content::PERMISSION_GEOLOCATION) {
     // TODO: Other types
     result_callback.Run(false);
     return;
   }
 
-  webview->RequestGeolocationPermission(requesting_frame.GetOrigin(),
-                                        result_callback);
+  WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
+    result_callback.Run(false);
+    return;
+  }
+
+  base::Callback<void(bool)> callback =
+      base::Bind(&RespondToGeolocationPermissionRequest,
+                 result_callback);
+  webview->RequestGeolocationPermission(requesting_frame,
+                                        bridge_id,
+                                        callback);
+}
+
+void ContentBrowserClient::CancelPermissionRequest(
+    content::PermissionType permission,
+    content::WebContents* web_contents,
+    int bridge_id,
+    const GURL& requesting_frame) {
+  if (permission != content::PERMISSION_GEOLOCATION) {
+    return;
+  }
+
+  WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
+    return;
+  }
+
+  webview->CancelGeolocationPermissionRequest(requesting_frame,
+                                              bridge_id);
 }
 
 bool ContentBrowserClient::CanCreateWindow(
@@ -342,6 +375,18 @@ void ContentBrowserClient::SetPlatformIntegration(
     BrowserPlatformIntegration* integration) {
   CHECK(integration && !platform_integration_);
   platform_integration_.reset(integration);
+}
+
+gpu::GpuControlList::OsType
+ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
+    std::string* os_version) {
+  if (!AndroidProperties::GetInstance()->Available()) {
+    // Use the platform defaults in this case
+    return gpu::GpuControlList::kOsAny;
+  }
+
+  *os_version = AndroidProperties::GetInstance()->GetOSVersion();
+  return gpu::GpuControlList::kOsAndroid;
 }
 
 } // namespace oxide

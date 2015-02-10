@@ -92,20 +92,36 @@ const char kFtpScheme[] = "ftp";
 const char kBrowserContextKey[] = "oxide_browser_context_data";
 
 const char kDefaultAcceptLanguage[] = "en-us,en";
+
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
+const int kBackLog = 1;
 
 class TCPServerSocketFactory :
     public content::DevToolsHttpHandler::ServerSocketFactory {
  public:
-  TCPServerSocketFactory(const std::string& address, int port, int backlog)
-      : content::DevToolsHttpHandler::ServerSocketFactory(
-            address, port, backlog) {}
+  TCPServerSocketFactory(const std::string& address, int port)
+      : address_(address),
+        port_(port) {}
 
  private:
-  scoped_ptr<net::ServerSocket> Create() const final {
-    return make_scoped_ptr(
-        new net::TCPServerSocket(NULL, net::NetLog::Source())).Pass();
+  scoped_ptr<net::ServerSocket> CreateForHttpServer() override {
+    scoped_ptr<net::TCPServerSocket> socket(
+        new net::TCPServerSocket(nullptr, net::NetLog::Source()));
+    if (socket->ListenWithAddressAndPort(address_, port_, kBackLog) != net::OK) {
+      return scoped_ptr<net::ServerSocket>();
+    }
+
+    return socket.Pass();
   }
+
+  scoped_ptr<net::ServerSocket> CreateForTethering(
+      std::string* out_name) override {
+    // Not supported
+    return scoped_ptr<net::ServerSocket>();
+  }
+
+  std::string address_;
+  int port_;
 
   DISALLOW_COPY_AND_ASSIGN(TCPServerSocketFactory);
 };
@@ -140,7 +156,7 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
       DCHECK(context_);
       url_request_context_ = context_->CreateMainRequestContext(
           protocol_handlers_, request_interceptors_.Pass())->AsWeakPtr();
-      context_ = NULL;
+      context_ = nullptr;
     }
 
     return url_request_context_.get();
@@ -159,7 +175,7 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
 class ResourceContext final : public content::ResourceContext {
  public:
   ResourceContext() :
-      request_context_(NULL) {}
+      request_context_(nullptr) {}
 
   net::HostResolver* GetHostResolver() final {
     return IOThread::instance()->globals()->host_resolver();
@@ -186,7 +202,6 @@ struct BrowserContextSharedData {
         product(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
         user_agent_string_is_default(true),
         user_script_master(context),
-        devtools_http_handler(NULL),
         devtools_enabled(params.devtools_enabled),
         devtools_port(params.devtools_port),
         devtools_ip(params.devtools_ip) {}
@@ -198,7 +213,7 @@ struct BrowserContextSharedData {
   bool user_agent_string_is_default;
   UserScriptMaster user_script_master;
 
-  content::DevToolsHttpHandler* devtools_http_handler;
+  scoped_ptr<content::DevToolsHttpHandler> devtools_http_handler;
   bool devtools_enabled;
   int devtools_port;
   std::string devtools_ip;
@@ -311,7 +326,7 @@ void BrowserContextIOData::Init() {
   cookie_store_ = content::CreateCookieStore(
       content::CookieStoreConfig(cookie_path,
                                  GetSessionCookieMode(),
-                                 NULL, NULL));
+                                 nullptr, nullptr));
 }
 
 BrowserContextIOData::BrowserContextIOData() :
@@ -421,9 +436,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   // TODO: We want persistent storage here (for non-incognito), but 
   //       SQLiteChannelIDStore is part of chrome
   storage->set_channel_id_service(
-      new net::ChannelIDService(
-          new net::DefaultChannelIDStore(NULL),
-          base::WorkerPool::GetTaskRunner(true)));
+      make_scoped_ptr(new net::ChannelIDService(
+          new net::DefaultChannelIDStore(nullptr),
+          base::WorkerPool::GetTaskRunner(true))));
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
@@ -432,7 +447,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   context->set_transport_security_state(transport_security_state_.get());
 
-  net::HttpCache::BackendFactory* cache_backend = NULL;
+  net::HttpCache::BackendFactory* cache_backend = nullptr;
   if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
@@ -582,7 +597,7 @@ class BrowserContextImpl : public BrowserContext {
   }
 
   bool HasOffTheRecordContext() const final {
-    return otr_context_ != NULL;
+    return otr_context_ != nullptr;
   }
 
   BrowserContextSharedData data_;
@@ -611,12 +626,7 @@ OTRBrowserContextImpl::OTRBrowserContextImpl(
 BrowserContextImpl::~BrowserContextImpl() {
   if (otr_context_) {
     delete otr_context_;
-    otr_context_ = NULL;
-  }
-
-  if (data_.devtools_http_handler) {
-    data_.devtools_http_handler->Stop();
-    data_.devtools_http_handler = NULL;
+    otr_context_ = nullptr;
   }
 }
 
@@ -633,7 +643,7 @@ BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
 BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
     : BrowserContext(new BrowserContextIODataImpl(params)),
       data_(this, params),
-      otr_context_(NULL) {
+      otr_context_(nullptr) {
   io_data()->GetSharedData().user_agent_string =
       content::BuildUserAgentFromProduct(data_.product);
 
@@ -646,18 +656,23 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
           data_.devtools_ip : kDevtoolsDefaultServerIp;
 
     scoped_ptr<content::DevToolsHttpHandler::ServerSocketFactory> factory(
-        new TCPServerSocketFactory(ip, data_.devtools_port, 1));
-    data_.devtools_http_handler = content::DevToolsHttpHandler::Start(
-        factory.Pass(),
-        std::string(),
-        new DevtoolsHttpHandlerDelegate(),
-        base::FilePath());
+        new TCPServerSocketFactory(ip, data_.devtools_port));
+    data_.devtools_http_handler.reset(
+        content::DevToolsHttpHandler::Start(factory.Pass(),
+                                            std::string(),
+                                            new DevtoolsHttpHandlerDelegate(),
+                                            base::FilePath()));
   }
+}
+
+scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
+    const base::FilePath& partition_path) {
+  return nullptr;
 }
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
   DCHECK(CalledOnValidThread());
-  return GetStoragePartition(this, NULL)->GetURLRequestContext();
+  return GetStoragePartition(this, nullptr)->GetURLRequestContext();
 }
 
 net::URLRequestContextGetter*
@@ -693,24 +708,24 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
   // ContentBrowserClient::GetStoragePartitionConfigForSite(), so it's a
   // bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
-  return NULL;
+  return nullptr;
 }
 
 content::DownloadManagerDelegate*
     BrowserContext::GetDownloadManagerDelegate() {
-  return NULL;
+  return nullptr;
 }
 
 content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
-  return NULL;
+  return nullptr;
 }
 
 storage::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
-  return NULL;
+  return nullptr;
 }
 
 content::PushMessagingService* BrowserContext::GetPushMessagingService() {
-  return NULL;
+  return nullptr;
 }
 
 content::SSLHostStateDelegate* BrowserContext::GetSSLHostStateDelegate() {
@@ -769,7 +784,7 @@ BrowserContext::~BrowserContext() {
   // Schedule io_data_ to be destroyed on the IO thread
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
                                      FROM_HERE, io_data_);
-  io_data_ = NULL;
+  io_data_ = nullptr;
 }
 
 // static

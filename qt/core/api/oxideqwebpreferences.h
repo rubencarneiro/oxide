@@ -71,7 +71,7 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
 
  public:
   virtual ~OxideQWebPreferences();
-  OxideQWebPreferences(QObject* parent = NULL);
+  OxideQWebPreferences(QObject* parent = nullptr);
 
   QString standardFontFamily() const;
   void setStandardFontFamily(const QString& font);

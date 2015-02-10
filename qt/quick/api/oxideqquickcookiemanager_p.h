@@ -41,7 +41,7 @@ class Q_DECL_EXPORT OxideQQuickCookieManager : public QObject {
 
 public:
   OxideQQuickCookieManager(OxideQQuickWebContext* webContext,
-                           QObject* parent = NULL);
+                           QObject* parent = nullptr);
   virtual ~OxideQQuickCookieManager();
 
   Q_INVOKABLE int setCookies(const QUrl& url, const QVariant& cookies);

@@ -42,15 +42,15 @@ WebView* WebContentsView::GetWebView() const {
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::NativeView WebContentsView::GetContentNativeView() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
-  return NULL;
+  return nullptr;
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
@@ -82,7 +82,7 @@ void WebContentsView::RestoreFocus() {
 }
 
 content::DropData* WebContentsView::GetDropData() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::Rect WebContentsView::GetViewBounds() const {
@@ -120,7 +120,7 @@ content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForPopupWidget(
     content::RenderWidgetHost* render_widget_host) {
-  return NULL;
+  return nullptr;
 }
 
 void WebContentsView::SetPageTitle(const base::string16& title) {}

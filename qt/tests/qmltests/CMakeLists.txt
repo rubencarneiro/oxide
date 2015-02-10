@@ -48,9 +48,6 @@ target_include_directories(
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
     ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
-if(OXIDE_ENABLE_COMPOSITING)
-  target_compile_definitions(${QML_TEST} PRIVATE -DENABLE_COMPOSITING)
-endif()
 set_target_properties(
     ${QML_TEST} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR}

@@ -32,33 +32,19 @@
 void OxideQPermissionRequestPrivate::OnCancelled() {
   Q_Q(OxideQPermissionRequest);
 
-  DCHECK(!is_cancelled_);
-  is_cancelled_ = true;
-
   Q_EMIT q->cancelled();
 }
 
 OxideQPermissionRequestPrivate::OxideQPermissionRequestPrivate(
-    const QUrl& url,
-    const QUrl& embedder,
     scoped_ptr<oxide::PermissionRequest> request)
-    : q_ptr(NULL),
-      request_(request.Pass()),
-      is_cancelled_(false),
-      url_(url),
-      embedder_(embedder) {
-}
+    : q_ptr(nullptr),
+      request_(request.Pass()) {}
 
 OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
 
 OxideQSimplePermissionRequestPrivate::OxideQSimplePermissionRequestPrivate(
-    const QUrl& url,
-    const QUrl& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQPermissionRequestPrivate(
-        url,
-        embedder,
-        request.Pass()),
+    : OxideQPermissionRequestPrivate(request.Pass()),
       did_respond_(false) {}
 
 bool OxideQSimplePermissionRequestPrivate::canRespond() const {
@@ -67,7 +53,7 @@ bool OxideQSimplePermissionRequestPrivate::canRespond() const {
     return false;
   }
 
-  if (is_cancelled_) {
+  if (request()->is_cancelled()) {
     qWarning() << "Can't respond to a cancelled permission request";
     return false;
   }
@@ -84,39 +70,27 @@ OxideQSimplePermissionRequestPrivate::~OxideQSimplePermissionRequestPrivate() {}
 
 // static
 OxideQSimplePermissionRequest* OxideQSimplePermissionRequestPrivate::Create(
-    const QUrl& url,
-    const QUrl& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   DCHECK(request);
 
   return new OxideQSimplePermissionRequest(
-      *new OxideQSimplePermissionRequestPrivate(
-        url,
-        embedder,
-        request.Pass()));
+      *new OxideQSimplePermissionRequestPrivate(request.Pass()));
 }
 
 OxideQGeolocationPermissionRequestPrivate::OxideQGeolocationPermissionRequestPrivate(
-    const QUrl& url,
-    const QUrl& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQSimplePermissionRequestPrivate(url, embedder, request.Pass()) {}
+    : OxideQSimplePermissionRequestPrivate(request.Pass()) {}
 
 OxideQGeolocationPermissionRequestPrivate::~OxideQGeolocationPermissionRequestPrivate() {}
 
 // static
 OxideQGeolocationPermissionRequest*
 OxideQGeolocationPermissionRequestPrivate::Create(
-    const QUrl& url,
-    const QUrl& embedder,
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   DCHECK(request);
 
   return new OxideQGeolocationPermissionRequest(
-      *new OxideQGeolocationPermissionRequestPrivate(
-        url,
-        embedder,
-        request.Pass()));
+      *new OxideQGeolocationPermissionRequestPrivate(request.Pass()));
 }
 
 OxideQPermissionRequest::OxideQPermissionRequest(
@@ -135,19 +109,19 @@ OxideQPermissionRequest::~OxideQPermissionRequest() {}
 QUrl OxideQPermissionRequest::url() const {
   Q_D(const OxideQPermissionRequest);
 
-  return d->url_;
+  return QUrl(QString::fromStdString(d->request_->url().spec()));;
 }
 
 QUrl OxideQPermissionRequest::embedder() const {
   Q_D(const OxideQPermissionRequest);
 
-  return d->embedder_;
+  return QUrl(QString::fromStdString(d->request_->embedder().spec()));
 }
 
 bool OxideQPermissionRequest::isCancelled() const {
   Q_D(const OxideQPermissionRequest);
 
-  return d->is_cancelled_;
+  return d->request_->is_cancelled();
 }
 
 OxideQSimplePermissionRequest::OxideQSimplePermissionRequest(

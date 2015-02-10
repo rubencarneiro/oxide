@@ -22,9 +22,10 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
+#include "base/memory/weak_ptr.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/trees/layer_tree_host_client.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/size.h"
 
 namespace cc {
 class Layer;
@@ -47,7 +48,7 @@ class Compositor final : public cc::LayerTreeHostClient,
  public:
   typedef std::vector<scoped_refptr<CompositorFrameHandle> > FrameHandleVector;
 
-  static scoped_ptr<Compositor> Create(CompositorClient* client, bool software);
+  static scoped_ptr<Compositor> Create(CompositorClient* client);
   ~Compositor();
 
   bool IsActive() const;
@@ -58,13 +59,13 @@ class Compositor final : public cc::LayerTreeHostClient,
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
 
   void DidSwapCompositorFrame(uint32 surface_id,
-                              FrameHandleVector& returned_frames);
+                              FrameHandleVector* returned_frames);
 
  private:
   friend class CompositorLock;
   friend class CompositorThreadProxy;
 
-  Compositor(CompositorClient* client, bool software);
+  Compositor(CompositorClient* client);
 
   void SendSwapCompositorFrameToClient(uint32 surface_id,
                                        CompositorFrameHandle* frame);
@@ -72,7 +73,7 @@ class Compositor final : public cc::LayerTreeHostClient,
   void LockCompositor();
   void UnlockCompositor();
 
-  scoped_ptr<cc::OutputSurface> CreateOutputSurface(bool fallback);
+  scoped_ptr<cc::OutputSurface> CreateOutputSurface();
 
   // cc::LayerTreeHostClient implementation
   void WillBeginMainFrame(int frame_id) final;
@@ -81,20 +82,24 @@ class Compositor final : public cc::LayerTreeHostClient,
   void Layout() final;
   void ApplyViewportDeltas(const gfx::Vector2d& inner_delta,
                            const gfx::Vector2d& outer_delta,
+                           const gfx::Vector2dF& elastic_overscroll_delta,
                            float page_scale,
                            float top_controls_delta) final;
   void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
                            float page_scale,
                            float top_controls_delta) final;
-  void RequestNewOutputSurface(bool fallback) final;
+  void RequestNewOutputSurface() final;
   void DidInitializeOutputSurface() final;
+  void DidFailToInitializeOutputSurface() final;
   void WillCommit() final;
   void DidCommit() final;
   void DidCommitAndDrawFrame() final;
   void DidCompleteSwapBuffers() final;
+  void DidCompletePageScaleAnimation() final;
 
   CompositorClient* client_;
-  bool use_software_;
+
+  int num_failed_recreate_attempts_;
 
   gfx::Size size_;
   float device_scale_factor_;
@@ -107,6 +112,8 @@ class Compositor final : public cc::LayerTreeHostClient,
   uint32 next_output_surface_id_;
 
   uint32 lock_count_;
+
+  base::WeakPtrFactory<Compositor> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(Compositor);
 };

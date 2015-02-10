@@ -29,10 +29,9 @@
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "base/timer/timer.h"
+#include "cc/input/top_controls_state.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
-#include "content/browser/renderer_host/event_with_latency_info.h"
-#include "content/common/input/input_event_ack_state.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
@@ -43,10 +42,12 @@
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "ui/base/ime/text_input_type.h"
-#include "ui/gfx/rect.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
@@ -66,8 +67,6 @@ class WebMouseWheelEvent;
 
 namespace content {
 
-class FrameTree;
-class FrameTreeNode;
 struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
@@ -109,12 +108,6 @@ class WebPreferences;
 class WebView;
 class WebViewContentsHelper;
 
-struct NewContentsDeleter {
-  void operator()(content::WebContents* ptr);
-};
-
-typedef scoped_ptr<content::WebContents, NewContentsDeleter> ScopedNewContentsHolder;
-
 class WebViewIterator final {
  public:
   ~WebViewIterator();
@@ -135,8 +128,7 @@ class WebViewIterator final {
 // This is the main webview class. Implementations should subclass
 // this. Note that this class will hold the main browser process
 // components alive
-class WebView : public base::SupportsWeakPtr<WebView>,
-                public ScriptMessageTarget,
+class WebView : public ScriptMessageTarget,
                 private CompositorClient,
                 private WebPreferencesObserver,
                 private GestureProviderClient,
@@ -155,12 +147,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   };
 
   struct Params {
-    Params() :
-        context(NULL),
-        incognito(false) {}
+    Params();
+    ~Params();
 
     BrowserContext* context;
-    ScopedNewContentsHolder contents;
+    scoped_ptr<content::WebContents> contents;
     bool incognito;
   };
 
@@ -171,6 +162,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   static WebView* FromRenderFrameHost(content::RenderFrameHost* rfh);
 
   static WebViewIterator GetAllWebViews();
+
+  base::WeakPtr<WebView> AsWeakPtr() {
+    return weak_factory_.GetWeakPtr();
+  }
 
   const GURL& GetURL() const;
   void SetURL(const GURL& url);
@@ -202,9 +197,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void SetIsFullscreen(bool fullscreen);
 
   void WasResized();
+  void ScreenUpdated();
   void VisibilityChanged();
   void FocusChanged();
   void InputPanelVisibilityChanged();
+  void UpdateWebPreferences();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -218,7 +215,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-  content::FrameTree* GetFrameTree();
 
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
@@ -230,10 +226,26 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
   }
+  gfx::Point GetCompositorFrameScrollOffsetPix();
+  gfx::Size GetCompositorFrameContentSizePix();
+  gfx::Size GetCompositorFrameViewportSizePix();
+
+  int GetLocationBarOffsetPix();
+  int GetLocationBarContentOffsetPix();
+  float GetLocationBarContentOffsetDip();
 
   const SecurityStatus& security_status() const { return security_status_; }
 
   ContentType blocked_content() const { return blocked_content_; }
+
+  float GetLocationBarHeightDip() const;
+  int GetLocationBarHeightPix() const;
+  void SetLocationBarHeightPix(int height);
+
+  cc::TopControlsState location_bar_constraints() const {
+    return location_bar_constraints_;
+  }
+  void SetLocationBarConstraints(cc::TopControlsState constraints);
 
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
@@ -248,8 +260,12 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void HidePopupMenu();
 
   void RequestGeolocationPermission(
-      const GURL& origin,
+      const GURL& requesting_frame,
+      int bridge_id,
       const base::Callback<void(bool)>& callback);
+  void CancelGeolocationPermissionRequest(
+      const GURL& requesting_frame,
+      int bridge_id);
 
   void AllowCertificateError(content::RenderFrameHost* rfh,
                              int cert_error,
@@ -261,8 +277,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                              const base::Callback<void(bool)>& callback,
                              content::CertificateRequestResultType* result);
                              
-  void UpdateWebPreferences();
-
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
@@ -299,9 +313,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
       bool* did_suppress_message);
   virtual JavaScriptDialog* CreateBeforeUnloadDialog();
 
-  virtual void FrameAdded(WebFrame* frame);
-  virtual void FrameRemoved(WebFrame* frame);
-
   virtual bool CanCreateWindows() const;
 
  protected:
@@ -334,6 +345,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void MaybeResetAutoScrollTimer();
   void ScrollFocusedEditableNodeIntoView();
 
+  float GetFrameMetadataScaleToPix();
+
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const override;
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -357,7 +370,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
 
   // RenderWidgetHostViewDelegate implementation
   void EvictCurrentFrame() final;
-  void UpdateFrameMetadata(const cc::CompositorFrameMetadata& metadata) final;
   void ProcessAckedTouchEvent(bool consumed) final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void TextInputStateChanged(ui::TextInputType type,
@@ -368,18 +380,18 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                               size_t selection_cursor_position,
                               size_t selection_anchor_position) final;
   void SelectionChanged() final;
-  WebView* GetWebView() final;
   Compositor* GetCompositor() const final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
                                        const content::OpenURLParams& params) final;
-  void NavigationStateChanged(const content::WebContents* source,
+  void NavigationStateChanged(content::WebContents* source,
                               content::InvalidateTypes changed_flags) final;
   void VisibleSSLStateChanged(const content::WebContents* source) final;
   bool ShouldCreateWebContents(
       content::WebContents* source,
       int route_id,
+      int main_frame_route_id,
       WindowContainerType window_container_type,
       const base::string16& frame_name,
       const GURL& target_url,
@@ -410,19 +422,24 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void BeforeUnloadFired(content::WebContents* source,
                          bool proceed,
                          bool* proceed_to_fire_unload) final;
-  content::JavaScriptDialogManager* GetJavaScriptDialogManager() final;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager(
+      content::WebContents* source) final;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) final;
-  void ToggleFullscreenModeForTab(content::WebContents* source,
-                                  bool enter) final;
+  void EnterFullscreenModeForTab(content::WebContents* source,
+                                 const GURL& origin) final;
+  void ExitFullscreenModeForTab(content::WebContents* source) final;
   bool IsFullscreenForTabOrPending(
       const content::WebContents* source) const final;
 
   // content::WebContentsObserver implementation
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) final;
+  void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) final;
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) final;
+  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                              content::RenderFrameHost* new_host) final;
   void DidStartProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
@@ -440,6 +457,10 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   void DidNavigateMainFrame(
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) final;
+  void DidNavigateAnyFrame(
+      content::RenderFrameHost* render_frame_host,
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) final;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
                      const GURL& validated_url) final;
   void DidFailLoad(content::RenderFrameHost* render_frame_host,
@@ -447,13 +468,13 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                    int error_code,
                    const base::string16& error_description) final;
   void DidGetRedirectForResourceRequest(
-      content::RenderViewHost* render_view_host,
+      content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) final;
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) final;
   void DidStartLoading(content::RenderViewHost* render_view_host) final;
   void DidStopLoading(content::RenderViewHost* render_view_host) final;
-  void FrameDetached(content::RenderFrameHost* render_frame_host) final;
+  void FrameDeleted(content::RenderFrameHost* render_frame_host) final;
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
   void DidUpdateFaviconURL(
       const std::vector<content::FaviconURL>& candidates) final;
@@ -469,9 +490,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnLoadingChanged();
   virtual void OnLoadProgressChanged(double progress);
 
-  virtual void OnLoadStarted(const GURL& validated_url,
-                             bool is_error_frame);
-  virtual void OnLoadCommitted(const GURL& url);
+  virtual void OnLoadStarted(const GURL& validated_url);
+  virtual void OnLoadRedirected(const GURL& url,
+                                const GURL& original_url);
+  virtual void OnLoadCommitted(const GURL& url,
+                               bool is_error_page);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,
@@ -492,8 +515,6 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnWebPreferencesDestroyed();
 
   virtual void OnRequestGeolocationPermission(
-      const GURL& origin,
-      const GURL& embedder,
       scoped_ptr<SimplePermissionRequest> request);
 
   virtual void OnUnhandledKeyboardEvent(
@@ -513,11 +534,8 @@ class WebView : public base::SupportsWeakPtr<WebView>,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
-  virtual void OnLoadRedirected(
-      const GURL& url,
-      const GURL& original_url);
-
-  virtual WebFrame* CreateWebFrame(content::FrameTreeNode* node) = 0;
+  virtual WebFrame* CreateWebFrame(
+      content::RenderFrameHost* render_frame_host);
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
@@ -537,20 +555,19 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   virtual void OnUpdateCursor(const content::WebCursor& cursor);
 
   virtual void OnSecurityStatusChanged(const SecurityStatus& old);
-  virtual bool OnCertificateError(
-      bool is_main_frame,
-      CertError cert_error,
-      const scoped_refptr<net::X509Certificate>& cert,
-      const GURL& request_url,
-      content::ResourceType resource_type,
-      bool strict_enforcement,
-      scoped_ptr<SimplePermissionRequest> request);
+  virtual void OnCertificateError(scoped_ptr<CertificateError> error);
   virtual void OnContentBlocked();
 
   virtual void OnPrepareToCloseResponse(bool proceed);
   virtual void OnCloseRequested();
 
-  scoped_ptr<content::WebContentsImpl> web_contents_;
+  struct WebContentsDeleter {
+    void operator()(content::WebContents* contents);
+  };
+  typedef scoped_ptr<content::WebContents, WebContentsDeleter>
+      WebContentsScopedPtr;
+
+  WebContentsScopedPtr web_contents_;
   WebViewContentsHelper* web_contents_helper_;
 
   scoped_ptr<Compositor> compositor_;
@@ -569,15 +586,24 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   int initial_index_;
 
   content::NotificationRegistrar registrar_;
-  WebFrame* root_frame_;
+
+  struct WebFrameDeleter {
+    void operator()(WebFrame* frame);
+  };
+  typedef scoped_ptr<WebFrame, WebFrameDeleter> WebFrameScopedPtr;
+
+  WebFrameScopedPtr root_frame_;
+
   bool is_fullscreen_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 
   PermissionRequestManager permission_request_manager_;
+  CertificateErrorManager certificate_error_manager_;
 
   ContentType blocked_content_;
 
+  cc::CompositorFrameMetadata pending_compositor_frame_metadata_;
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
@@ -596,6 +622,11 @@ class WebView : public base::SupportsWeakPtr<WebView>,
   // https://launchpad.net/bugs/1370366
   bool did_scroll_focused_editable_node_into_view_;
   base::Timer auto_scroll_timer_;
+
+  int location_bar_height_pix_;
+  cc::TopControlsState location_bar_constraints_;
+
+  base::WeakPtrFactory<WebView> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

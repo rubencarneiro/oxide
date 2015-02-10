@@ -54,8 +54,8 @@ class MessagePump final : public QObject,
  private:
   struct RunState {
     RunState() :
-        delegate(NULL),
-        event_loop(NULL),
+        delegate(nullptr),
+        event_loop(nullptr),
         should_quit(false) {}
 
     Delegate* delegate;

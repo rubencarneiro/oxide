@@ -27,7 +27,7 @@ namespace {
 
 QKeyEvent* CopyEvent(QKeyEvent* event) {
   if (!event) {
-    return NULL;
+    return nullptr;
   }
 
   return new QKeyEvent(*event);
@@ -36,12 +36,12 @@ QKeyEvent* CopyEvent(QKeyEvent* event) {
 }
 
 NativeWebKeyboardEvent::NativeWebKeyboardEvent()
-    : os_event(NULL),
+    : os_event(nullptr),
       skip_in_browser(false),
       match_edit_command(false) {}
 
 NativeWebKeyboardEvent::NativeWebKeyboardEvent(gfx::NativeEvent native_event)
-    : os_event(NULL),
+    : os_event(nullptr),
       skip_in_browser(false),
       match_edit_command(false) {
   NOTREACHED();
@@ -53,7 +53,7 @@ NativeWebKeyboardEvent::NativeWebKeyboardEvent(
     wchar_t character,
     int state,
     double time_stamp_seconds)
-    : os_event(NULL),
+    : os_event(nullptr),
       skip_in_browser(false),
       match_edit_command(false) {
   NOTREACHED();

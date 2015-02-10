@@ -35,17 +35,18 @@
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
-#include "shared/gl/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_adopted.h"
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 #include "shared/port/content/common/gpu_thread_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
-#include "shared/port/gl/gl_implementation_oxide.h"
+#include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_gpu_info_collector_linux.h"
 #include "oxide_io_thread.h"
 #include "oxide_message_pump.h"
 #include "oxide_power_save_blocker.h"
@@ -80,7 +81,8 @@ class ScopedBindGLESAPI {
 ScopedBindGLESAPI::ScopedBindGLESAPI()
     : has_egl_(false),
       orig_api_(EGL_NONE) {
-  egl_lib_.Reset(base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
+  egl_lib_.Reset(
+      base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), nullptr));
   if (!egl_lib_.is_valid()) {
     return;
   }
@@ -129,12 +131,12 @@ class Screen : public gfx::Screen {
 
   gfx::NativeWindow GetWindowUnderCursor() final {
     NOTIMPLEMENTED();
-    return NULL;
+    return nullptr;
   }
 
   gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) final {
     NOTIMPLEMENTED();
-    return NULL;
+    return nullptr;
   }
 
   int GetNumDisplays() const final {
@@ -192,38 +194,32 @@ void BrowserMainParts::PreEarlyInitialization() {
   gfx::InitializeOxideNativeDisplay(
       BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());
 
+  gpu_info_collector_.reset(CreateGpuInfoCollectorLinux());
+  gpu::SetGpuInfoCollectorOxideLinux(gpu_info_collector_.get());
+
   base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
   main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
-  base::MessageLoop::InitMessagePumpForUIFactory(NULL);
+  base::MessageLoop::InitMessagePumpForUIFactory(nullptr);
 }
 
 int BrowserMainParts::PreCreateThreads() {
-  // When using EGL, we need GLES for surfaceless contexts. Whilst the
-  // default API is GLES and this will be the selected API on the GPU
-  // thread, it is possible that the embedder has selected a different API
-  // on the main thread. Temporarily switch to GLES whilst we initialize
-  // the GL bits here
-  ScopedBindGLESAPI gles_binder;
+  {
+    // When using EGL, we need GLES for surfaceless contexts. Whilst the
+    // default API is GLES and this will be the selected API on the GPU
+    // thread, it is possible that the embedder has selected a different API
+    // on the main thread. Temporarily switch to GLES whilst we initialize
+    // the GL bits here
+    ScopedBindGLESAPI gles_binder;
 
-  GLContextAdopted* gl_share_context =
-      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
-  if (gl_share_context) {
-    gfx::InitializePreferredGLImplementation(
-        gl_share_context->GetImplementation());
+    // Do this here rather than on the GPU thread to work around a mesa race -
+    // see https://launchpad.net/bugs/1267893.
+    gfx::GLSurface::InitializeOneOff();
   }
 
-  // Do this here rather than on the GPU thread to work around a mesa race -
-  // see https://launchpad.net/bugs/1267893.
-  // Also, it allows us to check if the GL share context platform matches
-  // the selected Chromium GL platform before spinning up the GPU thread
-  gfx::GLSurface::InitializeOneOff();
-
-  if (gl_share_context &&
-      gl_share_context->GetImplementation() == gfx::GetGLImplementation()) {
-    content::oxide_gpu_shim::SetGLShareGroup(gl_share_context->share_group());
-  } else {
-    DLOG(INFO) << "No valid shared GL context has been provided. "
-               << "Compositing will not work";
+  GLContextAdopted* share_context =
+      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
+  if (share_context) {
+    content::oxide_gpu_shim::SetGLShareGroup(share_context->share_group());
   }
 
   primary_screen_.reset(new Screen());
@@ -232,6 +228,10 @@ int BrowserMainParts::PreCreateThreads() {
 
   io_thread_.reset(new IOThread());
 
+  return 0;
+}
+
+void BrowserMainParts::PreMainMessageLoopRun() {
   gpu::GPUInfo gpu_info;
   gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
   switch (rv) {
@@ -247,10 +247,6 @@ int BrowserMainParts::PreCreateThreads() {
 
   content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
 
-  return 0;
-}
-
-void BrowserMainParts::PreMainMessageLoopRun() {
   CompositorUtils::GetInstance()->Initialize();
   net::NetModule::SetResourceProvider(NetResourceProvider);
 }
@@ -261,7 +257,7 @@ bool BrowserMainParts::MainMessageLoopRun(int* result_code) {
 }
 
 void BrowserMainParts::PostMainMessageLoopRun() {
-  CompositorUtils::GetInstance()->Destroy();
+  CompositorUtils::GetInstance()->Shutdown();
 }
 
 void BrowserMainParts::PostDestroyThreads() {
@@ -270,9 +266,10 @@ void BrowserMainParts::PostDestroyThreads() {
     BrowserContext::AssertNoContextsExist();
   }
 
-  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, NULL);
+  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, nullptr);
   io_thread_.reset();
-  content::oxide_gpu_shim::SetGLShareGroup(NULL);
+  content::oxide_gpu_shim::SetGLShareGroup(nullptr);
+  gpu::SetGpuInfoCollectorOxideLinux(nullptr);
 }
 
 BrowserMainParts::BrowserMainParts() {}

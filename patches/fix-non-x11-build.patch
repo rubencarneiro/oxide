@@ -1,11 +1,11 @@
 # HG changeset patch
-# Parent 7e09b5b0a6f5c346bafd78128742700f41b3fa4d
+# Parent 4f65875d02676723bf521634e07d903179307530
 # User oxide
 
 diff --git a/ui/events/events.gyp b/ui/events/events.gyp
 --- a/ui/events/events.gyp
 +++ b/ui/events/events.gyp
-@@ -82,16 +82,17 @@
+@@ -85,16 +85,17 @@
        'target_name': 'events',
        'type': '<(component)',
        'dependencies': [
@@ -15,6 +15,7 @@ diff --git a/ui/events/events.gyp b/ui/events/events.gyp
          '../gfx/gfx.gyp:gfx',
          '../gfx/gfx.gyp:gfx_geometry',
 +        'devices/events_devices.gyp:events_devices',
+         'dom4_keycode_converter',
          'events_base',
          'gesture_detection',
        ],
@@ -22,4 +23,3 @@ diff --git a/ui/events/events.gyp b/ui/events/events.gyp
          'EVENTS_IMPLEMENTATION',
        ],
        'sources': [
-         # Note: sources list duplicated in GN build.

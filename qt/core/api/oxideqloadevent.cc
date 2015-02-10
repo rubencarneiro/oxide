@@ -17,18 +17,16 @@
 
 #include "oxideqloadevent.h"
 
+#include "base/logging.h"
+
 class OxideQLoadEventPrivate {
  public:
   ~OxideQLoadEventPrivate() {}
-  OxideQLoadEventPrivate(const QUrl& url,
-                         OxideQLoadEvent::Type type,
-                         OxideQLoadEvent::ErrorDomain error_domain,
-                         const QString& error_string,
-                         int error_code,
-                         const QUrl& original_url) :
-      url(url), type(type), error_domain(error_domain),
-      error_string(error_string), error_code(error_code),
-      original_url(original_url) {}
+  OxideQLoadEventPrivate()
+      : type(OxideQLoadEvent::TypeStarted),
+        error_domain(OxideQLoadEvent::ErrorDomainNone),
+        error_code(0),
+        is_error(false) {}
 
   QUrl url;
   OxideQLoadEvent::Type type;
@@ -36,17 +34,47 @@ class OxideQLoadEventPrivate {
   QString error_string;
   int error_code;
   QUrl original_url;
+  bool is_error;
 };
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  Type type,
+                                 bool is_error)
+    : d_ptr(new OxideQLoadEventPrivate()) {
+  Q_D(OxideQLoadEvent);
+
+  DCHECK(type != OxideQLoadEvent::TypeFailed &&
+         type != OxideQLoadEvent::TypeRedirected);
+  DCHECK(type == OxideQLoadEvent::TypeCommitted || !is_error);
+
+  d->url = url;
+  d->type = type;
+  d->is_error = is_error;
+}
+
+OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  ErrorDomain error_domain,
                                  const QString& error_string,
-                                 int error_code,
-                                 const QUrl& original_url) :
-     d_ptr(new OxideQLoadEventPrivate(
-         url, type, error_domain, error_string,
-         error_code, original_url)) {}
+                                 int error_code)
+    : d_ptr(new OxideQLoadEventPrivate()) {
+  Q_D(OxideQLoadEvent);
+
+  d->url = url;
+  d->type = OxideQLoadEvent::TypeFailed;
+  d->error_domain = error_domain;
+  d->error_string = error_string;
+  d->error_code = error_code;
+}
+
+OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
+                                 const QUrl& original_url)
+    : d_ptr(new OxideQLoadEventPrivate()) {
+  Q_D(OxideQLoadEvent);
+
+  d->url = url;
+  d->type = OxideQLoadEvent::TypeRedirected;
+  d->original_url = original_url;
+}
 
 OxideQLoadEvent::~OxideQLoadEvent() {}
 
@@ -84,4 +112,10 @@ QUrl OxideQLoadEvent::originalUrl() const {
   Q_D(const OxideQLoadEvent);
 
   return d->original_url;
+}
+
+bool OxideQLoadEvent::isError() const {
+  Q_D(const OxideQLoadEvent);
+
+  return d->is_error;
 }

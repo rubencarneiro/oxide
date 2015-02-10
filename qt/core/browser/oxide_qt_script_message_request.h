@@ -41,7 +41,7 @@ class ScriptMessageRequest final {
   static ScriptMessageRequest* FromAdapter(
       ScriptMessageRequestAdapter* adapter);
 
-  void SetRequest(oxide::ScriptMessageRequestImplBrowser* req);
+  void SetRequest(scoped_ptr<oxide::ScriptMessageRequestImplBrowser> req);
 
  private:
   friend class ScriptMessageRequestAdapter;

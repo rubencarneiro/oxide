@@ -1,5 +1,5 @@
 # HG changeset patch
-# Parent 7edf1dc4ba02ae95f2a36cb03ff9e918e4bb7b82
+# Parent b43bcb3fd3dab8ec3954be04c346a3f23817eb5c
 # User oxide
 
 diff --git a/content/public/common/content_switches.h b/content/public/common/content_switches.h
@@ -20,11 +20,11 @@ diff --git a/content/public/common/content_switches.h b/content/public/common/co
  extern const char kAuditHandles[];
  CONTENT_EXPORT extern const char kBlinkPlatformLogChannels[];
  CONTENT_EXPORT extern const char kBlockCrossSiteDocuments[];
- CONTENT_EXPORT extern const char kBrowserAssertTest[];
  CONTENT_EXPORT extern const char kBrowserCrashTest[];
  CONTENT_EXPORT extern const char kBrowserSubprocessPath[];
  extern const char kDebugPluginLoading[];
-@@ -162,17 +162,17 @@ CONTENT_EXPORT extern const char kGpuPro
+ CONTENT_EXPORT extern const char kDefaultTileWidth[];
+@@ -154,17 +154,17 @@ CONTENT_EXPORT extern const char kGpuPro
  CONTENT_EXPORT extern const char kGpuSandboxAllowSysVShm[];
  CONTENT_EXPORT extern const char kGpuSandboxFailuresFatal[];
  CONTENT_EXPORT extern const char kGpuSandboxStartEarly[];
@@ -43,15 +43,15 @@ diff --git a/content/public/common/content_switches.h b/content/public/common/co
  CONTENT_EXPORT extern const char kLogNetLog[];
  extern const char kLogPluginMessages[];
  extern const char kMaxUntiledLayerHeight[];
-@@ -195,17 +195,17 @@ CONTENT_EXPORT extern const char kPpapiP
+@@ -187,17 +187,17 @@ CONTENT_EXPORT extern const char kPpapiP
  extern const char kPpapiStartupDialog[];
  CONTENT_EXPORT extern const char kProcessPerSite[];
  CONTENT_EXPORT extern const char kProcessPerTab[];
  CONTENT_EXPORT extern const char kProcessType[];
  CONTENT_EXPORT extern const char kReduceSecurityForTesting[];
+ CONTENT_EXPORT extern const char kReducedReferrerGranularity[];
  CONTENT_EXPORT extern const char kRegisterPepperPlugins[];
  CONTENT_EXPORT extern const char kRemoteDebuggingPort[];
- CONTENT_EXPORT extern const char kRendererAssertTest[];
 -extern const char kRendererCmdPrefix[];
 +CONTENT_EXPORT extern const char kRendererCmdPrefix[];
  CONTENT_EXPORT extern const char kRendererProcess[];

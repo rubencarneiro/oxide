@@ -142,7 +142,7 @@ void PowerSaveBlocker::RemoveBlock() {
 
     if (bus_.get()) {
       bus_->ShutdownAndBlock();
-      bus_ = NULL;
+      bus_ = nullptr;
     }
   } else {
     NOTIMPLEMENTED();

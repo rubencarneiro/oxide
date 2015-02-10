@@ -186,10 +186,10 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     : oxide::qt::WebContextAdapter(q),
       constructed_(false),
       io_(new oxide::qquick::WebContextIODelegate()),
-      network_request_delegate_(NULL),
-      storage_access_permission_delegate_(NULL),
-      user_agent_override_delegate_(NULL),
-      cookie_manager_(NULL) {}
+      network_request_delegate_(nullptr),
+      storage_access_permission_delegate_(nullptr),
+      user_agent_override_delegate_(nullptr),
+      cookie_manager_(nullptr) {}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
   updateUserScripts();
@@ -245,7 +245,7 @@ OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
         static_cast<OxideQQuickWebContext *>(prop->object));
 
   if (index >= cd->userScripts().size()) {
-    return NULL;
+    return nullptr;
   }
 
   return adapterToQObject<OxideQQuickUserScript>(cd->userScripts().at(index));
@@ -312,7 +312,7 @@ OxideQQuickWebContextPrivate::GetCustomNetworkAccessManager() {
 
   QQmlEngine* engine = qmlEngine(q);
   if (!engine) {
-    return NULL;
+    return nullptr;
   }
 
   return engine->networkAccessManager();
@@ -346,13 +346,13 @@ void OxideQQuickWebContextPrivate::delegateWorkerDestroyed(
   Q_Q(OxideQQuickWebContext);
 
   if (worker == q->networkRequestDelegate()) {
-    q->setNetworkRequestDelegate(NULL);
+    q->setNetworkRequestDelegate(nullptr);
   }
   if (worker == q->storageAccessPermissionDelegate()) {
-    q->setStorageAccessPermissionDelegate(NULL);
+    q->setStorageAccessPermissionDelegate(nullptr);
   }
   if (worker == q->userAgentOverrideDelegate()) {
-    q->setUserAgentOverrideDelegate(NULL);
+    q->setUserAgentOverrideDelegate(nullptr);
   }
 }
 
@@ -409,7 +409,7 @@ OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
   }
 
   if (!create) {
-    return NULL;
+    return nullptr;
   }
 
   OxideQQuickWebContext* c = new OxideQQuickWebContext();
@@ -526,7 +526,7 @@ void OxideQQuickWebContext::setAcceptLangs(const QString& accept_langs) {
 QQmlListProperty<OxideQQuickUserScript>
 OxideQQuickWebContext::userScripts() {
   return QQmlListProperty<OxideQQuickUserScript>(
-      this, NULL,
+      this, nullptr,
       OxideQQuickWebContextPrivate::userScript_append,
       OxideQQuickWebContextPrivate::userScript_count,
       OxideQQuickWebContextPrivate::userScript_at,
@@ -581,7 +581,7 @@ void OxideQQuickWebContext::removeUserScript(
 
   d->detachUserScriptSignals(user_script);
   if (user_script->parent() == this) {
-    user_script->setParent(NULL);
+    user_script->setParent(nullptr);
   }
 
   d->userScripts().removeOne(ud);

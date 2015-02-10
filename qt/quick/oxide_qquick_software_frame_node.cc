@@ -35,7 +35,7 @@ void SoftwareFrameNode::updateNode(
     QSharedPointer<oxide::qt::CompositorFrameHandle> handle) {
   handle_ = handle;
 
-  setRect(QRect(QPoint(0, 0), handle_->GetSize()));
+  setRect(handle_->GetRect());
 
   texture_.reset(view_->window()->createTextureFromImage(
       handle_->GetSoftwareFrame(),

@@ -37,10 +37,17 @@ SoftwareFrameData::SoftwareFrameData(unsigned id,
 
 SoftwareFrameData::~SoftwareFrameData() {}
 
-CompositorFrameHandle::~CompositorFrameHandle() {
-  if (proxy_.get() && (software_frame_data_ || gl_frame_data_)) {
-    proxy_->ReclaimResourcesForFrame(this);
+// static
+void CompositorFrameHandleTraits::Destruct(const CompositorFrameHandle* x) {
+  if (x->software_frame_data() || x->gl_frame_data()) {
+    x->proxy_->ReclaimResourcesForFrame(const_cast<CompositorFrameHandle*>(x));
   }
+
+  delete x;
+}
+
+CompositorFrameHandle::~CompositorFrameHandle() {
+  DCHECK(!software_frame_data_ && !gl_frame_data_);
 }
 
 CompositorFrameHandle::CompositorFrameHandle(

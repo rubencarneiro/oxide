@@ -45,12 +45,12 @@ class AdapterBase {
 
 template <typename T>
 inline T* adapterToQObject(oxide::qt::AdapterBase* a) {
-  if (!a) return NULL;
+  if (!a) return nullptr;
   return qobject_cast<T *>(a->api_handle());
 }
 
 inline QObject* adapterToQObject(oxide::qt::AdapterBase* a) {
-  if (!a) return NULL;
+  if (!a) return nullptr;
   return qobject_cast<QObject *>(a->api_handle());
 }
 

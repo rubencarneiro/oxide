@@ -29,6 +29,7 @@
     'use_cups': 0,
     'use_gconf': 0,
     'use_gnome_keyring': 0,
+    'use_libpci': 1,
     'use_ozone': 1,
     'toolkit_views': 0,
     'remoting': 0,

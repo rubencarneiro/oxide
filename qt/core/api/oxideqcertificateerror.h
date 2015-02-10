@@ -82,7 +82,7 @@ class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
 
  private:
   OxideQCertificateError(OxideQCertificateErrorPrivate& dd,
-                         QObject* parent = NULL);
+                         QObject* parent = nullptr);
 
   QScopedPointer<OxideQCertificateErrorPrivate> d_ptr;
 };

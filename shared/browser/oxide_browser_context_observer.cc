@@ -22,12 +22,12 @@
 namespace oxide {
 
 void BrowserContextObserver::OnBrowserContextDestruction() {
-  browser_context_ = NULL;
+  browser_context_ = nullptr;
   BrowserContextDestroyed();
 }
 
 BrowserContextObserver::BrowserContextObserver()
-    : browser_context_(NULL) {}
+    : browser_context_(nullptr) {}
 
 BrowserContextObserver::BrowserContextObserver(BrowserContext* context)
     : browser_context_(context) {

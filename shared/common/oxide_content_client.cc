@@ -118,7 +118,7 @@ ContentClient::ContentClient() {
 
 ContentClient::~ContentClient() {
   DCHECK_EQ(g_instance, this);
-  g_instance = NULL;
+  g_instance = nullptr;
 }
 
 } // namespace oxide

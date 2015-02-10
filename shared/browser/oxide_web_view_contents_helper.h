@@ -23,7 +23,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/supports_user_data.h"
-#include "content/public/browser/web_contents_delegate.h"
 
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
@@ -40,15 +39,16 @@ class WebPreferences;
 
 class WebViewContentsHelper final : private BrowserContextObserver,
                                     private WebPreferencesObserver,
-                                    private base::SupportsUserData::Data,
-                                    private content::WebContentsDelegate {
+                                    private base::SupportsUserData::Data {
  public:
+  WebViewContentsHelper(content::WebContents* contents);
   WebViewContentsHelper(content::WebContents* contents,
-                        WebViewContentsHelper* opener = NULL);
+                        WebViewContentsHelper* opener);
 
   static WebViewContentsHelper* FromWebContents(content::WebContents* contents);
   static WebViewContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
 
+  content::WebContents* GetWebContents() const;
   BrowserContext* GetBrowserContext() const;
 
   WebPreferences* GetWebPreferences() const;
@@ -56,11 +56,9 @@ class WebViewContentsHelper final : private BrowserContextObserver,
 
   void WebContentsAdopted();
 
-  void TakeWebContentsOwnershipAndClosePage(
-      scoped_ptr<content::WebContents> web_contents);
-
  private:
   ~WebViewContentsHelper();
+  void Init();
 
   void UpdateWebPreferences();
 
@@ -70,18 +68,10 @@ class WebViewContentsHelper final : private BrowserContextObserver,
   // WebPreferencesObserver implementation
   void WebPreferencesValueChanged() final;
 
-  // content::WebContentsDelegate implementation
-  void CloseContents(content::WebContents* source) final;
-
   scoped_refptr<BrowserContext> context_;
   content::WebContents* web_contents_;
 
   bool owns_web_preferences_;
-
-  // When deleting the WebView, we take ownership of the WebContents
-  // whilst we wait for the unload handler to finish. This allows us to
-  // run the unload handler completely transparently to the application
-  scoped_ptr<content::WebContents> web_contents_holder_during_close_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebViewContentsHelper);
 };

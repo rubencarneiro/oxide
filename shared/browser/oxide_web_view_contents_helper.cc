@@ -25,7 +25,6 @@
 #include "shared/common/oxide_content_client.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_browser_process_main.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 
@@ -38,8 +37,23 @@ const char kWebViewContentsHelperKey[] = "oxide_web_view_contents_helper_data";
 WebViewContentsHelper::~WebViewContentsHelper() {
   if (web_preferences() && owns_web_preferences_) {
     WebPreferences* prefs = web_preferences();
-    WebPreferencesObserver::Observe(NULL);
+    WebPreferencesObserver::Observe(nullptr);
     prefs->Destroy();
+  }
+}
+
+void WebViewContentsHelper::Init() {
+  DCHECK(!FromWebContents(web_contents_));
+
+  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
+
+  content::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  renderer_prefs->browser_handles_non_local_top_level_requests = true;
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (rvh) {
+    rvh->SyncRendererPrefs();
   }
 }
 
@@ -60,16 +74,13 @@ void WebViewContentsHelper::WebPreferencesValueChanged() {
   UpdateWebPreferences();
 }
 
-void WebViewContentsHelper::CloseContents(content::WebContents* source) {
-  DCHECK_EQ(source, web_contents_);
-  DCHECK(web_contents_holder_during_close_);
-
-  scoped_ptr<content::WebContents> holder =
-      web_contents_holder_during_close_.Pass();
-  holder.reset();
-  // |this| has been deleted
-
-  BrowserProcessMain::GetInstance()->DecrementPendingUnloadsCount();
+WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
+    : BrowserContextObserver(
+          BrowserContext::FromContent(contents->GetBrowserContext())),
+      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
+      web_contents_(contents),
+      owns_web_preferences_(false) {
+  Init();
 }
 
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
@@ -79,24 +90,11 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       web_contents_(contents),
       owns_web_preferences_(false) {
-  DCHECK(!FromWebContents(web_contents_));
+  Init();
 
-  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
-
-  content::RendererPreferences* renderer_prefs =
-      web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->browser_handles_non_local_top_level_requests = true;
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (rvh) {
-    rvh->SyncRendererPrefs();
-  }
-
-  if (opener) {
-    WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());
-    owns_web_preferences_ = true;
-    UpdateWebPreferences();
-  }
+  WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());
+  owns_web_preferences_ = true;
+  UpdateWebPreferences();
 }
 
 // static
@@ -110,6 +108,10 @@ WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
 WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
     content::RenderViewHost* rvh) {
   return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+}
+
+content::WebContents* WebViewContentsHelper::GetWebContents() const {
+  return web_contents_;
 }
 
 BrowserContext* WebViewContentsHelper::GetBrowserContext() const {
@@ -127,7 +129,7 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
 
   if (web_preferences() && owns_web_preferences_) {
     WebPreferences* old = web_preferences();
-    WebPreferencesObserver::Observe(NULL);
+    WebPreferencesObserver::Observe(nullptr);
     old->Destroy();
   }
 
@@ -139,19 +141,6 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
 
 void WebViewContentsHelper::WebContentsAdopted() {
   owns_web_preferences_ = false;
-}
-
-void WebViewContentsHelper::TakeWebContentsOwnershipAndClosePage(
-    scoped_ptr<content::WebContents> web_contents) {
-  DCHECK_EQ(web_contents.get(), web_contents_);
-  DCHECK(!web_contents_holder_during_close_);
-
-  web_contents_holder_during_close_ = web_contents.Pass();
-
-  BrowserProcessMain::GetInstance()->IncrementPendingUnloadsCount();
-
-  web_contents_->SetDelegate(this);
-  web_contents_->GetRenderViewHost()->ClosePage();
 }
 
 } // namespace oxide

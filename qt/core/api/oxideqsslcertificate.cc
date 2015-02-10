@@ -65,14 +65,14 @@ static QDateTime ToQDateTime(const base::Time& time) {
 }
 
 OxideQSslCertificatePrivate::OxideQSslCertificatePrivate(
-    const scoped_refptr<net::X509Certificate>& cert)
+    net::X509Certificate* cert)
     : x509_cert_(cert) {}
 
 OxideQSslCertificatePrivate::~OxideQSslCertificatePrivate() {}
 
 // static
 OxideQSslCertificate* OxideQSslCertificatePrivate::Create(
-    const scoped_refptr<net::X509Certificate>& cert,
+    net::X509Certificate* cert,
     QObject* parent) {
   return new OxideQSslCertificate(
       *new OxideQSslCertificatePrivate(cert),
@@ -156,7 +156,7 @@ OxideQSslCertificate* OxideQSslCertificate::issuer() const {
   const net::X509Certificate::OSCertHandles& handles =
       d->x509_cert_->GetIntermediateCertificates();
   if (handles.empty()) {
-    return NULL;
+    return nullptr;
   }
 
   net::X509Certificate::OSCertHandle handle = handles[0];
@@ -168,7 +168,7 @@ OxideQSslCertificate* OxideQSslCertificate::issuer() const {
 
   scoped_refptr<net::X509Certificate> cert =
       net::X509Certificate::CreateFromHandle(handle, intermediates);
-  d->issuer_.reset(OxideQSslCertificatePrivate::Create(cert));
+  d->issuer_.reset(OxideQSslCertificatePrivate::Create(cert.get()));
 
   return d->issuer_.get();
 }
@@ -176,7 +176,7 @@ OxideQSslCertificate* OxideQSslCertificate::issuer() const {
 OxideQSslCertificate* OxideQSslCertificate::copy() const {
   Q_D(const OxideQSslCertificate);
 
-  return OxideQSslCertificatePrivate::Create(d->x509_cert_);
+  return OxideQSslCertificatePrivate::Create(d->x509_cert_.get());
 }
 
 QString OxideQSslCertificate::toPem() const {

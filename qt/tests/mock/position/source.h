@@ -26,7 +26,7 @@ class SourceMock : public QGeoPositionInfoSource
   Q_OBJECT
 
  public:
-  SourceMock(QObject* parent = NULL);
+  SourceMock(QObject* parent = nullptr);
 
   QGeoPositionInfo lastKnownPosition(
       bool fromSatellitePositioningMethodsOnly = false) const;

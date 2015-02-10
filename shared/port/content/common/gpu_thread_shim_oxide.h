@@ -20,13 +20,12 @@
 
 #include <cstdint>
 
-#include "base/memory/ref_counted.h"
-#include "base/message_loop/message_loop.h"
+#include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "content/common/content_export.h"
 
-namespace base {
-class SingleThreadTaskRunner;
-}
+typedef unsigned int GLuint;
 
 namespace gfx {
 class GLShareGroup;
@@ -42,25 +41,30 @@ class TextureRef;
 namespace content {
 
 class ContextProviderCommandBuffer;
+class GpuCommandBufferStub;
 
 namespace oxide_gpu_shim {
 
-CONTENT_EXPORT bool IsCurrentlyOnGpuThread();
+class CONTENT_EXPORT TextureRefHolder {
+ public:
+  TextureRefHolder();
+  TextureRefHolder(content::GpuCommandBufferStub* command_buffer,
+                   gpu::gles2::TextureRef* ref);
 
-CONTENT_EXPORT scoped_refptr<base::SingleThreadTaskRunner> GetGpuThreadTaskRunner();
-CONTENT_EXPORT void AddGpuThreadTaskObserver(base::MessageLoop::TaskObserver* obs);
+  ~TextureRefHolder();
 
-CONTENT_EXPORT gpu::gles2::TextureRef* CreateTextureRef(
+  bool IsValid() const;
+  GLuint GetServiceID() const;
+
+ private:
+  base::WeakPtr<content::GpuCommandBufferStub> command_buffer_;
+  scoped_refptr<gpu::gles2::TextureRef> ref_;
+};
+
+CONTENT_EXPORT TextureRefHolder CreateTextureRef(
     int32_t client_id,
     int32_t route_id,
     const gpu::Mailbox& mailbox);
-CONTENT_EXPORT void ReleaseTextureRef(int32_t client_id,
-                                      int32_t route_id,
-                                      gpu::gles2::TextureRef* ref);
-
-CONTENT_EXPORT bool IsSyncPointRetired(uint32_t sync_point);
-CONTENT_EXPORT void AddSyncPointCallback(uint32_t sync_point,
-                                         const base::Closure& callback);
 
 CONTENT_EXPORT int32_t GetContextProviderRouteID(
     content::ContextProviderCommandBuffer* provider);

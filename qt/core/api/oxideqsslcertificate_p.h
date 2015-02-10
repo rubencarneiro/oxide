@@ -33,14 +33,13 @@ class OxideQSslCertificatePrivate final {
  public:
   ~OxideQSslCertificatePrivate();
 
-  static OxideQSslCertificate* Create(
-      const scoped_refptr<net::X509Certificate>& cert,
-      QObject* parent = NULL);
+  static OxideQSslCertificate* Create(net::X509Certificate* cert,
+                                      QObject* parent = nullptr);
 
  private:
   friend class OxideQSslCertificate;
 
-  OxideQSslCertificatePrivate(const scoped_refptr<net::X509Certificate>& cert);
+  OxideQSslCertificatePrivate(net::X509Certificate* cert);
 
   scoped_refptr<net::X509Certificate> x509_cert_;
   mutable scoped_ptr<OxideQSslCertificate> issuer_;
