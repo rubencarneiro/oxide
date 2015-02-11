@@ -116,13 +116,17 @@ Api::Api(IOThreadControllerImpl* controller)
       controller_(controller) {}
    
 void Api::sendMessage(const QVariant& message) {
-  if (message.type() != QVariant::Map &&
-      message.type() != QVariant::List &&
-      message.type() != QVariant::StringList) {
+  QVariant aux = message;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+  if (aux.type() != QVariant::Map &&
+      aux.type() != QVariant::List &&
+      aux.type() != QVariant::StringList) {
     return;
   }
 
-  Q_EMIT controller_->sendMessage(message);
+  Q_EMIT controller_->sendMessage(aux);
 }
 
 void IOThreadControllerImpl::CallEntryPointInWorker(
@@ -300,16 +304,21 @@ void OxideQQuickWebContextDelegateWorker::setSource(const QUrl& source) {
 void OxideQQuickWebContextDelegateWorker::sendMessage(const QVariant& message) {
   Q_D(OxideQQuickWebContextDelegateWorker);
 
-  if (message.type() != QVariant::Map &&
-      message.type() != QVariant::List &&
-      message.type() != QVariant::StringList) {
-    qWarning() << "Called WebContextDelegateWorker.sendMessage with an invalid argument";
+  QVariant aux = message;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  if (aux.type() != QVariant::Map &&
+      aux.type() != QVariant::List &&
+      aux.type() != QVariant::StringList) {
+    qWarning() << "Called WebContextDelegateWorker.sendMessage with an invalid argument" << aux;
     return;
   }
 
   QMetaObject::invokeMethod(d->io_thread_controller_.data(),
                             "receiveMessage",
-                            Q_ARG(QVariant, message));
+                            Q_ARG(QVariant, aux));
 }
 
 #include "oxideqquickwebcontextdelegateworker.moc"
