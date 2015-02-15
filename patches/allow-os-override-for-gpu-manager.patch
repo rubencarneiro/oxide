@@ -7,9 +7,9 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
 --- a/content/browser/gpu/gpu_data_manager_impl_private.cc
 +++ b/content/browser/gpu/gpu_data_manager_impl_private.cc
 @@ -14,16 +14,17 @@
- #include "base/strings/string_number_conversions.h"
  #include "base/strings/stringprintf.h"
  #include "base/sys_info.h"
+ #include "base/trace_event/trace_event.h"
  #include "base/version.h"
  #include "cc/base/switches.h"
  #include "content/browser/gpu/gpu_process_host.h"
@@ -24,8 +24,8 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #include "gpu/command_buffer/service/gpu_switches.h"
  #include "gpu/config/gpu_control_list_jsons.h"
  #include "gpu/config/gpu_driver_bug_workaround_type.h"
-@@ -542,25 +543,25 @@ void GpuDataManagerImplPrivate::Initiali
-                  gpu_info);
+@@ -547,25 +548,25 @@ void GpuDataManagerImplPrivate::Initiali
+   }
  }
  
  void GpuDataManagerImplPrivate::UpdateGpuInfoHelper() {
@@ -52,7 +52,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
    NotifyGpuInfoUpdate();
  }
  
-@@ -900,32 +901,37 @@ GpuDataManagerImplPrivate::GpuDataManage
+@@ -905,32 +906,37 @@ GpuDataManagerImplPrivate::GpuDataManage
        use_warp_(false),
        card_blacklisted_(false),
        update_histograms_(true),
@@ -91,7 +91,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #endif
  }
  
-@@ -937,25 +943,27 @@ void GpuDataManagerImplPrivate::Initiali
+@@ -942,25 +948,27 @@ void GpuDataManagerImplPrivate::Initiali
        base::CommandLine::ForCurrentProcess()->HasSwitch(
            switches::kLogGpuControlListDecisions);
  
@@ -164,7 +164,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -345,9 +345,15 @@ const wchar_t* ContentBrowserClient::Get
+@@ -356,9 +356,15 @@ const wchar_t* ContentBrowserClient::Get
  #if defined(VIDEO_HOLE)
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
@@ -198,10 +198,10 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  #include "net/url_request/url_request_interceptor.h"
  #include "net/url_request/url_request_job_factory.h"
  #include "storage/browser/fileapi/file_system_context.h"
+ #include "third_party/WebKit/public/platform/WebPageVisibilityState.h"
  #include "ui/base/window_open_disposition.h"
  
- #if defined(OS_POSIX) && !defined(OS_MACOSX)
-@@ -609,13 +610,16 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -641,13 +642,16 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)

@@ -23,7 +23,7 @@
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
-#include "content/browser/renderer_host/render_view_host_impl.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 
 namespace oxide {
@@ -56,16 +56,17 @@ WebContentsUnloader* WebContentsUnloader::GetInstance() {
 }
 
 void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
-  content::RenderViewHostImpl* rvhi =
-      static_cast<content::RenderViewHostImpl*>(contents->GetRenderViewHost());
-  if (!rvhi || rvhi->SuddenTerminationAllowed()) {
+  content::RenderViewHost* rvh = contents->GetRenderViewHost();
+  if (!rvh) {
     return;
   }
 
+  // So we can intercept CloseContents
   contents->SetDelegate(this);
-  rvhi->ClosePage();
-
   contents_unloading_.push_back(contents.release());
+
+  rvh->ClosePage();
+  // Note: |rvh| might be deleted at this point
 }
 
 void WebContentsUnloader::WaitForPendingUnloadsToFinish() {

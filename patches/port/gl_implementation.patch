@@ -28,7 +28,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -304,16 +304,18 @@
+@@ -303,16 +303,18 @@
          'win/dpi.h',
          'win/hwnd_util.cc',
          'win/hwnd_util.h',
@@ -47,8 +47,8 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['OS=="ios"', {
            'dependencies': [
              '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
-@@ -390,17 +392,17 @@
-           'sources!': [
+@@ -391,17 +393,17 @@
+             'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
              'render_text_harfbuzz.cc',
@@ -140,7 +140,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'android/gl_jni_registrar.cc',
          'android/gl_jni_registrar.h',
          'android/scoped_java_surface.cc',
-@@ -46,17 +47,17 @@
+@@ -47,17 +48,17 @@
          'gl_bindings_autogen_osmesa.cc',
          'gl_bindings_autogen_osmesa.h',
          'gl_bindings_skia_in_process.cc',
@@ -159,7 +159,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_context_stub_with_extensions.h',
          'gl_context_win.cc',
          'gl_context_x11.cc',
-@@ -79,17 +80,17 @@
+@@ -80,17 +81,17 @@
          'gl_image_ref_counted_memory.h',
          'gl_image_shared_memory.cc',
          'gl_image_shared_memory.h',
@@ -178,7 +178,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_share_group.cc',
          'gl_share_group.h',
          'gl_state_restorer.cc',
-@@ -99,30 +100,33 @@
+@@ -100,30 +101,33 @@
          'gl_surface_android.cc',
          'gl_surface_mac.cc',
          'gl_surface_stub.cc',
@@ -213,7 +213,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'egl_util.h',
              'gl_bindings_autogen_egl.cc',
              'gl_bindings_autogen_egl.h',
-@@ -148,26 +152,26 @@
+@@ -149,26 +153,26 @@
            ],
          }],
          ['OS=="linux"', {
@@ -243,10 +243,51 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
            'all_dependent_settings': {
              'defines': [
                'GL_GLEXT_PROTOTYPES',
+diff --git a/ui/gl/gl_bindings.cc b/ui/gl/gl_bindings.cc
+--- a/ui/gl/gl_bindings.cc
++++ b/ui/gl/gl_bindings.cc
+@@ -3,17 +3,17 @@
+ // found in the LICENSE file.
+ 
+ #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
+ #include <EGL/egl.h>
+ #endif
+ 
+ #include "ui/gl/gl_bindings.h"
+ 
+-#if defined(USE_X11)
++#if defined(OS_LINUX)
+ #include "ui/gfx/x/x11_types.h"
+ #endif
+ 
+ #if defined(OS_WIN)
+ #include "ui/gl/gl_surface_wgl.h"
+ #endif
+ 
+ #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
+@@ -51,17 +51,17 @@ std::string DriverEGL::GetPlatformExtens
+   DCHECK(g_driver_egl.fn.eglInitializeFn);
+   g_driver_egl.fn.eglInitializeFn(display, NULL, NULL);
+   DCHECK(g_driver_egl.fn.eglQueryStringFn);
+   const char* str = g_driver_egl.fn.eglQueryStringFn(display, EGL_EXTENSIONS);
+   return str ? std::string(str) : "";
+ }
+ #endif
+ 
+-#if defined(USE_X11)
++#if defined(OS_LINUX)
+ std::string DriverGLX::GetPlatformExtensions() {
+   DCHECK(g_driver_glx.fn.glXQueryExtensionsStringFn);
+   const char* str =
+       g_driver_glx.fn.glXQueryExtensionsStringFn(gfx::GetXDisplay(), 0);
+   return str ? std::string(str) : "";
+ }
+ #endif
+ 
 diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 --- a/ui/gl/gl_bindings.h
 +++ b/ui/gl/gl_bindings.h
-@@ -20,17 +20,17 @@
+@@ -22,17 +22,17 @@
  #include "build/build_config.h"
  #include "ui/gl/gl_export.h"
  
@@ -265,7 +306,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -312,16 +312,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -314,16 +314,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -285,12 +326,12 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -375,17 +378,17 @@ struct GL_EXPORT DriverEGL {
-   void ClearBindings();
- 
-   ProcsEGL fn;
+@@ -383,17 +386,17 @@ struct GL_EXPORT DriverEGL {
    ProcsEGL debug_fn;
    ExtensionsEGL ext;
+ 
+  private:
+   static std::string GetPlatformExtensions();
  };
  #endif
  
@@ -298,13 +339,13 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 +#if defined(OS_LINUX)
  struct GL_EXPORT DriverGLX {
    void InitializeStaticBindings();
-   void InitializeDynamicBindings(GLContext* context);
    void InitializeDebugBindings();
    void ClearBindings();
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -415,16 +418,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+   ExtensionsGLX ext;
+@@ -425,16 +428,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  

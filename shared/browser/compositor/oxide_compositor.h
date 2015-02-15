@@ -76,12 +76,12 @@ class Compositor final : public cc::LayerTreeHostClient,
   scoped_ptr<cc::OutputSurface> CreateOutputSurface();
 
   // cc::LayerTreeHostClient implementation
-  void WillBeginMainFrame(int frame_id) final;
+  void WillBeginMainFrame() final;
   void BeginMainFrame(const cc::BeginFrameArgs& args) final;
   void DidBeginMainFrame() final;
   void Layout() final;
-  void ApplyViewportDeltas(const gfx::Vector2d& inner_delta,
-                           const gfx::Vector2d& outer_delta,
+  void ApplyViewportDeltas(const gfx::Vector2dF& inner_delta,
+                           const gfx::Vector2dF& outer_delta,
                            const gfx::Vector2dF& elastic_overscroll_delta,
                            float page_scale,
                            float top_controls_delta) final;
