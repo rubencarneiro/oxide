@@ -60,8 +60,10 @@ IPC_MESSAGE_ROUTED1(OxideMsg_SetAllowRunningInsecureContent,
                     bool)
 IPC_MESSAGE_ROUTED0(OxideMsg_ReloadFrame)
 
-IPC_MESSAGE_ROUTED1(OxideMsg_UpdateTopControlsState,
-                    cc::TopControlsState)
+IPC_MESSAGE_ROUTED3(OxideMsg_UpdateTopControlsState,
+                    cc::TopControlsState,
+                    cc::TopControlsState,
+                    bool)
 
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockDisplayingInsecureContent)
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockRunningInsecureContent)
