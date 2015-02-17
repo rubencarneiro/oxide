@@ -26,25 +26,18 @@ player_map::iterator find_player(Player *player)
 
 void setup_delegate(MediaHubDelegate *delegate, std::shared_ptr<Player>& player)
 {
-  player->seeked_to().connect([delegate, player](int64_t pos) {
-        if (find_player(player.get()) != g_mediahub_players.end()) {
+  player->seeked_to().connect([delegate](int64_t pos) {
           delegate->seeked_to(pos);
-        }
       });
 
-  player->end_of_stream().connect([delegate, player]() {
-        if (find_player(player.get()) != g_mediahub_players.end()) {
+  player->end_of_stream().connect([delegate]() {
           delegate->end_of_stream();
-        }
       });
 
-  player->playback_status_changed().connect([delegate, player](Player::PlaybackStatus status) {
-        if (find_player(player.get()) != g_mediahub_players.end()) {
+  player->playback_status_changed().connect([delegate](Player::PlaybackStatus status) {
           delegate->playback_status_changed(
-                      static_cast<MediaHubDelegate::Status>(status),
-                      player->duration().get()
+                      static_cast<MediaHubDelegate::Status>(status)
                     );
-        }
       });
 }
 }
@@ -99,8 +92,7 @@ mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubD
       setup_delegate(delegate, player);
 
       delegate->playback_status_changed(
-                    MediaHubDelegate::Status(player->playback_status().get()),
-                    player->duration().get()
+                    MediaHubDelegate::Status(player->playback_status().get())
                   );
     }
 
