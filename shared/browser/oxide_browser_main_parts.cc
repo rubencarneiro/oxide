@@ -17,12 +17,21 @@
 
 #include "oxide_browser_main_parts.h"
 
+#include <set>
+#include <string>
+
+#include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "base/scoped_native_library.h"
+#include "base/strings/string_number_conversions.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "EGL/egl.h"
+#include "gpu/command_buffer/service/gpu_switches.h"
+#include "gpu/config/gpu_control_list.h"
+#include "gpu/config/gpu_control_list_jsons.h"
+#include "gpu/config/gpu_driver_bug_list.h"
 #include "gpu/config/gpu_info_collector.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
@@ -43,6 +52,7 @@
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 
+#include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
@@ -62,6 +72,41 @@ blink::WebScreenInfo DefaultScreenInfoGetter() {
 
 scoped_ptr<base::MessagePump> CreateUIMessagePump() {
   return BrowserPlatformIntegration::GetInstance()->CreateUIMessagePump();
+}
+
+std::string IntSetToString(const std::set<int>& list) {
+  std::string rt;
+  for (std::set<int>::const_iterator it = list.begin();
+       it != list.end(); ++it) {
+    if (!rt.empty()) {
+      rt += ",";
+    }
+    rt += base::IntToString(*it);
+  }
+  return rt;
+}
+
+void ApplyGpuDriverBugWorkarounds(base::CommandLine* command_line,
+                                  const gpu::GPUInfo& gpu_info) {
+  gpu::GpuControlList::OsType os_type_override = gpu::GpuControlList::kOsAny;
+  std::string os_version_override;
+  if (AndroidProperties::GetInstance()->Available()) {
+    os_type_override = gpu::GpuControlList::kOsAndroid;
+    os_version_override = AndroidProperties::GetInstance()->GetOSVersion();
+  }
+
+  scoped_ptr<gpu::GpuDriverBugList> list(gpu::GpuDriverBugList::Create());
+  list->LoadList(gpu::kGpuDriverBugListJson,
+                 gpu::GpuControlList::kCurrentOsOnly,
+                 os_type_override);
+  std::set<int> workarounds = list->MakeDecision(
+      os_type_override, os_version_override, gpu_info);
+  if (workarounds.empty()) {
+    return;
+  }
+
+  command_line->AppendSwitchASCII(switches::kGpuDriverBugWorkarounds,
+                                  IntSetToString(workarounds));
 }
 
 class ScopedBindGLESAPI {
@@ -246,6 +291,11 @@ void BrowserMainParts::PreMainMessageLoopRun() {
   }
 
   content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
+
+  base::CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
+  if (!command_line.HasSwitch(switches::kDisableGpuDriverBugWorkarounds)) {
+    ApplyGpuDriverBugWorkarounds(&command_line, gpu_info);
+  }
 
   CompositorUtils::GetInstance()->Initialize();
   net::NetModule::SetResourceProvider(NetResourceProvider);
