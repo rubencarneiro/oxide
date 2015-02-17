@@ -57,7 +57,9 @@ MediaPlayerMediaHub::MediaPlayerMediaHub(
 
 MediaPlayerMediaHub::~MediaPlayerMediaHub() {
   timer_.Stop();
-  mediahub_stop(media_hub_client_);
+  if (!use_fixed_session_) {
+    mediahub_stop(media_hub_client_);
+  }
   mediahub_release(media_hub_client_);
 }
 
