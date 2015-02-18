@@ -40,6 +40,7 @@ class GLContextAdopted final : public oxide::GLContextAdopted {
 
   // gfx::GLContext implementation
   void* GetHandle() final;
+  bool WasAllocatedUsingRobustnessExtension() final;
 
   gfx::GLImplementation implementation() const { return implementation_; }
 
