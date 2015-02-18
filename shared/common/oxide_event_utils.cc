@@ -173,7 +173,8 @@ blink::WebGestureEvent MakeWebGestureEvent(
   return result;
 }
 
-blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event) {
+blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
+                                       bool may_cause_scrolling) {
   blink::WebTouchEvent result;
 
   result.timeStampSeconds =
@@ -200,6 +201,7 @@ blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event) {
   }
 
   result.cancelable = result.type != blink::WebInputEvent::TouchCancel;
+  result.causesScrollingIfUncanceled = may_cause_scrolling;
 
   result.touchesLength = std::min(
       event.GetPointerCount(),

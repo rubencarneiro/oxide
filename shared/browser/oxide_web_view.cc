@@ -372,6 +372,22 @@ float WebView::GetFrameMetadataScaleToPix() {
          compositor_frame_metadata().page_scale_factor;
 }
 
+void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
+                                           bool initial_host) {
+  cc::TopControlsState current = location_bar_constraints_;
+  if (initial_host && current == cc::BOTH) {
+    // Show the location bar if this is the initial RVH and the constraints
+    // are set to cc::BOTH
+    current = cc::SHOWN;
+  }
+
+  rvh->Send(
+      new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+                                          location_bar_constraints_,
+                                          current,
+                                          false));
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return 0;
 }
@@ -886,9 +902,7 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
       static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
     }
 
-    new_host->Send(
-        new OxideMsg_UpdateTopControlsState(new_host->GetRoutingID(),
-                                            location_bar_constraints_));
+    InitializeTopControlsForHost(new_host, !old_host);
   }
 }
 
@@ -1253,9 +1267,7 @@ void WebView::Init(Params* params) {
 
     content::RenderViewHost* rvh = GetRenderViewHost();
     if (rvh) {
-      rvh->Send(
-          new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                              location_bar_constraints_));
+      InitializeTopControlsForHost(rvh, true);
     }
 
     // Sync WebContents with the state of the WebView
@@ -1752,7 +1764,7 @@ int WebView::GetLocationBarOffsetPix() {
 }
 
 int WebView::GetLocationBarContentOffsetPix() {
-  return GetLocationBarContentOffsetDip() *
+  return compositor_frame_metadata().location_bar_content_translation.y() *
          compositor_frame_metadata().device_scale_factor;
 }
 
@@ -1805,7 +1817,9 @@ void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
   }
 
   rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                constraints));
+                                                constraints,
+                                                cc::BOTH,
+                                                true));
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
@@ -1988,7 +2002,8 @@ void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
 }
 
 void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
-  if (!gesture_provider_->OnTouchEvent(event)) {
+  auto rv = gesture_provider_->OnTouchEvent(event);
+  if (!rv.succeeded) {
     return;
   }
 
@@ -2000,8 +2015,9 @@ void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
 
   scoped_ptr<ui::MotionEvent> motion_event =
       gesture_provider_->GetTouchState();
-  host->ForwardTouchEventWithLatencyInfo(MakeWebTouchEvent(*motion_event),
-                                         ui::LatencyInfo());
+  host->ForwardTouchEventWithLatencyInfo(
+      MakeWebTouchEvent(*motion_event, rv.did_generate_scroll),
+      ui::LatencyInfo());
 }
 
 void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {

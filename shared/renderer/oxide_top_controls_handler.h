@@ -23,7 +23,7 @@
 #include "content/public/renderer/render_view_observer.h"
 
 namespace content {
-class RenderWidget;
+class RenderWidgetCompositor;
 }
 
 namespace oxide {
@@ -34,8 +34,10 @@ class TopControlsHandler final : public content::RenderViewObserver {
   ~TopControlsHandler();
 
  private:
-  content::RenderWidget* GetRenderWidget() const;
-  void OnUpdateTopControlsState(cc::TopControlsState constraints);
+  content::RenderWidgetCompositor* GetRenderWidgetCompositor() const;
+  void OnUpdateTopControlsState(cc::TopControlsState constraints,
+                                cc::TopControlsState current,
+                                bool animate);
 
   // IPC::Listener implementation
   bool OnMessageReceived(const IPC::Message& message) final;

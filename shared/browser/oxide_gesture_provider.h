@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_GESTURE_PROVIDER_H_
 
 #include "base/memory/scoped_ptr.h"
+#include "ui/events/gesture_detection/filtered_gesture_provider.h"
 
 namespace blink {
 class WebGestureEvent;
@@ -43,7 +44,8 @@ class GestureProvider {
   static scoped_ptr<GestureProvider> Create(GestureProviderClient* client);
   virtual ~GestureProvider();
 
-  virtual bool OnTouchEvent(const ui::TouchEvent& event) = 0;
+  virtual ui::FilteredGestureProvider::TouchHandlingResult
+      OnTouchEvent(const ui::TouchEvent& event) = 0;
   virtual void OnTouchEventAck(bool consumed) = 0;
 
   virtual scoped_ptr<ui::MotionEvent> GetTouchState() const = 0;

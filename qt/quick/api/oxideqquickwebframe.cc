@@ -193,7 +193,12 @@ OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
   OxideQQuickScriptMessageRequest* request =
       new OxideQQuickScriptMessageRequest();
 
-  if (!d->sendMessage(context, msg_id, args,
+  QVariant aux = args;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  if (!d->sendMessage(context, msg_id, aux,
                       OxideQQuickScriptMessageRequestPrivate::get(request))) {
     delete request;
     return nullptr;
@@ -207,5 +212,10 @@ void OxideQQuickWebFrame::sendMessageNoReply(const QUrl& context,
                                              const QVariant& args) {
   Q_D(OxideQQuickWebFrame);
 
-  d->sendMessageNoReply(context, msg_id, args);
+  QVariant aux = args;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  d->sendMessageNoReply(context, msg_id, aux);
 }

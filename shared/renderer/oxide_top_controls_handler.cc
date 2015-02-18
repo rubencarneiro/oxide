@@ -26,20 +26,22 @@
 
 namespace oxide {
 
-content::RenderWidget* TopControlsHandler::GetRenderWidget() const {
+content::RenderWidgetCompositor*
+TopControlsHandler::GetRenderWidgetCompositor() const {
   return static_cast<content::RenderWidget*>(
-      static_cast<content::RenderViewImpl*>(render_view()));
+      static_cast<content::RenderViewImpl*>(render_view()))->compositor();
 }
 
 void TopControlsHandler::OnUpdateTopControlsState(
-    cc::TopControlsState constraints) {
-  content::RenderWidgetCompositor* compositor =
-      GetRenderWidget()->compositor();
+    cc::TopControlsState constraints,
+    cc::TopControlsState current,
+    bool animate) {
+  content::RenderWidgetCompositor* compositor = GetRenderWidgetCompositor();
   if (!compositor) {
     return;
   }
 
-  compositor->UpdateTopControlsState(constraints, cc::BOTH, true);
+  compositor->UpdateTopControlsState(constraints, current, animate);
 }
 
 bool TopControlsHandler::OnMessageReceived(const IPC::Message& message) {
