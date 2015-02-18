@@ -53,7 +53,6 @@
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
 #include "gin/public/isolate_holder.h"
 #endif
-#include "gpu/command_buffer/service/gpu_switches.h"
 #include "ipc/ipc_descriptors.h"
 #include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
@@ -258,9 +257,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
 
   if (IsEnvironmentOptionEnabled("IGNORE_GPU_BLACKLIST")) {
     command_line->AppendSwitch(switches::kIgnoreGpuBlacklist);
-  }
-  if (IsEnvironmentOptionEnabled("DISABLE_GPU_DRIVER_BUG_WORKAROUNDS")) {
-    command_line->AppendSwitch(switches::kDisableGpuDriverBugWorkarounds);
   }
 
   if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {
