@@ -70,16 +70,14 @@ class FetchTextureResourcesTask
       const gpu::Mailbox& mailbox,
       uint32 sync_point,
       const CompositorUtils::CreateGLFrameHandleCallback& callback,
-      scoped_refptr<base::TaskRunner> task_runner,
-      const base::ThreadChecker& gpu_thread_checker)
+      scoped_refptr<base::TaskRunner> task_runner)
       : client_id_(client_id),
         route_id_(-1),
         context_provider_(context_provider),
         mailbox_(mailbox),
         sync_point_(sync_point),
         callback_(callback),
-        task_runner_(task_runner),
-        gpu_thread_checker_(gpu_thread_checker) {
+        task_runner_(task_runner) {
     DCHECK(task_runner_.get());
     DCHECK(!callback_.is_null());
     DCHECK(context_provider_.get());
@@ -107,7 +105,6 @@ class FetchTextureResourcesTask
   uint32 sync_point_;
   CompositorUtils::CreateGLFrameHandleCallback callback_;
   scoped_refptr<base::TaskRunner> task_runner_;
-  base::ThreadChecker gpu_thread_checker_;
 };
 
 class CompositorThread : public base::Thread {
@@ -193,8 +190,6 @@ GLFrameHandle::~GLFrameHandle() {
 }
 
 void FetchTextureResourcesTask::OnSyncPointRetired() {
-  DCHECK(gpu_thread_checker_.CalledOnValidThread());
-
   GLuint service_id = 0;
   TextureRefHolder ref =
       content::oxide_gpu_shim::CreateTextureRef(client_id_,
@@ -231,8 +226,6 @@ void FetchTextureResourcesTask::SendResponseOnDestinationThread(
 }
 
 void FetchTextureResourcesTask::FetchTextureResourcesOnGpuThread() {
-  DCHECK(gpu_thread_checker_.CalledOnValidThread());
-
   gpu::SyncPointManager* sync_point_manager =
       content::GpuChildThread::GetChannelManager()->sync_point_manager();
   if (sync_point_manager->IsSyncPointRetired(sync_point_)) {
@@ -390,8 +383,7 @@ void CompositorUtilsImpl::CreateGLFrameHandle(
   scoped_refptr<FetchTextureResourcesTask> task =
       new FetchTextureResourcesTask(
         client_id_, context_provider,
-        mailbox, sync_point, callback, task_runner,
-        gpu_thread_checker_);
+        mailbox, sync_point, callback, task_runner);
 
   base::AutoLock lock(fetch_texture_resources_lock_);
 
