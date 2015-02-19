@@ -26,6 +26,11 @@ namespace {
 GpuInfoCollectorOxideLinux* g_collector;
 }
 
+CollectInfoResult CollectGpuID(uint32* vendor_id, uint32* device_id) {
+  DCHECK(vendor_id && device_id);
+  return g_collector->CollectGpuID(vendor_id, device_id);
+}
+
 CollectInfoResult CollectContextGraphicsInfo(GPUInfo* gpu_info) {
   DCHECK(gpu_info);
   return g_collector->CollectContextGraphicsInfo(gpu_info);
