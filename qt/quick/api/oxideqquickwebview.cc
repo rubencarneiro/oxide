@@ -273,7 +273,7 @@ OxideQQuickWebViewPrivate::CreateFilePickerDelegate() {
 void OxideQQuickWebViewPrivate::OnInitialized() {
   Q_Q(OxideQQuickWebView);
 
-  Q_ASSERT(d->construct_props_.data());
+  Q_ASSERT(construct_props_.data());
 
   // Make the webview the QObject parent of the new root frame,
   // to stop Qml from collecting the frame tree

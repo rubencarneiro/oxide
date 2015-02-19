@@ -376,8 +376,6 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
 
-  Q_ASSERT(this != g_default_context);
-
   for (int i = 0; i < d->userScripts().size(); ++i) {
     d->detachUserScriptSignals(
         adapterToQObject<OxideQQuickUserScript>(d->userScripts().at(i)));
