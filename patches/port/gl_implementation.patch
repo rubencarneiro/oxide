@@ -28,7 +28,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -303,16 +303,18 @@
+@@ -300,16 +300,18 @@
          'win/dpi.h',
          'win/hwnd_util.cc',
          'win/hwnd_util.h',
@@ -47,7 +47,7 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['OS=="ios"', {
            'dependencies': [
              '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
-@@ -391,17 +393,17 @@
+@@ -388,17 +390,17 @@
              'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
@@ -57,13 +57,13 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
            ],
          }],
 -        ['use_x11==1', {
-+        ['OS == "linux"', {
++        ['OS=="linux"', {
            'dependencies': [
              '../../build/linux/system.gyp:x11',
              'x/gfx_x11.gyp:gfx_x11',
            ],
          }],
-         ['use_pango==1', {
+         ['use_cairo==1', {
            'dependencies': [
              '<(DEPTH)/build/linux/system.gyp:pangocairo',
 diff --git a/ui/gfx/x/gfx_x11.gyp b/ui/gfx/x/gfx_x11.gyp

@@ -6,7 +6,7 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1078,18 +1078,18 @@
+@@ -1103,18 +1103,18 @@
        'browser/renderer_host/input/web_input_event_builders_android.cc',
        'browser/renderer_host/input/web_input_event_builders_android.h',
        'browser/renderer_host/input/web_input_event_builders_win.cc',
@@ -27,7 +27,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/media/audio_input_sync_writer.h',
        'browser/renderer_host/media/audio_renderer_host.cc',
        'browser/renderer_host/media/audio_renderer_host.h',
-@@ -1144,18 +1144,18 @@
+@@ -1169,18 +1169,18 @@
        'browser/renderer_host/render_widget_host_delegate.cc',
        'browser/renderer_host/render_widget_host_delegate.h',
        'browser/renderer_host/render_widget_host_impl.cc',
@@ -42,15 +42,15 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 +      #'browser/renderer_host/render_widget_host_view_aura.h',
        'browser/renderer_host/render_widget_host_view_base.cc',
        'browser/renderer_host/render_widget_host_view_base.h',
+       'browser/renderer_host/render_widget_host_view_mac.h',
+       'browser/renderer_host/render_widget_host_view_mac.mm',
        'browser/renderer_host/render_widget_host_view_mac_dictionary_helper.h',
        'browser/renderer_host/render_widget_host_view_mac_dictionary_helper.mm',
        'browser/renderer_host/render_widget_host_view_mac_editcommand_helper.h',
        'browser/renderer_host/render_widget_host_view_mac_editcommand_helper.mm',
-       'browser/renderer_host/render_widget_host_view_mac.h',
-       'browser/renderer_host/render_widget_host_view_mac.mm',
-@@ -1380,18 +1380,18 @@
-       'browser/web_contents/aura/image_window_delegate.cc',
-       'browser/web_contents/aura/image_window_delegate.h',
+@@ -1403,18 +1403,18 @@
+       'browser/web_contents/aura/gesture_nav_simple.cc',
+       'browser/web_contents/aura/gesture_nav_simple.h',
        'browser/web_contents/aura/overscroll_navigation_overlay.cc',
        'browser/web_contents/aura/overscroll_navigation_overlay.h',
        'browser/web_contents/aura/shadow_layer_delegate.cc',
@@ -69,7 +69,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        #'browser/web_contents/web_contents_view_android.cc',
        #'browser/web_contents/web_contents_view_android.h',
        #'browser/web_contents/web_contents_view_aura.cc',
-@@ -1436,16 +1436,18 @@
+@@ -1459,16 +1459,18 @@
        '<(SHARED_INTERMEDIATE_DIR)/blink/grit/devtools_resources_map.h',
        '<(SHARED_INTERMEDIATE_DIR)/content/browser/tracing/grit/tracing_resources.h',
        '<(SHARED_INTERMEDIATE_DIR)/ui/resources/grit/webui_resources_map.cc',

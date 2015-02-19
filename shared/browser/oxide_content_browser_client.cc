@@ -323,7 +323,6 @@ content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {
 
 void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
-    const GURL& url,
     content::WebPreferences* prefs) {
   WebViewContentsHelper* contents_helper =
       WebViewContentsHelper::FromRenderViewHost(render_view_host);
