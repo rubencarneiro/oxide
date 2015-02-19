@@ -23,7 +23,12 @@
 namespace oxide {
 namespace qt {
 
-Q_DECL_EXPORT int OxideMain(int argc, const char** argv);
+typedef void (*ReleaseFreeMemoryFunction)();
+
+Q_DECL_EXPORT int OxideMain(
+    int argc,
+    const char** argv,
+    ReleaseFreeMemoryFunction release_free_memory_function);
 
 } // namespace qt
 } // namespace oxide

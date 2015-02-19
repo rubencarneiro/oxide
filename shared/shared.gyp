@@ -199,7 +199,7 @@
       ],
       'defines': [
         'OXIDE_SUBPROCESS_PATH=\"<(oxide_subprocess_path)\"',
-        'OXIDE_GETTEXT_DOMAIN=\"<(oxide_gettext_domain)\"'
+        'OXIDE_GETTEXT_DOMAIN=\"<(oxide_gettext_domain)\"',
       ],
       'dependencies': [
         'oxide_packed_resources',
