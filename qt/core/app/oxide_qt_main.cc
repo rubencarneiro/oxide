@@ -17,6 +17,8 @@
 
 #include "oxide_qt_main.h"
 
+#include "base/allocator/allocator_extension.h"
+
 #include "shared/app/oxide_main.h"
 
 #include "oxide_qt_platform_delegate.h"
@@ -24,7 +26,11 @@
 namespace oxide {
 namespace qt {
 
-int OxideMain(int argc, const char** argv) {
+int OxideMain(int argc,
+              const char** argv,
+              ReleaseFreeMemoryFunction release_free_memory_function) {
+  base::allocator::SetReleaseFreeMemoryFunction(release_free_memory_function);
+
   PlatformDelegate delegate;
 
   oxide::OxideMainParams params(&delegate);

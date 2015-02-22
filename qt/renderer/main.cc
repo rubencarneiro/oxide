@@ -16,7 +16,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #if defined(ENABLE_TCMALLOC)
-#include "base/allocator/allocator_extension.h"
 #include "third_party/tcmalloc/chromium/src/gperftools/malloc_extension.h"
 #endif
 #if defined(COMPONENT_BUILD)
@@ -38,8 +37,6 @@ static void ReleaseFreeMemoryThunk() {
 int main(int argc, const char* argv[]) {
 #if defined(ENABLE_TCMALLOC)
   tc_set_new_mode(1);
-
-  base::allocator::SetReleaseFreeMemoryFunction(ReleaseFreeMemoryThunk);
 #endif
 
 #if defined(COMPONENT_BUILD)
@@ -48,5 +45,10 @@ int main(int argc, const char* argv[]) {
   content::SetContentClient(nullptr);
 #endif
 
-  return oxide::qt::OxideMain(argc, argv);
+  oxide::qt::ReleaseFreeMemoryFunction release_free_memory_function = nullptr;
+#if defined(ENABLE_TCMALLOC)
+  release_free_memory_function = ReleaseFreeMemoryThunk;
+#endif
+
+  return oxide::qt::OxideMain(argc, argv, release_free_memory_function);
 }

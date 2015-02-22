@@ -36,7 +36,6 @@
         ['enable_tcmalloc==1', {
           'defines': ['ENABLE_TCMALLOC'],
           'dependencies': [
-            '<(DEPTH)/base/base.gyp:base',
             '../../shared/allocator.gyp:allocator',
           ],
         }],

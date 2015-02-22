@@ -97,5 +97,9 @@ void* GLContextAdopted::GetHandle() {
   return handle_;
 }
 
+bool GLContextAdopted::WasAllocatedUsingRobustnessExtension() {
+  return false;
+}
+
 } // namespace qt
 } // namespace oxide

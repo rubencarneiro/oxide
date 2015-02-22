@@ -401,6 +401,8 @@ class GpuInfoCollectorLinux : public gpu::GpuInfoCollectorOxideLinux {
   GpuInfoCollectorLinux() {}
   ~GpuInfoCollectorLinux() override {}
 
+  gpu::CollectInfoResult CollectGpuID(uint32* vendor_id,
+                                      uint32* device_id) override;
   gpu::CollectInfoResult CollectContextGraphicsInfo(
       gpu::GPUInfo* gpu_info) override;
   gpu::CollectInfoResult CollectBasicGraphicsInfo(
@@ -410,6 +412,25 @@ class GpuInfoCollectorLinux : public gpu::GpuInfoCollectorOxideLinux {
  private:
   DISALLOW_COPY_AND_ASSIGN(GpuInfoCollectorLinux);
 };
+
+gpu::CollectInfoResult GpuInfoCollectorLinux::CollectGpuID(uint32* vendor_id,
+                                                           uint32* device_id) {
+  *vendor_id = 0;
+  *device_id = 0;
+
+  if (AndroidProperties::GetInstance()->Available()) {
+    return gpu::kCollectInfoNonFatalFailure;
+  }
+
+  gpu::GPUInfo gpu_info;
+  gpu::CollectInfoResult result = CollectPCIVideoCardInfo(&gpu_info);
+  if (result == gpu::kCollectInfoSuccess) {
+    *vendor_id = gpu_info.gpu.vendor_id;
+    *device_id = gpu_info.gpu.device_id;
+  }
+
+  return result;
+}
 
 gpu::CollectInfoResult GpuInfoCollectorLinux::CollectContextGraphicsInfo(
     gpu::GPUInfo* gpu_info) {
