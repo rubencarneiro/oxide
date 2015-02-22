@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -208,9 +208,17 @@ BrowserPluginDelegate* ContentRendererCl
+@@ -210,9 +210,17 @@ BrowserPluginDelegate* ContentRendererCl
      const GURL& original_url) {
    return nullptr;
  }
@@ -41,16 +41,14 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class WebPrescientNetworking;
  class WebRTCPeerConnectionHandler;
  class WebRTCPeerConnectionHandlerClient;
-@@ -48,17 +50,19 @@ class WebSpeechSynthesizerClient;
- class WebThemeEngine;
- class WebURLRequest;
+@@ -50,16 +52,17 @@ class WebURLRequest;
  class WebWorkerPermissionClientProxy;
  struct WebPluginParams;
  struct WebURLError;
  }
  
  namespace media {
-+class MediaLog;
+ class MediaLog;
  class RendererFactory;
 +class WebMediaPlayerDelegate;
  struct KeySystemInfo;
@@ -61,7 +59,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class RenderFrame;
  class RenderView;
-@@ -287,13 +291,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -289,13 +292,20 @@ class CONTENT_EXPORT ContentRendererClie
    virtual bool IsPluginAllowedToUseCompositorAPI(const GURL& url);
  
    // Returns true if dev channel APIs are available for plugins.
@@ -82,10 +80,34 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  }  // namespace content
  
  #endif  // CONTENT_PUBLIC_RENDERER_CONTENT_RENDERER_CLIENT_H_
+diff --git a/content/public/renderer/content_renderer_client.h.rej b/content/public/renderer/content_renderer_client.h.rej
+deleted file mode 100644
+--- a/content/public/renderer/content_renderer_client.h.rej
++++ /dev/null
+@@ -1,19 +0,0 @@
+---- content_renderer_client.h
+-+++ content_renderer_client.h
+-@@ -268,13 +268,16 @@ class CONTENT_EXPORT ContentRendererClie
+-   // Returns true if the page at |url| can use Pepper Compositor APIs.
+-   virtual bool IsPluginAllowedToUseCompositorAPI(const GURL& url);
+- 
+-   // Returns true if the page at |url| can use Pepper VideoDecoder APIs.
+-   virtual bool IsPluginAllowedToUseVideoDecodeAPI(const GURL& url);
+- 
+-   // Returns true if dev channel APIs are available for plugins.
+-   virtual bool IsPluginAllowedToUseDevChannelAPIs();
+-+
+-+  virtual bool GetUserAgentOverride(const GURL& url,
+-+                                    std::string* user_agent);
+- };
+- 
+- }  // namespace content
+- 
+- #endif  // CONTENT_PUBLIC_RENDERER_CONTENT_RENDERER_CLIENT_H_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1910,16 +1910,25 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -1889,16 +1889,25 @@ blink::WebMediaPlayer* RenderFrameImpl::
      media_permission_dispatcher_ = new MediaPermissionDispatcher(this);
  
  #if defined(OS_ANDROID)
