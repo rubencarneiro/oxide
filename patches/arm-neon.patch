@@ -34,6 +34,50 @@ diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/com
        }],
        ['target_arch=="mipsel" and mips_arch_variant!="r6" and android_webview_build==0', {
          'defines': [
+diff --git a/third_party/webrtc/common_audio/fir_filter.cc b/third_party/webrtc/common_audio/fir_filter.cc
+--- a/third_party/webrtc/common_audio/fir_filter.cc
++++ b/third_party/webrtc/common_audio/fir_filter.cc
+@@ -52,17 +52,17 @@ FIRFilter* FIRFilter::Create(const float
+   // x86 CPU detection required.
+   if (WebRtc_GetCPUInfo(kSSE2)) {
+     filter =
+         new FIRFilterSSE2(coefficients, coefficients_length, max_input_length);
+   } else {
+     filter = new FIRFilterC(coefficients, coefficients_length);
+   }
+ #endif
+-#elif defined(WEBRTC_ARCH_ARM_V7)
++#elif defined(WEBRTC_DETECT_ARM_NEON) || defined(WEBRTC_ARCH_ARM_NEON)
+ #if defined(WEBRTC_ARCH_ARM_NEON)
+   filter =
+       new FIRFilterNEON(coefficients, coefficients_length, max_input_length);
+ #else
+   // ARM CPU detection required.
+   if (WebRtc_GetCPUFeaturesARM() & kCPUFeatureNEON) {
+     filter =
+         new FIRFilterNEON(coefficients, coefficients_length, max_input_length);
+diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
+--- a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
++++ b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
+@@ -123,17 +123,17 @@ void SincResampler::InitializeCPUSpecifi
+ // InitializeCPUSpecificFeatures().
+ // TODO(dalecurtis): Once Chrome moves to an SSE baseline this can be removed.
+ #define CONVOLVE_FUNC convolve_proc_
+ 
+ void SincResampler::InitializeCPUSpecificFeatures() {
+   convolve_proc_ = WebRtc_GetCPUInfo(kSSE2) ? Convolve_SSE : Convolve_C;
+ }
+ #endif
+-#elif defined(WEBRTC_ARCH_ARM_V7)
++#elif defined(WEBRTC_DETECT_ARM_NEON) || defined(WEBRTC_ARCH_ARM_NEON)
+ #if defined(WEBRTC_ARCH_ARM_NEON)
+ #define CONVOLVE_FUNC Convolve_NEON
+ void SincResampler::InitializeCPUSpecificFeatures() {}
+ #else
+ // ARM CPU detection required.  Function will be set by
+ // InitializeCPUSpecificFeatures().
+ #define CONVOLVE_FUNC convolve_proc_
+ 
 diff --git a/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi b/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
 --- a/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
 +++ b/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
