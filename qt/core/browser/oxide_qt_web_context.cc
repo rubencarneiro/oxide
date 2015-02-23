@@ -355,6 +355,7 @@ int WebContext::SetCookies(const QUrl& url,
         expiry,
         cookie.isSecure(),
         cookie.isHttpOnly(),
+        false,
         net::COOKIE_PRIORITY_DEFAULT,
         base::Bind(&WebContext::CookieSetCallback, this, ctxt, cookie));
   }

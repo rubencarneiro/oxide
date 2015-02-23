@@ -374,11 +374,11 @@ float WebView::GetFrameMetadataScaleToPix() {
 
 void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
                                            bool initial_host) {
-  cc::TopControlsState current = location_bar_constraints_;
-  if (initial_host && current == cc::BOTH) {
+  blink::WebTopControlsState current = location_bar_constraints_;
+  if (initial_host && current == blink::WebTopControlsBoth) {
     // Show the location bar if this is the initial RVH and the constraints
     // are set to cc::BOTH
-    current = cc::SHOWN;
+    current = blink::WebTopControlsShown;
   }
 
   rvh->Send(
@@ -1204,7 +1204,7 @@ WebView::WebView()
       did_scroll_focused_editable_node_into_view_(false),
       auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
-      location_bar_constraints_(cc::BOTH),
+      location_bar_constraints_(blink::WebTopControlsBoth),
       weak_factory_(this) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
@@ -1800,7 +1800,7 @@ void WebView::SetLocationBarHeightPix(int height) {
   host->WasResized();
 }
 
-void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
+void WebView::SetLocationBarConstraints(blink::WebTopControlsState constraints) {
   if (constraints == location_bar_constraints_) {
     return;
   }
@@ -1818,7 +1818,7 @@ void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
 
   rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
                                                 constraints,
-                                                cc::BOTH,
+                                                blink::WebTopControlsBoth,
                                                 true));
 }
 
