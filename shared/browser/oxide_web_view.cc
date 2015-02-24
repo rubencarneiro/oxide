@@ -372,20 +372,27 @@ float WebView::GetFrameMetadataScaleToPix() {
          compositor_frame_metadata().page_scale_factor;
 }
 
-void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
-                                           bool initial_host) {
-  cc::TopControlsState current = location_bar_constraints_;
-  if (initial_host && current == cc::BOTH) {
-    // Show the location bar if this is the initial RVH and the constraints
-    // are set to cc::BOTH
-    current = cc::SHOWN;
-  }
+void WebView::UpdateTopControlsForHost(content::RenderViewHost* rvh,
+                                       bool initialize,
+                                       bool initial_host) {
+  DCHECK(initialize || !initial_host);
+
+  cc::TopControlsState constraints =
+      location_bar_height_pix_ > 0 ? location_bar_constraints_ : cc::HIDDEN;
+
+  // Show the location bar if this is the initial RVH and the constraints
+  // are set to cc::BOTH
+  cc::TopControlsState current =
+      (!initial_host || constraints != cc::BOTH) ?
+        location_bar_constraints_ : cc::SHOWN;
+
+  bool animate = !initialize && location_bar_height_pix_ > 0;
 
   rvh->Send(
       new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                          location_bar_constraints_,
+                                          constraints,
                                           current,
-                                          false));
+                                          animate));
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -902,7 +909,7 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
       static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
     }
 
-    InitializeTopControlsForHost(new_host, !old_host);
+    UpdateTopControlsForHost(new_host, true, !old_host);
   }
 }
 
@@ -1267,7 +1274,7 @@ void WebView::Init(Params* params) {
 
     content::RenderViewHost* rvh = GetRenderViewHost();
     if (rvh) {
-      InitializeTopControlsForHost(rvh, true);
+      UpdateTopControlsForHost(rvh, true, true);
     }
 
     // Sync WebContents with the state of the WebView
@@ -1792,12 +1799,19 @@ void WebView::SetLocationBarHeightPix(int height) {
 
   location_bar_height_pix_ = height;
 
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host) {
+  if (!web_contents_) {
     return;
   }
 
-  host->WasResized();
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (rvh) {
+    UpdateTopControlsForHost(rvh, false, false);
+  }
+
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (host) {
+    host->WasResized();
+  }
 }
 
 void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
@@ -1816,10 +1830,7 @@ void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
     return;
   }
 
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                constraints,
-                                                cc::BOTH,
-                                                true));
+  UpdateTopControlsForHost(rvh, false, false);
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
