@@ -276,6 +276,10 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     command_line->AppendSwitch(switches::kDisableGpuDriverBugWorkarounds);
   }
 
+  if (IsEnvironmentOptionEnabled("ENABLE_GPU_SERVICE_LOGGING")) {
+    command_line->AppendSwitch(switches::kEnableGPUServiceLogging);
+  }
+
   if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {
     command_line->AppendSwitch(switches::kSingleProcess);
   } else if (process_model == PROCESS_MODEL_PROCESS_PER_VIEW) {
