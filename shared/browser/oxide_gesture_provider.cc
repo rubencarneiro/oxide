@@ -378,7 +378,6 @@ ui::MotionEvent::ToolType MotionEvent::GetToolType(
 }
 
 int MotionEvent::GetButtonState() const {
-  NOTREACHED();
   return 0;
 }
 
