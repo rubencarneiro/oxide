@@ -35,8 +35,6 @@ blink::WebTouchPoint CreateWebTouchPoint(const ui::MotionEvent& event,
 
   result.id = event.GetPointerId(pointer_index);
 
-  bool is_action_index =
-      pointer_index == static_cast<size_t>(event.GetActionIndex());
   switch (event.GetAction()) {
     case ui::MotionEvent::ACTION_DOWN:
       result.state = blink::WebTouchPoint::StatePressed;
@@ -51,14 +49,16 @@ blink::WebTouchPoint CreateWebTouchPoint(const ui::MotionEvent& event,
       result.state = blink::WebTouchPoint::StateCancelled;
       break;
     case ui::MotionEvent::ACTION_POINTER_DOWN:
-      result.state = is_action_index ?
-          blink::WebTouchPoint::StatePressed :
-          blink::WebTouchPoint::StateStationary;
+      result.state =
+          pointer_index == static_cast<size_t>(event.GetActionIndex()) ?
+            blink::WebTouchPoint::StatePressed :
+            blink::WebTouchPoint::StateStationary;
       break;
     case ui::MotionEvent::ACTION_POINTER_UP:
-      result.state = is_action_index ?
-          blink::WebTouchPoint::StateReleased :
-          blink::WebTouchPoint::StateStationary;
+      result.state =
+          pointer_index == static_cast<size_t>(event.GetActionIndex()) ?
+            blink::WebTouchPoint::StateReleased :
+            blink::WebTouchPoint::StateStationary;
       break;
     default:
       NOTREACHED();
