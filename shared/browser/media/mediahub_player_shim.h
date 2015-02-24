@@ -15,7 +15,7 @@ public:
 
   virtual void seeked_to(int64_t pos) = 0;
   virtual void end_of_stream() = 0;
-  virtual void playback_status_changed(Status status, int64_t duration) = 0;
+  virtual void playback_status_changed(Status status) = 0;
 };
 
 #if defined(__cplusplus)

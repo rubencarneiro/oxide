@@ -63,7 +63,7 @@ class MediaPlayerMediaHub : public MediaPlayer,
   // MediaHubDelegate
   void seeked_to(int64_t pos);
   void end_of_stream();
-  void playback_status_changed(MediaHubDelegate::Status status, int64_t duration);
+  void playback_status_changed(MediaHubDelegate::Status status);
 
  protected:
   void SetDuration(base::TimeDelta time);

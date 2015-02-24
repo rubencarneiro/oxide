@@ -57,7 +57,9 @@ MediaPlayerMediaHub::MediaPlayerMediaHub(
 
 MediaPlayerMediaHub::~MediaPlayerMediaHub() {
   timer_.Stop();
-  mediahub_stop(media_hub_client_);
+  if (!use_fixed_session_) {
+    mediahub_stop(media_hub_client_);
+  }
   mediahub_release(media_hub_client_);
 }
 
@@ -157,23 +159,23 @@ void MediaPlayerMediaHub::end_of_stream() {
   manager_->OnPlaybackComplete(player_id());
 }
 
-void MediaPlayerMediaHub::playback_status_changed(MediaHubDelegate::Status status, int64_t duration) {
+void MediaPlayerMediaHub::playback_status_changed(MediaHubDelegate::Status status) {
   switch (status) {
   case null:
   case ready:
     manager_->OnMediaMetadataChanged(player_id(),
-                                      base::TimeDelta::FromMilliseconds(duration),
+                                      base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_)),
                                       0, 0, true);
     break;
   case playing:
     manager_->OnMediaMetadataChanged(player_id(),
-                                      base::TimeDelta::FromMilliseconds(duration),
+                                      base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_)),
                                       0, 0, true);
     manager_->OnPlayerPlay(player_id());
     break;
   case paused:
     manager_->OnMediaMetadataChanged(player_id(),
-                                      base::TimeDelta::FromMilliseconds(duration),
+                                      base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_)),
                                       0, 0, true);
     manager_->OnPlayerPause(player_id());
     break;
