@@ -66,19 +66,25 @@ void WebContentsView::SizeContents(const gfx::Size& size) {
 }
 
 void WebContentsView::Focus() {
-  NOTREACHED();
+  content::RenderWidgetHostView* rwhv =
+      web_contents_->GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  rwhv->Focus();
 }
 
 void WebContentsView::SetInitialFocus() {
-  NOTREACHED();
+  NOTIMPLEMENTED();
 }
 
 void WebContentsView::StoreFocus() {
-  NOTREACHED();
+  NOTIMPLEMENTED();
 }
 
 void WebContentsView::RestoreFocus() {
-  NOTREACHED();
+  NOTIMPLEMENTED();
 }
 
 content::DropData* WebContentsView::GetDropData() const {
