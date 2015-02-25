@@ -152,6 +152,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
 
 void Compositor::WillBeginMainFrame() {}
 void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
+void Compositor::BeginMainFrameNotExpectedSoon() {}
 void Compositor::DidBeginMainFrame() {}
 void Compositor::Layout() {}
 void Compositor::ApplyViewportDeltas(
