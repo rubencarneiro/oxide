@@ -373,12 +373,10 @@ float MotionEvent::GetHistoricalY(size_t pointer_index,
 
 ui::MotionEvent::ToolType MotionEvent::GetToolType(
     size_t pointer_index) const {
-  NOTREACHED();
   return TOOL_TYPE_UNKNOWN;
 }
 
 int MotionEvent::GetButtonState() const {
-  NOTREACHED();
   return 0;
 }
 

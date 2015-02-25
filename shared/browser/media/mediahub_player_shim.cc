@@ -9,23 +9,35 @@ using namespace core::ubuntu::media;
 
 namespace {
 
-std::map<int, std::shared_ptr<Player> > g_mediahub_players;
+typedef std::map<int, std::shared_ptr<Player> > player_map;
+
+player_map g_mediahub_players;
+
+player_map::iterator find_player(Player *player)
+{
+  player_map::iterator it = g_mediahub_players.begin();
+  for (; it != g_mediahub_players.end(); it++) {
+    if (it->second.get() == player) {
+      break;
+    }
+  }
+  return it;
+}
 
 void setup_delegate(MediaHubDelegate *delegate, std::shared_ptr<Player>& player)
 {
   player->seeked_to().connect([delegate](int64_t pos) {
-        delegate->seeked_to(pos);
+          delegate->seeked_to(pos);
       });
 
   player->end_of_stream().connect([delegate]() {
-        delegate->end_of_stream();
+          delegate->end_of_stream();
       });
 
-  player->playback_status_changed().connect([player, delegate](Player::PlaybackStatus status) {
-        delegate->playback_status_changed(
-                    static_cast<MediaHubDelegate::Status>(status),
-                    player->duration().get()
-                  );
+  player->playback_status_changed().connect([delegate](Player::PlaybackStatus status) {
+          delegate->playback_status_changed(
+                      static_cast<MediaHubDelegate::Status>(status)
+                    );
       });
 }
 }
@@ -80,8 +92,7 @@ mediahub_create_fixed_player(int player_id, const std::string& domain, MediaHubD
       setup_delegate(delegate, player);
 
       delegate->playback_status_changed(
-                    MediaHubDelegate::Status(player->playback_status().get()),
-                    player->duration().get()
+                    MediaHubDelegate::Status(player->playback_status().get())
                   );
     }
 
@@ -217,12 +228,7 @@ void
 mediahub_release(MediaHubClientHandle handle)
 {
   try {
-    auto it = g_mediahub_players.begin();
-    for (; it != g_mediahub_players.end(); it++) {
-      if (it->second.get() == handle) {
-        break;
-      }
-    }
+    auto it = find_player(static_cast<Player*>(handle));
     if (it != g_mediahub_players.end()) {
       g_mediahub_players.erase(it);
     }

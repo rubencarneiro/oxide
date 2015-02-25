@@ -170,9 +170,13 @@ function(oxide_add_package_files)
   endif()
 endfunction()
 
-oxide_add_package_files(FILES ${OXIDE_INSTALL_LIB_FILES} ${OXIDE_INSTALL_LIBEXEC_FILES})
-oxide_add_package_files(PROGRAMS ${OXIDE_INSTALL_LIBEXEC_PROGRAMS} ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox)
-oxide_add_package_files(DIRECTORY ${CHROMIUM_PRODUCT_DIR}/locales)
+oxide_add_package_files(FILES ${OXIDE_INSTALL_LIB_FILES})
+oxide_add_package_files(OUTDIR ${OXIDE_SUBPROCESS_DIR}
+                        FILES ${OXIDE_INSTALL_LIBEXEC_FILES})
+oxide_add_package_files(OUTDIR ${OXIDE_SUBPROCESS_DIR}
+                        PROGRAMS ${OXIDE_INSTALL_LIBEXEC_PROGRAMS} ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox)
+oxide_add_package_files(OUTDIR ${OXIDE_SUBPROCESS_DIR}
+                        DIRECTORY ${CHROMIUM_PRODUCT_DIR}/locales)
 
 if(ENABLE_OXIDEQMLSCENE EQUAL 1)
   get_target_property(_LOCATION ${OXIDE_QMLRUNNER} LOCATION)
@@ -180,7 +184,7 @@ if(ENABLE_OXIDEQMLSCENE EQUAL 1)
 endif()
 
 get_target_property(_LOCATION ${OXIDE_QMLPLUGIN} LOCATION)
-oxide_add_package_files(OUTDIR ${OXIDE_QMLPLUGIN_MODULE_NAME}
+oxide_add_package_files(OUTDIR qml/${OXIDE_QMLPLUGIN_MODULE_NAME}
                         FILES ${_LOCATION} ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir)
 
 get_target_property(_LOCATION ${OXIDE_QUICKLIB} LOCATION)
@@ -189,7 +193,8 @@ get_target_property(_LOCATION ${OXIDE_QUICKLIB} LOCATION)
 oxide_add_package_files(FILES ${_LOCATION}.${OXIDE_CORELIB_SO_VERSION})
 
 if(ENABLE_COMPONENT_BUILD)
-  oxide_add_package_files(DIRECTORY ${CHROMIUM_LIB_DIR})
+  oxide_add_package_files(OUTDIR ${OXIDE_SUBPROCESS_DIR}
+                          DIRECTORY ${CHROMIUM_LIB_DIR})
 endif()
 
 add_custom_target(
@@ -201,5 +206,6 @@ add_custom_target(
       -DRENDERER_PATH=${OXIDE_RENDERER_NAME}
       -DSTAGE_DIR=${OXIDE_STAGE_DIR}
       -DOUTPUT_DIR=${CMAKE_BINARY_DIR}/out
+      -DSUBPROCESS_DIR=${OXIDE_SUBPROCESS_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/package.cmake
     COMMENT "Creating compressed archive")

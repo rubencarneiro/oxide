@@ -202,6 +202,19 @@ base::FilePath GetSubprocessPath() {
   return subprocess_exe;
 }
 
+const char* GetGLImplName(gfx::GLImplementation impl) {
+  switch (impl) {
+    case gfx::kGLImplementationDesktopGL:
+      return gfx::kGLImplementationDesktopName;
+    case gfx::kGLImplementationOSMesaGL:
+      return gfx::kGLImplementationOSMesaName;
+    case gfx::kGLImplementationEGLGLES2:
+      return gfx::kGLImplementationEGLName;
+    default:
+      return "unknown";
+  }
+}
+
 void InitializeCommandLine(const base::FilePath& subprocess_path,
                            ProcessModel process_model,
                            gfx::GLImplementation gl_impl) {
@@ -232,7 +245,7 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     command_line->AppendSwitch(switches::kDisableGpu);
   } else {
     command_line->AppendSwitchASCII(switches::kUseGL,
-                                    gfx::GetGLImplementationName(gl_impl));
+                                    GetGLImplName(gl_impl));
   }
 
   if (IsEnvironmentOptionEnabled("DISABLE_GPU_COMPOSITING")) {
@@ -261,6 +274,10 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   }
   if (IsEnvironmentOptionEnabled("DISABLE_GPU_DRIVER_BUG_WORKAROUNDS")) {
     command_line->AppendSwitch(switches::kDisableGpuDriverBugWorkarounds);
+  }
+
+  if (IsEnvironmentOptionEnabled("ENABLE_GPU_SERVICE_LOGGING")) {
+    command_line->AppendSwitch(switches::kEnableGPUServiceLogging);
   }
 
   if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {

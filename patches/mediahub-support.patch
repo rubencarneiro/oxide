@@ -80,30 +80,6 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  }  // namespace content
  
  #endif  // CONTENT_PUBLIC_RENDERER_CONTENT_RENDERER_CLIENT_H_
-diff --git a/content/public/renderer/content_renderer_client.h.rej b/content/public/renderer/content_renderer_client.h.rej
-deleted file mode 100644
---- a/content/public/renderer/content_renderer_client.h.rej
-+++ /dev/null
-@@ -1,19 +0,0 @@
----- content_renderer_client.h
--+++ content_renderer_client.h
--@@ -268,13 +268,16 @@ class CONTENT_EXPORT ContentRendererClie
--   // Returns true if the page at |url| can use Pepper Compositor APIs.
--   virtual bool IsPluginAllowedToUseCompositorAPI(const GURL& url);
-- 
--   // Returns true if the page at |url| can use Pepper VideoDecoder APIs.
--   virtual bool IsPluginAllowedToUseVideoDecodeAPI(const GURL& url);
-- 
--   // Returns true if dev channel APIs are available for plugins.
--   virtual bool IsPluginAllowedToUseDevChannelAPIs();
--+
--+  virtual bool GetUserAgentOverride(const GURL& url,
--+                                    std::string* user_agent);
-- };
-- 
-- }  // namespace content
-- 
-- #endif  // CONTENT_PUBLIC_RENDERER_CONTENT_RENDERER_CLIENT_H_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc

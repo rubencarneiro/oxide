@@ -28,6 +28,7 @@
 #include "base/strings/stringprintf.h"
 #include "base/supports_user_data.h"
 #include "base/synchronization/lock.h"
+#include "base/threading/thread_restrictions.h"
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
@@ -476,8 +477,12 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.net_log = context->net_log();
   session_params.host_mapping_rules = host_mapping_rules_.get();
 
-  storage->set_http_transaction_factory(
-      new net::HttpCache(session_params, cache_backend));
+  {
+    // Calls QuickStreamFactory constructor which uses base::CPU
+    base::ThreadRestrictions::ScopedAllowIO allow_io;
+    storage->set_http_transaction_factory(
+        new net::HttpCache(session_params, cache_backend));
+  }
 
   scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
       new net::URLRequestJobFactoryImpl());

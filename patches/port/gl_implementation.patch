@@ -69,8 +69,17 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 diff --git a/ui/gfx/x/gfx_x11.gyp b/ui/gfx/x/gfx_x11.gyp
 --- a/ui/gfx/x/gfx_x11.gyp
 +++ b/ui/gfx/x/gfx_x11.gyp
-@@ -17,16 +17,19 @@
-       'type': '<(component)',
+@@ -9,24 +9,27 @@
+                    # that the exclusion rules in filename_rules.gypi do not
+                    # exclude the x11* files.
+   },
+ 
+   'targets': [
+     {
+       # GN version: //ui/gfx/x
+       'target_name': 'gfx_x11',
+-      'type': '<(component)',
++      'type': 'static_library',
        'dependencies': [
          '../../../base/base.gyp:base',
          '../../../build/linux/system.gyp:x11',
