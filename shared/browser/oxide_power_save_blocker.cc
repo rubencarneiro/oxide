@@ -167,7 +167,8 @@ PowerSaveBlocker::PowerSaveBlocker()
 
 content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
     content::PowerSaveBlocker::PowerSaveBlockerType type,
-    const std::string& reason) {
+    content::PowerSaveBlocker::Reason reason,
+    const std::string& description) {
   return new PowerSaveBlocker();
 }
 
