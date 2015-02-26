@@ -720,7 +720,7 @@ bool WebMediaPlayer::IsKeySystemSupported(
     const std::string& key_system) {
   // TODO
   return player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE &&
-         media::IsConcreteSupportedKeySystem(key_system);
+         media::PrefixedIsSupportedConcreteKeySystem(key_system);
 }
 
 WebMediaPlayer::MediaKeyException WebMediaPlayer::generateKeyRequest(
