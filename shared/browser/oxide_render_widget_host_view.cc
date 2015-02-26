@@ -559,7 +559,6 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
-  DCHECK(ack_callbacks_.empty());
   resource_collection_->SetClient(nullptr);
   SetDelegate(nullptr);
 }
