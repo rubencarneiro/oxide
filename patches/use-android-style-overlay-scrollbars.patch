@@ -1,0 +1,27 @@
+# Description: Use Android-style overlay scrollbars. This makes an assumption
+#  that overlay scrollbars are mobile-only. If we want to support overlay
+#  scrollbars on desktop in the future, then we'll need to rethink this
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/third_party/WebKit/Source/platform/scroll/ScrollbarThemeAura.cpp b/third_party/WebKit/Source/platform/scroll/ScrollbarThemeAura.cpp
+--- a/third_party/WebKit/Source/platform/scroll/ScrollbarThemeAura.cpp
++++ b/third_party/WebKit/Source/platform/scroll/ScrollbarThemeAura.cpp
+@@ -46,17 +46,17 @@ namespace blink {
+ static bool useMockTheme()
+ {
+     return LayoutTestSupport::isRunningLayoutTest();
+ }
+ 
+ ScrollbarTheme* ScrollbarTheme::nativeTheme()
+ {
+     if (RuntimeEnabledFeatures::overlayScrollbarsEnabled()) {
+-        DEFINE_STATIC_LOCAL(ScrollbarThemeOverlay, theme, (10, 0, ScrollbarThemeOverlay::AllowHitTest));
++        DEFINE_STATIC_LOCAL(ScrollbarThemeOverlay, theme, (3, 3, ScrollbarThemeOverlay::DisallowHitTest, Color(128, 128, 128, 128)));
+         return &theme;
+     }
+ 
+     DEFINE_STATIC_LOCAL(ScrollbarThemeAura, theme, ());
+     return &theme;
+ }
+ 
+ int ScrollbarThemeAura::scrollbarThickness(ScrollbarControlSize controlSize)
