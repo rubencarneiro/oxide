@@ -344,6 +344,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
     prefs->shrinks_standalone_images_to_fit = false;
+    prefs->use_solid_color_scrollbars = true;
   }
 
   prefs->supports_multiple_windows = false;

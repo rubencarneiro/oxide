@@ -56,6 +56,14 @@ void ContentRendererClient::RenderThreadStarted() {
   // Usually enabled only on Android. We want this on mobile, but
   // should be ok everywhere
   blink::WebRuntimeFeatures::enableOrientationEvent(true);
+
+  std::string form_factor =
+      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
+        switches::kFormFactor);
+  if (form_factor == switches::kFormFactorTablet ||
+      form_factor == switches::kFormFactorPhone) {
+    blink::WebRuntimeFeatures::enableOverlayScrollbars(true);
+  }
 }
 
 void ContentRendererClient::RenderFrameCreated(

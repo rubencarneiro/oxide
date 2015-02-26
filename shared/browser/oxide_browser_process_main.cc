@@ -324,7 +324,6 @@ void AddFormFactorSpecificCommandLineArguments() {
     command_line->AppendSwitch(switches::kEnableViewportMeta);
     command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
     command_line->AppendSwitch(switches::kEnablePinch);
-    command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     command_line->AppendSwitch(switches::kLimitMaxDecodedImageBytes);
   }
 
