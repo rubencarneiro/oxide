@@ -26,7 +26,8 @@ WebContext {
     "MAP selfsigned.testsuite:443 localhost:4445",
     "MAP badidentity.testsuite:443 localhost:4446",
     "MAP testsuite:443 localhost:4443",
-    "MAP *.testsuite:443 localhost:4443"
+    "MAP *.testsuite:443 localhost:4443",
+    "MAP invalid:80 255.255.255.255:80"
   ]
 
   property var _cookiesDeletedSpy: SignalSpy {
