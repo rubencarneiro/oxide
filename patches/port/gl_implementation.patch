@@ -203,9 +203,9 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_switches.h',
          'gl_version_info.cc',
          'gl_version_info.h',
-@@ -114,16 +115,19 @@
-         'gpu_switching_manager.h',
-         'gpu_switching_observer.h',
+@@ -116,16 +117,19 @@
+         'gpu_timing.cc',
+         'gpu_timing.h',
          'scoped_binders.cc',
          'scoped_binders.h',
          'scoped_make_current.cc',
@@ -223,7 +223,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'egl_util.h',
              'gl_bindings_autogen_egl.cc',
              'gl_bindings_autogen_egl.h',
-@@ -149,28 +153,28 @@
+@@ -151,28 +155,28 @@
            ],
          }],
          ['OS=="linux"', {

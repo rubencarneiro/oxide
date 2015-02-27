@@ -18,6 +18,7 @@
 #include "oxide_gl_context_adopted.h"
 
 #include "base/logging.h"
+#include "ui/gl/gpu_timing.h"
 
 namespace oxide {
 
@@ -44,6 +45,10 @@ void GLContextAdopted::ReleaseCurrent(gfx::GLSurface* surface) {}
 
 bool GLContextAdopted::IsCurrent(gfx::GLSurface* surface) {
   return false;
+}
+
+scoped_refptr<gfx::GPUTimingClient> GLContextAdopted::CreateGPUTimingClient() {
+  return nullptr;
 }
 
 } // namespace oxide

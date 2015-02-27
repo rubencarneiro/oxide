@@ -37,6 +37,7 @@ class GLContextAdopted : public gfx::GLContext {
   bool MakeCurrent(gfx::GLSurface* surface) final;
   void ReleaseCurrent(gfx::GLSurface* surface) final;
   bool IsCurrent(gfx::GLSurface* surface) final;
+  scoped_refptr<gfx::GPUTimingClient> CreateGPUTimingClient() final;
 
  protected:
   GLContextAdopted(gfx::GLShareGroup* share_group);
