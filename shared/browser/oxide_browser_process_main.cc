@@ -279,6 +279,9 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("ENABLE_GPU_SERVICE_LOGGING")) {
     command_line->AppendSwitch(switches::kEnableGPUServiceLogging);
   }
+  if (IsEnvironmentOptionEnabled("ENABLE_GPU_DEBUGGING")) {
+    command_line->AppendSwitch(switches::kEnableGPUDebugging);
+  }
 
   if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {
     command_line->AppendSwitch(switches::kSingleProcess);
