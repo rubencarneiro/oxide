@@ -20,6 +20,7 @@
 #include <string>
 
 #include "base/command_line.h"
+#include "cc/trees/layer_tree_settings.h"
 #include "content/public/common/url_utils.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
@@ -27,6 +28,7 @@
 #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
 #include "third_party/WebKit/public/web/WebSettings.h"
 #include "third_party/WebKit/public/web/WebView.h"
+#include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
@@ -56,14 +58,6 @@ void ContentRendererClient::RenderThreadStarted() {
   // Usually enabled only on Android. We want this on mobile, but
   // should be ok everywhere
   blink::WebRuntimeFeatures::enableOrientationEvent(true);
-
-  std::string form_factor =
-      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
-        switches::kFormFactor);
-  if (form_factor == switches::kFormFactorTablet ||
-      form_factor == switches::kFormFactorPhone) {
-    blink::WebRuntimeFeatures::enableOverlayScrollbars(true);
-  }
 }
 
 void ContentRendererClient::RenderFrameCreated(
@@ -91,6 +85,7 @@ void ContentRendererClient::RenderViewCreated(
         switches::kFormFactor);
   if (form_factor == switches::kFormFactorTablet ||
       form_factor == switches::kFormFactorPhone) {
+    settings->setAllowCustomScrollbarInMainFrame(false);
     settings->setUseWideViewport(true);
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);
@@ -170,5 +165,26 @@ blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
   return nullptr;
 }
 #endif
+
+void ContentRendererClient::OverrideCompositorSettings(
+    cc::LayerTreeSettings* settings) {
+  // XXX: If we support overlay scrollbars on desktop, then we'll want to
+  //  use THINNING here, change the other settings and modify Blink to
+  //  be able to have 2 different overlay scrollbar styles (a small
+  //  non-hit-tested style for mobile and a much larger hit-tested style
+  //  for desktop)
+  if (ui::IsOverlayScrollbarEnabled()) {
+    // XXX: This will need updating if we support overlay scrollbars on
+    //  desktop. See https://launchpad.net/bugs/1426567
+    settings->scrollbar_animator = cc::LayerTreeSettings::LINEAR_FADE;
+    settings->scrollbar_fade_delay_ms = 300;
+    settings->scrollbar_fade_resize_delay_ms = 2000;
+    settings->scrollbar_fade_duration_ms = 300;
+  }
+
+  // XXX: This will need changing if we support pinch-viewport on desktop
+  //  with normal scrollbars. See https://launchpad.net/bugs/1426567
+  settings->scrollbar_show_scale_threshold = 1.f;
+}
 
 } // namespace oxide

@@ -1,8 +1,54 @@
-# Description: Use Android-style overlay scrollbars. This makes an assumption
-#  that overlay scrollbars are mobile-only. If we want to support overlay
-#  scrollbars on desktop in the future, then we'll need to rethink this
+# Description: Use Android-style overlay and pinch-viewport scrollbars, and
+#  disable scrollbars for the main frame when pinch-viewport is enabled (the
+#  pinch-viewport scrollbars will be used there). This makes an assumption
+#  that overlay scrollbars and pinch-viewport are mobile-only. If we want to
+#  support these on desktop in the future, then we'll need to rethink this
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
+diff --git a/third_party/WebKit/Source/core/frame/FrameView.cpp b/third_party/WebKit/Source/core/frame/FrameView.cpp
+--- a/third_party/WebKit/Source/core/frame/FrameView.cpp
++++ b/third_party/WebKit/Source/core/frame/FrameView.cpp
+@@ -3017,17 +3017,17 @@ bool FrameView::scrollbarsDisabled() con
+ {
+     if (!m_frame->settings() || !m_frame->settings()->pinchVirtualViewportEnabled())
+         return false;
+ 
+     // FIXME: This decision should be made based on whether or not to use
+     // viewport scrollbars for the main frame. This is implicitly just Android,
+     // but should be made explicit.
+     // http://crbug.com/434533
+-#if !OS(ANDROID)
++#if 0
+     return false;
+ #else
+     return m_frame->isMainFrame();
+ #endif
+ }
+ 
+ AXObjectCache* FrameView::axObjectCache() const
+ {
+diff --git a/third_party/WebKit/Source/core/frame/PinchViewport.cpp b/third_party/WebKit/Source/core/frame/PinchViewport.cpp
+--- a/third_party/WebKit/Source/core/frame/PinchViewport.cpp
++++ b/third_party/WebKit/Source/core/frame/PinchViewport.cpp
+@@ -341,17 +341,17 @@ void PinchViewport::setupScrollbar(WebSc
+         m_webOverlayScrollbarHorizontal : m_webOverlayScrollbarVertical;
+ 
+     int thumbThickness = frameHost().settings().pinchOverlayScrollbarThickness();
+     int scrollbarThickness = thumbThickness;
+     int scrollbarMargin = scrollbarThickness;
+ 
+     // FIXME: Rather than manually creating scrollbar layers, we should create
+     // real scrollbars so we can reuse all the machinery from ScrollbarTheme.
+-#if OS(ANDROID)
++#if 1
+     thumbThickness = ScrollbarTheme::theme()->thumbThickness(0);
+     scrollbarThickness = ScrollbarTheme::theme()->scrollbarThickness(RegularScrollbar);
+     scrollbarMargin = ScrollbarTheme::theme()->scrollbarMargin();
+ #endif
+ 
+     if (!webScrollbarLayer) {
+         ScrollingCoordinator* coordinator = frameHost().page().scrollingCoordinator();
+         ASSERT(coordinator);
 diff --git a/third_party/WebKit/Source/platform/scroll/ScrollbarThemeAura.cpp b/third_party/WebKit/Source/platform/scroll/ScrollbarThemeAura.cpp
 --- a/third_party/WebKit/Source/platform/scroll/ScrollbarThemeAura.cpp
 +++ b/third_party/WebKit/Source/platform/scroll/ScrollbarThemeAura.cpp
