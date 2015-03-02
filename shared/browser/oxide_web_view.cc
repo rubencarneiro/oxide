@@ -2020,7 +2020,7 @@ void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
   }
 
   content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host || !host->ShouldForwardTouchEvent()) {
+  if (!host) {
     gesture_provider_->OnTouchEventAck(false);
     return;
   }
