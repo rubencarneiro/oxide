@@ -65,6 +65,10 @@ def calc_inputs(locale):
   inputs.append(os.path.join(SHARE_INT_DIR, 'content', 'app', 'strings',
                 'content_strings_%s.pak' % locale))
 
+  #e.g. '<(SHARED_INTERMEDIATE_DIR)/ui/strings/app_locale_settings_da.pak',
+  inputs.append(os.path.join(SHARE_INT_DIR, 'ui', 'strings',
+                'app_locale_settings_%s.pak' % locale))
+
   # Add any extra input files.
   for extra_file in EXTRA_INPUT_FILES:
     inputs.append('%s_%s.pak' % (extra_file, locale))

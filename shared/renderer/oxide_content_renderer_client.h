@@ -51,14 +51,14 @@ class ContentRendererClient final : public content::ContentRendererClient {
                               int extension_group,
                               int world_id) final;
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
-
 #if defined(ENABLE_MEDIAHUB)
   blink::WebMediaPlayer* OverrideWebMediaPlayer(
-              blink::WebFrame* frame,
-              blink::WebMediaPlayerClient* client,
-              base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
-              media::MediaLog* media_log);
+      blink::WebFrame* frame,
+      blink::WebMediaPlayerClient* client,
+      base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
+      media::MediaLog* media_log) final;
 #endif
+  void OverrideCompositorSettings(cc::LayerTreeSettings* settings) final;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };

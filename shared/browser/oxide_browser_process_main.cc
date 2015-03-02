@@ -279,6 +279,9 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("ENABLE_GPU_SERVICE_LOGGING")) {
     command_line->AppendSwitch(switches::kEnableGPUServiceLogging);
   }
+  if (IsEnvironmentOptionEnabled("ENABLE_GPU_DEBUGGING")) {
+    command_line->AppendSwitch(switches::kEnableGPUDebugging);
+  }
 
   if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {
     command_line->AppendSwitch(switches::kSingleProcess);
@@ -319,11 +322,17 @@ void AddFormFactorSpecificCommandLineArguments() {
 
   FormFactor form_factor = GetFormFactorHint();
 
-  if (form_factor == FORM_FACTOR_PHONE || form_factor == FORM_FACTOR_TABLET) {
+  if (form_factor == FORM_FACTOR_DESKTOP) {
+    // Pinch-viewport is not supported on desktop yet
+    // see https://launchpad.net/bugs/1426567 and https://launchpad.net/bugs/1408686
+    command_line->AppendSwitch(cc::switches::kDisablePinchVirtualViewport);
+  } else {
     command_line->AppendSwitch(switches::kEnableViewport);
     command_line->AppendSwitch(switches::kEnableViewportMeta);
     command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
     command_line->AppendSwitch(switches::kEnablePinch);
+    // Note, overlay scrollbars do not work properly on desktop yet
+    // see https://launchpad.net/bugs/1426567
     command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
     command_line->AppendSwitch(switches::kLimitMaxDecodedImageBytes);
   }

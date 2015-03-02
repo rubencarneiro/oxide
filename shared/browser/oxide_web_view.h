@@ -347,9 +347,8 @@ class WebView : public ScriptMessageTarget,
 
   float GetFrameMetadataScaleToPix();
 
-  void UpdateTopControlsForHost(content::RenderViewHost* rvh,
-                                bool initialize,
-                                bool initial_host);
+  void InitializeTopControlsForHost(content::RenderViewHost* rvh,
+                                    bool initial_host);
 
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const override;

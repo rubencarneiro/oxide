@@ -372,28 +372,19 @@ float WebView::GetFrameMetadataScaleToPix() {
          compositor_frame_metadata().page_scale_factor;
 }
 
-void WebView::UpdateTopControlsForHost(content::RenderViewHost* rvh,
-                                       bool initialize,
-                                       bool initial_host) {
-  DCHECK(initialize || !initial_host);
-
-  blink::WebTopControlsState constraints =
-      location_bar_height_pix_ > 0 ?
-        location_bar_constraints_ : blink::WebTopControlsHidden;
-
+void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
+                                           bool initial_host) {
   // Show the location bar if this is the initial RVH and the constraints
   // are set to cc::BOTH
   blink::WebTopControlsState current =
-      (!initial_host || constraints != blink::WebTopControlsBoth) ?
+      (!initial_host || location_bar_constraints_ != blink::WebTopControlsBoth) ?
         location_bar_constraints_ : blink::WebTopControlsShown;
-
-  bool animate = !initialize && location_bar_height_pix_ > 0;
 
   rvh->Send(
       new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                          constraints,
+                                          location_bar_constraints_,
                                           current,
-                                          animate));
+                                          false));
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -910,7 +901,7 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
       static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
     }
 
-    UpdateTopControlsForHost(new_host, true, !old_host);
+    InitializeTopControlsForHost(new_host, !old_host);
   }
 }
 
@@ -1275,7 +1266,7 @@ void WebView::Init(Params* params) {
 
     content::RenderViewHost* rvh = GetRenderViewHost();
     if (rvh) {
-      UpdateTopControlsForHost(rvh, true, true);
+      InitializeTopControlsForHost(rvh, true);
     }
 
     // Sync WebContents with the state of the WebView
@@ -1800,19 +1791,12 @@ void WebView::SetLocationBarHeightPix(int height) {
 
   location_bar_height_pix_ = height;
 
-  if (!web_contents_) {
+  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  if (!host) {
     return;
   }
 
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (rvh) {
-    UpdateTopControlsForHost(rvh, false, false);
-  }
-
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (host) {
-    host->WasResized();
-  }
+  host->WasResized();
 }
 
 void WebView::SetLocationBarConstraints(blink::WebTopControlsState constraints) {
@@ -1831,7 +1815,10 @@ void WebView::SetLocationBarConstraints(blink::WebTopControlsState constraints) 
     return;
   }
 
-  UpdateTopControlsForHost(rvh, false, false);
+  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+                                                constraints,
+                                                blink::WebTopControlsBoth,
+                                                true));
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {

@@ -133,7 +133,7 @@ TestWebView {
     // Test we get the correct sequence of events for failed browser initiated
     // loads
     function test_WebView_loading_deprecated4_fail() {
-      var url = "http://moo.foo.bar.com/";
+      var url = "http://invalid/";
       expectedLoadEvents = [
         { type: LoadEvent.TypeStarted, url: url, loading: true },
         { type: LoadEvent.TypeFailed, url: url, loading: true }
