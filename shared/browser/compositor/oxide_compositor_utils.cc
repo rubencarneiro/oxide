@@ -17,6 +17,10 @@
 
 #include "oxide_compositor_utils.h"
 
+#include <map>
+#include <set>
+#include <utility>
+
 #include "base/bind.h"
 #include "base/logging.h"
 #include "base/memory/singleton.h"
@@ -45,7 +49,7 @@ namespace {
 void WakeUpGpuThread() {}
 }
 
-using content::oxide_gpu_shim::TextureRefHolder;
+typedef std::pair<content::oxide_gpu_shim::Texture*, int> TextureHolder;
 
 class GLFrameHandle : public GLFrameData {
  public:
@@ -117,8 +121,10 @@ class CompositorThread : public base::Thread {
   void Init() override;
 };
 
-class CompositorUtilsImpl : public CompositorUtils,
-                            public base::MessageLoop::TaskObserver {
+class CompositorUtilsImpl
+    : public CompositorUtils,
+      public base::MessageLoop::TaskObserver,
+      public gpu::gles2::TextureManager::DestructionObserver {
  public:
   static CompositorUtilsImpl* GetInstance();
 
@@ -135,9 +141,11 @@ class CompositorUtilsImpl : public CompositorUtils,
   gfx::GLSurfaceHandle GetSharedSurfaceHandle() override;
   bool CanUseGpuCompositing() override;
 
-  bool AddTextureRef(const gpu::Mailbox& mailbox,
-                     const TextureRefHolder& texture);
-  void RemoveTextureRef(const gpu::Mailbox& mailbox);
+  bool RefTexture(int32 client_id,
+                  int32 route_id,
+                  const gpu::Mailbox& mailbox);
+  void UnrefTexture(const gpu::Mailbox& mailbox);
+  GLuint GetTextureIDForMailbox(const gpu::Mailbox& mailbox);
 
  private:
   friend struct DefaultSingletonTraits<CompositorUtilsImpl>;
@@ -151,6 +159,10 @@ class CompositorUtilsImpl : public CompositorUtils,
   // base::MessageLoop::TaskObserver implementation
   void WillProcessTask(const base::PendingTask& pending_task) override;
   void DidProcessTask(const base::PendingTask& pending_task) override;
+
+  // gpu::gles2::TextureManager::DestructionObserver implementation
+  void OnTextureManagerDestroying(gpu::gles2::TextureManager* manager) override;
+  void OnTextureRefDestroying(gpu::gles2::TextureRef* texture) override;
 
   int32 client_id_;
 
@@ -172,7 +184,8 @@ class CompositorUtilsImpl : public CompositorUtils,
     GpuData() : has_shutdown(false) {}
 
     bool has_shutdown;
-    std::map<gpu::Mailbox, TextureRefHolder> textures;
+    std::map<gpu::Mailbox, TextureHolder> textures;
+    std::set<gpu::gles2::TextureManager*> texture_managers;
   } gpu_unsafe_access_;
 
   MainData& main();
@@ -184,20 +197,16 @@ class CompositorUtilsImpl : public CompositorUtils,
 GLFrameHandle::~GLFrameHandle() {
   content::GpuChildThread::GetTaskRunner()->PostTask(
       FROM_HERE,
-      base::Bind(&CompositorUtilsImpl::RemoveTextureRef,
+      base::Bind(&CompositorUtilsImpl::UnrefTexture,
                  base::Unretained(CompositorUtilsImpl::GetInstance()),
                  mailbox()));
 }
 
 void FetchTextureResourcesTask::OnSyncPointRetired() {
   GLuint service_id = 0;
-  TextureRefHolder ref =
-      content::oxide_gpu_shim::CreateTextureRef(client_id_,
-                                                route_id_,
-                                                mailbox_);
-  if (ref.IsValid() &&
-      CompositorUtilsImpl::GetInstance()->AddTextureRef(mailbox_, ref)) {
-    service_id = ref.GetServiceID();
+  CompositorUtilsImpl* utils = CompositorUtilsImpl::GetInstance();
+  if (utils->RefTexture(client_id_, route_id_, mailbox_)) {
+    service_id = utils->GetTextureIDForMailbox(mailbox_);
   }
 
   task_runner_->PostTask(
@@ -277,7 +286,6 @@ void CompositorUtilsImpl::ShutdownOnGpuThread() {
   DCHECK(!gpu().has_shutdown);
 
   gpu().has_shutdown = true;
-  gpu().textures.clear();
 }
 
 void CompositorUtilsImpl::WillProcessTask(
@@ -312,6 +320,26 @@ void CompositorUtilsImpl::DidProcessTask(
     task->FetchTextureResourcesOnGpuThread();
   }
 }
+
+void CompositorUtilsImpl::OnTextureManagerDestroying(
+    gpu::gles2::TextureManager* manager) {
+  if (gpu().texture_managers.erase(manager) == 0) {
+    return;
+  }
+
+  for (auto it = gpu().textures.begin(); it != gpu().textures.end(); ) {
+    if (it->second.first->GetTextureManager() != manager) {
+      ++it;
+      continue;
+    }
+
+    delete it->second.first;
+    gpu().textures.erase(it++);
+  }
+}
+
+void CompositorUtilsImpl::OnTextureRefDestroying(
+    gpu::gles2::TextureRef* texture) {}
 
 CompositorUtilsImpl::GpuData& CompositorUtilsImpl::gpu() {
   DCHECK(gpu_thread_checker_.CalledOnValidThread());
@@ -419,25 +447,62 @@ bool CompositorUtilsImpl::CanUseGpuCompositing() {
   return true;
 }
 
-bool CompositorUtilsImpl::AddTextureRef(const gpu::Mailbox& mailbox,
-                                        const TextureRefHolder& texture) {
+bool CompositorUtilsImpl::RefTexture(int32 client_id,
+                                     int32 route_id,
+                                     const gpu::Mailbox& mailbox) {
   if (gpu().has_shutdown) {
     return false;
   }
 
-  DCHECK(gpu().textures.find(mailbox) == gpu().textures.end());
+  auto it = gpu().textures.find(mailbox);
+  if (it != gpu().textures.end()) {
+    DCHECK_GT(it->second.second, 0);
+    it->second.second++;
+    return true;
+  }
 
-  gpu().textures[mailbox] = texture;
+  content::oxide_gpu_shim::Texture* texture =
+      content::oxide_gpu_shim::ConsumeTextureFromMailbox(client_id,
+                                                         route_id,
+                                                         mailbox);
+  if (!texture) {
+    return false;
+  }
+
+  gpu().textures[mailbox] = std::make_pair(texture, 1);
+
+  gpu::gles2::TextureManager* texture_manager = texture->GetTextureManager();
+  if (gpu().texture_managers.insert(texture_manager).second) {
+    texture_manager->AddObserver(this);
+  }
+
   return true;
 }
 
-void CompositorUtilsImpl::RemoveTextureRef(const gpu::Mailbox& mailbox) {
-  if (gpu().has_shutdown) {
+void CompositorUtilsImpl::UnrefTexture(const gpu::Mailbox& mailbox) {
+  auto it = gpu().textures.find(mailbox);
+  if (it == gpu().textures.end()) {
+    DCHECK(gpu().has_shutdown);
     return;
   }
 
-  size_t removed = gpu().textures.erase(mailbox);
-  DCHECK_GT(removed, 0U);
+  DCHECK_GT(it->second.second, 0);
+
+  if (--it->second.second == 0 && it->second.first->Destroy()) {
+    delete it->second.first;
+    size_t removed = gpu().textures.erase(mailbox);
+    DCHECK_GT(removed, 0U);
+  }
+}
+
+GLuint CompositorUtilsImpl::GetTextureIDForMailbox(const gpu::Mailbox& mailbox) {
+  if (gpu().has_shutdown) {
+    return 0;
+  }
+
+  auto it = gpu().textures.find(mailbox);
+  DCHECK(it != gpu().textures.end());
+  return it->second.first->GetServiceID();
 }
 
 CompositorUtils::~CompositorUtils() {}
