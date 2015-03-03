@@ -46,6 +46,7 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
       return CERT_ERROR_AUTHORITY_INVALID;
     case net::ERR_CERT_CONTAINS_ERRORS:
     case net::ERR_CERT_INVALID:
+    case net::ERR_CERT_VALIDITY_TOO_LONG:
       return CERT_ERROR_INVALID;
     case net::ERR_CERT_REVOKED:
       return CERT_ERROR_REVOKED;
