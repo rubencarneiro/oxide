@@ -82,10 +82,6 @@ class FetchTextureResourcesTask
         sync_point_(sync_point),
         callback_(callback),
         task_runner_(task_runner) {
-    DCHECK(task_runner_.get());
-    DCHECK(!callback_.is_null());
-    DCHECK(context_provider_.get());
-
     route_id_ = content::oxide_gpu_shim::GetContextProviderRouteID(
         static_cast<content::ContextProviderCommandBuffer*>(
           context_provider_.get()));
@@ -155,6 +151,10 @@ class CompositorUtilsImpl
 
   void InitializeOnGpuThread();
   void ShutdownOnGpuThread();
+  bool AcquirePendingTextureResourceFetchesLocked(
+      std::queue<scoped_refptr<FetchTextureResourcesTask> >* queue);
+  void ProcessTextureResourceFetches(
+      std::queue<scoped_refptr<FetchTextureResourcesTask> >* queue);
 
   // base::MessageLoop::TaskObserver implementation
   void WillProcessTask(const base::PendingTask& pending_task) override;
@@ -174,6 +174,7 @@ class CompositorUtilsImpl
   base::Lock fetch_texture_resources_lock_;
   bool fetch_texture_resources_pending_;
   bool gpu_thread_is_processing_task_;
+  bool can_fetch_texture_resources_;
   std::queue<scoped_refptr<FetchTextureResourcesTask> > fetch_texture_resources_queue_;
 
   struct MainData {
@@ -262,7 +263,8 @@ CompositorThread::~CompositorThread() {
 CompositorUtilsImpl::CompositorUtilsImpl()
     : client_id_(-1),
       fetch_texture_resources_pending_(false),
-      gpu_thread_is_processing_task_(false) {
+      gpu_thread_is_processing_task_(false),
+      can_fetch_texture_resources_(false) {
   main_thread_checker_.DetachFromThread();
   gpu_thread_checker_.DetachFromThread();
 }
@@ -285,7 +287,44 @@ void CompositorUtilsImpl::InitializeOnGpuThread() {
 void CompositorUtilsImpl::ShutdownOnGpuThread() {
   DCHECK(!gpu().has_shutdown);
 
+  base::MessageLoop::current()->RemoveTaskObserver(this);
   gpu().has_shutdown = true;
+
+  std::queue<scoped_refptr<FetchTextureResourcesTask> > queue;
+  {
+    base::AutoLock lock(fetch_texture_resources_lock_);
+    gpu_thread_is_processing_task_ = false;
+    if (!AcquirePendingTextureResourceFetchesLocked(&queue)) {
+      return;
+    }
+  }
+
+  ProcessTextureResourceFetches(&queue);
+}
+
+bool CompositorUtilsImpl::AcquirePendingTextureResourceFetchesLocked(
+    std::queue<scoped_refptr<FetchTextureResourcesTask> >* queue) {
+  DCHECK(gpu_thread_checker_.CalledOnValidThread());
+  fetch_texture_resources_lock_.AssertAcquired();
+
+  if (!fetch_texture_resources_pending_) {
+    return false;
+  }
+  fetch_texture_resources_pending_ = false;
+
+  std::swap(*queue, fetch_texture_resources_queue_);
+  return true;
+}
+
+void CompositorUtilsImpl::ProcessTextureResourceFetches(
+    std::queue<scoped_refptr<FetchTextureResourcesTask> >* queue) {
+  DCHECK(gpu_thread_checker_.CalledOnValidThread());
+
+  while (!queue->empty()) {
+    scoped_refptr<FetchTextureResourcesTask> task = queue->front();
+    queue->pop();
+    task->FetchTextureResourcesOnGpuThread();
+  }
 }
 
 void CompositorUtilsImpl::WillProcessTask(
@@ -294,7 +333,6 @@ void CompositorUtilsImpl::WillProcessTask(
 
   base::AutoLock lock(fetch_texture_resources_lock_);
   DCHECK(!gpu_thread_is_processing_task_);
-
   gpu_thread_is_processing_task_ = true;
 }
 
@@ -307,18 +345,13 @@ void CompositorUtilsImpl::DidProcessTask(
     base::AutoLock lock(fetch_texture_resources_lock_);
     DCHECK(gpu_thread_is_processing_task_);
     gpu_thread_is_processing_task_ = false;
-    if (!fetch_texture_resources_pending_) {
+
+    if (!AcquirePendingTextureResourceFetchesLocked(&queue)) {
       return;
     }
-    fetch_texture_resources_pending_ = false;
-    std::swap(queue, fetch_texture_resources_queue_);
   }
 
-  while (!queue.empty()) {
-    scoped_refptr<FetchTextureResourcesTask> task = queue.front();
-    queue.pop();
-    task->FetchTextureResourcesOnGpuThread();
-  }
+  ProcessTextureResourceFetches(&queue);
 }
 
 void CompositorUtilsImpl::OnTextureManagerDestroying(
@@ -376,11 +409,18 @@ void CompositorUtilsImpl::Initialize() {
         FROM_HERE,
         base::Bind(&CompositorUtilsImpl::InitializeOnGpuThread,
                    base::Unretained(this)));
+    base::AutoLock lock(fetch_texture_resources_lock_);
+    can_fetch_texture_resources_ = true;
   }
 }
 
 void CompositorUtilsImpl::Shutdown() {
   DCHECK(main().compositor_thread);
+
+  {
+    base::AutoLock lock(fetch_texture_resources_lock_);
+    can_fetch_texture_resources_ = false;
+  }
 
   scoped_refptr<base::SingleThreadTaskRunner> gpu_task_runner =
       content::GpuChildThread::GetTaskRunner();
@@ -405,8 +445,10 @@ void CompositorUtilsImpl::CreateGLFrameHandle(
     uint32 sync_point,
     const CreateGLFrameHandleCallback& callback,
     scoped_refptr<base::TaskRunner> task_runner) {
+  DCHECK(context_provider);
+  DCHECK(!callback.is_null());
   DCHECK(!mailbox.IsZero());
-  DCHECK(content::GpuChildThread::GetTaskRunner().get());
+  DCHECK(task_runner);
 
   scoped_refptr<FetchTextureResourcesTask> task =
       new FetchTextureResourcesTask(
@@ -415,13 +457,16 @@ void CompositorUtilsImpl::CreateGLFrameHandle(
 
   base::AutoLock lock(fetch_texture_resources_lock_);
 
+  DCHECK(can_fetch_texture_resources_);
+
   if (!fetch_texture_resources_pending_) {
     fetch_texture_resources_pending_ = true;
-    if (!gpu_thread_is_processing_task_ &&
-        !content::GpuChildThread::GetTaskRunner()->PostTask(
-          FROM_HERE, base::Bind(&WakeUpGpuThread))) {
-      // FIXME: Send an error asynchronously
-      return;
+    if (!gpu_thread_is_processing_task_) {
+      // We assert |can_fetch_texture_resources_| above, so this should
+      // never fail
+      content::GpuChildThread::GetTaskRunner()->PostTask(
+          FROM_HERE,
+          base::Bind(&WakeUpGpuThread));
     }
   }
 

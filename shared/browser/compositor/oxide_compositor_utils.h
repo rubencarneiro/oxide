@@ -40,16 +40,31 @@ namespace oxide {
 
 class GLFrameData;
 
+// Utilities for the compositor code
 class CompositorUtils {
  public:
+
+  // Return the CompositorUtils singleton
   static CompositorUtils* GetInstance();
 
+  // Initialize the CompositorUtils instance by starting up a compositor thread
+  // and starting the GPU service thread if it's not already running
   virtual void Initialize() = 0;
+
+  // Shutdown the CompositorUtils instance. This must be called before the GPU
+  // service thread is shut down
   virtual void Shutdown() = 0;
 
+  // Return the task runner for the compositor thread
   virtual scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() = 0;
 
   typedef base::Callback<void(scoped_ptr<GLFrameData>)> CreateGLFrameHandleCallback;
+
+  // Create a GPU service-side handle for the underlying texture represented by
+  // the provided client-side paramters (|context_provider| and |mailbox|). The
+  // result will be returned asynchronously using |callback|, only after the
+  // specified |sync_point| has expired. The callback will be called on the
+  // |task_runner| provided.
   virtual void CreateGLFrameHandle(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
