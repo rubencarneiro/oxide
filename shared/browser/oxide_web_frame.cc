@@ -218,7 +218,10 @@ void WebFrame::RemoveScriptMessageRequest(
       std::find(current_script_message_requests_.begin(),
                 current_script_message_requests_.end(),
                 req);
-  DCHECK(it != current_script_message_requests_.end());
+  if (it == current_script_message_requests_.end()) {
+    // can happen for non "persisted" requests e.g. SendMessageNoReply
+    return;
+  }
 
   if (!destroyed_) {
     current_script_message_requests_.erase(it);
