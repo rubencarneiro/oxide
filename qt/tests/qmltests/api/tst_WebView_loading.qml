@@ -162,6 +162,29 @@ TestWebView {
       compare(spy.count, 1,
               "WebView.loading should have changed twice during the load");
       compare(expectedLoadEvents.length, 0, "Some load events are missing");
+
+      // Verify that reloading a page that triggered an error
+      // generates the same sequence of load events
+      spy.clear();
+      expectedLoadEvents = [
+        { type: LoadEvent.TypeStarted, url: url, loading: true },
+        { type: LoadEvent.TypeFailed, url: url, loading: true },
+        { type: LoadEvent.TypeCommitted, url: url, error: true, loading: true }
+      ];
+      webView.reload();
+
+      verify(webView.loading,
+             "WebView.loading should be true once we start loading");
+      compare(spy.count, 1);
+
+      spy.clear();
+      spy.wait();
+
+      verify(!webView.loading,
+             "WebView.loading should be false after we finish loading");
+      compare(spy.count, 1,
+              "WebView.loading should have changed twice during the load");
+      compare(expectedLoadEvents.length, 0, "Some load events are missing");
     }
 
     function test_WebView_loading5_redirection() {
