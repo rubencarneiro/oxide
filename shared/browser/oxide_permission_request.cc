@@ -186,7 +186,7 @@ void PermissionRequest::SetCancelCallback(const base::Closure& callback) {
 void SimplePermissionRequest::Cancel() {
   DCHECK(!callback_.is_null());
 
-  callback_.Run(false);
+  callback_.Run(content::PERMISSION_STATUS_DENIED);
   callback_.Reset();
 
   PermissionRequest::Cancel();
@@ -197,7 +197,7 @@ SimplePermissionRequest::SimplePermissionRequest(
     const PermissionRequestID& request_id,
     const GURL& url,
     const GURL& embedder,
-    const base::Callback<void(bool)>& callback)
+    const base::Callback<void(content::PermissionStatus)>& callback)
     : PermissionRequest(manager, request_id, url, embedder),
       callback_(callback) {}
 
@@ -210,7 +210,7 @@ SimplePermissionRequest::~SimplePermissionRequest() {
 void SimplePermissionRequest::Allow() {
   DCHECK(!callback_.is_null());
 
-  callback_.Run(true);
+  callback_.Run(content::PERMISSION_STATUS_GRANTED);
   callback_.Reset();
 
   manager_->RemovePendingRequest(this);
@@ -219,7 +219,7 @@ void SimplePermissionRequest::Allow() {
 void SimplePermissionRequest::Deny() {
   DCHECK(!callback_.is_null());
 
-  callback_.Run(false);
+  callback_.Run(content::PERMISSION_STATUS_DENIED);
   callback_.Reset();
 
   manager_->RemovePendingRequest(this);

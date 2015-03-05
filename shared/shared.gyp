@@ -197,6 +197,7 @@
         ],
       },
       'export_dependent_settings': [
+        '<(DEPTH)/third_party/mojo/mojo_public.gyp:mojo_cpp_bindings',
         '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',
       ],
       'defines': [
@@ -235,6 +236,7 @@
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/khronos/khronos.gyp:khronos_headers',
         '<(DEPTH)/third_party/libXNVCtrl/libXNVCtrl.gyp:libXNVCtrl',
+        '<(DEPTH)/third_party/mojo/mojo_public.gyp:mojo_cpp_bindings',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
         # Not used directly. Should content_browser have this in export_dependent_settings?
         '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',

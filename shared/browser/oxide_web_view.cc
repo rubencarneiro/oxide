@@ -1912,7 +1912,7 @@ void WebView::HidePopupMenu() {
 void WebView::RequestGeolocationPermission(
     const GURL& requesting_frame,
     int bridge_id,
-    const base::Callback<void(bool)>& callback) {
+    const base::Callback<void(content::PermissionStatus)>& callback) {
   PermissionRequestID request_id(
       web_contents_->GetRenderProcessHost()->GetID(),
       web_contents_->GetRenderViewHost()->GetRoutingID(),

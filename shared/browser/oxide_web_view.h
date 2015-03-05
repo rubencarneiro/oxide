@@ -37,6 +37,7 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
+#include "content/public/common/permission_status.mojom.h"
 #include "content/public/common/resource_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
@@ -262,7 +263,7 @@ class WebView : public ScriptMessageTarget,
   void RequestGeolocationPermission(
       const GURL& requesting_frame,
       int bridge_id,
-      const base::Callback<void(bool)>& callback);
+      const base::Callback<void(content::PermissionStatus)>& callback);
   void CancelGeolocationPermissionRequest(
       const GURL& requesting_frame,
       int bridge_id);

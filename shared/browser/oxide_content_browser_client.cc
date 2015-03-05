@@ -91,8 +91,8 @@ class SingleProcessBrowserContextHolder
 };
 
 void RespondToGeolocationPermissionRequest(
-    const base::Callback<void(bool)>& callback,
-    bool result) {
+    const base::Callback<void(content::PermissionStatus)>& callback,
+    content::PermissionStatus result) {
   content::GeolocationProvider::GetInstance()
       ->UserDidOptIntoLocationServices();
   callback.Run(result);
@@ -247,20 +247,20 @@ void ContentBrowserClient::RequestPermission(
     int bridge_id,
     const GURL& requesting_frame,
     bool user_gesture,
-    const base::Callback<void(bool)>& result_callback) {
+    const base::Callback<void(content::PermissionStatus)>& result_callback) {
   if (permission != content::PERMISSION_GEOLOCATION) {
     // TODO: Other types
-    result_callback.Run(false);
+    result_callback.Run(content::PERMISSION_STATUS_DENIED);
     return;
   }
 
   WebView* webview = WebView::FromWebContents(web_contents);
   if (!webview) {
-    result_callback.Run(false);
+    result_callback.Run(content::PERMISSION_STATUS_DENIED);
     return;
   }
 
-  base::Callback<void(bool)> callback =
+  base::Callback<void(content::PermissionStatus)> callback =
       base::Bind(&RespondToGeolocationPermissionRequest,
                  result_callback);
   webview->RequestGeolocationPermission(requesting_frame,

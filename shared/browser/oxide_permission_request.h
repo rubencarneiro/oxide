@@ -23,6 +23,7 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
+#include "content/public/common/permission_status.mojom.h"
 #include "url/gurl.h"
 
 namespace oxide {
@@ -152,11 +153,12 @@ class PermissionRequest {
 // free to subclass from this 
 class SimplePermissionRequest : public PermissionRequest {
  public:
-  SimplePermissionRequest(PermissionRequestManager* manager,
-                          const PermissionRequestID& request_id,
-                          const GURL& url,
-                          const GURL& embedder,
-                          const base::Callback<void(bool)>& callback);
+  SimplePermissionRequest(
+      PermissionRequestManager* manager,
+      const PermissionRequestID& request_id,
+      const GURL& url,
+      const GURL& embedder,
+      const base::Callback<void(content::PermissionStatus)>& callback);
   ~SimplePermissionRequest() override;
 
   // Allow the requesting frame access to the desired resource
@@ -170,7 +172,7 @@ class SimplePermissionRequest : public PermissionRequest {
   void Cancel() override;
 
   // The callback provided by Chromium, which we use to respond to the request
-  base::Callback<void(bool)> callback_;
+  base::Callback<void(content::PermissionStatus)> callback_;
 
   DISALLOW_COPY_AND_ASSIGN(SimplePermissionRequest);
 };

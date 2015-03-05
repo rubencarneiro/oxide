@@ -105,7 +105,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
       int bridge_id,
       const GURL& requesting_frame,
       bool user_gesture,
-      const base::Callback<void(bool)>& result_callback) final;
+      const base::Callback<void(content::PermissionStatus)>& callback) final;
   void CancelPermissionRequest(content::PermissionType permission,
                                content::WebContents* web_contents,
                                int bridge_id,
