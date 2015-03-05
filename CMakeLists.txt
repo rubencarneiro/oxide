@@ -46,12 +46,10 @@ if(ENABLE_COMPONENT_BUILD)
   link_directories(${CHROMIUM_LIB_DIR})
 endif()
 
-set(GOLD_DIR ${CMAKE_BINARY_DIR}/gold)
-
 # Use gold everywhere
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -B ${GOLD_DIR}")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -B ${GOLD_DIR}")
-set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -B ${GOLD_DIR}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
 
 if(NOT DEFINED PYTHON)
   find_program(PYTHON python)
@@ -88,31 +86,6 @@ set(GETTEXT_PACKAGE "oxide-${OXIDE_BUILD}")
 
 # Import the configuration for this build
 include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
-
-# We want to link the core library with gold. Ubuntu has '-fuse-ld=gold',
-# but as this is distro specific, we do something that is currently
-# supportable across distributions. This creates a directory with a symlink
-# to the gold linker, and we pass -B to the compiler
-# The call to "gcc -print-prog-name=ld" is needed so that we get a path
-# to the correct linker in cross-builds
-execute_process(
-    COMMAND ${CMAKE_C_COMPILER} -print-prog-name=ld
-    RESULT_VARIABLE _RESULT
-    OUTPUT_VARIABLE _LINKER_PATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to get linker path from compiler")
-endif()
-set(_SETUP_GOLD_COMMAND
-    ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/setup-gold.py
-    --output ${GOLD_DIR} --ld ${_LINKER_PATH})
-get_filename_component(_LINKER_NAME ${_LINKER_PATH} NAME)
-add_custom_command(
-    OUTPUT ${GOLD_DIR}/${_LINKER_NAME}
-    COMMAND ${_SETUP_GOLD_COMMAND})
-add_custom_target(gold ALL
-                  DEPENDS ${GOLD_DIR}/${_LINKER_NAME}
-                  COMMENT "Creating a symlink for the gold linker")
 
 # Build the gyp command
 set(_GYP_COMMAND
@@ -188,6 +161,10 @@ else()
   set(ENV{AR} ${CMAKE_AR})
 endif()
 
+# FIXME: Support clang
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+  message(FATAL_ERROR "Oxide requires at least GCC 4.8 to build")
+endif()
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_HAS_CXX11)
 if(NOT COMPILER_HAS_CXX11)
   message(FATAL_ERROR "Oxide requires a compiler that supports -std=c++11")
@@ -214,7 +191,6 @@ endif()
 list(APPEND _NINJA_BUILD_COMMAND all)
 add_custom_target(
     gyp_all COMMAND ${_NINJA_BUILD_COMMAND} 
-    DEPENDS gold
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building the GYP \"all\" target")
 
