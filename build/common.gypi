@@ -51,7 +51,7 @@
         # Ubuntu-specific?
         'arm_float_abi': 'hard',
       }],
-      ['host_arch=="arm" or host_arch=="ia32"', {
+      ['(host_arch=="arm" or host_arch=="ia32") and component=="static_library"', {
         # This is desparate - we're trying to avoid linker OOM on native ARM
         # and x86 builds. This is unnecessary on ARM cross builds, hence the
         # test for "host_arch".
@@ -74,7 +74,7 @@
           '-Wl,--stats',
         ],
       }],
-      ['host_arch=="arm" or host_arch=="ia32"', {
+      ['(host_arch=="arm" or host_arch=="ia32") and component=="static_library"', {
         'ldflags': [
           # Try to work around linker OOM - we only want these on native
           # ARM and x86 builds though, hence the test for "host_arch"
