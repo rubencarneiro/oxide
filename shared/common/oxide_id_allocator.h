@@ -29,7 +29,7 @@ static const int kInvalidId = -1;
 
 class IdAllocator final {
  public:
-  IdAllocator(size_t max_id);
+  IdAllocator(size_t max_id = 0);
   ~IdAllocator();
 
   int AllocateId();

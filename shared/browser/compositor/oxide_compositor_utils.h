@@ -25,7 +25,6 @@
 
 namespace base {
 class SingleThreadTaskRunner;
-class TaskRunner;
 }
 
 namespace cc {
@@ -52,7 +51,8 @@ class CompositorUtils {
   virtual void Initialize() = 0;
 
   // Shutdown the CompositorUtils instance. This must be called before the GPU
-  // service thread is shut down
+  // service thread is shut down and must be called on the same thread that
+  // called Initialize()
   virtual void Shutdown() = 0;
 
   // Return the task runner for the compositor thread
@@ -65,12 +65,14 @@ class CompositorUtils {
   // result will be returned asynchronously using |callback|, only after the
   // specified |sync_point| has expired. The callback will be called on the
   // |task_runner| provided.
+  // This must be called on the same thread that called Initialize() ot the
+  // compositor thread. |task_runner| must be for either of these threads
   virtual void CreateGLFrameHandle(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
       uint32 sync_point,
       const CreateGLFrameHandleCallback& callback,
-      scoped_refptr<base::TaskRunner> task_runner) = 0;
+      scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
 
   virtual gfx::GLSurfaceHandle GetSharedSurfaceHandle() = 0;
 
