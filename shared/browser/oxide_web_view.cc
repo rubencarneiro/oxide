@@ -845,6 +845,11 @@ bool WebView::IsFullscreenForTabOrPending(
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
+  // We get a RenderFrameHostChanged notification when any FrameTreeNode is
+  // added to the FrameTree, which is when we want a notification. However,
+  // we get that before the FrameTreeNode has its parent set, so we still
+  // have to use RenderFrameCreated to add new nodes correctly
+
   if (WebFrame::FromRenderFrameHost(render_frame_host)) {
     // We already have a WebFrame for this host. This could be because the new
     // host is for the root frame, or it is a cross-process subframe
@@ -860,26 +865,6 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   WebFrame* frame = CreateWebFrame(render_frame_host);
   DCHECK(frame);
   frame->InitParent(parent);
-}
-
-void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    // This occurs if |render_frame_host| represents a frame that's being
-    // detached (so the WebFrame was deleted in FrameDetached)
-    return;
-  }
-
-  if (frame->render_frame_host() != render_frame_host) {
-    // |render_frame_host| is not the current host for this WebFrame, so
-    // we do nothing
-    return;
-  }
-
-  // If we get here, then it's likely that the main frame is being swapped.
-  // In this case, Chromium purges all RenderFrameHosts on the browser side
-  // before we get the detached messages from Blink
-  WebFrame::Destroy(frame);
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {}
@@ -908,9 +893,21 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
 void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
                                      content::RenderFrameHost* new_host) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
-  DCHECK(frame);
 
-  frame->set_render_frame_host(new_host);
+  if (frame) {
+    frame->set_render_frame_host(new_host);
+    return;
+  }
+
+#if 0
+  WebFrame* parent =
+      WebFrame::FromRenderFrameHost(new_host->GetParent());
+  DCHECK(parent);
+
+  frame = CreateWebFrame(new_host);
+  DCHECK(frame);
+  frame->InitParent(parent);
+#endif
 }
 
 void WebView::DidStartProvisionalLoadForFrame(

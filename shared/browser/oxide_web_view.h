@@ -437,7 +437,6 @@ class WebView : public ScriptMessageTarget,
 
   // content::WebContentsObserver implementation
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) final;
-  void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) final;
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) final;
