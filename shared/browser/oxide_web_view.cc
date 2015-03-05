@@ -1235,6 +1235,9 @@ WebView::~WebView() {
     rwhv->SetDelegate(nullptr);
   }
 
+  // Stop WebContents from calling back in to us
+  content::WebContentsObserver::Observe(nullptr);
+
   web_contents_->RemoveUserData(kWebViewKey);
 }
 
@@ -1317,7 +1320,7 @@ void WebView::Init(Params* params) {
   web_contents_->SetDelegate(this);
   web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
 
-  WebContentsObserver::Observe(web_contents_.get());
+  content::WebContentsObserver::Observe(web_contents_.get());
 
   // Set the initial WebPreferences. This has to happen after attaching
   // ourself to the WebContents, as the pref update needs to call back in
