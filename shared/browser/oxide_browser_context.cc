@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -224,6 +224,7 @@ struct BrowserContextSharedIOData {
   BrowserContextSharedIOData(const BrowserContext::Params& params)
       : path(params.path),
         cache_path(params.cache_path),
+        max_cache_size(params.max_cache_size),
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
@@ -239,6 +240,7 @@ struct BrowserContextSharedIOData {
 
   base::FilePath path;
   base::FilePath cache_path;
+  int max_cache_size;
 
   std::string user_agent_string;
   std::string accept_langs;
@@ -376,6 +378,10 @@ base::FilePath BrowserContextIOData::GetCachePath() const {
   return data.cache_path;
 }
 
+int BrowserContextIOData::GetMaxCacheSize() const {
+  return GetSharedData().max_cache_size;
+}
+
 std::string BrowserContextIOData::GetAcceptLangs() const {
   const BrowserContextSharedIOData& data = GetSharedData();
   base::AutoLock lock(data.lock);
@@ -456,7 +462,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          83886080, // XXX: 80MB - Make this configurable
+          GetMaxCacheSize(),
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }
@@ -870,6 +876,11 @@ base::FilePath BrowserContext::GetPath() const {
 base::FilePath BrowserContext::GetCachePath() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetCachePath();
+}
+
+int BrowserContext::GetMaxCacheSize() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetMaxCacheSize();
 }
 
 std::string BrowserContext::GetAcceptLangs() const {

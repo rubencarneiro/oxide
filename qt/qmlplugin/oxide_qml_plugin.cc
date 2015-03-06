@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -122,6 +122,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebView, 2>(uri, 1, 4, "WebView");
 
     qmlRegisterType<OxideQQuickWebView, 3>(uri, 1, 5, "WebView");
+
+    qmlRegisterType<OxideQQuickWebContext, 2>(uri, 1, 6, "WebContext");
   }
 };
 

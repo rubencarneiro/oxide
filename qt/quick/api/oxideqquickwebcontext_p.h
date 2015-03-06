@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,8 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QStringList hostMappingRules READ hostMappingRules WRITE setHostMappingRules NOTIFY hostMappingRulesChanged REVISION 1)
 
   Q_PROPERTY(QStringList allowedExtraUrlSchemes READ allowedExtraUrlSchemes WRITE setAllowedExtraUrlSchemes NOTIFY allowedExtraUrlSchemesChanged REVISION 1)
+
+  Q_PROPERTY(int maxCacheSize READ maxCacheSize WRITE setMaxCacheSize NOTIFY maxCacheSizeChanged REVISION 2)
 
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
@@ -148,6 +150,9 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   QStringList allowedExtraUrlSchemes() const;
   void setAllowedExtraUrlSchemes(const QStringList& schemes);
 
+  int maxCacheSize() const;
+  void setMaxCacheSize(int size);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -166,6 +171,7 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   void devtoolsBindIpChanged();
   Q_REVISION(1) void hostMappingRulesChanged();
   Q_REVISION(1) void allowedExtraUrlSchemesChanged();
+  Q_REVISION(2) void maxCacheSizeChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

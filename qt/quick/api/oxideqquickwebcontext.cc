@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -894,6 +894,28 @@ void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
   d->setAllowedExtraUrlSchemes(schemes);
 
   emit allowedExtraUrlSchemesChanged();
+}
+
+int OxideQQuickWebContext::maxCacheSize() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->maxCacheSize();
+}
+
+void OxideQQuickWebContext::setMaxCacheSize(int size) {
+  Q_D(OxideQQuickWebContext);
+
+  if (d->isInitialized()) {
+    qWarning() << "Cannot set WebContext.maxCacheSize once the context is in use";
+    return;
+  }
+
+  if (d->maxCacheSize() == size) {
+    return;
+  }
+
+  d->setMaxCacheSize(size);
+  emit maxCacheSizeChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

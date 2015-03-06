@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 1.0
+import com.canonical.Oxide 1.6
 import com.canonical.Oxide.Testing 1.0
 
 TestCase {
@@ -29,6 +29,7 @@ TestCase {
     var r = [
       { prop: "dataPath", signal: "dataPathChanged", val: "file:///foo", dataPath: "" },
       { prop: "cachePath", signal: "cachePathChanged", val: "file:///foo", dataPath: "" },
+      { prop: "maxCacheSize", signal: "maxCacheSizeChanged", val: 1048576, dataPath: "" },
       { prop: "sessionCookieMode", signal: "sessionCookieModeChanged", val: WebContext.SessionCookieModeRestored, dataPath: QMLTEST_DATADIR }
     ];
 

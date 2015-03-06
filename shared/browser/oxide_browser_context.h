@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -80,6 +80,7 @@ class BrowserContextIOData {
 
   base::FilePath GetPath() const;
   base::FilePath GetCachePath() const;
+  int GetMaxCacheSize() const;
 
   std::string GetAcceptLangs() const;
   std::string GetUserAgent() const;
@@ -132,12 +133,14 @@ class BrowserContext : public content::BrowserContext,
   struct Params {
     Params(const base::FilePath& path,
            const base::FilePath& cache_path,
+           int max_cache_size,
            content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
            bool devtools_enabled,
            int devtools_port,
            const std::string& devtools_ip)
         : path(path),
           cache_path(cache_path),
+          max_cache_size(max_cache_size),
           session_cookie_mode(session_cookie_mode),
           devtools_enabled(devtools_enabled),
           devtools_port(devtools_port),
@@ -145,6 +148,7 @@ class BrowserContext : public content::BrowserContext,
 
     base::FilePath path;
     base::FilePath cache_path;
+    int max_cache_size;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
     bool devtools_enabled;
     int devtools_port;
@@ -183,6 +187,7 @@ class BrowserContext : public content::BrowserContext,
 
   base::FilePath GetPath() const final;
   base::FilePath GetCachePath() const;
+  int GetMaxCacheSize() const;
 
   std::string GetAcceptLangs() const;
   void SetAcceptLangs(const std::string& langs);
