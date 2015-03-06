@@ -78,7 +78,7 @@ class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
 };
 
 WebContext::ConstructProperties::ConstructProperties() :
-    max_cache_size(83886080), // default to 80MB
+    max_cache_size(0),
     cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
     popup_blocker_enabled(true),
