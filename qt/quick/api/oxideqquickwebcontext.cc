@@ -905,6 +905,11 @@ int OxideQQuickWebContext::maxCacheSizeHint() const {
 void OxideQQuickWebContext::setMaxCacheSizeHint(int size) {
   Q_D(OxideQQuickWebContext);
 
+  if (size < 0) {
+    qWarning() << "WebContext.maxCacheSizeHint cannot have a negative value";
+    return;
+  }
+
   if (d->isInitialized()) {
     qWarning() << "Cannot set WebContext.maxCacheSizeHint once the context is in use";
     return;
