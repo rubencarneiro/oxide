@@ -110,8 +110,8 @@ class WebContext final : public oxide::BrowserContextDelegate {
   std::vector<std::string> GetHostMappingRules() const;
   void SetHostMappingRules(const std::vector<std::string>& rules);
 
-  int GetMaxCacheSize() const;
-  void SetMaxCacheSize(int size);
+  int GetMaxCacheSizeHint() const;
+  void SetMaxCacheSizeHint(int size);
 
  private:
   friend class WebContextAdapter;
@@ -123,7 +123,7 @@ class WebContext final : public oxide::BrowserContextDelegate {
     std::string user_agent;
     base::FilePath data_path;
     base::FilePath cache_path;
-    int max_cache_size;
+    int max_cache_size_hint;
     std::string accept_langs;
     net::StaticCookiePolicy::Type cookie_policy;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;

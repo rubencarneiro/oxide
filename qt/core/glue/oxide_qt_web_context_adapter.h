@@ -132,8 +132,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   void setAllowedExtraUrlSchemes(const QStringList& schemes);
 
-  int maxCacheSize() const;
-  void setMaxCacheSize(int size);
+  int maxCacheSizeHint() const;
+  void setMaxCacheSizeHint(int size);
 
  protected:
   WebContextAdapter(QObject* q);

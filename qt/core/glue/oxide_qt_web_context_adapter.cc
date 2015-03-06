@@ -276,12 +276,12 @@ void WebContextAdapter::setAllowedExtraUrlSchemes(const QStringList& schemes) {
   context_->SetAllowedExtraURLSchemes(set);
 }
 
-int WebContextAdapter::maxCacheSize() const {
-  return context_->GetMaxCacheSize();
+int WebContextAdapter::maxCacheSizeHint() const {
+  return context_->GetMaxCacheSizeHint();
 }
 
-void WebContextAdapter::setMaxCacheSize(int size) {
-  context_->SetMaxCacheSize(size);
+void WebContextAdapter::setMaxCacheSizeHint(int size) {
+  context_->SetMaxCacheSizeHint(size);
 }
 
 WebContextAdapter::WebContextAdapter(QObject* q)

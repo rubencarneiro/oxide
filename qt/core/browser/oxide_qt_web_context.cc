@@ -78,7 +78,7 @@ class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
 };
 
 WebContext::ConstructProperties::ConstructProperties() :
-    max_cache_size(0),
+    max_cache_size_hint(0),
     cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
     popup_blocker_enabled(true),
@@ -524,7 +524,7 @@ oxide::BrowserContext* WebContext::GetContext() {
   oxide::BrowserContext::Params params(
       construct_props_->data_path,
       construct_props_->cache_path,
-      construct_props_->max_cache_size,
+      construct_props_->max_cache_size_hint,
       construct_props_->session_cookie_mode,
       construct_props_->devtools_enabled,
       construct_props_->devtools_port,
@@ -747,17 +747,17 @@ void WebContext::SetHostMappingRules(const std::vector<std::string>& rules) {
   construct_props_->host_mapping_rules = rules;
 }
 
-int WebContext::GetMaxCacheSize() const {
+int WebContext::GetMaxCacheSizeHint() const {
   if (IsInitialized()) {
-    return context_->GetMaxCacheSize();
+    return context_->GetMaxCacheSizeHint();
   }
 
-  return construct_props_->max_cache_size;
+  return construct_props_->max_cache_size_hint;
 }
 
-void WebContext::SetMaxCacheSize(int size) {
+void WebContext::SetMaxCacheSizeHint(int size) {
   DCHECK(!IsInitialized());
-  construct_props_->max_cache_size = size;
+  construct_props_->max_cache_size_hint = size;
 }
 
 } // namespace qt

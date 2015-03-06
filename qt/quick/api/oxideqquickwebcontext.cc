@@ -896,26 +896,26 @@ void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
   emit allowedExtraUrlSchemesChanged();
 }
 
-int OxideQQuickWebContext::maxCacheSize() const {
+int OxideQQuickWebContext::maxCacheSizeHint() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->maxCacheSize();
+  return d->maxCacheSizeHint();
 }
 
-void OxideQQuickWebContext::setMaxCacheSize(int size) {
+void OxideQQuickWebContext::setMaxCacheSizeHint(int size) {
   Q_D(OxideQQuickWebContext);
 
   if (d->isInitialized()) {
-    qWarning() << "Cannot set WebContext.maxCacheSize once the context is in use";
+    qWarning() << "Cannot set WebContext.maxCacheSizeHint once the context is in use";
     return;
   }
 
-  if (d->maxCacheSize() == size) {
+  if (d->maxCacheSizeHint() == size) {
     return;
   }
 
-  d->setMaxCacheSize(size);
-  emit maxCacheSizeChanged();
+  d->setMaxCacheSizeHint(size);
+  emit maxCacheSizeHintChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

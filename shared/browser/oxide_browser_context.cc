@@ -224,7 +224,7 @@ struct BrowserContextSharedIOData {
   BrowserContextSharedIOData(const BrowserContext::Params& params)
       : path(params.path),
         cache_path(params.cache_path),
-        max_cache_size(params.max_cache_size),
+        max_cache_size_hint(params.max_cache_size_hint),
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
@@ -240,7 +240,7 @@ struct BrowserContextSharedIOData {
 
   base::FilePath path;
   base::FilePath cache_path;
-  int max_cache_size;
+  int max_cache_size_hint;
 
   std::string user_agent_string;
   std::string accept_langs;
@@ -378,8 +378,8 @@ base::FilePath BrowserContextIOData::GetCachePath() const {
   return data.cache_path;
 }
 
-int BrowserContextIOData::GetMaxCacheSize() const {
-  return GetSharedData().max_cache_size;
+int BrowserContextIOData::GetMaxCacheSizeHint() const {
+  return GetSharedData().max_cache_size_hint;
 }
 
 std::string BrowserContextIOData::GetAcceptLangs() const {
@@ -462,7 +462,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          GetMaxCacheSize(),
+          GetMaxCacheSizeHint(),
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }
@@ -878,9 +878,9 @@ base::FilePath BrowserContext::GetCachePath() const {
   return io_data()->GetCachePath();
 }
 
-int BrowserContext::GetMaxCacheSize() const {
+int BrowserContext::GetMaxCacheSizeHint() const {
   DCHECK(CalledOnValidThread());
-  return io_data()->GetMaxCacheSize();
+  return io_data()->GetMaxCacheSizeHint();
 }
 
 std::string BrowserContext::GetAcceptLangs() const {

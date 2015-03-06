@@ -80,7 +80,7 @@ class BrowserContextIOData {
 
   base::FilePath GetPath() const;
   base::FilePath GetCachePath() const;
-  int GetMaxCacheSize() const;
+  int GetMaxCacheSizeHint() const;
 
   std::string GetAcceptLangs() const;
   std::string GetUserAgent() const;
@@ -133,14 +133,14 @@ class BrowserContext : public content::BrowserContext,
   struct Params {
     Params(const base::FilePath& path,
            const base::FilePath& cache_path,
-           int max_cache_size,
+           int max_cache_size_hint,
            content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
            bool devtools_enabled,
            int devtools_port,
            const std::string& devtools_ip)
         : path(path),
           cache_path(cache_path),
-          max_cache_size(max_cache_size),
+          max_cache_size_hint(max_cache_size_hint),
           session_cookie_mode(session_cookie_mode),
           devtools_enabled(devtools_enabled),
           devtools_port(devtools_port),
@@ -148,7 +148,7 @@ class BrowserContext : public content::BrowserContext,
 
     base::FilePath path;
     base::FilePath cache_path;
-    int max_cache_size;
+    int max_cache_size_hint;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
     bool devtools_enabled;
     int devtools_port;
@@ -187,7 +187,7 @@ class BrowserContext : public content::BrowserContext,
 
   base::FilePath GetPath() const final;
   base::FilePath GetCachePath() const;
-  int GetMaxCacheSize() const;
+  int GetMaxCacheSizeHint() const;
 
   std::string GetAcceptLangs() const;
   void SetAcceptLangs(const std::string& langs);
