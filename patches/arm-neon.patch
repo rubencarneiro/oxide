@@ -15,7 +15,7 @@
 diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/common.gypi
 --- a/third_party/webrtc/build/common.gypi
 +++ b/third_party/webrtc/build/common.gypi
-@@ -278,17 +278,17 @@
+@@ -271,17 +271,17 @@
          ],
          'conditions': [
            ['arm_version>=7', {
@@ -34,44 +34,3 @@ diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/com
        }],
        ['target_arch=="mipsel" and mips_arch_variant!="r6" and android_webview_build==0', {
          'defines': [
-diff --git a/third_party/webrtc/modules/audio_coding/codecs/isac/isacfix.gypi b/third_party/webrtc/modules/audio_coding/codecs/isac/isacfix.gypi
---- a/third_party/webrtc/modules/audio_coding/codecs/isac/isacfix.gypi
-+++ b/third_party/webrtc/modules/audio_coding/codecs/isac/isacfix.gypi
-@@ -75,17 +75,17 @@
-         'fix/source/structs.h',
-       ],
-       'conditions': [
-         ['OS!="win"', {
-           'defines': [
-             'WEBRTC_LINUX',
-           ],
-         }],
--        ['target_arch=="arm" and arm_version>=7', {
-+        ['target_arch=="arm" and arm_version>=7 and (arm_neon==1 or arm_neon_optional==1)', {
-           'dependencies': [ 'isac_neon', ],
-           'sources': [
-             'fix/source/lattice_armv7.S',
-             'fix/source/pitch_filter_armv6.S',
-           ],
-           'sources!': [
-             'fix/source/lattice_c.c',
-             'fix/source/pitch_filter_c.c',
-@@ -119,17 +119,17 @@
-               ],
-             }],
-           ],
-         }],
-       ],
-     },
-   ],
-   'conditions': [
--    ['target_arch=="arm" and arm_version>=7', {
-+    ['target_arch=="arm" and arm_version>=7 and (arm_neon==1 or arm_neon_optional==1)', {
-       'targets': [
-         {
-           'target_name': 'isac_neon',
-           'type': 'static_library',
-           'includes': ['../../../../build/arm_neon.gypi',],
-           'dependencies': [
-             '<(webrtc_root)/common_audio/common_audio.gyp:common_audio',
-           ],
