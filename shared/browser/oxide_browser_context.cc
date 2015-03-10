@@ -21,7 +21,9 @@
 #include <libintl.h>
 #include <vector>
 
+#include "base/files/file_enumerator.h"
 #include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/memory/weak_ptr.h"
@@ -97,6 +99,41 @@ const char kDefaultAcceptLanguage[] = "en-us,en";
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
 const int kBackLog = 1;
 
+void CleanupGPUShaderCache(const base::FilePath& path) {
+  base::FilePath cache = path.Append(FILE_PATH_LITERAL("GPUCache"));
+  if (!base::DirectoryExists(cache)) {
+    return;
+  }
+
+  base::FileEnumerator traversal(
+      cache, false,
+      base::FileEnumerator::FILES | base::FileEnumerator::DIRECTORIES);
+  for (base::FilePath current = traversal.Next(); !current.empty();
+       current = traversal.Next()) {
+    if (traversal.GetInfo().IsDirectory()) {
+      LOG(WARNING)
+          << "Not deleting GPU shader cache directory \"" << cache.value()
+          << "\". Directory contains an unexpected sub-directory \""
+          << traversal.GetInfo().GetName().value() << "\"";
+      return;
+    }
+
+    base::FilePath::StringType name = traversal.GetInfo().GetName().value();
+    if (name != FILE_PATH_LITERAL("index") &&
+        name.compare(0, 5, FILE_PATH_LITERAL("data_")) != 0 &&
+        name.compare(0, 2, FILE_PATH_LITERAL("f_")) != 0) {
+      LOG(WARNING)
+          << "Not deleting GPU shader cache directory \"" << cache.value()
+          << "\". Directory contains an unexpected file \"" << name << "\"";
+      return;
+    }
+  }
+
+  base::DeleteFile(cache, true);
+}
+
+} // namespace
+
 class TCPServerSocketFactory :
     public content::DevToolsHttpHandler::ServerSocketFactory {
  public:
@@ -170,8 +207,6 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
 
   base::WeakPtr<URLRequestContext> url_request_context_;
 };
-
-} // namespace
 
 class ResourceContext final : public content::ResourceContext {
  public:
@@ -667,6 +702,13 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
                                             std::string(),
                                             new DevtoolsHttpHandlerDelegate(),
                                             base::FilePath()));
+  }
+
+  if (!GetPath().empty()) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::FILE,
+        FROM_HERE,
+        base::Bind(&CleanupGPUShaderCache, GetPath()));
   }
 }
 
