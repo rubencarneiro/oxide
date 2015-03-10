@@ -1,0 +1,14 @@
+# HG changeset patch
+# Parent 6b26f5d2748c34c5e491515e4c6d7144c6fde70e
+
+diff -r 6b26f5d2748c media/audio/pulse/pulse_util.cc
+--- a/media/audio/pulse/pulse_util.cc	Tue Feb 10 17:11:42 2015 +1000
++++ b/media/audio/pulse/pulse_util.cc	Tue Feb 10 17:25:31 2015 +1000
+@@ -289,6 +289,7 @@
+   ScopedPropertyList property_list;
+   pa_proplist_sets(property_list.get(), PA_PROP_APPLICATION_ICON_NAME,
+                    kBrowserDisplayName);
++  pa_proplist_sets(property_list.get(), PA_PROP_MEDIA_ROLE, "multimedia");
+   *stream = pa_stream_new_with_proplist(
+       *context, "Playback", &sample_specifications, map, property_list.get());
+   RETURN_ON_FAILURE(*stream, "failed to create PA playback stream");
