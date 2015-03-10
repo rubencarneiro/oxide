@@ -64,6 +64,7 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
 
   Q_PROPERTY(QStringList allowedExtraUrlSchemes READ allowedExtraUrlSchemes WRITE setAllowedExtraUrlSchemes NOTIFY allowedExtraUrlSchemesChanged REVISION 1)
 
+  // maxCacheSizeHint is a soft limit, expressed in MB
   Q_PROPERTY(int maxCacheSizeHint READ maxCacheSizeHint WRITE setMaxCacheSizeHint NOTIFY maxCacheSizeHintChanged REVISION 2)
 
   Q_ENUMS(CookiePolicy)

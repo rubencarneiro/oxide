@@ -462,7 +462,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          GetMaxCacheSizeHint(),
+          GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }

@@ -29,7 +29,7 @@ TestCase {
     var r = [
       { prop: "dataPath", signal: "dataPathChanged", val: "file:///foo", dataPath: "" },
       { prop: "cachePath", signal: "cachePathChanged", val: "file:///foo", dataPath: "" },
-      { prop: "maxCacheSizeHint", signal: "maxCacheSizeHintChanged", val: 1048576, dataPath: "" },
+      { prop: "maxCacheSizeHint", signal: "maxCacheSizeHintChanged", val: 1, dataPath: "" },
       { prop: "sessionCookieMode", signal: "sessionCookieModeChanged", val: WebContext.SessionCookieModeRestored, dataPath: QMLTEST_DATADIR }
     ];
 
