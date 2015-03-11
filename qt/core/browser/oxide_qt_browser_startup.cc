@@ -142,8 +142,7 @@ void BrowserStartup::EnsureChromiumStarted() {
       QOpenGLContextPrivate::globalShareContext());
 #endif
 
-  scoped_ptr<PlatformDelegate> delegate(
-      new PlatformDelegate(shared_gl_context_.get()));
+  scoped_ptr<PlatformDelegate> delegate(new PlatformDelegate());
 
   gfx::GLImplementation gl_impl = gfx::kGLImplementationNone;
 

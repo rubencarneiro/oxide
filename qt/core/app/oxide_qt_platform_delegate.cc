@@ -18,18 +18,16 @@
 #include "oxide_qt_platform_delegate.h"
 
 #include "qt/core/browser/oxide_qt_browser_platform_integration.h"
-#include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
 
 namespace oxide {
 namespace qt {
 
 oxide::BrowserPlatformIntegration*
 PlatformDelegate::CreateBrowserIntegration() {
-  return new BrowserPlatformIntegration(shared_gl_context_.get());
+  return new BrowserPlatformIntegration();
 }
 
-PlatformDelegate::PlatformDelegate(GLContextAdopted* shared_gl_context)
-    : shared_gl_context_(shared_gl_context) {}
+PlatformDelegate::PlatformDelegate() {}
 
 PlatformDelegate::~PlatformDelegate() {}
 

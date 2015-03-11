@@ -86,7 +86,7 @@ CONTENT_EXPORT Texture* ConsumeTextureFromMailbox(
 CONTENT_EXPORT int32_t GetContextProviderRouteID(
     content::ContextProviderCommandBuffer* provider);
 
-CONTENT_EXPORT gfx::GLShareGroup* GetGLShareGroup();
+gfx::GLShareGroup* GetGLShareGroup();
 CONTENT_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
 
 } // oxide_gpu_shim

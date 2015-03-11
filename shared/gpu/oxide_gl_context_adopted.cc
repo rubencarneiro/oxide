@@ -23,10 +23,27 @@ namespace oxide {
 
 void GLContextAdopted::OnSetSwapInterval(int interval) {}
 
-GLContextAdopted::GLContextAdopted(gfx::GLShareGroup* share_group)
-    : gfx::GLContext(share_group) {}
+GLContextAdopted::GLContextAdopted(GLContextAdopted* other)
+    : gfx::GLContext(nullptr),
+      handle_(other->GetHandle()),
+      was_allocated_using_robustness_extension_(
+        other->WasAllocatedUsingRobustnessExtension()) {}
+
+GLContextAdopted::GLContextAdopted(
+    void* handle,
+    bool was_allocated_using_robustness_extension)
+    : gfx::GLContext(nullptr),
+      handle_(handle),
+      was_allocated_using_robustness_extension_(
+        was_allocated_using_robustness_extension) {}
 
 GLContextAdopted::~GLContextAdopted() {}
+
+// static
+scoped_refptr<GLContextAdopted> GLContextAdopted::CloneFrom(
+    GLContextAdopted* other) {
+  return make_scoped_refptr(new GLContextAdopted(other));
+}
 
 bool GLContextAdopted::Initialize(gfx::GLSurface* compatible_surface,
                                   gfx::GpuPreference gpu_preference) {
@@ -44,6 +61,14 @@ void GLContextAdopted::ReleaseCurrent(gfx::GLSurface* surface) {}
 
 bool GLContextAdopted::IsCurrent(gfx::GLSurface* surface) {
   return false;
+}
+
+void* GLContextAdopted::GetHandle() {
+  return handle_;
+}
+
+bool GLContextAdopted::WasAllocatedUsingRobustnessExtension() {
+  return was_allocated_using_robustness_extension_;
 }
 
 } // namespace oxide

@@ -216,10 +216,17 @@ int BrowserMainParts::PreCreateThreads() {
     gfx::GLSurface::InitializeOneOff();
   }
 
-  GLContextAdopted* share_context =
+  scoped_refptr<GLContextAdopted> share_context =
       BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
   if (share_context) {
-    content::oxide_gpu_shim::SetGLShareGroup(share_context->share_group());
+    // There's nothing to prevent other code in Oxide from accessing the
+    // shared gfx::GLContext and associated gfx::GLShareGroup after the GPU
+    // thread has begun consuming it, and adjusting their reference counts.
+    // As it's not safe to do that, we clone it here. Note, this doesn't mean
+    // that you can assume it's safe to use the handle returned by it for
+    // anything
+    gl_share_context_ = GLContextAdopted::CloneFrom(share_context.get());
+    content::oxide_gpu_shim::SetGLShareGroup(gl_share_context_->share_group());
   }
 
   primary_screen_.reset(new Screen());
@@ -268,7 +275,10 @@ void BrowserMainParts::PostDestroyThreads() {
 
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, nullptr);
   io_thread_.reset();
+
   content::oxide_gpu_shim::SetGLShareGroup(nullptr);
+  gl_share_context_ = nullptr;
+
   gpu::SetGpuInfoCollectorOxideLinux(nullptr);
 }
 

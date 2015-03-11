@@ -17,6 +17,7 @@
 
 #include "gpu_thread_shim_oxide.h"
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop_proxy.h"
 #include "base/single_thread_task_runner.h"
@@ -36,6 +37,9 @@ namespace oxide_gpu_shim {
 
 namespace {
 
+base::LazyInstance<base::Lock> g_gl_share_group_lock =
+    LAZY_INSTANCE_INITIALIZER;
+bool g_gl_share_group_used = false;
 gfx::GLShareGroup* g_gl_share_group;
 
 content::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
@@ -131,10 +135,14 @@ int32_t GetContextProviderRouteID(
 }
 
 gfx::GLShareGroup* GetGLShareGroup() {
+  base::AutoLock lock(g_gl_share_group_lock.Get());
+  g_gl_share_group_used = true;
   return g_gl_share_group;
 }
 
 void SetGLShareGroup(gfx::GLShareGroup* share_group) {
+  base::AutoLock lock(g_gl_share_group_lock.Get());
+  CHECK(!g_gl_share_group_used || !share_group);
   g_gl_share_group = share_group;
 }
 

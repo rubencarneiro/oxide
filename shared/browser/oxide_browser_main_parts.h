@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
 
 #include "base/compiler_specific.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/browser_main_parts.h"
 
@@ -36,6 +37,7 @@ class GpuInfoCollectorOxideLinux;
 
 namespace oxide {
 
+class GLContextAdopted;
 class IOThread;
 
 class BrowserMainParts final : public content::BrowserMainParts {
@@ -51,6 +53,12 @@ class BrowserMainParts final : public content::BrowserMainParts {
   virtual bool MainMessageLoopRun(int* result_code) final;
   virtual void PostMainMessageLoopRun() final;
   virtual void PostDestroyThreads() final;
+
+  // This is a bit odd - gl_share_group_ is consumed by the GPU thread,
+  // but neither gfx::GLContext nor gfx::GLShareGroup are thread-safe.
+  // Therefore, it's only safe to drop this reference once the GPU thread
+  // has been shut-down
+  scoped_refptr<GLContextAdopted> gl_share_context_;
 
   scoped_ptr<gpu::GpuInfoCollectorOxideLinux> gpu_info_collector_;
   scoped_ptr<base::MessageLoop> main_message_loop_;

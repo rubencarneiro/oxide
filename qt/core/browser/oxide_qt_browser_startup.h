@@ -44,6 +44,9 @@ class BrowserStartup final {
   oxide::ProcessModel GetProcessModel();
   void SetProcessModel(oxide::ProcessModel model);
 
+  GLContextAdopted* shared_gl_context() const {
+    return shared_gl_context_.get();
+  }
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
   void SetSharedGLContext(GLContextAdopted* context);
 #endif

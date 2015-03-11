@@ -27,16 +27,13 @@ namespace oxide {
 namespace qt {
 
 GLContextAdopted::GLContextAdopted(void* handle,
-                                   gfx::GLImplementation implementation,
-                                   gfx::GLShareGroup* share_group)
-    : oxide::GLContextAdopted(share_group),
-      handle_(handle),
+                                   gfx::GLImplementation implementation)
+    : oxide::GLContextAdopted(handle, false),
       implementation_(implementation) {}
 
 // static
 scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
-    QOpenGLContext* context,
-    gfx::GLShareGroup* share_group) {
+    QOpenGLContext* context) {
   if (!context) {
     return scoped_refptr<GLContextAdopted>();
   }
@@ -59,24 +56,21 @@ scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
     if (handle) {
       return make_scoped_refptr(
           new GLContextAdopted(handle,
-                               gfx::kGLImplementationDesktopGL,
-                               share_group));
+                               gfx::kGLImplementationDesktopGL));
     }
 
     handle = pni->nativeResourceForContext("eglcontext", context);
     if (handle) {
       return make_scoped_refptr(
           new GLContextAdopted(handle,
-                               gfx::kGLImplementationEGLGLES2,
-                               share_group));
+                               gfx::kGLImplementationEGLGLES2));
     }
   } else if (platform.startsWith("ubuntu")) {
     void* handle = pni->nativeResourceForContext("eglcontext", context);
     if (handle) {
       return make_scoped_refptr(
           new GLContextAdopted(handle,
-                               gfx::kGLImplementationEGLGLES2,
-                               share_group));
+                               gfx::kGLImplementationEGLGLES2));
     }
   } else {
     LOG(WARNING)
@@ -91,14 +85,6 @@ scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
       << "QPlatformNativeInterface::nativeResourceForContext";
 
   return scoped_refptr<GLContextAdopted>();
-}
-
-void* GLContextAdopted::GetHandle() {
-  return handle_;
-}
-
-bool GLContextAdopted::WasAllocatedUsingRobustnessExtension() {
-  return false;
 }
 
 } // namespace qt

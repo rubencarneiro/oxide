@@ -32,24 +32,16 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class GLContextAdopted final : public oxide::GLContextAdopted {
+class GLContextAdopted : public oxide::GLContextAdopted {
  public:
-  static scoped_refptr<GLContextAdopted> Create(
-      QOpenGLContext* context,
-      gfx::GLShareGroup* share_group = nullptr);
-
-  // gfx::GLContext implementation
-  void* GetHandle() final;
-  bool WasAllocatedUsingRobustnessExtension() final;
+  static scoped_refptr<GLContextAdopted> Create(QOpenGLContext* context);
 
   gfx::GLImplementation implementation() const { return implementation_; }
 
  private:
   GLContextAdopted(void* handle,
-                   gfx::GLImplementation implementation,
-                   gfx::GLShareGroup* share_group);
+                   gfx::GLImplementation implementation);
 
-  void* handle_;
   gfx::GLImplementation implementation_;
 
   DISALLOW_COPY_AND_ASSIGN(GLContextAdopted);

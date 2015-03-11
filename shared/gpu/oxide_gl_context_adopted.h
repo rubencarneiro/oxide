@@ -18,8 +18,9 @@
 #ifndef _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
 #define _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
 
+#include "base/macros.h"
+#include "base/memory/ref_counted.h"
 #include "ui/gl/gl_context.h"
-#include "ui/gl/gl_implementation.h"
 
 namespace gfx {
 class GLShareGroup;
@@ -29,20 +30,31 @@ namespace oxide {
 
 class GLContextAdopted : public gfx::GLContext {
  public:
+  GLContextAdopted(void* handle,
+                   bool was_allocated_using_robustness_extension);
   virtual ~GLContextAdopted();
 
-  bool Initialize(gfx::GLSurface* compatible_surface,
-                  gfx::GpuPreference gpu_preference) final;
-  void Destroy() final;
-  bool MakeCurrent(gfx::GLSurface* surface) final;
-  void ReleaseCurrent(gfx::GLSurface* surface) final;
-  bool IsCurrent(gfx::GLSurface* surface) final;
+  static scoped_refptr<GLContextAdopted> CloneFrom(GLContextAdopted* other);
 
- protected:
-  GLContextAdopted(gfx::GLShareGroup* share_group);
+  // gfx::GLContext implementation
+  bool Initialize(gfx::GLSurface* compatible_surface,
+                  gfx::GpuPreference gpu_preference) override;
+  void Destroy() override;
+  bool MakeCurrent(gfx::GLSurface* surface) override;
+  void ReleaseCurrent(gfx::GLSurface* surface) override;
+  bool IsCurrent(gfx::GLSurface* surface) override;
+  void* GetHandle() override;
+  bool WasAllocatedUsingRobustnessExtension() override;
 
  private:
-  void OnSetSwapInterval(int interval) final;
+  void OnSetSwapInterval(int interval) override;
+
+  GLContextAdopted(GLContextAdopted* other);
+
+  void* handle_;
+  bool was_allocated_using_robustness_extension_;
+
+  DISALLOW_COPY_AND_ASSIGN(GLContextAdopted);
 };
 
 } // namespace oxide

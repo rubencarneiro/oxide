@@ -35,6 +35,7 @@
 #include "qt/core/glue/oxide_qt_init.h"
 #include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
 
+#include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
@@ -51,16 +52,14 @@ void LaunchURLExternallyOnUIThread(const GURL& url) {
 
 }
 
-BrowserPlatformIntegration::BrowserPlatformIntegration(
-    GLContextAdopted* gl_share_context)
-    : gl_share_context_(gl_share_context) {
+BrowserPlatformIntegration::BrowserPlatformIntegration() {
   QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
-                   this, SLOT(onApplicationStateChanged()));
+                   this, SLOT(OnApplicationStateChanged()));
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
 
-void BrowserPlatformIntegration::onApplicationStateChanged() {
+void BrowserPlatformIntegration::OnApplicationStateChanged() {
   NotifyApplicationStateChanged();
 }
 
@@ -98,7 +97,7 @@ blink::WebScreenInfo BrowserPlatformIntegration::GetDefaultScreenInfo() {
 }
 
 oxide::GLContextAdopted* BrowserPlatformIntegration::GetGLShareContext() {
-  return gl_share_context_.get();
+  return BrowserStartup::GetInstance()->shared_gl_context();
 }
 
 scoped_ptr<oxide::MessagePump>
