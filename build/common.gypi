@@ -23,6 +23,7 @@
     'disable_nacl': 1,
     'linux_use_bundled_gold': 0,
     'linux_use_bundled_binutils': 0,
+    'linux_use_gold_flags': 1,
     'use_allocator': 'none',
     'sysroot': '',
     'use_aura': 1,
@@ -50,30 +51,22 @@
         # Ubuntu-specific?
         'arm_float_abi': 'hard',
       }],
-      ['host_arch=="arm"', {
+      ['(host_arch=="arm" or host_arch=="ia32") and component=="static_library"', {
         # This is desparate - we're trying to avoid linker OOM on native ARM
-        # builds. This is unnecessary on ARM cross builds, hence the test for
-        # "host_arch".
+        # and x86 builds. This is unnecessary on ARM cross builds, hence the
+        # test for "host_arch".
         'remove_webcore_debug_symbols': 1,
       }],
     ],
   },
   'target_defaults': {
-    'cflags': [
-      '-B<(PRODUCT_DIR)/../../../gold',
-    ],
     'cflags!': [
       # Should remove this
       '-Werror',
     ],
-    'ldflags': [
-      '-B<(PRODUCT_DIR)/../../../gold',
-    ],
     'ldflags!': [
       # Currently get a bunch of "warning: hidden symbol" warnings from harfbuzz with gold
       '-Wl,--fatal-warnings',
-      # Applicable only for BFD linker
-      '-Wl,--reduce-memory-overheads',
     ],
     'conditions': [
       ['print_ld_stats==1', {
@@ -81,12 +74,10 @@
           '-Wl,--stats',
         ],
       }],
-      ['host_arch=="arm"', {
+      ['(host_arch=="arm" or host_arch=="ia32") and component=="static_library"', {
         'ldflags': [
           # Try to work around linker OOM - we only want these on native
-          # ARM builds though, hence the test for "host_arch"
-          '-Wl,--no-map-whole-files',
-          '-Wl,--no-keep-memory',
+          # ARM and x86 builds though, hence the test for "host_arch"
           '-Wl,--no-keep-files-mapped',
         ],
       }],

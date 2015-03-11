@@ -25,7 +25,6 @@
 
 namespace base {
 class SingleThreadTaskRunner;
-class TaskRunner;
 }
 
 namespace cc {
@@ -40,22 +39,40 @@ namespace oxide {
 
 class GLFrameData;
 
+// Utilities for the compositor code
 class CompositorUtils {
  public:
+
+  // Return the CompositorUtils singleton
   static CompositorUtils* GetInstance();
 
+  // Initialize the CompositorUtils instance by starting up a compositor thread
+  // and starting the GPU service thread if it's not already running
   virtual void Initialize() = 0;
+
+  // Shutdown the CompositorUtils instance. This must be called before the GPU
+  // service thread is shut down and must be called on the same thread that
+  // called Initialize()
   virtual void Shutdown() = 0;
 
+  // Return the task runner for the compositor thread
   virtual scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() = 0;
 
   typedef base::Callback<void(scoped_ptr<GLFrameData>)> CreateGLFrameHandleCallback;
+
+  // Create a GPU service-side handle for the underlying texture represented by
+  // the provided client-side paramters (|context_provider| and |mailbox|). The
+  // result will be returned asynchronously using |callback|, only after the
+  // specified |sync_point| has expired. The callback will be called on the
+  // |task_runner| provided.
+  // This must be called on the same thread that called Initialize() ot the
+  // compositor thread. |task_runner| must be for either of these threads
   virtual void CreateGLFrameHandle(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
       uint32 sync_point,
       const CreateGLFrameHandleCallback& callback,
-      scoped_refptr<base::TaskRunner> task_runner) = 0;
+      scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
 
   virtual gfx::GLSurfaceHandle GetSharedSurfaceHandle() = 0;
 

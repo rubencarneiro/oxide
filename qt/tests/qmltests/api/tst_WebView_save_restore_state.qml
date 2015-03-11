@@ -149,4 +149,44 @@ TestCase {
             "document.querySelector('#textInput').value") == "Te$t"; });
     restored.destroy();
   }
+
+  function test_WebView_save_and_restore_error_page_data() {
+    return get_restore_types();
+  }
+
+  // Test that restoring the state of a navigation that had triggered an error
+  // triggers the error again (see https://launchpad.net/bugs/1423531).
+  function test_WebView_save_and_restore_error_page(data) {
+    var url = "http://invalid/";
+    webView.url = url;
+    verify(webView.waitForLoadCommitted(),
+           "Timed out waiting for error page");
+
+    var state = webView.currentState;
+    verify(state.length > 0);
+
+    var restored = webViewComponent.createObject(
+        webView, {"restoreType": data.restoreType, "restoreState": state});
+    verify(restored !== null);
+
+    var expectedLoadEvents = [
+      { type: LoadEvent.TypeStarted, isError: false },
+      { type: LoadEvent.TypeFailed, isError: false },
+      { type: LoadEvent.TypeCommitted, isError: true }
+    ];
+    function _loadEvent(event) {
+      var expected = expectedLoadEvents[0];
+      compare(event.type, expected.type);
+      compare(event.url, url);
+      compare(event.isError, expected.isError);
+      expectedLoadEvents.shift();
+    }
+    restored.loadEvent.connect(_loadEvent);
+
+    tryCompare(restored, "url", url);
+    restored.waitFor(function() {
+        return (expectedLoadEvents.length === 0);
+    });
+    restored.destroy();
+  }
 }

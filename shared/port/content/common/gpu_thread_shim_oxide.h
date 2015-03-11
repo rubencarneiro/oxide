@@ -34,6 +34,7 @@ class GLShareGroup;
 namespace gpu {
 class Mailbox;
 namespace gles2 {
+class TextureManager;
 class TextureRef;
 }
 }
@@ -45,23 +46,39 @@ class GpuCommandBufferStub;
 
 namespace oxide_gpu_shim {
 
-class CONTENT_EXPORT TextureRefHolder {
+// Wrapper class for TextureRef. This is not thread-safe, and should only
+// be used on the GPU thread
+class CONTENT_EXPORT Texture {
  public:
-  TextureRefHolder();
-  TextureRefHolder(content::GpuCommandBufferStub* command_buffer,
-                   gpu::gles2::TextureRef* ref);
+  Texture(content::GpuCommandBufferStub* command_buffer,
+          gpu::gles2::TextureRef* ref);
+  ~Texture();
 
-  ~TextureRefHolder();
-
-  bool IsValid() const;
+  // Return the real texture ID
   GLuint GetServiceID() const;
 
+  // Returns the TextureManager associated with the share group that the
+  // TextureRef belongs to
+  gpu::gles2::TextureManager* GetTextureManager() const;
+
+  // Destroy the underlying TextureRef. This can fail, eg, if the context
+  // is lost. On success, |this| can be deleted. On failure, |this| must not
+  // be deleted until its TextureManager is deing destroyed
+  // Returns: true on success, false on failure
+  bool Destroy();  
+
  private:
+  // We use a WeakPtr, but it's a bug if this class outlives command_buffer_
   base::WeakPtr<content::GpuCommandBufferStub> command_buffer_;
+
   scoped_refptr<gpu::gles2::TextureRef> ref_;
+
+  DISALLOW_COPY_AND_ASSIGN(Texture);
 };
 
-CONTENT_EXPORT TextureRefHolder CreateTextureRef(
+// Create and return a Texture instance for the corresponding client process,
+// command buffer and mailbox. The caller takes ownership of Texture
+CONTENT_EXPORT Texture* ConsumeTextureFromMailbox(
     int32_t client_id,
     int32_t route_id,
     const gpu::Mailbox& mailbox);

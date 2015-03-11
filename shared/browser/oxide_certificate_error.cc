@@ -31,15 +31,7 @@ namespace oxide {
 namespace {
 
 CertError ToCertError(int error, net::X509Certificate* cert) {
-  if (!net::IsCertificateError(error)) {
-    return CERT_OK;
-  }
-
-  if (error == net::ERR_CERT_NO_REVOCATION_MECHANISM ||
-      error == net::ERR_CERT_UNABLE_TO_CHECK_REVOCATION) {
-    // These aren't treated as hard errors
-    return CERT_OK;
-  }
+  DCHECK(net::IsCertificateError(error));
 
   switch (error) {
     case net::ERR_CERT_COMMON_NAME_INVALID:
@@ -54,12 +46,15 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
       return CERT_ERROR_AUTHORITY_INVALID;
     case net::ERR_CERT_CONTAINS_ERRORS:
     case net::ERR_CERT_INVALID:
+    case net::ERR_CERT_VALIDITY_TOO_LONG:
       return CERT_ERROR_INVALID;
     case net::ERR_CERT_REVOKED:
       return CERT_ERROR_REVOKED;
     case net::ERR_CERT_WEAK_SIGNATURE_ALGORITHM:
     case net::ERR_CERT_WEAK_KEY:
       return CERT_ERROR_INSECURE;
+    //case net::ERR_CERT_NO_REVOCATION_MECHANISM:
+    //case net::ERR_CERT_UNABLE_TO_CHECK_REVOCATION:
     //case net::ERR_CERT_NON_UNIQUE_NAME:
     //case net::ERR_CERT_NAME_CONSTRAINT_VIOLATION:
     default:
