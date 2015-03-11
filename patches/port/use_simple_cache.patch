@@ -1,0 +1,14 @@
+# Description: Use the simple backend for the app cache (LP: #1430349).
+# Author: Olivier Tilloy <olivier.tilloy@canonical.com>
+
+diff --git a/content/content_browser.gypi b/content/content_browser.gypi
+--- a/content/content_browser.gypi
++++ b/content/content_browser.gypi
+@@ -33,6 +33,7 @@
+     'browser/speech/proto/speech_proto.gyp:speech_proto',
+     'content_common_mojo_bindings.gyp:content_common_mojo_bindings',
+   ],
++  'defines': ['APPCACHE_USE_SIMPLE_CACHE'],
+   'export_dependent_settings': [
+     '../ui/accessibility/accessibility.gyp:ax_gen',
+     # The public content API headers directly include Blink API headers, so we

@@ -5,6 +5,7 @@ port/render_widget_host_view.patch
 port/gl_implementation.patch
 port/media_ozone.patch
 port/gpu_info_collector.patch
+port/use_simple_cache.patch
 main-loop-integration.patch
 fix-gyp-with-different-toplevel.patch
 support-native-popup-menus.patch
