@@ -46,7 +46,7 @@ class ContentRendererClient final : public content::ContentRendererClient {
   void RenderThreadStarted() final;
   void RenderFrameCreated(content::RenderFrame* render_frame) final;
   void RenderViewCreated(content::RenderView* render_view) final;
-  void DidCreateScriptContext(blink::WebFrame* frame,
+  void DidCreateScriptContext(blink::WebLocalFrame* frame,
                               v8::Handle<v8::Context> context,
                               int extension_group,
                               int world_id) final;

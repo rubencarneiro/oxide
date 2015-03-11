@@ -186,7 +186,7 @@ ScriptMessageDispatcherRenderer::~ScriptMessageDispatcherRenderer() {
 
 // static
 ScriptMessageDispatcherRenderer* ScriptMessageDispatcherRenderer::FromWebFrame(
-    blink::WebFrame* frame) {
+    blink::WebLocalFrame* frame) {
   content::RenderFrame* rf = content::RenderFrame::FromWebFrame(frame);
   ScriptMessageDispatcherMap::iterator it = g_dispatcher_map.Get().find(rf);
   return it == g_dispatcher_map.Get().end() ? nullptr : it->second;

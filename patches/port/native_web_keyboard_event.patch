@@ -5,8 +5,8 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1135,17 +1135,17 @@
-       'browser/renderer_host/media/video_capture_controller_event_handler.h',
+@@ -1155,17 +1155,17 @@
+       'browser/renderer_host/media/video_capture_device_client.h',
        'browser/renderer_host/media/video_capture_host.cc',
        'browser/renderer_host/media/video_capture_host.h',
        'browser/renderer_host/media/video_capture_manager.cc',
@@ -24,7 +24,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/render_message_filter.cc',
        'browser/renderer_host/render_message_filter.h',
        'browser/renderer_host/render_process_host_impl.cc',
-@@ -1626,16 +1626,28 @@
+@@ -1633,16 +1633,28 @@
        'public/browser/plugin_service.h',
      ],
    },

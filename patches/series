@@ -27,6 +27,5 @@ customize-gesture-fling-curve.patch
 mediahub-support.patch
 allow-os-override-for-gpu-manager.patch
 viewport-min-width.patch
-fix-top-controls-divide-by-zero.patch
 use-android-style-overlay-scrollbars.patch
 allow-render-widget-compositor-settings-override.patch

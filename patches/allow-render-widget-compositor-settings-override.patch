@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -218,9 +218,12 @@ std::string ContentRendererClient::GetUs
+@@ -223,9 +223,12 @@ std::string ContentRendererClient::GetUs
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -25,7 +25,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class WebSpeechSynthesizerClient;
  class WebThemeEngine;
  class WebURLRequest;
- class WebWorkerPermissionClientProxy;
+ class WebWorkerContentSettingsClientProxy;
  struct WebPluginParams;
  struct WebURLError;
  }
@@ -42,7 +42,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  }
  
  namespace content {
-@@ -299,13 +303,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -302,13 +306,16 @@ class CONTENT_EXPORT ContentRendererClie
    virtual std::string GetUserAgentOverrideForURL(const GURL& url);
  
    // Allow overriding default media player
@@ -82,7 +82,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/platform/WebSize.h"
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
-@@ -434,16 +436,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -449,16 +451,18 @@ void RenderWidgetCompositor::Initialize(
        compositor_deps_->GetGpuMemoryBufferManager();
  
    scoped_ptr<cc::BeginFrameSource> external_begin_frame_source;

@@ -6,7 +6,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -169,17 +169,17 @@
+@@ -170,17 +170,17 @@
                    '<!@(<(pkg-config) --libs-only-l gtk+-unix-print-2.0)',
                  ],
                },
@@ -28,7 +28,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -300,16 +300,18 @@
+@@ -306,16 +306,18 @@
          'win/dpi.h',
          'win/hwnd_util.cc',
          'win/hwnd_util.h',
@@ -45,9 +45,9 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
        ],
        'conditions': [
          ['OS=="ios"', {
-           'dependencies': [
-             '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
-@@ -388,17 +390,17 @@
+           # Linkable dependents need to set the linker flag '-ObjC' in order to
+           # use the categories in this target (e.g. NSString+CrStringDrawing.h).
+@@ -395,17 +397,17 @@
              'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
@@ -407,7 +407,7 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
 --- a/ui/gl/gl_surface_glx.cc
 +++ b/ui/gl/gl_surface_glx.cc
-@@ -409,16 +409,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
+@@ -399,16 +399,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
  }
  
  void* GLSurfaceGLX::GetDisplay() {
@@ -425,7 +425,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
  gfx::AcceleratedWidget NativeViewGLSurfaceGLX::GetDrawableHandle() const {
    return window_;
-@@ -596,16 +597,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+@@ -584,16 +585,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();
