@@ -501,7 +501,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   } else {
     cache_backend = new net::HttpCache::DefaultBackend(
           net::DISK_CACHE,
-          net::CACHE_BACKEND_DEFAULT,
+          net::CACHE_BACKEND_SIMPLE,
           GetCachePath().Append(kCacheDirname),
           GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
