@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <libintl.h>
+#include <limits>
 #include <vector>
 
 #include "base/files/file_enumerator.h"
@@ -259,6 +260,7 @@ struct BrowserContextSharedIOData {
   BrowserContextSharedIOData(const BrowserContext::Params& params)
       : path(params.path),
         cache_path(params.cache_path),
+        max_cache_size_hint(params.max_cache_size_hint),
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
@@ -274,6 +276,7 @@ struct BrowserContextSharedIOData {
 
   base::FilePath path;
   base::FilePath cache_path;
+  int max_cache_size_hint;
 
   std::string user_agent_string;
   std::string accept_langs;
@@ -411,6 +414,15 @@ base::FilePath BrowserContextIOData::GetCachePath() const {
   return data.cache_path;
 }
 
+int BrowserContextIOData::GetMaxCacheSizeHint() const {
+  int max_cache_size_hint = GetSharedData().max_cache_size_hint;
+  // max_cache_size_hint is expressed in MB, let’s check that
+  // converting it to bytes won’t trigger an integer overflow
+  static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
+  DCHECK_LE(max_cache_size_hint, upper_limit);
+  return max_cache_size_hint;
+}
+
 std::string BrowserContextIOData::GetAcceptLangs() const {
   const BrowserContextSharedIOData& data = GetSharedData();
   base::AutoLock lock(data.lock);
@@ -491,7 +503,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          83886080, // XXX: 80MB - Make this configurable
+          GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }
@@ -912,6 +924,11 @@ base::FilePath BrowserContext::GetPath() const {
 base::FilePath BrowserContext::GetCachePath() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetCachePath();
+}
+
+int BrowserContext::GetMaxCacheSizeHint() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetMaxCacheSizeHint();
 }
 
 std::string BrowserContext::GetAcceptLangs() const {
