@@ -102,8 +102,8 @@
         'common/oxide_qt_screen_utils.h',
         'common/oxide_qt_skutils.cc',
         'common/oxide_qt_skutils.h',
-        'gpu/oxide_qt_gl_context_adopted.cc',
-        'gpu/oxide_qt_gl_context_adopted.h',
+        'gpu/oxide_qt_gl_context_dependent.cc',
+        'gpu/oxide_qt_gl_context_dependent.h',
       ],
       'actions': [
         {

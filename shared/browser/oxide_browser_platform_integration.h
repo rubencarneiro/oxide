@@ -33,7 +33,7 @@ class LocationProvider;
 namespace oxide {
 
 class BrowserPlatformIntegrationObserver;
-class GLContextAdopted;
+class GLContextDependent;
 class MessagePump;
 
 class BrowserPlatformIntegration {
@@ -58,7 +58,7 @@ class BrowserPlatformIntegration {
 
   virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
 
-  virtual GLContextAdopted* GetGLShareContext();
+  virtual GLContextDependent* GetGLShareContext();
 
   virtual scoped_ptr<MessagePump> CreateUIMessagePump() = 0;
 

@@ -19,7 +19,7 @@
 
 #include "qt/core/browser/oxide_qt_browser_startup.h"
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-#include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
+#include "qt/core/gpu/oxide_qt_gl_context_depdendent.h"
 #endif
 
 namespace oxide {
@@ -27,7 +27,7 @@ namespace qt {
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 void SetSharedGLContext(QOpenGLContext* context) {
-  scoped_refptr<GLContextAdopted> c(GLContextAdopted::Create(context));
+  scoped_refptr<GLContextDependent> c(GLContextDependent::Create(context));
   BrowserStartup::GetInstance()->SetSharedGLContext(c.get());
 }
 #endif

@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
-#define _OXIDE_SHARED_BROWSER_GL_CONTEXT_ADOPTED_H_
+#ifndef _OXIDE_SHARED_BROWSER_GL_CONTEXT_DEPENDENT_H_
+#define _OXIDE_SHARED_BROWSER_GL_CONTEXT_DEPENDENT_H_
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
@@ -28,13 +28,14 @@ class GLShareGroup;
 
 namespace oxide {
 
-class GLContextAdopted : public gfx::GLContext {
+class GLContextDependent : public gfx::GLContext {
  public:
-  GLContextAdopted(void* handle,
-                   bool was_allocated_using_robustness_extension);
-  virtual ~GLContextAdopted();
+  GLContextDependent(void* handle,
+                     bool was_allocated_using_robustness_extension);
+  virtual ~GLContextDependent();
 
-  static scoped_refptr<GLContextAdopted> CloneFrom(GLContextAdopted* other);
+  static scoped_refptr<GLContextDependent> CloneFrom(
+      GLContextDependent* other);
 
   // gfx::GLContext implementation
   bool Initialize(gfx::GLSurface* compatible_surface,
@@ -49,12 +50,12 @@ class GLContextAdopted : public gfx::GLContext {
  private:
   void OnSetSwapInterval(int interval) override;
 
-  GLContextAdopted(GLContextAdopted* other);
+  GLContextDependent(GLContextDependent* other);
 
   void* handle_;
   bool was_allocated_using_robustness_extension_;
 
-  DISALLOW_COPY_AND_ASSIGN(GLContextAdopted);
+  DISALLOW_COPY_AND_ASSIGN(GLContextDependent);
 };
 
 } // namespace oxide

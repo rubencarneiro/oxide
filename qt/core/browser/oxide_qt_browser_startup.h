@@ -28,7 +28,7 @@
 namespace oxide {
 namespace qt {
 
-class GLContextAdopted;
+class GLContextDependent;
 
 class BrowserStartup final {
  public:
@@ -44,11 +44,11 @@ class BrowserStartup final {
   oxide::ProcessModel GetProcessModel();
   void SetProcessModel(oxide::ProcessModel model);
 
-  GLContextAdopted* shared_gl_context() const {
+  GLContextDependent* shared_gl_context() const {
     return shared_gl_context_.get();
   }
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-  void SetSharedGLContext(GLContextAdopted* context);
+  void SetSharedGLContext(GLContextDependent* context);
 #endif
 
   bool DidSelectProcessModelFromEnv() const;
@@ -63,7 +63,7 @@ class BrowserStartup final {
   bool process_model_is_from_env_;
   oxide::ProcessModel process_model_;
 
-  scoped_refptr<GLContextAdopted> shared_gl_context_;
+  scoped_refptr<GLContextDependent> shared_gl_context_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserStartup);
 };

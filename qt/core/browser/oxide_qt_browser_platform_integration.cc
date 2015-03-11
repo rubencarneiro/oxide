@@ -33,7 +33,7 @@
 
 #include "qt/core/common/oxide_qt_screen_utils.h"
 #include "qt/core/glue/oxide_qt_init.h"
-#include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
+#include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
 
 #include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
@@ -96,7 +96,7 @@ blink::WebScreenInfo BrowserPlatformIntegration::GetDefaultScreenInfo() {
   return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
-oxide::GLContextAdopted* BrowserPlatformIntegration::GetGLShareContext() {
+oxide::GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
   return BrowserStartup::GetInstance()->shared_gl_context();
 }
 

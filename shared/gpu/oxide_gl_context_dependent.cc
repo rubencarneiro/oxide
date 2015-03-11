@@ -15,21 +15,21 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_gl_context_adopted.h"
+#include "oxide_gl_context_dependent.h"
 
 #include "base/logging.h"
 
 namespace oxide {
 
-void GLContextAdopted::OnSetSwapInterval(int interval) {}
+void GLContextDependent::OnSetSwapInterval(int interval) {}
 
-GLContextAdopted::GLContextAdopted(GLContextAdopted* other)
+GLContextDependent::GLContextDependent(GLContextDependent* other)
     : gfx::GLContext(nullptr),
       handle_(other->GetHandle()),
       was_allocated_using_robustness_extension_(
         other->WasAllocatedUsingRobustnessExtension()) {}
 
-GLContextAdopted::GLContextAdopted(
+GLContextDependent::GLContextDependent(
     void* handle,
     bool was_allocated_using_robustness_extension)
     : gfx::GLContext(nullptr),
@@ -37,37 +37,37 @@ GLContextAdopted::GLContextAdopted(
       was_allocated_using_robustness_extension_(
         was_allocated_using_robustness_extension) {}
 
-GLContextAdopted::~GLContextAdopted() {}
+GLContextDependent::~GLContextDependent() {}
 
 // static
-scoped_refptr<GLContextAdopted> GLContextAdopted::CloneFrom(
-    GLContextAdopted* other) {
-  return make_scoped_refptr(new GLContextAdopted(other));
+scoped_refptr<GLContextDependent> GLContextDependent::CloneFrom(
+    GLContextDependent* other) {
+  return make_scoped_refptr(new GLContextDependent(other));
 }
 
-bool GLContextAdopted::Initialize(gfx::GLSurface* compatible_surface,
-                                  gfx::GpuPreference gpu_preference) {
+bool GLContextDependent::Initialize(gfx::GLSurface* compatible_surface,
+                                    gfx::GpuPreference gpu_preference) {
   return true;
 }
 
-void GLContextAdopted::Destroy() {}
+void GLContextDependent::Destroy() {}
 
-bool GLContextAdopted::MakeCurrent(gfx::GLSurface* surface) {
+bool GLContextDependent::MakeCurrent(gfx::GLSurface* surface) {
   NOTREACHED();
   return false;
 }
 
-void GLContextAdopted::ReleaseCurrent(gfx::GLSurface* surface) {}
+void GLContextDependent::ReleaseCurrent(gfx::GLSurface* surface) {}
 
-bool GLContextAdopted::IsCurrent(gfx::GLSurface* surface) {
+bool GLContextDependent::IsCurrent(gfx::GLSurface* surface) {
   return false;
 }
 
-void* GLContextAdopted::GetHandle() {
+void* GLContextDependent::GetHandle() {
   return handle_;
 }
 
-bool GLContextAdopted::WasAllocatedUsingRobustnessExtension() {
+bool GLContextDependent::WasAllocatedUsingRobustnessExtension() {
   return was_allocated_using_robustness_extension_;
 }
 

@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_gl_context_adopted.h"
+#include "oxide_qt_gl_context_dependent.h"
 
 #include <QGuiApplication>
 #include <QString>
@@ -26,16 +26,16 @@
 namespace oxide {
 namespace qt {
 
-GLContextAdopted::GLContextAdopted(void* handle,
-                                   gfx::GLImplementation implementation)
-    : oxide::GLContextAdopted(handle, false),
+GLContextDependent::GLContextDependent(void* handle,
+                                       gfx::GLImplementation implementation)
+    : oxide::GLContextDependent(handle, false),
       implementation_(implementation) {}
 
 // static
-scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
+scoped_refptr<GLContextDependent> GLContextDependent::Create(
     QOpenGLContext* context) {
   if (!context) {
-    return scoped_refptr<GLContextAdopted>();
+    return nullptr;
   }
 
   QString platform = QGuiApplication::platformName();
@@ -45,7 +45,7 @@ scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
     LOG(WARNING)
         << "Unable to create adopted GL context for platform: "
         << qPrintable(platform) << " - no QPlatformNativeInterface";
-    return scoped_refptr<GLContextAdopted>();
+    return nullptr;
   }
 
   if (platform == "xcb") {
@@ -55,28 +55,28 @@ scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
     void* handle = pni->nativeResourceForContext("glxcontext", context);
     if (handle) {
       return make_scoped_refptr(
-          new GLContextAdopted(handle,
-                               gfx::kGLImplementationDesktopGL));
+          new GLContextDependent(handle,
+                                 gfx::kGLImplementationDesktopGL));
     }
 
     handle = pni->nativeResourceForContext("eglcontext", context);
     if (handle) {
       return make_scoped_refptr(
-          new GLContextAdopted(handle,
-                               gfx::kGLImplementationEGLGLES2));
+          new GLContextDependent(handle,
+                                 gfx::kGLImplementationEGLGLES2));
     }
   } else if (platform.startsWith("ubuntu")) {
     void* handle = pni->nativeResourceForContext("eglcontext", context);
     if (handle) {
       return make_scoped_refptr(
-          new GLContextAdopted(handle,
-                               gfx::kGLImplementationEGLGLES2));
+          new GLContextDependent(handle,
+                                 gfx::kGLImplementationEGLGLES2));
     }
   } else {
     LOG(WARNING)
         << "Unable to create adopted GL context for platform: "
         << qPrintable(platform) << " - unrecognized platform";
-    return scoped_refptr<GLContextAdopted>();
+    return nullptr;
   }
 
   LOG(ERROR)
@@ -84,7 +84,7 @@ scoped_refptr<GLContextAdopted> GLContextAdopted::Create(
       << qPrintable(platform) << " - unexpected result from "
       << "QPlatformNativeInterface::nativeResourceForContext";
 
-  return scoped_refptr<GLContextAdopted>();
+  return nullptr;
 }
 
 } // namespace qt

@@ -37,7 +37,7 @@ class GpuInfoCollectorOxideLinux;
 
 namespace oxide {
 
-class GLContextAdopted;
+class GLContextDependent;
 class IOThread;
 
 class BrowserMainParts final : public content::BrowserMainParts {
@@ -58,7 +58,7 @@ class BrowserMainParts final : public content::BrowserMainParts {
   // but neither gfx::GLContext nor gfx::GLShareGroup are thread-safe.
   // Therefore, it's only safe to drop this reference once the GPU thread
   // has been shut-down
-  scoped_refptr<GLContextAdopted> gl_share_context_;
+  scoped_refptr<GLContextDependent> gl_share_context_;
 
   scoped_ptr<gpu::GpuInfoCollectorOxideLinux> gpu_info_collector_;
   scoped_ptr<base::MessageLoop> main_message_loop_;

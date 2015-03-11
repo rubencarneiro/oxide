@@ -54,7 +54,7 @@ bool BrowserPlatformIntegration::IsTouchSupported() {
   return false;
 }
 
-GLContextAdopted* BrowserPlatformIntegration::GetGLShareContext() {
+GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
   return nullptr;
 }
 

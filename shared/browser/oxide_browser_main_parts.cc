@@ -35,7 +35,7 @@
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
-#include "shared/gpu/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_dependent.h"
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
@@ -216,7 +216,7 @@ int BrowserMainParts::PreCreateThreads() {
     gfx::GLSurface::InitializeOneOff();
   }
 
-  scoped_refptr<GLContextAdopted> share_context =
+  scoped_refptr<GLContextDependent> share_context =
       BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
   if (share_context) {
     // There's nothing to prevent other code in Oxide from accessing the
@@ -225,7 +225,7 @@ int BrowserMainParts::PreCreateThreads() {
     // As it's not safe to do that, we clone it here. Note, this doesn't mean
     // that you can assume it's safe to use the handle returned by it for
     // anything
-    gl_share_context_ = GLContextAdopted::CloneFrom(share_context.get());
+    gl_share_context_ = GLContextDependent::CloneFrom(share_context.get());
     content::oxide_gpu_shim::SetGLShareGroup(gl_share_context_->share_group());
   }
 

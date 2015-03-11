@@ -50,7 +50,7 @@ class BrowserPlatformIntegration final
   bool IsTouchSupported() final;
   intptr_t GetNativeDisplay() final;
   blink::WebScreenInfo GetDefaultScreenInfo() final;
-  oxide::GLContextAdopted* GetGLShareContext() final;
+  oxide::GLContextDependent* GetGLShareContext() final;
   scoped_ptr<oxide::MessagePump> CreateUIMessagePump() final;
   void BrowserThreadInit(content::BrowserThread::ID id) final;
   content::LocationProvider* CreateLocationProvider() final;
