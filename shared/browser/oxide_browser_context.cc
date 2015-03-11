@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <libintl.h>
+#include <limits>
 #include <vector>
 
 #include "base/files/file_path.h"
@@ -379,7 +380,12 @@ base::FilePath BrowserContextIOData::GetCachePath() const {
 }
 
 int BrowserContextIOData::GetMaxCacheSizeHint() const {
-  return GetSharedData().max_cache_size_hint;
+  int max_cache_size_hint = GetSharedData().max_cache_size_hint;
+  // max_cache_size_hint is expressed in MB, let’s check that
+  // converting it to bytes won’t trigger an integer overflow
+  static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
+  DCHECK_LE(max_cache_size_hint, upper_limit);
+  return max_cache_size_hint;
 }
 
 std::string BrowserContextIOData::GetAcceptLangs() const {
