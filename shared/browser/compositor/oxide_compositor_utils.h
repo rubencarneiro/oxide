@@ -47,7 +47,9 @@ class CompositorUtils {
   static CompositorUtils* GetInstance();
 
   // Initialize the CompositorUtils instance by starting up a compositor thread
-  // and starting the GPU service thread if it's not already running
+  // and starting the GPU service thread if it's not already running.
+  // Initialization is not thread-safe - this call should complete before any
+  // other threads use this class
   virtual void Initialize() = 0;
 
   // Shutdown the CompositorUtils instance. This must be called before the GPU
@@ -55,7 +57,8 @@ class CompositorUtils {
   // called Initialize()
   virtual void Shutdown() = 0;
 
-  // Return the task runner for the compositor thread
+  // Return the task runner for the compositor thread. Can be called on any
+  // thread
   virtual scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() = 0;
 
   typedef base::Callback<void(scoped_ptr<GLFrameData>)> CreateGLFrameHandleCallback;
@@ -66,7 +69,8 @@ class CompositorUtils {
   // specified |sync_point| has expired. The callback will be called on the
   // |task_runner| provided.
   // This must be called on the same thread that called Initialize() ot the
-  // compositor thread. |task_runner| must be for either of these threads
+  // compositor thread. |task_runner| must be for either of these threads as
+  // well
   virtual void CreateGLFrameHandle(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,

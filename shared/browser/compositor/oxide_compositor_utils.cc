@@ -28,6 +28,7 @@
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop_proxy.h"
 #include "base/single_thread_task_runner.h"
+#include "base/synchronization/waitable_event.h"
 #include "base/threading/thread.h"
 #include "base/threading/thread_restrictions.h"
 #include "cc/output/context_provider.h"
@@ -144,7 +145,7 @@ class CompositorUtilsImpl
   ~CompositorUtilsImpl() override;
 
   void InitializeOnGpuThread();
-  void ShutdownOnGpuThread();
+  void ShutdownOnGpuThread(base::WaitableEvent* shutdown_event);
 
   void FetchTextureResourcesOnGpuThread(FetchTextureResourcesTaskInfo* info);
   void ContinueFetchTextureResourcesOnGpuThread(int id);
@@ -250,16 +251,15 @@ void CompositorUtilsImpl::InitializeOnGpuThread() {
   base::MessageLoop::current()->AddTaskObserver(this);
 }
 
-void CompositorUtilsImpl::ShutdownOnGpuThread() {
+void CompositorUtilsImpl::ShutdownOnGpuThread(
+    base::WaitableEvent* shutdown_event) {
   DCHECK(!gpu().has_shutdown);
 
   base::MessageLoop::current()->RemoveTaskObserver(this);
   gpu().has_shutdown = true;
 
-  base::AutoLock lock1(incoming_texture_resource_fetches_.lock);
-  base::AutoLock lock2(texture_resource_fetches_.lock);
-  DCHECK(incoming_texture_resource_fetches_.queue.empty());
-  DCHECK(texture_resource_fetches_.info_map.empty());
+  shutdown_event->Signal();
+  // |shutdown_event| might be deleted now
 }
 
 void CompositorUtilsImpl::FetchTextureResourcesOnGpuThread(
@@ -290,6 +290,10 @@ void CompositorUtilsImpl::FetchTextureResourcesOnGpuThread(
 void CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread(int id) {
   DCHECK(gpu_thread_checker_.CalledOnValidThread());
 
+  if (gpu().has_shutdown) {
+    return;
+  }
+
   base::AutoLock lock(texture_resource_fetches_.lock);
   ContinueFetchTextureResourcesOnGpuThread_Locked(id);
 }
@@ -300,9 +304,7 @@ void CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread_Locked(
   texture_resource_fetches_.lock.AssertAcquired();
 
   auto it = texture_resource_fetches_.info_map.find(id);
-  if (it == texture_resource_fetches_.info_map.end()) {
-    return;
-  }
+  DCHECK(it != texture_resource_fetches_.info_map.end());
 
   FetchTextureResourcesTaskInfo* info = it->second;
 
@@ -331,13 +333,7 @@ void CompositorUtilsImpl::SendCreateGLFrameHandleResponse(int id,
     base::AutoLock lock(texture_resource_fetches_.lock);
 
     auto it = texture_resource_fetches_.info_map.find(id);
-    if (it == texture_resource_fetches_.info_map.end()) {
-      // Should only happen at shutdown, in which case we won't be leaking
-      // the texture by returning early because we'll drop our reference when
-      // the TextureManager owned by the ContextGroup that it belongs to is
-      // deleted
-      return;
-    }
+    DCHECK(it != texture_resource_fetches_.info_map.end());
 
     FetchTextureResourcesTaskInfo* info = it->second;
 
@@ -373,23 +369,28 @@ void CompositorUtilsImpl::DidProcessTask(
     const base::PendingTask& pending_task) {
   DCHECK(gpu_thread_checker_.CalledOnValidThread());
 
-  base::AutoLock lock1(incoming_texture_resource_fetches_.lock);
-  DCHECK(!incoming_texture_resource_fetches_.gpu_needs_wakeup);
-  incoming_texture_resource_fetches_.gpu_needs_wakeup = true;
+  std::queue<FetchTextureResourcesTaskInfo*> queue;
+  {
+    base::AutoLock lock(incoming_texture_resource_fetches_.lock);
+    DCHECK(!incoming_texture_resource_fetches_.gpu_needs_wakeup);
+    incoming_texture_resource_fetches_.gpu_needs_wakeup = true;
 
-  if (!incoming_texture_resource_fetches_.fetch_pending) {
-    return;
+    if (!incoming_texture_resource_fetches_.fetch_pending) {
+      return;
+    }
+    incoming_texture_resource_fetches_.fetch_pending = false;
+
+    std::swap(queue, incoming_texture_resource_fetches_.queue);
   }
 
-  incoming_texture_resource_fetches_.fetch_pending = false;
+  {
+    base::AutoLock lock(texture_resource_fetches_.lock);
 
-  base::AutoLock lock2(texture_resource_fetches_.lock);
-
-  while (!incoming_texture_resource_fetches_.queue.empty()) {
-    FetchTextureResourcesTaskInfo* info =
-        incoming_texture_resource_fetches_.queue.front();
-    incoming_texture_resource_fetches_.queue.pop();
-    FetchTextureResourcesOnGpuThread(info);
+    while (!queue.empty()) {
+      FetchTextureResourcesTaskInfo* info = queue.front();
+      queue.pop();
+      FetchTextureResourcesOnGpuThread(info);
+    }
   }
 }
 
@@ -431,14 +432,14 @@ CompositorUtilsImpl* CompositorUtilsImpl::GetInstance() {
 void CompositorUtilsImpl::Initialize() {
   DCHECK(!main().compositor_thread);
 
+  client_id_ =
+      content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId();
+  main_task_runner_ = base::MessageLoopProxy::current();
+
   main().compositor_thread.reset(new CompositorThread());
   main().compositor_thread->Start();
 
-  main_task_runner_ = base::MessageLoopProxy::current();
   compositor_task_runner_ = main().compositor_thread->message_loop_proxy();
-
-  client_id_ =
-      content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId();
 
   content::CauseForGpuLaunch cause =
       content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
@@ -457,37 +458,45 @@ void CompositorUtilsImpl::Initialize() {
 void CompositorUtilsImpl::Shutdown() {
   DCHECK(main().compositor_thread);
 
-  {
-    base::AutoLock lock1(incoming_texture_resource_fetches_.lock);
-    base::AutoLock lock2(texture_resource_fetches_.lock);
+  // Shut down the compositor thread first, to prevent more calls in to
+  // CreateGLFrameHandle
+  main().compositor_thread.reset();
 
-    incoming_texture_resource_fetches_.fetch_pending = false;
-    incoming_texture_resource_fetches_.can_queue = false;
-    while (incoming_texture_resource_fetches_.queue.size() > 0) {
-      FetchTextureResourcesTaskInfo* info =
-          incoming_texture_resource_fetches_.queue.front();
-      incoming_texture_resource_fetches_.queue.pop();
-      delete info;
-    }
-
-    for (auto it = texture_resource_fetches_.info_map.begin();
-         it != texture_resource_fetches_.info_map.end(); ++it) {
-      texture_resource_fetches_.id_allocator.FreeId(it->first);
-      delete it->second;
-    }
-    texture_resource_fetches_.info_map.clear();
-  }
-
+  // Detach the GPU thread MessageLoop::TaskObserver, to stop processing
+  // and existing incoming requests
   scoped_refptr<base::SingleThreadTaskRunner> gpu_task_runner =
       content::GpuChildThread::GetTaskRunner();
   if (gpu_task_runner.get()) {
+    base::ThreadRestrictions::ScopedAllowWait allow_wait;
+    base::WaitableEvent event(false, false);
     gpu_task_runner->PostTask(
         FROM_HERE,
         base::Bind(&CompositorUtilsImpl::ShutdownOnGpuThread,
-                   base::Unretained(this)));
+                   base::Unretained(this), &event));
+    event.Wait();
   }
 
-  main().compositor_thread.reset();
+  // Because we assert that CreateGLFrameHandle has to be called on the
+  // current thread or the compositor thread, at this point we're guaranteed
+  // to get no new incoming requests. It's safe to just delete any queued
+  // incoming requests without a lock
+  while (incoming_texture_resource_fetches_.queue.size() > 0) {
+    FetchTextureResourcesTaskInfo* info =
+        incoming_texture_resource_fetches_.queue.front();
+    incoming_texture_resource_fetches_.queue.pop();
+    delete info;
+  }
+
+  // We assert that the callback task runner passed to CreateGLFrameHandle
+  // is for the current thread or the compositor thread, which means it's
+  // guaranteed to not process any more tasks. It's safe to just delete
+  // the pending requests without a lock
+  for (auto it = texture_resource_fetches_.info_map.begin();
+       it != texture_resource_fetches_.info_map.end(); ++it) {
+    texture_resource_fetches_.id_allocator.FreeId(it->first);
+    delete it->second;
+  }
+  texture_resource_fetches_.info_map.clear();
 }
 
 scoped_refptr<base::SingleThreadTaskRunner>
