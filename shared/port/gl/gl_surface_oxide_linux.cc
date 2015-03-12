@@ -56,6 +56,12 @@ bool GLSurface::InitializeOneOffInternal() {
   return true;
 }
 
+scoped_refptr<GLSurface> GLSurface::CreateSurfacelessViewGLSurface(
+    gfx::AcceleratedWidget window) {
+  NOTREACHED();
+  return nullptr;
+}
+
 scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
     gfx::AcceleratedWidget window) {
   NOTREACHED();

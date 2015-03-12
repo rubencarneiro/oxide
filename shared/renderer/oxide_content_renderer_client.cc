@@ -38,7 +38,7 @@
 #include "oxide_top_controls_handler.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
-#include "oxide_web_permission_client.h"
+#include "oxide_web_content_settings_client.h"
 
 #if defined(ENABLE_MEDIAHUB)
 #include "media/oxide_renderer_media_player_manager.h"
@@ -63,7 +63,7 @@ void ContentRendererClient::RenderThreadStarted() {
 void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
-  new WebPermissionClient(render_frame);
+  new WebContentSettingsClient(render_frame);
 #if defined(ENABLE_MEDIAHUB)
   new RendererMediaPlayerManager(render_frame);
 #endif

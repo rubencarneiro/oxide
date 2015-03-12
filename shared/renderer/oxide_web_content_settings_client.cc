@@ -15,10 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_web_permission_client.h"
+#include "oxide_web_content_settings_client.h"
 
-#include "content/public/renderer/document_state.h"
-#include "content/public/renderer/navigation_state.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_view.h"
 #include "ipc/ipc_message.h"
@@ -29,7 +27,9 @@
 
 namespace oxide {
 
-void WebPermissionClient::DidCommitProvisionalLoad(bool is_new_navigation) {
+void WebContentSettingsClient::DidCommitProvisionalLoad(
+    bool is_new_navigation,
+    bool is_same_page_navigation) {
   did_block_displaying_insecure_content_ = false;
   did_block_running_insecure_content_ = false;
 
@@ -38,19 +38,15 @@ void WebPermissionClient::DidCommitProvisionalLoad(bool is_new_navigation) {
     return;
   }
 
-  content::DocumentState* ds =
-      content::DocumentState::FromDataSource(frame->dataSource());
-  content::NavigationState* ns = ds->navigation_state();
-  if (!ns->was_within_same_page() &&
-      ds->load_type() != content::DocumentState::LINK_LOAD_RELOAD) {
+  if (!is_same_page_navigation) {
     can_display_insecure_content_ = false;
     can_run_insecure_content_ = false;
   }
 }
 
-bool WebPermissionClient::OnMessageReceived(const IPC::Message& message) {
+bool WebContentSettingsClient::OnMessageReceived(const IPC::Message& message) {
   bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(WebPermissionClient, message)
+  IPC_BEGIN_MESSAGE_MAP(WebContentSettingsClient, message)
     IPC_MESSAGE_HANDLER(OxideMsg_SetAllowDisplayingInsecureContent,
                         OnSetAllowDisplayingInsecureContent)
     IPC_MESSAGE_HANDLER(OxideMsg_SetAllowRunningInsecureContent,
@@ -62,7 +58,7 @@ bool WebPermissionClient::OnMessageReceived(const IPC::Message& message) {
   return handled;
 }
 
-bool WebPermissionClient::allowDisplayingInsecureContent(
+bool WebContentSettingsClient::allowDisplayingInsecureContent(
     bool enabled_per_settings,
     const blink::WebSecurityOrigin& origin,
     const blink::WebURL& url) {
@@ -80,7 +76,7 @@ bool WebPermissionClient::allowDisplayingInsecureContent(
   return false;
 }
 
-bool WebPermissionClient::allowRunningInsecureContent(
+bool WebContentSettingsClient::allowRunningInsecureContent(
     bool enabled_per_settings,
     const blink::WebSecurityOrigin& origin,
     const blink::WebURL& url) {
@@ -96,27 +92,28 @@ bool WebPermissionClient::allowRunningInsecureContent(
   return false;
 }
 
-void WebPermissionClient::OnSetAllowDisplayingInsecureContent(bool allow) {
+void WebContentSettingsClient::OnSetAllowDisplayingInsecureContent(bool allow) {
   can_display_insecure_content_ = allow;
 }
 
-void WebPermissionClient::OnSetAllowRunningInsecureContent(bool allow) {
+void WebContentSettingsClient::OnSetAllowRunningInsecureContent(bool allow) {
   can_run_insecure_content_ = allow;
 }
 
-void WebPermissionClient::OnReloadFrame() {
+void WebContentSettingsClient::OnReloadFrame() {
   DCHECK(!render_frame()->GetWebFrame()->parent());
   render_frame()->GetWebFrame()->reload();
 }
 
-WebPermissionClient::WebPermissionClient(content::RenderFrame* render_frame)
+WebContentSettingsClient::WebContentSettingsClient(
+    content::RenderFrame* render_frame)
     : content::RenderFrameObserver(render_frame),
-      content::RenderFrameObserverTracker<WebPermissionClient>(render_frame),
+      content::RenderFrameObserverTracker<WebContentSettingsClient>(render_frame),
       can_display_insecure_content_(false),
       can_run_insecure_content_(false),
       did_block_displaying_insecure_content_(false),
       did_block_running_insecure_content_(false) {
-  render_frame->GetWebFrame()->setPermissionClient(this);
+  render_frame->GetWebFrame()->setContentSettingsClient(this);
 
   // Copy settings from the main frame else we end up in an infinite loop
   // in the case where a subframe tries to display or run insecure content
@@ -125,12 +122,13 @@ WebPermissionClient::WebPermissionClient(content::RenderFrame* render_frame)
   content::RenderFrame* main_frame =
       render_frame->GetRenderView()->GetMainRenderFrame();
   if (main_frame != render_frame) {
-    WebPermissionClient* main_client = WebPermissionClient::Get(main_frame);
+    WebContentSettingsClient* main_client =
+        WebContentSettingsClient::Get(main_frame);
     can_display_insecure_content_ = main_client->can_display_insecure_content_;
     can_run_insecure_content_ = main_client->can_run_insecure_content_;
   }
 }
 
-WebPermissionClient::~WebPermissionClient() {}
+WebContentSettingsClient::~WebContentSettingsClient() {}
 
 } // namespace oxide

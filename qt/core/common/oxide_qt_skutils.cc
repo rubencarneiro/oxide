@@ -24,7 +24,7 @@ namespace qt {
 
 QImage::Format QImageFormatFromSkImageInfo(const SkImageInfo& info) {
   SkAlphaType alpha = info.alphaType();
-  if (alpha == kIgnore_SkAlphaType || alpha == kOpaque_SkAlphaType) {
+  if (alpha == kUnknown_SkAlphaType || alpha == kOpaque_SkAlphaType) {
     return QImage::Format_Invalid;
   }
 

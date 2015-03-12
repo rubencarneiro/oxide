@@ -5,29 +5,29 @@
 diff --git a/cc/input/top_controls_manager.cc b/cc/input/top_controls_manager.cc
 --- a/cc/input/top_controls_manager.cc
 +++ b/cc/input/top_controls_manager.cc
-@@ -108,19 +108,22 @@ gfx::Vector2dF TopControlsManager::Scrol
+@@ -107,19 +107,22 @@ gfx::Vector2dF TopControlsManager::Scrol
    if (permitted_state_ == SHOWN && pending_delta.y() > 0)
      return pending_delta;
    else if (permitted_state_ == HIDDEN && pending_delta.y() < 0)
      return pending_delta;
  
-   current_scroll_delta_ += pending_delta.y();
+   accumulated_scroll_delta_ += pending_delta.y();
  
    float old_offset = ContentTopOffset();
 -  client_->SetCurrentTopControlsShownRatio(
--      (controls_scroll_begin_offset_ - current_scroll_delta_) /
+-      (baseline_content_offset_ - accumulated_scroll_delta_) /
 -      TopControlsHeight());
 +  if (TopControlsHeight() == 0)
 +    client_->SetCurrentTopControlsShownRatio(1.0f);
 +  else
 +    client_->SetCurrentTopControlsShownRatio(
-+        (controls_scroll_begin_offset_ - current_scroll_delta_) /
++        (baseline_content_offset_ - accumulated_scroll_delta_) /
 +        TopControlsHeight());
  
    // If the controls are fully visible, treat the current position as the
    // new baseline even if the gesture didn't end.
-   if (TopControlsShownRatio() == 1.f) {
-     current_scroll_delta_ = 0.f;
-     controls_scroll_begin_offset_ = ContentTopOffset();
-   }
+   if (TopControlsShownRatio() == 1.f)
+     ResetBaseline();
+ 
+   ResetAnimations();
  
