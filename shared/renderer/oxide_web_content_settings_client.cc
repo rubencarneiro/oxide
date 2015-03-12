@@ -30,18 +30,12 @@ namespace oxide {
 void WebContentSettingsClient::DidCommitProvisionalLoad(
     bool is_new_navigation,
     bool is_same_page_navigation) {
-  did_block_displaying_insecure_content_ = false;
-  did_block_running_insecure_content_ = false;
-
-  blink::WebFrame* frame = render_frame()->GetWebFrame();
-  if (frame->parent()) {
+  if (is_same_page_navigation) {
     return;
   }
 
-  if (!is_same_page_navigation) {
-    can_display_insecure_content_ = false;
-    can_run_insecure_content_ = false;
-  }
+  did_block_displaying_insecure_content_ = false;
+  did_block_running_insecure_content_ = false;
 }
 
 bool WebContentSettingsClient::OnMessageReceived(const IPC::Message& message) {
