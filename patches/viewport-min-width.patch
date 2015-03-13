@@ -1,28 +1,27 @@
 # Description: Set a minimum viewport width for sites that don't specify one
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
-diff --git a/third_party/WebKit/Source/core/css/CSSDefaultStyleSheets.cpp b/third_party/WebKit/Source/core/css/CSSDefaultStyleSheets.cpp
---- a/third_party/WebKit/Source/core/css/CSSDefaultStyleSheets.cpp
-+++ b/third_party/WebKit/Source/core/css/CSSDefaultStyleSheets.cpp
-@@ -92,21 +92,17 @@ CSSDefaultStyleSheets::CSSDefaultStyleSh
-     m_defaultViewportStyle = RuleSet::create();
-     m_defaultPrintStyle = RuleSet::create();
-     m_defaultQuirksStyle = RuleSet::create();
+diff --git a/third_party/WebKit/Source/core/css/resolver/ViewportStyleResolver.cpp b/third_party/WebKit/Source/core/css/resolver/ViewportStyleResolver.cpp
+--- a/third_party/WebKit/Source/core/css/resolver/ViewportStyleResolver.cpp
++++ b/third_party/WebKit/Source/core/css/resolver/ViewportStyleResolver.cpp
+@@ -55,20 +55,18 @@ ViewportStyleResolver::ViewportStyleReso
+ }
  
-     // Strict-mode rules.
-     String defaultRules = loadResourceAsASCIIString("html.css") + LayoutTheme::theme().extraDefaultStyleSheet();
-     m_defaultStyleSheet = parseUASheet(defaultRules);
-     m_defaultStyle->addRulesFromSheet(defaultStyleSheet(), screenEval());
+ void ViewportStyleResolver::collectViewportRules()
+ {
+     CSSDefaultStyleSheets& defaultStyleSheets = CSSDefaultStyleSheets::instance();
+     collectViewportRules(defaultStyleSheets.defaultStyle(), UserAgentOrigin);
+ 
+     bool useMobileViewportStyle = m_document->settings() && m_document->settings()->useMobileViewportStyle();
 -#if OS(ANDROID)
-     String viewportRules = loadResourceAsASCIIString("viewportAndroid.css");
--#else
--    String viewportRules;
+     // FIXME: Remove when useMobileViewportStyle is set from chromium.
+     useMobileViewportStyle = true;
 -#endif
-     m_viewportStyleSheet = parseUASheet(viewportRules);
-     m_defaultViewportStyle->addRulesFromSheet(viewportStyleSheet(), screenEval());
-     m_defaultPrintStyle->addRulesFromSheet(defaultStyleSheet(), printEval());
+     if (useMobileViewportStyle)
+         collectViewportRules(defaultStyleSheets.defaultMobileViewportStyle(), UserAgentOrigin);
  
-     // Quirks-mode rules.
-     String quirksRules = loadResourceAsASCIIString("quirks.css") + LayoutTheme::theme().extraQuirksStyleSheet();
-     m_quirksStyleSheet = parseUASheet(quirksRules);
-     m_defaultQuirksStyle->addRulesFromSheet(quirksStyleSheet(), screenEval());
+     if (m_document->isMobileDocument())
+         collectViewportRules(defaultStyleSheets.defaultXHTMLMobileProfileStyle(), UserAgentOrigin);
+ 
+     if (ScopedStyleResolver* scopedResolver = m_document->scopedStyleResolver())
+         scopedResolver->collectViewportRulesTo(this);
