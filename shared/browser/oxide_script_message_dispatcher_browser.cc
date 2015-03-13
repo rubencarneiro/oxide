@@ -24,7 +24,6 @@
 #include "base/callback.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
-#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
@@ -66,11 +65,11 @@ class MessageReceiver {
   void ReceiveMessageOnUIThread() {
     bool is_reply = params_.type == OxideMsg_SendMessage_Type::Reply;
 
-    content::RenderFrameHostImpl* rfh =
-        content::RenderFrameHostImpl::FromID(render_process_id_, routing_id_);
+    content::RenderFrameHost* rfh =
+        content::RenderFrameHost::FromID(render_process_id_, routing_id_);
     if (!rfh) {
       if (!is_reply) {
-        ReturnError(NULL, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
+        ReturnError(nullptr, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
                     "Could not find a RenderFrameHost corresponding to the "
                     "specified routing ID");
       }
@@ -83,7 +82,7 @@ class MessageReceiver {
       return;
     }
 
-    WebFrame* frame = WebFrame::FromFrameTreeNode(rfh->frame_tree_node());
+    WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
     if (!frame) {
       if (!is_reply) {
         ReturnError(rfh, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
@@ -171,7 +170,7 @@ class MessageReceiver {
     params.error = type;
     params.payload = msg;
 
-    content::RenderProcessHost* process = NULL;
+    content::RenderProcessHost* process = nullptr;
     if (rfh) {
       process = rfh->GetProcess();
     }

@@ -37,11 +37,10 @@ PepperHostFactoryBrowser::PepperHostFactoryBrowser(
 PepperHostFactoryBrowser::~PepperHostFactoryBrowser() {}
 
 scoped_ptr<ppapi::host::ResourceHost>
-PepperHostFactoryBrowser::CreateResourceHost(
-    ppapi::host::PpapiHost* host,
-    const ppapi::proxy::ResourceMessageCallParams& params,
-    PP_Instance instance,
-    const IPC::Message& message) {
+PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
+                                             PP_Resource resource,
+                                             PP_Instance instance,
+                                             const IPC::Message& message) {
   DCHECK(host == host_->GetPpapiHost());
 
   if (!host_->IsValidInstance(instance)) {
@@ -59,7 +58,7 @@ PepperHostFactoryBrowser::CreateResourceHost(
           ppapi::PERMISSION_PRIVATE) &&
       message.type() == PpapiHostMsg_Talk_Create::ID) {
     return scoped_ptr<ppapi::host::ResourceHost>(new PepperTalkHost(
-        host_, instance, params.pp_resource()));
+        host_, instance, resource));
   }
 
   // Flash interfaces:

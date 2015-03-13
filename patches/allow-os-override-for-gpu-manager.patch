@@ -1,0 +1,321 @@
+# Description: Allow the embedder to override the OS type and version
+#  passed to GpuControlList::MakeDecision. This allows us to spoof Android
+#  on Ubuntu phone
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/browser/gpu/gpu_data_manager_impl_private.cc
+--- a/content/browser/gpu/gpu_data_manager_impl_private.cc
++++ b/content/browser/gpu/gpu_data_manager_impl_private.cc
+@@ -14,16 +14,17 @@
+ #include "base/strings/stringprintf.h"
+ #include "base/sys_info.h"
+ #include "base/trace_event/trace_event.h"
+ #include "base/version.h"
+ #include "cc/base/switches.h"
+ #include "content/browser/gpu/gpu_process_host.h"
+ #include "content/common/gpu/gpu_messages.h"
+ #include "content/public/browser/browser_thread.h"
++#include "content/public/browser/content_browser_client.h"
+ #include "content/public/browser/gpu_data_manager_observer.h"
+ #include "content/public/common/content_client.h"
+ #include "content/public/common/content_constants.h"
+ #include "content/public/common/content_switches.h"
+ #include "content/public/common/web_preferences.h"
+ #include "gpu/command_buffer/service/gpu_switches.h"
+ #include "gpu/config/gpu_control_list_jsons.h"
+ #include "gpu/config/gpu_driver_bug_workaround_type.h"
+@@ -547,25 +548,25 @@ void GpuDataManagerImplPrivate::Initiali
+   }
+ }
+ 
+ void GpuDataManagerImplPrivate::UpdateGpuInfoHelper() {
+   GetContentClient()->SetGpuInfo(gpu_info_);
+ 
+   if (gpu_blacklist_) {
+     std::set<int> features = gpu_blacklist_->MakeDecision(
+-        gpu::GpuControlList::kOsAny, std::string(), gpu_info_);
++        os_type_override_, os_version_override_, gpu_info_);
+     if (update_histograms_)
+       UpdateStats(gpu_info_, gpu_blacklist_.get(), features);
+ 
+     UpdateBlacklistedFeatures(features);
+   }
+   if (gpu_driver_bug_list_) {
+     gpu_driver_bugs_ = gpu_driver_bug_list_->MakeDecision(
+-        gpu::GpuControlList::kOsAny, std::string(), gpu_info_);
++        os_type_override_, os_version_override_, gpu_info_);
+   }
+   gpu::GpuDriverBugList::AppendWorkaroundsFromCommandLine(
+       &gpu_driver_bugs_, *base::CommandLine::ForCurrentProcess());
+ 
+   // We have to update GpuFeatureType before notify all the observers.
+   NotifyGpuInfoUpdate();
+ }
+ 
+@@ -905,32 +906,37 @@ GpuDataManagerImplPrivate::GpuDataManage
+       use_warp_(false),
+       card_blacklisted_(false),
+       update_histograms_(true),
+       window_count_(0),
+       domain_blocking_enabled_(true),
+       owner_(owner),
+       display_count_(0),
+       gpu_process_accessible_(true),
+-      finalized_(false) {
++      finalized_(false),
++      os_type_override_(gpu::GpuControlList::kOsAny) {
+   DCHECK(owner_);
+   const base::CommandLine* command_line =
+       base::CommandLine::ForCurrentProcess();
+   if (command_line->HasSwitch(switches::kDisableGpu))
+     DisableHardwareAcceleration();
+ 
+ #if defined(OS_MACOSX)
+   CGGetActiveDisplayList (0, NULL, &display_count_);
+   CGDisplayRegisterReconfigurationCallback(DisplayReconfigCallback, owner_);
+ #endif  // OS_MACOSX
+ 
+   // For testing only.
+   if (command_line->HasSwitch(switches::kDisableDomainBlockingFor3DAPIs)) {
+     domain_blocking_enabled_ = false;
+   }
++
++  os_type_override_ =
++      GetContentClient()->browser()->GetOsTypeOverrideForGpuDataManager(
++        &os_version_override_);
+ }
+ 
+ GpuDataManagerImplPrivate::~GpuDataManagerImplPrivate() {
+ #if defined(OS_MACOSX)
+   CGDisplayRemoveReconfigurationCallback(DisplayReconfigCallback, owner_);
+ #endif
+ }
+ 
+@@ -942,25 +948,27 @@ void GpuDataManagerImplPrivate::Initiali
+       base::CommandLine::ForCurrentProcess()->HasSwitch(
+           switches::kLogGpuControlListDecisions);
+ 
+   if (!gpu_blacklist_json.empty()) {
+     gpu_blacklist_.reset(gpu::GpuBlacklist::Create());
+     if (log_gpu_control_list_decisions)
+       gpu_blacklist_->enable_control_list_logging("gpu_blacklist");
+     bool success = gpu_blacklist_->LoadList(
+-        gpu_blacklist_json, gpu::GpuControlList::kCurrentOsOnly);
++        gpu_blacklist_json, gpu::GpuControlList::kCurrentOsOnly,
++        os_type_override_);
+     DCHECK(success);
+   }
+   if (!gpu_driver_bug_list_json.empty()) {
+     gpu_driver_bug_list_.reset(gpu::GpuDriverBugList::Create());
+     if (log_gpu_control_list_decisions)
+       gpu_driver_bug_list_->enable_control_list_logging("gpu_driver_bug_list");
+     bool success = gpu_driver_bug_list_->LoadList(
+-        gpu_driver_bug_list_json, gpu::GpuControlList::kCurrentOsOnly);
++        gpu_driver_bug_list_json, gpu::GpuControlList::kCurrentOsOnly,
++        os_type_override_);
+     DCHECK(success);
+   }
+ 
+   gpu_info_ = gpu_info;
+   UpdateGpuInfo(gpu_info);
+   UpdateGpuSwitchingManager(gpu_info);
+   UpdatePreliminaryBlacklistedFeatures();
+ }
+diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/browser/gpu/gpu_data_manager_impl_private.h
+--- a/content/browser/gpu/gpu_data_manager_impl_private.h
++++ b/content/browser/gpu/gpu_data_manager_impl_private.h
+@@ -11,16 +11,17 @@
+ #include <string>
+ #include <vector>
+ 
+ #include "base/memory/ref_counted.h"
+ #include "base/memory/singleton.h"
+ #include "base/observer_list_threadsafe.h"
+ #include "content/browser/gpu/gpu_data_manager_impl.h"
+ #include "gpu/config/gpu_blacklist.h"
++#include "gpu/config/gpu_control_list.h"
+ #include "gpu/config/gpu_driver_bug_list.h"
+ 
+ namespace base {
+ class CommandLine;
+ }
+ 
+ namespace content {
+ 
+@@ -265,15 +266,18 @@ class CONTENT_EXPORT GpuDataManagerImplP
+ 
+   unsigned int display_count_;
+ 
+   bool gpu_process_accessible_;
+ 
+   // True if all future Initialize calls should be ignored.
+   bool finalized_;
+ 
++  gpu::GpuControlList::OsType os_type_override_;
++  std::string os_version_override_;
++
+   DISALLOW_COPY_AND_ASSIGN(GpuDataManagerImplPrivate);
+ };
+ 
+ }  // namespace content
+ 
+ #endif  // CONTENT_BROWSER_GPU_GPU_DATA_MANAGER_IMPL_PRIVATE_H_
+ 
+diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
+--- a/content/public/browser/content_browser_client.cc
++++ b/content/public/browser/content_browser_client.cc
+@@ -356,9 +356,15 @@ const wchar_t* ContentBrowserClient::Get
+ #if defined(VIDEO_HOLE)
+ ExternalVideoSurfaceContainer*
+ ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
+     WebContents* web_contents) {
+   return nullptr;
+ }
+ #endif
+ 
++gpu::GpuControlList::OsType
++ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
++    std::string* os_version) {
++  return gpu::GpuControlList::kOsAny;
++}
++
+ }  // namespace content
+diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
+--- a/content/public/browser/content_browser_client.h
++++ b/content/public/browser/content_browser_client.h
+@@ -18,16 +18,17 @@
+ #include "content/public/browser/certificate_request_result_type.h"
+ #include "content/public/browser/permission_type.h"
+ #include "content/public/common/content_client.h"
+ #include "content/public/common/media_stream_request.h"
+ #include "content/public/common/permission_status.mojom.h"
+ #include "content/public/common/resource_type.h"
+ #include "content/public/common/socket_permission_request.h"
+ #include "content/public/common/window_container_type.h"
++#include "gpu/config/gpu_control_list.h"
+ #include "net/base/mime_util.h"
+ #include "net/cookies/canonical_cookie.h"
+ #include "net/url_request/url_request_interceptor.h"
+ #include "net/url_request/url_request_job_factory.h"
+ #include "storage/browser/fileapi/file_system_context.h"
+ #include "third_party/WebKit/public/platform/WebPageVisibilityState.h"
+ #include "ui/base/window_open_disposition.h"
+ 
+@@ -641,13 +642,16 @@ class CONTENT_EXPORT ContentBrowserClien
+ #endif
+ 
+ #if defined(VIDEO_HOLE)
+   // Allows an embedder to provide its own ExternalVideoSurfaceContainer
+   // implementation.  Return nullptr to disable external surface video.
+   virtual ExternalVideoSurfaceContainer*
+   OverrideCreateExternalVideoSurfaceContainer(WebContents* web_contents);
+ #endif
++
++  virtual gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
++      std::string* os_version);
+ };
+ 
+ }  // namespace content
+ 
+ #endif  // CONTENT_PUBLIC_BROWSER_CONTENT_BROWSER_CLIENT_H_
+diff --git a/gpu/config/gpu_control_list.cc b/gpu/config/gpu_control_list.cc
+--- a/gpu/config/gpu_control_list.cc
++++ b/gpu/config/gpu_control_list.cc
+@@ -1327,30 +1327,32 @@ GpuControlList::GpuControlList()
+ }
+ 
+ GpuControlList::~GpuControlList() {
+   Clear();
+ }
+ 
+ bool GpuControlList::LoadList(
+     const std::string& json_context,
+-    GpuControlList::OsFilter os_filter) {
++    GpuControlList::OsFilter os_filter,
++    GpuControlList::OsType os_override) {
+   scoped_ptr<base::Value> root;
+   root.reset(base::JSONReader::Read(json_context));
+   if (root.get() == NULL || !root->IsType(base::Value::TYPE_DICTIONARY))
+     return false;
+ 
+   base::DictionaryValue* root_dictionary =
+       static_cast<base::DictionaryValue*>(root.get());
+   DCHECK(root_dictionary);
+-  return LoadList(*root_dictionary, os_filter);
++  return LoadList(*root_dictionary, os_filter, os_override);
+ }
+ 
+ bool GpuControlList::LoadList(const base::DictionaryValue& parsed_json,
+-                              GpuControlList::OsFilter os_filter) {
++                              GpuControlList::OsFilter os_filter,
++                              GpuControlList::OsType os_override) {
+   std::vector<ScopedGpuControlListEntry> entries;
+ 
+   parsed_json.GetString("version", &version_);
+   std::vector<std::string> pieces;
+   if (!ProcessVersionString(version_, '.', &pieces))
+     return false;
+ 
+   const base::ListValue* list = NULL;
+@@ -1368,17 +1370,19 @@ bool GpuControlList::LoadList(const base
+     if (entry.get() == NULL)
+       return false;
+     if (entry->id() > max_entry_id)
+       max_entry_id = entry->id();
+     entries.push_back(entry);
+   }
+ 
+   Clear();
+-  OsType my_os = GetOsType();
++  OsType my_os = os_override;
++  if (my_os == kOsAny)
++    my_os = GetOsType();
+   for (size_t i = 0; i < entries.size(); ++i) {
+     OsType entry_os = entries[i]->GetOsType();
+     if (os_filter == GpuControlList::kAllOs ||
+         entry_os == kOsAny || entry_os == my_os)
+       entries_.push_back(entries[i]);
+   }
+   max_entry_id_ = max_entry_id;
+   return true;
+diff --git a/gpu/config/gpu_control_list.h b/gpu/config/gpu_control_list.h
+--- a/gpu/config/gpu_control_list.h
++++ b/gpu/config/gpu_control_list.h
+@@ -40,17 +40,17 @@ class GPU_EXPORT GpuControlList {
+     kAllOs
+   };
+ 
+   GpuControlList();
+   virtual ~GpuControlList();
+ 
+   // Loads control list information from a json file.
+   // If failed, the current GpuControlList is un-touched.
+-  bool LoadList(const std::string& json_context, OsFilter os_filter);
++  bool LoadList(const std::string& json_context, OsFilter os_filter, OsType os_override = kOsAny);
+ 
+   // Collects system information and combines them with gpu_info and control
+   // list information to decide which entries are applied to the current
+   // system and returns the union of features specified in each entry.
+   // If os is kOsAny, use the current OS; if os_version is empty, use the
+   // current OS version.
+   std::set<int> MakeDecision(
+       OsType os, std::string os_version, const GPUInfo& gpu_info);
+@@ -451,17 +451,17 @@ class GPU_EXPORT GpuControlList {
+     scoped_ptr<BoolInfo> direct_rendering_info_;
+     std::set<int> features_;
+     std::vector<ScopedGpuControlListEntry> exceptions_;
+   };
+ 
+   // Gets the current OS type.
+   static OsType GetOsType();
+ 
+-  bool LoadList(const base::DictionaryValue& parsed_json, OsFilter os_filter);
++  bool LoadList(const base::DictionaryValue& parsed_json, OsFilter os_filter, OsType os_override);
+ 
+   void Clear();
+ 
+   static NumericOp StringToNumericOp(const std::string& op);
+ 
+   std::string version_;
+   std::vector<ScopedGpuControlListEntry> entries_;
+ 

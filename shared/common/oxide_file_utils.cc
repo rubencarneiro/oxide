@@ -72,7 +72,7 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
             file_path_,
             base::File::FLAG_OPEN | base::File::FLAG_READ,
             base::Bind(&GetFileContentsJobImpl::OnFileOpened, this))) {
-      callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
+      callback_.Run(base::File::FILE_ERROR_FAILED, nullptr, -1);
     }
   }
 
@@ -82,13 +82,13 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
     }
 
     if (error != base::File::FILE_OK) {
-      callback_.Run(error, NULL, -1);
+      callback_.Run(error, nullptr, -1);
       return;
     }
 
     if (!file_proxy_.GetInfo(
             base::Bind(&GetFileContentsJobImpl::OnGotFileInfo, this))) {
-      callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
+      callback_.Run(base::File::FILE_ERROR_FAILED, nullptr, -1);
     }
   }
 
@@ -99,12 +99,12 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
     }
 
     if (error != base::File::FILE_OK) {
-      callback_.Run(error, NULL, -1);
+      callback_.Run(error, nullptr, -1);
       return;
     }
 
     if (info.is_directory) {
-      callback_.Run(base::File::FILE_ERROR_NOT_A_FILE, NULL, -1);
+      callback_.Run(base::File::FILE_ERROR_NOT_A_FILE, nullptr, -1);
       return;
     }
 
@@ -112,7 +112,7 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
     if (!file_proxy_.Read(
             0, info.size,
             base::Bind(&GetFileContentsJobImpl::OnGotData, this))) {
-      callback_.Run(base::File::FILE_ERROR_FAILED, NULL, -1);
+      callback_.Run(base::File::FILE_ERROR_FAILED, nullptr, -1);
     }
   }
 
@@ -124,7 +124,7 @@ class GetFileContentsJobImpl : public AsyncFileJobImpl {
     }
 
     if (error != base::File::FILE_OK) {
-      callback_.Run(error, NULL, -1);
+      callback_.Run(error, nullptr, -1);
       return;
     }
 
@@ -163,7 +163,7 @@ AsyncFileJob* FileUtils::GetFileContents(base::TaskRunner* task_runner,
                                 const base::FilePath& file_path,
                                 const GetFileContentsCallback& callback) {
   if (callback.is_null()) {
-    return NULL;
+    return nullptr;
   }
 
   return new GetFileContentsJob(task_runner, file_path, callback);

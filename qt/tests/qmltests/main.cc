@@ -38,13 +38,11 @@
 #include <QtQuickTest/private/quicktestresult_p.h>
 #include <QtQuickVersion>
 #include <QUrl>
-#if defined(ENABLE_COMPOSITING)
 #include <QOpenGLContext>
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 #include <QtQuick/private/qsgcontext_p.h>
 #else
 #include <QtGui/private/qopenglcontext_p.h>
-#endif
 #endif
 
 #include "qt/core/api/oxideqglobal.h"
@@ -70,7 +68,7 @@ QNetworkReply* TestNetworkAccessManager::createRequest(
     QIODevice* outgoing_data) {
   if (req.url().scheme() == QLatin1String("test")) {
     if (!req.url().host().isEmpty()) {
-      return NULL;
+      return nullptr;
     }
 
     QUrl redirect;
@@ -219,7 +217,6 @@ int main(int argc, char** argv) {
   QStringList library_paths;
   QString test_path;
   QByteArray name;
-  bool use_data_dir = false;
 
   int index = 1;
   int outargc = 1;
@@ -243,16 +240,11 @@ int main(int argc, char** argv) {
     } else if (QLatin1String(arg) == QLatin1String("-add-library-path") && (index + 1) < argc) {
       library_paths.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("-use-datadir-for-context")) {
-      use_data_dir = true;
-      index += 1;
     } else if (QLatin1String(arg) == QLatin1String("-nss-db-path") && (index + 1) < argc) {
       if (!oxideGetNSSDbPath().isEmpty()) {
         qFatal("Can only specify -nss-db-path once");
       }
-      if (!oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])))) {
-        qFatal("Failed to set NSS DB path");
-      }
+      oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
     } else if (index != outargc) {
       argv[outargc++] = argv[index++];
@@ -262,18 +254,18 @@ int main(int argc, char** argv) {
     }
   }
 
-  argv[outargc] = NULL;
+  argv[outargc] = nullptr;
 
   QGuiApplication app(outargc, argv);
 
-#if defined(ENABLE_COMPOSITING)
   QOpenGLContext context;
   context.create();
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-  QSGContext::setSharedOpenGLContext(&context);
-#else
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  qt_gl_set_global_share_context(&context);
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
   QOpenGLContextPrivate::setGlobalShareContext(&context);
-#endif
+#else
+  QSGContext::setSharedOpenGLContext(&context);
 #endif
 
   for (int i = 0; i < library_paths.size(); ++i) {
@@ -331,7 +323,7 @@ int main(int argc, char** argv) {
   QQmlEngine engine;
   engine.setNetworkAccessManagerFactory(&nam_factory);
 
-  QQuickView view(&engine, NULL);
+  QQuickView view(&engine, nullptr);
   view.setFlags(Qt::Window | Qt::WindowSystemMenuHint |
                 Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint |
                 Qt::WindowCloseButtonHint);
@@ -344,9 +336,6 @@ int main(int argc, char** argv) {
   for (QStringList::iterator it = imports.begin(); it != imports.end(); ++it) {
     view.engine()->addImportPath(*it);
   }
-  view.rootContext()->setContextProperty(
-      QStringLiteral("QMLTEST_USE_CONTEXT_DATADIR"),
-      use_data_dir);
 
   for (QStringList::iterator it = files.begin(); it != files.end(); ++it) {
     const QFileInfo fi(*it);
@@ -400,7 +389,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  QuickTestResult::setProgramName(NULL);
+  QuickTestResult::setProgramName(nullptr);
   return QuickTestResult::exitCode();
 }
 

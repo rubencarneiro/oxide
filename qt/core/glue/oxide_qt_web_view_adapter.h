@@ -18,14 +18,15 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_ADAPTER_H_
 
+#include <QByteArray>
 #include <QDateTime>
 #include <QImage>
 #include <QList>
-#include <QPointF>
+#include <QPoint>
 #include <QRect>
 #include <QScopedPointer>
 #include <QSharedPointer>
-#include <QSizeF>
+#include <QSize>
 #include <QString>
 #include <QtGlobal>
 #include <Qt>
@@ -69,20 +70,29 @@ class WebView;
 enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_NONE = 0,
 
-  FRAME_METADATA_CHANGE_DEVICE_SCALE = 1 << 0,
-  FRAME_METADATA_CHANGE_SCROLL_OFFSET_X = 1 << 1,
-  FRAME_METADATA_CHANGE_SCROLL_OFFSET_Y = 1 << 2,
-  FRAME_METADATA_CHANGE_CONTENT_WIDTH = 1 << 3,
-  FRAME_METADATA_CHANGE_CONTENT_HEIGHT = 1 << 4,
-  FRAME_METADATA_CHANGE_VIEWPORT_WIDTH = 1 << 5,
-  FRAME_METADATA_CHANGE_VIEWPORT_HEIGHT = 1 << 6,
-  FRAME_METADATA_CHANGE_PAGE_SCALE = 1 << 7
+  FRAME_METADATA_CHANGE_SCROLL_OFFSET = 1 << 0,
+  FRAME_METADATA_CHANGE_CONTENT = 1 << 1,
+  FRAME_METADATA_CHANGE_VIEWPORT = 1 << 2,
+  FRAME_METADATA_CHANGE_CONTROLS_OFFSET = 1 << 3,
+  FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
 };
 
 enum ContentTypeFlags {
   CONTENT_TYPE_NONE = 0,
   CONTENT_TYPE_MIXED_DISPLAY = 1 << 0,
   CONTENT_TYPE_MIXED_SCRIPT = 1 << 1
+};
+
+enum RestoreType {
+  RESTORE_CURRENT_SESSION,
+  RESTORE_LAST_SESSION_EXITED_CLEANLY,
+  RESTORE_LAST_SESSION_CRASHED,
+};
+
+enum LocationBarMode {
+  LOCATION_BAR_MODE_AUTO,
+  LOCATION_BAR_MODE_SHOWN,
+  LOCATION_BAR_MODE_HIDDEN
 };
 
 class Q_DECL_EXPORT AcceleratedFrameData final {
@@ -108,7 +118,7 @@ class Q_DECL_EXPORT CompositorFrameHandle {
   };
 
   virtual Type GetType() = 0;
-  virtual const QSize& GetSize() const = 0;
+  virtual const QRect& GetRect() const = 0;
 
   virtual QImage GetSoftwareFrame() = 0;
   virtual AcceleratedFrameData GetAcceleratedFrame() = 0;
@@ -118,7 +128,11 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
  public:
   virtual ~WebViewAdapter();
 
-  void init();
+  void init(bool incognito,
+            WebContextAdapter* context,
+            OxideQNewViewRequest* new_view_request,
+            const QByteArray& restoreState,
+            RestoreType restoreType);
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -129,7 +143,6 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   bool canGoForward() const;
 
   bool incognito() const;
-  void setIncognito(bool incognito);
 
   bool loading() const;
 
@@ -139,9 +152,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   WebFrameAdapter* rootFrame() const;
 
   WebContextAdapter* context() const;
-  void setContext(WebContextAdapter* context);
 
   void wasResized();
+  void screenUpdated();
   void visibilityChanged();
 
   void handleFocusEvent(QFocusEvent* event);
@@ -161,7 +174,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   QList<ScriptMessageHandlerAdapter *>& messageHandlers();
 
-  bool isInitialized();
+  bool isInitialized() const;
 
   int getNavigationEntryCount() const;
   int getNavigationCurrentEntryIndex() const;
@@ -171,18 +184,16 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   QString getNavigationEntryTitle(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
+  QByteArray currentState() const;
+
   OxideQWebPreferences* preferences();
   void setPreferences(OxideQWebPreferences* prefs);
 
-  void setRequest(OxideQNewViewRequest* request);
-
   void updateWebPreferences();
 
-  float compositorFrameDeviceScaleFactor() const;
-  float compositorFramePageScaleFactor() const;
-  QPointF compositorFrameScrollOffset() const;
-  QSizeF compositorFrameLayerSize() const;
-  QSizeF compositorFrameViewportSize() const;
+  QPoint compositorFrameScrollOffsetPix();
+  QSize compositorFrameContentSizePix();
+  QSize compositorFrameViewportSizePix();
 
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle();
   void didCommitCompositorFrame();
@@ -196,22 +207,27 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   void prepareToClose();
 
+  int locationBarHeight();
+  void setLocationBarHeight(int height);
+  int locationBarOffsetPix();
+  int locationBarContentOffsetPix();
+  LocationBarMode locationBarMode() const;
+  void setLocationBarMode(LocationBarMode mode);
+
  protected:
   WebViewAdapter(QObject* q);
 
  private:
   friend class WebView;
 
-  struct ConstructProperties {
-    ConstructProperties() :
-        incognito(false),
-        context(NULL) {}
-
-    bool incognito;
-    WebContextAdapter* context;
-  };
+  void EnsurePreferences();
+  void RestoreState(RestoreType type, const QByteArray& state);
 
   void Initialized();
+  void WebPreferencesDestroyed();
+
+  void ScheduleUpdate();
+  void EvictCurrentFrame();
 
   virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
@@ -219,8 +235,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
   virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;
   virtual FilePickerDelegate* CreateFilePickerDelegate() = 0;
 
-  virtual void OnInitialized(bool orig_incognito,
-                             WebContextAdapter* orig_context) = 0;
+  virtual void OnInitialized() = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
@@ -250,7 +265,7 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void ToggleFullscreenMode(bool enter) = 0;
 
-  virtual void WebPreferencesDestroyed() = 0;
+  virtual void OnWebPreferencesReplaced() = 0;
 
   virtual void FrameAdded(WebFrameAdapter* frame) = 0;
   virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
@@ -269,8 +284,8 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
 
-  virtual void ScheduleUpdate() = 0;
-  virtual void EvictCurrentFrame() = 0;
+  virtual void OnScheduleUpdate() = 0;
+  virtual void OnEvictCurrentFrame() = 0;
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
@@ -284,10 +299,9 @@ class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
 
   QScopedPointer<WebView> view_;
 
-  QList<ScriptMessageHandlerAdapter *> message_handlers_;
+  QSharedPointer<CompositorFrameHandle> compositor_frame_;
 
-  QScopedPointer<ConstructProperties> construct_props_;
-  bool created_with_new_view_request_;
+  QList<ScriptMessageHandlerAdapter *> message_handlers_;
 };
 
 } // namespace qt

@@ -63,7 +63,7 @@ ScriptReferencedObjectBase* ScriptReferencedObjectBase::FromScriptHandle(
   v8::Local<v8::Value> val(handle->GetHiddenValue(
       v8::String::NewFromUtf8(isolate, kWrappedNativeObject)));
   if (val.IsEmpty() || !val->IsExternal()) {
-    return NULL;
+    return nullptr;
   }
 
   return reinterpret_cast<ScriptReferencedObjectBase *>(

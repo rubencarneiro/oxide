@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,15 +19,19 @@
 
 #include <algorithm>
 #include <libintl.h>
+#include <limits>
 #include <vector>
 
+#include "base/files/file_enumerator.h"
 #include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/stringprintf.h"
 #include "base/supports_user_data.h"
 #include "base/synchronization/lock.h"
+#include "base/threading/thread_restrictions.h"
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
@@ -92,21 +96,71 @@ const char kFtpScheme[] = "ftp";
 const char kBrowserContextKey[] = "oxide_browser_context_data";
 
 const char kDefaultAcceptLanguage[] = "en-us,en";
+
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
+const int kBackLog = 1;
+
+void CleanupGPUShaderCache(const base::FilePath& path) {
+  base::FilePath cache = path.Append(FILE_PATH_LITERAL("GPUCache"));
+  if (!base::DirectoryExists(cache)) {
+    return;
+  }
+
+  base::FileEnumerator traversal(
+      cache, false,
+      base::FileEnumerator::FILES | base::FileEnumerator::DIRECTORIES);
+  for (base::FilePath current = traversal.Next(); !current.empty();
+       current = traversal.Next()) {
+    if (traversal.GetInfo().IsDirectory()) {
+      LOG(WARNING)
+          << "Not deleting GPU shader cache directory \"" << cache.value()
+          << "\". Directory contains an unexpected sub-directory \""
+          << traversal.GetInfo().GetName().value() << "\"";
+      return;
+    }
+
+    base::FilePath::StringType name = traversal.GetInfo().GetName().value();
+    if (name != FILE_PATH_LITERAL("index") &&
+        name.compare(0, 5, FILE_PATH_LITERAL("data_")) != 0 &&
+        name.compare(0, 2, FILE_PATH_LITERAL("f_")) != 0) {
+      LOG(WARNING)
+          << "Not deleting GPU shader cache directory \"" << cache.value()
+          << "\". Directory contains an unexpected file \"" << name << "\"";
+      return;
+    }
+  }
+
+  base::DeleteFile(cache, true);
+}
+
+} // namespace
 
 class TCPServerSocketFactory :
     public content::DevToolsHttpHandler::ServerSocketFactory {
  public:
-  TCPServerSocketFactory(const std::string& address, int port, int backlog)
-      : content::DevToolsHttpHandler::ServerSocketFactory(
-            address, port, backlog) {}
+  TCPServerSocketFactory(const std::string& address, int port)
+      : address_(address),
+        port_(port) {}
 
  private:
-  scoped_ptr<net::ServerSocket> Create() const final {
-    return make_scoped_ptr(
-        new net::TCPServerSocket(NULL, net::NetLog::Source()))
-          .PassAs<net::ServerSocket>();
+  scoped_ptr<net::ServerSocket> CreateForHttpServer() override {
+    scoped_ptr<net::TCPServerSocket> socket(
+        new net::TCPServerSocket(nullptr, net::NetLog::Source()));
+    if (socket->ListenWithAddressAndPort(address_, port_, kBackLog) != net::OK) {
+      return scoped_ptr<net::ServerSocket>();
+    }
+
+    return socket.Pass();
   }
+
+  scoped_ptr<net::ServerSocket> CreateForTethering(
+      std::string* out_name) override {
+    // Not supported
+    return scoped_ptr<net::ServerSocket>();
+  }
+
+  std::string address_;
+  int port_;
 
   DISALLOW_COPY_AND_ASSIGN(TCPServerSocketFactory);
 };
@@ -141,7 +195,7 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
       DCHECK(context_);
       url_request_context_ = context_->CreateMainRequestContext(
           protocol_handlers_, request_interceptors_.Pass())->AsWeakPtr();
-      context_ = NULL;
+      context_ = nullptr;
     }
 
     return url_request_context_.get();
@@ -155,12 +209,10 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
   base::WeakPtr<URLRequestContext> url_request_context_;
 };
 
-} // namespace
-
 class ResourceContext final : public content::ResourceContext {
  public:
   ResourceContext() :
-      request_context_(NULL) {}
+      request_context_(nullptr) {}
 
   net::HostResolver* GetHostResolver() final {
     return IOThread::instance()->globals()->host_resolver();
@@ -187,7 +239,6 @@ struct BrowserContextSharedData {
         product(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
         user_agent_string_is_default(true),
         user_script_master(context),
-        devtools_http_handler(NULL),
         devtools_enabled(params.devtools_enabled),
         devtools_port(params.devtools_port),
         devtools_ip(params.devtools_ip) {}
@@ -199,7 +250,7 @@ struct BrowserContextSharedData {
   bool user_agent_string_is_default;
   UserScriptMaster user_script_master;
 
-  content::DevToolsHttpHandler* devtools_http_handler;
+  scoped_ptr<content::DevToolsHttpHandler> devtools_http_handler;
   bool devtools_enabled;
   int devtools_port;
   std::string devtools_ip;
@@ -209,6 +260,7 @@ struct BrowserContextSharedIOData {
   BrowserContextSharedIOData(const BrowserContext::Params& params)
       : path(params.path),
         cache_path(params.cache_path),
+        max_cache_size_hint(params.max_cache_size_hint),
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
@@ -224,6 +276,7 @@ struct BrowserContextSharedIOData {
 
   base::FilePath path;
   base::FilePath cache_path;
+  int max_cache_size_hint;
 
   std::string user_agent_string;
   std::string accept_langs;
@@ -312,7 +365,7 @@ void BrowserContextIOData::Init() {
   cookie_store_ = content::CreateCookieStore(
       content::CookieStoreConfig(cookie_path,
                                  GetSessionCookieMode(),
-                                 NULL, NULL));
+                                 nullptr, nullptr));
 }
 
 BrowserContextIOData::BrowserContextIOData() :
@@ -359,6 +412,15 @@ base::FilePath BrowserContextIOData::GetCachePath() const {
   }
 
   return data.cache_path;
+}
+
+int BrowserContextIOData::GetMaxCacheSizeHint() const {
+  int max_cache_size_hint = GetSharedData().max_cache_size_hint;
+  // max_cache_size_hint is expressed in MB, let’s check that
+  // converting it to bytes won’t trigger an integer overflow
+  static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
+  DCHECK_LE(max_cache_size_hint, upper_limit);
+  return max_cache_size_hint;
 }
 
 std::string BrowserContextIOData::GetAcceptLangs() const {
@@ -422,9 +484,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   // TODO: We want persistent storage here (for non-incognito), but 
   //       SQLiteChannelIDStore is part of chrome
   storage->set_channel_id_service(
-      new net::ChannelIDService(
-          new net::DefaultChannelIDStore(NULL),
-          base::WorkerPool::GetTaskRunner(true)));
+      make_scoped_ptr(new net::ChannelIDService(
+          new net::DefaultChannelIDStore(nullptr),
+          base::WorkerPool::GetTaskRunner(true))));
 
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
@@ -433,7 +495,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   context->set_transport_security_state(transport_security_state_.get());
 
-  net::HttpCache::BackendFactory* cache_backend = NULL;
+  net::HttpCache::BackendFactory* cache_backend = nullptr;
   if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
@@ -441,7 +503,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          83886080, // XXX: 80MB - Make this configurable
+          GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }
@@ -462,8 +524,12 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.net_log = context->net_log();
   session_params.host_mapping_rules = host_mapping_rules_.get();
 
-  storage->set_http_transaction_factory(
-      new net::HttpCache(session_params, cache_backend));
+  {
+    // Calls QuickStreamFactory constructor which uses base::CPU
+    base::ThreadRestrictions::ScopedAllowIO allow_io;
+    storage->set_http_transaction_factory(
+        new net::HttpCache(session_params, cache_backend));
+  }
 
   scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
       new net::URLRequestJobFactoryImpl());
@@ -494,9 +560,8 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   DCHECK(set_protocol);
 
   scoped_ptr<net::URLRequestJobFactory> top_job_factory(
-      new URLRequestDelegatedJobFactory(
-        job_factory.PassAs<net::URLRequestJobFactory>(),
-        this));
+      new URLRequestDelegatedJobFactory(job_factory.Pass(),
+                                        this));
 
   for (content::URLRequestInterceptorScopedVector::reverse_iterator it =
           request_interceptors.rbegin();
@@ -558,6 +623,8 @@ class OTRBrowserContextImpl : public BrowserContext {
   BrowserContextSharedData& GetSharedData() final;
   const BrowserContextSharedData& GetSharedData() const final;
 
+  bool HasOffTheRecordContext() const final { return true; }
+
   BrowserContextImpl* original_context_;
 };
 
@@ -579,6 +646,10 @@ class BrowserContextImpl : public BrowserContext {
 
   BrowserContext* GetOriginalContext() final {
     return this;
+  }
+
+  bool HasOffTheRecordContext() const final {
+    return otr_context_ != nullptr;
   }
 
   BrowserContextSharedData data_;
@@ -607,12 +678,7 @@ OTRBrowserContextImpl::OTRBrowserContextImpl(
 BrowserContextImpl::~BrowserContextImpl() {
   if (otr_context_) {
     delete otr_context_;
-    otr_context_ = NULL;
-  }
-
-  if (data_.devtools_http_handler) {
-    data_.devtools_http_handler->Stop();
-    data_.devtools_http_handler = NULL;
+    otr_context_ = nullptr;
   }
 }
 
@@ -629,7 +695,7 @@ BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
 BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
     : BrowserContext(new BrowserContextIODataImpl(params)),
       data_(this, params),
-      otr_context_(NULL) {
+      otr_context_(nullptr) {
   io_data()->GetSharedData().user_agent_string =
       content::BuildUserAgentFromProduct(data_.product);
 
@@ -642,18 +708,30 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
           data_.devtools_ip : kDevtoolsDefaultServerIp;
 
     scoped_ptr<content::DevToolsHttpHandler::ServerSocketFactory> factory(
-        new TCPServerSocketFactory(ip, data_.devtools_port, 1));
-    data_.devtools_http_handler = content::DevToolsHttpHandler::Start(
-        factory.Pass(),
-        std::string(),
-        new DevtoolsHttpHandlerDelegate(),
-        base::FilePath());
+        new TCPServerSocketFactory(ip, data_.devtools_port));
+    data_.devtools_http_handler.reset(
+        content::DevToolsHttpHandler::Start(factory.Pass(),
+                                            std::string(),
+                                            new DevtoolsHttpHandlerDelegate(),
+                                            base::FilePath()));
   }
+
+  if (!GetPath().empty()) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::FILE,
+        FROM_HERE,
+        base::Bind(&CleanupGPUShaderCache, GetPath()));
+  }
+}
+
+scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
+    const base::FilePath& partition_path) {
+  return nullptr;
 }
 
 net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
   DCHECK(CalledOnValidThread());
-  return GetStoragePartition(this, NULL)->GetURLRequestContext();
+  return GetStoragePartition(this, nullptr)->GetURLRequestContext();
 }
 
 net::URLRequestContextGetter*
@@ -689,24 +767,24 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
   // ContentBrowserClient::GetStoragePartitionConfigForSite(), so it's a
   // bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
-  return NULL;
+  return nullptr;
 }
 
 content::DownloadManagerDelegate*
     BrowserContext::GetDownloadManagerDelegate() {
-  return NULL;
+  return nullptr;
 }
 
 content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
-  return NULL;
+  return nullptr;
 }
 
 storage::SpecialStoragePolicy* BrowserContext::GetSpecialStoragePolicy() {
-  return NULL;
+  return nullptr;
 }
 
 content::PushMessagingService* BrowserContext::GetPushMessagingService() {
-  return NULL;
+  return nullptr;
 }
 
 content::SSLHostStateDelegate* BrowserContext::GetSSLHostStateDelegate() {
@@ -765,7 +843,7 @@ BrowserContext::~BrowserContext() {
   // Schedule io_data_ to be destroyed on the IO thread
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
                                      FROM_HERE, io_data_);
-  io_data_ = NULL;
+  io_data_ = nullptr;
 }
 
 // static
@@ -834,7 +912,8 @@ bool BrowserContext::IsOffTheRecord() const {
 bool BrowserContext::IsSameContext(BrowserContext* other) const {
   DCHECK(CalledOnValidThread());
   return other->GetOriginalContext() == this ||
-         other->GetOffTheRecordContext() == this;
+         (other->HasOffTheRecordContext() &&
+          other->GetOffTheRecordContext() == this);
 }
 
 base::FilePath BrowserContext::GetPath() const {
@@ -845,6 +924,11 @@ base::FilePath BrowserContext::GetPath() const {
 base::FilePath BrowserContext::GetCachePath() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetCachePath();
+}
+
+int BrowserContext::GetMaxCacheSizeHint() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetMaxCacheSizeHint();
 }
 
 std::string BrowserContext::GetAcceptLangs() const {
@@ -936,9 +1020,11 @@ void BrowserContext::SetIsPopupBlockerEnabled(bool enabled) {
   FOR_EACH_OBSERVER(BrowserContextObserver,
                     GetOriginalContext()->observers_,
                     NotifyPopupBlockerEnabledChanged());
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOffTheRecordContext()->observers_,
-                    NotifyPopupBlockerEnabledChanged());
+  if (HasOffTheRecordContext()) {
+    FOR_EACH_OBSERVER(BrowserContextObserver,
+                      GetOffTheRecordContext()->observers_,
+                      NotifyPopupBlockerEnabledChanged());
+  }
 }
 
 bool BrowserContext::GetDevtoolsEnabled() const {

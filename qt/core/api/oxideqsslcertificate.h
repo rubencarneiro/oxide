@@ -81,7 +81,7 @@ class Q_DECL_EXPORT OxideQSslCertificate Q_DECL_FINAL : public QObject {
 
  private:
   OxideQSslCertificate(OxideQSslCertificatePrivate& dd,
-                       QObject* parent = NULL);
+                       QObject* parent = nullptr);
 
   QScopedPointer<OxideQSslCertificatePrivate> d_ptr;
 };

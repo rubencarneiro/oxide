@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,31 +28,81 @@
 #include "content/public/browser/cookie_store_factory.h"
 #include "net/base/static_cookie_policy.h"
 
+#include "qt/core/browser/oxide_qt_browser_startup.h"
 #include "qt/core/browser/oxide_qt_web_context.h"
+#include "shared/browser/oxide_browser_process_main.h"
 
 namespace oxide {
 namespace qt {
 
+namespace {
+
+bool g_default_is_application_owned;
+bool g_initialized_default = false;
+WebContextAdapter* g_default;
+
+}
+
+// static
+WebContextAdapter* WebContextAdapter::GetDefault() {
+  return g_default;
+}
+
+// static
+void WebContextAdapter::DestroyDefault() {
+  if (!g_default || g_default_is_application_owned) {
+    return;
+  }
+
+  delete adapterToQObject(g_default);
+  DCHECK(!g_default);
+}
+
 QNetworkAccessManager* WebContextAdapter::GetCustomNetworkAccessManager() {
-  return NULL;
+  return nullptr;
 }
 
 WebContextAdapter::~WebContextAdapter() {
+  if (g_default == this) {
+    g_default = nullptr;
+  }
+
   context_->Destroy();
   context_->Release();
 }
 
 // static
-WebContextAdapter* WebContextAdapter::FromWebContext(WebContext* context) {
-  if (!context) {
-    return NULL;
-  }
+WebContextAdapter* WebContextAdapter::defaultContext() {
+  return g_default;
+}
 
+// static
+WebContextAdapter* WebContextAdapter::FromWebContext(WebContext* context) {
   return context->GetAdapter();
 }
 
 void WebContextAdapter::init(const QWeakPointer<IODelegate>& io_delegate) {
+  // If we are in single process mode because it was set in the environment,
+  // allow the first application-created context to become the default
+  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
+          oxide::PROCESS_MODEL_SINGLE_PROCESS &&
+      BrowserStartup::GetInstance()->DidSelectProcessModelFromEnv() &&
+      !g_initialized_default) {
+    g_initialized_default = true;
+    g_default_is_application_owned = true;
+    g_default = this;
+  }
+
   context_->Init(io_delegate);
+}
+
+void WebContextAdapter::makeDefault() {
+  DCHECK(!g_initialized_default);
+  DCHECK(!g_default || g_default == this);
+
+  g_initialized_default = true;
+  g_default_is_application_owned = false;
+  g_default = this;
 }
 
 QString WebContextAdapter::product() const {
@@ -224,6 +274,14 @@ void WebContextAdapter::setAllowedExtraUrlSchemes(const QStringList& schemes) {
   }
 
   context_->SetAllowedExtraURLSchemes(set);
+}
+
+int WebContextAdapter::maxCacheSizeHint() const {
+  return context_->GetMaxCacheSizeHint();
+}
+
+void WebContextAdapter::setMaxCacheSizeHint(int size) {
+  context_->SetMaxCacheSizeHint(size);
 }
 
 WebContextAdapter::WebContextAdapter(QObject* q)

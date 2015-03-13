@@ -17,14 +17,17 @@
 
 #include "oxide_qt_web_view_adapter.h"
 
-#include <QSize>
+#include <limits>
 #include <QtDebug>
 
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/pickle.h"
 #include "cc/output/compositor_frame_metadata.h"
-#include "ui/gfx/size.h"
+#include "third_party/WebKit/public/platform/WebTopControlsState.h"
+#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/size.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -36,6 +39,8 @@
 #include "qt/core/browser/oxide_qt_web_view.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_content_types.h"
+#include "shared/browser/oxide_browser_process_main.h"
+#include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_web_context_adapter.h"
 #include "oxide_qt_web_frame_adapter.h"
@@ -43,12 +48,38 @@
 namespace oxide {
 namespace qt {
 
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
+
+namespace {
+
+static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
+static uint16_t STATE_SERIALIZER_VERSION = 1;
+
+blink::WebTopControlsState LocationBarModeToBlinkTopControlsState(
+    LocationBarMode mode) {
+  switch (mode) {
+    case LOCATION_BAR_MODE_AUTO:
+      return blink::WebTopControlsBoth;
+    case LOCATION_BAR_MODE_SHOWN:
+      return blink::WebTopControlsShown;
+    case LOCATION_BAR_MODE_HIDDEN:
+      return blink::WebTopControlsHidden;
+    default:
+      NOTREACHED();
+      return blink::WebTopControlsBoth;
+  }
+}
+
+}
+
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
-  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame)
+  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
+                            int location_bar_content_offset)
       : frame_(frame) {
     if (frame_.get()) {
-      size_ = QSize(frame_->size_in_pixels().width(),
+      rect_ = QRect(0, location_bar_content_offset,
+                    frame_->size_in_pixels().width(),
                     frame_->size_in_pixels().height());
     }
   }
@@ -70,8 +101,8 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     return CompositorFrameHandle::TYPE_INVALID;
   }
 
-  const QSize& GetSize() const final {
-    return size_;
+  const QRect& GetRect() const final {
+    return rect_;
   }
 
   QImage GetSoftwareFrame() final {
@@ -90,34 +121,169 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
  private:
   scoped_refptr<oxide::CompositorFrameHandle> frame_;
-  QSize size_;
+  QRect rect_;
 };
+
+void WebViewAdapter::EnsurePreferences() {
+  if (view_->GetWebPreferences()) {
+    return;
+  }
+
+  OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(p)->preferences());
+}
+
+void WebViewAdapter::RestoreState(RestoreType type, const QByteArray& state) {
+  COMPILE_ASSERT(
+      RESTORE_CURRENT_SESSION == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_CURRENT_SESSION),
+      restore_type_enums_current_doesnt_match);
+  COMPILE_ASSERT(
+      RESTORE_LAST_SESSION_EXITED_CLEANLY == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+      restore_type_enums_exited_cleanly_doesnt_match);
+  COMPILE_ASSERT(
+      RESTORE_LAST_SESSION_CRASHED == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_LAST_SESSION_CRASHED),
+      restore_type_enums_crashed_doesnt_match);
+
+  content::NavigationController::RestoreType restore_type =
+      static_cast<content::NavigationController::RestoreType>(type);
+
+#define WARN_INVALID_DATA \
+    qWarning() << "Failed to read initial state: invalid data"
+  std::vector<sessions::SerializedNavigationEntry> entries;
+  Pickle pickle(state.data(), state.size());
+  PickleIterator i(pickle);
+  std::string magic_number;
+  if (!i.ReadString(&magic_number)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  if (magic_number != STATE_SERIALIZER_MAGIC_NUMBER) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  uint16_t version;
+  if (!i.ReadUInt16(&version)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  if (version != STATE_SERIALIZER_VERSION) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  int count;
+  if (!i.ReadLength(&count)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+  entries.resize(count);
+  for (int j = 0; j < count; ++j) {
+    sessions::SerializedNavigationEntry entry;
+    if (!entry.ReadFromPickle(&i)) {
+      WARN_INVALID_DATA;
+      return;
+    }
+    entries[j] = entry;
+  }
+  int index;
+  if (!i.ReadInt(&index)) {
+    WARN_INVALID_DATA;
+    return;
+  }
+#undef WARN_INVALID_DATA
+
+  view_->SetState(restore_type, entries, index);
+}
 
 void WebViewAdapter::Initialized() {
   DCHECK(isInitialized());
 
-  OnInitialized(construct_props_->incognito,
-                construct_props_->context);
-  construct_props_.reset();
+  OxideQWebPreferences* p =
+      static_cast<WebPreferences*>(view_->GetWebPreferences())->api_handle();
+  if (!p->parent()) {
+    // This will happen for a WebView created by newViewRequested, as
+    // we clone the openers preferences before the WebView is created
+    p->setParent(adapterToQObject(this));
+  }
+
+  OnInitialized();
+}
+
+void WebViewAdapter::WebPreferencesDestroyed() {
+  OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(p)->preferences());
+
+  OnWebPreferencesReplaced();
+}
+
+void WebViewAdapter::ScheduleUpdate() {
+  compositor_frame_.reset();
+  OnScheduleUpdate();
+}
+
+void WebViewAdapter::EvictCurrentFrame() {
+  compositor_frame_.reset();
+  OnEvictCurrentFrame();
 }
 
 WebViewAdapter::WebViewAdapter(QObject* q) :
     AdapterBase(q),
-    view_(WebView::Create(this)),
-    construct_props_(new ConstructProperties()),
-    created_with_new_view_request_(false) {}
+    view_(WebView::Create(this)) {}
 
 WebViewAdapter::~WebViewAdapter() {}
 
-void WebViewAdapter::init() {
-  if (created_with_new_view_request_ || isInitialized()) {
+void WebViewAdapter::init(bool incognito,
+                          WebContextAdapter* context,
+                          OxideQNewViewRequest* new_view_request,
+                          const QByteArray& restoreState,
+                          RestoreType restoreType) {
+  DCHECK(!isInitialized());
+
+  bool script_opened = false;
+
+  if (new_view_request) {
+    OxideQNewViewRequestPrivate* rd =
+        OxideQNewViewRequestPrivate::get(new_view_request);
+    if (rd->view) {
+      qWarning() << "Cannot assign NewViewRequest to more than one WebView";
+    } else {
+      rd->view = view_->AsWeakPtr();
+      script_opened = true;
+    }
+  }
+
+  if (script_opened) {
+    // Script opened webviews get initialized via another path
     return;
   }
 
+  if (!restoreState.isEmpty()) {
+    RestoreState(restoreType, restoreState);
+  }
+
+  CHECK(context) <<
+      "No context available for WebView. If you see this when running in "
+      "single-process mode, it is possible that the default WebContext has "
+      "been deleted by the application. In single-process mode, there is only "
+      "one WebContext, and this has to live for the life of the application";
+
+  WebContext* c = WebContext::FromAdapter(context);
+
+  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
+          oxide::PROCESS_MODEL_SINGLE_PROCESS) {
+    DCHECK(!incognito);
+    DCHECK_EQ(c, WebContext::GetDefault());
+  }
+
+  EnsurePreferences();
+
   oxide::WebView::Params params;
-  params.context =
-      WebContext::FromAdapter(construct_props_->context)->GetContext();
-  params.incognito = construct_props_->incognito;
+  params.context = c->GetContext();
+  params.incognito = incognito;
 
   view_->Init(&params);
 }
@@ -143,20 +309,7 @@ bool WebViewAdapter::canGoForward() const {
 }
 
 bool WebViewAdapter::incognito() const {
-  if (construct_props_) {
-    return construct_props_->incognito;
-  }
-
   return view_->IsIncognito();  
-}
-
-void WebViewAdapter::setIncognito(bool incognito) {
-  if (!construct_props_) {
-    qWarning() << "Cannot change incognito mode after WebView is initialized";
-    return;
-  }
-
-  construct_props_->incognito = incognito;
 }
 
 bool WebViewAdapter::loading() const {
@@ -177,20 +330,20 @@ WebFrameAdapter* WebViewAdapter::rootFrame() const {
 }
 
 WebContextAdapter* WebViewAdapter::context() const {
-  if (construct_props_) {
-    return construct_props_->context;
+  WebContext* c = view_->GetContext();
+  if (!c) {
+    return nullptr;
   }
 
-  return WebContextAdapter::FromWebContext(view_->GetContext());
-}
-
-void WebViewAdapter::setContext(WebContextAdapter* context) {
-  DCHECK(construct_props_);
-  construct_props_->context = context;
+  return WebContextAdapter::FromWebContext(c);
 }
 
 void WebViewAdapter::wasResized() {
   view_->WasResized();
+}
+
+void WebViewAdapter::screenUpdated() {
+  view_->ScreenUpdated();
 }
 
 void WebViewAdapter::visibilityChanged() {
@@ -252,8 +405,8 @@ QList<ScriptMessageHandlerAdapter*>& WebViewAdapter::messageHandlers() {
   return message_handlers_;
 }
 
-bool WebViewAdapter::isInitialized() {
-  return view_->GetWebContents() != NULL;
+bool WebViewAdapter::isInitialized() const {
+  return view_->GetWebContents() != nullptr;
 }
 
 int WebViewAdapter::getNavigationEntryCount() const {
@@ -286,36 +439,44 @@ QDateTime WebViewAdapter::getNavigationEntryTimestamp(int index) const {
       view_->GetNavigationEntryTimestamp(index).ToJsTime());
 }
 
-OxideQWebPreferences* WebViewAdapter::preferences() {
-  WebPreferences* prefs =
-      static_cast<WebPreferences *>(view_->GetWebPreferences());
-  if (!prefs) {
-    OxideQWebPreferences* p = new OxideQWebPreferences(adapterToQObject(this));
-    prefs = OxideQWebPreferencesPrivate::get(p)->preferences();
-    view_->SetWebPreferences(prefs);
-  } else if (!prefs->api_handle()) {
-    OxideQWebPreferencesPrivate::Adopt(prefs, adapterToQObject(this));
+QByteArray WebViewAdapter::currentState() const {
+  std::vector<sessions::SerializedNavigationEntry> entries = view_->GetState();
+  if (entries.size() == 0) {
+    return QByteArray();
   }
+  Pickle pickle;
+  pickle.WriteString(STATE_SERIALIZER_MAGIC_NUMBER);
+  pickle.WriteUInt16(STATE_SERIALIZER_VERSION);
+  pickle.WriteInt(entries.size());
+  std::vector<sessions::SerializedNavigationEntry>::const_iterator i;
+  static const size_t max_state_size = std::numeric_limits<uint16>::max() - 1024;
+  for (i = entries.begin(); i != entries.end(); ++i) {
+    i->WriteToPickle(max_state_size, &pickle);
+  }
+  pickle.WriteInt(view_->GetNavigationCurrentEntryIndex());
+  return QByteArray(static_cast<const char*>(pickle.data()), pickle.size());
+}
 
-  return prefs->api_handle();
+OxideQWebPreferences* WebViewAdapter::preferences() {
+  EnsurePreferences();
+  return static_cast<WebPreferences*>(
+      view_->GetWebPreferences())->api_handle();
 }
 
 void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
-  OxideQWebPreferences* old = NULL;
+  OxideQWebPreferences* old = nullptr;
   if (WebPreferences* o =
       static_cast<WebPreferences *>(view_->GetWebPreferences())) {
     old = o->api_handle();
   }
- 
-  if (prefs && !prefs->parent()) { 
+
+  if (!prefs) {
+    prefs = new OxideQWebPreferences(adapterToQObject(this));
+  } else if (!prefs->parent()) {
     prefs->setParent(adapterToQObject(this));
   }
-
-  WebPreferences* p = NULL;
-  if (prefs) {
-    p = OxideQWebPreferencesPrivate::get(prefs)->preferences();
-  }
-  view_->SetWebPreferences(p);
+  view_->SetWebPreferences(
+      OxideQWebPreferencesPrivate::get(prefs)->preferences());
 
   if (!old) {
     return;
@@ -326,59 +487,37 @@ void WebViewAdapter::setPreferences(OxideQWebPreferences* prefs) {
   }
 }
 
-void WebViewAdapter::setRequest(OxideQNewViewRequest* request) {
-  if (isInitialized()) {
-    qWarning() << "Cannot assign NewViewRequest to an already constructed WebView";
-    return;
-  }
-
-  if (created_with_new_view_request_) {
-    return;
-  }
-
-  OxideQNewViewRequestPrivate* rd = OxideQNewViewRequestPrivate::get(request);
-  if (rd->view) {
-    qWarning() << "Cannot assign NewViewRequest to more than one WebView";
-    return;
-  }
-
-  rd->view = view_->AsWeakPtr();
-  created_with_new_view_request_ = true;
-}
-
 void WebViewAdapter::updateWebPreferences() {
   view_->UpdateWebPreferences();
 }
 
-float WebViewAdapter::compositorFrameDeviceScaleFactor() const {
-  return view_->compositor_frame_metadata().device_scale_factor;
+QPoint WebViewAdapter::compositorFrameScrollOffsetPix() {
+  gfx::Point offset = view_->GetCompositorFrameScrollOffsetPix();
+  return QPoint(offset.x(), offset.y());
 }
 
-float WebViewAdapter::compositorFramePageScaleFactor() const {
-  return view_->compositor_frame_metadata().page_scale_factor;
+QSize WebViewAdapter::compositorFrameContentSizePix() {
+  gfx::Size size = view_->GetCompositorFrameContentSizePix();
+  return QSize(size.width(), size.height());
 }
 
-QPointF WebViewAdapter::compositorFrameScrollOffset() const {
-  const gfx::Vector2dF& offset =
-      view_->compositor_frame_metadata().root_scroll_offset;
-  return QPointF(offset.x(), offset.y());
-}
-
-QSizeF WebViewAdapter::compositorFrameLayerSize() const {
-  const gfx::SizeF& size = view_->compositor_frame_metadata().root_layer_size;
-  return QSizeF(size.width(), size.height());
-}
-
-QSizeF WebViewAdapter::compositorFrameViewportSize() const {
-  const gfx::SizeF& size =
-      view_->compositor_frame_metadata().scrollable_viewport_size;
-  return QSizeF(size.width(), size.height());
+QSize WebViewAdapter::compositorFrameViewportSizePix() {
+  gfx::Size size = view_->GetCompositorFrameViewportSizePix();
+  return QSize(size.width(), size.height());
 }
 
 QSharedPointer<CompositorFrameHandle> WebViewAdapter::compositorFrameHandle() {
-  QSharedPointer<CompositorFrameHandle> handle(
-      new CompositorFrameHandleImpl(view_->GetCompositorFrameHandle()));
-  return handle;
+  if (!compositor_frame_) {
+    const cc::CompositorFrameMetadata& metadata =
+        view_->compositor_frame_metadata();
+    compositor_frame_ =
+        QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
+          view_->GetCompositorFrameHandle(),
+          metadata.device_scale_factor *
+            metadata.location_bar_content_translation.y()));
+  }
+
+  return compositor_frame_;
 }
 
 void WebViewAdapter::didCommitCompositorFrame() {
@@ -416,6 +555,40 @@ ContentTypeFlags WebViewAdapter::blockedContent() const {
 
 void WebViewAdapter::prepareToClose() {
   view_->PrepareToClose();
+}
+
+int WebViewAdapter::locationBarHeight() {
+  return view_->GetLocationBarHeightPix();
+}
+
+void WebViewAdapter::setLocationBarHeight(int height) {
+  view_->SetLocationBarHeightPix(height);
+}
+
+int WebViewAdapter::locationBarOffsetPix() {
+  return view_->GetLocationBarOffsetPix();
+}
+
+int WebViewAdapter::locationBarContentOffsetPix() {
+  return view_->GetLocationBarContentOffsetPix();
+}
+
+LocationBarMode WebViewAdapter::locationBarMode() const {
+  switch (view_->location_bar_constraints()) {
+    case blink::WebTopControlsShown:
+      return LOCATION_BAR_MODE_SHOWN;
+    case blink::WebTopControlsHidden:
+      return LOCATION_BAR_MODE_HIDDEN;
+    case blink::WebTopControlsBoth:
+      return LOCATION_BAR_MODE_AUTO;
+    default:
+      NOTREACHED();
+      return LOCATION_BAR_MODE_AUTO;
+  }
+}
+
+void WebViewAdapter::setLocationBarMode(LocationBarMode mode) {
+  view_->SetLocationBarConstraints(LocationBarModeToBlinkTopControlsState(mode));
 }
 
 } // namespace qt

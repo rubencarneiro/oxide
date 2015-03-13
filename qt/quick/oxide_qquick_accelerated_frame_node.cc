@@ -20,6 +20,7 @@
 #include <QPoint>
 #include <QQuickWindow>
 #include <QRect>
+#include <QSize>
 #include <QSGTexture>
 
 #include "qt/core/glue/oxide_qt_web_view_adapter.h"
@@ -39,11 +40,11 @@ void AcceleratedFrameNode::updateNode(
     QSharedPointer<oxide::qt::CompositorFrameHandle> handle) {
   handle_ = handle;
 
-  setRect(QRect(QPoint(0, 0), handle_->GetSize()));
+  setRect(handle_->GetRect());
 
   texture_.reset(view_->window()->createTextureFromId(
       handle_->GetAcceleratedFrame().texture_id(),
-      handle_->GetSize(),
+      handle_->GetRect().size(),
       QQuickWindow::TextureHasAlphaChannel));
   setTexture(texture_.data());
 }

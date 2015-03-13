@@ -20,26 +20,12 @@
       'target_name': '<(oxide_core_name)',
       'type': 'shared_library',
       'product_extension': 'so.<(oxide_core_so_version)',
-      'dependencies': [
-        'OxideQtCore_private',
-        'OxideQtCore_public',
-      ],
-      'conditions': [
-        ['component=="shared_library"', {
-          'ldflags': [
-            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'OxideQtCore_private',
-      'type': 'static_library',
       'defines': [
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
       ],
       'dependencies': [
         '../build/system.gyp:Qt5Core',
+        '../build/system.gyp:Qt5Core-private',
         '../build/system.gyp:Qt5Gui',
         '../build/system.gyp:Qt5Gui-private',
         '../build/system.gyp:Qt5Positioning',
@@ -54,9 +40,11 @@
         '<(DEPTH)/ui/base/ui_base.gyp:ui_base',
         '<(DEPTH)/ui/events/events.gyp:events',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/surface/surface.gyp:surface',
-        '<(DEPTH)/url/url.gyp:url_lib'
+        '<(DEPTH)/url/url.gyp:url_lib',
+        'OxideQtCore_public',
       ],
       'variables': {
         'chromium_code': 1,
@@ -67,44 +55,33 @@
         '<(DEPTH)'
       ],
       'sources': [
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
         'api/internal/oxideqwebpreferences_p.cc',
-        'app/oxide_qt_content_main_delegate.cc',
-        'app/oxide_qt_content_main_delegate.h',
         'app/oxide_qt_main.cc',
         'app/oxide_qt_main.h',
-        'base/oxide_qt_event_utils.cc',
-        'base/oxide_qt_event_utils.h',
-        'base/oxide_qt_screen_utils.cc',
-        'base/oxide_qt_screen_utils.h',
-        'base/oxide_qt_skutils.cc',
-        'base/oxide_qt_skutils.h',
-        'browser/oxide_qt_browser_main_parts_delegate.cc',
-        'browser/oxide_qt_browser_main_parts_delegate.h',
+        'app/oxide_qt_platform_delegate.cc',
+        'app/oxide_qt_platform_delegate.h',
+        'browser/oxide_qt_browser_platform_integration.cc',
+        'browser/oxide_qt_browser_platform_integration.h',
+        'browser/oxide_qt_browser_startup.cc',
+        'browser/oxide_qt_browser_startup.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
-        'browser/oxide_qt_content_browser_client.cc',
-        'browser/oxide_qt_content_browser_client.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
-        'browser/oxide_qt_io_thread_delegate.cc',
-        'browser/oxide_qt_io_thread_delegate.h',
         'browser/oxide_qt_javascript_dialog.cc',
         'browser/oxide_qt_javascript_dialog.h',
         'browser/oxide_qt_location_provider.cc',
         'browser/oxide_qt_location_provider.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
-        'browser/oxide_qt_platform_integration.cc',
-        'browser/oxide_qt_platform_integration.h',
         'browser/oxide_qt_script_message.cc',
         'browser/oxide_qt_script_message.h',
         'browser/oxide_qt_script_message_handler.cc',
         'browser/oxide_qt_script_message_handler.h',
         'browser/oxide_qt_script_message_request.cc',
         'browser/oxide_qt_script_message_request.h',
-        'browser/oxide_qt_shared_gl_context.cc',
-        'browser/oxide_qt_shared_gl_context.h',
         'browser/oxide_qt_url_request_delegated_job.cc',
         'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_user_script.cc',
@@ -119,6 +96,14 @@
         'browser/oxide_qt_web_preferences.h',
         'browser/oxide_qt_web_view.cc',
         'browser/oxide_qt_web_view.h',
+        'common/oxide_qt_event_utils.cc',
+        'common/oxide_qt_event_utils.h',
+        'common/oxide_qt_screen_utils.cc',
+        'common/oxide_qt_screen_utils.h',
+        'common/oxide_qt_skutils.cc',
+        'common/oxide_qt_skutils.h',
+        'gpu/oxide_qt_gl_context_adopted.cc',
+        'gpu/oxide_qt_gl_context_adopted.h',
       ],
       'actions': [
         {
@@ -132,11 +117,23 @@
           'includes': [ 'moc.gypi' ]
         },
         {
+          'action_name': 'moc_oxide_qt_browser_platform_integration.cc',
+          'moc_input': 'browser/oxide_qt_browser_platform_integration.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
           'action_name': 'moc_oxide_qt_web_view.cc',
           'moc_input': 'browser/oxide_qt_web_view.h',
           'includes': [ 'moc.gypi' ]
         },
-      ]
+      ],
+      'conditions': [
+        ['component=="shared_library"', {
+          'ldflags': [
+            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'OxideQtCore_public',
@@ -155,6 +152,7 @@
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
         '<(DEPTH)/url/url.gyp:url_lib'
       ],
       'variables': {

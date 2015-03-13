@@ -18,7 +18,7 @@
 
 cmake_policy(VERSION 2.6.0)
 
-foreach(v STAGE_DIR OUTPUT_DIR FILES PROGRAMS DIRECTORIES RUN_QMLAPP_IN RENDERER_PATH)
+foreach(v STAGE_DIR OUTPUT_DIR FILES PROGRAMS DIRECTORIES RUN_QMLAPP_IN RENDERER_PATH SUBPROCESS_DIR)
   if(NOT DEFINED ${v})
     message(FATAL_ERROR "${v} must be defined")
   endif()
@@ -54,11 +54,11 @@ foreach(d ${DIRECTORIES})
   endforeach()
 endforeach()
 
-set(CHROMIUM_LIB_DIR "$(dirname $(readlink -f $0))")
+set(CHROMIUM_LIB_DIR "$(dirname $(readlink -f $0))/${SUBPROCESS_DIR}")
 set(LIB_OUTPUT_DIR "$(dirname $(readlink -f $0))")
-set(CHROMIUM_PRODUCT_DIR "$(dirname $(readlink -f $0))")
+set(CHROMIUM_PRODUCT_DIR "$(dirname $(readlink -f $0))/${SUBPROCESS_DIR}")
 set(OXIDE_RENDERER_NAME ${RENDERER_PATH})
-set(QMLPLUGIN_OUTPUT_DIR "$(dirname $(readlink -f $0))")
+set(QMLPLUGIN_OUTPUT_DIR "$(dirname $(readlink -f $0))/qml")
 
 configure_file(${RUN_QMLAPP_IN} ${STAGE_DIR}/.tmp/run_qmlapp.sh IMMEDIATE @ONLY)
 file(INSTALL ${STAGE_DIR}/.tmp/run_qmlapp.sh DESTINATION ${STAGE_DIR}

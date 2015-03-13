@@ -26,6 +26,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/common/oxide_qt_event_utils.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
@@ -69,6 +70,9 @@ class WebView final : public QObject,
 
   WebContext* GetContext() const;
 
+  void FrameAdded(oxide::WebFrame* frame);
+  void FrameRemoved(oxide::WebFrame* frame);
+
  private Q_SLOTS:
   void OnInputPanelVisibilityChanged();
 
@@ -97,9 +101,6 @@ class WebView final : public QObject,
       bool* did_suppress_message) final;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() final;
 
-  void FrameAdded(oxide::WebFrame* frame) final;
-  void FrameRemoved(oxide::WebFrame* frame) final;
-
   bool CanCreateWindows() const final;
 
   size_t GetScriptMessageHandlerCount() const final;
@@ -114,9 +115,11 @@ class WebView final : public QObject,
   void OnLoadingChanged() final;
   void OnLoadProgressChanged(double progress) final;
 
-  void OnLoadStarted(const GURL& validated_url,
-                     bool is_error_frame) final;
-  void OnLoadCommitted(const GURL& url) final;
+  void OnLoadStarted(const GURL& validated_url) final;
+  void OnLoadRedirected(const GURL& url,
+                        const GURL& original_url) final;
+  void OnLoadCommitted(const GURL& url,
+                       bool is_error_page) final;
   void OnLoadStopped(const GURL& validated_url) final;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,
@@ -137,8 +140,6 @@ class WebView final : public QObject,
   void OnWebPreferencesDestroyed() final;
 
   void OnRequestGeolocationPermission(
-      const GURL& origin,
-      const GURL& embedder,
       scoped_ptr<oxide::SimplePermissionRequest> request) final;
 
   void OnUnhandledKeyboardEvent(
@@ -153,14 +154,11 @@ class WebView final : public QObject,
 			   const std::string& cookies,
 			   const std::string& referrer) final;
 
-  void OnLoadRedirected(const GURL& url,
-                        const GURL& original_url) final;
-
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) final;
 
-  oxide::WebFrame* CreateWebFrame(content::FrameTreeNode* node) final;
+  oxide::WebFrame* CreateWebFrame(content::RenderFrameHost* rfh) final;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) final;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
@@ -180,14 +178,7 @@ class WebView final : public QObject,
   void OnUpdateCursor(const content::WebCursor& cursor) final;
 
   void OnSecurityStatusChanged(const oxide::SecurityStatus& old) final;
-  bool OnCertificateError(
-      bool is_main_frame,
-      oxide::CertError cert_error,
-      const scoped_refptr<net::X509Certificate>& cert,
-      const GURL& request_url,
-      content::ResourceType resource_type,
-      bool strict_enforcement,
-      scoped_ptr<oxide::SimplePermissionRequest> request) final;
+  void OnCertificateError(scoped_ptr<oxide::CertificateError> error) final;
   void OnContentBlocked() final;
 
   void OnPrepareToCloseResponse(bool proceed) final;
@@ -198,6 +189,8 @@ class WebView final : public QObject,
   bool has_input_method_state_;
 
   scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
+
+  UITouchEventFactory touch_event_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

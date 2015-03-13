@@ -29,14 +29,14 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(SecurityLevel securityLevel READ securityLevel NOTIFY securityLevelChanged)
-  Q_PROPERTY(ContentStatus contentStatus READ contentStatus NOTIFY contentStatusChanged)
-  Q_PROPERTY(CertStatus certStatus READ certStatus NOTIFY certStatusChanged)
+  Q_PROPERTY(ContentStatusFlags contentStatus READ contentStatus NOTIFY contentStatusChanged)
+  Q_PROPERTY(CertStatusFlags certStatus READ certStatus NOTIFY certStatusChanged)
 
   Q_PROPERTY(OxideQSslCertificate* certificate READ certificate NOTIFY certificateChanged)
 
   Q_ENUMS(SecurityLevel)
-  Q_FLAGS(ContentStatus)
-  Q_FLAGS(CertStatus)
+  Q_FLAGS(ContentStatusFlags)
+  Q_FLAGS(CertStatusFlags)
  
   Q_DECLARE_PRIVATE(OxideQSecurityStatus)
   Q_DISABLE_COPY(OxideQSecurityStatus)
@@ -51,14 +51,14 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
     SecurityLevelError
   };
 
-  enum ContentStatusFlags {
+  enum ContentStatus {
     ContentStatusNormal = 0,
     ContentStatusDisplayedInsecure = 1 << 0,
     ContentStatusRanInsecure = 1 << 1
   };
-  Q_DECLARE_FLAGS(ContentStatus, ContentStatusFlags)
+  Q_DECLARE_FLAGS(ContentStatusFlags, ContentStatus)
 
-  enum CertStatusFlags {
+  enum CertStatus {
     CertStatusOk = 0,
     CertStatusBadIdentity = 1 << 0,
     CertStatusExpired = 1 << 1,
@@ -70,13 +70,13 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
     CertStatusInsecure = 1 << 7,
     CertStatusGenericError = 1 << 8
   };
-  Q_DECLARE_FLAGS(CertStatus, CertStatusFlags)
+  Q_DECLARE_FLAGS(CertStatusFlags, CertStatus)
 
   ~OxideQSecurityStatus();
 
   SecurityLevel securityLevel() const;
-  ContentStatus contentStatus() const;
-  CertStatus certStatus() const;
+  ContentStatusFlags contentStatus() const;
+  CertStatusFlags certStatus() const;
 
   OxideQSslCertificate* certificate() const;
 
@@ -88,7 +88,7 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
 
  private:
   OxideQSecurityStatus(OxideQSecurityStatusPrivate& dd,
-                       QObject* parent = NULL);
+                       QObject* parent = nullptr);
 
   QScopedPointer<OxideQSecurityStatusPrivate> d_ptr;
 };

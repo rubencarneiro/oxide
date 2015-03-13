@@ -30,14 +30,13 @@
         'main.cc'
       ],
       'variables': {
-        'chromium_code': 1
+        'chromium_code': 1,
       },
       'conditions': [
         ['enable_tcmalloc==1', {
           'defines': ['ENABLE_TCMALLOC'],
           'dependencies': [
-            '<(DEPTH)/base/allocator/allocator.gyp:allocator',
-            '<(DEPTH)/base/base.gyp:base',
+            '../../shared/allocator.gyp:allocator',
           ],
         }],
         ['component=="shared_library"', {

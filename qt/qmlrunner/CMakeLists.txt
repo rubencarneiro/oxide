@@ -20,14 +20,11 @@ set(OXIDE_QMLRUNNER_SRCS main.cc)
 
 add_executable(${OXIDE_QMLRUNNER} ${OXIDE_QMLRUNNER_SRCS})
 qt5_use_modules(${OXIDE_QMLRUNNER} Core Gui Qml Quick)
-target_include_directories(${OXIDE_QMLRUNNER} PRIVATE ${Qt5Core_PRIVATE_INCLUDE_DIRS})
-if(OXIDE_ENABLE_COMPOSITING)
-  target_compile_definitions(${OXIDE_QMLRUNNER} PRIVATE -DENABLE_COMPOSITING)
-  target_include_directories(
-      ${OXIDE_QMLRUNNER} PRIVATE
-      ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-      ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-endif()
+target_include_directories(
+    ${OXIDE_QMLRUNNER} PRIVATE
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
 set_target_properties(
     ${OXIDE_QMLRUNNER} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR})

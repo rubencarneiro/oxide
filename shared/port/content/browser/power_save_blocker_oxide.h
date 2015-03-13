@@ -37,6 +37,7 @@ class PowerSaveBlockerOxideDelegate
 
 typedef PowerSaveBlockerOxideDelegate*
 (PowerSaveBlockerOxideDelegateFactory)(PowerSaveBlocker::PowerSaveBlockerType,
+                                       PowerSaveBlocker::Reason,
                                        const std::string&);
 
 CONTENT_EXPORT void SetPowerSaveBlockerOxideDelegateFactory(

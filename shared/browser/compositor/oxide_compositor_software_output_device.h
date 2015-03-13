@@ -26,8 +26,8 @@
 #include "base/memory/linked_ptr.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/output/software_output_device.h"
-#include "ui/gfx/rect.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 namespace cc {
 class SharedBitmap;
@@ -63,7 +63,7 @@ class CompositorSoftwareOutputDevice final : public cc::SoftwareOutputDevice,
 
   unsigned next_frame_id_;
 
-  OutputFrameData current_frame_;
+  OutputFrameData backing_frame_;
   OutputFrameData previous_frame_;
   std::deque<OutputFrameData> pending_frames_;
   std::queue<OutputFrameData> returned_frames_;

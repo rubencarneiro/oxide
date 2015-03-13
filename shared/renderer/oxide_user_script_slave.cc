@@ -21,6 +21,7 @@
 #include <string>
 
 #include "base/command_line.h"
+#include "base/logging.h"
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/renderer/render_thread.h"
@@ -46,9 +47,19 @@
 namespace oxide {
 
 namespace {
+
+UserScriptSlave* g_instance;
+
 const char kIsolatedWorldCSP[] = "script-src 'self'";
 const char kUserScriptHead[] = "(function (unsafeWindow) {\n";
 const char kUserScriptTail[] = "\n})(window);";
+
+}
+
+UserScriptSlave::~UserScriptSlave() {
+  CHECK(render_process_shutting_down_);
+  DCHECK_EQ(g_instance, this);
+  g_instance = nullptr;
 }
 
 // static
@@ -80,50 +91,29 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
   PickleIterator iter(pickle);
 
   uint64 num_scripts = 0;
-  CHECK(pickle.ReadUInt64(&iter, &num_scripts));
+  CHECK(iter.ReadUInt64(&num_scripts));
   for (; num_scripts > 0; --num_scripts) {
     linked_ptr<UserScript> script(new UserScript());
     user_scripts_.push_back(script);
 
-    script->Unpickle(pickle, &iter);
+    script->Unpickle(&iter);
   }
 }
 
-UserScriptSlave::UserScriptSlave() {
-  content::RenderThread::Get()->AddObserver(this);
-}
-
-UserScriptSlave::~UserScriptSlave() {}
-
-bool UserScriptSlave::OnControlMessageReceived(const IPC::Message& message) {
-  bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(UserScriptSlave, message)
-    IPC_MESSAGE_HANDLER(OxideMsg_UpdateUserScripts, OnUpdateUserScripts)
-    IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP()
-
-  return handled;
-}
-
-void UserScriptSlave::OnRenderProcessShutdown() {
-  content::RenderThread::Get()->RemoveObserver(this);
-}
-
 void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
-      blink::WebLocalFrame* frame,
-      const blink::WebScriptSource& script_source) {
+    blink::WebLocalFrame* frame,
+    const blink::WebScriptSource& script_source) {
 
   ScriptMessageDispatcherRenderer * dispatcher_renderer =
       ScriptMessageDispatcherRenderer::FromWebFrame(frame);
-  DCHECK(dispatcher_renderer != NULL);
+  DCHECK(dispatcher_renderer);
 
   linked_ptr<ScriptMessageManager> message_manager =
       dispatcher_renderer->ScriptMessageManagerForWorldId(kMainWorldId);
-  DCHECK(message_manager != NULL);
   if (!message_manager.get()) {
     LOG(ERROR) << "Could not get a proper message manager for frame: "
                << frame
-	       << " while trying to inject script in main world";
+               << " while trying to inject script in main world";
     return;
   }
 
@@ -177,6 +167,36 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
                << *v8::String::Utf8Value(try_catch.Message()->Get());
     return;
   }
+}
+
+bool UserScriptSlave::OnControlMessageReceived(const IPC::Message& message) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(UserScriptSlave, message)
+    IPC_MESSAGE_HANDLER(OxideMsg_UpdateUserScripts, OnUpdateUserScripts)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
+
+void UserScriptSlave::OnRenderProcessShutdown() {
+  content::RenderThread::Get()->RemoveObserver(this);
+  render_process_shutting_down_ = true;
+  delete this;
+}
+
+// static
+UserScriptSlave* UserScriptSlave::GetInstance() {
+  DCHECK(g_instance);
+  return g_instance;
+}
+
+UserScriptSlave::UserScriptSlave()
+    : render_process_shutting_down_(false) {
+  CHECK(!g_instance);
+  g_instance = this;
+
+  content::RenderThread::Get()->AddObserver(this);
 }
 
 void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
@@ -239,6 +259,5 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
     frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
   }
 }
-
 
 } // namespace oxide

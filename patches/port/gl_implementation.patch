@@ -6,7 +6,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -106,17 +106,17 @@
+@@ -169,17 +169,17 @@
                    '<!@(<(pkg-config) --libs-only-l gtk+-unix-print-2.0)',
                  ],
                },
@@ -28,7 +28,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -305,16 +305,18 @@
+@@ -300,16 +300,18 @@
          'win/dpi.h',
          'win/hwnd_util.cc',
          'win/hwnd_util.h',
@@ -47,8 +47,8 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['OS=="ios"', {
            'dependencies': [
              '<(DEPTH)/ui/ios/ui_ios.gyp:ui_ios',
-@@ -392,17 +394,17 @@
-           'sources!': [
+@@ -388,17 +390,17 @@
+             'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
              'render_text_harfbuzz.cc',
@@ -57,20 +57,29 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
            ],
          }],
 -        ['use_x11==1', {
-+        ['OS == "linux"', {
++        ['OS=="linux"', {
            'dependencies': [
              '../../build/linux/system.gyp:x11',
              'x/gfx_x11.gyp:gfx_x11',
            ],
          }],
-         ['use_pango==1', {
+         ['use_cairo==1', {
            'dependencies': [
              '<(DEPTH)/build/linux/system.gyp:pangocairo',
 diff --git a/ui/gfx/x/gfx_x11.gyp b/ui/gfx/x/gfx_x11.gyp
 --- a/ui/gfx/x/gfx_x11.gyp
 +++ b/ui/gfx/x/gfx_x11.gyp
-@@ -17,16 +17,19 @@
-       'type': '<(component)',
+@@ -9,24 +9,27 @@
+                    # that the exclusion rules in filename_rules.gypi do not
+                    # exclude the x11* files.
+   },
+ 
+   'targets': [
+     {
+       # GN version: //ui/gfx/x
+       'target_name': 'gfx_x11',
+-      'type': '<(component)',
++      'type': 'static_library',
        'dependencies': [
          '../../../base/base.gyp:base',
          '../../../build/linux/system.gyp:x11',
@@ -122,57 +131,44 @@ diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
-@@ -26,16 +26,17 @@
-       },
+@@ -22,16 +22,17 @@
+         '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
+       ],
        'defines': [
          'GL_IMPLEMENTATION',
        ],
        'include_dirs': [
          '<(DEPTH)/third_party/swiftshader/include',
          '<(DEPTH)/third_party/khronos',
-         '<(gl_binding_output_dir)',
 +        '<(DEPTH)/../../..',
        ],
-       'direct_dependent_settings': {
-         'include_dirs': [
-           '<(gl_binding_output_dir)',
-         ],
-       },
        'export_dependent_settings': [
          '<(DEPTH)/third_party/mesa/mesa.gyp:mesa_headers',
-@@ -50,26 +51,26 @@
-         'android/surface_texture_listener.cc',
-         'android/surface_texture_listener.h',
-         'gl_bindings.h',
+       ],
+       'sources': [
+         'android/gl_jni_registrar.cc',
+         'android/gl_jni_registrar.h',
+         'android/scoped_java_surface.cc',
+@@ -49,17 +50,17 @@
          'gl_bindings_skia_in_process.cc',
          'gl_bindings_skia_in_process.h',
          'gl_context.cc',
          'gl_context.h',
          'gl_context_android.cc',
--        'gl_context_mac.mm',
--        'gl_context_ozone.cc',
-+        #'gl_context_mac.mm',
-+        #'gl_context_ozone.cc',
+         'gl_context_mac.mm',
          'gl_context_osmesa.cc',
          'gl_context_osmesa.h',
+-        'gl_context_ozone.cc',
++        #'gl_context_ozone.cc',
          'gl_context_stub.cc',
          'gl_context_stub.h',
          'gl_context_stub_with_extensions.cc',
          'gl_context_stub_with_extensions.h',
--        'gl_context_win.cc',
--        'gl_context_x11.cc',
-+        #'gl_context_win.cc',
-+        #'gl_context_x11.cc',
-         'gl_export.h',
-         'gl_fence.cc',
-         'gl_fence.h',
-         'gl_fence_arb.cc',
-         'gl_fence_arb.h',
-         'gl_fence_nv.cc',
-         'gl_fence_nv.h',
-         'gl_gl_api_implementation.cc',
-@@ -81,53 +82,58 @@
-         'gl_image_ref_counted_memory.h',
+         'gl_context_win.cc',
+         'gl_context_x11.cc',
+         'gl_enums.cc',
+         'gl_enums.h',
+@@ -81,32 +82,32 @@
          'gl_image_shared_memory.cc',
          'gl_image_shared_memory.h',
          'gl_image_stub.cc',
@@ -180,14 +176,11 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_implementation.cc',
          'gl_implementation.h',
          'gl_implementation_android.cc',
+         'gl_implementation_mac.cc',
 -        'gl_implementation_ozone.cc',
--        'gl_implementation_mac.cc',
--        'gl_implementation_win.cc',
--        'gl_implementation_x11.cc',
 +        #'gl_implementation_ozone.cc',
-+        #'gl_implementation_mac.cc',
-+        #'gl_implementation_win.cc',
-+        #'gl_implementation_x11.cc',
+         'gl_implementation_win.cc',
+         'gl_implementation_x11.cc',
          'gl_osmesa_api_implementation.cc',
          'gl_osmesa_api_implementation.h',
          'gl_share_group.cc',
@@ -197,48 +190,40 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_surface.cc',
          'gl_surface.h',
          'gl_surface_android.cc',
--        'gl_surface_mac.cc',
-+        #'gl_surface_mac.cc',
-         'gl_surface_stub.cc',
-         'gl_surface_stub.h',
--        'gl_surface_win.cc',
--        'gl_surface_x11.cc',
-+        #'gl_surface_win.cc',
-+        #'gl_surface_x11.cc',
+         'gl_surface_mac.cc',
          'gl_surface_osmesa.cc',
          'gl_surface_osmesa.h',
 -        'gl_surface_ozone.cc',
 +        #'gl_surface_ozone.cc',
+         'gl_surface_stub.cc',
+         'gl_surface_stub.h',
+         'gl_surface_win.cc',
+         'gl_surface_x11.cc',
          'gl_switches.cc',
          'gl_switches.h',
          'gl_version_info.cc',
          'gl_version_info.h',
-         'gpu_switching_manager.cc',
-         'gpu_switching_manager.h',
+@@ -116,16 +117,19 @@
+         'gpu_timing.cc',
+         'gpu_timing.h',
          'scoped_binders.cc',
          'scoped_binders.h',
          'scoped_make_current.cc',
          'scoped_make_current.h',
          'sync_control_vsync_provider.cc',
          'sync_control_vsync_provider.h',
-         '<(gl_binding_output_dir)/gl_bindings_autogen_gl.cc',
-         '<(gl_binding_output_dir)/gl_bindings_autogen_gl.h',
-         '<(gl_binding_output_dir)/gl_bindings_autogen_osmesa.cc',
-         '<(gl_binding_output_dir)/gl_bindings_autogen_osmesa.h',
 +        '<(DEPTH)/../../../shared/port/gl/gl_context_oxide_linux.cc',
 +        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.cc',
-+        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.h',
-+        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide.h',
 +        '<(DEPTH)/../../../shared/port/gl/gl_surface_oxide_linux.cc',
        ],
-       # hard_dependency is necessary for this target because it has actions
-       # that generate header files included by dependent targets. The header
-       # files must be generated before the dependents are compiled. The usual
-       # semantics are to allow the two targets to build concurrently.
-       'hard_dependency': 1,
-       'actions': [
-         {
-@@ -198,24 +204,24 @@
+       'conditions': [
+         ['OS in ("win", "android", "linux")', {
+           'sources': [
+             'egl_util.cc',
+             'egl_util.h',
+             'gl_bindings_autogen_egl.cc',
+             'gl_bindings_autogen_egl.h',
+@@ -151,28 +155,28 @@
            ],
          }],
          ['OS=="linux"', {
@@ -250,8 +235,12 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 -        ['use_x11 == 1', {
 +        ['OS=="linux"', {
            'sources': [
+             'gl_bindings_autogen_glx.cc',
+             'gl_bindings_autogen_glx.h',
              'gl_context_glx.cc',
              'gl_context_glx.h',
+             'gl_egl_api_implementation.cc',
+             'gl_egl_api_implementation.h',
              'gl_glx_api_implementation.cc',
              'gl_glx_api_implementation.h',
 -            'gl_image_glx.cc',
@@ -260,16 +249,57 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 +            #'gl_image_glx.h',
              'gl_surface_glx.cc',
              'gl_surface_glx.h',
-             'gl_egl_api_implementation.cc',
-             'gl_egl_api_implementation.h',
-             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.cc',
-             '<(gl_binding_output_dir)/gl_bindings_autogen_glx.h',
            ],
            'all_dependent_settings': {
+             'defines': [
+               'GL_GLEXT_PROTOTYPES',
+             ],
+           },
+diff --git a/ui/gl/gl_bindings.cc b/ui/gl/gl_bindings.cc
+--- a/ui/gl/gl_bindings.cc
++++ b/ui/gl/gl_bindings.cc
+@@ -3,17 +3,17 @@
+ // found in the LICENSE file.
+ 
+ #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
+ #include <EGL/egl.h>
+ #endif
+ 
+ #include "ui/gl/gl_bindings.h"
+ 
+-#if defined(USE_X11)
++#if defined(OS_LINUX)
+ #include "ui/gfx/x/x11_types.h"
+ #endif
+ 
+ #if defined(OS_WIN)
+ #include "ui/gl/gl_surface_wgl.h"
+ #endif
+ 
+ #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
+@@ -51,17 +51,17 @@ std::string DriverEGL::GetPlatformExtens
+   DCHECK(g_driver_egl.fn.eglInitializeFn);
+   g_driver_egl.fn.eglInitializeFn(display, NULL, NULL);
+   DCHECK(g_driver_egl.fn.eglQueryStringFn);
+   const char* str = g_driver_egl.fn.eglQueryStringFn(display, EGL_EXTENSIONS);
+   return str ? std::string(str) : "";
+ }
+ #endif
+ 
+-#if defined(USE_X11)
++#if defined(OS_LINUX)
+ std::string DriverGLX::GetPlatformExtensions() {
+   DCHECK(g_driver_glx.fn.glXQueryExtensionsStringFn);
+   const char* str =
+       g_driver_glx.fn.glXQueryExtensionsStringFn(gfx::GetXDisplay(), 0);
+   return str ? std::string(str) : "";
+ }
+ #endif
+ 
 diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 --- a/ui/gl/gl_bindings.h
 +++ b/ui/gl/gl_bindings.h
-@@ -20,17 +20,17 @@
+@@ -22,17 +22,17 @@
  #include "build/build_config.h"
  #include "ui/gl/gl_export.h"
  
@@ -288,7 +318,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -260,16 +260,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -314,16 +314,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -308,12 +338,12 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -323,17 +326,17 @@ struct GL_EXPORT DriverEGL {
-   void ClearBindings();
- 
-   ProcsEGL fn;
+@@ -383,17 +386,17 @@ struct GL_EXPORT DriverEGL {
    ProcsEGL debug_fn;
    ExtensionsEGL ext;
+ 
+  private:
+   static std::string GetPlatformExtensions();
  };
  #endif
  
@@ -321,13 +351,13 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 +#if defined(OS_LINUX)
  struct GL_EXPORT DriverGLX {
    void InitializeStaticBindings();
-   void InitializeDynamicBindings(GLContext* context);
    void InitializeDebugBindings();
    void ClearBindings();
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -363,16 +366,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+   ExtensionsGLX ext;
+@@ -425,16 +428,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -419,7 +449,7 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
 @@ -43,16 +43,17 @@ class GL_EXPORT GLSurfaceGLX : public GL
  
   protected:
-   virtual ~GLSurfaceGLX();
+   ~GLSurfaceGLX() override;
  
   private:
    DISALLOW_COPY_AND_ASSIGN(GLSurfaceGLX);
@@ -433,7 +463,7 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
    explicit NativeViewGLSurfaceGLX(gfx::AcceleratedWidget window);
  
    // Implement GLSurfaceGLX.
-   virtual bool Initialize() override;
+   bool Initialize() override;
 @@ -86,16 +87,17 @@ class GL_EXPORT NativeViewGLSurfaceGLX :
  
    void* config_;
@@ -451,4 +481,4 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
    explicit PbufferGLSurfaceGLX(const gfx::Size& size);
  
    // Implement GLSurfaceGLX.
-   virtual bool Initialize() override;
+   bool Initialize() override;

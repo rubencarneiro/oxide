@@ -18,75 +18,14 @@
 #include "oxide_form_factor.h"
 
 #include <algorithm>
-#include <stdlib.h>
 
-#include "base/files/file_path.h"
 #include "base/logging.h"
-#include "base/scoped_native_library.h"
-#include "base/strings/string_util.h"
-#include "third_party/khronos/EGL/egl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
-#include "oxide_browser_process_main.h"
+#include "oxide_android_properties.h"
+#include "oxide_browser_platform_integration.h"
 
 namespace oxide {
-
-namespace {
-
-bool IsUbuntuPhoneOrTablet() {
-  if (getenv("DISPLAY")) {
-    // Running on X. Bail early because this code seems to cause other
-    // problems (see https://launchpad.net/bugs/1327319)
-    return false;
-  }
-
-  base::ScopedNativeLibrary egl(
-      base::LoadNativeLibrary(base::FilePath("libEGL.so.1"), NULL));
-  if (!egl.is_valid()) {
-    return false;
-  }
-
-  NativeDisplayType native_display =
-      BrowserProcessMain::GetInstance()->GetNativeDisplay();
-
-  typedef EGLDisplay (*f_eglGetDisplay)(NativeDisplayType);
-  f_eglGetDisplay eglGetDisplay =
-      reinterpret_cast<f_eglGetDisplay>(egl.GetFunctionPointer("eglGetDisplay"));
-  if (!eglGetDisplay) {
-    LOG(ERROR) << "Failed to resolve eglGetDisplay";
-    return false;
-  }
-  EGLDisplay display = eglGetDisplay(native_display);
-  if (display == EGL_NO_DISPLAY) {
-    LOG(ERROR) << "Failed to get EGL default display";
-    return false;
-  }
-
-  typedef EGLBoolean (*f_eglInitialize)(EGLDisplay, EGLint*, EGLint*);
-  f_eglInitialize eglInitialize =
-      reinterpret_cast<f_eglInitialize>(egl.GetFunctionPointer("eglInitialize"));
-  if (!eglInitialize) {
-    LOG(ERROR) << "Failed to resolve eglInitialize";
-    return false;
-  }
-  if (!eglInitialize(display, NULL, NULL)) {
-    LOG(ERROR) << "eglInitialize failed";
-    return false;
-  }
-
-  typedef const char* (*f_eglQueryString)(EGLDisplay, EGLint);
-  f_eglQueryString eglQueryString =
-      reinterpret_cast<f_eglQueryString>(egl.GetFunctionPointer("eglQueryString"));
-  if (!eglQueryString) {
-    LOG(ERROR) << "Failed to resolve eglQueryString";
-    return false;
-  }
-  const char* vendor = eglQueryString(display, EGL_VENDOR);
-
-  return LowerCaseEqualsASCII(std::string(vendor), "android");
-}
-
-}
 
 FormFactor GetFormFactorHint() {
   static bool initialized = false;
@@ -117,13 +56,13 @@ FormFactor GetFormFactorHint() {
 
   initialized = true;
 
-  if (IsUbuntuPhoneOrTablet()) {
+  if (AndroidProperties::GetInstance()->Available()) {
     // Ubuntu on phones and tablets currently uses an Android kernel and EGL
     // stack. If we detect these, assume we are a phone or tablet. The screen
     // size check here is basically the same as Chrome for Android, where
     // a minimum DIP width of less than 600 is a phone
     blink::WebScreenInfo screen(
-        BrowserProcessMain::GetInstance()->GetDefaultScreenInfo());
+        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo());
     if (std::min(screen.rect.width / screen.deviceScaleFactor,
                  screen.rect.height / screen.deviceScaleFactor) >= 600) {
       form_factor = FORM_FACTOR_TABLET;

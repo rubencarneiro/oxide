@@ -107,7 +107,7 @@ class UserScript final {
   }
 
   void Pickle(::Pickle* pickle) const;
-  void Unpickle(const ::Pickle& pickle, PickleIterator* iter);
+  void Unpickle(PickleIterator* iter);
 
   bool MatchesURL(const GURL& url) const;
 
@@ -117,14 +117,12 @@ class UserScript final {
 
   static void PickleGlobs(::Pickle* pickle,
                           const std::vector<std::string>& globs);
-  static void UnpickleGlobs(const ::Pickle& pickle,
-                            PickleIterator* iter,
-                            std::vector<std::string>& globs);
+  static void UnpickleGlobs(PickleIterator* iter,
+                            std::vector<std::string>* globs);
   static void PickleURLPatternSet(::Pickle* pickle,
                                   const extensions::URLPatternSet& set);
-  static void UnpickleURLPatternSet(const ::Pickle& pickle,
-                                    PickleIterator* iter,
-                                    extensions::URLPatternSet& set);
+  static void UnpickleURLPatternSet(PickleIterator* iter,
+                                    extensions::URLPatternSet* set);
 
   GURL url_;
 

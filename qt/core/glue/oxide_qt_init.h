@@ -20,15 +20,18 @@
 
 #include <QtGlobal>
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 QT_BEGIN_NAMESPACE
 class QOpenGLContext;
 QT_END_NAMESPACE
+#endif
 
 namespace oxide {
 namespace qt {
 
-Q_DECL_EXPORT QOpenGLContext* GetSharedGLContext();
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 Q_DECL_EXPORT void SetSharedGLContext(QOpenGLContext* context);
+#endif
 
 Q_DECL_EXPORT void EnsureChromiumStarted();
 

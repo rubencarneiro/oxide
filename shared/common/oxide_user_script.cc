@@ -46,17 +46,16 @@ void UserScript::PickleGlobs(::Pickle* pickle,
 }
 
 // static
-void UserScript::UnpickleGlobs(const ::Pickle& pickle,
-                               PickleIterator* iter,
-                               std::vector<std::string>& globs) {
-  globs.clear();
+void UserScript::UnpickleGlobs(PickleIterator* iter,
+                               std::vector<std::string>* globs) {
+  globs->clear();
 
   uint64 size = 0;
-  CHECK(pickle.ReadUInt64(iter, &size));
+  CHECK(iter->ReadUInt64(&size));
   for (; size > 0; --size) {
     std::string glob;
-    CHECK(pickle.ReadString(iter, &glob));
-    globs.push_back(glob);
+    CHECK(iter->ReadString(&glob));
+    globs->push_back(glob);
   }
 }
 
@@ -72,24 +71,23 @@ void UserScript::PickleURLPatternSet(::Pickle* pickle,
 }
 
 // static
-void UserScript::UnpickleURLPatternSet(const ::Pickle& pickle,
-                                       PickleIterator* iter,
-                                       extensions::URLPatternSet& set) {
-  set.ClearPatterns();
+void UserScript::UnpickleURLPatternSet(PickleIterator* iter,
+                                       extensions::URLPatternSet* set) {
+  set->ClearPatterns();
 
   uint64 size = 0;
-  CHECK(pickle.ReadUInt64(iter, &size));
+  CHECK(iter->ReadUInt64(&size));
   for (; size > 0; --size) {
     int valid_schemes = 0;
-    CHECK(pickle.ReadInt(iter, &valid_schemes));
+    CHECK(iter->ReadInt(&valid_schemes));
 
     std::string pattern_str;
-    CHECK(pickle.ReadString(iter, &pattern_str));
+    CHECK(iter->ReadString(&pattern_str));
 
     URLPattern pattern(valid_schemes);
     CHECK_EQ(pattern.Parse(pattern_str), URLPattern::PARSE_SUCCESS);
 
-    set.AddPattern(pattern);
+    set->AddPattern(pattern);
   }
 }
 
@@ -131,27 +129,25 @@ void UserScript::Pickle(::Pickle* pickle) const {
   pickle->WriteData(content().data(), content().length());
 }
 
-void UserScript::Unpickle(const ::Pickle& pickle, PickleIterator* iter) {
-  int run_loc = 0;
-  CHECK(pickle.ReadInt(iter, &run_loc));
-  run_location_ = static_cast<RunLocation>(run_loc);
-  CHECK(pickle.ReadBool(iter, &match_all_frames_));
-  CHECK(pickle.ReadBool(iter, &incognito_enabled_));
-  CHECK(pickle.ReadBool(iter, &emulate_greasemonkey_));
+void UserScript::Unpickle(PickleIterator* iter) {
+  CHECK(iter->ReadInt(reinterpret_cast<int*>(&run_location_)));
+  CHECK(iter->ReadBool(&match_all_frames_));
+  CHECK(iter->ReadBool(&incognito_enabled_));
+  CHECK(iter->ReadBool(&emulate_greasemonkey_));
 
   std::string context_spec;
-  CHECK(pickle.ReadString(iter, &context_spec));
+  CHECK(iter->ReadString(&context_spec));
   context_ = GURL(context_spec);
 
-  UnpickleGlobs(pickle, iter, include_globs_);
-  UnpickleGlobs(pickle, iter, exclude_globs_);
+  UnpickleGlobs(iter, &include_globs_);
+  UnpickleGlobs(iter, &exclude_globs_);
 
-  UnpickleURLPatternSet(pickle, iter, include_pattern_set_);
-  UnpickleURLPatternSet(pickle, iter, exclude_pattern_set_);
+  UnpickleURLPatternSet(iter, &include_pattern_set_);
+  UnpickleURLPatternSet(iter, &exclude_pattern_set_);
 
-  const char* data = NULL;
+  const char* data = nullptr;
   int length = 0;
-  CHECK(pickle.ReadData(iter, &data, &length));
+  CHECK(iter->ReadData(&data, &length));
   contents_ = std::string(data, length);
 }
 

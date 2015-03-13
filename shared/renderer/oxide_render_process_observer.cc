@@ -21,14 +21,14 @@
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_module.h"
 
-#include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_net_resource_provider.h"
+#include "shared/common/oxide_user_agent.h"
 
 namespace oxide {
 
 void RenderProcessObserver::OnSetUserAgent(const std::string& user_agent) {
-  ContentClient::instance()->SetUserAgent(user_agent);
+  SetUserAgent(user_agent);
 }
 
 bool RenderProcessObserver::OnControlMessageReceived(
@@ -44,6 +44,7 @@ bool RenderProcessObserver::OnControlMessageReceived(
 
 void RenderProcessObserver::OnRenderProcessShutdown() {
   content::RenderThread::Get()->RemoveObserver(this);
+  delete this;
 }
 
 RenderProcessObserver::RenderProcessObserver() {

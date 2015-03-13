@@ -36,10 +36,10 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 
+#include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_delegate.h"
-#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -111,7 +111,19 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
     return gfx::Size();
   }
 
-  return delegate_->GetWebView()->GetViewSizePix();
+  return delegate_->GetViewSizePix();
+}
+
+bool RenderWidgetHostView::DoTopControlsShrinkBlinkSize() const {
+  return top_controls_shrink_blink_size_;
+}
+
+float RenderWidgetHostView::GetTopControlsHeight() const {
+  if (!delegate_) {
+    return 0.0f;
+  }
+
+  return delegate_->GetLocationBarHeightDip();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -139,11 +151,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  Compositor* compositor = delegate_ ? delegate_->GetCompositor() : NULL;
+  Compositor* compositor = delegate_ ? delegate_->GetCompositor() : nullptr;
   CompositorLock lock(compositor);
 
   if (output_surface_id != last_output_surface_id_) {
-    resource_collection_->SetClient(NULL);
+    resource_collection_->SetClient(nullptr);
     if (resource_collection_->LoseAllResources()) {
       SendReturnedDelegatedResources();
     }
@@ -203,8 +215,14 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     RendererFrameEvictor::GetInstance()->AddFrame(this, IsShowing());
   }
 
-  if (delegate_) {
-    delegate_->UpdateFrameMetadata(frame->metadata);
+  compositor_frame_metadata_ = frame->metadata;
+
+  bool shrink =
+      compositor_frame_metadata_.location_bar_offset.y() == 0.0f &&
+      compositor_frame_metadata_.location_bar_content_translation.y() > 0.0f;
+  if (shrink != top_controls_shrink_blink_size_) {
+    top_controls_shrink_blink_size_ = shrink;
+    host_->WasResized();
   }
 
   if (!compositor || !compositor->IsActive()) {
@@ -221,23 +239,6 @@ void RenderWidgetHostView::InitAsPopup(
 void RenderWidgetHostView::InitAsFullscreen(
     content::RenderWidgetHostView* reference_host_view) {
   NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
-}
-
-void RenderWidgetHostView::WasShown() {
-  DCHECK(delegate_);
-
-  if (!frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->LockFrame(this);
-  }
-  host_->WasShown(ui::LatencyInfo());
-}
-
-void RenderWidgetHostView::WasHidden() {
-  if (!frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
-  }
-  host_->WasHidden();
-  RunAckCallbacks();
 }
 
 void RenderWidgetHostView::MovePluginWindows(
@@ -263,7 +264,8 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
 
 void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
                                                 ui::TextInputMode mode,
-                                                bool can_compose_inline) {}
+                                                bool can_compose_inline,
+                                                int flags) {}
 
 void RenderWidgetHostView::ImeCancelComposition() {
   if (!delegate_) {
@@ -279,7 +281,7 @@ void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
 }
 
 void RenderWidgetHostView::Destroy() {
-  host_ = NULL;
+  host_ = nullptr;
   delete this;
 }
 
@@ -288,9 +290,9 @@ void RenderWidgetHostView::SetTooltipText(const base::string16& tooltip_text) {}
 void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,
-    const base::Callback<void(bool, const SkBitmap&)>& callback,
+    content::ReadbackRequestCallback& callback,
     const SkColorType color_type) {
-  callback.Run(false, SkBitmap());
+  callback.Run(SkBitmap(), content::READBACK_NOT_SUPPORTED);
 }
 
 void RenderWidgetHostView::CopyFromCompositingSurfaceToVideoFrame(
@@ -312,11 +314,12 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
 
 void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
   if (!delegate_) {
-    *result = BrowserProcessMain::GetInstance()->GetDefaultScreenInfo();
+    *result =
+        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
     return;
   }
 
-  *result = delegate_->GetWebView()->GetScreenInfo();
+  *result = delegate_->GetScreenInfo();
 }
 
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
@@ -361,7 +364,7 @@ gfx::Vector2dF RenderWidgetHostView::GetLastScrollOffset() const {
 }
 
 gfx::NativeView RenderWidgetHostView::GetNativeView() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::NativeViewId RenderWidgetHostView::GetNativeViewId() const {
@@ -369,7 +372,7 @@ gfx::NativeViewId RenderWidgetHostView::GetNativeViewId() const {
 }
 
 gfx::NativeViewAccessible RenderWidgetHostView::GetNativeViewAccessible() {
-  return NULL;
+  return nullptr;
 }
 
 bool RenderWidgetHostView::HasFocus() const {
@@ -377,7 +380,7 @@ bool RenderWidgetHostView::HasFocus() const {
     return false;
   }
 
-  return delegate_->GetWebView()->HasFocus();
+  return delegate_->HasFocus();
 }
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
@@ -389,13 +392,18 @@ void RenderWidgetHostView::Show() {
     DCHECK(delegate_);
     return;
   }
+
   if (!delegate_) {
     return;
   }
 
   is_showing_ = true;
 
-  WasShown();
+  if (!frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->LockFrame(this);
+  }
+
+  host_->WasShown(ui::LatencyInfo());
 }
 
 void RenderWidgetHostView::Hide() {
@@ -405,7 +413,13 @@ void RenderWidgetHostView::Hide() {
 
   is_showing_ = false;
 
-  WasHidden();
+  if (!frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
+  }
+
+  host_->WasHidden();
+
+  RunAckCallbacks();
 }
 
 bool RenderWidgetHostView::IsShowing() {
@@ -414,11 +428,19 @@ bool RenderWidgetHostView::IsShowing() {
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
+  gfx::Rect bounds;
+
   if (!delegate_) {
-    return gfx::Rect(last_size_);
+    bounds = gfx::Rect(last_size_);
+  } else {
+    bounds = delegate_->GetViewBoundsDip();
   }
 
-  return delegate_->GetWebView()->GetViewBoundsDip();
+  if (DoTopControlsShrinkBlinkSize()) {
+    bounds.Inset(0, GetTopControlsHeight(), 0, 0);
+  }
+
+  return bounds;
 }
 
 bool RenderWidgetHostView::LockMouse() {
@@ -459,8 +481,8 @@ void RenderWidgetHostView::UpdateCursorOnWebView() {
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
-  frame_provider_ = NULL;
-  layer_ = NULL;
+  frame_provider_ = nullptr;
+  layer_ = nullptr;
 }
 
 void RenderWidgetHostView::SendDelegatedFrameAck(uint32 surface_id) {
@@ -518,7 +540,7 @@ void RenderWidgetHostView::DetachLayer() {
 
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     host_(content::RenderWidgetHostImpl::From(host)),
-    delegate_(NULL),
+    delegate_(nullptr),
     resource_collection_(new cc::DelegatedFrameResourceCollection()),
     last_output_surface_id_(0),
     frame_is_evicted_(true),
@@ -528,7 +550,8 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     show_ime_if_needed_(false),
     focused_node_is_editable_(false),
     is_loading_(false),
-    is_showing_(false) {
+    is_showing_(false),
+    top_controls_shrink_blink_size_(false) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   resource_collection_->SetClient(this);
@@ -536,9 +559,8 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
-  DCHECK(ack_callbacks_.empty());
-  resource_collection_->SetClient(NULL);
-  SetDelegate(NULL);
+  resource_collection_->SetClient(nullptr);
+  SetDelegate(nullptr);
 }
 
 void RenderWidgetHostView::CompositorDidCommit() {
@@ -561,7 +583,7 @@ void RenderWidgetHostView::SetDelegate(
     host_->SendScreenRects();
     host_->WasResized();
 
-    if (delegate_->GetWebView()->IsVisible()) {
+    if (delegate_->IsVisible()) {
       Show();
     } else {
       Hide();

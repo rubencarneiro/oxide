@@ -21,6 +21,9 @@ TestCase {
     var context = webView.context;
     OxideTestingUtils.destroyQObjectNow(webView);
     OxideTestingUtils.destroyQObjectNow(context);
+    // XXX: Hack to ensure that the cookie store lock gets released before
+    // starting the next test
+    qtest_results.wait(200);
   }
 
   function _clear(webView) {
@@ -45,10 +48,6 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_ephemeral() {
-    if (!QMLTEST_USE_CONTEXT_DATADIR) {
-      skip("Can't run session cookie tests withour a permanent storage");
-    }
-
     var webView = _createWebView(WebContext.SessionCookieModeEphemeral);
     _clear(webView);
     _set_cookies(webView);
@@ -61,10 +60,6 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_persistent() {
-    if (!QMLTEST_USE_CONTEXT_DATADIR) {
-      skip("Can't run session cookie tests withour a permanent storage");
-    }
-
     var webView = _createWebView(WebContext.SessionCookieModeRestored);
     _clear(webView);
     _set_cookies(webView);
@@ -85,10 +80,6 @@ TestCase {
   }
 
   function test_WebContext_sessionCookies_restored() {
-    if (!QMLTEST_USE_CONTEXT_DATADIR) {
-      skip("Can't run session cookie tests withour a permanent storage");
-    }
-      
     var webView = _createWebView(WebContext.SessionCookieModeRestored);
     _clear(webView);
     _set_cookies(webView);

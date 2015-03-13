@@ -34,44 +34,40 @@ void SetPowerSaveBlockerOxideDelegateFactory(
 class PowerSaveBlockerImpl::Delegate
     : public base::RefCounted<PowerSaveBlockerImpl::Delegate> {
  public:
-  ~Delegate() {}
-};
+  Delegate(PowerSaveBlockerType type,
+           Reason reason,
+           const std::string& description) {
+    if (!g_factory) {
+      NOTREACHED();
+      return;
+    }
 
-PowerSaveBlockerImpl::PowerSaveBlockerImpl(PowerSaveBlockerType type,
-                                           const std::string& reason) {}
+    delegate_ = g_factory(type, reason, description);
+    if (!delegate_.get()) {
+      NOTIMPLEMENTED();
+      return;
+    }
 
-PowerSaveBlockerImpl::~PowerSaveBlockerImpl() {}
+    delegate_->Init();
+  }
 
-class PowerSaveBlockerOxide : public PowerSaveBlockerImpl {
- public:
-  PowerSaveBlockerOxide(PowerSaveBlockerType type, const std::string& reason);
-  ~PowerSaveBlockerOxide();
+  ~Delegate() {
+    if (delegate_.get()) {
+      delegate_->CleanUp();
+    }
+  }
 
  private:
   scoped_refptr<PowerSaveBlockerOxideDelegate> delegate_;
+
+  DISALLOW_COPY_AND_ASSIGN(Delegate);
 };
 
-PowerSaveBlockerOxide::PowerSaveBlockerOxide(PowerSaveBlockerType type,
-                                             const std::string& reason)
-    : PowerSaveBlockerImpl(type, reason) {
-  if (!g_factory) {
-    NOTREACHED();
-    return;
-  }
+PowerSaveBlockerImpl::PowerSaveBlockerImpl(PowerSaveBlockerType type,
+                                           Reason reason,
+                                           const std::string& description)
+    : delegate_(new Delegate(type, reason, description)) {}
 
-  delegate_ = g_factory(type, reason);
-  if (!delegate_.get()) {
-    NOTIMPLEMENTED();
-    return;
-  }
-
-  delegate_->Init();
-}
-
-PowerSaveBlockerOxide::~PowerSaveBlockerOxide() {
-  if (delegate_.get()) {
-    delegate_->CleanUp();
-  }
-}
+PowerSaveBlockerImpl::~PowerSaveBlockerImpl() {}
 
 } // namespace content

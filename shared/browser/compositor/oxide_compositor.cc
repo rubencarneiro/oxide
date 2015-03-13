@@ -20,6 +20,7 @@
 #include "base/logging.h"
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
+#include "cc/scheduler/begin_frame_source.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
@@ -70,19 +71,20 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   return make_scoped_ptr(WGC3DCBI::CreateOffscreenContext(
       gpu_channel_host.get(), attrs, false, GURL(),
       content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
-      NULL));
+      nullptr));
 }
 
 } // namespace
 
-Compositor::Compositor(CompositorClient* client, bool software)
+Compositor::Compositor(CompositorClient* client)
     : client_(client),
-      use_software_(software),
+      num_failed_recreate_attempts_(0),
       device_scale_factor_(1.0f),
       root_layer_(cc::Layer::Create()),
       proxy_(new CompositorThreadProxy(this)),
       next_output_surface_id_(1),
-      lock_count_(0)  {
+      lock_count_(0),
+      weak_factory_(this) {
   DCHECK(CalledOnValidThread());
 }
 
@@ -119,19 +121,12 @@ void Compositor::UnlockCompositor() {
   }
 }
 
-scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
+scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   DCHECK(CalledOnValidThread());
-
-  // Don't use the provided fallback path, we need the browser side and
-  // renderer sides to be in sync, so this would probably result in no
-  // output anyway
-  if (fallback) {
-    return scoped_ptr<cc::OutputSurface>();
-  }
 
   uint32 output_surface_id = next_output_surface_id_++;
 
-  if (!use_software_) {
+  if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     scoped_refptr<cc::ContextProvider> context_provider =
         content::ContextProviderCommandBuffer::Create(
           CreateOffscreenContext3D(), "OxideWebViewCompositor");
@@ -142,7 +137,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
         new CompositorOutputSurfaceGL(output_surface_id,
                                       context_provider,
                                       proxy_));
-    return output.PassAs<cc::OutputSurface>();
+    return output.Pass();
   }
 
   scoped_ptr<CompositorSoftwareOutputDevice> output_device(
@@ -150,28 +145,50 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface(bool fallback) {
   scoped_ptr<CompositorOutputSurfaceSoftware> output(
       new CompositorOutputSurfaceSoftware(
         output_surface_id,
-        output_device.PassAs<cc::SoftwareOutputDevice>(),
+        output_device.Pass(),
         proxy_));
-  return output.PassAs<cc::OutputSurface>();
+  return output.Pass();
 }
 
-void Compositor::WillBeginMainFrame(int frame_id) {}
+void Compositor::WillBeginMainFrame() {}
 void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
+void Compositor::BeginMainFrameNotExpectedSoon() {}
 void Compositor::DidBeginMainFrame() {}
 void Compositor::Layout() {}
-void Compositor::ApplyViewportDeltas(const gfx::Vector2d& inner_delta,
-                                     const gfx::Vector2d& outer_delta,
-                                     float page_scale,
-                                     float top_controls_delta) {}
+void Compositor::ApplyViewportDeltas(
+    const gfx::Vector2dF& inner_delta,
+    const gfx::Vector2dF& outer_delta,
+    const gfx::Vector2dF& elastic_overscroll_delta,
+    float page_scale,
+    float top_controls_delta) {}
 void Compositor::ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
                                      float page_scale,
                                      float top_controls_delta) {}
 
-void Compositor::RequestNewOutputSurface(bool fallback) {
-  layer_tree_host_->SetOutputSurface(CreateOutputSurface(fallback));
+void Compositor::RequestNewOutputSurface() {
+  scoped_ptr<cc::OutputSurface> surface(CreateOutputSurface());
+  if (!surface) {
+    DidFailToInitializeOutputSurface();
+    return;
+  }
+
+  layer_tree_host_->SetOutputSurface(surface.Pass());
 }
 
-void Compositor::DidInitializeOutputSurface() {}
+void Compositor::DidInitializeOutputSurface() {
+  num_failed_recreate_attempts_ = 0;
+}
+
+void Compositor::DidFailToInitializeOutputSurface() {
+  num_failed_recreate_attempts_++;
+
+  CHECK_LE(num_failed_recreate_attempts_, 4);
+
+  base::MessageLoop::current()->PostTask(
+      FROM_HERE, base::Bind(&Compositor::RequestNewOutputSurface,
+                            weak_factory_.GetWeakPtr()));
+}
+
 void Compositor::WillCommit() {}
 
 void Compositor::DidCommit() {
@@ -180,15 +197,15 @@ void Compositor::DidCommit() {
 
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
+void Compositor::DidCompletePageScaleAnimation() {}
 
 // static
-scoped_ptr<Compositor> Compositor::Create(CompositorClient* client,
-                                          bool software) {
+scoped_ptr<Compositor> Compositor::Create(CompositorClient* client) {
   if (!client) {
     return scoped_ptr<Compositor>();
   }
 
-  return make_scoped_ptr(new Compositor(client, software));
+  return make_scoped_ptr(new Compositor(client));
 }
 
 Compositor::~Compositor() {
@@ -197,7 +214,7 @@ Compositor::~Compositor() {
 }
 
 bool Compositor::IsActive() const {
-  return layer_tree_host_.get() != NULL;
+  return layer_tree_host_.get() != nullptr;
 }
 
 void Compositor::SetVisibility(bool visible) {
@@ -206,8 +223,8 @@ void Compositor::SetVisibility(bool visible) {
     layer_tree_host_.reset();
   } else if (!layer_tree_host_) {
     cc::LayerTreeSettings settings;
-    settings.allow_antialiasing = false;
-    settings.begin_frame_scheduling_enabled = false;
+    settings.renderer_settings.allow_antialiasing = false;
+    settings.use_external_begin_frame_source = false;
     settings.throttle_frame_production = false;
     settings.using_synchronous_renderer_compositor = true;
 
@@ -217,7 +234,8 @@ void Compositor::SetVisibility(bool visible) {
         content::BrowserGpuMemoryBufferManager::current(),
         settings,
         base::MessageLoopProxy::current(),
-        CompositorUtils::GetInstance()->GetTaskRunner());
+        CompositorUtils::GetInstance()->GetTaskRunner(),
+        scoped_ptr<cc::BeginFrameSource>());
 
     layer_tree_host_->SetRootLayer(root_layer_);
     layer_tree_host_->SetVisible(true);
@@ -264,7 +282,7 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
 }
 
 void Compositor::DidSwapCompositorFrame(uint32 surface_id,
-                                        FrameHandleVector& returned_frames) {
+                                        FrameHandleVector* returned_frames) {
   proxy_->DidSwapCompositorFrame(surface_id, returned_frames);
 }
 

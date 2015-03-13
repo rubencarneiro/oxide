@@ -15,101 +15,22 @@
 diff --git a/third_party/webrtc/build/common.gypi b/third_party/webrtc/build/common.gypi
 --- a/third_party/webrtc/build/common.gypi
 +++ b/third_party/webrtc/build/common.gypi
-@@ -234,17 +234,21 @@
+@@ -271,17 +271,17 @@
          ],
          'conditions': [
-           ['arm_version==7', {
+           ['arm_version>=7', {
              'defines': ['WEBRTC_ARCH_ARM_V7',],
              'conditions': [
                ['arm_neon==1', {
                  'defines': ['WEBRTC_ARCH_ARM_NEON',],
-               }, {
--                'defines': ['WEBRTC_DETECT_ARM_NEON',],
-+                'conditions': [
-+                  ['arm_neon_optional==1', {
-+                    'defines': ['WEBRTC_DETECT_ARM_NEON',],
-+                  }],
-+                ],
+               }],
+-              ['arm_neon==0 and OS=="android"', {
++              ['arm_neon==0 and (OS=="android" or arm_neon_optional==1)', {
+                 'defines': ['WEBRTC_DETECT_ARM_NEON',],
                }],
              ],
            }],
          ],
        }],
-       ['target_arch=="mipsel"', {
+       ['target_arch=="mipsel" and mips_arch_variant!="r6" and android_webview_build==0', {
          'defines': [
-           'MIPS32_LE',
-diff --git a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
---- a/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
-+++ b/third_party/webrtc/common_audio/resampler/sinc_resampler.cc
-@@ -128,25 +128,29 @@ void SincResampler::InitializeCPUSpecifi
- void SincResampler::InitializeCPUSpecificFeatures() {
-   convolve_proc_ = WebRtc_GetCPUInfo(kSSE2) ? Convolve_SSE : Convolve_C;
- }
- #endif
- #elif defined(WEBRTC_ARCH_ARM_V7)
- #if defined(WEBRTC_ARCH_ARM_NEON)
- #define CONVOLVE_FUNC Convolve_NEON
- void SincResampler::InitializeCPUSpecificFeatures() {}
--#else
-+#elif defined(WEBRTC_DETECT_ARM_NEON)
- // ARM CPU detection required.  Function will be set by
- // InitializeCPUSpecificFeatures().
- #define CONVOLVE_FUNC convolve_proc_
- 
- void SincResampler::InitializeCPUSpecificFeatures() {
-   convolve_proc_ = WebRtc_GetCPUFeaturesARM() & kCPUFeatureNEON ?
-       Convolve_NEON : Convolve_C;
- }
-+#else
-+// No NEON
-+#define CONVOLVE_FUNC Convolve_C
-+void SincResampler::InitializeCPUSpecificFeatures() {}
- #endif
- #else
- // Unknown architecture.
- #define CONVOLVE_FUNC Convolve_C
- void SincResampler::InitializeCPUSpecificFeatures() {}
- #endif
- 
- SincResampler::SincResampler(double io_sample_rate_ratio,
-diff --git a/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi b/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
---- a/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
-+++ b/third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.gypi
-@@ -71,17 +71,17 @@
-         'structs.h',
-       ],
-       'conditions': [
-         ['OS!="win"', {
-           'defines': [
-             'WEBRTC_LINUX',
-           ],
-         }],
--        ['(target_arch=="arm" and arm_version==7) or target_arch=="armv7"', {
-+        ['((target_arch=="arm" and arm_version==7) or target_arch=="armv7") and (arm_neon==1 or arm_neon_optional==1)', {
-           'dependencies': [ 'isac_neon', ],
-           'sources': [
-             'lattice_armv7.S',
-             'pitch_filter_armv6.S',
-           ],
-           'sources!': [
-             'lattice_c.c',
-             'pitch_filter_c.c',
-@@ -114,17 +114,17 @@
-               ],
-             }],
-           ],
-         }],
-       ],
-     },
-   ],
-   'conditions': [
--    ['(target_arch=="arm" and arm_version==7) or target_arch=="armv7"', {
-+    ['((target_arch=="arm" and arm_version==7) or target_arch=="armv7") and (arm_neon==1 or arm_neon_optional==1)', {
-       'targets': [
-         {
-           'target_name': 'isac_neon',
-           'type': 'static_library',
-           'includes': ['../../../../../../build/arm_neon.gypi',],
-           'dependencies': [
-             '<(webrtc_root)/common_audio/common_audio.gyp:common_audio',
-           ],

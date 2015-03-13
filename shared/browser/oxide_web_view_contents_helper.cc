@@ -25,11 +25,8 @@
 #include "shared/common/oxide_content_client.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_browser_process_main.h"
-#include "oxide_content_browser_client.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
-#include "oxide_web_view_contents_helper_delegate.h"
 
 namespace oxide {
 
@@ -37,16 +34,16 @@ namespace {
 const char kWebViewContentsHelperKey[] = "oxide_web_view_contents_helper_data";
 }
 
-WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
-    : BrowserContextObserver(
-          BrowserContext::FromContent(contents->GetBrowserContext())),
-      WebPreferencesObserver(
-          ContentClient::instance()->browser()->CreateWebPreferences()),
-      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
-      web_contents_(contents),
-      delegate_(NULL),
-      owns_web_preferences_(true) {
-  CHECK(!FromWebContents(web_contents_));
+WebViewContentsHelper::~WebViewContentsHelper() {
+  if (web_preferences() && owns_web_preferences_) {
+    WebPreferences* prefs = web_preferences();
+    WebPreferencesObserver::Observe(nullptr);
+    prefs->Destroy();
+  }
+}
+
+void WebViewContentsHelper::Init() {
+  DCHECK(!FromWebContents(web_contents_));
 
   web_contents_->SetUserData(kWebViewContentsHelperKey, this);
 
@@ -57,15 +54,6 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   if (rvh) {
     rvh->SyncRendererPrefs();
-  }
-}
-
-WebViewContentsHelper::~WebViewContentsHelper() {
-  if (owns_web_preferences_) {
-    // Disconnect the observer to prevent it from calling back in to us
-    // via a vfunc, which it shouldn't do now we're in our destructor
-    WebPreferencesObserver::Observe(NULL);
-    delete web_preferences();
   }
 }
 
@@ -82,49 +70,31 @@ void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
   UpdateWebPreferences();
 }
 
-void WebViewContentsHelper::WebPreferencesDestroyed() {
-  CHECK(!owns_web_preferences_) <<
-      "Somebody destroyed a WebPreferences owned by us!";
-  WebPreferencesObserver::Observe(
-      ContentClient::instance()->browser()->CreateWebPreferences());
-  owns_web_preferences_ = true;
-
-  WebPreferencesValueChanged();
-
-  if (delegate_) {
-    delegate_->NotifyWebPreferencesDestroyed();
-  }
-}
-
 void WebViewContentsHelper::WebPreferencesValueChanged() {
   UpdateWebPreferences();
 }
 
-void WebViewContentsHelper::WebPreferencesAdopted() {
-  owns_web_preferences_ = false;
+WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
+    : BrowserContextObserver(
+          BrowserContext::FromContent(contents->GetBrowserContext())),
+      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
+      web_contents_(contents),
+      owns_web_preferences_(false) {
+  Init();
 }
 
-void WebViewContentsHelper::CloseContents(content::WebContents* source) {
-  DCHECK_EQ(source, web_contents_);
-  DCHECK(web_contents_holder_during_close_);
+WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
+                                             WebViewContentsHelper* opener)
+    : BrowserContextObserver(
+          BrowserContext::FromContent(contents->GetBrowserContext())),
+      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
+      web_contents_(contents),
+      owns_web_preferences_(false) {
+  Init();
 
-  scoped_ptr<content::WebContents> holder = web_contents_holder_during_close_.Pass();
-  holder.reset();
-  // |this| has been deleted
-
-  BrowserProcessMain::GetInstance()->DecrementPendingUnloadsCount();
-}
-
-// static
-void WebViewContentsHelper::Attach(content::WebContents* contents,
-                                   content::WebContents* opener) {
-  WebViewContentsHelper* helper = new WebViewContentsHelper(contents);
-  if (opener) {
-    WebViewContentsHelper* opener_helper =
-        WebViewContentsHelper::FromWebContents(opener);
-    DCHECK(opener_helper);
-    helper->GetWebPreferences()->CopyFrom(opener_helper->GetWebPreferences());
-  }
+  WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());
+  owns_web_preferences_ = true;
+  UpdateWebPreferences();
 }
 
 // static
@@ -140,9 +110,8 @@ WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
   return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
 }
 
-void WebViewContentsHelper::SetDelegate(
-    WebViewContentsHelperDelegate* delegate) {
-  delegate_ = delegate;
+content::WebContents* WebViewContentsHelper::GetWebContents() const {
+  return web_contents_;
 }
 
 BrowserContext* WebViewContentsHelper::GetBrowserContext() const {
@@ -154,39 +123,24 @@ WebPreferences* WebViewContentsHelper::GetWebPreferences() const {
 }
 
 void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
-  CHECK(!preferences || preferences->IsOwnedByEmbedder());
   if (preferences == web_preferences()) {
     return;
   }
 
   if (web_preferences() && owns_web_preferences_) {
     WebPreferences* old = web_preferences();
-    WebPreferencesObserver::Observe(NULL);
-    delete old;
+    WebPreferencesObserver::Observe(nullptr);
+    old->Destroy();
   }
 
-  if (preferences) {
-    owns_web_preferences_ = false;
-  } else {
-    preferences = ContentClient::instance()->browser()->CreateWebPreferences();
-    owns_web_preferences_ = true;
-  }
+  owns_web_preferences_ = false;
 
   WebPreferencesObserver::Observe(preferences);
-  WebPreferencesValueChanged();
+  UpdateWebPreferences();
 }
 
-void WebViewContentsHelper::TakeWebContentsOwnershipAndClosePage(
-    scoped_ptr<content::WebContents> web_contents) {
-  DCHECK_EQ(web_contents.get(), web_contents_);
-  DCHECK(!web_contents_holder_during_close_);
-
-  web_contents_holder_during_close_ = web_contents.Pass();
-
-  BrowserProcessMain::GetInstance()->IncrementPendingUnloadsCount();
-
-  web_contents_->SetDelegate(this);
-  web_contents_->GetRenderViewHost()->ClosePage();
+void WebViewContentsHelper::WebContentsAdopted() {
+  owns_web_preferences_ = false;
 }
 
 } // namespace oxide

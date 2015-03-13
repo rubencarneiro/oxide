@@ -1,0 +1,28 @@
+# Description: Customize the gesture fling curve for mobile
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/ui/events/gestures/fling_curve.cc b/ui/events/gestures/fling_curve.cc
+--- a/ui/events/gestures/fling_curve.cc
++++ b/ui/events/gestures/fling_curve.cc
+@@ -6,19 +6,19 @@
+ 
+ #include <algorithm>
+ #include <cmath>
+ 
+ #include "base/logging.h"
+ 
+ namespace {
+ 
+-const float kDefaultAlpha = -5.70762e+03f;
++const float kDefaultAlpha = -7.6e+03f;
+ const float kDefaultBeta = 1.72e+02f;
+-const float kDefaultGamma = 3.7e+00f;
++const float kDefaultGamma = 1.4e+00f;
+ 
+ inline double GetPositionAtTime(double t) {
+   return kDefaultAlpha * exp(-kDefaultGamma * t) - kDefaultBeta * t -
+          kDefaultAlpha;
+ }
+ 
+ inline double GetVelocityAtTime(double t) {
+   return -kDefaultAlpha * kDefaultGamma * exp(-kDefaultGamma * t) -

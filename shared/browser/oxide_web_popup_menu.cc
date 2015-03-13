@@ -30,7 +30,7 @@ void WebPopupMenu::RenderFrameDeleted(content::RenderFrameHost* rfh) {
   if (rfh != render_frame_host_) {
     return;
   }
-  render_frame_host_ = NULL;
+  render_frame_host_ = nullptr;
   Hide();
 }
 

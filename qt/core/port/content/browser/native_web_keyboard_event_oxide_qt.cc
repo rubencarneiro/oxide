@@ -23,13 +23,25 @@
 
 namespace content {
 
+namespace {
+
+QKeyEvent* CopyEvent(QKeyEvent* event) {
+  if (!event) {
+    return nullptr;
+  }
+
+  return new QKeyEvent(*event);
+}
+
+}
+
 NativeWebKeyboardEvent::NativeWebKeyboardEvent()
-    : os_event(NULL),
+    : os_event(nullptr),
       skip_in_browser(false),
       match_edit_command(false) {}
 
 NativeWebKeyboardEvent::NativeWebKeyboardEvent(gfx::NativeEvent native_event)
-    : os_event(NULL),
+    : os_event(nullptr),
       skip_in_browser(false),
       match_edit_command(false) {
   NOTREACHED();
@@ -41,7 +53,7 @@ NativeWebKeyboardEvent::NativeWebKeyboardEvent(
     wchar_t character,
     int state,
     double time_stamp_seconds)
-    : os_event(NULL),
+    : os_event(nullptr),
       skip_in_browser(false),
       match_edit_command(false) {
   NOTREACHED();
@@ -50,7 +62,7 @@ NativeWebKeyboardEvent::NativeWebKeyboardEvent(
 NativeWebKeyboardEvent::NativeWebKeyboardEvent(
     const NativeWebKeyboardEvent& other)
     : WebKeyboardEvent(other),
-      os_event(new QKeyEvent(*other.os_event)),
+      os_event(CopyEvent(other.os_event)),
       skip_in_browser(other.skip_in_browser),
       match_edit_command(false) {
 }
@@ -63,7 +75,7 @@ NativeWebKeyboardEvent& NativeWebKeyboardEvent::operator=(
     const NativeWebKeyboardEvent& other) {
   WebKeyboardEvent::operator=(other);
   delete os_event;
-  os_event = new QKeyEvent(*other.os_event);
+  os_event = CopyEvent(other.os_event);
   skip_in_browser = other.skip_in_browser;
   match_edit_command = other.match_edit_command;
   return *this;

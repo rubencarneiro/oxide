@@ -1,10 +1,13 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 1.0
+import com.canonical.Oxide 1.3
 import com.canonical.Oxide.Testing 1.0
 
 WebContext {
-  dataPath: QMLTEST_USE_CONTEXT_DATADIR ? QMLTEST_DATADIR : ""
+  property bool persistent: true
+
+  dataPath: persistent ? QMLTEST_DATADIR : ""
+
   userScripts: [
     UserScript {
       context: "oxide://testutils/"
@@ -23,7 +26,8 @@ WebContext {
     "MAP selfsigned.testsuite:443 localhost:4445",
     "MAP badidentity.testsuite:443 localhost:4446",
     "MAP testsuite:443 localhost:4443",
-    "MAP *.testsuite:443 localhost:4443"
+    "MAP *.testsuite:443 localhost:4443",
+    "MAP invalid:80 255.255.255.255:80"
   ]
 
   property var _cookiesDeletedSpy: SignalSpy {

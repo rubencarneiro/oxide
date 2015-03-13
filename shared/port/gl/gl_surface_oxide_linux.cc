@@ -56,10 +56,16 @@ bool GLSurface::InitializeOneOffInternal() {
   return true;
 }
 
+scoped_refptr<GLSurface> GLSurface::CreateSurfacelessViewGLSurface(
+    gfx::AcceleratedWidget window) {
+  NOTREACHED();
+  return nullptr;
+}
+
 scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
     gfx::AcceleratedWidget window) {
   NOTREACHED();
-  return NULL;
+  return nullptr;
 }
 
 
@@ -69,7 +75,7 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
     case kGLImplementationDesktopGL: {
       scoped_refptr<GLSurface> surface(new PbufferGLSurfaceGLX(size));
       if (!surface->Initialize()) {
-        return NULL;
+        return nullptr;
       }
 
       return surface;
@@ -84,7 +90,7 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
         surface = new PbufferGLSurfaceEGL(size);
       }
       if (!surface->Initialize()) {
-        return NULL;
+        return nullptr;
       }
 
       return surface;
@@ -94,14 +100,14 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
       scoped_refptr<GLSurface> surface(
           new GLSurfaceOSMesa(gfx::OSMesaSurfaceFormatBGRA, size));
       if (!surface->Initialize()) {
-        return NULL;
+        return nullptr;
       }
 
       return surface;
     }
 
     default:
-      return NULL;
+      return nullptr;
   }
 }
 

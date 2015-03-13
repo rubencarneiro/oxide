@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 1.0
+import com.canonical.Oxide 1.3
 import com.canonical.Oxide.Testing 1.0
 
 TestWebView {
@@ -8,19 +8,14 @@ TestWebView {
   width: 200
   height: 200
 
-  context.allowedExtraUrlSchemes: [ "test", "bar" ]
+  // XXX: Work around https://launchpad.net/bugs/1389721
+  Component.onCompleted: {
+    context.allowedExtraUrlSchemes = [ "test", "bar" ];
+  }
 
   TestCase {
     name: "CustomURLSchemes"
     when: windowShown
-
-    function initTestCase() {
-      OxideTestingUtils.setUrlHandler("test", false);
-    }
-
-    function cleanupTestCase() {
-      OxideTestingUtils.unsetUrlHandler("test");
-    }
 
     // This test loads the same text file twice - once using Chromium's file
     // protocol handler and once using a custom handler - and compares their
@@ -51,7 +46,7 @@ TestWebView {
     function test_CustomURLSchemes3_disallowed_scheme() {
       webView.context.allowedExtraUrlSchemes = [];
       webView.url = "test:///tst_CustomURLSchemes.txt";
-      verify(webView.waitForLoadFailed());
+      verify(webView.waitForLoadStopped());
     }
   }
 }

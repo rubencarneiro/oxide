@@ -32,7 +32,7 @@ TestWebView {
       // Check that the renderer doesn’t crash. If it does,
       // it might not be right away, so give it some time.
       for (var i = 0; i < 5; ++i) {
-        webView.waitFor(function() { return false; }, 500);
+        webView.wait(500);
         // Calling into the test API will raise an exception
         // if the renderer process has crashed.
         webView.getTestApi().documentURI;

@@ -25,12 +25,12 @@ namespace oxide {
 
 void WebPreferencesObserver::OnWebPreferencesDestruction() {
   DCHECK(web_preferences_);
-  web_preferences_ = NULL;
+  web_preferences_ = nullptr;
   WebPreferencesDestroyed();
 }
 
 WebPreferencesObserver::WebPreferencesObserver()
-    : web_preferences_(NULL) {}
+    : web_preferences_(nullptr) {}
 
 WebPreferencesObserver::WebPreferencesObserver(WebPreferences* preferences)
     : web_preferences_(preferences) {

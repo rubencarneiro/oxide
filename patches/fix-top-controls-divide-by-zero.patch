@@ -1,0 +1,33 @@
+# Description: Avoid a divide-dy-zero in TopControlsManager when the height
+#  is set to zero
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/cc/input/top_controls_manager.cc b/cc/input/top_controls_manager.cc
+--- a/cc/input/top_controls_manager.cc
++++ b/cc/input/top_controls_manager.cc
+@@ -107,19 +107,22 @@ gfx::Vector2dF TopControlsManager::Scrol
+   if (permitted_state_ == SHOWN && pending_delta.y() > 0)
+     return pending_delta;
+   else if (permitted_state_ == HIDDEN && pending_delta.y() < 0)
+     return pending_delta;
+ 
+   accumulated_scroll_delta_ += pending_delta.y();
+ 
+   float old_offset = ContentTopOffset();
+-  client_->SetCurrentTopControlsShownRatio(
+-      (baseline_content_offset_ - accumulated_scroll_delta_) /
+-      TopControlsHeight());
++  if (TopControlsHeight() == 0)
++    client_->SetCurrentTopControlsShownRatio(1.0f);
++  else
++    client_->SetCurrentTopControlsShownRatio(
++        (baseline_content_offset_ - accumulated_scroll_delta_) /
++        TopControlsHeight());
+ 
+   // If the controls are fully visible, treat the current position as the
+   // new baseline even if the gesture didn't end.
+   if (TopControlsShownRatio() == 1.f)
+     ResetBaseline();
+ 
+   ResetAnimations();
+ 

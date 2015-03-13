@@ -32,7 +32,7 @@
 
 OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
     oxide::qt::WebView* view)
-    : q_ptr(NULL),
+    : q_ptr(nullptr),
       web_view_(view) {}
 
 OxideQSecurityStatusPrivate::~OxideQSecurityStatusPrivate() {}
@@ -104,52 +104,58 @@ OxideQSecurityStatus::OxideQSecurityStatus(OxideQSecurityStatusPrivate& dd,
 
   COMPILE_ASSERT(
       ContentStatusNormal ==
-        static_cast<ContentStatus>(content::SSLStatus::NORMAL_CONTENT),
+        static_cast<ContentStatusFlags>(content::SSLStatus::NORMAL_CONTENT),
       content_status_enums_normal_doesnt_match);
   COMPILE_ASSERT(
       ContentStatusDisplayedInsecure ==
-        static_cast<ContentStatus>(content::SSLStatus::DISPLAYED_INSECURE_CONTENT),
+        static_cast<ContentStatusFlags>(
+          content::SSLStatus::DISPLAYED_INSECURE_CONTENT),
       content_status_enums_displayed_insecure_doesnt_match);
   COMPILE_ASSERT(
       ContentStatusRanInsecure ==
-        static_cast<ContentStatus>(content::SSLStatus::RAN_INSECURE_CONTENT),
+        static_cast<ContentStatusFlags>(
+          content::SSLStatus::RAN_INSECURE_CONTENT),
       content_status_enums_ran_insecure_doesnt_match);
 
   COMPILE_ASSERT(
-      CertStatusOk == static_cast<CertStatus>(oxide::CERT_STATUS_OK),
+      CertStatusOk == static_cast<CertStatusFlags>(oxide::CERT_STATUS_OK),
       cert_status_enums_ok_doesnt_match);
   COMPILE_ASSERT(
       CertStatusBadIdentity ==
-        static_cast<CertStatus>(oxide::CERT_STATUS_BAD_IDENTITY),
+        static_cast<CertStatusFlags>(oxide::CERT_STATUS_BAD_IDENTITY),
       cert_status_enums_bad_identity_doesnt_match);
   COMPILE_ASSERT(
-      CertStatusExpired == static_cast<CertStatus>(oxide::CERT_STATUS_EXPIRED),
+      CertStatusExpired ==
+        static_cast<CertStatusFlags>(oxide::CERT_STATUS_EXPIRED),
       cert_status_enums_expired_doesnt_match);
   COMPILE_ASSERT(
       CertStatusDateInvalid ==
-        static_cast<CertStatus>(oxide::CERT_STATUS_DATE_INVALID),
+        static_cast<CertStatusFlags>(oxide::CERT_STATUS_DATE_INVALID),
       cert_status_enums_date_invalid_doesnt_match);
   COMPILE_ASSERT(
       CertStatusAuthorityInvalid ==
-        static_cast<CertStatus>(oxide::CERT_STATUS_AUTHORITY_INVALID),
+        static_cast<CertStatusFlags>(oxide::CERT_STATUS_AUTHORITY_INVALID),
       cert_status_enums_authority_invalid_doesnt_match);
   COMPILE_ASSERT(
       CertStatusRevocationCheckFailed ==
-        static_cast<CertStatus>(oxide::CERT_STATUS_REVOCATION_CHECK_FAILED),
+        static_cast<CertStatusFlags>(
+          oxide::CERT_STATUS_REVOCATION_CHECK_FAILED),
       cert_status_enums_revocation_check_failed_doesnt_match);
   COMPILE_ASSERT(
-      CertStatusRevoked == static_cast<CertStatus>(oxide::CERT_STATUS_REVOKED),
+      CertStatusRevoked ==
+        static_cast<CertStatusFlags>(oxide::CERT_STATUS_REVOKED),
       cert_status_enums_revoked_doesnt_match);
   COMPILE_ASSERT(
-      CertStatusInvalid == static_cast<CertStatus>(oxide::CERT_STATUS_INVALID),
+      CertStatusInvalid ==
+        static_cast<CertStatusFlags>(oxide::CERT_STATUS_INVALID),
       cert_status_enums_invalid_doesnt_match);
   COMPILE_ASSERT(
       CertStatusInsecure ==
-        static_cast<CertStatus>(oxide::CERT_STATUS_INSECURE),
+        static_cast<CertStatusFlags>(oxide::CERT_STATUS_INSECURE),
       cert_status_enums_insecure_doesnt_match);
   COMPILE_ASSERT(
       CertStatusGenericError ==
-        static_cast<CertStatus>(oxide::CERT_STATUS_GENERIC_ERROR),
+        static_cast<CertStatusFlags>(oxide::CERT_STATUS_GENERIC_ERROR),
       cert_status_enums_generic_error_doesnt_match);
 }
 
@@ -163,19 +169,19 @@ OxideQSecurityStatus::securityLevel() const {
       d->web_view_->security_status().security_level());
 }
 
-OxideQSecurityStatus::ContentStatus
+OxideQSecurityStatus::ContentStatusFlags
 OxideQSecurityStatus::contentStatus() const {
   Q_D(const OxideQSecurityStatus);
 
-  return static_cast<ContentStatus>(
+  return static_cast<ContentStatusFlags>(
       d->web_view_->security_status().content_status());
 }
 
-OxideQSecurityStatus::CertStatus
+OxideQSecurityStatus::CertStatusFlags
 OxideQSecurityStatus::certStatus() const {
   Q_D(const OxideQSecurityStatus);
 
-  return static_cast<CertStatus>(
+  return static_cast<CertStatusFlags>(
       d->web_view_->security_status().cert_status());
 }
 
@@ -189,7 +195,7 @@ OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
   scoped_refptr<net::X509Certificate> cert =
       d->web_view_->security_status().cert();
   if (!cert.get()) {
-    return NULL;
+    return nullptr;
   }
 
   d->cert_.reset(OxideQSslCertificatePrivate::Create(cert.get()));

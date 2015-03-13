@@ -30,11 +30,14 @@ namespace qt {
 
 class WebPreferences final : public oxide::WebPreferences {
  public:
-  WebPreferences(OxideQWebPreferences* api_handle = NULL);
+  WebPreferences(OxideQWebPreferences* api_handle = nullptr);
   ~WebPreferences();
 
   OxideQWebPreferences* api_handle() const { return api_handle_; }
-  void SetApiHandle(OxideQWebPreferences* handle);
+
+  // oxide::WebPreferences implementation
+  void Destroy() final;
+  oxide::WebPreferences* Clone() const final;
 
  private:
   OxideQWebPreferences* api_handle_;

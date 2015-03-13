@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,8 @@
 
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
+
+#include <limits>
 
 #include <QMutex>
 #include <QMutexLocker>
@@ -41,14 +43,6 @@
 #include "oxidequseragentoverriderequest_p_p.h"
 
 namespace {
-
-OxideQQuickWebContext* g_default_context;
-
-void DestroyDefaultContext() {
-  OxideQQuickWebContext* context = g_default_context;
-  g_default_context = NULL;
-  delete context;
-}
 
 QVariant networkCookiesToVariant(const QList<QNetworkCookie>& cookies) {
   QList<QVariant> list;
@@ -194,10 +188,10 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     : oxide::qt::WebContextAdapter(q),
       constructed_(false),
       io_(new oxide::qquick::WebContextIODelegate()),
-      network_request_delegate_(NULL),
-      storage_access_permission_delegate_(NULL),
-      user_agent_override_delegate_(NULL),
-      cookie_manager_(NULL) {}
+      network_request_delegate_(nullptr),
+      storage_access_permission_delegate_(nullptr),
+      user_agent_override_delegate_(nullptr),
+      cookie_manager_(nullptr) {}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
   updateUserScripts();
@@ -253,7 +247,7 @@ OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
         static_cast<OxideQQuickWebContext *>(prop->object));
 
   if (index >= cd->userScripts().size()) {
-    return NULL;
+    return nullptr;
   }
 
   return adapterToQObject<OxideQQuickUserScript>(cd->userScripts().at(index));
@@ -320,7 +314,7 @@ OxideQQuickWebContextPrivate::GetCustomNetworkAccessManager() {
 
   QQmlEngine* engine = qmlEngine(q);
   if (!engine) {
-    return NULL;
+    return nullptr;
   }
 
   return engine->networkAccessManager();
@@ -354,13 +348,13 @@ void OxideQQuickWebContextPrivate::delegateWorkerDestroyed(
   Q_Q(OxideQQuickWebContext);
 
   if (worker == q->networkRequestDelegate()) {
-    q->setNetworkRequestDelegate(NULL);
+    q->setNetworkRequestDelegate(nullptr);
   }
   if (worker == q->storageAccessPermissionDelegate()) {
-    q->setStorageAccessPermissionDelegate(NULL);
+    q->setStorageAccessPermissionDelegate(nullptr);
   }
   if (worker == q->userAgentOverrideDelegate()) {
-    q->setUserAgentOverrideDelegate(NULL);
+    q->setUserAgentOverrideDelegate(nullptr);
   }
 }
 
@@ -383,10 +377,6 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
-
-  Q_ASSERT(this != g_default_context);
-
-  emit d->willBeDestroyed();
 
   for (int i = 0; i < d->userScripts().size(); ++i) {
     d->detachUserScriptSignals(
@@ -411,21 +401,25 @@ void OxideQQuickWebContext::componentComplete() {
 
 // static
 OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
-  if (g_default_context) {
-    return g_default_context;
+  OxideQQuickWebContextPrivate* p =
+      static_cast<OxideQQuickWebContextPrivate*>(
+        oxide::qt::WebContextAdapter::defaultContext());
+  if (p) {
+    return p->q_func();
   }
 
   if (!create) {
-    return NULL;
+    return nullptr;
   }
 
-  g_default_context = new OxideQQuickWebContext();
-  g_default_context->componentComplete();
-  qAddPostRoutine(DestroyDefaultContext);
+  OxideQQuickWebContext* c = new OxideQQuickWebContext();
+  c->componentComplete();
+  QQmlEngine::setObjectOwnership(c, QQmlEngine::CppOwnership);
 
-  QQmlEngine::setObjectOwnership(g_default_context, QQmlEngine::CppOwnership);
+  OxideQQuickWebContextPrivate::get(c)->makeDefault();
+  Q_ASSERT(oxide::qt::WebContextAdapter::defaultContext());
 
-  return g_default_context;
+  return c;
 }
 
 QString OxideQQuickWebContext::product() const {
@@ -532,7 +526,7 @@ void OxideQQuickWebContext::setAcceptLangs(const QString& accept_langs) {
 QQmlListProperty<OxideQQuickUserScript>
 OxideQQuickWebContext::userScripts() {
   return QQmlListProperty<OxideQQuickUserScript>(
-      this, NULL,
+      this, nullptr,
       OxideQQuickWebContextPrivate::userScript_append,
       OxideQQuickWebContextPrivate::userScript_count,
       OxideQQuickWebContextPrivate::userScript_at,
@@ -587,7 +581,7 @@ void OxideQQuickWebContext::removeUserScript(
 
   d->detachUserScriptSignals(user_script);
   if (user_script->parent() == this) {
-    user_script->setParent(NULL);
+    user_script->setParent(nullptr);
   }
 
   d->userScripts().removeOne(ud);
@@ -902,6 +896,41 @@ void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
   d->setAllowedExtraUrlSchemes(schemes);
 
   emit allowedExtraUrlSchemesChanged();
+}
+
+int OxideQQuickWebContext::maxCacheSizeHint() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->maxCacheSizeHint();
+}
+
+void OxideQQuickWebContext::setMaxCacheSizeHint(int size) {
+  Q_D(OxideQQuickWebContext);
+
+  if (size < 0) {
+    qWarning() << "WebContext.maxCacheSizeHint cannot have a negative value";
+    return;
+  }
+
+  static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
+  if (size > upper_limit) {
+    // To avoid integer overflow.
+    qWarning() << "WebContext.maxCacheSizeHint cannot exceed"
+               << upper_limit << "MB";
+    return;
+  }
+
+  if (d->isInitialized()) {
+    qWarning() << "Cannot set WebContext.maxCacheSizeHint once the context is in use";
+    return;
+  }
+
+  if (d->maxCacheSizeHint() == size) {
+    return;
+  }
+
+  d->setMaxCacheSizeHint(size);
+  emit maxCacheSizeHintChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

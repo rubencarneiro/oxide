@@ -42,15 +42,15 @@ WebView* WebContentsView::GetWebView() const {
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::NativeView WebContentsView::GetContentNativeView() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
-  return NULL;
+  return nullptr;
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
@@ -66,23 +66,29 @@ void WebContentsView::SizeContents(const gfx::Size& size) {
 }
 
 void WebContentsView::Focus() {
-  NOTREACHED();
+  content::RenderWidgetHostView* rwhv =
+      web_contents_->GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  rwhv->Focus();
 }
 
 void WebContentsView::SetInitialFocus() {
-  NOTREACHED();
+  NOTIMPLEMENTED();
 }
 
 void WebContentsView::StoreFocus() {
-  NOTREACHED();
+  NOTIMPLEMENTED();
 }
 
 void WebContentsView::RestoreFocus() {
-  NOTREACHED();
+  NOTIMPLEMENTED();
 }
 
 content::DropData* WebContentsView::GetDropData() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::Rect WebContentsView::GetViewBounds() const {
@@ -99,7 +105,8 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
                                  gfx::NativeView context) {}
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
-    content::RenderWidgetHost* render_widget_host) {
+    content::RenderWidgetHost* render_widget_host,
+    bool is_guest_view_hack) {
   RenderWidgetHostView* rwhv = new RenderWidgetHostView(render_widget_host);
 
   WebView* view = GetWebView();
@@ -119,7 +126,7 @@ content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForPopupWidget(
     content::RenderWidgetHost* render_widget_host) {
-  return NULL;
+  return nullptr;
 }
 
 void WebContentsView::SetPageTitle(const base::string16& title) {}

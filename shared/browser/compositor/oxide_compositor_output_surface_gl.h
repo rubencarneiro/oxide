@@ -24,7 +24,7 @@
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "gpu/command_buffer/common/mailbox.h"
-#include "ui/gfx/size.h"
+#include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_output_surface.h"
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -49,6 +49,8 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
  public:
   virtual ~WebContextAdapter();
 
+  static WebContextAdapter* defaultContext();
+
   enum CookiePolicy {
     CookiePolicyAllowAll,
     CookiePolicyBlockAll,
@@ -79,6 +81,7 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
   static WebContextAdapter* FromWebContext(WebContext* context);
 
   void init(const QWeakPointer<IODelegate>& io_delegate);
+  void makeDefault();
 
   QString product() const;
   void setProduct(const QString& product);
@@ -129,11 +132,17 @@ class Q_DECL_EXPORT WebContextAdapter : public AdapterBase {
 
   void setAllowedExtraUrlSchemes(const QStringList& schemes);
 
+  int maxCacheSizeHint() const;
+  void setMaxCacheSizeHint(int size);
+
  protected:
   WebContextAdapter(QObject* q);
 
  private:
   friend class WebContext;
+
+  static WebContextAdapter* GetDefault();
+  static void DestroyDefault();
 
   virtual void CookiesSet(int request_id,
                           const QList<QNetworkCookie>& failed_cookies) = 0;

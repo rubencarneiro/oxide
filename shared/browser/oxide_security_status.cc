@@ -23,14 +23,14 @@
 #include "net/cert/cert_status_flags.h"
 #include "net/cert/x509_certificate.h"
 
-#include "shared/base/oxide_enum_flags.h"
+#include "shared/common/oxide_enum_flags.h"
 
 namespace oxide {
 
 namespace {
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(content::SSLStatus::ContentStatusFlags)
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(CertStatus)
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(CertStatusFlags)
 
 inline SecurityLevel CalculateSecurityLevel(
     const content::SSLStatus& ssl_status,
@@ -75,9 +75,9 @@ inline SecurityLevel CalculateSecurityLevel(
   return SECURITY_LEVEL_SECURE;
 }
 
-inline CertStatus CalculateCertStatus(net::CertStatus cert_status,
-                                      net::X509Certificate* cert) {
-  CertStatus rv = CERT_STATUS_OK;
+inline CertStatusFlags CalculateCertStatus(net::CertStatus cert_status,
+                                           net::X509Certificate* cert) {
+  CertStatusFlags rv = CERT_STATUS_OK;
 
   // Handle flags that have a direct mapping to CertErrorStatus first
   if (cert_status & net::CERT_STATUS_COMMON_NAME_INVALID) {
@@ -147,7 +147,7 @@ SecurityStatus::SecurityStatus(const content::SSLStatus& ssl_status)
 SecurityStatus::~SecurityStatus() {}
 
 void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
-  cert_ = NULL;
+  cert_ = nullptr;
   content::CertStore::GetInstance()->RetrieveCert(ssl_status.cert_id,
                                                   &cert_);
 

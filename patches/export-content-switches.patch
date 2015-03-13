@@ -1,29 +1,10 @@
 # HG changeset patch
-# Parent 9b5239c969a39edee0a7a1e99039820b2d1c3a05
+# Parent 6a28c407ac67c31b5c4ec76345b57913b156c210
 # User oxide
 
 diff --git a/content/public/common/content_switches.h b/content/public/common/content_switches.h
 --- a/content/public/common/content_switches.h
 +++ b/content/public/common/content_switches.h
-@@ -14,17 +14,17 @@ namespace switches {
- 
- // All switches in alphabetical order. The switches should be documented
- // alongside the definition of their values in the .cc file.
- CONTENT_EXPORT extern const char kAcceleratedCanvas2dMSAASampleCount[];
- CONTENT_EXPORT extern const char kAllowFileAccessFromFiles[];
- CONTENT_EXPORT extern const char kAllowInsecureWebSocketFromHttpsOrigin[];
- CONTENT_EXPORT extern const char kAllowLoopbackInPeerConnection[];
- CONTENT_EXPORT extern const char kAllowNoSandboxJob[];
--extern const char kAllowSandboxDebugging[];
-+CONTENT_EXPORT extern const char kAllowSandboxDebugging[];
- extern const char kAuditAllHandles[];
- extern const char kAuditHandles[];
- CONTENT_EXPORT extern const char kBlinkPlatformLogChannels[];
- CONTENT_EXPORT extern const char kBlockCrossSiteDocuments[];
- CONTENT_EXPORT extern const char kBrowserAssertTest[];
- CONTENT_EXPORT extern const char kBrowserCrashTest[];
- CONTENT_EXPORT extern const char kBrowserSubprocessPath[];
- extern const char kDebugPluginLoading[];
 @@ -158,17 +158,17 @@ CONTENT_EXPORT extern const char kGpuPro
  CONTENT_EXPORT extern const char kGpuSandboxAllowSysVShm[];
  CONTENT_EXPORT extern const char kGpuSandboxFailuresFatal[];
@@ -49,16 +30,16 @@ diff --git a/content/public/common/content_switches.h b/content/public/common/co
  CONTENT_EXPORT extern const char kProcessPerTab[];
  CONTENT_EXPORT extern const char kProcessType[];
  CONTENT_EXPORT extern const char kReduceSecurityForTesting[];
+ CONTENT_EXPORT extern const char kReducedReferrerGranularity[];
  CONTENT_EXPORT extern const char kRegisterPepperPlugins[];
  CONTENT_EXPORT extern const char kRemoteDebuggingPort[];
- CONTENT_EXPORT extern const char kRendererAssertTest[];
 -extern const char kRendererCmdPrefix[];
 +CONTENT_EXPORT extern const char kRendererCmdPrefix[];
  CONTENT_EXPORT extern const char kRendererProcess[];
  CONTENT_EXPORT extern const char kRendererProcessLimit[];
  CONTENT_EXPORT extern const char kRendererStartupDialog[];
+ CONTENT_EXPORT extern const char kRootLayerScrolls[];
  extern const char kSandboxIPCProcess[];
  CONTENT_EXPORT extern const char kScrollEndEffect[];
  extern const char kShowPaintRects[];
  CONTENT_EXPORT extern const char kSingleProcess[];
- CONTENT_EXPORT extern const char kSitePerProcess[];

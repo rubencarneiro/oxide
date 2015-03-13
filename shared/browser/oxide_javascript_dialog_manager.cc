@@ -121,7 +121,7 @@ JavaScriptDialog* JavaScriptDialogManager::GetActiveDialog(
   std::map<content::WebContents*, JavaScriptDialog*>::const_iterator it;
   it = active_dialogs_.find(web_contents);
   if (it == active_dialogs_.end()) {
-    return NULL;
+    return nullptr;
   }
   return it->second;
 }
@@ -130,7 +130,7 @@ void JavaScriptDialogManager::OnDialogClosed(
     content::WebContents* web_contents,
     JavaScriptDialog* dialog) {
   DCHECK_EQ(dialog, GetActiveDialog(web_contents));
-  active_dialogs_[web_contents] = NULL;
+  active_dialogs_[web_contents] = nullptr;
   content::BrowserThread::DeleteSoon(
       content::BrowserThread::UI, FROM_HERE, dialog);
   std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
@@ -146,7 +146,7 @@ void JavaScriptDialogManager::OnDialogCancelled(
     content::WebContents* web_contents,
     JavaScriptDialog* dialog) {
   if (dialog == GetActiveDialog(web_contents)) {
-    active_dialogs_[web_contents] = NULL;
+    active_dialogs_[web_contents] = nullptr;
   } else {
     std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
     std::deque<JavaScriptDialog*>::iterator it =

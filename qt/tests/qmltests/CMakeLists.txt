@@ -48,16 +48,13 @@ target_include_directories(
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
     ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
-if(OXIDE_ENABLE_COMPOSITING)
-  target_compile_definitions(${QML_TEST} PRIVATE -DENABLE_COMPOSITING)
-endif()
 set_target_properties(
     ${QML_TEST} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR}
     AUTOMOC TRUE)
 
 function(add_qml_test)
-  cmake_parse_arguments(_ARGS "USE_DATA_DIR;SSL_TESTS" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
+  cmake_parse_arguments(_ARGS "SSL_TESTS" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
   if(NOT _ARGS_NAME)
     message(FATAL_ERROR "You must specify NAME when calling add_qml_test")
   endif()
@@ -87,9 +84,6 @@ function(add_qml_test)
        ${QMLTEST_BINARY} -name ${_ARGS_NAME}
        -input ${_ARGS_TEST_DIR}
        -add-library-path ${QTPLUGIN_OUTPUT_DIR})
-  if(_ARGS_USE_DATA_DIR)
-    list(APPEND TEST_COMMAND -use-datadir-for-context)
-  endif()
   if (_ARGS_SSL_TESTS)
     list(APPEND TEST_COMMAND -nss-db-path ${CMAKE_SOURCE_DIR}/qt/tests/ssldata/nss)
   endif()
@@ -97,8 +91,7 @@ function(add_qml_test)
   add_test(NAME ${_ARGS_NAME} COMMAND ${TEST_COMMAND})
 endfunction()
 
-add_qml_test(NAME qml-api-test-noprofile TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
-add_qml_test(NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api USE_DATA_DIR)
-add_qml_test(NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core USE_DATA_DIR)
+add_qml_test(NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
+add_qml_test(NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
 add_qml_test(NAME qml-crash-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
 add_qml_test(NAME qml-ssl-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ssl SSL_TESTS)

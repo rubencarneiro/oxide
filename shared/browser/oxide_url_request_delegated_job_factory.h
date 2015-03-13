@@ -44,6 +44,13 @@ class URLRequestDelegatedJobFactory final : public net::URLRequestJobFactory {
       const std::string& scheme,
       net::URLRequest* request,
       net::NetworkDelegate* network_delegate) const final;
+  net::URLRequestJob* MaybeInterceptRedirect(
+      net::URLRequest* request,
+      net::NetworkDelegate* network_delegate,
+      const GURL& location) const final;
+  net::URLRequestJob* MaybeInterceptResponse(
+      net::URLRequest* request,
+      net::NetworkDelegate* network_delegate) const final;
   bool IsHandledProtocol(const std::string& scheme) const final;
   bool IsHandledURL(const GURL& url) const final;
   bool IsSafeRedirectTarget(const GURL& location) const final;

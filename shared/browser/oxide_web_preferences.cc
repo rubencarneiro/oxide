@@ -17,6 +17,7 @@
 
 #include "oxide_web_preferences.h"
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/common/web_preferences.h"
@@ -24,6 +25,42 @@
 #include "oxide_web_preferences_observer.h"
 
 namespace oxide {
+
+namespace {
+
+class FallbackWebPreferences : public WebPreferences {
+ public:
+  FallbackWebPreferences() {}
+  ~FallbackWebPreferences() final {}
+};
+
+base::LazyInstance<FallbackWebPreferences> g_fallback =
+    LAZY_INSTANCE_INITIALIZER;
+
+}
+
+WebPreferences::~WebPreferences() {
+  FOR_EACH_OBSERVER(WebPreferencesObserver,
+                    observers_,
+                    OnWebPreferencesDestruction());
+}
+
+void WebPreferences::CopyFrom(const WebPreferences* other) {
+  standard_font_family_ = other->standard_font_family_;
+  fixed_font_family_ = other->fixed_font_family_;
+  serif_font_family_ = other->serif_font_family_;
+  sans_serif_font_family_ = other->sans_serif_font_family_;
+  default_encoding_ = other->default_encoding_;
+  default_font_size_ = other->default_font_size_;
+  default_fixed_font_size_ = other->default_fixed_font_size_;
+  minimum_font_size_ = other->minimum_font_size_;
+
+  for (unsigned int i = 0; i < ATTR_LAST; ++i) {
+    attributes_[i] = other->attributes_[i];
+  }
+
+  NotifyObserversOfChange();
+}
 
 void WebPreferences::NotifyObserversOfChange() {
   FOR_EACH_OBSERVER(WebPreferencesObserver,
@@ -47,8 +84,7 @@ WebPreferences::WebPreferences() :
     default_encoding_("ISO-8859-1"),
     default_font_size_(16),
     default_fixed_font_size_(13),
-    minimum_font_size_(0),
-    is_owned_by_embedder_(false) {
+    minimum_font_size_(0) {
   for (unsigned int i = 0; i < ATTR_LAST; ++i) {
     attributes_[i] = false;
   }
@@ -80,12 +116,6 @@ WebPreferences::WebPreferences() :
   SetAttribute(ATTR_TABS_TO_LINKS, true);
 
   // ATTR_CARET_BROWSING_ENABLED
-}
-
-WebPreferences::~WebPreferences() {
-  FOR_EACH_OBSERVER(WebPreferencesObserver,
-                    observers_,
-                    OnWebPreferencesDestruction());
 }
 
 std::string WebPreferences::StandardFontFamily() const {
@@ -237,34 +267,19 @@ void WebPreferences::ApplyToWebkitPrefs(content::WebPreferences* prefs) {
   prefs->caret_browsing_enabled = attributes_[ATTR_CARET_BROWSING_ENABLED];
 }
 
-bool WebPreferences::IsOwnedByEmbedder() const {
-  return is_owned_by_embedder_;
+void WebPreferences::Destroy() {
+  delete this;
 }
 
-void WebPreferences::SetIsOwnedByEmbedder() {
-  CHECK(!is_owned_by_embedder_);
-  is_owned_by_embedder_ = true;
-
-  FOR_EACH_OBSERVER(WebPreferencesObserver,
-                    observers_,
-                    WebPreferencesAdopted());
+WebPreferences* WebPreferences::Clone() const {
+  WebPreferences* rv = new WebPreferences();
+  rv->CopyFrom(this);
+  return rv;
 }
 
-void WebPreferences::CopyFrom(WebPreferences* other) {
-  standard_font_family_ = other->standard_font_family_;
-  fixed_font_family_ = other->fixed_font_family_;
-  serif_font_family_ = other->serif_font_family_;
-  sans_serif_font_family_ = other->sans_serif_font_family_;
-  default_encoding_ = other->default_encoding_;
-  default_font_size_ = other->default_font_size_;
-  default_fixed_font_size_ = other->default_fixed_font_size_;
-  minimum_font_size_ = other->minimum_font_size_;
-
-  for (unsigned int i = 0; i < ATTR_LAST; ++i) {
-    attributes_[i] = other->attributes_[i];
-  }
-
-  NotifyObserversOfChange();
+// static
+WebPreferences* WebPreferences::GetFallback() {
+  return g_fallback.Pointer();
 }
 
 } // namespace oxide

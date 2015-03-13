@@ -191,7 +191,7 @@ bool LocationSourceProxy::Initialize() {
 
   initialization_waiter_.wait(&initialization_lock_);
 
-  return source_ != NULL;
+  return source_ != nullptr;
 }
 
 bool LocationSourceProxy::IsCurrentlyOnGeolocationThread() const {
@@ -206,7 +206,7 @@ bool LocationSourceProxy::IsCurrentlyOnIOThread() {
 void LocationSourceProxy::InitializeOnIOThread() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-  source_.reset(QGeoPositionInfoSource::createDefaultSource(NULL));
+  source_.reset(QGeoPositionInfoSource::createDefaultSource(nullptr));
 
   {
     QMutexLocker lock(&initialization_lock_);

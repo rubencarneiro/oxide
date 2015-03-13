@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 1.0
+import com.canonical.Oxide 1.6
 import com.canonical.Oxide.Testing 1.0
 
 TestCase {
@@ -28,13 +28,10 @@ TestCase {
   function test_WebContext_semi_construct_only_properties1_data() {
     var r = [
       { prop: "dataPath", signal: "dataPathChanged", val: "file:///foo", dataPath: "" },
-      { prop: "cachePath", signal: "cachePathChanged", val: "file:///foo", dataPath: "" }
+      { prop: "cachePath", signal: "cachePathChanged", val: "file:///foo", dataPath: "" },
+      { prop: "maxCacheSizeHint", signal: "maxCacheSizeHintChanged", val: 1, dataPath: "" },
+      { prop: "sessionCookieMode", signal: "sessionCookieModeChanged", val: WebContext.SessionCookieModeRestored, dataPath: QMLTEST_DATADIR }
     ];
-    if (QMLTEST_USE_CONTEXT_DATADIR) {
-      r.push(
-        { prop: "sessionCookieMode", signal: "sessionCookieModeChanged", val: WebContext.SessionCookieModeRestored, dataPath: QMLTEST_DATADIR }
-      );
-    }
 
     return r;
   }

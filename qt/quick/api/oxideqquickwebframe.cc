@@ -30,15 +30,10 @@ OxideQQuickWebFramePrivate::OxideQQuickWebFramePrivate(
     OxideQQuickWebFrame* q) :
     oxide::qt::WebFrameAdapter(q) {}
 
-void OxideQQuickWebFramePrivate::URLChanged() {
+void OxideQQuickWebFramePrivate::URLCommitted() {
   Q_Q(OxideQQuickWebFrame);
 
   emit q->urlChanged();
-}
-
-OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
-    OxideQQuickWebFrame* frame) {
-  return frame->d_func();
 }
 
 // static
@@ -78,6 +73,11 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
 
   return adapterToQObject<OxideQQuickScriptMessageHandler>(
       p->messageHandlers().at(index));
+}
+
+OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
+    OxideQQuickWebFrame* frame) {
+  return frame->d_func();
 }
 
 OxideQQuickWebFrame::OxideQQuickWebFrame() :
@@ -122,7 +122,7 @@ OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
 
 QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {
   return QQmlListProperty<OxideQQuickWebFrame>(
-      this, NULL,
+      this, nullptr,
       OxideQQuickWebFramePrivate::childFrame_count,
       OxideQQuickWebFramePrivate::childFrame_at);
 }
@@ -130,7 +130,7 @@ QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {
 QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebFrame::messageHandlers() {
   return QQmlListProperty<OxideQQuickScriptMessageHandler>(
-      this, NULL,
+      this, nullptr,
       OxideQQuickWebFramePrivate::messageHandler_count,
       OxideQQuickWebFramePrivate::messageHandler_at);
 }
@@ -178,7 +178,7 @@ void OxideQQuickWebFrame::removeMessageHandler(
     return;
   }
 
-  handler->setParent(NULL);
+  handler->setParent(nullptr);
   d->messageHandlers().removeOne(hd);
 
   emit messageHandlersChanged();
@@ -193,10 +193,15 @@ OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
   OxideQQuickScriptMessageRequest* request =
       new OxideQQuickScriptMessageRequest();
 
-  if (!d->sendMessage(context, msg_id, args,
+  QVariant aux = args;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  if (!d->sendMessage(context, msg_id, aux,
                       OxideQQuickScriptMessageRequestPrivate::get(request))) {
     delete request;
-    return NULL;
+    return nullptr;
   }
 
   return request;
@@ -207,5 +212,10 @@ void OxideQQuickWebFrame::sendMessageNoReply(const QUrl& context,
                                              const QVariant& args) {
   Q_D(OxideQQuickWebFrame);
 
-  d->sendMessageNoReply(context, msg_id, args);
+  QVariant aux = args;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  d->sendMessageNoReply(context, msg_id, aux);
 }

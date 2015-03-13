@@ -38,6 +38,7 @@ class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
 class OxideQWebPreferences;
+class OxideQQuickLocationBarController;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContext;
@@ -67,6 +68,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_FLAGS(ContentType)
   Q_ENUMS(LogMessageSeverityLevel);
+  Q_ENUMS(RestoreType);
 
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
@@ -106,10 +108,20 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
+  // Set at construction time only
+  Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState REVISION 2)
+  Q_PROPERTY(RestoreType restoreType READ restoreType WRITE setRestoreType REVISION 2)
+  // Use to query the current state, to restore later
+  // XXX: not notify-able for now, until we figure out a way
+  // to do incremental updates
+  Q_PROPERTY(QString currentState READ currentState REVISION 2)
+
+  Q_PROPERTY(OxideQQuickLocationBarController* locationBarController READ locationBarController CONSTANT REVISION 3)
+
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
-  OxideQQuickWebView(QQuickItem* parent = NULL);
+  OxideQQuickWebView(QQuickItem* parent = nullptr);
   virtual ~OxideQQuickWebView();
 
   enum LogMessageSeverityLevel {
@@ -129,6 +141,12 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     ContentTypeMixedScript = 1 << 1
   };
   Q_DECLARE_FLAGS(ContentType, ContentTypeFlags)
+
+  enum RestoreType {
+    RestoreCurrentSession,
+    RestoreLastSessionExitedCleanly,
+    RestoreLastSessionCrashed
+  };
 
   void componentComplete();
 
@@ -197,6 +215,14 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   OxideQNewViewRequest* request() const;
   void setRequest(OxideQNewViewRequest* request);
 
+  QString restoreState() const;
+  void setRestoreState(const QString& state);
+  RestoreType restoreType() const;
+  void setRestoreType(RestoreType type);
+  QString currentState() const;
+
+  OxideQQuickLocationBarController* locationBarController();
+
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
  public Q_SLOTS:
@@ -209,7 +235,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void setCanTemporarilyDisplayInsecureContent(bool allow);
   void setCanTemporarilyRunInsecureContent(bool allow);
 
-  void prepareToClose();
+  Q_REVISION(2) void prepareToClose();
 
  Q_SIGNALS:
   void urlChanged();
@@ -217,8 +243,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void iconChanged();
   void navigationHistoryChanged();
   void incognitoChanged();
-  void loadingStateChanged();
-  void loadEvent(OxideQLoadEvent* event);
+  Q_REVISION(1) void loadingStateChanged();
+  Q_REVISION(1) void loadEvent(OxideQLoadEvent* event);
   void fullscreenChanged();
   void loadProgressChanged();
   void rootFrameChanged();
@@ -250,17 +276,21 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void downloadRequested(OxideQDownloadRequest* request);
   void certificateError(const QJSValue& error);
   void blockedContentChanged();
-  void prepareToCloseResponse(bool proceed);
-  void closeRequested();
+  Q_REVISION(2) void prepareToCloseResponse(bool proceed);
+  Q_REVISION(2) void closeRequested();
 
   // Deprecated since 1.3
   void loadingChanged(OxideQLoadEvent* loadEvent);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
-  Q_PRIVATE_SLOT(d_func(), void contextWillBeDestroyed());
+  Q_PRIVATE_SLOT(d_func(), void contextDestroyed());
 
-  Q_PRIVATE_SLOT(d_func(), void onWindowChanged(QQuickWindow*));
+  Q_PRIVATE_SLOT(d_func(), void screenChanged(QScreen*));
+  Q_PRIVATE_SLOT(d_func(), void windowChangedHelper(QQuickWindow*));
+
+  Q_PRIVATE_SLOT(d_func(), void screenGeometryChanged(const QRect&));
+  Q_PRIVATE_SLOT(d_func(), void screenOrientationChanged(Qt::ScreenOrientation));
 
   void connectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
@@ -271,8 +301,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
                   const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
   QSGNode* updatePaintNode(
       QSGNode* oldNode,
-      UpdatePaintNodeData * updatePaintNodeData) Q_DECL_FINAL;
-  void updatePolish() Q_DECL_FINAL;
+      UpdatePaintNodeData* updatePaintNodeData) Q_DECL_FINAL;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

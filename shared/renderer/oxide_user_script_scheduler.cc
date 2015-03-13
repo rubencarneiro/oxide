@@ -22,10 +22,10 @@
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
 
-#include "shared/common/oxide_content_client.h"
+#include "grit/oxide_resources.h"
+
 #include "shared/common/oxide_user_script.h"
 
-#include "oxide_content_renderer_client.h"
 #include "oxide_user_script_slave.h"
 
 namespace oxide {
@@ -33,14 +33,12 @@ namespace oxide {
 void UserScriptScheduler::DoIdleInject() {
   idle_posted_ = false;
 
-  UserScriptSlave* user_script_slave =
-      ContentClient::instance()->renderer()->user_script_slave();
-
   for (std::set<blink::WebLocalFrame *>::const_iterator it =
            pending_idle_frames_.begin();
        it != pending_idle_frames_.end(); ++it) {
-    blink::WebLocalFrame* f = *it;
-    user_script_slave->InjectScripts(f, UserScript::DOCUMENT_IDLE);
+    blink::WebLocalFrame* frame = *it;
+    UserScriptSlave::GetInstance()->InjectScripts(frame,
+                                                  UserScript::DOCUMENT_IDLE);
   }
 
   pending_idle_frames_.clear();
@@ -52,8 +50,8 @@ UserScriptScheduler::UserScriptScheduler(content::RenderView* render_view) :
     weak_factory_(this) {}
 
 void UserScriptScheduler::DidFinishDocumentLoad(blink::WebLocalFrame* frame) {
-  ContentClient::instance()->renderer()->user_script_slave()->InjectScripts(
-      frame, UserScript::DOCUMENT_END);
+  UserScriptSlave::GetInstance()->InjectScripts(frame,
+                                                UserScript::DOCUMENT_END);
 }
 
 void UserScriptScheduler::DidFinishLoad(blink::WebLocalFrame* frame) {
@@ -72,8 +70,8 @@ void UserScriptScheduler::DidFinishLoad(blink::WebLocalFrame* frame) {
 }
 
 void UserScriptScheduler::DidCreateDocumentElement(blink::WebLocalFrame* frame) {
-  ContentClient::instance()->renderer()->user_script_slave()->InjectScripts(
-      frame, UserScript::DOCUMENT_START);
+  UserScriptSlave::GetInstance()->InjectScripts(frame,
+                                                UserScript::DOCUMENT_START);
 }
 
 void UserScriptScheduler::FrameDetached(blink::WebFrame* frame) {

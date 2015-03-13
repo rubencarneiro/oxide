@@ -19,154 +19,156 @@
 
 #include <algorithm>
 
-#include "base/auto_reset.h"
-#include "base/bind.h"
 #include "base/logging.h"
 
 namespace oxide {
 
-// static
-void PermissionRequestManager::CancelPendingRequestFromSource(
-    const base::WeakPtr<PermissionRequest>& request) {
-  if (request) {
-    request->Cancel(true);
+PermissionRequestID::PermissionRequestID(int render_process_id,
+                                         int render_view_id,
+                                         int bridge_id,
+                                         const GURL& origin)
+    : render_process_id_(render_process_id),
+      render_view_id_(render_view_id),
+      bridge_id_(bridge_id),
+      origin_(origin) {}
+
+PermissionRequestID::PermissionRequestID()
+    : render_process_id_(-1),
+      render_view_id_(-1),
+      bridge_id_(-1) {}
+
+PermissionRequestID::~PermissionRequestID() {}
+
+bool PermissionRequestID::IsValid() const {
+  return render_process_id_ > -1 && render_view_id_ > -1 && bridge_id_ > -1;
+}
+
+bool PermissionRequestID::operator==(const PermissionRequestID& other) const {
+  return render_process_id_ == other.render_process_id_ &&
+         render_view_id_ == other.render_view_id_ &&
+         bridge_id_ == other.bridge_id_ &&
+         origin_ == other.origin_;
+}
+
+class PermissionRequestManager::IteratorGuard {
+ public:
+  IteratorGuard(PermissionRequestManager* manager);
+  ~IteratorGuard();
+
+ private:
+  base::WeakPtr<PermissionRequestManager> manager_;
+  bool iterating_original_;
+
+  DISALLOW_COPY_AND_ASSIGN(IteratorGuard);
+};
+
+PermissionRequestManager::IteratorGuard::IteratorGuard(
+    PermissionRequestManager* manager)
+    : manager_(manager->weak_factory_.GetWeakPtr()),
+      iterating_original_(manager->iterating_) {
+  manager->iterating_ = true;
+}
+
+PermissionRequestManager::IteratorGuard::~IteratorGuard() {
+  if (!manager_) {
+    return;
+  }
+
+  manager_->iterating_ = iterating_original_;
+  if (!manager_->iterating_) {
+    manager_->Compact();
   }
 }
 
-void PermissionRequestManager::AddPendingRequest(PermissionRequestType type,
-                                                 PermissionRequest* request) {
-  PermissionRequestVector& requests = pending_requests_[type];
+void PermissionRequestManager::AddPendingRequest(PermissionRequest* request) {
+  DCHECK_EQ(request->manager_, this);
+  DCHECK(std::find(
+      pending_requests_.begin(),
+      pending_requests_.end(),
+      request) == pending_requests_.end());
 
-  DCHECK(std::find(requests.begin(), requests.end(), request) == requests.end());
-
-  request->type_ = type;
-  request->manager_ = AsWeakPtr();
-  requests.push_back(request);
+  pending_requests_.push_back(request);
 }
 
 void PermissionRequestManager::RemovePendingRequest(
     PermissionRequest* request) {
-  DCHECK_LT(request->type_, PERMISSION_REQUEST_TYPE_MAX);
-
-  PermissionRequestVector& requests = pending_requests_[request->type_];
-
-  PermissionRequestVector::iterator it =
-      std::find(requests.begin(), requests.end(), request);
-  CHECK(it != requests.end());
-  if (in_dispatch_) {
-    *it = NULL;
+  DCHECK_EQ(request->manager_, this);
+  auto it =
+      std::find(pending_requests_.begin(), pending_requests_.end(), request);
+  DCHECK(it != pending_requests_.end());
+  if (iterating_) {
+    *it = nullptr;
   } else {
-    requests.erase(it);
+    pending_requests_.erase(it);
   }
+
+  request->manager_ = nullptr;
+}
+
+void PermissionRequestManager::Compact() {
+  DCHECK(!iterating_);
+
+  pending_requests_.erase(
+      std::remove(pending_requests_.begin(), pending_requests_.end(), nullptr),
+      pending_requests_.end());
 }
 
 PermissionRequestManager::PermissionRequestManager()
-    : in_dispatch_(false) {}
+    : iterating_(false),
+      weak_factory_(this) {}
 
 PermissionRequestManager::~PermissionRequestManager() {
-  CHECK(!HasAnyPendingRequests());
+  CancelPendingRequests();
 }
 
-scoped_ptr<SimplePermissionRequest>
-PermissionRequestManager::CreateSimplePermissionRequest(
-    PermissionRequestType type,
-    const base::Callback<void(bool)>& callback,
-    base::Closure* cancel_callback) {
-  CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
+void PermissionRequestManager::CancelPendingRequests() {
+  IteratorGuard guard(this);
+  for (auto it = pending_requests_.begin();
+       it != pending_requests_.end(); ++it) {
+    PermissionRequest* request = *it;
+    if (!request) {
+      continue;
+    }
 
-  scoped_ptr<SimplePermissionRequest> rv(
-      new SimplePermissionRequest(callback));
-  AddPendingRequest(type, rv.get());
-
-  if (cancel_callback) {
-    *cancel_callback = base::Bind(CancelPendingRequestFromSource,
-                                  rv->AsWeakPtr());
+    RemovePendingRequest(request);
+    request->Cancel();
   }
-
-  return rv.Pass();
 }
 
-bool PermissionRequestManager::HasAnyPendingRequests() {
-  for (int i = PERMISSION_REQUEST_TYPE_START;
-       i < PERMISSION_REQUEST_TYPE_MAX; ++i) {
-    if (HasPendingRequestsForType(static_cast<PermissionRequestType>(i))) {
-      return true;
+void PermissionRequestManager::CancelPendingRequestForID(
+    const PermissionRequestID& request_id) {
+  for (auto it = pending_requests_.begin();
+       it != pending_requests_.end(); ++it) {
+    PermissionRequest* request = *it;
+    if (request->request_id_ == request_id) {
+      RemovePendingRequest(request);
+      request->Cancel();
+      break;
     }
   }
-
-  return false;
 }
 
-bool PermissionRequestManager::HasPendingRequestsForType(
-    PermissionRequestType type) {
-  CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
-
-  PermissionRequestVector& requests = pending_requests_[type];
-
-  for (PermissionRequestVector::iterator it = requests.begin();
-       it != requests.end(); ++it) {
-    PermissionRequest* req = *it;
-    if (!req->is_cancelled_ && req->CanRespond()) {
-      return true;
-    }
-  }
-
-  return false;
+PermissionRequest::PermissionRequest(PermissionRequestManager* manager,
+                                     const PermissionRequestID& request_id,
+                                     const GURL& url,
+                                     const GURL& embedder)
+    : manager_(manager),
+      request_id_(request_id),
+      url_(url),
+      embedder_(embedder),
+      is_cancelled_(false) {
+  DCHECK(manager_);
+  manager_->AddPendingRequest(this);
 }
 
-void PermissionRequestManager::AbortPendingRequest(
-    PermissionRequest* request) {
-  if (!request) {
-    return;
-  }
+void PermissionRequest::Cancel() {
+  DCHECK(!is_cancelled_);
 
-  request->Cancel(true);
-}
-
-void PermissionRequestManager::CancelAllPendingRequests() {
-  for (int i = PERMISSION_REQUEST_TYPE_START;
-       i < PERMISSION_REQUEST_TYPE_MAX; ++i) {
-    CancelPendingRequestsForType(static_cast<PermissionRequestType>(i));
-  }
-}
-
-void PermissionRequestManager::CancelPendingRequestsForType(
-    PermissionRequestType type) {
-  CHECK_LT(type, PERMISSION_REQUEST_TYPE_MAX);
-  DCHECK(!in_dispatch_);
-
-  PermissionRequestVector& requests = pending_requests_[type];
-
-  {
-    base::AutoReset<bool> d(&in_dispatch_, true);
-
-    for (PermissionRequestVector::iterator it = requests.begin();
-         it != requests.end(); ++it) {
-      PermissionRequest* request = *it;
-      if (request) {
-        request->Cancel(false);
-      }
-    }
-  }
-
-  requests.erase(
-      std::remove(requests.begin(), requests.end(),
-                  static_cast<PermissionRequest *>(NULL)),
-      requests.end());
-}
-
-PermissionRequest::PermissionRequest()
-    : type_(PERMISSION_REQUEST_TYPE_START),
-      is_cancelled_(false) {}
-
-void PermissionRequest::Cancel(bool from_source) {
-  if (is_cancelled_) {
-    // Can be called multiple times from PermissionRequestManager
-    return;
-  }
   is_cancelled_ = true;
+
   if (!cancel_callback_.is_null()) {
     cancel_callback_.Run();
+    cancel_callback_.Reset();
   }
 }
 
@@ -181,24 +183,23 @@ void PermissionRequest::SetCancelCallback(const base::Closure& callback) {
   cancel_callback_ = callback;
 }
 
-SimplePermissionRequest::SimplePermissionRequest(
-    const base::Callback<void(bool)>& callback)
-    : callback_(callback) {}
+void SimplePermissionRequest::Cancel() {
+  DCHECK(!callback_.is_null());
 
-void SimplePermissionRequest::Cancel(bool from_source) {
-  if (callback_.is_null()) {
-    return;
-  }
-  if (!from_source && !callback_.is_null()) {
-    Deny();
-  }
+  callback_.Run(content::PERMISSION_STATUS_DENIED);
   callback_.Reset();
-  PermissionRequest::Cancel(from_source);
+
+  PermissionRequest::Cancel();
 }
 
-bool SimplePermissionRequest::CanRespond() const {
-  return !callback_.is_null();
-}
+SimplePermissionRequest::SimplePermissionRequest(
+    PermissionRequestManager* manager,
+    const PermissionRequestID& request_id,
+    const GURL& url,
+    const GURL& embedder,
+    const base::Callback<void(content::PermissionStatus)>& callback)
+    : PermissionRequest(manager, request_id, url, embedder),
+      callback_(callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {
   if (!callback_.is_null()) {
@@ -207,25 +208,21 @@ SimplePermissionRequest::~SimplePermissionRequest() {
 }
 
 void SimplePermissionRequest::Allow() {
-  if (callback_.is_null()) {
-    LOG(ERROR) << "Cannot Allow() a request that has been cancelled or "
-                  "responded to already";
-    return;
-  }
+  DCHECK(!callback_.is_null());
 
-  callback_.Run(true);
+  callback_.Run(content::PERMISSION_STATUS_GRANTED);
   callback_.Reset();
+
+  manager_->RemovePendingRequest(this);
 }
 
 void SimplePermissionRequest::Deny() {
-  if (callback_.is_null()) {
-    LOG(ERROR) << "Cannot Deny() a request that has been cancelled or "
-                  "responded to already";
-    return;
-  }
+  DCHECK(!callback_.is_null());
 
-  callback_.Run(false);
+  callback_.Run(content::PERMISSION_STATUS_DENIED);
   callback_.Reset();
+
+  manager_->RemovePendingRequest(this);
 }
 
 } // namespace oxide

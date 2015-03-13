@@ -20,17 +20,21 @@
 
 #include <cstdint>
 
-#include "base/memory/ref_counted.h"
-#include "base/message_loop/message_loop.h"
+#include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "content/common/content_export.h"
 
-namespace base {
-class SingleThreadTaskRunner;
+typedef unsigned int GLuint;
+
+namespace gfx {
+class GLShareGroup;
 }
 
 namespace gpu {
 class Mailbox;
 namespace gles2 {
+class TextureManager;
 class TextureRef;
 }
 }
@@ -38,31 +42,54 @@ class TextureRef;
 namespace content {
 
 class ContextProviderCommandBuffer;
+class GpuCommandBufferStub;
 
-namespace gpu_shim {
+namespace oxide_gpu_shim {
 
-CONTENT_EXPORT bool IsCurrentlyOnGpuThread();
+// Wrapper class for TextureRef. This is not thread-safe, and should only
+// be used on the GPU thread
+class CONTENT_EXPORT Texture {
+ public:
+  Texture(content::GpuCommandBufferStub* command_buffer,
+          gpu::gles2::TextureRef* ref);
+  ~Texture();
 
-CONTENT_EXPORT scoped_refptr<base::SingleThreadTaskRunner> GetGpuThreadTaskRunner();
-CONTENT_EXPORT void AddGpuThreadTaskObserver(base::MessageLoop::TaskObserver* obs);
+  // Return the real texture ID
+  GLuint GetServiceID() const;
 
-CONTENT_EXPORT gpu::gles2::TextureRef* CreateTextureRef(
-    unsigned target,
+  // Returns the TextureManager associated with the share group that the
+  // TextureRef belongs to
+  gpu::gles2::TextureManager* GetTextureManager() const;
+
+  // Destroy the underlying TextureRef. This can fail, eg, if the context
+  // is lost. On success, |this| can be deleted. On failure, |this| must not
+  // be deleted until its TextureManager is deing destroyed
+  // Returns: true on success, false on failure
+  bool Destroy();  
+
+ private:
+  // We use a WeakPtr, but it's a bug if this class outlives command_buffer_
+  base::WeakPtr<content::GpuCommandBufferStub> command_buffer_;
+
+  scoped_refptr<gpu::gles2::TextureRef> ref_;
+
+  DISALLOW_COPY_AND_ASSIGN(Texture);
+};
+
+// Create and return a Texture instance for the corresponding client process,
+// command buffer and mailbox. The caller takes ownership of Texture
+CONTENT_EXPORT Texture* ConsumeTextureFromMailbox(
     int32_t client_id,
     int32_t route_id,
     const gpu::Mailbox& mailbox);
-CONTENT_EXPORT void ReleaseTextureRef(int32_t client_id,
-                                      int32_t route_id,
-                                      gpu::gles2::TextureRef* ref);
-
-CONTENT_EXPORT bool IsSyncPointRetired(uint32_t sync_point);
-CONTENT_EXPORT void AddSyncPointCallback(uint32_t sync_point,
-                                         const base::Closure& callback);
 
 CONTENT_EXPORT int32_t GetContextProviderRouteID(
     content::ContextProviderCommandBuffer* provider);
 
-} // gpu_shim
+CONTENT_EXPORT gfx::GLShareGroup* GetGLShareGroup();
+CONTENT_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
+
+} // oxide_gpu_shim
 } // content
 
 #endif // _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_THREAD_SHIM_H_
