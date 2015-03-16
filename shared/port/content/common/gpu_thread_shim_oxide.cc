@@ -193,7 +193,8 @@ EGLImageKHR CreateImageFromTexture(int32_t client_id,
     return EGL_NO_IMAGE_KHR;
   }
 
-  if (!command_buffer->decoder()->MakeCurrent()) {
+  gpu::gles2::GLES2Decoder* decoder = command_buffer->decoder();
+  if (!decoder->MakeCurrent()) {
     return EGL_NO_IMAGE_KHR;
   }
 
