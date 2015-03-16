@@ -26,7 +26,6 @@ add-limit-max-decoded-image-bytes-switch.patch
 customize-gesture-fling-curve.patch
 mediahub-support.patch
 allow-os-override-for-gpu-manager.patch
-viewport-min-width.patch
 use-android-style-overlay-scrollbars.patch
 allow-render-widget-compositor-settings-override.patch
 enable-accelerated-canvas-on-krillin.patch
