@@ -76,6 +76,28 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
   owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
 }
 
+void CompositorThreadProxy::SendSwapImageFrameOnOwnerThread(
+    uint32 surface_id,
+    const gfx::Size& size,
+    float scale,
+    scoped_ptr<ImageFrameData> image_frame_data) {
+  if (!image_frame_data) {
+    DidSkipSwapCompositorFrame(surface_id, nullptr);
+    return;
+  }
+
+  scoped_refptr<CompositorFrameHandle> frame(
+      new CompositorFrameHandle(surface_id, this, size, scale));
+  frame->image_frame_data_ = image_frame_data.Pass();
+
+  if (!owner().compositor) {
+    DidSkipSwapCompositorFrame(surface_id, &frame);
+    return;
+  }
+
+  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
+}
+
 void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
     uint32 surface_id,
     const gfx::Size& size,
@@ -129,6 +151,11 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
       ack.gl_frame_data.reset(new cc::GLFrameData());
       ack.gl_frame_data->mailbox = gl_frame_data->mailbox();
       ack.gl_frame_data->size = frame->size_in_pixels();
+    } else if (frame->image_frame_data()) {
+      scoped_ptr<ImageFrameData> image_frame_data = frame->image_frame_data_.Pass();
+      ack.gl_frame_data.reset(new cc::GLFrameData());
+      ack.gl_frame_data->mailbox = image_frame_data->mailbox();
+      ack.gl_frame_data->size = frame->size_in_pixels();
     } else if (frame->software_frame_data()) {
       scoped_ptr<SoftwareFrameData> software_frame_data =
           frame->software_frame_data_.Pass();
@@ -147,7 +174,8 @@ void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
     uint32 surface_id,
     const gfx::Size& size_in_pixels,
     scoped_ptr<GLFrameData> gl_frame_data,
-    scoped_ptr<SoftwareFrameData> software_frame_data) {
+    scoped_ptr<SoftwareFrameData> software_frame_data,
+    scoped_ptr<ImageFrameData> image_frame_data) {
   if (!impl().output) {
     return;
   }
@@ -160,6 +188,10 @@ void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
   if (gl_frame_data.get()) {
     ack.gl_frame_data.reset(new cc::GLFrameData());
     ack.gl_frame_data->mailbox = gl_frame_data->mailbox();
+    ack.gl_frame_data->size = size_in_pixels;
+  } else if (image_frame_data.get()) {
+    ack.gl_frame_data.reset(new cc::GLFrameData());
+    ack.gl_frame_data->mailbox = image_frame_data->mailbox();
     ack.gl_frame_data->size = size_in_pixels;
   } else if (software_frame_data.get()) {
     ack.last_software_frame_id = software_frame_data->id();
@@ -180,7 +212,8 @@ CompositorThreadProxy::ImplData& CompositorThreadProxy::impl() {
   return impl_unsafe_access_;
 }
 CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)
-    : owner_message_loop_(base::MessageLoopProxy::current()) {
+    : mode_(CompositorUtils::GetInstance()->GetCompositingMode()),
+      owner_message_loop_(base::MessageLoopProxy::current()) {
   owner().compositor = compositor;
   impl_thread_checker_.DetachFromThread();
 }
@@ -199,17 +232,31 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
   if (frame->gl_frame_data) {
     cc::GLFrameData* gl_frame_data = frame->gl_frame_data.get();
 
-    CompositorUtils::GetInstance()->CreateGLFrameHandle(
-        impl().output->context_provider(),
-        gl_frame_data->mailbox,
-        gl_frame_data->sync_point,
-        base::Bind(
-          &CompositorThreadProxy::SendSwapGLFrameOnOwnerThread,
-          this, impl().output->surface_id(),
-          gl_frame_data->size, frame->metadata.device_scale_factor),
-        owner_message_loop_);
+    if (mode_ == COMPOSITING_MODE_TEXTURE) {
+      CompositorUtils::GetInstance()->CreateGLFrameHandle(
+          impl().output->context_provider(),
+          gl_frame_data->mailbox,
+          gl_frame_data->sync_point,
+          base::Bind(
+            &CompositorThreadProxy::SendSwapGLFrameOnOwnerThread,
+            this, impl().output->surface_id(),
+            gl_frame_data->size, frame->metadata.device_scale_factor),
+          owner_message_loop_);
+    } else {
+      DCHECK_EQ(mode_, COMPOSITING_MODE_IMAGE);
+      CompositorUtils::GetInstance()->CreateImageFrameHandle(
+          impl().output->context_provider(),
+          gl_frame_data->mailbox,
+          gl_frame_data->sync_point,
+          base::Bind(
+            &CompositorThreadProxy::SendSwapImageFrameOnOwnerThread,
+            this, impl().output->surface_id(),
+            gl_frame_data->size, frame->metadata.device_scale_factor),
+          owner_message_loop_);
+    }
   } else {
     DCHECK(frame->software_frame_data);
+    DCHECK_EQ(mode_, COMPOSITING_MODE_SOFTWARE);
     cc::SoftwareFrameData* software_frame_data = frame->software_frame_data.get();
 
     owner_message_loop_->PostTask(
@@ -256,7 +303,8 @@ void CompositorThreadProxy::ReclaimResourcesForFrame(
         &CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread,
         this, frame->surface_id_, frame->size_in_pixels(),
         base::Passed(&frame->gl_frame_data_),
-        base::Passed(&frame->software_frame_data_)));
+        base::Passed(&frame->software_frame_data_),
+        base::Passed(&frame->image_frame_data_)));
 }
 
 } // namespace oxide

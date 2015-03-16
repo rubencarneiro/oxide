@@ -40,6 +40,7 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_before_unload_dialog_delegate.cc
     oxide_qquick_confirm_dialog_delegate.cc
     oxide_qquick_file_picker_delegate.cc
+    oxide_qquick_image_frame_node.cc
     oxide_qquick_init.cc
     oxide_qquick_javascript_dialog_delegate.cc
     oxide_qquick_prompt_dialog_delegate.cc

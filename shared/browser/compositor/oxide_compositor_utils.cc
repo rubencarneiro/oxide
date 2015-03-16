@@ -40,6 +40,7 @@
 #include "content/gpu/gpu_child_thread.h"
 #include "gpu/command_buffer/service/sync_point_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
+#include "ui/gl/gl_surface_egl.h"
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 #include "shared/common/oxide_id_allocator.h"
@@ -59,11 +60,25 @@ class GLFrameHandle : public GLFrameData {
  public:
   GLFrameHandle(const gpu::Mailbox& mailbox,
                 GLuint texture_id,
-                const scoped_refptr<cc::ContextProvider>& context_provider)
+                cc::ContextProvider* context_provider)
       : GLFrameData(mailbox, texture_id),
         context_provider_(context_provider) {}
 
-  virtual ~GLFrameHandle() override;
+  ~GLFrameHandle() override;
+
+ private:
+  scoped_refptr<cc::ContextProvider> context_provider_;
+};
+
+class ImageFrameHandle : public ImageFrameData {
+ public:
+  ImageFrameHandle(const gpu::Mailbox& mailbox,
+                   EGLImageKHR image,
+                   cc::ContextProvider* context_provider)
+      : ImageFrameData(mailbox, image),
+        context_provider_(context_provider) {}
+
+  ~ImageFrameHandle() override;
 
  private:
   scoped_refptr<cc::ContextProvider> context_provider_;
@@ -82,11 +97,34 @@ struct FetchTextureResourcesTaskInfo {
         context_provider(context_provider),
         mailbox(mailbox),
         sync_point(sync_point),
-        callback(callback),
-        task_runner(task_runner) {
+        task_runner(task_runner),
+        want_egl_image(false) {
     route_id = content::oxide_gpu_shim::GetContextProviderRouteID(
         static_cast<content::ContextProviderCommandBuffer*>(
           this->context_provider.get()));
+    gl.callback = callback;
+    gl.service_id = 0;
+  }
+
+  FetchTextureResourcesTaskInfo(
+      int32 client_id,
+      cc::ContextProvider* context_provider,
+      const gpu::Mailbox& mailbox,
+      uint32 sync_point,
+      const CompositorUtils::CreateImageFrameHandleCallback& callback,
+      base::SingleThreadTaskRunner* task_runner)
+      : client_id(client_id),
+        route_id(-1),
+        context_provider(context_provider),
+        mailbox(mailbox),
+        sync_point(sync_point),
+        task_runner(task_runner),
+        want_egl_image(true) {
+    route_id = content::oxide_gpu_shim::GetContextProviderRouteID(
+        static_cast<content::ContextProviderCommandBuffer*>(
+          this->context_provider.get()));
+    image.callback = callback;
+    image.egl_image = EGL_NO_IMAGE_KHR;
   }
 
   ~FetchTextureResourcesTaskInfo();
@@ -96,8 +134,17 @@ struct FetchTextureResourcesTaskInfo {
   scoped_refptr<cc::ContextProvider> context_provider;
   gpu::Mailbox mailbox;
   uint32 sync_point;
-  CompositorUtils::CreateGLFrameHandleCallback callback;
   scoped_refptr<base::SingleThreadTaskRunner> task_runner;
+  bool want_egl_image;
+
+  struct {
+    CompositorUtils::CreateGLFrameHandleCallback callback;
+    GLuint service_id;
+  } gl;
+  struct {
+    CompositorUtils::CreateImageFrameHandleCallback callback;
+    EGLImageKHR egl_image;
+  } image;
 };
 
 class CompositorThread : public base::Thread {
@@ -118,7 +165,7 @@ class CompositorUtilsImpl
   static CompositorUtilsImpl* GetInstance();
 
   // CompositorUtils implementation
-  void Initialize() override;
+  void Initialize(bool has_share_context) override;
   void Shutdown() override;
   scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() override;
   void CreateGLFrameHandle(
@@ -127,8 +174,15 @@ class CompositorUtilsImpl
       uint32 sync_point,
       const CreateGLFrameHandleCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
+  void CreateImageFrameHandle(
+      cc::ContextProvider* context_provider,
+      const gpu::Mailbox& mailbox,
+      uint32 sync_point,
+      const CreateImageFrameHandleCallback& callback,
+      scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
   gfx::GLSurfaceHandle GetSharedSurfaceHandle() override;
-  bool CanUseGpuCompositing() override;
+  bool CanUseGpuCompositing() const override;
+  CompositingMode GetCompositingMode() const override;
 
   bool RefTexture(int32 client_id,
                   int32 route_id,
@@ -151,7 +205,8 @@ class CompositorUtilsImpl
   void ContinueFetchTextureResourcesOnGpuThread(int id);
   void ContinueFetchTextureResourcesOnGpuThread_Locked(int id);
 
-  void SendCreateGLFrameHandleResponse(int id, GLuint texture_id);
+  void SendCreateFrameHandleResponse(int id);
+
   // base::MessageLoop::TaskObserver implementation
   void WillProcessTask(const base::PendingTask& pending_task) override;
   void DidProcessTask(const base::PendingTask& pending_task) override;
@@ -162,6 +217,9 @@ class CompositorUtilsImpl
 
   // The client ID for this process's GPU channel
   int32 client_id_;
+
+  // Whether or not we have a shared GL context
+  bool has_share_context_;
 
   // ThreadChecker for the thread that called Initialize()
   base::ThreadChecker main_thread_checker_;
@@ -218,8 +276,20 @@ GLFrameHandle::~GLFrameHandle() {
                  mailbox()));
 }
 
+ImageFrameHandle::~ImageFrameHandle() {
+  content::GpuChildThread::GetTaskRunner()->PostTask(
+      FROM_HERE,
+      base::Bind(&CompositorUtilsImpl::UnrefTexture,
+                 base::Unretained(CompositorUtilsImpl::GetInstance()),
+                 mailbox()));
+}
+
 FetchTextureResourcesTaskInfo::~FetchTextureResourcesTaskInfo() {
   DCHECK(CompositorUtilsImpl::GetInstance()->CalledOnMainOrCompositorThread());
+  if (image.egl_image != EGL_NO_IMAGE_KHR) {
+    eglDestroyImageKHR(gfx::GLSurfaceEGL::GetHardwareDisplay(),
+                       image.egl_image);
+  }
 }
 
 void CompositorThread::Init() {
@@ -234,7 +304,8 @@ CompositorThread::~CompositorThread() {
 }
 
 CompositorUtilsImpl::CompositorUtilsImpl()
-    : client_id_(-1) {
+    : client_id_(-1),
+      has_share_context_(false) {
   main_thread_checker_.DetachFromThread();
   gpu_thread_checker_.DetachFromThread();
 }
@@ -313,22 +384,40 @@ void CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread_Locked(
     service_id = GetTextureIDForMailbox(info->mailbox);
   }
 
+  if (info->want_egl_image) {
+    if (service_id > 0) {
+      // TODO(chrisccoulson): Do we need to do this on every frame?
+      info->image.egl_image =
+          content::oxide_gpu_shim::CreateImageFromTexture(
+            info->client_id,
+            info->route_id,
+            service_id);
+      if (info->image.egl_image == EGL_NO_IMAGE_KHR) {
+        UnrefTexture(info->mailbox);
+      }
+    }
+  } else {
+    info->gl.service_id = service_id;
+  }
+
   // If the destination thread has quit already, this task may never run.
   // That's ok though - at some point, the TextureManager owned by the
   // ContextGroup that this texture belongs to will be deleted, and we drop
   // our texture ref there
   info->task_runner->PostTask(
       FROM_HERE,
-      base::Bind(&CompositorUtilsImpl::SendCreateGLFrameHandleResponse,
-                 base::Unretained(this), id, service_id));
+      base::Bind(&CompositorUtilsImpl::SendCreateFrameHandleResponse,
+                 base::Unretained(this), id));
 }
 
-void CompositorUtilsImpl::SendCreateGLFrameHandleResponse(int id,
-                                                          GLuint service_id) {
+void CompositorUtilsImpl::SendCreateFrameHandleResponse(int id) {
   DCHECK(CalledOnMainOrCompositorThread());
 
-  scoped_ptr<GLFrameHandle> handle;
-  CompositorUtils::CreateGLFrameHandleCallback callback;
+  scoped_ptr<GLFrameHandle> gl_handle;
+  scoped_ptr<ImageFrameHandle> image_handle;
+  CompositorUtils::CreateGLFrameHandleCallback gl_callback;
+  CompositorUtils::CreateImageFrameHandleCallback image_callback;
+
   {
     base::AutoLock lock(texture_resource_fetches_.lock);
 
@@ -339,21 +428,36 @@ void CompositorUtilsImpl::SendCreateGLFrameHandleResponse(int id,
 
     DCHECK(info->task_runner->RunsTasksOnCurrentThread());
 
-    if (service_id > 0) {
-      // If we arrive here, then we're guaranteed to have an owning reference
-      // to the underlying texture
-      handle.reset(new GLFrameHandle(info->mailbox,
-                                     service_id,
-                                     info->context_provider));
+    if (info->want_egl_image) {
+      if (info->image.egl_image != EGL_NO_IMAGE_KHR) {
+        image_handle.reset(new ImageFrameHandle(info->mailbox,
+                                                info->image.egl_image,
+                                                info->context_provider.get()));
+        info->image.egl_image = EGL_NO_IMAGE_KHR;
+      }
+      image_callback = info->image.callback;
+    } else {
+      if (info->gl.service_id > 0) {
+        // If we arrive here, then we're guaranteed to have an owning reference
+        // to the underlying texture
+        gl_handle.reset(new GLFrameHandle(info->mailbox,
+                                          info->gl.service_id,
+                                          info->context_provider.get()));
+      }
+      gl_callback = info->gl.callback;
     }
 
-    callback = info->callback;
     texture_resource_fetches_.id_allocator.FreeId(id);
     delete info;
     texture_resource_fetches_.info_map.erase(it);
   }
 
-  callback.Run(handle.Pass());
+  if (!gl_callback.is_null()) {
+    gl_callback.Run(gl_handle.Pass());
+  } else {
+    DCHECK(!image_callback.is_null());
+    image_callback.Run(image_handle.Pass());
+  }
 }
 
 void CompositorUtilsImpl::WillProcessTask(
@@ -429,9 +533,10 @@ CompositorUtilsImpl* CompositorUtilsImpl::GetInstance() {
   return Singleton<CompositorUtilsImpl>::get();
 }
 
-void CompositorUtilsImpl::Initialize() {
+void CompositorUtilsImpl::Initialize(bool has_share_context) {
   DCHECK(!main().compositor_thread);
 
+  has_share_context_ = has_share_context;
   client_id_ =
       content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId();
   main_task_runner_ = base::MessageLoopProxy::current();
@@ -542,6 +647,44 @@ void CompositorUtilsImpl::CreateGLFrameHandle(
   incoming_texture_resource_fetches_.queue.push(info);
 }
 
+void CompositorUtilsImpl::CreateImageFrameHandle(
+    cc::ContextProvider* context_provider,
+    const gpu::Mailbox& mailbox,
+    uint32 sync_point,
+    const CreateImageFrameHandleCallback& callback,
+    scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
+  DCHECK(context_provider);
+  DCHECK(!callback.is_null());
+  DCHECK(!mailbox.IsZero());
+  DCHECK(task_runner);
+
+  DCHECK(CalledOnMainOrCompositorThread());
+
+  FetchTextureResourcesTaskInfo* info =
+      new FetchTextureResourcesTaskInfo(
+        client_id_,
+        context_provider,
+        mailbox,
+        sync_point,
+        callback,
+        task_runner.get());
+
+  base::AutoLock lock(incoming_texture_resource_fetches_.lock);
+  DCHECK(incoming_texture_resource_fetches_.can_queue);
+
+  if (!incoming_texture_resource_fetches_.fetch_pending) {
+    incoming_texture_resource_fetches_.fetch_pending = true;
+    if (incoming_texture_resource_fetches_.gpu_needs_wakeup) {
+      // We assert |can_queue| above, so this should never fail
+      content::GpuChildThread::GetTaskRunner()->PostTask(
+          FROM_HERE,
+          base::Bind(&WakeUpGpuThread));
+    }
+  }
+
+  incoming_texture_resource_fetches_.queue.push(info);
+}
+
 gfx::GLSurfaceHandle CompositorUtilsImpl::GetSharedSurfaceHandle() {
   gfx::GLSurfaceHandle handle(gfx::kNullPluginWindow, gfx::NULL_TRANSPORT);
   handle.parent_client_id = client_id_;
@@ -549,16 +692,25 @@ gfx::GLSurfaceHandle CompositorUtilsImpl::GetSharedSurfaceHandle() {
   return handle;
 }
 
-bool CompositorUtilsImpl::CanUseGpuCompositing() {
+bool CompositorUtilsImpl::CanUseGpuCompositing() const {
+  return GetCompositingMode() != COMPOSITING_MODE_SOFTWARE;
+}
+
+CompositingMode CompositorUtilsImpl::GetCompositingMode() const {
   if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
-    return false;
+    return COMPOSITING_MODE_SOFTWARE;
   }
 
-  if (!BrowserPlatformIntegration::GetInstance()->GetGLShareContext()) {
-    return false;
+  if (has_share_context_) {
+    return COMPOSITING_MODE_TEXTURE;
   }
 
-  return true;
+  if (gfx::GetGLImplementation() == gfx::kGLImplementationEGLGLES2) {
+    // TODO(chrisccoulson): Make sure driver supports this
+    return COMPOSITING_MODE_IMAGE;
+  }
+
+  return COMPOSITING_MODE_SOFTWARE;
 }
 
 bool CompositorUtilsImpl::RefTexture(int32 client_id,

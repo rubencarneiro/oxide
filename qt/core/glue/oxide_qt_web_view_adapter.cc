@@ -18,6 +18,11 @@
 #include "oxide_qt_web_view_adapter.h"
 
 #include <limits>
+// gl_image_egl.h pulls in X11 headers, which #define KeyPress etc, so
+// include this now to avoid it failing
+#include <QEvent>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
 #include <QtDebug>
 
 #include "base/logging.h"
@@ -92,6 +97,9 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     if (frame_->gl_frame_data()) {
       return CompositorFrameHandle::TYPE_ACCELERATED;
     }
+    if (frame_->image_frame_data()) {
+      return CompositorFrameHandle::TYPE_IMAGE;
+    }
     if (frame_->software_frame_data()) {
       return CompositorFrameHandle::TYPE_SOFTWARE;
     }
@@ -113,9 +121,24 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
         QImage::Format_ARGB32);
   }
 
-  AcceleratedFrameData GetAcceleratedFrame() final {
+  unsigned int GetAcceleratedFrameTexture() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return AcceleratedFrameData(frame_->gl_frame_data()->texture_id());
+    return frame_->gl_frame_data()->texture_id();
+  }
+
+  void ImageFrameBindTexImage(unsigned int target) final {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_IMAGE);
+    typedef void (*glEGLImageTargetTexture2DOESProc)(GLenum target,
+                                                     GLeglImageOES image);
+    static glEGLImageTargetTexture2DOESProc glEGLImageTargetTexture2DOESFn =
+        reinterpret_cast<glEGLImageTargetTexture2DOESProc>(
+          QOpenGLContext::currentContext()->getProcAddress(
+            "glEGLImageTargetTexture2DOES"));
+    DCHECK(glEGLImageTargetTexture2DOESFn);
+    glEGLImageTargetTexture2DOESFn(target,
+                                   frame_->image_frame_data()->image());
+    DCHECK_EQ(static_cast<GLenum>(GL_NO_ERROR),
+              QOpenGLContext::currentContext()->functions()->glGetError());
   }
 
  private:

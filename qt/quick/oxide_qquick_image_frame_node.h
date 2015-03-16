@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,39 +15,44 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_accelerated_frame_node.h"
+#ifndef _OXIDE_QQUICK_IMAGE_FRAME_NODE_H_
+#define _OXIDE_QQUICK_IMAGE_FRAME_NODE_H_
 
-#include <QPoint>
-#include <QQuickWindow>
-#include <QRect>
-#include <QSize>
+#include <QSGSimpleTextureNode>
 #include <QSGTexture>
-
-#include "qt/core/glue/oxide_qt_web_view_adapter.h"
-#include "qt/quick/api/oxideqquickwebview_p.h"
+#include <QSharedPointer>
+#include <QtGlobal>
 
 namespace oxide {
+
+namespace qt{
+class CompositorFrameHandle;
+}
+
 namespace qquick {
 
-AcceleratedFrameNode::AcceleratedFrameNode(OxideQQuickWebView* view) :
-    view_(view) {
-  setTextureCoordinatesTransform(QSGSimpleTextureNode::MirrorVertically);
-}
+class ImageFrameNode : public QSGSimpleTextureNode,
+                       public QSGTexture {
+ public:
+  ImageFrameNode();
+  ~ImageFrameNode() override;
 
-AcceleratedFrameNode::~AcceleratedFrameNode() {}
+  void updateNode(QSharedPointer<oxide::qt::CompositorFrameHandle> handle);
 
-void AcceleratedFrameNode::updateNode(
-    QSharedPointer<oxide::qt::CompositorFrameHandle> handle) {
-  handle_ = handle;
+ private:
+  // QSGTexture implementation
+  int textureId() const override;
+  QSize textureSize() const override;
+  bool hasAlphaChannel() const override;
+  bool hasMipmaps() const override;
+  void bind() override;
 
-  setRect(handle_->GetRect());
-
-  texture_.reset(view_->window()->createTextureFromId(
-      handle_->GetAcceleratedFrameTexture(),
-      handle_->GetRect().size(),
-      QQuickWindow::TextureHasAlphaChannel));
-  setTexture(texture_.data());
-}
+  QSharedPointer<oxide::qt::CompositorFrameHandle> handle_;
+  bool dirty_bind_options_;
+  GLuint texture_id_;
+};
 
 } // namespace qquick
 } // namespace oxide
+
+#endif // _OXIDE_QQUICK_IMAGE_FRAME_NODE_H_

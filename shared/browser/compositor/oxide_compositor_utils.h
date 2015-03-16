@@ -23,6 +23,8 @@
 #include "base/memory/ref_counted.h"
 #include "ui/gfx/native_widget_types.h"
 
+#include "shared/browser/compositor/oxide_compositing_mode.h"
+
 namespace base {
 class SingleThreadTaskRunner;
 }
@@ -38,6 +40,7 @@ class Mailbox;
 namespace oxide {
 
 class GLFrameData;
+class ImageFrameData;
 
 // Utilities for the compositor code
 class CompositorUtils {
@@ -50,7 +53,7 @@ class CompositorUtils {
   // and starting the GPU service thread if it's not already running.
   // Initialization is not thread-safe - this call should complete before any
   // other threads use this class
-  virtual void Initialize() = 0;
+  virtual void Initialize(bool has_share_context) = 0;
 
   // Shutdown the CompositorUtils instance. This must be called before the GPU
   // service thread is shut down and must be called on the same thread that
@@ -78,9 +81,20 @@ class CompositorUtils {
       const CreateGLFrameHandleCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
 
+  typedef base::Callback<void(scoped_ptr<ImageFrameData>)> CreateImageFrameHandleCallback;
+
+  virtual void CreateImageFrameHandle(
+      cc::ContextProvider* context_provider,
+      const gpu::Mailbox& mailbox,
+      uint32 sync_point,
+      const CreateImageFrameHandleCallback& callback,
+      scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
+
   virtual gfx::GLSurfaceHandle GetSharedSurfaceHandle() = 0;
 
-  virtual bool CanUseGpuCompositing() = 0;
+  virtual bool CanUseGpuCompositing() const = 0;
+
+  virtual CompositingMode GetCompositingMode() const = 0;
 
  protected:
   virtual ~CompositorUtils();

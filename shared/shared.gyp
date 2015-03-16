@@ -262,6 +262,7 @@
         'app/oxide_main.cc',
         'app/oxide_main.h',
         'app/oxide_platform_delegate.h',
+        'browser/compositor/oxide_compositing_mode.h',
         'browser/compositor/oxide_compositor.cc',
         'browser/compositor/oxide_compositor.h',
         'browser/compositor/oxide_compositor_client.h',

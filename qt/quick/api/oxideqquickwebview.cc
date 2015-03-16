@@ -50,6 +50,7 @@
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_file_picker_delegate.h"
+#include "qt/quick/oxide_qquick_image_frame_node.h"
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
@@ -66,6 +67,7 @@
 QT_USE_NAMESPACE
 
 using oxide::qquick::AcceleratedFrameNode;
+using oxide::qquick::ImageFrameNode;
 using oxide::qquick::SoftwareFrameNode;
 
 namespace oxide {
@@ -916,6 +918,20 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
     AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
     if (!node) {
       node = new AcceleratedFrameNode(this);
+    }
+
+    if (d->received_new_compositor_frame_ || !oldNode) {
+      node->updateNode(handle);
+    }
+
+    return node;
+  }
+
+  if (handle->GetType() ==
+      oxide::qt::CompositorFrameHandle::TYPE_IMAGE) {
+    ImageFrameNode* node = static_cast<ImageFrameNode *>(oldNode);
+    if (!node) {
+      node = new ImageFrameNode();
     }
 
     if (d->received_new_compositor_frame_ || !oldNode) {

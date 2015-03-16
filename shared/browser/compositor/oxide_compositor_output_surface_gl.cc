@@ -171,11 +171,11 @@ void CompositorOutputSurfaceGL::ReclaimResources(
 
   it->sync_point = 0;
 
-  if (!is_backbuffer_discarded_ && it->size == surface_size_) {
-    returned_textures_.push(*it);
-  } else {
+  //if (!is_backbuffer_discarded_ && it->size == surface_size_) {
+  //  returned_textures_.push(*it);
+  //} else {
     context_provider_->ContextGL()->DeleteTextures(1, &it->texture_id);
-  }
+  //}
 
   pending_textures_.erase(it);
 

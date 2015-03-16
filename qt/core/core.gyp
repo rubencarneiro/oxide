@@ -153,6 +153,7 @@
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
+        '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/url/url.gyp:url_lib'
       ],
       'variables': {

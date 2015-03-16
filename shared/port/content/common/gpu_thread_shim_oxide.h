@@ -26,8 +26,10 @@
 #include "content/common/content_export.h"
 
 typedef unsigned int GLuint;
+typedef void* EGLImageKHR;
 
 namespace gfx {
+class GLImageEGL;
 class GLShareGroup;
 }
 
@@ -82,6 +84,12 @@ CONTENT_EXPORT Texture* ConsumeTextureFromMailbox(
     int32_t client_id,
     int32_t route_id,
     const gpu::Mailbox& mailbox);
+
+// Create and return an EGLImage for the specified texture
+CONTENT_EXPORT EGLImageKHR CreateImageFromTexture(
+    int32_t client_id,
+    int32_t route_id,
+    GLuint texture);
 
 CONTENT_EXPORT int32_t GetContextProviderRouteID(
     content::ContextProviderCommandBuffer* provider);

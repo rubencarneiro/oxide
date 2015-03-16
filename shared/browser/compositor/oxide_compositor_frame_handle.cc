@@ -17,9 +17,20 @@
 
 #include "oxide_compositor_frame_handle.h"
 
+#include "content/gpu/gpu_child_thread.h"
+#include "ui/gl/gl_bindings.h"
+#include "ui/gl/gl_surface_egl.h"
+
 #include "oxide_compositor_thread_proxy.h"
 
 namespace oxide {
+
+namespace {
+void DestroyEGLImage(EGLImageKHR egl_image) {
+  eglDestroyImageKHR(gfx::GLSurfaceEGL::GetHardwareDisplay(),
+                     egl_image);
+}
+}
 
 GLFrameData::GLFrameData(const gpu::Mailbox& mailbox,
                          GLuint texture_id)
@@ -27,6 +38,21 @@ GLFrameData::GLFrameData(const gpu::Mailbox& mailbox,
       texture_id_(texture_id) {}
 
 GLFrameData::~GLFrameData() {}
+
+ImageFrameData::ImageFrameData(const gpu::Mailbox& mailbox,
+                               EGLImageKHR image)
+    : mailbox_(mailbox),
+      image_(image) {}
+
+ImageFrameData::~ImageFrameData() {
+  if (image_ != EGL_NO_IMAGE_KHR) {
+    // XXX: Do we need to do this on a specific thread?
+    content::GpuChildThread::GetTaskRunner()->PostTask(
+        FROM_HERE,
+        base::Bind(&DestroyEGLImage, image_));
+  }
+
+}
 
 SoftwareFrameData::SoftwareFrameData(unsigned id,
                                      const gfx::Rect& damage_rect,
@@ -39,7 +65,9 @@ SoftwareFrameData::~SoftwareFrameData() {}
 
 // static
 void CompositorFrameHandleTraits::Destruct(const CompositorFrameHandle* x) {
-  if (x->software_frame_data() || x->gl_frame_data()) {
+  if (x->software_frame_data() ||
+      x->gl_frame_data() ||
+      x->image_frame_data()) {
     x->proxy_->ReclaimResourcesForFrame(const_cast<CompositorFrameHandle*>(x));
   }
 
@@ -47,7 +75,7 @@ void CompositorFrameHandleTraits::Destruct(const CompositorFrameHandle* x) {
 }
 
 CompositorFrameHandle::~CompositorFrameHandle() {
-  DCHECK(!software_frame_data_ && !gl_frame_data_);
+  DCHECK(!software_frame_data_ && !gl_frame_data_ && !image_frame_data_);
 }
 
 CompositorFrameHandle::CompositorFrameHandle(

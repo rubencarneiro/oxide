@@ -95,18 +95,6 @@ enum LocationBarMode {
   LOCATION_BAR_MODE_HIDDEN
 };
 
-class Q_DECL_EXPORT AcceleratedFrameData final {
- public:
-  AcceleratedFrameData(unsigned int id)
-      : texture_id_(id) {}
-  ~AcceleratedFrameData() {}
-
-  unsigned int texture_id() const { return texture_id_; }
-
- private:
-  unsigned int texture_id_;
-};
-
 class Q_DECL_EXPORT CompositorFrameHandle {
  public:
   virtual ~CompositorFrameHandle() {}
@@ -114,14 +102,16 @@ class Q_DECL_EXPORT CompositorFrameHandle {
   enum Type {
     TYPE_INVALID,
     TYPE_SOFTWARE,
-    TYPE_ACCELERATED
+    TYPE_ACCELERATED,
+    TYPE_IMAGE
   };
 
   virtual Type GetType() = 0;
   virtual const QRect& GetRect() const = 0;
 
   virtual QImage GetSoftwareFrame() = 0;
-  virtual AcceleratedFrameData GetAcceleratedFrame() = 0;
+  virtual unsigned int GetAcceleratedFrameTexture() = 0;
+  virtual void ImageFrameBindTexImage(unsigned int target) = 0;
 };
 
 class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {

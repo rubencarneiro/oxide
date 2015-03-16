@@ -27,6 +27,8 @@
 #include "base/threading/thread_checker.h"
 #include "cc/resources/shared_bitmap.h"
 
+#include "shared/browser/compositor/oxide_compositing_mode.h"
+
 namespace base {
 class MessageLoopProxy;
 }
@@ -47,6 +49,7 @@ class Compositor;
 class CompositorFrameHandle;
 class CompositorOutputSurface;
 class GLFrameData;
+class ImageFrameData;
 class SoftwareFrameData;
 
 class CompositorThreadProxy final
@@ -78,6 +81,11 @@ class CompositorThreadProxy final
                                     const gfx::Size& size,
                                     float scale,
                                     scoped_ptr<GLFrameData> gl_frame_data);
+  void SendSwapImageFrameOnOwnerThread(
+      uint32 surface_id,
+      const gfx::Size& size,
+      float scale,
+      scoped_ptr<ImageFrameData> image_frame_data);
   void SendSwapSoftwareFrameOnOwnerThread(uint32 surface_id,
                                           const gfx::Size& size,
                                           float scale,
@@ -91,7 +99,8 @@ class CompositorThreadProxy final
       uint32 surface_id,
       const gfx::Size& size_in_pixels,
       scoped_ptr<GLFrameData> gl_frame_data,
-      scoped_ptr<SoftwareFrameData> software_frame_data);
+      scoped_ptr<SoftwareFrameData> software_frame_data,
+      scoped_ptr<ImageFrameData> image_frame_data);
 
   struct OwnerData {
     OwnerData() : compositor(nullptr) {}
@@ -107,6 +116,8 @@ class CompositorThreadProxy final
 
   OwnerData& owner();
   ImplData& impl();
+
+  CompositingMode mode_;
 
   scoped_refptr<base::MessageLoopProxy> owner_message_loop_;
   scoped_refptr<base::MessageLoopProxy> impl_message_loop_;

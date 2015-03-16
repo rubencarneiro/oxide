@@ -27,6 +27,7 @@
 #include "ui/gfx/geometry/size.h"
 
 typedef unsigned int GLuint;
+typedef void* EGLImageKHR;
 
 namespace oxide {
 
@@ -45,6 +46,20 @@ class GLFrameData {
  private:
   gpu::Mailbox mailbox_;
   GLuint texture_id_;
+};
+
+class ImageFrameData {
+ public:
+  ImageFrameData(const gpu::Mailbox& mailbox,
+                 EGLImageKHR image);
+  virtual ~ImageFrameData();
+
+  const gpu::Mailbox& mailbox() const { return mailbox_; }
+  EGLImageKHR image() const { return image_; }
+
+ private:
+  gpu::Mailbox mailbox_;
+  EGLImageKHR image_;
 };
 
 class SoftwareFrameData {
@@ -81,6 +96,7 @@ class CompositorFrameHandle final :
   float device_scale() const { return device_scale_; }
 
   GLFrameData* gl_frame_data() const { return gl_frame_data_.get(); }
+  ImageFrameData* image_frame_data() const { return image_frame_data_.get(); }
   SoftwareFrameData* software_frame_data() const {
     return software_frame_data_.get();
   }
@@ -98,6 +114,7 @@ class CompositorFrameHandle final :
   float device_scale_;
 
   scoped_ptr<GLFrameData> gl_frame_data_;
+  scoped_ptr<ImageFrameData> image_frame_data_;
   scoped_ptr<SoftwareFrameData> software_frame_data_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorFrameHandle);

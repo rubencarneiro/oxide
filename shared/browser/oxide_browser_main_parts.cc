@@ -23,6 +23,7 @@
 #include "base/scoped_native_library.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "EGL/egl.h"
+#include "gpu/config/gpu_driver_bug_workaround_type.h"
 #include "gpu/config/gpu_info_collector.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
@@ -216,19 +217,6 @@ int BrowserMainParts::PreCreateThreads() {
     gfx::GLSurface::InitializeOneOff();
   }
 
-  scoped_refptr<GLContextDependent> share_context =
-      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
-  if (share_context) {
-    // There's nothing to prevent other code in Oxide from accessing the
-    // shared gfx::GLContext and associated gfx::GLShareGroup after the GPU
-    // thread has begun consuming it, and adjusting their reference counts.
-    // As it's not safe to do that, we clone it here. Note, this doesn't mean
-    // that you can assume it's safe to use the handle returned by it for
-    // anything
-    gl_share_context_ = GLContextDependent::CloneFrom(share_context.get());
-    content::oxide_gpu_shim::SetGLShareGroup(gl_share_context_->share_group());
-  }
-
   primary_screen_.reset(new Screen());
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
                                  primary_screen_.get());
@@ -252,9 +240,33 @@ void BrowserMainParts::PreMainMessageLoopRun() {
       break;
   }
 
-  content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
+  content::GpuDataManagerImpl* gpu_data_manager =
+      content::GpuDataManagerImpl::GetInstance();
+  gpu_data_manager->UpdateGpuInfo(gpu_info);
 
-  CompositorUtils::GetInstance()->Initialize();
+  bool has_share_context = false;
+
+  if (!gpu_data_manager->IsDriverBugWorkaroundActive(
+          gpu::USE_VIRTUALIZED_GL_CONTEXTS)) {
+    // Virtualized contexts generally work around share group bugs. Don't
+    // use the application provided share group if virtualized contexts are
+    // to be used for this driver
+    scoped_refptr<GLContextDependent> share_context =
+        BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
+    if (share_context) {
+      // There's nothing to prevent other code in Oxide from accessing the
+      // shared gfx::GLContext and associated gfx::GLShareGroup after the GPU
+      // thread has begun consuming it, and adjusting their reference counts.
+      // As it's not safe to do that, we clone it here. Note, this doesn't mean
+      // that you can assume it's safe to use the handle returned by it for
+      // anything
+      gl_share_context_ = GLContextDependent::CloneFrom(share_context.get());
+      content::oxide_gpu_shim::SetGLShareGroup(gl_share_context_->share_group());
+      has_share_context = true;
+    }
+  }
+
+  CompositorUtils::GetInstance()->Initialize(has_share_context);
   net::NetModule::SetResourceProvider(NetResourceProvider);
 }
 

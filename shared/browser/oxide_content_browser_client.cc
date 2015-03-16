@@ -176,10 +176,10 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     if (host->GetBrowserContext()->IsOffTheRecord()) {
       command_line->AppendSwitch(switches::kIncognito);
     }
+  }
 
-    if (!CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
-      command_line->AppendSwitch(switches::kDisableGpuCompositing);
-    }
+  if (!CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
+    command_line->AppendSwitch(switches::kDisableGpuCompositing);
   }
 }
 

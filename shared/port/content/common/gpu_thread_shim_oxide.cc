@@ -28,9 +28,13 @@
 #include "content/common/gpu/gpu_command_buffer_stub.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "gpu/command_buffer/service/context_group.h"
+#include "gpu/command_buffer/service/context_state.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
 #include "gpu/command_buffer/service/mailbox_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
+#include "ui/gl/gl_bindings.h"
+#include "ui/gl/gl_context.h"
+#include "ui/gl/gl_surface_egl.h"
 
 namespace content {
 namespace oxide_gpu_shim {
@@ -127,6 +131,95 @@ Texture* ConsumeTextureFromMailbox(int32_t client_id,
       new gpu::gles2::TextureRef(group->texture_manager(),
                                  0, texture);
   return new Texture(command_buffer, ref.get());
+}
+
+class ScopedTextureBinder {
+ public:
+  ScopedTextureBinder(GLenum target,
+                      GLuint texture,
+                      const gpu::gles2::ContextState* state)
+      : target_(target),
+        state_(state) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(target, texture);
+  }
+
+  ~ScopedTextureBinder() {
+    const gpu::gles2::TextureUnit& info = state_->texture_units[0];
+    GLuint last_id;
+    scoped_refptr<gpu::gles2::TextureRef> texture_ref;
+    switch (target_) {
+      case GL_TEXTURE_2D:
+        texture_ref = info.bound_texture_2d;
+        break;
+      case GL_TEXTURE_CUBE_MAP:
+        texture_ref = info.bound_texture_cube_map;
+        break;
+      case GL_TEXTURE_EXTERNAL_OES:
+        texture_ref = info.bound_texture_external_oes;
+        break;
+      case GL_TEXTURE_RECTANGLE_ARB:
+        texture_ref = info.bound_texture_rectangle_arb;
+        break;
+      default:
+        NOTREACHED();
+        break;
+    }
+    if (texture_ref.get()) {
+      last_id = texture_ref->service_id();
+    } else {
+      last_id = 0;
+    }
+
+    glBindTexture(target_, last_id);
+    glActiveTexture(GL_TEXTURE0 + state_->active_texture_unit);
+  }
+
+ private:
+  GLenum target_;
+  const gpu::gles2::ContextState* state_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScopedTextureBinder);
+};
+
+EGLImageKHR CreateImageFromTexture(int32_t client_id,
+                                   int32_t route_id,
+                                   GLuint texture) {
+  DCHECK(IsCurrentlyOnGpuThread());
+
+  content::GpuCommandBufferStub* command_buffer =
+      LookupCommandBuffer(client_id, route_id);
+  if (!command_buffer) {
+    return EGL_NO_IMAGE_KHR;
+  }
+
+  if (!command_buffer->decoder()->MakeCurrent()) {
+    return EGL_NO_IMAGE_KHR;
+  }
+
+  ScopedTextureBinder binder(GL_TEXTURE_2D, texture,
+                             decoder->GetContextState());
+  EGLint attrib_list[] = {
+      EGL_GL_TEXTURE_LEVEL_KHR, 0,
+      EGL_IMAGE_PRESERVED_KHR, EGL_TRUE,
+      EGL_NONE
+  };
+  EGLImageKHR egl_image =
+      eglCreateImageKHR(gfx::GLSurfaceEGL::GetHardwareDisplay(),
+                        gfx::GLContext::GetCurrent()->GetHandle(),
+                        EGL_GL_TEXTURE_2D_KHR,
+                        reinterpret_cast<EGLClientBuffer>(texture),
+                        attrib_list);
+  if (egl_image == EGL_NO_IMAGE_KHR) {
+    EGLint error = eglGetError();
+    LOG(ERROR) << "Error creating EGLImage: " << error;
+    return EGL_NO_IMAGE_KHR;
+  }
+
+  // This is required at least on Arale, but is it needed everywhere?
+  glFinish();
+
+  return egl_image;
 }
 
 int32_t GetContextProviderRouteID(
