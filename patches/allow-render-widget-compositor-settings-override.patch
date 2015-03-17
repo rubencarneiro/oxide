@@ -62,12 +62,12 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer/gpu/render_widget_compositor.cc
 --- a/content/renderer/gpu/render_widget_compositor.cc
 +++ b/content/renderer/gpu/render_widget_compositor.cc
-@@ -26,17 +26,19 @@
- #include "cc/output/begin_frame_args.h"
- #include "cc/output/copy_output_request.h"
- #include "cc/output/copy_output_result.h"
+@@ -27,17 +27,19 @@
+ #include "cc/output/latency_info_swap_promise.h"
+ #include "cc/output/swap_promise.h"
  #include "cc/resources/single_release_callback.h"
  #include "cc/scheduler/begin_frame_source.h"
+ #include "cc/trees/latency_info_swap_promise_monitor.h"
  #include "cc/trees/layer_tree_host.h"
  #include "content/common/content_switches_internal.h"
  #include "content/common/gpu/client/context_provider_command_buffer.h"
@@ -82,7 +82,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/platform/WebSize.h"
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
-@@ -449,16 +451,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -450,16 +452,18 @@ void RenderWidgetCompositor::Initialize(
        compositor_deps_->GetGpuMemoryBufferManager();
  
    scoped_ptr<cc::BeginFrameSource> external_begin_frame_source;

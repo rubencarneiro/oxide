@@ -280,7 +280,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -948,18 +948,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNee
+@@ -976,18 +976,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNee
  // Sent by the browser when an IME update that requires acknowledgement has been
  // processed on the browser side.
  IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
@@ -352,7 +352,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 --- a/content/renderer/external_popup_menu.h
 +++ b/content/renderer/external_popup_menu.h
 @@ -31,20 +31,18 @@ class ExternalPopupMenu : public blink::
-       float scale, const gfx::Point& offset);
+       float scale, const gfx::PointF& offset);
  
  #if defined(OS_MACOSX)
    // Called when the user has selected an item. |selected_item| is -1 if the
@@ -375,7 +375,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -938,23 +938,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -957,23 +957,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -393,13 +393,13 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 -#endif
  
  bool RenderFrameImpl::OnMessageReceived(const IPC::Message& msg) {
+   // We may get here while detaching, when the WebFrame has been deleted.  Do
+   // not process any messages in this state.
+   if (!frame_)
+     return false;
+ 
    // TODO(kenrb): document() should not be null, but as a transitional step
-   // we have RenderFrameProxy 'wrapping' a RenderFrameImpl, passing messages
-   // to this method. This happens for a top-level remote frame, where a
-   // document-less RenderFrame is replaced by a RenderFrameProxy but kept
-   // around and is still able to receive messages.
-   if (!frame_->document().isNull())
-@@ -1017,19 +1015,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -1041,19 +1039,18 @@ bool RenderFrameImpl::OnMessageReceived(
                          OnTextSurroundingSelectionRequest)
      IPC_MESSAGE_HANDLER(FrameMsg_AddStyleSheetByURL,
                          OnAddStyleSheetByURL)
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1542,31 +1539,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1566,31 +1563,29 @@ void RenderFrameImpl::OnDisownOpener() {
    if (frame_->opener())
      frame_->setOpener(NULL);
  }
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -1963,17 +1958,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -1987,17 +1982,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -516,7 +516,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const CommitNavigationParams& commit_params,
-@@ -870,20 +867,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -873,20 +870,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    // The current accessibility mode.
    AccessibilityMode accessibility_mode_;
@@ -564,11 +564,11 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
 --- a/content/renderer/render_widget.cc
 +++ b/content/renderer/render_widget.cc
-@@ -688,23 +688,21 @@ gfx::Rect RenderWidget::AdjustValidation
+@@ -678,23 +678,21 @@ gfx::Rect RenderWidget::AdjustValidation
+ 
  void RenderWidget::SetScreenMetricsEmulationParameters(
-     float device_scale_factor,
-     const gfx::Point& root_layer_offset,
-     float root_layer_scale) {
+     bool enabled,
+     const blink::WebDeviceEmulationParams& params) {
    // This is only supported in RenderView.
    NOTREACHED();
  }
@@ -591,15 +591,15 @@ diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.
 diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
 --- a/content/renderer/render_widget.h
 +++ b/content/renderer/render_widget.h
-@@ -396,20 +396,18 @@ class CONTENT_EXPORT RenderWidget
+@@ -390,20 +390,18 @@ class CONTENT_EXPORT RenderWidget
+               const gfx::Rect& resizer_rect,
                bool is_fullscreen,
                ResizeAck resize_ack);
    // Used to force the size of a window when running layout tests.
    void SetWindowRectSynchronously(const gfx::Rect& new_window_rect);
    virtual void SetScreenMetricsEmulationParameters(
-       float device_scale_factor,
-       const gfx::Point& root_layer_offset,
-       float root_layer_scale);
+       bool enabled,
+       const blink::WebDeviceEmulationParams& params);
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
    void SetExternalPopupOriginAdjustmentsForEmulation(
        ExternalPopupMenu* popup, ScreenMetricsEmulator* emulator);
