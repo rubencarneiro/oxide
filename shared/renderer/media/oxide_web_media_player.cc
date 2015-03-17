@@ -892,28 +892,6 @@ void WebMediaPlayer::OnMediaSourceOpened(
   client_->mediaSourceOpened(web_media_source);
 }
 
-void WebMediaPlayer::OnNeedKey(const std::string& type,
-                                      const std::vector<uint8>& init_data) {
-  DCHECK(main_thread_checker_.CalledOnValidThread());
-
-  // Do not fire NeedKey event if encrypted media is not enabled.
-  if (!blink::WebRuntimeFeatures::isPrefixedEncryptedMediaEnabled() &&
-      !blink::WebRuntimeFeatures::isEncryptedMediaEnabled()) {
-    return;
-  }
-
-  UMA_HISTOGRAM_COUNTS(kMediaEme + std::string("NeedKey"), 1);
-
-  DCHECK(init_data_type_.empty() || type.empty() || type == init_data_type_);
-  if (init_data_type_.empty()) {
-    init_data_type_ = type;
-  }
-
-  const uint8* init_data_ptr = init_data.empty() ? nullptr : &init_data[0];
-  client_->encrypted(
-      WebString::fromUTF8(type), init_data_ptr, init_data.size());
-}
-
 void WebMediaPlayer::enterFullscreen() {
   NOTIMPLEMENTED();
 }
