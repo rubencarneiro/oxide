@@ -71,6 +71,8 @@ class BrowserPlatformIntegration {
 
   virtual ApplicationState GetApplicationState();
 
+  virtual std::string GetApplicationLocale() = 0;
+
  protected:
   BrowserPlatformIntegration();
 

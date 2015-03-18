@@ -55,6 +55,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   void SetPlatformIntegration(BrowserPlatformIntegration* integration);
 
   // content::ContentBrowserClient implementation
+  std::string GetApplicationLocale() final;
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) final;
   void RenderProcessWillLaunch(content::RenderProcessHost* host) final;

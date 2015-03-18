@@ -140,6 +140,11 @@ BrowserPlatformIntegration::GetApplicationState() {
   }
 }
 
+std::string
+BrowserPlatformIntegration::GetApplicationLocale() {
+  return QLocale::system().name().toStdString();
+}
+
 QThread* GetIOQThread() {
   return g_io_thread.Get();
 }
