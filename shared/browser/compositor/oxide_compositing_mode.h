@@ -30,7 +30,7 @@ enum CompositingMode {
 
   // Compositor output will be an EGLImage, backed by a texture belonging
   // to the compositor GL context in the same process
-  COMPOSITING_MODE_IMAGE
+  COMPOSITING_MODE_EGLIMAGE
 
   // TODO: Extra modes for separate GPU process
 };

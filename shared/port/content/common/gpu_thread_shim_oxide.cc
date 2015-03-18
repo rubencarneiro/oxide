@@ -66,57 +66,15 @@ bool IsCurrentlyOnGpuThread() {
 
 }
 
-Texture::Texture(
-    content::GpuCommandBufferStub* command_buffer,
-    gpu::gles2::TextureRef* ref)
-    : command_buffer_(command_buffer->AsWeakPtr()),
-      ref_(ref) {
-  DCHECK(IsCurrentlyOnGpuThread());
-}
-
-Texture::~Texture() {
-  DCHECK(IsCurrentlyOnGpuThread());
-}
-
-GLuint Texture::GetServiceID() const {
-  DCHECK(IsCurrentlyOnGpuThread());
-  DCHECK(ref_);
-  return ref_->service_id();
-}
-
-gpu::gles2::TextureManager* Texture::GetTextureManager() const {
-  DCHECK(IsCurrentlyOnGpuThread());
-  DCHECK(command_buffer_);
-  return command_buffer_->decoder()->GetContextGroup()->texture_manager();
-}
-
-bool Texture::Destroy() {
-  DCHECK(IsCurrentlyOnGpuThread());
-
-  if (!ref_) {
-    return true;
-  }
-
-  DCHECK(command_buffer_);
-
-  if (!command_buffer_->decoder()->MakeCurrent()) {
-    DLOG(ERROR) << "Context lost - MakeCurrent failed";
-    return false;
-  }
-
-  ref_ = nullptr;
-  return true;
-}
-
-Texture* ConsumeTextureFromMailbox(int32_t client_id,
-                                   int32_t route_id,
-                                   const gpu::Mailbox& mailbox) {
+GLuint GetTextureFromMailbox(int32_t client_id,
+                             int32_t route_id,
+                             const gpu::Mailbox& mailbox) {
   DCHECK(IsCurrentlyOnGpuThread());
 
   content::GpuCommandBufferStub* command_buffer =
       LookupCommandBuffer(client_id, route_id);
   if (!command_buffer) {
-    return nullptr;
+    return 0;
   }
 
   gpu::gles2::ContextGroup* group =
@@ -124,13 +82,10 @@ Texture* ConsumeTextureFromMailbox(int32_t client_id,
   gpu::gles2::Texture* texture =
       group->mailbox_manager()->ConsumeTexture(mailbox);
   if (!texture) {
-    return nullptr;
+    return 0;
   }
 
-  scoped_refptr<gpu::gles2::TextureRef> ref =
-      new gpu::gles2::TextureRef(group->texture_manager(),
-                                 0, texture);
-  return new Texture(command_buffer, ref.get());
+  return texture->service_id();
 }
 
 class ScopedTextureBinder {
@@ -182,9 +137,9 @@ class ScopedTextureBinder {
   DISALLOW_COPY_AND_ASSIGN(ScopedTextureBinder);
 };
 
-EGLImageKHR CreateImageFromTexture(int32_t client_id,
-                                   int32_t route_id,
-                                   GLuint texture) {
+EGLImageKHR CreateEGLImageFromTexture(int32_t client_id,
+                                      int32_t route_id,
+                                      GLuint texture) {
   DCHECK(IsCurrentlyOnGpuThread());
 
   content::GpuCommandBufferStub* command_buffer =

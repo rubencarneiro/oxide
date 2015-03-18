@@ -17,6 +17,9 @@
 
 #include "oxide_compositor_thread_proxy.h"
 
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+
 #include "base/bind.h"
 #include "base/callback.h"
 #include "base/location.h"
@@ -54,21 +57,17 @@ void CompositorThreadProxy::DidSkipSwapCompositorFrame(
         this, surface_id, frames));
 }
 
-void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
-    uint32 surface_id,
+void CompositorThreadProxy::SendSwapTextureFrameOnOwnerThread(
+    uint32_t surface_id,
     const gfx::Size& size,
     float scale,
-    scoped_ptr<GLFrameData> gl_frame_data) {
-  if (!gl_frame_data) {
-    DidSkipSwapCompositorFrame(surface_id, nullptr);
-    return;
-  }
-
+    const gpu::Mailbox& mailbox,
+    GLuint texture) {
   scoped_refptr<CompositorFrameHandle> frame(
       new CompositorFrameHandle(surface_id, this, size, scale));
-  frame->gl_frame_data_ = gl_frame_data.Pass();
+  frame->gl_frame_data_.reset(new GLFrameData(mailbox, texture));
 
-  if (!owner().compositor) {
+  if (texture == 0 || !owner().compositor) {
     DidSkipSwapCompositorFrame(surface_id, &frame);
     return;
   }
@@ -76,21 +75,17 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
   owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
 }
 
-void CompositorThreadProxy::SendSwapImageFrameOnOwnerThread(
-    uint32 surface_id,
+void CompositorThreadProxy::SendSwapEGLImageFrameOnOwnerThread(
+    uint32_t surface_id,
     const gfx::Size& size,
     float scale,
-    scoped_ptr<ImageFrameData> image_frame_data) {
-  if (!image_frame_data) {
-    DidSkipSwapCompositorFrame(surface_id, nullptr);
-    return;
-  }
-
+    const gpu::Mailbox& mailbox,
+    EGLImageKHR egl_image) {
   scoped_refptr<CompositorFrameHandle> frame(
       new CompositorFrameHandle(surface_id, this, size, scale));
-  frame->image_frame_data_ = image_frame_data.Pass();
+  frame->image_frame_data_.reset(new ImageFrameData(mailbox, egl_image));
 
-  if (!owner().compositor) {
+  if (egl_image == EGL_NO_IMAGE_KHR || !owner().compositor) {
     DidSkipSwapCompositorFrame(surface_id, &frame);
     return;
   }
@@ -233,25 +228,27 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
     cc::GLFrameData* gl_frame_data = frame->gl_frame_data.get();
 
     if (mode_ == COMPOSITING_MODE_TEXTURE) {
-      CompositorUtils::GetInstance()->CreateGLFrameHandle(
+      CompositorUtils::GetInstance()->GetTextureFromMailbox(
           impl().output->context_provider(),
           gl_frame_data->mailbox,
           gl_frame_data->sync_point,
           base::Bind(
-            &CompositorThreadProxy::SendSwapGLFrameOnOwnerThread,
+            &CompositorThreadProxy::SendSwapTextureFrameOnOwnerThread,
             this, impl().output->surface_id(),
-            gl_frame_data->size, frame->metadata.device_scale_factor),
+            gl_frame_data->size, frame->metadata.device_scale_factor,
+            gl_frame_data->mailbox),
           owner_message_loop_);
     } else {
-      DCHECK_EQ(mode_, COMPOSITING_MODE_IMAGE);
-      CompositorUtils::GetInstance()->CreateImageFrameHandle(
+      DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
+      CompositorUtils::GetInstance()->CreateEGLImageFromMailbox(
           impl().output->context_provider(),
           gl_frame_data->mailbox,
           gl_frame_data->sync_point,
           base::Bind(
-            &CompositorThreadProxy::SendSwapImageFrameOnOwnerThread,
+            &CompositorThreadProxy::SendSwapEGLImageFrameOnOwnerThread,
             this, impl().output->surface_id(),
-            gl_frame_data->size, frame->metadata.device_scale_factor),
+            gl_frame_data->size, frame->metadata.device_scale_factor,
+            gl_frame_data->mailbox),
           owner_message_loop_);
     }
   } else {

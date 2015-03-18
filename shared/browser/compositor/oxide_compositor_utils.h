@@ -25,6 +25,9 @@
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
 
+typedef unsigned int GLuint;
+typedef void* EGLImageKHR;
+
 namespace base {
 class SingleThreadTaskRunner;
 }
@@ -38,9 +41,6 @@ class Mailbox;
 }
 
 namespace oxide {
-
-class GLFrameData;
-class ImageFrameData;
 
 // Utilities for the compositor code
 class CompositorUtils {
@@ -64,30 +64,34 @@ class CompositorUtils {
   // thread
   virtual scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() = 0;
 
-  typedef base::Callback<void(scoped_ptr<GLFrameData>)> CreateGLFrameHandleCallback;
+  typedef base::Callback<void(GLuint)> GetTextureFromMailboxCallback;
 
-  // Create a GPU service-side handle for the underlying texture represented by
-  // the provided client-side paramters (|context_provider| and |mailbox|). The
-  // result will be returned asynchronously using |callback|, only after the
-  // specified |sync_point| has expired. The callback will be called on the
-  // |task_runner| provided.
+  // Asynchronously get the real texture from the GPU service thread, using
+  // the specified |context_provider| and |mailbox| after |sync_point| has
+  // expired.
   // This must be called on the same thread that called Initialize() ot the
   // compositor thread. |task_runner| must be for either of these threads as
   // well
-  virtual void CreateGLFrameHandle(
+  virtual void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
       uint32 sync_point,
-      const CreateGLFrameHandleCallback& callback,
+      const GetTextureFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
 
-  typedef base::Callback<void(scoped_ptr<ImageFrameData>)> CreateImageFrameHandleCallback;
+  typedef base::Callback<void(EGLImageKHR)> CreateEGLImageFromMailboxCallback;
 
-  virtual void CreateImageFrameHandle(
+  // Asynchronously create an EGLImage backed by the texture represented by
+  // the specified |mailbox| on the GPU service thread after |sync_point|
+  // has expired.
+  // This must be called on the same thread that called Initialize() ot the
+  // compositor thread. |task_runner| must be for either of these threads as
+  // well
+  virtual void CreateEGLImageFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
       uint32 sync_point,
-      const CreateImageFrameHandleCallback& callback,
+      const CreateEGLImageFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
 
   virtual gfx::GLSurfaceHandle GetSharedSurfaceHandle() = 0;

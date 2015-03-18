@@ -38,7 +38,7 @@ class GLFrameData {
  public:
   GLFrameData(const gpu::Mailbox& mailbox,
               GLuint texture_id);
-  virtual ~GLFrameData();
+  ~GLFrameData();
 
   const gpu::Mailbox& mailbox() const { return mailbox_; }
   GLuint texture_id() const { return texture_id_; }
@@ -52,7 +52,7 @@ class ImageFrameData {
  public:
   ImageFrameData(const gpu::Mailbox& mailbox,
                  EGLImageKHR image);
-  virtual ~ImageFrameData();
+  ~ImageFrameData();
 
   const gpu::Mailbox& mailbox() const { return mailbox_; }
   EGLImageKHR image() const { return image_; }

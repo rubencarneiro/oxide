@@ -29,6 +29,9 @@
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
 
+typedef unsigned int GLuint;
+typedef void* EGLImageKHR;
+
 namespace base {
 class MessageLoopProxy;
 }
@@ -77,16 +80,17 @@ class CompositorThreadProxy final
       uint32 surface_id,
       scoped_refptr<CompositorFrameHandle>* frame);
 
-  void SendSwapGLFrameOnOwnerThread(uint32 surface_id,
-                                    const gfx::Size& size,
-                                    float scale,
-                                    scoped_ptr<GLFrameData> gl_frame_data);
-  void SendSwapImageFrameOnOwnerThread(
-      uint32 surface_id,
-      const gfx::Size& size,
-      float scale,
-      scoped_ptr<ImageFrameData> image_frame_data);
-  void SendSwapSoftwareFrameOnOwnerThread(uint32 surface_id,
+  void SendSwapTextureFrameOnOwnerThread(uint32_t surface_id,
+                                         const gfx::Size& size,
+                                         float scale,
+                                         const gpu::Mailbox& mailbox,
+                                         GLuint texture);
+  void SendSwapEGLImageFrameOnOwnerThread(uint32_t surface_id,
+                                          const gfx::Size& size,
+                                          float scale,
+                                          const gpu::Mailbox& mailbox,
+                                          EGLImageKHR egl_image);
+  void SendSwapSoftwareFrameOnOwnerThread(uint32_t surface_id,
                                           const gfx::Size& size,
                                           float scale,
                                           unsigned id,
