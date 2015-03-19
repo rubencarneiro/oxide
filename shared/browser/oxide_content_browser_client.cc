@@ -388,4 +388,9 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
   return gpu::GpuControlList::kOsAndroid;
 }
 
+std::string
+ContentBrowserClient::GetApplicationLocale() {
+  return platform_integration_->GetApplicationLocale();
+}
+
 } // namespace oxide

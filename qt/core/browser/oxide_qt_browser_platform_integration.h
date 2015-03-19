@@ -56,6 +56,7 @@ class BrowserPlatformIntegration final
   void BrowserThreadInit(content::BrowserThread::ID id) final;
   content::LocationProvider* CreateLocationProvider() final;
   ApplicationState GetApplicationState() final;
+  std::string GetApplicationLocale() final;
 
   scoped_refptr<GLContextAdopted> gl_share_context_;
 
