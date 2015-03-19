@@ -55,6 +55,7 @@ class BrowserPlatformIntegration final
   void BrowserThreadInit(content::BrowserThread::ID id) final;
   content::LocationProvider* CreateLocationProvider() final;
   ApplicationState GetApplicationState() final;
+  std::string GetApplicationLocale() final;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

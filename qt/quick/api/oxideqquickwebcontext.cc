@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,8 @@
 
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
+
+#include <limits>
 
 #include <QMutex>
 #include <QMutexLocker>
@@ -894,6 +896,41 @@ void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
   d->setAllowedExtraUrlSchemes(schemes);
 
   emit allowedExtraUrlSchemesChanged();
+}
+
+int OxideQQuickWebContext::maxCacheSizeHint() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->maxCacheSizeHint();
+}
+
+void OxideQQuickWebContext::setMaxCacheSizeHint(int size) {
+  Q_D(OxideQQuickWebContext);
+
+  if (size < 0) {
+    qWarning() << "WebContext.maxCacheSizeHint cannot have a negative value";
+    return;
+  }
+
+  static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
+  if (size > upper_limit) {
+    // To avoid integer overflow.
+    qWarning() << "WebContext.maxCacheSizeHint cannot exceed"
+               << upper_limit << "MB";
+    return;
+  }
+
+  if (d->isInitialized()) {
+    qWarning() << "Cannot set WebContext.maxCacheSizeHint once the context is in use";
+    return;
+  }
+
+  if (d->maxCacheSizeHint() == size) {
+    return;
+  }
+
+  d->setMaxCacheSizeHint(size);
+  emit maxCacheSizeHintChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

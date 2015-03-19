@@ -34,13 +34,15 @@ void SetPowerSaveBlockerOxideDelegateFactory(
 class PowerSaveBlockerImpl::Delegate
     : public base::RefCounted<PowerSaveBlockerImpl::Delegate> {
  public:
-  Delegate(PowerSaveBlockerType type, const std::string& reason) {
+  Delegate(PowerSaveBlockerType type,
+           Reason reason,
+           const std::string& description) {
     if (!g_factory) {
       NOTREACHED();
       return;
     }
 
-    delegate_ = g_factory(type, reason);
+    delegate_ = g_factory(type, reason, description);
     if (!delegate_.get()) {
       NOTIMPLEMENTED();
       return;
@@ -62,8 +64,9 @@ class PowerSaveBlockerImpl::Delegate
 };
 
 PowerSaveBlockerImpl::PowerSaveBlockerImpl(PowerSaveBlockerType type,
-                                           const std::string& reason)
-    : delegate_(new Delegate(type, reason)) {}
+                                           Reason reason,
+                                           const std::string& description)
+    : delegate_(new Delegate(type, reason, description)) {}
 
 PowerSaveBlockerImpl::~PowerSaveBlockerImpl() {}
 

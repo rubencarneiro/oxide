@@ -46,6 +46,7 @@ class GLContextDependent : public gfx::GLContext {
   bool IsCurrent(gfx::GLSurface* surface) override;
   void* GetHandle() override;
   bool WasAllocatedUsingRobustnessExtension() override;
+  scoped_refptr<gfx::GPUTimingClient> CreateGPUTimingClient() override;
 
  private:
   void OnSetSwapInterval(int interval) override;

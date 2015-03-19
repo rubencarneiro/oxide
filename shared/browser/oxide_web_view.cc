@@ -376,9 +376,9 @@ void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
                                            bool initial_host) {
   // Show the location bar if this is the initial RVH and the constraints
   // are set to cc::BOTH
-  cc::TopControlsState current =
-      (!initial_host || location_bar_constraints_ != cc::BOTH) ?
-        location_bar_constraints_ : cc::SHOWN;
+  blink::WebTopControlsState current =
+      (!initial_host || location_bar_constraints_ != blink::WebTopControlsBoth) ?
+        location_bar_constraints_ : blink::WebTopControlsShown;
 
   rvh->Send(
       new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
@@ -845,6 +845,11 @@ bool WebView::IsFullscreenForTabOrPending(
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
+  // We get a RenderFrameHostChanged notification when any FrameTreeNode is
+  // added to the FrameTree, which is when we want a notification. However,
+  // we get that before the FrameTreeNode has its parent set, so we still
+  // have to use RenderFrameCreated to add new nodes correctly
+
   if (WebFrame::FromRenderFrameHost(render_frame_host)) {
     // We already have a WebFrame for this host. This could be because the new
     // host is for the root frame, or it is a cross-process subframe
@@ -860,26 +865,6 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   WebFrame* frame = CreateWebFrame(render_frame_host);
   DCHECK(frame);
   frame->InitParent(parent);
-}
-
-void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    // This occurs if |render_frame_host| represents a frame that's being
-    // detached (so the WebFrame was deleted in FrameDetached)
-    return;
-  }
-
-  if (frame->render_frame_host() != render_frame_host) {
-    // |render_frame_host| is not the current host for this WebFrame, so
-    // we do nothing
-    return;
-  }
-
-  // If we get here, then it's likely that the main frame is being swapped.
-  // In this case, Chromium purges all RenderFrameHosts on the browser side
-  // before we get the detached messages from Blink
-  WebFrame::Destroy(frame);
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {}
@@ -908,9 +893,21 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
 void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
                                      content::RenderFrameHost* new_host) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
-  DCHECK(frame);
 
-  frame->set_render_frame_host(new_host);
+  if (frame) {
+    frame->set_render_frame_host(new_host);
+    return;
+  }
+
+#if 0
+  WebFrame* parent =
+      WebFrame::FromRenderFrameHost(new_host->GetParent());
+  DCHECK(parent);
+
+  frame = CreateWebFrame(new_host);
+  DCHECK(frame);
+  frame->InitParent(parent);
+#endif
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -1203,7 +1200,7 @@ WebView::WebView()
       did_scroll_focused_editable_node_into_view_(false),
       auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
-      location_bar_constraints_(cc::BOTH),
+      location_bar_constraints_(blink::WebTopControlsBoth),
       weak_factory_(this) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
@@ -1237,6 +1234,9 @@ WebView::~WebView() {
   if (rwhv) {
     rwhv->SetDelegate(nullptr);
   }
+
+  // Stop WebContents from calling back in to us
+  content::WebContentsObserver::Observe(nullptr);
 
   web_contents_->RemoveUserData(kWebViewKey);
 }
@@ -1320,7 +1320,7 @@ void WebView::Init(Params* params) {
   web_contents_->SetDelegate(this);
   web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
 
-  WebContentsObserver::Observe(web_contents_.get());
+  content::WebContentsObserver::Observe(web_contents_.get());
 
   // Set the initial WebPreferences. This has to happen after attaching
   // ourself to the WebContents, as the pref update needs to call back in
@@ -1799,7 +1799,7 @@ void WebView::SetLocationBarHeightPix(int height) {
   host->WasResized();
 }
 
-void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
+void WebView::SetLocationBarConstraints(blink::WebTopControlsState constraints) {
   if (constraints == location_bar_constraints_) {
     return;
   }
@@ -1817,7 +1817,7 @@ void WebView::SetLocationBarConstraints(cc::TopControlsState constraints) {
 
   rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
                                                 constraints,
-                                                cc::BOTH,
+                                                blink::WebTopControlsBoth,
                                                 true));
 }
 
@@ -1912,7 +1912,7 @@ void WebView::HidePopupMenu() {
 void WebView::RequestGeolocationPermission(
     const GURL& requesting_frame,
     int bridge_id,
-    const base::Callback<void(bool)>& callback) {
+    const base::Callback<void(content::PermissionStatus)>& callback) {
   PermissionRequestID request_id(
       web_contents_->GetRenderProcessHost()->GetID(),
       web_contents_->GetRenderViewHost()->GetRoutingID(),
@@ -2007,7 +2007,7 @@ void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
   }
 
   content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host || !host->ShouldForwardTouchEvent()) {
+  if (!host) {
     gesture_provider_->OnTouchEventAck(false);
     return;
   }

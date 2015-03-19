@@ -231,6 +231,9 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   // This is needed so that we can share GL resources with the embedder
   command_line->AppendSwitch(switches::kInProcessGPU);
 
+  // We don't want the GPU shader cache (see https://launchpad.net/bugs/1430478)
+  command_line->AppendSwitch(switches::kDisableGpuShaderDiskCache);
+
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 

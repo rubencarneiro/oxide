@@ -7,7 +7,7 @@
 diff --git a/ui/gl/gl_context_egl.cc b/ui/gl/gl_context_egl.cc
 --- a/ui/gl/gl_context_egl.cc
 +++ b/ui/gl/gl_context_egl.cc
-@@ -25,17 +25,18 @@ using ui::GetLastEGLErrorString;
+@@ -26,17 +26,18 @@ using ui::GetLastEGLErrorString;
  namespace gfx {
  
  GLContextEGL::GLContextEGL(GLShareGroup* share_group)
@@ -26,8 +26,8 @@ diff --git a/ui/gl/gl_context_egl.cc b/ui/gl/gl_context_egl.cc
    DCHECK(compatible_surface);
    DCHECK(!context_);
  
-   static const EGLint kContextAttributes[] = {
-@@ -48,18 +49,21 @@ bool GLContextEGL::Initialize(
+   EGLint context_client_version = 2;
+@@ -55,18 +56,21 @@ bool GLContextEGL::Initialize(
      EGL_LOSE_CONTEXT_ON_RESET_EXT,
      EGL_NONE
    };
@@ -50,7 +50,7 @@ diff --git a/ui/gl/gl_context_egl.cc b/ui/gl/gl_context_egl.cc
      context_attributes = kContextAttributes;
    }
  
-@@ -197,17 +201,17 @@ std::string GLContextEGL::GetExtensions(
+@@ -204,17 +208,17 @@ std::string GLContextEGL::GetExtensions(
                                            EGL_EXTENSIONS);
    if (!extensions)
      return GLContext::GetExtensions();

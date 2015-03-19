@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -274,6 +274,14 @@ void WebContextAdapter::setAllowedExtraUrlSchemes(const QStringList& schemes) {
   }
 
   context_->SetAllowedExtraURLSchemes(set);
+}
+
+int WebContextAdapter::maxCacheSizeHint() const {
+  return context_->GetMaxCacheSizeHint();
+}
+
+void WebContextAdapter::setMaxCacheSizeHint(int size) {
+  context_->SetMaxCacheSizeHint(size);
 }
 
 WebContextAdapter::WebContextAdapter(QObject* q)

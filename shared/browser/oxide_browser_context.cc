@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,9 +19,12 @@
 
 #include <algorithm>
 #include <libintl.h>
+#include <limits>
 #include <vector>
 
+#include "base/files/file_enumerator.h"
 #include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/memory/weak_ptr.h"
@@ -97,6 +100,41 @@ const char kDefaultAcceptLanguage[] = "en-us,en";
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
 const int kBackLog = 1;
 
+void CleanupGPUShaderCache(const base::FilePath& path) {
+  base::FilePath cache = path.Append(FILE_PATH_LITERAL("GPUCache"));
+  if (!base::DirectoryExists(cache)) {
+    return;
+  }
+
+  base::FileEnumerator traversal(
+      cache, false,
+      base::FileEnumerator::FILES | base::FileEnumerator::DIRECTORIES);
+  for (base::FilePath current = traversal.Next(); !current.empty();
+       current = traversal.Next()) {
+    if (traversal.GetInfo().IsDirectory()) {
+      LOG(WARNING)
+          << "Not deleting GPU shader cache directory \"" << cache.value()
+          << "\". Directory contains an unexpected sub-directory \""
+          << traversal.GetInfo().GetName().value() << "\"";
+      return;
+    }
+
+    base::FilePath::StringType name = traversal.GetInfo().GetName().value();
+    if (name != FILE_PATH_LITERAL("index") &&
+        name.compare(0, 5, FILE_PATH_LITERAL("data_")) != 0 &&
+        name.compare(0, 2, FILE_PATH_LITERAL("f_")) != 0) {
+      LOG(WARNING)
+          << "Not deleting GPU shader cache directory \"" << cache.value()
+          << "\". Directory contains an unexpected file \"" << name << "\"";
+      return;
+    }
+  }
+
+  base::DeleteFile(cache, true);
+}
+
+} // namespace
+
 class TCPServerSocketFactory :
     public content::DevToolsHttpHandler::ServerSocketFactory {
  public:
@@ -171,8 +209,6 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
   base::WeakPtr<URLRequestContext> url_request_context_;
 };
 
-} // namespace
-
 class ResourceContext final : public content::ResourceContext {
  public:
   ResourceContext() :
@@ -224,6 +260,7 @@ struct BrowserContextSharedIOData {
   BrowserContextSharedIOData(const BrowserContext::Params& params)
       : path(params.path),
         cache_path(params.cache_path),
+        max_cache_size_hint(params.max_cache_size_hint),
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
@@ -239,6 +276,7 @@ struct BrowserContextSharedIOData {
 
   base::FilePath path;
   base::FilePath cache_path;
+  int max_cache_size_hint;
 
   std::string user_agent_string;
   std::string accept_langs;
@@ -376,6 +414,15 @@ base::FilePath BrowserContextIOData::GetCachePath() const {
   return data.cache_path;
 }
 
+int BrowserContextIOData::GetMaxCacheSizeHint() const {
+  int max_cache_size_hint = GetSharedData().max_cache_size_hint;
+  // max_cache_size_hint is expressed in MB, let’s check that
+  // converting it to bytes won’t trigger an integer overflow
+  static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
+  DCHECK_LE(max_cache_size_hint, upper_limit);
+  return max_cache_size_hint;
+}
+
 std::string BrowserContextIOData::GetAcceptLangs() const {
   const BrowserContextSharedIOData& data = GetSharedData();
   base::AutoLock lock(data.lock);
@@ -456,7 +503,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           net::DISK_CACHE,
           net::CACHE_BACKEND_DEFAULT,
           GetCachePath().Append(kCacheDirname),
-          83886080, // XXX: 80MB - Make this configurable
+          GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
   }
@@ -668,6 +715,13 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
                                             new DevtoolsHttpHandlerDelegate(),
                                             base::FilePath()));
   }
+
+  if (!GetPath().empty()) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::FILE,
+        FROM_HERE,
+        base::Bind(&CleanupGPUShaderCache, GetPath()));
+  }
 }
 
 scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
@@ -870,6 +924,11 @@ base::FilePath BrowserContext::GetPath() const {
 base::FilePath BrowserContext::GetCachePath() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetCachePath();
+}
+
+int BrowserContext::GetMaxCacheSizeHint() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetMaxCacheSizeHint();
 }
 
 std::string BrowserContext::GetAcceptLangs() const {

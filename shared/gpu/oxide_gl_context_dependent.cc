@@ -18,6 +18,7 @@
 #include "oxide_gl_context_dependent.h"
 
 #include "base/logging.h"
+#include "ui/gl/gpu_timing.h"
 
 namespace oxide {
 
@@ -69,6 +70,10 @@ void* GLContextDependent::GetHandle() {
 
 bool GLContextDependent::WasAllocatedUsingRobustnessExtension() {
   return was_allocated_using_robustness_extension_;
+}
+
+scoped_refptr<gfx::GPUTimingClient> GLContextDepdendent::CreateGPUTimingClient() {
+  return nullptr;
 }
 
 } // namespace oxide

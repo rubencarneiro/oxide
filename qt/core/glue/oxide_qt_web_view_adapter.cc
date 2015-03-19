@@ -25,6 +25,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/pickle.h"
 #include "cc/output/compositor_frame_metadata.h"
+#include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/size.h"
 #include "url/gurl.h"
@@ -54,18 +55,18 @@ namespace {
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
 static uint16_t STATE_SERIALIZER_VERSION = 1;
 
-cc::TopControlsState LocationBarModeToCcTopControlsState(
+blink::WebTopControlsState LocationBarModeToBlinkTopControlsState(
     LocationBarMode mode) {
   switch (mode) {
     case LOCATION_BAR_MODE_AUTO:
-      return cc::BOTH;
+      return blink::WebTopControlsBoth;
     case LOCATION_BAR_MODE_SHOWN:
-      return cc::SHOWN;
+      return blink::WebTopControlsShown;
     case LOCATION_BAR_MODE_HIDDEN:
-      return cc::HIDDEN;
+      return blink::WebTopControlsHidden;
     default:
       NOTREACHED();
-      return cc::BOTH;
+      return blink::WebTopControlsBoth;
   }
 }
 
@@ -581,11 +582,11 @@ int WebViewAdapter::locationBarContentOffsetPix() {
 
 LocationBarMode WebViewAdapter::locationBarMode() const {
   switch (view_->location_bar_constraints()) {
-    case cc::SHOWN:
+    case blink::WebTopControlsShown:
       return LOCATION_BAR_MODE_SHOWN;
-    case cc::HIDDEN:
+    case blink::WebTopControlsHidden:
       return LOCATION_BAR_MODE_HIDDEN;
-    case cc::BOTH:
+    case blink::WebTopControlsBoth:
       return LOCATION_BAR_MODE_AUTO;
     default:
       NOTREACHED();
@@ -594,7 +595,7 @@ LocationBarMode WebViewAdapter::locationBarMode() const {
 }
 
 void WebViewAdapter::setLocationBarMode(LocationBarMode mode) {
-  view_->SetLocationBarConstraints(LocationBarModeToCcTopControlsState(mode));
+  view_->SetLocationBarConstraints(LocationBarModeToBlinkTopControlsState(mode));
 }
 
 } // namespace qt

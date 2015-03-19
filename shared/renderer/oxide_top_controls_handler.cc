@@ -17,31 +17,23 @@
 
 #include "oxide_top_controls_handler.h"
 
-#include "base/logging.h"
-#include "content/renderer/gpu/render_widget_compositor.h"
-#include "content/renderer/render_view_impl.h"
-#include "content/renderer/render_widget.h"
+#include "content/public/renderer/render_view.h"
+#include "third_party/WebKit/public/web/WebView.h"
 
 #include "shared/common/oxide_messages.h"
 
 namespace oxide {
 
-content::RenderWidgetCompositor*
-TopControlsHandler::GetRenderWidgetCompositor() const {
-  return static_cast<content::RenderWidget*>(
-      static_cast<content::RenderViewImpl*>(render_view()))->compositor();
-}
-
 void TopControlsHandler::OnUpdateTopControlsState(
-    cc::TopControlsState constraints,
-    cc::TopControlsState current,
+    blink::WebTopControlsState constraints,
+    blink::WebTopControlsState current,
     bool animate) {
-  content::RenderWidgetCompositor* compositor = GetRenderWidgetCompositor();
-  if (!compositor) {
+  blink::WebView* view = render_view()->GetWebView();
+  if (!view) {
     return;
   }
 
-  compositor->UpdateTopControlsState(constraints, current, animate);
+  view->updateTopControlsState(constraints, current, animate);
 }
 
 bool TopControlsHandler::OnMessageReceived(const IPC::Message& message) {

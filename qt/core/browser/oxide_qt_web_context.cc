@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -78,6 +78,7 @@ class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
 };
 
 WebContext::ConstructProperties::ConstructProperties() :
+    max_cache_size_hint(0),
     cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
     session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
     popup_blocker_enabled(true),
@@ -355,6 +356,7 @@ int WebContext::SetCookies(const QUrl& url,
         expiry,
         cookie.isSecure(),
         cookie.isHttpOnly(),
+        false,
         net::COOKIE_PRIORITY_DEFAULT,
         base::Bind(&WebContext::CookieSetCallback, this, ctxt, cookie));
   }
@@ -523,6 +525,7 @@ oxide::BrowserContext* WebContext::GetContext() {
   oxide::BrowserContext::Params params(
       construct_props_->data_path,
       construct_props_->cache_path,
+      construct_props_->max_cache_size_hint,
       construct_props_->session_cookie_mode,
       construct_props_->devtools_enabled,
       construct_props_->devtools_port,
@@ -743,6 +746,19 @@ std::vector<std::string> WebContext::GetHostMappingRules() const {
 void WebContext::SetHostMappingRules(const std::vector<std::string>& rules) {
   DCHECK(!IsInitialized());
   construct_props_->host_mapping_rules = rules;
+}
+
+int WebContext::GetMaxCacheSizeHint() const {
+  if (IsInitialized()) {
+    return context_->GetMaxCacheSizeHint();
+  }
+
+  return construct_props_->max_cache_size_hint;
+}
+
+void WebContext::SetMaxCacheSizeHint(int size) {
+  DCHECK(!IsInitialized());
+  construct_props_->max_cache_size_hint = size;
 }
 
 } // namespace qt

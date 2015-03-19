@@ -29,7 +29,6 @@
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "base/timer/timer.h"
-#include "cc/input/top_controls_state.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
 #include "content/public/browser/certificate_request_result_type.h"
@@ -38,8 +37,10 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
+#include "content/public/common/permission_status.mojom.h"
 #include "content/public/common/resource_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "third_party/WebKit/public/web/WebCompositionUnderline.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/geometry/point.h"
@@ -242,10 +243,10 @@ class WebView : public ScriptMessageTarget,
   int GetLocationBarHeightPix() const;
   void SetLocationBarHeightPix(int height);
 
-  cc::TopControlsState location_bar_constraints() const {
+  blink::WebTopControlsState location_bar_constraints() const {
     return location_bar_constraints_;
   }
-  void SetLocationBarConstraints(cc::TopControlsState constraints);
+  void SetLocationBarConstraints(blink::WebTopControlsState constraints);
 
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
@@ -262,7 +263,7 @@ class WebView : public ScriptMessageTarget,
   void RequestGeolocationPermission(
       const GURL& requesting_frame,
       int bridge_id,
-      const base::Callback<void(bool)>& callback);
+      const base::Callback<void(content::PermissionStatus)>& callback);
   void CancelGeolocationPermissionRequest(
       const GURL& requesting_frame,
       int bridge_id);
@@ -437,7 +438,6 @@ class WebView : public ScriptMessageTarget,
 
   // content::WebContentsObserver implementation
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) final;
-  void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) final;
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) final;
@@ -627,7 +627,7 @@ class WebView : public ScriptMessageTarget,
   base::Timer auto_scroll_timer_;
 
   int location_bar_height_pix_;
-  cc::TopControlsState location_bar_constraints_;
+  blink::WebTopControlsState location_bar_constraints_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
 

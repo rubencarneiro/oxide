@@ -18,10 +18,10 @@
 #include <string>
 
 #include "base/memory/shared_memory.h"
-#include "cc/input/top_controls_state.h"
 #include "content/public/common/common_param_traits.h"
 #include "ipc/ipc_message_macros.h"
 #include "ipc/ipc_message_start.h"
+#include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "url/gurl.h"
 
 #include "shared/common/oxide_message_enums.h"
@@ -29,7 +29,7 @@
 
 IPC_ENUM_TRAITS(OxideMsg_SendMessage_Type::Value)
 IPC_ENUM_TRAITS(oxide::ScriptMessageRequest::Error)
-IPC_ENUM_TRAITS(cc::TopControlsState)
+IPC_ENUM_TRAITS(blink::WebTopControlsState)
 
 IPC_STRUCT_BEGIN(OxideMsg_SendMessage_Params)
   IPC_STRUCT_MEMBER(std::string, context)
@@ -61,8 +61,8 @@ IPC_MESSAGE_ROUTED1(OxideMsg_SetAllowRunningInsecureContent,
 IPC_MESSAGE_ROUTED0(OxideMsg_ReloadFrame)
 
 IPC_MESSAGE_ROUTED3(OxideMsg_UpdateTopControlsState,
-                    cc::TopControlsState,
-                    cc::TopControlsState,
+                    blink::WebTopControlsState,
+                    blink::WebTopControlsState,
                     bool)
 
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockDisplayingInsecureContent)

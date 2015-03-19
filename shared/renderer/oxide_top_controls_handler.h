@@ -19,12 +19,8 @@
 #define _OXIDE_SHARED_RENDERER_TOP_CONTROLS_HANDLER_H_
 
 #include "base/macros.h"
-#include "cc/input/top_controls_state.h"
 #include "content/public/renderer/render_view_observer.h"
-
-namespace content {
-class RenderWidgetCompositor;
-}
+#include "third_party/WebKit/public/platform/WebTopControlsState.h"
 
 namespace oxide {
 
@@ -34,9 +30,8 @@ class TopControlsHandler final : public content::RenderViewObserver {
   ~TopControlsHandler();
 
  private:
-  content::RenderWidgetCompositor* GetRenderWidgetCompositor() const;
-  void OnUpdateTopControlsState(cc::TopControlsState constraints,
-                                cc::TopControlsState current,
+  void OnUpdateTopControlsState(blink::WebTopControlsState constraints,
+                                blink::WebTopControlsState current,
                                 bool animate);
 
   // IPC::Listener implementation
