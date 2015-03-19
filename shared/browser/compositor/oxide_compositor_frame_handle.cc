@@ -18,17 +18,16 @@
 #include "oxide_compositor_frame_handle.h"
 
 #include "content/gpu/gpu_child_thread.h"
-#include "ui/gl/gl_bindings.h"
-#include "ui/gl/gl_surface_egl.h"
 
+#include "oxide_compositor_gpu_shims.h"
 #include "oxide_compositor_thread_proxy.h"
+#include "oxide_compositor_utils.h"
 
 namespace oxide {
 
 namespace {
 void DestroyEGLImage(EGLImageKHR egl_image) {
-  eglDestroyImageKHR(gfx::GLSurfaceEGL::GetHardwareDisplay(),
-                     egl_image);
+  EGL::DestroyImageKHR(GpuUtils::GetHardwareEGLDisplay(), egl_image);
 }
 }
 
@@ -51,7 +50,6 @@ ImageFrameData::~ImageFrameData() {
         FROM_HERE,
         base::Bind(&DestroyEGLImage, image_));
   }
-
 }
 
 SoftwareFrameData::SoftwareFrameData(unsigned id,

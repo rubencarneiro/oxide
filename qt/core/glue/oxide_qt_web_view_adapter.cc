@@ -18,11 +18,6 @@
 #include "oxide_qt_web_view_adapter.h"
 
 #include <limits>
-// gl_image_egl.h pulls in X11 headers, which #define KeyPress etc, so
-// include this now to avoid it failing
-#include <QEvent>
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
 #include <QtDebug>
 
 #include "base/logging.h"
@@ -126,19 +121,8 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     return frame_->gl_frame_data()->texture_id();
   }
 
-  void ImageFrameBindTexImage(unsigned int target) final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_IMAGE);
-    typedef void (*glEGLImageTargetTexture2DOESProc)(GLenum target,
-                                                     GLeglImageOES image);
-    static glEGLImageTargetTexture2DOESProc glEGLImageTargetTexture2DOESFn =
-        reinterpret_cast<glEGLImageTargetTexture2DOESProc>(
-          QOpenGLContext::currentContext()->getProcAddress(
-            "glEGLImageTargetTexture2DOES"));
-    DCHECK(glEGLImageTargetTexture2DOESFn);
-    glEGLImageTargetTexture2DOESFn(target,
-                                   frame_->image_frame_data()->image());
-    DCHECK_EQ(static_cast<GLenum>(GL_NO_ERROR),
-              QOpenGLContext::currentContext()->functions()->glGetError());
+  EGLImageKHR GetImageFrame() final {
+    return frame_->image_frame_data()->image();
   }
 
  private:

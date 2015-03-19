@@ -15,48 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_THREAD_SHIM_H_
-#define _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_THREAD_SHIM_H_
+#ifndef _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_
+#define _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_
 
-#include <cstdint>
+#include <stdint.h>
 
-#include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
 #include "content/common/content_export.h"
-
-typedef unsigned int GLuint;
-typedef void* EGLImageKHR;
 
 namespace gfx {
 class GLShareGroup;
 }
 
 namespace gpu {
-class Mailbox;
+namespace gles2 {
+class GLES2Decoder;
+}
 }
 
 namespace content {
-
-class ContextProviderCommandBuffer;
-
 namespace oxide_gpu_shim {
 
-// Return the texture name for the specified client process, command buffer
-// and mailbox
-CONTENT_EXPORT GLuint GetTextureFromMailbox(
-    int32_t client_id,
-    int32_t route_id,
-    const gpu::Mailbox& mailbox);
-
-// Create and return an EGLImage for the specified texture
-CONTENT_EXPORT EGLImageKHR CreateEGLImageFromTexture(
-    int32_t client_id,
-    int32_t route_id,
-    GLuint texture);
-
-CONTENT_EXPORT int32_t GetContextProviderRouteID(
-    content::ContextProviderCommandBuffer* provider);
+CONTENT_EXPORT gpu::gles2::GLES2Decoder* GetGLES2Decoder(int32_t client_id,
+                                                         int32_t route_id);
 
 gfx::GLShareGroup* GetGLShareGroup();
 CONTENT_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
@@ -64,4 +44,4 @@ CONTENT_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
 } // oxide_gpu_shim
 } // content
 
-#endif // _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_THREAD_SHIM_H_
+#endif // _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_

@@ -268,6 +268,8 @@
         'browser/compositor/oxide_compositor_client.h',
         'browser/compositor/oxide_compositor_frame_handle.cc',
         'browser/compositor/oxide_compositor_frame_handle.h',
+        'browser/compositor/oxide_compositor_gpu_shims.cc',
+        'browser/compositor/oxide_compositor_gpu_shims.h',
         'browser/compositor/oxide_compositor_output_surface.cc',
         'browser/compositor/oxide_compositor_output_surface.h',
         'browser/compositor/oxide_compositor_output_surface_gl.cc',

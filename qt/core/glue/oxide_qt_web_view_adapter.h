@@ -36,6 +36,8 @@
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
 
+typedef void* EGLImageKHR;
+
 QT_BEGIN_NAMESPACE
 class QCursor;
 class QFocusEvent;
@@ -111,7 +113,7 @@ class Q_DECL_EXPORT CompositorFrameHandle {
 
   virtual QImage GetSoftwareFrame() = 0;
   virtual unsigned int GetAcceleratedFrameTexture() = 0;
-  virtual void ImageFrameBindTexImage(unsigned int target) = 0;
+  virtual EGLImageKHR GetImageFrame() = 0;
 };
 
 class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {

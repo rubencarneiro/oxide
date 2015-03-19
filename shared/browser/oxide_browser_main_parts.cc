@@ -40,7 +40,7 @@
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
-#include "shared/port/content/common/gpu_thread_shim_oxide.h"
+#include "shared/port/content/common/gpu_service_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 

@@ -30,17 +30,15 @@
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
-#include "content/common/gpu/gpu_channel_manager.h"
-#include "content/gpu/gpu_child_thread.h"
-#include "gpu/command_buffer/service/sync_point_manager.h"
-#include "ui/gl/gl_bindings.h"
-#include "ui/gl/gl_surface_egl.h"
+#include "ui/gl/gl_implementation.h"
+#include "ui/gl/gl_switches.h"
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 #include "shared/common/oxide_id_allocator.h"
-#include "shared/port/content/common/gpu_thread_shim_oxide.h"
+#include "shared/port/content/common/gpu_client_shim_oxide.h"
 
 #include "oxide_compositor_frame_handle.h"
+#include "oxide_compositor_gpu_shims.h"
 
 namespace oxide {
 
@@ -49,8 +47,7 @@ namespace {
 void WakeUpGpuThread() {}
 
 void DestroyEGLImage(EGLImageKHR egl_image) {
-  eglDestroyImageKHR(gfx::GLSurfaceEGL::GetHardwareDisplay(),
-                     egl_image);
+  EGL::DestroyImageKHR(GpuUtils::GetHardwareEGLDisplay(), egl_image);
 }
 
 } // namespace
@@ -62,8 +59,9 @@ class FetchTextureResourcesTaskInfo {
   virtual void DoFetch() = 0;
   virtual void RunCallback() = 0;
 
-  int32_t client_id() const { return client_id_; }
-  int32_t route_id() const { return route_id_; }
+  const CommandBufferID& command_buffer_id() const {
+    return command_buffer_id_;
+  }
   const gpu::Mailbox& mailbox() const { return mailbox_; }
   uint32_t sync_point() const { return sync_point_; }
   base::SingleThreadTaskRunner* task_runner() const {
@@ -77,15 +75,13 @@ class FetchTextureResourcesTaskInfo {
       const gpu::Mailbox& mailbox,
       uint32_t sync_point,
       base::SingleThreadTaskRunner* task_runner)
-      : client_id_(client_id),
-        route_id_(route_id),
+      : command_buffer_id_(client_id, route_id),
         mailbox_(mailbox),
         sync_point_(sync_point),
         task_runner_(task_runner) {}
 
  private:
-  int32_t client_id_;
-  int32_t route_id_;
+  CommandBufferID command_buffer_id_;
   gpu::Mailbox mailbox_;
   uint32_t sync_point_;
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
@@ -257,9 +253,8 @@ FetchTextureIDTaskInfo::~FetchTextureIDTaskInfo() {}
 
 void FetchTextureIDTaskInfo::DoFetch() {
   DCHECK(CompositorUtilsImpl::GetInstance()->CalledOnGpuThread());
-  texture_ = content::oxide_gpu_shim::GetTextureFromMailbox(client_id(),
-                                                            route_id(),
-                                                            mailbox());
+  texture_ = GpuUtils::GetTextureFromMailbox(command_buffer_id(),
+                                             mailbox());
 }
 
 void FetchTextureIDTaskInfo::RunCallback() {
@@ -270,7 +265,7 @@ void FetchTextureIDTaskInfo::RunCallback() {
 FetchEGLImageTaskInfo::~FetchEGLImageTaskInfo() {
   if (egl_image_ != EGL_NO_IMAGE_KHR) {
     // XXX: Do we need to do this on a specific thread?
-    content::GpuChildThread::GetTaskRunner()->PostTask(
+    GpuUtils::GetTaskRunner()->PostTask(
         FROM_HERE,
         base::Bind(&DestroyEGLImage, egl_image_));
   }
@@ -278,17 +273,8 @@ FetchEGLImageTaskInfo::~FetchEGLImageTaskInfo() {
 
 void FetchEGLImageTaskInfo::DoFetch() {
   DCHECK(CompositorUtilsImpl::GetInstance()->CalledOnGpuThread());
-  GLuint texture =
-      content::oxide_gpu_shim::GetTextureFromMailbox(client_id(),
-                                                     route_id(),
-                                                     mailbox());
-  if (texture == 0) {
-    return;
-  }
-
-  egl_image_ = content::oxide_gpu_shim::CreateEGLImageFromTexture(client_id(),
-                                                                  route_id(),
-                                                                  texture);
+  egl_image_ = GpuUtils::CreateEGLImageFromMailbox(command_buffer_id(),
+                                                   mailbox());
 }
 
 void FetchEGLImageTaskInfo::RunCallback() {
@@ -320,7 +306,7 @@ CompositorUtilsImpl::CompositorUtilsImpl()
 CompositorUtilsImpl::~CompositorUtilsImpl() {}
 
 void CompositorUtilsImpl::InitializeOnGpuThread() {
-  DCHECK(content::GpuChildThread::GetTaskRunner()->BelongsToCurrentThread());
+  DCHECK(GpuUtils::GetTaskRunner()->BelongsToCurrentThread());
   DCHECK(gpu_thread_checker_.CalledOnValidThread());
 
   base::AutoLock lock(incoming_texture_resource_fetches_.lock);
@@ -352,14 +338,12 @@ void CompositorUtilsImpl::FetchTextureResourcesOnGpuThread(
          texture_resource_fetches_.info_map.end());
   texture_resource_fetches_.info_map[id] = info;
 
-  gpu::SyncPointManager* sync_point_manager =
-      content::GpuChildThread::GetChannelManager()->sync_point_manager();
-  if (sync_point_manager->IsSyncPointRetired(info->sync_point())) {
+  if (GpuUtils::IsSyncPointRetired(info->sync_point())) {
     ContinueFetchTextureResourcesOnGpuThread_Locked(id);
     return;
   }
 
-  sync_point_manager->AddSyncPointCallback(
+  GpuUtils::AddSyncPointCallback(
       info->sync_point(),
       base::Bind(&CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread,
                  base::Unretained(this), id));
@@ -484,7 +468,7 @@ void CompositorUtilsImpl::Initialize(bool has_share_context) {
   scoped_refptr<content::GpuChannelHost> gpu_channel_host(
       content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
   if (gpu_channel_host.get()) {
-    content::GpuChildThread::GetTaskRunner()->PostTask(
+    GpuUtils::GetTaskRunner()->PostTask(
         FROM_HERE,
         base::Bind(&CompositorUtilsImpl::InitializeOnGpuThread,
                    base::Unretained(this)));
@@ -503,7 +487,7 @@ void CompositorUtilsImpl::Shutdown() {
   // Detach the GPU thread MessageLoop::TaskObserver, to stop processing
   // and existing incoming requests
   scoped_refptr<base::SingleThreadTaskRunner> gpu_task_runner =
-      content::GpuChildThread::GetTaskRunner();
+      GpuUtils::GetTaskRunner();
   if (gpu_task_runner.get()) {
     base::ThreadRestrictions::ScopedAllowWait allow_wait;
     base::WaitableEvent event(false, false);
@@ -573,7 +557,7 @@ void CompositorUtilsImpl::GetTextureFromMailbox(
     incoming_texture_resource_fetches_.fetch_pending = true;
     if (incoming_texture_resource_fetches_.gpu_needs_wakeup) {
       // We assert |can_queue| above, so this should never fail
-      content::GpuChildThread::GetTaskRunner()->PostTask(
+      GpuUtils::GetTaskRunner()->PostTask(
           FROM_HERE,
           base::Bind(&WakeUpGpuThread));
     }
@@ -613,7 +597,7 @@ void CompositorUtilsImpl::CreateEGLImageFromMailbox(
     incoming_texture_resource_fetches_.fetch_pending = true;
     if (incoming_texture_resource_fetches_.gpu_needs_wakeup) {
       // We assert |can_queue| above, so this should never fail
-      content::GpuChildThread::GetTaskRunner()->PostTask(
+      GpuUtils::GetTaskRunner()->PostTask(
           FROM_HERE,
           base::Bind(&WakeUpGpuThread));
     }

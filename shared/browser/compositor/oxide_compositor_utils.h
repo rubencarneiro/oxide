@@ -18,15 +18,16 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_UTILS_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_UTILS_H_
 
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES2/gl2.h>
+
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "ui/gfx/native_widget_types.h"
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
-
-typedef unsigned int GLuint;
-typedef void* EGLImageKHR;
 
 namespace base {
 class SingleThreadTaskRunner;

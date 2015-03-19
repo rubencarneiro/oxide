@@ -52,11 +52,23 @@ bool ImageFrameNode::hasMipmaps() const {
 }
 
 void ImageFrameNode::bind() {
-  QOpenGLContext::currentContext()->functions()->glBindTexture(GL_TEXTURE_2D,
-                                                               textureId());
+  QOpenGLContext* context = QOpenGLContext::currentContext();
+  QOpenGLFunctions* functions = context->functions();
+
+  functions->glBindTexture(GL_TEXTURE_2D, textureId());
   updateBindOptions(dirty_bind_options_);
   dirty_bind_options_ = false;
-  handle_->ImageFrameBindTexImage(GL_TEXTURE_2D);
+
+  typedef void (*glEGLImageTargetTexture2DOESProc)(GLenum target,
+                                                   GLeglImageOES image);
+  static glEGLImageTargetTexture2DOESProc glEGLImageTargetTexture2DOESFn =
+      reinterpret_cast<glEGLImageTargetTexture2DOESProc>(
+        context->getProcAddress("glEGLImageTargetTexture2DOES"));
+  Q_ASSERT(glEGLImageTargetTexture2DOESFn);
+
+  glEGLImageTargetTexture2DOESFn(GL_TEXTURE_2D,
+                                 handle_->GetImageFrame());
+  Q_ASSERT(static_cast<GLenum>(GL_NO_ERROR) == functions->glGetError());
 }
 
 ImageFrameNode::ImageFrameNode()
