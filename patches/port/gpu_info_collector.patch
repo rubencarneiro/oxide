@@ -22,7 +22,7 @@ diff --git a/gpu/gpu_config.gypi b/gpu/gpu_config.gypi
      'config/gpu_blacklist.h',
      'config/gpu_control_list.cc',
      'config/gpu_control_list.h',
-@@ -25,30 +26,32 @@
+@@ -25,29 +26,31 @@
      'config/gpu_driver_bug_workaround_type.h',
      'config/gpu_dx_diagnostics_win.cc',
      'config/gpu_feature_type.h',
@@ -39,7 +39,6 @@ diff --git a/gpu/gpu_config.gypi b/gpu/gpu_config.gypi
      'config/gpu_info_collector_ozone.cc',
      'config/gpu_info_collector_win.cc',
      'config/gpu_info_collector_x11.cc',
-     'config/gpu_performance_stats.h',
      'config/gpu_test_config.cc',
      'config/gpu_test_config.h',
      'config/gpu_test_expectations_parser.cc',

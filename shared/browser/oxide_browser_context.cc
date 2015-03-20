@@ -35,7 +35,6 @@
 #include "base/threading/worker_pool.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
-#include "content/public/browser/cookie_crypto_delegate.h"
 #include "content/public/browser/devtools_http_handler.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
