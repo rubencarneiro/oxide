@@ -78,7 +78,7 @@ class MessageReceiver {
 
     if (!OxideMsg_SendMessage_Type::is_valid(params_.type)) {
       LOG(ERROR) << "Renderer sent bad message type";
-      rfh->GetProcess()->ReceivedBadMessage();
+      rfh->GetProcess()->ShutdownForBadMessage();
       return;
     }
 

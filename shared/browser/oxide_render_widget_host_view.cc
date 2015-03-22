@@ -138,7 +138,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     scoped_ptr<cc::CompositorFrame> frame) {
   if (!frame->delegated_frame_data) {
     DLOG(ERROR) << "Non delegated renderer path is not supported";
-    host_->GetProcess()->ReceivedBadMessage();
+    host_->GetProcess()->ShutdownForBadMessage();
     return;
   }
 
@@ -147,7 +147,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
 
   if (frame_data->render_pass_list.empty()) {
     DLOG(ERROR) << "Invalid delegated frame";
-    host_->GetProcess()->ReceivedBadMessage();
+    host_->GetProcess()->ShutdownForBadMessage();
     return;
   }
 
