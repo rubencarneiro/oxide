@@ -626,8 +626,8 @@ CompositingMode CompositorUtilsImpl::GetCompositingMode() const {
     return COMPOSITING_MODE_TEXTURE;
   }
 
-  if (gfx::GetGLImplementation() == gfx::kGLImplementationEGLGLES2) {
-    // TODO(chrisccoulson): Make sure driver supports this
+  if (gfx::GetGLImplementation() == gfx::kGLImplementationEGLGLES2 &&
+      GpuUtils::CanUseEGLImage()) {
     return COMPOSITING_MODE_EGLIMAGE;
   }
 

@@ -108,6 +108,13 @@ void GpuUtils::AddSyncPointCallback(uint32_t sync_point,
 }
 
 // static
+bool GpuUtils::CanUseEGLImage() {
+  return gfx::g_driver_egl.ext.b_EGL_KHR_gl_texture_2D_image &&
+         gfx::g_driver_egl.ext.b_EGL_KHR_image &&
+         gfx::g_driver_egl.ext.b_EGL_KHR_image_base;
+}
+
+// static
 EGLDisplay GpuUtils::GetHardwareEGLDisplay() {
   return gfx::GLSurfaceEGL::GetHardwareDisplay();
 }

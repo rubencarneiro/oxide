@@ -72,6 +72,8 @@ class GpuUtils {
   static void AddSyncPointCallback(uint32_t sync_point,
                                    const base::Closure& callback);
 
+  static bool CanUseEGLImage();
+
   static GLuint GetTextureFromMailbox(const CommandBufferID& command_buffer,
                                       const gpu::Mailbox& mailbox);
 
