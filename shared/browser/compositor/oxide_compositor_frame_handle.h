@@ -80,13 +80,8 @@ class SoftwareFrameData {
   uint8* pixels_;
 };
 
-struct CompositorFrameHandleTraits {
-  static void Destruct(const CompositorFrameHandle* x);
-};
-
-class CompositorFrameHandle final :
-    public base::RefCountedThreadSafe<CompositorFrameHandle,
-                                      CompositorFrameHandleTraits> {
+class CompositorFrameHandle
+    : public base::RefCountedThreadSafe<CompositorFrameHandle> {
  public:
   CompositorFrameHandle(uint32 surface_id,
                         scoped_refptr<CompositorThreadProxy> proxy,
@@ -104,7 +99,7 @@ class CompositorFrameHandle final :
 
  private:
   friend class CompositorThreadProxy;
-  friend class CompositorFrameHandleTraits;
+  friend class base::RefCountedThreadSafe<CompositorFrameHandle>;
 
   ~CompositorFrameHandle();
 

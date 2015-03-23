@@ -17,6 +17,8 @@
 
 #include "oxide_compositor.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
@@ -282,8 +284,8 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
 }
 
 void Compositor::DidSwapCompositorFrame(uint32 surface_id,
-                                        FrameHandleVector* returned_frames) {
-  proxy_->DidSwapCompositorFrame(surface_id, returned_frames);
+                                        FrameHandleVector returned_frames) {
+  proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
 }
 
 } // namespace oxide

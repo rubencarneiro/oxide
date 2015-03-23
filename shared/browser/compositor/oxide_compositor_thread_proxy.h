@@ -22,12 +22,13 @@
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 
+#include <map>
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/synchronization/lock.h"
 #include "base/threading/thread_checker.h"
 #include "cc/resources/shared_bitmap.h"
 
@@ -63,13 +64,30 @@ class CompositorThreadProxy final
 
   CompositorThreadProxy(Compositor* compositor);
 
+  // Notification that the owning Compositor instance has been destroyed
   void CompositorDestroyed();
-  void SetOutputSurface(CompositorOutputSurface* output);
 
+  // Set the current output surface
+  void SetOutputSurface(CompositorOutputSurface* output_surface);
+
+  // Notification from the compositor that a buffer was created with the
+  // specified mailbox name
+  void MailboxBufferCreated(const gpu::Mailbox& mailbox, uint32_t sync_point);
+
+  // Notification from the compositor that the buffer with the specified
+  // mailbox name was destroyed
+  void MailboxBufferDestroyed(const gpu::Mailbox& mailbox);
+
+  // Called from the compositor to tell the client to swap
   void SwapCompositorFrame(cc::CompositorFrame* frame);
-  void DidSwapCompositorFrame(
-      uint32 surface_id,
-      FrameHandleVector* returned_frames);
+
+  // Called from the client to tell the compositor that a frame swap
+  // completed
+  void DidSwapCompositorFrame(uint32_t surface_id,
+                              FrameHandleVector returned_frames);
+
+  // Called when CompositorFrameHandle is deleted, so that associated
+  // resources can be reclaimed
   void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
 
  private:
@@ -77,26 +95,30 @@ class CompositorThreadProxy final
 
   ~CompositorThreadProxy();
 
-  void DidSkipSwapCompositorFrame(
-      uint32 surface_id,
-      scoped_refptr<CompositorFrameHandle>* frame);
+  void GetTextureFromMailboxResponseOnOwnerThread(uint32_t surface_id,
+                                                  const gpu::Mailbox& mailbox,
+                                                  GLuint texture);
+  void CreateEGLImageFromMailboxResponseOnOwnerThread(
+      uint32_t surface_id,
+      const gpu::Mailbox& mailbox,
+      EGLImageKHR egl_image);
 
-  void SendSwapTextureFrameOnOwnerThread(uint32_t surface_id,
-                                         const gfx::Size& size,
-                                         float scale,
-                                         const gpu::Mailbox& mailbox,
-                                         GLuint texture);
-  void SendSwapEGLImageFrameOnOwnerThread(uint32_t surface_id,
-                                          const gfx::Size& size,
-                                          float scale,
-                                          const gpu::Mailbox& mailbox,
-                                          EGLImageKHR egl_image);
   void SendSwapSoftwareFrameOnOwnerThread(uint32_t surface_id,
                                           const gfx::Size& size,
                                           float scale,
                                           unsigned id,
                                           const gfx::Rect& damage_rect,
                                           const cc::SharedBitmapId& bitmap_id);
+  void DidCompleteGLFrameOnImplThread(scoped_ptr<cc::CompositorFrame> frame);
+  void SendSwapGLFrameOnOwnerThread(uint32_t surface_id,
+                                    const gfx::Size& size,
+                                    float scale,
+                                    const gpu::Mailbox& mailbox);
+
+  void DidSkipSwapCompositorFrame(
+      uint32_t surface_id,
+      scoped_refptr<CompositorFrameHandle>* frame);
+
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
       uint32 surface_id,
       FrameHandleVector returned_frames);
@@ -107,6 +129,16 @@ class CompositorThreadProxy final
       scoped_ptr<SoftwareFrameData> software_frame_data,
       scoped_ptr<ImageFrameData> image_frame_data);
 
+  void UnrefMailboxBufferDataForEGLImage(const gpu::Mailbox& mailbox);
+
+  union MailboxBufferData {
+    GLuint texture;
+    struct {
+      int ref_count;
+      EGLImageKHR image;
+    } egl_image;
+  };
+
   struct OwnerData {
     OwnerData() : compositor(nullptr) {}
 
@@ -114,9 +146,9 @@ class CompositorThreadProxy final
   };
 
   struct ImplData {
-    ImplData() : output(nullptr) {}
+    ImplData() : output_surface(nullptr) {}
 
-    CompositorOutputSurface* output;
+    CompositorOutputSurface* output_surface;
   };
 
   OwnerData& owner();
@@ -132,6 +164,18 @@ class CompositorThreadProxy final
 
   OwnerData owner_unsafe_access_;
   ImplData impl_unsafe_access_;
+
+  // Lock for the following 2 data members. They aren't lockless and part
+  // of OwnerData because they have to be manipulated from the application's
+  // render thread via DidSwapCompositorFrame and ReclaimResourcesForFrame
+  base::Lock mb_data_map_lock_;
+
+  // The current output surface ID, for checking whether the surface has
+  // changed when fetching buffer resources from the GPU thread
+  uint32_t surface_id_for_mb_data_map_;
+
+  // A map of mailbox names to actual GPU buffers
+  std::map<const gpu::Mailbox, MailboxBufferData> mb_data_map_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorThreadProxy);
 };
