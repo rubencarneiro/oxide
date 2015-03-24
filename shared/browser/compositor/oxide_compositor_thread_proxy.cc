@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -49,35 +49,30 @@ void CompositorThreadProxy::GetTextureFromMailboxResponseOnOwnerThread(
     uint32_t surface_id,
     const gpu::Mailbox& mailbox,
     GLuint texture) {
-  base::AutoLock lock(mb_data_map_lock_);
-  if (surface_id != surface_id_for_mb_data_map_) {
+  if (texture == 0) {
     return;
   }
 
-  DCHECK(mb_data_map_.find(mailbox) == mb_data_map_.end());
-
-  MailboxBufferData data;
-  data.texture = texture;
-
-  mb_data_map_[mailbox] = data;
+  mailbox_buffer_map_.AddTextureMapping(surface_id, mailbox, texture);
 }
 
 void CompositorThreadProxy::CreateEGLImageFromMailboxResponseOnOwnerThread(
     uint32_t surface_id,
     const gpu::Mailbox& mailbox,
     EGLImageKHR egl_image) {
-  base::AutoLock lock(mb_data_map_lock_);
-  if (surface_id != surface_id_for_mb_data_map_) {
+  if (egl_image == EGL_NO_IMAGE_KHR) {
     return;
   }
 
-  DCHECK(mb_data_map_.find(mailbox) == mb_data_map_.end());
-
-  MailboxBufferData data;
-  data.egl_image.ref_count = 1;
-  data.egl_image.image = egl_image;
-
-  mb_data_map_[mailbox] = data;
+  if (!mailbox_buffer_map_.AddEGLImageMapping(surface_id,
+                                              mailbox,
+                                              egl_image)) {
+    GpuUtils::GetTaskRunner()->PostTask(
+        FROM_HERE,
+        base::Bind(base::IgnoreResult(&EGL::DestroyImageKHR),
+                   GpuUtils::GetHardwareEGLDisplay(),
+                   egl_image));
+  }
 }
 
 void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
@@ -128,31 +123,36 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
   scoped_refptr<CompositorFrameHandle> frame(
       new CompositorFrameHandle(surface_id, this, size, scale));
 
-  {
-    base::AutoLock lock(mb_data_map_lock_);
-
-    auto it = mb_data_map_.find(mailbox);
-    if (it == mb_data_map_.end()) {
-      // TODO(chrisccoulson): Handle case where data hasn't been received from
-      //  the GPU thread yet
-      frame->gl_frame_data_.reset(new GLFrameData(mailbox, 0));
-      DidSkipSwapCompositorFrame(surface_id, &frame);
-      return;
+  switch (mode_) {
+    case COMPOSITING_MODE_TEXTURE: {
+      GLuint texture =
+          mailbox_buffer_map_.ConsumeTextureFromMailbox(mailbox);
+      if (texture == 0) {
+        // This should only occur if the output surface was destroyed
+        return;
+      }
+      frame->gl_frame_data_.reset(new GLFrameData(mailbox, texture));
+      break;
     }
 
-    if (mode_ == COMPOSITING_MODE_TEXTURE) {
-      frame->gl_frame_data_.reset(new GLFrameData(mailbox, it->second.texture));
-    } else {
-      DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
-      frame->image_frame_data_.reset(
-          new ImageFrameData(mailbox, it->second.egl_image.image));
-      ++it->second.egl_image.ref_count;
+    case COMPOSITING_MODE_EGLIMAGE: {
+      EGLImageKHR egl_image =
+          mailbox_buffer_map_.ConsumeEGLImageFromMailbox(mailbox);
+      if (egl_image == EGL_NO_IMAGE_KHR) {
+        // This should only occur if the output surface was destroyed
+        return;
+      }
+      frame->image_frame_data_.reset(new ImageFrameData(mailbox, egl_image));
+      break;
     }
 
-    if (!owner().compositor) {
-      DidSkipSwapCompositorFrame(surface_id, &frame);
-      return;
-    }
+    default:
+      NOTREACHED();
+  }
+
+  if (!owner().compositor) {
+    DidSkipSwapCompositorFrame(surface_id, &frame);
+    return;
   }
 
   owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
@@ -199,8 +199,9 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
         scoped_ptr<ImageFrameData> image_frame_data =
             frame->image_frame_data_.Pass();
         ack.gl_frame_data->mailbox = image_frame_data->mailbox();
-        UnrefMailboxBufferDataForEGLImage(image_frame_data->mailbox());
       }
+      mailbox_buffer_map_.ReclaimMailboxBufferResources(
+          ack.gl_frame_data->mailbox);
     } else if (frame->software_frame_data()) {
       scoped_ptr<SoftwareFrameData> software_frame_data =
           frame->software_frame_data_.Pass();
@@ -230,8 +231,9 @@ void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
       ack.gl_frame_data->mailbox = gl_frame_data->mailbox();
     } else {
       ack.gl_frame_data->mailbox = image_frame_data->mailbox();
-      UnrefMailboxBufferDataForEGLImage(image_frame_data->mailbox());
     }
+    mailbox_buffer_map_.ReclaimMailboxBufferResources(
+        ack.gl_frame_data->mailbox);
   } else if (software_frame_data.get()) {
     ack.last_software_frame_id = software_frame_data->id();
   } else {
@@ -244,25 +246,6 @@ void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
   }
 
   impl().output_surface->ReclaimResources(ack);
-}
-
-void CompositorThreadProxy::UnrefMailboxBufferDataForEGLImage(
-    const gpu::Mailbox& mailbox) {
-  DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
-
-  base::AutoLock lock(mb_data_map_lock_);
-  auto it = mb_data_map_.find(mailbox);
-  DCHECK(it != mb_data_map_.end());
-
-  DCHECK_GT(it->second.egl_image.ref_count, 0);
-  if (--it->second.egl_image.ref_count == 0) {
-    GpuUtils::GetTaskRunner()->PostTask(
-        FROM_HERE,
-        base::Bind(base::IgnoreResult(&EGL::DestroyImageKHR),
-                   GpuUtils::GetHardwareEGLDisplay(),
-                   it->second.egl_image.image));
-    mb_data_map_.erase(it);
-  }
 }
 
 CompositorThreadProxy::OwnerData& CompositorThreadProxy::owner() {
@@ -278,7 +261,7 @@ CompositorThreadProxy::ImplData& CompositorThreadProxy::impl() {
 CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)
     : mode_(CompositorUtils::GetInstance()->GetCompositingMode()),
       owner_message_loop_(base::MessageLoopProxy::current()),
-      surface_id_for_mb_data_map_(0) {
+      mailbox_buffer_map_(mode_, this) {
   owner().compositor = compositor;
   impl_thread_checker_.DetachFromThread();
 }
@@ -296,9 +279,8 @@ void CompositorThreadProxy::SetOutputSurface(
   impl().output_surface = output_surface;
   impl_message_loop_ = base::MessageLoopProxy::current();
 
-  base::AutoLock lock(mb_data_map_lock_);
-  surface_id_for_mb_data_map_ =
-      output_surface ? output_surface->surface_id() : 0;
+  mailbox_buffer_map_.SetOutputSurfaceID(
+      output_surface ? output_surface->surface_id() : 0);
 }
 
 void CompositorThreadProxy::MailboxBufferCreated(const gpu::Mailbox& mailbox,
@@ -327,13 +309,7 @@ void CompositorThreadProxy::MailboxBufferCreated(const gpu::Mailbox& mailbox,
 
 void CompositorThreadProxy::MailboxBufferDestroyed(
     const gpu::Mailbox& mailbox) {
-  if (mode_ == COMPOSITING_MODE_TEXTURE) {
-    base::AutoLock lock(mb_data_map_lock_);
-    size_t rv = mb_data_map_.erase(mailbox);
-    DCHECK_GT(rv, 0U);
-  } else {
-    UnrefMailboxBufferDataForEGLImage(mailbox);
-  }
+  mailbox_buffer_map_.MailboxBufferDestroyed(mailbox);
 }
 
 void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {

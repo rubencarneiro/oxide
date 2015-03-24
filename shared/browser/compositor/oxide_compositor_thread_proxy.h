@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,11 +28,12 @@
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/synchronization/lock.h"
+#include "base/memory/scoped_vector.h"
 #include "base/threading/thread_checker.h"
 #include "cc/resources/shared_bitmap.h"
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
+#include "shared/browser/compositor/oxide_mailbox_buffer_map.h"
 
 namespace base {
 class MessageLoopProxy;
@@ -129,16 +130,6 @@ class CompositorThreadProxy final
       scoped_ptr<SoftwareFrameData> software_frame_data,
       scoped_ptr<ImageFrameData> image_frame_data);
 
-  void UnrefMailboxBufferDataForEGLImage(const gpu::Mailbox& mailbox);
-
-  union MailboxBufferData {
-    GLuint texture;
-    struct {
-      int ref_count;
-      EGLImageKHR image;
-    } egl_image;
-  };
-
   struct OwnerData {
     OwnerData() : compositor(nullptr) {}
 
@@ -165,17 +156,7 @@ class CompositorThreadProxy final
   OwnerData owner_unsafe_access_;
   ImplData impl_unsafe_access_;
 
-  // Lock for the following 2 data members. They aren't lockless and part
-  // of OwnerData because they have to be manipulated from the application's
-  // render thread via DidSwapCompositorFrame and ReclaimResourcesForFrame
-  base::Lock mb_data_map_lock_;
-
-  // The current output surface ID, for checking whether the surface has
-  // changed when fetching buffer resources from the GPU thread
-  uint32_t surface_id_for_mb_data_map_;
-
-  // A map of mailbox names to actual GPU buffers
-  std::map<const gpu::Mailbox, MailboxBufferData> mb_data_map_;
+  MailboxBufferMap mailbox_buffer_map_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorThreadProxy);
 };
