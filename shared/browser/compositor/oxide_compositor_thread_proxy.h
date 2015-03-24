@@ -58,6 +58,8 @@ class GLFrameData;
 class ImageFrameData;
 class SoftwareFrameData;
 
+// This class bridges Compositor (which lives on the owner thread) and its
+// client, and CompositorOutputSurface (which lives on the impl thread)
 class CompositorThreadProxy final
     : public base::RefCountedThreadSafe<CompositorThreadProxy> {
  public:
@@ -65,30 +67,35 @@ class CompositorThreadProxy final
 
   CompositorThreadProxy(Compositor* compositor);
 
-  // Notification that the owning Compositor instance has been destroyed
+  // Notification that the owning Compositor instance has been destroyed,
+  // called on the owner thread
   void CompositorDestroyed();
 
-  // Set the current output surface
+  // Set the current output surface, and called on the impl thread
   void SetOutputSurface(CompositorOutputSurface* output_surface);
 
   // Notification from the compositor that a buffer was created with the
-  // specified mailbox name
+  // specified mailbox name, called on the impl thread
   void MailboxBufferCreated(const gpu::Mailbox& mailbox, uint32_t sync_point);
 
   // Notification from the compositor that the buffer with the specified
-  // mailbox name was destroyed
+  // mailbox name was destroyed, called on the impl thread
   void MailboxBufferDestroyed(const gpu::Mailbox& mailbox);
 
-  // Called from the compositor to tell the client to swap
+  // Called from the compositor to tell the client to swap, called on
+  // the impl thread
   void SwapCompositorFrame(cc::CompositorFrame* frame);
 
   // Called from the client to tell the compositor that a frame swap
-  // completed
+  // completed. |returned_frames| contains the buffers that the client
+  // no longer needs. This function is called on the owner thread or
+  // another thread whilst the owner thread is frozen
   void DidSwapCompositorFrame(uint32_t surface_id,
                               FrameHandleVector returned_frames);
 
   // Called when CompositorFrameHandle is deleted, so that associated
-  // resources can be reclaimed
+  // resources can be reclaimed. Called on the owner thread or another
+  // thread whilst the owner thread is frozen
   void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
 
  private:
@@ -96,33 +103,47 @@ class CompositorThreadProxy final
 
   ~CompositorThreadProxy();
 
+  // Response from CompositorUtils::GetTextureFromMailbox
   void GetTextureFromMailboxResponseOnOwnerThread(uint32_t surface_id,
                                                   const gpu::Mailbox& mailbox,
                                                   GLuint texture);
+
+  // Response from CompositorUtils::CreateEGLImageFromMailbox
   void CreateEGLImageFromMailboxResponseOnOwnerThread(
       uint32_t surface_id,
       const gpu::Mailbox& mailbox,
       EGLImageKHR egl_image);
 
+  // Owner thread handler for a new software frame
   void SendSwapSoftwareFrameOnOwnerThread(uint32_t surface_id,
                                           const gfx::Size& size,
                                           float scale,
                                           unsigned id,
                                           const gfx::Rect& damage_rect,
                                           const cc::SharedBitmapId& bitmap_id);
-  void DidCompleteGLFrameOnImplThread(scoped_ptr<cc::CompositorFrame> frame);
+
+  // Called when the fence for a new GL frame is passed on the GPU thread
+  void DidCompleteGLFrameOnImplThread(uint32_t surface_id,
+                                      scoped_ptr<cc::CompositorFrame> frame);
+
+  // Owner thread handler for a new GL frame
   void SendSwapGLFrameOnOwnerThread(uint32_t surface_id,
                                     const gfx::Size& size,
                                     float scale,
                                     const gpu::Mailbox& mailbox);
 
+  // Called when the client is not notified of a new frame, eg, if it has
+  // disappeared. This is called on the owner thread
   void DidSkipSwapCompositorFrame(
       uint32_t surface_id,
       scoped_refptr<CompositorFrameHandle>* frame);
 
+  // Impl thread handler for DidSwapCompositorFrame
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
       uint32 surface_id,
       FrameHandleVector returned_frames);
+
+  // Impl thread handler for ReclaimResourcesForFrame
   void SendReclaimResourcesToOutputSurfaceOnImplThread(
       uint32 surface_id,
       const gfx::Size& size_in_pixels,
@@ -145,7 +166,7 @@ class CompositorThreadProxy final
   OwnerData& owner();
   ImplData& impl();
 
-  CompositingMode mode_;
+  const CompositingMode mode_;
 
   scoped_refptr<base::MessageLoopProxy> owner_message_loop_;
   scoped_refptr<base::MessageLoopProxy> impl_message_loop_;

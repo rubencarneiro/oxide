@@ -53,7 +53,23 @@ void CompositorThreadProxy::GetTextureFromMailboxResponseOnOwnerThread(
     return;
   }
 
-  mailbox_buffer_map_.AddTextureMapping(surface_id, mailbox, texture);
+  MailboxBufferMap::DelayedFrameSwapQueue ready_frame_swaps;
+
+  mailbox_buffer_map_.AddTextureMapping(
+      surface_id,
+      mailbox,
+      texture,
+      &ready_frame_swaps);
+
+  while (!ready_frame_swaps.empty()) {
+    const MailboxBufferMap::DelayedFrameSwap& swap = ready_frame_swaps.front();
+    SendSwapGLFrameOnOwnerThread(
+        swap.surface_id,
+        swap.size,
+        swap.scale,
+        swap.mailbox);
+    ready_frame_swaps.pop();           
+  }
 }
 
 void CompositorThreadProxy::CreateEGLImageFromMailboxResponseOnOwnerThread(
@@ -64,14 +80,27 @@ void CompositorThreadProxy::CreateEGLImageFromMailboxResponseOnOwnerThread(
     return;
   }
 
+  MailboxBufferMap::DelayedFrameSwapQueue ready_frame_swaps;
+
   if (!mailbox_buffer_map_.AddEGLImageMapping(surface_id,
                                               mailbox,
-                                              egl_image)) {
+                                              egl_image,
+                                              &ready_frame_swaps)) {
     GpuUtils::GetTaskRunner()->PostTask(
         FROM_HERE,
         base::Bind(base::IgnoreResult(&EGL::DestroyImageKHR),
                    GpuUtils::GetHardwareEGLDisplay(),
                    egl_image));
+  }
+
+  while (!ready_frame_swaps.empty()) {
+    const MailboxBufferMap::DelayedFrameSwap& swap = ready_frame_swaps.front();
+    SendSwapGLFrameOnOwnerThread(
+        swap.surface_id,
+        swap.size,
+        swap.scale,
+        swap.mailbox);
+    ready_frame_swaps.pop();           
   }
 }
 
@@ -104,12 +133,17 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
 }
 
 void CompositorThreadProxy::DidCompleteGLFrameOnImplThread(
+    uint32_t surface_id,
     scoped_ptr<cc::CompositorFrame> frame) {
+  if (!mailbox_buffer_map_.CanBeginFrameSwap(surface_id, frame.get())) {
+    return;
+  }
+
   owner_message_loop_->PostTask(
       FROM_HERE,
       base::Bind(&CompositorThreadProxy::SendSwapGLFrameOnOwnerThread,
                  this,
-                 impl().output_surface->surface_id(),
+                 surface_id,
                  frame->gl_frame_data->size,
                  frame->metadata.device_scale_factor,
                  frame->gl_frame_data->mailbox));
@@ -261,7 +295,7 @@ CompositorThreadProxy::ImplData& CompositorThreadProxy::impl() {
 CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)
     : mode_(CompositorUtils::GetInstance()->GetCompositingMode()),
       owner_message_loop_(base::MessageLoopProxy::current()),
-      mailbox_buffer_map_(mode_, this) {
+      mailbox_buffer_map_(mode_) {
   owner().compositor = compositor;
   impl_thread_checker_.DetachFromThread();
 }
@@ -332,7 +366,9 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
       context_provider->ContextSupport()->SignalQuery(
           query_id,
           base::Bind(&CompositorThreadProxy::DidCompleteGLFrameOnImplThread,
-                     this, base::Passed(&f)));
+                     this,
+                     impl().output_surface->surface_id(),
+                     base::Passed(&f)));
       gl->EndQueryEXT(GL_COMMANDS_COMPLETED_CHROMIUM);
       gl->Flush();
       gl->DeleteQueriesEXT(1, &query_id);
