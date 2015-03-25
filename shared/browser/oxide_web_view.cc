@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@
 #include "oxide_web_view.h"
 
 #include <queue>
+#include <utility>
 
 #include "base/auto_reset.h"
 #include "base/command_line.h"
@@ -2078,8 +2079,9 @@ void WebView::DidCommitCompositorFrame() {
     uint32 surface_id = received_surface_ids_.front();
     received_surface_ids_.pop();
 
-    compositor_->DidSwapCompositorFrame(surface_id,
-                                        &previous_compositor_frames_);
+    compositor_->DidSwapCompositorFrame(
+        surface_id,
+        std::move(previous_compositor_frames_));
   }
 }
 

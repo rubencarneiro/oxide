@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,21 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_platform_delegate.h"
-
-#include "qt/core/browser/oxide_qt_browser_platform_integration.h"
+#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITING_MODE_H_
+#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITING_MODE_H_
 
 namespace oxide {
-namespace qt {
 
-oxide::BrowserPlatformIntegration*
-PlatformDelegate::CreateBrowserIntegration() {
-  return new BrowserPlatformIntegration();
-}
+enum CompositingMode {
+  // Compositor output will be bitmap
+  COMPOSITING_MODE_SOFTWARE,
 
-PlatformDelegate::PlatformDelegate() {}
+  // Compositor output will be a GL texture, shared between the compositor
+  // GL context and the application GL context
+  COMPOSITING_MODE_TEXTURE,
 
-PlatformDelegate::~PlatformDelegate() {}
+  // Compositor output will be an EGLImage, backed by a texture belonging
+  // to the compositor GL context in the same process
+  COMPOSITING_MODE_EGLIMAGE
 
-} // namespace qt
+  // TODO: Extra modes for separate GPU process
+};
+
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITING_MODE_H_

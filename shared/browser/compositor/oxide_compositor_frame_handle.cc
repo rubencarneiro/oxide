@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,13 @@ GLFrameData::GLFrameData(const gpu::Mailbox& mailbox,
 
 GLFrameData::~GLFrameData() {}
 
+ImageFrameData::ImageFrameData(const gpu::Mailbox& mailbox,
+                               EGLImageKHR image)
+    : mailbox_(mailbox),
+      image_(image) {}
+
+ImageFrameData::~ImageFrameData() {}
+
 SoftwareFrameData::SoftwareFrameData(unsigned id,
                                      const gfx::Rect& damage_rect,
                                      uint8* pixels)
@@ -37,17 +44,11 @@ SoftwareFrameData::SoftwareFrameData(unsigned id,
 
 SoftwareFrameData::~SoftwareFrameData() {}
 
-// static
-void CompositorFrameHandleTraits::Destruct(const CompositorFrameHandle* x) {
-  if (x->software_frame_data() || x->gl_frame_data()) {
-    x->proxy_->ReclaimResourcesForFrame(const_cast<CompositorFrameHandle*>(x));
-  }
-
-  delete x;
-}
-
 CompositorFrameHandle::~CompositorFrameHandle() {
-  DCHECK(!software_frame_data_ && !gl_frame_data_);
+  if (software_frame_data_ || gl_frame_data_ || image_frame_data_) {
+    proxy_->ReclaimResourcesForFrame(this);
+  }
+  DCHECK(!software_frame_data_ && !gl_frame_data_ && !image_frame_data_);
 }
 
 CompositorFrameHandle::CompositorFrameHandle(

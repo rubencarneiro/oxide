@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -37,16 +37,16 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
 
-  if (!backing_texture_.texture_id && !returned_textures_.empty()) {
-    backing_texture_ = returned_textures_.front();
-    returned_textures_.pop();
-    DCHECK(backing_texture_.size == surface_size_);
+  if (!back_buffer_.texture_id && !returned_buffers_.empty()) {
+    back_buffer_ = returned_buffers_.front();
+    returned_buffers_.pop();
+    DCHECK(back_buffer_.size == surface_size_);
   }
 
-  if (!backing_texture_.texture_id) {
-    gl->GenTextures(1, &backing_texture_.texture_id);
-    backing_texture_.size = surface_size_;
-    gl->BindTexture(GL_TEXTURE_2D, backing_texture_.texture_id);
+  if (!back_buffer_.texture_id) {
+    gl->GenTextures(1, &back_buffer_.texture_id);
+    back_buffer_.size = surface_size_;
+    gl->BindTexture(GL_TEXTURE_2D, back_buffer_.texture_id);
     gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -62,8 +62,12 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
                    cc::GLDataFormat(format),
                    cc::GLDataType(format),
                    nullptr);
-    gl->GenMailboxCHROMIUM(backing_texture_.mailbox.name);
-    gl->ProduceTextureCHROMIUM(GL_TEXTURE_2D, backing_texture_.mailbox.name);
+    gl->GenMailboxCHROMIUM(back_buffer_.mailbox.name);
+    gl->ProduceTextureCHROMIUM(GL_TEXTURE_2D, back_buffer_.mailbox.name);
+
+    gl->Flush();
+    proxy_->MailboxBufferCreated(back_buffer_.mailbox,
+                                 gl->InsertSyncPointCHROMIUM());
   }
 }
 
@@ -77,15 +81,15 @@ void CompositorOutputSurfaceGL::DiscardBackbuffer() {
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
 
-  if (backing_texture_.texture_id) {
-    gl->DeleteTextures(1, &backing_texture_.texture_id);
-    backing_texture_ = OutputFrameData();
+  if (back_buffer_.texture_id) {
+    DiscardBuffer(&back_buffer_);
+    back_buffer_ = BufferData();
   }
 
-  while (!returned_textures_.empty()) {
-    OutputFrameData& texture = returned_textures_.front();
-    returned_textures_.pop();
-    gl->DeleteTextures(1, &texture.texture_id);
+  while (!returned_buffers_.empty()) {
+    BufferData& buffer = returned_buffers_.front();
+    returned_buffers_.pop();
+    DiscardBuffer(&buffer);
   }
 
   if (fbo_) {
@@ -112,8 +116,8 @@ void CompositorOutputSurfaceGL::BindFramebuffer() {
   DCHECK(CalledOnValidThread());
 
   EnsureBackbuffer();
-  DCHECK(backing_texture_.texture_id);
-  DCHECK(backing_texture_.size == surface_size_);
+  DCHECK(back_buffer_.texture_id);
+  DCHECK(back_buffer_.size == surface_size_);
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
 
@@ -124,28 +128,28 @@ void CompositorOutputSurfaceGL::BindFramebuffer() {
   gl->FramebufferTexture2D(GL_FRAMEBUFFER,
                            GL_COLOR_ATTACHMENT0,
                            GL_TEXTURE_2D,
-                           backing_texture_.texture_id,
+                           back_buffer_.texture_id,
                            0);
 }
 
 void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
   DCHECK(CalledOnValidThread());
   DCHECK(frame->gl_frame_data);
-  DCHECK(!backing_texture_.mailbox.IsZero());
-  DCHECK(surface_size_ == backing_texture_.size);
-  DCHECK(frame->gl_frame_data->size == backing_texture_.size);
-  DCHECK(!backing_texture_.size.IsEmpty());
+  DCHECK(!back_buffer_.mailbox.IsZero());
+  DCHECK(surface_size_ == back_buffer_.size);
+  DCHECK(frame->gl_frame_data->size == back_buffer_.size);
+  DCHECK(!back_buffer_.size.IsEmpty());
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
   gl->Flush();
 
-  frame->gl_frame_data->mailbox = backing_texture_.mailbox;
+  frame->gl_frame_data->mailbox = back_buffer_.mailbox;
   frame->gl_frame_data->sync_point = gl->InsertSyncPointCHROMIUM();
 
   CompositorOutputSurface::SwapBuffers(frame);
 
-  pending_textures_.push_back(backing_texture_);
-  backing_texture_ = OutputFrameData();
+  pending_buffers_.push_back(back_buffer_);
+  back_buffer_ = BufferData();
 }
 
 void CompositorOutputSurfaceGL::ReclaimResources(
@@ -156,8 +160,8 @@ void CompositorOutputSurfaceGL::ReclaimResources(
   DCHECK(!ack.gl_frame_data->mailbox.IsZero());
   DCHECK(!ack.gl_frame_data->size.IsEmpty());
 
-  std::deque<OutputFrameData>::iterator it;
-  for (it = pending_textures_.begin(); it != pending_textures_.end(); ++it) {
+  std::deque<BufferData>::iterator it;
+  for (it = pending_buffers_.begin(); it != pending_buffers_.end(); ++it) {
     DCHECK(!it->mailbox.IsZero());
     if (memcmp(it->mailbox.name,
                ack.gl_frame_data->mailbox.name,
@@ -167,23 +171,28 @@ void CompositorOutputSurfaceGL::ReclaimResources(
     }
   }
 
-  CHECK(it != pending_textures_.end());
+  CHECK(it != pending_buffers_.end());
 
   it->sync_point = 0;
 
   if (!is_backbuffer_discarded_ && it->size == surface_size_) {
-    returned_textures_.push(*it);
+    returned_buffers_.push(*it);
   } else {
-    context_provider_->ContextGL()->DeleteTextures(1, &it->texture_id);
+    DiscardBuffer(&(*it));
   }
 
-  pending_textures_.erase(it);
+  pending_buffers_.erase(it);
 
   CompositorOutputSurface::ReclaimResources(ack);
 }
 
+void CompositorOutputSurfaceGL::DiscardBuffer(BufferData* buffer) {
+  context_provider_->ContextGL()->DeleteTextures(1, &buffer->texture_id);
+  proxy_->MailboxBufferDestroyed(buffer->mailbox);
+}
+
 CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
-    uint32 surface_id,
+    uint32_t surface_id,
     scoped_refptr<cc::ContextProvider> context_provider,
     scoped_refptr<CompositorThreadProxy> proxy)
     : CompositorOutputSurface(surface_id, context_provider, proxy),
@@ -194,10 +203,10 @@ CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
 
 CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {
   DiscardBackbuffer();
-  while (!pending_textures_.empty()) {
-    OutputFrameData& texture = pending_textures_.front();
-    pending_textures_.pop_front();
-    context_provider_->ContextGL()->DeleteTextures(1, &texture.texture_id);
+  while (!pending_buffers_.empty()) {
+    BufferData& buffer = pending_buffers_.front();
+    pending_buffers_.pop_front();
+    DiscardBuffer(&buffer);
   }
 }
 
