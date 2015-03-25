@@ -360,18 +360,25 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
           impl().output_surface->context_provider();
       gpu::gles2::GLES2Interface* gl = context_provider->ContextGL();
 
-      uint32_t query_id;
-      gl->GenQueriesEXT(1, &query_id);
-      gl->BeginQueryEXT(GL_COMMANDS_COMPLETED_CHROMIUM, query_id);
-      context_provider->ContextSupport()->SignalQuery(
-          query_id,
-          base::Bind(&CompositorThreadProxy::DidCompleteGLFrameOnImplThread,
-                     this,
-                     impl().output_surface->surface_id(),
-                     base::Passed(&f)));
-      gl->EndQueryEXT(GL_COMMANDS_COMPLETED_CHROMIUM);
-      gl->Flush();
-      gl->DeleteQueriesEXT(1, &query_id);
+      if (!context_provider->ContextCapabilities().gpu.sync_query) {
+        gl->Finish();
+        DidCompleteGLFrameOnImplThread(impl().output_surface->surface_id(),
+                                       f.Pass());
+      } else {
+
+        uint32_t query_id;
+        gl->GenQueriesEXT(1, &query_id);
+        gl->BeginQueryEXT(GL_COMMANDS_COMPLETED_CHROMIUM, query_id);
+        context_provider->ContextSupport()->SignalQuery(
+            query_id,
+            base::Bind(&CompositorThreadProxy::DidCompleteGLFrameOnImplThread,
+                       this,
+                       impl().output_surface->surface_id(),
+                       base::Passed(&f)));
+        gl->EndQueryEXT(GL_COMMANDS_COMPLETED_CHROMIUM);
+        gl->Flush();
+        gl->DeleteQueriesEXT(1, &query_id);
+      }
       break;
     }
     case COMPOSITING_MODE_SOFTWARE: {
