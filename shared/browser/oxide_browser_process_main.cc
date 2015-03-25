@@ -240,9 +240,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   // Remove this when we implement a selection API (see bug #1324292)
   command_line->AppendSwitch(switches::kDisableTouchEditing);
 
-  command_line->AppendSwitch(
-      cc::switches::kEnableTopControlsPositionCalculation);
-
   if (gl_impl == gfx::kGLImplementationNone ||
       IsEnvironmentOptionEnabled("DISABLE_GPU")) {
     command_line->AppendSwitch(switches::kDisableGpu);

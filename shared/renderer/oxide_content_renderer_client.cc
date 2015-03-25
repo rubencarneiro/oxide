@@ -89,11 +89,12 @@ void ContentRendererClient::RenderViewCreated(
     settings->setUseWideViewport(true);
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);
+    settings->setUseMobileViewportStyle(true);
   }
 }
 
 void ContentRendererClient::DidCreateScriptContext(
-    blink::WebFrame* frame,
+    blink::WebLocalFrame* frame,
     v8::Handle<v8::Context> context,
     int extension_group,
     int world_id) {

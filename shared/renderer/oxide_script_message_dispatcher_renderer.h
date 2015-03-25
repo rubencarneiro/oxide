@@ -31,7 +31,7 @@
 struct OxideMsg_SendMessage_Params;
 
 namespace blink {
-class WebFrame;
+class WebLocalFrame;
 }
 
 namespace oxide {
@@ -43,7 +43,8 @@ class ScriptMessageDispatcherRenderer final : public content::RenderFrameObserve
   ScriptMessageDispatcherRenderer(content::RenderFrame* frame);
   ~ScriptMessageDispatcherRenderer();
 
-  static ScriptMessageDispatcherRenderer* FromWebFrame(blink::WebFrame* frame);
+  static ScriptMessageDispatcherRenderer* FromWebFrame(
+      blink::WebLocalFrame* frame);
 
   linked_ptr<ScriptMessageManager> ScriptMessageManagerForWorldId(int world_id);
 

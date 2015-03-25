@@ -41,11 +41,11 @@ diff --git a/content/child/blink_platform_impl.cc b/content/child/blink_platform
  #include "third_party/WebKit/public/platform/WebData.h"
  #include "third_party/WebKit/public/platform/WebFloatPoint.h"
  #include "third_party/WebKit/public/platform/WebString.h"
-@@ -1187,33 +1189,34 @@ BlinkPlatformImpl::allocateAndLockDiscar
-   base::DiscardableMemoryType type =
-       base::DiscardableMemory::GetPreferredType();
-   if (type == base::DISCARDABLE_MEMORY_TYPE_EMULATED)
-     return NULL;
+@@ -1183,33 +1185,34 @@ bool BlinkPlatformImpl::memoryAllocatorW
+ }
+ 
+ blink::WebDiscardableMemory*
+ BlinkPlatformImpl::allocateAndLockDiscardableMemory(size_t bytes) {
    return content::WebDiscardableMemoryImpl::CreateLockedMemory(bytes).release();
  }
  

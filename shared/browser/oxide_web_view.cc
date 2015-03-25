@@ -1038,11 +1038,11 @@ void WebView::NavigationEntryCommitted(
   OnNavigationEntryCommitted();
 }
 
-void WebView::DidStartLoading(content::RenderViewHost* render_view_host) {
+void WebView::DidStartLoading() {
   OnLoadingChanged();
 }
 
-void WebView::DidStopLoading(content::RenderViewHost* render_view_host) {
+void WebView::DidStopLoading() {
   OnLoadingChanged();
 }
 
