@@ -40,19 +40,19 @@ namespace oxide {
 class GLContextDependent;
 class IOThread;
 
-class BrowserMainParts final : public content::BrowserMainParts {
+class BrowserMainParts : public content::BrowserMainParts {
  public:
   BrowserMainParts();
   ~BrowserMainParts();
 
  private:
   // content::BrowserMainParts implementation
-  virtual void PreEarlyInitialization() final;
-  virtual int PreCreateThreads() final;
-  virtual void PreMainMessageLoopRun() final;
-  virtual bool MainMessageLoopRun(int* result_code) final;
-  virtual void PostMainMessageLoopRun() final;
-  virtual void PostDestroyThreads() final;
+  void PreEarlyInitialization() override;
+  int PreCreateThreads() override;
+  void PreMainMessageLoopRun() override;
+  bool MainMessageLoopRun(int* result_code) override;
+  void PostMainMessageLoopRun() override;
+  void PostDestroyThreads() override;
 
   // This is a bit odd - gl_share_group_ is consumed by the GPU thread,
   // but neither gfx::GLContext nor gfx::GLShareGroup are thread-safe.

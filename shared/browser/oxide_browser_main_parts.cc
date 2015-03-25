@@ -217,36 +217,12 @@ int BrowserMainParts::PreCreateThreads() {
     gfx::GLSurface::InitializeOneOff();
   }
 
-  primary_screen_.reset(new Screen());
-  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
-                                 primary_screen_.get());
-
-  io_thread_.reset(new IOThread());
-
-  return 0;
-}
-
-void BrowserMainParts::PreMainMessageLoopRun() {
-  gpu::GPUInfo gpu_info;
-  gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
-  switch (rv) {
-    case gpu::kCollectInfoFatalFailure:
-      LOG(ERROR) << "gpu::CollectContextGraphicsInfo failed";
-      break;
-    case gpu::kCollectInfoNone:
-      NOTREACHED();
-      break;
-    default:
-      break;
-  }
-
-  content::GpuDataManagerImpl* gpu_data_manager =
-      content::GpuDataManagerImpl::GetInstance();
-  gpu_data_manager->UpdateGpuInfo(gpu_info);
-
-  bool has_share_context = false;
-
-  if (!gpu_data_manager->IsDriverBugWorkaroundActive(
+  // In between now and PreMainMessageLoopRun, Chromium runs code that starts
+  // the GPU thread, so we need to decide now whether to use a share context.
+  // This sucks a bit, because it means that GpuDataManagerImpl is initialized
+  // twice. Note also that this decision is based on basic graphics info only
+  content::GpuDataManagerImpl::GetInstance()->Initialize();
+  if (!content::GpuDataManagerImpl::GetInstance()->IsDriverBugWorkaroundActive(
           gpu::USE_VIRTUALIZED_GL_CONTEXTS)) {
     // Virtualized contexts generally work around share group bugs. Don't
     // use the application provided share group if virtualized contexts are
@@ -262,11 +238,39 @@ void BrowserMainParts::PreMainMessageLoopRun() {
       // anything
       gl_share_context_ = GLContextDependent::CloneFrom(share_context.get());
       content::oxide_gpu_shim::SetGLShareGroup(gl_share_context_->share_group());
-      has_share_context = true;
     }
   }
 
-  CompositorUtils::GetInstance()->Initialize(has_share_context);
+  primary_screen_.reset(new Screen());
+  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
+                                 primary_screen_.get());
+
+  io_thread_.reset(new IOThread());
+
+  return 0;
+}
+
+void BrowserMainParts::PreMainMessageLoopRun() {
+  // With in-process GPU, nothing calls CollectContextGraphicsInfo, so we do
+  // this now. Note that this will have no effect on driver bug workarounds
+  // (those are added to the command line from the basic info found in
+  // GpuDataManager::Initialize)
+  gpu::GPUInfo gpu_info;
+  gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
+  switch (rv) {
+    case gpu::kCollectInfoFatalFailure:
+      LOG(ERROR) << "gpu::CollectContextGraphicsInfo failed";
+      break;
+    case gpu::kCollectInfoNone:
+      NOTREACHED();
+      break;
+    default:
+      break;
+  }
+
+  content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
+
+  CompositorUtils::GetInstance()->Initialize(gl_share_context_.get());
   net::NetModule::SetResourceProvider(NetResourceProvider);
 }
 
