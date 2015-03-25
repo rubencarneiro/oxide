@@ -183,9 +183,14 @@ void ContentRendererClient::OverrideCompositorSettings(
     settings->scrollbar_fade_duration_ms = 300;
   }
 
-  // XXX: This will need changing if we support pinch-viewport on desktop
-  //  with normal scrollbars. See https://launchpad.net/bugs/1426567
-  settings->scrollbar_show_scale_threshold = 1.f;
+  std::string form_factor =
+      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
+        switches::kFormFactor);
+  if (form_factor == switches::kFormFactorDesktop) {
+    settings->scrollbar_show_scale_threshold = 1.05f;
+  } else {
+    settings->scrollbar_show_scale_threshold = 1.f;
+  }
 }
 
 } // namespace oxide
