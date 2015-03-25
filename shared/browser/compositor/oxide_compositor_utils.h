@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,10 +18,16 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_UTILS_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_UTILS_H_
 
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES2/gl2.h>
+
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "ui/gfx/native_widget_types.h"
+
+#include "shared/browser/compositor/oxide_compositing_mode.h"
 
 namespace base {
 class SingleThreadTaskRunner;
@@ -37,8 +43,6 @@ class Mailbox;
 
 namespace oxide {
 
-class GLFrameData;
-
 // Utilities for the compositor code
 class CompositorUtils {
  public:
@@ -47,36 +51,55 @@ class CompositorUtils {
   static CompositorUtils* GetInstance();
 
   // Initialize the CompositorUtils instance by starting up a compositor thread
-  // and starting the GPU service thread if it's not already running
-  virtual void Initialize() = 0;
+  // and starting the GPU service thread if it's not already running.
+  // Initialization is not thread-safe - this call should complete before any
+  // other threads use this class
+  virtual void Initialize(bool has_share_context) = 0;
 
   // Shutdown the CompositorUtils instance. This must be called before the GPU
   // service thread is shut down and must be called on the same thread that
   // called Initialize()
   virtual void Shutdown() = 0;
 
-  // Return the task runner for the compositor thread
+  // Return the task runner for the compositor thread. Can be called on any
+  // thread
   virtual scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() = 0;
 
-  typedef base::Callback<void(scoped_ptr<GLFrameData>)> CreateGLFrameHandleCallback;
+  typedef base::Callback<void(GLuint)> GetTextureFromMailboxCallback;
 
-  // Create a GPU service-side handle for the underlying texture represented by
-  // the provided client-side paramters (|context_provider| and |mailbox|). The
-  // result will be returned asynchronously using |callback|, only after the
-  // specified |sync_point| has expired. The callback will be called on the
-  // |task_runner| provided.
+  // Asynchronously get the real texture from the GPU service thread, using
+  // the specified |context_provider| and |mailbox| after |sync_point| has
+  // expired.
   // This must be called on the same thread that called Initialize() ot the
-  // compositor thread. |task_runner| must be for either of these threads
-  virtual void CreateGLFrameHandle(
+  // compositor thread. |task_runner| must be for either of these threads as
+  // well
+  virtual void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
       uint32 sync_point,
-      const CreateGLFrameHandleCallback& callback,
+      const GetTextureFromMailboxCallback& callback,
+      scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
+
+  typedef base::Callback<void(EGLImageKHR)> CreateEGLImageFromMailboxCallback;
+
+  // Asynchronously create an EGLImage backed by the texture represented by
+  // the specified |mailbox| on the GPU service thread after |sync_point|
+  // has expired.
+  // This must be called on the same thread that called Initialize() ot the
+  // compositor thread. |task_runner| must be for either of these threads as
+  // well
+  virtual void CreateEGLImageFromMailbox(
+      cc::ContextProvider* context_provider,
+      const gpu::Mailbox& mailbox,
+      uint32 sync_point,
+      const CreateEGLImageFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
 
   virtual gfx::GLSurfaceHandle GetSharedSurfaceHandle() = 0;
 
-  virtual bool CanUseGpuCompositing() = 0;
+  virtual bool CanUseGpuCompositing() const = 0;
+
+  virtual CompositingMode GetCompositingMode() const = 0;
 
  protected:
   virtual ~CompositorUtils();

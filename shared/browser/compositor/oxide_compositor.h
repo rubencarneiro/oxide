@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -59,7 +59,7 @@ class Compositor final : public cc::LayerTreeHostClient,
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
 
   void DidSwapCompositorFrame(uint32 surface_id,
-                              FrameHandleVector* returned_frames);
+                              FrameHandleVector returned_frames);
 
  private:
   friend class CompositorLock;

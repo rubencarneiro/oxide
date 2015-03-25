@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -176,10 +176,10 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     if (host->GetBrowserContext()->IsOffTheRecord()) {
       command_line->AppendSwitch(switches::kIncognito);
     }
+  }
 
-    if (!CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
-      command_line->AppendSwitch(switches::kDisableGpuCompositing);
-    }
+  if (!CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
+    command_line->AppendSwitch(switches::kDisableGpuCompositing);
   }
 }
 
@@ -386,6 +386,11 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 
   *os_version = AndroidProperties::GetInstance()->GetOSVersion();
   return gpu::GpuControlList::kOsAndroid;
+}
+
+std::string
+ContentBrowserClient::GetApplicationLocale() {
+  return platform_integration_->GetApplicationLocale();
 }
 
 } // namespace oxide

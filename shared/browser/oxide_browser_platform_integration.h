@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,7 +33,7 @@ class LocationProvider;
 namespace oxide {
 
 class BrowserPlatformIntegrationObserver;
-class GLContextAdopted;
+class GLContextDependent;
 class MessagePump;
 
 class BrowserPlatformIntegration {
@@ -58,7 +58,7 @@ class BrowserPlatformIntegration {
 
   virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
 
-  virtual GLContextAdopted* GetGLShareContext();
+  virtual GLContextDependent* GetGLShareContext();
 
   virtual scoped_ptr<MessagePump> CreateUIMessagePump() = 0;
 
@@ -70,6 +70,8 @@ class BrowserPlatformIntegration {
   virtual content::LocationProvider* CreateLocationProvider();
 
   virtual ApplicationState GetApplicationState();
+
+  virtual std::string GetApplicationLocale() = 0;
 
  protected:
   BrowserPlatformIntegration();

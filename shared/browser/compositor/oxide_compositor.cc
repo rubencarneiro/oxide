@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_compositor.h"
+
+#include <utility>
 
 #include "base/logging.h"
 #include "cc/layers/layer.h"
@@ -282,8 +284,8 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
 }
 
 void Compositor::DidSwapCompositorFrame(uint32 surface_id,
-                                        FrameHandleVector* returned_frames) {
-  proxy_->DidSwapCompositorFrame(surface_id, returned_frames);
+                                        FrameHandleVector returned_frames) {
+  proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
 }
 
 } // namespace oxide

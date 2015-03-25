@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@
 #include "base/scoped_native_library.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "EGL/egl.h"
+#include "gpu/config/gpu_driver_bug_workaround_type.h"
 #include "gpu/config/gpu_info_collector.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
@@ -35,11 +36,11 @@
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
-#include "shared/gpu/oxide_gl_context_adopted.h"
+#include "shared/gpu/oxide_gl_context_dependent.h"
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
-#include "shared/port/content/common/gpu_thread_shim_oxide.h"
+#include "shared/port/content/common/gpu_service_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 
@@ -216,10 +217,28 @@ int BrowserMainParts::PreCreateThreads() {
     gfx::GLSurface::InitializeOneOff();
   }
 
-  GLContextAdopted* share_context =
-      BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
-  if (share_context) {
-    content::oxide_gpu_shim::SetGLShareGroup(share_context->share_group());
+  // In between now and PreMainMessageLoopRun, Chromium runs code that starts
+  // the GPU thread, so we need to decide now whether to use a share context.
+  // This sucks a bit, because it means that GpuDataManagerImpl is initialized
+  // twice. Note also that this decision is based on basic graphics info only
+  content::GpuDataManagerImpl::GetInstance()->Initialize();
+  if (!content::GpuDataManagerImpl::GetInstance()->IsDriverBugWorkaroundActive(
+          gpu::USE_VIRTUALIZED_GL_CONTEXTS)) {
+    // Virtualized contexts generally work around share group bugs. Don't
+    // use the application provided share group if virtualized contexts are
+    // to be used for this driver
+    scoped_refptr<GLContextDependent> share_context =
+        BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
+    if (share_context) {
+      // There's nothing to prevent other code in Oxide from accessing the
+      // shared gfx::GLContext and associated gfx::GLShareGroup after the GPU
+      // thread has begun consuming it, and adjusting their reference counts.
+      // As it's not safe to do that, we clone it here. Note, this doesn't mean
+      // that you can assume it's safe to use the handle returned by it for
+      // anything
+      gl_share_context_ = GLContextDependent::CloneFrom(share_context.get());
+      content::oxide_gpu_shim::SetGLShareGroup(gl_share_context_->share_group());
+    }
   }
 
   primary_screen_.reset(new Screen());
@@ -232,6 +251,10 @@ int BrowserMainParts::PreCreateThreads() {
 }
 
 void BrowserMainParts::PreMainMessageLoopRun() {
+  // With in-process GPU, nothing calls CollectContextGraphicsInfo, so we do
+  // this now. Note that this will have no effect on driver bug workarounds
+  // (those are added to the command line from the basic info found in
+  // GpuDataManager::Initialize)
   gpu::GPUInfo gpu_info;
   gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
   switch (rv) {
@@ -247,7 +270,7 @@ void BrowserMainParts::PreMainMessageLoopRun() {
 
   content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
 
-  CompositorUtils::GetInstance()->Initialize();
+  CompositorUtils::GetInstance()->Initialize(gl_share_context_.get());
   net::NetModule::SetResourceProvider(NetResourceProvider);
 }
 
@@ -268,7 +291,10 @@ void BrowserMainParts::PostDestroyThreads() {
 
   gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, nullptr);
   io_thread_.reset();
+
   content::oxide_gpu_shim::SetGLShareGroup(nullptr);
+  gl_share_context_ = nullptr;
+
   gpu::SetGpuInfoCollectorOxideLinux(nullptr);
 }
 

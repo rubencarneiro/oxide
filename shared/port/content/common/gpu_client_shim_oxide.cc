@@ -15,21 +15,18 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_platform_delegate.h"
+#include "gpu_client_shim_oxide.h"
 
-#include "qt/core/browser/oxide_qt_browser_platform_integration.h"
+#include "content/common/gpu/client/command_buffer_proxy_impl.h"
+#include "content/common/gpu/client/context_provider_command_buffer.h"
 
-namespace oxide {
-namespace qt {
+namespace content {
+namespace oxide_gpu_shim {
 
-oxide::BrowserPlatformIntegration*
-PlatformDelegate::CreateBrowserIntegration() {
-  return new BrowserPlatformIntegration();
+int32_t GetContextProviderRouteID(
+    content::ContextProviderCommandBuffer* provider) {
+  return provider->GetCommandBufferProxy()->GetRouteID();
 }
 
-PlatformDelegate::PlatformDelegate() {}
-
-PlatformDelegate::~PlatformDelegate() {}
-
-} // namespace qt
-} // namespace oxide
+} // namespace oxide_gpu_shim
+} // namespace content

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,7 +33,7 @@ namespace oxide {
 class CompositorOutputSurfaceGL final : public CompositorOutputSurface {
  public:
   CompositorOutputSurfaceGL(
-      uint32 surface_id,
+      uint32_t surface_id,
       scoped_refptr<cc::ContextProvider> context_provider,
       scoped_refptr<CompositorThreadProxy> proxy);
   ~CompositorOutputSurfaceGL();
@@ -49,21 +49,23 @@ class CompositorOutputSurfaceGL final : public CompositorOutputSurface {
   // CompositorOutputSurface implementation
   void ReclaimResources(const cc::CompositorFrameAck& ack) final;
 
-  struct OutputFrameData {
-    OutputFrameData() : texture_id(0), sync_point(0) {}
+  struct BufferData {
+    BufferData() : texture_id(0), sync_point(0) {}
 
-    uint32 texture_id;
+    uint32_t texture_id;
     gpu::Mailbox mailbox;
     gfx::Size size;
-    uint32 sync_point;
+    uint32_t sync_point;
   };
 
-  OutputFrameData backing_texture_;
-  std::deque<OutputFrameData> pending_textures_;
-  std::queue<OutputFrameData> returned_textures_;
+  void DiscardBuffer(BufferData* buffer);
+
+  BufferData back_buffer_;
+  std::deque<BufferData> pending_buffers_;
+  std::queue<BufferData> returned_buffers_;
 
   bool is_backbuffer_discarded_;
-  uint32 fbo_;
+  uint32_t fbo_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurfaceGL);
 };

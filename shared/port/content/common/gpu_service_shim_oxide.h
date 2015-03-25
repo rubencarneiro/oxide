@@ -15,21 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_platform_delegate.h"
+#ifndef _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_
+#define _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_
 
-#include "qt/core/browser/oxide_qt_browser_platform_integration.h"
+#include <stdint.h>
 
-namespace oxide {
-namespace qt {
+#include "content/common/content_export.h"
 
-oxide::BrowserPlatformIntegration*
-PlatformDelegate::CreateBrowserIntegration() {
-  return new BrowserPlatformIntegration();
+namespace gfx {
+class GLShareGroup;
 }
 
-PlatformDelegate::PlatformDelegate() {}
+namespace gpu {
+namespace gles2 {
+class GLES2Decoder;
+}
+}
 
-PlatformDelegate::~PlatformDelegate() {}
+namespace content {
+namespace oxide_gpu_shim {
 
-} // namespace qt
-} // namespace oxide
+CONTENT_EXPORT gpu::gles2::GLES2Decoder* GetGLES2Decoder(int32_t client_id,
+                                                         int32_t route_id);
+
+gfx::GLShareGroup* GetGLShareGroup();
+CONTENT_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
+
+} // oxide_gpu_shim
+} // content
+
+#endif // _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -93,6 +93,9 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     if (frame_->gl_frame_data()) {
       return CompositorFrameHandle::TYPE_ACCELERATED;
     }
+    if (frame_->image_frame_data()) {
+      return CompositorFrameHandle::TYPE_IMAGE;
+    }
     if (frame_->software_frame_data()) {
       return CompositorFrameHandle::TYPE_SOFTWARE;
     }
@@ -114,9 +117,13 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
         QImage::Format_ARGB32);
   }
 
-  AcceleratedFrameData GetAcceleratedFrame() final {
+  unsigned int GetAcceleratedFrameTexture() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return AcceleratedFrameData(frame_->gl_frame_data()->texture_id());
+    return frame_->gl_frame_data()->texture_id();
+  }
+
+  EGLImageKHR GetImageFrame() final {
+    return frame_->image_frame_data()->image();
   }
 
  private:

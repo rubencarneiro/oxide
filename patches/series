@@ -1,3 +1,4 @@
+add-oxide-classes-to-thread-restrictions-friends.patch
 port/native_web_keyboard_event.patch
 port/power_save_blocker.patch
 port/web_contents_view.patch

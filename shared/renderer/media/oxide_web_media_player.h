@@ -195,9 +195,6 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
 
   void OnMediaSourceOpened(blink::WebMediaSource* web_media_source);
 
-  void OnNeedKey(const std::string& type,
-                 const std::vector<uint8>& init_data);
-
  protected:
   // Helper method to update the playing state.
   void UpdatePlayingState(bool is_playing_);

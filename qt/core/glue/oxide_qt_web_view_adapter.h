@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -35,6 +35,8 @@
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
+
+typedef void* EGLImageKHR;
 
 QT_BEGIN_NAMESPACE
 class QCursor;
@@ -95,18 +97,6 @@ enum LocationBarMode {
   LOCATION_BAR_MODE_HIDDEN
 };
 
-class Q_DECL_EXPORT AcceleratedFrameData final {
- public:
-  AcceleratedFrameData(unsigned int id)
-      : texture_id_(id) {}
-  ~AcceleratedFrameData() {}
-
-  unsigned int texture_id() const { return texture_id_; }
-
- private:
-  unsigned int texture_id_;
-};
-
 class Q_DECL_EXPORT CompositorFrameHandle {
  public:
   virtual ~CompositorFrameHandle() {}
@@ -114,14 +104,16 @@ class Q_DECL_EXPORT CompositorFrameHandle {
   enum Type {
     TYPE_INVALID,
     TYPE_SOFTWARE,
-    TYPE_ACCELERATED
+    TYPE_ACCELERATED,
+    TYPE_IMAGE
   };
 
   virtual Type GetType() = 0;
   virtual const QRect& GetRect() const = 0;
 
   virtual QImage GetSoftwareFrame() = 0;
-  virtual AcceleratedFrameData GetAcceleratedFrame() = 0;
+  virtual unsigned int GetAcceleratedFrameTexture() = 0;
+  virtual EGLImageKHR GetImageFrame() = 0;
 };
 
 class Q_DECL_EXPORT WebViewAdapter : public AdapterBase {
