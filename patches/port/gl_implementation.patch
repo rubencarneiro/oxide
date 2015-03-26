@@ -6,7 +6,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -170,17 +170,17 @@
+@@ -194,17 +194,17 @@
                    '<!@(<(pkg-config) --libs-only-l gtk+-unix-print-2.0)',
                  ],
                },
@@ -66,68 +66,6 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['use_cairo==1', {
            'dependencies': [
              '<(DEPTH)/build/linux/system.gyp:pangocairo',
-diff --git a/ui/gfx/x/gfx_x11.gyp b/ui/gfx/x/gfx_x11.gyp
---- a/ui/gfx/x/gfx_x11.gyp
-+++ b/ui/gfx/x/gfx_x11.gyp
-@@ -9,24 +9,27 @@
-                    # that the exclusion rules in filename_rules.gypi do not
-                    # exclude the x11* files.
-   },
- 
-   'targets': [
-     {
-       # GN version: //ui/gfx/x
-       'target_name': 'gfx_x11',
--      'type': '<(component)',
-+      'type': 'static_library',
-       'dependencies': [
-         '../../../base/base.gyp:base',
-         '../../../build/linux/system.gyp:x11',
-       ],
-       'defines': [
-         'GFX_IMPLEMENTATION',
-       ],
-+      'include_dirs': [
-+        '<(DEPTH)/../../..',
-+      ],
-       'sources': [
-         'x11_atom_cache.cc',
-         'x11_atom_cache.h',
-         'x11_connection.cc',
-         'x11_connection.h',
-         'x11_error_tracker.cc',
-         'x11_error_tracker.h',
-         'x11_switches.cc',
-diff --git a/ui/gfx/x/x11_types.cc b/ui/gfx/x/x11_types.cc
---- a/ui/gfx/x/x11_types.cc
-+++ b/ui/gfx/x/x11_types.cc
-@@ -5,23 +5,22 @@
- #include "ui/gfx/x/x11_types.h"
- 
- #include <X11/Xlib.h>
- 
- #include "base/command_line.h"
- #include "base/message_loop/message_loop.h"
- #include "ui/gfx/x/x11_switches.h"
- 
-+#include "shared/port/gfx/gfx_utils_oxide.h"
-+
- namespace gfx {
- 
- XDisplay* GetXDisplay() {
--  static XDisplay* display = NULL;
--  if (!display)
--    display = OpenNewXDisplay();
--  return display;
-+  return reinterpret_cast<XDisplay*>(GetOxideNativeDisplay());
- }
- 
- XDisplay* OpenNewXDisplay() {
- #if defined(OS_CHROMEOS)
-   return XOpenDisplay(NULL);
- #else
-   std::string display_str = base::CommandLine::ForCurrentProcess()->
-                             GetSwitchValueASCII(switches::kX11Display);
 diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
 --- a/ui/gl/gl.gyp
 +++ b/ui/gl/gl.gyp
@@ -407,7 +345,45 @@ diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
 --- a/ui/gl/gl_surface_glx.cc
 +++ b/ui/gl/gl_surface_glx.cc
-@@ -399,16 +399,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
+@@ -24,16 +24,18 @@ extern "C" {
+ #include "base/trace_event/trace_event.h"
+ #include "ui/events/platform/platform_event_source.h"
+ #include "ui/gfx/x/x11_connection.h"
+ #include "ui/gfx/x/x11_types.h"
+ #include "ui/gl/gl_bindings.h"
+ #include "ui/gl/gl_implementation.h"
+ #include "ui/gl/sync_control_vsync_provider.h"
+ 
++#include "shared/port/gfx/gfx_utils_oxide.h"
++
+ namespace gfx {
+ 
+ namespace {
+ 
+ Display* g_display = NULL;
+ const char* g_glx_extensions = NULL;
+ bool g_glx_context_create = false;
+ bool g_glx_create_context_robustness_supported = false;
+@@ -325,17 +327,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
+     return true;
+ 
+   // http://crbug.com/245466
+   setenv("force_s3tc_enable", "true", 1);
+ 
+   // SGIVideoSyncProviderShim (if instantiated) will issue X commands on
+   // it's own thread.
+   gfx::InitializeThreadedX11();
+-  g_display = gfx::GetXDisplay();
++  g_display = reinterpret_cast<XDisplay*>(GetOxideNativeDisplay());
+ 
+   if (!g_display) {
+     LOG(ERROR) << "XOpenDisplay failed.";
+     return false;
+   }
+ 
+   int major, minor;
+   if (!glXQueryVersion(g_display, &major, &minor)) {
+@@ -399,16 +401,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
  }
  
  void* GLSurfaceGLX::GetDisplay() {
@@ -425,7 +401,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
  gfx::AcceleratedWidget NativeViewGLSurfaceGLX::GetDrawableHandle() const {
    return window_;
-@@ -584,16 +585,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+@@ -584,16 +587,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();
