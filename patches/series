@@ -31,3 +31,4 @@ use-android-style-overlay-scrollbars.patch
 allow-render-widget-compositor-settings-override.patch
 enable-accelerated-canvas-on-krillin.patch
 pulse-audio-role.patch
+enable-accelerated-canvas-on-arale.patch
