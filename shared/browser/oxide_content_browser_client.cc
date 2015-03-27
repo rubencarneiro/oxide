@@ -26,6 +26,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/geolocation_provider.h"
+#include "content/public/browser/permission_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_process_host_observer.h"
@@ -248,7 +249,7 @@ void ContentBrowserClient::RequestPermission(
     const GURL& requesting_frame,
     bool user_gesture,
     const base::Callback<void(content::PermissionStatus)>& result_callback) {
-  if (permission != content::PERMISSION_GEOLOCATION) {
+  if (permission != content::PermissionType::GEOLOCATION) {
     // TODO: Other types
     result_callback.Run(content::PERMISSION_STATUS_DENIED);
     return;
@@ -273,7 +274,7 @@ void ContentBrowserClient::CancelPermissionRequest(
     content::WebContents* web_contents,
     int bridge_id,
     const GURL& requesting_frame) {
-  if (permission != content::PERMISSION_GEOLOCATION) {
+  if (permission != content::PermissionType::GEOLOCATION) {
     return;
   }
 
