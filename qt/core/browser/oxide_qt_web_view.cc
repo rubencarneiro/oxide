@@ -705,6 +705,8 @@ void WebView::OnFocusedNodeChanged() {
 
   if (ShouldHideInputPanel() && HasFocus()) {
     SetInputPanelVisibility(false);
+  } else if (!has_input_method_state_ && ShouldShowInputPanel()) {
+    SetInputPanelVisibility(true);
   } else if (has_input_method_state_ && focused_node_is_editable_) {
     QGuiApplication::inputMethod()->reset();
   }
