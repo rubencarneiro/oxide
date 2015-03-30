@@ -146,10 +146,6 @@ bool NetworkDelegate::OnCanEnablePrivacyMode(
   return !(cookie_read_allowed && cookie_write_allowed);
 }
 
-bool NetworkDelegate::OnFirstPartyOnlyCookieExperimentEnabled() const {
-  return false;
-}
-
 bool NetworkDelegate::OnCancelURLRequestWithPolicyViolatingReferrerHeader(
     const net::URLRequest& request,
     const GURL& target_url,
