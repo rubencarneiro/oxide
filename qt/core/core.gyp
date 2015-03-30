@@ -102,6 +102,10 @@
         'common/oxide_qt_screen_utils.h',
         'common/oxide_qt_skutils.cc',
         'common/oxide_qt_skutils.h',
+        'glue/oxide_qt_proxy_handle.h',
+        'glue/oxide_qt_web_view_proxy.cc',
+        'glue/oxide_qt_web_view_proxy.h',
+        'glue/oxide_qt_web_view_proxy_client.h',
         'gpu/oxide_qt_gl_context_dependent.cc',
         'gpu/oxide_qt_gl_context_dependent.h',
       ],
@@ -231,8 +235,6 @@
         'glue/oxide_qt_web_frame_adapter.h',
         'glue/oxide_qt_web_popup_menu_delegate.cc',
         'glue/oxide_qt_web_popup_menu_delegate.h',
-        'glue/oxide_qt_web_view_adapter.cc',
-        'glue/oxide_qt_web_view_adapter.h',
       ],
       'actions': [
         {

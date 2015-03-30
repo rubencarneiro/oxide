@@ -19,7 +19,9 @@
 #define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
 #include <QKeyEvent>
+#include <QList>
 #include <QObject>
+#include <QSharedPointer>
 #include <QtGlobal>
 
 #include "base/basictypes.h"
@@ -27,6 +29,7 @@
 #include "base/memory/scoped_ptr.h"
 
 #include "qt/core/common/oxide_qt_event_utils.h"
+#include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view.h"
 
@@ -43,30 +46,21 @@ class OxideQSecurityStatus;
 namespace oxide {
 namespace qt {
 
+class CompositorFrameHandle;
+class ScriptMessageHandlerAdapter;
 class WebContext;
-class WebViewAdapter;
+class WebViewProxyClient;
 
-class WebView final : public QObject,
-                      public oxide::WebView {
+class WebView : public QObject,
+                public oxide::WebView,
+                public WebViewProxy {
   Q_OBJECT
 
  public:
-  static WebView* Create(WebViewAdapter* adapter);
+  WebView(WebViewProxyClient* client);
   ~WebView();
 
-  OxideQSecurityStatus* qsecurity_status() { return qsecurity_status_.get(); }
-
-  void HandleFocusEvent(QFocusEvent* event);
-  void HandleInputMethodEvent(QInputMethodEvent* event);
-  void HandleKeyEvent(QKeyEvent* event);
-  void HandleMouseEvent(QMouseEvent* event);
-  void HandleTouchEvent(QTouchEvent* event);
-  void HandleWheelEvent(QWheelEvent* event);
-
-  QVariant InputMethodQuery(Qt::InputMethodQuery query) const;
-
-  void SetCanTemporarilyDisplayInsecureContent(bool allow);
-  void SetCanTemporarilyRunInsecureContent(bool allow);
+  static WebView* FromProxyHandle(WebViewProxyHandle* handle);
 
   WebContext* GetContext() const;
 
@@ -77,120 +71,213 @@ class WebView final : public QObject,
   void OnInputPanelVisibilityChanged();
 
  private:
-  friend class WebViewAdapter;
-
-  WebView(WebViewAdapter* adapter);
-
   float GetDeviceScaleFactor() const;
 
   bool ShouldShowInputPanel() const;
   bool ShouldHideInputPanel() const;
   void SetInputPanelVisibility(bool visible);
 
-  // WebView implementation
-  void Init(oxide::WebView::Params* params) final;
+  // XXX(chrisccoulson): Move this in to oxide::WebView and the actual
+  // unpickling to Init
+  void RestoreState(qt::RestoreType type, const QByteArray& state);
 
-  blink::WebScreenInfo GetScreenInfo() const final;
-  gfx::Rect GetViewBoundsPix() const final;
-  bool IsVisible() const final;
-  bool HasFocus() const final;
-  bool IsInputPanelVisible() const final;
+  void EnsurePreferences();
+
+  // WebView implementation
+  void Init(oxide::WebView::Params* params) override;
+
+  blink::WebScreenInfo GetScreenInfo() const override;
+  gfx::Rect GetViewBoundsPix() const override;
+  bool IsVisible() const override;
+  bool HasFocus() const override;
+  bool IsInputPanelVisible() const override;
 
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type,
-      bool* did_suppress_message) final;
-  oxide::JavaScriptDialog* CreateBeforeUnloadDialog() final;
+      bool* did_suppress_message) override;
+  oxide::JavaScriptDialog* CreateBeforeUnloadDialog() override;
 
-  bool CanCreateWindows() const final;
+  bool CanCreateWindows() const override;
 
-  size_t GetScriptMessageHandlerCount() const final;
+  size_t GetScriptMessageHandlerCount() const override;
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
-      size_t index) const final;
+      size_t index) const override;
 
-  void OnURLChanged() final;
-  void OnTitleChanged() final;
-  void OnIconChanged(const GURL& icon) final;
-  void OnCommandsUpdated() final;
+  void OnURLChanged() override;
+  void OnTitleChanged() override;
+  void OnIconChanged(const GURL& icon) override;
+  void OnCommandsUpdated() override;
 
-  void OnLoadingChanged() final;
-  void OnLoadProgressChanged(double progress) final;
+  void OnLoadingChanged() override;
+  void OnLoadProgressChanged(double progress) override;
 
-  void OnLoadStarted(const GURL& validated_url) final;
+  void OnLoadStarted(const GURL& validated_url) override;
   void OnLoadRedirected(const GURL& url,
-                        const GURL& original_url) final;
+                        const GURL& original_url) override;
   void OnLoadCommitted(const GURL& url,
-                       bool is_error_page) final;
-  void OnLoadStopped(const GURL& validated_url) final;
+                       bool is_error_page) override;
+  void OnLoadStopped(const GURL& validated_url) override;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,
-                    const std::string& error_description) final;
-  void OnLoadSucceeded(const GURL& validated_url) final;
+                    const std::string& error_description) override;
+  void OnLoadSucceeded(const GURL& validated_url) override;
 
-  void OnNavigationEntryCommitted() final;
-  void OnNavigationListPruned(bool from_front, int count) final;
-  void OnNavigationEntryChanged(int index) final;
+  void OnNavigationEntryCommitted() override;
+  void OnNavigationListPruned(bool from_front, int count) override;
+  void OnNavigationEntryChanged(int index) override;
 
   bool OnAddMessageToConsole(int32 level,
                              const base::string16& message,
                              int32 line_no,
-                             const base::string16& source_id) final;
+                             const base::string16& source_id) override;
 
-  void OnToggleFullscreenMode(bool enter) final;
+  void OnToggleFullscreenMode(bool enter) override;
 
-  void OnWebPreferencesDestroyed() final;
+  void OnWebPreferencesDestroyed() override;
 
   void OnRequestGeolocationPermission(
-      scoped_ptr<oxide::SimplePermissionRequest> request) final;
+      scoped_ptr<oxide::SimplePermissionRequest> request) override;
 
   void OnUnhandledKeyboardEvent(
-      const content::NativeWebKeyboardEvent& event) final;
+      const content::NativeWebKeyboardEvent& event) override;
 
-  void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) final;
+  void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) override;
 
   void OnDownloadRequested(const GURL& url,
 			   const std::string& mimeType,
 			   const bool shouldPrompt,
 			   const base::string16& suggestedFilename,
 			   const std::string& cookies,
-			   const std::string& referrer) final;
+			   const std::string& referrer) override;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
-                              bool user_gesture) final;
+                              bool user_gesture) override;
 
-  oxide::WebFrame* CreateWebFrame(content::RenderFrameHost* rfh) final;
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) final;
+  oxide::WebFrame* CreateWebFrame(content::RenderFrameHost* rfh) override;
+  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
-                                   WindowOpenDisposition disposition) final;
+                                   WindowOpenDisposition disposition) override;
 
-  oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) final;
+  oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
 
-  void OnSwapCompositorFrame() final;
-  void OnEvictCurrentFrame() final;
+  void OnSwapCompositorFrame() override;
+  void OnEvictCurrentFrame() override;
 
-  void OnTextInputStateChanged() final;
-  void OnFocusedNodeChanged() final;
-  void OnSelectionBoundsChanged() final;
-  void OnImeCancelComposition() final;
-  void OnSelectionChanged() final;
+  void OnTextInputStateChanged() override;
+  void OnFocusedNodeChanged() override;
+  void OnSelectionBoundsChanged() override;
+  void OnImeCancelComposition() override;
+  void OnSelectionChanged() override;
 
-  void OnUpdateCursor(const content::WebCursor& cursor) final;
+  void OnUpdateCursor(const content::WebCursor& cursor) override;
 
-  void OnSecurityStatusChanged(const oxide::SecurityStatus& old) final;
-  void OnCertificateError(scoped_ptr<oxide::CertificateError> error) final;
-  void OnContentBlocked() final;
+  void OnSecurityStatusChanged(const oxide::SecurityStatus& old) override;
+  void OnCertificateError(scoped_ptr<oxide::CertificateError> error) override;
+  void OnContentBlocked() override;
 
-  void OnPrepareToCloseResponse(bool proceed) final;
-  void OnCloseRequested() final;
+  void OnPrepareToCloseResponse(bool proceed) override;
+  void OnCloseRequested() override;
 
-  WebViewAdapter* adapter_;
+  // WebViewProxy implementation
+  void init(bool incognito,
+            WebContextAdapter* context,
+            OxideQNewViewRequest* new_view_request,
+            const QByteArray& restore_state,
+            qt::RestoreType restore_type) override;
+
+  QUrl url() const override;
+  void setUrl(const QUrl& url) override;
+
+  QString title() const override;
+
+  bool canGoBack() const override;
+  bool canGoForward() const override;
+
+  bool incognito() const override;
+
+  bool loading() const override;
+
+  bool fullscreen() const override;
+  void setFullscreen(bool fullscreen) override;
+
+  WebFrameAdapter* rootFrame() const override;
+
+  WebContextAdapter* context() const override;
+
+  void wasResized() override;
+  void screenUpdated() override;
+  void visibilityChanged() override;
+
+  void handleFocusEvent(QFocusEvent* event) override;
+  void handleInputMethodEvent(QInputMethodEvent* event) override;
+  void handleKeyEvent(QKeyEvent* event) override;
+  void handleMouseEvent(QMouseEvent* event) override;
+  void handleTouchEvent(QTouchEvent* event) override;
+  void handleWheelEvent(QWheelEvent* event) override;
+
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
+
+  void goBack() override;
+  void goForward() override;
+  void stop() override;
+  void reload() override;
+
+  void loadHtml(const QString& html, const QUrl& base_url) override;
+
+  QList<ScriptMessageHandlerAdapter *>& messageHandlers() override;
+
+  bool isInitialized() const override;
+
+  int getNavigationEntryCount() const override;
+  int getNavigationCurrentEntryIndex() const override;
+  void setNavigationCurrentEntryIndex(int index) override;
+  int getNavigationEntryUniqueID(int index) const override;
+  QUrl getNavigationEntryUrl(int index) const override;
+  QString getNavigationEntryTitle(int index) const override;
+  QDateTime getNavigationEntryTimestamp(int index) const override;
+
+  QByteArray currentState() const override;
+
+  OxideQWebPreferences* preferences() override;
+  void setPreferences(OxideQWebPreferences* prefs) override;
+
+  void updateWebPreferences() override;
+
+  QPoint compositorFrameScrollOffsetPix() override;
+  QSize compositorFrameContentSizePix() override;
+  QSize compositorFrameViewportSizePix() override;
+
+  QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
+  void didCommitCompositorFrame() override;
+
+  void setCanTemporarilyDisplayInsecureContent(bool allow) override;
+  void setCanTemporarilyRunInsecureContent(bool allow) override;;
+
+  OxideQSecurityStatus* securityStatus() override;
+
+  ContentTypeFlags blockedContent() const override;
+
+  void prepareToClose() override;
+
+  int locationBarHeight() override;
+  void setLocationBarHeight(int height) override;
+  int locationBarOffsetPix() override;
+  int locationBarContentOffsetPix() override;
+  LocationBarMode locationBarMode() const override;
+  void setLocationBarMode(LocationBarMode mode) override;
+
+  WebViewProxyClient* client_;
 
   bool has_input_method_state_;
 
   scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
+  QList<ScriptMessageHandlerAdapter *> message_handlers_;
 
   UITouchEventFactory touch_event_factory_;
+
+  QSharedPointer<CompositorFrameHandle> compositor_frame_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

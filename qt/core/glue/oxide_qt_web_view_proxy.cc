@@ -15,39 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_accelerated_frame_node.h"
+#include "oxide_qt_web_view_proxy.h"
 
-#include <QPoint>
-#include <QQuickWindow>
-#include <QRect>
-#include <QSize>
-#include <QSGTexture>
-
-#include "qt/core/glue/oxide_qt_web_view_proxy.h"
-#include "qt/quick/api/oxideqquickwebview_p.h"
+#include "qt/core/browser/oxide_qt_web_view.h"
 
 namespace oxide {
-namespace qquick {
+namespace qt {
 
-AcceleratedFrameNode::AcceleratedFrameNode(OxideQQuickWebView* view) :
-    view_(view) {
-  setTextureCoordinatesTransform(QSGSimpleTextureNode::MirrorVertically);
+// static
+WebViewProxy* WebViewProxy::create(WebViewProxyClient* client) {
+  return new WebView(client);
 }
 
-AcceleratedFrameNode::~AcceleratedFrameNode() {}
+WebViewProxy::~WebViewProxy() {}
 
-void AcceleratedFrameNode::updateNode(
-    QSharedPointer<oxide::qt::CompositorFrameHandle> handle) {
-  handle_ = handle;
-
-  setRect(handle_->GetRect());
-
-  texture_.reset(view_->window()->createTextureFromId(
-      handle_->GetAcceleratedFrameTexture(),
-      handle_->GetRect().size(),
-      QQuickWindow::TextureHasAlphaChannel));
-  setTexture(texture_.data());
-}
-
-} // namespace qquick
+} // namespace qt
 } // namespace oxide

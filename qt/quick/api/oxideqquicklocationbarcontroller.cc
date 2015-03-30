@@ -17,8 +17,6 @@
 
 #include "oxideqquicklocationbarcontroller_p.h"
 
-#include "qt/core/glue/oxide_qt_web_view_adapter.h"
-
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
