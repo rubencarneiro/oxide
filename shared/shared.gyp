@@ -334,6 +334,8 @@
         'browser/oxide_message_pump.h',
         'browser/oxide_network_delegate.cc',
         'browser/oxide_network_delegate.h',
+        'browser/oxide_permission_manager.cc',
+        'browser/oxide_permission_manager.h',
         'browser/oxide_permission_request.cc',
         'browser/oxide_permission_request.h',
         'browser/oxide_power_save_blocker.cc',

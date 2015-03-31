@@ -91,14 +91,6 @@ class SingleProcessBrowserContextHolder
   DISALLOW_COPY_AND_ASSIGN(SingleProcessBrowserContextHolder);
 };
 
-void RespondToGeolocationPermissionRequest(
-    const base::Callback<void(content::PermissionStatus)>& callback,
-    content::PermissionStatus result) {
-  content::GeolocationProvider::GetInstance()
-      ->UserDidOptIntoLocationServices();
-  callback.Run(result);
-}
-
 }
 
 ContentBrowserClient::ContentBrowserClient() {}
@@ -240,51 +232,6 @@ void ContentBrowserClient::AllowCertificateError(
                                  resource_type, overridable,
                                  strict_enforcement, callback,
                                  result);
-}
-
-void ContentBrowserClient::RequestPermission(
-    content::PermissionType permission,
-    content::WebContents* web_contents,
-    int bridge_id,
-    const GURL& requesting_frame,
-    bool user_gesture,
-    const base::Callback<void(content::PermissionStatus)>& result_callback) {
-  if (permission != content::PermissionType::GEOLOCATION) {
-    // TODO: Other types
-    result_callback.Run(content::PERMISSION_STATUS_DENIED);
-    return;
-  }
-
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
-    result_callback.Run(content::PERMISSION_STATUS_DENIED);
-    return;
-  }
-
-  base::Callback<void(content::PermissionStatus)> callback =
-      base::Bind(&RespondToGeolocationPermissionRequest,
-                 result_callback);
-  webview->RequestGeolocationPermission(requesting_frame,
-                                        bridge_id,
-                                        callback);
-}
-
-void ContentBrowserClient::CancelPermissionRequest(
-    content::PermissionType permission,
-    content::WebContents* web_contents,
-    int bridge_id,
-    const GURL& requesting_frame) {
-  if (permission != content::PermissionType::GEOLOCATION) {
-    return;
-  }
-
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
-    return;
-  }
-
-  webview->CancelGeolocationPermissionRequest(requesting_frame,
-                                              bridge_id);
 }
 
 bool ContentBrowserClient::CanCreateWindow(

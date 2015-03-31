@@ -72,6 +72,7 @@
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
+#include "oxide_permission_manager.h"
 #include "oxide_ssl_config_service.h"
 #include "oxide_ssl_host_state_delegate.h"
 #include "oxide_url_request_context.h"
@@ -792,6 +793,14 @@ content::SSLHostStateDelegate* BrowserContext::GetSSLHostStateDelegate() {
   }
 
   return ssl_host_state_delegate_.get();
+}
+
+content::PermissionManager* BrowserContext::GetPermissionManager() {
+  if (!permission_manager_) {
+    permission_manager_.reset(new PermissionManager());
+  }
+
+  return permission_manager_.get();
 }
 
 void BrowserContext::AddObserver(BrowserContextObserver* observer) {

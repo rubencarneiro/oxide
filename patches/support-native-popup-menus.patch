@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -384,20 +384,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -380,20 +380,18 @@ bool RenderFrameHostImpl::OnMessageRecei
      IPC_MESSAGE_HANDLER(AccessibilityHostMsg_LocationChanges,
                          OnAccessibilityLocationChanges)
      IPC_MESSAGE_HANDLER(AccessibilityHostMsg_FindInPageResult,
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1402,17 +1400,16 @@ void RenderFrameHostImpl::OnToggleFullsc
+@@ -1398,17 +1396,16 @@ void RenderFrameHostImpl::OnToggleFullsc
    else
      delegate_->ExitFullscreenMode();
  
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1425,17 +1422,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1421,17 +1418,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
    mojo::BindToRequest(service, &request);
  }
  #endif
-@@ -1874,29 +1870,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -1870,29 +1866,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -116,7 +116,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
  
  namespace content {
  
-@@ -413,20 +411,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -394,20 +392,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
  #if defined(OS_WIN)
    void SetParentNativeViewAccessible(
        gfx::NativeViewAccessible accessible_parent);
@@ -138,7 +138,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const RequestNavigationParams& request_params);
  
-@@ -523,20 +520,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -504,20 +501,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
        const std::vector<AccessibilityHostMsg_EventParams>& params,
        int reset_token);
    void OnAccessibilityLocationChanges(
@@ -375,7 +375,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -946,23 +946,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -956,23 +956,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -399,7 +399,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
      return false;
  
    // TODO(kenrb): document() should not be null, but as a transitional step
-@@ -1030,19 +1028,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -1040,19 +1038,18 @@ bool RenderFrameImpl::OnMessageReceived(
                          OnTextSurroundingSelectionRequest)
      IPC_MESSAGE_HANDLER(FrameMsg_AddStyleSheetByURL,
                          OnAddStyleSheetByURL)
@@ -420,7 +420,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1562,31 +1559,29 @@ void RenderFrameImpl::OnDisownOpener() {
+@@ -1572,31 +1569,29 @@ void RenderFrameImpl::OnDisownOpener() {
    if (frame_->opener())
      frame_->setOpener(NULL);
  }
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -1983,17 +1978,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -1993,17 +1988,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -474,7 +474,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h
 +++ b/content/renderer/render_frame_impl.h
-@@ -277,19 +277,17 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -278,19 +278,17 @@ class CONTENT_EXPORT RenderFrameImpl
                                 const gfx::Range& replacement_range,
                                 bool keep_selection);
  #endif  // defined(ENABLE_PLUGINS)
@@ -494,7 +494,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -628,20 +626,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -629,20 +627,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnBeginExitTransition(const std::string& css_selector,
                               bool exit_to_native_app);
    void OnRevertExitTransition();
@@ -516,14 +516,14 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -891,20 +888,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -900,20 +897,18 @@ class CONTENT_EXPORT RenderFrameImpl
    AccessibilityMode accessibility_mode_;
  
    // Only valid if |accessibility_mode_| is anything other than
    // AccessibilityModeOff.
    RendererAccessibility* renderer_accessibility_;
  
-   scoped_ptr<PermissionManager> permission_client_;
+   scoped_ptr<PermissionDispatcher> permission_client_;
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
    // The external popup for the currently showing select popup.
