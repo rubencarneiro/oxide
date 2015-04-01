@@ -60,6 +60,7 @@
     ],
   },
   'target_defaults': {
+    'defines': ['APPCACHE_USE_SIMPLE_CACHE'],
     'cflags!': [
       # Should remove this
       '-Werror',
