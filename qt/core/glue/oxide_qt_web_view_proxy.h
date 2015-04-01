@@ -53,7 +53,7 @@ namespace oxide {
 namespace qt {
 
 class ScriptMessageHandlerAdapter;
-class WebContextAdapter;
+class WebContextProxy;
 class WebFrameAdapter;
 class WebViewProxyClient;
 class WebView;
@@ -95,15 +95,17 @@ class CompositorFrameHandle {
   virtual EGLImageKHR GetImageFrame() = 0;
 };
 
-class WebViewProxy {
+OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
+
+class Q_DECL_EXPORT WebViewProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebView);
  public:
-  Q_DECL_EXPORT static WebViewProxy* create(WebViewProxyClient* client);
+  static WebViewProxy* create(WebViewProxyClient* client);
 
   virtual ~WebViewProxy();
 
   virtual void init(bool incognito,
-                    WebContextAdapter* context,
+                    WebContextProxyHandle* context,
                     OxideQNewViewRequest* new_view_request,
                     const QByteArray& restore_state,
                     RestoreType restore_type) = 0;
@@ -125,7 +127,7 @@ class WebViewProxy {
 
   virtual WebFrameAdapter* rootFrame() const = 0;
 
-  virtual WebContextAdapter* context() const = 0;
+  virtual WebContextProxyHandle* context() const = 0;
 
   virtual void wasResized() = 0;
   virtual void screenUpdated() = 0;

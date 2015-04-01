@@ -71,7 +71,6 @@
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/common/oxide_qt_screen_utils.h"
 #include "qt/core/common/oxide_qt_skutils.h"
-#include "qt/core/glue/oxide_qt_web_context_adapter.h"
 #include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
@@ -967,7 +966,7 @@ void WebView::OnCloseRequested() {
 }
 
 void WebView::init(bool incognito,
-                   WebContextAdapter* context,
+                   WebContextProxyHandle* context,
                    OxideQNewViewRequest* new_view_request,
                    const QByteArray& restore_state,
                    qt::RestoreType restore_type) {
@@ -1001,7 +1000,7 @@ void WebView::init(bool incognito,
       "been deleted by the application. In single-process mode, there is only "
       "one WebContext, and this has to live for the life of the application";
 
-  WebContext* c = WebContext::FromAdapter(context);
+  WebContext* c = WebContext::FromProxyHandle(context);
 
   if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
           oxide::PROCESS_MODEL_SINGLE_PROCESS) {
@@ -1063,13 +1062,13 @@ WebFrameAdapter* WebView::rootFrame() const {
   return WebFrameAdapter::FromWebFrame(f);
 }
 
-WebContextAdapter* WebView::context() const {
+WebContextProxyHandle* WebView::context() const {
   WebContext* c = GetContext();
   if (!c) {
     return nullptr;
   }
 
-  return WebContextAdapter::FromWebContext(c);
+  return c->handle();
 }
 
 void WebView::wasResized() {

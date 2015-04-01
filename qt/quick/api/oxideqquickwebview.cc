@@ -215,6 +215,9 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
   view_ = view;
 }
 
+OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebView,
+                                    oxide::qt::WebViewProxyHandle);
+
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     oxide::qt::WebViewProxyHandle(oxide::qt::WebViewProxy::create(this), view),
@@ -251,13 +254,14 @@ void OxideQQuickWebViewPrivate::Initialized() {
     emit q->incognitoChanged();
   }
   if (construct_props_->context !=
-      adapterToQObject<OxideQQuickWebContext>(proxy()->context())) {
+      OxideQQuickWebContextPrivate::fromProxyHandle(proxy()->context())) {
     if (construct_props_->context) {
       detachContextSignals(
           OxideQQuickWebContextPrivate::get(construct_props_->context));
     }
     attachContextSignals(
-        static_cast<OxideQQuickWebContextPrivate*>(proxy()->context()));
+        OxideQQuickWebContextPrivate::get(
+          OxideQQuickWebContextPrivate::fromProxyHandle(proxy()->context())));
     emit q->contextChanged();
   }
 
@@ -1436,7 +1440,7 @@ OxideQQuickWebContext* OxideQQuickWebView::context() const {
     return d->construct_props_->context;
   }
 
-  return adapterToQObject<OxideQQuickWebContext>(d->proxy()->context()); 
+  return OxideQQuickWebContextPrivate::fromProxyHandle(d->proxy()->context());
 }
 
 void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {

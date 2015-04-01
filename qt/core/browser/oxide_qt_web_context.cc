@@ -17,22 +17,29 @@
 
 #include "oxide_qt_web_context.h"
 
-#include <QString>
-#include <QUrl>
-#include <QObject>
-#include <QNetworkCookie>
+#include <vector>
+
 #include <QDateTime>
 #include <QDebug>
 #include <QMetaMethod>
+#include <QNetworkCookie>
+#include <QObject>
+#include <QSharedPointer>
+#include <QString>
+#include <QUrl>
 
 #include "base/auto_reset.h"
+#include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/strings/string_util.h"
+#include "base/synchronization/lock.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/cookie_store_factory.h"
 #include "content/public/browser/resource_request_info.h"
 #include "content/public/common/resource_type.h"
 #include "net/base/net_errors.h"
 #include "net/base/static_cookie_policy.h"
+#include "net/cookies/canonical_cookie.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/http/http_response_headers.h"
 #include "net/url_request/url_request.h"
@@ -44,9 +51,13 @@
 #include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 #include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
 #include "qt/core/browser/oxide_qt_user_script.h"
+#include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
+#include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_user_script_master.h"
+
+#include "oxide_qt_browser_startup.h"
 
 namespace oxide {
 namespace qt {
@@ -54,6 +65,10 @@ namespace qt {
 namespace {
 
 const unsigned kDefaultDevtoolsPort = 8484;
+
+bool g_default_is_application_owned;
+bool g_initialized_default = false;
+WebContext* g_default;
 
 int GetNextCookieRequestId() {
   static int id = 0;
@@ -67,6 +82,77 @@ int GetNextCookieRequestId() {
 
 }
 
+class WebContext::BrowserContextDelegate
+    : public oxide::BrowserContextDelegate {
+ public:
+  BrowserContextDelegate(const base::WeakPtr<WebContext> context);
+  ~BrowserContextDelegate() override;
+
+  void Init(const QWeakPointer<WebContextProxyClient::IOClient>& io_client);
+
+  WebContext* context() const { return context_getter_->GetContext(); }
+
+  void SetAllowedExtraURLSchemes(const std::set<std::string>& schemes);
+
+ private:
+  QSharedPointer<WebContextProxyClient::IOClient> GetIOClient();
+
+  // oxide::BrowserContextDelegate implementation
+  int OnBeforeURLRequest(net::URLRequest* request,
+                         const net::CompletionCallback& callback,
+                         GURL* new_url) override;
+  int OnBeforeSendHeaders(net::URLRequest* request,
+                          const net::CompletionCallback& callback,
+                          net::HttpRequestHeaders* headers) override;
+  void OnBeforeRedirect(net::URLRequest* request,
+                        const GURL& new_location) override;
+  oxide::StoragePermission CanAccessStorage(const GURL& url,
+                                            const GURL& first_party_url,
+                                            bool write,
+                                            oxide::StorageType type) override;
+  bool GetUserAgentOverride(const GURL& url,
+                            std::string* user_agent) override;
+  bool IsCustomProtocolHandlerRegistered(
+      const std::string& scheme) const override;
+  oxide::URLRequestDelegatedJob* CreateCustomURLRequestJob(
+      net::URLRequest* request,
+      net::NetworkDelegate* network_delegate) override;
+
+  scoped_refptr<WebContextGetter> context_getter_;
+
+  base::Lock io_client_lock_;
+  QWeakPointer<WebContextProxyClient::IOClient> io_client_;
+
+  mutable base::Lock url_schemes_lock_;
+  std::set<std::string> allowed_extra_url_schemes_;
+
+  DISALLOW_COPY_AND_ASSIGN(BrowserContextDelegate);
+};
+
+struct WebContext::ConstructProperties {
+  ConstructProperties()
+      : max_cache_size_hint(0),
+        cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+        session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
+        popup_blocker_enabled(true),
+        devtools_enabled(false),
+        devtools_port(kDefaultDevtoolsPort) {}
+
+  std::string product;
+  std::string user_agent;
+  base::FilePath data_path;
+  base::FilePath cache_path;
+  int max_cache_size_hint;
+  std::string accept_langs;
+  net::StaticCookiePolicy::Type cookie_policy;
+  content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
+  bool popup_blocker_enabled;
+  bool devtools_enabled;
+  int devtools_port;
+  std::string devtools_ip;
+  std::vector<std::string> host_mapping_rules;
+};
+
 class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
  public:
   SetCookiesContext(int id)
@@ -77,77 +163,19 @@ class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
   QList<QNetworkCookie> failed;
 };
 
-WebContext::ConstructProperties::ConstructProperties() :
-    max_cache_size_hint(0),
-    cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
-    session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
-    popup_blocker_enabled(true),
-    devtools_enabled(false),
-    devtools_port(kDefaultDevtoolsPort) {}
-
-// static
-WebContext* WebContext::Create(WebContextAdapter* adapter) {
-  return new WebContext(adapter);
-}
-
-WebContext::WebContext(WebContextAdapter* adapter)
-    : adapter_(adapter),
-      construct_props_(new ConstructProperties()),
-      handling_cookie_request_(false) {}
-
-void WebContext::Init(
-    const QWeakPointer<WebContextAdapter::IODelegate>& io_delegate) {
-  base::AutoLock lock(io_delegate_lock_);
-  io_delegate_ = io_delegate;
-}
-
-void WebContext::Destroy() {
-  if (context_.get()) {
-    context_->SetDelegate(nullptr);
-  }
-  adapter_ = nullptr;
-
-  base::AutoLock lock(io_delegate_lock_);
-  io_delegate_.clear();
-}
-
-WebContextAdapter* WebContext::GetAdapter() const {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  return adapter_;
-}
-
-QSharedPointer<WebContextAdapter::IODelegate>
-WebContext::GetIODelegate() const {
+QSharedPointer<WebContextProxyClient::IOClient>
+WebContext::BrowserContextDelegate::GetIOClient() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-  base::AutoLock lock(io_delegate_lock_);
-  return io_delegate_.toStrongRef();
+  base::AutoLock lock(io_client_lock_);
+  return io_client_.toStrongRef();
 }
 
-void WebContext::UpdateUserScripts() {
-  if (!context_.get()) {
-    return;
-  }
-
-  std::vector<const oxide::UserScript *> scripts;
-
-  for (int i = 0; i < adapter_->user_scripts_.size(); ++i) {
-    UserScript* script = UserScript::FromAdapter(adapter_->user_scripts_.at(i));
-    if (script->state() == UserScript::Loading ||
-        script->state() == UserScript::Constructing) {
-      return;
-    } else if (script->state() == UserScript::Loaded) {
-      scripts.push_back(script->impl());
-    }
-  }
-
-  context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
-}
-
-int WebContext::OnBeforeURLRequest(net::URLRequest* request,
-                                   const net::CompletionCallback& callback,
-                                   GURL* new_url) {
-  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
-  if (!io_delegate) {
+int WebContext::BrowserContextDelegate::OnBeforeURLRequest(
+    net::URLRequest* request,
+    const net::CompletionCallback& callback,
+    GURL* new_url) {
+  QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
+  if (!io_client) {
     return net::OK;
   }
 
@@ -173,16 +201,17 @@ int WebContext::OnBeforeURLRequest(net::URLRequest* request,
   eventp->request_cancelled = &cancelled;
   eventp->new_url = new_url;
 
-  io_delegate->OnBeforeURLRequest(event);
+  io_client->OnBeforeURLRequest(event);
 
   return cancelled ? net::ERR_ABORTED : net::OK;
 }
 
-int WebContext::OnBeforeSendHeaders(net::URLRequest* request,
-                                    const net::CompletionCallback& callback,
-                                    net::HttpRequestHeaders* headers) {
-  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
-  if (!io_delegate) {
+int WebContext::BrowserContextDelegate::OnBeforeSendHeaders(
+    net::URLRequest* request,
+    const net::CompletionCallback& callback,
+    net::HttpRequestHeaders* headers) {
+  QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
+  if (!io_client) {
     return net::OK;
   }
 
@@ -208,15 +237,16 @@ int WebContext::OnBeforeSendHeaders(net::URLRequest* request,
   eventp->request_cancelled = &cancelled;
   eventp->headers = headers;
 
-  io_delegate->OnBeforeSendHeaders(event);
+  io_client->OnBeforeSendHeaders(event);
 
   return cancelled ? net::ERR_ABORTED : net::OK;
 }
 
-void WebContext::OnBeforeRedirect(net::URLRequest* request,
-                                  const GURL& new_location) {
-  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
-  if (!io_delegate) {
+void WebContext::BrowserContextDelegate::OnBeforeRedirect(
+    net::URLRequest* request,
+    const GURL& new_location) {
+  QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
+  if (!io_client) {
     return;
   }
 
@@ -242,22 +272,22 @@ void WebContext::OnBeforeRedirect(net::URLRequest* request,
       OxideQBeforeRedirectEventPrivate::get(event);
   eventp->request_cancelled = &cancelled;
 
-  io_delegate->OnBeforeRedirect(event);
+  io_client->OnBeforeRedirect(event);
 
   if (cancelled) {
     request->Cancel();
   }
 }
 
-oxide::StoragePermission WebContext::CanAccessStorage(
+oxide::StoragePermission WebContext::BrowserContextDelegate::CanAccessStorage(
     const GURL& url,
     const GURL& first_party_url,
     bool write,
     oxide::StorageType type) {
   oxide::StoragePermission result = oxide::STORAGE_PERMISSION_UNDEFINED;
 
-  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
-  if (!io_delegate) {
+  QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
+  if (!io_client) {
     return result;
   }
 
@@ -270,52 +300,491 @@ oxide::StoragePermission WebContext::CanAccessStorage(
 
   OxideQStoragePermissionRequestPrivate::get(req)->permission = &result;
 
-  io_delegate->HandleStoragePermissionRequest(req);
+  io_client->HandleStoragePermissionRequest(req);
 
   return result;
 }
 
-bool WebContext::GetUserAgentOverride(const GURL& url,
-                                      std::string* user_agent) {
-  QSharedPointer<WebContextAdapter::IODelegate> io_delegate = GetIODelegate();
-  if (!io_delegate) {
+bool WebContext::BrowserContextDelegate::GetUserAgentOverride(
+    const GURL& url,
+    std::string* user_agent) {
+  QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
+  if (!io_client) {
     return false;
   }
 
   QString new_user_agent;
-  bool overridden = io_delegate->GetUserAgentOverride(
+  bool overridden = io_client->GetUserAgentOverride(
       QUrl(QString::fromStdString(url.spec())), &new_user_agent);
 
   *user_agent = new_user_agent.toStdString();
   return overridden;
 }
 
-bool WebContext::IsCustomProtocolHandlerRegistered(
+bool WebContext::BrowserContextDelegate::IsCustomProtocolHandlerRegistered(
     const std::string& scheme) const {
   base::AutoLock lock(url_schemes_lock_);
   return allowed_extra_url_schemes_.find(scheme) !=
       allowed_extra_url_schemes_.end();
 }
 
-oxide::URLRequestDelegatedJob* WebContext::CreateCustomURLRequestJob(
+oxide::URLRequestDelegatedJob*
+WebContext::BrowserContextDelegate::CreateCustomURLRequestJob(
     net::URLRequest* request,
     net::NetworkDelegate* network_delegate) {
-  return new URLRequestDelegatedJob(this, request, network_delegate);
+  return new URLRequestDelegatedJob(context_getter_.get(),
+                                    request,
+                                    network_delegate);
 }
 
-WebContext::~WebContext() {}
+WebContext::BrowserContextDelegate::BrowserContextDelegate(
+    const base::WeakPtr<WebContext> context)
+    : context_getter_(new WebContextGetter(context)) {}
 
-// static
-WebContext* WebContext::FromAdapter(WebContextAdapter* adapter) {
-  return adapter->context_;
+WebContext::BrowserContextDelegate::~BrowserContextDelegate() {}
+
+void WebContext::BrowserContextDelegate::Init(
+    const QWeakPointer<WebContextProxyClient::IOClient>& io_client) {
+  base::AutoLock lock(io_client_lock_);
+  io_client_ = io_client;
+}
+
+void WebContext::BrowserContextDelegate::SetAllowedExtraURLSchemes(
+    const std::set<std::string>& schemes) {
+  base::AutoLock lock(url_schemes_lock_);
+  allowed_extra_url_schemes_ = schemes;
+}
+
+WebContextGetter::WebContextGetter(const base::WeakPtr<WebContext>& context)
+    : context_(context) {}
+
+WebContextGetter::~WebContextGetter() {}
+
+WebContext* WebContextGetter::GetContext() const {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  return context_.get();
+}
+
+bool WebContext::IsInitialized() const {
+  return context_.get() != nullptr;
+}
+
+void WebContext::UpdateUserScripts() {
+  if (!context_.get()) {
+    return;
+  }
+
+  std::vector<const oxide::UserScript *> scripts;
+
+  for (int i = 0; i < user_scripts_.size(); ++i) {
+    UserScript* script = UserScript::FromAdapter(user_scripts_.at(i));
+    if (script->state() == UserScript::Loading ||
+        script->state() == UserScript::Constructing) {
+      return;
+    } else if (script->state() == UserScript::Loaded) {
+      scripts.push_back(script->impl());
+    }
+  }
+
+  context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
+}
+
+void WebContext::CookieSetCallback(
+    const scoped_refptr<SetCookiesContext>& ctxt,
+    const QNetworkCookie& cookie,
+    bool success) {
+  DCHECK_GT(ctxt->remaining, 0);
+
+  if (!success) {
+    ctxt->failed.push_back(cookie);
+  }
+
+  if (--ctxt->remaining > 0 || handling_cookie_request_) {
+    return;
+  }
+
+  DeliverCookiesSet(ctxt);
+}
+
+void WebContext::DeliverCookiesSet(
+    const scoped_refptr<SetCookiesContext>& ctxt) {
+  DCHECK_EQ(ctxt->remaining, 0);
+  client_->CookiesSet(ctxt->id, ctxt->failed);
+}
+
+void WebContext::GotCookiesCallback(int request_id,
+                                    const net::CookieList& cookies) {
+  if (handling_cookie_request_) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE,
+        base::Bind(&WebContext::GotCookiesCallback,
+                   weak_factory_.GetWeakPtr(), request_id, cookies));
+    return;
+  }
+
+  QList<QNetworkCookie> qcookies;
+  for (net::CookieList::const_iterator iter = cookies.begin();
+       iter != cookies.end(); ++iter) {
+    QNetworkCookie cookie;
+
+    cookie.setName(iter->Name().c_str());
+    cookie.setValue(iter->Value().c_str());
+    cookie.setDomain(iter->Domain().c_str());
+    cookie.setPath(iter->Path().c_str());
+    if (!iter->ExpiryDate().is_null()) {
+      cookie.setExpirationDate(QDateTime::fromMSecsSinceEpoch(
+          iter->ExpiryDate().ToJsTime()));
+    }
+    cookie.setSecure(iter->IsSecure());
+    cookie.setHttpOnly(iter->IsHttpOnly());
+
+    qcookies.append(cookie);
+  }
+
+  client_->CookiesRetrieved(request_id, qcookies);
+}
+
+void WebContext::DeletedCookiesCallback(int request_id,
+                                        int num_deleted) {
+  client_->CookiesDeleted(request_id, num_deleted);
+}
+
+WebContext::WebContext(WebContextProxyClient* client)
+    : client_(client),
+      construct_props_(new ConstructProperties()),
+      handling_cookie_request_(false),
+      weak_factory_(this) {
+  delegate_ = new BrowserContextDelegate(weak_factory_.GetWeakPtr());
+
+  COMPILE_ASSERT(
+      CookiePolicyAllowAll == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
+      cookie_enums_allowall_doesnt_match);
+  COMPILE_ASSERT(
+      CookiePolicyBlockAll == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::BLOCK_ALL_COOKIES),
+      cookie_enums_blockall_doesnt_match);
+  COMPILE_ASSERT(
+      CookiePolicyBlockThirdParty == static_cast<CookiePolicy>(
+        net::StaticCookiePolicy::BLOCK_ALL_THIRD_PARTY_COOKIES),
+      cookie_enums_blockall3rdparty_doesnt_match);
+
+  COMPILE_ASSERT(
+      SessionCookieModeEphemeral == static_cast<SessionCookieMode>(
+        content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
+      session_cookie_mode_enums_ephemeral_doesnt_match);
+  COMPILE_ASSERT(
+      SessionCookieModePersistent == static_cast<SessionCookieMode>(
+        content::CookieStoreConfig::PERSISTANT_SESSION_COOKIES),
+      session_cookie_mode_enums_persistent_doesnt_match);
+  COMPILE_ASSERT(
+      SessionCookieModeRestored == static_cast<SessionCookieMode>(
+        content::CookieStoreConfig::RESTORED_SESSION_COOKIES),
+      session_cookie_mode_enums_restored_doesnt_match);
+}
+
+WebContext::~WebContext() {
+  if (g_default == this) {
+    g_default = nullptr;
+  }
+
+  if (context_.get()) {
+    context_->SetDelegate(nullptr);
+  }
 }
 
 // static
 WebContext* WebContext::FromBrowserContext(oxide::BrowserContext* context) {
-  return static_cast<WebContext *>(context->GetDelegate());
+  BrowserContextDelegate* delegate =
+      static_cast<BrowserContextDelegate*>(context->GetDelegate());
+  if (!delegate) {
+    return nullptr;
+  }
+
+  return delegate->context();
 }
 
-int WebContext::SetCookies(const QUrl& url,
+// static
+WebContext* WebContext::FromProxyHandle(WebContextProxyHandle* handle) {
+  return static_cast<WebContext*>(handle->proxy_.data());
+}
+
+// static
+WebContext* WebContext::GetDefault() {
+  return g_default;
+}
+
+// static
+void WebContext::DestroyDefault() {
+  if (!g_default || g_default_is_application_owned) {
+    return;
+  }
+
+  g_default->client_->DestroyDefault();
+  DCHECK(!g_default);
+}
+
+oxide::BrowserContext* WebContext::GetContext() {
+  if (context_.get()) {
+    return context_.get();
+  }
+
+  DCHECK(construct_props_);
+
+  oxide::BrowserContext::Params params(
+      construct_props_->data_path,
+      construct_props_->cache_path,
+      construct_props_->max_cache_size_hint,
+      construct_props_->session_cookie_mode,
+      construct_props_->devtools_enabled,
+      construct_props_->devtools_port,
+      construct_props_->devtools_ip);
+  params.host_mapping_rules = construct_props_->host_mapping_rules;
+
+  context_ = oxide::BrowserContext::Create(params);
+
+  if (!construct_props_->product.empty()) {
+    context_->SetProduct(construct_props_->product);
+  }
+  if (!construct_props_->user_agent.empty()) {
+    context_->SetUserAgent(construct_props_->user_agent);
+  }
+  if (!construct_props_->accept_langs.empty()) {
+    context_->SetAcceptLangs(construct_props_->accept_langs);
+  }
+  context_->SetCookiePolicy(construct_props_->cookie_policy);
+  context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
+
+  context_->SetDelegate(delegate_.get());
+
+  construct_props_.reset();
+
+  UpdateUserScripts();
+
+  return context_.get();
+}
+
+QNetworkAccessManager* WebContext::GetCustomNetworkAccessManager() {
+  return client_->GetCustomNetworkAccessManager();
+}
+
+void WebContext::init(
+    const QWeakPointer<WebContextProxyClient::IOClient>& io_client) {
+  // If we are in single process mode because it was set in the environment,
+  // allow the first application-created context to become the default
+  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
+          oxide::PROCESS_MODEL_SINGLE_PROCESS &&
+      BrowserStartup::GetInstance()->DidSelectProcessModelFromEnv() &&
+      !g_initialized_default) {
+    g_initialized_default = true;
+    g_default_is_application_owned = true;
+    g_default = this;
+  }
+
+  delegate_->Init(io_client);
+}
+
+void WebContext::makeDefault() {
+  DCHECK(!g_initialized_default);
+  DCHECK(!g_default || g_default == this);
+
+  g_initialized_default = true;
+  g_default_is_application_owned = false;
+  g_default = this;
+}
+
+QString WebContext::product() const {
+  if (IsInitialized()) {
+    return QString::fromStdString(context_->GetProduct());
+  }
+
+  return QString::fromStdString(construct_props_->product);
+}
+
+void WebContext::setProduct(const QString& product) {
+  if (IsInitialized()) {
+    context_->SetProduct(product.toStdString());
+  } else {
+    construct_props_->product = product.toStdString();
+  }
+}
+
+QString WebContext::userAgent() const {
+  if (IsInitialized()) {
+    return QString::fromStdString(context_->GetUserAgent());
+  }
+
+  return QString::fromStdString(construct_props_->user_agent);
+}
+
+void WebContext::setUserAgent(const QString& user_agent) {
+  if (IsInitialized()) {
+    context_->SetUserAgent(user_agent.toStdString());
+  } else {
+    construct_props_->user_agent = user_agent.toStdString();
+  }
+}
+
+QUrl WebContext::dataPath() const {
+  base::FilePath path;
+  if (IsInitialized()) {
+    path = context_->GetPath();
+  } else {
+    path = construct_props_->data_path;
+  }
+
+  if (path.empty()) {
+    return QUrl();
+  }
+
+  return QUrl::fromLocalFile(QString::fromStdString(path.value()));
+}
+
+void WebContext::setDataPath(const QUrl& url) {
+  DCHECK(!IsInitialized());
+  DCHECK(url.isLocalFile() || url.isEmpty());
+  construct_props_->data_path =
+      base::FilePath(url.toLocalFile().toStdString());
+}
+
+QUrl WebContext::cachePath() const {
+  base::FilePath path;
+  if (IsInitialized()) {
+    path = context_->GetCachePath();
+  } else {
+    path = construct_props_->cache_path;
+  }
+
+  if (path.empty()) {
+    return QUrl();
+  }
+
+  return QUrl::fromLocalFile(QString::fromStdString(path.value()));
+}
+
+void WebContext::setCachePath(const QUrl& url) {
+  DCHECK(!IsInitialized());
+  DCHECK(url.isLocalFile() || url.isEmpty());
+  construct_props_->cache_path =
+      base::FilePath(url.toLocalFile().toStdString());
+}
+
+QString WebContext::acceptLangs() const {
+  if (IsInitialized()) {
+    return QString::fromStdString(context_->GetAcceptLangs());
+  }
+
+  return QString::fromStdString(construct_props_->accept_langs);
+}
+
+void WebContext::setAcceptLangs(const QString& langs) {
+  if (IsInitialized()) {
+    context_->SetAcceptLangs(langs.toStdString());
+  } else {
+    construct_props_->accept_langs = langs.toStdString();
+  }
+}
+
+QList<UserScriptAdapter *>& WebContext::userScripts() {
+  return user_scripts_;
+}
+
+void WebContext::updateUserScripts() {
+  UpdateUserScripts();
+}
+
+bool WebContext::isInitialized() const {
+  return IsInitialized();
+}
+
+WebContextProxy::CookiePolicy WebContext::cookiePolicy() const {
+  if (IsInitialized()) {
+    return static_cast<CookiePolicy>(context_->GetCookiePolicy());
+  }
+
+  return static_cast<CookiePolicy>(construct_props_->cookie_policy);
+}
+
+void WebContext::setCookiePolicy(CookiePolicy policy) {
+  if (IsInitialized()) {
+    context_->SetCookiePolicy(
+        static_cast<net::StaticCookiePolicy::Type>(policy));
+  } else {
+    construct_props_->cookie_policy =
+        static_cast<net::StaticCookiePolicy::Type>(policy);
+  }
+}
+
+WebContextProxy::SessionCookieMode WebContext::sessionCookieMode() const {
+  if (IsInitialized()) {
+    return static_cast<SessionCookieMode>(context_->GetSessionCookieMode());
+  }
+
+  return static_cast<SessionCookieMode>(construct_props_->session_cookie_mode);
+}
+
+void WebContext::setSessionCookieMode(SessionCookieMode mode) {
+  DCHECK(!IsInitialized());
+  construct_props_->session_cookie_mode =
+      static_cast<content::CookieStoreConfig::SessionCookieMode>(mode);
+}
+
+bool WebContext::popupBlockerEnabled() const {
+  if (IsInitialized()) {
+    return context_->IsPopupBlockerEnabled();
+  }
+
+  return construct_props_->popup_blocker_enabled;
+}
+
+void WebContext::setPopupBlockerEnabled(bool enabled) {
+  if (IsInitialized()) {
+    context_->SetIsPopupBlockerEnabled(enabled);
+  } else {
+    construct_props_->popup_blocker_enabled = enabled;
+  }
+}
+
+bool WebContext::devtoolsEnabled() const {
+  if (IsInitialized()) {
+    return context_->GetDevtoolsEnabled();
+  }
+
+  return construct_props_->devtools_enabled;
+}
+
+void WebContext::setDevtoolsEnabled(bool enabled) {
+  DCHECK(!IsInitialized());
+  construct_props_->devtools_enabled = enabled;
+}
+
+int WebContext::devtoolsPort() const {
+  if (IsInitialized()) {
+    return context_->GetDevtoolsPort();
+  }
+
+  return construct_props_->devtools_port;
+}
+
+void WebContext::setDevtoolsPort(int port) {
+  DCHECK(!IsInitialized());
+  construct_props_->devtools_port = port;
+}
+
+QString WebContext::devtoolsBindIp() const {
+  if (IsInitialized()) {
+    return QString::fromStdString(context_->GetDevtoolsBindIp());
+  }
+
+  return QString::fromStdString(construct_props_->devtools_ip);
+}
+
+void WebContext::setDevtoolsBindIp(const QString& ip) {
+  DCHECK(!IsInitialized());
+  construct_props_->devtools_ip = ip.toStdString();
+}
+
+int WebContext::setCookies(const QUrl& url,
                            const QList<QNetworkCookie>& cookies) {
   if (!IsInitialized()) {
     return -1;
@@ -358,48 +827,21 @@ int WebContext::SetCookies(const QUrl& url,
         cookie.isHttpOnly(),
         false,
         net::COOKIE_PRIORITY_DEFAULT,
-        base::Bind(&WebContext::CookieSetCallback, this, ctxt, cookie));
+        base::Bind(&WebContext::CookieSetCallback,
+                   weak_factory_.GetWeakPtr(), ctxt, cookie));
   }
 
   if (ctxt->remaining == 0) {
     base::MessageLoop::current()->PostTask(
         FROM_HERE,
-        base::Bind(&WebContext::DeliverCookiesSet, this, ctxt));
+        base::Bind(&WebContext::DeliverCookiesSet,
+                   weak_factory_.GetWeakPtr(), ctxt));
   }
 
   return request_id;
 }
 
-void WebContext::CookieSetCallback(
-    const scoped_refptr<SetCookiesContext>& ctxt,
-    const QNetworkCookie& cookie,
-    bool success) {
-  DCHECK_GT(ctxt->remaining, 0);
-
-  if (!success) {
-    ctxt->failed.push_back(cookie);
-  }
-
-  if (--ctxt->remaining > 0 || handling_cookie_request_) {
-    return;
-  }
-
-  DeliverCookiesSet(ctxt);
-}
-
-void WebContext::DeliverCookiesSet(
-    const scoped_refptr<SetCookiesContext>& ctxt) {
-  DCHECK_EQ(ctxt->remaining, 0);
-
-  WebContextAdapter* adapter = GetAdapter();
-  if (!adapter) {
-    return;
-  }
-
-  adapter->CookiesSet(ctxt->id, ctxt->failed);
-}
-
-int WebContext::GetCookies(const QUrl& url) {
+int WebContext::getCookies(const QUrl& url) {
   if (!IsInitialized()) {
     return -1;
   }
@@ -411,12 +853,13 @@ int WebContext::GetCookies(const QUrl& url) {
   scoped_refptr<net::CookieStore> store = context_->GetCookieStore();
   store->GetCookieMonster()->GetAllCookiesForURLAsync(
       GURL(url.toString().toStdString()),
-      base::Bind(&WebContext::GotCookiesCallback, this, request_id));
+      base::Bind(&WebContext::GotCookiesCallback,
+                 weak_factory_.GetWeakPtr(), request_id));
 
   return request_id;
 }
 
-int WebContext::GetAllCookies() {
+int WebContext::getAllCookies() {
   if (!IsInitialized()) {
     return -1;
   }
@@ -426,49 +869,13 @@ int WebContext::GetAllCookies() {
   base::AutoReset<bool> f(&handling_cookie_request_, true);
 
   context_->GetCookieStore()->GetCookieMonster()->GetAllCookiesAsync(
-      base::Bind(&WebContext::GotCookiesCallback, this, request_id));
+      base::Bind(&WebContext::GotCookiesCallback,
+                 weak_factory_.GetWeakPtr(), request_id));
 
   return request_id;
 }
 
-void WebContext::GotCookiesCallback(int request_id,
-                                    const net::CookieList& cookies) {
-  WebContextAdapter* adapter = GetAdapter();
-  if (!adapter) {
-    return;
-  }
-
-  if (handling_cookie_request_) {
-    base::MessageLoop::current()->PostTask(
-        FROM_HERE,
-        base::Bind(&WebContext::GotCookiesCallback,
-                   this, request_id, cookies));
-    return;
-  }
-
-  QList<QNetworkCookie> qcookies;
-  for (net::CookieList::const_iterator iter = cookies.begin();
-       iter != cookies.end(); ++iter) {
-    QNetworkCookie cookie;
-
-    cookie.setName(iter->Name().c_str());
-    cookie.setValue(iter->Value().c_str());
-    cookie.setDomain(iter->Domain().c_str());
-    cookie.setPath(iter->Path().c_str());
-    if (!iter->ExpiryDate().is_null()) {
-      cookie.setExpirationDate(QDateTime::fromMSecsSinceEpoch(
-          iter->ExpiryDate().ToJsTime()));
-    }
-    cookie.setSecure(iter->IsSecure());
-    cookie.setHttpOnly(iter->IsHttpOnly());
-
-    qcookies.append(cookie);
-  }
-
-  adapter->CookiesRetrieved(request_id, qcookies);
-}
-
-int WebContext::DeleteAllCookies() {
+int WebContext::deleteAllCookies() {
   if (!IsInitialized()) {
     return -1;
   }
@@ -479,276 +886,48 @@ int WebContext::DeleteAllCookies() {
 
   context_->GetCookieStore()->GetCookieMonster()->DeleteAllAsync(
       base::Bind(&WebContext::DeletedCookiesCallback,
-                 this, request_id));
+                 weak_factory_.GetWeakPtr(), request_id));
 
   return request_id;
 }
 
-void WebContext::DeletedCookiesCallback(int request_id,
-                                        int num_deleted) {
-  WebContextAdapter* adapter = GetAdapter();
-  if (!adapter) {
-    return;
-  }
-
-  adapter->CookiesDeleted(request_id, num_deleted);
-}
-
-void WebContext::SetAllowedExtraURLSchemes(
-    const std::set<std::string>& schemes) {
-  base::AutoLock lock(url_schemes_lock_);
-  allowed_extra_url_schemes_ = schemes;
-}
-
-// static
-WebContext* WebContext::GetDefault() {
-  WebContextAdapter* adapter = WebContextAdapter::GetDefault();
-  if (!adapter) {
-    return nullptr;
-  }
-
-  return FromAdapter(adapter);
-}
-
-// static
-void WebContext::DestroyDefault() {
-  WebContextAdapter::DestroyDefault();
-}
-
-oxide::BrowserContext* WebContext::GetContext() {
-  if (context_.get()) {
-    return context_.get();
-  }
-
-  DCHECK(construct_props_);
-
-  oxide::BrowserContext::Params params(
-      construct_props_->data_path,
-      construct_props_->cache_path,
-      construct_props_->max_cache_size_hint,
-      construct_props_->session_cookie_mode,
-      construct_props_->devtools_enabled,
-      construct_props_->devtools_port,
-      construct_props_->devtools_ip);
-  params.host_mapping_rules = construct_props_->host_mapping_rules;
-
-  context_ = oxide::BrowserContext::Create(params);
-
-  if (!construct_props_->product.empty()) {
-    context_->SetProduct(construct_props_->product);
-  }
-  if (!construct_props_->user_agent.empty()) {
-    context_->SetUserAgent(construct_props_->user_agent);
-  }
-  if (!construct_props_->accept_langs.empty()) {
-    context_->SetAcceptLangs(construct_props_->accept_langs);
-  }
-  context_->SetCookiePolicy(construct_props_->cookie_policy);
-  context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
-
-  context_->SetDelegate(this);
-
-  construct_props_.reset();
-
-  UpdateUserScripts();
-
-  return context_.get();
-}
-
-QNetworkAccessManager* WebContext::GetCustomNetworkAccessManager() {
-  return GetAdapter()->GetCustomNetworkAccessManager();
-}
-
-bool WebContext::IsInitialized() const {
-  return context_.get() != nullptr;
-}
-
-std::string WebContext::GetProduct() const {
-  if (IsInitialized()) {
-    return context_->GetProduct();
-  }
-
-  return construct_props_->product;
-}
-
-void WebContext::SetProduct(const std::string& product) {
-  if (IsInitialized()) {
-    context_->SetProduct(product);
-  } else {
-    construct_props_->product = product;
-  }
-}
-
-std::string WebContext::GetUserAgent() const {
-  if (IsInitialized()) {
-    return context_->GetUserAgent();
-  }
-
-  return construct_props_->user_agent;
-}
-
-void WebContext::SetUserAgent(const std::string& user_agent) {
-  if (IsInitialized()) {
-    context_->SetUserAgent(user_agent);
-  } else {
-    construct_props_->user_agent = user_agent;
-  }
-}
-
-base::FilePath WebContext::GetDataPath() const {
-  if (IsInitialized()) {
-    return context_->GetPath();
-  }
-
-  return construct_props_->data_path;
-}
-
-void WebContext::SetDataPath(const base::FilePath& path) {
-  DCHECK(!IsInitialized());
-  construct_props_->data_path = path;
-}
-
-base::FilePath WebContext::GetCachePath() const {
-  if (IsInitialized()) {
-    return context_->GetCachePath();
-  }
-
-  return construct_props_->cache_path;
-}
-
-void WebContext::SetCachePath(const base::FilePath& path) {
-  DCHECK(!IsInitialized());
-  construct_props_->cache_path = path;
-}
-
-std::string WebContext::GetAcceptLangs() const {
-  if (IsInitialized()) {
-    return context_->GetAcceptLangs();
-  }
-
-  return construct_props_->accept_langs;
-}
-
-void WebContext::SetAcceptLangs(const std::string& langs) {
-  if (IsInitialized()) {
-    context_->SetAcceptLangs(langs);
-  } else {
-    construct_props_->accept_langs = langs;
-  }
-}
-
-net::StaticCookiePolicy::Type WebContext::GetCookiePolicy() const {
-  if (IsInitialized()) {
-    return context_->GetCookiePolicy();
-  }
-
-  return construct_props_->cookie_policy;
-}
-
-void WebContext::SetCookiePolicy(net::StaticCookiePolicy::Type policy) {
-  if (IsInitialized()) {
-    context_->SetCookiePolicy(policy);
-  } else {
-    construct_props_->cookie_policy = policy;
-  }
-}
-
-content::CookieStoreConfig::SessionCookieMode
-WebContext::GetSessionCookieMode() const {
-  if (IsInitialized()) {
-    return context_->GetSessionCookieMode();
-  }
-
-  return construct_props_->session_cookie_mode;
-}
-
-void WebContext::SetSessionCookieMode(
-    content::CookieStoreConfig::SessionCookieMode mode) {
-  DCHECK(!IsInitialized());
-  construct_props_->session_cookie_mode = mode;
-}
-
-bool WebContext::GetPopupBlockerEnabled() const {
-  if (IsInitialized()) {
-    return context_->IsPopupBlockerEnabled();
-  }
-
-  return construct_props_->popup_blocker_enabled;
-}
-
-void WebContext::SetPopupBlockerEnabled(bool enabled) {
-  if (IsInitialized()) {
-    context_->SetIsPopupBlockerEnabled(enabled);
-  } else {
-    construct_props_->popup_blocker_enabled = enabled;
-  }
-}
-
-bool WebContext::GetDevtoolsEnabled() const {
-  if (IsInitialized()) {
-    return context_->GetDevtoolsEnabled();
-  }
-
-  return construct_props_->devtools_enabled;
-}
-
-void WebContext::SetDevtoolsEnabled(bool enabled) {
-  if (IsInitialized()) {
-    qWarning() << "Cannot change the devtools enabled after inititialization";
-    return;
-  }
-
-  construct_props_->devtools_enabled = enabled;
-}
-
-int WebContext::GetDevtoolsPort() const {
-  if (IsInitialized()) {
-    return context_->GetDevtoolsPort();
-  }
-
-  return construct_props_->devtools_port;
-}
-
-void WebContext::SetDevtoolsPort(int port) {
-  if (IsInitialized()) {
-    qWarning() << "Cannot change the devtools port after inititialization";
-    return;
-  }
-
-  construct_props_->devtools_port = port;
-}
-
-std::string WebContext::GetDevtoolsBindIp() const {
-  if (IsInitialized()) {
-    return context_->GetDevtoolsBindIp();
-  }
-
-  return construct_props_->devtools_ip;
-}
-
-void WebContext::SetDevtoolsBindIp(const std::string& ip) {
-  if (IsInitialized()) {
-    qWarning() << "Cannot change the devtools bound ip after inititialization";
-    return;
-  }
-
-  construct_props_->devtools_ip = ip;
-}
-
-std::vector<std::string> WebContext::GetHostMappingRules() const {
+QStringList WebContext::hostMappingRules() const {
+  std::vector<std::string> v;
   if (!IsInitialized()) {
-    return construct_props_->host_mapping_rules;
+    v = construct_props_->host_mapping_rules;
+  } else {
+    v = context_->GetHostMappingRules();
   }
 
-  return context_->GetHostMappingRules();
+  QStringList rules;
+  for (std::vector<std::string>::const_iterator it = v.cbegin();
+       it != v.cend(); ++it) {
+    rules.append(QString::fromStdString(*it));
+  }
+
+  return rules;
 }
 
-void WebContext::SetHostMappingRules(const std::vector<std::string>& rules) {
+void WebContext::setHostMappingRules(const QStringList& rules) {
   DCHECK(!IsInitialized());
-  construct_props_->host_mapping_rules = rules;
+
+  construct_props_->host_mapping_rules.clear();
+
+  for (QStringList::const_iterator it = rules.cbegin();
+       it != rules.cend(); ++it) {
+    construct_props_->host_mapping_rules.push_back((*it).toStdString());
+  }
 }
 
-int WebContext::GetMaxCacheSizeHint() const {
+void WebContext::setAllowedExtraUrlSchemes(const QStringList& schemes) {
+  std::set<std::string> set;
+  for (int i = 0; i < schemes.size(); ++i) {
+    set.insert(base::StringToLowerASCII(schemes.at(i).toStdString()));
+  }
+  delegate_->SetAllowedExtraURLSchemes(set);
+}
+
+int WebContext::maxCacheSizeHint() const {
   if (IsInitialized()) {
     return context_->GetMaxCacheSizeHint();
   }
@@ -756,7 +935,7 @@ int WebContext::GetMaxCacheSizeHint() const {
   return construct_props_->max_cache_size_hint;
 }
 
-void WebContext::SetMaxCacheSizeHint(int size) {
+void WebContext::setMaxCacheSizeHint(int size) {
   DCHECK(!IsInitialized());
   construct_props_->max_cache_size_hint = size;
 }

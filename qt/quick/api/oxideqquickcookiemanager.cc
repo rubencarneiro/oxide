@@ -22,8 +22,6 @@
 #include <QNetworkCookie>
 #include <QtDebug>
 
-#include "qt/core/glue/oxide_qt_web_context_adapter.h"
-
 #include "oxideqquickwebcontext_p_p.h"
 
 namespace {

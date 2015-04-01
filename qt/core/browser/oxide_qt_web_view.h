@@ -182,7 +182,7 @@ class WebView : public QObject,
 
   // WebViewProxy implementation
   void init(bool incognito,
-            WebContextAdapter* context,
+            WebContextProxyHandle* context,
             OxideQNewViewRequest* new_view_request,
             const QByteArray& restore_state,
             qt::RestoreType restore_type) override;
@@ -204,7 +204,7 @@ class WebView : public QObject,
 
   WebFrameAdapter* rootFrame() const override;
 
-  WebContextAdapter* context() const override;
+  WebContextProxyHandle* context() const override;
 
   void wasResized() override;
   void screenUpdated() override;
