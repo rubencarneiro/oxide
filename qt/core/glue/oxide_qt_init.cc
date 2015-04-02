@@ -19,7 +19,7 @@
 
 #include "qt/core/browser/oxide_qt_browser_startup.h"
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-#include "qt/core/gpu/oxide_qt_gl_context_depdendent.h"
+#include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
 #endif
 
 namespace oxide {
