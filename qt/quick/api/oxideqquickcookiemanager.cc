@@ -27,9 +27,6 @@
 namespace {
 
 QList<QNetworkCookie> networkCookiesFromVariantList(const QVariant& cookies) {
-  if (!cookies.canConvert(QMetaType::QVariantList)) {
-    return QList<QNetworkCookie>();
-  }
   QList<QNetworkCookie> network_cookies;
   QList<QVariant> cl = cookies.toList();
   Q_FOREACH(QVariant cookie, cl) {
@@ -102,8 +99,32 @@ int OxideQQuickCookieManager::setCookies(const QUrl& url,
                                          const QVariant& cookies) {
   Q_D(OxideQQuickCookieManager);
 
-  return OxideQQuickWebContextPrivate::get(d->web_context_)->setCookies(
-      url, networkCookiesFromVariantList(cookies));
+  OxideQQuickWebContextPrivate* c =
+      OxideQQuickWebContextPrivate::get(d->web_context_);
+
+  if (!c->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickCookieManager::setCookies: WebContext is not initialized "
+        "yet";
+    return -1;
+  }
+
+  if (!cookies.canConvert(QMetaType::QVariantList)) {
+    qWarning() <<
+        "OxideQQuickCookieManager::setCookies: Invalid argument - expected "
+        "a list";
+    return -1;
+  }
+
+  QList<QNetworkCookie> network_cookies =
+      networkCookiesFromVariantList(cookies);
+
+  if (network_cookies.size() == 0) {
+    qWarning() << "OxideQQuickCookieManager::setCookies: No cookies provided";
+    return -1;
+  }
+
+  return c->setCookies(url, network_cookies);
 }
 
 int OxideQQuickCookieManager::setNetworkCookies(
@@ -111,26 +132,71 @@ int OxideQQuickCookieManager::setNetworkCookies(
     const QList<QNetworkCookie>& cookies) {
   Q_D(OxideQQuickCookieManager);
 
-  return OxideQQuickWebContextPrivate::get(d->web_context_)->setCookies(
-      url, cookies);
+  OxideQQuickWebContextPrivate* c =
+      OxideQQuickWebContextPrivate::get(d->web_context_);
+
+  if (!c->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickCookieManager::setNetworkCookies: WebContext is not "
+        "initialized yet";
+    return -1;
+  }
+
+  if (cookies.size() == 0) {
+    qWarning() <<
+        "OxideQQuickCookieManager::setNetworkCookies: No cookies provided";
+    return -1;
+  }
+
+  return c->setCookies(url, cookies);
 }
 
 int OxideQQuickCookieManager::getCookies(const QUrl& url) {
   Q_D(OxideQQuickCookieManager);
 
-  return OxideQQuickWebContextPrivate::get(d->web_context_)->getCookies(url);
+  OxideQQuickWebContextPrivate* c =
+      OxideQQuickWebContextPrivate::get(d->web_context_);
+
+  if (!c->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickCookieManager::getCookies: WebContext is not "
+        "initialized yet";
+    return -1;
+  }
+
+  return c->getCookies(url);
 }
 
 int OxideQQuickCookieManager::getAllCookies() {
   Q_D(OxideQQuickCookieManager);
 
-  return OxideQQuickWebContextPrivate::get(d->web_context_)->getAllCookies();
+  OxideQQuickWebContextPrivate* c =
+      OxideQQuickWebContextPrivate::get(d->web_context_);
+
+  if (!c->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickCookieManager::getAllCookies: WebContext is not "
+        "initialized yet";
+    return -1;
+  }
+
+  return c->getAllCookies();
 }
 
 int OxideQQuickCookieManager::deleteAllCookies() {
   Q_D(OxideQQuickCookieManager);
 
-  return OxideQQuickWebContextPrivate::get(d->web_context_)->deleteAllCookies();
+  OxideQQuickWebContextPrivate* c =
+      OxideQQuickWebContextPrivate::get(d->web_context_);
+
+  if (!c->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickCookieManager::deleteAllCookies: WebContext is not "
+        "initialized yet";
+    return -1;
+  }
+
+  return c->deleteAllCookies();
 }
 
 #include "moc_oxideqquickcookiemanager_p.cpp"

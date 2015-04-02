@@ -786,14 +786,6 @@ void WebContext::setDevtoolsBindIp(const QString& ip) {
 
 int WebContext::setCookies(const QUrl& url,
                            const QList<QNetworkCookie>& cookies) {
-  if (!IsInitialized()) {
-    return -1;
-  }
-
-  if (cookies.size() == 0) {
-    return -1;
-  }
-
   int request_id = GetNextCookieRequestId();
 
   base::AutoReset<bool> f(&handling_cookie_request_, true);
@@ -842,10 +834,6 @@ int WebContext::setCookies(const QUrl& url,
 }
 
 int WebContext::getCookies(const QUrl& url) {
-  if (!IsInitialized()) {
-    return -1;
-  }
-
   int request_id = GetNextCookieRequestId();
 
   base::AutoReset<bool> f(&handling_cookie_request_, true);
@@ -860,10 +848,6 @@ int WebContext::getCookies(const QUrl& url) {
 }
 
 int WebContext::getAllCookies() {
-  if (!IsInitialized()) {
-    return -1;
-  }
-
   int request_id = GetNextCookieRequestId();
 
   base::AutoReset<bool> f(&handling_cookie_request_, true);
@@ -876,10 +860,6 @@ int WebContext::getAllCookies() {
 }
 
 int WebContext::deleteAllCookies() {
-  if (!IsInitialized()) {
-    return -1;
-  }
-
   int request_id = GetNextCookieRequestId();
 
   base::AutoReset<bool> f(&handling_cookie_request_, true);

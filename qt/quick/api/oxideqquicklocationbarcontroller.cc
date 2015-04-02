@@ -49,7 +49,7 @@ void OxideQQuickLocationBarController::setHeight(qreal height) {
   Q_D(OxideQQuickLocationBarController);
 
   if (height < 0.0f) {
-    qWarning() << "LocationBarController.height cannot be negative";
+    qWarning() << "OxideQQuickLocationBarController: height cannot be negative";
     return;
   }
 

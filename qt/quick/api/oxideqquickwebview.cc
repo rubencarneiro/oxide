@@ -1177,12 +1177,14 @@ void OxideQQuickWebView::setIncognito(bool incognito) {
   Q_D(OxideQQuickWebView);
 
   if (d->proxy()->isInitialized()) {
-    qWarning() << "Cannot change incognito mode after WebView is initialized";
+    qWarning() <<
+        "OxideQQuickWebView: incognito can only be set during construction";
     return;
   }
 
-  if (oxideGetProcessModel() == OxideProcessModelSingleProcess) {
-    qWarning() << "Incognito is unavailable in single-process mode";
+  if (oxideGetProcessModel() == OxideProcessModelSingleProcess && incognito) {
+    qWarning() <<
+        "OxideQQuickWebView: Cannot set incognito in single-process mode";
     return;
   }
 
@@ -1244,7 +1246,7 @@ void OxideQQuickWebView::addMessageHandler(
   Q_D(OxideQQuickWebView);
 
   if (!handler) {
-    qWarning() << "Didn't specify a handler";
+    qWarning() << "OxideQQuickWebView::addMessageHandler: NULL handler";
     return;
   }
 
@@ -1252,7 +1254,9 @@ void OxideQQuickWebView::addMessageHandler(
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
   if (hd->isActive() && handler->parent() != this) {
-    qWarning() << "MessageHandler can't be added to more than one message target";
+    qWarning() <<
+        "OxideQQuickWebView::addMessageHandler: handler can't be added to "
+        "more than one message target";
     return;
   }
 
@@ -1271,7 +1275,7 @@ void OxideQQuickWebView::removeMessageHandler(
   Q_D(OxideQQuickWebView);
 
   if (!handler) {
-    qWarning() << "Didn't specify a handler";
+    qWarning() << "OxideQQuickWebView::removeMessageHandler: NULL handler";
     return;
   }
 
@@ -1447,14 +1451,16 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   Q_D(OxideQQuickWebView);
 
   if (d->proxy()->isInitialized()) {
-    qWarning() << "WebView context must be set during construction";
+    qWarning() <<
+        "OxideQQuickWebView: context can only be set during construction";
     return;
   }
 
   if (oxideGetProcessModel() == OxideProcessModelSingleProcess) {
     qWarning() <<
-        "WebView.context is read-only in single process mode. The webview "
-        "will automatically use the default WebContext";
+        "OxideQQuickWebView: context is read-only in single process mode. "
+        "The webview will automatically use the application-wide default "
+        "WebContext";
     return;
   }
 
@@ -1532,7 +1538,8 @@ void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
   Q_D(OxideQQuickWebView);
 
   if (d->proxy()->isInitialized()) {
-    qWarning() << "Cannot assign NewViewRequest to an already constructed WebView";
+    qWarning() <<
+        "OxideQQuickWebView: request must be provided during construction";
     return;
   }
 
@@ -1550,7 +1557,8 @@ void OxideQQuickWebView::setRestoreState(const QString& state) {
   Q_D(OxideQQuickWebView);
 
   if (d->proxy()->isInitialized()) {
-    qWarning() << "Cannot assign state to an already constructed WebView";
+    qWarning() <<
+        "OxideQQuickWebView: restoreState must be provided during construction";
     return;
   }
 
@@ -1572,7 +1580,8 @@ void OxideQQuickWebView::setRestoreType(OxideQQuickWebView::RestoreType type) {
   Q_D(OxideQQuickWebView);
 
   if (d->proxy()->isInitialized()) {
-    qWarning() << "Cannot assign state to an already constructed WebView";
+    qWarning() <<
+        "OxideQQuickWebView: restoreType must be provided during construction";
     return;
   }
 

@@ -376,6 +376,10 @@ OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
   return context->d_func();
 }
 
+bool OxideQQuickWebContextPrivate::isInitialized() const {
+  return proxy()->isInitialized();
+}
+
 int OxideQQuickWebContextPrivate::setCookies(
     const QUrl& url,
     const QList<QNetworkCookie>& cookies) {

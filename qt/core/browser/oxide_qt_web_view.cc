@@ -978,7 +978,7 @@ void WebView::init(bool incognito,
     OxideQNewViewRequestPrivate* rd =
         OxideQNewViewRequestPrivate::get(new_view_request);
     if (rd->view) {
-      qWarning() << "Cannot assign NewViewRequest to more than one WebView";
+      qWarning() << "OxideQNewViewRequest: Cannot assign to more than one WebView";
     } else {
       rd->view = AsWeakPtr();
       script_opened = true;
@@ -1377,24 +1377,10 @@ void WebView::didCommitCompositorFrame() {
 }
 
 void WebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
-  if (!(blocked_content() & oxide::CONTENT_TYPE_MIXED_DISPLAY) &&
-      allow) {
-    qWarning() << "Can only set webview to temporarily display insecure "
-                  "content when the content has been blocked";
-    return;
-  }
-
   SetCanTemporarilyDisplayInsecureContent(allow);
 }
 
 void WebView::setCanTemporarilyRunInsecureContent(bool allow) {
-  if (!(blocked_content() & oxide::CONTENT_TYPE_MIXED_SCRIPT) &&
-      allow) {
-    qWarning() << "Can only set webview to temporarily run insecure "
-                  "content when the content has been blocked";
-    return;
-  }
-
   SetCanTemporarilyRunInsecureContent(allow);
 }
 

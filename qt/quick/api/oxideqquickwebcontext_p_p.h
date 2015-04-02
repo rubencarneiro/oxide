@@ -62,6 +62,7 @@ class OxideQQuickWebContextPrivate : public QObject,
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
   // XXX(chrisccoulson): Add CookieManager proxy and remove these
+  bool isInitialized() const;
   int setCookies(const QUrl& url,
                  const QList<QNetworkCookie>& cookies);
   int getCookies(const QUrl& url);
