@@ -93,15 +93,6 @@ void ContentRendererClient::RenderViewCreated(
   }
 }
 
-void ContentRendererClient::DidCreateScriptContext(
-    blink::WebLocalFrame* frame,
-    v8::Handle<v8::Context> context,
-    int extension_group,
-    int world_id) {
-  ScriptMessageDispatcherRenderer::FromWebFrame(
-      frame)->DidCreateScriptContext(context, world_id);
-}
-
 std::string ContentRendererClient::GetUserAgentOverrideForURL(
     const GURL& url) {
   GURL u = url;
