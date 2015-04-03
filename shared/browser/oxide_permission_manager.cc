@@ -39,6 +39,10 @@ void RespondToGeolocationPermissionRequest(
 
 }
 
+struct PermissionManager::Subscription {
+  base::Callback<void(content::PermissionStatus)> callback;
+};
+
 void PermissionManager::RequestPermission(
     content::PermissionType permission,
     content::WebContents* web_contents,
@@ -99,6 +103,23 @@ void PermissionManager::RegisterPermissionUsage(
     content::PermissionType permission,
     const GURL& requesting_origin,
     const GURL& embedding_origin) {}
+
+int PermissionManager::SubscribePermissionStatusChange(
+    content::PermissionType permission,
+    const GURL& requesting_origin,
+    const GURL& embedding_origin,
+    const base::Callback<void(content::PermissionStatus)>& callback) {
+  // This is currently unused, but the callback owns a pointer that the calling
+  // code expects us to keep alive
+  Subscription* subscription = new Subscription();
+  subscription->callback = callback;
+
+  return subscriptions_.Add(subscription);
+}
+
+void PermissionManager::UnsubscribePermissionStatusChange(int subscription_id) {
+  subscriptions_.Remove(subscription_id);
+}
 
 PermissionManager::PermissionManager() {}
 

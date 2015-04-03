@@ -52,7 +52,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
    NotifyGpuInfoUpdate();
  }
  
-@@ -911,32 +912,37 @@ GpuDataManagerImplPrivate::GpuDataManage
+@@ -917,32 +918,37 @@ GpuDataManagerImplPrivate::GpuDataManage
        use_warp_(false),
        card_blacklisted_(false),
        update_histograms_(true),
@@ -91,7 +91,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #endif
  }
  
-@@ -948,25 +954,27 @@ void GpuDataManagerImplPrivate::Initiali
+@@ -954,25 +960,27 @@ void GpuDataManagerImplPrivate::Initiali
        base::CommandLine::ForCurrentProcess()->HasSwitch(
            switches::kLogGpuControlListDecisions);
  
@@ -164,7 +164,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -356,9 +356,15 @@ const wchar_t* ContentBrowserClient::Get
+@@ -338,9 +338,15 @@ const wchar_t* ContentBrowserClient::Get
  #if defined(VIDEO_HOLE)
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
@@ -183,12 +183,12 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -17,16 +17,17 @@
+@@ -16,16 +16,17 @@
+ #include "base/memory/scoped_vector.h"
  #include "base/values.h"
  #include "content/public/browser/certificate_request_result_type.h"
  #include "content/public/common/content_client.h"
  #include "content/public/common/media_stream_request.h"
- #include "content/public/common/permission_status.mojom.h"
  #include "content/public/common/resource_type.h"
  #include "content/public/common/socket_permission_request.h"
  #include "content/public/common/window_container_type.h"
@@ -201,7 +201,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  #include "third_party/WebKit/public/platform/WebPageVisibilityState.h"
  #include "ui/base/window_open_disposition.h"
  
-@@ -644,13 +645,16 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -614,13 +615,16 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)

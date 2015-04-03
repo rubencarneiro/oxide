@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_PERMISSION_MANAGER_H_
 
 #include "base/callback.h"
+#include "base/id_map.h"
 #include "base/macros.h"
 #include "content/public/browser/permission_manager.h"
 
@@ -52,6 +53,15 @@ class PermissionManager : public content::PermissionManager {
   void RegisterPermissionUsage(content::PermissionType permission,
                                const GURL& requesting_origin,
                                const GURL& embedding_origin) override;
+  int SubscribePermissionStatusChange(
+      content::PermissionType permission,
+      const GURL& requesting_origin,
+      const GURL& embedding_origin,
+      const base::Callback<void(content::PermissionStatus)>& callback) override;
+  void UnsubscribePermissionStatusChange(int subscription_id) override;
+
+  struct Subscription;
+  IDMap<Subscription, IDMapOwnPointer> subscriptions_;
 
   DISALLOW_COPY_AND_ASSIGN(PermissionManager);
 };
