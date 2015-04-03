@@ -21,8 +21,6 @@
 #include <QQmlEngine>
 #include <QtDebug>
 
-#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
-
 #include "oxideqquickscriptmessage_p.h"
 #include "oxideqquickscriptmessage_p_p.h"
 

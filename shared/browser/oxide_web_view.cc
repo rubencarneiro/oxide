@@ -863,9 +863,9 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
       WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
   DCHECK(parent);
 
-  WebFrame* frame = CreateWebFrame(render_frame_host);
+  WebFrame* frame = CreateWebFrame();
   DCHECK(frame);
-  frame->InitParent(parent);
+  frame->Init(render_frame_host, parent, this);
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {}
@@ -896,7 +896,7 @@ void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
   WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
 
   if (frame) {
-    frame->set_render_frame_host(new_host);
+    frame->SetRenderFrameHost(new_host);
     return;
   }
 
@@ -1148,8 +1148,8 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
-WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
-  return new WebFrame(rfh, this);
+WebFrame* WebView::CreateWebFrame() {
+  return new WebFrame();
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -1338,8 +1338,9 @@ void WebView::Init(Params* params) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
+  root_frame_.reset(CreateWebFrame());
   DCHECK(root_frame_.get());
+  root_frame_->Init(web_contents_->GetMainFrame(), nullptr, this);
 
   if (params->context) {
     if (!initial_url_.is_empty()) {

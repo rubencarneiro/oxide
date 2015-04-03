@@ -537,8 +537,7 @@ class WebView : public ScriptMessageTarget,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
-  virtual WebFrame* CreateWebFrame(
-      content::RenderFrameHost* render_frame_host);
+  virtual WebFrame* CreateWebFrame();
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,

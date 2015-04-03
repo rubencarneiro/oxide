@@ -22,8 +22,7 @@
 #include <QString>
 
 #include "qt/core/browser/oxide_qt_script_message.h"
-
-#include "oxide_qt_web_frame_adapter.h"
+#include "qt/core/browser/oxide_qt_web_frame.h"
 
 namespace oxide {
 namespace qt {
@@ -34,8 +33,8 @@ ScriptMessageAdapter::ScriptMessageAdapter(QObject* q)
 
 ScriptMessageAdapter::~ScriptMessageAdapter() {}
 
-WebFrameAdapter* ScriptMessageAdapter::frame() const {
-  return WebFrameAdapter::FromWebFrame(message_->GetFrame());
+WebFrameProxyHandle* ScriptMessageAdapter::frame() const {
+  return message_->GetFrame()->handle();
 }
 
 QString ScriptMessageAdapter::msgId() const {

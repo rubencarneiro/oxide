@@ -70,7 +70,6 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public QObject {
   friend class OxideQQuickWebViewPrivate;
 
   OxideQQuickWebFrame();
-  virtual void childEvent(QChildEvent* event);
 
   QScopedPointer<OxideQQuickWebFramePrivate> d_ptr;
 };

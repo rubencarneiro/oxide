@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -113,20 +113,35 @@ WebFrame::~WebFrame() {
   CHECK(destroyed_) << "WebFrame deleted without calling WillDestroy()";
 }
 
-WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
-                   WebView* view)
+WebFrame::WebFrame()
     : parent_(nullptr),
-      view_(view->AsWeakPtr()),
-      render_frame_host_(render_frame_host),
+      render_frame_host_(nullptr),
       next_message_serial_(0),
       destroyed_(false),
       weak_factory_(this) {
+}
+
+void WebFrame::Init(content::RenderFrameHost* render_frame_host,
+                    WebFrame* parent,
+                    WebView* view) {
+  DCHECK(render_frame_host && view);
+  DCHECK(!view_.get() && !parent_ && !render_frame_host_);
+  DCHECK(!parent || parent->view() == view);
+
+  parent_ = parent;
+  view_ = view->AsWeakPtr();
+  render_frame_host_ = render_frame_host;
+
   int64 id = static_cast<content::RenderFrameHostImpl*>(render_frame_host)
       ->frame_tree_node()
       ->frame_tree_node_id();
   std::pair<FrameMapIterator, bool> rv =
       g_frame_map.Get().insert(std::make_pair(id, this));
   DCHECK(rv.second);
+
+  if (parent_) {
+    parent_->AddChild(this);
+  }
 }
 
 // static
@@ -158,11 +173,13 @@ GURL WebFrame::GetURL() const {
   return render_frame_host_->GetLastCommittedURL();
 }
 
-void WebFrame::InitParent(WebFrame* parent) {
-  DCHECK(!parent_);
-  DCHECK_EQ(parent->view(), view());
-  parent_ = parent;
-  parent_->AddChild(this);
+void WebFrame::SetRenderFrameHost(
+    content::RenderFrameHost* render_frame_host) {
+  DCHECK_EQ(static_cast<content::RenderFrameHostImpl*>(render_frame_host)
+                ->frame_tree_node()->frame_tree_node_id(),
+            static_cast<content::RenderFrameHostImpl*>(render_frame_host_)
+                ->frame_tree_node()->frame_tree_node_id());
+  render_frame_host_ = render_frame_host;
 }
 
 size_t WebFrame::GetChildCount() const {

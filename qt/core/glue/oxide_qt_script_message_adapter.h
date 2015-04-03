@@ -25,6 +25,7 @@
 #include <QVariant>
 
 #include "qt/core/glue/oxide_qt_adapter_base.h"
+#include "qt/core/glue/oxide_qt_proxy_handle.h"
 
 QT_BEGIN_NAMESPACE
 class QString;
@@ -34,13 +35,15 @@ namespace oxide {
 namespace qt {
 
 class ScriptMessage;
-class WebFrameAdapter;
+class WebFrameProxy;
+
+OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 
 class Q_DECL_EXPORT ScriptMessageAdapter : public AdapterBase {
  public:
   virtual ~ScriptMessageAdapter();
 
-  WebFrameAdapter* frame() const;
+  WebFrameProxyHandle* frame() const;
   QString msgId() const;
   QUrl context() const;
   QVariant args() const;

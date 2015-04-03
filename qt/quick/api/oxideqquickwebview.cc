@@ -242,10 +242,6 @@ void OxideQQuickWebViewPrivate::Initialized() {
 
   Q_ASSERT(construct_props_.data());
 
-  // Make the webview the QObject parent of the new root frame,
-  // to stop Qml from collecting the frame tree
-  q->rootFrame()->setParent(q);
-
   // Initialization created the root frame. This is the only time
   // this is emitted
   emit q->rootFrameChanged();
@@ -378,7 +374,7 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
 }
 
-oxide::qt::WebFrameAdapter* OxideQQuickWebViewPrivate::CreateWebFrame() {
+oxide::qt::WebFrameProxyHandle* OxideQQuickWebViewPrivate::CreateWebFrame() {
   OxideQQuickWebFrame* frame = new OxideQQuickWebFrame();
   QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);
   return OxideQQuickWebFramePrivate::get(frame);
@@ -449,17 +445,17 @@ void OxideQQuickWebViewPrivate::WebPreferencesReplaced() {
 }
 
 void OxideQQuickWebViewPrivate::FrameAdded(
-    oxide::qt::WebFrameAdapter* frame) {
+    oxide::qt::WebFrameProxyHandle* frame) {
   Q_Q(OxideQQuickWebView);
 
-  emit q->frameAdded(adapterToQObject<OxideQQuickWebFrame>(frame));
+  emit q->frameAdded(OxideQQuickWebFramePrivate::fromProxyHandle(frame));
 }
 
 void OxideQQuickWebViewPrivate::FrameRemoved(
-    oxide::qt::WebFrameAdapter* frame) {
+    oxide::qt::WebFrameProxyHandle* frame) {
   Q_Q(OxideQQuickWebView);
 
-  emit q->frameRemoved(adapterToQObject<OxideQQuickWebFrame>(frame));
+  emit q->frameRemoved(OxideQQuickWebFramePrivate::fromProxyHandle(frame));
 }
 
 bool OxideQQuickWebViewPrivate::CanCreateWindows() const {
@@ -1228,7 +1224,12 @@ int OxideQQuickWebView::loadProgress() const {
 OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   Q_D(const OxideQQuickWebView);
 
-  return adapterToQObject<OxideQQuickWebFrame>(d->proxy()->rootFrame());
+  oxide::qt::WebFrameProxyHandle* frame = d->proxy()->rootFrame();
+  if (!frame) {
+    return nullptr;
+  }
+
+  return OxideQQuickWebFramePrivate::fromProxyHandle(frame);
 }
 
 QQmlListProperty<OxideQQuickScriptMessageHandler>

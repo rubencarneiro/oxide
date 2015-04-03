@@ -26,40 +26,37 @@
 #include "oxideqquickscriptmessagerequest_p.h"
 #include "oxideqquickscriptmessagerequest_p_p.h"
 
+OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebFrame,
+                                    oxide::qt::WebFrameProxyHandle);
+
 OxideQQuickWebFramePrivate::OxideQQuickWebFramePrivate(
     OxideQQuickWebFrame* q) :
-    oxide::qt::WebFrameAdapter(q) {}
-
-void OxideQQuickWebFramePrivate::URLCommitted() {
-  Q_Q(OxideQQuickWebFrame);
-
-  emit q->urlChanged();
-}
+    oxide::qt::WebFrameProxyHandle(oxide::qt::WebFrameProxy::create(this), q) {}
 
 // static
 int OxideQQuickWebFramePrivate::childFrame_count(
     QQmlListProperty<OxideQQuickWebFrame>* prop) {
-  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
-      static_cast<OxideQQuickWebFrame *>(prop->object));
+  oxide::qt::WebFrameProxy* p = OxideQQuickWebFramePrivate::get(
+      static_cast<OxideQQuickWebFrame*>(prop->object))->proxy();
 
-  return p->children().count();
+  return p->childFrameCount();
 }
 
 // static
 OxideQQuickWebFrame* OxideQQuickWebFramePrivate::childFrame_at(
     QQmlListProperty<OxideQQuickWebFrame>* prop,
     int index) {
-  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
-      static_cast<OxideQQuickWebFrame *>(prop->object));
+  oxide::qt::WebFrameProxy* p = OxideQQuickWebFramePrivate::get(
+      static_cast<OxideQQuickWebFrame*>(prop->object))->proxy();
 
-  return qobject_cast<OxideQQuickWebFrame *>(p->children().at(index));
+  return fromProxyHandle(p->childFrameAt(index));
 }
 
 // static
 int OxideQQuickWebFramePrivate::messageHandler_count(
     QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
-  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
-        static_cast<OxideQQuickWebFrame *>(prop->object));
+  oxide::qt::WebFrameProxy* p = OxideQQuickWebFramePrivate::get(
+      static_cast<OxideQQuickWebFrame*>(prop->object))->proxy();
 
   return p->messageHandlers().size();
 }
@@ -68,11 +65,23 @@ int OxideQQuickWebFramePrivate::messageHandler_count(
 OxideQQuickScriptMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
     QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
     int index) {
-  OxideQQuickWebFramePrivate* p = OxideQQuickWebFramePrivate::get(
-        static_cast<OxideQQuickWebFrame *>(prop->object));
+  oxide::qt::WebFrameProxy* p = OxideQQuickWebFramePrivate::get(
+      static_cast<OxideQQuickWebFrame*>(prop->object))->proxy();
 
   return adapterToQObject<OxideQQuickScriptMessageHandler>(
       p->messageHandlers().at(index));
+}
+
+void OxideQQuickWebFramePrivate::URLCommitted() {
+  Q_Q(OxideQQuickWebFrame);
+
+  emit q->urlChanged();
+}
+
+void OxideQQuickWebFramePrivate::ChildFramesChanged() {
+  Q_Q(OxideQQuickWebFrame);
+
+  emit q->childFramesChanged();
 }
 
 OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
@@ -83,41 +92,30 @@ OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
 OxideQQuickWebFrame::OxideQQuickWebFrame() :
     d_ptr(new OxideQQuickWebFramePrivate(this)) {}
 
-void OxideQQuickWebFrame::childEvent(QChildEvent* event) {
-  Q_D(OxideQQuickWebFrame);
-
-  OxideQQuickWebFrame* child = qobject_cast<OxideQQuickWebFrame *>(event->child());
-  if (!child) {
-    // We also manage message handlers and outgoing message requests
-    return;
-  }
-  
-  if (event->added()) {
-    d->children().append(child);
-  } else if (event->removed()) {
-    d->children().removeOne(child);
-  }
-
-  emit childFramesChanged();
-}
-
 OxideQQuickWebFrame::~OxideQQuickWebFrame() {
   Q_D(OxideQQuickWebFrame);
 
-  while (d->messageHandlers().size() > 0) {
+  while (d->proxy()->messageHandlers().size() > 0) {
     delete adapterToQObject<OxideQQuickScriptMessageHandler>(
-        d->messageHandlers().at(0));
+        d->proxy()->messageHandlers().at(0));
   }
 }
 
 QUrl OxideQQuickWebFrame::url() const {
   Q_D(const OxideQQuickWebFrame);
 
-  return d->url();
+  return d->proxy()->url();
 }
 
 OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
-  return qobject_cast<OxideQQuickWebFrame *>(parent());
+  Q_D(const OxideQQuickWebFrame);
+
+  oxide::qt::WebFrameProxyHandle* p = d->proxy()->parent();
+  if (!p) {
+    return nullptr;
+  }
+
+  return OxideQQuickWebFramePrivate::fromProxyHandle(p);
 }
 
 QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {
@@ -140,7 +138,7 @@ void OxideQQuickWebFrame::addMessageHandler(
   Q_D(OxideQQuickWebFrame);
 
   if (!handler) {
-    qWarning() << "Didn't specify a handler";
+    qWarning() << "OxideQQuickWebFrame::addMessageHandler: NULL handler";
     return;
   }
 
@@ -148,16 +146,18 @@ void OxideQQuickWebFrame::addMessageHandler(
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
   if (hd->isActive() && handler->parent() != this) {
-    qWarning() << "MessageHandler can't be added to more than one message target";
+    qWarning() <<
+        "OxideQQuickWebFrame::addMessageHandler: handler can't be added to "
+        "more than one message target";
     return;
   }
 
-  if (d->messageHandlers().contains(hd)) {
-    d->messageHandlers().removeOne(hd);
+  if (d->proxy()->messageHandlers().contains(hd)) {
+    d->proxy()->messageHandlers().removeOne(hd);
   }
 
   handler->setParent(this);
-  d->messageHandlers().append(hd);
+  d->proxy()->messageHandlers().append(hd);
 
   emit messageHandlersChanged();
 }
@@ -167,19 +167,19 @@ void OxideQQuickWebFrame::removeMessageHandler(
   Q_D(OxideQQuickWebFrame);
 
   if (!handler) {
-    qWarning() << "Didn't specify a handler";
+    qWarning() << "OxideQQuickWebFrame::addMessageHandler: NULL handler";
     return;
   }
 
   OxideQQuickScriptMessageHandlerPrivate* hd =
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->messageHandlers().contains(hd)) {
+  if (!d->proxy()->messageHandlers().contains(hd)) {
     return;
   }
 
   handler->setParent(nullptr);
-  d->messageHandlers().removeOne(hd);
+  d->proxy()->messageHandlers().removeOne(hd);
 
   emit messageHandlersChanged();
 }
@@ -198,8 +198,9 @@ OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
     aux = aux.value<QJSValue>().toVariant();
   }
 
-  if (!d->sendMessage(context, msg_id, aux,
-                      OxideQQuickScriptMessageRequestPrivate::get(request))) {
+  if (!d->proxy()->sendMessage(
+          context, msg_id, aux,
+          OxideQQuickScriptMessageRequestPrivate::get(request))) {
     delete request;
     return nullptr;
   }
@@ -217,5 +218,5 @@ void OxideQQuickWebFrame::sendMessageNoReply(const QUrl& context,
     aux = aux.value<QJSValue>().toVariant();
   }
 
-  d->sendMessageNoReply(context, msg_id, aux);
+  d->proxy()->sendMessageNoReply(context, msg_id, aux);
 }

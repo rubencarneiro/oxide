@@ -18,40 +18,30 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_FRAME_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_FRAME_H_
 
+#include <QList>
 #include <QtGlobal>
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/glue/oxide_qt_web_frame_proxy.h"
 #include "shared/browser/oxide_web_frame.h"
-
-QT_BEGIN_NAMESPACE
-class QObject;
-QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
 class ScriptMessageRequest;
-class WebFrameAdapter;
+class WebFrameProxyClient;
 
-class WebFrame : public oxide::WebFrame {
+class WebFrame : public oxide::WebFrame,
+                 public WebFrameProxy {
  public:
-  WebFrame(WebFrameAdapter* adapter,
-           content::RenderFrameHost* render_frame_host,
-           oxide::WebView* view);
+  WebFrame(WebFrameProxyClient* client);
 
-  bool SendMessage(const GURL& context,
-                   const std::string& msg_id,
-                   const std::string& args,
-                   ScriptMessageRequest* req);
+  static WebFrame* FromProxyHandle(WebFrameProxyHandle* handle);
 
  private:
-  friend class WebFrameAdapter;
-
   ~WebFrame() override;
-
-  QObject* api_handle() const { return api_handle_.get(); }
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;
@@ -63,8 +53,23 @@ class WebFrame : public oxide::WebFrame {
   void OnChildAdded(oxide::WebFrame* child) override;
   void OnChildRemoved(oxide::WebFrame* child) override;
 
-  scoped_ptr<QObject> api_handle_;
-  WebFrameAdapter* adapter_;
+  // WebFrameProxy implementation
+  QUrl url() const override;
+  WebFrameProxyHandle* parent() const override;
+  int childFrameCount() const override;
+  WebFrameProxyHandle* childFrameAt(int index) const override;
+  bool sendMessage(const QUrl& context,
+                   const QString& msg_id,
+                   const QVariant& args,
+                   ScriptMessageRequestAdapter* req) override;
+  void sendMessageNoReply(const QUrl& context,
+                          const QString& msg_id,
+                          const QVariant& args) override;
+  QList<ScriptMessageHandlerAdapter*>& messageHandlers() override;
+
+  WebFrameProxyClient* client_;
+
+  QList<ScriptMessageHandlerAdapter *> message_handlers_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);
 };

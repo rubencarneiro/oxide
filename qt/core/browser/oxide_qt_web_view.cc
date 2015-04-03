@@ -71,7 +71,6 @@
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/common/oxide_qt_screen_utils.h"
 #include "qt/core/common/oxide_qt_skutils.h"
-#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -776,8 +775,8 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-oxide::WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
-  return new WebFrame(client_->CreateWebFrame(), rfh, this);
+oxide::WebFrame* WebView::CreateWebFrame() {
+  return WebFrame::FromProxyHandle(client_->CreateWebFrame());
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -1053,13 +1052,13 @@ void WebView::setFullscreen(bool fullscreen) {
   SetIsFullscreen(fullscreen);
 }
 
-WebFrameAdapter* WebView::rootFrame() const {
+WebFrameProxyHandle* WebView::rootFrame() const {
   WebFrame* f = static_cast<WebFrame*>(GetRootFrame());
   if (!f) {
     return nullptr;
   }
 
-  return WebFrameAdapter::FromWebFrame(f);
+  return f->handle();
 }
 
 WebContextProxyHandle* WebView::context() const {
@@ -1472,13 +1471,11 @@ WebContext* WebView::GetContext() const {
 }
 
 void WebView::FrameAdded(oxide::WebFrame* frame) {
-  client_->FrameAdded(
-      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
+  client_->FrameAdded(static_cast<WebFrame*>(frame)->handle());
 }
 
 void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  client_->FrameRemoved(
-      WebFrameAdapter::FromWebFrame(static_cast<WebFrame *>(frame)));
+  client_->FrameRemoved(static_cast<WebFrame*>(frame)->handle());
 }
 
 } // namespace qt

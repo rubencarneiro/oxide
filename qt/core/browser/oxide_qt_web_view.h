@@ -154,7 +154,7 @@ class WebView : public QObject,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
 
-  oxide::WebFrame* CreateWebFrame(content::RenderFrameHost* rfh) override;
+  oxide::WebFrame* CreateWebFrame() override;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
@@ -202,7 +202,7 @@ class WebView : public QObject,
   bool fullscreen() const override;
   void setFullscreen(bool fullscreen) override;
 
-  WebFrameAdapter* rootFrame() const override;
+  WebFrameProxyHandle* rootFrame() const override;
 
   WebContextProxyHandle* context() const override;
 

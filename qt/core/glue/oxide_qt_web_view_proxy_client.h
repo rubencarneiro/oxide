@@ -23,6 +23,7 @@
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
+#include "qt/core/glue/oxide_qt_proxy_handle.h"
 
 class OxideQCertificateError;
 class OxideQDownloadRequest;
@@ -44,7 +45,7 @@ namespace qt {
 
 class FilePickerDelegate;
 class JavaScriptDialogDelegate;
-class WebFrameAdapter;
+class WebFrameProxy;
 class WebPopupMenuDelegate;
 
 enum FrameMetadataChangeFlags {
@@ -56,6 +57,8 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_CONTROLS_OFFSET = 1 << 3,
   FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
 };
+
+OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 
 class WebViewProxyClient {
  public:
@@ -83,7 +86,7 @@ class WebViewProxyClient {
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
 
-  virtual WebFrameAdapter* CreateWebFrame() = 0;
+  virtual WebFrameProxyHandle* CreateWebFrame() = 0;
 
   virtual QScreen* GetScreen() const = 0;
   virtual QRect GetViewBoundsPix() const = 0;
@@ -99,8 +102,8 @@ class WebViewProxyClient {
 
   virtual void WebPreferencesReplaced() = 0;
 
-  virtual void FrameAdded(WebFrameAdapter* frame) = 0;
-  virtual void FrameRemoved(WebFrameAdapter* frame) = 0;
+  virtual void FrameAdded(WebFrameProxyHandle* frame) = 0;
+  virtual void FrameRemoved(WebFrameProxyHandle* frame) = 0;
 
   virtual bool CanCreateWindows() const = 0;
 

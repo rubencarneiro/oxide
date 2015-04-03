@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -45,8 +45,12 @@ class WebFrame : public ScriptMessageTarget {
   typedef std::vector<ScriptMessageRequestImplBrowser*>
       ScriptMessageRequestVector;
 
-  WebFrame(content::RenderFrameHost* render_frame_host,
-           WebView* view);
+  WebFrame();
+
+  // Initialize this frame
+  void Init(content::RenderFrameHost* render_frame_host,
+            WebFrame* parent,
+            WebView* view);
 
   // Find the WebFrame for |frame_tree_node_id|. Currently only used in
   // WebView::OpenURLFromTab - please don't add new code which uses this
@@ -62,11 +66,6 @@ class WebFrame : public ScriptMessageTarget {
 
   // Return the last committed URL for this frame
   GURL GetURL() const;
-
-  // Initialize the parent of this frame to |parent|. This is not a constructor
-  // parameter because it calls in to the parents subclass, which may require
-  // the child frame to be fully constructed
-  void InitParent(WebFrame* parent);
 
   // Return the parent frame
   WebFrame* parent() const { return parent_; }
@@ -84,9 +83,7 @@ class WebFrame : public ScriptMessageTarget {
   }
 
   // Set the active RenderFrameHost for this WebFrame
-  void set_render_frame_host(content::RenderFrameHost* render_frame_host) {
-    render_frame_host_ = render_frame_host;
-  }
+  void SetRenderFrameHost(content::RenderFrameHost* render_frame_host);
 
   // Return the number of immediate children of this frame
   size_t GetChildCount() const;

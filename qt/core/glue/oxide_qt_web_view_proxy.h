@@ -54,7 +54,7 @@ namespace qt {
 
 class ScriptMessageHandlerAdapter;
 class WebContextProxy;
-class WebFrameAdapter;
+class WebFrameProxy;
 class WebViewProxyClient;
 class WebView;
 
@@ -96,6 +96,7 @@ class CompositorFrameHandle {
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
+OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 
 class Q_DECL_EXPORT WebViewProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebView);
@@ -125,7 +126,7 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual bool fullscreen() const = 0;
   virtual void setFullscreen(bool fullscreen) = 0;
 
-  virtual WebFrameAdapter* rootFrame() const = 0;
+  virtual WebFrameProxyHandle* rootFrame() const = 0;
 
   virtual WebContextProxyHandle* context() const = 0;
 

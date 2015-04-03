@@ -39,7 +39,7 @@ OxideQQuickScriptMessage::~OxideQQuickScriptMessage() {}
 OxideQQuickWebFrame* OxideQQuickScriptMessage::frame() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return adapterToQObject<OxideQQuickWebFrame>(d->frame());
+  return OxideQQuickWebFramePrivate::fromProxyHandle(d->frame());
 }
 
 QUrl OxideQQuickScriptMessage::context() const {
