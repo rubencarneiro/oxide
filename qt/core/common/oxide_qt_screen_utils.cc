@@ -84,7 +84,7 @@ float GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   }
 
   QString platform = QGuiApplication::platformName();
-  if (platform.startsWith("ubuntu") || platform == QLatinString("mirserver")) {
+  if (platform.startsWith("ubuntu") || platform == "mirserver") {
     QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
     bool ok;
     float scale = grid_unit_px.toFloat(&ok);
