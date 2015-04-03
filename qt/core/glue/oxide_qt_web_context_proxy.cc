@@ -31,7 +31,12 @@ WebContextProxy::~WebContextProxy() {}
 
 //static
 WebContextProxyHandle* WebContextProxy::defaultContext() {
-  return WebContext::GetDefault()->handle();
+  WebContext* context = WebContext::GetDefault();
+  if (!context) {
+    return nullptr;
+  }
+
+  return context->handle();
 }
 
 } // namespace qt
