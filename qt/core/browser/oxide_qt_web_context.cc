@@ -377,7 +377,7 @@ void WebContext::UpdateUserScripts() {
   std::vector<const oxide::UserScript *> scripts;
 
   for (int i = 0; i < user_scripts_.size(); ++i) {
-    UserScript* script = UserScript::FromAdapter(user_scripts_.at(i));
+    UserScript* script = UserScript::FromProxyHandle(user_scripts_.at(i));
     if (script->state() == UserScript::Loading ||
         script->state() == UserScript::Constructing) {
       return;
@@ -685,7 +685,7 @@ void WebContext::setAcceptLangs(const QString& langs) {
   }
 }
 
-QList<UserScriptAdapter *>& WebContext::userScripts() {
+QList<UserScriptProxyHandle*>& WebContext::userScripts() {
   return user_scripts_;
 }
 

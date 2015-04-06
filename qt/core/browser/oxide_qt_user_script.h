@@ -25,6 +25,7 @@
 #include "base/files/file.h"
 #include "url/gurl.h"
 
+#include "qt/core/glue/oxide_qt_user_script_proxy.h"
 #include "shared/common/oxide_user_script.h"
 
 namespace oxide {
@@ -33,9 +34,9 @@ class AsyncFileJob;
 
 namespace qt {
 
-class UserScriptAdapter;
+class UserScriptProxyClient;
 
-class UserScript final {
+class UserScript : public UserScriptProxy {
  public:
   enum State {
     Constructing,
@@ -44,36 +45,32 @@ class UserScript final {
     FailedLoad
   };
 
-  ~UserScript();
+  UserScript(UserScriptProxyClient* client);
+  ~UserScript() override;
 
-  static UserScript* FromAdapter(UserScriptAdapter* adapter);
+  static UserScript* FromProxyHandle(UserScriptProxyHandle* handle);
 
   const oxide::UserScript* impl() const { return &impl_; }
   State state() const { return state_; }
 
-  bool GetEmulateGreasemonkey() const;
-  void SetEmulateGreasemonkey(bool emulate);
-
-  bool GetMatchAllFrames() const;
-  void SetMatchAllFrames(bool match);
-
-  bool GetIncognitoEnabled() const;
-  void SetIncognitoEnabled(bool enabled);
-
-  GURL GetContext() const;
-  void SetContext(const GURL& context);
-
  private:
-  friend class UserScriptAdapter;
-
-  UserScript(UserScriptAdapter* adapter);
-
   void Init(const base::FilePath& path);
   void OnGotFileContents(base::File::Error error,
                          const char* data,
                          int bytes_read);
 
-  UserScriptAdapter* adapter_;
+  // UserScriptProxy implementation
+  bool emulateGreasemonkey() const override;
+  void setEmulateGreasemonkey(bool emulate) override;
+  bool matchAllFrames() const override;
+  void setMatchAllFrames(bool match) override;
+  bool incognitoEnabled() const override;
+  void setIncognitoEnabled(bool enabled) override;
+  QUrl context() const override;
+  void setContext(const QUrl& context) override;
+  void init(const QUrl& url) override;
+
+  UserScriptProxyClient* client_;
 
   State state_;
 

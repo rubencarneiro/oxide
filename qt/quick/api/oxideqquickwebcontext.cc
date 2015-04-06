@@ -206,7 +206,7 @@ void OxideQQuickWebContextPrivate::userScriptWillBeDeleted() {
   OxideQQuickUserScriptPrivate* sender =
       qobject_cast<OxideQQuickUserScriptPrivate *>(q->sender());
   Q_ASSERT(sender);
-  q->removeUserScript(adapterToQObject<OxideQQuickUserScript>(sender));  
+  q->removeUserScript(OxideQQuickUserScriptPrivate::fromProxyHandle(sender));
 }
 
 void OxideQQuickWebContextPrivate::detachUserScriptSignals(
@@ -255,7 +255,8 @@ OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
     return nullptr;
   }
 
-  return adapterToQObject<OxideQQuickUserScript>(p->userScripts().at(index));
+  return OxideQQuickUserScriptPrivate::fromProxyHandle(
+      p->userScripts().at(index));
 }
 
 void OxideQQuickWebContextPrivate::userScript_clear(
@@ -267,7 +268,7 @@ void OxideQQuickWebContextPrivate::userScript_clear(
 
   while (p->userScripts().size() > 0) {
     context->removeUserScript(
-        adapterToQObject<OxideQQuickUserScript>(p->userScripts().at(0)));
+        OxideQQuickUserScriptPrivate::fromProxyHandle(p->userScripts().at(0)));
   }
 }
 
@@ -415,7 +416,7 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
 
   for (int i = 0; i < d->proxy()->userScripts().size(); ++i) {
     d->detachUserScriptSignals(
-        adapterToQObject<OxideQQuickUserScript>(
+        OxideQQuickUserScriptPrivate::fromProxyHandle(
           d->proxy()->userScripts().at(i)));
   }
 

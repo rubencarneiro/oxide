@@ -35,11 +35,12 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class UserScriptAdapter;
+class UserScriptProxy;
 class WebContext;
+class WebContextProxy;
 class WebContextProxyClient;
 
-class WebContextProxy;
+OXIDE_Q_DECL_PROXY_HANDLE(UserScriptProxy);
 OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
 
 class Q_DECL_EXPORT WebContextProxy {
@@ -82,7 +83,7 @@ class Q_DECL_EXPORT WebContextProxy {
   virtual QString acceptLangs() const = 0;
   virtual void setAcceptLangs(const QString& langs) = 0;
 
-  virtual QList<UserScriptAdapter *>& userScripts() = 0;
+  virtual QList<UserScriptProxyHandle*>& userScripts() = 0;
   virtual void updateUserScripts() = 0;
 
   virtual bool isInitialized() const = 0;

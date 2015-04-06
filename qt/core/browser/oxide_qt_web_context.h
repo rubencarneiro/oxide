@@ -49,7 +49,6 @@ class BrowserContext;
 namespace qt {
 
 class SetCookiesContext;
-class UserScriptAdapter;
 class WebContextProxyClient;
 
 class WebContext;
@@ -112,7 +111,7 @@ class WebContext : public WebContextProxy {
   void setCachePath(const QUrl& url) override;
   QString acceptLangs() const override;
   void setAcceptLangs(const QString& langs) override;
-  QList<UserScriptAdapter *>& userScripts() override;
+  QList<UserScriptProxyHandle*>& userScripts() override;
   void updateUserScripts() override;
   bool isInitialized() const override;
   CookiePolicy cookiePolicy() const override;
@@ -150,7 +149,7 @@ class WebContext : public WebContextProxy {
 
   bool handling_cookie_request_;
 
-  QList<UserScriptAdapter *> user_scripts_;
+  QList<UserScriptProxyHandle*> user_scripts_;
 
   base::WeakPtrFactory<WebContext> weak_factory_;
 
