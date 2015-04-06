@@ -17,11 +17,13 @@
 
 #include "oxide_qt_script_message_handler.h"
 
+#include <QList>
 #include <QString>
+#include <QUrl>
 
 #include "base/bind.h"
 
-#include "qt/core/glue/oxide_qt_script_message_handler_adapter.h"
+#include "qt/core/glue/oxide_qt_script_message_handler_proxy_client.h"
 #include "shared/common/oxide_script_message.h"
 
 #include "oxide_qt_script_message.h"
@@ -29,19 +31,15 @@
 namespace oxide {
 namespace qt {
 
-ScriptMessageHandler::ScriptMessageHandler(
-    ScriptMessageHandlerAdapter* adapter)
-    : adapter_(adapter) {}
-
 bool ScriptMessageHandler::ReceiveMessageCallback(
     oxide::ScriptMessage* message,
     std::string* error_desc) {
   QString qerror;
 
-  ScriptMessageAdapter* qmessage = adapter_->CreateScriptMessage();
+  ScriptMessageAdapter* qmessage = client_->CreateScriptMessage();
   ScriptMessage::FromAdapter(qmessage)->Initialize(message);
 
-  bool success = adapter_->OnReceiveMessage(qmessage, qerror);
+  bool success = client_->ReceiveMessage(qmessage, qerror);
 
   if (!success) {
     *error_desc = qerror.toStdString();
@@ -50,38 +48,56 @@ bool ScriptMessageHandler::ReceiveMessageCallback(
   return success;
 }
 
-ScriptMessageHandler::~ScriptMessageHandler() {}
-
-// static
-ScriptMessageHandler* ScriptMessageHandler::FromAdapter(
-    ScriptMessageHandlerAdapter* adapter) {
-  return adapter->handler_.data();
+QString ScriptMessageHandler::msgId() const {
+  return QString::fromStdString(handler_.msg_id());
 }
 
-void ScriptMessageHandler::AttachHandler() {
+void ScriptMessageHandler::setMsgId(const QString& id) {
+  handler_.set_msg_id(id.toStdString());
+}
+
+QList<QUrl> ScriptMessageHandler::contexts() const {
+  QList<QUrl> list;
+
+  const std::vector<GURL>& contexts = handler_.contexts();
+  for (std::vector<GURL>::const_iterator it = contexts.begin();
+       it != contexts.end(); ++it) {
+    list.append(QUrl(QString::fromStdString((*it).spec())));
+  }
+
+  return list;
+}
+
+void ScriptMessageHandler::setContexts(const QList<QUrl>& contexts) {
+  std::vector<GURL> list;
+
+  for (int i = 0; i < contexts.size(); ++i) {
+    list.push_back(GURL(contexts[i].toString().toStdString()));
+  }
+
+  handler_.set_contexts(list);
+}
+
+void ScriptMessageHandler::attachHandler() {
   handler_.SetCallback(
       base::Bind(&ScriptMessageHandler::ReceiveMessageCallback,
                  base::Unretained(this)));
 }
 
-void ScriptMessageHandler::DetachHandler() {
+void ScriptMessageHandler::detachHandler() {
   handler_.SetCallback(oxide::ScriptMessageHandler::HandlerCallback());
 }
 
-std::string ScriptMessageHandler::GetMsgId() const {
-  return handler_.msg_id();
-}
+ScriptMessageHandler::ScriptMessageHandler(
+    ScriptMessageHandlerProxyClient* client)
+    : client_(client) {}
 
-void ScriptMessageHandler::SetMsgId(const std::string& msg_id) {
-  handler_.set_msg_id(msg_id);
-}
+ScriptMessageHandler::~ScriptMessageHandler() {}
 
-const std::vector<GURL>& ScriptMessageHandler::GetContexts() const {
-  return handler_.contexts();
-}
-
-void ScriptMessageHandler::SetContexts(const std::vector<GURL>& contexts) {
-  handler_.set_contexts(contexts);
+// static
+ScriptMessageHandler* ScriptMessageHandler::FromProxyHandle(
+    ScriptMessageHandlerProxyHandle* handle) {
+  return static_cast<ScriptMessageHandler*>(handle->proxy_.data());
 }
 
 } // namespace qt

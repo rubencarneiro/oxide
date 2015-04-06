@@ -540,7 +540,7 @@ size_t WebView::GetScriptMessageHandlerCount() const {
 
 const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
-  return ScriptMessageHandler::FromAdapter(
+  return ScriptMessageHandler::FromProxyHandle(
       message_handlers_.at(index))->handler();
 }
 
@@ -1255,7 +1255,7 @@ void WebView::loadHtml(const QString& html, const QUrl& base_url) {
            GURL(base_url.toString().toStdString()));
 }
 
-QList<ScriptMessageHandlerAdapter*>& WebView::messageHandlers() {
+QList<ScriptMessageHandlerProxyHandle*>& WebView::messageHandlers() {
   return message_handlers_;
 }
 

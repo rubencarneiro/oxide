@@ -52,7 +52,7 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
-class ScriptMessageHandlerAdapter;
+class ScriptMessageHandlerProxy;
 class WebContextProxy;
 class WebFrameProxy;
 class WebViewProxyClient;
@@ -95,6 +95,7 @@ class CompositorFrameHandle {
   virtual EGLImageKHR GetImageFrame() = 0;
 };
 
+OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
 OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
 OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 
@@ -150,7 +151,7 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void loadHtml(const QString& html, const QUrl& base_url) = 0;
 
-  virtual QList<ScriptMessageHandlerAdapter *>& messageHandlers() = 0;
+  virtual QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() = 0;
 
   virtual bool isInitialized() const = 0;
 

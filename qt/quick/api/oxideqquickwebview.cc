@@ -697,7 +697,7 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
     return nullptr;
   }
 
-  return adapterToQObject<OxideQQuickScriptMessageHandler>(
+  return OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
       p->messageHandlers().at(index));
 }
 
@@ -711,7 +711,7 @@ void OxideQQuickWebViewPrivate::messageHandler_clear(
 
   while (p->messageHandlers().size() > 0) {
     web_view->removeMessageHandler(
-        adapterToQObject<OxideQQuickScriptMessageHandler>(
+        OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
           p->messageHandlers().at(0)));
   }
 }
@@ -1083,7 +1083,7 @@ OxideQQuickWebView::~OxideQQuickWebView() {
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
   while (d->proxy()->messageHandlers().size() > 0) {
-    delete adapterToQObject<OxideQQuickScriptMessageHandler>(
+    delete OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
         d->proxy()->messageHandlers().at(0));
   }
 

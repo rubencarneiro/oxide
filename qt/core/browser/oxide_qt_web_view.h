@@ -47,7 +47,6 @@ namespace oxide {
 namespace qt {
 
 class CompositorFrameHandle;
-class ScriptMessageHandlerAdapter;
 class WebContext;
 class WebViewProxyClient;
 
@@ -226,7 +225,7 @@ class WebView : public QObject,
 
   void loadHtml(const QString& html, const QUrl& base_url) override;
 
-  QList<ScriptMessageHandlerAdapter *>& messageHandlers() override;
+  QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
 
   bool isInitialized() const override;
 
@@ -273,7 +272,7 @@ class WebView : public QObject,
   bool has_input_method_state_;
 
   scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
-  QList<ScriptMessageHandlerAdapter *> message_handlers_;
+  QList<ScriptMessageHandlerProxyHandle*> message_handlers_;
 
   UITouchEventFactory touch_event_factory_;
 

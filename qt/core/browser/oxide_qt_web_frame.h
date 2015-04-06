@@ -65,11 +65,11 @@ class WebFrame : public oxide::WebFrame,
   void sendMessageNoReply(const QUrl& context,
                           const QString& msg_id,
                           const QVariant& args) override;
-  QList<ScriptMessageHandlerAdapter*>& messageHandlers() override;
+  QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
 
   WebFrameProxyClient* client_;
 
-  QList<ScriptMessageHandlerAdapter *> message_handlers_;
+  QList<ScriptMessageHandlerProxyHandle*> message_handlers_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);
 };

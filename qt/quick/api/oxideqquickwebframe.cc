@@ -68,7 +68,7 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
   oxide::qt::WebFrameProxy* p = OxideQQuickWebFramePrivate::get(
       static_cast<OxideQQuickWebFrame*>(prop->object))->proxy();
 
-  return adapterToQObject<OxideQQuickScriptMessageHandler>(
+  return OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
       p->messageHandlers().at(index));
 }
 
@@ -96,7 +96,7 @@ OxideQQuickWebFrame::~OxideQQuickWebFrame() {
   Q_D(OxideQQuickWebFrame);
 
   while (d->proxy()->messageHandlers().size() > 0) {
-    delete adapterToQObject<OxideQQuickScriptMessageHandler>(
+    delete OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
         d->proxy()->messageHandlers().at(0));
   }
 }

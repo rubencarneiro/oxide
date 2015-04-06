@@ -21,13 +21,17 @@
 #include <QJSValue>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_script_message_handler_adapter.h"
+#include "qt/core/glue/oxide_qt_script_message_handler_proxy.h"
+#include "qt/core/glue/oxide_qt_script_message_handler_proxy_client.h"
 
 class OxideQQuickScriptMessageHandler;
 
-class OxideQQuickScriptMessageHandlerPrivate final :
-    public oxide::qt::ScriptMessageHandlerAdapter {
+class OxideQQuickScriptMessageHandlerPrivate
+    : public oxide::qt::ScriptMessageHandlerProxyHandle,
+      public oxide::qt::ScriptMessageHandlerProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickScriptMessageHandler)
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageHandler,
+                                      oxide::qt::ScriptMessageHandlerProxyHandle)
 
  public:
   OxideQQuickScriptMessageHandlerPrivate(OxideQQuickScriptMessageHandler* q);
@@ -38,9 +42,14 @@ class OxideQQuickScriptMessageHandlerPrivate final :
       OxideQQuickScriptMessageHandler* message_handler);
 
  private:
-  bool OnReceiveMessage(oxide::qt::ScriptMessageAdapter* message,
-                        QString& error) final;
-  oxide::qt::ScriptMessageAdapter* CreateScriptMessage() final;
+  oxide::qt::ScriptMessageHandlerProxy* proxy() const {
+    return oxide::qt::ScriptMessageHandlerProxyHandle::proxy();
+  }
+
+  // oxide::qt::ScriptMessageHandlerProxyClient implementation
+  bool ReceiveMessage(oxide::qt::ScriptMessageAdapter* message,
+                        QString& error) override;
+  oxide::qt::ScriptMessageAdapter* CreateScriptMessage() override;
 
   QJSValue callback_;
 

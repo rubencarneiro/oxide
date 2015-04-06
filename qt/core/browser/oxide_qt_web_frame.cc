@@ -25,10 +25,10 @@
 #include "base/logging.h"
 #include "url/gurl.h"
 
-#include "qt/core/browser/oxide_qt_script_message_handler.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "shared/browser/oxide_script_message_request_impl_browser.h"
 
+#include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_script_message_request.h"
 #include "oxide_qt_web_view.h"
 
@@ -39,7 +39,7 @@ WebFrame::~WebFrame() {}
 
 const oxide::ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
     size_t index) const {
-  return ScriptMessageHandler::FromAdapter(
+  return ScriptMessageHandler::FromProxyHandle(
       message_handlers_.at(index))->handler();
 }
 
@@ -124,7 +124,7 @@ void WebFrame::sendMessageNoReply(const QUrl& context,
       QString(jsondoc.toJson()).toStdString());
 }
 
-QList<ScriptMessageHandlerAdapter*>& WebFrame::messageHandlers() {
+QList<ScriptMessageHandlerProxyHandle*>& WebFrame::messageHandlers() {
   return message_handlers_;
 }
 

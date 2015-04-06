@@ -32,12 +32,13 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class ScriptMessageHandlerAdapter;
+class ScriptMessageHandlerProxy;
 class ScriptMessageRequestAdapter;
 class WebFrame;
 class WebFrameProxy;
 class WebFrameProxyClient;
 
+OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
 OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 
 class Q_DECL_EXPORT WebFrameProxy {
@@ -60,7 +61,7 @@ class Q_DECL_EXPORT WebFrameProxy {
                                   const QString& msg_id,
                                   const QVariant& args) = 0;
 
-  virtual QList<ScriptMessageHandlerAdapter*>& messageHandlers() = 0;
+  virtual QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() = 0;
 };
 
 } // namespace qt
