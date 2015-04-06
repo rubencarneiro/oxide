@@ -1445,7 +1445,12 @@ OxideQQuickWebContext* OxideQQuickWebView::context() const {
     return d->construct_props_->context;
   }
 
-  return OxideQQuickWebContextPrivate::fromProxyHandle(d->proxy()->context());
+  oxide::qt::WebContextProxyHandle* c = d->proxy()->context();
+  if (!c) {
+    return nullptr;
+  }
+
+  return OxideQQuickWebContextPrivate::fromProxyHandle(c);
 }
 
 void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
