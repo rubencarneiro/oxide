@@ -71,6 +71,7 @@
         '<(DEPTH)/content/content.gyp:content_resources',
         '<(DEPTH)/content/browser/devtools/devtools_resources.gyp:devtools_resources',
         '<(DEPTH)/net/net.gyp:net_resources',
+        '<(DEPTH)/third_party/WebKit/public/blink_resources.gyp:blink_image_resources',
         '<(DEPTH)/third_party/WebKit/public/blink_resources.gyp:blink_resources',
         '<(DEPTH)/ui/resources/ui_resources.gyp:ui_resources',
         '<(DEPTH)/ui/strings/ui_strings.gyp:ui_strings',
@@ -101,6 +102,7 @@
           'action_name': 'repack_oxide_100_percent',
           'variables': {
             'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_100_percent.pak',
             ]
@@ -118,7 +120,8 @@
           'action_name': 'repack_oxide_200_percent',
           'variables': {
             'pak_inputs': [
-              '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_100_percent.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_resources_200_percent.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_200_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_200_percent.pak',
             ]
           },

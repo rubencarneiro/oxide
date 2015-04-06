@@ -20,7 +20,6 @@
 #include "base/logging.h"
 #include "base/threading/worker_pool.h"
 #include "content/public/browser/browser_thread.h"
-#include "net/base/net_log.h"
 #include "net/cert/cert_verifier.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/dns/host_resolver.h"
@@ -30,6 +29,7 @@
 #include "net/http/http_network_session.h"
 #include "net/http/http_server_properties_impl.h"
 #include "net/http/transport_security_state.h"
+#include "net/log/net_log.h"
 #if defined(USE_NSS)
 #include "net/ocsp/nss_ocsp.h"
 #endif

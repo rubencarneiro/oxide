@@ -92,7 +92,7 @@ diff --git a/ui/gl/gl_context_egl.h b/ui/gl/gl_context_egl.h
 diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
 --- a/ui/gl/gl_context_glx.cc
 +++ b/ui/gl/gl_context_glx.cc
-@@ -16,35 +16,39 @@ extern "C" {
+@@ -16,17 +16,18 @@ extern "C" {
  #include "ui/gl/gl_implementation.h"
  #include "ui/gl/gl_surface_glx.h"
  
@@ -112,14 +112,15 @@ diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
  
  bool GLContextGLX::Initialize(
      GLSurface* compatible_surface, GpuPreference gpu_preference) {
-   display_ = static_cast<XDisplay*>(compatible_surface->GetDisplay());
- 
-   GLXContext share_handle = static_cast<GLXContext>(
-       share_group() ? share_group()->GetHandle() : NULL);
- 
-   if (GLSurfaceGLX::IsCreateContextSupported()) {
-     DVLOG(1) << "GLX_ARB_create_context supported.";
-     std::vector<int> attribs;
+@@ -45,18 +46,21 @@ bool GLContextGLX::Initialize(
+       // explicitly want to request a 3.2+ context with no support for
+       // the compatibility profile. WebGL 2.0 support currently
+       // requires a 4.2 context. crbug.com/473427
+       attribs.push_back(GLX_CONTEXT_MAJOR_VERSION_ARB);
+       attribs.push_back(4);
+       attribs.push_back(GLX_CONTEXT_MINOR_VERSION_ARB);
+       attribs.push_back(2);
+     }
 -    if (GLSurfaceGLX::IsCreateContextRobustnessSupported()) {
 +    if (GLSurfaceGLX::IsCreateContextRobustnessSupported() &&
 +        (!share_group()->GetContext() ||
@@ -134,7 +135,7 @@ diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
          display_,
          static_cast<GLXFBConfig>(compatible_surface->GetConfig()),
          share_handle,
-@@ -200,16 +204,16 @@ bool GLContextGLX::GetTotalGpuMemory(siz
+@@ -212,16 +216,16 @@ bool GLContextGLX::GetTotalGpuMemory(siz
      glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &kbytes);
      *bytes = 1024*kbytes;
      return true;

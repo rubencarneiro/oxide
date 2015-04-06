@@ -233,7 +233,8 @@ void Compositor::SetVisibility(bool visible) {
     settings.renderer_settings.allow_antialiasing = false;
     settings.use_external_begin_frame_source = false;
     settings.throttle_frame_production = false;
-    settings.using_synchronous_renderer_compositor = true;
+    // XXX(chrisccoulson): Hangs from 43.0.2357.2
+    //settings.using_synchronous_renderer_compositor = true;
 
     layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
         this,
