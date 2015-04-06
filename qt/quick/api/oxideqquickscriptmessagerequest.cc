@@ -23,7 +23,10 @@
 #include <QtDebug>
 #include <QVariant>
 
-void OxideQQuickScriptMessageRequestPrivate::OnReceiveReply(
+OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageRequest,
+                                    oxide::qt::ScriptMessageRequestProxyHandle);
+
+void OxideQQuickScriptMessageRequestPrivate::ReceiveReply(
     const QVariant& args) {
   if (!reply_callback.engine()) {
     return;
@@ -35,7 +38,7 @@ void OxideQQuickScriptMessageRequestPrivate::OnReceiveReply(
   reply_callback.call(jsargs);
 }
 
-void OxideQQuickScriptMessageRequestPrivate::OnReceiveError(
+void OxideQQuickScriptMessageRequestPrivate::ReceiveError(
     int error,
     const QString& msg) {
   QJSValueList jsargs;
@@ -46,8 +49,9 @@ void OxideQQuickScriptMessageRequestPrivate::OnReceiveError(
 }
 
 OxideQQuickScriptMessageRequestPrivate::OxideQQuickScriptMessageRequestPrivate(
-    OxideQQuickScriptMessageRequest* q) :
-    oxide::qt::ScriptMessageRequestAdapter(q) {}
+    OxideQQuickScriptMessageRequest* q)
+    : oxide::qt::ScriptMessageRequestProxyHandle(
+        oxide::qt::ScriptMessageRequestProxy::create(this), q) {}
 
 // static
 OxideQQuickScriptMessageRequestPrivate* OxideQQuickScriptMessageRequestPrivate::get(

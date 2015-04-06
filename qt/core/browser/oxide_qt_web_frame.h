@@ -61,7 +61,7 @@ class WebFrame : public oxide::WebFrame,
   bool sendMessage(const QUrl& context,
                    const QString& msg_id,
                    const QVariant& args,
-                   ScriptMessageRequestAdapter* req) override;
+                   ScriptMessageRequestProxyHandle* req) override;
   void sendMessageNoReply(const QUrl& context,
                           const QString& msg_id,
                           const QVariant& args) override;

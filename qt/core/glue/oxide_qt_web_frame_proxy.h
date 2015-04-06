@@ -33,12 +33,13 @@ namespace oxide {
 namespace qt {
 
 class ScriptMessageHandlerProxy;
-class ScriptMessageRequestAdapter;
+class ScriptMessageRequestProxy;
 class WebFrame;
 class WebFrameProxy;
 class WebFrameProxyClient;
 
 OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
+OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageRequestProxy);
 OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 
 class Q_DECL_EXPORT WebFrameProxy {
@@ -56,7 +57,7 @@ class Q_DECL_EXPORT WebFrameProxy {
   virtual bool sendMessage(const QUrl& context,
                            const QString& msg_id,
                            const QVariant& args,
-                           ScriptMessageRequestAdapter* req) = 0;
+                           ScriptMessageRequestProxyHandle* req) = 0;
   virtual void sendMessageNoReply(const QUrl& context,
                                   const QString& msg_id,
                                   const QVariant& args) = 0;

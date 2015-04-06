@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,41 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_
-#define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_
+#include "oxide_qt_script_message_request_proxy.h"
 
-#include <QScopedPointer>
-#include <QtGlobal>
-
-#include "qt/core/glue/oxide_qt_adapter_base.h"
-
-QT_BEGIN_NAMESPACE
-class QString;
-class QVariant;
-QT_END_NAMESPACE
+#include "qt/core/browser/oxide_qt_script_message_request.h"
 
 namespace oxide {
 namespace qt {
 
-class ScriptMessageRequest;
+// static
+ScriptMessageRequestProxy* ScriptMessageRequestProxy::create(
+    ScriptMessageRequestProxyClient* client) {
+  return new ScriptMessageRequest(client);
+}
 
-class Q_DECL_EXPORT ScriptMessageRequestAdapter : public AdapterBase {
- public:
-  virtual ~ScriptMessageRequestAdapter();
-
- protected:
-  ScriptMessageRequestAdapter(QObject* q);
-
- private:
-  friend class ScriptMessageRequest;
-
-  virtual void OnReceiveReply(const QVariant& args) = 0;
-  virtual void OnReceiveError(int error, const QString& msg) = 0;
-
-  QScopedPointer<ScriptMessageRequest> request_;
-};
+ScriptMessageRequestProxy::~ScriptMessageRequestProxy() {}
 
 } // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_REQUEST_ADAPTER_H_

@@ -97,7 +97,7 @@ WebFrameProxyHandle* WebFrame::childFrameAt(int index) const {
 bool WebFrame::sendMessage(const QUrl& context,
                            const QString& msg_id,
                            const QVariant& args,
-                           ScriptMessageRequestAdapter* req) {
+                           ScriptMessageRequestProxyHandle* req) {
   QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
 
   scoped_ptr<oxide::ScriptMessageRequestImplBrowser> smr =
@@ -108,7 +108,7 @@ bool WebFrame::sendMessage(const QUrl& context,
     return false;
   }
 
-  ScriptMessageRequest::FromAdapter(req)->SetRequest(smr.Pass());
+  ScriptMessageRequest::FromProxyHandle(req)->SetRequest(smr.Pass());
 
   return true;
 }

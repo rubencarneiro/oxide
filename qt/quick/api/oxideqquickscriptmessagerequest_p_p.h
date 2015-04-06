@@ -21,13 +21,17 @@
 #include <QJSValue>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_script_message_request_adapter.h"
+#include "qt/core/glue/oxide_qt_script_message_request_proxy.h"
+#include "qt/core/glue/oxide_qt_script_message_request_proxy_client.h"
 
 class OxideQQuickScriptMessageRequest;
 
-class OxideQQuickScriptMessageRequestPrivate final
-    : public oxide::qt::ScriptMessageRequestAdapter {
+class OxideQQuickScriptMessageRequestPrivate
+    : public oxide::qt::ScriptMessageRequestProxyHandle,
+      public oxide::qt::ScriptMessageRequestProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickScriptMessageRequest)
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageRequest,
+                                      oxide::qt::ScriptMessageRequestProxyHandle);
 
  public:
   OxideQQuickScriptMessageRequestPrivate(
@@ -36,12 +40,13 @@ class OxideQQuickScriptMessageRequestPrivate final
   static OxideQQuickScriptMessageRequestPrivate* get(
       OxideQQuickScriptMessageRequest* request);
 
+ private:
+  // oxide::qt::ScriptMessageRequestProxyClient
+  void ReceiveReply(const QVariant& args) override;
+  void ReceiveError(int error, const QString& msg) override;
+
   QJSValue reply_callback;
   QJSValue error_callback;
-
- private:
-  void OnReceiveReply(const QVariant& args) final;
-  void OnReceiveError(int error, const QString& msg) final;
 };
 
 #endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_
