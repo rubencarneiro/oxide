@@ -18,16 +18,24 @@
 #ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
 #define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
 
-#include "qt/core/glue/oxide_qt_script_message_adapter.h"
+#include "qt/core/glue/oxide_qt_script_message_proxy.h"
 
 class OxideQQuickScriptMessage;
 
-class OxideQQuickScriptMessagePrivate final
-    : public oxide::qt::ScriptMessageAdapter {
+class OxideQQuickScriptMessagePrivate
+    : public oxide::qt::ScriptMessageProxyHandle {
+  Q_DECLARE_PUBLIC(OxideQQuickScriptMessage)
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessage,
+                                      oxide::qt::ScriptMessageProxyHandle)
  public:
   OxideQQuickScriptMessagePrivate(OxideQQuickScriptMessage* q);
 
   static OxideQQuickScriptMessagePrivate* get(OxideQQuickScriptMessage* q);
+
+ private:
+  oxide::qt::ScriptMessageProxy* proxy() const {
+    return oxide::qt::ScriptMessageProxyHandle::proxy();
+  }
 };
 
 #endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_

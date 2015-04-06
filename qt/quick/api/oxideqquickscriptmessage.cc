@@ -21,9 +21,13 @@
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebframe_p_p.h"
 
+OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessage,
+                                    oxide::qt::ScriptMessageProxyHandle);
+
 OxideQQuickScriptMessagePrivate::OxideQQuickScriptMessagePrivate(
-    OxideQQuickScriptMessage* q) :
-    oxide::qt::ScriptMessageAdapter(q) {}
+    OxideQQuickScriptMessage* q)
+    : oxide::qt::ScriptMessageProxyHandle(
+        oxide::qt::ScriptMessageProxy::create(), q) {}
 
 // static
 OxideQQuickScriptMessagePrivate* OxideQQuickScriptMessagePrivate::get(
@@ -39,35 +43,35 @@ OxideQQuickScriptMessage::~OxideQQuickScriptMessage() {}
 OxideQQuickWebFrame* OxideQQuickScriptMessage::frame() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return OxideQQuickWebFramePrivate::fromProxyHandle(d->frame());
+  return OxideQQuickWebFramePrivate::fromProxyHandle(d->proxy()->frame());
 }
 
 QUrl OxideQQuickScriptMessage::context() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->context();
+  return d->proxy()->context();
 }
 
 QString OxideQQuickScriptMessage::msgId() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->msgId();
+  return d->proxy()->msgId();
 }
 
 QVariant OxideQQuickScriptMessage::args() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->args();
+  return d->proxy()->args();
 }
 
 void OxideQQuickScriptMessage::reply(const QVariant& args) {
   Q_D(OxideQQuickScriptMessage);
 
-  d->reply(args);
+  d->proxy()->reply(args);
 }
 
 void OxideQQuickScriptMessage::error(const QString& msg) {
   Q_D(OxideQQuickScriptMessage);
 
-  d->error(msg);
+  d->proxy()->error(msg);
 }

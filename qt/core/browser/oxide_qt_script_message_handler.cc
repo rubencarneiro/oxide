@@ -36,8 +36,8 @@ bool ScriptMessageHandler::ReceiveMessageCallback(
     std::string* error_desc) {
   QString qerror;
 
-  ScriptMessageAdapter* qmessage = client_->CreateScriptMessage();
-  ScriptMessage::FromAdapter(qmessage)->Initialize(message);
+  ScriptMessageProxyHandle* qmessage = client_->CreateScriptMessage();
+  ScriptMessage::FromProxyHandle(qmessage)->Initialize(message);
 
   bool success = client_->ReceiveMessage(qmessage, qerror);
 

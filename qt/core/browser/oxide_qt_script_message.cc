@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,9 +17,11 @@
 
 #include "oxide_qt_script_message.h"
 
+#include <QByteArray>
+#include <QJsonDocument>
+
 #include "base/logging.h"
 
-#include "qt/core/glue/oxide_qt_script_message_adapter.h"
 #include "shared/browser/oxide_script_message_impl_browser.h"
 #include "shared/common/oxide_script_message_request.h"
 
@@ -28,8 +30,39 @@
 namespace oxide {
 namespace qt {
 
-ScriptMessage::ScriptMessage(ScriptMessageAdapter* adapter)
-    : adapter_(adapter) {}
+WebFrameProxyHandle* ScriptMessage::frame() const {
+  return static_cast<WebFrame*>(impl_->source_frame())->handle();
+}
+
+QString ScriptMessage::msgId() const {
+  return QString::fromStdString(impl_->msg_id());
+}
+
+QUrl ScriptMessage::context() const {
+  return QUrl(QString::fromStdString(impl_->context().spec()));
+}
+
+QVariant ScriptMessage::args() const {
+  if (!args_.isValid()) {
+    QJsonDocument jsondoc(QJsonDocument::fromJson(
+        QByteArray(impl_->args().data(), impl_->args().length())));
+    args_ = jsondoc.toVariant();
+  }
+
+  return args_;
+}
+
+void ScriptMessage::reply(const QVariant& args) {
+  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
+  impl_->Reply(QString(jsondoc.toJson()).toStdString());
+}
+
+void ScriptMessage::error(const QString& msg) {
+  impl_->Error(oxide::ScriptMessageRequest::ERROR_HANDLER_REPORTED_ERROR,
+               msg.toStdString());
+}
+
+ScriptMessage::ScriptMessage() {}
 
 ScriptMessage::~ScriptMessage() {}
 
@@ -39,34 +72,8 @@ void ScriptMessage::Initialize(oxide::ScriptMessage* message) {
 }
 
 // static
-ScriptMessage* ScriptMessage::FromAdapter(ScriptMessageAdapter* adapter) {
-  return adapter->message_.data();
-}
-
-WebFrame* ScriptMessage::GetFrame() const {
-  return static_cast<WebFrame*>(impl_->source_frame());
-}
-
-std::string ScriptMessage::GetMsgId() const {
-  return impl_->msg_id();
-}
-
-GURL ScriptMessage::GetContext() const {
-  return impl_->context();
-}
-
-std::string ScriptMessage::GetArgs() const {
-  return impl_->args();
-}
-
-void ScriptMessage::Reply(const std::string& args) {
-  impl_->Reply(args);
-}
-
-void ScriptMessage::Error(const std::string& msg) {
-  impl_->Error(
-      oxide::ScriptMessageRequest::ERROR_HANDLER_REPORTED_ERROR,
-      msg);
+ScriptMessage* ScriptMessage::FromProxyHandle(ScriptMessageProxyHandle* handle) {
+  return static_cast<ScriptMessage*>(handle->proxy_.data());
 }
 
 } // namespace qt

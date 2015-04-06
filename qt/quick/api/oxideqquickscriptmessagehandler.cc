@@ -28,11 +28,11 @@ OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageHandler,
                                     oxide::qt::ScriptMessageHandlerProxyHandle);
 
 bool OxideQQuickScriptMessageHandlerPrivate::ReceiveMessage(
-    oxide::qt::ScriptMessageAdapter* message,
+    oxide::qt::ScriptMessageProxyHandle* message,
     QString& error) {
   QJSValueList args;
   args.append(callback_.engine()->newQObject(
-      adapterToQObject<OxideQQuickScriptMessage>(message)));
+      OxideQQuickScriptMessagePrivate::fromProxyHandle(message)));
 
   QJSValue rv = callback_.call(args);
   if (rv.isError()) {
@@ -43,7 +43,7 @@ bool OxideQQuickScriptMessageHandlerPrivate::ReceiveMessage(
   return true;
 }
 
-oxide::qt::ScriptMessageAdapter*
+oxide::qt::ScriptMessageProxyHandle*
 OxideQQuickScriptMessageHandlerPrivate::CreateScriptMessage() {
   OxideQQuickScriptMessage* message = new OxideQQuickScriptMessage();
   return OxideQQuickScriptMessagePrivate::get(message);

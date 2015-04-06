@@ -40,7 +40,7 @@ class WebContext;
 class WebContextProxyClient;
 
 class WebContextProxy;
-OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy)
+OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
 
 class Q_DECL_EXPORT WebContextProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebContext);

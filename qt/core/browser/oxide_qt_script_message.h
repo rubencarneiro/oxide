@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,11 @@
 
 #include <string>
 
-#include "base/basictypes.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "url/gurl.h"
+
+#include "qt/core/glue/oxide_qt_script_message_proxy.h"
 
 namespace oxide {
 
@@ -32,32 +33,26 @@ class ScriptMessageImplBrowser;
 
 namespace qt {
 
-class ScriptMessageAdapter;
-class WebFrame;
-
-class ScriptMessage final {
+class ScriptMessage : public ScriptMessageProxy {
  public:
-  ~ScriptMessage();
+  ScriptMessage();
+  ~ScriptMessage() override;
 
   void Initialize(oxide::ScriptMessage* message);
 
-  static ScriptMessage* FromAdapter(ScriptMessageAdapter* adapter);
-
-  WebFrame* GetFrame() const;
-  std::string GetMsgId() const;
-  GURL GetContext() const;
-  std::string GetArgs() const;
-
-  void Reply(const std::string& args);
-  void Error(const std::string& msg);
+  static ScriptMessage* FromProxyHandle(ScriptMessageProxyHandle* handle);
 
  private:
-  friend class ScriptMessageAdapter;
+  // ScriptMessageProxy implementation
+  WebFrameProxyHandle* frame() const override;
+  QString msgId() const override;
+  QUrl context() const override;
+  QVariant args() const override;
+  void reply(const QVariant& args) override;
+  void error(const QString& msg) override;
 
-  ScriptMessage(ScriptMessageAdapter* adapter);
-
-  ScriptMessageAdapter* adapter_;
   scoped_refptr<oxide::ScriptMessageImplBrowser> impl_;
+  mutable QVariant args_;
 
   DISALLOW_COPY_AND_ASSIGN(ScriptMessage);
 };
