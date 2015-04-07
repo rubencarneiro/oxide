@@ -30,8 +30,9 @@ OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebFrame,
                                     oxide::qt::WebFrameProxyHandle);
 
 OxideQQuickWebFramePrivate::OxideQQuickWebFramePrivate(
-    OxideQQuickWebFrame* q) :
-    oxide::qt::WebFrameProxyHandle(oxide::qt::WebFrameProxy::create(this), q) {}
+    oxide::qt::WebFrameProxy* proxy,
+    OxideQQuickWebFrame* q)
+    : oxide::qt::WebFrameProxyHandle(proxy, q) {}
 
 // static
 int OxideQQuickWebFramePrivate::childFrame_count(
@@ -84,13 +85,28 @@ void OxideQQuickWebFramePrivate::ChildFramesChanged() {
   emit q->childFramesChanged();
 }
 
+void OxideQQuickWebFramePrivate::DestroyFrame() {
+  Q_Q(OxideQQuickWebFrame);
+
+  delete q;
+  // |this| has been destroyed
+}
+
+// static
+OxideQQuickWebFrame* OxideQQuickWebFramePrivate::create(
+    oxide::qt::WebFrameProxy* proxy) {
+  OxideQQuickWebFrame* frame = new OxideQQuickWebFrame();
+  frame->d_ptr.reset(new OxideQQuickWebFramePrivate(proxy, frame));
+  return frame;
+}
+
+// static
 OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
     OxideQQuickWebFrame* frame) {
   return frame->d_func();
 }
 
-OxideQQuickWebFrame::OxideQQuickWebFrame() :
-    d_ptr(new OxideQQuickWebFramePrivate(this)) {}
+OxideQQuickWebFrame::OxideQQuickWebFrame() {}
 
 OxideQQuickWebFrame::~OxideQQuickWebFrame() {
   Q_D(OxideQQuickWebFrame);

@@ -25,9 +25,17 @@ OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessage,
                                     oxide::qt::ScriptMessageProxyHandle);
 
 OxideQQuickScriptMessagePrivate::OxideQQuickScriptMessagePrivate(
+    oxide::qt::ScriptMessageProxy* proxy,
     OxideQQuickScriptMessage* q)
-    : oxide::qt::ScriptMessageProxyHandle(
-        oxide::qt::ScriptMessageProxy::create(), q) {}
+    : oxide::qt::ScriptMessageProxyHandle(proxy, q) {}
+
+// static
+OxideQQuickScriptMessage* OxideQQuickScriptMessagePrivate::create(
+    oxide::qt::ScriptMessageProxy* proxy) {
+  OxideQQuickScriptMessage* message = new OxideQQuickScriptMessage();
+  message->d_ptr.reset(new OxideQQuickScriptMessagePrivate(proxy, message));
+  return message;
+}
 
 // static
 OxideQQuickScriptMessagePrivate* OxideQQuickScriptMessagePrivate::get(
@@ -35,8 +43,7 @@ OxideQQuickScriptMessagePrivate* OxideQQuickScriptMessagePrivate::get(
   return q->d_func();
 }
 
-OxideQQuickScriptMessage::OxideQQuickScriptMessage() :
-    d_ptr(new OxideQQuickScriptMessagePrivate(this)) {}
+OxideQQuickScriptMessage::OxideQQuickScriptMessage() {}
 
 OxideQQuickScriptMessage::~OxideQQuickScriptMessage() {}
 

@@ -36,7 +36,6 @@ OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 class Q_DECL_EXPORT ScriptMessageProxy {
   OXIDE_Q_DECL_PROXY_FOR(ScriptMessage);
  public:
-  static ScriptMessageProxy* create();
   virtual ~ScriptMessageProxy();
 
   virtual WebFrameProxyHandle* frame() const = 0;

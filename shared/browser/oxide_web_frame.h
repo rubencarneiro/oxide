@@ -45,12 +45,8 @@ class WebFrame : public ScriptMessageTarget {
   typedef std::vector<ScriptMessageRequestImplBrowser*>
       ScriptMessageRequestVector;
 
-  WebFrame();
-
-  // Initialize this frame
-  void Init(content::RenderFrameHost* render_frame_host,
-            WebFrame* parent,
-            WebView* view);
+  WebFrame(content::RenderFrameHost* render_frame_host,
+           WebView* view);
 
   // Find the WebFrame for |frame_tree_node_id|. Currently only used in
   // WebView::OpenURLFromTab - please don't add new code which uses this
@@ -66,6 +62,11 @@ class WebFrame : public ScriptMessageTarget {
 
   // Return the last committed URL for this frame
   GURL GetURL() const;
+
+  // Initialize the parent of this frame to |parent|. This is not a constructor
+  // parameter because it calls in to the parents subclass, which may require
+  // the child frame to be fully constructed
+  void InitParent(WebFrame* parent);
 
   // Return the parent frame
   WebFrame* parent() const { return parent_; }
@@ -128,6 +129,10 @@ class WebFrame : public ScriptMessageTarget {
   // is called, which will typically then destroy its publicly exposed
   // WebFrame
   void WillDestroy();
+
+  // Delete this WebFrame. Called after WillDestroyFrame and can be overridden
+  // by the implementation
+  virtual void Delete();
 
   // Add |child| to this frame, calling OnChildAdded
   void AddChild(WebFrame* child);

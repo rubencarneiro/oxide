@@ -95,7 +95,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void NavigationEntryCommitted() override;
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;
-  oxide::qt::WebFrameProxyHandle* CreateWebFrame() override;
+  oxide::qt::WebFrameProxyClient* CreateWebFrame(
+      oxide::qt::WebFrameProxy* proxy) override;
   QScreen* GetScreen() const override;
   QRect GetViewBoundsPix() const override;
   bool IsVisible() const override;

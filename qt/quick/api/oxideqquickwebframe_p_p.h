@@ -37,10 +37,13 @@ class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyHandle,
                                       oxide::qt::WebFrameProxyHandle)
 
  public:
+  static OxideQQuickWebFrame* create(oxide::qt::WebFrameProxy* proxy);
+
   static OxideQQuickWebFramePrivate* get(OxideQQuickWebFrame* web_frame);
 
  private:
-  OxideQQuickWebFramePrivate(OxideQQuickWebFrame* q);
+  OxideQQuickWebFramePrivate(oxide::qt::WebFrameProxy* proxy,
+                             OxideQQuickWebFrame* q);
 
   oxide::qt::WebFrameProxy* proxy() const {
     return oxide::qt::WebFrameProxyHandle::proxy();
@@ -59,6 +62,7 @@ class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyHandle,
   // oxide::qt::WebFrameProxyClient implementation
   void URLCommitted() override;
   void ChildFramesChanged() override;
+  void DestroyFrame() override;
 
   Q_DISABLE_COPY(OxideQQuickWebFramePrivate);
 };

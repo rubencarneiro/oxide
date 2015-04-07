@@ -22,11 +22,6 @@
 namespace oxide {
 namespace qt {
 
-// static
-ScriptMessageProxy* ScriptMessageProxy::create() {
-  return new ScriptMessage();
-}
-
 ScriptMessageProxy::~ScriptMessageProxy() {}
 
 } // namespace qt

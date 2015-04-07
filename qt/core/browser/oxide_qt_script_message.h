@@ -35,10 +35,8 @@ namespace qt {
 
 class ScriptMessage : public ScriptMessageProxy {
  public:
-  ScriptMessage();
+  ScriptMessage(oxide::ScriptMessage* message);
   ~ScriptMessage() override;
-
-  void Initialize(oxide::ScriptMessage* message);
 
   static ScriptMessage* FromProxyHandle(ScriptMessageProxyHandle* handle);
 

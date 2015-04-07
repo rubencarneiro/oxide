@@ -51,6 +51,11 @@ void WebFrame::DidCommitNewURL() {
   client_->URLCommitted();
 }
 
+void WebFrame::Delete() {
+  client_->DestroyFrame();
+  // |this| has been destroyed
+}
+
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
   client_->ChildFramesChanged();
 
@@ -128,8 +133,10 @@ QList<ScriptMessageHandlerProxyHandle*>& WebFrame::messageHandlers() {
   return message_handlers_;
 }
 
-WebFrame::WebFrame(WebFrameProxyClient* client)
-    : client_(client) {}
+WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
+                   WebView* view)
+    : oxide::WebFrame(render_frame_host, view),
+      client_(nullptr) {}
 
 // static
 WebFrame* WebFrame::FromProxyHandle(WebFrameProxyHandle* handle) {

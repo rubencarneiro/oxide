@@ -34,12 +34,10 @@ namespace qt {
 bool ScriptMessageHandler::ReceiveMessageCallback(
     oxide::ScriptMessage* message,
     std::string* error_desc) {
+  ScriptMessage* m = new ScriptMessage(message);
+
   QString qerror;
-
-  ScriptMessageProxyHandle* qmessage = client_->CreateScriptMessage();
-  ScriptMessage::FromProxyHandle(qmessage)->Initialize(message);
-
-  bool success = client_->ReceiveMessage(qmessage, qerror);
+  bool success = client_->ReceiveMessage(m, qerror);
 
   if (!success) {
     *error_desc = qerror.toStdString();

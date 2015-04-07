@@ -863,9 +863,9 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
       WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
   DCHECK(parent);
 
-  WebFrame* frame = CreateWebFrame();
+  WebFrame* frame = CreateWebFrame(render_frame_host);
   DCHECK(frame);
-  frame->Init(render_frame_host, parent, this);
+  frame->InitParent(parent);
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {}
@@ -1148,8 +1148,9 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
-WebFrame* WebView::CreateWebFrame() {
-  return new WebFrame();
+WebFrame* WebView::CreateWebFrame(
+    content::RenderFrameHost* render_frame_host) {
+  return new WebFrame(render_frame_host, this);
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -1338,9 +1339,8 @@ void WebView::Init(Params* params) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  root_frame_.reset(CreateWebFrame());
+  root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
   DCHECK(root_frame_.get());
-  root_frame_->Init(web_contents_->GetMainFrame(), nullptr, this);
 
   if (params->context) {
     if (!initial_url_.is_empty()) {

@@ -28,11 +28,14 @@ class OxideQQuickScriptMessagePrivate
   OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessage,
                                       oxide::qt::ScriptMessageProxyHandle)
  public:
-  OxideQQuickScriptMessagePrivate(OxideQQuickScriptMessage* q);
+  static OxideQQuickScriptMessage* create(oxide::qt::ScriptMessageProxy* proxy);
 
   static OxideQQuickScriptMessagePrivate* get(OxideQQuickScriptMessage* q);
 
  private:
+  OxideQQuickScriptMessagePrivate(oxide::qt::ScriptMessageProxy* proxy,
+                                  OxideQQuickScriptMessage* q);
+
   oxide::qt::ScriptMessageProxy* proxy() const {
     return oxide::qt::ScriptMessageProxyHandle::proxy();
   }

@@ -22,11 +22,6 @@
 namespace oxide {
 namespace qt {
 
-// static
-WebFrameProxy* WebFrameProxy::create(WebFrameProxyClient* client) {
-  return new WebFrame(client);
-}
-
 WebFrameProxy::~WebFrameProxy() {}
 
 } // namespace qt

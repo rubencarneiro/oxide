@@ -84,6 +84,10 @@ void WebFrame::WillDestroy() {
   }
 }
 
+void WebFrame::Delete() {
+  delete this;
+}
+
 void WebFrame::AddChild(WebFrame* child) {
   child_frames_.push_back(child);
   OnChildAdded(child);
@@ -113,35 +117,20 @@ WebFrame::~WebFrame() {
   CHECK(destroyed_) << "WebFrame deleted without calling WillDestroy()";
 }
 
-WebFrame::WebFrame()
+WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
+                   WebView* view)
     : parent_(nullptr),
-      render_frame_host_(nullptr),
+      view_(view->AsWeakPtr()),
+      render_frame_host_(render_frame_host),
       next_message_serial_(0),
       destroyed_(false),
       weak_factory_(this) {
-}
-
-void WebFrame::Init(content::RenderFrameHost* render_frame_host,
-                    WebFrame* parent,
-                    WebView* view) {
-  DCHECK(render_frame_host && view);
-  DCHECK(!view_.get() && !parent_ && !render_frame_host_);
-  DCHECK(!parent || parent->view() == view);
-
-  parent_ = parent;
-  view_ = view->AsWeakPtr();
-  render_frame_host_ = render_frame_host;
-
   int64 id = static_cast<content::RenderFrameHostImpl*>(render_frame_host)
       ->frame_tree_node()
       ->frame_tree_node_id();
   std::pair<FrameMapIterator, bool> rv =
       g_frame_map.Get().insert(std::make_pair(id, this));
   DCHECK(rv.second);
-
-  if (parent_) {
-    parent_->AddChild(this);
-  }
 }
 
 // static
@@ -166,11 +155,18 @@ WebFrame* WebFrame::FromRenderFrameHost(
 // static
 void WebFrame::Destroy(WebFrame* frame) {
   frame->WillDestroy();
-  delete frame;
+  frame->Delete();
 }
 
 GURL WebFrame::GetURL() const {
   return render_frame_host_->GetLastCommittedURL();
+}
+
+void WebFrame::InitParent(WebFrame* parent) {
+  DCHECK(!parent_);
+  DCHECK_EQ(parent->view(), view());
+  parent_ = parent;
+  parent_->AddChild(this);
 }
 
 void WebFrame::SetRenderFrameHost(

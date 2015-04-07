@@ -28,6 +28,8 @@ class WebFrameProxyClient {
   virtual void URLCommitted() = 0;
 
   virtual void ChildFramesChanged() = 0;
+
+  virtual void DestroyFrame() = 0;
 };
 
 } // namespace qt

@@ -62,14 +62,10 @@ void ScriptMessage::error(const QString& msg) {
                msg.toStdString());
 }
 
-ScriptMessage::ScriptMessage() {}
+ScriptMessage::ScriptMessage(oxide::ScriptMessage* message)
+    : impl_(static_cast<oxide::ScriptMessageImplBrowser*>(message)) {}
 
 ScriptMessage::~ScriptMessage() {}
-
-void ScriptMessage::Initialize(oxide::ScriptMessage* message) {
-  DCHECK(!impl_.get());
-  impl_ = static_cast<oxide::ScriptMessageImplBrowser*>(message);
-}
 
 // static
 ScriptMessage* ScriptMessage::FromProxyHandle(ScriptMessageProxyHandle* handle) {

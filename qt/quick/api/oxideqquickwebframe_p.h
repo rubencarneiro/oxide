@@ -67,8 +67,6 @@ class Q_DECL_EXPORT OxideQQuickWebFrame : public QObject {
   void messageHandlersChanged();
 
  protected:
-  friend class OxideQQuickWebViewPrivate;
-
   OxideQQuickWebFrame();
 
   QScopedPointer<OxideQQuickWebFramePrivate> d_ptr;

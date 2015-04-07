@@ -32,13 +32,19 @@ namespace qt {
 
 class ScriptMessageRequest;
 class WebFrameProxyClient;
+class WebView;
 
 class WebFrame : public oxide::WebFrame,
                  public WebFrameProxy {
  public:
-  WebFrame(WebFrameProxyClient* client);
+  WebFrame(content::RenderFrameHost* render_frame_host,
+           WebView* view);
 
   static WebFrame* FromProxyHandle(WebFrameProxyHandle* handle);
+
+  void set_client(WebFrameProxyClient* client) {
+    client_ = client;
+  }
 
  private:
   ~WebFrame() override;
@@ -50,6 +56,7 @@ class WebFrame : public oxide::WebFrame,
 
   // oxide::WebFrame implementation
   void DidCommitNewURL() override;
+  void Delete() override;
   void OnChildAdded(oxide::WebFrame* child) override;
   void OnChildRemoved(oxide::WebFrame* child) override;
 
