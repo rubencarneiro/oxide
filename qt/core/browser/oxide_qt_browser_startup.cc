@@ -153,7 +153,7 @@ void BrowserStartup::EnsureChromiumStarted() {
     if (QGuiApplication::platformNativeInterface()) {
       if (platform == QLatin1String("xcb")) {
         gl_impl = gfx::kGLImplementationDesktopGL;
-      } else if (platform.startsWith("ubuntu") || platform.startsWith("egl")) {
+      } else if (platform.startsWith("ubuntu") || platform == "egl") {
         gl_impl = gfx::kGLImplementationEGLGLES2;
       } else {
         LOG(WARNING)

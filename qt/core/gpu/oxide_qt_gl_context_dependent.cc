@@ -65,7 +65,7 @@ scoped_refptr<GLContextDependent> GLContextDependent::Create(
           new GLContextDependent(handle,
                                  gfx::kGLImplementationEGLGLES2));
     }
-  } else if (platform.startsWith("ubuntu") || platform.startsWith("egl")) {
+  } else if (platform.startsWith("ubuntu") || platform == "eglfs") {
     void* handle = pni->nativeResourceForContext("eglcontext", context);
     if (handle) {
       return make_scoped_refptr(

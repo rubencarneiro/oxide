@@ -193,10 +193,6 @@ std::string CollectDriverVersionATI() {
 // Use NVCtrl extention to query NV driver version.
 // Return empty string on failing.
 std::string CollectDriverVersionNVidia() {
-  // Return empty string if we're using GLES2 and there's no libX11
-  if (gfx::GetGLImplementation() == gfx::kGLImplementationEGLGLES2) {
-    return std::string();
-  }
   Display* display = gfx::GetXDisplay();
   if (!display) {
     VLOG(1) << "XOpenDisplay failed.";
