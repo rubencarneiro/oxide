@@ -32,7 +32,9 @@ OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebFrame,
 OxideQQuickWebFramePrivate::OxideQQuickWebFramePrivate(
     oxide::qt::WebFrameProxy* proxy,
     OxideQQuickWebFrame* q)
-    : oxide::qt::WebFrameProxyHandle(proxy, q) {}
+    : oxide::qt::WebFrameProxyHandle(proxy, q) {
+  proxy->setClient(this);
+}
 
 // static
 int OxideQQuickWebFramePrivate::childFrame_count(

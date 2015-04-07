@@ -374,7 +374,7 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
 }
 
-oxide::qt::WebFrameProxyClient* OxideQQuickWebViewPrivate::CreateWebFrame(
+oxide::qt::WebFrameProxyHandle* OxideQQuickWebViewPrivate::CreateWebFrame(
     oxide::qt::WebFrameProxy* proxy) {
   OxideQQuickWebFrame* frame = OxideQQuickWebFramePrivate::create(proxy);
   QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);

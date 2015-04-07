@@ -778,8 +778,8 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
 oxide::WebFrame* WebView::CreateWebFrame(
     content::RenderFrameHost* render_frame_host) {
   WebFrame* frame = new WebFrame(render_frame_host, this);
-  frame->set_client(client_->CreateWebFrame(frame));
-  return frame;
+  WebFrameProxyHandle* handle = client_->CreateWebFrame(frame);
+  return WebFrame::FromProxyHandle(handle);
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {

@@ -74,6 +74,11 @@ void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
   }
 }
 
+void WebFrame::setClient(WebFrameProxyClient* client) {
+  DCHECK(!client_ && client);
+  client_ = client;
+}
+
 QUrl WebFrame::url() const {
   return QUrl(QString::fromStdString(GetURL().spec()));
 }

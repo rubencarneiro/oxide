@@ -22,6 +22,7 @@
 #include <QUrl>
 
 #include "base/bind.h"
+#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_script_message_handler_proxy_client.h"
 #include "shared/common/oxide_script_message.h"
@@ -34,10 +35,10 @@ namespace qt {
 bool ScriptMessageHandler::ReceiveMessageCallback(
     oxide::ScriptMessage* message,
     std::string* error_desc) {
-  ScriptMessage* m = new ScriptMessage(message);
+  scoped_ptr<ScriptMessage> m(new ScriptMessage(message));
 
   QString qerror;
-  bool success = client_->ReceiveMessage(m, qerror);
+  bool success = client_->ReceiveMessage(m.release(), qerror);
 
   if (!success) {
     *error_desc = qerror.toStdString();

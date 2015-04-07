@@ -42,10 +42,6 @@ class WebFrame : public oxide::WebFrame,
 
   static WebFrame* FromProxyHandle(WebFrameProxyHandle* handle);
 
-  void set_client(WebFrameProxyClient* client) {
-    client_ = client;
-  }
-
  private:
   ~WebFrame() override;
 
@@ -61,6 +57,7 @@ class WebFrame : public oxide::WebFrame,
   void OnChildRemoved(oxide::WebFrame* child) override;
 
   // WebFrameProxy implementation
+  void setClient(WebFrameProxyClient* client) override;
   QUrl url() const override;
   WebFrameProxyHandle* parent() const override;
   int childFrameCount() const override;

@@ -36,6 +36,7 @@ class ScriptMessageHandlerProxy;
 class ScriptMessageRequestProxy;
 class WebFrame;
 class WebFrameProxy;
+class WebFrameProxyClient;
 
 OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
 OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageRequestProxy);
@@ -45,6 +46,8 @@ class Q_DECL_EXPORT WebFrameProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebFrame);
  public:
   virtual ~WebFrameProxy();
+
+  virtual void setClient(WebFrameProxyClient* client) = 0;
 
   virtual QUrl url() const = 0;
 

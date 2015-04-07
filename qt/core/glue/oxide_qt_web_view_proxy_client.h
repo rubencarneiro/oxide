@@ -46,7 +46,6 @@ namespace qt {
 class FilePickerDelegate;
 class JavaScriptDialogDelegate;
 class WebFrameProxy;
-class WebFrameProxyClient;
 class WebPopupMenuDelegate;
 
 enum FrameMetadataChangeFlags {
@@ -87,7 +86,7 @@ class WebViewProxyClient {
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
 
-  virtual WebFrameProxyClient* CreateWebFrame(WebFrameProxy* proxy) = 0;
+  virtual WebFrameProxyHandle* CreateWebFrame(WebFrameProxy* proxy) = 0;
 
   virtual QScreen* GetScreen() const = 0;
   virtual QRect GetViewBoundsPix() const = 0;
