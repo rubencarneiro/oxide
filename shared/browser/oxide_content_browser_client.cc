@@ -26,6 +26,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/geolocation_provider.h"
+#include "content/public/browser/permission_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_dispatcher_host.h"
@@ -62,18 +63,6 @@
 #endif
 
 namespace oxide {
-
-namespace {
-
-void RespondToGeolocationPermissionRequest(
-    const base::Callback<void(content::PermissionStatus)>& callback,
-    content::PermissionStatus result) {
-  content::GeolocationProvider::GetInstance()
-      ->UserDidOptIntoLocationServices();
-  callback.Run(result);
-}
-
-}
 
 ContentBrowserClient::ContentBrowserClient() {}
 
@@ -209,51 +198,6 @@ void ContentBrowserClient::AllowCertificateError(
                                  resource_type, overridable,
                                  strict_enforcement, callback,
                                  result);
-}
-
-void ContentBrowserClient::RequestPermission(
-    content::PermissionType permission,
-    content::WebContents* web_contents,
-    int bridge_id,
-    const GURL& requesting_frame,
-    bool user_gesture,
-    const base::Callback<void(content::PermissionStatus)>& result_callback) {
-  if (permission != content::PERMISSION_GEOLOCATION) {
-    // TODO: Other types
-    result_callback.Run(content::PERMISSION_STATUS_DENIED);
-    return;
-  }
-
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
-    result_callback.Run(content::PERMISSION_STATUS_DENIED);
-    return;
-  }
-
-  base::Callback<void(content::PermissionStatus)> callback =
-      base::Bind(&RespondToGeolocationPermissionRequest,
-                 result_callback);
-  webview->RequestGeolocationPermission(requesting_frame,
-                                        bridge_id,
-                                        callback);
-}
-
-void ContentBrowserClient::CancelPermissionRequest(
-    content::PermissionType permission,
-    content::WebContents* web_contents,
-    int bridge_id,
-    const GURL& requesting_frame) {
-  if (permission != content::PERMISSION_GEOLOCATION) {
-    return;
-  }
-
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
-    return;
-  }
-
-  webview->CancelGeolocationPermissionRequest(requesting_frame,
-                                              bridge_id);
 }
 
 bool ContentBrowserClient::CanCreateWindow(

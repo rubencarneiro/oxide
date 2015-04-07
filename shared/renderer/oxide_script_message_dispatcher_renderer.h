@@ -48,12 +48,12 @@ class ScriptMessageDispatcherRenderer final : public content::RenderFrameObserve
 
   linked_ptr<ScriptMessageManager> ScriptMessageManagerForWorldId(int world_id);
 
-  void DidCreateScriptContext(v8::Handle<v8::Context> context,
-                              int world_id);
-
  private:
   typedef std::vector<linked_ptr<ScriptMessageManager> > ScriptMessageManagerVector;
 
+  void DidCreateScriptContext(v8::Handle<v8::Context> context,
+                              int extension_group,
+                              int world_id) final;
   void WillReleaseScriptContext(v8::Handle<v8::Context> context,
                                 int world_id) final;
   bool OnMessageReceived(const IPC::Message& message) final;

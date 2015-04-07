@@ -51,6 +51,16 @@ base::LazyInstance<ScriptMessageDispatcherMap> g_dispatcher_map =
     LAZY_INSTANCE_INITIALIZER;
 }
 
+void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
+    v8::Handle<v8::Context> context,
+    int extension_id,
+    int world_id) {
+  script_message_managers_.push_back(
+      linked_ptr<ScriptMessageManager>(new ScriptMessageManager(render_frame(),
+                                                                context,
+                                                                world_id)));
+}
+
 void ScriptMessageDispatcherRenderer::WillReleaseScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
@@ -190,15 +200,6 @@ ScriptMessageDispatcherRenderer* ScriptMessageDispatcherRenderer::FromWebFrame(
   content::RenderFrame* rf = content::RenderFrame::FromWebFrame(frame);
   ScriptMessageDispatcherMap::iterator it = g_dispatcher_map.Get().find(rf);
   return it == g_dispatcher_map.Get().end() ? nullptr : it->second;
-}
-
-void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
-    v8::Handle<v8::Context> context,
-    int world_id) {
-  script_message_managers_.push_back(
-      linked_ptr<ScriptMessageManager>(new ScriptMessageManager(render_frame(),
-                                                                context,
-                                                                world_id)));
 }
 
 } // namespace oxide
