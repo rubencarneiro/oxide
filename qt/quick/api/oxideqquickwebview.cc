@@ -49,7 +49,7 @@
 #include "qt/quick/oxide_qquick_alert_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_confirm_dialog_delegate.h"
-#include "qt/quick/oxide_qquick_file_picker_delegate.h"
+#include "qt/quick/oxide_qquick_file_picker.h"
 #include "qt/quick/oxide_qquick_image_frame_node.h"
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
@@ -300,11 +300,11 @@ OxideQQuickWebViewPrivate::CreateBeforeUnloadDialogDelegate() {
   return new oxide::qquick::BeforeUnloadDialogDelegate(q);
 }
 
-oxide::qt::FilePickerDelegate*
-OxideQQuickWebViewPrivate::CreateFilePickerDelegate() {
+oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
+    oxide::qt::FilePickerProxyClient* client) {
   Q_Q(OxideQQuickWebView);
 
-  return new oxide::qquick::FilePickerDelegate(q);
+  return new oxide::qquick::FilePicker(q, client);
 }
 
 void OxideQQuickWebViewPrivate::URLChanged() {

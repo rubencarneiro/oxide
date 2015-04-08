@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_file_picker_delegate.h"
+#include "oxide_qquick_file_picker.h"
 
 #include <QDebug>
 #include <QObject>
@@ -24,6 +24,7 @@
 #include <QQmlEngine>
 #include <QQuickItem>
 
+#include "qt/core/glue/oxide_qt_file_picker_proxy_client.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 #include "qt/quick/api/oxideqquickwebview_p_p.h"
 
@@ -40,8 +41,8 @@ class FilePickerContext : public QObject {
 
  public:
   virtual ~FilePickerContext() {}
-  FilePickerContext(FilePickerDelegate* delegate,
-                    oxide::qt::FilePickerDelegate::Mode mode,
+  FilePickerContext(oxide::qt::FilePickerProxyClient* client,
+                    oxide::qt::FilePickerProxy::Mode mode,
                     const QString& title,
                     const QFileInfo& default_file_name,
                     const QStringList& accept_types);
@@ -57,31 +58,31 @@ class FilePickerContext : public QObject {
   void reject() const;
 
  private:
-  FilePickerDelegate* delegate_;
-  oxide::qt::FilePickerDelegate::Mode mode_;
+  oxide::qt::FilePickerProxyClient* client_;
+  oxide::qt::FilePickerProxy::Mode mode_;
   QString title_;
   QString default_file_name_;
   QStringList accept_types_;
 };
 
 FilePickerContext::FilePickerContext(
-    FilePickerDelegate* delegate,
-    oxide::qt::FilePickerDelegate::Mode mode,
+    oxide::qt::FilePickerProxyClient* client,
+    oxide::qt::FilePickerProxy::Mode mode,
     const QString& title,
     const QFileInfo& default_file_name,
-    const QStringList& accept_types) :
-    delegate_(delegate),
-    mode_(mode),
-    title_(title),
-    default_file_name_(default_file_name.filePath()),
-    accept_types_(accept_types) {}
+    const QStringList& accept_types)
+    : client_(client),
+      mode_(mode),
+      title_(title),
+      default_file_name_(default_file_name.filePath()),
+      accept_types_(accept_types) {}
 
 bool FilePickerContext::allowMultipleFiles() const {
-  return (mode_ == oxide::qt::FilePickerDelegate::OpenMultiple);
+  return (mode_ == oxide::qt::FilePickerProxy::OpenMultiple);
 }
 
 bool FilePickerContext::directory() const {
-  return (mode_ == oxide::qt::FilePickerDelegate::UploadFolder);
+  return (mode_ == oxide::qt::FilePickerProxy::UploadFolder);
 }
 
 void FilePickerContext::accept(const QVariant& files) const {
@@ -92,36 +93,45 @@ void FilePickerContext::accept(const QVariant& files) const {
     }
   }
   if ((info.size() > 1) && !allowMultipleFiles()) {
-    qWarning() << "This file picker does not allow selecting multiple files";
+    qWarning() <<
+        "FilePickerContext::accept: This file picker does not allow selecting "
+        "multiple files";
     info.erase(info.begin() + 1, info.end());
   }
-  delegate_->Done(info, mode_);
+  client_->done(info, mode_);
 }
 
 void FilePickerContext::reject() const {
-  delegate_->Done(QFileInfoList(), mode_);
+  client_->done(QFileInfoList(), mode_);
 }
 
-FilePickerDelegate::FilePickerDelegate(OxideQQuickWebView* webview) :
-    web_view_(webview) {}
+FilePicker::~FilePicker() {}
 
-void FilePickerDelegate::Show(Mode mode,
-                              const QString& title,
-                              const QFileInfo& defaultFileName,
-                              const QStringList& acceptTypes) {
-  FilePickerContext* contextObject =
-      new FilePickerContext(this, mode, title, defaultFileName, acceptTypes);
-  QQmlComponent* component = web_view_->filePicker();
-  if (!component) {
-    qWarning() << "Content requested a file picker, "
-                  "but the application hasn't provided one";
-    delete contextObject;
-    Done(QFileInfoList(), mode);
+void FilePicker::Show(Mode mode,
+                      const QString& title,
+                      const QFileInfo& default_fileName,
+                      const QStringList& accept_types) {
+  if (!view_) {
+    qWarning() << "FilePicker::Show: Can't show after the view has gone";
+    client_->done(QFileInfoList(), mode);
     return;
   }
+
+  FilePickerContext* contextObject =
+      new FilePickerContext(client_, mode, title, default_fileName, accept_types);
+  QQmlComponent* component = view_->filePicker();
+  if (!component) {
+    qWarning() <<
+        "FilePicker::Show: Content requested a file picker, but the "
+        "application hasn't provided one";
+    delete contextObject;
+    client_->done(QFileInfoList(), mode);
+    return;
+  }
+
   QQmlContext* baseContext = component->creationContext();
   if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(web_view_);
+    baseContext = QQmlEngine::contextForObject(view_);
   }
   context_.reset(new QQmlContext(baseContext));
 
@@ -131,24 +141,31 @@ void FilePickerDelegate::Show(Mode mode,
 
   item_.reset(qobject_cast<QQuickItem*>(component->beginCreate(context_.data())));
   if (!item_) {
-    qWarning() << "Failed to create file picker";
+    qWarning() <<
+        "FilePicker::Show: Failed to create instance of Qml file picker "
+        "component";
     context_.reset();
-    Done(QFileInfoList(), mode);
+    client_->done(QFileInfoList(), mode);
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(web_view_)->addAttachedPropertyTo(item_.data());
-  item_->setParentItem(web_view_);
+  OxideQQuickWebViewPrivate::get(view_)->addAttachedPropertyTo(item_.data());
+  item_->setParentItem(view_);
   component->completeCreate();
 }
 
-void FilePickerDelegate::Hide() {
+void FilePicker::Hide() {
   if (!item_.isNull()) {
     item_->setVisible(false);
   }
 }
 
+FilePicker::FilePicker(OxideQQuickWebView* view,
+                       oxide::qt::FilePickerProxyClient* client)
+    : view_(view),
+      client_(client) {}
+
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_file_picker_delegate.moc"
+#include "oxide_qquick_file_picker.moc"

@@ -15,13 +15,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_FILE_PICKER_DELEGATE_H_
-#define _OXIDE_QT_QUICK_FILE_PICKER_DELEGATE_H_
+#ifndef _OXIDE_QT_QUICK_FILE_PICKER_H_
+#define _OXIDE_QT_QUICK_FILE_PICKER_H_
 
+#include <QPointer>
 #include <QScopedPointer>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_file_picker_delegate.h"
+#include "qt/core/glue/oxide_qt_file_picker_proxy.h"
 
 class OxideQQuickWebView;
 
@@ -31,22 +32,30 @@ class QQuickItem;
 QT_END_NAMESPACE
 
 namespace oxide {
+
+namespace qt {
+class FilePickerProxyClient;
+}
+
 namespace qquick {
 
-class FilePickerDelegate final : public oxide::qt::FilePickerDelegate {
+class FilePicker : public oxide::qt::FilePickerProxy {
  public:
-  FilePickerDelegate(OxideQQuickWebView* webview);
-
- protected:
-  void Show(Mode mode,
-            const QString& title,
-            const QFileInfo& defaultFileName,
-            const QStringList& acceptTypes);
-  void Hide();
+  FilePicker(OxideQQuickWebView* view,
+             oxide::qt::FilePickerProxyClient* client);
 
  private:
-  OxideQQuickWebView* web_view_;
+  ~FilePicker() override;
 
+  // oxide::qt::FilePickerProxy implementation
+  void Show(Mode mode,
+            const QString& title,
+            const QFileInfo& default_filename,
+            const QStringList& accept_types) override;
+  void Hide() override;
+
+  QPointer<OxideQQuickWebView> view_;
+  oxide::qt::FilePickerProxyClient* client_;
   QScopedPointer<QQmlContext> context_;
   QScopedPointer<QQuickItem> item_;
 };
@@ -54,4 +63,4 @@ class FilePickerDelegate final : public oxide::qt::FilePickerDelegate {
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_FILE_PICKER_DELEGATE_H_
+#endif // _OXIDE_QT_QUICK_FILE_PICKER_H_

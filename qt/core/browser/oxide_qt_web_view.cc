@@ -836,7 +836,9 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
 }
 
 oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
-  return new FilePicker(client_->CreateFilePickerDelegate(), rvh);
+  FilePicker* picker = new FilePicker(rvh);
+  picker->SetProxy(client_->CreateFilePicker(picker));
+  return picker;
 }
 
 void WebView::OnSwapCompositorFrame() {

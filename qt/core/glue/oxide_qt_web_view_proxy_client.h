@@ -43,7 +43,8 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class FilePickerDelegate;
+class FilePickerProxy;
+class FilePickerProxyClient;
 class JavaScriptDialogDelegate;
 class WebFrameProxy;
 class WebPopupMenuProxy;
@@ -70,11 +71,11 @@ class WebViewProxyClient {
   virtual QObject* GetApiHandle() = 0;
 
   virtual WebPopupMenuProxy* CreateWebPopupMenu(
-      WebPopupMenuProxyClient* proxy) = 0;
+      WebPopupMenuProxyClient* client) = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       JavaScriptDialogDelegate::Type type) = 0;
   virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;
-  virtual FilePickerDelegate* CreateFilePickerDelegate() = 0;
+  virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;

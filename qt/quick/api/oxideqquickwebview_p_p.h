@@ -85,7 +85,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       oxide::qt::JavaScriptDialogDelegate::Type type) override;
   oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() override;
-  oxide::qt::FilePickerDelegate* CreateFilePickerDelegate() override;
+  oxide::qt::FilePickerProxy* CreateFilePicker(
+      oxide::qt::FilePickerProxyClient* client) override;
   void URLChanged() override;
   void TitleChanged() override;
   void IconChanged(QUrl icon) override;

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,13 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_FILE_PICKER_DELEGATE_H_
-#define _OXIDE_QT_CORE_GLUE_FILE_PICKER_DELEGATE_H_
+#ifndef _OXIDE_QT_CORE_GLUE_FILE_PICKER_PROXY_H_
+#define _OXIDE_QT_CORE_GLUE_FILE_PICKER_PROXY_H_
 
-#include <QFileInfo>
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
+class QFileInfo;
 class QString;
 class QStringList;
 QT_END_NAMESPACE
@@ -29,10 +29,9 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class FilePicker;
-
-class Q_DECL_EXPORT FilePickerDelegate {
+class FilePickerProxy {
  public:
+
   // Matches chromium’s content/public/common/file_chooser_params.h
   enum Mode {
     Open,
@@ -41,26 +40,17 @@ class Q_DECL_EXPORT FilePickerDelegate {
     Save,
   };
 
-  virtual ~FilePickerDelegate();
-
-  void Done(const QFileInfoList& files, Mode mode);
-
- protected:
-  FilePickerDelegate();
-
-  friend class FilePicker;
+  virtual ~FilePickerProxy() {}
 
   virtual void Show(Mode mode,
                     const QString& title,
-                    const QFileInfo& defaultFileName,
-                    const QStringList& acceptTypes) = 0;
-  virtual void Hide() = 0;
+                    const QFileInfo& default_fileName,
+                    const QStringList& accept_types) = 0;
 
-private:
-  FilePicker* file_picker_;
+  virtual void Hide() = 0;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_FILE_PICKER_DELEGATE_H_
+#endif // _OXIDE_QT_CORE_GLUE_FILE_PICKER_PROXY_H_

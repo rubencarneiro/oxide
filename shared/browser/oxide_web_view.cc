@@ -811,7 +811,6 @@ content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
 void WebView::RunFileChooser(content::WebContents* source,
                              const content::FileChooserParams& params) {
   DCHECK_VALID_SOURCE_CONTENTS
-  DCHECK(!active_file_picker_);
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   FilePicker* file_picker = CreateFilePicker(rvh);
@@ -821,8 +820,7 @@ void WebView::RunFileChooser(content::WebContents* source,
     return;
   }
 
-  active_file_picker_ = file_picker->AsWeakPtr();
-  active_file_picker_->Run(params);
+  file_picker->Run(params);
 }
 
 void WebView::EnterFullscreenModeForTab(content::WebContents* source,
