@@ -15,47 +15,49 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
-#define _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
+#ifndef _OXIDE_QT_QUICK_WEB_POPUP_MENU_H_
+#define _OXIDE_QT_QUICK_WEB_POPUP_MENU_H_
 
-#include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
+#include <QPointer>
+#include <QScopedPointer>
 
-#include "qt/core/glue/oxide_qt_web_popup_menu_proxy_client.h"
-#include "shared/browser/oxide_web_popup_menu.h"
+#include "qt/core/glue/oxide_qt_web_popup_menu_proxy.h"
+
+class OxideQQuickWebView;
+
+QT_BEGIN_NAMESPACE
+class QQmlContext;
+class QQuickItem;
+QT_END_NAMESPACE
 
 namespace oxide {
+
 namespace qt {
+class WebPopupMenuProxyClient;
+}
 
-class WebPopupMenuProxy;
+namespace qquick {
 
-class WebPopupMenu : public oxide::WebPopupMenu,
-                     public WebPopupMenuProxyClient {
+class WebPopupMenu : public oxide::qt::WebPopupMenuProxy {
  public:
-  WebPopupMenu(content::RenderFrameHost* rfh);
-
-  void SetProxy(WebPopupMenuProxy* proxy);
-
- private:
+  WebPopupMenu(OxideQQuickWebView* view,
+               oxide::qt::WebPopupMenuProxyClient* client);
   ~WebPopupMenu() override;
 
-  // oxide::WebPopupMenu implementation
-  void Show(const gfx::Rect& bounds,
-            const std::vector<content::MenuItem>& items,
-            int selected_item,
+ private:
+  // oxide::qt::WebPopupMenuProxy implementation
+  void Show(const QRect& bounds,
+            const QList<oxide::qt::MenuItem>& items,
             bool allow_multiple_selection) override;
   void Hide() override;
 
-  // WebPopupMenuProxyClient implementation
-  void selectItems(const QList<int>& selected_indices) override;
-  void cancel() override;
-
-  scoped_ptr<WebPopupMenuProxy> proxy_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
+  oxide::qt::WebPopupMenuProxyClient* client_;
+  QPointer<OxideQQuickWebView> view_;
+  QScopedPointer<QQuickItem> popup_item_;
+  QScopedPointer<QQmlContext> popup_context_;
 };
 
-} // namespace qt
+} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_QQUICK_H_
+#endif // _OXIDE_QT_QUICK_WEB_POPUP_MENU_H_

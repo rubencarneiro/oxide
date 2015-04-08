@@ -45,7 +45,7 @@ OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 class Q_DECL_EXPORT WebFrameProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebFrame);
  public:
-  virtual ~WebFrameProxy();
+  virtual ~WebFrameProxy() {}
 
   virtual void setClient(WebFrameProxyClient* client) = 0;
 

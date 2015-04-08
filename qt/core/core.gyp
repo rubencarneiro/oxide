@@ -106,7 +106,6 @@
         'glue/oxide_qt_script_message_handler_proxy.cc',
         'glue/oxide_qt_script_message_handler_proxy.h',
         'glue/oxide_qt_script_message_handler_proxy_client.h',
-        'glue/oxide_qt_script_message_proxy.cc',
         'glue/oxide_qt_script_message_proxy.h',
         'glue/oxide_qt_script_message_request_proxy.cc',
         'glue/oxide_qt_script_message_request_proxy.h',
@@ -117,9 +116,10 @@
         'glue/oxide_qt_web_context_proxy.cc',
         'glue/oxide_qt_web_context_proxy.h',
         'glue/oxide_qt_web_context_proxy_client.h',
-        'glue/oxide_qt_web_frame_proxy.cc',
         'glue/oxide_qt_web_frame_proxy.h',
         'glue/oxide_qt_web_frame_proxy_client.h',
+        'glue/oxide_qt_web_popup_menu_proxy.h',
+        'glue/oxide_qt_web_popup_menu_proxy_client.h',
         'glue/oxide_qt_web_view_proxy.cc',
         'glue/oxide_qt_web_view_proxy.h',
         'glue/oxide_qt_web_view_proxy_client.h',
@@ -237,8 +237,6 @@
         'glue/oxide_qt_init.h',
         'glue/oxide_qt_javascript_dialog_delegate.cc',
         'glue/oxide_qt_javascript_dialog_delegate.h',
-        'glue/oxide_qt_web_popup_menu_delegate.cc',
-        'glue/oxide_qt_web_popup_menu_delegate.h',
       ],
       'actions': [
         {

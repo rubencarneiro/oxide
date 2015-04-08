@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_web_popup_menu_delegate.h"
+#include "oxide_qquick_web_popup_menu.h"
 
 #include <QAbstractListModel>
 #include <QLatin1String>
@@ -29,6 +29,7 @@
 #include <QRectF>
 #include <QtDebug>
 
+#include "qt/core/glue/oxide_qt_web_popup_menu_proxy_client.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 #include "qt/quick/api/oxideqquickwebview_p_p.h"
 
@@ -42,7 +43,7 @@ class PopupListModel : public QAbstractListModel {
 
  public:
   virtual ~PopupListModel() {}
-  PopupListModel(QList<oxide::qt::MenuItem>& items,
+  PopupListModel(const QList<oxide::qt::MenuItem>& items,
                  bool allow_multiple_selection);
 
   int rowCount(const QModelIndex& parent = QModelIndex()) const final;
@@ -69,11 +70,11 @@ class PopupListModel : public QAbstractListModel {
   QHash<int, QByteArray> roles_;
 };
 
-PopupListModel::PopupListModel(QList<oxide::qt::MenuItem>& items,
+PopupListModel::PopupListModel(const QList<oxide::qt::MenuItem>& items,
                                bool allow_multiple_selection) :
     allow_multi_select_(allow_multiple_selection),
     selected_index_(-1) {
-  items_.swap(items);
+  items_ = items;
 
   if (!allow_multi_select_) {
     for (int i = 0; i < items_.size(); ++i) {
@@ -186,9 +187,9 @@ class PopupMenuContext : public QObject {
 
  public:
   virtual ~PopupMenuContext() {}
-  PopupMenuContext(WebPopupMenuDelegate* delegate,
+  PopupMenuContext(oxide::qt::WebPopupMenuProxyClient* client,
                    const QRect& bounds,
-                   QList<oxide::qt::MenuItem>& items,
+                   const QList<oxide::qt::MenuItem>& items,
                    bool allow_multiple_selection);
 
   QRectF elementRect() const { return element_rect_; }
@@ -199,50 +200,55 @@ class PopupMenuContext : public QObject {
   Q_INVOKABLE void cancel();
 
  private:
-  WebPopupMenuDelegate* delegate_;
+  oxide::qt::WebPopupMenuProxyClient* client_;
   QRectF element_rect_;
   PopupListModel items_;
 };
 
-PopupMenuContext::PopupMenuContext(WebPopupMenuDelegate* delegate,
+PopupMenuContext::PopupMenuContext(oxide::qt::WebPopupMenuProxyClient* client,
                                    const QRect& bounds,
-                                   QList<oxide::qt::MenuItem>& items,
+                                   const QList<oxide::qt::MenuItem>& items,
                                    bool allow_multiple_selection) :
-    delegate_(delegate),
+    client_(client),
     element_rect_(bounds),
     items_(items, allow_multiple_selection) {}
 
 void PopupMenuContext::accept() {
   QList<int> indices = items_.selectedIndices();
   Q_ASSERT(items_.allowMultiSelect() || indices.size() <= 1);
-  delegate_->SelectItems(indices);
+  client_->selectItems(indices);
 }
 
 void PopupMenuContext::cancel() {
-  delegate_->Cancel();
+  client_->cancel();
 }
 
 } // namespace
 
-WebPopupMenuDelegate::WebPopupMenuDelegate(OxideQQuickWebView* webview) :
-    web_view_(webview) {}
+void WebPopupMenu::Show(const QRect& bounds,
+                        const QList<oxide::qt::MenuItem>& items,
+                        bool allow_multiple_selection) {
+  if (!view_) {
+    qWarning() << "WebPopupMenu::Show: Can't show after the view has gone";
+    client_->cancel();
+    return;
+  }
 
-void WebPopupMenuDelegate::Show(const QRect& bounds,
-                                QList<oxide::qt::MenuItem>& items,
-                                bool allow_multiple_selection) {
-  QQmlComponent* popup_component = web_view_->popupMenu();
+  QQmlComponent* popup_component = view_->popupMenu();
   if (!popup_component) {
-    qWarning() << "Content requested a popup menu, but the application hasn't provided one";
-    Cancel();
+    qWarning() <<
+        "WebPopupMenu::Show: Content requested a popup menu, but the "
+        "application hasn't provided one";
+    client_->cancel();
     return;
   }
 
   PopupMenuContext* contextObject =
-      new PopupMenuContext(this, bounds, items, allow_multiple_selection);
+      new PopupMenuContext(client_, bounds, items, allow_multiple_selection);
 
   QQmlContext* baseContext = popup_component->creationContext();
   if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(web_view_);
+    baseContext = QQmlEngine::contextForObject(view_);
   }
   popup_context_.reset(new QQmlContext(baseContext));
 
@@ -253,25 +259,33 @@ void WebPopupMenuDelegate::Show(const QRect& bounds,
   popup_item_.reset(qobject_cast<QQuickItem *>(
       popup_component->beginCreate(popup_context_.data())));
   if (!popup_item_) {
-    qWarning() << "Failed to create popup";
-    Cancel();
+    qWarning() <<
+        "WebPopupMenu::Show: Failed to create instance of Qml popup component";
+    client_->cancel();
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(web_view_)->addAttachedPropertyTo(
+  OxideQQuickWebViewPrivate::get(view_)->addAttachedPropertyTo(
       popup_item_.data());
-  popup_item_->setParentItem(web_view_);
+  popup_item_->setParentItem(view_);
 
   popup_component->completeCreate();
 }
 
-void WebPopupMenuDelegate::Hide() {
+void WebPopupMenu::Hide() {
   if (popup_item_) {
     popup_item_->setVisible(false);
   }
 }
 
+WebPopupMenu::WebPopupMenu(OxideQQuickWebView* view,
+                           oxide::qt::WebPopupMenuProxyClient* client)
+    : client_(client),
+      view_(view) {}
+
+WebPopupMenu::~WebPopupMenu() {}
+
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_web_popup_menu_delegate.moc"
+#include "oxide_qquick_web_popup_menu.moc"

@@ -80,7 +80,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   // oxide::qt::WebViewProxyClient implementation
   void Initialized() override;
   QObject* GetApiHandle() override;
-  oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() override;
+  oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
+      oxide::qt::WebPopupMenuProxyClient* client) override;
   oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       oxide::qt::JavaScriptDialogDelegate::Type type) override;
   oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() override;

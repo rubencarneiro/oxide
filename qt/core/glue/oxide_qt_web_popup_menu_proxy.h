@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,39 +15,48 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_WEB_POPUP_MENU_DELEGATE_H_
-#define _OXIDE_QT_QUICK_WEB_POPUP_MENU_DELEGATE_H_
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_PROXY_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_PROXY_H_
 
-#include <QScopedPointer>
-
-#include "qt/core/glue/oxide_qt_web_popup_menu_delegate.h"
-
-class OxideQQuickWebView;
+#include <QString>
+#include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
-class QQmlContext;
-class QQuickItem;
+template <typename T> class QList;
+class QRect;
 QT_END_NAMESPACE
 
 namespace oxide {
-namespace qquick {
+namespace qt {
 
-class WebPopupMenuDelegate final : public oxide::qt::WebPopupMenuDelegate {
- public:
-  WebPopupMenuDelegate(OxideQQuickWebView* webview);
+struct MenuItem {
+  MenuItem() :
+      index(-1),
+      enabled(false),
+      checked(false),
+      separator(false) {}
 
-  void Show(const QRect& bounds,
-            QList<oxide::qt::MenuItem>& items,
-            bool allow_multiple_selection) final;
-  void Hide() final;
-
- private:
-  OxideQQuickWebView* web_view_;
-  QScopedPointer<QQuickItem> popup_item_;
-  QScopedPointer<QQmlContext> popup_context_;
+  QString label;
+  QString tooltip;
+  QString group;
+  int index;
+  bool enabled;
+  bool checked;
+  bool separator;
 };
 
-} // namespace qquick
+class WebPopupMenuProxy {
+ public:
+  virtual ~WebPopupMenuProxy() {}
+
+  virtual void Show(const QRect& bounds,
+                    const QList<MenuItem>& items,
+                    bool allow_multiple_selection) = 0;
+
+  virtual void Hide() = 0;
+};
+
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_WEB_POPUP_MENU_DELEGATE_H_
+#endif // _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_PROXY_H_

@@ -46,7 +46,8 @@ namespace qt {
 class FilePickerDelegate;
 class JavaScriptDialogDelegate;
 class WebFrameProxy;
-class WebPopupMenuDelegate;
+class WebPopupMenuProxy;
+class WebPopupMenuProxyClient;
 
 enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_NONE = 0,
@@ -68,7 +69,8 @@ class WebViewProxyClient {
 
   virtual QObject* GetApiHandle() = 0;
 
-  virtual WebPopupMenuDelegate* CreateWebPopupMenuDelegate() = 0;
+  virtual WebPopupMenuProxy* CreateWebPopupMenu(
+      WebPopupMenuProxyClient* proxy) = 0;
   virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
       JavaScriptDialogDelegate::Type type) = 0;
   virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;

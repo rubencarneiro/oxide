@@ -20,11 +20,14 @@
 
 #include <vector>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/menu_item.h"
+
+namespace base {
+template <typename T> class DeleteHelper;
+}
 
 namespace content {
 class RenderFrameHost;
@@ -37,32 +40,35 @@ class Rect;
 
 namespace oxide {
 
-class WebPopupMenu : public content::WebContentsObserver,
-                     public base::SupportsWeakPtr<WebPopupMenu> {
+class WebPopupMenu : public content::WebContentsObserver {
  public:
-  virtual ~WebPopupMenu();
-
   virtual void Show(const gfx::Rect& bounds,
                     const std::vector<content::MenuItem>& items,
                     int selected_item,
                     bool allow_multiple_selection) = 0;
-  void Hide();
+  void Close();
 
   void SelectItems(const std::vector<int>& selected_indices);
   void Cancel();
 
-  bool WasHidden() const;
+  base::WeakPtr<WebPopupMenu> GetWeakPtr() {
+    return weak_ptr_factory_.GetWeakPtr();
+  }
 
  protected:
+  friend class base::DeleteHelper<WebPopupMenu>;
+
   WebPopupMenu(content::RenderFrameHost* rfh);
+  virtual ~WebPopupMenu();
 
  private:
   void RenderFrameDeleted(content::RenderFrameHost* rfh) final;
 
-  virtual void OnHide() = 0;
+  virtual void Hide();
 
-  bool popup_was_hidden_;
   content::RenderFrameHostImpl* render_frame_host_;
+
+  base::WeakPtrFactory<WebPopupMenu> weak_ptr_factory_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
 };

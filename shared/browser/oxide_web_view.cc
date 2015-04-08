@@ -1891,7 +1891,7 @@ void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                             int selected_item,
                             const std::vector<content::MenuItem>& items,
                             bool allow_multiple_selection) {
-  DCHECK(!active_popup_menu_ || active_popup_menu_->WasHidden());
+  DCHECK(!active_popup_menu_);
 
   WebPopupMenu* menu = CreatePopupMenu(render_frame_host);
   if (!menu) {
@@ -1900,15 +1900,17 @@ void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
     return;
   }
 
-  active_popup_menu_ = menu->AsWeakPtr();
+  active_popup_menu_ = menu->GetWeakPtr();
 
   menu->Show(bounds, items, selected_item, allow_multiple_selection);
 }
 
 void WebView::HidePopupMenu() {
-  if (active_popup_menu_ && !active_popup_menu_->WasHidden()) {
-    active_popup_menu_->Hide();
+  if (!active_popup_menu_) {
+    return;
   }
+
+  active_popup_menu_->Close();
 }
 
 void WebView::RequestGeolocationPermission(

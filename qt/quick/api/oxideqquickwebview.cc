@@ -54,7 +54,7 @@
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog_delegate.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
-#include "qt/quick/oxide_qquick_web_popup_menu_delegate.h"
+#include "qt/quick/oxide_qquick_web_popup_menu.h"
 
 #include "oxideqquicklocationbarcontroller_p.h"
 #include "oxideqquickscriptmessagehandler_p.h"
@@ -269,11 +269,11 @@ QObject* OxideQQuickWebViewPrivate::GetApiHandle() {
   return q;
 }
 
-oxide::qt::WebPopupMenuDelegate*
-OxideQQuickWebViewPrivate::CreateWebPopupMenuDelegate() {
+oxide::qt::WebPopupMenuProxy* OxideQQuickWebViewPrivate::CreateWebPopupMenu(
+    oxide::qt::WebPopupMenuProxyClient* client) {
   Q_Q(OxideQQuickWebView);
 
-  return new oxide::qquick::WebPopupMenuDelegate(q);
+  return new oxide::qquick::WebPopupMenu(q, client);
 }
 
 oxide::qt::JavaScriptDialogDelegate*

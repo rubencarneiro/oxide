@@ -45,7 +45,7 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_javascript_dialog_delegate.cc
     oxide_qquick_prompt_dialog_delegate.cc
     oxide_qquick_software_frame_node.cc
-    oxide_qquick_web_popup_menu_delegate.cc
+    oxide_qquick_web_popup_menu.cc
     ${MOC_EXTRA})
 
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
