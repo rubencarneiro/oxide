@@ -27,9 +27,13 @@ namespace qquick {
 
 int ImageFrameNode::textureId() const {
   if (texture_id_ == 0) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
     QOpenGLContext::currentContext()->functions()->glGenTextures(
         1,
         &const_cast<ImageFrameNode*>(this)->texture_id_);
+#else
+    glGenTextures(1, &const_cast<ImageFrameNode*>(this)->texture_id_);
+#endif
   }
 
   return texture_id_;
@@ -55,7 +59,11 @@ void ImageFrameNode::bind() {
   QOpenGLContext* context = QOpenGLContext::currentContext();
   QOpenGLFunctions* functions = context->functions();
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
   functions->glBindTexture(GL_TEXTURE_2D, textureId());
+#else
+  glBindTexture(GL_TEXTURE_2D, textureId());
+#endif
   updateBindOptions(dirty_bind_options_);
   dirty_bind_options_ = false;
 
@@ -83,7 +91,11 @@ ImageFrameNode::ImageFrameNode()
 ImageFrameNode::~ImageFrameNode() {
   QOpenGLContext* context = QOpenGLContext::currentContext();
   if (context && texture_id_ != 0) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
     context->functions()->glDeleteTextures(1, &texture_id_);
+#else
+    glDeleteTextures(1, &texture_id_);
+#endif
   }
 }
 

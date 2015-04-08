@@ -295,6 +295,8 @@
         'browser/oxide_android_properties.h',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
+        'browser/oxide_browser_context_anchor.cc',
+        'browser/oxide_browser_context_anchor.h',
         'browser/oxide_browser_context_delegate.h',
         'browser/oxide_browser_context_observer.cc',
         'browser/oxide_browser_context_observer.h',

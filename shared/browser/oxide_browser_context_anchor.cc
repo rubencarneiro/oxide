@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,26 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_init.h"
+#include "oxide_browser_context_anchor.h"
 
-#include "qt/core/browser/oxide_qt_browser_startup.h"
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-#include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
-#endif
+#include "base/memory/singleton.h"
+#include "content/public/browser/render_process_host.h"
+
+#include "oxide_browser_context.h"
 
 namespace oxide {
-namespace qt {
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-void SetSharedGLContext(QOpenGLContext* context) {
-  scoped_refptr<GLContextDependent> c(GLContextDependent::Create(context));
-  BrowserStartup::GetInstance()->SetSharedGLContext(c.get());
-}
-#endif
+BrowserContextAnchor::BrowserContextAnchor() {}
 
-void EnsureChromiumStarted() {
-  BrowserStartup::GetInstance()->EnsureChromiumStarted();
+void BrowserContextAnchor::RenderProcessHostDestroyed(
+    content::RenderProcessHost* host) {
+  host->RemoveObserver(this);
+  BrowserContext::FromContent(host->GetBrowserContext())->Release();
 }
 
-} // namespace qt
+// static
+BrowserContextAnchor* BrowserContextAnchor::GetInstance() {
+  return Singleton<BrowserContextAnchor>::get();
+}
+
+void BrowserContextAnchor::RenderProcessWillLaunch(
+    content::RenderProcessHost* host) {
+  BrowserContext::FromContent(host->GetBrowserContext())->AddRef();
+  host->AddObserver(this);
+}
+
 } // namespace oxide

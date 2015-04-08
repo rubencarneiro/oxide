@@ -195,7 +195,7 @@ std::string CollectDriverVersionATI() {
 std::string CollectDriverVersionNVidia() {
   Display* display = gfx::GetXDisplay();
   if (!display) {
-    LOG(ERROR) << "XOpenDisplay failed.";
+    VLOG(1) << "XOpenDisplay failed.";
     return std::string();
   }
   int event_base = 0, error_base = 0;
